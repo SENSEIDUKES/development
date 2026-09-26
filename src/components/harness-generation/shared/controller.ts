@@ -12,18 +12,20 @@ import { compileStoryInformationPacket } from './context';
 import { createHarnessSenStory } from './senAdapter';
 import { diffHarnessReaderPatch } from './readerEdits';
 import type { ReaderCodexStoryPatchUpdater } from '../../../narrative/story';
-import { isTranslationSkillCompatible, translationCompatibilityError } from '../../../narrative/translationSkill';
+import { normalizeChapterWritingStyle, type ChapterWritingStyle } from '../../../narrative/readingMode';
 import { buildImmediateChapterRequest } from './immediateChapterRequest';
 import { attemptChapterPath, chapterDirectionGap, pendingChapterDirection, validateChapterDirectionChoice } from './chapterDirection';
 import { appendHarnessCorrection, type AppendHarnessCorrectionInput } from './canonicalState';
 import { HarnessCapabilityRegistry } from './capabilities';
 import {
   CAPA_SCHEMA,
+  managedCapaSkillSignature,
   managedCapaSlotReason,
   assembleCapaPrompt,
   createHarnessSkillCatalog,
   freezeHarnessSkillLoadout,
   resolveHarnessSkill,
+  resolveManagedCapaSkills,
 } from './skills';
 import {
   includeBundledHarnessSkills,
@@ -281,11 +283,16 @@ export class HarnessGenerationController {
     input: StoryFoundationInput,
     originalLanguage: SenLanguageCode = DEFAULT_SEN_LANGUAGE_CODE,
     initialSkillLoadout?: Partial<Record<HarnessSkillSlotId, HarnessSkillReference>>,
-    options: { visibility?: HarnessStoryVisibility } = {},
+    options: {
+      visibility?: HarnessStoryVisibility;
+      /** The story's Reading Mode from its Story Seed. Absent is Standard. */
+      chapterWritingStyle?: ChapterWritingStyle;
+    } = {},
   ): Promise<HarnessStory> {
     this.assertHydrated();
     const created = createHarnessStory(this.state, input, originalLanguage, this.runtime);
     created.story.visibility = options.visibility ?? 'private';
+    created.story.chapterWritingStyle = normalizeChapterWritingStyle(options.chapterWritingStyle);
     if (initialSkillLoadout) {
       const unsupportedSlot = Object.keys(initialSkillLoadout)
         .find(slot => !CAPA_SCHEMA.some(definition => definition.id === slot));
@@ -299,9 +306,6 @@ export class HarnessGenerationController {
         const manifest = resolveHarnessSkill(this.skillCatalog, reference);
         if (!manifest) throw new Error(`${slot.label} skill ${reference.id}@${reference.version} is not installed in this host.`);
         if (manifest.slot !== slot.id) throw new Error(`${manifest.name} cannot be equipped in the ${slot.label} slot.`);
-        if (slot.id === 'translation' && !isTranslationSkillCompatible(manifest, originalLanguage)) {
-          throw new Error(translationCompatibilityError(manifest, originalLanguage));
-        }
         loadout[slot.id] = cloneHarnessValue(reference);
       }
       if (!loadout.author) throw new Error('Choose an installed Author skill before creating a Harness story.');
@@ -418,9 +422,6 @@ export class HarnessGenerationController {
       const manifest = resolveHarnessSkill(this.skillCatalog, reference);
       if (!manifest) throw new Error('That Harness skill is not installed in this host.');
       if (manifest.slot !== slot) throw new Error(`${manifest.name} cannot be equipped in that slot.`);
-      if (slot === 'translation' && !isTranslationSkillCompatible(manifest, story.originalLanguage)) {
-        throw new Error(translationCompatibilityError(manifest, story.originalLanguage));
-      }
       loadout[slot] = cloneHarnessValue(reference);
     }
     story.skillLoadout = loadout;
@@ -432,6 +433,27 @@ export class HarnessGenerationController {
     } finally {
       this.generating = false;
     }
+  }
+
+  /**
+   * Changes the story's Reading Mode, a Story Setting owned by the story's
+   * owner. It applies to chapters written from now on; committed chapters keep
+   * the mode they were written in. The HARNESS resolves the matching
+   * Accessibility skill itself at every chapter call.
+   */
+  async setChapterWritingStyle(storyId: string, mode: ChapterWritingStyle): Promise<HarnessStory> {
+    this.assertHydrated();
+    if (this.generating) throw new Error('Wait for the active Harness update before changing the Reading Mode.');
+    const candidate = cloneHarnessValue(this.state);
+    const story = findStory(candidate, storyId);
+    if (!story) throw new Error('Open a Harness story before changing its Reading Mode.');
+    if (activeAttemptForStory(candidate, storyId)) {
+      throw new Error('Finish or explicitly retry the current chapter checkpoint before changing the Reading Mode.');
+    }
+    story.chapterWritingStyle = normalizeChapterWritingStyle(mode);
+    story.updatedAt = this.runtime.now();
+    await this.persist(candidate);
+    return cloneHarnessValue(story);
   }
 
   async setMediaSelection(
@@ -1385,7 +1407,11 @@ export class HarnessGenerationController {
     // A reader who changed this chapter's direction after the failure gets the
     // new direction: the request is rebuilt instead of resent.
     const sameDirection = (story ? pendingChapterDirection(story)?.id : undefined) === attempt.immediateChapterRequest.direction?.id;
-    const frozen = attempt.storyInformation.arc && sameChapter && sameDirection ? {
+    // The same holds for the managed skills: a changed Reading Mode or a
+    // different Translation package resolution rebuilds the request, so a
+    // stale CAPA Prompt is never resent.
+    const sameManagedSkills = story ? this.managedSkillsStillMatch(story, attempt) : false;
+    const frozen = attempt.storyInformation.arc && sameChapter && sameDirection && sameManagedSkills ? {
       capaPrompt: attempt.capaPrompt,
       storyInformation: attempt.storyInformation,
       immediateChapterRequest: attempt.immediateChapterRequest,
@@ -1393,6 +1419,22 @@ export class HarnessGenerationController {
       mediaLoadout: attempt.mediaLoadout,
     } : undefined;
     return this.generateNextChapterInternal(attempt.storyId, attempt.model, attempt.batchId, frozen);
+  }
+
+  /**
+   * Whether the story's managed CAPA skills resolve now to exactly what the
+   * attempt froze. A resolution that fails (competing Translation packages,
+   * for example) never matches, so the rebuild reports it.
+   */
+  private managedSkillsStillMatch(story: HarnessStory, attempt: HarnessGenerationAttempt): boolean {
+    try {
+      const fateMode = attempt.storyInformation.storyDirection.fateMode ?? 'regular';
+      const current = Object.values(resolveManagedCapaSkills(story, this.skillCatalog, fateMode))
+        .filter((skill): skill is HarnessSkillManifest => Boolean(skill));
+      return managedCapaSkillSignature(current) === managedCapaSkillSignature(attempt.capaPrompt.skills);
+    } catch {
+      return false;
+    }
   }
 
   private emptyBatchUsage(): HarnessBatchUsageAggregate {

@@ -25,6 +25,7 @@
 
 import { ARC_LENGTH, MAX_ROADMAP_ARCS, arcsCanBeAddedBeforeFinal, createInitialArcPlan, validateArcPlan, validateArcRoadmap, type ArcGoal, type ArcPlan } from '../../arc-goals/shared/arcGoals';
 import { normalizeFunSettings, validateHardPinInputs, type FunSettings, type HardPinInput } from '../../../narrative/storyDirection';
+import { isChapterWritingStyle, type ChapterWritingStyle } from '../../../narrative/readingMode';
 export { normalizeFunSettings, HARD_PIN_LIMIT, HARD_PIN_TEXT_LIMIT, validateHardPinInputs, type FunSettings, type FunSettingLevel, type HardPinInput } from '../../../narrative/storyDirection';
 import type {
   WorldBlueprint,
@@ -87,6 +88,13 @@ export interface StorySeedStoryOptional {
   /** Story metadata only; this does not request explicit generated content. */
   intendedForMatureAudiences: boolean;
   fateSurvival: StorySeedFateSurvivalSettings;
+  /**
+   * The Reading Mode stories from this seed start with, chosen in Story Seed
+   * Settings. A new seed takes the account's default; a saved seed keeps its
+   * own. Absent means Standard. It is a Story Setting, never world content, so
+   * it is left out of every Blueprint request.
+   */
+  chapterWritingStyle?: ChapterWritingStyle;
   funSettings: FunSettings;
   /**
    * High-priority creative intent for strange, difficult, contradictory, or
@@ -304,6 +312,7 @@ const normalizeStoryOptional = (value: unknown): StorySeedStoryOptional => {
     funSettings: normalizeFunSettings(source.funSettings),
     hardPins: validateHardPinInputs(source.hardPins ?? []),
   };
+  if (isChapterWritingStyle(source.chapterWritingStyle)) normalized.chapterWritingStyle = source.chapterWritingStyle;
   if (source.activeArcGoal !== undefined) normalized.activeArcGoal = createInitialArcPlan(source.activeArcGoal as ArcGoal).goals[0];
   const makeItWorkInstruction = text(source.makeItWorkInstruction);
   if (makeItWorkInstruction) normalized.makeItWorkInstruction = makeItWorkInstruction;
@@ -1227,11 +1236,20 @@ export const validateRequestedArcCount = (value: unknown): number => {
   return value;
 };
 
+/**
+ * The Seed as world content for the Blueprint model: Story Settings that only
+ * shape how chapters are later written stay out of it.
+ */
+const withoutStorySettings = (seed: StorySeedInput): StorySeedInput => {
+  const { chapterWritingStyle: _readingMode, ...optional } = seed.story.optional;
+  return { ...seed, story: { ...seed.story, optional } };
+};
+
 export const buildBlueprintGenerationPayload = (
   seed: StorySeedInput,
   options: { arcCount?: number } = {},
 ): BlueprintGenerationPayload => {
-  const storySeed = applyInferredStoryTags(normalizeStorySeedInput(seed));
+  const storySeed = withoutStorySettings(applyInferredStoryTags(normalizeStorySeedInput(seed)));
   assertValidStorySeedInput(storySeed);
   return { storySeed, ...(options.arcCount === undefined ? {} : { arcCount: validateRequestedArcCount(options.arcCount) }) };
 };
@@ -1246,7 +1264,7 @@ export const buildArcRoadmapExtensionPayload = (
   blueprint: WorldBlueprint,
   arcCount: number,
 ): ArcRoadmapExtensionPayload => {
-  const storySeed = applyInferredStoryTags(normalizeStorySeedInput(seed));
+  const storySeed = withoutStorySettings(applyInferredStoryTags(normalizeStorySeedInput(seed)));
   assertValidStorySeedInput(storySeed);
   const arcPlans = validateBlueprintArcRoadmap(blueprint);
   if (!arcsCanBeAddedBeforeFinal(arcPlans)) {

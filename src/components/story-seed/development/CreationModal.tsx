@@ -17,7 +17,7 @@ import { type StorySeedArtifact, type StorySeedRecord } from '@seihouse/sen/stor
 import { insertArcsBeforeFinal, type ArcPlan } from '@seihouse/sen/arc-goals';
 import { applyInferredStoryTags, buildArcRoadmapExtensionPayload, buildBlueprintGenerationPayload, buildInitialStoryGenerationPayload, createBlueprintDraftFromSeed, createEmptyStorySeedInput, mirrorSeedIntoBlueprint, normalizeStorySeedInput, reconcileStorySeedBlueprint, validateStorySeedDraft, validateStorySeedInput, type ArcRoadmapExtensionPayload, type BlueprintGenerationPayload, type InitialStoryGenerationPayload, type StorySeedInput } from '@seihouse/sen/story-seed';
 import { createStoryAdministrativeMetadata } from '@seihouse/sen/story-seed';
-import { DEFAULT_SEN_LANGUAGE_CODE, normalizeSenLanguageCode, type SenLanguageCode } from '@seihouse/sen/contracts';
+import { DEFAULT_SEN_LANGUAGE_CODE, normalizeChapterWritingStyle, normalizeSenLanguageCode, type ChapterWritingStyle, type SenLanguageCode } from '@seihouse/sen/contracts';
 import StoryAuthGate, { STORY_AUTH_DISSOLVE_MS } from './StoryAuthGate';
 
 // Creation workspace
@@ -26,7 +26,7 @@ import {
   REQUIRED_STORY_SECTIONS,
   type SeedSectionId,
 } from './seedSections';
-import type { SeedUpdate } from './seedState';
+import { setChapterWritingStyle, type SeedUpdate } from './seedState';
 import { OriginWorkspace } from './workspaces/OriginWorkspace';
 import { ArcWorkspace } from './workspaces/ArcWorkspace';
 import { WorldIdentityWorkspace } from './workspaces/WorldIdentityWorkspace';
@@ -61,6 +61,12 @@ export interface CreationModalProps {
    * so a later account change never reaches an already-created story.
    */
   accountDefaultLanguage?: SenLanguageCode;
+  /**
+   * The host account's default Reading Mode (its Default Chapter Writing
+   * Style). Only a genuinely new seed takes it; a saved or imported seed keeps
+   * its own, and absent means Standard.
+   */
+  accountDefaultChapterWritingStyle?: ChapterWritingStyle;
 }
 
 /** Existing one-story generation default; Chapter Generation Pass 1 does not use it. */
@@ -129,7 +135,7 @@ const selectCreationModalStore = (state: StoryCreationSnapshot): CreationModalSt
   libraryStories: state.stories,
 });
 
-export default function CreationModal({ onNavigateHome, onStartStory, onGenerateBlueprint, onExtendArcRoadmap, isGenerating: isGeneratingProp, error, accountDefaultLanguage }: CreationModalProps) {
+export default function CreationModal({ onNavigateHome, onStartStory, onGenerateBlueprint, onExtendArcRoadmap, isGenerating: isGeneratingProp, error, accountDefaultLanguage, accountDefaultChapterWritingStyle }: CreationModalProps) {
   const runtime = useStoryCreationRuntime();
   const guestWorkspace = Boolean(runtime.guestOwnerId);
   const storeIsGenerating = useStoryCreationStore(state => state.isGenerating);
@@ -178,6 +184,11 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     languageResolvedRef.current = true;
     setOriginalLanguage(code);
   }, []);
+  // The Reading Mode lives in the seed itself; the account default applies
+  // under the same rule as the language, until the seed has one of its own.
+  const accountReadingMode = normalizeChapterWritingStyle(accountDefaultChapterWritingStyle);
+  const readingModeResolvedRef = useRef(false);
+  const resolveReadingMode = useCallback(() => { readingModeResolvedRef.current = true; }, []);
   const [authDissolving, setAuthDissolving] = useState(false);
   const wasAuthRef = useRef(false);
   const previousSeedOwnerIdRef = useRef<string | null>(seedOwnerId);
@@ -220,9 +231,10 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
       setSeed(createEmptyStorySeedInput());
       setBlueprint(null);
       setSeedError(null);
-      // The new account's own default decides this workspace's language; the
-      // previous account's selection must not survive the switch.
+      // The new account's own defaults decide this workspace's language and
+      // Reading Mode; the previous account's selections must not survive the switch.
       languageResolvedRef.current = false;
+      readingModeResolvedRef.current = false;
     }
     if (!seedOwnerId) {
       setActiveSeed(null);
@@ -240,9 +252,21 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     setOriginalLanguage(accountLanguage);
   }, [accountLanguage, seedOwnerId]);
 
+  /** A genuinely new seed also follows the account's default Reading Mode, under the same rule. */
+  useEffect(() => {
+    if (readingModeResolvedRef.current) return;
+    setSeed(current => current.story.optional.chapterWritingStyle === accountReadingMode
+      ? current
+      : setChapterWritingStyle(accountReadingMode)(current));
+  }, [accountReadingMode, seedOwnerId]);
+
   // Always a functional update, so rapid successive edits (e.g. toggling two
   // tags in one task) can never lose a write to a stale render closure.
   const updateSeed = useCallback((update: SeedUpdate) => setSeed(update), []);
+  const storyLanguageSetting = useMemo(
+    () => ({ value: originalLanguage, onChange: resolveOriginalLanguage }),
+    [originalLanguage, resolveOriginalLanguage],
+  );
   const updateBlueprint = useCallback((update: SetStateAction<WorldBlueprint>) => {
     setBlueprint(current => {
       if (!current) return current;
@@ -312,7 +336,10 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
       && seedOwnerIdRef.current === ownerAtStart
       && (activeRecord ? currentRecord?.id === activeRecord.id : currentRecord === null);
     rememberSeed(saved, stillActive);
-    if (stillActive) resolveOriginalLanguage(saved.originalLanguage);
+    if (stillActive) {
+      resolveOriginalLanguage(saved.originalLanguage);
+      resolveReadingMode();
+    }
     if (saved.blueprint && stillActive) {
       // Persistence can be remote. Merge only trusted record metadata into
       // the latest state so edits made while this request was in flight are
@@ -381,6 +408,8 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
       : undefined;
     const selected = reconciled?.seed ?? normalizeStorySeedInput(selectedArtifact.seed);
     setSeed(selected);
+    // An imported seed keeps its own Reading Mode (Standard when it has none).
+    resolveReadingMode();
     // An imported artifact keeps the Original Language its file recorded; the
     // repository has already applied the English fallback where it had none.
     resolveOriginalLanguage(imported[0]?.originalLanguage
@@ -400,9 +429,10 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     const selected = reconciled?.seed ?? normalizeStorySeedInput(record.seed);
     setActiveSeed(record);
     setSeed(selected);
-    // Each seed restores its own Original Language; the previously opened
-    // seed's choice must never carry over into this one.
+    // Each seed restores its own Original Language and Reading Mode; the
+    // previously opened seed's choices must never carry over into this one.
     resolveOriginalLanguage(record.originalLanguage);
+    resolveReadingMode();
     setBlueprint(reconciled?.blueprint ?? createBlueprintDraftFromSeed(selected, { creator: currentUser?.displayName }));
     setSeedError(null);
   };
@@ -711,7 +741,6 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
             onRegenerateBlueprint={requestRegenerateBlueprint}
             onAddArcs={onExtendArcRoadmap ? requestAddArcs : undefined}
             originalLanguage={originalLanguage}
-            onOriginalLanguageChange={resolveOriginalLanguage}
           />
         </DeferredStorySeedView>
       </>
@@ -730,6 +759,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     <StorySeedWorkspaceChrome
         onNavigateHome={onNavigateHome}
         seed={seed} updateSeed={updateSeed} activeSection={activeSection} authorName={authorName}
+        storyLanguage={storyLanguageSetting} onReadingModeChange={resolveReadingMode}
         onSelectSection={selectWorkspaceSection} isGenerating={isGenerating} savedFeedback={savedFeedback}
         showStoryBank={showStoryBank} helpOpen={helpOpen} canManifest={canGenerate}
         manifestLabel={isGenerating ? (activeAgentId === 'versa' ? 'VERSA is drafting...' : 'Manifesting...') : 'Manifest World Blueprint'}

@@ -16,14 +16,4 @@ export const WORKSHOP_HARNESS_SKILLS: HarnessSkillManifest[] = [
     instructions: 'Treat the current arc as a runway, not a checklist. Advance one meaningful beat at a time, preserve room for reaction and consequence, and do not collapse a multi-chapter event into one chapter unless explicit author direction requires it.',
     author: 'SEIHouse Workshop',
   },
-  {
-    id: 'workshop.dyslexic-readability',
-    version: '0.1.0',
-    name: 'Dyslexic Readability Preview',
-    description: 'Demonstrates an accessibility skill that can guide prose and later reader presentation.',
-    slot: 'accessibility',
-    applications: ['generation', 'reader'],
-    instructions: 'Favor clear sentence boundaries, concrete references, and readable paragraph lengths while preserving the author\'s voice and narrative complexity.',
-    author: 'SEIHouse Workshop',
-  },
 ];

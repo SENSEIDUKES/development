@@ -31,6 +31,19 @@ There is no `chapter-generation` or `codex-cards` compatibility entry. Legacy
 Chapter Generation was retired; HARNESS is the one canonical generated-story
 owner.
 
+**0.7.0 (breaking):** Translation and Accessibility are managed CAPA slots, like
+Fate. The HARNESS resolves Translation from the story's Story Language (its
+Original Language) and Accessibility from its Reading Mode
+(`HarnessStory.chapterWritingStyle`, production's values, from
+`./contracts`), with SEN bundling one Accessibility skill per non-Standard mode
+(`SEN_READING_MODE_SKILLS`). Neither slot can be equipped by hand. The
+always-sent `HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS` constant became
+`buildHarnessOfficialOutputRequirements`, sent only when a chapter needs it;
+`isTranslationSkillCompatible` and `translationCompatibilityError` gave way to
+`resolveStoryLanguagePackage` and the shared `resolveTranslationPackage`.
+`CapaSlotDefinition` gains `installable`. Saved HARNESS workspaces upgrade in
+place (schema 21).
+
 **0.6.0 (breaking):** removed `AlterFatePanel`, `ReaderFateAlerts`,
 `FateSurvivalExplanation` and the `alterFateLock` helpers from `./reader-chamber`
 (the Reader's `handleAlterFate` prop became `onOpenFate`, and its unused

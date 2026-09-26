@@ -103,6 +103,7 @@ export function HarnessGenerationWorkspace() {
         readingStoryId={readingStoryId} onReadingStoryChange={changeReadingStory}
         initialStoryId={arrival.storyId} initialFocus={arrival.focus}
         modelAdapter={modelAdapter} storySeedSource={storySeedSource} installedSkills={installedSkills}
+        showHarnessInternals
         registeredMediaPacks={WORKSHOP_MEDIA_PACKS} mediaPackEntitlements={mediaPackEntitlements}
         baseMedia={LIBRARY_BASE_MEDIA}
         preferredModel={chapterModel} onModelChange={setChapterModel}

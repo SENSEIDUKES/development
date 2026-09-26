@@ -9,7 +9,13 @@
  */
 
 import { isSenLanguageCode, type SenLanguageCode } from '../lib/language';
-import type { HarnessSelectedTranslationGlossary, HarnessSkillManifest, HarnessTranslationGlossaryEntry, HarnessTranslationGlossaryResource, HarnessTranslationSkillMetadata, ImmediateChapterRequest, StoryInformationPacket } from './generation';
+import type { HarnessSelectedTranslationGlossary, HarnessSkillApplication, HarnessSkillManifest, HarnessTranslationGlossaryEntry, HarnessTranslationGlossaryResource, HarnessTranslationSkillMetadata, ImmediateChapterRequest, StoryInformationPacket } from './generation';
+
+/**
+ * Story Information and every machine-facing field are canonical English, so
+ * a story written in English needs no Translation skill.
+ */
+export const HARNESS_CANONICAL_LANGUAGE: SenLanguageCode = 'en';
 
 export const TRANSLATION_GLOSSARY_ENTRY_LIMIT = 5_000;
 const TERM_LENGTH_LIMIT = 200;
@@ -115,21 +121,110 @@ export const validateTranslationSkillMetadata = (
 export const translationTargetLanguage = (skill: HarnessSkillManifest): SenLanguageCode | undefined =>
   skill.slot === 'translation' ? skill.translation?.targetLanguage : undefined;
 
-/**
- * Whether a Translation skill may be equipped on a story. Compatibility is
- * decided by the story's permanent Original Language, never by reader
- * preference or skill naming.
- */
-export const isTranslationSkillCompatible = (
-  skill: HarnessSkillManifest,
-  storyOriginalLanguage: SenLanguageCode,
-): boolean => translationTargetLanguage(skill) === storyOriginalLanguage;
+/** The two jobs a Translation package may declare: writing canonical chapters, or translating them for a reader. */
+export type TranslationPackageApplication = Extract<HarnessSkillApplication, 'generation' | 'reader'>;
 
-export const translationCompatibilityError = (
+/** A Translation-slot skill that declares this job and exactly this language. */
+export const isTranslationPackageFor = (
   skill: HarnessSkillManifest,
-  storyOriginalLanguage: SenLanguageCode,
-): string =>
-  `${skill.name} translates into ${translationTargetLanguage(skill) ?? 'no declared language'}, but this story's Original Language is ${storyOriginalLanguage}. Install a Translation skill for ${storyOriginalLanguage} or leave the slot empty.`;
+  targetLanguage: SenLanguageCode,
+  application: TranslationPackageApplication,
+): boolean =>
+  skill.slot === 'translation'
+  && skill.applications.includes(application)
+  && skill.translation?.targetLanguage === targetLanguage;
+
+/** An explicit choice of one installed package, when a caller has one. */
+export interface TranslationPackageSelection {
+  id: string;
+  version?: string;
+  contentDigest?: string;
+}
+
+export type TranslationPackageResolution =
+  | { status: 'resolved'; skill: HarnessSkillManifest }
+  /** No installed package declares this job and language (or the selection). */
+  | { status: 'missing' }
+  /** Packages with different identities qualify; none is ever chosen silently. */
+  | { status: 'ambiguous' }
+  /** The newest qualifying release is installed with different content. */
+  | { status: 'conflicting-content'; version: string };
+
+const inlineDigest = (value: string): string => {
+  let low = 0x811c9dc5;
+  let high = 0x01000193;
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index);
+    low = Math.imul(low ^ code, 0x01000193) >>> 0;
+    high = Math.imul(high ^ (code + index), 0x85ebca6b) >>> 0;
+  }
+  return `inline-${high.toString(16).padStart(8, '0')}${low.toString(16).padStart(8, '0')}`;
+};
+
+/** Immutable identity of a package's selected instruction content. */
+export const translationSkillContentDigest = (skill: HarnessSkillManifest): string =>
+  skill.source?.sha256 ?? inlineDigest(skill.instructions ?? '');
+
+const compareNumericToken = (left: string, right: string): number => {
+  const normalizedLeft = left.replace(/^0+/, '') || '0';
+  const normalizedRight = right.replace(/^0+/, '') || '0';
+  return normalizedLeft.length - normalizedRight.length || normalizedLeft.localeCompare(normalizedRight);
+};
+
+/** Semver-friendly and deterministic for host versions that add labels. */
+const compareSkillVersions = (left: string, right: string): number => {
+  const tokenize = (value: string) => value.match(/\d+|[A-Za-z]+|[^A-Za-z\d]+/g) ?? [];
+  const leftTokens = tokenize(left);
+  const rightTokens = tokenize(right);
+  for (let index = 0; index < Math.max(leftTokens.length, rightTokens.length); index += 1) {
+    const leftToken = leftTokens[index];
+    const rightToken = rightTokens[index];
+    if (leftToken === undefined) return rightToken === '-' ? 1 : -1;
+    if (rightToken === undefined) return leftToken === '-' ? -1 : 1;
+    if (leftToken === rightToken) continue;
+    const leftNumeric = /^\d+$/.test(leftToken);
+    const rightNumeric = /^\d+$/.test(rightToken);
+    if (leftNumeric && rightNumeric) return compareNumericToken(leftToken, rightToken);
+    if (leftNumeric !== rightNumeric) return leftNumeric ? 1 : -1;
+    return leftToken.toLowerCase().localeCompare(rightToken.toLowerCase(), 'en');
+  }
+  return 0;
+};
+
+/**
+ * The one rule for choosing an installed Translation package, shared by
+ * chapter writing (`generation`) and Reader translation (`reader`). A package
+ * qualifies only by its declared job and language, never by its name. Several
+ * installed versions of one package resolve to the newest; packages with
+ * different identities are an explicit ambiguity unless the caller selected one.
+ */
+export const resolveTranslationPackage = (
+  installed: readonly HarnessSkillManifest[],
+  targetLanguage: SenLanguageCode,
+  application: TranslationPackageApplication,
+  selection?: TranslationPackageSelection,
+): TranslationPackageResolution => {
+  const compatible = installed.filter(candidate => isTranslationPackageFor(candidate, targetLanguage, application));
+  const selected = selection
+    ? compatible.filter(skill => skill.id === selection.id
+      && (selection.version === undefined || skill.version === selection.version)
+      && (selection.contentDigest === undefined
+        || translationSkillContentDigest(skill) === selection.contentDigest))
+    : compatible;
+  if (!selected.length) return { status: 'missing' };
+
+  const identities = new Set(selected.map(skill => skill.id));
+  if (!selection && identities.size > 1) return { status: 'ambiguous' };
+
+  const newest = [...selected].sort((left, right) =>
+    compareSkillVersions(right.version, left.version)
+    || translationSkillContentDigest(left).localeCompare(translationSkillContentDigest(right), 'en'))[0];
+  const sameRelease = selected.filter(skill => skill.id === newest.id && skill.version === newest.version);
+  if (new Set(sameRelease.map(translationSkillContentDigest)).size > 1) {
+    return { status: 'conflicting-content', version: newest.version };
+  }
+  return { status: 'resolved', skill: newest };
+};
 
 const WORD_CHARACTER = /[\p{L}\p{N}]/u;
 

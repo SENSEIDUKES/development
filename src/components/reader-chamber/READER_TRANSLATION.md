@@ -8,14 +8,16 @@ Reader translation is a **derived reading layer**. It never changes a story.
 | ---------------------- | ----------------------------------------------- | ---------------------------------------------- |
 | What it produces       | The chapter itself                               | A display overlay over that chapter             |
 | Language               | `HarnessStory.originalLanguage`, permanent       | Whatever a reader currently asks for            |
-| Which skill            | The story's equipped Translation slot            | A skill declaring the target language **and** the `reader` application |
+| Which skill            | The package HARNESS resolves for a non-English Original Language (`generation`) | A skill declaring the target language **and** the `reader` application |
 | Where it is stored     | Chapter blocks, memory, media — story canon      | A cache keyed by chapter, language, source hash, skill ID, version and content digest |
 | If it fails            | No chapter is committed                          | The original chapter stays on screen            |
 | Reversible             | No                                               | Yes — switching back is a render change         |
 
-The equipped generation skill is never reused for a reader's different target
+The story's writing package is never reused for a reader's different target
 language, and there is no generic or English fallback: an uninstalled language
-package means the reader is told so and keeps reading the original.
+package means the reader is told so and keeps reading the original. Both sides
+choose a package through the same rule (`resolveTranslationPackage` in
+`src/narrative/translationSkill.ts`), differing only in the job they require.
 
 ## Choosing a reading language
 

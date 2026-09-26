@@ -461,7 +461,6 @@ describe('Story Seed keyboard and mobile navigation', () => {
         onExportSeed={vi.fn()}
         isGenerating
         originalLanguage="en"
-        onOriginalLanguageChange={vi.fn()}
       />}</LibraryPresentationProvider>,
     ));
 

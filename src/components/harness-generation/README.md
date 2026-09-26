@@ -31,6 +31,7 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-09-26 (Story Settings: Translation and Accessibility):** Implements `docs/translation-accessibility-audit.md` with one product rule: users configure the story, the HARNESS decides the skills. **Story Settings:** the Story Seed's Settings sheet now holds Story Language (the existing Original Language control, moved there; the Blueprint Review confirms it read-only) and a new Reading Mode (production's Standard, Clear Reading, Easy Read, Literal Reading, `seed.story.optional.chapterWritingStyle`, kept out of every Blueprint request). A new seed takes the account's defaults; a saved seed keeps its own. The story copies both at creation (`HarnessStory.originalLanguage`, `HarnessStory.chapterWritingStyle`), and the novel page's Story Settings panel shows the Story Language and lets the owner change the Reading Mode for chapters still to come, in plain terms. **Managed slots:** `managedBy` now has three kinds. Accessibility (`reading-mode`) loads SEN's bundled skill for the mode (`SEN_READING_MODE_SKILLS`, production's instructions word for word), nothing for Standard. Translation (`story-language`) loads nothing for English, otherwise the one installed `generation` package for the language through `resolveTranslationPackage`, the rule Reader translation now shares; with none the chapter is still written and Story Settings says no specialized writing package is installed; competing packages are refused with a message. Neither slot is ever equipped by hand (`createStory`, `setSkillSlot`, initial loadouts and per-slot uploads all refuse), while Translation packages stay installable (`CapaSlotDefinition.installable`). **Prompt:** the Official Output Requirements travel only when Accessibility or Translation is loaded; a non-English story without a package gets only a one-line Story Language requirement and the machine-facing English rule; an English, Standard chapter carries none (about 320 estimated tokens saved). **Retry:** a failed chapter resends its frozen inputs only while the managed skills the story resolves still match, so a changed Reading Mode or package resolution rebuilds the request. **Surfaces:** the CAPA slot panel and SPP intake render only for a host that sets `showHarnessInternals` (the Workshop does); there the managed slots are read-only inspection cards. The Workshop's Dyslexic Readability sample is retired. Schema 21 removes hand-saved Translation and Accessibility references; a story without a Reading Mode reads as Standard. SEN 0.7.0, Library 0.5.0.
 - **2026-09-26 (Library Create):** The Library workspace can open a requested novel: `initialStoryId` selects it once the stored stories load (the pre-hydration snapshot is empty, so the request waits for them; unknown ids fall back to the first story), and `initialFocus: 'next-chapter'` brings its Generate Chapter panel into view and focus once. The Workshop wrapper reads them from `story` and `focus`, which Library Create's Continue and Studio send, and which fixes Story Seed's existing "start story" handoff (it already sent `story=`). No HARNESS concept, contract or persistence changed.
 - **2026-09-25 (Fate Phase 2):** Persistent steering is replaced by the reader's
   one-chapter direction. The HARNESS Reader's Alter Fate opens a new SEN **Fate
@@ -440,8 +441,12 @@ Development's complete SPP import flow and validation evidence are documented in
 
 CAPA Skills are not the deterministic capability handlers above. Capability handlers
 are permanent internal machinery that interprets committed evidence. CAPA Skills are
-versioned packages equipped into one of the six CAPA Schema slots (`CAPA_SCHEMA` in
-`shared/skills.ts`): Author, Pacing, Continuity, Style, Accessibility, or Translation.
+versioned packages in one of the seven CAPA Schema slots (`CAPA_SCHEMA` in
+`shared/skills.ts`): Author, Pacing, Fate, Continuity, Style, Accessibility, and
+Translation. Author, Pacing, Continuity and Style are equipped per story. Fate,
+Accessibility and Translation are managed: the HARNESS resolves them from the story's
+Fate mode, Reading Mode and Story Language at every loadout freeze, and nobody equips
+them. Users configure those through Story Settings and never see a slot.
 Media is not a CAPA Skill or slot. The bundled SEN Novel Author is a normal, replaceable generation skill, not
 hidden creative Harness behavior. It is equipped for new and previously saved local
 stories.
@@ -451,8 +456,9 @@ exact `id` and `version` reference in the story and refuses to generate if a
 referenced version is unavailable. For each attempt it freezes the equipped manifests
 in schema order and assembles every generation skill, Author first, once, into one
 CAPA Prompt (`assembleCapaPrompt`). The permanent HARNESS Official Output Requirements
-follow the skills and are shown as a locked inspection card in Development; they are
-not a seventh CAPA Skill and cannot be equipped, removed, or reordered. That CAPA Prompt is frozen on the attempt and is
+follow the skills only when a chapter needs them (an Accessibility or Translation skill is
+loaded, or the story is not written in English) and are shown as a locked inspection card
+in Development; they are not a CAPA Skill and cannot be equipped, removed, or reordered. That CAPA Prompt is frozen on the attempt and is
 the model's complete authoring instruction; it never enters the Story Information
 Packet. Only manifests declaring the `generation` application contribute text.
 Reader and post-commit applications may be recorded in the frozen CAPA Prompt's

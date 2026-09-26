@@ -4,6 +4,7 @@ import { IndexedDbHarnessGenerationRepository } from '../../../host/generation/i
 import { HarnessGenerationHttpClient } from '../../../host/generation/httpClient';
 import type { InitialStoryGenerationPayload } from '@seihouse/sen/story-seed';
 import { STORY_SEED_SCHEMA_VERSION } from '@seihouse/sen/story-seed';
+import { normalizeChapterWritingStyle } from '@seihouse/sen/contracts';
 import type {
   HarnessStorySeedOption,
   HarnessStorySeedSource,
@@ -49,8 +50,9 @@ export const createWorkshopStorySeedSource = (): HarnessStorySeedSource => ({
       title: record.title,
       updatedAt: record.updatedAt,
       hasBlueprint: Boolean(record.blueprint),
-      // Each option carries its own seed's language, never the last one opened.
+      // Each option carries its own seed's language and Reading Mode, never the last one opened.
       originalLanguage: record.originalLanguage,
+      chapterWritingStyle: normalizeChapterWritingStyle(record.seed.story.optional.chapterWritingStyle),
       initialSkillLoadout: createOfficialCapaDefaultLoadout(record.seed.story.required.style),
       foundation: createHarnessFoundationFromStorySeed(record),
     }));
@@ -73,12 +75,15 @@ export async function startWorkshopHarnessStory(payload: InitialStoryGenerationP
     originalLanguage: payload.administrative.originalLanguage,
     seed: payload.storySeed, blueprint: payload.blueprint,
   });
-  // Original Language is story identity, so it crosses the boundary as its own
-  // argument rather than hiding inside the neutral Foundation.
+  // Original Language is story identity and the Reading Mode a Story Setting,
+  // so both cross the boundary beside the neutral Foundation, never inside it.
   return controller.createStory(
     foundation,
     payload.administrative.originalLanguage,
     createOfficialCapaDefaultLoadout(payload.storySeed.story.required.style),
-    { visibility: payload.administrative.visibility === 'PUBLIC' ? 'public' : payload.administrative.visibility === 'SHARED' ? 'shared' : 'private' },
+    {
+      visibility: payload.administrative.visibility === 'PUBLIC' ? 'public' : payload.administrative.visibility === 'SHARED' ? 'shared' : 'private',
+      chapterWritingStyle: normalizeChapterWritingStyle(payload.storySeed.story.optional.chapterWritingStyle),
+    },
   );
 }

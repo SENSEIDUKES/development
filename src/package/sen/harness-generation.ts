@@ -37,28 +37,38 @@ export { GENERATION_PACKET_BUDGET, PACKET_SECTION_ORDER, estimatePacketTokens, t
 export {
   CAPA_SCHEMA,
   CAPA_PROMPT_TOKEN_LIMIT,
-  HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS,
   HARNESS_SKILL_INSTRUCTION_LIMIT,
   assembleCapaPrompt,
+  buildHarnessOfficialOutputRequirements,
   createHarnessSkillCatalog,
   freezeHarnessSkillLoadout,
   harnessSkillKey,
+  managedCapaSkillSignature,
   managedCapaSlotReason,
   resolveHarnessSkill,
+  resolveManagedCapaSkills,
+  resolveStoryLanguagePackage,
   validateHarnessSkillManifest,
   type CapaSlotDefinition,
+  type CapaSlotManager,
+  type StoryLanguagePackage,
 } from '../../components/harness-generation/shared/skills';
 export {
+  HARNESS_CANONICAL_LANGUAGE,
   TRANSLATION_GLOSSARY_ENTRY_LIMIT,
   buildSelectedTranslationGlossary,
-  isTranslationSkillCompatible,
+  isTranslationPackageFor,
   presentSelectedTranslationGlossary,
+  resolveTranslationPackage,
   selectTranslationGlossaryEntries,
-  translationCompatibilityError,
   translationMatchSource,
+  translationSkillContentDigest,
   translationTargetLanguage,
   validateTranslationGlossaryResource,
   validateTranslationSkillMetadata,
+  type TranslationPackageApplication,
+  type TranslationPackageResolution,
+  type TranslationPackageSelection,
 } from '../../narrative/translationSkill';
 export { buildImmediateChapterRequest } from '../../components/harness-generation/shared/immediateChapterRequest';
 export { attemptChapterPath, chapterDirectionGap, pendingChapterDirection, validateChapterDirectionChoice } from '../../components/harness-generation/shared/chapterDirection';
@@ -83,6 +93,7 @@ export {
   SEN_NOVEL_AUTHOR_SKILL,
 } from '../../components/harness-generation/shared/authorSkill';
 export { SEN_FATE_SURVIVAL_INSTRUCTIONS, SEN_FATE_SURVIVAL_SKILL } from '../../components/harness-generation/shared/fateSurvivalSkill';
+export { SEN_READING_MODE_SKILLS } from '../../components/harness-generation/shared/readingModeSkills';
 export { createHarnessSenStory } from '../../components/harness-generation/shared/senAdapter';
 export * from '../../narrative/generation';
 export { HarnessReaderSession } from '../../components/harness-generation/development/HarnessReaderSession';

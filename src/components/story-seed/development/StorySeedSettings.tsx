@@ -1,5 +1,16 @@
+import { useId } from 'react';
 import { type StorySeedInput } from '@seihouse/sen/story-seed';
 import {
+  CHAPTER_WRITING_STYLE_DESCRIPTIONS,
+  CHAPTER_WRITING_STYLE_OPTIONS,
+  SEN_LANGUAGES,
+  normalizeChapterWritingStyle,
+  normalizeSenLanguageCode,
+  type ChapterWritingStyle,
+  type SenLanguageCode,
+} from '@seihouse/sen/contracts';
+import {
+  setChapterWritingStyle,
   setIntendedForMatureAudiences,
   type SeedUpdate,
 } from './seedState';
@@ -7,6 +18,13 @@ import {
 interface StorySeedSettingsProps {
   seed: StorySeedInput;
   updateSeed: (update: SeedUpdate) => void;
+  /**
+   * The seed's Story Language: its saved Original Language, owned by the
+   * creation workspace beside the seed. Without it the control is not shown.
+   */
+  storyLanguage?: { value: SenLanguageCode; onChange: (language: SenLanguageCode) => void };
+  /** Tells the workspace the author chose a Reading Mode, so an account default no longer replaces it. */
+  onReadingModeChange?: (mode: ChapterWritingStyle) => void;
 }
 
 /** The complete seed subset rendered by the shared Settings body. */
@@ -16,7 +34,49 @@ export const haveSameStorySeedSettings = (
 ): boolean => {
   const previousOptional = previous.story.optional;
   const nextOptional = next.story.optional;
-  return previousOptional.intendedForMatureAudiences === nextOptional.intendedForMatureAudiences;
+  return previousOptional.intendedForMatureAudiences === nextOptional.intendedForMatureAudiences
+    && normalizeChapterWritingStyle(previousOptional.chapterWritingStyle) === normalizeChapterWritingStyle(nextOptional.chapterWritingStyle);
+};
+
+const settingCard = 'flex flex-col gap-2 rounded-xl border border-neutral-800/80 bg-[#080b17]/80 p-3';
+const settingTitle = 'block font-sc text-xs font-semibold tracking-wide text-signal';
+const settingHelp = 'block font-sans text-[11px] leading-relaxed text-neutral-400';
+const settingSelect = 'story-seed-touch-target h-11 w-full rounded border border-neutral-800 bg-black px-2 font-sans text-sm text-signal outline-none transition-colors hover:border-portal/50 focus:border-portal motion-reduce:transition-none';
+
+const StoryLanguageSetting = ({ value, onChange }: NonNullable<StorySeedSettingsProps['storyLanguage']>) => (
+  <div className={settingCard}>
+    <label htmlFor="story-original-language" className={settingTitle}>Story Language</label>
+    <select
+      id="story-original-language"
+      value={value}
+      onChange={event => onChange(normalizeSenLanguageCode(event.target.value))}
+      className={settingSelect}
+    >
+      {SEN_LANGUAGES.map(language => (
+        <option key={language.code} value={language.code}>{language.label}</option>
+      ))}
+    </select>
+    <span className={settingHelp}>Every chapter is written in this language. It can’t be changed once the story begins.</span>
+  </div>
+);
+
+const ReadingModeSetting = ({ value, onChange }: { value: ChapterWritingStyle; onChange: (mode: ChapterWritingStyle) => void }) => {
+  const id = useId();
+  return (
+    <div className={settingCard}>
+      <label htmlFor={id} className={settingTitle}>Reading Mode</label>
+      <select
+        id={id}
+        data-testid="story-reading-mode"
+        value={value}
+        onChange={event => onChange(normalizeChapterWritingStyle(event.target.value))}
+        className={settingSelect}
+      >
+        {CHAPTER_WRITING_STYLE_OPTIONS.map(mode => <option key={mode} value={mode}>{mode}</option>)}
+      </select>
+      <span className={settingHelp}>{CHAPTER_WRITING_STYLE_DESCRIPTIONS[value]} You can change it later for chapters still to come.</span>
+    </div>
+  );
 };
 
 interface MatureAudienceSettingProps {
@@ -58,9 +118,21 @@ const MatureAudienceSetting = ({ checked, onChange }: MatureAudienceSettingProps
   </div>
 );
 
-/** One shared Settings body for the desktop popover and mobile sheet. */
-export const StorySeedSettings = ({ seed, updateSeed }: StorySeedSettingsProps) => (
+/**
+ * One shared Settings body for the desktop popover and mobile sheet: the
+ * story's reader-experience defaults. The author configures the story here;
+ * how chapters are then written is decided from these settings.
+ */
+export const StorySeedSettings = ({ seed, updateSeed, storyLanguage, onReadingModeChange }: StorySeedSettingsProps) => (
   <>
+    {storyLanguage && <StoryLanguageSetting {...storyLanguage} />}
+    <ReadingModeSetting
+      value={normalizeChapterWritingStyle(seed.story.optional.chapterWritingStyle)}
+      onChange={mode => {
+        updateSeed(setChapterWritingStyle(mode));
+        onReadingModeChange?.(mode);
+      }}
+    />
     <MatureAudienceSetting
       checked={seed.story.optional.intendedForMatureAudiences}
       onChange={checked => updateSeed(setIntendedForMatureAudiences(checked))}

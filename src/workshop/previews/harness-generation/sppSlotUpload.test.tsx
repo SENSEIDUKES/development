@@ -51,6 +51,7 @@ function SlotImportHost({ repository }: { repository: InMemoryHarnessGenerationR
     repository={repository}
     modelAdapter={modelAdapter}
     installedSkills={installedSkills}
+    showHarnessInternals
     renderSlotSkillImport={(slot, busy, equip) => (
       <SppSkillImport busy={busy} destinationSlot={slot} onInstall={async skill => {
         setImported(current => [...current.filter(item => item.id !== skill.id), skill]);
@@ -113,8 +114,21 @@ describe('Uploading an SPP directly from a CAPA slot', () => {
 
     expect(slotImporters().map(details => details.querySelector('summary')!.textContent))
       .toEqual(CAPA_SCHEMA.filter(slot => !slot.managedBy).map(slot => `Upload SPP to ${slot.label}`));
-    // The Fate slot follows the story's Fate mode; nothing is uploaded into it.
-    expect(slotImporters().some(details => details.querySelector('summary')!.textContent === 'Upload SPP to Fate')).toBe(false);
+    // Fate, Accessibility and Translation follow Story Settings; nothing is uploaded into them from a story.
+    for (const managed of ['Fate', 'Accessibility', 'Translation']) {
+      expect(slotImporters().some(details => details.querySelector('summary')!.textContent === `Upload SPP to ${managed}`)).toBe(false);
+    }
+  });
+
+  it('keeps Translation installable from the inventory importer, while Fate and Accessibility take no packages', async () => {
+    await act(async () => root.render(<SppSkillImport busy={false} onInstall={vi.fn()} />));
+    const input = container.querySelector<HTMLInputElement>('input[type="file"]')!;
+    Object.defineProperty(input, 'files', { value: [new File([new Uint8Array(await authorPackage())], 'CAPA-AUTHOR.spp')], configurable: true });
+    await act(async () => { input.dispatchEvent(new Event('change', { bubbles: true })); });
+    await settle();
+
+    const slotChoice = [...container.querySelectorAll('select')].find(select => select.previousElementSibling?.textContent === 'Install for skill slot')!;
+    expect([...slotChoice.options].map(option => option.textContent)).toEqual(['Author', 'Pacing', 'Continuity', 'Style', 'Translation']);
   });
 
   it('installs and equips a matching package through its slot in one flow', async () => {

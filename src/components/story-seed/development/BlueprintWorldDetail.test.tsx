@@ -55,7 +55,7 @@ const Review = ({ details }: { details: Partial<WorldBlueprint> }) => {
   return (
     <LibraryPresentationProvider>
       <BlueprintReview seed={seed} updateSeed={setSeed} blueprint={blueprint} setBlueprint={setBlueprint}
-        originalLanguage="en" onOriginalLanguageChange={vi.fn()} onBack={vi.fn()} onStartStory={vi.fn()} onExportSeed={vi.fn()} isGenerating={false} />
+        originalLanguage="en" onBack={vi.fn()} onStartStory={vi.fn()} onExportSeed={vi.fn()} isGenerating={false} />
     </LibraryPresentationProvider>
   );
 };

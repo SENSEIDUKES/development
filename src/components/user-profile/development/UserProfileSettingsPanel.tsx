@@ -499,9 +499,9 @@ export function UserProfileSettingsPanel({
             </SEIDisclosure>
 
             {/* ---- Writing preferences -------------------------------------- */}
-            <SEIDisclosure value="writing" heading="Writing Preferences" icon={BookOpen} supportingText="Defaults copied onto newly created stories.">
+            <SEIDisclosure value="writing" heading="Writing Preferences" icon={BookOpen} supportingText="Defaults for each new Story Seed.">
               <div className="pt-1">
-                <SEIField label="Default Chapter Writing Style" htmlFor="cave-writing-style" helperText="Used when a new story is created" size="compact" disabled={!profile || isSavingChapterWritingStyle}>
+                <SEIField label="Default Reading Mode" htmlFor="cave-writing-style" helperText="Used when you start a new Story Seed. Existing seeds and stories keep their own." size="compact" disabled={!profile || isSavingChapterWritingStyle}>
                   <SEISelect
                     id="cave-writing-style"
                     size="compact"
@@ -510,7 +510,7 @@ export function UserProfileSettingsPanel({
                     onChange={event => { void handleDefaultChapterWritingStyleChange(event.target.value as ChapterWritingStyle); }}
                     disabled={!profile || isSavingChapterWritingStyle}
                     loading={isSavingChapterWritingStyle}
-                    loadingLabel="Saving writing style"
+                    loadingLabel="Saving Reading Mode"
                   >
                     {CHAPTER_WRITING_STYLE_OPTIONS.map(style => <option key={style} value={style}>{style}</option>)}
                   </SEISelect>

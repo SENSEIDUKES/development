@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Bookmark, Check, List } from 'lucide-react';
 import { type StorySeedInput } from '@seihouse/sen/story-seed';
+import type { ChapterWritingStyle, SenLanguageCode } from '@seihouse/sen/contracts';
 import type { SeedUpdate } from './seedState';
 import type { SeedSectionId } from './seedSections';
 import { buildStorySeedDrawerSections, storySeedDrawerProfile } from './StorySeedSelector';
@@ -19,6 +20,10 @@ interface StorySeedWorkspaceChromeProps {
   onNavigateHome: () => void;
   seed: StorySeedInput;
   updateSeed: (update: SeedUpdate) => void;
+  /** The seed's Story Language, edited in Settings. It lives beside the seed, owned by the creation workspace. */
+  storyLanguage?: { value: SenLanguageCode; onChange: (language: SenLanguageCode) => void };
+  /** Reported when the author picks a Reading Mode in Settings. */
+  onReadingModeChange?: (mode: ChapterWritingStyle) => void;
   activeSection: SeedSectionId;
   /** Who the drawer says is creating; omitted or null reads as a guest author. */
   authorName?: string | null;
@@ -153,7 +158,7 @@ function StorySeedChromeContent(props: StorySeedChromeContentProps) {
   const settingsSheet = <WorkspaceSheet open={settingsOpen} onOpenChange={setSettingsOpen} title="Story Seed settings" closeLabel="Close settings"
     returnFocusRef={settingsReturnFocusRef}
     footer={<HeaderActionButton action={save} primary />}>
-    <StorySeedSettings seed={props.seed} updateSeed={props.updateSeed} />
+    <StorySeedSettings seed={props.seed} updateSeed={props.updateSeed} storyLanguage={props.storyLanguage} onReadingModeChange={props.onReadingModeChange} />
   </WorkspaceSheet>;
   // The compatibility layouts render one slot each and add no shell of their own.
   // The header slot carries the page action row with it, so a host mounting only

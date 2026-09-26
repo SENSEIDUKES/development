@@ -12,6 +12,8 @@
 
 import { type StorySeedAbilities, type StorySeedCharacter, type StorySeedFaction, type StorySeedFateSurvivalSettings, type StorySeedInput, type StorySeedMainCharacter, type FunSettings, type StorySeedPowerSystem, type StorySeedStoryRequired, type StorySeedWorldFoundations, type StorySeedWorldIdentity } from '@seihouse/sen/story-seed';
 
+import type { ChapterWritingStyle } from '@seihouse/sen/contracts';
+
 export type SeedUpdate = (seed: StorySeedInput) => StorySeedInput;
 export type UpdateSeed = (update: SeedUpdate) => void;
 
@@ -49,6 +51,16 @@ export const setIntendedForMatureAudiences = (value: boolean): SeedUpdate =>
     story: {
       ...seed.story,
       optional: { ...seed.story.optional, intendedForMatureAudiences: value },
+    },
+  });
+
+/** The seed's Reading Mode, a Story Setting for the stories it starts. */
+export const setChapterWritingStyle = (value: ChapterWritingStyle): SeedUpdate =>
+  seed => ({
+    ...seed,
+    story: {
+      ...seed.story,
+      optional: { ...seed.story.optional, chapterWritingStyle: value },
     },
   });
 

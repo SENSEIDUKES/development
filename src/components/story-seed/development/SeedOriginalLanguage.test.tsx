@@ -4,7 +4,7 @@ import { act } from 'react';
 import { type Root } from 'react-dom/client';
 import { createRoot } from '../../../test-utils/createStoryCreationRoot';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { type SenLanguageCode } from '@seihouse/sen/contracts';
+import { type ChapterWritingStyle, type SenLanguageCode } from '@seihouse/sen/contracts';
 import { LOCAL_WORKSHOP_STORY_SEED_OWNER_ID, createStorySeed, listStorySeeds, resetStorySeedRepository, updateStorySeed } from '../../../workshop/previews/story-seed/storySeedStorage';
 import { createEmptyStorySeedInput, type StorySeedInput } from '@seihouse/sen/story-seed';
 import { resetMockState } from '../shared/stubs';
@@ -67,7 +67,9 @@ const allButtonsNamed = (name: string) => Array.from(
   container.querySelectorAll<HTMLButtonElement>('button'),
 ).filter(button => button.textContent?.trim() === name);
 
-const languageSelect = () => container.querySelector<HTMLSelectElement>('#story-original-language');
+// The Blueprint stage confirms the seed's Story Settings read-only before Manifest.
+const blueprintLanguage = () => container.querySelector('[data-testid="blueprint-story-language"]')?.getAttribute('data-language');
+const blueprintReadingMode = () => container.querySelector('[data-testid="blueprint-reading-mode"]')?.textContent;
 
 describe('saved Story Seed records own their Original Language', () => {
   it('stores and reloads a per-record language rather than one shared value', async () => {
@@ -111,7 +113,7 @@ describe('reopening a saved seed restores that seed’s own language', () => {
     return onStartStory;
   };
 
-  const renderWithAccountDefault = (accountDefaultLanguage?: SenLanguageCode) => {
+  const renderWithAccountDefault = (accountDefaultLanguage?: SenLanguageCode, accountDefaultChapterWritingStyle?: ChapterWritingStyle) => {
     act(() => root.render(
       <LibraryPresentationProvider>
         <CreationModal
@@ -121,6 +123,7 @@ describe('reopening a saved seed restores that seed’s own language', () => {
           isGenerating={false}
           error={null}
           {...(accountDefaultLanguage ? { accountDefaultLanguage } : {})}
+          {...(accountDefaultChapterWritingStyle ? { accountDefaultChapterWritingStyle } : {})}
         />
       </LibraryPresentationProvider>,
     ));
@@ -154,13 +157,13 @@ describe('reopening a saved seed restores that seed’s own language', () => {
 
     await openBank();
     await openBlueprintFor(0);
-    expect(languageSelect()?.value).toBe('ja');
+    expect(blueprintLanguage()).toBe('ja');
 
     await backToWorkspace();
     await openBank();
     await openBlueprintFor(1);
     // The regression: this previously still read the first seed's language.
-    expect(languageSelect()?.value).toBe('ko');
+    expect(blueprintLanguage()).toBe('ko');
   });
 
   it('manifests a banked seed with that seed’s saved language, not the one last opened', async () => {
@@ -169,7 +172,7 @@ describe('reopening a saved seed restores that seed’s own language', () => {
 
     await openBank();
     await openBlueprintFor(0);
-    expect(languageSelect()?.value).toBe('ja');
+    expect(blueprintLanguage()).toBe('ja');
 
     await backToWorkspace();
     await openBank();
@@ -180,8 +183,7 @@ describe('reopening a saved seed restores that seed’s own language', () => {
     expect(onStartStory.mock.calls[0][0].administrative.originalLanguage).toBe('ko');
   });
 
-  // The Original Language selector itself lives on the Blueprint stage, so a
-  // brand-new seed is observed where its language first becomes durable: the
+  // A brand-new seed is observed where its settings first become durable: the
   // draft the intake workspace saves.
   const saveDraft = async () => {
     await act(async () => { (buttonNamed('Save Draft') ?? buttonNamed('Saved'))!.click(); });
@@ -230,9 +232,55 @@ describe('reopening a saved seed restores that seed’s own language', () => {
 
     await openBank();
     await openBlueprintFor(0);
-    expect(languageSelect()?.value).toBe('ja');
+    expect(blueprintLanguage()).toBe('ja');
 
     renderWithAccountDefault('ms');
-    expect(languageSelect()?.value).toBe('ja');
+    expect(blueprintLanguage()).toBe('ja');
+  });
+  describe('Reading Mode defaults', () => {
+    const savedReadingModes = async () => (await listStorySeeds(LOCAL_WORKSHOP_STORY_SEED_OWNER_ID))
+      .map(record => record.seed.story.optional.chapterWritingStyle);
+
+    it('starts a new seed on the account’s default Reading Mode', async () => {
+      resetStorySeedRepository();
+      renderWithAccountDefault('en', 'Clear Reading');
+
+      await saveDraft();
+
+      expect(await savedReadingModes()).toEqual(['Clear Reading']);
+    });
+
+    it('starts on Standard when the account has no default', async () => {
+      resetStorySeedRepository();
+      renderWithAccountDefault('en');
+
+      await saveDraft();
+
+      expect(await savedReadingModes()).toEqual(['Standard']);
+    });
+
+    it('freezes the seed’s Reading Mode on first save before later account-default changes', async () => {
+      resetStorySeedRepository();
+      renderWithAccountDefault('en', 'Easy Read');
+      await saveDraft();
+
+      renderWithAccountDefault('en', 'Literal Reading');
+      await saveDraft();
+
+      expect(await savedReadingModes()).toEqual(['Easy Read']);
+    });
+
+    it('never lets an account default replace a saved seed’s own Reading Mode', async () => {
+      // Saved before Reading Mode existed: the seed has none, which reads as Standard.
+      twoSavedSeeds('ja', 'ko');
+      renderWithAccountDefault('en', 'Clear Reading');
+
+      await openBank();
+      await openBlueprintFor(0);
+      expect(blueprintReadingMode()).toBe('Standard');
+
+      renderWithAccountDefault('en', 'Literal Reading');
+      expect(blueprintReadingMode()).toBe('Standard');
+    });
   });
 });

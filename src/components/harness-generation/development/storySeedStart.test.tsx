@@ -115,10 +115,11 @@ describe('Harness Story Seed entry', () => {
     const story = await setup.createStory({ title: 'Slow Fire', premise: 'A rebellion begins with one missing ledger.' });
     await setup.setSkillSlot(story.id, 'pacing', { id: installedSkills[0].id, version: installedSkills[0].version });
 
-    await act(async () => root.render(<HarnessGenerationWorkspace repository={repository} modelAdapter={modelAdapter} installedSkills={installedSkills} />));
+    await act(async () => root.render(<HarnessGenerationWorkspace repository={repository} modelAdapter={modelAdapter} installedSkills={installedSkills} showHarnessInternals />));
 
     expect(container.textContent).toContain('CAPA skill slots');
-    expect(container.textContent).toContain('2/6 equipped');
+    // Four slots are equipped by hand; Fate, Accessibility and Translation follow Story Settings.
+    expect(container.textContent).toContain('2/4 equipped · 3 managed');
     expect(container.textContent).toContain('AuthorEquipped');
     expect(container.textContent).toContain('SEN Novel Author');
     expect(container.textContent).toContain('View skill instructions');

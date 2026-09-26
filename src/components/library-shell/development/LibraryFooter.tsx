@@ -1,17 +1,18 @@
 import type { HTMLAttributes, ReactNode } from 'react';
 import { ChevronRight, Globe } from 'lucide-react';
-import { LibraryElementalTitle } from '@seihouse/library-ui';
 import { SEIDisclosure, SEIDisclosureGroup } from '@seihouse/ui';
 import { getSenLanguageLabel, type SenLanguageCode } from '@seihouse/sen/contracts';
 import { LIBRARY_FOOTER_SOCIAL_GLYPHS, LIBRARY_FOOTER_SOCIAL_LABELS, type LibraryFooterSocialNetwork } from './LibraryFooterSocialIcons';
 import './library-footer.css';
 
-/** The company statement. The wordmark above it already names SEIHouse. */
+/** The footer's title, set above the company statement. */
+export const LIBRARY_FOOTER_TITLE = 'NovelExpanded';
+/** The company statement, read beneath the title. */
 export const LIBRARY_FOOTER_STATEMENT = 'A BETTER TIME CAPSULE AND TRANSLATOR OF ARTISTIC EXPRESSION';
-export const LIBRARY_FOOTER_MARK = 'SEN';
-/** What the SEN wordmark stands for, read out beneath it. */
-export const LIBRARY_FOOTER_EXPANSION = 'SEIHouse Expanded Novels';
-export const LIBRARY_FOOTER_COPYRIGHT = '© 2026 SEIHouse Productions LLC';
+/** The legal line, dated from the current year so it never goes stale. */
+export function libraryFooterCopyright(year = new Date().getFullYear()) {
+  return `© ${year} SEIHouse Productions LLC`;
+}
 
 /**
  * One footer destination. Hosts supply either an in-app action or an external
@@ -51,7 +52,6 @@ export interface LibraryFooterProps extends Omit<HTMLAttributes<HTMLElement>, 'c
   /** Terms, Privacy, Cookies. */
   legal: readonly LibraryFooterAction[];
   language?: LibraryFooterLanguage;
-  emblem?: { src: string; alt: string };
 }
 
 const hasDestination = (item: { href?: string; onSelect?: () => void }) => Boolean(item.href || item.onSelect);
@@ -59,35 +59,29 @@ const hasDestination = (item: { href?: string; onSelect?: () => void }) => Boole
 /** Renders an action as a real link or a real button; never a dead anchor. */
 function FooterControl({ item, className, children, ...props }: { item: LibraryFooterAction | LibraryFooterSocialLink; className: string; children: ReactNode } & Omit<HTMLAttributes<HTMLElement>, 'children'>) {
   const shared = { className, title: 'title' in item ? item.title : undefined, ...props };
-  if (item.href) {
-    return <a {...shared} href={item.href} target="_blank" rel="noreferrer" aria-disabled={'disabled' in item && item.disabled ? true : undefined}>{children}</a>;
+  const disabled = 'disabled' in item && item.disabled;
+  // A disabled link would still navigate, so a disabled destination is always
+  // rendered as a disabled button, whichever kind the host supplied.
+  if (item.href && !disabled) {
+    return <a {...shared} href={item.href} target="_blank" rel="noreferrer">{children}</a>;
   }
-  return <button {...shared} type="button" onClick={item.onSelect} disabled={'disabled' in item ? item.disabled : undefined}>{children}</button>;
+  return <button {...shared} type="button" onClick={disabled ? undefined : item.onSelect} disabled={disabled || undefined}>{children}</button>;
 }
 
 /**
  * The Celestial Library platform footer. Library-owned chrome, like the global
- * header and bottom navigation: it carries the SEN identity, the social row,
- * three closed menus, the account's language entry and the legal row. Every
+ * header and bottom navigation: it opens on its title and the company statement, then three
+ * closed menus, the social row, the account's language entry and the legal row. Every
  * destination comes from the host; the footer holds no routes or URLs of its own.
  */
-export function LibraryFooter({ groups, social, legal, language, emblem, className = '', ...props }: LibraryFooterProps) {
+export function LibraryFooter({ groups, social, legal, language, className = '', ...props }: LibraryFooterProps) {
   const visibleGroups = groups.map(group => ({ ...group, items: group.items.filter(hasDestination) })).filter(group => group.items.length > 0);
   const visibleSocial = social.filter(hasDestination);
   const visibleLegal = legal.filter(hasDestination);
   return <footer {...props} data-library-footer className={`library-footer ${className}`.trim()} aria-label="Celestial Library footer">
     <div className="library-footer-inner">
       <div className="library-footer-identity">
-        <div className="library-footer-seal" aria-hidden="true">
-          <span className="library-footer-hairline" />
-          {emblem && <img src={emblem.src} alt="" className="library-footer-emblem" decoding="async" />}
-          <span className="library-footer-hairline" />
-        </div>
-        {/* The wordmark carries the lettering, cycling the shared Celestial
-            Library spectrum; what it stands for reads plainly beneath it. */}
-        <LibraryElementalTitle as="p" element="celestial" intensity="subtle" shadow="none"
-          className="library-footer-mark" data-footer-production-mark>{LIBRARY_FOOTER_MARK}</LibraryElementalTitle>
-        <p className="library-footer-expansion" data-footer-expansion>{LIBRARY_FOOTER_EXPANSION}</p>
+        <p className="library-footer-title" data-footer-title>{LIBRARY_FOOTER_TITLE}</p>
         <p className="library-footer-statement">{LIBRARY_FOOTER_STATEMENT}</p>
       </div>
 
@@ -132,7 +126,7 @@ export function LibraryFooter({ groups, social, legal, language, emblem, classNa
       </div>
 
       <div className="library-footer-legal">
-        <p className="library-footer-copyright">{LIBRARY_FOOTER_COPYRIGHT}</p>
+        <p className="library-footer-copyright">{libraryFooterCopyright()}</p>
         {visibleLegal.length > 0 && <ul className="library-footer-legal-links" aria-label="Legal">
           {visibleLegal.map(item => <li key={item.id}>
             <FooterControl item={item} className="library-footer-legal-link">{item.label}</FooterControl>

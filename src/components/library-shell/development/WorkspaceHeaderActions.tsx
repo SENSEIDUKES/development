@@ -63,7 +63,16 @@ export function useHeaderDisclosure() {
         triggerRef.current?.focus();
       }
     };
-    const resize = () => { setOpen(false); triggerRef.current?.focus(); };
+    // Phones fire resize when the address bar collapses or the keyboard opens;
+    // only a real width change (rotation, window resize) can move the layout
+    // the panel is anchored to.
+    let width = window.innerWidth;
+    const resize = () => {
+      if (window.innerWidth === width) return;
+      width = window.innerWidth;
+      setOpen(false);
+      triggerRef.current?.focus();
+    };
     window.addEventListener('resize', resize);
     document.addEventListener('pointerdown', dismiss);
     document.addEventListener('focusin', dismiss);

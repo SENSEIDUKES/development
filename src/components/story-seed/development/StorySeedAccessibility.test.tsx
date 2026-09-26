@@ -27,8 +27,8 @@ import { OriginGenrePicker } from './workspaces/origin/OriginGenrePicker';
 import { OriginPremiseAndTags } from './workspaces/origin/OriginPremiseAndTags';
 import { OriginStyleSelector } from './workspaces/origin/OriginStyleSelector';
 
-vi.mock('../../../audio/playback', () => ({
-  useNarrativeAudio: () => ({
+vi.mock('../../../audio/playback', () => {
+  const playback = () => ({
     currentSource: null,
     currentTrackId: null,
     isMuted: false,
@@ -42,8 +42,9 @@ vi.mock('../../../audio/playback', () => ({
     subscribeToTrackChange: vi.fn(() => () => undefined),
     subscribeToQueueEnd: vi.fn(() => () => undefined),
     toggleMute: vi.fn(),
-  }),
-}));
+  });
+  return { useNarrativeAudio: playback, useOptionalNarrativeAudio: playback };
+});
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 

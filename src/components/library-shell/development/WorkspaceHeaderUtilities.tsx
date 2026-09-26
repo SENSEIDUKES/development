@@ -1,12 +1,24 @@
-import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react';
+import { Component, lazy, Suspense, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { NarrativeButton, NarrativeTextBox } from '@seihouse/sen/presentation';
 import { WorkspaceSheet } from './WorkspaceSheet';
 import { type HeaderAction } from './WorkspaceHeaderActions';
 import { LibraryHelpIcon as SENHelpIcon, LibrarySearchIcon as SENSearchIcon } from '@seihouse/library-ui';
 
-const LibraryHelpMenu = lazy(() => import('../../story-seed/development/StorySeedHelpMenu')
-  .then(module => ({ default: module.LibraryHelpMenu })));
+const loadHelpMenu = () => import('../../story-seed/development/StorySeedHelpMenu')
+  .then(module => ({ default: module.LibraryHelpMenu }));
+
+/**
+ * Help loads on demand. If its code cannot be fetched — a dropped connection,
+ * or a page left open across a deploy — the failure stays inside Help instead
+ * of unmounting the host page.
+ */
+class HelpBoundary extends Component<{ onError: () => void; children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch() { this.props.onError(); }
+  render() { return this.state.failed ? null : this.props.children; }
+}
 
 export interface HeaderSearchItem extends HeaderAction {
   description?: string;
@@ -27,8 +39,11 @@ export function WorkspaceHeaderUtilities({ items, help }: {
   items: readonly HeaderSearchItem[];
   help?: HeaderAction;
 }) {
-  const [experience, setExperience] = useState<'help' | 'search' | null>(null);
+  const [experience, setExperience] = useState<'help' | 'help-error' | 'search' | null>(null);
   const [query, setQuery] = useState('');
+  // A failed lazy load is cached by React, so each failure gets a fresh loader
+  // and the next Help press retries instead of failing forever.
+  const [LibraryHelpMenu, setLibraryHelpMenu] = useState(() => lazy(loadHelpMenu));
   const helpRef = useRef<HTMLButtonElement>(null);
   const searchRef = useRef<HTMLButtonElement>(null);
   const pendingAction = useRef<(() => void) | null>(null);
@@ -41,7 +56,7 @@ export function WorkspaceHeaderUtilities({ items, help }: {
   return <>
     <div className="workspace-header-utilities">
     <NarrativeButton ref={helpRef} variant="ghost" size="icon" aria-label="Help" title="Help"
-      aria-haspopup="dialog" aria-expanded={help ? help.expanded : experience === 'help'}
+      aria-haspopup="dialog" aria-expanded={help ? help.expanded : experience === 'help' || experience === 'help-error'}
       onPointerEnter={help?.onIntent} onFocus={help?.onIntent} disabled={help?.disabled}
       onClick={() => help ? help.onAction() : setExperience('help')}>
       <SENHelpIcon aria-hidden="true" size={24} className="workspace-header-utility-icon workspace-help-emblem" />
@@ -53,9 +68,15 @@ export function WorkspaceHeaderUtilities({ items, help }: {
       <span className="workspace-search-label">Search</span>
     </NarrativeButton>
     </div>
-    {experience === 'help' && createPortal(<Suspense fallback={<span role="status">Loading Help…</span>}>
-      <LibraryHelpMenu open onClose={() => setExperience(null)} />
-    </Suspense>, document.body)}
+    {experience === 'help' && createPortal(<HelpBoundary onError={() => { setLibraryHelpMenu(() => lazy(loadHelpMenu)); setExperience('help-error'); }}>
+      <Suspense fallback={<span role="status">Loading Help…</span>}>
+        <LibraryHelpMenu open onClose={() => setExperience(null)} />
+      </Suspense>
+    </HelpBoundary>, document.body)}
+    <WorkspaceSheet open={experience === 'help-error'} onOpenChange={open => { if (!open) setExperience(null); }}
+      title="Help" closeLabel="Close Help" returnFocusRef={helpRef}>
+      <p role="alert">Help could not load. Check your connection and try again.</p>
+    </WorkspaceSheet>
     <WorkspaceSheet open={experience === 'search'} onOpenChange={open => {
       if (!open) setExperience(current => current === 'search' ? null : current);
     }}

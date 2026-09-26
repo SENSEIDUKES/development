@@ -3,7 +3,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
-import { LibraryFooter, LIBRARY_FOOTER_COPYRIGHT, LIBRARY_FOOTER_STATEMENT, type LibraryFooterProps } from '@seihouse/library/shell';
+import { LibraryFooter, libraryFooterCopyright, LIBRARY_FOOTER_STATEMENT, LIBRARY_FOOTER_TITLE, type LibraryFooterProps } from '@seihouse/library/shell';
 import { MainLibraryFooter } from './MainLibraryFooter';
 import type { MainLibraryAdapter } from '../shared/MainLibraryAdapter';
 import { MainLibraryHeader } from './MainLibraryHeader';
@@ -31,12 +31,6 @@ const click = async (element: Element | null | undefined) => {
   await act(async () => { (element as HTMLElement).click(); });
 };
 const footer = () => container.querySelector('[data-library-footer]')!;
-// The elemental lettering repeats the wordmark in aria-hidden decoration layers.
-// Only the one visible layer is announced, so that is what the mark "reads".
-const markText = () => {
-  const mark = footer().querySelector('[data-footer-production-mark]')!;
-  return (mark.querySelector('.library-elemental-title__text') ?? mark).textContent;
-};
 const triggers = () => Array.from(footer().querySelectorAll<HTMLButtonElement>('[data-slot="disclosure-trigger"]'));
 const trigger = (label: string) => triggers().find(button => button.textContent?.trim() === label);
 
@@ -52,21 +46,18 @@ const props = (): LibraryFooterProps => ({
   ],
   legal: [{ id: 'terms', label: 'Terms', onSelect: vi.fn() }, { id: 'privacy', label: 'Privacy', onSelect: vi.fn() }, { id: 'cookies', label: 'Cookies', onSelect: vi.fn() }],
   language: { code: 'ja', onOpenSettings: vi.fn() },
-  emblem: { src: '/library-shell/celestial-library.jpg', alt: 'Celestial Library Logo' },
 });
 
 describe('LibraryFooter', () => {
-  it('keeps the SEN identity and the exact SEIHouse statement', async () => {
+  it('opens on the NovelExpanded title above the exact SEIHouse statement', async () => {
     await render(<LibraryFooter {...props()} />);
-    expect(markText()).toBe('SEN');
-    // The decoration never reaches the accessibility tree, so the mark is read once.
-    const mark = footer().querySelector('[data-footer-production-mark]')!;
-    expect(Array.from(mark.querySelectorAll('span')).filter(layer => layer.textContent === 'SEN'
-      && !layer.closest('[aria-hidden="true"]'))).toHaveLength(1);
-    expect(footer().querySelector('[data-footer-expansion]')?.textContent).toBe('SEIHouse Expanded Novels');
-    expect(footer().querySelector('.library-footer-statement')?.textContent).toBe(LIBRARY_FOOTER_STATEMENT);
+    const identity = footer().querySelector('.library-footer-identity')!;
+    expect(Array.from(identity.children).map(child => child.className)).toEqual(['library-footer-title', 'library-footer-statement']);
+    expect(identity.querySelector('[data-footer-title]')?.textContent).toBe(LIBRARY_FOOTER_TITLE);
+    expect(LIBRARY_FOOTER_TITLE).toBe('NovelExpanded');
+    expect(identity.querySelector('.library-footer-statement')?.textContent).toBe(LIBRARY_FOOTER_STATEMENT);
     expect(LIBRARY_FOOTER_STATEMENT).toBe('A BETTER TIME CAPSULE AND TRANSLATOR OF ARTISTIC EXPRESSION');
-    expect(footer().querySelector('.library-footer-emblem')?.getAttribute('src')).toBe('/library-shell/celestial-library.jpg');
+    expect(footer().querySelector('img')).toBeNull();
   });
 
   it('shows all five social channels without opening a menu, as real links or real buttons', async () => {
@@ -145,8 +136,8 @@ describe('LibraryFooter', () => {
   it('carries the copyright and legal row and never a portal domain button', async () => {
     const config = props();
     await render(<LibraryFooter {...config} />);
-    expect(footer().querySelector('.library-footer-copyright')?.textContent).toBe(LIBRARY_FOOTER_COPYRIGHT);
-    expect(LIBRARY_FOOTER_COPYRIGHT).toBe('© 2026 SEIHouse Productions LLC');
+    expect(footer().querySelector('.library-footer-copyright')?.textContent).toBe(`© ${new Date().getFullYear()} SEIHouse Productions LLC`);
+    expect(libraryFooterCopyright(2031)).toBe('© 2031 SEIHouse Productions LLC');
     const legal = Array.from(footer().querySelectorAll('.library-footer-legal-link'));
     expect(legal.map(link => link.textContent)).toEqual(['Terms', 'Privacy', 'Cookies']);
     await click(legal[1]);

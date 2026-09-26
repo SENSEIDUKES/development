@@ -24,6 +24,8 @@ export function MainLibraryNavigation({ location, onNavigate, sectionActions, ch
   };
   const activeId = location.screen === 'detail' || location.screen === 'challenge' ? undefined
     : location.screen === 'sects' ? 'sects' : location.screen === 'pricing' ? 'tiers'
+    // Seed Bank is the Cave's Stories screen, a sibling of the Cave home.
+    : location.screen === 'profile' && location.cave?.startsWith('/stories') ? 'seed-bank'
     : destination === 'home' ? 'immortal-hub' : destination === 'library' ? 'my-library'
     : destination === 'discover' ? 'fate-survival' : 'cultivator-cave';
   return <LibraryNavigation location={location} onNavigate={onNavigate} sectionMenu={{

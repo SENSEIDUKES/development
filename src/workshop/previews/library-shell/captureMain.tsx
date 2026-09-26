@@ -10,22 +10,25 @@ import { shellStates, type ShellSource } from './previewData';
  * fine, but "Open responsive … at browser width" (see LightNovelsHomeWorkspace
  * and LibraryShellWorkspace) navigates the whole tab here, and the captured
  * app shell has no Workshop chrome of its own — without this, that's a dead
- * end. Fixed positioning keeps it reachable above the shell's own bottom
- * navigation on every screen and scroll position, and it only renders when
- * this document is the top-level page, so the same capture stays clean when
- * embedded in a Workshop iframe.
+ * end. It sits in its own strip above the app rather than floating over it:
+ * a fixed pill covered the Library logo and the header's first control. The
+ * strip scrolls away with the page, and the browser's Back button remains. It
+ * only renders when this document is the top-level page, so the same capture
+ * stays clean when embedded in a Workshop iframe.
  */
 function CaptureExitToWorkshop({ children }: { children: ReactNode }) {
   const isTopLevel = (() => {
     try { return window.top === window.self; } catch { return true; }
   })();
   return <>
-    {isTopLevel && <a href="/" style={{
-      position: 'fixed', top: 'max(12px, env(safe-area-inset-top))', left: 'max(12px, env(safe-area-inset-left))',
-      zIndex: 2147483647, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px',
+    {isTopLevel && <div style={{
+      display: 'flex', padding: '8px max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left))',
+      paddingTop: 'max(8px, env(safe-area-inset-top))', background: '#050505', borderBottom: '1px solid rgba(255,255,255,0.08)',
+    }}><a href="/" style={{
+      display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 32, padding: '6px 14px',
       borderRadius: 9999, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(15,15,15,0.85)',
-      color: '#e5e5e5', font: '500 12px/1 system-ui, sans-serif', textDecoration: 'none', backdropFilter: 'blur(6px)',
-    }}>← Back to Workshop</a>}
+      color: '#e5e5e5', font: '500 12px/1 system-ui, sans-serif', textDecoration: 'none',
+    }}>← Back to Workshop</a></div>}
     {children}
   </>;
 }

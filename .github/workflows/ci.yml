@@ -29,6 +29,17 @@ jobs:
       - name: Type check
         run: npm run typecheck
 
+      - name: Verify Text Highlight Engine in browsers
+        run: |
+          npm run dev -- --host 127.0.0.1 > /tmp/text-highlight-vite.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://localhost:5173/ > /dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/verifyTextHighlightEngine.mjs
+
       - name: Run test suite
         run: npm test
 
@@ -40,17 +51,6 @@ jobs:
 
       - name: Smoke test packages
         run: npm run test:package
-
-      - name: Verify Text Highlight Engine in browsers
-        run: |
-          npm run dev -- --host 127.0.0.1 > /tmp/text-highlight-vite.log 2>&1 &
-          preview_pid=$!
-          trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
-          for attempt in $(seq 1 30); do
-            if curl --fail --silent http://localhost:5173/ > /dev/null; then break; fi
-            sleep 1
-          done
-          node scripts/verifyTextHighlightEngine.mjs
 
       - name: Upload Text Highlight Engine browser evidence
         if: always()

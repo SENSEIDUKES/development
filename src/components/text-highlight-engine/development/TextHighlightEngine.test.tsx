@@ -45,6 +45,17 @@ beforeEach(() => {
 afterEach(() => { act(() => root.unmount()); container.remove(); document.getSelection()?.removeAllRanges(); vi.unstubAllGlobals(); vi.useRealTimers(); });
 
 describe('Text Highlight Engine', () => {
+  it('captures the final drag range before keyboard focus enters Edit', async () => {
+    await select(7, 11);
+    act(() => {
+      const range = document.createRange(); range.setStart(block().firstChild!, 7); range.setEnd(block().firstChild!, 13);
+      document.getSelection()!.removeAllRanges(); document.getSelection()!.addRange(range);
+      document.dispatchEvent(new Event('pointerup'));
+      button('Edit')!.focus();
+    });
+    await act(async () => { await vi.runAllTimersAsync(); });
+    click('Edit'); expect(document.querySelector('textarea')?.value).toBe('middle');
+  });
   it('edits only the intended passage, retains identity, and clears state', async () => {
     const element = block(); await select();
     expect(selections).toHaveBeenLastCalledWith({ blockId: 'a', selectedText: 'middle', startOffset: 7, endOffset: 13 });

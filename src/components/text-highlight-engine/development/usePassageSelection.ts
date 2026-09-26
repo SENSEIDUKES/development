@@ -30,7 +30,6 @@ export function usePassageSelection(blocks: readonly TextHighlightBlock[], onSel
     const root = rootRef.current;
     if (!root) return;
     const doc = root.ownerDocument;
-    let frame = 0;
     const read = () => {
       if (editing || controlPointer.current || controlsRef.current?.contains(doc.activeElement)) return;
       const next = normalizePassageSelection(root, doc.getSelection());
@@ -41,22 +40,20 @@ export function usePassageSelection(blocks: readonly TextHighlightBlock[], onSel
         return { selection: next, text: block.text };
       });
     };
-    const schedule = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(read); };
     const down = (event: PointerEvent) => {
       controlPointer.current = !!controlsRef.current?.contains(event.target as Node);
       if (!controlPointer.current && (editing || !root.contains(event.target as Node))) clear();
     };
     const key = (event: KeyboardEvent) => { if (event.key === 'Escape' && snapshot) { clear(); root.focus({ preventScroll: true }); } };
-    doc.addEventListener('selectionchange', schedule);
-    doc.addEventListener('pointerup', schedule);
-    doc.addEventListener('keyup', schedule);
+    doc.addEventListener('selectionchange', read);
+    doc.addEventListener('pointerup', read);
+    doc.addEventListener('keyup', read);
     doc.addEventListener('pointerdown', down);
     doc.addEventListener('keydown', key);
     return () => {
-      cancelAnimationFrame(frame);
-      doc.removeEventListener('selectionchange', schedule);
-      doc.removeEventListener('pointerup', schedule);
-      doc.removeEventListener('keyup', schedule);
+      doc.removeEventListener('selectionchange', read);
+      doc.removeEventListener('pointerup', read);
+      doc.removeEventListener('keyup', read);
       doc.removeEventListener('pointerdown', down);
       doc.removeEventListener('keydown', key);
     };

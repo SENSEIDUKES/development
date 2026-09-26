@@ -37,6 +37,7 @@ for (const [name, browserType, width, height, touch] of [
       continue;
     }
     const original = await paragraph.textContent();
+    let expectedSelection = { start: 12, end: 35, text: original.slice(12, 35) };
     const siblings = await page.locator('[data-sen-text-block]').allTextContents();
     const select = async (start = 12, end = 35) => {
       await paragraph.scrollIntoViewIfNeeded();
@@ -59,6 +60,17 @@ for (const [name, browserType, width, height, touch] of [
       await page.mouse.move(box.x + 1, box.y + box.height / 2); await page.mouse.down();
       await page.mouse.move(box.x + box.width, box.y + box.height / 2, { steps: 12 }); await page.mouse.up();
       await page.getByRole('button', { name: 'Edit', exact: true }).waitFor();
+      // Pixel endpoints vary with platform font metrics. The browser's actual
+      // range is the input contract; the editor must preserve it exactly.
+      expectedSelection = await paragraph.evaluate(element => {
+        const range = document.getSelection().getRangeAt(0);
+        assertSameNode(range.startContainer, element.firstChild);
+        assertSameNode(range.endContainer, element.firstChild);
+        function assertSameNode(actual, expected) { if (actual !== expected) throw new Error('Drag left the intended paragraph'); }
+        return { start: range.startOffset, end: range.endOffset, text: range.toString() };
+      });
+      assert.ok(expectedSelection.start > 0 && expectedSelection.end < original.length && expectedSelection.text.length > 10);
+      assert.equal(expectedSelection.text, original.slice(expectedSelection.start, expectedSelection.end));
     } else await select();
     if (!touch) {
       await page.keyboard.press('Tab');
@@ -66,7 +78,7 @@ for (const [name, browserType, width, height, touch] of [
       await page.keyboard.press('Enter');
     } else await activate('Edit');
     const input = page.getByRole('textbox', { name: 'Replacement text' });
-    assert.equal(await input.inputValue(), 'Mara reached the harbor');
+    assert.equal(await input.inputValue(), expectedSelection.text);
     assert.ok(await page.locator('.sen-text-highlight-marks span').count());
     const dialog = page.getByRole('dialog', { name: 'Edit passage' });
     const bounds = await dialog.boundingBox(); assert.ok(bounds.x >= 0 && bounds.x + bounds.width <= width);
@@ -77,7 +89,7 @@ for (const [name, browserType, width, height, touch] of [
       await lightStyle.evaluate(element => element.remove());
     }
     await input.fill('Mara returned home'); await activate('Save');
-    assert.equal(await paragraph.textContent(), original.slice(0, 12) + 'Mara returned home' + original.slice(35));
+    assert.equal(await paragraph.textContent(), original.slice(0, expectedSelection.start) + 'Mara returned home' + original.slice(expectedSelection.end));
     assert.deepEqual((await page.locator('[data-sen-text-block]').allTextContents()).slice(1), siblings.slice(1));
     assert.equal(await dialog.count(), 0);
     await select(12, 30); await activate('Edit'); await input.fill('');

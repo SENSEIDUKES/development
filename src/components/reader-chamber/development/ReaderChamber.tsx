@@ -588,9 +588,14 @@ export default function ReaderChamber({
         : (scroller as HTMLElement).getBoundingClientRect().top;
       const chamberTop = chamberRef.current?.getBoundingClientRect().top ?? scrollerTop;
       const readerProgress = scrollerTop - chamberTop;
-      // Keep the header visible near this chapter's top and while one of its
-      // controls has an open panel (including a host-supplied accessory).
-      if (readerProgress <= 80 || headerRef.current?.querySelector('[aria-expanded="true"]')) {
+      const headerHasFocus = headerRef.current?.contains(document.activeElement);
+      // Keep the header visible near this chapter's top, while a control has
+      // focus, or while one of its controls has an open panel.
+      if (
+        readerProgress <= 80 ||
+        headerHasFocus ||
+        headerRef.current?.querySelector('[aria-expanded="true"]')
+      ) {
         direction = 0;
         accrued = 0;
         setIsHeaderVisible(true);

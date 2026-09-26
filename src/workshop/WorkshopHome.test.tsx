@@ -208,7 +208,7 @@ describe('WorkshopHome', () => {
     act(() => spp.click());
     expect(window.location.search).toBe('?tab=docs&doc=spp');
     expect(activePanel().querySelector('h1')?.textContent).toBe('SPP');
-    expect(activePanel().textContent).toContain('The definition for this term hasn’t been added yet.');
+    expect(activePanel().textContent).toContain('A portable file that keeps related content and assets together.');
     act(() => {
       window.history.replaceState(null, '', '?tab=docs&doc=arc-goal');
       window.dispatchEvent(new PopStateEvent('popstate'));

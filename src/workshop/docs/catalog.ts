@@ -178,19 +178,44 @@ export const docsCategories: readonly DocsCategory[] = [
     ],
   },
   {
-    id: 'packages', title: 'Packages', description: 'Software packages, SPPs, and their different responsibilities.',
+    id: 'packages', title: 'Packages', description: 'Four installable software packages build SEN and the Library; SPPs carry portable content and assets.',
     topics: [
-      topic('software-package', 'Software Package', ['package owner', 'package lane']),
-      topic('seihouse-ui', '@seihouse/ui'), topic('seihouse-library-ui', '@seihouse/library-ui'),
-      topic('seihouse-sen', '@seihouse/sen'), topic('seihouse-library', '@seihouse/library'),
-      topic('spp', 'SPP'), topic('spp-manifest', 'SPP Manifest', ['Package ID', 'instructions', 'resources']),
-      topic('media-pack', 'Media Pack'),
+      {
+        ...topic('seihouse-ui', '@seihouse/ui'),
+        definition: 'Our shared building blocks for interfaces.',
+        howItFits: 'The UI repository owns this software package. It supplies universal visual primitives and experience tokens that SEN and Library surfaces can use without carrying Library branding or product rules. SEN depends on this neutral UI layer; our branded presentation stays in @seihouse/library-ui.',
+      },
+      {
+        ...topic('seihouse-library-ui', '@seihouse/library-ui'),
+        definition: 'Our visual language for the Celestial Library.',
+        howItFits: 'The UI repository owns this separate software package of stateless Library presentation. @seihouse/library composes these visuals over reusable SEN behavior and supplies host asset locations. @seihouse/sen does not depend on Library UI, so another publisher can present the same narrative capabilities in its own style.',
+      },
+      {
+        ...topic('seihouse-sen', '@seihouse/sen'),
+        definition: 'The portable engine for expanded novels.',
+        howItFits: 'The Development repository publishes SEN’s reusable story, Reader, Codex, audio, generation, translation, and arc capabilities as a software package. A host supplies its own writing, branding, accounts, storage, media, and optional model adapter. Our Celestial Library builds on SEN, but SEN never depends on Library-specific rules or services.',
+      },
+      {
+        ...topic('seihouse-library', '@seihouse/library'),
+        definition: 'The Celestial Library’s own product behavior.',
+        howItFits: 'The Development repository publishes our first-party Library package on top of @seihouse/sen. It brings together the Library’s creation journey, home and profile, cultivation, rewards, economy, and branded presentation. The host and backend remain authoritative for accounts, purchases, durable balances, and media records; these rules do not move into SEN.',
+      },
+      {
+        ...topic('spp', 'SPP', ['SPP Manifest', 'Package ID', 'instructions', 'resources']),
+        definition: 'A portable file that keeps related content and assets together.',
+        howItFits: 'An SPP is our shared SEIHouse Productions Package container: a validated .spp archive with a manifest.json and an inventory of original files under assets/. Its manifest records the stable package ID, version, publisher, file paths, media types, and SHA-256 fingerprints. It can carry a writing skill or a Media Pack catalog, but the receiving host must explicitly select, validate, and use those files. The archive itself does not install instructions, grant access, or run code.',
+      },
     ],
   },
   {
     id: 'media', title: 'Media', description: 'Media selection, sound, visual expression, and asset records.',
     topics: [
-      topic('media-loadout', 'Media Loadout'), topic('media-catalog', 'Media Catalog'),
+      {
+        ...topic('media-loadout', 'Media Loadout', ['Media Pack']),
+        definition: 'The Soundscape and Sound Cue packs equipped for a story.',
+        howItFits: 'A Media Pack is validated catalog data for one audio type, with an ID, version, and verified source. The Library decides which registered packs a person may equip; the host owns the catalog and entitlement truth. A story can independently equip a Soundscape Pack and a Sound Cue Pack. HARNESS freezes the authorized loadout for an attempt and resolves semantic media signals against it after prose is accepted. Pack data never becomes a writing skill or enters the model prompt, and later equipment changes do not rewrite committed chapters.',
+      },
+      topic('media-catalog', 'Media Catalog'),
       topic('media-resolver', 'Media Resolver', ['resolved asset']),
       topic('soundscape', 'Soundscape'), topic('world-cue', 'World Cue'), topic('sound-cue', 'Sound Cue'),
       topic('manifest-action', 'Manifest Action'), topic('manifestation', 'Manifestation'),

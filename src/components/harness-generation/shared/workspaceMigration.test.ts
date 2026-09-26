@@ -44,8 +44,8 @@ describe('HARNESS workspace migration', () => {
   it('upgrades a schema 18 workspace in place, keeping every story, chapter and plan', async () => {
     const { stored, survivalId, regularId } = await savedAtVersion18();
     const migrated = readHarnessWorkspaceState(stored);
-    expect(HARNESS_GENERATION_SCHEMA_VERSION).toBe(20);
-    expect(migrated.schemaVersion).toBe(20);
+    expect(HARNESS_GENERATION_SCHEMA_VERSION).toBe(21);
+    expect(migrated.schemaVersion).toBe(21);
     expect(migrated.stories.map(story => story.id)).toEqual([survivalId, regularId]);
     expect(migrated.chapters).toEqual(stored.chapters);
     // Survival keeps only its switch; everything else in each Foundation is kept.

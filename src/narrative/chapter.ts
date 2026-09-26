@@ -416,7 +416,7 @@ export interface ContextManifest {
   sections: ContextManifestSection[];
 }
 
-export type ChapterWritingStyle = "Standard" | "Clear Reading" | "Easy Read" | "Literal Reading";
+export type { ChapterWritingStyle } from "./readingMode";
 
 export interface ChapterContent {
   storyId: string;

@@ -5,7 +5,7 @@ import { HarnessGenerationWorkspace } from '@seihouse/library/generation';
 import { SEN_NOVEL_AUTHOR_SKILL } from '@seihouse/sen/harness-generation';
 import { compileStoryInformationPacket } from './context';
 import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
-import { HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS, assembleCapaPrompt, buildMissionReminder } from '@seihouse/sen/harness-generation';
+import { assembleCapaPrompt, buildMissionReminder } from '@seihouse/sen/harness-generation';
 import type { HarnessRuntime } from './ids';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
@@ -190,10 +190,10 @@ describe('Harness Generation Phase 2 novel core', () => {
     expect(request.capaPrompt.skills.map(skill => [skill.slot, skill.name, skill.authoring])).toEqual([
       ['author', 'Cozy Fantasy Author', true], ['pacing', 'Long-Range Pacing', true],
     ]);
+    // An English story with no Accessibility or Translation skill carries no official requirements.
     expect(request.capaPrompt.text).toBe([
       'CAPA SKILL [Author] — Cozy Fantasy Author v1.0.0\nWrite with warmth, restraint, and close attention to daily life.',
       'CAPA SKILL [Pacing] — Long-Range Pacing v1.0.0\nDo not collapse the siege into one chapter.',
-      HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS,
     ].join('\n\n'));
     expect(JSON.stringify(request.storyInformation)).not.toContain('Write with warmth');
     expect(JSON.stringify(request.storyInformation)).not.toContain('skillLoadout');

@@ -50,9 +50,11 @@ All six manifests are valid but declare the same container package ID,
 produce distinct installed skill identities without rewriting that real package identity.
 The Continuity archive's `CONITINUITY` resource-path spelling is also retained exactly.
 
-No Accessibility or Translation SPP was supplied. Clear Reading, Easy Read, Literal Reading,
-Standard Accessibility, and Translation therefore have no official mapping and those slots
-remain empty. Style never changes Original Language and never equips Translation. A new story
+No Accessibility or Translation SPP was supplied. Since 2026-09-26 neither slot takes an
+official mapping: Accessibility follows the story's Reading Mode with SEN's bundled Clear
+Reading, Easy Read and Literal Reading skills (Standard loads nothing), and Translation follows
+the story's Story Language with whichever writing package the host has installed for it. Style
+never changes Original Language and never loads Translation. A new story
 gets the official defaults once; its saved per-story loadout is authoritative afterward, so an
 ordinary reload cannot overwrite a manual replacement. A deliberate Story Seed style change
 replaces only the Style reference before that story is created.
@@ -69,17 +71,18 @@ is rejected; create a new version while retaining the SPP package ID.
 
 ## Installing from a CAPA slot
 
-Every CAPA slot — Author, Pacing, Continuity, Style, Accessibility and Translation — opens the
-same importer with its own slot as the locked destination. There is no second importer and no
-slot-specific intake path: the flow validates, installs, and then equips through the existing
-`setSkillSlot` story operation.
+Every hand-equipped CAPA slot — Author, Pacing, Continuity and Style — opens the same importer
+with its own slot as the locked destination. There is no second importer and no slot-specific
+intake path: the flow validates, installs, and then equips through the existing `setSkillSlot`
+story operation. The managed slots (Fate, Accessibility, Translation) follow Story Settings and
+offer no per-story upload.
 
 A package may declare the slot it belongs to in the namespaced manifest extension
 `seihouse.capa` (`{ "slot": "author" }`). When it does, installing it into any other slot is
 rejected, from either entry point. A package that declares none is installed into the slot the
 host selected; a slot is never inferred from a package, publisher, or file name. Translation
-uploads keep the existing target-language, glossary and story-language requirements — an
-incompatible Translation skill is rejected when the slot tries to equip it.
+packages install through **Import SPP skill** only, with the existing target-language and
+glossary requirements; they are never equipped.
 
 The installed-skill selector stays on every slot, so already installed skills can still be
 switched without reuploading.
@@ -112,15 +115,19 @@ selected validated JSON catalog into a separate inventory; see
 [MEDIA_LOADOUT.md](./MEDIA_LOADOUT.md). It never promotes Media Pack data to
 instructions.
 
-Equipping is decided by `HarnessStory.originalLanguage`. Only a Translation skill whose
-target language equals the story's Original Language may be equipped, the Development
-slot list shows each installed skill's language, and compatibility is rechecked when the
-loadout is frozen for every generation attempt. A story may leave the slot empty.
+Installing is separate from equipping. Nobody equips a Translation skill: the HARNESS resolves
+it from `HarnessStory.originalLanguage` (the Story Language) when it freezes every chapter's
+loadout. An English story loads none. Any other language loads the one installed package that
+declares `generation` for exactly that language, newest version first; with none installed the
+chapter is still written, under a one-line HARNESS Story Language requirement, and Story
+Settings says no specialized writing package is installed; with several different packages the
+chapter is refused with a message rather than one being chosen silently. The choosing rule is
+`resolveTranslationPackage`, shared with Reader translation.
 
-The equipped skill governs canonical generation only. Reader translation is a separate,
+The resolved package governs canonical generation only. Reader translation is a separate,
 reversible reading layer that resolves its own skill by the reader's requested target
-language plus the `reader` application — the story's equipped generation skill is never
-borrowed for it, and there is no generic or English fallback. See
+language plus the `reader` application — the story's writing package is never borrowed for
+it, and there is no generic or English fallback. See
 [reader-chamber/READER_TRANSLATION.md](../reader-chamber/READER_TRANSLATION.md).
 
 The glossary never enters a prompt whole. At assembly the HARNESS matches canonical terms

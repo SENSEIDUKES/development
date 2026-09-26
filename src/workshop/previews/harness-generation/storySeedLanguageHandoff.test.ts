@@ -3,8 +3,9 @@ import { type StoryFoundationInput } from '@seihouse/sen/harness-generation';
 import { buildInitialStoryGenerationPayload } from '@seihouse/sen/story-seed';
 import { createStoryAdministrativeMetadata } from '@seihouse/sen/story-seed';
 import { createMockStorySeedRecord } from '../story-seed/previewData';
+import type { ChapterWritingStyle } from '@seihouse/sen/contracts';
 
-const createStory = vi.fn(async (_input: StoryFoundationInput, _originalLanguage?: string) => ({ id: 'hst_new' }));
+const createStory = vi.fn(async (_input: StoryFoundationInput, _originalLanguage?: string, _loadout?: unknown, _options?: Record<string, unknown>) => ({ id: 'hst_new' }));
 
 // Only the Harness entry points the handoff constructs are replaced; the Story
 // Seed contracts under test stay real.
@@ -35,8 +36,9 @@ vi.stubGlobal('localStorage', {});
 
 const { startWorkshopHarnessStory } = await import('./storySeedHandoff');
 
-const payloadWithLanguage = (originalLanguage: 'en' | 'ja') => {
+const payloadWithLanguage = (originalLanguage: 'en' | 'ja', readingMode?: ChapterWritingStyle) => {
   const record = createMockStorySeedRecord();
+  if (readingMode) record.seed.story.optional.chapterWritingStyle = readingMode;
   return buildInitialStoryGenerationPayload(
     record.seed,
     createStoryAdministrativeMetadata({
@@ -64,5 +66,23 @@ describe('Original Language across the Story Seed to Harness handoff', () => {
     await startWorkshopHarnessStory(payloadWithLanguage('en'));
 
     expect(createStory.mock.calls[0][1]).toBe('en');
+  });
+});
+
+describe('Reading Mode across the Story Seed to Harness handoff', () => {
+  it('hands the seed\'s Reading Mode to story creation as a Story Setting, beside the Foundation', async () => {
+    createStory.mockClear();
+    await startWorkshopHarnessStory(payloadWithLanguage('ja', 'Easy Read'));
+
+    expect(createStory.mock.calls[0][3]).toMatchObject({ chapterWritingStyle: 'Easy Read' });
+    // Only the verbatim source snapshot, which never reaches the writer, still records it.
+    expect(JSON.stringify({ ...createStory.mock.calls[0][0], sourceSnapshot: undefined })).not.toContain('Easy Read');
+  });
+
+  it('starts a story from a seed saved without one on Standard', async () => {
+    createStory.mockClear();
+    await startWorkshopHarnessStory(payloadWithLanguage('en'));
+
+    expect(createStory.mock.calls[0][3]).toMatchObject({ chapterWritingStyle: 'Standard' });
   });
 });

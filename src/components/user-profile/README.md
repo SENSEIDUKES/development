@@ -54,6 +54,12 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 
 ## Workshop history
 
+- **2026-09-26 Reading Mode:** The Writing Preferences field is now labelled "Default Reading Mode"
+  and says it is used when a new Story Seed starts; existing seeds and stories keep their own. It
+  still saves `defaultChapterWritingStyle` with production's four option strings, which SEN now
+  owns (`@seihouse/sen/contracts`); `chapterWritingStyle.ts` re-exports them. A Story Seed host
+  passes the value to Story Seed as `accountDefaultChapterWritingStyle`.
+
 - **2026-09-23 Familiar bonds:** The Cave's Familiar destination shows the name-effect panel
   (the Active Elemental Effect and the mastered-elements collection) above the bond panel. The
   profile's equipped Familiar is the Active Familiar; `activeNameEffect` resolves what letters

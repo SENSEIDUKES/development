@@ -134,10 +134,32 @@ const migrateV19ToV20 = (stored: StoredWorkspace): StoredWorkspace => {
   };
 };
 
+/**
+ * v20 → v21: Translation and Accessibility became managed slots, resolved from
+ * the story's Story Language and Reading Mode, so any skill saved in either slot
+ * by hand is removed. A story saved without a Reading Mode reads as Standard.
+ * Frozen attempts keep the CAPA Prompt they were sent with, and committed
+ * chapters are untouched.
+ */
+const migrateV20ToV21 = (stored: StoredWorkspace): StoredWorkspace => {
+  const state = stored as unknown as { stories: StoredRecord[] };
+  return {
+    ...stored,
+    schemaVersion: 21,
+    stories: state.stories.map(story => {
+      const loadout = story.skillLoadout as StoredRecord | undefined;
+      if (!loadout || !('translation' in loadout || 'accessibility' in loadout)) return story;
+      const { translation: _translation, accessibility: _accessibility, ...handEquipped } = loadout;
+      return { ...story, skillLoadout: handEquipped };
+    }),
+  };
+};
+
 /** Explicit upgrade steps, keyed by the version they upgrade from. */
 const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => StoredWorkspace> = {
   18: migrateV18ToV19,
   19: migrateV19ToV20,
+  20: migrateV20ToV21,
 };
 
 /**

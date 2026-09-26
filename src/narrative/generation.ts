@@ -1,6 +1,7 @@
 import type { ResolvedAudioMoment } from '../audio/inlineAudio';
 import type { FrozenNarrativeMedia, ResolvedSoundscape, StoryMediaSelection } from '../audio/media';
 import type { SenLanguageCode } from '../lib/language';
+import type { ChapterWritingStyle } from './readingMode';
 import type { StoryBlock } from './chapter';
 import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterSuggestions } from './storyDirection';
 
@@ -9,7 +10,7 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * matching upgrade step to `HARNESS_WORKSPACE_MIGRATIONS` in `repository.ts`,
  * so saved stories carry over. Storage with no migration path is preserved
  * untouched by the host and replaced with an empty workspace. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 20 as const;
+export const HARNESS_GENERATION_SCHEMA_VERSION = 21 as const;
 
 /** Output buckets assign processor categories; legacy event arrays remain readable. */
 export const HARNESS_MEMORY_CATEGORIES = {
@@ -87,6 +88,8 @@ export interface HarnessStorySeedOption {
   hasBlueprint: boolean;
   /** The seed's own Original Language, frozen onto the story it starts. */
   originalLanguage: SenLanguageCode;
+  /** The seed's Reading Mode, copied onto the story it starts. Absent means Standard. */
+  chapterWritingStyle?: ChapterWritingStyle;
   /** Host-resolved package identities to equip only when this story is created. */
   initialSkillLoadout?: Partial<Record<HarnessSkillSlotId, HarnessSkillReference>>;
   foundation: StoryFoundationInput;
@@ -147,7 +150,18 @@ export interface HarnessStory {
   brokenRoute?: HarnessBrokenRoute;
   /** Set once when the story reaches or fails its Destined Ending. No chapter is written after it. */
   conclusion?: HarnessStoryConclusion;
-  /** Per-story references to host-installed skills. The full manifests are frozen per request. */
+  /**
+   * The story's Reading Mode, a Story Setting copied from its Story Seed and
+   * changed only by the story's owner. It applies to chapters written from then
+   * on; committed chapters keep the mode they were written in. Absent means
+   * Standard. The HARNESS turns it into the managed Accessibility skill.
+   */
+  chapterWritingStyle?: ChapterWritingStyle;
+  /**
+   * Per-story references to host-installed skills for the hand-equipped CAPA
+   * slots. Managed slots (Fate, Accessibility, Translation) never appear here:
+   * the HARNESS resolves them from story state. The full manifests are frozen per request.
+   */
   skillLoadout?: Partial<Record<HarnessSkillSlotId, HarnessSkillReference>>;
   /** Entitled Media Packs equipped for this story. Separate from CAPA skills. */
   mediaLoadout?: StoryMediaSelection;
@@ -272,6 +286,12 @@ export interface HarnessSkillManifest extends HarnessSkillReference {
 export interface HarnessSkillLoadoutSnapshot {
   skills: HarnessSkillManifest[];
   capturedAt: string;
+  /**
+   * The story's Original Language when the loadout was frozen. A non-English
+   * story's CAPA Prompt carries the HARNESS-owned Story Language requirement,
+   * with or without a Translation skill. Absent is read as English.
+   */
+  originalLanguage?: SenLanguageCode;
 }
 
 /** One equipped CAPA Skill recorded in the CAPA Prompt. Its instructions live only in `CapaPrompt.text`. */

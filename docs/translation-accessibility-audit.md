@@ -5,6 +5,13 @@
 **Repository state:** `SENSEIDUKES/development` at `2e28fd3` (merge of #277). The reference pattern is the managed Fate slot from #270.
 **Production evidence:** `SENSEIDUKES/Light-Novels` at `647165a`, read only.
 
+> **Implemented (2026-09-26, same PR):** the recommended design below was built with the five
+> decisions as written, under one product rule: users configure the story in Story Settings, and
+> the HARNESS decides the skills. One addition: the novel page's CAPA slot panel and package
+> intake now render only when a development host sets `showHarnessInternals`, so a production
+> Library shows Story Settings only. Line citations below describe the audited commit; see
+> `src/components/harness-generation/README.md` for current behavior.
+
 HARNESS, CAPA, CAPA Schema, CAPA Skill, CAPA Prompt, Story Information Packet, Immediate
 Chapter Request, and Generation Model Call are used exactly as defined in
 [ARCHITECTURE_VOCABULARY.md](../src/components/harness-generation/ARCHITECTURE_VOCABULARY.md).

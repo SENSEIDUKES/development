@@ -84,7 +84,9 @@ export function SppSkillImport({ busy, destinationSlot, onInstall }: {
       setError('');
       setMessage(destinationSlot
         ? `Installed and equipped in the ${destinationLabel} slot.`
-        : 'Installed. Choose this skill in the story’s matching slot to activate it.');
+        : slot === 'translation'
+          ? 'Installed. Stories written in this language load it automatically.'
+          : 'Installed. Choose this skill in the story’s matching slot to activate it.');
     }
     catch (cause) { setError(cause instanceof Error ? cause.message : 'The skill could not be saved.'); }
     finally { setInstalling(false); }
@@ -126,7 +128,9 @@ export function SppSkillImport({ busy, destinationSlot, onInstall }: {
             <select id={fieldId('slot')} value={slot} disabled={disabled} onChange={event => {
               setChosenSlot(event.target.value as HarnessSkillSlotId); setError(''); setMessage('');
             }} className="min-h-11 w-full rounded-lg bg-neutral-900 px-3 text-sm text-white">
-              {CAPA_SCHEMA.filter(item => !item.managedBy).map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+              {/* Installable is not equippable: Translation packages install here
+                  and load from a story's Story Language, never by hand. */}
+              {CAPA_SCHEMA.filter(item => item.installable).map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
             </select>
           </>}
 

@@ -19,13 +19,10 @@
  * persisted values and API compatibility strings. The language fields carry
  * SEN language codes rather than production's display names.
  */
-import { type SenLanguageCode } from '@seihouse/sen/contracts';
+import { type ChapterWritingStyle, type SenLanguageCode } from '@seihouse/sen/contracts';
 
-export type ChapterWritingStyle =
-  | 'Standard'
-  | 'Clear Reading'
-  | 'Easy Read'
-  | 'Literal Reading';
+/** SEN owns the Reading Mode values; the profile stores the account's default. */
+export type { ChapterWritingStyle };
 
 export type PremiumTier =
   | 'mortal'
@@ -51,7 +48,10 @@ export interface UserProfile {
   interfaceLanguage: SenLanguageCode;
   /** The language Reader Chamber displays by default; never story canon. */
   defaultReadingLanguage: SenLanguageCode;
-  /** Default copied onto newly created stories; existing stories keep their saved value. */
+  /**
+   * The account's default Reading Mode, copied onto each new Story Seed.
+   * Existing seeds and stories keep their own value.
+   */
   defaultChapterWritingStyle?: ChapterWritingStyle;
   savedStoryCount: number;
   activeStories: string[];

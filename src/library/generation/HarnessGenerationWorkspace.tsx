@@ -11,8 +11,9 @@ import { HarnessGenerationController, exportHarnessStory } from '@seihouse/sen/h
 import { findFoundationRevision, findStory } from '@seihouse/sen/harness-generation';
 import { buildCanonicalStoryView } from '@seihouse/sen/harness-generation';
 import { GENERATION_PACKET_BUDGET, PACKET_SECTION_ORDER } from '@seihouse/sen/harness-generation';
-import { CAPA_SCHEMA, HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS, SEN_FATE_SURVIVAL_SKILL, harnessSkillKey } from '@seihouse/sen/harness-generation';
-import { isTranslationSkillCompatible, translationTargetLanguage } from '@seihouse/sen/harness-generation';
+import { CAPA_SCHEMA, SEN_FATE_SURVIVAL_SKILL, SEN_READING_MODE_SKILLS, buildHarnessOfficialOutputRequirements, harnessSkillKey, resolveStoryLanguagePackage, type CapaSlotManager } from '@seihouse/sen/harness-generation';
+import { getSenLanguageLabel, normalizeChapterWritingStyle, type ChapterWritingStyle } from '@seihouse/sen/contracts';
+import { StorySettingsPanel } from './StorySettingsPanel';
 import { includeBundledHarnessSkills } from '@seihouse/sen/harness-generation';
 import { HarnessReaderSession } from '@seihouse/sen/harness-generation';
 import { type HarnessGenerationRepository } from '@seihouse/sen/harness-generation';
@@ -46,6 +47,13 @@ export interface HarnessGenerationWorkspaceProps {
   storySeedSource?: HarnessStorySeedSource;
   /** Host-owned inventory. Passing a manifest means that exact skill version is installed and available to equip. */
   installedSkills?: HarnessSkillManifest[];
+  /**
+   * Development inspection of HARNESS internals: the CAPA skill slots, with the
+   * managed slots' resolved state, and the host's package intake. Production
+   * hosts leave it off, so a story's owner configures the story through Story
+   * Settings and never sees slots, skill IDs or loadouts.
+   */
+  showHarnessInternals?: boolean;
   /** Host-owned package intake, shown alongside the existing skill slots. */
   renderSkillImport?: (busy: boolean) => ReactNode;
   /**
@@ -227,6 +235,47 @@ function AttemptStatus({
   );
 }
 
+type ManagedCapaSlot = (typeof CAPA_SCHEMA)[number] & { managedBy: CapaSlotManager };
+
+/**
+ * What a managed slot resolves to for this story right now, from the same
+ * rules loadout freezing uses. Development inspection only: Story Settings
+ * never shows it.
+ */
+const managedSlotInspection = (
+  slot: ManagedCapaSlot,
+  story: HarnessStory,
+  fateMode: HarnessStoryMode,
+  installedSkills: HarnessSkillManifest[],
+): { status: 'Loaded' | 'Not used' | 'No package' | 'Blocked'; summary: string; skill?: HarnessSkillManifest } => {
+  switch (slot.managedBy) {
+    case 'fate-mode':
+      return fateMode === 'survival'
+        ? { status: 'Loaded', skill: SEN_FATE_SURVIVAL_SKILL, summary: `${SEN_FATE_SURVIVAL_SKILL.name} v${SEN_FATE_SURVIVAL_SKILL.version} loads on every chapter of this Fate Survival story.` }
+        : { status: 'Not used', summary: 'Regular Reader stories leave this slot empty. It follows the story\'s Fate mode and is never equipped by hand.' };
+    case 'reading-mode': {
+      const mode = normalizeChapterWritingStyle(story.chapterWritingStyle);
+      if (mode === 'Standard') return { status: 'Not used', summary: 'The Reading Mode is Standard, so this slot stays empty. It follows the story\'s Reading Mode and is never equipped by hand.' };
+      const skill = SEN_READING_MODE_SKILLS[mode];
+      return { status: 'Loaded', skill, summary: `${skill.name} v${skill.version} loads on every chapter while the Reading Mode is ${mode}.` };
+    }
+    case 'story-language': {
+      const language = getSenLanguageLabel(story.originalLanguage);
+      const support = resolveStoryLanguagePackage(installedSkills, story.originalLanguage);
+      switch (support.status) {
+        case 'not-needed':
+          return { status: 'Not used', summary: 'This story is written in English, so this slot stays empty. It follows the story\'s Story Language and is never equipped by hand.' };
+        case 'loaded':
+          return { status: 'Loaded', skill: support.skill, summary: `${support.skill.name} v${support.skill.version} writes every chapter in ${language}.` };
+        case 'missing':
+          return { status: 'No package', summary: `No ${language} writing package is installed. Chapters are written in ${language} from the HARNESS Story Language requirement alone.` };
+        case 'ambiguous':
+          return { status: 'Blocked', summary: support.message };
+      }
+    }
+  }
+};
+
 function SkillLoadoutPanel({
   story,
   fateMode,
@@ -246,11 +295,20 @@ function SkillLoadoutPanel({
   onInstalled?: (slot: HarnessSkillSlotId, skill: HarnessSkillManifest) => Promise<void>;
 }) {
   const installedByKey = new Map(installedSkills.map(skill => [harnessSkillKey(skill), skill]));
-  // The Fate slot follows the story's Fate mode, so only hand-equipped slots count here.
+  // Managed slots follow story state, so only hand-equipped slots count here.
   const equippableSlots = CAPA_SCHEMA.filter(slot => !slot.managedBy);
+  const managedCount = CAPA_SCHEMA.length - equippableSlots.length;
   const equippedCount = equippableSlots.filter(slot => story.skillLoadout?.[slot.id]).length;
-  const missingCount = Object.values(story.skillLoadout ?? {})
+  const missingCount = equippableSlots
+    .map(slot => story.skillLoadout?.[slot.id])
     .filter(reference => reference && !installedByKey.has(harnessSkillKey(reference))).length;
+  const readingModeLoaded = normalizeChapterWritingStyle(story.chapterWritingStyle) !== 'Standard';
+  const translationLoaded = resolveStoryLanguagePackage(installedSkills, story.originalLanguage).status === 'loaded';
+  const officialRequirements = buildHarnessOfficialOutputRequirements({
+    originalLanguage: story.originalLanguage,
+    accessibility: readingModeLoaded,
+    translation: translationLoaded,
+  });
 
   return (
     <LibraryPanel as="section" padding="md" aria-labelledby="harness-skills-title">
@@ -261,11 +319,11 @@ function SkillLoadoutPanel({
             <h2 id="harness-skills-title" className="font-display text-xl text-white">CAPA skill slots</h2>
           </div>
           <p className="mt-2 max-w-3xl text-sm leading-relaxed text-neutral-400">
-            The Author skill tells the model how to write. Equipped generation skills are assembled once, in schema order, into the CAPA Prompt frozen with each chapter attempt.
+            The Author skill tells the model how to write. Equipped generation skills are assembled once, in schema order, into the CAPA Prompt frozen with each chapter attempt. Fate, Accessibility and Translation follow the story's Fate mode, Reading Mode and Story Language.
           </p>
         </div>
         <span className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-cyan-100">
-          {equippedCount}/{equippableSlots.length} equipped · 1 locked
+          {equippedCount}/{equippableSlots.length} equipped · {managedCount} managed
         </span>
       </div>
 
@@ -277,27 +335,27 @@ function SkillLoadoutPanel({
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {CAPA_SCHEMA.map(slot => {
-          if (slot.managedBy === 'fate-mode') {
-            const active = fateMode === 'survival';
+          if (slot.managedBy) {
+            const managed = managedSlotInspection(slot as ManagedCapaSlot, story, fateMode, installedSkills);
+            const loaded = managed.status === 'Loaded';
+            const blocked = managed.status === 'Blocked';
             return (
-              <article key={slot.id} data-testid="harness-fate-slot" className={`rounded-xl border p-4 ${active ? 'border-cyan-300/30 bg-cyan-400/[0.07]' : 'border-white/10 bg-black/20'}`}>
+              <article key={slot.id} data-testid={`harness-${slot.id}-slot`} data-status={managed.status} className={`rounded-xl border p-4 ${loaded ? 'border-cyan-300/30 bg-cyan-400/[0.07]' : blocked ? 'border-human/30 bg-human-brand/[0.06]' : 'border-white/10 bg-black/20'}`}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-2">
                     <Puzzle size={16} className="shrink-0 text-cyan-200/75" aria-hidden="true" />
                     <h3 className="text-sm font-semibold text-white">{slot.label}</h3>
                   </div>
-                  <span className={`shrink-0 font-mono text-[9px] uppercase tracking-[0.12em] ${active ? 'text-cyan-100' : 'text-neutral-500'}`}>
-                    {active ? 'Loaded' : 'Not used'}
+                  <span className={`shrink-0 font-mono text-[9px] uppercase tracking-[0.12em] ${loaded ? 'text-cyan-100' : blocked ? 'text-human' : 'text-neutral-500'}`}>
+                    {managed.status}
                   </span>
                 </div>
                 <p className="mt-2 min-h-10 text-xs leading-relaxed text-neutral-500">{slot.description}</p>
-                <p className="mt-3 text-xs leading-relaxed text-neutral-300">{active
-                  ? `${SEN_FATE_SURVIVAL_SKILL.name} v${SEN_FATE_SURVIVAL_SKILL.version} loads on every chapter of this Fate Survival story.`
-                  : 'Regular Reader stories leave this slot empty. It follows the story\'s Fate mode and is never equipped by hand.'}</p>
-                {active && (
+                <p className="mt-3 text-xs leading-relaxed text-neutral-300">{managed.summary}</p>
+                {managed.skill?.instructions && (
                   <details className="mt-3 rounded-lg border border-white/10 bg-black/20 px-3 py-2">
                     <summary className="cursor-pointer text-[11px] font-medium text-cyan-100">View skill instructions</summary>
-                    <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words font-sans text-xs leading-relaxed text-neutral-300">{SEN_FATE_SURVIVAL_SKILL.instructions}</pre>
+                    <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words font-sans text-xs leading-relaxed text-neutral-300">{managed.skill.instructions}</pre>
                   </details>
                 )}
               </article>
@@ -307,14 +365,6 @@ function SkillLoadoutPanel({
           const selectedKey = reference ? harnessSkillKey(reference) : '';
           const selected = reference ? installedByKey.get(selectedKey) : undefined;
           const slotSkills = installedSkills.filter(skill => skill.slot === slot.id);
-          // Translation skills stay visible with their declared language so an
-          // incompatible one is explained rather than silently hidden.
-          const compatible = slot.id === 'translation'
-            ? slotSkills.filter(skill => isTranslationSkillCompatible(skill, story.originalLanguage))
-            : slotSkills;
-          const incompatible = slot.id === 'translation'
-            ? slotSkills.filter(skill => !isTranslationSkillCompatible(skill, story.originalLanguage))
-            : [];
           const missing = Boolean(reference && !selected);
           const applications = selected?.applications.map(value => value.replace(/-/g, ' ')).join(' · ');
           return (
@@ -342,19 +392,10 @@ function SkillLoadoutPanel({
               >
                 {slot.id !== 'author' && <option value="">No skill equipped</option>}
                 {missing && <option value={selectedKey}>{selectedKey} · unavailable</option>}
-                {compatible.map(skill => <option key={harnessSkillKey(skill)} value={harnessSkillKey(skill)}>
-                  {skill.name} · v{skill.version}{slot.id === 'translation' ? ` · ${translationTargetLanguage(skill)}` : ''}
-                </option>)}
-                {incompatible.map(skill => <option key={harnessSkillKey(skill)} value={harnessSkillKey(skill)} disabled>
-                  {skill.name} · v{skill.version} · {translationTargetLanguage(skill)} · not this story’s language
+                {slotSkills.map(skill => <option key={harnessSkillKey(skill)} value={harnessSkillKey(skill)}>
+                  {skill.name} · v{skill.version}
                 </option>)}
               </select>
-              {slot.id === 'translation' && (
-                <p className="mt-2 text-[11px] text-neutral-500">
-                  This story’s Original Language is <span className="font-mono text-neutral-300">{story.originalLanguage}</span>.
-                  {incompatible.length > 0 && ` ${incompatible.length} installed Translation ${incompatible.length === 1 ? 'skill targets' : 'skills target'} another language and cannot be equipped here.`}
-                </p>
-              )}
               {selected ? (
                 <div className="mt-3 border-t border-white/10 pt-3">
                   <p className="text-xs leading-relaxed text-neutral-300">{selected.description}</p>
@@ -368,7 +409,7 @@ function SkillLoadoutPanel({
                     </details>
                   )}
                 </div>
-              ) : compatible.length === 0 && !missing ? (
+              ) : slotSkills.length === 0 && !missing ? (
                 <p className="mt-3 text-[11px] text-neutral-500">No installed skill is available for this slot.</p>
               ) : null}
               {/* Direct intake: the package is validated against this slot and
@@ -384,7 +425,7 @@ function SkillLoadoutPanel({
             </article>
           );
         })}
-        <article className="rounded-xl border border-gold-accent/30 bg-gold-accent/[0.07] p-4">
+        <article className="rounded-xl border border-gold-accent/30 bg-gold-accent/[0.07] p-4" data-testid="harness-official-requirements">
           <div className="flex items-start justify-between gap-3">
             <div className="flex min-w-0 items-center gap-2">
               <FileText size={17} className="shrink-0 text-gold-accent" aria-hidden="true" />
@@ -395,15 +436,17 @@ function SkillLoadoutPanel({
             </span>
           </div>
           <p className="mt-2 min-h-10 text-xs leading-relaxed text-neutral-400">
-            Permanent HARNESS rules applied after every equipped CAPA Skill.
+            Permanent HARNESS rules added after the CAPA Skills when a chapter needs them: when Accessibility or Translation loads, or the story is not written in English.
           </p>
           <p className="mt-3 font-mono text-[9px] uppercase tracking-[0.12em] text-neutral-500">
-            Always active · not replaceable
+            {officialRequirements ? 'Sent with this story\'s chapters · not replaceable' : 'Not sent for this story'}
           </p>
-          <details className="mt-3 rounded-lg border border-white/10 bg-black/20 px-3 py-2">
-            <summary className="cursor-pointer text-[11px] font-medium text-gold-accent">View official requirements</summary>
-            <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words font-sans text-xs leading-relaxed text-neutral-300">{HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS}</pre>
-          </details>
+          {officialRequirements && (
+            <details className="mt-3 rounded-lg border border-white/10 bg-black/20 px-3 py-2">
+              <summary className="cursor-pointer text-[11px] font-medium text-gold-accent">View official requirements</summary>
+              <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words font-sans text-xs leading-relaxed text-neutral-300">{officialRequirements}</pre>
+            </details>
+          )}
         </article>
       </div>
     </LibraryPanel>
@@ -988,6 +1031,7 @@ export function HarnessGenerationWorkspace({
   modelAdapter: injectedAdapter,
   storySeedSource,
   installedSkills = EMPTY_INSTALLED_SKILLS,
+  showHarnessInternals = false,
   renderSkillImport,
   renderSlotSkillImport,
   registeredMediaPacks = EMPTY_MEDIA_PACKS,
@@ -1160,6 +1204,7 @@ export function HarnessGenerationWorkspace({
         option.foundation,
         option.originalLanguage,
         option.initialSkillLoadout,
+        { chapterWritingStyle: option.chapterWritingStyle },
       );
       setSelectedStoryId(created.id);
       setManualStart(false);
@@ -1176,6 +1221,10 @@ export function HarnessGenerationWorkspace({
   const setSkillSlot = (slot: HarnessSkillSlotId, reference?: HarnessSkillReference) => {
     if (!selectedStory) return;
     void run(() => controller.setSkillSlot(selectedStory.id, slot, reference));
+  };
+  const setReadingMode = (mode: ChapterWritingStyle) => {
+    if (!selectedStory) return;
+    void run(() => controller.setChapterWritingStyle(selectedStory.id, mode));
   };
   /**
    * Equips a skill the host has just installed from its slot. The catalog is
@@ -1457,8 +1506,17 @@ export function HarnessGenerationWorkspace({
               />
             )}
 
-            {renderSkillImport?.(busy)}
             {selectedStory && novelTab === 'novel' && (
+              <StorySettingsPanel
+                story={selectedStory}
+                installedSkills={availableSkills}
+                busy={busy}
+                onReadingModeChange={setReadingMode}
+              />
+            )}
+
+            {showHarnessInternals && renderSkillImport?.(busy)}
+            {showHarnessInternals && selectedStory && novelTab === 'novel' && (
               <SkillLoadoutPanel
                 story={selectedStory}
                 fateMode={selectedMode}

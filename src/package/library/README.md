@@ -22,8 +22,8 @@ durable ledgers and concrete infrastructure stay in the host/backend.
 | `./shell` | Navigation, route models, header/footer and shell orchestration |
 | `./home` | Library Home, discovery and story-detail surfaces |
 | `./creator-space` | The Create page: Creator Space tiles, the Creator Toolkit preview and the Your worlds row over host-supplied worlds, Energy and destinations |
-| `./story-seed` | Authenticated Story Bank, Help and branded creation journey |
-| `./generation` | First-party HARNESS workspace composition |
+| `./story-seed` | Authenticated Story Bank, Help and branded creation journey; Story Seed Settings own the Story Language and Reading Mode a new story starts with |
+| `./generation` | First-party HARNESS workspace composition: the novel page and its Story Settings (Story Language, Reading Mode). HARNESS internals such as CAPA slots show only when a development host sets `showHarnessInternals` |
 | `./media` | First-party catalog selection and entitlement contracts |
 | `./manifestations` | Celestial manifestation orchestration around Library UI visuals |
 | `./styles.css` | Library feature styles |

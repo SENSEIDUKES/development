@@ -268,24 +268,25 @@ describe('CAPA Prompt delivery', () => {
     });
   });
 
-  it('assembles normally when the Translation slot is empty', () => {
-    const prompt = assembleCapaPrompt({ skills: [SEN_NOVEL_AUTHOR_SKILL], capturedAt: 'a' });
+  it('assembles an English chapter with an empty Translation slot and no official requirements', () => {
+    const prompt = assembleCapaPrompt({ skills: [SEN_NOVEL_AUTHOR_SKILL], capturedAt: 'a', originalLanguage: 'en' });
 
-    expect(prompt.text).toContain('HARNESS OFFICIAL OUTPUT REQUIREMENTS');
+    expect(prompt.text).not.toContain('HARNESS OFFICIAL OUTPUT REQUIREMENTS');
     expect(prompt.translationGlossary).toBeUndefined();
   });
 });
 
-describe('equipping a Translation skill on a story', () => {
+describe('the Translation package follows the Story Language', () => {
   const japanese = validateHarnessSkillManifest(translationSkill());
   const korean = validateHarnessSkillManifest(translationSkill({
     id: 'test.translation.ko', name: 'Test Korean Translation', translation: { targetLanguage: 'ko' },
   }));
+  const author = { id: SEN_NOVEL_AUTHOR_SKILL.id, version: SEN_NOVEL_AUTHOR_SKILL.version };
 
-  const controllerWith = async (repository = new InMemoryHarnessGenerationRepository()) => {
+  const controllerWith = async (skills: HarnessSkillManifest[] = [japanese, korean]) => {
     const controller = new HarnessGenerationController({
-      repository,
-      installedSkills: [japanese, korean],
+      repository: new InMemoryHarnessGenerationRepository(),
+      installedSkills: skills,
       modelAdapter: {
         getServerInfo: async () => ({ provider: 'gemini' as const, configured: false, models: [], defaultModel: 'm' }),
         generate: async (): Promise<HarnessGenerationResponse> => { throw new Error('not used'); },
@@ -294,38 +295,53 @@ describe('equipping a Translation skill on a story', () => {
     await controller.hydrate();
     return controller;
   };
+  const translationFor = (skills: HarnessSkillManifest[], language: 'en' | 'ja' | 'ko') => {
+    const story = { ...baseStory, originalLanguage: language };
+    return freezeHarnessSkillLoadout(story, createHarnessSkillCatalog([SEN_NOVEL_AUTHOR_SKILL, ...skills]), 'a')
+      .skills.find(skill => skill.slot === 'translation')?.id;
+  };
+  const baseStory = {
+    id: 'hst', title: 'T', originalLanguage: 'ja' as const, createdAt: 'a', updatedAt: 'a',
+    activeFoundationRevisionId: 'hfr', foundationRevisionIds: ['hfr'], head: { nextChapterNumber: 1 },
+    skillLoadout: { author },
+  };
 
-  it('rejects a skill whose target language is not the story Original Language', async () => {
+  it('is never equipped by hand, at creation or afterwards', async () => {
     const controller = await controllerWith();
     const story = await controller.createStory({ premise: 'A courier crosses the sea.' }, 'ja');
 
-    await expect(controller.setSkillSlot(story.id, 'translation', korean))
-      .rejects.toThrow("this story's Original Language is ja");
+    await expect(controller.setSkillSlot(story.id, 'translation', japanese))
+      .rejects.toThrow("follows the story's Story Language");
+    await expect(controller.createStory({ premise: 'Another crossing.' }, 'ja', { author, translation: japanese }))
+      .rejects.toThrow("follows the story's Story Language");
   });
 
-  it('accepts a matching skill and keeps it through reload', async () => {
-    const repository = new InMemoryHarnessGenerationRepository();
-    const controller = await controllerWith(repository);
-    const story = await controller.createStory({ premise: 'A courier crosses the sea.' }, 'ja');
-    await controller.setSkillSlot(story.id, 'translation', japanese);
-
-    const reloaded = await controllerWith(repository);
-    expect(reloaded.snapshot().stories[0].skillLoadout?.translation)
-      .toMatchObject({ id: japanese.id, version: japanese.version });
+  it('loads the installed package for the story language, and nothing for English', () => {
+    expect(translationFor([japanese, korean], 'ja')).toBe(japanese.id);
+    expect(translationFor([japanese, korean], 'ko')).toBe(korean.id);
+    expect(translationFor([japanese, korean], 'en')).toBeUndefined();
   });
 
-  it('rechecks compatibility before every generation attempt', async () => {
-    const controller = await controllerWith();
-    const story = await controller.createStory({ premise: 'A courier crosses the sea.' }, 'ja');
-    await controller.setSkillSlot(story.id, 'translation', japanese);
+  it('ignores whatever an older story saved in the slot', () => {
+    const story = { ...baseStory, skillLoadout: { author, translation: { id: korean.id, version: korean.version } } };
+    const skills = freezeHarnessSkillLoadout(story, createHarnessSkillCatalog([SEN_NOVEL_AUTHOR_SKILL, japanese, korean]), 'a').skills;
+    expect(skills.find(skill => skill.slot === 'translation')?.id).toBe(japanese.id);
+  });
 
-    // A story reloaded against a host whose skill now targets another language
-    // must not reach the provider.
-    const drifted = { ...controller.snapshot().stories[0], originalLanguage: 'ko' as const };
-    expect(() => freezeHarnessSkillLoadout(
-      drifted,
-      createHarnessSkillCatalog([SEN_NOVEL_AUTHOR_SKILL, japanese]),
-      'a',
-    )).toThrow("this story's Original Language is ko");
+  it('never writes chapters with a package that only translates for readers', () => {
+    const readerOnly = validateHarnessSkillManifest(translationSkill({ id: 'test.reader.ja', applications: ['reader'] }));
+    expect(translationFor([readerOnly], 'ja')).toBeUndefined();
+  });
+
+  it('loads the newest version of one package', () => {
+    const newer = validateHarnessSkillManifest(translationSkill({ version: '1.2.0', instructions: 'Newer Japanese guidance.' }));
+    expect(freezeHarnessSkillLoadout(baseStory, createHarnessSkillCatalog([SEN_NOVEL_AUTHOR_SKILL, japanese, newer]), 'a')
+      .skills.find(skill => skill.slot === 'translation')?.version).toBe('1.2.0');
+  });
+
+  it('never chooses between competing packages for the same language', () => {
+    const rival = validateHarnessSkillManifest(translationSkill({ id: 'test.translation.ja.rival', name: 'Rival Japanese' }));
+    expect(() => freezeHarnessSkillLoadout(baseStory, createHarnessSkillCatalog([SEN_NOVEL_AUTHOR_SKILL, japanese, rival]), 'a'))
+      .toThrow('More than one Japanese (日本語) writing package is installed');
   });
 });

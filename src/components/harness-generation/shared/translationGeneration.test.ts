@@ -81,14 +81,13 @@ const buildController = (options: {
 const MODEL = 'google/gemini-3.1-flash-lite';
 const premise = 'A courier refines Qi and carries a Jade Slip to a mountain school.';
 
-describe('Translation skill through a real generation attempt', () => {
-  it('freezes the equipped skill, its provenance, and the selected reference onto the attempt', async () => {
+describe('Translation package resolved from the Story Language through a real generation attempt', () => {
+  it('freezes the resolved package, its provenance, and the selected reference onto the attempt', async () => {
     const repository = new InMemoryHarnessGenerationRepository();
     const skill = japaneseSkill();
     const controller = buildController({ repository, skills: [skill] });
     await controller.hydrate();
     const story = await controller.createStory({ premise }, 'ja');
-    await controller.setSkillSlot(story.id, 'translation', { id: skill.id, version: skill.version });
 
     await controller.generateNextChapter(story.id, MODEL);
 
@@ -112,7 +111,6 @@ describe('Translation skill through a real generation attempt', () => {
     const controller = buildController({ skills: [skill], captures });
     await controller.hydrate();
     const story = await controller.createStory({ premise }, 'ja');
-    await controller.setSkillSlot(story.id, 'translation', { id: skill.id, version: skill.version });
 
     await controller.generateNextChapter(story.id, MODEL);
 
@@ -133,7 +131,6 @@ describe('Translation skill through a real generation attempt', () => {
     const controller = buildController({ repository, skills: [skill], failFirstCall: true });
     await controller.hydrate();
     const story = await controller.createStory({ premise }, 'ja');
-    await controller.setSkillSlot(story.id, 'translation', { id: skill.id, version: skill.version });
 
     await controller.generateNextChapter(story.id, MODEL);
     const failed = repository.snapshot().attempts.at(-1)!;
@@ -150,9 +147,10 @@ describe('Translation skill through a real generation attempt', () => {
       .toEqual(failed.capaPrompt.translationGlossary?.entries);
   });
 
-  it('generates normally for a story that leaves the Translation slot empty', async () => {
+  it('writes a Japanese story with no writing package installed, stating its Story Language', async () => {
     const repository = new InMemoryHarnessGenerationRepository();
-    const controller = buildController({ repository });
+    const captures: Capture[] = [];
+    const controller = buildController({ repository, captures });
     await controller.hydrate();
     const story = await controller.createStory({ premise }, 'ja');
 
@@ -160,8 +158,14 @@ describe('Translation skill through a real generation attempt', () => {
 
     const snapshot = repository.snapshot();
     expect(snapshot.chapters).toHaveLength(1);
-    expect(snapshot.stories[0].skillLoadout?.translation).toBeUndefined();
-    expect(snapshot.attempts[0].capaPrompt.translationGlossary).toBeUndefined();
+    expect(snapshot.stories[0].originalLanguage).toBe('ja');
+    const [attempt] = snapshot.attempts;
+    expect(attempt.capaPrompt.skills.some(skill => skill.slot === 'translation')).toBe(false);
+    expect(attempt.capaPrompt.translationGlossary).toBeUndefined();
+    // Only the minimum HARNESS-owned language requirement travels.
+    expect(attempt.capaPrompt.text).toContain('Write all reader-facing chapter content in Japanese (日本語), this story\'s Original Language (ja).');
+    expect(attempt.capaPrompt.text).not.toMatch(/Translation instructions|Accessibility/);
+    expect(captures[0].systemInstruction).toContain('this story\'s Original Language (ja)');
   });
 
   it('keeps a glossary-free Translation skill working as plain instructions', async () => {
@@ -172,7 +176,6 @@ describe('Translation skill through a real generation attempt', () => {
     const controller = buildController({ skills: [skill], captures });
     await controller.hydrate();
     const story = await controller.createStory({ premise }, 'ja');
-    await controller.setSkillSlot(story.id, 'translation', { id: skill.id, version: skill.version });
 
     await controller.generateNextChapter(story.id, MODEL);
 

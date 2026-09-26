@@ -76,7 +76,7 @@ const Review = ({ initial, onAddArcs, onRegenerateBlueprint }: {
   return (
     <LibraryPresentationProvider>
       <BlueprintReview seed={seed} updateSeed={setSeed} blueprint={blueprint} setBlueprint={setBlueprint}
-        originalLanguage="en" onOriginalLanguageChange={vi.fn()} onBack={vi.fn()} onStartStory={vi.fn()} onExportSeed={vi.fn()}
+        originalLanguage="en" onBack={vi.fn()} onStartStory={vi.fn()} onExportSeed={vi.fn()}
         isGenerating={false} onAddArcs={onAddArcs} onRegenerateBlueprint={onRegenerateBlueprint} />
     </LibraryPresentationProvider>
   );

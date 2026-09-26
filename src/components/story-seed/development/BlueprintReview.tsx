@@ -25,7 +25,7 @@ import {
 import { ArcWorkspace } from './workspaces/ArcWorkspace';
 import { BlueprintArcRoadmapSection, type BlueprintArcAction } from './blueprint/BlueprintArcRoadmapSection';
 import { createBlueprintMarkdown } from './blueprint/createBlueprintMarkdown';
-import { SEN_LANGUAGES, normalizeSenLanguageCode, type SenLanguageCode } from '@seihouse/sen/contracts';
+import { getSenLanguageLabel, normalizeChapterWritingStyle, type SenLanguageCode } from '@seihouse/sen/contracts';
 
 interface BlueprintReviewProps {
   blueprint: WorldBlueprint;
@@ -40,9 +40,8 @@ interface BlueprintReviewProps {
   onRegenerateBlueprint?: (arcCount: number) => Promise<void>;
   /** Plans only the arcs being added, inserted before the final arc. Absent when the host cannot. */
   onAddArcs?: (arcCount: number) => Promise<void>;
-  /** Permanent story identity, chosen before the story is manifested. */
+  /** The seed's Story Language, chosen in Story Seed Settings and confirmed here before Manifest. */
   originalLanguage: SenLanguageCode;
-  onOriginalLanguageChange: (language: SenLanguageCode) => void;
 }
 
 export const BlueprintReview = ({
@@ -57,7 +56,6 @@ export const BlueprintReview = ({
   onRegenerateBlueprint,
   onAddArcs,
   originalLanguage,
-  onOriginalLanguageChange,
 }: BlueprintReviewProps) => {
   const runtime = useStoryCreationRuntime();
   const activeAgentId = useStoryCreationStore(state => state.activeAgentId);
@@ -291,28 +289,18 @@ export const BlueprintReview = ({
             </LibraryButton>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-end">
-              {/* Original Language is permanent story identity: it is chosen
-                  once here and frozen onto the story when it manifests. */}
-              <div className="flex flex-col gap-1">
-                <label
-                  htmlFor="story-original-language"
-                  className="font-sc text-[10px] font-bold uppercase tracking-[0.18em] text-neutral-400"
-                >
-                  Original Language
-                </label>
-                <select
-                  id="story-original-language"
-                  value={originalLanguage}
-                  disabled={isGenerating}
-                  onChange={event => onOriginalLanguageChange(normalizeSenLanguageCode(event.target.value))}
-                  className="h-11 min-w-44 rounded border border-neutral-800 bg-black px-2 font-sans text-[11px] text-signal outline-none transition-all hover:border-portal/50 focus:border-portal disabled:opacity-50"
-                >
-                  {SEN_LANGUAGES.map(language => (
-                    <option key={language.code} value={language.code}>{language.label}</option>
-                  ))}
-                </select>
-                <p className="max-w-44 font-sans text-[10px] leading-snug text-neutral-500">
-                  The language this story is written in. It cannot be changed later.
+              {/* The Story Settings this novel starts with, confirmed before
+                  Manifest. They are edited in Story Seed Settings. */}
+              <div className="flex flex-col gap-1 sm:w-56 sm:shrink-0" data-testid="blueprint-story-settings">
+                <p className="font-sc text-[10px] font-bold uppercase tracking-[0.18em] text-neutral-400">Story Settings</p>
+                <p className="font-sans text-[11px] leading-snug text-signal">
+                  Story Language: <span data-testid="blueprint-story-language" data-language={originalLanguage}>{getSenLanguageLabel(originalLanguage)}</span>
+                </p>
+                <p className="font-sans text-[11px] leading-snug text-signal">
+                  Reading Mode: <span data-testid="blueprint-reading-mode">{normalizeChapterWritingStyle(seed.story.optional.chapterWritingStyle)}</span>
+                </p>
+                <p className="font-sans text-[10px] leading-snug text-neutral-500">
+                  Change these in Settings from Refine Details. The language can’t be changed once the novel begins.
                 </p>
               </div>
 

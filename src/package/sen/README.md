@@ -9,6 +9,7 @@ accounts, Energy, QI, first-party catalogs, Workshop state, or concrete APIs.
 
 | Import | Owner responsibility |
 | --- | --- |
+| `./text-highlight-engine` | Single-block selection, local replacement, explicit deletion and Undo; no Reader or chapter dependencies |
 | `@seihouse/sen` | Neutral presentation contracts/defaults and version |
 | `./contracts` | Story, chapter, block, identity, voice, usage and language contracts |
 | `./presentation` | Product-neutral presentation provider and slots |

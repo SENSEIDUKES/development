@@ -29,10 +29,10 @@ export function creatorWorldsFromHarness(state: Pick<HarnessWorkspaceState, 'sto
   }));
 }
 
-/** Read-only: Create never saves to the chapter workspace's store. */
+/** Read-only: Create never saves, upgrades or resets the chapter workspace's store. */
 async function readLocalCreatorWorlds(): Promise<CreatorWorld[]> {
   if (typeof indexedDB === 'undefined') throw new Error('This browser has no local story storage, so written worlds cannot be read here.');
-  return creatorWorldsFromHarness(await new IndexedDbHarnessGenerationRepository().load());
+  return creatorWorldsFromHarness(await new IndexedDbHarnessGenerationRepository().peek());
 }
 
 /** The chapter workspace is its own Workshop page, so leave any preview frame for it. */

@@ -49,7 +49,8 @@
 }
 [data-creator-space] .creator-space-link:hover { color: #fff; }
 
-[data-creator-space] :is(.creator-space-stat, .creator-space-link, .creator-space-tool):focus-visible {
+/* World cards included: the selected card's glow replaces the card's own focus ring. */
+[data-creator-space] :is(.creator-space-stat, .creator-space-link, .creator-space-tool, .creator-space-world):focus-visible {
   outline: 2px solid rgba(4, 172, 255, 0.85);
   outline-offset: 2px;
 }

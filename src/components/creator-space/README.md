@@ -69,7 +69,9 @@ like Home, so the selection survives tab switches.
 ### The DEV host adapter
 
 `CreatorSpaceHost` (Workshop-owned) reads worlds from the chapter workspace's own
-browser-local store, `IndexedDbHarnessGenerationRepository` — **read only**, never `save`.
+browser-local store through `IndexedDbHarnessGenerationRepository.peek()` — **read only**: it
+never saves, and an older-format store is upgraded in memory only, leaving the upgrade (and
+its preserved copy) to the chapter workspace.
 Each `HarnessStory` becomes a world: distinct committed chapter numbers are its chapter
 count, `conclusion` makes it Complete, and `visibility` public/shared are shown as such
 (private is Draft). Stories carry no cover art or genre yet. Energy comes from the Energy

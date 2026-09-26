@@ -147,6 +147,36 @@ const nav = page => page.getByRole('navigation', { name: 'Library global navigat
   await ctx.close();
 }
 
+// 3b. Create only reads: an older-format store is shown but never upgraded or reset by Create.
+{
+  const { page, ctx, errors } = await open(shell(''));
+  await page.getByText('No worlds yet').waitFor();
+  const before = await page.evaluate(async () => {
+    const { createEmptyHarnessWorkspaceState } = await import('/src/components/harness-generation/shared/repository.ts');
+    const { HARNESS_GENERATION_SCHEMA_VERSION } = await import('/src/narrative/generation.ts');
+    const legacy = { ...createEmptyHarnessWorkspaceState(), schemaVersion: 18, stories: [{ id: 'legacy-1', title: 'Verification: Older Scroll', createdAt: '2026-09-01T00:00:00Z', updatedAt: '2026-09-01T00:00:00Z', activeFoundationRevisionId: 'f', foundationRevisionIds: ['f'], originalLanguage: 'en', head: { nextChapterNumber: 1 } }] };
+    const db = await new Promise((resolve, reject) => { const r = indexedDB.open('seihouse-harness-generation-v1', HARNESS_GENERATION_SCHEMA_VERSION); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); });
+    await new Promise((resolve, reject) => { const t = db.transaction('workspace', 'readwrite'); t.objectStore('workspace').put(legacy, 'state'); t.oncomplete = resolve; t.onerror = () => reject(t.error); });
+    db.close();
+    return legacy.schemaVersion;
+  });
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.getByText('1 world', { exact: true }).waitFor();
+  assert.equal(await selectedTitle(page), 'Verification: Older Scroll');
+  const after = await page.evaluate(async () => {
+    const db = await new Promise((resolve, reject) => { const r = indexedDB.open('seihouse-harness-generation-v1'); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); });
+    const read = key => new Promise((resolve, reject) => { const q = db.transaction('workspace', 'readonly').objectStore('workspace'); const r = key ? q.get(key) : q.getAllKeys(); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); });
+    const [state, keys] = [await read('state'), await read()];
+    db.close();
+    return { schemaVersion: state.schemaVersion, keys };
+  });
+  assert.equal(after.schemaVersion, before, 'Create must not upgrade the stored workspace');
+  assert.deepEqual(after.keys, ['state'], 'Create must not write a preserved copy');
+  results.readOnlyStore = { shownFromOlderFormat: true, storedSchemaVersionAfter: after.schemaVersion, storeKeys: after.keys };
+  assert.deepEqual(errors, []);
+  await ctx.close();
+}
+
 // 4. Widths, no sideways page scroll, reduced motion.
 results.widths = {};
 for (const [width, height] of [[320, 700], [768, 1024], [1440, 900]]) {

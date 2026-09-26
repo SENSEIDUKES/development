@@ -20,6 +20,13 @@
     "landsAtTop": true
   },
   "localErrors": [],
+  "readOnlyStore": {
+    "shownFromOlderFormat": true,
+    "storedSchemaVersionAfter": 18,
+    "storeKeys": [
+      "state"
+    ]
+  },
   "widths": {
     "320": {
       "horizontalOverflow": 0,

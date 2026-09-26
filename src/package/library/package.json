@@ -56,6 +56,10 @@
       "types": "./dist/types/package/library/home.d.ts",
       "import": "./dist/home.js"
     },
+    "./creator-space": {
+      "types": "./dist/types/package/library/creator-space.d.ts",
+      "import": "./dist/creator-space.js"
+    },
     "./media": {
       "types": "./dist/types/package/library/media.d.ts",
       "import": "./dist/media.js"

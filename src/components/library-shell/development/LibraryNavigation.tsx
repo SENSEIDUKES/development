@@ -20,7 +20,7 @@ export interface LibraryNavigationProps {
   children: ReactNode;
 }
 const Context = createContext<LibrarySectionMenu | null>(null);
-const icons = { home: 'home', library: 'book', discover: 'discovery' } as const satisfies Record<string, SENNavigationIconName>;
+const icons = { home: 'home', create: 'book', discover: 'discovery' } as const satisfies Record<string, SENNavigationIconName>;
 
 /** Optional existing desktop rail; retains the page's own destinations. */
 export function LibrarySectionSidebar() {

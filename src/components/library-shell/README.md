@@ -4,7 +4,7 @@
 - **Source locations:** Light-Novels `src/components/GlobalHeader.tsx` (`GlobalHeader`), `src/components/DaoInsights.tsx` (`DaoInsights`), and the collection navigation in `src/components/LibraryScreen.tsx` (`LibraryScreen`). Development `src/components/story-seed/development/CreationModal.tsx` (`CreationModal`), `StorySeedHeader.tsx`, `StorySeedSelector.tsx`, `StorySeedMobileNavigation.tsx`, and `StorySeedSettings.tsx`.
 - **Workshop preview:** `?preview=library-shell`
 - **Replica created:** 2026-09-08
-- **Last Workshop update:** 2026-09-25
+- **Last Workshop update:** 2026-09-26
 - **Last source comparison:** 2026-09-08
 - **Replica status:** under refinement; locked captures plus Development workspaces on the canonical `SEIAppHeader` and `SEIAppShell`.
 
@@ -146,6 +146,8 @@ Nothing in this PR is transferred back automatically. Light-Novels and locked re
 For an eventual approved change, identify the owning lane first. The footer would transfer `LibraryFooter.tsx`, `LibraryFooterSocialIcons.tsx`, `library-footer.css` and `MainLibraryFooter.tsx` to replace the footer block in Light-Novels `src/App.tsx`, with the host supplying its router callback, Help opener, social URLs and legal pages. Main header/DAO changes would target Light-Novels `src/components/GlobalHeader.tsx`, `src/components/DaoInsights.tsx`, relevant `src/index.css` rules, and only if needed the collection fragment in `src/components/LibraryScreen.tsx`. Story Seed changes would target its existing development header, selector, mobile navigation, settings, `CreationModal` integration, and `story-seed.css`, then ship through the established SEN package and Library host presentation adapter. Shared visual primitives would be changed in UI, published/packed first, then consumed by the hosts. Do not copy the frame HTML, Workshop wrappers, mock context, fixture data, content slots, or capture manifest into a production application.
 
 ## Workshop history
+
+- **2026-09-26:** The bottom strip's Library tab, which reopened Home with My Library selected, became **Create**, opening the new Create page (`{ screen: 'creator-space' }`, [Create](../creator-space/README.md)). `LibraryDestination` `library` → `create` (same book mark); My Library and story detail now select Home; the outline's `library` group became `create`. Header Search and the footer Explore menu gained Creator Space; My Library stays in both. The Development capture mounts Create through `CreatorSpaceHost` and keeps it mounted like Home. Locked captures and source-comparison dates are unchanged.
 
 - **2026-09-17:** Added the compact platform footer (`LibraryFooter`, `MainLibraryFooter`, `library-footer.css`) beneath Home content in the Development shell, keeping the SEN identity and statement, adding the visible social row, three closed single-open accordions over existing destinations, the account language entry that opens the Cave's Language setting, and the legal row. No portal button. Locked captures, header, bottom navigation and Home sections are unchanged.
 

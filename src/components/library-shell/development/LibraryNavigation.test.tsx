@@ -25,10 +25,12 @@ const globalNav = () => container.querySelector('.library-global-navigation')!;
 
 it.each<[LibraryLocation, string | undefined]>([
   [{ screen: 'home', collection: 'featured' }, 'home'],
-  [{ screen: 'home', collection: 'my-library' }, 'library'],
+  // My Library is a Home collection; Create is its own page.
+  [{ screen: 'home', collection: 'my-library' }, 'home'],
+  [{ screen: 'creator-space' }, 'create'],
   [{ screen: 'home', collection: 'challenges' }, 'discover'],
   [{ screen: 'sects' }, 'home'], [{ screen: 'pricing' }, 'home'],
-  [{ screen: 'challenge' }, 'discover'], [{ screen: 'detail' }, 'library'],
+  [{ screen: 'challenge' }, 'discover'], [{ screen: 'detail' }, 'home'],
   [{ screen: 'profile', cave: '/settings/switchboard' }, 'profile'],
   [{ screen: 'profile', cave: '/public/relics' }, 'profile'],
   [{ screen: 'reader' }, undefined], [{ screen: 'creator' }, undefined], [{ screen: 'unknown' }, undefined],
@@ -40,7 +42,7 @@ it('uses ordered global destinations, preserves host routes and updates selectio
   const navigate = vi.fn();
   const page = (location: LibraryLocation) => <MainLibraryNavigation location={location} onNavigate={navigate}><main>Existing content</main></MainLibraryNavigation>;
   await render(page({ screen: 'profile', cave: '/settings' }));
-  expect(Array.from(globalNav().querySelectorAll('button')).map(button => button.textContent)).toEqual(['Home', 'Library', 'Discover', 'Profile']);
+  expect(Array.from(globalNav().querySelectorAll('button')).map(button => button.textContent)).toEqual(['Home', 'Create', 'Discover', 'Profile']);
   expect(globalNav().querySelector('[data-sen-navigation-icon="home"]')).not.toBeNull();
   expect(globalNav().querySelector('[data-sen-navigation-icon="book"]')).not.toBeNull();
   expect(globalNav().querySelector('[data-sen-navigation-icon="discovery"]')).not.toBeNull();
@@ -48,18 +50,21 @@ it('uses ordered global destinations, preserves host routes and updates selectio
   expect(globalNav().querySelector('[aria-current="page"]')?.textContent).toBe('Profile');
   for (const [label, target] of [
     ['Home', { screen: 'home', collection: 'featured' }],
-    ['Library', { screen: 'home', collection: 'my-library' }],
+    ['Create', { screen: 'creator-space' }],
     ['Discover', { screen: 'home', collection: 'challenges' }],
     ['Profile', { screen: 'profile', cave: '/home' }],
   ] as const) {
     await click(button(label, globalNav()));
     expect(navigate).toHaveBeenLastCalledWith(target);
   }
-  await render(page({ screen: 'home', collection: 'my-library' }));
-  expect(globalNav().querySelector('[aria-current="page"]')?.textContent).toBe('Library');
+  await render(page({ screen: 'creator-space' }));
+  expect(globalNav().querySelector('[aria-current="page"]')?.textContent).toBe('Create');
   navigate.mockClear();
-  await click(button('Library', globalNav()));
+  await click(button('Create', globalNav()));
   expect(navigate).not.toHaveBeenCalled();
+  // Home's My Library collection keeps Home selected now that its tab is Create.
+  await render(page({ screen: 'home', collection: 'my-library' }));
+  expect(globalNav().querySelector('[aria-current="page"]')?.textContent).toBe('Home');
 });
 
 it('keeps four destinations with or without page options and preserves page state', async () => {
@@ -73,7 +78,7 @@ it('keeps four destinations with or without page options and preserves page stat
   await click(button('Page state 0'));
   await render(page('profile', true));
   expect(button('Page state 1')).toBeDefined();
-  expect(Array.from(globalNav().querySelectorAll('button')).map(button => button.textContent)).toEqual(['Home', 'Library', 'Discover', 'Profile']);
+  expect(Array.from(globalNav().querySelectorAll('button')).map(button => button.textContent)).toEqual(['Home', 'Create', 'Discover', 'Profile']);
   expect(globalNav().querySelector('[aria-haspopup], [aria-expanded], [aria-controls]')).toBeNull();
   expect(button('Section')).toBeUndefined();
   expect(document.querySelector('[role="dialog"]')).toBeNull();

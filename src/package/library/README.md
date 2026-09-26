@@ -21,6 +21,7 @@ durable ledgers and concrete infrastructure stay in the host/backend.
 | `./relics` | Fate Survival Relics: contracts, the read client, `FateSurvivalRelicsPanel` and `RelicReveal` |
 | `./shell` | Navigation, route models, header/footer and shell orchestration |
 | `./home` | Library Home, discovery and story-detail surfaces |
+| `./creator-space` | The Create page: Creator Space tiles, the Creator Toolkit preview and the Your worlds row over host-supplied worlds, Energy and destinations |
 | `./story-seed` | Authenticated Story Bank, Help and branded creation journey |
 | `./generation` | First-party HARNESS workspace composition |
 | `./media` | First-party catalog selection and entitlement contracts |

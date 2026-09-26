@@ -99,11 +99,26 @@ export class IndexedDbHarnessGenerationRepository implements HarnessGenerationRe
     return this.databasePromise;
   }
 
-  async load(): Promise<HarnessWorkspaceState> {
+  private async readStored(): Promise<{ database: IDBDatabase; stored: unknown }> {
     const database = await this.open();
     const transaction = database.transaction(STORE_NAME, 'readonly');
     const stored = await requestResult(transaction.objectStore(STORE_NAME).get(WORKSPACE_KEY));
     await transactionDone(transaction);
+    return { database, stored };
+  }
+
+  /**
+   * The workspace as `load` would present it, without writing: an older version is
+   * upgraded in memory only, and unreadable data reads as empty while staying stored.
+   * For readers such as Library Create; only the chapter workspace upgrades storage.
+   */
+  async peek(): Promise<HarnessWorkspaceState> {
+    const { stored } = await this.readStored();
+    return planHarnessWorkspaceLoad(stored).state;
+  }
+
+  async load(): Promise<HarnessWorkspaceState> {
+    const { database, stored } = await this.readStored();
     const plan = planHarnessWorkspaceLoad(stored);
     if (plan.preserve) {
       // The copy and the reset commit atomically: the reset never lands without it.

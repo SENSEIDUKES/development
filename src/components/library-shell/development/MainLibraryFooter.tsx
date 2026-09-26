@@ -35,6 +35,7 @@ export function MainLibraryFooter({ adapter, location, onNavigate, onOpenHelp, s
   const groups: LibraryFooterGroup[] = [
     { id: 'explore', label: 'Explore', items: [
       { id: 'immortal-hub', label: 'Immortal Hub', onSelect: go({ screen: 'home', collection: 'featured' }) },
+      { id: 'creator-space', label: 'Creator Space', onSelect: go({ screen: 'creator-space' }) },
       { id: 'my-library', label: 'My Library', onSelect: go({ screen: 'home', collection: 'my-library' }) },
       { id: 'fate-survival', label: 'Fate Survival Challenges', onSelect: go({ screen: 'home', collection: 'challenges' }) },
       { id: 'sects', label: 'Sects', onSelect: go({ screen: 'sects' }) },

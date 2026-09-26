@@ -23,7 +23,7 @@ The extraction retains the source hero JSX, video sequence, six-second backdrop 
 ## Navigation and preview behavior
 
 - Home: `screen=home&collection=featured`, the standalone homepage.
-- Library: `screen=home&collection=my-library`, the existing Library Shell destination.
+- Create (the strip's former Library slot, since 2026-09-26): `screen=creator-space`, the separate [Create](../creator-space/README.md) page. My Library remains `screen=home&collection=my-library`, reached from header Search and the footer, and keeps Home selected.
 - Discover: `screen=home&collection=challenges`, the existing Fate Survival destination.
 - Profile: the existing Cultivator Cave, including its own nested routes and shared chrome.
 - Novel detail: `screen=detail`, the existing destination, now populated for the sole featured mock novel. Direct loading and reloading select that fixture. Back/Forward and Back to novels preserve Home filters; returning from the detail restores card focus.

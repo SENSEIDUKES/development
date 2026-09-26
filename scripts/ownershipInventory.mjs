@@ -52,6 +52,7 @@ export const ownershipRules = [
   ['src/components/library/', 'workshop', 'locked-reference adapter'],
   ['src/components/sen-icons/', 'library', 'Celestial icons'],
   ['src/components/light-novels-home/', 'library', 'home'],
+  ['src/components/creator-space/', 'library', 'creator space'],
   ['src/components/user-profile/', 'library', 'profile'],
   ['src/components/energy/', 'library', 'energy'],
   ['src/components/familiar/', 'library', 'familiar'],

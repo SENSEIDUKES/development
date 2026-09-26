@@ -45,7 +45,9 @@ export async function verifyLibraryNavigation({ tab, viewport, baseUrl, widths =
     await viewport.set({ width, height: 740 });
     for (const [source, state, active] of [
       ['main-library', 'linked', 'Home'],
-      ['main-library', 'library', 'Library'],
+      ['main-library', 'create', 'Create'],
+      // My Library is a Home collection; Home stays selected.
+      ['main-library', 'library', 'Home'],
       ['main-library', 'discover', 'Discover'],
       ['cultivator-cave', 'developed-cultivator', 'Profile'],
     ]) {
@@ -53,7 +55,7 @@ export async function verifyLibraryNavigation({ tab, viewport, baseUrl, widths =
       await button('Search').waitFor({ state: 'visible' });
       if (source === 'cultivator-cave') await button('Settings').waitFor({ state: 'visible' });
       const size = await geometry();
-      assert.equal(size.buttons.map(button => button.label).join(','), 'Home,Library,Discover,Profile');
+      assert.equal(size.buttons.map(button => button.label).join(','), 'Home,Create,Discover,Profile');
       assert.equal(size.selected, active);
       assert.equal(size.overflow, false, `${width}/${active}: overflow`);
       assert.equal(size.position, 'fixed');
@@ -107,9 +109,9 @@ export async function verifyLibraryNavigation({ tab, viewport, baseUrl, widths =
   await button('Home').click();
   await tab.playwright.getByRole('button', { name: 'Insights from the Dao', exact: true }).waitFor({ state: 'visible' });
   assert.equal((await geometry()).selected, 'Home');
-  await button('Library').click(); assert.equal((await geometry()).selected, 'Library');
+  await button('Create').click(); assert.equal((await geometry()).selected, 'Create');
   await button('Discover').click(); assert.equal((await geometry()).selected, 'Discover');
-  await tab.back(); assert.equal((await geometry()).selected, 'Library');
+  await tab.back(); assert.equal((await geometry()).selected, 'Create');
   await tab.forward(); assert.equal((await geometry()).selected, 'Discover');
   await button('Profile').click();
   await button('Settings').waitFor({ state: 'visible' });

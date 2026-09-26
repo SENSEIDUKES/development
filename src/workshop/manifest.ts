@@ -177,6 +177,22 @@ export const workshopEntries: WorkshopEntry[] = [
     },
   },
   {
+    id: 'creator-space',
+    section: 'pages',
+    group: 'create',
+    owner: 'library',
+    status: 'active',
+    title: 'Create',
+    description: 'The Library’s Create tab, replacing the bottom-strip Library tab that reopened Home: a compact Creator Space with live Energy and In progress readings, an honest Creator Toolkit preview of Style Packs and Soundscapes, a swipeable Your worlds row whose selected world offers exactly Continue and Studio into its chapter workspace, and a closing Create button that opens Story Seed.',
+    category: 'other',
+    version: 'v1.0',
+    source: {
+      repository: 'SENSEIDUKES/development',
+      path: 'src/components/creator-space/; src/workshop/previews/creator-space/CreatorSpaceHost.tsx',
+      lastCompared: '2026-09-26',
+    },
+  },
+  {
     id: 'story-seed',
     section: 'pages',
     group: 'create',

@@ -1,0 +1,45 @@
+{
+  "phone": {
+    "worldsTop": 549,
+    "worldsBottom": 729,
+    "carveTop": 933,
+    "carveBelowWorldActions": true,
+    "carveWidth": 358,
+    "carveHeight": 48
+  },
+  "energyTile": "Energy500",
+  "energyDestination": "profile",
+  "carveDestination": "creator",
+  "continueLanding": {
+    "story": "Lantern Court",
+    "focused": "harness-generate-title",
+    "heading": "Generate Chapter 1"
+  },
+  "studioLanding": {
+    "story": "River of Oaths",
+    "landsAtTop": true
+  },
+  "localErrors": [],
+  "readOnlyStore": {
+    "shownFromOlderFormat": true,
+    "storedSchemaVersionAfter": 18,
+    "storeKeys": [
+      "state"
+    ]
+  },
+  "widths": {
+    "320": {
+      "horizontalOverflow": 0,
+      "worldsTop": 579
+    },
+    "768": {
+      "horizontalOverflow": 0,
+      "worldsTop": 595
+    },
+    "1440": {
+      "horizontalOverflow": 0,
+      "worldsTop": 595
+    }
+  },
+  "reducedMotion": "Ashes of the Nine Moons"
+}

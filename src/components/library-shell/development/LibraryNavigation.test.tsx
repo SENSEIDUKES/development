@@ -3,7 +3,7 @@ import { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
-import { LibraryNavigation, LibrarySectionSidebar } from '@seihouse/library/shell';
+import { LIBRARY_EMBLEM, LibraryNavigation, LibrarySectionSidebar, useLibraryWorkspace, type LibraryWorkspaceDefinition } from '@seihouse/library/shell';
 import { MainLibraryNavigation } from './MainLibraryNavigation';
 import { activeLibraryDestination, librarySectionItems, type LibraryLocation } from '@seihouse/library/shell';
 import { StorySeedWorkspaceChrome } from '../../story-seed/development/StorySeedWorkspaceChrome';
@@ -21,7 +21,7 @@ const render = async (node: React.ReactNode) => { await act(async () => root.ren
 const settle = async () => { await act(async () => { await new Promise(resolve => setTimeout(resolve, 80)); }); };
 const button = (name: string, scope: ParentNode = document) => Array.from(scope.querySelectorAll<HTMLButtonElement>('button')).find(button => (button.getAttribute('aria-label') ?? button.textContent) === name)!;
 const click = async (button: HTMLElement) => { await act(async () => { button.focus(); button.click(); }); await settle(); };
-const globalNav = () => container.querySelector('.library-global-navigation')!;
+const globalNav = () => container.querySelector('nav[aria-label="Library global navigation"]')!;
 
 it.each<[LibraryLocation, string | undefined]>([
   [{ screen: 'home', collection: 'featured' }, 'home'],
@@ -93,16 +93,23 @@ it.each(['reader', 'codex'])('excludes immersive %s even when standard mode is r
   expect(button('Chapter')).toBeDefined();
 });
 
-it('preserves the real Story Seed strip, sections, bank, Help and settings inside the shell exclusion', async () => {
-  const bank = vi.fn(); const help = vi.fn(); const select = vi.fn();
+it('runs Story Seed in the Library Shell workspace mode instead of a navigation system of its own', async () => {
+  const bank = vi.fn(); const help = vi.fn(); const select = vi.fn(); const home = vi.fn();
   await render(<LibraryNavigation location={{ screen: 'creator' }} onNavigate={vi.fn()}>
-    <StorySeedWorkspaceChrome onNavigateHome={vi.fn()} seed={createEmptyStorySeedInput()} updateSeed={vi.fn()} activeSection="origin" showStoryBank={false} helpOpen={false}
+    <StorySeedWorkspaceChrome onNavigateHome={home} seed={createEmptyStorySeedInput()} updateSeed={vi.fn()} activeSection="origin" showStoryBank={false} helpOpen={false}
       isGenerating={false} savedFeedback={false} canManifest={false} manifestLabel="Manifest" status="Ready" onSaveDraft={vi.fn()} onManifest={vi.fn()}
-      onToggleStoryBank={bank} onOpenHelp={help} onSelectSection={select} layout="mobile"><p>Existing editor</p></StorySeedWorkspaceChrome>
+      onToggleStoryBank={bank} onOpenHelp={help} onSelectSection={select}><p>Existing editor</p></StorySeedWorkspaceChrome>
   </LibraryNavigation>);
+  // The workspace route never shows the global strip; the shell draws Story Seed's task bar instead.
   expect(globalNav()).toBeNull();
-  const nav = document.querySelector('nav[aria-label="Story Seed navigation"]')!;
+  expect(container.querySelector('[data-library-mode="workspace"]')).not.toBeNull();
+  const nav = document.querySelector<HTMLElement>('nav[aria-label="Story Seed navigation"]')!;
+  expect(nav.classList.contains('library-global-navigation')).toBe(true);
+  expect(nav.classList.contains('library-workspace-navigation')).toBe(true);
   expect(Array.from(nav.querySelectorAll('button')).map(button => button.textContent)).toEqual(['Sections', 'Story Bank', 'Settings', 'Back']);
+  // The desktop rail is the same LibrarySectionSidebar every Library page uses.
+  const rail = container.querySelector('[data-slot="app-shell-sidebar"]')!;
+  expect(rail.querySelector('nav[aria-label="Story Seed sections"]')?.textContent).toContain('Story Bank');
   await click(button('Sections', nav));
   expect(document.querySelector('[role="dialog"]')).not.toBeNull();
   await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
@@ -111,4 +118,40 @@ it('preserves the real Story Seed strip, sections, bank, Help and settings insid
   expect(button('Help', nav)).toBeUndefined();
   await click(button('Settings', nav));
   expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Story Seed settings');
+  await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+  await settle();
+  // Story Seed's header matches every Library page: the Celestial Library emblem, home through the host.
+  const emblem = container.querySelector<HTMLImageElement>('header a img')!;
+  expect(emblem.getAttribute('src')).toBe(LIBRARY_EMBLEM.src);
+  expect(emblem.closest('a')!.getAttribute('aria-label')).toBe('Return to Library');
+  await click(emblem.closest('a')!);
+  expect(home).toHaveBeenCalledTimes(1);
+  await click(button('Back', nav));
+  expect(home).toHaveBeenCalledTimes(2);
+});
+
+it('draws any workspace from its definition: Sections only with sections, tools in order, Back last', async () => {
+  const onBack = vi.fn(); const tool = vi.fn(); const pick = vi.fn();
+  const definition = (sections: LibraryWorkspaceDefinition['sections']): LibraryWorkspaceDefinition => ({
+    label: 'Studio sections', closeLabel: 'Close studio sections', barLabel: 'Studio navigation', sections,
+    tools: [{ id: 'panels', label: 'Panels', icon: null, onSelect: tool }], back: { label: 'Leave', onBack },
+  });
+  function DrawerState() { const { drawerOpen } = useLibraryWorkspace(); return <p data-drawer-open={drawerOpen} />; }
+  await render(<LibraryNavigation mode="workspace" workspace={definition([])}><p>Studio</p></LibraryNavigation>);
+  const bar = () => document.querySelector<HTMLElement>('nav[aria-label="Studio navigation"]')!;
+  expect(Array.from(bar().querySelectorAll('button')).map(button => button.textContent)).toEqual(['Panels', 'Leave']);
+  await render(<LibraryNavigation mode="workspace" workspace={definition([{ id: 'pages', items: [{ id: 'cover', label: 'Cover', onSelect: pick }] }])}>
+    <DrawerState /><LibrarySectionSidebar />
+  </LibraryNavigation>);
+  expect(Array.from(bar().querySelectorAll('button')).map(button => button.textContent)).toEqual(['Sections', 'Panels', 'Leave']);
+  await click(button('Sections', bar()));
+  expect(container.querySelector('[data-drawer-open="true"]')).not.toBeNull();
+  // Choosing a destination in the drawer closes it before the page acts.
+  const drawer = document.querySelector('[role="dialog"]')!;
+  await click(button('Cover', drawer));
+  expect(pick).toHaveBeenCalledWith('cover');
+  expect(container.querySelector('[data-drawer-open="false"]')).not.toBeNull();
+  await click(button('Panels', bar())); expect(tool).toHaveBeenCalledTimes(1);
+  await click(button('Leave', bar())); expect(onBack).toHaveBeenCalledTimes(1);
+  expect(globalNav()).toBeNull();
 });

@@ -48,3 +48,11 @@
 .library-navigation-layout .workspace-shell-main {
   padding-bottom: var(--library-bottom-clearance);
 }
+
+/* Workspace mode uses the same bar and placement as the global strip. From the
+   desktop breakpoint the rail and the header replace it, so the bar and its
+   clearance step aside. */
+@media (min-width: 1024px) {
+  .library-workspace-navigation { display: none !important; }
+  .library-navigation-layout[data-library-mode='workspace'] { --library-bottom-clearance: 0px; }
+}

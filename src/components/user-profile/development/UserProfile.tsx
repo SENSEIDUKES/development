@@ -53,6 +53,7 @@ import {
 import { LibraryNavigation, LibrarySectionSidebar } from '../../library-shell/development/LibraryNavigation';
 import type { LibraryLocation } from '../../library-shell/development/libraryRoutes';
 import { WorkspaceShell } from '../../library-shell/development/WorkspaceShell';
+import { LIBRARY_EMBLEM } from '../../library-shell/development/libraryBrand';
 import { LibraryNavigationIcon as SENNavigationIcon } from '@seihouse/library-ui';
 import { EnergyPanel } from '../../energy/development/EnergyPanel';
 import { useEnergyAccount } from '../../energy/shared/useEnergyAccount';
@@ -548,7 +549,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
         sidebarLabel={navigationDefinition.label}
         sidebar={caveSidebarMounted ? <LibrarySectionSidebar /> : undefined}
         header={<WorkspaceHeader title="Profile" landmark="none"
-          emblem={assets.emblem ? { src: assets.emblem, alt: 'SEN' } : undefined}
+          emblem={LIBRARY_EMBLEM}
           home={{ href: '/', label: 'Return to Library', onNavigate: onNavigateHome }}
           contextualItem={isPublicView ? <button type="button" onClick={exitPublicView}
             aria-label="Exit public view" title="Exit public view"

@@ -28,7 +28,7 @@ import {
 import { recommendStoryTags } from '@seihouse/sen/story-seed';
 import { updateStoryTags, type UpdateSeed } from '../../seedState';
 import { NarrativeDragonCycleIcon as LibraryDragonCycleIcon, NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
-import { workspaceCompactLabelClass } from '../WorkspaceShell';
+import { workspaceCompactLabelClass } from '../SeedSectionFrame';
 
 const TAG_LIMIT = STORY_TAG_LIMIT;
 const TAG_LIMIT_MESSAGE = `Fated limit reached. Only up to ${TAG_LIMIT} celestial tags can be woven into the universe.`;

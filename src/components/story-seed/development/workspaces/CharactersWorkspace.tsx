@@ -20,7 +20,7 @@ import {
   type UpdateSeed,
 } from '../seedState';
 import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
-import { WorkspaceShell, WorkspaceSubheading } from './WorkspaceShell';
+import { SeedSectionFrame, WorkspaceSubheading } from './SeedSectionFrame';
 
 interface CharactersWorkspaceProps {
   seed: StorySeedInput;
@@ -269,7 +269,7 @@ export const AdditionalCharactersEditor = ({ seed, updateSeed }: CharactersWorks
 export const CharactersWorkspace = ({ seed, updateSeed }: CharactersWorkspaceProps) => {
   const section = getSeedSection('characters');
   return (
-    <WorkspaceShell section={section} complete={section.isFilled(seed)}>
+    <SeedSectionFrame section={section} complete={section.isFilled(seed)}>
       <div className="space-y-4">
         <WorkspaceSubheading>Main Character</WorkspaceSubheading>
         <MainCharacterFields seed={seed} updateSeed={updateSeed} />
@@ -279,6 +279,6 @@ export const CharactersWorkspace = ({ seed, updateSeed }: CharactersWorkspacePro
         <WorkspaceSubheading>Additional Characters</WorkspaceSubheading>
         <AdditionalCharactersEditor seed={seed} updateSeed={updateSeed} />
       </div>
-    </WorkspaceShell>
+    </SeedSectionFrame>
   );
 };

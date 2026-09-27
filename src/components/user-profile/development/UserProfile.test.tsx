@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { act } from 'react';
+import { LIBRARY_EMBLEM } from '../../library-shell/development/libraryBrand';
 import type { Root } from 'react-dom/client';
 import { createRoot } from '../../../test-utils/createLibraryRoot';
 import { LIBRARY_ASSETS } from '../../../host/media/libraryAssets';
@@ -1894,12 +1895,13 @@ describe('Display name limit', () => {
 });
 
 
-it('uses the SEN emblem as the Profile header home action', async () => {
+it('uses the Celestial Library emblem as the Profile header home action', async () => {
   const onNavigateHome = vi.fn();
   await renderCave({ onNavigateHome });
   const header = container.querySelector('header')!;
-  const emblem = header.querySelector('img[alt="SEN"]')!;
-  expect(emblem.getAttribute('src')).toBe('/favicon.jpg');
+  // Every Library page header carries the same emblem (Home, Story Seed, the Cave).
+  const emblem = header.querySelector(`img[alt="${LIBRARY_EMBLEM.alt}"]`)!;
+  expect(emblem.getAttribute('src')).toBe(LIBRARY_EMBLEM.src);
   expect(header.querySelector('img[src="/icons/sacred-tree.svg"]')).toBeNull();
   const link = emblem.closest('a')!;
   expect(link.getAttribute('aria-label')).toBe('Return to Library');

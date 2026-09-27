@@ -86,7 +86,7 @@ export function NovelBlueprintEditor({ snapshot, destinedEnding, busy = false, o
   const disabled = busy || saving;
 
   return (
-    <div className="story-seed-development-surface seed-workspace-shell relative space-y-6" data-testid="novel-blueprint-editor">
+    <div className="story-seed-development-surface seed-field-scope relative space-y-6" data-testid="novel-blueprint-editor">
       <BlueprintHeaderSection
         blueprintVersion={blueprint.blueprintVersion}
         title={identity.title ?? ''}

@@ -1,5 +1,7 @@
 # Library navigation architecture
 
+> **2026-09-27 — Two modes.** `LibraryNavigation` has a main mode (the global strip) and a workspace mode (`mode="workspace"` with a `LibraryWorkspaceDefinition`): the shell draws a focused task's bar — Sections, its tools, Back — in the strip's place and style, its Sections drawer, and its desktop rail through `LibrarySectionSidebar`. Story Seed now uses workspace mode instead of its own navigation system; its controls and behavior are unchanged. See the [Library Shell README](../src/components/library-shell/README.md).
+>
 > **2026-09-26 — Create replaces Library.** The strip is now **Home — Create — Discover — Profile**. Create opens its own page, `{ screen: 'creator-space' }` ([Create](../src/components/creator-space/README.md)). My Library (`screen: home`, `collection: my-library`) is unchanged and still reachable from header Search and the footer; it and story `detail` now select Home, since both are Home views. The section outline's `library` group became `create` (Creator Space, Story Seed, Seed Bank); My Library, Recently Read and Bookmarks moved under Home. The sections below describe the 2026-09-09 four-entry strip; read "Library" there as today's Create slot.
 
 Updated 2026-09-09. Navigation-only Development change, continuing the shared header in PR #190. No existing page body, card, content, image, field, reward, storage operation, or locked reference was redesigned. Production repositories and vendored UI artifacts are unchanged.
@@ -29,7 +31,7 @@ Discover currently lands on the existing Fate Survival collection because this r
 
 ## Preserved workspaces and Cave migration
 
-- `creator` / `story-seed` uses workspace mode. The existing Story Seed strip, drawer, Story Bank, Help, Settings, Manifest eligibility, and desktop navigation are unchanged.
+- `creator` / `story-seed` uses workspace mode. Story Seed supplies its workspace definition and the shell draws its bar (Sections, Story Bank, Settings, Back), drawer and desktop rail; Help, Settings, Manifest eligibility and behavior are unchanged.
 - `reader` / `codex` uses immersive mode. The shell never adds the global strip to those routes, even if a caller requests standard mode.
 - Other specialized workspaces can explicitly supply `mode="workspace"` or `mode="immersive"`; their navigation components are retained.
 - The Cave's old bottom bar and its placement/placeholder CSS were removed. `/home`, `/stories`, `/relics`, `/settings` and all existing child/public routes are unchanged. Settings is still the existing button under Daily Dao Pillar, outside the global strip. Public Exit returns to the same previous Cave path as before.

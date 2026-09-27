@@ -36,6 +36,28 @@ export function findBlockElement(root: HTMLElement, id: string): HTMLElement | u
     .find(element => element.getAttribute(BLOCK_ATTRIBUTE) === id);
 }
 
+/** Text that belongs to the passage, excluding inline controls and their joiners. */
+function passageTextNodes(block: HTMLElement): Text[] {
+  const walker = block.ownerDocument.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+  const nodes: Text[] = [];
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if (!node.parentElement?.closest('button, [aria-hidden="true"], [data-sen-selection-ignore]')) nodes.push(node as Text);
+  }
+  return nodes;
+}
+
+function logicalOffset(block: HTMLElement, container: Node, offset: number, nodes: readonly Text[]): number {
+  const prefix = block.ownerDocument.createRange();
+  prefix.selectNodeContents(block);
+  prefix.setEnd(container, offset);
+  let length = 0;
+  for (const node of nodes) {
+    if (!prefix.intersectsNode(node)) continue;
+    length += container === node ? offset : node.length;
+  }
+  return length;
+}
+
 /** DOM is an input adapter only. The returned value contains no live DOM objects. */
 export function normalizePassageSelection(root: HTMLElement, browserSelection: Selection | null): PassageSelection | null {
   if (!browserSelection || browserSelection.isCollapsed || browserSelection.rangeCount !== 1) return null;
@@ -43,13 +65,13 @@ export function normalizePassageSelection(root: HTMLElement, browserSelection: S
   const blockFor = (node: Node) => (node.nodeType === 1 ? node as Element : node.parentElement)?.closest<HTMLElement>(`[${BLOCK_ATTRIBUTE}]`);
   const block = blockFor(range.startContainer);
   if (!block || !root.contains(block) || blockFor(range.endContainer) !== block) return null;
-  const prefix = root.ownerDocument.createRange();
-  prefix.selectNodeContents(block);
-  prefix.setEnd(range.startContainer, range.startOffset);
-  const startOffset = prefix.toString().length;
-  prefix.setEnd(range.endContainer, range.endOffset);
-  const endOffset = prefix.toString().length;
-  const selectedText = (block.textContent ?? '').slice(startOffset, endOffset);
+  if ((range.startContainer.nodeType === Node.TEXT_NODE ? range.startContainer.parentElement : range.startContainer as Element)?.closest('button, [aria-hidden="true"], [data-sen-selection-ignore]')) return null;
+  if ((range.endContainer.nodeType === Node.TEXT_NODE ? range.endContainer.parentElement : range.endContainer as Element)?.closest('button, [aria-hidden="true"], [data-sen-selection-ignore]')) return null;
+  const nodes = passageTextNodes(block);
+  const text = nodes.map(node => node.data).join('');
+  const startOffset = logicalOffset(block, range.startContainer, range.startOffset, nodes);
+  const endOffset = logicalOffset(block, range.endContainer, range.endOffset, nodes);
+  const selectedText = text.slice(startOffset, endOffset);
   const blockId = block.getAttribute(BLOCK_ATTRIBUTE);
   if (!blockId || !selectedText.trim() || startOffset === endOffset) return null;
   return { blockId, selectedText, startOffset, endOffset };
@@ -58,13 +80,14 @@ export function normalizePassageSelection(root: HTMLElement, browserSelection: S
 /** Reconstruct transient geometry from canonical offsets, including split inline text nodes. */
 export function passageRange(root: HTMLElement, selection: PassageSelection): Range | null {
   const block = findBlockElement(root, selection.blockId);
-  if (!block || !isValidPassage({ id: selection.blockId, text: block.textContent ?? '' }, selection)) return null;
-  const walker = root.ownerDocument.createTreeWalker(block, 4 /* SHOW_TEXT */);
+  if (!block) return null;
+  const nodes = passageTextNodes(block);
+  if (!isValidPassage({ id: selection.blockId, text: nodes.map(node => node.data).join('') }, selection)) return null;
   const range = root.ownerDocument.createRange();
   let offset = 0;
   let started = false;
-  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-    const length = node.textContent?.length ?? 0;
+  for (const node of nodes) {
+    const length = node.length;
     if (!started && selection.startOffset <= offset + length) {
       range.setStart(node, selection.startOffset - offset);
       started = true;

@@ -54,6 +54,8 @@ export interface WorldCueIntent {
  */
 export interface ResolvedWorldCueMoment {
   id: string;
+  /** Explicit author asset choice; generated moments omit this field. */
+  origin?: 'manual';
   blockId: string;
   triggerPhrase: string;
   /** Zero-based among exact, case-sensitive occurrences in the named block. */
@@ -680,6 +682,7 @@ export function resolveResolvedAudioMomentCue(
 ): ResolvedWorldCueValidation {
   if (
     !isPlainObject(moment)
+    || (moment.origin !== undefined && moment.origin !== 'manual')
     || typeof moment.id !== 'string'
     || !moment.id.trim()
     || typeof moment.blockId !== 'string'
@@ -706,7 +709,7 @@ export function resolveResolvedAudioMomentCue(
     ) {
       return { ok: false, reason: 'invalid-moment', message: 'This Media Pack World Cue annotation is invalid.' };
     }
-    if (!isEligibleWorldCueTriggerPhrase(
+    if (moment.origin !== 'manual' && !isEligibleWorldCueTriggerPhrase(
       moment.triggerPhrase,
       moment.sourceCategory,
       moment.variation,
@@ -729,6 +732,9 @@ export function resolveResolvedAudioMomentCue(
         },
       },
     };
+  }
+  if (moment.origin === 'manual') {
+    return { ok: false, reason: 'invalid-moment', message: 'A manual World Cue requires approved catalog provenance.' };
   }
   const cue = getByUrl(loaded, moment.cue.publicUrl);
   if (!cue) {

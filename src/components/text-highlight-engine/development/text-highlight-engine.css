@@ -2,6 +2,11 @@
   --sen-passage-highlight: rgba(242, 207, 102, .35);
   color: inherit;
 }
+.sen-text-highlight-root {
+  position: relative;
+  isolation: isolate;
+}
+.sen-text-highlight-root:focus-visible { outline: none; }
 .sen-text-highlight-controls, .sen-text-highlight-undo, .sen-text-highlight button { box-sizing: border-box; }
 .sen-text-highlight [data-sen-text-block] { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.85; margin: 0 0 1.3em; min-height: 1.85em; }
 .sen-text-highlight [data-sen-text-block]::selection,
@@ -10,12 +15,15 @@
 .sen-text-highlight-editor { background: var(--sen-passage-highlight); outline: none; min-width: .5em; padding: 0; }
 .sen-text-highlight-editor:empty { display: inline-block; }
 .sen-text-highlight .sen-text-highlight-editor::selection { background: var(--sen-passage-highlight); }
-.sen-text-highlight-marks { position: fixed; inset: 0; pointer-events: none; z-index: 9998; overflow: hidden; }
+.sen-text-highlight-marks { position: fixed; inset: 0; pointer-events: none; z-index: -1; overflow: hidden; }
 .sen-text-highlight-marks span { position: absolute; background: var(--sen-passage-highlight); border-radius: 2px; }
-.sen-text-highlight-controls { position: fixed; z-index: 9999; border: 1px solid #8c8064; border-radius: 10px; background: #fffdf6; color: #29251c; box-shadow: 0 5px 22px #0003; padding: 4px; overflow: auto; font: 14px/1.5 system-ui, sans-serif; }
+.sen-text-highlight-controls { position: fixed; z-index: 9999; border: 1px solid #5c5c5c; border-radius: 14px; background: #262626; color: #f6f4ef; box-shadow: 0 12px 32px #0008; padding: 5px; overflow: auto; font: 14px/1.5 system-ui, sans-serif; }
 .sen-text-highlight button { min-height: 44px; min-width: 44px; padding: 8px 12px; border-radius: 6px; font: 500 14px/1.4 system-ui, sans-serif; cursor: pointer; }
 .sen-text-highlight button:hover:not(:disabled) { background: var(--sen-passage-highlight); }
 .sen-text-highlight button:disabled { opacity: .45; cursor: default; }
 .sen-text-highlight :focus-visible { outline: 2px solid #a47915; outline-offset: 3px; }
 .sen-text-highlight-actions { display: flex; gap: 4px; justify-content: flex-end; }
+.sen-text-highlight-menu { justify-content: flex-start; }
+.sen-text-highlight-menu button { text-transform: uppercase; letter-spacing: .035em; }
+.sen-text-highlight-menu button:not(:last-child) { border-right: 1px solid #555; border-radius: 0; }
 .sen-text-highlight-undo { position: fixed; z-index: 9999; bottom: 16px; left: 50%; transform: translateX(-50%); max-width: calc(100vw - 32px); display: flex; align-items: center; gap: 12px; padding: 4px 12px; border: 1px solid #8c8064; border-radius: 10px; color: #29251c; background: #fffdf6; box-shadow: 0 5px 22px #0003; font: 14px/1.5 system-ui, sans-serif; }

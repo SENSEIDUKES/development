@@ -1,0 +1,10 @@
+.sen-manual-cue-picker { width: 100%; font: 13px/1.45 system-ui, sans-serif; }
+.sen-manual-cue-picker__heading { padding: 8px 5px 10px; font-weight: 600; overflow-wrap: anywhere; }
+.sen-manual-cue-picker__list { max-height: min(30vh, 280px); overflow-y: auto; overscroll-behavior: contain; }
+.sen-manual-cue-picker__item { padding: 9px 5px; border-top: 1px solid #4b4b4b; }
+.sen-manual-cue-picker__item strong { display: block; font-weight: 500; }
+.sen-manual-cue-picker__item small { display: block; margin-top: 3px; color: #c5c0b6; text-transform: capitalize; }
+.sen-manual-cue-picker__buttons { display: flex; gap: 4px; justify-content: flex-end; }
+.sen-manual-cue-picker button { min-height: 36px; border: 1px solid #666; background: #343434; color: inherit; }
+.sen-manual-cue-picker button:hover { background: #544624; }
+.sen-manual-cue-picker p[role='alert'] { margin: 5px; color: #ffd68f; }

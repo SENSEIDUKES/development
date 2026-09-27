@@ -1,26 +1,32 @@
-import { useLayoutEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { SEIButton } from '@seihouse/ui';
 import { replacePassage, type PassageEdit, type PassageSelection, type TextHighlightBlock } from '../shared/selection';
 import { usePassageSelection } from './usePassageSelection';
+import type { PassageAction } from '../shared/actions';
 
 export interface TextHighlightEngineProps {
   blocks: readonly TextHighlightBlock[];
   onBlocksChange: (blocks: TextHighlightBlock[], edit: PassageEdit) => void;
   onSelectionChange?: (selection: PassageSelection | null) => void;
+  actions?: readonly PassageAction[];
+  renderBlockText?: (block: TextHighlightBlock) => ReactNode;
   className?: string;
   style?: CSSProperties;
 }
 
-export function TextHighlightEngine({ blocks, onBlocksChange, onSelectionChange, className = '', style }: TextHighlightEngineProps) {
+export function TextHighlightEngine({ blocks, onBlocksChange, onSelectionChange, actions = [], renderBlockText, className = '', style }: TextHighlightEngineProps) {
   const engine = usePassageSelection(blocks, onSelectionChange);
-  const { rootRef, controlsRef, editorRef, selection, sourceText, editing, rectangles } = engine;
+  const { rootRef, controlsRef, editorRef, selection, sourceText, editing, actionOpen, rectangles } = engine;
   const [replacement, setReplacement] = useState('');
   const [undo, setUndo] = useState<PassageEdit | null>(null);
+  const [menuPath, setMenuPath] = useState<string[]>([]);
+  const [panel, setPanel] = useState<ReactNode>(null);
   const [position, setPosition] = useState({ left: 8, top: 8, maxHeight: 400, width: 320 });
   const validUndo = undo && blocks.some(block => block.id === undo.after.id && block.text === undo.after.text) ? undo : null;
 
   useLayoutEffect(() => { if (undo && !validUndo) setUndo(null); }, [undo, validUndo]);
+  useEffect(() => { if (!selection) { setMenuPath([]); setPanel(null); } }, [selection]);
   useLayoutEffect(() => {
     const editor = editorRef.current;
     if (!editing || !editor || !selection) return;
@@ -58,16 +64,32 @@ export function TextHighlightEngine({ blocks, onBlocksChange, onSelectionChange,
     const topEdge = viewport?.offsetTop ?? 0;
     const width = viewport?.width ?? window.innerWidth;
     const height = viewport?.height ?? window.innerHeight;
-    const controlWidth = editing && replacement === '' ? Math.min(220, width - 16) : 64;
+    const controlWidth = editing && replacement === '' ? Math.min(220, width - 16)
+      : editing ? 64 : panel ? Math.min(360, width - 16) : Math.min(menuPath.length ? 120 : actions.length ? 144 : 64, width - 16);
     const controlHeight = controlsRef.current?.offsetHeight ?? 48;
     const anchor = rectangles.find(rect => rect.top + rect.height > topEdge && rect.top < topEdge + height) ?? rectangles[0];
-    const top = anchor ? (anchor.top - controlHeight - 10 >= topEdge + 8 ? anchor.top - controlHeight - 10 : anchor.top + anchor.height + 10) : topEdge + 8;
+    const below = (anchor?.top ?? topEdge) + (anchor?.height ?? 0) + 10;
+    const top = anchor ? (below + controlHeight <= topEdge + height - 8 ? below : anchor.top - controlHeight - 10) : topEdge + 8;
     setPosition({
       left: Math.max(leftEdge + 8, Math.min(anchor?.left ?? leftEdge + 8, leftEdge + width - controlWidth - 8)),
       top: Math.max(topEdge + 8, Math.min(top, topEdge + height - controlHeight - 8)),
       width: controlWidth, maxHeight: Math.max(44, height - 16),
     });
-  }, [rectangles, editing, replacement, controlsRef]);
+  }, [rectangles, editing, replacement, controlsRef, actions.length, menuPath.length, panel]);
+
+  const closeAction = () => { setMenuPath([]); setPanel(null); engine.clear(); };
+  const menuActions = menuPath.reduce<readonly PassageAction[]>((current, id) => {
+    const branch = current.find(action => action.id === id);
+    return branch?.children ?? [];
+  }, actions);
+  const openAction = (action: PassageAction) => {
+    if ('children' in action && action.children) { setMenuPath(path => [...path, action.id]); return; }
+    if (!selection || !('onActivate' in action) || !action.onActivate) return;
+    const content = action.onActivate(selection, closeAction);
+    if (content == null) { closeAction(); return; }
+    setPanel(content);
+    engine.beginAction();
+  };
 
   const commit = (operation: 'replace' | 'delete') => {
     if (!selection || (operation === 'replace' && replacement === '')) return;
@@ -92,7 +114,10 @@ export function TextHighlightEngine({ blocks, onBlocksChange, onSelectionChange,
   const visible = rectangles.some(rect => rect.top + rect.height > (window.visualViewport?.offsetTop ?? 0)
     && rect.top < (window.visualViewport?.offsetTop ?? 0) + (window.visualViewport?.height ?? window.innerHeight));
 
-  return <div ref={rootRef} className={`sen-text-highlight ${className}`} style={style} tabIndex={-1}>
+  return <div ref={rootRef} className={`sen-text-highlight sen-text-highlight-root ${className}`} style={style} tabIndex={-1}>
+    {selection && !editing && <div className="sen-text-highlight-marks" aria-hidden="true">
+      {rectangles.map((rect, index) => <span key={index} style={rect} />)}
+    </div>}
     {blocks.map(block => <p key={block.id} data-sen-text-block={block.id} tabIndex={-1}>
       {editing && selection?.blockId === block.id ? <>
         {block.text.slice(0, selection.startOffset)}
@@ -100,24 +125,30 @@ export function TextHighlightEngine({ blocks, onBlocksChange, onSelectionChange,
           role="textbox" aria-label="Edit selected text" aria-multiline="true"
           onInput={event => setReplacement(event.currentTarget.textContent ?? '')} />
         {block.text.slice(selection.endOffset)}
-      </> : block.text}
+      </> : renderBlockText?.(block) ?? block.text}
     </p>)}
     {validUndo && rootRef.current && createPortal(<div className="sen-text-highlight" style={style}>
       <div className="sen-text-highlight-undo" role="status">Passage deleted. <SEIButton unstyled onClick={restore}>Undo</SEIButton></div>
     </div>, rootRef.current.ownerDocument.body)}
     {selection && rootRef.current && createPortal(<div className="sen-text-highlight" style={style}>
-      {!editing && <div className="sen-text-highlight-marks" aria-hidden="true">
-        {rectangles.map((rect, index) => <span key={index} style={rect} />)}
-      </div>}
-      {(editing || visible) && <div ref={controlsRef} className="sen-text-highlight-controls" style={position}
-        role="group" aria-label={editing ? 'Edit passage' : 'Passage actions'}>
+      {(editing || actionOpen || visible) && <div ref={controlsRef} className="sen-text-highlight-controls" style={position}
+        role="group" aria-label={editing ? 'Edit passage' : panel ? 'Passage action panel' : 'Passage actions'}>
         {editing ? <>
           <div className="sen-text-highlight-actions">
             <SEIButton unstyled disabled={replacement === ''} onClick={() => commit('replace')}>Save</SEIButton>
             {replacement === '' && <SEIButton unstyled onClick={() => commit('delete')}>Delete Passage</SEIButton>}
           </div>
-        </> : <SEIButton unstyled onPointerDown={event => { if (event.pointerType === 'mouse') event.preventDefault(); }}
-          onClick={() => { setReplacement(selection.selectedText); engine.beginEdit(); }}>Edit</SEIButton>}
+        </> : panel ? <>
+          <SEIButton unstyled onClick={() => setPanel(null)}>Back</SEIButton>
+          {panel}
+        </> : <div className="sen-text-highlight-actions sen-text-highlight-menu">
+          {menuPath.length > 0 && <SEIButton unstyled onClick={() => setMenuPath(path => path.slice(0, -1))}>Back</SEIButton>}
+          {menuPath.length === 0 && <SEIButton unstyled onPointerDown={event => { if (event.pointerType === 'mouse') event.preventDefault(); }}
+            onClick={() => { setReplacement(selection.selectedText); engine.beginEdit(); }}>Edit</SEIButton>}
+          {menuActions.map(action => <SEIButton key={action.id} unstyled
+            onPointerDown={event => { if (event.pointerType === 'mouse') event.preventDefault(); }}
+            onClick={() => openAction(action)}>{action.label}</SEIButton>)}
+        </div>}
       </div>}
     </div>, rootRef.current.ownerDocument.body)}
   </div>;

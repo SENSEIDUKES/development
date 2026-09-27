@@ -12,6 +12,16 @@ function select(start: Node, from: number, end = start, to = from) {
   const selection = document.getSelection()!; selection.removeAllRanges(); selection.addRange(range); return selection;
 }
 describe('PassageSelection', () => {
+  it('counts only prose when a cue glyph and word joiner interrupt the DOM', () => {
+    document.body.innerHTML = '<main><p data-sen-text-block="stable">A <span class="inline-world-cue-annotation"><span>quiet harbor</span><span aria-hidden="true">\u2060</span><button type="button">Play</button></span> greeted Mara.</p></main>';
+    const root = document.querySelector('main')!;
+    const phrase = root.querySelector('.inline-world-cue-annotation span')!.firstChild!;
+    const result = normalizePassageSelection(root, select(phrase, 6, phrase, 12));
+    expect(result).toEqual({ blockId: 'stable', selectedText: 'harbor', startOffset: 8, endOffset: 14 });
+    expect(passageRange(root, result!)?.toString()).toBe('harbor');
+    expect(normalizePassageSelection(root, select(root.querySelector('button')!.firstChild!, 0,
+      root.querySelector('button')!.firstChild!, 4))).toBeNull();
+  });
   it('normalizes split nodes and UTF-16 offsets without retaining DOM state', () => {
     const root = fixture(); const span = root.querySelector('span')!;
     const result = normalizePassageSelection(root, select(span.firstChild!, 1, span.nextSibling!, 7));

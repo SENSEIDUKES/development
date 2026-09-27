@@ -9,6 +9,7 @@ export function usePassageSelection(blocks: readonly TextHighlightBlock[], onSel
   const editorRef = useRef<HTMLSpanElement>(null);
   const [snapshot, setSnapshot] = useState<{ selection: PassageSelection; text: string } | null>(null);
   const [editing, setEditing] = useState(false);
+  const [actionOpen, setActionOpen] = useState(false);
   const [rectangles, setRectangles] = useState<PassageRectangle[]>([]);
   const controlPointer = useRef(false);
   const selection = snapshot?.selection ?? null;
@@ -18,6 +19,7 @@ export function usePassageSelection(blocks: readonly TextHighlightBlock[], onSel
     if (root && native?.anchorNode && root.contains(native.anchorNode)) native.removeAllRanges();
     setSnapshot(null);
     setEditing(false);
+    setActionOpen(false);
     controlPointer.current = false;
   }, []);
 
@@ -32,7 +34,7 @@ export function usePassageSelection(blocks: readonly TextHighlightBlock[], onSel
     if (!root) return;
     const doc = root.ownerDocument;
     const read = () => {
-      if (editing || controlPointer.current || controlsRef.current?.contains(doc.activeElement)) return;
+      if (editing || actionOpen || controlPointer.current || controlsRef.current?.contains(doc.activeElement)) return;
       const next = normalizePassageSelection(root, doc.getSelection());
       const block = next && blocks.find(candidate => candidate.id === next.blockId);
       setSnapshot(previous => {
@@ -42,8 +44,12 @@ export function usePassageSelection(blocks: readonly TextHighlightBlock[], onSel
       });
     };
     const down = (event: PointerEvent) => {
-      controlPointer.current = !!controlsRef.current?.contains(event.target as Node);
-      if (!controlPointer.current && !editorRef.current?.contains(event.target as Node) && (editing || !root.contains(event.target as Node))) clear();
+      const target = event.target as Node;
+      const preserved = target.nodeType === Node.ELEMENT_NODE
+        ? (target as Element).closest('[data-sen-selection-preserve]')
+        : target.parentElement?.closest('[data-sen-selection-preserve]');
+      controlPointer.current = !!controlsRef.current?.contains(target) || !!preserved;
+      if (!controlPointer.current && !editorRef.current?.contains(target) && (editing || actionOpen || !root.contains(target))) clear();
     };
     const key = (event: KeyboardEvent) => { if (event.key === 'Escape' && snapshot) { clear(); root.focus({ preventScroll: true }); } };
     doc.addEventListener('selectionchange', read);
@@ -58,7 +64,7 @@ export function usePassageSelection(blocks: readonly TextHighlightBlock[], onSel
       doc.removeEventListener('pointerdown', down);
       doc.removeEventListener('keydown', key);
     };
-  }, [blocks, editing, clear, snapshot]);
+  }, [blocks, editing, actionOpen, clear, snapshot]);
 
   useLayoutEffect(() => {
     const root = rootRef.current;
@@ -106,8 +112,13 @@ export function usePassageSelection(blocks: readonly TextHighlightBlock[], onSel
     // The inline draft takes focus; the canonical selection stays unchanged.
     rootRef.current?.ownerDocument.getSelection()?.removeAllRanges();
   };
+  const beginAction = () => {
+    if (!snapshot) return;
+    setActionOpen(true);
+    rootRef.current?.ownerDocument.getSelection()?.removeAllRanges();
+  };
   const focusBlock = () => {
     if (rootRef.current && selection) findBlockElement(rootRef.current, selection.blockId)?.focus({ preventScroll: true });
   };
-  return { rootRef, controlsRef, editorRef, selection, sourceText: snapshot?.text, editing, rectangles, beginEdit, clear, focusBlock };
+  return { rootRef, controlsRef, editorRef, selection, sourceText: snapshot?.text, editing, actionOpen, rectangles, beginEdit, beginAction, clear, focusBlock };
 }

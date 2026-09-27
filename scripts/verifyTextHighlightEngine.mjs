@@ -73,6 +73,11 @@ for (const [name, browserType, width, height, touch] of [
       assert.equal(expectedSelection.text, original.slice(expectedSelection.start, expectedSelection.end));
     } else await select();
     assert.ok(await page.locator('.sen-text-highlight-marks span').count());
+    const colorPicker = page.getByLabel('Highlight color');
+    await colorPicker.dispatchEvent('pointerdown', { bubbles: true, pointerType: touch ? 'touch' : 'mouse' });
+    await colorPicker.fill('#88ccff');
+    assert.equal(await page.locator('.sen-text-highlight-marks span').first().evaluate(element => getComputedStyle(element).backgroundColor), 'rgba(136, 204, 255, 0.35)');
+    await colorPicker.fill('#f2cf66');
     if (!touch) {
       await page.keyboard.press('Tab');
       assert.equal(await page.evaluate(() => document.activeElement?.textContent), 'Edit');
@@ -106,7 +111,7 @@ for (const [name, browserType, width, height, touch] of [
     await select(); await activate('Edit'); await input.fill('unsaved'); await page.keyboard.press('Escape');
     assert.equal(await paragraph.textContent(), beforeDelete); assert.equal(await dialog.count(), 0);
     await select(); await activate('Edit'); await input.fill('discard on outside click');
-    await page.getByText('Highlight a passage, then choose Edit.', { exact: true }).click();
+    await page.getByText('Highlight a passage, then choose Edit or Media.', { exact: true }).click();
     assert.equal(await paragraph.textContent(), beforeDelete); assert.equal(await dialog.count(), 0);
     await select(); await activate('Edit');
     // Mobile WebKit does not implement mouse-wheel injection.
@@ -119,6 +124,57 @@ for (const [name, browserType, width, height, touch] of [
       document.getSelection().removeAllRanges(); document.getSelection().addRange(range); document.dispatchEvent(new Event('selectionchange'));
     });
     await page.waitForFunction(() => !document.querySelector('.sen-text-highlight-controls'));
+    await page.evaluate(() => document.getSelection()?.removeAllRanges());
+    const cueParagraph = page.locator('[data-sen-text-block="blue-door"]');
+    const cueOriginal = await cueParagraph.textContent();
+    await cueParagraph.scrollIntoViewIfNeeded();
+    await cueParagraph.evaluate(element => {
+      const phrase = 'blue door'; const start = element.firstChild.textContent.indexOf(phrase);
+      const range = document.createRange(); range.setStart(element.firstChild, start); range.setEnd(element.firstChild, start + phrase.length);
+      document.getSelection().removeAllRanges(); document.getSelection().addRange(range);
+      document.dispatchEvent(new Event('selectionchange'));
+    });
+    await page.screenshot({ path: `${output}/${name}-cue-actions.png` });
+    if (touch) { await activate('Media'); await activate('Audio'); await activate('Cue'); }
+    else {
+      for (const name of ['Media', 'Audio', 'Cue']) {
+        await page.getByRole('button', { name, exact: true }).focus();
+        await page.keyboard.press('Enter');
+      }
+    }
+    assert.equal(await page.locator('.sen-manual-cue-picker__item').count(), 92);
+    const press = async locator => touch ? locator.tap() : locator.click();
+    await press(page.locator('.sen-manual-cue-picker__item').first().getByRole('button', { name: 'Preview' }));
+    await page.waitForFunction(() => Array.from(document.querySelectorAll('audio')).some(audio => audio.currentSrc.includes('celestialaudio.seihouse.org')));
+    await page.screenshot({ path: `${output}/${name}-cue-picker.png` });
+    await press(page.locator('.sen-manual-cue-picker__item').first().getByRole('button', { name: 'Select' }));
+    assert.equal(await cueParagraph.locator('[data-cue-annotation]').count(), 1);
+    assert.equal(await cueParagraph.locator('.inline-world-cue-annotation__text').textContent(), 'blue door');
+    assert.equal((await cueParagraph.textContent()).replaceAll('\u2060', ''), cueOriginal);
+    await page.screenshot({ path: `${output}/${name}-cue-placed.png` });
+    await press(cueParagraph.locator('[data-action-type="world-cue"]'));
+    await page.waitForFunction(() => {
+      const control = document.querySelector('[data-action-type="world-cue"]');
+      return control?.getAttribute('data-state') === 'playing' || control?.getAttribute('data-state') === 'loading';
+    });
+    await cueParagraph.locator('.inline-world-cue-annotation__text').evaluate(element => {
+      const range = document.createRange(); range.selectNodeContents(element);
+      document.getSelection().removeAllRanges(); document.getSelection().addRange(range);
+      document.dispatchEvent(new Event('selectionchange'));
+    });
+    await activate('Media'); await activate('Audio'); await activate('Cue');
+    assert.equal(await page.getByRole('button', { name: 'Remove cue' }).count(), 1);
+    await press(page.locator('.sen-manual-cue-picker__item').nth(1).getByRole('button', { name: 'Replace' }));
+    assert.equal(await cueParagraph.locator('[data-cue-annotation]').count(), 1);
+    await cueParagraph.locator('.inline-world-cue-annotation__text').evaluate(element => {
+      const range = document.createRange(); range.selectNodeContents(element);
+      document.getSelection().removeAllRanges(); document.getSelection().addRange(range);
+      document.dispatchEvent(new Event('selectionchange'));
+    });
+    await activate('Media'); await activate('Audio'); await activate('Cue');
+    await activate('Remove cue');
+    assert.equal(await cueParagraph.locator('[data-cue-annotation]').count(), 0);
+    assert.equal(await cueParagraph.textContent(), cueOriginal);
     const layout = await page.evaluate(() => ({ viewport: document.documentElement.clientWidth, content: document.documentElement.scrollWidth }));
     assert.ok(layout.content <= layout.viewport + 1, JSON.stringify(layout));
     assert.deepEqual(errors, []);

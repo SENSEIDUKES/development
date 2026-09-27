@@ -16,7 +16,7 @@ export const PACKAGE_TARGETS = {
     forbiddenBundleContents: [...NEVER_PUBLISHED, ['@seihouse/library', 'Library dependency'], ['celestialaudio.seihouse.org', 'first-party catalog'], ['library-auth-backdrop', 'Library auth artwork']],
     typeDependencies: [], smokeDependencies: [],
     smokeExports: {
-      '@seihouse/sen/text-highlight-engine': ['TextHighlightEngine', 'usePassageSelection', 'normalizePassageSelection', 'replacePassage'],
+      '@seihouse/sen/text-highlight-engine': ['TextHighlightEngine', 'usePassageSelection', 'normalizePassageSelection', 'replacePassage', 'createManualCueMoment', 'ManualCuePicker'],
       '@seihouse/sen': ['NarrativePresentationProvider', 'SEN_PACKAGE_VERSION'],
       '@seihouse/sen/presentation': ['NarrativeArtProvider', 'NarrativeTextBox', 'AmbientEffect'],
       '@seihouse/sen/contracts': ['DEFAULT_SEN_LANGUAGE_CODE'],

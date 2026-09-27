@@ -1,7 +1,7 @@
 # Portable narrative audio
 
 - **Created:** 2026-08-19
-- **Last updated:** 2026-09-19
+- **Last updated:** 2026-09-27
 - **Ownership status:** SEN contracts separated from Library catalogs and host playback
 
 ## Ownership
@@ -52,6 +52,14 @@ interface WorldCueIntent {
 Playback is also explicit. Reader surfaces consume the `NarrativePlaybackPort`
 provided by their host. A package consumer may supply any player or omit audio
 entirely; SEN does not install the SEIHouse audio player.
+
+Author-selected manual moments use `origin: 'manual'` on the same resolved
+record. They require an approved cue and provenance supplied by the host, but
+may anchor text that does not describe an audible action. Generated intent
+keeps its existing audible-action validation and resolver behavior. The
+Text Highlight Engine supplies the separate adapter that maps an exact
+`PassageSelection` to this resolved record; audio contracts remain independent
+of that UI component.
 
 ## Library and host boundary
 

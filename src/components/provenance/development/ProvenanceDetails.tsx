@@ -1,10 +1,14 @@
-import type { ProvenanceContentType, ProvenanceRecord, ProvenanceStatus } from '../shared/types';
+import type {
+  ProvenanceContentType,
+  ProvenancePresentationStatus,
+  ProvenanceRecord,
+} from '../shared/types';
+import { getProvenancePresentationStatus } from '../shared/createProvenanceRecord';
 import './provenance.css';
 
-const STATUS_LABELS: Record<ProvenanceStatus, string> = {
+const STATUS_LABELS: Record<ProvenancePresentationStatus, string> = {
+  mock: 'Development mock',
   recorded: 'Recorded by SEIHouse',
-  verified: 'Verified',
-  'verification-unavailable': 'Verification unavailable',
 };
 
 const CONTENT_TYPE_LABELS: Record<ProvenanceContentType, string> = {
@@ -20,19 +24,40 @@ const CONTENT_TYPE_LABELS: Record<ProvenanceContentType, string> = {
   other: 'Other generated asset',
 };
 
+const ACTOR_LABELS: Record<ProvenanceRecord['actor'], string> = {
+  user: 'User',
+  ai: 'AI',
+  system: 'System',
+  import: 'Import',
+};
+
+const ACTION_LABELS: Record<ProvenanceRecord['action'], string> = {
+  generated: 'Generated',
+  edited: 'Edited',
+  regenerated: 'Regenerated',
+  translated: 'Translated',
+  converted: 'Converted',
+  'media-added': 'Media added',
+  uploaded: 'Uploaded',
+};
+
 function formatTimestamp(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
 
   return new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short',
   }).format(date);
 }
 
 interface DetailRowProps {
   label: string;
-  value?: string;
+  value: string;
   timestamp?: boolean;
 }
 
@@ -41,11 +66,7 @@ function DetailRow({ label, value, timestamp = false }: DetailRowProps) {
     <div className="provenance-details-row">
       <dt>{label}</dt>
       <dd>
-        {value
-          ? timestamp
-            ? <time dateTime={value}>{formatTimestamp(value)}</time>
-            : value
-          : <span className="provenance-details-missing">Not provided</span>}
+        {timestamp ? <time dateTime={value}>{formatTimestamp(value)}</time> : value}
       </dd>
     </div>
   );
@@ -57,6 +78,11 @@ export interface ProvenanceDetailsProps {
 }
 
 export function ProvenanceDetails({ record, className = '' }: ProvenanceDetailsProps) {
+  const presentationStatus = getProvenancePresentationStatus(record);
+  const recordedStatement = record.userId
+    ? 'SEIHouse recorded this asset for this user.'
+    : 'SEIHouse recorded this asset.';
+
   return (
     <section
       className={`provenance-details ${className}`.trim()}
@@ -66,29 +92,34 @@ export function ProvenanceDetails({ record, className = '' }: ProvenanceDetailsP
         <span className="provenance-details-mark" aria-hidden="true">Ⓢ</span>
         <div>
           <h3>SEIHouse Provenance</h3>
-          <p>SEIHouse recorded this asset for this user.</p>
+          <p>
+            {presentationStatus === 'recorded'
+              ? recordedStatement
+              : 'Development sample only. This mock does not assert a SEIHouse recording.'}
+          </p>
         </div>
       </div>
 
       <dl className="provenance-details-list">
         <DetailRow label="Content type" value={CONTENT_TYPE_LABELS[record.contentType]} />
+        <DetailRow label="Actor" value={ACTOR_LABELS[record.actor]} />
+        <DetailRow label="Action" value={ACTION_LABELS[record.action]} />
+        <DetailRow label="Version" value={record.versionId} />
         <DetailRow label="Recorded" value={record.recordedAt} timestamp />
         {record.generatedAt && <DetailRow label="Generated" value={record.generatedAt} timestamp />}
         <DetailRow label="Provenance ID" value={record.provenanceId} />
-        <DetailRow label="Generator" value={record.generator} />
-        <DetailRow label="Model" value={record.model} />
-        <DetailRow label="User record" value={record.userId} />
-        <DetailRow label="Asset record" value={record.assetId} />
-        <DetailRow label="Content fingerprint" value={record.contentHash} />
-        <DetailRow label="Parent lineage" value={record.parentAssetId} />
+        {record.generator && <DetailRow label="Generator" value={record.generator} />}
+        {record.model && <DetailRow label="Model" value={record.model} />}
       </dl>
 
       <div className="provenance-details-status">
         <span aria-hidden="true" />
-        {STATUS_LABELS[record.status]}
+        {STATUS_LABELS[presentationStatus]}
       </div>
       <p className="provenance-details-caveat">
-        Development record only. Cryptographic verification is not connected.
+        {presentationStatus === 'mock'
+          ? 'Sample data only. No authoritative recording or verification is connected.'
+          : 'Cryptographic verification is not connected.'}
       </p>
     </section>
   );

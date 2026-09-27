@@ -10,34 +10,59 @@ export type ProvenanceContentType =
   | 'video'
   | 'other';
 
-/**
- * `recorded` is the only status created locally in this phase. The remaining
- * values reserve presentation states for a future verifier without providing
- * or implying verification itself.
- */
-export type ProvenanceStatus =
-  | 'recorded'
-  | 'verified'
-  | 'verification-unavailable';
+export type ProvenanceActor = 'user' | 'ai' | 'system' | 'import';
+
+export type ProvenanceAction =
+  | 'generated'
+  | 'edited'
+  | 'regenerated'
+  | 'translated'
+  | 'converted'
+  | 'media-added'
+  | 'uploaded';
+
+export type ProvenanceAssetVersionRef = Readonly<{
+  assetId: string;
+  versionId: string;
+}>;
 
 /**
- * A provider-neutral description of an AI-generated asset and the evidence
- * SEIHouse may later use to protect its owner. Optional evidence fields do not
- * become claims merely because they exist in this contract.
+ * Mock is the only status created by the local development utility. Recorded
+ * describes an authoritative SEIHouse recording event. Verified is reserved
+ * for a future verifier result and is not currently a UI presentation state.
  */
-export type ProvenanceRecord = {
+export type ProvenanceStatus = 'mock' | 'recorded' | 'verified';
+
+/** Current UI modes deliberately exclude verified until a real result exists. */
+export type ProvenancePresentationStatus = Extract<ProvenanceStatus, 'mock' | 'recorded'>;
+
+/**
+ * A provider-neutral description of one meaningful asset version. When that
+ * version changes, create a new version and record instead of mutating history.
+ * This shape alone does not establish that a record is authoritative.
+ */
+export type ProvenanceRecord = Readonly<{
   provenanceId: string;
   contentType: ProvenanceContentType;
+  assetId: string;
+  versionId: string;
+  actor: ProvenanceActor;
+  action: ProvenanceAction;
   userId?: string;
-  assetId?: string;
   contentHash?: string;
-  parentAssetId?: string;
+  parentVersions?: readonly ProvenanceAssetVersionRef[];
   generator?: string;
   model?: string;
   generatedAt?: string;
   recordedAt: string;
   status: ProvenanceStatus;
-};
+}>;
 
-export type CreateProvenanceRecordInput = Pick<ProvenanceRecord, 'contentType'>
-  & Partial<Omit<ProvenanceRecord, 'contentType' | 'status'>>;
+/** Input for mock data only; status and generated identity are never caller-set. */
+export type CreateProvenanceRecordInput = Pick<
+  ProvenanceRecord,
+  'contentType' | 'assetId' | 'versionId' | 'actor' | 'action'
+> & Partial<Omit<
+  ProvenanceRecord,
+  'contentType' | 'assetId' | 'versionId' | 'actor' | 'action' | 'status'
+>>;

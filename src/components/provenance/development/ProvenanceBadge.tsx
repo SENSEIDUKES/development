@@ -3,7 +3,8 @@ import {
   SEIPopoverContent,
   SEIPopoverTrigger,
 } from '@seihouse/ui';
-import type { ProvenanceRecord } from '../shared/types';
+import { getProvenancePresentationStatus } from '../shared/createProvenanceRecord';
+import type { ProvenancePresentationStatus, ProvenanceRecord } from '../shared/types';
 import { ProvenanceDetails } from './ProvenanceDetails';
 import './provenance.css';
 
@@ -27,11 +28,16 @@ function ProvenanceMark() {
 }
 
 export function ProvenanceBadge({ record, className = '' }: ProvenanceBadgeProps) {
+  const presentationStatus: ProvenancePresentationStatus = getProvenancePresentationStatus(record);
+  const label = presentationStatus === 'mock'
+    ? `View development provenance sample for this ${record.contentType}`
+    : `View SEIHouse provenance for this ${record.contentType}`;
+
   return (
     <SEIPopover>
       <SEIPopoverTrigger
         className={`provenance-badge ${className}`.trim()}
-        aria-label={`View SEIHouse provenance for this ${record.contentType}`}
+        aria-label={label}
       >
         <ProvenanceMark />
       </SEIPopoverTrigger>

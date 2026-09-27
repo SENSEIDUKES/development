@@ -18,6 +18,9 @@ const PROVENANCE_EXAMPLES: readonly ProvenanceExample[] = [
       contentType: 'chapter',
       userId: 'user_mock_1042',
       assetId: 'chapter_mock_009',
+      versionId: 'chapter_v1',
+      actor: 'ai',
+      action: 'generated',
       generator: 'SEIHouse Chapter Generation',
       model: 'Gemini mock fixture',
       generatedAt: '2026-09-11T12:38:00.000Z',
@@ -33,7 +36,10 @@ const PROVENANCE_EXAMPLES: readonly ProvenanceExample[] = [
       contentType: 'translation',
       userId: 'user_mock_1042',
       assetId: 'translation_mock_fr_014',
-      parentAssetId: 'chapter_mock_009',
+      versionId: 'translation_v1',
+      parentVersions: [{ assetId: 'chapter_mock_009', versionId: 'chapter_v1' }],
+      actor: 'ai',
+      action: 'translated',
       generator: 'SEIHouse Translation',
       model: 'Translation model mock',
       generatedAt: '2026-09-11T12:44:19.000Z',
@@ -49,8 +55,11 @@ const PROVENANCE_EXAMPLES: readonly ProvenanceExample[] = [
       contentType: 'cover',
       userId: 'user_mock_1042',
       assetId: 'cover_mock_022',
+      versionId: 'cover_v1',
       contentHash: 'mock-only:fingerprint-placeholder-022',
-      parentAssetId: 'story_mock_003',
+      parentVersions: [{ assetId: 'story_mock_003', versionId: 'story_v1' }],
+      actor: 'ai',
+      action: 'generated',
       generator: 'SEIHouse Image Generation',
       model: 'Image model mock',
       generatedAt: '2026-09-11T13:02:10.000Z',
@@ -66,6 +75,9 @@ const PROVENANCE_EXAMPLES: readonly ProvenanceExample[] = [
       contentType: 'audio',
       userId: 'user_mock_2208',
       assetId: 'audio_mock_031',
+      versionId: 'audio_v1',
+      actor: 'ai',
+      action: 'generated',
       generator: 'SEA',
       recordedAt: '2026-09-11T13:16:42.000Z',
     }),
@@ -79,7 +91,10 @@ const PROVENANCE_EXAMPLES: readonly ProvenanceExample[] = [
       contentType: 'narration',
       userId: 'user_mock_2208',
       assetId: 'narration_mock_018',
-      parentAssetId: 'chapter_mock_009',
+      versionId: 'narration_v1',
+      parentVersions: [{ assetId: 'chapter_mock_009', versionId: 'chapter_v1' }],
+      actor: 'ai',
+      action: 'generated',
       generator: 'SEIHouse Narration',
       model: 'Voice model mock',
       generatedAt: '2026-09-11T13:21:05.000Z',
@@ -94,9 +109,29 @@ const PROVENANCE_EXAMPLES: readonly ProvenanceExample[] = [
       provenanceId: 'prov_video_006',
       contentType: 'video',
       assetId: 'video_mock_006',
+      versionId: 'video_v1',
+      actor: 'ai',
+      action: 'generated',
       recordedAt: '2026-09-11T13:34:58.000Z',
     }),
   },
+];
+
+const EDITED_CHAPTER_RECORD = createProvenanceRecord({
+  provenanceId: 'prov_chapter_009_v2',
+  contentType: 'chapter',
+  userId: 'user_mock_1042',
+  assetId: 'chapter_mock_009',
+  versionId: 'chapter_v2',
+  parentVersions: [{ assetId: 'chapter_mock_009', versionId: 'chapter_v1' }],
+  actor: 'user',
+  action: 'edited',
+  recordedAt: '2026-09-11T12:52:04.000Z',
+});
+
+const MOCK_RECORDS = [
+  ...PROVENANCE_EXAMPLES.slice(0, 3).map(example => ({ title: example.eyebrow, record: example.record })),
+  { title: 'User-edited chapter revision', record: EDITED_CHAPTER_RECORD },
 ];
 
 const SUPPORTED_TYPES = [
@@ -113,8 +148,8 @@ const SUPPORTED_TYPES = [
 ] as const;
 
 const FLOW = [
-  { title: 'AI Generation', note: 'Any SEIHouse generation surface' },
-  { title: 'Provenance Record', note: 'Portable metadata and evidence contract' },
+  { title: 'AI Generation', note: 'Edits, conversions, and imports also create version events' },
+  { title: 'Provenance Record', note: 'Version, actor/action, source, time, and trust state' },
   { title: 'Ⓢ Badge', note: 'Subtle asset-level disclosure' },
   { title: 'Provenance Details', note: 'Recorded time, identity, and available context' },
   { title: 'Future Backend Verification', note: 'Future · Not connected', future: true },
@@ -131,9 +166,9 @@ const CONNECTIONS = [
 
 const FUTURE_EVIDENCE = [
   { title: 'User record', status: 'Future' },
-  { title: 'Asset record', status: 'Future' },
+  { title: 'Asset + version record', status: 'Future · Not connected' },
   { title: 'Content fingerprint', status: 'Future · Not connected' },
-  { title: 'Parent lineage', status: 'Future · Not connected' },
+  { title: 'Parent versions', status: 'Future · Not connected' },
 ] as const;
 
 function ProvenanceExampleCard({ example, index }: { example: ProvenanceExample; index: number }) {
@@ -241,16 +276,16 @@ export function ProvenanceTab() {
         <div className="provenance-section-heading">
           <p>Mock records</p>
           <h2 id="provenance-records-title">The contract, visible and inspectable</h2>
-          <span>These values are fixtures only. The fingerprint below was not calculated from an asset.</span>
+          <span>All statuses are mock. The fingerprint below was not calculated from an asset.</span>
         </div>
         <div className="provenance-record-grid">
-          {PROVENANCE_EXAMPLES.slice(0, 3).map(example => (
-            <article key={example.record.provenanceId}>
+          {MOCK_RECORDS.map(({ title, record }) => (
+            <article key={record.provenanceId}>
               <div>
-                <span>{example.record.contentType}</span>
-                <ProvenanceBadge record={example.record} />
+                <span>{title}</span>
+                <ProvenanceBadge record={record} />
               </div>
-              <pre>{JSON.stringify(example.record, null, 2)}</pre>
+              <pre>{JSON.stringify(record, null, 2)}</pre>
             </article>
           ))}
         </div>

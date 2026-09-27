@@ -1,4 +1,19 @@
-import type { CreateProvenanceRecordInput, ProvenanceRecord } from './types';
+import type {
+  CreateProvenanceRecordInput,
+  ProvenancePresentationStatus,
+  ProvenanceRecord,
+} from './types';
+
+const trustedPresentationStatuses = new WeakMap<object, ProvenancePresentationStatus>();
+
+function registerPresentationStatus(record: ProvenanceRecord, status: ProvenancePresentationStatus) {
+  trustedPresentationStatuses.set(record, status);
+}
+
+/** Unrecognized or deserialized records are always treated as development mocks. */
+export function getProvenancePresentationStatus(record: ProvenanceRecord): ProvenancePresentationStatus {
+  return trustedPresentationStatuses.get(record) ?? 'mock';
+}
 
 function createLocalId() {
   if (typeof globalThis.crypto?.randomUUID === 'function') {
@@ -10,14 +25,19 @@ function createLocalId() {
 }
 
 /**
- * Creates a local provenance record without reading or writing persistence.
- * Callers may provide fixed IDs and timestamps for imports, fixtures, or tests.
+ * Creates a development mock only; it does not record an asset with SEIHouse.
+ * Callers may provide fixed IDs and timestamps for fixtures or tests.
  */
 export function createProvenanceRecord(input: CreateProvenanceRecordInput): ProvenanceRecord {
-  return {
+  const record: ProvenanceRecord = Object.freeze({
     ...input,
+    parentVersions: input.parentVersions
+      ? Object.freeze(input.parentVersions.map(parent => Object.freeze({ ...parent })))
+      : undefined,
     provenanceId: input.provenanceId ?? createLocalId(),
     recordedAt: input.recordedAt ?? new Date().toISOString(),
-    status: 'recorded',
-  };
+    status: 'mock',
+  });
+  registerPresentationStatus(record, 'mock');
+  return record;
 }

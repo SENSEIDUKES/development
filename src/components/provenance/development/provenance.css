@@ -29,7 +29,7 @@
 }
 
 .provenance-popover {
-  width: min(21rem, calc(100vw - 1.5rem));
+  width: min(22rem, calc(100vw - 1.5rem));
   padding: 0;
   overflow: hidden;
 }
@@ -59,14 +59,14 @@
 
 .provenance-details-heading h3 {
   margin: 0;
-  font: 600 0.82rem/1.3 var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+  font: 600 0.9rem/1.35 var(--font-sans, ui-sans-serif, system-ui, sans-serif);
   letter-spacing: 0.01em;
 }
 
 .provenance-details-heading p {
   margin: 0.28rem 0 0;
   color: var(--sh-text-muted, rgba(245, 241, 232, 0.62));
-  font-size: 0.72rem;
+  font-size: 0.82rem;
   line-height: 1.5;
 }
 
@@ -81,8 +81,8 @@
   display: grid;
   grid-template-columns: minmax(6rem, 0.8fr) minmax(0, 1.4fr);
   gap: 0.8rem;
-  padding: 0.36rem 0;
-  font-size: 0.68rem;
+  padding: 0.42rem 0;
+  font-size: 0.8rem;
   line-height: 1.45;
 }
 
@@ -97,11 +97,6 @@
   text-align: right;
 }
 
-.provenance-details-missing {
-  color: var(--sh-text-muted, rgba(245, 241, 232, 0.46));
-  font-style: italic;
-}
-
 .provenance-details-status {
   display: flex;
   gap: 0.48rem;
@@ -110,7 +105,7 @@
   padding-top: 0.72rem;
   border-top: 1px solid color-mix(in srgb, currentColor 10%, transparent);
   color: var(--sh-text-muted, rgba(245, 241, 232, 0.68));
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -126,8 +121,8 @@
   margin: 0;
   padding: 0.55rem 1rem 1rem;
   color: var(--sh-text-muted, rgba(245, 241, 232, 0.46));
-  font-size: 0.62rem;
-  line-height: 1.45;
+  font-size: 0.72rem;
+  line-height: 1.5;
 }
 
 @media (prefers-reduced-motion: reduce) {

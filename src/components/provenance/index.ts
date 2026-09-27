@@ -3,7 +3,11 @@ export { ProvenanceDetails, type ProvenanceDetailsProps } from './development/Pr
 export { createProvenanceRecord } from './shared/createProvenanceRecord';
 export type {
   CreateProvenanceRecordInput,
+  ProvenanceAction,
+  ProvenanceActor,
+  ProvenanceAssetVersionRef,
   ProvenanceContentType,
+  ProvenancePresentationStatus,
   ProvenanceRecord,
   ProvenanceStatus,
 } from './shared/types';

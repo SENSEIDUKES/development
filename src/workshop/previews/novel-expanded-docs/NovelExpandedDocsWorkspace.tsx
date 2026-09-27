@@ -17,6 +17,10 @@ export function NovelExpandedDocsWorkspace() {
 
   function navigate(id: string) {
     const href = docsHref(id);
+    if (id === topicId) {
+      if (window.location.search !== href) window.history.replaceState(null, '', href);
+      return;
+    }
     if (window.location.search !== href) window.history.pushState(null, '', href);
     setTopicId(id);
   }

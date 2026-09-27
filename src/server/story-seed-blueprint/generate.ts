@@ -1,5 +1,5 @@
 import { MAX_ROADMAP_ARCS, arcRoadmapSchema, insertArcsBeforeFinal, validateArcRoadmap, type ArcPlan } from '@seihouse/sen/arc-goals';
-import { GoogleGenAI } from "@google/genai";
+import { createModelRouter, ModelRouterError, type GenerationResult } from '@seihouse/library/model-router-server';
 import {
   buildArcRoadmapExtensionPayload,
   buildBlueprintGenerationPayload,
@@ -9,11 +9,8 @@ import {
   type BlueprintGenerationPayload,
 } from '@seihouse/sen/story-seed';
 import { type WorldBlueprint } from '@seihouse/sen/story-seed';
-import {
-  geminiBlueprintModelId,
-  type ResolvedStorySeedBlueprintConfig,
-} from "./config";
-import { generateOpenRouterText } from "../model-router/openRouter";
+import { type ResolvedStorySeedBlueprintConfig } from "./config";
+import { DEVELOPMENT_OPENROUTER_ATTRIBUTION } from '../model-router/openRouter';
 import {
   ARC_ROADMAP_EXTENSION_SYSTEM_PROMPT,
   buildArcRoadmapExtensionPrompt,
@@ -131,41 +128,34 @@ export interface WorldBlueprintModelProvider {
   generate(request: BlueprintModelRequest<object>): Promise<unknown>;
 }
 
-export class GeminiWorldBlueprintProvider implements WorldBlueprintModelProvider {
-  private readonly client: GoogleGenAI;
-
-  constructor(
-    apiKey: string,
-    private readonly model: string,
-  ) {
-    this.client = new GoogleGenAI({ apiKey });
+const parseBlueprintResponse = async (
+  generation: Promise<GenerationResult>,
+  maxOutputTokens: number,
+): Promise<unknown> => {
+  try {
+    const result = await generation;
+    if (result.capability !== 'text') throw new Error('Unexpected speech result.');
+    return JSON.parse(result.text.trim()) as unknown;
+  } catch (error) {
+    if (error instanceof ModelRouterError && error.code === 'output-limit') {
+      throw new BlueprintOutputLimitError(maxOutputTokens);
+    }
+    throw error;
   }
+};
+
+export class GeminiWorldBlueprintProvider implements WorldBlueprintModelProvider {
+  constructor(
+    private readonly apiKey: string,
+    private readonly model: string,
+  ) {}
 
   async generate(request: BlueprintModelRequest<object>): Promise<unknown> {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), request.timeoutMs);
-    try {
-      const response = await this.client.models.generateContent({
-        model: geminiBlueprintModelId(this.model),
-        contents: request.userPrompt,
-        config: {
-          systemInstruction: request.systemInstruction,
-          responseMimeType: "application/json",
-          responseJsonSchema: request.responseJsonSchema,
-          temperature: request.temperature,
-          maxOutputTokens: request.maxOutputTokens,
-          abortSignal: controller.signal,
-        },
-      });
-      if (response.candidates?.[0]?.finishReason === "MAX_TOKENS") {
-        throw new BlueprintOutputLimitError(request.maxOutputTokens);
-      }
-      const output = response.text?.trim();
-      if (!output) throw new Error("Gemini returned an empty World Blueprint response.");
-      return JSON.parse(output) as unknown;
-    } finally {
-      clearTimeout(timeout);
-    }
+    return parseBlueprintResponse(createModelRouter({ credentials: { gemini: this.apiKey } }).generate({
+      capability: 'text', model: this.model, systemInstruction: request.systemInstruction,
+      userPrompt: request.userPrompt, responseFormat: 'json', responseJsonSchema: request.responseJsonSchema,
+      temperature: request.temperature, maxOutputTokens: request.maxOutputTokens, timeoutMs: request.timeoutMs,
+    }), request.maxOutputTokens);
   }
 }
 
@@ -176,18 +166,14 @@ export class OpenRouterWorldBlueprintProvider implements WorldBlueprintModelProv
   ) {}
 
   async generate(request: BlueprintModelRequest<object>): Promise<unknown> {
-    const { text } = await generateOpenRouterText({
-      apiKey: this.apiKey,
-      model: this.model,
-      systemInstruction: request.systemInstruction,
-      userPrompt: request.userPrompt,
-      temperature: request.temperature,
-      maxOutputTokens: request.maxOutputTokens,
-      responseFormat: "json",
-      responseJsonSchema: request.responseJsonSchema,
-      timeoutMs: request.timeoutMs,
-    });
-    return JSON.parse(text.trim()) as unknown;
+    return parseBlueprintResponse(createModelRouter({
+      credentials: { openrouter: this.apiKey },
+      openRouterAttribution: DEVELOPMENT_OPENROUTER_ATTRIBUTION,
+    }).generate({
+      capability: 'text', model: this.model, systemInstruction: request.systemInstruction,
+      userPrompt: request.userPrompt, responseFormat: 'json', responseJsonSchema: request.responseJsonSchema,
+      temperature: request.temperature, maxOutputTokens: request.maxOutputTokens, timeoutMs: request.timeoutMs,
+    }), request.maxOutputTokens);
   }
 }
 

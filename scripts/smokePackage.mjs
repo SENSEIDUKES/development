@@ -9,7 +9,7 @@
  * Usage: `node scripts/smokePackage.mjs <sen|library>`
  */
 import { execFileSync } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { dirname, join, resolve, relative, isAbsolute } from 'node:path';
@@ -75,6 +75,23 @@ try {
   `);
   run(process.execPath, ['presentation-smoke.mjs'], consumerDirectory);
 
+  if (target.id === 'library') {
+    await writeFile(join(consumerDirectory, 'model-router-smoke.mjs'), `
+      import assert from 'node:assert/strict';
+      import { createModelRouter, ModelRouterError } from '@seihouse/library/model-router-server';
+      const fetchMock = async (_url, init) => {
+        assert.equal(init.headers.Authorization, 'Bearer packed-key');
+        return new Response(JSON.stringify({ choices: [{ message: { content: 'packed-result' } }] }), { status: 200 });
+      };
+      const router = createModelRouter({ credentials: { openrouter: 'packed-key' }, fetch: fetchMock });
+      const result = await router.generate({ capability: 'text', model: 'openrouter/openai/gpt-6-luna', systemInstruction: 's', userPrompt: 'u', temperature: 0, maxOutputTokens: 100, timeoutMs: 1000, responseFormat: 'text' });
+      assert.equal(result.text, 'packed-result');
+      assert.equal(result.provider, 'openrouter');
+      assert.equal(typeof ModelRouterError, 'function');
+    `);
+    run(process.execPath, ['model-router-smoke.mjs'], consumerDirectory);
+  }
+
   const imports = [];
   const bindings = [];
   let bindingIndex = 0;
@@ -98,6 +115,20 @@ try {
     [join(root, 'node_modules/vite/bin/vite.js'), 'build', '--logLevel', 'warn'],
     consumerDirectory,
   );
+
+  if (target.id === 'library') {
+    await writeFile(join(consumerDirectory, 'src/forbidden-browser-import.js'),
+      "import { createModelRouter } from '@seihouse/library/model-router-server'; document.body.textContent = String(createModelRouter);");
+    await writeFile(join(consumerDirectory, 'index.html'),
+      '<div id="app"></div><script type="module" src="/src/forbidden-browser-import.js"></script>');
+    run(process.execPath, [join(root, 'node_modules/vite/bin/vite.js'), 'build', '--logLevel', 'silent'], consumerDirectory);
+    const browserAssets = await readdir(join(consumerDirectory, 'dist/assets'));
+    const browserScript = browserAssets.find(name => name.endsWith('.js'));
+    assert(browserScript, 'browser smoke must produce a JavaScript bundle');
+    const browserOutput = await readFile(join(consumerDirectory, 'dist/assets', browserScript), 'utf8');
+    assert(browserOutput.includes('server-only'), 'browser import must include the server-only guard');
+    assert(!browserOutput.includes('openrouter.ai') && !browserOutput.includes('api.elevenlabs.io') && !browserOutput.includes('generativelanguage.googleapis.com'), 'browser bundle must not contain provider implementations');
+  }
   run(
     process.execPath,
     [

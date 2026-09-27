@@ -9,6 +9,7 @@ export const ownershipRules = [
   ['src/presentation/', 'sen', 'neutral presentation'],
   ['src/narrative/', 'sen', 'narrative contracts'],
   ['src/library/', 'library', 'headless Library behavior'],
+  ['src/library/model-router/', 'library', 'model router server'],
   ['src/host/', 'host', 'host adapters and records'],
   ['src/components/reader-chamber/shared/types.ts', 'workshop', 'locked-reference adapter'],
   ['src/components/reader-chamber/shared/id.ts', 'workshop', 'locked-reference adapter'],

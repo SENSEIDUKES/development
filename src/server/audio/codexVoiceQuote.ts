@@ -16,12 +16,10 @@ import type { LivingStoryRecord } from '../../components/chapter-generation/shar
 import { assignCharacterVoices, isCharacterVoiceEligible } from './characterVoiceAssignments';
 import { resolveVoiceKeyToProviderId } from './voiceCatalog';
 import { DEFAULT_TTS_MODEL } from '../model-router/catalog';
+import { createModelRouter } from '@seihouse/library/model-router-server';
 
-const ELEVENLABS_API_ORIGIN = 'https://api.elevenlabs.io';
 const DEFAULT_ELEVENLABS_MODEL = DEFAULT_TTS_MODEL;
-const ELEVENLABS_OUTPUT_FORMAT = 'mp3_44100_128';
 const ELEVENLABS_AUDIO_MIME_TYPE = 'audio/mpeg';
-const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 const MAX_SIGNATURE_QUOTE_LENGTH = 320;
 const DEFAULT_TIMEOUT_MS = 45_000;
 
@@ -112,43 +110,14 @@ export class ElevenLabsVoiceSpeechProvider implements VoiceSpeechProvider {
   ) {}
 
   async synthesize(request: VoiceSynthesisRequest): Promise<Uint8Array> {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
-    try {
-      const endpoint = new URL(
-        `/v1/text-to-speech/${encodeURIComponent(request.providerVoiceId)}`,
-        ELEVENLABS_API_ORIGIN,
-      );
-      endpoint.searchParams.set('output_format', ELEVENLABS_OUTPUT_FORMAT);
-      const response = await this.fetchImpl(endpoint, {
-        method: 'POST',
-        headers: {
-          Accept: 'audio/mpeg',
-          'Content-Type': 'application/json',
-          'xi-api-key': this.apiKey,
-        },
-        body: JSON.stringify({ text: request.text, model_id: this.model }),
-        signal: controller.signal,
-      });
-      if (!response.ok) {
-        throw new Error(`Voice provider returned HTTP ${response.status}.`);
-      }
-      const contentLength = Number(response.headers.get('content-length'));
-      if (Number.isFinite(contentLength) && contentLength > MAX_AUDIO_BYTES) {
-        throw new Error('Voice provider returned an oversized artifact.');
-      }
-      const contentType = response.headers.get('content-type')?.toLowerCase() ?? '';
-      if (contentType && !contentType.startsWith('audio/')) {
-        throw new Error('Voice provider returned a non-audio response.');
-      }
-      const bytes = new Uint8Array(await response.arrayBuffer());
-      if (bytes.byteLength === 0 || bytes.byteLength > MAX_AUDIO_BYTES) {
-        throw new Error('Voice provider returned an invalid audio artifact.');
-      }
-      return bytes;
-    } finally {
-      clearTimeout(timeout);
-    }
+    const result = await createModelRouter({
+      credentials: { elevenlabs: this.apiKey }, fetch: this.fetchImpl,
+    }).generate({
+      capability: 'tts', model: this.model, text: request.text,
+      voiceId: request.providerVoiceId, timeoutMs: this.timeoutMs,
+    });
+    if (result.capability !== 'tts') throw new Error('Unexpected text result.');
+    return result.bytes;
   }
 }
 

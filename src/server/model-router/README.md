@@ -1,6 +1,6 @@
 # Model Router
 
-Server-side catalog that routes every generation model to its provider,
+Server-side catalog that routes implemented generation models to their provider,
 grouped by capability. Opened from the Model Router gear in the Workshop header
 and on every preview (`src/workshop/ModelRouterSettings.tsx`); the old
 `?preview=model-router` page is archived but still reachable.
@@ -61,11 +61,15 @@ any model call that is not registered. See AGENTS.md.
 - Workshop gear and panel: `src/workshop/ModelRouterSettings.tsx`
 - Saved chapter-model choice (this browser): `src/host/generation/modelPreference.ts`
 
-## Transfer
+## Other apps
 
-Copy this folder plus the provider changes in `src/server/harness-generation/`,
-`src/server/chapter-generation/`, `src/server/story-seed-blueprint/` and
-`src/server/reader-translation/`. Leave the Workshop view behind.
+Install `@seihouse/library` and import its `./model-router-server` entry from
+an app-owned server route. See `src/package/library/README.md` for configuration
+and a call example. This folder holds Development's registry, environment
+aliases, status endpoint and Workshop-specific OpenRouter attribution. Other
+apps supply their own configuration and keep their prompts, auth, UI and saved
+work in their own code. Status reports key presence and `implemented`
+separately; catalog-only media models are not executable.
 
 ## Workshop history
 

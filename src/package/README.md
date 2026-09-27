@@ -59,6 +59,11 @@ Workshop and the packages always render the same source.
   of the engine's types. That makes SEN's build a prerequisite; this guard says
   so plainly instead of letting `tsc` fail on a missing module.
 
+The Library package also has one explicit server-only entry,
+`@seihouse/library/model-router-server`. Its browser export resolves to a guard;
+the normal client entries do not import it. It is the exception to the
+client-only entry rule and contains no app route, prompt, or credential value.
+
 ```bash
 npm run check:package-boundaries
 npm run build:package

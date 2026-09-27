@@ -25,6 +25,7 @@ durable ledgers and concrete infrastructure stay in the host/backend.
 | `./world-card` | One world in four sizes — Info page, Full discovery card, Compact creator tile and Mini track-sized row — over host-supplied world display data and destinations |
 | `./story-seed` | Authenticated Story Bank, Help and branded creation journey; Story Seed Settings own the Story Language and Reading Mode a new story starts with |
 | `./generation` | First-party HARNESS workspace composition: the novel page and its Story Settings (Story Language, Reading Mode). HARNESS internals such as CAPA slots show only when a development host sets `showHarnessInternals` |
+| `./model-router-server` | Server-only Gemini/OpenRouter text and ElevenLabs speech routing; apps supply credentials, prompts, HTTP policy, and storage |
 | `./media` | First-party catalog selection and entitlement contracts |
 | `./manifestations` | Celestial manifestation orchestration around Library UI visuals |
 | `./styles.css` | Library feature styles |
@@ -40,6 +41,41 @@ grants a boost, multiplier, discount or other advantage.
 visuals over SEN. Concrete CDN and public-directory locations are supplied as
 `LibraryAssets`; they are not embedded in the package.
 
+## Server Model Router
+
+Import `@seihouse/library/model-router-server` only in a trusted Node server.
+An app owns its API route, authentication, prompt, model allowlist, and saved
+work. Pass its server credentials into the router; never serialize them into a
+status response or browser code.
+
+```ts
+import { createModelRouter } from '@seihouse/library/model-router-server';
+
+const router = createModelRouter({
+  credentials: {
+    gemini: process.env.GEMINI_API_KEY,
+    openrouter: process.env.OPENROUTER_API_KEY,
+    elevenlabs: process.env.ELEVENLABS_API_KEY,
+  },
+  openRouterAttribution: { referer: 'https://your-app.example', title: 'Your App' },
+});
+
+const result = await router.generate({
+  capability: 'text', model: 'google/gemini-3.1-flash-lite',
+  systemInstruction: appOwnedInstructions, userPrompt: appOwnedPrompt,
+  temperature: 0.8, maxOutputTokens: 4096, timeoutMs: 90_000,
+  responseFormat: 'json', responseJsonSchema: appOwnedSchema,
+});
+```
+
+`text` handles Gemini and OpenRouter text and returns text plus optional
+provider token usage. `tts` takes a server-chosen voice ID and returns MPEG
+bytes from ElevenLabs. Provider errors use the stable `ModelRouterError.code`;
+apps should branch on that code rather than parsing message text. Apps decide
+their own HTTP message and retry policy. Image, music, video and 3D entries are
+catalog information only and have no generation adapter. A configured key
+does not prove that a provider call will succeed.
+
 ## Dependencies and verification
 
 Library consumes SEN only through `@seihouse/sen/*`. Its type build resolves
@@ -54,4 +90,5 @@ npm run test:package
 ```
 
 Workshop simulations, API handlers, identity verification, database adapters,
-provider access and production infrastructure are not published.
+and production infrastructure are not published. Provider access is published
+only through the server-only Model Router entry.

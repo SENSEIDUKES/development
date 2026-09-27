@@ -4,7 +4,7 @@
 - **Source locations:** Light-Novels `src/components/GlobalHeader.tsx` (`GlobalHeader`), `src/components/DaoInsights.tsx` (`DaoInsights`), and the collection navigation in `src/components/LibraryScreen.tsx` (`LibraryScreen`). Development `src/components/story-seed/development/CreationModal.tsx` (`CreationModal`), `StorySeedHeader.tsx`, `StorySeedSelector.tsx`, `StorySeedMobileNavigation.tsx`, and `StorySeedSettings.tsx`.
 - **Workshop preview:** `?preview=library-shell`
 - **Replica created:** 2026-09-08
-- **Last Workshop update:** 2026-09-26
+- **Last Workshop update:** 2026-09-27
 - **Last source comparison:** 2026-09-08
 - **Replica status:** under refinement; locked captures plus Development workspaces on the canonical `SEIAppHeader` and `SEIAppShell`.
 
@@ -69,6 +69,16 @@ Regression coverage: `LibraryShellResilience.test.tsx`.
 
 At the product owner's direction the footer read as busy, so everything above the company statement came out: the emblem seal and its gold hairlines, the `SEN` elemental wordmark and the `SEIHouse Expanded Novels` line. The footer now opens on a single `NovelExpanded` title (`LIBRARY_FOOTER_TITLE`, cream display serif) above "A better time capsule and translator of artistic expression", then the menus, channels, language and legal row. `LibraryFooter` no longer takes an `emblem`, and `LIBRARY_FOOTER_MARK` and `LIBRARY_FOOTER_EXPANSION` are gone; the header keeps the emblem through `LIBRARY_EMBLEM`. The 2026-09-22 identity entries above describe the superseded arrangement.
 
+## Browsing screens on the fixed-frame App Shell — 2026-09-27
+
+Development now vendors `@seihouse/ui@0.6.0` and `@seihouse/library-ui` from UI PR [#81](https://github.com/SENSEIDUKES/UI/pull/81) (`bce4c74`), and the Library's browsing screens use the App Shell's own scrolling model. `WorkspaceShell` is back to a pure adapter: the canonical shell is a screen-height frame whose `<main>` scrolls, the header stays put without sticky positioning, and the desktop rail appears from `lg` through the new `sidebarBreakpoint` and scrolls on its own. The workarounds that kept the older shell scrolling the whole page are gone — the `<main>` overflow override, the sticky rail and its measured header height, and the JavaScript hook that withheld the rail below 1024px. `mainRef` reaches the scrolling region for hosts that reset or restore scroll. Clearance above the fixed global strip is now the main region's bottom padding, so the frame never grows past the screen.
+
+The Main Library Home preview moved onto the same frame, so Home, Create, the Cave and Story Seed share one browsing shell; the locked reference keeps its original page-scrolling markup. `MainLibraryHeader` and `GlobalHeader` take `landmark="none"` inside it. Library UI kept its version number while `LibraryElementalTitle` moved to `@seihouse/ui` as `ElementalTitle`; the familiar name effect now uses the universal component.
+
+**The Reader Chamber stays outside the shell.** It is immersive, and its cinematic scrolling saves and restores the reading position against the document scroller (`reader-chamber/shared/cinematicScroll`). Mounting it inside the shell's `<main>` would silently move that scroll surface. `ReaderScrollBoundary.test.ts` fails if Reader code imports the Library Shell or `SEIAppShell`, if reader or codex stop being immersive routes, or if the reading position leaves the document scroller. The Reader's overlay gate, which listened for scroll on the prose container that never scrolls, now listens on the Reader's real scroll surface.
+
+The capture's Back to Workshop strip takes a fixed height and the frame gives it up (`preview-environment.css`), so opening a capture at browser width adds no second scrollbar.
+
 ## Capture boundary
 
 The locked reference area records two existing systems for comparison. Its captures remain unchanged. The separate Development area now proves the shared header family and responsive navigation in the active Story Seed and Cultivator Cave; see [component contracts](../../../docs/library-header-family.md). Main Library was read at `4a3dd02b6640b2ec50d8d1d136e37fb808249ed2` and Story Seed at development `7e1302bd2d5c3205706ddb1362607abed6a850e6`; neither was re-read on 2026-09-09, so their source-comparison dates are unchanged. The vendored UI artifacts now come from UI commit `42961e48e78ee816f9c2801a37a7f66af8aa2ae2` (UI PR #60), which adds `SEIAppHeader`, `SEIAppShell` and the compact `LibraryHeaderBadge` presentation.
@@ -111,7 +121,7 @@ Additional states are exercised through the original controls: open/close Comman
 | Desktop section navigation and mobile drawer | `StorySeedSelector` plus `seedSections`; required/completed state from `StorySeedInput`; equipped relic title supplied by the host | Drawer and panel primitives are already shared. Story/World families, seven sections, required inputs, and completion rules remain Story Seed-specific. |
 | Mobile bottom controls and settings sheet | `StorySeedMobileNavigation`; local drawer/sheet state, focus restoration, Escape, body scroll lock, ResizeObserver, safe-area padding; Settings body shared with desktop | Overlay mechanics, bottom-navigation layout, and accessibility may be common workspace infrastructure. Action labels, Manifest eligibility, and settings fields remain domain-owned. |
 | Settings and Manifest footer | `StorySeedSettings`, `seedState`, and `CreationModal`; maturity metadata, Fate Survival, granular Style/Genre/Premise gate, generation state | Workspace/domain semantics remain Story Seed-owned. Footer and button presentation already use common primitives. |
-| Presentation packages | UI owns `@seihouse/ui@0.4.0` and stateless `@seihouse/library-ui@0.5.0`; development's `LibraryPresentationProvider` supplies branded implementations and host asset slots to SEN contracts | `@seihouse/library/shell` owns navigation behavior. Library may depend on SEN; SEN must not depend on Library or Library UI. |
+| Presentation packages | UI owns `@seihouse/ui@0.6.0` and stateless `@seihouse/library-ui@0.5.0`; development's `LibraryPresentationProvider` supplies branded implementations and host asset slots to SEN contracts | `@seihouse/library/shell` owns navigation behavior. Library may depend on SEN; SEN must not depend on Library or Library UI. |
 
 ### Overlaps that are not equivalent
 

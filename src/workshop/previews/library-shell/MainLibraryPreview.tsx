@@ -5,6 +5,7 @@ import { LibraryCollectionStrip } from '../../../components/library-shell/refere
 import { MainLibraryAdapterContext, type MainLibraryAdapter } from '@seihouse/library/shell';
 import { MainLibraryNavigation } from '@seihouse/library/shell';
 import { MainLibraryFooter } from '@seihouse/library/shell';
+import { WorkspaceShell } from '@seihouse/library/shell';
 import { type LibraryLocation } from '@seihouse/library/shell';
 import { LightNovelsHome } from '@seihouse/library/home';
 import { LightNovelsHome as ReferenceHome } from '../../../components/light-novels-home/reference/LightNovelsHome';
@@ -65,7 +66,8 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
       opener.scrollIntoView?.({ block: 'center', behavior: 'instant' });
     } else {
       mainRef.current?.focus({ preventScroll: true });
-      if (currentScreen === 'detail') window.scrollTo?.({ top: 0, behavior: 'instant' });
+      // Browsing screens scroll inside the shell's <main>, not the window.
+      if (currentScreen === 'detail') mainRef.current?.scrollTo?.({ top: 0, behavior: 'instant' });
     }
     previousScreenRef.current = currentScreen;
   }, [currentScreen, activeTab, developmentNavigation]);
@@ -99,52 +101,63 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
   const isFeaturedDetail = developmentNavigation && currentScreen === 'detail' && activeStoryId === featuredNovel.id;
   const isCreate = developmentNavigation && currentScreen === 'creator-space';
   const collections = <LibraryCollectionStrip activeTab={activeTab} chooseTab={tab => developmentNavigation ? navigate({ screen: 'home', collection: tab as LibraryLocation['collection'] }) : chooseTab(tab)} syncStatus={adapter.syncStatus} libraryStories={state === 'guest' ? [] : adapter.stories} />;
-  const content = <MainLibraryAdapterContext.Provider value={adapter}>
-    <div className="min-h-dvh bg-[#050505] text-[#dfd8cf] font-serif overflow-x-hidden selection:bg-human/30 pb-safe">
-      {developmentHeader ? developmentHeader(adapter) : <GlobalHeader />}
-      <main ref={mainRef} tabIndex={developmentNavigation ? -1 : undefined} className="relative z-10 w-full outline-none min-h-[calc(100dvh-140px)]">
-        <div className="px-4 py-8 max-w-7xl mx-auto w-full">
-          {developmentNavigation && <div hidden={!isHome}>
-            <Home active={isHome} worlds={homePreviewWorlds} expansionsByWorld={homeReference ? undefined : homePreviewExpansions}
-              onCreateStory={() => navigate({ screen: 'creator' })} onOpenWorld={id => {
-                worldOpenerRef.current = document.getElementById(`home-world-${id}`);
-                setActiveStoryId(id); navigate({ screen: 'detail' });
-              }}>
-              {developmentHomeContent?.(adapter)}
-              {isHome && collections}
-            </Home>
-          </div>}
-          {developmentNavigation && createVisited && <div hidden={!isCreate}>
-            <CreatorSpaceHost onNavigate={navigate} />
-          </div>}
-          {isFeaturedDetail && <Detail story={featuredNovel} onBack={() => navigate({ screen: 'home', collection: 'featured' })}>
-            {!homeReference && <WorldExpressions world={featuredNovel} expansions={featuredExpansions} />}
-          </Detail>}
-          <div hidden={isHome || isFeaturedDetail || isCreate}>
-          <div className="mb-8 min-h-52 border border-dashed border-neutral-800 rounded-xl p-6 text-neutral-400 text-sm font-sans">
-            Workshop content slot · Featured Ascension and library content are outside this header capture.
-            <p className="mt-3" role="status">{destination ? `Workshop destination: ${destination}` : 'Local account and story fixtures. Shell actions stay in this preview.'}</p>
-            {(currentScreen === 'reader' || currentScreen === 'codex') && <button className="mt-4 underline" onClick={() => developmentNavigation ? navigate({ screen: 'home', collection: 'featured' }) : setCurrentScreen('home')}>Return to header capture</button>}
-          </div>
-          {extraFeedback && <p role="status" className="mb-4 text-sm text-portal">{extraFeedback}</p>}
-          {/* Home content between the featured area and the collection tabs —
-              where Dao Insights now lives, out of the top header. */}
-          {!developmentNavigation && currentScreen === 'home' && developmentHomeContent?.(adapter)}
-          {!isHome && collections}
-          <p className="font-sans text-xs text-neutral-400">Workshop collection destination: {activeTab}</p>
-          </div>
-        </div>
-        {developmentNavigation && <>
-          <MainLibraryFooter adapter={adapter} location={{ screen: currentScreen, collection: activeTab as LibraryLocation['collection'] }}
-            onNavigate={navigate} onOpenHelp={() => setHelpOpen(true)}
-            social={PREVIEW_SOCIAL_NETWORKS.map(network => ({ network, onSelect: () => setDestination(`${network} channel`) }))} />
-          {isHome && destination && <p role="status" className="pb-2 text-center font-sans text-xs text-neutral-500">Workshop destination: {destination}</p>}
-        </>}
-      </main>
-      {helpOpen && createPortal(<Suspense fallback={<span role="status">Loading Help…</span>}>
-        <LibraryHelpMenu open onClose={() => setHelpOpen(false)} />
-      </Suspense>, document.body)}
+  const body = <>
+    <div className="px-4 py-8 max-w-7xl mx-auto w-full">
+      {developmentNavigation && <div hidden={!isHome}>
+        <Home active={isHome} worlds={homePreviewWorlds} expansionsByWorld={homeReference ? undefined : homePreviewExpansions}
+          onCreateStory={() => navigate({ screen: 'creator' })} onOpenWorld={id => {
+            worldOpenerRef.current = document.getElementById(`home-world-${id}`);
+            setActiveStoryId(id); navigate({ screen: 'detail' });
+          }}>
+          {developmentHomeContent?.(adapter)}
+          {isHome && collections}
+        </Home>
+      </div>}
+      {developmentNavigation && createVisited && <div hidden={!isCreate}>
+        <CreatorSpaceHost onNavigate={navigate} />
+      </div>}
+      {isFeaturedDetail && <Detail story={featuredNovel} onBack={() => navigate({ screen: 'home', collection: 'featured' })}>
+        {!homeReference && <WorldExpressions world={featuredNovel} expansions={featuredExpansions} />}
+      </Detail>}
+      <div hidden={isHome || isFeaturedDetail || isCreate}>
+      <div className="mb-8 min-h-52 border border-dashed border-neutral-800 rounded-xl p-6 text-neutral-400 text-sm font-sans">
+        Workshop content slot · Featured Ascension and library content are outside this header capture.
+        <p className="mt-3" role="status">{destination ? `Workshop destination: ${destination}` : 'Local account and story fixtures. Shell actions stay in this preview.'}</p>
+        {(currentScreen === 'reader' || currentScreen === 'codex') && <button className="mt-4 underline" onClick={() => developmentNavigation ? navigate({ screen: 'home', collection: 'featured' }) : setCurrentScreen('home')}>Return to header capture</button>}
+      </div>
+      {extraFeedback && <p role="status" className="mb-4 text-sm text-portal">{extraFeedback}</p>}
+      {/* Home content between the featured area and the collection tabs —
+          where Dao Insights now lives, out of the top header. */}
+      {!developmentNavigation && currentScreen === 'home' && developmentHomeContent?.(adapter)}
+      {!isHome && collections}
+      <p className="font-sans text-xs text-neutral-400">Workshop collection destination: {activeTab}</p>
+      </div>
     </div>
+    {developmentNavigation && <>
+      <MainLibraryFooter adapter={adapter} location={{ screen: currentScreen, collection: activeTab as LibraryLocation['collection'] }}
+        onNavigate={navigate} onOpenHelp={() => setHelpOpen(true)}
+        social={PREVIEW_SOCIAL_NETWORKS.map(network => ({ network, onSelect: () => setDestination(`${network} channel`) }))} />
+      {isHome && destination && <p role="status" className="pb-2 text-center font-sans text-xs text-neutral-500">Workshop destination: {destination}</p>}
+    </>}
+  </>;
+  const help = helpOpen && createPortal(<Suspense fallback={<span role="status">Loading Help…</span>}>
+    <LibraryHelpMenu open onClose={() => setHelpOpen(false)} />
+  </Suspense>, document.body);
+  // Development: the Library's browsing frame is the canonical App Shell via
+  // WorkspaceShell — a fixed header and rail with the content scrolling in
+  // <main>. The locked reference keeps its original page-scrolling markup.
+  const content = <MainLibraryAdapterContext.Provider value={adapter}>
+    {developmentNavigation && developmentHeader
+      ? <div className="bg-[#050505] text-[#dfd8cf] font-serif selection:bg-human/30">
+        <WorkspaceShell header={developmentHeader(adapter)} mainRef={mainRef} mainId="library-main"
+          mainClassName="relative z-10 outline-none">{body}</WorkspaceShell>
+        {help}
+      </div>
+      : <div className="min-h-dvh bg-[#050505] text-[#dfd8cf] font-serif overflow-x-hidden selection:bg-human/30 pb-safe">
+        {developmentHeader ? developmentHeader(adapter) : <GlobalHeader />}
+        <main ref={mainRef} tabIndex={developmentNavigation ? -1 : undefined} className="relative z-10 w-full outline-none min-h-[calc(100dvh-140px)]">{body}</main>
+        {help}
+      </div>}
   </MainLibraryAdapterContext.Provider>;
   return developmentNavigation ? <MainLibraryNavigation location={{ screen: currentScreen, collection: activeTab as LibraryLocation['collection'] }} onNavigate={navigate}>{content}</MainLibraryNavigation> : content;
 }

@@ -36,3 +36,16 @@
   transition-duration: 0.001ms !important;
   scroll-behavior: auto !important;
 }
+
+/* Opened at browser width, the capture puts its Back to Workshop strip above
+   the app. The App Shell fills the screen, so it gives up the strip's height
+   rather than running past the bottom edge and adding a page scrollbar. */
+:root[data-capture-exit='top'] [data-slot='app-shell'] {
+  height: calc(100dvh - var(--capture-exit-height));
+}
+/* Preview wrappers that fill the screen (the Story Seed workspace's
+   `min-h-screen` ground) give up the same height. */
+:root[data-capture-exit='top'] .min-h-screen,
+:root[data-capture-exit='top'] .min-h-dvh {
+  min-height: calc(100dvh - var(--capture-exit-height));
+}

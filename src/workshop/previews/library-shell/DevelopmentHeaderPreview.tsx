@@ -51,7 +51,7 @@ function LibraryAppPreview({ source, state, message, setMessage }: { source: Hea
     <div hidden={profile}>
     <MainLibraryPreview state={source === 'cultivator-cave' ? 'linked' : state} developmentNavigation active={!profile}
       homeReference={new URLSearchParams(window.location.search).get('homeReference') === '1'}
-      developmentHeader={adapter => <MainLibraryHeader adapter={{ ...adapter, copyText }} />}
+      developmentHeader={adapter => <MainLibraryHeader adapter={{ ...adapter, copyText }} landmark="none" />}
       // Dao Insights sits in Home content now, beneath the featured area and
       // above the collection tabs, with the same host clipboard writer.
       developmentHomeContent={adapter => <MainLibraryHomeInsights adapter={{ ...adapter, copyText }} />}

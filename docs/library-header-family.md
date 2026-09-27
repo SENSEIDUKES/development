@@ -29,12 +29,12 @@ The follow-on bottom navigation architecture is documented in [Library navigatio
 | `primaryAction`, `secondaryActions`, `overflowActions`, `status` | Existing host commands/status, in the page toolbar; commands also participate in Search |
 | `landmark` | `banner` when standalone, `none` inside `WorkspaceShell` to avoid nested banners |
 | `WorkspaceHeaderUtilities` | Transient overlay/query state and presentation; no store, routing or remote data access |
-| `WorkspaceShell` | Uses `SEIAppShell`, retains the 1024px rail breakpoint, measures the complete header for the rail's sticky offset |
+| `WorkspaceShell` | Uses `SEIAppShell` (UI 0.6.0): a fixed frame whose `<main>` scrolls, with the rail revealed by `sidebarBreakpoint="lg"` (1024px) and scrolling on its own. Accepts `mainRef` for hosts that reset or restore scroll. The Reader Chamber is never a consumer |
 | Feature adapters | Continue to own eligibility, page state, content, navigation and side effects |
 
 `HeaderSearchItem` extends the existing `HeaderAction` with an optional description. IDs must be unique. Header commands are merged into search items by ID; an explicitly supplied search item takes precedence. SEN continues to use the narrative presentation contract and never imports Library UI. Home's `MainLibraryHeader` stays in the Library composition and is not exported through SEN.
 
-The header supplies 44px touch targets and visible focus rings. Search uses the canonical modal's initial focus, Tab containment, Escape, scroll lock and final focus; the reused Help menu retains its own focus handling. Safe areas come from the canonical header and shared sheet. `WorkspaceShell` observes the actual header height so a page toolbar, text sizing or safe-area change cannot leave the desktop rail under the header. Reduced motion retains the existing behavior.
+The header supplies 44px touch targets and visible focus rings. Search uses the canonical modal's initial focus, Tab containment, Escape, scroll lock and final focus; the reused Help menu retains its own focus handling. Safe areas come from the canonical header and shared sheet. Browsing screens scroll inside the shell's `<main>`, so the header and the desktop rail stay put without sticky offsets or measured heights; the clearance above the fixed global strip is the main region's bottom padding. Reduced motion retains the existing behavior.
 
 ## Previews and validation
 

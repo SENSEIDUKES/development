@@ -20,10 +20,18 @@ function CaptureExitToWorkshop({ children }: { children: ReactNode }) {
   const isTopLevel = (() => {
     try { return window.top === window.self; } catch { return true; }
   })();
+  // The browsing frame is a fixed App Shell sized to the screen, so the strip
+  // takes a known height and the shell below it gives up exactly that much
+  // (preview-environment.css) instead of pushing the frame past the screen.
+  if (isTopLevel) {
+    document.documentElement.dataset.captureExit = 'top';
+    document.documentElement.style.setProperty('--capture-exit-height', 'calc(48px + env(safe-area-inset-top))');
+  }
   return <>
     {isTopLevel && <div style={{
-      display: 'flex', padding: '8px max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left))',
-      paddingTop: 'max(8px, env(safe-area-inset-top))', background: '#050505', borderBottom: '1px solid rgba(255,255,255,0.08)',
+      display: 'flex', alignItems: 'center', boxSizing: 'border-box', height: 'var(--capture-exit-height)',
+      padding: '0 max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left))',
+      paddingTop: 'env(safe-area-inset-top)', background: '#050505', borderBottom: '1px solid rgba(255,255,255,0.08)',
     }}><a href="/" style={{
       display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 32, padding: '6px 14px',
       borderRadius: 9999, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(15,15,15,0.85)',

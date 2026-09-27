@@ -9,10 +9,14 @@ export interface MainLibraryHeaderAdapter extends MainLibraryAdapter {
 export { useHeaderClipboard };
 
 /** Home contributes its identity, guidance and commands to the shared header. */
-export function MainLibraryHeader({ adapter }: { adapter: MainLibraryHeaderAdapter }) {
+export function MainLibraryHeader({ adapter, landmark }: {
+  adapter: MainLibraryHeaderAdapter;
+  /** `'none'` inside `WorkspaceShell`, which owns the banner landmark. */
+  landmark?: 'banner' | 'none';
+}) {
   return <MainLibraryAdapterContext.Provider value={adapter}>
     <MainLibraryClipboardProvider copyText={adapter.copyText}>
-      <MotionConfig reducedMotion="user"><GlobalHeader /></MotionConfig>
+      <MotionConfig reducedMotion="user"><GlobalHeader landmark={landmark} /></MotionConfig>
     </MainLibraryClipboardProvider>
   </MainLibraryAdapterContext.Provider>;
 }

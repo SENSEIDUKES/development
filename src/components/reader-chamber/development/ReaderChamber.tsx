@@ -116,6 +116,23 @@ export function getReaderChamberSurfaceClass(
   return `flex flex-col min-h-[85dvh] rounded-t-xl transition-colors duration-500 relative overflow-clip ${themeClasses} ${isShaking ? "animate-screen-shake" : ""}`;
 }
 
+
+/**
+ * The Reader Chamber's actual scroll container: the nearest ancestor that
+ * genuinely scrolls — never an assumed global page scroll. Falls back to the
+ * document when no inner scroller exists (Workshop and production, where the
+ * Reader is immersive and outside the Library Shell).
+ */
+function findReaderScroller(start: HTMLElement): HTMLElement | Window {
+  let node: HTMLElement | null = start.parentElement;
+  while (node) {
+    const overflowY = window.getComputedStyle(node).overflowY;
+    if ((overflowY === "auto" || overflowY === "scroll") && node.scrollHeight > node.clientHeight) return node;
+    node = node.parentElement;
+  }
+  return window;
+}
+
 export default function ReaderChamber({
   chapters,
   onGenerateChapter,
@@ -318,9 +335,20 @@ export default function ReaderChamber({
   useEffect(() => {
     const el = readerRef.current;
     if (!el) return;
+    // The prose container never scrolls — the document (or a host's inner
+    // scroller) does — so the gate reads and listens to that real surface.
+    // Listening on the prose element itself never fired.
+    const scroller = findReaderScroller(el);
+    const metrics = scroller === window ? () => {
+      const page = document.scrollingElement ?? document.documentElement;
+      return { scrollTop: page.scrollTop, scrollHeight: page.scrollHeight, clientHeight: window.innerHeight };
+    } : () => {
+      const box = scroller as HTMLElement;
+      return { scrollTop: box.scrollTop, scrollHeight: box.scrollHeight, clientHeight: box.clientHeight };
+    };
 
     const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = el;
+      const { scrollTop, scrollHeight, clientHeight } = metrics();
       const currentAllowed = runtime.store.getSnapshot().canShowOverlays;
       let nextAllowed = true;
 
@@ -339,9 +367,9 @@ export default function ReaderChamber({
       }
     };
 
-    el.addEventListener('scroll', handleScroll, { passive: true });
+    scroller.addEventListener('scroll', handleScroll, { passive: true });
     return () => {
-      el.removeEventListener('scroll', handleScroll);
+      scroller.removeEventListener('scroll', handleScroll);
     };
   }, [selectedChapterNum, isPlayingText, setCanShowOverlays]);
 
@@ -553,22 +581,7 @@ export default function ReaderChamber({
     const startEl = readerRef.current;
     if (!startEl) return;
 
-    // The Reader Chamber's actual scroll container: the nearest ancestor that
-    // genuinely scrolls — never an assumed global page scroll. Falls back to
-    // the document when no inner scroller exists (Workshop + production).
-    let scroller: HTMLElement | Window = window;
-    let node: HTMLElement | null = startEl.parentElement;
-    while (node) {
-      const overflowY = window.getComputedStyle(node).overflowY;
-      if (
-        (overflowY === "auto" || overflowY === "scroll") &&
-        node.scrollHeight > node.clientHeight
-      ) {
-        scroller = node;
-        break;
-      }
-      node = node.parentElement;
-    }
+    const scroller = findReaderScroller(startEl);
 
     const getScrollTop = () =>
       scroller === window ? window.scrollY : (scroller as HTMLElement).scrollTop;

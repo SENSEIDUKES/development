@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { DESKTOP_NAVIGATION_QUERY } from './workspaceMedia';
 import { NarrativeNavigationDrawer, NarrativeNavigationDrawerPanel, NarrativeBottomNavigation, type NarrativeNavigationDrawerProfile, type NarrativeNavigationDrawerSection, type NarrativeBottomNavigationItem } from '@seihouse/sen/presentation';
 
 export interface WorkspaceNavigationDefinition {
@@ -24,7 +25,7 @@ export function useWorkspaceNavigation() {
 export function WorkspaceNavigation({ definition, children }: { definition: WorkspaceNavigationDefinition; children: ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   useEffect(() => {
-    const desktop = window.matchMedia('(min-width: 1024px)');
+    const desktop = window.matchMedia(DESKTOP_NAVIGATION_QUERY);
     const dismissOnDesktop = () => { if (desktop.matches) setDrawerOpen(false); };
     desktop.addEventListener('change', dismissOnDesktop);
     return () => desktop.removeEventListener('change', dismissOnDesktop);

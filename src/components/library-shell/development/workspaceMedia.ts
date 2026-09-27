@@ -11,7 +11,10 @@ import { useSyncExternalStore } from 'react';
  *   primary action included — actually fits beside the Library badge rather
  *   than crushing it.
  * - Desktop (`>= 1024px`): the persistent sidebar rail replaces the drawer and
- *   the bottom controls. Below it, phones and tablets keep both.
+ *   the bottom controls. Below it, phones and tablets keep both. The rail's
+ *   own visibility is the canonical shell's `sidebarBreakpoint="lg"`; this
+ *   query is for the pieces the shell does not own, such as closing an open
+ *   drawer once the rail appears.
  */
 export const COMPACT_HEADER_QUERY = '(max-width: 1279px)';
 export const DESKTOP_NAVIGATION_QUERY = '(min-width: 1024px)';
@@ -25,7 +28,6 @@ function subscribe(query: string) {
 }
 
 const compactSubscribe = subscribe(COMPACT_HEADER_QUERY);
-const desktopSubscribe = subscribe(DESKTOP_NAVIGATION_QUERY);
 export function useCompactHeader() {
   return useSyncExternalStore(
     compactSubscribe,
@@ -34,15 +36,3 @@ export function useCompactHeader() {
   );
 }
 
-/**
- * True only once the viewport is genuinely wide enough for the narrow rail.
- * Server and first paint answer `false`, so the drawer and bottom controls own
- * navigation until the desktop sidebar really fits.
- */
-export function useDesktopNavigation() {
-  return useSyncExternalStore(
-    desktopSubscribe,
-    () => window.matchMedia(DESKTOP_NAVIGATION_QUERY).matches,
-    () => false,
-  );
-}

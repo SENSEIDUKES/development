@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 import { Check, Sparkle } from 'lucide-react';
 import { STORY_STYLE_OPTIONS, type StoryStyle } from '@seihouse/sen/story-seed';
-import { workspaceCompactLabelClass } from '../WorkspaceShell';
+import { workspaceCompactLabelClass } from '../SeedSectionFrame';
 import { handleRadioGroupKeyDown, radioGroupTabIndex } from '../../radioGroupKeyboard';
 import { SENStorySeedIcon, type StorySeedIconName } from '../../SENStorySeedIcon';
 

@@ -769,8 +769,9 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
         error={seedError || error} onSaveDraft={requestSaveDraft} onManifest={requestGenerateBlueprint}
       onToggleStoryBank={toggleStoryBank} onOpenHelp={openHelp} onSecondaryIntent={preloadStorySeedSecondary}
     >
-      {/* `pb-24` clears the sticky Manifest strip at the end of scroll; on
-          mobile the in-flow bottom navigation occupies that space instead. */}
+      {/* `pb-24` clears the sticky Manifest strip at the end of scroll; below
+          the desktop breakpoint the shell's main region already clears the
+          workspace task bar, so no extra padding is added there. */}
       <div className="story-seed-development-surface mx-auto max-w-7xl px-4 pb-24 max-lg:pb-0 sm:px-6" id="creation-portal-root">
 
       {showStoryBank && (

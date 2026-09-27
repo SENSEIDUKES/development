@@ -7,7 +7,6 @@ export * from '../../components/library-shell/development/LibraryFooter';
 export * from '../../components/library-shell/development/WorkspaceHeader';
 export * from '../../components/library-shell/development/WorkspaceHeaderActions';
 export * from '../../components/library-shell/development/WorkspaceHeaderUtilities';
-export * from '../../components/library-shell/development/WorkspaceNavigation';
 export * from '../../components/library-shell/development/WorkspaceSheet';
 export * from '../../components/library-shell/development/WorkspaceShell';
 export * from '../../components/library-shell/development/MainLibraryFooter';

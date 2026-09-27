@@ -4,7 +4,7 @@ import { type StorySeedInput } from '@seihouse/sen/story-seed';
 import { getSeedSection } from '../seedSections';
 import { patchWorldIdentity, worldIdentity, patchWorldFoundations, worldFoundations, setMakeItWorkInstruction, type UpdateSeed } from '../seedState';
 import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
-import { WorkspaceShell } from './WorkspaceShell';
+import { SeedSectionFrame } from './SeedSectionFrame';
 
 interface WorldIdentityWorkspaceProps {
   seed: StorySeedInput;
@@ -17,7 +17,7 @@ export const WorldIdentityWorkspace = ({ seed, updateSeed }: WorldIdentityWorksp
   const identity = worldIdentity(seed);
 
   return (
-    <WorkspaceShell section={section} complete={section.isFilled(seed)}>
+    <SeedSectionFrame section={section} complete={section.isFilled(seed)}>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <LibraryTextBox
           id="world-type-input"
@@ -54,6 +54,6 @@ export const WorldIdentityWorkspace = ({ seed, updateSeed }: WorldIdentityWorksp
       <LibraryTextBox id="main-opposition-input" label="Main Opposition" icon={ShieldAlert}
         helpText="Who or what pushes back against the main character the hardest."
         value={worldFoundations(seed).mainOpposition || ''} onChange={value => updateSeed(patchWorldFoundations({ mainOpposition: value }))} />
-    </WorkspaceShell>
+    </SeedSectionFrame>
   );
 };

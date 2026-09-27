@@ -4,7 +4,7 @@ import { type StorySeedInput } from '@seihouse/sen/story-seed';
 import { getSeedSection } from '../seedSections';
 import { patchAbilities, worldFoundations, type UpdateSeed } from '../seedState';
 import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
-import { GuidanceNote, WorkspaceShell } from './WorkspaceShell';
+import { GuidanceNote, SeedSectionFrame } from './SeedSectionFrame';
 
 interface AbilitiesWorkspaceProps {
   seed: StorySeedInput;
@@ -43,13 +43,13 @@ export const AbilitiesFields = ({ seed, updateSeed }: AbilitiesWorkspaceProps) =
 export const AbilitiesWorkspace = ({ seed, updateSeed }: AbilitiesWorkspaceProps) => {
   const section = getSeedSection('abilities');
   return (
-    <WorkspaceShell section={section} complete={section.isFilled(seed)}>
+    <SeedSectionFrame section={section} complete={section.isFilled(seed)}>
       <AbilitiesFields seed={seed} updateSeed={updateSeed} />
 
       <GuidanceNote title="Abilities vs. Power System" tone="world">
         Abilities belong to the main character — what they start with and what sets them apart.
         The Power System section belongs to the world — the ladder everyone climbs.
       </GuidanceNote>
-    </WorkspaceShell>
+    </SeedSectionFrame>
   );
 };

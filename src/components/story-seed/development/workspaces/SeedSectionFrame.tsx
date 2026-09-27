@@ -22,8 +22,12 @@ export const workspaceCompactLabelClass =
 const familyAccentText = (section: SeedSection) =>
   section.family === 'story' ? 'text-[#CDB271]' : 'text-gold-accent';
 
-/** Family / section breadcrumb + title + tagline every workspace opens with. */
-export const WorkspaceShell = ({
+/**
+ * Family / section breadcrumb + title + tagline every Story Seed section opens
+ * with. Section content, not a shell: the Library Shell's `WorkspaceShell` owns
+ * the page frame and its workspace mode owns the navigation.
+ */
+export const SeedSectionFrame = ({
   section,
   complete,
   optionalNote,
@@ -44,7 +48,7 @@ export const WorkspaceShell = ({
       return <SectionIcon size={19} className={iconClassName} />;
     })();
   return (
-    <section aria-labelledby={`seed-workspace-${section.id}-title`} className="seed-workspace-shell max-w-3xl">
+    <section aria-labelledby={`seed-workspace-${section.id}-title`} className="seed-field-scope max-w-3xl">
       <p className="font-sc text-[11px] font-bold uppercase tracking-[0.34em] text-neutral-400">
         <span className={section.family === 'story' ? 'text-[#CDB271]/90' : 'text-gold-accent/80'}>
           {family.label}

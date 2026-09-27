@@ -8,7 +8,7 @@
   `src/hooks/useUserProfile.ts`
 - **Workshop preview:** `?preview=user-profile`
 - **Replica created:** 2026-09-08
-- **Last Workshop update:** 2026-09-23
+- **Last Workshop update:** 2026-09-27
 - **Last source comparison:** 2026-09-10
 - **Replica status:** `@seihouse/library/profile` surface consuming separate Library economy capabilities
 
@@ -54,6 +54,7 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 
 ## Workshop history
 
+- **2026-09-27:** The Cave header's emblem is the shared Celestial Library emblem (`LIBRARY_EMBLEM`), the same one Home and Story Seed carry, instead of the host's asset-slot image; its Return to Library behavior is unchanged.
 - **2026-09-26 Reading Mode:** The Writing Preferences field is now labelled "Default Reading Mode"
   and says it is used when a new Story Seed starts; existing seeds and stories keep their own. It
   still saves `defaultChapterWritingStyle` with production's four option strings, which SEN now

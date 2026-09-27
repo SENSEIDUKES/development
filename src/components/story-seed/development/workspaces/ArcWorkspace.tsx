@@ -5,7 +5,7 @@ import { HARD_PIN_LIMIT, HARD_PIN_TEXT_LIMIT, type StorySeedInput, type FunSetti
 import { getSeedSection } from '../seedSections';
 import { patchFunSettings, patchWorldFoundations, funSettings, worldFoundations, type UpdateSeed } from '../seedState';
 import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
-import { WorkspaceShell } from './WorkspaceShell';
+import { SeedSectionFrame } from './SeedSectionFrame';
 import { handleRadioGroupKeyDown } from '../radioGroupKeyboard';
 
 interface ArcWorkspaceProps {
@@ -84,7 +84,7 @@ export const ArcWorkspace = ({ seed, updateSeed, showActiveArcGoal = true }: Arc
     } } }));
   };
   return (
-    <WorkspaceShell section={section} complete={section.isFilled(seed)}>
+    <SeedSectionFrame section={section} complete={section.isFilled(seed)}>
       <LibraryTextArea id="destined-ending-input" label="Destined Ending" icon={Hourglass} maxLength={1500}
         helpText="The true long-term destination of this novel. If left blank, the Library recommends a fitting ending from your Origin. You can alter this outcome later."
         value={worldFoundations(seed).destinedEnding || ''}
@@ -181,6 +181,6 @@ export const ArcWorkspace = ({ seed, updateSeed, showActiveArcGoal = true }: Arc
         </div>
       </section>
 
-    </WorkspaceShell>
+    </SeedSectionFrame>
   );
 };

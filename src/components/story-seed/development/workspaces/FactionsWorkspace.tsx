@@ -3,7 +3,7 @@ import { normalizeCodexAliases, parseCodexAliases } from '@seihouse/sen/story-se
 import { getSeedSection } from '../seedSections';
 import { setFactions, worldFoundations, type UpdateSeed } from '../seedState';
 import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
-import { WorkspaceShell } from './WorkspaceShell';
+import { SeedSectionFrame } from './SeedSectionFrame';
 import { SENStorySeedIcon } from '../SENStorySeedIcon';
 
 interface FactionsWorkspaceProps {
@@ -136,12 +136,12 @@ export const FactionsEditor = ({ seed, updateSeed }: FactionsWorkspaceProps) => 
 export const FactionsWorkspace = ({ seed, updateSeed }: FactionsWorkspaceProps) => {
   const section = getSeedSection('factions');
   return (
-    <WorkspaceShell section={section} complete={section.isFilled(seed)}>
+    <SeedSectionFrame section={section} complete={section.isFilled(seed)}>
       <p className="font-sans text-xs text-neutral-400">
         Pre-define factions or sects for your world. Include their alignment, power level, and connection
         to the main character. Left empty, the Library invents the powers that fit your Story.
       </p>
       <FactionsEditor seed={seed} updateSeed={updateSeed} />
-    </WorkspaceShell>
+    </SeedSectionFrame>
   );
 };

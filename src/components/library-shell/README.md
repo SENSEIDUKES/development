@@ -14,7 +14,7 @@ Development now uses Logo — existing Library Header Badge — optional context
 
 ## Bottom navigation update — 2026-09-11
 
-`LibraryNavigation` now owns Home — Library — Discover — Profile, active-route matching, content clearance and safe-area spacing. Its active Development scrubber uses the supplied official SEN Home, Book, Discovery, and Profile icons. The shared navigation/header layer also supplies the official Settings and Exit marks to active consumer controls. The global Section control and drawer were removed on 2026-09-09 at user request; page destinations remain in top Search. Page definitions still supply the Cave’s existing desktop rail. `MainLibraryNavigation` adapts the existing LibraryScreen collections and routes. Story Seed keeps its current navigation, including Sections; Reader/Reader Codex are immersive exclusions. No page content, cards or internal controls were redesigned. [Contracts, route mappings and transfer details](../../../docs/library-navigation.md).
+`LibraryNavigation` now owns Home — Library — Discover — Profile, active-route matching, content clearance and safe-area spacing. Its active Development scrubber uses the supplied official SEN Home, Book, Discovery, and Profile icons. The shared navigation/header layer also supplies the official Settings and Exit marks to active consumer controls. The global Section control and drawer were removed on 2026-09-09 at user request; page destinations remain in top Search. Page definitions still supply the Cave’s existing desktop rail. `MainLibraryNavigation` adapts the existing LibraryScreen collections and routes. Story Seed keeps its Sections, Story Bank, Settings and Back controls, now drawn by the shell's workspace mode (2026-09-27, below); Reader/Reader Codex are immersive exclusions. No page content, cards or internal controls were redesigned. [Contracts, route mappings and transfer details](../../../docs/library-navigation.md).
 
 ## Platform footer — 2026-09-17
 
@@ -78,6 +78,17 @@ The Main Library Home preview moved onto the same frame, so Home, Create, the Ca
 **The Reader Chamber stays outside the shell.** It is immersive, and its cinematic scrolling saves and restores the reading position against the document scroller (`reader-chamber/shared/cinematicScroll`). Mounting it inside the shell's `<main>` would silently move that scroll surface. `ReaderScrollBoundary.test.ts` fails if Reader code imports the Library Shell or `SEIAppShell`, if reader or codex stop being immersive routes, or if the reading position leaves the document scroller. The Reader's overlay gate, which listened for scroll on the prose container that never scrolls, now listens on the Reader's real scroll surface.
 
 The capture's Back to Workshop strip takes a fixed height and the frame gives it up (`preview-environment.css`), so opening a capture at browser width adds no second scrollbar.
+
+## One navigation system, two modes — 2026-09-27
+
+`LibraryNavigation` is now the Library's only navigation system, with two official modes:
+
+- **Main mode** — the global strip (Home — Create — Discover — Profile) with an optional page rail. Home, Create, My Library and the Cultivator Cave use it; nothing about it changed.
+- **Workspace mode** — `<LibraryNavigation mode="workspace" workspace={definition}>`. A focused task describes itself in a `LibraryWorkspaceDefinition` (label, sections, profile, tools, Back) and the shell draws the rest: the bottom task bar in the global strip's place and style (Sections, the task's tools, Back), the Sections drawer on phones and tablets, and the desktop rail through the same `LibrarySectionSidebar` main mode uses. From 1024px the rail and header take over, so the task bar and its clearance step aside. `useLibraryWorkspace()` exposes the drawer state to a page that needs it.
+
+Story Seed is the first workspace. It no longer runs a navigation system of its own: `WorkspaceNavigation`, `WorkspaceSidebar`, `WorkspaceBottomControls` and `useWorkspaceNavigation` are removed, and `StorySeedWorkspaceChrome` supplies its sections, Story Bank and Settings tools, and Back to the shell. Users see the same bar (Sections, Story Bank, Settings, Back), drawer and rail. Its header now matches every Library page — the Celestial Library emblem (`LIBRARY_EMBLEM`), Help and Search — and the logo returns to Library Home through the host's `onNavigateHome` instead of reloading the Workshop root. The Cultivator Cave's header took the same emblem, so Home, Create, the Cave and Story Seed all carry one identity. Story Seed's section heading wrapper was renamed `SeedSectionFrame` (and its style scope `seed-field-scope`) so nothing in Story Seed is mistaken for a shell.
+
+The Library Shell tab groups its pages by mode — Main mode (Home, Create & My Library; Cultivator Cave), Workspace mode (Story Seed) and Header only — shows the selected page's mode, opens on Home, and its checklist covers both modes and the immersive Reader.
 
 ## Capture boundary
 

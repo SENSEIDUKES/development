@@ -214,10 +214,10 @@ export const StoryBank = ({
     {/* The same restrained celestial ambience the creation workspaces float over. */}
     <div aria-hidden="true" className="seed-workspace-ambience" />
 
-    {/* `seed-workspace-shell` scopes the Story Seed field polish (gilded
+    {/* `seed-field-scope` scopes the Story Seed field polish (gilded
         focus ring, quiet completed accents) onto the Import panel's glass
         field, keeping it consistent with the workspaces. */}
-    <div className="seed-workspace-shell relative p-4 sm:p-8">
+    <div className="seed-field-scope relative p-4 sm:p-8">
       <p className="font-sc text-[11px] font-bold uppercase tracking-[0.34em] text-neutral-400">
         <span className="text-[#CDB271]/90">Story Seed</span>
         <span className="mx-2.5 text-neutral-700">/</span>

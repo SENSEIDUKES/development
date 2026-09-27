@@ -4,7 +4,7 @@ import { type StorySeedInput } from '@seihouse/sen/story-seed';
 import { getSeedSection } from '../seedSections';
 import { patchPowerSystem, worldFoundations, type UpdateSeed } from '../seedState';
 import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
-import { WorkspaceShell } from './WorkspaceShell';
+import { SeedSectionFrame } from './SeedSectionFrame';
 
 interface PowerSystemWorkspaceProps {
   seed: StorySeedInput;
@@ -41,8 +41,8 @@ export const PowerSystemFields = ({ seed, updateSeed }: PowerSystemWorkspaceProp
 export const PowerSystemWorkspace = ({ seed, updateSeed }: PowerSystemWorkspaceProps) => {
   const section = getSeedSection('power-system');
   return (
-    <WorkspaceShell section={section} complete={section.isFilled(seed)}>
+    <SeedSectionFrame section={section} complete={section.isFilled(seed)}>
       <PowerSystemFields seed={seed} updateSeed={updateSeed} />
-    </WorkspaceShell>
+    </SeedSectionFrame>
   );
 };

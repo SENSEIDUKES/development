@@ -12,7 +12,7 @@ import {
   type UpdateSeed,
 } from '../seedState';
 import { NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
-import { WorkspaceShell } from './WorkspaceShell';
+import { SeedSectionFrame } from './SeedSectionFrame';
 import { OriginGenrePicker } from './origin/OriginGenrePicker';
 import { OriginPremiseAndTags } from './origin/OriginPremiseAndTags';
 import { OriginFateControls } from './origin/OriginFateControls';
@@ -66,7 +66,7 @@ export const OriginWorkspace = ({ seed, updateSeed }: OriginWorkspaceProps) => {
   ), [genre, updateGenre]);
 
   return (
-    <WorkspaceShell section={ORIGIN_SECTION} complete={originComplete}>
+    <SeedSectionFrame section={ORIGIN_SECTION} complete={originComplete}>
       {styleSelector}
 
       {genrePicker}
@@ -85,6 +85,6 @@ export const OriginWorkspace = ({ seed, updateSeed }: OriginWorkspaceProps) => {
           onChange={patch => updateSeed(patchFateSurvival(patch))}
         />}
       />
-    </WorkspaceShell>
+    </SeedSectionFrame>
   );
 };

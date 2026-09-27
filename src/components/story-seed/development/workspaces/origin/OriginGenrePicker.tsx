@@ -25,7 +25,7 @@ import {
 import { AnimatePresence, motion } from 'motion/react';
 import { GENRE_PRESETS } from '../../constants';
 import { NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
-import { workspaceCompactLabelClass } from '../WorkspaceShell';
+import { workspaceCompactLabelClass } from '../SeedSectionFrame';
 import { handleRadioGroupKeyDown, radioGroupTabIndex } from '../../radioGroupKeyboard';
 
 const GENRE_PATH_SIGILS: Record<string, LucideIcon> = {

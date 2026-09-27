@@ -8,16 +8,14 @@ import { SEIEmptyState, SEIErrorState, SEISkeleton } from '@seihouse/ui';
 import { useLibraryAssets } from '../../../library/assets';
 import { formatEnergy } from '../../energy/development/EnergyAmount';
 import type { CreatorSpaceProps, CreatorToolkitItem, CreatorWorld, CreatorWorldStatus } from '../shared/creatorSpaceContracts';
+import { WorldCardCompact, WORLD_STATUS_LABELS } from '../../world-card/development/WorldCardCompact';
 import './creator-space.css';
 
-const STATUS_LABELS: Record<CreatorWorldStatus, string> = {
-  draft: 'Draft', shared: 'Shared', public: 'Public', complete: 'Complete',
-};
 const TOOLKIT_ICONS = { style: Paintbrush, soundscape: AudioLines } as const;
 const TOOLKIT_PREVIEW_NOTICE = 'The plugin browser is still being built. For now, each world’s styles and soundscapes are chosen in its Studio.';
 
 export const creatorWorldMeta = (world: CreatorWorld) =>
-  `Ch. ${world.chapterCount} · ${STATUS_LABELS[world.status]}`;
+  `Ch. ${world.chapterCount} · ${WORLD_STATUS_LABELS[world.status]}`;
 export const creatorWorldCountLabel = (count: number) => `${count} ${count === 1 ? 'world' : 'worlds'}`;
 
 /** Stable pick of the Library's own celestial art for a world with no cover yet. */
@@ -161,22 +159,8 @@ function WorldsRow({ worlds, onContinueWorld, onOpenStudio }: {
         const cover = world.imageUrl ?? fallbackCover(world.id, homeImages);
         const isSelected = world.id === selected.id;
         return <li key={world.id}>
-          <LibraryCard interactive padding="none" id={`creator-world-${world.id}`}
-            className="creator-space-world" aria-pressed={isSelected}
-            aria-label={`${world.title}, ${creatorWorldMeta(world)}`}
-            onClick={() => setSelectedId(world.id)}>
-            <LibraryCardMedia className="creator-space-world-media">
-              <WorldCover src={cover} fallback={!world.imageUrl} />
-              <span className="absolute inset-0 bg-gradient-to-t from-black via-black/35 to-transparent" aria-hidden="true" />
-              <span className="absolute inset-x-0 bottom-0 flex flex-col gap-1 p-3">
-                <LibraryCardTitle as="h3" className="font-display text-lg font-bold leading-tight text-signal line-clamp-2 sm:text-xl">{world.title}</LibraryCardTitle>
-                <span className="flex items-center gap-1.5 font-sans text-xs text-neutral-200">
-                  Ch. {world.chapterCount}<span aria-hidden="true">•</span>
-                  <FileText size={12} aria-hidden="true" />{STATUS_LABELS[world.status]}
-                </span>
-              </span>
-            </LibraryCardMedia>
-          </LibraryCard>
+          <WorldCardCompact world={world} cover={cover} fallbackCover={!world.imageUrl}
+            selected={isSelected} onSelect={() => setSelectedId(world.id)} />
         </li>;
       })}
     </ul>
@@ -199,14 +183,6 @@ function WorldsRow({ worlds, onContinueWorld, onOpenStudio }: {
       {complete && <p id={noteId} className="mt-2 font-sans text-xs text-neutral-300">This story has reached its ending.</p>}
     </div>
   </>;
-}
-
-/** A world's art; a missing or unreachable image leaves the card's own celestial wash. */
-function WorldCover({ src, fallback }: { src?: string; fallback: boolean }) {
-  const [failed, setFailed] = useState<string>();
-  if (!src || failed === src) return null;
-  return <img src={src} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(src)}
-    className={`h-full w-full object-cover ${fallback ? 'creator-space-world-fallback' : ''}`} />;
 }
 
 /** Scroll pages of the worlds row, for the decorative position dots. */

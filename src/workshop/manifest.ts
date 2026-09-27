@@ -452,6 +452,12 @@ export const workshopEntries: WorkshopEntry[] = [
     source: { repository: 'SENSEIDUKES/Light-Novels', path: 'src/components/StoryDetailScreen.tsx', lastCompared: '2026-09-22' },
   },
   {
+    id: 'world-card', section: 'components', owner: 'library', status: 'active', title: 'World Card',
+    description: 'One world in every size it appears: the Info page a reader opens, the Full discovery card on Home, the Compact “Your worlds” tile on Create, and a new Mini row sized like an audio-player track. Home, the world detail and Create render these cards directly.',
+    category: 'other', version: 'v1.0',
+    source: { repository: 'SENSEIDUKES/development', path: 'src/components/world-card/', lastCompared: '2026-09-27' },
+  },
+  {
     id: 'celestial-backdrop',
     section: 'components',
     owner: 'library-ui',

@@ -48,6 +48,7 @@ const StorySeedWorkspace = lazy(() =>
 );
 const LightNovelsHomeWorkspace = lazy(() => import('./workshop/previews/light-novels-home/LightNovelsHomeWorkspace').then(module => ({ default: module.LightNovelsHomeWorkspace })));
 const CreatorSpaceWorkspace = lazy(() => import('./workshop/previews/creator-space/CreatorSpaceWorkspace').then(module => ({ default: module.CreatorSpaceWorkspace })));
+const WorldCardWorkspace = lazy(() => import('./workshop/previews/world-card/WorldCardWorkspace').then(module => ({ default: module.WorldCardWorkspace })));
 const MotionPictureWorkspace = lazy(() => import('./workshop/previews/motion-picture/MotionPictureWorkspace').then(module => ({ default: module.MotionPictureWorkspace })));
 const LibraryShellWorkspace = lazy(() =>
   import('./workshop/previews/library-shell/LibraryShellWorkspace')
@@ -137,6 +138,7 @@ const previewRegistry: Record<string, ComponentType> = {
   'light-novels-home': LightNovelsHomeWorkspace,
   'creator-space': CreatorSpaceWorkspace,
   'motion-picture': MotionPictureWorkspace,
+  'world-card': WorldCardWorkspace,
   'library-shell': LibraryShellWorkspace,
   'user-profile': UserProfileWorkspace,
 };

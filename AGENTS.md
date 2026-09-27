@@ -99,8 +99,10 @@ For faithful replicas, use mock data and preview-only wrappers while keeping com
   cultivation and the relic economy). Neither contains components of its own:
   entries re-export `development/` and `shared/` code so the Workshop and the
   packages always render the same source. Workshop shells, preview mocks,
-  locked `reference/` replicas, and `src/server/` code stay out of every
-  entry — and no SEN entry may reach a Library surface.
+  locked `reference/` replicas, and host-owned `src/server/` code stay out of
+  client entries. The `@seihouse/library/model-router-server` entry is the
+  explicit server-only provider exception; no SEN entry may reach a Library
+  surface.
   `npm run check:package-boundaries` walks the real import graph and fails on
   the file that breaks the rule; `npm run build:package` re-checks the built
   output. Workshop code consumes package surfaces through `@seihouse/sen/*`

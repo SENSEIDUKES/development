@@ -71,6 +71,7 @@ function ModelRow({ model, selected, selectable, reasoningLevel, onSelect }: {
         {model.isDefault && !selected && <span className="rounded border border-white/15 px-1 py-px text-white/50">Default</span>}
         {reasoningLevel && <span className="rounded border border-violet-400/35 px-1 py-px text-violet-200" title="Reasoning level">{reasoningLevel}</span>}
         {!model.available && <span className="rounded border border-white/10 px-1 py-px text-white/40">No key</span>}
+        {!model.implemented && <span className="rounded border border-white/10 px-1 py-px text-white/40">Catalog only</span>}
         {selected && <Check aria-label="Selected" className="text-cyan-300" size={15} />}
       </span>
     </>

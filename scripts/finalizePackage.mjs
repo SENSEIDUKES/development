@@ -41,6 +41,9 @@ const fail = message => {
 
 await copyFile(join(source, 'package.json'), join(output, 'package.json'));
 await copyFile(join(source, 'README.md'), join(output, 'README.md'));
+if (target.id === 'library') {
+  await copyFile(join(root, 'scripts/packageAssets/model-router-browser.js'), join(output, 'dist/model-router-browser.js'));
+}
 for (const relative of target.assets) {
   const destination = join(output, 'dist', relative);
   await mkdir(dirname(destination), { recursive: true });
@@ -49,7 +52,7 @@ for (const relative of target.assets) {
 
 const manifest = await readJson(join(output, 'package.json'));
 for (const [name, entry] of Object.entries(manifest.exports)) {
-  const paths = typeof entry === 'string' ? [entry] : Object.values(entry);
+  const paths = typeof entry === 'string' ? [entry] : Object.values(entry).filter(value => typeof value === 'string');
   for (const relative of paths) {
     if (!existsSync(join(output, relative))) {
       fail(`export "${name}" points at missing file ${relative}`);

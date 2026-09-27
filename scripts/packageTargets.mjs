@@ -59,7 +59,7 @@ export const PACKAGE_TARGETS = {
   },
   library: {
     ...common('library'),
-    unstyledEntries: ['index', 'cultivation', 'energy', 'dao-pillar', 'media', 'presentation'],
+    unstyledEntries: ['index', 'cultivation', 'energy', 'dao-pillar', 'media', 'presentation', 'model-router-server'],
     forbiddenBundleContents: NEVER_PUBLISHED,
     typeDependencies: ['sen'], smokeDependencies: ['sen'],
     smokeExports: {
@@ -89,7 +89,8 @@ export const PACKAGE_TARGETS = {
       import type { FamiliarsClient, FamiliarTrainingSnapshot } from '@seihouse/library/familiar';
       import type { DaoXpClient } from '@seihouse/library/cultivation';
       import type { HarnessGenerationWorkspaceProps } from '@seihouse/library/generation';
-      type All = [UserProfileServices, EnergyClient, FamiliarDefinition, FamiliarSelectionProps, QiClient, DaoXpClient, FateSurvivalRelicView, RelicsClient, AchievementsClient, MysteryScrollView, RewardGrant, FamiliarsClient, FamiliarTrainingSnapshot, HarnessGenerationWorkspaceProps];
+      import type { ModelRouterConfig, TextGenerationRequest, SpeechGenerationRequest, GenerationResult } from '@seihouse/library/model-router-server';
+      type All = [UserProfileServices, EnergyClient, FamiliarDefinition, FamiliarSelectionProps, QiClient, DaoXpClient, FateSurvivalRelicView, RelicsClient, AchievementsClient, MysteryScrollView, RewardGrant, FamiliarsClient, FamiliarTrainingSnapshot, HarnessGenerationWorkspaceProps, ModelRouterConfig, TextGenerationRequest, SpeechGenerationRequest, GenerationResult];
     `,
   },
 };

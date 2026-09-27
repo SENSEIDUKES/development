@@ -33,6 +33,8 @@ export interface ModelRouterModelStatus {
   stage: ModelStage;
   /** Its provider key is configured; this alone does not mean a generation consumer is connected. */
   available: boolean;
+  /** A server adapter exists for this capability. */
+  implemented: boolean;
   isDefault: boolean;
   /** Tunable reasoning levels, when the model has them. */
   reasoning?: ModelReasoning;
@@ -64,9 +66,11 @@ const modelStatus = (
   environment: ModelEnvironment,
   models: readonly RoutedModel[],
   defaultModel?: string,
+  implemented = false,
 ): ModelRouterModelStatus[] => models.map(model => ({
   ...model,
   available: Boolean(providerKey(environment, model.provider)),
+  implemented,
   isDefault: model.id === defaultModel,
 }));
 
@@ -98,7 +102,7 @@ export function modelRouterStatus(environment: ModelEnvironment): ModelRouterSta
         consumers: consumersFor('chapters'),
         defaultModel: chapters.defaultModel,
         providers: providerStatus(environment, ['gemini', 'openrouter']),
-        models: modelStatus(environment, chapterModels, chapters.defaultModel),
+        models: modelStatus(environment, chapterModels, chapters.defaultModel, true),
       },
       {
         id: 'images',
@@ -115,7 +119,7 @@ export function modelRouterStatus(environment: ModelEnvironment): ModelRouterSta
         consumers: consumersFor('tts'),
         defaultModel: ttsDefault,
         providers: providerStatus(environment, ['elevenlabs']),
-        models: modelStatus(environment, ttsModels, ttsDefault),
+        models: modelStatus(environment, ttsModels, ttsDefault, true),
       },
       {
         id: 'audio',

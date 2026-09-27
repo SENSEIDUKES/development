@@ -156,8 +156,8 @@ export function getWorkshopVersionLabel(version: WorkshopEntry['version']) {
 export const workshopEntries: WorkshopEntry[] = [
   {
     id: 'text-highlight-engine', title: 'Text Highlight Engine',
-    description: 'Select prose to edit it or place an existing Sound Cue through Media. A standalone SEN text-selection primitive with stable block identity.',
-    category: 'reader-ui', section: 'components', owner: 'sen', status: 'active', version: 'v1.1',
+    description: 'Select prose to edit it or place an existing Sound Cue through Media. Find cues by category or search in this standalone SEN preview.',
+    category: 'reader-ui', section: 'components', owner: 'sen', status: 'active', version: 'v1.2',
     source: { repository: 'SENSEIDUKES/development', path: 'src/components/text-highlight-engine/', lastCompared: 'Not applicable — DEV-native primitive' },
   },
   {

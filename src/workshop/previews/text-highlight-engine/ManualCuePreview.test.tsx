@@ -105,4 +105,20 @@ describe('Workshop manual Sound Cue flow', () => {
     click('Save');
     expect(block().querySelectorAll('[data-cue-annotation]')).toHaveLength(0);
   });
+
+  it('restores an anchored cue after undoing a deletion immediately before it', async () => {
+    await select(block().firstChild!, 12, 35); openCue();
+    act(() => document.querySelector('.sen-manual-cue-picker__item')!.querySelectorAll('button')[1].click());
+    await select(block().firstChild!, 0, 12); click('Edit');
+    act(() => {
+      const editor = block().querySelector('[contenteditable]')!;
+      editor.textContent = ''; editor.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    click('Delete Passage');
+    expect(block().querySelectorAll('[data-cue-annotation]')).toHaveLength(1);
+    click('Undo');
+    expect(block().textContent?.replaceAll('\u2060', '')).toBe(previewBlocks[0].text);
+    expect(block().querySelectorAll('[data-cue-annotation]')).toHaveLength(1);
+    expect(inlinePhrase().textContent).toBe(previewBlocks[0].text.slice(12, 35));
+  });
 });

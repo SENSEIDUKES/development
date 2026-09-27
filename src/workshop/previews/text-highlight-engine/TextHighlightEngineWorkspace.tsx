@@ -24,9 +24,12 @@ export function TextHighlightEnginePreview() {
 
   const updateBlocks = (next: TextHighlightBlock[], edit: PassageEdit) => {
     const difference = edit.after.text.length - edit.before.text.length;
+    // Undo inserts the deleted text at its original start; its old end is not
+    // a range in the shortened block that placements can overlap.
+    const editEnd = edit.operation === 'undo' ? edit.selection.startOffset : edit.selection.endOffset;
     setPlacements(previous => previous.flatMap(placement => {
       if (placement.blockId !== edit.before.id) return [placement];
-      if (edit.selection.endOffset <= placement.startOffset) return [{ ...placement,
+      if (editEnd <= placement.startOffset) return [{ ...placement,
         startOffset: placement.startOffset + difference, endOffset: placement.endOffset + difference }];
       if (edit.selection.startOffset >= placement.endOffset) return [placement];
       return [];

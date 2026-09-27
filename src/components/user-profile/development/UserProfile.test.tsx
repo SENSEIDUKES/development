@@ -600,11 +600,14 @@ describe('Cultivator Cave home', () => {
     // The chrome names the workspace without owning the page heading.
     expect(container.querySelector('h1')).toBeNull();
     expect(container.querySelector('[data-slot="library-header-badge-title"]')?.textContent).toBe('Profile');
-    // Below the desktop breakpoint the drawer is the only navigation mounted:
-    // no rail, and so no second copy of the same destinations.
+    // Below the desktop breakpoint the global strip is the only visible
+    // navigation: the canonical App Shell keeps the rail `display: none` until
+    // `lg`, so the same destinations are never offered twice.
     expect(container.querySelectorAll('nav[aria-label="Library global navigation"]')).toHaveLength(1);
-    expect(container.querySelectorAll('nav[aria-label="Cultivator Cave navigation"]')).toHaveLength(0);
-    expect(container.querySelector('[data-slot="app-shell-sidebar"]')).toBeNull();
+    const rail = container.querySelector('[data-slot="app-shell-sidebar"]')!;
+    expect(rail.classList.contains('hidden')).toBe(true);
+    expect(rail.classList.contains('lg:block')).toBe(true);
+    expect(rail.classList.contains('md:block')).toBe(false);
     expect(text()).not.toContain('Cultivate in silence. Ascend in the unseen.');
   });
 

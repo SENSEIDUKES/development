@@ -21,6 +21,7 @@ const checks = [
   'Main Library states exercise Home, Library, Discover, Sects and Tiers. Back/Forward updates the active destination.',
   'Cave Search contains Home, Stories and Relics; public Search also has Exit. Settings stays beneath Daily Dao Pillar.',
   'Story Seed retains its existing strip and Reader stays immersive. Neither receives the global strip.',
+  'Browsing screens scroll inside the frame: the header stays put, the rail appears from 1024px and scrolls on its own, and nothing hides behind the bottom strip.',
 ];
 
 export function LibraryShellWorkspace() {

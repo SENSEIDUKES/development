@@ -4,12 +4,13 @@
 - **Source location:** `src/components/ReaderChamber.tsx` and `src/components/ReaderViewport.tsx` (verified on `origin/main` @ `f89cb41`)
 - **Workshop preview:** `?preview=reader-chamber`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-09-25
+- **Last Workshop update:** 2026-09-27
 - **Last source comparison:** 2026-08-22
 - **Replica status:** under refinement
 
 ## Workshop history
 
+- **2026-09-27:** The Reader stays outside the Library Shell. Library browsing screens now scroll inside the App Shell's fixed frame, but the Reader is immersive and its cinematic scrolling depends on the document scroller, so `library-shell/development/ReaderScrollBoundary.test.ts` guards that boundary. The overlay gate now listens for scroll on the Reader's real scroll surface (the document, or a host's inner scroller) instead of the prose container, which never scrolls; `findReaderScroller` is shared with the scroll-direction header.
 - **2026-09-25 (Fate Phase 2):** The development Reader no longer carries the
   retired Fate Survival and Alter Fate (Branch) surfaces. Removed from
   `development/` and the SEN package: `AlterFatePanel` (the "linked copy"

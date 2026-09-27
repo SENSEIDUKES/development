@@ -14,7 +14,10 @@ import './main-library-header.css';
  * `MainLibraryHomeInsights` — so the header row keeps the full page title, Help
  * and Search at every width.
  */
-export function GlobalHeader() {
+export function GlobalHeader({ landmark = 'banner' }: {
+  /** `'none'` when `WorkspaceShell` already provides the banner landmark. */
+  landmark?: 'banner' | 'none';
+} = {}) {
   const adapter = useMainLibraryAdapter(value => value);
   const activeStory = adapter.stories.find(story => story.id === adapter.activeStoryId);
   if (adapter.currentScreen === 'reader' || adapter.currentScreen === 'codex') return null;
@@ -39,7 +42,7 @@ export function GlobalHeader() {
     { id: 'manga', label: 'Manga Studio', description: 'Visualize your chapters', icon: PenTool, disabled: true, title: 'Coming Soon', onAction: () => {} },
     { id: 'battles', label: 'Qi Battles', description: 'Test your cultivation realm', icon: Sword, disabled: true, title: 'Coming Soon', onAction: () => {} },
   ];
-  return <WorkspaceHeader title="Celestial Library"
+  return <WorkspaceHeader title="Celestial Library" landmark={landmark}
     emblem={LIBRARY_EMBLEM}
     home={{ href: '/', label: 'Return to Home', onNavigate: home }}
     searchItems={items} />;

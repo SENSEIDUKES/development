@@ -1,31 +1,24 @@
-/* Library skin over the canonical SEIAppShell. The grid, the sticky header row
-   and the landmarks are the canonical component's; these rules only give the
-   rail its Library surface and keep it usable while the workspace scrolls. */
+/* Library skin over the canonical SEIAppShell. The fixed frame, the header
+   row, the independently scrolling sidebar and <main>, and the rail's `lg`
+   breakpoint are all the canonical component's; these rules only give the
+   frame and the rail their Library surface. */
 .workspace-shell {
-  /* First-paint fallback; WorkspaceShell measures the complete header,
-     including the optional page toolbar, before the rail can scroll. */
-  --workspace-header-height: calc(3.5rem + var(--sh-safe-top, 0px));
-  --workspace-safe-bottom: env(safe-area-inset-bottom, 0px);
   background: transparent;
-  /* Deliberately no `overflow` here: a clipped ancestor becomes the sticky
-     scrollport, which would strand the header and the rail. Wide content
-     scrolls inside its own container instead. */
   max-width: 100%;
 }
-@media (min-width: 640px) {
-  .workspace-shell { --workspace-header-height: calc(4rem + var(--sh-safe-top, 0px)); }
+
+/* Browsing screens scroll inside <main>, the canonical shell's scrolling
+   region, so the header and the rail stay put without sticky positioning or
+   measured heights. `overscroll-behavior` keeps a phone's bounce inside the
+   content instead of dragging the whole frame. */
+.workspace-shell-main {
+  min-width: 0;
+  overscroll-behavior-y: contain;
 }
 
-/* The page is the scroller, not the main region: `SEIAppShell` marks `<main>`
-   `overflow-y: auto`, which would turn it into its own scroll container, leave
-   the sidebar row stuck at one viewport, and strand the sticky rail. Letting
-   the content grow the row instead keeps one scrollbar, a full-height rail and
-   a header that stays put. */
-.workspace-shell-main { min-width: 0; overflow: visible; }
-
-/* The column itself stretches the full grid row, so its surface and border run
-   from under the header to the bottom of the viewport even when the rail's own
-   contents are short. */
+/* The column stretches the full grid row, so its surface and border run from
+   under the header to the bottom of the frame even when the rail's own
+   contents are short; the canonical shell scrolls the rail when they are long. */
 .workspace-shell [data-slot="app-shell-sidebar"] {
   min-width: 0;
   background: color-mix(in srgb, var(--color-sen-void) 72%, transparent);
@@ -40,19 +33,4 @@
   border-bottom: 0;
   background: transparent;
   backdrop-filter: none;
-}
-
-/* The rail stays put and fills the viewport beneath the header while the
-   workspace scrolls; the navigation panel scrolls inside it. */
-.workspace-shell-rail {
-  position: sticky;
-  top: var(--workspace-header-height);
-  height: calc(100dvh - var(--workspace-header-height));
-  min-width: 0;
-  overflow: hidden;
-}
-.workspace-shell-rail > * { height: 100%; min-width: 0; }
-
-@media (prefers-reduced-motion: reduce) {
-  .workspace-shell-rail { scroll-behavior: auto; }
 }

@@ -4,7 +4,7 @@
 - **Source locations:** Light-Novels `src/components/GlobalHeader.tsx` (`GlobalHeader`), `src/components/DaoInsights.tsx` (`DaoInsights`), and the collection navigation in `src/components/LibraryScreen.tsx` (`LibraryScreen`). Development `src/components/story-seed/development/CreationModal.tsx` (`CreationModal`), `StorySeedHeader.tsx`, `StorySeedSelector.tsx`, `StorySeedMobileNavigation.tsx`, and `StorySeedSettings.tsx`.
 - **Workshop preview:** `?preview=library-shell`
 - **Replica created:** 2026-09-08
-- **Last Workshop update:** 2026-09-26
+- **Last Workshop update:** 2026-09-27
 - **Last source comparison:** 2026-09-08
 - **Replica status:** under refinement; locked captures plus Development workspaces on the canonical `SEIAppHeader` and `SEIAppShell`.
 
@@ -68,6 +68,16 @@ Regression coverage: `LibraryShellResilience.test.tsx`.
 ## Footer identity trimmed to the statement — 2026-09-25
 
 At the product owner's direction the footer read as busy, so everything above the company statement came out: the emblem seal and its gold hairlines, the `SEN` elemental wordmark and the `SEIHouse Expanded Novels` line. The footer now opens on a single `NovelExpanded` title (`LIBRARY_FOOTER_TITLE`, cream display serif) above "A better time capsule and translator of artistic expression", then the menus, channels, language and legal row. `LibraryFooter` no longer takes an `emblem`, and `LIBRARY_FOOTER_MARK` and `LIBRARY_FOOTER_EXPANSION` are gone; the header keeps the emblem through `LIBRARY_EMBLEM`. The 2026-09-22 identity entries above describe the superseded arrangement.
+
+## Browsing screens on the fixed-frame App Shell — 2026-09-27
+
+Development now vendors `@seihouse/ui@0.6.0` and `@seihouse/library-ui` from UI PR [#81](https://github.com/SENSEIDUKES/UI/pull/81) (`bce4c74`), and the Library's browsing screens use the App Shell's own scrolling model. `WorkspaceShell` is back to a pure adapter: the canonical shell is a screen-height frame whose `<main>` scrolls, the header stays put without sticky positioning, and the desktop rail appears from `lg` through the new `sidebarBreakpoint` and scrolls on its own. The workarounds that kept the older shell scrolling the whole page are gone — the `<main>` overflow override, the sticky rail and its measured header height, and the JavaScript hook that withheld the rail below 1024px. `mainRef` reaches the scrolling region for hosts that reset or restore scroll. Clearance above the fixed global strip is now the main region's bottom padding, so the frame never grows past the screen.
+
+The Main Library Home preview moved onto the same frame, so Home, Create, the Cave and Story Seed share one browsing shell; the locked reference keeps its original page-scrolling markup. `MainLibraryHeader` and `GlobalHeader` take `landmark="none"` inside it. Library UI kept its version number while `LibraryElementalTitle` moved to `@seihouse/ui` as `ElementalTitle`; the familiar name effect now uses the universal component.
+
+**The Reader Chamber stays outside the shell.** It is immersive, and its cinematic scrolling saves and restores the reading position against the document scroller (`reader-chamber/shared/cinematicScroll`). Mounting it inside the shell's `<main>` would silently move that scroll surface. `ReaderScrollBoundary.test.ts` fails if Reader code imports the Library Shell or `SEIAppShell`, if reader or codex stop being immersive routes, or if the reading position leaves the document scroller. The Reader's overlay gate, which listened for scroll on the prose container that never scrolls, now listens on the Reader's real scroll surface.
+
+The capture's Back to Workshop strip takes a fixed height and the frame gives it up (`preview-environment.css`), so opening a capture at browser width adds no second scrollbar.
 
 ## Capture boundary
 

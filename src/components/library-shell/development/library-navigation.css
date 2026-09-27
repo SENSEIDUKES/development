@@ -39,6 +39,12 @@
     padding-inline: 0.875rem !important;
   }
 }
-.library-navigation-layout .workspace-shell-rail {
-  height: calc(100dvh - var(--workspace-header-height) - var(--library-bottom-clearance));
+/* A page on the workspace shell scrolls inside its <main>, so the clearance
+   above the fixed strip moves there: padding the layout would make the whole
+   frame taller than the screen and add a second scrollbar. */
+.library-navigation-layout:has(.workspace-shell) {
+  padding-bottom: 0;
+}
+.library-navigation-layout .workspace-shell-main {
+  padding-bottom: var(--library-bottom-clearance);
 }

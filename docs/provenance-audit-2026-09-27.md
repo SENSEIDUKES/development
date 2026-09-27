@@ -53,3 +53,14 @@ The Ⓢ mark is a SEIHouse disclosure, not the official Content Credentials indi
 - Source: `src/components/provenance/shared/types.ts`, `createProvenanceRecord.ts`, `development/ProvenanceBadge.tsx`, `development/ProvenanceDetails.tsx`, `development/provenance.css`, `src/workshop/ProvenanceTab.tsx`, and `scripts/ownershipInventory.mjs`.
 - Validation: `npm run test:provenance` passed 9 tests; local browser rendered the dedicated preview, opened the details view, and showed the desktop and 390px layouts. The hosted preview redirected to Vercel login, so this audit's visual judgment comes from the local preview.
 - External guidance: [C2PA explainer](https://spec.c2pa.org/specifications/specifications/2.2/explainer/Explainer.html), [C2PA user experience guidance](https://spec.c2pa.org/specifications/specifications/2.2/ux/UX_Recommendations.html), [C2PA guiding principles](https://c2pa.org/principles/), and [NIST synthetic-content transparency overview](https://www.nist.gov/publications/reducing-risks-posed-synthetic-content-overview-technical-approaches-digital-content).
+
+## Implementation response — 2026-09-27
+
+Implemented on the follow-up branch after the audit:
+
+- Mock construction now has an explicit `mock` status and cannot accept caller-supplied status. The UI tracks trust separately from record data: only locally registered mocks are recognized, while arbitrary and deserialized objects default to mock. `verified` remains a reserved record status and is excluded from current presentation modes.
+- Records identify required `assetId`, `versionId`, `actor`, and `action`; optional `parentVersions` points to one or more exact prior versions. A changed version gets a new record.
+- The compact details view omits absent fields and internal user, asset, fingerprint, and parent IDs. It displays available version, actor/action, recording time with time zone, and generator/model. The approved user statement is reserved for records registered through a future authoritative recording path and appears only when a user ID is present.
+- Text size is larger, and the mock records include a user-edited chapter version to exercise the additional event semantics.
+
+An authoritative app recording event and actual verification remain future work. No generator, persistence, hash, C2PA, or backend connection was added.

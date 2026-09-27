@@ -57,9 +57,9 @@ describe('ProvenanceTab', () => {
       .map(item => item.textContent);
     expect(evidence).toEqual([
       'User recordFuture',
-      'Asset recordFuture',
+      'Asset + version recordFuture · Not connected',
       'Content fingerprintFuture · Not connected',
-      'Parent lineageFuture · Not connected',
+      'Parent versionsFuture · Not connected',
     ]);
     expect(container.textContent).toContain('No Firestore, Postgres, R2, APIs, hashing');
   });

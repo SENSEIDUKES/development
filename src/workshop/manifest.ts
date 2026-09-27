@@ -401,7 +401,7 @@ export const workshopEntries: WorkshopEntry[] = [
     owner: 'deferred',
     status: 'active',
     title: 'Provenance',
-    description: 'Reusable provenance marks, records, evidence contracts, and future connection maps for AI-generated assets.',
+    description: 'Reusable provenance marks and versioned records for generated, edited, converted, and imported assets.',
     category: 'other',
     version: 'v1.0',
     source: {

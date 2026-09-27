@@ -45,7 +45,7 @@ const ACTIVE_GROUPS = {
   Rewards: ['reward-loop', 'achievements', 'relics-gallery', 'familiar-training', 'dao-pillar', 'idle-cultivation'],
   Customization: ['familiar'],
   Systems: ['harness-generation', 'chapter-generation-manifestation', 'character-voice', 'provenance', 'energy'],
-  Components: ['motion-picture', 'celestial-backdrop', 'card-workshop'],
+  Components: ['text-highlight-engine', 'motion-picture', 'celestial-backdrop', 'card-workshop'],
 };
 
 describe('WorkshopHome', () => {
@@ -121,7 +121,7 @@ describe('WorkshopHome', () => {
       'reward-loop': 'workshop', achievements: 'library', 'familiar-training': 'library',
       familiar: 'library', 'relics-gallery': 'library', 'idle-cultivation': 'library',
       'harness-generation': 'sen', 'chapter-generation-manifestation': 'library', 'character-voice': 'sen', provenance: 'deferred', energy: 'library', 'model-router': 'deferred',
-      'motion-picture': 'sen', 'celestial-backdrop': 'library-ui', 'card-workshop': 'workshop',
+      'text-highlight-engine': 'sen', 'motion-picture': 'sen', 'celestial-backdrop': 'library-ui', 'card-workshop': 'workshop',
       'chapter-generation-flow': 'workshop',
     });
     for (const panel of workshopPanels) {

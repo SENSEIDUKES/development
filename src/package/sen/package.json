@@ -10,6 +10,10 @@
     "dist"
   ],
   "exports": {
+    "./text-highlight-engine": {
+      "types": "./dist/types/package/sen/text-highlight-engine.d.ts",
+      "import": "./dist/text-highlight-engine.js"
+    },
     ".": {
       "types": "./dist/types/package/sen/index.d.ts",
       "import": "./dist/index.js"

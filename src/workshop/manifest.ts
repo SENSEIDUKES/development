@@ -155,6 +155,12 @@ export function getWorkshopVersionLabel(version: WorkshopEntry['version']) {
  */
 export const workshopEntries: WorkshopEntry[] = [
   {
+    id: 'text-highlight-engine', title: 'Text Highlight Engine',
+    description: 'Select a passage and edit it locally. A standalone SEN text-selection primitive with stable block identity.',
+    category: 'reader-ui', section: 'components', owner: 'sen', status: 'active', version: 'v1.0',
+    source: { repository: 'SENSEIDUKES/development', path: 'src/components/text-highlight-engine/', lastCompared: 'Not applicable — DEV-native primitive' },
+  },
+  {
     id: 'light-novels-home', section: 'pages', group: 'home', owner: 'library', status: 'active', title: 'Light Novels Home',
     description: 'The existing Light Novels homepage and novel detail, with one mock novel showing manga/game seals and an Explore This World lane. Shared Home, Library, Discover and Profile navigation.',
     category: 'other', version: 'v1.0',

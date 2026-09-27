@@ -16,6 +16,7 @@ export const PACKAGE_TARGETS = {
     forbiddenBundleContents: [...NEVER_PUBLISHED, ['@seihouse/library', 'Library dependency'], ['celestialaudio.seihouse.org', 'first-party catalog'], ['library-auth-backdrop', 'Library auth artwork']],
     typeDependencies: [], smokeDependencies: [],
     smokeExports: {
+      '@seihouse/sen/text-highlight-engine': ['TextHighlightEngine', 'usePassageSelection', 'normalizePassageSelection', 'replacePassage'],
       '@seihouse/sen': ['NarrativePresentationProvider', 'SEN_PACKAGE_VERSION'],
       '@seihouse/sen/presentation': ['NarrativeArtProvider', 'NarrativeTextBox', 'AmbientEffect'],
       '@seihouse/sen/contracts': ['DEFAULT_SEN_LANGUAGE_CODE'],
@@ -34,6 +35,11 @@ export const PACKAGE_TARGETS = {
       '@seihouse/sen/arc-goals': ['ARC_LENGTH'],
     },
     smokeTypes: `
+      import type { PassageSelection, TextHighlightBlock, TextHighlightEngineProps } from '@seihouse/sen/text-highlight-engine';
+      const passage: PassageSelection = { blockId: 'publisher-paragraph', selectedText: 'text', startOffset: 0, endOffset: 4 };
+      const textBlock: TextHighlightBlock = { id: passage.blockId, text: 'text' };
+      const highlightProps: TextHighlightEngineProps = { blocks: [textBlock], onBlocksChange: (blocks, edit) => { void blocks; void edit.operation; } };
+      void highlightProps;
       import type { StoryWorld, StoryBlock, ReaderChapter, NarrativeUsagePort } from '@seihouse/sen/contracts';
       import type { ReaderRuntime } from '@seihouse/sen/reader-runtime';
       import type { StorySeedInput, StorySeedRepository } from '@seihouse/sen/story-seed';

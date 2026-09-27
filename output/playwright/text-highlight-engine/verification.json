@@ -1,0 +1,40 @@
+[
+  {
+    "name": "chromium-desktop",
+    "width": 1440,
+    "height": 900,
+    "touchActivation": false,
+    "nativeTouchSelectionHandles": "not tested",
+    "passed": true
+  },
+  {
+    "name": "chromium-phone",
+    "width": 390,
+    "height": 844,
+    "touchActivation": true,
+    "nativeTouchSelectionHandles": "not tested",
+    "passed": true
+  },
+  {
+    "name": "chromium-tablet",
+    "width": 768,
+    "height": 1024,
+    "touchActivation": true,
+    "nativeTouchSelectionHandles": "not tested",
+    "passed": true
+  },
+  {
+    "name": "webkit-phone",
+    "width": 390,
+    "height": 844,
+    "passed": null,
+    "blocked": "Windows WebKit viewport mismatch: requested 390px, reports 299px (DPR 1.3020833730697632). Native taps and layout assertions are unreliable on this runner."
+  },
+  {
+    "name": "webkit-tablet",
+    "width": 768,
+    "height": 1024,
+    "passed": null,
+    "blocked": "Windows WebKit viewport mismatch: requested 768px, reports 589px (DPR 1.3020833730697632). Native taps and layout assertions are unreliable on this runner."
+  }
+]

@@ -143,6 +143,23 @@ for (const [name, browserType, width, height, touch] of [
       }
     }
     assert.equal(await page.locator('.sen-manual-cue-picker__item').count(), 92);
+    assert.equal(await page.locator('.sen-manual-cue-picker__number').first().textContent(), '#001');
+    assert.equal(await page.locator('.sen-manual-cue-picker__number').last().textContent(), '#092');
+    const category = page.getByLabel('Category', { exact: true });
+    const search = page.getByLabel('Search cues', { exact: true });
+    await category.selectOption('weapons');
+    assert.equal(await page.locator('.sen-manual-cue-picker__item').count(), 20);
+    await search.fill(' SWORD ');
+    assert.equal(await page.locator('.sen-manual-cue-picker__item').count(), 7);
+    assert.equal(await page.locator('.sen-manual-cue-picker__number').first().textContent(), '#012');
+    assert.ok(await page.locator('.sen-text-highlight-marks span').count());
+    await page.screenshot({ path: `${output}/${name}-cue-filtered.png` });
+    await search.fill('not-a-real-cue');
+    assert.equal(await page.locator('.sen-manual-cue-picker__item').count(), 0);
+    assert.match(await page.locator('.sen-manual-cue-picker__empty').textContent(), /No Sound Cues match/);
+    await search.fill('');
+    await category.selectOption('all');
+    assert.equal(await page.locator('.sen-manual-cue-picker__item').count(), 92);
     const press = async locator => touch ? locator.tap() : locator.click();
     await press(page.locator('.sen-manual-cue-picker__item').first().getByRole('button', { name: 'Preview' }));
     await page.waitForFunction(() => Array.from(document.querySelectorAll('audio')).some(audio => audio.currentSrc.includes('celestialaudio.seihouse.org')));
@@ -151,6 +168,13 @@ for (const [name, browserType, width, height, touch] of [
     assert.equal(await cueParagraph.locator('[data-cue-annotation]').count(), 1);
     assert.equal(await cueParagraph.locator('.inline-world-cue-annotation__text').textContent(), 'blue door');
     assert.equal((await cueParagraph.textContent()).replaceAll('\u2060', ''), cueOriginal);
+    const glyphMetrics = await cueParagraph.locator('[data-action-type="world-cue"]').evaluate(element => ({
+      width: element.getBoundingClientRect().width,
+      fontSize: parseFloat(getComputedStyle(element.parentElement).fontSize),
+      paddingLeft: getComputedStyle(element).paddingLeft,
+    }));
+    assert.ok(glyphMetrics.width < glyphMetrics.fontSize * 1.25, JSON.stringify(glyphMetrics));
+    assert.equal(glyphMetrics.paddingLeft, '0px');
     await page.screenshot({ path: `${output}/${name}-cue-placed.png` });
     await press(cueParagraph.locator('[data-action-type="world-cue"]'));
     await page.waitForFunction(() => {
@@ -175,6 +199,30 @@ for (const [name, browserType, width, height, touch] of [
     await activate('Remove cue');
     assert.equal(await cueParagraph.locator('[data-cue-annotation]').count(), 0);
     assert.equal(await cueParagraph.textContent(), cueOriginal);
+    const letterParagraph = page.locator('[data-sen-text-block="letter"]');
+    const letterOriginal = await letterParagraph.textContent();
+    await letterParagraph.scrollIntoViewIfNeeded();
+    await letterParagraph.evaluate(element => {
+      const phrase = 'letter carefully'; const start = element.firstChild.textContent.indexOf(phrase);
+      const range = document.createRange(); range.setStart(element.firstChild, start); range.setEnd(element.firstChild, start + phrase.length);
+      document.getSelection().removeAllRanges(); document.getSelection().addRange(range);
+      document.dispatchEvent(new Event('selectionchange'));
+    });
+    await activate('Media'); await activate('Audio'); await activate('Cue');
+    await press(page.locator('.sen-manual-cue-picker__item').first().getByRole('button', { name: 'Select' }));
+    const punctuationLayout = await letterParagraph.locator('[data-cue-annotation]').evaluate(annotation => {
+      const glyph = annotation.querySelector('[data-action-type="world-cue"]').getBoundingClientRect();
+      const punctuation = document.createRange();
+      const punctuationNode = annotation.lastChild;
+      punctuation.selectNodeContents(punctuationNode);
+      const mark = punctuation.getBoundingClientRect();
+      return { gap: mark.left - glyph.right, overlapsVertically: mark.top < glyph.bottom && mark.bottom > glyph.top,
+        fontSize: parseFloat(getComputedStyle(annotation).fontSize) };
+    });
+    assert.ok(punctuationLayout.gap >= -2 && punctuationLayout.gap < punctuationLayout.fontSize, JSON.stringify(punctuationLayout));
+    assert.ok(punctuationLayout.overlapsVertically, JSON.stringify(punctuationLayout));
+    assert.equal((await letterParagraph.textContent()).replaceAll('\u2060', ''), letterOriginal);
+    await page.screenshot({ path: `${output}/${name}-cue-punctuation.png` });
     const layout = await page.evaluate(() => ({ viewport: document.documentElement.clientWidth, content: document.documentElement.scrollWidth }));
     assert.ok(layout.content <= layout.viewport + 1, JSON.stringify(layout));
     assert.deepEqual(errors, []);

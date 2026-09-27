@@ -7,7 +7,8 @@
   isolation: isolate;
 }
 .sen-text-highlight-root:focus-visible { outline: none; }
-.sen-text-highlight-controls, .sen-text-highlight-undo, .sen-text-highlight button { box-sizing: border-box; }
+.sen-text-highlight-controls, .sen-text-highlight-undo,
+.sen-text-highlight-controls button, .sen-text-highlight-undo button { box-sizing: border-box; }
 .sen-text-highlight [data-sen-text-block] { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.85; margin: 0 0 1.3em; min-height: 1.85em; }
 .sen-text-highlight [data-sen-text-block]::selection,
 .sen-text-highlight [data-sen-text-block] *::selection { background: transparent; color: inherit; }
@@ -18,10 +19,10 @@
 .sen-text-highlight-marks { position: fixed; inset: 0; pointer-events: none; z-index: -1; overflow: hidden; }
 .sen-text-highlight-marks span { position: absolute; background: var(--sen-passage-highlight); border-radius: 2px; }
 .sen-text-highlight-controls { position: fixed; z-index: 9999; border: 1px solid #5c5c5c; border-radius: 14px; background: #262626; color: #f6f4ef; box-shadow: 0 12px 32px #0008; padding: 5px; overflow: auto; font: 14px/1.5 system-ui, sans-serif; }
-.sen-text-highlight button { min-height: 44px; min-width: 44px; padding: 8px 12px; border-radius: 6px; font: 500 14px/1.4 system-ui, sans-serif; cursor: pointer; }
-.sen-text-highlight button:hover:not(:disabled) { background: var(--sen-passage-highlight); }
-.sen-text-highlight button:disabled { opacity: .45; cursor: default; }
-.sen-text-highlight :focus-visible { outline: 2px solid #a47915; outline-offset: 3px; }
+.sen-text-highlight-controls button, .sen-text-highlight-undo button { min-height: 44px; min-width: 44px; padding: 8px 12px; border-radius: 6px; font: 500 14px/1.4 system-ui, sans-serif; cursor: pointer; }
+.sen-text-highlight-controls button:hover:not(:disabled), .sen-text-highlight-undo button:hover:not(:disabled) { background: var(--sen-passage-highlight); }
+.sen-text-highlight-controls button:disabled, .sen-text-highlight-undo button:disabled { opacity: .45; cursor: default; }
+.sen-text-highlight-controls :focus-visible, .sen-text-highlight-undo :focus-visible { outline: 2px solid #a47915; outline-offset: 3px; }
 .sen-text-highlight-actions { display: flex; gap: 4px; justify-content: flex-end; }
 .sen-text-highlight-menu { justify-content: flex-start; }
 .sen-text-highlight-menu button { text-transform: uppercase; letter-spacing: .035em; }

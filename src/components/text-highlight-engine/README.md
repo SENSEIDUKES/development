@@ -54,6 +54,9 @@ manual `ResolvedAudioMoment` or a typed rejection. Manual moments may anchor
 ordinary author-selected text; generated cue validation still requires its
 audible-action phrase. The Workshop supplies its base catalog and routes
 Preview and placed glyphs through the shared `NarrativeAudioPlayback` provider.
+The reusable Cue picker offers category filtering and case-insensitive search
+over descriptions, variations, categories, and tags. Its visible catalog-order
+numbers remain unchanged when filtered; they are display aids, not moment IDs.
 
 ## Behavior and limitations
 
@@ -80,6 +83,8 @@ Preview and placed glyphs through the shared `NarrativeAudioPlayback` provider.
   excluded from selection offsets, so their presence does not shift the
   `PassageSelection`. Rich-text editing, formatting, and cross-paragraph editing
   are not supported.
+- The floating action controls own their touch-size rules. Inline cue glyphs
+  keep the Reader Chamber's compact prose sizing and punctuation placement.
 - Manual cue placement uses the current resolved-audio occurrence format.
   Overlapping instances of the same selected phrase cannot be represented
   exactly and are rejected instead of attaching a cue to another occurrence.
@@ -134,3 +139,6 @@ browser evidence out of the consuming surface. No integration was performed.
   → Cue, a host-catalog picker, shared playback, and in-memory inline glyph
   placements. Selections continue to use stable prose offsets when glyphs are
   present. Added a preview-only highlight color picker.
+- **2026-09-27:** Scoped floating-control styles so placed cues use Reader
+  Chamber's inline glyph spacing. Added numbered Cue results, parent-category
+  filtering, and search to the reusable picker.

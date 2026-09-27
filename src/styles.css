@@ -371,7 +371,7 @@ body {
 }
 .workshop-archive .workshop-card { opacity: 0.88; }
 
-/* Library Components tab — the same card language as the feature grids,
+/* Library Components workspace — the same card language as the feature grids,
    holding live previews of the real shared primitives instead of placeholder
    visuals. The cards are not links and the previews are interactive, so the
    hover lift is disabled to keep controls steady under the pointer. */
@@ -415,7 +415,7 @@ body {
   color: rgba(236, 231, 221, 0.62);
 }
 
-/* Icons tab — each card displays the canonical Library UI glyph rather than
+/* Icons workspace — each card displays the canonical Library UI glyph rather than
    an exported image or copied path data, so the catalog remains an accurate
    visual reference for the published component API. */
 .workshop-icons { margin-top: 2.5rem; }
@@ -582,7 +582,6 @@ body {
     letter-spacing: 0.03em;
   }
   .workshop-nav-tab-active::after { bottom: 0; }
-
   .workshop-header { padding: 1.25rem 0 0; }
   .workshop-title { font-size: 1.9rem; }
   .workshop-kicker { display: none; }

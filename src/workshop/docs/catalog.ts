@@ -267,5 +267,5 @@ export function searchDocs(query: string) {
 }
 
 export function docsHref(id = 'overview') {
-  return `?tab=docs${id === 'overview' ? '' : `&doc=${encodeURIComponent(id)}`}`;
+  return `?preview=novel-expanded-docs${id === 'overview' ? '' : `&doc=${encodeURIComponent(id)}`}`;
 }

@@ -78,7 +78,7 @@ describe('Docs topic catalog', () => {
   });
 
   it('builds portable Workshop URLs', () => {
-    expect(docsHref()).toBe('?tab=docs');
-    expect(docsHref('arc-goal')).toBe('?tab=docs&doc=arc-goal');
+    expect(docsHref()).toBe('?preview=novel-expanded-docs');
+    expect(docsHref('arc-goal')).toBe('?preview=novel-expanded-docs&doc=arc-goal');
   });
 });

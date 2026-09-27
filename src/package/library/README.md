@@ -70,7 +70,8 @@ const result = await router.generate({
 
 `text` handles Gemini and OpenRouter text and returns text plus optional
 provider token usage. `tts` takes a server-chosen voice ID and returns MPEG
-bytes from ElevenLabs. Provider errors use `ModelRouterError.code`; apps decide
+bytes from ElevenLabs. Provider errors use the stable `ModelRouterError.code`;
+apps should branch on that code rather than parsing message text. Apps decide
 their own HTTP message and retry policy. Image, music, video and 3D entries are
 catalog information only and have no generation adapter. A configured key
 does not prove that a provider call will succeed.

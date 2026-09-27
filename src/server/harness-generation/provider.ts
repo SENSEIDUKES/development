@@ -1,6 +1,7 @@
 import type { HarnessProviderReceipt } from '@seihouse/sen/harness-generation';
-import { createModelRouter, type ReasoningLevel } from '@seihouse/library/model-router-server';
+import { createModelRouter, ModelRouterError, type ReasoningLevel } from '@seihouse/library/model-router-server';
 import { requireTextModelKey, textModelProvider } from '../model-router/catalog';
+import { DEVELOPMENT_OPENROUTER_ATTRIBUTION } from '../model-router/openRouter';
 import type { ResolvedHarnessGenerationConfig } from './config';
 
 export interface HarnessTextGenerationRequest {
@@ -40,7 +41,7 @@ class RoutedHarnessTextProvider implements HarnessTextModelProvider {
     try {
       const router = createModelRouter({
         credentials: { [this.provider]: this.apiKey },
-        openRouterAttribution: { referer: 'https://dev.seaportal.world', title: 'SEIHouse Development' },
+        openRouterAttribution: DEVELOPMENT_OPENROUTER_ATTRIBUTION,
       });
       const result = await router.generate({
         capability: 'text', model: this.model, systemInstruction: request.systemInstruction,
@@ -66,7 +67,7 @@ class RoutedHarnessTextProvider implements HarnessTextModelProvider {
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown provider error';
-      if (message.includes('exceeded the') && message.includes('second deadline')) {
+      if (error instanceof ModelRouterError && error.code === 'timeout') {
         throw new Error(`The provider exceeded the Harness Generation ${Math.ceil(request.timeoutMs / 1000)} second deadline.`);
       }
       throw new Error(`${this.provider === 'gemini' ? 'Gemini' : 'OpenRouter'} Harness Generation failed: ${message}`);

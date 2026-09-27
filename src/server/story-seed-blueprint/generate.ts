@@ -1,5 +1,5 @@
 import { MAX_ROADMAP_ARCS, arcRoadmapSchema, insertArcsBeforeFinal, validateArcRoadmap, type ArcPlan } from '@seihouse/sen/arc-goals';
-import { createModelRouter } from '@seihouse/library/model-router-server';
+import { createModelRouter, ModelRouterError, type GenerationResult } from '@seihouse/library/model-router-server';
 import {
   buildArcRoadmapExtensionPayload,
   buildBlueprintGenerationPayload,
@@ -10,6 +10,7 @@ import {
 } from '@seihouse/sen/story-seed';
 import { type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { type ResolvedStorySeedBlueprintConfig } from "./config";
+import { DEVELOPMENT_OPENROUTER_ATTRIBUTION } from '../model-router/openRouter';
 import {
   ARC_ROADMAP_EXTENSION_SYSTEM_PROMPT,
   buildArcRoadmapExtensionPrompt,
@@ -127,6 +128,22 @@ export interface WorldBlueprintModelProvider {
   generate(request: BlueprintModelRequest<object>): Promise<unknown>;
 }
 
+const parseBlueprintResponse = async (
+  generation: Promise<GenerationResult>,
+  maxOutputTokens: number,
+): Promise<unknown> => {
+  try {
+    const result = await generation;
+    if (result.capability !== 'text') throw new Error('Unexpected speech result.');
+    return JSON.parse(result.text.trim()) as unknown;
+  } catch (error) {
+    if (error instanceof ModelRouterError && error.code === 'output-limit') {
+      throw new BlueprintOutputLimitError(maxOutputTokens);
+    }
+    throw error;
+  }
+};
+
 export class GeminiWorldBlueprintProvider implements WorldBlueprintModelProvider {
   constructor(
     private readonly apiKey: string,
@@ -134,13 +151,11 @@ export class GeminiWorldBlueprintProvider implements WorldBlueprintModelProvider
   ) {}
 
   async generate(request: BlueprintModelRequest<object>): Promise<unknown> {
-    const result = await createModelRouter({ credentials: { gemini: this.apiKey } }).generate({
+    return parseBlueprintResponse(createModelRouter({ credentials: { gemini: this.apiKey } }).generate({
       capability: 'text', model: this.model, systemInstruction: request.systemInstruction,
       userPrompt: request.userPrompt, responseFormat: 'json', responseJsonSchema: request.responseJsonSchema,
       temperature: request.temperature, maxOutputTokens: request.maxOutputTokens, timeoutMs: request.timeoutMs,
-    });
-    if (result.capability !== 'text') throw new Error('Unexpected speech result.');
-    return JSON.parse(result.text.trim()) as unknown;
+    }), request.maxOutputTokens);
   }
 }
 
@@ -151,16 +166,14 @@ export class OpenRouterWorldBlueprintProvider implements WorldBlueprintModelProv
   ) {}
 
   async generate(request: BlueprintModelRequest<object>): Promise<unknown> {
-    const result = await createModelRouter({
+    return parseBlueprintResponse(createModelRouter({
       credentials: { openrouter: this.apiKey },
-      openRouterAttribution: { referer: 'https://dev.seaportal.world', title: 'SEIHouse Development' },
+      openRouterAttribution: DEVELOPMENT_OPENROUTER_ATTRIBUTION,
     }).generate({
       capability: 'text', model: this.model, systemInstruction: request.systemInstruction,
       userPrompt: request.userPrompt, responseFormat: 'json', responseJsonSchema: request.responseJsonSchema,
       temperature: request.temperature, maxOutputTokens: request.maxOutputTokens, timeoutMs: request.timeoutMs,
-    });
-    if (result.capability !== 'text') throw new Error('Unexpected speech result.');
-    return JSON.parse(result.text.trim()) as unknown;
+    }), request.maxOutputTokens);
   }
 }
 

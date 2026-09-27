@@ -49,7 +49,7 @@
     "@google/genai": "^2.16.0",
     "@seihouse/audio-player": "github:SENSEIDUKES/AUDIO-PLAYER#b1e05870f4c3e9cad2ddb74119371c5c7cba6471",
     "@seihouse/library-ui": "file:vendor/seihouse-library-ui-0.5.0.tgz",
-    "@seihouse/ui": "file:vendor/seihouse-ui-0.4.0.tgz",
+    "@seihouse/ui": "file:vendor/seihouse-ui-0.6.0.tgz",
     "@vitejs/plugin-react": "latest",
     "fflate": "^0.8.3",
     "lucide-react": "^1.27.0",

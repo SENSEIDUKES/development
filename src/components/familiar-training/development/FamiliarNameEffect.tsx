@@ -1,24 +1,25 @@
 import type { CSSProperties } from 'react';
+// ElementalTitle now lives in the universal UI Text family (UI commit 7c144a5).
 import {
-  LibraryElementalTitle,
-  type LibraryElementalTitleEffect,
-  type LibraryElementalTitleSize,
-} from '@seihouse/library-ui';
+  ElementalTitle,
+  type ElementalTitleEffect,
+  type ElementalTitleSize,
+} from '@seihouse/ui';
 import type { FamiliarCosmeticEffect, FamiliarElement } from '../../../library/familiars/contracts';
 import { SIGNATURE_PIECES } from './signaturePieces';
 
 /** The current UI package has authored treatments for these elements only. */
-const AUTHORED_TITLE_EFFECTS: readonly LibraryElementalTitleEffect[] = ['fire', 'lightning', 'frost', 'celestial', 'void'];
+const AUTHORED_TITLE_EFFECTS: readonly ElementalTitleEffect[] = ['fire', 'lightning', 'frost', 'celestial', 'void'];
 
-const authoredTitleEffect = (element: FamiliarElement): LibraryElementalTitleEffect =>
-  AUTHORED_TITLE_EFFECTS.includes(element as LibraryElementalTitleEffect) ? element as LibraryElementalTitleEffect : 'none';
+const authoredTitleEffect = (element: FamiliarElement): ElementalTitleEffect =>
+  AUTHORED_TITLE_EFFECTS.includes(element as ElementalTitleEffect) ? element as ElementalTitleEffect : 'none';
 
 export interface FamiliarNameEffectProps {
   /** The resolved name effect; null keeps the host's own lettering (rank colours). */
   effect: FamiliarCosmeticEffect | null;
   children: string;
   as?: 'span' | 'p' | 'h1' | 'h2' | 'h3';
-  size?: LibraryElementalTitleSize;
+  size?: ElementalTitleSize;
   id?: string;
   tabIndex?: number;
   className?: string;
@@ -30,7 +31,7 @@ export interface FamiliarNameEffectProps {
 
 /**
  * The cultivator's name with its active effect. An element letters it
- * through `LibraryElementalTitle` — a mastered element outlined, a bond effect
+ * through `ElementalTitle` — a mastered element outlined, a bond effect
  * soft. A signature renders its own hand-built piece.
  */
 export function FamiliarNameEffect({ effect, children, as = 'span', size, className = '', plainClassName = '', plainStyle, ...rest }: FamiliarNameEffectProps) {
@@ -40,7 +41,7 @@ export function FamiliarNameEffect({ effect, children, as = 'span', size, classN
   const title = effect?.kind === 'elemental-title' ? effect : null;
   const renderedElement = title ? authoredTitleEffect(title.element) : 'none';
   return (
-    <LibraryElementalTitle
+    <ElementalTitle
       as={as}
       size={size}
       element={renderedElement}
@@ -51,6 +52,6 @@ export function FamiliarNameEffect({ effect, children, as = 'span', size, classN
       {...marks}
     >
       {children}
-    </LibraryElementalTitle>
+    </ElementalTitle>
   );
 }

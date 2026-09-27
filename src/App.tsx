@@ -85,6 +85,22 @@ const AudioPlayerSmokeWorkspace = lazy(() =>
   import('./workshop/previews/audio-player-smoke/AudioPlayerSmokeWorkspace')
     .then(module => ({ default: module.AudioPlayerSmokeWorkspace })),
 );
+const LibraryComponentsWorkspace = lazy(() =>
+  import('./workshop/previews/library-components/LibraryComponentsWorkspace')
+    .then(module => ({ default: module.LibraryComponentsWorkspace })),
+);
+const IconsWorkspace = lazy(() =>
+  import('./workshop/previews/icons/IconsWorkspace')
+    .then(module => ({ default: module.IconsWorkspace })),
+);
+const NovelExpandedDocsWorkspace = lazy(() =>
+  import('./workshop/previews/novel-expanded-docs/NovelExpandedDocsWorkspace')
+    .then(module => ({ default: module.NovelExpandedDocsWorkspace })),
+);
+const LibraryHelpPreviewWorkspace = lazy(() =>
+  import('./workshop/previews/library-help/LibraryHelpPreviewWorkspace')
+    .then(module => ({ default: module.LibraryHelpPreviewWorkspace })),
+);
 
 /**
  * One entry per manifest id. Adding a feature means adding one line here —
@@ -109,6 +125,10 @@ const previewRegistry: Record<string, ComponentType> = {
   'familiar-training': FamiliarTrainingWorkspace,
   'harness-generation': HarnessGenerationWorkspace,
   'idle-cultivation': ClosedDoorCultivationWorkspace,
+  'library-components': LibraryComponentsWorkspace,
+  'library-help': LibraryHelpPreviewWorkspace,
+  'icons': IconsWorkspace,
+  'novel-expanded-docs': NovelExpandedDocsWorkspace,
   'reader-codex': ReaderCodexWorkspace,
   'reader-chamber': ReaderChamberWorkspace,
   'relics-gallery': RelicsWorkspace,
@@ -144,7 +164,10 @@ function PreviewLayout({ children }: { children: ReactNode }) {
 }
 
 export default function App() {
-  const preview = new URLSearchParams(window.location.search).get('preview');
+  const params = new URLSearchParams(window.location.search);
+  const legacyDocsLink = params.get('tab') === 'docs'
+    || (params.get('tab') === 'systems' && params.get('view') === 'docs');
+  const preview = params.get('preview') ?? (legacyDocsLink ? 'novel-expanded-docs' : null);
   const Workspace = preview ? previewRegistry[preview] : undefined;
 
   if (Workspace) {

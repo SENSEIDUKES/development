@@ -20,7 +20,7 @@ export interface WorkshopSource {
  * Workshop navigation only: where SENSEI mentally works on something. It never
  * changes package or implementation ownership — see `WorkshopOwner` for that.
  */
-export type WorkshopSection = 'pages' | 'rewards' | 'customization' | 'systems' | 'components' | 'docs';
+export type WorkshopSection = 'pages' | 'rewards' | 'customization' | 'systems' | 'components';
 
 /** Optional subsection inside a Workshop section (Pages and Rewards use them). */
 export type WorkshopGroup =
@@ -49,8 +49,8 @@ export const WORKSHOP_OWNER_LABELS: Record<WorkshopOwner, string> = {
 };
 
 /**
- * Lifecycle filter, separate from navigation. Archived entries leave the four
- * active sections but keep their `?preview=` route and implementation intact.
+ * Lifecycle filter, separate from navigation. Archived entries stay out of
+ * normal browsing while keeping their `?preview=` route and implementation.
  */
 export type WorkshopStatus = 'active' | 'legacy' | 'archived';
 
@@ -106,28 +106,8 @@ export const WORKSHOP_SECTIONS: ReadonlyArray<{
     ],
   },
   { id: 'customization', label: 'Customization', description: 'Companions and the looks a cultivator collects and shapes.' },
-  { id: 'systems', label: 'Systems', description: 'Generation, voice, economy, and provenance systems behind the pages.' },
+  { id: 'systems', label: 'Systems', description: 'Generation, voice, Library guidance, product docs, economy, and provenance behind the pages.' },
   { id: 'components', label: 'Components', description: 'Reusable visual pieces, primitives, and icons.' },
-  { id: 'docs', label: 'NovelExpanded Docs', description: 'What Library and SEN concepts are and how they fit together.' },
-];
-
-/**
- * Live inventories rendered inline on the Workshop home instead of opening a
- * `?preview=` route. They carry the same section and ownership metadata.
- */
-export type WorkshopPanelId = 'library-components' | 'icons';
-
-export type WorkshopPanel = {
-  id: WorkshopPanelId;
-  title: string;
-  description: string;
-  section: WorkshopSection;
-  owner: WorkshopOwner;
-};
-
-export const workshopPanels: WorkshopPanel[] = [
-  { id: 'library-components', section: 'components', owner: 'library-ui', title: 'Library Components', description: 'Reusable Celestial Library primitives, rendered live.' },
-  { id: 'icons', section: 'components', owner: 'library-ui', title: 'Icons', description: 'Every current custom Celestial Library SVG glyph, rendered live.' },
 ];
 
 export type WorkshopTrack = 'development' | 'production';
@@ -154,6 +134,30 @@ export function getWorkshopVersionLabel(version: WorkshopEntry['version']) {
  * Array order is display order inside each section and group.
  */
 export const workshopEntries: WorkshopEntry[] = [
+  {
+    id: 'library-components', section: 'components', owner: 'library-ui', status: 'active',
+    title: 'Library Components', description: 'Reusable Celestial Library primitives, rendered live.',
+    category: 'other', version: 'v1.0',
+    source: { repository: 'SENSEIDUKES/development', path: 'src/workshop/LibraryComponents.tsx', lastCompared: 'Not applicable — live package catalog' },
+  },
+  {
+    id: 'icons', section: 'components', owner: 'library-ui', status: 'active',
+    title: 'Icons', description: 'Every current custom Celestial Library SVG glyph, rendered live.',
+    category: 'icons', version: 'v1.0',
+    source: { repository: 'SENSEIDUKES/development', path: 'src/workshop/Icons.tsx', lastCompared: 'Not applicable — live package catalog' },
+  },
+  {
+    id: 'novel-expanded-docs', section: 'systems', owner: 'workshop', status: 'active',
+    title: 'NovelExpanded Docs', description: 'Searchable reference for SEN, Library, and how product concepts fit together.',
+    category: 'other', version: 'v1.0',
+    source: { repository: 'SENSEIDUKES/development', path: 'src/workshop/docs/', lastCompared: 'Not applicable — Workshop reference surface' },
+  },
+  {
+    id: 'library-help', section: 'systems', owner: 'library', status: 'active',
+    title: 'Library Help', description: 'The Library guidance workspace, with searchable topics and English audio tips.',
+    category: 'other', version: 'v1.0',
+    source: { repository: 'SENSEIDUKES/development', path: 'src/components/story-seed/development/StorySeedHelpMenu.tsx; src/components/story-seed/development/storySeedHelp.ts', lastCompared: '2026-09-27' },
+  },
   {
     id: 'text-highlight-engine', title: 'Text Highlight Engine',
     description: 'Select prose to edit it or place an existing Sound Cue through Media. Find cues by category or search in this standalone SEN preview.',

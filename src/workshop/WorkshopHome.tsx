@@ -5,18 +5,12 @@ import {
   WORKSHOP_OWNER_LABELS,
   WORKSHOP_SECTIONS,
   workshopEntries,
-  workshopPanels,
   type WorkshopEntry,
   type WorkshopOwner,
-  type WorkshopPanel,
   type WorkshopSection,
 } from './manifest';
-import { LibraryComponentsGrid } from './LibraryComponents';
-import { IconsGrid } from './Icons';
 import { defaultFamiliar } from '../host/familiar/catalogue';
 import { ModelRouterGear } from './ModelRouterSettings';
-import { WorkshopDocs } from './docs/WorkshopDocs';
-import { docsHref } from './docs/catalog';
 
 const activeEntries = workshopEntries.filter((entry) => entry.status !== 'archived');
 const archivedEntries = workshopEntries.filter((entry) => entry.status === 'archived');
@@ -257,24 +251,8 @@ function EntryGrid({ entries }: { entries: readonly WorkshopEntry[] }) {
   );
 }
 
-function InlinePanel({ panel }: { panel: WorkshopPanel }) {
-  const headingId = `workshop-inline-${panel.id}`;
-  return (
-    <section className="workshop-group workshop-inline-panel" aria-labelledby={headingId} data-panel={panel.id}>
-      <div className="workshop-group-header">
-        <h2 className="workshop-group-title" id={headingId}>{panel.title}</h2>
-        <OwnerBadge owner={panel.owner} />
-      </div>
-      <p className="workshop-group-description">{panel.description}</p>
-      {panel.id === 'library-components' && <LibraryComponentsGrid />}
-      {panel.id === 'icons' && <IconsGrid />}
-    </section>
-  );
-}
-
 function SectionContent({ section }: { section: (typeof WORKSHOP_SECTIONS)[number] }) {
   const entries = activeEntries.filter((entry) => entry.section === section.id);
-  const panels = workshopPanels.filter((panel) => panel.section === section.id);
   return (
     <>
       {section.groups
@@ -290,34 +268,32 @@ function SectionContent({ section }: { section: (typeof WORKSHOP_SECTIONS)[numbe
           );
         })
         : <EntryGrid entries={entries} />}
-      {panels.map((panel) => <InlinePanel panel={panel} key={panel.id} />)}
     </>
   );
 }
 
-function readWorkshopLocation(): { tab: WorkshopSection; doc: string } {
+function readWorkshopTab(): WorkshopSection {
   const params = new URLSearchParams(window.location.search);
-  const tab = WORKSHOP_SECTIONS.find(section => section.id === params.get('tab'))?.id ?? 'pages';
-  return { tab, doc: params.get('doc') || 'overview' };
+  const requestedTab = params.get('tab');
+  return WORKSHOP_SECTIONS.find(section => section.id === requestedTab)?.id ?? 'pages';
 }
 
 export function WorkshopHome() {
-  const [location, setLocation] = useState(readWorkshopLocation);
-  const activeTab = location.tab;
+  const [activeTab, setActiveTab] = useState(readWorkshopTab);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const navRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const restoreLocation = () => setLocation(readWorkshopLocation());
+    const restoreLocation = () => setActiveTab(readWorkshopTab());
     window.addEventListener('popstate', restoreLocation);
     return () => window.removeEventListener('popstate', restoreLocation);
   }, []);
 
-  function navigate(tab: WorkshopSection, doc = 'overview') {
-    const query = tab === 'docs' ? docsHref(doc) : `?tab=${tab}`;
+  function selectTab(tab: WorkshopSection) {
+    const query = `?tab=${tab}`;
     if (window.location.search !== query) window.history.pushState(null, '', query);
-    setLocation({ tab, doc });
+    setActiveTab(tab);
     // A sticky phone tab or a Docs link may be used deep in the previous page.
     if (window.scrollY > 0) window.scrollTo({ top: 0 });
   }
@@ -328,10 +304,6 @@ export function WorkshopHome() {
     const index = WORKSHOP_SECTIONS.findIndex((section) => section.id === activeTab);
     if (nav && nav.scrollWidth > nav.clientWidth) tabRefs.current[index]?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
   }, [activeTab]);
-
-  function selectTab(id: WorkshopSection) {
-    navigate(id);
-  }
 
   function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     let nextIndex: number;
@@ -388,9 +360,7 @@ export function WorkshopHome() {
             hidden={activeTab !== tab.id}
             tabIndex={0}
           >
-            {activeTab === tab.id && (tab.id === 'docs' ? (
-              <WorkshopDocs topicId={location.doc} onNavigate={doc => navigate('docs', doc)} />
-            ) : (
+            {activeTab === tab.id && (
               <>
                 <header className="workshop-header">
                   <h1 className="workshop-title">{tab.label}</h1>
@@ -401,11 +371,11 @@ export function WorkshopHome() {
                 </header>
                 <SectionContent section={tab} />
               </>
-            ))}
+            )}
           </section>
         ))}
 
-        {activeTab !== 'docs' && archivedEntries.length > 0 && (
+        {archivedEntries.length > 0 && (
           <section className="workshop-archive" aria-label="Archive">
             <button
               type="button"

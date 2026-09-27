@@ -3,7 +3,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WorkshopHome } from './WorkshopHome';
-import { getWorkshopVersionLabel, WORKSHOP_OWNER_LABELS, workshopEntries, workshopPanels } from './manifest';
+import { getWorkshopVersionLabel, WORKSHOP_OWNER_LABELS, workshopEntries } from './manifest';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let container: HTMLDivElement;
@@ -23,7 +23,7 @@ afterEach(() => {
 });
 
 function tab(label: string) {
-  return [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')]
+  return [...container.querySelectorAll<HTMLButtonElement>('.workshop-nav [role="tab"]')]
     .find((element) => element.textContent === label)!;
 }
 function select(label: string) {
@@ -32,7 +32,10 @@ function select(label: string) {
 function activePanel() {
   return container.querySelector<HTMLElement>('[role="tabpanel"]:not([hidden])')!;
 }
-function previewIds(scope: ParentNode = activePanel()) {
+function activeWorkspace() {
+  return activePanel();
+}
+function previewIds(scope: ParentNode = activeWorkspace()) {
   return [...scope.querySelectorAll<HTMLAnchorElement>('a.workshop-card')]
     .map((card) => new URL(card.href).searchParams.get('preview'));
 }
@@ -44,8 +47,8 @@ const ACTIVE_GROUPS = {
   Pages: ['light-novels-home', 'library-shell', 'creator-space', 'story-seed', 'reader-chamber', 'reader-codex', 'user-profile', 'celestial-store'],
   Rewards: ['reward-loop', 'achievements', 'relics-gallery', 'familiar-training', 'dao-pillar', 'idle-cultivation'],
   Customization: ['familiar'],
-  Systems: ['harness-generation', 'chapter-generation-manifestation', 'character-voice', 'provenance', 'energy'],
-  Components: ['text-highlight-engine', 'motion-picture', 'celestial-backdrop', 'card-workshop'],
+  Systems: ['novel-expanded-docs', 'library-help', 'harness-generation', 'chapter-generation-manifestation', 'character-voice', 'provenance', 'energy'],
+  Components: ['library-components', 'icons', 'text-highlight-engine', 'motion-picture', 'celestial-backdrop', 'card-workshop'],
 };
 
 describe('WorkshopHome', () => {
@@ -53,9 +56,9 @@ describe('WorkshopHome', () => {
     expect(container.querySelector('.workshop-topbar [aria-label="Model Router settings"]')).not.toBeNull();
   });
 
-  it('shows the five Workshop sections and the NovelExpanded Docs tab', () => {
-    const tabs = container.querySelectorAll<HTMLButtonElement>('[role="tab"]');
-    expect([...tabs].map((element) => element.textContent)).toEqual(['Pages', 'Rewards', 'Customization', 'Systems', 'Components', 'NovelExpanded Docs']);
+  it('shows the five main Workshop sections', () => {
+    const tabs = container.querySelectorAll<HTMLButtonElement>('.workshop-nav [role="tab"]');
+    expect([...tabs].map((element) => element.textContent)).toEqual(['Pages', 'Rewards', 'Customization', 'Systems', 'Components']);
   });
 
   it('groups each active preview exactly once and preserves direct links and release labels', () => {
@@ -107,7 +110,7 @@ describe('WorkshopHome', () => {
     expect(workshopEntries.find((entry) => entry.id === 'celestial-store')?.group).toBe('commerce');
   });
 
-  it('shows the declared package owner on every card and inline panel', () => {
+  it('shows the declared package owner on every card', () => {
     for (const label of Object.keys(ACTIVE_GROUPS)) {
       select(label);
       for (const card of activePanel().querySelectorAll<HTMLAnchorElement>('a.workshop-card')) {
@@ -122,25 +125,25 @@ describe('WorkshopHome', () => {
       familiar: 'library', 'relics-gallery': 'library', 'idle-cultivation': 'library',
       'harness-generation': 'sen', 'chapter-generation-manifestation': 'library', 'character-voice': 'sen', provenance: 'deferred', energy: 'library', 'model-router': 'deferred',
       'text-highlight-engine': 'sen', 'motion-picture': 'sen', 'celestial-backdrop': 'library-ui', 'card-workshop': 'workshop',
+      'library-components': 'library-ui', icons: 'library-ui', 'novel-expanded-docs': 'workshop', 'library-help': 'library',
       'chapter-generation-flow': 'workshop',
     });
-    for (const panel of workshopPanels) {
-      select({ systems: 'Systems', components: 'Components', pages: 'Pages', rewards: 'Rewards', customization: 'Customization', docs: 'NovelExpanded Docs' }[panel.section]);
-      const section = activePanel().querySelector(`section[data-panel="${panel.id}"]`)!;
-      expect(section.querySelector('.workshop-group-title')?.textContent).toBe(panel.title);
-      expect(section.querySelector('.workshop-owner')?.textContent).toBe(`Owned by ${WORKSHOP_OWNER_LABELS[panel.owner]}`);
-    }
   });
 
-  it('opens Provenance as its own Systems card and renders the live Library Components and Icons under Components', () => {
+  it('shows Docs and Library Help as regular Systems workspace cards', () => {
     select('Systems');
-    expect(activePanel().querySelector('a[href="?preview=provenance"]')).not.toBeNull();
-    expect(activePanel().querySelector('section[data-panel]')).toBeNull();
-    expect(activePanel().querySelectorAll('.workshop-card-library')).toHaveLength(0);
+    expect(previewIds()).toEqual(ACTIVE_GROUPS.Systems);
+    expect(activeWorkspace().querySelector('a[href="?preview=novel-expanded-docs"] h2')?.textContent).toBe('NovelExpanded Docs');
+    expect(activeWorkspace().querySelector('a[href="?preview=library-help"] h2')?.textContent).toBe('Library Help');
+    expect(activeWorkspace().querySelector('.workshop-subnav')).toBeNull();
+  });
+
+  it('shows Library Components and Icons as regular Components workspace cards', () => {
     select('Components');
-    expect([...activePanel().querySelectorAll('section[data-panel]')].map((section) => section.getAttribute('data-panel'))).toEqual(['library-components', 'icons']);
-    expect(activePanel().querySelectorAll('.workshop-card-library').length).toBeGreaterThan(0);
-    expect(activePanel().querySelector('section[aria-label="Library components"]')).not.toBeNull();
+    expect(previewIds()).toEqual(ACTIVE_GROUPS.Components);
+    expect(activeWorkspace().querySelector('a[href="?preview=library-components"] h2')?.textContent).toBe('Library Components');
+    expect(activeWorkspace().querySelector('a[href="?preview=icons"] h2')?.textContent).toBe('Icons');
+    expect(activeWorkspace().querySelector('.workshop-subnav')).toBeNull();
   });
 
   it('keeps the old Model Router page archived and reachable, and the retired Chapter Generation flow as a record with no route', () => {
@@ -170,11 +173,10 @@ describe('WorkshopHome', () => {
   });
 
   it('connects every tab to uniquely labelled panels with one tab stop', () => {
-    const tabs = container.querySelectorAll<HTMLButtonElement>('[role="tab"]');
+    const tabs = container.querySelectorAll<HTMLButtonElement>('.workshop-nav [role="tab"]');
     for (const element of tabs) {
       select(element.textContent!);
-      expect(container.querySelectorAll('[role="tab"][tabindex="0"]')).toHaveLength(1);
-      expect(container.querySelectorAll('[role="tabpanel"]:not([hidden])')).toHaveLength(1);
+      expect(container.querySelectorAll('.workshop-nav [role="tab"][tabindex="0"]')).toHaveLength(1);
       const panel = document.getElementById(element.getAttribute('aria-controls')!)!;
       expect(panel.getAttribute('aria-labelledby')).toBe(element.id);
       expect(panel.hidden).toBe(false);
@@ -185,55 +187,11 @@ describe('WorkshopHome', () => {
 
   it('supports arrow wrapping, Home and End while moving focus with selection', () => {
     act(() => tab('Pages').focus());
-    for (const [key, label] of [['ArrowLeft', 'NovelExpanded Docs'], ['ArrowRight', 'Pages'], ['ArrowRight', 'Rewards'], ['ArrowRight', 'Customization'], ['End', 'NovelExpanded Docs'], ['Home', 'Pages']]) {
+    for (const [key, label] of [['ArrowLeft', 'Components'], ['ArrowRight', 'Pages'], ['ArrowRight', 'Rewards'], ['ArrowRight', 'Customization'], ['End', 'Components'], ['Home', 'Pages']]) {
       act(() => document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })));
       expect(document.activeElement).toBe(tab(label));
       expect(tab(label).getAttribute('aria-selected')).toBe('true');
     }
-  });
-
-  it('opens NovelExpanded Docs inside Workshop without preview cards or the archive', () => {
-    select('NovelExpanded Docs');
-    expect(activePanel().querySelector('h1')?.textContent).toBe('What each thing is.How it all fits.');
-    expect(previewIds()).toEqual([]);
-    expect(container.querySelector('#workshop-archive-toggle')).toBeNull();
-    expect(window.location.search).toBe('?tab=docs');
-    select('Pages');
-    expect(archiveToggle()).not.toBeNull();
-  });
-
-  it('supports shareable topics and restores Workshop tabs and topics on browser navigation', () => {
-    select('NovelExpanded Docs');
-    const spp = activePanel().querySelector<HTMLAnchorElement>('a[href="?tab=docs&doc=spp"]')!;
-    act(() => spp.click());
-    expect(window.location.search).toBe('?tab=docs&doc=spp');
-    expect(activePanel().querySelector('h1')?.textContent).toBe('SPP');
-    expect(activePanel().textContent).toContain('A portable file that keeps related content and assets together.');
-    act(() => {
-      window.history.replaceState(null, '', '?tab=docs&doc=arc-goal');
-      window.dispatchEvent(new PopStateEvent('popstate'));
-    });
-    expect(activePanel().querySelector('h1')?.textContent).toBe('Arc Goal');
-    act(() => {
-      window.history.replaceState(null, '', '?tab=systems');
-      window.dispatchEvent(new PopStateEvent('popstate'));
-    });
-    expect(tab('Systems').getAttribute('aria-selected')).toBe('true');
-    expect(previewIds()).toEqual(ACTIVE_GROUPS.Systems);
-  });
-
-  it('opens a direct topic URL on mount and handles unknown topics without inventing an entry', () => {
-    act(() => root.unmount());
-    window.history.replaceState(null, '', '?tab=docs&doc=harness');
-    root = createRoot(container);
-    act(() => root.render(<WorkshopHome />));
-    expect(activePanel().querySelector('h1')?.textContent).toBe('HARNESS');
-    act(() => {
-      window.history.replaceState(null, '', '?tab=docs&doc=missing');
-      window.dispatchEvent(new PopStateEvent('popstate'));
-    });
-    expect(activePanel().querySelector('h1')?.textContent).toBe('Topic not found');
-    act(() => activePanel().querySelector<HTMLAnchorElement>('.docs-back-link')!.click());
-    expect(window.location.search).toBe('?tab=docs');
+    select('Systems');
   });
 });

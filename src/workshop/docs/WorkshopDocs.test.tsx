@@ -37,7 +37,7 @@ describe('NovelExpanded Docs', () => {
     const drawer = document.querySelector<HTMLElement>('[role="dialog"]')!;
     expect(drawer).not.toBeNull();
     expect(document.getElementById(drawer.getAttribute('aria-labelledby')!)?.textContent).toBe('NovelExpanded Docs topics');
-    const link = drawer.querySelector<HTMLAnchorElement>('a[href="?tab=docs&doc=spp"]')!;
+    const link = drawer.querySelector<HTMLAnchorElement>('a[href="?preview=novel-expanded-docs&doc=spp"]')!;
     await act(async () => link.click());
     expect(onNavigate).toHaveBeenCalledWith('spp');
     expect(document.querySelector('[role="dialog"]')).toBeNull();
@@ -99,7 +99,7 @@ describe('NovelExpanded Docs', () => {
     act(() => root.render(<WorkshopDocs topicId="spp" onNavigate={onNavigate} />));
     const link = container.querySelector<HTMLAnchorElement>('.docs-navigation a[aria-current="page"]')!;
     expect(link.textContent).toBe('SPP');
-    expect(link.getAttribute('href')).toBe('?tab=docs&doc=spp');
+    expect(link.getAttribute('href')).toBe('?preview=novel-expanded-docs&doc=spp');
     const click = new MouseEvent('click', { ctrlKey: true, bubbles: true, cancelable: true });
     // Stop jsdom's unimplemented navigation after observing our handler.
     const preventNavigation = (event: Event) => {

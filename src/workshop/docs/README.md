@@ -1,7 +1,8 @@
 # NovelExpanded Docs
 
-Workshop-owned reference surface, created and updated 2026-09-25. This is a
-top-level **NovelExpanded Docs** tab focused on SEN and the Celestial Library, not a portable SEN/Library feature or an Original /
+Workshop-owned reference surface, created 2026-09-25 and last updated
+2026-09-27. This is the **NovelExpanded Docs** workspace under Systems, focused on SEN and the
+Celestial Library, not a portable SEN/Library feature or an Original /
 Development preview. The visual reference is the supplied Google API docs
 screenshots: topic navigation, search, and a readable article. SEIHouse's existing
 Workshop colors and typography are retained. No production source is imported.
@@ -9,7 +10,9 @@ Workshop colors and typography are retained. No production source is imported.
 Content stays within SEN and Library concepts. The SEIHouse entry alone explains
 the broader company context and SEA; other topics do not cover albums or SEA.
 
-- Open `?tab=docs`; individual entries use `?tab=docs&doc=arc-goal`.
+- Open `?preview=novel-expanded-docs`; individual entries use
+  `?preview=novel-expanded-docs&doc=arc-goal`. Older `?tab=docs` links continue
+  to open the same workspace.
 - Desktop has a persistent, independently scrolling topic sidebar. Phones and
   tablets use the existing `@seihouse/ui` drawer with focus trapping, Escape,
   outside dismissal, scroll lock, and focus return.
@@ -29,7 +32,7 @@ the broader company context and SEA; other topics do not cover albums or SEA.
   belongs in the Packages overview rather than separate topic pages.
 - No database, authentication, generated content, external requests, local
   storage, package exports, or production transfer is introduced. URL state is
-  owned by `WorkshopHome`; browser Back/Forward restores tabs and topics.
+  owned by `NovelExpandedDocsWorkspace`; browser Back/Forward restores topics.
 - The existing preview Archive remains on other Workshop tabs, never in NovelExpanded Docs.
 
 Validation: `npm run test:workshop`, `npm run typecheck`, `npm run build`, and

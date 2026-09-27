@@ -1,11 +1,11 @@
 import { useLibraryAssets } from '../../../library/assets';
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Eye } from 'lucide-react';
-import { LibraryPanel, LibraryCard, LibraryCardMedia, LibraryCardTitle, ManifestButton, ParticleEffect } from '@seihouse/library-ui';
-import { SEIBadge, SEIFilterChip, SEISelect, SEIEmptyState } from '@seihouse/ui';
+import { LibraryPanel, ManifestButton, ParticleEffect } from '@seihouse/library-ui';
+import { SEIFilterChip, SEISelect, SEIEmptyState } from '@seihouse/ui';
 import type { LightNovelsHomeProps } from '../shared/homeContracts';
-import { ExpansionSeals, type WorldExpansionPreview } from './WorldExpressions';
+import type { WorldExpansionPreview } from './WorldExpressions';
+import { WorldCardFull } from '../../world-card/development/WorldCardFull';
 import { LibraryDiscoveryIcon as SENDiscoveryIcon, LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
 import '../shared/home.css';
 /** Existing LibraryScreen Home presentation. Data and navigation belong to the host. */
@@ -240,91 +240,14 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
                 </LibraryPanel>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-6">
-                  {filteredAndSortedWorlds.map((world) => {
-                    const inLibraryStory = world.acquired;
-                    const isWorldRecentlyRead = world.recentlyRead;
-                    const isWorldDraft = world.draft;
-
-                    return (
-                      <LibraryCard
-                        interactive
-                        padding="none"
-                        contentClassName="gap-3"
-                        key={world.id}
-                        id={`home-world-${world.id}`}
-                        className="h-full"
-                        onClick={() => {
-                          onOpenWorld(world.id);
-                        }}
-                        aria-label={`View published world ${world.title}`}
-                        aria-describedby={expansionsByWorld[world.id]?.length ? `world-expansions-${world.id}` : undefined}
-                      >
-                        <LibraryCardMedia className="aspect-[2/3]">
-                          <img
-                            src={world.imageUrl}
-                            alt={world.title}
-                            className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
-                            referrerPolicy="no-referrer"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90"></div>
-                          <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm border border-neutral-800 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold text-signal tracking-wider font-sc flex items-center space-x-1">
-                            <Eye size={10} className="text-portal" />
-                            <span>{world.reads}</span>
-                          </div>
-                          <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-sm border border-neutral-800 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold text-signal tracking-wider font-sc">
-                            {world.chapterCount} Ch
-                          </div>
-                          <div className="absolute bottom-2 left-2 right-2 flex flex-col items-start gap-1">
-                            <div className="flex flex-wrap gap-1">
-                              <SEIBadge size="sm" variant="success" truncate>
-                                {world.genre}
-                              </SEIBadge>
-                              <SEIBadge size="sm" variant="info" truncate>
-                                {world.chapterWritingStyle ?? "Standard"}
-                              </SEIBadge>
-                            </div>
-                            <div className="flex flex-wrap gap-1 mt-0.5">
-                              {isWorldRecentlyRead && (
-                                <SEIBadge size="sm" variant="info" truncate>
-                                  ✦ Recently Read
-                                </SEIBadge>
-                              )}
-                              {inLibraryStory ? (
-                                isWorldDraft ? (
-                                  <SEIBadge size="sm" variant="danger" truncate>
-                                    ✍ Draft
-                                  </SEIBadge>
-                                ) : (
-                                  <SEIBadge size="sm" variant="accent" truncate>
-                                    🔒 Sealed
-                                  </SEIBadge>
-                                )
-                              ) : (
-                                <SEIBadge size="sm" variant="neutral" truncate>
-                                  ✧ Unacquired
-                                </SEIBadge>
-                              )}
-                            </div>
-                          </div>
-                        </LibraryCardMedia>
-
-                        <div className="space-y-1 p-3">
-                          <LibraryCardTitle
-                            as="h4"
-                            className="font-display font-bold text-base text-signal group-hover:text-portal transition-colors leading-tight line-clamp-2"
-                          >
-                            {world.title}
-                          </LibraryCardTitle>
-                          <p className="text-[10px] text-neutral-500 font-sans truncate">
-                            MC: {world.mcName} • {world.powerStage}
-                          </p>
-                          {expansionsByWorld[world.id]?.length ? <span id={`world-expansions-${world.id}`}>
-                            <ExpansionSeals expansions={expansionsByWorld[world.id]} />
-                          </span> : null}
-                        </div>
-                      </LibraryCard>
-                    );
-                  })}
+                  {filteredAndSortedWorlds.map((world) => (
+                    <WorldCardFull
+                      key={world.id}
+                      world={world}
+                      expansions={expansionsByWorld[world.id]}
+                      onOpen={() => onOpenWorld(world.id)}
+                    />
+                  ))}
                 </div>
               )}
             </div>

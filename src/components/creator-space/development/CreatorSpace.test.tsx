@@ -62,7 +62,7 @@ it('shows the creator workspace, its two readings and the world count', () => {
 
 it('selects the most recent world first and retargets exactly two actions to the tapped world', () => {
   const props = renderPage();
-  const cards = Array.from(container.querySelectorAll<HTMLElement>('.creator-space-world'));
+  const cards = Array.from(container.querySelectorAll<HTMLElement>('.world-card-compact'));
   expect(cards.map(card => card.getAttribute('aria-label'))).toEqual([
     'The Last Lotus of the Jade Empire, Ch. 24 · Draft',
     'Ashes of the Nine Moons, Ch. 12 · Draft',
@@ -87,7 +87,7 @@ it('selects the most recent world first and retargets exactly two actions to the
 
 it('keeps Studio open but stops Continue for a world that reached its ending', () => {
   const props = renderPage();
-  click(container.querySelectorAll<HTMLElement>('.creator-space-world')[2]);
+  click(container.querySelectorAll<HTMLElement>('.world-card-compact')[2]);
   expect((button('Continue') as HTMLButtonElement).disabled).toBe(true);
   expect(selected()?.textContent).toContain('This story has reached its ending.');
   click(button('Studio'));

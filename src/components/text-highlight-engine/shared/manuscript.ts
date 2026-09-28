@@ -1,3 +1,4 @@
+import { isWordBoundary } from '../../../narrative/words';
 import { isValidPassage, type PassageEdit, type PassageSelection, type TextHighlightBlock } from './selection';
 
 /**
@@ -307,18 +308,22 @@ function rebaseSentences(
   return [...before, ...rewritten, ...after];
 }
 
-/** Spans wholly before an edit stay, spans after it shift, spans overlapping it are detached — never moved. */
-function rebaseSpan(anchor: Extract<ManuscriptAnchor, { level: 'span' }>, start: number, removed: number, inserted: number): ManuscriptAnchor {
+/**
+ * Spans wholly before an edit stay, spans after it shift, spans overlapping it are detached — never moved.
+ * An edit that only touches a span but glues letters onto its first or last word ("sword" into "swords")
+ * changes its words as surely as an overlapping one, so that span is detached too: words stay whole.
+ */
+function rebaseSpan(anchor: Extract<ManuscriptAnchor, { level: 'span' }>, start: number, removed: number, inserted: number, text: string, locale: string): ManuscriptAnchor {
   if (anchor.detached) return anchor;
   const delta = inserted - removed;
   const shifted = { ...anchor, startOffset: anchor.startOffset + delta, endOffset: anchor.endOffset + delta };
-  if (removed === 0) {
-    if (anchor.startOffset >= start) return shifted;
-    return anchor.endOffset <= start ? anchor : { ...anchor, detached: true };
-  }
-  if (anchor.endOffset <= start) return anchor;
-  if (anchor.startOffset >= start + removed) return shifted;
-  return { ...anchor, detached: true };
+  const kept = removed === 0
+    ? anchor.startOffset >= start ? shifted : anchor.endOffset <= start ? anchor : undefined
+    : anchor.endOffset <= start ? anchor : anchor.startOffset >= start + removed ? shifted : undefined;
+  if (!kept) return { ...anchor, detached: true };
+  const touched = anchor.endOffset === start || anchor.startOffset === start + removed;
+  const glued = touched && (!isWordBoundary(text, kept.startOffset, locale) || !isWordBoundary(text, kept.endOffset, locale));
+  return glued ? { ...anchor, detached: true } : kept;
 }
 
 const replaceParagraph = (manuscript: Manuscript, paragraph: ManuscriptParagraph): Manuscript => ({
@@ -349,7 +354,7 @@ export function applyPassageEdit<Payload>(
 
   const inParagraph = (attachment: ManuscriptAttachment<Payload>) => attachment.anchor.blockId === paragraph.id;
   const moveWithText = (attachment: ManuscriptAttachment<Payload>) => inParagraph(attachment) && attachment.anchor.level === 'span'
-    ? { ...attachment, anchor: rebaseSpan(attachment.anchor, start, removed, inserted) } : attachment;
+    ? { ...attachment, anchor: rebaseSpan(attachment.anchor, start, removed, inserted, edit.after.text, manuscript.locale) } : attachment;
 
   const { deletion } = state;
   if (edit.operation === 'undo' && deletion?.before.id === paragraph.id && deletion.after === paragraph.text && deletion.before.text === edit.after.text) {

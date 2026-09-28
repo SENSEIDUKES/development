@@ -122,7 +122,9 @@ for (const [name, browserType, width, height, touch] of [
     await select(); await activate('Edit'); await input.fill('unsaved'); await page.keyboard.press('Escape');
     assert.equal(await paragraph.textContent(), beforeDelete); assert.equal(await dialog.count(), 0);
     await select(); await activate('Edit'); await input.fill('discard on outside click');
-    await page.getByText('Highlight words, then choose Edit or Media.', { exact: true }).click();
+    // A mouse click would switch an emulated phone to a fine pointer for the rest of the run: touch taps instead.
+    const hint = page.getByText('Highlight words, then choose Edit or Media.', { exact: true });
+    if (touch) await hint.tap(); else await hint.click();
     assert.equal(await paragraph.textContent(), beforeDelete); assert.equal(await dialog.count(), 0);
     await select(); await activate('Edit');
     // Mobile WebKit does not implement mouse-wheel injection.
@@ -236,38 +238,59 @@ for (const [name, browserType, width, height, touch] of [
     assert.equal((await letterParagraph.textContent()).replaceAll('\u2060', ''), letterOriginal);
     await page.screenshot({ path: `${output}/${name}-cue-punctuation.png` });
 
-    // Manuscript lab: pick a saved sentence from the page structure and attach a cue to the whole sentence.
+    // Manuscript lab: a Sound Cue sits on 1–5 whole words. A partial selection widens to its whole words…
+    const selectIn = (locator, phrase, length = phrase.length) => locator.evaluate((element, { phrase, length }) => {
+      const text = element.firstChild; const at = text.data.indexOf(phrase);
+      const range = document.createRange(); range.setStart(text, at); range.setEnd(text, at + length);
+      document.getSelection().removeAllRanges(); document.getSelection().addRange(range);
+      document.dispatchEvent(new Event('selectionchange'));
+    }, { phrase, length });
+    await paragraph.scrollIntoViewIfNeeded();
+    await selectIn(paragraph, 'Somewhere', 'Somewher'.length);
+    await activate('Media'); await activate('Audio'); await activate('Cue');
+    assert.equal(await page.locator('.sen-manual-cue-picker__heading').textContent(), 'Sound Cue for “Somewhere”');
+    await page.keyboard.press('Escape');
+    // …and more than five words leave Cue in the bar, dimmed, with its reason.
+    await selectIn(paragraph, 'Lin Wei drew his sword, planted');
+    await activate('Media'); await activate('Audio');
+    assert.equal(await page.locator('.sen-text-highlight-controls button[aria-label="Cue"]').isDisabled(), true);
+    assert.equal(await page.locator('.sen-text-highlight-reason').textContent(), 'Sound Cues fit 1–5 words');
+    await page.screenshot({ path: `${output}/${name}-lab-cue-unavailable.png` });
+    await page.keyboard.press('Escape');
+
+    // Picked from the page structure, a saved sentence's words hold a cue: "Dust swallowed the courtyard".
     const structure = page.getByTestId('manuscript-structure');
     await press(structure.locator('summary'));
-    const sentence = 'Dust swallowed the courtyard.';
-    await press(structure.locator('[data-sentence-id]', { hasText: sentence }));
-    await page.waitForFunction(text => document.querySelector('[data-testid="manuscript-selection"]')?.textContent?.includes(`“${text}”`), sentence);
-    assert.match(await page.getByTestId('manuscript-selection').textContent(), /exactly one sentence/);
-    await activate('Media'); await activate('Audio'); await activate('Cue'); await activate('Sentence');
-    await press(page.locator('.sen-manual-cue-picker__item').first().getByRole('button', { name: 'Select' }));
-    assert.equal(await paragraph.locator('.inline-world-cue-annotation__text').textContent(), sentence);
+    const placeOnSentence = async sentence => {
+      await press(structure.locator('[data-sentence-id]', { hasText: sentence }));
+      await page.waitForFunction(text => document.querySelector('[data-testid="manuscript-selection"]')?.textContent?.includes(`“${text}”`), sentence);
+      await activate('Media'); await activate('Audio'); await activate('Cue');
+      await press(page.locator('.sen-manual-cue-picker__item').first().getByRole('button', { name: 'Select' }));
+    };
+    await placeOnSentence('Dust swallowed the courtyard.');
+    assert.equal(await paragraph.locator('.inline-world-cue-annotation__text').textContent(), 'Dust swallowed the courtyard');
     assert.equal(await page.locator('[data-testid="manuscript-attachment"][data-status="placed"]').count(), 2);
-    await page.screenshot({ path: `${output}/${name}-lab-sentence-cue.png`, fullPage: true });
+    // Full-page captures reset an emulated phone to a fine pointer, so touch runs capture the viewport.
+    await page.screenshot({ path: `${output}/${name}-lab-sentence-cue.png`, fullPage: !touch });
 
-    // Editing the attached sentence flags the cue instead of moving it; Keep puts it on the new words.
+    // Editing a cue's words flags it into the inspector (it comes off the page); it is removed there and placed again.
     await paragraph.locator('.inline-world-cue-annotation__text').scrollIntoViewIfNeeded();
     await paragraph.locator('.inline-world-cue-annotation__text').evaluate(element => {
       const range = document.createRange(); range.selectNodeContents(element);
       document.getSelection().removeAllRanges(); document.getSelection().addRange(range);
       document.dispatchEvent(new Event('selectionchange'));
     });
-    await activate('Edit'); await input.fill('Dust filled the courtyard.'); await activate('Save');
-    await page.locator('[data-testid="manuscript-attachment"][data-status="changed"]').waitFor();
+    await activate('Edit'); await input.fill('Dust filled the courtyard'); await activate('Save');
+    const flaggedRow = page.getByTestId('manuscript-attachment').filter({ hasText: 'Words changed' });
+    await flaggedRow.waitFor();
     assert.equal(await paragraph.locator('[data-cue-annotation]').count(), 0);
-    await page.getByTestId('manuscript-attachment').filter({ hasText: 'Words changed' }).scrollIntoViewIfNeeded();
+    assert.match(await flaggedRow.textContent(), /came off the page/);
+    await flaggedRow.scrollIntoViewIfNeeded();
     await page.screenshot({ path: `${output}/${name}-lab-flagged.png` });
-    // With an overlay on, the changed cue keeps its Sound Cue blue and gains a dashed underline.
-    await activate('Cues');
-    await page.locator('.sen-overlay-mark[data-attention]').first().waitFor({ state: 'attached' });
-    await activate('Off');
-    await activate('Keep');
+    await press(flaggedRow.getByRole('button', { name: 'Remove' }));
     assert.equal(await page.locator('[data-testid="manuscript-attachment"][data-status="changed"]').count(), 0);
-    assert.equal(await paragraph.locator('.inline-world-cue-annotation__text').textContent(), 'Dust filled the courtyard.');
+    await placeOnSentence('Dust filled the courtyard.');
+    assert.equal(await paragraph.locator('.inline-world-cue-annotation__text').textContent(), 'Dust filled the courtyard');
 
     // The Cues overlay tints every placed cue and numbers the page as the model addresses it: ¶ numbers in the
     // margin, small raised sentence numbers in the line spacing, counted through the page.
@@ -278,10 +301,10 @@ for (const [name, browserType, width, height, touch] of [
     assert.deepEqual(await page.locator('.sen-overlay-pin').allTextContents(), expectedPins);
     assert.equal(await page.locator('.sen-overlay-label').count(), 0);
     assert.equal(await page.locator('.sen-overlay-mark[data-overlay-id]').evaluateAll(marks => new Set(marks.map(mark => mark.dataset.overlayId)).size), 2);
-    // Colors mean the kind of effect: the words cue and the sentence cue are both Sound Cue blue.
+    // Colors mean the kind of effect: every Sound Cue is the same blue.
     assert.equal(await page.locator('.sen-overlay-mark').evaluateAll(marks => new Set(marks.map(mark => getComputedStyle(mark).backgroundColor)).size), 1);
     assert.equal(await page.locator('.sen-overlay-mark[data-attention]').count(), 0);
-    assert.deepEqual(await page.getByTestId('overlay-legend').locator('li').allTextContents(), ['Sound Cue', 'Words changed']);
+    assert.deepEqual(await page.getByTestId('overlay-legend').locator('li').allTextContents(), ['Sound Cue']);
     // Never over a word: no number touches a letter, another number, or the screen edge, and ¶ numbers sit left of the text.
     const numbers = await page.evaluate(() => {
       const letters = [];
@@ -314,6 +337,40 @@ for (const [name, browserType, width, height, touch] of [
     assert.ok(overlayLayout.content <= overlayLayout.viewport + 1, JSON.stringify(overlayLayout));
     await activate('Off');
     await page.waitForFunction(() => !document.querySelector('.sen-text-highlight-overlay'));
+
+    // Remove mode. Desktop: right-click a placed cue's word, then Remove cue here; right-click a selection, then
+    // Delete Passage and Undo. Touch: long-press belongs to the phone, so the Add bar's Remove row opens it.
+    const bar = page.locator('.sen-text-highlight-controls');
+    await letterParagraph.scrollIntoViewIfNeeded();
+    if (!touch) {
+      const cueWord = await letterParagraph.locator('.inline-world-cue-annotation__text').evaluate(element => {
+        const rect = element.getBoundingClientRect(); return { x: rect.x + 6, y: rect.y + rect.height / 2 };
+      });
+      await page.mouse.click(cueWord.x, cueWord.y, { button: 'right' });
+      await page.locator('.sen-text-highlight-controls[data-mode="remove"]').waitFor();
+      assert.equal(await bar.getAttribute('data-layout'), 'stacked');
+      await page.screenshot({ path: `${output}/${name}-remove-bar.png` });
+      await activate('Remove cue here');
+      assert.equal(await letterParagraph.locator('[data-cue-annotation]').count(), 0);
+      const letterBefore = (await letterParagraph.textContent()).replaceAll('\u2060', '');
+      await selectIn(letterParagraph, 'cave walls');
+      const selected = await letterParagraph.evaluate(() => {
+        const rect = document.getSelection().getRangeAt(0).getBoundingClientRect(); return { x: rect.x + 4, y: rect.y + rect.height / 2 };
+      });
+      await page.mouse.click(selected.x, selected.y, { button: 'right' });
+      await page.locator('.sen-text-highlight-controls[data-mode="remove"]').waitFor();
+      await bar.getByRole('button', { name: 'Delete Passage', exact: true }).click();
+      assert.equal((await letterParagraph.textContent()).includes('cave walls'), false);
+      await activate('Undo');
+      assert.equal((await letterParagraph.textContent()).replaceAll('\u2060', ''), letterBefore);
+    } else {
+      await selectIn(letterParagraph.locator('.inline-world-cue-annotation__text'), 'cold');
+      await press(bar.getByRole('button', { name: 'Remove', exact: true }));
+      await page.locator('.sen-text-highlight-controls[data-mode="remove"]').waitFor();
+      await page.screenshot({ path: `${output}/${name}-remove-bar.png` });
+      await activate('Remove cue here');
+      assert.equal(await letterParagraph.locator('[data-cue-annotation]').count(), 0);
+    }
 
     // Sealing fixes the page: selection still reads its address, but editing and attaching are gone.
     await activate('Seal chapter'); await activate('Seal');

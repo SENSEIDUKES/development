@@ -14,11 +14,15 @@ export interface TextHighlightEngineProps {
   onBlocksChange: (blocks: TextHighlightBlock[], edit: PassageEdit) => void;
   onSelectionChange?: (selection: PassageSelection | null) => void;
   actions?: readonly PassageAction[];
+  /** Remove mode's host actions (e.g. "Remove cue here"). Undo and Delete Passage are always there while the text is editable. */
+  removeActions?: readonly PassageAction[];
   renderBlockText?: (block: TextHighlightBlock) => ReactNode;
   /** False once a host's text is fixed (for example a sealed chapter): no Edit, Delete, or Undo. Defaults to true. */
   editable?: boolean;
   /** Tints behind the prose and quiet numbers beside it (for example a Cues overlay). Absent means no overlay work at all. */
   overlay?: TextHighlightOverlay;
+  /** The prose's language, used to find word edges (the word under a right-click). */
+  locale?: string;
   className?: string;
   style?: CSSProperties;
 }
@@ -26,11 +30,14 @@ export interface TextHighlightEngineProps {
 /**
  * Text Highlight Engine: puts the named parts together over the host's
  * paragraphs — Selection Tracker, Selection Highlight, Inline Editor, Action
- * Bar, Undo Notice and Overlay Layer — and owns the edit and undo records it
- * reports.
+ * Bar (Add and Remove), Undo Notice and Overlay Layer — and owns the edit and
+ * undo records it reports.
  */
-export function TextHighlightEngine({ blocks, onBlocksChange, onSelectionChange, actions = [], renderBlockText, editable = true, overlay, className = '', style }: TextHighlightEngineProps) {
-  const tracker = useSelectionTracker(blocks, onSelectionChange);
+export function TextHighlightEngine({
+  blocks, onBlocksChange, onSelectionChange, actions = [], removeActions = [], renderBlockText, editable = true, overlay, locale,
+  className = '', style,
+}: TextHighlightEngineProps) {
+  const tracker = useSelectionTracker(blocks, onSelectionChange, { removable: editable, locale });
   const { rootRef, controlsRef, editorRef, selection, sourceText, editing, actionOpen, rectangles, clear } = tracker;
   const [replacement, setReplacement] = useState('');
   const [undo, setUndo] = useState<PassageEdit | null>(null);
@@ -74,7 +81,9 @@ export function TextHighlightEngine({ blocks, onBlocksChange, onSelectionChange,
     </p>)}
     {validUndo && container && <UndoNotice container={container} style={style} onUndo={restore} />}
     {selection && container && <ActionBar container={container} controlsRef={controlsRef} selection={selection} rectangles={rectangles}
-      actions={actions} editable={editable} editing={editing} actionOpen={actionOpen} replacement={replacement} style={style}
+      actions={actions} mode={tracker.mode} removeActions={removeActions} canUndo={!!validUndo} focusControls={tracker.focusControls}
+      editable={editable} editing={editing} actionOpen={actionOpen} replacement={replacement} style={style}
+      onModeChange={tracker.setMode} onUndo={restore}
       onEdit={() => { setReplacement(selection.selectedText); tracker.beginEdit(); }}
       onCommit={commit} onPanelOpen={tracker.beginAction} onClose={clear} />}
   </div>;

@@ -1,11 +1,11 @@
 import { useMemo, useRef, useState, type CSSProperties } from 'react';
-import { createMediaCatalog } from '@seihouse/sen/audio';
+import { SOUND_CUE_RULES, createMediaCatalog } from '@seihouse/sen/audio';
 import { InlineAudioText } from '@seihouse/sen/reader-chamber';
 import {
   MANUSCRIPT_PROTOTYPE_WORD_LIMIT, ManualCuePicker, TextHighlightEngine,
   anchorAtLevel, applyPassageEdit, countManuscriptWords, createManualCueMoment, flaggedAttachments, keepAttachment, passageRange,
-  placeAttachment, removeAttachment, resolveAnchor, sameAnchorTarget, sealManuscript,
-  type ManuscriptAnchorLevel, type ManuscriptAttachment, type ManuscriptParagraph, type ManuscriptSentence, type ManuscriptState,
+  placeAttachment, removeAttachment, resolveAnchor, sameAnchorTarget, sealManuscript, snapSoundCueSelection,
+  type ManuscriptAttachment, type ManuscriptParagraph, type ManuscriptSentence, type ManuscriptState,
   type PassageAction, type PassageEdit, type PassageSelection,
 } from '@seihouse/sen/text-highlight-engine';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
@@ -23,9 +23,6 @@ interface SoundCuePayload { cueUrl: string }
 type LabState = ManuscriptState<SoundCuePayload>;
 type LabAttachment = ManuscriptAttachment<SoundCuePayload>;
 const SOUND_CUE = 'sound-cue';
-const LEVELS: ReadonlyArray<{ level: ManuscriptAnchorLevel; label: string }> = [
-  { level: 'span', label: 'Words' }, { level: 'sentence', label: 'Sentence' }, { level: 'paragraph', label: 'Paragraph' },
-];
 const newAttachmentId = () => `a-${globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)}`;
 const createLabState = (): LabState => ({ manuscript: createPreviewManuscript(), attachments: [] });
 
@@ -39,6 +36,32 @@ function cueMoment(state: LabState, attachment: LabAttachment, occupied: readonl
   return result.ok ? result.moment : undefined;
 }
 
+const soundCues = (state: LabState) => state.attachments.filter(attachment => attachment.kind === SOUND_CUE);
+
+/**
+ * The Sound Cue a selection would hold — its whole words, and the cue already
+ * on them — or why it cannot hold one. A person meets the finished-cue rules
+ * as they select: 1–5 whole words, at most ten in the chapter.
+ */
+function soundCueTarget(state: LabState, selection: PassageSelection): { selection: PassageSelection; existing?: LabAttachment } | { reason: string } {
+  const paragraph = state.manuscript.paragraphs.find(candidate => candidate.id === selection.blockId);
+  const snapped = paragraph && snapSoundCueSelection(paragraph, selection, state.manuscript.locale);
+  if (!snapped || !snapped.ok) return { reason: snapped?.reason === 'too-many-words' ? `Sound Cues fit 1–${SOUND_CUE_RULES.maxWords} words` : 'Select a word' };
+  const anchor = anchorAtLevel(state.manuscript, snapped.selection, 'span');
+  const cues = soundCues(state);
+  const existing = anchor && cues.find(attachment => sameAnchorTarget(attachment.anchor, anchor));
+  // A cue already on these words can still take another sound, even with the chapter full.
+  if (!existing && cues.length >= SOUND_CUE_RULES.maxPerChapter) return { reason: `${cues.length} of ${SOUND_CUE_RULES.maxPerChapter} Sound Cues placed` };
+  return { selection: snapped.selection, existing };
+}
+
+/** The placed Sound Cues whose words a selection touches. */
+const cuesUnder = (state: LabState, selection: PassageSelection) => soundCues(state).filter(attachment => {
+  const resolution = resolveAnchor(state.manuscript, attachment.anchor);
+  return resolution.status === 'placed' && resolution.selection.blockId === selection.blockId
+    && resolution.selection.startOffset < selection.endOffset && resolution.selection.endOffset > selection.startOffset;
+});
+
 function CueAttachPanel({ state, selection, onPlace, onRemove, onClose }: {
   state: LabState;
   selection: PassageSelection;
@@ -46,29 +69,21 @@ function CueAttachPanel({ state, selection, onPlace, onRemove, onClose }: {
   onRemove: (id: string) => void;
   onClose: () => void;
 }) {
-  const [level, setLevel] = useState<ManuscriptAnchorLevel>('span');
-  const anchor = anchorAtLevel(state.manuscript, selection, level);
-  const target = anchor ? resolveAnchor(state.manuscript, anchor) : undefined;
+  const target = soundCueTarget(state, selection);
   const paragraph = state.manuscript.paragraphs.find(candidate => candidate.id === selection.blockId);
-  const cues = state.attachments.filter(attachment => attachment.kind === SOUND_CUE);
-  const existing = anchor && cues.find(attachment => sameAnchorTarget(attachment.anchor, anchor));
-  const occupied = cues.filter(attachment => attachment !== existing).flatMap(attachment => {
+  const anchor = 'selection' in target ? anchorAtLevel(state.manuscript, target.selection, 'span') : undefined;
+  if (!('selection' in target) || !paragraph || !anchor) {
+    return <p role="status" className="px-2 py-3 text-sm text-slate-300">{'reason' in target ? `${target.reason}.` : 'Select the words again.'}</p>;
+  }
+  const occupied = soundCues(state).filter(attachment => attachment !== target.existing).flatMap(attachment => {
     const resolution = resolveAnchor(state.manuscript, attachment.anchor);
     return resolution.status === 'placed' ? [resolution.selection] : [];
   });
   return <div className="sen-manuscript-cue-panel">
-    <div role="group" aria-label="Attach to" className="flex flex-wrap items-center gap-1 px-1 pb-1 text-xs text-slate-300">
-      <span className="mr-1">Attach to</span>
-      {LEVELS.map(option => <button key={option.level} type="button" aria-pressed={level === option.level}
-        className={level === option.level ? 'bg-[var(--sen-passage-highlight)] text-white' : 'text-slate-300'}
-        onClick={() => setLevel(option.level)}>{option.label}</button>)}
-    </div>
-    {anchor && target?.status === 'placed' && paragraph
-      ? <ManualCuePicker key={level} block={paragraph} selection={target.selection} catalog={catalog}
-        existing={existing ? cueMoment(state, existing) : undefined} occupiedSelections={occupied}
-        onPlace={moment => onPlace({ id: existing?.id ?? newAttachmentId(), kind: SOUND_CUE, anchor, payload: { cueUrl: moment.cue.publicUrl } })}
-        onRemove={() => existing && onRemove(existing.id)} onClose={onClose} />
-      : <p role="status" className="px-2 py-3 text-sm text-slate-300">This selection covers more than one sentence. Attach it to its words or its paragraph.</p>}
+    <ManualCuePicker block={paragraph} selection={target.selection} catalog={catalog}
+      existing={target.existing ? cueMoment(state, target.existing) : undefined} occupiedSelections={occupied}
+      onPlace={moment => onPlace({ id: target.existing?.id ?? newAttachmentId(), kind: SOUND_CUE, anchor, payload: { cueUrl: moment.cue.publicUrl } })}
+      onRemove={() => target.existing && onRemove(target.existing.id)} onClose={onClose} />
   </div>;
 }
 
@@ -122,10 +137,28 @@ export function TextHighlightEnginePreview() {
   };
 
   const actions: PassageAction[] = draft ? [{ id: 'media', label: 'Media', children: [{ id: 'audio', label: 'Audio', children: [{
-    id: 'cue', label: 'Cue', onActivate: (selected, close) => <CueAttachPanel state={state} selection={selected}
-      onPlace={attachment => setState(current => placeAttachment(current, attachment))}
+    id: 'cue', label: 'Cue',
+    unavailable: selected => { const target = soundCueTarget(state, selected); return 'reason' in target ? target.reason : undefined; },
+    onActivate: (selected, close) => <CueAttachPanel state={state} selection={selected}
+      onPlace={attachment => {
+        // The chapter's cap holds even if the page changed while the picker was open.
+        if (!state.attachments.some(placed => placed.id === attachment.id) && soundCues(state).length >= SOUND_CUE_RULES.maxPerChapter) {
+          setNotice(`A chapter holds at most ${SOUND_CUE_RULES.maxPerChapter} Sound Cues.`);
+          return;
+        }
+        setState(current => placeAttachment(current, attachment));
+      }}
       onRemove={id => setState(current => removeAttachment(current, id))} onClose={close} />,
   }] }] }] : [];
+  const removeActions: PassageAction[] = draft ? [{
+    id: 'remove-cue', label: 'Remove cue here',
+    unavailable: selected => cuesUnder(state, selected).length ? undefined : 'No Sound Cue here',
+    onActivate: selected => {
+      const ids = cuesUnder(state, selected).map(attachment => attachment.id);
+      setState(current => ids.reduce((next, id) => removeAttachment(next, id), current));
+      return null;
+    },
+  }] : [];
 
   return <section className="mx-auto max-w-2xl px-5 py-8 sm:px-8 sm:py-12">
     <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-400">
@@ -167,9 +200,10 @@ export function TextHighlightEnginePreview() {
           {OVERLAY_KINDS[overlayMode].map(kind => <li key={kind} className="flex items-center gap-1.5">
             <span aria-hidden="true" className="h-3 w-3 rounded-[3px] ring-1 ring-inset ring-white/10" style={{ background: ATTACHMENT_COLORS[kind].tone }} />{ATTACHMENT_COLORS[kind].label}
           </li>)}
-          <li className="flex items-center gap-1.5">
+          {/* Only effects that stay on the page after an edit (passage-level ones) show the underline. */}
+          {overlay?.marks?.some(mark => mark.attention) && <li className="flex items-center gap-1.5">
             <span aria-hidden="true" className="h-2.5 w-4 border-b-2 border-dashed border-amber-400" />Words changed
-          </li>
+          </li>}
         </ul>
       </div>}
     </div>
@@ -177,7 +211,7 @@ export function TextHighlightEnginePreview() {
     {/* A quiet gutter on phones gives the overlay's ¶ numbers room, so turning an overlay on never moves a word. */}
     <div ref={proseRef} className="pl-3 text-lg text-slate-200 sm:pl-0" style={{ fontFamily: 'Georgia, serif' }}>
       <TextHighlightEngine blocks={state.manuscript.paragraphs} onBlocksChange={edit} onSelectionChange={setSelection}
-        actions={actions} editable={draft} overlay={overlay}
+        actions={actions} removeActions={removeActions} editable={draft} overlay={overlay} locale={state.manuscript.locale}
         style={{ '--sen-passage-highlight': `${highlightColor}59` } as CSSProperties}
         renderBlockText={block => {
           const blockMoments = moments.filter(moment => moment.blockId === block.id);

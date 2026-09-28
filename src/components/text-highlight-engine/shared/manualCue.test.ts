@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { LIBRARY_BASE_MEDIA } from '../../../host/media/libraryCatalog';
 import { createMediaCatalog } from '../../../audio/media';
 import { resolvePlayableAudioMoment, splitByResolvedAudioMoments } from '../../../audio/inlineAudio';
-import { createManualCueMoment } from './manualCue';
+import { createManualCueMoment, snapSoundCueSelection } from './manualCue';
 
 const catalog = createMediaCatalog(LIBRARY_BASE_MEDIA);
 const cue = catalog.soundCues.cues.find(item => item.category === 'locations')!;
@@ -29,8 +29,8 @@ describe('manual Sound Cue placement', () => {
     const selected = { blockId: 'one', selectedText: phrase, startOffset: 0, endOffset: phrase.length };
     expect(createManualCueMoment(block, { ...selected, startOffset: 1 }, cue, catalog))
       .toMatchObject({ ok: false, reason: 'stale-selection' });
-    const overlap = { id: 'overlap', text: 'aaaaa' };
-    expect(createManualCueMoment(overlap, { blockId: 'overlap', selectedText: 'aaa', startOffset: 1, endOffset: 4 }, cue, catalog))
+    const overlap = { id: 'overlap', text: 'ha ha ha' };
+    expect(createManualCueMoment(overlap, { blockId: 'overlap', selectedText: 'ha ha', startOffset: 3, endOffset: 8 }, cue, catalog))
       .toMatchObject({ ok: false, reason: 'unrepresentable-occurrence' });
     expect(createManualCueMoment(block, selected, cue, catalog, [{
       blockId: 'one', selectedText: 'blue door', startOffset: 4, endOffset: 13,
@@ -40,5 +40,20 @@ describe('manual Sound Cue placement', () => {
     const atmosphere = catalog.soundCues.cues.find(item => item.category === 'atmosphere')!;
     expect(createManualCueMoment(block, selected, atmosphere, catalog))
       .toMatchObject({ ok: false, reason: 'unavailable-cue' });
+  });
+
+  it('places a cue only on 1–5 whole words, and snaps a selection to its whole words', () => {
+    const scene = { id: 'scene', text: 'Lin Wei drew his sword, planted his feet on the cracked tiles.' };
+    const select = (start: number, end: number) => ({ blockId: 'scene', selectedText: scene.text.slice(start, end), startOffset: start, endOffset: end });
+    const sword = scene.text.indexOf('sword');
+    expect(createManualCueMoment(scene, select(sword, sword + 3), cue, catalog)).toMatchObject({ ok: false, reason: 'partial-word' });
+    expect(createManualCueMoment(scene, select(sword, sword + 6), cue, catalog)).toMatchObject({ ok: false, reason: 'partial-word' });
+    expect(createManualCueMoment(scene, select(0, scene.text.indexOf(' on')), cue, catalog)).toMatchObject({ ok: false, reason: 'too-many-words' });
+    const drew = scene.text.indexOf('drew');
+    expect(createManualCueMoment(scene, select(drew, sword + 5), cue, catalog).ok).toBe(true);
+
+    expect(snapSoundCueSelection(scene, select(drew + 1, sword + 3))).toEqual({ ok: true, selection: select(drew, sword + 5) });
+    expect(snapSoundCueSelection(scene, select(sword + 5, sword + 7))).toEqual({ ok: false, reason: 'no-words' });
+    expect(snapSoundCueSelection(scene, select(0, scene.text.length))).toEqual({ ok: false, reason: 'too-many-words' });
   });
 });

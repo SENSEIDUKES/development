@@ -120,6 +120,21 @@ describe('One edit rule for every attachment', () => {
     expect(status(kept, 'inside')).toBe('changed');
   });
 
+  it('keeps words whole: an edit that glues letters onto an attachment’s words flags it, one that only touches them does not', () => {
+    const start: ManuscriptState<string> = { manuscript: page(), attachments: [] };
+    start.attachments = [
+      attach('roared', anchorAtLevel(start.manuscript, span(start.manuscript, 0, 'roared'), 'span')!),
+      attach('beast', anchorAtLevel(start.manuscript, span(start.manuscript, 0, 'beast'), 'span')!),
+    ];
+    // "roared" + "again" → "roaredagain": the cue would sit inside a longer word.
+    const glued = apply(start, edit(start, span(start.manuscript, 0, ' again'), 'again'));
+    expect(status(glued, 'roared')).toBe('changed');
+    expect(status(glued, 'beast')).toBe('placed');
+    // "The " → "One " ends right at "beast" but keeps the space: the word stays whole.
+    const touched = apply(start, edit(start, span(start.manuscript, 0, 'The ', 1), 'One '));
+    expect(resolveAnchor(touched.manuscript, touched.attachments[1].anchor)).toMatchObject({ status: 'placed', selection: { selectedText: 'beast' } });
+  });
+
   it('splits and merges only the touched sentences, and the first piece keeps its identity', () => {
     const state = setup();
     const split = apply(state, edit(state, span(state.manuscript, 0, 'swallowed the'), 'rose. Smoke filled the'));

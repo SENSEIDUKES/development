@@ -20,14 +20,15 @@ accessibility, viewport fit, power use, and look and feel. The Workshop's
 | Part | File | Owns |
 | --- | --- | --- |
 | Text Highlight Engine | `development/TextHighlightEngine.tsx` | Puts the parts together over the host's paragraphs; owns the edit and undo records it reports |
-| Selection Tracker | `development/useSelectionTracker.ts`, `shared/selection.ts`, `development/measure.ts` | Reads the browser selection; keeps the canonical selection (paragraph + exact positions); measures it; clears it on Escape or an outside tap; moves the first Tab of each selection into the Action Bar |
+| Selection Tracker | `development/useSelectionTracker.ts`, `shared/selection.ts`, `development/measure.ts` | Reads the browser selection; keeps the canonical selection (paragraph + exact positions); measures it; clears it on Escape or an outside tap; moves the first Tab of each selection into the Action Bar; opens Remove mode on right-click (selecting the word under the pointer when nothing is selected), the ContextMenu key or Shift+F10 |
 | Selection Highlight | `development/SelectionHighlight.tsx` | The tinted marks over the selected words |
-| Action Bar | `development/ActionBar.tsx`, `shared/actions.ts` | The one floating bar: Edit, the host's nested actions, Back, an action's panel, and Save / Delete Passage while editing; its position, touch sizing and labels. On touch screens (`pointer: coarse`) its buttons stack vertically, and while the phone's own selection menu can show it keeps a 72 px band above and below the selection clear |
+| Action Bar | `development/ActionBar.tsx`, `shared/actions.ts` | The one floating bar, with two faces. **Add**: Edit, the host's nested actions, Back, an action's panel, and Save / Delete Passage while editing. **Remove**: Undo, the host's removals and Delete Passage, as a vertical list like a desktop context menu, removals in red. An action a host marks unavailable stays visible, dimmed, with its reason. It owns its position, touch sizing and labels. On touch screens (`pointer: coarse`) its buttons stack vertically, the Add bar ends with a Remove row, and while the phone's own selection menu can show it keeps a 72 px band above and below the selection clear |
 | Overlay Layer | `development/OverlayLayer.tsx`, `shared/overlay.ts` | Draws a host's `overlay` with the prose without covering a word: tints behind the text (`OverlayMark`) and quiet numbers (`OverlayPin`) in the start margin or the line spacing; hidden from assistive technology, never takes taps, never changes text, no work while absent |
 | Inline Editor | `development/InlineEditor.tsx` | The plain-text draft replacing only the selected words, including line breaks and IME typing |
 | Undo Notice | `development/UndoNotice.tsx` | "Passage deleted · Undo" after an explicit deletion |
 | Cue Picker | `development/ManualCuePicker.tsx`, `shared/manualCue.ts` | Choosing, previewing and placing a Sound Cue from the host catalog |
 | Manuscript | `shared/manuscript.ts` | Permanent paragraph and sentence IDs, saved sentences, anchors, the one edit rule, draft / sealed |
+| Placement Rules | `src/audio/soundCueRules.ts`, `src/narrative/words.ts` | What a finished attachment may be, per kind of effect (see Placement rules), and word edges in any language |
 
 The Workshop adds the Manuscript Inspector and the lab page itself; neither is
 part of the SEN package.
@@ -50,7 +51,16 @@ updates through `onBlocksChange(blocks, edit)`. Blocks are immutable values.
 blocks. `onSelectionChange(selection | null)` remains available to hosts. The
 optional `actions` tree accepts nested generic `PassageAction` branches and
 leaf callbacks that receive the immutable `PassageSelection` and a close
-callback. Only the host decides which actions to expose. `renderBlockText` lets
+callback. Only the host decides which actions to expose. An action's optional
+`unavailable(selection)` returns a reason ("Sound Cues fit 1–5 words"): the
+action stays in the bar, dimmed, with the reason under its label and as its
+description. `removeActions` fill the bar's Remove mode beside the built-in
+Undo and Delete Passage. Remove mode exists only while `editable`: right-click
+on the selection, or on a word (which it selects first), the ContextMenu key
+and Shift+F10 open it and suppress the browser's menu; a right-click away from
+the prose keeps the browser's menu. On touch screens a long press belongs to
+the phone, so the Add bar's Remove row opens it. `locale` names the prose's
+language for word edges. `renderBlockText` lets
 a host render decorations around prose while keeping the block text canonical.
 
 The optional `overlay` draws a host's map-mode view with the prose, never on
@@ -76,8 +86,10 @@ state; temporary ranges supply geometry. The edit session also retains the
 original block text to reject stale replacements.
 
 Public lower-level exports: `normalizePassageSelection`, `isValidPassage`,
-`replacePassage`, `passageRange`, and `useSelectionTracker` (also exported under its
-former name, `usePassageSelection`). Custom host renderers
+`replacePassage`, `passageRange`, `passageOffsetAt` (a DOM position's block and
+plain-text offset), and `useSelectionTracker(blocks, onSelectionChange, { removable, locale })`
+(also exported under its former name, `usePassageSelection`), which adds
+`mode`, `setMode` and `focusControls` for Remove mode. Custom host renderers
 using the hook must attach its `rootRef`, mark prose blocks with
 `data-sen-text-block="stable-id"`, attach `controlsRef` to their controls and `editorRef` to their inline draft, and use
 the returned `beginEdit`/`beginAction`/`clear` lifecycle. Prose text nodes,
@@ -88,7 +100,11 @@ ready-made component handles this itself.
 The optional SEN `createManualCueMoment(block, selection, cue, catalog)` adapter
 validates the selected range against current prose, finds the exact
 non-overlapping phrase occurrence used by the existing inline renderer, and
-requires an approved host-supplied catalog cue and provenance. It returns a
+requires an approved host-supplied catalog cue and provenance. It refuses a
+range that is not exactly 1–5 whole words (`partial-word`, `too-many-words`); a
+host first turns any selection into the words a cue would hold with
+`snapSoundCueSelection` ("Somewher" → "Somewhere"), which says instead why a
+selection cannot hold one. It returns a
 manual `ResolvedAudioMoment` or a typed rejection. Manual moments may anchor
 ordinary author-selected text; generated cue validation still requires its
 audible-action phrase. The Workshop supplies its base catalog and routes
@@ -146,18 +162,52 @@ ManuscriptState      { manuscript; attachments; deletion? }
 
 The Workshop lab starts from three pre-made paragraphs (action, world-building,
 a breakthrough with a System line). Sound Cues are the only working attachment:
-the Cue panel's **Attach to: Words / Sentence / Paragraph** choice stores a
-`sound-cue` attachment whose payload is only the chosen catalog cue, and the
+each sits on 1–5 whole words as a `sound-cue` span attachment whose payload is
+only the chosen catalog cue (Remove mode's **Remove cue here** takes cues off
+the selected words), and the
 Reader's existing inline format (`ResolvedAudioMoment`) is derived from the
 anchor at render time. Below the prose, a Workshop-only inspector shows the
 selection's address, every attachment with its status (Keep / Remove), and the
 saved page structure, where clicking a sentence selects it. Draft/Sealed status,
 the word count, Reset sample and Seal chapter sit above the prose.
 
-Deliberately later: Soundscape, narration, Manifestation, Mind Palace and
+Deliberately later: the semantic-intent contract between the model, the
+manuscript and the HARNESS (the next task); Soundscape, narration, Manifestation, Mind Palace and
 Regenerate attachments; selection across paragraphs; manual sentence-boundary
 correction; non-English segmentation and presentation; Harness writing into the
 manuscript at chapter save; Reader Chamber migration; translation; persistence.
+
+## Placement rules
+
+Each kind of effect has its own rules for what may exist on the page — the
+finished attachment — kept in one place so they can be tuned later.
+
+| Effect | Sits on | Size | Per chapter |
+| --- | --- | --- | --- |
+| Sound Cue | Words: an action or event worth a sound ("drew his sword") | 1–5 whole words, never mid-word | 10 |
+| Soundscape (not built yet) | A passage, never words: atmosphere and tone, e.g. a chapter's opening or the moment before a major battle | — | 2 |
+
+`SOUND_CUE_RULES` and `soundCueWordIssue` (`src/audio/soundCueRules.ts`) hold
+the Sound Cue rules. Word edges come from `src/narrative/words.ts`, which
+follows each language's own word rules.
+
+Who enforces them:
+
+- **A person placing a cue** creates the finished attachment directly, so the
+  rules apply as they select: a selection widens to its whole words, a longer
+  one leaves Cue dimmed with its reason, and a full chapter refuses another
+  cue (a placed cue can still change its sound). An edit that glues letters
+  onto a placed cue's word ("sword" → "swords") flags it like any edit that
+  changes its words.
+- **The model** supplies semantic direction — what happens, and where — never
+  assets or attachment addresses. The HARNESS resolves that direction into a
+  finished attachment and enforces these rules there.
+- **Today's generation path** still anchors a cue on the model's exact phrase.
+  As short-term safety only, the HARNESS drops a resolved cue that would start
+  or end inside a word or run past five words, and keeps at most ten per
+  chapter (the response contract carries the same `maxItems`, and nothing
+  about word counts). This is not the final contract: the next task designs
+  how model direction is resolved on the manuscript's coordinates.
 
 ## Behavior and limitations
 
@@ -194,7 +244,8 @@ manuscript at chapter save; Reader Chamber migration; translation; persistence.
   Hosts can pass occupied selections to reject a new cue that would overlap an
   existing placement; the Workshop does so.
   In the Workshop, the manuscript's edit rule keeps, shifts, or flags each
-  placement; an Edit that changes a cue's words flags it instead of removing it.
+  placement; an Edit that changes a cue's words flags it into the inspector
+  (it comes off the page) instead of moving it.
   Cue choices and edits last only for that preview session.
 - Native touch selection remains browser-owned. `-webkit-touch-callout: none`
   requests callout suppression but cannot guarantee removal of every OS selection
@@ -231,6 +282,15 @@ browser evidence out of the consuming surface. No integration was performed.
 
 ## Workshop history
 
+- **2026-09-28:** The Action Bar gained its Remove mode: right-click, the
+  ContextMenu key or Shift+F10 (and the touch bar's Remove row) open Undo, the
+  host's removals and Delete Passage, and an unavailable action now stays
+  visible with its reason. Sound Cues follow the finished-attachment rules: 1–5
+  whole words (selections snap outward, "Somewher" → "Somewhere"), at most 10 per
+  chapter, words only — the Sentence and Paragraph choices are gone. Soundscape
+  rules (passage-level, at most 2) are written down for when they are built.
+  Today's generation path drops mid-word or over-long resolved cues and keeps
+  ten, as short-term safety ahead of the semantic-intent contract.
 - **2026-09-28:** Overlay colors now mean the kind of added effect, not how much
   text it covers: every Sound Cue is blue, and each future kind gets its own
   color (Soundscapes, for example, red). The tint's extent still shows words, a

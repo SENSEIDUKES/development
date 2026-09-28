@@ -36,12 +36,15 @@ export function findBlockElement(root: HTMLElement, id: string): HTMLElement | u
     .find(element => element.getAttribute(BLOCK_ATTRIBUTE) === id);
 }
 
+/** Inline controls, their joiners and host decorations: inside a block, but not passage text. */
+const INLINE_DECORATION = 'button, [aria-hidden="true"], [data-sen-selection-ignore]';
+
 /** Text that belongs to the passage, excluding inline controls and their joiners. */
 function passageTextNodes(block: HTMLElement): Text[] {
   const walker = block.ownerDocument.createTreeWalker(block, NodeFilter.SHOW_TEXT);
   const nodes: Text[] = [];
   for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-    if (!node.parentElement?.closest('button, [aria-hidden="true"], [data-sen-selection-ignore]')) nodes.push(node as Text);
+    if (!node.parentElement?.closest(INLINE_DECORATION)) nodes.push(node as Text);
   }
   return nodes;
 }
@@ -65,8 +68,8 @@ export function normalizePassageSelection(root: HTMLElement, browserSelection: S
   const blockFor = (node: Node) => (node.nodeType === 1 ? node as Element : node.parentElement)?.closest<HTMLElement>(`[${BLOCK_ATTRIBUTE}]`);
   const block = blockFor(range.startContainer);
   if (!block || !root.contains(block) || blockFor(range.endContainer) !== block) return null;
-  if ((range.startContainer.nodeType === Node.TEXT_NODE ? range.startContainer.parentElement : range.startContainer as Element)?.closest('button, [aria-hidden="true"], [data-sen-selection-ignore]')) return null;
-  if ((range.endContainer.nodeType === Node.TEXT_NODE ? range.endContainer.parentElement : range.endContainer as Element)?.closest('button, [aria-hidden="true"], [data-sen-selection-ignore]')) return null;
+  if ((range.startContainer.nodeType === Node.TEXT_NODE ? range.startContainer.parentElement : range.startContainer as Element)?.closest(INLINE_DECORATION)) return null;
+  if ((range.endContainer.nodeType === Node.TEXT_NODE ? range.endContainer.parentElement : range.endContainer as Element)?.closest(INLINE_DECORATION)) return null;
   const nodes = passageTextNodes(block);
   const text = nodes.map(node => node.data).join('');
   const startOffset = logicalOffset(block, range.startContainer, range.startOffset, nodes);
@@ -75,6 +78,15 @@ export function normalizePassageSelection(root: HTMLElement, browserSelection: S
   const blockId = block.getAttribute(BLOCK_ATTRIBUTE);
   if (!blockId || !selectedText.trim() || startOffset === endOffset) return null;
   return { blockId, selectedText, startOffset, endOffset };
+}
+
+/** Where a DOM position (e.g. the point under a pointer) falls in its block's passage text; null outside it. */
+export function passageOffsetAt(root: HTMLElement, node: Node, offset: number): { blockId: string; offset: number } | null {
+  const element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
+  const block = element?.closest<HTMLElement>(`[${BLOCK_ATTRIBUTE}]`);
+  const blockId = block?.getAttribute(BLOCK_ATTRIBUTE);
+  if (!block || !blockId || !root.contains(block) || element?.closest(INLINE_DECORATION)) return null;
+  return { blockId, offset: logicalOffset(block, node, offset, passageTextNodes(block)) };
 }
 
 /** Reconstruct transient geometry from canonical offsets, including split inline text nodes. */

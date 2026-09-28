@@ -31,6 +31,11 @@
 .sen-text-highlight-actions--stacked { flex-direction: column; align-items: stretch; gap: 0; }
 .sen-text-highlight-actions--stacked button { width: 100%; min-height: 48px; text-align: left; }
 .sen-text-highlight-menu.sen-text-highlight-actions--stacked button:not(:last-child) { border-right: 0; border-bottom: 1px solid #555; border-radius: 0; }
+/* Remove mode: removals read in red, as on iPhone and Mac menus. */
+.sen-text-highlight-controls [data-destructive] { color: #ff6961; }
+/* An unavailable action stays in place and readable: its label dims, its reason explains. */
+.sen-text-highlight-controls button[data-unavailable] { opacity: 1; color: #8e8e93; cursor: default; flex-direction: column; align-items: flex-start; }
+.sen-text-highlight-reason { display: block; margin-top: 2px; font: 400 11px/1.3 system-ui, -apple-system, sans-serif; letter-spacing: 0; text-transform: none; color: #b4b4ba; }
 .sen-text-highlight-undo { position: fixed; z-index: 9999; bottom: 16px; left: 50%; transform: translateX(-50%); max-width: calc(100vw - 32px); display: flex; align-items: center; gap: 12px; padding: 4px 12px; border: 1px solid #8c8064; border-radius: 10px; color: #29251c; background: #fffdf6; box-shadow: 0 5px 22px #0003; font: 14px/1.5 system-ui, sans-serif; }
 
 /* Overlay Layer: placed on the page so it scrolls with the words. Tints sit behind the text; numbers sit in the

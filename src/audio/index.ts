@@ -9,4 +9,5 @@ export * from './inlineAudio';
 export * from './media';
 export * from './mediaUrl';
 export * from './soundscapes';
+export * from './soundCueRules';
 export * from './playback';

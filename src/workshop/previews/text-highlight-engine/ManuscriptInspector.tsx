@@ -76,7 +76,7 @@ export function ManuscriptInspector<Payload>({ state, selection, describe, onKee
             <p className="font-serif text-slate-300">“{excerpt(words)}”</p>
             {status !== 'placed' && <p className="text-xs text-amber-200/90">
               {status === 'missing' ? 'Its paragraph or sentence no longer exists.' : attachment.anchor.level === 'span'
-                ? 'An edit replaced these words, so it was not moved anywhere else.' : 'Its words were edited. Keep it on the new words or remove it.'}
+                ? 'An edit changed these words, so it came off the page. Place it again or remove it.' : 'Its words were edited. Keep it on the new words or remove it.'}
             </p>}
             {draft && <div className="mt-1 flex gap-2">
               {status === 'changed' && attachment.anchor.level !== 'span' && <button type="button" className="min-h-9 rounded px-2 text-amber-100 underline-offset-2 hover:underline" onClick={() => onKeep(attachment.id)}>Keep</button>}

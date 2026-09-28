@@ -67,10 +67,10 @@ async function mount() {
     const configuration = query.get('source') === 'header-states' ? 'header-states' : query.get('source') === 'cultivator-cave' ? 'cultivator-cave' : source;
     const headerState = (headerStates[configuration] as readonly string[]).includes(requested) ? requested : headerStates[configuration][0];
     document.title = 'Library Shell — Development headers';
-    const { LibraryDesktopNavigationProvider } = await import('@seihouse/library/shell');
+    const { StoredLibraryDesktopNavigation } = await import('./StoredLibraryDesktopNavigation');
     // Workshop comparison: `laptopNav=strip` shows the laptop layout from before the Pathways sidebar.
     const laptopNavigation = query.get('laptopNav') === 'strip' ? 'strip' : 'sidebar';
-    root.render(<CaptureExitToWorkshop><DevAudioPlaybackProvider><StoryCreationPreviewRuntime><LibraryPresentationProvider assets={LIBRARY_ASSETS}><LibraryDesktopNavigationProvider value={laptopNavigation}><DevelopmentHeaderPreview source={configuration} state={headerState} /></LibraryDesktopNavigationProvider></LibraryPresentationProvider></StoryCreationPreviewRuntime></DevAudioPlaybackProvider></CaptureExitToWorkshop>);
+    root.render(<CaptureExitToWorkshop><DevAudioPlaybackProvider><StoryCreationPreviewRuntime><LibraryPresentationProvider assets={LIBRARY_ASSETS}><StoredLibraryDesktopNavigation value={laptopNavigation}><DevelopmentHeaderPreview source={configuration} state={headerState} /></StoredLibraryDesktopNavigation></LibraryPresentationProvider></StoryCreationPreviewRuntime></DevAudioPlaybackProvider></CaptureExitToWorkshop>);
   } else if (source === 'main-library') {
     await import('../../../components/library-shell/reference/main-library/source-theme.css');
     const { MainLibraryPreview } = await import('./MainLibraryPreview');

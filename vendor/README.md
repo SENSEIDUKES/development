@@ -1,9 +1,9 @@
 # Private UI artifacts
 
-Both UI tarballs are built from the merged UI PR [#82](https://github.com/SENSEIDUKES/UI/pull/82), commit `297f021612374dc1e2ead97ce4d1ad91509570ec`:
+Both UI tarballs are built from the merged UI PR [#83](https://github.com/SENSEIDUKES/UI/pull/83), merge commit `40546ce04090331368158ed547c609cbeccf4b56`:
 
-- `@seihouse/ui@0.7.0`: universal SEIHouse primitives and experience tokens, including the `SEIAppHeader` application chrome, the `SEIAppShell` scaffold (fixed-frame scrolling, `mainRef`, `sidebarBreakpoint`), the `ElementalTitle` Text family, and the Pathways navigation panel (`SEINavigationDrawerPanel` with identity, nested items, footer slots, image/video artwork and a compact rail).
-- `@seihouse/library-ui@0.6.0`: stateless Celestial Library presentation, including the transferred icon family, manifestation chamber/scenes/vessel, journey scrubber, Cave backdrop and particles, and the Library skin over the Pathways panel (`LibraryNavigationDrawerPanel`). Its `@seihouse/ui` peer is `^0.7.0`. Domain behavior remains in `@seihouse/library`.
+- `@seihouse/ui@0.9.0`: universal SEIHouse primitives and experience tokens, including the `SEIAppHeader` application chrome (with a centered `center` slot), the `SEIAppShell` scaffold (fixed-frame scrolling, `mainRef`, `sidebarBreakpoint`, and the automatic / pinned / compact sidebar modes), the `ElementalTitle` Text family, and the Pathways navigation panel (`SEINavigationDrawerPanel` with the account at the top, nested items, footer slots, image/video artwork, scroll fades and the pin control).
+- `@seihouse/library-ui@0.8.0`: stateless Celestial Library presentation, including the transferred icon family, manifestation chamber/scenes/vessel, journey scrubber, Cave backdrop and particles, and the Library skin over the Pathways panel (`LibraryNavigationDrawerPanel`). Its `@seihouse/ui` peer is `^0.9.0`. Domain behavior remains in `@seihouse/library`.
 
 `ui-artifacts.json` records source provenance and SHA-512 integrity. The root manifest pins these files, and `package-lock.json` records their integrity. Run `npm ci` followed by `npm run check:ui-artifacts` to verify the installed dependency inputs.
 

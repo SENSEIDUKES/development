@@ -30,8 +30,10 @@ const checks = [
   'Workspace mode (Story Seed): the shell draws the task bar in the global strip\'s place — Sections, Story Bank, Settings, Back. Sections opens the drawer; from 1024px the rail replaces the drawer and the bar.',
   'Workspace mode header matches main mode: the Celestial Library emblem, Help and Search; the logo and Back both return to Library Home.',
   'Reader stays immersive: no strip, no task bar, and it scrolls the whole page for cinematic reading.',
-  'Laptop navigation (1024px and wider): the Pathways sidebar — identity, Home, Create, Discover, Profile with the page\'s sections nested under the active one, Settings, artwork — replaces the bottom strip; 1024–1279px shows the compact icon rail. Compare it with the strip it replaced.',
-  'On laptops Home\'s header carries Dao Insights in its center; phones keep Dao Insights in Home content and the strip at the bottom.',
+  'Laptop navigation (1024px and wider): the Pathways sidebar — the reader\'s picture, name and rank, Home, Create, Discover, Profile with the Cave\'s pages nested under Profile, Settings, artwork — replaces the bottom strip. It rests as an icon rail and opens when the pointer reaches it or focus enters; the star beside the profile pins it open, and the choice is remembered. Compare it with the strip it replaced.',
+  'Nested pages are grey until active; the active one glows white under its parent\'s blue pill.',
+  'On laptops the header keeps the Celestial Library logo and badge on the left and carries Dao Insights in its center; phones keep Dao Insights in Home content and the strip at the bottom.',
+  'Story Seed\'s rail uses the same Pathways styling, with long section labels and guidance wrapping, and stays open.',
   'Browsing screens scroll inside the frame: the header stays put, the rail appears from 1024px and scrolls on its own, and nothing hides behind the bottom strip.',
 ];
 

@@ -1,9 +1,12 @@
 import type { ReactNode, Ref } from 'react';
 import { SEIAppShell } from '@seihouse/ui';
+import { useLibraryPathwaysRail } from './LibraryNavigation';
 import './workspace-shell.css';
 
 /** The one narrow rail width every Development workspace shares. */
 export const WORKSPACE_SIDEBAR_WIDTH = '14rem';
+/** The Pathways icon rail's width while it rests. */
+export const WORKSPACE_SIDEBAR_COMPACT_WIDTH = '4.5rem';
 
 export interface WorkspaceShellProps {
   /** The workspace header — pass `landmark="none"`; the shell owns the banner. */
@@ -30,7 +33,9 @@ export interface WorkspaceShellProps {
  * scrolling sidebar and `<main>`, and the breakpoint the rail appears at are
  * all the canonical component's. This adapter supplies only the Library rail
  * width and its `lg` hand-off — below `lg` the drawer and the bottom controls
- * own navigation, so the rail is never offered twice.
+ * own navigation, so the rail is never offered twice. When the rail is the
+ * main-mode Pathways sidebar it also applies the reader's remembered sidebar
+ * preference (automatic, pinned or compact).
  *
  * The Reader Chamber is deliberately not a consumer: it is immersive and
  * scrolls the document itself, which its cinematic scrolling depends on.
@@ -40,7 +45,12 @@ export function WorkspaceShell({
   header, sidebar, sidebarLabel, children, className = '',
   mainClassName = '', mainId, mainAriaLabel, mainRef,
 }: WorkspaceShellProps) {
+  const rail = useLibraryPathwaysRail();
+  const pathways = rail && sidebar ? {
+    sidebarMode: rail.mode, onSidebarModeChange: rail.setMode, sidebarCollapsedWidth: WORKSPACE_SIDEBAR_COMPACT_WIDTH,
+  } : {};
   return <SEIAppShell
+    {...pathways}
     header={header}
     sidebar={sidebar}
     sidebarWidth={WORKSPACE_SIDEBAR_WIDTH}

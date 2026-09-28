@@ -157,6 +157,13 @@
 
 /* Header center (laptops with the Pathways sidebar): Dao Insights between two
    hairlines, as the Library's voice rather than a boxed widget. */
+/* With a centered slot the identity keeps its content width so the center has
+   room. SEIAppHeader asks for this with `lg:flex-none`, but a second Tailwind
+   build on the same page (the locked capture's theme) can re-declare `flex-1`
+   after it, so the rule is stated here at a higher specificity. */
+@media (min-width: 1024px) {
+  .workspace-header-inner:has(> [data-slot="app-header-center"]) > .workspace-header-identity { flex: 0 1 auto; }
+}
 .workspace-header-center {
   display: flex; align-items: center; justify-content: center; gap: 1.25rem;
   width: 100%; min-width: 0;

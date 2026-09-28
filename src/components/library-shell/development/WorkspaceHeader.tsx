@@ -32,8 +32,8 @@ export interface WorkspaceHeaderProps {
   landmark?: 'banner' | 'none';
   /**
    * Centered header content while the Pathways sidebar is showing (laptops and
-   * wider). The sidebar already carries the Library identity there, so the
-   * badge steps aside for it — Home puts Dao Insights here.
+   * wider), between the logo and badge on the left and Help and Search on the
+   * right. Home puts Dao Insights here.
    */
   center?: ReactNode;
 }
@@ -70,7 +70,9 @@ export function WorkspaceHeader({ title, subtitle, emblem, home, back, primaryAc
     // truncating identity column rather than the fixed-width branding slot.
     branding={back && <LibraryButton variant="ghost" size="icon" icon={ArrowLeft}
       aria-label={back.label} onClick={back.onNavigate} />}
-    appName={showCenter ? <div className="workspace-header-center" data-header-center>{center}</div> : <span className="workspace-header-badge" onClick={event => {
+    center={showCenter ? <div className="workspace-header-center" data-header-center>{center}</div> : undefined}
+    centerBreakpoint="lg"
+    appName={<span className="workspace-header-badge" onClick={event => {
       // Canonical badge owns the link markup; the host may intercept ordinary navigation.
       if (home?.onNavigate && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey
         && (event.target as Element).closest('a')) {

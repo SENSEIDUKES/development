@@ -2,7 +2,7 @@
 
 Updated 2026-09-09. Development Home, Story Seed and Cultivator Cave use one `WorkspaceHeader` over the existing `SEIAppHeader`. The existing `LibraryHeaderBadge mode="app-header"` supplies the logo and custom plaque through `LibraryPresentationProvider`. UI packages and their pinned artifacts are unchanged.
 
-> **2026-09-28 — Header center.** `WorkspaceHeader` takes an optional `center` node. While main mode shows the laptop Pathways sidebar, the header draws it in the middle of the row in place of the page badge (the sidebar already carries the Library identity); `GlobalHeader` passes Dao Insights there, and `MainLibraryHomeInsights` steps aside. On phones and tablets, and with the strip setting, the badge returns and Dao Insights stays in Home content as described below.
+> **2026-09-28 — Header center.** `WorkspaceHeader` takes an optional `center` node. While main mode shows the laptop Pathways sidebar, it passes it to `SEIAppHeader`'s `center` slot (UI 0.9.0), in the middle of the row between the logo and badge and Help and Search; `GlobalHeader` passes Dao Insights there, and `MainLibraryHomeInsights` steps aside. On phones and tablets, and with the strip setting, the badge returns and Dao Insights stays in Home content as described below.
 
 ## Top navigation contract
 

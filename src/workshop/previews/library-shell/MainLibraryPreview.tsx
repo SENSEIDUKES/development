@@ -15,6 +15,8 @@ import { WorldExpressions } from '@seihouse/library/home';
 import { featuredNovel, featuredExpansions, homePreviewWorlds, homePreviewExpansions } from '../light-novels-home/previewData';
 import { libraryPreviewUrl, navigateLibraryPreview, readLibraryPreviewLocation } from './libraryPreviewNavigation';
 import { CreatorSpaceHost } from '../creator-space/CreatorSpaceHost';
+import { getDaoRankData } from '@seihouse/library/cultivation';
+import { getPreviewScenario } from '../user-profile/previewData';
 
 // The footer's Support menu opens the same Library Help the header utilities use.
 const LibraryHelpMenu = lazy(() => import('@seihouse/library/story-seed')
@@ -162,5 +164,14 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
         {help}
       </div>}
   </MainLibraryAdapterContext.Provider>;
-  return developmentNavigation ? <MainLibraryNavigation location={{ screen: currentScreen, collection: activeTab as LibraryLocation['collection'] }} onNavigate={navigate}>{content}</MainLibraryNavigation> : content;
+  // The sidebar's reader: Home's signed-in name, with the Workshop's developed
+  // cultivator supplying the portrait and cultivation rank the Cave shows.
+  const cultivator = getPreviewScenario('developed-cultivator').profile;
+  const profile = state === 'guest'
+    ? { name: 'Guest reader', detail: 'Sign in to cultivate', onSelect: () => navigate({ screen: 'profile', cave: '/home' }) }
+    : { name: adapter.userProfile?.displayName?.trim() || 'Cultivator', detail: getDaoRankData(cultivator?.dao_xp ?? 0).rank,
+      emblem: cultivator?.avatarUrl ? <img src={cultivator.avatarUrl} alt="" /> : undefined,
+      onSelect: () => navigate({ screen: 'profile', cave: '/home' }) };
+  return developmentNavigation ? <MainLibraryNavigation location={{ screen: currentScreen, collection: activeTab as LibraryLocation['collection'] }} onNavigate={navigate}
+    profile={profile}>{content}</MainLibraryNavigation> : content;
 }

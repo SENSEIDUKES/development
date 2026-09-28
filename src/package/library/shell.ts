@@ -3,6 +3,7 @@ export * from '../../components/library-shell/development/libraryBrand';
 export * from '../../components/library-shell/development/libraryLegal';
 export * from '../../components/library-shell/development/LibraryLegalSheet';
 export * from '../../components/library-shell/development/LibraryNavigation';
+export * from '../../components/library-shell/development/librarySidebarMode';
 export * from '../../components/library-shell/development/LibraryFooter';
 export * from '../../components/library-shell/development/WorkspaceHeader';
 export * from '../../components/library-shell/development/WorkspaceHeaderActions';

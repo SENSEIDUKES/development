@@ -3,6 +3,7 @@ import { MainLibraryAdapterContext } from '../shared/MainLibraryAdapter';
 import { DaoInsights } from './main-library/DaoInsights';
 import { MainLibraryClipboardProvider } from './mainLibraryClipboard';
 import type { MainLibraryHeaderAdapter } from './MainLibraryHeader';
+import { useLibraryPathways } from './LibraryNavigation';
 import './main-library/main-library-header.css';
 
 /**
@@ -16,6 +17,8 @@ import './main-library/main-library-header.css';
  * where it competed with the page title for a phone's header row.
  */
 export function MainLibraryHomeInsights({ adapter }: { adapter: MainLibraryHeaderAdapter }) {
+  // With the Pathways sidebar the header's center carries Dao Insights instead.
+  if (useLibraryPathways()) return null;
   return <MainLibraryAdapterContext.Provider value={adapter}>
     <MainLibraryClipboardProvider copyText={adapter.copyText}>
       <MotionConfig reducedMotion="user">

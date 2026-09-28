@@ -56,3 +56,11 @@
   .library-workspace-navigation { display: none !important; }
   .library-navigation-layout[data-library-mode='workspace'] { --library-bottom-clearance: 0px; }
 }
+
+/* Main mode on laptops and desktops: the Pathways sidebar replaces the strip,
+   so the strip and its clearance step aside. The sidebar's width follows the
+   reader's sidebar preference (automatic, pinned or compact), never the width. */
+@media (min-width: 1024px) {
+  .library-navigation-layout[data-library-desktop-navigation='sidebar'] > .library-global-navigation { display: none !important; }
+  .library-navigation-layout[data-library-desktop-navigation='sidebar'] { --library-bottom-clearance: 0px; }
+}

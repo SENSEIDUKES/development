@@ -1328,13 +1328,22 @@ describe('Cave workspace shell', () => {
     expect(shell?.classList.contains('z-10')).toBe(true);
   });
 
-  it('mounts the desktop rail only once the desktop breakpoint fits', async () => {
+  it('shows the Pathways sidebar on laptops with the Cave pages nested under Profile', async () => {
     desktopViewport = true;
     await renderCave();
     const rail = container.querySelector('[data-slot="app-shell-sidebar"]');
     expect(rail).not.toBeNull();
-    expect(rail?.getAttribute('aria-label')).toBe('Cultivator Cave navigation');
-    expect(rail?.querySelectorAll('nav[aria-label="Cultivator Cave navigation"]')).toHaveLength(1);
+    expect(rail?.getAttribute('aria-label')).toBe('Library pathways');
+    const pathways = rail!.querySelector('nav[aria-label="Library pathways"]')!;
+    expect(pathways).not.toBeNull();
+    // The Cave no longer brings a second, sparse rail: its pages live under Profile.
+    expect(rail?.querySelectorAll('nav[aria-label="Cultivator Cave navigation"]')).toHaveLength(0);
+    // The footer (Settings) sits in the same panel, below the navigation list.
+    const panel = pathways.closest('[data-slot="navigation-panel"]')!;
+    const names = Array.from(panel.querySelectorAll('button, a')).map(element => element.textContent?.trim());
+    for (const label of ['Home', 'Create', 'Discover', 'Profile', 'Stories', 'Rewards', 'Settings']) expect(names).toContain(label);
+    const current = Array.from(pathways.querySelectorAll('[aria-current]')).map(element => element.textContent?.trim());
+    expect(current).toContain('Profile');
     // One visible rail: the shell column, never a second bare aside beside it.
     expect(container.querySelectorAll('aside')).toHaveLength(1);
     // The workspace keeps its own scrolling region beside the rail.

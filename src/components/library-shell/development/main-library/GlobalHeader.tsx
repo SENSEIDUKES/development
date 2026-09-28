@@ -4,15 +4,17 @@ import { WorkspaceHeader } from '../WorkspaceHeader';
 import type { HeaderSearchItem } from '../WorkspaceHeaderUtilities';
 import { LibraryProfileIcon as SENProfileIcon } from '@seihouse/library-ui';
 import { LIBRARY_EMBLEM } from '../libraryBrand';
+import { DaoInsights } from './DaoInsights';
 import './main-library-header.css';
 
 /**
  * Home supplies its commands to the same header as every workspace.
  *
- * Dao Insights is no longer a header item: it lives in Home's own content,
- * between the featured area and the collection tabs — see
- * `MainLibraryHomeInsights` — so the header row keeps the full page title, Help
- * and Search at every width.
+ * Dao Insights sits in the header's center on laptops and wider, where the
+ * Pathways sidebar carries the Library identity. On phones and tablets it lives
+ * in Home's own content, between the featured area and the collection tabs —
+ * see `MainLibraryHomeInsights` — so the phone header keeps the full title,
+ * Help and Search.
  */
 export function GlobalHeader({ landmark = 'banner' }: {
   /** `'none'` when `WorkspaceShell` already provides the banner landmark. */
@@ -42,7 +44,9 @@ export function GlobalHeader({ landmark = 'banner' }: {
     { id: 'manga', label: 'Manga Studio', description: 'Visualize your chapters', icon: PenTool, disabled: true, title: 'Coming Soon', onAction: () => {} },
     { id: 'battles', label: 'Qi Battles', description: 'Test your cultivation realm', icon: Sword, disabled: true, title: 'Coming Soon', onAction: () => {} },
   ];
-  return <WorkspaceHeader title="Celestial Library" landmark={landmark}
+  // On laptops the Pathways sidebar carries the identity, so Dao Insights takes
+  // the header's center — its original home. Phones keep it in Home content.
+  return <WorkspaceHeader title="Celestial Library" landmark={landmark} center={<DaoInsights />}
     emblem={LIBRARY_EMBLEM}
     home={{ href: '/', label: 'Return to Home', onNavigate: home }}
     searchItems={items} />;

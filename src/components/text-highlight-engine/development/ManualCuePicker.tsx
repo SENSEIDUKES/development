@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { INLINE_AUDIO_CUE_CATEGORIES, type ResolvedAudioMoment } from '../../../audio/inlineAudio';
+import { SOUND_CUE_RULES } from '../../../audio/soundCueRules';
 import { useNarrativeAudio } from '../../../audio/playback';
 import { isMediaResourceProvenance, type MediaCatalog } from '../../../audio/media';
 import { isPublicHttpsMediaUrl } from '../../../audio/mediaUrl';
@@ -66,7 +67,11 @@ export function ManualCuePicker({ block, selection, catalog, existing, occupiedS
         ? 'This exact text position cannot be anchored. Select a different phrase.'
         : result.reason === 'overlapping-placement'
           ? 'This passage overlaps an existing cue. Select a separate passage.'
-          : 'This selection or cue is no longer available. Select the passage again.');
+          : result.reason === 'partial-word'
+            ? 'A Sound Cue sits on whole words. Select the whole word.'
+            : result.reason === 'too-many-words'
+              ? `Sound Cues fit 1–${SOUND_CUE_RULES.maxWords} words. Select the action itself.`
+              : 'This selection or cue is no longer available. Select the passage again.');
       return;
     }
     onPlace(result.moment, selection);

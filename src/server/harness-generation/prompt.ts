@@ -3,7 +3,7 @@ import { ARC_LENGTH, ARC_PLAN_SCHEMA, createArcChapterPosition } from '@seihouse
 import { HARNESS_CREATURE_EVENT_TYPES, HARNESS_CREATURE_SIZES, HARNESS_DIALOGUE_DELIVERIES, HARNESS_FATE_OUTCOMES, HARNESS_MANIFESTATION_MENTIONS, HARNESS_MANIFESTATION_TYPES, HARNESS_SOUND_CUE_CATEGORIES, HARNESS_SOUND_CUE_ENTITY_TYPES, HARNESS_SOUNDSCAPE_REGIONS, HARNESS_SYSTEM_PANEL_MEANINGS, HARNESS_SYSTEM_PANEL_PRESENTATIONS } from '@seihouse/sen/harness-generation';
 import { type HarnessArcRequest, type HarnessChapterDirection, type HarnessGenerationRequest, type HarnessStoryMode, type HarnessMemoryRecoveryRequest, type HarnessMissionReminder, type HarnessRequestMeasurement, type ImmediateChapterRequest, type PacketSectionId, type StoryInformationPacket } from '@seihouse/sen/harness-generation';
 import { GENERATION_PACKET_BUDGET } from '@seihouse/sen/harness-generation';
-import { CHAPTER_FUNCTIONS, HARNESS_MEMORY_CATEGORIES } from '@seihouse/sen/harness-generation';
+import { CHAPTER_FUNCTIONS, HARNESS_MEMORY_CATEGORIES, HARNESS_SIGNAL_LIMITS } from '@seihouse/sen/harness-generation';
 
 const memoryEntryProperties = {
     details: { type: 'object', properties: {
@@ -111,7 +111,8 @@ export const HARNESS_CHAPTER_RESPONSE_SCHEMA = {
       region: { type: 'string', enum: [...HARNESS_SOUNDSCAPE_REGIONS] },
       tags: tagList, intensity: { type: 'number' },
     }, required: ['anchorText', 'mood'] } },
-    soundCues: { type: 'array', items: { type: 'object', properties: {
+    // The chapter's Sound Cue cap. Word counts stay out of this contract: the model gives direction, the HARNESS places.
+    soundCues: { type: 'array', maxItems: HARNESS_SIGNAL_LIMITS.soundCues, items: { type: 'object', properties: {
       anchorText: { type: 'string', description: 'The exact audible action phrase from a paragraph, never an entity name.' },
       occurrenceIndex,
       category: { type: 'string', enum: [...HARNESS_SOUND_CUE_CATEGORIES] },

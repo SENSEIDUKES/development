@@ -2,6 +2,7 @@ import { getByUrl, parseAudioCues, type AudioCue, type AudioCueCategory, type Au
 import { extractReaderVisibleAudioText } from './readerVisibleText';
 import { isMediaResourceProvenance, type MediaResourceProvenance } from './media';
 import { isPublicHttpsMediaUrl } from './mediaUrl';
+import { SOUND_CUE_RULES, soundCueWordIssue } from './soundCueRules';
 
 export const INLINE_AUDIO_CUE_CATEGORIES = [
   'beasts',
@@ -96,7 +97,9 @@ export type WorldCueResolution =
         | 'phrase-not-found'
         | 'occurrence-not-found'
         | 'unresolved-cue'
-        | 'overlapping-placement';
+        | 'overlapping-placement'
+        | 'partial-word'
+        | 'too-many-words';
       message: string;
     };
 
@@ -142,7 +145,8 @@ export interface InlineAudioTextSegment {
 const EMPTY_AUDIO_CUES = parseAudioCues([]);
 const INLINE_CATEGORY_SET = new Set<AudioCueCategory>(INLINE_AUDIO_CUE_CATEGORIES);
 const RELATED_ENTITY_TYPE_SET = new Set<string>(WORLD_CUE_RELATED_ENTITY_TYPES);
-export const MAX_WORLD_CUE_MOMENTS_PER_CHAPTER = 24;
+/** The chapter's cap on placed Sound Cues, from the one set of finished-cue rules. */
+export const MAX_WORLD_CUE_MOMENTS_PER_CHAPTER = SOUND_CUE_RULES.maxPerChapter;
 export const MAX_WORLD_CUE_TRIGGER_LENGTH = 240;
 export const MAX_WORLD_CUE_TAGS = 8;
 const MAX_BLOCK_ID_LENGTH = 160;
@@ -549,6 +553,15 @@ export function resolveWorldCueIntent(
   const selectedOffset = exactOccurrenceOffset(blockText, intent.triggerPhrase, intent.occurrenceIndex);
   if (selectedOffset < 0) {
     return { ok: false, reason: 'occurrence-not-found', message: 'The requested zero-based phrase occurrence is absent.' };
+  }
+  // Short-term safety on today's generation path: whatever the model's phrase, the finished cue must meet the
+  // Sound Cue rules — whole words, never mid-word, at most five. The model's direction is not an address.
+  const wordIssue = soundCueWordIssue(blockText, selectedOffset, selectedOffset + intent.triggerPhrase.length);
+  if (wordIssue === 'too-many-words') {
+    return { ok: false, reason: 'too-many-words', message: `A placed Sound Cue holds 1–${SOUND_CUE_RULES.maxWords} whole words.` };
+  }
+  if (wordIssue) {
+    return { ok: false, reason: 'partial-word', message: 'A placed Sound Cue starts and ends on whole words, never inside one.' };
   }
   const cue = resolveCatalogCueForWorldCue(intent, loaded);
   if (!cue) {

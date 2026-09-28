@@ -25,6 +25,13 @@ export const describeSchemaShape = (schema: unknown) => {
 };
 
 describe('HARNESS chapter response schema shape', () => {
+  it('caps Sound Cues at the chapter limit without writing word rules into the model contract', () => {
+    const soundCues = (HARNESS_CHAPTER_RESPONSE_SCHEMA.properties as unknown as Record<string, { maxItems?: number }>).soundCues;
+    expect(soundCues.maxItems).toBe(10);
+    // Word counts belong to placement: the model gives direction, the HARNESS places the finished cue.
+    expect(JSON.stringify(soundCues)).not.toMatch(/\bwords?\b/i);
+  });
+
   it('is compact, shallow, and free of conditional or nested application contracts', () => {
     const shape = describeSchemaShape(HARNESS_CHAPTER_RESPONSE_SCHEMA);
     expect(shape.anyOfBranches).toBe(0);

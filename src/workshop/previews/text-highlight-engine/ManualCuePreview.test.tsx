@@ -113,13 +113,14 @@ describe('Workshop Cues overlay', () => {
     expect(chips('.sen-overlay-pin')).toEqual(['¶1', '1', '2', '3', '4', '5', '¶2', '6', '7', '8', '9', '¶3', '10', '11', '12', '13', '14', '15']);
     expect(chips('.sen-overlay-pin[data-placement="margin"]')).toEqual(['¶1', '¶2', '¶3']);
     expect(legend()?.textContent).toContain('The model writes it P2 S6.');
-    expect(Array.from(legend()!.querySelectorAll('li'), item => item.textContent)).toEqual(['Sound Cue', 'Words changed']);
+    // The changed-words key appears only when something on the page carries it.
+    expect(Array.from(legend()!.querySelectorAll('li'), item => item.textContent)).toEqual(['Sound Cue']);
     expect(host.querySelectorAll('.sen-overlay-mark')).toHaveLength(0);
 
     await selectRoar(); openCue(); placeFirstCue();
-    await select(block().firstChild!, 0, 4); openCue(); click('Sentence'); placeFirstCue();
+    await select(block().firstChild!, 0, 4); openCue(); placeFirstCue();
     expect(host.querySelectorAll('.sen-overlay-mark')).toHaveLength(2);
-    // Words or a whole sentence, every Sound Cue shares one color.
+    // Every Sound Cue shares one color: color says what an effect is.
     expect(new Set(Array.from(host.querySelectorAll<HTMLElement>('.sen-overlay-mark'), mark => mark.style.background)).size).toBe(1);
     // Tints only: the address is read from the numbers and the inspector, never from tags over the words.
     expect(host.querySelector('.sen-overlay-label')).toBeNull();
@@ -190,30 +191,56 @@ describe('Workshop manual Sound Cue flow', () => {
     expect(replace.mock.lastCall?.[0].source).toBe(previewSource);
   });
 
-  it('attaches a cue to the whole saved sentence around a selection', async () => {
-    const across = ACTION.indexOf('courtyard. Somewhere');
-    await selectText(0, across, across + 'courtyard. Somewhere'.length);
-    openCue(); click('Sentence');
-    expect(document.querySelector('.sen-manuscript-cue-panel [role="status"]')?.textContent).toContain('covers more than one sentence');
-    act(() => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); });
-
-    await select(block().firstChild!, ROAR_AT + 4, ROAR_AT + 9);
+  it('holds a Sound Cue on 1–5 whole words: a partial selection widens to its words, a longer one cannot hold a cue', async () => {
+    // "Somewher" is placed on the whole word.
+    const somewhere = ACTION.indexOf('Somewhere');
+    await selectText(0, somewhere, somewhere + 'Somewher'.length);
     openCue();
-    click('Sentence');
-    expect(document.querySelector('.sen-manual-cue-picker__heading')?.textContent).toBe(`Sound Cue for “${ROAR_SENTENCE}”`);
+    expect(document.querySelector('.sen-manual-cue-picker__heading')?.textContent).toBe('Sound Cue for “Somewhere”');
+    expect(document.querySelector('[aria-label="Attach to"]')).toBeNull();
     placeFirstCue();
-    expect(inlinePhrase().textContent).toBe(ROAR_SENTENCE);
-    expect(attachments()[0].textContent).toContain('Sentence · Paragraph 1 · Sentence 3');
+    expect(inlinePhrase().textContent).toBe('Somewhere');
+    expect(attachments()[0].textContent).toContain('Words · Paragraph 1 · Sentence 3');
 
-    const smoke = inlinePhrase().textContent!.indexOf('smoke');
-    await select(inlinePhrase().firstChild!, smoke, smoke + 'smoke'.length);
-    editTo('ash'); click('Save');
+    // Six words stay unavailable, with the reason in place.
+    const passage = ACTION.indexOf('Lin Wei drew his sword, planted');
+    await selectText(0, passage, passage + 'Lin Wei drew his sword, planted'.length);
+    click('Media'); click('Audio');
+    const cueAction = document.querySelector<HTMLButtonElement>('.sen-text-highlight-controls button[aria-label="Cue"]')!;
+    expect(cueAction.disabled).toBe(true);
+    expect(document.getElementById(cueAction.getAttribute('aria-describedby')!)?.textContent).toBe('Sound Cues fit 1–5 words');
+  });
+
+  it('holds at most ten Sound Cues in a chapter, while a placed cue can still change its sound', async () => {
+    for (const word of ['iron', 'gate', 'Dust', 'smoke', 'beast', 'claws', 'sword', 'tiles', 'lunge', 'bone']) {
+      const at = ACTION.indexOf(word);
+      await selectText(0, at, at + word.length); openCue(); placeFirstCue();
+    }
+    expect(attachments()).toHaveLength(10);
+    const wall = ACTION.indexOf('wall');
+    await selectText(0, wall, wall + 'wall'.length);
+    click('Media'); click('Audio');
+    const cueAction = document.querySelector<HTMLButtonElement>('.sen-text-highlight-controls button[aria-label="Cue"]')!;
+    expect(cueAction.disabled).toBe(true);
+    expect(document.getElementById(cueAction.getAttribute('aria-describedby')!)?.textContent).toBe('10 of 10 Sound Cues placed');
+    act(() => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); });
+    const sword = ACTION.indexOf('sword');
+    await selectText(0, sword, sword + 'sword'.length);
+    openCue();
+    expect(document.querySelector('.sen-manual-cue-picker__heading')?.textContent).toBe('Sound Cue for “sword”');
+  });
+
+  it('removes the cues under a selection from the Remove bar', async () => {
+    await selectRoar(); openCue(); placeFirstCue();
+    expect(attachments()).toHaveLength(1);
+    const beast = ACTION.indexOf('beast');
+    await selectText(0, beast, beast + 'beast'.length);
+    act(() => { block().dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2, clientX: 120, clientY: 210 })); });
+    expect(document.querySelector('.sen-text-highlight-controls')?.getAttribute('data-mode')).toBe('remove');
+    click('Remove cue here');
+    expect(attachments()).toHaveLength(0);
     expect(block().querySelectorAll('[data-cue-annotation]')).toHaveLength(0);
-    expect(attachments()[0].dataset.status).toBe('changed');
-    expect(attachments()[0].textContent).toContain('Sentence · Paragraph 1 · Sentence 3');
-    click('Keep');
-    expect(attachments()[0].dataset.status).toBe('placed');
-    expect(inlinePhrase().textContent).toBe(ROAR_SENTENCE.replace('smoke', 'ash'));
+    expect(prose()).toBe(ACTION);
   });
 
   it('reselects annotated prose for replacement and removal without duplicate glyphs', async () => {
@@ -254,7 +281,7 @@ describe('Workshop edits keep attachments on their words', () => {
     expect(block().querySelectorAll('[data-cue-annotation]')).toHaveLength(0);
     expect(attachments()).toHaveLength(1);
     expect(attachments()[0].dataset.status).toBe('changed');
-    expect(attachments()[0].textContent).toContain('An edit replaced these words');
+    expect(attachments()[0].textContent).toContain('An edit changed these words');
     act(() => attachments()[0].querySelector<HTMLButtonElement>('button')!.click());
     expect(attachments()).toHaveLength(0);
   });

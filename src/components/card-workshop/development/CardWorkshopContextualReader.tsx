@@ -65,7 +65,7 @@ const CONTEXT_CUE_LOCATION: CodexTerm = {
 const CONTEXT_WORLD_CUE_INTENTS = [
   {
     blockId: CONTEXT_OPENING_BLOCK_ID,
-    triggerPhrase: 'The Rain Court bell tolled once',
+    triggerPhrase: 'Rain Court bell tolled once',
     occurrenceIndex: 0,
     sourceCategory: 'locations',
     variation: 'signatures',

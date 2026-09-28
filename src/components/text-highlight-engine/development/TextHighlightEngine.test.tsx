@@ -3,6 +3,7 @@ import { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TextHighlightEngine } from './TextHighlightEngine';
+import type { PassageAction } from '../shared/actions';
 import type { PassageSelection, TextHighlightBlock } from '../shared/selection';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -13,10 +14,11 @@ let setFixed: (fixed: boolean) => void;
 const changed = vi.fn();
 const selections = vi.fn<(selection: PassageSelection | null) => void>();
 const initial = [{ id: 'a', text: 'Before middle after.' }, { id: 'b', text: 'Another paragraph.' }];
-function Host() {
+function Host({ actions, removeActions }: { actions?: PassageAction[]; removeActions?: PassageAction[] }) {
   const [blocks, setBlocks] = useState(initial); update = setBlocks;
   const [fixed, setFixedState] = useState(false); setFixed = setFixedState;
-  return <TextHighlightEngine blocks={blocks} onBlocksChange={(next, edit) => { changed(next, edit); setBlocks(next); }} onSelectionChange={selections} editable={!fixed} />;
+  return <TextHighlightEngine blocks={blocks} onBlocksChange={(next, edit) => { changed(next, edit); setBlocks(next); }} onSelectionChange={selections}
+    editable={!fixed} actions={actions} removeActions={removeActions} />;
 }
 const button = (name: string) => Array.from(document.querySelectorAll('button')).find(node => node.textContent === name);
 const click = (name: string) => act(() => button(name)!.click());
@@ -232,5 +234,114 @@ describe('Text Highlight Engine', () => {
     });
     await act(async () => { await vi.runAllTimersAsync(); });
     click('Edit'); expect(document.querySelector('[contenteditable]')?.textContent).toBe('middle');
+  });
+});
+
+describe('Action Bar Remove mode', () => {
+  const controls = () => document.querySelector<HTMLElement>('.sen-text-highlight-controls');
+  const barButton = (name: string) => Array.from(controls()?.querySelectorAll('button') ?? []).find(node => node.textContent === name);
+  /** A right-click at a point on the stubbed selection line (left 100–170, top 200–222). */
+  const rightClick = (target: Element = block(), x = 120, y = 210) => {
+    const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2, clientX: x, clientY: y });
+    act(() => { target.dispatchEvent(event); });
+    return event;
+  };
+  const press = (key: string, shiftKey = false) => {
+    const event = new KeyboardEvent('keydown', { key, shiftKey, bubbles: true, cancelable: true });
+    act(() => { document.dispatchEvent(event); });
+    return event;
+  };
+
+  it('opens on a right-click on the selection instead of the browser menu, then deletes and undoes', async () => {
+    await select();
+    expect(rightClick().defaultPrevented).toBe(true);
+    expect(controls()?.dataset.mode).toBe('remove');
+    expect(controls()?.getAttribute('aria-label')).toBe('Remove from passage');
+    expect(controls()?.dataset.layout).toBe('stacked');
+    expect(barButton('Edit')).toBeUndefined();
+    expect(barButton('Delete Passage')?.hasAttribute('data-destructive')).toBe(true);
+    act(() => barButton('Delete Passage')!.click());
+    expect(block().textContent).toBe('Before  after.');
+    expect(changed.mock.calls.at(-1)![1].operation).toBe('delete');
+    // Undo sits in the Remove bar too while the deletion can be undone.
+    await select(0, 6);
+    rightClick();
+    act(() => barButton('Undo')!.click());
+    expect(block().textContent).toBe(initial[0].text);
+    expect(changed.mock.calls.at(-1)![1].operation).toBe('undo');
+  });
+
+  it('selects the word under a right-click when nothing is selected, and leaves the browser menu elsewhere', () => {
+    Object.defineProperty(document, 'caretRangeFromPoint', { configurable: true, value: () => {
+      const range = document.createRange(); range.setStart(block().firstChild!, 9); range.collapse(true); return range;
+    } });
+    try {
+      expect(rightClick().defaultPrevented).toBe(true);
+      expect(selections).toHaveBeenLastCalledWith({ blockId: 'a', selectedText: 'middle', startOffset: 7, endOffset: 13 });
+      expect(controls()?.dataset.mode).toBe('remove');
+      expect(rightClick(document.body).defaultPrevented).toBe(false);
+    } finally { delete (document as { caretRangeFromPoint?: unknown }).caretRangeFromPoint; }
+  });
+
+  it('opens from the ContextMenu key and Shift+F10 with focus on its first action, swallowing the browser menu that follows', async () => {
+    await select();
+    expect(press('ContextMenu').defaultPrevented).toBe(true);
+    expect(controls()?.dataset.mode).toBe('remove');
+    expect(document.activeElement?.textContent).toBe('Delete Passage');
+    expect(rightClick(document.body).defaultPrevented).toBe(true);
+    press('Escape');
+    await select();
+    expect(press('F10', true).defaultPrevented).toBe(true);
+    expect(controls()?.dataset.mode).toBe('remove');
+  });
+
+  it('is reached on touch screens from the bar itself, and Back returns to Add', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: query === '(pointer: coarse)', media: query, addEventListener() {}, removeEventListener() {} }));
+    await select();
+    // A long press is the phone's own gesture, never a right-click.
+    act(() => { const down = new Event('pointerdown', { bubbles: true }); Object.defineProperty(down, 'pointerType', { value: 'touch' }); block().dispatchEvent(down); });
+    expect(rightClick().defaultPrevented).toBe(false);
+    expect(barButton('Remove')).toBeDefined();
+    act(() => barButton('Remove')!.click());
+    expect(controls()?.dataset.mode).toBe('remove');
+    act(() => barButton('Back')!.click());
+    expect(controls()?.dataset.mode).toBe('add');
+    expect(barButton('Edit')).toBeDefined();
+  });
+
+  it('belongs to one selection: a new selection is back in Add mode', async () => {
+    await select();
+    rightClick();
+    expect(controls()?.dataset.mode).toBe('remove');
+    await select(0, 6);
+    expect(controls()?.dataset.mode).toBe('add');
+  });
+
+  it('does not exist on fixed text, which keeps the browser menu', async () => {
+    act(() => setFixed(true));
+    await select();
+    expect(rightClick().defaultPrevented).toBe(false);
+    expect(press('ContextMenu').defaultPrevented).toBe(false);
+    expect(controls()).toBeNull();
+  });
+
+  it('shows an unavailable action dimmed with its reason, and runs the host removals', async () => {
+    const removeCue = vi.fn(() => null);
+    act(() => root.render(<Host
+      actions={[{ id: 'cue', label: 'Cue', unavailable: () => 'Sound Cues fit 1–5 words', onActivate: () => null }]}
+      removeActions={[{ id: 'remove-cue', label: 'Remove cue here', unavailable: selection => selection.selectedText === 'middle' ? undefined : 'No Sound Cue here', onActivate: removeCue }]} />));
+    await select();
+    const cue = controls()!.querySelector<HTMLButtonElement>('button[aria-label="Cue"]')!;
+    expect(cue.disabled).toBe(true);
+    expect(document.getElementById(cue.getAttribute('aria-describedby')!)?.textContent).toBe('Sound Cues fit 1–5 words');
+    rightClick();
+    const removal = controls()!.querySelector<HTMLButtonElement>('[data-destructive]:not([aria-label])')!;
+    expect(removal.textContent).toBe('Remove cue here');
+    act(() => removal.click());
+    expect(removeCue).toHaveBeenCalledWith(expect.objectContaining({ selectedText: 'middle' }), expect.any(Function));
+    expect(controls()).toBeNull();
+    await select(0, 6);
+    rightClick();
+    expect(controls()!.querySelector<HTMLButtonElement>('button[aria-label="Remove cue here"]')?.disabled).toBe(true);
   });
 });

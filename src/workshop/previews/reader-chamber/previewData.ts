@@ -33,7 +33,7 @@ export const READER_WORLD_CUE_INTENTS = [
   },
   {
     blockId: INLINE_AUDIO_BLOCK_ID,
-    triggerPhrase: 'Mei Lin drew the Ashen Sword',
+    triggerPhrase: 'drew the Ashen Sword',
     occurrenceIndex: 0,
     sourceCategory: 'weapons',
     variation: 'unsheathe',
@@ -51,7 +51,7 @@ export const READER_WORLD_CUE_INTENTS = [
   },
   {
     blockId: INLINE_AUDIO_BLOCK_ID,
-    triggerPhrase: 'the Collapsed Gate of the Ninth Meridian tolled once',
+    triggerPhrase: 'the Ninth Meridian tolled once',
     occurrenceIndex: 0,
     sourceCategory: 'locations',
     variation: 'signatures',
@@ -60,7 +60,7 @@ export const READER_WORLD_CUE_INTENTS = [
   },
   {
     blockId: INLINE_AUDIO_BLOCK_ID,
-    triggerPhrase: 'the Ninth Meridian Sect chanted in answer',
+    triggerPhrase: 'Meridian Sect chanted in answer',
     occurrenceIndex: 0,
     sourceCategory: 'factions',
     variation: 'general',

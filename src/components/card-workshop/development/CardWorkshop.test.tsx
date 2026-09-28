@@ -1086,14 +1086,14 @@ describe('CardWorkshopView', () => {
     const rainCourtCodexAction = [...(reader?.querySelectorAll<HTMLElement>('[role="button"]') ?? [])]
       .find(element => element.textContent === 'Rain Court');
     const rainCourtCueAction = reader?.querySelector<HTMLButtonElement>(
-      'button[aria-label="Play World Cue for The Rain Court bell tolled once"]',
+      'button[aria-label="Play World Cue for Rain Court bell tolled once"]',
     );
     expect(rainCourtCodexAction).toBeTruthy();
     expect(rainCourtCueAction).toBeTruthy();
     expect(rainCourtCueAction).not.toBe(rainCourtCodexAction);
-    expect(rainCourtCueAction?.closest('[data-cue-annotation="The Rain Court bell tolled once"]')?.textContent
+    expect(rainCourtCueAction?.closest('[data-cue-annotation="Rain Court bell tolled once"]')?.textContent
       ?.replace(/\u2060/g, ''))
-      .toBe('The Rain Court bell tolled once');
+      .toBe('Rain Court bell tolled once');
 
     const foxCueAction = reader?.querySelector<HTMLButtonElement>(
       'button[aria-label="Play World Cue for a Vermilion Debt Fox growled"]',
@@ -1290,7 +1290,7 @@ describe('CardWorkshopView', () => {
       <LibraryPresentationProvider>{renderWithDevAudio(<CardWorkshopView initialMode="contextual" />)}</LibraryPresentationProvider>,
     ));
 
-    await clickButton('Play World Cue for The Rain Court bell tolled once');
+    await clickButton('Play World Cue for Rain Court bell tolled once');
     await act(async () => {
       // The shared playback bridge waits 100ms for its queue commit.
       await vi.advanceTimersByTimeAsync(100);

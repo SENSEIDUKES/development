@@ -1,12 +1,30 @@
 import { INLINE_AUDIO_CUE_CATEGORIES, resolvePlayableAudioMoment, type ResolvedAudioMoment } from '../../../audio/inlineAudio';
 import { isMediaResourceProvenance, type MediaCatalog } from '../../../audio/media';
 import { isPublicHttpsMediaUrl } from '../../../audio/mediaUrl';
+import { soundCueWordIssue } from '../../../audio/soundCueRules';
 import type { AudioCue } from '../../../audio/cues';
+import { wholeWordRange } from '../../../narrative/words';
 import { isValidPassage, type PassageSelection, type TextHighlightBlock } from './selection';
 
 export type ManualCueResult =
   | { ok: true; moment: ResolvedAudioMoment }
-  | { ok: false; reason: 'stale-selection' | 'unrepresentable-occurrence' | 'overlapping-placement' | 'unavailable-cue' };
+  | { ok: false; reason: 'stale-selection' | 'partial-word' | 'too-many-words' | 'unrepresentable-occurrence' | 'overlapping-placement' | 'unavailable-cue' };
+
+export type SoundCueSelection =
+  | { ok: true; selection: PassageSelection }
+  | { ok: false; reason: 'no-words' | 'too-many-words' };
+
+/**
+ * The whole words a selection touches, as a Sound Cue holds them: a start or
+ * end inside a word widens to the word, and edge spaces or punctuation fall
+ * away ("Somewher" → "Somewhere"). Otherwise, why the words cannot hold one.
+ */
+export function snapSoundCueSelection(block: TextHighlightBlock, selection: PassageSelection, locale?: string): SoundCueSelection {
+  const whole = wholeWordRange(block.text, selection.startOffset, selection.endOffset, locale);
+  if (!whole) return { ok: false, reason: 'no-words' };
+  if (soundCueWordIssue(block.text, whole.start, whole.end, locale) === 'too-many-words') return { ok: false, reason: 'too-many-words' };
+  return { ok: true, selection: { blockId: block.id, startOffset: whole.start, endOffset: whole.end, selectedText: block.text.slice(whole.start, whole.end) } };
+}
 
 /** Exact occurrence semantics match the existing inline renderer, including its non-overlapping search. */
 function occurrenceAt(text: string, phrase: string, startOffset: number): number | null {
@@ -40,6 +58,9 @@ export function createManualCueMoment(
   occupiedSelections: readonly PassageSelection[] = [],
 ): ManualCueResult {
   if (!isValidPassage(block, selection)) return { ok: false, reason: 'stale-selection' };
+  // A cue never sits mid-word or on a whole passage; hosts snap selections first, this keeps every placement honest.
+  const wordIssue = soundCueWordIssue(block.text, selection.startOffset, selection.endOffset);
+  if (wordIssue) return { ok: false, reason: wordIssue === 'too-many-words' ? 'too-many-words' : 'partial-word' };
   if (occupiedSelections.some(occupied => occupied.blockId === block.id
     && selection.startOffset < occupied.endOffset && selection.endOffset > occupied.startOffset)) {
     return { ok: false, reason: 'overlapping-placement' };

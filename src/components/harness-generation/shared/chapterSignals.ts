@@ -1,5 +1,6 @@
 import { SOUNDSCAPE_REGIONS, type SoundscapeRegion } from '../../../audio/soundscapes';
 import { INLINE_AUDIO_CUE_CATEGORIES, WORLD_CUE_RELATED_ENTITY_TYPES, type InlineAudioCueCategory, type WorldCueRelatedEntityType } from '../../../audio/inlineAudio';
+import { SOUND_CUE_RULES } from '../../../audio/soundCueRules';
 import { STORY_ENTITY_TYPES, type StoryBlockMetadata, type StoryEntityType, type SystemEvent } from '../../../narrative/chapter';
 import type { HarnessWarning } from '../../../narrative/generation';
 
@@ -47,7 +48,8 @@ export const HARNESS_CREATURE_SIZES = ['tiny', 'small', 'medium', 'large', 'gian
 
 /** Upper bounds keep one malformed or runaway family from displacing the chapter. */
 export const HARNESS_SIGNAL_LIMITS: Record<HarnessSignalFamily, number> = {
-  dialogue: 200, manifestations: 60, systemPanels: 24, soundscapes: 24, soundCues: 24, creatureEvents: 24,
+  // Sound Cues share the finished-cue chapter cap; the rest are sanity bounds on the reply.
+  dialogue: 200, manifestations: 60, systemPanels: 24, soundscapes: 24, soundCues: SOUND_CUE_RULES.maxPerChapter, creatureEvents: 24,
 };
 const MAX_ANCHOR_LENGTH = 400;
 const MAX_TAGS = 8;

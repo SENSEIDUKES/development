@@ -1,7 +1,7 @@
 # Portable narrative audio
 
 - **Created:** 2026-08-19
-- **Last updated:** 2026-09-27
+- **Last updated:** 2026-09-28
 - **Ownership status:** SEN contracts separated from Library catalogs and host playback
 
 ## Ownership
@@ -17,6 +17,7 @@ The current split is:
 | Capability | Owner | Source |
 | --- | --- | --- |
 | Cue intent, validation, exact prose placement, resolved cue shape | SEN | `cues.ts`, `inlineAudio.ts` |
+| Finished Sound Cue rules (1–5 whole words, at most 10 per chapter) | SEN | `soundCueRules.ts` |
 | Portable soundscape intent and resolved track shape | SEN | `soundscapes.ts` |
 | Media URL safety and generic media records | SEN | `mediaUrl.ts`, `media.ts` |
 | Host-supplied playback port | SEN contract | `playback.tsx` |
@@ -36,6 +37,18 @@ catalog row, provider, credential, entitlement, or billing record. A host
 resolver validates the exact action phrase against the accepted story block and
 returns an immutable resolved record. Only that accepted record may travel with
 the chapter.
+
+A placed Sound Cue is 1–5 whole words, never starting or ending inside a word,
+and a chapter holds at most ten (`SOUND_CUE_RULES`, `soundCueWordIssue`). These
+describe the finished attachment, not what a model writes: manual placement
+meets them as a person selects, and `resolveWorldCueIntent` refuses a resolved
+range that breaks them (`partial-word`, `too-many-words`) while
+`MAX_WORLD_CUE_MOMENTS_PER_CHAPTER` follows the same cap. Intent validation
+(`validateWorldCueIntent`) adds no word limit, and saved chapters are never
+re-checked. On today's generation path this is short-term safety; the model's
+semantic-intent contract on the manuscript's coordinates comes next.
+Soundscapes, when their placement is built, are passage-level only and at most
+two per chapter.
 
 ```ts
 interface WorldCueIntent {

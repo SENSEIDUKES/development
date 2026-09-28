@@ -23,7 +23,7 @@ accessibility, viewport fit, power use, and look and feel. The Workshop's
 | Selection Tracker | `development/useSelectionTracker.ts`, `shared/selection.ts`, `development/measure.ts` | Reads the browser selection; keeps the canonical selection (paragraph + exact positions); measures it; clears it on Escape or an outside tap; moves the first Tab of each selection into the Action Bar |
 | Selection Highlight | `development/SelectionHighlight.tsx` | The tinted marks over the selected words |
 | Action Bar | `development/ActionBar.tsx`, `shared/actions.ts` | The one floating bar: Edit, the host's nested actions, Back, an action's panel, and Save / Delete Passage while editing; its position, touch sizing and labels. On touch screens (`pointer: coarse`) its buttons stack vertically, and while the phone's own selection menu can show it keeps a 72 px band above and below the selection clear |
-| Overlay Layer | `development/OverlayLayer.tsx`, `shared/overlay.ts` | Draws a host's `overlay` — tinted ranges (`OverlayMark`) and numbered chips (`OverlayPin`) — over the prose; hidden from assistive technology, never takes taps, never changes text, no work while absent |
+| Overlay Layer | `development/OverlayLayer.tsx`, `shared/overlay.ts` | Draws a host's `overlay` with the prose without covering a word: tints behind the text (`OverlayMark`) and quiet numbers (`OverlayPin`) in the start margin or the line spacing; hidden from assistive technology, never takes taps, never changes text, no work while absent |
 | Inline Editor | `development/InlineEditor.tsx` | The plain-text draft replacing only the selected words, including line breaks and IME typing |
 | Undo Notice | `development/UndoNotice.tsx` | "Passage deleted · Undo" after an explicit deletion |
 | Cue Picker | `development/ManualCuePicker.tsx`, `shared/manualCue.ts` | Choosing, previewing and placing a Sound Cue from the host catalog |
@@ -52,6 +52,18 @@ optional `actions` tree accepts nested generic `PassageAction` branches and
 leaf callbacks that receive the immutable `PassageSelection` and a close
 callback. Only the host decides which actions to expose. `renderBlockText` lets
 a host render decorations around prose while keeping the block text canonical.
+
+The optional `overlay` draws a host's map-mode view with the prose, never on
+top of a letter. `marks` are translucent tints behind exact words. `pins` are
+quiet numbers in the white space: `margin` sits in the start margin level with
+a line's baseline (paragraph numbers, e.g. ¶2); `raised` sits in the line
+spacing just above a character, like a verse number (sentence numbers). They
+use the system face at the prose's own color and reduced strength, with no
+box. Raised numbers rely on the engine's open line spacing (1.85, about 12 px
+between lines); margin numbers need about 30 px of start margin from the host
+(the Workshop keeps 32 px).
+The layer is decorative (`aria-hidden`), never takes taps, does no work while
+`overlay` is absent, and fades in unless the reader prefers reduced motion.
 
 `PassageSelection` contains `blockId`, `selectedText`, `startOffset`, `endOffset`.
 Offsets use UTF-16 code units into the unmodified block text: start inclusive,
@@ -216,6 +228,13 @@ browser evidence out of the consuming surface. No integration was performed.
 
 ## Workshop history
 
+- **2026-09-28:** Overlay numbers redesigned after phone testing: they no longer
+  sit on the words or stack. Paragraph numbers moved to the margin (¶1), and
+  sentence numbers became small raised numbers in the space between lines
+  (1…15, counted through the page), both in the system face at secondary
+  strength. Cue labels gave way to tints with a color key, the legend explains
+  the model's P2 S6 form, the inspector shows the model address of any
+  selection, and overlays fade in unless Reduce Motion is on.
 - **2026-09-26:** Created normalized selection contracts, validated local range
   replacement, minimal Edit/Save, soft gold selection, explicit Delete Passage
   and guarded Undo, with an independent four-paragraph preview.

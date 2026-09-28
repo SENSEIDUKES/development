@@ -265,22 +265,42 @@ for (const [name, browserType, width, height, touch] of [
     assert.equal(await page.locator('[data-testid="manuscript-attachment"][data-status="changed"]').count(), 0);
     assert.equal(await paragraph.locator('.inline-world-cue-annotation__text').textContent(), 'Dust filled the courtyard.');
 
-    // The Cues overlay tints every placed cue with its address and numbers the page as the model sees it.
+    // The Cues overlay tints every placed cue and numbers the page as the model addresses it: ¶ numbers in the
+    // margin, small raised sentence numbers in the line spacing, counted through the page.
     await activate('Cues');
-    // The layer draws only what is on screen and redraws on scroll, so collect each paragraph's numbering in view.
-    const seenPins = new Set();
-    const seenLabels = new Set();
-    for (let index = 0; index < 3; index += 1) {
-      const target = page.locator('[data-sen-text-block]').nth(index);
-      await target.evaluate(element => element.scrollIntoView({ block: 'start' }));
-      await page.waitForFunction(label => Array.from(document.querySelectorAll('.sen-overlay-pin')).some(pin => pin.textContent === label), `P${index + 1}`);
-      for (const label of await page.locator('.sen-overlay-pin').allTextContents()) seenPins.add(label);
-      for (const label of await page.locator('.sen-overlay-label').allTextContents()) seenLabels.add(label);
-    }
-    const expectedPins = ['P1', 'P2', 'P3', ...Array.from({ length: 15 }, (_, index) => `S${index + 1}`)];
-    assert.deepEqual(expectedPins.filter(label => !seenPins.has(label)), [], JSON.stringify([...seenPins]));
-    assert.deepEqual([...seenLabels].sort(), ['Cue · P1 S2 · sentence', 'Cue · P3 S11 · words'], JSON.stringify([...seenLabels]));
-    await paragraph.scrollIntoViewIfNeeded();
+    // The layer is placed on the page, not the screen, so every number exists at once, on screen or not.
+    await page.waitForFunction(() => document.querySelectorAll('.sen-overlay-pin').length === 18);
+    const expectedPins = ['¶1', '1', '2', '3', '4', '5', '¶2', '6', '7', '8', '9', '¶3', '10', '11', '12', '13', '14', '15'];
+    assert.deepEqual(await page.locator('.sen-overlay-pin').allTextContents(), expectedPins);
+    assert.equal(await page.locator('.sen-overlay-label').count(), 0);
+    assert.equal(await page.locator('.sen-overlay-mark[data-overlay-id]').evaluateAll(marks => new Set(marks.map(mark => mark.dataset.overlayId)).size), 2);
+    assert.deepEqual(await page.getByTestId('overlay-legend').locator('li').allTextContents(), ['Words', 'Sentence', 'Paragraph', 'Changed']);
+    // Never over a word: no number touches a letter, another number, or the screen edge, and ¶ numbers sit left of the text.
+    const numbers = await page.evaluate(() => {
+      const letters = [];
+      for (const paragraph of document.querySelectorAll('[data-sen-text-block]')) {
+        const walker = document.createTreeWalker(paragraph, NodeFilter.SHOW_TEXT);
+        for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+          if (!node.data.trim() || node.parentElement.closest('button, [aria-hidden="true"]')) continue;
+          const range = document.createRange(); range.selectNodeContents(node);
+          letters.push(...Array.from(range.getClientRects(), rect => rect.toJSON()).filter(rect => rect.width > 0));
+        }
+      }
+      const pins = Array.from(document.querySelectorAll('.sen-overlay-pin'), pin => ({ label: pin.textContent, placement: pin.dataset.placement, rect: pin.getBoundingClientRect().toJSON() }));
+      const overlaps = (a, b) => a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
+      const textLeft = Math.min(...Array.from(document.querySelectorAll('[data-sen-text-block]'), element => element.getBoundingClientRect().left));
+      const width = document.documentElement.clientWidth;
+      return {
+        coveringLetters: pins.filter(pin => letters.some(letter => overlaps(pin.rect, letter))).map(pin => pin.label),
+        touching: pins.flatMap((pin, index) => pins.slice(index + 1).filter(other => overlaps(pin.rect, other.rect)).map(other => `${pin.label}/${other.label}`)),
+        marginInText: pins.filter(pin => pin.placement === 'margin' && pin.rect.right > textLeft).map(pin => pin.label),
+        offScreen: pins.filter(pin => pin.rect.left < 0 || pin.rect.right > width).map(pin => pin.label),
+        letters: letters.length,
+      };
+    });
+    assert.ok(numbers.letters > 0, JSON.stringify(numbers));
+    assert.deepEqual([numbers.coveringLetters, numbers.touching, numbers.marginInText, numbers.offScreen], [[], [], [], []], JSON.stringify(numbers));
+    await page.getByTestId('overlay-switch').evaluate(element => element.scrollIntoView({ block: 'start' }));
     await page.waitForFunction(() => document.querySelectorAll('.sen-overlay-mark').length > 0);
     await page.screenshot({ path: `${output}/${name}-lab-overlay.png`, fullPage: !touch });
     const overlayLayout = await page.evaluate(() => ({ viewport: document.documentElement.clientWidth, content: document.documentElement.scrollWidth }));

@@ -1,6 +1,6 @@
 import {
-  locateSelection, resolveAnchor,
-  type Manuscript, type ManuscriptAnchorLevel, type ManuscriptState, type OverlayMark, type OverlayPin, type PassageSelection,
+  resolveAnchor,
+  type Manuscript, type ManuscriptAnchorLevel, type ManuscriptState, type OverlayMark, type OverlayPin,
 } from '@seihouse/sen/text-highlight-engine';
 
 /** The lab's overlays, like a strategy game's map modes: each tints one kind of attachment. */
@@ -13,47 +13,41 @@ export const OVERLAY_TONES: Record<ManuscriptAnchorLevel | 'flagged', string> = 
   flagged: 'rgba(251, 191, 36, .34)',
 };
 
-const LEVEL_WORD: Record<ManuscriptAnchorLevel, string> = { span: 'words', sentence: 'sentence', paragraph: 'paragraph' };
+/** The Cues overlay's key: what each tint means, in the order a reader meets them. */
+export const CUE_LEGEND: ReadonlyArray<{ label: string; tone: string }> = [
+  { label: 'Words', tone: OVERLAY_TONES.span },
+  { label: 'Sentence', tone: OVERLAY_TONES.sentence },
+  { label: 'Paragraph', tone: OVERLAY_TONES.paragraph },
+  { label: 'Changed', tone: OVERLAY_TONES.flagged },
+];
 
-/** The page's numbering as the model would address it: P1… per paragraph, S1… per saved sentence, counted through the page. */
+/**
+ * The page's numbering as the model addresses it (P2 S6), drawn the way a
+ * reader already knows it: ¶2 in the margin beside each paragraph, and a
+ * small raised 6 above each sentence's first letter, counted through the page.
+ */
 export function structurePins(manuscript: Manuscript): OverlayPin[] {
   let sentenceNumber = 0;
   return manuscript.paragraphs.flatMap((paragraph, index) => {
-    const pins: OverlayPin[] = [{ id: `pin:${paragraph.id}`, blockId: paragraph.id, offset: paragraph.sentences[0]?.start ?? 0, label: `P${index + 1}`, placement: 'above' }];
+    const pins: OverlayPin[] = [{ id: `pin:${paragraph.id}`, blockId: paragraph.id, offset: paragraph.sentences[0]?.start ?? 0, label: `¶${index + 1}`, placement: 'margin' }];
     for (const sentence of paragraph.sentences) {
       sentenceNumber += 1;
-      pins.push({ id: `pin:${sentence.id}`, blockId: paragraph.id, offset: sentence.start, label: `S${sentenceNumber}`, placement: 'raised' });
+      pins.push({ id: `pin:${sentence.id}`, blockId: paragraph.id, offset: sentence.start, label: String(sentenceNumber), placement: 'raised' });
     }
     return pins;
   });
 }
 
-/** "P1 S3", "P1 S3–S4", or just "P2" for a whole-paragraph attachment. */
-function addressLabel(manuscript: Manuscript, selection: PassageSelection, level: ManuscriptAnchorLevel): string {
-  const address = locateSelection(manuscript, selection);
-  if (!address) return '';
-  const numbers = address.sentences.map(sentence => sentence.number);
-  if (level === 'paragraph' || !numbers.length) return `P${address.paragraph.number}`;
-  return `P${address.paragraph.number} S${numbers[0]}${numbers.length > 1 ? `–S${numbers.at(-1)}` : ''}`;
-}
-
 /**
- * Every Sound Cue on the page as an overlay mark: one tone per attachment
- * level, amber where the cue's words changed. A span whose words an edit
- * replaced has no place left on the page; the inspector lists it instead.
+ * Every Sound Cue on the page as a tint: one tone per attachment level, amber
+ * where the cue's words changed. A span whose words an edit replaced has no
+ * place left on the page; the inspector lists it instead.
  */
 export function cueMarks<Payload>(state: ManuscriptState<Payload>, kind = 'sound-cue'): OverlayMark[] {
   return state.attachments.filter(attachment => attachment.kind === kind).flatMap(attachment => {
-    const { level } = attachment.anchor;
     const resolution = resolveAnchor(state.manuscript, attachment.anchor);
     const selection = resolution.status === 'placed' ? resolution.selection : resolution.status === 'changed' ? resolution.current : undefined;
     if (!selection) return [];
-    const flagged = resolution.status !== 'placed';
-    return [{
-      id: `mark:${attachment.id}`,
-      selection,
-      tone: flagged ? OVERLAY_TONES.flagged : OVERLAY_TONES[level],
-      label: `Cue · ${addressLabel(state.manuscript, selection, level)} · ${LEVEL_WORD[level]}${flagged ? ' changed' : ''}`,
-    }];
+    return [{ id: `mark:${attachment.id}`, selection, tone: resolution.status === 'placed' ? OVERLAY_TONES[attachment.anchor.level] : OVERLAY_TONES.flagged }];
   });
 }

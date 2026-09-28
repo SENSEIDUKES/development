@@ -14,6 +14,13 @@ export const describeAddress = (address: ManuscriptAddress) => {
   return `Paragraph ${address.paragraph.number}${sentences}`;
 };
 
+/** The same address the way the model writes it: P2 S8, P2 S8–S9, or P2 for a whole paragraph. */
+export const modelAddress = (address: ManuscriptAddress) => {
+  const numbers = address.sentences.map(sentence => sentence.number);
+  if (address.wholeParagraph || numbers.length === 0) return `P${address.paragraph.number}`;
+  return `P${address.paragraph.number} S${numbers[0]}${numbers.length > 1 ? `–S${numbers.at(-1)}` : ''}`;
+};
+
 /**
  * Workshop-only lab readout: where the current selection sits, what is
  * attached to the page, and the saved structure under the prose.
@@ -45,6 +52,7 @@ export function ManuscriptInspector<Payload>({ state, selection, describe, onKee
       <h2 id="manuscript-selection-heading" className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Selection</h2>
       {selection && address ? <div className="space-y-1">
         <p className="text-slate-100" data-testid="manuscript-address">{describeAddress(address)}</p>
+        <p className="text-xs text-slate-400">Model address <span className="font-semibold text-slate-200" data-testid="manuscript-model-address">{modelAddress(address)}</span></p>
         <p className="text-slate-400">Characters {selection.startOffset}–{selection.endOffset}
           {address.exactSentence ? ' · exactly one sentence' : address.wholeParagraph ? ' · the whole paragraph' : address.sentences.length > 1 ? ' · crosses a sentence boundary' : ''}</p>
         <p className="font-serif text-slate-200">“{excerpt(selection.selectedText, 160)}”</p>

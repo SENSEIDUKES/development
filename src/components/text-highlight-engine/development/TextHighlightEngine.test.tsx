@@ -182,17 +182,18 @@ describe('Text Highlight Engine', () => {
   it('draws no overlay and attaches no overlay work when the host sets none', () => {
     expect(document.querySelector('.sen-text-highlight-overlay')).toBeNull();
   });
-  it('draws a host overlay over the words it points at, without taking taps or changing the prose', () => {
+  it('draws a host overlay beside the words it points at, without covering them, taking taps or changing the prose', () => {
     const extra = document.createElement('div'); document.body.append(extra);
     const overlayRoot = createRoot(extra);
     const overlay = () => ({
       marks: [
-        { id: 'cue', selection: { blockId: 'a', selectedText: 'middle', startOffset: 7, endOffset: 13 }, tone: 'rgba(45, 212, 191, .3)', label: 'Cue · P1 S1 · words' },
+        { id: 'cue', selection: { blockId: 'a', selectedText: 'middle', startOffset: 7, endOffset: 13 }, tone: 'rgba(45, 212, 191, .3)' },
         { id: 'stale', selection: { blockId: 'a', selectedText: 'missing', startOffset: 0, endOffset: 7 }, tone: 'red' },
       ],
       pins: [
-        { id: 'p1', blockId: 'a', offset: 0, label: 'P1', placement: 'above' as const },
-        { id: 's2', blockId: 'b', offset: 0, label: 'S2', placement: 'raised' as const },
+        { id: 'p1', blockId: 'a', offset: 0, label: '¶1', placement: 'margin' as const },
+        { id: 's1', blockId: 'a', offset: 0, label: '1', placement: 'raised' as const },
+        { id: 's2', blockId: 'b', offset: 0, label: '12', placement: 'raised' as const },
       ],
     });
     // A host that rebuilds an identical overlay on every render must not cause repeated work.
@@ -203,8 +204,18 @@ describe('Text Highlight Engine', () => {
     expect(layers).toHaveLength(2);
     layers.forEach(layer => expect(layer.getAttribute('aria-hidden')).toBe('true'));
     expect(extra.querySelectorAll('.sen-overlay-mark')).toHaveLength(1);
-    expect(Array.from(extra.querySelectorAll('.sen-overlay-label'), chip => chip.textContent)).toEqual(['Cue · P1 S1 · words']);
-    expect(Array.from(extra.querySelectorAll('.sen-overlay-pin'), chip => chip.textContent)).toEqual(['P1', 'S2']);
+    const pins = Array.from(extra.querySelectorAll<HTMLElement>('.sen-overlay-pin'));
+    expect(pins.map(pin => [pin.textContent, pin.dataset.placement])).toEqual([['¶1', 'margin'], ['1', 'raised'], ['12', 'raised']]);
+    // The stubbed glyph box starts at top 200, left 100 and is 22px tall.
+    const [margin, first, second] = pins;
+    expect(margin.style.left).toBe('');
+    expect(parseFloat(margin.style.top)).toBeCloseTo(200 + 22 * 0.8 - 10);
+    // Raised numbers end where the glyph box begins, so they never cover a letter…
+    for (const pin of [first, second]) expect(parseFloat(pin.style.top) + 10).toBeLessThanOrEqual(200);
+    // …and two sentences starting at the same spot never stack their numbers.
+    expect(parseFloat(first.style.left)).toBe(100);
+    expect(parseFloat(second.style.left)).toBeGreaterThanOrEqual(100 + 6.5 + 3);
+    expect(extra.querySelector('.sen-overlay-label')).toBeNull();
     expect(extra.querySelector('[data-sen-text-block="a"]')!.textContent).toBe(initial[0].text);
     act(() => overlayRoot.render(<TextHighlightEngine blocks={initial} onBlocksChange={vi.fn()} />));
     expect(extra.querySelector('.sen-text-highlight-overlay')).toBeNull();

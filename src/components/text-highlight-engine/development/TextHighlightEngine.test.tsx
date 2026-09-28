@@ -9,12 +9,14 @@ import type { PassageSelection, TextHighlightBlock } from '../shared/selection';
 let root: Root;
 let container: HTMLDivElement;
 let update: (blocks: TextHighlightBlock[]) => void;
+let setFixed: (fixed: boolean) => void;
 const changed = vi.fn();
 const selections = vi.fn<(selection: PassageSelection | null) => void>();
 const initial = [{ id: 'a', text: 'Before middle after.' }, { id: 'b', text: 'Another paragraph.' }];
 function Host() {
   const [blocks, setBlocks] = useState(initial); update = setBlocks;
-  return <TextHighlightEngine blocks={blocks} onBlocksChange={(next, edit) => { changed(next, edit); setBlocks(next); }} onSelectionChange={selections} />;
+  const [fixed, setFixedState] = useState(false); setFixed = setFixedState;
+  return <TextHighlightEngine blocks={blocks} onBlocksChange={(next, edit) => { changed(next, edit); setBlocks(next); }} onSelectionChange={selections} editable={!fixed} />;
 }
 const button = (name: string) => Array.from(document.querySelectorAll('button')).find(node => node.textContent === name);
 const click = (name: string) => act(() => button(name)!.click());
@@ -110,6 +112,32 @@ describe('Text Highlight Engine', () => {
     await select(); click('Edit'); fill(''); click('Delete Passage');
     act(() => update([{ id: 'a', text: 'External replacement' }, initial[1]]));
     expect(button('Undo')).toBeUndefined();
+  });
+  it('moves the first Tab after a selection into its controls, whatever the host renders after the prose', async () => {
+    const after = document.createElement('button'); after.textContent = 'Host control'; container.append(after);
+    await select();
+    const shiftTab = new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true });
+    act(() => { document.dispatchEvent(shiftTab); });
+    expect(shiftTab.defaultPrevented).toBe(false);
+    const tab = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+    act(() => { document.dispatchEvent(tab); });
+    expect(tab.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(button('Edit'));
+    const again = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+    act(() => { document.dispatchEvent(again); });
+    expect(again.defaultPrevented).toBe(false);
+    after.remove();
+  });
+  it('offers no Edit, Delete or Undo once the host fixes its text, but still reports selections', async () => {
+    await select(); click('Edit'); fill(''); click('Delete Passage');
+    expect(button('Undo')).toBeDefined();
+    act(() => setFixed(true));
+    expect(button('Undo')).toBeUndefined();
+    await select(0, 6);
+    expect(selections).toHaveBeenLastCalledWith({ blockId: 'a', selectedText: 'Before', startOffset: 0, endOffset: 6 });
+    expect(document.querySelector('.sen-text-highlight-marks span')).not.toBeNull();
+    expect(button('Edit')).toBeUndefined();
+    expect(document.querySelector('.sen-text-highlight-controls')).toBeNull();
   });
   it.each(['mouse', 'touch'])('retains the selection during %s activation of Edit', async pointerType => {
     await select();

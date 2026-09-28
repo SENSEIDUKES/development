@@ -25,7 +25,8 @@ for (const [name, browserType, width, height, touch] of [
     page.setDefaultTimeout(15000);
     const errors = []; page.on('pageerror', error => errors.push(error.message));
     await page.goto(`${process.env.TEXT_HIGHLIGHT_URL ?? 'http://localhost:5173'}/?preview=text-highlight-engine`);
-    const paragraph = page.locator('[data-sen-text-block="harbor-arrival"]');
+    // Manuscript paragraph IDs are generated, so the three sample paragraphs are located by reading order.
+    const paragraph = page.locator('[data-sen-text-block]').nth(0);
     await paragraph.waitFor();
     await page.evaluate(() => document.fonts.ready);
     const viewport = await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve({ width: innerWidth, height: innerHeight, dpr: devicePixelRatio })))));
@@ -111,7 +112,7 @@ for (const [name, browserType, width, height, touch] of [
     await select(); await activate('Edit'); await input.fill('unsaved'); await page.keyboard.press('Escape');
     assert.equal(await paragraph.textContent(), beforeDelete); assert.equal(await dialog.count(), 0);
     await select(); await activate('Edit'); await input.fill('discard on outside click');
-    await page.getByText('Highlight a passage, then choose Edit or Media.', { exact: true }).click();
+    await page.getByText('Highlight words, then choose Edit or Media.', { exact: true }).click();
     assert.equal(await paragraph.textContent(), beforeDelete); assert.equal(await dialog.count(), 0);
     await select(); await activate('Edit');
     // Mobile WebKit does not implement mouse-wheel injection.
@@ -125,15 +126,16 @@ for (const [name, browserType, width, height, touch] of [
     });
     await page.waitForFunction(() => !document.querySelector('.sen-text-highlight-controls'));
     await page.evaluate(() => document.getSelection()?.removeAllRanges());
-    const cueParagraph = page.locator('[data-sen-text-block="blue-door"]');
+    const cueParagraph = page.locator('[data-sen-text-block]').nth(1);
     const cueOriginal = await cueParagraph.textContent();
     await cueParagraph.scrollIntoViewIfNeeded();
     await cueParagraph.evaluate(element => {
-      const phrase = 'blue door'; const start = element.firstChild.textContent.indexOf(phrase);
+      const phrase = 'temple bells'; const start = element.firstChild.textContent.indexOf(phrase);
       const range = document.createRange(); range.setStart(element.firstChild, start); range.setEnd(element.firstChild, start + phrase.length);
       document.getSelection().removeAllRanges(); document.getSelection().addRange(range);
       document.dispatchEvent(new Event('selectionchange'));
     });
+    await page.waitForFunction(() => document.querySelector('[data-testid="manuscript-address"]')?.textContent === 'Paragraph 2 · Sentence 8');
     await page.screenshot({ path: `${output}/${name}-cue-actions.png` });
     if (touch) { await activate('Media'); await activate('Audio'); await activate('Cue'); }
     else {
@@ -166,7 +168,7 @@ for (const [name, browserType, width, height, touch] of [
     await page.screenshot({ path: `${output}/${name}-cue-picker.png` });
     await press(page.locator('.sen-manual-cue-picker__item').first().getByRole('button', { name: 'Select' }));
     assert.equal(await cueParagraph.locator('[data-cue-annotation]').count(), 1);
-    assert.equal(await cueParagraph.locator('.inline-world-cue-annotation__text').textContent(), 'blue door');
+    assert.equal(await cueParagraph.locator('.inline-world-cue-annotation__text').textContent(), 'temple bells');
     assert.equal((await cueParagraph.textContent()).replaceAll('\u2060', ''), cueOriginal);
     const glyphMetrics = await cueParagraph.locator('[data-action-type="world-cue"]').evaluate(element => ({
       width: element.getBoundingClientRect().width,
@@ -199,11 +201,11 @@ for (const [name, browserType, width, height, touch] of [
     await activate('Remove cue');
     assert.equal(await cueParagraph.locator('[data-cue-annotation]').count(), 0);
     assert.equal(await cueParagraph.textContent(), cueOriginal);
-    const letterParagraph = page.locator('[data-sen-text-block="letter"]');
+    const letterParagraph = page.locator('[data-sen-text-block]').nth(2);
     const letterOriginal = await letterParagraph.textContent();
     await letterParagraph.scrollIntoViewIfNeeded();
     await letterParagraph.evaluate(element => {
-      const phrase = 'letter carefully'; const start = element.firstChild.textContent.indexOf(phrase);
+      const phrase = 'like cold fire'; const start = element.firstChild.textContent.indexOf(phrase);
       const range = document.createRange(); range.setStart(element.firstChild, start); range.setEnd(element.firstChild, start + phrase.length);
       document.getSelection().removeAllRanges(); document.getSelection().addRange(range);
       document.dispatchEvent(new Event('selectionchange'));
@@ -223,6 +225,48 @@ for (const [name, browserType, width, height, touch] of [
     assert.ok(punctuationLayout.overlapsVertically, JSON.stringify(punctuationLayout));
     assert.equal((await letterParagraph.textContent()).replaceAll('\u2060', ''), letterOriginal);
     await page.screenshot({ path: `${output}/${name}-cue-punctuation.png` });
+
+    // Manuscript lab: pick a saved sentence from the page structure and attach a cue to the whole sentence.
+    const structure = page.getByTestId('manuscript-structure');
+    await press(structure.locator('summary'));
+    const sentence = 'Dust swallowed the courtyard.';
+    await press(structure.locator('[data-sentence-id]', { hasText: sentence }));
+    await page.waitForFunction(text => document.querySelector('[data-testid="manuscript-selection"]')?.textContent?.includes(`“${text}”`), sentence);
+    assert.match(await page.getByTestId('manuscript-selection').textContent(), /exactly one sentence/);
+    await activate('Media'); await activate('Audio'); await activate('Cue'); await activate('Sentence');
+    await press(page.locator('.sen-manual-cue-picker__item').first().getByRole('button', { name: 'Select' }));
+    assert.equal(await paragraph.locator('.inline-world-cue-annotation__text').textContent(), sentence);
+    assert.equal(await page.locator('[data-testid="manuscript-attachment"][data-status="placed"]').count(), 2);
+    await page.screenshot({ path: `${output}/${name}-lab-sentence-cue.png`, fullPage: true });
+
+    // Editing the attached sentence flags the cue instead of moving it; Keep puts it on the new words.
+    await paragraph.locator('.inline-world-cue-annotation__text').scrollIntoViewIfNeeded();
+    await paragraph.locator('.inline-world-cue-annotation__text').evaluate(element => {
+      const range = document.createRange(); range.selectNodeContents(element);
+      document.getSelection().removeAllRanges(); document.getSelection().addRange(range);
+      document.dispatchEvent(new Event('selectionchange'));
+    });
+    await activate('Edit'); await input.fill('Dust filled the courtyard.'); await activate('Save');
+    await page.locator('[data-testid="manuscript-attachment"][data-status="changed"]').waitFor();
+    assert.equal(await paragraph.locator('[data-cue-annotation]').count(), 0);
+    await page.getByTestId('manuscript-attachment').filter({ hasText: 'Words changed' }).scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `${output}/${name}-lab-flagged.png` });
+    await activate('Keep');
+    assert.equal(await page.locator('[data-testid="manuscript-attachment"][data-status="changed"]').count(), 0);
+    assert.equal(await paragraph.locator('.inline-world-cue-annotation__text').textContent(), 'Dust filled the courtyard.');
+
+    // Sealing fixes the page: selection still reads its address, but editing and attaching are gone.
+    await activate('Seal chapter'); await activate('Seal');
+    await page.waitForFunction(() => document.querySelector('[data-testid="manuscript-status"]')?.textContent === 'Sealed');
+    await cueParagraph.scrollIntoViewIfNeeded();
+    await cueParagraph.evaluate(element => {
+      const range = document.createRange(); range.setStart(element.firstChild, 0); range.setEnd(element.firstChild, 6);
+      document.getSelection().removeAllRanges(); document.getSelection().addRange(range);
+      document.dispatchEvent(new Event('selectionchange'));
+    });
+    await page.waitForFunction(() => document.querySelector('[data-testid="manuscript-address"]')?.textContent === 'Paragraph 2 · Sentence 6');
+    assert.equal(await page.locator('.sen-text-highlight-controls').count(), 0);
+    await page.screenshot({ path: `${output}/${name}-lab-sealed.png`, fullPage: true });
     const layout = await page.evaluate(() => ({ viewport: document.documentElement.clientWidth, content: document.documentElement.scrollWidth }));
     assert.ok(layout.content <= layout.viewport + 1, JSON.stringify(layout));
     assert.deepEqual(errors, []);

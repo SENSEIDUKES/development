@@ -34,3 +34,26 @@
   background: transparent;
   backdrop-filter: none;
 }
+
+/* Minimized Pathways rail. A double tap or double click expands it
+   (WorkspaceShell), so the rail shows no star. The star stays in the tab order
+   and reappears for keyboard focus, so keyboard users can still expand it.
+   Double taps must not select text or zoom the page. */
+.workspace-shell[data-sidebar-collapsed="true"] [data-slot="app-shell-sidebar"] {
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+.workspace-shell[data-sidebar-collapsed="true"] [data-slot="app-shell-sidebar"] [data-slot="navigation-pin"]:not(:focus-visible) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  border: 0;
+  white-space: nowrap;
+}

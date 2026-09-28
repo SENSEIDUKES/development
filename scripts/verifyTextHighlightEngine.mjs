@@ -73,6 +73,16 @@ for (const [name, browserType, width, height, touch] of [
       assert.ok(expectedSelection.start > 0 && expectedSelection.end < original.length && expectedSelection.text.length > 10);
       assert.equal(expectedSelection.text, original.slice(expectedSelection.start, expectedSelection.end));
     } else await select();
+    // Touch screens stack the Action Bar and keep the phone's own selection-menu band clear.
+    const barLayout = await page.evaluate(() => {
+      const range = document.getSelection().getRangeAt(0).getBoundingClientRect();
+      const bar = document.querySelector('.sen-text-highlight-controls');
+      const box = bar.getBoundingClientRect();
+      return { layout: bar.getAttribute('data-layout'), selectionTop: range.top, selectionBottom: range.bottom, top: box.top, bottom: box.bottom };
+    });
+    assert.equal(barLayout.layout, touch ? 'stacked' : 'inline', JSON.stringify(barLayout));
+    if (touch) assert.ok(barLayout.top >= barLayout.selectionBottom + 60 || barLayout.bottom <= barLayout.selectionTop - 60, JSON.stringify(barLayout));
+    if (touch) await page.screenshot({ path: `${output}/${name}-touch-action-bar.png` });
     assert.ok(await page.locator('.sen-text-highlight-marks span').count());
     const colorPicker = page.getByLabel('Highlight color');
     await colorPicker.dispatchEvent('pointerdown', { bubbles: true, pointerType: touch ? 'touch' : 'mouse' });
@@ -254,6 +264,29 @@ for (const [name, browserType, width, height, touch] of [
     await activate('Keep');
     assert.equal(await page.locator('[data-testid="manuscript-attachment"][data-status="changed"]').count(), 0);
     assert.equal(await paragraph.locator('.inline-world-cue-annotation__text').textContent(), 'Dust filled the courtyard.');
+
+    // The Cues overlay tints every placed cue with its address and numbers the page as the model sees it.
+    await activate('Cues');
+    // The layer draws only what is on screen and redraws on scroll, so collect each paragraph's numbering in view.
+    const seenPins = new Set();
+    const seenLabels = new Set();
+    for (let index = 0; index < 3; index += 1) {
+      const target = page.locator('[data-sen-text-block]').nth(index);
+      await target.evaluate(element => element.scrollIntoView({ block: 'start' }));
+      await page.waitForFunction(label => Array.from(document.querySelectorAll('.sen-overlay-pin')).some(pin => pin.textContent === label), `P${index + 1}`);
+      for (const label of await page.locator('.sen-overlay-pin').allTextContents()) seenPins.add(label);
+      for (const label of await page.locator('.sen-overlay-label').allTextContents()) seenLabels.add(label);
+    }
+    const expectedPins = ['P1', 'P2', 'P3', ...Array.from({ length: 15 }, (_, index) => `S${index + 1}`)];
+    assert.deepEqual(expectedPins.filter(label => !seenPins.has(label)), [], JSON.stringify([...seenPins]));
+    assert.deepEqual([...seenLabels].sort(), ['Cue · P1 S2 · sentence', 'Cue · P3 S11 · words'], JSON.stringify([...seenLabels]));
+    await paragraph.scrollIntoViewIfNeeded();
+    await page.waitForFunction(() => document.querySelectorAll('.sen-overlay-mark').length > 0);
+    await page.screenshot({ path: `${output}/${name}-lab-overlay.png`, fullPage: !touch });
+    const overlayLayout = await page.evaluate(() => ({ viewport: document.documentElement.clientWidth, content: document.documentElement.scrollWidth }));
+    assert.ok(overlayLayout.content <= overlayLayout.viewport + 1, JSON.stringify(overlayLayout));
+    await activate('Off');
+    await page.waitForFunction(() => !document.querySelector('.sen-text-highlight-overlay'));
 
     // Sealing fixes the page: selection still reads its address, but editing and attaching are gone.
     await activate('Seal chapter'); await activate('Seal');

@@ -27,4 +27,17 @@
 .sen-text-highlight-menu { justify-content: flex-start; }
 .sen-text-highlight-menu button { text-transform: uppercase; letter-spacing: .035em; }
 .sen-text-highlight-menu button:not(:last-child) { border-right: 1px solid #555; border-radius: 0; }
+/* Touch screens: one full-width row per action, visibly different from the phone's own horizontal menu. */
+.sen-text-highlight-actions--stacked { flex-direction: column; align-items: stretch; gap: 0; }
+.sen-text-highlight-actions--stacked button { width: 100%; min-height: 48px; text-align: left; }
+.sen-text-highlight-menu.sen-text-highlight-actions--stacked button:not(:last-child) { border-right: 0; border-bottom: 1px solid #555; border-radius: 0; }
 .sen-text-highlight-undo { position: fixed; z-index: 9999; bottom: 16px; left: 50%; transform: translateX(-50%); max-width: calc(100vw - 32px); display: flex; align-items: center; gap: 12px; padding: 4px 12px; border: 1px solid #8c8064; border-radius: 10px; color: #29251c; background: #fffdf6; box-shadow: 0 5px 22px #0003; font: 14px/1.5 system-ui, sans-serif; }
+
+/* Overlay Layer: placed on the page so it scrolls with the words. Tints sit behind the text, chips above; neither takes taps. */
+.sen-text-highlight-overlay { position: absolute; inset: 0; pointer-events: none; z-index: -1; }
+.sen-text-highlight-overlay--chips { z-index: 1; }
+.sen-overlay-mark { position: absolute; border-radius: 3px; }
+.sen-overlay-pin, .sen-overlay-label { position: absolute; box-sizing: border-box; height: 16px; padding: 0 5px; border-radius: 4px;
+  font: 600 10px/14px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: 0; white-space: nowrap; }
+.sen-overlay-pin { background: rgba(15, 23, 42, .88); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, .5); }
+.sen-overlay-label { background: rgba(15, 23, 42, .92); color: #f8fafc; border: 1px solid rgba(45, 212, 191, .6); }

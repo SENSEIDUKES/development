@@ -13,6 +13,7 @@ import { workshopEntries } from '../../manifest';
 import { LIBRARY_BASE_MEDIA } from '../../../host/media/libraryCatalog';
 import { ManuscriptInspector } from './ManuscriptInspector';
 import { PartsBoard } from './PartsBoard';
+import { cueMarks, structurePins, type LabOverlay } from './overlays';
 import { createPreviewManuscript } from './previewData';
 
 const catalog = createMediaCatalog(LIBRARY_BASE_MEDIA);
@@ -77,8 +78,11 @@ export function TextHighlightEnginePreview() {
   const [notice, setNotice] = useState<string | null>(null);
   const [confirmSeal, setConfirmSeal] = useState(false);
   const [highlightColor, setHighlightColor] = useState('#8c6ee1');
+  const [overlayMode, setOverlayMode] = useState<LabOverlay>('off');
   const proseRef = useRef<HTMLDivElement>(null);
   const draft = state.manuscript.status === 'draft';
+  const overlay = useMemo(() => overlayMode === 'off' ? undefined
+    : { marks: cueMarks(state), pins: structurePins(state.manuscript) }, [overlayMode, state]);
   const words = countManuscriptWords(state.manuscript);
   const flagged = flaggedAttachments(state).length;
   const moments = useMemo(() => state.attachments.flatMap(attachment => {
@@ -147,10 +151,17 @@ export function TextHighlightEnginePreview() {
       </span>}
     </div>
     <PartsBoard />
+    <div className="mb-6 flex flex-wrap items-center gap-2 text-xs text-slate-400" role="group" aria-label="Overlays" data-testid="overlay-switch">
+      <span className="mr-1 uppercase tracking-[0.14em] text-slate-500">Overlays</span>
+      {([['off', 'Off'], ['cues', 'Cues']] as const).map(([mode, label]) => <button key={mode} type="button" aria-pressed={overlayMode === mode}
+        className={`min-h-9 rounded-lg border px-3 ${overlayMode === mode ? 'border-teal-300/60 bg-teal-400/10 text-teal-100' : 'border-slate-600 text-slate-300 hover:bg-slate-800'}`}
+        onClick={() => setOverlayMode(mode)}>{label}</button>)}
+      {overlayMode !== 'off' && <span className="text-slate-500">P = paragraph · S = sentence, numbered the way the model addresses them</span>}
+    </div>
     {notice && <p role="status" className="mb-4 rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-sm text-slate-200">{notice}</p>}
     <div ref={proseRef} className="text-lg text-slate-200" style={{ fontFamily: 'Georgia, serif' }}>
       <TextHighlightEngine blocks={state.manuscript.paragraphs} onBlocksChange={edit} onSelectionChange={setSelection}
-        actions={actions} editable={draft}
+        actions={actions} editable={draft} overlay={overlay}
         style={{ '--sen-passage-highlight': `${highlightColor}59` } as CSSProperties}
         renderBlockText={block => {
           const blockMoments = moments.filter(moment => moment.blockId === block.id);

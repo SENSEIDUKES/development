@@ -159,6 +159,57 @@ describe('Text Highlight Engine', () => {
     expect(button('Edit')).toBeUndefined();
     expect(document.querySelector('.sen-text-highlight-controls')).toBeNull();
   });
+  it('keeps the desktop bar inline, just under the selection', async () => {
+    await select();
+    const controls = document.querySelector<HTMLElement>('.sen-text-highlight-controls')!;
+    expect(controls.dataset.layout).toBe('inline');
+    expect(controls.querySelector('.sen-text-highlight-actions--stacked')).toBeNull();
+    expect(controls.style.top).toBe('232px');
+  });
+  it('stacks the bar on touch screens and keeps the phone menu band clear until the menu is gone', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: query === '(pointer: coarse)', media: query, addEventListener() {}, removeEventListener() {} }));
+    await select();
+    const controls = document.querySelector<HTMLElement>('.sen-text-highlight-controls')!;
+    expect(controls.dataset.layout).toBe('stacked');
+    expect(controls.querySelector('.sen-text-highlight-menu.sen-text-highlight-actions--stacked')).not.toBeNull();
+    // The stubbed selection line ends at 222px; the phone's own menu owns the next 72px.
+    expect(parseFloat(controls.style.top)).toBeGreaterThanOrEqual(222 + 72);
+    click('Edit');
+    const editing = document.querySelector<HTMLElement>('.sen-text-highlight-controls')!;
+    expect(editing.querySelector('.sen-text-highlight-actions--stacked')).not.toBeNull();
+    expect(parseFloat(editing.style.top)).toBeLessThan(222 + 72);
+  });
+  it('draws no overlay and attaches no overlay work when the host sets none', () => {
+    expect(document.querySelector('.sen-text-highlight-overlay')).toBeNull();
+  });
+  it('draws a host overlay over the words it points at, without taking taps or changing the prose', () => {
+    const extra = document.createElement('div'); document.body.append(extra);
+    const overlayRoot = createRoot(extra);
+    const overlay = () => ({
+      marks: [
+        { id: 'cue', selection: { blockId: 'a', selectedText: 'middle', startOffset: 7, endOffset: 13 }, tone: 'rgba(45, 212, 191, .3)', label: 'Cue · P1 S1 · words' },
+        { id: 'stale', selection: { blockId: 'a', selectedText: 'missing', startOffset: 0, endOffset: 7 }, tone: 'red' },
+      ],
+      pins: [
+        { id: 'p1', blockId: 'a', offset: 0, label: 'P1', placement: 'above' as const },
+        { id: 's2', blockId: 'b', offset: 0, label: 'S2', placement: 'raised' as const },
+      ],
+    });
+    // A host that rebuilds an identical overlay on every render must not cause repeated work.
+    for (let render = 0; render < 3; render += 1) {
+      act(() => overlayRoot.render(<TextHighlightEngine blocks={initial} onBlocksChange={vi.fn()} overlay={overlay()} />));
+    }
+    const layers = extra.querySelectorAll('.sen-text-highlight-overlay');
+    expect(layers).toHaveLength(2);
+    layers.forEach(layer => expect(layer.getAttribute('aria-hidden')).toBe('true'));
+    expect(extra.querySelectorAll('.sen-overlay-mark')).toHaveLength(1);
+    expect(Array.from(extra.querySelectorAll('.sen-overlay-label'), chip => chip.textContent)).toEqual(['Cue · P1 S1 · words']);
+    expect(Array.from(extra.querySelectorAll('.sen-overlay-pin'), chip => chip.textContent)).toEqual(['P1', 'S2']);
+    expect(extra.querySelector('[data-sen-text-block="a"]')!.textContent).toBe(initial[0].text);
+    act(() => overlayRoot.render(<TextHighlightEngine blocks={initial} onBlocksChange={vi.fn()} />));
+    expect(extra.querySelector('.sen-text-highlight-overlay')).toBeNull();
+    act(() => overlayRoot.unmount()); extra.remove();
+  });
   it.each(['mouse', 'touch'])('retains the selection during %s activation of Edit', async pointerType => {
     await select();
     act(() => {

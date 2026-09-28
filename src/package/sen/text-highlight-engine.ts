@@ -13,3 +13,4 @@ export {
   type ManuscriptAnchor, type ManuscriptAnchorLevel, type ManuscriptAnchorResolution, type ManuscriptAddress,
   type ManuscriptAttachment, type ManuscriptState, type ManuscriptEditResult,
 } from '../../components/text-highlight-engine/shared/manuscript';
+export type { OverlayMark, OverlayPin, TextHighlightOverlay } from '../../components/text-highlight-engine/shared/overlay';

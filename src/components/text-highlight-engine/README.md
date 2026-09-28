@@ -20,9 +20,10 @@ accessibility, viewport fit, power use, and look and feel. The Workshop's
 | Part | File | Owns |
 | --- | --- | --- |
 | Text Highlight Engine | `development/TextHighlightEngine.tsx` | Puts the parts together over the host's paragraphs; owns the edit and undo records it reports |
-| Selection Tracker | `development/useSelectionTracker.ts`, `shared/selection.ts` | Reads the browser selection; keeps the canonical selection (paragraph + exact positions); measures it; clears it on Escape or an outside tap; moves the first Tab of each selection into the Action Bar |
+| Selection Tracker | `development/useSelectionTracker.ts`, `shared/selection.ts`, `development/measure.ts` | Reads the browser selection; keeps the canonical selection (paragraph + exact positions); measures it; clears it on Escape or an outside tap; moves the first Tab of each selection into the Action Bar |
 | Selection Highlight | `development/SelectionHighlight.tsx` | The tinted marks over the selected words |
-| Action Bar | `development/ActionBar.tsx`, `shared/actions.ts` | The one floating bar: Edit, the host's nested actions, Back, an action's panel, and Save / Delete Passage while editing; its position, touch sizing and labels |
+| Action Bar | `development/ActionBar.tsx`, `shared/actions.ts` | The one floating bar: Edit, the host's nested actions, Back, an action's panel, and Save / Delete Passage while editing; its position, touch sizing and labels. On touch screens (`pointer: coarse`) its buttons stack vertically, and while the phone's own selection menu can show it keeps a 72 px band above and below the selection clear |
+| Overlay Layer | `development/OverlayLayer.tsx`, `shared/overlay.ts` | Draws a host's `overlay` — tinted ranges (`OverlayMark`) and numbered chips (`OverlayPin`) — over the prose; hidden from assistive technology, never takes taps, never changes text, no work while absent |
 | Inline Editor | `development/InlineEditor.tsx` | The plain-text draft replacing only the selected words, including line breaks and IME typing |
 | Undo Notice | `development/UndoNotice.tsx` | "Passage deleted · Undo" after an explicit deletion |
 | Cue Picker | `development/ManualCuePicker.tsx`, `shared/manualCue.ts` | Choosing, previewing and placing a Sound Cue from the host catalog |
@@ -226,6 +227,11 @@ browser evidence out of the consuming surface. No integration was performed.
   → Cue, a host-catalog picker, shared playback, and in-memory inline glyph
   placements. Selections continue to use stable prose offsets when glyphs are
   present. Added a preview-only highlight color picker.
+- **2026-09-28:** Added the Overlay Layer and the lab's Overlays switch: the Cues
+  overlay tints every placed cue by level (amber when its words changed) and
+  labels it with its address, and any overlay shows P1… / S1… numbering the way
+  the model addresses the page. On touch screens the Action Bar now stacks
+  vertically and keeps clear of the phone's own selection menu.
 - **2026-09-28:** Split the engine into named parts (Selection Tracker, Selection
   Highlight, Action Bar, Inline Editor, Undo Notice) with an Anatomy section and
   a Workshop Parts board that copies a brief per part. An open draft now closes

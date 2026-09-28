@@ -1,11 +1,13 @@
 import { useLayoutEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { replacePassage, type PassageEdit, type PassageSelection, type TextHighlightBlock } from '../shared/selection';
 import type { PassageAction } from '../shared/actions';
+import type { TextHighlightOverlay } from '../shared/overlay';
 import { useSelectionTracker } from './useSelectionTracker';
 import { SelectionHighlight } from './SelectionHighlight';
 import { InlineEditor } from './InlineEditor';
 import { ActionBar } from './ActionBar';
 import { UndoNotice } from './UndoNotice';
+import { OverlayLayer } from './OverlayLayer';
 
 export interface TextHighlightEngineProps {
   blocks: readonly TextHighlightBlock[];
@@ -15,6 +17,8 @@ export interface TextHighlightEngineProps {
   renderBlockText?: (block: TextHighlightBlock) => ReactNode;
   /** False once a host's text is fixed (for example a sealed chapter): no Edit, Delete, or Undo. Defaults to true. */
   editable?: boolean;
+  /** Tinted ranges and numbered chips drawn over the prose (for example a Cues overlay). Absent means no overlay work at all. */
+  overlay?: TextHighlightOverlay;
   className?: string;
   style?: CSSProperties;
 }
@@ -22,9 +26,10 @@ export interface TextHighlightEngineProps {
 /**
  * Text Highlight Engine: puts the named parts together over the host's
  * paragraphs — Selection Tracker, Selection Highlight, Inline Editor, Action
- * Bar and Undo Notice — and owns the edit and undo records it reports.
+ * Bar, Undo Notice and Overlay Layer — and owns the edit and undo records it
+ * reports.
  */
-export function TextHighlightEngine({ blocks, onBlocksChange, onSelectionChange, actions = [], renderBlockText, editable = true, className = '', style }: TextHighlightEngineProps) {
+export function TextHighlightEngine({ blocks, onBlocksChange, onSelectionChange, actions = [], renderBlockText, editable = true, overlay, className = '', style }: TextHighlightEngineProps) {
   const tracker = useSelectionTracker(blocks, onSelectionChange);
   const { rootRef, controlsRef, editorRef, selection, sourceText, editing, actionOpen, rectangles, clear } = tracker;
   const [replacement, setReplacement] = useState('');
@@ -58,6 +63,7 @@ export function TextHighlightEngine({ blocks, onBlocksChange, onSelectionChange,
   const container = rootRef.current?.ownerDocument.body;
 
   return <div ref={rootRef} className={`sen-text-highlight sen-text-highlight-root ${className}`} style={style} tabIndex={-1}>
+    <OverlayLayer overlay={overlay} blocks={blocks} />
     {selection && !editing && <SelectionHighlight rectangles={rectangles} />}
     {blocks.map(block => <p key={block.id} data-sen-text-block={block.id} tabIndex={-1}>
       {editing && selection?.blockId === block.id ? <>

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { findBlockElement, isValidPassage, normalizePassageSelection, passageRange, type PassageSelection, type TextHighlightBlock } from '../shared/selection';
+import { clipRectangles, watchLayout, type PassageRectangle } from './measure';
 
-export interface PassageRectangle { left: number; top: number; width: number; height: number }
+export type { PassageRectangle };
 
 /**
  * Selection Tracker: reads the browser selection inside the engine root,
@@ -90,41 +91,12 @@ export function useSelectionTracker(blocks: readonly TextHighlightBlock[], onSel
   useLayoutEffect(() => {
     const root = rootRef.current;
     if (!root || !selection) { setRectangles([]); return; }
-    let frame = 0;
     const measure = () => {
       const range = editing ? null : passageRange(root, selection);
-      const rects = editing ? editorRef.current?.getClientRects() : range?.getClientRects();
-      let left = 0, top = 0, right = window.innerWidth, bottom = window.innerHeight;
-      for (let parent = root.parentElement; parent; parent = parent.parentElement) {
-        const style = getComputedStyle(parent);
-        const bounds = parent.getBoundingClientRect();
-        if (/(auto|scroll|hidden|clip)/.test(style.overflowX)) { left = Math.max(left, bounds.left); right = Math.min(right, bounds.right); }
-        if (/(auto|scroll|hidden|clip)/.test(style.overflowY)) { top = Math.max(top, bounds.top); bottom = Math.min(bottom, bounds.bottom); }
-      }
-      setRectangles(rects ? Array.from(rects).filter(rect => rect.width > 0 && rect.height > 0)
-        .map(rect => ({ left: Math.max(left, rect.left), top: Math.max(top, rect.top),
-          width: Math.min(right, rect.right) - Math.max(left, rect.left), height: Math.min(bottom, rect.bottom) - Math.max(top, rect.top) }))
-        .filter(rect => rect.width > 0 && rect.height > 0) : []);
+      setRectangles(clipRectangles(root, editing ? editorRef.current?.getClientRects() : range?.getClientRects()));
     };
-    const schedule = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(measure); };
     measure();
-    root.addEventListener('input', schedule);
-    window.addEventListener('scroll', schedule, true);
-    window.addEventListener('resize', schedule);
-    window.visualViewport?.addEventListener('resize', schedule);
-    window.visualViewport?.addEventListener('scroll', schedule);
-    const observer = new ResizeObserver(schedule);
-    observer.observe(root);
-    if (controlsRef.current) observer.observe(controlsRef.current);
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-      root.removeEventListener('input', schedule);
-      window.removeEventListener('scroll', schedule, true);
-      window.removeEventListener('resize', schedule);
-      window.visualViewport?.removeEventListener('resize', schedule);
-      window.visualViewport?.removeEventListener('scroll', schedule);
-    };
+    return watchLayout(root, measure, [controlsRef.current]);
   }, [selection, editing, blocks]);
 
   const beginEdit = () => {

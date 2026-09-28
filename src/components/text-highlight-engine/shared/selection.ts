@@ -86,9 +86,12 @@ export function passageRange(root: HTMLElement, selection: PassageSelection): Ra
   const range = root.ownerDocument.createRange();
   let offset = 0;
   let started = false;
-  for (const node of nodes) {
+  for (const [index, node] of nodes.entries()) {
     const length = node.length;
-    if (!started && selection.startOffset <= offset + length) {
+    // A start exactly where one text node ends is the same position as the next
+    // node's beginning; starting there keeps the geometry with the words that follow
+    // instead of the previous node's line-end space.
+    if (!started && (selection.startOffset < offset + length || (selection.startOffset === offset + length && index === nodes.length - 1))) {
       range.setStart(node, selection.startOffset - offset);
       started = true;
     }

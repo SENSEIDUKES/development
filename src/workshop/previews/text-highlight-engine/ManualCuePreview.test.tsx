@@ -94,6 +94,30 @@ describe('Workshop manuscript page', () => {
   });
 });
 
+describe('Workshop Cues overlay', () => {
+  const overlayButton = (name: 'Off' | 'Cues') =>
+    Array.from(document.querySelectorAll<HTMLButtonElement>('[data-testid="overlay-switch"] button')).find(item => item.textContent === name)!;
+  const chips = (selector: string) => Array.from(host.querySelectorAll(selector), chip => chip.textContent);
+
+  it('numbers the page and tints every cue while on, and does nothing while off', async () => {
+    expect(host.querySelector('.sen-text-highlight-overlay')).toBeNull();
+    act(() => overlayButton('Cues').click());
+    expect(overlayButton('Cues').getAttribute('aria-pressed')).toBe('true');
+    expect(chips('.sen-overlay-pin')).toEqual(['P1', 'S1', 'S2', 'S3', 'S4', 'S5', 'P2', 'S6', 'S7', 'S8', 'S9', 'P3', 'S10', 'S11', 'S12', 'S13', 'S14', 'S15']);
+    expect(host.querySelectorAll('.sen-overlay-mark')).toHaveLength(0);
+
+    await selectRoar(); openCue(); placeFirstCue();
+    await select(block().firstChild!, 0, 4); openCue(); click('Sentence'); placeFirstCue();
+    expect(chips('.sen-overlay-label')).toEqual(['Cue · P1 S3 · words', 'Cue · P1 S1 · sentence']);
+    expect(host.querySelectorAll('.sen-overlay-mark')).toHaveLength(2);
+    expect(prose()).toBe(ACTION);
+
+    act(() => overlayButton('Off').click());
+    expect(host.querySelector('.sen-text-highlight-overlay')).toBeNull();
+    expect(block().querySelectorAll('[data-cue-annotation]')).toHaveLength(2);
+  });
+});
+
 describe('Workshop manual Sound Cue flow', () => {
   it('navigates nested actions, previews and places one existing cue through shared playback', async () => {
     const paragraph = block();

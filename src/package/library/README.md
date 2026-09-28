@@ -37,7 +37,7 @@ client asks the server to train, choose a look, or buy at today's price. Every b
 progression total, reward, role and permission is host-authoritative, and no Familiar effect
 grants a boost, multiplier, discount or other advantage.
 
-`LibraryPresentationProvider` composes stateless `@seihouse/library-ui@0.5.0`
+`LibraryPresentationProvider` composes stateless `@seihouse/library-ui@0.6.0`
 visuals over SEN. Concrete CDN and public-directory locations are supplied as
 `LibraryAssets`; they are not embedded in the package.
 

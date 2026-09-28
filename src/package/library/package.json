@@ -94,8 +94,8 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-focus-lock": "^2.13.7",
-    "@seihouse/library-ui": "0.8.0",
-    "@seihouse/ui": "0.9.0"
+    "@seihouse/library-ui": "0.9.0",
+    "@seihouse/ui": "0.10.0"
   },
   "dependencies": {
     "@google/genai": "^2.16.0"

@@ -51,6 +51,9 @@ const state = (shellStates[source] as readonly string[]).includes(requested) ? r
 const safeArea = query.get('safeArea');
 if (safeArea === 'on' || safeArea === 'landscape') document.documentElement.dataset.previewSafeArea = safeArea;
 if (query.get('motion') === 'reduced') document.documentElement.dataset.previewMotion = 'reduced';
+// The Workshop host is a Library app: dialogs, sheets and menus portal to the
+// body, so the body opts them into the Library's gold overlay scrollbar too.
+if (query.get('variant') === 'development') document.body.classList.add('library-scrollbars');
 
 async function mount() {
   // Separate documents preserve each source's CSS, portal target and media queries.

@@ -153,8 +153,8 @@ const icons = { home: 'home', create: 'book', discover: 'discovery' } as const s
  * The desktop rail's contents, in either mode. `WorkspaceShell` owns the column.
  * - Main mode shows the Pathways sidebar: the reader's picture, name and rank,
  *   the four destinations with a page's own sub-pages nested under the active
- *   one, Settings in the footer, and the host's artwork. The shell rests it as
- *   an icon rail and opens it on approach unless the reader pins it.
+ *   one, Settings in the footer, and the host's artwork. It is open by default;
+ *   the star minimizes it to the icon rail and restores it.
  * - Workspace mode shows the task's sections in the same Pathways styling.
  * - With the `strip` setting, main mode keeps the page's own section panel.
  */

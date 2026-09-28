@@ -34,8 +34,8 @@ export interface WorkspaceShellProps {
  * all the canonical component's. This adapter supplies only the Library rail
  * width and its `lg` hand-off — below `lg` the drawer and the bottom controls
  * own navigation, so the rail is never offered twice. When the rail is the
- * main-mode Pathways sidebar it also applies the reader's remembered sidebar
- * preference (automatic, pinned or compact).
+ * main-mode Pathways sidebar it also applies the reader's remembered choice
+ * — open (the default) or minimized to the icon rail — through the star only.
  *
  * The Reader Chamber is deliberately not a consumer: it is immersive and
  * scrolls the document itself, which its cinematic scrolling depends on.
@@ -46,8 +46,10 @@ export function WorkspaceShell({
   mainClassName = '', mainId, mainAriaLabel, mainRef,
 }: WorkspaceShellProps) {
   const rail = useLibraryPathwaysRail();
+  // Click-only: the star alone opens or minimizes the rail; hover and focus never do.
   const pathways = rail && sidebar ? {
-    sidebarMode: rail.mode, onSidebarModeChange: rail.setMode, sidebarCollapsedWidth: WORKSPACE_SIDEBAR_COMPACT_WIDTH,
+    sidebarBehavior: 'click' as const, sidebarMode: rail.mode, onSidebarModeChange: rail.setMode,
+    sidebarCollapsedWidth: WORKSPACE_SIDEBAR_COMPACT_WIDTH,
   } : {};
   return <SEIAppShell
     {...pathways}
@@ -60,6 +62,8 @@ export function WorkspaceShell({
     mainRef={mainRef}
     mainAriaLabel={mainAriaLabel}
     mainClassName={`workspace-shell-main ${mainClassName}`.trim()}
-    className={`workspace-shell ${className}`.trim()}
+    // `library-scrollbars` opts the page, rail and anything inside into the
+    // Library's gold overlay scrollbar (Library UI skin).
+    className={`workspace-shell library-scrollbars ${className}`.trim()}
   >{children}</SEIAppShell>;
 }

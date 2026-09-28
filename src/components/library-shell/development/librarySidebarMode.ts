@@ -2,19 +2,19 @@ import { useSyncExternalStore } from 'react';
 import type { SEISidebarMode } from '@seihouse/ui';
 
 /**
- * The reader's Pathways sidebar preference.
- * - `automatic` (default): rests as the icon rail and opens while the pointer
- *   is at the sidebar or keyboard focus is inside it.
- * - `pinned`: always open. The star beside the profile pins and unpins.
- * - `compact`: always the icon rail.
- * Every Library page shares one preference, so pinning on Home keeps the Cave
- * pinned. The host remembers it (per device or in account settings) through
+ * The reader's Pathways sidebar preference. The Library's sidebar is
+ * click-only: it never opens on hover or focus.
+ * - `pinned` (default): open, labels showing.
+ * - `compact`: the icon rail. The star beside the profile, or under the
+ *   avatar in the rail, switches between the two.
+ * Every Library page shares one preference, so minimizing on Home keeps the
+ * Cave minimized. The host remembers it (per device or in account settings) through
  * `LibraryDesktopNavigationProvider`; without one it lasts for the visit.
  */
 export type LibrarySidebarMode = SEISidebarMode;
-export const LIBRARY_SIDEBAR_MODES: readonly LibrarySidebarMode[] = ['automatic', 'pinned', 'compact'];
+export const LIBRARY_SIDEBAR_MODES: readonly LibrarySidebarMode[] = ['pinned', 'compact'];
 const listeners = new Set<() => void>();
-let current: LibrarySidebarMode = 'automatic';
+let current: LibrarySidebarMode = 'pinned';
 
 const subscribe = (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener); }; };
 const snapshot = () => current;

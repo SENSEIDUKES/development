@@ -5,9 +5,10 @@ const STORAGE_KEY = 'seihouse.library.sidebarMode';
 const read = (): LibrarySidebarMode => {
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
-    return LIBRARY_SIDEBAR_MODES.includes(stored as LibrarySidebarMode) ? stored as LibrarySidebarMode : 'automatic';
+    // Open unless the reader minimized it; the retired hover mode reads as open.
+    return LIBRARY_SIDEBAR_MODES.includes(stored as LibrarySidebarMode) ? stored as LibrarySidebarMode : 'pinned';
   } catch {
-    return 'automatic';
+    return 'pinned';
   }
 };
 

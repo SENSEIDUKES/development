@@ -54,7 +54,7 @@ try {
     type: 'module',
   }, null, 2));
   runNpm(
-    ['install', '--ignore-scripts', ...peers, join(root, 'vendor/seihouse-ui-0.9.0.tgz'), ...(target.id === 'library' ? [join(root, 'vendor/seihouse-library-ui-0.8.0.tgz')] : []), ...dependencyTarballs, tarballPath],
+    ['install', '--ignore-scripts', ...peers, join(root, 'vendor/seihouse-ui-0.10.0.tgz'), ...(target.id === 'library' ? [join(root, 'vendor/seihouse-library-ui-0.9.0.tgz')] : []), ...dependencyTarballs, tarballPath],
     consumerDirectory,
   );
 

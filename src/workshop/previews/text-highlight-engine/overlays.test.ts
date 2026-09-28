@@ -4,7 +4,7 @@ import {
   type ManuscriptAttachment, type ManuscriptIdFactory, type ManuscriptState, type PassageSelection,
 } from '@seihouse/sen/text-highlight-engine';
 import { createPreviewManuscript, previewParagraphs } from './previewData';
-import { CUE_LEGEND, OVERLAY_TONES, cueMarks, structurePins } from './overlays';
+import { ATTACHMENT_COLORS, OVERLAY_KINDS, attachmentMarks, structurePins } from './overlays';
 
 const ids = (): ManuscriptIdFactory => { let count = 0; return kind => `${kind[0]}${++count}`; };
 const words = (state: ManuscriptState<string>, index: number, phrase: string): PassageSelection => {
@@ -28,28 +28,31 @@ describe('Lab overlays', () => {
     expect(pins.find(pin => pin.label === '¶2')).toMatchObject({ blockId: second.id, offset: second.sentences[0].start });
   });
 
-  it('keys every tint it can draw', () => {
-    expect(CUE_LEGEND.map(entry => entry.label)).toEqual(['Words', 'Sentence', 'Paragraph', 'Changed']);
-    expect(new Set(CUE_LEGEND.map(entry => entry.tone))).toEqual(new Set(Object.values(OVERLAY_TONES)));
+  it('gives each overlay its kinds, one color per kind', () => {
+    expect(OVERLAY_KINDS.cues).toEqual(['sound-cue']);
+    expect(ATTACHMENT_COLORS['sound-cue'].label).toBe('Sound Cue');
   });
 
-  it('tints every cue by its level', () => {
+  it('tints every Sound Cue blue, whether it holds words, a sentence or a paragraph, and nothing of another kind', () => {
     const state: ManuscriptState<string> = { manuscript: createPreviewManuscript(ids()), attachments: [] };
     state.attachments = [
       cue(state, 'roar', words(state, 0, 'the beast roared again'), 'span'),
       cue(state, 'bells', words(state, 1, 'temple bells'), 'sentence'),
       cue(state, 'cave', words(state, 2, 'cold fire'), 'paragraph'),
+      { ...cue(state, 'rain', words(state, 1, 'paper lanterns'), 'sentence'), kind: 'soundscape' },
     ];
-    const marks = cueMarks(state);
+    const marks = attachmentMarks(state, OVERLAY_KINDS.cues);
     expect(marks.map(mark => mark.id)).toEqual(['mark:roar', 'mark:bells', 'mark:cave']);
-    expect(marks.map(mark => mark.tone)).toEqual([OVERLAY_TONES.span, OVERLAY_TONES.sentence, OVERLAY_TONES.paragraph]);
+    expect(new Set(marks.map(mark => mark.tone))).toEqual(new Set([ATTACHMENT_COLORS['sound-cue'].tone]));
+    expect(marks.some(mark => mark.attention)).toBe(false);
+    // How much text a tint covers shows what it is attached to.
+    expect(marks[0].selection.selectedText).toBe('the beast roared again');
     expect(marks[1].selection.selectedText).toBe(state.manuscript.paragraphs[1].text.slice(
       state.manuscript.paragraphs[1].sentences[2].start, state.manuscript.paragraphs[1].sentences[2].end));
-    expect(marks[0].selection.selectedText).toBe('the beast roared again');
     expect(marks[2].selection.selectedText).toBe(previewParagraphs[2]);
   });
 
-  it('shows a cue whose sentence changed in amber where the sentence is now, and leaves detached words to the inspector', () => {
+  it('keeps a cue whose sentence changed blue and underlines it where the sentence is now, and leaves detached words to the inspector', () => {
     const start: ManuscriptState<string> = { manuscript: createPreviewManuscript(ids()), attachments: [] };
     start.attachments = [
       cue(start, 'roar', words(start, 0, 'the beast roared again'), 'span'),
@@ -63,8 +66,8 @@ describe('Lab overlays', () => {
     };
     const refilled = edit(start, words(start, 0, 'swallowed'), 'filled');
     const changed = edit(refilled, words(refilled, 0, 'beast roared'), 'wind howled');
-    const marks = cueMarks(changed);
+    const marks = attachmentMarks(changed, OVERLAY_KINDS.cues);
     expect(marks).toHaveLength(1);
-    expect(marks[0]).toMatchObject({ tone: OVERLAY_TONES.flagged, selection: { selectedText: 'Dust filled the courtyard.' } });
+    expect(marks[0]).toMatchObject({ tone: ATTACHMENT_COLORS['sound-cue'].tone, attention: true, selection: { selectedText: 'Dust filled the courtyard.' } });
   });
 });

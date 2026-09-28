@@ -187,7 +187,7 @@ describe('Text Highlight Engine', () => {
     const overlayRoot = createRoot(extra);
     const overlay = () => ({
       marks: [
-        { id: 'cue', selection: { blockId: 'a', selectedText: 'middle', startOffset: 7, endOffset: 13 }, tone: 'rgba(45, 212, 191, .3)' },
+        { id: 'cue', selection: { blockId: 'a', selectedText: 'middle', startOffset: 7, endOffset: 13 }, tone: 'rgba(59, 130, 246, .38)', attention: true },
         { id: 'stale', selection: { blockId: 'a', selectedText: 'missing', startOffset: 0, endOffset: 7 }, tone: 'red' },
       ],
       pins: [
@@ -204,6 +204,8 @@ describe('Text Highlight Engine', () => {
     expect(layers).toHaveLength(2);
     layers.forEach(layer => expect(layer.getAttribute('aria-hidden')).toBe('true'));
     expect(extra.querySelectorAll('.sen-overlay-mark')).toHaveLength(1);
+    // A range that needs a decision keeps its tint and is marked for its dashed underline.
+    expect(extra.querySelector('.sen-overlay-mark')!.hasAttribute('data-attention')).toBe(true);
     const pins = Array.from(extra.querySelectorAll<HTMLElement>('.sen-overlay-pin'));
     expect(pins.map(pin => [pin.textContent, pin.dataset.placement])).toEqual([['¶1', 'margin'], ['1', 'raised'], ['12', 'raised']]);
     // The stubbed glyph box starts at top 200, left 100 and is 22px tall.

@@ -13,7 +13,7 @@ import { workshopEntries } from '../../manifest';
 import { LIBRARY_BASE_MEDIA } from '../../../host/media/libraryCatalog';
 import { ManuscriptInspector } from './ManuscriptInspector';
 import { PartsBoard } from './PartsBoard';
-import { CUE_LEGEND, cueMarks, structurePins, type LabOverlay } from './overlays';
+import { ATTACHMENT_COLORS, OVERLAY_KINDS, attachmentMarks, structurePins, type LabOverlay } from './overlays';
 import { createPreviewManuscript } from './previewData';
 
 const catalog = createMediaCatalog(LIBRARY_BASE_MEDIA);
@@ -82,7 +82,7 @@ export function TextHighlightEnginePreview() {
   const proseRef = useRef<HTMLDivElement>(null);
   const draft = state.manuscript.status === 'draft';
   const overlay = useMemo(() => overlayMode === 'off' ? undefined
-    : { marks: cueMarks(state), pins: structurePins(state.manuscript) }, [overlayMode, state]);
+    : { marks: attachmentMarks(state, OVERLAY_KINDS[overlayMode]), pins: structurePins(state.manuscript) }, [overlayMode, state]);
   const words = countManuscriptWords(state.manuscript);
   const flagged = flaggedAttachments(state).length;
   const moments = useMemo(() => state.attachments.flatMap(attachment => {
@@ -163,11 +163,14 @@ export function TextHighlightEnginePreview() {
           <span className="font-semibold text-slate-200">¶2</span> in the margin with a small raised <span className="font-semibold text-slate-200">6</span> is
           paragraph 2, sentence 6. The model writes it <span className="font-semibold text-slate-200">P2 S6</span>.
         </p>
-        {overlayMode === 'cues' && <ul className="flex flex-wrap gap-x-4 gap-y-1" aria-label="Cue colors">
-          {CUE_LEGEND.map(entry => <li key={entry.label} className="flex items-center gap-1.5">
-            <span aria-hidden="true" className="h-3 w-3 rounded-[3px] ring-1 ring-inset ring-white/10" style={{ background: entry.tone }} />{entry.label}
+        <ul className="flex flex-wrap gap-x-4 gap-y-1" aria-label="Overlay colors">
+          {OVERLAY_KINDS[overlayMode].map(kind => <li key={kind} className="flex items-center gap-1.5">
+            <span aria-hidden="true" className="h-3 w-3 rounded-[3px] ring-1 ring-inset ring-white/10" style={{ background: ATTACHMENT_COLORS[kind].tone }} />{ATTACHMENT_COLORS[kind].label}
           </li>)}
-        </ul>}
+          <li className="flex items-center gap-1.5">
+            <span aria-hidden="true" className="h-2.5 w-4 border-b-2 border-dashed border-amber-400" />Words changed
+          </li>
+        </ul>
       </div>}
     </div>
     {notice && <p role="status" className="mb-4 rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-sm text-slate-200">{notice}</p>}

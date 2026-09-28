@@ -1,9 +1,9 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { passageRange, type TextHighlightBlock } from '../shared/selection';
 import type { OverlayPin, TextHighlightOverlay } from '../shared/overlay';
-import { watchLayout, type PassageRectangle } from './measure';
+import { mergeLineRectangles, watchLayout, type PassageRectangle } from './measure';
 
-interface PlacedMark { id: string; tone: string; rects: PassageRectangle[] }
+interface PlacedMark { id: string; tone: string; attention?: boolean; rects: PassageRectangle[] }
 interface PlacedPin { id: string; label: string; placement: OverlayPin['placement']; top: number; left?: number; width?: number }
 
 /** Raised numbers are set 10px on a 10px line, so their box is known before they are drawn. */
@@ -52,8 +52,8 @@ export function OverlayLayer({ overlay, blocks }: {
         .map(rect => ({ left: rect.left - origin.left, top: rect.top - origin.top, width: rect.width, height: rect.height }));
       const placedMarks: PlacedMark[] = [];
       for (const mark of overlay.marks ?? []) {
-        const rects = local(passageRange(root, mark.selection)?.getClientRects());
-        if (rects.length) placedMarks.push({ id: mark.id, tone: mark.tone, rects });
+        const rects = mergeLineRectangles(local(passageRange(root, mark.selection)?.getClientRects()));
+        if (rects.length) placedMarks.push({ id: mark.id, tone: mark.tone, attention: mark.attention, rects });
       }
       const placedPins: PlacedPin[] = [];
       const raised: Array<PlacedPin & { left: number; width: number }> = [];
@@ -93,7 +93,8 @@ export function OverlayLayer({ overlay, blocks }: {
   return <>
     <div ref={layerRef} className="sen-text-highlight-overlay" aria-hidden="true">
       {marks.flatMap(mark => mark.rects.map((rect, index) =>
-        <span key={`${mark.id}:${index}`} className="sen-overlay-mark" data-overlay-id={mark.id} style={{ ...rect, background: mark.tone }} />))}
+        <span key={`${mark.id}:${index}`} className="sen-overlay-mark" data-overlay-id={mark.id} data-attention={mark.attention ? '' : undefined}
+          style={{ ...rect, background: mark.tone }} />))}
     </div>
     <div className="sen-text-highlight-overlay sen-text-highlight-overlay--pins" aria-hidden="true">
       {pins.map(pin => <span key={pin.id} className="sen-overlay-pin" data-placement={pin.placement} data-overlay-id={pin.id}

@@ -261,6 +261,10 @@ for (const [name, browserType, width, height, touch] of [
     assert.equal(await paragraph.locator('[data-cue-annotation]').count(), 0);
     await page.getByTestId('manuscript-attachment').filter({ hasText: 'Words changed' }).scrollIntoViewIfNeeded();
     await page.screenshot({ path: `${output}/${name}-lab-flagged.png` });
+    // With an overlay on, the changed cue keeps its Sound Cue blue and gains a dashed underline.
+    await activate('Cues');
+    await page.locator('.sen-overlay-mark[data-attention]').first().waitFor({ state: 'attached' });
+    await activate('Off');
     await activate('Keep');
     assert.equal(await page.locator('[data-testid="manuscript-attachment"][data-status="changed"]').count(), 0);
     assert.equal(await paragraph.locator('.inline-world-cue-annotation__text').textContent(), 'Dust filled the courtyard.');
@@ -274,7 +278,10 @@ for (const [name, browserType, width, height, touch] of [
     assert.deepEqual(await page.locator('.sen-overlay-pin').allTextContents(), expectedPins);
     assert.equal(await page.locator('.sen-overlay-label').count(), 0);
     assert.equal(await page.locator('.sen-overlay-mark[data-overlay-id]').evaluateAll(marks => new Set(marks.map(mark => mark.dataset.overlayId)).size), 2);
-    assert.deepEqual(await page.getByTestId('overlay-legend').locator('li').allTextContents(), ['Words', 'Sentence', 'Paragraph', 'Changed']);
+    // Colors mean the kind of effect: the words cue and the sentence cue are both Sound Cue blue.
+    assert.equal(await page.locator('.sen-overlay-mark').evaluateAll(marks => new Set(marks.map(mark => getComputedStyle(mark).backgroundColor)).size), 1);
+    assert.equal(await page.locator('.sen-overlay-mark[data-attention]').count(), 0);
+    assert.deepEqual(await page.getByTestId('overlay-legend').locator('li').allTextContents(), ['Sound Cue', 'Words changed']);
     // Never over a word: no number touches a letter, another number, or the screen edge, and ¶ numbers sit left of the text.
     const numbers = await page.evaluate(() => {
       const letters = [];

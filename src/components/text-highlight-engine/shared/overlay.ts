@@ -6,6 +6,11 @@ export interface OverlayMark {
   selection: PassageSelection;
   /** Any CSS color; keep it translucent so the words stay readable. */
   tone: string;
+  /**
+   * The range needs a decision (e.g. a cue whose words changed): it keeps its
+   * tone and gains a dashed underline in `--sen-overlay-attention` (amber).
+   */
+  attention?: boolean;
 }
 
 /** One quiet number beside the words, never on them: a paragraph's ¶2 or a sentence's 8. */

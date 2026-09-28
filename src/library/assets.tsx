@@ -9,6 +9,8 @@ export interface LibraryAssets {
   homeVideos?: readonly string[];
   caveImages?: Readonly<Record<string, string>>;
   helpAudio?: Readonly<Record<string, string>>;
+  /** Decorative landscape for the Pathways sidebar on laptops. */
+  navigationArtwork?: string;
 }
 const Context = createContext<LibraryAssets>({});
 export function LibraryAssetsProvider({ value, children }: PropsWithChildren<{ value: LibraryAssets }>) {

@@ -50,7 +50,7 @@ import {
   publicCavePath,
   useCaveRoute,
 } from './caveNavigation';
-import { LibraryNavigation, LibrarySectionSidebar } from '../../library-shell/development/LibraryNavigation';
+import { LibraryNavigation, LibrarySectionSidebar, useLibraryDesktopNavigation } from '../../library-shell/development/LibraryNavigation';
 import type { LibraryLocation } from '../../library-shell/development/libraryRoutes';
 import { WorkspaceShell } from '../../library-shell/development/WorkspaceShell';
 import { LIBRARY_EMBLEM } from '../../library-shell/development/libraryBrand';
@@ -259,6 +259,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   }), [boostState]);
 
   const assets = useLibraryAssets();
+  const desktopNavigation = useLibraryDesktopNavigation();
   const environment = getCaveEnvironment(environmentId);
   const environmentImage = assets.caveImages?.[environment.id];
   const isSignedOut = !currentUser && !localOnlyMode;
@@ -535,6 +536,9 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   };
 
   const caveSidebarMounted = isPublicView || (!isSignedOut && !spiritLinkGateMounted);
+  // On laptops the Pathways sidebar is the Library's navigation, so it is always
+  // present; the Cave's own pages nest under Profile only once the Cave is open.
+  const pathwaysSidebar = desktopNavigation === 'sidebar';
   return (
     <LibraryNavigation location={{ screen: 'profile', cave: route.path }} onNavigate={target => {
       if (target.screen === 'profile') navigate(target.cave ?? '/home');
@@ -546,8 +550,8 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
       <WorkspaceShell
         className="cave-shell relative z-10"
         mainClassName="cave-workspace-main"
-        sidebarLabel={navigationDefinition.label}
-        sidebar={caveSidebarMounted ? <LibrarySectionSidebar /> : undefined}
+        sidebarLabel={pathwaysSidebar ? 'Library pathways' : navigationDefinition.label}
+        sidebar={pathwaysSidebar || caveSidebarMounted ? <LibrarySectionSidebar /> : undefined}
         header={<WorkspaceHeader title="Profile" landmark="none"
           emblem={LIBRARY_EMBLEM}
           home={{ href: '/', label: 'Return to Library', onNavigate: onNavigateHome }}

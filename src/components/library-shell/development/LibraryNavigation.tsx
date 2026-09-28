@@ -4,11 +4,13 @@ import {
   LibraryBottomNavigation, LibraryNavigationDrawer, LibraryNavigationDrawerPanel,
   type LibraryNavigationDrawerProfile, type LibraryNavigationDrawerSection,
 } from '@seihouse/library-ui';
-import { activeLibraryDestination, LIBRARY_DESTINATIONS, libraryLocationKey, libraryNavigationMode, type LibraryLocation, type LibraryNavigationMode } from './libraryRoutes';
-import { DESKTOP_NAVIGATION_QUERY } from './workspaceMedia';
+import { activeLibraryDestination, LIBRARY_DESTINATIONS, libraryLocationKey, libraryNavigationMode, type LibraryDestination, type LibraryLocation, type LibraryNavigationMode } from './libraryRoutes';
+import { DESKTOP_NAVIGATION_QUERY, useCompactHeader, useDesktopNavigation } from './workspaceMedia';
+import { LIBRARY_EMBLEM } from './libraryBrand';
+import { useLibraryAssets } from '../../../library/assets';
 import './library-navigation.css';
 import { LibraryNavigationIcon as SENNavigationIcon, type LibraryNavigationIconName as SENNavigationIconName } from '@seihouse/library-ui';
-import { LibraryExitIcon as SENExitIcon, LibraryProfileIcon as SENProfileIcon } from '@seihouse/library-ui';
+import { LibraryExitIcon as SENExitIcon, LibraryProfileIcon as SENProfileIcon, LibrarySettingsIcon as SENSettingsIcon } from '@seihouse/library-ui';
 
 type SectionItem = LibraryNavigationDrawerSection['items'][number] & { onSelect?: (id: string) => void };
 type Section = Omit<LibraryNavigationDrawerSection, 'items'> & { items: SectionItem[] };
@@ -77,21 +79,85 @@ interface WorkspaceState {
   openDrawer: () => void;
   closeDrawer: () => void;
 }
+interface MainState {
+  location: LibraryLocation;
+  onNavigate: (location: LibraryLocation) => void;
+  selected: LibraryDestination | undefined;
+}
 interface NavigationContextValue {
   menu: LibrarySectionMenu | null;
   workspace: WorkspaceState | null;
+  main: MainState | null;
 }
-const Context = createContext<NavigationContextValue>({ menu: null, workspace: null });
+const Context = createContext<NavigationContextValue>({ menu: null, workspace: null, main: null });
+
+/**
+ * How main mode navigates on laptops and desktops (from 1024px). `sidebar` is
+ * the Pathways sidebar; `strip` keeps the phone's bottom strip at every width.
+ * Phones and tablets always use the strip. A host sets it once for the app.
+ */
+export type LibraryDesktopNavigation = 'sidebar' | 'strip';
+const DesktopNavigationContext = createContext<LibraryDesktopNavigation>('sidebar');
+export function LibraryDesktopNavigationProvider({ value, children }: { value: LibraryDesktopNavigation; children: ReactNode }) {
+  return <DesktopNavigationContext.Provider value={value}>{children}</DesktopNavigationContext.Provider>;
+}
+export function useLibraryDesktopNavigation() {
+  return useContext(DesktopNavigationContext);
+}
+/**
+ * True while main mode is showing the Pathways sidebar: a laptop-or-wider
+ * viewport with the `sidebar` setting. The header and Home use it to move Dao
+ * Insights into the header and to avoid repeating the sidebar's identity.
+ */
+export function useLibraryPathways() {
+  const { main } = useContext(Context);
+  const desktopNavigation = useLibraryDesktopNavigation();
+  const desktop = useDesktopNavigation();
+  return Boolean(main) && desktopNavigation === 'sidebar' && desktop;
+}
 const icons = { home: 'home', create: 'book', discover: 'discovery' } as const satisfies Record<string, SENNavigationIconName>;
 
 /**
- * The desktop rail's contents, in either mode: a main-mode page's own
- * destinations, or a workspace's sections. `WorkspaceShell` owns the column.
+ * The desktop rail's contents, in either mode. `WorkspaceShell` owns the column.
+ * - Main mode shows the Pathways sidebar: the Celestial Library identity, the
+ *   four destinations with the current page's own sections nested under the
+ *   active one, Settings in the footer, and the host's artwork.
+ * - Workspace mode keeps the task's section panel in the default styling: the
+ *   Pathways variant does not yet wrap long labels or section guidance.
+ * - With the `strip` setting, main mode keeps the page's own section panel.
  */
 export function LibrarySectionSidebar() {
-  const { menu, workspace } = useContext(Context);
+  const { menu, workspace, main } = useContext(Context);
+  const desktopNavigation = useLibraryDesktopNavigation();
   if (workspace) return <LibraryNavigationDrawerPanel aria-label={workspace.label} profile={workspace.profile} sections={workspace.sections} />;
+  if (main && desktopNavigation === 'sidebar') return <PathwaysSidebar main={main} menu={menu} />;
   return menu ? <LibraryNavigationDrawerPanel aria-label={menu.label} sections={menu.sections} /> : null;
+}
+
+function PathwaysSidebar({ main, menu }: { main: MainState; menu: LibrarySectionMenu | null }) {
+  const compact = useCompactHeader();
+  const { navigationArtwork } = useLibraryAssets();
+  const { location, onNavigate, selected } = main;
+  const go = (target: LibraryLocation) => { if (libraryLocationKey(location) !== libraryLocationKey(target)) onNavigate(target); };
+  // The page's own sections nest under the pathway you are on (e.g. Profile → Home, Stories, Rewards).
+  const nested = menu?.sections.flatMap(section => section.items) ?? [];
+  const settings: LibraryLocation = { screen: 'profile', cave: '/settings' };
+  return <LibraryNavigationDrawerPanel variant="pathways" density={compact ? 'compact' : 'default'}
+    aria-label="Library pathways"
+    identity={{ name: 'Celestial Library', wordmark: <>Celestial<br />Library</>, emblem: LIBRARY_EMBLEM, divider: true }}
+    sections={[{ id: 'pathways', label: 'Pathways', items: LIBRARY_DESTINATIONS.map(({ id, label, location: target }) => ({
+      id, label, active: selected === id,
+      icon: id === 'profile' ? <SENProfileIcon size={20} /> : <SENNavigationIcon name={icons[id]} size={20} />,
+      onSelect: () => go(target),
+      children: selected === id && nested.length ? nested.map(({ id: childId, label: childLabel, icon, active, onSelect }) => ({
+        id: childId, label: childLabel, icon, active, onSelect,
+      })) : undefined,
+    })) }]}
+    footer={{ divider: true, items: [
+      { id: 'settings', label: 'Settings', icon: <SENSettingsIcon size={18} />,
+        active: location.screen === 'profile' && Boolean(location.cave?.startsWith('/settings')), onSelect: () => go(settings) },
+    ] }}
+    artwork={navigationArtwork ? { type: 'image', src: navigationArtwork } : undefined} />;
 }
 
 /** Workspace mode's drawer state, for pages that open or close it themselves. */
@@ -102,8 +168,10 @@ export function useLibraryWorkspace() {
 }
 
 /**
- * The Library's one navigation system. Main mode is the global strip — Home,
- * Create, Discover, Profile — with an optional page rail. Workspace mode is a
+ * The Library's one navigation system. Main mode is Home, Create, Discover,
+ * Profile: the bottom strip on phones and tablets and, from 1024px, the
+ * Pathways sidebar (`LibrarySectionSidebar`) with a page's own sub-pages (the
+ * Cave's) nested under the active pathway. Workspace mode is a
  * focused task's own bar, Sections drawer and rail, drawn by the same shell
  * from the task's definition. Pages supply destinations, never a strip.
  */
@@ -113,14 +181,18 @@ export function LibraryNavigation(props: LibraryNavigationProps) {
   // Immersive and workspace routes cannot be overridden by the standard default.
   const routeMode = libraryNavigationMode(location.screen);
   const resolvedMode = routeMode !== 'standard' ? routeMode : mode ?? 'standard';
-  return <Context.Provider value={{ menu: sectionMenu ?? null, workspace: null }}>
-    {resolvedMode === 'standard' ? <MainNavigation location={location} onNavigate={onNavigate}>{children}</MainNavigation> : children}
+  const main = resolvedMode === 'standard' ? { location, onNavigate, selected: activeLibraryDestination(location) } : null;
+  return <Context.Provider value={{ menu: sectionMenu ?? null, workspace: null, main }}>
+    {main ? <MainNavigation location={location} onNavigate={onNavigate}>{children}</MainNavigation> : children}
   </Context.Provider>;
 }
 
 function MainNavigation({ location, onNavigate, children }: Pick<LibraryMainNavigationProps, 'location' | 'onNavigate' | 'children'>) {
   const selected = activeLibraryDestination(location);
-  return <div className="library-navigation-layout" data-library-mode="main" data-library-destination={selected}>
+  const desktopNavigation = useLibraryDesktopNavigation();
+  // From 1024px the Pathways sidebar replaces the strip unless the host keeps the strip.
+  return <div className="library-navigation-layout" data-library-mode="main" data-library-destination={selected}
+    data-library-desktop-navigation={desktopNavigation}>
     {children}
     <LibraryBottomNavigation aria-label="Library global navigation" className="library-global-navigation" showLabels
       items={LIBRARY_DESTINATIONS.map(({ id, label, location: target }) => {
@@ -156,7 +228,7 @@ function WorkspaceNavigation({ workspace, children }: { workspace: LibraryWorksp
     { id: 'back', label: back.label ?? 'Back', icon: <SENExitIcon size={20} aria-hidden="true" />,
       onSelect: () => { setDrawerOpen(false); back.onBack(); } },
   ];
-  return <Context.Provider value={{ menu: null, workspace: state }}>
+  return <Context.Provider value={{ menu: null, workspace: state, main: null }}>
     <div className="library-navigation-layout" data-library-mode="workspace">
       {children}
       {/* The same bar and placement as the global strip; only the items differ.

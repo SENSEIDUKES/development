@@ -2,6 +2,8 @@
 
 Updated 2026-09-09. Development Home, Story Seed and Cultivator Cave use one `WorkspaceHeader` over the existing `SEIAppHeader`. The existing `LibraryHeaderBadge mode="app-header"` supplies the logo and custom plaque through `LibraryPresentationProvider`. UI packages and their pinned artifacts are unchanged.
 
+> **2026-09-28 — Header center.** `WorkspaceHeader` takes an optional `center` node. While main mode shows the laptop Pathways sidebar, the header draws it in the middle of the row in place of the page badge (the sidebar already carries the Library identity); `GlobalHeader` passes Dao Insights there, and `MainLibraryHomeInsights` steps aside. On phones and tablets, and with the strip setting, the badge returns and Dao Insights stays in Home content as described below.
+
 ## Top navigation contract
 
 The top row is **Logo — Library Header Badge — optional page context — Help — Search**. `contextualItem` is an optional page-supplied React node: the public Cave passes Public View. Home passes none — Dao Insights lives in Home's own content, beneath the featured area and above the collection tabs (`MainLibraryHomeInsights`), so it never competes with the page title for the header row. A missing item consumes no slot or placeholder. The title receives a reserved minimum width above 479px. On narrower phones, tighter horizontal spacing and 13px title typography preserve the existing plaque height for current page names. Titles never ellipsize; unusually long host titles wrap as a fallback. The plaque shape, border, glow and colors are unchanged. Pages should supply a compact contextual emblem with its full accessible name on phones.

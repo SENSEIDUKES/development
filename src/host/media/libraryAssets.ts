@@ -2,6 +2,7 @@ import type { LibraryAssets } from '@seihouse/library/presentation';
 /** DEV host catalog. No package embeds these CDN or public-directory locations. */
 export const LIBRARY_ASSETS: LibraryAssets = {
   emblem: '/favicon.jpg',
+  navigationArtwork: '/manifest-backdrops/immortal-land-4.jpg',
   authImage: '/story-seed/library-auth-backdrop.jpg',
   authVideo: "https://pub-e482c2dbbb984c3c87ecdd8ae3a92183.r2.dev/LIBRARY/videos/VIDEO/Library%20Auth%20(Backdrop%20Video).mp4",
   homeVideos: [

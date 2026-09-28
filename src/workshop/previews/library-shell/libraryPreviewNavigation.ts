@@ -4,7 +4,7 @@ import { type LibraryLocation } from '@seihouse/library/shell';
 export function libraryPreviewUrl(location: LibraryLocation) {
   const current = new URL(window.location.href);
   const url = new URL('/library-shell.html', current);
-  for (const key of ['safeArea', 'motion', 'homeReference', 'worlds']) {
+  for (const key of ['safeArea', 'motion', 'homeReference', 'worlds', 'laptopNav']) {
     const value = current.searchParams.get(key);
     if (value) url.searchParams.set(key, value);
   }

@@ -4,7 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { MotionGlobalConfig } from 'motion/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
-import { LibraryFooter, LibrarySectionSidebar, WorkspaceHeader } from '@seihouse/library/shell';
+import { LibraryDesktopNavigationProvider, LibraryFooter, LibraryNavigation, LibrarySectionSidebar, WorkspaceHeader } from '@seihouse/library/shell';
 import { MainLibraryFooter } from './MainLibraryFooter';
 import { MainLibraryNavigation } from './MainLibraryNavigation';
 import { MainLibraryHomeInsights } from './MainLibraryHomeInsights';
@@ -102,13 +102,56 @@ it('uses host legal destinations instead of the placeholders when supplied', asy
 });
 
 it('marks Seed Bank, not Cultivator Cave, as the active section on the Cave Stories screen', async () => {
-  await render(<MainLibraryNavigation location={{ screen: 'profile', cave: '/stories' }} onNavigate={vi.fn()}>
+  // The page's own section panel, as hosts that keep the bottom strip on laptops show it.
+  await render(<LibraryDesktopNavigationProvider value="strip"><MainLibraryNavigation location={{ screen: 'profile', cave: '/stories' }} onNavigate={vi.fn()}>
     <LibrarySectionSidebar />
-  </MainLibraryNavigation>);
+  </MainLibraryNavigation></LibraryDesktopNavigationProvider>);
   const seedBank = byText('Seed Bank');
   const cave = byText('Cultivator Cave');
   expect(seedBank?.getAttribute('aria-current')).toBeTruthy();
   expect(cave?.getAttribute('aria-current')).toBeFalsy();
+});
+
+it('nests a page\'s own sub-pages under the active pathway and moves Dao Insights into the laptop header', async () => {
+  vi.stubGlobal('matchMedia', (query: string) => ({ media: query, matches: query.includes('min-width: 1024px'),
+    addEventListener: vi.fn(), removeEventListener: vi.fn(), addListener: vi.fn(), removeListener: vi.fn() }));
+  const navigate = vi.fn();
+  const openRewards = vi.fn();
+  // The Cave supplies its pages the same way.
+  await render(<LibraryNavigation location={{ screen: 'profile', cave: '/stories' }} onNavigate={navigate} sectionMenu={{
+    label: 'Cultivator Cave navigation',
+    sections: [{ id: 'cave', items: [
+      { id: 'stories', label: 'Stories', active: true, onSelect: vi.fn() },
+      { id: 'rewards', label: 'Rewards', onSelect: openRewards },
+    ] }],
+  }}>
+    <LibrarySectionSidebar />
+    <WorkspaceHeader title="Celestial Library" center={<p data-center-probe>Dao</p>} />
+  </LibraryNavigation>);
+  const pathways = document.querySelector('nav[aria-label="Library pathways"]')!;
+  expect(pathways).not.toBeNull();
+  expect(byText('Profile', pathways)?.getAttribute('aria-current')).toBeTruthy();
+  expect(byText('Stories', pathways)?.getAttribute('aria-current')).toBeTruthy();
+  expect(byText('Settings', pathways.closest('[data-slot="navigation-panel"]')!)).toBeTruthy();
+  await click(byText('Rewards', pathways));
+  expect(openRewards).toHaveBeenCalled();
+  // The laptop strip steps aside for the sidebar (CSS), and the header centers its content in place of the badge.
+  expect(document.querySelector('[data-library-desktop-navigation="sidebar"]')).not.toBeNull();
+  expect(document.querySelector('[data-header-center] [data-center-probe]')).not.toBeNull();
+  expect(document.querySelector('.workspace-header-badge')).toBeNull();
+  await click(byText('Create', pathways));
+  expect(navigate).toHaveBeenCalledWith({ screen: 'creator-space' });
+});
+
+it('keeps Home\'s on-page sections out of the Pathways sidebar so the four pathways stay in view', async () => {
+  vi.stubGlobal('matchMedia', (query: string) => ({ media: query, matches: query.includes('min-width: 1024px'),
+    addEventListener: vi.fn(), removeEventListener: vi.fn(), addListener: vi.fn(), removeListener: vi.fn() }));
+  await render(<MainLibraryNavigation location={{ screen: 'home', collection: 'featured' }} onNavigate={vi.fn()}>
+    <LibrarySectionSidebar />
+  </MainLibraryNavigation>);
+  const pathways = document.querySelector('nav[aria-label="Library pathways"]')!;
+  expect(byText('Home', pathways)?.getAttribute('aria-current')).toBeTruthy();
+  expect(byText('Immortal Hub', pathways)).toBeUndefined();
 });
 
 it('keeps a divined Dao quote after the carousel settles', async () => {

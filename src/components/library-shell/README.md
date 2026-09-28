@@ -4,7 +4,7 @@
 - **Source locations:** Light-Novels `src/components/GlobalHeader.tsx` (`GlobalHeader`), `src/components/DaoInsights.tsx` (`DaoInsights`), and the collection navigation in `src/components/LibraryScreen.tsx` (`LibraryScreen`). Development `src/components/story-seed/development/CreationModal.tsx` (`CreationModal`), `StorySeedHeader.tsx`, `StorySeedSelector.tsx`, `StorySeedMobileNavigation.tsx`, and `StorySeedSettings.tsx`.
 - **Workshop preview:** `?preview=library-shell`
 - **Replica created:** 2026-09-08
-- **Last Workshop update:** 2026-09-27
+- **Last Workshop update:** 2026-09-28
 - **Last source comparison:** 2026-09-08
 - **Replica status:** under refinement; locked captures plus Development workspaces on the canonical `SEIAppHeader` and `SEIAppShell`.
 
@@ -90,6 +90,18 @@ Story Seed is the first workspace. It no longer runs a navigation system of its 
 
 The Library Shell tab groups its pages by mode — Main mode (Home, Create & My Library; Cultivator Cave), Workspace mode (Story Seed) and Header only — shows the selected page's mode, opens on Home, and its checklist covers both modes and the immersive Reader.
 
+## Pathways sidebar on laptops — 2026-09-28
+
+Development now vendors `@seihouse/ui@0.7.0` and `@seihouse/library-ui@0.6.0` from UI PR [#82](https://github.com/SENSEIDUKES/UI/pull/82) (`297f021`), which added the Pathways panel (`variant="pathways"`: identity, one level of nested items, footer slots and decorative artwork) to the universal navigation panel and its Library skin.
+
+- **Main mode on laptops (1024px and wider)** now uses the **Pathways sidebar** instead of the bottom strip: the Celestial Library emblem and wordmark, Home — Create — Discover — Profile, Settings in the footer slot, and the host's navigation artwork (`LibraryAssets.navigationArtwork`, `immortal-land-4.jpg` in the Workshop). From 1024 to 1279px it collapses to a 72px icon rail. Phones and tablets keep the bottom strip.
+- **Only real sub-pages nest.** The Cultivator Cave's pages (Home, Stories, Rewards…) sit under Profile and replace the Cave's separate short rail. Home, Create and Discover pass no nested list in sidebar mode: their sections are already on the page, in the header menu and in the footer, and repeating them pushed the four pathways off a laptop screen.
+- **Dao Insights moves into the header center** whenever the Pathways sidebar is showing (`WorkspaceHeader` `center`, used by `GlobalHeader`); the Home content copy steps aside, and on phones and tablets it stays in Home content as before. The Cave keeps its PROFILE badge because it supplies no center.
+- **Workspace mode (Story Seed) keeps its existing sidebar styling.** The Pathways variant clips long section labels (World Identity, Characters…) and the section guidance cards, so Story Seed stays on the default panel until the UI repo wraps or truncates them.
+- **Hosts can keep the strip.** `LibraryDesktopNavigationProvider value="strip"` keeps the bottom strip at every width; `useLibraryPathways()` tells a surface whether the sidebar is showing.
+
+The Library Shell tab's **Laptop navigation** control switches the Development frame between the Pathways sidebar, the bottom strip (before), and **Compare both**, which stacks the two at the chosen viewport. Captures accept `&laptopNav=strip`.
+
 ## Capture boundary
 
 The locked reference area records two existing systems for comparison. Its captures remain unchanged. The separate Development area now proves the shared header family and responsive navigation in the active Story Seed and Cultivator Cave; see [component contracts](../../../docs/library-header-family.md). Main Library was read at `4a3dd02b6640b2ec50d8d1d136e37fb808249ed2` and Story Seed at development `7e1302bd2d5c3205706ddb1362607abed6a850e6`; neither was re-read on 2026-09-09, so their source-comparison dates are unchanged. The vendored UI artifacts now come from UI commit `42961e48e78ee816f9c2801a37a7f66af8aa2ae2` (UI PR #60), which adds `SEIAppHeader`, `SEIAppShell` and the compact `LibraryHeaderBadge` presentation.
@@ -167,6 +179,8 @@ Nothing in this PR is transferred back automatically. Light-Novels and locked re
 For an eventual approved change, identify the owning lane first. The footer would transfer `LibraryFooter.tsx`, `LibraryFooterSocialIcons.tsx`, `library-footer.css` and `MainLibraryFooter.tsx` to replace the footer block in Light-Novels `src/App.tsx`, with the host supplying its router callback, Help opener, social URLs and legal pages. Main header/DAO changes would target Light-Novels `src/components/GlobalHeader.tsx`, `src/components/DaoInsights.tsx`, relevant `src/index.css` rules, and only if needed the collection fragment in `src/components/LibraryScreen.tsx`. Story Seed changes would target its existing development header, selector, mobile navigation, settings, `CreationModal` integration, and `story-seed.css`, then ship through the established SEN package and Library host presentation adapter. Shared visual primitives would be changed in UI, published/packed first, then consumed by the hosts. Do not copy the frame HTML, Workshop wrappers, mock context, fixture data, content slots, or capture manifest into a production application.
 
 ## Workshop history
+
+- **2026-09-28:** Adopted UI 0.7.0 / Library UI 0.6.0 (UI PR #82). Laptop main mode moved from the bottom strip to the Pathways sidebar with the Cave's pages nested under Profile, Settings in the footer and the host's artwork; Dao Insights moved into the laptop header center. Story Seed keeps its default sidebar. Added the Laptop navigation compare control. Locked captures and source-comparison dates are unchanged.
 
 - **2026-09-26:** The bottom strip's Library tab, which reopened Home with My Library selected, became **Create**, opening the new Create page (`{ screen: 'creator-space' }`, [Create](../creator-space/README.md)). `LibraryDestination` `library` → `create` (same book mark); My Library and story detail now select Home; the outline's `library` group became `create`. Header Search and the footer Explore menu gained Creator Space; My Library stays in both. The Development capture mounts Create through `CreatorSpaceHost` and keeps it mounted like Home. Locked captures and source-comparison dates are unchanged.
 

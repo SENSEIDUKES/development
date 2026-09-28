@@ -56,3 +56,14 @@
   .library-workspace-navigation { display: none !important; }
   .library-navigation-layout[data-library-mode='workspace'] { --library-bottom-clearance: 0px; }
 }
+
+/* Main mode on laptops and desktops: the Pathways sidebar replaces the strip,
+   so the strip and its clearance step aside. From 1024px to 1279px the sidebar
+   is the compact icon rail; from 1280px it is the full 14rem panel. */
+@media (min-width: 1024px) {
+  .library-navigation-layout[data-library-desktop-navigation='sidebar'] > .library-global-navigation { display: none !important; }
+  .library-navigation-layout[data-library-desktop-navigation='sidebar'] { --library-bottom-clearance: 0px; }
+}
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .library-navigation-layout[data-library-desktop-navigation='sidebar'] .workspace-shell { --sh-shell-sidebar: 4.5rem !important; }
+}

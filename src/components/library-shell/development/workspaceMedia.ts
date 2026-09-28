@@ -36,3 +36,13 @@ export function useCompactHeader() {
   );
 }
 
+
+const desktopSubscribe = subscribe(DESKTOP_NAVIGATION_QUERY);
+/** True from the desktop breakpoint, where the Pathways sidebar replaces the strip. */
+export function useDesktopNavigation() {
+  return useSyncExternalStore(
+    desktopSubscribe,
+    () => window.matchMedia(DESKTOP_NAVIGATION_QUERY).matches,
+    () => false,
+  );
+}

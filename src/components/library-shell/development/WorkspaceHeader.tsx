@@ -4,6 +4,7 @@ import { NarrativeButton as LibraryButton, NarrativeHeaderBadge as LibraryHeader
 import { ArrowLeft } from 'lucide-react';
 import { HeaderActionButton, HeaderOverflow, type HeaderAction } from './WorkspaceHeaderActions';
 import { useCompactHeader } from './workspaceMedia';
+import { useLibraryPathways } from './LibraryNavigation';
 import { WorkspaceHeaderUtilities, type HeaderSearchItem } from './WorkspaceHeaderUtilities';
 import './workspace-header.css';
 
@@ -29,6 +30,12 @@ export interface WorkspaceHeaderProps {
   status?: { label: string; tone?: 'neutral' | 'success' | 'busy' | 'error' };
   /** `'none'` when a host — `WorkspaceShell` — already provides the banner landmark. */
   landmark?: 'banner' | 'none';
+  /**
+   * Centered header content while the Pathways sidebar is showing (laptops and
+   * wider). The sidebar already carries the Library identity there, so the
+   * badge steps aside for it — Home puts Dao Insights here.
+   */
+  center?: ReactNode;
 }
 
 /**
@@ -44,8 +51,10 @@ export interface WorkspaceHeaderProps {
  */
 export function WorkspaceHeader({ title, subtitle, emblem, home, back, primaryAction,
   secondaryActions = [], overflowActions = [], contextualItem, help, searchItems = [],
-  status, landmark = 'banner' }: WorkspaceHeaderProps) {
+  status, landmark = 'banner', center }: WorkspaceHeaderProps) {
   const compact = useCompactHeader();
+  const pathways = useLibraryPathways();
+  const showCenter = pathways && center != null && center !== false;
   const accessory = useContext(HeaderAccessoryContext);
   const commands = [...secondaryActions, ...(primaryAction ? [primaryAction] : []), ...overflowActions];
   const searchCommands = [...searchItems, ...commands.filter(action => !searchItems.some(item => item.id === action.id))];
@@ -61,7 +70,7 @@ export function WorkspaceHeader({ title, subtitle, emblem, home, back, primaryAc
     // truncating identity column rather than the fixed-width branding slot.
     branding={back && <LibraryButton variant="ghost" size="icon" icon={ArrowLeft}
       aria-label={back.label} onClick={back.onNavigate} />}
-    appName={<span className="workspace-header-badge" onClick={event => {
+    appName={showCenter ? <div className="workspace-header-center" data-header-center>{center}</div> : <span className="workspace-header-badge" onClick={event => {
       // Canonical badge owns the link markup; the host may intercept ordinary navigation.
       if (home?.onNavigate && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey
         && (event.target as Element).closest('a')) {

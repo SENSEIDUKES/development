@@ -51,7 +51,17 @@ export function usePassageSelection(blocks: readonly TextHighlightBlock[], onSel
       controlPointer.current = !!controlsRef.current?.contains(target) || !!preserved;
       if (!controlPointer.current && !editorRef.current?.contains(target) && (editing || actionOpen || !root.contains(target))) clear();
     };
-    const key = (event: KeyboardEvent) => { if (event.key === 'Escape' && snapshot) { clear(); root.focus({ preventScroll: true }); } };
+    const key = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && snapshot) { clear(); root.focus({ preventScroll: true }); return; }
+      // The floating controls sit at the end of the document. Whatever a host
+      // renders after its prose, the first Tab after a selection enters them.
+      if (event.key !== 'Tab' || event.shiftKey || !snapshot || actionOpen) return;
+      const controls = controlsRef.current;
+      const first = controls?.querySelector<HTMLElement>('button:not(:disabled)');
+      if (!controls || !first || controls.contains(doc.activeElement)) return;
+      event.preventDefault();
+      first.focus();
+    };
     doc.addEventListener('selectionchange', read);
     doc.addEventListener('pointerup', read);
     doc.addEventListener('keyup', read);

@@ -11,11 +11,13 @@ export interface TextHighlightEngineProps {
   onSelectionChange?: (selection: PassageSelection | null) => void;
   actions?: readonly PassageAction[];
   renderBlockText?: (block: TextHighlightBlock) => ReactNode;
+  /** False once a host's text is fixed (for example a sealed chapter): no Edit, Delete, or Undo. Defaults to true. */
+  editable?: boolean;
   className?: string;
   style?: CSSProperties;
 }
 
-export function TextHighlightEngine({ blocks, onBlocksChange, onSelectionChange, actions = [], renderBlockText, className = '', style }: TextHighlightEngineProps) {
+export function TextHighlightEngine({ blocks, onBlocksChange, onSelectionChange, actions = [], renderBlockText, editable = true, className = '', style }: TextHighlightEngineProps) {
   const engine = usePassageSelection(blocks, onSelectionChange);
   const { rootRef, controlsRef, editorRef, selection, sourceText, editing, actionOpen, rectangles } = engine;
   const [replacement, setReplacement] = useState('');
@@ -23,7 +25,7 @@ export function TextHighlightEngine({ blocks, onBlocksChange, onSelectionChange,
   const [menuPath, setMenuPath] = useState<string[]>([]);
   const [panel, setPanel] = useState<ReactNode>(null);
   const [position, setPosition] = useState({ left: 8, top: 8, maxHeight: 400, width: 320 });
-  const validUndo = undo && blocks.some(block => block.id === undo.after.id && block.text === undo.after.text) ? undo : null;
+  const validUndo = editable && undo && blocks.some(block => block.id === undo.after.id && block.text === undo.after.text) ? undo : null;
 
   useLayoutEffect(() => { if (undo && !validUndo) setUndo(null); }, [undo, validUndo]);
   useEffect(() => { if (!selection) { setMenuPath([]); setPanel(null); } }, [selection]);
@@ -92,7 +94,7 @@ export function TextHighlightEngine({ blocks, onBlocksChange, onSelectionChange,
   };
 
   const commit = (operation: 'replace' | 'delete') => {
-    if (!selection || (operation === 'replace' && replacement === '')) return;
+    if (!editable || !selection || (operation === 'replace' && replacement === '')) return;
     const before = blocks.find(block => block.id === selection.blockId);
     if (!before || before.text !== sourceText) { engine.clear(); return; }
     const after = replacePassage(before, selection, operation === 'delete' ? '' : replacement);
@@ -131,7 +133,7 @@ export function TextHighlightEngine({ blocks, onBlocksChange, onSelectionChange,
       <div className="sen-text-highlight-undo" role="status">Passage deleted. <SEIButton unstyled onClick={restore}>Undo</SEIButton></div>
     </div>, rootRef.current.ownerDocument.body)}
     {selection && rootRef.current && createPortal(<div className="sen-text-highlight" style={style}>
-      {(editing || actionOpen || visible) && <div ref={controlsRef} className="sen-text-highlight-controls" style={position}
+      {(editing || actionOpen || visible) && (editable || actions.length > 0) && <div ref={controlsRef} className="sen-text-highlight-controls" style={position}
         role="group" aria-label={editing ? 'Edit passage' : panel ? 'Passage action panel' : 'Passage actions'}>
         {editing ? <>
           <div className="sen-text-highlight-actions">
@@ -143,7 +145,7 @@ export function TextHighlightEngine({ blocks, onBlocksChange, onSelectionChange,
           {panel}
         </> : <div className="sen-text-highlight-actions sen-text-highlight-menu">
           {menuPath.length > 0 && <SEIButton unstyled onClick={() => setMenuPath(path => path.slice(0, -1))}>Back</SEIButton>}
-          {menuPath.length === 0 && <SEIButton unstyled onPointerDown={event => { if (event.pointerType === 'mouse') event.preventDefault(); }}
+          {menuPath.length === 0 && editable && <SEIButton unstyled onPointerDown={event => { if (event.pointerType === 'mouse') event.preventDefault(); }}
             onClick={() => { setReplacement(selection.selectedText); engine.beginEdit(); }}>Edit</SEIButton>}
           {menuActions.map(action => <SEIButton key={action.id} unstyled
             onPointerDown={event => { if (event.pointerType === 'mouse') event.preventDefault(); }}

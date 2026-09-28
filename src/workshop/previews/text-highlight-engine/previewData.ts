@@ -1,8 +1,10 @@
-import type { TextHighlightBlock } from '@seihouse/sen/text-highlight-engine';
+import { createManuscript, type ManuscriptIdFactory } from '@seihouse/sen/text-highlight-engine';
 
-export const previewBlocks: readonly TextHighlightBlock[] = [
-  { id: 'harbor-arrival', text: 'By the time Mara reached the harbor, the rain had softened to a silver mist. Fishing boats leaned against their ropes, and the smell of warm bread drifted from a doorway beside the water. She paused beneath the awning to read the address one more time.' },
-  { id: 'blue-door', text: 'The house with the blue door stood at the end of the lane. Someone had placed a bowl of pears on its windowsill, each fruit catching a little of the morning light. Inside, a clock struck nine, then hesitated before offering one uncertain final note.' },
-  { id: 'letter', text: 'Mara unfolded the letter carefully. “Come before the first frost,” her brother had written. There was no explanation, only a small drawing of the bridge they used to cross as children. She traced the uneven line with her thumb and knocked.' },
-  { id: 'welcome', text: 'For a moment, nothing moved. Then footsteps crossed the wooden floor, slow but unmistakable, and the latch lifted. Her brother looked older than she remembered. He smiled as if she had only been away for the afternoon.' },
+/** Three short pre-made paragraphs for the lab page: action, world-building, and a breakthrough. */
+export const previewParagraphs: readonly string[] = [
+  'The iron gate split down the middle, and Lin Wei rolled beneath the falling beam a heartbeat before it struck the ground. Dust swallowed the courtyard. Somewhere behind the smoke, the beast roared again, closer now, its claws scraping across the stone. “Get up!” someone shouted from the wall. Lin Wei drew his sword, planted his feet on the cracked tiles, and met the first lunge with a ringing strike that shook every bone in his arms.',
+  'Beyond the ridge, the city of Qinglan rose in nine terraces, each one older than the kingdom that claimed it. Merchants on the lowest terrace sold river salt and spirit herbs beneath paper lanterns. Higher up, the sect halls kept their doors shut, and only the temple bells spoke for them, marking the hours in long bronze notes. At the summit stood the Moon Archive, where no one had turned a page in three hundred years.',
+  'Lin Wei sat cross-legged in the cave until the last of the storm faded from the entrance. The pill dissolved on his tongue like cold fire. For a long moment nothing happened; then his meridians opened all at once, and a flood of qi tore through him with the sound of breaking ice. [Breakthrough: Foundation Establishment, Lv. 1] He opened his eyes. The cave walls were glowing faintly, as if the stone itself had noticed.',
 ];
+
+export const createPreviewManuscript = (createId?: ManuscriptIdFactory) => createManuscript(previewParagraphs, { createId });

@@ -126,7 +126,27 @@ describe('Text Highlight Engine', () => {
     const again = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
     act(() => { document.dispatchEvent(again); });
     expect(again.defaultPrevented).toBe(false);
+    // Once focus leaves for the host's own control, Tab keeps its normal order for this selection.
+    act(() => after.focus());
+    const onward = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+    act(() => { document.dispatchEvent(onward); });
+    expect(onward.defaultPrevented).toBe(false);
+    expect(document.activeElement).toBe(after);
+    // A new selection gets its own first-Tab jump.
+    await select(0, 6);
+    const fresh = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+    act(() => { document.dispatchEvent(fresh); });
+    expect(fresh.defaultPrevented).toBe(true);
     after.remove();
+  });
+  it('closes an open draft when the host fixes its text mid-edit', async () => {
+    await select(); click('Edit'); fill('unsaved words');
+    expect(document.querySelector('[contenteditable]')).not.toBeNull();
+    act(() => setFixed(true));
+    expect(document.querySelector('[contenteditable]')).toBeNull();
+    expect(button('Save')).toBeUndefined();
+    expect(block().textContent).toBe(initial[0].text);
+    expect(changed).not.toHaveBeenCalled();
   });
   it('offers no Edit, Delete or Undo once the host fixes its text, but still reports selections', async () => {
     await select(); click('Edit'); fill(''); click('Delete Passage');
@@ -138,6 +158,68 @@ describe('Text Highlight Engine', () => {
     expect(document.querySelector('.sen-text-highlight-marks span')).not.toBeNull();
     expect(button('Edit')).toBeUndefined();
     expect(document.querySelector('.sen-text-highlight-controls')).toBeNull();
+  });
+  it('keeps the desktop bar inline, just under the selection', async () => {
+    await select();
+    const controls = document.querySelector<HTMLElement>('.sen-text-highlight-controls')!;
+    expect(controls.dataset.layout).toBe('inline');
+    expect(controls.querySelector('.sen-text-highlight-actions--stacked')).toBeNull();
+    expect(controls.style.top).toBe('232px');
+  });
+  it('stacks the bar on touch screens and keeps the phone menu band clear until the menu is gone', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: query === '(pointer: coarse)', media: query, addEventListener() {}, removeEventListener() {} }));
+    await select();
+    const controls = document.querySelector<HTMLElement>('.sen-text-highlight-controls')!;
+    expect(controls.dataset.layout).toBe('stacked');
+    expect(controls.querySelector('.sen-text-highlight-menu.sen-text-highlight-actions--stacked')).not.toBeNull();
+    // The stubbed selection line ends at 222px; the phone's own menu owns the next 72px.
+    expect(parseFloat(controls.style.top)).toBeGreaterThanOrEqual(222 + 72);
+    click('Edit');
+    const editing = document.querySelector<HTMLElement>('.sen-text-highlight-controls')!;
+    expect(editing.querySelector('.sen-text-highlight-actions--stacked')).not.toBeNull();
+    expect(parseFloat(editing.style.top)).toBeLessThan(222 + 72);
+  });
+  it('draws no overlay and attaches no overlay work when the host sets none', () => {
+    expect(document.querySelector('.sen-text-highlight-overlay')).toBeNull();
+  });
+  it('draws a host overlay beside the words it points at, without covering them, taking taps or changing the prose', () => {
+    const extra = document.createElement('div'); document.body.append(extra);
+    const overlayRoot = createRoot(extra);
+    const overlay = () => ({
+      marks: [
+        { id: 'cue', selection: { blockId: 'a', selectedText: 'middle', startOffset: 7, endOffset: 13 }, tone: 'rgba(45, 212, 191, .3)' },
+        { id: 'stale', selection: { blockId: 'a', selectedText: 'missing', startOffset: 0, endOffset: 7 }, tone: 'red' },
+      ],
+      pins: [
+        { id: 'p1', blockId: 'a', offset: 0, label: '¶1', placement: 'margin' as const },
+        { id: 's1', blockId: 'a', offset: 0, label: '1', placement: 'raised' as const },
+        { id: 's2', blockId: 'b', offset: 0, label: '12', placement: 'raised' as const },
+      ],
+    });
+    // A host that rebuilds an identical overlay on every render must not cause repeated work.
+    for (let render = 0; render < 3; render += 1) {
+      act(() => overlayRoot.render(<TextHighlightEngine blocks={initial} onBlocksChange={vi.fn()} overlay={overlay()} />));
+    }
+    const layers = extra.querySelectorAll('.sen-text-highlight-overlay');
+    expect(layers).toHaveLength(2);
+    layers.forEach(layer => expect(layer.getAttribute('aria-hidden')).toBe('true'));
+    expect(extra.querySelectorAll('.sen-overlay-mark')).toHaveLength(1);
+    const pins = Array.from(extra.querySelectorAll<HTMLElement>('.sen-overlay-pin'));
+    expect(pins.map(pin => [pin.textContent, pin.dataset.placement])).toEqual([['¶1', 'margin'], ['1', 'raised'], ['12', 'raised']]);
+    // The stubbed glyph box starts at top 200, left 100 and is 22px tall.
+    const [margin, first, second] = pins;
+    expect(margin.style.left).toBe('');
+    expect(parseFloat(margin.style.top)).toBeCloseTo(200 + 22 * 0.8 - 10);
+    // Raised numbers end where the glyph box begins, so they never cover a letter…
+    for (const pin of [first, second]) expect(parseFloat(pin.style.top) + 10).toBeLessThanOrEqual(200);
+    // …and two sentences starting at the same spot never stack their numbers.
+    expect(parseFloat(first.style.left)).toBe(100);
+    expect(parseFloat(second.style.left)).toBeGreaterThanOrEqual(100 + 6.5 + 3);
+    expect(extra.querySelector('.sen-overlay-label')).toBeNull();
+    expect(extra.querySelector('[data-sen-text-block="a"]')!.textContent).toBe(initial[0].text);
+    act(() => overlayRoot.render(<TextHighlightEngine blocks={initial} onBlocksChange={vi.fn()} />));
+    expect(extra.querySelector('.sen-text-highlight-overlay')).toBeNull();
+    act(() => overlayRoot.unmount()); extra.remove();
   });
   it.each(['mouse', 'touch'])('retains the selection during %s activation of Edit', async pointerType => {
     await select();

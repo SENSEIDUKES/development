@@ -73,6 +73,16 @@ for (const [name, browserType, width, height, touch] of [
       assert.ok(expectedSelection.start > 0 && expectedSelection.end < original.length && expectedSelection.text.length > 10);
       assert.equal(expectedSelection.text, original.slice(expectedSelection.start, expectedSelection.end));
     } else await select();
+    // Touch screens stack the Action Bar and keep the phone's own selection-menu band clear.
+    const barLayout = await page.evaluate(() => {
+      const range = document.getSelection().getRangeAt(0).getBoundingClientRect();
+      const bar = document.querySelector('.sen-text-highlight-controls');
+      const box = bar.getBoundingClientRect();
+      return { layout: bar.getAttribute('data-layout'), selectionTop: range.top, selectionBottom: range.bottom, top: box.top, bottom: box.bottom };
+    });
+    assert.equal(barLayout.layout, touch ? 'stacked' : 'inline', JSON.stringify(barLayout));
+    if (touch) assert.ok(barLayout.top >= barLayout.selectionBottom + 60 || barLayout.bottom <= barLayout.selectionTop - 60, JSON.stringify(barLayout));
+    if (touch) await page.screenshot({ path: `${output}/${name}-touch-action-bar.png` });
     assert.ok(await page.locator('.sen-text-highlight-marks span').count());
     const colorPicker = page.getByLabel('Highlight color');
     await colorPicker.dispatchEvent('pointerdown', { bubbles: true, pointerType: touch ? 'touch' : 'mouse' });
@@ -254,6 +264,49 @@ for (const [name, browserType, width, height, touch] of [
     await activate('Keep');
     assert.equal(await page.locator('[data-testid="manuscript-attachment"][data-status="changed"]').count(), 0);
     assert.equal(await paragraph.locator('.inline-world-cue-annotation__text').textContent(), 'Dust filled the courtyard.');
+
+    // The Cues overlay tints every placed cue and numbers the page as the model addresses it: ¶ numbers in the
+    // margin, small raised sentence numbers in the line spacing, counted through the page.
+    await activate('Cues');
+    // The layer is placed on the page, not the screen, so every number exists at once, on screen or not.
+    await page.waitForFunction(() => document.querySelectorAll('.sen-overlay-pin').length === 18);
+    const expectedPins = ['¶1', '1', '2', '3', '4', '5', '¶2', '6', '7', '8', '9', '¶3', '10', '11', '12', '13', '14', '15'];
+    assert.deepEqual(await page.locator('.sen-overlay-pin').allTextContents(), expectedPins);
+    assert.equal(await page.locator('.sen-overlay-label').count(), 0);
+    assert.equal(await page.locator('.sen-overlay-mark[data-overlay-id]').evaluateAll(marks => new Set(marks.map(mark => mark.dataset.overlayId)).size), 2);
+    assert.deepEqual(await page.getByTestId('overlay-legend').locator('li').allTextContents(), ['Words', 'Sentence', 'Paragraph', 'Changed']);
+    // Never over a word: no number touches a letter, another number, or the screen edge, and ¶ numbers sit left of the text.
+    const numbers = await page.evaluate(() => {
+      const letters = [];
+      for (const paragraph of document.querySelectorAll('[data-sen-text-block]')) {
+        const walker = document.createTreeWalker(paragraph, NodeFilter.SHOW_TEXT);
+        for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+          if (!node.data.trim() || node.parentElement.closest('button, [aria-hidden="true"]')) continue;
+          const range = document.createRange(); range.selectNodeContents(node);
+          letters.push(...Array.from(range.getClientRects(), rect => rect.toJSON()).filter(rect => rect.width > 0));
+        }
+      }
+      const pins = Array.from(document.querySelectorAll('.sen-overlay-pin'), pin => ({ label: pin.textContent, placement: pin.dataset.placement, rect: pin.getBoundingClientRect().toJSON() }));
+      const overlaps = (a, b) => a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
+      const textLeft = Math.min(...Array.from(document.querySelectorAll('[data-sen-text-block]'), element => element.getBoundingClientRect().left));
+      const width = document.documentElement.clientWidth;
+      return {
+        coveringLetters: pins.filter(pin => letters.some(letter => overlaps(pin.rect, letter))).map(pin => pin.label),
+        touching: pins.flatMap((pin, index) => pins.slice(index + 1).filter(other => overlaps(pin.rect, other.rect)).map(other => `${pin.label}/${other.label}`)),
+        marginInText: pins.filter(pin => pin.placement === 'margin' && pin.rect.right > textLeft).map(pin => pin.label),
+        offScreen: pins.filter(pin => pin.rect.left < 0 || pin.rect.right > width).map(pin => pin.label),
+        letters: letters.length,
+      };
+    });
+    assert.ok(numbers.letters > 0, JSON.stringify(numbers));
+    assert.deepEqual([numbers.coveringLetters, numbers.touching, numbers.marginInText, numbers.offScreen], [[], [], [], []], JSON.stringify(numbers));
+    await page.getByTestId('overlay-switch').evaluate(element => element.scrollIntoView({ block: 'start' }));
+    await page.waitForFunction(() => document.querySelectorAll('.sen-overlay-mark').length > 0);
+    await page.screenshot({ path: `${output}/${name}-lab-overlay.png`, fullPage: !touch });
+    const overlayLayout = await page.evaluate(() => ({ viewport: document.documentElement.clientWidth, content: document.documentElement.scrollWidth }));
+    assert.ok(overlayLayout.content <= overlayLayout.viewport + 1, JSON.stringify(overlayLayout));
+    await activate('Off');
+    await page.waitForFunction(() => !document.querySelector('.sen-text-highlight-overlay'));
 
     // Sealing fixes the page: selection still reads its address, but editing and attaching are gone.
     await activate('Seal chapter'); await activate('Seal');

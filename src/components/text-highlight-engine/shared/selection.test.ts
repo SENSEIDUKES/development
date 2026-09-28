@@ -28,6 +28,14 @@ describe('PassageSelection', () => {
     expect(result).toEqual({ blockId: 'stable', selectedText: 'uiet harbor', startOffset: 6, endOffset: 17 });
     expect(passageRange(root, result!)?.toString()).toBe('uiet harbor');
   });
+  it('starts a range that begins at a text-node boundary in the node that follows', () => {
+    const root = fixture();
+    const block = root.querySelector('[data-sen-text-block="stable"]')!;
+    const range = passageRange(root, { blockId: 'stable', selectedText: 'quiet', startOffset: 5, endOffset: 10 })!;
+    expect(range.toString()).toBe('quiet');
+    expect(range.startContainer).toBe(block.querySelector('span')!.firstChild);
+    expect(range.startOffset).toBe(0);
+  });
   it('normalizes a backward selection in document order', () => {
     const root = fixture(); const node = root.querySelector('span')!.firstChild!;
     const selection = document.getSelection()!; selection.setBaseAndExtent(node, 5, node, 0);

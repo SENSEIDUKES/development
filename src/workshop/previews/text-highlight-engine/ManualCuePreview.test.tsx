@@ -53,6 +53,7 @@ function editTo(value: string) {
 }
 const attachments = () => Array.from(document.querySelectorAll<HTMLElement>('[data-testid="manuscript-attachment"]'));
 const address = () => document.querySelector('[data-testid="manuscript-address"]')?.textContent;
+const modelAddress = () => document.querySelector('[data-testid="manuscript-model-address"]')?.textContent;
 function setSearch(value: string) {
   const input = document.querySelector<HTMLInputElement>('.sen-manual-cue-picker input[type="search"]')!;
   act(() => {
@@ -86,11 +87,46 @@ describe('Workshop manuscript page', () => {
     const second = previewParagraphs[1];
     await select(block(1).firstChild!, second.indexOf('temple bells'), second.indexOf('temple bells') + 'temple bells'.length);
     expect(address()).toBe('Paragraph 2 · Sentence 8');
+    expect(modelAddress()).toBe('P2 S8');
     expect(document.querySelector('[data-testid="manuscript-selection"]')?.textContent).toContain('“temple bells”');
     act(() => document.querySelectorAll<HTMLButtonElement>('[data-testid="manuscript-structure"] [data-sentence-id]')[2].click());
     expect(address()).toBe('Paragraph 1 · Sentence 3');
+    expect(modelAddress()).toBe('P1 S3');
     expect(document.querySelector('[data-testid="manuscript-selection"]')?.textContent).toContain('exactly one sentence');
     expect(button('Edit')).toBeDefined();
+  });
+});
+
+describe('Workshop Cues overlay', () => {
+  const overlayButton = (name: 'Off' | 'Cues') =>
+    Array.from(document.querySelectorAll<HTMLButtonElement>('[data-testid="overlay-switch"] button')).find(item => item.textContent === name)!;
+  const chips = (selector: string) => Array.from(host.querySelectorAll(selector), chip => chip.textContent);
+
+  const legend = () => host.querySelector('[data-testid="overlay-legend"]');
+
+  it('numbers the page and tints every cue while on, and does nothing while off', async () => {
+    expect(host.querySelector('.sen-text-highlight-overlay')).toBeNull();
+    expect(legend()).toBeNull();
+    act(() => overlayButton('Cues').click());
+    expect(overlayButton('Cues').getAttribute('aria-pressed')).toBe('true');
+    // ¶ numbers in the margin, raised sentence numbers counted through the page — the model's P2 S6.
+    expect(chips('.sen-overlay-pin')).toEqual(['¶1', '1', '2', '3', '4', '5', '¶2', '6', '7', '8', '9', '¶3', '10', '11', '12', '13', '14', '15']);
+    expect(chips('.sen-overlay-pin[data-placement="margin"]')).toEqual(['¶1', '¶2', '¶3']);
+    expect(legend()?.textContent).toContain('The model writes it P2 S6.');
+    expect(Array.from(legend()!.querySelectorAll('li'), item => item.textContent)).toEqual(['Words', 'Sentence', 'Paragraph', 'Changed']);
+    expect(host.querySelectorAll('.sen-overlay-mark')).toHaveLength(0);
+
+    await selectRoar(); openCue(); placeFirstCue();
+    await select(block().firstChild!, 0, 4); openCue(); click('Sentence'); placeFirstCue();
+    expect(host.querySelectorAll('.sen-overlay-mark')).toHaveLength(2);
+    // Tints only: the address is read from the numbers and the inspector, never from tags over the words.
+    expect(host.querySelector('.sen-overlay-label')).toBeNull();
+    expect(prose()).toBe(ACTION);
+
+    act(() => overlayButton('Off').click());
+    expect(host.querySelector('.sen-text-highlight-overlay')).toBeNull();
+    expect(legend()).toBeNull();
+    expect(block().querySelectorAll('[data-cue-annotation]')).toHaveLength(2);
   });
 });
 

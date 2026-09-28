@@ -75,7 +75,7 @@ export function TextHighlightEnginePreview() {
   const [selection, setSelection] = useState<PassageSelection | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [confirmSeal, setConfirmSeal] = useState(false);
-  const [highlightColor, setHighlightColor] = useState('#f2cf66');
+  const [highlightColor, setHighlightColor] = useState('#8c6ee1');
   const proseRef = useRef<HTMLDivElement>(null);
   const draft = state.manuscript.status === 'draft';
   const words = countManuscriptWords(state.manuscript);

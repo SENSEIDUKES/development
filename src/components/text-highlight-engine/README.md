@@ -127,7 +127,7 @@ manuscript at chapter save; Reader Chamber migration; translation; persistence.
   The draft is an isolated plain-text span; surrounding prose stays read-only.
   Save changes only that range. HTML is literal text, and newlines remain inside
   the same paragraph. An empty block keeps its ID and visible line space.
-- Soft yellowish gold is `rgba(242, 207, 102, .35)`. Override
+- The default highlight is soft violet `rgba(140, 110, 225, .35)` (#8c6ee1). Override
   `--sen-passage-highlight` through the component's `style` prop to affect both
   the live selection overlay and inline draft highlight. The Workshop preview
   has a color picker for trying alternatives; it preserves the current selection
@@ -204,6 +204,7 @@ browser evidence out of the consuming surface. No integration was performed.
   → Cue, a host-catalog picker, shared playback, and in-memory inline glyph
   placements. Selections continue to use stable prose offsets when glyphs are
   present. Added a preview-only highlight color picker.
+- **2026-09-28:** Default highlight changed from soft gold to violet #8c6ee1.
 - **2026-09-28:** Added the manuscript page: permanent paragraph and sentence
   IDs separate from order, saved sentence boundaries, paragraph/sentence/span
   anchors that keep their words, and one edit rule that keeps, shifts or flags

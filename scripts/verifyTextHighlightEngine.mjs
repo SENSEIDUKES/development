@@ -78,7 +78,7 @@ for (const [name, browserType, width, height, touch] of [
     await colorPicker.dispatchEvent('pointerdown', { bubbles: true, pointerType: touch ? 'touch' : 'mouse' });
     await colorPicker.fill('#88ccff');
     assert.equal(await page.locator('.sen-text-highlight-marks span').first().evaluate(element => getComputedStyle(element).backgroundColor), 'rgba(136, 204, 255, 0.35)');
-    await colorPicker.fill('#f2cf66');
+    await colorPicker.fill('#8c6ee1');
     if (!touch) {
       await page.keyboard.press('Tab');
       assert.equal(await page.evaluate(() => document.activeElement?.textContent), 'Edit');

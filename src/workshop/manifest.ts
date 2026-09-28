@@ -160,8 +160,8 @@ export const workshopEntries: WorkshopEntry[] = [
   },
   {
     id: 'text-highlight-engine', title: 'Text Highlight Engine',
-    description: 'The manuscript lab: three pre-made paragraphs saved with permanent paragraph and sentence addresses. Select prose to see its address, edit it, or attach a Sound Cue to its words, sentence or paragraph; switch on the Cues overlay to see every cue tinted and the page numbered the way the model addresses it (¶ paragraph numbers in the margin, small raised sentence numbers); then seal the chapter.',
-    category: 'reader-ui', section: 'components', owner: 'sen', status: 'active', version: 'v1.5',
+    description: 'The manuscript lab: three pre-made paragraphs saved with permanent paragraph and sentence addresses. Select prose to see its address, edit it, or attach a Sound Cue to its words, sentence or paragraph; switch on the Cues overlay to see every Sound Cue in blue and the page numbered the way the model addresses it (¶ paragraph numbers in the margin, small raised sentence numbers); then seal the chapter.',
+    category: 'reader-ui', section: 'components', owner: 'sen', status: 'active', version: 'v1.6',
     source: { repository: 'SENSEIDUKES/development', path: 'src/components/text-highlight-engine/', lastCompared: 'Not applicable — DEV-native primitive' },
   },
   {

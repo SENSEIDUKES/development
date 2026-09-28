@@ -54,7 +54,10 @@ callback. Only the host decides which actions to expose. `renderBlockText` lets
 a host render decorations around prose while keeping the block text canonical.
 
 The optional `overlay` draws a host's map-mode view with the prose, never on
-top of a letter. `marks` are translucent tints behind exact words. `pins` are
+top of a letter. `marks` are translucent tints behind exact words; a mark with
+`attention` keeps its tint and gains a dashed underline in
+`--sen-overlay-attention` (amber by default) for a range that needs a decision.
+The host chooses each tint's color. `pins` are
 quiet numbers in the white space: `margin` sits in the start margin level with
 a line's baseline (paragraph numbers, e.g. ¶2); `raised` sits in the line
 spacing just above a character, like a verse number (sentence numbers). They
@@ -228,6 +231,11 @@ browser evidence out of the consuming surface. No integration was performed.
 
 ## Workshop history
 
+- **2026-09-28:** Overlay colors now mean the kind of added effect, not how much
+  text it covers: every Sound Cue is blue, and each future kind gets its own
+  color (Soundscapes, for example, red). The tint's extent still shows words, a
+  sentence or a paragraph. A cue whose words changed stays blue and gains an
+  amber dashed underline instead of turning amber.
 - **2026-09-28:** Overlay numbers redesigned after phone testing: they no longer
   sit on the words or stack. Paragraph numbers moved to the margin (¶1), and
   sentence numbers became small raised numbers in the space between lines

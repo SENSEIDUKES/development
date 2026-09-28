@@ -113,12 +113,14 @@ describe('Workshop Cues overlay', () => {
     expect(chips('.sen-overlay-pin')).toEqual(['¶1', '1', '2', '3', '4', '5', '¶2', '6', '7', '8', '9', '¶3', '10', '11', '12', '13', '14', '15']);
     expect(chips('.sen-overlay-pin[data-placement="margin"]')).toEqual(['¶1', '¶2', '¶3']);
     expect(legend()?.textContent).toContain('The model writes it P2 S6.');
-    expect(Array.from(legend()!.querySelectorAll('li'), item => item.textContent)).toEqual(['Words', 'Sentence', 'Paragraph', 'Changed']);
+    expect(Array.from(legend()!.querySelectorAll('li'), item => item.textContent)).toEqual(['Sound Cue', 'Words changed']);
     expect(host.querySelectorAll('.sen-overlay-mark')).toHaveLength(0);
 
     await selectRoar(); openCue(); placeFirstCue();
     await select(block().firstChild!, 0, 4); openCue(); click('Sentence'); placeFirstCue();
     expect(host.querySelectorAll('.sen-overlay-mark')).toHaveLength(2);
+    // Words or a whole sentence, every Sound Cue shares one color.
+    expect(new Set(Array.from(host.querySelectorAll<HTMLElement>('.sen-overlay-mark'), mark => mark.style.background)).size).toBe(1);
     // Tints only: the address is read from the numbers and the inspector, never from tags over the words.
     expect(host.querySelector('.sen-overlay-label')).toBeNull();
     expect(prose()).toBe(ACTION);

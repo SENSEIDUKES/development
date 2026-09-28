@@ -20,6 +20,24 @@ export function clipRectangles(root: HTMLElement, rects: ArrayLike<DOMRect> | It
 }
 
 /**
+ * One rectangle per stretch of a line: the browser reports a range's text and
+ * the inline elements around it separately, and drawing both would darken
+ * where they overlap and notch a tint at every element edge.
+ */
+export function mergeLineRectangles(rects: readonly PassageRectangle[]): PassageRectangle[] {
+  const merged: PassageRectangle[] = [];
+  for (const rect of [...rects].sort((first, second) => first.top - second.top || first.left - second.left)) {
+    const line = merged.find(candidate => Math.abs(candidate.top - rect.top) < 1 && Math.abs(candidate.height - rect.height) < 1
+      && rect.left <= candidate.left + candidate.width + 1 && candidate.left <= rect.left + rect.width + 1);
+    if (!line) { merged.push({ ...rect }); continue; }
+    const right = Math.max(line.left + line.width, rect.left + rect.width);
+    line.left = Math.min(line.left, rect.left);
+    line.width = right - line.left;
+  }
+  return merged;
+}
+
+/**
  * Calls `onChange` at most once per frame whenever the layout could have
  * changed: typing, resizing, the on-screen keyboard, web fonts finishing, a
  * size change of `root` or any extra element and — for screen-fixed drawings

@@ -23,6 +23,13 @@ describe('HARNESS compact chapter signals', () => {
     expect(accepted.accepted && accepted.draft.blocks?.map(block => block.text)).toEqual(['One.', 'Two.']);
   });
 
+  it('keeps at most ten Sound Cue signals, the chapter cap every placed cue shares', () => {
+    const cue = { anchorText: 'the fox growled', category: 'beasts', variation: 'growl' };
+    const { signals, warnings } = readHarnessChapterSignals({ soundCues: Array.from({ length: 11 }, () => cue) });
+    expect(signals.soundCues).toHaveLength(10);
+    expect(warnings.map(warning => warning.message).join(' ')).toMatch(/Sound Cue/);
+  });
+
   it('reads every signal family independently and drops malformed items with warnings', () => {
     const { signals, warnings } = readHarnessChapterSignals({
       dialogue: [{ anchorText: '“Not today,”', speaker: 'Mara', delivery: 'whispered' }, { anchorText: 'x', speaker: '' }, { speaker: 'Nobody' }],

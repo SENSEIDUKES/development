@@ -393,7 +393,8 @@ describe('World Cue placement and chapter resolution', () => {
     expect(overlap.audioMoments).toHaveLength(1);
     expect(overlap.issues).toContainEqual(expect.objectContaining({ reason: 'overlapping-placement' }));
 
-    const manyBlocks = Array.from({ length: 25 }, (_, index) => ({
+    // A chapter holds at most ten Sound Cues.
+    const manyBlocks = Array.from({ length: 11 }, (_, index) => ({
       id: `block-${index}`,
       text: `the fox growled ${index}.`,
     }));
@@ -402,10 +403,26 @@ describe('World Cue placement and chapter resolution', () => {
       blockId: block.id,
     }));
     const bounded = resolveChapterAudioMoments(manyBlocks, manyIntents, loadLibraryCues());
-    expect(bounded.audioMoments).toHaveLength(24);
+    expect(bounded.audioMoments).toHaveLength(10);
     expect(bounded.issues).toContainEqual(expect.objectContaining({
       reason: 'invalid-intent',
-      intentIndex: 24,
+      intentIndex: 10,
     }));
+  });
+
+  it('drops a finished cue that would sit inside a word or run past five words, and keeps the prose', () => {
+    const cues = loadLibraryCues();
+    // "ox growled" is found inside "the fox growled": its cue would start mid-word.
+    expect(resolveWorldCueIntent({ ...growlIntent, triggerPhrase: 'ox growled' }, { id: 'block-a', text: 'the fox growled loudly.' }, cues))
+      .toMatchObject({ ok: false, reason: 'partial-word' });
+    const long = { ...growlIntent, triggerPhrase: 'the old fox growled at the gate' };
+    // The model's phrase is direction, not the address: it passes intent checks, and only the finished cue is refused.
+    expect(validateWorldCueIntent(long).ok).toBe(true);
+    expect(resolveWorldCueIntent(long, { id: 'block-a', text: 'Then the old fox growled at the gate.' }, cues))
+      .toMatchObject({ ok: false, reason: 'too-many-words' });
+    const resolved = resolveChapterAudioMoments([{ id: 'block-a', text: 'Then the old fox growled at the gate.' }], [long, growlIntent], cues);
+    expect(resolved.audioMoments).toHaveLength(0);
+    expect(resolved.issues.map(issue => issue.reason)).toContain('too-many-words');
+    expect(resolveWorldCueIntent(growlIntent, { id: 'block-a', text: 'Then the fox growled at the gate.' }, cues).ok).toBe(true);
   });
 });

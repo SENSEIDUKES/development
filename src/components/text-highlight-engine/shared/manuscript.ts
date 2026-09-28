@@ -143,7 +143,11 @@ export function insertParagraph(manuscript: Manuscript, index: number, text: str
   if (manuscript.status === 'sealed') return manuscript;
   const paragraphs = [...manuscript.paragraphs];
   paragraphs.splice(Math.max(0, Math.min(index, paragraphs.length)), 0, createParagraph(text, manuscript.locale, createId));
-  return { ...manuscript, paragraphs };
+  const updated = { ...manuscript, paragraphs };
+  if (countManuscriptWords(updated) > MANUSCRIPT_PROTOTYPE_WORD_LIMIT) {
+    throw new RangeError(`A prototype manuscript holds at most ${MANUSCRIPT_PROTOTYPE_WORD_LIMIT} words.`);
+  }
+  return updated;
 }
 
 // ─── Anchors ────────────────────────────────────────────────────────────────

@@ -60,6 +60,7 @@ describe('Manuscript page', () => {
 
   it('caps the prototype page at the word limit', () => {
     expect(() => createManuscript([Array.from({ length: MANUSCRIPT_PROTOTYPE_WORD_LIMIT + 1 }, () => 'word').join(' ')])).toThrow(RangeError);
+    expect(() => insertParagraph(page(), 1, Array.from({ length: MANUSCRIPT_PROTOTYPE_WORD_LIMIT }, () => 'word').join(' '))).toThrow(RangeError);
     const state: ManuscriptState<string> = { manuscript: createManuscript(['Short start.', Array.from({ length: MANUSCRIPT_PROTOTYPE_WORD_LIMIT - 2 }, () => 'word').join(' ')]), attachments: [] };
     const result = applyPassageEdit(state, edit(state, span(state.manuscript, 0, 'Short'), 'A much longer'));
     expect(result).toEqual({ ok: false, reason: 'word-limit' });

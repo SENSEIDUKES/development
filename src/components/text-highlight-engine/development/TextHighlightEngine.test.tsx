@@ -126,7 +126,27 @@ describe('Text Highlight Engine', () => {
     const again = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
     act(() => { document.dispatchEvent(again); });
     expect(again.defaultPrevented).toBe(false);
+    // Once focus leaves for the host's own control, Tab keeps its normal order for this selection.
+    act(() => after.focus());
+    const onward = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+    act(() => { document.dispatchEvent(onward); });
+    expect(onward.defaultPrevented).toBe(false);
+    expect(document.activeElement).toBe(after);
+    // A new selection gets its own first-Tab jump.
+    await select(0, 6);
+    const fresh = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+    act(() => { document.dispatchEvent(fresh); });
+    expect(fresh.defaultPrevented).toBe(true);
     after.remove();
+  });
+  it('closes an open draft when the host fixes its text mid-edit', async () => {
+    await select(); click('Edit'); fill('unsaved words');
+    expect(document.querySelector('[contenteditable]')).not.toBeNull();
+    act(() => setFixed(true));
+    expect(document.querySelector('[contenteditable]')).toBeNull();
+    expect(button('Save')).toBeUndefined();
+    expect(block().textContent).toBe(initial[0].text);
+    expect(changed).not.toHaveBeenCalled();
   });
   it('offers no Edit, Delete or Undo once the host fixes its text, but still reports selections', async () => {
     await select(); click('Edit'); fill(''); click('Delete Passage');

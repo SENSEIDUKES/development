@@ -10,6 +10,27 @@ storage, or server dependency.
 - Workshop: `?preview=text-highlight-engine`
 - Package: `@seihouse/sen/text-highlight-engine`
 
+## Anatomy
+
+Each part has one file and one job, so it can be audited on its own for
+accessibility, viewport fit, power use, and look and feel. The Workshop's
+**Parts** board copies a ready-to-send brief for any of them
+(`src/workshop/previews/text-highlight-engine/parts.ts`, kept in step with this list).
+
+| Part | File | Owns |
+| --- | --- | --- |
+| Text Highlight Engine | `development/TextHighlightEngine.tsx` | Puts the parts together over the host's paragraphs; owns the edit and undo records it reports |
+| Selection Tracker | `development/useSelectionTracker.ts`, `shared/selection.ts` | Reads the browser selection; keeps the canonical selection (paragraph + exact positions); measures it; clears it on Escape or an outside tap; moves the first Tab of each selection into the Action Bar |
+| Selection Highlight | `development/SelectionHighlight.tsx` | The tinted marks over the selected words |
+| Action Bar | `development/ActionBar.tsx`, `shared/actions.ts` | The one floating bar: Edit, the host's nested actions, Back, an action's panel, and Save / Delete Passage while editing; its position, touch sizing and labels |
+| Inline Editor | `development/InlineEditor.tsx` | The plain-text draft replacing only the selected words, including line breaks and IME typing |
+| Undo Notice | `development/UndoNotice.tsx` | "Passage deleted · Undo" after an explicit deletion |
+| Cue Picker | `development/ManualCuePicker.tsx`, `shared/manualCue.ts` | Choosing, previewing and placing a Sound Cue from the host catalog |
+| Manuscript | `shared/manuscript.ts` | Permanent paragraph and sentence IDs, saved sentences, anchors, the one edit rule, draft / sealed |
+
+The Workshop adds the Manuscript Inspector and the lab page itself; neither is
+part of the SEN package.
+
 ## Host contract
 
 ```tsx
@@ -39,7 +60,8 @@ state; temporary ranges supply geometry. The edit session also retains the
 original block text to reject stale replacements.
 
 Public lower-level exports: `normalizePassageSelection`, `isValidPassage`,
-`replacePassage`, `passageRange`, and `usePassageSelection`. Custom host renderers
+`replacePassage`, `passageRange`, and `useSelectionTracker` (also exported under its
+former name, `usePassageSelection`). Custom host renderers
 using the hook must attach its `rootRef`, mark prose blocks with
 `data-sen-text-block="stable-id"`, attach `controlsRef` to their controls and `editorRef` to their inline draft, and use
 the returned `beginEdit`/`beginAction`/`clear` lifecycle. Prose text nodes,
@@ -204,6 +226,11 @@ browser evidence out of the consuming surface. No integration was performed.
   → Cue, a host-catalog picker, shared playback, and in-memory inline glyph
   placements. Selections continue to use stable prose offsets when glyphs are
   present. Added a preview-only highlight color picker.
+- **2026-09-28:** Split the engine into named parts (Selection Tracker, Selection
+  Highlight, Action Bar, Inline Editor, Undo Notice) with an Anatomy section and
+  a Workshop Parts board that copies a brief per part. An open draft now closes
+  when the host fixes its text, the first-Tab jump happens once per selection,
+  and `insertParagraph` honours the 500-word cap.
 - **2026-09-28:** Default highlight changed from soft gold to violet #8c6ee1.
 - **2026-09-28:** Added the manuscript page: permanent paragraph and sentence
   IDs separate from order, saved sentence boundaries, paragraph/sentence/span

@@ -12,6 +12,7 @@ import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import { LIBRARY_BASE_MEDIA } from '../../../host/media/libraryCatalog';
 import { ManuscriptInspector } from './ManuscriptInspector';
+import { PartsBoard } from './PartsBoard';
 import { createPreviewManuscript } from './previewData';
 
 const catalog = createMediaCatalog(LIBRARY_BASE_MEDIA);
@@ -145,6 +146,7 @@ export function TextHighlightEnginePreview() {
         <button type="button" className="min-h-9 rounded-lg px-3 text-slate-300" onClick={() => setConfirmSeal(false)}>Cancel</button>
       </span>}
     </div>
+    <PartsBoard />
     {notice && <p role="status" className="mb-4 rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-sm text-slate-200">{notice}</p>}
     <div ref={proseRef} className="text-lg text-slate-200" style={{ fontFamily: 'Georgia, serif' }}>
       <TextHighlightEngine blocks={state.manuscript.paragraphs} onBlocksChange={edit} onSelectionChange={setSelection}

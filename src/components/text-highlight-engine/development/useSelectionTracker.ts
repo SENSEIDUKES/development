@@ -3,7 +3,13 @@ import { findBlockElement, isValidPassage, normalizePassageSelection, passageRan
 
 export interface PassageRectangle { left: number; top: number; width: number; height: number }
 
-export function usePassageSelection(blocks: readonly TextHighlightBlock[], onSelectionChange?: (selection: PassageSelection | null) => void) {
+/**
+ * Selection Tracker: reads the browser selection inside the engine root,
+ * keeps the one canonical selection snapshot, measures its on-screen
+ * rectangles, and owns clearing (Escape, outside pointer) and the first-Tab
+ * jump into the Action Bar.
+ */
+export function useSelectionTracker(blocks: readonly TextHighlightBlock[], onSelectionChange?: (selection: PassageSelection | null) => void) {
   const rootRef = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<HTMLSpanElement>(null);
@@ -12,8 +18,11 @@ export function usePassageSelection(blocks: readonly TextHighlightBlock[], onSel
   const [actionOpen, setActionOpen] = useState(false);
   const [rectangles, setRectangles] = useState<PassageRectangle[]>([]);
   const controlPointer = useRef(false);
+  /** The first forward Tab moves into the Action Bar once per selection, never again until the selection changes. */
+  const tabTransferred = useRef(false);
   const selection = snapshot?.selection ?? null;
   const clear = useCallback(() => {
+    tabTransferred.current = false;
     const root = rootRef.current;
     const native = root?.ownerDocument.getSelection();
     if (root && native?.anchorNode && root.contains(native.anchorNode)) native.removeAllRanges();
@@ -24,6 +33,7 @@ export function usePassageSelection(blocks: readonly TextHighlightBlock[], onSel
   }, []);
 
   useEffect(() => { onSelectionChange?.(selection); }, [selection, onSelectionChange]);
+  useEffect(() => { tabTransferred.current = false; }, [selection]);
 
   useLayoutEffect(() => {
     if (snapshot && !blocks.some(block => block.id === snapshot.selection.blockId && block.text === snapshot.text)) clear();
@@ -55,11 +65,12 @@ export function usePassageSelection(blocks: readonly TextHighlightBlock[], onSel
       if (event.key === 'Escape' && snapshot) { clear(); root.focus({ preventScroll: true }); return; }
       // The floating controls sit at the end of the document. Whatever a host
       // renders after its prose, the first Tab after a selection enters them.
-      if (event.key !== 'Tab' || event.shiftKey || !snapshot || actionOpen) return;
+      if (event.key !== 'Tab' || event.shiftKey || !snapshot || actionOpen || tabTransferred.current) return;
       const controls = controlsRef.current;
       const first = controls?.querySelector<HTMLElement>('button:not(:disabled)');
       if (!controls || !first || controls.contains(doc.activeElement)) return;
       event.preventDefault();
+      tabTransferred.current = true;
       first.focus();
     };
     doc.addEventListener('selectionchange', read);
@@ -132,3 +143,6 @@ export function usePassageSelection(blocks: readonly TextHighlightBlock[], onSel
   };
   return { rootRef, controlsRef, editorRef, selection, sourceText: snapshot?.text, editing, actionOpen, rectangles, beginEdit, beginAction, clear, focusBlock };
 }
+
+/** Former name, kept so existing hosts keep working. */
+export const usePassageSelection = useSelectionTracker;

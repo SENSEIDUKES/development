@@ -16,6 +16,7 @@ export const featuredNovel: StoryDetailDisplay = {
   powerStage: 'Foundation',
   creatorName: 'SENSEI',
   format: 'Novel',
+  publicationStatus: 'ongoing',
   cultivationRate: 'Heaven',
   branchCount: 12,
   activityStatus: 'active-this-week',

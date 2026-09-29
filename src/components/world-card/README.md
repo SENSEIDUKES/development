@@ -59,6 +59,25 @@ motion keeps it steady. If the artwork cannot be sampled, the existing cyan
 fallback is used. Dark sampled colors are lifted for visible hover and click
 glows without changing which cover supplies the tint.
 
+## Status beside format
+
+The Full card takes an optional `displayStatus` with an explicit viewing
+context. A public surface supplies `ongoing` or `completed`, shown as **On Going**
+or **Completed**. A personal-library surface can supply the existing creator
+status (`draft`, `shared`, `public`, `complete`), shown with its existing label.
+The same document icon used by Compact appears beside the label, immediately
+after the format. The title stays above the creator name. One bottom row keeps
+chapter count, format, and contextual status centered together at Home grid
+width. The icons and spacing distinguish the three items without separators
+that would clip the row in the narrower Home grid.
+
+Home passes the host-reported `HomeWorld.publicationStatus`. The Workshop
+fixture supplies `ongoing` and its States control previews both public values
+and the personal-library values. Missing status stays hidden; the card does not
+infer completion from chapter count, Draft from acquisition, or status from the
+Info page's unrelated `status` text. Compact already displays its creator
+status. Sealed, Unacquired, and Recently read stay on the Info page.
+
 The Info page shows Cultivation Rate only when the host supplies a value. The
 Workshop fixture supplies "Heaven" for its sample world; other worlds are not
 silently assigned that rate.
@@ -108,13 +127,16 @@ These are documented product requirements, not behavior implemented here.
 Copy `development/`, `shared/` and `development/world-card.css`. Then:
 
 - have the host's Home grid, world detail and Create row render `WorldCard`, `WorldCardInfo` and `WorldCardCompact`;
-- supply world display data, optional per-world `videoUrl`, and destinations from the host;
+- supply world display data, optional per-world `videoUrl`, public publication status or personal-library creator status, and destinations from the host;
 - include the `@seihouse/sen/motion-picture` entry alongside the Library card.
 
 Leave behind the Workshop preview, its sample data and the `reference/` folder.
 
 ## Workshop history
 
+- **2026-09-29** — Centered the Full card's three-part bottom row as one unit, including at the narrower Home grid width. Removed separators from that row to keep all three values readable on one line.
+- **2026-09-29** — Moved the Full card's chapter count from the top-left badge into a bottom row with format and contextual status. Kept the creator name between title and that row.
+- **2026-09-29** — Added a document-icon status directly after the Full card's format. Public Home uses host-supplied On Going/Completed; a personal-library use can show the existing Draft/Shared/Public/Complete values. Added Workshop states for both contexts without deriving story progress from acquisition or chapter count.
 - **2026-09-29** — Restored a brighter hover and clicked/focused edge glow after the sampled cover color made it too dim. Motion playback now breathes from that strong glow instead of replacing it with a weaker one.
 - **2026-09-29** — Matched the Full card's edge glow to its cover artwork using SEN's existing color sampler. The glow breathes gently only while Motion Picture is active, stops with the clip, and stays still under reduced-motion settings.
 - **2026-09-29** — Composed the existing SEN Motion Picture in the Full card only. The featured Workshop world supplies the Ye Chen clip. Opening a world and playing its motion are separate controls, so keyboard and touch users can choose either action. Missing clips retain the static card; failed clips return to the still, and failed stills show the existing cover fallback.

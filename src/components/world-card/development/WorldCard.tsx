@@ -1,16 +1,21 @@
 import { useState, type CSSProperties } from 'react';
+import { FileText } from 'lucide-react';
 import { LibraryCard, LibraryCardMedia, LibraryCardTitle, LibraryStoryIcon } from '@seihouse/library-ui';
 import { MotionPicture, useDominantColor } from '@seihouse/sen/motion-picture';
 import type { WorldCardProps } from '../shared/worldCardContracts';
+import { WORLD_STATUS_LABELS } from './WorldCardCompact';
 import { WorldCardCover } from './WorldCardCover';
 import './world-card.css';
 
 /** The Library's full world card. Other sizes can follow after this one is settled. */
-export function WorldCard({ world, onOpen }: WorldCardProps) {
+export function WorldCard({ world, onOpen, displayStatus }: WorldCardProps) {
   const [motionPlaying, setMotionPlaying] = useState(false);
   const glowColor = useDominantColor(world.imageUrl.trim() || undefined);
   const motionAvailable = Boolean(world.imageUrl.trim() && world.videoUrl?.trim());
-  const openLabel = `Open ${world.title}, ${world.chapterCount} chapters${world.creatorName ? `, creator ${world.creatorName}` : ''}${world.format ? `, format ${world.format}` : ''}`;
+  const statusLabel = displayStatus?.view === 'public'
+    ? displayStatus.value === 'ongoing' ? 'On Going' : 'Completed'
+    : displayStatus?.view === 'library' ? WORLD_STATUS_LABELS[displayStatus.value] : undefined;
+  const openLabel = `Open ${world.title}, ${world.chapterCount} chapters${world.creatorName ? `, creator ${world.creatorName}` : ''}${world.format ? `, format ${world.format}` : ''}${statusLabel ? `, ${statusLabel}` : ''}`;
   return <LibraryCard
     padding="none"
     contentClassName="gap-0"
@@ -28,19 +33,21 @@ export function WorldCard({ world, onOpen }: WorldCardProps) {
         : <WorldCardCover src={world.imageUrl} title={world.title} decorative />}
       <div className="world-card-base-shade" aria-hidden="true" />
       <button type="button" className="world-card-base-open" onClick={onOpen} aria-label={openLabel} />
-      <span className="world-card-base-counter world-card-base-chapter-count" aria-label={`${world.chapterCount} chapters`}>
-        {world.chapterCount} Ch
-      </span>
       <div className="world-card-base-overlay">
         <LibraryCardTitle as="h3" className="world-card-base-title font-display">{world.title}</LibraryCardTitle>
-        {(world.creatorName || world.format) && <div className="world-card-base-meta">
+        <div className="world-card-base-meta world-card-base-meta-with-status">
           {world.creatorName && <span>{world.creatorName}</span>}
-          {world.creatorName && world.format && <span aria-hidden="true">·</span>}
-          {world.format && <span className="world-card-base-format">
-            {world.format.trim().toLowerCase() === 'novel' && <LibraryStoryIcon size={13} aria-hidden />}
-            {world.format.toUpperCase()}
-          </span>}
-        </div>}
+          <span className="world-card-base-details">
+            <span>Ch. {world.chapterCount}</span>
+            {world.format && <span className="world-card-base-format">
+              {world.format.trim().toLowerCase() === 'novel' && <LibraryStoryIcon size={13} aria-hidden />}
+              {world.format.toUpperCase()}
+            </span>}
+            {statusLabel && <span className="world-card-base-status">
+              <FileText size={12} aria-hidden="true" />{statusLabel}
+            </span>}
+          </span>
+        </div>
       </div>
     </LibraryCardMedia>
   </LibraryCard>;

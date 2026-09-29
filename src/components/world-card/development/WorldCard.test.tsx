@@ -19,7 +19,7 @@ const world: HomeWorld = {
   mcName: 'Ye Chen', powerStage: 'Foundation', creatorName: 'SENSEI', format: 'Novel', acquired: true,
 };
 
-it('opens the portrait card with only chapter count, title, creator and format on the image', () => {
+it('opens the portrait card with title, creator and a chapter-format row on the image', () => {
   const onOpen = vi.fn();
   act(() => root.render(<WorldCard world={world} onOpen={onOpen} />));
 
@@ -29,16 +29,35 @@ it('opens the portrait card with only chapter count, title, creator and format o
   expect(open.getAttribute('aria-label')).toBe('Open The Last Lotus, 24 chapters, creator SENSEI, format Novel');
   const media = card.querySelector('.world-card-base-media')!;
   expect(media.querySelector('.world-card-base-overlay')).not.toBeNull();
-  for (const value of ['The Last Lotus', '24 Ch', 'SENSEI', 'NOVEL']) {
+  for (const value of ['The Last Lotus', 'SENSEI', 'Ch. 24', 'NOVEL']) {
     expect(card.textContent).toContain(value);
     expect(media.textContent).toContain(value);
   }
   expect(card.querySelector('[data-sen-icon="story-scroll"]')).not.toBeNull();
+  expect(card.querySelector('.world-card-base-chapter-count')).toBeNull();
   for (const value of ['Xianxia', 'Standard', 'Creator', 'Format', 'Manga', 'Ye Chen', 'Foundation', '1,280', 'Sealed', 'Draft', 'Unacquired', 'Recently read']) {
     expect(card.textContent).not.toContain(value);
   }
   act(() => open.click());
   expect(onOpen).toHaveBeenCalledOnce();
+});
+
+it('shows the host-selected public or personal-library status beside the format', () => {
+  act(() => root.render(<WorldCard world={world} displayStatus={{ view: 'public', value: 'ongoing' }} onOpen={() => {}} />));
+  const card = container.querySelector('[data-world-card="full"]')!;
+  const details = card.querySelector('.world-card-base-details')!;
+  expect(details.textContent).toContain('Ch. 24NOVELOn Going');
+  expect(details.querySelector('.world-card-base-status svg')).not.toBeNull();
+  expect(card.querySelector('.world-card-base-open')?.getAttribute('aria-label')).toContain('On Going');
+
+  act(() => root.render(<WorldCard world={world} displayStatus={{ view: 'public', value: 'completed' }} onOpen={() => {}} />));
+  expect(details.textContent).toContain('Ch. 24NOVELCompleted');
+
+  act(() => root.render(<WorldCard world={{ ...world, draft: false }} displayStatus={{ view: 'library', value: 'draft' }} onOpen={() => {}} />));
+  expect(details.textContent).toContain('Ch. 24NOVELDraft');
+
+  act(() => root.render(<WorldCard world={world} displayStatus={{ view: 'library', value: 'complete' }} onOpen={() => {}} />));
+  expect(details.textContent).toContain('Ch. 24NOVELComplete');
 });
 
 it('plays only this world’s supplied motion clip without opening the world', () => {
@@ -65,7 +84,7 @@ it('plays only this world’s supplied motion clip without opening the world', (
   vi.restoreAllMocks();
 });
 
-it('keeps library states off the card and handles missing covers without inventing a writing style', () => {
+it('keeps acquisition and reading states off the card and handles missing covers without inventing a writing style', () => {
   const draft = { ...world, acquired: false, draft: true, recentlyRead: true, chapterWritingStyle: undefined, imageUrl: '' };
   act(() => root.render(<WorldCard world={draft} onOpen={() => {}} />));
   const card = container.querySelector('[data-world-card="full"]')!;
@@ -82,7 +101,8 @@ it('keeps library states off the card and handles missing covers without inventi
   expect(container.textContent).toContain('Cover unavailable');
 
   act(() => root.render(<WorldCard world={{ ...world, creatorName: undefined, format: undefined }} onOpen={() => {}} />));
-  expect(container.querySelector('.world-card-base-meta')).toBeNull();
+  expect(container.querySelector('.world-card-base-meta')?.textContent).toBe('Ch. 24');
+  expect(container.querySelector('.world-card-base-details')?.textContent).toBe('Ch. 24');
 
   act(() => root.render(<WorldCard world={{ ...world, format: 'Manga' }} onOpen={() => {}} />));
   expect(container.textContent).toContain('MANGA');

@@ -6,6 +6,8 @@ export interface HomeWorld {
   mcName: string; powerStage: string; acquired?: boolean; recentlyRead?: boolean; draft?: boolean;
   /** Card identity fields; omit either one when the host has no verified value. */
   creatorName?: string; format?: string;
+  /** Host-reported progress for a publicly visible world; omit when unknown. */
+  publicationStatus?: 'ongoing' | 'completed';
   /** This world's own optional motion cover clip; never use another world's clip as fallback. */
   videoUrl?: string;
 }

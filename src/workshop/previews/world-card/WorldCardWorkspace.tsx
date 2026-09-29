@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { useLibraryAssets } from '@seihouse/library/presentation';
 import { WorldCard, WorldCardCompact, WorldCardInfo, WorldCardMini, WORLD_STATUS_LABELS } from '@seihouse/library/world-card';
+import type { WorldCardDisplayStatus } from '@seihouse/library/world-card';
 import type { CreatorWorld } from '@seihouse/library/creator-space';
 import { WorldCardFullReference } from '../../../components/world-card/reference/WorldCardFull';
 import { WorldCardCompactReference } from '../../../components/world-card/reference/WorldCardCompact';
@@ -9,7 +10,7 @@ import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import {
   ACQUISITION_LABELS, previewCreatorWorlds, previewStory,
-  type WorldCardAcquisition, type WorldCardBranchPreview, type WorldCardCover, type WorldCardPreviewState, type WorldCardTitleLength,
+  type WorldCardAcquisition, type WorldCardBranchPreview, type WorldCardCover, type WorldCardPreviewState, type WorldCardStatusPreview, type WorldCardTitleLength,
 } from './previewData';
 import type { WorldActivityStatus } from '@seihouse/library/home';
 
@@ -23,6 +24,15 @@ const VIEWS = {
   mini: { label: 'Mini', description: 'New: a single row sized like an audio-player track — cover thumb, title, one line of meta and a round action.' },
 } as const;
 type View = keyof typeof VIEWS;
+
+const CARD_STATUS_PREVIEW: Record<WorldCardStatusPreview, WorldCardDisplayStatus> = {
+  'public-ongoing': { view: 'public', value: 'ongoing' },
+  'public-completed': { view: 'public', value: 'completed' },
+  'library-draft': { view: 'library', value: 'draft' },
+  'library-shared': { view: 'library', value: 'shared' },
+  'library-public': { view: 'library', value: 'public' },
+  'library-complete': { view: 'library', value: 'complete' },
+};
 
 /** Stable pick of the Library's own art for a world with no cover yet (matches Create). */
 function fallbackCover(id: string, images: readonly string[]) {
@@ -71,7 +81,8 @@ function WorldCardStage({ view, state, reference, onAction }: {
       <div className="w-[min(100%,13rem)]">
         {reference
           ? <WorldCardFullReference world={story} onOpen={() => onAction(`Open ${story.title}`)} />
-          : <WorldCard world={story} onOpen={() => onAction(`Open ${story.title}`)} />}
+          : <WorldCard world={story} displayStatus={CARD_STATUS_PREVIEW[state.cardStatus]}
+              onOpen={() => onAction(`Open ${story.title}`)} />}
       </div>
     </Stage>}
     {show('compact') && <Stage title="Compact" note="Create · Your worlds.">
@@ -100,7 +111,7 @@ const selectClass = 'min-h-11 rounded-lg border border-white/20 bg-black/30 p-2 
 /** One world in every size it appears: Info page, Full card, Compact and Mini. */
 export function WorldCardWorkspace() {
   const [view, setView] = useState<View>('all');
-  const [state, setState] = useState<WorldCardPreviewState>({ acquisition: 'sealed', titleLength: 'standard', cover: 'art', branches: 'sample', activity: 'active-this-week' });
+  const [state, setState] = useState<WorldCardPreviewState>({ acquisition: 'sealed', titleLength: 'standard', cover: 'art', branches: 'sample', activity: 'active-this-week', cardStatus: 'public-ongoing' });
   const [action, setAction] = useState('');
   const update = (patch: Partial<WorldCardPreviewState>) => setState(current => ({ ...current, ...patch }));
 
@@ -124,8 +135,22 @@ export function WorldCardWorkspace() {
         </label>,
       }, {
         id: 'states',
-        description: 'Library status, branches and activity appear on the Info page. Missing cover applies to every size.',
+        description: 'Full card progress changes with its public or personal-library context. Library state, branches and activity remain on the Info page.',
         content: <div className="flex flex-col gap-3">
+          <label className="flex flex-col gap-1 text-xs">Full card progress
+            <select className={selectClass} value={state.cardStatus} onChange={event => update({ cardStatus: event.target.value as WorldCardStatusPreview })}>
+              <optgroup label="Public view">
+                <option value="public-ongoing">On Going</option>
+                <option value="public-completed">Completed</option>
+              </optgroup>
+              <optgroup label="Your library">
+                <option value="library-draft">Draft</option>
+                <option value="library-shared">Shared</option>
+                <option value="library-public">Public</option>
+                <option value="library-complete">Complete</option>
+              </optgroup>
+            </select>
+          </label>
           <label className="flex flex-col gap-1 text-xs">Library status
             <select className={selectClass} value={state.acquisition} onChange={event => update({ acquisition: event.target.value as WorldCardAcquisition })}>
               {Object.entries(ACQUISITION_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}

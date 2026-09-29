@@ -1,5 +1,5 @@
-import { Info } from 'lucide-react';
-import { SEIDialog, SEIDialogContent, SEIDialogDescription, SEIDialogTitle, SEIDialogTrigger } from '@seihouse/ui';
+import { Eye, Info } from 'lucide-react';
+import { SEIBadge, SEIDialog, SEIDialogContent, SEIDialogDescription, SEIDialogTitle, SEIDialogTrigger } from '@seihouse/ui';
 import { LibraryStoryIcon } from '@seihouse/library-ui';
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
 import { WORLD_ACTIVITY_DISPLAY } from './worldActivityDisplay';
@@ -16,7 +16,13 @@ export function WorldCardStoryPanel({ world }: { world: HomeWorld }) {
     </SEIDialogTrigger>
     <SEIDialogContent variant="dark" aria-modal="true" className="world-card-story-panel"
       backdropClassName="world-card-story-backdrop" bodyClassName="world-card-story-panel-body">
-      <SEIDialogTitle className="world-card-story-panel-title">{world.title}</SEIDialogTitle>
+      <div className="world-card-story-panel-header">
+        <SEIDialogTitle className="world-card-story-panel-title">{world.title}</SEIDialogTitle>
+        <SEIBadge size="sm" variant="neutral" className="world-card-story-panel-views"
+          aria-label={`${world.reads.toLocaleString()} views`}>
+          <Eye size={12} aria-hidden="true" />{world.reads.toLocaleString()}
+        </SEIBadge>
+      </div>
       <SEIDialogDescription className="sr-only">Story overview</SEIDialogDescription>
       <section aria-label="Synopsis">
         <h4>Synopsis</h4>

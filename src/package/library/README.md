@@ -5,6 +5,12 @@ SEN engine and the two UI packages. Library owns SEIHouse users, products,
 economy, community and business policy. Authentication enforcement, secrets,
 durable ledgers and concrete infrastructure stay in the host/backend.
 
+**0.8.0 (breaking):** `@seihouse/library/world-card` no longer exports
+`WorldCardCompact`, `WorldCardMini`, or `WorldCardMiniProps`. Use
+`WorldCard face="compact"` for creator tiles. The unused mock Mini row was
+removed; a real Mini face can be designed later. The Info cover uses
+`WorldCard face="info"` through `WorldCardInfo`.
+
 ## Public entries
 
 | Import | Responsibility |

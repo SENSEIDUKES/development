@@ -1,11 +1,12 @@
 import { useState, type CSSProperties } from 'react';
 import { BookOpen, FileText } from 'lucide-react';
 import { ElementalTitle, SEIBadge } from '@seihouse/ui';
-import { LibraryCard, LibraryCardMedia, LibraryCardTitle, LibraryStoryIcon } from '@seihouse/library-ui';
+import { LibraryCard, LibraryCardMedia, LibraryCardTitle } from '@seihouse/library-ui';
 import { MotionPicture, useDominantColor } from '@seihouse/sen/motion-picture';
 import type { WorldCardProps } from '../shared/worldCardContracts';
 import { WORLD_STATUS_LABELS } from './WorldCardCompact';
 import { WorldCardCover } from './WorldCardCover';
+import { WorldCardStoryPanel } from './WorldCardStoryPanel';
 import './world-card.css';
 
 /** The Library's full world card. Other sizes can follow after this one is settled. */
@@ -32,13 +33,8 @@ export function WorldCard({ world, onOpen, displayStatus }: WorldCardProps) {
             alt={`${world.title} cover`} glow={false} onPlayingChange={setMotionPlaying}
             stillFallback={<WorldCardCover src="" title={world.title} decorative />} />
         : <WorldCardCover src={world.imageUrl} title={world.title} decorative />}
-      <div className="world-card-base-shade" aria-hidden="true" />
       <button type="button" className="world-card-base-open" onClick={onOpen} aria-label={openLabel} />
-      {world.format && <span className="world-card-base-format">
-        {world.format.trim().toLowerCase() === 'novel'
-          ? <><LibraryStoryIcon size={17} aria-hidden /><span className="sr-only">Novel</span></>
-          : world.format.toUpperCase()}
-      </span>}
+      <WorldCardStoryPanel key={world.id} world={world} />
       <div className="world-card-base-overlay">
         <LibraryCardTitle as="h3" className="world-card-base-title font-display">{world.title}</LibraryCardTitle>
         <div className="world-card-base-meta">

@@ -61,6 +61,38 @@ it('renders host-supplied creator lettering without assigning an element to othe
   expect(container.querySelector('.world-card-base-creator [data-element]')).toBeNull();
 });
 
+it('opens authorized story information without navigating or playing motion', async () => {
+  const onOpen = vi.fn();
+  await act(async () => root.render(<WorldCard world={{ ...world, synopsis: 'A lotus blooms.',
+    tags: ['FoundFamily'], activityStatus: 'active-this-week', branchingEnabled: false,
+  }} onOpen={onOpen} />));
+  const trigger = container.querySelector<HTMLButtonElement>('.world-card-base-format')!;
+  await act(async () => trigger.click());
+  const panel = document.querySelector('.world-card-story-panel')!;
+  expect(panel.textContent).toContain('A lotus blooms.');
+  expect(panel.textContent).toContain('Active this week');
+  expect(panel.textContent).toContain('BranchingDisabled');
+  expect(panel.textContent).toContain('#FoundFamily');
+  expect(panel.getAttribute('role')).toBe('dialog');
+  expect(panel.getAttribute('aria-modal')).toBe('true');
+  expect(document.querySelector('.world-card-story-backdrop')).not.toBeNull();
+  expect(onOpen).not.toHaveBeenCalled();
+  expect(container.querySelector('video')).toBeNull();
+  await act(async () => panel.querySelector<HTMLButtonElement>('[aria-label="Close dialog"]')!.click());
+  expect(document.querySelector('.world-card-story-panel')).toBeNull();
+});
+
+it('does not infer hidden activity or branching permission from missing data', async () => {
+  await act(async () => root.render(<WorldCard world={{ ...world, format: undefined }} onOpen={() => {}} />));
+  await act(async () => container.querySelector<HTMLButtonElement>('.world-card-base-format')!.click());
+  const panel = document.querySelector('.world-card-story-panel')!;
+  expect(panel.textContent).toContain('Synopsis unavailable.');
+  expect(panel.textContent).toContain('No story tags supplied.');
+  expect(panel.textContent).not.toContain('Activity');
+  expect(panel.textContent).not.toContain('Branching');
+  expect(panel.textContent).not.toContain('Quiet');
+});
+
 it('keeps chapter and host-selected status in the bottom row', () => {
   act(() => root.render(<WorldCard world={world} displayStatus={{ view: 'public', value: 'ongoing' }} onOpen={() => {}} />));
   const card = container.querySelector('[data-world-card="full"]')!;

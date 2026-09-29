@@ -4,6 +4,8 @@ export interface HomeWorld {
   id: string; title: string; genre: string; createdAt: string; reads: number;
   imageUrl: string; chapterCount: number; chapterWritingStyle?: string;
   mcName: string; powerStage: string; acquired?: boolean; recentlyRead?: boolean; draft?: boolean;
+  /** Card identity fields; omit either one when the host has no verified value. */
+  creatorName?: string; format?: string;
 }
 export interface LightNovelsHomeProps {
   active?: boolean;

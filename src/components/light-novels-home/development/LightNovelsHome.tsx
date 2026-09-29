@@ -4,14 +4,11 @@ import { motion, AnimatePresence } from 'motion/react';
 import { LibraryPanel, ManifestButton, ParticleEffect } from '@seihouse/library-ui';
 import { SEIFilterChip, SEISelect, SEIEmptyState } from '@seihouse/ui';
 import type { LightNovelsHomeProps } from '../shared/homeContracts';
-import type { WorldExpansionPreview } from './WorldExpressions';
-import { WorldCardFull } from '../../world-card/development/WorldCardFull';
+import { WorldCard } from '../../world-card/development/WorldCard';
 import { LibraryDiscoveryIcon as SENDiscoveryIcon, LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
 import '../shared/home.css';
 /** Existing LibraryScreen Home presentation. Data and navigation belong to the host. */
-export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWorld, children, expansionsByWorld = {} }: LightNovelsHomeProps & {
-  expansionsByWorld?: Readonly<Record<string, readonly WorldExpansionPreview[]>>;
-}) {
+export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWorld, children }: LightNovelsHomeProps) {
   const { homeVideos: HERO_VIDEOS = [], homeImages: CELESTIAL_FALLBACK_IMAGES = [] } = useLibraryAssets();
   const [currentVideoIdx, setCurrentVideoIdx] = useState(0);
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
@@ -241,10 +238,9 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-6">
                   {filteredAndSortedWorlds.map((world) => (
-                    <WorldCardFull
+                    <WorldCard
                       key={world.id}
                       world={world}
-                      expansions={expansionsByWorld[world.id]}
                       onOpen={() => onOpenWorld(world.id)}
                     />
                   ))}

@@ -13,8 +13,13 @@ export const featuredNovel: StoryDetailDisplay = {
   chapterWritingStyle: 'Standard',
   mcName: 'Ye Chen',
   powerStage: 'Foundation',
+  creatorName: 'SENSEI',
+  format: 'Novel',
+  cultivationRate: 'Heaven',
+  branchCount: 12,
+  activityStatus: 'active-this-week',
   acquired: true,
-  author: 'Aetherial Resonance',
+  author: 'SENSEI',
   currentArc: 'The Silent Pavilion',
   status: 'Manifesting',
   tags: ['LostLegacy', 'FoundFamily'],
@@ -36,4 +41,3 @@ export const featuredExpansions: readonly WorldExpansionPreview[] = [
   },
 ];
 export const homePreviewWorlds = [featuredNovel];
-export const homePreviewExpansions = { [featuredNovel.id]: featuredExpansions };

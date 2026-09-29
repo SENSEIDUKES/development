@@ -12,7 +12,7 @@ import { LightNovelsHome as ReferenceHome } from '../../../components/light-nove
 import { StoryDetailScreen } from '@seihouse/library/home';
 import { StoryDetailScreen as ReferenceStoryDetail } from '../../../components/light-novels-home/reference/StoryDetailScreen';
 import { WorldExpressions } from '@seihouse/library/home';
-import { featuredNovel, featuredExpansions, homePreviewWorlds, homePreviewExpansions } from '../light-novels-home/previewData';
+import { featuredNovel, featuredExpansions, homePreviewWorlds } from '../light-novels-home/previewData';
 import { libraryPreviewUrl, navigateLibraryPreview, readLibraryPreviewLocation } from './libraryPreviewNavigation';
 import { CreatorSpaceHost } from '../creator-space/CreatorSpaceHost';
 import { getDaoRankData } from '@seihouse/library/cultivation';
@@ -108,7 +108,7 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
   const body = <>
     <div className="px-4 py-8 max-w-7xl mx-auto w-full">
       {developmentNavigation && <div hidden={!isHome}>
-        <Home active={isHome} worlds={homePreviewWorlds} expansionsByWorld={homeReference ? undefined : homePreviewExpansions}
+        <Home active={isHome} worlds={homePreviewWorlds}
           onCreateStory={() => navigate({ screen: 'creator' })} onOpenWorld={id => {
             worldOpenerRef.current = document.getElementById(`home-world-${id}`);
             setActiveStoryId(id); navigate({ screen: 'detail' });

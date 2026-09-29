@@ -936,6 +936,7 @@ export class HarnessGenerationController {
       media: attempt.mediaLoadout,
       soundVocabulary: attempt.capaPrompt.soundVocabulary,
       locale: findStory(this.state, attempt.storyId)?.originalLanguage,
+      paragraphTarget: attempt.immediateChapterRequest.chapterScale.paragraphs,
     });
     if (!acceptance.accepted) {
       return this.appendFailure(attemptId, {

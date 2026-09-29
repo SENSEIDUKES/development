@@ -1,4 +1,4 @@
-import { type HarnessArcRequest, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessMemoryRecoveryRequest } from '@seihouse/sen/harness-generation';
+import { HARNESS_MAX_CHAPTER_PARAGRAPHS, type HarnessArcRequest, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessMemoryRecoveryRequest } from '@seihouse/sen/harness-generation';
 import { validateSoundWords } from '@seihouse/sen/audio';
 import {
   harnessGenerationServerInfo,
@@ -98,6 +98,11 @@ const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessMemoryRe
   const immediate = parsed.immediateChapterRequest;
   if (!isRecord(immediate) || !Number.isInteger(immediate.chapterNumber) || Number(immediate.chapterNumber) < 1) {
     throw new Error('Harness Generation needs an Immediate Chapter Request with a valid harness-owned chapter number.');
+  }
+  // The paragraph count becomes the schema's exact array length, so only a sane whole number passes.
+  const paragraphs = isRecord(immediate.chapterScale) ? immediate.chapterScale.paragraphs : undefined;
+  if (paragraphs !== undefined && (!Number.isInteger(paragraphs) || Number(paragraphs) < 1 || Number(paragraphs) > HARNESS_MAX_CHAPTER_PARAGRAPHS)) {
+    throw new Error(`The chapter paragraph count must be a whole number from 1 to ${HARNESS_MAX_CHAPTER_PARAGRAPHS}.`);
   }
   if (typeof parsed.model !== 'string') throw new Error('Choose a configured Harness Generation model.');
   return parsed as unknown as HarnessGenerationRequest;

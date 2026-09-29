@@ -11,8 +11,9 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * matching upgrade step to `HARNESS_WORKSPACE_MIGRATIONS` in `repository.ts`,
  * so saved stories carry over. Storage with no migration path is preserved
  * untouched by the host and replaced with an empty workspace. Schema 22
- * (chapters are paragraphs plus Sound Cues) deliberately has no upgrade step. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 22 as const;
+ * (chapters are paragraphs plus Sound Cues) deliberately has no upgrade step
+ * from earlier versions; 23 adds the optional paragraph counter. */
+export const HARNESS_GENERATION_SCHEMA_VERSION = 23 as const;
 
 /** Output buckets assign processor categories; legacy event arrays remain readable. */
 export const HARNESS_MEMORY_CATEGORIES = {
@@ -374,7 +375,16 @@ export interface ImmediateChapterRequest {
    * not a CAPA skill and not canonical Story Information: the Pacing skill
    * decides how the chapter uses the space this range allows.
    */
-  chapterScale: { minWords: number; maxWords: number };
+  chapterScale: {
+    minWords: number;
+    maxWords: number;
+    /**
+     * The exact number of paragraphs this chapter must have, rolled by the
+     * HARNESS for this chapter and frozen with the attempt, so a retry keeps it.
+     * Absent on attempts frozen before the counter existed.
+     */
+    paragraphs?: number;
+  };
 }
 
 /** One path for the next chapter, chosen by the reader. */
@@ -490,6 +500,8 @@ export interface HarnessChapterMetrics {
   paragraphCount: number;
   /** False when the chapter falls below the HARNESS chapter-scale target; the prose is still preserved. */
   meetsScaleTarget: boolean;
+  /** The exact paragraph count the HARNESS asked for, when it asked for one. A miss is kept and flagged. */
+  paragraphTarget?: number;
 }
 
 export interface HarnessAcceptedChapterDraft {
@@ -551,6 +563,7 @@ export interface HarnessWarning {
     | 'chapter_block_normalized'
     | 'chapter_structure_quality'
     | 'chapter_scale_below_target'
+    | 'chapter_paragraphs_off_target'
     | 'chapter_body_recovered'
     | 'optional_chapter_structure_omitted'
     | 'competing_prose_ignored'

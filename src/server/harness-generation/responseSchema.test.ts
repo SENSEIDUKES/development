@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { HARNESS_RESPONSE_CONTRACT, buildHarnessChapterResponseSchema, buildHarnessMemoryRecoveryPrompt } from './prompt';
+import { HARNESS_RESPONSE_CONTRACT, buildHarnessChapterResponseSchema, buildHarnessMemoryRecoveryPrompt, presentImmediateChapterRequest } from './prompt';
 
 const WORDS = [{ word: 'blade drawn', example: 'drew his sword' }, { word: 'beast roar', example: 'the beast roared' }];
 /** The schema a story with sound words receives. */
@@ -46,6 +46,13 @@ describe('HARNESS chapter response schema shape', () => {
     // How to mark lives in the CAPA Sound Cues skill, never in the permanent contract.
     expect(JSON.stringify(soundCues)).not.toMatch(/\bwords?\b|description/i);
     expect(HARNESS_RESPONSE_CONTRACT).not.toMatch(/Sound Cue|soundCues|\[\[/);
+  });
+
+  it('holds the paragraphs to the exact count the HARNESS rolled, and leaves them free without one', () => {
+    expect(buildHarnessChapterResponseSchema(WORDS, 73).properties.paragraphs).toMatchObject({ type: 'array', items: { type: 'string' }, minItems: 73, maxItems: 73 });
+    expect(buildHarnessChapterResponseSchema(WORDS).properties.paragraphs).not.toHaveProperty('minItems');
+    expect(presentImmediateChapterRequest({ chapterNumber: 3, continuation: true, chapterScale: { minWords: 1_800, maxWords: 2_500, paragraphs: 73 } }))
+      .toContain('CHAPTER SCALE: exactly 73 paragraph entries, 1,800 to 2,500 words in all.');
   });
 
   it('carries no Sound Cue field at all for a story without sound words', () => {

@@ -78,12 +78,17 @@ const soundCuesSchema = (words: readonly SoundWord[]) => ({
  * CAPA Sound Cues skill, never here. Reader structures, media, IDs, and memory
  * are HARNESS work and never appear here.
  */
-export const buildHarnessChapterResponseSchema = (words: readonly SoundWord[] = []) => ({
+export const buildHarnessChapterResponseSchema = (words: readonly SoundWord[] = [], paragraphCount?: number) => ({
   type: 'object',
   properties: {
     title: text,
     plan: { type: 'string', description: 'Optional one-paragraph continuation plan for the next chapter.' },
-    paragraphs: { type: 'array', items: text, description: 'The complete chapter, one entry per prose paragraph, in reading order. This is the only chapter body.' },
+    paragraphs: {
+      type: 'array', items: text,
+      // The HARNESS rolled this chapter's exact paragraph count; the schema holds the writer to it.
+      ...(paragraphCount ? { minItems: paragraphCount, maxItems: paragraphCount } : {}),
+      description: 'The complete chapter, one entry per prose paragraph, in reading order. This is the only chapter body.',
+    },
     ...(words.length ? { soundCues: soundCuesSchema(words) } : {}),
     arcCompletion: {
       type: 'object',
@@ -258,7 +263,9 @@ export const presentImmediateChapterRequest = (request: ImmediateChapterRequest)
   'IMMEDIATE CHAPTER REQUEST',
   `Write Chapter ${request.chapterNumber}${request.continuation ? ', continuing directly from the latest committed chapter above' : ', the opening chapter of this story'}.`,
   [
-    `CHAPTER SCALE: ${request.chapterScale.minWords.toLocaleString()} to ${request.chapterScale.maxWords.toLocaleString()} words, written as many separate paragraph entries.`,
+    request.chapterScale.paragraphs
+      ? `CHAPTER SCALE: exactly ${request.chapterScale.paragraphs} paragraph entries, ${request.chapterScale.minWords.toLocaleString()} to ${request.chapterScale.maxWords.toLocaleString()} words in all. Fill every paragraph; never pad with empty or one-word entries.`
+      : `CHAPTER SCALE: ${request.chapterScale.minWords.toLocaleString()} to ${request.chapterScale.maxWords.toLocaleString()} words, written as many separate paragraph entries.`,
     'This is the size of the chapter, not a summary length. Write the scene fully: let events happen on the page with description, dialogue, and consequence rather than reporting them. Your Pacing skill decides how this chapter uses that space; it does not change the size.',
   ].join('\n'),
   request.direction ? presentReaderDirection(request.direction) : 'The reader left this chapter\'s path to the HARNESS: follow the Fate Pressure Rhythm Direction and continue from committed developments and the Foundation.',
@@ -290,7 +297,7 @@ export const buildHarnessGenerationPrompt = (request: HarnessGenerationRequest) 
     presentMissionReminder(request.missionReminder),
     presentImmediateChapterRequest(request.immediateChapterRequest),
   ].join('\n\n');
-  const responseJsonSchema = buildHarnessChapterResponseSchema(request.capaPrompt.soundVocabulary ?? []);
+  const responseJsonSchema = buildHarnessChapterResponseSchema(request.capaPrompt.soundVocabulary ?? [], request.immediateChapterRequest.chapterScale.paragraphs);
   const measurement: HarnessRequestMeasurement = {
     systemInstructionCharacters: systemInstruction.length,
     userPromptCharacters: userPrompt.length,

@@ -116,6 +116,17 @@ describe('Harness Generation HTTP boundary', () => {
     expect(schema.properties.soundCues.items.properties.sound.enum).toEqual(['blade drawn']);
   });
 
+  it('rejects a chapter paragraph count that is not a sane whole number before contacting the provider', async () => {
+    const generate = vi.fn();
+    const providerFactory = () => ({ provider: 'gemini' as const, model: request().model, generate });
+    for (const paragraphs of [0, 2.5, 601, '73']) {
+      const body = request();
+      body.immediateChapterRequest = { ...body.immediateChapterRequest, chapterScale: { ...body.immediateChapterRequest.chapterScale, paragraphs: paragraphs as never } };
+      expect((await handleHarnessGenerationHttp({ method: 'POST', body }, { environment, providerFactory })).status).toBe(400);
+    }
+    expect(generate).not.toHaveBeenCalled();
+  });
+
   it('reports independent model configuration', async () => {
     const result = await handleHarnessGenerationHttp({ method: 'GET' }, { environment });
     expect(result.status).toBe(200);

@@ -70,6 +70,9 @@ it('opens authorized story information without navigating or playing motion', as
   await act(async () => trigger.click());
   const panel = document.querySelector('.world-card-story-panel')!;
   expect(panel.textContent).toContain('A lotus blooms.');
+  expect(panel.querySelector('.world-card-story-panel-views')?.getAttribute('aria-label')).toBe(`${world.reads.toLocaleString()} views`);
+  expect(panel.querySelector('.world-card-story-panel-views')?.getAttribute('data-slot')).toBe('badge');
+  expect(panel.querySelector('.world-card-story-panel-views')?.textContent).toContain(world.reads.toLocaleString());
   expect(panel.textContent).toContain('Active this week');
   expect(panel.textContent).toContain('BranchingDisabled');
   expect(panel.textContent).toContain('#FoundFamily');

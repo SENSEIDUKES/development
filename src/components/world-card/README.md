@@ -172,6 +172,14 @@ Leave behind the Workshop preview, its sample data and the `reference/` folder.
 
 ## Workshop history
 
+- **2026-09-29** — Kept the Full card's chapter and status metadata anchored during press while the cover art and glow provide the press feedback.
+
+- **2026-09-29** — Optimized the Full card across grid widths: the 2:3 frame now stays contained, title sizing follows the card's container, and lower metadata can wrap cleanly on narrow tracks.
+
+- **2026-09-29** — Sharpened the Full card's resting edge with a thin neutral border and restrained depth shadow, preserving its colored hover, active, and Motion Picture glows.
+
+- **2026-09-29** — Added a compact SEIBadge view count to the story information dialog header.
+
 - **2026-09-29** — Refined the Full card's title outline, restored a translucent MP control, centered the story information in a dimmed dialog, and faded the title and chapter/status pill during Motion Picture playback while retaining the creator name.
 
 - **2026-09-29** — Matched MP and format control sizing, made the format control open a compact story information popover, and replaced all Full-card cover dimming with a crisp title outline. Shared Activity labels with the Info page and documented host-authorized panel fields and independent branching permission.

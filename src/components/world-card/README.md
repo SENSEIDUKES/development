@@ -172,7 +172,7 @@ Leave behind the Workshop preview, its sample data and the `reference/` folder.
 
 ## Workshop history
 
-- **2026-09-29** — Matched the Full card's format control to the translucent Motion Picture control while the clip plays; it returns to its usual appearance when playback ends. Added a compact SEIBadge view count to the story information dialog header.
+- **2026-09-29** — Added a compact SEIBadge view count to the story information dialog header.
 
 - **2026-09-29** — Refined the Full card's title outline, restored a translucent MP control, centered the story information in a dimmed dialog, and faded the title and chapter/status pill during Motion Picture playback while retaining the creator name.
 

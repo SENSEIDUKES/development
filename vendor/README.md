@@ -1,8 +1,8 @@
 # Private UI artifacts
 
-Both UI tarballs are built from the merged UI PR [#84](https://github.com/SENSEIDUKES/UI/pull/84), merge commit `ced1de35ec65358e1e2e927079e6b98ddf68e7af`:
+The UI tarball is built from merged UI PR [#87](https://github.com/SENSEIDUKES/UI/pull/87), merge commit `d3c630181b5fb35cbb9be50847c96fff2dbd5e4a`. The unchanged Library UI tarball remains from PR [#84](https://github.com/SENSEIDUKES/UI/pull/84), merge commit `ced1de35ec65358e1e2e927079e6b98ddf68e7af`:
 
-- `@seihouse/ui@0.10.0`: universal SEIHouse primitives and experience tokens, including the `SEIAppHeader` application chrome (with a centered `center` slot), the `SEIAppShell` scaffold (fixed-frame scrolling, `mainRef`, `sidebarBreakpoint`, the automatic / pinned / compact sidebar modes and the click-only `sidebarBehavior`), the shared overlay scrollbar (`SEIOverlayScrollbar`, `useOverlayScrollbar`, `attachOverlayScrollbar`) used by every scrolling surface,, the `ElementalTitle` Text family, and the Pathways navigation panel (`SEINavigationDrawerPanel` with the account at the top, nested items, footer slots, image/video artwork, scroll fades and the pin control).
+- `@seihouse/ui@0.10.1`: universal SEIHouse primitives and experience tokens, including the refined `SEIBadge` and `ElementalTitle`, the `SEIAppHeader` application chrome, the `SEIAppShell` scaffold, the shared overlay scrollbar, and the Pathways navigation panel.
 - `@seihouse/library-ui@0.9.0`: stateless Celestial Library presentation, including the transferred icon family, manifestation chamber/scenes/vessel, journey scrubber, Cave backdrop and particles, and the Library skin over the Pathways panel (`LibraryNavigationDrawerPanel`). Its `@seihouse/ui` peer is `^0.10.0`; its skin supplies the gold gradient scrollbar and the gold-edged star. Domain behavior remains in `@seihouse/library`.
 
 `ui-artifacts.json` records source provenance and SHA-512 integrity. The root manifest pins these files, and `package-lock.json` records their integrity. Run `npm ci` followed by `npm run check:ui-artifacts` to verify the installed dependency inputs.

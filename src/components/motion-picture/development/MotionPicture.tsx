@@ -19,6 +19,8 @@ export interface MotionPictureProps {
   glow?: boolean;
   /** Overlaid above the artwork, for a host's own badge or caption. */
   children?: ReactNode;
+  /** Host artwork fallback if the still cannot load. */
+  stillFallback?: ReactNode;
   className?: string;
 }
 
@@ -42,11 +44,13 @@ export function MotionPicture({
   hold = false,
   glow = true,
   children,
+  stillFallback,
   className,
 }: MotionPictureProps) {
   const clip = useRef<HTMLVideoElement>(null);
   const [ownPlaying, setOwnPlaying] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [stillFailed, setStillFailed] = useState(false);
   // The clip stays mounted once played so stopping crossfades back instead of cutting.
   const [loaded, setLoaded] = useState(false);
   const auraColor = useDominantColor(glow ? stillUrl : undefined);
@@ -59,6 +63,8 @@ export function MotionPicture({
     setFailed(false);
     setLoaded(false);
   }, [videoUrl]);
+
+  useEffect(() => { setStillFailed(false); }, [stillUrl]);
 
   useEffect(() => {
     if (active) setLoaded(true);
@@ -90,7 +96,9 @@ export function MotionPicture({
       <span className="motion-picture-aura-halo" />
     </div>}
     <div className="motion-picture-frame">
-      <img src={stillUrl} alt={alt} className="motion-picture-still" loading="lazy" decoding="async" />
+      {(!stillFailed || !stillFallback) && <img src={stillUrl} alt={alt} className="motion-picture-still"
+        loading="lazy" decoding="async" onError={() => setStillFailed(true)} />}
+      {stillFailed && stillFallback && <div className="motion-picture-still-fallback">{stillFallback}</div>}
       {offered && loaded && <video ref={clip} key={videoUrl} src={videoUrl} className="motion-picture-clip"
         aria-hidden="true" muted playsInline
         onEnded={() => { if (!hold) setPlaying(false); }}

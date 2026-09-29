@@ -241,6 +241,7 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
                     <WorldCard
                       key={world.id}
                       world={world}
+                      displayStatus={world.publicationStatus ? { view: 'public', value: world.publicationStatus } : undefined}
                       onOpen={() => onOpenWorld(world.id)}
                     />
                   ))}

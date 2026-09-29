@@ -1,6 +1,6 @@
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
 import type { StoryDetailDisplay } from '../../light-novels-home/shared/storyDetailContracts';
-import type { CreatorWorld } from '../../creator-space/shared/creatorSpaceContracts';
+import type { CreatorWorld, CreatorWorldStatus } from '../../creator-space/shared/creatorSpaceContracts';
 
 /**
  * One world, four sizes. Each variant reads the display data its host page
@@ -16,9 +16,15 @@ export interface WorldCardInfoProps {
 }
 
 /** Full card: the 2:3 discovery card on Home. */
+export type WorldCardDisplayStatus =
+  | { view: 'public'; value: 'ongoing' | 'completed' }
+  | { view: 'library'; value: CreatorWorldStatus };
+
 export interface WorldCardProps {
   world: HomeWorld;
   onOpen: () => void;
+  /** Host-supplied progress for the surface showing this card. Unknown status stays hidden. */
+  displayStatus?: WorldCardDisplayStatus;
 }
 
 /** Compact card: the creator's world tile on Create. */

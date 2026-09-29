@@ -8,6 +8,8 @@ export type WorldCardAcquisition = 'sealed' | 'draft' | 'unacquired' | 'recently
 export type WorldCardTitleLength = 'standard' | 'long';
 export type WorldCardCover = 'art' | 'missing';
 export type WorldCardBranchPreview = 'sample' | 'zero' | 'unavailable';
+export type WorldCardStatusPreview = 'public-ongoing' | 'public-completed'
+  | 'library-draft' | 'library-shared' | 'library-public' | 'library-complete';
 
 export interface WorldCardPreviewState {
   acquisition: WorldCardAcquisition;
@@ -15,6 +17,7 @@ export interface WorldCardPreviewState {
   cover: WorldCardCover;
   branches: WorldCardBranchPreview;
   activity: WorldActivityStatus | 'hidden';
+  cardStatus: WorldCardStatusPreview;
 }
 
 export const ACQUISITION_LABELS: Record<WorldCardAcquisition, string> = {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { getByAnyTag, getByCategory, getByTag, getByUrl, getByVariation, getCategories, AUDIO_CUE_CATEGORIES, parseAudioCues, type AudioCue, type AudioCuesLoadResult } from '@seihouse/sen/audio';
-import { loadLibraryCues } from '../host/media/libraryCatalog';
+import { getByAnyTag, getByCategory, getByTag, getByUrl, getByVariation, getCategories, AUDIO_CUE_CATEGORIES, parseAudioCues, soundVocabulary, type AudioCue, type AudioCuesLoadResult } from '@seihouse/sen/audio';
+import { LIBRARY_BASE_MEDIA, LIBRARY_SOUND_WORDS, loadLibraryCues } from '../host/media/libraryCatalog';
 
 const makeValidCue = (overrides: Partial<{
   file_path: string;
@@ -271,5 +271,52 @@ describe('libraryCues lookups', () => {
   it('returns an empty list for an empty tag query', () => {
     const loaded: AudioCuesLoadResult = loadLibraryCues();
     expect(getByAnyTag(loaded, 'weapons', [])).toEqual([]);
+  });
+});
+
+describe('default library sound words', () => {
+  const SOUND_CUE_CATEGORIES = ['beasts', 'weapons', 'artifacts', 'locations', 'factions'];
+
+  it('gives every Sound Cue recording a declared sound word, and nothing else one', () => {
+    const loaded = loadLibraryCues();
+    const declared = new Set(LIBRARY_SOUND_WORDS.map(sound => sound.word));
+    for (const cue of loaded.cues) {
+      if (SOUND_CUE_CATEGORIES.includes(cue.category)) expect(declared.has(cue.metadata.sound ?? '')).toBe(true);
+      else expect(cue.metadata.sound).toBeUndefined();
+    }
+    expect(loaded.cues.filter(cue => cue.metadata.sound)).toHaveLength(92);
+  });
+
+  it('declares only words that recordings answer', () => {
+    const answered = new Set(loadLibraryCues().cues.map(cue => cue.metadata.sound));
+    expect(LIBRARY_SOUND_WORDS.filter(sound => !answered.has(sound.word))).toEqual([]);
+    expect(LIBRARY_SOUND_WORDS).toHaveLength(30);
+  });
+
+  it('reads Energy only from the size a recording names', () => {
+    const energy = (name: string) => loadLibraryCues().cues.find(cue => cue.file_path.endsWith(`/${name}.mp3`))?.metadata.studio_tags?.energy;
+    expect(energy('Small_Beast_Roar_1')).toBe('low');
+    expect(energy('Medium_Beast_Roar_1')).toBe('medium');
+    expect(energy('Giant_Beast_Roar_1')).toBe('high');
+    expect(energy('Heavy_Sword_Unsheathe_1')).toBe('high');
+    expect(energy('Sword_Unsheathe_1')).toBeUndefined();
+  });
+
+  it('offers every default word to a story with the default library', () => {
+    expect(soundVocabulary(LIBRARY_BASE_MEDIA).map(sound => sound.word)).toEqual(LIBRARY_SOUND_WORDS.map(sound => sound.word));
+  });
+
+  it('keeps sound words and Studio tags through the loader, and rejects malformed ones', () => {
+    const loaded = parseAudioCues([
+      { ...makeValidCue(), metadata: { ...makeValidCue().metadata, sound: 'Fire_Spell', studio_tags: { tone: 'Dark', energy: 'HIGH' } } },
+      { ...makeValidCue({ file_path: 'b.mp3', public_url: 'https://celestialaudio.seihouse.org/b.mp3' }), metadata: { ...makeValidCue().metadata, sound: 'a bad sound word!' } },
+      { ...makeValidCue({ file_path: 'c.mp3', public_url: 'https://celestialaudio.seihouse.org/c.mp3' }), metadata: { ...makeValidCue().metadata, studio_tags: { tone: 'urgent' } } },
+    ]);
+    expect(loaded.cues).toHaveLength(1);
+    expect(loaded.cues[0].metadata).toMatchObject({ sound: 'fire spell', studio_tags: { tone: 'dark', energy: 'high' } });
+    expect(loaded.issues.map(issue => issue.kind === 'malformed_entry' && issue.reason)).toEqual([
+      expect.stringContaining('metadata.sound'),
+      expect.stringContaining('Tone'),
+    ]);
   });
 });

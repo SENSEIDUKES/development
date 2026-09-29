@@ -4,10 +4,12 @@
 // (with provider IDs) is intentionally NOT re-exported here — that lives in
 // `src/server/audio/voiceCatalog.ts` and must stay on the server boundary.
 
+export * from './audioTags';
 export * from './cues';
 export * from './inlineAudio';
 export * from './media';
 export * from './mediaUrl';
 export * from './soundscapes';
 export * from './soundCueRules';
+export * from './soundWords';
 export * from './playback';

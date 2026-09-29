@@ -1,7 +1,7 @@
 import { isPublicHttpsMediaUrl, createMediaCatalog, type MediaCatalog, type MediaResourceProvenance, type NarrativeMediaPort, type StoryMediaSelection, type FrozenNarrativeMedia } from '@seihouse/sen/audio';
-import type { InlineAudioCueCategory } from '@seihouse/sen/audio';
 import { parseAudioCues, type AudioCue } from '@seihouse/sen/audio';
 import { validateSceneAudioCatalog, type SceneAudioTrack } from '@seihouse/sen/audio';
+import { validateSoundWords, type SoundWord } from '@seihouse/sen/audio';
 
 export const MEDIA_PACK_TYPES = ['soundscape', 'sound-cue'] as const;
 export type MediaPackType = (typeof MEDIA_PACK_TYPES)[number];
@@ -32,7 +32,15 @@ export interface SoundscapePack extends MediaPackBase {
 
 export interface SoundCuePack extends MediaPackBase {
   type: 'sound-cue';
-  entries: Array<AudioCue & { category: InlineAudioCueCategory }>;
+  /**
+   * The pack's sound words, each with an example of what a writer wraps. Every
+   * recording names one of them and every word has a recording. An equipped
+   * pack is the story's whole Sound Cue set: its words and recordings replace
+   * the default library's.
+   */
+  sounds: SoundWord[];
+  /** Each recording's cue category is its Studio parent tag. */
+  entries: AudioCue[];
 }
 
 export type MediaPack = SoundscapePack | SoundCuePack;
@@ -70,6 +78,7 @@ export interface FrozenMediaLoadoutRecord {
 }
 
 const PACK_FIELDS = new Set(['id', 'version', 'type', 'displayName', 'description', 'source', 'entries']);
+const SOUND_CUE_PACK_FIELDS = new Set([...PACK_FIELDS, 'sounds']);
 const SOURCE_FIELDS = new Set(['path', 'digest']);
 const SHA256 = /^[a-f0-9]{64}$/;
 const VERSION = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
@@ -120,7 +129,7 @@ const validateSource = (value: unknown): MediaPackSource => {
 };
 
 const validateBase = (value: Record<string, unknown>) => {
-  assertExactFields(value, PACK_FIELDS, 'Media Pack');
+  assertExactFields(value, value.type === 'sound-cue' ? SOUND_CUE_PACK_FIELDS : PACK_FIELDS, 'Media Pack');
   if (typeof value.id !== 'string' || !PACK_ID.test(value.id)) {
     throw new Error('Media Pack id must be a stable identifier.');
   }
@@ -138,7 +147,7 @@ const validateBase = (value: Record<string, unknown>) => {
   };
 };
 
-const validateSoundCueEntries = (value: unknown): SoundCuePack['entries'] => {
+const validateSoundCueEntries = (value: unknown, sounds: readonly SoundWord[]): SoundCuePack['entries'] => {
   if (!Array.isArray(value)) throw new Error('Sound Cue catalog must be an array.');
   value.forEach((entry, index) => {
     if (!isPlainObject(entry)) return;
@@ -146,23 +155,26 @@ const validateSoundCueEntries = (value: unknown): SoundCuePack['entries'] => {
     if (isPlainObject(entry.metadata)) {
       assertExactFields(
         entry.metadata,
-        new Set(['main_category', 'broad_variation', 'soft_tags', 'description', 'confidence_score']),
+        new Set(['main_category', 'broad_variation', 'soft_tags', 'description', 'confidence_score', 'sound', 'studio_tags']),
         `Sound Cue entry ${index} metadata`,
       );
     }
   });
   const loaded = parseAudioCues(value);
   if (loaded.issues.length > 0 || loaded.cues.length !== loaded.rawEntries.length) {
-    throw new Error(`Sound Cue catalog validation failed: ${loaded.issues.map(issue => issue.kind).join(', ') || 'invalid entry'}.`);
+    const reasons = loaded.issues.map(issue => ('reason' in issue ? `${issue.filePath}: ${issue.reason}` : issue.kind));
+    throw new Error(`Sound Cue catalog validation failed: ${reasons.join('; ') || 'invalid entry'}.`);
   }
-  const allowed = new Set<string>(SOUND_CUE_PACK_CATEGORIES);
+  // A recording's category is its Studio parent tag. Until placement is
+  // word-based, packs hold only the categories a Sound Cue can be placed from.
+  const placeable = new Set<string>(SOUND_CUE_PACK_CATEGORIES);
   for (const [index, cue] of loaded.cues.entries()) {
     const declaredCategory = isPlainObject(value[index]) ? value[index].category : undefined;
     if (declaredCategory !== undefined && declaredCategory !== cue.category) {
       throw new Error(`Sound Cue ${cue.file_path} has incompatible category data.`);
     }
-    if (!allowed.has(cue.category)) {
-      throw new Error(`Sound Cue Packs cannot contain ${cue.category} catalog entries.`);
+    if (!placeable.has(cue.category)) {
+      throw new Error(`Sound Cue Packs cannot contain ${cue.category} catalog entries yet.`);
     }
     if (!isPublicHttpsMediaUrl(cue.public_url)) throw new Error(`Sound Cue ${cue.file_path} needs a public HTTPS playback URL.`);
     if (!SUPPORTED_AUDIO_FILE.test(cue.file_path)) throw new Error(`Sound Cue ${cue.file_path} uses an unsupported file type.`);
@@ -172,6 +184,17 @@ const validateSoundCueEntries = (value: unknown): SoundCuePack['entries'] => {
     if (filePaths.has(cue.file_path)) throw new Error(`Duplicate Sound Cue identity ${cue.file_path}.`);
     filePaths.add(cue.file_path);
   }
+  // Words and recordings match one to one: each recording answers a declared
+  // word, and each declared word has at least one recording.
+  const declared = new Set(sounds.map(sound => sound.word));
+  const answered = new Set<string>();
+  for (const cue of loaded.cues) {
+    if (!cue.metadata.sound) throw new Error(`Sound Cue ${cue.file_path} needs a sound word.`);
+    if (!declared.has(cue.metadata.sound)) throw new Error(`Sound Cue ${cue.file_path} answers "${cue.metadata.sound}", which the pack does not declare.`);
+    answered.add(cue.metadata.sound);
+  }
+  const unused = sounds.find(sound => !answered.has(sound.word));
+  if (unused) throw new Error(`The sound word "${unused.word}" has no recording in this pack.`);
   return loaded.cues as SoundCuePack['entries'];
 };
 
@@ -187,7 +210,8 @@ export function validateMediaPack(value: unknown): MediaPack {
     return { ...base, type: 'soundscape', entries };
   }
   if (value.type === 'sound-cue') {
-    return { ...base, type: 'sound-cue', entries: validateSoundCueEntries(value.entries) };
+    const sounds = validateSoundWords(value.sounds);
+    return { ...base, type: 'sound-cue', sounds, entries: validateSoundCueEntries(value.entries, sounds) };
   }
   throw new Error('Media Pack type must be soundscape or sound-cue.');
 }
@@ -301,12 +325,18 @@ const packProvenance = (pack: MediaPack): MediaResourceProvenance => ({
   source: { ...pack.source },
 });
 
-/** Base catalogs always remain present; a validated frozen pack can only add candidates. */
+/**
+ * The authorized catalog for one attempt. A Soundscape Pack adds tracks to the
+ * base soundscapes. A Sound Cue Pack is the story's whole Sound Cue set: its
+ * words and recordings replace the default library's, while base recordings
+ * that answer no sound word (atmosphere, system) stay.
+ */
 export function createAuthorizedMediaCatalog(snapshot?: FrozenMediaLoadout, base: MediaCatalog = createMediaCatalog()): MediaCatalog {
   const soundscapes = structuredClone(base.soundscapes);
-  const soundCueProvenanceByUrl = new Map(base.soundCueProvenanceByUrl);
+  let soundCueProvenanceByUrl = new Map(base.soundCueProvenanceByUrl);
   const baseCues = base.soundCues;
-  const cueEntries: AudioCue[] = [...baseCues.cues];
+  let cueEntries: AudioCue[] = [...baseCues.cues];
+  let sounds = structuredClone(base.sounds);
 
   if (snapshot?.soundscapes) {
     try {
@@ -324,10 +354,14 @@ export function createAuthorizedMediaCatalog(snapshot?: FrozenMediaLoadout, base
       const pack = validateMediaPack(snapshot.soundCues);
       if (pack.type === 'sound-cue') {
         const provenance = packProvenance(pack);
-        pack.entries.forEach(cue => {
-          cueEntries.push(cue);
-          soundCueProvenanceByUrl.set(cue.public_url, provenance);
-        });
+        const kept = baseCues.cues.filter(cue => !cue.metadata.sound);
+        cueEntries = [...kept, ...pack.entries];
+        soundCueProvenanceByUrl = new Map(kept.flatMap(cue => {
+          const origin = base.soundCueProvenanceByUrl.get(cue.public_url);
+          return origin ? [[cue.public_url, origin] as const] : [];
+        }));
+        pack.entries.forEach(cue => soundCueProvenanceByUrl.set(cue.public_url, provenance));
+        sounds = structuredClone(pack.sounds);
       }
     } catch {
       // A malformed frozen pack contributes nothing; the base experience remains intact.
@@ -337,6 +371,7 @@ export function createAuthorizedMediaCatalog(snapshot?: FrozenMediaLoadout, base
     soundscapes,
     soundCues: parseAudioCues(cueEntries),
     soundCueProvenanceByUrl,
+    sounds,
   };
 }
 
@@ -372,6 +407,7 @@ export function createLibraryMediaPort(input: {
           cue,
           provenance: catalog.soundCueProvenanceByUrl.get(cue.public_url)!,
         })),
+        sounds: catalog.sounds,
       };
     },
   };

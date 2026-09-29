@@ -20,6 +20,13 @@ export interface ManualCuePickerProps {
   onClose: () => void;
 }
 
+/** A recording's sound word, then its category (the Studio parent tag) and child tags: "blade drawn · weapons · high". */
+const cueLabel = (cue: AudioCue) => {
+  const tags = cue.metadata.studio_tags;
+  return [cue.metadata.sound, cue.category, tags?.tone, tags?.energy, tags?.tension]
+    .filter(Boolean).join(' · ') || cue.metadata.broad_variation;
+};
+
 /** The host supplies its approved catalog. Preview and placed glyph share one audio owner. */
 export function ManualCuePicker({ block, selection, catalog, existing, occupiedSelections = [], onPlace, onRemove, onClose }: ManualCuePickerProps) {
   const playback = useNarrativeAudio();
@@ -42,7 +49,7 @@ export function ManualCuePicker({ block, selection, catalog, existing, occupiedS
     return cues.flatMap((cue, index) => {
       if (category !== 'all' && cue.category !== category) return [];
       const searchable = [cue.metadata.description, cue.category, cue.metadata.broad_variation,
-        ...cue.metadata.soft_tags].join(' ').toLowerCase();
+        cue.metadata.sound ?? '', ...cue.metadata.soft_tags].join(' ').toLowerCase();
       return needle && !searchable.includes(needle) ? [] : [{ cue, number: index + 1 }];
     });
   }, [cues, category, search]);
@@ -93,7 +100,7 @@ export function ManualCuePicker({ block, selection, catalog, existing, occupiedS
       </div>
       <div><label htmlFor={searchId}>Search cues</label>
         <input id={searchId} type="search" value={search} onChange={event => setSearch(event.target.value)}
-          placeholder="Description, variation, tag" />
+          placeholder="Description, sound word, tag" />
       </div>
     </div>
     <p className="sen-manual-cue-picker__count" role="status">Showing {results.length} of {cues.length} cues</p>
@@ -101,7 +108,7 @@ export function ManualCuePicker({ block, selection, catalog, existing, occupiedS
       {results.map(({ cue, number }) => <div key={cue.public_url} className="sen-manual-cue-picker__item">
         <div className="sen-manual-cue-picker__label">
           <span className="sen-manual-cue-picker__number">#{String(number).padStart(Math.max(3, String(cues.length).length), '0')}</span>
-          <div><strong>{cue.metadata.description}</strong><small>{cue.category} · {cue.metadata.broad_variation}</small></div>
+          <div><strong>{cue.metadata.description}</strong><small>{cueLabel(cue)}</small></div>
         </div>
         <div className="sen-manual-cue-picker__buttons">
           <button type="button" onClick={() => preview(cue)}>Preview</button>

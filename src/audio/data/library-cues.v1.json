@@ -14,7 +14,8 @@
                 "male"
             ],
             "description": "A deep, guttural male vocalization resembling a creature's chant or a powerful, dark incantation, suitable for fantasy settings.",
-            "confidence_score": 0.92
+            "confidence_score": 0.92,
+            "sound": "dark chant"
         }
     },
     {
@@ -32,7 +33,8 @@
                 "deep"
             ],
             "description": "A deep, resonant male voice speaks or chants a powerful, ritualistic phrase. The delivery is strong and commanding, suggesting a magical or ceremonial context.",
-            "confidence_score": 0.95
+            "confidence_score": 0.95,
+            "sound": "dark chant"
         }
     },
     {
@@ -50,7 +52,8 @@
                 "tribal"
             ],
             "description": "A rhythmic group chant featuring deep, guttural human voices, creating an atmospheric and ritualistic mood.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "war chant"
         }
     },
     {
@@ -68,7 +71,8 @@
                 "male"
             ],
             "description": "A powerful, aggressive male shout or yell, conveying strong exertion or a war cry in a short, impactful burst.",
-            "confidence_score": 0.95
+            "confidence_score": 0.95,
+            "sound": "war cry"
         }
     },
     {
@@ -86,7 +90,8 @@
                 "male"
             ],
             "description": "A powerful and rhythmic group chant by multiple male voices, creating an epic or ceremonial atmosphere.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "war chant"
         }
     },
     {
@@ -104,7 +109,8 @@
                 "sci-fi"
             ],
             "description": "A sequence of heavy, metallic clanks and whirs depicting the robust movement and internal mechanisms of a large mecha suit.",
-            "confidence_score": 1.0
+            "confidence_score": 1.0,
+            "sound": "mech moves"
         }
     },
     {
@@ -122,7 +128,8 @@
                 "blast"
             ],
             "description": "A potent fire magic spell is unleashed, characterized by a rapid magical whoosh and a powerful fiery blast.",
-            "confidence_score": 1.0
+            "confidence_score": 1.0,
+            "sound": "fire spell"
         }
     },
     {
@@ -139,7 +146,8 @@
                 "ascending"
             ],
             "description": "A shimmering and ascending magical sound effect with a bright, crystalline quality, suitable for a spell cast, item appearance, or magical transition.",
-            "confidence_score": 0.95
+            "confidence_score": 0.95,
+            "sound": "healing magic"
         }
     },
     {
@@ -157,7 +165,8 @@
                 "swift"
             ],
             "description": "A quick and energetic whoosh effect, characterized by swift air displacement.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "spell cast"
         }
     },
     {
@@ -175,7 +184,8 @@
                 "powerful"
             ],
             "description": "A powerful and dynamic wind magic spell that builds in intensity. It features a strong whoosh and swirling energy, characteristic of a magical wind release.",
-            "confidence_score": 1.0
+            "confidence_score": 1.0,
+            "sound": "wind spell"
         }
     },
     {
@@ -193,7 +203,8 @@
                 "sharp"
             ],
             "description": "The distinct, sharp sound of a dagger being unsheathed. This sound captures the metallic friction of the blade leaving its sheath.",
-            "confidence_score": 1.0
+            "confidence_score": 1.0,
+            "sound": "blade drawn"
         }
     },
     {
@@ -211,7 +222,11 @@
                 "sharp"
             ],
             "description": "A grand and powerful sound of a sword being dramatically unsheathed. This metallic scrape captures the epic drawing of a blade.",
-            "confidence_score": 1.0
+            "confidence_score": 1.0,
+            "sound": "blade drawn",
+            "studio_tags": {
+                "energy": "high"
+            }
         }
     },
     {
@@ -229,7 +244,11 @@
                 "weapon"
             ],
             "description": "The distinct sound of a heavy sword being unsheathed from its scabbard, characterized by a substantial metallic scrape.",
-            "confidence_score": 1.0
+            "confidence_score": 1.0,
+            "sound": "blade drawn",
+            "studio_tags": {
+                "energy": "high"
+            }
         }
     },
     {
@@ -247,7 +266,8 @@
                 "foley"
             ],
             "description": "The distinct sound of a sword being unsheathed. It captures the metallic scrape and movement of drawing a blade from its scabbard.",
-            "confidence_score": 1.0
+            "confidence_score": 1.0,
+            "sound": "blade drawn"
         }
     },
     {
@@ -265,7 +285,8 @@
                 "blade"
             ],
             "description": "The rapid sound of a metallic blade being drawn from its sheath, ready for action. It's a quick and sharp unsheathing.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "blade drawn"
         }
     },
     {
@@ -283,7 +304,8 @@
                 "scabbard"
             ],
             "description": "A sharp, metallic sound of a sword being unsheathed. This sound distinctly captures the action of a blade being drawn from its scabbard.",
-            "confidence_score": 1.0
+            "confidence_score": 1.0,
+            "sound": "blade drawn"
         }
     },
     {
@@ -336,7 +358,8 @@
                 "resonant"
             ],
             "description": "A single, loud metallic impact with a resonant decay, resembling a large metal object or gong being struck.",
-            "confidence_score": 0.97
+            "confidence_score": 0.97,
+            "sound": "bell rings"
         }
     },
     {
@@ -354,7 +377,8 @@
                 "resonant"
             ],
             "description": "A single, bright metallic chime with a long, clear resonance. The sound is sharp and then slowly decays.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "bell rings"
         }
     },
     {
@@ -372,7 +396,8 @@
                 "warning"
             ],
             "description": "A loud, powerful blast from an air horn. It functions as a distinct signal or an attention-grabbing warning.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "alarm horn"
         }
     },
     {
@@ -390,7 +415,8 @@
                 "heavy"
             ],
             "description": "A distinct heavy metallic scrape or drag, possibly from a large object being moved across a rough metal surface, with a slight rattling quality.",
-            "confidence_score": 0.92
+            "confidence_score": 0.92,
+            "sound": "metal scrape"
         }
     },
     {
@@ -408,7 +434,8 @@
                 "deep"
             ],
             "description": "A single, deep and resonant strike of a large metallic bell, followed by a long, slowly fading ringing decay.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "gong strikes"
         }
     },
     {
@@ -426,7 +453,8 @@
                 "military"
             ],
             "description": "A short, clear bugle call, reminiscent of a military signal or a ceremonial fanfare. It has a bright, brassy tone.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "bugle call"
         }
     },
     {
@@ -444,7 +472,8 @@
                 "short"
             ],
             "description": "A single, short, and bright metallic chime sound, reminiscent of a small bell or an alert notification.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "chime"
         }
     },
     {
@@ -462,7 +491,8 @@
                 "deep"
             ],
             "description": "A distinct, single strike of a large metallic gong, producing a deep, resonant tone with a long, shimmering decay.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "gong strikes"
         }
     },
     {
@@ -479,7 +509,8 @@
                 "short"
             ],
             "description": "A short, clear metallic chime sound, ideal for a notification or alert.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "bell rings"
         }
     },
     {
@@ -497,7 +528,8 @@
                 "resonant"
             ],
             "description": "A clear, single metallic bell or chime sound with a distinct resonant ding.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "bell rings"
         }
     },
     {
@@ -514,7 +546,8 @@
                 "deep"
             ],
             "description": "A deep, guttural growl from a large creature or monster, suggesting a menacing presence.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "dragon call"
         }
     },
     {
@@ -532,7 +565,8 @@
                 "deep"
             ],
             "description": "A deep, guttural, and sustained creature growl, conveying a sense of threat or presence from a large beast.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "dragon call"
         }
     },
     {
@@ -550,7 +584,8 @@
                 "guttural"
             ],
             "description": "A deep and resonant call from a powerful dragon, suitable for fantasy settings.",
-            "confidence_score": 1.0
+            "confidence_score": 1.0,
+            "sound": "dragon call"
         }
     },
     {
@@ -567,7 +602,11 @@
                 "animal"
             ],
             "description": "A high-pitched, sharp squeal from a pig, indicative of distress or excitement.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "animal cry",
+            "studio_tags": {
+                "energy": "medium"
+            }
         }
     },
     {
@@ -585,7 +624,11 @@
                 "animal"
             ],
             "description": "A high-pitched, sustained animal squeal, characteristic of a pig in distress or excitement, with a wavering pitch.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "animal cry",
+            "studio_tags": {
+                "energy": "medium"
+            }
         }
     },
     {
@@ -603,7 +646,11 @@
                 "animal"
             ],
             "description": "A very loud, high-pitched creature scream or screech, possibly indicating distress or a warning.",
-            "confidence_score": 0.9
+            "confidence_score": 0.9,
+            "sound": "creature screech",
+            "studio_tags": {
+                "energy": "medium"
+            }
         }
     },
     {
@@ -620,7 +667,11 @@
                 "whir"
             ],
             "description": "A short, high-pitched sound reminiscent of a large insect buzzing or whirring close by.",
-            "confidence_score": 0.9
+            "confidence_score": 0.9,
+            "sound": "wings beat",
+            "studio_tags": {
+                "energy": "low"
+            }
         }
     },
     {
@@ -638,7 +689,11 @@
                 "meow"
             ],
             "description": "A high-pitched and slightly prolonged cat meow, expressing distress or seeking attention. The vocalization has a wavering quality.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "animal cry",
+            "studio_tags": {
+                "energy": "low"
+            }
         }
     },
     {
@@ -656,7 +711,11 @@
                 "animal"
             ],
             "description": "A very loud and high-pitched squeal from a pig, suggesting distress or excitement typical of a farm animal.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "animal cry",
+            "studio_tags": {
+                "energy": "low"
+            }
         }
     },
     {
@@ -674,7 +733,11 @@
                 "animal"
             ],
             "description": "A powerful and guttural roar from a large, aggressive animal, accompanied by deep growls and an exhale.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "beast growl",
+            "studio_tags": {
+                "energy": "medium"
+            }
         }
     },
     {
@@ -692,7 +755,11 @@
                 "animal"
             ],
             "description": "A loud and powerful roar, suggestive of a large animal or creature exhibiting aggression or dominance.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "beast howl",
+            "studio_tags": {
+                "energy": "high"
+            }
         }
     },
     {
@@ -710,7 +777,11 @@
                 "deep"
             ],
             "description": "A deep, long, and sustained vocalization from a large animal, characterized by a wailing, mournful quality.",
-            "confidence_score": 0.95
+            "confidence_score": 0.95,
+            "sound": "beast howl",
+            "studio_tags": {
+                "energy": "high"
+            }
         }
     },
     {
@@ -727,7 +798,11 @@
                 "animal"
             ],
             "description": "A loud, powerful, and sustained roar from a large animal, possibly an aggressive beast or monster.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "beast howl",
+            "studio_tags": {
+                "energy": "medium"
+            }
         }
     },
     {
@@ -744,7 +819,11 @@
                 "animal"
             ],
             "description": "A guttural and powerful roar from a large, aggressive animal, suggestive of a predator.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "beast roar",
+            "studio_tags": {
+                "energy": "high"
+            }
         }
     },
     {
@@ -761,7 +840,11 @@
                 "large"
             ],
             "description": "A deep, guttural growl erupts into a powerful, sustained roar, suggesting a large and ferocious beast or monster.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "beast roar",
+            "studio_tags": {
+                "energy": "high"
+            }
         }
     },
     {
@@ -778,7 +861,11 @@
                 "large"
             ],
             "description": "A deep, powerful roar from a large beast, starting with a guttural growl and ending with a sustained, resonant vocalization.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "beast roar",
+            "studio_tags": {
+                "energy": "high"
+            }
         }
     },
     {
@@ -796,7 +883,11 @@
                 "deep"
             ],
             "description": "A deep, guttural growl or roar from a large, powerful animal, suggesting a predatory or territorial vocalization.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "beast roar",
+            "studio_tags": {
+                "energy": "high"
+            }
         }
     },
     {
@@ -813,7 +904,11 @@
                 "deep"
             ],
             "description": "A deep, guttural roar of a large beast or monster, conveying power and intensity.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "beast roar",
+            "studio_tags": {
+                "energy": "medium"
+            }
         }
     },
     {
@@ -830,7 +925,11 @@
                 "creature"
             ],
             "description": "A powerful, guttural roar from a large, aggressive creature, conveying menace and intensity.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "beast roar",
+            "studio_tags": {
+                "energy": "medium"
+            }
         }
     },
     {
@@ -847,7 +946,11 @@
                 "monster"
             ],
             "description": "A long, deep, and guttural roar from a large animal or monster, conveying a sense of power and threat.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "beast roar",
+            "studio_tags": {
+                "energy": "medium"
+            }
         }
     },
     {
@@ -864,7 +967,11 @@
                 "animal"
             ],
             "description": "A deep, powerful, and guttural roar or growl from a large animal or fantasy beast.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "beast roar",
+            "studio_tags": {
+                "energy": "medium"
+            }
         }
     },
     {
@@ -881,7 +988,11 @@
                 "vocalization"
             ],
             "description": "A distinct vocalization of a small beast, characterized as a roar. This is the second variation of this specific sound.",
-            "confidence_score": 1.0
+            "confidence_score": 1.0,
+            "sound": "beast roar",
+            "studio_tags": {
+                "energy": "low"
+            }
         }
     },
     {
@@ -898,7 +1009,8 @@
                 "equine"
             ],
             "description": "The clear and characteristic vocalization of a horse, featuring a distinct neigh or whinny.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "animal cry"
         }
     },
     {
@@ -916,7 +1028,8 @@
                 "horror"
             ],
             "description": "A terrifying and guttural screech produced by a zombie, ideal for horror settings or creature sound effects.",
-            "confidence_score": 1.0
+            "confidence_score": 1.0,
+            "sound": "creature screech"
         }
     },
     {
@@ -934,7 +1047,11 @@
                 "flying"
             ],
             "description": "A rapid and continuous buzzing sound created by the fast flapping of insect wings during flight, heard from a close perspective.",
-            "confidence_score": 0.85
+            "confidence_score": 0.85,
+            "sound": "wings beat",
+            "studio_tags": {
+                "energy": "low"
+            }
         }
     },
     {
@@ -952,7 +1069,11 @@
                 "fluttering"
             ],
             "description": "A quick, energetic sound of small wings rapidly flapping, suggesting a creature taking flight or hovering.",
-            "confidence_score": 0.95
+            "confidence_score": 0.95,
+            "sound": "wings beat",
+            "studio_tags": {
+                "energy": "low"
+            }
         }
     },
     {
@@ -1626,7 +1747,8 @@
                 "short"
             ],
             "description": "A crisp, short, and high-pitched metallic ding sound, typically used for user interface feedback or simple alerts.",
-            "confidence_score": 1.0
+            "confidence_score": 1.0,
+            "sound": "artifact activates"
         }
     },
     {
@@ -1644,7 +1766,8 @@
                 "short"
             ],
             "description": "A short, clear metallic ding sound, characteristic of a small bell being struck once, often used for notifications or alerts.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "power up"
         }
     },
     {
@@ -1662,7 +1785,8 @@
                 "evolving"
             ],
             "description": "A deep, sustained, and evolving tonal resonance sound, aligning with the concept of 'Resonance_1'.",
-            "confidence_score": 1.0
+            "confidence_score": 1.0,
+            "sound": "artifact resonates"
         }
     },
     {
@@ -1715,7 +1839,11 @@
                 "animal"
             ],
             "description": "A long, sustained, low-pitched vocalization of a large animal, akin to a mournful howl or distant call.",
-            "confidence_score": 0.95
+            "confidence_score": 0.95,
+            "sound": "beast howl",
+            "studio_tags": {
+                "energy": "medium"
+            }
         }
     },
     {
@@ -1785,7 +1913,8 @@
                 "deep"
             ],
             "description": "A deep, resonant male vocal chant, evoking a monastic or religious faction. This general sound effectively represents the solemn atmosphere or ritualistic practices of a monastery within a larger faction system.",
-            "confidence_score": 0.95
+            "confidence_score": 0.95,
+            "sound": "holy chant"
         }
     },
     {
@@ -1803,7 +1932,8 @@
                 "spell"
             ],
             "description": "A sharp, impactful magical spell cast, featuring a quick whoosh and a powerful energy release, fitting its role as a magical weapon.",
-            "confidence_score": 0.95
+            "confidence_score": 0.95,
+            "sound": "spell cast"
         }
     },
     {
@@ -1820,7 +1950,8 @@
                 "energy-burst"
             ],
             "description": "The sound features a quick, energetic whoosh followed by a magical impact or burst, fitting well as a spell cast sound within the 'Magic' category under 'Weapons'.",
-            "confidence_score": 0.95
+            "confidence_score": 0.95,
+            "sound": "spell cast"
         }
     },
     {
@@ -1838,7 +1969,8 @@
                 "spell"
             ],
             "description": "A short, high-pitched magical whoosh and zap sound, ideal for a quick spell cast or the launch of a magical projectile, fitting well within the 'Magic' subcategory of 'Weapons'.",
-            "confidence_score": 0.95
+            "confidence_score": 0.95,
+            "sound": "spell cast"
         }
     },
     {
@@ -1856,7 +1988,8 @@
                 "rattle"
             ],
             "description": "A sequence of distinct mechanical and metallic sounds, including clicks, clacks, and a subtle rattle, consistent with the manual reloading of an old firearm.",
-            "confidence_score": 0.95
+            "confidence_score": 0.95,
+            "sound": "gun reload"
         }
     },
     {
@@ -1874,7 +2007,8 @@
                 "whir"
             ],
             "description": "A series of quick, precise mechanical and metallic sounds, including a distinct click and a brief whirring motion, strongly suggesting the action of a futuristic weapon being reloaded.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "gun reload"
         }
     },
     {
@@ -1892,7 +2026,8 @@
                 "tech"
             ],
             "description": "A quick, mechanical reload sound featuring distinct metallic clicks and a short, sharp whirring or zipping element, strongly suggesting the action of reloading a futuristic or high-tech weapon.",
-            "confidence_score": 0.95
+            "confidence_score": 0.95,
+            "sound": "gun reload"
         }
     },
     {
@@ -1910,7 +2045,11 @@
                 "whoosh"
             ],
             "description": "A powerful, resonant metallic scrape and whoosh, characteristic of a large, epic sword being drawn from its scabbard. It perfectly fits the intended role of a weapon unsheathe sound.",
-            "confidence_score": 0.95
+            "confidence_score": 0.95,
+            "sound": "blade drawn",
+            "studio_tags": {
+                "energy": "high"
+            }
         }
     },
     {
@@ -1928,7 +2067,11 @@
                 "heavy"
             ],
             "description": "A distinct metallic scrape followed by a resonant ring, characteristic of a heavy sword being drawn from its scabbard, fitting its intended role as a weapon unsheathe sound.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "blade drawn",
+            "studio_tags": {
+                "energy": "high"
+            }
         }
     },
     {
@@ -1946,7 +2089,11 @@
                 "heavy"
             ],
             "description": "A heavy metallic unsheathe sound, characteristic of a large sword being drawn from its scabbard, featuring a distinct ringing resonance.",
-            "confidence_score": 0.95
+            "confidence_score": 0.95,
+            "sound": "blade drawn",
+            "studio_tags": {
+                "energy": "high"
+            }
         }
     },
     {
@@ -1964,7 +2111,8 @@
                 "resonant"
             ],
             "description": "A single, deep, and resonant metallic gong strike with a long, decaying sustain, evoking an ominous or grand atmosphere. This sound effectively serves as a signature for a location, marking a specific place or event, particularly one with a dark, mystical, or ceremonial theme.",
-            "confidence_score": 0.95
+            "confidence_score": 0.95,
+            "sound": "gong strikes"
         }
     },
     {
@@ -1982,7 +2130,8 @@
                 "short"
             ],
             "description": "A short, majestic brass fanfare, serving as a distinct musical signature. Its grand and authoritative tone makes it highly suitable as an identifying sonic 'signature' for an 'imperial location' or a significant event associated with such a place.",
-            "confidence_score": 0.95
+            "confidence_score": 0.95,
+            "sound": "fanfare"
         }
     },
     {
@@ -2000,7 +2149,8 @@
                 "brass"
             ],
             "description": "A short, powerful orchestral stinger or fanfare, characterized by strong brass and percussive elements, evoking a sense of grandeur and authority. It serves as an excellent audio signature for an 'Imperial' location or faction, marking its presence or importance.",
-            "confidence_score": 0.9
+            "confidence_score": 0.9,
+            "sound": "fanfare"
         }
     },
     {
@@ -2017,7 +2167,8 @@
                 "resonant"
             ],
             "description": "A single, bright, and resonant metallic chime with a mysterious quality. This sound effectively serves as a 'Signature' within 'Locations' by providing a distinct auditory cue or identifier for a specific place, event, or interaction within an environment, such as signaling a discovery, a magical occurrence, or a transition into a new area.",
-            "confidence_score": 0.9
+            "confidence_score": 0.9,
+            "sound": "chime"
         }
     },
     {
@@ -2034,7 +2185,8 @@
                 "rattle"
             ],
             "description": "A distinct, short rattling sound, suitable as a subtle auditory signature for a specific interactive element or small detail within a location, such as a loose object, a small mechanism, or a unique environmental detail.",
-            "confidence_score": 0.9
+            "confidence_score": 0.9,
+            "sound": "rattle"
         }
     },
     {
@@ -2052,7 +2204,8 @@
                 "deep"
             ],
             "description": "A deep, resonant gong strike, serving as a distinct signature sound that could mark a specific location, event, or transition within a 'Locations' context.",
-            "confidence_score": 0.95
+            "confidence_score": 0.95,
+            "sound": "gong strikes"
         }
     },
     {
@@ -2070,7 +2223,8 @@
                 "deep"
             ],
             "description": "A deep, guttural growl from a large animal, consistent with a tiger. This sound perfectly fits the 'Beasts > Growl' category as it is a clear and characteristic animal growl.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "beast growl"
         }
     },
     {
@@ -2088,7 +2242,11 @@
                 "hiss"
             ],
             "description": "A long, powerful, and slightly aggressive hissing sound, characteristic of a large serpent or snake. It perfectly fits the 'Beasts > Hiss' category as a clear animal hiss.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "serpent hiss",
+            "studio_tags": {
+                "energy": "high"
+            }
         }
     },
     {
@@ -2106,7 +2264,11 @@
                 "hiss"
             ],
             "description": "A distinct, sustained hissing sound, characteristic of a medium-sized serpent or reptile. It perfectly fits the 'Beasts' category as an animal vocalization and specifically aligns with 'Hiss' as the sound type.",
-            "confidence_score": 1.0
+            "confidence_score": 1.0,
+            "sound": "serpent hiss",
+            "studio_tags": {
+                "energy": "medium"
+            }
         }
     },
     {
@@ -2123,7 +2285,11 @@
                 "hiss"
             ],
             "description": "The sound is a distinct, sibilant hiss, characteristic of a medium-sized serpent or snake. It perfectly aligns with the 'Hiss' subcategory under 'Beasts', representing a clear animal vocalization.",
-            "confidence_score": 0.95
+            "confidence_score": 0.95,
+            "sound": "serpent hiss",
+            "studio_tags": {
+                "energy": "medium"
+            }
         }
     },
     {
@@ -2140,7 +2306,11 @@
                 "hiss"
             ],
             "description": "A distinct, sibilant hiss, characteristic of a small beast or creature, fitting perfectly within the 'Beasts > Hiss' category.",
-            "confidence_score": 0.95
+            "confidence_score": 0.95,
+            "sound": "serpent hiss",
+            "studio_tags": {
+                "energy": "low"
+            }
         }
     },
     {
@@ -2158,7 +2328,11 @@
                 "hiss"
             ],
             "description": "A sharp, sibilant hiss from a small, possibly reptilian creature, perfectly fitting the 'Beasts > Hiss' categorization.",
-            "confidence_score": 0.95
+            "confidence_score": 0.95,
+            "sound": "serpent hiss",
+            "studio_tags": {
+                "energy": "low"
+            }
         }
     },
     {
@@ -2176,7 +2350,11 @@
                 "hiss"
             ],
             "description": "A short, guttural hiss from a small beast, possibly reptilian or amphibian, with a wet, slightly choking quality, fitting its role as a beast's warning or defensive hiss.",
-            "confidence_score": 0.95
+            "confidence_score": 0.95,
+            "sound": "serpent hiss",
+            "studio_tags": {
+                "energy": "low"
+            }
         }
     },
     {
@@ -2194,7 +2372,11 @@
                 "hiss"
             ],
             "description": "A short, sharp, and aggressive hiss, characteristic of a small serpent or snake. It perfectly fits the 'Hiss' category for 'Beasts'.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "serpent hiss",
+            "studio_tags": {
+                "energy": "low"
+            }
         }
     },
     {
@@ -2212,7 +2394,11 @@
                 "deep"
             ],
             "description": "A deep, sustained vocalization characteristic of a large, powerful beast, featuring a long, drawn-out howl. This sound perfectly fits the 'Beasts > Howl' category.",
-            "confidence_score": 0.95
+            "confidence_score": 0.95,
+            "sound": "beast howl",
+            "studio_tags": {
+                "energy": "high"
+            }
         }
     },
     {
@@ -2230,7 +2416,11 @@
                 "animal"
             ],
             "description": "A long, sustained, and deep animal howl, characteristic of a large beast, perfectly fitting the 'Howl' category for 'Beasts'.",
-            "confidence_score": 1.0
+            "confidence_score": 1.0,
+            "sound": "beast howl",
+            "studio_tags": {
+                "energy": "medium"
+            }
         }
     },
     {
@@ -2248,7 +2438,11 @@
                 "creature"
             ],
             "description": "A distinct, high-pitched animal howl, characteristic of a small beast or creature vocalizing. It perfectly aligns with the 'Howl' subcategory under 'Beasts'.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "beast howl",
+            "studio_tags": {
+                "energy": "low"
+            }
         }
     },
     {
@@ -2266,7 +2460,11 @@
                 "animal"
             ],
             "description": "A distinct, sustained vocalization from a small animal, characterized by a rising and falling pitch, clearly resembling a howl. The sound genuinely fits the intended folder role as a small beast's howl.",
-            "confidence_score": 0.95
+            "confidence_score": 0.95,
+            "sound": "beast howl",
+            "studio_tags": {
+                "energy": "low"
+            }
         }
     },
     {
@@ -2284,7 +2482,11 @@
                 "cry"
             ],
             "description": "A sustained, high-pitched animal vocalization, characteristic of a small beast howling. It perfectly fits the 'Beasts > Howl' category.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "beast howl",
+            "studio_tags": {
+                "energy": "low"
+            }
         }
     },
     {
@@ -2302,7 +2504,11 @@
                 "short"
             ],
             "description": "A short, sharp, and aggressive animal roar, consistent with a small to medium-sized beast. It perfectly fits the 'Beasts > Roar' category.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "beast roar",
+            "studio_tags": {
+                "energy": "low"
+            }
         }
     },
     {
@@ -2320,7 +2526,11 @@
                 "short"
             ],
             "description": "A short, aggressive, and guttural roar from a small to medium-sized beast, fitting the intended 'Roar' category for 'Beasts'.",
-            "confidence_score": 0.95
+            "confidence_score": 0.95,
+            "sound": "beast roar",
+            "studio_tags": {
+                "energy": "low"
+            }
         }
     },
     {
@@ -2338,7 +2548,8 @@
                 "animal"
             ],
             "description": "A clear, high-pitched, and somewhat distressed vocalization from a cat, which perfectly fits the 'Screech' category for a 'Beast'.",
-            "confidence_score": 0.95
+            "confidence_score": 0.95,
+            "sound": "animal cry"
         }
     },
     {
@@ -2356,7 +2567,8 @@
                 "sustained"
             ],
             "description": "A high-pitched, sustained, and piercing creature vocalization, strongly resembling a monstrous or animalistic screech. It perfectly fits the 'Beasts > Screech' category as it's clearly a vocalization from a creature with a distinct screeching quality.",
-            "confidence_score": 0.98
+            "confidence_score": 0.98,
+            "sound": "creature screech"
         }
     },
     {
@@ -2373,7 +2585,11 @@
                 "whoosh"
             ],
             "description": "The sound features powerful, rhythmic flapping and whooshing, characteristic of large wings beating through the air. It perfectly fits the 'WingBeat' category under 'Beasts' as it clearly represents the movement of large animal wings.",
-            "confidence_score": 0.95
+            "confidence_score": 0.95,
+            "sound": "wings beat",
+            "studio_tags": {
+                "energy": "high"
+            }
         }
     },
     {
@@ -2391,7 +2607,11 @@
                 "large"
             ],
             "description": "A series of powerful, rhythmic wing beats, suggesting the movement of large wings from a substantial creature. This sound perfectly fits the \"WingBeat\" subcategory within \"Beasts\".",
-            "confidence_score": 0.95
+            "confidence_score": 0.95,
+            "sound": "wings beat",
+            "studio_tags": {
+                "energy": "high"
+            }
         }
     },
     {
@@ -2569,7 +2789,8 @@
                 "resonant"
             ],
             "description": "A short, resonant, metallic chime or ping, evoking the sound of a magical artifact or relic emitting a single energetic pulse. It fits the intended folder role by representing a distinct, brief energetic emanation from an ancient or enchanted object.",
-            "confidence_score": 0.9
+            "confidence_score": 0.9,
+            "sound": "artifact resonates"
         }
     },
     {

@@ -1,7 +1,7 @@
 # Portable narrative audio
 
 - **Created:** 2026-08-19
-- **Last updated:** 2026-09-28
+- **Last updated:** 2026-09-29
 - **Ownership status:** SEN contracts separated from Library catalogs and host playback
 
 ## Ownership
@@ -18,6 +18,8 @@ The current split is:
 | --- | --- | --- |
 | Cue intent, validation, exact prose placement, resolved cue shape | SEN | `cues.ts`, `inlineAudio.ts` |
 | Finished Sound Cue rules (1–5 whole words, at most 10 per chapter) | SEN | `soundCueRules.ts` |
+| Sound words (the event a recording answers, with an example) | SEN | `soundWords.ts`, `soundVocabulary` in `media.ts` |
+| Studio tags (parent + Tone, Energy, Tension) | SEN | `audioTags.ts` |
 | Portable soundscape intent and resolved track shape | SEN | `soundscapes.ts` |
 | Media URL safety and generic media records | SEN | `mediaUrl.ts`, `media.ts` |
 | Host-supplied playback port | SEN contract | `playback.tsx` |
@@ -73,6 +75,34 @@ keeps its existing audible-action validation and resolver behavior. The
 Text Highlight Engine supplies the separate adapter that maps an exact
 `PassageSelection` to this resolved record; audio contracts remain independent
 of that UI component.
+
+## Sound words and Studio tags
+
+A Sound Cue recording names its **sound word** (`metadata.sound`): the event it
+answers, in plain lowercase English ("blade drawn"). A catalog declares its
+words once (`SoundWord {word, example, meaning?}`), each with a 1–5 word
+example of the words a writer wraps for it ("drew his sword") and an optional
+one-line meaning. `validateSoundWords` holds a list to its limits
+(`SOUND_WORD_LIMITS`: at most 32 words; words of one to three lowercase words;
+plain-text examples and meanings). `soundVocabulary(media)` gives a story's
+words: the declared words that a playable recording answers, in declared order.
+The word names what happened; it is never a file, asset or catalog row.
+
+Every recording is also described by SEIHouse **Studio tags** (`audioTags.ts`):
+one parent and at most one value on each shared axis, Tone (bright, neutral,
+dark), Energy (low, medium, high) and Tension (calm, suspenseful, urgent),
+kept as `metadata.studio_tags`. A Sound Cue's parent is its cue category
+(artifacts, atmosphere, beasts, factions, locations, system, weapons). A
+Soundscape's parent is one of `SOUNDSCAPE_PARENT_TAGS` (ADVENTURE, AMBIENT,
+EMOTIONS, FIGHTING, WAR, SPECIAL); soundscape tracks adopt the tags when
+Soundscapes are rebuilt.
+
+The default library tags its 92 Sound Cue recordings with 30 starter words
+(`data/library-sounds.v1.json`) and reads Energy from the size a recording's
+name states (Small, Medium, Large/Giant/Heavy/Epic). Its Tone and Tension are
+left for the Studio remake of the official sets. An equipped Sound Cue Pack
+replaces the default words and recordings; see
+`src/components/harness-generation/MEDIA_LOADOUT.md`.
 
 ## Library and host boundary
 

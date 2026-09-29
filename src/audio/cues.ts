@@ -17,12 +17,18 @@
  * do not require a code change. Only `main_category` is normalized to a
  * closed enum of the seven known categories.
  *
+ * A Sound Cue recording also names its sound word (`sound`, see
+ * `soundWords.ts`) and may carry SEIHouse Studio child tags (`studio_tags`,
+ * see `audioTags.ts`); its category is its Studio parent tag. Both are
+ * validated here and kept in one spelling.
+ *
  * Raw data is preserved through the loader. Validation reports issues
  * without silently dropping entries; invalid or unknown-category entries
  * are surfaced in `issues` and excluded from the lookup indexes.
  */
 
-
+import { readAudioTags, type AudioTags } from './audioTags';
+import { isSoundWord, normalizeSoundWord } from './soundWords';
 
 export const AUDIO_CUE_CATEGORIES = [
   'beasts',
@@ -46,6 +52,10 @@ export interface AudioCueMetadata {
   description: string;
   /** Confidence in [0, 1]. */
   confidence_score: number;
+  /** The sound word this recording answers ("blade drawn"). */
+  sound?: string;
+  /** SEIHouse Studio child tags: at most one Tone, Energy and Tension. The category is the parent tag. */
+  studio_tags?: AudioTags;
 }
 
 export interface AudioCue {
@@ -231,6 +241,24 @@ export const parseAudioCues = (raw: unknown): AudioCuesLoadResult => {
       });
       continue;
     }
+    const sound = isString(m.sound) ? normalizeSoundWord(m.sound) : undefined;
+    if (m.sound !== undefined && !(sound && isSoundWord(sound))) {
+      issues.push({
+        kind: 'malformed_entry',
+        filePath: e.file_path,
+        reason: 'metadata.sound must be a sound word: one to three lowercase English words',
+      });
+      continue;
+    }
+    const studioTags = m.studio_tags === undefined ? undefined : readAudioTags(m.studio_tags);
+    if (studioTags && !studioTags.ok) {
+      issues.push({
+        kind: 'malformed_entry',
+        filePath: e.file_path,
+        reason: `metadata.studio_tags: ${studioTags.reason}`,
+      });
+      continue;
+    }
 
     const cue: AudioCue = {
       file_path: e.file_path,
@@ -241,6 +269,8 @@ export const parseAudioCues = (raw: unknown): AudioCuesLoadResult => {
         soft_tags: [...m.soft_tags],
         description: m.description,
         confidence_score: m.confidence_score,
+        ...(sound ? { sound } : {}),
+        ...(studioTags?.ok ? { studio_tags: studioTags.tags } : {}),
       },
       category,
     };

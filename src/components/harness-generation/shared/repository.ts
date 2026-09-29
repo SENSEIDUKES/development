@@ -48,12 +48,18 @@ const hasWorkspaceShape = (value: unknown): value is Record<string, unknown> & {
 type StoredWorkspace = Record<string, unknown> & { schemaVersion: number };
 
 /**
- * Explicit upgrade steps, keyed by the version they upgrade from. Schema 22
- * (Sound Cues in the tiny SEN language) has none by the product owner's
- * decision: chapters saved before it carried blocks and World Cues that no
- * longer exist, so earlier storage is kept untouched and the page starts fresh.
+ * Explicit upgrade steps, keyed by the version they upgrade from. Nothing
+ * before schema 22 (Sound Cues in the tiny SEN language) upgrades, by the
+ * product owner's decision: chapters saved before it carried blocks and World
+ * Cues that no longer exist, so that storage is kept untouched and the page
+ * starts fresh.
  */
-const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => StoredWorkspace> = {};
+const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => StoredWorkspace> = {
+  // Schema 22 -> 23: the paragraph counter adds only optional fields (the
+  // frozen request's `chapterScale.paragraphs` and `metrics.paragraphTarget`),
+  // so every story, attempt and chapter carries over unchanged.
+  22: stored => ({ ...stored, schemaVersion: 23 }),
+};
 
 /**
  * Upgrades saved storage from an earlier schema version through each explicit
@@ -74,7 +80,7 @@ export const migrateHarnessWorkspaceState = (value: unknown): HarnessWorkspaceSt
 /**
  * Reads saved Harness Generation storage. Current storage is read as is;
  * storage from an earlier version with an explicit migration is upgraded with
- * every story, chapter and plan kept (no earlier version has one today). Anything else (an unknown version or an
+ * every story, chapter and plan kept (schema 22 upgrades to 23 unchanged; nothing earlier upgrades). Anything else (an unknown version or an
  * unrecognized shape) cannot be read and yields an empty workspace; hosts keep
  * an untouched copy of it (see the IndexedDB repository) before replacing it.
  * Every structural change to a persisted field must bump

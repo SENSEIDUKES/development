@@ -1678,8 +1678,9 @@ export function HarnessGenerationWorkspace({
                       <h3 className="mt-2 font-display text-xl text-white">{chapter.title}</h3>
                       {/* Chapter scale and structure stay visible: a short or unstructured chapter is kept and flagged, never discarded. */}
                       <p className={`mt-1 font-mono text-[10px] uppercase tracking-[0.16em] ${chapter.metrics.meetsScaleTarget ? 'text-neutral-500' : 'text-amber-200/70'}`}>
-                        {chapter.metrics.wordCount.toLocaleString()} words · {chapter.metrics.paragraphCount.toLocaleString()} paragraphs · {(chapter.soundCues?.length ?? 0).toLocaleString()} Sound Cues
+                        {chapter.metrics.wordCount.toLocaleString()} words · {chapter.metrics.paragraphCount.toLocaleString()} paragraphs{chapter.metrics.paragraphTarget ? ` (${chapter.metrics.paragraphTarget.toLocaleString()} asked)` : ''} · {(chapter.soundCues?.length ?? 0).toLocaleString()} Sound Cues
                         {chapter.metrics.meetsScaleTarget ? '' : ' · below chapter-scale target'}
+                        {chapter.metrics.paragraphTarget && chapter.metrics.paragraphTarget !== chapter.metrics.paragraphCount ? ' · paragraph count missed' : ''}
                       </p>
                       <LibraryButton type="button" size="sm" variant="ghost" disabled={busy} onClick={() => void run(() => controller.replayStory(selectedStory.id, chapter.id))}>Repair chapter enhancements</LibraryButton>
                       <ChapterRecapEditor chapter={chapter} busy={busy} onSave={text => saveRecap(chapter.id, text)} />

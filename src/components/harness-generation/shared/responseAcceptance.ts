@@ -232,6 +232,8 @@ export interface HarnessResponseAcceptanceOptions {
   soundVocabulary?: readonly SoundWord[];
   /** The story's language, for word edges. */
   locale?: string;
+  /** The exact paragraph count the attempt asked for; a miss is kept and flagged. */
+  paragraphTarget?: number;
 }
 
 /**
@@ -343,7 +345,7 @@ export const acceptHarnessModelResponse = (
     // derives the readable prose from it, and places the Sound Cues the marks point to.
     const source = acceptedChapterBody(parsed, warnings);
     const marked = source ? readParagraphMarks(source, warnings) : [];
-    const body = marked.length ? harnessChapterBody(marked.map(reading => reading.text)) : undefined;
+    const body = marked.length ? harnessChapterBody(marked.map(reading => reading.text), options.paragraphTarget) : undefined;
     if (!body || looksLikeRefusal(body.prose)) {
       return {
         accepted: false,
@@ -396,7 +398,7 @@ export const acceptHarnessModelResponse = (
       warnings,
     };
   }
-  const body = harnessChapterBody(splitHarnessProseParagraphs(recovered).map(paragraph => readMarks(paragraph).text).filter(Boolean));
+  const body = harnessChapterBody(splitHarnessProseParagraphs(recovered).map(paragraph => readMarks(paragraph).text).filter(Boolean), options.paragraphTarget);
   warnings.push(
     {
       code: 'plain_prose_recovery',

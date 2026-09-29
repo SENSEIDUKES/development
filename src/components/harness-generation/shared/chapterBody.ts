@@ -13,6 +13,11 @@ import type { HarnessChapterMetrics, HarnessWarning } from '../../../narrative/g
 /** The HARNESS chapter-scale target. It is not a CAPA skill and not canonical Story Information. */
 export const HARNESS_CHAPTER_TARGET_MIN_WORDS = 1_800;
 export const HARNESS_CHAPTER_TARGET_MAX_WORDS = 2_500;
+/**
+ * The range the HARNESS rolls each chapter's exact paragraph count from. One
+ * range for every story for now; story styles come later.
+ */
+export const HARNESS_CHAPTER_PARAGRAPH_RANGE = { min: 50, max: 100 } as const;
 /** Below this a one-paragraph reply is a legitimately short body, not a structural failure. */
 export const HARNESS_SINGLE_PARAGRAPH_REVIEW_WORDS = 150;
 /** Upper bound: one runaway list cannot displace the chapter. */
@@ -70,7 +75,22 @@ export interface HarnessChapterBody {
   metrics: HarnessChapterMetrics;
 }
 
-export const harnessChapterBody = (paragraphs: readonly string[]): HarnessChapterBody => {
+/**
+ * The exact paragraph count for one chapter: a roll within
+ * `HARNESS_CHAPTER_PARAGRAPH_RANGE`, seeded by the story and chapter number, so
+ * chapters vary in length while the same chapter always gets the same number.
+ */
+export const harnessChapterParagraphTarget = (storyId: string, chapterNumber: number): number => {
+  let hash = 2166136261;
+  for (const character of `${storyId}\u001f${chapterNumber}`) {
+    hash ^= character.codePointAt(0)!;
+    hash = Math.imul(hash, 16777619);
+  }
+  const { min, max } = HARNESS_CHAPTER_PARAGRAPH_RANGE;
+  return min + ((hash >>> 0) % (max - min + 1));
+};
+
+export const harnessChapterBody = (paragraphs: readonly string[], paragraphTarget?: number): HarnessChapterBody => {
   const prose = paragraphs.join('\n\n');
   const wordCount = countHarnessWords(prose);
   return {
@@ -80,6 +100,7 @@ export const harnessChapterBody = (paragraphs: readonly string[]): HarnessChapte
       wordCount,
       paragraphCount: paragraphs.length,
       meetsScaleTarget: wordCount >= HARNESS_CHAPTER_TARGET_MIN_WORDS,
+      ...(paragraphTarget ? { paragraphTarget } : {}),
     },
   };
 };
@@ -94,6 +115,12 @@ export const harnessChapterBodyWarnings = (metrics: HarnessChapterMetrics): Harn
     warnings.push({
       code: 'chapter_structure_quality',
       message: `The provider returned ${metrics.wordCount.toLocaleString()} words as a single paragraph. The chapter is preserved exactly as written, but it carries no internal structure for dialogue, System Panels, or media to address.`,
+    });
+  }
+  if (metrics.paragraphTarget && metrics.paragraphCount !== metrics.paragraphTarget) {
+    warnings.push({
+      code: 'chapter_paragraphs_off_target',
+      message: `The chapter has ${metrics.paragraphCount.toLocaleString()} paragraphs; the HARNESS asked for exactly ${metrics.paragraphTarget.toLocaleString()}. It is preserved as written.`,
     });
   }
   if (!metrics.meetsScaleTarget) {

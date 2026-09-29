@@ -9,8 +9,10 @@ import {
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import {
   HARNESS_CHAPTER_TARGET_MIN_WORDS,
+  HARNESS_CHAPTER_PARAGRAPH_RANGE,
   countHarnessWords,
   harnessChapterBody,
+  harnessChapterParagraphTarget,
   normalizeHarnessParagraphs,
 } from './chapterBody';
 import { acceptHarnessModelResponse } from './responseAcceptance';
@@ -152,6 +154,28 @@ describe('HARNESS chapter body', () => {
     expect(result.draft.metrics.paragraphCount).toBe(2);
   });
 
+  it('rolls each chapter an exact paragraph count within one range, the same every time', () => {
+    const targets = Array.from({ length: 200 }, (_, index) => harnessChapterParagraphTarget('hst_story', index + 1));
+    expect(targets.every(target => target >= HARNESS_CHAPTER_PARAGRAPH_RANGE.min && target <= HARNESS_CHAPTER_PARAGRAPH_RANGE.max)).toBe(true);
+    // Chapters vary in length…
+    expect(new Set(targets).size).toBeGreaterThan(20);
+    // …and the same chapter always gets the same number, so a retry keeps it.
+    expect(harnessChapterParagraphTarget('hst_story', 7)).toBe(targets[6]);
+  });
+
+  it('keeps a chapter that misses its paragraph count and flags the miss, and says nothing when it hits', () => {
+    const paragraphs = fullLengthParagraphs();
+    const hit = acceptHarnessModelResponse(JSON.stringify({ paragraphs }), 1, { paragraphTarget: paragraphs.length });
+    const missed = acceptHarnessModelResponse(JSON.stringify({ paragraphs }), 1, { paragraphTarget: 73 });
+    if (!hit.accepted || !missed.accepted) throw new Error('Both chapters must be accepted.');
+    expect(hit.draft.metrics).toMatchObject({ paragraphCount: 40, paragraphTarget: 40 });
+    expect(hit.warnings.some(warning => warning.code === 'chapter_paragraphs_off_target')).toBe(false);
+    expect(missed.draft.paragraphs).toEqual(paragraphs);
+    expect(missed.draft.metrics).toMatchObject({ paragraphCount: 40, paragraphTarget: 73 });
+    expect(missed.warnings.find(warning => warning.code === 'chapter_paragraphs_off_target')?.message)
+      .toBe('The chapter has 40 paragraphs; the HARNESS asked for exactly 73. It is preserved as written.');
+  });
+
   it('splits a runaway single entry rather than collapsing the chapter into one paragraph', () => {
     expect(normalizeHarnessParagraphs(['One.\n\nTwo.\n\nThree.'])).toEqual(['One.', 'Two.', 'Three.']);
     expect(normalizeHarnessParagraphs([])).toBeUndefined();
@@ -191,9 +215,13 @@ describe('HARNESS chapter body persistence', () => {
     const committed = controller.snapshot().chapters[0];
     expect(committed.paragraphs).toHaveLength(3);
     expect(committed.prose).toBe(committed.paragraphs.join('\n\n'));
+    const paragraphTarget = harnessChapterParagraphTarget(storyId, 1);
     expect(committed.metrics).toEqual({
-      wordCount: countHarnessWords(committed.prose), paragraphCount: 3, meetsScaleTarget: false,
+      wordCount: countHarnessWords(committed.prose), paragraphCount: 3, meetsScaleTarget: false, paragraphTarget,
     });
+    // Three paragraphs against a 50–100 target: kept, and the miss is flagged.
+    expect(controller.snapshot().attempts[0].warnings.find(warning => warning.code === 'chapter_paragraphs_off_target')?.message)
+      .toBe(`The chapter has 3 paragraphs; the HARNESS asked for exactly ${paragraphTarget}. It is preserved as written.`);
 
     // Reload: a fresh controller over the same durable snapshot.
     const reloaded = new HarnessGenerationController({

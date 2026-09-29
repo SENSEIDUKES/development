@@ -33,6 +33,11 @@ export function WorldCard({ world, onOpen, displayStatus }: WorldCardProps) {
         : <WorldCardCover src={world.imageUrl} title={world.title} decorative />}
       <div className="world-card-base-shade" aria-hidden="true" />
       <button type="button" className="world-card-base-open" onClick={onOpen} aria-label={openLabel} />
+      {world.format && <span className="world-card-base-format">
+        {world.format.trim().toLowerCase() === 'novel'
+          ? <><LibraryStoryIcon size={17} aria-hidden /><span className="sr-only">Novel</span></>
+          : world.format.toUpperCase()}
+      </span>}
       <div className="world-card-base-overlay">
         <LibraryCardTitle as="h3" className="world-card-base-title font-display">{world.title}</LibraryCardTitle>
         <div className="world-card-base-meta world-card-base-meta-with-status">
@@ -41,11 +46,6 @@ export function WorldCard({ world, onOpen, displayStatus }: WorldCardProps) {
             <span className="world-card-base-chapters">
               <BookOpen size={12} aria-hidden="true" />Ch. {world.chapterCount}
             </span>
-            {world.format && <span className="world-card-base-format">
-              {world.format.trim().toLowerCase() === 'novel'
-                ? <><LibraryStoryIcon size={13} aria-hidden /><span className="sr-only">Novel</span></>
-                : world.format.toUpperCase()}
-            </span>}
             {statusLabel && <span className="world-card-base-status">
               <FileText size={12} aria-hidden="true" />{statusLabel}
             </span>}

@@ -65,12 +65,12 @@ The Full card takes an optional `displayStatus` with an explicit viewing
 context. A public surface supplies `ongoing` or `completed`, shown as **On Going**
 or **Completed**. A personal-library surface can supply the existing creator
 status (`draft`, `shared`, `public`, `complete`), shown with its existing label.
-The title stays above the creator name. One centered bottom row shows chapter
-count, format, then contextual status. A book icon marks the chapter count as
-a placeholder until the custom chapter icon is ready. The status uses the same
-document icon as Compact. Novel is shown by its `story-scroll` icon alone,
-with the format name retained for screen readers; formats without a dedicated
-icon continue to show text. The three items fit the narrower Home grid.
+The format sits in the card's top-left corner. Novel is shown by its
+`story-scroll` icon alone, with the format name retained for screen readers;
+formats without a dedicated icon continue to show text. The title stays above
+the creator name. One centered bottom row shows chapter count and contextual
+status. A book icon marks the chapter count as a placeholder until the custom
+chapter icon is ready. The status uses the same document icon as Compact.
 
 Home passes the host-reported `HomeWorld.publicationStatus`. The Workshop
 fixture supplies `ongoing` and its States control previews both public values
@@ -135,6 +135,7 @@ Leave behind the Workshop preview, its sample data and the `reference/` folder.
 
 ## Workshop history
 
+- **2026-09-29** — Moved the Full card's format icon to the top-left corner and left chapter count and contextual status in the centered bottom row.
 - **2026-09-29** — Added a temporary chapter icon and kept the Full card's format in the middle of its centered bottom row. Novel now uses only its story-scroll icon visually, with an accessible text label.
 - **2026-09-29** — Centered the Full card's three-part bottom row as one unit, including at the narrower Home grid width. Removed separators from that row to keep all three values readable on one line.
 - **2026-09-29** — Moved the Full card's chapter count from the top-left badge into a bottom row with format and contextual status. Kept the creator name between title and that row.

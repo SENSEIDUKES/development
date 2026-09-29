@@ -73,11 +73,13 @@ it('opens authorized story information without navigating or playing motion', as
   expect(panel.textContent).toContain('Active this week');
   expect(panel.textContent).toContain('BranchingDisabled');
   expect(panel.textContent).toContain('#FoundFamily');
-  expect(trigger.getAttribute('aria-expanded')).toBe('true');
+  expect(panel.getAttribute('role')).toBe('dialog');
+  expect(panel.getAttribute('aria-modal')).toBe('true');
+  expect(document.querySelector('.world-card-story-backdrop')).not.toBeNull();
   expect(onOpen).not.toHaveBeenCalled();
   expect(container.querySelector('video')).toBeNull();
-  await act(async () => panel.querySelector<HTMLButtonElement>('[aria-label="Close story information"]')!.click());
-  expect(trigger.getAttribute('aria-expanded')).toBe('false');
+  await act(async () => panel.querySelector<HTMLButtonElement>('[aria-label="Close dialog"]')!.click());
+  expect(document.querySelector('.world-card-story-panel')).toBeNull();
 });
 
 it('does not infer hidden activity or branching permission from missing data', async () => {

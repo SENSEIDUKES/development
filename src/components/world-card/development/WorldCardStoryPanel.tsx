@@ -1,25 +1,23 @@
-import { Info, X } from 'lucide-react';
-import { SEIPopover, SEIPopoverClose, SEIPopoverContent, SEIPopoverTitle, SEIPopoverTrigger } from '@seihouse/ui';
+import { Info } from 'lucide-react';
+import { SEIDialog, SEIDialogContent, SEIDialogDescription, SEIDialogTitle, SEIDialogTrigger } from '@seihouse/ui';
 import { LibraryStoryIcon } from '@seihouse/library-ui';
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
 import { WORLD_ACTIVITY_DISPLAY } from './worldActivityDisplay';
 
-/** A read-only preview of host-authorized story information, anchored to its format. */
+/** A read-only preview of host-authorized story information opened from its format. */
 export function WorldCardStoryPanel({ world }: { world: HomeWorld }) {
   const format = world.format?.trim();
   const activity = world.activityStatus ? WORLD_ACTIVITY_DISPLAY[world.activityStatus] : undefined;
-  return <SEIPopover>
-    <SEIPopoverTrigger className="world-card-base-format" aria-label={`Story information for ${world.title}${format ? `, ${format}` : ''}`}>
+  return <SEIDialog>
+    <SEIDialogTrigger className="world-card-base-format" aria-label={`Story information for ${world.title}${format ? `, ${format}` : ''}`}>
       {format?.toLowerCase() === 'novel'
         ? <><LibraryStoryIcon size={17} aria-hidden /><span className="sr-only">Novel</span></>
         : format ? format.toUpperCase() : <Info size={17} aria-hidden="true" />}
-    </SEIPopoverTrigger>
-    <SEIPopoverContent variant="dark" side="bottom" align="start" sideOffset={12} collisionPadding={12}
-      className="world-card-story-panel">
-      <header className="world-card-story-panel-header">
-        <SEIPopoverTitle className="world-card-story-panel-title">{world.title}</SEIPopoverTitle>
-        <SEIPopoverClose className="world-card-story-panel-close" aria-label="Close story information"><X size={18} aria-hidden="true" /></SEIPopoverClose>
-      </header>
+    </SEIDialogTrigger>
+    <SEIDialogContent variant="dark" aria-modal="true" className="world-card-story-panel"
+      backdropClassName="world-card-story-backdrop" bodyClassName="world-card-story-panel-body">
+      <SEIDialogTitle className="world-card-story-panel-title">{world.title}</SEIDialogTitle>
+      <SEIDialogDescription className="sr-only">Story overview</SEIDialogDescription>
       <section aria-label="Synopsis">
         <h4>Synopsis</h4>
         <p>{world.synopsis?.trim() || 'Synopsis unavailable.'}</p>
@@ -34,6 +32,6 @@ export function WorldCardStoryPanel({ world }: { world: HomeWorld }) {
           ? <ul className="world-card-story-panel-tags">{[...new Set(world.tags)].map(tag => <li key={tag}>#{tag}</li>)}</ul>
           : <p>No story tags supplied.</p>}
       </section>
-    </SEIPopoverContent>
-  </SEIPopover>;
+    </SEIDialogContent>
+  </SEIDialog>;
 }

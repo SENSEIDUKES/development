@@ -99,13 +99,17 @@ branch database or activity tracking.
 ## Format information panel
 
 The top-left format control opens `WorldCardStoryPanel`, using UI's existing
-`SEIPopover` for portal placement, viewport collision handling, focus, Escape,
+`SEIDialog` for centered viewport placement, a dim backdrop, focus, Escape,
 and outside-tap dismissal. It includes Synopsis, authorized Activity, branching
-permission, and Story tags. A close control is provided. Long content scrolls
+permission, and Story tags. A close control stays visible. Long content scrolls
 inside a compact viewport-bounded panel. Missing format uses an information icon.
 The format and MP controls have matching 28px visual bounds and 17px icons;
 invisible 8px extensions retain 44px touch targets without large visible rings.
-MP playback and opening the story remain independent actions.
+MP playback and opening the story remain independent actions. The MP control
+keeps a light translucent resting appearance. While motion is requested, the
+Full card fades its title and chapter/status pill out and leaves the creator
+name visible; both pieces return when playback stops or the clip ends. Reduced
+motion applies the visibility change immediately.
 
 `HomeWorld` now accepts optional `synopsis`, `tags`, `activityStatus`, and
 `branchingEnabled` so Home and discovery hosts can supply the same authorized
@@ -168,7 +172,9 @@ Leave behind the Workshop preview, its sample data and the `reference/` folder.
 
 ## Workshop history
 
-- **2026-09-29** � Matched MP and format control sizing, made the format control open a compact story information popover, and replaced all Full-card cover dimming with a crisp title outline. Shared Activity labels with the Info page and documented host-authorized panel fields and independent branching permission.
+- **2026-09-29** — Refined the Full card's title outline, restored a translucent MP control, centered the story information in a dimmed dialog, and faded the title and chapter/status pill during Motion Picture playback while retaining the creator name.
+
+- **2026-09-29** — Matched MP and format control sizing, made the format control open a compact story information popover, and replaced all Full-card cover dimming with a crisp title outline. Shared Activity labels with the Info page and documented host-authorized panel fields and independent branching permission.
 
 - **2026-09-29** — Placed chapter count and status in a small left-side badge and the unbadged elemental creator name on the right. Very narrow cards wrap the name beneath the badge. Added a soft dark scrim behind the title to keep it legible across cover art.
 - **2026-09-29** — Updated the vendored universal UI package to 0.10.1. Previewed a host-supplied lightning `ElementalTitle` on SENSEI and grouped the Full card's chapter and status in one translucent `SEIBadge` pill; worlds without creator styling keep plain text.

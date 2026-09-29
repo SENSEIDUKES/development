@@ -70,7 +70,7 @@ it('opens authorized story information without navigating or playing motion', as
   await act(async () => trigger.click());
   const panel = document.querySelector('.world-card-story-panel')!;
   expect(panel.textContent).toContain('A lotus blooms.');
-  expect(panel.querySelector('.world-card-story-panel-views')?.getAttribute('aria-label')).toBe('1,280 views');
+  expect(panel.querySelector('.world-card-story-panel-views')?.getAttribute('aria-label')).toBe(`${world.reads.toLocaleString()} views`);
   expect(panel.querySelector('.world-card-story-panel-views')?.getAttribute('data-slot')).toBe('badge');
   expect(panel.textContent).toContain('Active this week');
   expect(panel.textContent).toContain('BranchingDisabled');

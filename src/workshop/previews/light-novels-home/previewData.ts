@@ -18,6 +18,7 @@ export const featuredNovel: StoryDetailDisplay = {
   creatorTitle: { element: 'lightning', intensity: 'rare', color: '#dbeaff' },
   format: 'Novel',
   publicationStatus: 'ongoing',
+  senVerified: true,
   cultivationRate: 'Heaven',
   branchCount: 12,
   branchingEnabled: true,

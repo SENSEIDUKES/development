@@ -1,4 +1,5 @@
 import type { EnergyAccountState } from '../../energy/shared/useEnergyAccount';
+import type { ElementalTitleEffect, ElementalTitleIntensity } from '@seihouse/ui';
 
 /**
  * Where a world stands, as the host reports it. Library only labels it:
@@ -16,6 +17,9 @@ export interface CreatorWorld {
   updatedAt: string;
   /** Cover art. Without it the page shows the Library's own celestial art. */
   imageUrl?: string;
+  /** Host-supplied creator lettering for the World Card; absent when unknown. */
+  creatorName?: string;
+  creatorTitle?: { element: ElementalTitleEffect; intensity?: ElementalTitleIntensity; color?: string };
 }
 
 /** The host's read of the creator's worlds, including its request lifecycle. */

@@ -1,7 +1,7 @@
-import { Eye, Info } from 'lucide-react';
+import { BadgeCheck, Eye, Info } from 'lucide-react';
 import { SEIBadge, SEIDialog, SEIDialogContent, SEIDialogDescription, SEIDialogTitle, SEIDialogTrigger } from '@seihouse/ui';
-import { LibraryStoryIcon } from '@seihouse/library-ui';
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
+import { WorldCardFormatSymbol } from './WorldCardFormatSymbol';
 import { WORLD_ACTIVITY_DISPLAY } from './worldActivityDisplay';
 
 /** A read-only preview of host-authorized story information opened from its format. */
@@ -10,20 +10,23 @@ export function WorldCardStoryPanel({ world }: { world: HomeWorld }) {
   const activity = world.activityStatus ? WORLD_ACTIVITY_DISPLAY[world.activityStatus] : undefined;
   return <SEIDialog>
     <SEIDialogTrigger className="world-card-base-format" aria-label={`Story information for ${world.title}${format ? `, ${format}` : ''}`}>
-      {format?.toLowerCase() === 'novel'
-        ? <><LibraryStoryIcon size={17} aria-hidden /><span className="sr-only">Novel</span></>
-        : format ? format.toUpperCase() : <Info size={17} aria-hidden="true" />}
+      {format ? <WorldCardFormatSymbol format={format} /> : <Info size={17} aria-hidden="true" />}
     </SEIDialogTrigger>
     <SEIDialogContent variant="dark" aria-modal="true" className="world-card-story-panel"
       backdropClassName="world-card-story-backdrop" bodyClassName="world-card-story-panel-body">
-      <div className="world-card-story-panel-header">
-        <SEIDialogTitle className="world-card-story-panel-title">{world.title}</SEIDialogTitle>
+      <SEIDialogTitle className="sr-only">Story information for {world.title}</SEIDialogTitle>
+      <SEIDialogDescription className="sr-only">Story overview</SEIDialogDescription>
+      <aside className="world-card-story-panel-standing" aria-label="World standing">
+        <span className="world-card-story-panel-standing-label">World standing</span>
+        {world.senVerified === true && <SEIBadge size="sm" variant="info"
+          className="world-card-story-panel-verified" aria-label="SEN verified world">
+          <BadgeCheck size={13} aria-hidden="true" />SEN Verified
+        </SEIBadge>}
         <SEIBadge size="sm" variant="neutral" className="world-card-story-panel-views"
           aria-label={`${world.reads.toLocaleString()} views`}>
           <Eye size={12} aria-hidden="true" />{world.reads.toLocaleString()}
         </SEIBadge>
-      </div>
-      <SEIDialogDescription className="sr-only">Story overview</SEIDialogDescription>
+      </aside>
       <section aria-label="Synopsis">
         <h4>Synopsis</h4>
         <p>{world.synopsis?.trim() || 'Synopsis unavailable.'}</p>
@@ -32,7 +35,7 @@ export function WorldCardStoryPanel({ world }: { world: HomeWorld }) {
         {activity && <div><dt>Activity</dt><dd><span className={`world-card-activity-dot ${activity.color}`} aria-hidden="true" />{activity.label}</dd></div>}
         {world.branchingEnabled !== undefined && <div><dt>Branching</dt><dd>{world.branchingEnabled ? 'Enabled' : 'Disabled'}</dd></div>}
       </dl>}
-      <section aria-label="Story tags">
+      <section className="world-card-story-panel-tags-section" aria-label="Story tags">
         <h4>Story tags</h4>
         {world.tags?.length
           ? <ul className="world-card-story-panel-tags">{[...new Set(world.tags)].map(tag => <li key={tag}>#{tag}</li>)}</ul>

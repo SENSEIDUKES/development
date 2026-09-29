@@ -1,7 +1,7 @@
-import { BookOpen, Eye, GitBranch, Sparkles } from 'lucide-react';
-import { SEIBadge } from '@seihouse/ui';
+import { BookOpen, Eye, FileText, GitBranch, Sparkles } from 'lucide-react';
+import { ElementalTitle, SEIBadge } from '@seihouse/ui';
 import type { WorldCardInfoProps } from '../shared/worldCardContracts';
-import { WorldCardCover } from './WorldCardCover';
+import { WorldCard } from './WorldCard';
 import { WORLD_ACTIVITY_DISPLAY } from './worldActivityDisplay';
 import './world-card.css';
 
@@ -9,18 +9,29 @@ import './world-card.css';
 export function WorldCardInfo({ story, onRead, onOpenCodex, onOpenTimeline }: WorldCardInfoProps) {
   const activity = story.activityStatus ? WORLD_ACTIVITY_DISPLAY[story.activityStatus] : undefined;
   const hasBranches = story.branchCount !== undefined && Number.isSafeInteger(story.branchCount) && story.branchCount >= 0;
+  const creatorName = story.creatorName?.trim() || story.author;
+  const publicationLabel = story.publicationStatus === 'ongoing' ? 'On Going'
+    : story.publicationStatus === 'completed' ? 'Completed' : undefined;
   return <div className="flex flex-col md:flex-row gap-8 bg-[#0a0a0a] border border-neutral-900 rounded-xl p-6 shadow-2xl" data-world-card="info">
     <div className="w-full md:w-auto flex-shrink-0 flex flex-col items-center">
-      <div className="w-44 md:w-56 flex-shrink-0 relative">
-        <div className="world-card-info-cover mb-2">
-          <WorldCardCover src={story.imageUrl} title={story.title} loading="eager" />
-        </div>
+      <div className="w-44 md:w-56 flex-shrink-0 relative mb-2">
+        <WorldCard face="info" world={story} />
       </div>
     </div>
     <div className="flex-1 min-w-0 space-y-4">
       <div className="space-y-1">
         <h1 className="font-display font-bold text-3xl sm:text-4xl text-signal leading-tight break-words">{story.title}</h1>
-        <p className="font-sans text-xs text-neutral-400">Written by <span className="font-bold">{story.author}</span> · {story.createdAt.split('T')[0]}</p>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <p className="font-sans text-xs text-neutral-400">Written by <span className="font-bold">
+            {story.creatorTitle
+              ? <ElementalTitle as="span" element={story.creatorTitle.element}
+                  intensity={story.creatorTitle.intensity} color={story.creatorTitle.color}>{creatorName}</ElementalTitle>
+              : creatorName}
+          </span> · {story.createdAt.split('T')[0]}</p>
+          {publicationLabel && <SEIBadge size="sm" variant="neutral" aria-label={`Story status: ${publicationLabel}`}>
+            <FileText size={12} aria-hidden="true" />{publicationLabel}
+          </SEIBadge>}
+        </div>
       </div>
       <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Library state">
         <span className="font-sc text-[10px] font-bold uppercase tracking-wider text-neutral-500">Library</span>

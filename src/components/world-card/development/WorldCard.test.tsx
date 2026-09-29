@@ -69,10 +69,14 @@ it('opens authorized story information without navigating or playing motion', as
   const trigger = container.querySelector<HTMLButtonElement>('.world-card-base-format')!;
   await act(async () => trigger.click());
   const panel = document.querySelector('.world-card-story-panel')!;
+  expect(panel.querySelector('h2')?.classList.contains('sr-only')).toBe(true);
+  expect(panel.querySelector('h2')?.textContent).toBe(`Story information for ${world.title}`);
   expect(panel.textContent).toContain('A lotus blooms.');
   expect(panel.querySelector('.world-card-story-panel-views')?.getAttribute('aria-label')).toBe(`${world.reads.toLocaleString()} views`);
   expect(panel.querySelector('.world-card-story-panel-views')?.getAttribute('data-slot')).toBe('badge');
   expect(panel.querySelector('.world-card-story-panel-views')?.textContent).toContain(world.reads.toLocaleString());
+  expect(panel.querySelector('.world-card-story-panel-verified')).toBeNull();
+  expect(panel.querySelector('[aria-label="World standing"]')?.contains(panel.querySelector('.world-card-story-panel-views'))).toBe(true);
   expect(panel.textContent).toContain('Active this week');
   expect(panel.textContent).toContain('BranchingDisabled');
   expect(panel.textContent).toContain('#FoundFamily');
@@ -83,6 +87,18 @@ it('opens authorized story information without navigating or playing motion', as
   expect(container.querySelector('video')).toBeNull();
   await act(async () => panel.querySelector<HTMLButtonElement>('[aria-label="Close dialog"]')!.click());
   expect(document.querySelector('.world-card-story-panel')).toBeNull();
+});
+
+it('shows the official SEN mark only for a host-verified world', async () => {
+  await act(async () => root.render(<WorldCard world={{ ...world, senVerified: true }} onOpen={() => {}} />));
+  expect(container.querySelector('.world-card-story-panel-verified')).toBeNull();
+  await act(async () => container.querySelector<HTMLButtonElement>('.world-card-base-format')!.click());
+  const panel = document.querySelector('.world-card-story-panel')!;
+  const verified = panel.querySelector('.world-card-story-panel-verified')!;
+  expect(verified.textContent).toContain('SEN Verified');
+  expect(verified.getAttribute('aria-label')).toBe('SEN verified world');
+  expect(verified.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
+  expect(panel.querySelector('[aria-label="World standing"]')?.contains(verified)).toBe(true);
 });
 
 it('does not infer hidden activity or branching permission from missing data', async () => {
@@ -200,6 +216,45 @@ it('keeps the Info overview and shows cultivation rate only from data', () => {
   expect(libraryState).toContain('Draft');
   expect(libraryState).toContain('Recently read');
   expect(libraryState).not.toContain('Unacquired');
+});
+
+it('uses the artwork-only WorldCard on Info while keeping creator and progress on the page', () => {
+  const story: StoryDetailDisplay = {
+    ...world, author: 'SENSEI', synopsis: 'A lotus blooms.', currentArc: 'Silent Pavilion',
+    status: 'Manifesting', tags: [], publicationStatus: 'ongoing',
+    creatorTitle: { element: 'lightning', intensity: 'rare' },
+    videoUrl: 'https://media.seihouse.org/SEN/VIDEO/Motion%20Pictures/ye_chen_MP.mp4',
+  };
+  HTMLMediaElement.prototype.play = vi.fn().mockResolvedValue(undefined);
+  HTMLMediaElement.prototype.pause = vi.fn();
+  act(() => root.render(<WorldCardInfo story={story} />));
+
+  const page = container.querySelector('[data-world-card="info"]')!;
+  const cover = page.querySelector<HTMLElement>('[data-world-card="info-cover"]')!;
+  expect(cover.classList.contains('world-card-base')).toBe(true);
+  expect(cover.style.getPropertyValue('--world-card-glow')).not.toBe('');
+  expect(cover.querySelector('.world-card-base-overlay')).toBeNull();
+  expect(cover.querySelector('.world-card-base-details')).toBeNull();
+  const format = cover.querySelector('.world-card-base-format-static')!;
+  expect(format.getAttribute('role')).toBe('img');
+  expect(format.getAttribute('aria-label')).toBe('Format: Novel');
+  expect(format.querySelector('[data-sen-icon="story-scroll"]')).not.toBeNull();
+  expect(cover.querySelector('button.world-card-base-format')).toBeNull();
+  expect(cover.querySelector('.world-card-base-open')).toBeNull();
+  expect(page.querySelector('h1')?.textContent).toBe(story.title);
+  expect(page.querySelector('[data-element="lightning"]')?.textContent).toContain('SENSEI');
+  expect(page.querySelector('[aria-label="World information"]')?.textContent).toContain('Chapters24');
+  expect(page.querySelector('[aria-label="Story status: On Going"]')).not.toBeNull();
+  expect(cover.querySelector('video')).toBeNull();
+
+  act(() => cover.querySelector<HTMLButtonElement>('.motion-picture-control')!.click());
+  expect(cover.getAttribute('data-motion-playing')).toBe('true');
+  expect(cover.querySelector('video')?.getAttribute('src')).toBe(story.videoUrl);
+  act(() => cover.querySelector('video')!.dispatchEvent(new Event('ended')));
+  expect(cover.getAttribute('data-motion-playing')).toBeNull();
+  act(() => root.render(<WorldCardInfo story={{ ...story, format: undefined }} />));
+  expect(container.querySelector('[data-world-card="info-cover"] .world-card-base-format')).toBeNull();
+  vi.restoreAllMocks();
 });
 
 it('treats zero branches as known and omits activity the host does not supply', () => {

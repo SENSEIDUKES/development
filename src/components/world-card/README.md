@@ -1,15 +1,14 @@
 # World Card
 
-The full `WorldCard` is the canonical Library world card. Its related surfaces
-live here as well. Home, the world detail and Create render this folder's
-components directly.
+The Full, Compact, and Info cover cards are faces of one Library world card
+renderer. Home and Create render it through host-specific adapters in this
+folder; the Info page composes its cover face.
 
 | Size | Component | Where it appears |
 | --- | --- | --- |
-| Info page | `WorldCardInfo` | The world detail (`light-novels-home` `StoryDetailScreen`) |
+| Info page | `WorldCardInfo` with `WorldCard face="info"` | The world detail (`light-novels-home` `StoryDetailScreen`) |
 | Full card | `WorldCard` | Home's discovery grid (`light-novels-home` `LightNovelsHome`) |
-| Compact | `WorldCardCompact` | Create's "Your worlds" row (`creator-space` `CreatorSpace`) |
-| Mini | `WorldCardMini` | New — a track-sized row, not yet placed on a page |
+| Compact | `WorldCard face="compact"` | Create's "Your worlds" row (`creator-space` `CreatorSpace`) |
 
 - **Workshop preview:** `?preview=world-card` (Components → World Card)
 - **Package:** `@seihouse/library/world-card` (owner `library`)
@@ -18,11 +17,17 @@ components directly.
 - **Last source comparison:** 2026-09-27
 - **Status:** active
 
+The Workshop Pages controls include a viewport switcher: current browser,
+320px small phone, 390px phone, 768px tablet and 1280px desktop. Fixed sizes
+render the same preview stage in an iframe so its media queries see the chosen
+width. `canvas=1` is an internal frame mode of the existing preview route, not
+a second Workshop entry or a production surface.
+
 ## Why Library owns it
 
 The cards use Library UI (`LibraryCard`) and show Library-only states
-such as Sealed/Unacquired acquisition and Cultivation Rate. The Full card
-composes the portable `@seihouse/sen/motion-picture` behavior; SEN does not
+such as Sealed/Unacquired acquisition and Cultivation Rate. The Full and Info
+cover faces compose the portable `@seihouse/sen/motion-picture` behavior; SEN does not
 depend on the Library card.
 
 ## Source
@@ -30,34 +35,44 @@ depend on the Library card.
 - The Full card came from the inline card in `src/components/light-novels-home/development/LightNovelsHome.tsx`. Its production original is `SENSEIDUKES/Light-Novels` `src/components/LibraryScreen.tsx`, via the locked `light-novels-home/reference/` replica.
 - The Info page came from `src/components/light-novels-home/development/StoryDetailScreen.tsx`. Its production original is `SENSEIDUKES/Light-Novels` `src/components/StoryDetailScreen.tsx` @ 4a3dd02.
 - The Compact card came from `WorldsRow` in `src/components/creator-space/development/CreatorSpace.tsx`. It was built in DEV and has no production original.
-- The Mini card is new in DEV.
 
 ## Folders
 
 - `shared/worldCardContracts.ts` holds the props for each surface. They reuse the existing `HomeWorld`, `StoryDetailDisplay` and `CreatorWorld` display data; there is no new world model.
-- `development/WorldCardCover.tsx` gives the full card and Info page a shared fallback for empty or failed cover URLs.
+- `development/WorldCard.tsx` owns the Full, Compact, and Info cover faces. Create supplies its world, cover, and selection through `face="compact"`; there is no separate Compact component.
+- `development/WorldCardCover.tsx` handles static art for every face; Compact keeps its celestial wash when art is missing.
 - `development/` is the active Workshop version, which the real pages render.
 - `reference/` is locked. It holds:
   - the Full card as the production replica renders it;
   - the Compact tile as it stood before extraction.
 
-  The Info page reference is the existing `light-novels-home/reference/StoryDetailScreen`. Mini has no reference.
+  The Info page reference is the existing `light-novels-home/reference/StoryDetailScreen`.
 
 ## Mock boundaries
 
-The preview uses `featuredNovel` from `previews/light-novels-home/previewData.ts` and `SAMPLE_CREATOR_WORLDS` from `previews/creator-space/previewData.ts`. Every open, continue or read action only reports what it would do. No story data is read or written.
+The preview uses `featuredNovel` from `previews/light-novels-home/previewData.ts` and `SAMPLE_CREATOR_WORLDS` from `previews/creator-space/previewData.ts`. Every open or read action only reports what it would do. No story data is read or written.
 
 The featured world's optional `videoUrl` points to the supplied Ye Chen MP4
-at `media.seihouse.org`. The Full card plays it only after the separate motion
+at `media.seihouse.org`. The Full and Info cover faces play it only after the
+separate motion
 control is activated, once, muted and inline, then returns to its still cover.
 Worlds without a clip keep the static card. The host supplies each world's own
 clip; the card never reuses this sample URL for other worlds. Motion playback
-is local to the card, with no stored preference or upload path. The Full card
-samples its cover color for the edge glow instead of adding Motion Picture's
+is local to the card, with no stored preference or upload path. The Full and
+Info cover faces sample each cover's color for the edge glow instead of adding Motion Picture's
 separate aura. While its clip plays, that edge glow breathes slowly; reduced
 motion keeps it steady. If the artwork cannot be sampled, the existing cyan
 fallback is used. Dark sampled colors are lifted for visible hover and click
 glows without changing which cover supplies the tint.
+
+The Info page renders `WorldCard face="info"` as artwork only. It shares the
+Full card's raised border, cover-sampled hover and focus glow, and optional
+Motion Picture control and breathing glow. The cover has a static format mark
+when the host supplies a format, using the same icon as the Full card. It has
+no title, creator, chapter/status badge, format dialog trigger, or whole-card
+navigation action. The
+Info page owns its title, elemental creator byline, chapter count, and public
+status alongside its existing Library state, metrics, tags, and synopsis.
 
 ## Full card creator lettering and bottom badge
 
@@ -91,6 +106,15 @@ The Info page shows Cultivation Rate only when the host supplies a value. The
 Workshop fixture supplies "Heaven" for its sample world; other worlds are not
 silently assigned that rate.
 
+Compact keeps its shorter 11:12 crop and dark lower gradient. Its title,
+cover-sampled edge glow, press treatment, and translucent `SEIBadge` chapter/status
+pill come from the same rules as Full. Selection holds that same glow.
+Its creator name and optional elemental lettering use the same right-side
+bottom-row slot as Full, wrapping below the badge when the card is narrow.
+The Workshop's Create samples supply SENSEI for visual review; real Create
+worlds show a name only when their host supplies it. Its status comes from
+`CreatorWorld.status`; it does not gain Full's format trigger or Motion Picture control.
+
 The Info page preview uses mock values of 12 Branches and "Active this week"
 Activity. The States controls also show zero or unavailable branches, the
 other Activity states, and hidden Activity. These samples do not come from a
@@ -103,6 +127,20 @@ The top-left format control opens `WorldCardStoryPanel`, using UI's existing
 and outside-tap dismissal. It includes Synopsis, authorized Activity, branching
 permission, and Story tags. A close control stays visible. Long content scrolls
 inside a compact viewport-bounded panel. Missing format uses an information icon.
+An official `SEN Verified` badge appears in World standing only when the host
+supplies `senVerified: true`. The Workshop's featured world sets this sample
+flag so the badge can be reviewed. The card never derives verification from
+creator identity, publication status, or a world title. A future trusted SEN
+verification authority must define the criteria, grant/revoke the claim, and
+provide a viewer-safe read projection; creator-editable story data must not set it.
+The dialog's upper-right **World standing** section groups verification and
+views. The synopsis begins alongside it instead of waiting below it, then uses
+the full width once the box ends. The world title remains on the card; the
+dialog retains a screen-reader-only title for accessible naming. World standing
+leaves room for a later host-supplied leaderboard rank without showing a
+placeholder rank or suggesting a ranking system already exists. The close
+control keeps its 44px touch target with a smaller visible X; outside tap and
+Escape dismissal still work.
 The format and MP controls have matching 28px visual bounds and 17px icons;
 invisible 8px extensions retain 44px touch targets without large visible rings.
 MP playback and opening the story remain independent actions. The MP control
@@ -164,13 +202,31 @@ These are documented product requirements, not behavior implemented here.
 
 Copy `development/`, `shared/` and `development/world-card.css`. Then:
 
-- have the host's Home grid, world detail and Create row render `WorldCard`, `WorldCardInfo` and `WorldCardCompact`;
+- have the host's Home grid and Create row render `WorldCard` with the appropriate face, and the world detail render `WorldCardInfo`, which composes the Info cover face;
 - supply world display data, optional per-world `videoUrl`, optional creator lettering resolved from the creator profile, public publication status or personal-library creator status, authorized panel synopsis/tags/activity/branching permission, and destinations from the host;
 - include the `@seihouse/sen/motion-picture` entry and compatible `@seihouse/ui@0.10.1` components alongside the Library card.
 
 Leave behind the Workshop preview, its sample data and the `reference/` folder.
 
 ## Workshop history
+
+- **2026-09-29** — Added the Full card's format symbol to the Info cover's top-left corner. It identifies the host-supplied format without opening another dialog from the Info page; missing format shows no mark.
+
+- **2026-09-29** — Removed the duplicate visible title from the Full card's information dialog and let Synopsis flow alongside World standing. Kept the dialog title available to screen readers and cleared the following sections below the box.
+
+- **2026-09-29** — Removed the unused mock Mini row, including its component, contract, styles, package export, test, and Workshop view. Full, Compact, and Info remain; a future Mini can be designed as a real face when needed.
+
+- **2026-09-29** — Turned the dialog's upper-right corner into a World standing section for SEN verification and views, with space for a later real leaderboard rank. Widened the compact dialog for phone layouts and reduced the visible X while retaining its touch target and dismissal behavior.
+
+- **2026-09-29** — Added a compact `SEN Verified` mark beneath the title in the Full card's story information dialog. It renders only from an explicit host-supplied verification flag; the Workshop featured world previews the visual without claiming a live verification system.
+
+- **2026-09-29** — Replaced the Info page's plain cover wrapper with the shared `WorldCard` Info face. The artwork now has the Full card's border, sampled glow, hover response, and optional Motion Picture; title, elemental creator, chapters, and publication status remain in the surrounding Info page.
+
+- **2026-09-29** — Added true-width phone, tablet and desktop frames to the World Card Workshop controls for judging both card faces and the Info page at device sizes.
+
+- **2026-09-29** — Added host-supplied creator lettering to the compact face using the shared bottom-row slot. Workshop Create samples use SENSEI's lightning style to preview the layout; missing creator data stays hidden.
+
+- **2026-09-29** — Replaced Compact's separate component with `WorldCard face="compact"`. It now inherits the full card's title treatment, cover-sampled glow, press feedback and chapter/status badge while retaining its crop, lower gradient and selection behavior.
 
 - **2026-09-29** — Kept the Full card's chapter and status metadata anchored during press while the cover art and glow provide the press feedback.
 

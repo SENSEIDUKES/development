@@ -13,6 +13,8 @@ export interface HomeWorld {
   creatorTitle?: { element: ElementalTitleEffect; intensity?: ElementalTitleIntensity; color?: string };
   /** Host-reported progress for a publicly visible world; omit when unknown. */
   publicationStatus?: 'ongoing' | 'completed';
+  /** Official SEN verification, supplied by a trusted host projection; never inferred by the card. */
+  senVerified?: boolean;
   /** This world's own optional motion cover clip; never use another world's clip as fallback. */
   videoUrl?: string;
   /** Optional, viewer-authorized information for the format icon's story panel. */

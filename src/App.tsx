@@ -173,14 +173,17 @@ export default function App() {
   const Workspace = preview ? previewRegistry[preview] : undefined;
 
   if (Workspace) {
-    return (
+    const content = (
+      <DeferredWorkspace
+        loadingLabel="Loading Workshop preview"
+        className="min-h-[calc(100vh-5rem)]"
+      >
+        <Workspace />
+      </DeferredWorkspace>
+    );
+    return preview === 'world-card' && params.get('canvas') === '1' ? content : (
       <PreviewLayout>
-        <DeferredWorkspace
-          loadingLabel="Loading Workshop preview"
-          className="min-h-[calc(100vh-5rem)]"
-        >
-          <Workspace />
-        </DeferredWorkspace>
+        {content}
       </PreviewLayout>
     );
   }

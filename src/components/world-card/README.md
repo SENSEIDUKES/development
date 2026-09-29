@@ -59,17 +59,18 @@ motion keeps it steady. If the artwork cannot be sampled, the existing cyan
 fallback is used. Dark sampled colors are lifted for visible hover and click
 glows without changing which cover supplies the tint.
 
-## Status beside format
+## Full card bottom row
 
 The Full card takes an optional `displayStatus` with an explicit viewing
 context. A public surface supplies `ongoing` or `completed`, shown as **On Going**
 or **Completed**. A personal-library surface can supply the existing creator
 status (`draft`, `shared`, `public`, `complete`), shown with its existing label.
-The same document icon used by Compact appears beside the label, immediately
-after the format. The title stays above the creator name. One bottom row keeps
-chapter count, format, and contextual status centered together at Home grid
-width. The icons and spacing distinguish the three items without separators
-that would clip the row in the narrower Home grid.
+The title stays above the creator name. One centered bottom row shows chapter
+count, format, then contextual status. A book icon marks the chapter count as
+a placeholder until the custom chapter icon is ready. The status uses the same
+document icon as Compact. Novel is shown by its `story-scroll` icon alone,
+with the format name retained for screen readers; formats without a dedicated
+icon continue to show text. The three items fit the narrower Home grid.
 
 Home passes the host-reported `HomeWorld.publicationStatus`. The Workshop
 fixture supplies `ongoing` and its States control previews both public values
@@ -134,6 +135,7 @@ Leave behind the Workshop preview, its sample data and the `reference/` folder.
 
 ## Workshop history
 
+- **2026-09-29** — Added a temporary chapter icon and kept the Full card's format in the middle of its centered bottom row. Novel now uses only its story-scroll icon visually, with an accessible text label.
 - **2026-09-29** — Centered the Full card's three-part bottom row as one unit, including at the narrower Home grid width. Removed separators from that row to keep all three values readable on one line.
 - **2026-09-29** — Moved the Full card's chapter count from the top-left badge into a bottom row with format and contextual status. Kept the creator name between title and that row.
 - **2026-09-29** — Added a document-icon status directly after the Full card's format. Public Home uses host-supplied On Going/Completed; a personal-library use can show the existing Draft/Shared/Public/Complete values. Added Workshop states for both contexts without deriving story progress from acquisition or chapter count.

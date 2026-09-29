@@ -1,5 +1,5 @@
 import { useState, type CSSProperties } from 'react';
-import { FileText } from 'lucide-react';
+import { BookOpen, FileText } from 'lucide-react';
 import { LibraryCard, LibraryCardMedia, LibraryCardTitle, LibraryStoryIcon } from '@seihouse/library-ui';
 import { MotionPicture, useDominantColor } from '@seihouse/sen/motion-picture';
 import type { WorldCardProps } from '../shared/worldCardContracts';
@@ -38,10 +38,13 @@ export function WorldCard({ world, onOpen, displayStatus }: WorldCardProps) {
         <div className="world-card-base-meta world-card-base-meta-with-status">
           {world.creatorName && <span>{world.creatorName}</span>}
           <span className="world-card-base-details">
-            <span>Ch. {world.chapterCount}</span>
+            <span className="world-card-base-chapters">
+              <BookOpen size={12} aria-hidden="true" />Ch. {world.chapterCount}
+            </span>
             {world.format && <span className="world-card-base-format">
-              {world.format.trim().toLowerCase() === 'novel' && <LibraryStoryIcon size={13} aria-hidden />}
-              {world.format.toUpperCase()}
+              {world.format.trim().toLowerCase() === 'novel'
+                ? <><LibraryStoryIcon size={13} aria-hidden /><span className="sr-only">Novel</span></>
+                : world.format.toUpperCase()}
             </span>}
             {statusLabel && <span className="world-card-base-status">
               <FileText size={12} aria-hidden="true" />{statusLabel}

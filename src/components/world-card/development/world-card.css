@@ -89,11 +89,15 @@
 .world-card-base-details { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; align-self: center; gap: 0.0625rem; width: 100%; min-width: 0; font-size: 0.625rem; letter-spacing: -0.015em; white-space: nowrap; }
 .world-card-base-details > span { flex: none; }
 .world-card-base-details svg { width: 0.625rem; height: 0.625rem; }
-.world-card-base-format { display: inline-flex; align-items: center; gap: 0.2rem; }
-.world-card-base-format svg { flex: none; }
+.world-card-base-chapters, .world-card-base-format { display: inline-flex; align-items: center; gap: 0.2rem; }
+.world-card-base-chapters svg, .world-card-base-format svg { flex: none; }
 .world-card-base-status { display: inline-flex; align-items: center; gap: 0.2rem; }
 .world-card-base-status svg { flex: none; }
-.world-card-base-details :is(.world-card-base-format, .world-card-base-status) { gap: 0.125rem; }
+.world-card-base-details :is(.world-card-base-chapters, .world-card-base-format, .world-card-base-status) { gap: 0.125rem; }
+
+@media (max-width: 360px) {
+  .world-card-base-overlay { padding-inline: 0.55rem; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .world-card-base, .world-card-base-title { transition: none; }

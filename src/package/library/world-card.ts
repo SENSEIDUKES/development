@@ -1,5 +1,5 @@
 /**
- * `@seihouse/library/world-card` — one WorldCard with full and compact faces.
+ * `@seihouse/library/world-card` — one WorldCard with Full, Compact, and Info cover faces.
  *
  * The Info page, full discovery face, and compact creator face. Home, the
  * world detail, and Create render these,

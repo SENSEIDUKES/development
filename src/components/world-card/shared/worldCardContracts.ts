@@ -1,6 +1,5 @@
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
 import type { StoryDetailDisplay } from '../../light-novels-home/shared/storyDetailContracts';
-import type { WorldExpansionPreview } from '../../light-novels-home/development/WorldExpressions';
 import type { CreatorWorld } from '../../creator-space/shared/creatorSpaceContracts';
 
 /**
@@ -17,9 +16,8 @@ export interface WorldCardInfoProps {
 }
 
 /** Full card: the 2:3 discovery card on Home. */
-export interface WorldCardFullProps {
+export interface WorldCardProps {
   world: HomeWorld;
-  expansions?: readonly WorldExpansionPreview[];
   onOpen: () => void;
 }
 

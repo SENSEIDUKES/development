@@ -1,4 +1,87 @@
-/* World Card — sizes that need more than utility classes. */
+/* World Card — the full card is the visual base; smaller layouts follow later. */
+
+.world-card-base {
+  height: 100%;
+  transition: border-color 200ms cubic-bezier(0, 0, 0.2, 1),
+    box-shadow 200ms cubic-bezier(0, 0, 0.2, 1),
+    transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+.world-card-base:hover {
+  border-color: rgba(4, 172, 255, 0.8);
+  box-shadow: 0 0 0 1px rgba(4, 172, 255, 0.5),
+    0 0 20px rgba(4, 172, 255, 0.3),
+    0 18px 48px rgba(0, 0, 0, 0.5);
+}
+.world-card-base:focus,
+.world-card-base:active {
+  border-color: rgba(4, 172, 255, 0.95);
+  box-shadow: 0 0 0 1px rgba(4, 172, 255, 0.9),
+    0 0 26px rgba(4, 172, 255, 0.42),
+    0 18px 48px rgba(0, 0, 0, 0.55);
+}
+.world-card-base:active { transform: scale(0.99); }
+.world-card-base:focus-visible { outline: 2px solid #04acff; outline-offset: 2px; }
+.world-card-base-media { position: relative; overflow: hidden; background: #07111d; }
+.world-card-cover-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+.world-card-cover-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 1rem;
+  background: radial-gradient(ellipse at 50% 28%, rgba(4, 172, 255, 0.26), transparent 62%),
+    radial-gradient(ellipse at 90% 90%, rgba(212, 175, 55, 0.12), transparent 60%), #08111d;
+  color: #b9c9d8;
+  font-size: 0.65rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-transform: uppercase;
+}
+.world-card-base-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, 0.38), transparent 28%, rgba(0, 0, 0, 0.16) 48%, rgba(0, 0, 0, 0.92) 100%); pointer-events: none; }
+.world-card-base-counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  min-height: 1.35rem;
+  padding: 0.18rem 0.38rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.35rem;
+  background: rgba(3, 7, 13, 0.74);
+  color: #f5f5f5;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+.world-card-base-chapter-count { position: absolute; top: 0.65rem; left: 0.55rem; }
+.world-card-base-overlay { position: absolute; inset: auto 0 0; display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; padding: 0.8rem; }
+.world-card-base-title {
+  color: #f5f5f5;
+  font-size: 1.08rem;
+  font-weight: 700;
+  line-height: 1.22;
+  overflow-wrap: anywhere;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+  transition: color 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+.world-card-base:hover .world-card-base-title,
+.world-card-base:focus .world-card-base-title { color: #70d0ff; }
+.world-card-base-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; color: #e5e5e5; font-family: sans-serif; font-size: 0.75rem; font-weight: 400; line-height: 1.2; text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9); }
+.world-card-base-format { display: inline-flex; align-items: center; gap: 0.2rem; white-space: nowrap; }
+.world-card-base-format svg { flex: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .world-card-base, .world-card-base-title { transition: none; }
+  .world-card-base:active { transform: none; }
+}
+
+/* Info uses the same cover treatment at detail-page size. */
+.world-card-info-cover { position: relative; aspect-ratio: 2 / 3; overflow: hidden; border: 1px solid #262626; border-radius: 0.5rem; }
 
 /* Compact: the creator's world tile. */
 .world-card-compact { height: 100%; }

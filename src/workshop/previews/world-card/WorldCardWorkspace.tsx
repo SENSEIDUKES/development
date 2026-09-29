@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { useLibraryAssets } from '@seihouse/library/presentation';
-import { WorldCardCompact, WorldCardFull, WorldCardInfo, WorldCardMini, WORLD_STATUS_LABELS } from '@seihouse/library/world-card';
+import { WorldCard, WorldCardCompact, WorldCardInfo, WorldCardMini, WORLD_STATUS_LABELS } from '@seihouse/library/world-card';
 import type { CreatorWorld } from '@seihouse/library/creator-space';
 import { WorldCardFullReference } from '../../../components/world-card/reference/WorldCardFull';
 import { WorldCardCompactReference } from '../../../components/world-card/reference/WorldCardCompact';
@@ -8,16 +8,17 @@ import { StoryDetailScreen as ReferenceStoryDetail } from '../../../components/l
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import {
-  ACQUISITION_LABELS, previewCreatorWorlds, previewExpansions, previewStory,
-  type WorldCardAcquisition, type WorldCardCover, type WorldCardPreviewState, type WorldCardTitleLength,
+  ACQUISITION_LABELS, previewCreatorWorlds, previewStory,
+  type WorldCardAcquisition, type WorldCardBranchPreview, type WorldCardCover, type WorldCardPreviewState, type WorldCardTitleLength,
 } from './previewData';
+import type { WorldActivityStatus } from '@seihouse/library/home';
 
 const entry = workshopEntries.find(candidate => candidate.id === 'world-card')!;
 
 const VIEWS = {
   all: { label: 'All sizes', description: 'Every size of the same world, largest to smallest.' },
   info: { label: 'Info page', description: 'The full world overview a reader lands on when they open a world.' },
-  full: { label: 'Full card', description: 'Home’s 2:3 discovery card, shown at its Home grid width.' },
+  full: { label: 'World Card', description: 'The full 2:3 discovery card, shown at its Home grid width.' },
   compact: { label: 'Compact', description: 'Create’s “Your worlds” tile. Tap a tile to move the glowing selection.' },
   mini: { label: 'Mini', description: 'New: a single row sized like an audio-player track — cover thumb, title, one line of meta and a round action.' },
 } as const;
@@ -66,11 +67,11 @@ function WorldCardStage({ view, state, reference, onAction }: {
         ? <ReferenceStoryDetail story={story} onBack={() => onAction('Back to novels')} />
         : <WorldCardInfo story={story} />}
     </Stage>}
-    {show('full') && <Stage title="Full card" note="Home grid width.">
+    {show('full') && <Stage title="World Card" note="Home grid width.">
       <div className="w-[min(100%,13rem)]">
         {reference
           ? <WorldCardFullReference world={story} onOpen={() => onAction(`Open ${story.title}`)} />
-          : <WorldCardFull world={story} expansions={previewExpansions} onOpen={() => onAction(`Open ${story.title}`)} />}
+          : <WorldCard world={story} onOpen={() => onAction(`Open ${story.title}`)} />}
       </div>
     </Stage>}
     {show('compact') && <Stage title="Compact" note="Create · Your worlds.">
@@ -99,7 +100,7 @@ const selectClass = 'min-h-11 rounded-lg border border-white/20 bg-black/30 p-2 
 /** One world in every size it appears: Info page, Full card, Compact and Mini. */
 export function WorldCardWorkspace() {
   const [view, setView] = useState<View>('all');
-  const [state, setState] = useState<WorldCardPreviewState>({ acquisition: 'sealed', titleLength: 'standard', cover: 'art' });
+  const [state, setState] = useState<WorldCardPreviewState>({ acquisition: 'sealed', titleLength: 'standard', cover: 'art', branches: 'sample', activity: 'active-this-week' });
   const [action, setAction] = useState('');
   const update = (patch: Partial<WorldCardPreviewState>) => setState(current => ({ ...current, ...patch }));
 
@@ -123,7 +124,7 @@ export function WorldCardWorkspace() {
         </label>,
       }, {
         id: 'states',
-        description: 'Library status applies to the Info page and Full card. Missing cover applies to Compact and Mini.',
+        description: 'Library status, branches and activity appear on the Info page. Missing cover applies to every size.',
         content: <div className="flex flex-col gap-3">
           <label className="flex flex-col gap-1 text-xs">Library status
             <select className={selectClass} value={state.acquisition} onChange={event => update({ acquisition: event.target.value as WorldCardAcquisition })}>
@@ -140,6 +141,21 @@ export function WorldCardWorkspace() {
             <select className={selectClass} value={state.cover} onChange={event => update({ cover: event.target.value as WorldCardCover })}>
               <option value="art">World art</option>
               <option value="missing">No cover yet</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-xs">Branches
+            <select className={selectClass} value={state.branches} onChange={event => update({ branches: event.target.value as WorldCardBranchPreview })}>
+              <option value="sample">12 branches</option>
+              <option value="zero">0 branches</option>
+              <option value="unavailable">Unavailable</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-xs">Activity
+            <select className={selectClass} value={state.activity} onChange={event => update({ activity: event.target.value as WorldActivityStatus | 'hidden' })}>
+              <option value="active-now">Active now</option>
+              <option value="active-this-week">Active this week</option>
+              <option value="quiet">Quiet</option>
+              <option value="hidden">Hidden or unavailable</option>
             </select>
           </label>
         </div>,

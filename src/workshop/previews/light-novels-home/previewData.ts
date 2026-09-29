@@ -15,6 +15,7 @@ export const featuredNovel: StoryDetailDisplay = {
   mcName: 'Ye Chen',
   powerStage: 'Foundation',
   creatorName: 'SENSEI',
+  creatorTitle: { element: 'lightning', intensity: 'rare', color: '#dbeaff' },
   format: 'Novel',
   publicationStatus: 'ongoing',
   cultivationRate: 'Heaven',

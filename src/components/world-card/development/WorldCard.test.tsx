@@ -40,11 +40,25 @@ it('opens the portrait card with title, creator and a chapter-format row on the 
   expect(card.querySelector('.world-card-base-format .sr-only')?.textContent).toBe('Novel');
   expect(card.querySelector('.world-card-base-format')?.textContent).not.toContain('NOVEL');
   expect(card.querySelector('.world-card-base-chapter-count')).toBeNull();
+  expect(card.querySelector('.world-card-base-details')?.getAttribute('data-slot')).toBe('badge');
+  expect([...card.querySelector('.world-card-base-meta')!.children].map((element) => element.className)).toEqual([
+    expect.stringContaining('world-card-base-details'), 'world-card-base-creator',
+  ]);
+  expect(card.querySelector('.world-card-base-details .world-card-base-creator')).toBeNull();
   for (const value of ['Xianxia', 'Standard', 'Creator', 'Format', 'Manga', 'Ye Chen', 'Foundation', '1,280', 'Sealed', 'Draft', 'Unacquired', 'Recently read']) {
     expect(card.textContent).not.toContain(value);
   }
   act(() => open.click());
   expect(onOpen).toHaveBeenCalledOnce();
+});
+
+it('renders host-supplied creator lettering without assigning an element to other creators', () => {
+  act(() => root.render(<WorldCard world={{ ...world, creatorTitle: { element: 'lightning', intensity: 'rare' } }} onOpen={() => {}} />));
+  expect(container.querySelector('.world-card-base-creator [data-element="lightning"]')?.textContent).toContain('SENSEI');
+
+  act(() => root.render(<WorldCard world={world} onOpen={() => {}} />));
+  expect(container.querySelector('.world-card-base-creator')?.textContent).toBe('SENSEI');
+  expect(container.querySelector('.world-card-base-creator [data-element]')).toBeNull();
 });
 
 it('keeps chapter and host-selected status in the bottom row', () => {

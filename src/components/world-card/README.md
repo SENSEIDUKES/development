@@ -59,7 +59,7 @@ motion keeps it steady. If the artwork cannot be sampled, the existing cyan
 fallback is used. Dark sampled colors are lifted for visible hover and click
 glows without changing which cover supplies the tint.
 
-## Full card bottom row
+## Full card creator lettering and bottom badge
 
 The Full card takes an optional `displayStatus` with an explicit viewing
 context. A public surface supplies `ongoing` or `completed`, shown as **On Going**
@@ -67,10 +67,18 @@ or **Completed**. A personal-library surface can supply the existing creator
 status (`draft`, `shared`, `public`, `complete`), shown with its existing label.
 The format sits in the card's top-left corner. Novel is shown by its
 `story-scroll` icon alone, with the format name retained for screen readers;
-formats without a dedicated icon continue to show text. The title stays above
-the creator name. One centered bottom row shows chapter count and contextual
-status. A book icon marks the chapter count as a placeholder until the custom
-chapter icon is ready. The status uses the same document icon as Compact.
+formats without a dedicated icon continue to show text. The title sits above
+the information badge, with a soft dark scrim immediately behind the letters
+to keep it legible over varied cover art. The host may supply `creatorTitle` (element,
+intensity, and color) to render that name with UI's `ElementalTitle`. Without
+it, the name remains plain; the card never assigns an element from the name
+or world. The Workshop's SENSEI sample uses lightning for visual review.
+At the bottom, a translucent `SEIBadge` pill groups chapter count and
+contextual status on the left. The creator name sits to its right without a
+badge. Very narrow cards may wrap the name beneath the pill while keeping it
+right-aligned. A book icon marks the chapter count until the custom chapter icon is ready. The
+status uses the same document icon as Compact. Both values remain readable
+text inside the badge; the badge is not an action.
 
 Home passes the host-reported `HomeWorld.publicationStatus`. The Workshop
 fixture supplies `ongoing` and its States control previews both public values
@@ -128,13 +136,16 @@ These are documented product requirements, not behavior implemented here.
 Copy `development/`, `shared/` and `development/world-card.css`. Then:
 
 - have the host's Home grid, world detail and Create row render `WorldCard`, `WorldCardInfo` and `WorldCardCompact`;
-- supply world display data, optional per-world `videoUrl`, public publication status or personal-library creator status, and destinations from the host;
-- include the `@seihouse/sen/motion-picture` entry alongside the Library card.
+- supply world display data, optional per-world `videoUrl`, optional creator lettering resolved from the creator profile, public publication status or personal-library creator status, and destinations from the host;
+- include the `@seihouse/sen/motion-picture` entry and compatible `@seihouse/ui@0.10.1` components alongside the Library card.
 
 Leave behind the Workshop preview, its sample data and the `reference/` folder.
 
 ## Workshop history
 
+- **2026-09-29** — Placed chapter count and status in a small left-side badge and the unbadged elemental creator name on the right. Very narrow cards wrap the name beneath the badge. Added a soft dark scrim behind the title to keep it legible across cover art.
+- **2026-09-29** — Updated the vendored universal UI package to 0.10.1. Previewed a host-supplied lightning `ElementalTitle` on SENSEI and grouped the Full card's chapter and status in one translucent `SEIBadge` pill; worlds without creator styling keep plain text.
+- **2026-09-29** — Centered the creator name above the Full card's bottom metadata row for visual review.
 - **2026-09-29** — Moved the Full card's format icon to the top-left corner and left chapter count and contextual status in the centered bottom row.
 - **2026-09-29** — Added a temporary chapter icon and kept the Full card's format in the middle of its centered bottom row. Novel now uses only its story-scroll icon visually, with an accessible text label.
 - **2026-09-29** — Centered the Full card's three-part bottom row as one unit, including at the narrower Home grid width. Removed separators from that row to keep all three values readable on one line.

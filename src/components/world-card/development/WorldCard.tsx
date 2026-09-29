@@ -1,5 +1,6 @@
 import { useState, type CSSProperties } from 'react';
 import { BookOpen, FileText } from 'lucide-react';
+import { ElementalTitle, SEIBadge } from '@seihouse/ui';
 import { LibraryCard, LibraryCardMedia, LibraryCardTitle, LibraryStoryIcon } from '@seihouse/library-ui';
 import { MotionPicture, useDominantColor } from '@seihouse/sen/motion-picture';
 import type { WorldCardProps } from '../shared/worldCardContracts';
@@ -40,16 +41,23 @@ export function WorldCard({ world, onOpen, displayStatus }: WorldCardProps) {
       </span>}
       <div className="world-card-base-overlay">
         <LibraryCardTitle as="h3" className="world-card-base-title font-display">{world.title}</LibraryCardTitle>
-        <div className="world-card-base-meta world-card-base-meta-with-status">
-          {world.creatorName && <span>{world.creatorName}</span>}
-          <span className="world-card-base-details">
+        <div className="world-card-base-meta">
+          <SEIBadge size="sm" variant="neutral" className="world-card-base-details">
             <span className="world-card-base-chapters">
               <BookOpen size={12} aria-hidden="true" />Ch. {world.chapterCount}
             </span>
             {statusLabel && <span className="world-card-base-status">
               <FileText size={12} aria-hidden="true" />{statusLabel}
             </span>}
-          </span>
+          </SEIBadge>
+          {world.creatorName && <span className="world-card-base-creator">
+            {world.creatorTitle
+              ? <ElementalTitle as="span" element={world.creatorTitle.element}
+                  intensity={world.creatorTitle.intensity} color={world.creatorTitle.color}>
+                  {world.creatorName}
+                </ElementalTitle>
+              : world.creatorName}
+          </span>}
         </div>
       </div>
     </LibraryCardMedia>

@@ -56,7 +56,8 @@ is local to the card, with no stored preference or upload path. The Full card
 samples its cover color for the edge glow instead of adding Motion Picture's
 separate aura. While its clip plays, that edge glow breathes slowly; reduced
 motion keeps it steady. If the artwork cannot be sampled, the existing cyan
-fallback is used.
+fallback is used. Dark sampled colors are lifted for visible hover and click
+glows without changing which cover supplies the tint.
 
 The Info page shows Cultivation Rate only when the host supplies a value. The
 Workshop fixture supplies "Heaven" for its sample world; other worlds are not
@@ -114,6 +115,7 @@ Leave behind the Workshop preview, its sample data and the `reference/` folder.
 
 ## Workshop history
 
+- **2026-09-29** — Restored a brighter hover and clicked/focused edge glow after the sampled cover color made it too dim. Motion playback now breathes from that strong glow instead of replacing it with a weaker one.
 - **2026-09-29** — Matched the Full card's edge glow to its cover artwork using SEN's existing color sampler. The glow breathes gently only while Motion Picture is active, stops with the clip, and stays still under reduced-motion settings.
 - **2026-09-29** — Composed the existing SEN Motion Picture in the Full card only. The featured Workshop world supplies the Ye Chen clip. Opening a world and playing its motion are separate controls, so keyboard and touch users can choose either action. Missing clips retain the static card; failed clips return to the still, and failed stills show the existing cover fallback.
 - **2026-09-29** — Added the existing `story-scroll` Library icon beside NOVEL on the Full card and matched the Compact card's lighter subtext treatment. The icon is decorative because the format remains readable as text, and only the Novel format receives it; other formats can gain their own icon later.

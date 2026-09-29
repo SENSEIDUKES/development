@@ -2,37 +2,42 @@
 
 .world-card-base {
   --world-card-glow: rgba(4, 172, 255, 0.6);
+  /* Covers can sample very dark; lift their tint so the edge remains visible. */
+  --world-card-glow-lit: color-mix(in srgb, var(--world-card-glow) 70%, white);
   height: 100%;
   transition: border-color 200ms cubic-bezier(0, 0, 0.2, 1),
     box-shadow 200ms cubic-bezier(0, 0, 0.2, 1),
     transform 200ms cubic-bezier(0, 0, 0.2, 1);
 }
 .world-card-base:hover {
-  border-color: var(--world-card-glow);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--world-card-glow) 70%, transparent),
-    0 0 20px color-mix(in srgb, var(--world-card-glow) 55%, transparent),
+  border-color: var(--world-card-glow-lit);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--world-card-glow-lit) 80%, transparent),
+    0 0 26px 2px color-mix(in srgb, var(--world-card-glow-lit) 52%, transparent),
     0 18px 48px rgba(0, 0, 0, 0.5);
 }
 .world-card-base:focus-within,
 .world-card-base:active {
-  border-color: var(--world-card-glow);
-  box-shadow: 0 0 0 1px var(--world-card-glow),
-    0 0 26px color-mix(in srgb, var(--world-card-glow) 70%, transparent),
+  border-color: var(--world-card-glow-lit);
+  box-shadow: 0 0 0 1px var(--world-card-glow-lit),
+    0 0 32px 5px color-mix(in srgb, var(--world-card-glow-lit) 68%, transparent),
+    0 0 48px 8px color-mix(in srgb, var(--world-card-glow-lit) 28%, transparent),
     0 18px 48px rgba(0, 0, 0, 0.55);
 }
 .world-card-base[data-motion-playing='true'] {
-  border-color: var(--world-card-glow);
+  border-color: var(--world-card-glow-lit);
   animation: world-card-motion-breathe 3.8s ease-in-out infinite;
 }
 @keyframes world-card-motion-breathe {
   0%, 100% {
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--world-card-glow) 72%, transparent),
-      0 0 18px color-mix(in srgb, var(--world-card-glow) 50%, transparent),
+    box-shadow: 0 0 0 1px var(--world-card-glow-lit),
+      0 0 32px 5px color-mix(in srgb, var(--world-card-glow-lit) 68%, transparent),
+      0 0 48px 8px color-mix(in srgb, var(--world-card-glow-lit) 28%, transparent),
       0 18px 48px rgba(0, 0, 0, 0.5);
   }
   50% {
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--world-card-glow) 88%, transparent),
-      0 0 34px 5px color-mix(in srgb, var(--world-card-glow) 65%, transparent),
+    box-shadow: 0 0 0 2px var(--world-card-glow-lit),
+      0 0 42px 9px color-mix(in srgb, var(--world-card-glow-lit) 76%, transparent),
+      0 0 62px 14px color-mix(in srgb, var(--world-card-glow-lit) 32%, transparent),
       0 18px 48px rgba(0, 0, 0, 0.5);
   }
 }

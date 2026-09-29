@@ -13,7 +13,7 @@
 Harness Generation is an independent, checkpoint-first novel core. It gives an
 author a frozen Foundation copied from a saved Story Seed, asks a provider for one complete
 chapter, preserves raw output before interpreting it, accepts usable prose
-through canonical SEN chapter blocks, and carries saved recaps, story
+as paragraphs with their Sound Cues, and carries saved recaps, story
 direction, and the current canonical state into the next chapter while the
 complete prose, evidence, and memory history stay in storage.
 
@@ -25,12 +25,13 @@ existing Chapter Generation feature.
 | Field | Value |
 | --- | --- |
 | Replica creation date | 2026-08-29 |
-| Last Workshop update | 2026-09-25 |
+| Last Workshop update | 2026-09-29 |
 | Last source comparison | 2026-09-12 — verified the creative author direction in `Light-Novels/src/server/prompts.ts` on `main` before extracting the Author skill |
 | Lifecycle status | Reader-directed continuation (Fate page) with a derived SEN Reader adapter |
 
 ### History
 
+- **2026-09-29 (Tiny SEN language, part 1: the switch):** Chapters now speak the tiny SEN language, with narration and Sound Cues only. **Writer:** the model wraps the one to five words where a sound happens (`[[n|words]]`) and names it in a flat list (`soundCues: [{mark, sound, energy?}]`), choosing only from the story's sound words. The new managed CAPA slot **Sound Cues** (`media-loadout`, after Translation) carries SEN's bundled `SEN_SOUND_CUES_SKILL`; the story's frozen words close it as an example list whose header says the lines show how to mark and are not text for the chapter. A story with no sound words gets no section and no schema field. **Response contract:** `buildHarnessChapterResponseSchema(words)` drops dialogue, manifestations, System Panels, soundscapes and creature events; `soundCues` follows `paragraphs` with the words as an enum and a cap of ten; the contract keeps its no-invented-IDs guard and carries no Sound Cue wording. `http.ts` checks the words against the pack limits and answers 400 otherwise. **HARNESS:** media is frozen before CAPA; acceptance strips every mark from every reply string, then `placeSoundCues` places each cue on whole words (1–5, never in a system line, no overlap, first ten in reading order), picks that word's recording (matching Energy first, stable rotation), and stores a `SoundCueAttachment` span on paragraph `c{n}-p{i}`; set-aside cues become plain warnings. **Storage:** schema 22; `HarnessChapter` keeps paragraphs, prose and metrics, gains `soundCues`, loses `blocks`, `audioMoments` and `soundscapes`; by the product owner's decision there is no upgrade step, so earlier workspaces are kept untouched and the page starts fresh. **Reader:** one narration block per paragraph with its Sound Cues; the memory-based speaker guess is gone until dialogue is rebuilt. `acceptedChapterMedia.ts` and the World Cue intent system are deleted. SEN 0.8.0, Library 0.7.0.
 - **2026-09-29 (Tiny SEN language, part 1: foundation):** First half of narration + Sound Cues in the tiny SEN language; how chapters are written is unchanged until part 2. **Sound words:** a Sound Cue recording now names the event it answers (`metadata.sound`, e.g. "blade drawn"), and a catalog declares its words with a 1–5 word example each (`SoundWord`, `validateSoundWords`, `soundVocabulary`). The default library's 92 Sound Cue recordings carry 30 starter words (`src/audio/data/library-sounds.v1.json`) and Energy read from their names. **Studio tags:** SENSEI's tagging system (`src/audio/audioTags.ts`): a Sound Cue's parent is its cue category, a Soundscape's parent is ADVENTURE, AMBIENT, EMOTIONS, FIGHTING, WAR or SPECIAL, and both share Tone, Energy and Tension. **Packs:** a Sound Cue Pack declares `sounds`, every recording names a declared word, and an equipped pack replaces the default Sound Cue set (words and recordings); the frozen Media Loadout carries the attempt's words and the Media Loadout panel lists them. **Marks:** `src/narrative/marks.ts` reads and removes `[[n|words]]` marks, tolerating the slips a writer makes, for part 2's contract. See `MEDIA_LOADOUT.md` and `src/audio/README.md`.
 - **2026-09-26 (Story Settings: Translation and Accessibility):** Implements `docs/translation-accessibility-audit.md` with one product rule: users configure the story, the HARNESS decides the skills. **Story Settings:** the Story Seed's Settings sheet now holds Story Language (the existing Original Language control, moved there; the Blueprint Review confirms it read-only) and a new Reading Mode (production's Standard, Clear Reading, Easy Read, Literal Reading, `seed.story.optional.chapterWritingStyle`, kept out of every Blueprint request). A new seed takes the account's defaults; a saved seed keeps its own. The story copies both at creation (`HarnessStory.originalLanguage`, `HarnessStory.chapterWritingStyle`), and the novel page's Story Settings panel shows the Story Language and lets the owner change the Reading Mode for chapters still to come, in plain terms. **Managed slots:** `managedBy` now has three kinds. Accessibility (`reading-mode`) loads SEN's bundled skill for the mode (`SEN_READING_MODE_SKILLS`, production's instructions word for word), nothing for Standard. Translation (`story-language`) loads nothing for English, otherwise the one installed `generation` package for the language through `resolveTranslationPackage`, the rule Reader translation now shares; with none the chapter is still written and Story Settings says no specialized writing package is installed; competing packages are refused with a message. Neither slot is ever equipped by hand (`createStory`, `setSkillSlot`, initial loadouts and per-slot uploads all refuse), while Translation packages stay installable (`CapaSlotDefinition.installable`). **Prompt:** the Official Output Requirements travel only when Accessibility or Translation is loaded; a non-English story without a package gets only a one-line Story Language requirement and the machine-facing English rule; an English, Standard chapter carries none (about 320 estimated tokens saved). **Retry:** a failed chapter resends its frozen inputs only while the managed skills the story resolves still match, so a changed Reading Mode or package resolution rebuilds the request. **Surfaces:** the CAPA slot panel and SPP intake render only for a host that sets `showHarnessInternals` (the Workshop does); there the managed slots are read-only inspection cards. The Workshop's Dyslexic Readability sample is retired. Schema 21 removes hand-saved Translation and Accessibility references; a story without a Reading Mode reads as Standard. SEN 0.7.0, Library 0.5.0.
 - **2026-09-26 (Library Create):** The Library workspace can open a requested novel: `initialStoryId` selects it once the stored stories load (the pre-hydration snapshot is empty, so the request waits for them; unknown ids fall back to the first story), and `initialFocus: 'next-chapter'` brings its Generate Chapter panel into view and focus once. The Workshop wrapper reads them from `story` and `focus`, which Library Create's Continue and Studio send, and which fixes Story Seed's existing "start story" handoff (it already sent `story=`). No HARNESS concept, contract or persistence changed.
@@ -393,14 +394,13 @@ Codex. Neither component owns a second persistence path. SEN stays provider-neut
 
 1. Persist `request_started` before a provider request.
 2. Persist the raw provider response immediately after it returns.
-3. Accept the prose as the authoritative chapter, split it into canonical SEN
-   blocks, match every semantic signal to its exact prose anchor, validate each
-   signal independently, build the detailed SEN structures, resolve approved
-   media through the frozen Media Loadout, and persist that accepted chapter
-   draft. A malformed or unanchored signal becomes a warning, never lost prose.
+3. Accept the paragraphs as the authoritative chapter, strip every mark from
+   the reply, place each Sound Cue on the words its mark wraps with a
+   recording from the frozen Media Loadout, and persist that accepted chapter
+   draft. A malformed or unplaceable cue becomes a warning, never lost prose.
 4. Persist the (now always empty) writer-lane event checkpoint so the existing
    retry and replay stages remain unchanged.
-5. Atomically append a chapter with its accepted blocks and resolved media,
+5. Atomically append a chapter with its paragraphs and placed Sound Cues,
    attempt receipt, and updated story head.
 6. Run the separate memory extraction on the committed prose when the host
    adapter supports it; its failure leaves the chapter committed and retryable
@@ -409,7 +409,8 @@ Codex. Neither component owns a second persistence path. SEN stays provider-neut
 Only a committed chapter enters the next context snapshot.
 
 **Storage resets preserve data.** A saved workspace this build cannot read (an
-older schema version or an unreadable shape) is still reset for this build, but
+older schema version or an unreadable shape; schema 22 deliberately upgrades
+nothing earlier) is still reset for this build, but
 the host IndexedDB repository first copies the untouched record to a
 `preserved:v<version>:<time>` key in the same transaction, and the Workshop
 lists it with a download control. Reader state (place, bookmarks, settings) is
@@ -442,13 +443,14 @@ Development's complete SPP import flow and validation evidence are documented in
 
 CAPA Skills are not the deterministic capability handlers above. Capability handlers
 are permanent internal machinery that interprets committed evidence. CAPA Skills are
-versioned packages in one of the seven CAPA Schema slots (`CAPA_SCHEMA` in
-`shared/skills.ts`): Author, Pacing, Fate, Continuity, Style, Accessibility, and
-Translation. Author, Pacing, Continuity and Style are equipped per story. Fate,
-Accessibility and Translation are managed: the HARNESS resolves them from the story's
-Fate mode, Reading Mode and Story Language at every loadout freeze, and nobody equips
-them. Users configure those through Story Settings and never see a slot.
-Media is not a CAPA Skill or slot. The bundled SEN Novel Author is a normal, replaceable generation skill, not
+versioned packages in one of the eight CAPA Schema slots (`CAPA_SCHEMA` in
+`shared/skills.ts`): Author, Pacing, Fate, Continuity, Style, Accessibility,
+Translation, and Sound Cues. Author, Pacing, Continuity and Style are equipped per
+story. Fate, Accessibility, Translation and Sound Cues are managed: the HARNESS resolves
+them from the story's Fate mode, Reading Mode, Story Language and Media Loadout at every
+loadout freeze, and nobody equips them. Users configure those through Story Settings and
+the Media Loadout and never see a slot. The Media Loadout itself is not a CAPA slot:
+only its sound words reach the writer, as the Sound Cues skill's example list. The bundled SEN Novel Author is a normal, replaceable generation skill, not
 hidden creative Harness behavior. It is equipped for new and previously saved local
 stories.
 
@@ -465,15 +467,18 @@ Packet. Only manifests declaring the `generation` application contribute text.
 Reader and post-commit applications may be recorded in the frozen CAPA Prompt's
 skill inventory for their owning host runtime and send nothing to the writing model.
 
-The separate permanent `HARNESS_RESPONSE_CONTRACT` describes supported semantic
-chapter signals and the application-owned handoff for System Panels,
-manifestation triggers, dialogue/narration metadata, soundscape intent, World
-Cue and Sound Cue intent, and creature events. It is fixed HARNESS
-infrastructure, never an installable skill or loadout slot. It contains no
-asset catalog, R2 path, filename, track list, unlocked-resource list, or pack
-contents. HARNESS retains validation, generated IDs, ordering, persistence,
-resolution handoff, and checkpoint recovery; machine-facing fields remain
-canonical English.
+The separate permanent `HARNESS_RESPONSE_CONTRACT` describes the chapter reply:
+the paragraphs, the Arc Goal and ending evidence, the recap and the three
+suggestions, and the guard against invented IDs, URLs and assets. It carries no
+signal wording: how to mark a Sound Cue lives only in the CAPA Sound Cues skill,
+and the response schema (`buildHarnessChapterResponseSchema`) adds a `soundCues`
+list right after `paragraphs` only when the story has sound words, with those
+words as the only choices. It is fixed HARNESS infrastructure, never an
+installable skill or loadout slot, and contains no asset catalog, R2 path,
+filename, track list, unlocked-resource list, or pack contents. HARNESS retains
+validation, placement, generated IDs, ordering, persistence, and checkpoint
+recovery; sound words stay machine-facing English while the words a mark wraps
+stay in the story's language.
 
 The Workshop's sample skill manifests remain preview data only. Media Packs use
 the separate inventory and runtime boundary documented in

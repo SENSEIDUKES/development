@@ -9,7 +9,7 @@ export {
 } from '../../components/text-highlight-engine/shared/selection';
 export type { PassageAction } from '../../components/text-highlight-engine/shared/actions';
 export {
-  createManualCueMoment, snapSoundCueSelection, type ManualCueResult, type SoundCueSelection,
+  createManualSoundCue, snapSoundCueSelection, type ManualCueResult, type SoundCueSelection,
 } from '../../components/text-highlight-engine/shared/manualCue';
 export { ManualCuePicker, type ManualCuePickerProps } from '../../components/text-highlight-engine/development/ManualCuePicker';
 export {

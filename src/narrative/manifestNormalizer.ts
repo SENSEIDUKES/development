@@ -1,6 +1,5 @@
 import { STORY_ENTITY_TYPES, type BeastSonicProfile, type ChapterManifestDiagnostics, type ChapterManifestWarning, type FateResultData, type RegularSystemEvent, type StoryBlock, type StoryBlockMetadata, type SystemEvent, type SystemPromptPresentation, type WorldNoticeData } from './chapter';
 import { normalizeSystemPromptChanges, normalizeSystemStatusScreen } from './systemPromptPresentation';
-import { validateWorldCueIntent, type WorldCueIntent } from '../audio/inlineAudio';
 import { isSoundscapeRegion } from '../audio/soundscapes';
 
 type JsonRecord = Record<string, unknown>;
@@ -310,87 +309,9 @@ const parseBeastEvent = (
   return { type: type as NonNullable<StoryBlockMetadata["beastEvent"]>["type"], profile };
 };
 
-const exactOccurrenceOffset = (
-  text: string,
-  phrase: string,
-  occurrenceIndex: number,
-): number => {
-  let fromIndex = 0;
-  for (let index = 0; index <= occurrenceIndex; index += 1) {
-    const found = text.indexOf(phrase, fromIndex);
-    if (found < 0) return -1;
-    if (index === occurrenceIndex) return found;
-    fromIndex = found + phrase.length;
-  }
-  return -1;
-};
-
-export interface ParsedModelWorldCueIntents {
-  intents: WorldCueIntent[];
-  droppedCount: number;
-}
-
-/**
- * Converts untrusted, block-local model annotations into the shared model-safe
- * contract. The application supplies the stable block reference and discards
- * invalid annotations without sacrificing otherwise valid prose.
- */
-export function parseModelWorldCueIntents(
-  value: unknown,
-  blockId: string,
-  blockText: string,
-): ParsedModelWorldCueIntents {
-  if (!Array.isArray(value)) {
-    return { intents: [], droppedCount: value === undefined || value === null ? 0 : 1 };
-  }
-
-  const intents: WorldCueIntent[] = [];
-  const seenPlacements = new Set<string>();
-  let droppedCount = 0;
-  for (const candidate of value) {
-    if (!isRecord(candidate)) {
-      droppedCount += 1;
-      continue;
-    }
-    if (isRecord(candidate.relatedEntity) && "id" in candidate.relatedEntity) {
-      droppedCount += 1;
-      continue;
-    }
-    const validation = validateWorldCueIntent({
-      ...candidate,
-      blockId,
-    });
-    const offset = validation.ok
-      ? exactOccurrenceOffset(
-          blockText,
-          validation.intent.triggerPhrase,
-          validation.intent.occurrenceIndex,
-        )
-      : -1;
-    if (!validation.ok || offset < 0) {
-      droppedCount += 1;
-      continue;
-    }
-    const intent = validation.intent;
-    const placementKey = [
-      intent.blockId,
-      offset,
-      offset + intent.triggerPhrase.length,
-    ].join("\u001f");
-    if (seenPlacements.has(placementKey)) {
-      droppedCount += 1;
-      continue;
-    }
-    seenPlacements.add(placementKey);
-    intents.push(intent);
-  }
-  return { intents, droppedCount };
-}
-
 const parseBlockMetadata = (
   value: unknown,
   context: BlockWarningContext,
-  blockText: string,
 ): StoryBlockMetadata | undefined => {
   if (value === undefined || value === null) return undefined;
   if (!isRecord(value)) {
@@ -431,27 +352,10 @@ const parseBlockMetadata = (
   if (music) metadata.music = music;
   const beastEvent = parseBeastEvent(value.beastEvent, context);
   if (beastEvent) metadata.beastEvent = beastEvent;
-  const parsedAudioMoments = parseModelWorldCueIntents(
-    value.audioMoments,
-    context.blockId ?? `block-${context.blockIndex + 1}`,
-    blockText,
-  );
-  if (parsedAudioMoments.intents.length > 0) {
-    metadata.audioMoments = parsedAudioMoments.intents;
-  }
-  if (parsedAudioMoments.droppedCount > 0) {
-    warning(
-      context,
-      "optional-field-removed",
-      `Removed ${parsedAudioMoments.droppedCount} invalid optional World Cue audio moment${parsedAudioMoments.droppedCount === 1 ? "" : "s"}.`,
-      "metadata.audioMoments",
-    );
-  }
-
   const knownFields = new Set([
     "sceneType", "environment", "atmosphereCategory", "atmosphereTags", "theme", "motion", "emotion",
     "intensity", "tension", "danger", "mysticism", "audioSignature", "speakerName", "mode",
-    "speakerRole", "entities", "music", "beastEvent", "audioMoments",
+    "speakerRole", "entities", "music", "beastEvent",
   ]);
   for (const field of Object.keys(value)) {
     if (!knownFields.has(field)) {
@@ -796,7 +700,7 @@ const normalizeBlock = (
   }
   const id = normalizedBlockId(record, index, chapterNumber, warnings);
   const context: BlockWarningContext = { warnings, blockIndex: index, blockId: id };
-  const metadata = parseBlockMetadata(record.metadata, context, text);
+  const metadata = parseBlockMetadata(record.metadata, context);
   const system = parseSystemEvent(record.system, context);
   const rawType = nonEmptyString(record.type);
   const type = rawType === "dialogue" || (!rawType && metadata?.mode === "dialogue")

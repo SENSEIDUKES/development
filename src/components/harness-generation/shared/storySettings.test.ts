@@ -2,8 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   HarnessGenerationController,
   SEN_READING_MODE_SKILLS,
-  migrateHarnessWorkspaceState,
-  readHarnessWorkspaceState,
   validateHarnessSkillManifest,
   type HarnessGenerationModelAdapter,
   type HarnessGenerationRequest,
@@ -244,45 +242,5 @@ describe('7. Story-owned values', () => {
     } });
     await blocked.hydrate();
     await expect(blocked.setChapterWritingStyle(run.story.id, 'Easy Read')).rejects.toThrow('before changing the Reading Mode');
-  });
-});
-
-describe('8. Migration from schema 20', () => {
-  it('removes hand-saved Translation and Accessibility references and reads a missing Reading Mode as Standard', async () => {
-    const run = await setup({ language: 'ja', skills: [japaneseWriting()] });
-    await run.controller.generateNextChapter(run.story.id, 'fixture');
-    const current = run.repository.snapshot();
-    const frozenPrompt = structuredClone(current.attempts[0].capaPrompt);
-    const stored = structuredClone(current) as unknown as { schemaVersion: number; stories: Array<Record<string, unknown>> };
-    stored.schemaVersion = 20;
-    delete stored.stories[0].chapterWritingStyle;
-    stored.stories[0].skillLoadout = {
-      author: { id: AUTHOR, version: '1.0.0' },
-      translation: { id: 'test.writing.ja', version: '1.0.0' },
-      accessibility: { id: 'workshop.dyslexic-readability', version: '0.1.0' },
-    };
-
-    const migrated = migrateHarnessWorkspaceState(stored)!;
-    expect(migrated.schemaVersion).toBe(21);
-    expect(migrated.stories[0].skillLoadout).toEqual({ author: { id: AUTHOR, version: '1.0.0' } });
-    expect(migrated.stories[0].chapterWritingStyle).toBeUndefined();
-    // Frozen attempts and committed chapters are untouched.
-    expect(migrated.attempts[0].capaPrompt).toEqual(frozenPrompt);
-    expect(migrated.chapters).toEqual(current.chapters);
-    expect(readHarnessWorkspaceState(stored).stories[0].skillLoadout).toEqual({ author: { id: AUTHOR, version: '1.0.0' } });
-
-    // The upgraded story writes its next chapter in Standard with its language's package.
-    const reloaded = new HarnessGenerationController({
-      repository: new InMemoryHarnessGenerationRepository(migrated),
-      installedSkills: [japaneseWriting()],
-      modelAdapter: {
-        getServerInfo: async () => { throw new Error('unused'); },
-        generate: async request => { run.requests.push(structuredClone(request)); return { rawProviderResponse: reply('Mei rested.'), providerReceipt: receipt }; },
-        arcOperation: async () => ({ rawProviderResponse: '{}', providerReceipt: receipt }),
-      },
-    });
-    await reloaded.hydrate();
-    await reloaded.generateNextChapter(run.story.id, 'fixture');
-    expect(slotsOf(run.requests.at(-1)!)).toEqual({ author: AUTHOR, translation: 'test.writing.ja' });
   });
 });

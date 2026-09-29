@@ -1,9 +1,9 @@
 import { validateHardPinInputs } from '@seihouse/sen/harness-generation';
 import { ARC_LENGTH, ARC_PLAN_SCHEMA, createArcChapterPosition } from '@seihouse/sen/arc-goals';
-import { HARNESS_CREATURE_EVENT_TYPES, HARNESS_CREATURE_SIZES, HARNESS_DIALOGUE_DELIVERIES, HARNESS_FATE_OUTCOMES, HARNESS_MANIFESTATION_MENTIONS, HARNESS_MANIFESTATION_TYPES, HARNESS_SOUND_CUE_CATEGORIES, HARNESS_SOUND_CUE_ENTITY_TYPES, HARNESS_SOUNDSCAPE_REGIONS, HARNESS_SYSTEM_PANEL_MEANINGS, HARNESS_SYSTEM_PANEL_PRESENTATIONS } from '@seihouse/sen/harness-generation';
+import { AUDIO_ENERGIES, type SoundWord } from '@seihouse/sen/audio';
 import { type HarnessArcRequest, type HarnessChapterDirection, type HarnessGenerationRequest, type HarnessStoryMode, type HarnessMemoryRecoveryRequest, type HarnessMissionReminder, type HarnessRequestMeasurement, type ImmediateChapterRequest, type PacketSectionId, type StoryInformationPacket } from '@seihouse/sen/harness-generation';
 import { GENERATION_PACKET_BUDGET } from '@seihouse/sen/harness-generation';
-import { CHAPTER_FUNCTIONS, HARNESS_MEMORY_CATEGORIES, HARNESS_SIGNAL_LIMITS } from '@seihouse/sen/harness-generation';
+import { CHAPTER_FUNCTIONS, HARNESS_MEMORY_CATEGORIES, HARNESS_SOUND_CUE_SIGNAL_LIMIT } from '@seihouse/sen/harness-generation';
 
 const memoryEntryProperties = {
     details: { type: 'object', properties: {
@@ -50,26 +50,41 @@ const memorySchema = { type: 'object', properties: Object.fromEntries(Object.key
 const memoryResponseSchema = { type: 'object', properties: { memory: memorySchema }, required: ['memory'] };
 
 const text = { type: 'string' };
-const anchoredText = { type: 'string', description: 'An exact passage copied from this reply\'s paragraphs.' };
-/** Only needed when the anchor phrase repeats; the response contract explains the rule in full. */
-const occurrenceIndex = { type: 'integer', minimum: 0, description: 'Zero-based occurrence when anchorText repeats.' };
-const tagList = { type: 'array', items: text, description: 'Short canonical-English semantic tags.' };
-const labelValueEntry = { type: 'object', properties: { label: text, value: text }, required: ['label', 'value'] };
 
 /**
- * The compact semantic chapter contract requested from the provider. It is
- * deliberately shallow: the paragraphs array is the chapter, every signal
- * family is a flat list of small objects keyed by an exact prose anchor from
- * that same array, and no family repeats
- * another's definition. Final SEN blocks, System Panel presentations, media
- * assets, IDs, and memory are HARNESS work and never appear here.
+ * One Sound Cue signal in the tiny SEN language: the number of a mark the
+ * writer placed in its paragraphs, one of the story's sound words, and an
+ * optional Energy. The word list is an enum so the model picks from it; the
+ * HARNESS still re-checks every word, because not every provider enforces it.
  */
-export const HARNESS_CHAPTER_RESPONSE_SCHEMA = {
+const soundCuesSchema = (words: readonly SoundWord[]) => ({
+  type: 'array',
+  maxItems: HARNESS_SOUND_CUE_SIGNAL_LIMIT,
+  items: {
+    type: 'object',
+    properties: {
+      mark: { type: 'integer', minimum: 1 },
+      sound: { type: 'string', enum: words.map(sound => sound.word) },
+      energy: { type: 'string', enum: [...AUDIO_ENERGIES] },
+    },
+    required: ['mark', 'sound'],
+  },
+});
+
+/**
+ * The compact chapter contract requested from the provider. The paragraphs
+ * array is the chapter; the only signal is soundCues, which follows it and
+ * exists only when the story has sound words. How to mark is taught by the
+ * CAPA Sound Cues skill, never here. Reader structures, media, IDs, and memory
+ * are HARNESS work and never appear here.
+ */
+export const buildHarnessChapterResponseSchema = (words: readonly SoundWord[] = []) => ({
   type: 'object',
   properties: {
     title: text,
     plan: { type: 'string', description: 'Optional one-paragraph continuation plan for the next chapter.' },
     paragraphs: { type: 'array', items: text, description: 'The complete chapter, one entry per prose paragraph, in reading order. This is the only chapter body.' },
+    ...(words.length ? { soundCues: soundCuesSchema(words) } : {}),
     arcCompletion: {
       type: 'object',
       properties: { goalId: text, completed: { type: 'boolean' }, evidence: text },
@@ -89,45 +104,9 @@ export const HARNESS_CHAPTER_RESPONSE_SCHEMA = {
       properties: { ended: { type: 'boolean' }, evidence: text },
       required: ['ended', 'evidence'],
     },
-    dialogue: { type: 'array', items: { type: 'object', properties: {
-      anchorText: anchoredText, occurrenceIndex, speaker: text, delivery: { type: 'string', enum: [...HARNESS_DIALOGUE_DELIVERIES] },
-    }, required: ['anchorText', 'speaker'] } },
-    manifestations: { type: 'array', items: { type: 'object', properties: {
-      anchorText: anchoredText, occurrenceIndex, name: text,
-      type: { type: 'string', enum: [...HARNESS_MANIFESTATION_TYPES] },
-      mention: { type: 'string', enum: [...HARNESS_MANIFESTATION_MENTIONS] },
-    }, required: ['anchorText', 'name', 'type', 'mention'] } },
-    systemPanels: { type: 'array', items: { type: 'object', properties: {
-      anchorText: { type: 'string', description: 'The exact readable System Panel text copied from a paragraph.' },
-      occurrenceIndex,
-      presentation: { type: 'string', enum: [...HARNESS_SYSTEM_PANEL_PRESENTATIONS] },
-      meaning: { type: 'string', enum: [...HARNESS_SYSTEM_PANEL_MEANINGS] },
-      title: text, body: text,
-      entries: { type: 'array', items: labelValueEntry },
-      outcome: { type: 'string', enum: [...HARNESS_FATE_OUTCOMES], description: 'Fate presentation only.' },
-    }, required: ['anchorText', 'presentation', 'title'] } },
-    soundscapes: { type: 'array', items: { type: 'object', properties: {
-      anchorText: anchoredText, occurrenceIndex, mood: text,
-      region: { type: 'string', enum: [...HARNESS_SOUNDSCAPE_REGIONS] },
-      tags: tagList, intensity: { type: 'number' },
-    }, required: ['anchorText', 'mood'] } },
-    // The chapter's Sound Cue cap. Word counts stay out of this contract: the model gives direction, the HARNESS places.
-    soundCues: { type: 'array', maxItems: HARNESS_SIGNAL_LIMITS.soundCues, items: { type: 'object', properties: {
-      anchorText: { type: 'string', description: 'The exact audible action phrase from a paragraph, never an entity name.' },
-      occurrenceIndex,
-      category: { type: 'string', enum: [...HARNESS_SOUND_CUE_CATEGORIES] },
-      variation: text, tags: tagList, entityName: text,
-      entityType: { type: 'string', enum: [...HARNESS_SOUND_CUE_ENTITY_TYPES] },
-    }, required: ['anchorText', 'category', 'variation'] } },
-    creatureEvents: { type: 'array', items: { type: 'object', properties: {
-      anchorText: anchoredText, occurrenceIndex,
-      type: { type: 'string', enum: [...HARNESS_CREATURE_EVENT_TYPES] },
-      name: text, size: { type: 'string', enum: [...HARNESS_CREATURE_SIZES] },
-      bodyType: text, element: text, movement: text, intelligence: text, threatTier: text, signatureSound: text,
-    }, required: ['anchorText', 'type'] } },
   },
   required: ['paragraphs', 'arcCompletion', 'recap', 'chapterFunction', 'nextProgression', 'nextWorldBuilding', 'nextConflict'],
-} as const;
+});
 
 export const HARNESS_MEMORY_INSTRUCTIONS = [
   'Each memory entry may include details with character {name, role, relationshipToMC, isMainCharacter}, speech {speaker, quote}, or mechanics {subject, name, value, unit}. Include only information supported by its evidence and the chapter. Keep speaker role separate from relationship. Use the exact unique speech substring and an established named speaker. Mechanical values are exact absolute observations, including zero, never inferred deltas. The subject names the actual owner, which may be a character or an item. Put semantic objects inside details; do not emit application cards or IDs.',
@@ -163,14 +142,9 @@ export const HARNESS_RESPONSE_CONTRACT = [
   'Opening setup applies at the beginning of the story. For continuation, continue from the latest Previously On recap, respecting the actual story head. Previously On holds the saved recaps of the latest committed chapters, newest last; the full prose of earlier chapters is not supplied, so carry the story forward from those recaps and the canonical state rather than restarting or inventing missing chapter events. Committed developments evolve the starting Foundation state; do not reset that progress unless an explicit author change requires it.',
   'Current Canonical State is the latest applicable state of each character, relationship, location, faction, artifact, ability, and resource, resolved by the HARNESS. It is the current truth to continue from; it is not a checklist of things to mention. Resources list absolute balances observed in the story: never restore an opening balance, silently refill a resource, or use an old owner after a transfer. State new balances in the prose when they change.',
   'Fate Pressure Rhythm Direction appears only when the reader left this chapter\'s path to the HARNESS. It names the chapter function recommended next (progression, worldBuilding, or conflict), the recent sequence it evaluated, its reason, and, when available, the previous chapter\'s own suggestion for that function. Favor that function while keeping the chapter natural; the Active Arc Goal remains this stretch\'s destination.',
-  'Return one JSON object only. paragraphs is the complete chapter and its sole body: an ordered array with one entry per prose paragraph, written as continuous readable prose, including the readable text of any System Panel as its own entry exactly where the reader meets it. Never put the whole chapter in one entry and never add blank-line markers or numbering. title and plan are optional. arcCompletion is required. Do not return prose, chapter blocks, memory, or any other chapter body.',
+  'Return one JSON object only. paragraphs is the complete chapter and its sole body: an ordered array with one entry per prose paragraph, written as continuous readable prose. Never put the whole chapter in one entry and never add blank-line markers or numbering. title and plan are optional. arcCompletion is required. Do not return prose, chapter blocks, memory, or any other chapter body.',
   'After the chapter, return recap: a short "Previously On" recap of this chapter in two to four sentences, written for a reader returning later. Return chapterFunction: the one primary function this completed chapter served, progression, worldBuilding, or conflict. Return three one-line possibilities for the next chapter: nextProgression, nextWorldBuilding, and nextConflict, one per function. They are creative possibilities only; the reader or the HARNESS decides which path actually comes next. Never return hardPins, fatePressure, or destinedEnding: story direction is author-owned and any such field is ignored.',
-  'Optional signal families describe semantic intent the chapter itself establishes: dialogue, manifestations, systemPanels, soundscapes, soundCues, and creatureEvents. Each is a flat list. Every signal carries anchorText: one exact, distinctive passage copied verbatim from an entry of the paragraphs array you are returning in this reply, with the same characters, punctuation, and quotation marks. Never copy an anchor from a prior chapter, from the Story Information Packet, or from any text outside this reply; such an anchor is dropped. When the same phrase appears more than once, add occurrenceIndex, a zero-based count over its occurrences in reading order, or the signal is dropped as ambiguous. The HARNESS matches anchors to its own paragraph blocks, validates each signal on its own, and drops any signal whose anchor is absent. A dropped signal never removes prose. Omit signals the chapter does not support; omit whole families with nothing to report.',
-  'dialogue: one signal per spoken passage that needs attribution, with anchorText the exact quoted words and nothing else, speaker the established character name, and optional delivery. The HARNESS turns that exact span into its own dialogue block, so narration included in the anchor would be read as speech; a paragraph holding several speakers needs one signal per spoken passage. The HARNESS assigns speaker roles from the cast. manifestations: entities the reader should meet, with name, type (character, artifact, location, creature, or faction) and mention (reveal for a first meaningful appearance, reference otherwise).',
-  'systemPanels: one per readable System Panel in the prose. anchorText is the exact readable panel text. presentation is narrative, mechanical, world_notice, or fate. Supply title, optional meaning (the semantic color family), optional body, and optional entries as simple label/value pairs: mechanical presentations need entries for their stats; a fate presentation needs outcome (FATE AVERTED, FATE SCARRED, or DOOM MANIFESTED), body as the timeline scar, and entries as permanent costs. The HARNESS constructs the complete mechanical, narrative, World Notice, or Fate presentation afterward.',
-  'soundscapes: the mood of a scene, with optional region (chinese, japanese, korean, or western), tags, and intensity. soundCues: a deliberate audible action, with anchorText the exact audible action phrase (never an entity name), category (beasts, weapons, artifacts, locations, or factions), variation such as growl, roar, unsheathe, or activation, optional tags, and optional entityName/entityType. creatureEvents: type (reveal, power-up, technique, injury, turning-point, death, or breakthrough) with optional name, size, bodyType, element, movement, intelligence, threatTier, and signatureSound.',
-  'Signals are machine-facing and stay in canonical English; prose, titles, panel text, bodies, and entries are reader-facing. Do not invent block IDs, story/chapter/run/event identities, asset IDs, URLs, URIs, filenames, file paths, catalog records or selectors, provider identifiers, voice IDs or keys, persistence records, continuation tokens, Color Codes, or unsupported application fields. The HARNESS owns IDs, ordering, normalization, validation, catalog resolution, persistence, memory extraction, and commits.',
-  'Do not let signal formatting displace the chapter itself. If uncertain about a signal, omit it rather than fabricating precise mechanics.',
+  'Do not invent block IDs, story/chapter/run/event identities, asset IDs, URLs, URIs, filenames, file paths, catalog records or selectors, provider identifiers, voice IDs or keys, persistence records, continuation tokens, Color Codes, or unsupported application fields. The HARNESS owns IDs, ordering, normalization, validation, catalog resolution, persistence, memory extraction, and commits.',
   'READER DIRECTION: the Immediate Chapter Request may carry the reader\'s direction for this chapter: either one chapter function with the idea they chose, or their own direction in their words. It applies to this chapter only and changes what happens next, never what already happened; retain the consequences of prior events. Make it happen in this chapter, within the Active Arc Goal, or as the path to the story\'s ending when the route is broken. Author corrections override the targeted interpretations.',
   'CAPA skills are reusable authoring capabilities deliberately equipped by the author. The Author skill defines the writing approach; other CAPA skills refine execution. Skills never override explicit author corrections, the reader\'s direction, established canon, or the latest committed chapter.',
   'The Foundation, Blueprint, intendedDirection and any old loose plan are proposals wherever they concern future events. The structured active arc goal is this stretch\'s pacing target, pursued honestly. Adapt all direction to the reader\'s choices and committed developments. Never restore a planned enemy after the author makes them an ally. Past hostility may still have consequences without forcing renewed enmity.',
@@ -316,7 +290,7 @@ export const buildHarnessGenerationPrompt = (request: HarnessGenerationRequest) 
     presentMissionReminder(request.missionReminder),
     presentImmediateChapterRequest(request.immediateChapterRequest),
   ].join('\n\n');
-  const responseJsonSchema = HARNESS_CHAPTER_RESPONSE_SCHEMA;
+  const responseJsonSchema = buildHarnessChapterResponseSchema(request.capaPrompt.soundVocabulary ?? []);
   const measurement: HarnessRequestMeasurement = {
     systemInstructionCharacters: systemInstruction.length,
     userPromptCharacters: userPrompt.length,

@@ -39,13 +39,6 @@ const canonicalBlocks = (): StoryBlock[] => [
       speakerName: 'Narrator',
       entities: [{ name: 'Ye Chen', type: 'character', mention: 'reveal' }],
       music: { mood: 'solemn', region: 'chinese', trackId: 'track-77' },
-      audioMoments: [{
-        blockId: 'block-1',
-        triggerPhrase: 'mountain stair',
-        sourceCategory: 'locations',
-        variation: 'wind',
-        semanticTags: ['cold'],
-      }],
     },
   },
   {
@@ -79,15 +72,11 @@ const chapter = (blocks = canonicalBlocks()): ReaderChapter => ({
   premise: '',
   status: 'unread',
   blocks,
-  audioMoments: [{
-    id: 'moment-1',
-    blockId: 'block-1',
-    triggerPhrase: 'mountain stair',
-    occurrenceIndex: 0,
-    sourceCategory: 'locations',
-    variation: 'wind',
-    semanticTags: ['cold'],
-    cue: { publicUrl: 'https://library.example/cue.mp3' },
+  soundCues: [{
+    id: 'sound-cue:block-1:24-38',
+    kind: 'sound-cue',
+    anchor: { level: 'span', blockId: 'block-1', startOffset: 24, endOffset: 38, selectedText: 'mountain stair' },
+    payload: { origin: 'harness', sound: 'wind gust', cue: { publicUrl: 'https://library.example/cue.mp3', provenance: { catalogId: 'test-cues', version: '1' }, category: 'atmosphere' } },
   }],
 });
 
@@ -163,7 +152,7 @@ describe('reader-facing material is the only thing sent for translation', () => 
 
     for (const machineFacing of [
       'narration', 'dialogue', 'metadata', 'speakerName', 'Narrator', 'entities',
-      'music', 'track-77', 'chinese', 'audioMoments', 'triggerPhrase', 'mountain stair"',
+      'music', 'track-77', 'chinese', 'soundCues', 'wind gust', 'selectedText', 'mountain stair"',
       'promptType', 'presentation', 'progression', 'mechanical', 'trend', 'tone', 'direction',
     ]) {
       expect(serialized).not.toContain(machineFacing);

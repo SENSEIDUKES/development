@@ -242,7 +242,7 @@ already carries the same font and color tokens.
 - **Story data** — one mock `StoryWorld` ("Ashes of the Ninth Meridian", genre
   `Fate Survival`) with 4 chapters:
   1. rich structured-`blocks` chapter (breakthrough System Panel, Fate Result card,
-     inline World Cues, soft continuity notes, Context Inspector manifest);
+     inline Sound Cues, soft continuity notes, Context Inspector manifest);
   2. long legacy `generatedContent` prose chapter with a hard Timeline Divergence
      banner and a legacy `[bracket]` system line;
   3. sealed chapter that is also a death/critical scene (menacing red chamber
@@ -286,7 +286,7 @@ Effects section when supplied.
 
 **States — Reading** — normal reading states and reading setup
 
-- `reading` — rich blocks chapter 1 (System Panels, Fate Result card, inline World Cues,
+- `reading` — rich blocks chapter 1 (System Panels, Fate Result card, inline Sound Cues,
   Context Inspector, legend)
 - `fullscreen` — header hidden; click prose to toggle back
 - Chapter selector (1–4)
@@ -446,9 +446,11 @@ Workshop-only — never transfer: `shared/stubs.ts`, `shared/types.ts` (producti
 `lib/audio/musicResolver.ts` is authoritative), everything under
 `src/workshop/previews/reader-chamber/`, the manifest entry, and the registry line.
 `getReaderChamberSurfaceClass` is a Card Workshop presentation seam, not production API.
-`audioMoments` is chapter-owned generation output rather than a Workshop prop.
-Transfer its validator, resolver, accepted-result persistence, Reader adapter,
-and block-scoped rendering together; do not copy the preview fixtures as data.
+`soundCues` (SEN `SoundCueAttachment` records, replacing production's
+`audioMoments`) is chapter-owned generation output rather than a Workshop prop.
+Transfer its placement (`placeSoundCues`), accepted-result persistence, Reader
+adapter, and block-scoped rendering together; do not copy the preview fixtures
+as data.
 
 ## Transfer notes and cautions
 

@@ -1,4 +1,4 @@
-import { loadLibraryCues } from '../../../host/media/libraryCatalog';
+import { LIBRARY_BASE_MEDIA, LIBRARY_SOUND_WORDS } from '../../../host/media/libraryCatalog';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ReaderViewport,
@@ -18,10 +18,8 @@ import type {
   StoryBlock,
   StoryWorld,
 } from '@seihouse/sen/reader-chamber';
-import {
-  resolveChapterAudioMoments,
-  type WorldCueIntent,
-} from '@seihouse/sen/audio';
+import { placeSoundCues } from '@seihouse/sen/audio';
+import { readMarks } from '@seihouse/sen/generation';
 import type { CardPreset, CardWorkshopOverrides } from '../shared/types';
 import {
   SYSTEM_PROMPT_CHARACTER_TERMS,
@@ -33,7 +31,9 @@ const LOCAL_CREATURE_PORTRAIT = '/card-workshop/test-images/lyra_meadowlight_por
 
 const CONTEXT_CARD_BLOCK_ID = 'card-workshop-context-card';
 const CONTEXT_OPENING_BLOCK_ID = 'card-workshop-context-opening';
-const CONTEXT_OPENING_TEXT = 'Rain threaded down the bronze eaves. The Rain Court bell tolled once as a Vermilion Debt Fox growled beneath the empty tribunal.';
+/** The opening paragraph as a writer returns it, with the words where each sound happens marked. */
+const CONTEXT_OPENING = readMarks('Rain threaded down the bronze eaves. The [[1|Rain Court bell tolled once]] as [[2|a Vermilion Debt Fox growled]] beneath the empty tribunal.');
+const CONTEXT_OPENING_TEXT = CONTEXT_OPENING.text;
 const CONTEXT_CHAPTER_NUMBER = 1;
 
 const CONTEXT_WITNESS: CodexTerm = {
@@ -62,36 +62,17 @@ const CONTEXT_CUE_LOCATION: CodexTerm = {
   },
 };
 
-const CONTEXT_WORLD_CUE_INTENTS = [
-  {
-    blockId: CONTEXT_OPENING_BLOCK_ID,
-    triggerPhrase: 'Rain Court bell tolled once',
-    occurrenceIndex: 0,
-    sourceCategory: 'locations',
-    variation: 'signatures',
-    semanticTags: ['gong', 'resonant', 'deep'],
-    relatedEntity: { name: 'Rain Court', type: 'location' },
-  },
-  {
-    blockId: CONTEXT_OPENING_BLOCK_ID,
-    triggerPhrase: 'a Vermilion Debt Fox growled',
-    occurrenceIndex: 0,
-    sourceCategory: 'beasts',
-    variation: 'growl',
-    semanticTags: ['growl', 'predator', 'threatening'],
-    relatedEntity: { name: 'Vermilion Debt Fox', type: 'creature' },
-  },
-] as const satisfies readonly WorldCueIntent[];
-
-const CONTEXT_AUDIO_MOMENTS = (() => {
-  const resolution = resolveChapterAudioMoments(
-    [{ id: CONTEXT_OPENING_BLOCK_ID, text: CONTEXT_OPENING_TEXT }],
-    CONTEXT_WORLD_CUE_INTENTS, loadLibraryCues(),
-  );
-  if (resolution.issues.length > 0) {
-    throw new Error('Card Workshop World Cue fixture failed validation.');
-  }
-  return resolution.audioMoments.map(moment => ({ ...moment, cue: { ...moment.cue, provenance: { catalogId: 'library-default-cues', version: '1' } } }));
+/** Placed through the same HARNESS rules a generated chapter uses; the fixture never picks a file or URL. */
+const CONTEXT_SOUND_CUES = (() => {
+  const placement = placeSoundCues({
+    paragraphs: [{ blockId: CONTEXT_OPENING_BLOCK_ID, text: CONTEXT_OPENING.text, marks: CONTEXT_OPENING.marks }],
+    signals: [{ mark: 1, sound: 'bell rings', energy: 'high' }, { mark: 2, sound: 'beast growl' }],
+    vocabulary: LIBRARY_SOUND_WORDS,
+    recordings: LIBRARY_BASE_MEDIA.soundCues,
+    chapterNumber: CONTEXT_CHAPTER_NUMBER,
+  });
+  if (placement.setAside.length > 0) throw new Error('Card Workshop Sound Cue fixture failed placement.');
+  return placement.soundCues;
 })();
 
 const CONTEXT_READER_PREFERENCES: ReaderPreferences = {
@@ -308,7 +289,7 @@ export function createCardWorkshopContextualFixture(
       premise: 'A fixed, local Reader fixture.',
       status: 'read',
       hasContent: true,
-      audioMoments: CONTEXT_AUDIO_MOMENTS,
+      soundCues: CONTEXT_SOUND_CUES,
       blocks,
     },
     codexTerms,

@@ -6,4 +6,4 @@
  * provider voice records remain outside this package.
  */
 export * from '../../audio';
-export { extractReaderVisibleAudioText } from '../../audio/readerVisibleText';
+export { extractReaderVisibleAudioText, isReaderSystemLine } from '../../audio/readerVisibleText';

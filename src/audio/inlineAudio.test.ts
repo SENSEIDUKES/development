@@ -1,428 +1,142 @@
-import { loadLibraryCues } from '../host/media/libraryCatalog';
 import { describe, expect, it } from 'vitest';
-import { parseAudioCues } from '@seihouse/sen/audio';
-import { resolveCatalogCueForWorldCue, resolveChapterAudioMoments, resolvePlayableAudioMoment, resolveResolvedAudioMomentCue, resolveWorldCueIntent, splitByResolvedAudioMoments, validateWorldCueIntent, type ResolvedWorldCueMoment, type WorldCueIntent } from '@seihouse/sen/audio';
+import { readMarks } from '../narrative/marks';
+import type { AudioCue } from './cues';
+import { resolvePlayableSoundCue, soundCueTrackId, splitBySoundCues, type SoundCueAttachment } from './inlineAudio';
+import type { FrozenNarrativeMedia } from './media';
+import { describeSetAsideSoundCue, placeSoundCues, type SoundCueSignal } from './soundCuePlacement';
+import type { SoundWord } from './soundWords';
 
-const growlIntent: WorldCueIntent = {
-  blockId: 'block-a',
-  triggerPhrase: 'the fox growled',
-  occurrenceIndex: 0,
-  sourceCategory: 'beasts',
-  variation: 'growl',
-  semanticTags: ['tiger', 'close'],
-  relatedEntity: { name: 'Vermilion Debt Fox', type: 'creature' },
+const recording = (name: string, sound: string, energy?: 'low' | 'medium' | 'high'): FrozenNarrativeMedia['soundCues'][number] => ({
+  cue: {
+    file_path: `cues/${name}.mp3`,
+    public_url: `https://media.example.org/${name}.mp3`,
+    category: 'weapons',
+    metadata: {
+      main_category: 'weapons', broad_variation: 'unsheathe', soft_tags: [], description: name, confidence_score: 1,
+      sound, ...(energy ? { studio_tags: { energy } } : {}),
+    },
+  } satisfies AudioCue,
+  provenance: { catalogId: 'test-cues', version: '1' },
+});
+
+const RECORDINGS = [
+  recording('sword-medium', 'blade drawn', 'medium'),
+  recording('sword-heavy', 'blade drawn', 'high'),
+  recording('sword-plain', 'blade drawn'),
+  recording('roar-a', 'beast roar'),
+  recording('roar-b', 'beast roar'),
+];
+const VOCABULARY: SoundWord[] = [
+  { word: 'blade drawn', example: 'drew his sword' },
+  { word: 'beast roar', example: 'the beast roared' },
+];
+
+/** Reads marked paragraphs the way the HARNESS does, then places the cues. */
+const place = (paragraphs: string[], signals: SoundCueSignal[], chapterNumber = 1, locale?: string) => placeSoundCues({
+  paragraphs: paragraphs.map((source, index) => ({ blockId: `c${chapterNumber}-p${index + 1}`, ...readMarks(source) })),
+  signals, vocabulary: VOCABULARY, recordings: RECORDINGS, chapterNumber, locale,
+});
+
+describe('placeSoundCues', () => {
+  it('places a cue on the exact whole words its mark wraps', () => {
+    const { soundCues, setAside } = place(['Wei Lin [[1|drew his sword]] as the beast lunged.'], [{ mark: 1, sound: 'Blade Drawn', energy: 'high' }]);
+    expect(setAside).toEqual([]);
+    expect(soundCues).toEqual([{
+      id: 'sound-cue:c1-p1:8-22',
+      kind: 'sound-cue',
+      anchor: { level: 'span', blockId: 'c1-p1', startOffset: 8, endOffset: 22, selectedText: 'drew his sword' },
+      payload: {
+        origin: 'harness', sound: 'blade drawn', energy: 'high',
+        cue: { publicUrl: 'https://media.example.org/sword-heavy.mp3', provenance: { catalogId: 'test-cues', version: '1' }, category: 'weapons', tags: { energy: 'high' } },
+      },
+    }]);
+  });
+
+  it('widens a mark that starts or ends inside a word to the whole word', () => {
+    const { soundCues } = place(['The [[1|beast roa]]red.'], [{ mark: 1, sound: 'beast roar' }]);
+    expect(soundCues[0].anchor.selectedText).toBe('beast roared');
+  });
+
+  it('places cues in Japanese prose', () => {
+    const { soundCues, setAside } = place(['林は[[1|剣を抜いた]]。'], [{ mark: 1, sound: 'blade drawn' }], 1, 'ja');
+    expect(setAside).toEqual([]);
+    expect(soundCues[0].anchor.selectedText).toBe('剣を抜いた');
+  });
+
+  it('sets aside, never forces, what breaks the rules', () => {
+    const { soundCues, setAside } = place([
+      'He [[1|drew the long curved blade of his fathers]] slowly. The [[2|beast roared]].',
+      '[[[3|Quest complete]]]',
+      'She [[4|drew]] it.',
+    ], [
+      { mark: 1, sound: 'blade drawn' },
+      { mark: 2, sound: 'thunder' },
+      { mark: 3, sound: 'blade drawn' },
+      { mark: 9, sound: 'beast roar' },
+      { mark: 4, sound: 'blade drawn' },
+      { mark: 4, sound: 'beast roar' },
+    ]);
+    expect(soundCues.map(cue => cue.anchor.selectedText)).toEqual(['drew']);
+    expect(setAside.map(item => [item.mark, item.reason])).toEqual([
+      [1, 'too-many-words'], [2, 'unknown-sound'], [3, 'not-prose'], [9, 'missing-mark'], [4, 'duplicate-signal'],
+    ]);
+    expect(describeSetAsideSoundCue(setAside[0])).toBe('Sound Cue 1 "blade drawn" covers more than 5 words ("drew the long curved blade of his fathers"); it was set aside.');
+  });
+
+  it('keeps the first ten in reading order and drops overlaps', () => {
+    const paragraph = Array.from({ length: 12 }, (_, index) => `[[${index + 1}|roared]]`).join(' and ');
+    const { soundCues, setAside } = place([paragraph], Array.from({ length: 12 }, (_, index) => ({ mark: 12 - index, sound: 'beast roar' })));
+    expect(soundCues).toHaveLength(10);
+    expect(soundCues[0].anchor.startOffset).toBe(0);
+    expect(setAside.map(item => [item.mark, item.reason])).toEqual([[11, 'over-limit'], [12, 'over-limit']]);
+    const overlapping = place(['He [[1|drew his]] sword'], [{ mark: 1, sound: 'blade drawn' }]);
+    expect(overlapping.soundCues).toHaveLength(1);
+  });
+
+  it('rotates recordings so repeated sounds vary, identically on every run', () => {
+    const run = () => place(['The [[1|beast roared]]. Again the [[2|beast roared]].'], [{ mark: 1, sound: 'beast roar' }, { mark: 2, sound: 'beast roar' }], 3);
+    const urls = run().soundCues.map(cue => cue.payload.cue.publicUrl);
+    expect(new Set(urls).size).toBe(2);
+    expect(run()).toEqual(run());
+  });
+
+  it('prefers the Energy asked for and falls back to any recording of the word', () => {
+    expect(place(['He [[1|drew]].'], [{ mark: 1, sound: 'blade drawn', energy: 'medium' }]).soundCues[0].payload.cue.publicUrl).toContain('sword-medium');
+    expect(place(['The [[1|beast roared]].'], [{ mark: 1, sound: 'beast roar', energy: 'low' }]).soundCues).toHaveLength(1);
+  });
+});
+
+const cueOn = (text: string, words: string, overrides: Partial<SoundCueAttachment['payload']['cue']> = {}): SoundCueAttachment => {
+  const start = text.indexOf(words);
+  return {
+    id: `sound-cue:p1:${start}`, kind: 'sound-cue',
+    anchor: { level: 'span', blockId: 'p1', startOffset: start, endOffset: start + words.length, selectedText: words },
+    payload: { origin: 'harness', sound: 'blade drawn', cue: { publicUrl: 'https://media.example.org/a.mp3', provenance: { catalogId: 'x', version: '1' }, category: 'weapons', ...overrides } },
+  };
 };
 
-const resolvedMoment = (overrides: Partial<ResolvedWorldCueMoment> = {}): ResolvedWorldCueMoment => ({
-  id: 'world-cue:block-a:0:fox',
-  blockId: 'block-a',
-  triggerPhrase: 'the fox growled',
-  occurrenceIndex: 0,
-  sourceCategory: 'beasts',
-  variation: 'growl',
-  semanticTags: ['tiger'],
-  relatedEntity: { name: 'Vermilion Debt Fox', type: 'creature' },
-  cue: {
-    publicUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Beasts/Growl/Tiger_Growl_1.mp3',
-  },
-  ...overrides,
-});
+describe('Reader side of a Sound Cue', () => {
+  const text = 'Wei Lin drew his sword as the beast roared.';
 
-const catalogEntry = (
-  fileName: string,
-  tags: string[],
-  confidence: number,
-  publicUrl = `https://audio.example/${fileName}`,
-) => ({
-  file_path: `DEFAULT/Beasts/Growl/${fileName}`,
-  public_url: publicUrl,
-  metadata: {
-    main_category: 'beasts',
-    broad_variation: 'growl',
-    soft_tags: tags,
-    description: `${fileName} test cue`,
-    confidence_score: confidence,
-  },
-});
-
-describe('World Cue intent validation', () => {
-  it('keeps generation output catalog- and provider-neutral', () => {
-    expect(validateWorldCueIntent(growlIntent)).toMatchObject({ ok: true });
-    expect(Object.keys(growlIntent).sort()).toEqual([
-      'blockId',
-      'occurrenceIndex',
-      'relatedEntity',
-      'semanticTags',
-      'sourceCategory',
-      'triggerPhrase',
-      'variation',
+  it('splits a paragraph at its cues by offsets', () => {
+    const segments = splitBySoundCues(text, [cueOn(text, 'beast roared'), cueOn(text, 'drew his sword')]);
+    expect(segments.map(segment => [segment.text, Boolean(segment.cue)])).toEqual([
+      ['Wei Lin ', false], ['drew his sword', true], [' as the ', false], ['beast roared', true], ['.', false],
     ]);
-
-    expect(validateWorldCueIntent({
-      ...growlIntent,
-      cueUrl: 'https://audio.example/model-selected.mp3',
-    })).toMatchObject({ ok: false, reason: 'forbidden-field' });
-    expect(validateWorldCueIntent({
-      ...growlIntent,
-      relatedEntity: { ...growlIntent.relatedEntity, providerId: 'private-provider-id' },
-    })).toMatchObject({ ok: false, reason: 'forbidden-field' });
-    expect(validateWorldCueIntent({
-      ...growlIntent,
-      Voice_Key: 'private-voice-key',
-    })).toMatchObject({ ok: false, reason: 'forbidden-field' });
-    expect(validateWorldCueIntent({
-      ...growlIntent,
-      PublicURL: 'https://audio.example/model-selected.mp3',
-    })).toMatchObject({ ok: false, reason: 'forbidden-field' });
-    expect(validateWorldCueIntent({
-      ...growlIntent,
-      catalog_key: 'beast-growl-1',
-    })).toMatchObject({ ok: false, reason: 'forbidden-field' });
   });
 
-  it('requires positive audible-action evidence with or without entity context', () => {
-    expect(validateWorldCueIntent({
-      ...growlIntent,
-      triggerPhrase: 'A Vermilion Debt Fox',
-    })).toMatchObject({ ok: false, reason: 'ineligible-phrase' });
-    expect(validateWorldCueIntent({
-      ...growlIntent,
-      triggerPhrase: 'Vermilion Debt Fox',
-      relatedEntity: undefined,
-    })).toMatchObject({ ok: false, reason: 'ineligible-phrase' });
-    expect(validateWorldCueIntent({
-      ...growlIntent,
-      triggerPhrase: 'The Azure Ring',
-      sourceCategory: 'artifacts',
-      variation: 'relics',
-      relatedEntity: undefined,
-    })).toMatchObject({ ok: false, reason: 'ineligible-phrase' });
-    expect(validateWorldCueIntent({
-      ...growlIntent,
-      triggerPhrase: 'The Azure Ring',
-      sourceCategory: 'artifacts',
-      variation: 'ringing',
-      relatedEntity: undefined,
-    })).toMatchObject({ ok: false, reason: 'ineligible-phrase' });
-    expect(validateWorldCueIntent({
-      ...growlIntent,
-      triggerPhrase: 'the fox growled',
-      relatedEntity: undefined,
-    })).toMatchObject({ ok: true });
-    expect(validateWorldCueIntent({
-      ...growlIntent,
-      relatedEntity: { id: 'model-selected-entity', name: 'Vermilion Debt Fox' },
-    })).toMatchObject({ ok: false, reason: 'invalid-intent' });
-    expect(validateWorldCueIntent({
-      ...growlIntent,
-      relatedEntity: { name: 'Vermilion Debt Fox', type: 'species' },
-    })).toMatchObject({ ok: false, reason: 'invalid-intent' });
+  it('leaves prose plain where the words no longer match or cues overlap', () => {
+    expect(splitBySoundCues('Wei Lin sheathed his sword.', [cueOn(text, 'drew his sword')])).toEqual([{ text: 'Wei Lin sheathed his sword.' }]);
+    const overlap = { ...cueOn(text, 'his sword'), id: 'b' };
+    expect(splitBySoundCues(text, [cueOn(text, 'drew his sword'), overlap]).filter(segment => segment.cue)).toHaveLength(1);
   });
 
-  it('requires variation-compatible, affirmative audible actions', () => {
-    expect(validateWorldCueIntent({
-      ...growlIntent,
-      triggerPhrase: 'Mei Lin drew the Ashen Sword',
-      sourceCategory: 'weapons',
-      variation: 'unsheathe',
-      relatedEntity: { name: 'Ashen Sword', type: 'artifact' },
-    })).toMatchObject({ ok: true });
-    expect(validateWorldCueIntent({
-      ...growlIntent,
-      triggerPhrase: 'Mei Lin drew a map of the valley',
-      sourceCategory: 'weapons',
-      variation: 'unsheathe',
-      relatedEntity: undefined,
-    })).toMatchObject({ ok: false, reason: 'ineligible-phrase' });
-    expect(validateWorldCueIntent({
-      ...growlIntent,
-      triggerPhrase: 'the fox never growled',
-    })).toMatchObject({ ok: false, reason: 'ineligible-phrase' });
-    expect(validateWorldCueIntent({
-      ...growlIntent,
-      triggerPhrase: 'the rifle fired',
-      sourceCategory: 'weapons',
-      variation: 'reload',
-      relatedEntity: undefined,
-    })).toMatchObject({ ok: false, reason: 'ineligible-phrase' });
-    expect(validateWorldCueIntent({
-      ...growlIntent,
-      triggerPhrase: 'Mei Lin reloaded the rifle',
-      sourceCategory: 'weapons',
-      variation: 'reload',
-      relatedEntity: undefined,
-    })).toMatchObject({ ok: true });
-    expect(validateWorldCueIntent({
-      ...growlIntent,
-      triggerPhrase: 'Howl',
-      variation: 'howl',
-      relatedEntity: undefined,
-    })).toMatchObject({ ok: false, reason: 'ineligible-phrase' });
-    expect(validateWorldCueIntent({
-      ...growlIntent,
-      triggerPhrase: 'she sounded uncertain',
-      sourceCategory: 'locations',
-      variation: 'signatures',
-      relatedEntity: undefined,
-    })).toMatchObject({ ok: false, reason: 'ineligible-phrase' });
-  });
-
-  it('rejects selector-like values in every model-authored string field', () => {
-    const candidates = [
-      { ...growlIntent, blockId: 'https://media.example/block-a' },
-      { ...growlIntent, triggerPhrase: 'the fox growled beside asset://beast-growl-1' },
-      { ...growlIntent, sourceCategory: 'catalog://beasts' },
-      { ...growlIntent, variation: 'DEFAULT/Beasts/Growl/Tiger_Growl_1.mp3' },
-      { ...growlIntent, semanticTags: ['catalog_id=beast-growl-1'] },
-      { ...growlIntent, semanticTags: ['asset-beast-growl-1'] },
-      { ...growlIntent, semanticTags: ['beasts/growl/tiger'] },
-      {
-        ...growlIntent,
-        relatedEntity: { name: 'https://media.example/fox', type: 'creature' },
-      },
-      {
-        ...growlIntent,
-        relatedEntity: { name: 'Vermilion Debt Fox', type: 'provider://creature' },
-      },
-    ];
-
-    for (const candidate of candidates) {
-      expect(validateWorldCueIntent(candidate))
-        .toMatchObject({ ok: false, reason: 'forbidden-selector' });
-    }
-  });
-
-  it('rejects terminal punctuation so the glyph owns the phrase/punctuation boundary', () => {
-    expect(validateWorldCueIntent({
-      ...growlIntent,
-      triggerPhrase: 'the fox growled.',
-    })).toMatchObject({ ok: false, reason: 'ineligible-phrase' });
-    expect(resolveResolvedAudioMomentCue(resolvedMoment({
-      triggerPhrase: 'the fox growled.',
-    }), loadLibraryCues())).toMatchObject({ ok: false, reason: 'invalid-moment' });
-    for (const punctuation of ['—', '–', '”', "'"]) {
-      expect(validateWorldCueIntent({
-        ...growlIntent,
-        triggerPhrase: `the fox growled${punctuation}`,
-      })).toMatchObject({ ok: false, reason: 'ineligible-phrase' });
-    }
-  });
-
-  it('rejects reserved audio categories and bounds generated payload size', () => {
-    expect(validateWorldCueIntent({
-      ...growlIntent,
-      sourceCategory: 'atmosphere',
-    })).toMatchObject({ ok: false, reason: 'invalid-intent' });
-    expect(validateWorldCueIntent({
-      ...growlIntent,
-      sourceCategory: 'system',
-    })).toMatchObject({ ok: false, reason: 'invalid-intent' });
-    expect(validateWorldCueIntent({
-      ...growlIntent,
-      sourceCategory: 'voice',
-      voiceKey: 'character.mei-lin',
-    })).toMatchObject({ ok: false, reason: 'forbidden-field' });
-    expect(validateWorldCueIntent({
-      ...growlIntent,
-      semanticTags: Array.from({ length: 9 }, (_, index) => `tag-${index}`),
-    })).toMatchObject({ ok: false, reason: 'invalid-intent' });
-    expect(validateWorldCueIntent({
-      ...growlIntent,
-      triggerPhrase: `the fox growled ${'x'.repeat(241)}`,
-    })).toMatchObject({ ok: false, reason: 'invalid-intent' });
-  });
-});
-
-describe('World Cue catalog resolution', () => {
-  it('resolves deterministically by exact variation, tag overlap, confidence, then URL', () => {
-    const loaded = parseAudioCues([
-      catalogEntry('z.mp3', ['tiger', 'close'], 0.6, 'https://audio.example/z.mp3'),
-      catalogEntry('b.mp3', ['tiger'], 1, 'https://audio.example/b.mp3'),
-      catalogEntry('a.mp3', ['tiger', 'close'], 0.9, 'https://audio.example/a.mp3'),
-      catalogEntry('aa.mp3', ['tiger', 'close'], 0.9, 'https://audio.example/aa.mp3'),
-      {
-        ...catalogEntry('howl.mp3', ['tiger', 'close'], 1),
-        metadata: {
-          ...catalogEntry('howl.mp3', ['tiger', 'close'], 1).metadata,
-          broad_variation: 'howl',
-        },
-      },
-    ]);
-
-    expect(resolveCatalogCueForWorldCue(growlIntent, loaded)?.public_url)
-      .toBe('https://audio.example/a.mp3');
-    expect(resolveCatalogCueForWorldCue({
-      ...growlIntent,
-      variation: 'missing',
-    }, loaded)).toBeNull();
-  });
-
-  it('persists only the client-safe URL after exact placement and catalog validation', () => {
-    const result = resolveWorldCueIntent(
-      growlIntent,
-      { id: 'block-a', text: 'At dusk the fox growled once.' }, loadLibraryCues(),
-    );
-    expect(result.ok).toBe(true);
-    if (!result.ok) throw new Error(result.message);
-
-    expect(result.moment).toMatchObject({
-      blockId: 'block-a',
-      triggerPhrase: 'the fox growled',
-      occurrenceIndex: 0,
-      sourceCategory: 'beasts',
-      cue: { publicUrl: expect.stringContaining('/Beasts/Growl/') },
-    });
-    expect(Object.keys(result.moment.cue)).toEqual(['publicUrl']);
-    expect(JSON.stringify(result.moment)).not.toMatch(/file_path|assetId|catalogId|providerId/i);
-  });
-
-  it('revalidates persisted URLs and category/variation ownership before rendering', () => {
-    expect(resolveResolvedAudioMomentCue(resolvedMoment(), loadLibraryCues())).toMatchObject({ ok: true });
-    expect(resolveResolvedAudioMomentCue(resolvedMoment({
-      cue: { publicUrl: 'https://audio.example/unapproved.mp3' },
-    }), loadLibraryCues())).toMatchObject({ ok: false, reason: 'not-found' });
-    expect(resolveResolvedAudioMomentCue(resolvedMoment({
-      sourceCategory: 'weapons',
-    }), loadLibraryCues())).toMatchObject({ ok: false, reason: 'category-mismatch' });
-  });
-});
-
-describe('World Cue placement and chapter resolution', () => {
-  it('uses the requested zero-based exact occurrence and annotates no other mention', () => {
-    const text = 'the fox growled, then the fox growled again.';
-    const result = resolveWorldCueIntent(
-      { ...growlIntent, occurrenceIndex: 1 },
-      { id: 'block-a', text }, loadLibraryCues(),
-    );
-    expect(result.ok).toBe(true);
-    if (!result.ok) throw new Error(result.message);
-
-    const segments = splitByResolvedAudioMoments(text, [result.moment]);
-    expect(segments.filter(segment => segment.moment)).toHaveLength(1);
-    expect(segments.map(segment => segment.text).join('')).toBe(text);
-    expect(segments.findIndex(segment => segment.moment)).toBe(1);
-    expect(segments[0].text).toBe('the fox growled, then ');
-  });
-
-  it('counts placement only in the exact text Reader shows after hidden SFX cleanup', () => {
-    const block = {
-      id: 'block-a',
-      text: '[SFX: the fox growled] At dusk the fox growled.',
-    };
-    expect(resolveWorldCueIntent(growlIntent, block, loadLibraryCues())).toMatchObject({ ok: true });
-    expect(resolveWorldCueIntent(
-      { ...growlIntent, occurrenceIndex: 1 },
-      block, loadLibraryCues(),
-    )).toMatchObject({ ok: false, reason: 'occurrence-not-found' });
-
-    const chapter = resolveChapterAudioMoments([block], [growlIntent], loadLibraryCues());
-    expect(chapter.issues).toEqual([]);
-    expect(chapter.audioMoments).toHaveLength(1);
-  });
-
-  it('keeps an event scoped to its referenced block and reports stale placement', () => {
-    const blocks = [
-      { id: 'block-a', text: 'At dusk the fox growled.' },
-      { id: 'block-b', text: 'At dawn the fox growled.' },
-    ];
-    const resolution = resolveChapterAudioMoments(blocks, [growlIntent], loadLibraryCues());
-    expect(resolution.issues).toEqual([]);
-    expect(resolution.audioMoments).toHaveLength(1);
-    expect(resolution.audioMoments[0].blockId).toBe('block-a');
-    expect(splitByResolvedAudioMoments(blocks[0].text, resolution.audioMoments)
-      .some(segment => Boolean(segment.moment))).toBe(true);
-    expect(splitByResolvedAudioMoments(blocks[1].text, [])).toEqual([{ text: blocks[1].text }]);
-
-    expect(resolveWorldCueIntent(
-      { ...growlIntent, occurrenceIndex: 2 },
-      blocks[0], loadLibraryCues(),
-    )).toMatchObject({ ok: false, reason: 'occurrence-not-found' });
-    expect(resolveWorldCueIntent(
-      growlIntent,
-      { id: 'block-a', text: 'At dusk the fox watched.' }, loadLibraryCues(),
-    )).toMatchObject({ ok: false, reason: 'phrase-not-found' });
-  });
-
-  it('can consume block metadata intents and omits anything unresolved', () => {
-    const blocks = [{
-      id: 'block-a',
-      text: 'At dusk the fox growled while Mei Lin reloaded the rifle.',
-      metadata: {
-        audioMoments: [
-          growlIntent,
-          {
-            ...growlIntent,
-            triggerPhrase: 'Mei Lin reloaded the rifle',
-            sourceCategory: 'weapons',
-            variation: 'reload',
-            relatedEntity: undefined,
-          },
-        ],
-      },
-    }];
-    const loaded = parseAudioCues([
-      catalogEntry('growl.mp3', ['tiger', 'close'], 1),
-    ]);
-    const resolution = resolveChapterAudioMoments(blocks, undefined, loaded);
-    expect(resolution.audioMoments).toHaveLength(1);
-    expect(resolution.issues).toHaveLength(1);
-    expect(resolution.issues[0]).toMatchObject({ reason: 'unresolved-cue' });
-  });
-
-  it('does not migrate structured System Panel sounds into World Cues', () => {
-    const resolution = resolveChapterAudioMoments(
-      [{
-        id: 'block-a',
-        text: 'the fox growled.',
-        system: { kind: 'warning', title: 'Threat detected' },
-      }],
-      [growlIntent], loadLibraryCues(),
-    );
-    expect(resolution.audioMoments).toEqual([]);
-    expect(resolution.issues).toContainEqual(expect.objectContaining({ reason: 'reserved-block' }));
-  });
-
-  it('rejects overlapping persisted placements and caps moments per chapter', () => {
-    const overlap = resolveChapterAudioMoments(
-      [{ id: 'block-a', text: 'the fox growled loudly.' }],
-      [
-        growlIntent,
-        { ...growlIntent, triggerPhrase: 'fox growled' },
-      ], loadLibraryCues(),
-    );
-    expect(overlap.audioMoments).toHaveLength(1);
-    expect(overlap.issues).toContainEqual(expect.objectContaining({ reason: 'overlapping-placement' }));
-
-    // A chapter holds at most ten Sound Cues.
-    const manyBlocks = Array.from({ length: 11 }, (_, index) => ({
-      id: `block-${index}`,
-      text: `the fox growled ${index}.`,
-    }));
-    const manyIntents = manyBlocks.map(block => ({
-      ...growlIntent,
-      blockId: block.id,
-    }));
-    const bounded = resolveChapterAudioMoments(manyBlocks, manyIntents, loadLibraryCues());
-    expect(bounded.audioMoments).toHaveLength(10);
-    expect(bounded.issues).toContainEqual(expect.objectContaining({
-      reason: 'invalid-intent',
-      intentIndex: 10,
-    }));
-  });
-
-  it('drops a finished cue that would sit inside a word or run past five words, and keeps the prose', () => {
-    const cues = loadLibraryCues();
-    // "ox growled" is found inside "the fox growled": its cue would start mid-word.
-    expect(resolveWorldCueIntent({ ...growlIntent, triggerPhrase: 'ox growled' }, { id: 'block-a', text: 'the fox growled loudly.' }, cues))
-      .toMatchObject({ ok: false, reason: 'partial-word' });
-    const long = { ...growlIntent, triggerPhrase: 'the old fox growled at the gate' };
-    // The model's phrase is direction, not the address: it passes intent checks, and only the finished cue is refused.
-    expect(validateWorldCueIntent(long).ok).toBe(true);
-    expect(resolveWorldCueIntent(long, { id: 'block-a', text: 'Then the old fox growled at the gate.' }, cues))
-      .toMatchObject({ ok: false, reason: 'too-many-words' });
-    const resolved = resolveChapterAudioMoments([{ id: 'block-a', text: 'Then the old fox growled at the gate.' }], [long, growlIntent], cues);
-    expect(resolved.audioMoments).toHaveLength(0);
-    expect(resolved.issues.map(issue => issue.reason)).toContain('too-many-words');
-    expect(resolveWorldCueIntent(growlIntent, { id: 'block-a', text: 'Then the fox growled at the gate.' }, cues).ok).toBe(true);
+  it('plays only whole records with a public, provenanced recording, whatever the language', () => {
+    expect(resolvePlayableSoundCue(cueOn('林は剣を抜いた。', '剣を抜いた'))).toEqual({ ok: true, publicUrl: 'https://media.example.org/a.mp3' });
+    expect(resolvePlayableSoundCue(cueOn(text, 'drew', { publicUrl: 'http://media.example.org/a.mp3' })).ok).toBe(false);
+    expect(resolvePlayableSoundCue(cueOn(text, 'drew', { provenance: { catalogId: '', version: '' } })).ok).toBe(false);
+    const detached = cueOn(text, 'drew');
+    expect(resolvePlayableSoundCue({ ...detached, anchor: { ...detached.anchor, detached: true } })).toMatchObject({ ok: false, reason: 'detached' });
+    expect(soundCueTrackId(detached)).toBe('reader-inline:sound-cue:p1:8');
   });
 });

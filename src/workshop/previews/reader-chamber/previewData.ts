@@ -1,4 +1,4 @@
-import { loadLibraryCues } from '../../../host/media/libraryCatalog';
+import { LIBRARY_BASE_MEDIA, LIBRARY_SOUND_WORDS } from '../../../host/media/libraryCatalog';
 import type {
   Bookmark,
   GeneratedImage,
@@ -6,78 +6,45 @@ import type {
   ReaderPreferences,
   StoryWorld,
 } from '@seihouse/sen/reader-chamber';
-import { resolveChapterAudioMoments, type WorldCueIntent } from '@seihouse/sen/audio';
+import { placeSoundCues, type SoundCueSignal } from '@seihouse/sen/audio';
+import { readMarks } from '@seihouse/sen/generation';
 export const MOCK_READER_FALLBACK_LABEL = 'Mock fallback · No generated batch supplied · Four-chapter preview story only';
 
 export const MOCK_STORY_ID = 'workshop-story-emberfall';
 const CODEX_PREVIEW_IMAGE = '/story-seed/library-auth-backdrop.jpg';
 
 const INLINE_AUDIO_BLOCK_ID = 'ch1-b1-inline-audio';
-const INLINE_AUDIO_BLOCK_TEXT = 'A Vermilion Debt Fox growled beneath the lintel as Mei Lin drew the Ashen Sword. The Azure Ring chimed awake in Li Wei’s hand; the Collapsed Gate of the Ninth Meridian tolled once, and the Ninth Meridian Sect chanted in answer.';
+/** The paragraph as a writer returns it: the words where each sound happens are marked. */
+const INLINE_AUDIO_MARKED_TEXT = '[[1|A Vermilion Debt Fox growled]] beneath the lintel as Mei Lin [[2|drew the Ashen Sword]]. [[3|The Azure Ring chimed awake]] in Li Wei’s hand; the Collapsed Gate of the Ninth Meridian [[4|tolled once]], and the Ninth Meridian Sect [[5|chanted in answer]].';
 
 /**
- * Action-based, model-safe examples. Resolution runs after the final block
- * text exists, so these fixtures never choose catalog files or URLs.
- * Vermilion Debt Fox remains absent from StoryMemory (sound-only prose), while
- * The Azure Ring still demonstrates independent Codex and World Cue actions.
+ * What the writer said about each mark, in the tiny SEN language. Placement
+ * runs through the same HARNESS rules a generated chapter does, so these
+ * fixtures never choose catalog files or URLs.
  */
-export const READER_WORLD_CUE_INTENTS = [
-  {
-    blockId: INLINE_AUDIO_BLOCK_ID,
-    triggerPhrase: 'A Vermilion Debt Fox growled',
-    occurrenceIndex: 0,
-    sourceCategory: 'beasts',
-    variation: 'growl',
-    semanticTags: ['growl', 'predator', 'threatening'],
-    relatedEntity: { name: 'Vermilion Debt Fox', type: 'creature' },
-  },
-  {
-    blockId: INLINE_AUDIO_BLOCK_ID,
-    triggerPhrase: 'drew the Ashen Sword',
-    occurrenceIndex: 0,
-    sourceCategory: 'weapons',
-    variation: 'unsheathe',
-    semanticTags: ['sword', 'draw', 'metal'],
-    relatedEntity: { name: 'Ashen Sword', type: 'artifact' },
-  },
-  {
-    blockId: INLINE_AUDIO_BLOCK_ID,
-    triggerPhrase: 'The Azure Ring chimed awake',
-    occurrenceIndex: 0,
-    sourceCategory: 'artifacts',
-    variation: 'relics',
-    semanticTags: ['resonance', 'tonal', 'evolving'],
-    relatedEntity: { name: 'The Azure Ring', type: 'artifact' },
-  },
-  {
-    blockId: INLINE_AUDIO_BLOCK_ID,
-    triggerPhrase: 'the Ninth Meridian tolled once',
-    occurrenceIndex: 0,
-    sourceCategory: 'locations',
-    variation: 'signatures',
-    semanticTags: ['gong', 'resonant', 'deep'],
-    relatedEntity: { name: 'Collapsed Gate of the Ninth Meridian', type: 'location' },
-  },
-  {
-    blockId: INLINE_AUDIO_BLOCK_ID,
-    triggerPhrase: 'Meridian Sect chanted in answer',
-    occurrenceIndex: 0,
-    sourceCategory: 'factions',
-    variation: 'general',
-    semanticTags: ['chant', 'solemn', 'vocal'],
-    relatedEntity: { name: 'Ninth Meridian Sect', type: 'faction' },
-  },
-] as const satisfies readonly WorldCueIntent[];
+export const READER_SOUND_CUE_SIGNALS = [
+  { mark: 1, sound: 'beast growl', energy: 'medium' },
+  { mark: 2, sound: 'blade drawn', energy: 'medium' },
+  { mark: 3, sound: 'artifact resonates' },
+  { mark: 4, sound: 'gong strikes', energy: 'high' },
+  { mark: 5, sound: 'war chant' },
+] as const satisfies readonly SoundCueSignal[];
 
-const INLINE_AUDIO_MOMENTS = (() => {
-  const resolution = resolveChapterAudioMoments(
-    [{ id: INLINE_AUDIO_BLOCK_ID, text: INLINE_AUDIO_BLOCK_TEXT }],
-    READER_WORLD_CUE_INTENTS, loadLibraryCues(),
-  );
-  if (resolution.issues.length > 0) {
-    throw new Error(`Reader World Cue fixture failed validation: ${resolution.issues[0].message}`);
+const INLINE_AUDIO_PARAGRAPH = readMarks(INLINE_AUDIO_MARKED_TEXT);
+const INLINE_AUDIO_BLOCK_TEXT = INLINE_AUDIO_PARAGRAPH.text;
+
+const INLINE_SOUND_CUES = (() => {
+  const placement = placeSoundCues({
+    paragraphs: [{ blockId: INLINE_AUDIO_BLOCK_ID, text: INLINE_AUDIO_PARAGRAPH.text, marks: INLINE_AUDIO_PARAGRAPH.marks }],
+    signals: READER_SOUND_CUE_SIGNALS,
+    vocabulary: LIBRARY_SOUND_WORDS,
+    recordings: LIBRARY_BASE_MEDIA.soundCues,
+    chapterNumber: 1,
+  });
+  if (placement.setAside.length > 0) {
+    throw new Error(`Reader Sound Cue fixture set aside mark ${placement.setAside[0].mark} (${placement.setAside[0].reason}).`);
   }
-  return resolution.audioMoments.map(moment => ({ ...moment, cue: { ...moment.cue, provenance: { catalogId: 'library-default-cues', version: '1' } } }));
+  return placement.soundCues;
 })();
 
 const createCodexPreviewImage = (
@@ -111,7 +78,7 @@ export const mockReaderPreferences: ReaderPreferences = {
  * One mock StoryWorld with four chapters covering the chamber's meaningful
  * visual states:
  *  1. Rich structured-blocks chapter (System Panels, a Fate Result card,
- *     inline World Cues, a Context Inspector manifest, soft continuity notes).
+ *     inline Sound Cues, a Context Inspector manifest, soft continuity notes).
  *  2. Long legacy `generatedContent` prose chapter with a hard continuity
  *     divergence banner and a legacy [bracket] system line.
  *  3. Sealed chapter that is also a death/critical scene (menacing shading).
@@ -138,7 +105,7 @@ export function createMockChapters(): ReaderChapter[] {
         tension: 5,
         danger: 4,
       },
-      audioMoments: INLINE_AUDIO_MOMENTS,
+      soundCues: INLINE_SOUND_CUES,
       blocks: [
         {
           id: 'ch1-b1',

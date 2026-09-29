@@ -118,8 +118,8 @@ describe('Harness Story Seed entry', () => {
     await act(async () => root.render(<HarnessGenerationWorkspace repository={repository} modelAdapter={modelAdapter} installedSkills={installedSkills} showHarnessInternals />));
 
     expect(container.textContent).toContain('CAPA skill slots');
-    // Four slots are equipped by hand; Fate, Accessibility and Translation follow Story Settings.
-    expect(container.textContent).toContain('2/4 equipped · 3 managed');
+    // Four slots are equipped by hand; Fate, Accessibility and Translation follow Story Settings, Sound Cues the Media Loadout.
+    expect(container.textContent).toContain('2/4 equipped · 4 managed');
     expect(container.textContent).toContain('AuthorEquipped');
     expect(container.textContent).toContain('SEN Novel Author');
     expect(container.textContent).toContain('View skill instructions');

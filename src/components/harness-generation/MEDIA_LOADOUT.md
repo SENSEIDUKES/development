@@ -63,35 +63,42 @@ skill inventory.
 ## Freeze, resolution, persistence, and playback
 
 Every attempt freezes the exact authorized Media Loadout with its validated
-catalog entries and pack ID, version, type, source path, and digest. This
-snapshot lives on `HarnessGenerationAttempt.mediaLoadout`; it is absent from
-`HarnessGenerationRequest`, `CapaPrompt`, `StoryInformationPacket`, and the
-provider prompt. It consumes no CAPA budget. Explicit model retry reuses the
+catalog entries and pack ID, version, type, source path, and digest, before
+its CAPA Prompt is assembled. This snapshot lives on
+`HarnessGenerationAttempt.mediaLoadout`. Explicit model retry reuses the
 original snapshot, and deterministic replay reads the committed chapter.
 
 An equipped **Sound Cue Pack is the story's whole Sound Cue set**: its words
 and recordings replace the default library's (base recordings that answer no
-sound word stay). A Soundscape Pack still adds to the base soundscapes. The
-frozen snapshot carries the attempt's sound words (`FrozenNarrativeMedia.sounds`),
-and `describeSoundVocabulary(storyId)` shows them for inspection; the Media
-Loadout panel lists them. They do not reach the model yet.
+sound word stay). A Soundscape Pack still adds to the base soundscapes, which
+new chapters do not use until Soundscapes are rebuilt. The frozen snapshot
+carries the attempt's sound words (`FrozenNarrativeMedia.sounds`), and
+`describeSoundVocabulary(storyId)` shows them for inspection; the Media
+Loadout panel lists them.
 
-After the HARNESS has split the prose into SEN blocks and matched the accepted
-signals to their anchors, `acceptChapterMedia` receives one authorized catalog
-built from the base catalogs and the matching equipped pack in each slot. The existing World Cue resolver receives that Cue catalog as input.
-Soundscape selection uses the existing `SceneAudioTrack` contract, exact mood
-gating, semantic cultural-region compatibility, tag ranking, and stable
-identity tie-breaking. An exact regional track outranks a neutral base track;
-an explicitly mismatched or unrequested regional track is excluded. The model
-never supplies or selects a pack, URL, filename, catalog row, or R2 object.
+**Only the sound words reach the writer.** They fill the managed CAPA Sound
+Cues slot as its example list (`CapaPrompt.soundVocabulary`, counted against
+the CAPA budget, which a pack at its largest word list fits) and become the
+response schema's `soundCues.sound` choices. Recordings, URLs, filenames,
+catalog rows, packs and entitlements never enter `HarnessGenerationRequest`,
+the Story Information Packet or the provider prompt. The model never supplies
+or selects a pack, URL, filename, catalog row, or R2 object.
 
-Committed chapters persist only normalized blocks and resolved application
-media. Pack-resolved Cue records and resolved Soundscapes retain public playback
-data plus pack/version/source digest provenance; the chapter also records the
-frozen loadout provenance. No credential or private storage location persists.
-Reader adaptation copies these records unchanged. Inline Cues and the Audio
-Menu use `DevAudioPlaybackProvider`, require a user action, add no autoplay or
-second media element, and leave prose readable when playback is unavailable.
+After acceptance has stripped the marks from the paragraphs, `placeSoundCues`
+(`src/audio/soundCuePlacement.ts`) places each cue on the words its mark wraps
+and picks the recording from the frozen snapshot: that sound word's
+recordings, sorted by URL, preferring the Energy asked for, rotated by chapter
+number and how often the word has been used, so the same input always places
+the same recording and repeated sounds vary.
+
+Committed chapters persist paragraphs and their Sound Cues
+(`SoundCueAttachment`: the paragraph id, exact offsets and words, the sound
+word, Energy, and the recording's public URL, category, Studio tags and
+pack/version/source provenance); the chapter also records the frozen loadout
+provenance. No credential or private storage location persists. Reader
+adaptation copies these records unchanged. Inline Cues use
+`DevAudioPlaybackProvider`, require a user action, add no autoplay or second
+media element, and leave prose readable when playback is unavailable.
 
 ## Development fixtures
 
@@ -101,6 +108,6 @@ Workshop-owned adapter that supplies a temporary one-hour entitlement to
 HARNESS; it is not persisted by HARNESS and is not a reward economy, schedule,
 currency, marketplace, or product pack.
 
-Changing the persisted attempt, chapter, and story shapes bumped
-`HARNESS_GENERATION_SCHEMA_VERSION` to 11. Stale local Development data resets;
-there is no compatibility migration.
+Sound Cues in the tiny SEN language bumped `HARNESS_GENERATION_SCHEMA_VERSION`
+to 22 with no upgrade step: earlier workspaces are kept untouched and the page
+starts fresh.

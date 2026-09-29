@@ -79,7 +79,7 @@ describe('Chapter direction review regressions', () => {
     expect(createHarnessSenStory(state, story.id).memory?.worldRules).toEqual(['Mara: Sparks: 16 sparks']);
   });
 
-  it('keeps earlier dialogue through later ambiguity and correction of its character', async () => {
+  it('keeps an earlier character through later ambiguity and correction of its identity', async () => {
     const { controller, story, runtime } = await setup();
     await controller.generateNextChapter(story.id, 'fixture');
     await controller.generateNextChapter(story.id, 'fixture');
@@ -91,9 +91,8 @@ describe('Chapter direction review regressions', () => {
       chapterId: changed.chapters[1].id, facts: { role: 'Spy' } });
     const sen = createHarnessSenStory(changed, story.id);
     expect(sen.memory?.memoryWarnings).toContain('Ambiguous character identity: iven. Speech attribution is withheld.');
-    expect(sen.arcs[0].chapters[0].blocks?.find(block => block.type === 'dialogue')?.metadata?.speakerRole).toBe('Captain');
     expect(createHarnessSenStory(changed, story.id, 1).memory?.characters?.find(character => character.name === 'Iven')?.role).toBe('Captain');
-    expect(sen.arcs[0].chapters[0].blocks?.filter(block => !block.system).map(block => block.text).join('')).toBe(state.chapters[0].prose);
+    expect(sen.arcs[0].chapters[0].blocks?.map(block => block.text).join('\n\n')).toBe(state.chapters[0].prose);
   });
 
   it('omits blank cast fields and does not depend on locale-sensitive case folding', async () => {

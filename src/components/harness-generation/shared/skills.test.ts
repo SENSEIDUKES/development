@@ -6,7 +6,7 @@ import { createEmptyHarnessWorkspaceState } from '@seihouse/sen/harness-generati
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { CAPA_SCHEMA, SEN_READING_MODE_SKILLS, assembleCapaPrompt, buildHarnessOfficialOutputRequirements, createHarnessSkillCatalog, freezeHarnessSkillLoadout, validateHarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import { type HarnessSkillManifest, type HarnessSkillSlotId } from '@seihouse/sen/harness-generation';
-import { SEN_FATE_SURVIVAL_SKILL, SEN_NOVEL_AUTHOR_SKILL, includeBundledHarnessSkills } from '@seihouse/sen/harness-generation';
+import { SEN_FATE_SURVIVAL_SKILL, SEN_NOVEL_AUTHOR_SKILL, SEN_SOUND_CUES_SKILL, includeBundledHarnessSkills } from '@seihouse/sen/harness-generation';
 import { SEN_LIGHT_NOVEL_AUTHOR_INSTRUCTIONS } from '../../../lib/senLightNovelAuthorInstructions';
 
 const pacingSkill = (): HarnessSkillManifest => ({
@@ -116,26 +116,28 @@ describe('Harness installed skills', () => {
         generationSkill('accessibility', 'Use readable paragraph boundaries.'),
         generationSkill('style', 'Use short sentences.'),
         generationSkill('continuity', 'Preserve established canon.'),
+        SEN_SOUND_CUES_SKILL,
         SEN_FATE_SURVIVAL_SKILL,
         pacingSkill(),
         SEN_NOVEL_AUTHOR_SKILL,
       ],
+      soundVocabulary: [{ word: 'blade drawn', example: 'drew his sword' }, { word: 'chime', example: 'a soft chime', meaning: 'a small bright chime' }],
     });
     expect(CAPA_SCHEMA.map(slot => slot.id)).toEqual([
-      'author', 'pacing', 'fate', 'continuity', 'style', 'accessibility', 'translation',
+      'author', 'pacing', 'fate', 'continuity', 'style', 'accessibility', 'translation', 'soundCues',
     ]);
-    // Fate, Accessibility and Translation follow story state; the rest are equipped by hand.
+    // Fate, Accessibility, Translation and Sound Cues follow story state; the rest are equipped by hand.
     expect(CAPA_SCHEMA.filter(slot => slot.managedBy).map(slot => [slot.id, slot.managedBy])).toEqual([
-      ['fate', 'fate-mode'], ['accessibility', 'reading-mode'], ['translation', 'story-language'],
+      ['fate', 'fate-mode'], ['accessibility', 'reading-mode'], ['translation', 'story-language'], ['soundCues', 'media-loadout'],
     ]);
     // Installable is separate from equippable: Translation packages install, SEN fills Fate and Accessibility.
     expect(CAPA_SCHEMA.filter(slot => slot.installable).map(slot => slot.id)).toEqual([
       'author', 'pacing', 'continuity', 'style', 'translation',
     ]);
     expect(capa.skills.map(skill => skill.slot)).toEqual([
-      'author', 'pacing', 'fate', 'continuity', 'style', 'accessibility', 'translation',
+      'author', 'pacing', 'fate', 'continuity', 'style', 'accessibility', 'translation', 'soundCues',
     ]);
-    expect(capa.skills.map(skill => skill.authoring)).toEqual([true, true, true, true, true, true, true]);
+    expect(capa.skills.map(skill => skill.authoring)).toEqual([true, true, true, true, true, true, true, true]);
     const headers = capa.text.match(/^CAPA SKILL \[[^\]]+\]/gm);
     expect(headers).toEqual([
       'CAPA SKILL [Author]',
@@ -145,15 +147,22 @@ describe('Harness installed skills', () => {
       'CAPA SKILL [Style]',
       'CAPA SKILL [Accessibility]',
       'CAPA SKILL [Translation]',
+      'CAPA SKILL [Sound Cues]',
     ]);
+    // The story's sound words close the Sound Cues section as its example list, and nothing else carries them.
+    const soundSection = capa.text.slice(capa.text.indexOf('CAPA SKILL [Sound Cues]'), capa.text.indexOf('HARNESS OFFICIAL OUTPUT REQUIREMENTS'));
+    expect(soundSection).toContain('[[n|drew his sword]] → blade drawn\n[[n|a soft chime]] → chime (a small bright chime)');
+    expect(capa.text.split('drew his sword')).toHaveLength(2);
+    expect(capa.soundVocabulary).toEqual([{ word: 'blade drawn', example: 'drew his sword' }, { word: 'chime', example: 'a soft chime', meaning: 'a small bright chime' }]);
     expect(capa.text.split(SEN_LIGHT_NOVEL_AUTHOR_INSTRUCTIONS.trim())).toHaveLength(2);
     expect(capa.text).toContain('Use readable paragraph boundaries.');
     expect(capa.text).toContain('Keep reader-facing text in clear English.');
     expect(capa.text).not.toContain('secret asset catalog');
     expect(capa.text.endsWith(buildHarnessOfficialOutputRequirements({ accessibility: true, translation: true })!)).toBe(true);
     expect(capa.text.split('HARNESS OFFICIAL OUTPUT REQUIREMENTS')).toHaveLength(2);
-    expect(capa.text.indexOf('CAPA SKILL [Translation]')).toBeLessThan(capa.text.indexOf('HARNESS OFFICIAL OUTPUT REQUIREMENTS'));
-    expect(capa.skills).toHaveLength(7);
+    expect(capa.text.indexOf('CAPA SKILL [Translation]')).toBeLessThan(capa.text.indexOf('CAPA SKILL [Sound Cues]'));
+    expect(capa.text.indexOf('CAPA SKILL [Sound Cues]')).toBeLessThan(capa.text.indexOf('HARNESS OFFICIAL OUTPUT REQUIREMENTS'));
+    expect(capa.skills).toHaveLength(8);
     expect(capa.estimatedTokens).toBeGreaterThan(0);
   });
 

@@ -109,7 +109,7 @@ describe('HarnessReaderSession on a saved HARNESS story', { timeout: 20_000 }, (
     // A new passage is anchored to its block and its exact text.
     const kept = saved.bookmarks.find(bookmark => bookmark.id !== 'legacy')!;
     const chapter = canonBefore.chapters.find(entry => entry.chapterNumber === 2)!;
-    expect(kept).toMatchObject({ chapterNumber: 2, paragraphIndex: 0, blockId: chapter.blocks![0].id, passage: 'A keeper waited on the causeway with a lantern.' });
+    expect(kept).toMatchObject({ chapterNumber: 2, paragraphIndex: 0, blockId: `c${chapter.chapterNumber}-p1`, passage: 'A keeper waited on the causeway with a lantern.' });
 
     await click(button => button.getAttribute('aria-label') === 'Reader Settings', 'Reader Settings');
     await click(button => button.textContent?.trim() === 'Mark as Read', 'Mark as Read');

@@ -6,41 +6,30 @@ import { createRoot } from '../../../test-utils/createReaderRoot';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useNarrativeAudio, type NarrativeAudioPlayback, type NarrativeAudioPlaybackEvent } from '@seihouse/sen/audio';
 import { DevAudioPlaybackProvider } from '../../../audio/DevAudioPlayback';
-import { getInlineCueTrackId, type ResolvedAudioMoment } from '@seihouse/sen/audio';
+import { soundCueTrackId, type SoundCueAttachment } from '@seihouse/sen/audio';
 import { installAudioMediaStubs } from '../../../test-utils/renderWithDevAudio';
 import { InlineAudio, InlineAudioControl, InlineAudioText } from '@seihouse/sen/reader-chamber';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
-const beastMoment: ResolvedAudioMoment = {
-  id: 'world-cue:block-a:0:beast-growl',
-  blockId: 'block-a',
-  triggerPhrase: 'Vermilion Debt Fox growled',
-  occurrenceIndex: 0,
-  sourceCategory: 'beasts',
-  variation: 'growl',
-  semanticTags: ['tiger', 'close'],
-  relatedEntity: { name: 'Vermilion Debt Fox', type: 'creature' },
-  cue: {
-    publicUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Beasts/Growl/Tiger_Growl_1.mp3',
-    provenance: { catalogId: 'test-cues', version: '1' },
-  },
+/** A Sound Cue on `words` inside `text`, as the HARNESS stores it. */
+const soundCue = (
+  words: string, sound: string, publicUrl: string,
+  { text = words, blockId = 'block-a', catalogId = 'test-cues' }: { text?: string; blockId?: string; catalogId?: string } = {},
+): SoundCueAttachment => {
+  const start = text.indexOf(words);
+  return {
+    id: `sound-cue:${blockId}:${start}-${start + words.length}`,
+    kind: 'sound-cue',
+    anchor: { level: 'span', blockId, startOffset: start, endOffset: start + words.length, selectedText: words },
+    payload: { origin: 'harness', sound, cue: { publicUrl, provenance: { catalogId, version: '1' }, category: sound === 'blade drawn' ? 'weapons' : 'beasts' } },
+  };
 };
 
-const weaponMoment: ResolvedAudioMoment = {
-  id: 'world-cue:block-a:0:weapon-unsheathe',
-  blockId: 'block-a',
-  triggerPhrase: 'drew the Ashen Sword',
-  occurrenceIndex: 0,
-  sourceCategory: 'weapons',
-  variation: 'unsheathe',
-  semanticTags: ['sword', 'metal'],
-  relatedEntity: { name: 'Ashen Sword', type: 'artifact' },
-  cue: {
-    publicUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Weapons/Unsheathe/Sword_Unsheathe_1.mp3',
-    provenance: { catalogId: 'test-cues', version: '1' },
-  },
-};
+const BEAST_URL = 'https://celestialaudio.seihouse.org/DEFAULT/Beasts/Growl/Tiger_Growl_1.mp3';
+const WEAPON_URL = 'https://celestialaudio.seihouse.org/DEFAULT/Weapons/Unsheathe/Sword_Unsheathe_1.mp3';
+const beastCue = soundCue('Vermilion Debt Fox growled', 'beast growl', BEAST_URL);
+const weaponCue = soundCue('drew the Ashen Sword', 'blade drawn', WEAPON_URL);
 
 interface FakePlayback {
   playback: NarrativeAudioPlayback;
@@ -121,15 +110,16 @@ const visibleAnnotationText = (annotation: HTMLElement | null | undefined) => (
 describe('InlineAudioControl', () => {
   it('is an accessible inline native button and never plays without user activation', () => {
     const { playback } = createFakePlayback();
-    render(<p>Before <InlineAudioControl moment={beastMoment} playback={playback} /> after.</p>);
+    render(<p>Before <InlineAudioControl cue={beastCue} playback={playback} /> after.</p>);
 
-    const button = buttonFor(beastMoment.triggerPhrase);
+    const button = buttonFor(beastCue.anchor.selectedText);
     expect(button.tagName).toBe('BUTTON');
     expect(button.type).toBe('button');
     expect(button.tabIndex).toBe(0);
     expect(button.getAttribute('aria-label'))
-      .toBe('Play World Cue for Vermilion Debt Fox growled');
-    expect(button.dataset.audioMomentId).toBe(beastMoment.id);
+      .toBe('Play beast growl for Vermilion Debt Fox growled');
+    expect(button.dataset.soundCueId).toBe(beastCue.id);
+    expect(button.dataset.sound).toBe('beast growl');
     expect(button.dataset.state).toBe('idle');
     expect(button.textContent).toBe('');
     expect(button.querySelector('[data-library-glyph="sound"]')).toBeTruthy();
@@ -145,8 +135,8 @@ describe('InlineAudioControl', () => {
 
   it('exposes loading, playing, and failure states from the shared playback lifecycle', () => {
     const fake = createFakePlayback();
-    render(<InlineAudioControl moment={beastMoment} playback={fake.playback} />);
-    const button = buttonFor(beastMoment.triggerPhrase);
+    render(<InlineAudioControl cue={beastCue} playback={fake.playback} />);
+    const button = buttonFor(beastCue.anchor.selectedText);
 
     act(() => button.click());
     expect(button.dataset.state).toBe('loading');
@@ -165,13 +155,13 @@ describe('InlineAudioControl', () => {
     const fake = createFakePlayback(true);
     render(
       <p>
-        <InlineAudioControl moment={beastMoment} playback={fake.playback} /> then{' '}
-        <InlineAudioControl moment={weaponMoment} playback={fake.playback} />
+        <InlineAudioControl cue={beastCue} playback={fake.playback} /> then{' '}
+        <InlineAudioControl cue={weaponCue} playback={fake.playback} />
       </p>,
     );
 
-    const beast = buttonFor(beastMoment.triggerPhrase);
-    const weapon = buttonFor(weaponMoment.triggerPhrase);
+    const beast = buttonFor(beastCue.anchor.selectedText);
+    const weapon = buttonFor(weaponCue.anchor.selectedText);
     act(() => {
       beast.click();
       weapon.click();
@@ -180,51 +170,46 @@ describe('InlineAudioControl', () => {
     expect(fake.playback.replace).toHaveBeenCalledTimes(2);
     expect(beast.dataset.state).toBe('idle');
     expect(weapon.dataset.state).toBe('playing');
-    expect(fake.playback.currentSource).toBe(weaponMoment.cue.publicUrl);
+    expect(fake.playback.currentSource).toBe(weaponCue.payload.cue.publicUrl);
   });
 
   it('keeps separate annotation state when two events resolve to the same cue URL', () => {
     const fake = createFakePlayback(true);
-    const secondMoment: ResolvedAudioMoment = {
-      ...beastMoment,
-      id: 'world-cue:block-b:0:beast-growl',
-      blockId: 'block-b',
-      triggerPhrase: 'the beast growled',
-    };
+    const secondCue = soundCue('the beast growled', 'beast growl', BEAST_URL, { blockId: 'block-b' });
     render(
       <p>
-        <InlineAudioControl moment={beastMoment} playback={fake.playback} />
-        <InlineAudioControl moment={secondMoment} playback={fake.playback} />
+        <InlineAudioControl cue={beastCue} playback={fake.playback} />
+        <InlineAudioControl cue={secondCue} playback={fake.playback} />
       </p>,
     );
 
-    act(() => buttonFor(beastMoment.triggerPhrase).click());
+    act(() => buttonFor(beastCue.anchor.selectedText).click());
     const firstTrackId = fake.playback.currentTrackId;
-    act(() => buttonFor(secondMoment.triggerPhrase).click());
+    act(() => buttonFor(secondCue.anchor.selectedText).click());
     expect(fake.playback.currentTrackId).not.toBe(firstTrackId);
-    expect(buttonFor(beastMoment.triggerPhrase).dataset.state).toBe('idle');
-    expect(buttonFor(secondMoment.triggerPhrase).dataset.state).toBe('playing');
+    expect(buttonFor(beastCue.anchor.selectedText).dataset.state).toBe('idle');
+    expect(buttonFor(secondCue.anchor.selectedText).dataset.state).toBe('playing');
   });
 
   it('clears stale playing UI when a context update already points at another track', () => {
     const first = createFakePlayback();
-    first.playback.currentTrackId = getInlineCueTrackId(beastMoment);
+    first.playback.currentTrackId = soundCueTrackId(beastCue);
     first.playback.isPlaying = true;
-    render(<InlineAudioControl moment={beastMoment} playback={first.playback} />);
-    expect(buttonFor(beastMoment.triggerPhrase).dataset.state).toBe('playing');
+    render(<InlineAudioControl cue={beastCue} playback={first.playback} />);
+    expect(buttonFor(beastCue.anchor.selectedText).dataset.state).toBe('playing');
 
     const replacement = createFakePlayback();
-    replacement.playback.currentTrackId = getInlineCueTrackId(weaponMoment);
+    replacement.playback.currentTrackId = soundCueTrackId(weaponCue);
     replacement.playback.isPlaying = true;
-    render(<InlineAudioControl moment={beastMoment} playback={replacement.playback} />);
+    render(<InlineAudioControl cue={beastCue} playback={replacement.playback} />);
 
-    expect(buttonFor(beastMoment.triggerPhrase).dataset.state).toBe('idle');
+    expect(buttonFor(beastCue.anchor.selectedText).dataset.state).toBe('idle');
   });
 
   it('unsubscribes and stops only its own cue on cleanup', () => {
     const fake = createFakePlayback();
-    render(<InlineAudioControl moment={beastMoment} playback={fake.playback} />);
-    act(() => buttonFor(beastMoment.triggerPhrase).click());
+    render(<InlineAudioControl cue={beastCue} playback={fake.playback} />);
+    act(() => buttonFor(beastCue.anchor.selectedText).click());
     const trackId = fake.playback.currentTrackId;
 
     act(() => root.unmount());
@@ -236,11 +221,11 @@ describe('InlineAudioControl', () => {
   it('uses the latest committed playback adapter for cleanup', () => {
     const first = createFakePlayback();
     const second = createFakePlayback();
-    render(<InlineAudioControl moment={beastMoment} playback={first.playback} />);
-    act(() => buttonFor(beastMoment.triggerPhrase).click());
+    render(<InlineAudioControl cue={beastCue} playback={first.playback} />);
+    act(() => buttonFor(beastCue.anchor.selectedText).click());
     const trackId = first.playback.currentTrackId;
 
-    render(<InlineAudioControl moment={beastMoment} playback={second.playback} />);
+    render(<InlineAudioControl cue={beastCue} playback={second.playback} />);
     act(() => root.unmount());
     mounted = false;
 
@@ -250,14 +235,11 @@ describe('InlineAudioControl', () => {
 
   it('renders no glyph and never plays when a persisted cue cannot resolve', () => {
     const fake = createFakePlayback();
-    const missing: ResolvedAudioMoment = {
-      ...beastMoment,
-      id: 'world-cue:block-a:0:missing',
-      cue: { publicUrl: 'https://example.com/missing.mp3' },
-    };
+    // No provenance: the recording was never approved by a catalog.
+    const missing = soundCue('Vermilion Debt Fox growled', 'beast growl', 'https://example.com/missing.mp3', { catalogId: '' });
     render(
       <InlineAudioText
-        moments={[missing]}
+        cues={[missing]}
         text="Vermilion Debt Fox growled."
         renderText={text => text}
       />,
@@ -280,10 +262,10 @@ describe('InlineAudioControl', () => {
       semanticTags: ['dialogue'],
       relatedEntity: { id: 'mei-lin', name: 'Mei Lin', type: 'character' },
       artifact: { publicUrl: 'https://celestialaudio.seihouse.org/voice/v1/whatever.mp3' },
-    } as unknown as ResolvedAudioMoment;
+    } as unknown as SoundCueAttachment;
     render(
       <InlineAudioText
-        moments={[voiceAnnotation]}
+        cues={[voiceAnnotation]}
         text="Mei Lin said, “Stand behind me.”"
         renderText={text => text}
       />,
@@ -296,9 +278,9 @@ describe('InlineAudioControl', () => {
     render(
       <DevAudioPlaybackProvider>
         <InlineAudioText
-          moments={[weaponMoment]}
+          cues={[soundCue('drew the Ashen Sword', 'blade drawn', WEAPON_URL, { text: 'Mei Lin drew the Ashen Sword, in silence.' })]}
           text="Mei Lin drew the Ashen Sword, in silence."
-          renderText={(text) => text === weaponMoment.triggerPhrase
+          renderText={(text) => text === weaponCue.anchor.selectedText
             ? <>drew the <button type="button" aria-label="Open Codex entry for Ashen Sword">Ashen Sword</button></>
             : text}
         />
@@ -309,7 +291,7 @@ describe('InlineAudioControl', () => {
     const codexButton = container.querySelector<HTMLButtonElement>(
       'button[aria-label="Open Codex entry for Ashen Sword"]',
     );
-    const cueButton = buttonFor(weaponMoment.triggerPhrase);
+    const cueButton = buttonFor(weaponCue.anchor.selectedText);
     expect(codexButton).toBeTruthy();
     expect(cueButton).toBeTruthy();
     expect(cueButton).not.toBe(codexButton);
@@ -333,14 +315,14 @@ describe('InlineAudioControl', () => {
     render(
       <DevAudioPlaybackProvider>
         <InlineAudioText
-          moments={[beastMoment]}
+          cues={[soundCue('Vermilion Debt Fox growled', 'beast growl', BEAST_URL, { text: 'A Vermilion Debt Fox growled, then crouched beneath the lintel.' })]}
           text="A Vermilion Debt Fox growled, then crouched beneath the lintel."
           renderText={text => text}
         />
       </DevAudioPlaybackProvider>,
     );
 
-    const cueButton = buttonFor(beastMoment.triggerPhrase);
+    const cueButton = buttonFor(beastCue.anchor.selectedText);
     const annotation = cueButton.closest<HTMLElement>(
       '[data-cue-annotation="Vermilion Debt Fox growled"]',
     );
@@ -365,20 +347,20 @@ describe('InlineAudio shared-session integration', () => {
   it('keeps one package-owned audio element while replacing the active Cue', async () => {
     render(
       <DevAudioPlaybackProvider>
-        <InlineAudio moment={beastMoment} />
-        <InlineAudio moment={weaponMoment} />
+        <InlineAudio cue={beastCue} />
+        <InlineAudio cue={weaponCue} />
         <PlaybackProbe />
       </DevAudioPlaybackProvider>,
     );
     expect(container.querySelectorAll('audio')).toHaveLength(1);
 
-    await act(async () => buttonFor(beastMoment.triggerPhrase).click());
+    await act(async () => buttonFor(beastCue.anchor.selectedText).click());
     const firstTrack = container.querySelector('[data-testid="track-id"]')?.textContent;
-    expect(firstTrack).toContain(beastMoment.id);
+    expect(firstTrack).toContain(beastCue.id);
 
-    await act(async () => buttonFor(weaponMoment.triggerPhrase).click());
+    await act(async () => buttonFor(weaponCue.anchor.selectedText).click());
     const secondTrack = container.querySelector('[data-testid="track-id"]')?.textContent;
-    expect(secondTrack).toContain(weaponMoment.id);
+    expect(secondTrack).toContain(weaponCue.id);
     expect(secondTrack).not.toBe(firstTrack);
     expect(container.querySelectorAll('audio')).toHaveLength(1);
   });

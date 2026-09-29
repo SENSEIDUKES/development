@@ -16,7 +16,8 @@ The current split is:
 
 | Capability | Owner | Source |
 | --- | --- | --- |
-| Cue intent, validation, exact prose placement, resolved cue shape | SEN | `cues.ts`, `inlineAudio.ts` |
+| Sound Cue record, Reader playback and split helpers | SEN | `inlineAudio.ts` (`SoundCueAttachment`), `cues.ts` |
+| Placing a writer's Sound Cues on its marked words | SEN | `soundCuePlacement.ts` (`placeSoundCues`) |
 | Finished Sound Cue rules (1–5 whole words, at most 10 per chapter) | SEN | `soundCueRules.ts` |
 | Sound words (the event a recording answers, with an example) | SEN | `soundWords.ts`, `soundVocabulary` in `media.ts` |
 | Studio tags (parent + Tone, Energy, Tension) | SEN | `audioTags.ts` |
@@ -34,47 +35,58 @@ classifies it as host data. Published SEN has no path to it.
 
 ## Portable contract
 
-Generation may propose semantic intent only. It cannot choose a URL, filename,
-catalog row, provider, credential, entitlement, or billing record. A host
-resolver validates the exact action phrase against the accepted story block and
-returns an immutable resolved record. Only that accepted record may travel with
-the chapter.
+A writer says **where** and **what**, never which file: it wraps the one to
+five words where a sound happens in its own paragraph (`[[n|words]]`, read by
+`readMarks` in `src/narrative/marks.ts`) and names the sound with one of the
+story's sound words (`SoundCueSignal {mark, sound, energy?}`). It cannot choose
+a URL, filename, catalog row, provider, credential, entitlement, or billing
+record.
 
-A placed Sound Cue is 1–5 whole words, never starting or ending inside a word,
-and a chapter holds at most ten (`SOUND_CUE_RULES`, `soundCueWordIssue`). These
-describe the finished attachment, not what a model writes: manual placement
-meets them as a person selects, and `resolveWorldCueIntent` refuses a resolved
-range that breaks them (`partial-word`, `too-many-words`) while
-`MAX_WORLD_CUE_MOMENTS_PER_CHAPTER` follows the same cap. Intent validation
-(`validateWorldCueIntent`) adds no word limit, and saved chapters are never
-re-checked. On today's generation path this is short-term safety; the model's
-semantic-intent contract on the manuscript's coordinates comes next.
-Soundscapes, when their placement is built, are passage-level only and at most
-two per chapter.
+`placeSoundCues({paragraphs, signals, vocabulary, recordings, chapterNumber, locale})`
+turns that into finished cues, deterministically. A signal is set aside (with a
+reason `describeSetAsideSoundCue` puts into words), never forced, when its word
+is not one of the story's, its mark is missing or already used, the paragraph
+is a system line or not shown as prose, or the words break the finished-cue
+rules: a placed Sound Cue is 1–5 whole words, never starting or ending inside a
+word, never overlapping another, and a chapter holds at most ten, first in
+reading order (`SOUND_CUE_RULES`, `soundCueWordIssue`). A mark that starts or
+ends inside a word widens to the whole word, in the story's language. The
+recording is one of that word's, preferring the Energy asked for, chosen by a
+stable rotation so repeated sounds vary and the same input always gives the
+same cue. Soundscapes, when rebuilt, are passage-level only and at most two
+per chapter.
+
+A finished cue is a manuscript span attachment:
 
 ```ts
-interface WorldCueIntent {
-  blockId: string;
-  triggerPhrase: string;
-  occurrenceIndex?: number;
-  sourceCategory: 'beasts' | 'weapons' | 'artifacts' | 'locations' | 'factions';
-  variation: string;
-  semanticTags: string[];
-  relatedEntity?: { name: string; type: StoryEntityType };
+interface SoundCueAttachment {
+  id: string;                    // sound-cue:{paragraph}:{start}-{end}
+  kind: 'sound-cue';
+  anchor: { level: 'span'; blockId: string; startOffset: number; endOffset: number; selectedText: string };
+  payload: {
+    origin: 'harness' | 'manual';
+    sound: string;               // the sound word
+    energy?: 'low' | 'medium' | 'high';
+    cue: { publicUrl: string; provenance: MediaResourceProvenance; category: AudioCueCategory; tags?: AudioTags };
+  };
 }
 ```
+
+Only that record travels with the chapter. The Reader plays it only when its
+recording is public HTTPS with provenance (`resolvePlayableSoundCue`, in any
+language) and marks exactly the words its offsets cover (`splitBySoundCues`);
+a cue whose words no longer match is left as plain prose. Translated text shows
+no cues, because offsets do not survive translation.
 
 Playback is also explicit. Reader surfaces consume the `NarrativePlaybackPort`
 provided by their host. A package consumer may supply any player or omit audio
 entirely; SEN does not install the SEIHouse audio player.
 
-Author-selected manual moments use `origin: 'manual'` on the same resolved
-record. They require an approved cue and provenance supplied by the host, but
-may anchor text that does not describe an audible action. Generated intent
-keeps its existing audible-action validation and resolver behavior. The
-Text Highlight Engine supplies the separate adapter that maps an exact
-`PassageSelection` to this resolved record; audio contracts remain independent
-of that UI component.
+A cue an author places by hand is the same record with `origin: 'manual'`
+(`createManualSoundCue` in the Text Highlight Engine): the recording must be
+one the host's catalog approves and must name a sound word, and the selection
+meets the same finished-cue rules. Audio contracts remain independent of that
+UI component.
 
 ## Sound words and Studio tags
 
@@ -112,10 +124,10 @@ records, public asset locations, account entitlement truth, and provider
 access. HARNESS receives a frozen, semantic media snapshot only; provider model
 requests receive no catalog URLs or entitlement payloads.
 
-The Reader consumes the chapter's already-resolved records. Later catalog,
+The Reader consumes the chapter's already-placed records. Later catalog,
 unlock, expiry, or equipment changes cannot rewrite accepted story state.
 
-Character speech is separate from chapter cue intent. Reader Codex asks a
+Character speech is separate from chapter Sound Cues. Reader Codex asks a
 host-owned voice port to synthesize an eligible character's canonical signature
 quote. Provider IDs and secrets never enter SEN contracts or browser payloads.
 

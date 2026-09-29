@@ -20,7 +20,7 @@ import { getReaderTypography } from '../shared/readerTypography';
 import { getSenTextDirection, type SenLanguageCode } from '../../../lib/language';
 import { createCodexHighlighter, splitByCodexTerms } from '../../../narrative/codexHighlighting';
 import { InlineAudioText } from './InlineAudio';
-import type { ResolvedAudioMoment } from '../../../audio/inlineAudio';
+import type { SoundCueAttachment } from '../../../audio/inlineAudio';
 import type { ReaderContinueAction } from './ReaderControls/types';
 
 interface ReaderViewportProps {
@@ -146,20 +146,20 @@ export function ReaderViewport({
 }: ReaderViewportProps) {
   const readingLanguage = displayLanguage;
   const typography = getReaderTypography(currentPrefs);
-  // World Cues are anchored to exact phrase positions in the source language.
-  // Those positions do not survive translation, so they are not applied to
+  // Sound Cues are anchored to exact word offsets in the source language.
+  // Those offsets do not survive translation, so they are not applied to
   // translated text; the original chapter keeps every one of them.
-  const chapterAudioMoments: readonly ResolvedAudioMoment[] = isShowingTranslation
+  const chapterSoundCues: readonly SoundCueAttachment[] = isShowingTranslation
     ? []
-    : selectedChapter.audioMoments ?? [];
+    : selectedChapter.soundCues ?? [];
   const renderProseText = (text: string, paragraphIndex: number, blockId?: string) => {
-    const blockAudioMoments = blockId
-      ? chapterAudioMoments.filter(moment => moment.blockId === blockId)
+    const blockSoundCues = blockId
+      ? chapterSoundCues.filter(cue => cue.anchor.blockId === blockId)
       : [];
-    return blockAudioMoments.length > 0
+    return blockSoundCues.length > 0
       ? (
           <InlineAudioText
-            moments={blockAudioMoments}
+            cues={blockSoundCues}
             renderText={segment => renderHighlightedText(segment, paragraphIndex)}
             text={text}
           />

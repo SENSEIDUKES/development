@@ -31,6 +31,12 @@ export const countHarnessWords = (text: string): number => {
   return ideographs + words;
 };
 
+/**
+ * The one id of a chapter's paragraph: `c{chapter}-p{n}`, counted from 1. The
+ * Reader's blocks and every Sound Cue anchor use it.
+ */
+export const harnessParagraphBlockId = (chapterNumber: number, index: number) => `c${chapterNumber}-p${index + 1}`;
+
 /** Recovery only: blank-line paragraph boundaries inside one string. */
 export const splitHarnessProseParagraphs = (prose: string): string[] => prose
   .replace(/\r\n?/g, '\n')

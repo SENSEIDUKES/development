@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { resolvePlayableAudioMoment } from '@seihouse/sen/audio';
+import { resolvePlayableSoundCue } from '@seihouse/sen/audio';
 import { createLibraryMediaPort, validateMediaPack, type MediaPack, type MediaPackEntitlement } from '@seihouse/library/media';
 import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import type { HarnessRuntime } from './ids';
@@ -24,11 +24,10 @@ const response = (value: unknown): HarnessGenerationResponse => ({
   },
 });
 
-/** Prose plus compact semantic intent; the resolved media below is HARNESS work. */
+/** Marked prose plus a tiny Sound Cue signal; the recording below is HARNESS work. */
 const chapterReply = () => response({
-  paragraphs: ['Rain crossed the mountain pass as the clockwork beast roared across the stones.'],
-  soundscapes: [{ anchorText: 'Rain crossed the mountain pass', mood: 'storm-path', region: 'korean', tags: ['mountain-pass', 'rain', 'thunder'], intensity: 0.6 }],
-  soundCues: [{ anchorText: 'clockwork beast roared', category: 'beasts', variation: 'roar', tags: ['clockwork', 'metallic'] }],
+  paragraphs: ['Rain crossed the mountain pass as the [[1|clockwork beast roared]] across the stones.'],
+  soundCues: [{ mark: 1, sound: 'clockwork roar', energy: 'high' }],
   arcCompletion: { goalId: 'arc-1', completed: false, evidence: '' },
 });
 
@@ -79,7 +78,7 @@ const adapter = (...outputs: Array<HarnessGenerationResponse | Error>) => {
 };
 
 describe('HARNESS Media Loadout runtime integration', () => {
-  it('keeps registration, rewards and two story slots separate, then persists resolved media through reload and Reader adaptation', async () => {
+  it('keeps registration, rewards and two story slots separate, then persists placed Sound Cues through reload and Reader adaptation', async () => {
     const repository = new InMemoryHarnessGenerationRepository();
     const provider = adapter(chapterReply());
     const soundscapes = soundscapePack();
@@ -123,14 +122,15 @@ describe('HARNESS Media Loadout runtime integration', () => {
     expect(serializedRequest).not.toContain(soundCues.id);
     expect(serializedRequest).not.toContain('fixtures.r2.dev');
     expect(request.capaPrompt.text).not.toContain('Media Pack');
+    // The equipped pack replaces the default words: only its sound words reach the writer.
+    expect(request.capaPrompt.soundVocabulary).toEqual([{ word: 'clockwork roar', example: 'the clockwork beast roared' }]);
+    expect(request.capaPrompt.text).toContain('[[n|the clockwork beast roared]] → clockwork roar');
 
     const committed = controller.snapshot().chapters[0];
-    expect(committed.soundscapes?.[0]).toMatchObject({
-      intent: { region: 'korean' },
-      resource: { track: { id: 'TEST_STORM_PATH', region: 'korean' }, provenance: { catalogId: soundscapes.id, version: '1.0.0' } },
-    });
-    expect(committed.audioMoments?.[0]).toMatchObject({
-      cue: { publicUrl: 'https://fixtures.r2.dev/clockwork-roar.mp3', provenance: { catalogId: soundCues.id } },
+    expect(committed.paragraphs[0]).toBe('Rain crossed the mountain pass as the clockwork beast roared across the stones.');
+    expect(committed.soundCues?.[0]).toMatchObject({
+      anchor: { blockId: 'c1-p1', selectedText: 'clockwork beast roared' },
+      payload: { origin: 'harness', sound: 'clockwork roar', energy: 'high', cue: { publicUrl: 'https://fixtures.r2.dev/clockwork-roar.mp3', provenance: { catalogId: soundCues.id } } },
     });
     expect(committed.mediaLoadout).toMatchObject({
       soundscapes: [{ provenance: { catalogId: soundscapes.id, version: '1.0.0', source: soundscapes.source } }],
@@ -150,15 +150,11 @@ describe('HARNESS Media Loadout runtime integration', () => {
     const readerStory = createHarnessSenStory(reloaded.snapshot(), story.id);
     const readerChapter = readerStory.arcs[0].chapters[0];
     expect(readerChapter.generatedContent).toContain('clockwork beast roared');
-    expect(readerChapter.soundscapes?.[0].resource.track.id).toBe('TEST_STORM_PATH');
-    const playable = resolvePlayableAudioMoment(readerChapter.audioMoments![0]);
-    expect(playable).toEqual({ ok: true, publicUrl: 'https://fixtures.r2.dev/clockwork-roar.mp3', actionLabel: 'World Cue' });
+    const cue = readerChapter.soundCues![0];
+    expect(resolvePlayableSoundCue(cue)).toEqual({ ok: true, publicUrl: 'https://fixtures.r2.dev/clockwork-roar.mp3' });
 
-    const unavailable = {
-      ...readerChapter.audioMoments![0],
-      cue: { ...readerChapter.audioMoments![0].cue, publicUrl: 'https://fixtures.r2.dev/cue.mp3?token=secret' },
-    };
-    expect(resolvePlayableAudioMoment(unavailable).ok).toBe(false);
+    const unavailable = { ...cue, payload: { ...cue.payload, cue: { ...cue.payload.cue, publicUrl: 'https://fixtures.r2.dev/cue.mp3?token=secret' } } };
+    expect(resolvePlayableSoundCue(unavailable).ok).toBe(false);
     expect(readerChapter.generatedContent).toContain('Rain crossed the mountain pass');
   });
 
@@ -185,7 +181,6 @@ describe('HARNESS Media Loadout runtime integration', () => {
     const state = controller.snapshot();
     expect(state.attempts[1].mediaLoadout.soundscapes[0]?.provenance.version).toBe('1.0.0');
     expect(state.chapters[0].mediaLoadout.soundscapes[0]?.provenance.version).toBe('1.0.0');
-    expect(state.chapters[0].soundscapes?.[0].resource.track.url).toBe('https://fixtures.r2.dev/storm-v1.mp3');
   });
 
   it('rechecks host entitlement expiration when freezing an attempt without rewriting story equipment', async () => {
@@ -207,7 +202,6 @@ describe('HARNESS Media Loadout runtime integration', () => {
     expect(state.stories[0].mediaLoadout?.soundscapes).toEqual({ id: pack.id, version: pack.version });
     expect(state.attempts[0].mediaLoadout.soundscapes).toEqual([]);
     expect(state.chapters[0].mediaLoadout.soundscapes).toEqual([]);
-    expect(state.chapters[0].soundscapes).toBeUndefined();
     expect(JSON.stringify(await repository.load())).not.toContain('mediaPackEntitlements');
   });
 });

@@ -32,6 +32,31 @@ There is no `chapter-generation` or `codex-cards` compatibility entry. Legacy
 Chapter Generation was retired; HARNESS is the one canonical generated-story
 owner.
 
+**0.8.0 (breaking):** chapters speak the tiny SEN language, starting with
+narration and Sound Cues. The writer wraps the one to five words where a sound
+happens (`[[n|words]]`) and names it from the story's sound words
+(`soundCues: [{mark, sound, energy?}]`); the HARNESS strips every mark, places
+the cue on those exact words (`placeSoundCues`), picks the recording and stores
+it as a manuscript span attachment (`SoundCueAttachment`, kind `sound-cue`). A
+new managed CAPA slot, Sound Cues (`media-loadout`), carries SEN's bundled
+`SEN_SOUND_CUES_SKILL` and the story's sound words as its example list.
+`HarnessChapter` and the accepted draft keep `paragraphs`, `prose` and
+`metrics`, gain `soundCues`, and lose `blocks`, `audioMoments` and
+`soundscapes`; `ChapterContent.audioMoments`, `ChapterProse.audioMoments` and
+`ReaderChapter.audioMoments` became `soundCues` (a production transfer note:
+Light-Novels reads `audioMoments` today). Removed: the World Cue intent,
+validation and resolution system (`resolveWorldCueIntent`,
+`resolveChapterAudioMoments`, `ResolvedAudioMoment`, `WorldCueIntent`,
+`INLINE_AUDIO_CUE_CATEGORIES`), `acceptChapterMedia`, the HARNESS signal
+families and their enums (`readHarnessChapterSignals`,
+`applyHarnessChapterSignals`, `HARNESS_SIGNAL_LIMITS` and the rest), and
+`createManualCueMoment` (now `createManualSoundCue`). `InlineAudio`,
+`InlineAudioControl` and `InlineAudioText` take `cue`/`cues`. Dialogue,
+Manifestations, System Panels, Soundscapes and Creature Events are rebuilt
+later, one at a time. Saved HARNESS workspaces are not upgraded (schema 22):
+by the product owner's decision the earlier workspace is kept untouched and
+the page starts fresh.
+
 **0.7.0 (breaking):** Translation and Accessibility are managed CAPA slots, like
 Fate. The HARNESS resolves Translation from the story's Story Language (its
 Original Language) and Accessibility from its Reading Mode

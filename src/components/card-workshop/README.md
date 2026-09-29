@@ -22,7 +22,7 @@ The current presentation set is deliberately limited to:
 
 - `CodexCard` for Human Portraits, Non-Human Portraits, Artifacts, Locations, and Factions resolved from application-owned Codex entries;
 - `SystemBlock` and its nested `FateResultCard` presentation as independent System Panels;
-- inline World Cue examples showing both a Codex-linked term with an independent sound mark and a sound-only term whose prose remains visually native.
+- inline Sound Cue examples (placed from marked prose through the HARNESS rules) showing both a Codex-linked term with an independent sound mark and a sound-only term whose prose remains visually native.
 
 Chapter Visual Memories are not part of the Reader or Card Workshop. Manga Studio is outside this feature and is unchanged.
 

@@ -1,4 +1,5 @@
 import { type HarnessArcRequest, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessMemoryRecoveryRequest } from '@seihouse/sen/harness-generation';
+import { validateSoundWords } from '@seihouse/sen/audio';
 import {
   harnessGenerationServerInfo,
   resolveHarnessGenerationConfig,
@@ -78,6 +79,11 @@ const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessMemoryRe
   // The Generation Model Call carries two separated inputs plus the immediate request.
   if (!isRecord(parsed.capaPrompt) || typeof parsed.capaPrompt.text !== 'string' || !parsed.capaPrompt.text.trim()) {
     throw new Error('Harness Generation requires an assembled CAPA Prompt.');
+  }
+  // The sound words become the response schema's enum, so they are checked
+  // against the same limits a Sound Cue pack is held to before any call.
+  if (parsed.capaPrompt.soundVocabulary !== undefined) {
+    parsed.capaPrompt.soundVocabulary = validateSoundWords(parsed.capaPrompt.soundVocabulary);
   }
   if (!isRecord(parsed.storyInformation) || !isRecord(parsed.storyInformation.arc)) {
     throw new Error('Harness Generation needs a compact Story Information Packet with an authoritative Arc Plan.');

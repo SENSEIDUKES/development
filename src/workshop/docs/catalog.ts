@@ -213,11 +213,11 @@ export const docsCategories: readonly DocsCategory[] = [
       {
         ...topic('media-loadout', 'Media Loadout', ['Media Pack']),
         definition: 'The Soundscape and Sound Cue packs equipped for a story.',
-        howItFits: 'A Media Pack is validated catalog data for one audio type, with an ID, version, and verified source. The Library decides which registered packs a person may equip; the host owns the catalog and entitlement truth. A story can independently equip a Soundscape Pack and a Sound Cue Pack. HARNESS freezes the authorized loadout for an attempt and resolves semantic media signals against it after prose is accepted. Pack data never becomes a writing skill or enters the model prompt, and later equipment changes do not rewrite committed chapters.',
+        howItFits: 'A Media Pack is validated catalog data for one audio type, with an ID, version, and verified source. The Library decides which registered packs a person may equip; the host owns the catalog and entitlement truth. A story can independently equip a Soundscape Pack and a Sound Cue Pack. HARNESS freezes the authorized loadout for an attempt. An equipped Sound Cue Pack replaces the default sound words and recordings; only those sound words reach the writer, through the managed Sound Cues skill, and the HARNESS picks the recording itself when it places each cue. Recordings, URLs and entitlements never enter the model prompt, and later equipment changes do not rewrite committed chapters.',
       },
       topic('media-catalog', 'Media Catalog'),
       topic('media-resolver', 'Media Resolver', ['resolved asset']),
-      topic('soundscape', 'Soundscape'), topic('world-cue', 'World Cue'), topic('sound-cue', 'Sound Cue'),
+      topic('soundscape', 'Soundscape'), topic('sound-word', 'Sound Word'), topic('sound-cue', 'Sound Cue'),
       topic('manifest-action', 'Manifest Action'), topic('manifestation', 'Manifestation'),
       topic('motion-picture', 'Motion Picture'), topic('provenance', 'Provenance'),
     ],

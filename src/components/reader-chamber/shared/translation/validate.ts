@@ -32,9 +32,8 @@ const FORBIDDEN_KEYS = new Set([
   // Music, atmosphere, and creature classification.
   'music', 'trackId', 'region', 'beastEvent', 'profile', 'audioSignature',
   'atmosphereCategory', 'atmosphereTags', 'sceneType', 'environment', 'theme',
-  // World Cue intents and audio routing.
-  'audioMoments', 'triggerPhrase', 'occurrenceIndex', 'sourceCategory',
-  'variation', 'semanticTags', 'relatedEntity', 'cue', 'publicUrl',
+  // Sound Cues and audio routing.
+  'soundCues', 'anchor', 'payload', 'sound', 'energy', 'cue', 'publicUrl',
   // Asset identifiers and URLs.
   'assetId', 'assetManifest', 'heroImageAssetId', 'customUrl', 'url', 'src',
   // Numeric drivers that are not reader-facing copy.

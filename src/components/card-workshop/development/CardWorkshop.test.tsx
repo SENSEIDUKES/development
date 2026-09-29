@@ -1086,7 +1086,7 @@ describe('CardWorkshopView', () => {
     const rainCourtCodexAction = [...(reader?.querySelectorAll<HTMLElement>('[role="button"]') ?? [])]
       .find(element => element.textContent === 'Rain Court');
     const rainCourtCueAction = reader?.querySelector<HTMLButtonElement>(
-      'button[aria-label="Play World Cue for Rain Court bell tolled once"]',
+      'button[aria-label="Play bell rings for Rain Court bell tolled once"]',
     );
     expect(rainCourtCodexAction).toBeTruthy();
     expect(rainCourtCueAction).toBeTruthy();
@@ -1096,7 +1096,7 @@ describe('CardWorkshopView', () => {
       .toBe('Rain Court bell tolled once');
 
     const foxCueAction = reader?.querySelector<HTMLButtonElement>(
-      'button[aria-label="Play World Cue for a Vermilion Debt Fox growled"]',
+      'button[aria-label="Play beast growl for a Vermilion Debt Fox growled"]',
     );
     const foxCodexAction = [...(reader?.querySelectorAll<HTMLElement>('[role="button"]') ?? [])]
       .find(element => element.textContent === 'Vermilion Debt Fox');
@@ -1280,7 +1280,7 @@ describe('CardWorkshopView', () => {
     expect(container.querySelector('[data-testid="card-workshop-contextual-reader"] img[src^="http"]')).toBeFalsy();
   });
 
-  it('dispatches the real @seihouse/audio-player session when the contextual World Cue glyph is tapped', async () => {
+  it('dispatches the real @seihouse/audio-player session when the contextual Sound Cue glyph is tapped', async () => {
     vi.useFakeTimers();
     const playSpy = vi
       .spyOn(HTMLMediaElement.prototype, 'play')
@@ -1290,7 +1290,7 @@ describe('CardWorkshopView', () => {
       <LibraryPresentationProvider>{renderWithDevAudio(<CardWorkshopView initialMode="contextual" />)}</LibraryPresentationProvider>,
     ));
 
-    await clickButton('Play World Cue for Rain Court bell tolled once');
+    await clickButton('Play bell rings for Rain Court bell tolled once');
     await act(async () => {
       // The shared playback bridge waits 100ms for its queue commit.
       await vi.advanceTimersByTimeAsync(100);

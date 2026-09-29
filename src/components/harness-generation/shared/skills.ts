@@ -5,9 +5,11 @@ import { HARNESS_CANONICAL_LANGUAGE, buildSelectedTranslationGlossary, presentSe
 import type { CapaPrompt, HarnessSelectedTranslationGlossary, HarnessSkillLoadoutSnapshot, HarnessSkillApplication, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId, HarnessStory, HarnessStoryMode, ImmediateChapterRequest, StoryInformationPacket } from '../../../narrative/generation';
 import { SEN_FATE_SURVIVAL_SKILL } from './fateSurvivalSkill';
 import { SEN_READING_MODE_SKILLS } from './readingModeSkills';
+import { SEN_SOUND_CUES_SKILL, presentSoundVocabulary } from './soundCuesSkill';
+import type { SoundWord } from '../../../audio/soundWords';
 
 /** The story state that fills a managed CAPA slot. */
-export type CapaSlotManager = 'fate-mode' | 'story-language' | 'reading-mode';
+export type CapaSlotManager = 'fate-mode' | 'story-language' | 'reading-mode' | 'media-loadout';
 
 export interface CapaSlotDefinition {
   id: HarnessSkillSlotId;
@@ -24,6 +26,9 @@ export interface CapaSlotDefinition {
    *   Translation package that writes in it, when one is installed.
    * - `reading-mode`: the story's Reading Mode. Standard leaves the slot empty;
    *   each other mode loads SEN's matching bundled skill.
+   * - `media-loadout`: the attempt's frozen Media Loadout. A story with sound
+   *   words loads SEN's Sound Cues skill with those words; one without leaves
+   *   the slot empty.
    */
   managedBy?: CapaSlotManager;
   /**
@@ -48,6 +53,7 @@ export const CAPA_SCHEMA: readonly CapaSlotDefinition[] = [
   { id: 'style', label: 'Style', description: 'Shapes prose tradition, voice, rhythm, and presentation.', installable: true },
   { id: 'accessibility', label: 'Accessibility', description: 'Writes chapters in the story\'s Reading Mode.', managedBy: 'reading-mode', installable: false },
   { id: 'translation', label: 'Translation', description: 'Writes chapters in the story\'s Story Language when it is not English.', managedBy: 'story-language', installable: true },
+  { id: 'soundCues', label: 'Sound Cues', description: 'Marks the words where a sound happens and names it from the story\'s sound words.', managedBy: 'media-loadout', installable: false },
 ] as const;
 
 const HARNESS_SKILL_APPLICATIONS: readonly HarnessSkillApplication[] = [
@@ -62,6 +68,7 @@ const MANAGED_SLOT_REASONS: Record<CapaSlotManager, string> = {
   'fate-mode': 'The Fate slot follows the story\'s Fate mode: Fate Survival loads its skill on every chapter, and Regular Reader mode leaves it empty.',
   'story-language': 'The Translation slot follows the story\'s Story Language: a non-English story loads that language\'s installed writing package on every chapter, and an English story leaves it empty.',
   'reading-mode': 'The Accessibility slot follows the story\'s Reading Mode: Clear Reading, Easy Read and Literal Reading load SEN\'s matching skill on every chapter, and Standard leaves it empty.',
+  'media-loadout': 'The Sound Cues slot follows the story\'s Media Loadout: a story with sound words loads SEN\'s Sound Cues skill with them on every chapter, and one without leaves it empty.',
 };
 
 /** Why a slot cannot be equipped by hand, when it cannot. */
@@ -163,8 +170,15 @@ const resolveManagedSkill = (
   story: HarnessStory,
   catalog: ReadonlyMap<string, HarnessSkillManifest>,
   fateMode: HarnessStoryMode,
+  soundVocabulary: readonly SoundWord[],
 ): HarnessSkillManifest | undefined => {
   switch (manager) {
+    case 'media-loadout': {
+      if (!soundVocabulary.length) return undefined;
+      const manifest = resolveHarnessSkill(catalog, SEN_SOUND_CUES_SKILL);
+      if (!manifest) throw new Error('The Sound Cues skill is not installed in this host, so a chapter with sound words cannot be written.');
+      return manifest;
+    }
     case 'fate-mode': {
       if (fateMode !== 'survival') return undefined;
       const manifest = resolveHarnessSkill(catalog, SEN_FATE_SURVIVAL_SKILL);
@@ -195,10 +209,12 @@ export const resolveManagedCapaSkills = (
   story: HarnessStory,
   catalog: ReadonlyMap<string, HarnessSkillManifest>,
   fateMode: HarnessStoryMode = 'regular',
+  /** The story's sound words from the attempt's frozen Media Loadout. */
+  soundVocabulary: readonly SoundWord[] = [],
 ): Partial<Record<HarnessSkillSlotId, HarnessSkillManifest>> => Object.fromEntries(
   CAPA_SCHEMA.flatMap(slot => {
     if (!slot.managedBy) return [];
-    const skill = resolveManagedSkill(slot.managedBy, story, catalog, fateMode);
+    const skill = resolveManagedSkill(slot.managedBy, story, catalog, fateMode, soundVocabulary);
     return skill ? [[slot.id, skill]] : [];
   }),
 );
@@ -220,13 +236,15 @@ export const freezeHarnessSkillLoadout = (
   capturedAt: string,
   /** The Fate mode of the chapter being frozen. Fate Survival loads its skill into the Fate slot. */
   fateMode: HarnessStoryMode = 'regular',
+  /** The story's sound words from the attempt's frozen Media Loadout. Any fill the Sound Cues slot. */
+  soundVocabulary: readonly SoundWord[] = [],
 ): HarnessSkillLoadoutSnapshot => {
   const unsupportedSlot = Object.keys(story.skillLoadout ?? {})
     .find(slot => !CAPA_SCHEMA.some(definition => definition.id === slot));
   if (unsupportedSlot) {
     throw new Error(`${unsupportedSlot} is not a supported CAPA skill slot.`);
   }
-  const managed = resolveManagedCapaSkills(story, catalog, fateMode);
+  const managed = resolveManagedCapaSkills(story, catalog, fateMode, soundVocabulary);
   const skills = CAPA_SCHEMA.flatMap(slot => {
     // A managed slot ignores the story's loadout: story state decides it.
     if (slot.managedBy) {
@@ -247,7 +265,10 @@ export const freezeHarnessSkillLoadout = (
   if (!skills.some(skill => skill.slot === 'author' && skill.applications.includes('generation'))) {
     throw new Error('Equip an installed Author skill before generating a chapter.');
   }
-  return { skills, capturedAt, originalLanguage: story.originalLanguage };
+  return {
+    skills, capturedAt, originalLanguage: story.originalLanguage,
+    ...(managed.soundCues ? { soundVocabulary: cloneHarnessValue([...soundVocabulary]) } : {}),
+  };
 };
 
 /**
@@ -284,7 +305,7 @@ export const buildHarnessOfficialOutputRequirements = (input: {
       'Apply them consistently to prose, dialogue, narration, reader-visible System Panels, Manifestation text, captions, and other text intended to be experienced by the reader. Do not weaken or selectively ignore them to preserve another prose preference. When necessary, Style must operate within their reader-facing requirements.',
       `${named} ${adapters.length > 1 ? 'do' : 'does'} not apply to machine-facing output.`,
     ] : []),
-    'Keep all structured field names, IDs, enum values, triggers, technical metadata, internal tags, routing instructions, media-generation prompts, asset-search descriptions, audio directions, World Cue instructions, and backend effect payloads in canonical English and in the exact required structure.',
+    'Keep all structured field names, IDs, enum values, triggers, technical metadata, internal tags, routing instructions, media-generation prompts, asset-search descriptions, audio directions, sound words, and backend effect payloads in canonical English and in the exact required structure. Sound Cue marks wrap the story\'s own words, in its language.',
     ...(adapters.length ? [
       `When an output object contains both reader-facing and machine-facing information, apply ${named} only to the reader-facing fields. Preserve the machine-facing fields in canonical English.`,
       'These requirements change how reader-facing content is communicated. They must not change established facts, character intent, plot events, emotional meaning, canonical terminology, or the technical meaning of any media effect.',
@@ -329,6 +350,10 @@ export const assembleCapaPrompt = (
         ))
       : undefined;
 
+  // The Sound Cues skill carries the story's frozen sound words; without them it never loads.
+  const soundVocabulary = ordered.some(skill => skill.slot === 'soundCues' && isAuthoringSkill(skill)) && loadout.soundVocabulary?.length
+    ? loadout.soundVocabulary
+    : undefined;
   const sections = ordered.filter(isAuthoringSkill).map(skill => [
     `CAPA SKILL [${slotLabel(skill.slot)}] — ${skill.name} v${skill.version}`,
     skill.instructions!.trim(),
@@ -336,6 +361,8 @@ export const assembleCapaPrompt = (
     ...(skill === translationSkill && translationGlossary
       ? [presentSelectedTranslationGlossary(translationGlossary)]
       : []),
+    // The story's sound words close the Sound Cues section as its example list.
+    ...(skill.slot === 'soundCues' && soundVocabulary ? [presentSoundVocabulary(soundVocabulary)] : []),
   ].join('\n'));
   // The official requirements travel only when a reader-facing adapter is
   // loaded or the story is not written in English.
@@ -347,7 +374,7 @@ export const assembleCapaPrompt = (
   const text = [...sections, ...(officialRequirements ? [officialRequirements] : [])].join('\n\n');
   const estimatedTokens = Math.max(1, Math.ceil(text.length / 4));
   if (estimatedTokens > CAPA_PROMPT_TOKEN_LIMIT) {
-    throw new Error('Equipped skills exceed the CAPA Prompt budget. Empty a skill slot, install shorter instructions, or narrow the Translation glossary.');
+    throw new Error('Equipped skills exceed the CAPA Prompt budget. Empty a skill slot, install shorter instructions, narrow the Translation glossary, or equip a Sound Cue Pack with fewer sound words.');
   }
   return {
     capturedAt: loadout.capturedAt,
@@ -364,5 +391,6 @@ export const assembleCapaPrompt = (
     text,
     estimatedTokens,
     ...(translationGlossary ? { translationGlossary: cloneHarnessValue(translationGlossary) } : {}),
+    ...(soundVocabulary ? { soundVocabulary: cloneHarnessValue(soundVocabulary) } : {}),
   };
 };

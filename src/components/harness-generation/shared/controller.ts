@@ -1,6 +1,6 @@
 import { createArcChapterPosition, editArcPlan, validateArcPlan, type ArcPlan } from '../../arc-goals/shared/arcGoals';
 import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '../../../lib/language';
-import { createMediaCatalog, emptyNarrativeMedia, soundVocabulary, type FrozenNarrativeMedia, type NarrativeMediaPort, type MediaResourceReference, type MediaSelectionSlot } from '../../../audio/media';
+import { emptyNarrativeMedia, soundVocabulary, type FrozenNarrativeMedia, type NarrativeMediaPort, type MediaResourceReference, type MediaSelectionSlot } from '../../../audio/media';
 import type { SoundWord } from '../../../audio/soundWords';
 import { arcGoalEditState, commitHarnessArc, harnessArcContext, harnessArcPlan, harnessStoryMode, missingRequiredEnding, needsArcPlan, readArcReply, roadmapPlanGap, storyConclusionGap, survivalArcReviewGap, withArcGoalReview, arcGoalReview } from './arcState';
 import {
@@ -812,14 +812,15 @@ export class HarnessGenerationController {
     // against exactly the inputs this attempt sends, and replays with them.
     const storyInformation = frozen ? cloneHarnessValue({ ...frozen.storyInformation, attemptId }) : compileStoryInformationPacket(this.state, story, foundation, attemptId, this.runtime);
     const immediateChapterRequest = frozen ? cloneHarnessValue(frozen.immediateChapterRequest) : buildImmediateChapterRequest(story);
-    // The Fate slot follows the chapter's frozen Fate mode: every Fate Survival call carries its skill.
-    const capaPrompt = frozen ? cloneHarnessValue(frozen.capaPrompt) : assembleCapaPrompt(
-      freezeHarnessSkillLoadout(story, this.skillCatalog, startedAt, storyInformation.storyDirection.fateMode ?? 'regular'),
-      { storyInformation, immediateChapterRequest },
-    );
+    // Media is frozen before CAPA: its sound words fill the Sound Cues slot.
     const mediaLoadout = frozen
       ? cloneHarnessValue(frozen.mediaLoadout)
       : this.media?.freeze(story.mediaLoadout, startedAt) ?? emptyNarrativeMedia(startedAt);
+    // The Fate slot follows the chapter's frozen Fate mode: every Fate Survival call carries its skill.
+    const capaPrompt = frozen ? cloneHarnessValue(frozen.capaPrompt) : assembleCapaPrompt(
+      freezeHarnessSkillLoadout(story, this.skillCatalog, startedAt, storyInformation.storyDirection.fateMode ?? 'regular', soundVocabulary(mediaLoadout)),
+      { storyInformation, immediateChapterRequest },
+    );
     // Frozen beside the CAPA Prompt; presented as its own section at the provider boundary.
     const missionReminder = frozen ? cloneHarnessValue(frozen.missionReminder) : buildMissionReminder(capaPrompt);
     const attempt: HarnessGenerationAttempt = {
@@ -928,12 +929,13 @@ export class HarnessGenerationController {
         message: 'The raw provider response checkpoint is empty, so chapter prose cannot be accepted.',
       });
     }
-    // Prose is accepted on its own; signals are matched to it, converted into
-    // SEN structures, and resolved through the frozen Media Loadout. Speaker
-    // roles come from the frozen Foundation cast, never from the provider.
+    // Prose is accepted on its own, read out of the writer's marks. Sound Cues
+    // are placed only for the sound words the writer was given, on recordings
+    // from the attempt's frozen Media Loadout.
     const acceptance = acceptHarnessModelResponse(raw, attempt.chapterNumber, {
-      mediaCatalog: createMediaCatalog(attempt.mediaLoadout),
-      cast: attempt.foundationSnapshot.input.cast ?? [],
+      media: attempt.mediaLoadout,
+      soundVocabulary: attempt.capaPrompt.soundVocabulary,
+      locale: findStory(this.state, attempt.storyId)?.originalLanguage,
     });
     if (!acceptance.accepted) {
       return this.appendFailure(attemptId, {
@@ -1068,9 +1070,7 @@ export class HarnessGenerationController {
       prose: acceptedDraft.prose,
       paragraphs: cloneHarnessValue(acceptedDraft.paragraphs),
       metrics: cloneHarnessValue(acceptedDraft.metrics),
-      ...(acceptedDraft.blocks ? { blocks: cloneHarnessValue(acceptedDraft.blocks) } : {}),
-      ...(acceptedDraft.audioMoments ? { audioMoments: cloneHarnessValue(acceptedDraft.audioMoments) } : {}),
-      ...(acceptedDraft.soundscapes ? { soundscapes: cloneHarnessValue(acceptedDraft.soundscapes) } : {}),
+      ...(acceptedDraft.soundCues ? { soundCues: cloneHarnessValue(acceptedDraft.soundCues) } : {}),
       mediaLoadout: cloneHarnessValue(commitAttempt.mediaLoadout),
       ...(acceptedDraft.plan ? { plan: acceptedDraft.plan } : {}),
       // The recap and rhythm metadata are saved exactly once, with their own
@@ -1446,7 +1446,8 @@ export class HarnessGenerationController {
   private managedSkillsStillMatch(story: HarnessStory, attempt: HarnessGenerationAttempt): boolean {
     try {
       const fateMode = attempt.storyInformation.storyDirection.fateMode ?? 'regular';
-      const current = Object.values(resolveManagedCapaSkills(story, this.skillCatalog, fateMode))
+      // The Sound Cues slot compares against the attempt's own frozen media, which a retry reuses.
+      const current = Object.values(resolveManagedCapaSkills(story, this.skillCatalog, fateMode, soundVocabulary(attempt.mediaLoadout)))
         .filter((skill): skill is HarnessSkillManifest => Boolean(skill));
       return managedCapaSkillSignature(current) === managedCapaSkillSignature(attempt.capaPrompt.skills);
     } catch {

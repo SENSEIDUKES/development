@@ -1,3 +1,4 @@
+import { stripReplyMarks } from './chapterSignals';
 import { arcFirstChapter, arcGoalResolution, arcGoalResolved, arcGoalSegments, arcGenerationContext, arcMissedGoals, confirmArcGoal, createArcChapterPosition, type ArcGenerationContext, type ArcPlan } from '../../arc-goals/shared/arcGoals';
 import type { HarnessArcContext, HarnessArcGoalReview, HarnessGenerationAttempt, HarnessStory, HarnessStoryConclusion, HarnessStoryMode, HarnessWarning, StoryFoundationInput } from '../../../narrative/generation';
 
@@ -122,6 +123,13 @@ export function readArcReply(raw: string): Record<string, unknown> {
   catch { return {}; }
 }
 
+/**
+ * A chapter reply as its evidence is read: marks belong only in paragraphs, so
+ * an evidence passage the writer copied with marks still matches the saved,
+ * mark-free prose.
+ */
+export const readChapterReply = (raw: string): Record<string, unknown> => stripReplyMarks(readArcReply(raw));
+
 /** The mode an attempt was prepared under, from its frozen packet. Packets frozen before modes reached the writer read as Regular. */
 export const attemptStoryMode = (attempt: HarnessGenerationAttempt): HarnessStoryMode =>
   attempt.storyInformation.storyDirection.fateMode ?? 'regular';
@@ -133,7 +141,7 @@ export const attemptStoryMode = (attempt: HarnessGenerationAttempt): HarnessStor
  * evidence, or a warning when a report is set aside.
  */
 export function readStoryEnding(attempt: HarnessGenerationAttempt): { evidence?: string; warning?: HarnessWarning } {
-  const report = readArcReply(attempt.rawProviderResponse ?? '').storyEnded as { ended?: unknown; evidence?: unknown } | undefined;
+  const report = readChapterReply(attempt.rawProviderResponse ?? '').storyEnded as { ended?: unknown; evidence?: unknown } | undefined;
   if (!report || report.ended !== true || !attempt.acceptedDraft) return {};
   const evidence = typeof report.evidence === 'string' ? report.evidence.trim() : '';
   if (attemptStoryMode(attempt) !== 'survival') {
@@ -180,7 +188,7 @@ export function commitHarnessArc(story: HarnessStory, attempt: HarnessGeneration
   const warnings: HarnessWarning[] = [];
   const survival = attemptStoryMode(attempt) === 'survival';
   const chapterNumber = attempt.chapterNumber;
-  const reply = readArcReply(attempt.rawProviderResponse ?? '');
+  const reply = readChapterReply(attempt.rawProviderResponse ?? '');
   const route = context.route;
   let outcome: 'completed' | 'missed' | undefined;
   let evidence = '';

@@ -1,18 +1,16 @@
 import { chapterTitleFallback, defaultHarnessRuntime, stableHarnessId, type HarnessRuntime } from './ids';
-import { acceptChapterMedia } from '../../../narrative/acceptedChapterMedia';
-import type { MediaCatalog } from '../../../audio/media';
-import { isCompleteSystemEvent, normalizeManifestResponse } from '../../../narrative/manifestNormalizer';
-import {
-  applyHarnessChapterSignals,
-  readHarnessChapterSignals,
-  type HarnessCastMember,
-} from './chapterSignals';
+import type { FrozenNarrativeMedia } from '../../../audio/media';
+import { describeSetAsideSoundCue, placeSoundCues } from '../../../audio/soundCuePlacement';
+import type { SoundWord } from '../../../audio/soundWords';
+import type { SoundCueAttachment } from '../../../audio/inlineAudio';
+import { readMarks, type ProseMark } from '../../../narrative/marks';
+import { readHarnessSoundCueSignals, stripReplyMarks } from './chapterSignals';
 import {
   harnessChapterBody,
   harnessChapterBodyWarnings,
+  harnessParagraphBlockId,
   normalizeHarnessParagraphs,
   splitHarnessProseParagraphs,
-  type HarnessChapterBody,
 } from './chapterBody';
 import { HARNESS_MEMORY_CATEGORIES } from '../../../narrative/generation';
 import { CHAPTER_FUNCTIONS, CHAPTER_RECAP_TEXT_LIMIT, isChapterFunction, type ChapterFunction, type NextChapterSuggestions } from '../../../narrative/storyDirection';
@@ -228,10 +226,12 @@ const memoryExtraction = (parsed: Record<string, unknown>): unknown[] | undefine
 };
 
 export interface HarnessResponseAcceptanceOptions {
-  /** The equipped Media Loadout catalog used to resolve soundscapes and Sound Cues. */
-  mediaCatalog?: MediaCatalog;
-  /** Foundation cast; HARNESS assigns dialogue speaker roles from it. */
-  cast?: readonly HarnessCastMember[];
+  /** The attempt's frozen Media Loadout: the recordings a Sound Cue may use. */
+  media?: FrozenNarrativeMedia;
+  /** The sound words the writer was given (frozen on the CAPA Prompt). Without them no Sound Cue is placed. */
+  soundVocabulary?: readonly SoundWord[];
+  /** The story's language, for word edges. */
+  locale?: string;
 }
 
 /**
@@ -242,7 +242,7 @@ export interface HarnessResponseAcceptanceOptions {
 const acceptedChapterBody = (
   parsed: Record<string, unknown>,
   warnings: HarnessWarning[],
-): HarnessChapterBody | undefined => {
+): string[] | undefined => {
   const paragraphs = normalizeHarnessParagraphs(parsed.paragraphs);
   if (paragraphs) {
     if (parsed.prose !== undefined) {
@@ -251,7 +251,7 @@ const acceptedChapterBody = (
         message: 'The harness ignored a prose field because the paragraphs array is the authoritative chapter body.',
       });
     }
-    return harnessChapterBody(paragraphs);
+    return paragraphs;
   }
   const prose = nonEmptyString(parsed.prose);
   if (!prose) return undefined;
@@ -259,69 +259,58 @@ const acceptedChapterBody = (
     code: 'chapter_body_recovered',
     message: 'The provider returned chapter prose without the requested paragraphs array; the harness recovered its paragraphs from the blank lines in that prose.',
   });
-  return harnessChapterBody(splitHarnessProseParagraphs(prose));
+  return splitHarnessProseParagraphs(prose);
 };
 
 /**
- * The accepted paragraphs are the chapter. The HARNESS builds canonical SEN
- * blocks from them, matches every accepted signal to its exact prose anchor,
- * builds the detailed SEN structures, and resolves media through the equipped
- * Media Loadout. Any failure here removes optional structure, never readable
- * prose.
+ * Reads the writer's marks out of every paragraph. The chapter keeps only the
+ * clean text; each paragraph keeps the positions of its marks for placement.
+ * A paragraph that held nothing but a mark is dropped.
  */
-const acceptedProseChapter = (
+const readParagraphMarks = (paragraphs: readonly string[], warnings: HarnessWarning[]) => {
+  const read = paragraphs.map(paragraph => readMarks(paragraph)).filter(reading => reading.text);
+  const issues = read.reduce((count, reading) => count + reading.issues.length, 0);
+  if (issues) {
+    warnings.push({
+      code: 'prose_marks_removed',
+      message: `Removed ${issues} unusable mark${issues === 1 ? '' : 's'} (unclosed, nested, repeated, empty or point marks) and kept their words.`,
+    });
+  }
+  return read;
+};
+
+/**
+ * Places the writer's Sound Cues on the clean paragraphs through the story's
+ * frozen sound words and recordings. Every cue it cannot place is set aside
+ * with a plain reason; prose is never touched.
+ */
+const acceptedSoundCues = (
   parsed: Record<string, unknown>,
-  paragraphs: readonly string[],
+  paragraphs: ReadonlyArray<{ text: string; marks: readonly ProseMark[] }>,
   chapterNumber: number,
   warnings: HarnessWarning[],
   options: HarnessResponseAcceptanceOptions,
-): Pick<HarnessAcceptedChapterDraft, 'blocks' | 'audioMoments' | 'soundscapes'> | undefined => {
-  const signals = readHarnessChapterSignals(parsed);
-  warnings.push(...signals.warnings);
-  try {
-    const applied = applyHarnessChapterSignals(paragraphs, signals.signals, options.cast ?? []);
-    warnings.push(...applied.warnings);
-    const normalized = normalizeManifestResponse(JSON.stringify({ blocks: applied.blocks }), chapterNumber);
-    const blocks = normalized.blocks.map(block => {
-      if (!block.system || isCompleteSystemEvent(block.system)) return block;
-      warnings.push({
-        code: 'optional_chapter_structure_omitted',
-        message: 'Removed an incomplete System Panel while retaining its readable block text.',
-      });
-      const { system: _system, ...proseBlock } = block;
-      return proseBlock;
-    });
-    const media = acceptChapterMedia(blocks, options.mediaCatalog);
-    for (const warning of normalized.diagnostics.warnings) {
-      // Chapter scale is a HARNESS measurement against the HARNESS target and
-      // is reported once as `chapter_scale_below_target`; the SEN normalizer's
-      // own floor would only repeat it against a different number.
-      if (warning.code === 'under-minimum-word-count') continue;
-      warnings.push({
-        code: warning.code === 'optional-field-removed'
-          ? 'optional_chapter_structure_omitted'
-          : 'chapter_block_normalized',
-        message: warning.message,
-      });
-    }
-    for (const issue of media.issues) {
-      warnings.push({
-        code: 'optional_chapter_structure_omitted',
-        message: `Removed an unresolved optional Sound Cue: ${issue.message}`,
-      });
-    }
-    return {
-      blocks: media.blocks,
-      ...(media.audioMoments.length > 0 ? { audioMoments: media.audioMoments } : {}),
-      ...(media.soundscapes.length > 0 ? { soundscapes: media.soundscapes } : {}),
-    };
-  } catch (error) {
+): SoundCueAttachment[] => {
+  const read = readHarnessSoundCueSignals(parsed);
+  warnings.push(...read.warnings);
+  if (!read.signals.length) return [];
+  if (!options.soundVocabulary?.length) {
     warnings.push({
-      code: 'optional_chapter_structure_omitted',
-      message: `The chapter signals could not be applied; the readable prose is kept without optional structure (${error instanceof Error ? error.message : 'invalid signals'}).`,
+      code: 'sound_cue_set_aside',
+      message: `Set aside ${read.signals.length} Sound Cue${read.signals.length === 1 ? '' : 's'}: this story has no sound words.`,
     });
-    return undefined;
+    return [];
   }
+  const placement = placeSoundCues({
+    paragraphs: paragraphs.map((paragraph, index) => ({ blockId: harnessParagraphBlockId(chapterNumber, index), ...paragraph })),
+    signals: read.signals,
+    vocabulary: options.soundVocabulary,
+    recordings: options.media?.soundCues ?? [],
+    chapterNumber,
+    locale: options.locale,
+  });
+  for (const item of placement.setAside) warnings.push({ code: 'sound_cue_set_aside', message: describeSetAsideSoundCue(item) });
+  return placement.soundCues;
 };
 
 export const verifyHarnessEventEvidence = (event: HarnessSemanticEvent, prose: string): HarnessSemanticEvent => {
@@ -342,14 +331,19 @@ export const acceptHarnessModelResponse = (
   options: HarnessResponseAcceptanceOptions = {},
 ): ParsedResponse => {
   const warnings: HarnessWarning[] = [];
-  const parsed = parseJsonObject(raw);
-  if (parsed) {
+  const reply = parseJsonObject(raw);
+  if (reply) {
+    // Marks belong only in paragraphs: every other string the writer returned
+    // (title, plan, recap, suggestions, a prose fallback) is read without them.
+    const parsed = stripReplyMarks(reply);
     appendIgnoredIdentityWarning(parsed, warnings);
     appendIgnoredStoryDirectionWarning(parsed, warnings);
-    // The model paragraphs are the authoritative chapter. The HARNESS keeps
-    // every paragraph's text exactly as written, derives the readable prose
-    // from them, and builds one ordered SEN block per paragraph.
-    const body = acceptedChapterBody(parsed, warnings);
+    // The model paragraphs are the authoritative chapter. The HARNESS reads the
+    // writer's marks out of them, keeps the clean text exactly as written,
+    // derives the readable prose from it, and places the Sound Cues the marks point to.
+    const source = acceptedChapterBody(parsed, warnings);
+    const marked = source ? readParagraphMarks(source, warnings) : [];
+    const body = marked.length ? harnessChapterBody(marked.map(reading => reading.text)) : undefined;
     if (!body || looksLikeRefusal(body.prose)) {
       return {
         accepted: false,
@@ -364,7 +358,7 @@ export const acceptHarnessModelResponse = (
       });
     }
     warnings.push(...harnessChapterBodyWarnings(body.metrics));
-    const structured = acceptedProseChapter(parsed, body.paragraphs, chapterNumber, warnings, options);
+    const soundCues = acceptedSoundCues(parsed, marked, chapterNumber, warnings, options);
     const title = nonEmptyString(parsed.title);
     if (!title) {
       warnings.push({
@@ -381,9 +375,7 @@ export const acceptHarnessModelResponse = (
         paragraphs: body.paragraphs,
         prose: body.prose,
         metrics: body.metrics,
-        ...(structured?.blocks ? { blocks: structured.blocks } : {}),
-        ...(structured?.audioMoments ? { audioMoments: structured.audioMoments } : {}),
-        ...(structured?.soundscapes ? { soundscapes: structured.soundscapes } : {}),
+        ...(soundCues.length ? { soundCues } : {}),
         title: title ?? chapterTitleFallback(chapterNumber),
         titleSource: title ? 'model' : 'harness-fallback',
         ...(plan ? { plan } : {}),
@@ -404,11 +396,11 @@ export const acceptHarnessModelResponse = (
       warnings,
     };
   }
-  const body = harnessChapterBody(splitHarnessProseParagraphs(recovered));
+  const body = harnessChapterBody(splitHarnessProseParagraphs(recovered).map(paragraph => readMarks(paragraph).text).filter(Boolean));
   warnings.push(
     {
       code: 'plain_prose_recovery',
-      message: 'The response was not valid JSON, so the harness preserved its readable prose and omitted optional structure.',
+      message: 'The response was not valid JSON, so the harness preserved its readable prose without marks and placed no Sound Cues.',
     },
     {
       code: 'missing_title',

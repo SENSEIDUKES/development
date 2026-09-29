@@ -91,6 +91,31 @@ describe('Harness Generation HTTP boundary', () => {
       ...request(), operation: 'recover-memory', chapterId: ' ', prose: 'Saved prose.',
     }]) expect((await handleHarnessGenerationHttp({ method: 'POST', body }, { environment })).status).toBe(400);
   });
+  it('rejects sound words outside the Sound Cue pack limits before contacting the provider, and sends valid ones as the schema\'s only choices', async () => {
+    const generate = vi.fn(async (_input: HarnessTextGenerationRequest) => ({
+      rawProviderResponse: JSON.stringify({ paragraphs: ['The gate held.'] }),
+      providerReceipt: { provider: 'gemini' as const, model: request().model, generatedAt: '2026-09-29', usage: { source: 'unavailable' as const } },
+    }));
+    const providerFactory = () => ({ provider: 'gemini' as const, model: request().model, generate });
+    for (const soundVocabulary of [
+      'blade drawn',
+      [{ word: 'Blade Drawn!', example: 'drew his sword' }],
+      [{ word: 'blade drawn', example: 'see https://example.com' }],
+      Array.from({ length: 33 }, (_, index) => ({ word: `sound ${String.fromCharCode(97 + (index % 26))}${index}`, example: 'it sounded' })),
+    ]) {
+      const body = request();
+      body.capaPrompt = { ...body.capaPrompt, soundVocabulary: soundVocabulary as never };
+      expect((await handleHarnessGenerationHttp({ method: 'POST', body }, { environment, providerFactory })).status).toBe(400);
+    }
+    expect(generate).not.toHaveBeenCalled();
+
+    const body = request();
+    body.capaPrompt = { ...body.capaPrompt, soundVocabulary: [{ word: ' Blade Drawn ', example: 'drew his sword' }] };
+    expect((await handleHarnessGenerationHttp({ method: 'POST', body }, { environment, providerFactory })).status).toBe(200);
+    const schema = generate.mock.calls[0][0].responseJsonSchema as { properties: { soundCues: { items: { properties: { sound: { enum: string[] } } } } } };
+    expect(schema.properties.soundCues.items.properties.sound.enum).toEqual(['blade drawn']);
+  });
+
   it('reports independent model configuration', async () => {
     const result = await handleHarnessGenerationHttp({ method: 'GET' }, { environment });
     expect(result.status).toBe(200);
@@ -146,9 +171,9 @@ describe('Harness Generation HTTP boundary', () => {
     expect(input.systemInstruction).toContain('elite Eastern fantasy web-novel author specializing in Asian light novels');
     expect(input.systemInstruction.split('Do not resolve the siege in this chapter.')).toHaveLength(2);
     expect(input.systemInstruction).toContain('paragraphs is the complete chapter and its sole body');
-    expect(input.systemInstruction).toContain('Every signal carries anchorText');
-    expect(input.systemInstruction).toContain('The HARNESS assigns speaker roles from the cast.');
-    expect(input.systemInstruction).toContain('The HARNESS constructs the complete mechanical, narrative, World Notice, or Fate presentation afterward.');
+    // Narration only: the old signal families are gone, and the guard against invented IDs and assets stays.
+    expect(input.systemInstruction).not.toMatch(/anchorText|dialogue:|systemPanels|creatureEvents/);
+    expect(input.systemInstruction).toContain('Do not invent block IDs');
     expect(input.systemInstruction).not.toContain('memory object');
     expect(input.systemInstruction).not.toContain('blocks array');
     expect(input.systemInstruction.split('HARNESS RESPONSE AND EVIDENCE CONTRACT')).toHaveLength(2);

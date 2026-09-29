@@ -1,4 +1,5 @@
-import type { ResolvedAudioMoment } from '../audio/inlineAudio';
+import type { SoundCueAttachment } from '../audio/inlineAudio';
+import type { SoundWord } from '../audio/soundWords';
 import type { FrozenNarrativeMedia, ResolvedSoundscape, StoryMediaSelection } from '../audio/media';
 import type { SenLanguageCode } from '../lib/language';
 import type { ChapterWritingStyle } from './readingMode';
@@ -9,8 +10,9 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * persisted shape (attempt, chapter, or workspace state fields) and add the
  * matching upgrade step to `HARNESS_WORKSPACE_MIGRATIONS` in `repository.ts`,
  * so saved stories carry over. Storage with no migration path is preserved
- * untouched by the host and replaced with an empty workspace. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 21 as const;
+ * untouched by the host and replaced with an empty workspace. Schema 22
+ * (chapters are paragraphs plus Sound Cues) deliberately has no upgrade step. */
+export const HARNESS_GENERATION_SCHEMA_VERSION = 22 as const;
 
 /** Output buckets assign processor categories; legacy event arrays remain readable. */
 export const HARNESS_MEMORY_CATEGORIES = {
@@ -211,7 +213,8 @@ export type HarnessSkillSlotId =
   | 'continuity'
   | 'style'
   | 'accessibility'
-  | 'translation';
+  | 'translation'
+  | 'soundCues';
 
 export type HarnessSkillApplication =
   | 'generation'
@@ -292,6 +295,8 @@ export interface HarnessSkillLoadoutSnapshot {
    * with or without a Translation skill. Absent is read as English.
    */
   originalLanguage?: SenLanguageCode;
+  /** The story's sound words from the attempt's frozen Media Loadout; they fill the Sound Cues slot. */
+  soundVocabulary?: SoundWord[];
 }
 
 /** One equipped CAPA Skill recorded in the CAPA Prompt. Its instructions live only in `CapaPrompt.text`. */
@@ -323,6 +328,12 @@ export interface CapaPrompt {
    * replay reuses the same reference instead of reselecting against new state.
    */
   translationGlossary?: HarnessSelectedTranslationGlossary;
+  /**
+   * The sound words the Sound Cues section gave the writer, frozen with it. The
+   * response contract lets the writer name only these, and acceptance places
+   * cues only for them, on every retry and replay.
+   */
+  soundVocabulary?: SoundWord[];
 }
 
 /**
@@ -487,10 +498,8 @@ export interface HarnessAcceptedChapterDraft {
   /** Readable chapter derived by joining the accepted paragraphs with blank lines. */
   prose: string;
   metrics: HarnessChapterMetrics;
-  /** HARNESS-built SEN blocks carrying only accepted, anchor-matched signals. */
-  blocks?: StoryBlock[];
-  audioMoments?: ResolvedAudioMoment[];
-  soundscapes?: ResolvedSoundscape[];
+  /** Sound Cues the HARNESS placed from the writer's marks, on paragraph spans. */
+  soundCues?: SoundCueAttachment[];
   title: string;
   titleSource: 'model' | 'harness-fallback';
   plan?: HarnessModelPlan;
@@ -560,7 +569,9 @@ export interface HarnessWarning {
     | 'optional_rhythm_metadata_omitted'
     | 'ignored_model_story_direction'
     | 'ignored_story_ending'
-    | 'unconfirmed_arc_completion';
+    | 'unconfirmed_arc_completion'
+    | 'sound_cue_set_aside'
+    | 'prose_marks_removed';
   message: string;
 }
 
@@ -761,12 +772,11 @@ export interface HarnessChapter {
   /** The accepted model-authored paragraphs, preserved exactly and in order. */
   paragraphs: string[];
   metrics: HarnessChapterMetrics;
-  /** Canonical SEN blocks the HARNESS built from the paragraphs and annotated from accepted signals. */
-  blocks?: StoryBlock[];
-  /** Application-resolved media records only; model proposals never persist here. */
-  audioMoments?: ResolvedAudioMoment[];
-  /** Application-resolved soundscapes; later loadout changes cannot rewrite them. */
-  soundscapes?: ResolvedSoundscape[];
+  /**
+   * Sound Cues placed on the paragraphs: exact spans (`c{n}-p{i}` paragraph
+   * ids) with their resolved recordings. Later loadout changes cannot rewrite them.
+   */
+  soundCues?: SoundCueAttachment[];
   /** Pack/version provenance of the frozen catalog that produced this media. */
   mediaLoadout: FrozenNarrativeMedia;
   plan?: HarnessModelPlan;

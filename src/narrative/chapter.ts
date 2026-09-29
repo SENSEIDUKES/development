@@ -7,7 +7,7 @@
  * exactly as production does.
  */
 
-import type { ResolvedAudioMoment, WorldCueIntent } from '../audio/inlineAudio';
+import type { SoundCueAttachment } from '../audio/inlineAudio';
 import type { SoundscapeRegion } from '../audio/soundscapes';
 
 export interface BeastSonicProfile {
@@ -104,8 +104,6 @@ export interface StoryBlockMetadata {
     type: "reveal" | "power-up" | "technique" | "injury" | "turning-point" | "death" | "breakthrough";
     profile: BeastSonicProfile;
   };
-  /** Model-safe, block-scoped audible actions; application code resolves them. */
-  audioMoments?: WorldCueIntent[];
 }
 
 export type SystemEventKind = "system_prompt" | "fate_system_prompt";
@@ -430,8 +428,8 @@ export interface ChapterContent {
   manifestDiagnostics?: ChapterManifestDiagnostics;
   blocks?: StoryBlock[];
   archivedBlocks?: StoryBlock[];
-  /** Resolved, precisely placed World Cues and server-produced dialogue artifacts. */
-  audioMoments?: ResolvedAudioMoment[];
+  /** Placed Sound Cues: exact spans of its blocks with their resolved recordings. */
+  soundCues?: SoundCueAttachment[];
   summary?: string;
   episodicSummary?: string;
   statsChangeMessage?: string;

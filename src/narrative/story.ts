@@ -9,7 +9,7 @@
  */
 
 import type { BeastSonicProfile as ChapterBeastSonicProfile, StoryBlockMetadata as ChapterStoryBlockMetadata } from './chapter';
-import type { ResolvedAudioMoment } from '../audio/inlineAudio';
+import type { SoundCueAttachment } from '../audio/inlineAudio';
 import type { ResolvedSoundscape } from '../audio/media';
 
 export interface FateResultData {
@@ -216,8 +216,8 @@ export interface ChapterMedia {
 export interface ChapterProse {
   generatedContent?: string;
   blocks?: StoryBlock[];
-  /** Validated, block-scoped Worldcues and dialogue artifacts. */
-  audioMoments?: ResolvedAudioMoment[];
+  /** Placed Sound Cues: exact spans of its blocks with their resolved recordings. */
+  soundCues?: SoundCueAttachment[];
   /** Frozen, application-resolved chapter soundscapes. */
   soundscapes?: ResolvedSoundscape[];
   statsChangeMessage?: string;

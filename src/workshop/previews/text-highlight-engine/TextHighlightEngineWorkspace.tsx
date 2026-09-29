@@ -1,9 +1,9 @@
 import { useMemo, useRef, useState, type CSSProperties } from 'react';
-import { SOUND_CUE_RULES, createMediaCatalog } from '@seihouse/sen/audio';
+import { SOUND_CUE_KIND, SOUND_CUE_RULES, createMediaCatalog, type SoundCueAttachment, type SoundCuePayload } from '@seihouse/sen/audio';
 import { InlineAudioText } from '@seihouse/sen/reader-chamber';
 import {
   MANUSCRIPT_PROTOTYPE_WORD_LIMIT, ManualCuePicker, TextHighlightEngine,
-  anchorAtLevel, applyPassageEdit, countManuscriptWords, createManualCueMoment, flaggedAttachments, keepAttachment, passageRange,
+  anchorAtLevel, applyPassageEdit, countManuscriptWords, flaggedAttachments, keepAttachment, passageRange,
   placeAttachment, removeAttachment, resolveAnchor, sameAnchorTarget, sealManuscript, snapSoundCueSelection,
   type ManuscriptAttachment, type ManuscriptParagraph, type ManuscriptSentence, type ManuscriptState,
   type PassageAction, type PassageEdit, type PassageSelection,
@@ -18,25 +18,18 @@ import { createPreviewManuscript } from './previewData';
 
 const catalog = createMediaCatalog(LIBRARY_BASE_MEDIA);
 
-/** The Sound Cue system's payload. The manuscript never reads it. */
-interface SoundCuePayload { cueUrl: string }
+/** The lab stores Sound Cues exactly as SEN does: span attachments whose payload the manuscript never reads. */
 type LabState = ManuscriptState<SoundCuePayload>;
 type LabAttachment = ManuscriptAttachment<SoundCuePayload>;
-const SOUND_CUE = 'sound-cue';
-const newAttachmentId = () => `a-${globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)}`;
 const createLabState = (): LabState => ({ manuscript: createPreviewManuscript(), attachments: [] });
 
-/** A placed Sound Cue in the Reader's current inline format, derived from its manuscript anchor. */
-function cueMoment(state: LabState, attachment: LabAttachment, occupied: readonly PassageSelection[] = []) {
-  const resolution = resolveAnchor(state.manuscript, attachment.anchor);
-  const paragraph = state.manuscript.paragraphs.find(candidate => candidate.id === attachment.anchor.blockId);
-  const cue = catalog.soundCues.byUrl.get(attachment.payload.cueUrl);
-  if (resolution.status !== 'placed' || !paragraph || !cue) return undefined;
-  const result = createManualCueMoment(paragraph, resolution.selection, cue, catalog, occupied);
-  return result.ok ? result.moment : undefined;
+/** A Sound Cue the Reader can show: still on its words. An edited or detached one waits in the inspector. */
+function placedCue(state: LabState, attachment: LabAttachment): SoundCueAttachment | undefined {
+  if (attachment.kind !== SOUND_CUE_KIND || attachment.anchor.level !== 'span') return undefined;
+  return resolveAnchor(state.manuscript, attachment.anchor).status === 'placed' ? attachment as SoundCueAttachment : undefined;
 }
 
-const soundCues = (state: LabState) => state.attachments.filter(attachment => attachment.kind === SOUND_CUE);
+const soundCues = (state: LabState) => state.attachments.filter(attachment => attachment.kind === SOUND_CUE_KIND);
 
 /**
  * The Sound Cue a selection would hold — its whole words, and the cue already
@@ -81,8 +74,8 @@ function CueAttachPanel({ state, selection, onPlace, onRemove, onClose }: {
   });
   return <div className="sen-manuscript-cue-panel">
     <ManualCuePicker block={paragraph} selection={target.selection} catalog={catalog}
-      existing={target.existing ? cueMoment(state, target.existing) : undefined} occupiedSelections={occupied}
-      onPlace={moment => onPlace({ id: target.existing?.id ?? newAttachmentId(), kind: SOUND_CUE, anchor, payload: { cueUrl: moment.cue.publicUrl } })}
+      existing={target.existing ? placedCue(state, target.existing) : undefined} occupiedSelections={occupied}
+      onPlace={cue => onPlace({ ...cue, id: target.existing?.id ?? cue.id, anchor })}
       onRemove={() => target.existing && onRemove(target.existing.id)} onClose={onClose} />
   </div>;
 }
@@ -100,9 +93,9 @@ export function TextHighlightEnginePreview() {
     : { marks: attachmentMarks(state, OVERLAY_KINDS[overlayMode]), pins: structurePins(state.manuscript) }, [overlayMode, state]);
   const words = countManuscriptWords(state.manuscript);
   const flagged = flaggedAttachments(state).length;
-  const moments = useMemo(() => state.attachments.flatMap(attachment => {
-    const moment = attachment.kind === SOUND_CUE ? cueMoment(state, attachment) : undefined;
-    return moment ? [moment] : [];
+  const placedCues = useMemo(() => state.attachments.flatMap(attachment => {
+    const cue = placedCue(state, attachment);
+    return cue ? [cue] : [];
   }), [state]);
 
   const edit = (_blocks: unknown, change: PassageEdit) => {
@@ -214,16 +207,16 @@ export function TextHighlightEnginePreview() {
         actions={actions} removeActions={removeActions} editable={draft} overlay={overlay} locale={state.manuscript.locale}
         style={{ '--sen-passage-highlight': `${highlightColor}59` } as CSSProperties}
         renderBlockText={block => {
-          const blockMoments = moments.filter(moment => moment.blockId === block.id);
-          return blockMoments.length > 0
-            ? <InlineAudioText text={block.text} moments={blockMoments} renderText={text => text} />
+          const blockCues = placedCues.filter(cue => cue.anchor.blockId === block.id);
+          return blockCues.length > 0
+            ? <InlineAudioText text={block.text} cues={blockCues} renderText={text => text} />
             : block.text;
         }} />
     </div>
     <ManuscriptInspector state={state} selection={selection} onSelectSentence={selectSentence}
       describe={attachment => {
-        const cue = catalog.soundCues.byUrl.get(attachment.payload.cueUrl);
-        return cue ? `Sound Cue · ${cue.metadata.description}` : 'Sound Cue · unavailable';
+        const cue = catalog.soundCues.byUrl.get(attachment.payload.cue.publicUrl);
+        return `Sound Cue · ${attachment.payload.sound}${cue ? ` · ${cue.metadata.description}` : ''}`;
       }}
       onKeep={id => setState(current => keepAttachment(current, id))}
       onRemove={id => setState(current => removeAttachment(current, id))} />

@@ -28,3 +28,9 @@ export function extractReaderVisibleAudioText(text: string) {
 
   return { cleanText: cleanText.trim(), sfxList };
 }
+
+/**
+ * A paragraph the Reader shows as a system line rather than prose: its visible
+ * text is one bracketed line ("[Quest complete]"). Nothing is placed inside one.
+ */
+export const isReaderSystemLine = (cleanText: string) => cleanText.startsWith('[') && cleanText.endsWith(']');

@@ -97,20 +97,18 @@ excluding buttons, `aria-hidden` content, and `data-sen-selection-ignore`
 decorations, must concatenate to the supplied block text exactly. The
 ready-made component handles this itself.
 
-The optional SEN `createManualCueMoment(block, selection, cue, catalog)` adapter
-validates the selected range against current prose, finds the exact
-non-overlapping phrase occurrence used by the existing inline renderer, and
-requires an approved host-supplied catalog cue and provenance. It refuses a
-range that is not exactly 1–5 whole words (`partial-word`, `too-many-words`); a
-host first turns any selection into the words a cue would hold with
-`snapSoundCueSelection` ("Somewher" → "Somewhere"), which says instead why a
-selection cannot hold one. It returns a
-manual `ResolvedAudioMoment` or a typed rejection. Manual moments may anchor
-ordinary author-selected text; generated cue validation still requires its
-audible-action phrase. The Workshop supplies its base catalog and routes
+The optional SEN `createManualSoundCue(block, selection, cue, catalog)` adapter
+validates the selected range against current prose and requires an approved
+host-supplied catalog recording with provenance and a sound word. It refuses a
+range that is not exactly 1–5 whole words (`partial-word`, `too-many-words`) or
+that overlaps another cue; a host first turns any selection into the words a
+cue would hold with `snapSoundCueSelection` ("Somewher" → "Somewhere"), which
+says instead why a selection cannot hold one. It returns the same
+`SoundCueAttachment` the HARNESS stores for a generated cue, with
+`origin: 'manual'`, or a typed rejection. The Workshop supplies its base catalog and routes
 Preview and placed glyphs through the shared `NarrativeAudioPlayback` provider.
 The reusable Cue picker offers category filtering and case-insensitive search
-over descriptions, variations, categories, and tags. Its visible catalog-order
+over descriptions, sound words, variations, categories, and tags, and lists only recordings that name a sound word. Its visible catalog-order
 numbers remain unchanged when filtered; they are display aids, not moment IDs.
 
 ## Manuscript
@@ -162,17 +160,15 @@ ManuscriptState      { manuscript; attachments; deletion? }
 
 The Workshop lab starts from three pre-made paragraphs (action, world-building,
 a breakthrough with a System line). Sound Cues are the only working attachment:
-each sits on 1–5 whole words as a `sound-cue` span attachment whose payload is
-only the chosen catalog cue (Remove mode's **Remove cue here** takes cues off
-the selected words), and the
-Reader's existing inline format (`ResolvedAudioMoment`) is derived from the
-anchor at render time. Below the prose, a Workshop-only inspector shows the
+each sits on 1–5 whole words as the SEN `SoundCueAttachment` itself, exactly
+what a generated chapter stores (Remove mode's **Remove cue here** takes cues
+off the selected words), and the Reader renders every cue still placed on its
+words. Below the prose, a Workshop-only inspector shows the
 selection's address, every attachment with its status (Keep / Remove), and the
 saved page structure, where clicking a sentence selects it. Draft/Sealed status,
 the word count, Reset sample and Seal chapter sit above the prose.
 
-Deliberately later: the semantic-intent contract between the model, the
-manuscript and the HARNESS (the next task); Soundscape, narration, Manifestation, Mind Palace and
+Deliberately later: Soundscape, narration, Manifestation, Mind Palace and
 Regenerate attachments; selection across paragraphs; manual sentence-boundary
 correction; non-English segmentation and presentation; Harness writing into the
 manuscript at chapter save; Reader Chamber migration; translation; persistence.

@@ -1,11 +1,11 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { INLINE_AUDIO_CUE_CATEGORIES, type ResolvedAudioMoment } from '../../../audio/inlineAudio';
+import type { SoundCueAttachment } from '../../../audio/inlineAudio';
 import { SOUND_CUE_RULES } from '../../../audio/soundCueRules';
 import { useNarrativeAudio } from '../../../audio/playback';
 import { isMediaResourceProvenance, type MediaCatalog } from '../../../audio/media';
 import { isPublicHttpsMediaUrl } from '../../../audio/mediaUrl';
-import type { AudioCue } from '../../../audio/cues';
-import { createManualCueMoment } from '../shared/manualCue';
+import { AUDIO_CUE_CATEGORIES, type AudioCue } from '../../../audio/cues';
+import { createManualSoundCue } from '../shared/manualCue';
 import type { PassageSelection, TextHighlightBlock } from '../shared/selection';
 import './manual-cue-picker.css';
 
@@ -13,9 +13,9 @@ export interface ManualCuePickerProps {
   block: TextHighlightBlock;
   selection: PassageSelection;
   catalog: MediaCatalog;
-  existing?: ResolvedAudioMoment;
+  existing?: SoundCueAttachment;
   occupiedSelections?: readonly PassageSelection[];
-  onPlace: (moment: ResolvedAudioMoment, selection: PassageSelection) => void;
+  onPlace: (cue: SoundCueAttachment, selection: PassageSelection) => void;
   onRemove: (selection: PassageSelection) => void;
   onClose: () => void;
 }
@@ -38,11 +38,12 @@ export function ManualCuePicker({ block, selection, catalog, existing, occupiedS
   const [error, setError] = useState<string | null>(null);
   const [category, setCategory] = useState<string>('all');
   const [search, setSearch] = useState('');
+  // Only recordings with a sound word can be a Sound Cue; any cue category (the Studio parent tag) may hold one.
   const cues = useMemo(() => catalog.soundCues.cues.filter(cue =>
-    INLINE_AUDIO_CUE_CATEGORIES.includes(cue.category as typeof INLINE_AUDIO_CUE_CATEGORIES[number])
+    Boolean(cue.metadata.sound)
     && isPublicHttpsMediaUrl(cue.public_url)
     && isMediaResourceProvenance(catalog.soundCueProvenanceByUrl.get(cue.public_url))), [catalog]);
-  const categories = useMemo(() => INLINE_AUDIO_CUE_CATEGORIES.filter(value =>
+  const categories = useMemo(() => AUDIO_CUE_CATEGORIES.filter(value =>
     cues.some(cue => cue.category === value)), [cues]);
   const results = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -68,20 +69,18 @@ export function ManualCuePicker({ block, selection, catalog, existing, occupiedS
     setError(null);
   };
   const place = (cue: AudioCue) => {
-    const result = createManualCueMoment(block, selection, cue, catalog, occupiedSelections);
+    const result = createManualSoundCue(block, selection, cue, catalog, occupiedSelections);
     if (!result.ok) {
-      setError(result.reason === 'unrepresentable-occurrence'
-        ? 'This exact text position cannot be anchored. Select a different phrase.'
-        : result.reason === 'overlapping-placement'
-          ? 'This passage overlaps an existing cue. Select a separate passage.'
-          : result.reason === 'partial-word'
-            ? 'A Sound Cue sits on whole words. Select the whole word.'
-            : result.reason === 'too-many-words'
-              ? `Sound Cues fit 1–${SOUND_CUE_RULES.maxWords} words. Select the action itself.`
-              : 'This selection or cue is no longer available. Select the passage again.');
+      setError(result.reason === 'overlapping-placement'
+        ? 'This passage overlaps an existing cue. Select a separate passage.'
+        : result.reason === 'partial-word'
+          ? 'A Sound Cue sits on whole words. Select the whole word.'
+          : result.reason === 'too-many-words'
+            ? `Sound Cues fit 1–${SOUND_CUE_RULES.maxWords} words. Select the action itself.`
+            : 'This selection or cue is no longer available. Select the passage again.');
       return;
     }
-    onPlace(result.moment, selection);
+    onPlace(result.cue, selection);
     onClose();
   };
   return <div className="sen-manual-cue-picker" aria-label="Choose Sound Cue">

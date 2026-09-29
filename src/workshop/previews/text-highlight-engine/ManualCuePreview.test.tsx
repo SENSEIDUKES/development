@@ -156,7 +156,7 @@ describe('Workshop manual Sound Cue flow', () => {
     expect(attachments()[0].dataset.status).toBe('placed');
     expect(attachments()[0].textContent).toContain('Words · Paragraph 1 · Sentence 3');
     act(() => block().querySelector<HTMLButtonElement>('[data-action-type="world-cue"]')!.click());
-    expect(replace.mock.lastCall?.[0]).toMatchObject({ id: expect.stringContaining('reader-inline:manual-world-cue:'),
+    expect(replace.mock.lastCall?.[0]).toMatchObject({ id: expect.stringContaining('reader-inline:sound-cue:'),
       source: expect.stringMatching(/^https:/) });
   });
 

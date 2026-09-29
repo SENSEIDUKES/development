@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { HARNESS_CHAPTER_RESPONSE_SCHEMA, buildHarnessMemoryRecoveryPrompt } from './prompt';
+import { HARNESS_RESPONSE_CONTRACT, buildHarnessChapterResponseSchema, buildHarnessMemoryRecoveryPrompt } from './prompt';
+
+const WORDS = [{ word: 'blade drawn', example: 'drew his sword' }, { word: 'beast roar', example: 'the beast roared' }];
+/** The schema a story with sound words receives. */
+const HARNESS_CHAPTER_RESPONSE_SCHEMA = buildHarnessChapterResponseSchema(WORDS);
 
 /** Shape metrics of a serialized provider schema; see the PR for before/after values. */
 export const describeSchemaShape = (schema: unknown) => {
@@ -25,40 +29,48 @@ export const describeSchemaShape = (schema: unknown) => {
 };
 
 describe('HARNESS chapter response schema shape', () => {
-  it('caps Sound Cues at the chapter limit without writing word rules into the model contract', () => {
-    const soundCues = (HARNESS_CHAPTER_RESPONSE_SCHEMA.properties as unknown as Record<string, { maxItems?: number }>).soundCues;
-    expect(soundCues.maxItems).toBe(10);
-    // Word counts belong to placement: the model gives direction, the HARNESS places the finished cue.
-    expect(JSON.stringify(soundCues)).not.toMatch(/\bwords?\b/i);
+  it('asks for Sound Cues as {mark, sound, energy?} right after the paragraphs, with the story\'s words as the only choices', () => {
+    const soundCues = HARNESS_CHAPTER_RESPONSE_SCHEMA.properties.soundCues;
+    expect(soundCues).toEqual({
+      type: 'array', maxItems: 10,
+      items: {
+        type: 'object',
+        properties: {
+          mark: { type: 'integer', minimum: 1 },
+          sound: { type: 'string', enum: ['blade drawn', 'beast roar'] },
+          energy: { type: 'string', enum: ['low', 'medium', 'high'] },
+        },
+        required: ['mark', 'sound'],
+      },
+    });
+    // How to mark lives in the CAPA Sound Cues skill, never in the permanent contract.
+    expect(JSON.stringify(soundCues)).not.toMatch(/\bwords?\b|description/i);
+    expect(HARNESS_RESPONSE_CONTRACT).not.toMatch(/Sound Cue|soundCues|\[\[/);
+  });
+
+  it('carries no Sound Cue field at all for a story without sound words', () => {
+    expect(buildHarnessChapterResponseSchema([]).properties).not.toHaveProperty('soundCues');
+    expect(buildHarnessChapterResponseSchema().properties).not.toHaveProperty('soundCues');
   });
 
   it('is compact, shallow, and free of conditional or nested application contracts', () => {
     const shape = describeSchemaShape(HARNESS_CHAPTER_RESPONSE_SCHEMA);
     expect(shape.anyOfBranches).toBe(0);
-    // root → signal list → signal → label/value list → entry: nothing deeper.
-    expect(shape.maxObjectDepth).toBeLessThanOrEqual(5);
-    expect(shape.objectSchemas).toBeLessThanOrEqual(12);
-    // Five shallow story-direction strings (recap, chapter function, three
-    // suggestions) sit beside the chapter; see the PR for before/after sizes.
-    expect(shape.serializedBytes).toBeLessThan(5_500);
+    // root → Sound Cue list → signal: nothing deeper.
+    expect(shape.maxObjectDepth).toBeLessThanOrEqual(3);
+    expect(shape.objectSchemas).toBeLessThanOrEqual(4);
+    expect(shape.serializedBytes).toBeLessThan(2_000);
     expect(HARNESS_CHAPTER_RESPONSE_SCHEMA.required).toEqual([
       'paragraphs', 'arcCompletion', 'recap', 'chapterFunction', 'nextProgression', 'nextWorldBuilding', 'nextConflict',
     ]);
     expect(Object.keys(HARNESS_CHAPTER_RESPONSE_SCHEMA.properties)).toEqual([
-      'title', 'plan', 'paragraphs', 'arcCompletion', 'recap', 'chapterFunction', 'nextProgression', 'nextWorldBuilding', 'nextConflict',
-      'storyEnded', 'dialogue', 'manifestations', 'systemPanels', 'soundscapes', 'soundCues', 'creatureEvents',
+      'title', 'plan', 'paragraphs', 'soundCues', 'arcCompletion', 'recap', 'chapterFunction', 'nextProgression', 'nextWorldBuilding', 'nextConflict',
+      'storyEnded',
     ]);
     const serialized = JSON.stringify(HARNESS_CHAPTER_RESPONSE_SCHEMA);
-    for (const forbidden of ['prose', 'blocks', 'memory', 'metadata', 'status', 'worldNotice', 'fateResult', 'blockId', 'url', 'asset', 'catalog', 'trackId', 'id"']) {
+    for (const forbidden of ['prose', 'blocks', 'memory', 'metadata', 'status', 'worldNotice', 'fateResult', 'blockId', 'url', 'asset', 'catalog', 'trackId', 'id"',
+      'dialogue', 'manifestations', 'systemPanels', 'soundscapes', 'creatureEvents', 'anchorText', 'occurrenceIndex', 'category', 'variation']) {
       expect(serialized, forbidden).not.toContain(`"${forbidden}"`);
-    }
-    for (const family of ['dialogue', 'manifestations', 'systemPanels', 'soundscapes', 'soundCues', 'creatureEvents'] as const) {
-      const items = HARNESS_CHAPTER_RESPONSE_SCHEMA.properties[family].items as { properties: { anchorText: unknown; occurrenceIndex: unknown }; required: readonly string[] };
-      expect(items.properties.anchorText).toBeDefined();
-      expect(items.required).toContain('anchorText');
-      // Disambiguation is available everywhere an anchor can repeat, and never required.
-      expect(items.properties.occurrenceIndex).toEqual({ type: 'integer', minimum: 0, description: expect.any(String) });
-      expect(items.required).not.toContain('occurrenceIndex');
     }
   });
 

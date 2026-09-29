@@ -11,7 +11,7 @@ import { HarnessGenerationController, exportHarnessStory } from '@seihouse/sen/h
 import { findFoundationRevision, findStory } from '@seihouse/sen/harness-generation';
 import { buildCanonicalStoryView } from '@seihouse/sen/harness-generation';
 import { GENERATION_PACKET_BUDGET, PACKET_SECTION_ORDER } from '@seihouse/sen/harness-generation';
-import { CAPA_SCHEMA, SEN_FATE_SURVIVAL_SKILL, SEN_READING_MODE_SKILLS, buildHarnessOfficialOutputRequirements, harnessSkillKey, resolveStoryLanguagePackage, type CapaSlotManager } from '@seihouse/sen/harness-generation';
+import { CAPA_SCHEMA, SEN_FATE_SURVIVAL_SKILL, SEN_READING_MODE_SKILLS, SEN_SOUND_CUES_SKILL, buildHarnessOfficialOutputRequirements, harnessSkillKey, resolveStoryLanguagePackage, type CapaSlotManager } from '@seihouse/sen/harness-generation';
 import { getSenLanguageLabel, normalizeChapterWritingStyle, type ChapterWritingStyle } from '@seihouse/sen/contracts';
 import { StorySettingsPanel } from './StorySettingsPanel';
 import { includeBundledHarnessSkills } from '@seihouse/sen/harness-generation';
@@ -247,8 +247,13 @@ const managedSlotInspection = (
   story: HarnessStory,
   fateMode: HarnessStoryMode,
   installedSkills: HarnessSkillManifest[],
+  soundWords: readonly SoundWord[],
 ): { status: 'Loaded' | 'Not used' | 'No package' | 'Blocked'; summary: string; skill?: HarnessSkillManifest } => {
   switch (slot.managedBy) {
+    case 'media-loadout':
+      return soundWords.length
+        ? { status: 'Loaded', skill: SEN_SOUND_CUES_SKILL, summary: `${SEN_SOUND_CUES_SKILL.name} v${SEN_SOUND_CUES_SKILL.version} loads with this story's ${soundWords.length} sound words from its Media Loadout.` }
+        : { status: 'Not used', summary: 'This story has no sound words, so this slot stays empty. It follows the story\'s Media Loadout and is never equipped by hand.' };
     case 'fate-mode':
       return fateMode === 'survival'
         ? { status: 'Loaded', skill: SEN_FATE_SURVIVAL_SKILL, summary: `${SEN_FATE_SURVIVAL_SKILL.name} v${SEN_FATE_SURVIVAL_SKILL.version} loads on every chapter of this Fate Survival story.` }
@@ -280,6 +285,7 @@ function SkillLoadoutPanel({
   story,
   fateMode,
   installedSkills,
+  soundWords,
   busy,
   onChange,
   renderSlotSkillImport,
@@ -289,6 +295,8 @@ function SkillLoadoutPanel({
   /** The story's Fate mode, which fills the mode-managed Fate slot. */
   fateMode: HarnessStoryMode;
   installedSkills: HarnessSkillManifest[];
+  /** The story's sound words, which fill the Media Loadout-managed Sound Cues slot. */
+  soundWords: readonly SoundWord[];
   busy: boolean;
   onChange: (slot: HarnessSkillSlotId, reference?: HarnessSkillReference) => void;
   renderSlotSkillImport?: HarnessGenerationWorkspaceProps['renderSlotSkillImport'];
@@ -336,7 +344,7 @@ function SkillLoadoutPanel({
       <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {CAPA_SCHEMA.map(slot => {
           if (slot.managedBy) {
-            const managed = managedSlotInspection(slot as ManagedCapaSlot, story, fateMode, installedSkills);
+            const managed = managedSlotInspection(slot as ManagedCapaSlot, story, fateMode, installedSkills, soundWords);
             const loaded = managed.status === 'Loaded';
             const blocked = managed.status === 'Blocked';
             return (
@@ -527,7 +535,7 @@ function MediaLoadoutPanel({
             <h2 id="harness-media-loadout-title" className="font-display text-xl text-white">Media Loadout</h2>
           </div>
           <p className="mt-2 max-w-3xl text-sm leading-relaxed text-neutral-400">
-            Reward unlocks make registered packs available. Equipping is a separate story choice, and only expands deterministic runtime resolution after generation. Nothing here enters CAPA or the model request.
+            Reward unlocks make registered packs available. Equipping is a separate story choice. Only the Sound Cue slot's sound words reach the writer, through the CAPA Sound Cues slot; recordings, URLs and entitlements never enter the model request.
           </p>
         </div>
         <span className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-emerald-100">
@@ -550,6 +558,9 @@ function MediaLoadoutPanel({
                 <h3 className="text-sm font-semibold text-white">{slot.label}</h3>
                 <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-emerald-100">{slotState}</span>
               </div>
+              {slot.id === 'soundscapes' && (
+                <p className="mt-1 text-[11px] text-neutral-500">Not used by new chapters yet.</p>
+              )}
               <label className="mt-3 block text-[10px] uppercase tracking-[0.14em] text-neutral-500" htmlFor={`harness-media-${slot.id}`}>Available pack</label>
               <select
                 id={`harness-media-${slot.id}`}
@@ -1559,6 +1570,7 @@ export function HarnessGenerationWorkspace({
                 story={selectedStory}
                 fateMode={selectedMode}
                 installedSkills={availableSkills}
+                soundWords={soundWords}
                 busy={busy}
                 onChange={setSkillSlot}
                 renderSlotSkillImport={renderSlotSkillImport}
@@ -1666,7 +1678,7 @@ export function HarnessGenerationWorkspace({
                       <h3 className="mt-2 font-display text-xl text-white">{chapter.title}</h3>
                       {/* Chapter scale and structure stay visible: a short or unstructured chapter is kept and flagged, never discarded. */}
                       <p className={`mt-1 font-mono text-[10px] uppercase tracking-[0.16em] ${chapter.metrics.meetsScaleTarget ? 'text-neutral-500' : 'text-amber-200/70'}`}>
-                        {chapter.metrics.wordCount.toLocaleString()} words · {chapter.metrics.paragraphCount.toLocaleString()} paragraphs · {chapter.blocks?.length.toLocaleString() ?? '0'} blocks
+                        {chapter.metrics.wordCount.toLocaleString()} words · {chapter.metrics.paragraphCount.toLocaleString()} paragraphs · {(chapter.soundCues?.length ?? 0).toLocaleString()} Sound Cues
                         {chapter.metrics.meetsScaleTarget ? '' : ' · below chapter-scale target'}
                       </p>
                       <LibraryButton type="button" size="sm" variant="ghost" disabled={busy} onClick={() => void run(() => controller.replayStory(selectedStory.id, chapter.id))}>Repair chapter enhancements</LibraryButton>

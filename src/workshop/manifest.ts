@@ -161,7 +161,7 @@ export const workshopEntries: WorkshopEntry[] = [
   {
     id: 'text-highlight-engine', title: 'Text Highlight Engine',
     description: 'The manuscript lab: three pre-made paragraphs saved with permanent paragraph and sentence addresses. Select prose to see its address, edit it, or attach a Sound Cue to 1–5 whole words (up to 10 per chapter); right-click or use the Remove row for Undo, Remove cue here and Delete Passage; switch on the Cues overlay to see every Sound Cue in blue and the page numbered the way the model addresses it (¶ paragraph numbers in the margin, small raised sentence numbers); then seal the chapter.',
-    category: 'reader-ui', section: 'components', owner: 'sen', status: 'active', version: 'v1.7',
+    category: 'reader-ui', section: 'components', owner: 'sen', status: 'active', version: 'v1.8',
     source: { repository: 'SENSEIDUKES/development', path: 'src/components/text-highlight-engine/', lastCompared: 'Not applicable — DEV-native primitive' },
   },
   {
@@ -225,9 +225,9 @@ export const workshopEntries: WorkshopEntry[] = [
     owner: 'sen',
     status: 'active',
     title: 'Reader Chamber',
-    description: 'The full reading UI with chapter-scoped Reader Codex memory, a Mind Palace of kept passages anchored to their exact text, an Alter Fate entry that opens the host\'s Fate page, and persisted action-scoped Worldcues resolved through the approved Library catalog.',
+    description: 'The full reading UI with chapter-scoped Reader Codex memory, a Mind Palace of kept passages anchored to their exact text, an Alter Fate entry that opens the host\'s Fate page, and Sound Cues placed on the exact words a chapter marks, played from the approved Library catalog.',
     category: 'reader-ui',
-    version: 'v1.5',
+    version: 'v1.6',
     source: {
       repository: 'SENSEIDUKES/Light-Novels',
       path: 'src/components/ReaderChamber.tsx; src/components/ReaderViewport.tsx',
@@ -360,9 +360,9 @@ export const workshopEntries: WorkshopEntry[] = [
     owner: 'sen',
     status: 'active',
     title: 'Harness Generation',
-    description: 'Standalone checkpoint-first novel core: a premise-first Story Foundation, one model call per chapter, independent IndexedDB persistence, tolerant prose acceptance, semantic-event ledger, and continuity directed one chapter at a time from the Reader\'s Fate page, in Regular Reader or Fate Survival mode.',
+    description: 'Standalone checkpoint-first novel core: a premise-first Story Foundation, one model call per chapter written in the tiny SEN language (narration plus Sound Cues the writer marks on its own words), independent IndexedDB persistence, tolerant prose acceptance, semantic-event ledger, and continuity directed one chapter at a time from the Reader\'s Fate page, in Regular Reader or Fate Survival mode.',
     category: 'other',
-    version: 'v1.1',
+    version: 'v1.2',
     source: {
       repository: 'SENSEIDUKES/development',
       path: 'src/components/harness-generation/',

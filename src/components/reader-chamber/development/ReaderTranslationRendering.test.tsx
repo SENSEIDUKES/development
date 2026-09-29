@@ -11,7 +11,7 @@ import { buildReaderFacingChapter, mergeReaderTranslation } from '@seihouse/sen/
 import { validateReaderTranslationResponse } from '@seihouse/sen/translation';
 import { ReaderViewport } from '@seihouse/sen/reader-chamber';
 
-// World Cue controls mount a real playback adapter; the Reader's own audio
+// Sound Cue controls mount a real playback adapter; the Reader's own audio
 // stack is not what this file is testing.
 vi.mock('../../../audio/playback', () => ({
   useNarrativeAudio: () => ({
@@ -59,19 +59,17 @@ const chapter = (): ReaderChapter => ({
   premise: '',
   status: 'read',
   blocks: canonicalBlocks(),
-  // A World Cue anchored to an exact phrase in the source language.
-  audioMoments: [{
-    id: 'world-cue:block-1:0:weapon-unsheathe',
-    blockId: 'block-1',
-    triggerPhrase: 'drew the Ashen Sword',
-    occurrenceIndex: 0,
-    sourceCategory: 'weapons',
-    variation: 'unsheathe',
-    semanticTags: ['sword', 'metal'],
-    relatedEntity: { name: 'Ashen Sword', type: 'artifact' },
-    cue: {
-      publicUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Weapons/Unsheathe/Sword_Unsheathe_1.mp3',
-      provenance: { catalogId: 'test-cues', version: '1' },
+  // A Sound Cue anchored to exact word offsets in the source language.
+  soundCues: [{
+    id: 'sound-cue:block-1:12-32',
+    kind: 'sound-cue',
+    anchor: { level: 'span', blockId: 'block-1', startOffset: 12, endOffset: 32, selectedText: 'drew the Ashen Sword' },
+    payload: {
+      origin: 'harness', sound: 'blade drawn',
+      cue: {
+        publicUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Weapons/Unsheathe/Sword_Unsheathe_1.mp3',
+        provenance: { catalogId: 'test-cues', version: '1' }, category: 'weapons',
+      },
     },
   }],
 });
@@ -209,7 +207,7 @@ describe('rendering canonical and translated chapters through the same Reader', 
   };
 
   const prose = () => container.querySelector<HTMLElement>('.reader-prose');
-  // World Cue marks insert word joiners into the prose; they are invisible.
+  // Sound Cue marks insert word joiners into the prose; they are invisible.
   const visibleText = () => (container.textContent ?? '').replace(/⁠/g, '');
   const blockIds = () => Array.from(container.querySelectorAll('[data-block-id]'))
     .map(element => element.getAttribute('data-block-id'));
@@ -246,10 +244,10 @@ describe('rendering canonical and translated chapters through the same Reader', 
     container.querySelectorAll('[data-cue-phrase], [data-cue-annotation]'),
   ).map(element => element.getAttribute('data-cue-phrase') ?? element.getAttribute('data-cue-annotation'));
 
-  it('plays source-language phrase-anchored World Cues only on the original chapter', () => {
+  it('plays source-language Sound Cues only on the original chapter', () => {
     renderOriginal();
-    // The cue is anchored to "mountain stair" at an exact position in the
-    // source prose; the original chapter keeps it.
+    // The cue is anchored to exact word offsets in the source prose; the
+    // original chapter keeps it.
     expect(worldCueAnchors()).toContain('drew the Ashen Sword');
 
     remount();

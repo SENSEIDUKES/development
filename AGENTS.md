@@ -15,6 +15,18 @@ This repository is the **SEN Development space**: a centralized development, rec
 
 Use it to isolate, preview, and refine UI components, animations, icons, rewards, and visual effects without needing the production app, authentication, story data, or migration infrastructure.
 
+### Product direction (NovelExpanded)
+
+Before any product work, meaning anything a NovelExpanded.com reader or author will see or feel, read [`NOVEL_EXPANDED.md`](./NOVEL_EXPANDED.md). It is the owner's direction for the product:
+
+- the four pages in a straight line;
+- the read → direct → Next Chapter loop as the core;
+- the HARNESS as invisible infrastructure, never a user-facing page;
+- the two tiers;
+- what gets built next.
+
+Only what is being built now exists: do not reconnect an old system because it used to be there. When a task and that document disagree, ask the owner.
+
 ### Major system reconstruction
 
 For tasks that rebuild a real product system rather than only refining a visual Workshop component, read [`DEVELOPMENT_RECONSTRUCTION.md`](./DEVELOPMENT_RECONSTRUCTION.md) before implementation.

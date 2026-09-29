@@ -28,9 +28,10 @@ Do not edit, create, delete, commit, push, or open a pull request that changes a
 Before making any changes, every coding agent is required to:
 
 1. Read [AGENTS.md](./AGENTS.md).
-2. Read [Sensei Skill](./skills/sensei-skill/SKILL.md) and [SEIHouse Codebase Conventions](./skills/seihouse-codebase-conventions/SKILL.md).
-3. For imported surfaces or reconstructed systems, read [Workshop Replica](./skills/workshop-replica/SKILL.md) and select its faithful-replica or reconstruction mode.
-4. State clearly if a required skill cannot be accessed; do not invent a replacement.
+2. Read [NOVEL_EXPANDED.md](./NOVEL_EXPANDED.md), the owner's product direction, before any product work.
+3. Read [Sensei Skill](./skills/sensei-skill/SKILL.md) and [SEIHouse Codebase Conventions](./skills/seihouse-codebase-conventions/SKILL.md).
+4. For imported surfaces or reconstructed systems, read [Workshop Replica](./skills/workshop-replica/SKILL.md) and select its faithful-replica or reconstruction mode.
+5. State clearly if a required skill cannot be accessed; do not invent a replacement.
 
 The seven canonical skills are maintained directly in `skills/`, discovered through
 `.agents/skills.json`, and listed in [AGENTS.md](./AGENTS.md#required-skills).

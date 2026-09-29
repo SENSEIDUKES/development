@@ -21,8 +21,9 @@ components directly.
 ## Why Library owns it
 
 The cards use Library UI (`LibraryCard`) and show Library-only states
-such as Sealed/Unacquired acquisition and Cultivation Rate. There is no
-reusable narrative behavior in them to split out into SEN.
+such as Sealed/Unacquired acquisition and Cultivation Rate. The Full card
+composes the portable `@seihouse/sen/motion-picture` behavior; SEN does not
+depend on the Library card.
 
 ## Source
 
@@ -45,6 +46,14 @@ reusable narrative behavior in them to split out into SEN.
 ## Mock boundaries
 
 The preview uses `featuredNovel` from `previews/light-novels-home/previewData.ts` and `SAMPLE_CREATOR_WORLDS` from `previews/creator-space/previewData.ts`. Every open, continue or read action only reports what it would do. No story data is read or written.
+
+The featured world's optional `videoUrl` points to the supplied Ye Chen MP4
+at `media.seihouse.org`. The Full card plays it only after the separate motion
+control is activated, once, muted and inline, then returns to its still cover.
+Worlds without a clip keep the static card. The host supplies each world's own
+clip; the card never reuses this sample URL for other worlds. Motion playback
+is local to the card, with no stored preference or upload path. The Full card
+keeps its own edge treatment instead of adding Motion Picture's sampled aura.
 
 The Info page shows Cultivation Rate only when the host supplies a value. The
 Workshop fixture supplies "Heaven" for its sample world; other worlds are not
@@ -95,12 +104,14 @@ These are documented product requirements, not behavior implemented here.
 Copy `development/`, `shared/` and `development/world-card.css`. Then:
 
 - have the host's Home grid, world detail and Create row render `WorldCard`, `WorldCardInfo` and `WorldCardCompact`;
-- supply world display data and destinations from the host.
+- supply world display data, optional per-world `videoUrl`, and destinations from the host;
+- include the `@seihouse/sen/motion-picture` entry alongside the Library card.
 
 Leave behind the Workshop preview, its sample data and the `reference/` folder.
 
 ## Workshop history
 
+- **2026-09-29** — Composed the existing SEN Motion Picture in the Full card only. The featured Workshop world supplies the Ye Chen clip. Opening a world and playing its motion are separate controls, so keyboard and touch users can choose either action. Missing clips retain the static card; failed clips return to the still, and failed stills show the existing cover fallback.
 - **2026-09-29** — Added the existing `story-scroll` Library icon beside NOVEL on the Full card and matched the Compact card's lighter subtext treatment. The icon is decorative because the format remains readable as text, and only the Novel format receives it; other formats can gain their own icon later.
 - **2026-09-29** — Brought the Compact card's stronger edge and selected glow to the Full card's hover, press, and focus states. Matched its smooth transition timing and added reduced-motion handling; the Full card remains a navigation action, not a toggle.
 - **2026-09-29** — Replaced Realm and Status on the Info page with host-supplied Branches and Activity. Added Workshop states and documented the future branch, activity, freshness, and visibility contract. The Full card remains free of activity indicators and glow.

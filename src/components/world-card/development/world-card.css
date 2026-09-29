@@ -12,16 +12,22 @@
     0 0 20px rgba(4, 172, 255, 0.3),
     0 18px 48px rgba(0, 0, 0, 0.5);
 }
-.world-card-base:focus,
+.world-card-base:focus-within,
 .world-card-base:active {
   border-color: rgba(4, 172, 255, 0.95);
   box-shadow: 0 0 0 1px rgba(4, 172, 255, 0.9),
     0 0 26px rgba(4, 172, 255, 0.42),
     0 18px 48px rgba(0, 0, 0, 0.55);
 }
-.world-card-base:active { transform: scale(0.99); }
-.world-card-base:focus-visible { outline: 2px solid #04acff; outline-offset: 2px; }
+.world-card-base:has(.world-card-base-open:active) { transform: scale(0.99); }
+.world-card-base:has(.world-card-base-open:focus-visible) { outline: 2px solid #04acff; outline-offset: 2px; }
 .world-card-base-media { position: relative; overflow: hidden; background: #07111d; }
+.world-card-base-motion { position: absolute; z-index: 3; inset: 0; height: 100%; pointer-events: none; }
+.world-card-base-motion .motion-picture-still { object-position: center top; }
+.world-card-base-motion .motion-picture-frame { border-radius: 0; }
+.world-card-base-motion .motion-picture-control { top: 0.45rem; right: 0.45rem; bottom: auto; pointer-events: auto; }
+.world-card-base-open { position: absolute; inset: 0; z-index: 2; width: 100%; cursor: pointer; }
+.world-card-base-open:focus-visible { outline: none; }
 .world-card-cover-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
 .world-card-cover-fallback {
   position: absolute;
@@ -42,7 +48,7 @@
   text-align: center;
   text-transform: uppercase;
 }
-.world-card-base-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, 0.38), transparent 28%, rgba(0, 0, 0, 0.16) 48%, rgba(0, 0, 0, 0.92) 100%); pointer-events: none; }
+.world-card-base-shade { position: absolute; z-index: 4; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, 0.38), transparent 28%, rgba(0, 0, 0, 0.16) 48%, rgba(0, 0, 0, 0.92) 100%); pointer-events: none; }
 .world-card-base-counter {
   display: inline-flex;
   align-items: center;
@@ -58,8 +64,8 @@
   line-height: 1;
   white-space: nowrap;
 }
-.world-card-base-chapter-count { position: absolute; top: 0.65rem; left: 0.55rem; }
-.world-card-base-overlay { position: absolute; inset: auto 0 0; display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; padding: 0.8rem; }
+.world-card-base-chapter-count { position: absolute; z-index: 5; top: 0.65rem; left: 0.55rem; pointer-events: none; }
+.world-card-base-overlay { position: absolute; z-index: 5; inset: auto 0 0; display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; padding: 0.8rem; pointer-events: none; }
 .world-card-base-title {
   color: #f5f5f5;
   font-size: 1.08rem;
@@ -70,7 +76,7 @@
   transition: color 200ms cubic-bezier(0, 0, 0.2, 1);
 }
 .world-card-base:hover .world-card-base-title,
-.world-card-base:focus .world-card-base-title { color: #70d0ff; }
+.world-card-base:focus-within .world-card-base-title { color: #70d0ff; }
 .world-card-base-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; color: #e5e5e5; font-family: sans-serif; font-size: 0.75rem; font-weight: 400; line-height: 1.2; text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9); }
 .world-card-base-meta > span { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 .world-card-base-format { display: inline-flex; align-items: center; gap: 0.2rem; }
@@ -78,7 +84,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .world-card-base, .world-card-base-title { transition: none; }
-  .world-card-base:active { transform: none; }
+  .world-card-base:has(.world-card-base-open:active) { transform: none; }
 }
 
 /* Info uses the same cover treatment at detail-page size. */

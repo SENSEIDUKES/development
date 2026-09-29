@@ -61,6 +61,9 @@ Differences from production, each on purpose:
   while an explicitly requested clip still plays.
 - **A clip that fails withdraws its own control** instead of leaving an empty frame, and
   a newly supplied clip gets a fresh chance.
+- **A still that fails can show the host's own fallback.** `stillFallback` is optional;
+  World Card uses its established unavailable-cover treatment without putting Library
+  language or artwork into the SEN component.
 - **Playback state is the host's to keep or ignore.** Pass `playing` and
   `onPlayingChange` to persist the choice the way production persists `motionCoverActive`;
   omit them and the component owns the state itself. No persistence, profile, or store

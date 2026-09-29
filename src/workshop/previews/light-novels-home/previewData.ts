@@ -9,6 +9,7 @@ export const featuredNovel: StoryDetailDisplay = {
   createdAt: '2026-09-09T12:00:00Z',
   reads: 1280,
   imageUrl: '/card-workshop/test-images/ye_chen_portrait.png',
+  videoUrl: 'https://media.seihouse.org/SEN/VIDEO/Motion%20Pictures/ye_chen_MP.mp4',
   chapterCount: 24,
   chapterWritingStyle: 'Standard',
   mcName: 'Ye Chen',

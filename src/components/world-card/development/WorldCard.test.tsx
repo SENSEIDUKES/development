@@ -23,8 +23,9 @@ it('opens the portrait card with only chapter count, title, creator and format o
   const onOpen = vi.fn();
   act(() => root.render(<WorldCard world={world} onOpen={onOpen} />));
 
-  const card = container.querySelector('[data-world-card="full"]') as HTMLButtonElement;
-  expect(card.getAttribute('aria-label')).toBe('Open The Last Lotus, 24 chapters, creator SENSEI, format Novel');
+  const card = container.querySelector('[data-world-card="full"]')!;
+  const open = card.querySelector<HTMLButtonElement>('.world-card-base-open')!;
+  expect(open.getAttribute('aria-label')).toBe('Open The Last Lotus, 24 chapters, creator SENSEI, format Novel');
   const media = card.querySelector('.world-card-base-media')!;
   expect(media.querySelector('.world-card-base-overlay')).not.toBeNull();
   for (const value of ['The Last Lotus', '24 Ch', 'SENSEI', 'NOVEL']) {
@@ -35,8 +36,29 @@ it('opens the portrait card with only chapter count, title, creator and format o
   for (const value of ['Xianxia', 'Standard', 'Creator', 'Format', 'Manga', 'Ye Chen', 'Foundation', '1,280', 'Sealed', 'Draft', 'Unacquired', 'Recently read']) {
     expect(card.textContent).not.toContain(value);
   }
-  act(() => card.click());
+  act(() => open.click());
   expect(onOpen).toHaveBeenCalledOnce();
+});
+
+it('plays only this world’s supplied motion clip without opening the world', () => {
+  const onOpen = vi.fn();
+  const videoUrl = 'https://media.seihouse.org/SEN/VIDEO/Motion%20Pictures/ye_chen_MP.mp4';
+  HTMLMediaElement.prototype.play = vi.fn().mockResolvedValue(undefined);
+  HTMLMediaElement.prototype.pause = vi.fn();
+  act(() => root.render(<WorldCard world={{ ...world, videoUrl }} onOpen={onOpen} />));
+  const card = container.querySelector('[data-world-card="full"]')!;
+  const play = card.querySelector<HTMLButtonElement>('.motion-picture-control')!;
+  expect(card.querySelector('video')).toBeNull();
+  expect(play.getAttribute('aria-label')).toBe('Play motion for The Last Lotus cover');
+  act(() => play.click());
+  expect(card.querySelector('video')?.getAttribute('src')).toBe(videoUrl);
+  expect(play.getAttribute('aria-pressed')).toBe('true');
+  expect(onOpen).not.toHaveBeenCalled();
+  act(() => card.querySelector('video')!.dispatchEvent(new Event('ended')));
+  expect(play.getAttribute('aria-pressed')).toBe('false');
+  act(() => card.querySelector<HTMLButtonElement>('.world-card-base-open')!.click());
+  expect(onOpen).toHaveBeenCalledOnce();
+  vi.restoreAllMocks();
 });
 
 it('keeps library states off the card and handles missing covers without inventing a writing style', () => {

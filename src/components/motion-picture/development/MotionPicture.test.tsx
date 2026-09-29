@@ -90,6 +90,15 @@ describe('Motion Picture', () => {
     expect(control()).not.toBeNull();
   });
 
+  it('renders a host fallback if its still fails to load', () => {
+    act(() => root.render(<MotionPicture stillUrl={STILL} videoUrl={CLIP} alt="Ye Chen"
+      stillFallback={<span>Cover unavailable</span>} />));
+    act(() => still().dispatchEvent(new Event('error')));
+    expect(still()).toBeNull();
+    expect(container.textContent).toContain('Cover unavailable');
+    expect(control()).not.toBeNull();
+  });
+
   it('names the control for the artwork it belongs to, in both states', () => {
     act(() => root.render(<MotionPicture stillUrl={STILL} videoUrl={CLIP} alt="Celestial Guardian" />));
     expect(control()!.getAttribute('aria-label')).toBe('Play motion for Celestial Guardian');

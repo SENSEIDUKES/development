@@ -33,10 +33,21 @@ declared pack type, display metadata, an explicitly selected relative JSON
 source path, its lowercase SHA-256 digest, and validated entries with public
 HTTPS audio URLs.
 
+A Sound Cue Pack also declares its **sound words**:
+`sounds: [{ word, example, meaning? }]`, the events its recordings answer, each
+with a 1–5 word example of what a writer wraps ("drew his sword") and an
+optional one-line meaning (SEN `validateSoundWords`). Every recording names one
+declared word in `metadata.sound`, and every declared word has at least one
+recording. A recording's cue category (artifacts, atmosphere, beasts, factions,
+locations, system, weapons) is its Studio parent tag; `metadata.studio_tags`
+may add at most one Tone, Energy and Tension (SEN `audioTags.ts`). Soundscape
+Packs take no sound words.
+
 Validation rejects malformed or mixed entries, duplicate catalog identities,
 non-audio and non-JSON files, signed or credential-bearing URLs, credentials,
-provider secrets, executable/script/instruction fields, unsupported Cue
-categories, and conflicts with built-in catalog identities. The base
+provider secrets, executable/script/instruction fields, undeclared or unused
+sound words, unknown Studio tags, and conflicts with built-in catalog
+identities. It names the entry and the problem. The base
 The first-party soundscape and cue catalogs live under `src/host/media/` and
 remain host records; they are not part of SEN or repackaged as portable data.
 
@@ -56,9 +67,16 @@ snapshot lives on `HarnessGenerationAttempt.mediaLoadout`; it is absent from
 provider prompt. It consumes no CAPA budget. Explicit model retry reuses the
 original snapshot, and deterministic replay reads the committed chapter.
 
+An equipped **Sound Cue Pack is the story's whole Sound Cue set**: its words
+and recordings replace the default library's (base recordings that answer no
+sound word stay). A Soundscape Pack still adds to the base soundscapes. The
+frozen snapshot carries the attempt's sound words (`FrozenNarrativeMedia.sounds`),
+and `describeSoundVocabulary(storyId)` shows them for inspection; the Media
+Loadout panel lists them. They do not reach the model yet.
+
 After the HARNESS has split the prose into SEN blocks and matched the accepted
 signals to their anchors, `acceptChapterMedia` receives one authorized catalog
-built from the base catalogs plus the matching equipped pack in each slot. The existing World Cue resolver receives that Cue catalog as input.
+built from the base catalogs and the matching equipped pack in each slot. The existing World Cue resolver receives that Cue catalog as input.
 Soundscape selection uses the existing `SceneAudioTrack` contract, exact mood
 gating, semantic cultural-region compatibility, tag ranking, and stable
 identity tie-breaking. An exact regional track outranks a neutral base track;
@@ -76,7 +94,7 @@ second media element, and leave prose readable when playback is unavailable.
 ## Development fixtures
 
 `mediaPackFixtures.ts` contains one tiny Soundscape Pack and one tiny Sound Cue
-Pack for Development verification only. The **Grant test reward** action is a
+Pack (one word, "clockwork roar") for Development verification only. The **Grant test reward** action is a
 Workshop-owned adapter that supplies a temporary one-hour entitlement to
 HARNESS; it is not persisted by HARNESS and is not a reward economy, schedule,
 currency, marketplace, or product pack.

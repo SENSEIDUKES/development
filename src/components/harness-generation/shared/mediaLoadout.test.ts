@@ -43,10 +43,14 @@ const soundCuePack = (): MediaPack => validateMediaPack({
   id: 'test.story-cues', version: '1.0.0', type: 'sound-cue',
   displayName: 'Story Cues', description: 'Test-only sound cues.',
   source: { path: 'catalogs/cues.json', digest: '3'.repeat(64) },
+  sounds: [{ word: 'clockwork roar', example: 'the clockwork beast roared' }],
   entries: [{
     file_path: 'fixtures/clockwork-roar.mp3',
     public_url: 'https://fixtures.r2.dev/clockwork-roar.mp3',
-    metadata: { main_category: 'beasts', broad_variation: 'roar', soft_tags: ['clockwork', 'metallic'], description: 'Test roar.', confidence_score: 1 },
+    metadata: {
+      main_category: 'beasts', broad_variation: 'roar', soft_tags: ['clockwork', 'metallic'], description: 'Test roar.', confidence_score: 1,
+      sound: 'clockwork roar', studio_tags: { energy: 'high' },
+    },
   }],
 });
 
@@ -131,6 +135,7 @@ describe('HARNESS Media Loadout runtime integration', () => {
     expect(committed.mediaLoadout).toMatchObject({
       soundscapes: [{ provenance: { catalogId: soundscapes.id, version: '1.0.0', source: soundscapes.source } }],
       soundCues: [{ provenance: { catalogId: soundCues.id, version: '1.0.0', source: soundCues.source } }],
+      sounds: [{ word: 'clockwork roar', example: 'the clockwork beast roared' }],
     });
 
     const committedBeforeChanges = JSON.stringify(committed);

@@ -1,6 +1,7 @@
 import { createArcChapterPosition, editArcPlan, validateArcPlan, type ArcPlan } from '../../arc-goals/shared/arcGoals';
 import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '../../../lib/language';
-import { createMediaCatalog, emptyNarrativeMedia, type FrozenNarrativeMedia, type NarrativeMediaPort, type MediaResourceReference, type MediaSelectionSlot } from '../../../audio/media';
+import { createMediaCatalog, emptyNarrativeMedia, soundVocabulary, type FrozenNarrativeMedia, type NarrativeMediaPort, type MediaResourceReference, type MediaSelectionSlot } from '../../../audio/media';
+import type { SoundWord } from '../../../audio/soundWords';
 import { arcGoalEditState, commitHarnessArc, harnessArcContext, harnessArcPlan, harnessStoryMode, missingRequiredEnding, needsArcPlan, readArcReply, roadmapPlanGap, storyConclusionGap, survivalArcReviewGap, withArcGoalReview, arcGoalReview } from './arcState';
 import {
   createHarnessStory,
@@ -394,6 +395,17 @@ export class HarnessGenerationController {
     if (!story) throw new Error('Open a Harness story before inspecting its Mission Reminder.');
     const mode = harnessStoryMode(findFoundationRevision(this.state, story.activeFoundationRevisionId)?.input);
     return buildMissionReminder(assembleCapaPrompt(freezeHarnessSkillLoadout(story, this.skillCatalog, this.runtime.now(), mode)));
+  }
+
+  /**
+   * The sound words the next attempt would freeze for this story: its equipped
+   * Sound Cue Pack's, or the default library's. For inspection; never persisted here.
+   */
+  describeSoundVocabulary(storyId: string): SoundWord[] {
+    this.assertHydrated();
+    const story = findStory(this.state, storyId);
+    if (!story) throw new Error('Open a Harness story before inspecting its sound words.');
+    return soundVocabulary(this.media?.freeze(story.mediaLoadout, this.runtime.now()));
   }
 
   async setSkillSlot(

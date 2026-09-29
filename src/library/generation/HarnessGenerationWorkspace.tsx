@@ -1,6 +1,6 @@
 import { StoryFoundationEditor } from '@seihouse/sen/story-seed';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import type { FrozenNarrativeMedia } from '@seihouse/sen/audio';
+import type { FrozenNarrativeMedia, SoundWord } from '@seihouse/sen/audio';
 import { BookOpen, CheckCircle2, CircleAlert, Compass, Download, FileText, ListTree, LoaderCircle, Pause, Pin, Play, Plus, Puzzle, RefreshCcw, Volume2 } from 'lucide-react';
 import { CHAPTER_FUNCTIONS, CHAPTER_FUNCTION_LABELS, FATE_MODE_LABELS, FATE_PRESSURE_RHYTHM_CONFIG, FateArcGoalCard, FateConclusion, FateDestinedEnding, FatePathChooser, HARD_PIN_LIMIT, chapterDirectionGap, describeChapterPath, harnessStoryMode } from '@seihouse/sen/harness-generation';
 import type { ChapterDirectionChoice, HardPinInput, HarnessChapter, HarnessMissionReminder, StoryFoundationRevision } from '@seihouse/sen/harness-generation';
@@ -453,10 +453,23 @@ function SkillLoadoutPanel({
   );
 }
 
+/** One sound word as a chip; its example (and meaning) show on hover. */
+function SoundWordChip({ sound }: { sound: SoundWord }) {
+  return (
+    <li
+      className="rounded-full border border-emerald-300/20 bg-black/25 px-2.5 py-1 text-[11px] text-emerald-50"
+      title={[`e.g. "${sound.example}"`, sound.meaning].filter(Boolean).join(' · ')}
+    >
+      {sound.word}
+    </li>
+  );
+}
+
 function MediaLoadoutPanel({
   story,
   packs,
   entitlements,
+  soundWords,
   busy,
   onGrant,
   onChange,
@@ -464,6 +477,8 @@ function MediaLoadoutPanel({
   story: HarnessStory;
   packs: MediaPack[];
   entitlements: MediaPackEntitlement[];
+  /** The sound words this story's next chapter would use. */
+  soundWords: SoundWord[];
   busy: boolean;
   onGrant?: (reference: MediaPackReference) => void;
   onChange: (slot: StoryMediaLoadoutSlot, reference?: MediaPackReference) => void;
@@ -556,6 +571,19 @@ function MediaLoadoutPanel({
                   </option>
                 ))}
               </select>
+              {slot.id === 'soundCues' && (
+                <div className="mt-3" aria-labelledby="harness-sound-words-title">
+                  <p id="harness-sound-words-title" className="text-[10px] uppercase tracking-[0.14em] text-neutral-500">
+                    Sound words for this story · {soundWords.length}
+                  </p>
+                  {soundWords.length > 0
+                    ? <ul className="mt-2 flex flex-wrap gap-1.5">{soundWords.map(sound => <SoundWordChip key={sound.word} sound={sound} />)}</ul>
+                    : <p className="mt-2 text-xs text-neutral-500">No sound words: this story has no Sound Cue recordings.</p>}
+                  <p className="mt-2 text-[11px] leading-relaxed text-neutral-500">
+                    {reference && registeredForSlot && entitled.has(selectedKey) ? 'From the equipped pack, which replaces the default library.' : 'From the default library.'}
+                  </p>
+                </div>
+              )}
             </article>
           );
         })}
@@ -576,6 +604,11 @@ function MediaLoadoutPanel({
               </div>
               <p className="mt-3 text-xs leading-relaxed text-neutral-400">{pack.description}</p>
               <p className="mt-2 text-[11px] text-neutral-500">{pack.entries.length} validated catalog {pack.entries.length === 1 ? 'entry' : 'entries'}</p>
+              {pack.type === 'sound-cue' && (
+                <ul className="mt-2 flex flex-wrap gap-1.5" aria-label={`${pack.displayName} sound words`}>
+                  {pack.sounds.map(sound => <SoundWordChip key={sound.word} sound={sound} />)}
+                </ul>
+              )}
               {state === 'Locked' && onGrant && (
                 <LibraryButton type="button" size="sm" variant="ghost" disabled={busy} onClick={() => onGrant({ id: pack.id, version: pack.version })}>
                   Grant test reward
@@ -1303,6 +1336,11 @@ export function HarnessGenerationWorkspace({
     try { await controller.editChapterRecap(chapterId, text); }
     finally { setBusy(false); }
   };
+  const soundWords = useMemo<SoundWord[]>(() => {
+    if (!state || !selectedStory) return [];
+    try { return controller.describeSoundVocabulary(selectedStory.id); }
+    catch { return []; }
+  }, [controller, state, selectedStory]);
   const missionReminder = useMemo<HarnessMissionReminder | { error: string } | undefined>(() => {
     if (!state || !selectedStory) return undefined;
     try { return controller.describeMissionReminder(selectedStory.id); }
@@ -1533,6 +1571,7 @@ export function HarnessGenerationWorkspace({
                 story={selectedStory}
                 packs={registeredMediaPacks}
                 entitlements={mediaPackEntitlements}
+                soundWords={soundWords}
                 busy={busy}
                 onGrant={onGrantDevelopmentMediaReward ? grantDevelopmentMediaReward : undefined}
                 onChange={setMediaLoadoutSlot}

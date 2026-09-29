@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createAuthorizedMediaCatalog, createRegisteredMediaPackCatalog, freezeMediaLoadout, mediaPackKey, validateMediaPack, type MediaPack } from '@seihouse/library/media';
-import { resolveAuthorizedSoundscape } from '@seihouse/sen/audio';
+import { createAuthorizedMediaCatalog, createLibraryMediaPort, createRegisteredMediaPackCatalog, freezeMediaLoadout, mediaPackKey, validateMediaPack, type MediaPack } from '@seihouse/library/media';
+import { createMediaCatalog, parseAudioCues, resolveAuthorizedSoundscape, type FrozenNarrativeMedia } from '@seihouse/sen/audio';
 import { resolveSoundscapeTrack, type SceneAudioTrack } from '@seihouse/sen/audio';
 
 const soundscape = (overrides: Record<string, unknown> = {}) => ({
@@ -11,15 +11,21 @@ const soundscape = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
+const cueEntry = (sound = 'clockwork roar', studioTags: Record<string, unknown> = { energy: 'high' }, name = 'clockwork-roar') => ({
+  file_path: `fixtures/${name}.mp3`,
+  public_url: `https://fixtures.r2.dev/${name}.mp3`,
+  metadata: {
+    main_category: 'beasts', broad_variation: 'clockwork-roar', soft_tags: ['clockwork'], description: 'Test roar.', confidence_score: 1,
+    sound, studio_tags: studioTags,
+  },
+});
+
 const soundCues = (overrides: Record<string, unknown> = {}) => ({
   id: 'test.clockwork-cues', version: '1.0.0', type: 'sound-cue',
   displayName: 'Clockwork Cues', description: 'Test-only cues.',
   source: { path: 'catalogs/cues.json', digest: 'b'.repeat(64) },
-  entries: [{
-    file_path: 'fixtures/clockwork-roar.mp3',
-    public_url: 'https://fixtures.r2.dev/clockwork-roar.mp3',
-    metadata: { main_category: 'beasts', broad_variation: 'clockwork-roar', soft_tags: ['clockwork'], description: 'Test roar.', confidence_score: 1 },
-  }],
+  sounds: [{ word: 'clockwork roar', example: 'the clockwork beast roared' }],
+  entries: [cueEntry()],
   ...overrides,
 });
 
@@ -32,6 +38,25 @@ describe('Media Pack contracts', () => {
     expect([...createRegisteredMediaPackCatalog([tracks, cues]).keys()]).toEqual([
       mediaPackKey(tracks), mediaPackKey(cues),
     ]);
+  });
+
+  it('holds a Sound Cue Pack\'s words and recordings to one another, with any cue category as the parent tag', () => {
+    expect(validateMediaPack(soundCues())).toMatchObject({
+      sounds: [{ word: 'clockwork roar', example: 'the clockwork beast roared' }],
+      entries: [{ category: 'beasts', metadata: { sound: 'clockwork roar', studio_tags: { energy: 'high' } } }],
+    });
+    expect(() => validateMediaPack(soundCues({ sounds: undefined }))).toThrow('Sound words must be a list');
+    expect(() => validateMediaPack(soundCues({ entries: [cueEntry('gear whine')] }))).toThrow('does not declare');
+    expect(() => validateMediaPack(soundCues({ entries: [{ ...cueEntry(), metadata: { ...cueEntry().metadata, sound: undefined } }] }))).toThrow('needs a sound word');
+    expect(() => validateMediaPack(soundCues({
+      sounds: [{ word: 'clockwork roar', example: 'the clockwork beast roared' }, { word: 'gear whine', example: 'gears whined' }],
+    }))).toThrow('"gear whine" has no recording');
+    expect(() => validateMediaPack(soundCues({ entries: [cueEntry('clockwork roar', { parent: 'FIGHTING' })] }))).toThrow('no parent tag');
+    const alarm = { ...cueEntry(), metadata: { ...cueEntry().metadata, main_category: 'system' } };
+    expect(validateMediaPack(soundCues({ entries: [alarm] }))).toMatchObject({ entries: [{ category: 'system' }] });
+    expect(() => validateMediaPack(soundCues({ entries: [cueEntry('clockwork roar', { energy: 'loud' })] }))).toThrow('Energy must be one of low, medium, high');
+    expect(() => validateMediaPack(soundCues({ sounds: { 'clockwork roar': 'the clockwork beast roared' } }))).toThrow('list');
+    expect(() => validateMediaPack(soundscape({ sounds: [] }))).toThrow('unsupported field sounds');
   });
 
   it('rejects mixed types, duplicate identities, unsafe URLs, secrets, code and unsupported sources', () => {
@@ -92,6 +117,33 @@ describe('Media Pack contracts', () => {
       capturedAt: '2026-09-16T00:00:01.000Z',
     });
     expect(expired.soundscapes).toBeUndefined();
+  });
+
+  it('lets an equipped Sound Cue Pack replace the default sound set, keeping recordings that answer no word', () => {
+    const base: FrozenNarrativeMedia = {
+      capturedAt: 'base',
+      soundscapes: [],
+      soundCues: [
+        { cue: parseAudioCues([{ ...cueEntry('beast roar', {}, 'default-roar'), metadata: { ...cueEntry('beast roar', {}, 'default-roar').metadata, studio_tags: undefined } }]).cues[0], provenance: { catalogId: 'defaults', version: '1' } },
+        { cue: parseAudioCues([{ ...cueEntry(undefined, {}, 'rain'), metadata: { main_category: 'atmosphere', broad_variation: 'rain', soft_tags: [], description: 'Rain.', confidence_score: 1 } }]).cues[0], provenance: { catalogId: 'defaults', version: '1' } },
+      ],
+      sounds: [{ word: 'beast roar', example: 'the beast roared' }],
+    };
+    const defaults = createAuthorizedMediaCatalog(undefined, createMediaCatalog(base));
+    expect(defaults.sounds.map(sound => sound.word)).toEqual(['beast roar']);
+    expect(defaults.soundCues.cues.map(cue => cue.file_path)).toEqual(['fixtures/default-roar.mp3', 'fixtures/rain.mp3']);
+
+    const pack = validateMediaPack(soundCues()) as Extract<MediaPack, { type: 'sound-cue' }>;
+    const equipped = createAuthorizedMediaCatalog({ capturedAt: 'now', soundCues: pack }, createMediaCatalog(base));
+    expect(equipped.sounds.map(sound => sound.word)).toEqual(['clockwork roar']);
+    expect(equipped.soundCues.cues.map(cue => cue.file_path)).toEqual(['fixtures/rain.mp3', 'fixtures/clockwork-roar.mp3']);
+    expect(equipped.soundCueProvenanceByUrl.get('https://fixtures.r2.dev/default-roar.mp3')).toBeUndefined();
+    expect(equipped.soundCueProvenanceByUrl.get('https://fixtures.r2.dev/clockwork-roar.mp3')).toMatchObject({ catalogId: pack.id });
+    expect(equipped.soundCueProvenanceByUrl.get('https://fixtures.r2.dev/rain.mp3')).toMatchObject({ catalogId: 'defaults' });
+
+    const port = createLibraryMediaPort({ registered: [pack], entitlements: [{ pack, unlockedAt: '2026-09-16T00:00:00.000Z' }], base });
+    expect(port.freeze({ soundCues: pack }, '2026-09-16T00:00:01.000Z').sounds).toEqual(pack.sounds);
+    expect(port.freeze(undefined, '2026-09-16T00:00:01.000Z').sounds).toEqual(base.sounds);
   });
 
   it('adds only the equipped pack to the base catalog and keeps deterministic selection', () => {

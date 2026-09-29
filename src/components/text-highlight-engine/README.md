@@ -4,7 +4,7 @@ SEN-owned plain-text selection and local editing, plus the manuscript page that
 SEN features point at. No Reader, chapter, generation, translation, Library,
 storage, or server dependency.
 
-- Created: **2026-09-26**; last Workshop update: **2026-09-28**
+- Created: **2026-09-26**; last Workshop update: **2026-09-29**
 - Lifecycle: active standalone prototype; the Workshop tab is the manuscript lab
 - Source: this Development repository; no production replica or source comparison
 - Workshop: `?preview=text-highlight-engine`
@@ -282,6 +282,10 @@ browser evidence out of the consuming surface. No integration was performed.
 
 ## Workshop history
 
+- **2026-09-29:** The Cue Picker shows each recording's sound word, cue
+  category (its Studio parent tag) and child tags ("blade drawn · weapons ·
+  high"), and search also finds sound words. Browsing, numbering and filters
+  are unchanged.
 - **2026-09-28:** The Action Bar gained its Remove mode: right-click, the
   ContextMenu key or Shift+F10 (and the touch bar's Remove row) open Undo, the
   host's removals and Delete Passage, and an unavailable action now stays

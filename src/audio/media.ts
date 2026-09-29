@@ -1,5 +1,7 @@
 import { parseAudioCues, type AudioCue, type AudioCuesLoadResult } from './cues';
+import { isPublicHttpsMediaUrl } from './mediaUrl';
 import { resolveSoundscapeTrack, type SceneAudioTrack, type SoundscapeIntent } from './soundscapes';
+import type { SoundWord } from './soundWords';
 
 /** Opaque host resource identity; contains no account, price, or entitlement. */
 export interface MediaResourceReference { id: string; version: string }
@@ -17,6 +19,8 @@ export interface FrozenNarrativeMedia {
   capturedAt: string;
   soundscapes: Array<{ track: SceneAudioTrack; provenance: MediaResourceProvenance }>;
   soundCues: Array<{ cue: AudioCue; provenance: MediaResourceProvenance }>;
+  /** The sound words these Sound Cue recordings answer, each with its example. */
+  sounds?: SoundWord[];
 }
 
 export interface NarrativeMediaPort {
@@ -29,6 +33,7 @@ export interface MediaCatalog {
   soundscapes: FrozenNarrativeMedia['soundscapes'];
   soundCues: AudioCuesLoadResult;
   soundCueProvenanceByUrl: ReadonlyMap<string, MediaResourceProvenance>;
+  sounds: SoundWord[];
 }
 
 export interface ResolvedSoundscape {
@@ -45,7 +50,19 @@ export function createMediaCatalog(snapshot?: FrozenNarrativeMedia): MediaCatalo
     soundscapes: snapshot?.soundscapes ?? [],
     soundCues: parseAudioCues(snapshot?.soundCues.map(entry => entry.cue) ?? []),
     soundCueProvenanceByUrl: new Map(snapshot?.soundCues.map(entry => [entry.cue.public_url, entry.provenance]) ?? []),
+    sounds: structuredClone(snapshot?.sounds ?? []),
   };
+}
+
+/**
+ * The sound words a story may name: every declared word that at least one
+ * playable recording answers (public HTTPS, with provenance), in declared order.
+ */
+export function soundVocabulary(media?: Pick<FrozenNarrativeMedia, 'sounds' | 'soundCues'>): SoundWord[] {
+  const playable = new Set((media?.soundCues ?? [])
+    .filter(({ cue, provenance }) => cue.metadata.sound && isPublicHttpsMediaUrl(cue.public_url) && isMediaResourceProvenance(provenance))
+    .map(({ cue }) => cue.metadata.sound));
+  return structuredClone((media?.sounds ?? []).filter(sound => playable.has(sound.word)));
 }
 
 export function resolveAuthorizedSoundscape(intent: SoundscapeIntent, catalog: MediaCatalog): ResolvedSoundscape | null {

@@ -159,9 +159,14 @@ export class HarnessGenerationController {
     this.skillCatalog = createHarnessSkillCatalog(includeBundledHarnessSkills(manifests));
   }
 
-  /** Replaces only the port used by future attempts. Saved snapshots remain immutable. */
+  /**
+   * Replaces only the port used by future attempts. Saved snapshots remain
+   * immutable; listeners hear of it so views derived from the port (the
+   * story's sound words) refresh.
+   */
   setMediaPort(media?: NarrativeMediaPort): void {
     this.media = media;
+    this.notify();
   }
 
   snapshot(): HarnessWorkspaceState {

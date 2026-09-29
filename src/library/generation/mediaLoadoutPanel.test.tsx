@@ -24,7 +24,7 @@ const towerPack = validateMediaPack({
     file_path: 'fixtures/floor-cleared.mp3',
     public_url: 'https://fixtures.r2.dev/floor-cleared.mp3',
     metadata: {
-      main_category: 'system', broad_variation: 'clear', soft_tags: [], description: 'Test.', confidence_score: 1,
+      main_category: 'locations', broad_variation: 'clear', soft_tags: [], description: 'Test.', confidence_score: 1,
       sound: 'floor cleared', studio_tags: { tone: 'bright', energy: 'medium' },
     },
   }],
@@ -35,14 +35,15 @@ let root: Root;
 beforeEach(() => { container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container); });
 afterEach(() => { act(() => root.unmount()); container.remove(); });
 
-const render = async (repository: InMemoryHarnessGenerationRepository) => {
+const UNLOCKED = [{ pack: towerPack, unlockedAt: '2026-01-01T00:00:00.000Z' }];
+const render = async (repository: InMemoryHarnessGenerationRepository, entitlements = UNLOCKED) => {
   await act(async () => root.render(
     <HarnessGenerationWorkspace
       repository={repository}
       modelAdapter={modelAdapter}
       baseMedia={LIBRARY_BASE_MEDIA}
       registeredMediaPacks={[towerPack]}
-      mediaPackEntitlements={[{ pack: towerPack, unlockedAt: '2026-01-01T00:00:00.000Z' }]}
+      mediaPackEntitlements={entitlements}
     />,
   ));
 };
@@ -72,5 +73,10 @@ describe('Media Loadout sound words', () => {
     expect(repository.snapshot().stories.find(entry => entry.id === story.id)?.mediaLoadout?.soundCues).toEqual({ id: 'test.tower-cues', version: '1.0.0' });
     expect(storyWords()).toEqual(['floor cleared']);
     expect(container.textContent).toContain('From the equipped pack, which replaces the default library.');
+
+    // When the host withdraws the unlock, the words fall back to the default library at once.
+    await render(repository, []);
+    expect(storyWords()).toContain('blade drawn');
+    expect(storyWords()).not.toContain('floor cleared');
   });
 });

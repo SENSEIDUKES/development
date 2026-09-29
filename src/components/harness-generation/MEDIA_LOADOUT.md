@@ -40,8 +40,10 @@ optional one-line meaning (SEN `validateSoundWords`). Every recording names one
 declared word in `metadata.sound`, and every declared word has at least one
 recording. A recording's cue category (artifacts, atmosphere, beasts, factions,
 locations, system, weapons) is its Studio parent tag; `metadata.studio_tags`
-may add at most one Tone, Energy and Tension (SEN `audioTags.ts`). Soundscape
-Packs take no sound words.
+may add at most one Tone, Energy and Tension (SEN `audioTags.ts`). Until
+placement is word-based, packs hold only the categories a Sound Cue can be
+placed from (beasts, weapons, artifacts, locations, factions). Soundscape Packs
+take no sound words.
 
 Validation rejects malformed or mixed entries, duplicate catalog identities,
 non-audio and non-JSON files, signed or credential-bearing URLs, credentials,

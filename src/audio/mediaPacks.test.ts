@@ -40,7 +40,7 @@ describe('Media Pack contracts', () => {
     ]);
   });
 
-  it('holds a Sound Cue Pack\'s words and recordings to one another, with any cue category as the parent tag', () => {
+  it('holds a Sound Cue Pack\'s words and recordings to one another, with its cue category as the parent tag', () => {
     expect(validateMediaPack(soundCues())).toMatchObject({
       sounds: [{ word: 'clockwork roar', example: 'the clockwork beast roared' }],
       entries: [{ category: 'beasts', metadata: { sound: 'clockwork roar', studio_tags: { energy: 'high' } } }],
@@ -52,8 +52,9 @@ describe('Media Pack contracts', () => {
       sounds: [{ word: 'clockwork roar', example: 'the clockwork beast roared' }, { word: 'gear whine', example: 'gears whined' }],
     }))).toThrow('"gear whine" has no recording');
     expect(() => validateMediaPack(soundCues({ entries: [cueEntry('clockwork roar', { parent: 'FIGHTING' })] }))).toThrow('no parent tag');
+    // Atmosphere and System recordings join packs once placement is word-based.
     const alarm = { ...cueEntry(), metadata: { ...cueEntry().metadata, main_category: 'system' } };
-    expect(validateMediaPack(soundCues({ entries: [alarm] }))).toMatchObject({ entries: [{ category: 'system' }] });
+    expect(() => validateMediaPack(soundCues({ entries: [alarm] }))).toThrow('cannot contain system catalog entries yet');
     expect(() => validateMediaPack(soundCues({ entries: [cueEntry('clockwork roar', { energy: 'loud' })] }))).toThrow('Energy must be one of low, medium, high');
     expect(() => validateMediaPack(soundCues({ sounds: { 'clockwork roar': 'the clockwork beast roared' } }))).toThrow('list');
     expect(() => validateMediaPack(soundscape({ sounds: [] }))).toThrow('unsupported field sounds');

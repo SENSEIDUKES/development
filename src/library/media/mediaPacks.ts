@@ -83,6 +83,7 @@ const SOURCE_FIELDS = new Set(['path', 'digest']);
 const SHA256 = /^[a-f0-9]{64}$/;
 const VERSION = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
 const PACK_ID = /^[a-z0-9][a-z0-9._-]{2,127}$/i;
+const SOUND_CUE_PACK_CATEGORIES = ['beasts', 'weapons', 'artifacts', 'locations', 'factions'] as const;
 const SUPPORTED_AUDIO_FILE = /\.(?:aac|flac|m4a|mp3|oga|ogg|opus|wav)$/i;
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> => (
@@ -164,11 +165,16 @@ const validateSoundCueEntries = (value: unknown, sounds: readonly SoundWord[]): 
     const reasons = loaded.issues.map(issue => ('reason' in issue ? `${issue.filePath}: ${issue.reason}` : issue.kind));
     throw new Error(`Sound Cue catalog validation failed: ${reasons.join('; ') || 'invalid entry'}.`);
   }
-  // Every cue category is allowed: it is the recording's Studio parent tag.
+  // A recording's category is its Studio parent tag. Until placement is
+  // word-based, packs hold only the categories a Sound Cue can be placed from.
+  const placeable = new Set<string>(SOUND_CUE_PACK_CATEGORIES);
   for (const [index, cue] of loaded.cues.entries()) {
     const declaredCategory = isPlainObject(value[index]) ? value[index].category : undefined;
     if (declaredCategory !== undefined && declaredCategory !== cue.category) {
       throw new Error(`Sound Cue ${cue.file_path} has incompatible category data.`);
+    }
+    if (!placeable.has(cue.category)) {
+      throw new Error(`Sound Cue Packs cannot contain ${cue.category} catalog entries yet.`);
     }
     if (!isPublicHttpsMediaUrl(cue.public_url)) throw new Error(`Sound Cue ${cue.file_path} needs a public HTTPS playback URL.`);
     if (!SUPPORTED_AUDIO_FILE.test(cue.file_path)) throw new Error(`Sound Cue ${cue.file_path} uses an unsupported file type.`);

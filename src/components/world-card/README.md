@@ -53,7 +53,10 @@ control is activated, once, muted and inline, then returns to its still cover.
 Worlds without a clip keep the static card. The host supplies each world's own
 clip; the card never reuses this sample URL for other worlds. Motion playback
 is local to the card, with no stored preference or upload path. The Full card
-keeps its own edge treatment instead of adding Motion Picture's sampled aura.
+samples its cover color for the edge glow instead of adding Motion Picture's
+separate aura. While its clip plays, that edge glow breathes slowly; reduced
+motion keeps it steady. If the artwork cannot be sampled, the existing cyan
+fallback is used.
 
 The Info page shows Cultivation Rate only when the host supplies a value. The
 Workshop fixture supplies "Heaven" for its sample world; other worlds are not
@@ -111,6 +114,7 @@ Leave behind the Workshop preview, its sample data and the `reference/` folder.
 
 ## Workshop history
 
+- **2026-09-29** — Matched the Full card's edge glow to its cover artwork using SEN's existing color sampler. The glow breathes gently only while Motion Picture is active, stops with the clip, and stays still under reduced-motion settings.
 - **2026-09-29** — Composed the existing SEN Motion Picture in the Full card only. The featured Workshop world supplies the Ye Chen clip. Opening a world and playing its motion are separate controls, so keyboard and touch users can choose either action. Missing clips retain the static card; failed clips return to the still, and failed stills show the existing cover fallback.
 - **2026-09-29** — Added the existing `story-scroll` Library icon beside NOVEL on the Full card and matched the Compact card's lighter subtext treatment. The icon is decorative because the format remains readable as text, and only the Novel format receives it; other formats can gain their own icon later.
 - **2026-09-29** — Brought the Compact card's stronger edge and selected glow to the Full card's hover, press, and focus states. Matched its smooth transition timing and added reduced-motion handling; the Full card remains a navigation action, not a toggle.

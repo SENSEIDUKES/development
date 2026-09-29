@@ -24,6 +24,7 @@ it('opens the portrait card with only chapter count, title, creator and format o
   act(() => root.render(<WorldCard world={world} onOpen={onOpen} />));
 
   const card = container.querySelector('[data-world-card="full"]')!;
+  expect((card as HTMLElement).style.getPropertyValue('--world-card-glow')).not.toBe('');
   const open = card.querySelector<HTMLButtonElement>('.world-card-base-open')!;
   expect(open.getAttribute('aria-label')).toBe('Open The Last Lotus, 24 chapters, creator SENSEI, format Novel');
   const media = card.querySelector('.world-card-base-media')!;
@@ -50,12 +51,15 @@ it('plays only this world’s supplied motion clip without opening the world', (
   const play = card.querySelector<HTMLButtonElement>('.motion-picture-control')!;
   expect(card.querySelector('video')).toBeNull();
   expect(play.getAttribute('aria-label')).toBe('Play motion for The Last Lotus cover');
+  expect(card.getAttribute('data-motion-playing')).toBeNull();
   act(() => play.click());
+  expect(card.getAttribute('data-motion-playing')).toBe('true');
   expect(card.querySelector('video')?.getAttribute('src')).toBe(videoUrl);
   expect(play.getAttribute('aria-pressed')).toBe('true');
   expect(onOpen).not.toHaveBeenCalled();
   act(() => card.querySelector('video')!.dispatchEvent(new Event('ended')));
   expect(play.getAttribute('aria-pressed')).toBe('false');
+  expect(card.getAttribute('data-motion-playing')).toBeNull();
   act(() => card.querySelector<HTMLButtonElement>('.world-card-base-open')!.click());
   expect(onOpen).toHaveBeenCalledOnce();
   vi.restoreAllMocks();

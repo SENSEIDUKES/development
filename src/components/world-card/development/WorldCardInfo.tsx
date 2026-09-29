@@ -1,19 +1,13 @@
 import { BookOpen, Eye, GitBranch, Sparkles } from 'lucide-react';
 import { SEIBadge } from '@seihouse/ui';
-import type { WorldActivityStatus } from '../../light-novels-home/shared/storyDetailContracts';
 import type { WorldCardInfoProps } from '../shared/worldCardContracts';
 import { WorldCardCover } from './WorldCardCover';
+import { WORLD_ACTIVITY_DISPLAY } from './worldActivityDisplay';
 import './world-card.css';
-
-const ACTIVITY_DISPLAY: Record<WorldActivityStatus, { label: string; color: string }> = {
-  'active-now': { label: 'Active now', color: 'bg-emerald-400' },
-  'active-this-week': { label: 'Active this week', color: 'bg-amber-400' },
-  quiet: { label: 'Quiet', color: 'bg-rose-400' },
-};
 
 /** Info page: the world's full overview — cover, byline, tags, metrics, synopsis and entry actions. */
 export function WorldCardInfo({ story, onRead, onOpenCodex, onOpenTimeline }: WorldCardInfoProps) {
-  const activity = story.activityStatus ? ACTIVITY_DISPLAY[story.activityStatus] : undefined;
+  const activity = story.activityStatus ? WORLD_ACTIVITY_DISPLAY[story.activityStatus] : undefined;
   const hasBranches = story.branchCount !== undefined && Number.isSafeInteger(story.branchCount) && story.branchCount >= 0;
   return <div className="flex flex-col md:flex-row gap-8 bg-[#0a0a0a] border border-neutral-900 rounded-xl p-6 shadow-2xl" data-world-card="info">
     <div className="w-full md:w-auto flex-shrink-0 flex flex-col items-center">

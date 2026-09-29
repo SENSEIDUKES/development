@@ -68,8 +68,8 @@ status (`draft`, `shared`, `public`, `complete`), shown with its existing label.
 The format sits in the card's top-left corner. Novel is shown by its
 `story-scroll` icon alone, with the format name retained for screen readers;
 formats without a dedicated icon continue to show text. The title sits above
-the information badge, with a soft dark scrim immediately behind the letters
-to keep it legible over varied cover art. The host may supply `creatorTitle` (element,
+the information badge, with a crisp dark text outline for contrast. The Full
+card has no image dimming layer or title scrim. The host may supply `creatorTitle` (element,
 intensity, and color) to render that name with UI's `ElementalTitle`. Without
 it, the name remains plain; the card never assigns an element from the name
 or world. The Workshop's SENSEI sample uses lightning for visual review.
@@ -96,13 +96,37 @@ Activity. The States controls also show zero or unavailable branches, the
 other Activity states, and hidden Activity. These samples do not come from a
 branch database or activity tracking.
 
+## Format information panel
+
+The top-left format control opens `WorldCardStoryPanel`, using UI's existing
+`SEIPopover` for portal placement, viewport collision handling, focus, Escape,
+and outside-tap dismissal. It includes Synopsis, authorized Activity, branching
+permission, and Story tags. A close control is provided. Long content scrolls
+inside a compact viewport-bounded panel. Missing format uses an information icon.
+The format and MP controls have matching 28px visual bounds and 17px icons;
+invisible 8px extensions retain 44px touch targets without large visible rings.
+MP playback and opening the story remain independent actions.
+
+`HomeWorld` now accepts optional `synopsis`, `tags`, `activityStatus`, and
+`branchingEnabled` so Home and discovery hosts can supply the same authorized
+projection as the detail page. `StoryDetailDisplay` still requires synopsis and
+tags. An omitted Activity or branching permission is hidden, never inferred.
+Empty synopsis/tags receive an unavailable/empty message. `branchingEnabled`
+is a boolean creator permission, independent of `branchCount`; zero descendants
+does not mean disabled, and existing descendants do not mean enabled. Hosts must
+filter these fields for the viewer before passing them to the client. The panel
+is read-only and is not an authorization check or a branch-creation action.
+Any future branch endpoint must recheck the creator permission and viewer access
+on the server. The preview supplies a sample enabled permission; no backend or
+presence polling was added.
+
 ## Branches and Activity data contract
 
 `StoryDetailDisplay` is a read-only display projection supplied by the host
 when opening a world. The Info page shows Branches and Activity in the metric
 grid where Realm and Status used to be. `WorldCardInfo` does not fetch, count,
-poll, infer, or authorize these values. The Full card has no activity signal or
-related glow. Boosts are outside this iteration.
+poll, infer, or authorize these values. The Full card shows authorized Activity
+only inside its format-triggered panel; Activity does not control its glow. Boosts are outside this iteration.
 
 - `branchCount?: number` is the aggregate number of distinct descendant worlds
   grown from this world's seed, excluding the seed itself. A known zero renders
@@ -125,7 +149,8 @@ related glow. Boosts are outside this iteration.
 Future integration needs an authoritative branch relationship and count
 projection, an activity projection with freshness rules, creator visibility
 settings, and server-side viewer authorization. Supply the authorized results
-through `StoryDetailDisplay` in the host's world-detail data flow. Database
+through `StoryDetailDisplay` in the host's world-detail data flow and authorized
+`HomeWorld` fields for the card panel. Database
 reads, presence subscriptions, permission decisions, and persistent settings
 belong outside this component and the Workshop fixtures. Branch creation must
 respect the source creator's permission; each new branch starts private.
@@ -136,12 +161,14 @@ These are documented product requirements, not behavior implemented here.
 Copy `development/`, `shared/` and `development/world-card.css`. Then:
 
 - have the host's Home grid, world detail and Create row render `WorldCard`, `WorldCardInfo` and `WorldCardCompact`;
-- supply world display data, optional per-world `videoUrl`, optional creator lettering resolved from the creator profile, public publication status or personal-library creator status, and destinations from the host;
+- supply world display data, optional per-world `videoUrl`, optional creator lettering resolved from the creator profile, public publication status or personal-library creator status, authorized panel synopsis/tags/activity/branching permission, and destinations from the host;
 - include the `@seihouse/sen/motion-picture` entry and compatible `@seihouse/ui@0.10.1` components alongside the Library card.
 
 Leave behind the Workshop preview, its sample data and the `reference/` folder.
 
 ## Workshop history
+
+- **2026-09-29** � Matched MP and format control sizing, made the format control open a compact story information popover, and replaced all Full-card cover dimming with a crisp title outline. Shared Activity labels with the Info page and documented host-authorized panel fields and independent branching permission.
 
 - **2026-09-29** — Placed chapter count and status in a small left-side badge and the unbadged elemental creator name on the right. Very narrow cards wrap the name beneath the badge. Added a soft dark scrim behind the title to keep it legible across cover art.
 - **2026-09-29** — Updated the vendored universal UI package to 0.10.1. Previewed a host-supplied lightning `ElementalTitle` on SENSEI and grouped the Full card's chapter and status in one translucent `SEIBadge` pill; worlds without creator styling keep plain text.

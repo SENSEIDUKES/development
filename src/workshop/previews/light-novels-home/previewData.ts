@@ -20,6 +20,7 @@ export const featuredNovel: StoryDetailDisplay = {
   publicationStatus: 'ongoing',
   cultivationRate: 'Heaven',
   branchCount: 12,
+  branchingEnabled: true,
   activityStatus: 'active-this-week',
   acquired: true,
   author: 'SENSEI',

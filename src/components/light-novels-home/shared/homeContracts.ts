@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 import type { ElementalTitleEffect, ElementalTitleIntensity } from '@seihouse/ui';
+/** Host-computed and viewer-authorized; omit hidden, stale, or unavailable activity. */
+export type WorldActivityStatus = 'active-now' | 'active-this-week' | 'quiet';
 /** Display data only; account acquisition and story opening remain host actions. */
 export interface HomeWorld {
   id: string; title: string; genre: string; createdAt: string; reads: number;
@@ -13,6 +15,12 @@ export interface HomeWorld {
   publicationStatus?: 'ongoing' | 'completed';
   /** This world's own optional motion cover clip; never use another world's clip as fallback. */
   videoUrl?: string;
+  /** Optional, viewer-authorized information for the format icon's story panel. */
+  synopsis?: string;
+  tags?: readonly string[];
+  activityStatus?: WorldActivityStatus;
+  /** Creator's branching permission, supplied by the host. Omission means unknown. */
+  branchingEnabled?: boolean;
 }
 export interface LightNovelsHomeProps {
   active?: boolean;

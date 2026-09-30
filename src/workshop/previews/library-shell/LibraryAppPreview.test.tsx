@@ -20,7 +20,7 @@ beforeEach(() => {
 });
 afterEach(() => { act(() => root.unmount()); container.remove(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 const render = async (state = 'linked') => { await act(async () => root.render(<LibraryPresentationProvider><DevelopmentHeaderPreview source="main-library" state={state} /></LibraryPresentationProvider>)); };
-const button = (label: string) => [...container.querySelectorAll<HTMLButtonElement>('button')].find(b => b.textContent?.trim() === label)!;
+const button = (label: string) => [...container.querySelectorAll<HTMLButtonElement>('button')].find(b => b.textContent?.trim() === label || b.getAttribute('aria-label') === label)!;
 const click = async (label: string) => { await act(async () => button(label).click()); };
 const current = () => container.querySelector('.library-global-navigation [aria-current="page"]')?.textContent;
 const homeVisible = () => !container.querySelector('[data-light-novels-home]')?.closest('[hidden]');

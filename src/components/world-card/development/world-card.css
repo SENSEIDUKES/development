@@ -243,6 +243,11 @@
 @media (min-width: 640px) { .world-card-info-body { gap: 1.1rem; padding: 1.5rem; } }
 @media (min-width: 1024px) { .world-card-info-body { gap: 1.25rem; padding: 2rem; } }
 
+/* On the Info cover the motion control steps aside while the clip plays, keeping the small frame clear; keyboard focus still shows it. */
+.world-card-info-cover .world-card-base[data-motion-playing='true'] .motion-picture-control:not(:focus-visible) { opacity: 0; pointer-events: none; }
+.world-card-info-cover .motion-picture-control { transition: opacity 200ms ease-out, background-color 200ms ease-out; }
+@media (prefers-reduced-motion: reduce) { .world-card-info-cover .motion-picture-control { transition: none; } }
+
 /*
  * Hero: cover beside the identity column at every width. On narrow phones the
  * tags run full width beneath so the hero stays short; from 380px they join

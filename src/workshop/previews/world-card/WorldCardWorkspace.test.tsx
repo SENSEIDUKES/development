@@ -30,7 +30,7 @@ it('opens either Compact world in the existing Info stage and returns to the car
   expect(container.querySelector('[data-world-card="compact"]')).toBeNull();
 
   const back = container.querySelector<HTMLButtonElement>('[data-story-detail] button')!;
-  expect(back.textContent).toContain('Back to cards');
+  expect(back.getAttribute('aria-label')).toBe('Back to cards');
   act(() => back.click());
   act(() => container.querySelectorAll<HTMLElement>('[data-world-card="compact"]')[1].click());
   expect(container.querySelectorAll('section[aria-label="Info page"]')).toHaveLength(1);

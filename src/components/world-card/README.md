@@ -132,11 +132,16 @@ pieces rather than page-local cards or buttons:
   which Story Seed's tag editor also reads.
   - Phones use compact serif pills.
   - The creation date is not shown on this page.
-- **Header row.** `StoryDetailScreen` shows a gold ← arrow with its back label
-  and a gold `WORLD INFO` eyebrow. Its new optional `backLabel` lets the host
-  name where Back leads; the default is `Back to novels`. The Workshop's Info
-  stage renders this same detail screen, with **Back to cards** when a card
-  opened it.
+- **Header row.** `StoryDetailScreen` uses the Library's standard back
+  control: a ghost `LibraryButton` icon with ←, as in the workspace header and
+  Profile. Its optional `backLabel` (default `Back to novels`) is the button's
+  accessible name. A gold `WORLD INFO` eyebrow sits opposite. The Workshop's
+  Info stage renders this same detail screen, labelled **Back to cards** when
+  a card opened it.
+- **Motion on the Info cover.** While the cover's Motion Picture clip plays,
+  its control fades out so the small frame stays clear. It returns when the
+  clip ends, and it stays visible if a keyboard user focuses it. The Full
+  card's control is unchanged.
 - **No placeholder metrics.** Views, Branches, and Activity are not shown on
   the Info page. They have no real source yet, so the page isn't built around
   them. The Full card's format dialog still shows its views and Activity for
@@ -334,6 +339,9 @@ Leave behind the Workshop preview, its sample data and the `reference/` folder.
     replaces the mock Fate Timeline and opens the Full card's story information
     dialog, the future home of provenance records. The format mark is gone from
     the Info cover.
+  - **Back and motion.** The back control is now the standard Library ghost
+    icon button, and the Info cover's motion control hides while its clip
+    plays.
   - **Tags.** Tags use the Story Seed catalog colors, with no `#`, and
     Cultivation Rate is removed from the tag slot. The Workshop sample world
     now carries real catalog tags (inheritance trials, sect politics, found

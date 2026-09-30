@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
-import { ArrowRight, ChevronDown, ChevronRight, ChevronUp, Flower2, Info, Lock } from 'lucide-react';
+import { ArrowRight, ChevronDown, ChevronRight, ChevronUp, Flower2, Info } from 'lucide-react';
 import { ElementalTitle, SEIBadge } from '@seihouse/ui';
 import { LibraryButton, LibraryCard, LibraryIcon, LibraryPanel, type LibraryIconName } from '@seihouse/library-ui';
 import { getTagMetadata, normalizeStoryTagIdentity, STORY_TAG_COLOR_ACCENTS, type StoryTagMetadata } from '@seihouse/sen/story-seed';
@@ -16,6 +16,8 @@ import './world-card.css';
  * synopsis, the Chapters card (its only reading action), Open Codex, and the
  * Information row that opens the world's story information dialog.
  * Every value and destination comes from the host; unknown values are omitted.
+ * This is the public view a reader sees. It shows no owner or library states
+ * (visibility, draft, acquisition); the owner's view is a separate Story View.
  */
 export function WorldCardInfo({ story, onRead, onOpenCodex, readingPosition }: WorldCardInfoProps) {
   const detail = 'author' in story ? story : undefined;
@@ -49,13 +51,13 @@ export function WorldCardInfo({ story, onRead, onOpenCodex, readingPosition }: W
               </span>
             </p>}
           </header>
-          <div className="world-card-info-pills" role="group" aria-label="Library state">
+          <div className="world-card-info-pills" role="group" aria-label="Story status">
             {publicationLabel && <SEIBadge size="lg" variant={publicationLabel === 'On Going' ? 'success' : 'neutral'}
               className="world-card-info-pill world-card-info-pill-status" data-status={detail?.publicationStatus}
               aria-label={`Story status: ${publicationLabel}`}>
               <span className="world-card-info-status-dot" aria-hidden="true" />{publicationLabel}
             </SEIBadge>}
-            <LibraryState story={story} />
+            {detail?.recentlyRead && <SEIBadge size="lg" variant="info" className="world-card-info-pill">Recently read</SEIBadge>}
             {genre && <span className="world-card-info-genre">
               <Flower2 size={22} aria-hidden="true" /><span className="sr-only">Genre: </span>{genre}
             </span>}
@@ -105,28 +107,6 @@ function StoryTagChip({ label, metadata }: { label: string; metadata?: StoryTagM
   </SEIBadge>;
 }
 
-/** Library state: Draft, Sealed, or Unacquired, plus Recently read — Library-only acquisition states. */
-function LibraryState({ story }: Pick<WorldCardInfoProps, 'story'>) {
-  const detail = 'author' in story ? story : undefined;
-  if (detail?.draft || (!detail && story.status === 'draft')) {
-    return <>
-      <SEIBadge size="lg" variant="danger" className="world-card-info-pill">Draft</SEIBadge>
-      {detail?.recentlyRead && <SEIBadge size="lg" variant="info" className="world-card-info-pill">Recently read</SEIBadge>}
-    </>;
-  }
-  if (!detail) {
-    return <SEIBadge size="lg" variant="neutral" className="world-card-info-pill">{story.status === 'complete' ? 'Complete' : story.status === 'public' ? 'Public' : 'Shared'}</SEIBadge>;
-  }
-  return <>
-    {detail.acquired
-      ? <SEIBadge size="lg" variant="outline" className="world-card-info-pill world-card-info-pill-sealed">
-          <Lock size={15} aria-hidden="true" />Sealed
-        </SEIBadge>
-      : <SEIBadge size="lg" variant="outline" className="world-card-info-pill">Unacquired</SEIBadge>}
-    {detail.recentlyRead && <SEIBadge size="lg" variant="info" className="world-card-info-pill">Recently read</SEIBadge>}
-  </>;
-}
-
 /** Clamped synopsis with an accessible More control that appears only when the text overflows. */
 function WorldSynopsis({ storyId, synopsis }: { storyId: string; synopsis?: string }) {
   const textRef = useRef<HTMLParagraphElement>(null);
@@ -166,7 +146,7 @@ function ChaptersCard({ story, currentArc, coverUrl, onRead, readingPosition }: 
   const resumeChapter = readingPosition && Number.isSafeInteger(readingPosition.chapterNumber) && readingPosition.chapterNumber > 0
     ? readingPosition.chapterNumber : undefined;
   const readable = Boolean(onRead) && count > 0;
-  const actionLabel = resumeChapter ? `Continue Reading · Ch. ${resumeChapter}` : 'Start Reading';
+  const actionLabel = resumeChapter ? `Continue · Ch. ${resumeChapter}` : 'Start Reading';
   const countLabel = count === 0 ? 'No chapters yet' : `${count.toLocaleString()} ${count === 1 ? 'Chapter' : 'Chapters'}`;
   // LibraryCard wraps `media` in its own media slot; the slot is styled by .world-card-info-chapters.
   const media = coverUrl ? <WorldCardCover src={coverUrl} title={story.title} decorative compact /> : undefined;
@@ -176,7 +156,7 @@ function ChaptersCard({ story, currentArc, coverUrl, onRead, readingPosition }: 
     {readable
       ? <span className="world-card-info-chapters-cue" aria-hidden="true">
           {resumeChapter
-            ? <>Continue Reading <span className="whitespace-nowrap">· Ch. {resumeChapter}<ArrowRight size={18} /></span></>
+            ? <span className="whitespace-nowrap">Continue · Ch. {resumeChapter}<ArrowRight size={18} /></span>
             : <span className="whitespace-nowrap">Start Reading<ArrowRight size={18} /></span>}
         </span>
       : count > 0 && <span className="world-card-info-chapters-unavailable">Reading isn’t available here yet</span>}

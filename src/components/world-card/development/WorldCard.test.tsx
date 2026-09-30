@@ -196,7 +196,6 @@ it('keeps the Info overview and shows cultivation rate only from data', () => {
   for (const placeholder of ['Views', '1,280', 'Branches', 'Activity', 'Active this week']) {
     expect(container.textContent).not.toContain(placeholder);
   }
-  expect(container.querySelector('[aria-label="Library state"]')?.textContent).toContain('Sealed');
   expect(container.textContent).toContain('A lotus blooms.');
 
   act(() => root.render(<WorldCardInfo story={{ ...story, cultivationRate: undefined, imageUrl: '' }} />));
@@ -204,15 +203,15 @@ it('keeps the Info overview and shows cultivation rate only from data', () => {
   expect(container.textContent).toContain('Cover unavailable');
   expect(container.querySelector('[data-world-card="info"]')).not.toBeNull();
 
-  act(() => root.render(<WorldCardInfo story={{ ...story, acquired: false }} />));
-  expect(container.querySelector('[aria-label="Library state"]')?.textContent).toContain('Unacquired');
-  expect(container.querySelector('[aria-label="Library state"]')?.textContent).not.toContain('Sealed');
-
+  // The public Info view shows no owner or acquisition states; only the viewer's own Recently read.
+  for (const variant of [{ acquired: true }, { acquired: false }, { draft: true }]) {
+    act(() => root.render(<WorldCardInfo story={{ ...story, ...variant }} />));
+    for (const ownerState of ['Sealed', 'Unacquired', 'Draft']) expect(container.textContent).not.toContain(ownerState);
+  }
   act(() => root.render(<WorldCardInfo story={{ ...story, acquired: false, draft: true, recentlyRead: true }} />));
-  const libraryState = container.querySelector('[aria-label="Library state"]')?.textContent;
-  expect(libraryState).toContain('Draft');
-  expect(libraryState).toContain('Recently read');
-  expect(libraryState).not.toContain('Unacquired');
+  const status = container.querySelector('[aria-label="Story status"]')?.textContent;
+  expect(status).toContain('Recently read');
+  expect(status).not.toContain('Draft');
 });
 
 it('uses the artwork-only WorldCard on Info while keeping creator and progress on the page', () => {
@@ -273,7 +272,7 @@ it('makes the Chapters card the single reading action and names the known readin
   expect(onRead).toHaveBeenCalledTimes(3);
 
   act(() => root.render(<WorldCardInfo story={infoStory} onRead={onRead} readingPosition={{ chapterNumber: 7 }} />));
-  expect(container.querySelector('[data-world-info-chapters]')?.textContent).toContain('Continue Reading · Ch. 7');
+  expect(container.querySelector('[data-world-info-chapters]')?.textContent).toContain('Continue · Ch. 7');
   expect(container.textContent).not.toContain('Start Reading');
 
   act(() => root.render(<WorldCardInfo story={{ ...infoStory, currentArc: '' }} />));
@@ -360,7 +359,7 @@ it('reflects only this world’s own cover and omits metrics and connected media
   expect(container.querySelector('[aria-label="World information"]')).toBeNull();
   expect(container.textContent).not.toContain('aren’t shared');
   expect(container.textContent).not.toContain('—');
-  expect(container.querySelector('[aria-label="Library state"]')?.textContent).toContain('Draft');
+  expect(container.textContent).not.toContain('Draft');
   expect(container.textContent).toContain('Synopsis is not available yet.');
 });
 
@@ -372,7 +371,7 @@ it('keeps title, byline and states beside the cover, with the tags in the hero',
   const identity = hero.children[1];
   expect(identity.querySelector('h1')?.textContent).toBe('The Last Lotus');
   expect(identity.textContent).toContain('SENSEI');
-  expect(identity.querySelector('[aria-label="Library state"]')?.textContent).toContain('Sealed');
+  expect(identity.textContent).not.toContain('Sealed');
   expect(identity.querySelector('[aria-label="Story status: On Going"]')).not.toBeNull();
   const tags = hero.children[2];
   expect(tags.getAttribute('aria-label')).toBe('Story tags');

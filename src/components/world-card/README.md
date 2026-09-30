@@ -39,8 +39,8 @@ preview data in browser history for Back, Forward, and refresh.
 
 ## Why Library owns it
 
-The cards use Library UI (`LibraryCard`) and show Library-only states
-such as Sealed/Unacquired acquisition and Cultivation Rate. The Full and Info
+The cards use Library UI (`LibraryCard`, `LibraryPanel`, `LibraryButton`) and
+Library presentation. The Full and Info
 cover faces compose the portable `@seihouse/sen/motion-picture` behavior; SEN does not
 depend on the Library card.
 
@@ -85,7 +85,7 @@ Motion Picture control and breathing glow. It has no format mark, title,
 creator, chapter/status badge, format dialog trigger, or whole-card navigation
 action: the world's format lives in the page's **Information** row instead. The
 Info page owns its title, elemental creator byline, chapter count, and public
-status alongside its existing Library state, tags, and synopsis.
+status alongside the viewer's Recently read state, tags, and synopsis.
 
 ## Info page layout
 
@@ -97,7 +97,7 @@ pieces rather than page-local cards or buttons:
 | Glass surface | `LibraryPanel` (`as="article"`) |
 | Cover | `WorldCard face="info"` (unchanged) |
 | Creator name | `ElementalTitle` when the host supplies `creatorTitle`, otherwise plain text |
-| Publication, Library state, story tags | `SEIBadge` |
+| Publication status, Recently read, story tags | `SEIBadge` |
 | Story tag colors | Story Seed tag catalog (`getTagMetadata`, `STORY_TAG_COLOR_ACCENTS` from `@seihouse/sen/story-seed`) |
 | Chapters card, Open Codex | `LibraryCard` (`interactive` when a destination exists) |
 | Information row | `WorldCardStoryPanel` (the Full card's format dialog) with the row as its trigger |
@@ -118,7 +118,7 @@ pieces rather than page-local cards or buttons:
   - The cover takes about a third of the width and keeps the World Card's own
     edge and glow.
   - The column beside it holds the title (cream shading to cyan), `by` +
-    creator, and the status / Library state / genre pills.
+    creator, and the publication status / Recently read / genre pills.
   - The story tags join that column from 380px. On narrower phones they run
     full width under the hero. This slot holds story tags only; Cultivation
     Rate is not shown.
@@ -142,6 +142,13 @@ pieces rather than page-local cards or buttons:
   its control fades out so the small frame stays clear. It returns when the
   clip ends, and it stays visible if a keyboard user focuses it. The Full
   card's control is unchanged.
+- **Public view only.** This Info page is what a reader sees when they open
+  someone's world. It shows no owner or library states: the old Sealed /
+  Unacquired acquisition labels and Draft are gone. Only the viewer's own
+  **Recently read** remains. The owner's view of a world they are still
+  building is a separate, future surface: NovelExpanded's **Story View**. It
+  will sit inside Studio, with the Text Highlight Engine and custom soundscape
+  and Sound Cue packs close at hand, and it is not a variant of this page.
 - **No placeholder metrics.** Views, Branches, and Activity are not shown on
   the Info page. They have no real source yet, so the page isn't built around
   them. The Full card's format dialog still shows its views and Activity for
@@ -158,7 +165,7 @@ pieces rather than page-local cards or buttons:
     Continue label), the cue moves beneath the text.
   - With the host's `onRead` and at least one chapter, the whole card is one
     `LibraryCard` button (Enter and Space work) with a **Start Reading →** cue.
-  - The cue reads **Continue Reading · Ch. N →** only when the host supplies
+  - The cue reads **Continue · Ch. N →** only when the host supplies
     `readingPosition`.
   - Without `onRead`, or with zero chapters, the card is static text. It is not
     focusable and shows no arrow.
@@ -212,7 +219,8 @@ fixture supplies `ongoing` and its States control previews both public values
 and the personal-library values. Missing status stays hidden; the card does not
 infer completion from chapter count, Draft from acquisition, or status from the
 Info page's unrelated `status` text. Compact already displays its creator
-status. Sealed, Unacquired, and Recently read stay on the Info page.
+status. Of the Library states, only the viewer's Recently read appears, on the
+Info page.
 
 The Info page does not show Cultivation Rate; its tag slot holds story tags
 only. The contract field remains for a later Library surface.
@@ -339,6 +347,12 @@ Leave behind the Workshop preview, its sample data and the `reference/` folder.
     replaces the mock Fate Timeline and opens the Full card's story information
     dialog, the future home of provenance records. The format mark is gone from
     the Info cover.
+  - **Public view.** Sealed, Unacquired and Draft are removed; only Recently
+    read remains. The Workshop's Library status control became **Reader
+    history**.
+  - **Continue.** The reading cue reads **Continue · Ch. N →** when the host
+    knows the reader's position. The Workshop sample now starts at a known
+    Chapter 7.
   - **Back and motion.** The back control is now the standard Library ghost
     icon button, and the Info cover's motion control hides while its clip
     plays.

@@ -42,7 +42,7 @@ export function WorldCard(props: WorldCardFaceProps) {
       ? displayStatus.value === 'ongoing' ? 'On Going' : 'Completed'
       : displayStatus?.view === 'library' ? WORLD_STATUS_LABELS[displayStatus.value] : undefined;
   const openLabel = compact
-    ? `Open ${world.title}, Ch. ${world.chapterCount} · ${statusLabel}${creatorName ? `, creator ${creatorName}` : ''}`
+    ? `Open ${world.title}, Ch. ${world.chapterCount} · ${statusLabel}`
     : `Open ${world.title}, ${world.chapterCount} chapters${creatorName ? `, creator ${creatorName}` : ''}${fullWorld?.format ? `, format ${fullWorld.format}` : ''}${statusLabel ? `, ${statusLabel}` : ''}`;
   return <LibraryCard
     {...interactionProps}
@@ -82,7 +82,7 @@ export function WorldCard(props: WorldCardFaceProps) {
               <FileText size={12} aria-hidden="true" />{statusLabel}
             </span>}
           </SEIBadge>
-          {creatorName && <span className="world-card-base-creator">
+          {!compact && creatorName && <span className="world-card-base-creator">
             {creatorTitle
               ? <ElementalTitle as="span" element={creatorTitle.element}
                   intensity={creatorTitle.intensity} color={creatorTitle.color}>

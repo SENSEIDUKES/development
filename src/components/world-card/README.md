@@ -13,7 +13,7 @@ folder; the Info page composes its cover face.
 - **Workshop preview:** `?preview=world-card` (Components → World Card)
 - **Package:** `@seihouse/library/world-card` (owner `library`)
 - **Created:** 2026-09-27
-- **Last Workshop update:** 2026-09-29
+- **Last Workshop update:** 2026-09-30
 - **Last source comparison:** 2026-09-27
 - **Status:** active
 
@@ -22,10 +22,10 @@ The Workshop Pages controls include a viewport switcher: current browser,
 render the same preview stage in an iframe so its media queries see the chosen
 width. `canvas=1` is an internal frame mode of the existing preview route, not
 a second Workshop entry or a production surface.
-The Info stage reuses Home's `WorldExpressions` connected-media section beneath
-the world overview, with the same novel, manga, and duel-game concept fixtures.
-Those expansions belong only to the featured sample world; other Compact
-samples do not inherit its media.
+Connected media is not part of the Info page. The Workshop Info stage and the
+Library shell's world detail no longer render Home's `WorldExpressions`
+section beneath it; that component, its package export and its concept
+fixtures stay in `light-novels-home` for future use.
 
 Clicking Full or Compact opens that world's existing Info page through a host-supplied
 action. In the World Card Workshop, the same Info stage is shown for the
@@ -33,7 +33,7 @@ selected card, with Back to cards. Home already routes its Full card to the
 detail screen. Create now routes Compact cards there as well; Continue and
 Studio remain separate actions below the selected world. Create's local story
 projection carries only title, chapter count, status, art, and known creator
-lettering. The Info page keeps its standard layout and marks unavailable views,
+lettering. The Info page keeps its standard layout and omits unavailable views,
 arc, tags, Branches, and Activity instead of inventing them. The Workshop route retains the selected world's
 preview data in browser history for Back, Forward, and refresh.
 
@@ -87,6 +87,74 @@ no title, creator, chapter/status badge, format dialog trigger, or whole-card
 navigation action. The
 Info page owns its title, elemental creator byline, chapter count, and public
 status alongside its existing Library state, metrics, tags, and synopsis.
+
+## Info page layout
+
+`WorldCardInfo` is one Celestial glass page, composed from the existing Library
+pieces rather than page-local cards or buttons:
+
+| Part | Component |
+| --- | --- |
+| Glass surface | `LibraryPanel` (`as="article"`) |
+| Cover | `WorldCard face="info"` (unchanged) |
+| Creator name | `ElementalTitle` when the host supplies `creatorTitle`, otherwise plain text |
+| Publication, Library state, tags, Cultivation Rate | `SEIBadge` |
+| Chapters card, Open Codex, Fate Timeline | `LibraryCard` (`interactive` when a destination exists) |
+| Synopsis More / Less | `LibraryButton` (`ghost`) |
+
+- **Cover reflection.** The glass carries a faint, blurred copy of this
+  world's own `imageUrl` behind a dark indigo scrim. The layer is decorative
+  and hidden from assistive technology. It is not rendered when the world has
+  no cover, so the panel falls back to its own glass. It never uses another
+  world's art.
+- **Phone-first hero.** From 340px wide, the reference arrangement holds:
+  - The cover (about 37% of the width, with the World Card's own edge and glow) sits on the left.
+  - One column beside it holds the title (cream shading to cyan), `by` +
+    creator, the status / Library state / genre pills, and the tags.
+  - Below 340px the hero stacks, centred.
+  - Phones use compact serif pills.
+  - The creation date is no longer shown on this page.
+- **Header row.** `StoryDetailScreen` shows a gold ← arrow with its back label
+  and a gold `WORLD INFO` eyebrow. Its new optional `backLabel` lets the host
+  name where Back leads; the default is `Back to novels`. The Workshop's Info
+  stage renders this same detail screen, with **Back to cards** when a card
+  opened it.
+- **Metrics.** Views, Branches, and Activity appear only when supplied.
+  Activity tints its pulse glyph by state (green, amber, or rose). If none
+  are known, one line says they are not shared for this world yet. There are
+  no dash placeholders.
+- **Synopsis.** It is clamped to four lines. **More** appears only when the text
+  actually overflows, with `aria-expanded` and `aria-controls`. A missing
+  synopsis says so.
+- **Chapters card: the only reading action.**
+  - The card sits on a faint second card edge, like a stack of chapters. It
+    shows a crop of the same cover on the left (from 340px), then the chapter
+    count, a divider and the cue on one row, with the current arc underneath.
+  - When the card is too narrow for one row (below 340px, or with a long
+    Continue label), the cue moves beneath the text.
+  - With the host's `onRead` and at least one chapter, the whole card is one
+    `LibraryCard` button (Enter and Space work) with a **Start Reading →** cue.
+  - The cue reads **Continue Reading · Ch. N →** only when the host supplies
+    `readingPosition`.
+  - Without `onRead`, or with zero chapters, the card is static text. It is not
+    focusable and shows no arrow.
+  - There is no hero read button and no fixed bottom bar.
+- **Secondary tools.** Open Codex and Fate Timeline are quieter `LibraryCard`
+  rows led by the Library's own artwork (`LibraryIcon` `navigation-book` and
+  `story-arc`) on a soft glow. Each appears only when the host supplies its handler; there are no
+  disabled placeholders. There is no Characters section (characters belong in
+  the Codex) and no bookmark.
+- The page never uses fixed positioning, so the host's mobile bottom navigation
+  keeps its space. The Info page looks the same whichever card opened it.
+- `readingPosition` is a new optional, host-supplied field on
+  `WorldCardInfoProps`, passed through by `StoryDetailScreen`. No DEV host
+  supplies a real position, Codex destination, or Timeline destination yet. The
+  Library shell's detail screen therefore shows a static Chapters card and no
+  tool rows until a host wires those actions.
+
+The Workshop's States section adds **Info destinations** (reading, Codex and
+Fate Timeline / reading only / none) and **Reading position** (not started /
+Chapter 7). These preview-only mocks report through the Workshop status line.
 
 ## Full card creator lettering and bottom badge
 
@@ -219,12 +287,52 @@ These are documented product requirements, not behavior implemented here.
 Copy `development/`, `shared/` and `development/world-card.css`. Then:
 
 - have the host's Home grid and Create row render `WorldCard` with the appropriate face, and the world detail render `WorldCardInfo`, which composes the Info cover face;
+- pass the host's reading action as `onRead`, the viewer's known `readingPosition` when there is one, and `onOpenCodex` / `onOpenTimeline` only when those destinations work;
 - supply world display data, optional per-world `videoUrl`, optional creator lettering resolved from the creator profile, public publication status or personal-library creator status, authorized panel synopsis/tags/activity/branching permission, and destinations from the host;
-- include the `@seihouse/sen/motion-picture` entry and compatible `@seihouse/ui@0.10.1` components alongside the Library card.
+- include the `@seihouse/sen/motion-picture` entry, compatible `@seihouse/ui@0.10.1` components, and `@seihouse/library-ui@0.9.0` (`LibraryPanel`, `LibraryCard`, `LibraryButton`).
 
 Leave behind the Workshop preview, its sample data and the `reference/` folder.
 
 ## Workshop history
+
+- **2026-09-30** — Second pass, laid out phone-first to follow the approved
+  reference closely.
+  - **Hero.** The cover now sits beside one column holding the title, byline,
+    pills and tags. The cover keeps the World Card's own edge and glow, and
+    the title shades from cream to cyan.
+  - **Pills.** They use compact serif styling. On Going is green, Sealed is
+    indigo with a gold lock, and the genre has a gold mark.
+  - **Metrics.** The strip has inset dividers, and the Activity glyph is tinted
+    by state.
+  - **Details.** The divider has a star ornament, and More is set in cyan
+    serif.
+  - **Chapters card.** It is stacked: cover crop, then count | Start Reading →
+    on one row, then the arc beneath.
+  - **Tools.** Codex and Timeline cards lead with Library artwork.
+  - **Header.** The detail screen has a gold back arrow and a `WORLD INFO`
+    eyebrow, with an optional `backLabel`.
+  - **Workshop.** The Info stage now renders the real `StoryDetailScreen`.
+  - **Date.** The creation date is no longer shown on the Info page.
+
+- **2026-09-30** — Redesigned the Info page as one Celestial glass page.
+  - **Surface.** A `LibraryPanel` carries a faint, blurred reflection of the
+    world's own cover.
+  - **Unchanged.** The real `WorldCard` Info face and the `ElementalTitle`
+    byline stay as they were.
+  - **Badges.** Publication, Library state, genre, tags and Cultivation Rate
+    use `SEIBadge`.
+  - **Metrics.** A glass strip shows only the metrics that are supplied.
+  - **Synopsis.** It has a four-line clamp with an accessible More control.
+  - **Reading.** A single `LibraryCard` Chapters card is the only reading
+    action. It says Start Reading, or Continue Reading when the host supplies a
+    position, and is static when the host supplies no reading action.
+  - **Tools.** Quieter Open Codex and Fate Timeline cards appear only when the
+    host supplies those destinations.
+  - **Removed.** The equal-weight pill buttons, disabled placeholders and
+    "tags unavailable" chip are gone.
+  - **Connected media.** It is no longer shown beneath the Info page in the
+    Workshop or the Library shell. `WorldExpressions` is preserved.
+  - **Workshop.** Added Info destinations and Reading position states.
 
 - **2026-09-29** — Brought Home's existing connected-media section into the World Card Workshop Info stage. The featured world's Novel, Manga, and Game previews appear below the overview; other Compact worlds do not inherit those sample adaptations.
 

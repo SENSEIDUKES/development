@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { useLibraryAssets } from '@seihouse/library/presentation';
-import { WorldCard, WorldCardInfo } from '@seihouse/library/world-card';
+import { WorldCard } from '@seihouse/library/world-card';
 import type { WorldCardDisplayStatus } from '@seihouse/library/world-card';
 import type { CreatorWorld } from '@seihouse/library/creator-space';
 import { WorldCardFullReference } from '../../../components/world-card/reference/WorldCardFull';
@@ -10,10 +10,10 @@ import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import {
   ACQUISITION_LABELS, previewCreatorWorlds, previewStory,
-  type WorldCardAcquisition, type WorldCardBranchPreview, type WorldCardCover, type WorldCardPreviewState, type WorldCardStatusPreview, type WorldCardTitleLength,
+  type WorldCardAcquisition, type WorldCardBranchPreview, type WorldCardCover, type WorldCardDestinations, type WorldCardPreviewState,
+  type WorldCardReadingPreview, type WorldCardStatusPreview, type WorldCardTitleLength,
 } from './previewData';
-import { WorldExpressions, type WorldActivityStatus } from '@seihouse/library/home';
-import { featuredExpansions, featuredNovel } from '../light-novels-home/previewData';
+import { StoryDetailScreen, type WorldActivityStatus } from '@seihouse/library/home';
 
 const entry = workshopEntries.find(candidate => candidate.id === 'world-card')!;
 
@@ -36,7 +36,7 @@ type Viewport = keyof typeof VIEWPORTS;
 
 const DEFAULT_STATE: WorldCardPreviewState = {
   acquisition: 'sealed', titleLength: 'standard', cover: 'art', branches: 'sample',
-  activity: 'active-this-week', cardStatus: 'public-ongoing',
+  activity: 'active-this-week', cardStatus: 'public-ongoing', destinations: 'all', reading: 'start',
 };
 
 const CARD_STATUS_PREVIEW: Record<WorldCardStatusPreview, WorldCardDisplayStatus> = {
@@ -91,15 +91,15 @@ export function WorldCardStage({ view, state, reference, onAction }: {
 
   return <div className="mx-auto max-w-5xl space-y-12 px-4 py-6 sm:px-8" data-world-card-stage={reference ? 'reference' : 'development'}>
     {(openedWorld || show('info')) && <Stage title="Info page">
-      {openedWorld && <button type="button" className="min-h-11 rounded px-2 text-sm text-neutral-300 hover:text-white" onClick={() => setOpenedWorld(null)}>← Back to cards</button>}
       {reference
         ? <ReferenceStoryDetail story={story} onBack={() => onAction('Back to novels')} />
-        : <div className="space-y-8">
-          <WorldCardInfo story={infoWorld} />
-          {infoWorld.id === featuredNovel.id && <WorldExpressions
-            world={story.imageUrl ? story : { ...story, imageUrl: featuredNovel.imageUrl }}
-            expansions={featuredExpansions} />}
-        </div>}
+        : <StoryDetailScreen story={infoWorld}
+            backLabel={openedWorld ? 'Back to cards' : 'Back to novels'}
+            onBack={openedWorld ? () => setOpenedWorld(null) : () => onAction('Back to novels')}
+            readingPosition={state.reading === 'chapter-7' ? { chapterNumber: 7 } : undefined}
+            onRead={state.destinations === 'none' ? undefined : () => onAction(`${state.reading === 'chapter-7' ? 'Continue' : 'Start'} reading ${infoWorld.title}`)}
+            onOpenCodex={state.destinations === 'all' ? () => onAction(`Open Codex for ${infoWorld.title}`) : undefined}
+            onOpenTimeline={state.destinations === 'all' ? () => onAction(`Open Fate Timeline for ${infoWorld.title}`) : undefined} />}
     </Stage>}
     {!openedWorld && show('full') && <Stage title="World Card" note="Home grid width.">
       <div className="w-[min(100%,13rem)]">
@@ -133,6 +133,8 @@ function readCanvasState(params: URLSearchParams): WorldCardPreviewState {
     branches: pick(params.get('branches'), ['sample', 'zero', 'unavailable'], DEFAULT_STATE.branches),
     activity: pick(params.get('activity'), ['active-now', 'active-this-week', 'quiet', 'hidden'], DEFAULT_STATE.activity),
     cardStatus: pick(params.get('cardStatus'), Object.keys(CARD_STATUS_PREVIEW) as WorldCardStatusPreview[], DEFAULT_STATE.cardStatus),
+    destinations: pick(params.get('destinations'), ['all', 'reading-only', 'none'], DEFAULT_STATE.destinations),
+    reading: pick(params.get('reading'), ['start', 'chapter-7'], DEFAULT_STATE.reading),
   };
 }
 
@@ -201,7 +203,7 @@ function WorldCardWorkspaceShell() {
         </div>,
       }, {
         id: 'states',
-        description: 'Full card progress changes with its public or personal-library context. Library state, branches and activity remain on the Info page.',
+        description: 'Full card progress changes with its public or personal-library context. Library state, branches, activity, reading position and the Info page destinations stay on the Info page.',
         content: <div className="flex flex-col gap-3">
           <label className="flex flex-col gap-1 text-xs">Full card progress
             <select className={selectClass} value={state.cardStatus} onChange={event => update({ cardStatus: event.target.value as WorldCardStatusPreview })}>
@@ -247,6 +249,19 @@ function WorldCardWorkspaceShell() {
               <option value="active-this-week">Active this week</option>
               <option value="quiet">Quiet</option>
               <option value="hidden">Hidden or unavailable</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-xs">Info destinations
+            <select className={selectClass} value={state.destinations} onChange={event => update({ destinations: event.target.value as WorldCardDestinations })}>
+              <option value="all">Reading, Codex and Fate Timeline</option>
+              <option value="reading-only">Reading only</option>
+              <option value="none">None supplied</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-xs">Reading position
+            <select className={selectClass} value={state.reading} onChange={event => update({ reading: event.target.value as WorldCardReadingPreview })}>
+              <option value="start">Not started (Start Reading)</option>
+              <option value="chapter-7">Known: Chapter 7 (Continue Reading)</option>
             </select>
           </label>
         </div>,

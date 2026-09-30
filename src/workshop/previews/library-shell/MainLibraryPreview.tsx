@@ -11,8 +11,7 @@ import { LightNovelsHome } from '@seihouse/library/home';
 import { LightNovelsHome as ReferenceHome } from '../../../components/light-novels-home/reference/LightNovelsHome';
 import { StoryDetailScreen } from '@seihouse/library/home';
 import { StoryDetailScreen as ReferenceStoryDetail } from '../../../components/light-novels-home/reference/StoryDetailScreen';
-import { WorldExpressions } from '@seihouse/library/home';
-import { featuredNovel, featuredExpansions, homePreviewWorlds } from '../light-novels-home/previewData';
+import { featuredNovel, homePreviewWorlds } from '../light-novels-home/previewData';
 import { libraryPreviewUrl, navigateLibraryPreview, readLibraryPreviewLocation } from './libraryPreviewNavigation';
 import { CreatorSpaceHost } from '../creator-space/CreatorSpaceHost';
 import type { CreatorWorld } from '@seihouse/library/creator-space';
@@ -138,9 +137,7 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
           window.history.replaceState({ ...window.history.state, creatorWorld: infoWorld }, '', window.location.href);
         }} />
       </div>}
-      {isFeaturedDetail && <Detail story={featuredNovel} onBack={() => navigate({ screen: 'home', collection: 'featured' })}>
-        {!homeReference && <WorldExpressions world={featuredNovel} expansions={featuredExpansions} />}
-      </Detail>}
+      {isFeaturedDetail && <Detail story={featuredNovel} onBack={() => navigate({ screen: 'home', collection: 'featured' })} />}
       {isCreatorDetail && <StoryDetailScreen story={activeCreatorWorld} onBack={() => navigate({ screen: 'creator-space' })} />}
       <div hidden={isHome || isFeaturedDetail || isCreatorDetail || isCreate}>
       <div className="mb-8 min-h-52 border border-dashed border-neutral-800 rounded-xl p-6 text-neutral-400 text-sm font-sans">

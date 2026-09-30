@@ -13,6 +13,8 @@ export interface WorldCardInfoProps {
   onRead?: () => void;
   onOpenCodex?: () => void;
   onOpenTimeline?: () => void;
+  /** The viewer's known reading position; the Chapters card says Continue Reading only when supplied. */
+  readingPosition?: { chapterNumber: number };
 }
 
 /** Artwork-only face on the Info page; story details remain in the page layout. */

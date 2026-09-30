@@ -124,8 +124,9 @@ it('opens the clicked Full and Compact worlds on their Info pages', async () => 
   await act(async () => compact.click());
   expect(new URLSearchParams(location.search).get('screen')).toBe('detail');
   expect(container.querySelector('[data-story-detail] h1')?.textContent).toBe('Ashes of the Nine Moons');
-  expect(container.querySelector('[data-story-detail] [aria-label="World information"]')?.textContent).toContain('Chapters12');
-  expect(container.querySelector('[data-story-detail] [aria-label="World information"]')?.textContent).toContain('Views—');
+  expect(container.querySelector('[data-story-detail] [data-world-info-chapters]')?.textContent).toContain('12 Chapters');
+  expect(container.querySelector('[data-story-detail] [aria-label="World information"]')).toBeNull();
+  expect(container.querySelector('[data-story-detail]')?.textContent).toContain('aren’t shared for this world yet');
   const detailUrl = window.location.href;
   const detailState = window.history.state;
   await act(async () => { window.history.back(); await new Promise(resolve => setTimeout(resolve, 50)); });
@@ -138,7 +139,7 @@ it('opens the clicked Full and Compact worlds on their Info pages', async () => 
   window.history.replaceState(detailState, '', detailUrl);
   await render();
   expect(container.querySelector('[data-story-detail] h1')?.textContent).toBe('Ashes of the Nine Moons');
-  expect(container.querySelector('[data-story-detail] [aria-label="World information"]')?.textContent).toContain('Views—');
+  expect(container.querySelector('[data-story-detail] [data-world-info-chapters]')?.textContent).toContain('12 Chapters');
   await click('Back to novels');
   expect(createVisible()).toBe(true);
 });

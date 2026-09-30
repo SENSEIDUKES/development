@@ -21,5 +21,7 @@ export interface StoryDetailScreenProps {
   onRead?: () => void;
   onOpenCodex?: () => void;
   onOpenTimeline?: () => void;
+  /** The viewer's known reading position, when the host has one. */
+  readingPosition?: { chapterNumber: number };
   children?: ReactNode;
 }

@@ -8,6 +8,9 @@ export type WorldCardAcquisition = 'sealed' | 'draft' | 'unacquired' | 'recently
 export type WorldCardTitleLength = 'standard' | 'long';
 export type WorldCardCover = 'art' | 'missing';
 export type WorldCardBranchPreview = 'sample' | 'zero' | 'unavailable';
+/** Which host destinations the Info page receives, to review unavailable actions. */
+export type WorldCardDestinations = 'all' | 'reading-only' | 'none';
+export type WorldCardReadingPreview = 'start' | 'chapter-7';
 export type WorldCardStatusPreview = 'public-ongoing' | 'public-completed'
   | 'library-draft' | 'library-shared' | 'library-public' | 'library-complete';
 
@@ -18,6 +21,8 @@ export interface WorldCardPreviewState {
   branches: WorldCardBranchPreview;
   activity: WorldActivityStatus | 'hidden';
   cardStatus: WorldCardStatusPreview;
+  destinations: WorldCardDestinations;
+  reading: WorldCardReadingPreview;
 }
 
 export const ACQUISITION_LABELS: Record<WorldCardAcquisition, string> = {

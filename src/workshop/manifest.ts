@@ -453,7 +453,7 @@ export const workshopEntries: WorkshopEntry[] = [
   },
   {
     id: 'world-card', section: 'components', owner: 'library', status: 'active', title: 'World Card',
-    description: 'The full World Card on Home, the Info page a reader opens, the Compact “Your worlds” tile on Create, and a Mini row sized like an audio-player track. Home, the world detail and Create render these components directly.',
+    description: 'The full World Card on Home, the Info page a reader opens, and the Compact “Your worlds” tile on Create. Home, the world detail and Create render these components directly.',
     category: 'other', version: 'v1.0',
     source: { repository: 'SENSEIDUKES/development', path: 'src/components/world-card/', lastCompared: '2026-09-27' },
   },

@@ -107,18 +107,31 @@ pieces rather than page-local cards or buttons:
   and hidden from assistive technology. It is not rendered when the world has
   no cover, so the panel falls back to its own glass. It never uses another
   world's art.
-- **Hero.** The cover sits beside the title and byline from about 380px wide
-  and stacks, centred, below that. From 768px the cover spans the title and
-  the state rows. Long titles wrap inside the title column.
-- **Metrics.** Views, Branches, and Activity appear only when supplied. If none
+- **Phone-first hero.** From 340px wide, the reference arrangement holds:
+  - The cover (about 37% of the width, framed in fine gold at rest) sits on the left.
+  - One column beside it holds the title (cream shading to cyan), `by` +
+    creator, the status / Library state / genre pills, and the tags.
+  - Below 340px the hero stacks, centred.
+  - Phones use compact serif pills.
+  - The creation date is no longer shown on this page.
+- **Header row.** `StoryDetailScreen` shows a gold ← arrow with its back label
+  and a gold `WORLD INFO` eyebrow. Its new optional `backLabel` lets the host
+  name where Back leads; the default is `Back to novels`. The Workshop's Info
+  stage renders this same detail screen, with **Back to cards** when a card
+  opened it.
+- **Metrics.** Views, Branches, and Activity appear only when supplied.
+  Activity tints its pulse glyph by state (green, amber, or rose). If none
   are known, one line says they are not shared for this world yet. There are
   no dash placeholders.
 - **Synopsis.** It is clamped to four lines. **More** appears only when the text
   actually overflows, with `aria-expanded` and `aria-controls`. A missing
   synopsis says so.
 - **Chapters card: the only reading action.**
-  - The card shows the chapter count, the current arc when non-empty, and a
-    landscape crop of the same cover from 360px.
+  - The card sits on a faint second card edge, like a stack of chapters. It
+    shows a crop of the same cover on the left (from 340px), then the chapter
+    count, a divider and the cue on one row, with the current arc underneath.
+  - When the card is too narrow for one row (below 340px, or with a long
+    Continue label), the cue moves beneath the text.
   - With the host's `onRead` and at least one chapter, the whole card is one
     `LibraryCard` button (Enter and Space work) with a **Start Reading →** cue.
   - The cue reads **Continue Reading · Ch. N →** only when the host supplies
@@ -127,7 +140,8 @@ pieces rather than page-local cards or buttons:
     focusable and shows no arrow.
   - There is no hero read button and no fixed bottom bar.
 - **Secondary tools.** Open Codex and Fate Timeline are quieter `LibraryCard`
-  rows. Each appears only when the host supplies its handler; there are no
+  rows led by the Library's own artwork (`LibraryIcon` `navigation-book` and
+  `story-arc`) on a soft glow. Each appears only when the host supplies its handler; there are no
   disabled placeholders. There is no Characters section (characters belong in
   the Codex) and no bookmark.
 - The page never uses fixed positioning, so the host's mobile bottom navigation
@@ -280,6 +294,25 @@ Copy `development/`, `shared/` and `development/world-card.css`. Then:
 Leave behind the Workshop preview, its sample data and the `reference/` folder.
 
 ## Workshop history
+
+- **2026-09-30** — Second pass, laid out phone-first to follow the approved
+  reference closely.
+  - **Hero.** The cover now sits beside one column holding the title, byline,
+    pills and tags. The cover has a fine gold frame at rest, and the title
+    shades from cream to cyan.
+  - **Pills.** They use compact serif styling. On Going is green, Sealed is
+    indigo with a gold lock, and the genre has a gold mark.
+  - **Metrics.** The strip has inset dividers, and the Activity glyph is tinted
+    by state.
+  - **Details.** The divider has a star ornament, and More is set in cyan
+    serif.
+  - **Chapters card.** It is stacked: cover crop, then count | Start Reading →
+    on one row, then the arc beneath.
+  - **Tools.** Codex and Timeline cards lead with Library artwork.
+  - **Header.** The detail screen has a gold back arrow and a `WORLD INFO`
+    eyebrow, with an optional `backLabel`.
+  - **Workshop.** The Info stage now renders the real `StoryDetailScreen`.
+  - **Date.** The creation date is no longer shown on the Info page.
 
 - **2026-09-30** — Redesigned the Info page as one Celestial glass page.
   - **Surface.** A `LibraryPanel` carries a faint, blurred reflection of the

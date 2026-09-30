@@ -28,7 +28,9 @@ it('opens either Compact world in the existing Info stage and returns to the car
   expect(container.querySelector('[aria-label^="Connected media for"]')).toBeNull();
   expect(container.querySelector('[data-world-card="compact"]')).toBeNull();
 
-  act(() => container.querySelector<HTMLButtonElement>('section[aria-label="Info page"] > button')!.click());
+  const back = container.querySelector<HTMLButtonElement>('[data-story-detail] button')!;
+  expect(back.textContent).toContain('Back to cards');
+  act(() => back.click());
   act(() => container.querySelectorAll<HTMLElement>('[data-world-card="compact"]')[1].click());
   expect(container.querySelectorAll('section[aria-label="Info page"]')).toHaveLength(1);
   expect(container.querySelector('[data-world-card="info"] h1')?.textContent).toBe('Ashes of the Nine Moons');

@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { useLibraryAssets } from '@seihouse/library/presentation';
-import { WorldCard, WorldCardInfo } from '@seihouse/library/world-card';
+import { WorldCard } from '@seihouse/library/world-card';
 import type { WorldCardDisplayStatus } from '@seihouse/library/world-card';
 import type { CreatorWorld } from '@seihouse/library/creator-space';
 import { WorldCardFullReference } from '../../../components/world-card/reference/WorldCardFull';
@@ -13,7 +13,7 @@ import {
   type WorldCardAcquisition, type WorldCardBranchPreview, type WorldCardCover, type WorldCardDestinations, type WorldCardPreviewState,
   type WorldCardReadingPreview, type WorldCardStatusPreview, type WorldCardTitleLength,
 } from './previewData';
-import type { WorldActivityStatus } from '@seihouse/library/home';
+import { StoryDetailScreen, type WorldActivityStatus } from '@seihouse/library/home';
 
 const entry = workshopEntries.find(candidate => candidate.id === 'world-card')!;
 
@@ -91,10 +91,11 @@ export function WorldCardStage({ view, state, reference, onAction }: {
 
   return <div className="mx-auto max-w-5xl space-y-12 px-4 py-6 sm:px-8" data-world-card-stage={reference ? 'reference' : 'development'}>
     {(openedWorld || show('info')) && <Stage title="Info page">
-      {openedWorld && <button type="button" className="min-h-11 rounded px-2 text-sm text-neutral-300 hover:text-white" onClick={() => setOpenedWorld(null)}>← Back to cards</button>}
       {reference
         ? <ReferenceStoryDetail story={story} onBack={() => onAction('Back to novels')} />
-        : <WorldCardInfo story={infoWorld}
+        : <StoryDetailScreen story={infoWorld}
+            backLabel={openedWorld ? 'Back to cards' : 'Back to novels'}
+            onBack={openedWorld ? () => setOpenedWorld(null) : () => onAction('Back to novels')}
             readingPosition={state.reading === 'chapter-7' ? { chapterNumber: 7 } : undefined}
             onRead={state.destinations === 'none' ? undefined : () => onAction(`${state.reading === 'chapter-7' ? 'Continue' : 'Start'} reading ${infoWorld.title}`)}
             onOpenCodex={state.destinations === 'all' ? () => onAction(`Open Codex for ${infoWorld.title}`) : undefined}

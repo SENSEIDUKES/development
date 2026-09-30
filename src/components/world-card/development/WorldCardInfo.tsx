@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { Activity, ArrowRight, ChevronDown, ChevronRight, ChevronUp, Eye, GitBranch, Lock, Sparkles, Sprout } from 'lucide-react';
+import { Activity, ArrowRight, ChevronDown, ChevronRight, ChevronUp, Eye, Flower2, GitBranch, Lock } from 'lucide-react';
 import { ElementalTitle, SEIBadge } from '@seihouse/ui';
-import { LibraryButton, LibraryCard, LibraryPanel } from '@seihouse/library-ui';
+import { LibraryButton, LibraryCard, LibraryIcon, LibraryPanel, type LibraryIconName } from '@seihouse/library-ui';
 import type { WorldCardInfoProps } from '../shared/worldCardContracts';
 import { WorldCard } from './WorldCard';
 import { WorldCardCover } from './WorldCardCover';
@@ -17,7 +17,6 @@ export function WorldCardInfo({ story, onRead, onOpenCodex, onOpenTimeline, read
   const detail = 'author' in story ? story : undefined;
   const coverUrl = story.imageUrl?.trim() || undefined;
   const creatorName = story.creatorName?.trim() || detail?.author?.trim();
-  const createdOn = detail?.createdAt?.split('T')[0];
   const publicationLabel = detail?.publicationStatus === 'ongoing' ? 'On Going'
     : detail?.publicationStatus === 'completed' ? 'Completed' : undefined;
   const genre = detail?.genre?.trim();
@@ -34,35 +33,35 @@ export function WorldCardInfo({ story, onRead, onOpenCodex, onOpenTimeline, read
         <div className="world-card-info-cover">
           <WorldCard face="info" world={story} />
         </div>
-        <header className="world-card-info-heading">
-          <h1 id={`world-info-title-${story.id}`} className="world-card-info-title font-display">{story.title}</h1>
-          {creatorName && <p className="world-card-info-byline">
-            <span className="world-card-info-byline-by">by</span>{' '}
-            <span className="world-card-info-creator">
-              {story.creatorTitle
-                ? <ElementalTitle as="span" element={story.creatorTitle.element}
-                    intensity={story.creatorTitle.intensity} color={story.creatorTitle.color}>{creatorName}</ElementalTitle>
-                : creatorName}
-            </span>
-            {createdOn && <span className="world-card-info-date"> · <time dateTime={createdOn}>{createdOn}</time></span>}
-          </p>}
-        </header>
-        <div className="world-card-info-states">
-          <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Library state">
-            {publicationLabel && <SEIBadge size="md" variant={publicationLabel === 'On Going' ? 'success' : 'neutral'}
+        <div className="world-card-info-identity">
+          <header>
+            <h1 id={`world-info-title-${story.id}`} className="world-card-info-title font-display">{story.title}</h1>
+            {creatorName && <p className="world-card-info-byline">
+              <span className="world-card-info-byline-by">by</span>{' '}
+              <span className="world-card-info-creator">
+                {story.creatorTitle
+                  ? <ElementalTitle as="span" element={story.creatorTitle.element}
+                      intensity={story.creatorTitle.intensity} color={story.creatorTitle.color}>{creatorName}</ElementalTitle>
+                  : creatorName}
+              </span>
+            </p>}
+          </header>
+          <div className="world-card-info-pills" role="group" aria-label="Library state">
+            {publicationLabel && <SEIBadge size="lg" variant={publicationLabel === 'On Going' ? 'success' : 'neutral'}
+              className="world-card-info-pill world-card-info-pill-status" data-status={detail?.publicationStatus}
               aria-label={`Story status: ${publicationLabel}`}>
               <span className="world-card-info-status-dot" aria-hidden="true" />{publicationLabel}
             </SEIBadge>}
             <LibraryState story={story} />
             {genre && <span className="world-card-info-genre">
-              <Sprout size={16} aria-hidden="true" /><span className="sr-only">Genre: </span>{genre}
+              <Flower2 size={22} aria-hidden="true" /><span className="sr-only">Genre: </span>{genre}
             </span>}
           </div>
-          {(tags.length > 0 || cultivationRate) && <ul className="flex flex-wrap gap-2" aria-label="Story tags">
-            {cultivationRate && <li><SEIBadge size="md" variant="outline" className="world-card-info-tag">
+          {(tags.length > 0 || cultivationRate) && <ul className="world-card-info-pills" aria-label="Story tags">
+            {tags.map(tag => <li key={tag}><SEIBadge size="lg" variant="outline" className="world-card-info-pill">#{tag}</SEIBadge></li>)}
+            {cultivationRate && <li><SEIBadge size="lg" variant="outline" className="world-card-info-pill">
               Cultivation Rate: {cultivationRate}
             </SEIBadge></li>}
-            {tags.map(tag => <li key={tag}><SEIBadge size="md" variant="outline" className="world-card-info-tag">#{tag}</SEIBadge></li>)}
           </ul>}
         </div>
       </div>
@@ -77,9 +76,9 @@ export function WorldCardInfo({ story, onRead, onOpenCodex, onOpenTimeline, read
         onRead={onRead} readingPosition={readingPosition} />
 
       {(onOpenCodex || onOpenTimeline) && <div className="world-card-info-tools">
-        {onOpenCodex && <StoryToolCard icon={<Sparkles size={22} aria-hidden="true" />} title="Open Codex"
+        {onOpenCodex && <StoryToolCard icon="navigation-book" title="Open Codex"
           description="Explore the lore, sects, and world" onOpen={onOpenCodex} />}
-        {onOpenTimeline && <StoryToolCard icon={<GitBranch size={22} aria-hidden="true" />} title="Fate Timeline"
+        {onOpenTimeline && <StoryToolCard icon="story-arc" title="Fate Timeline"
           description="Uncover key events and turning points" onOpen={onOpenTimeline} />}
       </div>}
     </div>
@@ -91,18 +90,20 @@ function LibraryState({ story }: Pick<WorldCardInfoProps, 'story'>) {
   const detail = 'author' in story ? story : undefined;
   if (detail?.draft || (!detail && story.status === 'draft')) {
     return <>
-      <SEIBadge size="md" variant="danger">Draft</SEIBadge>
-      {detail?.recentlyRead && <SEIBadge size="md" variant="info">Recently read</SEIBadge>}
+      <SEIBadge size="lg" variant="danger" className="world-card-info-pill">Draft</SEIBadge>
+      {detail?.recentlyRead && <SEIBadge size="lg" variant="info" className="world-card-info-pill">Recently read</SEIBadge>}
     </>;
   }
   if (!detail) {
-    return <SEIBadge size="md" variant="neutral">{story.status === 'complete' ? 'Complete' : story.status === 'public' ? 'Public' : 'Shared'}</SEIBadge>;
+    return <SEIBadge size="lg" variant="neutral" className="world-card-info-pill">{story.status === 'complete' ? 'Complete' : story.status === 'public' ? 'Public' : 'Shared'}</SEIBadge>;
   }
   return <>
     {detail.acquired
-      ? <SEIBadge size="md" variant="accent" icon={Lock}>Sealed</SEIBadge>
-      : <SEIBadge size="md" variant="neutral">Unacquired</SEIBadge>}
-    {detail.recentlyRead && <SEIBadge size="md" variant="info">Recently read</SEIBadge>}
+      ? <SEIBadge size="lg" variant="outline" className="world-card-info-pill world-card-info-pill-sealed">
+          <Lock size={15} aria-hidden="true" />Sealed
+        </SEIBadge>
+      : <SEIBadge size="lg" variant="outline" className="world-card-info-pill">Unacquired</SEIBadge>}
+    {detail.recentlyRead && <SEIBadge size="lg" variant="info" className="world-card-info-pill">Recently read</SEIBadge>}
   </>;
 }
 
@@ -118,15 +119,13 @@ function WorldMetrics({ story }: Pick<WorldCardInfoProps, 'story'>) {
     return <p className="world-card-info-metrics-empty">Views, branches and activity aren’t shared for this world yet.</p>;
   }
   return <dl className="world-card-info-metrics" aria-label="World information">
-    {views !== undefined && <Metric icon={<Eye size={24} aria-hidden="true" />} label="Views" value={views.toLocaleString()} />}
-    {branches !== undefined && <Metric icon={<GitBranch size={24} aria-hidden="true" />} label="Branches" value={branches.toLocaleString()} />}
-    {activity && <div className="world-card-info-metric">
-      <Activity size={24} aria-hidden="true" className="world-card-info-metric-icon" />
+    {views !== undefined && <Metric icon={<Eye size={26} aria-hidden="true" />} label="Views" value={views.toLocaleString()} />}
+    {branches !== undefined && <Metric icon={<GitBranch size={26} aria-hidden="true" />} label="Branches" value={branches.toLocaleString()} />}
+    {activity && <div className="world-card-info-metric" data-activity={detail?.activityStatus}>
+      <span className="world-card-info-metric-icon world-card-info-activity-icon"><Activity size={26} aria-hidden="true" /></span>
       <div className="min-w-0">
         <dt className="sr-only">Activity</dt>
-        <dd className="world-card-info-activity">
-          <span className={`h-2 w-2 shrink-0 rounded-full ${activity.color}`} aria-hidden="true" />{activity.label}
-        </dd>
+        <dd className="world-card-info-activity">{activity.label}</dd>
       </div>
     </div>}
   </dl>;
@@ -186,32 +185,37 @@ function ChaptersCard({ story, currentArc, coverUrl, onRead, readingPosition }: 
   // LibraryCard wraps `media` in its own media slot; the slot is styled by .world-card-info-chapters.
   const media = coverUrl ? <WorldCardCover src={coverUrl} title={story.title} decorative compact /> : undefined;
   const content = <div className="world-card-info-chapters-content">
-    <div className="world-card-info-chapters-text">
-      <p className="world-card-info-chapters-count font-display">{countLabel}</p>
-      {currentArc && <p className="world-card-info-chapters-arc">Current arc · {currentArc}</p>}
-    </div>
+    <p className="world-card-info-chapters-count font-display">{countLabel}</p>
+    {currentArc && <p className="world-card-info-chapters-arc">Current arc · {currentArc}</p>}
     {readable
-      ? <span className="world-card-info-chapters-cue" aria-hidden="true">{actionLabel}<ArrowRight size={20} /></span>
+      ? <span className="world-card-info-chapters-cue" aria-hidden="true">
+          {resumeChapter
+            ? <>Continue Reading <span className="whitespace-nowrap">· Ch. {resumeChapter}<ArrowRight size={18} /></span></>
+            : <span className="whitespace-nowrap">Start Reading<ArrowRight size={18} /></span>}
+        </span>
       : count > 0 && <span className="world-card-info-chapters-unavailable">Reading isn’t available here yet</span>}
   </div>;
   const shared = { padding: 'none' as const, className: 'world-card-info-chapters', contentClassName: 'gap-0', media, 'data-world-info-chapters': readable ? 'action' : 'static' };
 
-  if (!readable) return <LibraryCard {...shared}>{content}</LibraryCard>;
-  return <LibraryCard {...shared} interactive onClick={() => onRead!()}
-    aria-label={`${actionLabel}: ${story.title}, ${countLabel}${currentArc ? `, current arc ${currentArc}` : ''}`}>
-    {content}
-  </LibraryCard>;
+  return <div className="world-card-info-chapters-stack">
+    {readable
+      ? <LibraryCard {...shared} interactive onClick={() => onRead!()}
+          aria-label={`${actionLabel}: ${story.title}, ${countLabel}${currentArc ? `, current arc ${currentArc}` : ''}`}>
+          {content}
+        </LibraryCard>
+      : <LibraryCard {...shared}>{content}</LibraryCard>}
+  </div>;
 }
 
 /** Quieter secondary destinations; rendered only when the host supplies a working one. */
 function StoryToolCard({ icon, title, description, onOpen }: {
-  icon: ReactNode; title: string; description: string; onOpen: () => void;
+  icon: LibraryIconName; title: string; description: string; onOpen: () => void;
 }) {
   return <LibraryCard interactive onClick={() => onOpen()} padding="none" className="world-card-info-tool" contentClassName="gap-0"
     aria-label={`${title}: ${description}`}>
     <div className="world-card-info-tool-content">
-      <span className="world-card-info-tool-icon" aria-hidden="true">{icon}</span>
-      <span className="min-w-0 flex-1">
+      <span className="world-card-info-tool-art" aria-hidden="true"><LibraryIcon name={icon} size={40} /></span>
+      <span className="min-w-0 flex-1 py-3">
         <span className="world-card-info-tool-title font-display">{title}</span>
         <span className="world-card-info-tool-description">{description}</span>
       </span>

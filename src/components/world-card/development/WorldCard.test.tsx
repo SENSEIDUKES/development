@@ -375,3 +375,17 @@ it('reflects only this world’s own cover and omits unknown metrics and connect
   expect(container.querySelector('[aria-label="Library state"]')?.textContent).toContain('Draft');
   expect(container.textContent).toContain('Synopsis is not available yet.');
 });
+
+it('keeps title, byline, states and tags together in one column beside the cover', () => {
+  act(() => root.render(<WorldCardInfo story={{ ...infoStory, publicationStatus: 'ongoing', cultivationRate: 'Heaven' }} />));
+  const hero = container.querySelector('.world-card-info-hero')!;
+  expect(hero.children).toHaveLength(2);
+  expect(hero.children[0].querySelector('[data-world-card="info-cover"]')).not.toBeNull();
+  const identity = hero.children[1];
+  expect(identity.querySelector('h1')?.textContent).toBe('The Last Lotus');
+  expect(identity.textContent).toContain('SENSEI');
+  expect(identity.querySelector('[aria-label="Library state"]')?.textContent).toContain('Sealed');
+  expect(identity.querySelector('[aria-label="Story status: On Going"]')).not.toBeNull();
+  expect(identity.querySelector('[aria-label="Story tags"]')?.textContent).toContain('#FoundFamily');
+  expect(identity.querySelector('[aria-label="Story tags"]')?.textContent).toContain('Cultivation Rate: Heaven');
+});

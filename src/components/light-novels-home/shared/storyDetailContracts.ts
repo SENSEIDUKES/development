@@ -18,6 +18,8 @@ export interface StoryDetailDisplay extends HomeWorld {
 export interface StoryDetailScreenProps {
   story: StoryDetailDisplay;
   onBack: () => void;
+  /** Visible name of the way back; the host names where Back leads. */
+  backLabel?: string;
   onRead?: () => void;
   onOpenCodex?: () => void;
   onOpenTimeline?: () => void;

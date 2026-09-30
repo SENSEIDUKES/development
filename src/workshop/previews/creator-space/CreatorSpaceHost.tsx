@@ -51,8 +51,9 @@ function openChapterWorkspace(storyId: string, focusNextChapter: boolean) {
  * sample set), the live Energy account the shell already mounts, the Toolkit
  * previews, and the existing destinations. Production supplies its own.
  */
-export function CreatorSpaceHost({ onNavigate, source = readCreatorWorldsSource() }: {
+export function CreatorSpaceHost({ onNavigate, onOpenWorld, source = readCreatorWorldsSource() }: {
   onNavigate: (location: LibraryLocation) => void;
+  onOpenWorld: (world: CreatorWorld) => void;
   source?: CreatorWorldsSource;
 }) {
   const [worlds, setWorlds] = useState<CreatorWorldsState>(() => source === 'sample'
@@ -86,6 +87,7 @@ export function CreatorSpaceHost({ onNavigate, source = readCreatorWorldsSource(
       onCreate={() => onNavigate({ screen: 'creator' })}
       onOpenEnergy={() => onNavigate({ screen: 'profile', cave: '/home/energy' })}
       onContinueWorld={id => act(id, true)}
+      onOpenWorld={onOpenWorld}
       onOpenStudio={id => act(id, false)}
       onRetryWorlds={() => setAttempt(value => value + 1)} />
     {source === 'sample' && <p role="status" className="mt-3 font-sans text-xs text-neutral-400 empty:hidden">{sampleNotice}</p>}

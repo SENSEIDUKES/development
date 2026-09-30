@@ -27,21 +27,22 @@ export function WorldCard(props: WorldCardFaceProps) {
   const compactWorld = props.face === 'compact' ? props.world : undefined;
   const creatorName = world.creatorName;
   const creatorTitle = world.creatorTitle;
-  const format = props.face === 'compact' ? undefined : props.world.format?.trim();
+  const format = props.face === 'compact' || !('format' in props.world) ? undefined : props.world.format?.trim();
   const interactionProps = props.face === 'compact'
-    ? { interactive: true as const, onClick: props.onSelect, 'aria-pressed': props.selected ?? false }
+    ? { interactive: true as const, onClick: props.onOpen }
     : { interactive: false as const };
   const [motionPlaying, setMotionPlaying] = useState(false);
   const imageUrl = compact ? props.cover ?? world.imageUrl : world.imageUrl;
   const glowColor = useDominantColor(imageUrl?.trim() || undefined);
-  const motionAvailable = Boolean(motionWorld && imageUrl?.trim() && motionWorld.videoUrl?.trim());
+  const videoUrl = motionWorld && 'videoUrl' in motionWorld ? motionWorld.videoUrl : undefined;
+  const motionAvailable = Boolean(videoUrl?.trim() && imageUrl?.trim());
   const displayStatus = props.face === 'full' || props.face === undefined ? props.displayStatus : undefined;
   const statusLabel = compactWorld ? WORLD_STATUS_LABELS[compactWorld.status]
     : displayStatus?.view === 'public'
       ? displayStatus.value === 'ongoing' ? 'On Going' : 'Completed'
       : displayStatus?.view === 'library' ? WORLD_STATUS_LABELS[displayStatus.value] : undefined;
   const openLabel = compact
-    ? `${world.title}, Ch. ${world.chapterCount} · ${statusLabel}${creatorName ? `, creator ${creatorName}` : ''}`
+    ? `Open ${world.title}, Ch. ${world.chapterCount} · ${statusLabel}${creatorName ? `, creator ${creatorName}` : ''}`
     : `Open ${world.title}, ${world.chapterCount} chapters${creatorName ? `, creator ${creatorName}` : ''}${fullWorld?.format ? `, format ${fullWorld.format}` : ''}${statusLabel ? `, ${statusLabel}` : ''}`;
   return <LibraryCard
     {...interactionProps}
@@ -51,12 +52,13 @@ export function WorldCard(props: WorldCardFaceProps) {
     className={`world-card-base h-full${compact ? ' world-card-compact' : ''}`}
     style={{ '--world-card-glow': glowColor } as CSSProperties}
     data-world-card={compact ? 'compact' : info ? 'info-cover' : 'full'}
+    data-selected={compact && props.selected ? 'true' : undefined}
     aria-label={compact ? openLabel : undefined}
     data-motion-playing={motionAvailable && motionPlaying ? 'true' : undefined}
   >
     <LibraryCardMedia className={`world-card-base-media${compact ? ' world-card-compact-media' : ' aspect-[2/3]'}`}>
       {motionAvailable && motionWorld
-        ? <MotionPicture className="world-card-base-motion" stillUrl={imageUrl!} videoUrl={motionWorld.videoUrl!}
+        ? <MotionPicture className="world-card-base-motion" stillUrl={imageUrl!} videoUrl={videoUrl!}
             alt={`${world.title} cover`} glow={false} onPlayingChange={setMotionPlaying}
             stillFallback={<WorldCardCover src="" title={world.title} decorative />} />
         : <WorldCardCover src={imageUrl} title={world.title} decorative={!info} loading={info ? 'eager' : 'lazy'} compact={compact}

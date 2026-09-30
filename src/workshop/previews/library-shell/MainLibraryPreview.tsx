@@ -15,6 +15,8 @@ import { WorldExpressions } from '@seihouse/library/home';
 import { featuredNovel, featuredExpansions, homePreviewWorlds } from '../light-novels-home/previewData';
 import { libraryPreviewUrl, navigateLibraryPreview, readLibraryPreviewLocation } from './libraryPreviewNavigation';
 import { CreatorSpaceHost } from '../creator-space/CreatorSpaceHost';
+import type { CreatorWorld } from '@seihouse/library/creator-space';
+import type { StoryDetailDisplay } from '@seihouse/library/home';
 import { getDaoRankData } from '@seihouse/library/cultivation';
 import { getPreviewScenario } from '../user-profile/previewData';
 
@@ -28,8 +30,11 @@ const PREVIEW_SOCIAL_NETWORKS = ['discord', 'tiktok', 'instagram', 'youtube', 'x
 
 export function MainLibraryPreview({ state, developmentHeader, developmentHomeContent, extraFeedback, developmentNavigation = false, homeReference = false, active = true }: { state: string; developmentHeader?: (adapter: MainLibraryAdapter) => React.ReactNode; developmentHomeContent?: (adapter: MainLibraryAdapter) => React.ReactNode; extraFeedback?: string; developmentNavigation?: boolean; homeReference?: boolean; active?: boolean }) {
   const initialLocation = readLibraryPreviewLocation(state);
+  const restoredCreatorWorld = developmentNavigation && initialLocation.screen === 'detail'
+    ? (window.history.state?.creatorWorld as CreatorWorld | StoryDetailDisplay | undefined) ?? null : null;
   const [currentScreen, setCurrentScreen] = useState(developmentNavigation ? initialLocation.screen : state === 'profile' ? 'profile' : 'home');
-  const [activeStoryId, setActiveStoryId] = useState<string | null>(developmentNavigation && initialLocation.screen === 'detail' ? featuredNovel.id : state === 'active-story' ? 'mock-story' : null);
+  const [activeStoryId, setActiveStoryId] = useState<string | null>(developmentNavigation && initialLocation.screen === 'detail' ? restoredCreatorWorld?.id ?? featuredNovel.id : state === 'active-story' ? 'mock-story' : null);
+  const [activeCreatorWorld, setActiveCreatorWorld] = useState<CreatorWorld | StoryDetailDisplay | null>(restoredCreatorWorld);
   const [activeTab, chooseTab] = useState<string>(developmentNavigation ? initialLocation.collection ?? 'featured' : 'my-library');
   const [destination, setDestination] = useState('');
   const [helpOpen, setHelpOpen] = useState(false);
@@ -44,7 +49,7 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
       navigateLibraryPreview(location);
       return;
     }
-    if (developmentNavigation) window.history.pushState(window.history.state, '', libraryPreviewUrl(location));
+    if (developmentNavigation) window.history.pushState({}, '', libraryPreviewUrl(location));
     setCurrentScreen(location.screen);
     if (location.collection) chooseTab(location.collection);
     setDestination(location.screen);
@@ -54,7 +59,11 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
     const onBack = () => {
       const location = readLibraryPreviewLocation(state);
       setCurrentScreen(location.screen);
-      if (location.screen === 'detail') setActiveStoryId(featuredNovel.id);
+      if (location.screen === 'detail') {
+        const creatorWorld = (window.history.state?.creatorWorld as CreatorWorld | StoryDetailDisplay | undefined) ?? null;
+        setActiveCreatorWorld(creatorWorld);
+        setActiveStoryId(creatorWorld?.id ?? featuredNovel.id);
+      }
       chooseTab(location.collection ?? 'featured');
     };
     window.addEventListener('popstate', onBack);
@@ -102,7 +111,8 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
   // Laptops show the Pathways sidebar unless the host keeps the bottom strip.
   const pathwaysSidebar = useLibraryDesktopNavigation() === 'sidebar';
   const isHome = active && developmentNavigation && currentScreen === 'home' && activeTab === 'featured';
-  const isFeaturedDetail = developmentNavigation && currentScreen === 'detail' && activeStoryId === featuredNovel.id;
+  const isCreatorDetail = developmentNavigation && currentScreen === 'detail' && activeCreatorWorld?.id === activeStoryId;
+  const isFeaturedDetail = developmentNavigation && currentScreen === 'detail' && !isCreatorDetail && activeStoryId === featuredNovel.id;
   const isCreate = developmentNavigation && currentScreen === 'creator-space';
   const collections = <LibraryCollectionStrip activeTab={activeTab} chooseTab={tab => developmentNavigation ? navigate({ screen: 'home', collection: tab as LibraryLocation['collection'] }) : chooseTab(tab)} syncStatus={adapter.syncStatus} libraryStories={state === 'guest' ? [] : adapter.stories} />;
   const body = <>
@@ -111,6 +121,7 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
         <Home active={isHome} worlds={homePreviewWorlds}
           onCreateStory={() => navigate({ screen: 'creator' })} onOpenWorld={id => {
             worldOpenerRef.current = document.getElementById(`home-world-${id}`);
+            setActiveCreatorWorld(null);
             setActiveStoryId(id); navigate({ screen: 'detail' });
           }}>
           {developmentHomeContent?.(adapter)}
@@ -118,12 +129,20 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
         </Home>
       </div>}
       {developmentNavigation && createVisited && <div hidden={!isCreate}>
-        <CreatorSpaceHost onNavigate={navigate} />
+        <CreatorSpaceHost onNavigate={navigate} onOpenWorld={world => {
+          worldOpenerRef.current = document.getElementById(`creator-world-${world.id}`);
+          const infoWorld = world.id === featuredNovel.id ? featuredNovel : world;
+          setActiveCreatorWorld(infoWorld);
+          setActiveStoryId(world.id);
+          navigate({ screen: 'detail' });
+          window.history.replaceState({ ...window.history.state, creatorWorld: infoWorld }, '', window.location.href);
+        }} />
       </div>}
       {isFeaturedDetail && <Detail story={featuredNovel} onBack={() => navigate({ screen: 'home', collection: 'featured' })}>
         {!homeReference && <WorldExpressions world={featuredNovel} expansions={featuredExpansions} />}
       </Detail>}
-      <div hidden={isHome || isFeaturedDetail || isCreate}>
+      {isCreatorDetail && <StoryDetailScreen story={activeCreatorWorld} onBack={() => navigate({ screen: 'creator-space' })} />}
+      <div hidden={isHome || isFeaturedDetail || isCreatorDetail || isCreate}>
       <div className="mb-8 min-h-52 border border-dashed border-neutral-800 rounded-xl p-6 text-neutral-400 text-sm font-sans">
         Workshop content slot · Featured Ascension and library content are outside this header capture.
         <p className="mt-3" role="status">{destination ? `Workshop destination: ${destination}` : 'Local account and story fixtures. Shell actions stay in this preview.'}</p>

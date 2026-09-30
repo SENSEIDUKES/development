@@ -32,7 +32,7 @@ function fallbackCover(id: string, images: readonly string[]) {
  * presents them and reports which world the creator wants to work on.
  */
 export function CreatorSpace({
-  worlds, energy, toolkit, onCreate, onOpenEnergy, onContinueWorld, onOpenStudio, onBrowseToolkit, onRetryWorlds,
+  worlds, energy, toolkit, onCreate, onOpenEnergy, onContinueWorld, onOpenWorld, onOpenStudio, onBrowseToolkit, onRetryWorlds,
 }: CreatorSpaceProps) {
   const items = useMemo(() => worlds.status === 'ready'
     ? [...worlds.items].sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
@@ -71,7 +71,7 @@ export function CreatorSpace({
           description="Create, at the end of this page, starts your first world from a Story Seed. It will appear here as soon as its story begins." />
       </LibraryPanel>}
       {worlds.status === 'ready' && items.length > 0 && <WorldsRow worlds={items}
-        onContinueWorld={onContinueWorld} onOpenStudio={onOpenStudio} />}
+        onContinueWorld={onContinueWorld} onOpenWorld={onOpenWorld} onOpenStudio={onOpenStudio} />}
     </section>
 
     {/* The page closes on starting something new, after the worlds already in progress. */}
@@ -139,9 +139,10 @@ function WorldsLoading() {
   </div>;
 }
 
-function WorldsRow({ worlds, onContinueWorld, onOpenStudio }: {
+function WorldsRow({ worlds, onContinueWorld, onOpenWorld, onOpenStudio }: {
   worlds: readonly CreatorWorld[];
   onContinueWorld: (worldId: string) => void;
+  onOpenWorld: (world: CreatorWorld) => void;
   onOpenStudio: (worldId: string) => void;
 }) {
   const { homeImages = [] } = useLibraryAssets();
@@ -160,7 +161,7 @@ function WorldsRow({ worlds, onContinueWorld, onOpenStudio }: {
         const isSelected = world.id === selected.id;
         return <li key={world.id}>
           <WorldCard face="compact" world={world} cover={cover} fallbackCover={!world.imageUrl}
-            selected={isSelected} onSelect={() => setSelectedId(world.id)} />
+            selected={isSelected} onOpen={() => { setSelectedId(world.id); onOpenWorld(cover ? { ...world, imageUrl: cover } : world); }} />
         </li>;
       })}
     </ul>

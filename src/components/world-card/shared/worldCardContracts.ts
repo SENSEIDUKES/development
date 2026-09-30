@@ -3,7 +3,7 @@ import type { StoryDetailDisplay } from '../../light-novels-home/shared/storyDet
 import type { CreatorWorld, CreatorWorldStatus } from '../../creator-space/shared/creatorSpaceContracts';
 
 /**
- * One world, four sizes. Each variant reads the display data its host page
+ * One world, three views. Each face reads the display data its host page
  * already supplies — no new world model is introduced here.
  */
 
@@ -13,6 +13,12 @@ export interface WorldCardInfoProps {
   onRead?: () => void;
   onOpenCodex?: () => void;
   onOpenTimeline?: () => void;
+}
+
+/** Artwork-only face on the Info page; story details remain in the page layout. */
+export interface WorldCardInfoCoverProps {
+  world: StoryDetailDisplay;
+  face: 'info';
 }
 
 /** Full card: the 2:3 discovery card on Home. */
@@ -36,16 +42,4 @@ export interface WorldCardCompactProps {
   fallbackCover?: boolean;
   selected?: boolean;
   onSelect: () => void;
-}
-
-/** Mini card: a single row, sized like an audio-player track. */
-export interface WorldCardMiniProps {
-  title: string;
-  imageUrl?: string;
-  /** One muted line under the title, e.g. "Ch. 24 · Xianxia". */
-  meta: string;
-  onOpen?: () => void;
-  /** Label for the round trailing action; the action shows only with `onAction`. */
-  actionLabel?: string;
-  onAction?: () => void;
 }

@@ -8,7 +8,7 @@ import { SEIEmptyState, SEIErrorState, SEISkeleton } from '@seihouse/ui';
 import { useLibraryAssets } from '../../../library/assets';
 import { formatEnergy } from '../../energy/development/EnergyAmount';
 import type { CreatorSpaceProps, CreatorToolkitItem, CreatorWorld, CreatorWorldStatus } from '../shared/creatorSpaceContracts';
-import { WorldCardCompact, WORLD_STATUS_LABELS } from '../../world-card/development/WorldCardCompact';
+import { WorldCard, WORLD_STATUS_LABELS } from '../../world-card/development/WorldCard';
 import './creator-space.css';
 
 const TOOLKIT_ICONS = { style: Paintbrush, soundscape: AudioLines } as const;
@@ -159,7 +159,7 @@ function WorldsRow({ worlds, onContinueWorld, onOpenStudio }: {
         const cover = world.imageUrl ?? fallbackCover(world.id, homeImages);
         const isSelected = world.id === selected.id;
         return <li key={world.id}>
-          <WorldCardCompact world={world} cover={cover} fallbackCover={!world.imageUrl}
+          <WorldCard face="compact" world={world} cover={cover} fallbackCover={!world.imageUrl}
             selected={isSelected} onSelect={() => setSelectedId(world.id)} />
         </li>;
       })}

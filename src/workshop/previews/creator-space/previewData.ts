@@ -8,19 +8,21 @@ import { featuredNovel } from '../light-novels-home/previewData';
  * They let the page be judged without a browser full of written stories; the
  * real Create tab reads the chapter workspace's own local store instead.
  */
+const sampleCreator = { creatorName: featuredNovel.creatorName, creatorTitle: featuredNovel.creatorTitle };
+
 export const SAMPLE_CREATOR_WORLDS: readonly CreatorWorld[] = [
-  { id: featuredNovel.id, title: featuredNovel.title, chapterCount: featuredNovel.chapterCount, status: 'draft',
+  { ...sampleCreator, id: featuredNovel.id, title: featuredNovel.title, chapterCount: featuredNovel.chapterCount, status: 'draft',
     updatedAt: '2026-09-26T09:00:00Z', imageUrl: featuredNovel.imageUrl },
-  { id: 'sample-nine-moons', title: 'Ashes of the Nine Moons', chapterCount: 12, status: 'draft',
+  { ...sampleCreator, id: 'sample-nine-moons', title: 'Ashes of the Nine Moons', chapterCount: 12, status: 'draft',
     updatedAt: '2026-09-25T18:30:00Z', imageUrl: '/card-workshop/test-images/lyra_meadowlight_portrait.png' },
-  { id: 'sample-blood-silk', title: 'The Blood-Silk Oath', chapterCount: 31, status: 'shared',
+  { ...sampleCreator, id: 'sample-blood-silk', title: 'The Blood-Silk Oath', chapterCount: 31, status: 'shared',
     updatedAt: '2026-09-24T11:10:00Z', imageUrl: '/card-workshop/test-images/elder_kaelen_portrait.png' },
-  { id: 'sample-northern-wall', title: 'Iron Vow of the Northern Wall', chapterCount: 7, status: 'draft',
+  { ...sampleCreator, id: 'sample-northern-wall', title: 'Iron Vow of the Northern Wall', chapterCount: 7, status: 'draft',
     updatedAt: '2026-09-21T08:45:00Z', imageUrl: '/card-workshop/test-images/sergeant_anya_petrova_portrait.png' },
-  { id: 'sample-lake-pavilion', title: 'The Pavilion Beneath the Lake', chapterCount: 40, status: 'complete',
+  { ...sampleCreator, id: 'sample-lake-pavilion', title: 'The Pavilion Beneath the Lake', chapterCount: 40, status: 'complete',
     updatedAt: '2026-09-15T20:05:00Z', imageUrl: '/card-workshop/test-images/lotus_lake_pavilion_portrait.jpg' },
   // No cover yet: shows the Library's own celestial art in its place.
-  { id: 'sample-forgetting-rivers', title: 'Where the Rivers Forget', chapterCount: 3, status: 'draft',
+  { ...sampleCreator, id: 'sample-forgetting-rivers', title: 'Where the Rivers Forget', chapterCount: 3, status: 'draft',
     updatedAt: '2026-09-10T07:20:00Z' },
 ];
 

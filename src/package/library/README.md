@@ -5,6 +5,12 @@ SEN engine and the two UI packages. Library owns SEIHouse users, products,
 economy, community and business policy. Authentication enforcement, secrets,
 durable ledgers and concrete infrastructure stay in the host/backend.
 
+**0.8.0 (breaking):** `@seihouse/library/world-card` no longer exports
+`WorldCardCompact`, `WorldCardMini`, or `WorldCardMiniProps`. Use
+`WorldCard face="compact"` for creator tiles. The unused mock Mini row was
+removed; a real Mini face can be designed later. The Info cover uses
+`WorldCard face="info"` through `WorldCardInfo`.
+
 ## Public entries
 
 | Import | Responsibility |
@@ -22,7 +28,7 @@ durable ledgers and concrete infrastructure stay in the host/backend.
 | `./shell` | Navigation, route models, header/footer and shell orchestration |
 | `./home` | Library Home, discovery and story-detail surfaces |
 | `./creator-space` | The Create page: Creator Space tiles, the Creator Toolkit preview and the Your worlds row over host-supplied worlds, Energy and destinations |
-| `./world-card` | The full `WorldCard`, its Info page, Compact creator tile and Mini track-sized row — over host-supplied world display data and destinations |
+| `./world-card` | The shared `WorldCard` with Full, Compact, and Info cover faces, plus its Info page — over host-supplied world display data and destinations |
 | `./story-seed` | Authenticated Story Bank, Help and branded creation journey; Story Seed Settings own the Story Language and Reading Mode a new story starts with |
 | `./generation` | First-party HARNESS workspace composition: the novel page and its Story Settings (Story Language, Reading Mode). HARNESS internals such as CAPA slots show only when a development host sets `showHarnessInternals` |
 | `./model-router-server` | Server-only Gemini/OpenRouter text and ElevenLabs speech routing; apps supply credentials, prompts, HTTP policy, and storage |

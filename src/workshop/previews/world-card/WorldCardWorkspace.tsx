@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { useLibraryAssets } from '@seihouse/library/presentation';
-import { WorldCard, WorldCardCompact, WorldCardInfo, WorldCardMini, WORLD_STATUS_LABELS } from '@seihouse/library/world-card';
+import { WorldCard, WorldCardInfo } from '@seihouse/library/world-card';
 import type { WorldCardDisplayStatus } from '@seihouse/library/world-card';
 import type { CreatorWorld } from '@seihouse/library/creator-space';
 import { WorldCardFullReference } from '../../../components/world-card/reference/WorldCardFull';
@@ -17,13 +17,26 @@ import type { WorldActivityStatus } from '@seihouse/library/home';
 const entry = workshopEntries.find(candidate => candidate.id === 'world-card')!;
 
 const VIEWS = {
-  all: { label: 'All sizes', description: 'Every size of the same world, largest to smallest.' },
+  all: { label: 'All views', description: 'The Info page, Full card, and Compact card together.' },
   info: { label: 'Info page', description: 'The full world overview a reader lands on when they open a world.' },
   full: { label: 'World Card', description: 'The full 2:3 discovery card, shown at its Home grid width.' },
   compact: { label: 'Compact', description: 'Create’s “Your worlds” tile. Tap a tile to move the glowing selection.' },
-  mini: { label: 'Mini', description: 'New: a single row sized like an audio-player track — cover thumb, title, one line of meta and a round action.' },
 } as const;
 type View = keyof typeof VIEWS;
+
+const VIEWPORTS = {
+  current: { label: 'Current browser', width: 0, height: 0 },
+  small: { label: 'Small phone', width: 320, height: 700 },
+  mobile: { label: 'Phone', width: 390, height: 844 },
+  tablet: { label: 'Tablet', width: 768, height: 1024 },
+  desktop: { label: 'Desktop', width: 1280, height: 900 },
+} as const;
+type Viewport = keyof typeof VIEWPORTS;
+
+const DEFAULT_STATE: WorldCardPreviewState = {
+  acquisition: 'sealed', titleLength: 'standard', cover: 'art', branches: 'sample',
+  activity: 'active-this-week', cardStatus: 'public-ongoing',
+};
 
 const CARD_STATUS_PREVIEW: Record<WorldCardStatusPreview, WorldCardDisplayStatus> = {
   'public-ongoing': { view: 'public', value: 'ongoing' },
@@ -55,11 +68,13 @@ function Stage({ title, note, children }: { title: string; note?: string; childr
 function CompactRow({ worlds, reference }: { worlds: readonly CreatorWorld[]; reference: boolean }) {
   const { homeImages = [] } = useLibraryAssets();
   const [selectedId, setSelectedId] = useState(worlds[0]?.id);
-  const Card = reference ? WorldCardCompactReference : WorldCardCompact;
   return <ul className="flex gap-3 overflow-x-auto pb-4" aria-label="Your worlds">
     {worlds.slice(0, 3).map(world => <li key={world.id} className="w-[min(46%,13.5rem)] flex-none sm:w-[13.5rem]">
-      <Card world={world} cover={world.imageUrl ?? fallbackCover(world.id, homeImages)} fallbackCover={!world.imageUrl}
-        selected={world.id === selectedId} onSelect={() => setSelectedId(world.id)} />
+      {reference
+        ? <WorldCardCompactReference world={world} cover={world.imageUrl ?? fallbackCover(world.id, homeImages)} fallbackCover={!world.imageUrl}
+            selected={world.id === selectedId} onSelect={() => setSelectedId(world.id)} />
+        : <WorldCard face="compact" world={world} cover={world.imageUrl ?? fallbackCover(world.id, homeImages)} fallbackCover={!world.imageUrl}
+            selected={world.id === selectedId} onSelect={() => setSelectedId(world.id)} />}
     </li>)}
   </ul>;
 }
@@ -88,37 +103,70 @@ function WorldCardStage({ view, state, reference, onAction }: {
     {show('compact') && <Stage title="Compact" note="Create · Your worlds.">
       <CompactRow key={`${reference}-${state.titleLength}-${state.cover}`} worlds={worlds} reference={reference} />
     </Stage>}
-    {show('mini') && <Stage title="Mini" note={reference ? undefined : 'Track-sized row.'}>
-      {reference
-        ? <p className="max-w-md font-sans text-sm text-neutral-400">New in Development — the Mini size has no production original yet.</p>
-        : <ul className="max-w-md space-y-2" aria-label="Worlds, mini">
-            {worlds.slice(0, 4).map(world => {
-              const meta = world.id === story.id
-                ? `Ch. ${world.chapterCount} · ${story.genre}`
-                : `Ch. ${world.chapterCount} · ${WORLD_STATUS_LABELS[world.status]}`;
-              return <li key={world.id}>
-                <WorldCardMini title={world.title} imageUrl={world.imageUrl} meta={meta}
-                  onOpen={() => onAction(`Open ${world.title}`)} onAction={() => onAction(`Continue ${world.title}`)} />
-              </li>;
-            })}
-          </ul>}
-    </Stage>}
   </div>;
 }
 
 const selectClass = 'min-h-11 rounded-lg border border-white/20 bg-black/30 p-2 text-sm text-white';
 
-/** One world in every size it appears: Info page, Full card, Compact and Mini. */
-export function WorldCardWorkspace() {
+function canvasUrl(view: View, state: WorldCardPreviewState, reference: boolean) {
+  const params = new URLSearchParams({ preview: 'world-card', canvas: '1', view,
+    reference: reference ? '1' : '0', ...state });
+  return `/?${params.toString()}`;
+}
+
+function readCanvasState(params: URLSearchParams): WorldCardPreviewState {
+  const pick = <T extends string>(value: string | null, options: readonly T[], fallback: T): T =>
+    options.includes(value as T) ? value as T : fallback;
+  return {
+    acquisition: pick(params.get('acquisition'), ['sealed', 'draft', 'unacquired', 'recently-read'], DEFAULT_STATE.acquisition),
+    titleLength: pick(params.get('titleLength'), ['standard', 'long'], DEFAULT_STATE.titleLength),
+    cover: pick(params.get('cover'), ['art', 'missing'], DEFAULT_STATE.cover),
+    branches: pick(params.get('branches'), ['sample', 'zero', 'unavailable'], DEFAULT_STATE.branches),
+    activity: pick(params.get('activity'), ['active-now', 'active-this-week', 'quiet', 'hidden'], DEFAULT_STATE.activity),
+    cardStatus: pick(params.get('cardStatus'), Object.keys(CARD_STATUS_PREVIEW) as WorldCardStatusPreview[], DEFAULT_STATE.cardStatus),
+  };
+}
+
+/** The same Workshop stage inside a real-width document for viewport checks. */
+function WorldCardCanvas() {
+  const params = new URLSearchParams(window.location.search);
+  const view = pickView(params.get('view'));
+  const [action, setAction] = useState('');
+  return <div className="min-h-screen bg-[#04060d] text-slate-300">
+    <WorldCardStage view={view} state={readCanvasState(params)} reference={params.get('reference') === '1'}
+      onAction={message => setAction(`${message} · mock preview`)} />
+    <p className="px-4 pb-6 font-sans text-xs text-neutral-400 sm:px-8" role="status">{action}</p>
+  </div>;
+}
+
+function pickView(value: string | null): View {
+  return value && Object.hasOwn(VIEWS, value) ? value as View : 'all';
+}
+
+/** The Info page, Full card, and Compact face in one Workshop. */
+function WorldCardWorkspaceShell() {
   const [view, setView] = useState<View>('all');
-  const [state, setState] = useState<WorldCardPreviewState>({ acquisition: 'sealed', titleLength: 'standard', cover: 'art', branches: 'sample', activity: 'active-this-week', cardStatus: 'public-ongoing' });
+  const [viewport, setViewport] = useState<Viewport>('current');
+  const [state, setState] = useState<WorldCardPreviewState>(DEFAULT_STATE);
   const [action, setAction] = useState('');
   const update = (patch: Partial<WorldCardPreviewState>) => setState(current => ({ ...current, ...patch }));
 
-  const render = (reference: boolean) => <>
-    <WorldCardStage view={view} state={state} reference={reference} onAction={message => setAction(`${message} · mock preview`)} />
-    <p className="px-4 pb-6 font-sans text-xs text-neutral-400 sm:px-8" role="status">{action}</p>
-  </>;
+  const render = (reference: boolean) => {
+    if (viewport !== 'current') {
+      const { label, width, height } = VIEWPORTS[viewport];
+      return <div className="overflow-x-auto py-4 sm:px-4" data-world-card-viewport={viewport}>
+        <p className="mb-3 px-4 text-xs text-white/65 sm:px-0">{label} · {width} × {height}</p>
+        <iframe title={`World Card ${reference ? 'reference' : 'development'} at ${label} width`}
+          src={canvasUrl(view, state, reference)} width={width} height={height}
+          className="mx-auto block max-w-none border-0 bg-[#04060d] sm:rounded-xl sm:border sm:border-white/20"
+          style={{ width, height, boxSizing: 'content-box' }} />
+      </div>;
+    }
+    return <>
+      <WorldCardStage view={view} state={state} reference={reference} onAction={message => setAction(`${message} · mock preview`)} />
+      <p className="px-4 pb-6 font-sans text-xs text-neutral-400 sm:px-8" role="status">{action}</p>
+    </>;
+  };
 
   return <FeatureWorkspace entry={entry}
     renderReference={() => render(true)} renderDevelopment={() => render(false)}
@@ -128,11 +176,20 @@ export function WorldCardWorkspace() {
       sections: [{
         id: 'pages',
         description: VIEWS[view].description,
-        content: <label className="flex flex-col gap-1 text-xs">View
-          <select className={selectClass} value={view} onChange={event => setView(event.target.value as View)}>
-            {Object.entries(VIEWS).map(([value, option]) => <option key={value} value={value}>{option.label}</option>)}
-          </select>
-        </label>,
+        content: <div className="flex flex-col gap-3">
+          <label className="flex flex-col gap-1 text-xs">View
+            <select className={selectClass} value={view} onChange={event => setView(event.target.value as View)}>
+              {Object.entries(VIEWS).map(([value, option]) => <option key={value} value={value}>{option.label}</option>)}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-xs">Viewport
+            <select className={selectClass} value={viewport} onChange={event => setViewport(event.target.value as Viewport)}>
+              {Object.entries(VIEWPORTS).map(([value, size]) => <option key={value} value={value}>
+                {size.width ? `${size.label} · ${size.width} × ${size.height}` : size.label}
+              </option>)}
+            </select>
+          </label>
+        </div>,
       }, {
         id: 'states',
         description: 'Full card progress changes with its public or personal-library context. Library state, branches and activity remain on the Info page.',
@@ -186,4 +243,9 @@ export function WorldCardWorkspace() {
         </div>,
       }],
     }} />;
+}
+
+export function WorldCardWorkspace() {
+  return new URLSearchParams(window.location.search).get('canvas') === '1'
+    ? <WorldCardCanvas /> : <WorldCardWorkspaceShell />;
 }

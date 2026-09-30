@@ -9,7 +9,7 @@ import type { CreatorWorld, CreatorWorldStatus } from '../../creator-space/share
 
 /** Info page: the full world overview shown when a reader opens a world. */
 export interface WorldCardInfoProps {
-  story: StoryDetailDisplay;
+  story: StoryDetailDisplay | CreatorWorld;
   onRead?: () => void;
   onOpenCodex?: () => void;
   onOpenTimeline?: () => void;
@@ -17,7 +17,7 @@ export interface WorldCardInfoProps {
 
 /** Artwork-only face on the Info page; story details remain in the page layout. */
 export interface WorldCardInfoCoverProps {
-  world: StoryDetailDisplay;
+  world: StoryDetailDisplay | CreatorWorld;
   face: 'info';
 }
 
@@ -41,5 +41,6 @@ export interface WorldCardCompactProps {
   /** True when `cover` is host fallback art rather than the world's own. */
   fallbackCover?: boolean;
   selected?: boolean;
-  onSelect: () => void;
+  /** Opens this world's Info page; the host owns navigation. */
+  onOpen: () => void;
 }

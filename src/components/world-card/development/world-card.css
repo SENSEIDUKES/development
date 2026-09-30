@@ -25,7 +25,7 @@
 }
 .world-card-base:focus-within,
 .world-card-base:active,
-.world-card-base[aria-pressed='true'] {
+.world-card-base[data-selected='true'] {
   border-color: var(--world-card-glow-lit);
   box-shadow: 0 0 0 1px var(--world-card-glow-lit),
     0 0 32px 5px color-mix(in srgb, var(--world-card-glow-lit) 68%, transparent),

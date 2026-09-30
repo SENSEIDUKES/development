@@ -17,6 +17,8 @@ export interface CreatorWorld {
   updatedAt: string;
   /** Cover art. Without it the page shows the Library's own celestial art. */
   imageUrl?: string;
+  /** Known story format for its Info cover; leave absent when the source has not supplied one. */
+  format?: string;
   /** Host-supplied creator lettering for the World Card; absent when unknown. */
   creatorName?: string;
   creatorTitle?: { element: ElementalTitleEffect; intensity?: ElementalTitleIntensity; color?: string };
@@ -48,6 +50,8 @@ export interface CreatorSpaceProps {
   onOpenEnergy?: () => void;
   /** Continue writing the world: its chapter workspace, ready for the next chapter. */
   onContinueWorld: (worldId: string) => void;
+  /** Opens the selected world's Info page. */
+  onOpenWorld: (world: CreatorWorld) => void;
   /** The world's full Studio workspace. */
   onOpenStudio: (worldId: string) => void;
   /** Opens a pack/plugin browser. Omit it while none exists; the page says so honestly. */

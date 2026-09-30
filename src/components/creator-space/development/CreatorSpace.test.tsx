@@ -28,7 +28,7 @@ function renderPage(overrides: Partial<CreatorSpaceProps> = {}) {
     worlds: { status: 'ready', items: WORLDS },
     energy: readyEnergy(320),
     toolkit: [{ id: 'style', kind: 'style', title: 'Style Packs', description: 'Writing styles.' }],
-    onCreate: vi.fn(), onOpenEnergy: vi.fn(), onContinueWorld: vi.fn(), onOpenStudio: vi.fn(),
+    onCreate: vi.fn(), onOpenEnergy: vi.fn(), onContinueWorld: vi.fn(), onOpenWorld: vi.fn(), onOpenStudio: vi.fn(),
     ...overrides,
   };
   act(() => root.render(<LibraryPresentationProvider><CreatorSpace {...props} /></LibraryPresentationProvider>));
@@ -64,17 +64,18 @@ it('selects the most recent world first and retargets exactly two actions to the
   const props = renderPage();
   const cards = Array.from(container.querySelectorAll<HTMLElement>('.world-card-compact'));
   expect(cards.map(card => card.getAttribute('aria-label'))).toEqual([
-    'The Last Lotus of the Jade Empire, Ch. 24 · Draft',
-    'Ashes of the Nine Moons, Ch. 12 · Draft',
-    'The Pavilion Beneath the Lake, Ch. 40 · Complete',
+    'Open The Last Lotus of the Jade Empire, Ch. 24 · Draft',
+    'Open Ashes of the Nine Moons, Ch. 12 · Draft',
+    'Open The Pavilion Beneath the Lake, Ch. 40 · Complete',
   ]);
-  expect(cards[0].getAttribute('aria-pressed')).toBe('true');
+  expect(cards[0].getAttribute('data-selected')).toBe('true');
   expect(selected()?.querySelector('h3')?.textContent).toBe('The Last Lotus of the Jade Empire');
   expect(Array.from(selected()!.querySelectorAll('button')).map(item => item.textContent?.trim())).toEqual(['Continue', 'Studio']);
 
   click(cards[1]);
-  expect(cards[1].getAttribute('aria-pressed')).toBe('true');
-  expect(cards[0].getAttribute('aria-pressed')).toBe('false');
+  expect(cards[1].getAttribute('data-selected')).toBe('true');
+  expect(cards[0].getAttribute('data-selected')).toBeNull();
+  expect(props.onOpenWorld).toHaveBeenCalledWith(WORLDS[0]);
   expect(selected()?.querySelector('h3')?.textContent).toBe('Ashes of the Nine Moons');
   click(button('Continue'));
   expect(props.onContinueWorld).toHaveBeenCalledWith('older');

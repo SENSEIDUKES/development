@@ -12,7 +12,8 @@ import {
   ACQUISITION_LABELS, previewCreatorWorlds, previewStory,
   type WorldCardAcquisition, type WorldCardBranchPreview, type WorldCardCover, type WorldCardPreviewState, type WorldCardStatusPreview, type WorldCardTitleLength,
 } from './previewData';
-import type { WorldActivityStatus } from '@seihouse/library/home';
+import { WorldExpressions, type WorldActivityStatus } from '@seihouse/library/home';
+import { featuredExpansions, featuredNovel } from '../light-novels-home/previewData';
 
 const entry = workshopEntries.find(candidate => candidate.id === 'world-card')!;
 
@@ -20,7 +21,7 @@ const VIEWS = {
   all: { label: 'All views', description: 'The Info page, Full card, and Compact card together.' },
   info: { label: 'Info page', description: 'The full world overview a reader lands on when they open a world.' },
   full: { label: 'World Card', description: 'The full 2:3 discovery card, shown at its Home grid width.' },
-  compact: { label: 'Compact', description: 'Create’s “Your worlds” tile. Tap a tile to move the glowing selection.' },
+  compact: { label: 'Compact', description: 'Create’s “Your worlds” tile. Tap a tile to open that world’s Info page.' },
 } as const;
 type View = keyof typeof VIEWS;
 
@@ -65,7 +66,7 @@ function Stage({ title, note, children }: { title: string; note?: string; childr
   </section>;
 }
 
-function CompactRow({ worlds, reference }: { worlds: readonly CreatorWorld[]; reference: boolean }) {
+function CompactRow({ worlds, reference, onOpen }: { worlds: readonly CreatorWorld[]; reference: boolean; onOpen: (world: CreatorWorld) => void }) {
   const { homeImages = [] } = useLibraryAssets();
   const [selectedId, setSelectedId] = useState(worlds[0]?.id);
   return <ul className="flex gap-3 overflow-x-auto pb-4" aria-label="Your worlds">
@@ -74,34 +75,42 @@ function CompactRow({ worlds, reference }: { worlds: readonly CreatorWorld[]; re
         ? <WorldCardCompactReference world={world} cover={world.imageUrl ?? fallbackCover(world.id, homeImages)} fallbackCover={!world.imageUrl}
             selected={world.id === selectedId} onSelect={() => setSelectedId(world.id)} />
         : <WorldCard face="compact" world={world} cover={world.imageUrl ?? fallbackCover(world.id, homeImages)} fallbackCover={!world.imageUrl}
-            selected={world.id === selectedId} onSelect={() => setSelectedId(world.id)} />}
+            selected={world.id === selectedId} onOpen={() => { setSelectedId(world.id); const cover = world.imageUrl ?? fallbackCover(world.id, homeImages); onOpen(cover ? { ...world, imageUrl: cover } : world); }} />}
     </li>)}
   </ul>;
 }
 
-function WorldCardStage({ view, state, reference, onAction }: {
+export function WorldCardStage({ view, state, reference, onAction }: {
   view: View; state: WorldCardPreviewState; reference: boolean; onAction: (message: string) => void;
 }) {
   const story = previewStory(state);
   const worlds = previewCreatorWorlds(state);
+  const [openedWorld, setOpenedWorld] = useState<CreatorWorld | typeof story | null>(null);
+  const infoWorld = openedWorld?.id === story.id ? story : openedWorld ?? story;
   const show = (candidate: View) => view === 'all' || view === candidate;
 
   return <div className="mx-auto max-w-5xl space-y-12 px-4 py-6 sm:px-8" data-world-card-stage={reference ? 'reference' : 'development'}>
-    {show('info') && <Stage title="Info page">
+    {(openedWorld || show('info')) && <Stage title="Info page">
+      {openedWorld && <button type="button" className="min-h-11 rounded px-2 text-sm text-neutral-300 hover:text-white" onClick={() => setOpenedWorld(null)}>← Back to cards</button>}
       {reference
         ? <ReferenceStoryDetail story={story} onBack={() => onAction('Back to novels')} />
-        : <WorldCardInfo story={story} />}
+        : <div className="space-y-8">
+          <WorldCardInfo story={infoWorld} />
+          {infoWorld.id === featuredNovel.id && <WorldExpressions
+            world={story.imageUrl ? story : { ...story, imageUrl: featuredNovel.imageUrl }}
+            expansions={featuredExpansions} />}
+        </div>}
     </Stage>}
-    {show('full') && <Stage title="World Card" note="Home grid width.">
+    {!openedWorld && show('full') && <Stage title="World Card" note="Home grid width.">
       <div className="w-[min(100%,13rem)]">
         {reference
           ? <WorldCardFullReference world={story} onOpen={() => onAction(`Open ${story.title}`)} />
           : <WorldCard world={story} displayStatus={CARD_STATUS_PREVIEW[state.cardStatus]}
-              onOpen={() => onAction(`Open ${story.title}`)} />}
+              onOpen={() => setOpenedWorld(story)} />}
       </div>
     </Stage>}
-    {show('compact') && <Stage title="Compact" note="Create · Your worlds.">
-      <CompactRow key={`${reference}-${state.titleLength}-${state.cover}`} worlds={worlds} reference={reference} />
+    {!openedWorld && show('compact') && <Stage title="Compact" note="Create · Your worlds.">
+      <CompactRow key={`${reference}-${state.titleLength}-${state.cover}`} worlds={worlds} reference={reference} onOpen={setOpenedWorld} />
     </Stage>}
   </div>;
 }

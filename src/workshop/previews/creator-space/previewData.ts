@@ -8,7 +8,7 @@ import { featuredNovel } from '../light-novels-home/previewData';
  * They let the page be judged without a browser full of written stories; the
  * real Create tab reads the chapter workspace's own local store instead.
  */
-const sampleCreator = { creatorName: featuredNovel.creatorName, creatorTitle: featuredNovel.creatorTitle };
+const sampleCreator = { creatorName: featuredNovel.creatorName, creatorTitle: featuredNovel.creatorTitle, format: featuredNovel.format };
 
 export const SAMPLE_CREATOR_WORLDS: readonly CreatorWorld[] = [
   { ...sampleCreator, id: featuredNovel.id, title: featuredNovel.title, chapterCount: featuredNovel.chapterCount, status: 'draft',

@@ -22,6 +22,20 @@ The Workshop Pages controls include a viewport switcher: current browser,
 render the same preview stage in an iframe so its media queries see the chosen
 width. `canvas=1` is an internal frame mode of the existing preview route, not
 a second Workshop entry or a production surface.
+The Info stage reuses Home's `WorldExpressions` connected-media section beneath
+the world overview, with the same novel, manga, and duel-game concept fixtures.
+Those expansions belong only to the featured sample world; other Compact
+samples do not inherit its media.
+
+Clicking Full or Compact opens that world's existing Info page through a host-supplied
+action. In the World Card Workshop, the same Info stage is shown for the
+selected card, with Back to cards. Home already routes its Full card to the
+detail screen. Create now routes Compact cards there as well; Continue and
+Studio remain separate actions below the selected world. Create's local story
+projection carries only title, chapter count, status, art, and known creator
+lettering. The Info page keeps its standard layout and marks unavailable views,
+arc, tags, Branches, and Activity instead of inventing them. The Workshop route retains the selected world's
+preview data in browser history for Back, Forward, and refresh.
 
 ## Why Library owns it
 
@@ -114,6 +128,8 @@ bottom-row slot as Full, wrapping below the badge when the card is narrow.
 The Workshop's Create samples supply SENSEI for visual review; real Create
 worlds show a name only when their host supplies it. Its status comes from
 `CreatorWorld.status`; it does not gain Full's format trigger or Motion Picture control.
+Its card action opens Info; the selected glow remains visual state, while the
+card is exposed to assistive technology as an opening action rather than a toggle.
 
 The Info page preview uses mock values of 12 Branches and "Active this week"
 Activity. The States controls also show zero or unavailable branches, the
@@ -209,6 +225,8 @@ Copy `development/`, `shared/` and `development/world-card.css`. Then:
 Leave behind the Workshop preview, its sample data and the `reference/` folder.
 
 ## Workshop history
+
+- **2026-09-29** — Brought Home's existing connected-media section into the World Card Workshop Info stage. The featured world's Novel, Manga, and Game previews appear below the overview; other Compact worlds do not inherit those sample adaptations.
 
 - **2026-09-29** — Added the Full card's format symbol to the Info cover's top-left corner. It identifies the host-supplied format without opening another dialog from the Info page; missing format shows no mark.
 

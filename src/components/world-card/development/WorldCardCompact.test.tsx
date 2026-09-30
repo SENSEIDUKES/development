@@ -17,12 +17,13 @@ it('uses the shared image card with only a title and the chapter/status badge', 
   const container = document.createElement('div');
   document.body.append(container);
   const root = createRoot(container);
-  const onSelect = vi.fn();
+  const onOpen = vi.fn();
 
-  act(() => root.render(<WorldCard face="compact" world={world} selected onSelect={onSelect} />));
+  act(() => root.render(<WorldCard face="compact" world={world} selected onOpen={onOpen} />));
   const card = container.querySelector<HTMLElement>('[data-world-card="compact"]')!;
   expect(card.classList.contains('world-card-base')).toBe(true);
-  expect(card.getAttribute('aria-pressed')).toBe('true');
+  expect(card.getAttribute('data-selected')).toBe('true');
+  expect(card.getAttribute('aria-pressed')).toBeNull();
   expect(card.getAttribute('aria-label')).toContain('Ch. 24 · Draft');
   expect(card.getAttribute('aria-label')).toContain('creator SENSEI');
   expect(card.querySelector('.world-card-base-title')?.textContent).toBe(world.title);
@@ -33,7 +34,7 @@ it('uses the shared image card with only a title and the chapter/status badge', 
   expect(card.querySelector('.world-card-base-format')).toBeNull();
   expect(card.querySelector('.motion-picture-control')).toBeNull();
   act(() => card.click());
-  expect(onSelect).toHaveBeenCalledOnce();
+  expect(onOpen).toHaveBeenCalledOnce();
 
   act(() => root.unmount());
   container.remove();
@@ -43,7 +44,7 @@ it('keeps a missing compact cover as the existing celestial wash', () => {
   const container = document.createElement('div');
   document.body.append(container);
   const root = createRoot(container);
-  act(() => root.render(<WorldCard face="compact" world={{ ...world, imageUrl: undefined, creatorName: undefined, creatorTitle: undefined }} onSelect={() => {}} />));
+  act(() => root.render(<WorldCard face="compact" world={{ ...world, imageUrl: undefined, creatorName: undefined, creatorTitle: undefined }} onOpen={() => {}} />));
   expect(container.querySelector('.world-card-compact-media img')).toBeNull();
   expect(container.textContent).not.toContain('Cover unavailable');
   expect(container.querySelector('.world-card-base-details')?.textContent).toBe('Ch. 24Draft');

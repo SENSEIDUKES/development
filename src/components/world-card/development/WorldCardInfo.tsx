@@ -1,27 +1,30 @@
-import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { Activity, ArrowRight, ChevronDown, ChevronRight, ChevronUp, Eye, Flower2, GitBranch, Lock } from 'lucide-react';
+import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { ArrowRight, ChevronDown, ChevronRight, ChevronUp, Flower2, Info, Lock } from 'lucide-react';
 import { ElementalTitle, SEIBadge } from '@seihouse/ui';
 import { LibraryButton, LibraryCard, LibraryIcon, LibraryPanel, type LibraryIconName } from '@seihouse/library-ui';
+import { getTagMetadata, normalizeStoryTagIdentity, STORY_TAG_COLOR_ACCENTS, type StoryTagMetadata } from '@seihouse/sen/story-seed';
 import type { WorldCardInfoProps } from '../shared/worldCardContracts';
 import { WorldCard } from './WorldCard';
 import { WorldCardCover } from './WorldCardCover';
-import { WORLD_ACTIVITY_DISPLAY } from './worldActivityDisplay';
+import { WorldCardFormatSymbol } from './WorldCardFormatSymbol';
+import { WorldCardStoryPanel } from './WorldCardStoryPanel';
+import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
 import './world-card.css';
 
 /**
- * Info page: the world's full overview — cover, byline, states, tags, metrics,
- * synopsis, the Chapters card (its only reading action) and quieter story tools.
+ * Info page: the world's full overview — cover, byline, states, tags,
+ * synopsis, the Chapters card (its only reading action), Open Codex, and the
+ * Information row that opens the world's story information dialog.
  * Every value and destination comes from the host; unknown values are omitted.
  */
-export function WorldCardInfo({ story, onRead, onOpenCodex, onOpenTimeline, readingPosition }: WorldCardInfoProps) {
+export function WorldCardInfo({ story, onRead, onOpenCodex, readingPosition }: WorldCardInfoProps) {
   const detail = 'author' in story ? story : undefined;
   const coverUrl = story.imageUrl?.trim() || undefined;
   const creatorName = story.creatorName?.trim() || detail?.author?.trim();
   const publicationLabel = detail?.publicationStatus === 'ongoing' ? 'On Going'
     : detail?.publicationStatus === 'completed' ? 'Completed' : undefined;
   const genre = detail?.genre?.trim();
-  const tags = [...new Set(detail?.tags.map(tag => tag.trim()).filter(Boolean) ?? [])];
-  const cultivationRate = detail?.cultivationRate?.trim();
+  const tags = storyTags(detail?.tags);
 
   return <LibraryPanel as="article" padding="none" className="world-card-info" data-world-card="info"
     aria-labelledby={`world-info-title-${story.id}`}>
@@ -57,16 +60,11 @@ export function WorldCardInfo({ story, onRead, onOpenCodex, onOpenTimeline, read
               <Flower2 size={22} aria-hidden="true" /><span className="sr-only">Genre: </span>{genre}
             </span>}
           </div>
-          {(tags.length > 0 || cultivationRate) && <ul className="world-card-info-pills" aria-label="Story tags">
-            {tags.map(tag => <li key={tag}><SEIBadge size="lg" variant="outline" className="world-card-info-pill">#{tag}</SEIBadge></li>)}
-            {cultivationRate && <li><SEIBadge size="lg" variant="outline" className="world-card-info-pill">
-              Cultivation Rate: {cultivationRate}
-            </SEIBadge></li>}
-          </ul>}
         </div>
+        {tags.length > 0 && <ul className="world-card-info-pills world-card-info-tags" aria-label="Story tags">
+          {tags.map(tag => <li key={tag.key}><StoryTagChip {...tag} /></li>)}
+        </ul>}
       </div>
-
-      <WorldMetrics story={story} />
 
       <div className="world-card-info-divider" aria-hidden="true"><span /></div>
 
@@ -75,14 +73,36 @@ export function WorldCardInfo({ story, onRead, onOpenCodex, onOpenTimeline, read
       <ChaptersCard story={story} currentArc={detail?.currentArc?.trim()} coverUrl={coverUrl}
         onRead={onRead} readingPosition={readingPosition} />
 
-      {(onOpenCodex || onOpenTimeline) && <div className="world-card-info-tools">
+      {(onOpenCodex || detail) && <div className="world-card-info-tools">
         {onOpenCodex && <StoryToolCard icon="navigation-book" title="Open Codex"
           description="Explore the lore, sects, and world" onOpen={onOpenCodex} />}
-        {onOpenTimeline && <StoryToolCard icon="story-arc" title="Fate Timeline"
-          description="Uncover key events and turning points" onOpen={onOpenTimeline} />}
+        {detail && <InformationToolRow world={detail} />}
       </div>}
     </div>
   </LibraryPanel>;
+}
+
+/** The world's tags, once each, resolved against the Story Seed tag catalog for their category color. */
+function storyTags(tags: readonly string[] | undefined) {
+  const seen = new Set<string>();
+  return (tags ?? []).flatMap(raw => {
+    const label = raw.trim();
+    const key = normalizeStoryTagIdentity(label);
+    if (!label || seen.has(key)) return [];
+    seen.add(key);
+    return [{ key, label, metadata: getTagMetadata(label) }];
+  });
+}
+
+/** One tag as a chip in its catalog category color; a tag outside the catalog stays neutral. */
+function StoryTagChip({ label, metadata }: { label: string; metadata?: StoryTagMetadata }) {
+  const accent = metadata && STORY_TAG_COLOR_ACCENTS[metadata.color];
+  return <SEIBadge size="lg" variant="outline" className="world-card-info-pill world-card-info-tag"
+    data-tag-color={metadata?.color} title={metadata?.category}
+    style={accent && metadata.color !== 'black' ? { '--world-info-tag-accent': accent } as CSSProperties : undefined}>
+    {metadata && <span className="world-card-info-tag-dot" aria-hidden="true" />}
+    {metadata?.label ?? label}
+  </SEIBadge>;
 }
 
 /** Library state: Draft, Sealed, or Unacquired, plus Recently read — Library-only acquisition states. */
@@ -107,41 +127,7 @@ function LibraryState({ story }: Pick<WorldCardInfoProps, 'story'>) {
   </>;
 }
 
-/** Views, Branches, and Activity — each shown only when the host supplies it. */
-function WorldMetrics({ story }: Pick<WorldCardInfoProps, 'story'>) {
-  const detail = 'author' in story ? story : undefined;
-  const views = detail && Number.isSafeInteger(detail.reads) && detail.reads >= 0 ? detail.reads : undefined;
-  const branches = detail?.branchCount !== undefined && Number.isSafeInteger(detail.branchCount) && detail.branchCount >= 0
-    ? detail.branchCount : undefined;
-  const activity = detail?.activityStatus ? WORLD_ACTIVITY_DISPLAY[detail.activityStatus] : undefined;
-
-  if (views === undefined && branches === undefined && !activity) {
-    return <p className="world-card-info-metrics-empty">Views, branches and activity aren’t shared for this world yet.</p>;
-  }
-  return <dl className="world-card-info-metrics" aria-label="World information">
-    {views !== undefined && <Metric icon={<Eye size={26} aria-hidden="true" />} label="Views" value={views.toLocaleString()} />}
-    {branches !== undefined && <Metric icon={<GitBranch size={26} aria-hidden="true" />} label="Branches" value={branches.toLocaleString()} />}
-    {activity && <div className="world-card-info-metric" data-activity={detail?.activityStatus}>
-      <span className="world-card-info-metric-icon world-card-info-activity-icon"><Activity size={26} aria-hidden="true" /></span>
-      <div className="min-w-0">
-        <dt className="sr-only">Activity</dt>
-        <dd className="world-card-info-activity">{activity.label}</dd>
-      </div>
-    </div>}
-  </dl>;
-}
-
-function Metric({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
-  return <div className="world-card-info-metric">
-    <span className="world-card-info-metric-icon">{icon}</span>
-    <div className="flex min-w-0 flex-col-reverse">
-      <dt className="world-card-info-metric-label">{label}</dt>
-      <dd className="world-card-info-metric-value">{value}</dd>
-    </div>
-  </div>;
-}
-
-/** Four-line synopsis with an accessible More control that appears only when the text overflows. */
+/** Clamped synopsis with an accessible More control that appears only when the text overflows. */
 function WorldSynopsis({ storyId, synopsis }: { storyId: string; synopsis?: string }) {
   const textRef = useRef<HTMLParagraphElement>(null);
   const [expanded, setExpanded] = useState(false);
@@ -215,11 +201,30 @@ function StoryToolCard({ icon, title, description, onOpen }: {
     aria-label={`${title}: ${description}`}>
     <div className="world-card-info-tool-content">
       <span className="world-card-info-tool-art" aria-hidden="true"><LibraryIcon name={icon} size={40} /></span>
-      <span className="min-w-0 flex-1 py-3">
+      <span className="world-card-info-tool-text">
         <span className="world-card-info-tool-title font-display">{title}</span>
         <span className="world-card-info-tool-description">{description}</span>
       </span>
       <ChevronRight size={22} aria-hidden="true" className="world-card-info-tool-chevron" />
     </div>
   </LibraryCard>;
+}
+
+/**
+ * Information: the world's format mark and name, opening the same story information
+ * dialog as the Full card's format mark. Provenance records will live here later.
+ */
+function InformationToolRow({ world }: { world: HomeWorld }) {
+  const format = world.format?.trim();
+  return <WorldCardStoryPanel world={world} triggerClassName="world-card-info-tool world-card-info-information"
+    trigger={<span className="world-card-info-tool-content">
+      <span className="world-card-info-tool-art" aria-hidden="true">
+        {format ? <WorldCardFormatSymbol format={format} /> : <Info size={24} aria-hidden="true" />}
+      </span>
+      <span className="world-card-info-tool-text">
+        <span className="world-card-info-tool-title font-display">Information</span>
+        {format && <span className="world-card-info-tool-description">{format}</span>}
+      </span>
+      <ChevronRight size={22} aria-hidden="true" className="world-card-info-tool-chevron" />
+    </span>} />;
 }

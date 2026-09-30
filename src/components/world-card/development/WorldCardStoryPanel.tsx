@@ -1,16 +1,24 @@
+import type { ReactNode } from 'react';
 import { BadgeCheck, Eye, Info } from 'lucide-react';
 import { SEIBadge, SEIDialog, SEIDialogContent, SEIDialogDescription, SEIDialogTitle, SEIDialogTrigger } from '@seihouse/ui';
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
 import { WorldCardFormatSymbol } from './WorldCardFormatSymbol';
 import { WORLD_ACTIVITY_DISPLAY } from './worldActivityDisplay';
 
-/** A read-only preview of host-authorized story information opened from its format. */
-export function WorldCardStoryPanel({ world }: { world: HomeWorld }) {
+/**
+ * A read-only preview of host-authorized story information opened from its format.
+ * The Full card opens it from its corner format mark; the Info page supplies its own Information row as the trigger.
+ */
+export function WorldCardStoryPanel({ world, trigger, triggerClassName = 'world-card-base-format' }: {
+  world: HomeWorld;
+  trigger?: ReactNode;
+  triggerClassName?: string;
+}) {
   const format = world.format?.trim();
   const activity = world.activityStatus ? WORLD_ACTIVITY_DISPLAY[world.activityStatus] : undefined;
   return <SEIDialog>
-    <SEIDialogTrigger className="world-card-base-format" aria-label={`Story information for ${world.title}${format ? `, ${format}` : ''}`}>
-      {format ? <WorldCardFormatSymbol format={format} /> : <Info size={17} aria-hidden="true" />}
+    <SEIDialogTrigger className={triggerClassName} aria-label={`Story information for ${world.title}${format ? `, ${format}` : ''}`}>
+      {trigger ?? (format ? <WorldCardFormatSymbol format={format} /> : <Info size={17} aria-hidden="true" />)}
     </SEIDialogTrigger>
     <SEIDialogContent variant="dark" aria-modal="true" className="world-card-story-panel"
       backdropClassName="world-card-story-backdrop" bodyClassName="world-card-story-panel-body">

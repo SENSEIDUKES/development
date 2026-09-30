@@ -19,6 +19,7 @@ import {
   CATEGORY_COLORS,
   CURATED_PREMISE_EXAMPLES,
   getTagMetadata,
+  STORY_TAG_COLOR_ACCENTS,
   normalizeStoryTagIdentity,
   STORY_TAG_CATALOG,
   type StoryTagCategory,
@@ -36,18 +37,7 @@ const TAG_RECOMMENDED_COPY = 'Recommended: 4–8 tags.';
 const SEARCH_RESULT_LIMIT = 24;
 const ALL_CURATED_PREMISE_EXAMPLES = Object.values(CURATED_PREMISE_EXAMPLES).flat();
 
-const TAG_COLOR_ACCENTS: Record<StoryTagCategoryColor, string> = {
-  gray: '#9CA3AF',
-  red: '#F87171',
-  green: '#34D399',
-  purple: '#A78BFA',
-  pink: '#F472B6',
-  gold: '#D4AF37',
-  blue: '#60A5FA',
-  teal: '#2DD4BF',
-  orange: '#FB923C',
-  black: '#000000',
-};
+const TAG_COLOR_ACCENTS = STORY_TAG_COLOR_ACCENTS;
 
 const CategoryColorDot = ({ color }: { color: StoryTagCategoryColor }) => (
   <span

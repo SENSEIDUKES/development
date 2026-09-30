@@ -7,7 +7,6 @@ import { SAMPLE_CREATOR_WORLDS } from '../creator-space/previewData';
 export type WorldCardAcquisition = 'sealed' | 'draft' | 'unacquired' | 'recently-read';
 export type WorldCardTitleLength = 'standard' | 'long';
 export type WorldCardCover = 'art' | 'missing';
-export type WorldCardBranchPreview = 'sample' | 'zero' | 'unavailable';
 /** Which host destinations the Info page receives, to review unavailable actions. */
 export type WorldCardDestinations = 'all' | 'reading-only' | 'none';
 export type WorldCardReadingPreview = 'start' | 'chapter-7';
@@ -18,7 +17,6 @@ export interface WorldCardPreviewState {
   acquisition: WorldCardAcquisition;
   titleLength: WorldCardTitleLength;
   cover: WorldCardCover;
-  branches: WorldCardBranchPreview;
   activity: WorldActivityStatus | 'hidden';
   cardStatus: WorldCardStatusPreview;
   destinations: WorldCardDestinations;
@@ -32,7 +30,7 @@ export const ACQUISITION_LABELS: Record<WorldCardAcquisition, string> = {
 const LONG_TITLE = 'The Last Lotus of the Jade Empire and the Thousand-Year Oath Beneath the Silent Pavilion';
 
 /** The featured novel with the chosen states applied to the full card and overview. */
-export function previewStory({ acquisition, titleLength, cover, branches, activity }: WorldCardPreviewState): StoryDetailDisplay {
+export function previewStory({ acquisition, titleLength, cover, activity }: WorldCardPreviewState): StoryDetailDisplay {
   return {
     ...featuredNovel,
     title: titleLength === 'long' ? LONG_TITLE : featuredNovel.title,
@@ -40,7 +38,6 @@ export function previewStory({ acquisition, titleLength, cover, branches, activi
     acquired: acquisition !== 'unacquired',
     draft: acquisition === 'draft',
     recentlyRead: acquisition === 'recently-read',
-    branchCount: branches === 'sample' ? 12 : branches === 'zero' ? 0 : undefined,
     activityStatus: activity === 'hidden' ? undefined : activity,
   } satisfies HomeWorld & StoryDetailDisplay;
 }

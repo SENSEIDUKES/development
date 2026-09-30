@@ -12,7 +12,6 @@ export interface WorldCardInfoProps {
   story: StoryDetailDisplay | CreatorWorld;
   onRead?: () => void;
   onOpenCodex?: () => void;
-  onOpenTimeline?: () => void;
   /** The viewer's known reading position; the Chapters card says Continue Reading only when supplied. */
   readingPosition?: { chapterNumber: number };
 }

@@ -25,12 +25,12 @@ it('uses the shared image card with only a title and the chapter/status badge', 
   expect(card.getAttribute('data-selected')).toBe('true');
   expect(card.getAttribute('aria-pressed')).toBeNull();
   expect(card.getAttribute('aria-label')).toContain('Ch. 24 · Draft');
-  expect(card.getAttribute('aria-label')).toContain('creator SENSEI');
+  expect(card.getAttribute('aria-label')).not.toContain('creator SENSEI');
   expect(card.querySelector('.world-card-base-title')?.textContent).toBe(world.title);
   expect(card.querySelector('.world-card-base-details')?.getAttribute('data-slot')).toBe('badge');
   expect(card.querySelector('.world-card-base-details')?.textContent).toBe('Ch. 24Draft');
   expect(card.querySelectorAll('.world-card-base-details svg')).toHaveLength(2);
-  expect(card.querySelector('.world-card-base-creator [data-element="lightning"]')?.textContent).toContain('SENSEI');
+  expect(card.querySelector('.world-card-base-creator')).toBeNull();
   expect(card.querySelector('.world-card-base-format')).toBeNull();
   expect(card.querySelector('.motion-picture-control')).toBeNull();
   act(() => card.click());

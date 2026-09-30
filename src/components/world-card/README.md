@@ -191,10 +191,9 @@ silently assigned that rate.
 Compact keeps its shorter 11:12 crop and dark lower gradient. Its title,
 cover-sampled edge glow, press treatment, and translucent `SEIBadge` chapter/status
 pill come from the same rules as Full. Selection holds that same glow.
-Its creator name and optional elemental lettering use the same right-side
-bottom-row slot as Full, wrapping below the badge when the card is narrow.
-The Workshop's Create samples supply SENSEI for visual review; real Create
-worlds show a name only when their host supplies it. Its status comes from
+The Compact face shows only its title and chapter/status badge. Creator data
+remains available to the Info page, but does not appear on the Compact card.
+Its status comes from
 `CreatorWorld.status`; it does not gain Full's format trigger or Motion Picture control.
 Its card action opens Info; the selected glow remains visual state, while the
 card is exposed to assistive technology as an opening action rather than a toggle.
@@ -294,6 +293,8 @@ Copy `development/`, `shared/` and `development/world-card.css`. Then:
 Leave behind the Workshop preview, its sample data and the `reference/` folder.
 
 ## Workshop history
+
+- **2026-09-30** — Kept the Full card's chapter/status badge and creator name on one bottom row at narrow Home widths; removed the creator name from Compact cards while retaining their title and chapter/status badge.
 
 - **2026-09-30** — Second pass, laid out phone-first to follow the approved
   reference closely.

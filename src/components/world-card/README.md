@@ -108,7 +108,7 @@ pieces rather than page-local cards or buttons:
   no cover, so the panel falls back to its own glass. It never uses another
   world's art.
 - **Phone-first hero.** From 340px wide, the reference arrangement holds:
-  - The cover (about 37% of the width, framed in fine gold at rest) sits on the left.
+  - The cover (about 37% of the width, with the World Card's own edge and glow) sits on the left.
   - One column beside it holds the title (cream shading to cyan), `by` +
     creator, the status / Library state / genre pills, and the tags.
   - Below 340px the hero stacks, centred.
@@ -298,8 +298,8 @@ Leave behind the Workshop preview, its sample data and the `reference/` folder.
 - **2026-09-30** — Second pass, laid out phone-first to follow the approved
   reference closely.
   - **Hero.** The cover now sits beside one column holding the title, byline,
-    pills and tags. The cover has a fine gold frame at rest, and the title
-    shades from cream to cyan.
+    pills and tags. The cover keeps the World Card's own edge and glow, and
+    the title shades from cream to cyan.
   - **Pills.** They use compact serif styling. On Going is green, Sealed is
     indigo with a gold lock, and the genre has a gold mark.
   - **Metrics.** The strip has inset dividers, and the Activity glyph is tinted

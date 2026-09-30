@@ -261,11 +261,6 @@
   .world-card-info-identity { gap: 0.9rem; }
 }
 @media (min-width: 1024px) { .world-card-info-hero { grid-template-columns: 15rem minmax(0, 1fr); column-gap: 2.25rem; } }
-/* The real Info cover face, framed in fine gold at rest; its sampled glow still answers hover and focus. */
-.world-card-info-cover .world-card-base:not(:hover):not(:focus-within):not(:active):not([data-motion-playing='true']) {
-  border-color: rgba(212, 175, 55, 0.78);
-  box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.18), 0 0 22px rgba(212, 175, 55, 0.12), 0 18px 38px rgba(0, 0, 0, 0.5);
-}
 
 .world-card-info-title {
   margin: 0; font-weight: 700; line-height: 1.06; letter-spacing: -0.005em;

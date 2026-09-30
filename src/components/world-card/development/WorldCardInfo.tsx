@@ -20,7 +20,7 @@ export function WorldCardInfo({ story, onRead, onOpenCodex, onOpenTimeline, read
   const publicationLabel = detail?.publicationStatus === 'ongoing' ? 'On Going'
     : detail?.publicationStatus === 'completed' ? 'Completed' : undefined;
   const genre = detail?.genre?.trim();
-  const tags = detail?.tags.map(tag => tag.trim()).filter(Boolean) ?? [];
+  const tags = [...new Set(detail?.tags.map(tag => tag.trim()).filter(Boolean) ?? [])];
   const cultivationRate = detail?.cultivationRate?.trim();
 
   return <LibraryPanel as="article" padding="none" className="world-card-info" data-world-card="info"

@@ -389,3 +389,12 @@ it('keeps title, byline, states and tags together in one column beside the cover
   expect(identity.querySelector('[aria-label="Story tags"]')?.textContent).toContain('#FoundFamily');
   expect(identity.querySelector('[aria-label="Story tags"]')?.textContent).toContain('Cultivation Rate: Heaven');
 });
+
+it('shows each trimmed tag once', () => {
+  const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+  act(() => root.render(<WorldCardInfo story={{ ...infoStory, tags: ['Lore', ' Lore', '', 'FoundFamily'] }} />));
+  const tags = [...container.querySelectorAll('[aria-label="Story tags"] li')].map(item => item.textContent);
+  expect(tags).toEqual(['#Lore', '#FoundFamily']);
+  expect(error).not.toHaveBeenCalled();
+  error.mockRestore();
+});

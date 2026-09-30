@@ -290,7 +290,9 @@
 }
 .world-card-info-pill svg { width: 0.75rem; height: 0.75rem; }
 /* Story tags in their Story Seed catalog category color. */
-.world-card-info-tag { border-color: color-mix(in srgb, var(--world-info-tag-accent, #8c90e6) 45%, transparent); }
+.world-card-info-tags > li { min-width: 0; max-width: 100%; }
+/* Long tags (for example one outside the catalog) wrap inside their chip instead of overflowing the column. */
+.world-card-info-tag { max-width: 100%; border-color: color-mix(in srgb, var(--world-info-tag-accent, #8c90e6) 45%, transparent); white-space: normal; overflow-wrap: anywhere; line-height: 1.2; padding-block: 0.15rem; }
 .world-card-info-tag-dot { width: 0.4rem; height: 0.4rem; flex: none; border-radius: 999px; background: var(--world-info-tag-accent, #8c90e6); }
 .world-card-info-tag[data-tag-color='black'] { border-color: rgba(226, 232, 240, 0.28); }
 .world-card-info-tag[data-tag-color='black'] .world-card-info-tag-dot { background: #000; box-shadow: 0 0 0 1px rgba(226, 232, 240, 0.45); }

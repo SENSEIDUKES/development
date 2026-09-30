@@ -33,14 +33,14 @@ selected card, with Back to cards. Home already routes its Full card to the
 detail screen. Create now routes Compact cards there as well; Continue and
 Studio remain separate actions below the selected world. Create's local story
 projection carries only title, chapter count, status, art, and known creator
-lettering. The Info page keeps its standard layout and omits unavailable views,
-arc, tags, Branches, and Activity instead of inventing them. The Workshop route retains the selected world's
+lettering. The Info page keeps its standard layout and omits an unavailable
+arc and tags instead of inventing them. The Workshop route retains the selected world's
 preview data in browser history for Back, Forward, and refresh.
 
 ## Why Library owns it
 
-The cards use Library UI (`LibraryCard`) and show Library-only states
-such as Sealed/Unacquired acquisition and Cultivation Rate. The Full and Info
+The cards use Library UI (`LibraryCard`, `LibraryPanel`, `LibraryButton`) and
+Library presentation. The Full and Info
 cover faces compose the portable `@seihouse/sen/motion-picture` behavior; SEN does not
 depend on the Library card.
 
@@ -81,12 +81,11 @@ glows without changing which cover supplies the tint.
 
 The Info page renders `WorldCard face="info"` as artwork only. It shares the
 Full card's raised border, cover-sampled hover and focus glow, and optional
-Motion Picture control and breathing glow. The cover has a static format mark
-when the host supplies a format, using the same icon as the Full card. It has
-no title, creator, chapter/status badge, format dialog trigger, or whole-card
-navigation action. The
+Motion Picture control and breathing glow. It has no format mark, title,
+creator, chapter/status badge, format dialog trigger, or whole-card navigation
+action: the world's format lives in the page's **Information** row instead. The
 Info page owns its title, elemental creator byline, chapter count, and public
-status alongside its existing Library state, metrics, tags, and synopsis.
+status alongside the viewer's Recently read state, tags, and synopsis.
 
 ## Info page layout
 
@@ -98,8 +97,10 @@ pieces rather than page-local cards or buttons:
 | Glass surface | `LibraryPanel` (`as="article"`) |
 | Cover | `WorldCard face="info"` (unchanged) |
 | Creator name | `ElementalTitle` when the host supplies `creatorTitle`, otherwise plain text |
-| Publication, Library state, tags, Cultivation Rate | `SEIBadge` |
-| Chapters card, Open Codex, Fate Timeline | `LibraryCard` (`interactive` when a destination exists) |
+| Publication status, Recently read, story tags | `SEIBadge` |
+| Story tag colors | Story Seed tag catalog (`getTagMetadata`, `STORY_TAG_COLOR_ACCENTS` from `@seihouse/sen/story-seed`) |
+| Chapters card, Open Codex | `LibraryCard` (`interactive` when a destination exists) |
+| Information row | `WorldCardStoryPanel` (the Full card's format dialog) with the row as its trigger |
 | Synopsis More / Less | `LibraryButton` (`ghost`) |
 
 - **Cover reflection.** The glass carries a faint, blurred copy of this
@@ -107,25 +108,55 @@ pieces rather than page-local cards or buttons:
   and hidden from assistive technology. It is not rendered when the world has
   no cover, so the panel falls back to its own glass. It never uses another
   world's art.
-- **Phone-first hero.** From 340px wide, the reference arrangement holds:
-  - The cover (about 37% of the width, with the World Card's own edge and glow) sits on the left.
-  - One column beside it holds the title (cream shading to cyan), `by` +
-    creator, the status / Library state / genre pills, and the tags.
-  - Below 340px the hero stacks, centred.
+- **At a glance on a phone.** On a phone the whole overview, from the back row
+  down to the Information row, is sized to fit between the Library shell's header
+  and its bottom navigation. This is checked in the shell at 390 × 844. At
+  320 × 693 (the width of a phone with Display Zoom) it fits through the
+  Chapters card.
+- **Hero.** The cover and the title always sit side by side; the hero never
+  stacks.
+  - The cover takes about a third of the width and keeps the World Card's own
+    edge and glow.
+  - The column beside it holds the title (cream shading to cyan), `by` +
+    creator, and the publication status / Recently read / genre pills.
+  - The story tags join that column from 380px. On narrower phones they run
+    full width under the hero. This slot holds story tags only; Cultivation
+    Rate is not shown.
+- **Story tags in their catalog colors.** Each tag resolves against the Story
+  Seed tag catalog. It shows its catalog label with its category's color dot
+  and a matching tinted border (for example Politics & War in purple, Destiny &
+  Karma in gold, Meta & Continuity in black with a light ring). Hovering shows
+  the category. A tag outside the catalog stays a neutral chip. Tags are shown
+  once each, compared the catalog's way (trimmed, case-insensitive), with no
+  `#`. The color values now live beside the catalog as `STORY_TAG_COLOR_ACCENTS`,
+  which Story Seed's tag editor also reads.
   - Phones use compact serif pills.
-  - The creation date is no longer shown on this page.
-- **Header row.** `StoryDetailScreen` shows a gold ← arrow with its back label
-  and a gold `WORLD INFO` eyebrow. Its new optional `backLabel` lets the host
-  name where Back leads; the default is `Back to novels`. The Workshop's Info
-  stage renders this same detail screen, with **Back to cards** when a card
-  opened it.
-- **Metrics.** Views, Branches, and Activity appear only when supplied.
-  Activity tints its pulse glyph by state (green, amber, or rose). If none
-  are known, one line says they are not shared for this world yet. There are
-  no dash placeholders.
-- **Synopsis.** It is clamped to four lines. **More** appears only when the text
-  actually overflows, with `aria-expanded` and `aria-controls`. A missing
-  synopsis says so.
+  - The creation date is not shown on this page.
+- **Header row.** `StoryDetailScreen` uses the Library's standard back
+  control: a ghost `LibraryButton` icon with ←, as in the workspace header and
+  Profile. Its optional `backLabel` (default `Back to novels`) is the button's
+  accessible name. A gold `WORLD INFO` eyebrow sits opposite. The Workshop's
+  Info stage renders this same detail screen, labelled **Back to cards** when
+  a card opened it.
+- **Motion on the Info cover.** While the cover's Motion Picture clip plays,
+  its control fades out so the small frame stays clear. It returns when the
+  clip ends, and it stays visible if a keyboard user focuses it. The Full
+  card's control is unchanged.
+- **Public view only.** This Info page is what a reader sees when they open
+  someone's world. It shows no owner or library states: the old Sealed /
+  Unacquired acquisition labels and Draft are gone. Only the viewer's own
+  **Recently read** remains. The owner's view of a world they are still
+  building is a separate, future surface: NovelExpanded's **Story View**. It
+  will sit inside Studio, with the Text Highlight Engine and custom soundscape
+  and Sound Cue packs close at hand, and it is not a variant of this page.
+- **No placeholder metrics.** Views, Branches, and Activity are not shown on
+  the Info page. They have no real source yet, so the page isn't built around
+  them. The Full card's format dialog still shows its views and Activity for
+  now.
+- **Synopsis.** It is clamped to three lines on phones and four from 640px.
+  **More** sits beside the last line and appears only when the text actually
+  overflows, with `aria-expanded` and `aria-controls`. A missing synopsis says
+  so.
 - **Chapters card: the only reading action.**
   - The card sits on a faint second card edge, like a stack of chapters. It
     shows a crop of the same cover on the left (from 340px), then the chapter
@@ -134,26 +165,32 @@ pieces rather than page-local cards or buttons:
     Continue label), the cue moves beneath the text.
   - With the host's `onRead` and at least one chapter, the whole card is one
     `LibraryCard` button (Enter and Space work) with a **Start Reading →** cue.
-  - The cue reads **Continue Reading · Ch. N →** only when the host supplies
+  - The cue reads **Continue · Ch. N →** only when the host supplies
     `readingPosition`.
   - Without `onRead`, or with zero chapters, the card is static text. It is not
     focusable and shows no arrow.
   - There is no hero read button and no fixed bottom bar.
-- **Secondary tools.** Open Codex and Fate Timeline are quieter `LibraryCard`
-  rows led by the Library's own artwork (`LibraryIcon` `navigation-book` and
-  `story-arc`) on a soft glow. Each appears only when the host supplies its handler; there are no
-  disabled placeholders. There is no Characters section (characters belong in
+- **Secondary tools.** Open Codex is a quieter `LibraryCard` row led by the
+  Library's own book artwork, shown only when the host supplies its handler.
+  The **Information** row replaces the former mock Fate Timeline. It shows
+  the world's format mark and format name (for example the Novel scroll and
+  "Novel") under the title Information. It opens the same story information
+  dialog as the Full card's format mark: synopsis, World standing with views,
+  Activity, branching, and tags. This row is where the world's real provenance
+  records will live later. It appears for a Library world with story details;
+  a Create world without them has no Information row. Fate Timeline is no longer part of the Info page, and `onOpenTimeline`
+  is gone from `WorldCardInfoProps`. There are no disabled placeholders. There is no Characters section (characters belong in
   the Codex) and no bookmark.
 - The page never uses fixed positioning, so the host's mobile bottom navigation
   keeps its space. The Info page looks the same whichever card opened it.
 - `readingPosition` is a new optional, host-supplied field on
   `WorldCardInfoProps`, passed through by `StoryDetailScreen`. No DEV host
-  supplies a real position, Codex destination, or Timeline destination yet. The
-  Library shell's detail screen therefore shows a static Chapters card and no
-  tool rows until a host wires those actions.
+  supplies a real position or Codex destination yet. The Library shell's detail
+  screen therefore shows a static Chapters card and only the Information row until
+  a host wires those actions.
 
-The Workshop's States section adds **Info destinations** (reading, Codex and
-Fate Timeline / reading only / none) and **Reading position** (not started /
+The Workshop's States section adds **Info destinations** (reading and Codex /
+reading only / none) and **Reading position** (not started /
 Chapter 7). These preview-only mocks report through the Workshop status line.
 
 ## Full card creator lettering and bottom badge
@@ -182,11 +219,11 @@ fixture supplies `ongoing` and its States control previews both public values
 and the personal-library values. Missing status stays hidden; the card does not
 infer completion from chapter count, Draft from acquisition, or status from the
 Info page's unrelated `status` text. Compact already displays its creator
-status. Sealed, Unacquired, and Recently read stay on the Info page.
+status. Of the Library states, only the viewer's Recently read appears, on the
+Info page.
 
-The Info page shows Cultivation Rate only when the host supplies a value. The
-Workshop fixture supplies "Heaven" for its sample world; other worlds are not
-silently assigned that rate.
+The Info page does not show Cultivation Rate; its tag slot holds story tags
+only. The contract field remains for a later Library surface.
 
 Compact keeps its shorter 11:12 crop and dark lower gradient. Its title,
 cover-sampled edge glow, press treatment, and translucent `SEIBadge` chapter/status
@@ -198,10 +235,9 @@ Its status comes from
 Its card action opens Info; the selected glow remains visual state, while the
 card is exposed to assistive technology as an opening action rather than a toggle.
 
-The Info page preview uses mock values of 12 Branches and "Active this week"
-Activity. The States controls also show zero or unavailable branches, the
-other Activity states, and hidden Activity. These samples do not come from a
-branch database or activity tracking.
+The Workshop's Activity control previews the Full card's format dialog only;
+the Info page shows no Activity or Branches. Its sample values do not come from
+activity tracking.
 
 ## Format information panel
 
@@ -248,8 +284,9 @@ presence polling was added.
 ## Branches and Activity data contract
 
 `StoryDetailDisplay` is a read-only display projection supplied by the host
-when opening a world. The Info page shows Branches and Activity in the metric
-grid where Realm and Status used to be. `WorldCardInfo` does not fetch, count,
+when opening a world. The Info page currently shows neither Branches nor
+Activity (see Info page layout); the contract below is kept for when a real
+source exists. `WorldCardInfo` does not fetch, count,
 poll, infer, or authorize these values. The Full card shows authorized Activity
 only inside its format-triggered panel; Activity does not control its glow. Boosts are outside this iteration.
 
@@ -286,13 +323,43 @@ These are documented product requirements, not behavior implemented here.
 Copy `development/`, `shared/` and `development/world-card.css`. Then:
 
 - have the host's Home grid and Create row render `WorldCard` with the appropriate face, and the world detail render `WorldCardInfo`, which composes the Info cover face;
-- pass the host's reading action as `onRead`, the viewer's known `readingPosition` when there is one, and `onOpenCodex` / `onOpenTimeline` only when those destinations work;
+- pass the host's reading action as `onRead`, the viewer's known `readingPosition` when there is one, and `onOpenCodex` only when that destination works;
 - supply world display data, optional per-world `videoUrl`, optional creator lettering resolved from the creator profile, public publication status or personal-library creator status, authorized panel synopsis/tags/activity/branching permission, and destinations from the host;
 - include the `@seihouse/sen/motion-picture` entry, compatible `@seihouse/ui@0.10.1` components, and `@seihouse/library-ui@0.9.0` (`LibraryPanel`, `LibraryCard`, `LibraryButton`).
 
 Leave behind the Workshop preview, its sample data and the `reference/` folder.
 
 ## Workshop history
+
+- **2026-09-30** — Info page rebuilt to show everything at a glance on a
+  phone.
+  - **One screen.** The page now fits between the Library shell's header and
+    bottom navigation.
+  - **Hero.** Cover and title stay side by side at every width; tags run full
+    width beneath the hero on narrow phones.
+  - **Removed.** The placeholder Views / Branches / Activity strip (and its
+    "not shared yet" line) is gone, and so is the Workshop Branches control.
+  - **Synopsis.** Three lines, with More beside the last line.
+  - **Sizing.** The Chapters card and tools are compact; on phones under 380px,
+    Codex and Timeline sit side by side.
+  - **Header row.** The back row no longer wraps.
+  - **Information row.** An Information row (format mark and format name)
+    replaces the mock Fate Timeline and opens the Full card's story information
+    dialog, the future home of provenance records. The format mark is gone from
+    the Info cover.
+  - **Public view.** Sealed, Unacquired and Draft are removed; only Recently
+    read remains. The Workshop's Library status control became **Reader
+    history**.
+  - **Continue.** The reading cue reads **Continue · Ch. N →** when the host
+    knows the reader's position. The Workshop sample now starts at a known
+    Chapter 7.
+  - **Back and motion.** The back control is now the standard Library ghost
+    icon button, and the Info cover's motion control hides while its clip
+    plays.
+  - **Tags.** Tags use the Story Seed catalog colors, with no `#`, and
+    Cultivation Rate is removed from the tag slot. The Workshop sample world
+    now carries real catalog tags (inheritance trials, sect politics, found
+    family, lost history).
 
 - **2026-09-30** — Kept the Full card's chapter/status badge and creator name on one bottom row at narrow Home widths; removed the creator name from Compact cards while retaining their title and chapter/status badge.
 

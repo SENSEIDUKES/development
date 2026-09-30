@@ -5,7 +5,6 @@ import { LibraryCard, LibraryCardMedia, LibraryCardTitle } from '@seihouse/libra
 import { MotionPicture, useDominantColor } from '@seihouse/sen/motion-picture';
 import type { WorldCardCompactProps, WorldCardInfoCoverProps, WorldCardProps } from '../shared/worldCardContracts';
 import { WorldCardCover } from './WorldCardCover';
-import { WorldCardFormatSymbol } from './WorldCardFormatSymbol';
 import { WorldCardStoryPanel } from './WorldCardStoryPanel';
 import { WORLD_STATUS_LABELS } from './worldCardStatus';
 import './world-card.css';
@@ -27,7 +26,6 @@ export function WorldCard(props: WorldCardFaceProps) {
   const compactWorld = props.face === 'compact' ? props.world : undefined;
   const creatorName = world.creatorName;
   const creatorTitle = world.creatorTitle;
-  const format = props.face === 'compact' || !('format' in props.world) ? undefined : props.world.format?.trim();
   const interactionProps = props.face === 'compact'
     ? { interactive: true as const, onClick: props.onOpen }
     : { interactive: false as const };
@@ -64,9 +62,6 @@ export function WorldCard(props: WorldCardFaceProps) {
         : <WorldCardCover src={imageUrl} title={world.title} decorative={!info} loading={info ? 'eager' : 'lazy'} compact={compact}
             fallbackCover={compact && props.fallbackCover} />}
       {compact && <span className="world-card-compact-gradient" aria-hidden="true" />}
-      {info && format && <span className="world-card-base-format world-card-base-format-static" role="img" aria-label={`Format: ${format}`}>
-        <WorldCardFormatSymbol format={format} />
-      </span>}
       {!compact && !info && <>
         <button type="button" className="world-card-base-open" onClick={props.onOpen} aria-label={openLabel} />
         <WorldCardStoryPanel key={world.id} world={fullWorld!} />

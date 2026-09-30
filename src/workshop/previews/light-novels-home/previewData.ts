@@ -27,7 +27,7 @@ export const featuredNovel: StoryDetailDisplay = {
   author: 'SENSEI',
   currentArc: 'The Silent Pavilion',
   status: 'Manifesting',
-  tags: ['LostLegacy', 'FoundFamily'],
+  tags: ['inheritance trials', 'sect politics', 'found family', 'lost history'],
   synopsis: 'When the last lotus blooms beneath an abandoned pavilion, a young cultivator inherits a promise the empire tried to erase. Ye Chen must follow its roots through forgotten sects and skybound ruins, before the world’s oldest oath awakens.',
 };
 

@@ -9,9 +9,9 @@ import { StoryDetailScreen as ReferenceStoryDetail } from '../../../components/l
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import {
-  ACQUISITION_LABELS, previewCreatorWorlds, previewStory,
-  type WorldCardAcquisition, type WorldCardBranchPreview, type WorldCardCover, type WorldCardDestinations, type WorldCardPreviewState,
-  type WorldCardReadingPreview, type WorldCardStatusPreview, type WorldCardTitleLength,
+  previewCreatorWorlds, previewStory,
+  type WorldCardCover, type WorldCardDestinations, type WorldCardPreviewState,
+  type WorldCardReadingPreview, type WorldCardRecentlyRead, type WorldCardStatusPreview, type WorldCardTitleLength,
 } from './previewData';
 import { StoryDetailScreen, type WorldActivityStatus } from '@seihouse/library/home';
 
@@ -35,8 +35,8 @@ const VIEWPORTS = {
 type Viewport = keyof typeof VIEWPORTS;
 
 const DEFAULT_STATE: WorldCardPreviewState = {
-  acquisition: 'sealed', titleLength: 'standard', cover: 'art', branches: 'sample',
-  activity: 'active-this-week', cardStatus: 'public-ongoing', destinations: 'all', reading: 'start',
+  recentlyRead: 'no', titleLength: 'standard', cover: 'art',
+  activity: 'active-this-week', cardStatus: 'public-ongoing', destinations: 'all', reading: 'chapter-7',
 };
 
 const CARD_STATUS_PREVIEW: Record<WorldCardStatusPreview, WorldCardDisplayStatus> = {
@@ -99,7 +99,7 @@ export function WorldCardStage({ view, state, reference, onAction }: {
             readingPosition={state.reading === 'chapter-7' ? { chapterNumber: 7 } : undefined}
             onRead={state.destinations === 'none' ? undefined : () => onAction(`${state.reading === 'chapter-7' ? 'Continue' : 'Start'} reading ${infoWorld.title}`)}
             onOpenCodex={state.destinations === 'all' ? () => onAction(`Open Codex for ${infoWorld.title}`) : undefined}
-            onOpenTimeline={state.destinations === 'all' ? () => onAction(`Open Fate Timeline for ${infoWorld.title}`) : undefined} />}
+            />}
     </Stage>}
     {!openedWorld && show('full') && <Stage title="World Card" note="Home grid width.">
       <div className="w-[min(100%,13rem)]">
@@ -127,10 +127,9 @@ function readCanvasState(params: URLSearchParams): WorldCardPreviewState {
   const pick = <T extends string>(value: string | null, options: readonly T[], fallback: T): T =>
     options.includes(value as T) ? value as T : fallback;
   return {
-    acquisition: pick(params.get('acquisition'), ['sealed', 'draft', 'unacquired', 'recently-read'], DEFAULT_STATE.acquisition),
+    recentlyRead: pick(params.get('recentlyRead'), ['no', 'yes'], DEFAULT_STATE.recentlyRead),
     titleLength: pick(params.get('titleLength'), ['standard', 'long'], DEFAULT_STATE.titleLength),
     cover: pick(params.get('cover'), ['art', 'missing'], DEFAULT_STATE.cover),
-    branches: pick(params.get('branches'), ['sample', 'zero', 'unavailable'], DEFAULT_STATE.branches),
     activity: pick(params.get('activity'), ['active-now', 'active-this-week', 'quiet', 'hidden'], DEFAULT_STATE.activity),
     cardStatus: pick(params.get('cardStatus'), Object.keys(CARD_STATUS_PREVIEW) as WorldCardStatusPreview[], DEFAULT_STATE.cardStatus),
     destinations: pick(params.get('destinations'), ['all', 'reading-only', 'none'], DEFAULT_STATE.destinations),
@@ -203,7 +202,7 @@ function WorldCardWorkspaceShell() {
         </div>,
       }, {
         id: 'states',
-        description: 'Full card progress changes with its public or personal-library context. Library state, branches, activity, reading position and the Info page destinations stay on the Info page.',
+        description: 'Full card progress changes with its public or personal-library context. Reader history, reading position and the Info page destinations stay on the Info page. Activity appears only in the Full card’s story panel.',
         content: <div className="flex flex-col gap-3">
           <label className="flex flex-col gap-1 text-xs">Full card progress
             <select className={selectClass} value={state.cardStatus} onChange={event => update({ cardStatus: event.target.value as WorldCardStatusPreview })}>
@@ -219,9 +218,10 @@ function WorldCardWorkspaceShell() {
               </optgroup>
             </select>
           </label>
-          <label className="flex flex-col gap-1 text-xs">Library status
-            <select className={selectClass} value={state.acquisition} onChange={event => update({ acquisition: event.target.value as WorldCardAcquisition })}>
-              {Object.entries(ACQUISITION_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          <label className="flex flex-col gap-1 text-xs">Reader history
+            <select className={selectClass} value={state.recentlyRead} onChange={event => update({ recentlyRead: event.target.value as WorldCardRecentlyRead })}>
+              <option value="no">Not read recently</option>
+              <option value="yes">Recently read</option>
             </select>
           </label>
           <label className="flex flex-col gap-1 text-xs">Title
@@ -236,13 +236,6 @@ function WorldCardWorkspaceShell() {
               <option value="missing">No cover yet</option>
             </select>
           </label>
-          <label className="flex flex-col gap-1 text-xs">Branches
-            <select className={selectClass} value={state.branches} onChange={event => update({ branches: event.target.value as WorldCardBranchPreview })}>
-              <option value="sample">12 branches</option>
-              <option value="zero">0 branches</option>
-              <option value="unavailable">Unavailable</option>
-            </select>
-          </label>
           <label className="flex flex-col gap-1 text-xs">Activity
             <select className={selectClass} value={state.activity} onChange={event => update({ activity: event.target.value as WorldActivityStatus | 'hidden' })}>
               <option value="active-now">Active now</option>
@@ -253,15 +246,15 @@ function WorldCardWorkspaceShell() {
           </label>
           <label className="flex flex-col gap-1 text-xs">Info destinations
             <select className={selectClass} value={state.destinations} onChange={event => update({ destinations: event.target.value as WorldCardDestinations })}>
-              <option value="all">Reading, Codex and Fate Timeline</option>
+              <option value="all">Reading and Codex</option>
               <option value="reading-only">Reading only</option>
               <option value="none">None supplied</option>
             </select>
           </label>
           <label className="flex flex-col gap-1 text-xs">Reading position
             <select className={selectClass} value={state.reading} onChange={event => update({ reading: event.target.value as WorldCardReadingPreview })}>
+              <option value="chapter-7">Known: Chapter 7 (Continue)</option>
               <option value="start">Not started (Start Reading)</option>
-              <option value="chapter-7">Known: Chapter 7 (Continue Reading)</option>
             </select>
           </label>
         </div>,

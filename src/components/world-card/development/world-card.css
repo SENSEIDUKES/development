@@ -111,8 +111,6 @@
 }
 .world-card-base-format { position: absolute; z-index: 5; top: 0.5rem; left: 0.5rem; font-family: sans-serif; font-size: 0.625rem; line-height: 1; letter-spacing: 0.04em; }
 .world-card-base-format svg { flex: none; }
-.world-card-base-format-static { cursor: default; }
-.world-card-base-format-static::after { content: none; }
 .world-card-base-overlay { position: absolute; z-index: 5; inset: auto 0 0; display: flex; flex-direction: column; gap: clamp(0.3rem, 2cqw, 0.4rem); min-width: 0; padding: clamp(0.65rem, 4cqw, 0.8rem); pointer-events: none; }
 .world-card-base-title {
   position: relative;
@@ -212,9 +210,11 @@
 .world-card-story-panel-tags li { max-width: 100%; padding: 0.125rem 0.5rem; border-radius: 999px; background: #ffffff0a; border: 1px solid #ffffff1f; color: #b6e3ff; font-size: 0.75rem; }
 
 /*
- * Info page — Celestial glass, designed phone-first from the approved
- * reference: cover beside title/byline/pills, a metrics strip, a gold
- * ornament divider, synopsis, the Chapters card, then quieter tools.
+ * Info page — Celestial glass, phone-first and at a glance. On a phone the
+ * whole overview (cover, title, states, synopsis, Chapters, tools)
+ * is sized to sit between the host's header and bottom navigation, as in the
+ * approved reference; cover and title stay side by side at every width.
+ * Views, branches and activity are not shown: they have no real source yet.
  */
 .world-card-info {
   --world-info-line: rgba(128, 132, 230, 0.34);
@@ -227,7 +227,7 @@
 }
 /* This world's own cover as a soft reflection in the upper right of the glass. */
 .world-card-info-reflection {
-  position: absolute; z-index: 0; top: 0; right: 0; width: 72%; height: 58%; pointer-events: none;
+  position: absolute; z-index: 0; top: 0; right: 0; width: 72%; height: 50%; pointer-events: none;
   background-size: cover; background-position: center 18%; background-repeat: no-repeat;
   filter: blur(8px) saturate(0.85) brightness(0.85); opacity: 0.42; transform: scale(1.06);
   -webkit-mask-image: radial-gradient(ellipse 85% 80% at 78% 22%, #000 22%, rgba(0, 0, 0, 0.5) 50%, transparent 76%);
@@ -237,162 +237,191 @@
   position: absolute; inset: 0; z-index: 0; pointer-events: none;
   background:
     radial-gradient(80% 45% at 100% 0%, rgba(110, 96, 230, 0.12), transparent 70%),
-    linear-gradient(180deg, rgba(8, 10, 24, 0.3) 0%, rgba(8, 10, 24, 0.72) 38%, rgba(7, 9, 20, 0.9) 62%, rgba(6, 8, 18, 0.94) 100%);
+    linear-gradient(180deg, rgba(8, 10, 24, 0.3) 0%, rgba(8, 10, 24, 0.72) 34%, rgba(7, 9, 20, 0.9) 56%, rgba(6, 8, 18, 0.94) 100%);
 }
-.world-card-info-body { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 1rem; padding: 0.75rem; }
-@media (min-width: 640px) { .world-card-info-body { gap: 1.25rem; padding: 1.5rem; } }
-@media (min-width: 1024px) { .world-card-info-body { padding: 2rem; } }
+.world-card-info-body { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 0.625rem; padding: 0.75rem; }
+@media (min-width: 640px) { .world-card-info-body { gap: 1.1rem; padding: 1.5rem; } }
+@media (min-width: 1024px) { .world-card-info-body { gap: 1.25rem; padding: 2rem; } }
 
-/* Hero: cover on the left, one identity column on the right (stacks only below 340px). */
-.world-card-info-hero { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.9rem; align-items: center; }
-.world-card-info-identity { align-self: center; }
-.world-card-info-cover { width: min(11rem, 68%); justify-self: center; }
-.world-card-info-identity { display: flex; min-width: 0; flex-direction: column; gap: 0.7rem; }
-@media (min-width: 340px) {
-  .world-card-info-hero { grid-template-columns: minmax(6.5rem, 37%) minmax(0, 1fr); column-gap: 0.8rem; }
-  .world-card-info-cover { width: 100%; align-self: center; }
+/* On the Info cover the motion control steps aside while the clip plays, keeping the small frame clear; keyboard focus still shows it. */
+.world-card-info-cover .world-card-base[data-motion-playing='true'] .motion-picture-control:not(:focus-visible) { opacity: 0; pointer-events: none; }
+.world-card-info-cover .motion-picture-control { transition: opacity 200ms ease-out, background-color 200ms ease-out; }
+@media (prefers-reduced-motion: reduce) { .world-card-info-cover .motion-picture-control { transition: none; } }
+
+/*
+ * Hero: cover beside the identity column at every width. On narrow phones the
+ * tags run full width beneath so the hero stays short; from 380px they join
+ * the column beside the cover, as in the reference.
+ */
+.world-card-info-hero {
+  display: grid; grid-template-columns: minmax(5.5rem, 33%) minmax(0, 1fr); grid-template-areas: 'cover identity' 'tags tags';
+  gap: 0.6rem 0.75rem; align-items: center;
+}
+.world-card-info-cover { grid-area: cover; width: 100%; }
+.world-card-info-identity { grid-area: identity; display: flex; min-width: 0; flex-direction: column; gap: 0.4rem; }
+.world-card-info-tags { grid-area: tags; }
+@media (min-width: 380px) {
+  .world-card-info-hero { grid-template-areas: 'cover identity' 'cover tags'; row-gap: 0.4rem; }
+  .world-card-info-identity { align-self: end; }
+  .world-card-info-tags { align-self: start; }
 }
 @media (min-width: 640px) {
-  .world-card-info-hero { grid-template-columns: 13rem minmax(0, 1fr); column-gap: 1.75rem; }
-  .world-card-info-identity { gap: 0.9rem; }
+  .world-card-info-hero { grid-template-columns: 13rem minmax(0, 1fr); column-gap: 1.75rem; row-gap: 0.8rem; }
+  .world-card-info-identity { gap: 0.8rem; }
 }
 @media (min-width: 1024px) { .world-card-info-hero { grid-template-columns: 15rem minmax(0, 1fr); column-gap: 2.25rem; } }
 
 .world-card-info-title {
-  margin: 0; font-weight: 700; line-height: 1.06; letter-spacing: -0.005em;
-  font-size: clamp(1.5rem, 6.7vw, 3.4rem); overflow-wrap: anywhere; text-wrap: balance;
+  margin: 0; font-weight: 700; line-height: 1.05; letter-spacing: -0.005em;
+  font-size: clamp(1.3rem, 5.8vw, 3.4rem); overflow-wrap: anywhere; text-wrap: balance;
   background-image: linear-gradient(165deg, #fbf5e6 0%, #f4f1ea 38%, #bfe9ff 62%, #7fd9ff 82%, #5fcfff 100%);
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 @media (forced-colors: active) { .world-card-info-title { background: none; color: CanvasText; } }
-.world-card-info-byline { margin-top: 0.45rem; color: #eef0f6; font-size: clamp(1rem, 4.4vw, 1.3rem); line-height: 1.2; overflow-wrap: anywhere; }
+.world-card-info-byline { margin-top: 0.2rem; color: #eef0f6; font-size: clamp(0.9rem, 3.9vw, 1.3rem); line-height: 1.2; overflow-wrap: anywhere; }
 .world-card-info-byline-by { margin-right: 0.3em; color: #9d9ce6; font-family: var(--font-serif, serif); }
-.world-card-info-creator { font-family: var(--font-sc, serif); font-weight: 700; letter-spacing: 0.12em; }
+.world-card-info-creator { font-family: var(--font-sc, serif); font-weight: 700; letter-spacing: 0.1em; }
 
-.world-card-info-pills { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; }
+.world-card-info-pills { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; }
 .world-card-info-pill {
-  min-height: 2rem; padding-inline: 0.8rem; gap: 0.4rem;
+  min-height: 1.4rem; gap: 0.25rem; padding-inline: 0.45rem;
   border-color: var(--world-info-line-strong); background: rgba(24, 24, 58, 0.5);
-  color: #e6e8f4; font-family: var(--font-serif, serif); font-size: 0.875rem; letter-spacing: 0;
+  color: #e6e8f4; font-family: var(--font-serif, serif); font-size: 0.6875rem; letter-spacing: 0; white-space: nowrap;
 }
+.world-card-info-pill svg { width: 0.75rem; height: 0.75rem; }
+/* Story tags in their Story Seed catalog category color. */
+.world-card-info-tags > li { min-width: 0; max-width: 100%; }
+/* Long tags (for example one outside the catalog) wrap inside their chip instead of overflowing the column. */
+.world-card-info-tag { max-width: 100%; border-color: color-mix(in srgb, var(--world-info-tag-accent, #8c90e6) 45%, transparent); white-space: normal; overflow-wrap: anywhere; line-height: 1.2; padding-block: 0.15rem; }
+.world-card-info-tag-dot { width: 0.4rem; height: 0.4rem; flex: none; border-radius: 999px; background: var(--world-info-tag-accent, #8c90e6); }
+.world-card-info-tag[data-tag-color='black'] { border-color: rgba(226, 232, 240, 0.28); }
+.world-card-info-tag[data-tag-color='black'] .world-card-info-tag-dot { background: #000; box-shadow: 0 0 0 1px rgba(226, 232, 240, 0.45); }
 .world-card-info-pill-status[data-status='ongoing'] { border-color: rgba(52, 211, 153, 0.62); background: rgba(6, 50, 38, 0.42); color: #5fe3ad; }
-.world-card-info-status-dot { width: 0.55rem; height: 0.55rem; flex: none; border-radius: 999px; background: currentColor; box-shadow: 0 0 8px currentColor; }
+.world-card-info-status-dot { width: 0.4rem; height: 0.4rem; flex: none; border-radius: 999px; background: currentColor; box-shadow: 0 0 6px currentColor; }
 .world-card-info-pill-sealed svg { color: var(--world-info-gold); }
-.world-card-info-genre { display: inline-flex; align-items: center; gap: 0.4rem; padding-inline: 0.2rem; color: #f1f2f7; font-family: var(--font-serif, serif); font-size: 1rem; }
-.world-card-info-genre svg { flex: none; color: var(--world-info-gold); }
-@media (max-width: 479px) {
-  .world-card-info-identity { gap: 0.55rem; }
-  .world-card-info-pills { gap: 0.3rem; }
-  .world-card-info-pill { min-height: 1.6rem; gap: 0.3rem; padding-inline: 0.5rem; font-size: 0.75rem; }
-  .world-card-info-pill svg { width: 0.8rem; height: 0.8rem; }
-  .world-card-info-status-dot { width: 0.45rem; height: 0.45rem; }
-  .world-card-info-genre { gap: 0.3rem; font-size: 0.875rem; }
-  .world-card-info-genre svg { width: 1.1rem; height: 1.1rem; }
-  .world-card-info-activity, .world-card-info-metric-label { font-size: 0.8125rem; }
-  .world-card-info-metric { gap: 0.4rem; padding-inline: 0.3rem; }
-  .world-card-info-metric-icon svg { width: 22px; height: 22px; }
-  .world-card-info-activity { text-wrap: balance; }
+.world-card-info-genre { display: inline-flex; align-items: center; gap: 0.25rem; padding-inline: 0.15rem; color: #f1f2f7; font-family: var(--font-serif, serif); font-size: 0.8125rem; }
+.world-card-info-genre svg { flex: none; width: 1rem; height: 1rem; color: var(--world-info-gold); }
+@media (min-width: 640px) {
+  .world-card-info-pills { gap: 0.45rem; }
+  .world-card-info-pill { min-height: 2rem; gap: 0.4rem; padding-inline: 0.8rem; font-size: 0.875rem; }
+  .world-card-info-pill svg { width: 0.95rem; height: 0.95rem; }
+  .world-card-info-status-dot { width: 0.55rem; height: 0.55rem; }
+  .world-card-info-genre { font-size: 1rem; }
+  .world-card-info-genre svg { width: 1.35rem; height: 1.35rem; }
 }
-
-/* Metrics strip: icon beside value and label, fine inset dividers. */
-.world-card-info-metrics {
-  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
-  border: 1px solid var(--world-info-line); border-radius: 1rem;
-  background: rgba(12, 14, 32, 0.62); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
-.world-card-info-metric { position: relative; display: flex; min-width: 0; align-items: center; justify-content: center; gap: 0.55rem; padding: 0.85rem 0.4rem; }
-.world-card-info-metric + .world-card-info-metric::before { content: ''; position: absolute; left: 0; top: 22%; bottom: 22%; width: 1px; background: var(--world-info-line-strong); }
-.world-card-info-metric-icon { display: inline-flex; flex: none; color: #eef1f8; }
-.world-card-info-metric-value { color: #f5f5f5; font-family: var(--font-display, serif); font-size: 1.35rem; line-height: 1.05; overflow-wrap: anywhere; }
-.world-card-info-metric-label { color: #c2c7d6; font-family: var(--font-serif, serif); font-size: 0.875rem; line-height: 1.2; }
-.world-card-info-activity { color: #e3e6f0; font-family: var(--font-serif, serif); font-size: 0.875rem; line-height: 1.25; }
-.world-card-info-metric[data-activity='active-now'] .world-card-info-activity-icon { color: #34d399; }
-.world-card-info-metric[data-activity='active-this-week'] .world-card-info-activity-icon { color: #fbbf24; }
-.world-card-info-metric[data-activity='quiet'] .world-card-info-activity-icon { color: #fb7185; }
-.world-card-info-metrics-empty { border: 1px dashed var(--world-info-line); border-radius: 1rem; padding: 0.85rem 1rem; color: #b3b9c8; font-family: var(--font-serif, serif); font-size: 0.9rem; }
-@media (max-width: 359px) {
-  .world-card-info-metric { flex-direction: column; gap: 0.3rem; text-align: center; }
-  .world-card-info-metric-icon svg { width: 20px; height: 20px; }
-  .world-card-info-metric-value { font-size: 1.1rem; }
-}
-@media (min-width: 640px) { .world-card-info-metric { gap: 0.8rem; padding-block: 1rem; } .world-card-info-metric-value { font-size: 1.6rem; } }
 
 /* Gold hairline with a small star ornament. */
-.world-card-info-divider { display: flex; align-items: center; gap: 0.7rem; padding-inline: 0.1rem; }
+.world-card-info-divider { display: flex; align-items: center; gap: 0.6rem; padding-inline: 0.1rem; }
 .world-card-info-divider::before,
 .world-card-info-divider::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(212, 175, 55, 0.15), rgba(212, 175, 55, 0.75) 25%, rgba(212, 175, 55, 0.75) 75%, rgba(212, 175, 55, 0.15)); }
-.world-card-info-divider span { position: relative; width: 0.7rem; height: 0.7rem; border: 1px solid var(--world-info-gold); transform: rotate(45deg); box-shadow: 0 0 10px rgba(212, 175, 55, 0.4); }
-.world-card-info-divider span::after { content: ''; position: absolute; inset: 0.18rem; background: var(--world-info-gold); }
+.world-card-info-divider span { position: relative; width: 0.55rem; height: 0.55rem; border: 1px solid var(--world-info-gold); transform: rotate(45deg); box-shadow: 0 0 8px rgba(212, 175, 55, 0.4); }
+.world-card-info-divider span::after { content: ''; position: absolute; inset: 0.14rem; background: var(--world-info-gold); }
 
-.world-card-info-synopsis-section { display: flex; flex-direction: column; align-items: flex-end; gap: 0.1rem; }
-.world-card-info-synopsis { width: 100%; margin: 0; color: #e7e9f1; font-family: var(--font-serif, serif); font-size: 1rem; line-height: 1.6; white-space: pre-line; overflow-wrap: anywhere; }
-.world-card-info-synopsis-clamped { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; line-clamp: 4; overflow: hidden; }
+/* Synopsis: three lines on a phone, with More beside the last line as in the reference. */
+.world-card-info-synopsis-section { display: flex; align-items: flex-end; gap: 0.25rem; }
+.world-card-info-synopsis { flex: 1; min-width: 0; margin: 0; color: #e7e9f1; font-family: var(--font-serif, serif); font-size: 0.875rem; line-height: 1.5; white-space: pre-line; overflow-wrap: anywhere; }
+.world-card-info-synopsis-clamped { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; }
 .world-card-info-synopsis-empty { color: #b3b9c8; font-style: italic; }
 .world-card-info-more {
-  min-height: 2.75rem; padding-inline: 0.5rem; color: var(--world-info-cyan);
-  font-family: var(--font-display, serif); font-size: 1.1rem; font-weight: 700; letter-spacing: 0; text-transform: none;
+  flex: none; min-height: 2.75rem; margin-bottom: -0.7rem; padding-inline: 0.35rem; color: var(--world-info-cyan);
+  font-family: var(--font-display, serif); font-size: 0.95rem; font-weight: 700; letter-spacing: 0; text-transform: none;
+}
+@media (min-width: 640px) {
+  .world-card-info-synopsis { font-size: 1rem; line-height: 1.6; }
+  .world-card-info-synopsis-clamped { -webkit-line-clamp: 4; line-clamp: 4; }
+  .world-card-info-more { font-size: 1.1rem; }
 }
 
 /* Chapters card — the only reading action — sits on a faint second card, like a stack of chapters. */
-.world-card-info-chapters-stack { position: relative; padding-top: 0.4rem; }
+.world-card-info-chapters-stack { position: relative; padding-top: 0.3rem; }
 .world-card-info-chapters-stack::before {
-  content: ''; position: absolute; top: 0; left: 0.1rem; right: 0.1rem; height: 2rem; pointer-events: none;
-  border: 1px solid var(--world-info-line); border-bottom: 0; border-radius: 1.2rem 1.2rem 0 0; background: rgba(14, 16, 36, 0.55);
+  content: ''; position: absolute; top: 0; left: 0.1rem; right: 0.1rem; height: 1.5rem; pointer-events: none;
+  border: 1px solid var(--world-info-line); border-bottom: 0; border-radius: 1.1rem 1.1rem 0 0; background: rgba(14, 16, 36, 0.55);
 }
-.world-card-info-chapters { position: relative; flex-direction: row; align-items: stretch; min-height: 6.25rem; border-color: var(--world-info-line-strong); }
-.world-card-info-chapters > [data-slot='card-media'] { display: none; width: 23%; max-width: 16rem; background: #07111d; }
+.world-card-info-chapters { position: relative; flex-direction: row; align-items: stretch; min-height: 4.25rem; border-color: var(--world-info-line-strong); }
+.world-card-info-chapters > [data-slot='card-media'] { display: block; width: 23%; max-width: 16rem; background: #07111d; }
 .world-card-info-chapters > [data-slot='card-media'] .world-card-cover-image { object-position: center 26%; }
 .world-card-info-chapters > [data-slot='card-media']::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent 50%, rgba(10, 12, 26, 0.85)); }
-@media (min-width: 340px) { .world-card-info-chapters > [data-slot='card-media'] { display: block; } }
 @media (min-width: 480px) { .world-card-info-chapters > [data-slot='card-media'] { width: 30%; } }
 @media (min-width: 640px) { .world-card-info-chapters > [data-slot='card-media'] { width: 34%; } .world-card-info-chapters { min-height: 7rem; } }
 .world-card-info-chapters > [data-slot='card-content'] { container-type: inline-size; justify-content: center; }
 .world-card-info-chapters-content {
   display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: 'count' 'arc' 'cue';
-  align-items: center; gap: 0.25rem 0; padding: 1rem 0.7rem;
+  align-items: center; gap: 0.15rem 0; padding: 0.6rem 0.7rem;
 }
-.world-card-info-chapters-count { grid-area: count; margin: 0; color: #f7f7fa; font-size: 1.15rem; font-weight: 700; line-height: 1.1; white-space: nowrap; }
-.world-card-info-chapters-arc { grid-area: arc; margin: 0; color: #d6dae5; font-family: var(--font-serif, serif); font-size: 0.875rem; line-height: 1.35; overflow-wrap: anywhere; }
+.world-card-info-chapters-count { grid-area: count; margin: 0; color: #f7f7fa; font-size: 1.1rem; font-weight: 700; line-height: 1.1; white-space: nowrap; }
+.world-card-info-chapters-arc { grid-area: arc; margin: 0; color: #d6dae5; font-family: var(--font-serif, serif); font-size: 0.8125rem; line-height: 1.3; overflow-wrap: anywhere; }
 .world-card-info-chapters-cue, .world-card-info-chapters-unavailable { grid-area: cue; }
 .world-card-info-chapters-cue {
-  margin-top: 0.2rem; color: var(--world-info-gold-text);
-  max-width: 10rem; font-family: var(--font-display, serif); font-size: 0.925rem; font-weight: 700; line-height: 1.2; text-wrap: balance;
+  margin-top: 0.1rem; max-width: 10rem; color: var(--world-info-gold-text);
+  font-family: var(--font-display, serif); font-size: 0.9rem; font-weight: 700; line-height: 1.2; text-wrap: balance;
 }
-.world-card-info-chapters-cue svg { display: inline-block; margin-left: 0.3rem; vertical-align: -0.2em; transition: transform 200ms ease-out; }
-.world-card-info-chapters-unavailable { margin-top: 0.2rem; color: #b3b9c8; font-size: 0.8rem; }
+.world-card-info-chapters-cue svg { display: inline-block; width: 1rem; height: 1rem; margin-left: 0.25rem; vertical-align: -0.2em; transition: transform 200ms ease-out; }
+.world-card-info-chapters-unavailable { margin-top: 0.1rem; color: #b3b9c8; font-size: 0.75rem; }
 /* Room for one row: count | divider | cue, with the arc underneath — as in the reference. */
-@container (min-width: 14rem) {
-  .world-card-info-chapters-content { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: 'count cue' 'arc arc'; column-gap: 0.4rem; row-gap: 0.35rem; }
-  .world-card-info-chapters-cue { justify-self: end; margin-top: 0; padding-left: 0.45rem; border-left: 1px solid var(--world-info-line-strong); text-align: right; }
+@container (min-width: 13.5rem) {
+  .world-card-info-chapters-content { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: 'count cue' 'arc arc'; column-gap: 0.4rem; row-gap: 0.25rem; }
+  .world-card-info-chapters-cue, .world-card-info-chapters-unavailable { justify-self: end; margin-top: 0; padding-left: 0.45rem; border-left: 1px solid var(--world-info-line-strong); text-align: right; }
 }
 @container (min-width: 22rem) {
   .world-card-info-chapters-content { padding: 1rem 1.25rem; column-gap: 1.25rem; }
   .world-card-info-chapters-count { font-size: 1.75rem; }
   .world-card-info-chapters-arc { font-size: 1rem; }
   .world-card-info-chapters-cue { max-width: none; padding-left: 1.25rem; font-size: 1.25rem; }
+  .world-card-info-chapters-cue svg { width: 1.2rem; height: 1.2rem; }
 }
 .world-card-info-chapters:hover .world-card-info-chapters-cue svg,
 .world-card-info-chapters:focus-visible .world-card-info-chapters-cue svg { transform: translateX(3px); }
 
 /* Quieter tools: Library artwork on the left, title and line, gold chevron. */
-.world-card-info-tools { display: grid; gap: 0.7rem; }
-@media (min-width: 768px) { .world-card-info-tools { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.world-card-info-tools { display: grid; gap: 0.5rem; }
+.world-card-info-tools > :only-child { grid-column: 1 / -1; }
+@media (min-width: 768px) { .world-card-info-tools { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; } }
 .world-card-info-tool { border-color: var(--world-info-line); background-color: rgba(12, 14, 30, 0.6); }
-.world-card-info-tool-content { display: flex; align-items: center; gap: 0.9rem; min-height: 4.75rem; padding: 0 1rem 0 0; }
+.world-card-info-tool-content { display: flex; align-items: center; gap: 0.7rem; min-height: 3.25rem; padding: 0 0.8rem 0 0; }
+.world-card-info-tool-text { min-width: 0; flex: 1; padding-block: 0.4rem; }
 .world-card-info-tool-art {
-  position: relative; display: flex; flex: none; align-self: stretch; align-items: center; justify-content: center; width: 5.25rem;
+  position: relative; display: flex; flex: none; align-self: stretch; align-items: center; justify-content: center; width: 3.75rem;
   background: radial-gradient(circle at 50% 50%, rgba(4, 172, 255, 0.34), rgba(40, 60, 140, 0.16) 42%, transparent 70%);
-  color: var(--world-info-gold-text); filter: drop-shadow(0 0 8px rgba(4, 172, 255, 0.45));
+  color: var(--world-info-gold-text); filter: drop-shadow(0 0 6px rgba(4, 172, 255, 0.45));
 }
-.world-card-info-tool-title { display: block; color: #f7f7fa; font-family: var(--font-display, serif); font-size: 1.25rem; font-weight: 700; line-height: 1.2; }
-.world-card-info-tool-description { display: block; margin-top: 0.1rem; color: #cdd2de; font-family: var(--font-serif, serif); font-size: 0.9rem; line-height: 1.35; overflow-wrap: anywhere; }
-.world-card-info-tool-chevron { flex: none; color: var(--world-info-gold-text); transition: transform 200ms ease-out; }
+.world-card-info-tool-art > :not(.sr-only) { width: 1.75rem !important; height: 1.75rem !important; }
+/* The Information row is the story dialog's own trigger button, given the tool cards' glass. */
+.world-card-info-information {
+  /* Positioned like the LibraryCard above it, so that card's deep shadow cannot fall over this row. */
+  position: relative; display: block; width: 100%; overflow: hidden; padding: 0; border: 1px solid var(--world-info-line); border-radius: 1.35rem;
+  background: rgba(12, 14, 30, 0.6); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 10px 30px rgba(0, 0, 0, 0.35);
+  color: inherit; text-align: left; cursor: pointer; transition: border-color 200ms ease-out, box-shadow 200ms ease-out;
+}
+.world-card-info-information:hover { border-color: rgba(4, 172, 255, 0.4); }
+.world-card-info-information:focus-visible { outline: none; box-shadow: 0 0 0 2px #000, 0 0 0 4px rgba(4, 172, 255, 0.7); }
+.world-card-info-information .world-card-info-tool-art { font-family: var(--font-sen-sans, sans-serif); font-size: 0.625rem; font-weight: 700; letter-spacing: 0.04em; }
+.world-card-info-tool-title { display: block; color: #f7f7fa; font-family: var(--font-display, serif); font-size: 1rem; font-weight: 700; line-height: 1.2; }
+.world-card-info-tool-description { display: block; color: #cdd2de; font-family: var(--font-serif, serif); font-size: 0.75rem; line-height: 1.3; overflow-wrap: anywhere; }
+.world-card-info-tool-chevron { flex: none; width: 1.1rem; height: 1.1rem; color: var(--world-info-gold-text); transition: transform 200ms ease-out; }
 .world-card-info-tool:hover .world-card-info-tool-chevron,
 .world-card-info-tool:focus-visible .world-card-info-tool-chevron { transform: translateX(3px); }
-@media (min-width: 640px) { .world-card-info-tool-art { width: 6.5rem; } .world-card-info-tool-content { min-height: 5.5rem; } }
+/* Narrow phones: Codex and Timeline sit side by side as compact tiles so the page still fits one screen. */
+@media (max-width: 379px) {
+  .world-card-info-tools { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .world-card-info-tool-content { gap: 0.35rem; min-height: 3rem; padding-right: 0.45rem; }
+  .world-card-info-tool-art { width: 2.4rem; }
+  .world-card-info-tool-art > :not(.sr-only) { width: 1.4rem !important; height: 1.4rem !important; }
+  .world-card-info-tool-title { font-size: 0.875rem; }
+  .world-card-info-tool-description { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .world-card-info-tool-chevron { width: 0.9rem; height: 0.9rem; }
+}
+@media (min-width: 640px) {
+  .world-card-info-tool-content { min-height: 5.5rem; gap: 0.9rem; padding-right: 1rem; }
+  .world-card-info-tool-art { width: 6.5rem; }
+  .world-card-info-tool-art > :not(.sr-only) { width: 2.5rem !important; height: 2.5rem !important; }
+  .world-card-info-tool-title { font-size: 1.25rem; }
+  .world-card-info-tool-description { font-size: 0.9rem; }
+  .world-card-info-tool-chevron { width: 1.4rem; height: 1.4rem; }
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .world-card-info-chapters-cue svg, .world-card-info-tool-chevron { transition: none; }
+  .world-card-info-chapters-cue svg, .world-card-info-tool-chevron, .world-card-info-information { transition: none; }
   .world-card-info-chapters:hover .world-card-info-chapters-cue svg,
   .world-card-info-chapters:focus-visible .world-card-info-chapters-cue svg,
   .world-card-info-tool:hover .world-card-info-tool-chevron,

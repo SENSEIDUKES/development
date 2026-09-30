@@ -20,7 +20,7 @@ beforeEach(() => {
 });
 afterEach(() => { act(() => root.unmount()); container.remove(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 const render = async (state = 'linked') => { await act(async () => root.render(<LibraryPresentationProvider><DevelopmentHeaderPreview source="main-library" state={state} /></LibraryPresentationProvider>)); };
-const button = (label: string) => [...container.querySelectorAll<HTMLButtonElement>('button')].find(b => b.textContent?.trim() === label)!;
+const button = (label: string) => [...container.querySelectorAll<HTMLButtonElement>('button')].find(b => b.textContent?.trim() === label || b.getAttribute('aria-label') === label)!;
 const click = async (label: string) => { await act(async () => button(label).click()); };
 const current = () => container.querySelector('.library-global-navigation [aria-current="page"]')?.textContent;
 const homeVisible = () => !container.querySelector('[data-light-novels-home]')?.closest('[hidden]');
@@ -117,7 +117,7 @@ it('opens the clicked Full and Compact worlds on their Info pages', async () => 
 
   await act(async () => container.querySelector<HTMLElement>('#creator-world-mock-lotus-empire')!.click());
   expect(container.querySelector('[data-story-detail] h1')?.textContent).toContain('The Last Lotus');
-  expect(container.querySelector('[data-story-detail] [aria-label="World information"]')?.textContent).toContain('Views1,280');
+  expect(container.querySelector('[data-story-detail] [data-world-info-chapters]')?.textContent).toContain('24 Chapters');
   await click('Back to novels');
 
   const compact = container.querySelector<HTMLElement>('#creator-world-sample-nine-moons')!;
@@ -126,7 +126,6 @@ it('opens the clicked Full and Compact worlds on their Info pages', async () => 
   expect(container.querySelector('[data-story-detail] h1')?.textContent).toBe('Ashes of the Nine Moons');
   expect(container.querySelector('[data-story-detail] [data-world-info-chapters]')?.textContent).toContain('12 Chapters');
   expect(container.querySelector('[data-story-detail] [aria-label="World information"]')).toBeNull();
-  expect(container.querySelector('[data-story-detail]')?.textContent).toContain('aren’t shared for this world yet');
   const detailUrl = window.location.href;
   const detailState = window.history.state;
   await act(async () => { window.history.back(); await new Promise(resolve => setTimeout(resolve, 50)); });

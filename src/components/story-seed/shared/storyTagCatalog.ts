@@ -45,6 +45,20 @@ export const CATEGORY_COLORS: Record<StoryTagCategory, StoryTagCategoryColor> = 
   'Meta & Continuity': 'black',
 };
 
+/** The accent each category color paints on a tag chip; black is drawn with a light ring instead of a tint. */
+export const STORY_TAG_COLOR_ACCENTS: Record<StoryTagCategoryColor, string> = {
+  gray: '#9CA3AF',
+  red: '#F87171',
+  green: '#34D399',
+  purple: '#A78BFA',
+  pink: '#F472B6',
+  gold: '#D4AF37',
+  blue: '#60A5FA',
+  teal: '#2DD4BF',
+  orange: '#FB923C',
+  black: '#000000',
+};
+
 /**
  * AUDIT & CATALOG METADATA (Step 2 Update):
  * Categorized Story Tags with internal metadata (label, category, styles, aliases, color).

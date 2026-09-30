@@ -189,34 +189,29 @@ it('keeps the Info overview and shows cultivation rate only from data', () => {
     branchCount: 12, activityStatus: 'active-this-week',
   };
   act(() => root.render(<WorldCardInfo story={story} />));
-  expect(container.textContent).toContain('Cultivation Rate: Heaven');
-  expect(container.textContent).toContain('Views');
-  expect(container.textContent).toContain('1,280');
-  const information = container.querySelector('[aria-label="World information"]')!;
-  expect(information.textContent).toContain('Branches');
-  expect(information.textContent).toContain('12');
-  expect(information.textContent).toContain('Activity');
-  expect(information.textContent).toContain('Active this week');
-  expect(information.textContent).not.toContain('Realm');
-  expect(information.textContent).not.toContain('Status');
-  expect(information.textContent).not.toContain('Chapters');
-  expect(container.querySelector('[aria-label="Library state"]')?.textContent).toContain('Sealed');
+  // Cultivation Rate is not shown: the tag slot holds story tags only.
+  expect(container.textContent).not.toContain('Cultivation Rate');
+  // Views, branches and activity are placeholders with no real source yet, so the Info page shows none of them.
+  expect(container.querySelector('[aria-label="World information"]')).toBeNull();
+  for (const placeholder of ['Views', '1,280', 'Branches', 'Activity', 'Active this week']) {
+    expect(container.textContent).not.toContain(placeholder);
+  }
   expect(container.textContent).toContain('A lotus blooms.');
 
   act(() => root.render(<WorldCardInfo story={{ ...story, cultivationRate: undefined, imageUrl: '' }} />));
-  expect(container.textContent).not.toContain('Cultivation Rate: Heaven');
+  expect(container.textContent).not.toContain('Cultivation Rate');
   expect(container.textContent).toContain('Cover unavailable');
   expect(container.querySelector('[data-world-card="info"]')).not.toBeNull();
 
-  act(() => root.render(<WorldCardInfo story={{ ...story, acquired: false }} />));
-  expect(container.querySelector('[aria-label="Library state"]')?.textContent).toContain('Unacquired');
-  expect(container.querySelector('[aria-label="Library state"]')?.textContent).not.toContain('Sealed');
-
+  // The public Info view shows no owner or acquisition states; only the viewer's own Recently read.
+  for (const variant of [{ acquired: true }, { acquired: false }, { draft: true }]) {
+    act(() => root.render(<WorldCardInfo story={{ ...story, ...variant }} />));
+    for (const ownerState of ['Sealed', 'Unacquired', 'Draft']) expect(container.textContent).not.toContain(ownerState);
+  }
   act(() => root.render(<WorldCardInfo story={{ ...story, acquired: false, draft: true, recentlyRead: true }} />));
-  const libraryState = container.querySelector('[aria-label="Library state"]')?.textContent;
-  expect(libraryState).toContain('Draft');
-  expect(libraryState).toContain('Recently read');
-  expect(libraryState).not.toContain('Unacquired');
+  const status = container.querySelector('[aria-label="Story status"]')?.textContent;
+  expect(status).toContain('Recently read');
+  expect(status).not.toContain('Draft');
 });
 
 it('uses the artwork-only WorldCard on Info while keeping creator and progress on the page', () => {
@@ -236,11 +231,8 @@ it('uses the artwork-only WorldCard on Info while keeping creator and progress o
   expect(cover.style.getPropertyValue('--world-card-glow')).not.toBe('');
   expect(cover.querySelector('.world-card-base-overlay')).toBeNull();
   expect(cover.querySelector('.world-card-base-details')).toBeNull();
-  const format = cover.querySelector('.world-card-base-format-static')!;
-  expect(format.getAttribute('role')).toBe('img');
-  expect(format.getAttribute('aria-label')).toBe('Format: Novel');
-  expect(format.querySelector('[data-sen-icon="story-scroll"]')).not.toBeNull();
-  expect(cover.querySelector('button.world-card-base-format')).toBeNull();
+  // The format lives in the page's Information row, not on the Info cover.
+  expect(cover.querySelector('.world-card-base-format')).toBeNull();
   expect(cover.querySelector('.world-card-base-open')).toBeNull();
   expect(page.querySelector('h1')?.textContent).toBe(story.title);
   expect(page.querySelector('[data-element="lightning"]')?.textContent).toContain('SENSEI');
@@ -254,35 +246,12 @@ it('uses the artwork-only WorldCard on Info while keeping creator and progress o
   expect(cover.querySelector('video')?.getAttribute('src')).toBe(story.videoUrl);
   act(() => cover.querySelector('video')!.dispatchEvent(new Event('ended')));
   expect(cover.getAttribute('data-motion-playing')).toBeNull();
-  act(() => root.render(<WorldCardInfo story={{ ...story, format: undefined }} />));
-  expect(container.querySelector('[data-world-card="info-cover"] .world-card-base-format')).toBeNull();
   vi.restoreAllMocks();
-});
-
-it('treats zero branches as known and omits activity the host does not supply', () => {
-  const story: StoryDetailDisplay = {
-    ...world, author: 'SENSEI', synopsis: 'A lotus blooms.', currentArc: 'Silent Pavilion',
-    status: 'Manifesting', tags: [], branchCount: 0, activityStatus: 'active-now',
-  };
-  act(() => root.render(<WorldCardInfo story={story} />));
-  let information = container.querySelector('[aria-label="World information"]')!;
-  expect(information.textContent).toContain('Branches0');
-  expect(information.textContent).toContain('Active now');
-
-  act(() => root.render(<WorldCardInfo story={{ ...story, branchCount: undefined, activityStatus: 'quiet' }} />));
-  information = container.querySelector('[aria-label="World information"]')!;
-  expect(information.textContent).toContain('Quiet');
-  expect(information.textContent).not.toContain('Branches');
-
-  act(() => root.render(<WorldCardInfo story={{ ...story, branchCount: undefined, activityStatus: undefined }} />));
-  information = container.querySelector('[aria-label="World information"]')!;
-  expect(information.textContent).not.toContain('Activity');
-  expect(information.textContent).not.toContain('Branches');
 });
 
 const infoStory: StoryDetailDisplay = {
   ...world, author: 'SENSEI', synopsis: 'A lotus blooms.', currentArc: 'Silent Pavilion',
-  status: 'Manifesting', tags: ['FoundFamily'], branchCount: 12,
+  status: 'Manifesting', tags: ['found family'], branchCount: 12,
 };
 
 it('makes the Chapters card the single reading action and names the known reading position', () => {
@@ -290,7 +259,7 @@ it('makes the Chapters card the single reading action and names the known readin
   act(() => root.render(<WorldCardInfo story={infoStory} onRead={onRead} />));
   const readingActions = container.querySelectorAll<HTMLElement>('[role="button"][data-world-info-chapters="action"]');
   expect(readingActions).toHaveLength(1);
-  expect(container.querySelectorAll('[role="button"], button:not(.motion-picture-control)')).toHaveLength(1);
+  expect(container.querySelectorAll('[role="button"], button:not(.motion-picture-control):not(.world-card-info-information)')).toHaveLength(1);
   const chapters = readingActions[0];
   expect(chapters.textContent).toContain('Start Reading');
   expect(chapters.getAttribute('aria-label')).toBe('Start Reading: The Last Lotus, 24 Chapters, current arc Silent Pavilion');
@@ -303,7 +272,7 @@ it('makes the Chapters card the single reading action and names the known readin
   expect(onRead).toHaveBeenCalledTimes(3);
 
   act(() => root.render(<WorldCardInfo story={infoStory} onRead={onRead} readingPosition={{ chapterNumber: 7 }} />));
-  expect(container.querySelector('[data-world-info-chapters]')?.textContent).toContain('Continue Reading · Ch. 7');
+  expect(container.querySelector('[data-world-info-chapters]')?.textContent).toContain('Continue · Ch. 7');
   expect(container.textContent).not.toContain('Start Reading');
 
   act(() => root.render(<WorldCardInfo story={{ ...infoStory, currentArc: '' }} />));
@@ -319,7 +288,7 @@ it('makes the Chapters card the single reading action and names the known readin
   expect(container.querySelector('[data-world-info-chapters]')?.textContent).toContain('No chapters yet');
 });
 
-it('shows Codex and Fate Timeline only for destinations the host supplies', () => {
+it('shows Open Codex only when supplied and an Information row that opens the story information', async () => {
   const onOpenCodex = vi.fn();
   act(() => root.render(<WorldCardInfo story={infoStory} onOpenCodex={onOpenCodex} />));
   const codex = container.querySelector<HTMLElement>('[role="button"][aria-label^="Open Codex"]')!;
@@ -327,14 +296,32 @@ it('shows Codex and Fate Timeline only for destinations the host supplies', () =
   expect(onOpenCodex).toHaveBeenCalledTimes(1);
   expect(container.textContent).not.toContain('Fate Timeline');
 
-  act(() => root.render(<WorldCardInfo story={infoStory} onOpenTimeline={vi.fn()} />));
-  expect(container.textContent).not.toContain('Open Codex');
-  expect(container.querySelector('[role="button"][aria-label^="Fate Timeline"]')).not.toBeNull();
-
   act(() => root.render(<WorldCardInfo story={infoStory} />));
   expect(container.textContent).not.toContain('Open Codex');
-  expect(container.textContent).not.toContain('Fate Timeline');
   expect(container.querySelector('button:disabled')).toBeNull();
+  const format = container.querySelector<HTMLButtonElement>('button.world-card-info-information')!;
+  expect(format.getAttribute('aria-label')).toBe('Story information for The Last Lotus, Novel');
+  expect(format.querySelector('.world-card-info-tool-title')?.textContent).toBe('Information');
+  expect(format.querySelector('.world-card-info-tool-description')?.textContent).toBe('Novel');
+  expect(format.querySelector('[data-sen-icon="story-scroll"]')).not.toBeNull();
+  await act(async () => format.click());
+  const panel = document.body.querySelector('.world-card-story-panel')!;
+  expect(panel.textContent).toContain('A lotus blooms.');
+  expect(panel.textContent).toContain('1,280');
+
+  act(() => root.render(<WorldCardInfo story={{ id: 'ashes', title: 'Ashes', chapterCount: 3, status: 'draft', updatedAt: '2026-09-01' }} />));
+  expect(container.querySelector('.world-card-info-information')).toBeNull();
+});
+
+it('paints story tags in their Story Seed catalog colors and leaves unknown tags neutral', () => {
+  act(() => root.render(<WorldCardInfo story={{ ...infoStory, tags: ['sect politics', 'found family', 'lost history', 'Moon Bridge'] }} />));
+  const chips = [...container.querySelectorAll<HTMLElement>('[aria-label="Story tags"] li > *')];
+  expect(chips.map(chip => chip.textContent)).toEqual(['sect politics', 'found family', 'lost history', 'Moon Bridge']);
+  expect(chips.map(chip => chip.getAttribute('data-tag-color'))).toEqual(['purple', 'gold', 'black', null]);
+  expect(chips[0].style.getPropertyValue('--world-info-tag-accent')).toBe('#A78BFA');
+  expect(chips[0].getAttribute('title')).toBe('Politics & War');
+  expect(chips[3].querySelector('.world-card-info-tag-dot')).toBeNull();
+  expect(container.textContent).not.toContain('#');
 });
 
 it('offers More only when the synopsis overflows its four lines', () => {
@@ -357,7 +344,7 @@ it('offers More only when the synopsis overflows its four lines', () => {
   clientHeight.mockRestore();
 });
 
-it('reflects only this world’s own cover and omits unknown metrics and connected media', () => {
+it('reflects only this world’s own cover and omits metrics and connected media', () => {
   act(() => root.render(<WorldCardInfo story={infoStory} />));
   const reflection = container.querySelector<HTMLElement>('.world-card-info-reflection')!;
   expect(reflection.getAttribute('aria-hidden')).toBe('true');
@@ -370,31 +357,33 @@ it('reflects only this world’s own cover and omits unknown metrics and connect
 
   act(() => root.render(<WorldCardInfo story={{ id: 'ashes', title: 'Ashes', chapterCount: 3, status: 'draft', updatedAt: '2026-09-01' }} />));
   expect(container.querySelector('[aria-label="World information"]')).toBeNull();
-  expect(container.textContent).toContain('aren’t shared for this world yet');
+  expect(container.textContent).not.toContain('aren’t shared');
   expect(container.textContent).not.toContain('—');
-  expect(container.querySelector('[aria-label="Library state"]')?.textContent).toContain('Draft');
+  expect(container.textContent).not.toContain('Draft');
   expect(container.textContent).toContain('Synopsis is not available yet.');
 });
 
-it('keeps title, byline, states and tags together in one column beside the cover', () => {
+it('keeps title, byline and states beside the cover, with the tags in the hero', () => {
   act(() => root.render(<WorldCardInfo story={{ ...infoStory, publicationStatus: 'ongoing', cultivationRate: 'Heaven' }} />));
   const hero = container.querySelector('.world-card-info-hero')!;
-  expect(hero.children).toHaveLength(2);
+  expect(hero.children).toHaveLength(3);
   expect(hero.children[0].querySelector('[data-world-card="info-cover"]')).not.toBeNull();
   const identity = hero.children[1];
   expect(identity.querySelector('h1')?.textContent).toBe('The Last Lotus');
   expect(identity.textContent).toContain('SENSEI');
-  expect(identity.querySelector('[aria-label="Library state"]')?.textContent).toContain('Sealed');
+  expect(identity.textContent).not.toContain('Sealed');
   expect(identity.querySelector('[aria-label="Story status: On Going"]')).not.toBeNull();
-  expect(identity.querySelector('[aria-label="Story tags"]')?.textContent).toContain('#FoundFamily');
-  expect(identity.querySelector('[aria-label="Story tags"]')?.textContent).toContain('Cultivation Rate: Heaven');
+  const tags = hero.children[2];
+  expect(tags.getAttribute('aria-label')).toBe('Story tags');
+  expect(tags.textContent).toBe('found family');
+  expect(tags.textContent).not.toContain('Cultivation Rate');
 });
 
 it('shows each trimmed tag once', () => {
   const error = vi.spyOn(console, 'error').mockImplementation(() => {});
-  act(() => root.render(<WorldCardInfo story={{ ...infoStory, tags: ['Lore', ' Lore', '', 'FoundFamily'] }} />));
+  act(() => root.render(<WorldCardInfo story={{ ...infoStory, tags: ['Lore', ' Lore', '', 'found family', 'Found Family '] }} />));
   const tags = [...container.querySelectorAll('[aria-label="Story tags"] li')].map(item => item.textContent);
-  expect(tags).toEqual(['#Lore', '#FoundFamily']);
+  expect(tags).toEqual(['Lore', 'found family']);
   expect(error).not.toHaveBeenCalled();
   error.mockRestore();
 });

@@ -6,8 +6,11 @@ import { createStorySeed, listStorySeeds, resetStorySeedRepository, setStorySeed
 import { type StorySeedRecord, type StorySeedRepository } from '@seihouse/sen/story-seed';
 import { createStoryAdministrativeMetadata, validateStoryAdministrativeMetadata } from '@seihouse/sen/story-seed';
 
+/** A Blueprint saved before arcs were planned as they begin: a plan for every one of its seven arcs. */
+const everyArcPlanned = Array.from({ length: 7 }, (_, index) => ({ arcNumber: index + 1, goals: [{ id: `arc-${index + 1}-goal`, text: index ? `Hold the route through Arc ${index + 1}.` : 'Reach the gate.', chapters: 100 }] }));
 const blueprint: WorldBlueprint = {
-  arcPlans: Array.from({ length: 7 }, (_, index) => ({ arcNumber: index + 1, goals: [{ id: `arc-${index + 1}-goal`, text: index ? `Hold the route through Arc ${index + 1}.` : 'Reach the gate.', chapters: 100 }] })),
+  arcPlans: everyArcPlanned.slice(0, 1),
+  arcLookahead: [{ arcNumber: 2, direction: 'Hold the route through Arc 2.' }, { arcNumber: 3, direction: 'Hold the route through Arc 3.' }],
   title: 'Ashes of the Ninth Meridian',
   logline: 'Seven doomed timelines. One chance to break fate.',
   worldOverview: 'A shattered celestial court rules the sects through fate ledgers.',
@@ -218,6 +221,9 @@ describe('Story Seed creator/story/world contract', () => {
     // The retired Fate Survival mystery and thread proposals are not read back.
     expect(normalized).not.toHaveProperty('majorMysteries');
     expect(normalized).not.toHaveProperty('unresolvedPlotThreads');
+    // A Blueprint that planned every arc keeps its Arc 1; its next two arcs become the hidden look-ahead.
+    const { arcLookahead: _lookahead, ...everyArc } = blueprint;
+    expect(normalizeWorldBlueprint({ ...everyArc, arcPlans: everyArcPlanned })).toMatchObject(blueprint);
   });
 
   it('preserves deliberately cleared editable fields instead of restoring seed fallbacks', () => {

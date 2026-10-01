@@ -5,6 +5,12 @@ SEN engine and the two UI packages. Library owns SEIHouse users, products,
 economy, community and business policy. Authentication enforcement, secrets,
 durable ledgers and concrete infrastructure stay in the host/backend.
 
+**0.11.0:** requires `@seihouse/sen` 0.11.0. `useLibraryStories` gains
+`planArc`, and `StoryPages` hands it to the Reader, so a new arc's goals are
+planned and reviewed in the World Blueprint before its first chapter. The
+`./story-seed` re-exports lose `onExtendArcRoadmap`/`onAddArcs` (Add arcs is
+gone).
+
 **0.10.0:** requires `@seihouse/sen` 0.10.0. New `./stories` entry, the
 reader's side of a HARNESS story: `useLibraryStories` opens a host's stories
 with the Library's defaults (story memory read only on request, the Library

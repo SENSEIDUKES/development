@@ -61,7 +61,7 @@ belongs to this browser's one reader.
 ## The World Blueprint access token
 
 World Blueprints are still a development service behind
-`STORY_SEED_BLUEPRINT_ACCESS_TOKEN`. The first Blueprint (or Add Arcs) of a
+`STORY_SEED_BLUEPRINT_ACCESS_TOKEN`. The first Blueprint of a
 visit asks for the token in a small sheet. It is kept only in that tab's
 memory, never saved, and asked for again when the server does not accept it.
 
@@ -101,6 +101,16 @@ task needs something the list does not allow.
 
 Story View and the Reader are the Library's `StoryPages` (`@seihouse/library/stories`).
 
+## Arcs
+
+Create's ARC page asks for the story's length in arcs (Story Length); left
+blank, the World Blueprint suggests one. The Blueprint shows Arc 1's goals and
+that length, nothing about later arcs. When a story reaches a new arc, the Reader's Next reads
+"Arc N begins" and opens the World Blueprint's goal section for that arc
+(SEN's `BlueprintArcPage`). Pressing Next plans the arc with one model
+request through the Library's `planArc`; the reader reviews or edits the goals
+(Fate Survival: one time), then writes or directs the arc's first chapter.
+
 ## Not in the app yet
 
 - Story Settings (CAPA and media slots) inside Create and Story View.
@@ -115,4 +125,5 @@ Story View and the Reader are the Library's `StoryPages` (`@seihouse/library/sto
 
 ## History
 
+- **2026-10-01** — The World Blueprint plans Arc 1 only and fills every blank Story Seed slot; each later arc is planned and reviewed when it begins, in the Reader. Add Arcs is gone.
 - **2026-10-01** — Piece 1: the four pages at `/app/`, on separate storage, with the same chapters as the Workshop and the `check:app` guard.

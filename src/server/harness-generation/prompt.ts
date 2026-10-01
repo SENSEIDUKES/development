@@ -1,5 +1,5 @@
 import { validateHardPinInputs } from '@seihouse/sen/harness-generation';
-import { ARC_LENGTH, ARC_PLAN_SCHEMA, createArcChapterPosition } from '@seihouse/sen/arc-goals';
+import { ARC_LENGTH, ARC_LOOKAHEAD_SCHEMA, ARC_PLAN_DRAFT_SCHEMA, MAX_ARC_LOOKAHEAD, createArcChapterPosition } from '@seihouse/sen/arc-goals';
 import { AUDIO_ENERGIES, type SoundWord } from '@seihouse/sen/audio';
 import { type HarnessArcRequest, type HarnessChapterDirection, type HarnessGenerationRequest, type HarnessStoryMode, type HarnessMemoryRecoveryRequest, type HarnessMissionReminder, type HarnessRequestMeasurement, type ImmediateChapterRequest, type PacketSectionId, type StoryInformationPacket } from '@seihouse/sen/harness-generation';
 import { GENERATION_PACKET_BUDGET } from '@seihouse/sen/harness-generation';
@@ -309,15 +309,30 @@ export const buildHarnessGenerationPrompt = (request: HarnessGenerationRequest) 
   return { systemInstruction, userPrompt, responseJsonSchema, measurement };
 };
 
+/**
+ * The arc planner: plans the goals of the arc the reader is beginning,
+ * continuing from where the last arc left off. Beside the compact Story
+ * Information Packet it alone receives the planning context (the arc's place in
+ * the story's length, the earlier arcs' goals and outcomes, and the hidden
+ * look-ahead), and it returns a fresh look-ahead. The HARNESS assigns the arc
+ * number and every goal identity.
+ */
 export const buildHarnessArcPrompt = (request: HarnessArcRequest) => ({
-    systemInstruction: `Plan the next arc automatically from current canon and the novel-wide Destined Ending. Return one to five one-line sequential goals, never an overarching goal or long-term goal bank. Five is a maximum. Give each goal a unique ID prefixed with its arc number and a positive whole-chapter allocation weighted by what it requires. Allocations must sum to ${ARC_LENGTH}. Goals never overlap. Use the requested arc number. Preserve an existing Destined Ending verbatim; if absent, supply a fitting novel-wide ending. Do not retcon generated chapters.`,
+    systemInstruction: [
+      'You plan one arc of a serialized novel: the arc the story is beginning now. Continue from where the story actually is (the latest recaps and the current canon) and from how the previous arc ended, including any goals it missed, toward the novel-wide Destined Ending. Do not retcon written chapters.',
+      `Return one to five one-line sequential goals for this arc, never an overarching goal or a long-term goal bank. Five is a maximum. Give each goal a positive whole-chapter allocation weighted by what it requires; the allocations sum to ${ARC_LENGTH}. Goals never overlap and never repeat an earlier arc's goal.`,
+      'When planning.finalArc is true, this is the story\'s last arc: its last goal is the story reaching its Destined Ending. Otherwise no goal reaches or resolves the Destined Ending.',
+      `The look-ahead is your own earlier private direction for this arc and the next ones. Follow it where it still fits what happened, and change it where the story moved elsewhere. Then return a fresh look-ahead: one line each for at most the next ${MAX_ARC_LOOKAHEAD} arcs after this one, never beyond planning.plannedArcCount; when the next arc is the final one, its line arrives at the Destined Ending. Return an empty look-ahead for the final arc. Readers never see the look-ahead.`,
+      'Preserve an existing Destined Ending verbatim; if absent, supply a fitting novel-wide ending.',
+    ].join('\n\n'),
     userPrompt: JSON.stringify({
       requestedArc: createArcChapterPosition(request.storyInformation.chapterNumber),
+      // Only the planner receives the planning context; the writer never does.
+      ...(request.planning ? { planning: request.planning } : {}),
       // Diagnostics are HARNESS-only; the planner reads the same compact sections the writer does.
       storyInformation: { ...request.storyInformation, diagnostics: undefined },
-      instruction: request.instruction,
     }, null, 2),
-    responseJsonSchema: { type: 'object', properties: { plan: ARC_PLAN_SCHEMA, destinedEnding: { type: 'string' } }, required: ['plan', 'destinedEnding'] },
+    responseJsonSchema: { type: 'object', properties: { plan: ARC_PLAN_DRAFT_SCHEMA, lookahead: ARC_LOOKAHEAD_SCHEMA, destinedEnding: { type: 'string' } }, required: ['plan', 'lookahead', 'destinedEnding'] },
   });
 
 export const buildHarnessMemoryRecoveryPrompt = (request: HarnessMemoryRecoveryRequest) => ({

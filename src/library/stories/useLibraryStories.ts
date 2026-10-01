@@ -44,6 +44,8 @@ export interface LibraryStories {
   canGenerate: boolean;
   /** Writes the story's next chapter with the current model. */
   generateNextChapter: (storyId: string) => Promise<void>;
+  /** Plans the goals of the arc a story's next chapter begins, with the chosen model. */
+  planArc: (storyId: string) => Promise<void>;
 }
 
 const EMPTY_SKILLS: HarnessSkillManifest[] = [];
@@ -126,11 +128,15 @@ export function useLibraryStories({
   const generateNextChapter = useCallback(async (storyId: string) => {
     await controller.generateNextChapter(storyId, model);
   }, [controller, model]);
+  const planArc = useCallback(async (storyId: string) => {
+    await controller.planNextArc(storyId, model);
+  }, [controller, model]);
   const state = opened ? snapshot : undefined;
 
   return {
     controller, state, serverInfo, model, setModel, loadError: storageError ?? writerError, retry,
     canGenerate: Boolean(state && serverInfo?.configured && model),
     generateNextChapter,
+    planArc,
   };
 }

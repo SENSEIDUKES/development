@@ -1,4 +1,4 @@
-import { MAX_ROADMAP_ARCS, arcFirstChapter, validateArcPlan, validateArcRoadmap } from '../../arc-goals/shared/arcGoals';
+import { MAX_ROADMAP_ARCS, normalizeArcLookahead, validateArcPlan } from '../../arc-goals/shared/arcGoals';
 import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '../../../lib/language';
 import { FATE_PRESSURE_TIERS, isFatePressure, normalizeFunSettings, validateHardPinInputs } from '../../../narrative/storyDirection';
 import { cloneHarnessValue, defaultHarnessRuntime, emptyStoryHead, stableHarnessId, type HarnessRuntime } from './ids';
@@ -45,9 +45,9 @@ export const normalizeStoryFoundationInput = (input: StoryFoundationInput): Stor
     }
     normalized.plannedArcCount = input.plannedArcCount;
   }
-  if (input.arcRoadmap !== undefined) {
-    normalized.arcRoadmap = validateArcRoadmap(input.arcRoadmap, normalized.plannedArcCount ?? input.arcRoadmap.length);
-    normalized.plannedArcCount = normalized.arcRoadmap.length;
+  if (input.initialArcLookahead !== undefined) {
+    const lookahead = normalizeArcLookahead(input.initialArcLookahead, { afterArc: 1, plannedArcCount: normalized.plannedArcCount });
+    if (lookahead.length) normalized.initialArcLookahead = lookahead;
   }
   for (const key of optionalFoundationKeys) {
     const value = input[key]?.trim();
@@ -126,15 +126,13 @@ export const createHarnessStory = (
     activeFoundationRevisionId: foundation.id,
     foundationRevisionIds: [foundation.id],
     head: emptyStoryHead(),
-    // A reviewed Blueprint roadmap arrives whole: every arc's plan is saved now,
-    // effective from that arc's first chapter. Without one, only Arc 1 is known.
-    arcPlans: normalizedInput.arcRoadmap
-      ? normalizedInput.arcRoadmap.map(plan => ({ plan, effectiveChapter: arcFirstChapter(plan.arcNumber), reason: 'initial' as const }))
-      : normalizedInput.initialArcPlan ? [{ plan: normalizedInput.initialArcPlan, effectiveChapter: 1, reason: 'initial' }] : [],
-    // The Blueprint review that approved the roadmap is Arc 1's review, made
-    // immediately before the story began. Later arcs are reviewed in turn.
-    ...(normalizedInput.arcRoadmap && normalizedInput.fateSurvival?.enabled
+    // Only Arc 1 is known when a story begins; every later arc is planned when it begins.
+    arcPlans: normalizedInput.initialArcPlan ? [{ plan: normalizedInput.initialArcPlan, effectiveChapter: 1, reason: 'initial' }] : [],
+    // A Blueprint story's Arc 1 was reviewed in the Blueprint, immediately
+    // before the story began. Later arcs are reviewed as they begin.
+    ...(normalizedInput.initialArcPlan && normalizedInput.plannedArcCount
       ? { arcGoalReviews: [{ arcNumber: 1, reviewedAt: createdAt, edited: false, source: 'blueprint-creation' as const }] } : {}),
+    ...(normalizedInput.initialArcLookahead ? { arcLookahead: cloneHarnessValue(normalizedInput.initialArcLookahead) } : {}),
     goalCompletions: [],
     hardPins: (normalizedInput.initialHardPins ?? []).map(pin => ({ ...pin, id: pin.id ?? runtime.createId('hpin'), createdAt, updatedAt: createdAt })),
   };

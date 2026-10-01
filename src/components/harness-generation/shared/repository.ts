@@ -59,6 +59,35 @@ const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => 
   // frozen request's `chapterScale.paragraphs` and `metrics.paragraphTarget`),
   // so every story, attempt and chapter carries over unchanged.
   22: stored => ({ ...stored, schemaVersion: 23 }),
+  // Schema 23 -> 24: each arc is planned when it begins. Every stored copy of
+  // a Foundation drops its whole-route roadmap; the arcs it planned are already
+  // saved on their stories and carry over. A story with a planned length that
+  // has not begun records Arc 1's review, made in the Blueprint before it
+  // began, as Fate Survival roadmap stories already did. Arc planning requests
+  // drop the never-used free-text instruction.
+  23: stored => {
+    const next = cloneHarnessValue(stored) as StoredWorkspace & {
+      foundations?: Array<{ id?: string; input?: Record<string, unknown> }>;
+      attempts?: Array<{ foundationSnapshot?: { input?: Record<string, unknown> } }>;
+      memoryRecoveries?: Array<{ request?: { foundation?: { input?: Record<string, unknown> } } }>;
+      arcPlanOperations?: Array<{ request?: Record<string, unknown> }>;
+      stories?: Array<{ activeFoundationRevisionId?: string; head?: { nextChapterNumber?: number }; arcPlans?: unknown[]; arcGoalReviews?: Array<{ arcNumber?: number }>; createdAt?: string }>;
+    };
+    const dropRoadmap = (input?: Record<string, unknown>) => { if (input) delete input.arcRoadmap; };
+    for (const foundation of next.foundations ?? []) dropRoadmap(foundation.input);
+    for (const attempt of next.attempts ?? []) dropRoadmap(attempt.foundationSnapshot?.input);
+    for (const recovery of next.memoryRecoveries ?? []) dropRoadmap(recovery.request?.foundation?.input);
+    for (const operation of next.arcPlanOperations ?? []) if (operation.request) delete operation.request.instruction;
+    for (const story of next.stories ?? []) {
+      const input = (next.foundations ?? []).find(foundation => foundation.id === story.activeFoundationRevisionId)?.input;
+      const notBegun = (story.head?.nextChapterNumber ?? 1) <= 1;
+      const hasArcOne = (story.arcPlans ?? []).some(revision => (revision as { plan?: { arcNumber?: number } })?.plan?.arcNumber === 1);
+      if (input?.plannedArcCount && notBegun && hasArcOne && !(story.arcGoalReviews ?? []).some(review => review.arcNumber === 1)) {
+        story.arcGoalReviews = [...(story.arcGoalReviews ?? []), { arcNumber: 1, reviewedAt: story.createdAt, edited: false, source: 'migration' } as { arcNumber: number }];
+      }
+    }
+    return { ...next, schemaVersion: 24 };
+  },
 };
 
 /**
@@ -80,7 +109,7 @@ export const migrateHarnessWorkspaceState = (value: unknown): HarnessWorkspaceSt
 /**
  * Reads saved Harness Generation storage. Current storage is read as is;
  * storage from an earlier version with an explicit migration is upgraded with
- * every story, chapter and plan kept (schema 22 upgrades to 23 unchanged; nothing earlier upgrades). Anything else (an unknown version or an
+ * every story, chapter and plan kept (schema 22 upgrades to 23 unchanged, 23 to 24 drops the stored whole-route roadmaps; nothing earlier upgrades). Anything else (an unknown version or an
  * unrecognized shape) cannot be read and yields an empty workspace; hosts keep
  * an untouched copy of it (see the IndexedDB repository) before replacing it.
  * Every structural change to a persisted field must bump

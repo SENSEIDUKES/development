@@ -1,5 +1,5 @@
-import { ARC_LENGTH, MAX_ARC_GOALS, type ArcPlan } from '@seihouse/sen/arc-goals';
-import { WORLD_FACT_DETAILS, type StorySeedInput, type WorldBlueprint } from '@seihouse/sen/story-seed';
+import { ARC_LENGTH, MAX_ARC_GOALS, MAX_ARC_LOOKAHEAD, MAX_ROADMAP_ARCS } from '@seihouse/sen/arc-goals';
+import { SEED_CHARACTER_LIMIT, SEED_FACTION_LIMIT, WORLD_FACT_DETAILS, type StorySeedInput } from '@seihouse/sen/story-seed';
 
 export const WORLD_BLUEPRINT_SYSTEM_PROMPT = `You are an elite Eastern fantasy author and world architect. Build a detailed World Blueprint that can serve as the canon bible for serialized chapter generation.
 
@@ -43,77 +43,30 @@ const worldFactRules = (storySeed: StorySeedInput): string[] => {
   ];
 };
 
-export const buildWorldBlueprintPrompt = (storySeed: StorySeedInput, maxArcs: number, arcCount?: number): string => `Create one complete World Blueprint from this finalized canonical Story Seed:
+export const buildWorldBlueprintPrompt = (storySeed: StorySeedInput, arcCount = storySeed.story.optional.arcCount): string => `Create one complete World Blueprint from this finalized canonical Story Seed:
 
 ${JSON.stringify(storySeed, null, 2)}
 
 Completion rules:
-- Complete every output field. No blank strings. majorFactions and initialCharacters must not be empty.
+- Complete every output field. No blank strings. characters and factions must not be empty.
 - Generate a strong logline.
 ${worldFactRules(storySeed).map(rule => `- ${rule}`).join('\n')}
-- Complete the main character's name, age, appearance, personality, and background profile when missing.
-- Include the creator's named characters and factions, then add only useful supporting entries. Begin every entry with its name: Name (role) — description.
+- Fill every Story Seed slot. Where the creator already wrote a slot, repeat their value exactly; only blank slots are yours to fill. Never write aliases or Hard Pins.
+- mainCharacter: name, age, appearance, personality, startingIdentity, secretAdvantage, startingWeakness, mainFlaw, moralAlignment, a short bio (who they are now, in two or three sentences), and backgroundProfile (their fuller backstory beyond the bio).
+- characters: list every side character the creator wrote first, by their exact name, then add only useful supporting characters, at most ${SEED_CHARACTER_LIMIT} in all; never the main character. Give each its role, age, skinTone, eyeColor, powerType, rankLevel, connectionToMC, and a short bio.
+- factions: list every faction the creator wrote first, by its exact name, then add only useful supporting factions, at most ${SEED_FACTION_LIMIT} in all. Give each its role, powerLevel, alignment, connectionToMC, and a description of its hierarchy and beliefs.
+- abilities (startingPowerConcept, uniquePath), powerSystem (flavor, knownRanks: the rank ladder in order) and mainOpposition: fill each.
+- Keep every slot to one short, concrete fact; the longer prose fields (logline, worldOverview, powerSystemOutline, backgroundProfile, firstArcPromise) add what the slots do not already say, never restating them.
 - ${arcCount === undefined
-  ? `Establish the Destined Ending first, then a realistic estimatedArcs between 1 and ${maxArcs}.`
-  : `Establish the Destined Ending first. The author chose the story's length: estimatedArcs is exactly ${arcCount}.`} Each arc is exactly ${ARC_LENGTH} chapters.
-- Generate arcPlans: exactly estimatedArcs plans, one per arc, in order, with arcNumber 1 through estimatedArcs. Together they are one coherent route from the opening situation to the Destined Ending: each arc builds on the one before it, and the final arc's final goal is the story reaching its Destined Ending.
-- Each arc plan has 1 to ${MAX_ARC_GOALS} sequential one-line goals. Every goal has a unique ID prefixed with its arc (for example arc-2-...) and a positive whole-chapter allocation weighted by what it requires; an arc's allocations sum to exactly ${ARC_LENGTH}. Goals never overlap and never repeat across arcs.
+  ? `Establish the Destined Ending first, then a realistic estimatedArcs between 1 and ${MAX_ROADMAP_ARCS}: the story's length.`
+  : `Establish the Destined Ending first. The creator chose the story's length (story.optional.arcCount): estimatedArcs is exactly ${arcCount}.`} Each arc is exactly ${ARC_LENGTH} chapters, and the last arc arrives at the Destined Ending.
+- Plan only Arc 1, in arcOne: 1 to ${MAX_ARC_GOALS} sequential one-line goals, each with a positive whole-chapter allocation weighted by what it requires; the allocations sum to exactly ${ARC_LENGTH}. Goals never overlap. When estimatedArcs is 1, Arc 1 is the whole story and its last goal is the story reaching its Destined Ending; otherwise no Arc 1 goal reaches or resolves it. Every later arc is planned when the story reaches it, from where the story is then.
 - ${storySeed.story.optional.activeArcGoal
-  ? 'Arc 1 must begin with story.optional.activeArcGoal: use its text verbatim as Arc 1\'s first goal and plan the rest of the route around it.'
+  ? 'Arc 1 must begin with story.optional.activeArcGoal: use its text verbatim as Arc 1\'s first goal and plan the rest of the arc around it.'
   : 'Choose Arc 1\'s first goal as the immediate goal the creator will review.'}
+- Write arcLookahead: private direction for the arcs after Arc 1, one line each for at most the next ${MAX_ARC_LOOKAHEAD} arcs (Arc 2 and Arc 3), never beyond estimatedArcs, describing where the route goes toward the Destined Ending; the final arc's line arrives at it. Return an empty arcLookahead when estimatedArcs is 1. Readers never see it; it guides the planning of those arcs.
 - Establish the first-arc promise, trope rules, and a practical style bible.
 - The style bible must translate genre, style, tags, and maturity metadata into actionable prose, pacing, viewpoint, dialogue, and thematic guidance.
 - The trope rules must explicitly account for face-slap, plot-armor, recognition, and Make It Work settings. Keep Fate Survival settings out of trope rules; chapter generation receives them separately. Apply the other settings without exposing app-control language as ordinary narration.
-- mcProfile repeats mainCharacter.backgroundProfile exactly.
 
 Return the JSON object only.`;
-
-export const ARC_ROADMAP_EXTENSION_SYSTEM_PROMPT = `You are an elite Eastern fantasy author lengthening a novel's saved arc roadmap. The roadmap is the route from the story's opening to its fixed Destined Ending. Its saved arcs are author-reviewed and authoritative: plan only the new arcs the author asked for, and never restate, rewrite, renumber, or contradict a saved arc. Every non-empty Story Seed value is authoritative canon. Describe minors safely and never sexualize a character under 18. Return only the requested JSON object.`;
-
-const presentSavedArc = (plan: ArcPlan, finalArc: boolean): string => [
-  `Arc ${plan.arcNumber}${finalArc ? ' (final arc; reaches the Destined Ending)' : ''}:`,
-  ...plan.goals.map(goal => `  - [${goal.id}] ${goal.text} (${goal.chapters} chapters)`),
-].join('\n');
-
-/**
- * Asks for only the arcs being added. The saved roadmap and the Blueprint's
- * summary are context; the new arcs bridge the arc before the final arc and
- * the final arc, which keeps its goals and its place at the end of the route.
- */
-export const buildArcRoadmapExtensionPrompt = (storySeed: StorySeedInput, blueprint: WorldBlueprint, arcCount: number): string => {
-  const saved = blueprint.arcPlans ?? [];
-  const finalArc = saved[saved.length - 1];
-  const bridgeFrom = saved[saved.length - 2];
-  const added = arcCount - saved.length;
-  const firstNew = saved.length;
-  const newArcs = added === 1 ? `Arc ${firstNew}` : `Arcs ${firstNew} through ${arcCount - 1}`;
-  const summary = ([
-    ['Logline', blueprint.logline],
-    ['World overview', blueprint.worldOverview],
-    ['Power system', blueprint.powerSystemOutline],
-    ['First-arc promise', blueprint.firstArcPromise],
-  ] as const).filter(([, value]) => value?.trim()).map(([label, value]) => `- ${label}: ${value.trim()}`);
-  const destinedEnding = storySeed.world.optional.worldFoundations.destinedEnding?.trim() || blueprint.destinedEnding?.trim() || '';
-  return `The author is lengthening this story from ${saved.length} to ${arcCount} arcs. Plan only the ${added} new ${added === 1 ? 'arc' : 'arcs'}.
-
-The new arcs go between Arc ${bridgeFrom.arcNumber} and the final arc, so the story still reaches its Destined Ending in its last arc. They become ${newArcs}; the current final arc becomes Arc ${arcCount} and keeps its goals unchanged.
-
-Story Seed (canonical; every non-empty value is authoritative):
-${JSON.stringify(storySeed, null, 2)}
-
-World Blueprint summary:
-${summary.length ? summary.join('\n') : '- (none)'}
-
-Destined Ending (the fixed destination): ${destinedEnding}
-
-Saved arc roadmap (author-reviewed; do not change it):
-${saved.map(plan => presentSavedArc(plan, plan === finalArc)).join('\n')}
-
-Rules:
-- Return arcPlans with exactly ${added} ${added === 1 ? 'plan' : 'plans'}, ${added === 1 ? `numbered ${firstNew}` : `numbered ${firstNew} through ${arcCount - 1} in order`}.
-- The new arcs pick up where Arc ${bridgeFrom.arcNumber} ends and lead into the final arc's first goal, "${finalArc.goals[0].text}". With the saved arcs they form one coherent route: each new arc builds on the one before it and raises the stakes toward the final arc.
-- No new arc reaches or resolves the Destined Ending; that stays the final arc's last goal. Never repeat or pre-empt a saved goal.
-- Each plan has 1 to ${MAX_ARC_GOALS} sequential one-line goals. Every goal has a unique ID prefixed with its new arc number (for example arc-${firstNew}-...) that no saved goal uses, and a positive whole-chapter allocation weighted by what it requires; an arc's allocations sum to exactly ${ARC_LENGTH}. Goals never overlap.
-
-Return the JSON object only.`;
-};

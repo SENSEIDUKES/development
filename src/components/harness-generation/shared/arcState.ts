@@ -1,6 +1,6 @@
 import { stripReplyMarks } from './chapterSignals';
-import { arcFirstChapter, arcGoalResolution, arcGoalResolved, arcGoalSegments, arcGenerationContext, arcMissedGoals, confirmArcGoal, createArcChapterPosition, type ArcGenerationContext, type ArcPlan } from '../../arc-goals/shared/arcGoals';
-import type { HarnessArcContext, HarnessArcGoalReview, HarnessGenerationAttempt, HarnessStory, HarnessStoryConclusion, HarnessStoryMode, HarnessWarning, StoryFoundationInput } from '../../../narrative/generation';
+import { arcFirstChapter, arcGoalResolution, arcGoalResolved, arcGoalSegments, arcGenerationContext, arcMissedGoals, confirmArcGoal, createArcChapterPosition, normalizeArcLookahead, type ArcGenerationContext, type ArcPlan } from '../../arc-goals/shared/arcGoals';
+import type { HarnessArcContext, HarnessArcGoalReview, HarnessArcPlanningContext, HarnessGenerationAttempt, HarnessStory, HarnessStoryConclusion, HarnessStoryMode, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput } from '../../../narrative/generation';
 
 /**
  * Both modes record every Arc Goal honestly: achieved, with a verbatim
@@ -12,6 +12,12 @@ import type { HarnessArcContext, HarnessArcGoalReview, HarnessGenerationAttempt,
  * direction: every chapter pursues it, a missed goal only puts the story off
  * track, and a missed final goal lets the story continue past its roadmap
  * toward the same ending. Arc Goals stay editable while the novel is private.
+ *
+ * Each arc is planned when it begins. In a story with a planned length (every
+ * story made from a World Blueprint) the reader begins each arc after the
+ * first: its goals are planned then, from where the last arc left off, and the
+ * reader reviews them (accepts or edits) before its first chapter, in both
+ * modes.
  *
  * Fate Survival: the reader directs every chapter; each arc's goals are set
  * once, immediately before that arc begins, and locked when its generation
@@ -247,26 +253,39 @@ export function storyConclusionGap(story: HarnessStory): string | undefined {
   return `Fate failed in Chapter ${ended.chapterNumber}: the story ended there. No further chapter is written.`;
 }
 
+/** Whether a story reviews each arc's goals before the arc's first chapter: Fate Survival, and every story with a planned length. */
+const reviewsEachArc = (foundation?: Pick<StoryFoundationInput, 'fateSurvival' | 'plannedArcCount'>) =>
+  harnessStoryMode(foundation) === 'survival' || Boolean(foundation?.plannedArcCount);
+
 /**
- * Whether the automatic Arc planner must create a plan before the next
- * chapter. A story with a Blueprint roadmap planned every arc before it began,
- * so nothing is invented at a boundary; only stories without a roadmap plan
- * their next arc automatically.
+ * Whether the next chapter's arc still needs its goals planned. Each arc is
+ * planned when it begins: a story with a planned length plans only within it,
+ * and nothing is planned after the route breaks or the story ends.
  */
 export function needsArcPlan(story: HarnessStory, foundation?: Pick<StoryFoundationInput, 'plannedArcCount'>): boolean {
-  // The chapter that ends a broken route never begins a new arc.
-  if (story.brokenRoute || foundation?.plannedArcCount) return false;
-  return !harnessArcPlan(story, arcOf(story.head.nextChapterNumber));
+  if (story.brokenRoute || story.conclusion) return false;
+  const arc = arcOf(story.head.nextChapterNumber);
+  if (foundation?.plannedArcCount && arc > foundation.plannedArcCount) return false;
+  return !harnessArcPlan(story, arc);
 }
 
-/** Why the next chapter has no saved plan in a roadmap story, if it has none. */
-export function roadmapPlanGap(story: HarnessStory, foundation: Pick<StoryFoundationInput, 'plannedArcCount' | 'fateSurvival'>): string | undefined {
+/** Why the next chapter cannot be written yet because its arc still needs planning, in a story whose arcs are planned as the reader begins them. */
+export function arcPlanGap(story: HarnessStory, foundation: Pick<StoryFoundationInput, 'plannedArcCount'>): string | undefined {
+  if (!foundation.plannedArcCount || !needsArcPlan(story, foundation)) return undefined;
+  const { arcNumber: arc, chapterInArc } = createArcChapterPosition(story.head.nextChapterNumber);
+  return chapterInArc === 1
+    ? `Arc ${arc} begins with Chapter ${story.head.nextChapterNumber}. Plan its goals in the novel's Blueprint before that chapter is written.`
+    : `Arc ${arc} has no saved plan. Plan its goals in the novel's Blueprint before Chapter ${story.head.nextChapterNumber} is written.`;
+}
+
+/** Why the next chapter cannot be written because every planned arc is written. */
+export function routeCompleteGap(story: HarnessStory, foundation: Pick<StoryFoundationInput, 'plannedArcCount' | 'fateSurvival'>): string | undefined {
   const count = foundation.plannedArcCount;
-  // The chapter ending a broken route, and Regular Reader chapters past a missed final goal, need no further plan.
+  // The chapter ending a broken route, and Regular Reader chapters past a missed final goal, continue the arc they belong to.
   if (!count || story.brokenRoute || regularFinalGoalMissed(story, foundation)) return undefined;
   const arc = arcOf(story.head.nextChapterNumber);
-  if (arc > count) return `All ${count} planned ${count === 1 ? 'arc is' : 'arcs are'} written: the route to the Destined Ending is complete. Chapter ${story.head.nextChapterNumber} would begin Arc ${arc}, which the novel's Blueprint never planned.`;
-  return harnessArcPlan(story, arc) ? undefined : `Arc ${arc} has no saved plan in this novel's roadmap.`;
+  if (arc <= count) return undefined;
+  return `All ${count} planned ${count === 1 ? 'arc is' : 'arcs are'} written: the route to the Destined Ending is complete. Chapter ${story.head.nextChapterNumber} would begin Arc ${arc}, beyond the story's planned length.`;
 }
 
 export const arcGoalReview = (story: HarnessStory, arcNumber: number): HarnessArcGoalReview | undefined =>
@@ -285,9 +304,13 @@ export interface HarnessArcGoalEditState {
   editable: boolean;
   /** Why the arc cannot be edited now, in plain language. */
   reason?: string;
-  /** Fate Survival: where this arc stands in its one-time review. */
+  /**
+   * Where this arc stands in its review before its first chapter (Fate
+   * Survival, and stories with a planned length). In Fate Survival the review
+   * is the arc's one-time edit.
+   */
   review?: 'pending' | 'edited' | 'accepted' | 'locked' | 'not-yet';
-  /** Fate Survival: the plan may be accepted as written instead of edited. */
+  /** The arc's review is pending: its plan may be accepted as written instead of edited. */
   canAccept: boolean;
   /** Resolved goals (completed or missed) keep their wording, allocation and position. */
   lockedGoalIds: string[];
@@ -300,7 +323,7 @@ export interface HarnessArcGoalEditState {
  * controller (which enforces it) and every surface that offers an edit.
  * Completed arcs are history in both modes.
  */
-export function arcGoalEditState(story: HarnessStory, foundation: Pick<StoryFoundationInput, 'fateSurvival'> | undefined, arcNumber: number): HarnessArcGoalEditState {
+export function arcGoalEditState(story: HarnessStory, foundation: Pick<StoryFoundationInput, 'fateSurvival' | 'plannedArcCount'> | undefined, arcNumber: number): HarnessArcGoalEditState {
   const mode = harnessStoryMode(foundation);
   const currentArc = arcOf(story.head.nextChapterNumber);
   const status = arcNumber < currentArc ? 'completed' : arcNumber === currentArc ? 'active' : 'upcoming';
@@ -314,14 +337,22 @@ export function arcGoalEditState(story: HarnessStory, foundation: Pick<StoryFoun
   if (story.brokenRoute) return denied(`The route broke in Chapter ${story.brokenRoute.chapterNumber}, and the next chapter ends the story. No arc's goals change now.`);
   if (status === 'completed') return denied(`Arc ${arcNumber} is complete. Its goals are part of the novel's history.`);
   if (lockedGoalIds.length === plan.goals.length) return denied(`Every goal in Arc ${arcNumber} is resolved.`);
+  const review = arcGoalReview(story, arcNumber);
 
   if (mode === 'regular') {
+    // A story with a planned length reviews each arc once, just before its first chapter.
+    const reviewState: HarnessArcGoalEditState['review'] = !reviewsEachArc(foundation) ? undefined
+      : review?.reviewedAt ? (review.edited ? 'edited' : 'accepted')
+        : arcHasBegun(story, arcNumber) ? undefined
+          : status === 'active' ? 'pending' : 'not-yet';
+    const reviewFields = { ...(reviewState ? { review: reviewState } : {}), canAccept: reviewState === 'pending' };
     const visibility = story.visibility ?? 'private';
-    if (visibility !== 'private') return denied('Arc Goals can be edited only while the novel is private.');
-    return { arcNumber, mode, status, editable: true, canAccept: false, lockedGoalIds, missedGoalIds };
+    if (visibility !== 'private') {
+      return { arcNumber, mode, status, editable: false, reason: 'Arc Goals can be edited only while the novel is private.', ...reviewFields, lockedGoalIds, missedGoalIds };
+    }
+    return { arcNumber, mode, status, editable: true, ...reviewFields, lockedGoalIds, missedGoalIds };
   }
 
-  const review = arcGoalReview(story, arcNumber);
   if (review?.lockedAt || arcHasBegun(story, arcNumber)) return denied(`Arc ${arcNumber}'s goals were locked when its generation began.`, 'locked');
   if (review?.reviewedAt) {
     return denied(`Arc ${arcNumber}'s goals were set in its one-time review and lock when its first chapter is generated.`, review.edited ? 'edited' : 'accepted');
@@ -330,12 +361,79 @@ export function arcGoalEditState(story: HarnessStory, foundation: Pick<StoryFoun
   return { arcNumber, mode, status, editable: true, review: 'pending', canAccept: true, lockedGoalIds, missedGoalIds };
 }
 
-/** Fate Survival: the arc about to be generated must have used its one-time review. */
-export function survivalArcReviewGap(story: HarnessStory, foundation: Pick<StoryFoundationInput, 'fateSurvival'>): string | undefined {
+/**
+ * Why the next chapter waits on its arc's review: in Fate Survival and in
+ * every story with a planned length, the arc about to begin needs its goals
+ * accepted or edited first. Arc 1 of a Blueprint story was reviewed in the
+ * Blueprint before the story began.
+ */
+export function arcReviewGap(story: HarnessStory, foundation: Pick<StoryFoundationInput, 'fateSurvival' | 'plannedArcCount'>): string | undefined {
   // The chapter that ends a broken route begins no arc, so it needs no review.
-  if (harnessStoryMode(foundation) !== 'survival' || story.brokenRoute) return undefined;
+  if (!reviewsEachArc(foundation) || story.brokenRoute) return undefined;
   const arc = arcOf(story.head.nextChapterNumber);
+  if (!harnessArcPlan(story, arc)) return undefined;
   const review = arcGoalReview(story, arc);
   if (review?.lockedAt || review?.reviewedAt || arcHasBegun(story, arc)) return undefined;
-  return `Set Arc ${arc}'s goals before it begins. Review its saved plan in the novel's Blueprint, then edit it once or accept it as written.`;
+  return harnessStoryMode(foundation) === 'survival'
+    ? `Set Arc ${arc}'s goals before it begins. Review its saved plan in the novel's Blueprint, then edit it once or accept it as written.`
+    : `Review Arc ${arc}'s goals before Chapter ${story.head.nextChapterNumber} is written: accept them as written or edit them in the novel's Blueprint.`;
+}
+
+/** What the next chapter waits on at the start of an arc, if anything. */
+export type HarnessNextArcStep =
+  | { kind: 'plan'; arcNumber: number; status: 'needed' | 'planning' | 'failed'; message?: string }
+  | { kind: 'review'; arcNumber: number };
+
+/**
+ * The one answer every surface shows before an arc's first chapter, read
+ * from saved story state: the arc still needs its goals planned (or its
+ * planning is running or failed), or they need the reader's review. Stories
+ * without a planned length plan automatically and only ever wait on a review.
+ */
+export function nextArcStep(state: Pick<HarnessWorkspaceState, 'stories' | 'foundations' | 'arcPlanOperations'>, storyId: string): HarnessNextArcStep | undefined {
+  const story = state.stories.find(entry => entry.id === storyId);
+  if (!story || story.conclusion) return undefined;
+  const input = state.foundations.find(entry => entry.id === story.activeFoundationRevisionId)?.input;
+  if (!input) return undefined;
+  const arcNumber = arcOf(story.head.nextChapterNumber);
+  if (input.plannedArcCount && needsArcPlan(story, input)) {
+    const operation = state.arcPlanOperations.filter(entry => entry.storyId === storyId && !['completed', 'abandoned'].includes(entry.status)).at(-1);
+    if (operation?.status === 'request_started') return { kind: 'plan', arcNumber, status: 'planning' };
+    if (operation?.status === 'failed' || operation?.status === 'provider_outcome_unknown') {
+      return { kind: 'plan', arcNumber, status: 'failed',
+        message: operation.status === 'failed' ? operation.failure ?? `Arc ${arcNumber}'s goals could not be planned.` : `Arc ${arcNumber}'s planning was interrupted before its answer arrived.` };
+    }
+    return { kind: 'plan', arcNumber, status: 'needed' };
+  }
+  return arcReviewGap(story, input) ? { kind: 'review', arcNumber } : undefined;
+}
+
+/** How many earlier arcs the arc planner sees in full; older arcs arrive as one tally. */
+const PLANNER_HISTORY_ARCS = 3;
+
+/**
+ * What only the arc planner receives when it plans an arc: where the arc sits
+ * in the story's length, how the earlier arcs went (every goal's outcome), and
+ * the hidden look-ahead for this arc and the next.
+ */
+export function arcPlanningContext(story: HarnessStory, foundation: Pick<StoryFoundationInput, 'plannedArcCount'>, arcNumber: number): HarnessArcPlanningContext {
+  const count = foundation.plannedArcCount;
+  const history = Array.from({ length: arcNumber - 1 }, (_, index) => index + 1).flatMap(number => {
+    const plan = harnessArcPlan(story, number);
+    if (!plan) return [];
+    return [{ arcNumber: number, goals: plan.goals.map(goal => {
+      const resolution = arcGoalResolution(plan, goal, story.goalCompletions);
+      return { text: goal.text, outcome: !resolution ? 'unresolved' as const : resolution.outcome === 'missed' ? 'missed' as const : 'completed' as const };
+    }) }];
+  });
+  const earlier = history.slice(0, -PLANNER_HISTORY_ARCS);
+  const tally = (outcome: 'completed' | 'missed') => earlier.reduce((sum, arc) => sum + arc.goals.filter(goal => goal.outcome === outcome).length, 0);
+  return {
+    arcNumber,
+    ...(count ? { plannedArcCount: count } : {}),
+    finalArc: Boolean(count && arcNumber >= count),
+    previousArcs: history.slice(-PLANNER_HISTORY_ARCS),
+    ...(earlier.length ? { earlierArcs: `Arcs ${earlier[0].arcNumber}–${earlier.at(-1)!.arcNumber}: ${tally('completed')} goals completed, ${tally('missed')} missed.` } : {}),
+    lookahead: normalizeArcLookahead(story.arcLookahead, { afterArc: arcNumber - 1, plannedArcCount: count }),
+  };
 }

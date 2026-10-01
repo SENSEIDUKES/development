@@ -12,8 +12,10 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * so saved stories carry over. Storage with no migration path is preserved
  * untouched by the host and replaced with an empty workspace. Schema 22
  * (chapters are paragraphs plus Sound Cues) deliberately has no upgrade step
- * from earlier versions; 23 adds the optional paragraph counter. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 23 as const;
+ * from earlier versions; 23 adds the optional paragraph counter; 24 plans
+ * each arc when it begins (the Foundation keeps Arc 1 and a hidden look-ahead
+ * instead of a whole roadmap). */
+export const HARNESS_GENERATION_SCHEMA_VERSION = 24 as const;
 
 /** Output buckets assign processor categories; legacy event arrays remain readable. */
 export const HARNESS_MEMORY_CATEGORIES = {
@@ -56,14 +58,22 @@ export interface StoryFoundationInput {
    * visible label and never written by a model reply.
    */
   fatePressure?: FatePressure;
+  /**
+   * Arc 1's reviewed goal plan, the only arc a World Blueprint plans. HARNESS
+   * copies it once, at story creation; every later arc is planned when it
+   * begins, and plan edits are story revisions, never Foundation edits.
+   */
   initialArcPlan?: import('../components/arc-goals/shared/arcGoals').ArcPlan;
   /**
-   * Every arc's saved goal plan from the reviewed Blueprint, Arc 1 through
-   * `plannedArcCount`. HARNESS copies it once, at story creation; later plan
-   * edits are story revisions, never Foundation edits.
+   * The Blueprint's hidden look-ahead for the arcs after Arc 1, copied once
+   * onto the story at creation. Only the arc planner reads it.
    */
-  arcRoadmap?: import('../components/arc-goals/shared/arcGoals').ArcPlan[];
-  /** How many arcs the story's route to its Destined Ending was planned for. Fixed once set. */
+  initialArcLookahead?: import('../components/arc-goals/shared/arcGoals').ArcLookaheadEntry[];
+  /**
+   * The story's length in arcs: the route to its Destined Ending, whose last
+   * arc arrives there. Fixed once set. A story with a planned length plans each
+   * arc when the reader begins it and reviews its goals before its first chapter.
+   */
   plannedArcCount?: number;
   title?: string;
   /** The only author field required to start a Harness story. */
@@ -175,11 +185,18 @@ export interface HarnessStory {
   /** Who may read the novel. Arc Goals stay editable in Regular Reader mode only while it is private. Absent means private. */
   visibility?: HarnessStoryVisibility;
   /**
-   * Fate Survival's one-time arc goal review, one entry per arc: the plan is
-   * reviewed (edited once or accepted as written) before the arc begins and
-   * locked when that arc's generation begins.
+   * Each arc's goal review, one entry per arc: the plan is reviewed (edited or
+   * accepted as written) before the arc's first chapter. Fate Survival's review
+   * is its one-time edit, locked when that arc's generation begins; a story with
+   * a planned length reviews every arc in Regular Reader mode too.
    */
   arcGoalReviews?: HarnessArcGoalReview[];
+  /**
+   * The arc planner's private direction for the next arcs (at most two), set
+   * from the Blueprint and replaced each time an arc is planned. Never shown to
+   * readers and never sent to the chapter writer.
+   */
+  arcLookahead?: import('../components/arc-goals/shared/arcGoals').ArcLookaheadEntry[];
 }
 
 export type HarnessStoryVisibility = 'private' | 'shared' | 'public';
@@ -1140,7 +1157,33 @@ export interface HarnessArcRequest {
   storyId: string;
   model: string;
   storyInformation: StoryInformationPacket;
-  instruction?: string;
+  /** What only the arc planner receives. Absent on requests saved before schema 24. */
+  planning?: HarnessArcPlanningContext;
+}
+
+/** One earlier arc as the arc planner sees it: its goals and how each turned out. */
+export interface HarnessPlannedArcHistory {
+  arcNumber: number;
+  goals: Array<{ text: string; outcome: 'completed' | 'missed' | 'unresolved' }>;
+}
+
+/**
+ * The arc planner's own context, beside the Story Information Packet: which
+ * arc it plans within the story's length, how the earlier arcs went, and the
+ * hidden look-ahead. The chapter writer never receives it.
+ */
+export interface HarnessArcPlanningContext {
+  arcNumber: number;
+  /** The story's length in arcs, when it has one. */
+  plannedArcCount?: number;
+  /** This arc is the story's last: its final goal is reaching the Destined Ending. */
+  finalArc: boolean;
+  /** The last three arcs before this one, in order, with every goal's outcome. */
+  previousArcs: HarnessPlannedArcHistory[];
+  /** A one-line tally of any arcs before those three. */
+  earlierArcs?: string;
+  /** The current look-ahead: earlier direction for this arc and the next. */
+  lookahead: import('../components/arc-goals/shared/arcGoals').ArcLookaheadEntry[];
 }
 
 /** Durable checkpoint for the required Arc planner provider operation. */

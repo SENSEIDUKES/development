@@ -70,6 +70,7 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
     <HarnessReaderSession state={state} storyId={storyId} controller={controller}
       readerStateRepository={readerStateRepository} startOnOpen={startOnOpen}
       onGenerateNextChapter={stories.canGenerate ? () => stories.generateNextChapter(storyId) : undefined}
+      onPlanArc={stories.canGenerate ? () => stories.planArc(storyId) : undefined}
       renderWriting={writingAgent ? writing => <AILoadingVeil agent={writingAgent} isGenerating={writing.active}
         generationPhase="chapter" generatingChapterNum={writing.chapterNumber} progress={null}
         generationProgressMessage={null} estimatedSecondsRemaining={null} activeAgentId="versa"

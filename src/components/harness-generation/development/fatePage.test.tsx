@@ -255,7 +255,7 @@ describe('Where the route stands on the Fate page', { timeout: 20_000 }, () => {
     const setup = new HarnessGenerationController({ repository, modelAdapter: model.modelAdapter });
     await setup.hydrate();
     await setup.createStory({ premise: 'A courier returns to the drowned city that erased her name.', destinedEnding: ENDING,
-      arcRoadmap: [plan], plannedArcCount: 1, ...foundation });
+      initialArcPlan: plan, plannedArcCount: 1, ...foundation });
     const saved = setup.snapshot();
     saved.stories[0].head.nextChapterNumber = nextChapterNumber;
     saved.stories[0].goalCompletions = resolved.map(goal => ({ arcNumber: 1, goalId: goal.goalId, goalText: plan.goals.find(item => item.id === goal.goalId)!.text,

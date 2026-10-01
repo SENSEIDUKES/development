@@ -86,7 +86,7 @@ export {
   MISSION_REMINDER_TEXT_LIMIT,
   buildMissionReminder,
 } from '../../components/harness-generation/shared/missionReminder';
-export { arcGoalEditState, goalsThatBreakRoute, harnessArcContext, harnessArcPlan, harnessChapterArc, harnessStoryMode, missedGoalsBreakRoute, missingRequiredEnding, regularFinalGoalMissed, storyConclusionGap, type HarnessArcGoalEditState, type HarnessStoryMode } from '../../components/harness-generation/shared/arcState';
+export { arcGoalEditState, arcPlanGap, arcReviewGap, goalsThatBreakRoute, harnessArcContext, harnessArcPlan, harnessChapterArc, harnessStoryMode, missedGoalsBreakRoute, missingRequiredEnding, nextArcStep, regularFinalGoalMissed, routeCompleteGap, storyConclusionGap, type HarnessArcGoalEditState, type HarnessNextArcStep, type HarnessStoryMode } from '../../components/harness-generation/shared/arcState';
 export * from '../../narrative/storyDirection';
 export {
   includeBundledHarnessSkills,
@@ -99,6 +99,7 @@ export { createHarnessSenStory } from '../../components/harness-generation/share
 export * from '../../narrative/generation';
 export { HarnessReaderSession, type HarnessReaderWriting } from '../../components/harness-generation/development/HarnessReaderSession';
 export { FatePage } from '../../components/harness-generation/development/FatePage';
+export { BlueprintArcPage } from '../../components/harness-generation/development/BlueprintArcPage';
 export { useNextChapterWriter, type NextChapterWriter } from '../../components/harness-generation/development/useNextChapterWriter';
 export {
   CHAPTER_FUNCTION_LABELS,

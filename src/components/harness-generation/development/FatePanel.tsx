@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { ArcPlanView } from '../../arc-goals/development/ArcPlanView';
-import { ARC_LENGTH } from '../../arc-goals/shared/arcGoals';
+import { ARC_LENGTH, createArcChapterPosition } from '../../arc-goals/shared/arcGoals';
 import { CHAPTER_FUNCTIONS, type ChapterFunction } from '../../../narrative/storyDirection';
 import {
   CHAPTER_DIRECTION_TEXT_LIMIT,
@@ -77,9 +77,11 @@ export function FateArcGoalCard({ story, foundation, generatedThrough, actions }
     return (
       <div className={`${panel} border-dashed`} data-testid="fate-arc-goal">
         <p className={eyebrow}>Active Arc Goal</p>
-        <p className="mt-2 text-sm text-neutral-300">{foundation?.plannedArcCount
-          ? `All ${foundation.plannedArcCount} planned arcs are written.`
-          : `No Arc Plan exists yet. The Arc planner creates it before Chapter ${nextChapter} is written.`}</p>
+        <p className="mt-2 text-sm text-neutral-300">{!foundation?.plannedArcCount
+          ? `No Arc Plan exists yet. The Arc planner creates it before Chapter ${nextChapter} is written.`
+          : createArcChapterPosition(nextChapter).arcNumber > foundation.plannedArcCount
+            ? `All ${foundation.plannedArcCount} planned arcs are written.`
+            : `Arc ${createArcChapterPosition(nextChapter).arcNumber}'s goals are planned when it begins, from where the story is, and shown in the World Blueprint for your review before Chapter ${nextChapter} is written.`}</p>
         {actions}
       </div>
     );

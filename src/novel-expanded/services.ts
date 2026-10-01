@@ -6,7 +6,7 @@ import { IndexedDbHarnessGenerationRepository } from '../host/generation/indexed
 import { installOfficialCapaSkillsInMemory } from '../host/generation/capa/officialCapaSkills';
 import { IndexedDbReaderStateRepository } from '../host/reader/readerStateStorage';
 import { createLocalStorySeedRepository } from '../host/story-seed/localStorySeedRepository';
-import { requestArcRoadmapExtension, requestWorldBlueprint } from '../host/story-seed/blueprintGenerationClient';
+import { requestWorldBlueprint } from '../host/story-seed/blueprintGenerationClient';
 
 /**
  * The app's own browser storage. Its stories, reading places and Story Seeds
@@ -30,7 +30,6 @@ export interface NovelExpandedServices {
   installSkills: () => Promise<HarnessSkillManifest[]>;
   /** The World Blueprint server, behind the development access token. */
   requestWorldBlueprint: typeof requestWorldBlueprint;
-  requestArcRoadmapExtension: typeof requestArcRoadmapExtension;
 }
 
 export function createNovelExpandedServices(): NovelExpandedServices {
@@ -42,6 +41,5 @@ export function createNovelExpandedServices(): NovelExpandedServices {
     // Held in memory: the app never writes the Workshop's imported-skill inventory.
     installSkills: () => installOfficialCapaSkillsInMemory(),
     requestWorldBlueprint,
-    requestArcRoadmapExtension,
   };
 }

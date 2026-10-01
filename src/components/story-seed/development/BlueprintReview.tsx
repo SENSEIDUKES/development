@@ -8,7 +8,7 @@ import {
   type SetStateAction,
 } from 'react';
 import { ArrowLeft, ArrowRight, Check, Copy, Download } from 'lucide-react';
-import { describeBlueprintArcRoadmapProblem, reviewWorldFactDetail, type WorldBlueprint, type WorldBlueprintMainCharacter, type WorldFactDetailField } from '@seihouse/sen/story-seed';
+import { describeBlueprintArcPlanProblem, reviewWorldFactDetail, type WorldBlueprint, type WorldBlueprintMainCharacter, type WorldFactDetailField } from '@seihouse/sen/story-seed';
 import { STORY_TAG_LIMIT, type StorySeedInput, type StorySeedStoryRequired, type StorySeedWorldIdentity } from '@seihouse/sen/story-seed';
 import { useStoryCreationRuntime, useStoryCreationStore } from '../../../library/story-seed/runtime';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, CreationButton as ManifestButton } from '@seihouse/sen/presentation';
@@ -23,7 +23,7 @@ import {
   BlueprintWorldSettingSection,
 } from './blueprint/BlueprintReviewSections';
 import { ArcWorkspace } from './workspaces/ArcWorkspace';
-import { BlueprintArcRoadmapSection, type BlueprintArcAction } from './blueprint/BlueprintArcRoadmapSection';
+import { BlueprintArcGoalsSection } from './blueprint/BlueprintArcGoalsSection';
 import { createBlueprintMarkdown } from './blueprint/createBlueprintMarkdown';
 import { getSenLanguageLabel, normalizeChapterWritingStyle, type SenLanguageCode } from '@seihouse/sen/contracts';
 
@@ -36,10 +36,8 @@ interface BlueprintReviewProps {
   onStartStory: () => void;
   onExportSeed: () => void;
   isGenerating: boolean;
-  /** Replaces the whole Blueprint with a fresh one planned at the chosen arc count. */
+  /** Replaces the whole Blueprint with a fresh one for a story of the chosen length. */
   onRegenerateBlueprint?: (arcCount: number) => Promise<void>;
-  /** Plans only the arcs being added, inserted before the final arc. Absent when the host cannot. */
-  onAddArcs?: (arcCount: number) => Promise<void>;
   /** The seed's Story Language, chosen in Story Seed Settings and confirmed here before Manifest. */
   originalLanguage: SenLanguageCode;
 }
@@ -54,7 +52,6 @@ export const BlueprintReview = ({
   onExportSeed,
   isGenerating,
   onRegenerateBlueprint,
-  onAddArcs,
   originalLanguage,
 }: BlueprintReviewProps) => {
   const runtime = useStoryCreationRuntime();
@@ -80,22 +77,19 @@ export const BlueprintReview = ({
     backgroundProfile: blueprint.mainCharacter?.backgroundProfile || blueprint.mcProfile || '',
   }), [blueprint.mainCharacter, blueprint.mcProfile]);
   const copyPayloadRef = useRef({ blueprint, origin, mainCharacter });
-  const roadmapProblem = describeBlueprintArcRoadmapProblem(blueprint);
-  // The arc action in progress owns the busy state, so the Manifest button
-  // never claims to be manifesting while arcs are being planned.
-  const [arcAction, setArcAction] = useState<BlueprintArcAction | null>(null);
-  const runArcAction = useCallback(async (action: BlueprintArcAction, arcCount: number) => {
-    const handler = action === 'add' ? onAddArcs : onRegenerateBlueprint;
-    if (!handler) return;
-    setArcAction(action);
+  const arcProblem = describeBlueprintArcPlanProblem(blueprint);
+  // A regeneration owns the busy state, so the Manifest button never claims
+  // to be manifesting while the Blueprint is being replaced.
+  const [regenerating, setRegenerating] = useState(false);
+  const regenerate = useCallback(async (arcCount: number) => {
+    if (!onRegenerateBlueprint) return;
+    setRegenerating(true);
     try {
-      await handler(arcCount);
+      await onRegenerateBlueprint(arcCount);
     } finally {
-      if (isMountedRef.current) setArcAction(null);
+      if (isMountedRef.current) setRegenerating(false);
     }
-  }, [onAddArcs, onRegenerateBlueprint]);
-  const addArcs = useCallback((arcCount: number) => runArcAction('add', arcCount), [runArcAction]);
-  const regenerate = useCallback((arcCount: number) => runArcAction('regenerate', arcCount), [runArcAction]);
+  }, [onRegenerateBlueprint]);
 
   useEffect(() => {
     copyPayloadRef.current = { blueprint, origin, mainCharacter };
@@ -252,18 +246,18 @@ export const BlueprintReview = ({
           onWorldFactDetailChange={updateWorldFactDetail}
         />
 
-        <ArcWorkspace seed={seed} updateSeed={updateSeed} showActiveArcGoal={false} />
+        <ArcWorkspace seed={seed} updateSeed={updateSeed} showActiveArcGoal={false} showStoryLength={false} />
 
-        <BlueprintArcRoadmapSection
+        <BlueprintArcGoalsSection
           arcPlans={blueprint.arcPlans}
           estimatedArcs={blueprint.estimatedArcs}
+          arcOneScope={blueprint.arcOneScope}
           destinedEnding={seed.world.optional.worldFoundations.destinedEnding}
-          problem={roadmapProblem}
+          problem={arcProblem}
           setBlueprint={setBlueprint}
           updateSeed={updateSeed}
-          arcAction={arcAction}
+          regenerating={regenerating}
           generating={isGenerating}
-          onAddArcs={onAddArcs ? addArcs : undefined}
           onRegenerate={onRegenerateBlueprint ? regenerate : undefined}
         />
 
@@ -310,14 +304,14 @@ export const BlueprintReview = ({
                 icon={SENManifestingIcon}
                 className="sm:w-auto"
                 onClick={onStartStory}
-                disabled={Boolean(roadmapProblem) || Boolean(arcAction)}
-                loading={isGenerating && !arcAction}
+                disabled={Boolean(arcProblem) || regenerating}
+                loading={isGenerating && !regenerating}
                 loadingIndicator={activeAgentId === 'versa' ? (
                   <img src={runtime.authorMarkUrl} className="size-5 animate-pulse object-contain" alt="" aria-hidden="true" />
                 ) : undefined}
                 iconRight={!isGenerating ? <ArrowRight size={16} /> : undefined}
               >
-                {isGenerating && !arcAction
+                {isGenerating && !regenerating
                   ? (activeAgentId === 'versa' ? 'VERSA is writing...' : 'Manifesting...')
                   : 'Manifest Story'}
               </ManifestButton>

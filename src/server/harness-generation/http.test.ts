@@ -45,11 +45,14 @@ const request = (): HarnessGenerationRequest => ({
 
 const environment = { GEMINI_API_KEY: 'test-key' };
 
+/** The arc planner's own context, which every planning request carries. */
+const PLANNING = { arcNumber: 2, plannedArcCount: 2, finalArc: true, previousArcs: [], lookahead: [] };
+
 describe('Harness Generation HTTP boundary', () => {
   it('passes the Router reasoning level to the provider only when the model accepts it', async () => {
     const generate = vi.fn(async (_input: HarnessTextGenerationRequest) => ({ rawProviderResponse: '{}',
       providerReceipt: { provider: 'gemini' as const, model: request().model, generatedAt: '2026-09-23', usage: { source: 'unavailable' as const } } }));
-    const send = (reasoningLevel: string) => handleHarnessGenerationHttp({ method: 'POST', body: { ...request(), operation: 'plan-arc', reasoningLevel } },
+    const send = (reasoningLevel: string) => handleHarnessGenerationHttp({ method: 'POST', body: { ...request(), operation: 'plan-arc', planning: PLANNING, reasoningLevel } },
       { environment, providerFactory: () => ({ provider: 'gemini', model: request().model, generate }) });
     await send('high');
     await send('xhigh');
@@ -60,13 +63,20 @@ describe('Harness Generation HTTP boundary', () => {
     const generate = vi.fn(async (_input: HarnessTextGenerationRequest) => ({ rawProviderResponse: '{}',
       providerReceipt: { provider: 'gemini' as const, model: request().model, generatedAt: '2026-09-13', usage: { source: 'unavailable' as const } } }));
     const original = request();
-    const result = await handleHarnessGenerationHttp({ method: 'POST', body: { ...original, operation: 'plan-arc' } },
+    const result = await handleHarnessGenerationHttp({ method: 'POST', body: { ...original, operation: 'plan-arc', planning: PLANNING } },
       { environment, providerFactory: () => ({ provider: 'gemini', model: original.model, generate }) });
     expect(result.status).toBe(200);
     expect(generate).toHaveBeenCalledOnce();
     const schema = generate.mock.calls[0][0].responseJsonSchema as { properties: Record<string, unknown> };
     expect(schema.properties).toHaveProperty('plan');
+    expect(schema.properties).toHaveProperty('lookahead');
     expect(schema.properties).not.toHaveProperty('prose');
+    // Only the planner receives its planning context.
+    expect(generate.mock.calls[0][0].userPrompt).toContain('"finalArc": true');
+    const missing = await handleHarnessGenerationHttp({ method: 'POST', body: { ...original, operation: 'plan-arc' } },
+      { environment, providerFactory: () => ({ provider: 'gemini', model: original.model, generate }) });
+    expect(missing.status).toBe(400);
+    expect(generate).toHaveBeenCalledOnce();
   });
   it('serializes recovery as evidence extraction, with no chapter-generation response schema', async () => {
     const generate = vi.fn(async (_input: HarnessTextGenerationRequest) => ({ rawProviderResponse: '{"memory":{}}',

@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import { type StorySeedInput } from '@seihouse/sen/story-seed';
-import { createStorySeedExport, parseStorySeedJson, STORY_SEED_SCHEMA_VERSION } from "@seihouse/sen/story-seed";
+import { createStorySeedExport, fillBlankSeedSlots, parseStorySeedJson, STORY_SEED_SCHEMA_VERSION, type GeneratedWorldBlueprint } from "@seihouse/sen/story-seed";
 import { type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { createHarnessFoundationFromStorySeed } from "../../workshop/previews/harness-generation/storySeedHandoff";
 import { handleStorySeedBlueprintHttp } from "./http";
 import { resolveStorySeedBlueprintConfig } from "./config";
-import { BlueprintOutputLimitError, arcRoadmapExtensionArcLimit, blueprintRoadmapArcLimit } from "./generate";
+import { BlueprintOutputLimitError } from "./generate";
 import type {
   WorldBlueprintModelProvider,
   WorldBlueprintModelRequest,
@@ -94,7 +94,7 @@ const canonicalSeed = (): StorySeedInput => ({
   },
 });
 
-const generatedBlueprint = (): Record<string, unknown> & { arcPlans?: unknown[] } => ({
+const generatedBlueprint = (): Record<string, unknown> & { arcOne?: unknown; arcLookahead?: unknown[] } => ({
   title: "Gemini Tried To Rename It",
   logline: "Gemini tried to replace the creator's direction.",
   worldOverview: "A different world.",
@@ -107,20 +107,30 @@ const generatedBlueprint = (): Record<string, unknown> & { arcPlans?: unknown[] 
     personality: "Wrong personality",
     appearance: "Black court robes stitched with a severed seventh sun.",
     backgroundProfile: "A survivor of repeated imperial collapses.",
+    startingIdentity: "A contradictory identity",
+    secretAdvantage: "A contradictory advantage",
+    startingWeakness: "A contradictory weakness",
+    mainFlaw: "A contradictory flaw",
+    moralAlignment: "A contradictory alignment",
+    bio: "A contradictory bio",
   },
-  mcProfile: "A survivor of repeated imperial collapses.",
-  majorFactions: [
-    "The Vermilion Tribunal (Nine Seats) — a completely contradictory generated description",
-    "Regent's Bronze Guard — the palace's private army",
+  // The creator's own cards come back by name with contradictions the Seed never takes; the new ones fill out the cast.
+  characters: [
+    { name: "The witness Minister Sui", role: "contradictory role", age: "99", skinTone: "contradictory", eyeColor: "contradictory", powerType: "contradictory", rankLevel: "contradictory", connectionToMC: "contradictory", bio: "A contradictory generated description" },
+    { name: "Regent Zhao", role: "antagonist", age: "Sixty", skinTone: "Ivory", eyeColor: "Black", powerType: "Decree craft", rankLevel: "Crown Soul", connectionToMC: "Architect of the hearing", bio: "The architect of the hearing." },
   ],
-  initialCharacters: [
-    "The witness Minister Sui (Rain Witness) — a contradictory generated description",
-    "Regent Zhao — the architect of the hearing",
+  factions: [
+    { name: "The Vermilion Tribunal", role: "contradictory", powerLevel: "contradictory", alignment: "contradictory", connectionToMC: "contradictory", description: "A completely contradictory generated description" },
+    { name: "Regent's Bronze Guard", role: "palace army", powerLevel: "regional", alignment: "loyal to the regent", connectionToMC: "guards his hearing", description: "The palace's private army." },
   ],
-  arcPlans: [
-    { arcNumber: 1, goals: [{ id: "arc-1-hearing", text: "Survive the hearing.", chapters: 40 }, { id: "arc-1-regent", text: "Expose the regent's forged decree.", chapters: 60 }] },
-    { arcNumber: 2, goals: [{ id: "arc-2-tribunal", text: "Win a seat on the Vermilion Tribunal.", chapters: 100 }] },
-    { arcNumber: 3, goals: [{ id: "arc-3-oath", text: "Break the seventh oath.", chapters: 50 }, { id: "arc-3-ending", text: "Fulfil the Destined Ending.", chapters: 50 }] },
+  abilities: { startingPowerConcept: "contradictory", uniquePath: "contradictory" },
+  powerSystem: { flavor: "contradictory", knownRanks: "contradictory" },
+  mainOpposition: "Regent Zhao and the forged succession decree",
+  // Arc 1's goals only; the server gives them their identities.
+  arcOne: { goals: [{ text: "Survive the hearing.", chapters: 40 }, { text: "Expose the regent's forged decree.", chapters: 60 }] },
+  arcLookahead: [
+    { arcNumber: 2, direction: "LOOKAHEAD_A2 Win a seat on the Vermilion Tribunal." },
+    { arcNumber: 3, direction: "LOOKAHEAD_A3 Break the seventh oath and reach the crown." },
   ],
   firstArcPromise: "A different first conflict.",
   tropeRules: "Foreknowledge creates costly choices rather than automatic victories.",
@@ -150,7 +160,7 @@ const manifest = async (provider: RecordingProvider) => handleStorySeedBlueprint
 });
 
 describe("protected Story Seed World Blueprint generation", () => {
-  it('requests a complete arc roadmap toward the ending and retains author-owned Hard Pins, Fun Settings and the opening goal', async () => {
+  it('plans only Arc 1 with a hidden look-ahead, and retains author-owned Hard Pins, Fun Settings and the opening goal', async () => {
     const seed = canonicalSeed();
     seed.story.optional.hardPins = [{ text: 'Keep the master alive.' }];
     seed.story.optional.activeArcGoal = { id: 'arc-1-author', text: 'Reach the hearing.', chapters: 100 };
@@ -160,40 +170,43 @@ describe("protected Story Seed World Blueprint generation", () => {
     const blueprint = response.body as WorldBlueprint;
     expect(blueprint.hardPins).toEqual(seed.story.optional.hardPins);
     expect(blueprint.funSettings).toEqual(seed.story.optional.funSettings);
-    // Every arc is saved; Arc 1 opens with the creator's own goal, allocations and later goals intact.
+    // Only Arc 1 is saved; it opens with the creator's own goal, and the server assigns its identities.
     expect(blueprint.estimatedArcs).toBe(3);
-    expect(blueprint.arcPlans?.map(plan => plan.arcNumber)).toEqual([1, 2, 3]);
-    expect(blueprint.arcPlans?.[0].goals).toEqual([
-      { id: 'arc-1-hearing', text: 'Reach the hearing.', chapters: 40 },
-      { id: 'arc-1-regent', text: "Expose the regent's forged decree.", chapters: 60 },
-    ]);
+    expect(blueprint.arcPlans).toEqual([{ arcNumber: 1, goals: [
+      { id: 'arc-1-1', text: 'Reach the hearing.', chapters: 40 },
+      { id: 'arc-1-2', text: "Expose the regent's forged decree.", chapters: 60 },
+    ] }]);
+    expect(blueprint.arcLookahead?.map(entry => entry.arcNumber)).toEqual([2, 3]);
     const schema = provider.requests[0].responseJsonSchema;
-    expect(schema.required).toContain('arcPlans');
-    expect(schema.properties.arcPlans.items.properties.goals).toMatchObject({ minItems: 1, maxItems: 5 });
-    // The default 8,192-token budget bounds the arc count instead of truncating the roadmap.
-    expect(blueprintRoadmapArcLimit(8_192)).toBe(14);
-    expect(schema.properties.estimatedArcs.maximum).toBe(14);
-    expect(schema.properties.arcPlans.maxItems).toBe(14);
-    expect(provider.requests[0].userPrompt).toContain('final arc\'s final goal is the story reaching its Destined Ending');
-    expect(provider.requests[0].userPrompt).toContain('use its text verbatim as Arc 1\'s first goal');
-    expect(provider.requests[0].userPrompt).not.toMatch(/firstMajorConflict|additionalStoryDirection|plotAndTropeSettings/);
+    expect(schema.required).toEqual(expect.arrayContaining(['arcOne', 'arcLookahead', 'estimatedArcs']));
+    expect(schema.required).not.toContain('arcPlans');
+    expect(schema.properties.arcOne.properties.goals).toMatchObject({ minItems: 1, maxItems: 5 });
+    expect(JSON.stringify(schema.properties.arcOne)).not.toContain('"id"');
+    expect(schema.properties.arcLookahead.maxItems).toBe(2);
+    // The story's length is no longer bounded by how many arcs one answer can hold.
+    expect(schema.properties.estimatedArcs).toMatchObject({ minimum: 1, maximum: 100 });
+    const prompt = provider.requests[0].userPrompt;
+    expect(prompt).toContain('Plan only Arc 1, in arcOne');
+    expect(prompt).toContain('Every later arc is planned when the story reaches it');
+    expect(prompt).toContain('Write arcLookahead: private direction for the arcs after Arc 1');
+    expect(prompt).toContain('use its text verbatim as Arc 1\'s first goal');
+    expect(prompt).not.toMatch(/firstMajorConflict|additionalStoryDirection|plotAndTropeSettings|arcPlans/);
   });
 
-  it('fails loudly instead of shortening a roadmap that plans fewer arcs than it counts', async () => {
-    const provider = new RecordingProvider({ ...generatedBlueprint(), arcPlans: generatedBlueprint().arcPlans!.slice(0, 2) } as Record<string, unknown>);
+  it('fails loudly instead of padding an Arc 1 that does not fill its hundred chapters', async () => {
+    const provider = new RecordingProvider({ ...generatedBlueprint(), arcOne: { goals: [{ text: 'Survive the hearing.', chapters: 40 }] } });
     const response = await manifest(provider);
     expect(response.status).toBe(502);
-    expect((response.body as { error: string }).error).toContain('planned 2 of its 3 arcs. Nothing was shortened or saved');
+    expect((response.body as { error: string }).error).toBe('The generated Arc 1 is invalid: Goal allocations must total 100 chapters. Nothing was saved; generate again.');
   });
 
-  it('reports the model output limit when the roadmap is cut off', async () => {
+  it('reports the model output limit when the answer is cut off', async () => {
     const provider: RecordingProvider = Object.assign(new RecordingProvider(), {
       generate: async () => { throw new BlueprintOutputLimitError(8_192); },
     });
     const response = await manifest(provider);
     expect(response.status).toBe(502);
-    expect((response.body as { error: string }).error).toContain("8,192-token output limit before its arc roadmap was complete");
-    expect(blueprintRoadmapArcLimit(32_768)).toBe(100);
+    expect((response.body as { error: string }).error).toContain("8,192-token output limit before it was complete");
   });
 
   it.each([false, true])("never asks for Fate Survival mysteries or threads when Survival is %s", async enabled => {
@@ -248,16 +261,29 @@ describe("protected Story Seed World Blueprint generation", () => {
     expect(blueprint.mcProfile).toBe((generatedBlueprint().mainCharacter as WorldBlueprint["mainCharacter"])?.backgroundProfile);
     expect(blueprint.mcProfile).not.toContain("Secret advantage:");
     expect(blueprint.powerSystemOutline).toBe(generatedBlueprint().powerSystemOutline);
+    // The cast lists show the cast the Seed will hold: the creator's cards exactly, then the new ones.
     expect(blueprint.initialCharacters[0]).toContain("Minister Sui");
     expect(blueprint.initialCharacters[0]).toContain("age: 52");
-    expect(blueprint.initialCharacters.filter(entry => entry.toLocaleLowerCase().includes("minister sui")))
-      .toHaveLength(1);
-    expect(blueprint.initialCharacters).toContain("Regent Zhao — the architect of the hearing");
+    expect(blueprint.initialCharacters.join("\n")).not.toContain("contradictory");
+    expect(blueprint.initialCharacters.filter(entry => entry.toLocaleLowerCase().includes("minister sui"))).toHaveLength(1);
+    expect(blueprint.initialCharacters[1]).toBe("Regent Zhao — age: Sixty; skin tone: Ivory; eyes: Black; role: antagonist; connection to main character: Architect of the hearing; power: Decree craft; rank: Crown Soul; profile: The architect of the hearing.");
     expect(blueprint.majorFactions[0]).toContain("Vermilion Tribunal");
     expect(blueprint.majorFactions[0]).toContain("Nine seats bound by visible blood oaths.");
-    expect(blueprint.majorFactions.filter(entry => entry.toLocaleLowerCase().includes("vermilion tribunal")))
-      .toHaveLength(1);
-    expect(blueprint.majorFactions).toContain("Regent's Bronze Guard — the palace's private army");
+    expect(blueprint.majorFactions.join("\n")).not.toContain("contradictory");
+    expect(blueprint.majorFactions.filter(entry => entry.toLocaleLowerCase().includes("vermilion tribunal"))).toHaveLength(1);
+    expect(blueprint.majorFactions[1]).toContain("Regent's Bronze Guard");
+    // The proposed slot values travel with the reply, for the creator's blanks only.
+    const slots = (response.body as GeneratedWorldBlueprint).generatedSeedSlots!;
+    expect(slots.mainOpposition).toBe("Regent Zhao and the forged succession decree");
+    expect(slots.characters?.map(entry => entry.name)).toEqual(["The witness Minister Sui", "Regent Zhao"]);
+    expect(JSON.stringify(slots)).not.toContain("aliases");
+    const filled = fillBlankSeedSlots(seed, slots).world.optional.worldFoundations;
+    expect(filled.mainCharacter).toEqual({ ...seed.world.optional.worldFoundations.mainCharacter });
+    expect(filled.additionalCharacters![0]).toEqual(seed.world.optional.worldFoundations.additionalCharacters![0]);
+    expect(filled.additionalCharacters![1]).toMatchObject({ name: "Regent Zhao", age: "Sixty", connectionToMC: "Architect of the hearing" });
+    expect(filled.factions![0]).toEqual(seed.world.optional.worldFoundations.factions![0]);
+    expect(filled.abilities).toEqual(seed.world.optional.worldFoundations.abilities);
+    expect(filled.mainOpposition).toBe("Regent Zhao and the forged succession decree");
     expect(blueprint.firstArcPromise).toBe(generatedBlueprint().firstArcPromise);
     expect(blueprint.destinedEnding).toBe(seed.world.optional.worldFoundations.destinedEnding);
   });
@@ -308,7 +334,7 @@ describe("protected Story Seed World Blueprint generation", () => {
 
     expect(response.status).toBe(502);
     expect(response.body).toEqual({
-      error: "Gemini could not produce a complete World Blueprint. No Story Seed data was changed; please retry.",
+      error: "The model could not produce a complete World Blueprint. No Story Seed data was changed; please retry.",
     });
     expect(onError).toHaveBeenCalledOnce();
     expect(onError.mock.calls[0][0]).toEqual(new Error(
@@ -380,90 +406,66 @@ const post = (body: Record<string, unknown>, provider: WorldBlueprintModelProvid
 
 const errorOf = (response: { body: unknown }) => (response.body as { error: string }).error;
 
-describe("Blueprint arc count and added arcs", () => {
-  it("regenerates with the arc count the author chose, as an exact schema and prompt instruction", async () => {
+describe("Blueprint story length", () => {
+  /** The canonical Seed with the creator's Story Length set on its ARC page. */
+  const seedOfLength = (arcCount: unknown): StorySeedInput => {
+    const seed = canonicalSeed();
+    return { ...seed, story: { ...seed.story, optional: { ...seed.story.optional, arcCount: arcCount as number } } };
+  };
+
+  it("plans for the Seed's Story Length, as an exact schema and prompt instruction, still planning only Arc 1", async () => {
     const provider = new RecordingProvider();
-    const response = await post({ storySeed: canonicalSeed(), arcCount: 3 }, provider);
+    const response = await post({ storySeed: seedOfLength(3) }, provider);
     expect(response.status).toBe(200);
-    expect((response.body as WorldBlueprint).arcPlans).toHaveLength(3);
+    expect((response.body as WorldBlueprint).arcPlans).toHaveLength(1);
+    expect((response.body as WorldBlueprint).arcOneScope).toBe("opening");
     const schema = provider.requests[0].responseJsonSchema;
     expect(schema.properties.estimatedArcs).toMatchObject({ minimum: 3, maximum: 3 });
-    expect(schema.properties.arcPlans).toMatchObject({ minItems: 3, maxItems: 3 });
-    expect(provider.requests[0].userPrompt).toContain("The author chose the story's length: estimatedArcs is exactly 3.");
+    expect(provider.requests[0].userPrompt).toContain("The creator chose the story's length (story.optional.arcCount): estimatedArcs is exactly 3.");
     expect(provider.requests[0].userPrompt).not.toContain("a realistic estimatedArcs");
   });
 
-  it("refuses a chosen arc count the output budget cannot hold, before calling the model", async () => {
+  it("lets the model choose a realistic length when the Seed leaves it blank", async () => {
     const provider = new RecordingProvider();
-    const response = await post({ storySeed: canonicalSeed(), arcCount: 20 }, provider);
-    expect(response.status).toBe(400);
-    expect(errorOf(response)).toContain("at most 14 arcs within the model's 8,192-token output limit, and 20 were requested. Nothing was generated.");
-    expect(provider.requests).toHaveLength(0);
-    expect(errorOf(await post({ storySeed: canonicalSeed(), arcCount: 2.5 }, provider))).toContain("whole number from 1 to 100");
-  });
-
-  it("fails loudly when the model plans a different length than the author chose", async () => {
-    const response = await post({ storySeed: canonicalSeed(), arcCount: 4 }, new RecordingProvider());
-    expect(response.status).toBe(502);
-    expect(errorOf(response)).toContain("planned 3 arcs instead of the 4 requested. Nothing was shortened or saved");
-  });
-
-  const reviewed = async () => (await manifest(new RecordingProvider())).body as WorldBlueprint;
-  const addedArcs = (...ids: string[][]) => ({ arcPlans: ids.map((goalIds, index) => ({
-    arcNumber: 3 + index,
-    goals: goalIds.map((id, goalIndex) => ({ id, text: `New goal ${id}.`, chapters: goalIndex ? 1 : 101 - goalIds.length })),
-  })) });
-
-  it("plans only the new arcs, with the saved roadmap as context, and returns them numbered before the final arc", async () => {
-    const blueprint = await reviewed();
-    // The model reuses a saved goal identity; the new goal is given a unique one.
-    const provider = new RecordingProvider(addedArcs(["arc-3-oath", "arc-3-siege"], ["arc-4-return"]));
-    const response = await post({ operation: "extend-arc-roadmap", storySeed: canonicalSeed(), blueprint, arcCount: 5 }, provider);
+    const response = await post({ storySeed: canonicalSeed() }, provider);
     expect(response.status).toBe(200);
-    const added = (response.body as { addedArcPlans: Array<{ arcNumber: number; goals: Array<{ id: string }> }> }).addedArcPlans;
-    expect(added.map(plan => plan.arcNumber)).toEqual([3, 4]);
-    expect(added[0].goals.map(goal => goal.id)).toEqual(["arc-3-oath-2", "arc-3-siege"]);
-    const request = provider.requests[0];
-    expect(request.systemInstruction.startsWith("You are an elite Eastern fantasy author lengthening a novel's saved arc roadmap.")).toBe(true);
-    expect(request.systemInstruction).toContain("plan only the new arcs the author asked for, and never restate, rewrite, renumber, or contradict a saved arc");
-    expect(request.userPrompt).toContain("from 3 to 5 arcs. Plan only the 2 new arcs.");
-    expect(request.userPrompt).toContain("between Arc 2 and the final arc");
-    expect(request.userPrompt).toContain("the current final arc becomes Arc 5 and keeps its goals unchanged");
-    expect(request.userPrompt).toContain("[arc-2-tribunal] Win a seat on the Vermilion Tribunal. (100 chapters)");
-    expect(request.userPrompt).toContain("Arc 3 (final arc; reaches the Destined Ending):");
-    expect(request.userPrompt).toContain("lead into the final arc's first goal, \"Break the seventh oath.\"");
-    expect(request.userPrompt).toContain("Destined Ending (the fixed destination): Jin Rui must accept or destroy the seventh crown.");
-    const schema = request.responseJsonSchema as unknown as { required: string[]; properties: { arcPlans: { minItems: number; maxItems: number } } };
-    expect(schema.required).toEqual(["arcPlans"]);
-    expect(schema.properties.arcPlans).toMatchObject({ minItems: 2, maxItems: 2 });
+    expect(provider.requests[0].responseJsonSchema.properties.estimatedArcs).toMatchObject({ minimum: 1, maximum: 100 });
+    expect(provider.requests[0].userPrompt).toContain("a realistic estimatedArcs between 1 and 100");
   });
 
-  it("adds nothing when the model plans the wrong number of arcs or invalid ones", async () => {
-    const blueprint = await reviewed();
-    const short = await post({ operation: "extend-arc-roadmap", storySeed: canonicalSeed(), blueprint, arcCount: 5 }, new RecordingProvider(addedArcs(["arc-3-only"])));
-    expect(short.status).toBe(502);
-    expect(errorOf(short)).toBe("The model planned 1 of the 2 new arcs. Nothing was added; try again.");
-    const invalid = await post({ operation: "extend-arc-roadmap", storySeed: canonicalSeed(), blueprint, arcCount: 4 }, new RecordingProvider({ arcPlans: [{ arcNumber: 3, goals: [{ id: "arc-3-short", text: "Too short.", chapters: 40 }] }] }));
-    expect(invalid.status).toBe(502);
-    expect(errorOf(invalid)).toContain("The new arcs are invalid: Goal allocations must total 100 chapters. Nothing was added");
+  it("accepts any length from 1 to 100, refuses anything else before any model call, and takes the length only from the Seed", async () => {
+    const provider = new RecordingProvider({ ...generatedBlueprint(), estimatedArcs: 60 });
+    const response = await post({ storySeed: seedOfLength(60) }, provider);
+    expect(response.status).toBe(200);
+    expect((response.body as WorldBlueprint).estimatedArcs).toBe(60);
+    for (const invalid of [2.5, 0, 101, "12"]) {
+      const refused = await post({ storySeed: seedOfLength(invalid) }, provider);
+      expect(refused.status).toBe(400);
+      expect(errorOf(refused)).toContain("Story Length must be a whole number of arcs from 1 to 100.");
+    }
+    const outside = await post({ storySeed: canonicalSeed(), arcCount: 5 }, provider);
+    expect(outside.status).toBe(400);
+    expect(errorOf(outside)).toContain("Story Length (story.optional.arcCount)");
+    expect(provider.requests).toHaveLength(1);
   });
 
-  it("refuses requests that would re-plan a saved arc or exceed one call's budget, without calling the model", async () => {
-    const blueprint = await reviewed();
-    const provider = new RecordingProvider(addedArcs(["unused"]));
-    const oneArc = { ...blueprint, estimatedArcs: 1, arcPlans: blueprint.arcPlans!.slice(0, 1) };
-    const single = await post({ operation: "extend-arc-roadmap", storySeed: canonicalSeed(), blueprint: oneArc, arcCount: 3 }, provider);
-    expect(single.status).toBe(400);
-    expect(errorOf(single)).toContain("plans the whole story as one arc");
-    const notLonger = await post({ operation: "extend-arc-roadmap", storySeed: canonicalSeed(), blueprint, arcCount: 3 }, provider);
-    expect(notLonger.status).toBe(400);
-    expect(errorOf(notLonger)).toContain("already plans 3 arcs");
-    const tooMany = await post({ operation: "extend-arc-roadmap", storySeed: canonicalSeed(), blueprint, arcCount: 18 }, provider, { STORY_SEED_BLUEPRINT_MAX_OUTPUT_TOKENS: "4096" });
-    expect(tooMany.status).toBe(400);
-    expect(errorOf(tooMany)).toContain("One request can add at most 14 arcs within the model's 4,096-token output limit, and 15 were requested. Nothing was generated.");
+  it("fails loudly when the model answers for a different length than the creator chose", async () => {
+    const response = await post({ storySeed: seedOfLength(4) }, new RecordingProvider());
+    expect(response.status).toBe(502);
+    expect(errorOf(response)).toContain("was not planned for the 4 arcs requested. Nothing was saved");
+  });
+
+  it("keeps the look-ahead within the length and empty for a one-arc story, and offers no way to add arcs", async () => {
+    const oneArc = await post({ storySeed: seedOfLength(1) }, new RecordingProvider({ ...generatedBlueprint(), estimatedArcs: 1 }));
+    expect(oneArc.status).toBe(200);
+    expect((oneArc.body as WorldBlueprint).estimatedArcs).toBe(1);
+    expect((oneArc.body as WorldBlueprint).arcOneScope).toBe("whole-story");
+    expect((oneArc.body as WorldBlueprint).arcLookahead).toBeUndefined();
+    const provider = new RecordingProvider();
+    const extension = await post({ operation: "extend-arc-roadmap", storySeed: canonicalSeed() }, provider);
+    expect(extension.status).toBe(400);
+    expect(errorOf(extension)).toBe("Unknown Blueprint operation.");
     expect(provider.requests).toHaveLength(0);
-    expect(arcRoadmapExtensionArcLimit(8_192)).toBe(30);
-    expect(errorOf(await post({ operation: "rewrite-everything", storySeed: canonicalSeed() }, provider))).toBe("Unknown Blueprint operation.");
   });
 });
 
@@ -498,8 +500,10 @@ describe("Cleaned-up Blueprint instructions", () => {
     expect(systemInstruction).toContain("Interpret the Story Seed's genre, tags, and storytelling tradition through that Eastern fantasy frame, as adaptable lenses rather than mandatory tropes. Never fill open creative space with Western fantasy defaults unless the Story Seed asks for them.");
     for (const genreList of ["Wuxia", "Xuanhuan", "LitRPG", "tower climbing", "cultivation realms"]) expect(systemInstruction).not.toContain(genreList);
     expect(userPrompt).toContain("- Generate a strong logline.\n");
-    expect(userPrompt).toContain("Begin every entry with its name: Name (role) — description.");
-    expect(userPrompt).toContain("- mcProfile repeats mainCharacter.backgroundProfile exactly.");
+    expect(userPrompt).toContain("- Fill every Story Seed slot. Where the creator already wrote a slot, repeat their value exactly; only blank slots are yours to fill. Never write aliases or Hard Pins.");
+    expect(userPrompt).toContain("never the main character");
+    expect(userPrompt).toContain("Keep every slot to one short, concrete fact");
+    expect(userPrompt).not.toMatch(/mcProfile|Name \(role\) — description/);
   });
 
   it("asks for added detail only where the creator wrote the world fact", async () => {
@@ -518,17 +522,15 @@ describe("Cleaned-up Blueprint instructions", () => {
     expect(partial.userPrompt).toContain("- The creator already wrote the society (worldIdentity.societyStructure); that wording stays the fact. In societyStructure, write only");
   });
 
-  it("keeps the strict output form and needs no more output, so the arc limit is unchanged", async () => {
+  it("keeps the strict output form", async () => {
     const { schema } = await promptFor(canonicalSeed());
     expect(schema.additionalProperties).toBe(false);
     expect([...schema.required].sort()).toEqual([
-      "arcPlans", "destinedEnding", "estimatedArcs", "firstArcPromise", "initialCharacters", "logline", "mainCharacter",
-      "majorFactions", "mcProfile", "powerSystemOutline", "societyStructure", "startingLocation",
+      "abilities", "arcLookahead", "arcOne", "characters", "destinedEnding", "estimatedArcs", "factions", "firstArcPromise", "logline",
+      "mainCharacter", "mainOpposition", "powerSystem", "powerSystemOutline", "societyStructure", "startingLocation",
       "styleBible", "title", "tropeRules", "worldOverview",
     ]);
     expect(Object.keys(schema.properties)).not.toContain("worldOverviewDetail");
-    expect(blueprintRoadmapArcLimit(8_192)).toBe(14);
-    expect(schema.properties.arcPlans.maxItems).toBe(14);
   });
 
   it("returns the added detail beside the author's facts, never in their place", async () => {

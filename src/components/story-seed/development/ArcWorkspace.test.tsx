@@ -50,7 +50,7 @@ afterEach(() => { act(() => root.unmount()); container.remove(); resetWorkshopSt
 describe('Story Seed Arc and World ownership', () => {
   it('renders the approved order, three optional pins, and one goal without a full plan editor', () => {
     render(initial());
-    const nodes = ['label[for="destined-ending-input"]', '#arc-hard-pins-title', 'label[for="active-arc-goal-input"]', '#arc-fun-settings-title'].map(selector => container.querySelector(selector)!);
+    const nodes = ['label[for="destined-ending-input"]', 'label[for="story-length-input"]', '#arc-hard-pins-title', 'label[for="active-arc-goal-input"]', '#arc-fun-settings-title'].map(selector => container.querySelector(selector)!);
     nodes.forEach(node => expect(node).not.toBeNull());
     nodes.slice(1).forEach((node, i) => expect(nodes[i].compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy());
     expect(container.querySelectorAll('input[id^="hard-pin-"]')).toHaveLength(3);
@@ -71,26 +71,26 @@ describe('Story Seed Arc and World ownership', () => {
     render(current, 'world');
     fill('make-it-work-instruction-input', 'The mountain walks. Make it believable.');
     fill('main-opposition-input', 'The gate keeper.');
-    // A draft without a generated roadmap cannot begin a story.
+    // A draft without a generated Arc 1 cannot begin a story.
     render(current, 'blueprint');
     expect(button('Manifest Story')?.disabled).toBe(true);
-    expect(container.textContent).toContain('plan every arc');
+    expect(container.textContent).toContain('Generate the Blueprint to plan Arc 1');
     expect(container.querySelector('#active-arc-goal-input')).toBeNull();
-    // A generated two-arc roadmap: review and edit it before the story begins.
-    render(current, 'blueprint', reconcileStorySeedBlueprint(current, { ...createBlueprintDraftFromSeed(current), arcPlans: roadmap, estimatedArcs: 2 }).blueprint);
+    // A generated Blueprint for a two-arc story plans Arc 1: review and edit it before the story begins.
+    render(current, 'blueprint', reconcileStorySeedBlueprint(current, { ...createBlueprintDraftFromSeed(current), arcPlans: [roadmap[0]], estimatedArcs: 2 }).blueprint);
+    expect(container.textContent).not.toContain('Arc 2');
     fill('hard-pin-2', 'Rebuild the temple.');
     act(() => button('Edit Arc 1 goals')!.click());
-    const openingGoal = container.querySelector<HTMLInputElement>('[data-testid="blueprint-arc-roadmap"] fieldset input')!;
+    const openingGoal = container.querySelector<HTMLInputElement>('[data-testid="blueprint-arc-goals"] fieldset input')!;
     act(() => {
       Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(openingGoal, 'Open the mountain gate.');
       openingGoal.dispatchEvent(new Event('input', { bubbles: true }));
     });
     await act(async () => { button('Save goals')!.click(); });
     expect(blueprint.hardPins).toEqual(current.story.optional.hardPins);
-    // Arc 1's opening goal writes through to the Seed; its allocation and the rest of the route stay saved.
+    // Arc 1's opening goal writes through to the Seed; its allocation and its other goals stay saved.
     expect(current.story.optional.activeArcGoal).toEqual({ id: 'arc-1-gate', text: 'Open the mountain gate.', chapters: 100 });
-    expect(blueprint.arcPlans?.[0].goals).toEqual([{ id: 'arc-1-gate', text: 'Open the mountain gate.', chapters: 60 }, roadmap[0].goals[1]]);
-    expect(blueprint.arcPlans?.[1]).toEqual(roadmap[1]);
+    expect(blueprint.arcPlans).toEqual([{ arcNumber: 1, goals: [{ id: 'arc-1-gate', text: 'Open the mountain gate.', chapters: 60 }, roadmap[0].goals[1]] }]);
     expect(blueprint.funSettings?.faceSlap).toBe('high');
     expect(button('Manifest Story')?.disabled).toBe(false);
     const saved = await workshopStorySeedStorage.create('arc-test', current, blueprint, 'ja');
@@ -170,5 +170,51 @@ describe('Story Seed Arc and World ownership', () => {
     expect(blueprint.initialCharacters).toEqual(['Han Li']);
     expect(reconcileStorySeedBlueprint(current, blueprint).seed.world.optional.worldFoundations.additionalCharacters?.map(entry => entry.name))
       .toEqual(['Han Li']);
+  });
+});
+
+describe('Story Length on the ARC page', () => {
+  const lengthText = () => container.querySelector('[data-testid="story-length-summary"]')?.textContent ?? '';
+
+  it('saves a whole number of arcs to the Seed, keeps the last length while the text is not one, and clears to let the Blueprint suggest one', () => {
+    render(initial());
+    expect(current.story.optional.arcCount).toBeUndefined();
+    fill('story-length-input', '11');
+    expect(current.story.optional.arcCount).toBe(11);
+    expect(lengthText()).toBe('11 arcs · 1,100 chapters. Arc 11, the final arc, reaches the Destined Ending.');
+    for (const notALength of ['0', '101', '2.5']) {
+      fill('story-length-input', notALength);
+      expect(current.story.optional.arcCount).toBe(11);
+      expect(container.textContent).toContain('Choose a whole number of arcs from 1 to 100.');
+    }
+    fill('story-length-input', '1');
+    expect(lengthText()).toBe('1 arc · 100 chapters. Arc 1 is the whole story and reaches the Destined Ending.');
+    fill('story-length-input', '');
+    expect(current.story.optional).not.toHaveProperty('arcCount');
+    expect(lengthText()).toBe('');
+  });
+
+  it('is the length the Blueprint is generated for and follows, travels with exports, and is never filled from a Blueprint', () => {
+    render(initial());
+    fill('story-length-input', '12');
+    // The Blueprint request carries the length in the Seed itself.
+    expect(buildBlueprintGenerationPayload(current).storySeed.story.optional.arcCount).toBe(12);
+    // A Blueprint, generated or older, takes the Seed's length.
+    expect(blueprint.estimatedArcs).toBe(12);
+    const generated = reconcileStorySeedBlueprint(current, { ...createBlueprintDraftFromSeed(current), arcPlans: [roadmap[0]], estimatedArcs: 5 });
+    expect(generated.blueprint.estimatedArcs).toBe(12);
+    const [restored] = parseStorySeedJson(JSON.stringify(createStorySeedExport(generated.seed, generated.blueprint)));
+    expect(restored.seed.story.optional.arcCount).toBe(12);
+    // A blank Story Length stays blank: the Blueprint keeps its own suggestion.
+    const blank = reconcileStorySeedBlueprint(initial(), { ...createBlueprintDraftFromSeed(initial()), arcPlans: [roadmap[0]], estimatedArcs: 7 });
+    expect(blank.seed.story.optional.arcCount).toBeUndefined();
+    expect(blank.blueprint.estimatedArcs).toBe(7);
+  });
+
+  it('is edited beside Arc 1\'s goals in the Blueprint review, never twice', () => {
+    const seed = { ...initial(), story: { ...initial().story, optional: { ...initial().story.optional, arcCount: 6 } } };
+    render(seed, 'blueprint', reconcileStorySeedBlueprint(seed, { ...createBlueprintDraftFromSeed(seed), arcPlans: [roadmap[0]] }).blueprint);
+    expect(container.querySelector('#story-length-input')).toBeNull();
+    expect(container.querySelector<HTMLInputElement>('#blueprint-arc-count-input')!.value).toBe('6');
   });
 });

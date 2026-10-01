@@ -1,56 +1,36 @@
-import { MAX_ROADMAP_ARCS, arcRoadmapSchema, insertArcsBeforeFinal, validateArcRoadmap, type ArcPlan } from '@seihouse/sen/arc-goals';
+import { ARC_LOOKAHEAD_SCHEMA, ARC_PLAN_DRAFT_SCHEMA, MAX_ROADMAP_ARCS, arcPlanFromDraft } from '@seihouse/sen/arc-goals';
 import { createModelRouter, ModelRouterError, type GenerationResult } from '@seihouse/library/model-router-server';
 import {
-  buildArcRoadmapExtensionPayload,
+  SEED_CHARACTER_LIMIT,
+  SEED_CHARACTER_SLOT_FIELDS,
+  SEED_FACTION_LIMIT,
+  SEED_FACTION_SLOT_FIELDS,
+  SEED_MAIN_CHARACTER_SLOT_FIELDS,
   buildBlueprintGenerationPayload,
   finalizeGeneratedWorldBlueprint,
-  validateRequestedArcCount,
-  type ArcRoadmapExtensionPayload,
+  type GeneratedWorldBlueprint,
+  validateBlueprintArcPlan,
   type BlueprintGenerationPayload,
+  type StorySeedInput,
 } from '@seihouse/sen/story-seed';
 import { type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { type ResolvedStorySeedBlueprintConfig } from "./config";
 import { DEVELOPMENT_OPENROUTER_ATTRIBUTION } from '../model-router/openRouter';
 import {
-  ARC_ROADMAP_EXTENSION_SYSTEM_PROMPT,
-  buildArcRoadmapExtensionPrompt,
   buildWorldBlueprintPrompt,
   WORLD_BLUEPRINT_SYSTEM_PROMPT,
 } from "./prompt";
 
-/** Output tokens reserved for every Blueprint field other than the arc roadmap. */
-export const BLUEPRINT_PROSE_OUTPUT_TOKENS = 4_500;
-/** Output tokens one arc plan may need: up to five one-line goals with identities and allocations. */
-export const ROADMAP_OUTPUT_TOKENS_PER_ARC = 250;
+const textSlots = (fields: readonly string[]) => Object.fromEntries(fields.map(field => [field, { type: "string" }]));
 
 /**
- * How many arcs one Blueprint call can plan within its output budget. The
- * roadmap is generated whole in the same call; this limit bounds the arc count
- * the model may choose instead of letting a long roadmap be cut off.
+ * The Blueprint response schema. It has a place for every Story Seed slot
+ * (filled only where the creator left one blank) and it plans Arc 1 only (`arcOne`: wording and
+ * chapters; the identities are assigned on the server) and a hidden look-ahead
+ * for the next arcs. `exactArcs` is the Seed's Story Length, when the creator
+ * chose one; without it the model picks a realistic length.
  */
-export const blueprintRoadmapArcLimit = (maxOutputTokens: number): number => Math.max(1, Math.min(
-  MAX_ROADMAP_ARCS,
-  Math.floor((maxOutputTokens - BLUEPRINT_PROSE_OUTPUT_TOKENS) / ROADMAP_OUTPUT_TOKENS_PER_ARC),
-));
-
-/** Output tokens reserved for the framing around an arc extension's new plans. */
-export const ARC_EXTENSION_FRAMING_OUTPUT_TOKENS = 500;
-
-/**
- * How many arcs one extension call can add within its output budget. Only the
- * new plans are generated, so one call adds more arcs than a whole Blueprint
- * can plan, and a roadmap can grow past that limit in steps.
- */
-export const arcRoadmapExtensionArcLimit = (maxOutputTokens: number): number => Math.max(1, Math.min(
-  MAX_ROADMAP_ARCS,
-  Math.floor((maxOutputTokens - ARC_EXTENSION_FRAMING_OUTPUT_TOKENS) / ROADMAP_OUTPUT_TOKENS_PER_ARC),
-));
-
-/**
- * The Blueprint response schema. `exactArcs` is the arc count the author
- * chose; without it the model picks a length up to `maxArcs`.
- */
-export const worldBlueprintResponseSchema = (maxArcs: number, exactArcs?: number) => ({
+export const worldBlueprintResponseSchema = (exactArcs?: number) => ({
   type: "object",
   additionalProperties: false,
   required: [
@@ -61,11 +41,14 @@ export const worldBlueprintResponseSchema = (maxArcs: number, exactArcs?: number
     "societyStructure",
     "powerSystemOutline",
     "mainCharacter",
-    "mcProfile",
-    "majorFactions",
-    "initialCharacters",
+    "characters",
+    "factions",
+    "abilities",
+    "powerSystem",
+    "mainOpposition",
     "firstArcPromise",
-    "arcPlans",
+    "arcOne",
+    "arcLookahead",
     "tropeRules",
     "styleBible",
     "destinedEnding",
@@ -81,36 +64,39 @@ export const worldBlueprintResponseSchema = (maxArcs: number, exactArcs?: number
     mainCharacter: {
       type: "object",
       additionalProperties: false,
-      required: ["name", "age", "personality", "appearance", "backgroundProfile"],
+      required: ["name", "age", "personality", "appearance", "backgroundProfile", ...SEED_MAIN_CHARACTER_SLOT_FIELDS],
       properties: {
         name: { type: "string", minLength: 1 },
         age: { type: "string", minLength: 1 },
         personality: { type: "string", minLength: 1 },
         appearance: { type: "string", minLength: 1 },
         backgroundProfile: { type: "string", minLength: 1 },
+        ...textSlots(SEED_MAIN_CHARACTER_SLOT_FIELDS),
       },
     },
-    mcProfile: { type: "string", minLength: 1 },
-    majorFactions: { type: "array", minItems: 1, items: { type: "string", minLength: 1 } },
-    initialCharacters: { type: "array", minItems: 1, items: { type: "string", minLength: 1 } },
-    arcPlans: arcRoadmapSchema(exactArcs ?? maxArcs, exactArcs ?? 1),
+    // Side characters and factions as cards: the creator's own by name first, then supporting ones.
+    characters: { type: "array", minItems: 1, maxItems: SEED_CHARACTER_LIMIT, items: {
+      type: "object", additionalProperties: false, required: ["name", ...SEED_CHARACTER_SLOT_FIELDS],
+      properties: { name: { type: "string", minLength: 1 }, ...textSlots(SEED_CHARACTER_SLOT_FIELDS) },
+    } },
+    factions: { type: "array", minItems: 1, maxItems: SEED_FACTION_LIMIT, items: {
+      type: "object", additionalProperties: false, required: ["name", ...SEED_FACTION_SLOT_FIELDS],
+      properties: { name: { type: "string", minLength: 1 }, ...textSlots(SEED_FACTION_SLOT_FIELDS) },
+    } },
+    abilities: { type: "object", additionalProperties: false, required: ["startingPowerConcept", "uniquePath"], properties: textSlots(["startingPowerConcept", "uniquePath"]) },
+    powerSystem: { type: "object", additionalProperties: false, required: ["flavor", "knownRanks"], properties: textSlots(["flavor", "knownRanks"]) },
+    mainOpposition: { type: "string" },
+    arcOne: ARC_PLAN_DRAFT_SCHEMA,
+    arcLookahead: ARC_LOOKAHEAD_SCHEMA,
     firstArcPromise: { type: "string", minLength: 1 },
     tropeRules: { type: "string", minLength: 1 },
     styleBible: { type: "string", minLength: 1 },
     destinedEnding: { type: "string", minLength: 1 },
-    estimatedArcs: { type: "integer", minimum: exactArcs ?? 1, maximum: exactArcs ?? maxArcs },
+    estimatedArcs: { type: "integer", minimum: exactArcs ?? 1, maximum: exactArcs ?? MAX_ROADMAP_ARCS },
   },
 }) as const;
 
-export const WORLD_BLUEPRINT_RESPONSE_SCHEMA = worldBlueprintResponseSchema(MAX_ROADMAP_ARCS);
-
-/** The response schema for an arc extension: exactly the arcs being added, nothing else. */
-export const arcRoadmapExtensionResponseSchema = (addedArcs: number) => ({
-  type: "object",
-  additionalProperties: false,
-  required: ["arcPlans"],
-  properties: { arcPlans: arcRoadmapSchema(addedArcs, addedArcs) },
-}) as const;
+export const WORLD_BLUEPRINT_RESPONSE_SCHEMA = worldBlueprintResponseSchema();
 
 /** One structured call to the Blueprint model: a whole Blueprint, or only the arcs being added. */
 export interface BlueprintModelRequest<Schema extends object = ReturnType<typeof worldBlueprintResponseSchema>> {
@@ -177,10 +163,10 @@ export class OpenRouterWorldBlueprintProvider implements WorldBlueprintModelProv
   }
 }
 
-/** The model stopped at its output limit: the Blueprint and its arc roadmap are incomplete. */
+/** The model stopped at its output limit: the Blueprint is incomplete. */
 export class BlueprintOutputLimitError extends Error {
   constructor(maxOutputTokens: number) {
-    super(`The Blueprint reached the model's ${maxOutputTokens.toLocaleString("en-US")}-token output limit before its arc roadmap was complete. Nothing was shortened or saved. Raise STORY_SEED_BLUEPRINT_MAX_OUTPUT_TOKENS (up to 32,768) or generate again.`);
+    super(`The Blueprint reached the model's ${maxOutputTokens.toLocaleString("en-US")}-token output limit before it was complete. Nothing was shortened or saved. Raise STORY_SEED_BLUEPRINT_MAX_OUTPUT_TOKENS (up to 32,768) or generate again.`);
     this.name = "BlueprintOutputLimitError";
   }
 }
@@ -193,7 +179,7 @@ export class BlueprintRequestError extends Error {
   }
 }
 
-/** The model's arc plans are not the roadmap that was asked for. Nothing is shortened, padded or saved. */
+/** The model's Arc 1 or story length is not what was asked for. Nothing is shortened, padded or saved. */
 export class BlueprintRoadmapError extends Error {
   constructor(message: string) {
     super(message);
@@ -201,7 +187,6 @@ export class BlueprintRoadmapError extends Error {
   }
 }
 
-const outputLimitLabel = (maxOutputTokens: number) => `${maxOutputTokens.toLocaleString("en-US")}-token`;
 
 /** Route the configured Blueprint model to its provider through the Model Router. */
 export const createWorldBlueprintProvider = (
@@ -256,79 +241,39 @@ export const generateWorldBlueprint = async (
   payload: BlueprintGenerationPayload,
   config: ResolvedStorySeedBlueprintConfig,
   provider: WorldBlueprintModelProvider,
-): Promise<WorldBlueprint> => {
-  let arcCount: number | undefined;
-  try { arcCount = payload.arcCount === undefined ? undefined : validateRequestedArcCount(payload.arcCount); }
-  catch (error) { throw new BlueprintRequestError(error instanceof Error ? error.message : "The arc count is invalid."); }
-  const { storySeed } = buildBlueprintGenerationPayload(payload.storySeed);
-  const maxArcs = blueprintRoadmapArcLimit(config.maxOutputTokens);
-  // A chosen length the output budget cannot hold is refused before any call,
-  // never generated and cut short.
-  if (arcCount !== undefined && arcCount > maxArcs) {
-    throw new BlueprintRequestError(`One Blueprint generation can plan at most ${maxArcs} arcs within the model's ${outputLimitLabel(config.maxOutputTokens)} output limit, and ${arcCount} were requested. Nothing was generated. Regenerate with ${maxArcs} or fewer arcs and add the rest with Add arcs, or raise STORY_SEED_BLUEPRINT_MAX_OUTPUT_TOKENS (up to 32,768).`);
-  }
+): Promise<GeneratedWorldBlueprint> => {
+  let storySeed: StorySeedInput;
+  try { ({ storySeed } = buildBlueprintGenerationPayload(payload.storySeed)); }
+  catch (error) { throw new BlueprintRequestError(error instanceof Error ? error.message : "The Story Seed is invalid."); }
+  // The creator's Story Length, when set, is the exact length Arc 1 is planned for.
+  const arcCount = storySeed.story.optional.arcCount;
   const generated = await provider.generate({
     systemInstruction: WORLD_BLUEPRINT_SYSTEM_PROMPT,
-    userPrompt: buildWorldBlueprintPrompt(storySeed, maxArcs, arcCount),
-    responseJsonSchema: worldBlueprintResponseSchema(maxArcs, arcCount),
+    userPrompt: buildWorldBlueprintPrompt(storySeed),
+    responseJsonSchema: worldBlueprintResponseSchema(arcCount),
     temperature: config.temperature,
     maxOutputTokens: config.maxOutputTokens,
     timeoutMs: config.timeoutMs,
   });
-  const blueprint = finalizeGeneratedWorldBlueprint(generated, storySeed);
+  // Arc 1 arrives as wording and chapters; the server gives its goals their
+  // identities. A missing or malformed Arc 1 fails loudly, never padded.
+  const answer = (generated && typeof generated === "object" ? generated : {}) as Record<string, unknown>;
+  const reason = (error: unknown) => (error instanceof Error ? error.message : "unknown problem").replace(/\.$/, "");
+  let arcOne;
+  let arcOneProblem: string | undefined;
+  try { arcOne = arcPlanFromDraft(answer.arcOne, 1); }
+  catch (error) { arcOneProblem = reason(error); }
+  const { arcOne: _draft, ...rest } = answer;
+  const blueprint = finalizeGeneratedWorldBlueprint({ ...rest, arcPlans: arcOne ? [arcOne] : [] }, storySeed);
   assertCompleteGeneratedBlueprint(blueprint);
-  if (arcCount !== undefined && blueprint.estimatedArcs !== arcCount) {
-    throw new BlueprintRoadmapError(`The generated Blueprint planned ${blueprint.estimatedArcs} arcs instead of the ${arcCount} requested. Nothing was shortened or saved; generate again.`);
+  if (arcOneProblem) throw new BlueprintRoadmapError(`The generated Arc 1 is invalid: ${arcOneProblem}. Nothing was saved; generate again.`);
+  // The Blueprint takes the Seed's length, so the answer itself must have planned for it.
+  if (arcCount !== undefined && answer.estimatedArcs !== arcCount) {
+    throw new BlueprintRoadmapError(`The generated Blueprint was not planned for the ${arcCount} ${arcCount === 1 ? "arc" : "arcs"} requested. Nothing was saved; generate again.`);
   }
-  // The roadmap is all-or-nothing: an incomplete or malformed roadmap fails the
-  // generation loudly instead of being trimmed or padded to fit.
-  const plans = Array.isArray((generated as { arcPlans?: unknown })?.arcPlans) ? (generated as { arcPlans: unknown[] }).arcPlans : [];
-  if (plans.length !== blueprint.estimatedArcs) {
-    throw new BlueprintRoadmapError(`The generated Blueprint planned ${plans.length} of its ${blueprint.estimatedArcs} arcs. Nothing was shortened or saved; generate again.`);
-  }
-  try { validateArcRoadmap(blueprint.arcPlans, blueprint.estimatedArcs); }
-  catch (error) { throw new BlueprintRoadmapError(`The generated arc roadmap is invalid: ${error instanceof Error ? error.message : 'unknown problem'}`); }
+  try { validateBlueprintArcPlan(blueprint); }
+  catch (error) { throw new BlueprintRoadmapError(`The generated Arc 1 is invalid: ${reason(error)}. Nothing was saved; generate again.`); }
   // HARNESS is the only downstream consumer. These gates plus the Story Seed
   // handoff validation are its contract; no legacy chapter adapter runs here.
   return blueprint;
-};
-
-/**
- * Plans only the arcs an author is adding to a reviewed Blueprint. The saved
- * roadmap travels as context and is never re-planned: the new arcs go in
- * before its final arc, which still reaches the Destined Ending. Returns just
- * the new arcs, numbered in place; the caller inserts them with
- * `insertArcsBeforeFinal`.
- */
-export const extendArcRoadmap = async (
-  payload: ArcRoadmapExtensionPayload,
-  config: ResolvedStorySeedBlueprintConfig,
-  provider: WorldBlueprintModelProvider,
-): Promise<ArcPlan[]> => {
-  let request: ArcRoadmapExtensionPayload;
-  try { request = buildArcRoadmapExtensionPayload(payload.storySeed, payload.blueprint, payload.arcCount); }
-  catch (error) { throw new BlueprintRequestError(error instanceof Error ? error.message : "The arc request is invalid."); }
-  const saved = request.blueprint.arcPlans ?? [];
-  const addedArcs = request.arcCount - saved.length;
-  const limit = arcRoadmapExtensionArcLimit(config.maxOutputTokens);
-  if (addedArcs > limit) {
-    throw new BlueprintRequestError(`One request can add at most ${limit} arcs within the model's ${outputLimitLabel(config.maxOutputTokens)} output limit, and ${addedArcs} were requested. Nothing was generated. Add them in smaller steps, or raise STORY_SEED_BLUEPRINT_MAX_OUTPUT_TOKENS (up to 32,768).`);
-  }
-  const generated = await provider.generate({
-    systemInstruction: ARC_ROADMAP_EXTENSION_SYSTEM_PROMPT,
-    userPrompt: buildArcRoadmapExtensionPrompt(request.storySeed, request.blueprint, request.arcCount),
-    responseJsonSchema: arcRoadmapExtensionResponseSchema(addedArcs),
-    temperature: config.temperature,
-    maxOutputTokens: config.maxOutputTokens,
-    timeoutMs: config.timeoutMs,
-  });
-  const plans = (generated as { arcPlans?: unknown } | null)?.arcPlans;
-  if (!Array.isArray(plans) || plans.length !== addedArcs) {
-    throw new BlueprintRoadmapError(`The model planned ${Array.isArray(plans) ? plans.length : 0} of the ${addedArcs} new arcs. Nothing was added; try again.`);
-  }
-  try {
-    return insertArcsBeforeFinal(saved, plans as ArcPlan[]).slice(saved.length - 1, request.arcCount - 1);
-  } catch (error) {
-    throw new BlueprintRoadmapError(`The new arcs are invalid: ${error instanceof Error ? error.message : "unknown problem."} Nothing was added; try again.`);
-  }
 };

@@ -32,6 +32,33 @@ The whole product is one straight line:
 3. **Story View:** create the cover art, see the story, and Enter.
 4. **Reader Chamber:** just reading. Chapters arrive here.
 
+## The World Blueprint
+
+The World Blueprint is the novel's transferable core. Keep this in mind for every
+Blueprint, arc and sharing decision.
+
+- **It is what moves between users.** A creator who publishes a novel publicly can
+  let readers take the story and make their own version of it. The reader takes the
+  creator's Blueprint, keeps the same Story Seed, changes whatever they want inside
+  the Blueprint, and goes on with their own version of that novel. That is how
+  branching will work.
+- **It is always modifiable, but changing it is discouraged.** Every change comes
+  with a hard warning that says what it could cause ("if you change this, it could
+  cause this issue"). Nothing in it is locked away from its owner.
+- **AI fills every blank.** The reader fills in what they care about, and the model
+  fills every Story Seed slot they left blank. It never rewrites what they wrote.
+- **The reader sees only the first arc.** In the Blueprint the reader sees Arc 1 and
+  its goals, nothing further. Readers change the story on a whim, so there is no
+  point generating many arc goals ahead of time. The model still gets a short
+  look-ahead of the next couple of arcs so it has good direction; the reader does
+  not see it.
+- **Each new arc is planned when it begins.** At the beginning of every new arc, its
+  goals are generated, continuing from where the last arc left off: the next path to
+  the Destined Ending.
+- **The Blueprint reappears at every new arc,** at least its goal section, so the
+  reader sees the new arc's goals, and can change them, before its first chapter is
+  written.
+
 ## The core loop: read, direct, Next Chapter
 
 Reading and directing are the product. A reader who wants to kill the sect leader
@@ -126,7 +153,17 @@ Update this section whenever it changes.
     Seeds and reading places, and asks for the Blueprint access token on
     Create. `npm run check:app` fails the build if it reaches an old system
     ([`src/novel-expanded/README.md`](./src/novel-expanded/README.md)).
-- **Not tested yet:** real generation with a real model, on the Vercel preview.
+  - **Story Length is set from the start:** the Story Seed's ARC page asks how many
+    arcs the story should run (1 to 100); left blank, the World Blueprint suggests one.
+  - **The World Blueprint shows Arc 1 only**, with the story's length. The model
+    gets a short private look-ahead of the next arcs. Each later arc is planned
+    when the reader presses Next at its start, from where the last arc left off,
+    and the World Blueprint's goal section opens in the Reader for review before
+    that arc's first chapter, in both modes. The model fills every Story Seed slot
+    left blank and never changes what the creator wrote. Add arcs is gone.
+- **Not tested yet:** real generation with a real model, on the Vercel preview, including a real Blueprint (Arc 1 only, filled slots) and a real arc planned at a new arc.
+- **Not yet as [The World Blueprint](#the-world-blueprint) describes:**
+  branching, and the warnings on Blueprint changes, are not built.
 - **Not connected yet:**
   - The CAPA skill and media slots still sit on the Harness Generation page, not in
     Story Settings.
@@ -142,11 +179,15 @@ Update this section whenever it changes.
 
 ## What comes next
 
-1. **Refine the creation-to-reading interaction** in the Workshop: Story Seed → Story
+1. **Branching and Blueprint change warnings** ([its direction](#the-world-blueprint)):
+   a reader takes a published creator's Blueprint, keeps the Story Seed, and makes
+   their own version; every Blueprint change carries a hard warning about what it
+   could cause.
+2. **Refine the creation-to-reading interaction** in the Workshop: Story Seed → Story
    View → Reader Chamber, including the manifestation sequence and World Cards. The
    new path (Story Seed → HARNESS → new reader) is connected; what remains is how it
    looks and feels.
-2. **Grow the NovelExpanded app** (`/app/`) piece by piece. Piece 1, the four
+3. **Grow the NovelExpanded app** (`/app/`) piece by piece. Piece 1, the four
    pages at their own address with a check that fails the build if the app
    imports an old system, is built. Next pieces:
    - Story Settings (CAPA and media slots) inside Create and Story View, leaving
@@ -157,14 +198,14 @@ Update this section whenever it changes.
 
    The app can move to its own repository once SEN is stable enough to install
    as a package.
-3. **Rebuild the remaining kinds** one at a time, then design the Codex.
+4. **Rebuild the remaining kinds** one at a time, then design the Codex.
 
 ## Names
 
 | Name | What it is |
 | --- | --- |
 | NovelExpanded app | The product at NovelExpanded.com: the four pages. Built at `/app/` (piece 1: Home, Create, Story View, Reader), in `src/novel-expanded/`. |
-| Story Seed / World Blueprint | Where a story is created (`?preview=story-seed`). |
+| Story Seed / World Blueprint | Where a story is created (`?preview=story-seed`, and Create in the app). The Blueprint is the novel's transferable core: what a reader takes to make their own version ([The World Blueprint](#the-world-blueprint)). |
 | Story View | The story's own page: cover art, the story, Enter. Built today as the World Info page (`WorldCardInfo`), where Start Story or Start Reading leads into the Reader Chamber. |
 | Reader Chamber | Where chapters are read: a HARNESS story's chapters on the Text Highlight Engine with Sound Cues (`HarnessReaderSession`). The older Reader Chamber preview (`?preview=reader-chamber`) is not part of this path. |
 | Text Highlight Engine (manuscript lab) | The manuscript editor at `?preview=text-highlight-engine`. |

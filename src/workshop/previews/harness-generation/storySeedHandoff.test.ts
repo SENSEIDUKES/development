@@ -11,21 +11,26 @@ import { buildHarnessGenerationPrompt } from '../../../server/harness-generation
 import { createOfficialCapaDefaultLoadout, OFFICIAL_STYLE_REFERENCES, updateOfficialCapaStyle } from '../../../host/generation/capa/officialCapaSkills';
 
 describe('Story Seed to Harness handoff', () => {
-  it('hands over the complete reviewed roadmap and arc count, and only Arc 1 from a pre-roadmap Blueprint', () => {
+  it('hands over Arc 1, the story length and the hidden look-ahead, and only the Seed goal as Arc 1 without a generated Blueprint', () => {
     const record = createMockStorySeedRecord();
     const foundation = createHarnessFoundationFromStorySeed(record);
     expect(foundation.plannedArcCount).toBe(3);
-    expect(foundation.arcRoadmap).toEqual(record.blueprint!.arcPlans);
-    expect(foundation.arcRoadmap?.[0].goals[0].text).toBe(record.seed.story.optional.activeArcGoal!.text);
-    expect(foundation).not.toHaveProperty('initialArcPlan');
-    // A Blueprint saved before roadmaps (one Arc 1 plan of a longer story) still starts a story.
-    const legacy = createMockStorySeedRecord();
-    delete legacy.seed.story.optional.activeArcGoal;
-    legacy.blueprint = { ...legacy.blueprint!, arcPlans: legacy.blueprint!.arcPlans!.slice(0, 1), estimatedArcs: 12 };
-    const legacyFoundation = createHarnessFoundationFromStorySeed(legacy);
-    expect(legacyFoundation.arcRoadmap).toBeUndefined();
-    expect(legacyFoundation.plannedArcCount).toBeUndefined();
-    expect(legacyFoundation.initialArcPlan).toEqual(legacy.blueprint.arcPlans![0]);
+    expect(foundation.initialArcPlan).toEqual(record.blueprint!.arcPlans![0]);
+    expect(foundation.initialArcPlan?.goals[0].text).toBe(record.seed.story.optional.activeArcGoal!.text);
+    expect(foundation.initialArcLookahead).toEqual(record.blueprint!.arcLookahead);
+    // A Blueprint saved before arcs were planned as they begin hands over its Arc 1, its length and its next arcs as the look-ahead.
+    const older = createMockStorySeedRecord();
+    older.blueprint = { ...older.blueprint!, arcLookahead: undefined, estimatedArcs: 12, arcPlans: [older.blueprint!.arcPlans![0], { arcNumber: 2, goals: [{ id: 'arc-2-old', text: 'OLD_ARC_TWO', chapters: 100 }] }] };
+    const olderFoundation = createHarnessFoundationFromStorySeed(older);
+    expect(olderFoundation.plannedArcCount).toBe(12);
+    expect(olderFoundation.initialArcLookahead).toEqual([{ arcNumber: 2, direction: 'OLD_ARC_TWO' }]);
+    // A Seed without a generated Blueprint starts an open-ended story from its goal.
+    const seedOnly = createMockStorySeedRecord();
+    delete seedOnly.blueprint;
+    const seedFoundation = createHarnessFoundationFromStorySeed(seedOnly);
+    expect(seedFoundation.plannedArcCount).toBeUndefined();
+    expect(seedFoundation.initialArcLookahead).toBeUndefined();
+    expect(seedFoundation.initialArcPlan?.goals[0].text).toBe(seedOnly.seed.story.optional.activeArcGoal!.text);
   });
 
   it('routes Arc inputs once and freezes the original pins and active goal across reload, retry, and replay', async () => {

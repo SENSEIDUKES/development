@@ -66,7 +66,6 @@ const appServices = (writer: HarnessGenerationModelAdapter, overrides: Partial<N
   writer,
   installSkills: async () => officialSkills,
   requestWorldBlueprint: vi.fn(),
-  requestArcRoadmapExtension: vi.fn(),
   ...overrides,
 });
 

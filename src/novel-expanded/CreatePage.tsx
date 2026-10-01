@@ -7,7 +7,7 @@ import type { NovelExpandedServices } from './services';
 import { useNovelExpandedStoryCreation } from './storyCreationRuntime';
 
 export interface CreatePageProps {
-  services: Pick<NovelExpandedServices, 'storySeeds' | 'requestWorldBlueprint' | 'requestArcRoadmapExtension'>;
+  services: Pick<NovelExpandedServices, 'storySeeds' | 'requestWorldBlueprint'>;
   /** The development access token, held by the app for the visit so leaving Create never forgets it. */
   blueprintToken: RefObject<string | undefined>;
   /** The Story Seeds the reader's stories started from. */
@@ -76,9 +76,7 @@ export function CreatePage({ services, blueprintToken, startedSeedIds, onHome, o
     <div className="min-h-screen bg-void" data-testid="novel-expanded-create">
       <CreationModal onNavigateHome={onHome} onStartStory={onStartStory} isGenerating={generating} error={null}
         onGenerateBlueprint={payload => withToken('The World Blueprint needs the development access token. Nothing was changed.',
-          (accessToken, signal) => services.requestWorldBlueprint(payload, accessToken, signal))}
-        onExtendArcRoadmap={payload => withToken('Adding arcs needs the development access token. Nothing was changed.',
-          (accessToken, signal) => services.requestArcRoadmapExtension(payload, accessToken, signal))} />
+          (accessToken, signal) => services.requestWorldBlueprint(payload, accessToken, signal))} />
     </div>
     <AccessTokenSheet request={tokenRequest} />
   </StoryCreationProvider>;

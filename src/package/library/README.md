@@ -5,6 +5,15 @@ SEN engine and the two UI packages. Library owns SEIHouse users, products,
 economy, community and business policy. Authentication enforcement, secrets,
 durable ledgers and concrete infrastructure stay in the host/backend.
 
+**0.10.0:** requires `@seihouse/sen` 0.10.0. New `./stories` entry, the
+reader's side of a HARNESS story: `useLibraryStories` opens a host's stories
+with the Library's defaults (story memory read only on request, the Library
+media port, the remembered model), `StoryPages` shows one story's World Info
+page and its Reader with the Aura Veil while a chapter is written, and
+`storyHomeWorlds` lists the stories as Home cards, newest first.
+`HarnessGenerationWorkspace` is built on the same hook and pages.
+`./story-seed` adds `harnessStoryStartFromSeed`: the story a Story Seed starts.
+
 **0.9.0:** requires `@seihouse/sen` 0.9.0. A HARNESS story opens on its World
 Info page: `HarnessGenerationWorkspace` takes `infoStoryId` /
 `onInfoStoryChange` (host-controlled like `readingStoryId`) and `writingAgent`,
@@ -41,6 +50,7 @@ removed; a real Mini face can be designed later. The Info cover uses
 | `./world-card` | The shared `WorldCard` with Full, Compact, and Info cover faces, plus its Info page — over host-supplied world display data and destinations |
 | `./story-seed` | Authenticated Story Bank, Help and branded creation journey; Story Seed Settings own the Story Language and Reading Mode a new story starts with |
 | `./generation` | First-party HARNESS workspace composition: the novel page and its Story Settings (Story Language, Reading Mode). HARNESS internals such as CAPA slots show only when a development host sets `showHarnessInternals` |
+| `./stories` | A reader's HARNESS stories over host-supplied storage and writer: `useLibraryStories` (one controller with the Library's defaults), `StoryPages` (a story's World Info page and its Reader, with the Aura Veil while a chapter is written), `harnessStoryDisplay` and `storyHomeWorlds` (Home cards, newest first) |
 | `./model-router-server` | Server-only Gemini/OpenRouter text and ElevenLabs speech routing; apps supply credentials, prompts, HTTP policy, and storage |
 | `./media` | First-party catalog selection and entitlement contracts |
 | `./manifestations` | Celestial manifestation orchestration around Library UI visuals |

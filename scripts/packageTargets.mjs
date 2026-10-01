@@ -80,6 +80,7 @@ export const PACKAGE_TARGETS = {
       '@seihouse/library/generation': ['HarnessGenerationWorkspace'],
       '@seihouse/library/media': ['createLibraryMediaPort', 'validateMediaPack'],
       '@seihouse/library/manifestations': ['AILoadingVeil'],
+      '@seihouse/library/stories': ['useLibraryStories', 'StoryPages', 'harnessStoryDisplay', 'storyHomeWorlds'],
     },
     smokeTypes: `
       import type { UserProfileServices } from '@seihouse/library/profile';
@@ -91,8 +92,9 @@ export const PACKAGE_TARGETS = {
       import type { FamiliarsClient, FamiliarTrainingSnapshot } from '@seihouse/library/familiar';
       import type { DaoXpClient } from '@seihouse/library/cultivation';
       import type { HarnessGenerationWorkspaceProps } from '@seihouse/library/generation';
+      import type { LibraryStories, LibraryStoriesOptions, StoryPagesProps } from '@seihouse/library/stories';
       import type { ModelRouterConfig, TextGenerationRequest, SpeechGenerationRequest, GenerationResult } from '@seihouse/library/model-router-server';
-      type All = [UserProfileServices, EnergyClient, FamiliarDefinition, FamiliarSelectionProps, QiClient, DaoXpClient, FateSurvivalRelicView, RelicsClient, AchievementsClient, MysteryScrollView, RewardGrant, FamiliarsClient, FamiliarTrainingSnapshot, HarnessGenerationWorkspaceProps, ModelRouterConfig, TextGenerationRequest, SpeechGenerationRequest, GenerationResult];
+      type All = [UserProfileServices, EnergyClient, FamiliarDefinition, FamiliarSelectionProps, QiClient, DaoXpClient, FateSurvivalRelicView, RelicsClient, AchievementsClient, MysteryScrollView, RewardGrant, FamiliarsClient, FamiliarTrainingSnapshot, HarnessGenerationWorkspaceProps, LibraryStories, LibraryStoriesOptions, StoryPagesProps, ModelRouterConfig, TextGenerationRequest, SpeechGenerationRequest, GenerationResult];
     `,
   },
 };

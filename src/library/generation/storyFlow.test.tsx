@@ -7,7 +7,7 @@ import { installAudioMediaStubs, renderWithDevAudio } from '../../test-utils/ren
 import { HarnessGenerationController, type HarnessGenerationModelAdapter } from '@seihouse/sen/harness-generation';
 import type { ReaderStateRepository, ReaderStoryState } from '@seihouse/sen/reader-runtime';
 import { HarnessGenerationWorkspace } from '@seihouse/library/generation';
-import { harnessStoryDisplay } from './storyView';
+import { harnessStoryDisplay } from '../stories/storyView';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 

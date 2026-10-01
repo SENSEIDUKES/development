@@ -4,10 +4,10 @@ import type { FrozenNarrativeMedia, SoundWord } from '@seihouse/sen/audio';
 import { BookOpen, CheckCircle2, CircleAlert, Compass, Download, FileText, ListTree, LoaderCircle, Pause, Pin, Play, Plus, Puzzle, RefreshCcw, Volume2 } from 'lucide-react';
 import { CHAPTER_FUNCTIONS, CHAPTER_FUNCTION_LABELS, FATE_MODE_LABELS, FATE_PRESSURE_RHYTHM_CONFIG, FateArcGoalCard, FateConclusion, FateDestinedEnding, FatePathChooser, HARD_PIN_LIMIT, chapterDirectionGap, describeChapterPath, harnessStoryMode } from '@seihouse/sen/harness-generation';
 import type { ChapterDirectionChoice, HardPinInput, HarnessChapter, HarnessMissionReminder, StoryFoundationRevision } from '@seihouse/sen/harness-generation';
-import { createLibraryMediaPort, isMediaPackEntitlementActive, mediaPackKey, type MediaPack, type MediaPackEntitlement, type MediaPackReference, type StoryMediaLoadoutSlot } from '../media/mediaPacks';
+import { isMediaPackEntitlementActive, mediaPackKey, type MediaPack, type MediaPackEntitlement, type MediaPackReference, type StoryMediaLoadoutSlot } from '../media/mediaPacks';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox, CreationButton as ManifestButton } from '@seihouse/sen/presentation';
 import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
-import { HarnessGenerationController, exportHarnessStory } from '@seihouse/sen/harness-generation';
+import { exportHarnessStory } from '@seihouse/sen/harness-generation';
 import { findFoundationRevision, findStory } from '@seihouse/sen/harness-generation';
 import { buildCanonicalStoryView } from '@seihouse/sen/harness-generation';
 import { GENERATION_PACKET_BUDGET, PACKET_SECTION_ORDER } from '@seihouse/sen/harness-generation';
@@ -15,15 +15,13 @@ import { CAPA_SCHEMA, SEN_FATE_SURVIVAL_SKILL, SEN_READING_MODE_SKILLS, SEN_SOUN
 import { getSenLanguageLabel, normalizeChapterWritingStyle, type ChapterWritingStyle } from '@seihouse/sen/contracts';
 import { StorySettingsPanel } from './StorySettingsPanel';
 import { includeBundledHarnessSkills } from '@seihouse/sen/harness-generation';
-import { HarnessReaderSession } from '@seihouse/sen/harness-generation';
 import { type HarnessGenerationRepository } from '@seihouse/sen/harness-generation';
 import type { ReaderStateRepository } from '@seihouse/sen/reader-runtime';
 import { NovelBlueprintTab } from './NovelBlueprintTab';
-import { harnessStoryDisplay } from './storyView';
-import AILoadingVeil from '../../components/chapter-manifestation/development/AILoadingVeil';
-import { StoryDetailScreen } from '../../components/light-novels-home/development/StoryDetailScreen';
+import { useLibraryStories } from '../stories/useLibraryStories';
+import { StoryPages } from '../stories/StoryPages';
 import type { LoadingAgentPresentation } from '../manifestations/taskCard';
-import { type HarnessGenerationAttempt, type HarnessGenerationModelAdapter, type HarnessGenerationServerInfo, type HarnessCorrectionKind, type HarnessSemanticEvent, type HarnessStory, type HarnessStoryMode, type HarnessSkillManifest, type HarnessSkillReference, type HarnessSkillSlotId, type HarnessStorySeedOption, type HarnessStorySeedSource, type HarnessWorkspaceState, type StoryFoundationInput } from '@seihouse/sen/harness-generation';
+import { type HarnessGenerationAttempt, type HarnessGenerationModelAdapter, type HarnessCorrectionKind, type HarnessSemanticEvent, type HarnessStory, type HarnessStoryMode, type HarnessSkillManifest, type HarnessSkillReference, type HarnessSkillSlotId, type HarnessStorySeedOption, type HarnessStorySeedSource, type HarnessWorkspaceState, type StoryFoundationInput } from '@seihouse/sen/harness-generation';
 
 export interface HarnessGenerationWorkspaceProps {
   /** Host-selected first-party records; never a built-in SEN catalog. */
@@ -95,8 +93,6 @@ export interface HarnessGenerationWorkspaceProps {
 }
 
 const emptyFoundation = (): StoryFoundationInput => ({ premise: '' });
-/** The veil stays open while a chapter is written; there is no minimized state here. */
-const keepVeilOpen = () => undefined;
 const EMPTY_INSTALLED_SKILLS: HarnessSkillManifest[] = [];
 const EMPTY_MEDIA_PACKS: MediaPack[] = [];
 const EMPTY_MEDIA_ENTITLEMENTS: MediaPackEntitlement[] = [];
@@ -1115,18 +1111,12 @@ export function HarnessGenerationWorkspace({
     () => includeBundledHarnessSkills(installedSkills),
     [installedSkills],
   );
-  const repository = injectedRepository;
-  const modelAdapter = injectedAdapter;
-  // The Codex waits, so story memory is read from a chapter only on request:
-  // a chapter is ready to read as soon as it is saved.
-  const controller = useMemo(
-    () => new HarnessGenerationController({ repository, modelAdapter, chapterMemory: 'on-request', media: createLibraryMediaPort({ registered: registeredMediaPacks, entitlements: mediaPackEntitlements, base: baseMedia }) }),
-    [repository, modelAdapter],
-  );
-  useEffect(() => controller.setInstalledSkills(installedSkills), [controller, installedSkills]);
-  useEffect(() => controller.setMediaPort(createLibraryMediaPort({ registered: registeredMediaPacks, entitlements: mediaPackEntitlements, base: baseMedia })), [controller, registeredMediaPacks, mediaPackEntitlements, baseMedia]);
-  const [state, setState] = useState<HarnessWorkspaceState>();
-  const [serverInfo, setServerInfo] = useState<HarnessGenerationServerInfo>();
+  // The stories, their controller and the writer: the same Library setup the app uses.
+  const stories = useLibraryStories({
+    repository: injectedRepository, modelAdapter: injectedAdapter, installedSkills,
+    registeredMediaPacks, mediaPackEntitlements, baseMedia, preferredModel,
+  });
+  const { controller, state, serverInfo, model, setModel } = stories;
   const [selectedStoryId, setSelectedStoryId] = useState<string>();
   // The requested novel waits for the stored stories: the snapshot before hydration is empty.
   const requestedStoryId = useRef(initialStoryId);
@@ -1134,7 +1124,6 @@ export function HarnessGenerationWorkspace({
   const [novelTab, setNovelTab] = useState<'novel' | 'blueprint'>('novel');
   useEffect(() => { setNovelTab('novel'); }, [selectedStoryId]);
   const [foundationForm, setFoundationForm] = useState<StoryFoundationInput>(emptyFoundation);
-  const [model, setModel] = useState('');
   const [batchCount, setBatchCount] = useState('');
   const [internalReadingStoryId, setInternalReadingStoryId] = useState<string>();
   const openReadingStoryId = onReadingStoryChange ? readingStoryId : internalReadingStoryId;
@@ -1142,11 +1131,10 @@ export function HarnessGenerationWorkspace({
   const [internalInfoStoryId, setInternalInfoStoryId] = useState<string>();
   const openInfoStoryId = onInfoStoryChange ? infoStoryId : internalInfoStoryId;
   const setInfoStoryId = onInfoStoryChange ?? setInternalInfoStoryId;
-  /** Set by Start Story, so the Reader begins Chapter 1 as it opens. */
-  const [startOnOpen, setStartOnOpen] = useState(false);
-  const [infoReadingPosition, setInfoReadingPosition] = useState<{ chapterNumber: number }>();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string>();
+  // Opening storage or reaching the writer failed: say so where actions report.
+  useEffect(() => { if (stories.loadError) setMessage(stories.loadError); }, [stories.loadError]);
   const [foundationError, setFoundationError] = useState<string>();
   const [storySeedOptions, setStorySeedOptions] = useState<HarnessStorySeedOption[]>([]);
   const [storySeedLoading, setStorySeedLoading] = useState(Boolean(storySeedSource));
@@ -1167,44 +1155,8 @@ export function HarnessGenerationWorkspace({
   }, [storySeedSource]);
 
   useEffect(() => {
-    let active = true;
-    const unsubscribe = controller.subscribe(snapshot => {
-      if (active) setState(snapshot);
-    });
-    void controller.hydrate()
-      .catch(error => active && setMessage(error instanceof Error ? error.message : 'Harness Generation could not open local storage.'));
-    void modelAdapter.getServerInfo()
-      .then(info => {
-        if (!active) return;
-        setServerInfo(info);
-        setModel(current => current || info.defaultModel);
-      })
-      .catch(error => active && setMessage(error instanceof Error ? error.message : 'Harness Generation could not load provider configuration.'));
-    return () => {
-      active = false;
-      unsubscribe();
-    };
-  }, [controller, modelAdapter]);
-
-  // Follow the host's remembered choice (the Model Router) whenever the server offers it.
-  useEffect(() => {
-    if (preferredModel && serverInfo?.models.some(option => option.id === preferredModel)) setModel(preferredModel);
-  }, [preferredModel, serverInfo]);
-
-  useEffect(() => {
     void loadStorySeeds();
   }, [loadStorySeeds]);
-
-  // World Info says Continue for a returning reader; the place is the host's Reader state.
-  useEffect(() => {
-    setInfoReadingPosition(undefined);
-    if (!openInfoStoryId || openReadingStoryId || !readerStateRepository) return;
-    let active = true;
-    readerStateRepository.load(openInfoStoryId).then(saved => {
-      if (active && saved?.lastReadChapter) setInfoReadingPosition({ chapterNumber: saved.lastReadChapter });
-    }, () => undefined);
-    return () => { active = false; };
-  }, [openInfoStoryId, openReadingStoryId, readerStateRepository]);
 
   const selectedStory = state && selectedStoryId ? findStory(state, selectedStoryId) : undefined;
   const selectedFoundation = state && selectedStory
@@ -1435,33 +1387,19 @@ export function HarnessGenerationWorkspace({
   const selectedMode = harnessStoryMode(selectedFoundation?.input);
   // Fate Survival writes nothing until the reader directs the chapter, and never in batches.
   const directionGap = selectedStory ? chapterDirectionGap(selectedStory, selectedMode) : undefined;
-  const readerGenerate = state && openReadingStoryId && serverInfo?.configured && model
-    ? async () => { await controller.generateNextChapter(openReadingStoryId, model); }
-    : undefined;
-
   // A story's own pages come first: the Reader, then its World Info page.
   // Back from the Reader returns to World Info when the reader came from there.
-  if (!state && (openReadingStoryId || openInfoStoryId)) return <main className="mx-auto max-w-3xl px-4 py-6">
-    {message
-      ? <p role="alert" className="text-sm text-human">{message}</p>
-      : <p role="status" className="text-sm text-neutral-400">Opening your story…</p>}
-  </main>;
-  const readingStory = state && openReadingStoryId ? findStory(state, openReadingStoryId) : undefined;
-  if (state && readingStory) return <HarnessReaderSession key={readingStory.id} state={state} storyId={readingStory.id}
-    controller={controller} readerStateRepository={readerStateRepository}
-    onGenerateNextChapter={readerGenerate} startOnOpen={startOnOpen}
-    renderWriting={writingAgent ? writing => <AILoadingVeil agent={writingAgent} isGenerating={writing.active}
-      generationPhase="chapter" generatingChapterNum={writing.chapterNumber} progress={null}
-      generationProgressMessage={null} estimatedSecondsRemaining={null} activeAgentId="versa"
-      streamingBlocksCount={0} isVeilMinimized={false} setIsVeilMinimized={keepVeilOpen} /> : undefined}
-    onClose={() => { setStartOnOpen(false); setSelectedStoryId(readingStory.id); setReadingStoryId(undefined); }} />;
-  const infoStory = state && openInfoStoryId ? harnessStoryDisplay(state, openInfoStoryId) : undefined;
-  if (state && infoStory) return <main className="px-4 pb-12 pt-4 sm:px-6 sm:pt-6" data-testid="harness-world-info">
-    <StoryDetailScreen story={infoStory} readingPosition={infoReadingPosition}
-      onBack={() => { setSelectedStoryId(infoStory.id); setInfoStoryId(undefined); }}
-      onRead={() => { setStartOnOpen(false); setReadingStoryId(infoStory.id); }}
-      onStart={() => { setStartOnOpen(true); setReadingStoryId(infoStory.id); }} />
-  </main>;
+  // One StoryPages per story stays mounted as the reader moves between them.
+  const storyPage: { id: string; page: 'info' | 'read' } | undefined = !state
+    ? (openReadingStoryId ? { id: openReadingStoryId, page: 'read' } : openInfoStoryId ? { id: openInfoStoryId, page: 'info' } : undefined)
+    : openReadingStoryId && findStory(state, openReadingStoryId) ? { id: openReadingStoryId, page: 'read' }
+      : openInfoStoryId && findStory(state, openInfoStoryId) ? { id: openInfoStoryId, page: 'info' }
+        : undefined;
+  if (storyPage) return <StoryPages key={storyPage.id} stories={stories} storyId={storyPage.id} page={storyPage.page}
+    readerStateRepository={readerStateRepository} writingAgent={writingAgent}
+    onOpenReader={() => setReadingStoryId(storyPage.id)}
+    onCloseReader={() => { setSelectedStoryId(storyPage.id); setReadingStoryId(undefined); }}
+    onBack={() => { setSelectedStoryId(storyPage.id); setInfoStoryId(undefined); }} />;
 
   return (
     <main className="mx-auto max-w-7xl px-4 pb-12 pt-4 sm:px-6 sm:pt-6" data-testid="harness-generation-workspace">
@@ -1731,7 +1669,7 @@ export function HarnessGenerationWorkspace({
                 <div className="flex items-center gap-2">
                   <BookOpen size={18} className="text-cyan-200" aria-hidden="true" />
                   <h2 id="harness-chapters-title" className="font-display text-xl text-white">Committed chapters</h2>
-                  <LibraryButton type="button" size="sm" onClick={() => { setStartOnOpen(false); setReadingStoryId(selectedStory.id); }}>Open Reader Chamber</LibraryButton>
+                  <LibraryButton type="button" size="sm" onClick={() => setReadingStoryId(selectedStory.id)}>Open Reader Chamber</LibraryButton>
                 </div>
                 <div className="mt-5 space-y-5">
                   {chapters.map(chapter => (

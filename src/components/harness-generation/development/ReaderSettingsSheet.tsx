@@ -1,0 +1,108 @@
+import { useEffect } from 'react';
+import FocusLock from 'react-focus-lock';
+import { Play, RotateCcw, X } from 'lucide-react';
+import { READ_ALOUD_RATES, READ_ALOUD_ROLES, type ReadAloud, type ReadAloudRole, type ReadAloudVoice } from '@seihouse/sen/reader-runtime';
+import { getSenLanguageLabel, normalizeSenLanguageCode } from '../../../lib/language';
+
+const ROLE_TITLES: Record<ReadAloudRole, string> = { narrator: 'Narrator', protagonist: 'Protagonist', side: 'Side characters' };
+const ROLE_HELP: Record<ReadAloudRole, string> = {
+  narrator: 'Reads the story itself.',
+  protagonist: 'Reads the main character\'s spoken lines.',
+  side: 'Reads everyone else\'s spoken lines.',
+};
+
+/** A language's own name, without the native script in brackets ("Korean (한국어)" → "Korean"). */
+const plainLanguage = (language: string) => getSenLanguageLabel(normalizeSenLanguageCode(language)).replace(/\s*\(.*\)$/u, '');
+const voiceLabel = (voice: ReadAloudVoice) => `${voice.name} (${voice.lang})`;
+
+function VoicePicker({ role, readAloud, language }: { role: ReadAloudRole; readAloud: ReadAloud; language: string }) {
+  const id = `reader-voice-${role}`;
+  const chosen = readAloud.choice[role]?.voiceURI ?? '';
+  const own = new Set(readAloud.languageVoices.map(voice => voice.voiceURI));
+  const others = readAloud.voices.filter(voice => !own.has(voice.voiceURI));
+  return <div className="mt-4">
+    <label htmlFor={id} className="font-mono text-[10px] uppercase tracking-[0.18em] text-cyan-200/70">{ROLE_TITLES[role]}</label>
+    <div className="mt-1 flex items-center gap-2">
+      <select id={id} value={chosen} data-voice-role={role}
+        onChange={event => readAloud.setVoice(role, readAloud.voices.find(voice => voice.voiceURI === event.target.value))}
+        className="min-h-11 min-w-0 flex-1 rounded-lg border border-white/15 bg-neutral-900 px-3 text-sm text-neutral-100">
+        {!chosen && <option value="">{`The device's ${plainLanguage(language)} voice`}</option>}
+        {readAloud.languageVoices.length > 0 && <optgroup label={`${plainLanguage(language)} voices`}>
+          {readAloud.languageVoices.map(voice => <option key={voice.voiceURI} value={voice.voiceURI}>{voiceLabel(voice)}</option>)}
+        </optgroup>}
+        {others.length > 0 && <optgroup label="Other voices">
+          {others.map(voice => <option key={voice.voiceURI} value={voice.voiceURI}>{voiceLabel(voice)}</option>)}
+        </optgroup>}
+      </select>
+      <button type="button" aria-label={`Preview the ${ROLE_TITLES[role]} voice`} title="Preview" onClick={() => readAloud.preview(role)}
+        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-white/15 text-neutral-100 hover:border-white/35">
+        <Play className="h-4 w-4" aria-hidden />
+      </button>
+    </div>
+    <p className="mt-1 text-xs text-neutral-500">{ROLE_HELP[role]}</p>
+  </div>;
+}
+
+/**
+ * Reader Settings: a sheet on phones and a side panel on wider screens. Its
+ * first section is Narration, the three voices and the speed Read Aloud uses;
+ * later sections join it here.
+ */
+export function ReaderSettingsSheet({ open, onClose, readAloud, language }: {
+  open: boolean;
+  onClose: () => void;
+  readAloud: ReadAloud;
+  /** The story's language: its voices are listed first. */
+  language: string;
+}) {
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
+  if (!open) return null;
+  return <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/60 sm:items-stretch sm:justify-end" onClick={onClose}>
+    <FocusLock returnFocus>
+      <div role="dialog" aria-modal="true" aria-labelledby="reader-settings-title" data-testid="reader-settings" onClick={event => event.stopPropagation()}
+        className="max-h-[85vh] w-screen max-w-md overflow-y-auto rounded-t-2xl border border-white/10 bg-neutral-950 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:h-full sm:max-h-none sm:w-[26rem] sm:rounded-none sm:rounded-l-2xl">
+        <div className="flex items-center justify-between gap-3">
+          <h2 id="reader-settings-title" className="font-display text-xl text-white">Reader Settings</h2>
+          <button type="button" aria-label="Close Reader Settings" onClick={onClose}
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-white/15 text-neutral-200 hover:border-white/35">
+            <X className="h-4 w-4" aria-hidden />
+          </button>
+        </div>
+        <section aria-labelledby="reader-settings-narration" data-testid="reader-settings-narration" className="mt-4 rounded-xl border border-white/10 bg-black/20 p-3 sm:p-4">
+          <h3 id="reader-settings-narration" className="text-sm font-semibold text-neutral-100">Narration</h3>
+          <p className="mt-1 text-xs leading-relaxed text-neutral-400">
+            Three voices read the story when you tap Listen. Your choices stay on this device, for each story language.
+          </p>
+          {!readAloud.supported
+            ? <p role="note" className="mt-3 text-sm text-amber-200">This browser can't read aloud.</p>
+            : <>
+                {readAloud.languageVoices.length === 0 && <p role="note" className="mt-3 text-sm text-amber-200">
+                  {`This device has no ${plainLanguage(language)} voice. Add one in your device's speech settings; until then the device chooses how to read ${plainLanguage(language)}.`}
+                </p>}
+                {READ_ALOUD_ROLES.map(role => <VoicePicker key={role} role={role} readAloud={readAloud} language={language} />)}
+                <fieldset className="mt-5">
+                  <legend className="font-mono text-[10px] uppercase tracking-[0.18em] text-cyan-200/70">Speed</legend>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {READ_ALOUD_RATES.map(rate => <label key={rate} className="cursor-pointer">
+                      <input type="radio" name="read-aloud-rate" value={rate} checked={readAloud.rate === rate} onChange={() => readAloud.setRate(rate)} className="peer sr-only" />
+                      <span className="inline-flex min-h-11 min-w-14 items-center justify-center rounded-full border border-white/15 px-3 text-sm text-neutral-200 peer-checked:border-cyan-300/60 peer-checked:bg-cyan-400/15 peer-checked:text-cyan-50 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-cyan-300">
+                        {`${rate}×`}
+                      </span>
+                    </label>)}
+                  </div>
+                </fieldset>
+                <button type="button" onClick={readAloud.resetVoices}
+                  className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full border border-white/15 px-4 text-sm text-neutral-200 hover:border-white/35">
+                  <RotateCcw className="h-4 w-4" aria-hidden /> Reset voices
+                </button>
+              </>}
+        </section>
+      </div>
+    </FocusLock>
+  </div>;
+}

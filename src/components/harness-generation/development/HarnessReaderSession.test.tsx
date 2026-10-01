@@ -8,7 +8,8 @@ import { createRoot } from '../../../test-utils/createReaderRoot';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { installAudioMediaStubs, renderWithDevAudio } from '../../../test-utils/renderWithDevAudio';
 import { HarnessGenerationController, HarnessReaderSession, type HarnessGenerationModelAdapter, type HarnessReaderWriting } from '@seihouse/sen/harness-generation';
-import type { ReaderStateRepository, ReaderStoryState } from '@seihouse/sen/reader-runtime';
+import type { ReadAloudVoicePicks, ReaderPreferenceStorage, ReaderStateRepository, ReaderStoryState } from '@seihouse/sen/reader-runtime';
+import { installFakeSpeechSynthesis, type FakeSpeechSynthesis } from '../../../test-utils/fakeSpeechSynthesis';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -21,7 +22,7 @@ const reply = (title: string, paragraphs: string[], soundCues: unknown[] = []) =
 });
 // The writer marks the words where a sound happens; the HARNESS places the cue there.
 const CHAPTERS = [
-  reply('Low Tide', ['The tide pulled back from the drowned gate.', 'Mara froze as [[1|the beast roared]] beyond the seawall.', 'Salt dried white on the courier seal.'],
+  reply('Low Tide', ['The tide pulled back from the drowned gate.', 'Mara froze as [[1|the beast roared]] beyond the seawall. Nothing answered it.', 'Salt dried white on the courier seal.'],
     [{ mark: 1, sound: 'beast roar', energy: 'high' }]),
   reply('The Bell Keeper', ['A keeper waited on the causeway with a lantern.', 'He asked for the name the city had erased.', 'Mara gave him the only one she still owned.']),
 ];
@@ -68,14 +69,16 @@ const story = async ({ written = 0 } = {}) => {
 };
 
 /** A host like the Library workspace: it follows the controller and writes chapters with its model. */
-function Host({ controller, storyId, readerState, renderWriting, startOnOpen, canWrite = true }: {
+function Host({ controller, storyId, readerState, renderWriting, startOnOpen, canWrite = true, readerPreferences, readAloudVoices }: {
   controller: HarnessGenerationController; storyId: string; readerState?: ReaderStateRepository;
   renderWriting?: (writing: HarnessReaderWriting) => React.ReactNode; startOnOpen?: boolean; canWrite?: boolean;
+  readerPreferences?: ReaderPreferenceStorage; readAloudVoices?: ReadAloudVoicePicks;
 }) {
   const [state, setState] = useState(controller.snapshot());
   useEffect(() => { const stop = controller.subscribe(setState); return () => { stop(); }; }, [controller]);
   return <HarnessReaderSession state={state} storyId={storyId} controller={controller} onClose={() => undefined}
     readerStateRepository={readerState} renderWriting={renderWriting} startOnOpen={startOnOpen}
+    readerPreferences={readerPreferences} readAloudVoices={readAloudVoices}
     onGenerateNextChapter={canWrite ? async () => { await controller.generateNextChapter(storyId, 'test-model'); } : undefined} />;
 }
 
@@ -124,8 +127,10 @@ describe('The HARNESS Reader', { timeout: 20_000 }, () => {
     // The Sound Cue sits on the words the writer marked; no mark is left in the prose.
     expect(first.querySelector('[data-cue-annotation]')!.getAttribute('data-cue-annotation')).toBe('the beast roared');
     expect(first.textContent).not.toContain('[[');
-    // Only Sound Cues: no Codex, no Mind Palace, no reading settings.
-    expect(container.textContent).not.toMatch(/Codex|Mind Palace|Reader Settings/);
+    // Only Sound Cues: no Codex, no Mind Palace. A browser without speech gets no Listen and no Reader Settings.
+    expect(container.textContent).not.toMatch(/Codex|Mind Palace/);
+    expect(buttonBy(byLabel('Reader Settings'))).toBeUndefined();
+    expect(container.querySelector('[data-testid="read-aloud-player"]')).toBeNull();
 
     await click(byLabel('Next Chapter'), 'Next Chapter');
     expect(chapterOnScreen(2)!.textContent).toContain('A keeper waited on the causeway with a lantern.');
@@ -189,5 +194,111 @@ describe('The HARNESS Reader', { timeout: 20_000 }, () => {
     expect(container.querySelector('[data-testid="fate-page"]')).toBeTruthy();
     await click(button => button.textContent?.trim() === 'Back to reading', 'Back to reading');
     expect(container.querySelector('[data-testid="harness-reader"]')).toBeTruthy();
+  });
+});
+
+describe('Read Aloud in the HARNESS Reader', { timeout: 20_000 }, () => {
+  const PICKS: ReadAloudVoicePicks = { en: { narrator: ['Daniel'], protagonist: ['Rishi'], side: ['Samantha'] } };
+  let speech: FakeSpeechSynthesis;
+  let uninstall: () => void;
+  const memory = () => {
+    const values = new Map<string, string>();
+    const storage: ReaderPreferenceStorage = { read: key => values.get(key) ?? null, write: (key, value) => { values.set(key, value); }, remove: key => { values.delete(key); } };
+    return { values, storage };
+  };
+  const lastSpoken = () => speech.spoken.at(-1)!;
+  /** The current line ends; the next one begins. */
+  const next = async () => { await act(async () => { speech.start(); speech.finish(); }); await flush(); };
+
+  beforeEach(() => {
+    ({ fake: speech, uninstall } = installFakeSpeechSynthesis());
+    vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
+    Range.prototype.getClientRects = () => [{ left: 10, top: 20, right: 90, bottom: 40, width: 80, height: 20 }] as unknown as DOMRectList;
+  });
+  afterEach(() => {
+    uninstall();
+    vi.unstubAllGlobals();
+  });
+
+  it('reads the chapter from its title in the host\'s voices, lighting the sentence being spoken', async () => {
+    const { controller, storyId } = await story({ written: 2 });
+    const { storage } = memory();
+    await mount(<Host controller={controller} storyId={storyId} readerPreferences={storage} readAloudVoices={PICKS} />);
+
+    await click(button => button.textContent?.trim() === 'Listen', 'Listen');
+    expect(lastSpoken().text).toBe('Chapter 1. Low Tide');
+    expect(lastSpoken().voice?.name).toBe('Daniel');
+    expect(container.querySelector('h1[data-speaking]')!.textContent).toBe('Low Tide');
+    expect(container.querySelector('[data-testid="read-aloud-speaker"]')!.textContent).toBe('Narrator');
+
+    await next();
+    expect(lastSpoken().text).toBe('The tide pulled back from the drowned gate.');
+    const mark = container.querySelector('[data-overlay-id="read-aloud"]');
+    expect(mark).toBeTruthy();
+    expect(container.querySelector('h1[data-speaking]')).toBeNull();
+
+    // A cue that is loading in the same paragraph never hides the light on a later sentence.
+    await next();
+    expect(lastSpoken().text).toBe('Mara froze as the beast roared beyond the seawall.');
+    await act(async () => { buttonBy(button => button.dataset.cuePhrase === 'the beast roared')!.click(); });
+    await next();
+    expect(lastSpoken().text).toBe('Nothing answered it.');
+    expect(container.querySelector('[data-overlay-id="read-aloud"]')).toBeTruthy();
+
+    await click(byLabel('Pause'), 'Pause');
+    expect(container.querySelector('[data-testid="read-aloud-player"]')!.getAttribute('data-status')).toBe('paused');
+    await click(byLabel('Stop'), 'Stop');
+    expect(container.querySelector('[data-overlay-id="read-aloud"]')).toBeNull();
+    expect(buttonBy(button => button.textContent?.trim() === 'Listen')).toBeTruthy();
+  });
+
+  it('Reader Settings holds only Narration: three voices with previews and the speed, saved on the device', async () => {
+    const { controller, storyId } = await story({ written: 1 });
+    const { storage, values } = memory();
+    await mount(<Host controller={controller} storyId={storyId} readerPreferences={storage} readAloudVoices={PICKS} />);
+
+    await click(byLabel('Reader Settings'), 'Reader Settings');
+    const dialog = container.ownerDocument.querySelector<HTMLElement>('[role="dialog"]')!;
+    expect(dialog.querySelector('h2')!.textContent).toBe('Reader Settings');
+    expect([...dialog.querySelectorAll('section h3')].map(heading => heading.textContent)).toEqual(['Narration']);
+    expect(dialog.textContent).not.toMatch(/Codex|Mind Palace|Audio|Customize|Accessibility/);
+    const selected = (role: string) => {
+      const select = dialog.querySelector<HTMLSelectElement>(`select[data-voice-role="${role}"]`)!;
+      return select.options[select.selectedIndex].textContent;
+    };
+    expect([selected('narrator'), selected('protagonist'), selected('side')]).toEqual(['Daniel (en-GB)', 'Rishi (en-IN)', 'Samantha (en-US)']);
+    expect(dialog.querySelector('optgroup')!.getAttribute('label')).toBe('English voices');
+
+    await act(async () => { dialog.querySelector<HTMLInputElement>('input[name="read-aloud-rate"][value="1.25"]')!.click(); });
+    expect(JSON.parse(values.get('read-aloud')!)).toMatchObject({ v: 1, rate: 1.25 });
+    await act(async () => { buttonBy(byLabel('Preview the Side characters voice'))!.click(); });
+    await flush();
+    expect(lastSpoken().voice?.name).toBe('Samantha');
+
+    await click(byLabel('Close Reader Settings'), 'Close Reader Settings');
+    expect(container.ownerDocument.querySelector('[role="dialog"]')).toBeNull();
+  });
+
+  it('pauses while the Fate page covers the chapter, and keeps listening into the next chapter', async () => {
+    const { controller, storyId } = await story({ written: 2 });
+    await mount(<Host controller={controller} storyId={storyId} readAloudVoices={PICKS} />);
+    await click(button => button.textContent?.trim() === 'Listen', 'Listen');
+    await next();
+    const cancels = speech.cancels;
+
+    await click(byLabel('Open Fate'), 'Open Fate');
+    expect(speech.cancels).toBeGreaterThan(cancels);
+    const spokenOnFate = speech.spoken.length;
+    await flush(20);
+    expect(speech.spoken.length).toBe(spokenOnFate);
+
+    await click(button => button.textContent?.trim() === 'Back to reading', 'Back to reading');
+    await flush();
+    // Still listening: the same line is read again from its start.
+    expect(lastSpoken().text).toBe('The tide pulled back from the drowned gate.');
+
+    await click(byLabel('Next Chapter'), 'Next Chapter');
+    await flush();
+    expect(lastSpoken().text).toBe('Chapter 2. The Bell Keeper');
   });
 });

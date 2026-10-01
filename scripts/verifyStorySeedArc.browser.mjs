@@ -26,7 +26,8 @@ try {
         startingLocation: 'The foothills.', societyStructure: 'Mountain villages.', powerSystemOutline: 'Costly cultivation.',
         mainCharacter: { name: 'Mara', age: '25', personality: 'Patient', appearance: 'Dark hair', backgroundProfile: 'A returning traveler.' },
         mcProfile: 'A returning traveler.', majorFactions: ['The Gate'], initialCharacters: ['The Keeper'], majorMysteries: [],
-        firstArcPromise: 'Reach the gate.', arcPlan: { arcNumber: 1, goals: [storySeed.story.optional.activeArcGoal] },
+        firstArcPromise: 'Reach the gate.', arcPlans: [{ arcNumber: 1, goals: [{ ...storySeed.story.optional.activeArcGoal, chapters: 100 }] }],
+        arcLookahead: [{ arcNumber: 2, direction: 'LOOKAHEAD_HIDDEN Cross the gate.' }],
         tropeRules: 'Earn each success.', styleBible: 'Clear sensory prose.', destinedEnding: 'Free the valley.', estimatedArcs: 3, unresolvedPlotThreads: [],
       } });
     });
@@ -79,8 +80,10 @@ try {
     await page.getByPlaceholder('Enter the server-configured testing token').fill('browser-fixture');
     await button('Manifest World Blueprint').click();
     await page.getByRole('button', { name: 'Manifest Story', exact: true }).waitFor();
+    // The Blueprint shows Arc 1 and the story's length; the look-ahead is the arc planner's alone.
+    assert.match(await page.getByTestId('blueprint-arc-goals').first().textContent(), /Arc 1/);
+    assert.ok(!(await page.locator('body').innerText()).includes('LOOKAHEAD_HIDDEN'));
     await page.locator('#hard-pin-2').fill('Keep the revised promise.');
-    await page.locator('#active-arc-goal-input').fill('Unlock the mountain gate.');
     // Blueprint review edits save to the Seed, including the generated cast.
     await page.locator('#char-role-blueprint-character-the-keeper').fill('Gatekeeper ally');
     await page.locator('#faction-description-blueprint-faction-the-gate').fill('Guardians of the pass.');
@@ -92,7 +95,9 @@ try {
     const stream = await exported.createReadStream();
     let content = ''; for await (const chunk of stream) content += chunk;
     assert(content.includes('Keep the revised promise.'));
-    assert(content.includes('Unlock the mountain gate.'));
+    // Arc 1 opens with the Seed's Active Arc Goal, and the hidden look-ahead travels with the export.
+    assert(content.includes('Open the mountain gate.'));
+    assert(content.includes('LOOKAHEAD_HIDDEN'));
     assert(!/plotAndTropeSettings|additionalStoryDirection|firstMajorConflict/.test(content));
     const exportedSeed = JSON.parse(content).seed.world.optional.worldFoundations;
     assert.equal(exportedSeed.additionalCharacters.find(entry => entry.name === 'The Keeper')?.role, 'Gatekeeper ally');

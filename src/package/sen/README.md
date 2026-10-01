@@ -33,6 +33,36 @@ There is no `chapter-generation` or `codex-cards` compatibility entry. Legacy
 Chapter Generation was retired; HARNESS is the one canonical generated-story
 owner.
 
+**0.11.0 (breaking):** a World Blueprint plans only Arc 1; every later arc is
+planned when the reader begins it.
+
+- `./story-seed`:
+  - `WorldBlueprint.arcPlans` holds exactly Arc 1, and a new hidden
+    `arcLookahead` holds at most two one-line directions for the next arcs.
+  - `validateBlueprintArcPlan`, `describeBlueprintArcPlanProblem`,
+    `alignArcOneWithSeed` and `fitArcLookahead` replace the whole-roadmap
+    functions.
+  - `buildArcRoadmapExtensionPayload`, `ARC_ROADMAP_EXTENSION_OPERATION` and
+    `ArcRoadmapExtensionPayload` are removed, and so are `CreationModal`'s
+    `onExtendArcRoadmap` and `BlueprintReview`'s `onAddArcs`.
+  - New: `fillBlankSeedSlots`, `readGeneratedSeedSlots`, `GeneratedSeedSlots`,
+    `GeneratedWorldBlueprint`, and the `SEED_*` slot lists and card limits.
+- `./arc-goals`:
+  - `insertArcsBeforeFinal`, `arcsCanBeAddedBeforeFinal`, `validateArcRoadmap`
+    and `arcRoadmapSchema` are removed.
+  - New look-ahead and planning helpers: `ArcLookaheadEntry`,
+    `normalizeArcLookahead`, `arcLookaheadFromPlans`, `ARC_PLAN_DRAFT_SCHEMA`,
+    `arcPlanFromDraft`, and `ARC_LOOKAHEAD_SCHEMA`.
+- `./harness-generation`:
+  - The Foundation takes `initialArcPlan`, `plannedArcCount` and
+    `initialArcLookahead` in place of `arcRoadmap`.
+  - `planNextArc`, `nextArcStep`, `arcPlanGap`, `arcReviewGap` and
+    `routeCompleteGap` are new, together with `BlueprintArcPage`, the World
+    Blueprint's goal section that reappears in the Reader when a new arc
+    begins.
+  - `HarnessReaderSession` takes `onPlanArc`.
+  - Storage moves to schema 24.
+
 **0.10.0 (breaking):** `InlineAudio`, `InlineAudioControl` and `InlineAudioText`
 moved from `./reader-chamber` to their own entry, `./inline-audio`, and their
 source from `components/reader-chamber/development/` to `src/audio/`. The

@@ -76,7 +76,7 @@ export const docsCategories: readonly DocsCategory[] = [
       {
         ...topic('arc', 'Arc'),
         definition: 'A 100-chapter stretch of a novel with its own goals.',
-        howItFits: 'Each arc has one to five sequential Arc Goals, with one active goal at a time and an allocated chapter range for each. The Story Seed ARC section collects the Destined Ending, optional Hard Pins, an initial Active Arc Goal, and Fun Settings; the World Blueprint plans the full Arc Roadmap. HARNESS tracks the live arc and its goals as chapters commit.',
+        howItFits: 'Each arc has one to five sequential Arc Goals, with one active goal at a time and an allocated chapter range for each. The Story Seed ARC section collects the Destined Ending, optional Hard Pins, an initial Active Arc Goal, and Fun Settings; the World Blueprint plans Arc 1 and the story’s length, and each later arc is planned when it begins. HARNESS tracks the live arc and its goals as chapters commit.',
       },
       {
         ...topic('world', 'World'),
@@ -106,12 +106,12 @@ export const docsCategories: readonly DocsCategory[] = [
       {
         ...topic('world-blueprint', 'World Blueprint', ['Blueprint']),
         definition: 'Our editable plan for a novel before it begins.',
-        howItFits: 'The Blueprint is a sibling to the Story Seed, not a replacement for it. It expands the creator’s inputs into reviewable world background, cast and power-system detail, Style guidance, the Destined Ending, and an Arc Roadmap. Seed-owned facts stay in the Seed when reviewed; Blueprint-only elaboration remains editable. We validate the roadmap before manifesting the novel and carry the resolved plan into HARNESS.',
+        howItFits: 'The Blueprint is a sibling to the Story Seed, not a replacement for it. It expands the creator’s inputs into reviewable world background, cast and power-system detail, Style guidance, the Destined Ending, Arc 1’s goals and the story’s length, and it fills every Story Seed slot the creator left blank without changing what they wrote. Seed-owned facts stay in the Seed when reviewed; Blueprint-only elaboration remains editable. We validate Arc 1 before manifesting the novel and carry it into HARNESS. Its goal section reappears in the Reader at the start of every later arc. The Blueprint is the novel’s transferable core: branching will let a reader keep a published Story Seed and make their own version of its Blueprint.',
       },
       {
         ...topic('destined-ending', 'Destined Ending'),
         definition: 'The ending the creator sets for the novel to move toward.',
-        howItFits: 'The creator can set it in Story Seed ARC or review it in the Blueprint; the roadmap’s final arc aims for it. HARNESS carries it as story direction, not as an event already in canon or a forced chapter deadline. In regular reading it remains the guaranteed destination even if a final goal is missed; in Fate Survival it is not guaranteed. Once the novel begins, this ending is fixed.',
+        howItFits: 'The creator can set it in Story Seed ARC or review it in the Blueprint; the final arc, planned when it begins, aims for it. HARNESS carries it as story direction, not as an event already in canon or a forced chapter deadline. In regular reading it remains the guaranteed destination even if a final goal is missed; in Fate Survival it is not guaranteed. Once the novel begins, this ending is fixed.',
       },
       {
         ...topic('hard-pin', 'Hard Pin'),
@@ -124,9 +124,9 @@ export const docsCategories: readonly DocsCategory[] = [
         howItFits: 'Story Seed ARC lets the creator tune Face-Slaps, Plot Armor, and Recognition at low, medium, or high. These settings enter the chapter writer’s current story information as flavor. They do not outrank the Destined Ending, Hard Pins, the active goal, established canon, or the writing skills.',
       },
       {
-        ...topic('arc-roadmap', 'Arc Roadmap'),
-        definition: 'The reviewed plan connecting every arc to the novel’s ending.',
-        howItFits: 'The World Blueprint plans an arc count and a goal plan for each arc, with the final arc aimed at the Destined Ending. The creator reviews and edits that route before the novel starts and can add arcs before the final arc or regenerate the plan. HARNESS copies the reviewed plans into the novel once; later edits follow each Fate mode’s rules rather than silently changing committed history.',
+        ...topic('arc-roadmap', 'Arc Planning', ['Arc Roadmap', 'look-ahead']),
+        definition: 'How each arc’s goals are planned as the novel reaches it.',
+        howItFits: 'The World Blueprint plans only Arc 1 and the story’s length, plus a short private look-ahead of the next arcs that only the arc planner reads. When the reader reaches a new arc, HARNESS plans its goals with one model request, continuing from where the last arc left off (including missed goals) toward the Destined Ending, and the final arc reaches it. The World Blueprint’s goal section then appears for review: the reader can edit the goals (once in Fate Survival) or accept them before the arc’s first chapter. The chapter writer still sees only the active goal, never a later arc.',
       },
       {
         ...topic('arc-goal', 'Arc Goal', ['Active Arc Goal', 'allocation', 'deadline']),

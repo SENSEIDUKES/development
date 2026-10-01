@@ -3,7 +3,8 @@
  * Walks the NovelExpanded app in Chromium at phone (390px) and laptop (1440px)
  * widths against a running dev server, with both APIs stubbed:
  *
- * `/app` → empty Home → Create → token sheet → World Blueprint → Manifest
+ * `/app` → empty Home → Create → token sheet → World Blueprint (Arc 1 only,
+ * the hidden look-ahead nowhere on screen, every blank Seed slot filled) → Manifest
  * Story → Story View → Start Story under the veil → Chapter 1 with its Sound
  * Cue → reload (no new request) → Back → Continue · Ch. 1 → Back → Home card →
  * browser Back and Forward → a missing story goes Home.
@@ -55,12 +56,15 @@ async function sampleSeed(browser) {
     window.$RefreshReg$ = () => {};
     window.$RefreshSig$ = () => type => type;
     window.__vite_plugin_react_preamble_installed__ = true;
-    const { createMockStorySeedRecord } = await import('/src/workshop/previews/story-seed/previewData.ts');
+    const { createMockStorySeedRecord, createMockSeedSlotAnswer } = await import('/src/workshop/previews/story-seed/previewData.ts');
+    const { readGeneratedSeedSlots } = await import('/src/components/story-seed/shared/storySeedSchema.ts');
     const record = createMockStorySeedRecord({ id: 'seed-browser-walk', userId: 'novelexpanded-reader' });
     // A Regular Reader story: Start Story writes Chapter 1 at once.
     record.seed.story.optional.fateSurvival = { ...record.seed.story.optional.fateSurvival, enabled: false };
     const { blueprint, ...withoutBlueprint } = record;
-    return { record: withoutBlueprint, blueprint };
+    // The server's answer: Arc 1, a look-ahead only the arc planner may read, and the slots for the Seed's blanks.
+    const answer = { ...blueprint, arcLookahead: [{ arcNumber: 2, direction: 'LOOKAHEAD_HIDDEN The prince walks the court road.' }], generatedSeedSlots: readGeneratedSeedSlots(createMockSeedSlotAnswer()) };
+    return { record: withoutBlueprint, blueprint: answer };
   });
   await context.close();
   return sample;
@@ -91,7 +95,7 @@ async function walk(browser, viewport, sample) {
     }
     const body = request.postDataJSON();
     if (body.operation === 'plan-arc') {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rawProviderResponse: JSON.stringify({ plan: { arcNumber: 1, goals: [{ id: 'arc-1', text: 'Reach the gate.', chapters: 100 }] }, destinedEnding: 'Mara reclaims her name.' }), providerReceipt: receipt }) });
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rawProviderResponse: JSON.stringify({ plan: { goals: [{ text: 'Reach the gate.', chapters: 100 }] }, lookahead: [], destinedEnding: 'Mara reclaims her name.' }), providerReceipt: receipt }) });
       return;
     }
     if (!body.immediateChapterRequest) {
@@ -136,6 +140,20 @@ async function walk(browser, viewport, sample) {
   // 3. The Blueprint, then Manifest Story, then Story View and Start Story under the veil.
   await visibleButton(/^Manifest Story/).waitFor();
   check(counts.blueprints === 1, `One Blueprint request expected, saw ${counts.blueprints}.`);
+  // Arc 1 and the story's length, nothing about later arcs; the look-ahead stays the planner's.
+  const arcGoals = page.getByTestId('blueprint-arc-goals').filter({ visible: true }).first();
+  await arcGoals.waitFor();
+  const arcText = await arcGoals.textContent();
+  check(arcText.includes('Arc 1') && !/Arc [2-9]/.test(arcText), `The Blueprint should show Arc 1 only, got: ${arcText}`);
+  check(await page.getByTestId('blueprint-story-length').filter({ visible: true }).count() === 1, 'The Blueprint should show the story length.');
+  const screenText = await page.evaluate(() => [document.body.innerText, ...[...document.querySelectorAll('input, textarea')].map(field => field.value)].join('\n'));
+  check(!screenText.includes('LOOKAHEAD_HIDDEN'), 'The look-ahead must never appear on screen.');
+  // Blank slots are filled; what the creator wrote is unchanged.
+  for (const filled of ['Cannot trust anyone who has not died beside him', 'Junior Sister Han', 'Deep Sea Alliance', 'Rebuilds his meridians from the scars of failed timelines']) {
+    check(screenText.includes(filled), `The Blueprint should fill a blank Seed slot with “${filled}”.`);
+  }
+  check(screenText.includes('Born as the son of a fallen patriarch'), "The creator's own Biography must stay.");
+  check(!screenText.includes('A laborer in the outer quarry'), "The model's Biography must not replace the creator's.");
   await shot('3-blueprint');
   await visibleButton(/^Manifest Story/).click();
   await page.getByTestId('harness-world-info').waitFor();

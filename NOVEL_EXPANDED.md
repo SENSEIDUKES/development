@@ -153,14 +153,15 @@ Update this section whenever it changes.
     Seeds and reading places, and asks for the Blueprint access token on
     Create. `npm run check:app` fails the build if it reaches an old system
     ([`src/novel-expanded/README.md`](./src/novel-expanded/README.md)).
-- **Not tested yet:** real generation with a real model, on the Vercel preview.
+  - **The World Blueprint shows Arc 1 only**, with the story's length. The model
+    gets a short private look-ahead of the next arcs. Each later arc is planned
+    when the reader presses Next at its start, from where the last arc left off,
+    and the World Blueprint's goal section opens in the Reader for review before
+    that arc's first chapter, in both modes. The model fills every Story Seed slot
+    left blank and never changes what the creator wrote. Add arcs is gone.
+- **Not tested yet:** real generation with a real model, on the Vercel preview, including a real Blueprint (Arc 1 only, filled slots) and a real arc planned at a new arc.
 - **Not yet as [The World Blueprint](#the-world-blueprint) describes:**
-  - The Blueprint plans every arc up front and shows them all; later arcs are never
-    re-planned from what happened, and no Blueprint reappears when an arc begins.
-  - The model leaves many Story Seed slots empty (Starting Identity, Secret
-    Advantage, Starting Weakness, Main Flaw, Moral Alignment, and the side
-    characters' and factions' details), because its answer has no place for them.
-  - Branching, and the warnings on Blueprint changes, are not built.
+  branching, and the warnings on Blueprint changes, are not built.
 - **Not connected yet:**
   - The CAPA skill and media slots still sit on the Harness Generation page, not in
     Story Settings.
@@ -176,11 +177,10 @@ Update this section whenever it changes.
 
 ## What comes next
 
-1. **Bring the World Blueprint in line with [its direction](#the-world-blueprint):**
-   the reader sees only Arc 1; each later arc is planned when it begins, from where
-   the last arc left off, and the Blueprint's goal section reappears for the reader
-   to review before that arc's first chapter; the model fills every Story Seed slot
-   left blank. Branching and the change warnings come after.
+1. **Branching and Blueprint change warnings** ([its direction](#the-world-blueprint)):
+   a reader takes a published creator's Blueprint, keeps the Story Seed, and makes
+   their own version; every Blueprint change carries a hard warning about what it
+   could cause.
 2. **Refine the creation-to-reading interaction** in the Workshop: Story Seed → Story
    View → Reader Chamber, including the manifestation sequence and World Cards. The
    new path (Story Seed → HARNESS → new reader) is connected; what remains is how it

@@ -4,9 +4,9 @@ import { navigateLibraryPreview } from '../library-shell/libraryPreviewNavigatio
 import { LIBRARY_DESTINATIONS } from '@seihouse/library/shell';
 import { lazy, useCallback, useEffect, useRef, useState } from 'react';
 import { CreationModal as DevelopmentCreationModal } from '@seihouse/library/story-seed';
-import { requestArcRoadmapExtension, requestWorldBlueprint } from '../../../host/story-seed/blueprintGenerationClient';
+import { requestWorldBlueprint } from '../../../host/story-seed/blueprintGenerationClient';
 import { resetStorySeedRepository, setStorySeedRepository } from './storySeedStorage';
-import { finalizeGeneratedWorldBlueprint, type ArcRoadmapExtensionPayload, type BlueprintGenerationPayload } from '@seihouse/sen/story-seed';
+import { finalizeGeneratedWorldBlueprint, type BlueprintGenerationPayload } from '@seihouse/sen/story-seed';
 import {
   resetMockSeeds,
   resetMockState,
@@ -20,8 +20,8 @@ import {
 } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import {
-  createMockAddedArcs,
-  createMockArcRoadmap,
+  createMockArcLookahead,
+  createMockArcOne,
   createMockBlueprint,
   createReferenceSavedSeeds,
   createStoryBankRecords,
@@ -446,30 +446,11 @@ export function StorySeedWorkspace({ embedded = false, initialState, localGenera
           // Finalized like the server's reply, so the preview shows the same
           // author-fact detail and cast merging a real generation produces.
           return finalizeGeneratedWorldBlueprint(
-            { ...mock, estimatedArcs: arcCount, arcPlans: createMockArcRoadmap(arcCount, payload.storySeed.story.optional.activeArcGoal) },
+            { ...mock, estimatedArcs: arcCount, arcPlans: [createMockArcOne(payload.storySeed.story.optional.activeArcGoal, arcCount)], arcLookahead: createMockArcLookahead(arcCount) },
             payload.storySeed,
           );
         }
         return await requestWorldBlueprint(payload, blueprintAccessToken, controller.signal);
-      } finally {
-        if (activeBlueprintRequestRef.current === controller) {
-          activeBlueprintRequestRef.current = null;
-          setBlueprintGenerating(false);
-        }
-      }
-    },
-    onExtendArcRoadmap: async (payload: ArcRoadmapExtensionPayload) => {
-      activeBlueprintRequestRef.current?.abort();
-      const controller = new AbortController();
-      activeBlueprintRequestRef.current = controller;
-      setBlueprintGenerating(true);
-      try {
-        const savedArcs = payload.blueprint.arcPlans?.length ?? 0;
-        if (localGeneration) {
-          await wait(300);
-          return createMockAddedArcs(savedArcs, payload.arcCount - savedArcs);
-        }
-        return await requestArcRoadmapExtension(payload, blueprintAccessToken, controller.signal);
       } finally {
         if (activeBlueprintRequestRef.current === controller) {
           activeBlueprintRequestRef.current = null;

@@ -11,7 +11,7 @@ import { handleRadioGroupKeyDown } from '../radioGroupKeyboard';
 interface ArcWorkspaceProps {
   seed: StorySeedInput;
   updateSeed: UpdateSeed;
-  /** The Blueprint review edits Arc 1's opening goal inside its roadmap instead. */
+  /** The Blueprint review edits Arc 1's opening goal inside Arc 1's goals instead. */
   showActiveArcGoal?: boolean;
 }
 
@@ -101,7 +101,7 @@ export const ArcWorkspace = ({ seed, updateSeed, showActiveArcGoal = true }: Arc
       </section>
       {showActiveArcGoal && <>
         <LibraryTextBox id="active-arc-goal-input" label="Active Arc Goal" icon={Target}
-          helpText="The first goal of Arc 1: what the story works toward right now. The Blueprint plans every arc from here to the Destined Ending, and you review that whole roadmap before the story begins."
+          helpText="The first goal of Arc 1: what the story works toward right now. The Blueprint plans Arc 1 around it; each later arc is planned when it begins, and you review its goals then."
           value={seed.story.optional.activeArcGoal?.text ?? ''}
           onChange={text => updateSeed(current => ({ ...current, story: { ...current.story, optional: {
             ...current.story.optional, activeArcGoal: text.trim() ? { id: current.story.optional.activeArcGoal?.id ?? 'arc-1-initial', text, chapters: ARC_LENGTH } : undefined,

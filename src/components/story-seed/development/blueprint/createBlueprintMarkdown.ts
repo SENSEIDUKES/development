@@ -86,13 +86,13 @@ ${blueprint.destinedEnding || ''}
 ### Hard Pins
 ${markdownList((blueprint.hardPins ?? []).map(pin => pin.text))}
 
-### Arc Roadmap
-${(blueprint.arcPlans ?? []).map(plan => [`#### Arc ${plan.arcNumber}`, ...plan.goals.map((goal, index) => `${index + 1}. ${goal.text} (${goal.chapters} chapters)`)].join('\n')).join('\n\n')}
+### Arc 1 Goals
+${(blueprint.arcPlans ?? []).slice(0, 1).map(plan => plan.goals.map((goal, index) => `${index + 1}. ${goal.text} (${goal.chapters} chapters)`).join('\n')).join('')}
 
 ### Fun Settings
 ${Object.entries(blueprint.funSettings ?? {}).map(([key, value]) => `- ${key}: ${value}`).join('\n')}
 
-**Estimated Arcs:** ${blueprint.estimatedArcs || ''}
+**Story Length:** ${blueprint.estimatedArcs || ''} arcs. Each later arc is planned when it begins.
 
 ### Generated Style Bible
 ${blueprint.styleBible || ''}

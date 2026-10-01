@@ -14,8 +14,7 @@ import { type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { generateUUID } from '@seihouse/sen/story-seed';
 import { useStoryCreationRuntime, useStoryCreationStore, type StoryCreationSnapshot } from '../../../library/story-seed/runtime';
 import { type StorySeedArtifact, type StorySeedRecord } from '@seihouse/sen/story-seed';
-import { insertArcsBeforeFinal, type ArcPlan } from '@seihouse/sen/arc-goals';
-import { applyInferredStoryTags, buildArcRoadmapExtensionPayload, buildBlueprintGenerationPayload, buildInitialStoryGenerationPayload, createBlueprintDraftFromSeed, createEmptyStorySeedInput, mirrorSeedIntoBlueprint, normalizeStorySeedInput, reconcileStorySeedBlueprint, validateStorySeedDraft, validateStorySeedInput, type ArcRoadmapExtensionPayload, type BlueprintGenerationPayload, type InitialStoryGenerationPayload, type StorySeedInput } from '@seihouse/sen/story-seed';
+import { applyInferredStoryTags, buildBlueprintGenerationPayload, buildInitialStoryGenerationPayload, createBlueprintDraftFromSeed, createEmptyStorySeedInput, mirrorSeedIntoBlueprint, normalizeStorySeedInput, reconcileStorySeedBlueprint, validateStorySeedDraft, validateStorySeedInput, type BlueprintGenerationPayload, type InitialStoryGenerationPayload, type StorySeedInput } from '@seihouse/sen/story-seed';
 import { createStoryAdministrativeMetadata } from '@seihouse/sen/story-seed';
 import { DEFAULT_SEN_LANGUAGE_CODE, normalizeChapterWritingStyle, normalizeSenLanguageCode, type ChapterWritingStyle, type SenLanguageCode } from '@seihouse/sen/contracts';
 import StoryAuthGate, { STORY_AUTH_DISSOLVE_MS } from './StoryAuthGate';
@@ -47,12 +46,6 @@ export interface CreationModalProps {
   onNavigateHome: () => void;
   onStartStory: (payload: InitialStoryGenerationPayload) => Promise<void>;
   onGenerateBlueprint: (payload: BlueprintGenerationPayload) => Promise<WorldBlueprint>;
-  /**
-   * Plans only the arcs an author adds to a reviewed Blueprint and returns
-   * them. Without it, the review offers only a whole-Blueprint regeneration
-   * for a different arc count.
-   */
-  onExtendArcRoadmap?: (payload: ArcRoadmapExtensionPayload) => Promise<ArcPlan[]>;
   isGenerating: boolean;
   error: string | null;
   /**
@@ -135,7 +128,7 @@ const selectCreationModalStore = (state: StoryCreationSnapshot): CreationModalSt
   libraryStories: state.stories,
 });
 
-export default function CreationModal({ onNavigateHome, onStartStory, onGenerateBlueprint, onExtendArcRoadmap, isGenerating: isGeneratingProp, error, accountDefaultLanguage, accountDefaultChapterWritingStyle }: CreationModalProps) {
+export default function CreationModal({ onNavigateHome, onStartStory, onGenerateBlueprint, isGenerating: isGeneratingProp, error, accountDefaultLanguage, accountDefaultChapterWritingStyle }: CreationModalProps) {
   const runtime = useStoryCreationRuntime();
   const guestWorkspace = Boolean(runtime.guestOwnerId);
   const storeIsGenerating = useStoryCreationStore(state => state.isGenerating);
@@ -515,8 +508,8 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   };
 
   /**
-   * Blueprint review: replace the whole Blueprint with a fresh one planned at
-   * the chosen arc count. The Seed, with every reviewed value it owns, is the
+   * Blueprint review: replace the whole Blueprint with a fresh one for a story
+   * of the chosen length (Arc 1 is planned for that length). The Seed, with every reviewed value it owns, is the
    * input, so the Destined Ending and opening goal carry over.
    */
   const handleRegenerateBlueprint = async (arcCount: number) => {
@@ -525,32 +518,6 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     const validation = validateStorySeedInput(seedInput);
     if (!validation.valid) throw new Error(validation.errors.join(' '));
     await generateBlueprintFrom(seedInput, arcCount);
-  };
-
-  /**
-   * Blueprint review: plan only the arcs being added. Every saved arc keeps
-   * its goals; the new ones go in before the final arc, which still reaches
-   * the Destined Ending. The lengthened Blueprint is saved like a generated one.
-   */
-  const handleAddArcs = async (arcCount: number) => {
-    if (!onExtendArcRoadmap || !blueprint) return;
-    if (runtime.store.getSnapshot().isGenerating) throw new Error('Another generation is still running. Try again when it finishes.');
-    const context = blueprintContextForRecord(currentSeed || undefined);
-    const reviewed = reconcileStorySeedBlueprint(applyInferredStoryTags(normalizeStorySeedInput(seed)), blueprint, context);
-    const added = await onExtendArcRoadmap(buildArcRoadmapExtensionPayload(reviewed.seed, reviewed.blueprint, arcCount));
-    const latest = latestReviewRef.current;
-    const base = latest.blueprint ?? reviewed.blueprint;
-    const arcPlans = insertArcsBeforeFinal(base.arcPlans ?? [], added);
-    const lengthened: WorldBlueprint = { ...base, arcPlans, estimatedArcs: arcPlans.length };
-    setBlueprint(lengthened);
-    try {
-      const saved = reconcileStorySeedBlueprint(applyInferredStoryTags(normalizeStorySeedInput(latest.seed)), lengthened, context);
-      await persistSeed(saved.seed, saved.blueprint, originalLanguage);
-      setSeedError(null);
-    } catch (seedSaveError) {
-      console.error('Failed to save the lengthened Blueprint:', seedSaveError);
-      setSeedError('The new arcs were added, but this seed was not saved to your account. Save the draft before leaving.');
-    }
   };
 
   /**
@@ -714,7 +681,6 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   const requestExportCurrentSeed = useLatestCallback(handleExportCurrentSeed);
   const requestGenerateBlueprint = useLatestCallback(handleGenerateBlueprintClick);
   const requestRegenerateBlueprint = useLatestCallback(handleRegenerateBlueprint);
-  const requestAddArcs = useLatestCallback(handleAddArcs);
 
   if ((!currentUser || authDissolving) && !guestWorkspace) {
     return <StoryAuthGate linked={Boolean(currentUser)} onAuthenticate={runtime.authenticate} />;
@@ -739,7 +705,6 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
             onExportSeed={requestExportCurrentSeed}
             isGenerating={isGenerating}
             onRegenerateBlueprint={requestRegenerateBlueprint}
-            onAddArcs={onExtendArcRoadmap ? requestAddArcs : undefined}
             originalLanguage={originalLanguage}
           />
         </DeferredStorySeedView>

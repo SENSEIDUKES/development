@@ -71,26 +71,26 @@ describe('Story Seed Arc and World ownership', () => {
     render(current, 'world');
     fill('make-it-work-instruction-input', 'The mountain walks. Make it believable.');
     fill('main-opposition-input', 'The gate keeper.');
-    // A draft without a generated roadmap cannot begin a story.
+    // A draft without a generated Arc 1 cannot begin a story.
     render(current, 'blueprint');
     expect(button('Manifest Story')?.disabled).toBe(true);
-    expect(container.textContent).toContain('plan every arc');
+    expect(container.textContent).toContain('Generate the Blueprint to plan Arc 1');
     expect(container.querySelector('#active-arc-goal-input')).toBeNull();
-    // A generated two-arc roadmap: review and edit it before the story begins.
-    render(current, 'blueprint', reconcileStorySeedBlueprint(current, { ...createBlueprintDraftFromSeed(current), arcPlans: roadmap, estimatedArcs: 2 }).blueprint);
+    // A generated Blueprint for a two-arc story plans Arc 1: review and edit it before the story begins.
+    render(current, 'blueprint', reconcileStorySeedBlueprint(current, { ...createBlueprintDraftFromSeed(current), arcPlans: [roadmap[0]], estimatedArcs: 2 }).blueprint);
+    expect(container.textContent).not.toContain('Arc 2');
     fill('hard-pin-2', 'Rebuild the temple.');
     act(() => button('Edit Arc 1 goals')!.click());
-    const openingGoal = container.querySelector<HTMLInputElement>('[data-testid="blueprint-arc-roadmap"] fieldset input')!;
+    const openingGoal = container.querySelector<HTMLInputElement>('[data-testid="blueprint-arc-goals"] fieldset input')!;
     act(() => {
       Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(openingGoal, 'Open the mountain gate.');
       openingGoal.dispatchEvent(new Event('input', { bubbles: true }));
     });
     await act(async () => { button('Save goals')!.click(); });
     expect(blueprint.hardPins).toEqual(current.story.optional.hardPins);
-    // Arc 1's opening goal writes through to the Seed; its allocation and the rest of the route stay saved.
+    // Arc 1's opening goal writes through to the Seed; its allocation and its other goals stay saved.
     expect(current.story.optional.activeArcGoal).toEqual({ id: 'arc-1-gate', text: 'Open the mountain gate.', chapters: 100 });
-    expect(blueprint.arcPlans?.[0].goals).toEqual([{ id: 'arc-1-gate', text: 'Open the mountain gate.', chapters: 60 }, roadmap[0].goals[1]]);
-    expect(blueprint.arcPlans?.[1]).toEqual(roadmap[1]);
+    expect(blueprint.arcPlans).toEqual([{ arcNumber: 1, goals: [{ id: 'arc-1-gate', text: 'Open the mountain gate.', chapters: 60 }, roadmap[0].goals[1]] }]);
     expect(blueprint.funSettings?.faceSlap).toBe('high');
     expect(button('Manifest Story')?.disabled).toBe(false);
     const saved = await workshopStorySeedStorage.create('arc-test', current, blueprint, 'ja');

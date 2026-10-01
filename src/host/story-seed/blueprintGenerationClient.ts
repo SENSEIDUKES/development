@@ -1,6 +1,4 @@
-import { type ArcPlan } from '@seihouse/sen/arc-goals';
-import { type WorldBlueprint } from '@seihouse/sen/story-seed';
-import { type ArcRoadmapExtensionPayload, type BlueprintGenerationPayload } from '@seihouse/sen/story-seed';
+import { type BlueprintGenerationPayload, type WorldBlueprint } from '@seihouse/sen/story-seed';
 
 const ENDPOINT = '/api/generate-blueprint';
 const REQUEST_TIMEOUT_MS = 130_000;
@@ -49,7 +47,7 @@ const readResponseBody = async (response: Response): Promise<unknown> => {
 };
 
 const postBlueprintRequest = async (
-  payload: BlueprintGenerationPayload | ArcRoadmapExtensionPayload,
+  payload: BlueprintGenerationPayload,
   accessToken: string,
   messages: { missingToken: string; failed: (status: number) => string; timedOut: string },
   signal?: AbortSignal,
@@ -97,18 +95,3 @@ export const requestWorldBlueprint = async (
   failed: status => `World Blueprint generation failed with status ${status}.`,
   timedOut: 'World Blueprint generation timed out. No Story Seed data was changed; please retry.',
 }, signal) as unknown as WorldBlueprint;
-
-/** Plans only the arcs being added to a reviewed Blueprint; returns the new arcs, numbered in place. */
-export const requestArcRoadmapExtension = async (
-  payload: ArcRoadmapExtensionPayload,
-  accessToken: string,
-  signal?: AbortSignal,
-): Promise<ArcPlan[]> => {
-  const body = await postBlueprintRequest(payload, accessToken, {
-    missingToken: 'Enter the Development access token before adding arcs.',
-    failed: status => `Adding arcs failed with status ${status}.`,
-    timedOut: 'Adding arcs timed out. Nothing was changed; please retry.',
-  }, signal);
-  if (!Array.isArray(body.addedArcPlans)) throw new Error('The World Blueprint server returned no new arcs.');
-  return body.addedArcPlans as ArcPlan[];
-};

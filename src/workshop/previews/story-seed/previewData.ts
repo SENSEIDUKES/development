@@ -10,7 +10,7 @@ import {
   type StorySeedInput,
   type StorySeedRecord,
 } from '@seihouse/sen/story-seed';
-import type { ArcPlan } from '@seihouse/sen/arc-goals';
+import type { ArcLookaheadEntry, ArcPlan } from '@seihouse/sen/arc-goals';
 
 export const MOCK_USER_ID = 'mock-user-workshop';
 
@@ -121,33 +121,28 @@ const MOCK_ROUTE = [
 ] as const;
 
 /**
- * A complete mock roadmap: one plan per arc, ending at the Destined Ending.
- * Arc 1 opens with the creator's Active Arc Goal when one is supplied.
+ * A mock Arc 1, the only arc a Blueprint plans. It opens with the creator's
+ * Active Arc Goal when one is supplied; in a one-arc story its last goal is
+ * the Destined Ending.
  */
-export const createMockArcRoadmap = (arcCount: number, openingGoal?: { id: string; text: string }): ArcPlan[] =>
-  Array.from({ length: arcCount }, (_, index) => {
-    const arcNumber = index + 1;
-    const texts: string[] = [...MOCK_ROUTE[Math.min(index, MOCK_ROUTE.length - 1)]];
-    if (arcNumber === arcCount) texts[texts.length - 1] = 'The prince survives and the court\'s grip on fate is broken';
-    else if (index >= MOCK_ROUTE.length - 1) texts[texts.length - 1] = `Hold the alliance together through the trials of Arc ${arcNumber}`;
-    const goals = texts.map((text, goalIndex) => ({ id: `arc-${arcNumber}-goal-${goalIndex + 1}`, text, chapters: goalIndex === 0 ? 30 : goalIndex === 1 ? 40 : 30 }));
-    if (arcNumber === 1 && openingGoal) goals[0] = { ...goals[0], id: openingGoal.id, text: openingGoal.text };
-    return { arcNumber, goals };
-  });
+export const createMockArcOne = (openingGoal?: { id: string; text: string }, arcCount = 3): ArcPlan => {
+  const texts: string[] = [...MOCK_ROUTE[0]];
+  if (arcCount === 1) texts[texts.length - 1] = 'The prince survives and the court\'s grip on fate is broken';
+  const goals = texts.map((text, goalIndex) => ({ id: `arc-1-goal-${goalIndex + 1}`, text, chapters: goalIndex === 0 ? 30 : goalIndex === 1 ? 40 : 30 }));
+  if (openingGoal) goals[0] = { ...goals[0], id: openingGoal.id, text: openingGoal.text };
+  return { arcNumber: 1, goals };
+};
 
-/**
- * Mock arcs for Add arcs: bridge arcs numbered from `firstArc`, which the
- * Blueprint review inserts before the final arc.
- */
-export const createMockAddedArcs = (firstArc: number, count: number): ArcPlan[] =>
-  Array.from({ length: count }, (_, index) => {
-    const arcNumber = firstArc + index;
-    const texts = [`Hold the alliance together through the trials of Arc ${arcNumber}`, `Uncover the court's next move against the prince`, `Force the elders to choose a side`];
-    return { arcNumber, goals: texts.map((text, goalIndex) => ({ id: `arc-${arcNumber}-added-${goalIndex + 1}`, text, chapters: goalIndex === 1 ? 40 : 30 })) };
-  });
+/** A mock hidden look-ahead: where Arcs 2 and 3 head, within the story's length. */
+export const createMockArcLookahead = (arcCount = 3): ArcLookaheadEntry[] =>
+  [2, 3].filter(arcNumber => arcNumber <= arcCount).map(arcNumber => ({
+    arcNumber,
+    direction: arcNumber === arcCount ? 'The prince survives and the court\'s grip on fate is broken.' : MOCK_ROUTE[arcNumber - 1].join('; then ') + '.',
+  }));
 
 export const createMockBlueprint = (): WorldBlueprint => ({
-  arcPlans: createMockArcRoadmap(3),
+  arcPlans: [createMockArcOne()],
+  arcLookahead: createMockArcLookahead(3),
   blueprintVersion: 'v1.0',
   creator: 'Workshop Creator',
   title: 'Ashes of the Ninth Meridian',

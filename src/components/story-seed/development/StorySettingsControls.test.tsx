@@ -5,9 +5,9 @@ import { type Root } from 'react-dom/client';
 import { createRoot } from '../../../test-utils/createStoryCreationRoot';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CHAPTER_WRITING_STYLE_OPTIONS, SEN_LANGUAGES, type SenLanguageCode } from '@seihouse/sen/contracts';
-import { buildBlueprintGenerationPayload, buildArcRoadmapExtensionPayload, createBlueprintDraftFromSeed, createEmptyStorySeedInput, normalizeStorySeedInput, reconcileStorySeedBlueprint, type StorySeedInput } from '@seihouse/sen/story-seed';
+import { buildBlueprintGenerationPayload, createBlueprintDraftFromSeed, createEmptyStorySeedInput, normalizeStorySeedInput, reconcileStorySeedBlueprint, type StorySeedInput } from '@seihouse/sen/story-seed';
 import { resetMockState } from '../shared/stubs';
-import { createMockArcRoadmap } from '../../../workshop/previews/story-seed/previewData';
+import { createMockArcOne } from '../../../workshop/previews/story-seed/previewData';
 import { BlueprintReview, StorySeedSettings } from '@seihouse/library/story-seed';
 
 let container: HTMLDivElement;
@@ -128,7 +128,7 @@ describe('Reading Mode stays out of world generation', () => {
   it('keeps the setting on the saved seed, including after a Blueprint writes back into it', () => {
     const seed = completeSeed();
     expect(normalizeStorySeedInput(seed).story.optional.chapterWritingStyle).toBe('Easy Read');
-    const generated = { ...createBlueprintDraftFromSeed(seed), arcPlans: createMockArcRoadmap(2, seed.story.optional.activeArcGoal), estimatedArcs: 2 };
+    const generated = { ...createBlueprintDraftFromSeed(seed), arcPlans: [createMockArcOne(seed.story.optional.activeArcGoal, 2)], estimatedArcs: 2 };
     expect(reconcileStorySeedBlueprint(seed, generated).seed.story.optional.chapterWritingStyle).toBe('Easy Read');
   });
 
@@ -136,13 +136,5 @@ describe('Reading Mode stays out of world generation', () => {
     const payload = buildBlueprintGenerationPayload(completeSeed());
     expect('chapterWritingStyle' in payload.storySeed.story.optional).toBe(false);
     expect(JSON.stringify(payload)).not.toContain('Easy Read');
-  });
-
-  it('never sends it when arcs are added either', () => {
-    const seed = completeSeed();
-    const blueprint = { ...createBlueprintDraftFromSeed(seed), arcPlans: createMockArcRoadmap(2, seed.story.optional.activeArcGoal), estimatedArcs: 2 };
-    const payload = buildArcRoadmapExtensionPayload(seed, blueprint, 3);
-    expect('chapterWritingStyle' in payload.storySeed.story.optional).toBe(false);
-    expect(JSON.stringify(payload.storySeed)).not.toContain('Easy Read');
   });
 });

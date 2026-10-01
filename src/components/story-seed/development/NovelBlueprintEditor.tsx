@@ -98,13 +98,13 @@ export function NovelBlueprintEditor({ snapshot, destinedEnding, busy = false, o
       />
       <LibraryPanel as="section" aria-labelledby="novel-blueprint-ending-heading" padding="md">
         <BlueprintSectionHeading id="novel-blueprint-ending-heading" icon={Hourglass} title="Destined Ending"
-          tagline="The novel's fixed destination. Every arc's plan is a route toward it, so it is not edited here." />
+          tagline="The novel's fixed destination. Every arc is planned as a route toward it, so it is not edited here." />
         <p className="mt-4 text-sm leading-relaxed text-neutral-200" data-testid="novel-blueprint-destined-ending">
           {destinedEnding?.trim() || 'Not set yet. It is established before the first chapter.'}
         </p>
         {blueprint.arcPlans?.length ? (
           <p className="mt-2 text-xs text-neutral-400" data-testid="novel-blueprint-arc-count">
-            Planned length · {blueprint.arcPlans.length} {blueprint.arcPlans.length === 1 ? 'arc' : 'arcs'}, set when the novel began.
+            Planned length · {blueprint.estimatedArcs} {blueprint.estimatedArcs === 1 ? 'arc' : 'arcs'}, set when the novel began.
           </p>
         ) : null}
       </LibraryPanel>

@@ -23,7 +23,7 @@
  * belongs to the locked `reference/` replica (see `referenceIntake.ts`).
  */
 
-import { ARC_LENGTH, MAX_ROADMAP_ARCS, arcsCanBeAddedBeforeFinal, createInitialArcPlan, validateArcPlan, validateArcRoadmap, type ArcGoal, type ArcPlan } from '../../arc-goals/shared/arcGoals';
+import { ARC_LENGTH, MAX_ROADMAP_ARCS, arcLookaheadFromPlans, createInitialArcPlan, normalizeArcLookahead, validateArcPlan, type ArcGoal, type ArcLookaheadEntry, type ArcPlan } from '../../arc-goals/shared/arcGoals';
 import { normalizeFunSettings, validateHardPinInputs, type FunSettings, type HardPinInput } from '../../../narrative/storyDirection';
 import { isChapterWritingStyle, type ChapterWritingStyle } from '../../../narrative/readingMode';
 export { normalizeFunSettings, HARD_PIN_LIMIT, HARD_PIN_TEXT_LIMIT, validateHardPinInputs, type FunSettings, type FunSettingLevel, type HardPinInput } from '../../../narrative/storyDirection';
@@ -202,26 +202,10 @@ export interface StorySeedInput {
 export interface BlueprintGenerationPayload {
   storySeed: StorySeedInput;
   /**
-   * The number of arcs the author asked the Blueprint to plan. Absent, the
-   * model chooses a realistic length for the story.
+   * The story's length in arcs, as the author chose it. Absent, the model
+   * chooses a realistic length. The Blueprint plans only Arc 1 either way.
    */
   arcCount?: number;
-}
-
-/** Names an arc extension request on the Blueprint endpoint. */
-export const ARC_ROADMAP_EXTENSION_OPERATION = 'extend-arc-roadmap' as const;
-
-/**
- * Asks for only the arcs an author is adding to a reviewed Blueprint. The
- * saved roadmap travels as context and is never re-planned; the new arcs go in
- * before its final arc (see `insertArcsBeforeFinal`).
- */
-export interface ArcRoadmapExtensionPayload {
-  operation: typeof ARC_ROADMAP_EXTENSION_OPERATION;
-  storySeed: StorySeedInput;
-  blueprint: WorldBlueprint;
-  /** The roadmap's length once the new arcs are added. */
-  arcCount: number;
 }
 
 export interface InitialStoryGenerationPayload extends BlueprintGenerationPayload {
@@ -551,46 +535,68 @@ export interface WorldBlueprintContext {
 const UNTITLED_BLUEPRINT_TITLE = 'Untitled Story';
 
 /**
- * Reads a saved roadmap. Blueprints saved before roadmaps held one Arc 1
- * `arcPlan`; it is read as a one-arc roadmap rather than discarded.
+ * Reads a saved Blueprint's Arc 1 and never throws. Older Blueprints held one
+ * Arc 1 `arcPlan`, or a plan for every arc; either way only a valid Arc 1 is
+ * kept, and anything malformed is dropped rather than failing the read.
  */
-const readArcRoadmap = (source: Record<string, unknown>): ArcPlan[] | undefined => {
-  if (Array.isArray(source.arcPlans) && source.arcPlans.length) return validateArcRoadmap(source.arcPlans);
-  return source.arcPlan ? [validateArcPlan(source.arcPlan)] : undefined;
+const readArcOne = (source: Record<string, unknown>): ArcPlan | undefined => {
+  const candidate = Array.isArray(source.arcPlans) ? source.arcPlans[0] : source.arcPlan;
+  try { const plan = validateArcPlan(candidate); return plan.arcNumber === 1 ? plan : undefined; }
+  catch { return undefined; }
 };
 
 /**
- * Keeps the roadmap's opening goal in step with the Seed's Active Arc Goal,
- * the one arc-goal value the Seed owns. Allocations, identities and every other
- * goal and arc stay exactly as the roadmap saved them.
+ * Reads the hidden look-ahead within the story's length. A Blueprint saved
+ * before arcs were planned as they begin keeps its next planned arcs as the
+ * look-ahead, until one is saved in its place.
  */
-export const alignArcRoadmapWithSeed = (roadmap: ArcPlan[] | undefined, seed: StorySeedInput): ArcPlan[] | undefined => {
+const readArcLookahead = (source: Record<string, unknown>, estimatedArcs: number): ArcLookaheadEntry[] => {
+  const bounds = { afterArc: 1, plannedArcCount: estimatedArcs };
+  if (Array.isArray(source.arcLookahead)) return normalizeArcLookahead(source.arcLookahead, bounds);
+  if (!Array.isArray(source.arcPlans)) return [];
+  const later = source.arcPlans.slice(1).flatMap(entry => {
+    try { return [validateArcPlan(entry)]; } catch { return []; }
+  });
+  return arcLookaheadFromPlans(later, bounds);
+};
+
+/**
+ * Keeps Arc 1's opening goal in step with the Seed's Active Arc Goal, the one
+ * arc-goal value the Seed owns. Allocations, identities and every other goal
+ * stay as saved. A Blueprint that has not planned Arc 1 yet gets none: Arc 1
+ * comes only from the Blueprint, never from the Seed's goal alone.
+ */
+export const alignArcOneWithSeed = (arcPlans: ArcPlan[] | undefined, seed: StorySeedInput): ArcPlan[] | undefined => {
   const seedGoal = seed.story.optional.activeArcGoal;
-  if (!roadmap?.length) return seedGoal ? [createInitialArcPlan(seedGoal)] : undefined;
-  if (!seedGoal || roadmap[0].goals[0]?.text === seedGoal.text) return roadmap;
-  const [first, ...rest] = roadmap;
-  return [{ ...first, goals: first.goals.map((goal, index) => index === 0 ? { ...goal, text: seedGoal.text } : goal) }, ...rest];
+  const first = arcPlans?.[0];
+  if (!first) return undefined;
+  if (!seedGoal || first.goals[0]?.text === seedGoal.text) return [first];
+  return [{ ...first, goals: first.goals.map((goal, index) => index === 0 ? { ...goal, text: seedGoal.text } : goal) }];
 };
 
 /**
- * The Manifest gate for the arc roadmap: a validated plan for every arc the
- * Blueprint counts, with no arc left for automatic planning.
+ * The Manifest gate: a Blueprint begins a story with a valid Arc 1 and a story
+ * length. Every later arc is planned when the reader begins it.
  */
-export const validateBlueprintArcRoadmap = (blueprint: Pick<WorldBlueprint, 'arcPlans' | 'estimatedArcs'>): ArcPlan[] => {
-  if (!blueprint.arcPlans?.length) {
-    throw new Error('Generate the Blueprint to plan every arc before beginning the story.');
-  }
-  if (blueprint.arcPlans.length !== blueprint.estimatedArcs) {
-    throw new Error(`The Blueprint plans ${blueprint.arcPlans.length} of its ${blueprint.estimatedArcs} arcs. Regenerate the Blueprint to plan every arc before beginning the story.`);
-  }
-  return validateArcRoadmap(blueprint.arcPlans, blueprint.estimatedArcs);
+export const validateBlueprintArcPlan = (blueprint: Pick<WorldBlueprint, 'arcPlans' | 'estimatedArcs'>): ArcPlan => {
+  const first = blueprint.arcPlans?.[0];
+  if (!first) throw new Error('Generate the Blueprint to plan Arc 1 before beginning the story.');
+  if (blueprint.arcPlans!.length !== 1) throw new Error('A Blueprint plans only Arc 1; every later arc is planned when it begins.');
+  const plan = validateArcPlan(first);
+  if (plan.arcNumber !== 1) throw new Error('The Blueprint\'s plan must be Arc 1.');
+  validateRequestedArcCount(blueprint.estimatedArcs);
+  return plan;
 };
 
-/** Human-readable roadmap problem for the review, or undefined when ready. */
-export const describeBlueprintArcRoadmapProblem = (blueprint: Pick<WorldBlueprint, 'arcPlans' | 'estimatedArcs'>): string | undefined => {
-  try { validateBlueprintArcRoadmap(blueprint); return undefined; }
-  catch (error) { return error instanceof Error ? error.message : 'The arc roadmap is not ready.'; }
+/** Human-readable Arc 1 problem for the review, or undefined when ready. */
+export const describeBlueprintArcPlanProblem = (blueprint: Pick<WorldBlueprint, 'arcPlans' | 'estimatedArcs'>): string | undefined => {
+  try { validateBlueprintArcPlan(blueprint); return undefined; }
+  catch (error) { return error instanceof Error ? error.message : 'Arc 1 is not ready.'; }
 };
+
+/** Keeps a look-ahead to the arcs a story of `estimatedArcs` still has after Arc 1, for a story length the author changed. */
+export const fitArcLookahead = (lookahead: ArcLookaheadEntry[] | undefined, estimatedArcs: number): ArcLookaheadEntry[] =>
+  normalizeArcLookahead(lookahead, { afterArc: 1, plannedArcCount: estimatedArcs });
 
 export const createBlueprintDraftFromSeed = (
   seed: StorySeedInput,
@@ -626,7 +632,7 @@ export const createBlueprintDraftFromSeed = (
     mcProfile: backgroundProfile,
     majorFactions: (worldFoundations.factions || []).map(faction => faction.name),
     initialCharacters: (worldFoundations.additionalCharacters || []).map(character => character.name),
-    arcPlans: alignArcRoadmapWithSeed(undefined, seed),
+    arcPlans: undefined,
     hardPins: validateHardPinInputs(seed.story.optional.hardPins ?? []),
     funSettings: normalizeFunSettings(seed.story.optional.funSettings),
     firstArcPromise: '',
@@ -705,6 +711,8 @@ export const normalizeWorldBlueprint = (
     && source.estimatedArcs > 0
     ? source.estimatedArcs
     : fallback.estimatedArcs;
+  const arcOne = readArcOne(source);
+  const arcLookahead = readArcLookahead(source, estimatedArcs);
 
   return {
     blueprintVersion: sourceMetadata('blueprintVersion') || WORLD_BLUEPRINT_VERSION,
@@ -730,7 +738,8 @@ export const normalizeWorldBlueprint = (
     initialCharacters: Array.isArray(source.initialCharacters)
       ? stringList(source.initialCharacters)
       : fallback.initialCharacters,
-    arcPlans: alignArcRoadmapWithSeed(readArcRoadmap(source), normalizedSeed),
+    arcPlans: alignArcOneWithSeed(arcOne ? [arcOne] : undefined, normalizedSeed),
+    ...(arcLookahead.length ? { arcLookahead } : {}),
     hardPins: validateHardPinInputs(seed ? normalizedSeed.story.optional.hardPins ?? [] : source.hardPins ?? []),
     funSettings: normalizeFunSettings(seed ? normalizedSeed.story.optional.funSettings : source.funSettings),
     firstArcPromise: read('firstArcPromise', fallback.firstArcPromise),
@@ -1016,9 +1025,9 @@ export const promoteBlueprintIntoSeed = (seed: StorySeedInput, blueprint: WorldB
       ...(parsed.role ? { role: parsed.role } : {}), ...(parsed.details ? { description: parsed.details } : {}),
     });
   }
-  // The roadmap's opening goal fills an empty Seed Active Arc Goal. The Seed
+  // Arc 1's opening goal fills an empty Seed Active Arc Goal. The Seed
   // keeps it as the creator's statement of intent; its real chapter
-  // allocation lives in the Blueprint roadmap.
+  // allocation lives in the Blueprint's Arc 1.
   const openingGoal = blueprint.arcPlans?.[0]?.goals[0];
   const suggestedGoal = openingGoal ? { id: openingGoal.id, text: openingGoal.text, chapters: ARC_LENGTH } : undefined;
 
@@ -1079,7 +1088,10 @@ export const mirrorSeedIntoBlueprint = (blueprint: WorldBlueprint, seed: StorySe
     mcProfile: backgroundProfile,
     initialCharacters: (worldFoundations.additionalCharacters || []).filter(entry => text(entry.name)).map(characterBlueprintEntry),
     majorFactions: (worldFoundations.factions || []).filter(entry => text(entry.name)).map(factionBlueprintEntry),
-    arcPlans: alignArcRoadmapWithSeed(blueprint.arcPlans, seed),
+    arcPlans: alignArcOneWithSeed(blueprint.arcPlans, seed),
+    // The look-ahead keeps only arcs the story's length still has.
+    arcLookahead: blueprint.arcLookahead?.length && fitArcLookahead(blueprint.arcLookahead, blueprint.estimatedArcs).length
+      ? fitArcLookahead(blueprint.arcLookahead, blueprint.estimatedArcs) : undefined,
     hardPins: validateHardPinInputs(seed.story.optional.hardPins ?? []),
     funSettings: normalizeFunSettings(seed.story.optional.funSettings),
     destinedEnding: text(worldFoundations.destinedEnding) || '',
@@ -1228,7 +1240,7 @@ export const finalizeGeneratedWorldBlueprint = (
   };
 };
 
-/** A requested arc count is a whole number of arcs a roadmap can hold. */
+/** A story length is a whole number of arcs, from 1 to the longest a story may run. */
 export const validateRequestedArcCount = (value: unknown): number => {
   if (typeof value !== 'number' || !Number.isInteger(value) || value < 1 || value > MAX_ROADMAP_ARCS) {
     throw new Error(`The arc count must be a whole number from 1 to ${MAX_ROADMAP_ARCS}.`);
@@ -1254,29 +1266,6 @@ export const buildBlueprintGenerationPayload = (
   return { storySeed, ...(options.arcCount === undefined ? {} : { arcCount: validateRequestedArcCount(options.arcCount) }) };
 };
 
-/**
- * Validates a request to add arcs to a reviewed Blueprint: a valid Seed, a
- * complete saved roadmap with a place before its final arc, and a longer
- * target length.
- */
-export const buildArcRoadmapExtensionPayload = (
-  seed: StorySeedInput,
-  blueprint: WorldBlueprint,
-  arcCount: number,
-): ArcRoadmapExtensionPayload => {
-  const storySeed = withoutStorySettings(applyInferredStoryTags(normalizeStorySeedInput(seed)));
-  assertValidStorySeedInput(storySeed);
-  const arcPlans = validateBlueprintArcRoadmap(blueprint);
-  if (!arcsCanBeAddedBeforeFinal(arcPlans)) {
-    throw new Error('This roadmap plans the whole story as one arc, which is both its opening and its final arc. Regenerate the Blueprint with more arcs instead.');
-  }
-  const target = validateRequestedArcCount(arcCount);
-  if (target <= arcPlans.length) {
-    throw new Error(`The roadmap already plans ${arcPlans.length} ${arcPlans.length === 1 ? 'arc' : 'arcs'}. Choose a larger arc count to add arcs, or regenerate the Blueprint to plan fewer.`);
-  }
-  return { operation: ARC_ROADMAP_EXTENSION_OPERATION, storySeed, blueprint: { ...blueprint, arcPlans }, arcCount: target };
-};
-
 export const buildInitialStoryGenerationPayload = (
   seed: StorySeedInput,
   administrative: StoryAdministrativeMetadata,
@@ -1286,6 +1275,6 @@ export const buildInitialStoryGenerationPayload = (
   const storySeed = applyInferredStoryTags(normalizeStorySeedInput(seed));
   assertValidStorySeedInput(storySeed);
   assertValidStoryAdministrativeMetadata(administrative);
-  const arcPlans = validateBlueprintArcRoadmap(blueprint);
-  return { storySeed, administrative, blueprint: { ...blueprint, arcPlans }, chapterCount };
+  const arcPlan = validateBlueprintArcPlan(blueprint);
+  return { storySeed, administrative, blueprint: { ...blueprint, arcPlans: [arcPlan] }, chapterCount };
 };

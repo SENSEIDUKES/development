@@ -33,7 +33,7 @@ export const ownershipRules = [
   ['src/lib/senLightNovelAuthorInstructions.ts', 'sen', 'optional author skill'],
   ['src/styles.css', 'workshop', 'preview styles'],
   ['src/audio/', 'sen', 'media'],
-  ['src/audio/DevAudioPlayback.tsx', 'workshop', 'preview playback'],
+  ['src/audio/DevAudioPlayback.tsx', 'host', 'browser audio-player bridge'],
   ['src/audio/libraryCues.ts', 'host', 'first-party catalog records'],
   ['src/audio/data/', 'host', 'first-party catalog records'],
   ['src/library/media/', 'library', 'media catalog and entitlement policy'],

@@ -16,6 +16,7 @@ accounts, Energy, QI, first-party catalogs, Workshop state, or concrete APIs.
 | `./reader-runtime` | Required host ports for Reader/Codex state and services |
 | `./reader-chamber` | Portable Reader behavior and UI, including the anchored Mind Palace |
 | `./reader-codex` | Portable Codex behavior and UI |
+| `./inline-audio` | Sound Cues on the page: the glyph on the words a cue marks and its inline playback (needs a host `NarrativeAudioProvider`) |
 | `./color-codes` | Single narrative Color Code authority |
 | `./cards` | Narrative and System card families |
 | `./manifestations` | Neutral manifestation capability and reveal UI |
@@ -31,6 +32,12 @@ accounts, Energy, QI, first-party catalogs, Workshop state, or concrete APIs.
 There is no `chapter-generation` or `codex-cards` compatibility entry. Legacy
 Chapter Generation was retired; HARNESS is the one canonical generated-story
 owner.
+
+**0.10.0 (breaking):** `InlineAudio`, `InlineAudioControl` and `InlineAudioText`
+moved from `./reader-chamber` to their own entry, `./inline-audio`, and their
+source from `components/reader-chamber/development/` to `src/audio/`. The
+HARNESS Reader now renders Sound Cues without reaching the older Reader
+Chamber, its Codex cards or their styles.
 
 **0.9.0 (breaking):** `HarnessReaderSession` is just reading. Each chapter's
 paragraphs sit on the read-only Text Highlight Engine with their Sound Cues

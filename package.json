@@ -26,7 +26,7 @@
     "test:energy": "vitest run src/server/energy src/components/energy",
     "test:audio-catalog": "vitest run src/server/audio src/audio/libraryCues.test.ts",
     "test:codex-voice": "vitest run src/server/audio src/components/reader-codex/shared/hooks",
-    "test:inline-audio": "vitest run src/audio src/components/reader-chamber/development/InlineAudio.test.tsx src/components/reader-chamber/development/InlineAudio.styles.test.ts",
+    "test:inline-audio": "vitest run src/audio",
     "test:dao-pillar": "vitest run src/server/dao-pillar src/server/qi src/components/dao-pillar",
     "test:reader-chamber": "vitest run src/components/reader-chamber",
     "test:reader-codex": "vitest run src/components/reader-codex",

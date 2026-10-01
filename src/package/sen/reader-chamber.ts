@@ -37,17 +37,6 @@ export { WorldNotice } from '../../components/reader-chamber/development/WorldNo
 export type { WorldNoticeProps } from '../../components/reader-chamber/development/WorldNotice';
 export { SystemColorLegend } from '../../components/reader-chamber/development/SystemColorLegend';
 export { VirtualizedList } from '../../presentation/VirtualizedList';
-export {
-  InlineAudio,
-  InlineAudioControl,
-  InlineAudioText,
-} from '../../components/reader-chamber/development/InlineAudio';
-export type {
-  InlineAudioControlProps,
-  InlineAudioProps,
-  InlineAudioStatus,
-  InlineAudioTextProps,
-} from '../../components/reader-chamber/development/InlineAudio';
 
 export * from '../../narrative/story';
 export * from '../../narrative/systemPromptPresentation';

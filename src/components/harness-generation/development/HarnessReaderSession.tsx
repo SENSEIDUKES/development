@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { TextHighlightEngine, type TextHighlightBlock } from '@seihouse/sen/text-highlight-engine';
-import { InlineAudioText } from '@seihouse/sen/reader-chamber';
+import { InlineAudioText } from '@seihouse/sen/inline-audio';
 import type { SoundCueAttachment } from '@seihouse/sen/audio';
 import {
   applyReaderStatePatch,

@@ -1,7 +1,7 @@
 # Portable narrative audio
 
 - **Created:** 2026-08-19
-- **Last updated:** 2026-09-29
+- **Last updated:** 2026-10-01
 - **Ownership status:** SEN contracts separated from Library catalogs and host playback
 
 ## Ownership
@@ -17,6 +17,7 @@ The current split is:
 | Capability | Owner | Source |
 | --- | --- | --- |
 | Sound Cue record, Reader playback and split helpers | SEN | `inlineAudio.ts` (`SoundCueAttachment`), `cues.ts` |
+| Sound Cues on the page: the glyph on the marked words and its inline playback | SEN (`@seihouse/sen/inline-audio`) | `InlineAudio.tsx`, `InlineAudio.css` |
 | Placing a writer's Sound Cues on its marked words | SEN | `soundCuePlacement.ts` (`placeSoundCues`) |
 | Finished Sound Cue rules (1–5 whole words, at most 10 per chapter) | SEN | `soundCueRules.ts` |
 | Sound words (the event a recording answers, with an example) | SEN | `soundWords.ts`, `soundVocabulary` in `media.ts` |

@@ -23,6 +23,7 @@ export const PACKAGE_TARGETS = {
       '@seihouse/sen/color-codes': ['COLOR_CODES', 'getColorCodeValue', 'resolveCharacterRelationshipColorCode'],
       '@seihouse/sen/cards': ['CodexCard', 'CodexHovercard', 'CharacterCard', 'LocationCard', 'SystemBlock', 'WorldNotice', 'FateResultCard'],
       '@seihouse/sen/reader-chamber': ['ReaderChamber', 'ReaderViewport'],
+      '@seihouse/sen/inline-audio': ['InlineAudio', 'InlineAudioControl', 'InlineAudioText'],
       '@seihouse/sen/reader-codex': ['ReaderCodex', 'CodexSheetOverlay'],
       '@seihouse/sen/reader-runtime': ['ReaderRuntimeProvider'],
       '@seihouse/sen/translation': ['ReaderTranslationController', 'ReaderTranslationRuntimeProvider'],

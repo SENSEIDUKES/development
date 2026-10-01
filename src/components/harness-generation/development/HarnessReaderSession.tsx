@@ -209,7 +209,7 @@ export function HarnessReaderSession({
   const readAloud = useReadAloud({
     scriptKey: chapter?.id ?? 'no-chapter',
     buildScript: () => (chapter ? buildReadAloudScript({
-      chapterNumber: chapter.chapterNumber, title: chapter.title, language, paragraphs: blocks,
+      chapterNumber: chapter.chapterNumber, title: chapter.title, language, paragraphs: blocks, speakers: chapter.speakers,
     }) : NO_SCRIPT),
     language, preferences: readerPreferences, picks: readAloudVoices,
     suspended: fateOpen || arcOpen || writer.writing,

@@ -15,6 +15,8 @@ import type { ManuscriptAnchor, ManuscriptAttachment } from '../components/text-
 export interface SpokenLine {
   start: number;
   end: number;
+  /** False when the quote runs on to the end of the paragraph: the speech continues in the next one. */
+  closed: boolean;
 }
 
 /** Each opening mark and the marks that may close it. */
@@ -35,10 +37,11 @@ export function findSpokenLines(text: string): SpokenLine[] {
     if (!closers) { index += 1; continue; }
     const start = index;
     let end = text.length;
+    let closed = false;
     for (let cursor = start + 1; cursor < text.length; cursor += 1) {
-      if (closers.includes(text[cursor])) { end = cursor + 1; break; }
+      if (closers.includes(text[cursor])) { end = cursor + 1; closed = true; break; }
     }
-    lines.push({ start, end });
+    lines.push({ start, end, closed });
     index = end;
   }
   return lines;

@@ -1,4 +1,5 @@
 import type { SoundCueAttachment } from '../audio/inlineAudio';
+import type { SpeakerAttachment } from './speech';
 import type { SoundWord } from '../audio/soundWords';
 import type { FrozenNarrativeMedia, ResolvedSoundscape, StoryMediaSelection } from '../audio/media';
 import type { SenLanguageCode } from '../lib/language';
@@ -14,8 +15,8 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * (chapters are paragraphs plus Sound Cues) deliberately has no upgrade step
  * from earlier versions; 23 adds the optional paragraph counter; 24 plans
  * each arc when it begins (the Foundation keeps Arc 1 and a hidden look-ahead
- * instead of a whole roadmap). */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 24 as const;
+ * instead of a whole roadmap); 25 adds the optional speaker records. */
+export const HARNESS_GENERATION_SCHEMA_VERSION = 25 as const;
 
 /** Output buckets assign processor categories; legacy event arrays remain readable. */
 export const HARNESS_MEMORY_CATEGORIES = {
@@ -529,6 +530,8 @@ export interface HarnessAcceptedChapterDraft {
   metrics: HarnessChapterMetrics;
   /** Sound Cues the HARNESS placed from the writer's marks, on paragraph spans. */
   soundCues?: SoundCueAttachment[];
+  /** Who speaks each spoken line the writer tagged, on paragraph spans. */
+  speakers?: SpeakerAttachment[];
   title: string;
   titleSource: 'model' | 'harness-fallback';
   plan?: HarnessModelPlan;
@@ -601,7 +604,8 @@ export interface HarnessWarning {
     | 'ignored_story_ending'
     | 'unconfirmed_arc_completion'
     | 'sound_cue_set_aside'
-    | 'prose_marks_removed';
+    | 'prose_marks_removed'
+    | 'speaker_tags_incomplete';
   message: string;
 }
 
@@ -807,6 +811,12 @@ export interface HarnessChapter {
    * ids) with their resolved recordings. Later loadout changes cannot rewrite them.
    */
   soundCues?: SoundCueAttachment[];
+  /**
+   * Who speaks each spoken line the writer tagged: exact spans of the quoted
+   * words, each naming its speaker and whether that is the main character.
+   * Read Aloud gives them the Protagonist or Side voice.
+   */
+  speakers?: SpeakerAttachment[];
   /** Pack/version provenance of the frozen catalog that produced this media. */
   mediaLoadout: FrozenNarrativeMedia;
   plan?: HarnessModelPlan;

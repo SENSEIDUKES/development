@@ -63,8 +63,9 @@ describe('Harness Generation Phase 3 deterministic story harness', () => {
     // Shaped like a saved workspace from before the CAPA / Story Information
     // separation: an older schemaVersion, and attempts still keyed by the old
     // `contextSnapshot` field with no `capaPrompt` or `immediateChapterRequest`.
+    // Schema 21: nothing before 22 upgrades (later versions do, step by step).
     const old = {
-      schemaVersion: HARNESS_GENERATION_SCHEMA_VERSION - 1,
+      schemaVersion: 21,
       stories: [{ id: 'story', title: 'Old', createdAt: 'a', updatedAt: 'a', activeFoundationRevisionId: 'foundation', foundationRevisionIds: ['foundation'], head: { nextChapterNumber: 2, lastCommittedChapterId: 'chapter' } }],
       foundations: [{ id: 'foundation', storyId: 'story', revision: 1, createdAt: 'a', input: { premise: 'Old premise.' } }],
       chapters: [{ id: 'chapter', storyId: 'story', attemptId: 'committed', foundationRevisionId: 'foundation', contextSnapshotId: 'context', chapterNumber: 1, title: 'One', titleSource: 'model', prose: 'Old prose.', eventIds: ['event'], responseMode: 'json', createdAt: 'a', committedAt: 'b' }],

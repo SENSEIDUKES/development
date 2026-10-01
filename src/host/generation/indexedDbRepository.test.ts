@@ -54,6 +54,15 @@ describe('planHarnessWorkspaceLoad', () => {
     expect(state.stories[1].arcGoalReviews).toBeUndefined();
   });
 
+  it('upgrades schema 24 to carry speaker records: every chapter carries over unchanged, with none', () => {
+    const chapter = { id: 'c1', storyId: 'story-1', chapterNumber: 1, paragraphs: ['“Hold the gate,” Mara said.'], soundCues: [] };
+    const stored = { ...createEmptyHarnessWorkspaceState(), schemaVersion: 24, stories: [{ id: 'story-1' }], chapters: [chapter] };
+    const plan = planHarnessWorkspaceLoad(stored, now);
+    expect(plan.state.schemaVersion).toBe(HARNESS_GENERATION_SCHEMA_VERSION);
+    expect(plan.state.chapters).toEqual([chapter]);
+    expect(plan.preserve?.record).toMatchObject({ reason: 'migrated', schemaVersion: 24 });
+  });
+
   it('keeps an untouched copy of an older-schema workspace (nothing before schema 22 upgrades) before starting fresh', () => {
     const stored = { schemaVersion: 21, stories: [{ id: 'a' }, { id: 'b' }], chapters: [{ id: 'c1' }] };
     const plan = planHarnessWorkspaceLoad(stored, now);

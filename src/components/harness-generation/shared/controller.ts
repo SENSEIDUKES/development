@@ -44,6 +44,7 @@ import {
   type SemanticEventPreservationInput,
   type SemanticEventPreservationResult,
 } from './responseAcceptance';
+import { protagonistNames } from './speakers';
 import {
   createEmptyHarnessWorkspaceState,
   type HarnessGenerationRepository,
@@ -1001,6 +1002,8 @@ export class HarnessGenerationController {
       soundVocabulary: attempt.capaPrompt.soundVocabulary,
       locale: findStory(this.state, attempt.storyId)?.originalLanguage,
       paragraphTarget: attempt.immediateChapterRequest.chapterScale.paragraphs,
+      // Whose lines are the protagonist's comes from what the writer was shown, so a retry decides the same.
+      protagonistNames: protagonistNames(attempt.storyInformation.currentStory, attempt.storyInformation.canonicalState.characters),
     });
     if (!acceptance.accepted) {
       return this.appendFailure(attemptId, {
@@ -1136,6 +1139,7 @@ export class HarnessGenerationController {
       paragraphs: cloneHarnessValue(acceptedDraft.paragraphs),
       metrics: cloneHarnessValue(acceptedDraft.metrics),
       ...(acceptedDraft.soundCues ? { soundCues: cloneHarnessValue(acceptedDraft.soundCues) } : {}),
+      ...(acceptedDraft.speakers ? { speakers: cloneHarnessValue(acceptedDraft.speakers) } : {}),
       mediaLoadout: cloneHarnessValue(commitAttempt.mediaLoadout),
       ...(acceptedDraft.plan ? { plan: acceptedDraft.plan } : {}),
       // The recap and rhythm metadata are saved exactly once, with their own

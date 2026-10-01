@@ -73,6 +73,30 @@ export const getSenTextDirection = (code: string): SenTextDirection =>
   LANGUAGES_BY_CODE.get(code)?.direction ?? 'ltr';
 
 /**
+ * The speech-voice language tags (BCP 47) that can read a SEN language, best
+ * first. Devices name voices inconsistently: Android may say `in` for
+ * Indonesian or `fil` for Tagalog, and Chinese voices may carry a script
+ * (`zh-Hant`) or a Mandarin tag (`cmn-…`) instead of a region. Traditional
+ * Chinese ends with Hong Kong's voice, which still reads the same characters.
+ */
+const SPEECH_LANGUAGE_TAGS: Readonly<Record<SenLanguageCode, readonly string[]>> = {
+  en: ['en'],
+  es: ['es'],
+  'zh-CN': ['zh-CN', 'zh-Hans', 'cmn-Hans', 'cmn-CN', 'zh-SG'],
+  'zh-TW': ['zh-TW', 'zh-Hant', 'cmn-Hant', 'cmn-TW', 'zh-HK'],
+  ja: ['ja'],
+  ko: ['ko'],
+  vi: ['vi'],
+  id: ['id', 'in'],
+  th: ['th'],
+  tl: ['fil', 'tl'],
+  ms: ['ms'],
+};
+
+export const senSpeechLanguageTags = (code: SenLanguageCode): readonly string[] =>
+  SPEECH_LANGUAGE_TAGS[code] ?? SPEECH_LANGUAGE_TAGS[DEFAULT_SEN_LANGUAGE_CODE];
+
+/**
  * The account-level reading language a reader surface displays when the story
  * itself has not been overridden: Default Reading Language, then Interface
  * Language, then English.

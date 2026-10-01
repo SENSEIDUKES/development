@@ -86,8 +86,19 @@ export interface WorldBlueprint {
   tropeRules: string;
   styleBible: string;
   destinedEnding?: string;
-  /** The story's length in arcs of 100 chapters; its last arc arrives at the Destined Ending. */
+  /**
+   * The story's length in arcs of 100 chapters; its last arc arrives at the
+   * Destined Ending. The Seed's Story Length (`story.optional.arcCount`), when
+   * the creator set one, is this length; otherwise the Blueprint keeps its own.
+   */
   estimatedArcs: number;
+  /**
+   * What Arc 1 was planned as: the whole story (a one-arc story, whose Arc 1
+   * reaches the Destined Ending) or the opening of a longer one. A length that
+   * crosses that line needs Arc 1 planned again, by regenerating the Blueprint.
+   * Older Blueprints take it from their saved length.
+   */
+  arcOneScope?: 'whole-story' | 'opening';
 }
 
 /**

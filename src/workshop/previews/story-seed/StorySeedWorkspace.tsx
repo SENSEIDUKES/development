@@ -443,7 +443,7 @@ export function StorySeedWorkspace({ embedded = false, initialState, localGenera
         if (localGeneration) {
           await wait(300);
           const mock = createMockBlueprint();
-          const arcCount = payload.arcCount ?? mock.estimatedArcs;
+          const arcCount = payload.storySeed.story.optional.arcCount ?? mock.estimatedArcs;
           // Finalized like the server's reply, so the preview shows the same
           // author-fact detail and cast merging a real generation produces.
           return finalizeGeneratedWorldBlueprint(

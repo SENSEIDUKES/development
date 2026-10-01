@@ -19,8 +19,12 @@ try {
       await button(name).click();
     };
     await page.route('**/api/generate-blueprint', async route => {
-      const { storySeed } = route.request().postDataJSON();
+      const request = route.request().postDataJSON();
+      const { storySeed } = request;
       assert(!JSON.stringify(storySeed).match(/additionalStoryDirection|firstMajorConflict|plotAndTropeSettings|arcPlan/));
+      // The Story Length set on the ARC page travels in the Seed itself.
+      assert.equal(storySeed.story.optional.arcCount, 11);
+      assert(!('arcCount' in request));
       await route.fulfill({ json: {
         title: 'Arc browser verification', logline: 'A journey to the gate.', worldOverview: 'A mountain kingdom.',
         startingLocation: 'The foothills.', societyStructure: 'Mountain villages.', powerSystemOutline: 'Costly cultivation.',
@@ -28,7 +32,7 @@ try {
         mcProfile: 'A returning traveler.', majorFactions: ['The Gate'], initialCharacters: ['The Keeper'], majorMysteries: [],
         firstArcPromise: 'Reach the gate.', arcPlans: [{ arcNumber: 1, goals: [{ ...storySeed.story.optional.activeArcGoal, chapters: 100 }] }],
         arcLookahead: [{ arcNumber: 2, direction: 'LOOKAHEAD_HIDDEN Cross the gate.' }],
-        tropeRules: 'Earn each success.', styleBible: 'Clear sensory prose.', destinedEnding: 'Free the valley.', estimatedArcs: 3, unresolvedPlotThreads: [],
+        tropeRules: 'Earn each success.', styleBible: 'Clear sensory prose.', destinedEnding: 'Free the valley.', estimatedArcs: 11, unresolvedPlotThreads: [],
       } });
     });
     await page.goto(`${origin}/?preview=story-seed`);
@@ -39,7 +43,7 @@ try {
     await page.getByLabel('Title', { exact: true }).fill('Arc browser verification');
     await page.locator('#core-premise-input').fill('A traveler returns to the mountain gate.');
     await section('ARC');
-    const selectors = ['label[for="destined-ending-input"]', '#arc-hard-pins-title', 'label[for="active-arc-goal-input"]', '#arc-fun-settings-title'];
+    const selectors = ['label[for="destined-ending-input"]', 'label[for="story-length-input"]', '#arc-hard-pins-title', 'label[for="active-arc-goal-input"]', '#arc-fun-settings-title'];
     const boxes = [];
     for (const selector of selectors) {
       const field = page.locator(selector);
@@ -54,6 +58,8 @@ try {
     assert.equal(await page.locator('input[id^="hard-pin-"]').count(), 3);
     assert.equal(await page.getByText('Story Sauce', { exact: true }).count(), 0);
     await page.locator('#destined-ending-input').fill('Free the valley.');
+    await page.locator('#story-length-input').fill('11');
+    assert.match(await page.getByTestId('story-length-summary').textContent(), /11 arcs · 1,100 chapters/);
     for (let i = 1; i <= 3; i++) await page.locator(`#hard-pin-${i}`).fill(`Keep promise ${i}.`);
     await page.locator('#active-arc-goal-input').fill('Open the mountain gate.');
     await page.locator('#arc-face-slap-high').click();
@@ -71,6 +77,7 @@ try {
     await button('Refine Details').click();
     await section('ARC');
     assert.equal(await page.locator('#hard-pin-3').inputValue(), 'Keep promise 3.');
+    assert.equal(await page.locator('#story-length-input').inputValue(), '11');
     assert.equal(await page.locator('#active-arc-goal-input').inputValue(), 'Open the mountain gate.');
     await section('World Identity');
     assert.equal(await page.locator('#make-it-work-instruction-input').inputValue(), 'The mountain walks.');
@@ -80,8 +87,10 @@ try {
     await page.getByPlaceholder('Enter the server-configured testing token').fill('browser-fixture');
     await button('Manifest World Blueprint').click();
     await page.getByRole('button', { name: 'Manifest Story', exact: true }).waitFor();
-    // The Blueprint shows Arc 1 and the story's length; the look-ahead is the arc planner's alone.
-    assert.match(await page.getByTestId('blueprint-arc-goals').first().textContent(), /Arc 1/);
+    // The Blueprint shows Arc 1 and the Seed's Story Length; the look-ahead is the arc planner's alone.
+    assert.match(await page.getByTestId('blueprint-arc-goals').first().textContent(), /Arc 1 of 11 arcs/);
+    assert.equal(await page.locator('#blueprint-arc-count-input').inputValue(), '11');
+    assert.equal(await page.locator('#story-length-input').count(), 0);
     assert.ok(!(await page.locator('body').innerText()).includes('LOOKAHEAD_HIDDEN'));
     await page.locator('#hard-pin-2').fill('Keep the revised promise.');
     // Blueprint review edits save to the Seed, including the generated cast.
@@ -98,6 +107,7 @@ try {
     // Arc 1 opens with the Seed's Active Arc Goal, and the hidden look-ahead travels with the export.
     assert(content.includes('Open the mountain gate.'));
     assert(content.includes('LOOKAHEAD_HIDDEN'));
+    assert.equal(JSON.parse(content).seed.story.optional.arcCount, 11);
     assert(!/plotAndTropeSettings|additionalStoryDirection|firstMajorConflict/.test(content));
     const exportedSeed = JSON.parse(content).seed.world.optional.worldFoundations;
     assert.equal(exportedSeed.additionalCharacters.find(entry => entry.name === 'The Keeper')?.role, 'Gatekeeper ally');

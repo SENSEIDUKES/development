@@ -84,6 +84,14 @@ export interface StorySeedFateSurvivalSettings {
 
 export interface StorySeedStoryOptional {
   activeArcGoal?: ArcGoal;
+  /**
+   * The Story Length: how many arcs of 100 chapters the story takes to reach
+   * its Destined Ending, as the creator chose it on the ARC page. Blueprint
+   * generation plans for exactly this length, and the Blueprint's length
+   * follows it. Absent, the Blueprint suggests a length and keeps it as its
+   * own; a blank Story Length is never filled from it.
+   */
+  arcCount?: number;
   hardPins?: HardPinInput[];
   /** Story metadata only; this does not request explicit generated content. */
   intendedForMatureAudiences: boolean;
@@ -200,12 +208,12 @@ export interface StorySeedInput {
 }
 
 export interface BlueprintGenerationPayload {
-  storySeed: StorySeedInput;
   /**
-   * The story's length in arcs, as the author chose it. Absent, the model
-   * chooses a realistic length. The Blueprint plans only Arc 1 either way.
+   * The Seed. Its Story Length (`story.optional.arcCount`), when set, is the
+   * exact length the Blueprint plans for; absent, the model chooses a realistic
+   * one. The Blueprint plans only Arc 1 either way.
    */
-  arcCount?: number;
+  storySeed: StorySeedInput;
 }
 
 export interface InitialStoryGenerationPayload extends BlueprintGenerationPayload {
@@ -250,6 +258,13 @@ const normalizeSurvivalPressure = (value: unknown): StorySeedSurvivalPressure =>
   const normalized = text(value)?.toLowerCase();
   return normalized === 'heaven' || normalized === 'mortal' ? normalized : 'immortal';
 };
+
+/** A Story Length is set: an absent or null value leaves the length to the Blueprint. */
+const hasArcCount = (value: unknown): boolean => value !== undefined && value !== null;
+
+/** What Arc 1 is planned as in a story of this length. */
+const arcOneScopeFor = (estimatedArcs: number): NonNullable<WorldBlueprint['arcOneScope']> =>
+  estimatedArcs === 1 ? 'whole-story' : 'opening';
 
 const WORLD_IDENTITY_FIELDS = ['title', 'worldType', 'societyStructure', 'startingLocation'] as const;
 const MAIN_CHARACTER_FIELDS = [
@@ -326,6 +341,7 @@ const normalizeStoryOptional = (value: unknown): StorySeedStoryOptional => {
     hardPins: validateHardPinInputs(source.hardPins ?? []),
   };
   if (isChapterWritingStyle(source.chapterWritingStyle)) normalized.chapterWritingStyle = source.chapterWritingStyle;
+  if (hasArcCount(source.arcCount)) normalized.arcCount = validateRequestedArcCount(source.arcCount);
   if (source.activeArcGoal !== undefined) normalized.activeArcGoal = createInitialArcPlan(source.activeArcGoal as ArcGoal).goals[0];
   const makeItWorkInstruction = text(source.makeItWorkInstruction);
   if (makeItWorkInstruction) normalized.makeItWorkInstruction = makeItWorkInstruction;
@@ -449,6 +465,10 @@ export const validateStorySeedDraft = (value: unknown): StorySeedValidationResul
     if (value.story.optional.activeArcGoal !== undefined) {
       try { createInitialArcPlan(value.story.optional.activeArcGoal as ArcGoal); }
       catch (error) { errors.push(error instanceof Error ? error.message : 'Invalid Active Arc Goal.'); }
+    }
+    if (hasArcCount(value.story.optional.arcCount)) {
+      try { validateRequestedArcCount(value.story.optional.arcCount); }
+      catch { errors.push(`Story Length must be a whole number of arcs from 1 to ${MAX_ROADMAP_ARCS}.`); }
     }
   }
 
@@ -605,20 +625,28 @@ export const alignArcOneWithSeed = (arcPlans: ArcPlan[] | undefined, seed: Story
 
 /**
  * The Manifest gate: a Blueprint begins a story with a valid Arc 1 and a story
- * length. Every later arc is planned when the reader begins it.
+ * length. Every later arc is planned when the reader begins it. Arc 1 must
+ * still be what its length needs: the whole story in a one-arc story, the
+ * opening of a longer one. A Story Length changed across that line after the
+ * Blueprint was generated needs Arc 1 planned again.
  */
-export const validateBlueprintArcPlan = (blueprint: Pick<WorldBlueprint, 'arcPlans' | 'estimatedArcs'>): ArcPlan => {
+export const validateBlueprintArcPlan = (blueprint: Pick<WorldBlueprint, 'arcPlans' | 'estimatedArcs' | 'arcOneScope'>): ArcPlan => {
   const first = blueprint.arcPlans?.[0];
   if (!first) throw new Error('Generate the Blueprint to plan Arc 1 before beginning the story.');
   if (blueprint.arcPlans!.length !== 1) throw new Error('A Blueprint plans only Arc 1; every later arc is planned when it begins.');
   const plan = validateArcPlan(first);
   if (plan.arcNumber !== 1) throw new Error('The Blueprint\'s plan must be Arc 1.');
   validateRequestedArcCount(blueprint.estimatedArcs);
+  if (blueprint.arcOneScope && blueprint.arcOneScope !== arcOneScopeFor(blueprint.estimatedArcs)) {
+    throw new Error(blueprint.arcOneScope === 'whole-story'
+      ? `Arc 1 was planned as the whole story, reaching the Destined Ending. Regenerate the Blueprint to plan Arc 1 as the opening of ${blueprint.estimatedArcs} arcs, or set the Story Length back to 1 arc.`
+      : 'Arc 1 was planned as the opening of a longer story. Regenerate the Blueprint to plan a one-arc story that reaches the Destined Ending, or set a longer Story Length.');
+  }
   return plan;
 };
 
 /** Human-readable Arc 1 problem for the review, or undefined when ready. */
-export const describeBlueprintArcPlanProblem = (blueprint: Pick<WorldBlueprint, 'arcPlans' | 'estimatedArcs'>): string | undefined => {
+export const describeBlueprintArcPlanProblem = (blueprint: Pick<WorldBlueprint, 'arcPlans' | 'estimatedArcs' | 'arcOneScope'>): string | undefined => {
   try { validateBlueprintArcPlan(blueprint); return undefined; }
   catch (error) { return error instanceof Error ? error.message : 'Arc 1 is not ready.'; }
 };
@@ -668,7 +696,7 @@ export const createBlueprintDraftFromSeed = (
     tropeRules: '',
     styleBible: '',
     destinedEnding: worldFoundations.destinedEnding || '',
-    estimatedArcs: 10,
+    estimatedArcs: seed.story.optional.arcCount ?? 10,
   };
 };
 
@@ -735,12 +763,21 @@ export const normalizeWorldBlueprint = (
   const status = text(context.status) || sourceMetadata('status');
   const createdAt = text(context.createdAt) || sourceMetadata('createdAt');
   const updatedAt = text(context.updatedAt) || sourceMetadata('updatedAt');
-  const estimatedArcs = typeof source.estimatedArcs === 'number'
+  const savedArcs = typeof source.estimatedArcs === 'number'
     && Number.isInteger(source.estimatedArcs)
     && source.estimatedArcs > 0
     ? source.estimatedArcs
-    : fallback.estimatedArcs;
+    : undefined;
+  // The creator's Story Length is the story's length; without one, the
+  // Blueprint keeps the length it has.
+  const estimatedArcs = normalizedSeed.story.optional.arcCount ?? savedArcs ?? fallback.estimatedArcs;
   const arcOne = readArcOne(source);
+  // What Arc 1 was planned as. A Blueprint saved before this was recorded
+  // could only change its length on its own side of the one-arc line, so its
+  // saved length says.
+  const arcOneScope = source.arcOneScope === 'whole-story' || source.arcOneScope === 'opening'
+    ? source.arcOneScope
+    : arcOneScopeFor(savedArcs ?? estimatedArcs);
   const arcLookahead = readArcLookahead(source, estimatedArcs);
 
   return {
@@ -768,6 +805,7 @@ export const normalizeWorldBlueprint = (
       ? stringList(source.initialCharacters)
       : fallback.initialCharacters,
     arcPlans: alignArcOneWithSeed(arcOne ? [arcOne] : undefined, normalizedSeed),
+    ...(arcOne ? { arcOneScope } : {}),
     ...(arcLookahead.length ? { arcLookahead } : {}),
     hardPins: validateHardPinInputs(seed ? normalizedSeed.story.optional.hardPins ?? [] : source.hardPins ?? []),
     funSettings: normalizeFunSettings(seed ? normalizedSeed.story.optional.funSettings : source.funSettings),
@@ -1100,7 +1138,9 @@ export const fillBlankSeedSlots = (seed: StorySeedInput, slots: GeneratedSeedSlo
  * Copies Blueprint values into the Seed wherever the Seed owns that concept
  * and has no value yet: generated world identity, ending, initial goal,
  * main-character basics, and every side character or faction the Seed does
- * not already name. The Seed never loses a value it already has.
+ * not already name. The Seed never loses a value it already has. The story's
+ * length is never copied: a blank Story Length leaves the length to the
+ * Blueprint, which keeps its own.
  */
 export const promoteBlueprintIntoSeed = (seed: StorySeedInput, blueprint: WorldBlueprint): StorySeedInput => {
   const source = normalizeStorySeedInput(seed);
@@ -1169,12 +1209,14 @@ export const promoteBlueprintIntoSeed = (seed: StorySeedInput, blueprint: WorldB
 /**
  * Rewrites every Seed-owned Blueprint field from the Seed, exactly. The
  * Blueprint keeps only what the Seed has no field for: background and power
- * outline prose, style bible, arc estimate, metadata.
+ * outline prose, style bible, metadata, and the story's length while the
+ * Seed's Story Length is blank.
  */
 export const mirrorSeedIntoBlueprint = (blueprint: WorldBlueprint, seed: StorySeedInput): WorldBlueprint => {
   const { worldIdentity, worldFoundations } = seed.world.optional;
   const mainCharacter = worldFoundations.mainCharacter || {};
   const backgroundProfile = blueprint.mainCharacter?.backgroundProfile ?? blueprint.mcProfile ?? '';
+  const estimatedArcs = seed.story.optional.arcCount ?? blueprint.estimatedArcs;
   return {
     ...blueprint,
     originSnapshot: createBlueprintOriginSnapshot(seed),
@@ -1193,9 +1235,10 @@ export const mirrorSeedIntoBlueprint = (blueprint: WorldBlueprint, seed: StorySe
     initialCharacters: (worldFoundations.additionalCharacters || []).filter(entry => text(entry.name)).map(characterBlueprintEntry),
     majorFactions: (worldFoundations.factions || []).filter(entry => text(entry.name)).map(factionBlueprintEntry),
     arcPlans: alignArcOneWithSeed(blueprint.arcPlans, seed),
+    estimatedArcs,
     // The look-ahead keeps only arcs the story's length still has.
-    arcLookahead: blueprint.arcLookahead?.length && fitArcLookahead(blueprint.arcLookahead, blueprint.estimatedArcs).length
-      ? fitArcLookahead(blueprint.arcLookahead, blueprint.estimatedArcs) : undefined,
+    arcLookahead: blueprint.arcLookahead?.length && fitArcLookahead(blueprint.arcLookahead, estimatedArcs).length
+      ? fitArcLookahead(blueprint.arcLookahead, estimatedArcs) : undefined,
     hardPins: validateHardPinInputs(seed.story.optional.hardPins ?? []),
     funSettings: normalizeFunSettings(seed.story.optional.funSettings),
     destinedEnding: text(worldFoundations.destinedEnding) || '',
@@ -1286,9 +1329,10 @@ export const finalizeGeneratedWorldBlueprint = (
   seed: StorySeedInput,
 ): GeneratedWorldBlueprint => {
   const storySeed = normalizeStorySeedInput(seed);
-  // Details are derived below from the author's facts, never taken as sent.
+  // Details are derived below from the author's facts, and what Arc 1 was
+  // planned as from the answer's own length, never taken as sent.
   const modelOutput = Object.fromEntries(Object.entries(isRecord(value) ? value : {})
-    .filter(([key]) => !WORLD_FACT_DETAILS.some(entry => entry.detail === key || entry.basis === key)));
+    .filter(([key]) => key !== 'arcOneScope' && !WORLD_FACT_DETAILS.some(entry => entry.detail === key || entry.basis === key)));
   const generated = normalizeWorldBlueprint(modelOutput, storySeed, {
     preserveSourceMetadata: false,
   });
@@ -1368,13 +1412,10 @@ const withoutStorySettings = (seed: StorySeedInput): StorySeedInput => {
   return { ...seed, story: { ...seed.story, optional } };
 };
 
-export const buildBlueprintGenerationPayload = (
-  seed: StorySeedInput,
-  options: { arcCount?: number } = {},
-): BlueprintGenerationPayload => {
+export const buildBlueprintGenerationPayload = (seed: StorySeedInput): BlueprintGenerationPayload => {
   const storySeed = withoutStorySettings(applyInferredStoryTags(normalizeStorySeedInput(seed)));
   assertValidStorySeedInput(storySeed);
-  return { storySeed, ...(options.arcCount === undefined ? {} : { arcCount: validateRequestedArcCount(options.arcCount) }) };
+  return { storySeed };
 };
 
 export const buildInitialStoryGenerationPayload = (

@@ -246,11 +246,12 @@ export const BlueprintReview = ({
           onWorldFactDetailChange={updateWorldFactDetail}
         />
 
-        <ArcWorkspace seed={seed} updateSeed={updateSeed} showActiveArcGoal={false} />
+        <ArcWorkspace seed={seed} updateSeed={updateSeed} showActiveArcGoal={false} showStoryLength={false} />
 
         <BlueprintArcGoalsSection
           arcPlans={blueprint.arcPlans}
           estimatedArcs={blueprint.estimatedArcs}
+          arcOneScope={blueprint.arcOneScope}
           destinedEnding={seed.world.optional.worldFoundations.destinedEnding}
           problem={arcProblem}
           setBlueprint={setBlueprint}

@@ -10,8 +10,8 @@ import {
   finalizeGeneratedWorldBlueprint,
   type GeneratedWorldBlueprint,
   validateBlueprintArcPlan,
-  validateRequestedArcCount,
   type BlueprintGenerationPayload,
+  type StorySeedInput,
 } from '@seihouse/sen/story-seed';
 import { type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { type ResolvedStorySeedBlueprintConfig } from "./config";
@@ -27,8 +27,8 @@ const textSlots = (fields: readonly string[]) => Object.fromEntries(fields.map(f
  * The Blueprint response schema. It has a place for every Story Seed slot
  * (filled only where the creator left one blank) and it plans Arc 1 only (`arcOne`: wording and
  * chapters; the identities are assigned on the server) and a hidden look-ahead
- * for the next arcs. `exactArcs` is the story length the author chose;
- * without it the model picks a realistic length.
+ * for the next arcs. `exactArcs` is the Seed's Story Length, when the creator
+ * chose one; without it the model picks a realistic length.
  */
 export const worldBlueprintResponseSchema = (exactArcs?: number) => ({
   type: "object",
@@ -242,13 +242,14 @@ export const generateWorldBlueprint = async (
   config: ResolvedStorySeedBlueprintConfig,
   provider: WorldBlueprintModelProvider,
 ): Promise<GeneratedWorldBlueprint> => {
-  let arcCount: number | undefined;
-  try { arcCount = payload.arcCount === undefined ? undefined : validateRequestedArcCount(payload.arcCount); }
-  catch (error) { throw new BlueprintRequestError(error instanceof Error ? error.message : "The arc count is invalid."); }
-  const { storySeed } = buildBlueprintGenerationPayload(payload.storySeed);
+  let storySeed: StorySeedInput;
+  try { ({ storySeed } = buildBlueprintGenerationPayload(payload.storySeed)); }
+  catch (error) { throw new BlueprintRequestError(error instanceof Error ? error.message : "The Story Seed is invalid."); }
+  // The creator's Story Length, when set, is the exact length Arc 1 is planned for.
+  const arcCount = storySeed.story.optional.arcCount;
   const generated = await provider.generate({
     systemInstruction: WORLD_BLUEPRINT_SYSTEM_PROMPT,
-    userPrompt: buildWorldBlueprintPrompt(storySeed, arcCount),
+    userPrompt: buildWorldBlueprintPrompt(storySeed),
     responseJsonSchema: worldBlueprintResponseSchema(arcCount),
     temperature: config.temperature,
     maxOutputTokens: config.maxOutputTokens,
@@ -266,8 +267,9 @@ export const generateWorldBlueprint = async (
   const blueprint = finalizeGeneratedWorldBlueprint({ ...rest, arcPlans: arcOne ? [arcOne] : [] }, storySeed);
   assertCompleteGeneratedBlueprint(blueprint);
   if (arcOneProblem) throw new BlueprintRoadmapError(`The generated Arc 1 is invalid: ${arcOneProblem}. Nothing was saved; generate again.`);
-  if (arcCount !== undefined && blueprint.estimatedArcs !== arcCount) {
-    throw new BlueprintRoadmapError(`The generated Blueprint is ${blueprint.estimatedArcs} arcs long instead of the ${arcCount} requested. Nothing was saved; generate again.`);
+  // The Blueprint takes the Seed's length, so the answer itself must have planned for it.
+  if (arcCount !== undefined && answer.estimatedArcs !== arcCount) {
+    throw new BlueprintRoadmapError(`The generated Blueprint was not planned for the ${arcCount} ${arcCount === 1 ? "arc" : "arcs"} requested. Nothing was saved; generate again.`);
   }
   try { validateBlueprintArcPlan(blueprint); }
   catch (error) { throw new BlueprintRoadmapError(`The generated Arc 1 is invalid: ${reason(error)}. Nothing was saved; generate again.`); }

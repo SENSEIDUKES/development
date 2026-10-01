@@ -14,7 +14,7 @@ import { type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { generateUUID } from '@seihouse/sen/story-seed';
 import { useStoryCreationRuntime, useStoryCreationStore, type StoryCreationSnapshot } from '../../../library/story-seed/runtime';
 import { type StorySeedArtifact, type StorySeedRecord } from '@seihouse/sen/story-seed';
-import { applyInferredStoryTags, buildBlueprintGenerationPayload, fillBlankSeedSlots, type GeneratedWorldBlueprint, buildInitialStoryGenerationPayload, createBlueprintDraftFromSeed, createEmptyStorySeedInput, mirrorSeedIntoBlueprint, normalizeStorySeedInput, reconcileStorySeedBlueprint, validateStorySeedDraft, validateStorySeedInput, type BlueprintGenerationPayload, type InitialStoryGenerationPayload, type StorySeedInput } from '@seihouse/sen/story-seed';
+import { applyInferredStoryTags, buildBlueprintGenerationPayload, describeBlueprintArcPlanProblem, fillBlankSeedSlots, type GeneratedWorldBlueprint, buildInitialStoryGenerationPayload, createBlueprintDraftFromSeed, createEmptyStorySeedInput, mirrorSeedIntoBlueprint, normalizeStorySeedInput, reconcileStorySeedBlueprint, validateStorySeedDraft, validateStorySeedInput, type BlueprintGenerationPayload, type InitialStoryGenerationPayload, type StorySeedInput } from '@seihouse/sen/story-seed';
 import { createStoryAdministrativeMetadata } from '@seihouse/sen/story-seed';
 import { DEFAULT_SEN_LANGUAGE_CODE, normalizeChapterWritingStyle, normalizeSenLanguageCode, type ChapterWritingStyle, type SenLanguageCode } from '@seihouse/sen/contracts';
 import StoryAuthGate, { STORY_AUTH_DISSOLVE_MS } from './StoryAuthGate';
@@ -476,18 +476,21 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   };
 
   /**
-   * Generates a Blueprint from a validated Seed, at the arc count the author
-   * chose when there is one, and opens it for review. Generation failures are
-   * thrown to the caller.
+   * Generates a Blueprint from a validated Seed, for the Seed's Story Length
+   * when the creator set one, and opens it for review. Generation failures are
+   * thrown to the caller, and the Seed changes only when one succeeds.
    */
-  const generateBlueprintFrom = async (seedInput: StorySeedInput, arcCount?: number) => {
+  const generateBlueprintFrom = async (seedInput: StorySeedInput) => {
     // Write the inferred tags back so the creator sees exactly what is saved.
-    if (seed.story.required.storyTags.length === 0) setSeed(seedInput);
+    if (seed.story.required.storyTags.length === 0) {
+      const storyTags = seedInput.story.required.storyTags;
+      setSeed(current => ({ ...current, story: { ...current.story, required: { ...current.story.required, storyTags } } }));
+    }
     // Blueprint review code downloads while the provider is generating, so
     // the dossier is ready when the response arrives without burdening the
     // initial Story Seed route.
     preloadStorySeedSecondary();
-    const generated = await onGenerateBlueprint(buildBlueprintGenerationPayload(seedInput, { arcCount }));
+    const generated = await onGenerateBlueprint(buildBlueprintGenerationPayload(seedInput));
     // Every Seed slot the creator left blank is filled from the model's
     // proposed values, once; the creator's own values never change. Then
     // everything else the Blueprint generated that the Seed has a field for
@@ -512,15 +515,18 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
 
   /**
    * Blueprint review: replace the whole Blueprint with a fresh one for a story
-   * of the chosen length (Arc 1 is planned for that length). The Seed, with every reviewed value it owns, is the
-   * input, so the Destined Ending and opening goal carry over.
+   * of the chosen length (Arc 1 is planned for that length). The Seed, with
+   * every reviewed value it owns, is the input, so the Destined Ending and
+   * opening goal carry over; the chosen length becomes its Story Length once
+   * the new Blueprint arrives.
    */
   const handleRegenerateBlueprint = async (arcCount: number) => {
     if (runtime.store.getSnapshot().isGenerating) throw new Error('Another generation is still running. Try again when it finishes.');
-    const seedInput = applyInferredStoryTags(normalizeStorySeedInput(seed));
+    const reviewed = applyInferredStoryTags(normalizeStorySeedInput(seed));
+    const seedInput = { ...reviewed, story: { ...reviewed.story, optional: { ...reviewed.story.optional, arcCount } } };
     const validation = validateStorySeedInput(seedInput);
     if (!validation.valid) throw new Error(validation.errors.join(' '));
-    await generateBlueprintFrom(seedInput, arcCount);
+    await generateBlueprintFrom(seedInput);
   };
 
   /**
@@ -552,6 +558,15 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     const validation = validateStorySeedInput(seedInput);
     if (!validation.valid) {
       setSeedError(validation.errors.join(' '));
+      return;
+    }
+    // A Blueprint whose Arc 1 no longer fits it (a Story Length changed across
+    // the one-arc line after it was generated) opens for review with the reason.
+    const arcProblem = describeBlueprintArcPlanProblem(cleanBlueprint);
+    if (arcProblem) {
+      setBlueprint(cleanBlueprint);
+      setStage('blueprint');
+      setSeedError(arcProblem);
       return;
     }
 

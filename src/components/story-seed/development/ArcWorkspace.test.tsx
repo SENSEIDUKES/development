@@ -50,7 +50,7 @@ afterEach(() => { act(() => root.unmount()); container.remove(); resetWorkshopSt
 describe('Story Seed Arc and World ownership', () => {
   it('renders the approved order, three optional pins, and one goal without a full plan editor', () => {
     render(initial());
-    const nodes = ['label[for="destined-ending-input"]', '#arc-hard-pins-title', 'label[for="active-arc-goal-input"]', '#arc-fun-settings-title'].map(selector => container.querySelector(selector)!);
+    const nodes = ['label[for="destined-ending-input"]', 'label[for="story-length-input"]', '#arc-hard-pins-title', 'label[for="active-arc-goal-input"]', '#arc-fun-settings-title'].map(selector => container.querySelector(selector)!);
     nodes.forEach(node => expect(node).not.toBeNull());
     nodes.slice(1).forEach((node, i) => expect(nodes[i].compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy());
     expect(container.querySelectorAll('input[id^="hard-pin-"]')).toHaveLength(3);
@@ -170,5 +170,51 @@ describe('Story Seed Arc and World ownership', () => {
     expect(blueprint.initialCharacters).toEqual(['Han Li']);
     expect(reconcileStorySeedBlueprint(current, blueprint).seed.world.optional.worldFoundations.additionalCharacters?.map(entry => entry.name))
       .toEqual(['Han Li']);
+  });
+});
+
+describe('Story Length on the ARC page', () => {
+  const lengthText = () => container.querySelector('[data-testid="story-length-summary"]')?.textContent ?? '';
+
+  it('saves a whole number of arcs to the Seed, keeps the last length while the text is not one, and clears to let the Blueprint suggest one', () => {
+    render(initial());
+    expect(current.story.optional.arcCount).toBeUndefined();
+    fill('story-length-input', '11');
+    expect(current.story.optional.arcCount).toBe(11);
+    expect(lengthText()).toBe('11 arcs · 1,100 chapters. Arc 11, the final arc, reaches the Destined Ending.');
+    for (const notALength of ['0', '101', '2.5']) {
+      fill('story-length-input', notALength);
+      expect(current.story.optional.arcCount).toBe(11);
+      expect(container.textContent).toContain('Choose a whole number of arcs from 1 to 100.');
+    }
+    fill('story-length-input', '1');
+    expect(lengthText()).toBe('1 arc · 100 chapters. Arc 1 is the whole story and reaches the Destined Ending.');
+    fill('story-length-input', '');
+    expect(current.story.optional).not.toHaveProperty('arcCount');
+    expect(lengthText()).toBe('');
+  });
+
+  it('is the length the Blueprint is generated for and follows, travels with exports, and is never filled from a Blueprint', () => {
+    render(initial());
+    fill('story-length-input', '12');
+    // The Blueprint request carries the length in the Seed itself.
+    expect(buildBlueprintGenerationPayload(current).storySeed.story.optional.arcCount).toBe(12);
+    // A Blueprint, generated or older, takes the Seed's length.
+    expect(blueprint.estimatedArcs).toBe(12);
+    const generated = reconcileStorySeedBlueprint(current, { ...createBlueprintDraftFromSeed(current), arcPlans: [roadmap[0]], estimatedArcs: 5 });
+    expect(generated.blueprint.estimatedArcs).toBe(12);
+    const [restored] = parseStorySeedJson(JSON.stringify(createStorySeedExport(generated.seed, generated.blueprint)));
+    expect(restored.seed.story.optional.arcCount).toBe(12);
+    // A blank Story Length stays blank: the Blueprint keeps its own suggestion.
+    const blank = reconcileStorySeedBlueprint(initial(), { ...createBlueprintDraftFromSeed(initial()), arcPlans: [roadmap[0]], estimatedArcs: 7 });
+    expect(blank.seed.story.optional.arcCount).toBeUndefined();
+    expect(blank.blueprint.estimatedArcs).toBe(7);
+  });
+
+  it('is edited beside Arc 1\'s goals in the Blueprint review, never twice', () => {
+    const seed = { ...initial(), story: { ...initial().story, optional: { ...initial().story.optional, arcCount: 6 } } };
+    render(seed, 'blueprint', reconcileStorySeedBlueprint(seed, { ...createBlueprintDraftFromSeed(seed), arcPlans: [roadmap[0]] }).blueprint);
+    expect(container.querySelector('#story-length-input')).toBeNull();
+    expect(container.querySelector<HTMLInputElement>('#blueprint-arc-count-input')!.value).toBe('6');
   });
 });

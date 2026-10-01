@@ -103,8 +103,9 @@ Story View and the Reader are the Library's `StoryPages` (`@seihouse/library/sto
 
 ## Arcs
 
-Create's World Blueprint shows Arc 1's goals and the story's length, nothing
-about later arcs. When a story reaches a new arc, the Reader's Next reads
+Create's ARC page asks for the story's length in arcs (Story Length); left
+blank, the World Blueprint suggests one. The Blueprint shows Arc 1's goals and
+that length, nothing about later arcs. When a story reaches a new arc, the Reader's Next reads
 "Arc N begins" and opens the World Blueprint's goal section for that arc
 (SEN's `BlueprintArcPage`). Pressing Next plans the arc with one model
 request through the Library's `planArc`; the reader reviews or edits the goals

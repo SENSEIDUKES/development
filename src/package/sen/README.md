@@ -47,6 +47,11 @@ planned when the reader begins it.
     `onExtendArcRoadmap` and `BlueprintReview`'s `onAddArcs`.
   - New: `fillBlankSeedSlots`, `readGeneratedSeedSlots`, `GeneratedSeedSlots`,
     `GeneratedWorldBlueprint`, and the `SEED_*` slot lists and card limits.
+  - The Seed holds the creator's Story Length (`story.optional.arcCount`, 1 to
+    100 arcs). The Blueprint is generated for it and its `estimatedArcs`
+    follows it; `WorldBlueprint.arcOneScope` records what Arc 1 was planned as.
+    `BlueprintGenerationPayload.arcCount` is removed, and
+    `buildBlueprintGenerationPayload` takes only the Seed.
 - `./arc-goals`:
   - `insertArcsBeforeFinal`, `arcsCanBeAddedBeforeFinal`, `validateArcRoadmap`
     and `arcRoadmapSchema` are removed.

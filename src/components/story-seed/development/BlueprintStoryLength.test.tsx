@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
-import { act, useState } from 'react';
+import { act, useEffect, useState } from 'react';
 import { type Root } from 'react-dom/client';
 import { createRoot } from '../../../test-utils/createStoryCreationRoot';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createBlueprintDraftFromSeed, finalizeGeneratedWorldBlueprint, reconcileStorySeedBlueprint, type BlueprintGenerationPayload, type StorySeedInput, type WorldBlueprint } from '@seihouse/sen/story-seed';
+import { createBlueprintDraftFromSeed, finalizeGeneratedWorldBlueprint, mirrorSeedIntoBlueprint, normalizeStorySeedInput, reconcileStorySeedBlueprint, type BlueprintGenerationPayload, type StorySeedInput, type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { BlueprintReview, CreationModal } from '@seihouse/library/story-seed';
 import { LOCAL_WORKSHOP_STORY_SEED_OWNER_ID, listStorySeeds, resetStorySeedRepository } from '../../../workshop/previews/story-seed/storySeedStorage';
 import { createFilledStorySeedInput, createMockArcLookahead, createMockArcOne, createMockBlueprint, createMockSeedSlotAnswer, createMockStorySeedRecord } from '../../../workshop/previews/story-seed/previewData';
@@ -65,14 +65,24 @@ const reviewed = (arcCount: number): { seed: StorySeedInput; blueprint: WorldBlu
   return reconcileStorySeedBlueprint(seed, { ...createBlueprintDraftFromSeed(seed), arcPlans: [createMockArcOne(undefined, arcCount)], arcLookahead: createMockArcLookahead(arcCount), estimatedArcs: arcCount });
 };
 
+/** A reviewed pair whose Seed's Story Length was then changed on the ARC page. */
+const withStoryLength = ({ seed, blueprint }: { seed: StorySeedInput; blueprint: WorldBlueprint }, arcCount: number) => {
+  const changed = { ...seed, story: { ...seed.story, optional: { ...seed.story.optional, arcCount } } };
+  return { seed: changed, blueprint: mirrorSeedIntoBlueprint(blueprint, changed) };
+};
+
 let latestBlueprint: WorldBlueprint | undefined;
+let latestSeed: StorySeedInput | undefined;
 const Review = ({ initial, onRegenerateBlueprint }: {
   initial: { seed: StorySeedInput; blueprint: WorldBlueprint };
   onRegenerateBlueprint?: (arcCount: number) => Promise<void>;
 }) => {
   const [seed, setSeed] = useState(initial.seed);
   const [blueprint, setBlueprint] = useState(initial.blueprint);
+  // Like Story Seed creation: the Blueprint mirrors every Seed edit.
+  useEffect(() => setBlueprint(previous => mirrorSeedIntoBlueprint(previous, normalizeStorySeedInput(seed))), [seed]);
   latestBlueprint = blueprint;
+  latestSeed = seed;
   return (
     <LibraryPresentationProvider>
       <BlueprintReview seed={seed} updateSeed={setSeed} blueprint={blueprint} setBlueprint={setBlueprint}
@@ -101,6 +111,8 @@ describe('Blueprint review: Arc 1 and the story length', () => {
     setArcCount('12');
     expect(help()).toContain('Saving the length changes no goals. Arc 12, the final arc, will arrive at the Destined Ending.');
     act(() => buttonNamed('Save length')!.click());
+    // The length is the Seed's Story Length; the Blueprint follows it.
+    expect(latestSeed?.story.optional.arcCount).toBe(12);
     expect(latestBlueprint?.estimatedArcs).toBe(12);
     expect(latestBlueprint?.arcPlans).toHaveLength(1);
     setArcCount('2');
@@ -121,6 +133,30 @@ describe('Blueprint review: Arc 1 and the story length', () => {
     expect(buttonNamed('Regenerate with 3 arcs')!.disabled).toBe(false);
   });
 
+  it('asks for Arc 1 to be planned again when the Story Length was changed across the one-arc line on the ARC page', () => {
+    act(() => root.render(<Review initial={withStoryLength(reviewed(3), 1)} onRegenerateBlueprint={vi.fn(async () => undefined)} />));
+    expect(arcCountInput().value).toBe('1');
+    expect(container.querySelector('[data-testid="blueprint-arc-problem"]')!.textContent).toContain('Arc 1 was planned as the opening of a longer story');
+    expect(buttonNamed('Manifest Story')!.disabled).toBe(true);
+    expect(help()).toContain('Arc 1 was planned for a different length. Regenerate to plan Arc 1 for 1 arc, or change the length back.');
+    expect(buttonNamed('Regenerate with 1 arc')).toBeTruthy();
+    expect(buttonNamed('Save length')).toBeUndefined();
+    // A length on Arc 1's own side of the line saves, and the story can begin again.
+    setArcCount('4');
+    act(() => buttonNamed('Save length')!.click());
+    expect(latestSeed?.story.optional.arcCount).toBe(4);
+    expect(container.querySelector('[data-testid="blueprint-arc-problem"]')).toBeNull();
+    expect(buttonNamed('Manifest Story')!.disabled).toBe(false);
+  });
+
+  it('a whole-story Arc 1 asks the same when the length grows past one arc', () => {
+    act(() => root.render(<Review initial={withStoryLength(reviewed(1), 11)} onRegenerateBlueprint={vi.fn(async () => undefined)} />));
+    expect(container.querySelector('[data-testid="blueprint-arc-problem"]')!.textContent).toContain('Arc 1 was planned as the whole story');
+    expect(container.textContent).toContain('Arc 1 · the whole story, reaches the Destined Ending');
+    expect(buttonNamed('Regenerate with 11 arcs')).toBeTruthy();
+    expect(buttonNamed('Manifest Story')!.disabled).toBe(true);
+  });
+
   it('asks before replacing the whole Blueprint, holds the review while it regenerates, and reports a failure where it happened', async () => {
     let finish: () => void = () => undefined;
     const onRegenerateBlueprint = vi.fn(() => new Promise<void>((resolve, reject) => { finish = () => reject(new Error('The model is resting.')); void resolve; }));
@@ -139,9 +175,9 @@ describe('Blueprint review: Arc 1 and the story length', () => {
 });
 
 describe('Story Seed creation: regenerating at a chosen length', () => {
-  const renderModal = (props: { onGenerateBlueprint?: (payload: BlueprintGenerationPayload) => Promise<WorldBlueprint> }) => act(() => root.render(
+  const renderModal = (props: { onGenerateBlueprint?: (payload: BlueprintGenerationPayload) => Promise<WorldBlueprint>; onStartStory?: () => Promise<void> }) => act(() => root.render(
     <LibraryPresentationProvider>
-      <CreationModal onNavigateHome={vi.fn()} onStartStory={vi.fn()} onGenerateBlueprint={props.onGenerateBlueprint ?? vi.fn()}
+      <CreationModal onNavigateHome={vi.fn()} onStartStory={props.onStartStory ?? vi.fn()} onGenerateBlueprint={props.onGenerateBlueprint ?? vi.fn()}
         isGenerating={false} error={null} accountDefaultLanguage="en" />
     </LibraryPresentationProvider>,
   ));
@@ -154,9 +190,12 @@ describe('Story Seed creation: regenerating at a chosen length', () => {
 
   it('regenerates Arc 1 for a chosen length from the reviewed Seed and saves it', async () => {
     resetStorySeedRepository([createMockStorySeedRecord({ id: 'seed-regenerate', userId: LOCAL_WORKSHOP_STORY_SEED_OWNER_ID })]);
-    const onGenerateBlueprint = vi.fn(async (payload: BlueprintGenerationPayload) => ({
-      ...createMockBlueprint(), estimatedArcs: payload.arcCount!, arcPlans: [createMockArcOne(payload.storySeed.story.optional.activeArcGoal, payload.arcCount!)], arcLookahead: createMockArcLookahead(payload.arcCount!),
-    }));
+    const onGenerateBlueprint = vi.fn(async (payload: BlueprintGenerationPayload) => {
+      const arcCount = payload.storySeed.story.optional.arcCount!;
+      return finalizeGeneratedWorldBlueprint({
+        ...createMockBlueprint(), estimatedArcs: arcCount, arcPlans: [createMockArcOne(payload.storySeed.story.optional.activeArcGoal, arcCount)], arcLookahead: createMockArcLookahead(arcCount),
+      }, payload.storySeed);
+    });
     renderModal({ onGenerateBlueprint });
     await openBankedBlueprint();
 
@@ -166,11 +205,15 @@ describe('Story Seed creation: regenerating at a chosen length', () => {
     await flush();
 
     expect(onGenerateBlueprint).toHaveBeenCalledTimes(1);
-    expect(onGenerateBlueprint.mock.calls[0][0].arcCount).toBe(1);
+    // The chosen length travels in the Seed, and becomes its Story Length.
+    expect(onGenerateBlueprint.mock.calls[0][0]).not.toHaveProperty('arcCount');
+    expect(onGenerateBlueprint.mock.calls[0][0].storySeed.story.optional.arcCount).toBe(1);
     expect(arcCountInput().value).toBe('1');
     const [saved] = await listStorySeeds(LOCAL_WORKSHOP_STORY_SEED_OWNER_ID);
+    expect(saved.seed.story.optional.arcCount).toBe(1);
     expect(saved.blueprint?.arcPlans).toHaveLength(1);
     expect(saved.blueprint?.estimatedArcs).toBe(1);
+    expect(saved.blueprint?.arcOneScope).toBe('whole-story');
     expect(saved.blueprint?.arcLookahead).toBeUndefined();
     expect(container.textContent).toContain('Arc 1 · the whole story, reaches the Destined Ending');
   });
@@ -199,5 +242,23 @@ describe('Story Seed creation: regenerating at a chosen length', () => {
     expect(foundations.additionalCharacters?.find(card => card.name === 'Junior Sister Han')).toMatchObject({ role: 'Ally', age: 'Seventeen', eyeColor: 'Amber' });
     expect(foundations.powerSystem?.knownRanks).toContain('Foundation Establishment');
     expect(saved.blueprint).not.toHaveProperty('generatedSeedSlots');
+  });
+
+  it('opens the review with the reason instead of starting a banked story whose Arc 1 no longer fits its Story Length', async () => {
+    const record = createMockStorySeedRecord({ id: 'seed-length-changed', userId: LOCAL_WORKSHOP_STORY_SEED_OWNER_ID });
+    // Arc 1 was planned as the opening of 3 arcs; the Story Length was then set to one arc.
+    const seed = { ...record.seed, story: { ...record.seed.story, optional: { ...record.seed.story.optional, arcCount: 1 } } };
+    resetStorySeedRepository([{ ...record, seed }]);
+    const onStartStory = vi.fn(async () => undefined);
+    renderModal({ onStartStory });
+    await act(async () => { buttonNamed('Story Bank')!.click(); });
+    await flush();
+    await act(async () => { buttonNamed('Manifest Novel')!.click(); });
+    await flush();
+
+    expect(onStartStory).not.toHaveBeenCalled();
+    expect(container.querySelector('[role="alert"]')!.textContent).toContain('Arc 1 was planned as the opening of a longer story');
+    expect(buttonNamed('Regenerate with 1 arc')).toBeTruthy();
+    expect(buttonNamed('Manifest Story')!.disabled).toBe(true);
   });
 });

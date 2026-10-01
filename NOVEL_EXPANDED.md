@@ -153,6 +153,8 @@ Update this section whenever it changes.
     Seeds and reading places, and asks for the Blueprint access token on
     Create. `npm run check:app` fails the build if it reaches an old system
     ([`src/novel-expanded/README.md`](./src/novel-expanded/README.md)).
+  - **Story Length is set from the start:** the Story Seed's ARC page asks how many
+    arcs the story should run (1 to 100); left blank, the World Blueprint suggests one.
   - **The World Blueprint shows Arc 1 only**, with the story's length. The model
     gets a short private look-ahead of the next arcs. Each later arc is planned
     when the reader presses Next at its start, from where the last arc left off,

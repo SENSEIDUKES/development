@@ -76,7 +76,7 @@ export const docsCategories: readonly DocsCategory[] = [
       {
         ...topic('arc', 'Arc'),
         definition: 'A 100-chapter stretch of a novel with its own goals.',
-        howItFits: 'Each arc has one to five sequential Arc Goals, with one active goal at a time and an allocated chapter range for each. The Story Seed ARC section collects the Destined Ending, optional Hard Pins, an initial Active Arc Goal, and Fun Settings; the World Blueprint plans Arc 1 and the story’s length, and each later arc is planned when it begins. HARNESS tracks the live arc and its goals as chapters commit.',
+        howItFits: 'Each arc has one to five sequential Arc Goals, with one active goal at a time and an allocated chapter range for each. The Story Seed ARC section collects the Destined Ending, the Story Length in arcs, optional Hard Pins, an initial Active Arc Goal, and Fun Settings; the World Blueprint plans Arc 1 for that length (or suggests a length when it is left blank), and each later arc is planned when it begins. HARNESS tracks the live arc and its goals as chapters commit.',
       },
       {
         ...topic('world', 'World'),
@@ -126,7 +126,7 @@ export const docsCategories: readonly DocsCategory[] = [
       {
         ...topic('arc-roadmap', 'Arc Planning', ['Arc Roadmap', 'look-ahead']),
         definition: 'How each arc’s goals are planned as the novel reaches it.',
-        howItFits: 'The World Blueprint plans only Arc 1 and the story’s length, plus a short private look-ahead of the next arcs that only the arc planner reads. When the reader reaches a new arc, HARNESS plans its goals with one model request, continuing from where the last arc left off (including missed goals) toward the Destined Ending, and the final arc reaches it. The World Blueprint’s goal section then appears for review: the reader can edit the goals (once in Fate Survival) or accept them before the arc’s first chapter. The chapter writer still sees only the active goal, never a later arc.',
+        howItFits: 'The creator can set the story’s length in arcs on the Story Seed’s ARC page, or leave it for the Blueprint to suggest. The World Blueprint plans only Arc 1 for that length, plus a short private look-ahead of the next arcs that only the arc planner reads. When the reader reaches a new arc, HARNESS plans its goals with one model request, continuing from where the last arc left off (including missed goals) toward the Destined Ending, and the final arc reaches it. The World Blueprint’s goal section then appears for review: the reader can edit the goals (once in Fate Survival) or accept them before the arc’s first chapter. The chapter writer still sees only the active goal, never a later arc.',
       },
       {
         ...topic('arc-goal', 'Arc Goal', ['Active Arc Goal', 'allocation', 'deadline']),

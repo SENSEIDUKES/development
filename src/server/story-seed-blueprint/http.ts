@@ -44,7 +44,10 @@ const errorResponse = (status: number, error: string): StorySeedBlueprintHttpRes
   headers: { "Cache-Control": "no-store" },
 });
 
-/** One operation: a whole Blueprint, which plans Arc 1 for a story of the chosen (or a realistic) length. */
+/**
+ * One operation: a whole Blueprint, which plans Arc 1 for a story of the
+ * Seed's Story Length, or a realistic length when the Seed leaves it blank.
+ */
 const parseRequest = (body: unknown): BlueprintGenerationPayload => {
   const parsed = typeof body === "string" ? JSON.parse(body) : body;
   if (!isRecord(parsed) || !isRecord(parsed.storySeed)) {
@@ -53,7 +56,9 @@ const parseRequest = (body: unknown): BlueprintGenerationPayload => {
   const storySeed = parsed.storySeed as unknown as StorySeedInput;
   // Arcs are planned when each begins, so no request adds arcs to a Blueprint.
   if (parsed.operation !== undefined) throw new Error("Unknown Blueprint operation.");
-  return { storySeed, ...(parsed.arcCount === undefined ? {} : { arcCount: parsed.arcCount as number }) };
+  // The length travels in the Seed alone, so a request can never carry two.
+  if (parsed.arcCount !== undefined) throw new Error("The story length is the Story Seed's own Story Length (story.optional.arcCount).");
+  return { storySeed };
 };
 
 export async function handleStorySeedBlueprintHttp(

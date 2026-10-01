@@ -43,7 +43,7 @@ const worldFactRules = (storySeed: StorySeedInput): string[] => {
   ];
 };
 
-export const buildWorldBlueprintPrompt = (storySeed: StorySeedInput, arcCount?: number): string => `Create one complete World Blueprint from this finalized canonical Story Seed:
+export const buildWorldBlueprintPrompt = (storySeed: StorySeedInput, arcCount = storySeed.story.optional.arcCount): string => `Create one complete World Blueprint from this finalized canonical Story Seed:
 
 ${JSON.stringify(storySeed, null, 2)}
 
@@ -59,7 +59,7 @@ ${worldFactRules(storySeed).map(rule => `- ${rule}`).join('\n')}
 - Keep every slot to one short, concrete fact; the longer prose fields (logline, worldOverview, powerSystemOutline, backgroundProfile, firstArcPromise) add what the slots do not already say, never restating them.
 - ${arcCount === undefined
   ? `Establish the Destined Ending first, then a realistic estimatedArcs between 1 and ${MAX_ROADMAP_ARCS}: the story's length.`
-  : `Establish the Destined Ending first. The author chose the story's length: estimatedArcs is exactly ${arcCount}.`} Each arc is exactly ${ARC_LENGTH} chapters, and the last arc arrives at the Destined Ending.
+  : `Establish the Destined Ending first. The creator chose the story's length (story.optional.arcCount): estimatedArcs is exactly ${arcCount}.`} Each arc is exactly ${ARC_LENGTH} chapters, and the last arc arrives at the Destined Ending.
 - Plan only Arc 1, in arcOne: 1 to ${MAX_ARC_GOALS} sequential one-line goals, each with a positive whole-chapter allocation weighted by what it requires; the allocations sum to exactly ${ARC_LENGTH}. Goals never overlap. When estimatedArcs is 1, Arc 1 is the whole story and its last goal is the story reaching its Destined Ending; otherwise no Arc 1 goal reaches or resolves it. Every later arc is planned when the story reaches it, from where the story is then.
 - ${storySeed.story.optional.activeArcGoal
   ? 'Arc 1 must begin with story.optional.activeArcGoal: use its text verbatim as Arc 1\'s first goal and plan the rest of the arc around it.'

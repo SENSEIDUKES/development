@@ -1,7 +1,7 @@
 import { memo, useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 import { Map as RoadmapIcon, RefreshCw } from 'lucide-react';
 import { ARC_LENGTH, ArcPlanView, MAX_ROADMAP_ARCS, type ArcPlan } from '@seihouse/sen/arc-goals';
-import { fitArcLookahead, type StorySeedInput, type WorldBlueprint } from '@seihouse/sen/story-seed';
+import { type StorySeedInput, type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
 import { BlueprintSectionHeading } from './BlueprintDossierPrimitives';
 import { type UpdateSeed } from '../seedState';
@@ -9,6 +9,8 @@ import { type UpdateSeed } from '../seedState';
 interface BlueprintArcGoalsSectionProps {
   arcPlans?: ArcPlan[];
   estimatedArcs: number;
+  /** What Arc 1 was planned as; absent, what the length says. */
+  arcOneScope?: WorldBlueprint['arcOneScope'];
   destinedEnding?: string;
   /** Why the Blueprint cannot begin a story yet, if it cannot. */
   problem?: string;
@@ -30,12 +32,15 @@ const arcsLabel = (count: number) => `${count} ${count === 1 ? 'arc' : 'arcs'}`;
  * planned when the reader begins it, and this same section reappears in the
  * Reader for its review. The hidden look-ahead is never shown.
  *
- * The length saves without a model call, except across the one-arc line: a
- * one-arc story's Arc 1 is the whole story and ends at the Destined Ending, so
- * changing to or from one arc re-plans Arc 1 by regenerating the Blueprint.
+ * The length is the Seed's Story Length, so saving it here writes the Seed and
+ * the Blueprint follows. It saves without a model call, except across the
+ * one-arc line: a one-arc story's Arc 1 is the whole story and ends at the
+ * Destined Ending, so changing to or from one arc re-plans Arc 1 by
+ * regenerating the Blueprint. A length changed across that line on the ARC
+ * page is offered the same regeneration here.
  */
 export const BlueprintArcGoalsSection = memo(({
-  arcPlans = [], estimatedArcs, destinedEnding, problem, setBlueprint, updateSeed,
+  arcPlans = [], estimatedArcs, arcOneScope, destinedEnding, problem, setBlueprint, updateSeed,
   regenerating = false, generating = false, onRegenerate,
 }: BlueprintArcGoalsSectionProps) => {
   const [countText, setCountText] = useState(String(estimatedArcs));
@@ -51,13 +56,17 @@ export const BlueprintArcGoalsSection = memo(({
   const chosen = Number(countText);
   const countValid = countText.trim() !== '' && Number.isInteger(chosen) && chosen >= 1 && chosen <= MAX_ROADMAP_ARCS;
   const changed = countValid && chosen !== estimatedArcs;
-  // Arc 1 is planned differently when it is the whole story.
-  const crossesOneArc = changed && (chosen === 1) !== (estimatedArcs === 1);
   const arcOne = arcPlans[0];
+  // Arc 1 is planned differently when it is the whole story.
+  const plannedWhole = arcOneScope ? arcOneScope === 'whole-story' : estimatedArcs === 1;
+  const crossesOneArc = countValid && (chosen === 1) !== plannedWhole;
+  // The length already set no longer fits Arc 1 (changed on the ARC page).
+  const replanNeeded = Boolean(arcOne) && !changed && crossesOneArc;
 
   const saveLength = () => {
     if (!changed || crossesOneArc) return;
-    setBlueprint(current => ({ ...current, estimatedArcs: chosen, arcLookahead: fitArcLookahead(current.arcLookahead, chosen) }));
+    // The Seed owns the length; the Blueprint mirrors it and trims its look-ahead.
+    updateSeed((current: StorySeedInput) => ({ ...current, story: { ...current.story, optional: { ...current.story.optional, arcCount: chosen } } }));
   };
   const regenerate = async () => {
     if (!onRegenerate || !countValid) return;
@@ -119,20 +128,22 @@ export const BlueprintArcGoalsSection = memo(({
               onClick={() => { setActionError(''); setConfirmingRegenerate(true); }}>
               {regenerating
                 ? 'Regenerating…'
-                : changed ? `Regenerate with ${arcsLabel(chosen)}` : 'Regenerate whole Blueprint'}
+                : changed || replanNeeded ? `Regenerate with ${arcsLabel(chosen)}` : 'Regenerate whole Blueprint'}
             </LibraryButton>
           )}
         </div>
         <p className="mt-3 text-xs leading-relaxed text-neutral-400" data-testid="blueprint-arc-count-help">
           {!countValid
             ? `Choose a whole number of arcs from 1 to ${MAX_ROADMAP_ARCS}.`
-            : crossesOneArc
-              ? estimatedArcs === 1
-                ? `Arc 1 was planned as the whole story, ending at the Destined Ending. A ${arcsLabel(chosen)} story needs Arc 1 re-planned as its opening: regenerate the Blueprint.`
-                : 'A one-arc story\'s Arc 1 is the whole story and ends at the Destined Ending, so Arc 1 is re-planned: regenerate the Blueprint.'
-              : changed
-                ? `Saving the length changes no goals. Arc ${chosen}, the final arc, will arrive at the Destined Ending.`
-                : 'Change the length to make the story longer or shorter, or regenerate the whole Blueprint.'}
+            : replanNeeded
+              ? `Arc 1 was planned for a different length. Regenerate to plan Arc 1 for ${arcsLabel(chosen)}, or change the length back.`
+              : crossesOneArc
+                ? plannedWhole
+                  ? `Arc 1 was planned as the whole story, ending at the Destined Ending. A ${arcsLabel(chosen)} story needs Arc 1 re-planned as its opening: regenerate the Blueprint.`
+                  : 'A one-arc story\'s Arc 1 is the whole story and ends at the Destined Ending, so Arc 1 is re-planned: regenerate the Blueprint.'
+                : changed
+                  ? `Saving the length changes no goals. Arc ${chosen}, the final arc, will arrive at the Destined Ending.`
+                  : 'Change the length to make the story longer or shorter, or regenerate the whole Blueprint.'}
         </p>
         {confirmingRegenerate && (
           <div className="mt-3 rounded-lg border border-amber-300/30 bg-amber-950/20 p-3" data-testid="blueprint-regenerate-confirm">
@@ -156,7 +167,7 @@ export const BlueprintArcGoalsSection = memo(({
       {arcOne && (
         <div className="mt-2">
           <ArcPlanView key={arcOne.goals.map(goal => goal.id).join('|')} plan={arcOne} onEdit={busy ? undefined : savePlan} defaultOpen
-            title={`Arc 1${estimatedArcs === 1 ? ' · the whole story, reaches the Destined Ending' : ''} · ${arcOne.goals.length} ${arcOne.goals.length === 1 ? 'goal' : 'goals'}`}
+            title={`Arc 1${plannedWhole ? ' · the whole story, reaches the Destined Ending' : ''} · ${arcOne.goals.length} ${arcOne.goals.length === 1 ? 'goal' : 'goals'}`}
             editLabel="Edit Arc 1 goals" />
         </div>
       )}

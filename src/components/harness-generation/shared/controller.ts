@@ -93,6 +93,9 @@ const addWarnings = (attempt: HarnessGenerationAttempt, warnings: HarnessWarning
   }
 };
 
+/** A Foundation has its Destined Ending; a blank or missing one is asked of the arc planner. */
+const hasDestinedEnding = (input: StoryFoundationInput) => Boolean(input.destinedEnding?.trim());
+
 const errorMessage = (error: unknown, fallback: string) =>
   error instanceof Error && error.message ? error.message : fallback;
 
@@ -587,7 +590,7 @@ export class HarnessGenerationController {
     const foundation = findFoundationRevision(this.state, story.activeFoundationRevisionId)!;
     const planNeeded = needsArcPlan(story, foundation.input);
     if (!this.modelAdapter.arcOperation) throw new Error('This Harness adapter cannot create the authoritative Arc Plan required before chapter generation.');
-    if (!planNeeded && foundation.input.destinedEnding) return;
+    if (!planNeeded && hasDestinedEnding(foundation.input)) return;
     const pending = this.state.arcPlanOperations.filter(operation => operation.storyId === storyId
       && ['request_started', 'provider_outcome_unknown', 'raw_received', 'failed'].includes(operation.status)).at(-1);
     if (pending?.status === 'raw_received') return this.applyArcPlanOperation(pending.id);
@@ -639,7 +642,7 @@ export class HarnessGenerationController {
       const takenGoalIds = (story.arcPlans ?? []).filter(revision => revision.plan.arcNumber !== arcNumber)
         .flatMap(revision => revision.plan.goals.map(goal => goal.id));
       const plan = needsArcPlan(story, foundation.input) ? arcPlanFromDraft(reply.plan, arcNumber, takenGoalIds) : undefined;
-      if (!foundation.input.destinedEnding?.trim() && (typeof reply.destinedEnding !== 'string' || !reply.destinedEnding.trim())) throw new Error('The arc planner must supply the novel Destined Ending.');
+      if (!hasDestinedEnding(foundation.input) && (typeof reply.destinedEnding !== 'string' || !reply.destinedEnding.trim())) throw new Error('The arc planner must supply the novel Destined Ending.');
       let candidate = cloneHarnessValue(this.state);
       const target = findStory(candidate, operation.storyId)!;
       if (plan) {
@@ -652,8 +655,8 @@ export class HarnessGenerationController {
       const saved = candidate.arcPlanOperations.find(item => item.id === operationId)!;
       saved.status = 'completed';
       saved.failure = undefined;
-      if (!foundation.input.destinedEnding && typeof reply.destinedEnding === 'string') {
-        candidate = reviseStoryFoundation(candidate, operation.storyId, { ...foundation.input, destinedEnding: reply.destinedEnding }, this.runtime).state;
+      if (!hasDestinedEnding(foundation.input) && typeof reply.destinedEnding === 'string') {
+        candidate = reviseStoryFoundation(candidate, operation.storyId, { ...foundation.input, destinedEnding: reply.destinedEnding.trim() }, this.runtime).state;
       }
       await this.persist(candidate);
     } catch (error) {
@@ -670,7 +673,8 @@ export class HarnessGenerationController {
    * Plans the goals of the arc the next chapter begins, whatever state its
    * planning is in: never asked, failed, interrupted, or answered but not yet
    * saved. A story with a planned length plans each arc this way, when the
-   * reader begins it; its goals then wait on the reader's review.
+   * reader begins it; its goals then wait on the reader's review. A story
+   * missing only its Destined Ending asks the planner for it the same way.
    */
   async planNextArc(storyId: string, model: string): Promise<HarnessWorkspaceState> {
     this.assertHydrated();
@@ -682,7 +686,7 @@ export class HarnessGenerationController {
     if (ended) throw new Error(ended);
     const foundation = findFoundationRevision(this.state, story.activeFoundationRevisionId);
     if (!foundation) throw new Error('The active Story Foundation revision is missing. Restore a local export before continuing.');
-    if (!needsArcPlan(story, foundation.input)) return this.snapshot();
+    if (!needsArcPlan(story, foundation.input) && hasDestinedEnding(foundation.input)) return this.snapshot();
     const stale = this.state.arcPlanOperations.filter(item => item.storyId === storyId
       && ['provider_outcome_unknown', 'failed'].includes(item.status));
     if (stale.length) {
@@ -845,7 +849,7 @@ export class HarnessGenerationController {
     // never inside a chapter write; one without plans its next arc here.
     const planGap = arcPlanGap(story, foundation.input);
     if (planGap) throw new Error(planGap);
-    if (needsArcPlan(story, foundation.input) || !foundation.input.destinedEnding) {
+    if (needsArcPlan(story, foundation.input) || !hasDestinedEnding(foundation.input)) {
       this.generating = true;
       try { await this.prepareArcPlan(storyId, model); }
       finally { this.generating = false; }

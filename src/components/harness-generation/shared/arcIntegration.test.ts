@@ -38,6 +38,22 @@ describe('HARNESS canonical arc integration', () => {
     expect(run.repository.snapshot().stories.find(item => item.id === story.id)?.arcPlans).toHaveLength(1);
   });
 
+  it('plans again on request when only the Destined Ending was missing and asking for it failed', async () => {
+    const run = await setup();
+    const story = await run.controller.createStory({ premise: 'An archivist reunites a divided kingdom.', initialArcPlan: plan });
+    run.arcOperation.mockRejectedValueOnce(new Error('The planner is resting.'));
+    await expect(run.controller.generateNextChapter(story.id, 'fixture')).rejects.toThrow('The planner is resting.');
+    await expect(run.controller.generateNextChapter(story.id, 'fixture')).rejects.toThrow('The last Arc planning request failed');
+    // Planning again sets the failed request aside and asks once more.
+    await run.controller.planNextArc(story.id, 'fixture');
+    expect(run.arcOperation).toHaveBeenCalledTimes(2);
+    const state = run.controller.snapshot();
+    const saved = state.stories.find(item => item.id === story.id)!;
+    expect(state.foundations.find(item => item.id === saved.activeFoundationRevisionId)?.input.destinedEnding).toBe('Unite the kingdoms.');
+    await run.controller.generateNextChapter(story.id, 'fixture');
+    expect(run.requests).toHaveLength(1);
+  });
+
   it('requires an explicit retry after an interrupted Arc planning request', async () => {
     const run = await setup();
     const story = await run.controller.createStory({ premise: 'An archivist reunites a divided kingdom.' });

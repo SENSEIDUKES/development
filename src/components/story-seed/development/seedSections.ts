@@ -65,6 +65,7 @@ export const SEED_SECTIONS: SeedSection[] = [
     isFilled: seed => {
       return hasText(seed.story.optional.activeArcGoal?.text)
         || Boolean(seed.story.optional.hardPins?.length)
+        || seed.story.optional.arcCount !== undefined
         || hasText(worldFoundations(seed).destinedEnding);
     },
   },

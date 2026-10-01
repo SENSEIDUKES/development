@@ -17,7 +17,8 @@ The package exposes these through `@seihouse/sen/arc-goals`.
 | Behavior | Owner |
 | --- | --- |
 | Exactly 100 chapters; one to five weighted sequential goals | Neutral SEN arc contract |
-| Destined Ending, story length, Arc 1's goals and the hidden look-ahead | Existing Story Seed Blueprint provider; the Blueprint plans only Arc 1 |
+| The story length the creator chooses | Story Seed ARC page, Story Length (`story.optional.arcCount`); left blank, the Blueprint suggests one |
+| Destined Ending, story length, Arc 1's goals and the hidden look-ahead | Existing Story Seed Blueprint provider; the Blueprint plans only Arc 1, for the Seed's Story Length when set |
 | Creator review and edits before generation | Blueprint review Arc Goals (`BlueprintArcGoalsSection`, reusing `ArcPlanView`): Arc 1 and the story length; Arc 1's first goal is the Seed's Active Arc Goal |
 | Arc 1 validation (`validateArcPlan`, `validateBlueprintArcPlan`) | Neutral SEN arc contract and the Story Seed Manifest gate |
 | The hidden look-ahead (`ArcLookaheadEntry`, `normalizeArcLookahead`, `arcLookaheadFromPlans`) | Neutral SEN arc contract; only the arc planner reads it, and no reader surface shows it |
@@ -48,9 +49,12 @@ its deadline, and the arc's position on the planned route, never the look-ahead.
 every arc of the story's length is written the route is complete and HARNESS stops
 rather than inventing another arc.
 
-The length may be changed in the Blueprint review before the story begins without a
-model call; only a change to or from a one-arc story (whose Arc 1 ends at the Destined
-Ending) regenerates the Blueprint.
+The creator may set the length up front, as the Story Seed's Story Length on its ARC
+page; the Blueprint is then generated for exactly that length and follows it. It may be
+changed there or in the Blueprint review before the story begins without a model call;
+only a change to or from a one-arc story (whose Arc 1 ends at the Destined Ending) needs
+the Blueprint regenerated, and until then the Blueprint records what Arc 1 was planned
+as (`WorldBlueprint.arcOneScope`) and the Manifest gate says so.
 
 Completion requires a positive model assessment of the generated prose plus
 a continuous exact evidence quotation from that prose. A matching quotation proves
@@ -74,8 +78,9 @@ penalty, or automatic retry policy is supplied.
 
 Story Seed Blueprints saved when every arc was planned keep their Arc 1, and their next
 two arcs become the look-ahead; nothing is wiped. HARNESS schema 24 drops stored whole-route
-roadmaps from Foundations (saved arcs stay on their stories); earlier schemas upgrade in
-place after an untouched copy is kept. Completion records saved before outcomes existed
+roadmaps from Foundations (saved arcs stay on their stories). Only schemas 22 and 23
+upgrade in place, after an untouched copy is kept; an older workspace is kept as that
+untouched copy and opens empty, without an upgrade. Completion records saved before outcomes existed
 read as completed.
 The shipped HTTP adapter supports automatic planning, and every chapter-generation
 adapter must support that plan operation before its first model call. HARNESS persistence

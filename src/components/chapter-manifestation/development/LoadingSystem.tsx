@@ -54,7 +54,7 @@ const DEFAULT_COMPACT_GRACE_MS = 1200;
  * Minimization is navigation-driven — the caller flips `minimized` when the
  * user leaves the generation page — so LoadingVeilCard's `onMinimize` prop
  * is gone. `onMinimizedChange` still drives the compact indicator's expand.
- * Workshop-only: do not wire this into production flows.
+ * First real caller: the Library's HARNESS Reader, while it writes a chapter.
  */
 export default function LoadingSystem({
   active,

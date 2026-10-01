@@ -22,29 +22,17 @@ import {
 } from './manifestationRevealPreview';
 
 /**
- * Every operation routable through the Aura Veil's two manifestation modes.
- * Reader Chamber, Codex, and Narration are deliberately absent — they own
- * dedicated manifestation logic and are never previewed here.
+ * The Aura Veil's two screens: one narrative manifestation (a chapter being
+ * written, the HARNESS Reader's write) and one media reveal (cover art, the
+ * first media asset a story gets). Reader Chamber, Codex, and Narration are
+ * deliberately absent — they own dedicated manifestation logic.
  */
-type GenerationPhase =
-  | 'blueprint' | 'initial-arc' | 'chapter'
-  | 'cover' | 'image' | 'audio' | 'visual'
-  | null;
+type GenerationPhase = 'chapter' | 'cover' | null;
 
-const NARRATIVE_OPERATIONS: { id: Exclude<GenerationPhase, null>; label: string }[] = [
-  { id: 'blueprint', label: 'World Blueprint' },
-  { id: 'initial-arc', label: 'Initial Arc' },
-  { id: 'chapter', label: 'Chapter' },
+const MANIFESTATIONS: { id: Exclude<GenerationPhase, null>; label: string }[] = [
+  { id: 'chapter', label: 'Narrative' },
+  { id: 'cover', label: 'Media reveal' },
 ];
-
-const MEDIA_OPERATIONS: { id: Exclude<GenerationPhase, null>; label: string }[] = [
-  { id: 'cover', label: 'Cover Art' },
-  { id: 'image', label: 'Image' },
-  { id: 'audio', label: 'Audio' },
-  { id: 'visual', label: 'Visual / Motion' },
-];
-
-const ALL_OPERATIONS = [...NARRATIVE_OPERATIONS, ...MEDIA_OPERATIONS];
 
 /**
  * The two top-level workshop areas inside this feature. The Aura Veil
@@ -409,23 +397,15 @@ function AuraVeilSimulationControls({
     <div className="divide-y divide-white/5">
       <ControlGroup
         icon={<Layers size={14} className="text-human" />}
-        title="Operation"
-        hint="Selects which generation operation the Aura Veil simulates. Narrative operations show the omen scene; media operations show the Manifestation Reveal."
+        title="Manifestation"
+        hint="The Aura Veil has two screens. Narrative shows the omen scene while a chapter is written; Media reveal shows the Manifestation Reveal while a media asset forms."
       >
-        <div className="space-y-3">
-          <PillOptionGroup
-            label="Narrative Manifestation"
-            options={NARRATIVE_OPERATIONS}
-            selected={sim.veilPhase}
-            onPick={(id) => sim.setVeilPhase(id as Exclude<GenerationPhase, null>)}
-          />
-          <PillOptionGroup
-            label="Media Manifestation"
-            options={MEDIA_OPERATIONS}
-            selected={sim.veilPhase}
-            onPick={(id) => sim.setVeilPhase(id as Exclude<GenerationPhase, null>)}
-          />
-        </div>
+        <PillOptionGroup
+          label="Screen"
+          options={MANIFESTATIONS}
+          selected={sim.veilPhase}
+          onPick={(id) => sim.setVeilPhase(id as Exclude<GenerationPhase, null>)}
+        />
       </ControlGroup>
 
       {veilPhaseIsMedia && (
@@ -614,7 +594,7 @@ export function ChapterManifestationWorkspace() {
       ? [
           {
             id: 'states' as const,
-            description: 'Choose an operation, force media reveal progression, and run or stop the shared veil simulation.',
+            description: 'Choose the narrative or media screen, force media reveal progression, and run or stop the shared veil simulation.',
             content: <AuraVeilSimulationControls sim={sim} cosmetics={cosmetics} media={media} section="states" />,
           },
           {

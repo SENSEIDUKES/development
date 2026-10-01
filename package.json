@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && node scripts/buildHarnessGenerationApi.mjs && node scripts/buildStorySeedBlueprintApi.mjs && node scripts/buildCodexVoiceApi.mjs && node scripts/buildReaderTranslationApi.mjs && node scripts/buildLibraryEconomyApi.mjs && node scripts/buildModelRouterApi.mjs",
+    "build": "tsc -b && node scripts/checkNovelExpandedApp.mjs && vite build && node scripts/buildHarnessGenerationApi.mjs && node scripts/buildStorySeedBlueprintApi.mjs && node scripts/buildCodexVoiceApi.mjs && node scripts/buildReaderTranslationApi.mjs && node scripts/buildLibraryEconomyApi.mjs && node scripts/buildModelRouterApi.mjs",
     "preview": "vite preview",
     "build:package": "npm run build:package:sen && npm run build:package:library",
     "build:package:sen": "vite build --config vite.package.config.ts && tsc -p tsconfig.package.json && node scripts/finalizePackage.mjs sen",
@@ -13,6 +13,7 @@
     "check:ui-artifacts": "node scripts/checkUIArtifacts.mjs",
     "check:package-boundaries": "node scripts/checkPackageBoundaries.mjs",
     "check:ownership": "node scripts/checkOwnership.mjs",
+    "check:app": "node scripts/checkNovelExpandedApp.mjs",
     "test:package": "npm run check:ui-artifacts && npm run check:package-boundaries && npm run build:package && node scripts/smokePackage.mjs sen && node scripts/smokePackage.mjs library",
     "typecheck": "tsc -b",
     "test": "vitest run",
@@ -43,7 +44,7 @@
     "test:reader-translation": "vitest run src/server/reader-translation",
     "test:public-generation-guard": "vitest run src/server/shared",
     "test:workshop": "vitest run src/workshop/FeatureWorkspace.test.tsx src/workshop/WorkshopHome.test.tsx src/workshop/docs",
-    "verify": "npm run typecheck && npm test && npm run check:ownership && npm run check:package-boundaries && npm run test:package"
+    "verify": "npm run typecheck && npm test && npm run check:ownership && npm run check:package-boundaries && npm run check:app && npm run test:package"
   },
   "dependencies": {
     "@google/genai": "^2.16.0",

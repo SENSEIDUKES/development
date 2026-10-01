@@ -140,6 +140,36 @@ export const createMockArcLookahead = (arcCount = 3): ArcLookaheadEntry[] =>
     direction: arcNumber === arcCount ? 'The prince survives and the court\'s grip on fate is broken.' : MOCK_ROUTE[arcNumber - 1].join('; then ') + '.',
   }));
 
+/**
+ * The Story Seed slot values a Blueprint answer proposes, in the model's answer
+ * shape: the creator's own cards by name, then supporting ones, every slot
+ * filled. Only the creator's blanks take them.
+ */
+export const createMockSeedSlotAnswer = () => ({
+  mainCharacter: {
+    name: 'Ye Chen', age: 'Nineteen', personality: 'Ruthless but protective, chaotic neutral',
+    appearance: 'Lean and wiry, with sharp, weary eyes and a burn scar across one palm.',
+    backgroundProfile: 'Ye Chen remembers dying seven times beside the Ninth Prince; each timeline taught him one more name to fear.',
+    startingIdentity: 'Crippled young master, secretly the reincarnated Ninth Prince',
+    secretAdvantage: 'Foreknowledge of seven doomed timelines',
+    startingWeakness: 'Destroyed meridians',
+    mainFlaw: 'Cannot trust anyone who has not died beside him',
+    moralAlignment: 'Pragmatic protector',
+    bio: 'A laborer in the outer quarry whom the sect has written off.',
+  },
+  characters: [
+    { name: 'Elder Qin', role: 'Sect Elder', age: 'Ancient', skinTone: 'Weathered bronze', eyeColor: 'Frost grey', powerType: 'Frost Dao', rankLevel: 'Nascent Soul', connectionToMC: 'Secret protector', bio: 'A retired enforcer.' },
+    { name: 'Junior Sister Han', role: 'Ally', age: 'Seventeen', skinTone: 'Pale', eyeColor: 'Amber', powerType: 'Talisman craft', rankLevel: 'Qi Condensation 6', connectionToMC: 'Fellow quarry laborer', bio: 'A talisman prodigy hiding her talent from the inner sect.' },
+  ],
+  factions: [
+    { name: 'Heavenly Sword Sect', role: 'Ruling Power', powerLevel: 'Mid Tier', alignment: 'Righteous (in name only)', connectionToMC: "MC's starting sect", description: 'A corrupted sect.' },
+    { name: 'Deep Sea Alliance', role: 'Rival power', powerLevel: 'High Tier', alignment: 'Neutral', connectionToMC: 'Hunts the prince for the court', description: 'Merchant clans bound by tide oaths, ruled by a council of three.' },
+  ],
+  abilities: { startingPowerConcept: 'Qi Condensation Tier 1', uniquePath: 'Rebuilds his meridians from the scars of failed timelines' },
+  powerSystem: { flavor: 'Martial arts, Daoist', knownRanks: 'Qi Condensation → Foundation Establishment → Core Formation → Nascent Soul' },
+  mainOpposition: "The celestial court's fate auditors",
+});
+
 export const createMockBlueprint = (): WorldBlueprint => ({
   arcPlans: [createMockArcOne()],
   arcLookahead: createMockArcLookahead(3),

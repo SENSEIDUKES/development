@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { type StorySeedInput } from '@seihouse/sen/story-seed';
-import { createStorySeedExport, parseStorySeedJson, STORY_SEED_SCHEMA_VERSION } from "@seihouse/sen/story-seed";
+import { createStorySeedExport, fillBlankSeedSlots, parseStorySeedJson, STORY_SEED_SCHEMA_VERSION, type GeneratedWorldBlueprint } from "@seihouse/sen/story-seed";
 import { type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { createHarnessFoundationFromStorySeed } from "../../workshop/previews/harness-generation/storySeedHandoff";
 import { handleStorySeedBlueprintHttp } from "./http";
@@ -107,16 +107,25 @@ const generatedBlueprint = (): Record<string, unknown> & { arcOne?: unknown; arc
     personality: "Wrong personality",
     appearance: "Black court robes stitched with a severed seventh sun.",
     backgroundProfile: "A survivor of repeated imperial collapses.",
+    startingIdentity: "A contradictory identity",
+    secretAdvantage: "A contradictory advantage",
+    startingWeakness: "A contradictory weakness",
+    mainFlaw: "A contradictory flaw",
+    moralAlignment: "A contradictory alignment",
+    bio: "A contradictory bio",
   },
-  mcProfile: "A survivor of repeated imperial collapses.",
-  majorFactions: [
-    "The Vermilion Tribunal (Nine Seats) — a completely contradictory generated description",
-    "Regent's Bronze Guard — the palace's private army",
+  // The creator's own cards come back by name with contradictions the Seed never takes; the new ones fill out the cast.
+  characters: [
+    { name: "The witness Minister Sui", role: "contradictory role", age: "99", skinTone: "contradictory", eyeColor: "contradictory", powerType: "contradictory", rankLevel: "contradictory", connectionToMC: "contradictory", bio: "A contradictory generated description" },
+    { name: "Regent Zhao", role: "antagonist", age: "Sixty", skinTone: "Ivory", eyeColor: "Black", powerType: "Decree craft", rankLevel: "Crown Soul", connectionToMC: "Architect of the hearing", bio: "The architect of the hearing." },
   ],
-  initialCharacters: [
-    "The witness Minister Sui (Rain Witness) — a contradictory generated description",
-    "Regent Zhao — the architect of the hearing",
+  factions: [
+    { name: "The Vermilion Tribunal", role: "contradictory", powerLevel: "contradictory", alignment: "contradictory", connectionToMC: "contradictory", description: "A completely contradictory generated description" },
+    { name: "Regent's Bronze Guard", role: "palace army", powerLevel: "regional", alignment: "loyal to the regent", connectionToMC: "guards his hearing", description: "The palace's private army." },
   ],
+  abilities: { startingPowerConcept: "contradictory", uniquePath: "contradictory" },
+  powerSystem: { flavor: "contradictory", knownRanks: "contradictory" },
+  mainOpposition: "Regent Zhao and the forged succession decree",
   // Arc 1's goals only; the server gives them their identities.
   arcOne: { goals: [{ text: "Survive the hearing.", chapters: 40 }, { text: "Expose the regent's forged decree.", chapters: 60 }] },
   arcLookahead: [
@@ -252,16 +261,29 @@ describe("protected Story Seed World Blueprint generation", () => {
     expect(blueprint.mcProfile).toBe((generatedBlueprint().mainCharacter as WorldBlueprint["mainCharacter"])?.backgroundProfile);
     expect(blueprint.mcProfile).not.toContain("Secret advantage:");
     expect(blueprint.powerSystemOutline).toBe(generatedBlueprint().powerSystemOutline);
+    // The cast lists show the cast the Seed will hold: the creator's cards exactly, then the new ones.
     expect(blueprint.initialCharacters[0]).toContain("Minister Sui");
     expect(blueprint.initialCharacters[0]).toContain("age: 52");
-    expect(blueprint.initialCharacters.filter(entry => entry.toLocaleLowerCase().includes("minister sui")))
-      .toHaveLength(1);
-    expect(blueprint.initialCharacters).toContain("Regent Zhao — the architect of the hearing");
+    expect(blueprint.initialCharacters.join("\n")).not.toContain("contradictory");
+    expect(blueprint.initialCharacters.filter(entry => entry.toLocaleLowerCase().includes("minister sui"))).toHaveLength(1);
+    expect(blueprint.initialCharacters[1]).toBe("Regent Zhao — age: Sixty; skin tone: Ivory; eyes: Black; role: antagonist; connection to main character: Architect of the hearing; power: Decree craft; rank: Crown Soul; profile: The architect of the hearing.");
     expect(blueprint.majorFactions[0]).toContain("Vermilion Tribunal");
     expect(blueprint.majorFactions[0]).toContain("Nine seats bound by visible blood oaths.");
-    expect(blueprint.majorFactions.filter(entry => entry.toLocaleLowerCase().includes("vermilion tribunal")))
-      .toHaveLength(1);
-    expect(blueprint.majorFactions).toContain("Regent's Bronze Guard — the palace's private army");
+    expect(blueprint.majorFactions.join("\n")).not.toContain("contradictory");
+    expect(blueprint.majorFactions.filter(entry => entry.toLocaleLowerCase().includes("vermilion tribunal"))).toHaveLength(1);
+    expect(blueprint.majorFactions[1]).toContain("Regent's Bronze Guard");
+    // The proposed slot values travel with the reply, for the creator's blanks only.
+    const slots = (response.body as GeneratedWorldBlueprint).generatedSeedSlots!;
+    expect(slots.mainOpposition).toBe("Regent Zhao and the forged succession decree");
+    expect(slots.characters?.map(entry => entry.name)).toEqual(["The witness Minister Sui", "Regent Zhao"]);
+    expect(JSON.stringify(slots)).not.toContain("aliases");
+    const filled = fillBlankSeedSlots(seed, slots).world.optional.worldFoundations;
+    expect(filled.mainCharacter).toEqual({ ...seed.world.optional.worldFoundations.mainCharacter });
+    expect(filled.additionalCharacters![0]).toEqual(seed.world.optional.worldFoundations.additionalCharacters![0]);
+    expect(filled.additionalCharacters![1]).toMatchObject({ name: "Regent Zhao", age: "Sixty", connectionToMC: "Architect of the hearing" });
+    expect(filled.factions![0]).toEqual(seed.world.optional.worldFoundations.factions![0]);
+    expect(filled.abilities).toEqual(seed.world.optional.worldFoundations.abilities);
+    expect(filled.mainOpposition).toBe("Regent Zhao and the forged succession decree");
     expect(blueprint.firstArcPromise).toBe(generatedBlueprint().firstArcPromise);
     expect(blueprint.destinedEnding).toBe(seed.world.optional.worldFoundations.destinedEnding);
   });
@@ -452,8 +474,10 @@ describe("Cleaned-up Blueprint instructions", () => {
     expect(systemInstruction).toContain("Interpret the Story Seed's genre, tags, and storytelling tradition through that Eastern fantasy frame, as adaptable lenses rather than mandatory tropes. Never fill open creative space with Western fantasy defaults unless the Story Seed asks for them.");
     for (const genreList of ["Wuxia", "Xuanhuan", "LitRPG", "tower climbing", "cultivation realms"]) expect(systemInstruction).not.toContain(genreList);
     expect(userPrompt).toContain("- Generate a strong logline.\n");
-    expect(userPrompt).toContain("Begin every entry with its name: Name (role) — description.");
-    expect(userPrompt).toContain("- mcProfile repeats mainCharacter.backgroundProfile exactly.");
+    expect(userPrompt).toContain("- Fill every Story Seed slot. Where the creator already wrote a slot, repeat their value exactly; only blank slots are yours to fill. Never write aliases or Hard Pins.");
+    expect(userPrompt).toContain("never the main character");
+    expect(userPrompt).toContain("Keep every slot to one short, concrete fact");
+    expect(userPrompt).not.toMatch(/mcProfile|Name \(role\) — description/);
   });
 
   it("asks for added detail only where the creator wrote the world fact", async () => {
@@ -476,8 +500,8 @@ describe("Cleaned-up Blueprint instructions", () => {
     const { schema } = await promptFor(canonicalSeed());
     expect(schema.additionalProperties).toBe(false);
     expect([...schema.required].sort()).toEqual([
-      "arcLookahead", "arcOne", "destinedEnding", "estimatedArcs", "firstArcPromise", "initialCharacters", "logline", "mainCharacter",
-      "majorFactions", "mcProfile", "powerSystemOutline", "societyStructure", "startingLocation",
+      "abilities", "arcLookahead", "arcOne", "characters", "destinedEnding", "estimatedArcs", "factions", "firstArcPromise", "logline",
+      "mainCharacter", "mainOpposition", "powerSystem", "powerSystemOutline", "societyStructure", "startingLocation",
       "styleBible", "title", "tropeRules", "worldOverview",
     ]);
     expect(Object.keys(schema.properties)).not.toContain("worldOverviewDetail");

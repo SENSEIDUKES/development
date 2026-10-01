@@ -263,6 +263,35 @@ const CHARACTER_FIELDS = [
 ] as const;
 const FACTION_FIELDS = ['name', 'role', 'powerLevel', 'alignment', 'connectionToMC', 'description'] as const;
 
+/** How many side characters and factions a Story Seed holds. The model only adds within them; a creator's own cards are never trimmed. */
+export const SEED_CHARACTER_LIMIT = 8 as const;
+export const SEED_FACTION_LIMIT = 5 as const;
+
+/** The main character's slots the Blueprint fills when blank, beside the name, age, appearance and personality it already carries. */
+export const SEED_MAIN_CHARACTER_SLOT_FIELDS = ['startingIdentity', 'secretAdvantage', 'startingWeakness', 'mainFlaw', 'moralAlignment', 'bio'] as const;
+/** A side character's or faction's slots, everything but its identity and its creator-only aliases. */
+export const SEED_CHARACTER_SLOT_FIELDS = CHARACTER_FIELDS.filter(field => field !== 'name');
+export const SEED_FACTION_SLOT_FIELDS = FACTION_FIELDS.filter(field => field !== 'name');
+
+/**
+ * What the Blueprint model proposes for Story Seed slots: values for the main
+ * character, every side character and faction (the creator's own by name,
+ * then supporting ones), abilities, the power system and the main opposition.
+ * Response-only: `fillBlankSeedSlots` applies it once, to blank slots only,
+ * and it is never stored. Aliases and Hard Pins are never among it.
+ */
+export interface GeneratedSeedSlots {
+  mainCharacter?: Partial<Record<typeof SEED_MAIN_CHARACTER_SLOT_FIELDS[number], string>>;
+  characters?: Array<{ name: string } & Partial<Record<typeof SEED_CHARACTER_SLOT_FIELDS[number], string>>>;
+  factions?: Array<{ name: string } & Partial<Record<typeof SEED_FACTION_SLOT_FIELDS[number], string>>>;
+  abilities?: Partial<StorySeedAbilities>;
+  powerSystem?: Partial<StorySeedPowerSystem>;
+  mainOpposition?: string;
+}
+
+/** A World Blueprint as the server returns it: the Blueprint plus the slot values it proposes for the Seed. */
+export type GeneratedWorldBlueprint = WorldBlueprint & { generatedSeedSlots?: GeneratedSeedSlots };
+
 const normalizeCharacter = (value: unknown, index: number): StorySeedCharacter | null => {
   if (!isRecord(value) || !text(value.name)) return null;
   const normalized = {
@@ -772,7 +801,7 @@ const mainCharacterAuthoredDetails = (
   ['Secret advantage', mainCharacter.secretAdvantage],
   ['Starting weakness', mainCharacter.startingWeakness],
   ['Moral alignment', mainCharacter.moralAlignment],
-  ['Creator profile', mainCharacter.bio],
+  ['Biography', mainCharacter.bio],
 ];
 
 const powerSystemAuthoredDetails = (
@@ -992,6 +1021,81 @@ const uniqueEntityId = (prefix: string, name: string, taken: Set<string>): strin
   return id;
 };
 
+/** Reads the slot values a Blueprint answer proposes. Anything malformed is left out; names are required, aliases never read. */
+export const readGeneratedSeedSlots = (value: unknown): GeneratedSeedSlots => {
+  const source = isRecord(value) ? value : {};
+  const pick = <F extends string>(record: unknown, fields: readonly F[]) => {
+    const values = Object.fromEntries(fields.flatMap(field => {
+      const valueText = isRecord(record) ? text(record[field]) : undefined;
+      return valueText ? [[field, valueText]] : [];
+    })) as Partial<Record<F, string>>;
+    return Object.keys(values).length ? values : undefined;
+  };
+  const named = <F extends string>(list: unknown, fields: readonly F[]) => (Array.isArray(list) ? list : []).flatMap(entry => {
+    const name = isRecord(entry) ? text(entry.name) : undefined;
+    return name ? [{ name, ...pick(entry, fields) }] : [];
+  });
+  const mainCharacter = pick(source.mainCharacter, SEED_MAIN_CHARACTER_SLOT_FIELDS);
+  const characters = named(source.characters, SEED_CHARACTER_SLOT_FIELDS);
+  const factions = named(source.factions, SEED_FACTION_SLOT_FIELDS);
+  const abilities = pick(source.abilities, ABILITY_FIELDS);
+  const powerSystem = pick(source.powerSystem, POWER_SYSTEM_FIELDS);
+  const mainOpposition = text(source.mainOpposition);
+  return {
+    ...(mainCharacter ? { mainCharacter } : {}),
+    ...(characters.length ? { characters } : {}),
+    ...(factions.length ? { factions } : {}),
+    ...(abilities ? { abilities } : {}),
+    ...(powerSystem ? { powerSystem } : {}),
+    ...(mainOpposition ? { mainOpposition } : {}),
+  };
+};
+
+/**
+ * Fills every blank Story Seed slot from the Blueprint's proposed values, once.
+ * A value the creator wrote is never changed, aliases are never written, and
+ * the creator's own side characters and factions (matched by name, alias or
+ * title) get their blanks filled. New cards are added only up to the Seed's
+ * limits; the creator's are never trimmed.
+ */
+export const fillBlankSeedSlots = (seed: StorySeedInput, slots: GeneratedSeedSlots | undefined): StorySeedInput => {
+  const source = normalizeStorySeedInput(seed);
+  if (!slots) return source;
+  const foundations = source.world.optional.worldFoundations;
+  const fillFields = <T extends object>(current: T, proposed: Record<string, string | undefined> | undefined, fields: readonly string[]): T => {
+    const next = { ...current } as Record<string, unknown>;
+    for (const field of fields) if (!text(next[field]) && text(proposed?.[field])) next[field] = text(proposed![field]);
+    return next as T;
+  };
+  const mainCharacter = fillFields(foundations.mainCharacter ?? {}, slots.mainCharacter, SEED_MAIN_CHARACTER_SLOT_FIELDS);
+  const mainName = text(mainCharacter.name);
+  const fillCards = <Card extends { id: string; name: string; aliases?: string[] }>(
+    cards: Card[], proposed: Array<{ name: string } & Record<string, string | undefined>>, fields: readonly string[], limit: number, idPrefix: string, excluded: string[] = [],
+  ): Card[] => {
+    const next = cards.map(card => ({ ...card }));
+    const ids = new Set(next.map(card => card.id));
+    for (const entry of proposed) {
+      if (namesKnownEntity(entry.name, excluded)) continue;
+      const match = next.find(card => namesKnownEntity(entry.name, entityNames([card])));
+      if (match) Object.assign(match, fillFields(match, entry, fields));
+      else if (next.length < limit) next.push(fillFields({ id: uniqueEntityId(idPrefix, entry.name, ids), name: entry.name } as Card, entry, fields));
+    }
+    return next;
+  };
+  return normalizeStorySeedInput({
+    ...source,
+    world: { ...source.world, optional: { ...source.world.optional, worldFoundations: {
+      ...foundations,
+      mainCharacter,
+      additionalCharacters: fillCards(foundations.additionalCharacters ?? [], slots.characters ?? [], SEED_CHARACTER_SLOT_FIELDS, SEED_CHARACTER_LIMIT, 'blueprint-character', mainName ? [mainName] : []),
+      factions: fillCards(foundations.factions ?? [], slots.factions ?? [], SEED_FACTION_SLOT_FIELDS, SEED_FACTION_LIMIT, 'blueprint-faction'),
+      abilities: fillFields(foundations.abilities ?? {}, slots.abilities, ABILITY_FIELDS),
+      powerSystem: fillFields(foundations.powerSystem ?? {}, slots.powerSystem, POWER_SYSTEM_FIELDS),
+      ...(text(foundations.mainOpposition) || !slots.mainOpposition ? {} : { mainOpposition: slots.mainOpposition }),
+    } } },
+  });
+};
+
 /**
  * Copies Blueprint values into the Seed wherever the Seed owns that concept
  * and has no value yet: generated world identity, ending, initial goal,
@@ -1180,7 +1284,7 @@ export const resolveStorySeedWorldCanon = (
 export const finalizeGeneratedWorldBlueprint = (
   value: unknown,
   seed: StorySeedInput,
-): WorldBlueprint => {
+): GeneratedWorldBlueprint => {
   const storySeed = normalizeStorySeedInput(seed);
   // Details are derived below from the author's facts, never taken as sent.
   const modelOutput = Object.fromEntries(Object.entries(isRecord(value) ? value : {})
@@ -1203,6 +1307,12 @@ export const finalizeGeneratedWorldBlueprint = (
     const added = authored ? detailBeyondAuthoredFact(authored, text(modelOutput[field])) : undefined;
     return added ? [[detail, added], [basis, authored]] : [];
   })) as Pick<WorldBlueprint, WorldFactDetailField | WorldFactDetailBasisField>;
+  // The slot values the model proposed for the Seed travel with the reply, to
+  // fill only the creator's blanks. When the answer gives structured cards, the
+  // Blueprint's cast lists show the cast the Seed will hold once they are filled.
+  const generatedSeedSlots = readGeneratedSeedSlots(modelOutput);
+  const filledFoundations = fillBlankSeedSlots(storySeed, generatedSeedSlots).world.optional.worldFoundations;
+  const structuredCast = Array.isArray(modelOutput.characters) || Array.isArray(modelOutput.factions);
 
   return {
     ...generated,
@@ -1224,19 +1334,20 @@ export const finalizeGeneratedWorldBlueprint = (
       backgroundProfile,
     },
     mcProfile: backgroundProfile,
-    majorFactions: mergeAuthoritativeEntries(
-      generated.majorFactions,
-      worldFoundations.factions || [],
-      factionBlueprintEntry,
-    ),
-    initialCharacters: mergeAuthoritativeEntries(
-      generated.initialCharacters,
-      worldFoundations.additionalCharacters || [],
-      characterBlueprintEntry,
-      mainCharacterName ? [mainCharacterName] : [],
-    ),
+    majorFactions: structuredCast
+      ? (filledFoundations.factions ?? []).map(factionBlueprintEntry)
+      : mergeAuthoritativeEntries(generated.majorFactions, worldFoundations.factions || [], factionBlueprintEntry),
+    initialCharacters: structuredCast
+      ? (filledFoundations.additionalCharacters ?? []).map(characterBlueprintEntry)
+      : mergeAuthoritativeEntries(
+        generated.initialCharacters,
+        worldFoundations.additionalCharacters || [],
+        characterBlueprintEntry,
+        mainCharacterName ? [mainCharacterName] : [],
+      ),
     firstArcPromise: generated.firstArcPromise,
     destinedEnding: text(worldFoundations.destinedEnding) || generated.destinedEnding,
+    ...(Object.keys(generatedSeedSlots).length ? { generatedSeedSlots } : {}),
   };
 };
 

@@ -10,7 +10,7 @@ import {
   User,
 } from 'lucide-react';
 import { LibraryCharactersIcon as SENCharactersIcon } from '@seihouse/library-ui';
-import { type StorySeedCharacter, type StorySeedInput } from '@seihouse/sen/story-seed';
+import { type StorySeedCharacter, type StorySeedInput, SEED_CHARACTER_LIMIT } from '@seihouse/sen/story-seed';
 import { normalizeCodexAliases, parseCodexAliases } from '@seihouse/sen/story-seed';
 import { getSeedSection } from '../seedSections';
 import {
@@ -244,7 +244,7 @@ export const AdditionalCharactersEditor = ({ seed, updateSeed }: CharactersWorks
           </div>
         </div>
       ))}
-      {characters.length < 8 && (
+      {characters.length < SEED_CHARACTER_LIMIT && (
         <button
           type="button"
           onClick={() => {
@@ -255,7 +255,7 @@ export const AdditionalCharactersEditor = ({ seed, updateSeed }: CharactersWorks
           }}
           className="w-full rounded-xl border border-dashed border-neutral-700/70 py-2.5 font-sc text-xs uppercase tracking-widest text-neutral-400 transition-all hover:border-portal/50 hover:bg-portal/5 hover:text-portal"
         >
-          + Add Character ({characters.length}/8)
+          + Add Character ({characters.length}/{SEED_CHARACTER_LIMIT})
         </button>
       )}
     </>

@@ -4,10 +4,10 @@ import { act, useState } from 'react';
 import { type Root } from 'react-dom/client';
 import { createRoot } from '../../../test-utils/createStoryCreationRoot';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createBlueprintDraftFromSeed, reconcileStorySeedBlueprint, type BlueprintGenerationPayload, type StorySeedInput, type WorldBlueprint } from '@seihouse/sen/story-seed';
+import { createBlueprintDraftFromSeed, finalizeGeneratedWorldBlueprint, reconcileStorySeedBlueprint, type BlueprintGenerationPayload, type StorySeedInput, type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { BlueprintReview, CreationModal } from '@seihouse/library/story-seed';
 import { LOCAL_WORKSHOP_STORY_SEED_OWNER_ID, listStorySeeds, resetStorySeedRepository } from '../../../workshop/previews/story-seed/storySeedStorage';
-import { createFilledStorySeedInput, createMockArcLookahead, createMockArcOne, createMockBlueprint, createMockStorySeedRecord } from '../../../workshop/previews/story-seed/previewData';
+import { createFilledStorySeedInput, createMockArcLookahead, createMockArcOne, createMockBlueprint, createMockSeedSlotAnswer, createMockStorySeedRecord } from '../../../workshop/previews/story-seed/previewData';
 import { resetMockState } from '../shared/stubs';
 
 vi.mock('../../../audio/playback', () => ({
@@ -173,5 +173,31 @@ describe('Story Seed creation: regenerating at a chosen length', () => {
     expect(saved.blueprint?.estimatedArcs).toBe(1);
     expect(saved.blueprint?.arcLookahead).toBeUndefined();
     expect(container.textContent).toContain('Arc 1 · the whole story, reaches the Destined Ending');
+  });
+
+  it('fills the Seed\'s blank slots from the Blueprint answer, so the review shows them filled and the saved record keeps them', async () => {
+    resetStorySeedRepository([createMockStorySeedRecord({ id: 'seed-slots', userId: LOCAL_WORKSHOP_STORY_SEED_OWNER_ID })]);
+    const onGenerateBlueprint = vi.fn(async (payload: BlueprintGenerationPayload) => finalizeGeneratedWorldBlueprint({
+      ...createMockBlueprint(), ...createMockSeedSlotAnswer(), estimatedArcs: 3, arcPlans: [createMockArcOne(payload.storySeed.story.optional.activeArcGoal)],
+    }, payload.storySeed));
+    renderModal({ onGenerateBlueprint });
+    await openBankedBlueprint();
+    act(() => buttonNamed('Regenerate whole Blueprint')!.click());
+    await act(async () => { buttonNamed('Replace Blueprint')!.click(); });
+    await flush();
+
+    const value = (id: string) => container.querySelector<HTMLInputElement | HTMLTextAreaElement>(`#${id}`)?.value;
+    expect(value('mc-main-flaw-input')).toBe('Cannot trust anyone who has not died beside him');
+    expect(value('mc-moral-alignment-input')).toBe('Pragmatic protector');
+    // The creator's own words stay theirs.
+    expect(value('mc-starting-identity-input')).toBe('Crippled young master, secretly the reincarnated Ninth Prince');
+    expect(value('char-skin-preview-character-1')).toBe('Weathered bronze');
+    const [saved] = await listStorySeeds(LOCAL_WORKSHOP_STORY_SEED_OWNER_ID);
+    const foundations = saved.seed.world.optional.worldFoundations;
+    expect(foundations.mainCharacter?.mainFlaw).toBe('Cannot trust anyone who has not died beside him');
+    // A card the earlier Blueprint added (name and role only) gets its blanks filled too.
+    expect(foundations.additionalCharacters?.find(card => card.name === 'Junior Sister Han')).toMatchObject({ role: 'Ally', age: 'Seventeen', eyeColor: 'Amber' });
+    expect(foundations.powerSystem?.knownRanks).toContain('Foundation Establishment');
+    expect(saved.blueprint).not.toHaveProperty('generatedSeedSlots');
   });
 });

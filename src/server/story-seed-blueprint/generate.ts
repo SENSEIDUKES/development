@@ -1,8 +1,14 @@
 import { ARC_LOOKAHEAD_SCHEMA, ARC_PLAN_DRAFT_SCHEMA, MAX_ROADMAP_ARCS, arcPlanFromDraft } from '@seihouse/sen/arc-goals';
 import { createModelRouter, ModelRouterError, type GenerationResult } from '@seihouse/library/model-router-server';
 import {
+  SEED_CHARACTER_LIMIT,
+  SEED_CHARACTER_SLOT_FIELDS,
+  SEED_FACTION_LIMIT,
+  SEED_FACTION_SLOT_FIELDS,
+  SEED_MAIN_CHARACTER_SLOT_FIELDS,
   buildBlueprintGenerationPayload,
   finalizeGeneratedWorldBlueprint,
+  type GeneratedWorldBlueprint,
   validateBlueprintArcPlan,
   validateRequestedArcCount,
   type BlueprintGenerationPayload,
@@ -15,8 +21,11 @@ import {
   WORLD_BLUEPRINT_SYSTEM_PROMPT,
 } from "./prompt";
 
+const textSlots = (fields: readonly string[]) => Object.fromEntries(fields.map(field => [field, { type: "string" }]));
+
 /**
- * The Blueprint response schema. It plans Arc 1 only (`arcOne`: wording and
+ * The Blueprint response schema. It has a place for every Story Seed slot
+ * (filled only where the creator left one blank) and it plans Arc 1 only (`arcOne`: wording and
  * chapters; the identities are assigned on the server) and a hidden look-ahead
  * for the next arcs. `exactArcs` is the story length the author chose;
  * without it the model picks a realistic length.
@@ -32,9 +41,11 @@ export const worldBlueprintResponseSchema = (exactArcs?: number) => ({
     "societyStructure",
     "powerSystemOutline",
     "mainCharacter",
-    "mcProfile",
-    "majorFactions",
-    "initialCharacters",
+    "characters",
+    "factions",
+    "abilities",
+    "powerSystem",
+    "mainOpposition",
     "firstArcPromise",
     "arcOne",
     "arcLookahead",
@@ -53,18 +64,28 @@ export const worldBlueprintResponseSchema = (exactArcs?: number) => ({
     mainCharacter: {
       type: "object",
       additionalProperties: false,
-      required: ["name", "age", "personality", "appearance", "backgroundProfile"],
+      required: ["name", "age", "personality", "appearance", "backgroundProfile", ...SEED_MAIN_CHARACTER_SLOT_FIELDS],
       properties: {
         name: { type: "string", minLength: 1 },
         age: { type: "string", minLength: 1 },
         personality: { type: "string", minLength: 1 },
         appearance: { type: "string", minLength: 1 },
         backgroundProfile: { type: "string", minLength: 1 },
+        ...textSlots(SEED_MAIN_CHARACTER_SLOT_FIELDS),
       },
     },
-    mcProfile: { type: "string", minLength: 1 },
-    majorFactions: { type: "array", minItems: 1, items: { type: "string", minLength: 1 } },
-    initialCharacters: { type: "array", minItems: 1, items: { type: "string", minLength: 1 } },
+    // Side characters and factions as cards: the creator's own by name first, then supporting ones.
+    characters: { type: "array", minItems: 1, maxItems: SEED_CHARACTER_LIMIT, items: {
+      type: "object", additionalProperties: false, required: ["name", ...SEED_CHARACTER_SLOT_FIELDS],
+      properties: { name: { type: "string", minLength: 1 }, ...textSlots(SEED_CHARACTER_SLOT_FIELDS) },
+    } },
+    factions: { type: "array", minItems: 1, maxItems: SEED_FACTION_LIMIT, items: {
+      type: "object", additionalProperties: false, required: ["name", ...SEED_FACTION_SLOT_FIELDS],
+      properties: { name: { type: "string", minLength: 1 }, ...textSlots(SEED_FACTION_SLOT_FIELDS) },
+    } },
+    abilities: { type: "object", additionalProperties: false, required: ["startingPowerConcept", "uniquePath"], properties: textSlots(["startingPowerConcept", "uniquePath"]) },
+    powerSystem: { type: "object", additionalProperties: false, required: ["flavor", "knownRanks"], properties: textSlots(["flavor", "knownRanks"]) },
+    mainOpposition: { type: "string" },
     arcOne: ARC_PLAN_DRAFT_SCHEMA,
     arcLookahead: ARC_LOOKAHEAD_SCHEMA,
     firstArcPromise: { type: "string", minLength: 1 },
@@ -220,7 +241,7 @@ export const generateWorldBlueprint = async (
   payload: BlueprintGenerationPayload,
   config: ResolvedStorySeedBlueprintConfig,
   provider: WorldBlueprintModelProvider,
-): Promise<WorldBlueprint> => {
+): Promise<GeneratedWorldBlueprint> => {
   let arcCount: number | undefined;
   try { arcCount = payload.arcCount === undefined ? undefined : validateRequestedArcCount(payload.arcCount); }
   catch (error) { throw new BlueprintRequestError(error instanceof Error ? error.message : "The arc count is invalid."); }

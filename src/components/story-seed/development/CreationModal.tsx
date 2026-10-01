@@ -14,7 +14,7 @@ import { type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { generateUUID } from '@seihouse/sen/story-seed';
 import { useStoryCreationRuntime, useStoryCreationStore, type StoryCreationSnapshot } from '../../../library/story-seed/runtime';
 import { type StorySeedArtifact, type StorySeedRecord } from '@seihouse/sen/story-seed';
-import { applyInferredStoryTags, buildBlueprintGenerationPayload, buildInitialStoryGenerationPayload, createBlueprintDraftFromSeed, createEmptyStorySeedInput, mirrorSeedIntoBlueprint, normalizeStorySeedInput, reconcileStorySeedBlueprint, validateStorySeedDraft, validateStorySeedInput, type BlueprintGenerationPayload, type InitialStoryGenerationPayload, type StorySeedInput } from '@seihouse/sen/story-seed';
+import { applyInferredStoryTags, buildBlueprintGenerationPayload, fillBlankSeedSlots, type GeneratedWorldBlueprint, buildInitialStoryGenerationPayload, createBlueprintDraftFromSeed, createEmptyStorySeedInput, mirrorSeedIntoBlueprint, normalizeStorySeedInput, reconcileStorySeedBlueprint, validateStorySeedDraft, validateStorySeedInput, type BlueprintGenerationPayload, type InitialStoryGenerationPayload, type StorySeedInput } from '@seihouse/sen/story-seed';
 import { createStoryAdministrativeMetadata } from '@seihouse/sen/story-seed';
 import { DEFAULT_SEN_LANGUAGE_CODE, normalizeChapterWritingStyle, normalizeSenLanguageCode, type ChapterWritingStyle, type SenLanguageCode } from '@seihouse/sen/contracts';
 import StoryAuthGate, { STORY_AUTH_DISSOLVE_MS } from './StoryAuthGate';
@@ -488,10 +488,13 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     // initial Story Seed route.
     preloadStorySeedSecondary();
     const generated = await onGenerateBlueprint(buildBlueprintGenerationPayload(seedInput, { arcCount }));
-    // Everything the Blueprint generated that the Seed has a field for
-    // (world identity, ending, goal, main character, side characters,
-    // factions) is copied into the Seed, where review edits it.
-    const { seed: generatedSeed, blueprint: bp } = reconcileStorySeedBlueprint(seedInput, generated, {
+    // Every Seed slot the creator left blank is filled from the model's
+    // proposed values, once; the creator's own values never change. Then
+    // everything else the Blueprint generated that the Seed has a field for
+    // (world identity, ending, goal, main character basics) is copied into the
+    // Seed, where review edits it.
+    const filledSeed = fillBlankSeedSlots(seedInput, (generated as GeneratedWorldBlueprint).generatedSeedSlots);
+    const { seed: generatedSeed, blueprint: bp } = reconcileStorySeedBlueprint(filledSeed, generated, {
       creator: currentUser?.displayName,
       preserveSourceMetadata: false,
     });

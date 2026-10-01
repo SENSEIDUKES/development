@@ -1,5 +1,5 @@
 import { ARC_LENGTH, MAX_ARC_GOALS, MAX_ARC_LOOKAHEAD, MAX_ROADMAP_ARCS } from '@seihouse/sen/arc-goals';
-import { WORLD_FACT_DETAILS, type StorySeedInput } from '@seihouse/sen/story-seed';
+import { SEED_CHARACTER_LIMIT, SEED_FACTION_LIMIT, WORLD_FACT_DETAILS, type StorySeedInput } from '@seihouse/sen/story-seed';
 
 export const WORLD_BLUEPRINT_SYSTEM_PROMPT = `You are an elite Eastern fantasy author and world architect. Build a detailed World Blueprint that can serve as the canon bible for serialized chapter generation.
 
@@ -48,11 +48,15 @@ export const buildWorldBlueprintPrompt = (storySeed: StorySeedInput, arcCount?: 
 ${JSON.stringify(storySeed, null, 2)}
 
 Completion rules:
-- Complete every output field. No blank strings. majorFactions and initialCharacters must not be empty.
+- Complete every output field. No blank strings. characters and factions must not be empty.
 - Generate a strong logline.
 ${worldFactRules(storySeed).map(rule => `- ${rule}`).join('\n')}
-- Complete the main character's name, age, appearance, personality, and background profile when missing.
-- Include the creator's named characters and factions, then add only useful supporting entries. Begin every entry with its name: Name (role) — description.
+- Fill every Story Seed slot. Where the creator already wrote a slot, repeat their value exactly; only blank slots are yours to fill. Never write aliases or Hard Pins.
+- mainCharacter: name, age, appearance, personality, startingIdentity, secretAdvantage, startingWeakness, mainFlaw, moralAlignment, a short bio (who they are now, in two or three sentences), and backgroundProfile (their fuller backstory beyond the bio).
+- characters: list every side character the creator wrote first, by their exact name, then add only useful supporting characters, at most ${SEED_CHARACTER_LIMIT} in all; never the main character. Give each its role, age, skinTone, eyeColor, powerType, rankLevel, connectionToMC, and a short bio.
+- factions: list every faction the creator wrote first, by its exact name, then add only useful supporting factions, at most ${SEED_FACTION_LIMIT} in all. Give each its role, powerLevel, alignment, connectionToMC, and a description of its hierarchy and beliefs.
+- abilities (startingPowerConcept, uniquePath), powerSystem (flavor, knownRanks: the rank ladder in order) and mainOpposition: fill each.
+- Keep every slot to one short, concrete fact; the longer prose fields (logline, worldOverview, powerSystemOutline, backgroundProfile, firstArcPromise) add what the slots do not already say, never restating them.
 - ${arcCount === undefined
   ? `Establish the Destined Ending first, then a realistic estimatedArcs between 1 and ${MAX_ROADMAP_ARCS}: the story's length.`
   : `Establish the Destined Ending first. The author chose the story's length: estimatedArcs is exactly ${arcCount}.`} Each arc is exactly ${ARC_LENGTH} chapters, and the last arc arrives at the Destined Ending.
@@ -64,6 +68,5 @@ ${worldFactRules(storySeed).map(rule => `- ${rule}`).join('\n')}
 - Establish the first-arc promise, trope rules, and a practical style bible.
 - The style bible must translate genre, style, tags, and maturity metadata into actionable prose, pacing, viewpoint, dialogue, and thematic guidance.
 - The trope rules must explicitly account for face-slap, plot-armor, recognition, and Make It Work settings. Keep Fate Survival settings out of trope rules; chapter generation receives them separately. Apply the other settings without exposing app-control language as ordinary narration.
-- mcProfile repeats mainCharacter.backgroundProfile exactly.
 
 Return the JSON object only.`;

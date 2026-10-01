@@ -17,15 +17,18 @@ Use it to isolate, preview, and refine UI components, animations, icons, rewards
 
 ### Product direction (NovelExpanded)
 
-Before any product work, meaning anything a NovelExpanded.com reader or author will see or feel, read [`NOVEL_EXPANDED.md`](./NOVEL_EXPANDED.md). It is the owner's direction for the product:
+Before any product work, meaning anything a NovelExpanded.com reader or author will see or feel or anything SEN offers a host that embeds it, read [`NOVEL_EXPANDED.md`](./NOVEL_EXPANDED.md). It is the owner's direction for the product:
 
-- the four pages in a straight line;
-- the read → direct → Next Chapter loop as the core;
-- the HARNESS as invisible infrastructure, never a user-facing page;
-- the two tiers;
-- what gets built next.
+- the product family: SEN, the licensable engine; Expanded Novels, SEIHouse's first-party product on it (the Library in code); and the shared SEIHouse infrastructure beneath both;
+- the product map, the whole surface the two products cover;
+- users and progressive disclosure, from entertainment user to creator-business;
+- SEN licensing as the business strategy;
+- the core application spine: four pages that are the minimum path through the product, not its scope;
+- the read → direct → Next Chapter loop at its heart;
+- the HARNESS as invisible infrastructure inside SEN, never a user-facing page;
+- where the build is today and what gets built next.
 
-Only what is being built now exists: do not reconnect an old system because it used to be there. When a task and that document disagree, ask the owner.
+Recent development activity does not redefine the product: never treat the subsystem receiving the most work as the whole of SEN or Expanded Novels. Only what is being built now exists: do not reconnect an old system because it used to be there. When a task and that document disagree, ask the owner.
 
 ### The NovelExpanded app
 

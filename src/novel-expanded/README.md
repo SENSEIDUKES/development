@@ -1,7 +1,8 @@
 # NovelExpanded app
 
 The NovelExpanded app as its own place, at **`/app/`** on every preview and
-deployment. It holds only the straight line from [`NOVEL_EXPANDED.md`](../../NOVEL_EXPANDED.md):
+deployment. It holds only the core application spine from [`NOVEL_EXPANDED.md`](../../NOVEL_EXPANDED.md),
+the minimum path through the product:
 
 **Home → Create (Story Seed and World Blueprint) → Story View (World Info) → Reader**
 

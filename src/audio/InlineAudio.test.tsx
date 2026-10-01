@@ -9,6 +9,7 @@ import { DevAudioPlaybackProvider } from './DevAudioPlayback';
 import { soundCueTrackId, type SoundCueAttachment } from '@seihouse/sen/audio';
 import { installAudioMediaStubs } from '../test-utils/renderWithDevAudio';
 import { InlineAudio, InlineAudioControl, InlineAudioText } from '@seihouse/sen/inline-audio';
+import { passageRange } from '@seihouse/sen/text-highlight-engine';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -335,6 +336,30 @@ describe('InlineAudioControl', () => {
       .toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(container.textContent?.replace(/\u2060/g, ''))
       .toBe('A Vermilion Debt Fox growled, then crouched beneath the lintel.');
+  });
+});
+
+describe('InlineAudioText passage offsets', () => {
+  it('keeps a cue\'s status announcement out of the passage text, so later sentences still resolve', () => {
+    const text = 'A Vermilion Debt Fox growled, then crouched. The lintel creaked.';
+    render(
+      <DevAudioPlaybackProvider>
+        <p data-sen-text-block="block-a">
+          <InlineAudioText
+            cues={[soundCue('Vermilion Debt Fox growled', 'beast growl', BEAST_URL, { text })]}
+            text={text}
+            renderText={words => words}
+          />
+        </p>
+      </DevAudioPlaybackProvider>,
+    );
+    const later = { blockId: 'block-a', selectedText: 'The lintel creaked.', startOffset: text.indexOf('The lintel'), endOffset: text.length };
+    expect(passageRange(container, later)?.toString()).toBe('The lintel creaked.');
+
+    // A tapped cue announces its state; the announcement is not prose.
+    act(() => buttonFor('Vermilion Debt Fox growled').click());
+    expect(container.textContent).toContain('Loading beast growl for Vermilion Debt Fox growled.');
+    expect(passageRange(container, later)?.toString()).toBe('The lintel creaked.');
   });
 });
 

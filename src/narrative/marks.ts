@@ -2,9 +2,10 @@
  * Marks: how a writer says "here" in its own prose, in the tiny SEN language.
  *
  * A span mark wraps the words where something happens: `[[1|drew his sword]]`.
- * The number ties the mark to the signal that says what happened. Marks are
- * transport only: `readMarks` removes every one and reports where each span
- * sat in the clean text, so no bracket ever reaches a reader.
+ * The number ties the mark to the signal that says what happened. A speaker
+ * tag names who speaks the speech that follows it: `[[@Lin Feng]] “Run!”`.
+ * Marks are transport only: `readMarks` removes every one and reports where
+ * each span and tag sat in the clean text, so no bracket ever reaches a reader.
  *
  * Writers slip, so reading is tolerant: spaces around the number, a missing or
  * different separator (`[[1 drew]]`, `[[1:drew]]`), full-width brackets,
@@ -13,6 +14,14 @@
  * removed with its words kept. A lone `]]` with no open mark is ordinary text.
  * A point mark (`[[1]]`) is reserved for future kinds: it is removed and
  * reported.
+ *
+ * A speaker tag is read before anything else at a bracket, so a tag can never
+ * be mistaken for a mark, and a tag inside an open span leaves the span whole.
+ * It tolerates spaces, full-width brackets and ＠, one closing bracket, a
+ * number written after the name (`[[@Lin Feng|1]]`), and words written inside
+ * it (`[[@Lin Feng|“Run!”]]`, whose words stay). A tag that never closes, or
+ * whose name is empty or too long to be a name, is still removed and reported,
+ * so no part of it leaks. `[[Lin Feng]]` without the @ is ordinary text.
  */
 
 /** A span mark's place in the clean text: UTF-16 offsets, start inclusive and end exclusive. */
@@ -34,13 +43,29 @@ export type ProseMarkIssue =
   /** A span that wraps no text. */
   | { kind: 'empty'; id: number };
 
+/** A speaker tag's name, and where it sat in the clean text: the speech it names follows it. */
+export interface SpeakerTag {
+  name: string;
+  /** UTF-16 offset in the clean text. */
+  offset: number;
+}
+
+/** A speaker tag that named nobody: empty, too long to be a name, or never closed. It was removed. */
+export interface SpeakerTagIssue { kind: 'unnamed' }
+
 export interface MarkReading {
   /** The text with every mark removed and its ends trimmed. */
   text: string;
   /** Span marks in reading order. */
   marks: ProseMark[];
   issues: ProseMarkIssue[];
+  /** Speaker tags in reading order. */
+  speakers: SpeakerTag[];
+  speakerIssues: SpeakerTagIssue[];
 }
+
+/** Longer than this, a speaker tag's "name" is prose written into the tag, not a name. */
+export const SPEAKER_TAG_NAME_LIMIT = 48;
 
 const OPEN = String.raw`(?:[\[［]{2})`;
 const CLOSE = String.raw`(?:[\]］]{1,2})`;
@@ -55,6 +80,14 @@ const SPAN_OPEN = new RegExp(String.raw`(?:${OPEN}${GAP}${DIGITS}${GAP}(?:${SEPA
 /** `[[drew his sword|1]]`, but never `[[1|2]]`, which is the usual order. */
 const REVERSED = new RegExp(String.raw`${OPEN}${GAP}(?![0-9０-９]{1,3}${GAP}${SEPARATOR})([^\[\]［］|｜\n]{1,80}?)${GAP}[|｜]${GAP}${DIGITS}${GAP}[\]］]{2}`, 'y');
 const SPAN_CLOSE = new RegExp(CLOSE, 'y');
+const AT = String.raw`[@＠]`;
+const NAME = String.raw`([^\[\]［］|｜:：\n]*?)`;
+/** `[[@Lin Feng]]` `[[ @Lin Feng ]` `［［＠林］］`, and the slips `[[@Lin Feng|1]]` and `[[@Lin Feng|“Run!”]]`. */
+const SPEAKER = new RegExp(String.raw`${OPEN}${GAP}${AT}${GAP}${NAME}${GAP}(?:(${SEPARATOR})${GAP}(?:${DIGITS}${GAP}[\]］]{1,2})?|[\]］]{1,2})`, 'y');
+/** `[@Lin Feng]`, read only at the very start of a paragraph. */
+const SPEAKER_SINGLE = new RegExp(String.raw`[\[［]${GAP}${AT}${GAP}${NAME}${GAP}[\]］]`, 'y');
+/** A tag that never closes: removed up to the speech it was meant to name. */
+const SPEAKER_UNCLOSED = new RegExp(String.raw`${OPEN}${GAP}${AT}[^\[\]［］|｜\n“"「『«]{0,${SPEAKER_TAG_NAME_LIMIT}}`, 'y');
 
 const toNumber = (digits: string) => Number(digits.replace(/[０-９]/g, digit => String(digit.charCodeAt(0) - 0xff10)));
 const isSpace = (character: string | undefined) => character !== undefined && /[ \t　]/.test(character);
@@ -72,10 +105,14 @@ export function readMarks(source: string): MarkReading {
   let text = '';
   const marks: ProseMark[] = [];
   const issues: ProseMarkIssue[] = [];
+  const speakers: SpeakerTag[] = [];
+  const speakerIssues: SpeakerTagIssue[] = [];
   const used = new Set<number>();
   let open: { id: number; start: number } | undefined;
   /** Spans opened inside the open one: their closings are consumed without ending it. */
   let nested = 0;
+  /** Words were written inside a speaker tag: its closing bracket comes after them. */
+  let tagWords = false;
 
   /** Removing a token between two spaces would leave a double space; keep one. */
   const skipDoubledSpace = (next: number) => (isSpace(text.at(-1)) && isSpace(source[next]) ? next + 1 : next);
@@ -95,6 +132,22 @@ export function readMarks(source: string): MarkReading {
   while (index < source.length) {
     const character = source[index];
     if (character === '[' || character === '［') {
+      const tag = matchAt(SPEAKER, source, index) ?? (text.trim() ? null : matchAt(SPEAKER_SINGLE, source, index));
+      if (tag) {
+        const name = tag[1].trim();
+        if (name && name.length <= SPEAKER_TAG_NAME_LIMIT) speakers.push({ name, offset: text.length });
+        else speakerIssues.push({ kind: 'unnamed' });
+        // A separator with no number after it means the writer's words follow inside the tag.
+        if (tag[2] && !tag[3]) tagWords = true;
+        index = skipDoubledSpace(index + tag[0].length);
+        continue;
+      }
+      const unclosedTag = matchAt(SPEAKER_UNCLOSED, source, index);
+      if (unclosedTag) {
+        speakerIssues.push({ kind: 'unnamed' });
+        index = skipDoubledSpace(index + unclosedTag[0].length);
+        continue;
+      }
       const point = matchAt(POINT, source, index);
       if (point) {
         issues.push({ kind: 'point', id: toNumber(point[1]) });
@@ -132,6 +185,11 @@ export function readMarks(source: string): MarkReading {
       index = skipDoubledSpace(index + closing[0].length);
       continue;
     }
+    if (tagWords && (character === ']' || character === '］')) {
+      tagWords = false;
+      index = skipDoubledSpace(index + matchAt(SPAN_CLOSE, source, index)![0].length);
+      continue;
+    }
     text += character;
     index += 1;
   }
@@ -146,6 +204,8 @@ export function readMarks(source: string): MarkReading {
       .map(mark => ({ id: mark.id, start: Math.max(0, mark.start - lead), end: Math.min(trimmed.length, mark.end - lead) }))
       .sort((left, right) => left.start - right.start || left.id - right.id),
     issues,
+    speakers: speakers.map(tag => ({ name: tag.name, offset: Math.min(trimmed.length, Math.max(0, tag.offset - lead)) })),
+    speakerIssues,
   };
 }
 

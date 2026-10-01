@@ -28,6 +28,11 @@ The current split is:
 | Celestial Library packs and entitlement policy | Library | `src/library/media/mediaPacks.ts` |
 | First-party cue and soundscape records | Host | `src/host/media/libraryCatalog.ts`, `src/host/media/soundscapeCatalog.ts` |
 | Concrete browser audio-player adapter | Host (the Workshop and the NovelExpanded app) | `DevAudioPlayback.tsx` |
+
+A Sound Cue's screen-reader status ("Loading beast roar for …") is marked as an
+inline decoration (`data-sen-selection-ignore`): screen readers still hear it,
+and passage offsets and Read Aloud's sentence light stay true while a cue
+loads, plays or fails.
 | Provider voice catalog and synthesis | Host/server | `src/server/audio/` |
 
 The historical JSON cue inventory remains under `data/` as a first-party host

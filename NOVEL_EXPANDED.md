@@ -138,10 +138,15 @@ Update this section whenever it changes.
     Blueprint → **Start Story** → the story's **World Info** page → **Start
     Story** → the **Reader Chamber**, where Chapter 1 is written under the Aura
     Veil and opens when it is saved. Returning readers get **Continue · Ch. N**.
-  - **The Reader Chamber is just reading:** chapters sit on the Text Highlight
-    Engine (read-only), with only Sound Cues active. Next writes the next
-    chapter; Fate directs it. No Codex, Mind Palace, reading settings, reader
-    translation, read-aloud or read marks.
+  - **The Reader Chamber is reading and listening:** chapters sit on the Text
+    Highlight Engine (read-only), with Sound Cues active. Next writes the next
+    chapter; Fate directs it. **Listen** reads the chapter aloud with the
+    browser's own voices in three parts: the Narrator for the prose, the
+    Protagonist voice for the main character's spoken lines, the Side voice for
+    everyone else's. The sentence being spoken is lit and the page follows it.
+    **Reader Settings** has one section, Narration (the three voices and the
+    speed, remembered on the device for each story language). No Codex, Mind
+    Palace, reader translation or read marks.
   - **The Aura Veil has two screens:** one narrative manifestation and one media
     reveal. The narrative one shows while a chapter is written.
   - **The memory call after each chapter is off** in the Library; it runs only
@@ -161,7 +166,16 @@ Update this section whenever it changes.
     and the World Blueprint's goal section opens in the Reader for review before
     that arc's first chapter, in both modes. The model fills every Story Seed slot
     left blank and never changes what the creator wrote. Add arcs is gone.
-- **Not tested yet:** real generation with a real model, on the Vercel preview, including a real Blueprint (Arc 1 only, filled slots) and a real arc planned at a new arc.
+  - **Dialogue speakers, in the tiny SEN language:** the writer tags who speaks
+    each spoken line (`[[@Name]]`), and the HARNESS records whether it is the
+    main character. That is what gives Listen its three voices. Chapters
+    written before this read every quoted line in the Side voice.
+- **Not tested yet:**
+  - real generation with a real model on the Vercel preview: a real Blueprint
+    (Arc 1 only, filled slots), a real arc planned at a new arc, and real
+    speaker tags;
+  - Listen on real phones (iPhone Safari, Android Chrome), whose voices differ
+    from device to device.
 - **Not yet as [The World Blueprint](#the-world-blueprint) describes:**
   branching, and the warnings on Blueprint changes, are not built.
 - **Not connected yet:**
@@ -171,7 +185,6 @@ Update this section whenever it changes.
     to a cover generator.
   - The Text Highlight Engine's tools (fixes, cue placement) are not in the Reader.
 - **Not rebuilt yet:**
-  - dialogue speakers;
   - soundscapes;
   - manifestations;
   - System Panels, including the Fate Survival result card;
@@ -199,6 +212,10 @@ Update this section whenever it changes.
    The app can move to its own repository once SEN is stable enough to install
    as a package.
 4. **Rebuild the remaining kinds** one at a time, then design the Codex.
+5. **Cinematic scrolling**, the Reader's default way to read: the page moves
+   with Listen's voice (its playhead is ready for it), and later Sound Cues and
+   manifestations fire as the voice reaches them. AI narration (generated once
+   per language, stored and shared) comes after, on the same script.
 
 ## Names
 
@@ -207,7 +224,9 @@ Update this section whenever it changes.
 | NovelExpanded app | The product at NovelExpanded.com: the four pages. Built at `/app/` (piece 1: Home, Create, Story View, Reader), in `src/novel-expanded/`. |
 | Story Seed / World Blueprint | Where a story is created (`?preview=story-seed`, and Create in the app). The Blueprint is the novel's transferable core: what a reader takes to make their own version ([The World Blueprint](#the-world-blueprint)). |
 | Story View | The story's own page: cover art, the story, Enter. Built today as the World Info page (`WorldCardInfo`), where Start Story or Start Reading leads into the Reader Chamber. |
-| Reader Chamber | Where chapters are read: a HARNESS story's chapters on the Text Highlight Engine with Sound Cues (`HarnessReaderSession`). The older Reader Chamber preview (`?preview=reader-chamber`) is not part of this path. |
+| Reader Chamber | Where chapters are read: a HARNESS story's chapters on the Text Highlight Engine with Sound Cues and Listen (`HarnessReaderSession`). The older Reader Chamber preview (`?preview=reader-chamber`) is not part of this path. |
+| Listen / Read Aloud | The Reader reading a chapter aloud in three voices with the spoken sentence lit (`useReadAloud`, SEN's `reader-runtime`). Its voices and speed live in Reader Settings → Narration. |
+| Reader Settings | The Reader's settings sheet. Narration is its only section today. |
 | Text Highlight Engine (manuscript lab) | The manuscript editor at `?preview=text-highlight-engine`. |
 | Story Settings | The only place a user meets the HARNESS: language, reading mode, CAPA skills and media. |
 | Harness Generation | The developer instrument for the HARNESS (`?preview=harness-generation`). Never a product page. |

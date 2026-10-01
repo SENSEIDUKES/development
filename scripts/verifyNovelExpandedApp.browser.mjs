@@ -6,11 +6,19 @@
  * `/app` → empty Home → Create → token sheet → World Blueprint (Arc 1 only,
  * the hidden look-ahead nowhere on screen, every blank Seed slot filled) → Manifest
  * Story → Story View → Start Story under the veil → Chapter 1 with its Sound
- * Cue → reload (no new request) → Back → Continue · Ch. 1 → Back → Home card →
- * browser Back and Forward → a missing story goes Home.
+ * Cue → Listen (three voices from the writer's speaker tags, the spoken
+ * sentence lit, Pause and Resume, Reader Settings → Narration with the speed
+ * kept on the device) → reload (no new request, nothing reads by itself) →
+ * Back → Continue · Ch. 1 → Back → Home card → browser Back and Forward → a
+ * missing story goes Home.
+ *
+ * Headless Chromium has no voices, so a stand-in for the browser's speech is
+ * installed before the app loads; each line ends on its own after a moment,
+ * or waits for the walk while `__speechHold` is set.
  *
  * It fails on any page error, any memory request, and any module request into
- * the Workshop, the older Reader or Codex, or the HARNESS developer page.
+ * the Workshop, the older Reader or Codex (its narration included), or the
+ * HARNESS developer page.
  *
  * Usage: start `npm run dev -- --host 127.0.0.1`, then
  *   node scripts/verifyNovelExpandedApp.browser.mjs [base URL]
@@ -23,7 +31,7 @@ const OUTPUT = 'output/playwright/novel-expanded';
 const TOKEN = 'browser-walk-token';
 const VIEWPORTS = [{ name: 'phone', width: 390, height: 844 }, { name: 'laptop', width: 1440, height: 900 }];
 const SHARED_READER_CONTRACTS = /\/src\/components\/reader-(?:chamber\/shared\/(?:readerLanguage|manifestationEligibility|cinematicScroll\/anchors|cinematicScroll\/useSemanticReadingPosition)|codex\/shared\/types)\.ts/;
-const FORBIDDEN_MODULE = /\/src\/(?:workshop\/|library\/generation\/|components\/reader-(?:chamber|codex)\/)/;
+const FORBIDDEN_MODULE = /\/src\/(?:workshop\/|library\/generation\/|components\/reader-(?:chamber|codex)\/|host\/reader\/webSpeechNarration)/;
 
 const receipt = { provider: 'gemini', model: 'fixture', generatedAt: '2026-10-01T12:00:00.000Z', usage: { source: 'unavailable' } };
 const chapter = {
@@ -31,6 +39,9 @@ const chapter = {
   paragraphs: [
     'The tide pulled back from the drowned gate, and [[1|the beast roared]] across the causeway.',
     'Mara counted the bells that no longer rang.',
+    // The writer tags who speaks: the main character's line, then someone else's.
+    '[[@Ye Chen]] “Ring the bells,” Ye Chen said.',
+    '[[@Junior Sister Han]] “They are drowned,” she whispered.',
   ],
   // One of the Library's sound words, so the cue is placed (an unknown sound is set aside).
   soundCues: [{ mark: 1, sound: 'beast roar' }],
@@ -43,6 +54,63 @@ const chapter = {
 };
 
 const check = (condition, message) => { if (!condition) throw new Error(message); };
+
+/**
+ * The browser's speech, for a headless browser that has none: Apple-like
+ * voices, lines that start and end on their own, and a log of what was spoken.
+ */
+function installSpeechStandIn() {
+  const voices = [['Samantha', 'en-US', true], ['Bubbles', 'en-US', false], ['Daniel', 'en-GB', false], ['Rishi', 'en-IN', false], ['Kyoko', 'ja-JP', false]]
+    .map(([name, lang, isDefault]) => ({ voiceURI: `fake:${name}`, name, lang, localService: true, default: isDefault }));
+  const spoken = [];
+  let current = null;
+  let queue = [];
+  let ending = 0;
+  window.__spoken = spoken;
+  window.__cancels = 0;
+  const synth = {
+    speaking: false, pending: false, paused: false,
+    getVoices: () => voices.slice(),
+    addEventListener() {}, removeEventListener() {},
+    speak(utterance) {
+      spoken.push({ text: utterance.text, voice: utterance.voice ? utterance.voice.name : null, lang: utterance.lang, rate: utterance.rate });
+      queue.push(utterance);
+      if (!current) next();
+    },
+    cancel() {
+      window.__cancels += 1;
+      clearTimeout(ending);
+      const dropped = [current, ...queue].filter(Boolean);
+      current = null;
+      queue = [];
+      synth.speaking = false;
+      for (const utterance of dropped) utterance.onerror?.({ error: 'interrupted' });
+    },
+    pause() {}, resume() {},
+  };
+  const finish = utterance => {
+    if (current !== utterance) return;
+    current = null;
+    synth.speaking = false;
+    utterance.onend?.({});
+    // The player usually speaks its next line from onend; only an idle queue moves on here.
+    if (!current) next();
+  };
+  function next() {
+    current = queue.shift() ?? null;
+    synth.speaking = Boolean(current);
+    if (!current) return;
+    const utterance = current;
+    setTimeout(() => { if (current === utterance) utterance.onstart?.({}); }, 10);
+    if (!window.__speechHold) ending = setTimeout(() => finish(utterance), 150);
+  }
+  window.__finishLine = () => current && finish(current);
+  class Utterance {
+    constructor(text) { Object.assign(this, { text, voice: null, lang: '', rate: 1, pitch: 1, volume: 1, onstart: null, onend: null, onerror: null, onboundary: null }); }
+  }
+  Object.defineProperty(window, 'speechSynthesis', { value: synth, configurable: true });
+  Object.defineProperty(window, 'SpeechSynthesisUtterance', { value: Utterance, configurable: true, writable: true });
+}
 
 /** The Workshop's own sample seed and Blueprint, built in a separate page so the app's page never loads Workshop code. */
 async function sampleSeed(browser) {
@@ -72,6 +140,7 @@ async function sampleSeed(browser) {
 
 async function walk(browser, viewport, sample) {
   const context = await browser.newContext({ viewport: { width: viewport.width, height: viewport.height } });
+  await context.addInitScript(installSpeechStandIn);
   const page = await context.newPage();
   const problems = [];
   const counts = { chapters: 0, memory: 0, blueprints: 0 };
@@ -170,10 +239,63 @@ async function walk(browser, viewport, sample) {
   await shot('6-chapter-1');
   check(counts.chapters === 1, `One chapter request expected, saw ${counts.chapters}.`);
 
-  // 4. A reload stays on Chapter 1 and writes nothing.
+  // 3b. Listen: three voices, the spoken sentence lit, Pause and Resume, Reader Settings → Narration.
+  const spoken = () => page.evaluate(() => window.__spoken.map(line => ({ ...line })));
+  const lastSpoken = async () => (await spoken()).at(-1);
+  const finishLine = async () => { await page.evaluate(() => window.__finishLine()); await page.waitForTimeout(60); };
+  await page.evaluate(() => { window.__speechHold = true; });
+  check(!(await page.textContent('body')).includes('[[@'), 'No speaker tag may reach the page.');
+  await visibleButton(/^Listen$/).click();
+  await page.locator('h1[data-speaking]').waitFor();
+  check(JSON.stringify(await lastSpoken()) === JSON.stringify({ text: 'Chapter 1. Low Tide', voice: 'Daniel', lang: 'en-GB', rate: 1 }),
+    `Listen should read the title in Daniel's voice, got ${JSON.stringify(await lastSpoken())}.`);
+  await finishLine();
+  check(await page.locator('[data-overlay-id="read-aloud"]').count() > 0, 'The sentence being read should be lit.');
+  for (let guard = 0; guard < 10 && !(await lastSpoken()).text.startsWith('“Ring'); guard += 1) await finishLine();
+  const protagonist = await lastSpoken();
+  check(protagonist.text === '“Ring the bells,”' && protagonist.voice === 'Rishi', `The main character's line should use the Protagonist voice (Rishi), got ${JSON.stringify(protagonist)}.`);
+  check((await page.getByTestId('read-aloud-speaker').textContent()) === 'Ye Chen', 'The player should name who is speaking.');
+  await shot('6b-listening');
+  for (let guard = 0; guard < 6 && !(await lastSpoken()).text.startsWith('“They'); guard += 1) await finishLine();
+  const side = await lastSpoken();
+  check(side.text === '“They are drowned,”' && side.voice === 'Samantha', `Someone else's line should use the Side voice (Samantha), got ${JSON.stringify(side)}.`);
+  await visibleButton('Pause').click();
+  check(await page.getByTestId('read-aloud-player').getAttribute('data-status') === 'paused', 'Pause should pause.');
+  await visibleButton('Resume').click();
+  await page.waitForTimeout(60);
+  check((await lastSpoken()).text === '“They are drowned,”', 'Resume should read the same line again from its start.');
+  await visibleButton('Reader Settings').click();
+  const settings = page.getByRole('dialog', { name: 'Reader Settings' });
+  await settings.waitFor();
+  check(JSON.stringify(await settings.locator('section h3').allTextContents()) === '["Narration"]', 'Reader Settings should hold Narration only.');
+  check(await settings.locator('select[data-voice-role]').count() === 3, 'Narration should offer three voices.');
+  await settings.locator('label').filter({ hasText: '1.25×' }).click();
+  const saved = JSON.parse(await page.evaluate(() => localStorage.getItem('novelexpanded-reader-read-aloud')) ?? '{}');
+  check(saved.rate === 1.25, `The speed should be kept on the device, got ${JSON.stringify(saved)}.`);
+  await shot('6c-reader-settings');
+  await settings.getByRole('button', { name: 'Close Reader Settings' }).click();
+  await visibleButton('Stop').click();
+  check(await visibleButton(/^Listen$/).isVisible(), 'Stop should bring Listen back.');
+  // The bar never covers the chapter's own controls, and the page never scrolls sideways.
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await page.waitForTimeout(100);
+  const layout = await page.evaluate(() => ({
+    nav: document.querySelector('nav[aria-label="Chapters"]').getBoundingClientRect().bottom,
+    player: document.querySelector('[data-testid="read-aloud-player"]').getBoundingClientRect().top,
+    wide: document.documentElement.scrollWidth > window.innerWidth,
+  }));
+  check(layout.nav <= layout.player + 1, `The Listen bar should not cover the chapter navigation (${JSON.stringify(layout)}).`);
+  check(!layout.wide, 'The Reader must not scroll sideways.');
+
+  // 4. A reload stays on Chapter 1, writes nothing, keeps the speed, and reads nothing by itself.
   await page.reload();
   await page.locator('[data-chapter-number="1"]').waitFor();
   check(counts.chapters === 1, `A reload must not write a chapter, saw ${counts.chapters} requests.`);
+  await page.waitForTimeout(300);
+  check((await spoken()).length === 0, 'Nothing should be read aloud until the reader taps Listen.');
+  await visibleButton('Reader Settings').click();
+  check(await page.locator('input[name="read-aloud-rate"][value="1.25"]').isChecked(), 'The saved speed should come back after a reload.');
+  await page.keyboard.press('Escape');
 
   // 5. Back to Story View (Continue · Ch. 1), then Home with the story's card.
   await visibleButton(/^Back$/).click();

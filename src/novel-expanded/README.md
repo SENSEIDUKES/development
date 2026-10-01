@@ -52,6 +52,7 @@ Workshop's, so neither can overwrite the other (`services.ts`):
 | --- | --- |
 | Stories | IndexedDB `novelexpanded-harness-stories-v1` |
 | Reading places | IndexedDB `novelexpanded-reader-state-v1` |
+| Narration voices and speed (Reader Settings) | localStorage `novelexpanded-reader-read-aloud` |
 | Story Seeds | localStorage `novelexpanded-story-seeds-v1` |
 
 A story started in the app shows on the app's Home, not on the Workshop's
@@ -121,9 +122,10 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 - `src/novel-expanded/*.test.ts(x)`: the four pages, browser Back, an unknown story, the token sheet, a skill load failure.
 - `scripts/checkNovelExpandedApp.test.ts`: the guard, including the real app.
-- `scripts/verifyNovelExpandedApp.browser.mjs`: the walk in Chromium at 390px and 1440px against the dev server, with stubbed APIs.
+- `scripts/verifyNovelExpandedApp.browser.mjs`: the walk in Chromium at 390px and 1440px against the dev server, with stubbed APIs and a stand-in for the browser's speech (headless Chromium has no voices).
 
 ## History
 
+- **2026-10-01** — The Reader reads aloud in three voices: Listen, the spoken sentence lit, Reader Settings → Narration, with the voices and speed kept on this device and SEIHouse's voices from the Library. `check:app` also refuses the older Reader's narration.
 - **2026-10-01** — The World Blueprint plans Arc 1 only and fills every blank Story Seed slot; each later arc is planned and reviewed when it begins, in the Reader. Add Arcs is gone.
 - **2026-10-01** — Piece 1: the four pages at `/app/`, on separate storage, with the same chapters as the Workshop and the `check:app` guard.

@@ -13,6 +13,8 @@ page and its Reader with the Aura Veil while a chapter is written, and
 `storyHomeWorlds` lists the stories as Home cards, newest first.
 `HarnessGenerationWorkspace` is built on the same hook and pages.
 `./story-seed` adds `harnessStoryStartFromSeed`: the story a Story Seed starts.
+`LightNovelsHome` takes an optional `emptyState` (`{ title, description }`),
+so a host can word its list before it has any worlds.
 
 **0.9.0:** requires `@seihouse/sen` 0.9.0. A HARNESS story opens on its World
 Info page: `HarnessGenerationWorkspace` takes `infoStoryId` /

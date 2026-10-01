@@ -29,5 +29,7 @@ export interface LightNovelsHomeProps {
   worlds: readonly HomeWorld[];
   onCreateStory: () => void;
   onOpenWorld: (id: string) => void;
+  /** What the list says while it has no worlds. Without it, Home keeps the catalog's wording. */
+  emptyState?: { title: string; description: string };
   children?: ReactNode;
 }

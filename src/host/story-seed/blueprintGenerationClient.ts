@@ -5,6 +5,18 @@ import { type ArcRoadmapExtensionPayload, type BlueprintGenerationPayload } from
 const ENDPOINT = '/api/generate-blueprint';
 const REQUEST_TIMEOUT_MS = 130_000;
 
+/**
+ * A Blueprint request the server answered with an error. `status` is its HTTP
+ * status, so a host can act on it (401: the access token was not accepted)
+ * without matching message text.
+ */
+export class BlueprintRequestError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message);
+    this.name = 'BlueprintRequestError';
+  }
+}
+
 const requestSignalWithTimeout = (callerSignal?: AbortSignal) => {
   const controller = new AbortController();
   let timedOut = false;
@@ -62,7 +74,7 @@ const postBlueprintRequest = async (
         && typeof body.error === 'string'
         ? body.error
         : messages.failed(response.status);
-      throw new Error(error);
+      throw new BlueprintRequestError(error, response.status);
     }
     if (!body || typeof body !== 'object' || Array.isArray(body)) {
       throw new Error('The World Blueprint server returned an invalid response.');

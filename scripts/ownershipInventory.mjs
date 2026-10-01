@@ -11,6 +11,7 @@ export const ownershipRules = [
   ['src/library/', 'library', 'headless Library behavior'],
   ['src/library/model-router/', 'library', 'model router server'],
   ['src/host/', 'host', 'host adapters and records'],
+  ['src/novel-expanded/', 'host', 'NovelExpanded app'],
   ['src/components/reader-chamber/shared/types.ts', 'workshop', 'locked-reference adapter'],
   ['src/components/reader-chamber/shared/id.ts', 'workshop', 'locked-reference adapter'],
   ['src/components/reader-chamber/shared/dialect.ts', 'workshop', 'locked-reference adapter'],

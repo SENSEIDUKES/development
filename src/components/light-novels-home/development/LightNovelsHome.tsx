@@ -8,7 +8,7 @@ import { WorldCard } from '../../world-card/development/WorldCard';
 import { LibraryDiscoveryIcon as SENDiscoveryIcon, LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
 import '../shared/home.css';
 /** Existing LibraryScreen Home presentation. Data and navigation belong to the host. */
-export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWorld, children }: LightNovelsHomeProps) {
+export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWorld, emptyState, children }: LightNovelsHomeProps) {
   const { homeVideos: HERO_VIDEOS = [], homeImages: CELESTIAL_FALLBACK_IMAGES = [] } = useLibraryAssets();
   const [currentVideoIdx, setCurrentVideoIdx] = useState(0);
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
@@ -231,8 +231,8 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
                   <SEIEmptyState
                     icon={SENDiscoveryIcon}
                     titleAs="h4"
-                    title="Awaiting Manifestations"
-                    description="Curated worlds will return after their chapters are published to the current library format."
+                    title={emptyState?.title ?? 'Awaiting Manifestations'}
+                    description={emptyState?.description ?? 'Curated worlds will return after their chapters are published to the current library format.'}
                   />
                 </LibraryPanel>
               ) : (

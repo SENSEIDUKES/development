@@ -98,6 +98,8 @@ describe('HARNESS Sound Cues through marks', () => {
     // Recordings, URLs and catalogs never enter the call.
     expect(JSON.stringify(request)).not.toMatch(/https:|library-default-cues|\.mp3/);
     expect(systemInstruction).not.toMatch(/dialogue|manifestations|systemPanels|creatureEvents/);
+    // Speakers is its own kind, taught by its own skill: never the retired dialogue contract.
+    expect(systemInstruction).toContain('CAPA SKILL [Speakers] — SEN Speakers');
   });
 
   it('places cues on the marked words, strips every mark, explains what it set aside, and survives reload into the Reader', async () => {

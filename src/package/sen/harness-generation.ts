@@ -95,6 +95,7 @@ export {
 export { SEN_FATE_SURVIVAL_INSTRUCTIONS, SEN_FATE_SURVIVAL_SKILL } from '../../components/harness-generation/shared/fateSurvivalSkill';
 export { SEN_READING_MODE_SKILLS } from '../../components/harness-generation/shared/readingModeSkills';
 export { SEN_SOUND_CUES_INSTRUCTIONS, SEN_SOUND_CUES_SKILL, presentSoundVocabulary } from '../../components/harness-generation/shared/soundCuesSkill';
+export { SEN_SPEAKERS_INSTRUCTIONS, SEN_SPEAKERS_SKILL } from '../../components/harness-generation/shared/speakersSkill';
 export { createHarnessSenStory } from '../../components/harness-generation/shared/senAdapter';
 export * from '../../narrative/generation';
 export { HarnessReaderSession, type HarnessReaderWriting } from '../../components/harness-generation/development/HarnessReaderSession';

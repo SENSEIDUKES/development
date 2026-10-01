@@ -21,7 +21,8 @@ it.runIf(Boolean(process.env.HARNESS_SPP_ENV))('generates real baseline and equi
       getServerInfo: async () => { throw new Error('Not needed'); },
       generate: async request => {
         const prompt = buildHarnessGenerationPrompt(request);
-        expect(request.capaPrompt.skills.length).toBe(1);
+        // One Author skill, beside SEN's Speakers skill, which loads on every chapter.
+        expect(request.capaPrompt.skills.map(entry => entry.slot)).toEqual(['author', 'speakers']);
         if (equipped) expect(request.capaPrompt.text).toContain(skill.instructions!);
         if (equipped) expect(prompt.systemInstruction).toContain(skill.instructions!);
         let diagnostic = '';

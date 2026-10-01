@@ -9,6 +9,7 @@ import {
   SEN_READING_MODE_SKILLS,
   SEN_SOUND_CUES_INSTRUCTIONS,
   SEN_SOUND_CUES_SKILL,
+  SEN_SPEAKERS_SKILL,
   assembleCapaPrompt,
   presentSoundVocabulary,
 } from '@seihouse/sen/harness-generation';
@@ -54,7 +55,7 @@ describe('SEN Sound Cues skill', () => {
     const capa = assembleCapaPrompt({
       capturedAt: 'now',
       originalLanguage: 'ja',
-      skills: [SEN_NOVEL_AUTHOR_SKILL, SEN_FATE_SURVIVAL_SKILL, SEN_READING_MODE_SKILLS['Easy Read'], SEN_SOUND_CUES_SKILL],
+      skills: [SEN_NOVEL_AUTHOR_SKILL, SEN_FATE_SURVIVAL_SKILL, SEN_READING_MODE_SKILLS['Easy Read'], SEN_SOUND_CUES_SKILL, SEN_SPEAKERS_SKILL],
       soundVocabulary,
     });
     expect(capa.soundVocabulary).toHaveLength(SOUND_WORD_LIMITS.maxWords);

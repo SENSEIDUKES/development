@@ -6,10 +6,11 @@ import type { CapaPrompt, HarnessSelectedTranslationGlossary, HarnessSkillLoadou
 import { SEN_FATE_SURVIVAL_SKILL } from './fateSurvivalSkill';
 import { SEN_READING_MODE_SKILLS } from './readingModeSkills';
 import { SEN_SOUND_CUES_SKILL, presentSoundVocabulary } from './soundCuesSkill';
+import { SEN_SPEAKERS_SKILL } from './speakersSkill';
 import type { SoundWord } from '../../../audio/soundWords';
 
 /** The story state that fills a managed CAPA slot. */
-export type CapaSlotManager = 'fate-mode' | 'story-language' | 'reading-mode' | 'media-loadout';
+export type CapaSlotManager = 'fate-mode' | 'story-language' | 'reading-mode' | 'media-loadout' | 'always';
 
 export interface CapaSlotDefinition {
   id: HarnessSkillSlotId;
@@ -29,6 +30,8 @@ export interface CapaSlotDefinition {
    * - `media-loadout`: the attempt's frozen Media Loadout. A story with sound
    *   words loads SEN's Sound Cues skill with those words; one without leaves
    *   the slot empty.
+   * - `always`: every chapter. SEN's Speakers skill loads whenever the host
+   *   has it; a host without it leaves the slot empty and never fails a chapter.
    */
   managedBy?: CapaSlotManager;
   /**
@@ -54,6 +57,7 @@ export const CAPA_SCHEMA: readonly CapaSlotDefinition[] = [
   { id: 'accessibility', label: 'Accessibility', description: 'Writes chapters in the story\'s Reading Mode.', managedBy: 'reading-mode', installable: false },
   { id: 'translation', label: 'Translation', description: 'Writes chapters in the story\'s Story Language when it is not English.', managedBy: 'story-language', installable: true },
   { id: 'soundCues', label: 'Sound Cues', description: 'Marks the words where a sound happens and names it from the story\'s sound words.', managedBy: 'media-loadout', installable: false },
+  { id: 'speakers', label: 'Speakers', description: 'Tags who speaks each spoken line, so the Reader can give each its voice.', managedBy: 'always', installable: false },
 ] as const;
 
 const HARNESS_SKILL_APPLICATIONS: readonly HarnessSkillApplication[] = [
@@ -69,6 +73,7 @@ const MANAGED_SLOT_REASONS: Record<CapaSlotManager, string> = {
   'story-language': 'The Translation slot follows the story\'s Story Language: a non-English story loads that language\'s installed writing package on every chapter, and an English story leaves it empty.',
   'reading-mode': 'The Accessibility slot follows the story\'s Reading Mode: Clear Reading, Easy Read and Literal Reading load SEN\'s matching skill on every chapter, and Standard leaves it empty.',
   'media-loadout': 'The Sound Cues slot follows the story\'s Media Loadout: a story with sound words loads SEN\'s Sound Cues skill with them on every chapter, and one without leaves it empty.',
+  always: 'The Speakers slot loads SEN\'s Speakers skill on every chapter, so the Reader knows who speaks each line.',
 };
 
 /** Why a slot cannot be equipped by hand, when it cannot. */
@@ -173,6 +178,9 @@ const resolveManagedSkill = (
   soundVocabulary: readonly SoundWord[],
 ): HarnessSkillManifest | undefined => {
   switch (manager) {
+    // Never required: without it the chapter is simply written without speaker tags.
+    case 'always':
+      return resolveHarnessSkill(catalog, SEN_SPEAKERS_SKILL);
     case 'media-loadout': {
       if (!soundVocabulary.length) return undefined;
       const manifest = resolveHarnessSkill(catalog, SEN_SOUND_CUES_SKILL);

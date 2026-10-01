@@ -53,6 +53,14 @@ describe('the NovelExpanded app guard', () => {
     ]);
   });
 
+  it('keeps the older Reader\'s narration out: the app reads aloud only with SEN\'s Read Aloud', () => {
+    const { violations } = findAppViolations(graphOf({
+      [MAIN]: [{ specifier: '../host/reader/webSpeechNarration', target: 'src/host/reader/webSpeechNarration.ts' }],
+      'src/host/reader/webSpeechNarration.ts': [],
+    }), MAIN, ownershipOf);
+    expect(violations).toEqual(['THE_OLDER_READER src/novel-expanded/main.tsx → src/host/reader/webSpeechNarration.ts']);
+  });
+
   it('passes the real app', () => {
     const { entry, violations, reached } = checkNovelExpandedApp();
     expect(entry).toBe(MAIN);

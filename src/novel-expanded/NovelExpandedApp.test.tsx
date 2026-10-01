@@ -15,8 +15,10 @@ import { writeModelPreference } from '../host/generation/modelPreference';
 import { BlueprintRequestError } from '../host/story-seed/blueprintGenerationClient';
 import { createLocalStorySeedRepository } from '../host/story-seed/localStorySeedRepository';
 import { startHarnessStoryFromSeed } from '../host/story-seed/startHarnessStory';
+import { createLocalReaderPreferenceStorage } from '../host/reader/readerPreferenceStorage';
+import { installFakeSpeechSynthesis } from '../test-utils/fakeSpeechSynthesis';
 import { NovelExpandedApp } from './NovelExpandedApp';
-import type { NovelExpandedServices } from './services';
+import { NOVEL_EXPANDED_STORAGE, type NovelExpandedServices } from './services';
 import { NOVEL_EXPANDED_READER_ID } from './storyCreationRuntime';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -62,6 +64,7 @@ beforeAll(async () => {
 const appServices = (writer: HarnessGenerationModelAdapter, overrides: Partial<NovelExpandedServices> = {}): NovelExpandedServices => ({
   stories: new InMemoryHarnessGenerationRepository(),
   readerState: new MemoryReaderStateRepository(),
+  readerPreferences: createLocalReaderPreferenceStorage(NOVEL_EXPANDED_STORAGE.readerPreferences),
   storySeeds: createLocalStorySeedRepository({ storageKey: 'test-novelexpanded-seeds' }),
   writer,
   installSkills: async () => officialSkills,
@@ -182,6 +185,29 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
     expect(address()).toBe(`/app/?story=${created.id}&read=1`);
     expect(document.querySelector('[data-chapter-number="1"]')).toBeTruthy();
     expect(story.generate).toHaveBeenCalledTimes(1);
+  });
+
+  it('reads a chapter aloud in the Library\'s voices and keeps the reader\'s speed on this device', async () => {
+    const { fake: speech, uninstall } = installFakeSpeechSynthesis();
+    vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
+    try {
+      const story = scriptedWriter();
+      const services = appServices(story.writer);
+      const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
+      await render(services, `/app/?story=${created.id}`);
+      await click(chaptersAction(), 'Start Story', 10);
+      await act(async () => { story.release(); });
+      await flush(10);
+
+      await click(buttonByText('Listen'), 'Listen');
+      expect(speech.spoken.map(utterance => [utterance.text, utterance.voice?.name])).toEqual([['Chapter 1. Low Tide', 'Daniel']]);
+      await click(document.querySelector('button[aria-label="Reader Settings"]'), 'Reader Settings');
+      await click(document.querySelector('input[name="read-aloud-rate"][value="1.5"]'), 'Speed 1.5×');
+      expect(JSON.parse(window.localStorage.getItem('novelexpanded-reader-read-aloud')!)).toMatchObject({ v: 1, rate: 1.5 });
+    } finally {
+      uninstall();
+      vi.unstubAllGlobals();
+    }
   });
 
   it('sends an unknown story home instead of a developer page', async () => {

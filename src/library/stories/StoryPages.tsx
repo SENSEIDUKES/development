@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { findStory, HarnessReaderSession } from '@seihouse/sen/harness-generation';
-import type { ReaderStateRepository } from '@seihouse/sen/reader-runtime';
+import type { ReaderPreferenceStorage, ReaderStateRepository } from '@seihouse/sen/reader-runtime';
 import AILoadingVeil from '../../components/chapter-manifestation/development/AILoadingVeil';
 import { StoryDetailScreen } from '../../components/light-novels-home/development/StoryDetailScreen';
 import type { LoadingAgentPresentation } from '../manifestations/taskCard';
+import { LIBRARY_READ_ALOUD_VOICES } from './readAloudVoices';
 import { harnessStoryDisplay } from './storyView';
 import type { LibraryStories } from './useLibraryStories';
 
@@ -22,6 +23,8 @@ export interface StoryPagesProps {
   backLabel?: string;
   /** Host-owned durable Reader state: the reading place. */
   readerStateRepository?: ReaderStateRepository;
+  /** Host-owned device preferences: the reader's narration voices and speed. */
+  readerPreferences?: ReaderPreferenceStorage;
   /** The agent the Aura Veil shows while a chapter is written (the host owns agent art). Without it, Next says it is writing. */
   writingAgent?: LoadingAgentPresentation;
 }
@@ -36,7 +39,7 @@ const keepVeilOpen = () => undefined;
  * as the reader moves between them, so Start Story still begins Chapter 1 once
  * the Reader opens.
  */
-export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader, onBack, backLabel, readerStateRepository, writingAgent }: StoryPagesProps) {
+export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader, onBack, backLabel, readerStateRepository, readerPreferences, writingAgent }: StoryPagesProps) {
   const { state, controller, loadError } = stories;
   /** Set by Start Story, so the Reader begins Chapter 1 as it opens. */
   const [startOnOpen, setStartOnOpen] = useState(false);
@@ -69,6 +72,7 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
     {writerAlert}
     <HarnessReaderSession state={state} storyId={storyId} controller={controller}
       readerStateRepository={readerStateRepository} startOnOpen={startOnOpen}
+      readerPreferences={readerPreferences} readAloudVoices={LIBRARY_READ_ALOUD_VOICES}
       onGenerateNextChapter={stories.canGenerate ? () => stories.generateNextChapter(storyId) : undefined}
       onPlanArc={stories.canGenerate ? () => stories.planArc(storyId) : undefined}
       renderWriting={writingAgent ? writing => <AILoadingVeil agent={writingAgent} isGenerating={writing.active}

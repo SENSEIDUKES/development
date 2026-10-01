@@ -5,6 +5,7 @@ import { HarnessGenerationWorkspace as HarnessGenerationSurface } from '@seihous
 import { HarnessGenerationHttpClient } from '../../../host/generation/httpClient';
 import { IndexedDbHarnessGenerationRepository } from '../../../host/generation/indexedDbRepository';
 import { IndexedDbReaderStateRepository } from '../../../host/reader/readerStateStorage';
+import { createLocalReaderPreferenceStorage } from '../../../host/reader/readerPreferenceStorage';
 import { PreservedWorkspaceNotice } from './PreservedWorkspaceNotice';
 import { useModelPreference } from '../../../host/generation/modelPreference';
 import type { HarnessSkillManifest } from '@seihouse/sen/harness-generation';
@@ -34,6 +35,8 @@ export function HarnessGenerationWorkspace() {
     save: (state: Parameters<typeof repository.save>[0]) => repository.save(state),
   }), [repository]);
   const [readerStateRepository] = useState(() => new IndexedDbReaderStateRepository());
+  // The Workshop's own reader preferences, apart from the app's.
+  const [readerPreferences] = useState(() => createLocalReaderPreferenceStorage('workshop.reader.'));
   // The open Reader story and World Info page live in the URL (`read`, `info`)
   // so a reload returns to the same page.
   const [readingStoryId, setReadingStoryId] = useState(() => new URLSearchParams(window.location.search).get('read') ?? undefined);
@@ -104,7 +107,7 @@ export function HarnessGenerationWorkspace() {
               </button>
             </div>
           : <><PreservedWorkspaceNotice repository={repository} refreshKey={preservedRefresh} />
-          <HarnessGenerationSurface repository={surfaceRepository} readerStateRepository={readerStateRepository}
+          <HarnessGenerationSurface repository={surfaceRepository} readerStateRepository={readerStateRepository} readerPreferences={readerPreferences}
         readingStoryId={readingStoryId} onReadingStoryChange={changeReadingStory}
         infoStoryId={infoStoryId} onInfoStoryChange={changeInfoStory} writingAgent={AGENTS.VERSA}
         initialStoryId={arrival.storyId} initialFocus={arrival.focus}

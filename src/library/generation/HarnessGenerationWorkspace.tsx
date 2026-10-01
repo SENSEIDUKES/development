@@ -16,7 +16,7 @@ import { getSenLanguageLabel, normalizeChapterWritingStyle, type ChapterWritingS
 import { StorySettingsPanel } from './StorySettingsPanel';
 import { includeBundledHarnessSkills } from '@seihouse/sen/harness-generation';
 import { type HarnessGenerationRepository } from '@seihouse/sen/harness-generation';
-import type { ReaderStateRepository } from '@seihouse/sen/reader-runtime';
+import type { ReaderPreferenceStorage, ReaderStateRepository } from '@seihouse/sen/reader-runtime';
 import { NovelBlueprintTab } from './NovelBlueprintTab';
 import { useLibraryStories } from '../stories/useLibraryStories';
 import { StoryPages } from '../stories/StoryPages';
@@ -31,6 +31,8 @@ export interface HarnessGenerationWorkspaceProps {
   modelAdapter: HarnessGenerationModelAdapter;
   /** Host-owned durable Reader state: the reading place for stories opened in the Reader. */
   readerStateRepository?: ReaderStateRepository;
+  /** Host-owned device preferences for the Reader: narration voices and speed. */
+  readerPreferences?: ReaderPreferenceStorage;
   /**
    * Host-controlled story open in the Reader, so a host can restore it after a
    * reload. Without `onReadingStoryChange` the workspace keeps it internally.
@@ -1099,6 +1101,7 @@ export function HarnessGenerationWorkspace({
   preferredModel,
   onModelChange,
   readerStateRepository,
+  readerPreferences,
   readingStoryId,
   onReadingStoryChange,
   infoStoryId,
@@ -1415,7 +1418,7 @@ export function HarnessGenerationWorkspace({
       : openInfoStoryId && findStory(state, openInfoStoryId) ? { id: openInfoStoryId, page: 'info' }
         : undefined;
   if (storyPage) return <StoryPages key={storyPage.id} stories={stories} storyId={storyPage.id} page={storyPage.page}
-    readerStateRepository={readerStateRepository} writingAgent={writingAgent}
+    readerStateRepository={readerStateRepository} readerPreferences={readerPreferences} writingAgent={writingAgent}
     onOpenReader={() => setReadingStoryId(storyPage.id)}
     onCloseReader={() => { setSelectedStoryId(storyPage.id); setReadingStoryId(undefined); }}
     onBack={() => { setSelectedStoryId(storyPage.id); setInfoStoryId(undefined); }} />;

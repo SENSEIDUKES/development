@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, type RefObject } from 'react';
 import { CreationModal, StoryCreationProvider } from '@seihouse/library/story-seed';
 import type { InitialStoryGenerationPayload } from '@seihouse/sen/story-seed';
 import { BlueprintRequestError } from '../host/story-seed/blueprintGenerationClient';
@@ -8,6 +8,8 @@ import { useNovelExpandedStoryCreation } from './storyCreationRuntime';
 
 export interface CreatePageProps {
   services: Pick<NovelExpandedServices, 'storySeeds' | 'requestWorldBlueprint' | 'requestArcRoadmapExtension'>;
+  /** The development access token, held by the app for the visit so leaving Create never forgets it. */
+  blueprintToken: RefObject<string | undefined>;
   /** The Story Seeds the reader's stories started from. */
   startedSeedIds: readonly string[];
   onHome: () => void;
@@ -16,10 +18,8 @@ export interface CreatePageProps {
 }
 
 /** Create: the Story Seed and its World Blueprint, the same journey the Library ships. */
-export function CreatePage({ services, startedSeedIds, onHome, onStartStory }: CreatePageProps) {
+export function CreatePage({ services, blueprintToken, startedSeedIds, onHome, onStartStory }: CreatePageProps) {
   const runtime = useNovelExpandedStoryCreation(services.storySeeds, startedSeedIds);
-  // The development access token lives only in this tab's memory.
-  const token = useRef<string | undefined>(undefined);
   const pendingToken = useRef<Promise<string | undefined> | undefined>(undefined);
   const [tokenRequest, setTokenRequest] = useState<AccessTokenRequest>();
   const activeRequest = useRef<AbortController | null>(null);
@@ -59,18 +59,18 @@ export function CreatePage({ services, startedSeedIds, onHome, onStartStory }: C
   const withToken = useCallback(async <T,>(cancelled: string, run: (accessToken: string, signal: AbortSignal) => Promise<T>): Promise<T> => {
     let rejected = false;
     for (;;) {
-      const accessToken = token.current ?? await askForToken(rejected);
+      const accessToken = blueprintToken.current ?? await askForToken(rejected);
       if (!accessToken) throw new Error(cancelled);
-      token.current = accessToken;
+      blueprintToken.current = accessToken;
       try {
         return await track(signal => run(accessToken, signal));
       } catch (error) {
         if (!(error instanceof BlueprintRequestError) || error.status !== 401) throw error;
-        token.current = undefined;
+        blueprintToken.current = undefined;
         rejected = true;
       }
     }
-  }, [askForToken, track]);
+  }, [askForToken, blueprintToken, track]);
 
   return <StoryCreationProvider value={runtime}>
     <div className="min-h-screen bg-void" data-testid="novel-expanded-create">

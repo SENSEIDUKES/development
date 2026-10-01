@@ -1133,8 +1133,15 @@ export function HarnessGenerationWorkspace({
   const setInfoStoryId = onInfoStoryChange ?? setInternalInfoStoryId;
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string>();
-  // Opening storage or reaching the writer failed: say so where actions report.
-  useEffect(() => { if (stories.loadError) setMessage(stories.loadError); }, [stories.loadError]);
+  // Opening storage or reaching the writer failed: say so where actions report,
+  // and take it down once a Retry succeeds (unless another message replaced it).
+  const shownLoadError = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const previousLoadError = shownLoadError.current;
+    shownLoadError.current = stories.loadError;
+    if (stories.loadError) setMessage(stories.loadError);
+    else if (previousLoadError) setMessage(current => current === previousLoadError ? undefined : current);
+  }, [stories.loadError]);
   const [foundationError, setFoundationError] = useState<string>();
   const [storySeedOptions, setStorySeedOptions] = useState<HarnessStorySeedOption[]>([]);
   const [storySeedLoading, setStorySeedLoading] = useState(Boolean(storySeedSource));

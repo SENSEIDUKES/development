@@ -207,6 +207,38 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
 });
 
 describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
+  it('keeps the access token for the whole visit: leaving Create and coming back does not ask again', async () => {
+    const record = createMockStorySeedRecord({ userId: NOVEL_EXPANDED_READER_ID });
+    const { blueprint, ...withoutBlueprint } = record;
+    const seeds = createLocalStorySeedRepository({ storageKey: 'test-novelexpanded-seeds' });
+    seeds.reset([withoutBlueprint]);
+    const requestWorldBlueprint = vi.fn(async (_payload: unknown, _accessToken: string) => blueprint!);
+    const services = appServices(scriptedWriter().writer, { storySeeds: seeds, requestWorldBlueprint: requestWorldBlueprint as unknown as NovelExpandedServices['requestWorldBlueprint'] });
+    await render(services, '/app/');
+    const sheet = () => document.querySelector<HTMLFormElement>('[data-testid="access-token-sheet"]');
+    const blueprintFromTheBank = async () => {
+      await click(buttonByText('Carve New Destiny', container), 'Carve New Destiny', 20);
+      await click(buttonByText('Story Bank', container), 'Story Bank', 200);
+      await click(buttonByText('Use Seed', container), 'Use Seed', 200);
+      await click(buttonByText('Refine Details', container), 'Refine Details', 200);
+      await click([...container.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.includes('Manifest World Blueprint') && !button.disabled), 'Manifest World Blueprint', 20);
+    };
+
+    await blueprintFromTheBank();
+    await typeInto(sheet()!.querySelector('input[type="password"]')!, 'visit-token');
+    await click(buttonByText('Continue', sheet()!), 'Continue', 300);
+    expect(requestWorldBlueprint).toHaveBeenCalledTimes(1);
+
+    // Leave Create for Home, then come back for another Blueprint.
+    await act(async () => { window.history.back(); });
+    await flush(30);
+    expect(address()).toBe('/app/');
+    await blueprintFromTheBank();
+    await flush(300);
+    expect(sheet()).toBeNull();
+    expect(requestWorldBlueprint.mock.calls.map(call => call[1])).toEqual(['visit-token', 'visit-token']);
+  });
+
   it('asks for the access token before a Blueprint, asks again when it is refused, and starts the story on Story View', async () => {
     const record = createMockStorySeedRecord({ userId: NOVEL_EXPANDED_READER_ID });
     const { blueprint, ...withoutBlueprint } = record;

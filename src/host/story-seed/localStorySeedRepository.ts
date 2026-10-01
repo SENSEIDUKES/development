@@ -103,23 +103,25 @@ export function createLocalStorySeedRepository({ storageKey }: { storageKey: str
       memoryRecords = records;
       return [...records];
     }
+    let normalizedRecords: Array<StorySeedRecord | null>;
     try {
       const parsed = JSON.parse(persisted);
       if (!Array.isArray(parsed)) throw new Error('Stored Story Seed data is not a collection.');
-      const normalizedRecords = parsed.map(normalizeRecord);
-      if (normalizedRecords.some(seed => seed === null)) {
-        // Development persistence has no migration path. A structural/schema
-        // mismatch clears the stale local collection rather than retaining a
-        // partly readable old Story Seed shape.
-        writeRecords([]);
-        return [];
-      }
-      const records = normalizedRecords.filter((seed): seed is StorySeedRecord => seed !== null);
-      memoryRecords = records;
-      return [...records];
+      normalizedRecords = parsed.map(normalizeRecord);
     } catch {
       throw new Error('Saved Story Seed data is unreadable. Import a valid backup or clear the damaged browser data.');
     }
+    if (normalizedRecords.some(seed => seed === null)) {
+      // Development persistence has no migration path. A structural/schema
+      // mismatch clears the stale local collection rather than retaining a
+      // partly readable old Story Seed shape. Storage refusing that reset is
+      // its own failure, never reported as unreadable data.
+      saveRecords([], 'Outdated Story Seeds could not be cleared. Check browser storage access and try again.');
+      return [];
+    }
+    const records = normalizedRecords.filter((seed): seed is StorySeedRecord => seed !== null);
+    memoryRecords = records;
+    return [...records];
   };
 
   const writeRecords = (records: StorySeedRecord[]): void => {

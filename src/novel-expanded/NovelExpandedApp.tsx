@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import { StoryPages, storyHomeWorlds, useLibraryStories } from '@seihouse/library/stories';
 import { findStory, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
@@ -32,6 +32,8 @@ export function NovelExpandedApp({ services }: { services: NovelExpandedServices
 
 function NovelExpandedPages({ services }: { services: NovelExpandedServices }) {
   const [route, navigate] = useAppRoute();
+  // The development access token lives only in this tab's memory, for the whole visit.
+  const blueprintToken = useRef<string | undefined>(undefined);
   const [chapterModel] = useModelPreference('chapters');
   const [skills, setSkills] = useState<HarnessSkillManifest[]>();
   const [skillsError, setSkillsError] = useState<string>();
@@ -70,7 +72,7 @@ function NovelExpandedPages({ services }: { services: NovelExpandedServices }) {
     </main>;
   }
 
-  if (route.page === 'create') return <CreatePage services={services} startedSeedIds={seedIds}
+  if (route.page === 'create') return <CreatePage services={services} blueprintToken={blueprintToken} startedSeedIds={seedIds}
     onHome={() => navigate(HOME_ROUTE)}
     onStartStory={async payload => {
       const story = await startHarnessStoryFromSeed(stories.controller, payload);

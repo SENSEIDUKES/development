@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
-import { act } from 'react';
+import { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { InMemoryHarnessGenerationRepository } from '../../test-utils/InMemoryHarnessGenerationRepository';
 import { installAudioMediaStubs, renderWithDevAudio } from '../../test-utils/renderWithDevAudio';
-import { HarnessGenerationController, type HarnessGenerationModelAdapter } from '@seihouse/sen/harness-generation';
+import { HarnessGenerationController, type HarnessGenerationModelAdapter, type HarnessGenerationRepository } from '@seihouse/sen/harness-generation';
 import type { ReaderStateRepository, ReaderStoryState } from '@seihouse/sen/reader-runtime';
 import { HarnessGenerationWorkspace } from '@seihouse/library/generation';
 import { harnessStoryDisplay } from '../stories/storyView';
@@ -132,5 +132,36 @@ describe('A story\'s way in: World Info, then the Reader', { timeout: 20_000 }, 
     expect(worldInfo()).toBeNull();
     expect(container.querySelector('[data-testid="harness-generation-workspace"]')).toBeTruthy();
     expect(buttonByText('Open Reader Chamber')).toBeTruthy();
+  });
+
+  it('takes a load error down once Retry opens the stories', async () => {
+    const model = scriptedModel();
+    const { repository, storyId } = await seededStory(model.adapter);
+    let failures = 1;
+    const flaky: HarnessGenerationRepository = {
+      load: async () => {
+        if (failures > 0) { failures -= 1; throw new Error('Your stories could not be opened.'); }
+        return repository.load();
+      },
+      save: state => repository.save(state),
+    };
+    function Host() {
+      const [reading, setReading] = useState<string | undefined>(storyId);
+      return <HarnessGenerationWorkspace repository={flaky} modelAdapter={model.adapter} readerStateRepository={new MemoryReaderStateRepository()}
+        readingStoryId={reading} onReadingStoryChange={setReading} />;
+    }
+    await act(async () => root.render(renderWithDevAudio(<Host />)));
+    await flush();
+    expect(container.querySelector('[role="alert"]')!.textContent).toContain('Your stories could not be opened.');
+
+    // Retry on the story's page opens the stories, and the Reader shows.
+    await click(buttonByText('Retry'), 'Retry');
+    await flush();
+    expect(container.querySelector('[data-testid="harness-reader"]')).toBeTruthy();
+
+    // Back on the developer page, the old error is gone.
+    await click(buttonByText('Back'), 'Back');
+    expect(container.querySelector('[data-testid="harness-generation-workspace"]')).toBeTruthy();
+    expect(container.textContent).not.toContain('Your stories could not be opened.');
   });
 });

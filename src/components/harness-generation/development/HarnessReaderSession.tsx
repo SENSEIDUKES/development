@@ -10,8 +10,9 @@ import {
   type ReaderStoryState,
 } from '@seihouse/sen/reader-runtime';
 import { harnessParagraphBlockId } from '../shared/chapterBody';
-import { harnessStoryMode } from '../shared/arcState';
+import { harnessStoryMode, nextArcStep } from '../shared/arcState';
 import { pendingChapterDirection } from '../shared/chapterDirection';
+import { BlueprintArcPage } from './BlueprintArcPage';
 import { FatePage } from './FatePage';
 import { useNextChapterWriter } from './useNextChapterWriter';
 import type { HarnessGenerationController } from '../shared/controller';
@@ -37,13 +38,19 @@ const navButton = 'min-h-11 rounded-full border px-4 text-sm disabled:cursor-not
  * (or, in Fate Survival, asks for its direction first); the Fate page is one
  * tap away. Codex, Mind Palace and reading settings are not part of it.
  */
-export function HarnessReaderSession({ state, storyId, onClose, controller, readerStateRepository, onGenerateNextChapter, renderWriting, startOnOpen = false }: {
+export function HarnessReaderSession({ state, storyId, onClose, controller, readerStateRepository, onGenerateNextChapter, onPlanArc, renderWriting, startOnOpen = false }: {
   state: HarnessWorkspaceState; storyId: string; onClose: () => void; controller: HarnessGenerationController;
   /**
    * Writes the story's next chapter with the host's model: from Next at the
    * newest chapter, and from the Fate page. Absent when the host cannot generate here.
    */
   onGenerateNextChapter?: () => Promise<void>;
+  /**
+   * Plans the goals of the arc the next chapter begins, with the host's model.
+   * When a new arc begins, the World Blueprint's goal section reappears for
+   * the reader to review them before its first chapter.
+   */
+  onPlanArc?: () => Promise<void>;
   /** Host-owned durable Reader state. Without it, the reading place lasts for this session only. */
   readerStateRepository?: ReaderStateRepository;
   /**
@@ -67,6 +74,7 @@ export function HarnessReaderSession({ state, storyId, onClose, controller, read
   const [selectedChapter, setSelectedChapter] = useState(1);
   const [fateOpen, setFateOpen] = useState(false);
   const [fateFocus, setFateFocus] = useState(false);
+  const [arcOpen, setArcOpen] = useState(false);
   const writer = useNextChapterWriter(controller, storyId, onGenerateNextChapter);
   const [storageError, setStorageError] = useState('');
   const readerStateRef = useRef<ReaderStoryState | undefined>(undefined);
@@ -112,7 +120,10 @@ export function HarnessReaderSession({ state, storyId, onClose, controller, read
   }, [readerStateRepository]);
 
   const upcoming = story?.head.nextChapterNumber ?? 1;
-  const openFate = (focusDirection = false) => { writer.reset(); setFateFocus(focusDirection); setFateOpen(true); };
+  const openFate = (focusDirection = false) => { writer.reset(); setArcOpen(false); setFateFocus(focusDirection); setFateOpen(true); };
+  const openArc = () => { writer.reset(); setFateOpen(false); setArcOpen(true); };
+  // At the start of an arc, the next chapter waits for the arc's goals: planned, then reviewed in the World Blueprint.
+  const arcStep = nextArcStep(state, storyId);
   // Next at the newest chapter. Regular Reader: write the next chapter (through
   // Rhythm, or the reader's one-chapter choice when they made one) and open it.
   // Fate Survival: the chapter waits on the reader's direction, so Next goes to
@@ -125,7 +136,9 @@ export function HarnessReaderSession({ state, storyId, onClose, controller, read
   const continueAfterLatest: { label: string; run: () => void; busy?: boolean } | undefined = !story ? undefined
     : story.conclusion
       ? { label: 'See how the story ended', run: () => openFate() }
-      : mode === 'survival' && !pendingChapterDirection(story)
+      : arcStep
+        ? { label: `Arc ${arcStep.arcNumber} begins`, run: openArc }
+        : mode === 'survival' && !pendingChapterDirection(story)
         ? { label: `Direct Chapter ${upcoming}`, run: () => openFate(true) }
         : onGenerateNextChapter
           ? { label: writer.writing ? `Writing Chapter ${upcoming}…` : `Write Chapter ${upcoming}`, run: () => void writeNext(), busy: writer.writing }
@@ -147,10 +160,23 @@ export function HarnessReaderSession({ state, storyId, onClose, controller, read
 
   // One position for the writing screen in both views, so it can close smoothly.
   const writing = renderWriting?.({ active: writer.writing, chapterNumber: writer.writingChapter ?? upcoming });
+  if (arcOpen) {
+    return <>
+      <main className="mx-auto w-full min-w-0 max-w-6xl">
+        <BlueprintArcPage state={state} storyId={storyId} controller={controller} onBack={() => setArcOpen(false)} onPlanArc={onPlanArc}
+          onContinue={() => {
+            setArcOpen(false);
+            if (mode === 'survival') openFate(true);
+            else if (onGenerateNextChapter) void writeNext();
+          }} />
+      </main>
+      {writing}
+    </>;
+  }
   if (fateOpen) {
     return <>
       <main className="mx-auto w-full min-w-0 max-w-6xl">
-        <FatePage state={state} storyId={storyId} controller={controller} onBack={() => setFateOpen(false)}
+        <FatePage state={state} storyId={storyId} controller={controller} onBack={() => setFateOpen(false)} onOpenArc={openArc}
           onGenerateNextChapter={onGenerateNextChapter} writer={writer} focusDirection={fateFocus}
           onReadChapter={number => { openChapter(number); setFateOpen(false); }} />
       </main>

@@ -1,6 +1,6 @@
 import type { HarnessWorkspaceState } from '../../../narrative/generation';
 import type { HarnessGenerationController } from '../shared/controller';
-import { harnessStoryMode } from '../shared/arcState';
+import { arcPlanGap, arcReviewGap, harnessStoryMode, nextArcStep } from '../shared/arcState';
 import { chapterDirectionGap } from '../shared/chapterDirection';
 import { FATE_MODE_LABELS, FateArcGoalCard, FateConclusion, FateDestinedEnding, FatePathChooser, describeChapterPath } from './FatePanel';
 import { useNextChapterWriter, type NextChapterWriter } from './useNextChapterWriter';
@@ -12,7 +12,7 @@ import { useNextChapterWriter, type NextChapterWriter } from './useNextChapterWr
  * four paths to intervene; Fate Survival asks the reader to direct every
  * chapter. Writing the chapter is a host action, since the host owns the model.
  */
-export function FatePage({ state, storyId, controller, onBack, onGenerateNextChapter, onReadChapter, writer: sharedWriter, focusDirection = false }: {
+export function FatePage({ state, storyId, controller, onBack, onGenerateNextChapter, onReadChapter, onOpenArc, writer: sharedWriter, focusDirection = false }: {
   state: HarnessWorkspaceState;
   storyId: string;
   controller: HarnessGenerationController;
@@ -21,6 +21,8 @@ export function FatePage({ state, storyId, controller, onBack, onGenerateNextCha
   onGenerateNextChapter?: () => Promise<void>;
   /** Opens a chapter in the Reader. */
   onReadChapter?: (chapterNumber: number) => void;
+  /** Opens the World Blueprint's goals for the arc the next chapter begins. */
+  onOpenArc?: () => void;
   /** The session's writer, when another surface can also start the write. */
   writer?: NextChapterWriter;
   /** Opened as the step the next chapter waits on: the reader's own direction. */
@@ -35,7 +37,10 @@ export function FatePage({ state, storyId, controller, onBack, onGenerateNextCha
   const chapters = state.chapters.filter(chapter => chapter.storyId === storyId).sort((a, b) => a.chapterNumber - b.chapterNumber);
   const lastChapter = chapters.at(-1);
   const nextChapter = story.head.nextChapterNumber;
-  const gap = chapterDirectionGap(story, mode);
+  // At the start of an arc the chapter waits for the arc's goals, then (Fate Survival) for the reader's direction.
+  const arcStep = nextArcStep(state, storyId);
+  const arcGap = foundation ? arcPlanGap(story, foundation) ?? arcReviewGap(story, foundation) : undefined;
+  const gap = arcGap ?? chapterDirectionGap(story, mode);
   const writtenPath = chapters.find(chapter => chapter.chapterNumber === written)?.path;
 
   return (
@@ -50,7 +55,13 @@ export function FatePage({ state, storyId, controller, onBack, onGenerateNextCha
 
       <FateConclusion story={story} />
       <FateDestinedEnding foundation={foundation} />
-      {!story.conclusion && <FateArcGoalCard story={story} foundation={foundation} generatedThrough={lastChapter?.chapterNumber ?? 0} />}
+      {!story.conclusion && <FateArcGoalCard story={story} foundation={foundation} generatedThrough={lastChapter?.chapterNumber ?? 0}
+        actions={arcStep && onOpenArc ? (
+          <button type="button" onClick={onOpenArc} data-testid="fate-open-arc"
+            className="mt-3 min-h-11 rounded-full border border-cyan-300/50 bg-cyan-400/15 px-4 text-sm font-semibold text-cyan-50 hover:bg-cyan-400/25">
+            {arcStep.kind === 'plan' ? `Begin Arc ${arcStep.arcNumber}` : `Review Arc ${arcStep.arcNumber} goals`}
+          </button>
+        ) : undefined} />}
       {lastChapter?.path && (
         <p className="text-xs text-neutral-400" data-testid="fate-last-path">Chapter {lastChapter.chapterNumber} followed: {describeChapterPath(lastChapter.path)}</p>
       )}

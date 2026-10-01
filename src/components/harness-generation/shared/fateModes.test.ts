@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { HarnessGenerationController, createHarnessSenStory, type HarnessArcRequest, type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type StoryFoundationInput } from '@seihouse/sen/harness-generation';
-import { arcGoalSegments, type ArcPlan } from '@seihouse/sen/arc-goals';
+import { arcFirstChapter, arcGoalSegments, type ArcPlan } from '@seihouse/sen/arc-goals';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
 
@@ -42,11 +42,17 @@ const setup = async (overrides: Partial<StoryFoundationInput> = {}, roadmap: Arc
   const controller = new HarnessGenerationController({ repository, modelAdapter });
   await controller.hydrate();
   const story = await controller.createStory({ premise: 'An archivist races the rising river.', destinedEnding: ENDING,
-    arcRoadmap: roadmap, plannedArcCount: roadmap.length, fatePressure: 'heaven', ...overrides });
-  /** Moves the story head to a later chapter with earlier goals already resolved at their deadlines. */
+    initialArcPlan: roadmap[0], plannedArcCount: roadmap.length, fatePressure: 'heaven', ...overrides });
+  /**
+   * Moves the story head to a later chapter with earlier goals already
+   * resolved at their deadlines, and with every arc before the one being
+   * written already planned as it began.
+   */
   const jumpTo = async (nextChapterNumber: number, resolved: Array<{ goalId: string; outcome?: 'missed' }> = []) => {
     const saved = controller.snapshot();
     saved.stories[0].head.nextChapterNumber = nextChapterNumber;
+    saved.stories[0].arcPlans = roadmap.filter(entry => arcFirstChapter(entry.arcNumber) < nextChapterNumber || entry.arcNumber === 1)
+      .map(entry => ({ plan: entry, effectiveChapter: arcFirstChapter(entry.arcNumber), reason: 'initial' as const }));
     saved.stories[0].goalCompletions = resolved.map(goal => {
       const arcPlan = roadmap.find(entry => entry.goals.some(item => item.id === goal.goalId))!;
       const segment = arcGoalSegments(arcPlan).find(item => item.id === goal.goalId)!;
@@ -393,7 +399,7 @@ describe('Fate Survival', () => {
   });
 
   it('never plans a new arc for the ending chapter in a story without a roadmap', async () => {
-    const run = await setup({ ...SURVIVAL, arcRoadmap: undefined, plannedArcCount: undefined, initialArcPlan: plan });
+    const run = await setup({ ...SURVIVAL, plannedArcCount: undefined, initialArcPlan: plan });
     const story = await run.jumpTo(100, [{ goalId: 'arc-1-flood', outcome: 'missed' }, { goalId: 'arc-1-bridge' }, { goalId: 'arc-1-tower' }]);
     await directed(story, run.story.id, 'Lin leaves the archive sealed.');
     expect(story.snapshot().stories[0].brokenRoute).toMatchObject({ chapterNumber: 100, reason: 'arc-goals-missed' });

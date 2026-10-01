@@ -27,6 +27,33 @@ describe('planHarnessWorkspaceLoad', () => {
     });
   });
 
+  it('upgrades schema 23 to plan each arc as it begins: every stored Foundation copy drops its roadmap, saved arcs stay, and an unbegun story keeps its Arc 1 review', () => {
+    const arc = (arcNumber: number) => ({ arcNumber, goals: [{ id: `arc-${arcNumber}-a`, text: `Arc ${arcNumber} goal.`, chapters: 100 }] });
+    const roadmapInput = { premise: 'A river story.', plannedArcCount: 2, arcRoadmap: [arc(1), arc(2)] };
+    const stored = {
+      ...createEmptyHarnessWorkspaceState(), schemaVersion: 23,
+      foundations: [{ id: 'f-new', input: structuredClone(roadmapInput) }, { id: 'f-old', input: structuredClone(roadmapInput) }],
+      stories: [
+        { id: 'new', activeFoundationRevisionId: 'f-new', createdAt: 'created', head: { nextChapterNumber: 1 },
+          arcPlans: [{ plan: arc(1), effectiveChapter: 1, reason: 'initial' }, { plan: arc(2), effectiveChapter: 101, reason: 'initial' }] },
+        { id: 'begun', activeFoundationRevisionId: 'f-old', createdAt: 'created', head: { nextChapterNumber: 7 },
+          arcPlans: [{ plan: arc(1), effectiveChapter: 1, reason: 'initial' }, { plan: arc(2), effectiveChapter: 101, reason: 'initial' }] },
+      ],
+      attempts: [{ id: 'a', foundationSnapshot: { id: 'f-old', input: structuredClone(roadmapInput) } }],
+      memoryRecoveries: [{ id: 'm', request: { foundation: { id: 'f-old', input: structuredClone(roadmapInput) } } }],
+      arcPlanOperations: [{ id: 'op', request: { operation: 'plan-arc', instruction: 'unused' } }],
+    };
+    const { state } = planHarnessWorkspaceLoad(stored, now);
+    expect(state.schemaVersion).toBe(HARNESS_GENERATION_SCHEMA_VERSION);
+    for (const input of [...state.foundations.map(entry => entry.input), state.attempts[0].foundationSnapshot.input, state.memoryRecoveries![0].request.foundation.input]) {
+      expect(input).toEqual({ premise: 'A river story.', plannedArcCount: 2 });
+    }
+    expect(state.arcPlanOperations[0].request).toEqual({ operation: 'plan-arc' });
+    expect(state.stories.map(story => story.arcPlans?.length)).toEqual([2, 2]);
+    expect(state.stories[0].arcGoalReviews).toEqual([{ arcNumber: 1, reviewedAt: 'created', edited: false, source: 'migration' }]);
+    expect(state.stories[1].arcGoalReviews).toBeUndefined();
+  });
+
   it('keeps an untouched copy of an older-schema workspace (nothing before schema 22 upgrades) before starting fresh', () => {
     const stored = { schemaVersion: 21, stories: [{ id: 'a' }, { id: 'b' }], chapters: [{ id: 'c1' }] };
     const plan = planHarnessWorkspaceLoad(stored, now);

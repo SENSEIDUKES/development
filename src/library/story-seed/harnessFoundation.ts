@@ -1,4 +1,4 @@
-import { createInitialArcPlan, validateArcPlan } from '@seihouse/sen/arc-goals';
+import { arcLookaheadFromPlans, createInitialArcPlan, validateArcPlan } from '@seihouse/sen/arc-goals';
 import {
   describeBlueprintArcRoadmapProblem,
   getStoryStyleLabel,
@@ -33,10 +33,11 @@ const withAddedDetail = (fact: string | undefined, detail: string | undefined): 
  * its reviewed Blueprint, so authored values win and Blueprint copies are
  * never re-sent.
  *
- * A Blueprint with a complete arc roadmap hands over every arc's saved plan and
- * the arc count. A Seed without a Blueprint, or a Blueprint saved before arc
- * roadmaps, hands over only its Arc 1 plan; HARNESS plans the later arcs of
- * such a story at each boundary, as before.
+ * A Blueprint hands over Arc 1's reviewed plan, the story's length and the
+ * hidden look-ahead; HARNESS plans every later arc when the reader begins it.
+ * A Seed without a Blueprint, or a Blueprint saved before arc roadmaps, hands
+ * over only its Arc 1 plan, and HARNESS plans such a story's later arcs at
+ * each boundary.
  */
 export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): StoryFoundationInput => {
   // Reconciled first, so every reviewed Blueprint value is read from the Seed.
@@ -51,9 +52,11 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
     ? validateBlueprintArcRoadmap(blueprint) : undefined;
   // Without a complete roadmap, the saved Arc 1 plan (whose opening goal is the
   // Seed's Active Arc Goal) is preferred over a bare Seed goal.
-  const initialArcPlan = completeRoadmap ? undefined
+  const initialArcPlan = completeRoadmap ? completeRoadmap[0]
     : blueprint?.arcPlans?.[0] ? validateArcPlan(blueprint.arcPlans[0])
       : optional.activeArcGoal ? createInitialArcPlan(optional.activeArcGoal) : undefined;
+  const initialArcLookahead = completeRoadmap
+    ? arcLookaheadFromPlans(completeRoadmap.slice(1), { afterArc: 1, plannedArcCount: completeRoadmap.length }) : [];
   if (initialArcPlan && initialArcPlan.arcNumber !== 1) {
     throw new Error('Story Seed supplies the Arc 1 plan.');
   }
@@ -66,7 +69,8 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
     destinedEnding: world.destinedEnding,
     fatePressure: optional.fateSurvival.pressure,
     fateSurvival: { enabled: optional.fateSurvival.enabled },
-    ...(completeRoadmap ? { arcRoadmap: completeRoadmap, plannedArcCount: completeRoadmap.length } : {}),
+    ...(completeRoadmap ? { plannedArcCount: completeRoadmap.length } : {}),
+    ...(initialArcLookahead.length ? { initialArcLookahead } : {}),
     ...(initialArcPlan ? { initialArcPlan } : {}),
     initialHardPins: validateHardPinInputs(optional.hardPins ?? []),
     funSettings: normalizeFunSettings(optional.funSettings),

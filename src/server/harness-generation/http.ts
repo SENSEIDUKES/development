@@ -73,6 +73,13 @@ const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessMemoryRe
     if (!isRecord(parsed.storyInformation) || !isRecord(parsed.storyInformation.storyHead) || typeof parsed.model !== 'string'
       || typeof parsed.storyId !== 'string') throw new Error('Arc operations require a frozen Story Information Packet.');
     requirePacket(parsed.storyInformation);
+    // The planner's own context: which arc, within what length, after which arcs, with what look-ahead.
+    const planning = parsed.planning;
+    if (!isRecord(planning) || !Number.isInteger(planning.arcNumber) || Number(planning.arcNumber) < 1
+      || typeof planning.finalArc !== 'boolean' || !Array.isArray(planning.previousArcs) || !Array.isArray(planning.lookahead)
+      || (planning.plannedArcCount !== undefined && (!Number.isInteger(planning.plannedArcCount) || Number(planning.plannedArcCount) < 1))) {
+      throw new Error('Arc planning requires its planning context: the arc, the earlier arcs and the look-ahead.');
+    }
     return parsed as unknown as HarnessArcRequest;
   }
   if (parsed.operation !== undefined) throw new Error('Unknown Harness Generation operation.');

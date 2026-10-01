@@ -116,8 +116,82 @@ export const createInitialArcPlan = (goal: ArcGoal): ArcPlan => validateArcPlan(
 /** The first chapter of an arc. */
 export const arcFirstChapter = (arcNumber: number): number => (arcNumber - 1) * ARC_LENGTH + 1;
 
-/** The upper bound on arcs one roadmap may plan. The Blueprint model's output budget may allow fewer. */
+/** The longest a story may be planned to run, in arcs. */
 export const MAX_ROADMAP_ARCS = 100 as const;
+
+/** How many arcs ahead the hidden look-ahead reaches. */
+export const MAX_ARC_LOOKAHEAD = 2 as const;
+/** The longest one look-ahead direction may be, in characters. */
+export const ARC_LOOKAHEAD_TEXT_LIMIT = 400 as const;
+
+/**
+ * One line of the hidden look-ahead: where the route goes in an arc that is
+ * not planned yet. Only the model that plans arcs reads it; readers never see
+ * it and the chapter writer never receives it.
+ */
+export interface ArcLookaheadEntry { arcNumber: number; direction: string }
+
+/** Response schema for a look-ahead. */
+export const ARC_LOOKAHEAD_SCHEMA = {
+  type: 'array', maxItems: MAX_ARC_LOOKAHEAD, items: { type: 'object',
+    properties: { arcNumber: { type: 'integer', minimum: 2 }, direction: { type: 'string' } },
+    required: ['arcNumber', 'direction'] },
+};
+
+/**
+ * Keeps the usable part of a look-ahead and never throws: one-line directions
+ * for arcs after `afterArc` and within the story's planned length, the
+ * nearest first, one per arc, at most `MAX_ARC_LOOKAHEAD`.
+ */
+export function normalizeArcLookahead(value: unknown, bounds: { afterArc: number; plannedArcCount?: number }): ArcLookaheadEntry[] {
+  if (!Array.isArray(value)) return [];
+  const byArc = new Map<number, string>();
+  for (const entry of value) {
+    const arcNumber = (entry as Partial<ArcLookaheadEntry> | null)?.arcNumber;
+    const raw = (entry as Partial<ArcLookaheadEntry> | null)?.direction;
+    if (!Number.isInteger(arcNumber) || typeof raw !== 'string') continue;
+    if (arcNumber! <= bounds.afterArc || (bounds.plannedArcCount !== undefined && arcNumber! > bounds.plannedArcCount)) continue;
+    const direction = raw.replace(/\s+/g, ' ').trim().slice(0, ARC_LOOKAHEAD_TEXT_LIMIT).trim();
+    if (direction && !byArc.has(arcNumber!)) byArc.set(arcNumber!, direction);
+  }
+  return [...byArc].sort(([left], [right]) => left - right).slice(0, MAX_ARC_LOOKAHEAD)
+    .map(([arcNumber, direction]) => ({ arcNumber, direction }));
+}
+
+/** A look-ahead drawn from saved arc plans (each arc's goals in one line), for plans made before arcs were planned as they begin. */
+export const arcLookaheadFromPlans = (plans: readonly ArcPlan[], bounds: { afterArc: number; plannedArcCount?: number }): ArcLookaheadEntry[] =>
+  normalizeArcLookahead(plans.map(plan => ({ arcNumber: plan.arcNumber, direction: plan.goals.map(goal => goal.text).join(' Then ') })), bounds);
+
+/** One arc's goals as a planning model writes them: wording and chapters only. The HARNESS owns arc numbers and goal identities. */
+export const ARC_PLAN_DRAFT_SCHEMA = {
+  type: 'object', properties: { goals: {
+    type: 'array', minItems: 1, maxItems: MAX_ARC_GOALS, items: { type: 'object',
+      properties: { text: { type: 'string' }, chapters: { type: 'integer', minimum: 1, maximum: ARC_LENGTH } },
+      required: ['text', 'chapters'] },
+  } }, required: ['goals'],
+};
+
+/**
+ * Turns a model's goal draft into an arc's plan. The arc number is the arc
+ * being planned, and each goal is given the identity `arc-N-k`, never one
+ * already used by another arc, whatever identity the draft carried.
+ */
+export function arcPlanFromDraft(draft: unknown, arcNumber: number, takenGoalIds: Iterable<string> = []): ArcPlan {
+  const goals = (draft as { goals?: unknown } | null)?.goals;
+  if (!Array.isArray(goals)) throw new Error('The planned arc has no goals.');
+  const taken = new Set(takenGoalIds);
+  const plan = {
+    arcNumber,
+    goals: goals.map((goal, index) => {
+      let id = `arc-${arcNumber}-${index + 1}`;
+      for (let suffix = 2; taken.has(id); suffix += 1) id = `arc-${arcNumber}-${index + 1}-${suffix}`;
+      taken.add(id);
+      const { text, chapters } = (goal ?? {}) as { text?: unknown; chapters?: unknown };
+      return { id, text: typeof text === 'string' ? text.replace(/\s+/g, ' ').trim() : text, chapters } as ArcGoal;
+    }),
+  };
+  return validateArcPlan(plan);
+}
 
 /**
  * An arc roadmap: one saved plan per arc, Arc 1 through Arc N, in order. Every

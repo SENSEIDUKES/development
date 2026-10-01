@@ -1,8 +1,8 @@
-import { createArcChapterPosition, editArcPlan, validateArcPlan, type ArcPlan } from '../../arc-goals/shared/arcGoals';
+import { arcPlanFromDraft, createArcChapterPosition, editArcPlan, normalizeArcLookahead, type ArcPlan } from '../../arc-goals/shared/arcGoals';
 import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '../../../lib/language';
 import { emptyNarrativeMedia, soundVocabulary, type FrozenNarrativeMedia, type NarrativeMediaPort, type MediaResourceReference, type MediaSelectionSlot } from '../../../audio/media';
 import type { SoundWord } from '../../../audio/soundWords';
-import { arcGoalEditState, commitHarnessArc, harnessArcContext, harnessArcPlan, harnessStoryMode, missingRequiredEnding, needsArcPlan, readArcReply, roadmapPlanGap, storyConclusionGap, survivalArcReviewGap, withArcGoalReview, arcGoalReview } from './arcState';
+import { arcGoalEditState, arcPlanGap, arcPlanningContext, arcReviewGap, commitHarnessArc, harnessArcContext, harnessArcPlan, harnessStoryMode, missingRequiredEnding, needsArcPlan, readArcReply, routeCompleteGap, storyConclusionGap, withArcGoalReview, arcGoalReview } from './arcState';
 import {
   createHarnessStory,
   findFoundationRevision,
@@ -591,13 +591,17 @@ export class HarnessGenerationController {
     const pending = this.state.arcPlanOperations.filter(operation => operation.storyId === storyId
       && ['request_started', 'provider_outcome_unknown', 'raw_received', 'failed'].includes(operation.status)).at(-1);
     if (pending?.status === 'raw_received') return this.applyArcPlanOperation(pending.id);
+    if (pending?.status === 'failed') throw new Error(`The last Arc planning request failed: ${pending.failure ?? 'no reason was saved'}. Plan the arc again.`);
     if (pending) throw new Error('The previous Arc planning provider outcome is unknown. Explicitly retry Arc planning before generating a chapter.');
 
     const startedAt = this.runtime.now();
     const storyInformation = compileStoryInformationPacket(this.state, story, foundation, this.runtime.createId('hplan'), this.runtime);
+    // Only the arc planner receives where the arc sits in the story's length,
+    // how the earlier arcs went, and the hidden look-ahead.
+    const planning = arcPlanningContext(story, foundation.input, createArcChapterPosition(story.head.nextChapterNumber).arcNumber);
     const operation: HarnessArcPlanOperation = {
       id: this.runtime.createId('harc'), storyId, foundationRevisionId: foundation.id, startedAt,
-      status: 'request_started', request: { operation: 'plan-arc', storyId, model, storyInformation },
+      status: 'request_started', request: { operation: 'plan-arc', storyId, model, storyInformation, planning },
     };
     const started = cloneHarnessValue(this.state);
     started.arcPlanOperations.push(operation);
@@ -629,12 +633,22 @@ export class HarnessGenerationController {
     const foundation = findFoundationRevision(this.state, operation.foundationRevisionId)!;
     try {
       const reply = readArcReply(operation.rawProviderResponse);
-      const plan = needsArcPlan(story, foundation.input) ? validateArcPlan(reply.plan) : undefined;
-      if (plan && plan.arcNumber !== createArcChapterPosition(story.head.nextChapterNumber).arcNumber) throw new Error('The generated plan targets the wrong arc.');
+      // The HARNESS owns arc numbers and goal identities: the planner's draft
+      // becomes the plan for the arc being begun, with identities no other arc uses.
+      const arcNumber = createArcChapterPosition(story.head.nextChapterNumber).arcNumber;
+      const takenGoalIds = (story.arcPlans ?? []).filter(revision => revision.plan.arcNumber !== arcNumber)
+        .flatMap(revision => revision.plan.goals.map(goal => goal.id));
+      const plan = needsArcPlan(story, foundation.input) ? arcPlanFromDraft(reply.plan, arcNumber, takenGoalIds) : undefined;
       if (!foundation.input.destinedEnding?.trim() && (typeof reply.destinedEnding !== 'string' || !reply.destinedEnding.trim())) throw new Error('The arc planner must supply the novel Destined Ending.');
       let candidate = cloneHarnessValue(this.state);
       const target = findStory(candidate, operation.storyId)!;
-      if (plan) target.arcPlans = [...(target.arcPlans ?? []), { plan, effectiveChapter: story.head.nextChapterNumber, reason: 'initial' }];
+      if (plan) {
+        target.arcPlans = [...(target.arcPlans ?? []), { plan, effectiveChapter: story.head.nextChapterNumber, reason: 'initial' }];
+        // The planner's fresh look-ahead replaces the old one; a reply without one keeps nothing stale.
+        const lookahead = normalizeArcLookahead(reply.lookahead, { afterArc: arcNumber, plannedArcCount: foundation.input.plannedArcCount });
+        if (lookahead.length) target.arcLookahead = lookahead;
+        else delete target.arcLookahead;
+      }
       const saved = candidate.arcPlanOperations.find(item => item.id === operationId)!;
       saved.status = 'completed';
       saved.failure = undefined;
@@ -650,6 +664,36 @@ export class HarnessGenerationController {
       await this.persist(failed);
       throw error;
     }
+  }
+
+  /**
+   * Plans the goals of the arc the next chapter begins, whatever state its
+   * planning is in: never asked, failed, interrupted, or answered but not yet
+   * saved. A story with a planned length plans each arc this way, when the
+   * reader begins it; its goals then wait on the reader's review.
+   */
+  async planNextArc(storyId: string, model: string): Promise<HarnessWorkspaceState> {
+    this.assertHydrated();
+    if (this.generating) throw new Error('Wait for the active Harness operation to finish.');
+    if (!model.trim()) throw new Error('Choose a configured Harness model before planning an arc.');
+    const story = findStory(this.state, storyId);
+    if (!story) throw new Error('Open a Harness story before planning its next arc.');
+    const ended = storyConclusionGap(story);
+    if (ended) throw new Error(ended);
+    const foundation = findFoundationRevision(this.state, story.activeFoundationRevisionId);
+    if (!foundation) throw new Error('The active Story Foundation revision is missing. Restore a local export before continuing.');
+    if (!needsArcPlan(story, foundation.input)) return this.snapshot();
+    const stale = this.state.arcPlanOperations.filter(item => item.storyId === storyId
+      && ['provider_outcome_unknown', 'failed'].includes(item.status));
+    if (stale.length) {
+      const candidate = cloneHarnessValue(this.state);
+      for (const operation of candidate.arcPlanOperations) if (stale.some(item => item.id === operation.id)) operation.status = 'abandoned';
+      await this.persist(candidate);
+    }
+    this.generating = true;
+    try { await this.prepareArcPlan(storyId, model.trim()); }
+    finally { this.generating = false; }
+    return this.snapshot();
   }
 
   async retryArcPlan(storyId: string, model: string): Promise<HarnessWorkspaceState> {
@@ -700,14 +744,15 @@ export class HarnessGenerationController {
     if (reused) throw new Error(`Goal identity “${reused.id}” already belongs to another arc.`);
     const now = this.runtime.now();
     story.arcPlans = [...(story.arcPlans ?? []), { plan, effectiveChapter: story.head.nextChapterNumber, reason: 'edit' }];
-    if (permission.mode === 'survival') {
+    // An edit made while the arc's review is pending is that review, in both modes.
+    if (permission.review === 'pending') {
       story.arcGoalReviews = withArcGoalReview(story, { arcNumber, reviewedAt: now, edited: true, source: 'novel-blueprint' });
     }
     story.updatedAt = now;
     await this.persist(candidate);
   }
 
-  /** Fate Survival: uses an arc's one-time review by accepting its saved plan as written. */
+  /** Reviews an arc before its first chapter by accepting its saved plan as written (in Fate Survival, its one-time review). */
   async acceptArcGoals(storyId: string, arcNumber: number) {
     this.assertHydrated();
     if (this.generating || activeAttemptForStory(this.state, storyId)) throw new Error('Finish the current chapter checkpoint before reviewing goals.');
@@ -793,19 +838,23 @@ export class HarnessGenerationController {
     // An ended story never requests another chapter or plans another arc.
     const ended = storyConclusionGap(story);
     if (ended) throw new Error(ended);
+    // Beyond the story's planned length no arc begins.
+    const routeComplete = routeCompleteGap(story, foundation.input);
+    if (routeComplete) throw new Error(routeComplete);
+    // A story with a planned length plans each arc when the reader begins it,
+    // never inside a chapter write; one without plans its next arc here.
+    const planGap = arcPlanGap(story, foundation.input);
+    if (planGap) throw new Error(planGap);
     if (needsArcPlan(story, foundation.input) || !foundation.input.destinedEnding) {
       this.generating = true;
       try { await this.prepareArcPlan(storyId, model); }
       finally { this.generating = false; }
       return this.generateNextChapterInternal(storyId, model, batchId, frozen);
     }
-    // A roadmap story never invents an arc: the next chapter needs its saved plan.
-    const gap = roadmapPlanGap(story, foundation.input);
-    if (gap) throw new Error(gap);
     if (!harnessArcContext(story, foundation.input, story.head.nextChapterNumber)) {
       throw new Error(`Chapter ${story.head.nextChapterNumber} has no saved Arc Plan.`);
     }
-    const reviewGap = survivalArcReviewGap(story, foundation.input);
+    const reviewGap = arcReviewGap(story, foundation.input);
     if (reviewGap) throw new Error(reviewGap);
     // Fate Survival is written one reader-directed chapter at a time. A retry
     // resends the direction its attempt already carries.
@@ -1126,7 +1175,11 @@ export class HarnessGenerationController {
       return this.snapshot();
     }
     await this.replayStory(commitAttempt.storyId, chapterId);
-    if (createArcChapterPosition(commitAttempt.chapterNumber + 1).chapterInArc === 1 && !findStory(this.state, commitAttempt.storyId)?.conclusion) {
+    // A story without a planned length plans its next arc as soon as the
+    // last chapter of one commits; a story with one waits for the reader.
+    const committedStory = findStory(this.state, commitAttempt.storyId);
+    const committedFoundation = committedStory ? findFoundationRevision(this.state, committedStory.activeFoundationRevisionId)?.input : undefined;
+    if (createArcChapterPosition(commitAttempt.chapterNumber + 1).chapterInArc === 1 && !committedStory?.conclusion && !committedFoundation?.plannedArcCount) {
       try { await this.prepareArcPlan(commitAttempt.storyId, commitAttempt.model); }
       catch (error) {
         const pending = cloneHarnessValue(this.state);
@@ -1516,7 +1569,20 @@ export class HarnessGenerationController {
         await this.persist(completed);
         return this.snapshot();
       }
-      await this.generateNextChapter(batch.storyId, batch.model, batch.id);
+      try {
+        await this.generateNextChapter(batch.storyId, batch.model, batch.id);
+      } catch (error) {
+        // A chapter that waits on the reader (an arc to plan or review, a
+        // direction) pauses the batch with the reason instead of leaving it running.
+        const paused = cloneHarnessValue(this.state);
+        const target = paused.batches.find(entry => entry.id === batchId);
+        if (!target || activeAttemptForStory(paused, target.storyId)) throw error;
+        target.status = 'paused';
+        target.failure = errorMessage(error, 'The batch paused before its next chapter.');
+        target.updatedAt = this.runtime.now();
+        await this.persist(paused);
+        return this.snapshot();
+      }
       const attemptId = this.state.batches.find(entry => entry.id === batchId)?.currentAttemptId;
       if (!attemptId) throw new Error('The batch lost its current attempt checkpoint.');
       await this.recordBatchAttempt(batchId, attemptId);

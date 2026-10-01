@@ -63,7 +63,7 @@ const setup = async (options: {
   const controller = new HarnessGenerationController({ repository, modelAdapter, installedSkills: options.skills ?? [] });
   await controller.hydrate();
   const story = await controller.createStory(
-    { premise: 'A courier climbs to a mountain school.', destinedEnding: 'Mei opens the school gate.', arcRoadmap: [plan], plannedArcCount: 1, ...options.foundation },
+    { premise: 'A courier climbs to a mountain school.', destinedEnding: 'Mei opens the school gate.', initialArcPlan: plan, plannedArcCount: 1, ...options.foundation },
     options.language ?? 'en',
     undefined,
     options.readingMode ? { chapterWritingStyle: options.readingMode } : {},

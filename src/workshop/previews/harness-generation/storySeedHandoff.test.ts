@@ -11,19 +11,19 @@ import { buildHarnessGenerationPrompt } from '../../../server/harness-generation
 import { createOfficialCapaDefaultLoadout, OFFICIAL_STYLE_REFERENCES, updateOfficialCapaStyle } from '../../../host/generation/capa/officialCapaSkills';
 
 describe('Story Seed to Harness handoff', () => {
-  it('hands over the complete reviewed roadmap and arc count, and only Arc 1 from a pre-roadmap Blueprint', () => {
+  it('hands over Arc 1, the story length and the hidden look-ahead, and only Arc 1 from a pre-roadmap Blueprint', () => {
     const record = createMockStorySeedRecord();
     const foundation = createHarnessFoundationFromStorySeed(record);
     expect(foundation.plannedArcCount).toBe(3);
-    expect(foundation.arcRoadmap).toEqual(record.blueprint!.arcPlans);
-    expect(foundation.arcRoadmap?.[0].goals[0].text).toBe(record.seed.story.optional.activeArcGoal!.text);
-    expect(foundation).not.toHaveProperty('initialArcPlan');
+    expect(foundation.initialArcPlan).toEqual(record.blueprint!.arcPlans![0]);
+    expect(foundation.initialArcPlan?.goals[0].text).toBe(record.seed.story.optional.activeArcGoal!.text);
+    expect(foundation.initialArcLookahead?.map(entry => entry.arcNumber)).toEqual([2, 3]);
     // A Blueprint saved before roadmaps (one Arc 1 plan of a longer story) still starts a story.
     const legacy = createMockStorySeedRecord();
     delete legacy.seed.story.optional.activeArcGoal;
     legacy.blueprint = { ...legacy.blueprint!, arcPlans: legacy.blueprint!.arcPlans!.slice(0, 1), estimatedArcs: 12 };
     const legacyFoundation = createHarnessFoundationFromStorySeed(legacy);
-    expect(legacyFoundation.arcRoadmap).toBeUndefined();
+    expect(legacyFoundation.initialArcLookahead).toBeUndefined();
     expect(legacyFoundation.plannedArcCount).toBeUndefined();
     expect(legacyFoundation.initialArcPlan).toEqual(legacy.blueprint.arcPlans![0]);
   });

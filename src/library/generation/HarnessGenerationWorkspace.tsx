@@ -2,7 +2,7 @@ import { StoryFoundationEditor } from '@seihouse/sen/story-seed';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { FrozenNarrativeMedia, SoundWord } from '@seihouse/sen/audio';
 import { BookOpen, CheckCircle2, CircleAlert, Compass, Download, FileText, ListTree, LoaderCircle, Pause, Pin, Play, Plus, Puzzle, RefreshCcw, Volume2 } from 'lucide-react';
-import { CHAPTER_FUNCTIONS, CHAPTER_FUNCTION_LABELS, FATE_MODE_LABELS, FATE_PRESSURE_RHYTHM_CONFIG, FateArcGoalCard, FateConclusion, FateDestinedEnding, FatePathChooser, HARD_PIN_LIMIT, chapterDirectionGap, describeChapterPath, harnessStoryMode } from '@seihouse/sen/harness-generation';
+import { CHAPTER_FUNCTIONS, CHAPTER_FUNCTION_LABELS, FATE_MODE_LABELS, FATE_PRESSURE_RHYTHM_CONFIG, FateArcGoalCard, FateConclusion, FateDestinedEnding, FatePathChooser, HARD_PIN_LIMIT, arcPlanGap, arcReviewGap, chapterDirectionGap, describeChapterPath, harnessStoryMode, nextArcStep } from '@seihouse/sen/harness-generation';
 import type { ChapterDirectionChoice, HardPinInput, HarnessChapter, HarnessMissionReminder, StoryFoundationRevision } from '@seihouse/sen/harness-generation';
 import { isMediaPackEntitlementActive, mediaPackKey, type MediaPack, type MediaPackEntitlement, type MediaPackReference, type StoryMediaLoadoutSlot } from '../media/mediaPacks';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox, CreationButton as ManifestButton } from '@seihouse/sen/presentation';
@@ -1311,7 +1311,14 @@ export function HarnessGenerationWorkspace({
     try { await controller.chooseChapterDirection(selectedStory.id, choice); }
     finally { setBusy(false); }
   };
-  const retryArcPlan = () => selectedStory && void run(() => controller.retryArcPlan(selectedStory.id, model));
+  const retryArcPlan = () => selectedStory && void run(() => controller.planNextArc(selectedStory.id, model));
+  const planArc = async () => {
+    if (!selectedStory) return;
+    setBusy(true);
+    setMessage(undefined);
+    try { await controller.planNextArc(selectedStory.id, model); }
+    finally { setBusy(false); }
+  };
   const saveHardPins = async (pins: HardPinInput[]) => {
     if (!selectedStory) return;
     setBusy(true);
@@ -1394,6 +1401,11 @@ export function HarnessGenerationWorkspace({
   const selectedMode = harnessStoryMode(selectedFoundation?.input);
   // Fate Survival writes nothing until the reader directs the chapter, and never in batches.
   const directionGap = selectedStory ? chapterDirectionGap(selectedStory, selectedMode) : undefined;
+  // At the start of an arc the next chapter waits for its goals to be planned and reviewed in the Blueprint.
+  const arcStep = state && selectedStory ? nextArcStep(state, selectedStory.id) : undefined;
+  const arcGap = selectedStory && selectedFoundation
+    ? arcPlanGap(selectedStory, selectedFoundation.input) ?? arcReviewGap(selectedStory, selectedFoundation.input) : undefined;
+  const chapterGap = arcGap ?? directionGap;
   // A story's own pages come first: the Reader, then its World Info page.
   // Back from the Reader returns to World Info when the reader came from there.
   // One StoryPages per story stays mounted as the reader moves between them.
@@ -1544,6 +1556,7 @@ export function HarnessGenerationWorkspace({
             {selectedStory && novelTab === 'blueprint' && (
               <div role="tabpanel" id="novel-panel-blueprint" aria-labelledby="novel-tab-blueprint">
                 <NovelBlueprintTab story={selectedStory} foundation={selectedFoundation} busy={busy}
+                  arcStep={arcStep} onPlanArc={model ? planArc : undefined} showLookahead={showHarnessInternals}
                   onEditArcGoals={editArcPlan} onAcceptArcGoals={acceptArcGoals} onSaveFoundation={saveBlueprintFoundation} />
               </div>
             )}
@@ -1630,12 +1643,13 @@ export function HarnessGenerationWorkspace({
                     type="button"
                     icon={SENManifestingIcon}
                     onClick={generate}
-                    disabled={!generationAvailable || Boolean(directionGap) || Boolean(selectedStory.conclusion)}
+                    disabled={!generationAvailable || Boolean(chapterGap) || Boolean(selectedStory.conclusion)}
                     loading={busy}
                   >
                     Generate Next Chapter
                   </ManifestButton>
-                  {(directionGap || selectedStory.conclusion) && <p className="mt-2 text-xs text-neutral-400" data-testid="harness-generation-gap">{directionGap ?? 'This story has ended. No further chapter is written.'}</p>}
+                  {(chapterGap || selectedStory.conclusion) && <p className="mt-2 text-xs text-neutral-400" data-testid="harness-generation-gap">{selectedStory.conclusion ? 'This story has ended. No further chapter is written.' : chapterGap}</p>}
+                  {arcGap && !selectedStory.conclusion && <LibraryButton type="button" size="sm" variant="secondary" className="mt-2" onClick={() => setNovelTab('blueprint')}>Open the Blueprint</LibraryButton>}
                 </div>
                 <div className="mt-5 rounded-xl border border-white/10 bg-black/20 p-4">
                   <div className="flex flex-wrap items-end gap-3">
@@ -1643,7 +1657,7 @@ export function HarnessGenerationWorkspace({
                       <input id="harness-batch-count" type="number" min="1" placeholder="Choose a count" value={batchCount} onChange={event => setBatchCount(event.target.value)} disabled={busy}
                         className="mt-1 min-h-11 w-full rounded-lg border border-white/15 bg-black/35 px-3 text-sm text-white" />
                     </label>
-                    <LibraryButton type="button" size="sm" icon={Play} onClick={startBatch} disabled={!generationAvailable || !batchCount || selectedMode === 'survival' || Boolean(selectedStory.conclusion)}>Start sequential batch</LibraryButton>
+                    <LibraryButton type="button" size="sm" icon={Play} onClick={startBatch} disabled={!generationAvailable || !batchCount || selectedMode === 'survival' || Boolean(arcGap) || Boolean(selectedStory.conclusion)}>Start sequential batch</LibraryButton>
                     {batch?.status === 'running' || batch?.status === 'pause_requested' ? <LibraryButton type="button" size="sm" variant="secondary" icon={Pause} onClick={pauseBatch} disabled={batch.status === 'pause_requested'}>Pause after active call</LibraryButton> : null}
                     {batch?.status === 'paused' && <LibraryButton type="button" size="sm" icon={Play} onClick={resumeBatch} loading={busy}>Resume batch</LibraryButton>}
                     {batch && ['failed', 'provider_outcome_unknown'].includes(batch.status) && <LibraryButton type="button" size="sm" variant="secondary" icon={RefreshCcw} onClick={retryBatch} loading={busy}>{batch.status === 'provider_outcome_unknown' ? 'Explicitly retry unknown call' : 'Retry failed batch chapter'}</LibraryButton>}

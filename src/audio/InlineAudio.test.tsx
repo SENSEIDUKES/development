@@ -2,13 +2,13 @@
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import React, { act } from 'react';
 import type { Root } from 'react-dom/client';
-import { createRoot } from '../../../test-utils/createReaderRoot';
+import { createRoot } from '../test-utils/createReaderRoot';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useNarrativeAudio, type NarrativeAudioPlayback, type NarrativeAudioPlaybackEvent } from '@seihouse/sen/audio';
-import { DevAudioPlaybackProvider } from '../../../audio/DevAudioPlayback';
+import { DevAudioPlaybackProvider } from './DevAudioPlayback';
 import { soundCueTrackId, type SoundCueAttachment } from '@seihouse/sen/audio';
-import { installAudioMediaStubs } from '../../../test-utils/renderWithDevAudio';
-import { InlineAudio, InlineAudioControl, InlineAudioText } from '@seihouse/sen/reader-chamber';
+import { installAudioMediaStubs } from '../test-utils/renderWithDevAudio';
+import { InlineAudio, InlineAudioControl, InlineAudioText } from '@seihouse/sen/inline-audio';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 

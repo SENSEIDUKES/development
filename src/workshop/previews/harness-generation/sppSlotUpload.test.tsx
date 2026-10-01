@@ -7,9 +7,9 @@ import { CAPA_SCHEMA, HarnessGenerationController, type HarnessGenerationModelAd
 import { HarnessGenerationWorkspace } from '@seihouse/library/generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { SppSkillImport } from './SppSkillImport';
-import { DOCX_MEDIA_TYPE } from './docxInstructions';
-import { SPP_CAPA_EXTENSION } from './sppSkills';
-import { buildDocx, docxParagraph } from './fixtures/docxFixtures';
+import { DOCX_MEDIA_TYPE } from '../../../host/generation/capa/docxInstructions';
+import { SPP_CAPA_EXTENSION } from '../../../host/generation/capa/sppSkills';
+import { buildDocx, docxParagraph } from '../../../test-utils/fixtures/spp/docxFixtures';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 

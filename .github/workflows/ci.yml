@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Clear generated browser evidence
-        run: rm -rf -- output/playwright/text-highlight-engine
+        run: rm -rf -- output/playwright/text-highlight-engine output/playwright/novel-expanded
 
       - uses: actions/setup-node@v4
         with:
@@ -32,7 +32,7 @@ jobs:
       - name: Type check
         run: npm run typecheck
 
-      - name: Verify Text Highlight Engine in browsers
+      - name: Verify Text Highlight Engine and the NovelExpanded app in browsers
         run: |
           npm run dev -- --host 127.0.0.1 > /tmp/text-highlight-vite.log 2>&1 &
           preview_pid=$!
@@ -42,6 +42,7 @@ jobs:
             sleep 1
           done
           node scripts/verifyTextHighlightEngine.mjs
+          node scripts/verifyNovelExpandedApp.browser.mjs
 
       - name: Run test suite
         run: npm test
@@ -52,6 +53,9 @@ jobs:
       - name: Check package boundaries
         run: npm run check:package-boundaries
 
+      - name: Check the NovelExpanded app reaches only current systems
+        run: npm run check:app
+
       - name: Smoke test packages
         run: npm run test:package
 
@@ -61,3 +65,10 @@ jobs:
         with:
           name: text-highlight-engine-browser-evidence
           path: output/playwright/text-highlight-engine/
+
+      - name: Upload NovelExpanded app browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: novel-expanded-browser-evidence
+          path: output/playwright/novel-expanded/

@@ -7,7 +7,7 @@ import React, {
   useState,
   type ReactNode,
 } from 'react';
-import { NarrativeSoundGlyph as LibrarySoundGlyph } from '../../../presentation';
+import { NarrativeSoundGlyph as LibrarySoundGlyph } from '../presentation';
 import {
   matchLeadingInlineAudioPunctuation,
   resolvePlayableSoundCue,
@@ -15,8 +15,8 @@ import {
   splitBySoundCues,
   type InlineAudioTextSegment,
   type SoundCueAttachment,
-} from '../../../audio/inlineAudio';
-import { useNarrativeAudio, type NarrativeAudioPlayback } from '../../../audio/playback';
+} from './inlineAudio';
+import { useNarrativeAudio, type NarrativeAudioPlayback } from './playback';
 import './InlineAudio.css';
 
 export type InlineAudioStatus = 'idle' | 'loading' | 'playing' | 'error';

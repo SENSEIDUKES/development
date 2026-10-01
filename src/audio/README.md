@@ -1,7 +1,7 @@
 # Portable narrative audio
 
 - **Created:** 2026-08-19
-- **Last updated:** 2026-09-29
+- **Last updated:** 2026-10-01
 - **Ownership status:** SEN contracts separated from Library catalogs and host playback
 
 ## Ownership
@@ -17,6 +17,7 @@ The current split is:
 | Capability | Owner | Source |
 | --- | --- | --- |
 | Sound Cue record, Reader playback and split helpers | SEN | `inlineAudio.ts` (`SoundCueAttachment`), `cues.ts` |
+| Sound Cues on the page: the glyph on the marked words and its inline playback | SEN (`@seihouse/sen/inline-audio`) | `InlineAudio.tsx`, `InlineAudio.css` |
 | Placing a writer's Sound Cues on its marked words | SEN | `soundCuePlacement.ts` (`placeSoundCues`) |
 | Finished Sound Cue rules (1–5 whole words, at most 10 per chapter) | SEN | `soundCueRules.ts` |
 | Sound words (the event a recording answers, with an example) | SEN | `soundWords.ts`, `soundVocabulary` in `media.ts` |
@@ -26,7 +27,7 @@ The current split is:
 | Host-supplied playback port | SEN contract | `playback.tsx` |
 | Celestial Library packs and entitlement policy | Library | `src/library/media/mediaPacks.ts` |
 | First-party cue and soundscape records | Host | `src/host/media/libraryCatalog.ts`, `src/host/media/soundscapeCatalog.ts` |
-| Concrete browser audio-player adapter | Host/Workshop | `DevAudioPlayback.tsx` |
+| Concrete browser audio-player adapter | Host (the Workshop and the NovelExpanded app) | `DevAudioPlayback.tsx` |
 | Provider voice catalog and synthesis | Host/server | `src/server/audio/` |
 
 The historical JSON cue inventory remains under `data/` as a first-party host

@@ -18,8 +18,9 @@ vi.mock('@seihouse/sen/harness-generation', () => ({
   HarnessGenerationHttpClient: class {},
 }));
 
-vi.mock('./officialCapaSkills', () => ({
+vi.mock('../../../host/generation/capa/officialCapaSkills', () => ({
   installOfficialCapaSkills: async () => ({ installed: [], official: [] }),
+  createOfficialCapaDefaultLoadout: () => ({ author: { id: 'official.author', version: '1.0.1' } }),
   OFFICIAL_CAPA_DEFAULT_REFERENCES: {
     author: { id: 'official.author', version: '1.0.1' },
     pacing: { id: 'official.pacing', version: '1.0.1' },

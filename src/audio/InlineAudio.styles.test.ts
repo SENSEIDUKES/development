@@ -22,7 +22,7 @@ import { describe, expect, it } from 'vitest';
 // when vitest is invoked from the package script.
 const CSS_PATH = resolve(
   process.cwd(),
-  'src/components/reader-chamber/development/InlineAudio.css',
+  'src/audio/InlineAudio.css',
 );
 const css = readFileSync(CSS_PATH, 'utf8');
 

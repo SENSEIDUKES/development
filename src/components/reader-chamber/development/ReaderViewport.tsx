@@ -19,7 +19,7 @@ import { ContextInspector } from './ContextInspector';
 import { getReaderTypography } from '../shared/readerTypography';
 import { getSenTextDirection, type SenLanguageCode } from '../../../lib/language';
 import { createCodexHighlighter, splitByCodexTerms } from '../../../narrative/codexHighlighting';
-import { InlineAudioText } from './InlineAudio';
+import { InlineAudioText } from '../../../audio/InlineAudio';
 import type { SoundCueAttachment } from '../../../audio/inlineAudio';
 import type { ReaderContinueAction } from './ReaderControls/types';
 

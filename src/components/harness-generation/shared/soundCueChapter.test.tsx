@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createLibraryMediaPort } from '@seihouse/library/media';
 import { DevAudioPlaybackProvider } from '../../../audio/DevAudioPlayback';
 import { LIBRARY_BASE_MEDIA, LIBRARY_SOUND_WORDS } from '../../../host/media/libraryCatalog';
-import { InlineAudioText } from '@seihouse/sen/reader-chamber';
+import { InlineAudioText } from '@seihouse/sen/inline-audio';
 import {
   HARNESS_GENERATION_SCHEMA_VERSION,
   HarnessGenerationController,

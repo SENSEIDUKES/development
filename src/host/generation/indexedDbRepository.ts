@@ -81,13 +81,16 @@ const transactionDone = (transaction: IDBTransaction): Promise<void> => new Prom
 export class IndexedDbHarnessGenerationRepository implements HarnessGenerationRepository {
   private databasePromise?: Promise<IDBDatabase>;
 
+  /** `databaseName` keeps one host's stories apart from another's on the same site (the Workshop and the NovelExpanded app). */
+  constructor(private readonly databaseName: string = HARNESS_GENERATION_INDEXED_DB_NAME) {}
+
   private open(): Promise<IDBDatabase> {
     if (this.databasePromise) return this.databasePromise;
     if (typeof indexedDB === 'undefined') {
       return Promise.reject(new Error('Harness Generation requires IndexedDB, which is unavailable in this browser.'));
     }
     this.databasePromise = new Promise((resolve, reject) => {
-      const request = indexedDB.open(HARNESS_GENERATION_INDEXED_DB_NAME, HARNESS_GENERATION_SCHEMA_VERSION);
+      const request = indexedDB.open(this.databaseName, HARNESS_GENERATION_SCHEMA_VERSION);
       request.onupgradeneeded = () => {
         const database = request.result;
         if (!database.objectStoreNames.contains(STORE_NAME)) database.createObjectStore(STORE_NAME);

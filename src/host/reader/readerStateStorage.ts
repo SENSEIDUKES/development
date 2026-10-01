@@ -23,13 +23,16 @@ const transactionDone = (transaction: IDBTransaction): Promise<void> => new Prom
 export class IndexedDbReaderStateRepository implements ReaderStateRepository {
   private databasePromise?: Promise<IDBDatabase>;
 
+  /** `databaseName` keeps one host's reading places apart from another's on the same site. */
+  constructor(private readonly databaseName: string = READER_STATE_INDEXED_DB_NAME) {}
+
   private open(): Promise<IDBDatabase> {
     if (this.databasePromise) return this.databasePromise;
     if (typeof indexedDB === 'undefined') {
       return Promise.reject(new Error('Saving your reading place requires IndexedDB, which is unavailable in this browser.'));
     }
     this.databasePromise = new Promise((resolve, reject) => {
-      const request = indexedDB.open(READER_STATE_INDEXED_DB_NAME, DATABASE_VERSION);
+      const request = indexedDB.open(this.databaseName, DATABASE_VERSION);
       request.onupgradeneeded = () => {
         const database = request.result;
         if (!database.objectStoreNames.contains(STORE_NAME)) database.createObjectStore(STORE_NAME);

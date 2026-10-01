@@ -56,6 +56,12 @@ describe('WorkshopHome', () => {
     expect(container.querySelector('.workshop-topbar [aria-label="Model Router settings"]')).not.toBeNull();
   });
 
+  it('links to the NovelExpanded app at its own address, with no preview id of its own', () => {
+    const link = container.querySelector<HTMLAnchorElement>('.workshop-topbar a[href="/app/"]');
+    expect(link?.textContent).toBe('NovelExpanded app');
+    expect(workshopEntries.some(entry => entry.id === 'novel-expanded-app')).toBe(false);
+  });
+
   it('shows the five main Workshop sections', () => {
     const tabs = container.querySelectorAll<HTMLButtonElement>('.workshop-nav [role="tab"]');
     expect([...tabs].map((element) => element.textContent)).toEqual(['Pages', 'Rewards', 'Customization', 'Systems', 'Components']);

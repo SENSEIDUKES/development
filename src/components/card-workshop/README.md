@@ -107,7 +107,7 @@ development page never scrolls horizontally.
 The active Development presentation owners are:
 
 - `src/components/reader-chamber/development/CodexCard.tsx`
-- `src/components/reader-chamber/development/InlineAudio.tsx`
+- `src/audio/InlineAudio.tsx`
 - `src/components/reader-chamber/development/ReaderViewport.tsx`
 - `src/components/reader-chamber/development/SystemBlock.tsx`
 - `src/components/reader-chamber/development/SystemPromptMechanical.tsx`

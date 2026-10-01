@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { BookOpen } from 'lucide-react';
 import {
   getWorkshopTrack,
   getWorkshopVersionLabel,
@@ -328,7 +329,14 @@ export function WorkshopHome() {
         <div className="workshop-topbar">
           <div className="workshop-brand-row">
             <span className="workshop-brand">SEIHOUSE</span>
-            <ModelRouterGear />
+            <div className="flex items-center gap-2">
+              {/* The app itself: the four pages in a straight line, at its own address. */}
+              <a href="/app/"
+                className="workshop-touch-target inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-neutral-700/50 bg-neutral-900/80 px-3 font-sans text-xs tracking-wide text-neutral-200 shadow-lg backdrop-blur transition-colors hover:bg-neutral-800 hover:text-white">
+                <BookOpen aria-hidden="true" size={15} />NovelExpanded app
+              </a>
+              <ModelRouterGear />
+            </div>
           </div>
           <div className="workshop-nav" aria-label="Workshop sections" role="tablist" ref={navRef}>
             {WORKSHOP_SECTIONS.map((tab, index) => (

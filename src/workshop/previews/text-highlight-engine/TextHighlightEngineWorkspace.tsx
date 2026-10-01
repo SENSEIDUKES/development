@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState, type CSSProperties } from 'react';
 import { SOUND_CUE_KIND, SOUND_CUE_RULES, createMediaCatalog, type SoundCueAttachment, type SoundCuePayload } from '@seihouse/sen/audio';
-import { InlineAudioText } from '@seihouse/sen/reader-chamber';
+import { InlineAudioText } from '@seihouse/sen/inline-audio';
 import {
   MANUSCRIPT_PROTOTYPE_WORD_LIMIT, ManualCuePicker, TextHighlightEngine,
   anchorAtLevel, applyPassageEdit, countManuscriptWords, flaggedAttachments, keepAttachment, passageRange,

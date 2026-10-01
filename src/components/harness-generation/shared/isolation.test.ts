@@ -22,12 +22,12 @@ const importsOf = (file: string) => [...readFileSync(file, 'utf8').matchAll(/\bf
   .map(match => match[1]);
 
 describe('Harness Generation isolation boundary', () => {
-  it('reuses only the canonical SEN chapter contracts while keeping the legacy generation cycle and Story Seed outside the Harness', () => {
+  it('keeps the older Reader, the legacy generation cycle and Story Seed outside the Harness', () => {
     for (const file of [...sourceFiles(featureRoot), packageEntry]) {
       for (const specifier of importsOf(file)) {
-        if (/reader-chamber|reader-codex/.test(specifier)) {
-          expect(/(?:senAdapter\.ts|HarnessReaderSession\.tsx)$/.test(file), `Unexpected SEN edge: ${file}`).toBe(true);
-        }
+        // The HARNESS Reader renders Sound Cues through `@seihouse/sen/inline-audio`;
+        // nothing in the HARNESS reaches the older Reader Chamber or Codex.
+        expect(/reader-chamber|reader-codex/.test(specifier), `${relative(process.cwd(), file)} reaches the older Reader: ${specifier}`).toBe(false);
         if (/chapter-generation/.test(specifier)) {
           // chapterSignals converts accepted signals into the canonical SEN
           // block contract; it reuses the shared types only.

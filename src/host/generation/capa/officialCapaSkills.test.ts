@@ -4,13 +4,13 @@ import { HarnessGenerationController, harnessSkillKey } from '@seihouse/sen/harn
 import type { HarnessGenerationRequest, HarnessGenerationResponse } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import {
+  createOfficialCapaDefaultLoadout,
   installOfficialCapaSkills,
   OFFICIAL_CAPA_PACKAGES,
   OFFICIAL_STYLE_REFERENCES,
   type OfficialCapaArchiveLoader,
 } from './officialCapaSkills';
 import { inspectHarnessSpp } from './sppSkills';
-import { createOfficialCapaDefaultLoadout } from './storySeedHandoff';
 
 class MemoryStorage implements Pick<Storage, 'getItem' | 'setItem'> {
   private readonly values = new Map<string, string>();

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { type BlueprintGenerationPayload } from '@seihouse/sen/story-seed';
-import { requestArcRoadmapExtension, requestWorldBlueprint } from '../../../host/story-seed/blueprintGenerationClient';
+import { BlueprintRequestError, requestArcRoadmapExtension, requestWorldBlueprint } from '../../../host/story-seed/blueprintGenerationClient';
 
 const payload: BlueprintGenerationPayload = {
   storySeed: {
@@ -78,5 +78,15 @@ describe('Adding arcs through the Blueprint client', () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ error: 'The model planned 1 of the 2 new arcs. Nothing was added; try again.' }), { status: 502 })));
     await expect(requestArcRoadmapExtension(extension, 'development-token')).rejects.toThrow('The model planned 1 of the 2 new arcs.');
     await expect(requestArcRoadmapExtension(extension, ' ')).rejects.toThrow('before adding arcs');
+  });
+});
+
+describe('Blueprint generation client refusals', () => {
+  it('carries the server\'s status, so a host can ask again for a token the server did not accept', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ error: 'A valid Development Story Seed access token is required.' }), { status: 401 })));
+
+    const refusal = await requestWorldBlueprint(payload, 'wrong-token').catch((error: unknown) => error);
+    expect(refusal).toBeInstanceOf(BlueprintRequestError);
+    expect(refusal).toMatchObject({ status: 401, message: 'A valid Development Story Seed access token is required.' });
   });
 });

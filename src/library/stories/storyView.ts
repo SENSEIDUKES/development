@@ -36,3 +36,13 @@ export function harnessStoryDisplay(state: HarnessWorkspaceState, storyId: strin
     tags: Array.isArray(tags) ? tags.filter((tag): tag is string => typeof tag === 'string') : [],
   };
 }
+
+/** The reader's stories as Home cards, newest first. */
+export function storyHomeWorlds(state: HarnessWorkspaceState): StoryDetailDisplay[] {
+  return [...state.stories]
+    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
+    .flatMap(story => {
+      const display = harnessStoryDisplay(state, story.id);
+      return display ? [display] : [];
+    });
+}

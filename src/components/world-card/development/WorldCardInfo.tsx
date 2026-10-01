@@ -13,13 +13,14 @@ import './world-card.css';
 
 /**
  * Info page: the world's full overview — cover, byline, states, tags,
- * synopsis, the Chapters card (its only reading action), Open Codex, and the
- * Information row that opens the world's story information dialog.
+ * synopsis, the Chapters card (its only reading action, or Start Story while a
+ * story the host can start has no chapters), Open Codex, and the Information
+ * row that opens the world's story information dialog.
  * Every value and destination comes from the host; unknown values are omitted.
  * This is the public view a reader sees. It shows no owner or library states
  * (visibility, draft, acquisition); the owner's view is a separate Story View.
  */
-export function WorldCardInfo({ story, onRead, onOpenCodex, readingPosition }: WorldCardInfoProps) {
+export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, readingPosition }: WorldCardInfoProps) {
   const detail = 'author' in story ? story : undefined;
   const coverUrl = story.imageUrl?.trim() || undefined;
   const creatorName = story.creatorName?.trim() || detail?.author?.trim();
@@ -73,7 +74,7 @@ export function WorldCardInfo({ story, onRead, onOpenCodex, readingPosition }: W
       <WorldSynopsis key={story.id} storyId={story.id} synopsis={detail?.synopsis?.trim()} />
 
       <ChaptersCard story={story} currentArc={detail?.currentArc?.trim()} coverUrl={coverUrl}
-        onRead={onRead} readingPosition={readingPosition} />
+        onRead={onRead} onStart={onStart} readingPosition={readingPosition} />
 
       {(onOpenCodex || detail) && <div className="world-card-info-tools">
         {onOpenCodex && <StoryToolCard icon="navigation-book" title="Open Codex"
@@ -137,16 +138,20 @@ function WorldSynopsis({ storyId, synopsis }: { storyId: string; synopsis?: stri
   </section>;
 }
 
-/** The page's only reading action: one tap target wired to the host's reading action. */
-function ChaptersCard({ story, currentArc, coverUrl, onRead, readingPosition }: {
+/**
+ * The page's only reading action: one tap target wired to the host's reading
+ * action, or to its start action while the story has no chapters yet.
+ */
+function ChaptersCard({ story, currentArc, coverUrl, onRead, onStart, readingPosition }: {
   story: WorldCardInfoProps['story']; currentArc?: string; coverUrl?: string;
-  onRead?: () => void; readingPosition?: WorldCardInfoProps['readingPosition'];
+  onRead?: () => void; onStart?: () => void; readingPosition?: WorldCardInfoProps['readingPosition'];
 }) {
   const count = Number.isSafeInteger(story.chapterCount) && story.chapterCount > 0 ? story.chapterCount : 0;
   const resumeChapter = readingPosition && Number.isSafeInteger(readingPosition.chapterNumber) && readingPosition.chapterNumber > 0
     ? readingPosition.chapterNumber : undefined;
-  const readable = Boolean(onRead) && count > 0;
-  const actionLabel = resumeChapter ? `Continue · Ch. ${resumeChapter}` : 'Start Reading';
+  const action = count > 0 ? onRead : onStart;
+  const readable = Boolean(action);
+  const actionLabel = count === 0 ? 'Start Story' : resumeChapter ? `Continue · Ch. ${resumeChapter}` : 'Start Reading';
   const countLabel = count === 0 ? 'No chapters yet' : `${count.toLocaleString()} ${count === 1 ? 'Chapter' : 'Chapters'}`;
   // LibraryCard wraps `media` in its own media slot; the slot is styled by .world-card-info-chapters.
   const media = coverUrl ? <WorldCardCover src={coverUrl} title={story.title} decorative compact /> : undefined;
@@ -155,9 +160,7 @@ function ChaptersCard({ story, currentArc, coverUrl, onRead, readingPosition }: 
     {currentArc && <p className="world-card-info-chapters-arc">Current arc · {currentArc}</p>}
     {readable
       ? <span className="world-card-info-chapters-cue" aria-hidden="true">
-          {resumeChapter
-            ? <span className="whitespace-nowrap">Continue · Ch. {resumeChapter}<ArrowRight size={18} /></span>
-            : <span className="whitespace-nowrap">Start Reading<ArrowRight size={18} /></span>}
+          <span className="whitespace-nowrap">{actionLabel}<ArrowRight size={18} /></span>
         </span>
       : count > 0 && <span className="world-card-info-chapters-unavailable">Reading isn’t available here yet</span>}
   </div>;
@@ -165,7 +168,7 @@ function ChaptersCard({ story, currentArc, coverUrl, onRead, readingPosition }: 
 
   return <div className="world-card-info-chapters-stack">
     {readable
-      ? <LibraryCard {...shared} interactive onClick={() => onRead!()}
+      ? <LibraryCard {...shared} interactive onClick={() => action!()}
           aria-label={`${actionLabel}: ${story.title}, ${countLabel}${currentArc ? `, current arc ${currentArc}` : ''}`}>
           {content}
         </LibraryCard>

@@ -5,6 +5,8 @@ import { pendingChapterDirection } from '../shared/chapterDirection';
 /** One story's next-chapter write, shared by every surface that can start it. */
 export interface NextChapterWriter {
   writing: boolean;
+  /** The chapter being written. It stays set after the write, so a closing screen keeps its number. */
+  writingChapter?: number;
   /** Why the last write did not save a chapter. A chosen direction is kept for the retry. */
   error: string;
   /** The chapter the last write saved. */
@@ -23,6 +25,7 @@ export interface NextChapterWriter {
  */
 export function useNextChapterWriter(controller: HarnessGenerationController, storyId: string, generate?: () => Promise<void>): NextChapterWriter {
   const [writing, setWriting] = useState(false);
+  const [writingChapter, setWritingChapter] = useState<number>();
   const [error, setError] = useState('');
   const [written, setWritten] = useState<number>();
 
@@ -31,7 +34,7 @@ export function useNextChapterWriter(controller: HarnessGenerationController, st
     if (!generate || !story) return undefined;
     const chapterNumber = story.head.nextChapterNumber;
     const retry = pendingChapterDirection(story) ? 'Its direction is kept, so you can try again.' : 'You can try again.';
-    setWriting(true); setError(''); setWritten(undefined);
+    setWriting(true); setWritingChapter(chapterNumber); setError(''); setWritten(undefined);
     try {
       await generate();
       const latest = controller.snapshot();
@@ -50,5 +53,5 @@ export function useNextChapterWriter(controller: HarnessGenerationController, st
   }, [controller, generate, storyId]);
 
   const reset = useCallback(() => { setError(''); setWritten(undefined); }, []);
-  return { writing, error, written, write, reset };
+  return { writing, writingChapter, error, written, write, reset };
 }

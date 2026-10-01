@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { AGENTS } from '../../../lib/agents';
 import { LIBRARY_BASE_MEDIA } from '../../../host/media/libraryCatalog';
 import { HarnessGenerationWorkspace as HarnessGenerationSurface } from '@seihouse/library/generation';
 import { HarnessGenerationHttpClient } from '../../../host/generation/httpClient';
@@ -33,21 +34,25 @@ export function HarnessGenerationWorkspace() {
     save: (state: Parameters<typeof repository.save>[0]) => repository.save(state),
   }), [repository]);
   const [readerStateRepository] = useState(() => new IndexedDbReaderStateRepository());
-  // The open Reader story lives in the URL so a reload returns to the same story.
+  // The open Reader story and World Info page live in the URL (`read`, `info`)
+  // so a reload returns to the same page.
   const [readingStoryId, setReadingStoryId] = useState(() => new URLSearchParams(window.location.search).get('read') ?? undefined);
+  const [infoStoryId, setInfoStoryId] = useState(() => new URLSearchParams(window.location.search).get('info') ?? undefined);
   // `story` opens a novel on arrival (Library Create, the Story Seed handoff);
   // `focus=next-chapter` lands on its Generate Chapter panel.
   const [arrival] = useState(() => {
     const query = new URLSearchParams(window.location.search);
     return { storyId: query.get('story') ?? undefined, focus: query.get('focus') === 'next-chapter' ? 'next-chapter' as const : undefined };
   });
-  const changeReadingStory = useCallback((storyId: string | undefined) => {
-    setReadingStoryId(storyId);
+  const changeStoryPage = useCallback((param: 'read' | 'info', storyId: string | undefined) => {
+    (param === 'read' ? setReadingStoryId : setInfoStoryId)(storyId);
     const url = new URL(window.location.href);
-    if (storyId) url.searchParams.set('read', storyId);
-    else url.searchParams.delete('read');
+    if (storyId) url.searchParams.set(param, storyId);
+    else url.searchParams.delete(param);
     window.history.replaceState(window.history.state, '', url);
   }, []);
+  const changeReadingStory = useCallback((storyId: string | undefined) => changeStoryPage('read', storyId), [changeStoryPage]);
+  const changeInfoStory = useCallback((storyId: string | undefined) => changeStoryPage('info', storyId), [changeStoryPage]);
   const [modelAdapter] = useState(() => new HarnessGenerationHttpClient());
   const [chapterModel, setChapterModel] = useModelPreference('chapters');
   const [saved] = useState(() => {
@@ -101,6 +106,7 @@ export function HarnessGenerationWorkspace() {
           : <><PreservedWorkspaceNotice repository={repository} refreshKey={preservedRefresh} />
           <HarnessGenerationSurface repository={surfaceRepository} readerStateRepository={readerStateRepository}
         readingStoryId={readingStoryId} onReadingStoryChange={changeReadingStory}
+        infoStoryId={infoStoryId} onInfoStoryChange={changeInfoStory} writingAgent={AGENTS.VERSA}
         initialStoryId={arrival.storyId} initialFocus={arrival.focus}
         modelAdapter={modelAdapter} storySeedSource={storySeedSource} installedSkills={installedSkills}
         showHarnessInternals

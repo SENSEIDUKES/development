@@ -100,24 +100,32 @@ when its words change. That means:
   right, so its categories, and what the model is told to document, can be designed
   on purpose.
 
-## Where we are (2026-09-29)
+## Where we are (2026-10-01)
 
 Update this section whenever it changes.
 
 - **Built:**
   - Chapters are narration plus Sound Cues in the tiny SEN language (#295).
   - Each chapter asks for an exact paragraph count from 50 to 100 (#296).
-- **Works:** a Story Seed hands off to a HARNESS story.
-- **In progress:** World Card refinement (#297–#299), part of the first step below.
+  - **The way in works end to end in the Workshop:** Story Seed → World
+    Blueprint → **Start Story** → the story's **World Info** page → **Start
+    Story** → the **Reader Chamber**, where Chapter 1 is written under the Aura
+    Veil and opens when it is saved. Returning readers get **Continue · Ch. N**.
+  - **The Reader Chamber is just reading:** chapters sit on the Text Highlight
+    Engine (read-only), with only Sound Cues active. Next writes the next
+    chapter; Fate directs it. No Codex, Mind Palace, reading settings, reader
+    translation, read-aloud or read marks.
+  - **The Aura Veil has two screens:** one narrative manifestation and one media
+    reveal. The narrative one shows while a chapter is written.
+  - **The memory call after each chapter is off** in the Library; it runs only
+    on request until the Codex returns.
 - **Not tested yet:** real generation with a real model, on the Vercel preview.
 - **Not connected yet:**
-  - A generated chapter still opens in the old Reader Chamber
-    (`HarnessReaderSession`), with the Codex sheet and Codex term highlighting.
-  - After each chapter, a separate memory call still runs and feeds the Codex.
   - The CAPA skill and media slots still sit on the Harness Generation page, not in
     Story Settings.
-  - The Text Highlight Engine (the manuscript lab) is not connected to generation.
-    The goal is for it to become the Reader Chamber, with only Sound Cues active.
+  - The World Info page has no cover art yet: the media reveal is not connected
+    to a cover generator.
+  - The Text Highlight Engine's tools (fixes, cue placement) are not in the Reader.
 - **Not rebuilt yet:**
   - dialogue speakers;
   - soundscapes;
@@ -128,9 +136,9 @@ Update this section whenever it changes.
 ## What comes next
 
 1. **Refine the creation-to-reading interaction** in the Workshop: Story Seed → Story
-   View → Reader Chamber, including the manifestation sequence and World Cards. Design
-   it for the new path (Story Seed → HARNESS → new reader), not the old Chapter
-   Generation pipeline.
+   View → Reader Chamber, including the manifestation sequence and World Cards. The
+   new path (Story Seed → HARNESS → new reader) is connected; what remains is how it
+   looks and feels.
 2. **Build the NovelExpanded app** inside this repository.
    - It gets its own address, separate from the Workshop.
    - It shows only the four pages and only current pieces.
@@ -145,8 +153,8 @@ Update this section whenever it changes.
 | --- | --- |
 | NovelExpanded app | The product at NovelExpanded.com: the four pages. Not built yet. |
 | Story Seed / World Blueprint | Where a story is created (`?preview=story-seed`). |
-| Story View | The story's own page: cover art, the story, Enter. |
-| Reader Chamber | Where chapters are read. Today `?preview=reader-chamber`; its future is built on the Text Highlight Engine. |
+| Story View | The story's own page: cover art, the story, Enter. Built today as the World Info page (`WorldCardInfo`), where Start Story or Start Reading leads into the Reader Chamber. |
+| Reader Chamber | Where chapters are read: a HARNESS story's chapters on the Text Highlight Engine with Sound Cues (`HarnessReaderSession`). The older Reader Chamber preview (`?preview=reader-chamber`) is not part of this path. |
 | Text Highlight Engine (manuscript lab) | The manuscript editor at `?preview=text-highlight-engine`. |
 | Story Settings | The only place a user meets the HARNESS: language, reading mode, CAPA skills and media. |
 | Harness Generation | The developer instrument for the HARNESS (`?preview=harness-generation`). Never a product page. |

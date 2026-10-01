@@ -66,6 +66,16 @@ it('keeps connected media off the Info page and reports each supplied destinatio
   expect(container.querySelector('[aria-label^="Open Codex"]')).toBeNull();
   expect(container.querySelector('[aria-label^="Fate Timeline"]')).toBeNull();
 
+  // A new story with no chapters: the Chapters card starts it.
+  act(() => root.render(<LibraryPresentationProvider>
+    <WorldCardStage view="info" state={{ ...state, reading: 'new-story' }} reference={false} onAction={onAction} />
+  </LibraryPresentationProvider>));
+  const start = container.querySelector<HTMLElement>('[data-world-info-chapters="action"]')!;
+  expect(start.textContent).toContain('No chapters yet');
+  expect(start.textContent).toContain('Start Story');
+  act(() => start.click());
+  expect(onAction).toHaveBeenLastCalledWith('Start story The Last Lotus of the Jade Empire');
+
   act(() => root.unmount());
   container.remove();
 });

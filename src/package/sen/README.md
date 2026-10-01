@@ -32,6 +32,19 @@ There is no `chapter-generation` or `codex-cards` compatibility entry. Legacy
 Chapter Generation was retired; HARNESS is the one canonical generated-story
 owner.
 
+**0.9.0 (breaking):** `HarnessReaderSession` is just reading. Each chapter's
+paragraphs sit on the read-only Text Highlight Engine with their Sound Cues
+(`InlineAudioText`); Previous, Next, Next at the newest chapter and the Fate
+page (its header's Fate button) stay. The `installedSkills` prop is removed, and
+with it the packaged Reader Chamber, Codex sheet, Mind Palace, reading
+settings, reader translation, read-aloud and read marks in this Reader. New:
+`renderWriting(writing: HarnessReaderWriting)`, the host's screen while a
+chapter is written (rendered on every pass so it can animate out);
+`startOnOpen`, which begins Chapter 1 as the Reader opens for a story with no
+chapters; `NextChapterWriter.writingChapter`; and the controller option
+`chapterMemory: 'after-commit' | 'on-request'` (default `after-commit`), which
+lets a host read story memory only on request.
+
 **0.8.0 (breaking):** chapters speak the tiny SEN language, starting with
 narration and Sound Cues. The writer wraps the one to five words where a sound
 happens (`[[n|words]]`) and names it from the story's sound words

@@ -288,6 +288,28 @@ it('makes the Chapters card the single reading action and names the known readin
   expect(container.querySelector('[data-world-info-chapters]')?.textContent).toContain('No chapters yet');
 });
 
+it('turns the Chapters card into Start Story for a story with no chapters that the host can start', () => {
+  const onRead = vi.fn();
+  const onStart = vi.fn();
+  act(() => root.render(<WorldCardInfo story={{ ...infoStory, chapterCount: 0, currentArc: '' }} onRead={onRead} onStart={onStart} />));
+  const start = container.querySelector<HTMLElement>('[role="button"][data-world-info-chapters="action"]')!;
+  expect(start.textContent).toContain('No chapters yet');
+  expect(start.textContent).toContain('Start Story');
+  expect(start.getAttribute('aria-label')).toBe('Start Story: The Last Lotus, No chapters yet');
+  act(() => start.click());
+  expect(onStart).toHaveBeenCalledTimes(1);
+  expect(onRead).not.toHaveBeenCalled();
+
+  // Once the story has chapters, the same card reads them; Start Story is gone.
+  act(() => root.render(<WorldCardInfo story={infoStory} onRead={onRead} onStart={onStart} />));
+  const read = container.querySelector<HTMLElement>('[role="button"][data-world-info-chapters="action"]')!;
+  expect(read.textContent).toContain('Start Reading');
+  expect(read.textContent).not.toContain('Start Story');
+  act(() => read.click());
+  expect(onRead).toHaveBeenCalledTimes(1);
+  expect(onStart).toHaveBeenCalledTimes(1);
+});
+
 it('shows Open Codex only when supplied and an Information row that opens the story information', async () => {
   const onOpenCodex = vi.fn();
   act(() => root.render(<WorldCardInfo story={infoStory} onOpenCodex={onOpenCodex} />));

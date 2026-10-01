@@ -360,9 +360,9 @@ export const workshopEntries: WorkshopEntry[] = [
     owner: 'sen',
     status: 'active',
     title: 'Harness Generation',
-    description: 'Standalone checkpoint-first novel core: a premise-first Story Foundation, one model call per chapter written in the tiny SEN language (narration plus Sound Cues the writer marks on its own words), independent IndexedDB persistence, tolerant prose acceptance, semantic-event ledger, and continuity directed one chapter at a time from the Reader\'s Fate page, in Regular Reader or Fate Survival mode.',
+    description: 'Standalone checkpoint-first novel core: a premise-first Story Foundation, one model call per chapter written in the tiny SEN language (narration plus Sound Cues the writer marks on its own words), independent IndexedDB persistence, tolerant prose acceptance, semantic-event ledger, and continuity directed one chapter at a time from the Reader\'s Fate page, in Regular Reader or Fate Survival mode. A story opens on its World Info page; Start Story writes Chapter 1 under the Aura Veil in a reading-only Reader on the Text Highlight Engine.',
     category: 'other',
-    version: 'v1.2',
+    version: 'v1.3',
     source: {
       repository: 'SENSEIDUKES/development',
       path: 'src/components/harness-generation/',
@@ -375,9 +375,9 @@ export const workshopEntries: WorkshopEntry[] = [
     owner: 'library',
     status: 'active',
     title: 'Chapter Generation Manifestation',
-    description: 'Aura Veil state simulator with two workshop areas — the full-shell Aura Veil (narrative and media manifestation modes, driven by one task-card format) and a focused standalone Manifestation Reveal preview for the agnostic sealed → unsealing → revealed mechanic and its current celestial scroll vessel.',
+    description: 'Aura Veil state simulator with two workshop areas — the full-shell Aura Veil (two screens: one narrative manifestation and one media reveal, driven by one task-card format; the HARNESS Reader shows the narrative screen while it writes a chapter) and a focused standalone Manifestation Reveal preview for the agnostic sealed → unsealing → revealed mechanic and its current celestial scroll vessel.',
     category: 'animations',
-    version: 'v1.6',
+    version: 'v1.7',
     source: {
       repository: 'SENSEIDUKES/Light-Novels',
       path: 'src/components/AILoadingVeil.tsx',
@@ -453,8 +453,8 @@ export const workshopEntries: WorkshopEntry[] = [
   },
   {
     id: 'world-card', section: 'components', owner: 'library', status: 'active', title: 'World Card',
-    description: 'The full World Card on Home, the Info page a reader opens, and the Compact “Your worlds” tile on Create. Home, the world detail and Create render these components directly.',
-    category: 'other', version: 'v1.0',
+    description: 'The full World Card on Home, the Info page a reader opens (Start Story for a story with no chapters yet), and the Compact “Your worlds” tile on Create. Home, the world detail, Create and the HARNESS story path render these components directly.',
+    category: 'other', version: 'v1.1',
     source: { repository: 'SENSEIDUKES/development', path: 'src/components/world-card/', lastCompared: '2026-09-27' },
   },
   {

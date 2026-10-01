@@ -25,12 +25,13 @@ existing Chapter Generation feature.
 | Field | Value |
 | --- | --- |
 | Replica creation date | 2026-08-29 |
-| Last Workshop update | 2026-09-29 |
+| Last Workshop update | 2026-10-01 |
 | Last source comparison | 2026-09-12 — verified the creative author direction in `Light-Novels/src/server/prompts.ts` on `main` before extracting the Author skill |
-| Lifecycle status | Reader-directed continuation (Fate page) with a derived SEN Reader adapter |
+| Lifecycle status | Reader-directed continuation (Fate page) in a reading-only Reader on the Text Highlight Engine |
 
 ### History
 
+- **2026-10-01 (The way in, the new Reader, one veil):** A new story now goes Story Seed → World Blueprint → **World Info** → **Reader**. **World Info:** after Start Story, the Story Seed Workshop host opens `?preview=harness-generation&story=<id>&info=<id>`, and the Library surface shows the story's World Info page before its panel (`StoryDetailScreen` with `harnessStoryDisplay`: title, genre, the Seed's tags, the Blueprint logline or else the premise, and the chapter count; no invented art, author or arc). A story with no chapters offers **Start Story** (the World Info page's new `onStart`): the Reader opens and begins Chapter 1 at once (`startOnOpen`; Regular Reader writes it, Fate Survival asks for its direction first). A story with chapters offers Start Reading, or Continue · Ch. N from the host's Reader state. Back from the Reader returns to World Info, and Back from World Info to the panel, which gains a World Info button; "Open in SEN" is now "Open Reader Chamber". The Workshop keeps both pages in the URL (`info`, `read`). **Reader:** `HarnessReaderSession` is rebuilt as just reading. Each paragraph sits on the read-only Text Highlight Engine (block `c{n}-p{i}`) with its Sound Cues (`InlineAudioText`). It keeps Previous and Next, Next at the newest chapter (write, direct, or see how it ended), the Fate page from its header, and the reading place in host Reader state. The packaged Reader Chamber, Codex sheet, Mind Palace, reading settings and themes, reader translation, read-aloud and read marks are gone from it; their saved records are left untouched. With `renderWriting` the host shows a screen while a chapter is written: the Library shows the Aura Veil with the host's agent (`writingAgent`; the Workshop passes Versa), naming the chapter without a percentage it cannot know. **Memory:** the controller takes `chapterMemory: 'after-commit' | 'on-request'`. The Library uses `on-request`, because the Codex waits: the separate memory call no longer runs after each chapter, and the inspection panel's "Recover memory from saved prose" runs it on request. Chapters keep their recaps and Story Seed foundation for continuity. SEN 0.9.0, Library 0.9.0.
 - **2026-09-29 (Basic paragraph counter):** The most basic chapter length control, with no story styles yet. For every chapter the HARNESS rolls an exact paragraph count from one range, 50–100 (`HARNESS_CHAPTER_PARAGRAPH_RANGE`, `harnessChapterParagraphTarget`). The roll is seeded by story and chapter number, so chapters vary in length while a retry keeps its number; it is frozen on the Immediate Chapter Request as `chapterScale.paragraphs`. The response schema requires exactly that many paragraphs (`minItems` = `maxItems`), the request says "exactly N paragraph entries" beside the unchanged word range, and `http.ts` refuses a count that is not a whole number from 1 to 600. A chapter that misses is kept, never retried, and flagged (`chapter_paragraphs_off_target`, `metrics.paragraphTarget`); the Workshop chapter row shows the count asked beside the count returned. Schema 23 upgrades schema 22 unchanged. Styles with their own ranges come after this is proven with a real model.
 - **2026-09-29 (Tiny SEN language, part 1: the switch):** Chapters now speak the tiny SEN language, with narration and Sound Cues only. **Writer:** the model wraps the one to five words where a sound happens (`[[n|words]]`) and names it in a flat list (`soundCues: [{mark, sound, energy?}]`), choosing only from the story's sound words. The new managed CAPA slot **Sound Cues** (`media-loadout`, after Translation) carries SEN's bundled `SEN_SOUND_CUES_SKILL`; the story's frozen words close it as an example list whose header says the lines show how to mark and are not text for the chapter. A story with no sound words gets no section and no schema field. **Response contract:** `buildHarnessChapterResponseSchema(words)` drops dialogue, manifestations, System Panels, soundscapes and creature events; `soundCues` follows `paragraphs` with the words as an enum and a cap of ten; the contract keeps its no-invented-IDs guard and carries no Sound Cue wording. `http.ts` checks the words against the pack limits and answers 400 otherwise. **HARNESS:** media is frozen before CAPA; acceptance strips every mark from every reply string, then `placeSoundCues` places each cue on whole words (1–5, never in a system line, no overlap, first ten in reading order), picks that word's recording (matching Energy first, stable rotation), and stores a `SoundCueAttachment` span on paragraph `c{n}-p{i}`; set-aside cues become plain warnings. **Storage:** schema 22; `HarnessChapter` keeps paragraphs, prose and metrics, gains `soundCues`, loses `blocks`, `audioMoments` and `soundscapes`; by the product owner's decision there is no upgrade step, so earlier workspaces are kept untouched and the page starts fresh. **Reader:** one narration block per paragraph with its Sound Cues; the memory-based speaker guess is gone until dialogue is rebuilt. `acceptedChapterMedia.ts` and the World Cue intent system are deleted. SEN 0.8.0, Library 0.7.0.
 - **2026-09-29 (Tiny SEN language, part 1: foundation):** First half of narration + Sound Cues in the tiny SEN language; how chapters are written is unchanged until part 2. **Sound words:** a Sound Cue recording now names the event it answers (`metadata.sound`, e.g. "blade drawn"), and a catalog declares its words with a 1–5 word example each (`SoundWord`, `validateSoundWords`, `soundVocabulary`). The default library's 92 Sound Cue recordings carry 30 starter words (`src/audio/data/library-sounds.v1.json`) and Energy read from their names. **Studio tags:** SENSEI's tagging system (`src/audio/audioTags.ts`): a Sound Cue's parent is its cue category, a Soundscape's parent is ADVENTURE, AMBIENT, EMOTIONS, FIGHTING, WAR or SPECIAL, and both share Tone, Energy and Tension. **Packs:** a Sound Cue Pack declares `sounds`, every recording names a declared word, and an equipped pack replaces the default Sound Cue set (words and recordings); the frozen Media Loadout carries the attempt's words and the Media Loadout panel lists them. **Marks:** `src/narrative/marks.ts` reads and removes `[[n|words]]` marks, tolerating the slips a writer makes, for part 2's contract. See `MEDIA_LOADOUT.md` and `src/audio/README.md`.
@@ -387,9 +388,11 @@ generic SEN UI primitives and accept a neutral, host-injected Story Seed source,
 Story Seed-to-Foundation adapter. HARNESS reuses Chapter Generation's public
 SEN block normalization and accepted-media contracts, but not its legacy
 generation cycle, prompts, planning, processing, or persistence.
-`shared/senAdapter.ts` remains the direct Reader contract edge, and
-`development/HarnessReaderSession.tsx` composes the existing packaged Reader and
-Codex. Neither component owns a second persistence path. SEN stays provider-neutral.
+`development/HarnessReaderSession.tsx` is the Reader: chapters on the read-only
+Text Highlight Engine with their Sound Cues, and the Fate page. It owns no
+second persistence path; the reading place is host Reader state.
+`shared/senAdapter.ts` still derives the SEN story the controller's reader-edit
+path uses, though the Reader no longer edits. SEN stays provider-neutral.
 
 ## Durable generation behavior
 
@@ -404,8 +407,9 @@ Codex. Neither component owns a second persistence path. SEN stays provider-neut
 5. Atomically append a chapter with its paragraphs and placed Sound Cues,
    attempt receipt, and updated story head.
 6. Run the separate memory extraction on the committed prose when the host
-   adapter supports it; its failure leaves the chapter committed and retryable
-   from the inspection panel.
+   adapter supports it, unless the host reads memory only on request
+   (`chapterMemory: 'on-request'`, which the Library uses); its failure leaves
+   the chapter committed and retryable from the inspection panel.
 
 Only a committed chapter enters the next context snapshot.
 
@@ -414,8 +418,8 @@ older schema version or an unreadable shape; schema 22 deliberately upgrades
 nothing earlier) is still reset for this build, but
 the host IndexedDB repository first copies the untouched record to a
 `preserved:v<version>:<time>` key in the same transaction, and the Workshop
-lists it with a download control. Reader state (place, bookmarks, settings) is
-stored separately and is never affected by a HARNESS reset. If storage fails,
+lists it with a download control. Reader state (the reading place) is stored
+separately and is never affected by a HARNESS reset. If storage fails,
 the controller retains the completed local checkpoint, blocks continuation,
 and retries persistence without another model call.
 

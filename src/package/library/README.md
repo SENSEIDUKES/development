@@ -5,6 +5,16 @@ SEN engine and the two UI packages. Library owns SEIHouse users, products,
 economy, community and business policy. Authentication enforcement, secrets,
 durable ledgers and concrete infrastructure stay in the host/backend.
 
+**0.9.0:** requires `@seihouse/sen` 0.9.0. A HARNESS story opens on its World
+Info page: `HarnessGenerationWorkspace` takes `infoStoryId` /
+`onInfoStoryChange` (host-controlled like `readingStoryId`) and `writingAgent`,
+the agent the Aura Veil shows while the Reader writes a chapter. Its controller
+reads story memory only on request. `WorldCardInfo` and `StoryDetailScreen`
+take `onStart`, which turns an empty story's Chapters card into Start Story.
+The Development `AILoadingVeil` takes `progress` (`null` when unknown) and has
+two screens: every narrative operation shows the same narrative manifestation,
+every media operation the same reveal.
+
 **0.8.0 (breaking):** `@seihouse/library/world-card` no longer exports
 `WorldCardCompact`, `WorldCardMini`, or `WorldCardMiniProps`. Use
 `WorldCard face="compact"` for creator tiles. The unused mock Mini row was

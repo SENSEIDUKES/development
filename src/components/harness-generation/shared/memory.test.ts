@@ -4,7 +4,7 @@ import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemor
 import { buildCanonicalStoryView } from '@seihouse/sen/harness-generation';
 import { createHarnessSenStory } from '@seihouse/sen/harness-generation';
 import { resolveHarnessEntity } from '@seihouse/sen/harness-generation';
-import { type HarnessGenerationModelAdapter, type HarnessGenerationResponse, type HarnessMemoryRecoveryRequest } from '@seihouse/sen/harness-generation';
+import { type HarnessGenerationControllerOptions, type HarnessGenerationModelAdapter, type HarnessGenerationResponse, type HarnessMemoryRecoveryRequest } from '@seihouse/sen/harness-generation';
 
 // Synthetic regression prose, not the user's saved Start Now chapter.
 const prose = [
@@ -29,7 +29,7 @@ const reply = (body: unknown): HarnessGenerationResponse => ({
   rawProviderResponse: JSON.stringify(body), providerReceipt: { provider: 'gemini', model: 'fixture',
     generatedAt: '2026-09-05T12:00:00Z', usage: { source: 'unavailable' } },
 });
-const setup = async (rich = false) => {
+const setup = async (rich = false, options: Pick<HarnessGenerationControllerOptions, 'chapterMemory'> = {}) => {
   const repository = new InMemoryHarnessGenerationRepository();
   // The chapter call returns prose only. The automatic post-commit extraction
   // returns either evidenced events or four generic summaries; later explicit
@@ -42,7 +42,7 @@ const setup = async (rich = false) => {
     generate, recoverMemory,
     arcOperation: async request => reply({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 100 }] }, destinedEnding: 'Bring the story to its true conclusion.' }),
   };
-  const controller = new HarnessGenerationController({ repository, modelAdapter });
+  const controller = new HarnessGenerationController({ repository, modelAdapter, ...options });
   await controller.hydrate();
   const story = await controller.createStory({ premise: 'A traveler meets a dungeon intelligence.', identities: [
     { kind: 'character', name: 'Aria', aliases: ['Dungeon Voice'], evidence: 'Aria is the dungeon intelligence.' },
@@ -54,6 +54,21 @@ const setup = async (rich = false) => {
 };
 
 describe('Useful, evidenced chapter memory', () => {
+  it('reads memory after every chapter by default, and only when asked for a host that chose on-request', async () => {
+    const automatic = await setup(true);
+    expect(automatic.recoverMemory).toHaveBeenCalledTimes(1);
+
+    const onRequest = await setup(true, { chapterMemory: 'on-request' });
+    // The chapter is saved and returned without a memory call.
+    expect(onRequest.chapter.prose).toBe(prose);
+    expect(onRequest.recoverMemory).not.toHaveBeenCalled();
+    expect(onRequest.controller.snapshot().memoryRecoveries ?? []).toEqual([]);
+    // Asked for, the same extraction reads the saved prose.
+    await onRequest.controller.recoverChapterMemory(onRequest.chapter.id, 'fixture');
+    expect(onRequest.recoverMemory).toHaveBeenCalledTimes(1);
+    expect(onRequest.recoverMemory.mock.calls[0][0].prose).toBe(prose);
+  });
+
   it('retires a previous fallback when replay now interprets the same event successfully', async () => {
     const { controller, repository, modelAdapter, story } = await setup(true);
     const state = controller.snapshot();

@@ -13,7 +13,7 @@ folder; the Info page composes its cover face.
 - **Workshop preview:** `?preview=world-card` (Components → World Card)
 - **Package:** `@seihouse/library/world-card` (owner `library`)
 - **Created:** 2026-09-27
-- **Last Workshop update:** 2026-09-30
+- **Last Workshop update:** 2026-10-01
 - **Last source comparison:** 2026-09-27
 - **Status:** active
 
@@ -167,8 +167,11 @@ pieces rather than page-local cards or buttons:
     `LibraryCard` button (Enter and Space work) with a **Start Reading →** cue.
   - The cue reads **Continue · Ch. N →** only when the host supplies
     `readingPosition`.
-  - Without `onRead`, or with zero chapters, the card is static text. It is not
-    focusable and shows no arrow.
+  - With zero chapters and the host's `onStart`, the same card is a
+    **Start Story →** button: the host starts the story (the Library's HARNESS
+    host opens the Reader and writes Chapter 1).
+  - Without the matching action (`onRead` with chapters, `onStart` without),
+    the card is static text. It is not focusable and shows no arrow.
   - There is no hero read button and no fixed bottom bar.
 - **Secondary tools.** Open Codex is a quieter `LibraryCard` row led by the
   Library's own book artwork, shown only when the host supplies its handler.
@@ -190,8 +193,9 @@ pieces rather than page-local cards or buttons:
   a host wires those actions.
 
 The Workshop's States section adds **Info destinations** (reading and Codex /
-reading only / none) and **Reading position** (not started /
-Chapter 7). These preview-only mocks report through the Workshop status line.
+reading only / none) and **Reading position** (not started / Chapter 7 / a new
+story with no chapters, which shows Start Story). These preview-only mocks
+report through the Workshop status line.
 
 ## Full card creator lettering and bottom badge
 
@@ -330,6 +334,15 @@ Copy `development/`, `shared/` and `development/world-card.css`. Then:
 Leave behind the Workshop preview, its sample data and the `reference/` folder.
 
 ## Workshop history
+
+- **2026-10-01** — **Start Story.** `WorldCardInfoProps` (and
+  `StoryDetailScreen`) take `onStart`. A story with no chapters whose host can
+  start it shows its Chapters card as **Start Story →**; with chapters, the card
+  reads them as before. The Library's HARNESS host is the first to use it: a
+  story just started from its Story Seed and Blueprint opens on this page, and
+  Start Story takes the reader into the Reader while Chapter 1 is written.
+  The Workshop's Reading position control gains **New story, no chapters
+  (Start Story)**.
 
 - **2026-09-30** — Info page rebuilt to show everything at a glance on a
   phone.

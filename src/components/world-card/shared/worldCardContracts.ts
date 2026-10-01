@@ -11,6 +11,11 @@ import type { CreatorWorld, CreatorWorldStatus } from '../../creator-space/share
 export interface WorldCardInfoProps {
   story: StoryDetailDisplay | CreatorWorld;
   onRead?: () => void;
+  /**
+   * Starts a story that has no chapters yet. The host owns what starting means
+   * (for example writing Chapter 1); without it, an empty story stays static.
+   */
+  onStart?: () => void;
   onOpenCodex?: () => void;
   /** The viewer's known reading position; the Chapters card says Continue Reading only when supplied. */
   readingPosition?: { chapterNumber: number };

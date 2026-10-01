@@ -97,7 +97,7 @@ export { SEN_READING_MODE_SKILLS } from '../../components/harness-generation/sha
 export { SEN_SOUND_CUES_INSTRUCTIONS, SEN_SOUND_CUES_SKILL, presentSoundVocabulary } from '../../components/harness-generation/shared/soundCuesSkill';
 export { createHarnessSenStory } from '../../components/harness-generation/shared/senAdapter';
 export * from '../../narrative/generation';
-export { HarnessReaderSession } from '../../components/harness-generation/development/HarnessReaderSession';
+export { HarnessReaderSession, type HarnessReaderWriting } from '../../components/harness-generation/development/HarnessReaderSession';
 export { FatePage } from '../../components/harness-generation/development/FatePage';
 export { useNextChapterWriter, type NextChapterWriter } from '../../components/harness-generation/development/useNextChapterWriter';
 export {

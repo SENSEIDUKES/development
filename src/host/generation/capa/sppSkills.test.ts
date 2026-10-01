@@ -7,7 +7,7 @@ import { type HarnessGenerationResponse } from '@seihouse/sen/harness-generation
 import { handleHarnessGenerationHttp } from '../../../server/harness-generation/http';
 import { createHarnessSppSkill, inspectHarnessSpp, loadHarnessSppSkills, readHarnessSppText, saveHarnessSppSkill, SPP_SKILL_STORAGE_KEY } from './sppSkills';
 
-const authorBytes = () => new Uint8Array(readFileSync(new URL('./fixtures/SEN-AUTHOR.spp', import.meta.url)));
+const authorBytes = () => new Uint8Array(readFileSync(new URL('../../../test-utils/fixtures/spp/SEN-AUTHOR.spp', import.meta.url)));
 const storage = () => {
   const values = new Map<string, string>();
   return { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => { values.set(key, value); } };

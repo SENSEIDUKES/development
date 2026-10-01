@@ -5,7 +5,7 @@ import {
   type HarnessSkillReference,
   type HarnessSkillSlotId,
 } from '@seihouse/sen/harness-generation';
-import type { StoryStyle } from '@seihouse/sen/story-seed';
+import type { StorySeedRecord, StoryStyle } from '@seihouse/sen/story-seed';
 import authorArchiveUrl from './official-capa/CAPA-AUTHOR.spp?url';
 import continuityArchiveUrl from './official-capa/CAPA-Continuity.spp?url';
 import pacingArchiveUrl from './official-capa/CAPA-Pacing.spp?url';
@@ -121,6 +121,22 @@ export const OFFICIAL_STYLE_REFERENCES: Record<StoryStyle, HarnessSkillReference
   korean: officialCapaReference(officialByKey.get('style-korean')!),
 };
 
+type HarnessSkillLoadout = Partial<Record<HarnessSkillSlotId, HarnessSkillReference>>;
+type StorySeedStyle = StorySeedRecord['seed']['story']['required']['style'];
+
+/** A deliberate Story Seed style change replaces only the Style slot. */
+export const updateOfficialCapaStyle = (loadout: HarnessSkillLoadout, style: StorySeedStyle): HarnessSkillLoadout => {
+  const { style: _previousStyle, ...unchangedSlots } = loadout;
+  return {
+    ...unchangedSlots,
+    ...(style ? { style: OFFICIAL_STYLE_REFERENCES[style] } : {}),
+  };
+};
+
+/** Official defaults for a newly created story. No unprovided slot is invented. */
+export const createOfficialCapaDefaultLoadout = (style: StorySeedStyle): HarnessSkillLoadout =>
+  updateOfficialCapaStyle(OFFICIAL_CAPA_DEFAULT_REFERENCES, style);
+
 export type OfficialCapaArchiveLoader = (definition: OfficialCapaPackageDefinition) => Promise<Uint8Array>;
 
 export const fetchOfficialCapaArchive: OfficialCapaArchiveLoader = async definition => {
@@ -184,4 +200,16 @@ export async function installOfficialCapaSkills(
   for (const skill of official) installed = saveHarnessSppSkill(stagedStorage, installed, skill);
   storage.setItem(SPP_SKILL_STORAGE_KEY, serialized);
   return { installed, official };
+}
+
+/**
+ * The official skills alone, for a host that keeps no imported skills of its
+ * own (the NovelExpanded app): nothing is read from or written to browser storage.
+ */
+export async function installOfficialCapaSkillsInMemory(
+  loadArchive: OfficialCapaArchiveLoader = fetchOfficialCapaArchive,
+): Promise<HarnessSkillManifest[]> {
+  const values = new Map<string, string>();
+  const memory = { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => { values.set(key, value); } };
+  return (await installOfficialCapaSkills(memory, loadArchive)).installed;
 }

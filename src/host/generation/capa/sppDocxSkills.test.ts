@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createPack } from 'seihouse-productions-package';
 import { zipSync } from 'fflate';
 import { assembleCapaPrompt } from '@seihouse/sen/harness-generation';
-import { buildDocx, buildDocxWithoutDocumentPart, docxParagraph } from './fixtures/docxFixtures';
+import { buildDocx, buildDocxWithoutDocumentPart, docxParagraph } from '../../../test-utils/fixtures/spp/docxFixtures';
 import { DOCX_MEDIA_TYPE } from './docxInstructions';
 import {
   createHarnessSppSkill,

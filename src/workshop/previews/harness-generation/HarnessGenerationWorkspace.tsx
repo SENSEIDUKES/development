@@ -15,8 +15,8 @@ import { workshopEntries } from '../../manifest';
 import { createWorkshopStorySeedSource } from './storySeedHandoff';
 import { WORKSHOP_HARNESS_SKILLS } from './skillCatalog';
 import { SppSkillImport } from './SppSkillImport';
-import { loadHarnessSppSkills, saveHarnessSppSkill } from './sppSkills';
-import { installOfficialCapaSkills } from './officialCapaSkills';
+import { loadHarnessSppSkills, saveHarnessSppSkill } from '../../../host/generation/capa/sppSkills';
+import { installOfficialCapaSkills } from '../../../host/generation/capa/officialCapaSkills';
 import { WORKSHOP_MEDIA_PACKS } from './mediaPackFixtures';
 
 const storySeedSource = createWorkshopStorySeedSource();

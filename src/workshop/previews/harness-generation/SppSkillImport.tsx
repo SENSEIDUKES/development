@@ -9,7 +9,7 @@ import {
   harnessSppInstructionFiles,
   inspectHarnessSpp,
   readHarnessSppText,
-} from './sppSkills';
+} from '../../../host/generation/capa/sppSkills';
 
 /** The two jobs a language package can do; each is chosen, never assumed. */
 const TRANSLATION_APPLICATIONS: ReadonlyArray<{ id: HarnessSkillApplication; label: string }> = [

@@ -6,13 +6,9 @@ import { handleHarnessGenerationHttp } from '../../../server/harness-generation/
 import type { HarnessTextGenerationRequest } from '../../../server/harness-generation/provider';
 import { createMockStorySeedRecord } from '../story-seed/previewData';
 import { normalizeWorldBlueprint } from '@seihouse/sen/story-seed';
-import {
-  createHarnessFoundationFromStorySeed,
-  createOfficialCapaDefaultLoadout,
-  updateOfficialCapaStyle,
-} from './storySeedHandoff';
+import { createHarnessFoundationFromStorySeed } from './storySeedHandoff';
 import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
-import { OFFICIAL_STYLE_REFERENCES } from './officialCapaSkills';
+import { createOfficialCapaDefaultLoadout, OFFICIAL_STYLE_REFERENCES, updateOfficialCapaStyle } from '../../../host/generation/capa/officialCapaSkills';
 
 describe('Story Seed to Harness handoff', () => {
   it('hands over the complete reviewed roadmap and arc count, and only Arc 1 from a pre-roadmap Blueprint', () => {

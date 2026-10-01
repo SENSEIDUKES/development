@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createPack } from 'seihouse-productions-package';
-import { inspectHarnessSpp, SPP_SKILL_STORAGE_KEY } from './sppSkills';
+import { inspectHarnessSpp, SPP_SKILL_STORAGE_KEY } from '../../../host/generation/capa/sppSkills';
 import {
   loadHarnessSppMediaPacks,
   readHarnessSppMediaPack,

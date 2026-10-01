@@ -76,7 +76,7 @@ export const PACKAGE_TARGETS = {
       '@seihouse/library/shell': ['LibraryNavigation', 'WorkspaceShell', 'WorkspaceHeader'],
       '@seihouse/library/home': ['LightNovelsHome', 'StoryDetailScreen'],
       '@seihouse/library/world-card': ['WorldCard', 'WorldCardInfo'],
-      '@seihouse/library/story-seed': ['CreationModal', 'StoryCreationProvider'],
+      '@seihouse/library/story-seed': ['CreationModal', 'StoryCreationProvider', 'harnessStoryStartFromSeed'],
       '@seihouse/library/generation': ['HarnessGenerationWorkspace'],
       '@seihouse/library/media': ['createLibraryMediaPort', 'validateMediaPack'],
       '@seihouse/library/manifestations': ['AILoadingVeil'],

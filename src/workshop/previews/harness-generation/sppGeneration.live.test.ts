@@ -7,13 +7,13 @@ import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemor
 import { type HarnessGenerationResponse } from '@seihouse/sen/harness-generation';
 import { handleHarnessGenerationHttp } from '../../../server/harness-generation/http';
 import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
-import { createHarnessSppSkill, inspectHarnessSpp } from './sppSkills';
+import { createHarnessSppSkill, inspectHarnessSpp } from '../../../host/generation/capa/sppSkills';
 
 // Explicit opt-in only: uses an existing server credential for two isolated chapters.
 it.runIf(Boolean(process.env.HARNESS_SPP_ENV))('generates real baseline and equipped chapters through the existing Harness endpoint', async () => {
   const configured = parseEnv(readFileSync(process.env.HARNESS_SPP_ENV!, 'utf8'));
   const environment = { GEMINI_API_KEY: configured.GEMINI_API_KEY, HARNESS_GENERATION_TEMPERATURE: '0', HARNESS_GENERATION_MAX_OUTPUT_TOKENS: '8192' };
-  const content = await inspectHarnessSpp(new Uint8Array(readFileSync(new URL('./fixtures/SEN-AUTHOR.spp', import.meta.url))));
+  const content = await inspectHarnessSpp(new Uint8Array(readFileSync(new URL('../../../test-utils/fixtures/spp/SEN-AUTHOR.spp', import.meta.url))));
   const skill = createHarnessSppSkill(content, content.manifest.files[0].path, 'author');
   for (const equipped of [false, true]) {
     const repository = new InMemoryHarnessGenerationRepository();

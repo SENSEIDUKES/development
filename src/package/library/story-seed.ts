@@ -12,6 +12,7 @@ export {
   type NovelBlueprintSnapshot,
 } from '../../components/story-seed/development/NovelBlueprintEditor';
 export { createHarnessFoundationFromStorySeed } from '../../library/story-seed/harnessFoundation';
+export { harnessStoryStartFromSeed, type HarnessStoryStart } from '../../library/story-seed/harnessStoryStart';
 export { ImportPanel } from '../../components/story-seed/development/ImportPanel';
 export { StoryBank } from '../../components/story-seed/development/StoryBank';
 export { StorySeedHeader } from '../../components/story-seed/development/StorySeedHeader';

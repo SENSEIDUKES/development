@@ -75,22 +75,17 @@ const start = async (foundation: Partial<StoryFoundationInput>, prepare?: (contr
   await act(async () => { root.render(renderWithDevAudio(<Host controller={controller} storyId={story.id} />)); });
   await flush();
   if (openFate) {
-    // The Reader header's Alter Fate opens the Fate page.
-    await click(byLabel('Quick Actions'), 'Quick Actions');
-    // The shared popover renders its action in a document-level portal.
-    const alterFate = document.querySelector<HTMLButtonElement>('[role="dialog"] button[title^="Alter Fate:"]');
-    expect(alterFate, 'Expected Alter Fate in Quick Actions').toBeTruthy();
-    await act(async () => { alterFate!.click(); });
-    await flush();
+    // The Reader header's Fate button opens the Fate page.
+    await click(byLabel('Open Fate'), 'Open Fate');
     expect(fatePage()).toBeTruthy();
   }
   return { controller, storyId: story.id, requests: model.requests, failNext: model.failNext };
 };
 
-/** The Reader turns the page with an exit animation; wait until this chapter's prose is on screen. */
+/** This chapter is the one on screen, with its prose. */
 const showsChapter = async (chapterNumber: number) => {
-  for (let index = 0; index < 30 && !container.querySelector(`[data-reader-anchor^="${chapterNumber}:"]`); index++) await flush(100);
-  expect(container.textContent).toContain(`Mara walked the causeway on day ${chapterNumber}.`);
+  for (let index = 0; index < 30 && !container.querySelector(`[data-chapter-number="${chapterNumber}"]`); index++) await flush(100);
+  expect(container.querySelector(`[data-chapter-number="${chapterNumber}"]`)?.textContent).toContain(`Mara walked the causeway on day ${chapterNumber}.`);
 };
 
 /** The bottom bar's Next. At the newest chapter it names the action it runs. */

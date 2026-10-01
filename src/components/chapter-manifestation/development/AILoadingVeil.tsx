@@ -26,6 +26,13 @@ interface DevelopmentAILoadingVeilProps extends AILoadingVeilProps {
    * Reveal progression stays caller-owned — the veil only reports the tap.
    */
   onMediaUnseal?: () => void;
+  /**
+   * The caller's known progress, 0–100, or null when it is unknown (a HARNESS
+   * chapter arrives whole, so its writer passes null): the scrubber drifts and
+   * no percentage shows. Omitted, the narrative screen estimates progress
+   * from streamed passages, as the Workshop simulation does.
+   */
+  progress?: number | null;
 }
 
 /**
@@ -52,7 +59,11 @@ interface DevelopmentAILoadingVeilProps extends AILoadingVeilProps {
  * - 2026-07-30: backdrop tuning — the particle shower runs ~18% slower
  *   (speedScale 0.82) and a 35% share of particles drift laterally instead
  *   of converging, so the sides of the veil stay populated.
- * Workshop-only: do not wire this into production flows.
+ * - 2026-10-01: two screens. Every narrative operation shows the same
+ *   narrative manifestation and every media operation the same reveal; the
+ *   pill names the chapter, with a percentage only when progress is known
+ *   (`progress`), so a HARNESS chapter write never shows a made-up number.
+ * First real caller: the Library's HARNESS Reader, while it writes a chapter.
  */
 export default function AILoadingVeil({
   agent,
@@ -70,24 +81,28 @@ export default function AILoadingVeil({
   destinationId,
   mediaReveal,
   mediaAsset,
-  onMediaUnseal
+  onMediaUnseal,
+  progress
 }: DevelopmentAILoadingVeilProps) {
   const [quoteIndex, setQuoteIndex] = React.useState(0);
 
-  const isChapterPhase = generationPhase === 'chapter';
+  // Two screens, whatever the operation: one narrative manifestation (any
+  // story or chapter writing) and one media reveal (any media asset). A call
+  // with no operation (a retrieval) keeps its own progress message.
   const isMediaOperation = manifestationModeForOperation(generationPhase) === 'media';
+  const isNarrativeScreen = Boolean(generationPhase) && !isMediaOperation;
 
   const shouldShowFullScreen = isGenerating && !isVeilMinimized;
 
   const passagesWoven = streamingBlocksCount;
-  const progressWidth = isChapterPhase
-    ? Math.min(6 + passagesWoven * 4.5, 96)
-    : null;
+  const progressWidth = progress !== undefined
+    ? (progress === null ? null : Math.min(Math.max(progress, 0), 100))
+    : isNarrativeScreen
+      ? Math.min(6 + passagesWoven * 4.5, 96)
+      : null;
 
-  // Operation-specific language: narrative ops rotate the narrative lines,
-  // media ops rotate the media set; other phases keep their progress message.
   const statusLines = isMediaOperation ? MEDIA_STATUS_LINES : NARRATIVE_STATUS_LINES;
-  const rotatesQuotes = isChapterPhase || isMediaOperation;
+  const rotatesQuotes = isNarrativeScreen || isMediaOperation;
 
   // The scroll's reveal progression, resolved once for the card spec
   // (a supplied asset implies 'revealed').
@@ -125,6 +140,8 @@ export default function AILoadingVeil({
     // Compact card: no atmospheric phrase and no phase marker pill.
     description: '',
     operationTitle: '',
+    // The bottom pill names the chapter on the narrative screen; nothing else has one.
+    trackerTitle: isNarrativeScreen && generatingChapterNum ? `Chapter ${generatingChapterNum}` : '',
   };
 
   return (

@@ -479,7 +479,9 @@ export function StorySeedWorkspace({ embedded = false, initialState, localGenera
     },
     onStartStory: async (payload: InitialStoryGenerationPayload) => {
       const story = await startWorkshopHarnessStory(payload);
-      window.location.assign('?preview=harness-generation&story=' + encodeURIComponent(story.id));
+      // The new story opens on its World Info page; Start Story there writes Chapter 1 in the Reader.
+      const id = encodeURIComponent(story.id);
+      window.location.assign(`?preview=harness-generation&story=${id}&info=${id}`);
     },
   };
 

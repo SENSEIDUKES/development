@@ -9,7 +9,8 @@ export type WorldCardTitleLength = 'standard' | 'long';
 export type WorldCardCover = 'art' | 'missing';
 /** Which host destinations the Info page receives, to review unavailable actions. */
 export type WorldCardDestinations = 'all' | 'reading-only' | 'none';
-export type WorldCardReadingPreview = 'start' | 'chapter-7';
+/** `new-story`: a story with no chapters yet, whose host can start it (Start Story). */
+export type WorldCardReadingPreview = 'start' | 'chapter-7' | 'new-story';
 export type WorldCardStatusPreview = 'public-ongoing' | 'public-completed'
   | 'library-draft' | 'library-shared' | 'library-public' | 'library-complete';
 
@@ -26,9 +27,10 @@ export interface WorldCardPreviewState {
 const LONG_TITLE = 'The Last Lotus of the Jade Empire and the Thousand-Year Oath Beneath the Silent Pavilion';
 
 /** The featured novel with the chosen states applied to the full card and overview. */
-export function previewStory({ recentlyRead, titleLength, cover, activity }: WorldCardPreviewState): StoryDetailDisplay {
+export function previewStory({ recentlyRead, titleLength, cover, activity, reading }: WorldCardPreviewState): StoryDetailDisplay {
   return {
     ...featuredNovel,
+    ...(reading === 'new-story' ? { chapterCount: 0, currentArc: '' } : {}),
     title: titleLength === 'long' ? LONG_TITLE : featuredNovel.title,
     imageUrl: cover === 'missing' ? '' : featuredNovel.imageUrl,
     recentlyRead: recentlyRead === 'yes',

@@ -4,12 +4,13 @@
 - **Source location:** `src/components/AILoadingVeil.tsx`
 - **Workshop preview:** `?preview=chapter-generation-manifestation`
 - **Replica created:** 2026-07-29
-- **Last Workshop update:** 2026-09-25
+- **Last Workshop update:** 2026-10-01
 - **Last source comparison:** 2026-07-29
 - **Replica status:** under refinement
 
 ## Workshop history
 
+- **2026-10-01:** **Two screens, connected.** The Aura Veil now has one narrative manifestation screen and one media reveal, not three narrative and four media operations. The Workshop's Operation control is a single **Manifestation** choice, Narrative (`chapter`) or Media reveal (`cover`). In the Development veil every narrative operation shows the same screen (the narrative lines rotate for all of them) and every media operation the same reveal. The bottom pill names the chapter and adds a percentage only when progress is known: the new `progress` prop (`null` when unknown) lets a caller whose chapter arrives whole say so, and the journey scrubber then drifts instead of showing a made-up number. Omitted, the Workshop simulation's streamed-passages estimate is unchanged. **First real caller:** the Library's HARNESS Reader shows this veil (Versa, Narrative, "Chapter N") while it writes a chapter. The SEN taxonomy (`shared/manifestation.ts`), the Library task card builder, the standalone Manifestation Reveal area and the locked `reference/` veil are unchanged.
 - **2026-09-25:** Retired the `steer` ("Sovereign Shift", "trigger the subsequent 10 chapters") and `alter-fate` ("Fate Alteration", "your chosen divergence") narrative operations with the flows they served: persistent steering and the Alter Fate timeline fork were replaced by the reader's one-chapter direction, which is written as an ordinary `chapter` operation. Narrative operations are now World Blueprint, Initial Arc, and Chapter; nothing else in the veil changed.
 - **2026-08-21:** Published this feature as `@seihouse/sen/manifestations`: the chamber and its zones, the loading system and veils, the journey scrubber with its destinations, travelers, and trails, the omen scenes, and the manifestation model. `AILoadingVeil` now draws its motes from the Library-owned `ParticleEffect` instead of an application-root file. The locked `reference/` replica stays Workshop-only.
 
@@ -103,8 +104,8 @@ Two visual modes render the same card:
 
 The primary veil (the **Aura Veil**) is one shared manifestation shell hosting two manifestation modes, resolved per operation and carried on the task card as `manifestation` (taxonomy in `shared/manifestation.ts`):
 
-- **Narrative manifestation** — story and narrative-generation operations: World Blueprint (`blueprint`), Initial Arc (`initial-arc`), Chapter (`chapter`). Renders `NarrativeManifestationZone`: the chamber hosting a **system-selected omen scene** from the `omen-scenes` registry. Scenes are never user-selected — an explicit `sceneId` on the spec wins, otherwise the pick is seeded deterministically by the operation's tracker title so the same operation always omens the same scene (`sword-cultivator-clash` is the fallback).
-- **Media manifestation** — standalone media-generation operations outside the Reader Chamber and Codex: Cover Art (`cover`), Image (`image`), Audio (`audio`), Visual / Motion (`visual`), and future standalone asset types (add to `MEDIA_OPERATIONS` + `MediaKind`). Renders `MediaManifestationZone`: the same chamber hosting the **Manifestation Reveal** — a vessel-agnostic `sealed` → `unsealing` → `revealed` mechanic, currently hosted by the celestial scroll vessel (`development/vessels/CelestialScrollVessel`). The mechanic owns the state routing, tap-to-unseal, accessibility, reduced motion, and containment; the vessel owns the artwork for each state. The Aura Veil's media zone wires the media data through both, and the chamber's golden ambient atmosphere stays shared.
+- **Narrative manifestation** — one screen for every story and narrative-generation operation (the taxonomy still names World Blueprint `blueprint`, Initial Arc `initial-arc` and Chapter `chapter`; the HARNESS Reader's chapter write is the live caller). Renders `NarrativeManifestationZone`: the chamber hosting a **system-selected omen scene** from the `omen-scenes` registry. Scenes are never user-selected — an explicit `sceneId` on the spec wins, otherwise the pick is seeded deterministically by the operation's tracker title so the same operation always omens the same scene (`sword-cultivator-clash` is the fallback).
+- **Media manifestation** — one reveal for every standalone media-generation operation outside the Reader Chamber and Codex (the taxonomy names Cover Art `cover`, Image `image`, Audio `audio` and Visual / Motion `visual`, which change only the placeholder label; future asset types join `MEDIA_OPERATIONS` + `MediaKind`). Renders `MediaManifestationZone`: the same chamber hosting the **Manifestation Reveal** — a vessel-agnostic `sealed` → `unsealing` → `revealed` mechanic, currently hosted by the celestial scroll vessel (`development/vessels/CelestialScrollVessel`). The mechanic owns the state routing, tap-to-unseal, accessibility, reduced motion, and containment; the vessel owns the artwork for each state. The Aura Veil's media zone wires the media data through both, and the chamber's golden ambient atmosphere stays shared.
 
 **Shell invariants (identical across modes):** Versa presence (hero zone), aura and ambient atmosphere (emblem aura + cinematic backdrop), status and progress presentation (journey scrubber + layered status), and the shared responsive 100dvh layout. Only the active manifestation zone and the operation-specific language change: narrative operations rotate `NARRATIVE_STATUS_LINES` during a chapter, media operations rotate `MEDIA_STATUS_LINES` and track the reveal progression ("Manifestation sealed" → "Unsealing the manifestation" → "Manifestation Complete").
 
@@ -164,8 +165,8 @@ Nothing beyond the AILoadingVeil replica boundary — the system is presentation
 The workshop has two top-level areas, switched at the top of the page:
 
 - **Aura Veil** (the existing full-shell simulation):
-  - Primary veil — operation selector grouped by manifestation mode: narrative (World Blueprint, Initial Arc, Chapter) and media (Cover Art, Image, Audio, Visual / Motion), switched between Reference and Development via the workspace control.
-  - Media reveal — Development-only controls (visible only when a media operation is selected) for the reveal progression (sealed / unsealing / revealed) and revealed content (mock asset vs placeholder vista).
+  - Primary veil — one Manifestation choice between the two screens, Narrative (a chapter being written) and Media reveal (cover art), switched between Reference and Development via the workspace control.
+  - Media reveal — Development-only controls (visible only when Media reveal is selected) for the reveal progression (sealed / unsealing / revealed) and revealed content (mock asset vs placeholder vista).
   - Journey scrubber — Development-only controls for traveler, aura trail, and destination.
   - Simulation — open the Aura Veil, open a compact indicator, or stop the running simulation.
   - Compact indicators — Versa background and Scout retrieval compact tasks.

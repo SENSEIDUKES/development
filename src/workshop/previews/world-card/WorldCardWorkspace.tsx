@@ -98,6 +98,7 @@ export function WorldCardStage({ view, state, reference, onAction }: {
             onBack={openedWorld ? () => setOpenedWorld(null) : () => onAction('Back to novels')}
             readingPosition={state.reading === 'chapter-7' ? { chapterNumber: 7 } : undefined}
             onRead={state.destinations === 'none' ? undefined : () => onAction(`${state.reading === 'chapter-7' ? 'Continue' : 'Start'} reading ${infoWorld.title}`)}
+            onStart={state.destinations === 'none' ? undefined : () => onAction(`Start story ${infoWorld.title}`)}
             onOpenCodex={state.destinations === 'all' ? () => onAction(`Open Codex for ${infoWorld.title}`) : undefined}
             />}
     </Stage>}
@@ -133,7 +134,7 @@ function readCanvasState(params: URLSearchParams): WorldCardPreviewState {
     activity: pick(params.get('activity'), ['active-now', 'active-this-week', 'quiet', 'hidden'], DEFAULT_STATE.activity),
     cardStatus: pick(params.get('cardStatus'), Object.keys(CARD_STATUS_PREVIEW) as WorldCardStatusPreview[], DEFAULT_STATE.cardStatus),
     destinations: pick(params.get('destinations'), ['all', 'reading-only', 'none'], DEFAULT_STATE.destinations),
-    reading: pick(params.get('reading'), ['start', 'chapter-7'], DEFAULT_STATE.reading),
+    reading: pick(params.get('reading'), ['start', 'chapter-7', 'new-story'], DEFAULT_STATE.reading),
   };
 }
 
@@ -255,6 +256,7 @@ function WorldCardWorkspaceShell() {
             <select className={selectClass} value={state.reading} onChange={event => update({ reading: event.target.value as WorldCardReadingPreview })}>
               <option value="chapter-7">Known: Chapter 7 (Continue)</option>
               <option value="start">Not started (Start Reading)</option>
+              <option value="new-story">New story, no chapters (Start Story)</option>
             </select>
           </label>
         </div>,

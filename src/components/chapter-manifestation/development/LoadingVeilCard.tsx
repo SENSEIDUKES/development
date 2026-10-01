@@ -93,7 +93,7 @@ export interface LoadingVeilCardProps {
  *
  * Aura work (kept from the previous pass): saturated violet nebula with a
  * bright core, twin counter-rotating cloak wisps, grounded pool, six motes.
- * Workshop-only: do not wire this into production flows.
+ * First real caller: the Library's HARNESS Reader, while it writes a chapter.
  */
 export default function LoadingVeilCard({ task, backdrop, emblemClassName, travelerId, trailStyle, destinationId, onMediaUnseal }: LoadingVeilCardProps) {
   const isVersa = task.agentId === 'versa';
@@ -301,10 +301,11 @@ export default function LoadingVeilCard({ task, backdrop, emblemClassName, trave
           Consolidated status hierarchy at the bottom of the chamber: a
           persistent chapter pill ("Chapter 1 ｜ 42%") in a softly glowing
           accent-tinted capsule above the rotating quote — the only text
-          that changes. Indeterminate operations (no progress) render the
+          that changes. The percentage shows only when progress is known
+          ("Chapter 1" alone otherwise); a card with no title renders the
           quote alone. */}
       <div className="relative z-10 flex-none px-6 pt-3 pb-7 flex flex-col items-center justify-center min-h-[44px]">
-        {task.progress !== null && (
+        {task.trackerTitle && (
           <div
             className={`mb-2 inline-flex items-center gap-2.5 rounded-full border px-4 py-1 backdrop-blur-sm ${
               isVersa
@@ -315,10 +316,12 @@ export default function LoadingVeilCard({ task, backdrop, emblemClassName, trave
             <span className={`font-sans text-xs sm:text-sm tracking-wide font-medium ${isVersa ? 'text-purple-100/90' : 'text-sky-100/90'}`}>
               {task.trackerTitle}
             </span>
-            <span aria-hidden="true" className={`h-3 w-px ${isVersa ? 'bg-purple-300/35' : 'bg-sky-300/35'}`} />
-            <span className={`font-sans text-xs sm:text-sm tracking-wide font-semibold ${isVersa ? 'text-purple-50' : 'text-sky-50'}`}>
-              {Math.round(task.progress)}%
-            </span>
+            {task.progress !== null && <>
+              <span aria-hidden="true" className={`h-3 w-px ${isVersa ? 'bg-purple-300/35' : 'bg-sky-300/35'}`} />
+              <span className={`font-sans text-xs sm:text-sm tracking-wide font-semibold ${isVersa ? 'text-purple-50' : 'text-sky-50'}`}>
+                {Math.round(task.progress)}%
+              </span>
+            </>}
           </div>
         )}
         <div className="flex items-center justify-center gap-3">

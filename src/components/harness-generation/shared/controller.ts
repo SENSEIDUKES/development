@@ -66,6 +66,13 @@ export interface HarnessGenerationControllerOptions {
   installedSkills?: HarnessSkillManifest[];
   /** Host-authorized media selection and freezing. Never enters CAPA or provider requests. */
   media?: NarrativeMediaPort;
+  /**
+   * When story memory is read from a committed chapter. `after-commit` (the
+   * default) runs the separate extraction after every chapter; `on-request`
+   * runs it only when asked ("Recover memory from saved prose"), so a chapter
+   * returns as soon as it is saved.
+   */
+  chapterMemory?: 'after-commit' | 'on-request';
 }
 
 type WorkspaceListener = (state: HarnessWorkspaceState) => void;
@@ -133,6 +140,7 @@ export class HarnessGenerationController {
   private readonly capabilityRegistry: HarnessCapabilityRegistry;
   private skillCatalog: ReadonlyMap<string, HarnessSkillManifest>;
   private media?: NarrativeMediaPort;
+  private readonly chapterMemory: 'after-commit' | 'on-request';
   private readonly listeners = new Set<WorkspaceListener>();
   private state = createEmptyHarnessWorkspaceState();
   private hydrated = false;
@@ -146,6 +154,7 @@ export class HarnessGenerationController {
     this.capabilityRegistry = options.capabilityRegistry ?? new HarnessCapabilityRegistry();
     this.skillCatalog = createHarnessSkillCatalog(includeBundledHarnessSkills(options.installedSkills ?? []));
     this.media = options.media;
+    this.chapterMemory = options.chapterMemory ?? 'after-commit';
   }
 
   subscribe(listener: WorkspaceListener): () => void {
@@ -899,10 +908,12 @@ export class HarnessGenerationController {
   /**
    * Story memory is never part of the chapter-writing call. After a chapter
    * commits, the existing separate extraction reads the saved prose through
-   * the host adapter. Its outcome never changes the committed chapter; an
-   * explicit "Recover memory from saved prose" retries it.
+   * the host adapter, unless the host asked for memory only on request. Its
+   * outcome never changes the committed chapter; an explicit "Recover memory
+   * from saved prose" retries it.
    */
   private async extractCommittedChapterMemory(attemptId: string): Promise<HarnessWorkspaceState> {
+    if (this.chapterMemory === 'on-request') return this.snapshot();
     const attempt = this.state.attempts.find(candidate => candidate.id === attemptId);
     const chapterId = attempt?.committedChapterId;
     if (!attempt || attempt.stage !== 'committed' || !chapterId || !this.modelAdapter.recoverMemory) return this.snapshot();

@@ -21,6 +21,8 @@ export interface StoryDetailScreenProps {
   /** Visible name of the way back; the host names where Back leads. */
   backLabel?: string;
   onRead?: () => void;
+  /** Starts a story that has no chapters yet; see `WorldCardInfoProps.onStart`. */
+  onStart?: () => void;
   onOpenCodex?: () => void;
   onOpenTimeline?: () => void;
   /** The viewer's known reading position, when the host has one. */

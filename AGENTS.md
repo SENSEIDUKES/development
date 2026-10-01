@@ -27,6 +27,12 @@ Before any product work, meaning anything a NovelExpanded.com reader or author w
 
 Only what is being built now exists: do not reconnect an old system because it used to be there. When a task and that document disagree, ask the owner.
 
+### The NovelExpanded app
+
+The app itself lives in [`src/novel-expanded/`](./src/novel-expanded/README.md), served from `app/index.html` at **`/app/`** (Home `/app/`, Create `?page=create`, Story View `?story=<id>`, Reader `?story=<id>&read=1`). It is a `host` of the SEN and Library packages, keeps its own browser storage, and has no manifest entry or `?preview=` id; the Workshop home links to it.
+
+`npm run check:app` (`scripts/checkNovelExpandedApp.mjs`) walks the app's import graph and fails, naming the chain, if it reaches Workshop, test or unowned code, an older system's entry (`@seihouse/sen/reader-chamber`, `reader-codex`, `cards`, `translation`, `@seihouse/library/generation`), the HARNESS developer page, the older Reader's code, or, from the app's own files, a package entry outside its list. It runs in `verify`, `npm run build` and CI. Never widen the list or reconnect an old system to make it pass; ask the owner.
+
 ### Major system reconstruction
 
 For tasks that rebuild a real product system rather than only refining a visual Workshop component, read [`DEVELOPMENT_RECONSTRUCTION.md`](./DEVELOPMENT_RECONSTRUCTION.md) before implementation.

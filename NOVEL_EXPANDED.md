@@ -6,7 +6,7 @@
 > older design because it used to exist.
 
 - **Created:** 2026-09-29
-- **Last updated:** 2026-09-29
+- **Last updated:** 2026-10-01
 - **Owner:** SENSEI, SEIHouse Productions
 
 ## What NovelExpanded is
@@ -119,6 +119,13 @@ Update this section whenever it changes.
     reveal. The narrative one shows while a chapter is written.
   - **The memory call after each chapter is off** in the Library; it runs only
     on request until the Codex returns.
+  - **The NovelExpanded app has its own address, `/app/`**, linked from the
+    Workshop home. It shows only the four pages in a straight line: Home →
+    Create (Story Seed and World Blueprint) → Story View (World Info) → Reader.
+    It writes the same chapters as the Workshop, keeps its own stories, Story
+    Seeds and reading places, and asks for the Blueprint access token on
+    Create. `npm run check:app` fails the build if it reaches an old system
+    ([`src/novel-expanded/README.md`](./src/novel-expanded/README.md)).
 - **Not tested yet:** real generation with a real model, on the Vercel preview.
 - **Not connected yet:**
   - The CAPA skill and media slots still sit on the Harness Generation page, not in
@@ -139,19 +146,24 @@ Update this section whenever it changes.
    View → Reader Chamber, including the manifestation sequence and World Cards. The
    new path (Story Seed → HARNESS → new reader) is connected; what remains is how it
    looks and feels.
-2. **Build the NovelExpanded app** inside this repository.
-   - It gets its own address, separate from the Workshop.
-   - It shows only the four pages and only current pieces.
-   - A check fails the build if it imports an old system.
-   - It can move to its own repository once SEN is stable enough to install as a
-     package.
+2. **Grow the NovelExpanded app** (`/app/`) piece by piece. Piece 1, the four
+   pages at their own address with a check that fails the build if the app
+   imports an old system, is built. Next pieces:
+   - Story Settings (CAPA and media slots) inside Create and Story View, leaving
+     the developer page;
+   - cover art on Story View through the media reveal;
+   - a Workshop switch to inspect the app's stories;
+   - real accounts and server-side storage.
+
+   The app can move to its own repository once SEN is stable enough to install
+   as a package.
 3. **Rebuild the remaining kinds** one at a time, then design the Codex.
 
 ## Names
 
 | Name | What it is |
 | --- | --- |
-| NovelExpanded app | The product at NovelExpanded.com: the four pages. Not built yet. |
+| NovelExpanded app | The product at NovelExpanded.com: the four pages. Built at `/app/` (piece 1: Home, Create, Story View, Reader), in `src/novel-expanded/`. |
 | Story Seed / World Blueprint | Where a story is created (`?preview=story-seed`). |
 | Story View | The story's own page: cover art, the story, Enter. Built today as the World Info page (`WorldCardInfo`), where Start Story or Start Reading leads into the Reader Chamber. |
 | Reader Chamber | Where chapters are read: a HARNESS story's chapters on the Text Highlight Engine with Sound Cues (`HarnessReaderSession`). The older Reader Chamber preview (`?preview=reader-chamber`) is not part of this path. |

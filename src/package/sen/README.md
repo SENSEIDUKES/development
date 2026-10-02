@@ -48,8 +48,8 @@ owner.
 - `./harness-generation`:
   - `HarnessReaderSession` takes `readerPreferences` and `readAloudVoices`, and
     shows Listen and Reader Settings (Narration) when the browser can speak.
-  - Speaker tags (`[[@Name]]`, read by `readMarks`) become
-    `HarnessChapter.speakers` (schema 25).
+  - Speaker tags (`[[@MC]]` for the main character, `[[@Name]]` for anyone
+    else, read by `readMarks`) become `HarnessChapter.speakers` (schema 25).
   - `SEN_SPEAKERS_SKILL` fills the new always-managed `speakers` slot.
   - `HarnessSkillSlotId` and `CapaSlotManager` widen, which is the breaking part.
 - `./contracts`: `senSpeechLanguageTags`.

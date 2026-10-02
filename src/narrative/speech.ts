@@ -55,6 +55,13 @@ export function findSpokenLines(text: string): SpokenLine[] {
  */
 export const SPEAKER_KIND = 'speaker';
 
+/**
+ * The main character's own speaker tag, `[[@MC]]`. The writer marks the main
+ * character's speech with it whatever name the prose uses, so whether a line is
+ * theirs is the writer's call, never a guess from a name.
+ */
+export const MAIN_CHARACTER_SPEAKER_TAG = 'MC';
+
 /** Where a speaker record sits: an exact span of one paragraph. */
 export type SpeakerAnchor = Extract<ManuscriptAnchor, { level: 'span' }>;
 

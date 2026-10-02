@@ -39,8 +39,8 @@ const chapter = {
   paragraphs: [
     'The tide pulled back from the drowned gate, and [[1|the beast roared]] across the causeway.',
     'Mara counted the bells that no longer rang.',
-    // The writer tags who speaks: the main character's line, then someone else's.
-    '[[@Ye Chen]] “Ring the bells,” Ye Chen said.',
+    // The writer tags who speaks: the main character with their own tag, then someone else by name.
+    '[[@MC]] “Ring the bells,” Ye Chen said.',
     '[[@Junior Sister Han]] “They are drowned,” she whispered.',
   ],
   // One of the Library's sound words, so the cue is placed (an unknown sound is set aside).

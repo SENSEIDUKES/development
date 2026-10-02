@@ -155,12 +155,19 @@ describe('HARNESS chapter body', () => {
   });
 
   it('rolls each chapter an exact paragraph count within one range, the same every time', () => {
-    const targets = Array.from({ length: 200 }, (_, index) => harnessChapterParagraphTarget('hst_story', index + 1));
-    expect(targets.every(target => target >= HARNESS_CHAPTER_PARAGRAPH_RANGE.min && target <= HARNESS_CHAPTER_PARAGRAPH_RANGE.max)).toBe(true);
+    const range = { min: 40, max: 80 };
+    const targets = Array.from({ length: 200 }, (_, index) => harnessChapterParagraphTarget('hst_story', index + 1, range));
+    expect(targets.every(target => target >= range.min && target <= range.max)).toBe(true);
     // Chapters vary in length…
     expect(new Set(targets).size).toBeGreaterThan(20);
     // …and the same chapter always gets the same number, so a retry keeps it.
-    expect(harnessChapterParagraphTarget('hst_story', 7)).toBe(targets[6]);
+    expect(harnessChapterParagraphTarget('hst_story', 7, range)).toBe(targets[6]);
+  });
+
+  it('asks every chapter for the same 50 paragraphs while the owner measures how exactly the writer reaches a count', () => {
+    expect(HARNESS_CHAPTER_PARAGRAPH_RANGE).toEqual({ min: 50, max: 50 });
+    const targets = Array.from({ length: 50 }, (_, index) => harnessChapterParagraphTarget(`hst_${index % 7}`, index + 1));
+    expect(new Set(targets)).toEqual(new Set([50]));
   });
 
   it('keeps a chapter that misses its paragraph count and flags the miss, and says nothing when it hits', () => {
@@ -219,7 +226,7 @@ describe('HARNESS chapter body persistence', () => {
     expect(committed.metrics).toEqual({
       wordCount: countHarnessWords(committed.prose), paragraphCount: 3, meetsScaleTarget: false, paragraphTarget,
     });
-    // Three paragraphs against a 50–100 target: kept, and the miss is flagged.
+    // Three paragraphs against a 50-paragraph target: kept, and the miss is flagged.
     expect(controller.snapshot().attempts[0].warnings.find(warning => warning.code === 'chapter_paragraphs_off_target')?.message)
       .toBe(`The chapter has 3 paragraphs; the HARNESS asked for exactly ${paragraphTarget}. It is preserved as written.`);
 

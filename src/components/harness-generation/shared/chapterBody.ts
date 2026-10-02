@@ -16,8 +16,12 @@ export const HARNESS_CHAPTER_TARGET_MAX_WORDS = 2_500;
 /**
  * The range the HARNESS rolls each chapter's exact paragraph count from. One
  * range for every story for now; story styles come later.
+ *
+ * Fixed at 50 for now: while the owner tests, every chapter asks for the same
+ * count, so how exactly the writer reaches it can be compared chapter to
+ * chapter. The range to return to afterwards is 40 to 80.
  */
-export const HARNESS_CHAPTER_PARAGRAPH_RANGE = { min: 50, max: 100 } as const;
+export const HARNESS_CHAPTER_PARAGRAPH_RANGE: { readonly min: number; readonly max: number } = { min: 50, max: 50 };
 /** Below this a one-paragraph reply is a legitimately short body, not a structural failure. */
 export const HARNESS_SINGLE_PARAGRAPH_REVIEW_WORDS = 150;
 /** Upper bound: one runaway list cannot displace the chapter. */
@@ -80,13 +84,16 @@ export interface HarnessChapterBody {
  * `HARNESS_CHAPTER_PARAGRAPH_RANGE`, seeded by the story and chapter number, so
  * chapters vary in length while the same chapter always gets the same number.
  */
-export const harnessChapterParagraphTarget = (storyId: string, chapterNumber: number): number => {
+export const harnessChapterParagraphTarget = (
+  storyId: string,
+  chapterNumber: number,
+  { min, max }: { readonly min: number; readonly max: number } = HARNESS_CHAPTER_PARAGRAPH_RANGE,
+): number => {
   let hash = 2166136261;
   for (const character of `${storyId}\u001f${chapterNumber}`) {
     hash ^= character.codePointAt(0)!;
     hash = Math.imul(hash, 16777619);
   }
-  const { min, max } = HARNESS_CHAPTER_PARAGRAPH_RANGE;
   return min + ((hash >>> 0) % (max - min + 1));
 };
 

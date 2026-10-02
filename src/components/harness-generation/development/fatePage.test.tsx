@@ -40,6 +40,8 @@ const typeInto = async (element: HTMLTextAreaElement, value: string) => {
   });
 };
 const fatePage = () => container.querySelector<HTMLElement>('[data-testid="fate-page"]')!;
+const pathOption = (value: string) => fatePage().querySelector<HTMLInputElement>(`[data-testid="fate-path-chooser"] input[type="radio"][value="${value}"]`)!;
+const choosePath = async (value: string) => { await act(async () => { pathOption(value).click(); }); await flush(); };
 
 /** A host like the Library workspace: it follows the controller and writes chapters with its model. */
 function Host({ controller, storyId }: { controller: HarnessGenerationController; storyId: string }) {
@@ -142,7 +144,7 @@ describe('The Fate page in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(container.textContent).toContain('Mara walked the causeway on day 2.');
   });
 
-  it('Fate Survival: asks only for the reader\'s own direction, keeps it through a failed write, and clears it once written', async () => {
+  it('Fate Survival: offers the writer\'s three suggested paths and the reader\'s own with none chosen, keeps a direction through a failed write, and clears it once written', async () => {
     const run = await start({ fateSurvival: { enabled: true } }, async (controller, storyId) => {
       await controller.acceptArcGoals(storyId, 1);
       await controller.chooseChapterDirection(storyId, { kind: 'reader', text: 'Mara wakes on the causeway.' });
@@ -155,13 +157,19 @@ describe('The Fate page in the HARNESS Reader', { timeout: 20_000 }, () => {
     // Two goals: missing one of them is half, so this goal's miss would break the route.
     expect(page.querySelector('[data-testid="fate-route"]')!.textContent).toBe('Missed in this arc: 0 of 2. One more miss breaks the route.');
     const chooser = page.querySelector('[data-testid="fate-path-chooser"]')!;
-    // No generated paths: no ideas, no automatic Rhythm, only the reader's own words.
-    expect(chooser.querySelectorAll('input[type="radio"]')).toHaveLength(0);
-    expect(chooser.textContent).not.toContain('Mara climbs the bell tower.');
-    expect(chooser.textContent).toContain('It cannot be written until you give one.');
+    // The writer's three suggested paths and the reader's own words. Nothing is automatic, so nothing starts chosen.
+    const options = [...chooser.querySelectorAll<HTMLInputElement>('input[type="radio"]')];
+    expect(options.map(option => option.value)).toEqual(['progression', 'worldBuilding', 'conflict', 'reader']);
+    expect(options.some(option => option.checked)).toBe(false);
+    expect(chooser.textContent).not.toContain('Let fate decide');
+    expect(chooser.textContent).toContain('Mara climbs the bell tower.');
+    expect(chooser.textContent).toContain('The tide wardens seize the causeway.');
+    expect(chooser.textContent).toContain('It cannot be written until you choose its path.');
+    expect(buttonBy(byText('Set Chapter 2’s path'))!.disabled).toBe(true);
     expect(buttonBy(byText('Write Chapter 2'))!.disabled).toBe(true);
 
-    await typeInto(chooser.querySelector<HTMLTextAreaElement>('textarea')!, 'Mara cuts the bell rope and climbs.');
+    await choosePath('reader');
+    await typeInto(fatePage().querySelector<HTMLTextAreaElement>('[data-testid="fate-path-chooser"] textarea')!, 'Mara cuts the bell rope and climbs.');
     await click(byText('Set Chapter 2’s path'), 'Set path');
     expect(fatePage().textContent).toContain('Set for Chapter 2: Your direction: Mara cuts the bell rope and climbs.');
 
@@ -209,7 +217,7 @@ describe('Next at the newest chapter in the HARNESS Reader', { timeout: 20_000 }
     expect(run.requests).toHaveLength(2);
   });
 
-  it('Fate Survival: goes to the direction step first, then writes that direction, retrying a failed write with it', async () => {
+  it('Fate Survival: goes to the direction step first, then writes that direction, retrying a failed write with it, and writes a suggested path the same way', async () => {
     const run = await start({ fateSurvival: { enabled: true } }, async (controller, storyId) => {
       await controller.acceptArcGoals(storyId, 1);
       await controller.chooseChapterDirection(storyId, { kind: 'reader', text: 'Mara wakes on the causeway.' });
@@ -218,10 +226,13 @@ describe('Next at the newest chapter in the HARNESS Reader', { timeout: 20_000 }
     expect(nextChapterButton().getAttribute('aria-label')).toBe('Next Chapter: Direct Chapter 2');
     await act(async () => { nextChapterButton().click(); });
     await flush();
-    // The Fate page opens at the step the chapter waits on, ready for the reader's words.
+    // The Fate page opens at the step the chapter waits on: its four paths, the first one focused, the keyboard not yet up.
+    expect(document.activeElement).toBe(pathOption('progression'));
+    expect(fatePage().querySelector('[data-testid="fate-path-chooser"] textarea')).toBeNull();
+    expect(run.requests).toHaveLength(1);
+    await choosePath('reader');
     const textarea = fatePage().querySelector<HTMLTextAreaElement>('[data-testid="fate-path-chooser"] textarea')!;
     expect(document.activeElement).toBe(textarea);
-    expect(run.requests).toHaveLength(1);
     await typeInto(textarea, 'Mara rings the first bell herself.');
     await click(byText('Set Chapter 2’s path'), 'Set path');
     await click(byText('Back to reading'), 'Back to reading');
@@ -241,8 +252,19 @@ describe('Next at the newest chapter in the HARNESS Reader', { timeout: 20_000 }
       .toEqual([{ kind: 'reader', text: 'Mara rings the first bell herself.' }, { kind: 'reader', text: 'Mara rings the first bell herself.' }]);
     await showsChapter(2);
     expect(run.controller.snapshot().stories[0].nextChapterDirection).toBeUndefined();
-    // Chapter 3 waits on a new direction.
+    // Chapter 3 waits on a new direction. The reader takes the writer's suggested path instead of writing one.
     expect(nextChapterButton().getAttribute('aria-label')).toBe('Next Chapter: Direct Chapter 3');
+    await act(async () => { nextChapterButton().click(); });
+    await flush();
+    await choosePath('progression');
+    await click(byText('Set Chapter 3’s path'), 'Set path');
+    await click(byText('Back to reading'), 'Back to reading');
+    await act(async () => { nextChapterButton().click(); });
+    await flush();
+    expect(run.requests.at(-1)!.immediateChapterRequest.direction?.choice)
+      .toEqual({ kind: 'chapter-function', chapterFunction: 'progression', suggestion: 'Mara climbs the bell tower.' });
+    expect(run.requests.at(-1)!.storyInformation.rhythm).toBeUndefined();
+    await showsChapter(3);
   });
 });
 

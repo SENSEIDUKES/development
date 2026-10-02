@@ -553,10 +553,10 @@ export class HarnessGenerationController {
 
   /**
    * Saves the reader's choice for the next chapter only, or clears it so Rhythm
-   * chooses automatically. Regular Reader mode accepts one of the three chapter
-   * functions (with the idea the reader picked) or the reader's own direction;
-   * Fate Survival accepts only the reader's own direction. The choice survives a
-   * failed attempt and is consumed when that chapter commits.
+   * chooses automatically (Regular Reader; Fate Survival then waits for a new
+   * choice). Both modes accept one of the three chapter functions (with the
+   * idea the reader picked) or the reader's own direction. The choice survives
+   * a failed attempt and is consumed when that chapter commits.
    */
   async chooseChapterDirection(storyId: string, choice: ChapterDirectionChoice | null) {
     this.assertHydrated();

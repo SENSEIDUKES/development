@@ -212,11 +212,12 @@ describe('Regular Reader mode', () => {
 });
 
 describe('Fate Survival', () => {
-  it('writes nothing until the reader directs the chapter, offers no generated paths, sends no Rhythm, and always loads the Fate Survival skill', async () => {
+  it('writes nothing until the reader chooses the chapter\'s path, offers the writer\'s suggested paths beside the reader\'s own, sends no Rhythm, and always loads the Fate Survival skill', async () => {
     const run = await setup(SURVIVAL);
     await expect(run.controller.generateNextChapter(run.story.id, 'fixture')).rejects.toThrow("choose Chapter 1's direction");
-    await expect(run.controller.chooseChapterDirection(run.story.id, { kind: 'chapter-function', chapterFunction: 'conflict' }))
-      .rejects.toThrow('in your own words');
+    // A suggested path is a choice like the reader's own words; the reader changes their mind before writing.
+    await run.controller.chooseChapterDirection(run.story.id, { kind: 'chapter-function', chapterFunction: 'conflict' });
+    expect(run.controller.snapshot().stories[0].nextChapterDirection?.choice).toEqual({ kind: 'chapter-function', chapterFunction: 'conflict' });
     await expect(run.controller.startBatch(run.story.id, 'fixture', 3)).rejects.toThrow('one reader-directed chapter at a time');
     await directed(run.controller, run.story.id, 'Lin swims for the archive tower.');
     const request = run.requests[0];
@@ -233,10 +234,17 @@ describe('Fate Survival', () => {
     expect(request.capaPrompt.skills.map(skill => skill.id)).toEqual(['seihouse.sen-novel-author', FATE_SKILL, 'seihouse.sen-speakers']);
     expect(prompt.systemInstruction).toContain('CAPA SKILL [Fate] — SEN Fate Survival');
     expect(prompt.systemInstruction).toContain('Make the reader\'s direction for this chapter happen on the page');
-    // The next chapter needs a new direction, and carries the skill again.
+    // The next chapter needs a new choice, and carries the skill again. This time the reader takes one of the
+    // writer's suggested paths: it reaches the writer as the reader's direction, still with no Rhythm.
     expect(run.controller.snapshot().stories[0].nextChapterDirection).toBeUndefined();
     await expect(run.controller.generateNextChapter(run.story.id, 'fixture')).rejects.toThrow("choose Chapter 2's direction");
-    await directed(run.controller, run.story.id, 'Lin climbs the tower stairs.');
+    await run.controller.chooseChapterDirection(run.story.id, { kind: 'chapter-function', chapterFunction: 'progression', suggestion: 'Lin climbs the tower stairs.' });
+    await run.controller.generateNextChapter(run.story.id, 'fixture');
+    const suggested = run.requests.at(-1)!;
+    expect(suggested.immediateChapterRequest.direction?.choice).toEqual({ kind: 'chapter-function', chapterFunction: 'progression', suggestion: 'Lin climbs the tower stairs.' });
+    expect(suggested.storyInformation.rhythm).toBeUndefined();
+    expect(buildHarnessGenerationPrompt(suggested).userPrompt).toContain('Write the chapter so its primary function is progression, developing that idea');
+    expect(run.controller.snapshot().chapters.at(-1)!.path).toMatchObject({ kind: 'chapter-function', chapterFunction: 'progression' });
     expect(run.requests.every(sent => sent.capaPrompt.skills.some(skill => skill.id === FATE_SKILL))).toBe(true);
   });
 

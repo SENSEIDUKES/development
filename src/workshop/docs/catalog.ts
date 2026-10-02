@@ -146,12 +146,12 @@ export const docsCategories: readonly DocsCategory[] = [
       {
         ...topic('fate-survival', 'Fate Survival', ['Fate Outcome']),
         definition: 'A story mode where the reader directs every chapter and the ending is not guaranteed.',
-        howItFits: 'The creator chooses this mode in Origin before the novel begins, and the choice is then fixed. The reader must give each chapter its own direction; HARNESS loads the Fate Survival writing skill on every call. Missed goals can break the route, requiring the next chapter to end the story. The story ends only when committed prose shows the ending—not merely because a goal or chapter count says so.',
+        howItFits: 'The creator chooses this mode in Origin before the novel begins, and the choice is then fixed. The reader must choose each chapter’s path, one of the writer’s three suggested directions or their own words, because nothing is automatic; HARNESS loads the Fate Survival writing skill on every call. Missed goals can break the route, requiring the next chapter to end the story. The story ends only when committed prose shows the ending—not merely because a goal or chapter count says so.',
       },
       {
         ...topic('alter-fate', 'Alter Fate'),
         definition: 'The reader’s way to choose the next chapter’s path.',
-        howItFits: 'Alter Fate opens the Fate page in the Reader; it does not rewrite chapters that already happened. In regular reading, the reader can take one of three suggested directions or write their own instead of letting Rhythm choose. In Fate Survival, they must write their own direction before a chapter can begin. The choice belongs to that one chapter, survives a failed attempt, and is consumed when the chapter commits.',
+        howItFits: 'Alter Fate opens the Fate page in the Reader; it does not rewrite chapters that already happened. In regular reading, the reader can take one of three suggested directions or write their own instead of letting Rhythm choose. In Fate Survival nothing is automatic: they must take one of those suggested directions or write their own before a chapter can begin. The choice belongs to that one chapter, survives a failed attempt, and is consumed when the chapter commits.',
       },
     ],
   },

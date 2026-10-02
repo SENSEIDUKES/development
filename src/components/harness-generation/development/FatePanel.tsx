@@ -175,41 +175,45 @@ export function FateArcGoalCard({ story, foundation, generatedThrough, actions }
 type PathOption = 'fate' | ChapterFunction | 'reader';
 
 /**
- * The next chapter's path. Regular Reader mode: fate decides by default
- * (Rhythm's automatic pick); the reader may intervene through four paths, one
- * of the writer's three suggested directions or their own direction. Fate
- * Survival: only the reader's own direction, every chapter. A choice directs
- * that one chapter and is used up when it is saved.
+ * The next chapter's path: four paths in both modes, one of the writer's three
+ * suggested directions or the reader's own. Regular Reader mode: fate decides
+ * by default (Rhythm's automatic pick), so a path is an intervention. Fate
+ * Survival: nothing is automatic, so the reader chooses every chapter's path
+ * and nothing starts chosen. A choice directs that one chapter and is used up
+ * when it is saved.
  */
 export function FatePathChooser({ story, foundation, chapters, busy = false, focusDirection = false, onChoose }: {
   story: HarnessStory;
   foundation?: StoryFoundationInput;
   chapters: HarnessChapter[];
   busy?: boolean;
-  /** Puts the reader straight into their own direction, as the step the chapter is waiting on. */
+  /** Puts the reader straight at the chapter's paths, as the step the chapter is waiting on. */
   focusDirection?: boolean;
   onChoose: (choice: ChapterDirectionChoice | null) => Promise<void>;
 }) {
   const mode = harnessStoryMode(foundation);
+  const survival = mode === 'survival';
   const pending = pendingChapterDirection(story);
-  const recommendation = mode === 'regular' ? story.rhythmRecommendation : undefined;
+  const recommendation = survival ? undefined : story.rhythmRecommendation;
   const ideasChapter = [...chapters].sort((a, b) => a.chapterNumber - b.chapterNumber).reverse().find(chapter => chapter.rhythm?.nextChapterSuggestions);
   const ideas = ideasChapter?.rhythm?.nextChapterSuggestions ?? {};
-  const savedOption: PathOption = !pending ? 'fate' : pending.choice.kind === 'reader' ? 'reader' : pending.choice.chapterFunction;
+  // Fate Survival has no path to fall back on, so nothing starts chosen there.
+  const savedOption: PathOption | undefined = pending ? (pending.choice.kind === 'reader' ? 'reader' : pending.choice.chapterFunction)
+    : survival ? undefined : 'fate';
   const savedText = pending?.choice.kind === 'reader' ? pending.choice.text : '';
-  const [option, setOption] = useState<PathOption>(mode === 'survival' ? 'reader' : savedOption);
+  const [option, setOption] = useState<PathOption | undefined>(savedOption);
   const [text, setText] = useState(savedText);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   // A commit consumes the choice and a new chapter opens: start from what is saved.
   useEffect(() => {
-    setOption(mode === 'survival' ? 'reader' : savedOption);
+    setOption(savedOption);
     setText(savedText);
     setError('');
   }, [story.id, story.head.nextChapterNumber, pending?.id, mode, savedOption, savedText]);
 
   const chapterNumber = story.head.nextChapterNumber;
-  const choice = (): ChapterDirectionChoice | null => option === 'fate' ? null
+  const choice = (): ChapterDirectionChoice | null => !option || option === 'fate' ? null
     : option === 'reader' ? { kind: 'reader', text }
       : { kind: 'chapter-function', chapterFunction: option, ...(ideas[option] ? { suggestion: ideas[option] } : {}) };
   const unchanged = option === savedOption && (option !== 'reader' || text.trim() === savedText);
@@ -220,10 +224,10 @@ export function FatePathChooser({ story, foundation, chapters, busy = false, foc
     finally { setSaving(false); }
   };
   const disabled = busy || saving;
-  const radio = (value: PathOption, title: string, body: ReactNode, badge?: string) => (
+  const radio = (value: PathOption, title: string, body: ReactNode, badge?: string, focus = false) => (
     <label key={value} className={`flex min-h-11 cursor-pointer gap-3 rounded-lg border p-3 text-sm ${option === value ? 'border-cyan-300/50 bg-cyan-400/[0.08]' : 'border-white/10 hover:border-white/25'}`}>
       <input type="radio" name={`fate-path-${story.id}`} value={value} checked={option === value} disabled={disabled}
-        onChange={() => setOption(value)} className="mt-1 shrink-0" />
+        onChange={() => setOption(value)} autoFocus={focus} className="mt-1 shrink-0" />
       <span className="min-w-0">
         <span className="flex flex-wrap items-center gap-2 font-semibold text-white">{title}{badge && <span className="rounded-full border border-cyan-300/30 px-2 py-0.5 font-mono text-[10px] font-normal uppercase tracking-[0.12em] text-cyan-100">{badge}</span>}</span>
         <span className="mt-1 block break-words text-xs leading-relaxed text-neutral-300">{body}</span>
@@ -240,26 +244,26 @@ export function FatePathChooser({ story, foundation, chapters, busy = false, foc
           ? 'Fate decides each chapter by default. To intervene, take one of four paths: one of the writer’s three suggested directions, or your own. Your choice directs this one chapter and is used up once the chapter is saved.'
           : story.brokenRoute
             ? 'The route is broken. Your direction for this chapter leads the story to its end: the writer brings it to a believable ending here.'
-            : 'You direct every chapter. Fate offers no paths here: the writer follows your direction and the story answers honestly, so success is never guaranteed.'}
+            : 'You choose every chapter’s path: one of the writer’s three suggested directions, or your own. Nothing is automatic, and the story answers honestly, so success is never guaranteed.'}
       </p>
       <p className="mt-3 text-xs text-neutral-300" data-testid="fate-path-current">
         {pending ? `Set for Chapter ${chapterNumber}: ${describeChapterPath(pending.choice)}`
-          : mode === 'survival' ? `Chapter ${chapterNumber} has no direction yet. It cannot be written until you give one.`
+          : survival ? `Chapter ${chapterNumber} has no direction yet. It cannot be written until you choose its path.`
             : `Chapter ${chapterNumber} follows fate unless you choose otherwise.`}
       </p>
       <fieldset className="mt-3 space-y-2" disabled={disabled}>
         <legend className="sr-only">Chapter {chapterNumber}’s path</legend>
-        {mode === 'regular' && radio('fate', 'Let fate decide',
+        {!survival && radio('fate', 'Let fate decide',
           recommendation
             ? <>{sentence(`Rhythm picks ${CHAPTER_FUNCTION_LABELS[recommendation.recommendedFunction]}${ideas[recommendation.recommendedFunction] ? ` — ${ideas[recommendation.recommendedFunction]}` : ''}`)} <span className="text-neutral-500">{recommendation.reason}</span></>
             : 'Rhythm picks the next chapter’s function from the story’s recent rhythm and its Fate Pressure.',
           'Default')}
-        {mode === 'regular' && <p className={`${eyebrow} pt-2`} data-testid="fate-intervention-heading">Or intervene · four paths</p>}
-        {mode === 'regular' && CHAPTER_FUNCTIONS.map(type => radio(type, CHAPTER_FUNCTION_LABELS[type],
+        <p className={`${eyebrow} pt-2`} data-testid="fate-intervention-heading">{survival ? 'Choose a path · four paths' : 'Or intervene · four paths'}</p>
+        {CHAPTER_FUNCTIONS.map((type, index) => radio(type, CHAPTER_FUNCTION_LABELS[type],
           ideas[type] ?? 'No suggestion saved for this function yet; the writer chooses how to serve it.',
-          recommendation?.recommendedFunction === type ? 'Fate’s pick' : undefined))}
-        {mode === 'regular' ? radio('reader', 'Your own direction', 'Tell the story what happens next, in your words.')
-          : null}
+          recommendation?.recommendedFunction === type ? 'Fate’s pick' : undefined,
+          focusDirection && !savedOption && index === 0))}
+        {radio('reader', 'Your own direction', survival ? 'What your protagonist does next, in your words.' : 'Tell the story what happens next, in your words.')}
         {option === 'reader' && (
           <div className="space-y-1">
             <label htmlFor={`fate-direction-${story.id}`} className="block text-xs text-neutral-300">Your direction for Chapter {chapterNumber}</label>
@@ -272,11 +276,11 @@ export function FatePathChooser({ story, foundation, chapters, busy = false, foc
         )}
       </fieldset>
       <div className="mt-3 flex flex-wrap gap-2">
-        <button type="button" className={primaryButton} disabled={disabled || unchanged || (option === 'reader' && !text.trim())}
+        <button type="button" className={primaryButton} disabled={disabled || !option || unchanged || (option === 'reader' && !text.trim())}
           onClick={() => void save(choice())}>
           {option === 'fate' ? 'Leave it to fate' : `Set Chapter ${chapterNumber}’s path`}
         </button>
-        {pending && mode === 'survival' && (
+        {pending && survival && (
           <button type="button" className={quietButton} disabled={disabled} onClick={() => void save(null)}>Clear direction</button>
         )}
       </div>

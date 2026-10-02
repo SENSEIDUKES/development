@@ -12,19 +12,24 @@ import {
   managedCapaSlotReason,
 } from '@seihouse/sen/harness-generation';
 import { readMarks } from '../../../narrative/marks';
+import { isMainCharacterTag } from './speakers';
 import { createHarnessStory } from './foundation';
 import { defaultHarnessRuntime } from './ids';
 
 describe('SEN Speakers skill', () => {
-  it('teaches the speaker tag the HARNESS reads, with a placeholder name', () => {
-    expect(SEN_SPEAKERS_SKILL).toMatchObject({ id: 'seihouse.sen-speakers', slot: 'speakers', applications: ['generation'] });
+  it('teaches the main character\'s own tag and the name tag the HARNESS reads, with a placeholder name', () => {
+    expect(SEN_SPEAKERS_SKILL).toMatchObject({ id: 'seihouse.sen-speakers', version: '1.1.0', slot: 'speakers', applications: ['generation'] });
+    expect(SEN_SPEAKERS_INSTRUCTIONS).toContain('[[@MC]]');
     expect(SEN_SPEAKERS_INSTRUCTIONS).toContain('[[@Name]]');
-    // Its own example reads as one tag on one spoken line.
-    const example = SEN_SPEAKERS_INSTRUCTIONS.split('\n').at(-1)!;
-    expect(readMarks(example)).toMatchObject({ text: '“Hold the gate,” she said.', speakers: [{ name: 'Name', offset: 0 }] });
+    // Its own examples read as one tag on one spoken line each: the main character's, then anyone else's.
+    const [mine, theirs] = SEN_SPEAKERS_INSTRUCTIONS.split('\n').slice(-2).map(line => readMarks(line));
+    expect(mine).toMatchObject({ text: '“Hold the gate,” he said.', speakers: [{ name: 'MC', offset: 0 }] });
+    expect(isMainCharacterTag(mine.speakers[0].name)).toBe(true);
+    expect(theirs).toMatchObject({ text: '“It will not hold,” she said.', speakers: [{ name: 'Name', offset: 0 }] });
+    expect(isMainCharacterTag(theirs.speakers[0].name)).toBe(false);
     expect(SEN_SPEAKERS_INSTRUCTIONS).toMatch(/never dashes/);
     expect(SEN_SPEAKERS_INSTRUCTIONS).toMatch(/new paragraph when the speaker changes/);
-    expect(SEN_SPEAKERS_INSTRUCTIONS).toMatch(/main character too, even when the story is told in the first person/);
+    expect(SEN_SPEAKERS_INSTRUCTIONS).toMatch(/the tag is always \[\[@MC\]\], whatever name the prose uses for them and even when the story is told in the first person/);
   });
 
   it('never speaks of the retired dialogue contract, Sound Cues or numbered marks, so the guards on them stay true', () => {
@@ -40,7 +45,7 @@ describe('SEN Speakers skill', () => {
     story.skillLoadout = { author: { id: SEN_NOVEL_AUTHOR_SKILL.id, version: SEN_NOVEL_AUTHOR_SKILL.version } };
     const bundled = freezeHarnessSkillLoadout(story, createHarnessSkillCatalog(includeBundledHarnessSkills([])), 'now');
     expect(bundled.skills.map(skill => skill.slot)).toEqual(['author', 'speakers']);
-    expect(assembleCapaPrompt(bundled).text).toContain('CAPA SKILL [Speakers] — SEN Speakers v1.0.0');
+    expect(assembleCapaPrompt(bundled).text).toContain('CAPA SKILL [Speakers] — SEN Speakers v1.1.0');
     // A host whose catalog lacks the skill writes the chapter without speaker tags.
     const minimal = freezeHarnessSkillLoadout(story, createHarnessSkillCatalog([SEN_NOVEL_AUTHOR_SKILL]), 'now');
     expect(minimal.skills.map(skill => skill.slot)).toEqual(['author']);

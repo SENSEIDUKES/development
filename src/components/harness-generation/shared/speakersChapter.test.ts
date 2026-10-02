@@ -11,9 +11,10 @@ import { acceptHarnessModelResponse } from './responseAcceptance';
 
 /**
  * Dialogue speakers, end to end, in the tiny SEN language: the writer tags who
- * speaks; the HARNESS strips every tag, finds each spoken line, decides from
- * the frozen Story Information whether its speaker is the main character, saves
- * one speaker record per line, and Read Aloud gives each line its voice.
+ * speaks, the main character with their own tag; the HARNESS strips every tag,
+ * finds each spoken line, saves one speaker record per line (a name tag is
+ * also checked against the frozen Story Information), and Read Aloud gives
+ * each line its voice.
  */
 
 const GOAL = { arcNumber: 1, goals: [{ id: 'arc-1-gate', text: 'Hold the river gate.', chapters: 100 }] };
@@ -35,7 +36,7 @@ const taggedChapter = () => JSON.stringify({
   title: 'The River Gate',
   paragraphs: [
     'Rain hammered the river gate.',
-    '[[@Wei Lin]] “Hold the gate,” he said, and drew his sword.',
+    '[[@MC]] “Hold the gate,” he said, and drew his sword.',
     '[[@Elder Mo]] “It will not hold.” The old man did not move.',
     '[[@Wei]] “Then I will.”',
     '“Who goes there?” a voice called from the dark.',
@@ -71,9 +72,10 @@ describe('HARNESS dialogue speakers through speaker tags', () => {
     expect(chapter.paragraphs[1]).toBe('“Hold the gate,” he said, and drew his sword.');
     expect(chapter.recap?.text).toBe('Wei Lin held the gate.');
     expect(chapter.speakers?.map(record => [record.id, record.anchor.selectedText, record.payload.speaker, record.payload.protagonist])).toEqual([
+      // The main character's own tag, saved under the name the story gives them.
       ['speaker:c1-p2:0-16', '“Hold the gate,”', 'Wei Lin', true],
       ['speaker:c1-p3:0-19', '“It will not hold.”', 'Elder Mo', false],
-      // One word of the main character's name, shared with no one else.
+      // A name tag still counts: one word of the main character's name, shared with no one else.
       ['speaker:c1-p4:0-14', '“Then I will.”', 'Wei', true],
     ]);
     expect(state.attempts[0].warnings.filter(warning => warning.code === 'speaker_tags_incomplete').map(warning => warning.message)).toEqual([

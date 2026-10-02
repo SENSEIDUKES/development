@@ -278,8 +278,9 @@ when its words change. That means:
   because it used to be there. [DEVELOPMENT_RECONSTRUCTION.md](./DEVELOPMENT_RECONSTRUCTION.md)
   still says what must be protected: authentication, Postgres, R2 and persistence.
 - **Basic first.** Prove the simplest version with a real model before adding the
-  advanced layer. For example, the chapter paragraph counter uses one range (50–100)
-  now; story styles with their own ranges come only after it works.
+  advanced layer. For example, the chapter paragraph counter asks for one fixed count
+  (50) while its accuracy is measured; a range (40–80), then story styles with their
+  own ranges, come only after it works.
 - **One kind at a time, in the tiny SEN language.** The model says what happens and
   where, the manuscript gives it a place, and the HARNESS turns it into exact,
   repeatable behavior. Each kind of content is rebuilt this way from the ground up.
@@ -297,7 +298,8 @@ Update it whenever it changes.
 
 - **Built:**
   - Chapters are narration plus Sound Cues in the tiny SEN language (#295).
-  - Each chapter asks for an exact paragraph count from 50 to 100 (#296).
+  - Each chapter asks for exactly 50 paragraphs for now, so the writer's accuracy
+    can be measured; the range to return to is 40 to 80 (#296).
   - **The way in works end to end in the Workshop:** Story Seed → World
     Blueprint → **Start Story** → the story's **World Info** page → **Start
     Story** → the **Reader Chamber**, where Chapter 1 is written under the Aura
@@ -334,8 +336,8 @@ Update it whenever it changes.
     that arc's first chapter, in both modes. The model fills every Story Seed slot
     left blank and never changes what the creator wrote. Add arcs is gone.
   - **Dialogue speakers, in the tiny SEN language:** the writer tags who speaks
-    each spoken line (`[[@Name]]`), and the HARNESS records whether it is the
-    main character. That is what gives Listen its three voices. Chapters
+    each spoken line (`[[@MC]]` for the main character, `[[@Name]]` for anyone
+    else), and the HARNESS records whether it is the main character. That is what gives Listen its three voices. Chapters
     written before this read every quoted line in the Side voice.
 - **Not tested yet:**
   - real generation with a real model on the Vercel preview: a real Blueprint

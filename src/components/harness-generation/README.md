@@ -25,12 +25,16 @@ existing Chapter Generation feature.
 | Field | Value |
 | --- | --- |
 | Replica creation date | 2026-08-29 |
-| Last Workshop update | 2026-10-01 |
+| Last Workshop update | 2026-10-02 |
 | Last source comparison | 2026-09-12 — verified the creative author direction in `Light-Novels/src/server/prompts.ts` on `main` before extracting the Author skill |
 | Lifecycle status | Reader-directed continuation (Fate page) in a Reader on the Text Highlight Engine that reads aloud in three voices |
 
 ### History
 
+- **2026-10-02 (Listen voices from the owner's test; Fate Survival paths; a fixed chapter length):** Changes from SENSEI's first real test on the preview.
+  - **The main character's own speaker tag.** A real chapter read the main character in both the Protagonist and the Side voice, and often in the Side voice. The protagonist was decided by matching the writer's tag to the main character's full name, so a shortened name of more than one word (a hyphenated given name such as "Jin-Woo" for "Sung Jin-Woo") fell to the Side voice, and the Story Seed's main character carries no nicknames to match. Production instead trusted the writer's role label on each line. Now the writer tags the main character's speech `[[@MC]]` whatever name the prose uses (`MAIN_CHARACTER_SPEAKER_TAG`, SEN Speakers v1.1.0), and the record is saved under the name Story Information gives them. A name tag remains the fallback: a part of one of the main character's names, word for word, counts when no other declared name shares it (`isProtagonist`). Chapters written before keep the voices they were saved with.
+  - **Fate Survival offers the four paths.** The Fate page now offers Fate Survival the writer's three suggested directions as well as the reader's own words, as Regular Reader mode does. Nothing is automatic: there is no "Let fate decide", nothing starts chosen, and a chapter still waits for the reader's choice (`validateChapterDirectionChoice` accepts a chapter function in both modes). When the Reader opens the Fate page for a waiting chapter, focus lands on the first path rather than the text box, so a phone keyboard doesn't cover the options.
+  - **Chapter length fixed at 50 paragraphs for testing.** `HARNESS_CHAPTER_PARAGRAPH_RANGE` is `{ min: 50, max: 50 }`, so every chapter asks for exactly 50 and the writer's accuracy can be compared chapter to chapter (the Harness Generation page shows "N paragraphs (50 asked)" and flags a miss). The range to return to is 40 to 80; `harnessChapterParagraphTarget` takes a range for that.
 - **2026-10-01 (Read Aloud and dialogue speakers):** The owner asked for the prototype's triple-voice narration, remade rather than ported. **Reader:** `HarnessReaderSession` gains Listen and Reader Settings, whose only section is Narration.
   - **Voices:** the Narrator reads prose, the Protagonist voice the main character's spoken lines, the Side voice everyone else's.
   - **The light:** the sentence being spoken is lit through the engine's overlay, and the page follows it unless the reader is scrolling.
@@ -503,9 +507,9 @@ packs, marketplace behavior, currency, scheduling, or a reward economy.
 
 The reader directs one chapter at a time. `controller.chooseChapterDirection(id,
 choice)` saves the path for the next chapter only: one of Rhythm's three chapter
-functions with the idea the reader picked (Regular Reader mode), or the reader's
-own direction in their words (either mode). `null` returns Regular Reader mode to
-fate's automatic pick. The choice travels in the Immediate Chapter Request, stays
+functions with the idea the reader picked, or the reader's own direction in
+their words (either mode). `null` returns Regular Reader mode to fate's
+automatic pick. The choice travels in the Immediate Chapter Request, stays
 through failed attempts, and is consumed when that chapter commits; the committed
 chapter records the `path` it took. Fate Survival requires a direction for every
 chapter and cannot run batches. Corrections, not directions, change established

@@ -2,7 +2,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { HarnessGenerationWorkspace } from '@seihouse/library/generation';
-import { SEN_NOVEL_AUTHOR_SKILL, SEN_SPEAKERS_INSTRUCTIONS } from '@seihouse/sen/harness-generation';
+import { SEN_NOVEL_AUTHOR_SKILL, SEN_SPEAKERS_INSTRUCTIONS, SEN_SPEAKERS_SKILL } from '@seihouse/sen/harness-generation';
 import { compileStoryInformationPacket } from './context';
 import { harnessChapterParagraphTarget } from './chapterBody';
 import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
@@ -196,7 +196,7 @@ describe('Harness Generation Phase 2 novel core', () => {
     expect(request.capaPrompt.text).toBe([
       'CAPA SKILL [Author] — Cozy Fantasy Author v1.0.0\nWrite with warmth, restraint, and close attention to daily life.',
       'CAPA SKILL [Pacing] — Long-Range Pacing v1.0.0\nDo not collapse the siege into one chapter.',
-      `CAPA SKILL [Speakers] — SEN Speakers v1.0.0\n${SEN_SPEAKERS_INSTRUCTIONS}`,
+      `CAPA SKILL [Speakers] — SEN Speakers v${SEN_SPEAKERS_SKILL.version}\n${SEN_SPEAKERS_INSTRUCTIONS}`,
     ].join('\n\n'));
     expect(JSON.stringify(request.storyInformation)).not.toContain('Write with warmth');
     expect(JSON.stringify(request.storyInformation)).not.toContain('skillLoadout');

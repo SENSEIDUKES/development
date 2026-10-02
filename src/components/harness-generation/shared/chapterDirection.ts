@@ -9,10 +9,12 @@ import {
 } from '../../../narrative/generation';
 
 /**
- * Checks one reader choice for the next chapter against the story's Fate mode
- * and returns the clean value to save. Regular Reader mode offers the three
- * chapter functions and the reader's own direction; Fate Survival offers only
- * the reader's own direction, because SEN never proposes the path there.
+ * Checks one reader choice for the next chapter and returns the clean value to
+ * save. Both Fate modes offer the three chapter functions, each with the
+ * writer's suggested idea, and the reader's own direction. The modes differ in
+ * what happens without a choice: Regular Reader leaves the path to fate, while
+ * Fate Survival writes nothing until the reader chooses. The mode stays in the
+ * signature so a mode can narrow its paths later.
  */
 export function validateChapterDirectionChoice(choice: ChapterDirectionChoice, mode: HarnessStoryMode): ChapterDirectionChoice {
   if (choice?.kind === 'reader') {
@@ -22,7 +24,6 @@ export function validateChapterDirectionChoice(choice: ChapterDirectionChoice, m
     return { kind: 'reader', text };
   }
   if (choice?.kind === 'chapter-function') {
-    if (mode === 'survival') throw new Error('Fate Survival: you direct each chapter yourself, in your own words.');
     if (!isChapterFunction(choice.chapterFunction)) throw new Error('Choose Progression, World Building, or Conflict.');
     const suggestion = typeof choice.suggestion === 'string' ? choice.suggestion.trim() : '';
     return { kind: 'chapter-function', chapterFunction: choice.chapterFunction, ...(suggestion ? { suggestion } : {}) };

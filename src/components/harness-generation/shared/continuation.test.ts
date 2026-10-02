@@ -75,7 +75,7 @@ describe('Steered continuation and SEN boundaries', () => {
     expect(sen.mcName).toBe('Mara');
     expect(sen.memory?.worldRules).toContain('Mara: Sparks: 0 sparks');
     expect(sen.memory?.worldRules).toContain('bell: Charges: 3 charges');
-    // Dialogue is rebuilt later in the tiny SEN language; until then the Reader shows narration only.
+    // Paragraphs stay narration blocks: who speaks is the chapter's own speaker records, never a block type.
     expect(sen.arcs[0].chapters[0].blocks?.every(block => block.type === 'narration')).toBe(true);
     expect(sen.arcs[0].chapters[0].generatedContent).toBe(prose);
     expect(writes).toBe(1);
@@ -165,7 +165,7 @@ describe('Steered continuation and SEN boundaries', () => {
     expect(sen.memory?.characters?.find(character => character.name === 'Iven')).toMatchObject({ role: 'Captain', relationshipToMC: 'Ally' });
     expect(resolveHarnessEntity('Iven', state, story.id).resolution).toBe('exact');
     const chapter = sen.arcs[0].chapters[49];
-    // One narration block per paragraph: speakers return when dialogue is rebuilt.
+    // One narration block per paragraph: speakers live on the chapter's speaker records.
     expect(chapter.blocks?.every(block => block.type === 'narration')).toBe(true);
     expect(chapter.blocks?.map(block => block.text).join('\n\n')).toBe(state.chapters[49].prose);
     // Extracted memory is Codex evidence, never a reader-visible panel: these

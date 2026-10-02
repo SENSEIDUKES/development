@@ -66,9 +66,20 @@ const trimRange = (text: string, range: TextRange): TextRange | undefined => {
   return start < end ? { start, end } : undefined;
 };
 
+/** One sentence segmenter per locale: a chapter asks for hundreds of sentences. */
+const sentenceSegmenters = new Map<string, Intl.Segmenter>();
+const sentenceSegmenter = (locale: string) => {
+  let segmenter = sentenceSegmenters.get(locale);
+  if (!segmenter) {
+    segmenter = new Intl.Segmenter(locale, { granularity: 'sentence' });
+    sentenceSegmenters.set(locale, segmenter);
+  }
+  return segmenter;
+};
+
 const segmentRanges = (text: string, locale: string): TextRange[] => {
   if (typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function') {
-    return Array.from(new Intl.Segmenter(locale, { granularity: 'sentence' }).segment(text),
+    return Array.from(sentenceSegmenter(locale).segment(text),
       part => ({ start: part.index, end: part.index + part.segment.length }));
   }
   const ranges: TextRange[] = [];

@@ -40,6 +40,8 @@ export const SHARED_READER_CONTRACTS = new Set([
 
 const CODE = /\.[cm]?[jt]sx?$/;
 const OLD_READER = /^src\/components\/reader-(?:chamber|codex)\//;
+/** The older Reader's own host pieces: its narration, never the new Read Aloud. */
+const OLD_READER_HOST = new Set(['src/host/reader/webSpeechNarration.ts']);
 
 /** The module an HTML page loads. */
 export function pageModule(html) {
@@ -54,7 +56,7 @@ function fileProblem(file, classify) {
   if (!owner) return 'unowned code';
   if (['workshop', 'test', 'deferred'].includes(owner)) return `${owner} code`;
   if (file.startsWith('src/library/generation/')) return 'the HARNESS developer page';
-  if (OLD_READER.test(file) && CODE.test(file) && !SHARED_READER_CONTRACTS.has(file)) return 'the older Reader';
+  if ((OLD_READER.test(file) && CODE.test(file) && !SHARED_READER_CONTRACTS.has(file)) || OLD_READER_HOST.has(file)) return 'the older Reader';
   return undefined;
 }
 

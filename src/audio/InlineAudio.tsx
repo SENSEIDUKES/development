@@ -154,7 +154,9 @@ export function InlineAudioControl({ cue, playback }: InlineAudioControlProps) {
       >
         <LibrarySoundGlyph className="inline-world-cue__glyph" />
       </button>
-      <span id={statusId} className="sr-only" aria-live="polite">
+      {/* Announced to screen readers, but never part of the passage text, so
+          offsets and highlights stay true while a cue loads, plays or fails. */}
+      <span id={statusId} className="sr-only" aria-live="polite" data-sen-selection-ignore="">
         {stateMessage}
       </span>
     </>

@@ -88,6 +88,10 @@ const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => 
     }
     return { ...next, schemaVersion: 24 };
   },
+  // Schema 24 -> 25: chapters and accepted drafts gain optional speaker
+  // records (who speaks each spoken line). Chapters written before have none,
+  // and Read Aloud reads their quoted lines in the Side voice.
+  24: stored => ({ ...stored, schemaVersion: 25 }),
 };
 
 /**

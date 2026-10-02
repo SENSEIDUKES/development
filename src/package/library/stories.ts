@@ -11,3 +11,4 @@ export {
 } from '../../library/stories/useLibraryStories';
 export { StoryPages, type StoryPagesProps } from '../../library/stories/StoryPages';
 export { harnessStoryDisplay, storyHomeWorlds } from '../../library/stories/storyView';
+export { LIBRARY_READ_ALOUD_VOICES } from '../../library/stories/readAloudVoices';

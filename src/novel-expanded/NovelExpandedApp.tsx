@@ -82,6 +82,7 @@ function NovelExpandedPages({ services }: { services: NovelExpandedServices }) {
 
   if (storyId) return missing ? null : <StoryPages key={storyId} stories={stories} storyId={storyId}
     page={route.page === 'read' ? 'read' : 'info'} readerStateRepository={services.readerState}
+    readerPreferences={services.readerPreferences}
     writingAgent={AGENTS.VERSA} backLabel="Back to your stories"
     onOpenReader={() => navigate({ page: 'read', storyId })}
     onCloseReader={() => navigate({ page: 'story', storyId })}

@@ -122,7 +122,8 @@ const buildHarnessSenStory = (state: HarnessWorkspaceState, storyId: string, thr
   memory.memoryWarnings = [...ambiguous].map(name => `Ambiguous character identity: ${name}. Speech attribution is withheld.`);
 
   // Each paragraph is one narration block with its stable id; the chapter's
-  // Sound Cues sit on those ids. Dialogue attribution returns when it is rebuilt.
+  // Sound Cues sit on those ids. Speakers are the chapter's own speaker records
+  // (\`HarnessChapter.speakers\`), which the HARNESS Reader's Read Aloud reads.
   const readerChapters = (includeChapters ? chapters : []).map(chapter => ({
     persistenceId: chapter.id,
     number: chapter.chapterNumber,

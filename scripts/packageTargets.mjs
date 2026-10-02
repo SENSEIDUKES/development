@@ -25,14 +25,14 @@ export const PACKAGE_TARGETS = {
       '@seihouse/sen/reader-chamber': ['ReaderChamber', 'ReaderViewport'],
       '@seihouse/sen/inline-audio': ['InlineAudio', 'InlineAudioControl', 'InlineAudioText'],
       '@seihouse/sen/reader-codex': ['ReaderCodex', 'CodexSheetOverlay'],
-      '@seihouse/sen/reader-runtime': ['ReaderRuntimeProvider'],
+      '@seihouse/sen/reader-runtime': ['ReaderRuntimeProvider', 'useReadAloud', 'buildReadAloudScript', 'findSpokenLines', 'chooseDefaultVoices', 'createWebSpeechEngine'],
       '@seihouse/sen/translation': ['ReaderTranslationController', 'ReaderTranslationRuntimeProvider'],
       '@seihouse/sen/manifestations': ['ManifestationReveal'],
       '@seihouse/sen/motion-picture': ['MotionPicture'],
       '@seihouse/sen/audio': ['parseAudioCues', 'createMediaCatalog', 'placeSoundCues', 'NarrativeAudioProvider'],
       '@seihouse/sen/story-seed': ['StoryFoundationEditor', 'createEmptyStorySeedInput', 'parseStorySeedJson'],
       '@seihouse/sen/generation': ['readMarks'],
-      '@seihouse/sen/harness-generation': ['HarnessGenerationController', 'createHarnessSenStory'],
+      '@seihouse/sen/harness-generation': ['HarnessGenerationController', 'createHarnessSenStory', 'HarnessReaderSession', 'SEN_SPEAKERS_SKILL'],
       '@seihouse/sen/arc-goals': ['ARC_LENGTH'],
     },
     smokeTypes: `
@@ -42,7 +42,11 @@ export const PACKAGE_TARGETS = {
       const highlightProps: TextHighlightEngineProps = { blocks: [textBlock], onBlocksChange: (blocks, edit) => { void blocks; void edit.operation; } };
       void highlightProps;
       import type { StoryWorld, StoryBlock, ReaderChapter, NarrativeUsagePort } from '@seihouse/sen/contracts';
-      import type { ReaderRuntime } from '@seihouse/sen/reader-runtime';
+      import type { ReaderRuntime, ReadAloudScript, ReadAloudVoicePicks, SpeakerAttachment } from '@seihouse/sen/reader-runtime';
+      const picks: ReadAloudVoicePicks = { en: { narrator: ['Publisher Voice'] } };
+      const script: ReadAloudScript = { version: 1, lines: [] };
+      declare const speaker: SpeakerAttachment;
+      void picks; void script; void speaker.payload.protagonist;
       import type { StorySeedInput, StorySeedRepository } from '@seihouse/sen/story-seed';
       import type { HarnessStory, HarnessGenerationModelAdapter } from '@seihouse/sen/harness-generation';
       import type { ChapterContent } from '@seihouse/sen/generation';
@@ -80,7 +84,7 @@ export const PACKAGE_TARGETS = {
       '@seihouse/library/generation': ['HarnessGenerationWorkspace'],
       '@seihouse/library/media': ['createLibraryMediaPort', 'validateMediaPack'],
       '@seihouse/library/manifestations': ['AILoadingVeil'],
-      '@seihouse/library/stories': ['useLibraryStories', 'StoryPages', 'harnessStoryDisplay', 'storyHomeWorlds'],
+      '@seihouse/library/stories': ['useLibraryStories', 'StoryPages', 'harnessStoryDisplay', 'storyHomeWorlds', 'LIBRARY_READ_ALOUD_VOICES'],
     },
     smokeTypes: `
       import type { UserProfileServices } from '@seihouse/library/profile';

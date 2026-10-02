@@ -6,6 +6,7 @@ import { useWebSpeechNarration } from '../host/reader/webSpeechNarration';
 import { extractWorkshopGlossaryTerms } from '../components/reader-codex/shared/workshopGlossary';
 import { TRACK_LIBRARY } from '../host/media/soundscapeCatalog';
 import { requestCodexVoice } from '../host/reader/codexVoice';
+import { createLocalReaderPreferenceStorage } from '../host/reader/readerPreferenceStorage';
 import { DEFAULT_CULTIVATION_GLOSSARY } from '../host/reader/cultivationGlossary';
 import { ReaderTranslationController, ReaderTranslationRuntimeProvider } from '@seihouse/sen/translation';
 import { ReaderTranslationHttpProvider } from '../host/reader/translationHttp';
@@ -21,11 +22,7 @@ const runtime: ReaderRuntime = {
     prompt: `${type} manifestation for ${name}: ${description ?? ''}`,
   }),
   defaultGlossary: DEFAULT_CULTIVATION_GLOSSARY,
-  preferences: {
-    read: key => { try { return localStorage.getItem(`workshop.reader.${key}`); } catch { return null; } },
-    write: (key, value) => { try { localStorage.setItem(`workshop.reader.${key}`, value); } catch { /* advisory */ } },
-    remove: key => { try { localStorage.removeItem(`workshop.reader.${key}`); } catch { /* advisory */ } },
-  },
+  preferences: createLocalReaderPreferenceStorage('workshop.reader.'),
   setAudioChannel(channel, value) {
     const { audioMix } = useAppStore.getState();
     setMockState({ audioMix: { ...audioMix, [channel]: { ...audioMix[channel], ...value } } });

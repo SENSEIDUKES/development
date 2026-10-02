@@ -13,7 +13,7 @@ accounts, Energy, QI, first-party catalogs, Workshop state, or concrete APIs.
 | `@seihouse/sen` | Neutral presentation contracts/defaults and version |
 | `./contracts` | Story, chapter, block, identity, voice, usage and language contracts |
 | `./presentation` | Product-neutral presentation provider and slots |
-| `./reader-runtime` | Required host ports for Reader/Codex state and services |
+| `./reader-runtime` | Required host ports for Reader/Codex state and services, and Read Aloud: spoken lines and speaker records, the three-voice script, voice choice, device preferences through `ReaderPreferenceStorage`, and the `useReadAloud` player over the browser's speech |
 | `./reader-chamber` | Portable Reader behavior and UI, including the anchored Mind Palace |
 | `./reader-codex` | Portable Codex behavior and UI |
 | `./inline-audio` | Sound Cues on the page: the glyph on the words a cue marks and its inline playback (needs a host `NarrativeAudioProvider`) |
@@ -32,6 +32,28 @@ accounts, Energy, QI, first-party catalogs, Workshop state, or concrete APIs.
 There is no `chapter-generation` or `codex-cards` compatibility entry. Legacy
 Chapter Generation was retired; HARNESS is the one canonical generated-story
 owner.
+
+**0.12.0 (breaking):** Read Aloud and dialogue speakers.
+
+- `./reader-runtime`: Read Aloud, the Reader's three-voice narration on the
+  browser's own speech.
+  - `findSpokenLines`, `SpeakerAttachment` and `SPEAKER_KIND`: spoken lines and
+    the speaker records on them.
+  - `buildReadAloudScript`: a chapter as short lines inside its sentences, each
+    for the Narrator, Protagonist or Side voice.
+  - `chooseDefaultVoices` and `resolveReadAloudVoices`: voices for the story's
+    language, from a host's `ReadAloudVoicePicks`.
+  - The preferences codec, through the existing `ReaderPreferenceStorage` port.
+  - `useReadAloud`, with `createWebSpeechEngine`.
+- `./harness-generation`:
+  - `HarnessReaderSession` takes `readerPreferences` and `readAloudVoices`, and
+    shows Listen and Reader Settings (Narration) when the browser can speak.
+  - Speaker tags (`[[@Name]]`, read by `readMarks`) become
+    `HarnessChapter.speakers` (schema 25).
+  - `SEN_SPEAKERS_SKILL` fills the new always-managed `speakers` slot.
+  - `HarnessSkillSlotId` and `CapaSlotManager` widen, which is the breaking part.
+- `./contracts`: `senSpeechLanguageTags`.
+- `./inline-audio`: a cue's screen-reader status no longer shifts passage offsets.
 
 **0.11.0 (breaking):** a World Blueprint plans only Arc 1; every later arc is
 planned when the reader begins it.

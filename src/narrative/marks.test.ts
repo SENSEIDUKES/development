@@ -13,7 +13,7 @@ describe('readMarks', () => {
 
   it('leaves text without marks exactly as it was', () => {
     const plain = 'The sign read [[CLOSED]], and [Level 2] flashed; a lone ]] stays.';
-    expect(readMarks(plain)).toEqual({ text: plain, marks: [], issues: [] });
+    expect(readMarks(plain)).toEqual({ text: plain, marks: [], issues: [], speakers: [], speakerIssues: [] });
   });
 
   it('reads the slips a writer makes', () => {
@@ -36,13 +36,13 @@ describe('readMarks', () => {
   });
 
   it('removes a point mark without leaving a double space, and reports it', () => {
-    expect(readMarks('Wei Lin [[1]] drew his sword.')).toEqual({ text: 'Wei Lin drew his sword.', marks: [], issues: [{ kind: 'point', id: 1 }] });
+    expect(readMarks('Wei Lin [[1]] drew his sword.')).toEqual({ text: 'Wei Lin drew his sword.', marks: [], issues: [{ kind: 'point', id: 1 }], speakers: [], speakerIssues: [] });
     expect(readMarks('[[3]] Dawn broke.').text).toBe('Dawn broke.');
   });
 
   it('keeps the words of a mark that never closes', () => {
     expect(readMarks('He [[4|drew his sword as the beast lunged.')).toEqual({
-      text: 'He drew his sword as the beast lunged.', marks: [], issues: [{ kind: 'unclosed', id: 4 }],
+      text: 'He drew his sword as the beast lunged.', marks: [], issues: [{ kind: 'unclosed', id: 4 }], speakers: [], speakerIssues: [],
     });
   });
 
@@ -71,6 +71,63 @@ describe('readMarks', () => {
       'A [[1|b]] c [[2]] d [[3|e f', '[[drew|9]] [[10|x] y', '［［７｜剣］］と[[8:盾]]', 'x [[1 [[2|y]] z]] w', '[[999|a]]',
     ];
     for (const sample of samples) expect(readMarks(sample).text).not.toMatch(/[[［]{2}\s*[0-9０-９]/);
+  });
+});
+
+describe('speaker tags', () => {
+  const tags = (reading: ReturnType<typeof readMarks>) => reading.speakers.map(tag => [tag.name, reading.text.slice(tag.offset)]);
+
+  it('removes a tag and reports who speaks the speech that follows it', () => {
+    const reading = readMarks('[[@Lin Feng]] “Run!” he shouted. [[@Elder Mo]] “Never.”');
+    expect(reading.text).toBe('“Run!” he shouted. “Never.”');
+    expect(tags(reading)).toEqual([['Lin Feng', '“Run!” he shouted. “Never.”'], ['Elder Mo', '“Never.”']]);
+    expect(reading.issues).toEqual([]);
+    expect(reading.speakerIssues).toEqual([]);
+  });
+
+  it('reads the slips a writer makes, and full-width CJK brackets', () => {
+    expect(tags(readMarks('[[ @ Lin Feng ]] “Run!”'))).toEqual([['Lin Feng', '“Run!”']]);
+    expect(tags(readMarks('[[@Lin Feng] “Run!”'))).toEqual([['Lin Feng', '“Run!”']]);
+    expect(tags(readMarks('［［＠林］］「行くぞ」'))).toEqual([['林', '「行くぞ」']]);
+    expect(tags(readMarks('[@Mara] “Hold the gate.”'))).toEqual([['Mara', '“Hold the gate.”']]);
+    // A number written after the name is dropped; words written inside the tag stay.
+    expect(readMarks('[[@Mara|1]] “Hold the gate.”').text).toBe('“Hold the gate.”');
+    const inside = readMarks('[[@Mara|“Hold the gate.”]] she said.');
+    expect(inside.text).toBe('“Hold the gate.” she said.');
+    expect(tags(inside)).toEqual([['Mara', '“Hold the gate.” she said.']]);
+  });
+
+  it('is read before marks: never a reversed span, and a tag inside a span leaves the span whole', () => {
+    const reading = readMarks('The door [[1|slammed [[@Mara]] shut]].');
+    expect(reading.text).toBe('The door slammed shut.');
+    expect(words(reading)).toEqual([[1, 'slammed shut']]);
+    expect(tags(reading)).toEqual([['Mara', 'shut.']]);
+    expect(readMarks('[[@Mara|2]] “Go.”').marks).toEqual([]);
+  });
+
+  it('removes a tag that names nobody, and leaks nothing', () => {
+    for (const sample of ['[[@]] “Go.”', `[[@${'A very long name '.repeat(4)}]] “Go.”`, '[[@Mara “Go.”']) {
+      const reading = readMarks(sample);
+      expect(reading.text).toBe('“Go.”');
+      expect(reading.speakers).toEqual([]);
+      expect(reading.speakerIssues).toEqual([{ kind: 'unnamed' }]);
+    }
+  });
+
+  it('leaves ordinary brackets, emails and untagged names alone', () => {
+    for (const plain of ['[Level 2] flashed.', 'The sign read [[CLOSED]].', 'Write to name@example.com today.', '[[Mara]] waited.', 'He said [@Mara] later.']) {
+      expect(readMarks(plain)).toEqual({ text: plain, marks: [], issues: [], speakers: [], speakerIssues: [] });
+    }
+  });
+
+  it('never lets a tag reach the clean text', () => {
+    const samples = ['[[@A]] x [[@B|y]] z', '［［＠林］］と[[@Mo|3]]', 'x [[1|a [[@B]] b]] [[@C', '[[@]]', '  [[@Mara]]  “Go.”  '];
+    for (const sample of samples) expect(readMarks(sample).text).not.toMatch(/[[［]{1,2}\s*[@＠]/);
+    expect(readMarks('  [[@Mara]]  “Go.”  ').speakers).toEqual([{ name: 'Mara', offset: 0 }]);
+  });
+
+  it('strips tags from fields that carry none', () => {
+    expect(stripMarks('Previously, [[@Mara]] Mara held the gate.')).toBe('Previously, Mara held the gate.');
   });
 });
 

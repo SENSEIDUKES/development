@@ -5,6 +5,14 @@ SEN engine and the two UI packages. Library owns SEIHouse users, products,
 economy, community and business policy. Authentication enforcement, secrets,
 durable ledgers and concrete infrastructure stay in the host/backend.
 
+**0.12.0:** requires `@seihouse/sen` 0.12.0. `./stories` adds
+`LIBRARY_READ_ALOUD_VOICES`, SEIHouse's narration voices: Daniel narrates and
+Rishi voices the protagonist on Apple devices, with a female side voice, and
+the closest equivalents on Edge, Windows and Chrome. `StoryPages` takes
+`readerPreferences` (the host's device storage) and hands both to the Reader.
+`HarnessGenerationWorkspace` passes `readerPreferences` through, and its slot
+inspection shows the Speakers slot.
+
 **0.11.0:** requires `@seihouse/sen` 0.11.0. `useLibraryStories` gains
 `planArc`, and `StoryPages` hands it to the Reader, so a new arc's goals are
 planned and reviewed in the World Blueprint before its first chapter. The

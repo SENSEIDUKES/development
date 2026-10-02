@@ -3,7 +3,9 @@ import type { FrozenNarrativeMedia } from '../../../audio/media';
 import { describeSetAsideSoundCue, placeSoundCues } from '../../../audio/soundCuePlacement';
 import type { SoundWord } from '../../../audio/soundWords';
 import type { SoundCueAttachment } from '../../../audio/inlineAudio';
-import { readMarks, type ProseMark } from '../../../narrative/marks';
+import { readMarks, type MarkReading, type ProseMark } from '../../../narrative/marks';
+import type { SpeakerAttachment } from '../../../narrative/speech';
+import { placeSpeakers, type ProtagonistNames } from './speakers';
 import { readHarnessSoundCueSignals, stripReplyMarks } from './chapterSignals';
 import {
   harnessChapterBody,
@@ -234,6 +236,10 @@ export interface HarnessResponseAcceptanceOptions {
   locale?: string;
   /** The exact paragraph count the attempt asked for; a miss is kept and flagged. */
   paragraphTarget?: number;
+  /** The main character's names, from the attempt's frozen Story Information: whose lines are the protagonist's. */
+  protagonistNames?: ProtagonistNames;
+  /** The writer was asked for speaker tags, so speech it left untagged is worth flagging. */
+  speakersExpected?: boolean;
 }
 
 /**
@@ -266,11 +272,20 @@ const acceptedChapterBody = (
 
 /**
  * Reads the writer's marks out of every paragraph. The chapter keeps only the
- * clean text; each paragraph keeps the positions of its marks for placement.
- * A paragraph that held nothing but a mark is dropped.
+ * clean text; each paragraph keeps the positions of its marks and speaker tags
+ * for placement. A paragraph that held nothing but a mark is dropped; a speaker
+ * tag written alone in its own paragraph moves to the start of the next one,
+ * and one with no paragraph after it is counted as naming no speech.
  */
 const readParagraphMarks = (paragraphs: readonly string[], warnings: HarnessWarning[]) => {
-  const read = paragraphs.map(paragraph => readMarks(paragraph)).filter(reading => reading.text);
+  const read: MarkReading[] = [];
+  let loose: MarkReading['speakers'] = [];
+  for (const reading of paragraphs.map(paragraph => readMarks(paragraph))) {
+    if (!reading.text) { loose = [...loose, ...reading.speakers.map(tag => ({ ...tag, offset: 0 }))]; continue; }
+    read.push(loose.length ? { ...reading, speakers: [...loose, ...reading.speakers] } : reading);
+    loose = [];
+  }
+  const strandedTags = loose.length;
   const issues = read.reduce((count, reading) => count + reading.issues.length, 0);
   if (issues) {
     warnings.push({
@@ -278,7 +293,7 @@ const readParagraphMarks = (paragraphs: readonly string[], warnings: HarnessWarn
       message: `Removed ${issues} unusable mark${issues === 1 ? '' : 's'} (unclosed, nested, repeated, empty or point marks) and kept their words.`,
     });
   }
-  return read;
+  return { read, strandedTags };
 };
 
 /**
@@ -315,6 +330,35 @@ const acceptedSoundCues = (
   return placement.soundCues;
 };
 
+/**
+ * Gives every spoken line its speaker from the writer's tags. Speech left
+ * untagged is read in the Side voice, and is flagged when the writer was asked
+ * for tags or tagged other lines; tags that named nobody or no speech are
+ * flagged too. A chapter is never rejected for its speakers.
+ */
+const acceptedSpeakers = (
+  marked: { read: ReadonlyArray<Pick<MarkReading, 'text' | 'speakers' | 'speakerIssues'>>; strandedTags: number },
+  chapterNumber: number,
+  warnings: HarnessWarning[],
+  options: HarnessResponseAcceptanceOptions,
+): SpeakerAttachment[] => {
+  const placement = placeSpeakers({
+    paragraphs: marked.read.map((paragraph, index) => ({ blockId: harnessParagraphBlockId(chapterNumber, index), ...paragraph })),
+    protagonist: options.protagonistNames ?? { names: [], others: [] },
+  });
+  const nameless = marked.read.reduce((count, paragraph) => count + paragraph.speakerIssues.length, 0);
+  const unused = placement.unused + marked.strandedTags;
+  const tagged = placement.speakers.length > 0 || unused > 0 || nameless > 0;
+  const problems = [
+    ...((tagged || options.speakersExpected) && placement.untagged
+      ? [`${placement.untagged} spoken line${placement.untagged === 1 ? ' had' : 's had'} no speaker tag and will be read in the Side voice`] : []),
+    ...(unused ? [`${unused} speaker tag${unused === 1 ? '' : 's'} named no spoken line`] : []),
+    ...(nameless ? [`${nameless} speaker tag${nameless === 1 ? '' : 's'} named nobody and ${nameless === 1 ? 'was' : 'were'} removed`] : []),
+  ];
+  if (problems.length) warnings.push({ code: 'speaker_tags_incomplete', message: `${problems.join('; ')}.` });
+  return placement.speakers;
+};
+
 export const verifyHarnessEventEvidence = (event: HarnessSemanticEvent, prose: string): HarnessSemanticEvent => {
   const normalize = (value: string) => value.replace(/\s+/g, ' ').trim();
   const quote = event.evidence ? normalize(event.evidence) : '';
@@ -344,8 +388,8 @@ export const acceptHarnessModelResponse = (
     // writer's marks out of them, keeps the clean text exactly as written,
     // derives the readable prose from it, and places the Sound Cues the marks point to.
     const source = acceptedChapterBody(parsed, warnings);
-    const marked = source ? readParagraphMarks(source, warnings) : [];
-    const body = marked.length ? harnessChapterBody(marked.map(reading => reading.text), options.paragraphTarget) : undefined;
+    const marked = source ? readParagraphMarks(source, warnings) : { read: [], strandedTags: 0 };
+    const body = marked.read.length ? harnessChapterBody(marked.read.map(reading => reading.text), options.paragraphTarget) : undefined;
     if (!body || looksLikeRefusal(body.prose)) {
       return {
         accepted: false,
@@ -360,7 +404,8 @@ export const acceptHarnessModelResponse = (
       });
     }
     warnings.push(...harnessChapterBodyWarnings(body.metrics));
-    const soundCues = acceptedSoundCues(parsed, marked, chapterNumber, warnings, options);
+    const soundCues = acceptedSoundCues(parsed, marked.read, chapterNumber, warnings, options);
+    const speakers = acceptedSpeakers(marked, chapterNumber, warnings, options);
     const title = nonEmptyString(parsed.title);
     if (!title) {
       warnings.push({
@@ -378,6 +423,7 @@ export const acceptHarnessModelResponse = (
         prose: body.prose,
         metrics: body.metrics,
         ...(soundCues.length ? { soundCues } : {}),
+        ...(speakers.length ? { speakers } : {}),
         title: title ?? chapterTitleFallback(chapterNumber),
         titleSource: title ? 'model' : 'harness-fallback',
         ...(plan ? { plan } : {}),
@@ -402,7 +448,7 @@ export const acceptHarnessModelResponse = (
   warnings.push(
     {
       code: 'plain_prose_recovery',
-      message: 'The response was not valid JSON, so the harness preserved its readable prose without marks and placed no Sound Cues.',
+      message: 'The response was not valid JSON, so the harness preserved its readable prose without marks and placed no Sound Cues or speakers.',
     },
     {
       code: 'missing_title',

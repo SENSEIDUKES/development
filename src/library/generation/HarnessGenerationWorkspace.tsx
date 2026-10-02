@@ -11,12 +11,12 @@ import { exportHarnessStory } from '@seihouse/sen/harness-generation';
 import { findFoundationRevision, findStory } from '@seihouse/sen/harness-generation';
 import { buildCanonicalStoryView } from '@seihouse/sen/harness-generation';
 import { GENERATION_PACKET_BUDGET, PACKET_SECTION_ORDER } from '@seihouse/sen/harness-generation';
-import { CAPA_SCHEMA, SEN_FATE_SURVIVAL_SKILL, SEN_READING_MODE_SKILLS, SEN_SOUND_CUES_SKILL, buildHarnessOfficialOutputRequirements, harnessSkillKey, resolveStoryLanguagePackage, type CapaSlotManager } from '@seihouse/sen/harness-generation';
+import { CAPA_SCHEMA, SEN_FATE_SURVIVAL_SKILL, SEN_READING_MODE_SKILLS, SEN_SOUND_CUES_SKILL, SEN_SPEAKERS_SKILL, buildHarnessOfficialOutputRequirements, harnessSkillKey, resolveStoryLanguagePackage, type CapaSlotManager } from '@seihouse/sen/harness-generation';
 import { getSenLanguageLabel, normalizeChapterWritingStyle, type ChapterWritingStyle } from '@seihouse/sen/contracts';
 import { StorySettingsPanel } from './StorySettingsPanel';
 import { includeBundledHarnessSkills } from '@seihouse/sen/harness-generation';
 import { type HarnessGenerationRepository } from '@seihouse/sen/harness-generation';
-import type { ReaderStateRepository } from '@seihouse/sen/reader-runtime';
+import type { ReaderPreferenceStorage, ReaderStateRepository } from '@seihouse/sen/reader-runtime';
 import { NovelBlueprintTab } from './NovelBlueprintTab';
 import { useLibraryStories } from '../stories/useLibraryStories';
 import { StoryPages } from '../stories/StoryPages';
@@ -31,6 +31,8 @@ export interface HarnessGenerationWorkspaceProps {
   modelAdapter: HarnessGenerationModelAdapter;
   /** Host-owned durable Reader state: the reading place for stories opened in the Reader. */
   readerStateRepository?: ReaderStateRepository;
+  /** Host-owned device preferences for the Reader: narration voices and speed. */
+  readerPreferences?: ReaderPreferenceStorage;
   /**
    * Host-controlled story open in the Reader, so a host can restore it after a
    * reload. Without `onReadingStoryChange` the workspace keeps it internally.
@@ -264,6 +266,10 @@ const managedSlotInspection = (
   soundWords: readonly SoundWord[],
 ): { status: 'Loaded' | 'Not used' | 'No package' | 'Blocked'; summary: string; skill?: HarnessSkillManifest } => {
   switch (slot.managedBy) {
+    case 'always':
+      return installedSkills.some(skill => skill.id === SEN_SPEAKERS_SKILL.id && skill.version === SEN_SPEAKERS_SKILL.version)
+        ? { status: 'Loaded', skill: SEN_SPEAKERS_SKILL, summary: `${SEN_SPEAKERS_SKILL.name} v${SEN_SPEAKERS_SKILL.version} loads on every chapter, so the Reader knows who speaks each line.` }
+        : { status: 'No package', summary: 'This host has no Speakers skill, so chapters are written without speaker tags and every quoted line is read in the Side voice.' };
     case 'media-loadout':
       return soundWords.length
         ? { status: 'Loaded', skill: SEN_SOUND_CUES_SKILL, summary: `${SEN_SOUND_CUES_SKILL.name} v${SEN_SOUND_CUES_SKILL.version} loads with this story's ${soundWords.length} sound words from its Media Loadout.` }
@@ -341,7 +347,7 @@ function SkillLoadoutPanel({
             <h2 id="harness-skills-title" className="font-display text-xl text-white">CAPA skill slots</h2>
           </div>
           <p className="mt-2 max-w-3xl text-sm leading-relaxed text-neutral-400">
-            The Author skill tells the model how to write. Equipped generation skills are assembled once, in schema order, into the CAPA Prompt frozen with each chapter attempt. Fate, Accessibility and Translation follow the story's Fate mode, Reading Mode and Story Language.
+            The Author skill tells the model how to write. Equipped generation skills are assembled once, in schema order, into the CAPA Prompt frozen with each chapter attempt. Fate, Accessibility, Translation and Sound Cues follow the story's Fate mode, Reading Mode, Story Language and Media Loadout; Speakers loads on every chapter.
           </p>
         </div>
         <span className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-cyan-100">
@@ -1099,6 +1105,7 @@ export function HarnessGenerationWorkspace({
   preferredModel,
   onModelChange,
   readerStateRepository,
+  readerPreferences,
   readingStoryId,
   onReadingStoryChange,
   infoStoryId,
@@ -1415,7 +1422,7 @@ export function HarnessGenerationWorkspace({
       : openInfoStoryId && findStory(state, openInfoStoryId) ? { id: openInfoStoryId, page: 'info' }
         : undefined;
   if (storyPage) return <StoryPages key={storyPage.id} stories={stories} storyId={storyPage.id} page={storyPage.page}
-    readerStateRepository={readerStateRepository} writingAgent={writingAgent}
+    readerStateRepository={readerStateRepository} readerPreferences={readerPreferences} writingAgent={writingAgent}
     onOpenReader={() => setReadingStoryId(storyPage.id)}
     onCloseReader={() => { setSelectedStoryId(storyPage.id); setReadingStoryId(undefined); }}
     onBack={() => { setSelectedStoryId(storyPage.id); setInfoStoryId(undefined); }} />;

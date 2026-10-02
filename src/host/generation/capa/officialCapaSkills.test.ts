@@ -129,8 +129,11 @@ describe('official CAPA SPP defaults', () => {
       ['pacing', createOfficialCapaDefaultLoadout('chinese').pacing!.id, '1.0.1'],
       ['continuity', createOfficialCapaDefaultLoadout('chinese').continuity!.id, '1.0.1'],
       ['style', OFFICIAL_STYLE_REFERENCES.japanese.id, '1.0.0'],
+      // SEN's bundled Speakers skill loads on every chapter; it is not an official CAPA package.
+      ['speakers', 'seihouse.sen-speakers', '1.0.0'],
     ]);
-    expect(requests[0].capaPrompt.skills.every(skill => skill.source?.archiveSha256)).toBe(true);
+    // Every official package skill keeps the archive it was installed from.
+    expect(requests[0].capaPrompt.skills.filter(skill => skill.slot !== 'speakers').every(skill => skill.source?.archiveSha256)).toBe(true);
     expect(reloaded.snapshot().attempts[0].capaPrompt).toEqual(requests[0].capaPrompt);
   });
 });

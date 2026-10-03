@@ -359,6 +359,13 @@ Update it whenever it changes.
     each change linked to its passage, with the checks worth testing. Chapters
     written before this have nothing recorded. The tag system is defined in
     [the vocabulary](./src/components/harness-generation/ARCHITECTURE_VOCABULARY.md#the-tag-system-the-tiny-sen-language).
+  - **Every chapter keeps the story's point of view, and is a whole chapter:**
+    the Style skill chooses the point of view when the story opens (first person
+    suits a Japanese story), and the HARNESS reads it from the opening chapter
+    and tells every later chapter to keep it. A reply far short of a chapter
+    (under a quarter of its 1,800-word minimum) is a failed write: nothing is
+    saved, and the Reader says so with Next ready to try again. A chapter's
+    title is its name alone; the Reader numbers it.
   - **Export story,** on World Info, saves a story as one file: every chapter
     with the exact instructions, Story Information and request the writer was
     given, and its raw reply. It is how a test is shared.
@@ -371,7 +378,10 @@ Update it whenever it changes.
     stayed on one scene: its export showed a 25-chapter first goal and the
     writer told to fill it, so nothing happened that Holdings could record.
     Arcs are now 30 chapters, goals hand over when reached, and every chapter
-    must change something; the test runs again on a new story;
+    must change something. The second run (five chapters) moved every chapter,
+    and showed a point-of-view switch, a failed write saved as Chapter 3,
+    numbered titles, and a slate lost from Holdings because it was only tagged
+    as equipped; all four are fixed, and the test runs again on a new story;
   - Listen on real phones (iPhone Safari, Android Chrome), whose voices differ
     from device to device.
 - **Not yet as [The World Blueprint](#the-world-blueprint) describes:**

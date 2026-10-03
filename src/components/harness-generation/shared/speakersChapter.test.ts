@@ -6,6 +6,7 @@ import {
 } from '@seihouse/sen/harness-generation';
 import { buildReadAloudScript } from '@seihouse/sen/reader-runtime';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { writtenChapterReply } from '../../../test-utils/writtenChapter';
 import { harnessParagraphBlockId } from './chapterBody';
 import { acceptHarnessModelResponse } from './responseAcceptance';
 
@@ -23,7 +24,7 @@ const response = (rawProviderResponse: string): HarnessGenerationResponse => ({
   providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: '2026-10-01T12:00:00.000Z', usage: { source: 'unavailable' } },
 });
 const adapter = (raw: string) => {
-  const generate = vi.fn(async () => response(raw));
+  const generate = vi.fn(async () => response(writtenChapterReply(raw)));
   const value: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
     generate,

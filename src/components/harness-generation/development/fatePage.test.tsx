@@ -4,6 +4,7 @@ import type { Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRoot } from '../../../test-utils/createReaderRoot';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { writtenChapterReply } from '../../../test-utils/writtenChapter';
 import { installAudioMediaStubs, renderWithDevAudio } from '../../../test-utils/renderWithDevAudio';
 import { FatePage, HarnessGenerationController, HarnessReaderSession, type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type StoryFoundationInput } from '@seihouse/sen/harness-generation';
 
@@ -59,7 +60,7 @@ const createModel = () => {
     generate: async request => {
       requests.push(structuredClone(request));
       if (failures.shift()) throw new Error('The provider timed out.');
-      return { rawProviderResponse: chapterReply(request.immediateChapterRequest.chapterNumber), providerReceipt: receipt };
+      return { rawProviderResponse: writtenChapterReply(chapterReply(request.immediateChapterRequest.chapterNumber)), providerReceipt: receipt };
     },
     recoverMemory: async () => ({ rawProviderResponse: JSON.stringify({ events: [] }), providerReceipt: receipt }),
     arcOperation: vi.fn(),

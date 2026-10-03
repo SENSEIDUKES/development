@@ -4,6 +4,7 @@ import type { Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRoot } from '../../../test-utils/createReaderRoot';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { writtenChapterReply } from '../../../test-utils/writtenChapter';
 import { installAudioMediaStubs, renderWithDevAudio } from '../../../test-utils/renderWithDevAudio';
 import { HarnessGenerationController, HarnessReaderSession, type HarnessArcRequest, type HarnessGenerationModelAdapter } from '@seihouse/sen/harness-generation';
 
@@ -24,7 +25,7 @@ const atArcTwo = async (survival = false) => {
     plan: { goals: [{ text: 'Find the keeper of the drowned law.', chapters: 18 }, { text: 'Reclaim her name before the tide court.', chapters: 12 }] },
     lookahead: [], destinedEnding: 'Mara reclaims her name.',
   }) }));
-  const generate = vi.fn(async () => ({ rawProviderResponse: chapter(`Chapter ${generate.mock.calls.length}`), providerReceipt: receipt }));
+  const generate = vi.fn(async () => ({ rawProviderResponse: writtenChapterReply(chapter(`Chapter ${generate.mock.calls.length}`)), providerReceipt: receipt }));
   const adapter: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [{ id: 'test-model', label: 'Test' }], defaultModel: 'test-model' }),
     generate, arcOperation,

@@ -1,6 +1,7 @@
 import { splitSentences } from '../components/text-highlight-engine/shared/manuscript';
 import { isSenLanguageCode, normalizeSenLanguageCode, senSpeechLanguageTags, type SenLanguageCode } from '../lib/language';
 import type { ReaderPreferenceStorage } from './readerRuntime';
+import { chapterTitleText } from './chapterTitle';
 import { findSpokenLines, isSpeakerOnText, narratedSpeaker, type MainCharacterNames, type SpeakerAttachment } from './speech';
 import { wordRanges } from './words';
 
@@ -212,8 +213,11 @@ function sentenceParts(sentence: ReadAloudRange, spoken: readonly SpokenPart[]):
 export function buildReadAloudScript(chapter: ReadAloudChapter): ReadAloudScript {
   const language = normalizeSenLanguageCode(chapter.language);
   const lines: ReadAloudLine[] = [];
-  const title = chapter.title?.trim() ?? '';
-  const heading = language === 'en' ? `Chapter ${chapter.chapterNumber}.${title ? ` ${title}` : ''}` : title;
+  // "Chapter 3" is said once: a title that repeats the number ("Chapter 3: The Gate", or the bare fallback) is read without it.
+  const written = chapter.title?.trim() ?? '';
+  const named = chapterTitleText(written);
+  const title = named || written;
+  const heading = language === 'en' ? `Chapter ${chapter.chapterNumber}.${named ? ` ${named}` : ''}` : title;
   if (isSpeakable(heading)) {
     lines.push({ key: 'title', sentence: { start: 0, end: title.length }, start: 0, end: title.length, text: heading, role: 'narrator' });
   }

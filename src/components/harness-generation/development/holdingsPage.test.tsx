@@ -4,6 +4,7 @@ import type { Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRoot } from '../../../test-utils/createReaderRoot';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { writtenChapterReply } from '../../../test-utils/writtenChapter';
 import { installAudioMediaStubs, renderWithDevAudio } from '../../../test-utils/renderWithDevAudio';
 import { HarnessGenerationController, HarnessReaderSession, type HarnessGenerationModelAdapter } from '@seihouse/sen/harness-generation';
 
@@ -21,7 +22,7 @@ const replies = [
     mainCharacterHoldings: ['Rusted Iron Sword', 'Cloud Step', 'Silver Bell'],
   },
   {
-    paragraphs: ['Morning came.', '[[equipped: MC | Jade Sword]] He swung a jade sword he had never owned.'],
+    paragraphs: ['Morning came.', '[[lost: MC | Jade Sword]] He dropped a jade sword he had never owned.'],
     mainCharacterHoldings: ['Rusted Iron Sword', 'Cloud Step'],
   },
 ];
@@ -53,7 +54,7 @@ function Host({ controller, storyId }: { controller: HarnessGenerationController
 const start = async () => {
   const modelAdapter: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [{ id: 'test-model', label: 'Test' }], defaultModel: 'test-model' }),
-    generate: async request => ({ rawProviderResponse: chapterReply(request.immediateChapterRequest.chapterNumber), providerReceipt: receipt }),
+    generate: async request => ({ rawProviderResponse: writtenChapterReply(chapterReply(request.immediateChapterRequest.chapterNumber)), providerReceipt: receipt }),
     arcOperation: vi.fn(),
   };
   const controller = new HarnessGenerationController({ repository: new InMemoryHarnessGenerationRepository(), modelAdapter });
@@ -88,12 +89,12 @@ describe('The Holdings page in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(card.querySelector('[aria-label="Ye Chen: In hand"]')!.textContent).toContain('Rusted Iron Sword');
     expect(card.querySelector('[aria-label="Ye Chen: Learning"]')!.textContent).toContain('Cloud Step');
     expect([...card.querySelectorAll('button')].map(button => button.textContent)).toEqual(['Ch. 1 · gained', 'Ch. 1 · took up', 'Ch. 1 · began learning']);
-    // The jade sword was never held, so it was never recorded: it is a check, not a holding.
+    // The jade sword was never held, so losing it is a check, not a change.
     expect(card.textContent).not.toContain('Jade Sword');
     const checks = holdings.querySelector('[data-testid="holdings-checks"]')!;
     expect(checks.querySelector('summary')!.textContent).toBe('Checks (2)');
     expect(checks.textContent).toContain('Chapter 1: the writer\'s closing list for Ye Chen includes ‘Silver Bell’, which no tag recorded.');
-    expect(checks.textContent).toContain('Chapter 2: Ye Chen equips ‘Jade Sword’, which the record does not show them holding.');
+    expect(checks.textContent).toContain('Chapter 2: Ye Chen loses ‘Jade Sword’, which the record does not show them holding.');
   });
 
   it('opens the passage behind a change in the Reader, and returns to reading', async () => {

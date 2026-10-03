@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { HarnessGenerationController, createHarnessSenStory, type HarnessArcRequest, type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type StoryFoundationInput } from '@seihouse/sen/harness-generation';
 import { arcFirstChapter, arcGoalSegments, type ArcPlan } from '@seihouse/sen/arc-goals';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { writtenChapter } from '../../../test-utils/writtenChapter';
 import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
 
 const ENDING = 'Lin reopens the drowned archive to the valley.';
@@ -34,7 +35,7 @@ const setup = async (overrides: Partial<StoryFoundationInput> = {}, roadmap: Arc
       requests.push(structuredClone(request));
       const next = outputs.shift() ?? chapter('Lin waded on.');
       if (next instanceof Error) throw next;
-      return { rawProviderResponse: JSON.stringify(next), providerReceipt: receipt };
+      return { rawProviderResponse: JSON.stringify(writtenChapter(next)), providerReceipt: receipt };
     },
     arcOperation,
   };

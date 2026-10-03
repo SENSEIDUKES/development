@@ -9,6 +9,7 @@ import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import { assembleCapaPrompt, buildMissionReminder } from '@seihouse/sen/harness-generation';
 import type { HarnessRuntime } from './ids';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { REST_OF_CHAPTER, writtenChapter, writtenChapterReply } from '../../../test-utils/writtenChapter';
 import { type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 
 const runtime = (): HarnessRuntime => {
@@ -36,7 +37,11 @@ const response = (
   },
 });
 
-/** Chapter replies carry prose only; `memory` fixtures feed the separate extraction call for that chapter's prose. */
+/**
+ * Chapter replies carry prose only, and each is a written chapter (it ends
+ * with the rest of one); `memory` fixtures feed the separate extraction call
+ * for that chapter's prose.
+ */
 const adapter = (...outputs: Array<HarnessGenerationResponse | Error>) => {
   const memoryByProse = new Map<string, unknown>();
   const generate = vi.fn(async (_request: HarnessGenerationRequest) => {
@@ -46,11 +51,12 @@ const adapter = (...outputs: Array<HarnessGenerationResponse | Error>) => {
     try {
       const parsed = JSON.parse(output.rawProviderResponse) as { prose?: string; memory?: unknown };
       if (parsed.memory !== undefined && parsed.prose) {
-        memoryByProse.set(parsed.prose, parsed.memory);
-        return { ...output, rawProviderResponse: JSON.stringify({ ...parsed, memory: undefined }) };
+        const written = writtenChapter({ ...parsed, memory: undefined });
+        memoryByProse.set(written.prose!, parsed.memory);
+        return { ...output, rawProviderResponse: JSON.stringify(written) };
       }
     } catch { /* plain prose fixtures pass through */ }
-    return output;
+    return { ...output, rawProviderResponse: writtenChapterReply(output.rawProviderResponse) };
   });
   const recoverMemory = vi.fn(async (request: { prose: string }) => response(JSON.stringify(memoryByProse.get(request.prose) ?? { events: [] })));
   const value: HarnessGenerationModelAdapter = {
@@ -257,7 +263,7 @@ describe('Harness Generation Phase 2 novel core', () => {
     // The chapter-writing call carried no memory; extraction read the committed prose.
     expect(provider.generate).toHaveBeenCalledTimes(1);
     expect(provider.recoverMemory).toHaveBeenCalledTimes(1);
-    expect(provider.recoverMemory.mock.calls[0][0].prose).toBe('Arin found the first dry stair beneath the flood line.');
+    expect(provider.recoverMemory.mock.calls[0][0].prose).toBe(`Arin found the first dry stair beneath the flood line.\n\n${REST_OF_CHAPTER}`);
     expect(state.attempts[0]).toMatchObject({ stage: 'committed', preservedEvents: [] });
     expect(state.memoryRecoveries?.[0]).toMatchObject({ status: 'applied', chapterId: state.chapters[0].id });
     expect(state.chapters[0].eventIds).toHaveLength(2);
@@ -327,7 +333,7 @@ describe('Harness Generation Phase 2 novel core', () => {
     await controller.generateNextChapter(story.id, 'google/gemini-3.1-flash-lite');
 
     const state = controller.snapshot();
-    expect(state.chapters[0].prose).toBe('The ferry left without its lantern.');
+    expect(state.chapters[0].prose).toBe(`The ferry left without its lantern.\n\n${REST_OF_CHAPTER}`);
     expect(state.attempts[0]).toMatchObject({ stage: 'committed', postCommitProcessing: 'warnings' });
     expect(state.memoryRecoveries ?? []).toHaveLength(0);
     expect(provider.recoverMemory).not.toHaveBeenCalled();
@@ -335,7 +341,7 @@ describe('Harness Generation Phase 2 novel core', () => {
 
   it('uses plain-prose recovery when invalid JSON still contains readable chapter prose', async () => {
     const repository = new InMemoryHarnessGenerationRepository();
-    const provider = adapter(response('The rain receded from the archive steps, exposing a door that had not been there at dusk.'));
+    const provider = adapter(response(`The rain receded from the archive steps, exposing a door that had not been there at dusk.\n\n${REST_OF_CHAPTER}`));
     const controller = new HarnessGenerationController({ repository, modelAdapter: provider.value, runtime: runtime() });
     await controller.hydrate();
     const story = await createStory(controller);

@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 import { HarnessGenerationController, exportHarnessStory, readHarnessWorkspaceState } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { asWrittenChapter } from '../../../test-utils/writtenChapter';
 import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
 import { acceptHarnessModelResponse } from './responseAcceptance';
 import { FATE_PRESSURE_RHYTHM_CONFIG, buildRhythmRecommendation, recommendNextChapterFunction } from './rhythm';
@@ -49,7 +50,7 @@ const setup = async () => {
   let arcReply: Record<string, unknown> = { plan, destinedEnding: 'Yi Chen leads the Azure Sect to glory.' };
   const adapter: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ configured: true, provider: 'gemini', defaultModel: 'fixture', models: [] }),
-    generate: vi.fn(async request => { requests.push(request); return response(outputs.shift() ?? chapterReply()); }),
+    generate: vi.fn(async request => { requests.push(request); return asWrittenChapter(response(outputs.shift() ?? chapterReply())); }),
     arcOperation: vi.fn(async request => { arcRequests.push(request); return response(arcReply); }),
   };
   const repository = new InMemoryHarnessGenerationRepository();

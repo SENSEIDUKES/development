@@ -1,6 +1,6 @@
 {
   "name": "@seihouse/library",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "description": "Celestial Library product capabilities: accounts, Profile, Energy, cultivation, rewards, Relics, navigation and story creation.",
   "type": "module",
   "sideEffects": ["**/*.css", "./dist/model-router-browser.js"],
@@ -92,7 +92,7 @@
     "./styles.css": "./dist/library.css"
   },
   "peerDependencies": {
-    "@seihouse/sen": ">=0.15.0",
+    "@seihouse/sen": ">=0.16.0",
     "lucide-react": ">=1",
     "motion": ">=12",
     "react": "^19.0.0",

@@ -4,6 +4,7 @@ import { createLibraryMediaPort, validateMediaPack, type MediaPack, type MediaPa
 import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import type { HarnessRuntime } from './ids';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { asWrittenChapter } from '../../../test-utils/writtenChapter';
 import { createHarnessSenStory } from '@seihouse/sen/harness-generation';
 import { type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse } from '@seihouse/sen/harness-generation';
 
@@ -64,7 +65,7 @@ const adapter = (...outputs: Array<HarnessGenerationResponse | Error>) => {
     const output = outputs.shift();
     if (!output) throw new Error('Missing provider fixture.');
     if (output instanceof Error) throw output;
-    return output;
+    return asWrittenChapter(output);
   });
   const value: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),

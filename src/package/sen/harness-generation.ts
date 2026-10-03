@@ -142,3 +142,4 @@ export {
 export { findStory, findFoundationRevision } from '../../components/harness-generation/shared/foundation';
 export * from '../../components/harness-generation/shared/chapterSignals';
 export * from '../../components/harness-generation/shared/chapterBody';
+export { chapterTitleText } from '../../narrative/chapterTitle';

@@ -48,6 +48,15 @@ describe('HARNESS chapter response schema shape', () => {
     expect(HARNESS_RESPONSE_CONTRACT).not.toMatch(/Sound Cue|soundCues|\[\[/);
   });
 
+  it('holds every chapter to the point of view the story opened in, and leaves the first choice to the Style skill', () => {
+    expect(HARNESS_RESPONSE_CONTRACT).toContain('POINT OF VIEW: Current Story Information\'s pointOfView is the point of view the story has been told in since it opened');
+    expect(HARNESS_RESPONSE_CONTRACT).toContain('Write this whole chapter in that point of view and never switch it. When pointOfView is absent, your Style skill chooses it.');
+  });
+
+  it('asks for the chapter\'s name alone as its title, since the HARNESS numbers chapters', () => {
+    expect(HARNESS_RESPONSE_CONTRACT).toContain('title is the chapter\'s name alone, never its number, which the HARNESS assigns.');
+  });
+
   it('holds the paragraphs to the exact count the HARNESS rolled, and leaves them free without one', () => {
     expect(buildHarnessChapterResponseSchema(WORDS, 73).properties.paragraphs).toMatchObject({ type: 'array', items: { type: 'string' }, minItems: 73, maxItems: 73 });
     expect(buildHarnessChapterResponseSchema(WORDS).properties.paragraphs).not.toHaveProperty('minItems');

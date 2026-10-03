@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { HARNESS_RESPONSE_CONTRACT, buildHarnessChapterResponseSchema, buildHarnessMemoryRecoveryPrompt, presentImmediateChapterRequest } from './prompt';
+import { HARNESS_RESPONSE_CONTRACT, buildHarnessChapterResponseSchema, buildHarnessMemoryRecoveryPrompt, presentHoldings, presentImmediateChapterRequest } from './prompt';
 
 const WORDS = [{ word: 'blade drawn', example: 'drew his sword' }, { word: 'beast roar', example: 'the beast roared' }];
 /** The schema a story with sound words receives. */
@@ -108,5 +108,27 @@ describe('HARNESS chapter response schema shape', () => {
     const memorySchema = memory.responseJsonSchema as { properties: { memory: { properties: Record<string, unknown> } } };
     expect(Object.keys(memorySchema.properties.memory.properties)).toHaveLength(13);
     expect(JSON.stringify(HARNESS_CHAPTER_RESPONSE_SCHEMA)).not.toContain('characters');
+  });
+});
+
+describe('the Holdings section the writer reads', () => {
+  it('shows the main character even with nothing recorded', () => {
+    expect(presentHoldings({ characters: [{ name: 'Ye Chen', mainCharacter: true }] })).toBe('Ye Chen (main character): nothing recorded yet.');
+  });
+
+  it('puts rank beside the name and gives each list one line, by exact name', () => {
+    expect(presentHoldings({ characters: [
+      { name: 'Ye Chen', mainCharacter: true, rank: 'Qi Condensation 3', inHand: ['Rusted Iron Sword'], carries: ['Jade Pendant', 'Spirit Pill ×3'], knows: ['Iron Palm (Minor Success)', 'Cloud Step (sealed)'], learning: ['Wind Step'] },
+      { name: 'Elder Qin', carries: ['Jade Gourd'] },
+    ] })).toBe([
+      'Ye Chen (main character) · rank: Qi Condensation 3',
+      '- in hand: Rusted Iron Sword',
+      '- carries: Jade Pendant; Spirit Pill ×3',
+      '- knows: Iron Palm (Minor Success); Cloud Step (sealed)',
+      '- learning: Wind Step',
+      '',
+      'Elder Qin',
+      '- carries: Jade Gourd',
+    ].join('\n'));
   });
 });

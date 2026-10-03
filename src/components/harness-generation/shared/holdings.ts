@@ -12,6 +12,7 @@ import {
   type HoldingsSectionCharacter,
 } from '../../../narrative/holdings';
 import type { WordTag } from '../../../narrative/marks';
+import type { CurrentStoryProjection } from '../../../narrative/generation';
 import { normalizeIdentityLabel } from './canonicalProjection';
 import { isMainCharacterTag } from './speakers';
 
@@ -126,6 +127,28 @@ export interface DeclaredCharacter {
   name: string;
   aliases?: readonly string[];
   mainCharacter?: boolean;
+}
+
+/**
+ * The characters a chapter's frozen Story Information declares: the cast, with
+ * the aliases their declared identities carry. The cast's main character is
+ * the one `MC` names.
+ */
+export function declaredCharacters(story: Pick<CurrentStoryProjection, 'cast' | 'identities'>): DeclaredCharacter[] {
+  const declared: DeclaredCharacter[] = [];
+  const find = (name: string) => declared.find(character => normalizeIdentityLabel(character.name) === normalizeIdentityLabel(name));
+  for (const member of story.cast ?? []) {
+    const existing = find(member.name);
+    if (existing) { if (member.isMainCharacter) existing.mainCharacter = true; continue; }
+    declared.push({ name: member.name, ...(member.isMainCharacter ? { mainCharacter: true } : {}) });
+  }
+  for (const identity of (story.identities ?? []).filter(candidate => candidate.kind === 'character')) {
+    const existing = find(identity.name);
+    const aliases = identity.aliases?.filter(alias => alias.trim()) ?? [];
+    if (existing) existing.aliases = [...new Set([...(existing.aliases ?? []), ...aliases])];
+    else declared.push({ name: identity.name, ...(aliases.length ? { aliases } : {}) });
+  }
+  return declared;
 }
 
 /** Who an `MC` tag is when the Story Information names no main character. */

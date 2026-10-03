@@ -14,6 +14,7 @@ export const createEmptyHarnessWorkspaceState = (): HarnessWorkspaceState => ({
   corrections: [],
   batches: [],
   arcPlanOperations: [],
+  codexEntries: [],
 });
 
 export interface HarnessGenerationRepository {
@@ -35,7 +36,8 @@ export const isCurrentHarnessWorkspaceState = (value: unknown): value is Harness
     && Array.isArray(candidate.projections)
     && Array.isArray(candidate.corrections)
     && Array.isArray(candidate.batches)
-    && Array.isArray(candidate.arcPlanOperations);
+    && Array.isArray(candidate.arcPlanOperations)
+    && Array.isArray(candidate.codexEntries);
 };
 
 const hasWorkspaceShape = (value: unknown): value is Record<string, unknown> & { schemaVersion?: unknown } => {
@@ -92,6 +94,11 @@ const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => 
   // records (who speaks each spoken line). Chapters written before have none,
   // and Read Aloud reads their quoted lines in the Side voice.
   24: stored => ({ ...stored, schemaVersion: 25 }),
+  // Schema 25 -> 26: holdings. Chapters and accepted drafts gain optional
+  // holding changes and a closing list, and the workspace gains its Codex
+  // entries. Chapters written before carry none, so their stories start with
+  // nothing recorded and every chapter carries over unchanged.
+  25: stored => ({ ...stored, codexEntries: Array.isArray(stored.codexEntries) ? stored.codexEntries : [], schemaVersion: 26 }),
 };
 
 /**
@@ -113,7 +120,7 @@ export const migrateHarnessWorkspaceState = (value: unknown): HarnessWorkspaceSt
 /**
  * Reads saved Harness Generation storage. Current storage is read as is;
  * storage from an earlier version with an explicit migration is upgraded with
- * every story, chapter and plan kept (schema 22 upgrades to 23 unchanged, 23 to 24 drops the stored whole-route roadmaps; nothing earlier upgrades). Anything else (an unknown version or an
+ * every story, chapter and plan kept (schema 22 upgrades to 23 unchanged, 23 to 24 drops the stored whole-route roadmaps, 24 to 25 and 25 to 26 add only optional records; nothing earlier upgrades). Anything else (an unknown version or an
  * unrecognized shape) cannot be read and yields an empty workspace; hosts keep
  * an untouched copy of it (see the IndexedDB repository) before replacing it.
  * Every structural change to a persisted field must bump

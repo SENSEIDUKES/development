@@ -1,6 +1,7 @@
 import { validateHardPinInputs } from '../../../narrative/storyDirection';
 import { harnessArcContext, harnessStoryMode } from './arcState';
 import { projectCanonicalState } from './canonicalProjection';
+import { deriveHoldings, holdingsSection } from './holdings';
 import { semanticReaderChanges } from './readerEdits';
 import { GENERATION_PACKET_BUDGET, estimatePacketTokens } from './packetBudget';
 import { cloneHarnessValue, defaultHarnessRuntime, type HarnessRuntime } from './ids';
@@ -146,6 +147,15 @@ export const compileStoryInformationPacket = (
   });
   omitted.push(...canonical.omitted);
 
+  // Section 8: what each character has now, worked out again from the committed
+  // chapters' holding changes. Protected: the main character always travels.
+  const mainCharacterName = (foundationRevision.input.cast ?? []).find(member => member.isMainCharacter)?.name;
+  const holdings = holdingsSection(deriveHoldings({
+    entries: state.codexEntries.filter(entry => entry.storyId === story.id),
+    chapters,
+    mainCharacterName,
+  }), mainCharacterName);
+
   const sections: PacketSectionMeasurement[] = [
     measure('currentStory', currentStory),
     measure('storyDirection', storyDirection),
@@ -153,6 +163,7 @@ export const compileStoryInformationPacket = (
     measure('rhythm', rhythm),
     measure('previouslyOn', previouslyOn),
     measure('canonicalState', canonical.projection),
+    measure('holdings', holdings),
   ];
 
   return {
@@ -170,6 +181,7 @@ export const compileStoryInformationPacket = (
     ...(rhythm ? { rhythm } : {}),
     previouslyOn,
     canonicalState: canonical.projection,
+    holdings,
     diagnostics: {
       budgetSource: GENERATION_PACKET_BUDGET.source,
       sections,

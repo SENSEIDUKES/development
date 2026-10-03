@@ -27,6 +27,8 @@ export const GENERATION_PACKET_BUDGET = {
     rhythm: { protected: true },
     previouslyOn: { tokens: 2_000, protected: false },
     canonicalState: { tokens: 3_000, protected: false },
+    // What each character has now: never trimmed, so the writer never forgets a sword or invents a second one.
+    holdings: { protected: true },
     missionReminder: { protected: true },
     immediateChapterRequest: { protected: true },
   } satisfies Record<PacketSectionId, PacketSectionBudget>,
@@ -50,6 +52,7 @@ export const PACKET_SECTION_ORDER: readonly PacketSectionId[] = [
   'rhythm',
   'previouslyOn',
   'canonicalState',
+  'holdings',
   'missionReminder',
   'immediateChapterRequest',
 ];

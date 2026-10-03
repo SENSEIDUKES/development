@@ -276,7 +276,7 @@ const managedSlotInspection = (
       }
       return loaded && skill
         ? { status: 'Loaded', skill, summary: `${skill.name} v${skill.version} loads on every chapter, so the Reader knows who speaks each line.` }
-        : { status: 'No package', summary: 'This host has no Speakers skill, so chapters are written without speaker tags and every quoted line is read in the Side voice.' };
+        : { status: 'No package', summary: 'This host has no Speakers skill, so chapters are written without speaker tags and Read Aloud takes every speaker from the narration.' };
     }
     case 'media-loadout':
       return soundWords.length

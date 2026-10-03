@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { findSpokenLines, isSpeakerOnText, SPEAKER_KIND, speakerAttachmentId, type SpeakerAttachment } from './speech';
+import { findSpokenLines, isSpeakerOnText, narratedSpeaker, SPEAKER_KIND, speakerAttachmentId, type SpeakerAttachment } from './speech';
 
 const lines = (text: string) => findSpokenLines(text).map(line => text.slice(line.start, line.end));
 
@@ -49,5 +49,33 @@ describe('speaker records', () => {
     expect(isSpeakerOnText(record(), 'c1-p0', '“Ring the gongs,” Ye Chen said.')).toBe(false);
     expect(isSpeakerOnText(record({ detached: true }), 'c1-p0', text)).toBe(false);
     expect(isSpeakerOnText({ ...record(), payload: { origin: 'harness', speaker: '  ', protagonist: false } }, 'c1-p0', text)).toBe(false);
+  });
+});
+
+describe('narratedSpeaker', () => {
+  const cast = { names: ['Shen Jiuyan', 'Young Master Shen'], others: ['Elder Mo'] };
+  const told = (text: string, index = 0) => narratedSpeaker(text, findSpokenLines(text), index, cast);
+
+  it('reads the sentence after a line, then the ones that lead into it', () => {
+    expect(told('“How long?” Jiuyan asked. Elder Mo frowned.')).toBe('main');
+    expect(told('“How long?” asked Shen Jiuyan.')).toBe('main');
+    expect(told('“Go,” said Elder Mo to Jiuyan.')).toBe('other');
+    expect(told('Lin Xiao stepped forward. Her spear struck the stone. “No one enters.”')).toBe('other');
+    expect(told('“Then cut it,” Lin Xiao said. “Now.”', 1)).toBe('other');
+    expect(told('“Hold,” the Young Master Shen said.')).toBe('main');
+  });
+
+  it('counts "I" as the main character and never guesses a pronoun', () => {
+    expect(told('“Wait,” I said.')).toBe('main');
+    expect(told('“No,” she said. Jiuyan frowned.')).toBeUndefined();
+    expect(told('He looked away. “Fine.”')).toBeUndefined();
+    expect(told('“Who goes there?” a voice called.')).toBeUndefined();
+  });
+
+  it('finds names in scripts written without spaces', () => {
+    const chinese = { names: ['沈九言'], others: ['林晓'] };
+    const text = '“走！”沈九言说。“快！”林晓喊道。';
+    expect(narratedSpeaker(text, findSpokenLines(text), 0, chinese)).toBe('main');
+    expect(narratedSpeaker(text, findSpokenLines(text), 1, chinese)).toBe('other');
   });
 });

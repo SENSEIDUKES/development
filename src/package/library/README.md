@@ -5,6 +5,11 @@ SEN engine and the two UI packages. Library owns SEIHouse users, products,
 economy, community and business policy. Authentication enforcement, secrets,
 durable ledgers and concrete infrastructure stay in the host/backend.
 
+**0.15.0:** requires `@seihouse/sen` 0.15.0. `LIBRARY_READ_ALOUD_VOICES` is
+production's cast: Daniel or Google US English narrates, Rishi or the device's
+next voice is the Protagonist, and a female voice by production's names is the
+Side voice; on Windows that is Microsoft David (or Mark) and Zira.
+
 **0.14.0:** requires `@seihouse/sen` 0.14.0 (arcs of 30 chapters). The Story
 Seed's Story Length and the Blueprint count 30 chapters an arc.
 

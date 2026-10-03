@@ -33,6 +33,18 @@ There is no `chapter-generation` or `codex-cards` compatibility entry. Legacy
 Chapter Generation was retired; HARNESS is the one canonical generated-story
 owner.
 
+**0.15.0 (breaking):** Read Aloud reads like production.
+
+- `./reader-runtime`: speech nobody tagged is voiced from its narration
+  (`narratedSpeaker`, `ReadAloudChapter.mainCharacter`): the Side voice when
+  the sentence beside it names someone else first, otherwise the main
+  character's, now `UNTAGGED_SPEECH_ROLE` (was the Side voice).
+  `chooseDefaultVoices` takes a voice on the device before an online one
+  (`isDeviceVoice`) and a pick's standard voice before its Enhanced or Premium
+  one, then the first voice not yet taken (no longer a voice from another
+  region). The browser's queue is cleared before every line, and the next line
+  waits 50 ms after one ends, as in production.
+
 **0.14.0 (breaking):** arcs of 30 chapters.
 
 - `./arc-goals`: `ARC_LENGTH` is 30, so an arc plan's goals total 30 chapters

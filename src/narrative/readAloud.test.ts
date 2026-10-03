@@ -8,6 +8,7 @@ import {
   chooseDefaultVoices,
   estimateSpeechMs,
   findStoredVoice,
+  isDeviceVoice,
   isNoveltyVoice,
   parseReadAloudPreferences,
   readAloudSentenceKey,
@@ -19,7 +20,7 @@ import {
   type ReadAloudVoice,
   type ReadAloudVoicePicks,
 } from './readAloud';
-import { SPEAKER_KIND, speakerAttachmentId, type SpeakerAttachment } from './speech';
+import { SPEAKER_KIND, speakerAttachmentId, type MainCharacterNames, type SpeakerAttachment } from './speech';
 
 const speaker = (blockId: string, text: string, words: string, name: string, protagonist: boolean): SpeakerAttachment => {
   const start = text.indexOf(words);
@@ -30,9 +31,9 @@ const speaker = (blockId: string, text: string, words: string, name: string, pro
   };
 };
 
-const script = (paragraphs: string[], options: { title?: string; language?: string; speakers?: SpeakerAttachment[] } = {}) =>
+const script = (paragraphs: string[], options: { title?: string; language?: string; speakers?: SpeakerAttachment[]; mainCharacter?: MainCharacterNames } = {}) =>
   buildReadAloudScript({
-    chapterNumber: 3, title: options.title ?? 'Low Tide', language: options.language ?? 'en', speakers: options.speakers,
+    chapterNumber: 3, title: options.title ?? 'Low Tide', language: options.language ?? 'en', speakers: options.speakers, mainCharacter: options.mainCharacter,
     paragraphs: paragraphs.map((text, index) => ({ id: `c3-p${index}`, text })),
   });
 
@@ -76,19 +77,48 @@ describe('buildReadAloudScript', () => {
     expect(lines[1].sentence).toEqual(lines[2].sentence);
   });
 
-  it('gives a quote nobody was named for the untagged voice, and ignores a record whose words changed', () => {
+  it('gives a quote nobody was named for the main character\'s voice, as production did, and ignores a record whose words changed', () => {
     const text = '“Who goes there?” a voice called.';
     const stale = speaker('c3-p0', '“Who comes there?” a voice called.', '“Who comes there?”', 'Ye Chen', true);
     const lines = script([text], { speakers: [stale] }).lines.slice(1);
-    expect(UNTAGGED_SPEECH_ROLE).toBe('side');
-    expect(lines.map(line => [line.text, line.role])).toEqual([['“Who goes there?”', 'side'], ['a voice called.', 'narrator']]);
+    expect(UNTAGGED_SPEECH_ROLE).toBe('protagonist');
+    expect(lines.map(line => [line.text, line.role])).toEqual([['“Who goes there?”', 'protagonist'], ['a voice called.', 'narrator']]);
+  });
+
+  it('voices speech nobody tagged from its narration: the Side voice when it names someone else, one speaker to a paragraph', () => {
+    const tagged = speaker('c3-p6', '“Hold.”', '“Hold.”', 'Elder Mo', false);
+    const chapter = script([
+      '“How long?” Jiuyan asked.',
+      '“Less than an incense stick,” Elder Mo replied. “Perhaps less.”',
+      'Lin Xiao stepped forward. Her spear struck the stone. “No one enters.”',
+      '“Go,” Lin Xiao told Jiuyan.',
+      '“It will not be sacrificed,” she said.',
+      '“May have,” Jiuyan said. “Not has.” He looked away.',
+      '“Hold.”',
+      '“Steady,” Mo said.',
+    ], { speakers: [tagged], mainCharacter: { names: ['Shen Jiuyan'], others: [] } });
+    const voiced = chapter.lines.filter(line => line.role !== 'narrator').map(line => [line.text, line.role, line.speaker]);
+    expect(voiced).toEqual([
+      ['“How long?”', 'protagonist', 'Shen Jiuyan'],
+      ['“Less than an incense stick,”', 'side', undefined],
+      ['“Perhaps less.”', 'side', undefined],
+      ['“No one enters.”', 'side', undefined],
+      ['“Go,”', 'side', undefined],
+      // "she" could be anyone: production's voice, the main character's.
+      ['“It will not be sacrificed,”', 'protagonist', undefined],
+      ['“May have,”', 'protagonist', 'Shen Jiuyan'],
+      ['“Not has.”', 'protagonist', 'Shen Jiuyan'],
+      ['“Hold.”', 'side', 'Elder Mo'],
+      // A name the writer tagged elsewhere in the chapter is known everywhere.
+      ['“Steady,”', 'side', undefined],
+    ]);
   });
 
   it('keeps every script, Thai and Korean included, and skips parts with nothing to hear', () => {
     const thai = script(['เขาวิ่งไปที่ประตู'], { language: 'th' }).lines.slice(1);
     const korean = script(['“달려!” 그가 외쳤다.'], { language: 'ko' }).lines.slice(1);
     expect(thai.map(line => line.text)).toEqual(['เขาวิ่งไปที่ประตู']);
-    expect(korean.map(line => [line.text, line.role])).toEqual([['“달려!”', 'side'], ['그가 외쳤다.', 'narrator']]);
+    expect(korean.map(line => [line.text, line.role])).toEqual([['“달려!”', 'protagonist'], ['그가 외쳤다.', 'narrator']]);
     expect(script(['“…”']).lines.slice(1)).toEqual([]);
   });
 
@@ -139,11 +169,22 @@ describe('voices', () => {
     expect(isNoveltyVoice(voice('Daniel', 'en-GB'))).toBe(false);
   });
 
-  it('matches picks as whole words and prefers a Premium or natural variant', () => {
-    const edge = [voice('Microsoft David - English (United States)', 'en-US'), voice('Microsoft Ryan Online (Natural) - English (United Kingdom)', 'en-GB'),
-      voice('Danielle', 'en-US'), voice('Daniel', 'en-GB'), voice('Daniel (Premium)', 'en-GB')];
-    expect(chooseDefaultVoices(edge, 'en', { en: { narrator: ['Daniel'] } }).narrator?.name).toBe('Daniel (Premium)');
+  it('matches picks as whole words, a voice on the device before an online one, and a standard voice before its Premium one', () => {
+    const edge = [voice('Microsoft David - English (United States)', 'en-US', { localService: true }),
+      voice('Microsoft Ryan Online (Natural) - English (United Kingdom)', 'en-GB', { localService: false }),
+      voice('Danielle', 'en-US'), voice('Daniel (Premium)', 'en-GB'), voice('Daniel', 'en-GB')];
+    expect(chooseDefaultVoices(edge, 'en', { en: { narrator: ['Daniel'] } }).narrator?.name).toBe('Daniel');
+    // An online voice pauses to fetch every line: a later pick on the device wins.
+    expect(chooseDefaultVoices(edge, 'en', { en: { narrator: ['Microsoft Ryan', 'Microsoft David'] } }).narrator?.name).toContain('David');
     expect(chooseDefaultVoices(edge, 'en', { en: { narrator: ['Microsoft Ryan'] } }).narrator?.name).toContain('Ryan');
+    expect(isDeviceVoice(edge[1])).toBe(false);
+    expect(isDeviceVoice(voice('Daniel', 'en-GB'))).toBe(true);
+  });
+
+  it('takes the first voice on the device before an online one when the picks run out', () => {
+    const chrome = [voice('Google US English', 'en-US', { localService: false }), voice('Microsoft David - English (United States)', 'en-US', { localService: true, default: true }),
+      voice('Microsoft Zira - English (United States)', 'en-US', { localService: true })];
+    expect(names(chooseDefaultVoices(chrome, 'en'))).toEqual(['Microsoft David - English (United States)', 'Microsoft Zira - English (United States)', 'Google US English']);
   });
 
   it('reads a story\'s language with its own voices, best language tag first', () => {

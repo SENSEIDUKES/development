@@ -13,7 +13,7 @@ const ROLE_HELP: Record<ReadAloudRole, string> = {
 
 /** A language's own name, without the native script in brackets ("Korean (한국어)" → "Korean"). */
 const plainLanguage = (language: string) => getSenLanguageLabel(normalizeSenLanguageCode(language)).replace(/\s*\(.*\)$/u, '');
-const voiceLabel = (voice: ReadAloudVoice) => `${voice.name} (${voice.lang})`;
+const voiceLabel = (voice: ReadAloudVoice) => `${voice.name} (${voice.lang})${voice.localService === false ? ' · online' : ''}`;
 
 function VoicePicker({ role, readAloud, language }: { role: ReadAloudRole; readAloud: ReadAloud; language: string }) {
   const id = `reader-voice-${role}`;
@@ -77,6 +77,7 @@ export function ReaderSettingsSheet({ open, onClose, readAloud, language }: {
           <h3 id="reader-settings-narration" className="text-sm font-semibold text-neutral-100">Narration</h3>
           <p className="mt-1 text-xs leading-relaxed text-neutral-400">
             Three voices read the story when you tap Listen. Your choices stay on this device, for each story language.
+            Voices on this device start at once; an online voice can pause before its lines.
           </p>
           {!readAloud.supported
             ? <p role="note" className="mt-3 text-sm text-amber-200">This browser can't read aloud.</p>

@@ -344,8 +344,9 @@ Update it whenever it changes.
     left blank and never changes what the creator wrote. Add arcs is gone.
   - **Dialogue speakers, in the tiny SEN language:** the writer tags who speaks
     each spoken line (`[[@MC]]` for the main character, `[[@Name]]` for anyone
-    else), and the HARNESS records whether it is the main character. That is what gives Listen its three voices. Chapters
-    written before this read every quoted line in the Side voice.
+    else), and the HARNESS records whether it is the main character. That is what gives Listen its three voices. A line
+    the writer left untagged is voiced from its narration, as a reader tells: the Side voice when the
+    narration names someone else ("Lin Xiao said"), otherwise the Protagonist voice, as production read it.
   - **Holdings, the first information tags:** what each character has, uses,
     knows and is. Every chapter, the writer reads the Holdings section (the
     main character first), uses only what is there, and tags each change where

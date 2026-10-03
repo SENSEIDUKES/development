@@ -208,7 +208,7 @@ describe('Read Aloud in the HARNESS Reader', { timeout: 20_000 }, () => {
   };
   const lastSpoken = () => speech.spoken.at(-1)!;
   /** The current line ends; the next one begins. */
-  const next = async () => { await act(async () => { speech.start(); speech.finish(); }); await flush(); };
+  const next = async () => { await act(async () => { speech.start(); speech.finish(); }); await flush(60); };
 
   beforeEach(() => {
     ({ fake: speech, uninstall } = installFakeSpeechSynthesis());

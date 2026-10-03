@@ -19,6 +19,7 @@ import {
 import { harnessParagraphBlockId } from '../shared/chapterBody';
 import { harnessStoryMode, nextArcStep } from '../shared/arcState';
 import { pendingChapterDirection } from '../shared/chapterDirection';
+import { protagonistNames } from '../shared/speakers';
 import { BlueprintArcPage } from './BlueprintArcPage';
 import { FatePage } from './FatePage';
 import { HoldingsPage } from './HoldingsPage';
@@ -216,10 +217,14 @@ export function HarnessReaderSession({
   const chapter = chapters.find(entry => entry.chapterNumber === selectedChapter) ?? chapters.at(-1);
   const language = story?.originalLanguage ?? 'en';
   const blocks = useMemo(() => (chapter ? chapterBlocks(chapter) : []), [chapter]);
+  // The main character as this chapter's writer was told: speech it left untagged is voiced from its narration.
+  const attempt = chapter && state.attempts.find(item => item.id === chapter.attemptId);
+  const mainCharacter = useMemo(() => (attempt
+    ? protagonistNames(attempt.storyInformation.currentStory, attempt.storyInformation.canonicalState.characters) : undefined), [attempt]);
   const readAloud = useReadAloud({
     scriptKey: chapter?.id ?? 'no-chapter',
     buildScript: () => (chapter ? buildReadAloudScript({
-      chapterNumber: chapter.chapterNumber, title: chapter.title, language, paragraphs: blocks, speakers: chapter.speakers,
+      chapterNumber: chapter.chapterNumber, title: chapter.title, language, paragraphs: blocks, speakers: chapter.speakers, mainCharacter,
     }) : NO_SCRIPT),
     language, preferences: readerPreferences, picks: readAloudVoices,
     suspended: fateOpen || arcOpen || holdingsOpen || writer.writing,

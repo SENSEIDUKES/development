@@ -349,7 +349,7 @@ const acceptedSoundCues = (
 
 /**
  * Gives every spoken line its speaker from the writer's tags. Speech left
- * untagged is read in the Side voice, and is flagged when the writer was asked
+ * untagged is voiced from its narration by Read Aloud, and is flagged when the writer was asked
  * for tags or tagged other lines; tags that named nobody or no speech are
  * flagged too. A chapter is never rejected for its speakers.
  */
@@ -368,7 +368,7 @@ const acceptedSpeakers = (
   const tagged = placement.speakers.length > 0 || unused > 0 || nameless > 0;
   const problems = [
     ...((tagged || options.speakersExpected) && placement.untagged
-      ? [`${placement.untagged} spoken line${placement.untagged === 1 ? ' had' : 's had'} no speaker tag and will be read in the Side voice`] : []),
+      ? [`${placement.untagged} spoken line${placement.untagged === 1 ? ' had' : 's had'} no speaker tag; Read Aloud takes the speaker from the narration`] : []),
     ...(unused ? [`${unused} speaker tag${unused === 1 ? '' : 's'} named no spoken line`] : []),
     ...(nameless ? [`${nameless} speaker tag${nameless === 1 ? '' : 's'} named nobody and ${nameless === 1 ? 'was' : 'were'} removed`] : []),
   ];

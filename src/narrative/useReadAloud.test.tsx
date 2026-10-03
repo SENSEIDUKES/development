@@ -82,19 +82,31 @@ describe('useReadAloud', () => {
     expect(player.status).toBe('playing');
     expect(player.line?.key).toBe('title');
 
-    act(() => { fake.start(); fake.finish(); });
-    act(() => { fake.start(); fake.finish(); });
+    act(() => { fake.start(); fake.finish(); vi.advanceTimersByTime(50); });
+    act(() => { fake.start(); fake.finish(); vi.advanceTimersByTime(50); });
     expect(lastSpoken().text).toBe('“Ring the bells,”');
     expect(lastSpoken().voice?.name).toBe('Rishi');
-    act(() => { fake.start(); fake.finish(); });
+    act(() => { fake.start(); fake.finish(); vi.advanceTimersByTime(50); });
     expect(lastSpoken()).toMatchObject({ text: 'Ye Chen said.' });
     expect(lastSpoken().voice?.name).toBe('Daniel');
+  });
+
+  it('clears the browser\'s queue before every line and waits production\'s 50 ms after each line ends', () => {
+    mount();
+    act(() => player.play());
+    expect(fake.cancels).toBe(1);
+    act(() => { fake.start(); fake.finish(); });
+    act(() => { vi.advanceTimersByTime(49); });
+    expect(texts()).toEqual(['Chapter 1. Low Tide']);
+    act(() => { vi.advanceTimersByTime(1); });
+    expect(texts()).toHaveLength(2);
+    expect(fake.cancels).toBe(2);
   });
 
   it('pauses by cancelling, ignores the cancelled line\'s events, and resumes the same line from its start', () => {
     mount();
     act(() => player.play());
-    act(() => { fake.start(); fake.finish(); });
+    act(() => { fake.start(); fake.finish(); vi.advanceTimersByTime(50); });
     expect(player.line?.text).toBe('The tide went out.');
     const before = fake.spoken.length;
     act(() => player.pause());
@@ -187,7 +199,7 @@ describe('useReadAloud', () => {
     act(() => { player.setRate(1.5); player.setVoice('narrator', player.voices.find(each => each.name === 'Samantha')); });
     expect(fake.spoken).toHaveLength(1);
     expect(lastSpoken().rate).toBe(1);
-    act(() => { fake.start(); fake.finish(); fake.start(); fake.finish(); });
+    act(() => { fake.start(); fake.finish(); vi.advanceTimersByTime(50); fake.start(); fake.finish(); vi.advanceTimersByTime(50); });
     expect(lastSpoken()).toMatchObject({ text: 'Ye Chen said.', rate: 1.5 });
     expect(lastSpoken().voice?.name).toBe('Samantha');
     const saved = JSON.parse(values.get('read-aloud')!);
@@ -214,7 +226,7 @@ describe('useReadAloud', () => {
   it('keeps listening across chapters until Stop, but a paused reader stays paused', () => {
     mount();
     act(() => player.play(4));
-    act(() => { fake.start(); fake.finish(); });
+    act(() => { fake.start(); fake.finish(); vi.advanceTimersByTime(50); });
     expect(player.status).toBe('ended');
     act(() => setProps({ chapter: 2 }));
     act(() => { vi.advanceTimersByTime(0); });

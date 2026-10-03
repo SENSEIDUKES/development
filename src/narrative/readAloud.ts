@@ -1,7 +1,7 @@
 import { splitSentences } from '../components/text-highlight-engine/shared/manuscript';
 import { isSenLanguageCode, normalizeSenLanguageCode, senSpeechLanguageTags, type SenLanguageCode } from '../lib/language';
 import type { ReaderPreferenceStorage } from './readerRuntime';
-import { findSpokenLines, isSpeakerOnText, type SpeakerAttachment } from './speech';
+import { findSpokenLines, isSpeakerOnText, narratedSpeaker, type MainCharacterNames, type SpeakerAttachment } from './speech';
 import { wordRanges } from './words';
 
 /**
@@ -20,10 +20,11 @@ export type ReadAloudRole = 'narrator' | 'protagonist' | 'side';
 export const READ_ALOUD_ROLES: readonly ReadAloudRole[] = ['narrator', 'protagonist', 'side'];
 
 /**
- * The voice for a spoken line nobody was named for, including every quote in a
- * chapter written before speakers existed.
+ * The voice for a spoken line nobody was named for and whose narration names no
+ * one else (“…,” he said.), including every quote in a chapter written
+ * before speakers existed: the main character's, as production read it.
  */
-export const UNTAGGED_SPEECH_ROLE: ReadAloudRole = 'side';
+export const UNTAGGED_SPEECH_ROLE: ReadAloudRole = 'protagonist';
 
 /** Bumped whenever the same chapter would produce different lines (stored audio keys on them later). */
 export const READ_ALOUD_SCRIPT_VERSION = 1;
@@ -67,6 +68,8 @@ export interface ReadAloudChapter {
   speakers?: readonly SpeakerAttachment[];
   /** The story's language (a SEN language code): sentence rules, and whether "Chapter N." is spoken. */
   language?: string;
+  /** Who the main character is, for speech nobody tagged: its narration says who speaks it. */
+  mainCharacter?: MainCharacterNames;
 }
 
 const SPEAKABLE = /[\p{L}\p{N}]/u;
@@ -152,8 +155,14 @@ export function boundSpeechRanges(text: string, start: number, end: number, loca
 
 interface SpokenPart extends ReadAloudRange { role: ReadAloudRole; speaker?: string }
 
-/** A paragraph's spoken parts: its speaker records first, then any quoted line nobody was named for. */
-function spokenParts(blockId: string, text: string, speakers: readonly SpeakerAttachment[]): SpokenPart[] {
+/**
+ * A paragraph's spoken parts: its speaker records first, then any quoted line
+ * nobody was named for, voiced by who its narration names (`narratedSpeaker`);
+ * a line whose own narration names no one takes the speaker another untagged
+ * line of the paragraph was given, one speaker to a paragraph as production
+ * read it, and otherwise the main character's voice.
+ */
+function spokenParts(blockId: string, text: string, speakers: readonly SpeakerAttachment[], cast: MainCharacterNames): SpokenPart[] {
   const named: SpokenPart[] = [];
   const records = speakers
     .filter(record => isSpeakerOnText(record, blockId, text))
@@ -166,9 +175,15 @@ function spokenParts(blockId: string, text: string, speakers: readonly SpeakerAt
       role: record.payload.protagonist ? 'protagonist' : 'side', speaker: record.payload.speaker.trim(),
     });
   }
-  const untagged = findSpokenLines(text)
-    .filter(line => !named.some(part => part.start < line.end && part.end > line.start))
-    .map((line): SpokenPart => ({ ...line, role: UNTAGGED_SPEECH_ROLE }));
+  const lines = findSpokenLines(text);
+  const open = lines.flatMap((line, index) => (named.some(part => part.start < line.end && part.end > line.start) ? [] : [{ line, index }]));
+  const told = open.map(({ index }) => narratedSpeaker(text, lines, index, cast));
+  const paragraphSpeaker = told.find(Boolean);
+  const untagged = open.map(({ line }, position): SpokenPart => {
+    const who = told[position] ?? paragraphSpeaker;
+    if (who === 'other') return { ...line, role: 'side' };
+    return { ...line, role: who === 'main' ? 'protagonist' : UNTAGGED_SPEECH_ROLE, ...(who === 'main' && cast.names[0] ? { speaker: cast.names[0] } : {}) };
+  });
   return [...named, ...untagged].sort((left, right) => left.start - right.start);
 }
 
@@ -202,9 +217,15 @@ export function buildReadAloudScript(chapter: ReadAloudChapter): ReadAloudScript
   if (isSpeakable(heading)) {
     lines.push({ key: 'title', sentence: { start: 0, end: title.length }, start: 0, end: title.length, text: heading, role: 'narrator' });
   }
+  // Everyone the writer tagged is a known name too, so their untagged lines are recognised as theirs.
+  const tagged = (chapter.speakers ?? []).filter(record => !record.payload?.protagonist).map(record => record.payload?.speaker ?? '');
+  const cast: MainCharacterNames = {
+    names: chapter.mainCharacter?.names ?? [],
+    others: [...new Set([...(chapter.mainCharacter?.others ?? []), ...tagged].map(name => name.trim()).filter(Boolean))],
+  };
   for (const { id, text } of chapter.paragraphs) {
     if (!text.trim()) continue;
-    const spoken = spokenParts(id, text, chapter.speakers ?? []);
+    const spoken = spokenParts(id, text, chapter.speakers ?? [], cast);
     for (const sentence of splitSentences(text, language)) {
       for (const part of sentenceParts(sentence, spoken)) {
         for (const range of boundSpeechRanges(text, part.start, part.end, language)) {
@@ -245,7 +266,6 @@ export type ReadAloudVoiceChoice = Partial<Record<ReadAloudRole, ReadAloudVoice>
 export type ReadAloudVoicePicks = Partial<Record<SenLanguageCode, Partial<Record<ReadAloudRole, readonly string[]>>>>;
 
 const normalizeTag = (tag: string) => tag.replace(/_/g, '-').toLowerCase();
-const regionOf = (voice: ReadAloudVoice) => normalizeTag(voice.lang).split('-').slice(1).join('-');
 
 /** The voices that can read a language, best language match first, then in the device's order. */
 export function voicesForLanguage(voices: readonly ReadAloudVoice[], language: string): ReadAloudVoice[] {
@@ -276,13 +296,18 @@ const nameMatches = (name: string, pick: string) =>
   new RegExp(`(?:^|[^\\p{L}\\p{N}])${escapeRegExp(pick.trim())}(?:$|[^\\p{L}\\p{N}])`, 'iu').test(name);
 const quality = (voice: ReadAloudVoice) => (/premium/i.test(voice.name) ? 2 : /enhanced|natural|neural/i.test(voice.name) ? 1 : 0);
 
+/** A voice on the device rather than fetched online for every line: it starts at once. */
+export const isDeviceVoice = (voice: ReadAloudVoice) => voice.localService !== false;
+
 /**
- * The voices each role reads with by default, for one language: the host's
- * picks first (their best-quality variant), then the device's default voice for
- * the narrator, then voices from a different region than those already chosen,
- * so three voices sound different even on devices that name them by locale.
- * Roles in `taken` keep their voice. With no voice for the language, a role is
- * left empty and speech carries only the language.
+ * The voices each role reads with by default, for one language, chosen the
+ * way production chose them: the host's picks first, then the device's default
+ * voice for the narrator, then the first voice not yet taken. A voice on the
+ * device always comes before an online one, which pauses to fetch every line,
+ * and a pick's standard voice before its Enhanced or Premium one, which
+ * reloads its speech data whenever the voice changes. Roles in `taken` keep
+ * their voice. With no voice for the language, a role is left empty and
+ * speech carries only the language.
  */
 export function chooseDefaultVoices(
   voices: readonly ReadAloudVoice[],
@@ -292,24 +317,24 @@ export function chooseDefaultVoices(
 ): ReadAloudVoiceChoice {
   const code = normalizeSenLanguageCode(language);
   const pool = voicesForLanguage(voices, code).filter(voice => !isNoveltyVoice(voice));
+  const ordered = [...pool.filter(isDeviceVoice), ...pool.filter(voice => !isDeviceVoice(voice))];
   const choice: ReadAloudVoiceChoice = {};
   for (const role of READ_ALOUD_ROLES) if (taken[role]) choice[role] = taken[role];
-  const chosen = () => READ_ALOUD_ROLES.flatMap(role => (choice[role] ? [choice[role]!] : []));
-  const free = (voice: ReadAloudVoice) => !chosen().some(other => other.voiceURI === voice.voiceURI);
+  const free = (voice: ReadAloudVoice) => !READ_ALOUD_ROLES.some(role => choice[role]?.voiceURI === voice.voiceURI);
   const picked = (role: ReadAloudRole) => {
-    for (const name of picks?.[code]?.[role] ?? []) {
-      const matches = pool.filter(voice => free(voice) && nameMatches(voice.name, name));
-      if (matches.length) return [...matches].sort((left, right) => quality(right) - quality(left))[0];
+    for (const deviceOnly of [true, false]) {
+      for (const name of picks?.[code]?.[role] ?? []) {
+        const matches = ordered.filter(voice => free(voice) && (!deviceOnly || isDeviceVoice(voice)) && nameMatches(voice.name, name));
+        if (matches.length) return [...matches].sort((left, right) => quality(left) - quality(right))[0];
+      }
     }
     return undefined;
   };
   for (const role of READ_ALOUD_ROLES) {
     if (choice[role]) continue;
-    const regions = new Set(chosen().map(regionOf));
     const voice = picked(role)
-      ?? (role === 'narrator' ? pool.find(candidate => candidate.default && free(candidate)) : undefined)
-      ?? pool.find(candidate => free(candidate) && !regions.has(regionOf(candidate)))
-      ?? pool.find(free)
+      ?? (role === 'narrator' ? ordered.find(candidate => candidate.default && free(candidate) && isDeviceVoice(candidate)) : undefined)
+      ?? ordered.find(free)
       ?? (role === 'side' ? choice.protagonist : undefined)
       ?? choice.narrator;
     if (voice) choice[role] = voice;

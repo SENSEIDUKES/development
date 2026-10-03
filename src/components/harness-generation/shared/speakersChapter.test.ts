@@ -79,7 +79,7 @@ describe('HARNESS dialogue speakers through speaker tags', () => {
       ['speaker:c1-p4:0-14', '“Then I will.”', 'Wei', true],
     ]);
     expect(state.attempts[0].warnings.filter(warning => warning.code === 'speaker_tags_incomplete').map(warning => warning.message)).toEqual([
-      '1 spoken line had no speaker tag and will be read in the Side voice; 1 speaker tag named no spoken line.',
+      '1 spoken line had no speaker tag; Read Aloud takes the speaker from the narration; 1 speaker tag named no spoken line.',
     ]);
 
     const reloaded = new HarnessGenerationController({ repository, modelAdapter: adapter('{}').value });
@@ -87,7 +87,8 @@ describe('HARNESS dialogue speakers through speaker tags', () => {
     const saved = reloaded.snapshot().chapters[0];
     expect(saved.speakers).toEqual(chapter.speakers);
 
-    // Read Aloud: the main character's lines in the Protagonist voice, everyone else's in the Side voice.
+    // Read Aloud: the main character's lines in the Protagonist voice, everyone else's in the Side voice,
+    // and a line nobody tagged whose narration names no one in production's voice, the main character's.
     const script = buildReadAloudScript({
       chapterNumber: 1, title: saved.title, language: 'en', speakers: saved.speakers,
       paragraphs: saved.paragraphs.map((text, index) => ({ id: harnessParagraphBlockId(1, index), text })),
@@ -97,7 +98,7 @@ describe('HARNESS dialogue speakers through speaker tags', () => {
       ['“Hold the gate,”', 'protagonist', 'Wei Lin'],
       ['“It will not hold.”', 'side', 'Elder Mo'],
       ['“Then I will.”', 'protagonist', 'Wei'],
-      ['“Who goes there?”', 'side', undefined],
+      ['“Who goes there?”', 'protagonist', undefined],
     ]);
   });
 
@@ -116,6 +117,6 @@ describe('HARNESS dialogue speakers through speaker tags', () => {
     expect(accepted.accepted && accepted.warnings.map(warning => warning.code)).not.toContain('speaker_tags_incomplete');
     const expected = acceptHarnessModelResponse(raw, 1, { speakersExpected: true });
     expect(expected.accepted && expected.warnings.find(warning => warning.code === 'speaker_tags_incomplete')?.message)
-      .toBe('1 spoken line had no speaker tag and will be read in the Side voice.');
+      .toBe('1 spoken line had no speaker tag; Read Aloud takes the speaker from the narration.');
   });
 });

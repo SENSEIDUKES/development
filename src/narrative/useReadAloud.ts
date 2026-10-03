@@ -57,7 +57,9 @@ type SpeechScope = { speechSynthesis?: SpeechSynthesis; SpeechSynthesisUtterance
  * The browser's own speech (Web Speech API). It keeps the line being spoken
  * referenced, because Chrome can drop an unreferenced utterance before it
  * ends, and detaches a line's handlers before cancelling it, so a
- * cancellation is never mistaken for a line finishing.
+ * cancellation is never mistaken for a line finishing. Like production, it
+ * clears the browser's queue before every line, so a line the browser still
+ * holds (an online voice that never reported its end) never delays the next.
  */
 export function createWebSpeechEngine(scope: SpeechScope = globalThis as SpeechScope): SpeechEngine {
   const synth = scope.speechSynthesis;
@@ -82,6 +84,7 @@ export function createWebSpeechEngine(scope: SpeechScope = globalThis as SpeechS
     speak(request, events) {
       if (!supported) return;
       detach();
+      synth!.cancel();
       const utterance = new Utterance!(request.text);
       const native = request.voice && synth!.getVoices().find(voice => voice.voiceURI === request.voice!.voiceURI);
       if (native) utterance.voice = native;
@@ -169,6 +172,8 @@ export interface ReadAloud {
 /** The prototype's narration volume. */
 export const READ_ALOUD_VOLUME = 0.9;
 const START_TIMEOUT_MS = { first: 8_000, next: 4_000 } as const;
+/** Production's pause between one line's end and the next line: the browser settles before it speaks again. */
+const LINE_GAP_MS = 50;
 const WATCHDOG = { factor: 2, paddingMs: 5_000, rechecks: 3 } as const;
 /** Away this long with no word spoken, the device stopped (a locked phone): the line is read again. */
 const HIDDEN_RESTART_MS = 2_000;
@@ -262,7 +267,8 @@ export function useReadAloud({
     publish();
   }, [clearTimers, engine, publish]);
 
-  const speakAt = useCallback(function speakAt(index: number, afterCancel = false) {
+  /** Speaks a line now, or after `wait` ms: after a cancellation, or production's gap between lines. */
+  const speakAt = useCallback(function speakAt(index: number, wait?: number) {
     const state = live.current;
     const lines = scriptFor().lines;
     clearTimers();
@@ -287,7 +293,7 @@ export function useReadAloud({
       // The line never reported its end: go on to the next one.
       engine.cancel();
       state.retried = false;
-      speakAt(index + 1, true);
+      speakAt(index + 1, 0);
     }, (estimateSpeechMs(line.text) / latest.current.rate) * WATCHDOG.factor + WATCHDOG.paddingMs);
 
     const begin = () => {
@@ -307,15 +313,15 @@ export function useReadAloud({
           state.lastEventAt = Date.now();
           state.retried = false;
           state.firstLine = false;
-          speakAt(index + 1);
+          speakAt(index + 1, LINE_GAP_MS);
         },
         onError: error => {
           if (token !== state.token || error === 'interrupted' || error === 'canceled') return;
           if (error === 'not-allowed') { pauseForTap(); return; }
           // A voice that fails (an offline network voice) gets one retry without it; then the line is skipped.
-          if (!state.retried && voices[line.role]) { state.retried = true; speakAt(index, true); return; }
+          if (!state.retried && voices[line.role]) { state.retried = true; speakAt(index, 0); return; }
           state.retried = false;
-          speakAt(index + 1, true);
+          speakAt(index + 1, 0);
         },
       });
       later(() => {
@@ -326,8 +332,8 @@ export function useReadAloud({
       }, state.firstLine ? START_TIMEOUT_MS.first : START_TIMEOUT_MS.next);
     };
     // A line spoken right after a cancellation can be dropped by Chrome; the first one is spoken at once (iOS).
-    if (afterCancel) later(begin, 0);
-    else begin();
+    if (wait === undefined) begin();
+    else later(begin, wait);
   }, [clearTimers, engine, later, pauseForTap, publish, scriptFor]);
 
   const play = useCallback((fromLine = 0) => {
@@ -340,7 +346,7 @@ export function useReadAloud({
     state.listening = true;
     state.firstLine = true;
     state.retried = false;
-    speakAt(Math.max(0, Math.min(Math.trunc(fromLine), lines.length - 1)), busy);
+    speakAt(Math.max(0, Math.min(Math.trunc(fromLine), lines.length - 1)), busy ? 0 : undefined);
   }, [engine, halt, scriptFor, speakAt]);
 
   const pause = useCallback(() => {
@@ -359,7 +365,7 @@ export function useReadAloud({
     if (busy) halt();
     state.listening = true;
     state.retried = false;
-    speakAt(state.index, busy);
+    speakAt(state.index, busy ? 0 : undefined);
   }, [engine, halt, speakAt]);
 
   const stop = useCallback(() => {
@@ -397,7 +403,7 @@ export function useReadAloud({
     if (state.status === 'playing') {
       halt();
       state.retried = false;
-      speakAt(target, true);
+      speakAt(target, 0);
       return;
     }
     if (target >= lines.length) return;
@@ -497,7 +503,7 @@ export function useReadAloud({
     } else if (state.listening && (state.status === 'paused' || (state.status === 'ended' && state.index < scriptFor().lines.length))) {
       // Still listening: carry on with the same line, or a new chapter from its title.
       state.firstLine = true;
-      speakAt(state.index, true);
+      speakAt(state.index, 0);
       return;
     }
     publish();
@@ -516,7 +522,7 @@ export function useReadAloud({
       const stalled = !engine.isSpeaking() || away > lineMs + HIDDEN_RESTART_MS;
       if (away < HIDDEN_RESTART_MS || state.lastEventAt > state.hiddenAt || !stalled) return;
       halt();
-      speakAt(state.index, true);
+      speakAt(state.index, 0);
     };
     document.addEventListener('visibilitychange', onVisibility);
     return () => document.removeEventListener('visibilitychange', onVisibility);

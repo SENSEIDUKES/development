@@ -241,7 +241,8 @@ export function HarnessReaderSession({
   // After a Holdings link opens a chapter, the paragraph where the change happened comes into view.
   useEffect(() => {
     if (!passageTarget || holdingsOpen) return;
-    const block = articleRef.current?.querySelector<HTMLElement>(`[data-sen-text-block="${passageTarget}"]`);
+    // Paragraph ids are `c{n}-p{i}`; anything else is never put into a selector.
+    const block = /^[\w-]+$/.test(passageTarget) ? articleRef.current?.querySelector<HTMLElement>(`[data-sen-text-block="${passageTarget}"]`) : undefined;
     if (!block) return;
     block.scrollIntoView?.({ block: 'center' });
     setPassageTarget(undefined);

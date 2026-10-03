@@ -35,6 +35,7 @@ export { compileStoryInformationPacket, projectCurrentStory } from '../../compon
 export { projectCanonicalState, normalizeIdentityLabel, type CanonicalProjectionInput, type CanonicalProjectionResult } from '../../components/harness-generation/shared/canonicalProjection';
 export { GENERATION_PACKET_BUDGET, PACKET_SECTION_ORDER, estimatePacketTokens, type PacketSectionBudget } from '../../components/harness-generation/shared/packetBudget';
 export {
+  ALWAYS_LOADED_SKILLS,
   CAPA_SCHEMA,
   CAPA_PROMPT_TOKEN_LIMIT,
   HARNESS_SKILL_INSTRUCTION_LIMIT,
@@ -96,6 +97,7 @@ export { SEN_FATE_SURVIVAL_INSTRUCTIONS, SEN_FATE_SURVIVAL_SKILL } from '../../c
 export { SEN_READING_MODE_SKILLS } from '../../components/harness-generation/shared/readingModeSkills';
 export { SEN_SOUND_CUES_INSTRUCTIONS, SEN_SOUND_CUES_SKILL, presentSoundVocabulary } from '../../components/harness-generation/shared/soundCuesSkill';
 export { SEN_SPEAKERS_INSTRUCTIONS, SEN_SPEAKERS_SKILL } from '../../components/harness-generation/shared/speakersSkill';
+export { SEN_HOLDINGS_INSTRUCTIONS, SEN_HOLDINGS_SKILL } from '../../components/harness-generation/shared/holdingsSkill';
 export {
   HOLDINGS_SECTION_OTHER_CHARACTERS,
   declaredCharacters,

@@ -237,7 +237,8 @@ export type HarnessSkillSlotId =
   | 'accessibility'
   | 'translation'
   | 'soundCues'
-  | 'speakers';
+  | 'speakers'
+  | 'holdings';
 
 export type HarnessSkillApplication =
   | 'generation'

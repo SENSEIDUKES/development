@@ -1006,6 +1006,7 @@ export class HarnessGenerationController {
       // Whose lines are the protagonist's comes from what the writer was shown, so a retry decides the same.
       protagonistNames: protagonistNames(attempt.storyInformation.currentStory, attempt.storyInformation.canonicalState.characters),
       speakersExpected: attempt.capaPrompt.skills.some(skill => skill.slot === 'speakers' && skill.authoring),
+      holdingsExpected: attempt.capaPrompt.skills.some(skill => skill.slot === 'holdings' && skill.authoring),
     });
     if (!acceptance.accepted) {
       return this.appendFailure(attemptId, {

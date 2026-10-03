@@ -231,7 +231,7 @@ describe('Fate Survival', () => {
     expect(prompt.userPrompt).toContain(ENDING);
     expect(prompt.userPrompt).toContain('Survive the first flood.');
     // The Fate Survival skill is part of the same chapter call's CAPA Prompt.
-    expect(request.capaPrompt.skills.map(skill => skill.id)).toEqual(['seihouse.sen-novel-author', FATE_SKILL, 'seihouse.sen-speakers']);
+    expect(request.capaPrompt.skills.map(skill => skill.id)).toEqual(['seihouse.sen-novel-author', FATE_SKILL, 'seihouse.sen-speakers', 'seihouse.sen-holdings']);
     expect(prompt.systemInstruction).toContain('CAPA SKILL [Fate] — SEN Fate Survival');
     expect(prompt.systemInstruction).toContain('Make the reader\'s direction for this chapter happen on the page');
     // The next chapter needs a new choice, and carries the skill again. This time the reader takes one of the

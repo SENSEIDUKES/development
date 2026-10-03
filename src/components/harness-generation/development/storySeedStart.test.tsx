@@ -119,7 +119,7 @@ describe('Harness Story Seed entry', () => {
 
     expect(container.textContent).toContain('CAPA skill slots');
     // Four slots are equipped by hand; Fate, Accessibility and Translation follow Story Settings, Sound Cues the Media Loadout.
-    expect(container.textContent).toContain('2/4 equipped · 5 managed');
+    expect(container.textContent).toContain('2/4 equipped · 6 managed');
     expect(container.textContent).toContain('AuthorEquipped');
     expect(container.textContent).toContain('SEN Novel Author');
     expect(container.textContent).toContain('View skill instructions');

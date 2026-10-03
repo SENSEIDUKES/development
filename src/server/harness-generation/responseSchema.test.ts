@@ -55,6 +55,23 @@ describe('HARNESS chapter response schema shape', () => {
       .toContain('CHAPTER SCALE: exactly 73 paragraph entries, 1,800 to 2,500 words in all.');
   });
 
+  it('asks for the closing list of the main character\'s holdings only when the Holdings skill is loaded, as a plain list of names', () => {
+    const withHoldings = buildHarnessChapterResponseSchema(WORDS, 50, { holdings: true });
+    expect(withHoldings.properties.mainCharacterHoldings).toEqual({
+      type: 'array', items: { type: 'string' },
+      description: 'After the chapter: every thing the main character has and every ability they know or are learning, each by its exact name.',
+    });
+    // Right after the chapter body, while it is fresh, and required.
+    expect(Object.keys(withHoldings.properties).slice(0, 5)).toEqual(['title', 'plan', 'paragraphs', 'soundCues', 'mainCharacterHoldings']);
+    expect(withHoldings.required.slice(0, 2)).toEqual(['paragraphs', 'mainCharacterHoldings']);
+    // A list of strings adds no structure: the schema stays as shallow and as small as before.
+    const shape = describeSchemaShape(withHoldings);
+    expect(shape.objectSchemas).toBe(describeSchemaShape(buildHarnessChapterResponseSchema(WORDS, 50)).objectSchemas);
+    expect(shape.maxObjectDepth).toBeLessThanOrEqual(3);
+    expect(shape.serializedBytes).toBeLessThan(2_200);
+    expect(buildHarnessChapterResponseSchema(WORDS).properties).not.toHaveProperty('mainCharacterHoldings');
+  });
+
   it('carries no Sound Cue field at all for a story without sound words', () => {
     expect(buildHarnessChapterResponseSchema([]).properties).not.toHaveProperty('soundCues');
     expect(buildHarnessChapterResponseSchema().properties).not.toHaveProperty('soundCues');

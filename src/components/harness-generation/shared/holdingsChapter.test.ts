@@ -8,6 +8,7 @@ import {
   type HarnessWorkspaceState,
 } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
 import { acceptHarnessModelResponse } from './responseAcceptance';
 
 /**
@@ -145,6 +146,11 @@ describe('HARNESS holdings through change tags', () => {
     expect(state.attempts[1].storyInformation.diagnostics.sections.find(section => section.section === 'holdings')).toMatchObject({ protected: true, overBudget: false });
     // Chapter 2 named nothing new.
     expect(state.codexEntries).toHaveLength(6);
+    // What the writer actually receives: the Holdings skill, the section, and the closing list it must return.
+    const prompt = buildHarnessGenerationPrompt(writer.generate.mock.calls[1][0]);
+    expect(prompt.systemInstruction).toContain('CAPA SKILL [Holdings] — SEN Holdings v1.0.0');
+    expect(prompt.userPrompt).toContain('HOLDINGS (what each character has now, by exact name; the main character first)\nYe Chen (main character)\n- in hand: Rusted Iron Sword\n- carries: Spirit Pill ×3\n- learning: Cloud Step\n\nElder Qin\n- carries: Jade Gourd');
+    expect(prompt.responseJsonSchema.required).toContain('mainCharacterHoldings');
 
     const holdings = holdingsOf(state, story.id);
     const main = holdings.characters[0];

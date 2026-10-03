@@ -74,11 +74,13 @@ const soundCuesSchema = (words: readonly SoundWord[]) => ({
 /**
  * The compact chapter contract requested from the provider. The paragraphs
  * array is the chapter; the only signal is soundCues, which follows it and
- * exists only when the story has sound words. How to mark is taught by the
- * CAPA Sound Cues skill, never here. Reader structures, media, IDs, and memory
- * are HARNESS work and never appear here.
+ * exists only when the story has sound words. The closing list of the main
+ * character's holdings follows them, only when the Holdings skill is loaded:
+ * a plain list of names, so it adds no structure. How to mark and tag is
+ * taught by the CAPA skills, never here. Reader structures, media, IDs, and
+ * memory are HARNESS work and never appear here.
  */
-export const buildHarnessChapterResponseSchema = (words: readonly SoundWord[] = [], paragraphCount?: number) => ({
+export const buildHarnessChapterResponseSchema = (words: readonly SoundWord[] = [], paragraphCount?: number, { holdings = false }: { holdings?: boolean } = {}) => ({
   type: 'object',
   properties: {
     title: text,
@@ -90,6 +92,10 @@ export const buildHarnessChapterResponseSchema = (words: readonly SoundWord[] = 
       description: 'The complete chapter, one entry per prose paragraph, in reading order. This is the only chapter body.',
     },
     ...(words.length ? { soundCues: soundCuesSchema(words) } : {}),
+    ...(holdings ? { mainCharacterHoldings: {
+      type: 'array', items: text,
+      description: 'After the chapter: every thing the main character has and every ability they know or are learning, each by its exact name.',
+    } } : {}),
     arcCompletion: {
       type: 'object',
       properties: { goalId: text, completed: { type: 'boolean' }, evidence: text },
@@ -110,7 +116,7 @@ export const buildHarnessChapterResponseSchema = (words: readonly SoundWord[] = 
       required: ['ended', 'evidence'],
     },
   },
-  required: ['paragraphs', 'arcCompletion', 'recap', 'chapterFunction', 'nextProgression', 'nextWorldBuilding', 'nextConflict'],
+  required: ['paragraphs', ...(holdings ? ['mainCharacterHoldings'] : []), 'arcCompletion', 'recap', 'chapterFunction', 'nextProgression', 'nextWorldBuilding', 'nextConflict'],
 });
 
 export const HARNESS_MEMORY_INSTRUCTIONS = [
@@ -310,7 +316,9 @@ export const buildHarnessGenerationPrompt = (request: HarnessGenerationRequest) 
     presentMissionReminder(request.missionReminder),
     presentImmediateChapterRequest(request.immediateChapterRequest),
   ].join('\n\n');
-  const responseJsonSchema = buildHarnessChapterResponseSchema(request.capaPrompt.soundVocabulary ?? [], request.immediateChapterRequest.chapterScale.paragraphs);
+  const responseJsonSchema = buildHarnessChapterResponseSchema(request.capaPrompt.soundVocabulary ?? [], request.immediateChapterRequest.chapterScale.paragraphs, {
+    holdings: request.capaPrompt.skills.some(skill => skill.slot === 'holdings' && skill.authoring),
+  });
   const measurement: HarnessRequestMeasurement = {
     systemInstructionCharacters: systemInstruction.length,
     userPromptCharacters: userPrompt.length,

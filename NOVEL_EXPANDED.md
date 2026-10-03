@@ -353,12 +353,17 @@ Update it whenever it changes.
     each change linked to its passage, with the checks worth testing. Chapters
     written before this have nothing recorded. The tag system is defined in
     [the vocabulary](./src/components/harness-generation/ARCHITECTURE_VOCABULARY.md#the-tag-system-the-tiny-sen-language).
+  - **Export story,** on World Info, saves a story as one file: every chapter
+    with the exact instructions, Story Information and request the writer was
+    given, and its raw reply. It is how a test is shared.
 - **Not tested yet:**
   - real generation with a real model on the Vercel preview: a real Blueprint
     (Arc 1 only, filled slots), a real arc planned at a new arc, and real
     speaker tags;
   - holdings with a real model: the 10-chapter test, comparing what the
-    chapters show against the Holdings page;
+    chapters show against the Holdings page. The first run (six chapters)
+    stayed on one scene, and Holdings recorded only Chapter 1's starting
+    abilities; its export is read before the next step;
   - Listen on real phones (iPhone Safari, Android Chrome), whose voices differ
     from device to device.
 - **Not yet as [The World Blueprint](#the-world-blueprint) describes:**

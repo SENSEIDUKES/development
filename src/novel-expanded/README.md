@@ -23,7 +23,7 @@ rewrites and every page survives a reload.
 | --- | --- | --- |
 | Home | `/app/` | The reader's stories, newest first, and Carve New Destiny |
 | Create | `/app/?page=create` | The Library's Story Seed journey: the seed, its World Blueprint, Manifest Story |
-| Story View | `/app/?story=<id>` | The story's World Info page: Start Story, Start Reading, Continue |
+| Story View | `/app/?story=<id>` | The story's World Info page: Start Story, Start Reading, Continue, and Export story (the whole story as one file, for sharing a test) |
 | Reader | `/app/?story=<id>&read=1` | The reading-only Reader, with the Aura Veil while a chapter is written |
 
 - Moving inside the app adds a browser history entry, so Back and Forward walk the same pages.
@@ -127,6 +127,7 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## History
 
+- **2026-10-03** — Export story on Story View: one file with the story, every chapter, and for each chapter the exact instructions, Story Information and request the writer was given and its raw reply, so a test can be shared and read.
 - **2026-10-03** — Holdings: the writer reads what each character has and tags every change; the Reader's Holdings page (beside Fate) lists it, each change linked to its passage, with the checks to compare against the chapters. The app's stories carry their Codex entries in the same saved workspace.
 - **2026-10-01** — The Reader reads aloud in three voices: Listen, the spoken sentence lit, Reader Settings → Narration, with the voices and speed kept on this device and SEIHouse's voices from the Library. `check:app` also refuses the older Reader's narration.
 - **2026-10-01** — The World Blueprint plans Arc 1 only and fills every blank Story Seed slot; each later arc is planned and reviewed when it begins, in the Reader. Add Arcs is gone.

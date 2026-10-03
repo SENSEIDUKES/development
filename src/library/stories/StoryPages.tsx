@@ -5,6 +5,7 @@ import AILoadingVeil from '../../components/chapter-manifestation/development/AI
 import { StoryDetailScreen } from '../../components/light-novels-home/development/StoryDetailScreen';
 import type { LoadingAgentPresentation } from '../manifestations/taskCard';
 import { LIBRARY_READ_ALOUD_VOICES } from './readAloudVoices';
+import { downloadHarnessStory } from './storyExport';
 import { harnessStoryDisplay } from './storyView';
 import type { LibraryStories } from './useLibraryStories';
 
@@ -44,6 +45,7 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
   /** Set by Start Story, so the Reader begins Chapter 1 as it opens. */
   const [startOnOpen, setStartOnOpen] = useState(false);
   const [readingPosition, setReadingPosition] = useState<{ chapterNumber: number }>();
+  const [exportProblem, setExportProblem] = useState<string>();
 
   // World Info says Continue for a returning reader; the place is the host's Reader state.
   useEffect(() => {
@@ -82,6 +84,15 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
       onClose={() => { setStartOnOpen(false); onCloseReader(); }} />
   </>;
 
+  const exportStory = () => {
+    try {
+      downloadHarnessStory(state, storyId);
+      setExportProblem(undefined);
+    } catch (error) {
+      setExportProblem(error instanceof Error ? error.message : 'The story could not be exported.');
+    }
+  };
+
   return <>
     {writerAlert}
     <main className="px-4 pb-12 pt-4 sm:px-6 sm:pt-6" data-testid="harness-world-info">
@@ -89,6 +100,13 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
         onBack={onBack}
         onRead={() => { setStartOnOpen(false); onOpenReader(); }}
         onStart={() => { setStartOnOpen(true); onOpenReader(); }} />
+      {/* For testing: the whole story as one file, so a test can be shared. */}
+      <div className="mx-auto mt-10 flex max-w-5xl flex-wrap items-center gap-x-3 gap-y-2 border-t border-white/10 pt-4" data-testid="story-export">
+        <button type="button" onClick={exportStory}
+          className="min-h-11 rounded-full border border-white/15 px-4 text-sm text-neutral-200 hover:border-white/30">Export story</button>
+        <p className="min-w-0 flex-1 text-xs text-neutral-500">Saves a file with every chapter and what the writer was given for it, so a test can be shared.</p>
+        {exportProblem && <p role="alert" className="w-full text-xs text-amber-200">{exportProblem}</p>}
+      </div>
     </main>
   </>;
 }

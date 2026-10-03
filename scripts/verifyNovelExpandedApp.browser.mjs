@@ -9,8 +9,8 @@
  * Cue → Listen (three voices from the writer's speaker tags, the spoken
  * sentence lit, Pause and Resume, Reader Settings → Narration with the speed
  * kept on the device) → reload (no new request, nothing reads by itself) →
- * Back → Continue · Ch. 1 → Back → Home card → browser Back and Forward → a
- * missing story goes Home.
+ * Back → Continue · Ch. 1 → Export story (the whole story as one file) → Back
+ * → Home card → browser Back and Forward → a missing story goes Home.
  *
  * Headless Chromium has no voices, so a stand-in for the browser's speech is
  * installed before the app loads; each line ends on its own after a moment,
@@ -23,7 +23,7 @@
  * Usage: start `npm run dev -- --host 127.0.0.1`, then
  *   node scripts/verifyNovelExpandedApp.browser.mjs [base URL]
  */
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
 
 const BASE = (process.argv[2] ?? process.env.NOVEL_EXPANDED_URL ?? 'http://localhost:5173').replace(/\/$/, '');
@@ -321,6 +321,15 @@ async function walk(browser, viewport, sample) {
   await page.getByTestId('harness-world-info').waitFor();
   check(address() === storyAddress, `Back from the Reader should open Story View, got ${address()}`);
   check((await page.locator('[data-world-info-chapters="action"]').textContent()).includes('Continue · Ch. 1'), 'Story View should continue at Chapter 1.');
+  // Export story saves the whole story as one file, with what the writer was given for each chapter.
+  await page.getByTestId('story-export').scrollIntoViewIfNeeded();
+  await shot('4b-story-export');
+  const [exported] = await Promise.all([page.waitForEvent('download'), visibleButton('Export story').click()]);
+  check(/\.json$/.test(exported.suggestedFilename()), `Export story should save a .json file, got ${exported.suggestedFilename()}`);
+  const archive = JSON.parse(readFileSync(await exported.path(), 'utf8'));
+  check(address().includes(archive.story?.id), 'Export story should save this story.');
+  check(archive.chapters?.length === 1 && archive.attempts?.[0]?.storyInformation && archive.attempts[0].rawProviderResponse,
+    'Export story should carry the chapter, its Story Information and the writer\'s reply.');
   await visibleButton('Back to your stories').click();
   await page.getByTestId('novel-expanded-home').waitFor();
   check(address() === '/app/', `Back from Story View should go Home, got ${address()}`);

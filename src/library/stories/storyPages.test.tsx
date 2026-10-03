@@ -136,6 +136,45 @@ describe('A story\'s own pages for any host', { timeout: 20_000 }, () => {
     expect(container.querySelector('[data-testid="story-host-home"]')).toBeTruthy();
   });
 
+  it('World Info saves the whole story as one file, so a test can be shared', async () => {
+    const model = scriptedModel();
+    model.release();
+    const repository = new InMemoryHarnessGenerationRepository();
+    const story = await createSeededStory(repository, model.adapter, 'The Drowned Name');
+    const writer = new HarnessGenerationController({ repository, modelAdapter: model.adapter });
+    await writer.hydrate();
+    await writer.generateNextChapter(story.id, 'fixture');
+    await act(async () => root.render(renderWithDevAudio(<StoryHost repository={repository} adapter={model.adapter} storyId={story.id} />)));
+    await flush();
+
+    const saved: Blob[] = [];
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockImplementation(blob => { saved.push(blob as Blob); return 'blob:story'; });
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    const names: string[] = [];
+    const followed = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) { names.push(this.download); });
+    try {
+      await click(worldInfo()!.querySelector<HTMLElement>('[data-testid="story-export"] button'), 'Export story');
+      expect(names).toEqual(['The-Drowned-Name.json']);
+      expect(saved).toHaveLength(1);
+      const archive = JSON.parse(await saved[0].text());
+      expect(archive.story).toMatchObject({ id: story.id, title: 'The Drowned Name' });
+      expect(archive.chapters.map((chapter: { title: string }) => chapter.title)).toEqual(['Low Tide']);
+      // Each chapter travels with what the writer was given and what it returned.
+      expect(archive.attempts[0]).toMatchObject({
+        capaPrompt: { text: expect.any(String) },
+        storyInformation: { arc: { activeGoal: { text: 'Reclaim her name.' } } },
+        immediateChapterRequest: { chapterNumber: 1 },
+        warnings: expect.any(Array),
+      });
+      expect(JSON.parse(archive.attempts[0].rawProviderResponse).recap).toBe('Mara returns.');
+      expect(worldInfo()!.querySelector('[role="alert"]')).toBeNull();
+    } finally {
+      createObjectURL.mockRestore();
+      revokeObjectURL.mockRestore();
+      followed.mockRestore();
+    }
+  });
+
   it('says plainly when a story is gone, and when storage cannot open, then opens on Retry', async () => {
     const model = scriptedModel();
     const repository = new InMemoryHarnessGenerationRepository();

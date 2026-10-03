@@ -22,6 +22,16 @@
  * it (`[[@Lin Feng|“Run!”]]`, whose words stay). A tag that never closes, or
  * whose name is empty or too long to be a name, is still removed and reported,
  * so no part of it leaks. `[[Lin Feng]]` without the @ is ordinary text.
+ *
+ * A word tag begins with its tag word and says what changed, in parts split by
+ * pipes: `[[gained: MC | Rusted Iron Sword]]`. It points at what follows it.
+ * The tag words are the language's own (`TAG_WORDS`), each with the other
+ * spellings a writer slips into ("obtained" for gained); letter case, spaces,
+ * full-width colons, pipes and brackets, and a single closing bracket all
+ * read. A tag word with fewer than two parts, or one that never closes, is
+ * still removed and reported, so no part of it leaks. An unknown word with a
+ * pipe after its colon (`[[obtainedd: MC | Sword]]`) is a slipped tag: removed
+ * and reported too. Without a pipe, `[[Note: …]]` is ordinary text.
  */
 
 /** A span mark's place in the clean text: UTF-16 offsets, start inclusive and end exclusive. */
@@ -53,6 +63,48 @@ export interface SpeakerTag {
 /** A speaker tag that named nobody: empty, too long to be a name, or never closed. It was removed. */
 export interface SpeakerTagIssue { kind: 'unnamed' }
 
+/**
+ * The tag words of the tiny SEN language, each with the other spellings a
+ * writer may slip into. Holdings are the first kind written this way: what a
+ * character has, uses, knows and is, tagged where the story changes it.
+ */
+export const TAG_WORDS = {
+  has: ['has', 'had', 'have', 'holds', 'owns', 'carries'],
+  gained: ['gained', 'gain', 'gains', 'obtained', 'obtain', 'acquired', 'acquire', 'received', 'receive', 'got'],
+  lost: ['lost', 'lose', 'loses', 'used up', 'consumed', 'spent', 'broke', 'broken', 'destroyed', 'gave', 'gave away', 'given', 'sold', 'stolen', 'dropped'],
+  equipped: ['equipped', 'equip', 'equips', 'wields', 'wield', 'wielded', 'wears', 'wear', 'wore'],
+  unequipped: ['unequipped', 'unequip', 'unequips', 'put away', 'stowed', 'stow', 'sheathed'],
+  knows: ['knows', 'know', 'knew', 'known'],
+  learning: ['learning', 'studying', 'practicing', 'practising'],
+  learned: ['learned', 'learnt', 'learn', 'learns'],
+  improved: ['improved', 'improve', 'improves'],
+  sealed: ['sealed', 'seal', 'seals'],
+  unsealed: ['unsealed', 'unseal', 'unseals'],
+  rank: ['rank', 'ranked'],
+} as const satisfies Record<string, readonly string[]>;
+
+export type TagWord = keyof typeof TAG_WORDS;
+
+/** A word tag, and where it sat in the clean text: it points at what follows it. */
+export interface WordTag {
+  word: TagWord;
+  /** The writer's own spelling, when it was another accepted one ("obtained" for gained). */
+  spelling?: string;
+  /** The parts between the pipes, trimmed, in order: who, then what. */
+  parts: string[];
+  /** UTF-16 offset in the clean text. */
+  offset: number;
+}
+
+/** A word tag that could not be read. It was removed, so nothing of it leaks. */
+export type WordTagIssue =
+  /** A tag word with fewer than two parts. */
+  | { kind: 'incomplete'; word: TagWord }
+  /** A tag word that never closed. */
+  | { kind: 'unclosed'; word: TagWord }
+  /** A word that is not a tag word, written as a tag (a pipe after its colon). */
+  | { kind: 'unknown'; word: string };
+
 export interface MarkReading {
   /** The text with every mark removed and its ends trimmed. */
   text: string;
@@ -62,7 +114,18 @@ export interface MarkReading {
   /** Speaker tags in reading order. */
   speakers: SpeakerTag[];
   speakerIssues: SpeakerTagIssue[];
+  /** Word tags in reading order. */
+  wordTags: WordTag[];
+  wordTagIssues: WordTagIssue[];
 }
+
+const TAG_WORD_SPELLINGS = new Map<string, TagWord>(
+  (Object.entries(TAG_WORDS) as Array<[TagWord, readonly string[]]>).flatMap(([word, spellings]) => spellings.map(spelling => [spelling, word] as const)),
+);
+
+/** A spelling's tag word: letter case, hyphens and repeated spaces aside ("Put-Away" is unequipped). */
+export const tagWordOf = (spelling: string): TagWord | undefined =>
+  TAG_WORD_SPELLINGS.get(spelling.trim().toLowerCase().replace(/[\s-]+/g, ' '));
 
 /** Longer than this, a speaker tag's "name" is prose written into the tag, not a name. */
 export const SPEAKER_TAG_NAME_LIMIT = 48;
@@ -88,6 +151,13 @@ const SPEAKER = new RegExp(String.raw`${OPEN}${GAP}${AT}${GAP}${NAME}${GAP}(?:($
 const SPEAKER_SINGLE = new RegExp(String.raw`[\[［]${GAP}${AT}${GAP}${NAME}${GAP}[\]］]`, 'y');
 /** A tag that never closes: removed up to the speech it was meant to name. */
 const SPEAKER_UNCLOSED = new RegExp(String.raw`${OPEN}${GAP}${AT}[^\[\]［］|｜\n“"「『«]{0,${SPEAKER_TAG_NAME_LIMIT}}`, 'y');
+const TAG_WORD = String.raw`([A-Za-z]+(?:[ \t-][A-Za-z]+)?)`;
+const COLON = String.raw`[:：]`;
+const PIPE = /[|｜]/;
+/** `[[gained: MC | Rusted Iron Sword]]` `［［gained：MC｜剣］］` `[[Gained:MC|Sword]` */
+const WORD_TAG = new RegExp(String.raw`${OPEN}${GAP}${TAG_WORD}${GAP}${COLON}([^\[\]［］\n]{0,240})${CLOSE}`, 'y');
+/** A word tag that never closes: removed through the end of the sentence it ran into. */
+const WORD_TAG_UNCLOSED = new RegExp(String.raw`${OPEN}${GAP}${TAG_WORD}${GAP}${COLON}[^\[\]［］\n.!?。！？“"「]{0,120}[.!?。！？]?`, 'y');
 
 const toNumber = (digits: string) => Number(digits.replace(/[０-９]/g, digit => String(digit.charCodeAt(0) - 0xff10)));
 const isSpace = (character: string | undefined) => character !== undefined && /[ \t　]/.test(character);
@@ -107,6 +177,8 @@ export function readMarks(source: string): MarkReading {
   const issues: ProseMarkIssue[] = [];
   const speakers: SpeakerTag[] = [];
   const speakerIssues: SpeakerTagIssue[] = [];
+  const wordTags: WordTag[] = [];
+  const wordTagIssues: WordTagIssue[] = [];
   const used = new Set<number>();
   let open: { id: number; start: number } | undefined;
   /** Spans opened inside the open one: their closings are consumed without ending it. */
@@ -146,6 +218,24 @@ export function readMarks(source: string): MarkReading {
       if (unclosedTag) {
         speakerIssues.push({ kind: 'unnamed' });
         index = skipDoubledSpace(index + unclosedTag[0].length);
+        continue;
+      }
+      const wordTag = matchAt(WORD_TAG, source, index);
+      const word = wordTag ? tagWordOf(wordTag[1]) : undefined;
+      if (wordTag && (word || PIPE.test(wordTag[2]))) {
+        const parts = wordTag[2].split(PIPE).map(part => part.trim()).filter(Boolean);
+        const spelling = wordTag[1].trim().toLowerCase().replace(/[\s-]+/g, ' ');
+        if (!word) wordTagIssues.push({ kind: 'unknown', word: wordTag[1].trim() });
+        else if (parts.length < 2) wordTagIssues.push({ kind: 'incomplete', word });
+        else wordTags.push({ word, ...(spelling !== word ? { spelling } : {}), parts, offset: text.length });
+        index = skipDoubledSpace(index + wordTag[0].length);
+        continue;
+      }
+      const unclosedWordTag = wordTag ? null : matchAt(WORD_TAG_UNCLOSED, source, index);
+      const unclosedWord = unclosedWordTag ? tagWordOf(unclosedWordTag[1]) : undefined;
+      if (unclosedWordTag && unclosedWord) {
+        wordTagIssues.push({ kind: 'unclosed', word: unclosedWord });
+        index = skipDoubledSpace(index + unclosedWordTag[0].length);
         continue;
       }
       const point = matchAt(POINT, source, index);
@@ -206,6 +296,8 @@ export function readMarks(source: string): MarkReading {
     issues,
     speakers: speakers.map(tag => ({ name: tag.name, offset: Math.min(trimmed.length, Math.max(0, tag.offset - lead)) })),
     speakerIssues,
+    wordTags: wordTags.map(tag => ({ ...tag, offset: Math.min(trimmed.length, Math.max(0, tag.offset - lead)) })),
+    wordTagIssues,
   };
 }
 

@@ -127,6 +127,7 @@ export { createHarnessSenStory } from '../../components/harness-generation/share
 export * from '../../narrative/generation';
 export { HarnessReaderSession, type HarnessReaderWriting } from '../../components/harness-generation/development/HarnessReaderSession';
 export { FatePage } from '../../components/harness-generation/development/FatePage';
+export { HoldingsPage } from '../../components/harness-generation/development/HoldingsPage';
 export { BlueprintArcPage } from '../../components/harness-generation/development/BlueprintArcPage';
 export { useNextChapterWriter, type NextChapterWriter } from '../../components/harness-generation/development/useNextChapterWriter';
 export {

@@ -20,7 +20,7 @@ describe('Story Seed to Harness handoff', () => {
     expect(foundation.initialArcLookahead).toEqual(record.blueprint!.arcLookahead);
     // A Blueprint saved before arcs were planned as they begin hands over its Arc 1, its length and its next arcs as the look-ahead.
     const older = createMockStorySeedRecord();
-    older.blueprint = { ...older.blueprint!, arcLookahead: undefined, estimatedArcs: 12, arcPlans: [older.blueprint!.arcPlans![0], { arcNumber: 2, goals: [{ id: 'arc-2-old', text: 'OLD_ARC_TWO', chapters: 100 }] }] };
+    older.blueprint = { ...older.blueprint!, arcLookahead: undefined, estimatedArcs: 12, arcPlans: [older.blueprint!.arcPlans![0], { arcNumber: 2, goals: [{ id: 'arc-2-old', text: 'OLD_ARC_TWO', chapters: 30 }] }] };
     const olderFoundation = createHarnessFoundationFromStorySeed(older);
     expect(olderFoundation.plannedArcCount).toBe(12);
     expect(olderFoundation.initialArcLookahead).toEqual([{ arcNumber: 2, direction: 'OLD_ARC_TWO' }]);
@@ -37,7 +37,7 @@ describe('Story Seed to Harness handoff', () => {
     const record = createMockStorySeedRecord();
     record.seed.story.optional.fateSurvival.enabled = false;
     record.seed.story.optional.hardPins = [{ text: 'PIN_KEEP_MASTER' }, { text: 'PIN_KEEP_TEMPLE' }, { text: 'PIN_KEEP_VOW' }];
-    record.seed.story.optional.activeArcGoal = { id: 'arc-1-gate', text: 'GOAL_OPEN_GATE', chapters: 100 };
+    record.seed.story.optional.activeArcGoal = { id: 'arc-1-gate', text: 'GOAL_OPEN_GATE', chapters: 30 };
     record.seed.story.optional.funSettings = { faceSlap: 'high', plotArmor: 'low', recognition: 'medium' };
     record.seed.story.optional.makeItWorkInstruction = 'WORLD_WALKING_MOUNTAIN';
     record.seed.world.optional.worldFoundations.mainOpposition = 'WORLD_GATE_KEEPER';
@@ -69,7 +69,7 @@ describe('Story Seed to Harness handoff', () => {
       expect(prompt.systemInstruction).not.toContain(marker);
     }
     expect(prompt.userPrompt).not.toMatch(/REMOVED_|arcGoals|"plan"/);
-    expect(requests[0].storyInformation.arc).toMatchObject({ activeGoal: { text: 'GOAL_OPEN_GATE' }, completionDeadline: 30, plannedArcCount: 3, finalArc: false });
+    expect(requests[0].storyInformation.arc).toMatchObject({ activeGoal: { text: 'GOAL_OPEN_GATE' }, completionDeadline: 9, plannedArcCount: 3, finalArc: false });
     expect(requests[0].storyInformation.currentStory.funSettings).toEqual(record.seed.story.optional.funSettings);
     expect(JSON.stringify(requests[0].storyInformation.canonicalState)).not.toMatch(/PIN_|GOAL_|funSettings/);
     expect(requests[0].storyInformation.currentStory.intendedDirection).toBeUndefined();
@@ -78,7 +78,7 @@ describe('Story Seed to Harness handoff', () => {
     invalid.storyInformation.storyDirection.hardPins.push('FOURTH_PIN');
     expect(() => buildHarnessGenerationPrompt(invalid)).toThrow('at most 3');
     await controller.setHardPins(story.id, [{ text: 'LATER_PIN' }]);
-    await controller.editArcGoals(story.id, { arcNumber: 1, goals: [{ id: 'arc-1-later', text: 'LATER_GOAL', chapters: 100 }] });
+    await controller.editArcGoals(story.id, { arcNumber: 1, goals: [{ id: 'arc-1-later', text: 'LATER_GOAL', chapters: 30 }] });
     const reloaded = new HarnessGenerationController({ repository, modelAdapter: adapter });
     await reloaded.hydrate();
     await reloaded.retryModelRequest(failed.id);
@@ -105,7 +105,7 @@ describe('Story Seed to Harness handoff', () => {
         providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: '2026-09-20T12:00:00Z', usage: { source: 'unavailable' } } };
     }) };
     // Supply the existing Arc Plan authority, so the test needs no planning call.
-    foundation.initialArcPlan = { arcNumber: 1, goals: [{ id: 'arc-1-gate', text: 'Reach the gate.', chapters: 100 }] };
+    foundation.initialArcPlan = { arcNumber: 1, goals: [{ id: 'arc-1-gate', text: 'Reach the gate.', chapters: 30 }] };
     const repository = new InMemoryHarnessGenerationRepository();
     const controller = new HarnessGenerationController({ repository, modelAdapter });
     await controller.hydrate();
@@ -281,7 +281,7 @@ describe('Story Seed to Harness handoff', () => {
     const requests: HarnessGenerationRequest[] = [];
     const adapter = {
       getServerInfo: async () => ({ provider: 'gemini' as const, configured: true, models: [], defaultModel: 'google/gemini-3.1-flash-lite' }),
-      arcOperation: async (request: { storyInformation: { chapterNumber: number } }) => ({ rawProviderResponse: JSON.stringify({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 100 }] }, destinedEnding: 'Bring the story to its true conclusion.' }), providerReceipt: { provider: 'gemini' as const, model: 'google/gemini-3.1-flash-lite', generatedAt: '2026-09-05T12:00:00.000Z', usage: { source: 'unavailable' as const } } }),
+      arcOperation: async (request: { storyInformation: { chapterNumber: number } }) => ({ rawProviderResponse: JSON.stringify({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 30 }] }, destinedEnding: 'Bring the story to its true conclusion.' }), providerReceipt: { provider: 'gemini' as const, model: 'google/gemini-3.1-flash-lite', generatedAt: '2026-09-05T12:00:00.000Z', usage: { source: 'unavailable' as const } } }),
       recoverMemory: async () => ({ rawProviderResponse: JSON.stringify({ events: [{ description: 'Mara has blue eyes.', category: 'character', subjects: ['Mara'] }] }),
         providerReceipt: { provider: 'gemini' as const, model: 'google/gemini-3.1-flash-lite', generatedAt: '2026-09-05T12:00:00.000Z', usage: { source: 'unavailable' as const } } }),
       generate: async (request: HarnessGenerationRequest) => {

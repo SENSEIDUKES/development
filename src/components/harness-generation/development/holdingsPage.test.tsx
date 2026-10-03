@@ -9,7 +9,7 @@ import { HarnessGenerationController, HarnessReaderSession, type HarnessGenerati
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
-const plan = { arcNumber: 1, goals: [{ id: 'arc-1-armory', text: 'Survive the armory trial.', chapters: 100 }] };
+const plan = { arcNumber: 1, goals: [{ id: 'arc-1-armory', text: 'Survive the armory trial.', chapters: 30 }] };
 const receipt = { provider: 'gemini' as const, model: 'test-model', generatedAt: '2026-10-03T12:00:00.000Z', usage: { source: 'unavailable' as const } };
 const replies = [
   {

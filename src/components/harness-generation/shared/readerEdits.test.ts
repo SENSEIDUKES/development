@@ -9,7 +9,7 @@ import { applyHarnessReaderChanges, diffHarnessReaderPatch, semanticReaderChange
 const fixture = () => createHarnessStory(createEmptyHarnessWorkspaceState(), {
   premise: 'A courier returns to a city at low tide.',
   identities: [{ kind: 'character', name: 'Mara', evidence: 'Mara is a courier.' }],
-  initialArcPlan: { arcNumber: 1, goals: [{ id: 'gate', text: 'Open the gate.', chapters: 100 }] },
+  initialArcPlan: { arcNumber: 1, goals: [{ id: 'gate', text: 'Open the gate.', chapters: 30 }] },
 });
 const noGeneration: HarnessGenerationModelAdapter = {
   getServerInfo: async () => ({ configured: false, provider: 'custom', models: [], defaultModel: '' }),

@@ -5,6 +5,9 @@ SEN engine and the two UI packages. Library owns SEIHouse users, products,
 economy, community and business policy. Authentication enforcement, secrets,
 durable ledgers and concrete infrastructure stay in the host/backend.
 
+**0.14.0:** requires `@seihouse/sen` 0.14.0 (arcs of 30 chapters). The Story
+Seed's Story Length and the Blueprint count 30 chapters an arc.
+
 **0.13.1:** `StoryPages`' World Info page has Export story: the whole story
 as one file (`exportHarnessStory`), for sharing a test.
 `HarnessGenerationWorkspace`'s export saves the same file.

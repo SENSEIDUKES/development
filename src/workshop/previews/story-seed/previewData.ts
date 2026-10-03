@@ -128,7 +128,7 @@ const MOCK_ROUTE = [
 export const createMockArcOne = (openingGoal?: { id: string; text: string }, arcCount = 3): ArcPlan => {
   const texts: string[] = [...MOCK_ROUTE[0]];
   if (arcCount === 1) texts[texts.length - 1] = 'The prince survives and the court\'s grip on fate is broken';
-  const goals = texts.map((text, goalIndex) => ({ id: `arc-1-goal-${goalIndex + 1}`, text, chapters: goalIndex === 0 ? 30 : goalIndex === 1 ? 40 : 30 }));
+  const goals = texts.map((text, goalIndex) => ({ id: `arc-1-goal-${goalIndex + 1}`, text, chapters: goalIndex === 1 ? 12 : 9 }));
   if (openingGoal) goals[0] = { ...goals[0], id: openingGoal.id, text: openingGoal.text };
   return { arcNumber: 1, goals };
 };
@@ -245,7 +245,7 @@ export const createFilledStorySeedInput = (): StorySeedInput => ({
         plotArmor: 'low',
         recognition: 'high',
       },
-      activeArcGoal: { id: 'arc-1-rank', text: 'Reach Foundation rank.', chapters: 100 },
+      activeArcGoal: { id: 'arc-1-rank', text: 'Reach Foundation rank.', chapters: 30 },
       makeItWorkInstruction: 'The weakest bloodline is secretly the only one heaven fears.',
     },
   },

@@ -26,7 +26,7 @@ const adapter = (requests: HarnessGenerationRequest[] = []) => ({
   getServerInfo: async () => ({ provider: 'fixture', configured: true, models: [], defaultModel: 'fixture-model' }),
   arcOperation: async () => ({
     rawProviderResponse: JSON.stringify({
-      plan: { arcNumber: 1, goals: [{ id: 'opening', text: 'Enter the mountain school.', chapters: 100 }] },
+      plan: { arcNumber: 1, goals: [{ id: 'opening', text: 'Enter the mountain school.', chapters: 30 }] },
       destinedEnding: 'Enter the mountain school.',
     }),
     providerReceipt: { provider: 'fixture', model: 'fixture-model', generatedAt: '2026-09-19T12:00:00.000Z', usage: { source: 'unavailable' as const } },
@@ -114,7 +114,7 @@ describe('official CAPA SPP defaults', () => {
     await controller.hydrate();
     const story = await controller.createStory({
       premise: 'A courier reaches a sealed mountain gate.',
-      initialArcPlan: { arcNumber: 1, goals: [{ id: 'opening', text: 'Enter the mountain school.', chapters: 100 }] },
+      initialArcPlan: { arcNumber: 1, goals: [{ id: 'opening', text: 'Enter the mountain school.', chapters: 30 }] },
     }, 'en', createOfficialCapaDefaultLoadout('chinese'));
 
     await controller.setSkillSlot(story.id, 'style', OFFICIAL_STYLE_REFERENCES.japanese);

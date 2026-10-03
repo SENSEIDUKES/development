@@ -11,7 +11,7 @@ import type { ArcPlan } from '@seihouse/sen/arc-goals';
 const receipt = { provider: 'fixture', model: 'fixture', generatedAt: '2026-09-20T12:00:00.000Z', usage: { source: 'unavailable' as const } };
 const response = (body: unknown): HarnessGenerationResponse => ({ rawProviderResponse: JSON.stringify(body), providerReceipt: receipt });
 
-const plan: ArcPlan = { arcNumber: 1, goals: [{ id: 'arc-1-gate', text: 'Reach the mountain gate.', chapters: 10 }, { id: 'arc-1-trial', text: 'Pass the sect trial.', chapters: 90 }] };
+const plan: ArcPlan = { arcNumber: 1, goals: [{ id: 'arc-1-gate', text: 'Reach the mountain gate.', chapters: 3 }, { id: 'arc-1-trial', text: 'Pass the sect trial.', chapters: 27 }] };
 
 const chapterReply = (n: number) => ({
   title: `Chapter ${n} Title`,

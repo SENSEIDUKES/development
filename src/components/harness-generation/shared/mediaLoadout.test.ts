@@ -70,7 +70,7 @@ const adapter = (...outputs: Array<HarnessGenerationResponse | Error>) => {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
     generate,
     arcOperation: async () => response({
-      plan: { arcNumber: 1, goals: [{ id: 'arc-1', text: 'Cross the pass.', chapters: 100 }] },
+      plan: { arcNumber: 1, goals: [{ id: 'arc-1', text: 'Cross the pass.', chapters: 30 }] },
       destinedEnding: 'Reach the city beyond the pass.',
     }),
   };

@@ -233,6 +233,11 @@ Blueprint, arc and sharing decision.
   point generating many arc goals ahead of time. The model still gets a short
   look-ahead of the next couple of arcs so it has good direction; the reader does
   not see it.
+- **Every arc is 30 chapters,** one standard size the product prices and sells by. A
+  complete novel runs about 10 arcs (300 chapters); a long epic 30 to 40 (900 to 1,200).
+- **A goal's chapters are a budget, not a quota.** The story reaches a goal when it earns
+  it, and the next goal starts in the following chapter. Every chapter changes something;
+  the story never marks time to fill a goal's chapters.
 - **Each new arc is planned when it begins.** At the beginning of every new arc, its
   goals are generated, continuing from where the last arc left off: the next path to
   the Destined Ending.
@@ -327,7 +332,7 @@ Update it whenever it changes.
     Create. `npm run check:app` fails the build if it reaches an old system
     ([`src/novel-expanded/README.md`](./src/novel-expanded/README.md)).
   - **Story Length is set from the start:** the Story Seed's ARC page asks how many
-    arcs the story should run (1 to 100); left blank, the World Blueprint suggests one.
+    arcs of 30 chapters the story should run (1 to 100); left blank, the World Blueprint suggests one.
   - **Story Language and Reading Mode come from the Story Seed:** chapters are
     written in the story's language, one of 11 today, and Clear Reading, Easy Read
     or Literal Reading loads SEN's matching Accessibility skill on every chapter.
@@ -362,8 +367,10 @@ Update it whenever it changes.
     speaker tags;
   - holdings with a real model: the 10-chapter test, comparing what the
     chapters show against the Holdings page. The first run (six chapters)
-    stayed on one scene, and Holdings recorded only Chapter 1's starting
-    abilities; its export is read before the next step;
+    stayed on one scene: its export showed a 25-chapter first goal and the
+    writer told to fill it, so nothing happened that Holdings could record.
+    Arcs are now 30 chapters, goals hand over when reached, and every chapter
+    must change something; the test runs again on a new story;
   - Listen on real phones (iPhone Safari, Android Chrome), whose voices differ
     from device to device.
 - **Not yet as [The World Blueprint](#the-world-blueprint) describes:**

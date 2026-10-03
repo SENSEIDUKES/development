@@ -7,13 +7,13 @@ import { buildHarnessGenerationPrompt } from '../../../server/harness-generation
 const ENDING = 'Lin reopens the drowned archive to the valley.';
 /** One arc of four goals; the last is the final goal, the Destined Ending itself. */
 const plan: ArcPlan = { arcNumber: 1, goals: [
-  { id: 'arc-1-flood', text: 'Survive the first flood.', chapters: 10 },
-  { id: 'arc-1-bridge', text: 'Rebuild the rope bridge.', chapters: 10 },
-  { id: 'arc-1-tower', text: 'Climb the archive tower.', chapters: 10 },
-  { id: 'arc-1-ending', text: 'Reopen the drowned archive to the valley.', chapters: 70 },
+  { id: 'arc-1-flood', text: 'Survive the first flood.', chapters: 3 },
+  { id: 'arc-1-bridge', text: 'Rebuild the rope bridge.', chapters: 3 },
+  { id: 'arc-1-tower', text: 'Climb the archive tower.', chapters: 3 },
+  { id: 'arc-1-ending', text: 'Reopen the drowned archive to the valley.', chapters: 21 },
 ] };
 /** A second arc, for a roadmap whose first arc ends before the final goal. */
-const secondArc: ArcPlan = { arcNumber: 2, goals: [{ id: 'arc-2-valley', text: 'Carry the archive to the valley.', chapters: 100 }] };
+const secondArc: ArcPlan = { arcNumber: 2, goals: [{ id: 'arc-2-valley', text: 'Carry the archive to the valley.', chapters: 30 }] };
 const receipt = { provider: 'fixture', model: 'fixture', generatedAt: 'now', usage: { source: 'unavailable' as const } };
 const chapter = (text: string, extra: Record<string, unknown> = {}) => ({
   paragraphs: [text], recap: `Recap: ${text}`, chapterFunction: 'progression',
@@ -135,7 +135,7 @@ describe('Regular Reader mode', () => {
 
   it('records a missed deadline honestly: the chapter saves, the story is off track, and fate never fails', async () => {
     const run = await setup();
-    const atDeadline = await run.jumpTo(10);
+    const atDeadline = await run.jumpTo(3);
     // A claimed success without a passage from the chapter is not a success.
     run.outputs.push(chapter('Lin waited out the storm on the roof.', {
       arcCompletion: { goalId: 'arc-1-flood', completed: true, evidence: 'Lin held back the flood.' },
@@ -143,8 +143,8 @@ describe('Regular Reader mode', () => {
     }));
     await atDeadline.generateNextChapter(run.story.id, 'fixture');
     const saved = atDeadline.snapshot();
-    expect(saved.stories[0].head.nextChapterNumber).toBe(11);
-    expect(saved.stories[0].goalCompletions).toEqual([expect.objectContaining({ goalId: 'arc-1-flood', outcome: 'missed', chapterNumber: 10 })]);
+    expect(saved.stories[0].head.nextChapterNumber).toBe(4);
+    expect(saved.stories[0].goalCompletions).toEqual([expect.objectContaining({ goalId: 'arc-1-flood', outcome: 'missed', chapterNumber: 3 })]);
     expect(warningCodes(atDeadline)).toEqual(expect.arrayContaining(['unconfirmed_arc_completion', 'ignored_story_ending']));
     expect(saved.stories[0].conclusion).toBeUndefined();
     expect(saved.stories[0].brokenRoute).toBeUndefined();
@@ -153,7 +153,7 @@ describe('Regular Reader mode', () => {
     await atDeadline.generateNextChapter(run.story.id, 'fixture');
     const next = run.requests.at(-1)!;
     expect(next.storyInformation.arc).toMatchObject({ activeGoal: { id: 'arc-1-bridge' },
-      route: { status: 'off-track', missedGoals: [{ goalId: 'arc-1-flood', text: 'Survive the first flood.', chapterNumber: 10 }] } });
+      route: { status: 'off-track', missedGoals: [{ goalId: 'arc-1-flood', text: 'Survive the first flood.', chapterNumber: 3 }] } });
     const prompt = buildHarnessGenerationPrompt(next);
     expect(prompt.userPrompt).toContain('"status": "off-track"');
     expect(prompt.userPrompt).toContain('guaranteed as the story\'s standing direction');
@@ -163,11 +163,11 @@ describe('Regular Reader mode', () => {
 
   it('ends the story when the prose reaches the Destined Ending through the final goal', async () => {
     const run = await setup();
-    const atFinal = await run.jumpTo(100, [{ goalId: 'arc-1-flood' }, { goalId: 'arc-1-bridge' }, { goalId: 'arc-1-tower' }]);
+    const atFinal = await run.jumpTo(30, [{ goalId: 'arc-1-flood' }, { goalId: 'arc-1-bridge' }, { goalId: 'arc-1-tower' }]);
     run.outputs.push(achieved('arc-1-ending', 'The archive doors opened to the valley at last.'));
     await atFinal.generateNextChapter(run.story.id, 'fixture');
     expect(run.requests.at(-1)!.storyInformation.arc).toMatchObject({ finalArc: true, finalGoal: true, route: { status: 'on-track' } });
-    expect(atFinal.snapshot().stories[0].conclusion).toMatchObject({ outcome: 'destined-ending-reached', reason: 'final-goal-completed', chapterNumber: 100 });
+    expect(atFinal.snapshot().stories[0].conclusion).toMatchObject({ outcome: 'destined-ending-reached', reason: 'final-goal-completed', chapterNumber: 30 });
     await expect(atFinal.generateNextChapter(run.story.id, 'fixture')).rejects.toThrow('reached its Destined Ending');
     await expect(atFinal.chooseChapterDirection(run.story.id, direct('One more chapter.'))).rejects.toThrow('reached its Destined Ending');
     expect(run.arcOperation).not.toHaveBeenCalled();
@@ -175,21 +175,21 @@ describe('Regular Reader mode', () => {
 
   it('continues past a missed final goal toward the same Destined Ending, inventing no arc, until the prose reaches it', async () => {
     const run = await setup();
-    const atFinal = await run.jumpTo(100, [{ goalId: 'arc-1-flood' }, { goalId: 'arc-1-bridge', outcome: 'missed' }, { goalId: 'arc-1-tower' }]);
+    const atFinal = await run.jumpTo(30, [{ goalId: 'arc-1-flood' }, { goalId: 'arc-1-bridge', outcome: 'missed' }, { goalId: 'arc-1-tower' }]);
     run.outputs.push(chapter('The archive stayed sealed as the river rose.'));
     await atFinal.generateNextChapter(run.story.id, 'fixture');
     const missed = atFinal.snapshot().stories[0];
     // Recorded honestly: missed, not reached, and not a failure.
-    expect(missed.goalCompletions?.at(-1)).toMatchObject({ goalId: 'arc-1-ending', outcome: 'missed', chapterNumber: 100 });
+    expect(missed.goalCompletions?.at(-1)).toMatchObject({ goalId: 'arc-1-ending', outcome: 'missed', chapterNumber: 30 });
     expect(missed.conclusion).toBeUndefined();
     expect(missed.brokenRoute).toBeUndefined();
 
-    // Chapter 101 is past the one planned arc: no roadmap gap, no new arc, the same destination.
+    // Chapter 31 is past the one planned arc: no roadmap gap, no new arc, the same destination.
     await atFinal.generateNextChapter(run.story.id, 'fixture');
     const past = run.requests.at(-1)!;
-    expect(past.immediateChapterRequest.chapterNumber).toBe(101);
+    expect(past.immediateChapterRequest.chapterNumber).toBe(31);
     expect(past.storyInformation.arc).toMatchObject({ arcNumber: 1, finalGoal: true, activeGoal: { id: 'arc-1-ending' },
-      route: { status: 'past-final-goal', finalGoalMissedInChapter: 100, missedGoals: [{ goalId: 'arc-1-bridge' }, { goalId: 'arc-1-ending' }] } });
+      route: { status: 'past-final-goal', finalGoalMissedInChapter: 30, missedGoals: [{ goalId: 'arc-1-bridge' }, { goalId: 'arc-1-ending' }] } });
     expect(past.storyInformation.rhythm).toBeDefined();
     const prompt = buildHarnessGenerationPrompt(past);
     expect(prompt.userPrompt).toContain('the final goal was missed; the story keeps pursuing the Destined Ending past its roadmap');
@@ -197,17 +197,17 @@ describe('Regular Reader mode', () => {
     expect(prompt.userPrompt).not.toContain('completionDeadline');
     expect(run.arcOperation).not.toHaveBeenCalled();
     expect(atFinal.snapshot().stories[0].arcPlans).toHaveLength(1);
-    // The Reader keeps Chapter 101 in Arc 1: no Arc 2 appears.
+    // The Reader keeps Chapter 31 in Arc 1: no Arc 2 appears.
     expect(createHarnessSenStory(atFinal.snapshot(), run.story.id).arcs.map(arc => [arc.title, arc.chapters.map(item => item.number)]))
-      .toEqual([['Arc 1', [100, 101]]]);
+      .toEqual([['Arc 1', [30, 31]]]);
 
     // When the prose reaches it, the story ends, and the final goal's miss stays on record.
     run.outputs.push(achieved('arc-1-ending', 'At last the archive doors opened to the valley.'));
     await atFinal.generateNextChapter(run.story.id, 'fixture');
     const reached = atFinal.snapshot().stories[0];
-    expect(reached.conclusion).toMatchObject({ outcome: 'destined-ending-reached', reason: 'reached-after-final-goal-missed', chapterNumber: 102,
+    expect(reached.conclusion).toMatchObject({ outcome: 'destined-ending-reached', reason: 'reached-after-final-goal-missed', chapterNumber: 32,
       evidence: 'At last the archive doors opened to the valley.' });
-    expect(reached.goalCompletions?.filter(goal => goal.goalId === 'arc-1-ending')).toEqual([expect.objectContaining({ outcome: 'missed', chapterNumber: 100 })]);
+    expect(reached.goalCompletions?.filter(goal => goal.goalId === 'arc-1-ending')).toEqual([expect.objectContaining({ outcome: 'missed', chapterNumber: 30 })]);
   });
 });
 
@@ -250,12 +250,12 @@ describe('Fate Survival', () => {
 
   it('records a miss and moves on while fewer than half of the arc\'s goals are missed', async () => {
     const run = await setup(SURVIVAL);
-    const atDeadline = await run.jumpTo(10);
+    const atDeadline = await run.jumpTo(3);
     run.outputs.push(chapter('Lin let the wall fall and pulled the stranger from the current.'));
     await directed(atDeadline, run.story.id, 'Lin abandons the flood wall to save a stranger.');
     const saved = atDeadline.snapshot().stories[0];
-    expect(saved.head.nextChapterNumber).toBe(11);
-    expect(saved.goalCompletions).toEqual([expect.objectContaining({ goalId: 'arc-1-flood', outcome: 'missed', chapterNumber: 10 })]);
+    expect(saved.head.nextChapterNumber).toBe(4);
+    expect(saved.goalCompletions).toEqual([expect.objectContaining({ goalId: 'arc-1-flood', outcome: 'missed', chapterNumber: 3 })]);
     expect(saved.brokenRoute).toBeUndefined();
     expect(saved.conclusion).toBeUndefined();
     await directed(atDeadline, run.story.id, 'Lin follows the stranger to the lower stacks.');
@@ -264,38 +264,38 @@ describe('Fate Survival', () => {
 
   it('ends the story in the chapter that breaks the route when that chapter already shows a genuine ending', async () => {
     const run = await setup(SURVIVAL);
-    const story = await run.jumpTo(20, [{ goalId: 'arc-1-flood', outcome: 'missed' }]);
+    const story = await run.jumpTo(6, [{ goalId: 'arc-1-flood', outcome: 'missed' }]);
     run.outputs.push(ended('The bridge gave way beneath her, and the river kept Lin.'));
     await directed(story, run.story.id, 'Lin crosses the broken bridge.');
     const saved = story.snapshot().stories[0];
-    expect(saved.brokenRoute).toMatchObject({ chapterNumber: 20, reason: 'arc-goals-missed' });
-    expect(saved.conclusion).toMatchObject({ outcome: 'fate-failed', reason: 'story-ended', chapterNumber: 20,
+    expect(saved.brokenRoute).toMatchObject({ chapterNumber: 6, reason: 'arc-goals-missed' });
+    expect(saved.conclusion).toMatchObject({ outcome: 'fate-failed', reason: 'story-ended', chapterNumber: 6,
       evidence: 'The bridge gave way beneath her, and the river kept Lin.' });
-    await expect(story.generateNextChapter(run.story.id, 'fixture')).rejects.toThrow('Fate failed in Chapter 20');
+    await expect(story.generateNextChapter(run.story.id, 'fixture')).rejects.toThrow('Fate failed in Chapter 6');
     expect(run.requests).toHaveLength(1);
   });
 
   it('breaks the route when half of an arc\'s goals are missed, and the next chapter ends the story when its prose shows the ending', async () => {
     const run = await setup(SURVIVAL);
-    const story = await run.jumpTo(20, [{ goalId: 'arc-1-flood', outcome: 'missed' }]);
+    const story = await run.jumpTo(6, [{ goalId: 'arc-1-flood', outcome: 'missed' }]);
     run.outputs.push(chapter('The bridge ropes snapped and Lin watched them drift away.'));
     await directed(story, run.story.id, 'Lin lets the bridge go to save the lantern.');
     // 2 of 4 missed: the route breaks. That alone ends nothing.
     const broken = story.snapshot().stories[0];
-    expect(broken.brokenRoute).toEqual({ chapterNumber: 20, arcNumber: 1, reason: 'arc-goals-missed', goalsInArc: 4, recordedAt: expect.any(String),
-      missedGoals: [expect.objectContaining({ goalId: 'arc-1-flood', chapterNumber: 10 }), expect.objectContaining({ goalId: 'arc-1-bridge', chapterNumber: 20 })] });
+    expect(broken.brokenRoute).toEqual({ chapterNumber: 6, arcNumber: 1, reason: 'arc-goals-missed', goalsInArc: 4, recordedAt: expect.any(String),
+      missedGoals: [expect.objectContaining({ goalId: 'arc-1-flood', chapterNumber: 3 }), expect.objectContaining({ goalId: 'arc-1-bridge', chapterNumber: 6 })] });
     expect(broken.conclusion).toBeUndefined();
-    await expect(story.editArcGoals(run.story.id, plan)).rejects.toThrow('The route broke in Chapter 20');
+    await expect(story.editArcGoals(run.story.id, plan)).rejects.toThrow('The route broke in Chapter 6');
 
     // The next chapter still waits on the reader's direction, and its context says the route is broken.
-    await expect(story.generateNextChapter(run.story.id, 'fixture')).rejects.toThrow("choose Chapter 21's direction");
+    await expect(story.generateNextChapter(run.story.id, 'fixture')).rejects.toThrow("choose Chapter 7's direction");
     run.outputs.push(ended('The flood took the bridge, the lantern and Lin together, and the archive stayed dark.', {
       // A goal claimed after the route broke is never recorded: there is no goal left to reach.
       arcCompletion: { goalId: 'arc-1-tower', completed: true, evidence: 'The flood took the bridge, the lantern and Lin together, and the archive stayed dark.' },
     }));
     await directed(story, run.story.id, 'Lin goes back into the flood for the lantern.');
     const last = run.requests.at(-1)!;
-    expect(last.storyInformation.arc?.route).toEqual({ status: 'broken', brokenInChapter: 20, reason: 'arc-goals-missed',
+    expect(last.storyInformation.arc?.route).toEqual({ status: 'broken', brokenInChapter: 6, reason: 'arc-goals-missed',
       missedGoals: [expect.objectContaining({ goalId: 'arc-1-flood' }), expect.objectContaining({ goalId: 'arc-1-bridge' })] });
     const prompt = buildHarnessGenerationPrompt(last);
     expect(prompt.userPrompt).toContain('none: the route to the Destined Ending is broken, so this chapter must end the story');
@@ -304,18 +304,18 @@ describe('Fate Survival', () => {
     expect(prompt.systemInstruction).not.toMatch(/closing chapter|closingChapter|closing stretch/i);
 
     const saved = story.snapshot().stories[0];
-    expect(saved.conclusion).toMatchObject({ outcome: 'fate-failed', reason: 'story-ended', chapterNumber: 21,
+    expect(saved.conclusion).toMatchObject({ outcome: 'fate-failed', reason: 'story-ended', chapterNumber: 7,
       evidence: 'The flood took the bridge, the lantern and Lin together, and the archive stayed dark.' });
     expect(saved.goalCompletions?.some(goal => goal.goalId === 'arc-1-tower')).toBe(false);
     expect(saved.nextChapterDirection).toBeUndefined();
-    await expect(story.chooseChapterDirection(run.story.id, direct('One more chapter.'))).rejects.toThrow('Fate failed in Chapter 21');
-    await expect(story.generateNextChapter(run.story.id, 'fixture')).rejects.toThrow('Fate failed in Chapter 21');
+    await expect(story.chooseChapterDirection(run.story.id, direct('One more chapter.'))).rejects.toThrow('Fate failed in Chapter 7');
+    await expect(story.generateNextChapter(run.story.id, 'fixture')).rejects.toThrow('Fate failed in Chapter 7');
     expect(run.arcOperation).not.toHaveBeenCalled();
   });
 
   it('never locks the story on a missing ending: the chapter is not saved, its direction stays, and a retry can end it', async () => {
     const run = await setup(SURVIVAL);
-    const story = await run.jumpTo(20, [{ goalId: 'arc-1-flood', outcome: 'missed' }]);
+    const story = await run.jumpTo(6, [{ goalId: 'arc-1-flood', outcome: 'missed' }]);
     await directed(story, run.story.id, 'Lin lets the bridge go.');
     const committed = story.snapshot().chapters.length;
 
@@ -323,10 +323,10 @@ describe('Fate Survival', () => {
     run.outputs.push(chapter('Lin climbed into the dark and kept climbing.'));
     await directed(story, run.story.id, 'Lin climbs into the dark.');
     const missing = story.snapshot();
-    expect(missing.attempts.at(-1)).toMatchObject({ stage: 'generation_failed', chapterNumber: 21,
-      failure: { stage: 'response', message: expect.stringContaining('Chapter 21 must end the story, but its prose does not show that ending') } });
+    expect(missing.attempts.at(-1)).toMatchObject({ stage: 'generation_failed', chapterNumber: 7,
+      failure: { stage: 'response', message: expect.stringContaining('Chapter 7 must end the story, but its prose does not show that ending') } });
     expect(missing.chapters).toHaveLength(committed);
-    expect(missing.stories[0].head.nextChapterNumber).toBe(21);
+    expect(missing.stories[0].head.nextChapterNumber).toBe(7);
     expect(missing.stories[0].conclusion).toBeUndefined();
     expect(missing.stories[0].nextChapterDirection?.choice).toEqual(direct('Lin climbs into the dark.'));
 
@@ -348,7 +348,7 @@ describe('Fate Survival', () => {
     const done = story.snapshot();
     expect(done.chapters).toHaveLength(committed + 1);
     expect(done.chapters.at(-1)!.path).toMatchObject({ kind: 'reader', text: 'Lin climbs into the dark.' });
-    expect(done.stories[0].conclusion).toMatchObject({ outcome: 'fate-failed', reason: 'story-ended', chapterNumber: 21 });
+    expect(done.stories[0].conclusion).toMatchObject({ outcome: 'fate-failed', reason: 'story-ended', chapterNumber: 7 });
     expect(done.stories[0].nextChapterDirection).toBeUndefined();
   });
 
@@ -364,18 +364,18 @@ describe('Fate Survival', () => {
 
   it('breaks the route on a missed final goal; the ending chapter passes the planned end without another arc, and claiming the goal is no ending', async () => {
     const run = await setup(SURVIVAL);
-    const story = await run.jumpTo(100, [{ goalId: 'arc-1-flood' }, { goalId: 'arc-1-bridge' }, { goalId: 'arc-1-tower' }]);
+    const story = await run.jumpTo(30, [{ goalId: 'arc-1-flood' }, { goalId: 'arc-1-bridge' }, { goalId: 'arc-1-tower' }]);
     await directed(story, run.story.id, 'Lin turns back from the archive.');
-    expect(story.snapshot().stories[0].brokenRoute).toMatchObject({ chapterNumber: 100, reason: 'final-goal-missed', missedGoals: [{ goalId: 'arc-1-ending' }] });
+    expect(story.snapshot().stories[0].brokenRoute).toMatchObject({ chapterNumber: 30, reason: 'final-goal-missed', missedGoals: [{ goalId: 'arc-1-ending' }] });
     expect(story.snapshot().stories[0].conclusion).toBeUndefined();
-    // Chapter 101 lies past the one planned arc. Claiming the final goal there neither
+    // Chapter 31 lies past the one planned arc. Claiming the final goal there neither
     // reaches the Destined Ending nor counts as the ending the broken route requires.
     run.outputs.push(achieved('arc-1-ending', 'The archive doors opened to the valley at last.'));
     await directed(story, run.story.id, 'Lin walks into the flood plain.');
     expect(run.requests.at(-1)!.storyInformation.arc).toMatchObject({ arcNumber: 1, route: { status: 'broken', reason: 'final-goal-missed' } });
     const refused = story.snapshot();
     expect(refused.stories[0].conclusion).toBeUndefined();
-    expect(refused.stories[0].head.nextChapterNumber).toBe(101);
+    expect(refused.stories[0].head.nextChapterNumber).toBe(31);
     expect(refused.stories[0].goalCompletions?.filter(goal => goal.goalId === 'arc-1-ending')).toEqual([expect.objectContaining({ outcome: 'missed' })]);
 
     // Even beside a genuine ending, claiming the final goal cannot turn the broken route into the Destined Ending.
@@ -384,7 +384,7 @@ describe('Fate Survival', () => {
     }));
     await story.generateNextChapter(run.story.id, 'fixture');
     const after = story.snapshot().stories[0];
-    expect(after.conclusion).toMatchObject({ outcome: 'fate-failed', reason: 'story-ended', chapterNumber: 101 });
+    expect(after.conclusion).toMatchObject({ outcome: 'fate-failed', reason: 'story-ended', chapterNumber: 31 });
     expect(after.goalCompletions?.filter(goal => goal.goalId === 'arc-1-ending')).toEqual([expect.objectContaining({ outcome: 'missed' })]);
     expect(after.arcPlans).toHaveLength(1);
     expect(run.arcOperation).not.toHaveBeenCalled();
@@ -393,25 +393,25 @@ describe('Fate Survival', () => {
   it('ends across an arc boundary without reviewing, locking or writing the next arc', async () => {
     const run = await setup(SURVIVAL, [plan, secondArc]);
     // Arc 1's last goal is not the final goal here: missing it makes 2 of 4.
-    const story = await run.jumpTo(100, [{ goalId: 'arc-1-flood', outcome: 'missed' }, { goalId: 'arc-1-bridge' }, { goalId: 'arc-1-tower' }]);
+    const story = await run.jumpTo(30, [{ goalId: 'arc-1-flood', outcome: 'missed' }, { goalId: 'arc-1-bridge' }, { goalId: 'arc-1-tower' }]);
     await directed(story, run.story.id, 'Lin leaves the archive sealed.');
-    expect(story.snapshot().stories[0].brokenRoute).toMatchObject({ chapterNumber: 100, reason: 'arc-goals-missed' });
+    expect(story.snapshot().stories[0].brokenRoute).toMatchObject({ chapterNumber: 30, reason: 'arc-goals-missed' });
     // Arc 2 was never reviewed, yet the chapter that ends the story may lie in its range.
     run.outputs.push(ended('Lin rowed into the rain toward the valley, and no one saw her again.'));
     await directed(story, run.story.id, 'Lin rows toward the valley.');
     expect(run.requests.at(-1)!.storyInformation.arc).toMatchObject({ arcNumber: 1, route: { status: 'broken' } });
     expect(run.requests.at(-1)!.storyInformation.arc?.activeGoal.id).not.toBe('arc-2-valley');
-    expect(story.snapshot().stories[0].conclusion).toMatchObject({ reason: 'story-ended', chapterNumber: 101 });
+    expect(story.snapshot().stories[0].conclusion).toMatchObject({ reason: 'story-ended', chapterNumber: 31 });
     expect(story.snapshot().stories[0].arcGoalReviews?.map(review => review.arcNumber)).toEqual([1]);
     expect(createHarnessSenStory(story.snapshot(), run.story.id).arcs.map(arc => arc.title)).toEqual(['Arc 1']);
   });
 
   it('never plans a new arc for the ending chapter in a story without a roadmap', async () => {
     const run = await setup({ ...SURVIVAL, plannedArcCount: undefined, initialArcPlan: plan });
-    const story = await run.jumpTo(100, [{ goalId: 'arc-1-flood', outcome: 'missed' }, { goalId: 'arc-1-bridge' }, { goalId: 'arc-1-tower' }]);
+    const story = await run.jumpTo(30, [{ goalId: 'arc-1-flood', outcome: 'missed' }, { goalId: 'arc-1-bridge' }, { goalId: 'arc-1-tower' }]);
     await directed(story, run.story.id, 'Lin leaves the archive sealed.');
-    expect(story.snapshot().stories[0].brokenRoute).toMatchObject({ chapterNumber: 100, reason: 'arc-goals-missed' });
-    // Chapter 101 would begin Arc 2, which the Arc planner would normally create first.
+    expect(story.snapshot().stories[0].brokenRoute).toMatchObject({ chapterNumber: 30, reason: 'arc-goals-missed' });
+    // Chapter 31 would begin Arc 2, which the Arc planner would normally create first.
     run.outputs.push(ended('Lin rowed into the rain toward the valley, and no one saw her again.'));
     await directed(story, run.story.id, 'Lin rows toward the valley.');
     expect(run.requests.at(-1)!.storyInformation.arc).toMatchObject({ arcNumber: 1, route: { status: 'broken' } });
@@ -422,9 +422,9 @@ describe('Fate Survival', () => {
 
   it('reaches the Destined Ending when the final goal is achieved', async () => {
     const run = await setup(SURVIVAL);
-    const atEnd = await run.jumpTo(100, [{ goalId: 'arc-1-flood' }, { goalId: 'arc-1-bridge' }, { goalId: 'arc-1-tower' }]);
+    const atEnd = await run.jumpTo(30, [{ goalId: 'arc-1-flood' }, { goalId: 'arc-1-bridge' }, { goalId: 'arc-1-tower' }]);
     run.outputs.push(achieved('arc-1-ending', 'The archive doors opened to the valley at last.'));
     await directed(atEnd, run.story.id, 'Lin opens the doors.');
-    expect(atEnd.snapshot().stories[0].conclusion).toMatchObject({ outcome: 'destined-ending-reached', reason: 'final-goal-completed', chapterNumber: 100 });
+    expect(atEnd.snapshot().stories[0].conclusion).toMatchObject({ outcome: 'destined-ending-reached', reason: 'final-goal-completed', chapterNumber: 30 });
   });
 });

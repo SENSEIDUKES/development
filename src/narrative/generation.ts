@@ -19,7 +19,7 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * instead of a whole roadmap); 25 adds the optional speaker records; 26 adds
  * holdings: each chapter's holding changes and closing list, and the
  * workspace's Codex entries. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 26 as const;
+export const HARNESS_GENERATION_SCHEMA_VERSION = 27 as const;
 
 /** Output buckets assign processor categories; legacy event arrays remain readable. */
 export const HARNESS_MEMORY_CATEGORIES = {

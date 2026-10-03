@@ -57,7 +57,7 @@ const modelReply = (overrides: Record<string, unknown> = {}) => ({
   ],
   majorMysteries: [],
   firstArcPromise: 'The tournament exposes the first assassin.',
-  arcPlans: [{ arcNumber: 1, goals: [{ id: 'arc-1-rank', text: 'Reach Foundation rank.', chapters: 100 }] }],
+  arcPlans: [{ arcNumber: 1, goals: [{ id: 'arc-1-rank', text: 'Reach Foundation rank.', chapters: 30 }] }],
   tropeRules: 'Face-slaps land on ledger abusers.',
   styleBible: 'Close third person.',
   destinedEnding: 'ignored: the author wrote the ending',

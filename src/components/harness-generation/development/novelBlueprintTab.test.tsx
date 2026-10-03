@@ -18,7 +18,7 @@ const modelAdapter: HarnessGenerationModelAdapter = {
   generate: vi.fn(async request => { requests.push(structuredClone(request)); return reply({ title: 'The Quarry', paragraphs: ['Ye Chen hauled stone in the quarry.'] }); }),
   // The arc planner's draft for the arc being begun; the HARNESS assigns its identities.
   arcOperation: vi.fn(async () => reply({ plan: { goals: [
-    { text: 'Climb to the inner sect.', chapters: 60 }, { text: 'Win the sect trial.', chapters: 40 },
+    { text: 'Climb to the inner sect.', chapters: 18 }, { text: 'Win the sect trial.', chapters: 12 },
   ] }, lookahead: [{ arcNumber: 3, direction: 'LOOKAHEAD_A3 Ye Chen faces the sect master.' }], destinedEnding: 'unused' })),
 };
 
@@ -48,10 +48,10 @@ const startNovel = async (survival: boolean) => {
   return { repository, controller, story, record };
 };
 
-/** The story moved to Chapter 101 with Arc 1's goals all achieved, as the boundary tests do instead of writing a hundred chapters. */
+/** The story moved to Chapter 31 with Arc 1's goals all achieved, as the boundary tests do instead of writing thirty chapters. */
 const arcOneFinished = (state: ReturnType<HarnessGenerationController['snapshot']>) => {
-  state.stories[0].head.nextChapterNumber = 101;
-  state.stories[0].goalCompletions = state.stories[0].arcPlans![0].plan.goals.map(goal => ({ arcNumber: 1, goalId: goal.id, goalText: goal.text, chapterNumber: 100, evidence: 'done' }));
+  state.stories[0].head.nextChapterNumber = 31;
+  state.stories[0].goalCompletions = state.stories[0].arcPlans![0].plan.goals.map(goal => ({ arcNumber: 1, goalId: goal.id, goalText: goal.text, chapterNumber: 30, evidence: 'done' }));
   return state;
 };
 
@@ -99,7 +99,7 @@ describe('The novel page Blueprint tab', () => {
     const { controller } = await startNovel(false);
     const atArc2 = new InMemoryHarnessGenerationRepository(arcOneFinished(controller.snapshot()));
     await openBlueprint(atArc2);
-    expect(container.querySelector('[data-testid="novel-arc-plan-step"]')!.textContent).toContain('Arc 2 begins with Chapter 101');
+    expect(container.querySelector('[data-testid="novel-arc-plan-step"]')!.textContent).toContain('Arc 2 begins with Chapter 31');
     await act(async () => button('Plan Arc 2')!.click());
     expect(container.querySelector('[data-testid="novel-arc-plan-step"]')).toBeNull();
     expect(container.querySelector('[data-testid="novel-arc-2"]')!.textContent).toContain('Awaiting your review');
@@ -108,7 +108,7 @@ describe('The novel page Blueprint tab', () => {
     await act(async () => setValue(goal, 'Reach the inner sect through the back gate.'));
     await act(async () => button('Save goals')!.click());
     const story = atArc2.snapshot().stories[0];
-    expect(story.arcPlans?.at(-1)).toMatchObject({ reason: 'edit', effectiveChapter: 101, plan: { arcNumber: 2, goals: [{ id: 'arc-2-1', text: 'Reach the inner sect through the back gate.' }, { id: 'arc-2-2' }] } });
+    expect(story.arcPlans?.at(-1)).toMatchObject({ reason: 'edit', effectiveChapter: 31, plan: { arcNumber: 2, goals: [{ id: 'arc-2-1', text: 'Reach the inner sect through the back gate.' }, { id: 'arc-2-2' }] } });
     expect(story.arcGoalReviews?.find(review => review.arcNumber === 2)).toMatchObject({ edited: true });
     expect(container.querySelector('[data-testid="novel-arc-2"]')!.textContent).toContain('Reviewed');
     // The planner's look-ahead is never on the reader's page.

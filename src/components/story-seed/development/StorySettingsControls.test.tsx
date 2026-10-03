@@ -120,7 +120,7 @@ describe('Reading Mode stays out of world generation', () => {
   const completeSeed = () => {
     const seed = createEmptyStorySeedInput();
     seed.story.required = { premise: 'A courier crosses the sea.', genre: 'Xianxia', style: 'chinese', storyTags: ['sea'] };
-    seed.story.optional.activeArcGoal = { id: 'arc-1-sea', text: 'Cross the sea.', chapters: 100 };
+    seed.story.optional.activeArcGoal = { id: 'arc-1-sea', text: 'Cross the sea.', chapters: 30 };
     seed.story.optional.chapterWritingStyle = 'Easy Read';
     return seed;
   };

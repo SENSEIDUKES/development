@@ -1,4 +1,4 @@
-import { arcPlanFromDraft, createArcChapterPosition, editArcPlan, normalizeArcLookahead, type ArcPlan } from '../../arc-goals/shared/arcGoals';
+import { arcGoalResolved, arcGoalSegments, arcPlanFromDraft, createArcChapterPosition, editArcPlan, normalizeArcLookahead, type ArcPlan } from '../../arc-goals/shared/arcGoals';
 import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '../../../lib/language';
 import { emptyNarrativeMedia, soundVocabulary, type FrozenNarrativeMedia, type NarrativeMediaPort, type MediaResourceReference, type MediaSelectionSlot } from '../../../audio/media';
 import type { SoundWord } from '../../../audio/soundWords';
@@ -723,7 +723,8 @@ export class HarnessGenerationController {
    * `arcGoalEditState` decides what is allowed: Regular Reader mode edits the
    * active and upcoming arcs while the novel is private; Fate Survival edits an
    * arc once, immediately before it begins. Completed goals and completed arcs
-   * never change, and a locked Survival plan is never revised.
+   * never change, a goal not yet reached never gets a deadline before the next
+   * chapter, and a locked Survival plan is never revised.
    */
   async editArcGoals(storyId: string, proposed: ArcPlan) {
     this.assertHydrated();
@@ -744,6 +745,10 @@ export class HarnessGenerationController {
         throw new Error(`“${previous.goals[index].text}” is complete. Completed goals keep their wording, chapters, and place in the arc.`);
       }
     });
+    // A goal not yet reached keeps its deadline ahead of the story, so the next chapter never works toward an overdue goal.
+    const nextChapter = story.head.nextChapterNumber;
+    const overdue = arcGoalSegments(plan).find(goal => goal.endChapter < nextChapter && !arcGoalResolved(plan, goal, story.goalCompletions));
+    if (overdue) throw new Error(`Chapter ${nextChapter} is next, so “${overdue.text}” cannot have a deadline before Chapter ${nextChapter}.`);
     const otherArcGoalIds = new Set((story.arcPlans ?? []).filter(revision => revision.plan.arcNumber !== arcNumber)
       .flatMap(revision => revision.plan.goals.map(goal => goal.id)));
     const reused = plan.goals.find(goal => otherArcGoalIds.has(goal.id));

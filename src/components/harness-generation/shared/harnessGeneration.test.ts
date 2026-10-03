@@ -62,7 +62,7 @@ const adapter = (...outputs: Array<HarnessGenerationResponse | Error>) => {
     }),
     generate,
     recoverMemory,
-    arcOperation: async request => response(JSON.stringify({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 100 }] }, destinedEnding: 'Bring the story to its true conclusion.' })),
+    arcOperation: async request => response(JSON.stringify({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 30 }] }, destinedEnding: 'Bring the story to its true conclusion.' })),
   };
   return { value, generate, recoverMemory };
 };

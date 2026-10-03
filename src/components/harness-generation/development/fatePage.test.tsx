@@ -11,8 +11,8 @@ import { FatePage, HarnessGenerationController, HarnessReaderSession, type Harne
 
 const ENDING = 'Mara reclaims her name from the drowned city.';
 const plan = { arcNumber: 1, goals: [
-  { id: 'arc-1-bells', text: 'Ring the drowned bells again.', chapters: 20 },
-  { id: 'arc-1-name', text: 'Reclaim her name.', chapters: 80 },
+  { id: 'arc-1-bells', text: 'Ring the drowned bells again.', chapters: 6 },
+  { id: 'arc-1-name', text: 'Reclaim her name.', chapters: 24 },
 ] };
 const receipt = { provider: 'gemini' as const, model: 'test-model', generatedAt: '2026-09-25T12:00:00.000Z', usage: { source: 'unavailable' as const } };
 const chapterReply = (n: number) => JSON.stringify({
@@ -291,33 +291,33 @@ describe('Where the route stands on the Fate page', { timeout: 20_000 }, () => {
   };
 
   it('Regular Reader past a missed final goal: off track, still pursuing the same Destined Ending', async () => {
-    const page = await showFateAt({}, 101, [{ goalId: 'arc-1-bells', chapterNumber: 20 }, { goalId: 'arc-1-name', chapterNumber: 100, outcome: 'missed' }]);
+    const page = await showFateAt({}, 31, [{ goalId: 'arc-1-bells', chapterNumber: 6 }, { goalId: 'arc-1-name', chapterNumber: 30, outcome: 'missed' }]);
     const card = page.querySelector('[data-testid="fate-arc-goal"]')!;
-    expect(card.textContent).toContain('The final goal was missed in Chapter 100');
+    expect(card.textContent).toContain('The final goal was missed in Chapter 30');
     expect(card.textContent).toContain('Reclaim her name.');
     expect(card.querySelector('[data-testid="fate-arc-goal-status"]')!.textContent).toContain('keeps pursuing its Destined Ending past the roadmap');
     expect(page.textContent).not.toContain('planned arcs are written');
-    expect(page.querySelector('[data-testid="fate-path-chooser"]')!.textContent).toContain('Chapter 101 follows fate unless you choose otherwise.');
+    expect(page.querySelector('[data-testid="fate-path-chooser"]')!.textContent).toContain('Chapter 31 follows fate unless you choose otherwise.');
   });
 
   it('Fate Survival with a broken route: the next chapter must end the story, still directed by the reader, then how it ended', async () => {
-    const brokenRoute = { chapterNumber: 20, arcNumber: 1, reason: 'arc-goals-missed' as const, goalsInArc: 2, recordedAt: 'then',
-      missedGoals: [{ goalId: 'arc-1-bells', text: 'Ring the drowned bells again.', chapterNumber: 20 }] };
-    const page = await showFateAt({ fateSurvival: { enabled: true } }, 21, [{ goalId: 'arc-1-bells', chapterNumber: 20, outcome: 'missed' }],
+    const brokenRoute = { chapterNumber: 6, arcNumber: 1, reason: 'arc-goals-missed' as const, goalsInArc: 2, recordedAt: 'then',
+      missedGoals: [{ goalId: 'arc-1-bells', text: 'Ring the drowned bells again.', chapterNumber: 6 }] };
+    const page = await showFateAt({ fateSurvival: { enabled: true } }, 7, [{ goalId: 'arc-1-bells', chapterNumber: 6, outcome: 'missed' }],
       story => { story.brokenRoute = brokenRoute; });
     const card = page.querySelector('[data-testid="fate-arc-goal"]')!;
     expect(card.textContent).toContain('Route broken');
-    expect(card.textContent).toContain('1 of Arc 1\'s 2 goals were missed by Chapter 20');
+    expect(card.textContent).toContain('1 of Arc 1\'s 2 goals were missed by Chapter 6');
     expect(card.querySelector('[data-testid="fate-arc-goal-status"]')!.textContent)
-      .toBe('Chapter 21 must bring the story to its end. It is saved only when its prose shows that ending; if it does not, try again with the same direction.');
+      .toBe('Chapter 7 must bring the story to its end. It is saved only when its prose shows that ending; if it does not, try again with the same direction.');
     expect(page.textContent).not.toMatch(/closing chapter|closing stretch/i);
     expect(page.querySelector('[data-testid="fate-path-chooser"]')!.textContent).toContain('Your direction for this chapter leads the story to its end');
 
-    const closed = await showFateAt({ fateSurvival: { enabled: true } }, 22, [{ goalId: 'arc-1-bells', chapterNumber: 20, outcome: 'missed' }], story => {
+    const closed = await showFateAt({ fateSurvival: { enabled: true } }, 8, [{ goalId: 'arc-1-bells', chapterNumber: 6, outcome: 'missed' }], story => {
       story.brokenRoute = brokenRoute;
-      story.conclusion = { outcome: 'fate-failed', reason: 'story-ended', chapterNumber: 21, evidence: 'The drowned bells rang once over Mara\'s grave.', recordedAt: 'now' };
+      story.conclusion = { outcome: 'fate-failed', reason: 'story-ended', chapterNumber: 7, evidence: 'The drowned bells rang once over Mara\'s grave.', recordedAt: 'now' };
     });
-    expect(closed.querySelector('[data-testid="fate-conclusion"]')!.textContent).toContain('The story ended in Chapter 21, and the Destined Ending was never reached.');
+    expect(closed.querySelector('[data-testid="fate-conclusion"]')!.textContent).toContain('The story ended in Chapter 7, and the Destined Ending was never reached.');
     expect(closed.querySelector('[data-testid="fate-conclusion"]')!.textContent).toContain('The drowned bells rang once over Mara\'s grave.');
     expect(closed.querySelector('[data-testid="fate-path-chooser"]')).toBeNull();
   });

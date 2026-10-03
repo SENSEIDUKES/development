@@ -127,7 +127,7 @@ const generatedBlueprint = (): Record<string, unknown> & { arcOne?: unknown; arc
   powerSystem: { flavor: "contradictory", knownRanks: "contradictory" },
   mainOpposition: "Regent Zhao and the forged succession decree",
   // Arc 1's goals only; the server gives them their identities.
-  arcOne: { goals: [{ text: "Survive the hearing.", chapters: 40 }, { text: "Expose the regent's forged decree.", chapters: 60 }] },
+  arcOne: { goals: [{ text: "Survive the hearing.", chapters: 12 }, { text: "Expose the regent's forged decree.", chapters: 18 }] },
   arcLookahead: [
     { arcNumber: 2, direction: "LOOKAHEAD_A2 Win a seat on the Vermilion Tribunal." },
     { arcNumber: 3, direction: "LOOKAHEAD_A3 Break the seventh oath and reach the crown." },
@@ -163,7 +163,7 @@ describe("protected Story Seed World Blueprint generation", () => {
   it('plans only Arc 1 with a hidden look-ahead, and retains author-owned Hard Pins, Fun Settings and the opening goal', async () => {
     const seed = canonicalSeed();
     seed.story.optional.hardPins = [{ text: 'Keep the master alive.' }];
-    seed.story.optional.activeArcGoal = { id: 'arc-1-author', text: 'Reach the hearing.', chapters: 100 };
+    seed.story.optional.activeArcGoal = { id: 'arc-1-author', text: 'Reach the hearing.', chapters: 30 };
     const provider = new RecordingProvider({ ...generatedBlueprint(), hardPins: [{ text: 'Unwanted model goal.' }], funSettings: { faceSlap: 'high' } });
     const response = await handleStorySeedBlueprintHttp({ method: 'POST', headers: { Authorization: 'Bearer development-access-token' }, body: { storySeed: seed } }, { environment, providerFactory: () => provider });
     expect(response.status).toBe(200);
@@ -173,8 +173,8 @@ describe("protected Story Seed World Blueprint generation", () => {
     // Only Arc 1 is saved; it opens with the creator's own goal, and the server assigns its identities.
     expect(blueprint.estimatedArcs).toBe(3);
     expect(blueprint.arcPlans).toEqual([{ arcNumber: 1, goals: [
-      { id: 'arc-1-1', text: 'Reach the hearing.', chapters: 40 },
-      { id: 'arc-1-2', text: "Expose the regent's forged decree.", chapters: 60 },
+      { id: 'arc-1-1', text: 'Reach the hearing.', chapters: 12 },
+      { id: 'arc-1-2', text: "Expose the regent's forged decree.", chapters: 18 },
     ] }]);
     expect(blueprint.arcLookahead?.map(entry => entry.arcNumber)).toEqual([2, 3]);
     const schema = provider.requests[0].responseJsonSchema;
@@ -193,11 +193,11 @@ describe("protected Story Seed World Blueprint generation", () => {
     expect(prompt).not.toMatch(/firstMajorConflict|additionalStoryDirection|plotAndTropeSettings|arcPlans/);
   });
 
-  it('fails loudly instead of padding an Arc 1 that does not fill its hundred chapters', async () => {
-    const provider = new RecordingProvider({ ...generatedBlueprint(), arcOne: { goals: [{ text: 'Survive the hearing.', chapters: 40 }] } });
+  it('fails loudly instead of padding an Arc 1 that does not fill its thirty chapters', async () => {
+    const provider = new RecordingProvider({ ...generatedBlueprint(), arcOne: { goals: [{ text: 'Survive the hearing.', chapters: 12 }] } });
     const response = await manifest(provider);
     expect(response.status).toBe(502);
-    expect((response.body as { error: string }).error).toBe('The generated Arc 1 is invalid: Goal allocations must total 100 chapters. Nothing was saved; generate again.');
+    expect((response.body as { error: string }).error).toBe('The generated Arc 1 is invalid: Goal allocations must total 30 chapters. Nothing was saved; generate again.');
   });
 
   it('reports the model output limit when the answer is cut off', async () => {

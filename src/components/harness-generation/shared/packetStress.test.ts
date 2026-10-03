@@ -50,7 +50,7 @@ export const runPacketStress = async (chapterCount: number) => {
     getServerInfo: async () => ({ configured: true, provider: 'gemini', defaultModel: 'fixture', models: [] }),
     generate: async request => { requests.push(structuredClone(request)); chapter += 1; return response(stressChapter(chapter)); },
     recoverMemory: async request => response(stressMemory(request.prose)),
-    arcOperation: async () => response({ plan: { arcNumber: 1, goals: [{ id: 'arc-1-goal', text: 'Carry Yi Chen through the outer court.', chapters: 100 }] }, destinedEnding: 'Yi Chen leads the Azure Sect to glory.' }),
+    arcOperation: async () => response({ plan: { arcNumber: 1, goals: [{ id: 'arc-1-goal', text: 'Carry Yi Chen through the outer court.', chapters: 30 }] }, destinedEnding: 'Yi Chen leads the Azure Sect to glory.' }),
   };
   const repository = new InMemoryHarnessGenerationRepository();
   const controller = new HarnessGenerationController({ repository, modelAdapter: adapter });

@@ -34,7 +34,7 @@ const reviewedRecord = () => {
     majorFactions: ['Fate Auditors — ledger-keepers'],
     initialCharacters: ['Junior Sister Han (Ally) — Elder Qin\'s last disciple'],
     majorMysteries: [], unresolvedPlotThreads: [], estimatedArcs: 1,
-    arcPlans: [{ arcNumber: 1, goals: [{ id: 'arc-1-rank', text: 'Reach Foundation rank.', chapters: 100 }] }],
+    arcPlans: [{ arcNumber: 1, goals: [{ id: 'arc-1-rank', text: 'Reach Foundation rank.', chapters: 30 }] }],
   }, seed());
   const reviewed = reconcileStorySeedBlueprint(seed(), generated);
   return {

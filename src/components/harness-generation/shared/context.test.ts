@@ -54,10 +54,10 @@ describe('Compact Story Information Packet', () => {
 
   it('assembles distinct sections: direction, arc, rhythm with the matching suggestion, recaps, and latest canonical state', () => {
     const { state, story, foundation } = fixture();
-    story.arcPlans = [{ plan: { arcNumber: 1, goals: [{ id: 'g1', text: 'Anchor the city.', chapters: 100 }] }, effectiveChapter: 1, reason: 'initial' }];
+    story.arcPlans = [{ plan: { arcNumber: 1, goals: [{ id: 'g1', text: 'Anchor the city.', chapters: 30 }] }, effectiveChapter: 1, reason: 'initial' }];
     const packet = compileStoryInformationPacket(state, story, foundation, 'next');
     expect(packet.storyDirection).toEqual({ destinedEnding: 'The city anchors itself.', hardPins: ['Mara never leaves the city.'], fateMode: 'regular' });
-    expect(packet.arc).toMatchObject({ arcNumber: 1, activeGoal: { id: 'g1' }, completionDeadline: 100, positionInSegment: 5 });
+    expect(packet.arc).toMatchObject({ arcNumber: 1, activeGoal: { id: 'g1' }, completionDeadline: 30, positionInSegment: 5 });
     expect(packet.rhythm).toEqual({ fatePressure: 'mortal', recentFunctions: [{ chapterNumber: 4, chapterFunction: 'worldBuilding' }], recommendedFunction: 'conflict', reason: 'Test reason.', suggestion: 'Fight 4' });
     // Chapter 2 has no recap and is skipped, never replaced by prose.
     expect(packet.previouslyOn).toEqual([{ chapterNumber: 1, title: 'Chapter 1', recap: 'Recap 1.' }, { chapterNumber: 3, title: 'Chapter 3', recap: 'Recap 3.' }, { chapterNumber: 4, title: 'Chapter 4', recap: 'Recap 4.' }]);

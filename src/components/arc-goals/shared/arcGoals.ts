@@ -1,5 +1,9 @@
 /** Provider-neutral SEN authority. No host, persistence, or generation dependencies. */
-export const ARC_LENGTH = 100 as const;
+/**
+ * Every arc is the same length: one standard size the product prices and
+ * sells by. A complete novel runs about ten arcs; a long epic thirty to forty.
+ */
+export const ARC_LENGTH = 30 as const;
 export const MAX_ARC_GOALS = 5 as const;
 export interface ArcChapterPosition {
   arcNumber: number; chapterInArc: number; chaptersInArc: number; display: string;
@@ -77,10 +81,21 @@ export function arcGoalCompleted(plan: ArcPlan, goal: ArcGoal, completions: ArcG
 export function arcGoalResolved(plan: ArcPlan, goal: ArcGoal, completions: ArcGoalCompletion[] = [], beforeChapter = Infinity) {
   return Boolean(arcGoalResolution(plan, goal, completions, beforeChapter));
 }
-/** Resolution (completed or missed) AND the allocated segment boundary are required to advance. */
+/**
+ * The goal a chapter works toward: the arc's first goal not yet resolved
+ * (reached, or missed at its deadline) before that chapter. A goal's chapters
+ * are a budget, not a quota: one reached early hands over at once, so the next
+ * goal starts in the following chapter and keeps its own deadline, gaining the
+ * spare chapters. Once every goal is resolved, the last one stays active, as
+ * reached, for the rest of the arc.
+ */
 export function activeArcGoal(plan: ArcPlan, chapter: number, completions: ArcGoalCompletion[] = []): ArcGoalSegment {
   const segments = arcGoalSegments(plan);
-  return segments.find(goal => chapter <= goal.endChapter || !arcGoalResolved(plan, goal, completions, chapter)) ?? segments[segments.length - 1];
+  const open = segments.findIndex(goal => !arcGoalResolved(plan, goal, completions, chapter));
+  const index = open === -1 ? segments.length - 1 : open;
+  const previous = index > 0 ? arcGoalResolution(plan, segments[index - 1], completions, chapter) : undefined;
+  const segment = segments[index];
+  return previous && previous.chapterNumber < segment.startChapter - 1 ? { ...segment, startChapter: previous.chapterNumber + 1 } : segment;
 }
 export function arcGenerationContext(plan: ArcPlan, chapter: number, destinedEnding: string, completions: ArcGoalCompletion[] = [], plannedArcCount?: number): ArcGenerationContext {
   const activeGoal = activeArcGoal(plan, chapter, completions);

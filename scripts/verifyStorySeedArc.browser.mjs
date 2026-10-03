@@ -30,7 +30,7 @@ try {
         startingLocation: 'The foothills.', societyStructure: 'Mountain villages.', powerSystemOutline: 'Costly cultivation.',
         mainCharacter: { name: 'Mara', age: '25', personality: 'Patient', appearance: 'Dark hair', backgroundProfile: 'A returning traveler.' },
         mcProfile: 'A returning traveler.', majorFactions: ['The Gate'], initialCharacters: ['The Keeper'], majorMysteries: [],
-        firstArcPromise: 'Reach the gate.', arcPlans: [{ arcNumber: 1, goals: [{ ...storySeed.story.optional.activeArcGoal, chapters: 100 }] }],
+        firstArcPromise: 'Reach the gate.', arcPlans: [{ arcNumber: 1, goals: [{ ...storySeed.story.optional.activeArcGoal, chapters: 30 }] }],
         arcLookahead: [{ arcNumber: 2, direction: 'LOOKAHEAD_HIDDEN Cross the gate.' }],
         tropeRules: 'Earn each success.', styleBible: 'Clear sensory prose.', destinedEnding: 'Free the valley.', estimatedArcs: 11, unresolvedPlotThreads: [],
       } });

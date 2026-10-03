@@ -1,7 +1,7 @@
 # SEN Arc Goals
 
 - **Created:** 2026-09-13
-- **Last Workshop update:** 2026-10-01
+- **Last Workshop update:** 2026-10-03
 - **Status:** neutral SEN contract integrated with the DEV HARNESS host
 - **Preview:** existing Story Seed ARC workspace and HARNESS Reader Codex chapter recaps
 - **Source comparison:** DEV implementation audited 2026-09-13; no production replica imported
@@ -16,7 +16,8 @@ The package exposes these through `@seihouse/sen/arc-goals`.
 
 | Behavior | Owner |
 | --- | --- |
-| Exactly 100 chapters; one to five weighted sequential goals | Neutral SEN arc contract |
+| Exactly 30 chapters (`ARC_LENGTH`), one standard size the product prices and sells by; one to five weighted sequential goals | Neutral SEN arc contract |
+| A goal's chapters are a budget, not a quota: a goal reached early hands over to the next in the following chapter, which keeps its own deadline (`activeArcGoal`) | Neutral SEN arc contract; the HARNESS response contract tells the writer the deadline is a limit and that every chapter changes the story's situation |
 | The story length the creator chooses | Story Seed ARC page, Story Length (`story.optional.arcCount`); left blank, the Blueprint suggests one |
 | Destined Ending, story length, Arc 1's goals and the hidden look-ahead | Existing Story Seed Blueprint provider; the Blueprint plans only Arc 1, for the Seed's Story Length when set |
 | Creator review and edits before generation | Blueprint review Arc Goals (`BlueprintArcGoalsSection`, reusing `ArcPlanView`): Arc 1 and the story length; Arc 1's first goal is the Seed's Active Arc Goal |
@@ -26,7 +27,7 @@ The package exposes these through `@seihouse/sen/arc-goals`.
 | Durable per-arc revisions, frozen context, confirmed completion | Existing HARNESS story record, controller, and IndexedDB repository |
 | Planning each later arc when the reader begins it (`planNextArc`; `ARC_PLAN_DRAFT_SCHEMA`, `arcPlanFromDraft` give it the HARNESS's arc number and goal identities) | HARNESS controller and `shared/arcState.ts` (`arcPlanningContext`, `nextArcStep`) |
 | The review before each arc's first chapter (accept or edit), in both modes | HARNESS `arcReviewGap` / `arcGoalEditState`, shown in the Reader's `BlueprintArcPage` (the World Blueprint's goal section) and the Workshop's Blueprint tab |
-| Mode edit rules (`arcGoalEditState`): Regular Reader edits active/upcoming arcs while private; Fate Survival sets each arc once before it begins and locks it at generation; completed and missed goals are history in both | HARNESS `shared/arcState.ts`, enforced by the controller |
+| Mode edit rules (`arcGoalEditState`): Regular Reader edits active/upcoming arcs while private; Fate Survival sets each arc once before it begins and locks it at generation; completed and missed goals are history in both, and a goal not yet reached never gets a deadline before the next chapter | HARNESS `shared/arcState.ts`, enforced by the controller (`editArcGoals`) |
 | Deadline rule: in both modes an unachieved deadline chapter commits and records the goal as missed; the mode decides what a miss means (Regular Reader: off track, continuing past a missed final goal; Fate Survival: a broken route, after which the next chapter must end the story) | HARNESS `commitHarnessArc` / `harnessArcContext` in `shared/arcState.ts` |
 | Chapter grouping, plan inspection and editing | HARNESS SEN adapter (`harnessChapterArc` keeps the chapter ending a broken route, and past-final-goal chapters, in the arc they continue), Reader session, and Codex chapter-recap area |
 | Active Arc Goal display (arc, goal n of total, text, allocated range, next chapter, deadline/status by mode, the arc's goals) | SEN `FateArcGoalCard` (HARNESS `development/FatePanel.tsx`), shown on the Reader's Fate page and in the Library workspace, reading `harnessArcContext`; `ArcPlanView` marks completed and missed goals |
@@ -59,8 +60,10 @@ as (`WorldBlueprint.arcOneScope`) and the Manifest gate says so.
 Completion requires a positive model assessment of the generated prose plus
 a continuous exact evidence quotation from that prose. A matching quotation proves
 provenance; semantic assessment remains the model's responsibility. Completion is
-scoped to arc, goal identity, and wording. Early completion does not start the next
-goal before its allocated segment.
+scoped to arc, goal identity, and wording. A goal completed early hands over at once:
+the next goal starts in the following chapter, keeps its own deadline and gains the spare
+chapters (`activeArcGoal`). Once every goal of an arc is resolved, the last stays active,
+as reached, for the rest of the arc.
 
 Goals are recorded honestly in both Fate modes. A deadline chapter always commits; a
 goal it did not achieve is recorded as missed (`ArcGoalCompletion.outcome: 'missed'`,
@@ -77,11 +80,11 @@ penalty, or automatic retry policy is supplied.
 ## Integration boundaries
 
 Story Seed Blueprints saved when every arc was planned keep their Arc 1, and their next
-two arcs become the look-ahead; nothing is wiped. HARNESS schema 24 drops stored whole-route
-roadmaps from Foundations (saved arcs stay on their stories). Only schemas 22 and 23
-upgrade in place, after an untouched copy is kept; an older workspace is kept as that
-untouched copy and opens empty, without an upgrade. Completion records saved before outcomes existed
-read as completed.
+two arcs become the look-ahead; a saved Arc 1 planned for 100-chapter arcs no longer
+validates, so its Blueprint plans Arc 1 again. HARNESS schema 27 (arcs of 30 chapters)
+upgrades nothing older, by the product owner's decision: every earlier story was a test
+story, so an older workspace is kept as an untouched copy and opens empty. Completion
+records saved without an outcome read as completed.
 The shipped HTTP adapter supports automatic planning, and every chapter-generation
 adapter must support that plan operation before its first model call. HARNESS persistence
 remains the existing local IndexedDB boundary; this work does not add account/cloud story

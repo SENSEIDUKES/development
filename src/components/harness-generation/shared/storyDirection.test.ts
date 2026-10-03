@@ -26,8 +26,8 @@ const response = (reply: unknown): HarnessGenerationResponse => ({
 });
 
 const plan: ArcPlan = { arcNumber: 1, goals: [
-  { id: 'arc-1-gate', text: 'Reach the mountain gate.', chapters: 10 },
-  { id: 'arc-1-trial', text: 'Pass the sect trial.', chapters: 90 },
+  { id: 'arc-1-gate', text: 'Reach the mountain gate.', chapters: 3 },
+  { id: 'arc-1-trial', text: 'Pass the sect trial.', chapters: 27 },
 ] };
 
 const chapterReply = (overrides: Record<string, unknown> = {}) => ({
@@ -344,7 +344,7 @@ describe('Active Arc Goal source', () => {
     const saved = state.stories[0];
     const foundation = state.foundations.find(item => item.id === saved.activeFoundationRevisionId)!;
     const context = harnessArcContext(saved, foundation.input, saved.head.nextChapterNumber)!;
-    expect(context).toMatchObject({ arcNumber: 1, chapterInArc: 2, activeGoal: { id: 'arc-1-gate', text: 'Reach the mountain gate.', startChapter: 1, endChapter: 10 }, completionDeadline: 10, positionInSegment: 2, completionConfirmed: false });
+    expect(context).toMatchObject({ arcNumber: 1, chapterInArc: 2, activeGoal: { id: 'arc-1-gate', text: 'Reach the mountain gate.', startChapter: 1, endChapter: 3 }, completionDeadline: 3, positionInSegment: 2, completionConfirmed: false });
     expect(context.plan).toEqual(run.requests[0].storyInformation.arc?.plan);
     expect(context.plan.goals.findIndex(goal => goal.id === context.activeGoal.id) + 1).toBe(1);
     expect(context.plan.goals).toHaveLength(2);

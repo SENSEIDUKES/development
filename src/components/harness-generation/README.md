@@ -31,6 +31,11 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-10-03 (Arcs of 30 chapters; goals as budgets):** The first real Holdings test (exported with Export story) stayed on one scene for six chapters: Arc 1's first goal had 25 of its 100 chapters, the writer was told to pace it across them without delivering it early, and a goal reached early stayed active until its segment ended.
+  - **Arcs:** every arc is 30 chapters (`ARC_LENGTH`), the standard size the product prices and sells by.
+  - **Handover:** a goal reached early hands over to the next in the following chapter, which keeps its own deadline and gains the spare chapters (`activeArcGoal`); once every goal is resolved the last stays active, as reached.
+  - **The writer:** the response contract says a goal's chapters are a budget, not a quota (`completionDeadline` is the latest chapter, never a length to fill), that every chapter changes the story's situation and never ends where the last one ended, that the goal is the destination and not the only subject, and that a reached goal (`completionConfirmed`) is written past, never staged again. The next-chapter ideas must move the story on from where the chapter ends.
+  - **Storage and versions:** schema 27 upgrades nothing older, by the owner's decision (every earlier story was a test story): older storage is kept untouched and the page opens empty. SEN 0.14.0, Library 0.14.0.
 - **2026-10-03 (Holdings: the tag system's first information tags):** The owner's number-one long-story problem: by chapter 10 the main character had ten abilities and seven weapons, because nothing remembered what they held. The writer now has two jobs in one call, the chapter and its tags, and no second call is added. Definitions live in [the vocabulary](./ARCHITECTURE_VOCABULARY.md#the-tag-system-the-tiny-sen-language).
   - **Word tags:** `readMarks` reads `[[word: who | what | more]]` (`TAG_WORDS`, with the other spellings each accepts); nothing it reads or cannot read reaches the prose.
   - **Holding changes:** each tag is saved as a `HoldingChangeAttachment` on the sentence it points at (`placeHoldingChanges`); a tag alone in its own paragraph moves to the next. When the chapter commits, every name resolves to a Codex entry with an app-made ID (`resolveHoldingChanges`, `HarnessWorkspaceState.codexEntries`); `MC` is the main character.

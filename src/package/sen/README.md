@@ -33,6 +33,14 @@ There is no `chapter-generation` or `codex-cards` compatibility entry. Legacy
 Chapter Generation was retired; HARNESS is the one canonical generated-story
 owner.
 
+**0.14.0 (breaking):** arcs of 30 chapters.
+
+- `./arc-goals`: `ARC_LENGTH` is 30, so an arc plan's goals total 30 chapters
+  and Arc 2 begins with Chapter 31. `activeArcGoal` hands a goal reached early
+  to the next in the following chapter; that goal keeps its own deadline.
+- `./harness-generation`: `HARNESS_GENERATION_SCHEMA_VERSION` 27 upgrades no
+  older storage; an older workspace is kept untouched and the page opens empty.
+
 **0.13.0 (breaking):** holdings, the tag system's first information tags.
 
 - `./generation`: `readMarks` reads word tags (`[[gained: MC | Thing]]`) and

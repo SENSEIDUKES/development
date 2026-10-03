@@ -120,13 +120,13 @@ describe('HARNESS canonical arc integration', () => {
     expect(run.requests[1].storyInformation.arc?.activeGoal.id).toBe('arc-1-second');
   });
 
-  it('records a goal as missed when an edited allocation moves its deadline into the past', async () => {
+  it('refuses an edit that puts an unfinished goal’s deadline before the next chapter; one moved to the next chapter is missed there', async () => {
     const run = await setup();
     const editablePlan: ArcPlan = {
       arcNumber: 1,
       goals: [
-        { id: 'edited-first', text: 'Secure the invader’s trust.', chapters: 3 },
-        { id: 'edited-second', text: 'Defeat the invader.', chapters: 27 },
+        { id: 'edited-first', text: 'Secure the invader’s trust.', chapters: 5 },
+        { id: 'edited-second', text: 'Defeat the invader.', chapters: 25 },
       ],
     };
     const story = await run.controller.createStory({
@@ -135,14 +135,16 @@ describe('HARNESS canonical arc integration', () => {
     run.setOutput({ prose: 'She watched the invader from the gate.' });
     await run.controller.generateNextChapter(story.id, 'fixture');
     await run.controller.generateNextChapter(story.id, 'fixture');
-
-    await run.controller.editArcGoals(story.id, {
+    const shortened = (chapters: number): ArcPlan => ({
       ...editablePlan,
-      goals: [
-        { ...editablePlan.goals[0], chapters: 1 },
-        { ...editablePlan.goals[1], chapters: 29 },
-      ],
+      goals: [{ ...editablePlan.goals[0], chapters }, { ...editablePlan.goals[1], chapters: 30 - chapters }],
     });
+
+    // Chapter 3 is next: the goal still being written toward cannot end in Chapter 2.
+    await expect(run.controller.editArcGoals(story.id, shortened(2)))
+      .rejects.toThrow('Chapter 3 is next, so “Secure the invader’s trust.” cannot have a deadline before Chapter 3.');
+    expect(run.controller.snapshot().stories.find(item => item.id === story.id)?.arcPlans).toHaveLength(1);
+    await run.controller.editArcGoals(story.id, shortened(3));
     await run.controller.generateNextChapter(story.id, 'fixture');
 
     const saved = run.controller.snapshot();

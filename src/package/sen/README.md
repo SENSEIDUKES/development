@@ -40,6 +40,8 @@ owner.
   to the next in the following chapter; that goal keeps its own deadline.
 - `./harness-generation`: `HARNESS_GENERATION_SCHEMA_VERSION` 27 upgrades no
   older storage; an older workspace is kept untouched and the page opens empty.
+  `editArcGoals` refuses an edit that gives a goal not yet reached a deadline
+  before the next chapter.
 
 **0.13.0 (breaking):** holdings, the tag system's first information tags.
 

@@ -63,6 +63,17 @@ describe('planHarnessWorkspaceLoad', () => {
     expect(plan.preserve?.record).toMatchObject({ reason: 'migrated', schemaVersion: 24 });
   });
 
+  it('upgrades schema 25 to carry holdings: every chapter carries over unchanged, with nothing recorded and no Codex entries', () => {
+    const chapter = { id: 'c1', storyId: 'story-1', chapterNumber: 1, paragraphs: ['He took the sword.'], speakers: [] };
+    const { codexEntries: _none, ...older } = createEmptyHarnessWorkspaceState();
+    const stored = { ...older, schemaVersion: 25, stories: [{ id: 'story-1' }], chapters: [chapter] };
+    const plan = planHarnessWorkspaceLoad(stored, now);
+    expect(plan.state.schemaVersion).toBe(HARNESS_GENERATION_SCHEMA_VERSION);
+    expect(plan.state.chapters).toEqual([chapter]);
+    expect(plan.state.codexEntries).toEqual([]);
+    expect(plan.preserve?.record).toMatchObject({ reason: 'migrated', schemaVersion: 25 });
+  });
+
   it('keeps an untouched copy of an older-schema workspace (nothing before schema 22 upgrades) before starting fresh', () => {
     const stored = { schemaVersion: 21, stories: [{ id: 'a' }, { id: 'b' }], chapters: [{ id: 'c1' }] };
     const plan = planHarnessWorkspaceLoad(stored, now);

@@ -64,13 +64,13 @@ const setup = async (options: { throughHttp?: boolean } = {}) => {
 };
 
 describe('Compact long-story generation packet', () => {
-  it('delivers the nine sections to the provider once, in the approved order, with nothing else', async () => {
+  it('delivers the ten sections to the provider once, in the approved order, with nothing else', async () => {
     const run = await setup();
     await run.controller.generateNextChapter(run.story.id, 'fixture');
     await run.controller.generateNextChapter(run.story.id, 'fixture');
     const prompt = buildHarnessGenerationPrompt(run.requests[1]);
     expect(prompt.measurement.sections.map(section => section.section)).toEqual(PACKET_SECTION_ORDER);
-    const markers = ['CAPA SKILL [Author]', 'CURRENT STORY INFORMATION', 'DESTINED ENDING AND HARD PINS', 'ACTIVE ARC GOAL', 'FATE PRESSURE RHYTHM DIRECTION', 'PREVIOUSLY ON', 'CURRENT CANONICAL STATE', 'MISSION REMINDER:', 'IMMEDIATE CHAPTER REQUEST'];
+    const markers = ['CAPA SKILL [Author]', 'CURRENT STORY INFORMATION', 'DESTINED ENDING AND HARD PINS', 'ACTIVE ARC GOAL', 'FATE PRESSURE RHYTHM DIRECTION', 'PREVIOUSLY ON', 'CURRENT CANONICAL STATE', 'HOLDINGS (what each character has now', 'MISSION REMINDER:', 'IMMEDIATE CHAPTER REQUEST'];
     const serialized = `${prompt.systemInstruction}\n\n${prompt.userPrompt}`;
     const positions = markers.map(marker => ({ marker, index: serialized.indexOf(marker), count: serialized.split(marker).length - 1 }));
     for (const position of positions) expect(position, position.marker).toMatchObject({ count: 1 });
@@ -177,7 +177,7 @@ describe('Compact long-story generation packet', () => {
     });
     expect(attempt.requestMeasurement!.sections.reduce((sum, section) => sum + section.characters, 0)).toBeLessThanOrEqual(attempt.requestMeasurement!.totalCharacters);
     expect(attempt.requestMeasurement!.sections.map(section => section.section)).toEqual(PACKET_SECTION_ORDER);
-    // The provider received the same nine sections the local builder produces.
+    // The provider received the same ten sections the local builder produces.
     const local = buildHarnessGenerationPrompt(run.requests[1]);
     expect(local.userPrompt).toBe(sent.userPrompt);
     expect(local.systemInstruction).toBe(sent.systemInstruction);

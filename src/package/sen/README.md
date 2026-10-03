@@ -33,6 +33,21 @@ There is no `chapter-generation` or `codex-cards` compatibility entry. Legacy
 Chapter Generation was retired; HARNESS is the one canonical generated-story
 owner.
 
+**0.13.0 (breaking):** holdings, the tag system's first information tags.
+
+- `./generation`: `readMarks` reads word tags (`[[gained: MC | Thing]]`) and
+  `TAG_WORDS` lists the tag words with the spellings each accepts.
+- `./harness-generation`:
+  - `CodexEntry`, `HoldingChangeAttachment` and `HoldingsSection`: the records.
+  - `placeHoldingChanges`, `resolveHoldingChanges`, `deriveHoldings` and
+    `holdingsSection`: tags to records, records to Codex entries, and what
+    every character holds now, worked out and checked by plain rules.
+  - `SEN_HOLDINGS_SKILL` in a new always-managed `holdings` CAPA slot
+    (`ALWAYS_LOADED_SKILLS`), and `HoldingsPage` in the Reader.
+  - Breaking: `HarnessSkillSlotId` and `PacketSectionId` widen with
+    `holdings`, `HarnessWorkspaceState` requires `codexEntries`, and the
+    workspace schema is 26.
+
 **0.12.0 (breaking):** Read Aloud and dialogue speakers.
 
 - `./reader-runtime`: Read Aloud, the Reader's three-voice narration on the

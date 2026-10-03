@@ -1,5 +1,6 @@
 import type { SoundCueAttachment } from '../audio/inlineAudio';
 import type { SpeakerAttachment } from './speech';
+import type { CodexEntry, HoldingChangeAttachment, HoldingsSection } from './holdings';
 import type { SoundWord } from '../audio/soundWords';
 import type { FrozenNarrativeMedia, ResolvedSoundscape, StoryMediaSelection } from '../audio/media';
 import type { SenLanguageCode } from '../lib/language';
@@ -15,8 +16,10 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * (chapters are paragraphs plus Sound Cues) deliberately has no upgrade step
  * from earlier versions; 23 adds the optional paragraph counter; 24 plans
  * each arc when it begins (the Foundation keeps Arc 1 and a hidden look-ahead
- * instead of a whole roadmap); 25 adds the optional speaker records. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 25 as const;
+ * instead of a whole roadmap); 25 adds the optional speaker records; 26 adds
+ * holdings: each chapter's holding changes and closing list, and the
+ * workspace's Codex entries. */
+export const HARNESS_GENERATION_SCHEMA_VERSION = 26 as const;
 
 /** Output buckets assign processor categories; legacy event arrays remain readable. */
 export const HARNESS_MEMORY_CATEGORIES = {
@@ -234,7 +237,8 @@ export type HarnessSkillSlotId =
   | 'accessibility'
   | 'translation'
   | 'soundCues'
-  | 'speakers';
+  | 'speakers'
+  | 'holdings';
 
 export type HarnessSkillApplication =
   | 'generation'
@@ -533,6 +537,13 @@ export interface HarnessAcceptedChapterDraft {
   soundCues?: SoundCueAttachment[];
   /** Who speaks each spoken line the writer tagged, on paragraph spans. */
   speakers?: SpeakerAttachment[];
+  /**
+   * Every holding change the writer tagged, on the sentence its tag points at.
+   * Names are as written; they resolve to Codex entries when the chapter commits.
+   */
+  holdingChanges?: HoldingChangeAttachment[];
+  /** The writer's closing list: the main character's things and abilities by name, after this chapter. */
+  closingHoldings?: string[];
   title: string;
   titleSource: 'model' | 'harness-fallback';
   plan?: HarnessModelPlan;
@@ -606,7 +617,8 @@ export interface HarnessWarning {
     | 'unconfirmed_arc_completion'
     | 'sound_cue_set_aside'
     | 'prose_marks_removed'
-    | 'speaker_tags_incomplete';
+    | 'speaker_tags_incomplete'
+    | 'holding_tags_incomplete';
   message: string;
 }
 
@@ -722,6 +734,7 @@ export type PacketSectionId =
   | 'rhythm'
   | 'previouslyOn'
   | 'canonicalState'
+  | 'holdings'
   | 'missionReminder'
   | 'immediateChapterRequest';
 
@@ -789,6 +802,12 @@ export interface StoryInformationPacket {
   previouslyOn: PreviouslyOnEntry[];
   /** Section 7. */
   canonicalState: CanonicalStateProjection;
+  /**
+   * Section 8: what each character has now, worked out from the committed
+   * chapters' holding changes. The main character first, always. Absent only
+   * from packets frozen before holdings existed.
+   */
+  holdings?: HoldingsSection;
   /** HARNESS-only; the provider boundary never presents it. */
   diagnostics: StoryInformationDiagnostics;
 }
@@ -818,6 +837,14 @@ export interface HarnessChapter {
    * Read Aloud gives them the Protagonist or Side voice.
    */
   speakers?: SpeakerAttachment[];
+  /**
+   * What changed in what characters have, use, know and are: one holding
+   * change per tag, on the sentence it points at, with every name resolved
+   * to a Codex entry. Holdings are worked out from these, never stored.
+   */
+  holdingChanges?: HoldingChangeAttachment[];
+  /** The writer's closing list for this chapter, checked against the holdings it leaves. */
+  closingHoldings?: string[];
   /** Pack/version provenance of the frozen catalog that produced this media. */
   mediaLoadout: FrozenNarrativeMedia;
   plan?: HarnessModelPlan;
@@ -1090,6 +1117,8 @@ export interface HarnessWorkspaceState {
   batches: HarnessBatchRun[];
   arcPlanOperations: HarnessArcPlanOperation[];
   memoryRecoveries?: HarnessMemoryRecovery[];
+  /** Every story's Codex entries: the people, things and abilities its holdings name, each with an app-made ID. */
+  codexEntries: CodexEntry[];
 }
 
 export interface HarnessMemoryRecoveryRequest {
@@ -1133,7 +1162,7 @@ export interface HarnessGenerationRequest {
   model: string;
   capaPrompt: CapaPrompt;
   storyInformation: StoryInformationPacket;
-  /** Section 8: the frozen Mission Reminder, kept distinct until the provider boundary. */
+  /** Section 9: the frozen Mission Reminder, kept distinct until the provider boundary. */
   missionReminder: HarnessMissionReminder;
   immediateChapterRequest: ImmediateChapterRequest;
 }

@@ -3,9 +3,11 @@ import type { FrozenNarrativeMedia } from '../../../audio/media';
 import { describeSetAsideSoundCue, placeSoundCues } from '../../../audio/soundCuePlacement';
 import type { SoundWord } from '../../../audio/soundWords';
 import type { SoundCueAttachment } from '../../../audio/inlineAudio';
-import { readMarks, type MarkReading, type ProseMark } from '../../../narrative/marks';
+import { readMarks, type MarkReading, type ProseMark, type WordTag } from '../../../narrative/marks';
 import type { SpeakerAttachment } from '../../../narrative/speech';
+import type { HoldingChangeAttachment } from '../../../narrative/holdings';
 import { placeSpeakers, type ProtagonistNames } from './speakers';
+import { placeHoldingChanges } from './holdings';
 import { readHarnessSoundCueSignals, stripReplyMarks } from './chapterSignals';
 import {
   harnessChapterBody,
@@ -240,6 +242,8 @@ export interface HarnessResponseAcceptanceOptions {
   protagonistNames?: ProtagonistNames;
   /** The writer was asked for speaker tags, so speech it left untagged is worth flagging. */
   speakersExpected?: boolean;
+  /** The writer was asked for holdings tags and a closing list, so a missing list is worth flagging. */
+  holdingsExpected?: boolean;
 }
 
 /**
@@ -272,19 +276,32 @@ const acceptedChapterBody = (
 
 /**
  * Reads the writer's marks out of every paragraph. The chapter keeps only the
- * clean text; each paragraph keeps the positions of its marks and speaker tags
- * for placement. A paragraph that held nothing but a mark is dropped; a speaker
- * tag written alone in its own paragraph moves to the start of the next one,
- * and one with no paragraph after it is counted as naming no speech.
+ * clean text; each paragraph keeps the positions of its marks and tags for
+ * placement. A paragraph that held nothing but a mark is dropped; a tag written
+ * alone in its own paragraph moves to the start of the next one. A speaker tag
+ * with no paragraph after it is counted as naming no speech; a word tag with
+ * none goes to the end of the last paragraph, where its change happened.
  */
 const readParagraphMarks = (paragraphs: readonly string[], warnings: HarnessWarning[]) => {
   const read: MarkReading[] = [];
   let loose: MarkReading['speakers'] = [];
+  let looseWords: WordTag[] = [];
+  let wordTagIssues = 0;
   for (const reading of paragraphs.map(paragraph => readMarks(paragraph))) {
-    if (!reading.text) { loose = [...loose, ...reading.speakers.map(tag => ({ ...tag, offset: 0 }))]; continue; }
-    read.push(loose.length ? { ...reading, speakers: [...loose, ...reading.speakers] } : reading);
+    wordTagIssues += reading.wordTagIssues.length;
+    if (!reading.text) {
+      loose = [...loose, ...reading.speakers.map(tag => ({ ...tag, offset: 0 }))];
+      looseWords = [...looseWords, ...reading.wordTags.map(tag => ({ ...tag, offset: 0 }))];
+      continue;
+    }
+    read.push(loose.length || looseWords.length
+      ? { ...reading, speakers: [...loose, ...reading.speakers], wordTags: [...looseWords, ...reading.wordTags] }
+      : reading);
     loose = [];
+    looseWords = [];
   }
+  const last = read.at(-1);
+  if (last && looseWords.length) read[read.length - 1] = { ...last, wordTags: [...last.wordTags, ...looseWords.map(tag => ({ ...tag, offset: last.text.length }))] };
   const strandedTags = loose.length;
   const issues = read.reduce((count, reading) => count + reading.issues.length, 0);
   if (issues) {
@@ -293,7 +310,7 @@ const readParagraphMarks = (paragraphs: readonly string[], warnings: HarnessWarn
       message: `Removed ${issues} unusable mark${issues === 1 ? '' : 's'} (unclosed, nested, repeated, empty or point marks) and kept their words.`,
     });
   }
-  return { read, strandedTags };
+  return { read, strandedTags, wordTagIssues };
 };
 
 /**
@@ -359,6 +376,37 @@ const acceptedSpeakers = (
   return placement.speakers;
 };
 
+/**
+ * Reads the writer's holding tags into holding changes on the sentences they
+ * point at, and its closing list of the main character's holdings. Tags it
+ * cannot read, and a missing or malformed list, are flagged; the chapter is
+ * never rejected for its holdings.
+ */
+const acceptedHoldings = (
+  parsed: Record<string, unknown>,
+  marked: { read: ReadonlyArray<Pick<MarkReading, 'text' | 'wordTags'>>; wordTagIssues: number },
+  chapterNumber: number,
+  warnings: HarnessWarning[],
+  options: HarnessResponseAcceptanceOptions,
+): { changes: HoldingChangeAttachment[]; closing?: string[] } => {
+  const placement = placeHoldingChanges({
+    paragraphs: marked.read.map((paragraph, index) => ({ blockId: harnessParagraphBlockId(chapterNumber, index), text: paragraph.text, wordTags: paragraph.wordTags })),
+    locale: options.locale,
+  });
+  const raw = parsed.mainCharacterHoldings;
+  const closing = Array.isArray(raw)
+    ? [...new Set(raw.map(nonEmptyString).filter((name): name is string => Boolean(name)))]
+    : undefined;
+  const problems = [
+    ...(marked.wordTagIssues ? [`${marked.wordTagIssues} tag${marked.wordTagIssues === 1 ? ' was' : 's were'} unreadable and removed`] : []),
+    ...placement.problems,
+    ...(raw !== undefined && !closing ? ['the closing list of the main character\'s holdings was not a list and was set aside'] : []),
+    ...(raw === undefined && options.holdingsExpected ? ['the writer returned no closing list of the main character\'s holdings, so this chapter is not checked against one'] : []),
+  ];
+  if (problems.length) warnings.push({ code: 'holding_tags_incomplete', message: `${problems.join('; ')}.`.replace(/^./, letter => letter.toUpperCase()) });
+  return { changes: placement.changes, ...(closing ? { closing } : {}) };
+};
+
 export const verifyHarnessEventEvidence = (event: HarnessSemanticEvent, prose: string): HarnessSemanticEvent => {
   const normalize = (value: string) => value.replace(/\s+/g, ' ').trim();
   const quote = event.evidence ? normalize(event.evidence) : '';
@@ -388,7 +436,7 @@ export const acceptHarnessModelResponse = (
     // writer's marks out of them, keeps the clean text exactly as written,
     // derives the readable prose from it, and places the Sound Cues the marks point to.
     const source = acceptedChapterBody(parsed, warnings);
-    const marked = source ? readParagraphMarks(source, warnings) : { read: [], strandedTags: 0 };
+    const marked = source ? readParagraphMarks(source, warnings) : { read: [], strandedTags: 0, wordTagIssues: 0 };
     const body = marked.read.length ? harnessChapterBody(marked.read.map(reading => reading.text), options.paragraphTarget) : undefined;
     if (!body || looksLikeRefusal(body.prose)) {
       return {
@@ -406,6 +454,7 @@ export const acceptHarnessModelResponse = (
     warnings.push(...harnessChapterBodyWarnings(body.metrics));
     const soundCues = acceptedSoundCues(parsed, marked.read, chapterNumber, warnings, options);
     const speakers = acceptedSpeakers(marked, chapterNumber, warnings, options);
+    const holdings = acceptedHoldings(parsed, marked, chapterNumber, warnings, options);
     const title = nonEmptyString(parsed.title);
     if (!title) {
       warnings.push({
@@ -424,6 +473,8 @@ export const acceptHarnessModelResponse = (
         metrics: body.metrics,
         ...(soundCues.length ? { soundCues } : {}),
         ...(speakers.length ? { speakers } : {}),
+        ...(holdings.changes.length ? { holdingChanges: holdings.changes } : {}),
+        ...(holdings.closing ? { closingHoldings: holdings.closing } : {}),
         title: title ?? chapterTitleFallback(chapterNumber),
         titleSource: title ? 'model' : 'harness-fallback',
         ...(plan ? { plan } : {}),
@@ -448,7 +499,7 @@ export const acceptHarnessModelResponse = (
   warnings.push(
     {
       code: 'plain_prose_recovery',
-      message: 'The response was not valid JSON, so the harness preserved its readable prose without marks and placed no Sound Cues or speakers.',
+      message: 'The response was not valid JSON, so the harness preserved its readable prose without marks and placed no Sound Cues, speakers or holding changes.',
     },
     {
       code: 'missing_title',

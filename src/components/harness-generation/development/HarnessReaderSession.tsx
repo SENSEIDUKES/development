@@ -21,6 +21,7 @@ import { harnessStoryMode, nextArcStep } from '../shared/arcState';
 import { pendingChapterDirection } from '../shared/chapterDirection';
 import { BlueprintArcPage } from './BlueprintArcPage';
 import { FatePage } from './FatePage';
+import { HoldingsPage } from './HoldingsPage';
 import { ReadAloudPlayer } from './ReadAloudPlayer';
 import { ReaderSettingsSheet } from './ReaderSettingsSheet';
 import { useFollowNarration, type NarrationHighlight } from './useFollowNarration';
@@ -118,6 +119,9 @@ export function HarnessReaderSession({
   const [fateOpen, setFateOpen] = useState(false);
   const [fateFocus, setFateFocus] = useState(false);
   const [arcOpen, setArcOpen] = useState(false);
+  const [holdingsOpen, setHoldingsOpen] = useState(false);
+  /** A paragraph to bring into view once its chapter is on screen: where a holding change happened. */
+  const [passageTarget, setPassageTarget] = useState<string>();
   const writer = useNextChapterWriter(controller, storyId, onGenerateNextChapter);
   const [storageError, setStorageError] = useState('');
   const readerStateRef = useRef<ReaderStoryState | undefined>(undefined);
@@ -166,8 +170,14 @@ export function HarnessReaderSession({
   }, [readerStateRepository]);
 
   const upcoming = story?.head.nextChapterNumber ?? 1;
-  const openFate = (focusDirection = false) => { writer.reset(); setArcOpen(false); setFateFocus(focusDirection); setFateOpen(true); };
-  const openArc = () => { writer.reset(); setFateOpen(false); setArcOpen(true); };
+  const openFate = (focusDirection = false) => { writer.reset(); setArcOpen(false); setHoldingsOpen(false); setFateFocus(focusDirection); setFateOpen(true); };
+  const openArc = () => { writer.reset(); setFateOpen(false); setHoldingsOpen(false); setArcOpen(true); };
+  const openHoldings = () => { setFateOpen(false); setArcOpen(false); setHoldingsOpen(true); };
+  const openPassage = (chapterNumber: number, blockId: string) => {
+    setHoldingsOpen(false);
+    openChapter(chapterNumber);
+    setPassageTarget(blockId);
+  };
   // At the start of an arc, the next chapter waits for the arc's goals: planned, then reviewed in the World Blueprint.
   const arcStep = nextArcStep(state, storyId);
   // Next at the newest chapter. Regular Reader: write the next chapter (through
@@ -212,7 +222,7 @@ export function HarnessReaderSession({
       chapterNumber: chapter.chapterNumber, title: chapter.title, language, paragraphs: blocks, speakers: chapter.speakers,
     }) : NO_SCRIPT),
     language, preferences: readerPreferences, picks: readAloudVoices,
-    suspended: fateOpen || arcOpen || writer.writing,
+    suspended: fateOpen || arcOpen || holdingsOpen || writer.writing,
   });
   const reading = readAloud.status === 'playing' || readAloud.status === 'paused';
   const spoken = reading ? readAloud.line : undefined;
@@ -228,6 +238,15 @@ export function HarnessReaderSession({
   }, [blocks, spokenBlock, sentenceStart, sentenceEnd]);
   const follow = useFollowNarration({ article: articleRef, highlight, active: reading, player: playerRef });
   const listen = () => readAloud.play(lineWhereTheReaderIs(readAloud.script(), articleRef.current));
+  // After a Holdings link opens a chapter, the paragraph where the change happened comes into view.
+  useEffect(() => {
+    if (!passageTarget || holdingsOpen) return;
+    // Paragraph ids are `c{n}-p{i}`; anything else is never put into a selector.
+    const block = /^[\w-]+$/.test(passageTarget) ? articleRef.current?.querySelector<HTMLElement>(`[data-sen-text-block="${passageTarget}"]`) : undefined;
+    if (!block) return;
+    block.scrollIntoView?.({ block: 'center' });
+    setPassageTarget(undefined);
+  }, [passageTarget, holdingsOpen, chapter?.id]);
 
   if (!story) return <p role="alert" className="p-4 text-sm text-amber-200">This story is no longer available.</p>;
   if (!readerState) return <main className="mx-auto w-full max-w-3xl px-4 py-6"><p role="status" className="text-sm text-neutral-400">Opening your place in the story…</p></main>;
@@ -243,6 +262,15 @@ export function HarnessReaderSession({
             if (mode === 'survival') openFate(true);
             else if (onGenerateNextChapter) void writeNext();
           }} />
+      </main>
+      {writing}
+    </>;
+  }
+  if (holdingsOpen) {
+    return <>
+      <main className="mx-auto w-full min-w-0 max-w-6xl">
+        <HoldingsPage state={state} storyId={storyId} onBack={() => setHoldingsOpen(false)} onReadPassage={openPassage}
+          onReadChapter={number => { openChapter(number); setHoldingsOpen(false); }} />
       </main>
       {writing}
     </>;
@@ -272,6 +300,8 @@ export function HarnessReaderSession({
           className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-white/15 text-neutral-200 hover:border-white/30">
           <Settings className="h-4 w-4" aria-hidden />
         </button>}
+        <button type="button" aria-label="Open Holdings" title="Holdings: what each character has now" onClick={openHoldings}
+          className={`${navButton} border-white/15 text-neutral-200 hover:border-white/30`}>Holdings</button>
         <button type="button" aria-label="Open Fate" title="Fate: decide what happens next" onClick={() => openFate()}
           className={`${navButton} border-cyan-300/30 text-cyan-50 hover:border-cyan-300/60`}>Fate</button>
       </div>

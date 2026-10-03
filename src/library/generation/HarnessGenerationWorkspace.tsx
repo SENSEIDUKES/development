@@ -11,7 +11,7 @@ import { exportHarnessStory } from '@seihouse/sen/harness-generation';
 import { findFoundationRevision, findStory } from '@seihouse/sen/harness-generation';
 import { buildCanonicalStoryView } from '@seihouse/sen/harness-generation';
 import { GENERATION_PACKET_BUDGET, PACKET_SECTION_ORDER } from '@seihouse/sen/harness-generation';
-import { CAPA_SCHEMA, SEN_FATE_SURVIVAL_SKILL, SEN_READING_MODE_SKILLS, SEN_SOUND_CUES_SKILL, SEN_SPEAKERS_SKILL, buildHarnessOfficialOutputRequirements, harnessSkillKey, resolveStoryLanguagePackage, type CapaSlotManager } from '@seihouse/sen/harness-generation';
+import { ALWAYS_LOADED_SKILLS, CAPA_SCHEMA, SEN_FATE_SURVIVAL_SKILL, SEN_READING_MODE_SKILLS, SEN_SOUND_CUES_SKILL, buildHarnessOfficialOutputRequirements, harnessSkillKey, resolveStoryLanguagePackage, type CapaSlotManager } from '@seihouse/sen/harness-generation';
 import { getSenLanguageLabel, normalizeChapterWritingStyle, type ChapterWritingStyle } from '@seihouse/sen/contracts';
 import { StorySettingsPanel } from './StorySettingsPanel';
 import { includeBundledHarnessSkills } from '@seihouse/sen/harness-generation';
@@ -266,10 +266,18 @@ const managedSlotInspection = (
   soundWords: readonly SoundWord[],
 ): { status: 'Loaded' | 'Not used' | 'No package' | 'Blocked'; summary: string; skill?: HarnessSkillManifest } => {
   switch (slot.managedBy) {
-    case 'always':
-      return installedSkills.some(skill => skill.id === SEN_SPEAKERS_SKILL.id && skill.version === SEN_SPEAKERS_SKILL.version)
-        ? { status: 'Loaded', skill: SEN_SPEAKERS_SKILL, summary: `${SEN_SPEAKERS_SKILL.name} v${SEN_SPEAKERS_SKILL.version} loads on every chapter, so the Reader knows who speaks each line.` }
+    case 'always': {
+      const skill = ALWAYS_LOADED_SKILLS[slot.id];
+      const loaded = skill && installedSkills.some(installed => installed.id === skill.id && installed.version === skill.version);
+      if (slot.id === 'holdings') {
+        return loaded && skill
+          ? { status: 'Loaded', skill, summary: `${skill.name} v${skill.version} loads on every chapter: the writer reads what every character has, uses only that, and tags each change.` }
+          : { status: 'No package', summary: 'This host has no Holdings skill, so chapters are written without holding tags and nothing new is recorded.' };
+      }
+      return loaded && skill
+        ? { status: 'Loaded', skill, summary: `${skill.name} v${skill.version} loads on every chapter, so the Reader knows who speaks each line.` }
         : { status: 'No package', summary: 'This host has no Speakers skill, so chapters are written without speaker tags and every quoted line is read in the Side voice.' };
+    }
     case 'media-loadout':
       return soundWords.length
         ? { status: 'Loaded', skill: SEN_SOUND_CUES_SKILL, summary: `${SEN_SOUND_CUES_SKILL.name} v${SEN_SOUND_CUES_SKILL.version} loads with this story's ${soundWords.length} sound words from its Media Loadout.` }

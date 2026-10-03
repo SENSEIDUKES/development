@@ -38,13 +38,16 @@ const chapter = {
   title: 'Low Tide',
   paragraphs: [
     'The tide pulled back from the drowned gate, and [[1|the beast roared]] across the causeway.',
-    'Mara counted the bells that no longer rang.',
+    // The writer tags what changes in what a character has, where it happens.
+    '[[gained: MC | Bell Key]] Mara counted the bells that no longer rang. [[equipped: MC | Bell Key]] She turned the old key in her palm.',
     // The writer tags who speaks: the main character with their own tag, then someone else by name.
     '[[@MC]] “Ring the bells,” Ye Chen said.',
     '[[@Junior Sister Han]] “They are drowned,” she whispered.',
   ],
   // One of the Library's sound words, so the cue is placed (an unknown sound is set aside).
   soundCues: [{ mark: 1, sound: 'beast roar' }],
+  // The writer's closing list: one name no tag recorded, so the Holdings page has one check.
+  mainCharacterHoldings: ['Bell Key', 'Silver Bell'],
   arcCompletion: { goalId: 'none', completed: false, evidence: '' },
   recap: 'Mara returns to the drowned city.',
   chapterFunction: 'progression',
@@ -244,7 +247,7 @@ async function walk(browser, viewport, sample) {
   const lastSpoken = async () => (await spoken()).at(-1);
   const finishLine = async () => { await page.evaluate(() => window.__finishLine()); await page.waitForTimeout(60); };
   await page.evaluate(() => { window.__speechHold = true; });
-  check(!(await page.textContent('body')).includes('[[@'), 'No speaker tag may reach the page.');
+  check(!(await page.textContent('body')).includes('[['), 'No tag may reach the page.');
   await visibleButton(/^Listen$/).click();
   await page.locator('h1[data-speaking]').waitFor();
   check(JSON.stringify(await lastSpoken()) === JSON.stringify({ text: 'Chapter 1. Low Tide', voice: 'Daniel', lang: 'en-GB', rate: 1 }),
@@ -286,6 +289,22 @@ async function walk(browser, viewport, sample) {
   }));
   check(layout.nav <= layout.player + 1, `The Listen bar should not cover the chapter navigation (${JSON.stringify(layout)}).`);
   check(!layout.wide, 'The Reader must not scroll sideways.');
+
+  // 3c. Holdings: what the main character has now, each change linked to its passage, and the checks.
+  await visibleButton('Open Holdings').click();
+  const holdingsPage = page.getByTestId('holdings-page');
+  await holdingsPage.waitFor();
+  const inHand = await holdingsPage.locator('[aria-label$=": In hand"]').first().textContent();
+  check(inHand.includes('Bell Key'), `The Bell Key should be in hand, got ${inHand}.`);
+  check(JSON.stringify(await holdingsPage.locator('[data-testid="holdings-character"]').first().locator('button').allTextContents()) === '["Ch. 1 · gained","Ch. 1 · took up"]',
+    'Each change should link to its chapter.');
+  check((await holdingsPage.locator('[data-testid="holdings-checks"] summary').textContent()) === 'Checks (1)', 'The closing list should leave one check.');
+  check(!(await page.textContent('body')).includes('[['), 'No tag may reach the Holdings page.');
+  check(!(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), 'The Holdings page must not scroll sideways.');
+  await shot('6d-holdings');
+  await holdingsPage.getByRole('button', { name: /^Ch\. 1 · took up/ }).click();
+  await page.locator('[data-chapter-number="1"]').waitFor();
+  check(await page.getByTestId('holdings-page').count() === 0, 'A change\'s link should open its chapter.');
 
   // 4. A reload stays on Chapter 1, writes nothing, keeps the speed, and reads nothing by itself.
   await page.reload();

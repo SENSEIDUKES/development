@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { HARNESS_RESPONSE_CONTRACT, buildHarnessChapterResponseSchema, buildHarnessMemoryRecoveryPrompt, presentImmediateChapterRequest } from './prompt';
+import { HARNESS_RESPONSE_CONTRACT, buildHarnessChapterResponseSchema, buildHarnessMemoryRecoveryPrompt, presentHoldings, presentImmediateChapterRequest } from './prompt';
 
 const WORDS = [{ word: 'blade drawn', example: 'drew his sword' }, { word: 'beast roar', example: 'the beast roared' }];
 /** The schema a story with sound words receives. */
@@ -55,6 +55,23 @@ describe('HARNESS chapter response schema shape', () => {
       .toContain('CHAPTER SCALE: exactly 73 paragraph entries, 1,800 to 2,500 words in all.');
   });
 
+  it('asks for the closing list of the main character\'s holdings only when the Holdings skill is loaded, as a plain list of names', () => {
+    const withHoldings = buildHarnessChapterResponseSchema(WORDS, 50, { holdings: true });
+    expect(withHoldings.properties.mainCharacterHoldings).toEqual({
+      type: 'array', items: { type: 'string' },
+      description: 'After the chapter: every thing the main character has and every ability they know or are learning, each by its exact name.',
+    });
+    // Right after the chapter body, while it is fresh, and required.
+    expect(Object.keys(withHoldings.properties).slice(0, 5)).toEqual(['title', 'plan', 'paragraphs', 'soundCues', 'mainCharacterHoldings']);
+    expect(withHoldings.required.slice(0, 2)).toEqual(['paragraphs', 'mainCharacterHoldings']);
+    // A list of strings adds no structure: the schema stays as shallow and as small as before.
+    const shape = describeSchemaShape(withHoldings);
+    expect(shape.objectSchemas).toBe(describeSchemaShape(buildHarnessChapterResponseSchema(WORDS, 50)).objectSchemas);
+    expect(shape.maxObjectDepth).toBeLessThanOrEqual(3);
+    expect(shape.serializedBytes).toBeLessThan(2_200);
+    expect(buildHarnessChapterResponseSchema(WORDS).properties).not.toHaveProperty('mainCharacterHoldings');
+  });
+
   it('carries no Sound Cue field at all for a story without sound words', () => {
     expect(buildHarnessChapterResponseSchema([]).properties).not.toHaveProperty('soundCues');
     expect(buildHarnessChapterResponseSchema().properties).not.toHaveProperty('soundCues');
@@ -108,5 +125,27 @@ describe('HARNESS chapter response schema shape', () => {
     const memorySchema = memory.responseJsonSchema as { properties: { memory: { properties: Record<string, unknown> } } };
     expect(Object.keys(memorySchema.properties.memory.properties)).toHaveLength(13);
     expect(JSON.stringify(HARNESS_CHAPTER_RESPONSE_SCHEMA)).not.toContain('characters');
+  });
+});
+
+describe('the Holdings section the writer reads', () => {
+  it('shows the main character even with nothing recorded', () => {
+    expect(presentHoldings({ characters: [{ name: 'Ye Chen', mainCharacter: true }] })).toBe('Ye Chen (main character): nothing recorded yet.');
+  });
+
+  it('puts rank beside the name and gives each list one line, by exact name', () => {
+    expect(presentHoldings({ characters: [
+      { name: 'Ye Chen', mainCharacter: true, rank: 'Qi Condensation 3', inHand: ['Rusted Iron Sword'], carries: ['Jade Pendant', 'Spirit Pill ×3'], knows: ['Iron Palm (Minor Success)', 'Cloud Step (sealed)'], learning: ['Wind Step'] },
+      { name: 'Elder Qin', carries: ['Jade Gourd'] },
+    ] })).toBe([
+      'Ye Chen (main character) · rank: Qi Condensation 3',
+      '- in hand: Rusted Iron Sword',
+      '- carries: Jade Pendant; Spirit Pill ×3',
+      '- knows: Iron Palm (Minor Success); Cloud Step (sealed)',
+      '- learning: Wind Step',
+      '',
+      'Elder Qin',
+      '- carries: Jade Gourd',
+    ].join('\n'));
   });
 });

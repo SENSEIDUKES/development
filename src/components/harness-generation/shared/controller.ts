@@ -45,6 +45,7 @@ import {
   type SemanticEventPreservationResult,
 } from './responseAcceptance';
 import { protagonistNames } from './speakers';
+import { declaredCharacters, resolveHoldingChanges } from './holdings';
 import {
   createEmptyHarnessWorkspaceState,
   type HarnessGenerationRepository,
@@ -1005,6 +1006,7 @@ export class HarnessGenerationController {
       // Whose lines are the protagonist's comes from what the writer was shown, so a retry decides the same.
       protagonistNames: protagonistNames(attempt.storyInformation.currentStory, attempt.storyInformation.canonicalState.characters),
       speakersExpected: attempt.capaPrompt.skills.some(skill => skill.slot === 'speakers' && skill.authoring),
+      holdingsExpected: attempt.capaPrompt.skills.some(skill => skill.slot === 'holdings' && skill.authoring),
     });
     if (!acceptance.accepted) {
       return this.appendFailure(attemptId, {
@@ -1127,6 +1129,19 @@ export class HarnessGenerationController {
       ...event,
       chapterId,
     }));
+    // Every name a holding change uses becomes a Codex entry now, in the same
+    // write that commits its chapter: the app assigns the IDs, never the writer.
+    const holdings = acceptedDraft.holdingChanges?.length
+      ? resolveHoldingChanges({
+        storyId: commitAttempt.storyId,
+        chapter: { id: chapterId, chapterNumber: commitAttempt.chapterNumber },
+        changes: acceptedDraft.holdingChanges,
+        entries: candidate.codexEntries,
+        declared: declaredCharacters(commitAttempt.storyInformation.currentStory),
+        createdAt: committedAt,
+        createId: () => this.runtime.createId('hcx'),
+      })
+      : undefined;
     const chapter = {
       id: chapterId,
       storyId: commitAttempt.storyId,
@@ -1141,6 +1156,8 @@ export class HarnessGenerationController {
       metrics: cloneHarnessValue(acceptedDraft.metrics),
       ...(acceptedDraft.soundCues ? { soundCues: cloneHarnessValue(acceptedDraft.soundCues) } : {}),
       ...(acceptedDraft.speakers ? { speakers: cloneHarnessValue(acceptedDraft.speakers) } : {}),
+      ...(holdings?.changes.length ? { holdingChanges: holdings.changes } : {}),
+      ...(acceptedDraft.closingHoldings ? { closingHoldings: [...acceptedDraft.closingHoldings] } : {}),
       mediaLoadout: cloneHarnessValue(commitAttempt.mediaLoadout),
       ...(acceptedDraft.plan ? { plan: acceptedDraft.plan } : {}),
       // The recap and rhythm metadata are saved exactly once, with their own
@@ -1155,6 +1172,7 @@ export class HarnessGenerationController {
     };
     candidate.chapters.push(chapter);
     candidate.events.push(...committedEvents);
+    if (holdings?.created.length) candidate.codexEntries.push(...holdings.created);
     commitStory.head = {
       nextChapterNumber: commitAttempt.chapterNumber + 1,
       lastCommittedChapterId: chapter.id,
@@ -1702,5 +1720,6 @@ export const exportHarnessStory = (state: HarnessWorkspaceState, storyId: string
     projections: state.projections.filter(projection => projection.storyId === storyId),
     batches: state.batches.filter(batch => batch.storyId === storyId),
     memoryRecoveries: state.memoryRecoveries?.filter(recovery => recovery.storyId === storyId) ?? [],
+    codexEntries: state.codexEntries.filter(entry => entry.storyId === storyId),
   };
 };

@@ -43,7 +43,7 @@ const scriptedWriter = () => {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [{ id: 'fixture', label: 'Fixture' }, { id: 'remembered', label: 'Remembered' }], defaultModel: 'fixture' }),
     generate: generate as unknown as HarnessGenerationModelAdapter['generate'],
     recoverMemory,
-    arcOperation: async () => ({ rawProviderResponse: JSON.stringify({ plan: { arcNumber: 1, goals: [{ id: 'arc-1', text: 'Reach the gate.', chapters: 100 }] }, destinedEnding: 'Mara reclaims her name.' }), providerReceipt: receipt }),
+    arcOperation: async () => ({ rawProviderResponse: JSON.stringify({ plan: { arcNumber: 1, goals: [{ id: 'arc-1', text: 'Reach the gate.', chapters: 30 }] }, destinedEnding: 'Mara reclaims her name.' }), providerReceipt: receipt }),
   };
   return { writer, generate, recoverMemory, release: () => release() };
 };

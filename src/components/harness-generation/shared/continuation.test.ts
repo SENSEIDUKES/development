@@ -10,7 +10,7 @@ import { buildHarnessGenerationPrompt } from '../../../server/harness-generation
 import { type HarnessGenerationModelAdapter, type HarnessGenerationRequest } from '@seihouse/sen/harness-generation';
 
 const arcOperation = async (request: { storyInformation: { chapterNumber: number } }) => ({
-  rawProviderResponse: JSON.stringify({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 100 }] }, destinedEnding: 'Bring the story to its true conclusion.' }),
+  rawProviderResponse: JSON.stringify({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 30 }] }, destinedEnding: 'Bring the story to its true conclusion.' }),
   providerReceipt: { provider: 'fixture' as const, model: 'fixture', generatedAt: 'now', usage: { source: 'unavailable' as const } },
 });
 
@@ -164,7 +164,8 @@ describe('Steered continuation and SEN boundaries', () => {
     expect(sen.memory?.characters).toHaveLength(2);
     expect(sen.memory?.characters?.find(character => character.name === 'Iven')).toMatchObject({ role: 'Captain', relationshipToMC: 'Ally' });
     expect(resolveHarnessEntity('Iven', state, story.id).resolution).toBe('exact');
-    const chapter = sen.arcs[0].chapters[49];
+    // Chapter 50 is in Arc 2: arcs are 30 chapters.
+    const chapter = sen.arcs.flatMap(arc => arc.chapters)[49];
     // One narration block per paragraph: speakers live on the chapter's speaker records.
     expect(chapter.blocks?.every(block => block.type === 'narration')).toBe(true);
     expect(chapter.blocks?.map(block => block.text).join('\n\n')).toBe(state.chapters[49].prose);

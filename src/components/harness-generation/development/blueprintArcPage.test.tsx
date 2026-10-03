@@ -9,7 +9,7 @@ import { HarnessGenerationController, HarnessReaderSession, type HarnessArcReque
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
-const ARC_ONE = { arcNumber: 1, goals: [{ id: 'arc-1-name', text: 'Reclaim her name.', chapters: 100 }] };
+const ARC_ONE = { arcNumber: 1, goals: [{ id: 'arc-1-name', text: 'Reclaim her name.', chapters: 30 }] };
 const LOOKAHEAD = 'LOOKAHEAD_HIDDEN Mara walks the drowned law to its source.';
 const receipt = { provider: 'gemini' as const, model: 'test-model', generatedAt: '2026-10-01T12:00:00.000Z', usage: { source: 'unavailable' as const } };
 const chapter = (title: string) => JSON.stringify({
@@ -18,10 +18,10 @@ const chapter = (title: string) => JSON.stringify({
   nextProgression: 'Mara climbs.', nextWorldBuilding: 'The law is old.', nextConflict: 'The wardens close in.',
 });
 
-/** A story whose Arc 1 is written to its end, so its next chapter, 101, begins Arc 2. */
+/** A story whose Arc 1 is written to its end, so its next chapter, 31, begins Arc 2. */
 const atArcTwo = async (survival = false) => {
   const arcOperation = vi.fn(async (_request: HarnessArcRequest) => ({ providerReceipt: receipt, rawProviderResponse: JSON.stringify({
-    plan: { goals: [{ text: 'Find the keeper of the drowned law.', chapters: 60 }, { text: 'Reclaim her name before the tide court.', chapters: 40 }] },
+    plan: { goals: [{ text: 'Find the keeper of the drowned law.', chapters: 18 }, { text: 'Reclaim her name before the tide court.', chapters: 12 }] },
     lookahead: [], destinedEnding: 'Mara reclaims her name.',
   }) }));
   const generate = vi.fn(async () => ({ rawProviderResponse: chapter(`Chapter ${generate.mock.calls.length}`), providerReceipt: receipt }));
@@ -37,8 +37,8 @@ const atArcTwo = async (survival = false) => {
   if (survival) await first.chooseChapterDirection(created.id, { kind: 'reader', text: 'Mara rows in.' });
   await first.generateNextChapter(created.id, 'test-model');
   const saved = first.snapshot();
-  saved.stories[0].head.nextChapterNumber = 101;
-  saved.stories[0].goalCompletions = [{ arcNumber: 1, goalId: 'arc-1-name', goalText: 'Reclaim her name.', chapterNumber: 100, evidence: '', outcome: 'missed' }];
+  saved.stories[0].head.nextChapterNumber = 31;
+  saved.stories[0].goalCompletions = [{ arcNumber: 1, goalId: 'arc-1-name', goalText: 'Reclaim her name.', chapterNumber: 30, evidence: '', outcome: 'missed' }];
   const controller = new HarnessGenerationController({ repository: new InMemoryHarnessGenerationRepository(saved), modelAdapter: adapter });
   await controller.hydrate();
   return { controller, storyId: created.id, arcOperation, generate };
@@ -76,7 +76,7 @@ beforeEach(() => {
 afterEach(() => { act(() => root.unmount()); container.remove(); });
 
 describe('The World Blueprint reappears when a new arc begins', { timeout: 20_000 }, () => {
-  it('Regular Reader: Next opens Arc 2 in the Blueprint, plans it, and accepting it writes Chapter 101', async () => {
+  it('Regular Reader: Next opens Arc 2 in the Blueprint, plans it, and accepting it writes Chapter 31', async () => {
     const run = await atArcTwo();
     await act(async () => { root.render(renderWithDevAudio(<Host controller={run.controller} storyId={run.storyId} />)); });
     await flush();
@@ -89,15 +89,15 @@ describe('The World Blueprint reappears when a new arc begins', { timeout: 20_00
     expect(run.arcOperation.mock.calls[0][0].planning?.previousArcs).toEqual([{ arcNumber: 1, goals: [{ text: 'Reclaim her name.', outcome: 'missed' }] }]);
     const goals = container.querySelector('[data-testid="blueprint-arc-goals"]')!;
     expect(goals.textContent).toContain('Find the keeper of the drowned law.');
-    expect(goals.textContent).toContain('Chapters 101–160');
+    expect(goals.textContent).toContain('Chapters 31–48');
     // The look-ahead is the planner's alone.
     expect(container.textContent).not.toContain('LOOKAHEAD_HIDDEN');
 
-    await click('Accept and write Chapter 101');
+    await click('Accept and write Chapter 31');
     await flush();
     expect(page()).toBeNull();
     expect(run.controller.snapshot().stories[0].arcGoalReviews?.find(review => review.arcNumber === 2)).toMatchObject({ edited: false });
-    expect(container.querySelector('[data-chapter-number="101"]')).toBeTruthy();
+    expect(container.querySelector('[data-chapter-number="31"]')).toBeTruthy();
     expect(run.generate).toHaveBeenCalledTimes(2);
   });
 
@@ -114,9 +114,9 @@ describe('The World Blueprint reappears when a new arc begins', { timeout: 20_00
     });
     await click('Save goals');
     expect(run.controller.snapshot().stories[0].arcGoalReviews?.find(review => review.arcNumber === 2)).toMatchObject({ edited: true });
-    await click('Write Chapter 101');
+    await click('Write Chapter 31');
     await flush();
-    expect(container.querySelector('[data-chapter-number="101"]')).toBeTruthy();
+    expect(container.querySelector('[data-chapter-number="31"]')).toBeTruthy();
   });
 
   it('Fate Survival: accepting the arc opens the direction for its first chapter', async () => {
@@ -125,7 +125,7 @@ describe('The World Blueprint reappears when a new arc begins', { timeout: 20_00
     await flush();
     await click('Next Chapter: Arc 2 begins');
     expect(buttonNamed('Edit Arc 2 goals (one time)')).toBeTruthy();
-    await click('Accept and direct Chapter 101');
+    await click('Accept and direct Chapter 31');
     expect(container.querySelector('[data-testid="fate-page"]')).toBeTruthy();
     expect(run.generate).toHaveBeenCalledTimes(1);
     expect(run.controller.snapshot().stories[0].arcGoalReviews?.find(review => review.arcNumber === 2)).toMatchObject({ edited: false });

@@ -34,7 +34,7 @@ const request = (): HarnessGenerationRequest => ({
     createdAt: '2026-08-29T00:00:00.000Z',
     currentStory: { title: 'The Moved City', originalLanguage: 'en', premise: foundation().input.premise, corrections: [] },
     storyDirection: { destinedEnding: 'Restore the city.', hardPins: [] },
-    arc: arcGenerationContext({ arcNumber: 1, goals: [{ id: 'arc-1-opening', text: 'Reach the moved city.', chapters: 100 }] }, 1, 'Restore the city.'),
+    arc: arcGenerationContext({ arcNumber: 1, goals: [{ id: 'arc-1-opening', text: 'Reach the moved city.', chapters: 30 }] }, 1, 'Restore the city.'),
     previouslyOn: [],
     canonicalState: { characters: [], relationships: [], locations: [], factions: [], artifacts: [], abilities: [], resources: [] },
     diagnostics: { budgetSource: 'test', sections: [], omitted: [], identityAmbiguities: [], storage: { chapters: 0, events: 0, canonicalRecords: 0, activeRecords: 0, recaps: 0 } },

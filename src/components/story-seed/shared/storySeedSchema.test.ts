@@ -7,7 +7,7 @@ import { type StorySeedRecord, type StorySeedRepository } from '@seihouse/sen/st
 import { createStoryAdministrativeMetadata, validateStoryAdministrativeMetadata } from '@seihouse/sen/story-seed';
 
 /** A Blueprint saved before arcs were planned as they begin: a plan for every one of its seven arcs. */
-const everyArcPlanned = Array.from({ length: 7 }, (_, index) => ({ arcNumber: index + 1, goals: [{ id: `arc-${index + 1}-goal`, text: index ? `Hold the route through Arc ${index + 1}.` : 'Reach the gate.', chapters: 100 }] }));
+const everyArcPlanned = Array.from({ length: 7 }, (_, index) => ({ arcNumber: index + 1, goals: [{ id: `arc-${index + 1}-goal`, text: index ? `Hold the route through Arc ${index + 1}.` : 'Reach the gate.', chapters: 30 }] }));
 const blueprint: WorldBlueprint = {
   arcPlans: everyArcPlanned.slice(0, 1),
   arcLookahead: [{ arcNumber: 2, direction: 'Hold the route through Arc 2.' }, { arcNumber: 3, direction: 'Hold the route through Arc 3.' }],

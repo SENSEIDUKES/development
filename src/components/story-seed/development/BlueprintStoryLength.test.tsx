@@ -96,7 +96,7 @@ describe('Blueprint review: Arc 1 and the story length', () => {
   it('shows only Arc 1, never the hidden look-ahead, and says later arcs are planned when they begin', () => {
     act(() => root.render(<Review initial={reviewed(3)} onRegenerateBlueprint={vi.fn(async () => undefined)} />));
     const section = container.querySelector('[data-testid="blueprint-arc-goals"]')!;
-    expect(section.textContent).toContain('Arc 1 of 3 arcs of 100 chapters');
+    expect(section.textContent).toContain('Arc 1 of 3 arcs of 30 chapters');
     expect(section.textContent).toContain('Each later arc is planned when it begins');
     expect(buttonNamed('Edit Arc 1 goals')).toBeTruthy();
     expect(container.textContent).not.toMatch(/Edit Arc 2 goals|Arc 2 ·/);

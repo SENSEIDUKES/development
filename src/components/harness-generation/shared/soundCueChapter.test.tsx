@@ -25,7 +25,7 @@ import { acceptHarnessModelResponse } from './responseAcceptance';
  */
 
 const media = createLibraryMediaPort({ registered: [], entitlements: [], base: LIBRARY_BASE_MEDIA });
-const GOAL = { arcNumber: 1, goals: [{ id: 'arc-1-opening', text: 'Face the debt fox.', chapters: 100 }] };
+const GOAL = { arcNumber: 1, goals: [{ id: 'arc-1-opening', text: 'Face the debt fox.', chapters: 30 }] };
 
 const response = (rawProviderResponse: string): HarnessGenerationResponse => ({
   rawProviderResponse,

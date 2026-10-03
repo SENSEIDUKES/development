@@ -13,7 +13,7 @@ import { installFakeSpeechSynthesis, type FakeSpeechSynthesis } from '../../../t
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
-const GOAL = { arcNumber: 1, goals: [{ id: 'arc-1-name', text: 'Reclaim her name.', chapters: 100 }] };
+const GOAL = { arcNumber: 1, goals: [{ id: 'arc-1-name', text: 'Reclaim her name.', chapters: 30 }] };
 const reply = (title: string, paragraphs: string[], soundCues: unknown[] = []) => JSON.stringify({
   title, paragraphs, soundCues,
   arcCompletion: { goalId: 'arc-1-name', completed: false, evidence: '' },

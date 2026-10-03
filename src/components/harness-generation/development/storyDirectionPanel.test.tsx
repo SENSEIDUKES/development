@@ -10,8 +10,8 @@ import { type ArcPlan } from '@seihouse/sen/arc-goals';
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const plan: ArcPlan = { arcNumber: 1, goals: [
-  { id: 'arc-1-gate', text: 'Reach the mountain gate.', chapters: 10 },
-  { id: 'arc-1-trial', text: 'Pass the sect trial.', chapters: 90 },
+  { id: 'arc-1-gate', text: 'Reach the mountain gate.', chapters: 3 },
+  { id: 'arc-1-trial', text: 'Pass the sect trial.', chapters: 27 },
 ] };
 
 const reply = (body: unknown) => ({ rawProviderResponse: JSON.stringify(body), providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: 'now', usage: { source: 'unavailable' as const } } });
@@ -56,12 +56,12 @@ describe('HARNESS story-direction sources', () => {
     expect(goal.textContent).toContain('Goal 1 of 2');
     expect(goal.textContent).toContain(context.activeGoal.text);
     expect(goal.textContent).toContain(`${context.activeGoal.startChapter}–${context.activeGoal.endChapter}`);
-    expect(goal.textContent).toContain('Chapter 2 · Arc 1 — Chapter 2/100');
+    expect(goal.textContent).toContain('Chapter 2 · Arc 1 — Chapter 2/30');
     expect(goal.textContent).toContain(`Deadline · Chapter ${context.completionDeadline}`);
-    expect(goal.textContent).toContain('8 chapters left before the deadline');
+    expect(goal.textContent).toContain('1 chapter left before the deadline');
     await act(async () => button('Show the arc\'s goals').click());
     expect(goal.textContent).toContain('Pass the sect trial.');
-    expect(goal.textContent).toContain('Chapters 11–100');
+    expect(goal.textContent).toContain('Chapters 4–30');
 
     const panel = container.querySelector('[data-testid="harness-story-direction"]')!;
     expect(panel.textContent).toContain('Yi Chen leads the Azure Sect to glory.');

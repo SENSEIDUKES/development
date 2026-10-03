@@ -18,7 +18,7 @@ import { acceptHarnessModelResponse } from './responseAcceptance';
  * commits, and shows the next chapter what each character has now.
  */
 
-const GOAL = { arcNumber: 1, goals: [{ id: 'arc-1-armory', text: 'Survive the armory trial.', chapters: 100 }] };
+const GOAL = { arcNumber: 1, goals: [{ id: 'arc-1-armory', text: 'Survive the armory trial.', chapters: 30 }] };
 const response = (rawProviderResponse: string): HarnessGenerationResponse => ({
   rawProviderResponse,
   providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: '2026-10-03T12:00:00.000Z', usage: { source: 'unavailable' } },

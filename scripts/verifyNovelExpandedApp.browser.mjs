@@ -167,7 +167,7 @@ async function walk(browser, viewport, sample) {
     }
     const body = request.postDataJSON();
     if (body.operation === 'plan-arc') {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rawProviderResponse: JSON.stringify({ plan: { goals: [{ text: 'Reach the gate.', chapters: 100 }] }, lookahead: [], destinedEnding: 'Mara reclaims her name.' }), providerReceipt: receipt }) });
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rawProviderResponse: JSON.stringify({ plan: { goals: [{ text: 'Reach the gate.', chapters: 30 }] }, lookahead: [], destinedEnding: 'Mara reclaims her name.' }), providerReceipt: receipt }) });
       return;
     }
     if (!body.immediateChapterRequest) {

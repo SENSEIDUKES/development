@@ -31,8 +31,8 @@ const Editor = ({ seed: input, view, initialBlueprint }: { seed: StorySeedInput;
 const render = (seed: StorySeedInput, view: 'arc' | 'world' | 'blueprint' = 'arc', initialBlueprint?: WorldBlueprint) => act(() => root.render(<Editor key={initialBlueprint ? `${view}-generated` : view} seed={seed} view={view} initialBlueprint={initialBlueprint} />));
 const button = (text: string) => [...container.querySelectorAll<HTMLButtonElement>('button')].find(item => item.textContent?.trim() === text);
 const roadmap = [
-  { arcNumber: 1, goals: [{ id: 'arc-1-gate', text: 'Reach the mountain gate.', chapters: 60 }, { id: 'arc-1-trial', text: 'Pass the trial.', chapters: 40 }] },
-  { arcNumber: 2, goals: [{ id: 'arc-2-valley', text: 'Free the valley.', chapters: 100 }] },
+  { arcNumber: 1, goals: [{ id: 'arc-1-gate', text: 'Reach the mountain gate.', chapters: 18 }, { id: 'arc-1-trial', text: 'Pass the trial.', chapters: 12 }] },
+  { arcNumber: 2, goals: [{ id: 'arc-2-valley', text: 'Free the valley.', chapters: 30 }] },
 ];
 const fill = (id: string, value: string) => act(() => {
   const input = container.querySelector<HTMLInputElement | HTMLTextAreaElement>(`#${id}`)!;
@@ -89,8 +89,8 @@ describe('Story Seed Arc and World ownership', () => {
     await act(async () => { button('Save goals')!.click(); });
     expect(blueprint.hardPins).toEqual(current.story.optional.hardPins);
     // Arc 1's opening goal writes through to the Seed; its allocation and its other goals stay saved.
-    expect(current.story.optional.activeArcGoal).toEqual({ id: 'arc-1-gate', text: 'Open the mountain gate.', chapters: 100 });
-    expect(blueprint.arcPlans).toEqual([{ arcNumber: 1, goals: [{ id: 'arc-1-gate', text: 'Open the mountain gate.', chapters: 60 }, roadmap[0].goals[1]] }]);
+    expect(current.story.optional.activeArcGoal).toEqual({ id: 'arc-1-gate', text: 'Open the mountain gate.', chapters: 30 });
+    expect(blueprint.arcPlans).toEqual([{ arcNumber: 1, goals: [{ id: 'arc-1-gate', text: 'Open the mountain gate.', chapters: 18 }, roadmap[0].goals[1]] }]);
     expect(blueprint.funSettings?.faceSlap).toBe('high');
     expect(button('Manifest Story')?.disabled).toBe(false);
     const saved = await workshopStorySeedStorage.create('arc-test', current, blueprint, 'ja');
@@ -181,14 +181,14 @@ describe('Story Length on the ARC page', () => {
     expect(current.story.optional.arcCount).toBeUndefined();
     fill('story-length-input', '11');
     expect(current.story.optional.arcCount).toBe(11);
-    expect(lengthText()).toBe('11 arcs · 1,100 chapters. Arc 11, the final arc, reaches the Destined Ending.');
+    expect(lengthText()).toBe('11 arcs · 330 chapters. Arc 11, the final arc, reaches the Destined Ending.');
     for (const notALength of ['0', '101', '2.5']) {
       fill('story-length-input', notALength);
       expect(current.story.optional.arcCount).toBe(11);
       expect(container.textContent).toContain('Choose a whole number of arcs from 1 to 100.');
     }
     fill('story-length-input', '1');
-    expect(lengthText()).toBe('1 arc · 100 chapters. Arc 1 is the whole story and reaches the Destined Ending.');
+    expect(lengthText()).toBe('1 arc · 30 chapters. Arc 1 is the whole story and reaches the Destined Ending.');
     fill('story-length-input', '');
     expect(current.story.optional).not.toHaveProperty('arcCount');
     expect(lengthText()).toBe('');

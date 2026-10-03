@@ -21,7 +21,7 @@ describe('Start Now captured prose and memory regression', () => {
       let extractions = 0;
       const controller = new HarnessGenerationController({ repository, modelAdapter: {
         getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
-        arcOperation: async request => response({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 100 }] }, destinedEnding: 'Bring the story to its true conclusion.' }),
+        arcOperation: async request => response({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 30 }] }, destinedEnding: 'Bring the story to its true conclusion.' }),
         generate: async () => response({ prose: fixture.prose }),
         recoverMemory: async () => response(recover && extractions++ === 0 ? { events: fixture.originalEvents } : fixture.memoryReply),
       } });

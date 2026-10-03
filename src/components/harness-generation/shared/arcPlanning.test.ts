@@ -6,14 +6,14 @@ import { buildHarnessArcPrompt, buildHarnessGenerationPrompt } from '../../../se
 
 const ENDING = 'ENDING_Lin rebuilds the drowned archive and reopens it to the valley.';
 const arcOne: ArcPlan = { arcNumber: 1, goals: [
-  { id: 'arc-1-flood', text: 'GOAL_A1G1 Survive the first flood.', chapters: 40 },
-  { id: 'arc-1-map', text: 'GOAL_A1G2 Recover the archive map.', chapters: 60 },
+  { id: 'arc-1-flood', text: 'GOAL_A1G1 Survive the first flood.', chapters: 12 },
+  { id: 'arc-1-map', text: 'GOAL_A1G2 Recover the archive map.', chapters: 18 },
 ] };
 const LOOKAHEAD = 'LOOKAHEAD_A2 Lin dives for the sunken stacks and opens the archive.';
 /** The planner's draft for Arc 2: wording and chapters only, plus identities the HARNESS replaces. */
 const arcTwoDraft = { goals: [
-  { id: 'arc-1-flood', text: 'GOAL_A2G1 Dive to the sunken stacks.', chapters: 70 },
-  { text: 'GOAL_A2G2 Reopen the archive to the valley.', chapters: 30 },
+  { id: 'arc-1-flood', text: 'GOAL_A2G1 Dive to the sunken stacks.', chapters: 21 },
+  { text: 'GOAL_A2G2 Reopen the archive to the valley.', chapters: 9 },
 ] };
 const reply = (body: unknown) => ({ rawProviderResponse: JSON.stringify(body), providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: 'now', usage: { source: 'unavailable' as const } } });
 
@@ -49,8 +49,8 @@ const setup = async (overrides: Partial<StoryFoundationInput> = {}, visibility?:
 const READER = { kind: 'reader' as const, text: 'Lin climbs the archive tower before the water rises.' };
 /** Arc 1 finished: its first goal achieved, its second missed at its deadline. */
 const arcOneDone = [
-  { arcNumber: 1, goalId: 'arc-1-flood', goalText: arcOne.goals[0].text, chapterNumber: 40 },
-  { arcNumber: 1, goalId: 'arc-1-map', goalText: arcOne.goals[1].text, chapterNumber: 100, outcome: 'missed' as const },
+  { arcNumber: 1, goalId: 'arc-1-flood', goalText: arcOne.goals[0].text, chapterNumber: 12 },
+  { arcNumber: 1, goalId: 'arc-1-map', goalText: arcOne.goals[1].text, chapterNumber: 30, outcome: 'missed' as const },
 ];
 
 describe('HARNESS plans each arc when it begins', () => {
@@ -64,7 +64,7 @@ describe('HARNESS plans each arc when it begins', () => {
     await run.controller.generateNextChapter(run.story.id, 'fixture');
     expect(run.arcOperation).not.toHaveBeenCalled();
     const request = run.requests[0];
-    expect(request.storyInformation.arc).toMatchObject({ arcNumber: 1, plannedArcCount: 2, finalArc: false, activeGoal: { id: 'arc-1-flood' }, completionDeadline: 40 });
+    expect(request.storyInformation.arc).toMatchObject({ arcNumber: 1, plannedArcCount: 2, finalArc: false, activeGoal: { id: 'arc-1-flood' }, completionDeadline: 12 });
     const prompt = buildHarnessGenerationPrompt(request);
     expect(prompt.userPrompt.split(ENDING)).toHaveLength(2);
     expect(prompt.userPrompt).toContain('GOAL_A1G1');
@@ -77,9 +77,9 @@ describe('HARNESS plans each arc when it begins', () => {
 
   it('Regular Reader: plans Arc 2 only when the reader begins it, from how Arc 1 went, then waits for its review', async () => {
     const run = await setup();
-    const atArc2 = await run.jumpTo(101, arcOneDone);
+    const atArc2 = await run.jumpTo(31, arcOneDone);
     // A chapter write never plans an arc in a story with a planned length.
-    await expect(atArc2.generateNextChapter(run.story.id, 'fixture')).rejects.toThrow("Arc 2 begins with Chapter 101. Plan its goals in the novel's Blueprint");
+    await expect(atArc2.generateNextChapter(run.story.id, 'fixture')).rejects.toThrow("Arc 2 begins with Chapter 31. Plan its goals in the novel's Blueprint");
     expect(run.arcOperation).not.toHaveBeenCalled();
     expect(nextArcStep(atArc2.snapshot(), run.story.id)).toEqual({ kind: 'plan', arcNumber: 2, status: 'needed' });
 
@@ -99,25 +99,25 @@ describe('HARNESS plans each arc when it begins', () => {
 
     const planned = atArc2.snapshot().stories[0];
     expect(planned.arcPlans?.at(-1)).toEqual({ plan: { arcNumber: 2, goals: [
-      { id: 'arc-2-1', text: 'GOAL_A2G1 Dive to the sunken stacks.', chapters: 70 },
-      { id: 'arc-2-2', text: 'GOAL_A2G2 Reopen the archive to the valley.', chapters: 30 },
-    ] }, effectiveChapter: 101, reason: 'initial' });
+      { id: 'arc-2-1', text: 'GOAL_A2G1 Dive to the sunken stacks.', chapters: 21 },
+      { id: 'arc-2-2', text: 'GOAL_A2G2 Reopen the archive to the valley.', chapters: 9 },
+    ] }, effectiveChapter: 31, reason: 'initial' });
     // The final arc has nothing after it to look ahead to.
     expect(planned.arcLookahead).toBeUndefined();
     expect(nextArcStep(atArc2.snapshot(), run.story.id)).toEqual({ kind: 'review', arcNumber: 2 });
-    await expect(atArc2.generateNextChapter(run.story.id, 'fixture')).rejects.toThrow("Review Arc 2's goals before Chapter 101 is written");
+    await expect(atArc2.generateNextChapter(run.story.id, 'fixture')).rejects.toThrow("Review Arc 2's goals before Chapter 31 is written");
 
     await atArc2.acceptArcGoals(run.story.id, 2);
     expect(nextArcStep(atArc2.snapshot(), run.story.id)).toBeUndefined();
     await atArc2.generateNextChapter(run.story.id, 'fixture');
     const request = run.requests.at(-1)!;
-    expect(request.storyInformation.arc).toMatchObject({ arcNumber: 2, chapterInArc: 1, finalArc: true, activeGoal: { id: 'arc-2-1', startChapter: 101, endChapter: 170 } });
+    expect(request.storyInformation.arc).toMatchObject({ arcNumber: 2, chapterInArc: 1, finalArc: true, activeGoal: { id: 'arc-2-1', startChapter: 31, endChapter: 51 } });
     expect(buildHarnessGenerationPrompt(request).userPrompt).not.toContain('LOOKAHEAD_A2');
   });
 
   it('Regular Reader: an edit made while the review is pending is the review; a public novel can still accept', async () => {
     const run = await setup();
-    const atArc2 = await run.jumpTo(101, arcOneDone);
+    const atArc2 = await run.jumpTo(31, arcOneDone);
     await atArc2.planNextArc(run.story.id, 'fixture');
     const edited = atArc2.snapshot().stories[0].arcPlans!.at(-1)!.plan;
     await atArc2.editArcGoals(run.story.id, { ...edited, goals: [{ ...edited.goals[0], text: 'Dive with the ferryman.' }, edited.goals[1]] });
@@ -126,7 +126,7 @@ describe('HARNESS plans each arc when it begins', () => {
     expect(run.requests.at(-1)!.storyInformation.arc?.activeGoal.text).toBe('Dive with the ferryman.');
 
     const published = await setup({}, 'public');
-    const publicArc2 = await published.jumpTo(101, arcOneDone);
+    const publicArc2 = await published.jumpTo(31, arcOneDone);
     await publicArc2.planNextArc(published.story.id, 'fixture');
     const state = publicArc2.snapshot();
     expect(arcGoalEditState(state.stories[0], state.foundations[0].input, 2)).toMatchObject({ editable: false, review: 'pending', canAccept: true });
@@ -137,16 +137,16 @@ describe('HARNESS plans each arc when it begins', () => {
 
   it('Regular Reader: edits the active arc while private, never completed arcs or completed goals', async () => {
     const run = await setup();
-    const arc1Edit: ArcPlan = { arcNumber: 1, goals: [{ ...arcOne.goals[0], chapters: 50 }, { ...arcOne.goals[1], chapters: 50 }] };
+    const arc1Edit: ArcPlan = { arcNumber: 1, goals: [{ ...arcOne.goals[0], chapters: 15 }, { ...arcOne.goals[1], chapters: 15 }] };
     await run.controller.editArcGoals(run.story.id, arc1Edit);
     expect(run.controller.snapshot().stories[0].arcPlans?.at(-1)).toEqual({ plan: arc1Edit, effectiveChapter: 1, reason: 'edit' });
     // Arc 2 is not planned yet, so there is nothing to edit.
-    await expect(run.controller.editArcGoals(run.story.id, { arcNumber: 2, goals: [{ id: 'arc-2-x', text: 'Too early.', chapters: 100 }] }))
+    await expect(run.controller.editArcGoals(run.story.id, { arcNumber: 2, goals: [{ id: 'arc-2-x', text: 'Too early.', chapters: 30 }] }))
       .rejects.toThrow('no saved plan for that arc yet');
-    const inArc2 = await run.jumpTo(101, arcOneDone);
+    const inArc2 = await run.jumpTo(31, arcOneDone);
     await expect(inArc2.editArcGoals(run.story.id, arc1Edit)).rejects.toThrow('Arc 1 is complete');
     await inArc2.planNextArc(run.story.id, 'fixture');
-    await expect(inArc2.editArcGoals(run.story.id, { arcNumber: 2, goals: [{ id: 'arc-1-flood', text: 'Reuse.', chapters: 100 }] }))
+    await expect(inArc2.editArcGoals(run.story.id, { arcNumber: 2, goals: [{ id: 'arc-1-flood', text: 'Reuse.', chapters: 30 }] }))
       .rejects.toThrow('already belongs to another arc');
     const published = await setup({}, 'public');
     await expect(published.controller.editArcGoals(published.story.id, arc1Edit)).rejects.toThrow('only while the novel is private');
@@ -160,7 +160,7 @@ describe('HARNESS plans each arc when it begins', () => {
     await run.controller.generateNextChapter(run.story.id, 'fixture');
     expect(run.controller.snapshot().stories[0].arcGoalReviews?.[0].lockedAt).toBeTruthy();
 
-    const atArc2 = await run.jumpTo(101, arcOneDone.slice(0, 1).concat([{ ...arcOneDone[1], outcome: undefined as never }]));
+    const atArc2 = await run.jumpTo(31, arcOneDone.slice(0, 1).concat([{ ...arcOneDone[1], outcome: undefined as never }]));
     await atArc2.planNextArc(run.story.id, 'fixture');
     await atArc2.chooseChapterDirection(run.story.id, READER);
     await expect(atArc2.generateNextChapter(run.story.id, 'fixture')).rejects.toThrow("Set Arc 2's goals before it begins");
@@ -176,7 +176,7 @@ describe('HARNESS plans each arc when it begins', () => {
 
   it('says plainly when planning failed, and plans again on request', async () => {
     const run = await setup();
-    const atArc2 = await run.jumpTo(101, arcOneDone);
+    const atArc2 = await run.jumpTo(31, arcOneDone);
     run.arcOperation.mockRejectedValueOnce(new Error('The planner is busy.'));
     await expect(atArc2.planNextArc(run.story.id, 'fixture')).rejects.toThrow('The planner is busy.');
     expect(nextArcStep(atArc2.snapshot(), run.story.id)).toEqual({ kind: 'plan', arcNumber: 2, status: 'failed', message: 'The planner is busy.' });
@@ -191,7 +191,7 @@ describe('HARNESS plans each arc when it begins', () => {
     run.arcOperation.mockResolvedValueOnce(reply({ plan: arcTwoDraft, destinedEnding: ENDING, lookahead: [
       { arcNumber: 2, direction: 'Already planned.' }, { arcNumber: 3, direction: 'The valley rises.' }, { arcNumber: 4, direction: 'Lin reopens the archive.' }, { arcNumber: 5, direction: 'Past the end.' },
     ] }));
-    const atArc2 = await run.jumpTo(101, arcOneDone);
+    const atArc2 = await run.jumpTo(31, arcOneDone);
     await atArc2.planNextArc(run.story.id, 'fixture');
     expect(run.arcOperation.mock.calls[0][0].planning).toMatchObject({ plannedArcCount: 4, finalArc: false });
     expect(atArc2.snapshot().stories[0].arcLookahead).toEqual([{ arcNumber: 3, direction: 'The valley rises.' }, { arcNumber: 4, direction: 'Lin reopens the archive.' }]);
@@ -199,7 +199,7 @@ describe('HARNESS plans each arc when it begins', () => {
 
   it('stops at the end of the planned route instead of planning an arc beyond it', async () => {
     const run = await setup();
-    const past = await run.jumpTo(201);
+    const past = await run.jumpTo(61);
     await expect(past.generateNextChapter(run.story.id, 'fixture')).rejects.toThrow('route to the Destined Ending is complete');
     expect(nextArcStep(past.snapshot(), run.story.id)).toBeUndefined();
     await past.planNextArc(run.story.id, 'fixture');
@@ -208,11 +208,11 @@ describe('HARNESS plans each arc when it begins', () => {
 
   it('pauses a batch at an arc that waits on the reader instead of leaving it running', async () => {
     const run = await setup();
-    const atEnd = await run.jumpTo(100, arcOneDone.slice(0, 1));
+    const atEnd = await run.jumpTo(30, arcOneDone.slice(0, 1));
     await atEnd.startBatch(run.story.id, 'fixture', 3);
     const batch = atEnd.snapshot().batches[0];
     expect(batch.completedChapterIds).toHaveLength(1);
-    expect(batch).toMatchObject({ status: 'paused', failure: expect.stringContaining('Arc 2 begins with Chapter 101') });
+    expect(batch).toMatchObject({ status: 'paused', failure: expect.stringContaining('Arc 2 begins with Chapter 31') });
   });
 
   it('keeps the Destined Ending and arc count fixed across Foundation revisions', async () => {

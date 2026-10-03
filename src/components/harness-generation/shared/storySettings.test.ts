@@ -33,7 +33,7 @@ const japaneseWriting = (overrides: Partial<HarnessSkillManifest> = {}) => valid
   ...overrides,
 });
 
-const plan: ArcPlan = { arcNumber: 1, goals: [{ id: 'arc-1-gate', text: 'Reach the mountain gate.', chapters: 100 }] };
+const plan: ArcPlan = { arcNumber: 1, goals: [{ id: 'arc-1-gate', text: 'Reach the mountain gate.', chapters: 30 }] };
 const receipt = { provider: 'fixture', model: 'fixture', generatedAt: 'now', usage: { source: 'unavailable' as const } };
 const reply = (text: string) => JSON.stringify({
   paragraphs: [text], recap: `Recap: ${text}`, chapterFunction: 'progression',

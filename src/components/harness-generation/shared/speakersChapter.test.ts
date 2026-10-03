@@ -17,7 +17,7 @@ import { acceptHarnessModelResponse } from './responseAcceptance';
  * each line its voice.
  */
 
-const GOAL = { arcNumber: 1, goals: [{ id: 'arc-1-gate', text: 'Hold the river gate.', chapters: 100 }] };
+const GOAL = { arcNumber: 1, goals: [{ id: 'arc-1-gate', text: 'Hold the river gate.', chapters: 30 }] };
 const response = (rawProviderResponse: string): HarnessGenerationResponse => ({
   rawProviderResponse,
   providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: '2026-10-01T12:00:00.000Z', usage: { source: 'unavailable' } },

@@ -7,7 +7,6 @@ import type { ChapterDirectionChoice, HardPinInput, HarnessChapter, HarnessMissi
 import { isMediaPackEntitlementActive, mediaPackKey, type MediaPack, type MediaPackEntitlement, type MediaPackReference, type StoryMediaLoadoutSlot } from '../media/mediaPacks';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox, CreationButton as ManifestButton } from '@seihouse/sen/presentation';
 import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
-import { exportHarnessStory } from '@seihouse/sen/harness-generation';
 import { findFoundationRevision, findStory } from '@seihouse/sen/harness-generation';
 import { buildCanonicalStoryView } from '@seihouse/sen/harness-generation';
 import { GENERATION_PACKET_BUDGET, PACKET_SECTION_ORDER } from '@seihouse/sen/harness-generation';
@@ -20,6 +19,7 @@ import type { ReaderPreferenceStorage, ReaderStateRepository } from '@seihouse/s
 import { NovelBlueprintTab } from './NovelBlueprintTab';
 import { useLibraryStories } from '../stories/useLibraryStories';
 import { StoryPages } from '../stories/StoryPages';
+import { downloadHarnessStory } from '../stories/storyExport';
 import type { LoadingAgentPresentation } from '../manifestations/taskCard';
 import { type HarnessGenerationAttempt, type HarnessGenerationModelAdapter, type HarnessCorrectionKind, type HarnessSemanticEvent, type HarnessStory, type HarnessStoryMode, type HarnessSkillManifest, type HarnessSkillReference, type HarnessSkillSlotId, type HarnessStorySeedOption, type HarnessStorySeedSource, type HarnessWorkspaceState, type StoryFoundationInput } from '@seihouse/sen/harness-generation';
 
@@ -1399,14 +1399,7 @@ export function HarnessGenerationWorkspace({
   const download = () => {
     if (!state || !selectedStory) return;
     try {
-      const archive = exportHarnessStory(state, selectedStory.id);
-      const blob = new Blob([JSON.stringify(archive, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = `${selectedStory.title.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '') || 'harness-story'}.json`;
-      anchor.click();
-      window.setTimeout(() => URL.revokeObjectURL(url), 0);
+      downloadHarnessStory(state, selectedStory.id);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Harness story export failed.');
     }

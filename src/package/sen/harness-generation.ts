@@ -96,6 +96,30 @@ export { SEN_FATE_SURVIVAL_INSTRUCTIONS, SEN_FATE_SURVIVAL_SKILL } from '../../c
 export { SEN_READING_MODE_SKILLS } from '../../components/harness-generation/shared/readingModeSkills';
 export { SEN_SOUND_CUES_INSTRUCTIONS, SEN_SOUND_CUES_SKILL, presentSoundVocabulary } from '../../components/harness-generation/shared/soundCuesSkill';
 export { SEN_SPEAKERS_INSTRUCTIONS, SEN_SPEAKERS_SKILL } from '../../components/harness-generation/shared/speakersSkill';
+export {
+  HOLDINGS_SECTION_OTHER_CHARACTERS,
+  deriveHoldings,
+  holdingTargetKind,
+  holdingsSection,
+  namesNearlyMatch,
+  placeHoldingChanges,
+  readHoldingTag,
+  resolveHoldingChanges,
+  type CharacterHoldings,
+  type DeclaredCharacter,
+  type HeldThing,
+  type HoldingEvent,
+  type HoldingFlag,
+  type HoldingFlagKind,
+  type HoldingPassage,
+  type HoldingPlacement,
+  type HoldingsChapter,
+  type HoldingsState,
+  type KnownAbility,
+  type ReadHoldingTag,
+  type ResolvedHoldingChanges,
+} from '../../components/harness-generation/shared/holdings';
+export * from '../../narrative/holdings';
 export { createHarnessSenStory } from '../../components/harness-generation/shared/senAdapter';
 export * from '../../narrative/generation';
 export { HarnessReaderSession, type HarnessReaderWriting } from '../../components/harness-generation/development/HarnessReaderSession';

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { writtenChapter } from '../../../test-utils/writtenChapter';
 import { type HarnessGenerationRequest, type HarnessGenerationResponse } from '@seihouse/sen/harness-generation';
 import { handleHarnessGenerationHttp } from '../../../server/harness-generation/http';
 import type { HarnessTextGenerationRequest } from '../../../server/harness-generation/provider';
@@ -52,7 +53,7 @@ describe('Story Seed to Harness handoff', () => {
       arcOperation: vi.fn(),
       generate: vi.fn(async (request: HarnessGenerationRequest): Promise<HarnessGenerationResponse> => {
         requests.push(structuredClone(request));
-        return { rawProviderResponse: requests.length === 1 ? '' : JSON.stringify({ paragraphs: ['The traveler reaches the gate.'] }),
+        return { rawProviderResponse: requests.length === 1 ? '' : JSON.stringify(writtenChapter({ paragraphs: ['The traveler reaches the gate.'] })),
           providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: '2026-09-20T12:00:00Z', usage: { source: 'unavailable' } } };
       }),
     };
@@ -101,7 +102,7 @@ describe('Story Seed to Harness handoff', () => {
     const requests: HarnessGenerationRequest[] = [];
     const modelAdapter = { getServerInfo: async () => ({ configured: true, provider: 'fixture', defaultModel: 'fixture', models: [] }), arcOperation: vi.fn(), generate: vi.fn(async (request: HarnessGenerationRequest): Promise<HarnessGenerationResponse> => {
       requests.push(request);
-      return { rawProviderResponse: JSON.stringify({ paragraphs: ['The traveler waits at the gate.'] }),
+      return { rawProviderResponse: JSON.stringify(writtenChapter({ paragraphs: ['The traveler waits at the gate.'] })),
         providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: '2026-09-20T12:00:00Z', usage: { source: 'unavailable' } } };
     }) };
     // Supply the existing Arc Plan authority, so the test needs no planning call.
@@ -195,7 +196,7 @@ describe('Story Seed to Harness handoff', () => {
       arcOperation: vi.fn(),
       generate: vi.fn(async (request: HarnessGenerationRequest): Promise<HarnessGenerationResponse> => {
         requests.push(structuredClone(request));
-        return { rawProviderResponse: JSON.stringify({ paragraphs: ['Hero Once waits.'] }),
+        return { rawProviderResponse: JSON.stringify(writtenChapter({ paragraphs: ['Hero Once waits.'] })),
           providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: '2026-09-23T12:00:00Z', usage: { source: 'unavailable' } } };
       }),
     } });
@@ -273,7 +274,7 @@ describe('Story Seed to Harness handoff', () => {
     const input = createHarnessFoundationFromStorySeed(record);
     const repository = new InMemoryHarnessGenerationRepository();
     const response: HarnessGenerationResponse = {
-      rawProviderResponse: JSON.stringify({ prose: 'Mara waits at the sealed harbor gate.' }),
+      rawProviderResponse: JSON.stringify(writtenChapter({ prose: 'Mara waits at the sealed harbor gate.' })),
       providerReceipt: { provider: 'gemini', model: 'google/gemini-3.1-flash-lite',
         generatedAt: '2026-09-05T12:00:00.000Z', usage: { source: 'unavailable' } },
     };

@@ -29,6 +29,7 @@ import { useFollowNarration, type NarrationHighlight } from './useFollowNarratio
 import { useNextChapterWriter } from './useNextChapterWriter';
 import type { HarnessGenerationController } from '../shared/controller';
 import type { HarnessWorkspaceState } from '../../../narrative/generation';
+import { chapterTitleText } from '../../../narrative/chapterTitle';
 
 /** What the host's writing screen shows. */
 export interface HarnessReaderWriting {
@@ -367,7 +368,7 @@ const ChapterView = memo(function ChapterView({ chapter, blocks, locale, article
   return <article ref={articleRef} className="mt-6" data-chapter-number={chapter.chapterNumber} lang={locale} aria-labelledby={`harness-reader-chapter-${chapter.chapterNumber}`}>
     <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-500">Chapter {chapter.chapterNumber}</p>
     <h1 id={`harness-reader-chapter-${chapter.chapterNumber}`} data-read-aloud-title="" data-speaking={highlight === 'title' ? '' : undefined}
-      className={`mt-1 rounded font-display text-2xl text-white transition-colors sm:text-3xl ${highlight === 'title' ? 'bg-cyan-300/15' : ''}`}>{chapter.title}</h1>
+      className={`mt-1 rounded font-display text-2xl text-white transition-colors sm:text-3xl ${highlight === 'title' ? 'bg-cyan-300/15' : ''}`}>{chapterTitleText(chapter.title) || chapter.title}</h1>
     <TextHighlightEngine blocks={blocks} onBlocksChange={keepProse} editable={false} locale={locale} overlay={overlay}
       className="mt-6 font-serif text-[1.075rem] leading-8 text-neutral-200 [&_p]:mb-5"
       renderBlockText={block => {

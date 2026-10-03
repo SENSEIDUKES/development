@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { writtenChapter } from '../../../test-utils/writtenChapter';
 import { createHarnessSenStory } from '@seihouse/sen/harness-generation';
 import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
 import { type HarnessArcRequest, type HarnessGenerationRequest, type HarnessGenerationModelAdapter } from '@seihouse/sen/harness-generation';
@@ -18,7 +19,7 @@ const setup = async () => {
   }));
   const adapter: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ configured: true, provider: 'gemini', defaultModel: 'fixture', models: [] }),
-    generate: async request => { requests.push(request); return response(output); },
+    generate: async request => { requests.push(request); return response(writtenChapter(output)); },
     arcOperation,
   };
   const repository = new InMemoryHarnessGenerationRepository();
@@ -67,7 +68,7 @@ describe('HARNESS canonical arc integration', () => {
     await run.repository.save(state);
     const reloaded = new HarnessGenerationController({ repository: run.repository, modelAdapter: {
       getServerInfo: async () => ({ configured: true, provider: 'gemini', defaultModel: 'fixture', models: [] }),
-      generate: async () => response({ prose: 'unused' }),
+      generate: async () => response(writtenChapter({ prose: 'unused' })),
       arcOperation: run.arcOperation,
     } });
     await reloaded.hydrate();
@@ -196,7 +197,7 @@ describe('HARNESS canonical arc integration', () => {
     const reloaded = new HarnessGenerationController({ repository: new InMemoryHarnessGenerationRepository(saved), modelAdapter: {
       getServerInfo: async () => ({ configured: true, provider: 'gemini', defaultModel: 'fixture', models: [] }),
       arcOperation: run.arcOperation,
-      generate: async () => response({ prose: 'She defeated the invader.', arcCompletion: { goalId: 'arc-1-second', completed: true, evidence: 'She defeated the invader.' } }),
+      generate: async () => response(writtenChapter({ prose: 'She defeated the invader.', arcCompletion: { goalId: 'arc-1-second', completed: true, evidence: 'She defeated the invader.' } })),
     } });
     await reloaded.hydrate();
     await reloaded.generateNextChapter(run.story.id, 'fixture');
@@ -208,7 +209,7 @@ describe('HARNESS canonical arc integration', () => {
   it('rejects chapter generation when an adapter cannot create the required Arc Plan', async () => {
     const controller = new HarnessGenerationController({ repository: new InMemoryHarnessGenerationRepository(), modelAdapter: {
       getServerInfo: async () => ({ configured: true, provider: 'gemini', defaultModel: 'fixture', models: [] }),
-      generate: async () => response({ prose: 'Never called.' }),
+      generate: async () => response(writtenChapter({ prose: 'Never called.' })),
     } });
     await controller.hydrate();
     const story = await controller.createStory({ premise: 'A new world begins.' });

@@ -8,17 +8,19 @@ import { MAIN_CHARACTER_SPEAKER_TAG } from '../../../narrative/speech';
  * writer labelled each line's role); everyone else's is `[[@Name]]`. The
  * HARNESS removes the tags and finds the quoted lines; the Reader voices them.
  * The second example uses a placeholder, so no real name leans on the casting.
+ * It never mentions point of view: the Style skill chooses that, and the
+ * HARNESS keeps it (`CurrentStoryProjection.pointOfView`).
  */
 export const SEN_SPEAKERS_INSTRUCTIONS = `Speakers
 
-Every paragraph in which someone speaks begins with a speaker tag. When the main character speaks, the tag is always [[@${MAIN_CHARACTER_SPEAKER_TAG}]], whatever name the prose uses for them and even when the story is told in the first person. Anyone else's tag is [[@Name]], naming them exactly as Current Story Information names them, in that spelling even when the chapter is written in another language; anyone not listed there is named the way the prose names them. Put spoken words in quotation marks, “…” or the story language's own such as 「…」 or «…», never dashes. Start a new paragraph when the speaker changes; if a second person speaks within the same paragraph, put their own tag just before their words. Tags go only inside paragraphs, never in the title, recap or evidence. For example:
+Every paragraph in which someone speaks begins with a speaker tag. When the main character speaks, the tag is always [[@${MAIN_CHARACTER_SPEAKER_TAG}]], whatever name or pronoun the prose uses for them. Anyone else's tag is [[@Name]], naming them exactly as Current Story Information names them, in that spelling even when the chapter is written in another language; anyone not listed there is named the way the prose names them. Put spoken words in quotation marks, “…” or the story language's own such as 「…」 or «…», never dashes. Start a new paragraph when the speaker changes; if a second person speaks within the same paragraph, put their own tag just before their words. Tags go only inside paragraphs, never in the title, recap or evidence. For example:
 [[@${MAIN_CHARACTER_SPEAKER_TAG}]] “Hold the gate,” he said.
 [[@Name]] “It will not hold,” she said.`;
 
 /** SEN's bundled Speakers skill. It occupies the Speakers slot, which the HARNESS fills on every chapter. */
 export const SEN_SPEAKERS_SKILL: HarnessSkillManifest = {
   id: 'seihouse.sen-speakers',
-  version: '1.1.0',
+  version: '1.2.0',
   name: 'SEN Speakers',
   description: 'Tags who speaks each spoken line, the main character with their own tag, so the Reader can voice it.',
   slot: 'speakers',

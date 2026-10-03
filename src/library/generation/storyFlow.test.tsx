@@ -3,6 +3,7 @@ import { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { InMemoryHarnessGenerationRepository } from '../../test-utils/InMemoryHarnessGenerationRepository';
+import { writtenChapter } from '../../test-utils/writtenChapter';
 import { installAudioMediaStubs, renderWithDevAudio } from '../../test-utils/renderWithDevAudio';
 import { HarnessGenerationController, type HarnessGenerationModelAdapter, type HarnessGenerationRepository } from '@seihouse/sen/harness-generation';
 import type { ReaderStateRepository, ReaderStoryState } from '@seihouse/sen/reader-runtime';
@@ -25,11 +26,11 @@ const scriptedModel = () => {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [{ id: 'fixture', label: 'Fixture' }], defaultModel: 'fixture' }),
     generate: async () => {
       await gate;
-      return { rawProviderResponse: JSON.stringify({
+      return { rawProviderResponse: JSON.stringify(writtenChapter({
         title: 'Low Tide', paragraphs: ['The tide pulled back from the drowned gate.', 'Mara counted the bells that no longer rang.'],
         arcCompletion: { goalId: 'arc-1-name', completed: false, evidence: '' }, recap: 'Mara returns.', chapterFunction: 'progression',
         nextProgression: 'Mara climbs the bell tower.', nextWorldBuilding: 'The keeper explains the drowned law.', nextConflict: 'The tide wardens seize the causeway.',
-      }), providerReceipt: receipt };
+      })), providerReceipt: receipt };
     },
     recoverMemory,
     arcOperation: async () => ({ rawProviderResponse: JSON.stringify({ plan: GOAL, destinedEnding: 'Mara reclaims her name.' }), providerReceipt: receipt }),

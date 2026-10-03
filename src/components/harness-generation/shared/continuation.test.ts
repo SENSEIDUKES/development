@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import { HarnessCapabilityRegistry, resolveHarnessEntity, type HarnessCapabilityContext } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { writtenChapter } from '../../../test-utils/writtenChapter';
 import { createHarnessSenStory } from '@seihouse/sen/harness-generation';
 import { compileStoryInformationPacket } from './context';
 import { preserveSemanticEvents } from './responseAcceptance';
@@ -41,7 +42,7 @@ describe('Steered continuation and SEN boundaries', () => {
       arcOperation,
       generate: async input => {
         writes++; request = input;
-        return response({ prose, arcCompletion: { goalId: 'arc-1-goal', completed: false, evidence: '' } });
+        return response(writtenChapter({ prose, arcCompletion: { goalId: 'arc-1-goal', completed: false, evidence: '' } }));
       },
       recoverMemory: async () => response(extractions++ === 0 ? { memory: {
         characters: [{ description: 'Iven addresses Mara.', evidence: prose, facts: {}, subjects: [{ name: 'Iven', kind: 'character' }],
@@ -77,7 +78,7 @@ describe('Steered continuation and SEN boundaries', () => {
     expect(sen.memory?.worldRules).toContain('bell: Charges: 3 charges');
     // Paragraphs stay narration blocks: who speaks is the chapter's own speaker records, never a block type.
     expect(sen.arcs[0].chapters[0].blocks?.every(block => block.type === 'narration')).toBe(true);
-    expect(sen.arcs[0].chapters[0].generatedContent).toBe(prose);
+    expect(sen.arcs[0].chapters[0].generatedContent).toBe(writtenChapter({ prose }).prose);
     expect(writes).toBe(1);
   });
 
@@ -98,9 +99,9 @@ describe('Steered continuation and SEN boundaries', () => {
         requests.push(request);
         const n = request.immediateChapterRequest.chapterNumber;
         const relationship = n === 1 ? 'Enemy' : 'Ally';
-        return { rawProviderResponse: JSON.stringify({
+        return { rawProviderResponse: JSON.stringify(writtenChapter({
           prose: `Mara meets Iven. Iven is her ${relationship}. "We remember the burned bridge." Iven speaks as captain. Mara has ${n} sparks.`,
-        }), providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: new Date().toISOString(), usage: { source: 'unavailable' } } };
+        })), providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: new Date().toISOString(), usage: { source: 'unavailable' } } };
       },
       recoverMemory: async request => {
         const n = Number(/has (\d+) sparks/.exec(request.prose)![1]);
@@ -223,7 +224,7 @@ describe('Steered continuation and SEN boundaries', () => {
       arcOperation,
       generate: async () => {
         calls++;
-        return { rawProviderResponse: JSON.stringify({ prose: 'Mara has 0 sparks. Iven has 13 sparks.' }), providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: 'now', usage: { source: 'unavailable' } } };
+        return { rawProviderResponse: JSON.stringify(writtenChapter({ prose: 'Mara has 0 sparks. Iven has 13 sparks.' })), providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: 'now', usage: { source: 'unavailable' } } };
       },
       recoverMemory: async () => ({ rawProviderResponse: JSON.stringify({ events: [
         { description: 'The transfer completes.', details: { mechanics: { subject: 'Mara', name: 'Sparks', value: '0' } } },

@@ -6,6 +6,7 @@ import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import type { HarnessRuntime } from './ids';
 import { createEmptyHarnessWorkspaceState, readHarnessWorkspaceState } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { asWrittenChapter, writtenChapter } from '../../../test-utils/writtenChapter';
 import { HARNESS_GENERATION_SCHEMA_VERSION, type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessSemanticEvent, type HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
 
 const runtime = (): HarnessRuntime => {
@@ -38,11 +39,12 @@ const adapter = (...outputs: Array<HarnessGenerationResponse | Error>) => {
     try {
       const parsed = JSON.parse(next.rawProviderResponse) as { prose?: string; events?: unknown[] };
       if (parsed.events && parsed.prose) {
-        memoryByProse.set(parsed.prose, parsed.events);
-        return { ...next, rawProviderResponse: JSON.stringify({ ...parsed, events: undefined }) };
+        const written = writtenChapter({ ...parsed, events: undefined });
+        memoryByProse.set(written.prose!, parsed.events);
+        return { ...next, rawProviderResponse: JSON.stringify(written) };
       }
     } catch { /* plain prose fixtures pass through */ }
-    return next;
+    return asWrittenChapter(next);
   });
   const value: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [{ id: 'gemini-test', label: 'Gemini test' }], defaultModel: 'gemini-test' }),
@@ -296,7 +298,7 @@ describe('Harness Generation Phase 3 deterministic story harness', () => {
     let call = 0;
     const generate = vi.fn(async () => {
       call += 1;
-      if (call === 1) return response({ prose: 'First batch chapter.' });
+      if (call === 1) return asWrittenChapter(response({ prose: 'First batch chapter.' }));
       if (call === 2) return new Promise<HarnessGenerationResponse>(resolve => { resolveSecond = resolve; });
       throw new Error('Unexpected provider call.');
     });
@@ -312,7 +314,7 @@ describe('Harness Generation Phase 3 deterministic story harness', () => {
     for (let index = 0; index < 30 && generate.mock.calls.length < 2; index += 1) await Promise.resolve();
     const batchId = controller.snapshot().batches[0].id;
     await controller.requestBatchPause(batchId);
-    resolveSecond(response({ prose: 'Second batch chapter finishes the active call.' }));
+    resolveSecond(asWrittenChapter(response({ prose: 'Second batch chapter finishes the active call.' })));
     await running;
     expect(controller.snapshot().batches[0]).toMatchObject({ status: 'paused' });
     expect(controller.snapshot().chapters.map(chapter => chapter.chapterNumber)).toEqual([1, 2]);

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { createPack } from 'seihouse-productions-package';
 import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { writtenChapter } from '../../../test-utils/writtenChapter';
 import { type HarnessGenerationResponse } from '@seihouse/sen/harness-generation';
 import { handleHarnessGenerationHttp } from '../../../server/harness-generation/http';
 import { createHarnessSppSkill, inspectHarnessSpp, loadHarnessSppSkills, readHarnessSppText, saveHarnessSppSkill, SPP_SKILL_STORAGE_KEY } from './sppSkills';
@@ -55,7 +56,7 @@ describe('SPP intake through Harness skills', () => {
             expect(prompt.userPrompt).not.toContain(text.trim());
             expect(request.capaPrompt.skills[0].source).toMatchObject({ packageId: content.manifest.id, path });
             expect(JSON.stringify(request.storyInformation)).not.toContain(content.manifest.id);
-            return { rawProviderResponse: JSON.stringify({ prose: 'The courier caught the falling jade token before it struck the rain-soaked steps.' }),
+            return { rawProviderResponse: JSON.stringify(writtenChapter({ prose: 'The courier caught the falling jade token before it struck the rain-soaked steps.' })),
               providerReceipt: { provider: 'gemini', model: request.model, generatedAt: new Date().toISOString(), durationMs: 1, usage: { source: 'unavailable' } } };
           } }),
         });

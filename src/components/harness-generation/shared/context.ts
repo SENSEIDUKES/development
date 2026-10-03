@@ -2,6 +2,8 @@ import { validateHardPinInputs } from '../../../narrative/storyDirection';
 import { harnessArcContext, harnessStoryMode } from './arcState';
 import { projectCanonicalState } from './canonicalProjection';
 import { deriveHoldings, holdingsSection } from './holdings';
+import { storyPointOfView } from './pointOfView';
+import { protagonistNames } from './speakers';
 import { semanticReaderChanges } from './readerEdits';
 import { GENERATION_PACKET_BUDGET, estimatePacketTokens } from './packetBudget';
 import { cloneHarnessValue, defaultHarnessRuntime, type HarnessRuntime } from './ids';
@@ -15,8 +17,9 @@ const directionFocus = (direction: HarnessStory['nextChapterDirection']) =>
 
 /**
  * Current Story Information: reads the active Foundation's stable domain
- * fields into one compact projection. The Story Seed snapshot, storage
- * identifiers, and generation diagnostics stay out of it.
+ * fields into one compact projection, with the point of view the story
+ * opened in, read from its committed chapters. The Story Seed snapshot,
+ * storage identifiers, chapter prose and generation diagnostics stay out of it.
  */
 export const projectCurrentStory = (
   state: HarnessWorkspaceState,
@@ -51,6 +54,11 @@ export const projectCurrentStory = (
         } } : {}),
       }];
     });
+  const pointOfView = storyPointOfView(
+    state.chapters.filter(chapter => chapter.storyId === story.id),
+    protagonistNames({ cast: input.cast, identities: input.identities }),
+    story.originalLanguage,
+  );
   return {
     title: story.title,
     originalLanguage: story.originalLanguage,
@@ -66,6 +74,7 @@ export const projectCurrentStory = (
     ...(text(input.worldFacts) ? { worldFacts: input.worldFacts!.trim() } : {}),
     ...(input.cast?.length ? { cast: cloneHarnessValue(input.cast) } : {}),
     ...(input.identities?.length ? { identities: cloneHarnessValue(input.identities) } : {}),
+    ...(pointOfView ? { pointOfView } : {}),
     corrections,
   };
 };

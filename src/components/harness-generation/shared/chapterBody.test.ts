@@ -7,11 +7,13 @@ import {
   type HarnessGenerationResponse,
 } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { STOPPED_WRITE_REPLY, asWrittenChapter } from '../../../test-utils/writtenChapter';
 import {
   HARNESS_CHAPTER_TARGET_MIN_WORDS,
   HARNESS_CHAPTER_PARAGRAPH_RANGE,
   countHarnessWords,
   harnessChapterBody,
+  harnessFailedWrite,
   harnessChapterParagraphTarget,
   normalizeHarnessParagraphs,
 } from './chapterBody';
@@ -23,8 +25,8 @@ import type { HarnessRuntime } from './ids';
  *
  * `paragraphs` is the only model-authored chapter body; HARNESS derives the
  * prose and measures it, and the Reader shows one narration block per
- * paragraph. Short or unstructured output is always preserved and always
- * inspectable.
+ * paragraph. Short or unstructured output is preserved and inspectable; only
+ * a failed write, far below the chapter's size, is never saved as a chapter.
  */
 
 const runtime = (): HarnessRuntime => {
@@ -49,7 +51,7 @@ const adapter = (...outputs: HarnessGenerationResponse[]) => {
   const generate = vi.fn(async () => {
     const output = outputs.shift();
     if (!output) throw new Error('No test provider response remains.');
-    return output;
+    return asWrittenChapter(output);
   });
   const value: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({
@@ -120,12 +122,16 @@ describe('HARNESS chapter body', () => {
     // the same thing for a chapter written in the story's original language.
     expect(countHarnessWords('雨落在庭院里')).toBe(6);
     expect(countHarnessWords('Mara said 雨落')).toBe(4);
+    // Thai puts spaces between phrases, not words: its words are found by the language's own rules,
+    // so a whole Thai chapter is never mistaken for a failed write.
+    expect(countHarnessWords('ฉันไปตลาดเมื่อวานนี้ แล้วกลับบ้าน')).toBeGreaterThanOrEqual(8);
+    expect(countHarnessWords('Mara said ฉันไปตลาด')).toBeGreaterThanOrEqual(5);
 
     const body = harnessChapterBody(['One two three.', 'Four five.']);
     expect(body.metrics).toEqual({ wordCount: 5, paragraphCount: 2, meetsScaleTarget: false });
   });
 
-  it('preserves output below the scale target and marks it as failing, without rejecting it', () => {
+  it('preserves a short chapter below the scale target and marks it as failing', () => {
     const accepted = accept({ paragraphs: ['Short opening.', 'Shorter still.'] });
 
     expect(accepted.draft.prose).toBe('Short opening.\n\nShorter still.');
@@ -137,6 +143,31 @@ describe('HARNESS chapter body', () => {
     expect(full.draft.metrics.wordCount).toBeGreaterThanOrEqual(HARNESS_CHAPTER_TARGET_MIN_WORDS);
     expect(full.draft.metrics.meetsScaleTarget).toBe(true);
     expect(full.warnings.some(item => item.code === 'chapter_scale_below_target')).toBe(false);
+  });
+
+  it('refuses a failed write far below the chapter\'s size, and keeps a chapter that is only short', () => {
+    // The reply that ended the owner's Chapter 3: four paragraphs, two of them the writer's own notes.
+    const stopped = acceptHarnessModelResponse(STOPPED_WRITE_REPLY, 3, { minWords: HARNESS_CHAPTER_TARGET_MIN_WORDS });
+    expect(stopped).toEqual({ accepted: false, reason: 'The writer stopped after 104 words, far short of the 1,800 a chapter needs.', warnings: [] });
+    // The same in plain prose.
+    const plain = acceptHarnessModelResponse('The gate opened.\n\nShe stepped through.', 3, { minWords: HARNESS_CHAPTER_TARGET_MIN_WORDS });
+    expect(plain).toMatchObject({ accepted: false, reason: 'The writer stopped after 6 words, far short of the 1,800 a chapter needs.' });
+    // A quarter of the minimum is the line: 449 words is a failed write, 450 a short chapter, kept and flagged.
+    const words = (count: number) => Array.from({ length: count }, () => 'tide').join(' ');
+    expect(harnessFailedWrite({ wordCount: 449 }, 1_800)).toBe('The writer stopped after 449 words, far short of the 1,800 a chapter needs.');
+    expect(harnessFailedWrite({ wordCount: 450 }, 1_800)).toBeUndefined();
+    const short = acceptHarnessModelResponse(JSON.stringify({ paragraphs: [words(450)] }), 3, { minWords: HARNESS_CHAPTER_TARGET_MIN_WORDS });
+    expect(short.accepted).toBe(true);
+    expect(short.warnings.some(warning => warning.code === 'chapter_scale_below_target')).toBe(true);
+  });
+
+  it('keeps the writer\'s title without a chapter label, and numbers a title that was only the label', () => {
+    expect(accept({ title: 'Chapter 3: The Gutter Becomes a Front Line', paragraphs: ['The gutter flooded.'] }, 3).draft)
+      .toMatchObject({ title: 'The Gutter Becomes a Front Line', titleSource: 'model' });
+    const bare = accept({ title: 'Chapter 3', paragraphs: ['The gutter flooded.'] }, 3);
+    expect(bare.draft).toMatchObject({ title: 'Chapter 3', titleSource: 'harness-fallback' });
+    expect(bare.warnings.find(warning => warning.code === 'missing_title')?.message)
+      .toBe('The provider\'s title, “Chapter 3”, only numbered the chapter; the harness assigned Chapter 3.');
   });
 
   it('recovers a body from prose when the provider omits the paragraphs array', () => {
@@ -220,15 +251,16 @@ describe('HARNESS chapter body persistence', () => {
     const { controller, repository, storyId } = await generateChapter();
 
     const committed = controller.snapshot().chapters[0];
-    expect(committed.paragraphs).toHaveLength(3);
+    // The writer's three paragraphs, then the rest of the written chapter.
+    expect(committed.paragraphs).toHaveLength(4);
     expect(committed.prose).toBe(committed.paragraphs.join('\n\n'));
     const paragraphTarget = harnessChapterParagraphTarget(storyId, 1);
     expect(committed.metrics).toEqual({
-      wordCount: countHarnessWords(committed.prose), paragraphCount: 3, meetsScaleTarget: false, paragraphTarget,
+      wordCount: countHarnessWords(committed.prose), paragraphCount: 4, meetsScaleTarget: false, paragraphTarget,
     });
-    // Three paragraphs against a 50-paragraph target: kept, and the miss is flagged.
+    // Four paragraphs against a 50-paragraph target: kept, and the miss is flagged.
     expect(controller.snapshot().attempts[0].warnings.find(warning => warning.code === 'chapter_paragraphs_off_target')?.message)
-      .toBe(`The chapter has 3 paragraphs; the HARNESS asked for exactly ${paragraphTarget}. It is preserved as written.`);
+      .toBe(`The chapter has 4 paragraphs; the HARNESS asked for exactly ${paragraphTarget}. It is preserved as written.`);
 
     // Reload: a fresh controller over the same durable snapshot.
     const reloaded = new HarnessGenerationController({
@@ -251,6 +283,29 @@ describe('HARNESS chapter body persistence', () => {
     expect(readerChapter.generatedContent).toBe(committed.prose);
     expect(readerChapter.blocks?.map(block => [block.id, block.type, block.text])).toEqual(
       committed.paragraphs.map((text, index) => [`c1-p${index + 1}`, 'narration', text]));
+  });
+
+  it('never saves a failed write: the reply stays on the attempt, the story waits, and trying again writes the chapter', async () => {
+    const repository = new InMemoryHarnessGenerationRepository();
+    const provider = adapter();
+    // Not a written chapter: the writer stopped, so this reply is never made one.
+    provider.generate.mockResolvedValueOnce(response(STOPPED_WRITE_REPLY)).mockResolvedValueOnce(asWrittenChapter(response(chapterReply)));
+    const controller = new HarnessGenerationController({ repository, modelAdapter: provider.value, runtime: runtime() });
+    await controller.hydrate();
+    const story = await controller.createStory({ premise: 'A courier returns to the drowned city that erased her name.' });
+    await controller.generateNextChapter(story.id, 'google/gemini-3.1-flash-lite');
+
+    const failed = controller.snapshot().attempts[0];
+    expect(failed).toMatchObject({ stage: 'generation_failed', rawProviderResponse: STOPPED_WRITE_REPLY,
+      failure: { stage: 'response', message: 'The writer stopped after 104 words, far short of the 1,800 a chapter needs.' } });
+    expect(failed.acceptedDraft).toBeUndefined();
+    expect(controller.snapshot().chapters).toHaveLength(0);
+    expect(controller.snapshot().stories[0].head.nextChapterNumber).toBe(1);
+
+    const retried = await controller.retryModelRequest(failed.id);
+    expect(retried.chapters).toHaveLength(1);
+    expect(retried.chapters[0].paragraphs[0]).toBe('Mara reached the causeway at dusk, and the lanterns were already lit.');
+    expect(retried.stories[0].head.nextChapterNumber).toBe(2);
   });
 
   it('replays the same accepted result from the frozen raw response', async () => {
@@ -279,8 +334,8 @@ describe('HARNESS chapter body persistence', () => {
 
     const retried = await controller.retryModelRequest(failed.id);
     const chapter = retried.chapters.at(-1)!;
-    expect(chapter.paragraphs).toHaveLength(3);
+    expect(chapter.paragraphs).toHaveLength(4);
     expect(chapter.prose).toBe(chapter.paragraphs.join('\n\n'));
-    expect(chapter.metrics.paragraphCount).toBe(3);
+    expect(chapter.metrics.paragraphCount).toBe(4);
   });
 });

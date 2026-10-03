@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { HarnessGenerationController, arcGoalEditState, nextArcStep, type HarnessArcRequest, type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type StoryFoundationInput } from '@seihouse/sen/harness-generation';
 import { type ArcPlan } from '@seihouse/sen/arc-goals';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { writtenChapter } from '../../../test-utils/writtenChapter';
 import { buildHarnessArcPrompt, buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
 
 const ENDING = 'ENDING_Lin rebuilds the drowned archive and reopens it to the valley.';
@@ -23,7 +24,7 @@ const setup = async (overrides: Partial<StoryFoundationInput> = {}, visibility?:
   const arcOperation = vi.fn(async (_request: HarnessArcRequest) => reply({ plan: arcTwoDraft, lookahead: [], destinedEnding: ENDING }));
   const modelAdapter: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ configured: true, provider: 'fixture', defaultModel: 'fixture', models: [] }),
-    generate: async request => { requests.push(structuredClone(request)); return reply(output); },
+    generate: async request => { requests.push(structuredClone(request)); return reply(writtenChapter(output)); },
     arcOperation,
   };
   const repository = new InMemoryHarnessGenerationRepository();

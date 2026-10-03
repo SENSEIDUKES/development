@@ -15,6 +15,7 @@ import {
 } from '@seihouse/sen/harness-generation';
 import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { REST_OF_CHAPTER, writtenChapterReply } from '../../../test-utils/writtenChapter';
 import { acceptHarnessModelResponse } from './responseAcceptance';
 
 /**
@@ -38,7 +39,7 @@ const response = (rawProviderResponse: string): HarnessGenerationResponse => ({
 const adapter = (...raws: string[]) => {
   const generate = vi.fn(async (_request: HarnessGenerationRequest) => {
     const raw = raws.length > 1 ? raws.shift()! : raws[0];
-    return response(raw);
+    return response(writtenChapterReply(raw));
   });
   const value: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
@@ -118,6 +119,7 @@ describe('HARNESS Sound Cues through marks', () => {
       'She drew her sword and waited for the rain to stop.',
       'Thunder rolled over the tiled roofs.',
       'The debt collectors of the eastern ward all arrived at once.',
+      REST_OF_CHAPTER,
     ]);
     // Nothing a reader, memory or the next chapter sees carries a mark.
     expect(JSON.stringify(state.chapters)).not.toContain('[[');
@@ -188,7 +190,7 @@ describe('HARNESS Sound Cues through marks', () => {
     await controller.generateNextChapter(story.id, 'fixture');
 
     const chapter = controller.snapshot().chapters[0];
-    expect(chapter.paragraphs).toEqual(['雨の中、林は剣を抜いた。', '獣が吠えた。']);
+    expect(chapter.paragraphs).toEqual(['雨の中、林は剣を抜いた。', '獣が吠えた。', REST_OF_CHAPTER]);
     expect(chapter.soundCues?.map(cue => [cue.anchor.blockId, cue.anchor.selectedText, cue.payload.sound])).toEqual([
       ['c1-p1', '剣を抜いた', 'blade drawn'],
       ['c1-p2', '吠えた', 'beast roar'],

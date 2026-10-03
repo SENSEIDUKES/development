@@ -1008,6 +1008,8 @@ export class HarnessGenerationController {
       soundVocabulary: attempt.capaPrompt.soundVocabulary,
       locale: findStory(this.state, attempt.storyId)?.originalLanguage,
       paragraphTarget: attempt.immediateChapterRequest.chapterScale.paragraphs,
+      // A reply far below the size asked for is a failed write: it is never committed, and the raw reply stays on the attempt.
+      minWords: attempt.immediateChapterRequest.chapterScale.minWords,
       // Whose lines are the protagonist's comes from what the writer was shown, so a retry decides the same.
       protagonistNames: protagonistNames(attempt.storyInformation.currentStory, attempt.storyInformation.canonicalState.characters),
       speakersExpected: attempt.capaPrompt.skills.some(skill => skill.slot === 'speakers' && skill.authoring),

@@ -18,7 +18,7 @@ import { defaultHarnessRuntime } from './ids';
 
 describe('SEN Speakers skill', () => {
   it('teaches the main character\'s own tag and the name tag the HARNESS reads, with a placeholder name', () => {
-    expect(SEN_SPEAKERS_SKILL).toMatchObject({ id: 'seihouse.sen-speakers', version: '1.1.0', slot: 'speakers', applications: ['generation'] });
+    expect(SEN_SPEAKERS_SKILL).toMatchObject({ id: 'seihouse.sen-speakers', version: '1.2.0', slot: 'speakers', applications: ['generation'] });
     expect(SEN_SPEAKERS_INSTRUCTIONS).toContain('[[@MC]]');
     expect(SEN_SPEAKERS_INSTRUCTIONS).toContain('[[@Name]]');
     // Its own examples read as one tag on one spoken line each: the main character's, then anyone else's.
@@ -29,7 +29,9 @@ describe('SEN Speakers skill', () => {
     expect(isMainCharacterTag(theirs.speakers[0].name)).toBe(false);
     expect(SEN_SPEAKERS_INSTRUCTIONS).toMatch(/never dashes/);
     expect(SEN_SPEAKERS_INSTRUCTIONS).toMatch(/new paragraph when the speaker changes/);
-    expect(SEN_SPEAKERS_INSTRUCTIONS).toMatch(/the tag is always \[\[@MC\]\], whatever name the prose uses for them and even when the story is told in the first person/);
+    expect(SEN_SPEAKERS_INSTRUCTIONS).toMatch(/the tag is always \[\[@MC\]\], whatever name or pronoun the prose uses for them\./);
+    // Point of view is the Style skill's choice, kept by the HARNESS: this skill never leans on it.
+    expect(SEN_SPEAKERS_INSTRUCTIONS).not.toMatch(/first person|first-person|third person|third-person|point of view/i);
   });
 
   it('never speaks of the retired dialogue contract, Sound Cues or numbered marks, so the guards on them stay true', () => {
@@ -45,7 +47,7 @@ describe('SEN Speakers skill', () => {
     story.skillLoadout = { author: { id: SEN_NOVEL_AUTHOR_SKILL.id, version: SEN_NOVEL_AUTHOR_SKILL.version } };
     const bundled = freezeHarnessSkillLoadout(story, createHarnessSkillCatalog(includeBundledHarnessSkills([])), 'now');
     expect(bundled.skills.map(skill => skill.slot)).toEqual(['author', 'speakers', 'holdings']);
-    expect(assembleCapaPrompt(bundled).text).toContain('CAPA SKILL [Speakers] — SEN Speakers v1.1.0');
+    expect(assembleCapaPrompt(bundled).text).toContain('CAPA SKILL [Speakers] — SEN Speakers v1.2.0');
     // A host whose catalog lacks the skill writes the chapter without speaker tags.
     const minimal = freezeHarnessSkillLoadout(story, createHarnessSkillCatalog([SEN_NOVEL_AUTHOR_SKILL]), 'now');
     expect(minimal.skills.map(skill => skill.slot)).toEqual(['author']);

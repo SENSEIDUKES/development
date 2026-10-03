@@ -637,6 +637,9 @@ export interface HarnessProviderReceipt {
   usage: HarnessUsageReceipt;
 }
 
+/** How a story's narration tells the main character: as "I", or by their name. */
+export type NarrativePointOfView = 'first-person' | 'third-person';
+
 /**
  * Current Story Information: the compact, model-facing projection of the
  * active Foundation. It reads stable domain fields (a visible "Core Premise"
@@ -659,6 +662,13 @@ export interface CurrentStoryProjection {
   worldFacts?: string;
   cast?: NonNullable<HarnessEventDetails['character']>[];
   identities?: Array<{ name: string; aliases?: string[]; kind: 'character' | 'location-world' | 'faction'; evidence: string }>;
+  /**
+   * The point of view the story opened in, read from its earliest committed
+   * chapter that shows one clearly, so every later chapter keeps it. Absent
+   * before the first chapter (the Style skill chooses) and when no chapter
+   * shows one clearly.
+   */
+  pointOfView?: NarrativePointOfView;
   /** Explicit author corrections, newest first, compacted to their meaning. */
   corrections: Array<{
     kind: HarnessCorrectionKind;

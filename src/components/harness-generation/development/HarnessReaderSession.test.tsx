@@ -6,6 +6,7 @@ import { createLibraryMediaPort } from '@seihouse/library/media';
 import { LIBRARY_BASE_MEDIA } from '../../../host/media/libraryCatalog';
 import { createRoot } from '../../../test-utils/createReaderRoot';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { STOPPED_WRITE_REPLY, writtenChapter } from '../../../test-utils/writtenChapter';
 import { installAudioMediaStubs, renderWithDevAudio } from '../../../test-utils/renderWithDevAudio';
 import { HarnessGenerationController, HarnessReaderSession, type HarnessGenerationModelAdapter, type HarnessReaderWriting } from '@seihouse/sen/harness-generation';
 import type { ReadAloudVoicePicks, ReaderPreferenceStorage, ReaderStateRepository, ReaderStoryState } from '@seihouse/sen/reader-runtime';
@@ -14,12 +15,12 @@ import { installFakeSpeechSynthesis, type FakeSpeechSynthesis } from '../../../t
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const GOAL = { arcNumber: 1, goals: [{ id: 'arc-1-name', text: 'Reclaim her name.', chapters: 30 }] };
-const reply = (title: string, paragraphs: string[], soundCues: unknown[] = []) => JSON.stringify({
+const reply = (title: string, paragraphs: string[], soundCues: unknown[] = []) => JSON.stringify(writtenChapter({
   title, paragraphs, soundCues,
   arcCompletion: { goalId: 'arc-1-name', completed: false, evidence: '' },
   recap: `${title}.`, chapterFunction: 'progression',
   nextProgression: 'Mara climbs the bell tower.', nextWorldBuilding: 'The keeper explains the drowned law.', nextConflict: 'The tide wardens seize the causeway.',
-});
+}));
 // The writer marks the words where a sound happens; the HARNESS places the cue there.
 const CHAPTERS = [
   reply('Low Tide', ['The tide pulled back from the drowned gate.', 'Mara froze as [[1|the beast roared]] beyond the seawall. Nothing answered it.', 'Salt dried white on the courier seal.'],
@@ -29,9 +30,8 @@ const CHAPTERS = [
 const media = createLibraryMediaPort({ registered: [], entitlements: [], base: LIBRARY_BASE_MEDIA });
 const receipt = { provider: 'gemini' as const, model: 'test-model', generatedAt: '2026-10-01T12:00:00.000Z', usage: { source: 'unavailable' as const } };
 
-/** A model that answers with the next scripted chapter; `hold()` keeps the next answer until released. */
-const scriptedProvider = () => {
-  const replies = [...CHAPTERS];
+/** A model that answers with the next scripted reply; `hold()` keeps the next answer until released. */
+const scriptedProvider = (replies = [...CHAPTERS]) => {
   let gate: Promise<void> = Promise.resolve();
   const generate = vi.fn(async () => {
     await gate;
@@ -57,9 +57,9 @@ class MemoryReaderStateRepository implements ReaderStateRepository {
   async save(state: ReaderStoryState) { this.records.set(state.storyId, structuredClone(state)); }
 }
 
-const story = async ({ written = 0 } = {}) => {
+const story = async ({ written = 0, replies }: { written?: number; replies?: string[] } = {}) => {
   const harness = new InMemoryHarnessGenerationRepository();
-  const model = scriptedProvider();
+  const model = scriptedProvider(replies);
   const controller = new HarnessGenerationController({ repository: harness, modelAdapter: model.adapter, media });
   await controller.hydrate();
   const created = await controller.createStory({ premise: 'A courier returns to the drowned city that erased her name.',
@@ -120,10 +120,10 @@ describe('The HARNESS Reader', { timeout: 20_000 }, () => {
     const readerState = new MemoryReaderStateRepository();
     await mount(<Host controller={controller} storyId={storyId} readerState={readerState} />);
 
-    // One engine paragraph per HARNESS paragraph, on the chapter's own block ids.
+    // One engine paragraph per HARNESS paragraph, on the chapter's own block ids (the fourth is the rest of the chapter).
     const first = chapterOnScreen(1)!;
     expect(first.querySelector('h1')!.textContent).toBe('Low Tide');
-    expect([...first.querySelectorAll('[data-sen-text-block]')].map(block => block.getAttribute('data-sen-text-block'))).toEqual(['c1-p1', 'c1-p2', 'c1-p3']);
+    expect([...first.querySelectorAll('[data-sen-text-block]')].map(block => block.getAttribute('data-sen-text-block'))).toEqual(['c1-p1', 'c1-p2', 'c1-p3', 'c1-p4']);
     // The Sound Cue sits on the words the writer marked; no mark is left in the prose.
     expect(first.querySelector('[data-cue-annotation]')!.getAttribute('data-cue-annotation')).toBe('the beast roared');
     expect(first.textContent).not.toContain('[[');
@@ -170,6 +170,21 @@ describe('The HARNESS Reader', { timeout: 20_000 }, () => {
     // The closing screen keeps the number of the chapter it was writing.
     expect(seen.at(-1)).toEqual({ active: false, chapterNumber: 1 });
     expect(buttonBy(byLabel('Next Chapter: Write Chapter 2'))).toBeTruthy();
+  });
+
+  it('a write that stops far short of a chapter saves nothing, says so, and the reader tries again', async () => {
+    const { controller, storyId } = await story({ replies: [STOPPED_WRITE_REPLY, ...CHAPTERS] });
+    await mount(<Host controller={controller} storyId={storyId} />);
+
+    await click(byLabel('Next Chapter: Write Chapter 1'), 'Write Chapter 1');
+    expect(chapterOnScreen(1)).toBeNull();
+    expect(container.querySelector('[role="alert"]')!.textContent)
+      .toBe('Chapter 1 was not saved. The writer stopped after 104 words, far short of the 1,800 a chapter needs. You can try again.');
+    expect(container.textContent).not.toContain('Need fix tag syntax');
+
+    await click(byLabel('Next Chapter: Write Chapter 1'), 'Write Chapter 1');
+    expect(chapterOnScreen(1)!.textContent).toContain('The tide pulled back from the drowned gate.');
+    expect(container.querySelector('[role="alert"]')).toBeNull();
   });
 
   it('Start Story begins Chapter 1 as the Reader opens, once', async () => {

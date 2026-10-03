@@ -3,6 +3,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { REST_OF_CHAPTER, asWrittenChapter } from '../../../test-utils/writtenChapter';
 import { HarnessGenerationController, harnessArcContext, type HarnessGenerationModelAdapter } from '@seihouse/sen/harness-generation';
 import { HarnessGenerationWorkspace } from '@seihouse/library/generation';
 import { type ArcPlan } from '@seihouse/sen/arc-goals';
@@ -18,11 +19,11 @@ const reply = (body: unknown) => ({ rawProviderResponse: JSON.stringify(body), p
 
 const modelAdapter: HarnessGenerationModelAdapter = {
   getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [{ id: 'fixture', label: 'Fixture' }], defaultModel: 'fixture' }),
-  generate: vi.fn(async () => reply({
+  generate: vi.fn(async () => asWrittenChapter(reply({
     title: 'Ashes', paragraphs: ['Yi Chen climbed toward the Azure Sect gate.'], arcCompletion: { goalId: 'arc-1-gate', completed: false, evidence: '' },
     recap: 'Yi Chen reached the gate at dusk.', chapterFunction: 'worldBuilding',
     nextProgression: 'Yi Chen enters the outer court.', nextWorldBuilding: 'The archives reveal the founder’s oath.', nextConflict: 'A rival disciple challenges Yi Chen.',
-  })),
+  }))),
   arcOperation: vi.fn(async () => reply({ plan, destinedEnding: 'Yi Chen leads the Azure Sect to glory.' })),
 };
 
@@ -126,7 +127,8 @@ describe('HARNESS story-direction sources', () => {
     await act(async () => button('Save recap').click());
     const saved = repository.snapshot().chapters[0];
     expect(saved.recap).toMatchObject({ text: 'Author recap: the gate opened.', source: 'author' });
-    expect(saved.prose).toBe('Yi Chen climbed toward the Azure Sect gate.');
+    // Editing the recap never touches the chapter.
+    expect(saved.prose).toBe(`Yi Chen climbed toward the Azure Sect gate.\n\n${REST_OF_CHAPTER}`);
     expect(container.querySelector('[data-testid="harness-recap-1"]')!.textContent).toContain('edited by author');
   });
 });

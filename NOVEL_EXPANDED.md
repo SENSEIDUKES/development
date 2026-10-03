@@ -291,7 +291,7 @@ when its words change. That means:
   right, so its categories, and what the model is told to document, can be designed
   on purpose.
 
-## Where we are (2026-10-01)
+## Where we are (2026-10-03)
 
 The current implementation status, and the only section that says what is built.
 Update it whenever it changes.
@@ -311,12 +311,14 @@ Update it whenever it changes.
     Protagonist voice for the main character's spoken lines, the Side voice for
     everyone else's. The sentence being spoken is lit and the page follows it.
     **Reader Settings** has one section, Narration (the three voices and the
-    speed, remembered on the device for each story language). No Codex, Mind
-    Palace, reader translation or read marks.
+    speed, remembered on the device for each story language). **Holdings**
+    lists what each character has now, for checking the chapters (below). No
+    Codex, Mind Palace, reader translation or read marks.
   - **The Aura Veil has two screens:** one narrative manifestation and one media
     reveal. The narrative one shows while a chapter is written.
   - **The memory call after each chapter is off** in the Library; it runs only
-    on request until the Codex returns.
+    on request until the tag records replace it, and then it is deleted.
+    Holdings never use it: the writer tags them in the same reply.
   - **The NovelExpanded app has its own address, `/app/`**, linked from the
     Workshop home. It shows only the core application spine: Home → Create
     (Story Seed and World Blueprint) → Story View (World Info) → Reader. It
@@ -339,10 +341,24 @@ Update it whenever it changes.
     each spoken line (`[[@MC]]` for the main character, `[[@Name]]` for anyone
     else), and the HARNESS records whether it is the main character. That is what gives Listen its three voices. Chapters
     written before this read every quoted line in the Side voice.
+  - **Holdings, the first information tags:** what each character has, uses,
+    knows and is. Every chapter, the writer reads the Holdings section (the
+    main character first), uses only what is there, and tags each change where
+    it happens (`[[gained: MC | Thing]]`, `lost`, `equipped`, `unequipped`,
+    `learning`, `learned`, `improved`, `sealed`, `unsealed`, `rank`, and `has`
+    or `knows` the first time the story shows something already held). It ends
+    its reply with the main character's closing list. Each name becomes a Codex
+    entry with an app-made ID; plain rules flag what cannot be true; nothing is
+    stored that could count twice. The Reader's **Holdings** page shows it all,
+    each change linked to its passage, with the checks worth testing. Chapters
+    written before this have nothing recorded. The tag system is defined in
+    [the vocabulary](./src/components/harness-generation/ARCHITECTURE_VOCABULARY.md#the-tag-system-the-tiny-sen-language).
 - **Not tested yet:**
   - real generation with a real model on the Vercel preview: a real Blueprint
     (Arc 1 only, filled slots), a real arc planned at a new arc, and real
     speaker tags;
+  - holdings with a real model: the 10-chapter test, comparing what the
+    chapters show against the Holdings page;
   - Listen on real phones (iPhone Safari, Android Chrome), whose voices differ
     from device to device.
 - **Not yet as [The World Blueprint](#the-world-blueprint) describes:**

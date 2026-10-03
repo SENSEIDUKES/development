@@ -360,9 +360,9 @@ export const workshopEntries: WorkshopEntry[] = [
     owner: 'sen',
     status: 'active',
     title: 'Harness Generation',
-    description: 'Standalone checkpoint-first novel core: a premise-first Story Foundation, one model call per chapter written in the tiny SEN language (narration plus Sound Cues the writer marks on its own words), independent IndexedDB persistence, tolerant prose acceptance, semantic-event ledger, and continuity directed one chapter at a time from the Reader\'s Fate page, in Regular Reader or Fate Survival mode. A story opens on its World Info page; Start Story writes Chapter 1 under the Aura Veil in a Reader on the Text Highlight Engine. Listen reads chapters aloud in three voices (Narrator, Protagonist, Side) with the spoken sentence lit, from the speakers the writer tags.',
+    description: 'Standalone checkpoint-first novel core: a premise-first Story Foundation, one model call per chapter written in the tiny SEN language (narration plus Sound Cues the writer marks on its own words), independent IndexedDB persistence, tolerant prose acceptance, semantic-event ledger, and continuity directed one chapter at a time from the Reader\'s Fate page, in Regular Reader or Fate Survival mode. A story opens on its World Info page; Start Story writes Chapter 1 under the Aura Veil in a Reader on the Text Highlight Engine. Listen reads chapters aloud in three voices (Narrator, Protagonist, Side) with the spoken sentence lit, from the speakers the writer tags. Holdings: the writer reads what each character has, uses only that, and tags every change; plain rules check it, and the Reader\'s Holdings page shows it with the passage behind each change.',
     category: 'other',
-    version: 'v1.4',
+    version: 'v1.5',
     source: {
       repository: 'SENSEIDUKES/development',
       path: 'src/components/harness-generation/',

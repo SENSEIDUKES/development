@@ -254,6 +254,8 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     await typeInto(sheet()!.querySelector('input[type="password"]')!, 'visit-token');
     await click(buttonByText('Continue', sheet()!), 'Continue', 300);
     expect(requestWorldBlueprint).toHaveBeenCalledTimes(1);
+    // The Blueprint is written by the model chapters are written with.
+    expect((requestWorldBlueprint.mock.calls[0] as unknown[])[3]).toBe('fixture');
 
     // Leave Create for Home, then come back for another Blueprint.
     await act(async () => { window.history.back(); });

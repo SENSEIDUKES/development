@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ARC_LENGTH, MAX_ROADMAP_ARCS } from '@seihouse/sen/arc-goals';
+import { ARC_LENGTH, STORY_LENGTH_ARCS } from '@seihouse/sen/arc-goals';
 import { Hourglass, Milestone, Target, Pin } from 'lucide-react';
 import { HARD_PIN_LIMIT, HARD_PIN_TEXT_LIMIT, type StorySeedInput, type FunSettingLevel } from '@seihouse/sen/story-seed';
 import { getSeedSection } from '../seedSections';
@@ -24,7 +24,7 @@ const readStoryLength = (value: string): number | undefined | null => {
   const trimmed = value.trim();
   if (!trimmed) return undefined;
   const count = Number(trimmed);
-  return Number.isInteger(count) && count >= 1 && count <= MAX_ROADMAP_ARCS ? count : null;
+  return Number.isInteger(count) && count >= STORY_LENGTH_ARCS.min && count <= STORY_LENGTH_ARCS.max ? count : null;
 };
 
 type FunSettingKey = 'faceSlap' | 'plotArmor' | 'recognition';
@@ -121,16 +121,14 @@ export const ArcWorkspace = ({ seed, updateSeed, showActiveArcGoal = true, showS
         onChange={value => updateSeed(patchWorldFoundations({ destinedEnding: value }))} rows={3} />
       {showStoryLength && <div>
         <LibraryTextBox id="story-length-input" label="Story Length (arcs)" icon={Milestone}
-          type="number" min={1} max={MAX_ROADMAP_ARCS} step={1} inputMode="numeric"
+          type="number" min={STORY_LENGTH_ARCS.min} max={STORY_LENGTH_ARCS.max} step={1} inputMode="numeric"
           helpText={`How many arcs of ${ARC_LENGTH} chapters the story takes to reach its Destined Ending. Leave it blank and the World Blueprint suggests a length you can change.`}
           value={lengthText} invalid={typedLength === null}
-          error={typedLength === null ? `Choose a whole number of arcs from 1 to ${MAX_ROADMAP_ARCS}.` : undefined}
+          error={typedLength === null ? `Choose a whole number of arcs from ${STORY_LENGTH_ARCS.min} to ${STORY_LENGTH_ARCS.max}.` : undefined}
           onChange={changeLength} />
         {typeof typedLength === 'number' && (
           <p className="mt-2 text-xs text-neutral-400" data-testid="story-length-summary">
-            {arcsLabel(typedLength)} · {(typedLength * ARC_LENGTH).toLocaleString('en-US')} chapters. {typedLength === 1
-              ? 'Arc 1 is the whole story and reaches the Destined Ending.'
-              : `Arc ${typedLength}, the final arc, reaches the Destined Ending.`}
+            {arcsLabel(typedLength)} · {(typedLength * ARC_LENGTH).toLocaleString('en-US')} chapters. Arc {typedLength}, the final arc, reaches the Destined Ending.
           </p>
         )}
       </div>}

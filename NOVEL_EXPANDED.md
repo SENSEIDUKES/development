@@ -332,7 +332,9 @@ Update it whenever it changes.
     Create. `npm run check:app` fails the build if it reaches an old system
     ([`src/novel-expanded/README.md`](./src/novel-expanded/README.md)).
   - **Story Length is set from the start:** the Story Seed's ARC page asks how many
-    arcs of 30 chapters the story should run (1 to 100); left blank, the World Blueprint suggests one.
+    arcs of 30 chapters the story should run, 10 to 40 (300 to 1,200 chapters); left
+    blank, the World Blueprint suggests one in that range, written by the same model
+    the chapters are.
   - **Story Language and Reading Mode come from the Story Seed:** chapters are
     written in the story's language, one of 11 today, and Clear Reading, Easy Read
     or Literal Reading loads SEN's matching Accessibility skill on every chapter.

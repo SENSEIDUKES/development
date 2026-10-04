@@ -30,10 +30,10 @@ export const PACKAGE_TARGETS = {
       '@seihouse/sen/manifestations': ['ManifestationReveal'],
       '@seihouse/sen/motion-picture': ['MotionPicture'],
       '@seihouse/sen/audio': ['parseAudioCues', 'createMediaCatalog', 'placeSoundCues', 'NarrativeAudioProvider'],
-      '@seihouse/sen/story-seed': ['StoryFoundationEditor', 'createEmptyStorySeedInput', 'parseStorySeedJson'],
+      '@seihouse/sen/story-seed': ['StoryFoundationEditor', 'createEmptyStorySeedInput', 'parseStorySeedJson', 'describeStoryLengthProblem'],
       '@seihouse/sen/generation': ['readMarks', 'TAG_WORDS'],
       '@seihouse/sen/harness-generation': ['HarnessGenerationController', 'createHarnessSenStory', 'HarnessReaderSession', 'SEN_SPEAKERS_SKILL', 'SEN_HOLDINGS_SKILL', 'SEN_SOUND_CUES_SKILL', 'HARNESS_TAG_RULES', 'deriveHoldings', 'holdingsSection', 'HoldingsPage', 'harnessFailedWrite', 'chapterTitleText'],
-      '@seihouse/sen/arc-goals': ['ARC_LENGTH'],
+      '@seihouse/sen/arc-goals': ['ARC_LENGTH', 'STORY_LENGTH_ARCS'],
     },
     smokeTypes: `
       import type { PassageSelection, TextHighlightBlock, TextHighlightEngineProps } from '@seihouse/sen/text-highlight-engine';

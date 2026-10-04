@@ -15,7 +15,8 @@ import {
   generateWorldBlueprint,
   type WorldBlueprintModelProvider,
 } from "./generate";
-import { missingKeyMessage } from "../model-router/catalog";
+import { missingKeyMessage, providerKey, resolveChapterModelRoute, resolveReasoningLevel, textModelProvider } from "../model-router/catalog";
+import { ModelRouterError } from "@seihouse/library/model-router-server";
 
 export interface StorySeedBlueprintHttpRequest {
   method?: string;
@@ -33,6 +34,8 @@ export interface StorySeedBlueprintHttpDependencies {
   environment: StorySeedBlueprintEnvironment;
   providerFactory?: (apiKey: string, model: string) => WorldBlueprintModelProvider;
   onError?: (error: unknown) => void;
+  /** Called once per Blueprint written: which model wrote it and how long it took. Never the Seed. */
+  onAnswer?: (answer: { model: string; durationMs: number }) => void;
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -44,11 +47,17 @@ const errorResponse = (status: number, error: string): StorySeedBlueprintHttpRes
   headers: { "Cache-Control": "no-store" },
 });
 
+/** A Blueprint request: the Seed, and the chapter model the reader chose, with its reasoning level. */
+interface BlueprintHttpPayload extends BlueprintGenerationPayload {
+  model?: string;
+  reasoningLevel?: unknown;
+}
+
 /**
  * One operation: a whole Blueprint, which plans Arc 1 for a story of the
  * Seed's Story Length, or a realistic length when the Seed leaves it blank.
  */
-const parseRequest = (body: unknown): BlueprintGenerationPayload => {
+const parseRequest = (body: unknown): BlueprintHttpPayload => {
   const parsed = typeof body === "string" ? JSON.parse(body) : body;
   if (!isRecord(parsed) || !isRecord(parsed.storySeed)) {
     throw new Error("The Blueprint request must contain the complete finalized Story Seed.");
@@ -58,7 +67,12 @@ const parseRequest = (body: unknown): BlueprintGenerationPayload => {
   if (parsed.operation !== undefined) throw new Error("Unknown Blueprint operation.");
   // The length travels in the Seed alone, so a request can never carry two.
   if (parsed.arcCount !== undefined) throw new Error("The story length is the Story Seed's own Story Length (story.optional.arcCount).");
-  return { storySeed };
+  if (parsed.model !== undefined && typeof parsed.model !== "string") throw new Error("Choose a configured chapter model.");
+  return {
+    storySeed,
+    ...(parsed.model !== undefined ? { model: parsed.model as string } : {}),
+    ...(parsed.reasoningLevel !== undefined ? { reasoningLevel: parsed.reasoningLevel } : {}),
+  };
 };
 
 export async function handleStorySeedBlueprintHttp(
@@ -97,11 +111,7 @@ export async function handleStorySeedBlueprintHttp(
   if (!hasValidBearerToken(request, config.accessToken)) {
     return errorResponse(401, "A valid Development Story Seed access token is required.");
   }
-  if (!config.apiKey) {
-    return errorResponse(503, missingKeyMessage(config.model));
-  }
-
-  let parsed: BlueprintGenerationPayload;
+  let parsed: BlueprintHttpPayload;
   try {
     parsed = parseRequest(request.body);
   } catch (error) {
@@ -111,11 +121,31 @@ export async function handleStorySeedBlueprintHttp(
       : message);
   }
 
+  // The Blueprint is written by the chapter model the reader chose in the
+  // Model Router, from the same list chapters are; a request without one
+  // keeps the server's Blueprint model.
+  let model = config.model;
+  let apiKey = config.apiKey;
+  if (parsed.model === undefined && !apiKey) return errorResponse(503, missingKeyMessage(model));
+  if (parsed.model !== undefined) {
+    const route = resolveChapterModelRoute(dependencies.environment, "HARNESS_GENERATION_MODELS", "HARNESS_GENERATION_DEFAULT_MODEL");
+    if (!route.models.some(option => option.id === parsed.model)) {
+      return errorResponse(400, `Model '${parsed.model}' is not configured for chapter generation.`);
+    }
+    model = parsed.model;
+    const key = providerKey(dependencies.environment, textModelProvider(model)!);
+    if (!key) return errorResponse(503, missingKeyMessage(model));
+    apiKey = key;
+  }
+  const chosen = { ...config, model, provider: textModelProvider(model)!, apiKey: apiKey! };
+
+  const started = Date.now();
   try {
     const provider = dependencies.providerFactory
-      ? dependencies.providerFactory(config.apiKey, config.model)
-      : createWorldBlueprintProvider({ ...config, apiKey: config.apiKey });
-    const body = await generateWorldBlueprint(parsed, config, provider);
+      ? dependencies.providerFactory(chosen.apiKey, model)
+      : createWorldBlueprintProvider(chosen);
+    const body = await generateWorldBlueprint({ storySeed: parsed.storySeed }, chosen, provider, resolveReasoningLevel(model, parsed.reasoningLevel));
+    dependencies.onAnswer?.({ model, durationMs: Date.now() - started });
     return {
       status: 200,
       body,
@@ -133,6 +163,10 @@ export async function handleStorySeedBlueprintHttp(
     // behind a generic retry message or shortened to fit.
     if (error instanceof BlueprintOutputLimitError || error instanceof BlueprintRoadmapError) {
       return errorResponse(502, message);
+    }
+    // The one model failure a creator can act on: the model was still writing at the deadline.
+    if (error instanceof ModelRouterError && error.code === "timeout") {
+      return errorResponse(502, `The model was still writing after ${Math.ceil(chosen.timeoutMs / 1000)} seconds, so it was stopped. Choose a lower reasoning level or a faster model in the Model Router. No Story Seed data was changed.`);
     }
     if (message.includes("output token limit")) {
       return errorResponse(502, new BlueprintOutputLimitError(config?.maxOutputTokens ?? 0).message);

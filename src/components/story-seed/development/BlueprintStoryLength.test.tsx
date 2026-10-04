@@ -94,59 +94,64 @@ const Review = ({ initial, onRegenerateBlueprint }: {
 
 describe('Blueprint review: Arc 1 and the story length', () => {
   it('shows only Arc 1, never the hidden look-ahead, and says later arcs are planned when they begin', () => {
-    act(() => root.render(<Review initial={reviewed(3)} onRegenerateBlueprint={vi.fn(async () => undefined)} />));
+    act(() => root.render(<Review initial={reviewed(12)} onRegenerateBlueprint={vi.fn(async () => undefined)} />));
     const section = container.querySelector('[data-testid="blueprint-arc-goals"]')!;
-    expect(section.textContent).toContain('Arc 1 of 3 arcs of 30 chapters');
+    expect(section.textContent).toContain('Arc 1 of 12 arcs of 30 chapters');
     expect(section.textContent).toContain('Each later arc is planned when it begins');
     expect(buttonNamed('Edit Arc 1 goals')).toBeTruthy();
     expect(container.textContent).not.toMatch(/Edit Arc 2 goals|Arc 2 ·/);
-    for (const entry of createMockArcLookahead(3)) expect(container.textContent).not.toContain(entry.direction);
+    for (const entry of createMockArcLookahead(12)) expect(container.textContent).not.toContain(entry.direction);
     expect(buttonNamed('Manifest Story')!.disabled).toBe(false);
   });
 
   it('saves a new length without a model call, keeping only look-ahead the length still has', () => {
     const onRegenerateBlueprint = vi.fn(async () => undefined);
-    act(() => root.render(<Review initial={reviewed(3)} onRegenerateBlueprint={onRegenerateBlueprint} />));
-    expect(arcCountInput().value).toBe('3');
-    setArcCount('12');
-    expect(help()).toContain('Saving the length changes no goals. Arc 12, the final arc, will arrive at the Destined Ending.');
+    act(() => root.render(<Review initial={reviewed(12)} onRegenerateBlueprint={onRegenerateBlueprint} />));
+    expect(arcCountInput().value).toBe('12');
+    setArcCount('20');
+    expect(help()).toContain('Saving the length changes no goals. Arc 20, the final arc, will arrive at the Destined Ending.');
     act(() => buttonNamed('Save length')!.click());
     // The length is the Seed's Story Length; the Blueprint follows it.
-    expect(latestSeed?.story.optional.arcCount).toBe(12);
-    expect(latestBlueprint?.estimatedArcs).toBe(12);
+    expect(latestSeed?.story.optional.arcCount).toBe(20);
+    expect(latestBlueprint?.estimatedArcs).toBe(20);
     expect(latestBlueprint?.arcPlans).toHaveLength(1);
-    setArcCount('2');
+    setArcCount('10');
     act(() => buttonNamed('Save length')!.click());
-    expect(latestBlueprint?.estimatedArcs).toBe(2);
-    expect(latestBlueprint?.arcLookahead?.map(entry => entry.arcNumber)).toEqual([2]);
+    expect(latestBlueprint?.estimatedArcs).toBe(10);
+    expect(latestBlueprint?.arcLookahead?.map(entry => entry.arcNumber)).toEqual([2, 3]);
     expect(onRegenerateBlueprint).not.toHaveBeenCalled();
-    setArcCount('0');
-    expect(help()).toContain('Choose a whole number of arcs from 1 to 100.');
+    // 10 to 40 arcs (300 to 1,200 chapters).
+    for (const notALength of ['0', '9', '41']) {
+      setArcCount(notALength);
+      expect(help()).toContain('Choose a whole number of arcs from 10 to 40.');
+      expect(buttonNamed('Save length')).toBeUndefined();
+    }
   });
 
-  it('re-plans Arc 1 only by regenerating when the length crosses the one-arc line', () => {
+  it('re-plans an older one-arc Arc 1 only by regenerating, at a length from 10 to 40', () => {
     act(() => root.render(<Review initial={reviewed(1)} onRegenerateBlueprint={vi.fn(async () => undefined)} />));
     expect(container.textContent).toContain('Arc 1 · the whole story, reaches the Destined Ending');
-    setArcCount('3');
+    setArcCount('12');
     expect(buttonNamed('Save length')).toBeUndefined();
     expect(help()).toContain('Arc 1 was planned as the whole story');
-    expect(buttonNamed('Regenerate with 3 arcs')!.disabled).toBe(false);
+    expect(buttonNamed('Regenerate with 12 arcs')!.disabled).toBe(false);
   });
 
-  it('asks for Arc 1 to be planned again when the Story Length was changed across the one-arc line on the ARC page', () => {
-    act(() => root.render(<Review initial={withStoryLength(reviewed(3), 1)} onRegenerateBlueprint={vi.fn(async () => undefined)} />));
-    expect(arcCountInput().value).toBe('1');
-    expect(container.querySelector('[data-testid="blueprint-arc-problem"]')!.textContent).toContain('Arc 1 was planned as the opening of a longer story');
+  it('opens a Blueprint saved with fewer than 10 arcs, names the fix, and saves a length from 10 to 40 without a model call', () => {
+    const onRegenerateBlueprint = vi.fn(async () => undefined);
+    act(() => root.render(<Review initial={reviewed(3)} onRegenerateBlueprint={onRegenerateBlueprint} />));
+    expect(arcCountInput().value).toBe('3');
+    expect(container.querySelector('[data-testid="blueprint-arc-problem"]')!.textContent).toBe('Story Length must be a whole number of arcs from 10 to 40.');
     expect(buttonNamed('Manifest Story')!.disabled).toBe(true);
-    expect(help()).toContain('Arc 1 was planned for a different length. Regenerate to plan Arc 1 for 1 arc, or change the length back.');
-    expect(buttonNamed('Regenerate with 1 arc')).toBeTruthy();
-    expect(buttonNamed('Save length')).toBeUndefined();
-    // A length on Arc 1's own side of the line saves, and the story can begin again.
-    setArcCount('4');
+    expect(help()).toContain('Choose a whole number of arcs from 10 to 40.');
+    // Arc 1 was planned as the opening, so a longer length needs no new plan.
+    setArcCount('10');
     act(() => buttonNamed('Save length')!.click());
-    expect(latestSeed?.story.optional.arcCount).toBe(4);
+    expect(latestSeed?.story.optional.arcCount).toBe(10);
+    expect(latestBlueprint?.arcPlans).toHaveLength(1);
     expect(container.querySelector('[data-testid="blueprint-arc-problem"]')).toBeNull();
     expect(buttonNamed('Manifest Story')!.disabled).toBe(false);
+    expect(onRegenerateBlueprint).not.toHaveBeenCalled();
   });
 
   it('a whole-story Arc 1 asks the same when the length grows past one arc', () => {
@@ -160,12 +165,12 @@ describe('Blueprint review: Arc 1 and the story length', () => {
   it('asks before replacing the whole Blueprint, holds the review while it regenerates, and reports a failure where it happened', async () => {
     let finish: () => void = () => undefined;
     const onRegenerateBlueprint = vi.fn(() => new Promise<void>((resolve, reject) => { finish = () => reject(new Error('The model is resting.')); void resolve; }));
-    act(() => root.render(<Review initial={reviewed(3)} onRegenerateBlueprint={onRegenerateBlueprint} />));
-    setArcCount('5');
-    act(() => buttonNamed('Regenerate with 5 arcs')!.click());
-    expect(container.querySelector('[data-testid="blueprint-regenerate-confirm"]')!.textContent).toContain('a fresh one for 5 arcs');
+    act(() => root.render(<Review initial={reviewed(12)} onRegenerateBlueprint={onRegenerateBlueprint} />));
+    setArcCount('15');
+    act(() => buttonNamed('Regenerate with 15 arcs')!.click());
+    expect(container.querySelector('[data-testid="blueprint-regenerate-confirm"]')!.textContent).toContain('a fresh one for 15 arcs');
     await act(async () => { buttonNamed('Replace Blueprint')!.click(); });
-    expect(onRegenerateBlueprint).toHaveBeenCalledWith(5);
+    expect(onRegenerateBlueprint).toHaveBeenCalledWith(15);
     expect(buttonNamed('Manifest Story')!.disabled).toBe(true);
     await act(async () => { finish(); });
     await flush();
@@ -199,23 +204,23 @@ describe('Story Seed creation: regenerating at a chosen length', () => {
     renderModal({ onGenerateBlueprint });
     await openBankedBlueprint();
 
-    setArcCount('1');
-    act(() => buttonNamed('Regenerate with 1 arc')!.click());
+    setArcCount('20');
+    act(() => buttonNamed('Regenerate with 20 arcs')!.click());
     await act(async () => { buttonNamed('Replace Blueprint')!.click(); });
     await flush();
 
     expect(onGenerateBlueprint).toHaveBeenCalledTimes(1);
     // The chosen length travels in the Seed, and becomes its Story Length.
     expect(onGenerateBlueprint.mock.calls[0][0]).not.toHaveProperty('arcCount');
-    expect(onGenerateBlueprint.mock.calls[0][0].storySeed.story.optional.arcCount).toBe(1);
-    expect(arcCountInput().value).toBe('1');
+    expect(onGenerateBlueprint.mock.calls[0][0].storySeed.story.optional.arcCount).toBe(20);
+    expect(arcCountInput().value).toBe('20');
     const [saved] = await listStorySeeds(LOCAL_WORKSHOP_STORY_SEED_OWNER_ID);
-    expect(saved.seed.story.optional.arcCount).toBe(1);
+    expect(saved.seed.story.optional.arcCount).toBe(20);
     expect(saved.blueprint?.arcPlans).toHaveLength(1);
-    expect(saved.blueprint?.estimatedArcs).toBe(1);
-    expect(saved.blueprint?.arcOneScope).toBe('whole-story');
-    expect(saved.blueprint?.arcLookahead).toBeUndefined();
-    expect(container.textContent).toContain('Arc 1 · the whole story, reaches the Destined Ending');
+    expect(saved.blueprint?.estimatedArcs).toBe(20);
+    expect(saved.blueprint?.arcOneScope).toBe('opening');
+    expect(saved.blueprint?.arcLookahead?.map(entry => entry.arcNumber)).toEqual([2, 3]);
+    expect(container.textContent).toContain('Arc 1 of 20 arcs of 30 chapters');
   });
 
   it('fills the Seed\'s blank slots from the Blueprint answer, so the review shows them filled and the saved record keeps them', async () => {
@@ -244,10 +249,10 @@ describe('Story Seed creation: regenerating at a chosen length', () => {
     expect(saved.blueprint).not.toHaveProperty('generatedSeedSlots');
   });
 
-  it('opens the review with the reason instead of starting a banked story whose Arc 1 no longer fits its Story Length', async () => {
+  it('opens the review with the reason instead of starting a banked story whose Story Length is shorter than 10 arcs', async () => {
     const record = createMockStorySeedRecord({ id: 'seed-length-changed', userId: LOCAL_WORKSHOP_STORY_SEED_OWNER_ID });
-    // Arc 1 was planned as the opening of 3 arcs; the Story Length was then set to one arc.
-    const seed = { ...record.seed, story: { ...record.seed.story, optional: { ...record.seed.story.optional, arcCount: 1 } } };
+    // A Seed saved before the range, with a Story Length of 4 arcs.
+    const seed = { ...record.seed, story: { ...record.seed.story, optional: { ...record.seed.story.optional, arcCount: 4 } } };
     resetStorySeedRepository([{ ...record, seed }]);
     const onStartStory = vi.fn(async () => undefined);
     renderModal({ onStartStory });
@@ -257,8 +262,12 @@ describe('Story Seed creation: regenerating at a chosen length', () => {
     await flush();
 
     expect(onStartStory).not.toHaveBeenCalled();
-    expect(container.querySelector('[role="alert"]')!.textContent).toContain('Arc 1 was planned as the opening of a longer story');
-    expect(buttonNamed('Regenerate with 1 arc')).toBeTruthy();
+    expect(container.querySelector('[role="alert"]')!.textContent).toContain('Story Length must be a whole number of arcs from 10 to 40.');
+    expect(arcCountInput().value).toBe('4');
     expect(buttonNamed('Manifest Story')!.disabled).toBe(true);
+    // Choosing a length in range lets the story begin, with no model call.
+    setArcCount('10');
+    act(() => buttonNamed('Save length')!.click());
+    expect(buttonNamed('Manifest Story')!.disabled).toBe(false);
   });
 });

@@ -125,7 +125,7 @@ const MOCK_ROUTE = [
  * Active Arc Goal when one is supplied; in a one-arc story its last goal is
  * the Destined Ending.
  */
-export const createMockArcOne = (openingGoal?: { id: string; text: string }, arcCount = 3): ArcPlan => {
+export const createMockArcOne = (openingGoal?: { id: string; text: string }, arcCount = 10): ArcPlan => {
   const texts: string[] = [...MOCK_ROUTE[0]];
   if (arcCount === 1) texts[texts.length - 1] = 'The prince survives and the court\'s grip on fate is broken';
   const goals = texts.map((text, goalIndex) => ({ id: `arc-1-goal-${goalIndex + 1}`, text, chapters: goalIndex === 1 ? 12 : 9 }));
@@ -134,7 +134,7 @@ export const createMockArcOne = (openingGoal?: { id: string; text: string }, arc
 };
 
 /** A mock hidden look-ahead: where Arcs 2 and 3 head, within the story's length. */
-export const createMockArcLookahead = (arcCount = 3): ArcLookaheadEntry[] =>
+export const createMockArcLookahead = (arcCount = 10): ArcLookaheadEntry[] =>
   [2, 3].filter(arcNumber => arcNumber <= arcCount).map(arcNumber => ({
     arcNumber,
     direction: arcNumber === arcCount ? 'The prince survives and the court\'s grip on fate is broken.' : MOCK_ROUTE[arcNumber - 1].join('; then ') + '.',
@@ -172,7 +172,7 @@ export const createMockSeedSlotAnswer = () => ({
 
 export const createMockBlueprint = (): WorldBlueprint => ({
   arcPlans: [createMockArcOne()],
-  arcLookahead: createMockArcLookahead(3),
+  arcLookahead: createMockArcLookahead(10),
   blueprintVersion: 'v1.0',
   creator: 'Workshop Creator',
   title: 'Ashes of the Ninth Meridian',
@@ -192,7 +192,7 @@ export const createMockBlueprint = (): WorldBlueprint => ({
   tropeRules: 'Face-slapping tied to fate corrections, not petty insults.',
   styleBible: 'Close third-person narration with restrained exposition, concrete sensory detail, and sharp reversals at scene endings.',
   destinedEnding: "The prince survives and shatters the celestial court's grip on fate.",
-  estimatedArcs: 3,
+  estimatedArcs: 10,
   unresolvedPlotThreads: ['Sever the engagement with Chu family', 'Win the Inner Sect tournament'],
 });
 

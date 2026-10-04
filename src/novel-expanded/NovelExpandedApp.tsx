@@ -72,7 +72,7 @@ function NovelExpandedPages({ services }: { services: NovelExpandedServices }) {
     </main>;
   }
 
-  if (route.page === 'create') return <CreatePage services={services} blueprintToken={blueprintToken} startedSeedIds={seedIds}
+  if (route.page === 'create') return <CreatePage services={services} blueprintToken={blueprintToken} startedSeedIds={seedIds} chapterModel={stories.model || undefined}
     onHome={() => navigate(HOME_ROUTE)}
     onStartStory={async payload => {
       const story = await startHarnessStoryFromSeed(stories.controller, payload);

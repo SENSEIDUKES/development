@@ -1,7 +1,9 @@
 import { type BlueprintGenerationPayload, type WorldBlueprint } from '@seihouse/sen/story-seed';
+import { readReasoningPreference } from '../generation/modelPreference';
 
 const ENDPOINT = '/api/generate-blueprint';
-const REQUEST_TIMEOUT_MS = 130_000;
+/** Longer than the server's 180-second route, so the server's own answer, a deadline included, arrives first. */
+const REQUEST_TIMEOUT_MS = 190_000;
 
 /**
  * A Blueprint request the server answered with an error. `status` is its HTTP
@@ -36,6 +38,12 @@ const requestSignalWithTimeout = (callerSignal?: AbortSignal) => {
   };
 };
 
+const withChapterModel = (payload: BlueprintGenerationPayload, model?: string) => {
+  if (!model) return payload;
+  const reasoningLevel = typeof window === 'undefined' ? undefined : readReasoningPreference(model);
+  return { ...payload, model, ...(reasoningLevel ? { reasoningLevel } : {}) };
+};
+
 const readResponseBody = async (response: Response): Promise<unknown> => {
   const text = await response.text();
   if (!text) return {};
@@ -47,7 +55,7 @@ const readResponseBody = async (response: Response): Promise<unknown> => {
 };
 
 const postBlueprintRequest = async (
-  payload: BlueprintGenerationPayload,
+  payload: BlueprintGenerationPayload & { model?: string; reasoningLevel?: string },
   accessToken: string,
   messages: { missingToken: string; failed: (status: number) => string; timedOut: string },
   signal?: AbortSignal,
@@ -86,11 +94,18 @@ const postBlueprintRequest = async (
   }
 };
 
+/**
+ * Generates a World Blueprint. `model` is the chapter model the reader chose
+ * (the Model Router): the Blueprint is written by the same model as the
+ * chapters, at the reasoning level saved for it. Without one, the server's
+ * Blueprint model writes it.
+ */
 export const requestWorldBlueprint = async (
   payload: BlueprintGenerationPayload,
   accessToken: string,
   signal?: AbortSignal,
-): Promise<WorldBlueprint> => await postBlueprintRequest(payload, accessToken, {
+  model?: string,
+): Promise<WorldBlueprint> => await postBlueprintRequest(withChapterModel(payload, model), accessToken, {
   missingToken: 'Enter the Development access token before manifesting the World Blueprint.',
   failed: status => `World Blueprint generation failed with status ${status}.`,
   timedOut: 'World Blueprint generation timed out. No Story Seed data was changed; please retry.',

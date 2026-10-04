@@ -15,7 +15,7 @@ describe('Story Seed to Harness handoff', () => {
   it('hands over Arc 1, the story length and the hidden look-ahead, and only the Seed goal as Arc 1 without a generated Blueprint', () => {
     const record = createMockStorySeedRecord();
     const foundation = createHarnessFoundationFromStorySeed(record);
-    expect(foundation.plannedArcCount).toBe(3);
+    expect(foundation.plannedArcCount).toBe(10);
     expect(foundation.initialArcPlan).toEqual(record.blueprint!.arcPlans![0]);
     expect(foundation.initialArcPlan?.goals[0].text).toBe(record.seed.story.optional.activeArcGoal!.text);
     expect(foundation.initialArcLookahead).toEqual(record.blueprint!.arcLookahead);
@@ -70,7 +70,7 @@ describe('Story Seed to Harness handoff', () => {
       expect(prompt.systemInstruction).not.toContain(marker);
     }
     expect(prompt.userPrompt).not.toMatch(/REMOVED_|arcGoals|"plan"/);
-    expect(requests[0].storyInformation.arc).toMatchObject({ activeGoal: { text: 'GOAL_OPEN_GATE' }, completionDeadline: 9, plannedArcCount: 3, finalArc: false });
+    expect(requests[0].storyInformation.arc).toMatchObject({ activeGoal: { text: 'GOAL_OPEN_GATE' }, completionDeadline: 9, plannedArcCount: 10, finalArc: false });
     expect(requests[0].storyInformation.currentStory.funSettings).toEqual(record.seed.story.optional.funSettings);
     expect(JSON.stringify(requests[0].storyInformation.canonicalState)).not.toMatch(/PIN_|GOAL_|funSettings/);
     expect(requests[0].storyInformation.currentStory.intendedDirection).toBeUndefined();

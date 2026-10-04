@@ -76,8 +76,8 @@ describe('Story Seed Arc and World ownership', () => {
     expect(button('Manifest Story')?.disabled).toBe(true);
     expect(container.textContent).toContain('Generate the Blueprint to plan Arc 1');
     expect(container.querySelector('#active-arc-goal-input')).toBeNull();
-    // A generated Blueprint for a two-arc story plans Arc 1: review and edit it before the story begins.
-    render(current, 'blueprint', reconcileStorySeedBlueprint(current, { ...createBlueprintDraftFromSeed(current), arcPlans: [roadmap[0]], estimatedArcs: 2 }).blueprint);
+    // A generated Blueprint for a twelve-arc story plans Arc 1: review and edit it before the story begins.
+    render(current, 'blueprint', reconcileStorySeedBlueprint(current, { ...createBlueprintDraftFromSeed(current), arcPlans: [roadmap[0]], estimatedArcs: 12 }).blueprint);
     expect(container.textContent).not.toContain('Arc 2');
     fill('hard-pin-2', 'Rebuild the temple.');
     act(() => button('Edit Arc 1 goals')!.click());
@@ -182,13 +182,14 @@ describe('Story Length on the ARC page', () => {
     fill('story-length-input', '11');
     expect(current.story.optional.arcCount).toBe(11);
     expect(lengthText()).toBe('11 arcs · 330 chapters. Arc 11, the final arc, reaches the Destined Ending.');
-    for (const notALength of ['0', '101', '2.5']) {
+    // 10 to 40 arcs (300 to 1,200 chapters); anything else keeps the last length.
+    for (const notALength of ['0', '1', '9', '41', '101', '2.5']) {
       fill('story-length-input', notALength);
       expect(current.story.optional.arcCount).toBe(11);
-      expect(container.textContent).toContain('Choose a whole number of arcs from 1 to 100.');
+      expect(container.textContent).toContain('Choose a whole number of arcs from 10 to 40.');
     }
-    fill('story-length-input', '1');
-    expect(lengthText()).toBe('1 arc · 30 chapters. Arc 1 is the whole story and reaches the Destined Ending.');
+    fill('story-length-input', '40');
+    expect(lengthText()).toBe('40 arcs · 1,200 chapters. Arc 40, the final arc, reaches the Destined Ending.');
     fill('story-length-input', '');
     expect(current.story.optional).not.toHaveProperty('arcCount');
     expect(lengthText()).toBe('');

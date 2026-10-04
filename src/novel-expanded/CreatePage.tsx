@@ -12,13 +12,15 @@ export interface CreatePageProps {
   blueprintToken: RefObject<string | undefined>;
   /** The Story Seeds the reader's stories started from. */
   startedSeedIds: readonly string[];
+  /** The model chapters are written with; the World Blueprint is written by the same one. */
+  chapterModel?: string;
   onHome: () => void;
   /** Manifest Story: the host starts the story and shows it. */
   onStartStory: (payload: InitialStoryGenerationPayload) => Promise<void>;
 }
 
 /** Create: the Story Seed and its World Blueprint, the same journey the Library ships. */
-export function CreatePage({ services, blueprintToken, startedSeedIds, onHome, onStartStory }: CreatePageProps) {
+export function CreatePage({ services, blueprintToken, startedSeedIds, chapterModel, onHome, onStartStory }: CreatePageProps) {
   const runtime = useNovelExpandedStoryCreation(services.storySeeds, startedSeedIds);
   const pendingToken = useRef<Promise<string | undefined> | undefined>(undefined);
   const [tokenRequest, setTokenRequest] = useState<AccessTokenRequest>();
@@ -76,7 +78,7 @@ export function CreatePage({ services, blueprintToken, startedSeedIds, onHome, o
     <div className="min-h-screen bg-void" data-testid="novel-expanded-create">
       <CreationModal onNavigateHome={onHome} onStartStory={onStartStory} isGenerating={generating} error={null}
         onGenerateBlueprint={payload => withToken('The World Blueprint needs the development access token. Nothing was changed.',
-          (accessToken, signal) => services.requestWorldBlueprint(payload, accessToken, signal))} />
+          (accessToken, signal) => services.requestWorldBlueprint(payload, accessToken, signal, chapterModel))} />
     </div>
     <AccessTokenSheet request={tokenRequest} />
   </StoryCreationProvider>;

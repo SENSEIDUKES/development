@@ -33,6 +33,17 @@ There is no `chapter-generation` or `codex-cards` compatibility entry. Legacy
 Chapter Generation was retired; HARNESS is the one canonical generated-story
 owner.
 
+**0.18.0 (breaking):** a story runs 10 to 40 arcs.
+
+- `./arc-goals`: `STORY_LENGTH_ARCS` (`{ min: 10, max: 40 }`, 300 to 1,200
+  chapters) is the range a Story Length or a Blueprint's length is chosen in.
+  `MAX_ROADMAP_ARCS` (100) stays the longest a saved story or draft carries.
+- `./story-seed`: `validateRequestedArcCount`, `validateStorySeedInput` and
+  `validateBlueprintArcPlan` require a length in range; drafts and Blueprints
+  saved with another length still load and normalize as they are. New
+  `describeStoryLengthProblem` names the problem, which the Blueprint review
+  fixes without a model call.
+
 **0.17.0 (breaking):** the writer's tags, one strict shape.
 
 - `./harness-generation`: every tag kind is taught in one shape (JOB, FORMAT,

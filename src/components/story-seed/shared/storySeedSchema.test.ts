@@ -24,7 +24,7 @@ const blueprint: WorldBlueprint = {
   tropeRules: 'Consequences before triumph.',
   styleBible: 'korean',
   destinedEnding: 'The prince survives and severs the court from fate.',
-  estimatedArcs: 7,
+  estimatedArcs: 12,
 };
 
 /** Fate Survival proposals an older Blueprint may still hold; the development Blueprint no longer reads them. */

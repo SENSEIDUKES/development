@@ -1,7 +1,13 @@
+import { AUDIO_ENERGIES, type AudioEnergy } from '../audio/audioTags';
+import { normalizeSoundWord } from '../audio/soundWords';
+
 /**
  * Marks: how a writer says "here" in its own prose, in the tiny SEN language.
  *
- * A span mark wraps the words where something happens: `[[1|drew his sword]]`.
+ * A sound tag wraps the words where a sound plays and names the sound, with an
+ * optional Energy: `[[sound: blade drawn | drew his sword | high]]`. The words
+ * stay in the text; the rest of the tag is removed. A span mark wraps the
+ * words where something happens: `[[1|drew his sword]]`.
  * The number ties the mark to the signal that says what happened. A speaker
  * tag names who speaks the speech that follows it: `[[@Lin Feng]] “Run!”`.
  * Marks are transport only: `readMarks` removes every one and reports where
@@ -32,6 +38,16 @@
  * still removed and reported, so no part of it leaks. An unknown word with a
  * pipe after its colon (`[[obtainedd: MC | Sword]]`) is a slipped tag: removed
  * and reported too. Without a pipe, `[[Note: …]]` is ordinary text.
+ *
+ * A sound tag reads the same slips: letter case, spaces, full-width brackets,
+ * colons and pipes, a single closing bracket, other words for "sound" ("sfx",
+ * "sound effect"), and the Energy written before the words instead of after
+ * them. Other tags inside its words are read as usual. A sound tag that never
+ * closes keeps its words; one opened inside another span, or wrapping nothing,
+ * counts for nothing and keeps its words. One with no words to wrap
+ * (`[[sound: thunder]]`) is removed and reported, so its sound word never
+ * becomes prose. Given the story's sound words, a tag written the other way
+ * round (`[[sound: drew his sword | blade drawn]]`) is read the right way.
  */
 
 /** A span mark's place in the clean text: UTF-16 offsets, start inclusive and end exclusive. */
@@ -105,9 +121,45 @@ export type WordTagIssue =
   /** A word that is not a tag word, written as a tag (a pipe after its colon). */
   | { kind: 'unknown'; word: string };
 
+/** The words a sound tag wraps in the clean text, and the sound the writer named for them. */
+export interface SoundTag {
+  /** The sound word as written, trimmed. Whether it is one of the story's is decided where the cue is placed. */
+  sound: string;
+  /** The Energy the writer asked for, when it gave one. */
+  energy?: AudioEnergy;
+  /** UTF-16 offsets in the clean text, start inclusive and end exclusive. */
+  start: number;
+  end: number;
+}
+
+export type SoundTagIssue =
+  /** A sound tag with no sound word, or no words to wrap (`[[sound: thunder]]`). Nothing of it but its words stays. */
+  | { kind: 'incomplete' }
+  /** A sound tag that never closed; its opening was removed and its words kept. */
+  | { kind: 'unclosed'; sound: string }
+  /** A sound tag opened inside another span; only the outer one counts, and its words stay. */
+  | { kind: 'nested'; sound: string }
+  /** A sound tag that wraps no text. */
+  | { kind: 'empty'; sound: string };
+
+/** The words a sound tag may open with, letter case and hyphens aside: `[[sfx: …]]` is `[[sound: …]]`. */
+export const SOUND_TAG_WORDS = ['sound', 'sounds', 'sfx', 'sound cue', 'sound effect'] as const;
+
+export interface MarkReadingOptions {
+  /**
+   * The story's sound words. With them, a sound tag whose words and sound word
+   * were written the other way round is read the right way, so the sound word
+   * never becomes prose.
+   */
+  soundWords?: Iterable<string>;
+}
+
 export interface MarkReading {
   /** The text with every mark removed and its ends trimmed. */
   text: string;
+  /** Sound tags in reading order. */
+  sounds: SoundTag[];
+  soundIssues: SoundTagIssue[];
   /** Span marks in reading order. */
   marks: ProseMark[];
   issues: ProseMarkIssue[];
@@ -158,9 +210,26 @@ const PIPE = /[|｜]/;
 const WORD_TAG = new RegExp(String.raw`${OPEN}${GAP}${TAG_WORD}${GAP}${COLON}([^\[\]［］\n]{0,240})${CLOSE}`, 'y');
 /** A word tag that never closes: removed through the end of the sentence it ran into. */
 const WORD_TAG_UNCLOSED = new RegExp(String.raw`${OPEN}${GAP}${TAG_WORD}${GAP}${COLON}[^\[\]［］\n.!?。！？“"「]{0,120}[.!?。！？]?`, 'y');
+const SOUND_TAG_WORD = String.raw`(?:sounds?|sfx|sound[ \t-]?(?:cue|effect))`;
+const ENERGY = String.raw`(${AUDIO_ENERGIES.join('|')})`;
+/** `[[sound: blade drawn |`, or `[[sound: blade drawn | high |` with the Energy first: the words follow it. */
+const SOUND_OPEN = new RegExp(String.raw`${OPEN}${GAP}${SOUND_TAG_WORD}${GAP}${COLON}${GAP}([^\[\]［］|｜\n]{1,120}?)${GAP}[|｜]${GAP}(?:${ENERGY}${GAP}[|｜]${GAP})?`, 'iy');
+/** `[[sound: thunder]]`: a sound tag with nothing to wrap. */
+const SOUND_POINT = new RegExp(String.raw`${OPEN}${GAP}${SOUND_TAG_WORD}${GAP}${COLON}[^\[\]［］|｜\n]{0,48}${CLOSE}`, 'iy');
+/** A sound tag with no pipe that never closes: removed through the end of the sentence it ran into. */
+const SOUND_UNCLOSED = new RegExp(String.raw`${OPEN}${GAP}${SOUND_TAG_WORD}${GAP}${COLON}[^\[\]［］|｜\n.!?。！？“"「]{0,120}[.!?。！？]?`, 'iy');
+/** `| high]]`: the Energy written after a sound tag's words, closing it. */
+const SOUND_CLOSE_WITH_PART = new RegExp(String.raw`[|｜]${GAP}([^\[\]［］|｜\n]{0,24}?)${GAP}${CLOSE}`, 'y');
 
 const toNumber = (digits: string) => Number(digits.replace(/[０-９]/g, digit => String(digit.charCodeAt(0) - 0xff10)));
 const isSpace = (character: string | undefined) => character !== undefined && /[ \t　]/.test(character);
+const energyOf = (value: string | undefined): AudioEnergy | undefined => {
+  const energy = value?.trim().toLowerCase();
+  return (AUDIO_ENERGIES as readonly string[]).includes(energy ?? '') ? energy as AudioEnergy : undefined;
+};
+
+/** A span open in the text: a numbered mark or a sound tag. Only the outer one counts. */
+type OpenSpan = { start: number; inner: boolean } & ({ kind: 'mark'; id: number } | { kind: 'sound'; sound: string; energy?: AudioEnergy });
 
 const matchAt = (pattern: RegExp, text: string, index: number) => {
   pattern.lastIndex = index;
@@ -171,8 +240,11 @@ const matchAt = (pattern: RegExp, text: string, index: number) => {
  * Reads and removes every mark in one text (one paragraph, a title, a recap).
  * Offsets in the result refer to the returned clean text.
  */
-export function readMarks(source: string): MarkReading {
+export function readMarks(source: string, { soundWords }: MarkReadingOptions = {}): MarkReading {
+  const knownSounds = soundWords ? new Set([...soundWords].map(normalizeSoundWord)) : undefined;
   let text = '';
+  const sounds: SoundTag[] = [];
+  const soundIssues: SoundTagIssue[] = [];
   const marks: ProseMark[] = [];
   const issues: ProseMarkIssue[] = [];
   const speakers: SpeakerTag[] = [];
@@ -180,24 +252,63 @@ export function readMarks(source: string): MarkReading {
   const wordTags: WordTag[] = [];
   const wordTagIssues: WordTagIssue[] = [];
   const used = new Set<number>();
-  let open: { id: number; start: number } | undefined;
-  /** Spans opened inside the open one: their closings are consumed without ending it. */
-  let nested = 0;
+  /** Spans open in the text, outermost first: an inner one's closing is consumed without ending the outer. */
+  const spans: OpenSpan[] = [];
   /** Words were written inside a speaker tag: its closing bracket comes after them. */
   let tagWords = false;
 
   /** Removing a token between two spaces would leave a double space; keep one. */
   const skipDoubledSpace = (next: number) => (isSpace(text.at(-1)) && isSpace(source[next]) ? next + 1 : next);
 
-  const addSpan = (id: number, start: number, end: number) => {
+  /** The span's words, without the spaces at its ends; undefined when it wraps nothing. */
+  const wrapped = (start: number, end: number) => {
     let from = start;
     let to = end;
     while (from < to && isSpace(text[from])) from += 1;
     while (to > from && isSpace(text[to - 1])) to -= 1;
-    if (from === to) { issues.push({ kind: 'empty', id }); return; }
+    return from === to ? undefined : { start: from, end: to };
+  };
+
+  const addSpan = (id: number, start: number, end: number) => {
+    const range = wrapped(start, end);
+    if (!range) { issues.push({ kind: 'empty', id }); return; }
     if (used.has(id)) { issues.push({ kind: 'duplicate', id }); return; }
     used.add(id);
-    marks.push({ id, start: from, end: to });
+    marks.push({ id, ...range });
+  };
+
+  const openSpan = (span: OpenSpan) => {
+    if (spans.length) {
+      if (span.kind === 'mark') issues.push({ kind: 'nested', id: span.id });
+      else soundIssues.push({ kind: 'nested', sound: span.sound });
+    }
+    spans.push({ ...span, inner: spans.length > 0 });
+  };
+
+  /** Closes the innermost open span; only the outer one is recorded. */
+  const closeSpan = (trailing?: string) => {
+    const span = spans.pop()!;
+    if (span.inner) return;
+    if (span.kind === 'mark') { addSpan(span.id, span.start, text.length); return; }
+    const words = text.slice(span.start).trim();
+    // `[[sound: thunder | high]]` names an Energy, not words: it is removed whole.
+    if (!span.energy && energyOf(words)) {
+      text = text.slice(0, span.start);
+      soundIssues.push({ kind: 'incomplete' });
+      return;
+    }
+    if (!span.sound) { soundIssues.push({ kind: 'incomplete' }); return; }
+    let sound = span.sound;
+    // Written the other way round, `[[sound: drew his sword | blade drawn]]`: the words were written first.
+    if (knownSounds && !knownSounds.has(normalizeSoundWord(sound)) && knownSounds.has(normalizeSoundWord(words))
+      && !speakers.some(tag => tag.offset > span.start) && !wordTags.some(tag => tag.offset > span.start)) {
+      text = text.slice(0, span.start) + sound;
+      sound = words;
+    }
+    const range = wrapped(span.start, text.length);
+    if (!range) { soundIssues.push({ kind: 'empty', sound }); return; }
+    const energy = span.energy ?? energyOf(trailing);
+    sounds.push({ sound, ...(energy ? { energy } : {}), ...range });
   };
 
   let index = 0;
@@ -218,6 +329,19 @@ export function readMarks(source: string): MarkReading {
       if (unclosedTag) {
         speakerIssues.push({ kind: 'unnamed' });
         index = skipDoubledSpace(index + unclosedTag[0].length);
+        continue;
+      }
+      const sound = matchAt(SOUND_OPEN, source, index);
+      if (sound) {
+        const energy = energyOf(sound[2]);
+        openSpan({ kind: 'sound', sound: sound[1].trim(), ...(energy ? { energy } : {}), start: text.length, inner: false });
+        index = skipDoubledSpace(index + sound[0].length);
+        continue;
+      }
+      const soundPoint = matchAt(SOUND_POINT, source, index) ?? matchAt(SOUND_UNCLOSED, source, index);
+      if (soundPoint) {
+        soundIssues.push({ kind: 'incomplete' });
+        index = skipDoubledSpace(index + soundPoint[0].length);
         continue;
       }
       const wordTag = matchAt(WORD_TAG, source, index);
@@ -249,29 +373,32 @@ export function readMarks(source: string): MarkReading {
         const start = text.length;
         text += reversed[1];
         const id = toNumber(reversed[2]);
-        if (open) issues.push({ kind: 'nested', id });
+        if (spans.length) issues.push({ kind: 'nested', id });
         else addSpan(id, start, text.length);
         index += reversed[0].length;
         continue;
       }
       const opening = matchAt(SPAN_OPEN, source, index);
       if (opening) {
-        const id = toNumber(opening[1] ?? opening[2]);
-        if (open) {
-          issues.push({ kind: 'nested', id });
-          nested += 1;
-        } else open = { id, start: text.length };
+        openSpan({ kind: 'mark', id: toNumber(opening[1] ?? opening[2]), start: text.length, inner: false });
         index = skipDoubledSpace(index + opening[0].length);
         continue;
       }
     }
-    if (open && (character === ']' || character === '］')) {
-      const closing = matchAt(SPAN_CLOSE, source, index)!;
-      if (nested > 0) nested -= 1;
-      else {
-        addSpan(open.id, open.start, text.length);
-        open = undefined;
+    if (spans.at(-1)?.kind === 'sound' && (character === '|' || character === '｜')) {
+      const closing = matchAt(SOUND_CLOSE_WITH_PART, source, index);
+      if (closing) {
+        closeSpan(closing[1]);
+        index = skipDoubledSpace(index + closing[0].length);
+        continue;
       }
+      // Any other pipe inside a sound tag's words is the tag's, never prose.
+      index = skipDoubledSpace(index + 1);
+      continue;
+    }
+    if (spans.length && (character === ']' || character === '］')) {
+      const closing = matchAt(SPAN_CLOSE, source, index)!;
+      closeSpan();
       index = skipDoubledSpace(index + closing[0].length);
       continue;
     }
@@ -283,20 +410,25 @@ export function readMarks(source: string): MarkReading {
     text += character;
     index += 1;
   }
-  if (open) issues.push({ kind: 'unclosed', id: open.id });
+  const outer = spans[0];
+  if (outer?.kind === 'mark') issues.push({ kind: 'unclosed', id: outer.id });
+  if (outer?.kind === 'sound') soundIssues.push({ kind: 'unclosed', sound: outer.sound });
 
-  // Trim the ends and shift every span with them.
+  // Trim the ends and shift every span and tag with them.
   const lead = text.length - text.trimStart().length;
   const trimmed = text.trim();
+  const at = (offset: number) => Math.min(trimmed.length, Math.max(0, offset - lead));
   return {
     text: trimmed,
+    sounds: sounds.map(tag => ({ ...tag, start: at(tag.start), end: at(tag.end) })),
+    soundIssues,
     marks: marks
-      .map(mark => ({ id: mark.id, start: Math.max(0, mark.start - lead), end: Math.min(trimmed.length, mark.end - lead) }))
+      .map(mark => ({ id: mark.id, start: at(mark.start), end: at(mark.end) }))
       .sort((left, right) => left.start - right.start || left.id - right.id),
     issues,
-    speakers: speakers.map(tag => ({ name: tag.name, offset: Math.min(trimmed.length, Math.max(0, tag.offset - lead)) })),
+    speakers: speakers.map(tag => ({ name: tag.name, offset: at(tag.offset) })),
     speakerIssues,
-    wordTags: wordTags.map(tag => ({ ...tag, offset: Math.min(trimmed.length, Math.max(0, tag.offset - lead)) })),
+    wordTags: wordTags.map(tag => ({ ...tag, offset: at(tag.offset) })),
     wordTagIssues,
   };
 }

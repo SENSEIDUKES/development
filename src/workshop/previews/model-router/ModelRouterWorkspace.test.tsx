@@ -40,7 +40,17 @@ it('shows one provider at a time, starting with the provider of the selected mod
   expect(provider('gemini').getAttribute('aria-selected')).toBe('true');
   expect(listedModels().every(id => id!.startsWith('google/'))).toBe(true);
   await click(provider('openrouter'));
-  expect(listedModels()).toEqual(['openrouter/openai/gpt-6-luna', 'openrouter/openai/gpt-6-luna-pro']);
+  expect(listedModels()).toEqual([
+    'openrouter/openai/gpt-6-luna', 'openrouter/openai/gpt-6-luna-pro',
+    'openrouter/z-ai/glm-5.3-flash', 'openrouter/qwen/qwen3.8-flash',
+    'openrouter/minimax/minimax-m2.7', 'openrouter/arcee-ai/trinity-large-thinking',
+    'openrouter/deepseek/deepseek-v4.1-flash', 'openrouter/google/gemini-3.8-flash',
+  ]);
+  for (const id of listedModels()) {
+    await click(row(id!)!);
+    expect(readModelPreference('chapters')).toBe(id);
+    expect(row(id!)!.getAttribute('aria-checked')).toBe('true');
+  }
 });
 
 it('selects a chapter model, saves it, and blocks models without a key', async () => {

@@ -6,7 +6,7 @@ and on every preview (`src/workshop/ModelRouterSettings.tsx`); the old
 `?preview=model-router` page is archived but still reachable.
 
 - **Created:** 2026-09-23
-- **Last Workshop update:** 2026-09-23
+- **Last Workshop update:** 2026-10-04
 - **Last source comparison:** 2026-09-23 (DEV-native; no production counterpart)
 - **Status:** active (gear); Systems card archived; owner `deferred` (server/host infrastructure, in no package)
 
@@ -41,7 +41,7 @@ any model call that is not registered. See AGENTS.md.
 | Variable | Purpose |
 | --- | --- |
 | `GEMINI_API_KEY` | Gemini models |
-| `OpenRouter-Dev` (or `OPENROUTER_API_KEY`) | OpenRouter models (GPT-6 Luna, GPT-6 Luna Pro appear once set) |
+| `OpenRouter-Dev` (or `OPENROUTER_API_KEY`) | OpenRouter chapter models appear once set |
 | `OPENROUTER_MODELS` | Extra OpenRouter models, comma-separated (`openai/gpt-5.6-luna`) |
 | `OPENROUTER_REASONING_EFFORT` | Optional server fallback reasoning effort for OpenRouter models (the Router's Advanced setting wins) |
 | `HARNESS_GENERATION_MODELS`, `CHAPTER_GENERATION_MODELS` | Models pinned ahead of the catalog |
@@ -73,6 +73,13 @@ separately; catalog-only media models are not executable.
 
 ## Workshop history
 
+- 2026-10-04 — Added GLM 5.3 Flash, Qwen 3.8 Flash, MiniMax M2.7, Trinity
+  Large Thinking, DeepSeek V4.1 Flash, and Gemini 3.8 Flash to Chapters →
+  OpenRouter in the shared `src/library/model-router/catalog.ts` catalog.
+  Model IDs were verified against OpenRouter's public `/api/v1/models` catalog.
+  GPT-6 Luna and Luna Pro, saved choices, and the default remain unchanged.
+  New entries use provider-default reasoning unless tunable levels are already
+  established for the model (Gemini 3.8 Flash).
 - 2026-09-23 — Added Audio, Video, and 3D catalog tabs for Gemini Lyria, Gemini Veo,
   and Tripo models. These capabilities are informational only; no generation
   consumers or provider calls were added.

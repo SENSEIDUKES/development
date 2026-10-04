@@ -5,6 +5,7 @@ import type { SoundWord } from '../../../audio/soundWords';
 import type { SoundCueAttachment } from '../../../audio/inlineAudio';
 import { readMarks, type MarkReading, type ProseMark, type WordTag } from '../../../narrative/marks';
 import type { SpeakerAttachment } from '../../../narrative/speech';
+import { chapterTitleText } from '../../../narrative/chapterTitle';
 import type { HoldingChangeAttachment } from '../../../narrative/holdings';
 import { placeSpeakers, type ProtagonistNames } from './speakers';
 import { placeHoldingChanges } from './holdings';
@@ -12,6 +13,7 @@ import { readHarnessSoundCueSignals, stripReplyMarks } from './chapterSignals';
 import {
   harnessChapterBody,
   harnessChapterBodyWarnings,
+  harnessFailedWrite,
   harnessParagraphBlockId,
   normalizeHarnessParagraphs,
   splitHarnessProseParagraphs,
@@ -238,6 +240,11 @@ export interface HarnessResponseAcceptanceOptions {
   locale?: string;
   /** The exact paragraph count the attempt asked for; a miss is kept and flagged. */
   paragraphTarget?: number;
+  /**
+   * The fewest words the attempt asked for. A reply far below it is a failed
+   * write and is not accepted (`harnessFailedWrite`); a merely short one is kept and flagged.
+   */
+  minWords?: number;
   /** The main character's names, from the attempt's frozen Story Information: whose lines are the protagonist's. */
   protagonistNames?: ProtagonistNames;
   /** The writer was asked for speaker tags, so speech it left untagged is worth flagging. */
@@ -445,6 +452,8 @@ export const acceptHarnessModelResponse = (
         warnings,
       };
     }
+    const stopped = options.minWords ? harnessFailedWrite(body.metrics, options.minWords) : undefined;
+    if (stopped) return { accepted: false, reason: stopped, warnings };
     if (parsed.blocks !== undefined) {
       warnings.push({
         code: 'competing_prose_ignored',
@@ -455,11 +464,15 @@ export const acceptHarnessModelResponse = (
     const soundCues = acceptedSoundCues(parsed, marked.read, chapterNumber, warnings, options);
     const speakers = acceptedSpeakers(marked, chapterNumber, warnings, options);
     const holdings = acceptedHoldings(parsed, marked, chapterNumber, warnings, options);
-    const title = nonEmptyString(parsed.title);
+    // The chapter's number is the HARNESS's: a "Chapter 3:" the writer put before its title is dropped.
+    const writtenTitle = nonEmptyString(parsed.title);
+    const title = writtenTitle ? nonEmptyString(chapterTitleText(writtenTitle)) : undefined;
     if (!title) {
       warnings.push({
         code: 'missing_title',
-        message: `The provider omitted a chapter title; the harness assigned ${chapterTitleFallback(chapterNumber)}.`,
+        message: writtenTitle
+          ? `The provider's title, “${writtenTitle}”, only numbered the chapter; the harness assigned ${chapterTitleFallback(chapterNumber)}.`
+          : `The provider omitted a chapter title; the harness assigned ${chapterTitleFallback(chapterNumber)}.`,
       });
     }
     const plan = parsePlan(parsed.plan, warnings);
@@ -496,6 +509,8 @@ export const acceptHarnessModelResponse = (
     };
   }
   const body = harnessChapterBody(splitHarnessProseParagraphs(recovered).map(paragraph => readMarks(paragraph).text).filter(Boolean), options.paragraphTarget);
+  const stopped = options.minWords ? harnessFailedWrite(body.metrics, options.minWords) : undefined;
+  if (stopped) return { accepted: false, reason: stopped, warnings };
   warnings.push(
     {
       code: 'plain_prose_recovery',

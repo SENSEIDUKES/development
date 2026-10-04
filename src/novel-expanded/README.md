@@ -10,7 +10,7 @@ The Workshop is where systems are built and inspected one at a time. The app is
 where they are used together, the way a reader meets them.
 
 - Created: 2026-10-01 (piece 1)
-- Last updated: 2026-10-01
+- Last updated: 2026-10-03
 - Owner: `host` (`scripts/ownershipInventory.mjs`). The app is a host of the
   Library and SEN packages, like any outside app would be.
 
@@ -127,6 +127,7 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## History
 
+- **2026-10-03** — From the five-chapter test: every chapter keeps the point of view the story opened in; a reply far short of a chapter is never saved, and the Reader says so with Next ready to try again; titles drop a "Chapter N:" the writer added, so the Reader and Listen say the number once; a thing first shown taken in hand is recorded in Holdings.
 - **2026-10-03** — Listen reads like production: speech the writer left untagged is voiced from its narration (another named speaker gets the Side voice, otherwise the main character's), the default voices are the computer's own rather than online ones, and each line follows the last after production's 50 ms gap.
 - **2026-10-03** — Arcs are 30 chapters and a goal reached early hands over to the next; every chapter must change something. Stories saved before (all test stories) are set aside untouched and the app opens empty.
 - **2026-10-03** — Export story on Story View: one file with the story, every chapter, and for each chapter the exact instructions, Story Information and request the writer was given and its raw reply, so a test can be shared and read.

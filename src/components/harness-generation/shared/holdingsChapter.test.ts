@@ -8,6 +8,7 @@ import {
   type HarnessWorkspaceState,
 } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { REST_OF_CHAPTER, writtenChapterReply } from '../../../test-utils/writtenChapter';
 import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
 import { acceptHarnessModelResponse } from './responseAcceptance';
 
@@ -25,7 +26,7 @@ const response = (rawProviderResponse: string): HarnessGenerationResponse => ({
 });
 const adapter = (...replies: string[]) => {
   const generate = vi.fn<HarnessGenerationModelAdapter['generate']>();
-  for (const reply of replies) generate.mockResolvedValueOnce(response(reply));
+  for (const reply of replies) generate.mockResolvedValueOnce(response(writtenChapterReply(reply)));
   const value: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
     generate,
@@ -94,6 +95,7 @@ describe('HARNESS holdings through change tags', () => {
       'Elder Qin raised a jade gourd and drank.',
       'Ye Chen began to practise the footwork.',
       'He slept.',
+      REST_OF_CHAPTER,
     ]);
     const entryName = (id?: string) => state.codexEntries.find(entry => entry.id === id)?.name;
     expect(chapter.holdingChanges?.map(change => [change.anchor.blockId, change.anchor.selectedText, change.payload.verb, entryName(change.payload.holder.entryId), entryName(change.payload.target?.entryId), change.payload.count])).toEqual([

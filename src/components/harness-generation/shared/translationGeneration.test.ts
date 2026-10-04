@@ -3,6 +3,7 @@ import { handleHarnessGenerationHttp } from '../../../server/harness-generation/
 import { SEN_NOVEL_AUTHOR_SKILL } from '@seihouse/sen/harness-generation';
 import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { writtenChapter } from '../../../test-utils/writtenChapter';
 import { validateHarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import { validateTranslationGlossaryResource } from '@seihouse/sen/harness-generation';
 import { type HarnessGenerationResponse, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
@@ -65,7 +66,7 @@ const buildController = (options: {
               options.captures?.push({ systemInstruction: prompt.systemInstruction, userPrompt: prompt.userPrompt });
               if (options.failFirstCall && calls === 1) throw new Error('Simulated provider failure.');
               return {
-                rawProviderResponse: JSON.stringify({ prose: 'The courier caught the jade token before it struck the steps.' }),
+                rawProviderResponse: JSON.stringify(writtenChapter({ prose: 'The courier caught the jade token before it struck the steps.' })),
                 providerReceipt: { provider: 'gemini', model: request.model, generatedAt: new Date().toISOString(), durationMs: 1, usage: { source: 'unavailable' as const } },
               };
             },

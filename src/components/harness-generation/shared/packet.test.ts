@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { HarnessGenerationController, projectCanonicalState, exportHarnessStory } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { writtenChapter } from '../../../test-utils/writtenChapter';
 import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
 import { handleHarnessGenerationHttp } from '../../../server/harness-generation/http';
 import type { HarnessTextGenerationRequest } from '../../../server/harness-generation/provider';
@@ -14,7 +15,7 @@ const response = (body: unknown): HarnessGenerationResponse => ({ rawProviderRes
 const plan: ArcPlan = { arcNumber: 1, goals: [{ id: 'arc-1-gate', text: 'Reach the mountain gate.', chapters: 3 }, { id: 'arc-1-trial', text: 'Pass the sect trial.', chapters: 27 }] };
 
 const chapterReply = (n: number) => ({
-  title: `Chapter ${n} Title`,
+  title: `The Gate, Day ${n}`,
   paragraphs: [`Yi Chen reached Stage ${n} and climbed toward the Azure Sect gate. He had ${100 + n} qi.`, `Elder Mu watched from the wall in chapter ${n}.`],
   arcCompletion: { goalId: 'arc-1-gate', completed: false, evidence: '' },
   recap: `Recap ${n}: Yi Chen climbed higher.`,
@@ -38,7 +39,7 @@ const setup = async (options: { throughHttp?: boolean } = {}) => {
     generate: vi.fn(async request => {
       requests.push(structuredClone(request));
       chapter += 1;
-      const body = chapterReply(chapter);
+      const body = writtenChapter(chapterReply(chapter));
       memories.set(body.paragraphs.join('\n\n'), memoryReply(chapter, body.paragraphs.join('\n\n')));
       if (!options.throughHttp) return response(body);
       const result = await handleHarnessGenerationHttp({ method: 'POST', body: JSON.stringify(request) }, {
@@ -94,7 +95,7 @@ describe('Compact long-story generation packet', () => {
     await run.controller.generateNextChapter(run.story.id, 'fixture');
     const state = run.controller.snapshot();
     const packet = run.requests[1].storyInformation;
-    expect(packet.previouslyOn).toEqual([{ chapterNumber: 1, title: 'Chapter 1 Title', recap: 'Recap 1: Yi Chen climbed higher.' }]);
+    expect(packet.previouslyOn).toEqual([{ chapterNumber: 1, title: 'The Gate, Day 1', recap: 'Recap 1: Yi Chen climbed higher.' }]);
     expect(packet.canonicalState.characters).toEqual(expect.arrayContaining([
       expect.objectContaining({ name: 'Yi Chen', asOfChapter: 1, facts: expect.objectContaining({ role: 'Disciple', stage: 'Stage 1', isMainCharacter: 'true' }) }),
       expect.objectContaining({ name: 'Elder Mu', facts: expect.objectContaining({ role: 'Elder' }) }),

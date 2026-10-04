@@ -52,6 +52,22 @@ describe('Compact Story Information Packet', () => {
     expect(current).not.toHaveProperty('fatePressure');
   });
 
+  it('tells every later chapter the point of view the story opened in, read from its chapters, never their prose', () => {
+    const { state, story, foundation } = fixture();
+    // Before a main character is declared there is no name to count, so the Style alone decides.
+    expect(projectCurrentStory(state, story, foundation)).not.toHaveProperty('pointOfView');
+    foundation.input.cast = [{ name: 'Mara', isMainCharacter: true }];
+    const opening = state.chapters.find(chapter => chapter.chapterNumber === 1)!;
+    opening.paragraphs = Array.from({ length: 8 }, () => 'Mara watched the tide climb the quay.');
+    // Chapter 2 switched to "I": the story still opened in the third person, so that is what travels.
+    state.chapters.find(chapter => chapter.chapterNumber === 2)!.paragraphs = Array.from({ length: 8 }, () => 'I watched the tide climb my quay.');
+    const packet = compileStoryInformationPacket(state, story, foundation, 'next');
+    expect(packet.currentStory.pointOfView).toBe('third-person');
+    expect(JSON.stringify(packet)).not.toContain('watched the tide');
+    // A story in another language is never read, since only English words are counted.
+    expect(projectCurrentStory(state, { ...story, originalLanguage: 'es' }, foundation)).not.toHaveProperty('pointOfView');
+  });
+
   it('assembles distinct sections: direction, arc, rhythm with the matching suggestion, recaps, and latest canonical state', () => {
     const { state, story, foundation } = fixture();
     story.arcPlans = [{ plan: { arcNumber: 1, goals: [{ id: 'g1', text: 'Anchor the city.', chapters: 30 }] }, effectiveChapter: 1, reason: 'initial' }];

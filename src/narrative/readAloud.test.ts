@@ -43,6 +43,10 @@ describe('buildReadAloudScript', () => {
     expect(script([], { title: '' }).lines[0].text).toBe('Chapter 3.');
     expect(script([], { language: 'ko', title: '썰물' }).lines[0].text).toBe('썰물');
     expect(script([], { language: 'ja', title: '' }).lines).toEqual([]);
+    // "Chapter 3" is said once, even when the title repeats it or is only the number.
+    expect(script([], { title: 'Chapter 3: Low Tide' }).lines[0]).toMatchObject({ text: 'Chapter 3. Low Tide', end: 8 });
+    expect(script([], { title: 'Chapter 3' }).lines[0].text).toBe('Chapter 3.');
+    expect(script([], { language: 'ja', title: '第3章 引き潮' }).lines[0].text).toBe('引き潮');
   });
 
   it('switches voice mid-sentence: the speaker\'s line in their voice, the rest by the narrator, one sentence lit', () => {

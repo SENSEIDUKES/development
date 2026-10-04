@@ -3,6 +3,7 @@ import { appendHarnessCorrection, buildCanonicalStoryView } from './canonicalSta
 import { compileStoryInformationPacket } from './context';
 import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { asWrittenChapter } from '../../../test-utils/writtenChapter';
 import { type HarnessGenerationRequest, type HarnessGenerationResponse } from '@seihouse/sen/harness-generation';
 
 interface ChapterFixture { chapter: HarnessGenerationResponse; memory: HarnessGenerationResponse }
@@ -30,7 +31,7 @@ const setup = async (...replies: ChapterFixture[]) => {
     const reply = replies.shift();
     if (!reply) throw new Error('Unexpected model call.');
     memories.push(reply.memory);
-    return reply.chapter;
+    return asWrittenChapter(reply.chapter);
   });
   const modelAdapter = { generate,
     recoverMemory: async () => memories.shift()!,

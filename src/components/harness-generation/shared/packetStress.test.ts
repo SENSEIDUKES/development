@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { writtenChapter } from '../../../test-utils/writtenChapter';
 import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
 import { GENERATION_PACKET_BUDGET } from '@seihouse/sen/harness-generation';
 import type { HarnessGenerationModelAdapter, HarnessGenerationRequest, HarnessGenerationResponse } from '@seihouse/sen/harness-generation';
@@ -48,7 +49,7 @@ export const runPacketStress = async (chapterCount: number) => {
   let chapter = 0;
   const adapter: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ configured: true, provider: 'gemini', defaultModel: 'fixture', models: [] }),
-    generate: async request => { requests.push(structuredClone(request)); chapter += 1; return response(stressChapter(chapter)); },
+    generate: async request => { requests.push(structuredClone(request)); chapter += 1; return response(writtenChapter(stressChapter(chapter))); },
     recoverMemory: async request => response(stressMemory(request.prose)),
     arcOperation: async () => response({ plan: { arcNumber: 1, goals: [{ id: 'arc-1-goal', text: 'Carry Yi Chen through the outer court.', chapters: 30 }] }, destinedEnding: 'Yi Chen leads the Azure Sect to glory.' }),
   };

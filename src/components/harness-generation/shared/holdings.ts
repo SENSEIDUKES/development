@@ -353,11 +353,6 @@ const listedName = (value: string) => value.trim().replace(/\s*[x×]\s*[0-9０-�
 /** A paragraph's position in its chapter, from its `c{n}-p{i}` id. */
 const paragraphIndex = (blockId: string) => Number(blockId.match(/-p(\d+)$/)?.[1] ?? 0);
 
-const VERB_PHRASES: Record<HoldingVerb, string> = {
-  has: 'has', gained: 'gains', lost: 'loses', equipped: 'equips', unequipped: 'puts away', knows: 'knows',
-  learning: 'starts learning', learned: 'learns', improved: 'improves', sealed: 'seals', unsealed: 'unseals', rank: 'reaches rank',
-};
-
 /**
  * Works out what every character holds now: each committed chapter in order,
  * each change in reading order, every change checked against what came before
@@ -453,7 +448,8 @@ export function deriveHoldings({ entries, chapters, mainCharacterName }: {
             break;
           case 'equipped':
           case 'unequipped':
-            if (!thing) { flag('not-held', `${holder.name} ${VERB_PHRASES[payload.verb]} ${quoted}, which the record does not show them holding.`); break; }
+            // Taking a thing in hand, or putting it away, shows the character has it: the first time the story shows it that way, it is recorded as held.
+            if (!thing) { holder.things.set(key, { entryId: key, name: targetName!, count: payload.count ?? 1, equipped: payload.verb === 'equipped', events: [event] }); took(); break; }
             if (thing.equipped !== (payload.verb === 'equipped')) { thing.equipped = payload.verb === 'equipped'; thing.events.push(event); took(); }
             break;
         }

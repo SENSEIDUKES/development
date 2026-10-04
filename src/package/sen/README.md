@@ -33,6 +33,20 @@ There is no `chapter-generation` or `codex-cards` compatibility entry. Legacy
 Chapter Generation was retired; HARNESS is the one canonical generated-story
 owner.
 
+**0.16.0 (breaking):** what a five-chapter test showed.
+
+- `./harness-generation`: a reply under a quarter of the chapter's minimum
+  words is a failed write (`harnessFailedWrite`, `HARNESS_FAILED_WRITE_SHARE`):
+  never saved, its raw reply kept on the attempt for a retry. A chapter that is
+  only short is still kept and flagged. The story's point of view travels in
+  Current Story Information (`CurrentStoryProjection.pointOfView`, read from its
+  earliest committed chapter that shows one clearly), and the response contract
+  tells the writer to keep it; SEN Speakers v1.2.0 no longer mentions point of
+  view. A chapter label the writer put before its title is dropped
+  (`chapterTitleText`), and the Reader and Read Aloud say the number once.
+  Taking a thing in hand or putting it away records it as held the first time
+  the story shows it (`deriveHoldings`), instead of being flagged and left out.
+
 **0.15.0 (breaking):** Read Aloud reads like production.
 
 - `./reader-runtime`: speech nobody tagged is voiced from its narration

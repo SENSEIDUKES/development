@@ -11,6 +11,7 @@ import {
 import type { ArcPlan } from '@seihouse/sen/arc-goals';
 import type { ChapterWritingStyle, SenLanguageCode } from '@seihouse/sen/contracts';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { writtenChapterReply } from '../../../test-utils/writtenChapter';
 import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
 
 /**
@@ -55,7 +56,7 @@ const setup = async (options: {
       requests.push(structuredClone(request));
       const next = outputs.shift() ?? reply('Mei climbed toward the gate.');
       if (next instanceof Error) throw next;
-      return { rawProviderResponse: next, providerReceipt: receipt };
+      return { rawProviderResponse: writtenChapterReply(next), providerReceipt: receipt };
     },
     arcOperation: async () => ({ rawProviderResponse: '{}', providerReceipt: receipt }),
   };

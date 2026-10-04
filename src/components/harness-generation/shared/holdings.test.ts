@@ -164,16 +164,26 @@ describe('working out holdings', () => {
   it('flags a change that cannot be true and leaves it out', () => {
     const run = story();
     run.write(1, [
-      '[[equipped: MC | Jade Sword]] He drew a jade sword.',
       '[[gained: MC | Rusted Iron Sword]] He took it. [[gained: MC | Rusted Iron Sword]] He took it again.',
       '[[improved: MC | Iron Palm | Major Success]] His palm burned. [[learning: MC | Wind Step]] He tried.',
       '[[unsealed: MC | Wind Step]] Nothing was sealed. [[lost: MC | Spirit Pill | 2]] Two pills fell.',
     ]);
     const state = run.derive();
-    expect(flagKinds(state)).toEqual(['not-held', 'already-held', 'not-learned', 'sealed-state', 'not-held']);
-    expect(state.flags[0]).toMatchObject({ chapterNumber: 1, message: 'Chapter 1: Ye Chen equips ‘Jade Sword’, which the record does not show them holding.' });
+    expect(flagKinds(state)).toEqual(['already-held', 'not-learned', 'sealed-state', 'not-held']);
+    expect(state.flags.at(-1)).toMatchObject({ chapterNumber: 1, message: 'Chapter 1: Ye Chen loses ‘Spirit Pill’, which the record does not show them holding.' });
     expect(things(state)).toEqual([['Rusted Iron Sword', 1, false]]);
     expect(abilities(state)).toEqual([['Wind Step', 'learning', undefined, false, false]]);
+  });
+
+  it('records a thing as held the first time the story shows it taken in hand or put away', () => {
+    // The owner's Goblin story, Chapter 1: Grit pulled a slate from under a stone, tagged only as equipped.
+    const run = story();
+    run.write(1, ['[[equipped: MC | Slate tally board]] He pulled a flat piece of slate from beneath a loose stone.',
+      '[[unequipped: MC | Jade Sword]] He hung the jade sword on the wall.'], ['Slate tally board', 'Jade Sword']);
+    const state = run.derive();
+    expect(things(state)).toEqual([['Slate tally board', 1, true], ['Jade Sword', 1, false]]);
+    // Nothing is flagged: the closing list and the record agree.
+    expect(state.flags).toEqual([]);
   });
 
   it('flags losing more than held, and removes them all', () => {
@@ -186,11 +196,11 @@ describe('working out holdings', () => {
 
   it('is worked out the same every time, and follows a chapter\'s current version', () => {
     const run = story();
-    run.write(5, ['[[gained: MC | Jade Sword]] He claimed the jade sword.']);
-    run.write(7, ['[[equipped: MC | Jade Sword]] He swung the jade sword.']);
+    run.write(5, ['[[gained: MC | Spirit Pill | 3]] He claimed three pills.']);
+    run.write(7, ['[[lost: MC | Spirit Pill | 1]] He swallowed one.']);
     expect(run.derive()).toEqual(run.derive());
-    expect(things(run.derive())).toEqual([['Jade Sword', 1, true]]);
-    // Chapter 5 rewritten without the gain: the sword is gone, and chapter 7 is flagged.
+    expect(things(run.derive())).toEqual([['Spirit Pill', 2, false]]);
+    // Chapter 5 rewritten without the gain: the pills are gone, and chapter 7 is flagged.
     run.chapters[0] = { ...run.chapters[0], holdingChanges: [] };
     const state = run.derive();
     expect(things(state)).toEqual([]);

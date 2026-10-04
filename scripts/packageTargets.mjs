@@ -32,7 +32,7 @@ export const PACKAGE_TARGETS = {
       '@seihouse/sen/audio': ['parseAudioCues', 'createMediaCatalog', 'placeSoundCues', 'NarrativeAudioProvider'],
       '@seihouse/sen/story-seed': ['StoryFoundationEditor', 'createEmptyStorySeedInput', 'parseStorySeedJson'],
       '@seihouse/sen/generation': ['readMarks', 'TAG_WORDS'],
-      '@seihouse/sen/harness-generation': ['HarnessGenerationController', 'createHarnessSenStory', 'HarnessReaderSession', 'SEN_SPEAKERS_SKILL', 'SEN_HOLDINGS_SKILL', 'deriveHoldings', 'holdingsSection', 'HoldingsPage'],
+      '@seihouse/sen/harness-generation': ['HarnessGenerationController', 'createHarnessSenStory', 'HarnessReaderSession', 'SEN_SPEAKERS_SKILL', 'SEN_HOLDINGS_SKILL', 'deriveHoldings', 'holdingsSection', 'HoldingsPage', 'harnessFailedWrite', 'chapterTitleText'],
       '@seihouse/sen/arc-goals': ['ARC_LENGTH'],
     },
     smokeTypes: `

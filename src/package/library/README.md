@@ -5,6 +5,10 @@ SEN engine and the two UI packages. Library owns SEIHouse users, products,
 economy, community and business policy. Authentication enforcement, secrets,
 durable ledgers and concrete infrastructure stay in the host/backend.
 
+**0.16.0:** requires `@seihouse/sen` 0.16.0 (failed writes are never saved;
+the story's point of view is kept; titles without a chapter label; equipping
+records a thing as held).
+
 **0.15.0:** requires `@seihouse/sen` 0.15.0. `LIBRARY_READ_ALOUD_VOICES` is
 production's cast: Daniel or Google US English narrates, Rishi or the device's
 next voice is the Protagonist, and a female voice by production's names is the

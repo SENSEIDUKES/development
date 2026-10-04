@@ -1,4 +1,5 @@
 import type { HarnessChapterMetrics, HarnessWarning } from '../../../narrative/generation';
+import { wordRanges } from '../../../narrative/words';
 
 /**
  * The HARNESS-owned chapter body.
@@ -22,22 +23,36 @@ export const HARNESS_CHAPTER_TARGET_MAX_WORDS = 2_500;
  * chapter. The range to return to afterwards is 40 to 80.
  */
 export const HARNESS_CHAPTER_PARAGRAPH_RANGE: { readonly min: number; readonly max: number } = { min: 50, max: 50 };
+/**
+ * Below this share of the chapter's minimum words a reply is a failed write,
+ * not a short chapter: the writer stopped, or wrote about the task instead of
+ * the story, long before a chapter. It is never saved, and the reader tries
+ * again. A reply at or above it is kept, and flagged when short.
+ */
+export const HARNESS_FAILED_WRITE_SHARE = 0.25;
 /** Below this a one-paragraph reply is a legitimately short body, not a structural failure. */
 export const HARNESS_SINGLE_PARAGRAPH_REVIEW_WORDS = 150;
 /** Upper bound: one runaway list cannot displace the chapter. */
 export const HARNESS_MAX_CHAPTER_PARAGRAPHS = 600;
 
 const CJK_CHARACTER = '[\\u3040-\\u30ff\\u3400-\\u4dbf\\u4e00-\\u9fff\\uf900-\\ufaff\\uff66-\\uff9f]';
+/** Scripts that put no space between words (Thai, Lao, Khmer, Burmese): their words are found by the language's own rules. */
+const UNSPACED_SCRIPT = /[\p{Script=Thai}\p{Script=Lao}\p{Script=Khmer}\p{Script=Myanmar}]/u;
+const UNSPACED_RUN = /[\p{Script=Thai}\p{Script=Lao}\p{Script=Khmer}\p{Script=Myanmar}]+/gu;
 
 /**
- * Whitespace-delimited words plus one count per CJK character, so a chapter
- * written in the story's original language measures honestly against the
- * scale target instead of reading as a handful of words.
+ * Whitespace-delimited words, one count per CJK character, and the words of
+ * scripts written without spaces (`wordRanges`), so a chapter written in the
+ * story's original language measures honestly against the scale target
+ * instead of reading as a handful of words.
  */
 export const countHarnessWords = (text: string): number => {
   const ideographs = text.match(new RegExp(CJK_CHARACTER, 'gu'))?.length ?? 0;
-  const words = text.replace(new RegExp(CJK_CHARACTER, 'gu'), ' ').trim().split(/\s+/u).filter(Boolean).length;
-  return ideographs + words;
+  const unspaced = UNSPACED_SCRIPT.test(text)
+    ? wordRanges(text).filter(word => UNSPACED_SCRIPT.test(text.slice(word.start, word.end))).length
+    : 0;
+  const words = text.replace(new RegExp(CJK_CHARACTER, 'gu'), ' ').replace(UNSPACED_RUN, ' ').trim().split(/\s+/u).filter(Boolean).length;
+  return ideographs + unspaced + words;
 };
 
 /**
@@ -113,8 +128,17 @@ export const harnessChapterBody = (paragraphs: readonly string[], paragraphTarge
 };
 
 /**
- * Quality diagnostics. Short or unstructured output is always preserved and
- * always inspectable; it is never rejected and its prose is never discarded.
+ * Why a reply is a failed write rather than a chapter, when it is one: fewer
+ * words than `HARNESS_FAILED_WRITE_SHARE` of the minimum the attempt asked for.
+ */
+export const harnessFailedWrite = (metrics: Pick<HarnessChapterMetrics, 'wordCount'>, minWords: number): string | undefined =>
+  metrics.wordCount < Math.ceil(minWords * HARNESS_FAILED_WRITE_SHARE)
+    ? `The writer stopped after ${metrics.wordCount.toLocaleString('en-US')} ${metrics.wordCount === 1 ? 'word' : 'words'}, far short of the ${minWords.toLocaleString('en-US')} a chapter needs.`
+    : undefined;
+
+/**
+ * Quality diagnostics. Short or unstructured output is preserved and always
+ * inspectable; only a failed write (`harnessFailedWrite`) is not a chapter.
  */
 export const harnessChapterBodyWarnings = (metrics: HarnessChapterMetrics): HarnessWarning[] => {
   const warnings: HarnessWarning[] = [];

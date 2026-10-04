@@ -43,6 +43,8 @@ const chapter = {
     // The writer tags who speaks: the main character with their own tag, then someone else by name.
     '[[@MC]] “Ring the bells,” Ye Chen said.',
     '[[@Junior Sister Han]] “They are drowned,” she whispered.',
+    // The rest of the chapter: a reply under a quarter of the 1,800-word minimum is a failed write and is never saved.
+    Array.from({ length: 35 }, () => 'The night went on, and the town kept its quiet watch until dawn.').join(' '),
   ],
   // One of the Library's sound words, so the cue is placed (an unknown sound is set aside).
   soundCues: [{ mark: 1, sound: 'beast roar' }],

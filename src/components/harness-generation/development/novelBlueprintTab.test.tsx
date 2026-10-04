@@ -3,6 +3,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { asWrittenChapter } from '../../../test-utils/writtenChapter';
 import { HarnessGenerationController, type HarnessGenerationModelAdapter, type HarnessGenerationRequest } from '@seihouse/sen/harness-generation';
 import { HarnessGenerationWorkspace } from '@seihouse/library/generation';
 import { createMockStorySeedRecord } from '../../../workshop/previews/story-seed/previewData';
@@ -15,7 +16,7 @@ const requests: HarnessGenerationRequest[] = [];
 const reply = (body: unknown) => ({ rawProviderResponse: JSON.stringify(body), providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: 'now', usage: { source: 'unavailable' as const } } });
 const modelAdapter: HarnessGenerationModelAdapter = {
   getServerInfo: async () => ({ configured: true, provider: 'fixture', defaultModel: 'fixture', models: [{ id: 'fixture', label: 'Fixture' }] }),
-  generate: vi.fn(async request => { requests.push(structuredClone(request)); return reply({ title: 'The Quarry', paragraphs: ['Ye Chen hauled stone in the quarry.'] }); }),
+  generate: vi.fn(async request => { requests.push(structuredClone(request)); return asWrittenChapter(reply({ title: 'The Quarry', paragraphs: ['Ye Chen hauled stone in the quarry.'] })); }),
   // The arc planner's draft for the arc being begun; the HARNESS assigns its identities.
   arcOperation: vi.fn(async () => reply({ plan: { goals: [
     { text: 'Climb to the inner sect.', chapters: 18 }, { text: 'Win the sect trial.', chapters: 12 },

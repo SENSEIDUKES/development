@@ -8,6 +8,7 @@ import { SEN_READING_MODE_SKILLS } from './readingModeSkills';
 import { SEN_SOUND_CUES_SKILL, presentSoundVocabulary } from './soundCuesSkill';
 import { SEN_SPEAKERS_SKILL } from './speakersSkill';
 import { SEN_HOLDINGS_SKILL } from './holdingsSkill';
+import { HARNESS_TAG_RULES } from './tagRules';
 import type { SoundWord } from '../../../audio/soundWords';
 
 /** The story state that fills a managed CAPA slot. */
@@ -42,6 +43,12 @@ export interface CapaSlotDefinition {
    * slots SEN fills with its own bundled skills take no packages at all.
    */
   installable: boolean;
+  /**
+   * The slot's skill teaches one kind of tag the writer puts in its prose. The
+   * HARNESS tag rules, which hold for every kind, are said once before the
+   * first such section (`HARNESS_TAG_RULES`).
+   */
+  writesTags?: true;
 }
 
 /**
@@ -58,9 +65,9 @@ export const CAPA_SCHEMA: readonly CapaSlotDefinition[] = [
   { id: 'style', label: 'Style', description: 'Shapes prose tradition, voice, rhythm, and presentation.', installable: true },
   { id: 'accessibility', label: 'Accessibility', description: 'Writes chapters in the story\'s Reading Mode.', managedBy: 'reading-mode', installable: false },
   { id: 'translation', label: 'Translation', description: 'Writes chapters in the story\'s Story Language when it is not English.', managedBy: 'story-language', installable: true },
-  { id: 'soundCues', label: 'Sound Cues', description: 'Marks the words where a sound happens and names it from the story\'s sound words.', managedBy: 'media-loadout', installable: false },
-  { id: 'speakers', label: 'Speakers', description: 'Tags who speaks each spoken line, so the Reader can give each its voice.', managedBy: 'always', installable: false },
-  { id: 'holdings', label: 'Holdings', description: 'Keeps what every character has, uses, knows and is: tags each change where it happens and lists what the main character holds after the chapter.', managedBy: 'always', installable: false },
+  { id: 'soundCues', label: 'Sound Cues', description: 'Tags the words where a sound happens and names it from the story\'s sound words.', managedBy: 'media-loadout', installable: false, writesTags: true },
+  { id: 'speakers', label: 'Speakers', description: 'Tags who speaks each spoken line, so the Reader can give each its voice.', managedBy: 'always', installable: false, writesTags: true },
+  { id: 'holdings', label: 'Holdings', description: 'Keeps what every character has, uses, knows and is: tags each change where it happens and lists what the main character holds after the chapter.', managedBy: 'always', installable: false, writesTags: true },
 ] as const;
 
 /** SEN's own skill for each slot that loads on every chapter. */
@@ -339,7 +346,8 @@ export const buildHarnessOfficialOutputRequirements = (input: {
   ].join('\n\n');
 };
 
-const slotLabel = (slot: HarnessSkillSlotId) => CAPA_SCHEMA.find(definition => definition.id === slot)!.label;
+const slotDefinition = (slot: HarnessSkillSlotId) => CAPA_SCHEMA.find(definition => definition.id === slot)!;
+const slotLabel = (slot: HarnessSkillSlotId) => slotDefinition(slot).label;
 
 const isAuthoringSkill = (skill: HarnessSkillManifest) =>
   skill.applications.includes('generation') && Boolean(skill.instructions?.trim());
@@ -347,8 +355,9 @@ const isAuthoringSkill = (skill: HarnessSkillManifest) =>
 /**
  * Assembles the CAPA Prompt: every equipped generation skill, Author first,
  * once each, in CAPA Schema order, then the official requirements when the
- * chapter needs them. Non-generation skills are recorded for their host
- * runtime but contribute no authoring text.
+ * chapter needs them. When any loaded skill teaches a tag, the HARNESS tag
+ * rules come once, just before the first of them. Non-generation skills are
+ * recorded for their host runtime but contribute no authoring text.
  */
 export const assembleCapaPrompt = (
   loadout: HarnessSkillLoadoutSnapshot,
@@ -380,7 +389,8 @@ export const assembleCapaPrompt = (
   const soundVocabulary = ordered.some(skill => skill.slot === 'soundCues' && isAuthoringSkill(skill)) && loadout.soundVocabulary?.length
     ? loadout.soundVocabulary
     : undefined;
-  const sections = ordered.filter(isAuthoringSkill).map(skill => [
+  const authoring = ordered.filter(isAuthoringSkill);
+  const sections = authoring.map(skill => [
     `CAPA SKILL [${slotLabel(skill.slot)}] — ${skill.name} v${skill.version}`,
     skill.instructions!.trim(),
     // The selected reference belongs to the Translation section, not its own.
@@ -397,6 +407,9 @@ export const assembleCapaPrompt = (
     accessibility: ordered.some(skill => skill.slot === 'accessibility' && isAuthoringSkill(skill)),
     translation: Boolean(translationSkill),
   });
+  // The rules every tag shares come once, before the first skill that teaches a tag.
+  const firstTagSection = authoring.findIndex(skill => slotDefinition(skill.slot).writesTags);
+  if (firstTagSection >= 0) sections.splice(firstTagSection, 0, HARNESS_TAG_RULES);
   const text = [...sections, ...(officialRequirements ? [officialRequirements] : [])].join('\n\n');
   const estimatedTokens = Math.max(1, Math.ceil(text.length / 4));
   if (estimatedTokens > CAPA_PROMPT_TOKEN_LIMIT) {

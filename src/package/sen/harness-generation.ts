@@ -98,6 +98,7 @@ export { SEN_READING_MODE_SKILLS } from '../../components/harness-generation/sha
 export { SEN_SOUND_CUES_INSTRUCTIONS, SEN_SOUND_CUES_SKILL, presentSoundVocabulary } from '../../components/harness-generation/shared/soundCuesSkill';
 export { SEN_SPEAKERS_INSTRUCTIONS, SEN_SPEAKERS_SKILL } from '../../components/harness-generation/shared/speakersSkill';
 export { SEN_HOLDINGS_INSTRUCTIONS, SEN_HOLDINGS_SKILL } from '../../components/harness-generation/shared/holdingsSkill';
+export { HARNESS_TAG_RULES } from '../../components/harness-generation/shared/tagRules';
 export {
   HOLDINGS_SECTION_OTHER_CHARACTERS,
   declaredCharacters,

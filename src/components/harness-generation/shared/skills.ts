@@ -331,7 +331,7 @@ export const buildHarnessOfficialOutputRequirements = (input: {
       'Apply them consistently to prose, dialogue, narration, reader-visible System Panels, Manifestation text, captions, and other text intended to be experienced by the reader. Do not weaken or selectively ignore them to preserve another prose preference. When necessary, Style must operate within their reader-facing requirements.',
       `${named} ${adapters.length > 1 ? 'do' : 'does'} not apply to machine-facing output.`,
     ] : []),
-    'Keep all structured field names, IDs, enum values, triggers, technical metadata, internal tags, routing instructions, media-generation prompts, asset-search descriptions, audio directions, sound words, and backend effect payloads in canonical English and in the exact required structure. Sound Cue marks wrap the story\'s own words, in its language.',
+    'Keep all structured field names, IDs, enum values, triggers, technical metadata, internal tags, routing instructions, media-generation prompts, asset-search descriptions, audio directions, sound words, and backend effect payloads in canonical English and in the exact required structure. A sound tag\'s words are the story\'s own, in its language.',
     ...(adapters.length ? [
       `When an output object contains both reader-facing and machine-facing information, apply ${named} only to the reader-facing fields. Preserve the machine-facing fields in canonical English.`,
       'These requirements change how reader-facing content is communicated. They must not change established facts, character intent, plot events, emotional meaning, canonical terminology, or the technical meaning of any media effect.',

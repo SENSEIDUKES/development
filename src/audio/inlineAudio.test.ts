@@ -3,7 +3,7 @@ import { readMarks } from '../narrative/marks';
 import type { AudioCue } from './cues';
 import { resolvePlayableSoundCue, soundCueTrackId, splitBySoundCues, type SoundCueAttachment } from './inlineAudio';
 import type { FrozenNarrativeMedia } from './media';
-import { describeSetAsideSoundCue, placeSoundCues, type SoundCueSignal } from './soundCuePlacement';
+import { describeSetAsideSoundCue, placeSoundCues } from './soundCuePlacement';
 import type { SoundWord } from './soundWords';
 
 const recording = (name: string, sound: string, energy?: 'low' | 'medium' | 'high'): FrozenNarrativeMedia['soundCues'][number] => ({
@@ -31,15 +31,15 @@ const VOCABULARY: SoundWord[] = [
   { word: 'beast roar', example: 'the beast roared' },
 ];
 
-/** Reads marked paragraphs the way the HARNESS does, then places the cues. */
-const place = (paragraphs: string[], signals: SoundCueSignal[], chapterNumber = 1, locale?: string) => placeSoundCues({
+/** Reads tagged paragraphs the way the HARNESS does, then places the cues. */
+const place = (paragraphs: string[], chapterNumber = 1, locale?: string, vocabulary = VOCABULARY) => placeSoundCues({
   paragraphs: paragraphs.map((source, index) => ({ blockId: `c${chapterNumber}-p${index + 1}`, ...readMarks(source) })),
-  signals, vocabulary: VOCABULARY, recordings: RECORDINGS, chapterNumber, locale,
+  vocabulary, recordings: RECORDINGS, chapterNumber, locale,
 });
 
 describe('placeSoundCues', () => {
-  it('places a cue on the exact whole words its mark wraps', () => {
-    const { soundCues, setAside } = place(['Wei Lin [[1|drew his sword]] as the beast lunged.'], [{ mark: 1, sound: 'Blade Drawn', energy: 'high' }]);
+  it('places a cue on the exact whole words its sound tag wraps', () => {
+    const { soundCues, setAside } = place(['Wei Lin [[sound: Blade Drawn | drew his sword | high]] as the beast lunged.']);
     expect(setAside).toEqual([]);
     expect(soundCues).toEqual([{
       id: 'sound-cue:c1-p1:8-22',
@@ -52,57 +52,64 @@ describe('placeSoundCues', () => {
     }]);
   });
 
-  it('widens a mark that starts or ends inside a word to the whole word', () => {
-    const { soundCues } = place(['The [[1|beast roa]]red.'], [{ mark: 1, sound: 'beast roar' }]);
+  it('widens a tag that starts or ends inside a word to the whole word', () => {
+    const { soundCues } = place(['The [[sound: beast roar | beast roa]]red.']);
     expect(soundCues[0].anchor.selectedText).toBe('beast roared');
   });
 
   it('places cues in Japanese prose', () => {
-    const { soundCues, setAside } = place(['林は[[1|剣を抜いた]]。'], [{ mark: 1, sound: 'blade drawn' }], 1, 'ja');
+    const { soundCues, setAside } = place(['林は[[sound: blade drawn | 剣を抜いた | medium]]。'], 1, 'ja');
     expect(setAside).toEqual([]);
     expect(soundCues[0].anchor.selectedText).toBe('剣を抜いた');
   });
 
+  it('places up to eight words, the moment a writer wraps whole', () => {
+    const { soundCues, setAside } = place(['Below, [[sound: beast roar | a beast roared across the terrace at dusk]] and fell silent.']);
+    expect(setAside).toEqual([]);
+    expect(soundCues[0].anchor.selectedText).toBe('a beast roared across the terrace at dusk');
+  });
+
   it('sets aside, never forces, what breaks the rules', () => {
     const { soundCues, setAside } = place([
-      'He [[1|drew the long curved blade of his fathers]] slowly. The [[2|beast roared]].',
-      '[[[3|Quest complete]]]',
-      'She [[4|drew]] it.',
-    ], [
-      { mark: 1, sound: 'blade drawn' },
-      { mark: 2, sound: 'thunder' },
-      { mark: 3, sound: 'blade drawn' },
-      { mark: 9, sound: 'beast roar' },
-      { mark: 4, sound: 'blade drawn' },
-      { mark: 4, sound: 'beast roar' },
-    ]);
+      'He [[sound: blade drawn | drew the long curved blade of his fathers and grandfathers]] slowly. The [[sound: thunder | beast roared]].',
+      '[[[sound: blade drawn | Quest complete]]]',
+      'She [[sound: blade drawn | drew]] it.',
+    ], 1, undefined, [...VOCABULARY, { word: 'chime', example: 'a soft chime' }]);
     expect(soundCues.map(cue => cue.anchor.selectedText)).toEqual(['drew']);
-    expect(setAside.map(item => [item.mark, item.reason])).toEqual([
-      [1, 'too-many-words'], [2, 'unknown-sound'], [3, 'not-prose'], [9, 'missing-mark'], [4, 'duplicate-signal'],
+    expect(setAside.map(item => [item.sound, item.reason, item.blockId])).toEqual([
+      ['blade drawn', 'too-many-words', 'c1-p1'], ['thunder', 'unknown-sound', 'c1-p1'], ['blade drawn', 'not-prose', 'c1-p2'],
     ]);
-    expect(describeSetAsideSoundCue(setAside[0])).toBe('Sound Cue 1 "blade drawn" covers more than 5 words ("drew the long curved blade of his fathers"); it was set aside.');
+    expect(describeSetAsideSoundCue(setAside[0])).toBe('The "blade drawn" sound on “drew the long curved blade of his fathers and grandfathers” covers more than 8 words; it was set aside.');
+    expect(describeSetAsideSoundCue(setAside[1])).toBe('The "thunder" sound on “beast roared” is not one of this story\'s sound words; it was set aside.');
+    // A story word with no playable recording is set aside too.
+    const silent = place(['A [[sound: chime | soft chime]] rang.'], 1, undefined, [...VOCABULARY, { word: 'chime', example: 'a soft chime' }]);
+    expect(silent.setAside.map(item => item.reason)).toEqual(['no-recording']);
   });
 
   it('keeps the first ten in reading order and drops overlaps', () => {
-    const paragraph = Array.from({ length: 12 }, (_, index) => `[[${index + 1}|roared]]`).join(' and ');
-    const { soundCues, setAside } = place([paragraph], Array.from({ length: 12 }, (_, index) => ({ mark: 12 - index, sound: 'beast roar' })));
+    const paragraph = Array.from({ length: 12 }, () => '[[sound: beast roar | roared]]').join(' and ');
+    const { soundCues, setAside } = place([paragraph]);
     expect(soundCues).toHaveLength(10);
     expect(soundCues[0].anchor.startOffset).toBe(0);
-    expect(setAside.map(item => [item.mark, item.reason])).toEqual([[11, 'over-limit'], [12, 'over-limit']]);
-    const overlapping = place(['He [[1|drew his]] sword'], [{ mark: 1, sound: 'blade drawn' }]);
+    expect(setAside.map(item => item.reason)).toEqual(['over-limit', 'over-limit']);
+    const overlapping = placeSoundCues({
+      paragraphs: [{ blockId: 'p1', text: 'He drew his sword.', sounds: [{ sound: 'blade drawn', start: 3, end: 11 }, { sound: 'blade drawn', start: 8, end: 17 }] }],
+      vocabulary: VOCABULARY, recordings: RECORDINGS, chapterNumber: 1,
+    });
     expect(overlapping.soundCues).toHaveLength(1);
+    expect(overlapping.setAside).toMatchObject([{ reason: 'overlaps', words: 'his sword' }]);
   });
 
   it('rotates recordings so repeated sounds vary, identically on every run', () => {
-    const run = () => place(['The [[1|beast roared]]. Again the [[2|beast roared]].'], [{ mark: 1, sound: 'beast roar' }, { mark: 2, sound: 'beast roar' }], 3);
+    const run = () => place(['The [[sound: beast roar | beast roared]]. Again the [[sound: beast roar | beast roared]].'], 3);
     const urls = run().soundCues.map(cue => cue.payload.cue.publicUrl);
     expect(new Set(urls).size).toBe(2);
     expect(run()).toEqual(run());
   });
 
   it('prefers the Energy asked for and falls back to any recording of the word', () => {
-    expect(place(['He [[1|drew]].'], [{ mark: 1, sound: 'blade drawn', energy: 'medium' }]).soundCues[0].payload.cue.publicUrl).toContain('sword-medium');
-    expect(place(['The [[1|beast roared]].'], [{ mark: 1, sound: 'beast roar', energy: 'low' }]).soundCues).toHaveLength(1);
+    expect(place(['He [[sound: blade drawn | drew | medium]].']).soundCues[0].payload.cue.publicUrl).toContain('sword-medium');
+    expect(place(['The [[sound: beast roar | beast roared | low]].']).soundCues).toHaveLength(1);
   });
 });
 

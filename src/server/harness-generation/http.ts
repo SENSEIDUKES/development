@@ -87,8 +87,8 @@ const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessMemoryRe
   if (!isRecord(parsed.capaPrompt) || typeof parsed.capaPrompt.text !== 'string' || !parsed.capaPrompt.text.trim()) {
     throw new Error('Harness Generation requires an assembled CAPA Prompt.');
   }
-  // The sound words become the response schema's enum, so they are checked
-  // against the same limits a Sound Cue pack is held to before any call.
+  // The sound words travel with the CAPA Prompt the writer reads, so they are
+  // checked against the same limits a Sound Cue pack is held to before any call.
   if (parsed.capaPrompt.soundVocabulary !== undefined) {
     parsed.capaPrompt.soundVocabulary = validateSoundWords(parsed.capaPrompt.soundVocabulary);
   }

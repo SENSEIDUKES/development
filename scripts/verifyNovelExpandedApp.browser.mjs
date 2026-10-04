@@ -37,7 +37,8 @@ const receipt = { provider: 'gemini', model: 'fixture', generatedAt: '2026-10-01
 const chapter = {
   title: 'Low Tide',
   paragraphs: [
-    'The tide pulled back from the drowned gate, and [[1|the beast roared]] across the causeway.',
+    // The writer puts a sound tag on the words where a sound happens, naming one of the Library's sound words.
+    'The tide pulled back from the drowned gate, and [[sound: beast roar | the beast roared | high]] across the causeway.',
     // The writer tags what changes in what a character has, where it happens.
     '[[gained: MC | Bell Key]] Mara counted the bells that no longer rang. [[equipped: MC | Bell Key]] She turned the old key in her palm.',
     // The writer tags who speaks: the main character with their own tag, then someone else by name.
@@ -46,8 +47,6 @@ const chapter = {
     // The rest of the chapter: a reply under a quarter of the 1,800-word minimum is a failed write and is never saved.
     Array.from({ length: 35 }, () => 'The night went on, and the town kept its quiet watch until dawn.').join(' '),
   ],
-  // One of the Library's sound words, so the cue is placed (an unknown sound is set aside).
-  soundCues: [{ mark: 1, sound: 'beast roar' }],
   // The writer's closing list: one name no tag recorded, so the Holdings page has one check.
   mainCharacterHoldings: ['Bell Key', 'Silver Bell'],
   arcCompletion: { goalId: 'none', completed: false, evidence: '' },

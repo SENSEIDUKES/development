@@ -6,20 +6,21 @@ import { normalizeSoundWord } from '../audio/soundWords';
  *
  * A sound tag wraps the words where a sound plays and names the sound, with an
  * optional Energy: `[[sound: blade drawn | drew his sword | high]]`. The words
- * stay in the text; the rest of the tag is removed. A span mark wraps the
- * words where something happens: `[[1|drew his sword]]`.
- * The number ties the mark to the signal that says what happened. A speaker
- * tag names who speaks the speech that follows it: `[[@Lin Feng]] “Run!”`.
- * Marks are transport only: `readMarks` removes every one and reports where
- * each span and tag sat in the clean text, so no bracket ever reaches a reader.
+ * stay in the text; the rest of the tag is removed. A speaker tag names who
+ * speaks the speech that follows it: `[[@Lin Feng]] “Run!”`. A word tag names
+ * a change to what a character has: `[[gained: MC | Rusted Iron Sword]]`.
+ * Tags are transport only: `readMarks` removes every one and reports where
+ * each sat in the clean text, so no bracket ever reaches a reader.
  *
- * Writers slip, so reading is tolerant: spaces around the number, a missing or
- * different separator (`[[1 drew]]`, `[[1:drew]]`), full-width brackets,
+ * A numbered span mark (`[[1|drew his sword]]`) is the retired form of a sound
+ * tag, whose number pointed into a separate list. It is still read, so an old
+ * habit never leaks into the prose, and reported in `marks`, but nothing is
+ * placed from it. Reading it is tolerant: spaces around the number, a missing
+ * or different separator (`[[1 drew]]`, `[[1:drew]]`), full-width brackets,
  * pipes and digits, a single closing bracket, and the words written before the
  * number (`[[drew his sword|1]]`) all still read. A mark that never closes is
  * removed with its words kept. A lone `]]` with no open mark is ordinary text.
- * A point mark (`[[1]]`) is reserved for future kinds: it is removed and
- * reported.
+ * A point mark (`[[1]]`) is removed and reported.
  *
  * A speaker tag is read before anything else at a bracket, so a tag can never
  * be mistaken for a mark, and a tag inside an open span leaves the span whole.
@@ -160,7 +161,7 @@ export interface MarkReading {
   /** Sound tags in reading order. */
   sounds: SoundTag[];
   soundIssues: SoundTagIssue[];
-  /** Span marks in reading order. */
+  /** Retired numbered span marks in reading order: read so they never leak, never placed. */
   marks: ProseMark[];
   issues: ProseMarkIssue[];
   /** Speaker tags in reading order. */

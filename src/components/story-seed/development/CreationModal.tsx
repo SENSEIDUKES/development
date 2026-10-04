@@ -14,7 +14,7 @@ import { type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { generateUUID } from '@seihouse/sen/story-seed';
 import { useStoryCreationRuntime, useStoryCreationStore, type StoryCreationSnapshot } from '../../../library/story-seed/runtime';
 import { type StorySeedArtifact, type StorySeedRecord } from '@seihouse/sen/story-seed';
-import { applyInferredStoryTags, buildBlueprintGenerationPayload, describeBlueprintArcPlanProblem, fillBlankSeedSlots, type GeneratedWorldBlueprint, buildInitialStoryGenerationPayload, createBlueprintDraftFromSeed, createEmptyStorySeedInput, mirrorSeedIntoBlueprint, normalizeStorySeedInput, reconcileStorySeedBlueprint, validateStorySeedDraft, validateStorySeedInput, type BlueprintGenerationPayload, type InitialStoryGenerationPayload, type StorySeedInput } from '@seihouse/sen/story-seed';
+import { applyInferredStoryTags, buildBlueprintGenerationPayload, describeBlueprintArcPlanProblem, describeStoryLengthProblem, fillBlankSeedSlots, type GeneratedWorldBlueprint, buildInitialStoryGenerationPayload, createBlueprintDraftFromSeed, createEmptyStorySeedInput, mirrorSeedIntoBlueprint, normalizeStorySeedInput, reconcileStorySeedBlueprint, validateStorySeedDraft, validateStorySeedInput, type BlueprintGenerationPayload, type InitialStoryGenerationPayload, type StorySeedInput } from '@seihouse/sen/story-seed';
 import { createStoryAdministrativeMetadata } from '@seihouse/sen/story-seed';
 import { DEFAULT_SEN_LANGUAGE_CODE, normalizeChapterWritingStyle, normalizeSenLanguageCode, type ChapterWritingStyle, type SenLanguageCode } from '@seihouse/sen/contracts';
 import StoryAuthGate, { STORY_AUTH_DISSOLVE_MS } from './StoryAuthGate';
@@ -556,17 +556,18 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
       return;
     }
     const validation = validateStorySeedInput(seedInput);
-    if (!validation.valid) {
-      setSeedError(validation.errors.join(' '));
-      return;
-    }
-    // A Blueprint whose Arc 1 no longer fits it (a Story Length changed across
-    // the one-arc line after it was generated) opens for review with the reason.
+    // A Blueprint whose length or Arc 1 no longer fits (a length saved before
+    // the 10 to 40 range, or an older one-arc Arc 1 under a longer length)
+    // opens for review with the reason; the review edits the length.
     const arcProblem = describeBlueprintArcPlanProblem(cleanBlueprint);
-    if (arcProblem) {
+    if (arcProblem && validation.errors.every(error => error === arcProblem)) {
       setBlueprint(cleanBlueprint);
       setStage('blueprint');
       setSeedError(arcProblem);
+      return;
+    }
+    if (!validation.valid) {
+      setSeedError(validation.errors.join(' '));
       return;
     }
 
@@ -625,7 +626,9 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     loadSeedIntoWorkspace(record);
     setShowStoryBank(false);
     const validation = validateStorySeedInput(seedInput);
-    if (!validation.valid) {
+    // A Story Length outside 10 to 40 is fixed in the Blueprint review, which the start path opens.
+    const lengthProblem = describeStoryLengthProblem(seedInput.story.optional.arcCount);
+    if (!validation.valid && !validation.errors.every(error => error === lengthProblem)) {
       setStage('intake');
       setSeedError(validation.errors.join(' '));
       return;

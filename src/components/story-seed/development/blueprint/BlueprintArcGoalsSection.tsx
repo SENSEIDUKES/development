@@ -1,6 +1,6 @@
 import { memo, useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 import { Map as RoadmapIcon, RefreshCw } from 'lucide-react';
-import { ARC_LENGTH, ArcPlanView, MAX_ROADMAP_ARCS, type ArcPlan } from '@seihouse/sen/arc-goals';
+import { ARC_LENGTH, ArcPlanView, STORY_LENGTH_ARCS, type ArcPlan } from '@seihouse/sen/arc-goals';
 import { type StorySeedInput, type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
 import { BlueprintSectionHeading } from './BlueprintDossierPrimitives';
@@ -54,7 +54,7 @@ export const BlueprintArcGoalsSection = memo(({
 
   const busy = regenerating || generating;
   const chosen = Number(countText);
-  const countValid = countText.trim() !== '' && Number.isInteger(chosen) && chosen >= 1 && chosen <= MAX_ROADMAP_ARCS;
+  const countValid = countText.trim() !== '' && Number.isInteger(chosen) && chosen >= STORY_LENGTH_ARCS.min && chosen <= STORY_LENGTH_ARCS.max;
   const changed = countValid && chosen !== estimatedArcs;
   const arcOne = arcPlans[0];
   // Arc 1 is planned differently when it is the whole story.
@@ -107,8 +107,8 @@ export const BlueprintArcGoalsSection = memo(({
               label="Story length (arcs)"
               type="number"
               size="compact"
-              min={1}
-              max={MAX_ROADMAP_ARCS}
+              min={STORY_LENGTH_ARCS.min}
+              max={STORY_LENGTH_ARCS.max}
               step={1}
               inputMode="numeric"
               value={countText}
@@ -134,7 +134,7 @@ export const BlueprintArcGoalsSection = memo(({
         </div>
         <p className="mt-3 text-xs leading-relaxed text-neutral-400" data-testid="blueprint-arc-count-help">
           {!countValid
-            ? `Choose a whole number of arcs from 1 to ${MAX_ROADMAP_ARCS}.`
+            ? `Choose a whole number of arcs from ${STORY_LENGTH_ARCS.min} to ${STORY_LENGTH_ARCS.max}.`
             : replanNeeded
               ? `Arc 1 was planned for a different length. Regenerate to plan Arc 1 for ${arcsLabel(chosen)}, or change the length back.`
               : crossesOneArc

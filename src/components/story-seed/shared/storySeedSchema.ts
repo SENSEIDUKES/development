@@ -23,7 +23,7 @@
  * belongs to the locked `reference/` replica (see `referenceIntake.ts`).
  */
 
-import { ARC_LENGTH, MAX_ROADMAP_ARCS, arcLookaheadFromPlans, createInitialArcPlan, normalizeArcLookahead, validateArcPlan, type ArcGoal, type ArcLookaheadEntry, type ArcPlan } from '../../arc-goals/shared/arcGoals';
+import { ARC_LENGTH, MAX_ROADMAP_ARCS, STORY_LENGTH_ARCS, arcLookaheadFromPlans, createInitialArcPlan, normalizeArcLookahead, validateArcPlan, type ArcGoal, type ArcLookaheadEntry, type ArcPlan } from '../../arc-goals/shared/arcGoals';
 import { normalizeFunSettings, validateHardPinInputs, type FunSettings, type HardPinInput } from '../../../narrative/storyDirection';
 import { isChapterWritingStyle, type ChapterWritingStyle } from '../../../narrative/readingMode';
 export { normalizeFunSettings, HARD_PIN_LIMIT, HARD_PIN_TEXT_LIMIT, validateHardPinInputs, type FunSettings, type FunSettingLevel, type HardPinInput } from '../../../narrative/storyDirection';
@@ -262,6 +262,25 @@ const normalizeSurvivalPressure = (value: unknown): StorySeedSurvivalPressure =>
 /** A Story Length is set: an absent or null value leaves the length to the Blueprint. */
 const hasArcCount = (value: unknown): boolean => value !== undefined && value !== null;
 
+/**
+ * A saved length still loads: Seeds and Blueprints saved before the
+ * `STORY_LENGTH_ARCS` range keep theirs, up to the longest a story may carry.
+ */
+const isSavedArcCount = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= MAX_ROADMAP_ARCS;
+
+const STORY_LENGTH_MESSAGE = `Story Length must be a whole number of arcs from ${STORY_LENGTH_ARCS.min} to ${STORY_LENGTH_ARCS.max}.`;
+
+/**
+ * Why a Story Length cannot be generated from or begun, or undefined when it
+ * can: blank, or a whole number of arcs within `STORY_LENGTH_ARCS`. The
+ * Blueprint review edits the length, so a story with only this problem opens
+ * there.
+ */
+export const describeStoryLengthProblem = (arcCount: unknown): string | undefined =>
+  !hasArcCount(arcCount) || (isSavedArcCount(arcCount) && arcCount >= STORY_LENGTH_ARCS.min && arcCount <= STORY_LENGTH_ARCS.max)
+    ? undefined : STORY_LENGTH_MESSAGE;
+
 /** What Arc 1 is planned as in a story of this length. */
 const arcOneScopeFor = (estimatedArcs: number): NonNullable<WorldBlueprint['arcOneScope']> =>
   estimatedArcs === 1 ? 'whole-story' : 'opening';
@@ -341,7 +360,10 @@ const normalizeStoryOptional = (value: unknown): StorySeedStoryOptional => {
     hardPins: validateHardPinInputs(source.hardPins ?? []),
   };
   if (isChapterWritingStyle(source.chapterWritingStyle)) normalized.chapterWritingStyle = source.chapterWritingStyle;
-  if (hasArcCount(source.arcCount)) normalized.arcCount = validateRequestedArcCount(source.arcCount);
+  if (hasArcCount(source.arcCount)) {
+    if (!isSavedArcCount(source.arcCount)) throw new Error(STORY_LENGTH_MESSAGE);
+    normalized.arcCount = source.arcCount;
+  }
   if (source.activeArcGoal !== undefined) normalized.activeArcGoal = createInitialArcPlan(source.activeArcGoal as ArcGoal).goals[0];
   const makeItWorkInstruction = text(source.makeItWorkInstruction);
   if (makeItWorkInstruction) normalized.makeItWorkInstruction = makeItWorkInstruction;
@@ -466,9 +488,8 @@ export const validateStorySeedDraft = (value: unknown): StorySeedValidationResul
       try { createInitialArcPlan(value.story.optional.activeArcGoal as ArcGoal); }
       catch (error) { errors.push(error instanceof Error ? error.message : 'Invalid Active Arc Goal.'); }
     }
-    if (hasArcCount(value.story.optional.arcCount)) {
-      try { validateRequestedArcCount(value.story.optional.arcCount); }
-      catch { errors.push(`Story Length must be a whole number of arcs from 1 to ${MAX_ROADMAP_ARCS}.`); }
+    if (hasArcCount(value.story.optional.arcCount) && !isSavedArcCount(value.story.optional.arcCount)) {
+      errors.push(STORY_LENGTH_MESSAGE);
     }
   }
 
@@ -497,6 +518,10 @@ export const validateStorySeedInput = (value: unknown): StorySeedValidationResul
     if (storyTags.length === 0) errors.push('Story Tags are required.');
     if (storyTags.length > STORY_TAG_LIMIT) errors.push(`Story Tags cannot exceed ${STORY_TAG_LIMIT}.`);
   }
+  // A length saved before the current range loads, but a story is generated only within it.
+  const arcCount = isRecord(value) && isRecord(value.story) && isRecord(value.story.optional) ? value.story.optional.arcCount : undefined;
+  const lengthProblem = isSavedArcCount(arcCount) ? describeStoryLengthProblem(arcCount) : undefined;
+  if (lengthProblem) errors.push(lengthProblem);
   return { valid: errors.length === 0, errors };
 };
 
@@ -639,7 +664,7 @@ export const validateBlueprintArcPlan = (blueprint: Pick<WorldBlueprint, 'arcPla
   validateRequestedArcCount(blueprint.estimatedArcs);
   if (blueprint.arcOneScope && blueprint.arcOneScope !== arcOneScopeFor(blueprint.estimatedArcs)) {
     throw new Error(blueprint.arcOneScope === 'whole-story'
-      ? `Arc 1 was planned as the whole story, reaching the Destined Ending. Regenerate the Blueprint to plan Arc 1 as the opening of ${blueprint.estimatedArcs} arcs, or set the Story Length back to 1 arc.`
+      ? `Arc 1 was planned as the whole story, reaching the Destined Ending. Regenerate the Blueprint to plan Arc 1 as the opening of ${blueprint.estimatedArcs} arcs.`
       : 'Arc 1 was planned as the opening of a longer story. Regenerate the Blueprint to plan a one-arc story that reaches the Destined Ending, or set a longer Story Length.');
   }
   return plan;
@@ -1395,10 +1420,10 @@ export const finalizeGeneratedWorldBlueprint = (
   };
 };
 
-/** A story length is a whole number of arcs, from 1 to the longest a story may run. */
+/** A story length chosen now: a whole number of arcs within `STORY_LENGTH_ARCS`. */
 export const validateRequestedArcCount = (value: unknown): number => {
-  if (typeof value !== 'number' || !Number.isInteger(value) || value < 1 || value > MAX_ROADMAP_ARCS) {
-    throw new Error(`The arc count must be a whole number from 1 to ${MAX_ROADMAP_ARCS}.`);
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < STORY_LENGTH_ARCS.min || value > STORY_LENGTH_ARCS.max) {
+    throw new Error(STORY_LENGTH_MESSAGE);
   }
   return value;
 };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildInitialStoryGenerationPayload, createStoryAdministrativeMetadata, createBlueprintDraftFromSeed, createEmptyStorySeedInput, describeBlueprintArcPlanProblem, finalizeGeneratedWorldBlueprint, mirrorSeedIntoBlueprint, normalizeStorySeedInput, normalizeWorldBlueprint, reconcileStorySeedBlueprint, validateStorySeedDraft, type StorySeedInput } from '@seihouse/sen/story-seed';
+import { buildInitialStoryGenerationPayload, createStoryAdministrativeMetadata, createBlueprintDraftFromSeed, createEmptyStorySeedInput, describeBlueprintArcPlanProblem, finalizeGeneratedWorldBlueprint, mirrorSeedIntoBlueprint, normalizeStorySeedInput, normalizeWorldBlueprint, reconcileStorySeedBlueprint, validateStorySeedDraft, validateStorySeedInput, type StorySeedInput } from '@seihouse/sen/story-seed';
 import { createStorySeedExport, parseStorySeedJson } from '@seihouse/sen/story-seed';
 
 describe('Story Seed arc plans', () => {
@@ -24,7 +24,8 @@ describe('Story Seed arc plans', () => {
       [roadmap, 2, 'plans only Arc 1'],
       [[roadmap[1]], 2, 'must be Arc 1'],
       [[{ arcNumber: 1, goals: [{ id: 'arc-1-short', text: 'Too short.', chapters: 18 }] }], 2, 'total 30'],
-      [[arcOne], 0, 'whole number from 1'],
+      [[arcOne], 9, 'from 10 to 40'],
+      [[arcOne], 41, 'from 10 to 40'],
     ] as const) {
       expect(() => buildInitialStoryGenerationPayload(seed, administrative, { ...blueprint, estimatedArcs, arcPlans: arcPlans as never }, 1)).toThrow(message);
     }
@@ -93,25 +94,35 @@ describe('Story Seed arc plans', () => {
       expect(finalized.arcOneScope).toBe('whole-story');
     });
 
-    it('lets a story begin only while Arc 1 fits the length, in both directions across the one-arc line', () => {
-      const planned = reconcileStorySeedBlueprint(base(), { arcPlans: [arcOne], estimatedArcs: 4 }).blueprint;
+    it('lets a story begin only with a length from 10 to 40 arcs, and asks for Arc 1 again after a one-arc plan', () => {
+      const planned = reconcileStorySeedBlueprint(base(), { arcPlans: [arcOne], estimatedArcs: 12 }).blueprint;
       expect(describeBlueprintArcPlanProblem(planned)).toBeUndefined();
-      expect(describeBlueprintArcPlanProblem(mirrorSeedIntoBlueprint(planned, lengthOf(base(), 9)))).toBeUndefined();
-      expect(describeBlueprintArcPlanProblem(mirrorSeedIntoBlueprint(planned, lengthOf(base(), 1))))
-        .toContain('Arc 1 was planned as the opening of a longer story');
+      expect(describeBlueprintArcPlanProblem(mirrorSeedIntoBlueprint(planned, lengthOf(base(), 40)))).toBeUndefined();
+      // A Blueprint saved before the range opens with its own length and names the fix.
+      const older = reconcileStorySeedBlueprint(base(), { arcPlans: [arcOne], estimatedArcs: 4 }).blueprint;
+      expect(older.estimatedArcs).toBe(4);
+      expect(describeBlueprintArcPlanProblem(older)).toBe('Story Length must be a whole number of arcs from 10 to 40.');
+      expect(describeBlueprintArcPlanProblem(mirrorSeedIntoBlueprint(older, lengthOf(base(), 10)))).toBeUndefined();
+      // An older one-arc Blueprint planned Arc 1 as the whole story: a story of 10 or more arcs needs Arc 1 planned again.
       const whole = reconcileStorySeedBlueprint(base(), { arcPlans: [arcOne], estimatedArcs: 1 }).blueprint;
       expect(describeBlueprintArcPlanProblem(mirrorSeedIntoBlueprint(whole, lengthOf(base(), 11))))
-        .toBe('Arc 1 was planned as the whole story, reaching the Destined Ending. Regenerate the Blueprint to plan Arc 1 as the opening of 11 arcs, or set the Story Length back to 1 arc.');
+        .toBe('Arc 1 was planned as the whole story, reaching the Destined Ending. Regenerate the Blueprint to plan Arc 1 as the opening of 11 arcs.');
     });
 
-    it('refuses a Story Length that is not a whole number of arcs from 1 to 100, and reads a missing one as blank', () => {
+    it('loads a saved length up to 100 arcs, but generates from a length of 10 to 40 only, and reads a missing one as blank', () => {
       for (const arcCount of [0, 101, 2.5, '12']) {
         expect(validateStorySeedDraft({ ...base(), story: { ...base().story, optional: { ...base().story.optional, arcCount } } }).errors)
-          .toContain('Story Length must be a whole number of arcs from 1 to 100.');
+          .toContain('Story Length must be a whole number of arcs from 10 to 40.');
       }
       expect(normalizeStorySeedInput({ ...base(), story: { ...base().story, optional: { ...base().story.optional, arcCount: null } } }).story.optional)
         .not.toHaveProperty('arcCount');
+      // A Seed saved before the range keeps its length; generating asks for one inside it.
+      expect(normalizeStorySeedInput(lengthOf(base(), 4)).story.optional.arcCount).toBe(4);
       expect(normalizeStorySeedInput(lengthOf(base(), 100)).story.optional.arcCount).toBe(100);
+      for (const arcCount of [4, 9, 41, 100]) {
+        expect(validateStorySeedInput(lengthOf(base(), arcCount)).errors).toEqual(['Story Length must be a whole number of arcs from 10 to 40.']);
+      }
+      for (const arcCount of [10, 40]) expect(validateStorySeedInput(lengthOf(base(), arcCount)).valid).toBe(true);
     });
   });
 });

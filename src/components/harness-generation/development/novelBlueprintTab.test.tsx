@@ -75,7 +75,7 @@ describe('The novel page Blueprint tab', () => {
     expect(container.querySelector('[data-testid="novel-blueprint"] #destined-ending-input')).toBeNull();
     // Only Arc 1 is planned; the rest are planned when each begins.
     expect(container.querySelectorAll('li[data-testid^="novel-arc-"]')).toHaveLength(1);
-    expect(container.querySelector('[data-testid="novel-arc-unplanned"]')!.textContent).toContain('Arcs 2–3 are planned when each begins');
+    expect(container.querySelector('[data-testid="novel-arc-unplanned"]')!.textContent).toContain('Arcs 2–10 are planned when each begins');
     expect(container.querySelector('[data-testid="novel-arc-goal-rules"]')!.textContent).toContain('While this novel is private');
 
     const outline = container.querySelector<HTMLTextAreaElement>('#blueprint-power-outline')!;
@@ -87,7 +87,7 @@ describe('The novel page Blueprint tab', () => {
     expect(revision.worldFacts).toContain('EDITED_OUTLINE');
     expect((revision.sourceSnapshot!.blueprint as { powerSystemOutline: string }).powerSystemOutline).toContain('EDITED_OUTLINE');
     expect(revision.destinedEnding).toBe(saved.foundations[0].input.destinedEnding);
-    expect(revision.plannedArcCount).toBe(3);
+    expect(revision.plannedArcCount).toBe(10);
     expect(saved.chapters).toHaveLength(1);
     expect(saved.chapters[0].foundationRevisionId).toBe(saved.foundations[0].id);
 
@@ -124,7 +124,7 @@ describe('The novel page Blueprint tab', () => {
     expect(container.querySelector('[data-testid="novel-arc-1"]')!.textContent).toContain('Completed');
     await act(async () => button('Plan Arc 2')!.click());
     expect(container.querySelector('[data-testid="novel-arc-2"]')!.textContent).toContain('Awaiting your review');
-    expect(container.querySelector('[data-testid="novel-arc-unplanned"]')!.textContent).toContain('Arc 3 is planned when it begins');
+    expect(container.querySelector('[data-testid="novel-arc-unplanned"]')!.textContent).toContain('Arcs 3–10 are planned when each begins');
     await act(async () => button('Accept Arc 2 goals as written')!.click());
     expect(atArc2.snapshot().stories[0].arcGoalReviews?.find(review => review.arcNumber === 2)).toMatchObject({ edited: false, source: 'novel-blueprint' });
     expect(container.querySelector('[data-testid="novel-arc-2"]')!.textContent).toContain('Set · locks when generation begins');

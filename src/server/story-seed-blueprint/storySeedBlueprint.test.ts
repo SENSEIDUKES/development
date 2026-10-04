@@ -136,7 +136,7 @@ const generatedBlueprint = (): Record<string, unknown> & { arcOne?: unknown; arc
   tropeRules: "Foreknowledge creates costly choices rather than automatic victories.",
   styleBible: "Restrained court tension, exact ritual detail, and sudden spectacle.",
   destinedEnding: "A different ending.",
-  estimatedArcs: 3,
+  estimatedArcs: 12,
 });
 
 class RecordingProvider implements WorldBlueprintModelProvider {
@@ -171,7 +171,7 @@ describe("protected Story Seed World Blueprint generation", () => {
     expect(blueprint.hardPins).toEqual(seed.story.optional.hardPins);
     expect(blueprint.funSettings).toEqual(seed.story.optional.funSettings);
     // Only Arc 1 is saved; it opens with the creator's own goal, and the server assigns its identities.
-    expect(blueprint.estimatedArcs).toBe(3);
+    expect(blueprint.estimatedArcs).toBe(12);
     expect(blueprint.arcPlans).toEqual([{ arcNumber: 1, goals: [
       { id: 'arc-1-1', text: 'Reach the hearing.', chapters: 12 },
       { id: 'arc-1-2', text: "Expose the regent's forged decree.", chapters: 18 },
@@ -184,7 +184,7 @@ describe("protected Story Seed World Blueprint generation", () => {
     expect(JSON.stringify(schema.properties.arcOne)).not.toContain('"id"');
     expect(schema.properties.arcLookahead.maxItems).toBe(2);
     // The story's length is no longer bounded by how many arcs one answer can hold.
-    expect(schema.properties.estimatedArcs).toMatchObject({ minimum: 1, maximum: 100 });
+    expect(schema.properties.estimatedArcs).toMatchObject({ minimum: 10, maximum: 40 });
     const prompt = provider.requests[0].userPrompt;
     expect(prompt).toContain('Plan only Arc 1, in arcOne');
     expect(prompt).toContain('Every later arc is planned when the story reaches it');
@@ -415,33 +415,41 @@ describe("Blueprint story length", () => {
 
   it("plans for the Seed's Story Length, as an exact schema and prompt instruction, still planning only Arc 1", async () => {
     const provider = new RecordingProvider();
-    const response = await post({ storySeed: seedOfLength(3) }, provider);
+    const response = await post({ storySeed: seedOfLength(12) }, provider);
     expect(response.status).toBe(200);
     expect((response.body as WorldBlueprint).arcPlans).toHaveLength(1);
     expect((response.body as WorldBlueprint).arcOneScope).toBe("opening");
     const schema = provider.requests[0].responseJsonSchema;
-    expect(schema.properties.estimatedArcs).toMatchObject({ minimum: 3, maximum: 3 });
-    expect(provider.requests[0].userPrompt).toContain("The creator chose the story's length (story.optional.arcCount): estimatedArcs is exactly 3.");
+    expect(schema.properties.estimatedArcs).toMatchObject({ minimum: 12, maximum: 12 });
+    expect(provider.requests[0].userPrompt).toContain("The creator chose the story's length (story.optional.arcCount): estimatedArcs is exactly 12.");
     expect(provider.requests[0].userPrompt).not.toContain("a realistic estimatedArcs");
   });
 
-  it("lets the model choose a realistic length when the Seed leaves it blank", async () => {
+  it("lets the model choose a realistic length from 10 to 40 when the Seed leaves it blank, kept inside that range", async () => {
     const provider = new RecordingProvider();
     const response = await post({ storySeed: canonicalSeed() }, provider);
     expect(response.status).toBe(200);
-    expect(provider.requests[0].responseJsonSchema.properties.estimatedArcs).toMatchObject({ minimum: 1, maximum: 100 });
-    expect(provider.requests[0].userPrompt).toContain("a realistic estimatedArcs between 1 and 100");
+    expect(provider.requests[0].responseJsonSchema.properties.estimatedArcs).toMatchObject({ minimum: 10, maximum: 40 });
+    expect(provider.requests[0].userPrompt).toContain("a realistic estimatedArcs between 10 and 40");
+    // A provider that ignores the range costs no Blueprint: the suggestion is kept inside it, and Arc 1 stays the opening.
+    for (const [answered, kept] of [[3, 10], [1, 10], [60, 40]]) {
+      const suggested = await post({ storySeed: canonicalSeed() }, new RecordingProvider({ ...generatedBlueprint(), estimatedArcs: answered }));
+      expect(suggested.status).toBe(200);
+      expect((suggested.body as WorldBlueprint).estimatedArcs).toBe(kept);
+      expect((suggested.body as WorldBlueprint).arcOneScope).toBe("opening");
+    }
   });
 
-  it("accepts any length from 1 to 100, refuses anything else before any model call, and takes the length only from the Seed", async () => {
-    const provider = new RecordingProvider({ ...generatedBlueprint(), estimatedArcs: 60 });
-    const response = await post({ storySeed: seedOfLength(60) }, provider);
+  it("accepts a length from 10 to 40, refuses anything else before any model call, and takes the length only from the Seed", async () => {
+    const provider = new RecordingProvider({ ...generatedBlueprint(), estimatedArcs: 40 });
+    const response = await post({ storySeed: seedOfLength(40) }, provider);
     expect(response.status).toBe(200);
-    expect((response.body as WorldBlueprint).estimatedArcs).toBe(60);
-    for (const invalid of [2.5, 0, 101, "12"]) {
+    expect((response.body as WorldBlueprint).estimatedArcs).toBe(40);
+    // Lengths saved before the range (1 to 9, or past 40) open, but are never generated from.
+    for (const invalid of [2.5, 0, 1, 9, 41, 101, "12"]) {
       const refused = await post({ storySeed: seedOfLength(invalid) }, provider);
       expect(refused.status).toBe(400);
-      expect(errorOf(refused)).toContain("Story Length must be a whole number of arcs from 1 to 100.");
+      expect(errorOf(refused)).toContain("Story Length must be a whole number of arcs from 10 to 40.");
     }
     const outside = await post({ storySeed: canonicalSeed(), arcCount: 5 }, provider);
     expect(outside.status).toBe(400);
@@ -450,17 +458,20 @@ describe("Blueprint story length", () => {
   });
 
   it("fails loudly when the model answers for a different length than the creator chose", async () => {
-    const response = await post({ storySeed: seedOfLength(4) }, new RecordingProvider());
+    const response = await post({ storySeed: seedOfLength(14) }, new RecordingProvider());
     expect(response.status).toBe(502);
-    expect(errorOf(response)).toContain("was not planned for the 4 arcs requested. Nothing was saved");
+    expect(errorOf(response)).toContain("was not planned for the 14 arcs requested. Nothing was saved");
   });
 
-  it("keeps the look-ahead within the length and empty for a one-arc story, and offers no way to add arcs", async () => {
-    const oneArc = await post({ storySeed: seedOfLength(1) }, new RecordingProvider({ ...generatedBlueprint(), estimatedArcs: 1 }));
-    expect(oneArc.status).toBe(200);
-    expect((oneArc.body as WorldBlueprint).estimatedArcs).toBe(1);
-    expect((oneArc.body as WorldBlueprint).arcOneScope).toBe("whole-story");
-    expect((oneArc.body as WorldBlueprint).arcLookahead).toBeUndefined();
+  it("plans Arc 1 as the opening, never the whole story, and offers no way to add arcs", async () => {
+    const opening = await post({ storySeed: seedOfLength(10) }, new RecordingProvider({ ...generatedBlueprint(), estimatedArcs: 10 }));
+    expect(opening.status).toBe(200);
+    expect((opening.body as WorldBlueprint).arcOneScope).toBe("opening");
+    expect((opening.body as WorldBlueprint).arcLookahead?.map(entry => entry.arcNumber)).toEqual([2, 3]);
+    const recorded = new RecordingProvider();
+    await post({ storySeed: canonicalSeed() }, recorded);
+    expect(recorded.requests[0].userPrompt).toContain("No Arc 1 goal reaches or resolves the Destined Ending.");
+    expect(recorded.requests[0].userPrompt).not.toContain("estimatedArcs is 1");
     const provider = new RecordingProvider();
     const extension = await post({ operation: "extend-arc-roadmap", storySeed: canonicalSeed() }, provider);
     expect(extension.status).toBe(400);

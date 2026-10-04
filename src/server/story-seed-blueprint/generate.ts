@@ -1,4 +1,4 @@
-import { ARC_LOOKAHEAD_SCHEMA, ARC_PLAN_DRAFT_SCHEMA, MAX_ROADMAP_ARCS, arcPlanFromDraft } from '@seihouse/sen/arc-goals';
+import { ARC_LOOKAHEAD_SCHEMA, ARC_PLAN_DRAFT_SCHEMA, STORY_LENGTH_ARCS, arcPlanFromDraft } from '@seihouse/sen/arc-goals';
 import { createModelRouter, ModelRouterError, type GenerationResult } from '@seihouse/library/model-router-server';
 import {
   SEED_CHARACTER_LIMIT,
@@ -92,7 +92,7 @@ export const worldBlueprintResponseSchema = (exactArcs?: number) => ({
     tropeRules: { type: "string", minLength: 1 },
     styleBible: { type: "string", minLength: 1 },
     destinedEnding: { type: "string", minLength: 1 },
-    estimatedArcs: { type: "integer", minimum: exactArcs ?? 1, maximum: exactArcs ?? MAX_ROADMAP_ARCS },
+    estimatedArcs: { type: "integer", minimum: exactArcs ?? STORY_LENGTH_ARCS.min, maximum: exactArcs ?? STORY_LENGTH_ARCS.max },
   },
 }) as const;
 
@@ -229,7 +229,7 @@ const assertCompleteGeneratedBlueprint = (blueprint: WorldBlueprint): void => {
       missing.push(`mainCharacter.${field}`);
     }
   }
-  if (!Number.isInteger(blueprint.estimatedArcs) || blueprint.estimatedArcs < 1 || blueprint.estimatedArcs > 100) {
+  if (!Number.isInteger(blueprint.estimatedArcs) || blueprint.estimatedArcs < STORY_LENGTH_ARCS.min || blueprint.estimatedArcs > STORY_LENGTH_ARCS.max) {
     missing.push("estimatedArcs");
   }
   if (missing.length > 0) {
@@ -264,7 +264,13 @@ export const generateWorldBlueprint = async (
   try { arcOne = arcPlanFromDraft(answer.arcOne, 1); }
   catch (error) { arcOneProblem = reason(error); }
   const { arcOne: _draft, ...rest } = answer;
-  const blueprint = finalizeGeneratedWorldBlueprint({ ...rest, arcPlans: arcOne ? [arcOne] : [] }, storySeed);
+  // The length the model suggests is kept within the story lengths a creator
+  // may choose; a provider that ignores the schema's range does not cost the
+  // whole Blueprint. The creator's own Story Length is never adjusted.
+  const suggestedArcs = arcCount === undefined && Number.isInteger(answer.estimatedArcs)
+    ? Math.min(STORY_LENGTH_ARCS.max, Math.max(STORY_LENGTH_ARCS.min, answer.estimatedArcs as number))
+    : answer.estimatedArcs;
+  const blueprint = finalizeGeneratedWorldBlueprint({ ...rest, estimatedArcs: suggestedArcs, arcPlans: arcOne ? [arcOne] : [] }, storySeed);
   assertCompleteGeneratedBlueprint(blueprint);
   if (arcOneProblem) throw new BlueprintRoadmapError(`The generated Arc 1 is invalid: ${arcOneProblem}. Nothing was saved; generate again.`);
   // The Blueprint takes the Seed's length, so the answer itself must have planned for it.

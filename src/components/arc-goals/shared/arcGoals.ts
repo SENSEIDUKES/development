@@ -131,8 +131,15 @@ export const createInitialArcPlan = (goal: ArcGoal): ArcPlan => validateArcPlan(
 /** The first chapter of an arc. */
 export const arcFirstChapter = (arcNumber: number): number => (arcNumber - 1) * ARC_LENGTH + 1;
 
-/** The longest a story may be planned to run, in arcs. */
+/**
+ * The longest planned length a saved story or Blueprint may carry, in arcs.
+ * New lengths are chosen within `STORY_LENGTH_ARCS`; this wider bound only
+ * lets stories and drafts saved before that range load as they are.
+ */
 export const MAX_ROADMAP_ARCS = 100 as const;
+
+/** The story lengths a creator or the Blueprint may choose, in arcs: 300 to 1,200 chapters. */
+export const STORY_LENGTH_ARCS = { min: 10, max: 40 } as const;
 
 /** How many arcs ahead the hidden look-ahead reaches. */
 export const MAX_ARC_LOOKAHEAD = 2 as const;

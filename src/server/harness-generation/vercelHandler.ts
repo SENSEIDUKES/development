@@ -1,3 +1,4 @@
+import type { HarnessProviderReceipt } from '@seihouse/sen/harness-generation';
 import { handleHarnessGenerationHttp } from './http';
 import {
   createPublicGenerationGuard,
@@ -44,6 +45,11 @@ export default async function harnessGenerationHandler(request: RequestLike, res
         ...(admission.retryAfterSeconds ? { 'Retry-After': String(admission.retryAfterSeconds) } : {}),
       },
     };
+  // One line per answer: which model, how long it took and its size. Never the story.
+  const receipt = result.status === 200 ? (result.body as { providerReceipt?: HarnessProviderReceipt }).providerReceipt : undefined;
+  if (receipt) {
+    console.info(`[harness-generation] ${receipt.model} answered in ${receipt.durationMs === undefined ? '?' : Math.round(receipt.durationMs / 1000)}s (${receipt.usage.inputTokens ?? '?'} tokens in, ${receipt.usage.outputTokens ?? '?'} out)`);
+  }
   for (const [name, value] of Object.entries(result.headers ?? {})) response.setHeader(name, value);
   response.status(result.status).json(result.body);
 }

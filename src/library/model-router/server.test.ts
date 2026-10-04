@@ -48,6 +48,25 @@ describe('published Model Router server contract', () => {
       .rejects.toMatchObject({ message: expect.stringMatching(/^The model refused: I cannot write that\. \(/) });
   });
 
+  it('reports a reply still being written at the deadline as a timeout, never as an empty reply', async () => {
+    // OpenRouter sends its 200 at once and holds the body open while the model writes.
+    const fetchMock = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => ({
+      ok: true, status: 200, statusText: 'OK',
+      json: () => new Promise((_resolve, reject) => init?.signal?.addEventListener('abort', () => reject(new DOMException('This operation was aborted', 'AbortError')))),
+    }) as unknown as Response);
+    const router = createModelRouter({ credentials: { openrouter: 'secret' }, fetch: fetchMock as typeof fetch });
+    await expect(router.generate({ ...textRequest, timeoutMs: 20 }))
+      .rejects.toMatchObject({ code: 'timeout', message: 'The provider exceeded the 1 second deadline.' });
+    // A 200 whose body is not JSON says so.
+    const garbled = createModelRouter({
+      credentials: { openrouter: 'secret' },
+      fetch: vi.fn(async () => new Response('upstream reset', { status: 200 })) as typeof fetch,
+    });
+    await expect(garbled.generate(textRequest)).rejects.toMatchObject({
+      code: 'provider-error', message: expect.stringMatching(/^OpenRouter's reply could not be read: /),
+    });
+  });
+
   it('routes Gemini structured text and reports output limits', async () => {
     const generateContent = vi.fn(async () => ({
       text: '{"ok":true}', usageMetadata: { promptTokenCount: 4, candidatesTokenCount: 7, totalTokenCount: 11 },

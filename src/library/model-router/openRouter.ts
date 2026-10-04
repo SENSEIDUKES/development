@@ -109,7 +109,16 @@ export async function generateOpenRouterText(request: OpenRouterTextRequest): Pr
         ...(request.reasoningEffort ? { reasoning: { effort: request.reasoningEffort } } : {}),
       }),
     });
-    const body = await response.json().catch(() => undefined) as OpenRouterChatResponse | undefined;
+    // OpenRouter answers 200 at once and holds the reply open while the model
+    // writes, so a deadline that passes mid-reply lands here, never at fetch.
+    // It is a timeout, not an empty reply.
+    let body: OpenRouterChatResponse | undefined;
+    try {
+      body = await response.json() as OpenRouterChatResponse;
+    } catch (error) {
+      if (controller.signal.aborted) throw Object.assign(new Error('The OpenRouter reply did not finish before the deadline.'), { name: 'AbortError' });
+      if (response.ok) throw new Error(`OpenRouter's reply could not be read: ${error instanceof Error ? error.message : 'unknown error'}.`);
+    }
     if (!response.ok || body?.error) {
       const detail = body?.error?.message ?? response.statusText;
       throw new Error(`OpenRouter ${response.status}: ${detail}`);

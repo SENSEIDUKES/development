@@ -54,7 +54,8 @@ interface OpenRouterChatResponse {
 /**
  * Why a reply came back with no answer, from what the reply itself says:
  * the provider OpenRouter chose, how it finished, and where its tokens went.
- * It never repeats the reply's own words, only their size.
+ * It never repeats the reply's own words, a refusal's or a provider error's
+ * text included (they can quote the story): only their kind and size.
  */
 const emptyReplyMessage = (body: OpenRouterChatResponse | undefined, choice: OpenRouterChatChoice | undefined): string => {
   const reasoning = choice?.message?.reasoning?.trim() ?? '';
@@ -66,9 +67,18 @@ const emptyReplyMessage = (body: OpenRouterChatResponse | undefined, choice: Ope
       ? `${body!.usage!.completion_tokens_details!.reasoning_tokens} of them reasoning` : undefined,
     reasoning ? `${reasoning.length} characters of reasoning${reasoning.startsWith('{') ? ' that begin like the JSON answer' : ''}` : 'no reasoning text',
   ].filter(Boolean).join(', ');
-  if (choice?.error?.message) return `The provider failed during the reply: ${choice.error.message} (${facts}).`;
-  if (choice?.message?.refusal?.trim()) return `The model refused: ${choice.message.refusal.trim()} (${facts}).`;
+  if (choice?.error) {
+    const code = typeof choice.error.code === 'number' ? ` with code ${choice.error.code}` : '';
+    return `The provider failed during the reply${code} (${facts}).`;
+  }
+  if (choice?.message?.refusal?.trim()) return `The model refused to answer (${facts}).`;
   return `The configured model returned an empty response (${facts}).`;
+};
+
+/** The catalog's OpenRouter entry for a router id or a bare OpenRouter name. */
+const catalogEntry = (model: string) => {
+  const sent = providerModelName(model);
+  return CHAPTER_MODELS.find(option => option.provider === 'openrouter' && providerModelName(option.id) === sent);
 };
 
 const responseFormat = (request: OpenRouterTextRequest) => {
@@ -107,7 +117,7 @@ export async function generateOpenRouterText(request: OpenRouterTextRequest): Pr
         max_tokens: request.maxOutputTokens + REASONING_HEADROOM_TOKENS,
         ...(format ? { response_format: format } : {}),
         ...(request.reasoningEffort ? { reasoning: { effort: request.reasoningEffort } } : {}),
-        ...(CHAPTER_MODELS.find(model => model.id === request.model)?.fastestProvider ? { provider: { sort: 'throughput' } } : {}),
+        ...(catalogEntry(request.model)?.fastestProvider ? { provider: { sort: 'throughput' } } : {}),
       }),
     });
     // OpenRouter answers 200 at once and holds the reply open while the model
@@ -117,7 +127,8 @@ export async function generateOpenRouterText(request: OpenRouterTextRequest): Pr
     try {
       body = await response.json() as OpenRouterChatResponse;
     } catch (error) {
-      if (controller.signal.aborted) throw Object.assign(new Error('The OpenRouter reply did not finish before the deadline.'), { name: 'AbortError' });
+      const aborted = controller.signal.aborted && (error === controller.signal.reason || (error as Error | undefined)?.name === 'AbortError');
+      if (aborted) throw Object.assign(new Error('The OpenRouter reply did not finish before the deadline.'), { name: 'AbortError' });
       if (response.ok) throw new Error(`OpenRouter's reply could not be read: ${error instanceof Error ? error.message : 'unknown error'}.`);
     }
     if (!response.ok || body?.error) {

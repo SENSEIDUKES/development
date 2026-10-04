@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createModelRouter, ModelRouterError, type GenerationRequest } from './server';
+import { createModelRouter, generateOpenRouterText, ModelRouterError, type GenerationRequest } from './server';
 
 const textRequest = {
   capability: 'text' as const, model: 'openrouter/openai/gpt-6-luna',
@@ -42,25 +42,29 @@ describe('published Model Router server contract', () => {
       message: 'The configured model returned an empty response (provider Alibaba, finish stop, 812 output tokens, 812 of them reasoning, 24 characters of reasoning that begin like the JSON answer).',
     });
     await expect(answerInReasoning).rejects.not.toMatchObject({ message: expect.stringContaining('Secret words') });
-    await expect(reply({ message: { content: null }, finish_reason: 'error', error: { code: 502, message: 'Upstream overloaded' } }))
-      .rejects.toMatchObject({ code: 'provider-error', message: expect.stringMatching(/^The provider failed during the reply: Upstream overloaded \(provider Alibaba, finish error, /) });
-    await expect(reply({ message: { content: null, refusal: 'I cannot write that.' }, finish_reason: 'stop' }))
-      .rejects.toMatchObject({ message: expect.stringMatching(/^The model refused: I cannot write that\. \(/) });
+    // A provider failure or a refusal says only its kind: their own text can quote the story.
+    const failed = reply({ message: { content: null }, finish_reason: 'error', error: { code: 502, message: 'Upstream overloaded near "Secret words"' } });
+    await expect(failed).rejects.toMatchObject({ code: 'provider-error', message: expect.stringMatching(/^The provider failed during the reply with code 502 \(provider Alibaba, finish error, /) });
+    await expect(failed).rejects.not.toMatchObject({ message: expect.stringMatching(/Upstream|Secret/) });
+    const refused = reply({ message: { content: null, refusal: 'I cannot write "Secret words".' }, finish_reason: 'stop' });
+    await expect(refused).rejects.toMatchObject({ message: expect.stringMatching(/^The model refused to answer \(provider Alibaba, /) });
+    await expect(refused).rejects.not.toMatchObject({ message: expect.stringContaining('Secret') });
   });
 
   it('asks OpenRouter for the fastest provider only for models the catalog marks', async () => {
     const bodies: Array<Record<string, unknown>> = [];
-    const router = createModelRouter({
-      credentials: { openrouter: 'secret' },
-      fetch: vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
-        bodies.push(JSON.parse(String(init?.body)));
-        return new Response(JSON.stringify({ choices: [{ message: { content: '{"ok":true}' }, finish_reason: 'stop' }] }), { status: 200 });
-      }) as typeof fetch,
-    });
+    const fetchFor = (sent: Array<Record<string, unknown>>) => vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+      sent.push(JSON.parse(String(init?.body)));
+      return new Response(JSON.stringify({ choices: [{ message: { content: '{"ok":true}' }, finish_reason: 'stop' }] }), { status: 200 });
+    }) as typeof fetch;
+    const router = createModelRouter({ credentials: { openrouter: 'secret' }, fetch: fetchFor(bodies) });
     await router.generate({ ...textRequest, model: 'openrouter/z-ai/glm-5.3-flash' });
     await router.generate(textRequest);
     expect(bodies[0]).toMatchObject({ model: 'z-ai/glm-5.3-flash', provider: { sort: 'throughput' } });
     expect(bodies[1]).not.toHaveProperty('provider');
+    // The adapter also takes a bare OpenRouter name; the same model routes the same way.
+    await generateOpenRouterText({ apiKey: 'secret', model: 'z-ai/glm-5.3-flash', systemInstruction: 's', userPrompt: 'u', temperature: 1, maxOutputTokens: 100, responseFormat: 'json', fetchImpl: fetchFor(bodies) });
+    expect(bodies[2]).toMatchObject({ model: 'z-ai/glm-5.3-flash', provider: { sort: 'throughput' } });
   });
 
   it('reports a reply still being written at the deadline as a timeout, never as an empty reply', async () => {
@@ -79,6 +83,17 @@ describe('published Model Router server contract', () => {
     });
     await expect(garbled.generate(textRequest)).rejects.toMatchObject({
       code: 'provider-error', message: expect.stringMatching(/^OpenRouter's reply could not be read: /),
+    });
+    // A read that fails for its own reason just as the deadline passes is still an unreadable reply, never a timeout.
+    const brokenAtDeadline = createModelRouter({
+      credentials: { openrouter: 'secret' },
+      fetch: vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => ({
+        ok: true, status: 200, statusText: 'OK',
+        json: () => new Promise((_resolve, reject) => init?.signal?.addEventListener('abort', () => reject(new SyntaxError('Unexpected end of JSON input')))),
+      }) as unknown as Response) as typeof fetch,
+    });
+    await expect(brokenAtDeadline.generate({ ...textRequest, timeoutMs: 20 })).rejects.toMatchObject({
+      code: 'provider-error', message: "OpenRouter's reply could not be read: Unexpected end of JSON input.",
     });
   });
 

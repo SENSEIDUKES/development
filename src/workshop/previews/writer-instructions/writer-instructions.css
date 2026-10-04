@@ -1,0 +1,85 @@
+.writer-instructions {
+  --wi-line: rgba(236, 231, 221, 0.12);
+  --wi-muted: #aaa49a;
+  --wi-accent: #e3a18e;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: 1rem 1rem 4rem;
+  color: #ece7dd;
+  font-family: var(--font-sans);
+  overflow-wrap: anywhere;
+}
+.writer-instructions h1 {
+  margin: 0.5rem 0 0;
+  font-size: clamp(1.75rem, 6vw, 2.6rem);
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  line-height: 1.2;
+  color: #f4efe6;
+}
+.writer-instructions h2 {
+  margin: 2.5rem 0 0.75rem;
+  font-size: 1.15rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.writer-instructions__intro {
+  margin: 1rem 0 0;
+  max-width: 40rem;
+  font-size: 1rem;
+  line-height: 1.75;
+  color: #c9c2b6;
+}
+.writer-instructions__note,
+.writer-instructions__total,
+.writer-instruction__when,
+.writer-instructions__changed {
+  margin: 0.75rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: var(--wi-muted);
+}
+.writer-instruction {
+  border-top: 1px solid var(--wi-line);
+  padding: 0.25rem 0 1rem;
+}
+.writer-instruction:last-of-type { border-bottom: 1px solid var(--wi-line); }
+.writer-instruction summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  min-height: 44px;
+  padding: 0.75rem 0 0;
+  cursor: pointer;
+  list-style: none;
+}
+.writer-instruction summary::-webkit-details-marker { display: none; }
+.writer-instruction summary::before { content: '▸'; flex: 0 0 1rem; color: var(--wi-muted); }
+.writer-instruction[open] summary::before { content: '▾'; }
+.writer-instruction summary:focus-visible { outline: 2px solid var(--wi-accent); outline-offset: 2px; }
+.writer-instruction__date { white-space: nowrap; }
+.writer-instruction__title { font-size: 1rem; font-weight: 500; color: #f4efe6; }
+.writer-instruction__meta { font-size: 0.8rem; color: var(--wi-muted); }
+.writer-instruction__text {
+  margin: 0.75rem 0 0;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--wi-line);
+  border-radius: 0.5rem;
+  background: #141210;
+  color: #e6dfd3;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.8rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.writer-instructions__history { margin: 0; padding: 0; list-style: none; }
+.writer-instructions__history li { padding: 1rem 0; border-top: 1px solid var(--wi-line); }
+.writer-instructions__history time { font-size: 0.8rem; color: var(--wi-accent); }
+.writer-instructions__history p { margin: 0.5rem 0 0; font-size: 0.9rem; line-height: 1.75; }
+@media (min-width: 640px) {
+  .writer-instructions { padding: 1.5rem 1.5rem 5rem; }
+}

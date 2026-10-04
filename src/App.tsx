@@ -102,6 +102,10 @@ const LibraryHelpPreviewWorkspace = lazy(() =>
   import('./workshop/previews/library-help/LibraryHelpPreviewWorkspace')
     .then(module => ({ default: module.LibraryHelpPreviewWorkspace })),
 );
+const WriterInstructionsWorkspace = lazy(() =>
+  import('./workshop/previews/writer-instructions/WriterInstructionsWorkspace')
+    .then(module => ({ default: module.WriterInstructionsWorkspace })),
+);
 
 /**
  * One entry per manifest id. Adding a feature means adding one line here —
@@ -130,6 +134,7 @@ const previewRegistry: Record<string, ComponentType> = {
   'library-help': LibraryHelpPreviewWorkspace,
   'icons': IconsWorkspace,
   'novel-expanded-docs': NovelExpandedDocsWorkspace,
+  'writer-instructions': WriterInstructionsWorkspace,
   'reader-codex': ReaderCodexWorkspace,
   'reader-chamber': ReaderChamberWorkspace,
   'relics-gallery': RelicsWorkspace,

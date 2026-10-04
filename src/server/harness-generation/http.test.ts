@@ -259,6 +259,46 @@ describe('Harness Generation HTTP boundary', () => {
     expect(result).toMatchObject({ status: 400, body: { error: expect.stringContaining('premise') } });
   });
 
+  it('sends GLM, Qwen and DeepSeek the reasoning level that finishes a chapter when the reader chose none', async () => {
+    const sent: Array<[string, unknown]> = [];
+    const write = (model: string, reasoningLevel?: string) => handleHarnessGenerationHttp(
+      { method: 'POST', body: { ...request(), model, ...(reasoningLevel ? { reasoningLevel } : {}) } },
+      { environment: { ...environment, OPENROUTER_API_KEY: 'router-key' }, providerFactory: () => ({
+        provider: 'openrouter', model,
+        generate: async (input: HarnessTextGenerationRequest) => {
+          sent.push([model, input.reasoningLevel]);
+          return { rawProviderResponse: '{}', providerReceipt: { provider: 'openrouter', model, generatedAt: '2026-10-04', usage: { source: 'unavailable' as const } } };
+        },
+      }) },
+    );
+    await write('openrouter/z-ai/glm-5.3-flash');
+    await write('openrouter/qwen/qwen3.8-flash');
+    await write('openrouter/deepseek/deepseek-v4.1-flash');
+    await write('openrouter/z-ai/glm-5.3-flash', 'medium');
+    await write('openrouter/openai/gpt-6-luna');
+    await write('openrouter/minimax/minimax-m2.7');
+    expect(sent).toEqual([
+      ['openrouter/z-ai/glm-5.3-flash', 'low'],
+      ['openrouter/qwen/qwen3.8-flash', 'none'],
+      ['openrouter/deepseek/deepseek-v4.1-flash', 'none'],
+      // The reader's own choice wins; every other model still sends nothing.
+      ['openrouter/z-ai/glm-5.3-flash', 'medium'],
+      ['openrouter/openai/gpt-6-luna', undefined],
+      ['openrouter/minimax/minimax-m2.7', undefined],
+    ]);
+  });
+
+  it('tells the reader a chapter was stopped at the deadline, not that it failed for no reason', async () => {
+    const result = await handleHarnessGenerationHttp(
+      { method: 'POST', body: request() },
+      { environment, providerFactory: () => ({
+        provider: 'gemini', model: 'google/gemini-3.1-flash-lite',
+        generate: async () => { throw new Error('The provider exceeded the Harness Generation 170 second deadline.'); },
+      }) },
+    );
+    expect(result).toMatchObject({ status: 502, body: { error: 'The model was still writing after 170 seconds, so it was stopped. Choose a lower reasoning level or a faster model in the Model Router. The prior committed story is unchanged.' } });
+  });
+
   it('does not expose protected provider failure details', async () => {
     const result = await handleHarnessGenerationHttp(
       { method: 'POST', body: request() },

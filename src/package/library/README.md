@@ -5,6 +5,14 @@ SEN engine and the two UI packages. Library owns SEIHouse users, products,
 economy, community and business policy. Authentication enforcement, secrets,
 durable ledgers and concrete infrastructure stay in the host/backend.
 
+**0.17.1:** chapter models that think too long finish again. GLM 5.3 Flash,
+Qwen 3.8 Flash and DeepSeek V4.1 Flash thought past the 170-second chapter
+deadline on their own defaults, so the Router now sends each a level that
+finishes (`ModelReasoning.sendDefault`: GLM low, Qwen and DeepSeek none)
+unless the reader chooses another. The OpenRouter adapter reports a reply still
+being written at the deadline as a timeout, and an empty reply with its finish
+reason, provider and token counts, instead of 'returned an empty response'.
+
 **0.17.0:** requires `@seihouse/sen` 0.17.0 (the writer tags sounds where
 they happen, in one strict shape for every tag kind; Sound Cues fit 1–8
 words). No Library API changed.

@@ -182,6 +182,16 @@ export const handleHarnessGenerationHttp = async (
     ) {
       return requestError(message);
     }
+    // The one provider failure a reader can act on: the model was still writing at the deadline.
+    const deadline = error instanceof HarnessGenerationExecutionError
+      ? message.match(/exceeded the Harness Generation (\d+) second deadline/)?.[1] : undefined;
+    if (deadline) {
+      return {
+        status: 502,
+        body: { error: `The model was still writing after ${deadline} seconds, so it was stopped. Choose a lower reasoning level or a faster model in the Model Router. The prior committed story is unchanged.` },
+        headers: { 'Cache-Control': 'no-store' },
+      };
+    }
     if (error instanceof HarnessGenerationExecutionError) {
       return {
         status: 502,

@@ -27,8 +27,7 @@ const response = (value: unknown): HarnessGenerationResponse => ({
 
 /** Marked prose plus a tiny Sound Cue signal; the recording below is HARNESS work. */
 const chapterReply = () => response({
-  paragraphs: ['Rain crossed the mountain pass as the [[1|clockwork beast roared]] across the stones.'],
-  soundCues: [{ mark: 1, sound: 'clockwork roar', energy: 'high' }],
+  paragraphs: ['Rain crossed the mountain pass as the [[sound: clockwork roar | clockwork beast roared | high]] across the stones.'],
   arcCompletion: { goalId: 'arc-1', completed: false, evidence: '' },
 });
 
@@ -125,7 +124,7 @@ describe('HARNESS Media Loadout runtime integration', () => {
     expect(request.capaPrompt.text).not.toContain('Media Pack');
     // The equipped pack replaces the default words: only its sound words reach the writer.
     expect(request.capaPrompt.soundVocabulary).toEqual([{ word: 'clockwork roar', example: 'the clockwork beast roared' }]);
-    expect(request.capaPrompt.text).toContain('[[n|the clockwork beast roared]] → clockwork roar');
+    expect(request.capaPrompt.text).toContain('\nclockwork roar: the clockwork beast roared\n');
 
     const committed = controller.snapshot().chapters[0];
     expect(committed.paragraphs[0]).toBe('Rain crossed the mountain pass as the clockwork beast roared across the stones.');

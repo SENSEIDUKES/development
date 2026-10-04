@@ -6,7 +6,7 @@ import type {
   ReaderPreferences,
   StoryWorld,
 } from '@seihouse/sen/reader-chamber';
-import { placeSoundCues, type SoundCueSignal } from '@seihouse/sen/audio';
+import { placeSoundCues } from '@seihouse/sen/audio';
 import { readMarks } from '@seihouse/sen/generation';
 export const MOCK_READER_FALLBACK_LABEL = 'Mock fallback · No generated batch supplied · Four-chapter preview story only';
 
@@ -14,35 +14,26 @@ export const MOCK_STORY_ID = 'workshop-story-emberfall';
 const CODEX_PREVIEW_IMAGE = '/story-seed/library-auth-backdrop.jpg';
 
 const INLINE_AUDIO_BLOCK_ID = 'ch1-b1-inline-audio';
-/** The paragraph as a writer returns it: the words where each sound happens are marked. */
-const INLINE_AUDIO_MARKED_TEXT = '[[1|A Vermilion Debt Fox growled]] beneath the lintel as Mei Lin [[2|drew the Ashen Sword]]. [[3|The Azure Ring chimed awake]] in Li Wei’s hand; the Collapsed Gate of the Ninth Meridian [[4|tolled once]], and the Ninth Meridian Sect [[5|chanted in answer]].';
-
 /**
- * What the writer said about each mark, in the tiny SEN language. Placement
- * runs through the same HARNESS rules a generated chapter does, so these
- * fixtures never choose catalog files or URLs.
+ * The paragraph as a writer returns it, in the tiny SEN language: a sound tag
+ * on the words where each sound happens. Placement runs through the same
+ * HARNESS rules a generated chapter does, so these fixtures never choose
+ * catalog files or URLs.
  */
-export const READER_SOUND_CUE_SIGNALS = [
-  { mark: 1, sound: 'beast growl', energy: 'medium' },
-  { mark: 2, sound: 'blade drawn', energy: 'medium' },
-  { mark: 3, sound: 'artifact resonates' },
-  { mark: 4, sound: 'gong strikes', energy: 'high' },
-  { mark: 5, sound: 'war chant' },
-] as const satisfies readonly SoundCueSignal[];
+const INLINE_AUDIO_MARKED_TEXT = '[[sound: beast growl | A Vermilion Debt Fox growled | medium]] beneath the lintel as Mei Lin [[sound: blade drawn | drew the Ashen Sword | medium]]. [[sound: artifact resonates | The Azure Ring chimed awake]] in Li Wei’s hand; the Collapsed Gate of the Ninth Meridian [[sound: gong strikes | tolled once | high]], and the Ninth Meridian Sect [[sound: war chant | chanted in answer]].';
 
 const INLINE_AUDIO_PARAGRAPH = readMarks(INLINE_AUDIO_MARKED_TEXT);
 const INLINE_AUDIO_BLOCK_TEXT = INLINE_AUDIO_PARAGRAPH.text;
 
 const INLINE_SOUND_CUES = (() => {
   const placement = placeSoundCues({
-    paragraphs: [{ blockId: INLINE_AUDIO_BLOCK_ID, text: INLINE_AUDIO_PARAGRAPH.text, marks: INLINE_AUDIO_PARAGRAPH.marks }],
-    signals: READER_SOUND_CUE_SIGNALS,
+    paragraphs: [{ blockId: INLINE_AUDIO_BLOCK_ID, text: INLINE_AUDIO_PARAGRAPH.text, sounds: INLINE_AUDIO_PARAGRAPH.sounds }],
     vocabulary: LIBRARY_SOUND_WORDS,
     recordings: LIBRARY_BASE_MEDIA.soundCues,
     chapterNumber: 1,
   });
   if (placement.setAside.length > 0) {
-    throw new Error(`Reader Sound Cue fixture set aside mark ${placement.setAside[0].mark} (${placement.setAside[0].reason}).`);
+    throw new Error(`Reader Sound Cue fixture set aside "${placement.setAside[0].sound}" (${placement.setAside[0].reason}).`);
   }
   return placement.soundCues;
 })();

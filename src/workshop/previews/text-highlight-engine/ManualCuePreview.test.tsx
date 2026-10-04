@@ -196,7 +196,7 @@ describe('Workshop manual Sound Cue flow', () => {
     expect(replace.mock.lastCall?.[0].source).toBe(previewSource);
   });
 
-  it('holds a Sound Cue on 1–5 whole words: a partial selection widens to its words, a longer one cannot hold a cue', async () => {
+  it('holds a Sound Cue on 1–8 whole words: a partial selection widens to its words, a longer one cannot hold a cue', async () => {
     // "Somewher" is placed on the whole word.
     const somewhere = ACTION.indexOf('Somewhere');
     await selectText(0, somewhere, somewhere + 'Somewher'.length);
@@ -207,13 +207,13 @@ describe('Workshop manual Sound Cue flow', () => {
     expect(inlinePhrase().textContent).toBe('Somewhere');
     expect(attachments()[0].textContent).toContain('Words · Paragraph 1 · Sentence 3');
 
-    // Six words stay unavailable, with the reason in place.
-    const passage = ACTION.indexOf('Lin Wei drew his sword, planted');
-    await selectText(0, passage, passage + 'Lin Wei drew his sword, planted'.length);
+    // Nine words stay unavailable, with the reason in place.
+    const passage = ACTION.indexOf('Lin Wei drew his sword, planted his feet on');
+    await selectText(0, passage, passage + 'Lin Wei drew his sword, planted his feet on'.length);
     click('Media'); click('Audio');
     const cueAction = document.querySelector<HTMLButtonElement>('.sen-text-highlight-controls button[aria-label="Cue"]')!;
     expect(cueAction.disabled).toBe(true);
-    expect(document.getElementById(cueAction.getAttribute('aria-describedby')!)?.textContent).toBe('Sound Cues fit 1–5 words');
+    expect(document.getElementById(cueAction.getAttribute('aria-describedby')!)?.textContent).toBe('Sound Cues fit 1–8 words');
   });
 
   it('holds at most ten Sound Cues in a chapter, while a placed cue can still change its sound', async () => {

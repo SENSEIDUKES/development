@@ -101,7 +101,7 @@ describe('Harness Generation HTTP boundary', () => {
       ...request(), operation: 'recover-memory', chapterId: ' ', prose: 'Saved prose.',
     }]) expect((await handleHarnessGenerationHttp({ method: 'POST', body }, { environment })).status).toBe(400);
   });
-  it('rejects sound words outside the Sound Cue pack limits before contacting the provider, and sends valid ones as the schema\'s only choices', async () => {
+  it('rejects sound words outside the Sound Cue pack limits before contacting the provider, and asks for no list of sounds in the reply', async () => {
     const generate = vi.fn(async (_input: HarnessTextGenerationRequest) => ({
       rawProviderResponse: JSON.stringify({ paragraphs: ['The gate held.'] }),
       providerReceipt: { provider: 'gemini' as const, model: request().model, generatedAt: '2026-09-29', usage: { source: 'unavailable' as const } },
@@ -122,8 +122,9 @@ describe('Harness Generation HTTP boundary', () => {
     const body = request();
     body.capaPrompt = { ...body.capaPrompt, soundVocabulary: [{ word: ' Blade Drawn ', example: 'drew his sword' }] };
     expect((await handleHarnessGenerationHttp({ method: 'POST', body }, { environment, providerFactory })).status).toBe(200);
-    const schema = generate.mock.calls[0][0].responseJsonSchema as { properties: { soundCues: { items: { properties: { sound: { enum: string[] } } } } } };
-    expect(schema.properties.soundCues.items.properties.sound.enum).toEqual(['blade drawn']);
+    // The words travel in the CAPA Prompt the writer reads; the reply carries sound tags, never a list.
+    const schema = generate.mock.calls[0][0].responseJsonSchema as { properties: Record<string, unknown> };
+    expect(schema.properties).not.toHaveProperty('soundCues');
   });
 
   it('rejects a chapter paragraph count that is not a sane whole number before contacting the provider', async () => {

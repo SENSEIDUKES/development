@@ -3,13 +3,13 @@ import type { FrozenNarrativeMedia } from '../../../audio/media';
 import { describeSetAsideSoundCue, placeSoundCues } from '../../../audio/soundCuePlacement';
 import type { SoundWord } from '../../../audio/soundWords';
 import type { SoundCueAttachment } from '../../../audio/inlineAudio';
-import { readMarks, type MarkReading, type ProseMark, type WordTag } from '../../../narrative/marks';
+import { readMarks, type MarkReading, type WordTag } from '../../../narrative/marks';
 import type { SpeakerAttachment } from '../../../narrative/speech';
 import { chapterTitleText } from '../../../narrative/chapterTitle';
 import type { HoldingChangeAttachment } from '../../../narrative/holdings';
 import { placeSpeakers, type ProtagonistNames } from './speakers';
 import { placeHoldingChanges } from './holdings';
-import { readHarnessSoundCueSignals, stripReplyMarks } from './chapterSignals';
+import { ignoredSoundCueListWarning, stripReplyMarks } from './chapterSignals';
 import {
   harnessChapterBody,
   harnessChapterBodyWarnings,
@@ -282,20 +282,26 @@ const acceptedChapterBody = (
 };
 
 /**
- * Reads the writer's marks out of every paragraph. The chapter keeps only the
- * clean text; each paragraph keeps the positions of its marks and tags for
- * placement. A paragraph that held nothing but a mark is dropped; a tag written
- * alone in its own paragraph moves to the start of the next one. A speaker tag
- * with no paragraph after it is counted as naming no speech; a word tag with
- * none goes to the end of the last paragraph, where its change happened.
+ * Reads the writer's tags out of every paragraph. The chapter keeps only the
+ * clean text; each paragraph keeps the positions of its tags for placement.
+ * Given the story's sound words, a sound tag written the other way round is
+ * read the right way. A paragraph that held nothing but a tag is dropped; a
+ * tag written alone in its own paragraph moves to the start of the next one.
+ * A speaker tag with no paragraph after it is counted as naming no speech; a
+ * word tag with none goes to the end of the last paragraph, where its change
+ * happened. Numbered marks (`[[1|words]]`) are a retired form: they are
+ * removed with their words kept, and nothing is placed from them.
  */
-const readParagraphMarks = (paragraphs: readonly string[], warnings: HarnessWarning[]) => {
+const readParagraphMarks = (paragraphs: readonly string[], warnings: HarnessWarning[], soundWords?: readonly SoundWord[]) => {
   const read: MarkReading[] = [];
   let loose: MarkReading['speakers'] = [];
   let looseWords: WordTag[] = [];
   let wordTagIssues = 0;
-  for (const reading of paragraphs.map(paragraph => readMarks(paragraph))) {
+  let soundTagIssues = 0;
+  const options = soundWords?.length ? { soundWords: soundWords.map(sound => sound.word) } : {};
+  for (const reading of paragraphs.map(paragraph => readMarks(paragraph, options))) {
     wordTagIssues += reading.wordTagIssues.length;
+    soundTagIssues += reading.soundIssues.length;
     if (!reading.text) {
       loose = [...loose, ...reading.speakers.map(tag => ({ ...tag, offset: 0 }))];
       looseWords = [...looseWords, ...reading.wordTags.map(tag => ({ ...tag, offset: 0 }))];
@@ -310,41 +316,44 @@ const readParagraphMarks = (paragraphs: readonly string[], warnings: HarnessWarn
   const last = read.at(-1);
   if (last && looseWords.length) read[read.length - 1] = { ...last, wordTags: [...last.wordTags, ...looseWords.map(tag => ({ ...tag, offset: last.text.length }))] };
   const strandedTags = loose.length;
-  const issues = read.reduce((count, reading) => count + reading.issues.length, 0);
-  if (issues) {
+  const retired = read.reduce((count, reading) => count + reading.marks.length + reading.issues.length, 0);
+  if (retired) {
     warnings.push({
       code: 'prose_marks_removed',
-      message: `Removed ${issues} unusable mark${issues === 1 ? '' : 's'} (unclosed, nested, repeated, empty or point marks) and kept their words.`,
+      message: `Removed ${retired} numbered mark${retired === 1 ? '' : 's'}, a retired form that places nothing, and kept ${retired === 1 ? 'its' : 'their'} words.`,
+    });
+  }
+  if (soundTagIssues) {
+    warnings.push({
+      code: 'sound_cue_set_aside',
+      message: `Removed ${soundTagIssues} unusable sound tag${soundTagIssues === 1 ? '' : 's'} (unclosed, nested, empty, or naming no sound or no words) and kept the prose.`,
     });
   }
   return { read, strandedTags, wordTagIssues };
 };
 
 /**
- * Places the writer's Sound Cues on the clean paragraphs through the story's
- * frozen sound words and recordings. Every cue it cannot place is set aside
- * with a plain reason; prose is never touched.
+ * Places the writer's Sound Cues on the clean paragraphs, from their sound
+ * tags, through the story's frozen sound words and recordings. Every tag it
+ * cannot place is set aside with a plain reason; prose is never touched.
  */
 const acceptedSoundCues = (
-  parsed: Record<string, unknown>,
-  paragraphs: ReadonlyArray<{ text: string; marks: readonly ProseMark[] }>,
+  paragraphs: ReadonlyArray<Pick<MarkReading, 'text' | 'sounds'>>,
   chapterNumber: number,
   warnings: HarnessWarning[],
   options: HarnessResponseAcceptanceOptions,
 ): SoundCueAttachment[] => {
-  const read = readHarnessSoundCueSignals(parsed);
-  warnings.push(...read.warnings);
-  if (!read.signals.length) return [];
+  const tagged = paragraphs.reduce((count, paragraph) => count + paragraph.sounds.length, 0);
+  if (!tagged) return [];
   if (!options.soundVocabulary?.length) {
     warnings.push({
       code: 'sound_cue_set_aside',
-      message: `Set aside ${read.signals.length} Sound Cue${read.signals.length === 1 ? '' : 's'}: this story has no sound words.`,
+      message: `Set aside ${tagged} sound tag${tagged === 1 ? '' : 's'}: this story has no sound words.`,
     });
     return [];
   }
   const placement = placeSoundCues({
-    paragraphs: paragraphs.map((paragraph, index) => ({ blockId: harnessParagraphBlockId(chapterNumber, index), ...paragraph })),
-    signals: read.signals,
+    paragraphs: paragraphs.map((paragraph, index) => ({ blockId: harnessParagraphBlockId(chapterNumber, index), text: paragraph.text, sounds: paragraph.sounds })),
     vocabulary: options.soundVocabulary,
     recordings: options.media?.soundCues ?? [],
     chapterNumber,
@@ -437,13 +446,15 @@ export const acceptHarnessModelResponse = (
     // Marks belong only in paragraphs: every other string the writer returned
     // (title, plan, recap, suggestions, a prose fallback) is read without them.
     const parsed = stripReplyMarks(reply);
+    const ignoredSoundCues = ignoredSoundCueListWarning(reply);
+    if (ignoredSoundCues) warnings.push(ignoredSoundCues);
     appendIgnoredIdentityWarning(parsed, warnings);
     appendIgnoredStoryDirectionWarning(parsed, warnings);
     // The model paragraphs are the authoritative chapter. The HARNESS reads the
-    // writer's marks out of them, keeps the clean text exactly as written,
-    // derives the readable prose from it, and places the Sound Cues the marks point to.
+    // writer's tags out of them, keeps the clean text exactly as written,
+    // derives the readable prose from it, and places the Sound Cues its sound tags name.
     const source = acceptedChapterBody(parsed, warnings);
-    const marked = source ? readParagraphMarks(source, warnings) : { read: [], strandedTags: 0, wordTagIssues: 0 };
+    const marked = source ? readParagraphMarks(source, warnings, options.soundVocabulary) : { read: [], strandedTags: 0, wordTagIssues: 0 };
     const body = marked.read.length ? harnessChapterBody(marked.read.map(reading => reading.text), options.paragraphTarget) : undefined;
     if (!body || looksLikeRefusal(body.prose)) {
       return {
@@ -461,7 +472,7 @@ export const acceptHarnessModelResponse = (
       });
     }
     warnings.push(...harnessChapterBodyWarnings(body.metrics));
-    const soundCues = acceptedSoundCues(parsed, marked.read, chapterNumber, warnings, options);
+    const soundCues = acceptedSoundCues(marked.read, chapterNumber, warnings, options);
     const speakers = acceptedSpeakers(marked, chapterNumber, warnings, options);
     const holdings = acceptedHoldings(parsed, marked, chapterNumber, warnings, options);
     // The chapter's number is the HARNESS's: a "Chapter 3:" the writer put before its title is dropped.
@@ -508,7 +519,9 @@ export const acceptHarnessModelResponse = (
       warnings,
     };
   }
-  const body = harnessChapterBody(splitHarnessProseParagraphs(recovered).map(paragraph => readMarks(paragraph).text).filter(Boolean), options.paragraphTarget);
+  // Read with the story's sound words, so a sound tag written the other way round never leaves its sound word in the prose.
+  const soundWords = options.soundVocabulary?.length ? { soundWords: options.soundVocabulary.map(sound => sound.word) } : {};
+  const body = harnessChapterBody(splitHarnessProseParagraphs(recovered).map(paragraph => readMarks(paragraph, soundWords).text).filter(Boolean), options.paragraphTarget);
   const stopped = options.minWords ? harnessFailedWrite(body.metrics, options.minWords) : undefined;
   if (stopped) return { accepted: false, reason: stopped, warnings };
   warnings.push(

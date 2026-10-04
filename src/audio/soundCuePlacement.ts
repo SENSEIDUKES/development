@@ -1,4 +1,4 @@
-import type { ProseMark } from '../narrative/marks';
+import type { SoundTag } from '../narrative/marks';
 import { wholeWordRange } from '../narrative/words';
 import type { AudioEnergy } from './audioTags';
 import { SOUND_CUE_KIND, type SoundCueAttachment } from './inlineAudio';
@@ -8,24 +8,15 @@ import { extractReaderVisibleAudioText, isReaderSystemLine } from './readerVisib
 import { SOUND_CUE_RULES, soundCueWordIssue } from './soundCueRules';
 import { normalizeSoundWord, type SoundWord } from './soundWords';
 
-/** What a writer said: the sound at one of its marks. */
-export interface SoundCueSignal {
-  mark: number;
-  sound: string;
-  energy?: AudioEnergy;
-}
-
-/** One paragraph of clean prose, its id, and the marks read out of it. */
+/** One paragraph of clean prose, its id, and the sound tags read out of it. */
 export interface SoundCueParagraph {
   blockId: string;
   text: string;
-  marks: readonly ProseMark[];
+  sounds: readonly SoundTag[];
 }
 
 export type SoundCueSetAsideReason =
   | 'unknown-sound'
-  | 'duplicate-signal'
-  | 'missing-mark'
   | 'not-prose'
   | 'no-words'
   | 'too-many-words'
@@ -33,12 +24,17 @@ export type SoundCueSetAsideReason =
   | 'over-limit'
   | 'no-recording';
 
+/** A sound tag that became no Sound Cue, where it sat, and why. */
 export interface SoundCueSetAside {
-  mark: number;
+  /** The sound word the writer named, in its one spelling. */
   sound: string;
+  energy?: AudioEnergy;
   reason: SoundCueSetAsideReason;
-  /** The marked words, when the mark was found. */
-  words?: string;
+  blockId: string;
+  /** The tag's words in the clean paragraph: UTF-16 offsets, start inclusive and end exclusive. */
+  start: number;
+  end: number;
+  words: string;
 }
 
 export interface SoundCuePlacement {
@@ -46,28 +42,24 @@ export interface SoundCuePlacement {
   setAside: SoundCueSetAside[];
 }
 
+/** A tag that may become a cue: where it sits, as it would be set aside, and its paragraph's place. */
 interface Candidate {
-  signal: SoundCueSignal & { sound: string };
+  tag: Omit<SoundCueSetAside, 'reason'>;
   paragraph: number;
-  blockId: string;
-  start: number;
-  end: number;
-  words: string;
 }
 
 /**
- * Places a writer's Sound Cues, deterministically. Each signal names a mark
- * and a sound word; the cue sits on the whole words that mark wraps. It is set
- * aside, never forced, when the word is not one of the story's, its mark is
- * missing or already used, the paragraph is not shown as prose, or the words
- * break the finished-cue rules (1–5 whole words, no overlap, at most ten in a
- * chapter, first in reading order kept). The recording is the sound word's,
- * preferring the Energy asked for, in a stable rotation so repeated sounds
- * vary. The same input always places the same cues.
+ * Places a writer's Sound Cues, deterministically. Each sound tag names a
+ * sound word and wraps the words where it happens; the cue sits on those
+ * whole words. A tag is set aside, never forced, when its word is not one of
+ * the story's, its paragraph is not shown as prose, or its words break the
+ * finished-cue rules (whole words within the word limit, no overlap, at most
+ * ten in a chapter, first in reading order kept). The recording is the sound
+ * word's, preferring the Energy asked for, in a stable rotation so repeated
+ * sounds vary. The same input always places the same cues.
  */
 export function placeSoundCues(input: {
   paragraphs: readonly SoundCueParagraph[];
-  signals: readonly SoundCueSignal[];
   vocabulary: readonly SoundWord[];
   recordings: FrozenNarrativeMedia['soundCues'];
   chapterNumber: number;
@@ -75,74 +67,63 @@ export function placeSoundCues(input: {
 }): SoundCuePlacement {
   const words = new Set(input.vocabulary.map(sound => sound.word));
   const setAside: SoundCueSetAside[] = [];
-  const marks = new Map<number, { paragraph: number; mark: ProseMark }>();
-  input.paragraphs.forEach((paragraph, index) => paragraph.marks.forEach(mark => {
-    if (!marks.has(mark.id)) marks.set(mark.id, { paragraph: index, mark });
-  }));
-
-  const usedMarks = new Set<number>();
   const candidates: Candidate[] = [];
-  for (const raw of input.signals) {
-    const sound = normalizeSoundWord(raw.sound);
-    const signal = { ...raw, sound };
-    if (!words.has(sound)) { setAside.push({ mark: raw.mark, sound, reason: 'unknown-sound' }); continue; }
-    if (usedMarks.has(raw.mark)) { setAside.push({ mark: raw.mark, sound, reason: 'duplicate-signal' }); continue; }
-    usedMarks.add(raw.mark);
-    const found = marks.get(raw.mark);
-    if (!found) { setAside.push({ mark: raw.mark, sound, reason: 'missing-mark' }); continue; }
-    const paragraph = input.paragraphs[found.paragraph];
-    const marked = paragraph.text.slice(found.mark.start, found.mark.end);
+  input.paragraphs.forEach((paragraph, index) => {
     const visible = extractReaderVisibleAudioText(paragraph.text).cleanText;
-    if (visible !== paragraph.text || isReaderSystemLine(visible)) {
-      setAside.push({ mark: raw.mark, sound, reason: 'not-prose', words: marked });
-      continue;
+    const prose = visible === paragraph.text && !isReaderSystemLine(visible);
+    for (const tag of paragraph.sounds) {
+      const sound = normalizeSoundWord(tag.sound);
+      const where = { sound, ...(tag.energy ? { energy: tag.energy } : {}), blockId: paragraph.blockId };
+      const marked = { ...where, start: tag.start, end: tag.end, words: paragraph.text.slice(tag.start, tag.end) };
+      if (!words.has(sound)) { setAside.push({ ...marked, reason: 'unknown-sound' }); continue; }
+      if (!prose) { setAside.push({ ...marked, reason: 'not-prose' }); continue; }
+      const whole = wholeWordRange(paragraph.text, tag.start, tag.end, input.locale);
+      if (!whole) { setAside.push({ ...marked, reason: 'no-words' }); continue; }
+      const wrapped = { ...where, start: whole.start, end: whole.end, words: paragraph.text.slice(whole.start, whole.end) };
+      if (soundCueWordIssue(paragraph.text, whole.start, whole.end, input.locale)) {
+        setAside.push({ ...wrapped, reason: 'too-many-words' });
+        continue;
+      }
+      candidates.push({ tag: wrapped, paragraph: index });
     }
-    const whole = wholeWordRange(paragraph.text, found.mark.start, found.mark.end, input.locale);
-    if (!whole) { setAside.push({ mark: raw.mark, sound, reason: 'no-words', words: marked }); continue; }
-    const wrapped = paragraph.text.slice(whole.start, whole.end);
-    if (soundCueWordIssue(paragraph.text, whole.start, whole.end, input.locale)) {
-      setAside.push({ mark: raw.mark, sound, reason: 'too-many-words', words: wrapped });
-      continue;
-    }
-    candidates.push({ signal, paragraph: found.paragraph, blockId: paragraph.blockId, start: whole.start, end: whole.end, words: wrapped });
-  }
+  });
 
-  candidates.sort((left, right) => left.paragraph - right.paragraph || left.start - right.start || left.signal.mark - right.signal.mark);
+  candidates.sort((left, right) => left.paragraph - right.paragraph || left.tag.start - right.tag.start);
   const uses = new Map<string, number>();
   const soundCues: SoundCueAttachment[] = [];
   const placed: Candidate[] = [];
   for (const candidate of candidates) {
-    const { signal } = candidate;
-    if (placed.some(other => other.paragraph === candidate.paragraph && candidate.start < other.end && candidate.end > other.start)) {
-      setAside.push({ mark: signal.mark, sound: signal.sound, reason: 'overlaps', words: candidate.words });
+    const { tag } = candidate;
+    if (placed.some(other => other.paragraph === candidate.paragraph && tag.start < other.tag.end && tag.end > other.tag.start)) {
+      setAside.push({ ...tag, reason: 'overlaps' });
       continue;
     }
     if (soundCues.length >= SOUND_CUE_RULES.maxPerChapter) {
-      setAside.push({ mark: signal.mark, sound: signal.sound, reason: 'over-limit', words: candidate.words });
+      setAside.push({ ...tag, reason: 'over-limit' });
       continue;
     }
     const recordings = input.recordings
-      .filter(({ cue, provenance }) => cue.metadata.sound === signal.sound
+      .filter(({ cue, provenance }) => cue.metadata.sound === tag.sound
         && isPublicHttpsMediaUrl(cue.public_url) && isMediaResourceProvenance(provenance))
       .sort((left, right) => left.cue.public_url.localeCompare(right.cue.public_url));
-    const matching = signal.energy ? recordings.filter(({ cue }) => cue.metadata.studio_tags?.energy === signal.energy) : [];
+    const matching = tag.energy ? recordings.filter(({ cue }) => cue.metadata.studio_tags?.energy === tag.energy) : [];
     const pool = matching.length ? matching : recordings;
     if (!pool.length) {
-      setAside.push({ mark: signal.mark, sound: signal.sound, reason: 'no-recording', words: candidate.words });
+      setAside.push({ ...tag, reason: 'no-recording' });
       continue;
     }
-    const used = uses.get(signal.sound) ?? 0;
-    uses.set(signal.sound, used + 1);
+    const used = uses.get(tag.sound) ?? 0;
+    uses.set(tag.sound, used + 1);
     const { cue, provenance } = pool[(input.chapterNumber + used) % pool.length];
     placed.push(candidate);
     soundCues.push({
-      id: `sound-cue:${candidate.blockId}:${candidate.start}-${candidate.end}`,
+      id: `sound-cue:${tag.blockId}:${tag.start}-${tag.end}`,
       kind: SOUND_CUE_KIND,
-      anchor: { level: 'span', blockId: candidate.blockId, startOffset: candidate.start, endOffset: candidate.end, selectedText: candidate.words },
+      anchor: { level: 'span', blockId: tag.blockId, startOffset: tag.start, endOffset: tag.end, selectedText: tag.words },
       payload: {
         origin: 'harness',
-        sound: signal.sound,
-        ...(signal.energy ? { energy: signal.energy } : {}),
+        sound: tag.sound,
+        ...(tag.energy ? { energy: tag.energy } : {}),
         cue: {
           publicUrl: cue.public_url,
           provenance: structuredClone(provenance),
@@ -157,9 +138,7 @@ export function placeSoundCues(input: {
 
 const SET_ASIDE_MESSAGES: Record<SoundCueSetAsideReason, string> = {
   'unknown-sound': 'is not one of this story\'s sound words',
-  'duplicate-signal': 'repeats a mark another Sound Cue already used',
-  'missing-mark': 'has no mark in the prose',
-  'not-prose': 'is marked in a line the Reader shows as a system line',
+  'not-prose': 'is in a line the Reader shows as a system line',
   'no-words': 'wraps no words',
   'too-many-words': `covers more than ${SOUND_CUE_RULES.maxWords} words`,
   overlaps: 'overlaps another Sound Cue',
@@ -167,6 +146,6 @@ const SET_ASIDE_MESSAGES: Record<SoundCueSetAsideReason, string> = {
   'no-recording': 'has no playable recording',
 };
 
-/** A plain sentence for one set-aside cue: `Sound Cue 3 "blade drawn" covers more than 5 words ("...").` */
+/** A plain sentence for one set-aside tag: `The "blade drawn" sound on “drew his sword” has no playable recording; it was set aside.` */
 export const describeSetAsideSoundCue = (item: SoundCueSetAside) =>
-  `Sound Cue ${item.mark} "${item.sound}" ${SET_ASIDE_MESSAGES[item.reason]}${item.words ? ` ("${item.words}")` : ''}; it was set aside.`;
+  `The "${item.sound}" sound on “${item.words}” ${SET_ASIDE_MESSAGES[item.reason]}; it was set aside.`;

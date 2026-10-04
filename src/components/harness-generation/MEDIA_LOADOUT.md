@@ -35,7 +35,7 @@ HTTPS audio URLs.
 
 A Sound Cue Pack also declares its **sound words**:
 `sounds: [{ word, example, meaning? }]`, the events its recordings answer, each
-with a 1–5 word example of what a writer wraps ("drew his sword") and an
+with a 1–5 word example of what a writer tags ("drew his sword") and an
 optional one-line meaning (SEN `validateSoundWords`). Every recording names one
 declared word in `metadata.sound`, and every declared word has at least one
 recording. A recording's cue category (artifacts, atmosphere, beasts, factions,
@@ -77,15 +77,17 @@ carries the attempt's sound words (`FrozenNarrativeMedia.sounds`), and
 Loadout panel lists them.
 
 **Only the sound words reach the writer.** They fill the managed CAPA Sound
-Cues slot as its example list (`CapaPrompt.soundVocabulary`, counted against
-the CAPA budget, which a pack at its largest word list fits) and become the
-response schema's `soundCues.sound` choices. Recordings, URLs, filenames,
+Cues slot as its list, one line per word with its example and meaning, after
+one example tag made from the first word (`CapaPrompt.soundVocabulary`,
+counted against the CAPA budget, which a pack at its largest word list fits).
+The writer names one of them in each sound tag; the reply carries no list.
+Recordings, URLs, filenames,
 catalog rows, packs and entitlements never enter `HarnessGenerationRequest`,
 the Story Information Packet or the provider prompt. The model never supplies
 or selects a pack, URL, filename, catalog row, or R2 object.
 
-After acceptance has stripped the marks from the paragraphs, `placeSoundCues`
-(`src/audio/soundCuePlacement.ts`) places each cue on the words its mark wraps
+After acceptance has read the tags out of the paragraphs, `placeSoundCues`
+(`src/audio/soundCuePlacement.ts`) places each cue on the words its sound tag wraps
 and picks the recording from the frozen snapshot: that sound word's
 recordings, sorted by URL, preferring the Energy asked for, rotated by chapter
 number and how often the word has been used, so the same input always places

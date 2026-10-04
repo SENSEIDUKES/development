@@ -150,7 +150,7 @@ describe('HARNESS holdings through change tags', () => {
     expect(state.codexEntries).toHaveLength(6);
     // What the writer actually receives: the Holdings skill, the section, and the closing list it must return.
     const prompt = buildHarnessGenerationPrompt(writer.generate.mock.calls[1][0]);
-    expect(prompt.systemInstruction).toContain('CAPA SKILL [Holdings] — SEN Holdings v1.0.0');
+    expect(prompt.systemInstruction).toContain('CAPA SKILL [Holdings] — SEN Holdings v2.0.0');
     expect(prompt.userPrompt).toContain('HOLDINGS (what each character has now, by exact name; the main character first)\nYe Chen (main character)\n- in hand: Rusted Iron Sword\n- carries: Spirit Pill ×3\n- learning: Cloud Step\n\nElder Qin\n- carries: Jade Gourd');
     expect(prompt.responseJsonSchema.required).toContain('mainCharacterHoldings');
 

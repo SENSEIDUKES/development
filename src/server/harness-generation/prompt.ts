@@ -1,9 +1,8 @@
 import { validateHardPinInputs } from '@seihouse/sen/harness-generation';
 import { ARC_LENGTH, ARC_LOOKAHEAD_SCHEMA, ARC_PLAN_DRAFT_SCHEMA, MAX_ARC_LOOKAHEAD, createArcChapterPosition } from '@seihouse/sen/arc-goals';
-import { AUDIO_ENERGIES, type SoundWord } from '@seihouse/sen/audio';
 import { type HarnessArcRequest, type HarnessChapterDirection, type HarnessGenerationRequest, type HarnessStoryMode, type HarnessMemoryRecoveryRequest, type HarnessMissionReminder, type HarnessRequestMeasurement, type ImmediateChapterRequest, type PacketSectionId, type StoryInformationPacket } from '@seihouse/sen/harness-generation';
 import { GENERATION_PACKET_BUDGET } from '@seihouse/sen/harness-generation';
-import { CHAPTER_FUNCTIONS, HARNESS_MEMORY_CATEGORIES, HARNESS_SOUND_CUE_SIGNAL_LIMIT } from '@seihouse/sen/harness-generation';
+import { CHAPTER_FUNCTIONS, HARNESS_MEMORY_CATEGORIES } from '@seihouse/sen/harness-generation';
 
 const memoryEntryProperties = {
     details: { type: 'object', properties: {
@@ -52,35 +51,16 @@ const memoryResponseSchema = { type: 'object', properties: { memory: memorySchem
 const text = { type: 'string' };
 
 /**
- * One Sound Cue signal in the tiny SEN language: the number of a mark the
- * writer placed in its paragraphs, one of the story's sound words, and an
- * optional Energy. The word list is an enum so the model picks from it; the
- * HARNESS still re-checks every word, because not every provider enforces it.
- */
-const soundCuesSchema = (words: readonly SoundWord[]) => ({
-  type: 'array',
-  maxItems: HARNESS_SOUND_CUE_SIGNAL_LIMIT,
-  items: {
-    type: 'object',
-    properties: {
-      mark: { type: 'integer', minimum: 1 },
-      sound: { type: 'string', enum: words.map(sound => sound.word) },
-      energy: { type: 'string', enum: [...AUDIO_ENERGIES] },
-    },
-    required: ['mark', 'sound'],
-  },
-});
-
-/**
  * The compact chapter contract requested from the provider. The paragraphs
- * array is the chapter; the only signal is soundCues, which follows it and
- * exists only when the story has sound words. The closing list of the main
- * character's holdings follows them, only when the Holdings skill is loaded:
- * a plain list of names, so it adds no structure. How to mark and tag is
- * taught by the CAPA skills, never here. Reader structures, media, IDs, and
- * memory are HARNESS work and never appear here.
+ * array is the chapter, and every signal travels inside it as a tag: sounds,
+ * speakers and holding changes alike, so the reply has no list to keep in
+ * step with the prose. The closing list of the main character's holdings
+ * follows it, only when the Holdings skill is loaded: a plain list of names,
+ * so it adds no structure. How to tag is taught by the CAPA skills, never
+ * here. Reader structures, media, IDs, and memory are HARNESS work and never
+ * appear here.
  */
-export const buildHarnessChapterResponseSchema = (words: readonly SoundWord[] = [], paragraphCount?: number, { holdings = false }: { holdings?: boolean } = {}) => ({
+export const buildHarnessChapterResponseSchema = (paragraphCount?: number, { holdings = false }: { holdings?: boolean } = {}) => ({
   type: 'object',
   properties: {
     title: text,
@@ -91,7 +71,6 @@ export const buildHarnessChapterResponseSchema = (words: readonly SoundWord[] = 
       ...(paragraphCount ? { minItems: paragraphCount, maxItems: paragraphCount } : {}),
       description: 'The complete chapter, one entry per prose paragraph, in reading order. This is the only chapter body.',
     },
-    ...(words.length ? { soundCues: soundCuesSchema(words) } : {}),
     ...(holdings ? { mainCharacterHoldings: {
       type: 'array', items: text,
       description: 'After the chapter: every thing the main character has and every ability they know or are learning, each by its exact name.',
@@ -317,7 +296,7 @@ export const buildHarnessGenerationPrompt = (request: HarnessGenerationRequest) 
     presentMissionReminder(request.missionReminder),
     presentImmediateChapterRequest(request.immediateChapterRequest),
   ].join('\n\n');
-  const responseJsonSchema = buildHarnessChapterResponseSchema(request.capaPrompt.soundVocabulary ?? [], request.immediateChapterRequest.chapterScale.paragraphs, {
+  const responseJsonSchema = buildHarnessChapterResponseSchema(request.immediateChapterRequest.chapterScale.paragraphs, {
     holdings: request.capaPrompt.skills.some(skill => skill.slot === 'holdings' && skill.authoring),
   });
   const measurement: HarnessRequestMeasurement = {

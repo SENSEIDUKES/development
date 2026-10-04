@@ -25,12 +25,18 @@ existing Chapter Generation feature.
 | Field | Value |
 | --- | --- |
 | Replica creation date | 2026-08-29 |
-| Last Workshop update | 2026-10-03 |
+| Last Workshop update | 2026-10-04 |
 | Last source comparison | 2026-09-12 — verified the creative author direction in `Light-Novels/src/server/prompts.ts` on `main` before extracting the Author skill |
 | Lifecycle status | Reader-directed continuation (Fate page) in a Reader on the Text Highlight Engine that reads aloud in three voices, with holdings tagged by the writer and checked by plain rules, the story's point of view kept from its opening, and failed writes never saved |
 
 ### History
 
+- **2026-10-04 (The writer's tags, one strict shape; sound tags; the Writer Instructions page):** The owner's two exports showed the tag instructions were worded too loosely: no speaker tags at all in either story's Chapter 1, 36% of sounds lost (3 to numbers that fell out of step with the list, 7 to the five-word limit). The owner approved one shape for every tag kind, then asked for it audited down to what the writer needs, so more kinds can stack.
+  - **One shape:** every tag kind is taught as JOB, FORMAT, REQUIRED, FORBIDDEN and CHECK BEFORE YOU RETURN. What every tag shares is said once, as the HARNESS tag rules (`HARNESS_TAG_RULES`, `shared/tagRules.ts`), just before the first skill that teaches a tag: tags are machine notes removed before anyone reads; write each exactly as its FORMAT shows; each paragraph reads complete without them; never outside paragraphs; never written about in the prose. CAPA slots that teach a tag say so (`writesTags`). SEN Speakers 2.0.0 (every chapter including the first, one speaker per paragraph), SEN Holdings 2.0.0 (the same rules as a table) and SEN Sound Cues 2.0.0. The three kinds and the rules are 737 words, down from 874.
+  - **Sound tags:** the writer puts a sound tag on the words where a sound happens, `[[sound: Sound Word | Words | Energy]]`, and the reply format no longer asks for a `soundCues` list, so no number can fall out of step. `readMarks` reads the tags (with the story's sound words, one written the other way round reads right); `placeSoundCues` places them. A writer that still returns the list, or still writes numbered marks, places nothing and is told so; the words are kept. The story's sound list is one line per word (`blade drawn: drew his sword`), after one example tag made from the first word.
+  - **Eight words:** by the owner's decision a Sound Cue fits 1–8 whole words (`SOUND_CUE_RULES.maxWords`), for the writer and for cues placed by hand, so a natural phrase ("a horn blared across the terrace") keeps its sound.
+  - **Writer Instructions:** a Workshop page (`?preview=writer-instructions`) shows every block the chapter writer reads before the story, from the live code, with its version, size and last change. A dated history records every change, and a test fails until a change is written there, so the instructions never change without the owner knowing.
+  - **Versions:** SEN 0.17.0, Library 0.17.0.
 - **2026-10-03 (What a five-chapter test showed: point of view, failed writes, titles, holdings):** The owner's Goblin test story (five chapters, exported) switched its point of view, saved a failed write as Chapter 3, numbered its own titles, and lost an item from Holdings. Each is fixed where it starts.
   - **Point of view:** Chapter 1 was told in the third person, Chapter 2 in the first, Chapter 4 switched mid-chapter, and Chapter 5 went back. The Japanese Style allows first person or close third, which is right for that tradition, but the writer sees only recaps of earlier chapters, never their prose, so it could not see which one the story opened in. The Style still chooses; the HARNESS now remembers. It reads the story's point of view from its earliest committed chapter that shows one clearly (`storyPointOfView`, `shared/pointOfView.ts`: in English narration with speech left out, "I", "me", "my" and "myself" against the main character's names, at least 8 and twice the other; anything less clear reads as nothing), carries it in Current Story Information (`CurrentStoryProjection.pointOfView`, worked out each time, never stored), and the response contract tells the writer to keep it and never switch. The SEN Speakers skill no longer mentions first person (v1.2.0: "whatever name or pronoun the prose uses for them"), so point of view is the Style's alone.
   - **Failed writes:** Chapter 3 came back as four paragraphs and 104 words, two of them the writer's own notes about the task ("Need fix tag syntax…"), with none of the fields that follow a chapter, and it was saved, because a short chapter was never refused. By the owner's decision that rule changes: a reply under a quarter of the chapter's minimum (`HARNESS_FAILED_WRITE_SHARE`, 450 of 1,800 words) is a failed write (`harnessFailedWrite`). It is never saved, its raw reply stays on the attempt, and the Reader says "Chapter 3 was not saved. The writer stopped after 104 words, far short of the 1,800 a chapter needs. You can try again." with Next ready to try again. A chapter that is only short is still kept and flagged. So that a whole chapter in Thai, Lao, Khmer or Burmese (written without spaces between words) is never mistaken for one, `countHarnessWords` now counts those words by the language's own rules (`wordRanges`); before, a Thai chapter counted about a fifth of its words.
@@ -491,7 +497,7 @@ story. Fate, Accessibility, Translation and Sound Cues are managed: the HARNESS 
 them from the story's Fate mode, Reading Mode, Story Language and Media Loadout at every
 loadout freeze, and nobody equips them. Users configure those through Story Settings and
 the Media Loadout and never see a slot. The Media Loadout itself is not a CAPA slot:
-only its sound words reach the writer, as the Sound Cues skill's example list. The bundled SEN Novel Author is a normal, replaceable generation skill, not
+only its sound words reach the writer, as the Sound Cues skill's list. The bundled SEN Novel Author is a normal, replaceable generation skill, not
 hidden creative Harness behavior. It is equipped for new and previously saved local
 stories.
 
@@ -508,18 +514,24 @@ Packet. Only manifests declaring the `generation` application contribute text.
 Reader and post-commit applications may be recorded in the frozen CAPA Prompt's
 skill inventory for their owning host runtime and send nothing to the writing model.
 
+When any loaded skill teaches a tag (Sound Cues, Speakers, Holdings), the
+HARNESS tag rules (`HARNESS_TAG_RULES`) come once, just before the first of
+them: what every tag kind shares, so no kind repeats it. Like the official
+requirements they are HARNESS text, never a skill.
+
 The separate permanent `HARNESS_RESPONSE_CONTRACT` describes the chapter reply:
 the paragraphs, the Arc Goal and ending evidence, the recap and the three
 suggestions, and the guard against invented IDs, URLs and assets. It carries no
-signal wording: how to mark a Sound Cue lives only in the CAPA Sound Cues skill,
-and the response schema (`buildHarnessChapterResponseSchema`) adds a `soundCues`
-list right after `paragraphs` only when the story has sound words, with those
-words as the only choices. It is fixed HARNESS infrastructure, never an
-installable skill or loadout slot, and contains no asset catalog, R2 path,
-filename, track list, unlocked-resource list, or pack contents. HARNESS retains
-validation, placement, generated IDs, ordering, persistence, and checkpoint
-recovery; sound words stay machine-facing English while the words a mark wraps
-stay in the story's language.
+tag wording: how to tag lives only in the CAPA skills, and every signal travels
+as a tag inside `paragraphs`, so the response schema
+(`buildHarnessChapterResponseSchema`) has no list of signals. It is fixed
+HARNESS infrastructure, never an installable skill or loadout slot, and
+contains no asset catalog, R2 path, filename, track list, unlocked-resource
+list, or pack contents. HARNESS retains validation, placement, generated IDs,
+ordering, persistence, and checkpoint recovery; sound words stay
+machine-facing English while the words a sound tag wraps stay in the story's
+language. Every block the writer reads is shown, from the live code, on the
+Workshop's Writer Instructions page.
 
 The Workshop's sample skill manifests remain preview data only. Media Packs use
 the separate inventory and runtime boundary documented in

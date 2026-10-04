@@ -238,7 +238,7 @@ for (const [name, browserType, width, height, touch] of [
     assert.equal((await letterParagraph.textContent()).replaceAll('\u2060', ''), letterOriginal);
     await page.screenshot({ path: `${output}/${name}-cue-punctuation.png` });
 
-    // Manuscript lab: a Sound Cue sits on 1–5 whole words. A partial selection widens to its whole words…
+    // Manuscript lab: a Sound Cue sits on 1–8 whole words. A partial selection widens to its whole words…
     const selectIn = (locator, phrase, length = phrase.length) => locator.evaluate((element, { phrase, length }) => {
       const text = element.firstChild; const at = text.data.indexOf(phrase);
       const range = document.createRange(); range.setStart(text, at); range.setEnd(text, at + length);
@@ -250,11 +250,11 @@ for (const [name, browserType, width, height, touch] of [
     await activate('Media'); await activate('Audio'); await activate('Cue');
     assert.equal(await page.locator('.sen-manual-cue-picker__heading').textContent(), 'Sound Cue for “Somewhere”');
     await page.keyboard.press('Escape');
-    // …and more than five words leave Cue in the bar, dimmed, with its reason.
-    await selectIn(paragraph, 'Lin Wei drew his sword, planted');
+    // …and more than eight words leave Cue in the bar, dimmed, with its reason.
+    await selectIn(paragraph, 'Lin Wei drew his sword, planted his feet on');
     await activate('Media'); await activate('Audio');
     assert.equal(await page.locator('.sen-text-highlight-controls button[aria-label="Cue"]').isDisabled(), true);
-    assert.equal(await page.locator('.sen-text-highlight-reason').textContent(), 'Sound Cues fit 1–5 words');
+    assert.equal(await page.locator('.sen-text-highlight-reason').textContent(), 'Sound Cues fit 1–8 words');
     await page.screenshot({ path: `${output}/${name}-lab-cue-unavailable.png` });
     await page.keyboard.press('Escape');
 

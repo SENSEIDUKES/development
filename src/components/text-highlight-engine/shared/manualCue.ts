@@ -30,7 +30,7 @@ export function snapSoundCueSelection(block: TextHighlightBlock, selection: Pass
  * A Sound Cue an author places by hand: the same record the HARNESS stores,
  * with origin manual. The recording must be one the host's catalog approves,
  * with a public HTTPS URL, provenance and a sound word; the selection must be
- * current, whole words (1–5) and free of other cues. The selection contract
+ * current, whole words (1–8) and free of other cues. The selection contract
  * itself stays media-agnostic.
  */
 export function createManualSoundCue(

@@ -15,16 +15,15 @@ import { installFakeSpeechSynthesis, type FakeSpeechSynthesis } from '../../../t
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const GOAL = { arcNumber: 1, goals: [{ id: 'arc-1-name', text: 'Reclaim her name.', chapters: 30 }] };
-const reply = (title: string, paragraphs: string[], soundCues: unknown[] = []) => JSON.stringify(writtenChapter({
-  title, paragraphs, soundCues,
+const reply = (title: string, paragraphs: string[]) => JSON.stringify(writtenChapter({
+  title, paragraphs,
   arcCompletion: { goalId: 'arc-1-name', completed: false, evidence: '' },
   recap: `${title}.`, chapterFunction: 'progression',
   nextProgression: 'Mara climbs the bell tower.', nextWorldBuilding: 'The keeper explains the drowned law.', nextConflict: 'The tide wardens seize the causeway.',
 }));
-// The writer marks the words where a sound happens; the HARNESS places the cue there.
+// The writer puts a sound tag on the words where a sound happens; the HARNESS places the cue there.
 const CHAPTERS = [
-  reply('Low Tide', ['The tide pulled back from the drowned gate.', 'Mara froze as [[1|the beast roared]] beyond the seawall. Nothing answered it.', 'Salt dried white on the courier seal.'],
-    [{ mark: 1, sound: 'beast roar', energy: 'high' }]),
+  reply('Low Tide', ['The tide pulled back from the drowned gate.', 'Mara froze as [[sound: beast roar | the beast roared | high]] beyond the seawall. Nothing answered it.', 'Salt dried white on the courier seal.']),
   reply('The Bell Keeper', ['A keeper waited on the causeway with a lantern.', 'He asked for the name the city had erased.', 'Mara gave him the only one she still owned.']),
 ];
 const media = createLibraryMediaPort({ registered: [], entitlements: [], base: LIBRARY_BASE_MEDIA });

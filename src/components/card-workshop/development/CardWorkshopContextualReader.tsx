@@ -31,8 +31,8 @@ const LOCAL_CREATURE_PORTRAIT = '/card-workshop/test-images/lyra_meadowlight_por
 
 const CONTEXT_CARD_BLOCK_ID = 'card-workshop-context-card';
 const CONTEXT_OPENING_BLOCK_ID = 'card-workshop-context-opening';
-/** The opening paragraph as a writer returns it, with the words where each sound happens marked. */
-const CONTEXT_OPENING = readMarks('Rain threaded down the bronze eaves. The [[1|Rain Court bell tolled once]] as [[2|a Vermilion Debt Fox growled]] beneath the empty tribunal.');
+/** The opening paragraph as a writer returns it, with a sound tag on the words where each sound happens. */
+const CONTEXT_OPENING = readMarks('Rain threaded down the bronze eaves. The [[sound: bell rings | Rain Court bell tolled once | high]] as [[sound: beast growl | a Vermilion Debt Fox growled | medium]] beneath the empty tribunal.');
 const CONTEXT_OPENING_TEXT = CONTEXT_OPENING.text;
 const CONTEXT_CHAPTER_NUMBER = 1;
 
@@ -65,8 +65,7 @@ const CONTEXT_CUE_LOCATION: CodexTerm = {
 /** Placed through the same HARNESS rules a generated chapter uses; the fixture never picks a file or URL. */
 const CONTEXT_SOUND_CUES = (() => {
   const placement = placeSoundCues({
-    paragraphs: [{ blockId: CONTEXT_OPENING_BLOCK_ID, text: CONTEXT_OPENING.text, marks: CONTEXT_OPENING.marks }],
-    signals: [{ mark: 1, sound: 'bell rings', energy: 'high' }, { mark: 2, sound: 'beast growl' }],
+    paragraphs: [{ blockId: CONTEXT_OPENING_BLOCK_ID, text: CONTEXT_OPENING.text, sounds: CONTEXT_OPENING.sounds }],
     vocabulary: LIBRARY_SOUND_WORDS,
     recordings: LIBRARY_BASE_MEDIA.soundCues,
     chapterNumber: CONTEXT_CHAPTER_NUMBER,

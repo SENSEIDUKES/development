@@ -43,13 +43,15 @@ describe('manual Sound Cue placement', () => {
       .toMatchObject({ ok: false, reason: 'unavailable-cue' });
   });
 
-  it('places a cue only on 1–5 whole words, and snaps a selection to its whole words', () => {
+  it('places a cue only on 1–8 whole words, and snaps a selection to its whole words', () => {
     const scene = { id: 'scene', text: 'Lin Wei drew his sword, planted his feet on the cracked tiles.' };
     const select = (start: number, end: number) => ({ blockId: 'scene', selectedText: scene.text.slice(start, end), startOffset: start, endOffset: end });
     const sword = scene.text.indexOf('sword');
     expect(createManualSoundCue(scene, select(sword, sword + 3), cue, catalog)).toMatchObject({ ok: false, reason: 'partial-word' });
     expect(createManualSoundCue(scene, select(sword, sword + 6), cue, catalog)).toMatchObject({ ok: false, reason: 'partial-word' });
-    expect(createManualSoundCue(scene, select(0, scene.text.indexOf(' on')), cue, catalog)).toMatchObject({ ok: false, reason: 'too-many-words' });
+    // Eight words hold a cue; nine do not.
+    expect(createManualSoundCue(scene, select(0, scene.text.indexOf(' on')), cue, catalog).ok).toBe(true);
+    expect(createManualSoundCue(scene, select(0, scene.text.indexOf(' the')), cue, catalog)).toMatchObject({ ok: false, reason: 'too-many-words' });
     const drew = scene.text.indexOf('drew');
     expect(createManualSoundCue(scene, select(drew, sword + 5), cue, catalog).ok).toBe(true);
 

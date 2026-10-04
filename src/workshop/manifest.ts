@@ -160,7 +160,7 @@ export const workshopEntries: WorkshopEntry[] = [
   },
   {
     id: 'text-highlight-engine', title: 'Text Highlight Engine',
-    description: 'The manuscript lab: three pre-made paragraphs saved with permanent paragraph and sentence addresses. Select prose to see its address, edit it, or attach a Sound Cue to 1–5 whole words (up to 10 per chapter); right-click or use the Remove row for Undo, Remove cue here and Delete Passage; switch on the Cues overlay to see every Sound Cue in blue and the page numbered the way the model addresses it (¶ paragraph numbers in the margin, small raised sentence numbers); then seal the chapter.',
+    description: 'The manuscript lab: three pre-made paragraphs saved with permanent paragraph and sentence addresses. Select prose to see its address, edit it, or attach a Sound Cue to 1–8 whole words (up to 10 per chapter); right-click or use the Remove row for Undo, Remove cue here and Delete Passage; switch on the Cues overlay to see every Sound Cue in blue and the page numbered the way the model addresses it (¶ paragraph numbers in the margin, small raised sentence numbers); then seal the chapter.',
     category: 'reader-ui', section: 'components', owner: 'sen', status: 'active', version: 'v1.8',
     source: { repository: 'SENSEIDUKES/development', path: 'src/components/text-highlight-engine/', lastCompared: 'Not applicable — DEV-native primitive' },
   },
@@ -360,13 +360,28 @@ export const workshopEntries: WorkshopEntry[] = [
     owner: 'sen',
     status: 'active',
     title: 'Harness Generation',
-    description: 'Standalone checkpoint-first novel core: a premise-first Story Foundation, one model call per chapter written in the tiny SEN language (narration plus Sound Cues the writer marks on its own words), independent IndexedDB persistence, tolerant prose acceptance, semantic-event ledger, and continuity directed one chapter at a time from the Reader\'s Fate page, in Regular Reader or Fate Survival mode. A story opens on its World Info page; Start Story writes Chapter 1 under the Aura Veil in a Reader on the Text Highlight Engine. Listen reads chapters aloud in three voices (Narrator, Protagonist, Side) with the spoken sentence lit, from the speakers the writer tags. Holdings: the writer reads what each character has, uses only that, and tags every change; plain rules check it, and the Reader\'s Holdings page shows it with the passage behind each change.',
+    description: 'Standalone checkpoint-first novel core: a premise-first Story Foundation, one model call per chapter written in the tiny SEN language (narration plus sound tags the writer puts on its own words), independent IndexedDB persistence, tolerant prose acceptance, semantic-event ledger, and continuity directed one chapter at a time from the Reader\'s Fate page, in Regular Reader or Fate Survival mode. A story opens on its World Info page; Start Story writes Chapter 1 under the Aura Veil in a Reader on the Text Highlight Engine. Listen reads chapters aloud in three voices (Narrator, Protagonist, Side) with the spoken sentence lit, from the speakers the writer tags. Holdings: the writer reads what each character has, uses only that, and tags every change; plain rules check it, and the Reader\'s Holdings page shows it with the passage behind each change.',
     category: 'other',
     version: 'v1.5',
     source: {
       repository: 'SENSEIDUKES/development',
       path: 'src/components/harness-generation/',
       lastCompared: '2026-08-29',
+    },
+  },
+  {
+    id: 'writer-instructions',
+    section: 'systems',
+    owner: 'workshop',
+    status: 'active',
+    title: 'Writer Instructions',
+    description: 'The exact instructions the chapter writer reads before the story, taken from the live code: the Author, the tag rules, Sound Cues with the story\'s sound list, Speakers, Holdings and the response contract, each with its version, size and the date it last changed, plus the blocks only some stories get. A dated history records every change; a test fails until a change is written there.',
+    category: 'other',
+    version: 'v1.0',
+    source: {
+      repository: 'SENSEIDUKES/development',
+      path: 'src/workshop/previews/writer-instructions/',
+      lastCompared: 'Not applicable — generated from live code',
     },
   },
   {

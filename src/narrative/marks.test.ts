@@ -13,7 +13,7 @@ describe('readMarks', () => {
 
   it('leaves text without marks exactly as it was', () => {
     const plain = 'The sign read [[CLOSED]], and [Level 2] flashed; a lone ]] stays.';
-    expect(readMarks(plain)).toEqual({ text: plain, marks: [], issues: [], speakers: [], speakerIssues: [], wordTags: [], wordTagIssues: [] });
+    expect(readMarks(plain)).toEqual({ text: plain, sounds: [], soundIssues: [], marks: [], issues: [], speakers: [], speakerIssues: [], wordTags: [], wordTagIssues: [] });
   });
 
   it('reads the slips a writer makes', () => {
@@ -36,13 +36,13 @@ describe('readMarks', () => {
   });
 
   it('removes a point mark without leaving a double space, and reports it', () => {
-    expect(readMarks('Wei Lin [[1]] drew his sword.')).toEqual({ text: 'Wei Lin drew his sword.', marks: [], issues: [{ kind: 'point', id: 1 }], speakers: [], speakerIssues: [], wordTags: [], wordTagIssues: [] });
+    expect(readMarks('Wei Lin [[1]] drew his sword.')).toEqual({ text: 'Wei Lin drew his sword.', sounds: [], soundIssues: [], marks: [], issues: [{ kind: 'point', id: 1 }], speakers: [], speakerIssues: [], wordTags: [], wordTagIssues: [] });
     expect(readMarks('[[3]] Dawn broke.').text).toBe('Dawn broke.');
   });
 
   it('keeps the words of a mark that never closes', () => {
     expect(readMarks('He [[4|drew his sword as the beast lunged.')).toEqual({
-      text: 'He drew his sword as the beast lunged.', marks: [], issues: [{ kind: 'unclosed', id: 4 }], speakers: [], speakerIssues: [],
+      text: 'He drew his sword as the beast lunged.', sounds: [], soundIssues: [], marks: [], issues: [{ kind: 'unclosed', id: 4 }], speakers: [], speakerIssues: [],
       wordTags: [], wordTagIssues: [],
     });
   });
@@ -117,7 +117,7 @@ describe('speaker tags', () => {
 
   it('leaves ordinary brackets, emails and untagged names alone', () => {
     for (const plain of ['[Level 2] flashed.', 'The sign read [[CLOSED]].', 'Write to name@example.com today.', '[[Mara]] waited.', 'He said [@Mara] later.']) {
-      expect(readMarks(plain)).toEqual({ text: plain, marks: [], issues: [], speakers: [], speakerIssues: [], wordTags: [], wordTagIssues: [] });
+      expect(readMarks(plain)).toEqual({ text: plain, sounds: [], soundIssues: [], marks: [], issues: [], speakers: [], speakerIssues: [], wordTags: [], wordTagIssues: [] });
     }
   });
 
@@ -185,7 +185,7 @@ describe('word tags', () => {
 
   it('leaves a bracketed note with no pipe and no tag word alone', () => {
     for (const plain of ['The board read [[Note: back soon]].', '[[Wei Lin]] waited.', 'He said: [gained] nothing.']) {
-      expect(readMarks(plain)).toEqual({ text: plain, marks: [], issues: [], speakers: [], speakerIssues: [], wordTags: [], wordTagIssues: [] });
+      expect(readMarks(plain)).toEqual({ text: plain, sounds: [], soundIssues: [], marks: [], issues: [], speakers: [], speakerIssues: [], wordTags: [], wordTagIssues: [] });
     }
   });
 
@@ -197,6 +197,111 @@ describe('word tags', () => {
 
   it('strips tags from fields that carry none', () => {
     expect(stripMarks('Previously, [[gained: MC | Sword]] Wei Lin took the sword.')).toBe('Previously, Wei Lin took the sword.');
+  });
+});
+
+describe('sound tags', () => {
+  /** Each tag as [sound, energy, the words it wraps]. */
+  const sounds = (reading: ReturnType<typeof readMarks>) => reading.sounds.map(tag => [tag.sound, tag.energy, reading.text.slice(tag.start, tag.end)]);
+
+  it('keeps the words a tag wraps, and reports the sound, its Energy and where the words sit', () => {
+    const reading = readMarks('Wei Lin [[sound: blade drawn | drew his sword | high]] as the beast [[sound: beast roar | roared]].');
+    expect(reading.text).toBe('Wei Lin drew his sword as the beast roared.');
+    expect(sounds(reading)).toEqual([['blade drawn', 'high', 'drew his sword'], ['beast roar', undefined, 'roared']]);
+    expect(reading.soundIssues).toEqual([]);
+    expect(reading.wordTags).toEqual([]);
+    expect(reading.wordTagIssues).toEqual([]);
+  });
+
+  it('reads the slips a writer makes', () => {
+    const cases: Array<[string, string, ReturnType<typeof sounds>]> = [
+      ['He [[sound: blade drawn | high | drew his sword]] fast.', 'He drew his sword fast.', [['blade drawn', 'high', 'drew his sword']]],
+      ['He [[ Sound : Blade Drawn|drew his sword | HIGH ]] fast.', 'He drew his sword fast.', [['Blade Drawn', 'high', 'drew his sword']]],
+      ['He [[sound: blade drawn | drew his sword] fast.', 'He drew his sword fast.', [['blade drawn', undefined, 'drew his sword']]],
+      ['He [[sfx: blade drawn | drew his sword]] fast.', 'He drew his sword fast.', [['blade drawn', undefined, 'drew his sword']]],
+      ['He [[Sound Effect: blade drawn | drew his sword]] fast.', 'He drew his sword fast.', [['blade drawn', undefined, 'drew his sword']]],
+      ['He [[sound-cue: blade drawn | drew his sword]] fast.', 'He drew his sword fast.', [['blade drawn', undefined, 'drew his sword']]],
+      ['林は［［sound：blade drawn｜剣を抜いた］］。', '林は剣を抜いた。', [['blade drawn', undefined, '剣を抜いた']]],
+      // A part after the words that is not an Energy is the tag's, never prose.
+      ['He [[sound: blade drawn | drew his sword | loudly]] fast.', 'He drew his sword fast.', [['blade drawn', undefined, 'drew his sword']]],
+    ];
+    for (const [sample, text, expected] of cases) {
+      const reading = readMarks(sample);
+      expect(reading.text).toBe(text);
+      expect(sounds(reading)).toEqual(expected);
+    }
+  });
+
+  it('reads a tag written the other way round the right way, given the story\'s sound words', () => {
+    const reading = readMarks('He [[sound: drew his sword | blade drawn]] and waited.', { soundWords: ['blade drawn', 'beast roar'] });
+    expect(reading.text).toBe('He drew his sword and waited.');
+    expect(sounds(reading)).toEqual([['blade drawn', undefined, 'drew his sword']]);
+    // The right way round stays as written.
+    expect(sounds(readMarks('[[sound: beast roar | roared]] x', { soundWords: ['beast roar'] }))).toEqual([['beast roar', undefined, 'roared']]);
+  });
+
+  it('reads other tags inside its words as usual, and stays whole', () => {
+    const reading = readMarks('The door [[sound: door slam | slammed [[@Mara]] shut]]. [[sound: blade drawn | He [[equipped: MC | Sword]] drew]] it.');
+    expect(reading.text).toBe('The door slammed shut. He drew it.');
+    expect(sounds(reading)).toEqual([['door slam', undefined, 'slammed shut'], ['blade drawn', undefined, 'He drew']]);
+    expect(reading.speakers).toEqual([{ name: 'Mara', offset: reading.text.indexOf('shut') }]);
+    expect(reading.wordTags).toEqual([{ word: 'equipped', parts: ['MC', 'Sword'], offset: reading.text.indexOf('drew') }]);
+  });
+
+  it('removes a tag with nothing to wrap, and leaks nothing', () => {
+    const cases: Array<[string, string]> = [
+      ['[[sound: thunder]] Thunder rolled.', 'Thunder rolled.'],
+      ['[[sound: thunder | high]] Thunder rolled.', 'Thunder rolled.'],
+      // No pipe and no closing: where the sound word ends is unknown, so the sentence it ran into goes with it.
+      ['[[sound: thunder Thunder rolled. Rain fell.', 'Rain fell.'],
+    ];
+    for (const [sample, text] of cases) {
+      const reading = readMarks(sample);
+      expect(reading.text).toBe(text);
+      expect(reading.sounds).toEqual([]);
+      expect(reading.soundIssues).toEqual([{ kind: 'incomplete' }]);
+    }
+    // With no sound word, the words are still the writer's prose.
+    expect(readMarks('He [[sound: | drew his sword]] fast.')).toMatchObject({ text: 'He drew his sword fast.', sounds: [], soundIssues: [{ kind: 'incomplete' }] });
+  });
+
+  it('keeps the words of a tag that never closes, opens inside another, or wraps nothing', () => {
+    expect(readMarks('He [[sound: blade drawn | drew his sword as the beast lunged.')).toMatchObject({
+      text: 'He drew his sword as the beast lunged.', sounds: [], soundIssues: [{ kind: 'unclosed', sound: 'blade drawn' }],
+    });
+    const nested = readMarks('He [[sound: blade drawn | drew [[sound: thunder | his | high]] sword]] fast.');
+    expect(nested.text).toBe('He drew his sword fast.');
+    expect(sounds(nested)).toEqual([['blade drawn', undefined, 'drew his sword']]);
+    expect(nested.soundIssues).toEqual([{ kind: 'nested', sound: 'thunder' }]);
+    expect(readMarks('Rain [[sound: thunder | ]] fell.')).toMatchObject({ text: 'Rain fell.', sounds: [], soundIssues: [{ kind: 'empty', sound: 'thunder' }] });
+  });
+
+  it('never lets a further pipe inside its words reach the prose', () => {
+    const reading = readMarks('He [[sound: bell rings | the bell rang | and rang again for the dead of the sect]] twice.');
+    expect(reading.text).toBe('He the bell rang and rang again for the dead of the sect twice.');
+    expect(sounds(reading)).toEqual([['bell rings', undefined, 'the bell rang and rang again for the dead of the sect']]);
+  });
+
+  it('trims the ends and shifts every tag with them', () => {
+    const reading = readMarks('  [[sound: bell rings | The bell rang]] twice.  ');
+    expect(reading.text).toBe('The bell rang twice.');
+    expect(sounds(reading)).toEqual([['bell rings', undefined, 'The bell rang']]);
+  });
+
+  it('never lets a tag reach the clean text', () => {
+    const samples = [
+      'A [[sound: x | b]] c [[sound: y]] d [[sound: z | e f', '[[sfx: a | b | low]] [[sound: c | d] e', '［［sound：鐘｜鐘が鳴った］］と',
+      'x [[sound: a | b [[sound: c | d]] e]] f', '[[sound: thunder | high]]', '[[Sound Effect: boom | it | medium]]',
+    ];
+    for (const sample of samples) {
+      const { text } = readMarks(sample);
+      expect(text).not.toMatch(/[[［]{1,2}\s*s(?:ound|fx)/i);
+      expect(text).not.toMatch(/[|｜\]］]|\b(?:low|medium|high)\b/);
+    }
+  });
+
+  it('strips tags from fields that carry none, keeping their words', () => {
+    expect(stripMarks('The [[sound: bell rings | bell tolled]] at dawn.')).toBe('The bell tolled at dawn.');
   });
 });
 

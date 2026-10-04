@@ -16,7 +16,7 @@ accounts, Energy, QI, first-party catalogs, Workshop state, or concrete APIs.
 | `./reader-runtime` | Required host ports for Reader/Codex state and services, and Read Aloud: spoken lines and speaker records, the three-voice script, voice choice, device preferences through `ReaderPreferenceStorage`, and the `useReadAloud` player over the browser's speech |
 | `./reader-chamber` | Portable Reader behavior and UI, including the anchored Mind Palace |
 | `./reader-codex` | Portable Codex behavior and UI |
-| `./inline-audio` | Sound Cues on the page: the glyph on the words a cue marks and its inline playback (needs a host `NarrativeAudioProvider`) |
+| `./inline-audio` | Sound Cues on the page: the glyph on the words a cue sits on and its inline playback (needs a host `NarrativeAudioProvider`) |
 | `./color-codes` | Single narrative Color Code authority |
 | `./cards` | Narrative and System card families |
 | `./manifestations` | Neutral manifestation capability and reveal UI |
@@ -32,6 +32,27 @@ accounts, Energy, QI, first-party catalogs, Workshop state, or concrete APIs.
 There is no `chapter-generation` or `codex-cards` compatibility entry. Legacy
 Chapter Generation was retired; HARNESS is the one canonical generated-story
 owner.
+
+**0.17.0 (breaking):** the writer's tags, one strict shape.
+
+- `./harness-generation`: every tag kind is taught in one shape (JOB, FORMAT,
+  REQUIRED, FORBIDDEN, CHECK BEFORE YOU RETURN), and what every tag shares is
+  said once, as `HARNESS_TAG_RULES`, before the first skill that teaches a
+  tag (CAPA slots that teach one carry `writesTags`). SEN Sound Cues, Speakers
+  and Holdings are 2.0.0. Sounds are tagged where they happen,
+  `[[sound: Sound Word | Words | Energy]]`: the reply format no longer asks
+  for `soundCues`, and `readHarnessSoundCueSignals` and
+  `HARNESS_SOUND_CUE_SIGNAL_LIMIT` are gone. A writer that still returns the
+  list, or still writes numbered marks, places nothing and is told so in a
+  warning (`ignoredSoundCueListWarning`); the words are kept.
+- `./generation`: `readMarks(text, { soundWords })` reads sound tags
+  (`MarkReading.sounds`, `soundIssues`, `SoundTag`); given the story's sound
+  words, a tag written the other way round reads the right way. Numbered marks
+  are still read so they never leak, and nothing is placed from them.
+- `./audio`: `placeSoundCues` takes each paragraph's sound tags (`sounds`)
+  instead of marks and signals; `SoundCueSignal` is gone, and a set-aside tag
+  keeps its sound, words and place. `SOUND_CUE_RULES.maxWords` is 8, for a cue
+  placed by hand and one the writer tags alike.
 
 **0.16.0 (breaking):** what a five-chapter test showed.
 

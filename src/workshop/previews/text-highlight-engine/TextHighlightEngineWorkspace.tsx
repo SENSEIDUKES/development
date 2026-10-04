@@ -34,7 +34,7 @@ const soundCues = (state: LabState) => state.attachments.filter(attachment => at
 /**
  * The Sound Cue a selection would hold — its whole words, and the cue already
  * on them — or why it cannot hold one. A person meets the finished-cue rules
- * as they select: 1–5 whole words, at most ten in the chapter.
+ * as they select: 1–8 whole words, at most ten in the chapter.
  */
 function soundCueTarget(state: LabState, selection: PassageSelection): { selection: PassageSelection; existing?: LabAttachment } | { reason: string } {
   const paragraph = state.manuscript.paragraphs.find(candidate => candidate.id === selection.blockId);

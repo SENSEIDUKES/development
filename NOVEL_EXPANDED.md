@@ -296,7 +296,7 @@ when its words change. That means:
   right, so its categories, and what the model is told to document, can be designed
   on purpose.
 
-## Where we are (2026-10-03)
+## Where we are (2026-10-04)
 
 The current implementation status, and the only section that says what is built.
 Update it whenever it changes.
@@ -366,6 +366,17 @@ Update it whenever it changes.
     (under a quarter of its 1,800-word minimum) is a failed write: nothing is
     saved, and the Reader says so with Next ready to try again. A chapter's
     title is its name alone; the Reader numbers it.
+  - **The writer's tags, in one strict shape:** every tag kind is taught the
+    same way (its job, its format, what is required, what is forbidden, and a
+    check before it returns), and what every tag shares is said once. Sounds
+    are tagged where they happen (`[[sound: blade drawn | drew his sword |
+    high]]`), naming one of the story's sound words, on up to 8 words; the
+    numbered marks and separate list that lost sounds in the tests are gone.
+    Speakers must be tagged from Chapter 1 on, one speaker per paragraph.
+  - **Writer Instructions, in the Workshop:** every block of text the writer
+    reads before the story, from the live code, with its version, size and
+    the date it last changed, and a dated history. A change to the writer's
+    instructions fails the build until it is written in that history.
   - **Export story,** on World Info, saves a story as one file: every chapter
     with the exact instructions, Story Information and request the writer was
     given, and its raw reply. It is how a test is shared.
@@ -381,7 +392,9 @@ Update it whenever it changes.
     must change something. The second run (five chapters) moved every chapter,
     and showed a point-of-view switch, a failed write saved as Chapter 3,
     numbered titles, and a slate lost from Holdings because it was only tagged
-    as equipped; all four are fixed, and the test runs again on a new story;
+    as equipped; all four are fixed. Both runs also showed loose tag wording:
+    no speaker tags in either Chapter 1, and 36% of sounds lost. The tags are
+    now taught in one strict shape, and the test runs again on a new story;
   - Listen on real phones (iPhone Safari, Android Chrome), whose voices differ
     from device to device.
 - **Not yet as [The World Blueprint](#the-world-blueprint) describes:**

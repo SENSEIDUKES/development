@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { AUDIO_ENERGIES } from '../../../audio/audioTags';
 import { SOUND_CUE_RULES } from '../../../audio/soundCueRules';
 import { SOUND_WORD_LIMITS, validateSoundWords, type SoundWord } from '../../../audio/soundWords';
 import { LIBRARY_SOUND_WORDS } from '../../../host/media/libraryCatalog';
@@ -13,8 +14,7 @@ import {
   assembleCapaPrompt,
   presentSoundVocabulary,
 } from '@seihouse/sen/harness-generation';
-
-const NUMBER_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
+import { readMarks } from '../../../narrative/marks';
 
 /** The largest sound list a Sound Cue Pack may declare: every limit at its maximum. */
 const largestVocabulary = (): SoundWord[] => validateSoundWords(Array.from({ length: SOUND_WORD_LIMITS.maxWords }, (_, index) => {
@@ -27,11 +27,21 @@ const largestVocabulary = (): SoundWord[] => validateSoundWords(Array.from({ len
 }));
 
 describe('SEN Sound Cues skill', () => {
-  it('states the finished-cue rules with the same numbers placement enforces', () => {
-    expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain(`[[n|words]]`);
-    expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain(`one to ${NUMBER_WORDS[SOUND_CUE_RULES.maxWords]} words`);
-    expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain(`at most ${NUMBER_WORDS[SOUND_CUE_RULES.maxPerChapter]}`);
-    expect(SEN_SOUND_CUES_SKILL).toMatchObject({ id: 'seihouse.sen-sound-cues', slot: 'soundCues', applications: ['generation'] });
+  it('teaches the sound tag with the same numbers placement enforces, in its five parts', () => {
+    expect(SEN_SOUND_CUES_SKILL).toMatchObject({ id: 'seihouse.sen-sound-cues', version: '2.0.0', slot: 'soundCues', applications: ['generation'] });
+    const lines = SEN_SOUND_CUES_INSTRUCTIONS.split('\n');
+    expect(lines[0]).toMatch(/^JOB: /);
+    expect(lines).toContain('FORMAT: [[sound: Sound Word | Words | Energy]]');
+    expect(lines.filter(line => /^(?:REQUIRED|FORBIDDEN|CHECK BEFORE YOU RETURN):/.test(line)).map(line => line.split(':')[0])).toEqual(['REQUIRED', 'FORBIDDEN', 'CHECK BEFORE YOU RETURN']);
+    expect(lines.at(-1)).toMatch(/^CHECK BEFORE YOU RETURN: /);
+    expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain(`the few words where it happens, at most ${SOUND_CUE_RULES.maxWords}.`);
+    expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain(`at most ${SOUND_CUE_RULES.maxWords} words and an energy`);
+    expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain(`At most ${SOUND_CUE_RULES.maxPerChapter} per chapter.`);
+    expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain(`${AUDIO_ENERGIES.slice(0, -1).join(', ')} or ${AUDIO_ENERGIES.at(-1)}`);
+  });
+
+  it('never teaches the retired numbered marks or a separate list of sounds', () => {
+    expect(SEN_SOUND_CUES_INSTRUCTIONS).not.toMatch(/\[\[n\||\[\[\d|soundCues|"mark"/);
   });
 
   it('names no sounds of its own: the story\'s example list teaches the pattern and is the whole vocabulary', () => {
@@ -41,13 +51,16 @@ describe('SEN Sound Cues skill', () => {
     }
   });
 
-  it('tells the writer the list below is examples of how to mark, not text for the chapter', () => {
+  it('shows one example tag made from the first word, then every word with example words it fits', () => {
     const list = presentSoundVocabulary([{ word: 'blade drawn', example: 'drew his sword' }, { word: 'chime', example: 'a soft chime', meaning: 'a small bright chime' }]);
-    const [header, ...lines] = list.split('\n');
-    expect(header).toMatch(/^The examples below show how to do it\./);
-    expect(header).toContain('They are not text for the chapter');
-    expect(header).toContain('use only these sound words');
-    expect(lines).toEqual(['[[n|drew his sword]] → blade drawn', '[[n|a soft chime]] → chime (a small bright chime)']);
+    const [example, header, ...lines] = list.split('\n');
+    expect(example).toBe('EXAMPLE: [[sound: blade drawn | drew his sword | medium]]');
+    // The example is a real tag: the reader keeps its words and reads its sound and Energy.
+    const reading = readMarks(example.slice('EXAMPLE: '.length));
+    expect(reading).toMatchObject({ text: 'drew his sword', sounds: [{ sound: 'blade drawn', energy: 'medium', start: 0, end: 14 }], soundIssues: [] });
+    expect(header).toBe('SOUND WORDS (each with example words; write your own):');
+    expect(lines).toEqual(['blade drawn: drew his sword', 'chime: a soft chime (a small bright chime)']);
+    expect(presentSoundVocabulary([])).toBe('');
   });
 
   it('fits the CAPA budget with every bundled skill loaded and the largest sound list a pack may declare', () => {

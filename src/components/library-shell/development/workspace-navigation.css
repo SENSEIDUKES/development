@@ -1,3 +1,7 @@
+/* Over the full-screen writing veil (z-index 9999) when the writing waits on it. */
+.workspace-sheet.workspace-sheet--above-veil {
+  z-index: 10001 !important;
+}
 .workspace-sheet {
   z-index: 250 !important;
   max-height: calc(100dvh - max(3rem, var(--sh-safe-top, env(safe-area-inset-top)))) !important;

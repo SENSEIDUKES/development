@@ -12,6 +12,7 @@ import { writtenChapter } from '../test-utils/writtenChapter';
 import { installAudioMediaStubs } from '../test-utils/renderWithDevAudio';
 import { createMockStorySeedRecord } from '../workshop/previews/story-seed/previewData';
 import { createOfficialCapaDefaultLoadout, installOfficialCapaSkillsInMemory, OFFICIAL_CAPA_DEFAULT_REFERENCES } from '../host/generation/capa/officialCapaSkills';
+import { HarnessGenerationRequestError } from '../host/generation/httpClient';
 import { writeModelPreference } from '../host/generation/modelPreference';
 import { BlueprintRequestError } from '../host/story-seed/blueprintGenerationClient';
 import { createLocalStorySeedRepository } from '../host/story-seed/localStorySeedRepository';
@@ -70,6 +71,7 @@ const appServices = (writer: HarnessGenerationModelAdapter, overrides: Partial<N
   writer,
   installSkills: async () => officialSkills,
   requestWorldBlueprint: vi.fn(),
+  accessToken: { current: undefined },
   ...overrides,
 });
 
@@ -188,6 +190,45 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
     expect(story.generate).toHaveBeenCalledTimes(1);
   });
 
+  it('asks for the access token when a chapter reaches the visitor limit, then writes it with the token', async () => {
+    const story = scriptedWriter();
+    const accessToken = { current: undefined as string | undefined };
+    const sentWith: Array<string | undefined> = [];
+    // The server refuses a chapter past the visitor limit unless the owner's token rides with it.
+    const writer: HarnessGenerationModelAdapter = {
+      ...story.writer,
+      generate: async request => {
+        sentWith.push(accessToken.current);
+        if (!accessToken.current) throw new HarnessGenerationRequestError('This Development action has reached its temporary request limit. Please try again shortly.', 429);
+        if (accessToken.current !== 'owner-token') throw new HarnessGenerationRequestError('The access token was not accepted.', 401);
+        return story.writer.generate(request);
+      },
+    };
+    const services = appServices(writer, { accessToken });
+    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
+    await render(services, `/app/?story=${created.id}`);
+    await click(chaptersAction(), 'Start Story', 10);
+
+    const sheet = () => document.querySelector<HTMLFormElement>('[data-testid="access-token-sheet"]');
+    expect(sheet(), 'Expected the access token sheet').toBeTruthy();
+    expect(sheet()!.textContent).toContain('chapters are limited to 6 every 30 minutes');
+    // The writing veil covers the page while the chapter waits; the sheet opens above it.
+    expect(sheet()!.closest('.workspace-sheet')!.classList.contains('workspace-sheet--above-veil')).toBe(true);
+    await typeInto(sheet()!.querySelector('input[type="password"]')!, 'wrong-token');
+    await click(buttonByText('Continue', sheet()!), 'Continue', 20);
+    expect(sheet()!.textContent).toContain('That token was not accepted.');
+    await typeInto(sheet()!.querySelector('input[type="password"]')!, 'owner-token');
+    await click(buttonByText('Continue', sheet()!), 'Continue', 20);
+    expect(sheet()).toBeNull();
+    await act(async () => { story.release(); });
+    await flush(10);
+    expect(document.querySelector('[data-chapter-number="1"]')!.textContent).toContain('The tide pulled back from the drowned gate.');
+    // One chapter written: the refused tries never reached the model.
+    expect(sentWith).toEqual([undefined, 'wrong-token', 'owner-token']);
+    expect(story.generate).toHaveBeenCalledTimes(1);
+    expect(accessToken.current).toBe('owner-token');
+  });
+
   it('reads a chapter aloud in the Library\'s voices and keeps the reader\'s speed on this device', async () => {
     const { fake: speech, uninstall } = installFakeSpeechSynthesis();
     vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
@@ -233,7 +274,7 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
 });
 
 describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
-  it('keeps the access token for the whole visit: leaving Create and coming back does not ask again', async () => {
+  it('keeps the access token on this device: leaving Create and coming back does not ask again', async () => {
     const record = createMockStorySeedRecord({ userId: NOVEL_EXPANDED_READER_ID });
     const { blueprint, ...withoutBlueprint } = record;
     const seeds = createLocalStorySeedRepository({ storageKey: 'test-novelexpanded-seeds' });
@@ -265,6 +306,8 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     await flush(300);
     expect(sheet()).toBeNull();
     expect(requestWorldBlueprint.mock.calls.map(call => call[1])).toEqual(['visit-token', 'visit-token']);
+    // Kept in the app's saved token, which chapters carry too.
+    expect(services.accessToken.current).toBe('visit-token');
   });
 
   it('asks for the access token before a Blueprint, asks again when it is refused, and starts the story on Story View', async () => {

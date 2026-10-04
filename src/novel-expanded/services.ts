@@ -1,6 +1,7 @@
 import type { HarnessGenerationModelAdapter, HarnessGenerationRepository, HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import type { ReaderPreferenceStorage, ReaderStateRepository } from '@seihouse/sen/reader-runtime';
 import type { StorySeedRepository } from '@seihouse/sen/story-seed';
+import { createSavedAccessToken, type AccessTokenStore } from '../host/generation/accessToken';
 import { HarnessGenerationHttpClient } from '../host/generation/httpClient';
 import { IndexedDbHarnessGenerationRepository } from '../host/generation/indexedDbRepository';
 import { installOfficialCapaSkillsInMemory } from '../host/generation/capa/officialCapaSkills';
@@ -35,17 +36,22 @@ export interface NovelExpandedServices {
   installSkills: () => Promise<HarnessSkillManifest[]>;
   /** The World Blueprint server, behind the development access token. */
   requestWorldBlueprint: typeof requestWorldBlueprint;
+  /** The owner's development access token, saved on this device: it unlocks Blueprints and lifts the chapter limit. */
+  accessToken: AccessTokenStore;
 }
 
 export function createNovelExpandedServices(): NovelExpandedServices {
+  const accessToken = createSavedAccessToken();
   return {
     stories: new IndexedDbHarnessGenerationRepository(NOVEL_EXPANDED_STORAGE.stories),
     readerState: new IndexedDbReaderStateRepository(NOVEL_EXPANDED_STORAGE.readerState),
     readerPreferences: createLocalReaderPreferenceStorage(NOVEL_EXPANDED_STORAGE.readerPreferences),
     storySeeds: createLocalStorySeedRepository({ storageKey: NOVEL_EXPANDED_STORAGE.storySeeds }),
-    writer: new HarnessGenerationHttpClient(),
+    // Chapters carry the owner's token, which lifts the visitor limit.
+    writer: new HarnessGenerationHttpClient(undefined, () => accessToken.current),
     // Held in memory: the app never writes the Workshop's imported-skill inventory.
     installSkills: () => installOfficialCapaSkillsInMemory(),
     requestWorldBlueprint,
+    accessToken,
   };
 }

@@ -328,8 +328,9 @@ Update it whenever it changes.
     Workshop home. It shows only the core application spine: Home → Create
     (Story Seed and World Blueprint) → Story View (World Info) → Reader. It
     writes the same chapters as the Workshop, keeps its own stories, Story
-    Seeds and reading places, and asks for the Blueprint access token on
-    Create. `npm run check:app` fails the build if it reaches an old system
+    Seeds and reading places, and asks once for the owner's access token,
+    which unlocks Blueprints and lifts the chapter limit, saving it on this
+    device. `npm run check:app` fails the build if it reaches an old system
     ([`src/novel-expanded/README.md`](./src/novel-expanded/README.md)).
   - **Story Length is set from the start:** the Story Seed's ARC page asks how many
     arcs of 30 chapters the story should run, 10 to 40 (300 to 1,200 chapters); left

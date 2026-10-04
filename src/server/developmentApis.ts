@@ -9,6 +9,8 @@ import { createConfiguredCodexVoiceQuoteService } from '../server/audio/codexVoi
 import { modelRouterStatus } from '../server/model-router/status';
 import {
   createPublicGenerationGuard,
+  developmentAccessToken,
+  ownerTokenAdmission,
   type PublicGenerationGuardResult,
 } from '../server/shared/publicGenerationGuard';
 
@@ -106,7 +108,8 @@ export const generationApis = (
         const admission: PublicGenerationGuardResult = request.method?.toUpperCase() !== 'POST'
           ? { allowed: true }
           : pathname === '/api/harness-generation'
-              ? guardHarnessGeneration(request)
+              // The owner's access token lifts the visitor limit.
+              ? ownerTokenAdmission(request, developmentAccessToken(environment)) ?? guardHarnessGeneration(request)
             : pathname === '/api/codex-voice-quote'
               ? guardCodexVoiceQuote(request)
             : pathname === '/api/reader-translation'

@@ -5,6 +5,7 @@ import { LIBRARY_DESTINATIONS } from '@seihouse/library/shell';
 import { lazy, useCallback, useEffect, useRef, useState } from 'react';
 import { CreationModal as DevelopmentCreationModal } from '@seihouse/library/story-seed';
 import { requestWorldBlueprint } from '../../../host/story-seed/blueprintGenerationClient';
+import { createSavedAccessToken } from '../../../host/generation/accessToken';
 import { readModelPreference } from '../../../host/generation/modelPreference';
 import { resetStorySeedRepository, setStorySeedRepository } from './storySeedStorage';
 import { finalizeGeneratedWorldBlueprint, type BlueprintGenerationPayload } from '@seihouse/sen/story-seed';
@@ -453,7 +454,8 @@ export function StorySeedWorkspace({ embedded = false, initialState, localGenera
           );
         }
         // The chapter model chosen in the Model Router writes the Blueprint too.
-        return await requestWorldBlueprint(payload, blueprintAccessToken, controller.signal, readModelPreference('chapters'));
+        // An empty token box uses the access token saved on this device.
+        return await requestWorldBlueprint(payload, blueprintAccessToken || createSavedAccessToken().current || '', controller.signal, readModelPreference('chapters'));
       } finally {
         if (activeBlueprintRequestRef.current === controller) {
           activeBlueprintRequestRef.current = null;
@@ -557,7 +559,7 @@ export function StorySeedWorkspace({ embedded = false, initialState, localGenera
                 className="min-h-11 w-full rounded-lg border border-white/10 bg-black/25 px-3 text-sm font-normal normal-case tracking-normal text-white/85 outline-none placeholder:text-white/25 focus:border-cyan-500/60 disabled:opacity-50"
               />
               <span className="text-[9px] font-normal normal-case tracking-normal text-white/30">
-                Held in memory for this page only. The Gemini key remains server-side.
+                Held in memory for this page only; left empty, the token saved on this device is used. The Gemini key remains server-side.
               </span>
             </label>
           </form>

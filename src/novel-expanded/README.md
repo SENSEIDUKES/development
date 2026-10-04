@@ -54,21 +54,25 @@ Workshop's, so neither can overwrite the other (`services.ts`):
 | Stories | IndexedDB `novelexpanded-harness-stories-v1` |
 | Reading places | IndexedDB `novelexpanded-reader-state-v1` |
 | Narration voices and speed (Reader Settings) | localStorage `novelexpanded-reader-read-aloud` |
+| The access token | localStorage `seihouse-development-access-token`, shared with the Workshop |
 | Story Seeds | localStorage `novelexpanded-story-seeds-v1` |
 
 A story started in the app shows on the app's Home, not on the Workshop's
 developer page, and the other way round. There are no accounts yet: every seed
 belongs to this browser's one reader.
 
-## The World Blueprint access token
+## The access token
 
-World Blueprints are still a development service behind
-`STORY_SEED_BLUEPRINT_ACCESS_TOKEN`. The first Blueprint of a
-visit asks for the token in a small sheet. It is kept only in that tab's
-memory, never saved, and asked for again when the server does not accept it.
+The owner's Development access token (`STORY_SEED_BLUEPRINT_ACCESS_TOKEN` on the
+server) unlocks World Blueprints and lifts the chapter limit. The app asks for
+it once, in a small sheet, the first time a Blueprint needs it or a chapter
+reaches the limit, and saves it on this device. A token the server does not
+accept is forgotten and asked for again.
 
-Chapter writing (`/api/harness-generation`) needs no token. It shares the
-Workshop's limit of 6 requests per 30 minutes per visitor.
+Chapter writing (`/api/harness-generation`) allows a visitor without the token
+6 requests per 30 minutes, the Workshop's limit; with it there is no limit. A
+chapter refused at the limit asks for the token and is sent again with it. The
+server refused it before any model call, so nothing is written twice.
 
 ## What the app may reach: `npm run check:app`
 
@@ -97,8 +101,9 @@ task needs something the list does not allow.
 | `routes.ts` | Addresses and history |
 | `services.ts` | Storage, the writer, the official skills and the Blueprint client |
 | `HomePage.tsx` | Home inside the Library workspace shell |
-| `CreatePage.tsx` | Create: `CreationModal` in a guest Story Seed runtime, and the token sheet |
-| `AccessTokenSheet.tsx` | The token sheet |
+| `CreatePage.tsx` | Create: `CreationModal` in a guest Story Seed runtime; asks for the token before a Blueprint |
+| `AccessTokenSheet.tsx` | The access token sheet, one for the whole app |
+| `accessToken.ts` | The chapter writer with the owner's token: a chapter at the limit asks for it and is sent again |
 | `storyCreationRuntime.ts` | The guest Story Seed runtime; which seeds already became stories |
 
 Story View and the Reader are the Library's `StoryPages` (`@seihouse/library/stories`).
@@ -127,6 +132,7 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## History
 
+- **2026-10-04** — The access token lifts the chapter limit. Chapters had a limit of 6 every 30 minutes per visitor that the token never lifted, so testing stopped at the seventh. Now the token is saved on this device and sent with every chapter, the server lets it past the limit, and a chapter refused at the limit asks for the token once and is written with it. Visitors without it keep the limit.
 - **2026-10-03** — From the five-chapter test: every chapter keeps the point of view the story opened in; a reply far short of a chapter is never saved, and the Reader says so with Next ready to try again; titles drop a "Chapter N:" the writer added, so the Reader and Listen say the number once; a thing first shown taken in hand is recorded in Holdings.
 - **2026-10-03** — Listen reads like production: speech the writer left untagged is voiced from its narration (another named speaker gets the Side voice, otherwise the main character's), the default voices are the computer's own rather than online ones, and each line follows the last after production's 50 ms gap.
 - **2026-10-03** — Arcs are 30 chapters and a goal reached early hands over to the next; every chapter must change something. Stories saved before (all test stories) are set aside untouched and the app opens empty.

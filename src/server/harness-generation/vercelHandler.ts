@@ -2,6 +2,8 @@ import type { HarnessProviderReceipt } from '@seihouse/sen/harness-generation';
 import { handleHarnessGenerationHttp } from './http';
 import {
   createPublicGenerationGuard,
+  developmentAccessToken,
+  ownerTokenAdmission,
   type PublicGenerationGuardResult,
 } from '../shared/publicGenerationGuard';
 
@@ -26,8 +28,9 @@ interface ResponseLike {
 }
 
 export default async function harnessGenerationHandler(request: RequestLike, response: ResponseLike) {
+  // The owner's access token lifts the visitor limit.
   const admission: PublicGenerationGuardResult = request.method?.toUpperCase() === 'POST'
-    ? guardHarnessGeneration(request)
+    ? ownerTokenAdmission(request, developmentAccessToken(process.env)) ?? guardHarnessGeneration(request)
     : { allowed: true };
   const result = admission.allowed
     ? await handleHarnessGenerationHttp(

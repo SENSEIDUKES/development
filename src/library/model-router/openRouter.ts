@@ -1,4 +1,4 @@
-import { providerModelName } from './catalog';
+import { CHAPTER_MODELS, providerModelName } from './catalog';
 
 const OPENROUTER_CHAT_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
 
@@ -107,6 +107,7 @@ export async function generateOpenRouterText(request: OpenRouterTextRequest): Pr
         max_tokens: request.maxOutputTokens + REASONING_HEADROOM_TOKENS,
         ...(format ? { response_format: format } : {}),
         ...(request.reasoningEffort ? { reasoning: { effort: request.reasoningEffort } } : {}),
+        ...(CHAPTER_MODELS.find(model => model.id === request.model)?.fastestProvider ? { provider: { sort: 'throughput' } } : {}),
       }),
     });
     // OpenRouter answers 200 at once and holds the reply open while the model

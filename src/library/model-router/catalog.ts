@@ -45,6 +45,12 @@ export interface RoutedModel {
   stage: ModelStage;
   /** Present when the model's reasoning can be tuned (Advanced settings in the Router). */
   reasoning?: ModelReasoning;
+  /**
+   * OpenRouter only: route to the provider with the highest throughput, for a
+   * model served by many providers whose cheapest ones write too slowly to
+   * finish a chapter inside the deadline.
+   */
+  fastestProvider?: true;
 }
 
 // Levels from the Gemini thinking docs and OpenRouter's model catalog (2026-09-23).
@@ -84,7 +90,7 @@ export const CHAPTER_MODELS: readonly RoutedModel[] = [
   // GLM, Qwen and DeepSeek think past the chapter deadline on their own defaults.
   // Their sent defaults finished a full chapter on 2026-10-04: GLM low in 74s,
   // Qwen none in 78s, DeepSeek none in 46s. MiniMax (74s) and Trinity (9s) finish as they are.
-  { id: 'openrouter/z-ai/glm-5.3-flash', label: 'GLM 5.3 Flash · OpenRouter', provider: 'openrouter', stage: 'current', reasoning: { levels: ALWAYS_REASONING_LEVELS, defaultLevel: 'low', sendDefault: true } },
+  { id: 'openrouter/z-ai/glm-5.3-flash', label: 'GLM 5.3 Flash · OpenRouter', provider: 'openrouter', stage: 'current', reasoning: { levels: ALWAYS_REASONING_LEVELS, defaultLevel: 'low', sendDefault: true }, fastestProvider: true },
   { id: 'openrouter/qwen/qwen3.8-flash', label: 'Qwen 3.8 Flash · OpenRouter', provider: 'openrouter', stage: 'current', reasoning: { levels: OPEN_MODEL_LEVELS, defaultLevel: 'none', sendDefault: true } },
   { id: 'openrouter/minimax/minimax-m2.7', label: 'MiniMax M2.7 · OpenRouter', provider: 'openrouter', stage: 'current' },
   { id: 'openrouter/arcee-ai/trinity-large-thinking', label: 'Trinity Large Thinking · OpenRouter', provider: 'openrouter', stage: 'current' },

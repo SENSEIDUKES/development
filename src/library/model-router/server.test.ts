@@ -28,6 +28,26 @@ describe('published Model Router server contract', () => {
     expect(JSON.stringify(result)).not.toContain('secret');
   });
 
+  it('says why an OpenRouter reply has no answer, from the reply itself, never repeating its words', async () => {
+    const reply = (choice: object) => createModelRouter({
+      credentials: { openrouter: 'secret' },
+      fetch: vi.fn(async () => new Response(JSON.stringify({
+        provider: 'Alibaba', choices: [choice],
+        usage: { prompt_tokens: 9, completion_tokens: 812, total_tokens: 821, completion_tokens_details: { reasoning_tokens: 812 } },
+      }), { status: 200 })) as typeof fetch,
+    }).generate(textRequest);
+    const answerInReasoning = reply({ message: { content: '', reasoning: '{"title":"Secret words"}' }, finish_reason: 'stop' });
+    await expect(answerInReasoning).rejects.toMatchObject({
+      code: 'provider-error',
+      message: 'The configured model returned an empty response (provider Alibaba, finish stop, 812 output tokens, 812 of them reasoning, 24 characters of reasoning that begin like the JSON answer).',
+    });
+    await expect(answerInReasoning).rejects.not.toMatchObject({ message: expect.stringContaining('Secret words') });
+    await expect(reply({ message: { content: null }, finish_reason: 'error', error: { code: 502, message: 'Upstream overloaded' } }))
+      .rejects.toMatchObject({ code: 'provider-error', message: expect.stringMatching(/^The provider failed during the reply: Upstream overloaded \(provider Alibaba, finish error, /) });
+    await expect(reply({ message: { content: null, refusal: 'I cannot write that.' }, finish_reason: 'stop' }))
+      .rejects.toMatchObject({ message: expect.stringMatching(/^The model refused: I cannot write that\. \(/) });
+  });
+
   it('routes Gemini structured text and reports output limits', async () => {
     const generateContent = vi.fn(async () => ({
       text: '{"ok":true}', usageMetadata: { promptTokenCount: 4, candidatesTokenCount: 7, totalTokenCount: 11 },

@@ -32,11 +32,44 @@ export interface OpenRouterTextResult {
   usage?: { inputTokens: number; outputTokens: number; totalTokens: number };
 }
 
-interface OpenRouterChatResponse {
-  choices?: Array<{ message?: { content?: string | null }; finish_reason?: string | null }>;
-  usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
+interface OpenRouterChatChoice {
+  message?: { content?: string | null; reasoning?: string | null; refusal?: string | null };
+  finish_reason?: string | null;
+  native_finish_reason?: string | null;
+  /** A provider failure OpenRouter reports inside an otherwise successful reply. */
   error?: { message?: string; code?: number | string };
 }
+
+interface OpenRouterChatResponse {
+  /** The provider OpenRouter routed this call to. */
+  provider?: string;
+  choices?: OpenRouterChatChoice[];
+  usage?: {
+    prompt_tokens?: number; completion_tokens?: number; total_tokens?: number;
+    completion_tokens_details?: { reasoning_tokens?: number };
+  };
+  error?: { message?: string; code?: number | string };
+}
+
+/**
+ * Why a reply came back with no answer, from what the reply itself says:
+ * the provider OpenRouter chose, how it finished, and where its tokens went.
+ * It never repeats the reply's own words, only their size.
+ */
+const emptyReplyMessage = (body: OpenRouterChatResponse | undefined, choice: OpenRouterChatChoice | undefined): string => {
+  const reasoning = choice?.message?.reasoning?.trim() ?? '';
+  const facts = [
+    body?.provider ? `provider ${body.provider}` : undefined,
+    `finish ${choice?.native_finish_reason || choice?.finish_reason || 'none'}`,
+    Number.isFinite(body?.usage?.completion_tokens) ? `${body!.usage!.completion_tokens} output tokens` : undefined,
+    Number.isFinite(body?.usage?.completion_tokens_details?.reasoning_tokens)
+      ? `${body!.usage!.completion_tokens_details!.reasoning_tokens} of them reasoning` : undefined,
+    reasoning ? `${reasoning.length} characters of reasoning${reasoning.startsWith('{') ? ' that begin like the JSON answer' : ''}` : 'no reasoning text',
+  ].filter(Boolean).join(', ');
+  if (choice?.error?.message) return `The provider failed during the reply: ${choice.error.message} (${facts}).`;
+  if (choice?.message?.refusal?.trim()) return `The model refused: ${choice.message.refusal.trim()} (${facts}).`;
+  return `The configured model returned an empty response (${facts}).`;
+};
 
 const responseFormat = (request: OpenRouterTextRequest) => {
   if (request.responseFormat !== 'json') return undefined;
@@ -86,7 +119,7 @@ export async function generateOpenRouterText(request: OpenRouterTextRequest): Pr
     if (choice?.finish_reason === 'length') {
       throw new Error('OpenRouter stopped at the output token limit before the reply was complete.');
     }
-    if (!text.trim()) throw new Error('The configured model returned an empty response.');
+    if (!text.trim()) throw new Error(emptyReplyMessage(body, choice));
     const usage = body?.usage;
     const reported = Number.isFinite(usage?.prompt_tokens) && Number.isFinite(usage?.completion_tokens);
     return {

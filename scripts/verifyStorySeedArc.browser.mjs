@@ -58,8 +58,12 @@ try {
     assert.equal(await page.locator('input[id^="hard-pin-"]').count(), 3);
     assert.equal(await page.getByText('Story Sauce', { exact: true }).count(), 0);
     await page.locator('#destined-ending-input').fill('Free the valley.');
+    // A story runs 10 to 40 arcs of 30 chapters.
+    await page.locator('#story-length-input').fill('5');
+    assert(await page.getByText('Choose a whole number of arcs from 10 to 40.').filter({ visible: true }).count());
+    assert.equal(await page.getByTestId('story-length-summary').count(), 0);
     await page.locator('#story-length-input').fill('11');
-    assert.match(await page.getByTestId('story-length-summary').textContent(), /11 arcs · 1,100 chapters/);
+    assert.match(await page.getByTestId('story-length-summary').textContent(), /11 arcs · 330 chapters/);
     for (let i = 1; i <= 3; i++) await page.locator(`#hard-pin-${i}`).fill(`Keep promise ${i}.`);
     await page.locator('#active-arc-goal-input').fill('Open the mountain gate.');
     await page.locator('#arc-face-slap-high').click();

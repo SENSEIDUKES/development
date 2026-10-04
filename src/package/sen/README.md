@@ -42,7 +42,9 @@ owner.
   `validateBlueprintArcPlan` require a length in range; drafts and Blueprints
   saved with another length still load and normalize as they are. New
   `describeStoryLengthProblem` names the problem, which the Blueprint review
-  fixes without a model call.
+  fixes without a model call, except for an older Blueprint planned as one arc
+  (`arcOneScope: 'whole-story'`, its Arc 1 the whole story): a length edit
+  cannot make that Arc 1 an opening, so the review asks for it to be regenerated.
 
 **0.17.0 (breaking):** the writer's tags, one strict shape.
 

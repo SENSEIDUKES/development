@@ -272,11 +272,17 @@ export const generateWorldBlueprint = async (
   const { arcOne: _draft, ...rest } = answer;
   // The length the model suggests is kept within the story lengths a creator
   // may choose; a provider that ignores the schema's range does not cost the
-  // whole Blueprint. The creator's own Story Length is never adjusted.
+  // whole Blueprint. The creator's own Story Length is never adjusted. A
+  // look-ahead written for the model's own length is dropped with it, so no
+  // later arc is steered toward an ending placed for another length; each is
+  // planned when the story reaches it.
   const suggestedArcs = arcCount === undefined && Number.isInteger(answer.estimatedArcs)
     ? Math.min(STORY_LENGTH_ARCS.max, Math.max(STORY_LENGTH_ARCS.min, answer.estimatedArcs as number))
     : answer.estimatedArcs;
-  const blueprint = finalizeGeneratedWorldBlueprint({ ...rest, estimatedArcs: suggestedArcs, arcPlans: arcOne ? [arcOne] : [] }, storySeed);
+  const lengthAdjusted = suggestedArcs !== answer.estimatedArcs;
+  const blueprint = finalizeGeneratedWorldBlueprint({
+    ...rest, estimatedArcs: suggestedArcs, ...(lengthAdjusted ? { arcLookahead: [] } : {}), arcPlans: arcOne ? [arcOne] : [],
+  }, storySeed);
   assertCompleteGeneratedBlueprint(blueprint);
   if (arcOneProblem) throw new BlueprintRoadmapError(`The generated Arc 1 is invalid: ${arcOneProblem}. Nothing was saved; generate again.`);
   // The Blueprint takes the Seed's length, so the answer itself must have planned for it.

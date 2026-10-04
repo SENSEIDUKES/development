@@ -497,12 +497,16 @@ describe("Blueprint story length", () => {
     expect(response.status).toBe(200);
     expect(provider.requests[0].responseJsonSchema.properties.estimatedArcs).toMatchObject({ minimum: 10, maximum: 40 });
     expect(provider.requests[0].userPrompt).toContain("a realistic estimatedArcs between 10 and 40");
+    // A suggestion in range keeps its look-ahead.
+    expect((response.body as WorldBlueprint).arcLookahead?.map(entry => entry.arcNumber)).toEqual([2, 3]);
     // A provider that ignores the range costs no Blueprint: the suggestion is kept inside it, and Arc 1 stays the opening.
+    // Its look-ahead was written for the model's own length (Arc 3 may reach the ending of a three-arc story), so it is dropped.
     for (const [answered, kept] of [[3, 10], [1, 10], [60, 40]]) {
       const suggested = await post({ storySeed: canonicalSeed() }, new RecordingProvider({ ...generatedBlueprint(), estimatedArcs: answered }));
       expect(suggested.status).toBe(200);
       expect((suggested.body as WorldBlueprint).estimatedArcs).toBe(kept);
       expect((suggested.body as WorldBlueprint).arcOneScope).toBe("opening");
+      expect((suggested.body as WorldBlueprint).arcLookahead).toBeUndefined();
     }
   });
 

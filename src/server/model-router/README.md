@@ -43,7 +43,7 @@ any model call that is not registered. See AGENTS.md.
 | `GEMINI_API_KEY` | Gemini models |
 | `OpenRouter-Dev` (or `OPENROUTER_API_KEY`) | OpenRouter chapter models appear once set |
 | `OPENROUTER_MODELS` | Extra OpenRouter models, comma-separated (`openai/gpt-5.6-luna`) |
-| `OPENROUTER_REASONING_EFFORT` | Optional server fallback reasoning effort for OpenRouter models (the Router's Advanced setting wins) |
+| `OPENROUTER_REASONING_EFFORT` | Optional server fallback reasoning effort for OpenRouter models (the Router's Advanced setting wins; models that send their own default, below, never use it) |
 | `HARNESS_GENERATION_MODELS`, `CHAPTER_GENERATION_MODELS` | Models pinned ahead of the catalog |
 | `*_DEFAULT_MODEL` | Default model per surface (otherwise Gemini 3.1 Flash Lite) |
 | `ELEVENLABS_API_KEY`, `ELEVENLABS_MODEL_ID` | TTS |
@@ -73,6 +73,23 @@ separately; catalog-only media models are not executable.
 
 ## Workshop history
 
+- 2026-10-04 — Chapter generation restored for the new models. GLM 5.3 Flash,
+  Qwen 3.8 Flash and DeepSeek V4.1 Flash, on their own reasoning defaults, were
+  still writing at the HARNESS's 170-second deadline; the OpenRouter adapter
+  swallowed the cut-off reply and reported "returned an empty response". On a
+  preview with the real key, the levels below each finished a full chapter, so
+  the catalog now sends them unless the reader chooses another
+  (`ModelReasoning.sendDefault`): GLM low (OpenRouter refuses `none`,
+  "Reasoning is mandatory"), Qwen none (25–78 s), DeepSeek none (17–46 s).
+  At low, GLM still ran past the deadline once in two, because OpenRouter
+  favoured its cheapest providers, so GLM also routes to its fastest one
+  (`RoutedModel.fastestProvider`, OpenRouter's `provider.sort: throughput`):
+  two chapters in 17 s and 25 s, both saved. MiniMax
+  M2.7 (74 s), Trinity Large Thinking (9 s) and Gemini 3.8 Flash finish on
+  their own defaults and are unchanged; so are every Gemini model, GPT-6 Luna
+  and Luna Pro, saved choices and the default. A reply still being written at
+  the deadline is now reported as a timeout, and an empty reply names its
+  provider, finish reason and token counts.
 - 2026-10-04 — Added GLM 5.3 Flash, Qwen 3.8 Flash, MiniMax M2.7, Trinity
   Large Thinking, DeepSeek V4.1 Flash, and Gemini 3.8 Flash to Chapters →
   OpenRouter in the shared `src/library/model-router/catalog.ts` catalog.

@@ -137,6 +137,23 @@ describe('Model Router reasoning levels', () => {
     expect(CHAPTER_MODELS.every(model => model.reasoning?.levels.includes(model.reasoning.defaultLevel) ?? true)).toBe(true);
   });
 
+  it('sends a level that finishes a chapter only for the models whose own default does not', () => {
+    expect(CHAPTER_MODELS.filter(model => model.reasoning?.sendDefault).map(model => [model.id, model.reasoning!.defaultLevel])).toEqual([
+      ['openrouter/z-ai/glm-5.3-flash', 'low'],
+      ['openrouter/qwen/qwen3.8-flash', 'none'],
+      ['openrouter/deepseek/deepseek-v4.1-flash', 'none'],
+    ]);
+    expect(resolveReasoningLevel('openrouter/qwen/qwen3.8-flash', undefined)).toBe('none');
+    expect(resolveReasoningLevel('openrouter/deepseek/deepseek-v4.1-flash', 'bogus')).toBe('none');
+    expect(resolveReasoningLevel('openrouter/z-ai/glm-5.3-flash', 'high')).toBe('high');
+    // GLM 5.3 Flash always reasons: OpenRouter refuses 'none', so it is neither offered nor sent.
+    expect(resolveReasoningLevel('openrouter/z-ai/glm-5.3-flash', 'none')).toBe('low');
+    // Every other model still sends nothing unless the reader chooses.
+    expect(resolveReasoningLevel('openrouter/openai/gpt-6-luna', undefined)).toBeUndefined();
+    expect(resolveReasoningLevel('google/gemini-3.1-flash-lite', undefined)).toBeUndefined();
+    expect(resolveReasoningLevel('openrouter/minimax/minimax-m2.7', undefined)).toBeUndefined();
+  });
+
   it('maps levels to Gemini thinking config and to OpenRouter reasoning effort', async () => {
     expect(geminiThinkingConfig('high')).toEqual({ thinkingConfig: { thinkingLevel: 'HIGH' } });
     expect(geminiThinkingConfig(undefined)).toEqual({});

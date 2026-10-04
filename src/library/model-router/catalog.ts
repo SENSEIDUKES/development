@@ -25,8 +25,17 @@ export type ReasoningLevel = typeof REASONING_LEVELS[number];
 export interface ModelReasoning {
   /** Levels this model accepts, lowest to highest. */
   levels: readonly ReasoningLevel[];
-  /** What the provider uses when no level is sent. */
+  /**
+   * What applies when the reader chooses no level: the provider's own default,
+   * or, with `sendDefault`, this level sent by the Router.
+   */
   defaultLevel: ReasoningLevel;
+  /**
+   * The Router sends `defaultLevel` itself when the reader chooses none: the
+   * provider's own default thinks past the chapter deadline (HARNESS waits
+   * 170 seconds) and the chapter never arrives.
+   */
+  sendDefault?: true;
 }
 
 export interface RoutedModel {
@@ -36,12 +45,22 @@ export interface RoutedModel {
   stage: ModelStage;
   /** Present when the model's reasoning can be tuned (Advanced settings in the Router). */
   reasoning?: ModelReasoning;
+  /**
+   * OpenRouter only: route to the provider with the highest throughput, for a
+   * model served by many providers whose cheapest ones write too slowly to
+   * finish a chapter inside the deadline.
+   */
+  fastestProvider?: true;
 }
 
 // Levels from the Gemini thinking docs and OpenRouter's model catalog (2026-09-23).
 const GEMINI_THREE_LEVELS: readonly ReasoningLevel[] = ['low', 'medium', 'high'];
 const GEMINI_FOUR_LEVELS: readonly ReasoningLevel[] = ['minimal', 'low', 'medium', 'high'];
 const OPENAI_LEVELS: readonly ReasoningLevel[] = ['none', 'low', 'medium', 'high', 'xhigh', 'max'];
+// OpenRouter's effort levels for open models (2026-10-04). GLM 5.3 Flash always
+// reasons: OpenRouter refuses 'none' ("Reasoning is mandatory for this endpoint").
+const OPEN_MODEL_LEVELS: readonly ReasoningLevel[] = ['none', 'low', 'medium', 'high'];
+const ALWAYS_REASONING_LEVELS: readonly ReasoningLevel[] = ['low', 'medium', 'high'];
 
 /**
  * `keyVariable` is the name shown in messages and the Router; `keyVariables`
@@ -68,11 +87,15 @@ export const CHAPTER_MODELS: readonly RoutedModel[] = [
   { id: 'google/gemini-3.1-flash-lite', label: 'Gemini 3.1 Flash Lite', provider: 'gemini', stage: 'current', reasoning: { levels: GEMINI_FOUR_LEVELS, defaultLevel: 'minimal' } },
   { id: 'openrouter/openai/gpt-6-luna', label: 'GPT-6 Luna · OpenRouter', provider: 'openrouter', stage: 'current', reasoning: { levels: OPENAI_LEVELS, defaultLevel: 'medium' } },
   { id: 'openrouter/openai/gpt-6-luna-pro', label: 'GPT-6 Luna Pro · OpenRouter', provider: 'openrouter', stage: 'current', reasoning: { levels: OPENAI_LEVELS, defaultLevel: 'medium' } },
-  { id: 'openrouter/z-ai/glm-5.3-flash', label: 'GLM 5.3 Flash · OpenRouter', provider: 'openrouter', stage: 'current' },
-  { id: 'openrouter/qwen/qwen3.8-flash', label: 'Qwen 3.8 Flash · OpenRouter', provider: 'openrouter', stage: 'current' },
+  // GLM, Qwen and DeepSeek think past the chapter deadline on their own defaults.
+  // Their sent defaults finished full chapters on 2026-10-04: GLM low on its
+  // fastest provider in 17s and 25s, Qwen none in 25-78s, DeepSeek none in
+  // 17-46s. MiniMax (74s) and Trinity (9s) finish as they are.
+  { id: 'openrouter/z-ai/glm-5.3-flash', label: 'GLM 5.3 Flash · OpenRouter', provider: 'openrouter', stage: 'current', reasoning: { levels: ALWAYS_REASONING_LEVELS, defaultLevel: 'low', sendDefault: true }, fastestProvider: true },
+  { id: 'openrouter/qwen/qwen3.8-flash', label: 'Qwen 3.8 Flash · OpenRouter', provider: 'openrouter', stage: 'current', reasoning: { levels: OPEN_MODEL_LEVELS, defaultLevel: 'none', sendDefault: true } },
   { id: 'openrouter/minimax/minimax-m2.7', label: 'MiniMax M2.7 · OpenRouter', provider: 'openrouter', stage: 'current' },
   { id: 'openrouter/arcee-ai/trinity-large-thinking', label: 'Trinity Large Thinking · OpenRouter', provider: 'openrouter', stage: 'current' },
-  { id: 'openrouter/deepseek/deepseek-v4.1-flash', label: 'DeepSeek V4.1 Flash · OpenRouter', provider: 'openrouter', stage: 'current' },
+  { id: 'openrouter/deepseek/deepseek-v4.1-flash', label: 'DeepSeek V4.1 Flash · OpenRouter', provider: 'openrouter', stage: 'current', reasoning: { levels: OPEN_MODEL_LEVELS, defaultLevel: 'none', sendDefault: true } },
   { id: 'openrouter/google/gemini-3.8-flash', label: 'Gemini 3.8 Flash · OpenRouter', provider: 'openrouter', stage: 'current', reasoning: { levels: GEMINI_THREE_LEVELS, defaultLevel: 'medium' } },
 ];
 
@@ -217,13 +240,14 @@ export const requireTextModelKey = (model: string, keys: ChapterModelRoute['keys
 
 /**
  * The reasoning level to send for a model: the requested level when the
- * catalog says the model accepts it, otherwise nothing (the provider default).
- * An unknown or stale level is dropped rather than failing the generation.
+ * catalog says the model accepts it, otherwise the model's `sendDefault`
+ * level, otherwise nothing (the provider default). An unknown or stale level
+ * is dropped rather than failing the generation.
  */
 export const resolveReasoningLevel = (model: string, requested: unknown): ReasoningLevel | undefined => {
-  if (typeof requested !== 'string') return undefined;
   const reasoning = CHAPTER_MODELS.find(option => option.id === model)?.reasoning;
-  return reasoning?.levels.find(level => level === requested);
+  const chosen = typeof requested === 'string' ? reasoning?.levels.find(level => level === requested) : undefined;
+  return chosen ?? (reasoning?.sendDefault ? reasoning.defaultLevel : undefined);
 };
 
 export const isMissingKeyMessage = (message: string): boolean =>

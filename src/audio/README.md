@@ -1,7 +1,7 @@
 # Portable narrative audio
 
 - **Created:** 2026-08-19
-- **Last updated:** 2026-10-01
+- **Last updated:** 2026-10-04
 - **Ownership status:** SEN contracts separated from Library catalogs and host playback
 
 ## Ownership
@@ -17,9 +17,9 @@ The current split is:
 | Capability | Owner | Source |
 | --- | --- | --- |
 | Sound Cue record, Reader playback and split helpers | SEN | `inlineAudio.ts` (`SoundCueAttachment`), `cues.ts` |
-| Sound Cues on the page: the glyph on the marked words and its inline playback | SEN (`@seihouse/sen/inline-audio`) | `InlineAudio.tsx`, `InlineAudio.css` |
-| Placing a writer's Sound Cues on its marked words | SEN | `soundCuePlacement.ts` (`placeSoundCues`) |
-| Finished Sound Cue rules (1–5 whole words, at most 10 per chapter) | SEN | `soundCueRules.ts` |
+| Sound Cues on the page: the glyph on the tagged words and its inline playback | SEN (`@seihouse/sen/inline-audio`) | `InlineAudio.tsx`, `InlineAudio.css` |
+| Placing a writer's Sound Cues on the words its sound tags wrap | SEN | `soundCuePlacement.ts` (`placeSoundCues`) |
+| Finished Sound Cue rules (1–8 whole words, at most 10 per chapter) | SEN | `soundCueRules.ts` |
 | Sound words (the event a recording answers, with an example) | SEN | `soundWords.ts`, `soundVocabulary` in `media.ts` |
 | Studio tags (parent + Tone, Energy, Tension) | SEN | `audioTags.ts` |
 | Portable soundscape intent and resolved track shape | SEN | `soundscapes.ts` |
@@ -41,22 +41,25 @@ classifies it as host data. Published SEN has no path to it.
 
 ## Portable contract
 
-A writer says **where** and **what**, never which file: it wraps the one to
-five words where a sound happens in its own paragraph (`[[n|words]]`, read by
-`readMarks` in `src/narrative/marks.ts`) and names the sound with one of the
-story's sound words (`SoundCueSignal {mark, sound, energy?}`). It cannot choose
-a URL, filename, catalog row, provider, credential, entitlement, or billing
-record.
+A writer says **where** and **what**, never which file: it puts a sound tag on
+the few words where a sound happens in its own paragraph and names the sound
+with one of the story's sound words, with an Energy:
+`[[sound: blade drawn | drew his sword | high]]`, read by `readMarks` in
+`src/narrative/marks.ts` into a `SoundTag {sound, energy?, start, end}`. It
+cannot choose a URL, filename, catalog row, provider, credential, entitlement,
+or billing record. (The numbered marks and separate `soundCues` list that came
+before are retired: they are still removed from the prose, and place nothing.)
 
-`placeSoundCues({paragraphs, signals, vocabulary, recordings, chapterNumber, locale})`
-turns that into finished cues, deterministically. A signal is set aside (with a
-reason `describeSetAsideSoundCue` puts into words), never forced, when its word
-is not one of the story's, its mark is missing or already used, the paragraph
-is a system line or not shown as prose, or the words break the finished-cue
-rules: a placed Sound Cue is 1–5 whole words, never starting or ending inside a
-word, never overlapping another, and a chapter holds at most ten, first in
-reading order (`SOUND_CUE_RULES`, `soundCueWordIssue`). A mark that starts or
-ends inside a word widens to the whole word, in the story's language. The
+`placeSoundCues({paragraphs, vocabulary, recordings, chapterNumber, locale})`,
+each paragraph with its `sounds`, turns those tags into finished cues,
+deterministically. A tag is set aside (with a reason `describeSetAsideSoundCue`
+puts into words), never forced, when its word is not one of the story's, the
+paragraph is a system line or not shown as prose, or the words break the
+finished-cue rules: a placed Sound Cue is 1–8 whole words, never starting or
+ending inside a word, never overlapping another, and a chapter holds at most
+ten, first in reading order (`SOUND_CUE_RULES`, `soundCueWordIssue`). A tag
+that starts or ends inside a word widens to the whole word, in the story's
+language. The
 recording is one of that word's, preferring the Energy asked for, chosen by a
 stable rotation so repeated sounds vary and the same input always gives the
 same cue. Soundscapes, when rebuilt, are passage-level only and at most two
@@ -99,8 +102,9 @@ UI component.
 A Sound Cue recording names its **sound word** (`metadata.sound`): the event it
 answers, in plain lowercase English ("blade drawn"). A catalog declares its
 words once (`SoundWord {word, example, meaning?}`), each with a 1–5 word
-example of the words a writer wraps for it ("drew his sword") and an optional
-one-line meaning. `validateSoundWords` holds a list to its limits
+example of the words a writer tags for it ("drew his sword") and an optional
+one-line meaning. The writer sees each as one line, `blade drawn: drew his
+sword`, after one example tag made from the first word. `validateSoundWords` holds a list to its limits
 (`SOUND_WORD_LIMITS`: at most 32 words; words of one to three lowercase words;
 plain-text examples and meanings). `soundVocabulary(media)` gives a story's
 words: the declared words that a playable recording answers, in declared order.

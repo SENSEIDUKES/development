@@ -4,7 +4,7 @@ SEN-owned plain-text selection and local editing, plus the manuscript page that
 SEN features point at. No Reader, chapter, generation, translation, Library,
 storage, or server dependency.
 
-- Created: **2026-09-26**; last Workshop update: **2026-09-29**
+- Created: **2026-09-26**; last Workshop update: **2026-10-04**
 - Lifecycle: active standalone prototype; the Workshop tab is the manuscript lab
 - Source: this Development repository; no production replica or source comparison
 - Workshop: `?preview=text-highlight-engine`
@@ -52,7 +52,7 @@ blocks. `onSelectionChange(selection | null)` remains available to hosts. The
 optional `actions` tree accepts nested generic `PassageAction` branches and
 leaf callbacks that receive the immutable `PassageSelection` and a close
 callback. Only the host decides which actions to expose. An action's optional
-`unavailable(selection)` returns a reason ("Sound Cues fit 1–5 words"): the
+`unavailable(selection)` returns a reason ("Sound Cues fit 1–8 words"): the
 action stays in the bar, dimmed, with the reason under its label and as its
 description. `removeActions` fill the bar's Remove mode beside the built-in
 Undo and Delete Passage. Remove mode exists only while `editable`: right-click
@@ -100,7 +100,7 @@ ready-made component handles this itself.
 The optional SEN `createManualSoundCue(block, selection, cue, catalog)` adapter
 validates the selected range against current prose and requires an approved
 host-supplied catalog recording with provenance and a sound word. It refuses a
-range that is not exactly 1–5 whole words (`partial-word`, `too-many-words`) or
+range that is not exactly 1–8 whole words (`partial-word`, `too-many-words`) or
 that overlaps another cue; a host first turns any selection into the words a
 cue would hold with `snapSoundCueSelection` ("Somewher" → "Somewhere"), which
 says instead why a selection cannot hold one. It returns the same
@@ -160,7 +160,7 @@ ManuscriptState      { manuscript; attachments; deletion? }
 
 The Workshop lab starts from three pre-made paragraphs (action, world-building,
 a breakthrough with a System line). Sound Cues are the only working attachment:
-each sits on 1–5 whole words as the SEN `SoundCueAttachment` itself, exactly
+each sits on 1–8 whole words as the SEN `SoundCueAttachment` itself, exactly
 what a generated chapter stores (Remove mode's **Remove cue here** takes cues
 off the selected words), and the Reader renders every cue still placed on its
 words. Below the prose, a Workshop-only inspector shows the
@@ -180,7 +180,7 @@ finished attachment — kept in one place so they can be tuned later.
 
 | Effect | Sits on | Size | Per chapter |
 | --- | --- | --- | --- |
-| Sound Cue | Words: an action or event worth a sound ("drew his sword") | 1–5 whole words, never mid-word | 10 |
+| Sound Cue | Words: where a sound happens ("drew his sword", "a horn blared across the terrace") | 1–8 whole words, never mid-word | 10 |
 | Soundscape (not built yet) | A passage, never words: atmosphere and tone, e.g. a chapter's opening or the moment before a major battle | — | 2 |
 
 `SOUND_CUE_RULES` and `soundCueWordIssue` (`src/audio/soundCueRules.ts`) hold
@@ -198,12 +198,10 @@ Who enforces them:
 - **The model** supplies semantic direction — what happens, and where — never
   assets or attachment addresses. The HARNESS resolves that direction into a
   finished attachment and enforces these rules there.
-- **Today's generation path** still anchors a cue on the model's exact phrase.
-  As short-term safety only, the HARNESS drops a resolved cue that would start
-  or end inside a word or run past five words, and keeps at most ten per
-  chapter (the response contract carries the same `maxItems`, and nothing
-  about word counts). This is not the final contract: the next task designs
-  how model direction is resolved on the manuscript's coordinates.
+- **The writer** puts a sound tag on the words where a sound happens
+  (`[[sound: blade drawn | drew his sword | high]]`). The HARNESS keeps the
+  words, widens a tag that starts or ends inside a word to its whole words,
+  and sets aside one that runs past eight words or past the chapter's ten.
 
 ## Behavior and limitations
 
@@ -278,6 +276,9 @@ browser evidence out of the consuming surface. No integration was performed.
 
 ## Workshop history
 
+- **2026-10-04:** Sound Cues fit 1–8 whole words (the owner's decision), for a
+  cue placed by hand and one the writer tags alike, so a writer's natural
+  phrase ("a horn blared across the terrace") keeps its sound.
 - **2026-09-29:** The Cue Picker shows each recording's sound word, cue
   category (its Studio parent tag) and child tags ("blade drawn · weapons ·
   high"), and search also finds sound words. Browsing, numbering and filters

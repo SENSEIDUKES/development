@@ -45,8 +45,17 @@ export interface ReadAloudLine {
   key: string;
   /** The paragraph read; absent for the chapter title. */
   blockId?: string;
-  /** The sentence this line belongs to, in paragraph offsets: the part a Reader lights. */
+  /**
+   * The sentence this line belongs to, the part a Reader lights: offsets into
+   * the paragraph, or for the title line into the title the Reader shows.
+   */
   sentence: ReadAloudRange;
+  /**
+   * The line's own place in the same text as `sentence`. For a paragraph line
+   * it slices `text` back out of the paragraph; the title line covers the
+   * shown title, while `text` is what is spoken for it ("Chapter 3. The Gate."
+   * in English), so these offsets never index into `text`.
+   */
   start: number;
   end: number;
   /** What is spoken. */

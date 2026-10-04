@@ -8,7 +8,8 @@ durable ledgers and concrete infrastructure stay in the host/backend.
 **0.18.0:** requires `@seihouse/sen` 0.18.0 (a story runs 10 to 40 arcs).
 `CreationModal` opens the Blueprint review, with the reason, for a banked
 story whose only problem is a length saved before that range, where the length
-is fixed without a model call.
+is fixed without a model call; an older Blueprint planned as one arc, whose
+Arc 1 is the whole story, is regenerated there instead.
 
 **0.17.1:** chapter models that think too long finish again. GLM 5.3 Flash,
 Qwen 3.8 Flash and DeepSeek V4.1 Flash thought past the 170-second chapter

@@ -49,9 +49,11 @@ export function resolveStorySeedBlueprintConfig(
       environment.STORY_SEED_BLUEPRINT_MAX_OUTPUT_TOKENS ?? environment.AI_MAX_TOKENS,
       8_192,
     )))),
-    timeoutMs: Math.min(120_000, Math.max(10_000, Math.floor(finiteNumber(
+    // The Blueprint is written by the chapter model, so it has a chapter's
+    // deadline: Vercel allows this route 180 seconds, as it does chapters.
+    timeoutMs: Math.min(170_000, Math.max(10_000, Math.floor(finiteNumber(
       environment.STORY_SEED_BLUEPRINT_TIMEOUT_MS,
-      90_000,
+      170_000,
     )))),
   };
 }

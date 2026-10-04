@@ -65,7 +65,12 @@ describe('Blueprint generation client cancellation', () => {
     const rejection = expect(request).rejects.toThrow(
       'World Blueprint generation timed out. No Story Seed data was changed; please retry.',
     );
-    await vi.advanceTimersByTimeAsync(130_000);
+    let settled = false;
+    void request.catch(() => undefined).finally(() => { settled = true; });
+    // The server's route runs up to 180 seconds; its own answer arrives first.
+    await vi.advanceTimersByTimeAsync(185_000);
+    expect(settled).toBe(false);
+    await vi.advanceTimersByTimeAsync(5_000);
 
     await rejection;
   });

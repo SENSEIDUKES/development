@@ -1,6 +1,6 @@
 import { handleStorySeedBlueprintHttp } from "./http";
 
-export const maxDuration = 120;
+export const maxDuration = 180;
 
 interface RequestLike {
   method?: string;
@@ -23,6 +23,8 @@ export default async function storySeedBlueprintHandler(
     {
       environment: process.env,
       onError: error => console.error("[story-seed-blueprint]", error),
+      // One line per Blueprint: which model wrote it and how long it took. Never the Seed.
+      onAnswer: ({ model, durationMs }) => console.info(`[story-seed-blueprint] ${model} answered in ${Math.round(durationMs / 1000)}s`),
     },
   );
   for (const [name, value] of Object.entries(result.headers ?? {})) {

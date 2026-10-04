@@ -16,6 +16,7 @@ import {
   type WorldBlueprintModelProvider,
 } from "./generate";
 import { missingKeyMessage, providerKey, resolveChapterModelRoute, resolveReasoningLevel, textModelProvider } from "../model-router/catalog";
+import { ModelRouterError } from "@seihouse/library/model-router-server";
 
 export interface StorySeedBlueprintHttpRequest {
   method?: string;
@@ -33,6 +34,8 @@ export interface StorySeedBlueprintHttpDependencies {
   environment: StorySeedBlueprintEnvironment;
   providerFactory?: (apiKey: string, model: string) => WorldBlueprintModelProvider;
   onError?: (error: unknown) => void;
+  /** Called once per Blueprint written: which model wrote it and how long it took. Never the Seed. */
+  onAnswer?: (answer: { model: string; durationMs: number }) => void;
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -136,11 +139,13 @@ export async function handleStorySeedBlueprintHttp(
   }
   const chosen = { ...config, model, provider: textModelProvider(model)!, apiKey: apiKey! };
 
+  const started = Date.now();
   try {
     const provider = dependencies.providerFactory
       ? dependencies.providerFactory(chosen.apiKey, model)
       : createWorldBlueprintProvider(chosen);
     const body = await generateWorldBlueprint({ storySeed: parsed.storySeed }, chosen, provider, resolveReasoningLevel(model, parsed.reasoningLevel));
+    dependencies.onAnswer?.({ model, durationMs: Date.now() - started });
     return {
       status: 200,
       body,
@@ -158,6 +163,10 @@ export async function handleStorySeedBlueprintHttp(
     // behind a generic retry message or shortened to fit.
     if (error instanceof BlueprintOutputLimitError || error instanceof BlueprintRoadmapError) {
       return errorResponse(502, message);
+    }
+    // The one model failure a creator can act on: the model was still writing at the deadline.
+    if (error instanceof ModelRouterError && error.code === "timeout") {
+      return errorResponse(502, `The model was still writing after ${Math.ceil(chosen.timeoutMs / 1000)} seconds, so it was stopped. Choose a lower reasoning level or a faster model in the Model Router. No Story Seed data was changed.`);
     }
     if (message.includes("output token limit")) {
       return errorResponse(502, new BlueprintOutputLimitError(config?.maxOutputTokens ?? 0).message);

@@ -130,6 +130,7 @@ export const generationApis = (
             {
               environment,
               onError: error => console.error('[story-seed-blueprint]', error),
+              onAnswer: ({ model, durationMs }) => console.info(`[story-seed-blueprint] ${model} answered in ${Math.round(durationMs / 1000)}s`),
             },
           );
           writeJson(response, result.status, result.body, result.headers);

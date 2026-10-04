@@ -6,6 +6,7 @@ import { createHarnessFoundationFromStorySeed } from "../../workshop/previews/ha
 import { handleStorySeedBlueprintHttp } from "./http";
 import { resolveStorySeedBlueprintConfig } from "./config";
 import { BlueprintOutputLimitError } from "./generate";
+import { ModelRouterError } from "@seihouse/library/model-router-server";
 import type {
   WorldBlueprintModelProvider,
   WorldBlueprintModelRequest,
@@ -375,6 +376,12 @@ describe("protected Story Seed World Blueprint generation", () => {
     }).temperature).toBe(0);
   });
 
+  it("gives the Blueprint a chapter's deadline: 170 seconds by default and at most", () => {
+    expect(resolveStorySeedBlueprintConfig({}).timeoutMs).toBe(170_000);
+    expect(resolveStorySeedBlueprintConfig({ STORY_SEED_BLUEPRINT_TIMEOUT_MS: "999999" }).timeoutMs).toBe(170_000);
+    expect(resolveStorySeedBlueprintConfig({ STORY_SEED_BLUEPRINT_TIMEOUT_MS: "60000" }).timeoutMs).toBe(60_000);
+  });
+
   it("exports a paired artifact that loads through the HARNESS handoff with no fixture fallback", async () => {
     const response = await manifest(new RecordingProvider());
     expect(response.status).toBe(200);
@@ -440,6 +447,28 @@ describe("Blueprint model: the chapter model the reader chose", () => {
     expect(chosen.response.status).toBe(200);
     const fallback = await send({ storySeed: canonicalSeed() }, routerOnly);
     expect(fallback.response.status).toBe(503);
+  });
+
+  it("says a Blueprint stopped at its deadline was still being written, and reports which model wrote each one", async () => {
+    const request = { method: "POST", headers: { Authorization: "Bearer development-access-token" }, body: { storySeed: canonicalSeed(), model: "openrouter/z-ai/glm-5.3-flash" } };
+    const onAnswer = vi.fn();
+    const answered = await handleStorySeedBlueprintHttp(request, { environment: withRouter, providerFactory: () => new RecordingProvider(), onAnswer });
+    expect(answered.status).toBe(200);
+    expect(onAnswer).toHaveBeenCalledExactlyOnceWith({ model: "openrouter/z-ai/glm-5.3-flash", durationMs: expect.any(Number) });
+    const stillWriting: WorldBlueprintModelProvider = {
+      generate: async () => { throw new ModelRouterError("timeout", "The provider exceeded the 170 second deadline."); },
+    };
+    const unanswered = vi.fn();
+    const stopped = await handleStorySeedBlueprintHttp(request, { environment: withRouter, providerFactory: () => stillWriting, onAnswer: unanswered });
+    expect(stopped.status).toBe(502);
+    expect(errorOf(stopped)).toBe("The model was still writing after 170 seconds, so it was stopped. Choose a lower reasoning level or a faster model in the Model Router. No Story Seed data was changed.");
+    expect(unanswered).not.toHaveBeenCalled();
+    // Any other provider failure keeps the plain retry message.
+    const failing: WorldBlueprintModelProvider = {
+      generate: async () => { throw new ModelRouterError("provider-error", "OpenRouter 500: upstream"); },
+    };
+    const failed = await handleStorySeedBlueprintHttp(request, { environment: withRouter, providerFactory: () => failing });
+    expect(errorOf(failed)).toBe("The model could not produce a complete World Blueprint. No Story Seed data was changed; please retry.");
   });
 });
 

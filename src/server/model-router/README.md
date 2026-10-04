@@ -80,7 +80,9 @@ separately; catalog-only media models are not executable.
   OpenRouter, never wrote the Blueprint. The request now carries the chosen
   chapter model and its reasoning level; the server accepts any model chapters
   may use and refuses others, and a request without one keeps the server's
-  Blueprint model.
+  Blueprint model. A Blueprint has a chapter's deadline (170 seconds), says
+  so when the model was still writing at it, and logs
+  `[story-seed-blueprint] <model> answered in <N>s`.
 - 2026-10-04 — Chapter generation restored for the new models. GLM 5.3 Flash,
   Qwen 3.8 Flash and DeepSeek V4.1 Flash, on their own reasoning defaults, were
   still writing at the HARNESS's 170-second deadline; the OpenRouter adapter

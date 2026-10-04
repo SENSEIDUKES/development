@@ -2,7 +2,8 @@ import { type BlueprintGenerationPayload, type WorldBlueprint } from '@seihouse/
 import { readReasoningPreference } from '../generation/modelPreference';
 
 const ENDPOINT = '/api/generate-blueprint';
-const REQUEST_TIMEOUT_MS = 130_000;
+/** Longer than the server's 180-second route, so the server's own answer, a deadline included, arrives first. */
+const REQUEST_TIMEOUT_MS = 190_000;
 
 /**
  * A Blueprint request the server answered with an error. `status` is its HTTP

@@ -5,6 +5,10 @@ SEN engine and the two UI packages. Library owns SEIHouse users, products,
 economy, community and business policy. Authentication enforcement, secrets,
 durable ledgers and concrete infrastructure stay in the host/backend.
 
+**0.18.1:** `WorkspaceSheet` takes `aboveVeil`, opening it over the
+full-screen writing veil for a question the writing waits on (the app's
+access token sheet, when a chapter reaches the visitor limit).
+
 **0.18.0:** requires `@seihouse/sen` 0.18.0 (a story runs 10 to 40 arcs).
 `CreationModal` opens the Blueprint review, with the reason, for a banked
 story whose only problem is a length saved before that range, where the length

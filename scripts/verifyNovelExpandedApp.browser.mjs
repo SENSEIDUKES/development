@@ -147,7 +147,7 @@ async function walk(browser, viewport, sample) {
   await context.addInitScript(installSpeechStandIn);
   const page = await context.newPage();
   const problems = [];
-  const counts = { chapters: 0, memory: 0, blueprints: 0 };
+  const counts = { chapters: 0, memory: 0, blueprints: 0, chaptersWithToken: 0 };
   page.on('pageerror', error => problems.push(`page error: ${error.message}`));
   page.on('request', request => {
     const path = new URL(request.url()).pathname;
@@ -177,6 +177,8 @@ async function walk(browser, viewport, sample) {
       return;
     }
     counts.chapters += 1;
+    // The token given for the Blueprint rides with chapters too, lifting the visitor limit.
+    if (request.headers().authorization === `Bearer ${TOKEN}`) counts.chaptersWithToken += 1;
     // Long enough for the veil to be seen.
     await new Promise(resolve => setTimeout(resolve, 1200));
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rawProviderResponse: JSON.stringify(chapter), providerReceipt: receipt }) });
@@ -351,6 +353,7 @@ async function walk(browser, viewport, sample) {
   check(address() === '/app/', `A missing story should go Home, got ${address()}`);
 
   check(counts.memory === 0, `Story memory must wait until asked, saw ${counts.memory} memory requests.`);
+  check(counts.chapters > 0 && counts.chaptersWithToken === counts.chapters, `Every chapter should carry the saved access token, saw ${counts.chaptersWithToken} of ${counts.chapters}.`);
   await context.close();
   return problems;
 }

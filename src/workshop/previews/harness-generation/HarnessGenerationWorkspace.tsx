@@ -3,6 +3,7 @@ import { AGENTS } from '../../../lib/agents';
 import { LIBRARY_BASE_MEDIA } from '../../../host/media/libraryCatalog';
 import { HarnessGenerationWorkspace as HarnessGenerationSurface } from '@seihouse/library/generation';
 import { HarnessGenerationHttpClient } from '../../../host/generation/httpClient';
+import { createSavedAccessToken } from '../../../host/generation/accessToken';
 import { IndexedDbHarnessGenerationRepository } from '../../../host/generation/indexedDbRepository';
 import { IndexedDbReaderStateRepository } from '../../../host/reader/readerStateStorage';
 import { createLocalReaderPreferenceStorage } from '../../../host/reader/readerPreferenceStorage';
@@ -56,7 +57,12 @@ export function HarnessGenerationWorkspace() {
   }, []);
   const changeReadingStory = useCallback((storyId: string | undefined) => changeStoryPage('read', storyId), [changeStoryPage]);
   const changeInfoStory = useCallback((storyId: string | undefined) => changeStoryPage('info', storyId), [changeStoryPage]);
-  const [modelAdapter] = useState(() => new HarnessGenerationHttpClient());
+  // Chapters carry the owner's access token saved on this device (the app's
+  // too), which lifts the visitor limit.
+  const [modelAdapter] = useState(() => {
+    const accessToken = createSavedAccessToken();
+    return new HarnessGenerationHttpClient(undefined, () => accessToken.current);
+  });
   const [chapterModel, setChapterModel] = useModelPreference('chapters');
   const [saved] = useState(() => {
     try { return { skills: loadHarnessSppSkills(localStorage), error: '' }; }

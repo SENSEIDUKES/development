@@ -2,6 +2,7 @@ import { createHarnessFoundationFromStorySeed } from '@seihouse/library/story-se
 import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import { IndexedDbHarnessGenerationRepository } from '../../../host/generation/indexedDbRepository';
 import { HarnessGenerationHttpClient } from '../../../host/generation/httpClient';
+import { createSavedAccessToken } from '../../../host/generation/accessToken';
 import type { InitialStoryGenerationPayload } from '@seihouse/sen/story-seed';
 import { normalizeChapterWritingStyle } from '@seihouse/sen/contracts';
 import type {
@@ -39,7 +40,7 @@ export async function startWorkshopHarnessStory(payload: InitialStoryGenerationP
   const { installed } = await installOfficialCapaSkills(localStorage);
   const controller = new HarnessGenerationController({
     repository: new IndexedDbHarnessGenerationRepository(),
-    modelAdapter: new HarnessGenerationHttpClient(),
+    modelAdapter: new HarnessGenerationHttpClient(undefined, () => createSavedAccessToken().current),
     installedSkills: installed,
   });
   await controller.hydrate();

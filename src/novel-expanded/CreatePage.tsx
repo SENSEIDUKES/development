@@ -1,15 +1,16 @@
-import { useCallback, useRef, useState, type RefObject } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { CreationModal, StoryCreationProvider } from '@seihouse/library/story-seed';
 import type { InitialStoryGenerationPayload } from '@seihouse/sen/story-seed';
 import { BlueprintRequestError } from '../host/story-seed/blueprintGenerationClient';
-import { AccessTokenSheet, type AccessTokenRequest } from './AccessTokenSheet';
+import type { AskForAccessToken } from './accessToken';
 import type { NovelExpandedServices } from './services';
 import { useNovelExpandedStoryCreation } from './storyCreationRuntime';
 
 export interface CreatePageProps {
-  services: Pick<NovelExpandedServices, 'storySeeds' | 'requestWorldBlueprint'>;
-  /** The development access token, held by the app for the visit so leaving Create never forgets it. */
-  blueprintToken: RefObject<string | undefined>;
+  /** `accessToken`: the owner's token, saved on this device, so leaving Create never forgets it. */
+  services: Pick<NovelExpandedServices, 'storySeeds' | 'requestWorldBlueprint' | 'accessToken'>;
+  /** Opens the app's access token sheet. */
+  askForToken: AskForAccessToken;
   /** The Story Seeds the reader's stories started from. */
   startedSeedIds: readonly string[];
   /** The model chapters are written with; the World Blueprint is written by the same one. */
@@ -20,26 +21,10 @@ export interface CreatePageProps {
 }
 
 /** Create: the Story Seed and its World Blueprint, the same journey the Library ships. */
-export function CreatePage({ services, blueprintToken, startedSeedIds, chapterModel, onHome, onStartStory }: CreatePageProps) {
+export function CreatePage({ services, askForToken, startedSeedIds, chapterModel, onHome, onStartStory }: CreatePageProps) {
   const runtime = useNovelExpandedStoryCreation(services.storySeeds, startedSeedIds);
-  const pendingToken = useRef<Promise<string | undefined> | undefined>(undefined);
-  const [tokenRequest, setTokenRequest] = useState<AccessTokenRequest>();
   const activeRequest = useRef<AbortController | null>(null);
   const [generating, setGenerating] = useState(false);
-
-  const askForToken = useCallback((rejected: boolean) => {
-    pendingToken.current ??= new Promise<string | undefined>(resolve => {
-      setTokenRequest({
-        rejected,
-        resolve: value => {
-          pendingToken.current = undefined;
-          setTokenRequest(undefined);
-          resolve(value);
-        },
-      });
-    });
-    return pendingToken.current;
-  }, []);
 
   /** One request at a time, like the Workshop: a newer one cancels the older. */
   const track = useCallback(async <T,>(run: (signal: AbortSignal) => Promise<T>): Promise<T> => {
@@ -59,20 +44,21 @@ export function CreatePage({ services, blueprintToken, startedSeedIds, chapterMo
 
   /** Asks for the token when there is none, and again when the server does not accept it. */
   const withToken = useCallback(async <T,>(cancelled: string, run: (accessToken: string, signal: AbortSignal) => Promise<T>): Promise<T> => {
+    const token = services.accessToken;
     let rejected = false;
     for (;;) {
-      const accessToken = blueprintToken.current ?? await askForToken(rejected);
+      const accessToken = token.current ?? await askForToken({ reason: 'blueprint', rejected });
       if (!accessToken) throw new Error(cancelled);
-      blueprintToken.current = accessToken;
+      token.current = accessToken;
       try {
         return await track(signal => run(accessToken, signal));
       } catch (error) {
         if (!(error instanceof BlueprintRequestError) || error.status !== 401) throw error;
-        blueprintToken.current = undefined;
+        token.current = undefined;
         rejected = true;
       }
     }
-  }, [askForToken, blueprintToken, track]);
+  }, [askForToken, services.accessToken, track]);
 
   return <StoryCreationProvider value={runtime}>
     <div className="min-h-screen bg-void" data-testid="novel-expanded-create">
@@ -80,6 +66,5 @@ export function CreatePage({ services, blueprintToken, startedSeedIds, chapterMo
         onGenerateBlueprint={payload => withToken('The World Blueprint needs the development access token. Nothing was changed.',
           (accessToken, signal) => services.requestWorldBlueprint(payload, accessToken, signal, chapterModel))} />
     </div>
-    <AccessTokenSheet request={tokenRequest} />
   </StoryCreationProvider>;
 }

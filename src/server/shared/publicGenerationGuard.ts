@@ -7,7 +7,12 @@
  * This is an abuse-control layer, not an identity or account-permission system.
  * Production must use its authenticated application boundary when these routes
  * are moved out of the Development Workshop.
+ *
+ * The owner's Development access token (`STORY_SEED_BLUEPRINT_ACCESS_TOKEN`,
+ * the one that also unlocks World Blueprints) lifts the limit: see
+ * `ownerTokenAdmission`.
  */
+import { hasValidBearerToken } from './bearerToken';
 
 export interface RequestWithHeaders {
   headers?: Record<string, string | string[] | undefined>;
@@ -21,7 +26,7 @@ export interface PublicGenerationLimit {
 
 export interface PublicGenerationGuardResult {
   allowed: boolean;
-  status?: 403 | 429;
+  status?: 401 | 403 | 429;
   error?: string;
   retryAfterSeconds?: number;
 }
@@ -49,6 +54,26 @@ const isSameOriginBrowserRequest = (request: RequestWithHeaders): boolean => {
   } catch {
     return false;
   }
+};
+
+/** The owner's Development access token, when the server has one. */
+export const developmentAccessToken = (environment: Record<string, string | undefined>): string | undefined =>
+  environment.STORY_SEED_BLUEPRINT_ACCESS_TOKEN?.trim() || undefined;
+
+/**
+ * The owner's token lifts the visitor limit. A request carrying it is let
+ * through; one carrying another token is refused, so the page can ask again.
+ * Without a token, or on a server with none set, the visitor limit applies
+ * (`undefined`: ask the guard).
+ */
+export const ownerTokenAdmission = (
+  request: RequestWithHeaders,
+  ownerToken: string | undefined,
+): PublicGenerationGuardResult | undefined => {
+  if (!ownerToken || !header(request, 'authorization')) return undefined;
+  return hasValidBearerToken(request, ownerToken)
+    ? { allowed: true }
+    : { allowed: false, status: 401, error: 'The access token was not accepted.' };
 };
 
 interface RateWindow {

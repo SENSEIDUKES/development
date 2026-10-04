@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import { StoryPages, storyHomeWorlds, useLibraryStories } from '@seihouse/library/stories';
 import { findStory, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
@@ -10,6 +10,8 @@ import { LIBRARY_BASE_MEDIA } from '../host/media/libraryCatalog';
 import { MANIFEST_BACKDROPS } from '../host/reader/manifestBackdrops';
 import { startHarnessStoryFromSeed } from '../host/story-seed/startHarnessStory';
 import { AGENTS } from '../lib/agents';
+import { AccessTokenSheet, type AccessTokenRequest } from './AccessTokenSheet';
+import { writerWithAccessToken, type AskForAccessToken } from './accessToken';
 import { CreatePage } from './CreatePage';
 import { HomePage } from './HomePage';
 import { HOME_ROUTE, useAppRoute } from './routes';
@@ -31,9 +33,36 @@ export function NovelExpandedApp({ services }: { services: NovelExpandedServices
 }
 
 function NovelExpandedPages({ services }: { services: NovelExpandedServices }) {
+  const [tokenRequest, setTokenRequest] = useState<AccessTokenRequest>();
+  const pendingToken = useRef<Promise<string | undefined> | undefined>(undefined);
+  // One sheet for the whole app: a Blueprint and a chapter past the visitor
+  // limit ask for the same token, saved on this device once given.
+  const askForToken = useCallback<AskForAccessToken>(({ reason, rejected }) => {
+    pendingToken.current ??= new Promise<string | undefined>(resolve => {
+      setTokenRequest({
+        reason, rejected,
+        resolve: value => {
+          pendingToken.current = undefined;
+          setTokenRequest(undefined);
+          resolve(value);
+        },
+      });
+    });
+    return pendingToken.current;
+  }, []);
+  const writer = useMemo(() => writerWithAccessToken(services.writer, services.accessToken, askForToken), [services, askForToken]);
+  return <>
+    <NovelExpandedRoutes services={services} writer={writer} askForToken={askForToken} />
+    <AccessTokenSheet request={tokenRequest} />
+  </>;
+}
+
+function NovelExpandedRoutes({ services, writer, askForToken }: {
+  services: NovelExpandedServices;
+  writer: NovelExpandedServices['writer'];
+  askForToken: AskForAccessToken;
+}): ReactNode {
   const [route, navigate] = useAppRoute();
-  // The development access token lives only in this tab's memory, for the whole visit.
-  const blueprintToken = useRef<string | undefined>(undefined);
   const [chapterModel] = useModelPreference('chapters');
   const [skills, setSkills] = useState<HarnessSkillManifest[]>();
   const [skillsError, setSkillsError] = useState<string>();
@@ -49,7 +78,7 @@ function NovelExpandedPages({ services }: { services: NovelExpandedServices }) {
   }, [services, skillsAttempt]);
 
   const stories = useLibraryStories({
-    repository: services.stories, modelAdapter: services.writer, installedSkills: skills,
+    repository: services.stories, modelAdapter: writer, installedSkills: skills,
     baseMedia: LIBRARY_BASE_MEDIA, preferredModel: chapterModel,
   });
   const { state } = stories;
@@ -72,7 +101,7 @@ function NovelExpandedPages({ services }: { services: NovelExpandedServices }) {
     </main>;
   }
 
-  if (route.page === 'create') return <CreatePage services={services} blueprintToken={blueprintToken} startedSeedIds={seedIds} chapterModel={stories.model || undefined}
+  if (route.page === 'create') return <CreatePage services={services} askForToken={askForToken} startedSeedIds={seedIds} chapterModel={stories.model || undefined}
     onHome={() => navigate(HOME_ROUTE)}
     onStartStory={async payload => {
       const story = await startHarnessStoryFromSeed(stories.controller, payload);

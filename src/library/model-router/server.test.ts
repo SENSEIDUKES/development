@@ -48,6 +48,21 @@ describe('published Model Router server contract', () => {
       .rejects.toMatchObject({ message: expect.stringMatching(/^The model refused: I cannot write that\. \(/) });
   });
 
+  it('asks OpenRouter for the fastest provider only for models the catalog marks', async () => {
+    const bodies: Array<Record<string, unknown>> = [];
+    const router = createModelRouter({
+      credentials: { openrouter: 'secret' },
+      fetch: vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+        bodies.push(JSON.parse(String(init?.body)));
+        return new Response(JSON.stringify({ choices: [{ message: { content: '{"ok":true}' }, finish_reason: 'stop' }] }), { status: 200 });
+      }) as typeof fetch,
+    });
+    await router.generate({ ...textRequest, model: 'openrouter/z-ai/glm-5.3-flash' });
+    await router.generate(textRequest);
+    expect(bodies[0]).toMatchObject({ model: 'z-ai/glm-5.3-flash', provider: { sort: 'throughput' } });
+    expect(bodies[1]).not.toHaveProperty('provider');
+  });
+
   it('reports a reply still being written at the deadline as a timeout, never as an empty reply', async () => {
     // OpenRouter sends its 200 at once and holds the body open while the model writes.
     const fetchMock = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => ({

@@ -79,8 +79,12 @@ separately; catalog-only media models are not executable.
   swallowed the cut-off reply and reported "returned an empty response". On a
   preview with the real key, the levels below each finished a full chapter, so
   the catalog now sends them unless the reader chooses another
-  (`ModelReasoning.sendDefault`): GLM low (74 s; OpenRouter refuses `none`,
-  "Reasoning is mandatory"), Qwen none (78 s), DeepSeek none (46 s). MiniMax
+  (`ModelReasoning.sendDefault`): GLM low (OpenRouter refuses `none`,
+  "Reasoning is mandatory"), Qwen none (25–78 s), DeepSeek none (17–46 s).
+  At low, GLM still ran past the deadline once in two, because OpenRouter
+  favoured its cheapest providers, so GLM also routes to its fastest one
+  (`RoutedModel.fastestProvider`, OpenRouter's `provider.sort: throughput`):
+  two chapters in 17 s and 25 s, both saved. MiniMax
   M2.7 (74 s), Trinity Large Thinking (9 s) and Gemini 3.8 Flash finish on
   their own defaults and are unchanged; so are every Gemini model, GPT-6 Luna
   and Luna Pro, saved choices and the default. A reply still being written at

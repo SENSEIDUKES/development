@@ -9,7 +9,9 @@ durable ledgers and concrete infrastructure stay in the host/backend.
 Qwen 3.8 Flash and DeepSeek V4.1 Flash thought past the 170-second chapter
 deadline on their own defaults, so the Router now sends each a level that
 finishes (`ModelReasoning.sendDefault`: GLM low, Qwen and DeepSeek none)
-unless the reader chooses another. The OpenRouter adapter reports a reply still
+unless the reader chooses another. GLM is also routed to its fastest OpenRouter
+provider (`RoutedModel.fastestProvider`): of its 35 providers, OpenRouter
+favoured the cheapest, which were too slow. The OpenRouter adapter reports a reply still
 being written at the deadline as a timeout, and an empty reply with its finish
 reason, provider and token counts, instead of 'returned an empty response'.
 

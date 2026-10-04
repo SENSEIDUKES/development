@@ -88,8 +88,9 @@ export const CHAPTER_MODELS: readonly RoutedModel[] = [
   { id: 'openrouter/openai/gpt-6-luna', label: 'GPT-6 Luna · OpenRouter', provider: 'openrouter', stage: 'current', reasoning: { levels: OPENAI_LEVELS, defaultLevel: 'medium' } },
   { id: 'openrouter/openai/gpt-6-luna-pro', label: 'GPT-6 Luna Pro · OpenRouter', provider: 'openrouter', stage: 'current', reasoning: { levels: OPENAI_LEVELS, defaultLevel: 'medium' } },
   // GLM, Qwen and DeepSeek think past the chapter deadline on their own defaults.
-  // Their sent defaults finished a full chapter on 2026-10-04: GLM low in 74s,
-  // Qwen none in 78s, DeepSeek none in 46s. MiniMax (74s) and Trinity (9s) finish as they are.
+  // Their sent defaults finished full chapters on 2026-10-04: GLM low on its
+  // fastest provider in 17s and 25s, Qwen none in 25-78s, DeepSeek none in
+  // 17-46s. MiniMax (74s) and Trinity (9s) finish as they are.
   { id: 'openrouter/z-ai/glm-5.3-flash', label: 'GLM 5.3 Flash · OpenRouter', provider: 'openrouter', stage: 'current', reasoning: { levels: ALWAYS_REASONING_LEVELS, defaultLevel: 'low', sendDefault: true }, fastestProvider: true },
   { id: 'openrouter/qwen/qwen3.8-flash', label: 'Qwen 3.8 Flash · OpenRouter', provider: 'openrouter', stage: 'current', reasoning: { levels: OPEN_MODEL_LEVELS, defaultLevel: 'none', sendDefault: true } },
   { id: 'openrouter/minimax/minimax-m2.7', label: 'MiniMax M2.7 · OpenRouter', provider: 'openrouter', stage: 'current' },

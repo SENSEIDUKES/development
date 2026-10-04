@@ -406,6 +406,43 @@ const post = (body: Record<string, unknown>, provider: WorldBlueprintModelProvid
 
 const errorOf = (response: { body: unknown }) => (response.body as { error: string }).error;
 
+describe("Blueprint model: the chapter model the reader chose", () => {
+  const withRouter = { ...environment, OPENROUTER_API_KEY: "server-only-router-key" };
+  const send = (body: Record<string, unknown>, env: Record<string, string> = withRouter) => {
+    const provider = new RecordingProvider();
+    const providerFactory = vi.fn((_apiKey: string, _model: string) => provider);
+    return handleStorySeedBlueprintHttp({ method: "POST", headers: { Authorization: "Bearer development-access-token" }, body }, { environment: env, providerFactory })
+      .then(response => ({ response, provider, providerFactory }));
+  };
+
+  it("writes the Blueprint with the chapter model sent, at its reasoning level, and keeps the server's model when none is sent", async () => {
+    const chosen = await send({ storySeed: canonicalSeed(), model: "openrouter/openai/gpt-6-luna", reasoningLevel: "high" });
+    expect(chosen.response.status).toBe(200);
+    expect(chosen.providerFactory).toHaveBeenCalledWith("server-only-router-key", "openrouter/openai/gpt-6-luna");
+    expect(chosen.provider.requests[0].reasoningLevel).toBe("high");
+    // A model whose own default thinks too long gets the level chapters send it.
+    const glm = await send({ storySeed: canonicalSeed(), model: "openrouter/z-ai/glm-5.3-flash" });
+    expect(glm.provider.requests[0].reasoningLevel).toBe("low");
+    // No model sent: the server's Blueprint model, as before, with no reasoning level.
+    const fallback = await send({ storySeed: canonicalSeed() });
+    expect(fallback.providerFactory).toHaveBeenCalledWith("server-only-gemini-key", "google/gemini-test");
+    expect(fallback.provider.requests[0]).not.toHaveProperty("reasoningLevel");
+  });
+
+  it("refuses a model chapters cannot use, before any model call, and needs only the chosen model's key", async () => {
+    const unknown = await send({ storySeed: canonicalSeed(), model: "openrouter/someone/unlisted-model" });
+    expect(unknown.response.status).toBe(400);
+    expect((unknown.response.body as { error: string }).error).toBe("Model 'openrouter/someone/unlisted-model' is not configured for chapter generation.");
+    expect(unknown.providerFactory).not.toHaveBeenCalled();
+    // The server's own Blueprint model has no key here; the chosen OpenRouter model does.
+    const { GEMINI_API_KEY: _gemini, ...routerOnly } = withRouter;
+    const chosen = await send({ storySeed: canonicalSeed(), model: "openrouter/openai/gpt-6-luna" }, routerOnly);
+    expect(chosen.response.status).toBe(200);
+    const fallback = await send({ storySeed: canonicalSeed() }, routerOnly);
+    expect(fallback.response.status).toBe(503);
+  });
+});
+
 describe("Blueprint story length", () => {
   /** The canonical Seed with the creator's Story Length set on its ARC page. */
   const seedOfLength = (arcCount: unknown): StorySeedInput => {

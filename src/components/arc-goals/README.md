@@ -51,11 +51,13 @@ every arc of the story's length is written the route is complete and HARNESS sto
 rather than inventing another arc.
 
 The creator may set the length up front, as the Story Seed's Story Length on its ARC
-page; the Blueprint is then generated for exactly that length and follows it. It may be
-changed there or in the Blueprint review before the story begins without a model call;
-only a change to or from a one-arc story (whose Arc 1 ends at the Destined Ending) needs
-the Blueprint regenerated, and until then the Blueprint records what Arc 1 was planned
-as (`WorldBlueprint.arcOneScope`) and the Manifest gate says so.
+page; the Blueprint is then generated for exactly that length and follows it. A length is
+10 to 40 arcs (`STORY_LENGTH_ARCS`: 300 to 1,200 chapters); `MAX_ROADMAP_ARCS` (100) is
+only the longest a saved story or draft may carry, so ones saved before the range still
+load. It may be changed there or in the Blueprint review before the story begins without
+a model call, since Arc 1 is always planned as the opening. An older Blueprint planned
+for one arc (whose Arc 1 ends at the Destined Ending) records that
+(`WorldBlueprint.arcOneScope`) and needs regenerating; the Manifest gate says so.
 
 Completion requires a positive model assessment of the generated prose plus
 a continuous exact evidence quotation from that prose. A matching quotation proves

@@ -73,6 +73,14 @@ separately; catalog-only media models are not executable.
 
 ## Workshop history
 
+- 2026-10-04 — The Story Seed Blueprint follows the Router (`modelChoice:
+  'router'`). It always used the server's Blueprint model
+  (`STORY_SEED_BLUEPRINT_MODEL`, else the chapter default: Gemini 3.1 Flash
+  Lite through Google), so a chapter model chosen in the Router, such as one on
+  OpenRouter, never wrote the Blueprint. The request now carries the chosen
+  chapter model and its reasoning level; the server accepts any model chapters
+  may use and refuses others, and a request without one keeps the server's
+  Blueprint model.
 - 2026-10-04 — Chapter generation restored for the new models. GLM 5.3 Flash,
   Qwen 3.8 Flash and DeepSeek V4.1 Flash, on their own reasoning defaults, were
   still writing at the HARNESS's 170-second deadline; the OpenRouter adapter

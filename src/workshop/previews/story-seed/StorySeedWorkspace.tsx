@@ -5,6 +5,7 @@ import { LIBRARY_DESTINATIONS } from '@seihouse/library/shell';
 import { lazy, useCallback, useEffect, useRef, useState } from 'react';
 import { CreationModal as DevelopmentCreationModal } from '@seihouse/library/story-seed';
 import { requestWorldBlueprint } from '../../../host/story-seed/blueprintGenerationClient';
+import { readModelPreference } from '../../../host/generation/modelPreference';
 import { resetStorySeedRepository, setStorySeedRepository } from './storySeedStorage';
 import { finalizeGeneratedWorldBlueprint, type BlueprintGenerationPayload } from '@seihouse/sen/story-seed';
 import {
@@ -451,7 +452,8 @@ export function StorySeedWorkspace({ embedded = false, initialState, localGenera
             payload.storySeed,
           );
         }
-        return await requestWorldBlueprint(payload, blueprintAccessToken, controller.signal);
+        // The chapter model chosen in the Model Router writes the Blueprint too.
+        return await requestWorldBlueprint(payload, blueprintAccessToken, controller.signal, readModelPreference('chapters'));
       } finally {
         if (activeBlueprintRequestRef.current === controller) {
           activeBlueprintRequestRef.current = null;

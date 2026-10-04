@@ -15,7 +15,7 @@ import {
   generateWorldBlueprint,
   type WorldBlueprintModelProvider,
 } from "./generate";
-import { missingKeyMessage } from "../model-router/catalog";
+import { missingKeyMessage, providerKey, resolveChapterModelRoute, resolveReasoningLevel, textModelProvider } from "../model-router/catalog";
 
 export interface StorySeedBlueprintHttpRequest {
   method?: string;
@@ -44,11 +44,17 @@ const errorResponse = (status: number, error: string): StorySeedBlueprintHttpRes
   headers: { "Cache-Control": "no-store" },
 });
 
+/** A Blueprint request: the Seed, and the chapter model the reader chose, with its reasoning level. */
+interface BlueprintHttpPayload extends BlueprintGenerationPayload {
+  model?: string;
+  reasoningLevel?: unknown;
+}
+
 /**
  * One operation: a whole Blueprint, which plans Arc 1 for a story of the
  * Seed's Story Length, or a realistic length when the Seed leaves it blank.
  */
-const parseRequest = (body: unknown): BlueprintGenerationPayload => {
+const parseRequest = (body: unknown): BlueprintHttpPayload => {
   const parsed = typeof body === "string" ? JSON.parse(body) : body;
   if (!isRecord(parsed) || !isRecord(parsed.storySeed)) {
     throw new Error("The Blueprint request must contain the complete finalized Story Seed.");
@@ -58,7 +64,12 @@ const parseRequest = (body: unknown): BlueprintGenerationPayload => {
   if (parsed.operation !== undefined) throw new Error("Unknown Blueprint operation.");
   // The length travels in the Seed alone, so a request can never carry two.
   if (parsed.arcCount !== undefined) throw new Error("The story length is the Story Seed's own Story Length (story.optional.arcCount).");
-  return { storySeed };
+  if (parsed.model !== undefined && typeof parsed.model !== "string") throw new Error("Choose a configured chapter model.");
+  return {
+    storySeed,
+    ...(parsed.model !== undefined ? { model: parsed.model as string } : {}),
+    ...(parsed.reasoningLevel !== undefined ? { reasoningLevel: parsed.reasoningLevel } : {}),
+  };
 };
 
 export async function handleStorySeedBlueprintHttp(
@@ -97,11 +108,7 @@ export async function handleStorySeedBlueprintHttp(
   if (!hasValidBearerToken(request, config.accessToken)) {
     return errorResponse(401, "A valid Development Story Seed access token is required.");
   }
-  if (!config.apiKey) {
-    return errorResponse(503, missingKeyMessage(config.model));
-  }
-
-  let parsed: BlueprintGenerationPayload;
+  let parsed: BlueprintHttpPayload;
   try {
     parsed = parseRequest(request.body);
   } catch (error) {
@@ -111,11 +118,29 @@ export async function handleStorySeedBlueprintHttp(
       : message);
   }
 
+  // The Blueprint is written by the chapter model the reader chose in the
+  // Model Router, from the same list chapters are; a request without one
+  // keeps the server's Blueprint model.
+  let model = config.model;
+  let apiKey = config.apiKey;
+  if (parsed.model === undefined && !apiKey) return errorResponse(503, missingKeyMessage(model));
+  if (parsed.model !== undefined) {
+    const route = resolveChapterModelRoute(dependencies.environment, "HARNESS_GENERATION_MODELS", "HARNESS_GENERATION_DEFAULT_MODEL");
+    if (!route.models.some(option => option.id === parsed.model)) {
+      return errorResponse(400, `Model '${parsed.model}' is not configured for chapter generation.`);
+    }
+    model = parsed.model;
+    const key = providerKey(dependencies.environment, textModelProvider(model)!);
+    if (!key) return errorResponse(503, missingKeyMessage(model));
+    apiKey = key;
+  }
+  const chosen = { ...config, model, provider: textModelProvider(model)!, apiKey: apiKey! };
+
   try {
     const provider = dependencies.providerFactory
-      ? dependencies.providerFactory(config.apiKey, config.model)
-      : createWorldBlueprintProvider({ ...config, apiKey: config.apiKey });
-    const body = await generateWorldBlueprint(parsed, config, provider);
+      ? dependencies.providerFactory(chosen.apiKey, model)
+      : createWorldBlueprintProvider(chosen);
+    const body = await generateWorldBlueprint({ storySeed: parsed.storySeed }, chosen, provider, resolveReasoningLevel(model, parsed.reasoningLevel));
     return {
       status: 200,
       body,

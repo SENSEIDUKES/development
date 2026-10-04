@@ -1,5 +1,5 @@
 import { ARC_LOOKAHEAD_SCHEMA, ARC_PLAN_DRAFT_SCHEMA, STORY_LENGTH_ARCS, arcPlanFromDraft } from '@seihouse/sen/arc-goals';
-import { createModelRouter, ModelRouterError, type GenerationResult } from '@seihouse/library/model-router-server';
+import { createModelRouter, ModelRouterError, type GenerationResult, type ReasoningLevel } from '@seihouse/library/model-router-server';
 import {
   SEED_CHARACTER_LIMIT,
   SEED_CHARACTER_SLOT_FIELDS,
@@ -106,6 +106,8 @@ export interface BlueprintModelRequest<Schema extends object = ReturnType<typeof
   temperature: number;
   maxOutputTokens: number;
   timeoutMs: number;
+  /** The chapter model's reasoning level, when the model takes one. */
+  reasoningLevel?: ReasoningLevel;
 }
 
 export type WorldBlueprintModelRequest = BlueprintModelRequest;
@@ -141,6 +143,7 @@ export class GeminiWorldBlueprintProvider implements WorldBlueprintModelProvider
       capability: 'text', model: this.model, systemInstruction: request.systemInstruction,
       userPrompt: request.userPrompt, responseFormat: 'json', responseJsonSchema: request.responseJsonSchema,
       temperature: request.temperature, maxOutputTokens: request.maxOutputTokens, timeoutMs: request.timeoutMs,
+      reasoningLevel: request.reasoningLevel,
     }), request.maxOutputTokens);
   }
 }
@@ -159,6 +162,7 @@ export class OpenRouterWorldBlueprintProvider implements WorldBlueprintModelProv
       capability: 'text', model: this.model, systemInstruction: request.systemInstruction,
       userPrompt: request.userPrompt, responseFormat: 'json', responseJsonSchema: request.responseJsonSchema,
       temperature: request.temperature, maxOutputTokens: request.maxOutputTokens, timeoutMs: request.timeoutMs,
+      reasoningLevel: request.reasoningLevel,
     }), request.maxOutputTokens);
   }
 }
@@ -241,6 +245,7 @@ export const generateWorldBlueprint = async (
   payload: BlueprintGenerationPayload,
   config: ResolvedStorySeedBlueprintConfig,
   provider: WorldBlueprintModelProvider,
+  reasoningLevel?: ReasoningLevel,
 ): Promise<GeneratedWorldBlueprint> => {
   let storySeed: StorySeedInput;
   try { ({ storySeed } = buildBlueprintGenerationPayload(payload.storySeed)); }
@@ -254,6 +259,7 @@ export const generateWorldBlueprint = async (
     temperature: config.temperature,
     maxOutputTokens: config.maxOutputTokens,
     timeoutMs: config.timeoutMs,
+    ...(reasoningLevel ? { reasoningLevel } : {}),
   });
   // Arc 1 arrives as wording and chapters; the server gives its goals their
   // identities. A missing or malformed Arc 1 fails loudly, never padded.

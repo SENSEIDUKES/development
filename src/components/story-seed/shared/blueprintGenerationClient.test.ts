@@ -37,6 +37,25 @@ afterEach(() => {
   fetchUntilAborted.mockClear();
 });
 
+describe('Blueprint generation client: the chapter model', () => {
+  it('sends the chapter model the reader chose with its saved reasoning level, and nothing when there is none', async () => {
+    const bodies: unknown[] = [];
+    vi.stubGlobal('fetch', vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      bodies.push(JSON.parse(String(init?.body)));
+      return new Response(JSON.stringify({ title: 'Blueprint' }), { status: 200 });
+    }));
+    vi.stubGlobal('window', { localStorage: { getItem: () => JSON.stringify({ chapters: 'openrouter/z-ai/glm-5.3-flash', reasoning: { 'openrouter/z-ai/glm-5.3-flash': 'medium' } }) } });
+    await requestWorldBlueprint(payload, 'development-token', undefined, 'openrouter/z-ai/glm-5.3-flash');
+    await requestWorldBlueprint(payload, 'development-token', undefined, 'openrouter/openai/gpt-6-luna');
+    await requestWorldBlueprint(payload, 'development-token');
+    expect(bodies).toEqual([
+      { ...payload, model: 'openrouter/z-ai/glm-5.3-flash', reasoningLevel: 'medium' },
+      { ...payload, model: 'openrouter/openai/gpt-6-luna' },
+      payload,
+    ]);
+  });
+});
+
 describe('Blueprint generation client cancellation', () => {
   it('times out a stalled request after the server timeout ceiling', async () => {
     vi.useFakeTimers();

@@ -37,12 +37,16 @@ owner.
 reader mixer. `@seihouse/audio-player` ^4.0.0 is a new peer.
 
 - The HARNESS Reader (`./harness-generation`) plays its soundtrack through the
-  host's `ReaderMixerProvider`: the reader's chosen atmosphere starts on entry
-  and every layer stops on leaving; only the layers the chapter uses appear in
-  Audio settings (Sound Cues when it has some; soundscapes are not chosen
-  yet); the chapter's cues are warmed early; Listen dips the soundtrack and
-  keeps the reader active; a sleep timer that fires stops Listen too; reaching
-  the chapter's navigation is the chapter's end for an End of chapter timer.
+  host's `ReaderMixerProvider`: the reader's chosen atmosphere plays while the
+  chapter is on screen and fades out while a page covers it (Fate, Holdings,
+  an arc's page, the writing screen), keeping a sleep timer; every layer stops
+  on leaving the Reader; only the layers the chapter uses appear in Audio
+  settings (Sound Cues when it has some; soundscapes are not chosen yet); the
+  chapter's cues are warmed early; Listen dips the soundtrack and keeps the
+  reader active; a sleep timer that fires stops Listen too; the chapter's
+  navigation coming into view, or Listen finishing the chapter, is the
+  chapter's end for an End of chapter timer. A cue whose saved Energy is not
+  low, medium or high plays as medium.
 - The Reader shows the player's ghost note above the Listen bar (a tap mutes
   story audio, a long-press opens Audio), and Reader Settings opens with an
   Audio section (the player's `ReaderMixerPanel`, loaded only when the sheet

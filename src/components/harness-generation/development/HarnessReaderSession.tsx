@@ -222,9 +222,10 @@ export function HarnessReaderSession({
     continueRef.current?.run();
   }, [readyToStart]);
 
-  // Read Aloud follows the chapter on screen. Another page or the writing
-  // screen over the chapter silences it until the chapter is back.
+  // Read Aloud and the soundtrack follow the chapter on screen. Another page or
+  // the writing screen over the chapter silences them until the chapter is back.
   const chapter = chapters.find(entry => entry.chapterNumber === selectedChapter) ?? chapters.at(-1);
+  const covered = fateOpen || arcOpen || holdingsOpen || writer.writing;
   const language = story?.originalLanguage ?? 'en';
   const blocks = useMemo(() => (chapter ? chapterBlocks(chapter) : []), [chapter]);
   // The main character as this chapter's writer was told: speech it left untagged is voiced from its narration.
@@ -237,7 +238,7 @@ export function HarnessReaderSession({
       chapterNumber: chapter.chapterNumber, title: chapter.title, language, paragraphs: blocks, speakers: chapter.speakers, mainCharacter,
     }) : NO_SCRIPT),
     language, preferences: readerPreferences, picks: readAloudVoices,
-    suspended: fateOpen || arcOpen || holdingsOpen || writer.writing,
+    suspended: covered,
   });
   const reading = readAloud.status === 'playing' || readAloud.status === 'paused';
   const spoken = reading ? readAloud.line : undefined;
@@ -253,7 +254,9 @@ export function HarnessReaderSession({
   }, [blocks, spokenBlock, sentenceStart, sentenceEnd]);
   const follow = useFollowNarration({ article: articleRef, highlight, active: reading, player: playerRef });
   const mixer = useReaderSoundtrack({
-    chapterId: chapter?.id, soundCues: chapter?.soundCues, speaking: readAloud.status === 'playing',
+    active: Boolean(story && readerState && chapter) && !covered,
+    chapterId: chapter?.id, soundCues: chapter?.soundCues,
+    speaking: readAloud.status === 'playing', listenEnded: readAloud.status === 'ended',
     onSleep: readAloud.stop, chapterEnd,
   });
   const listen = () => readAloud.play(lineWhereTheReaderIs(readAloud.script(), articleRef.current));

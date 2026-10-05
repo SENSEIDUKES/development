@@ -376,6 +376,13 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
     await click(byLabel('Next Chapter'), 'Next Chapter');
     expect(mixer.getState().availability.cues).toBe(false);
 
+    // The Fate page covers the chapter (and its note): the atmosphere fades out until the chapter is back.
+    const stopAtmosphere = vi.spyOn(mixer, 'stopAtmosphere');
+    await click(byLabel('Open Fate'), 'Open Fate');
+    expect(stopAtmosphere).toHaveBeenCalledTimes(1);
+    await click(button => button.textContent?.trim() === 'Back to reading', 'Back to reading');
+    expect(startAtmosphere).toHaveBeenCalledTimes(2);
+
     expect(stopAll).not.toHaveBeenCalled();
     act(() => root.unmount());
     expect(stopAll).toHaveBeenCalledTimes(1);

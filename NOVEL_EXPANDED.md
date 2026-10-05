@@ -317,7 +317,11 @@ Update it whenever it changes.
     everyone else's. The sentence being spoken is lit and the page follows it.
     **The soundtrack is SEIHouse's own audio player** (its reader mixer): the
     reader's chosen **atmosphere** (50 beds from SEN Atmospheres, Volume 1,
-    played at one measured loudness) plays under the chapter, Sound Cues play
+    each measured so the player can level it toward −20 LUFS) plays under the
+    chapter. The levels are not even yet: 22 beds are too quiet to reach −20
+    even at the player's largest boost and need re-exporting, and until the
+    audio host allows the player to process its files (CORS), it can only turn
+    loud beds down, never quiet ones up. Sound Cues play
     over it at the loudness of their Energy, Listen dips it, and a **sleep
     timer** stops it, Listen included. A small **note** above the Listen bar
     mutes all story audio with a tap; a long-press opens Audio settings.

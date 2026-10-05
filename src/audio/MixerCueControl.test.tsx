@@ -91,7 +91,7 @@ describe('MixerCueControl', () => {
     expect(listeners.size).toBe(0);
   });
 
-  it('plays a cue with no Energy as medium, and low quieter still', () => {
+  it('plays a cue with no Energy, or an Energy it does not know, as medium, and low quieter still', () => {
     const { mixer } = createFakeMixer();
     render(<><MixerCueControl cue={cueWith()} mixer={mixer} /></>);
     act(() => button().click());
@@ -99,6 +99,13 @@ describe('MixerCueControl', () => {
     render(<MixerCueControl cue={cueWith('low')} mixer={mixer} />);
     act(() => button().click());
     expect(mixer.playCue).toHaveBeenLastCalledWith(BEAST_URL, { volume: 0.6 });
+    // A saved cue can carry anything; it never plays at an undefined level.
+    for (const energy of ['extreme', 'constructor']) {
+      const saved = cueWith();
+      render(<MixerCueControl cue={{ ...saved, payload: { ...saved.payload, energy: energy as 'low' } }} mixer={mixer} />);
+      act(() => button().click());
+      expect(mixer.playCue).toHaveBeenLastCalledWith(BEAST_URL, { volume: 0.8 });
+    }
   });
 
   it('shows the mixer\'s failure for this cue', () => {

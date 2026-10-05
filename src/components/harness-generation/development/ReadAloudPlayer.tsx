@@ -1,4 +1,4 @@
-import type { ComponentType, Ref } from 'react';
+import type { ComponentType, ReactNode, Ref } from 'react';
 import { Headphones, LocateFixed, Pause, Play, SkipBack, SkipForward, Square } from 'lucide-react';
 import type { ReadAloud, ReadAloudRole } from '@seihouse/sen/reader-runtime';
 
@@ -16,21 +16,29 @@ function IconButton({ label, icon: Icon, onClick }: { label: string; icon: Compo
  * The Listen bar: always reachable at the bottom of the chapter. Idle, it
  * offers Listen; while reading it pauses, resumes, steps a sentence back or
  * forward, stops, and shows who is speaking. When the sentence being read has
- * scrolled away, it offers the way back to it.
+ * scrolled away, it offers the way back to it. The story audio note floats
+ * just above its right end, and stays there (alone) where a browser can't
+ * read aloud.
  */
-export function ReadAloudPlayer({ readAloud, onListen, offscreen, onBackToNarration, playerRef }: {
+export function ReadAloudPlayer({ readAloud, onListen, offscreen, onBackToNarration, playerRef, note }: {
   readAloud: ReadAloud;
   /** Starts reading where the reader is on the page. */
   onListen: () => void;
   offscreen: boolean;
   onBackToNarration: () => void;
   playerRef?: Ref<HTMLDivElement>;
+  /** The story audio note (the soundtrack's mute), placed above the bar. */
+  note?: ReactNode;
 }) {
-  if (!readAloud.supported) return null;
+  const noteSlot = note ? <div className="pointer-events-none absolute bottom-full right-4 mb-2 [&>*]:pointer-events-auto" data-testid="story-audio-note">{note}</div> : null;
+  if (!readAloud.supported) {
+    return noteSlot && <div className="pointer-events-none sticky bottom-0 z-20 -mx-4 mt-8 h-0 pb-[env(safe-area-inset-bottom)]">{noteSlot}</div>;
+  }
   const { status, line, notice } = readAloud;
   const speaking = status === 'ended' ? 'End of chapter' : line ? line.speaker ?? ROLE_LABELS[line.role] : '';
   return <div ref={playerRef} role="region" aria-label="Listen" data-testid="read-aloud-player" data-status={status}
     className="sticky bottom-0 z-20 -mx-4 mt-8 border-t border-white/10 bg-neutral-950/90 px-4 pt-2 backdrop-blur pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+    {noteSlot}
     {notice && <p role="status" className="mb-2 text-center text-xs text-amber-200">{notice}</p>}
     <div className="mx-auto flex max-w-3xl items-center gap-2">
       {status === 'idle'

@@ -9,7 +9,7 @@
  * Usage: `node scripts/smokePackage.mjs <sen|library>`
  */
 import { execFileSync } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { dirname, join, resolve, relative, isAbsolute } from 'node:path';
@@ -41,12 +41,30 @@ const pack = packageTarget => {
   tarballs.push(tarballPath);
   return tarballPath;
 };
+/**
+ * The SEIHouse audio player is installed from GitHub, not a registry, so the
+ * consumer gets the exact build this repository locks, packed from
+ * node_modules (never resolved by name from a public registry).
+ */
+const packAudioPlayer = async () => {
+  const installed = join(root, 'node_modules/@seihouse/audio-player');
+  const manifest = JSON.parse(await readFile(join(installed, 'package.json'), 'utf8'));
+  const copy = join(consumerDirectory, '.audio-player');
+  await mkdir(copy, { recursive: true });
+  // Its published files only, and no scripts: packing must never rebuild it.
+  for (const entry of manifest.files) await cp(join(installed, entry), join(copy, entry), { recursive: true });
+  delete manifest.scripts;
+  await writeFile(join(copy, 'package.json'), JSON.stringify(manifest, null, 2));
+  const packed = JSON.parse(runNpm(['pack', '--json', '--pack-destination', consumerDirectory], copy))[0];
+  return join(consumerDirectory, packed.filename);
+};
 
 try {
   const lock = JSON.parse(await readFile(join(root, 'package-lock.json'), 'utf8'));
   const peers = ['react', 'react-dom', 'react-focus-lock', 'lucide-react', 'motion', '@types/react', '@types/react-dom'].map(name => name + '@' + lock.packages['node_modules/' + name].version);
   const dependencyTarballs = target.smokeDependencies.map(id => pack(resolveTarget(id)));
   const tarballPath = pack(target);
+  const audioPlayer = await packAudioPlayer();
 
   await writeFile(join(consumerDirectory, 'package.json'), JSON.stringify({
     name: `${target.id}-package-smoke-consumer`,
@@ -54,7 +72,7 @@ try {
     type: 'module',
   }, null, 2));
   runNpm(
-    ['install', '--ignore-scripts', ...peers, join(root, 'vendor/seihouse-ui-0.10.1.tgz'), ...(target.id === 'library' ? [join(root, 'vendor/seihouse-library-ui-0.9.0.tgz')] : []), ...dependencyTarballs, tarballPath],
+    ['install', '--ignore-scripts', ...peers, join(root, 'vendor/seihouse-ui-0.10.1.tgz'), ...(target.id === 'library' ? [join(root, 'vendor/seihouse-library-ui-0.9.0.tgz')] : []), audioPlayer, ...dependencyTarballs, tarballPath],
     consumerDirectory,
   );
 
@@ -154,7 +172,9 @@ try {
     assert(!installedManifest.exports['./library']);
     assert(!JSON.stringify(installedManifest).includes('@seihouse/library'));
     assert(!(await import('node:fs')).existsSync(join(consumerDirectory, 'node_modules/@seihouse/library-ui')));
-    assert(!(await import('node:fs')).existsSync(join(consumerDirectory, 'node_modules/@seihouse/audio-player')));
+    // The SEIHouse audio player is SEN's sound (a peer), installed at the exact build this repository locks.
+    const audioPlayer = JSON.parse(await readFile(join(consumerDirectory, 'node_modules/@seihouse/audio-player/package.json'), 'utf8'));
+    assert.equal(audioPlayer.version, lock.packages['node_modules/@seihouse/audio-player'].version);
   }
   const linked = target.smokeDependencies.length > 0
     ? ` linked against ${target.smokeDependencies.join(', ')},`

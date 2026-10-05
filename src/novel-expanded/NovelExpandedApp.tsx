@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { ReaderMixerProvider, type ReaderMixer } from '@seihouse/audio-player';
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import { StoryPages, storyHomeWorlds, useLibraryStories } from '@seihouse/library/stories';
 import { findStory, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import { NarrativeButton } from '@seihouse/sen/presentation';
-import { DevAudioPlaybackProvider } from '../audio/DevAudioPlayback';
 import { useModelPreference } from '../host/generation/modelPreference';
 import { LIBRARY_ASSETS } from '../host/media/libraryAssets';
 import { LIBRARY_BASE_MEDIA } from '../host/media/libraryCatalog';
@@ -23,13 +23,15 @@ import { startedSeedIds } from './storyCreationRuntime';
  * (World Info) → Reader, and nothing else. Its chapters are written the same
  * way as the Workshop's: the official CAPA skills, the Library's sound words
  * and Sound Cues, memory read only on request, and the Model Router's choice.
+ * Its one sound owner is the reader mixer (the SEIHouse audio player), made
+ * once by the page that mounts the app and kept for the page's lifetime.
  */
-export function NovelExpandedApp({ services }: { services: NovelExpandedServices }) {
-  return <DevAudioPlaybackProvider>
+export function NovelExpandedApp({ services, readerMixer }: { services: NovelExpandedServices; readerMixer: ReaderMixer }) {
+  return <ReaderMixerProvider mixer={readerMixer}>
     <LibraryPresentationProvider assets={LIBRARY_ASSETS} backdrops={MANIFEST_BACKDROPS}>
       <NovelExpandedPages services={services} />
     </LibraryPresentationProvider>
-  </DevAudioPlaybackProvider>;
+  </ReaderMixerProvider>;
 }
 
 function NovelExpandedPages({ services }: { services: NovelExpandedServices }) {

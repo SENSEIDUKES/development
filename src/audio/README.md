@@ -27,7 +27,8 @@ The current split is:
 | Host-supplied playback port | SEN contract | `playback.tsx` |
 | Celestial Library packs and entitlement policy | Library | `src/library/media/mediaPacks.ts` |
 | First-party cue and soundscape records | Host | `src/host/media/libraryCatalog.ts`, `src/host/media/soundscapeCatalog.ts` |
-| Concrete browser audio-player adapter | Host (the Workshop and the NovelExpanded app) | `DevAudioPlayback.tsx` |
+| The reader mixer a host creates: SEN Atmospheres, Volume 1 (50 beds with measured loudness) and the reader's saved mix | Host (the NovelExpanded app and the Workshop) | `src/host/reader/readerMixer.ts`, `src/host/media/atmosphereCatalog.ts`, `src/host/media/data/sen-atmospheres-v1.json` |
+| Single-channel browser player for the older Workshop previews | Host (the Workshop only) | `DevAudioPlayback.tsx` |
 
 A Sound Cue's screen-reader status ("Loading beast roar for …") is marked as an
 inline decoration (`data-sen-selection-ignore`): screen readers still hear it,
@@ -87,9 +88,14 @@ language) and marks exactly the words its offsets cover (`splitBySoundCues`);
 a cue whose words no longer match is left as plain prose. Translated text shows
 no cues, because offsets do not survive translation.
 
-Playback is also explicit. Reader surfaces consume the `NarrativePlaybackPort`
-provided by their host. A package consumer may supply any player or omit audio
-entirely; SEN does not install the SEIHouse audio player.
+Playback is also explicit, and the host supplies it. The SEIHouse audio
+player is SEIHouse ecosystem infrastructure that SEN uses directly (a peer of
+`@seihouse/sen`): a host that gives the Reader a reader mixer
+(`ReaderMixerProvider`) gets the full soundtrack, with Sound Cues played over
+the atmosphere and music (`MixerCueControl`: cues may overlap, each at the
+reader's Sound Cues level times its Energy, `SOUND_CUE_ENERGY_VOLUME`). A host
+that supplies only a single-channel `NarrativeAudioProvider` keeps that route,
+one cue at a time. `InlineAudio` needs one or the other.
 
 A cue an author places by hand is the same record with `origin: 'manual'`
 (`createManualSoundCue` in the Text Highlight Engine): the recording must be

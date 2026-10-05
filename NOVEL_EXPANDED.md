@@ -296,7 +296,7 @@ when its words change. That means:
   right, so its categories, and what the model is told to document, can be designed
   on purpose.
 
-## Where we are (2026-10-04)
+## Where we are (2026-10-05)
 
 The current implementation status, and the only section that says what is built.
 Update it whenever it changes.
@@ -315,8 +315,21 @@ Update it whenever it changes.
     browser's own voices in three parts: the Narrator for the prose, the
     Protagonist voice for the main character's spoken lines, the Side voice for
     everyone else's. The sentence being spoken is lit and the page follows it.
-    **Reader Settings** has one section, Narration (the three voices and the
-    speed, remembered on the device for each story language). **Holdings**
+    **The soundtrack is SEIHouse's own audio player** (its reader mixer): the
+    reader's chosen **atmosphere** (50 beds from SEN Atmospheres, Volume 1,
+    each measured so the player can level it toward −20 LUFS) plays under the
+    chapter. The levels are not even yet: 22 beds are too quiet to reach −20
+    even at the player's largest boost and need re-exporting, and until the
+    audio host allows the player to process its files (CORS), it can only turn
+    loud beds down, never quiet ones up. Sound Cues play
+    over it at the loudness of their Energy, Listen dips it, and a **sleep
+    timer** stops it, Listen included. A small **note** above the Listen bar
+    mutes all story audio with a tap; a long-press opens Audio settings.
+    **Reader Settings** opens with **Audio** (presets, master, the atmosphere
+    and Sound Cues levels, the atmosphere choice and the sleep timer, showing
+    only what the chapter uses), then **Narration** (the three voices and the
+    speed, remembered on the device for each story language). The mix is
+    remembered on the device, never in the story. **Holdings**
     lists what each character has now, for checking the chapters (below). No
     Codex, Mind Palace, reader translation or read marks.
   - **The Aura Veil has two screens:** one narrative manifestation and one media
@@ -412,7 +425,8 @@ Update it whenever it changes.
     rewards, Familiars, the Celestial Store, Creator Space) are Library package
     entries the Workshop previews; the NovelExpanded app uses none of them yet.
 - **Not rebuilt yet:**
-  - soundscapes;
+  - soundscapes (the music under a scene): the audio player plays them, but
+    nothing chooses one for a chapter yet;
   - manifestations;
   - System Panels, including the Fate Survival result card;
   - creature events.
@@ -456,7 +470,7 @@ Update it whenever it changes.
 | NovelExpanded app | Expanded Novels' app at NovelExpanded.com. Built at `/app/` (piece 1: the core application spine of Home, Create, Story View and Reader), in `src/novel-expanded/`. |
 | Story Seed / World Blueprint | Where a story is created (`?preview=story-seed`, and Create in the app). The Blueprint is the novel's transferable core: what a reader takes to make their own version ([The World Blueprint](#the-world-blueprint)). |
 | Story View | The story's own page: cover art, the story, Enter. Built today as the World Info page (`WorldCardInfo`), where Start Story or Start Reading leads into the Reader Chamber. |
-| Reader Chamber | Where chapters are read: a HARNESS story's chapters on the Text Highlight Engine with Sound Cues and Listen (`HarnessReaderSession`). The older Reader Chamber preview (`?preview=reader-chamber`) is not part of this path. |
+| Reader Chamber | Where chapters are read: a HARNESS story's chapters on the Text Highlight Engine with Sound Cues, Listen and the soundtrack (`HarnessReaderSession`). The older Reader Chamber preview (`?preview=reader-chamber`) is not part of this path. |
 | Listen / Read Aloud | The Reader reading a chapter aloud in three voices with the spoken sentence lit (`useReadAloud`, SEN's `reader-runtime`). Its voices and speed live in Reader Settings → Narration. |
 | Reader Settings | The Reader's settings sheet. Narration is its only section today. |
 | Text Highlight Engine (manuscript lab) | The manuscript editor at `?preview=text-highlight-engine`. |

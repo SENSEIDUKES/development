@@ -5,6 +5,9 @@ SEN engine and the two UI packages. Library owns SEIHouse users, products,
 economy, community and business policy. Authentication enforcement, secrets,
 durable ledgers and concrete infrastructure stay in the host/backend.
 
+**0.19.0:** requires `@seihouse/sen` 0.19.0 (the Reader's sound is the
+SEIHouse audio player's reader mixer; the host supplies `ReaderMixerProvider`).
+
 **0.18.1:** `WorkspaceSheet` takes `aboveVeil`, opening it over the
 full-screen writing veil for a question the writing waits on (the app's
 access token sheet, when a chapter reaches the visitor limit).

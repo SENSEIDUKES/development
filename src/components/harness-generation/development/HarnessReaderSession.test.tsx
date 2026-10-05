@@ -11,6 +11,8 @@ import { installAudioMediaStubs, renderWithDevAudio } from '../../../test-utils/
 import { HarnessGenerationController, HarnessReaderSession, type HarnessGenerationModelAdapter, type HarnessReaderWriting } from '@seihouse/sen/harness-generation';
 import type { ReadAloudVoicePicks, ReaderPreferenceStorage, ReaderStateRepository, ReaderStoryState } from '@seihouse/sen/reader-runtime';
 import { installFakeSpeechSynthesis, type FakeSpeechSynthesis } from '../../../test-utils/fakeSpeechSynthesis';
+import { ReaderMixerProvider, type ReaderMixer, type ReaderMixerSleepEvent } from '@seihouse/audio-player';
+import { createHostReaderMixer } from '../../../host/reader/readerMixer';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -314,5 +316,154 @@ describe('Read Aloud in the HARNESS Reader', { timeout: 20_000 }, () => {
     await click(byLabel('Next Chapter'), 'Next Chapter');
     await flush();
     expect(lastSpoken().text).toBe('Chapter 2. The Bell Keeper');
+  });
+});
+
+describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
+  const PICKS: ReadAloudVoicePicks = { en: { narrator: ['Daniel'], protagonist: ['Rishi'], side: ['Samantha'] } };
+  const BEAST_ROAR = /Beasts\/Roar\//;
+  let observed: { callback: IntersectionObserverCallback; target?: Element }[];
+  const mixerFor = () => {
+    const values = new Map<string, string>();
+    const storage: ReaderPreferenceStorage = { read: key => values.get(key) ?? null, write: (key, value) => { values.set(key, value); }, remove: key => { values.delete(key); } };
+    return { mixer: createHostReaderMixer(storage), values };
+  };
+  const mountWithMixer = async (mixer: ReaderMixer, element: React.ReactElement) => {
+    await act(async () => { root.render(renderWithDevAudio(<ReaderMixerProvider mixer={mixer}>{element}</ReaderMixerProvider>)); });
+    await flush();
+  };
+  const note = () => container.querySelector<HTMLButtonElement>('[data-testid="story-audio-note"] button');
+  /** Opens the lazily loaded Audio panel and waits for it. */
+  const audioPanel = async () => {
+    for (let tries = 0; tries < 50 && !container.ownerDocument.querySelector('[data-testid="reader-settings-audio"] h3'); tries++) await flush(20);
+    return container.ownerDocument.querySelector<HTMLElement>('[data-testid="reader-settings-audio"]')!;
+  };
+
+  beforeEach(() => {
+    observed = [];
+    vi.stubGlobal('IntersectionObserver', class {
+      constructor(private callback: IntersectionObserverCallback) {}
+      observe(target: Element) { observed.push({ callback: this.callback, target }); }
+      disconnect() { observed = observed.filter(entry => entry.callback !== this.callback); }
+    });
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('plays the reader\'s atmosphere and the chapter\'s cues through the mixer, shows only what the chapter uses, and stops on leaving', async () => {
+    const { controller, storyId } = await story({ written: 2 });
+    const { mixer } = mixerFor();
+    const startAtmosphere = vi.spyOn(mixer, 'startAtmosphere');
+    const stopAll = vi.spyOn(mixer, 'stopAll');
+    const preloadCues = vi.spyOn(mixer, 'preloadCues');
+    const playCue = vi.spyOn(mixer, 'playCue');
+    const notifyChapterEnd = vi.spyOn(mixer, 'notifyChapterEnd');
+    await mountWithMixer(mixer, <Host controller={controller} storyId={storyId} />);
+
+    expect(startAtmosphere).toHaveBeenCalledTimes(1);
+    // Chapter 1 has a Sound Cue: Sound Cues show in Audio and its sound is warmed. Soundscapes are not chosen yet.
+    expect(mixer.getState().availability).toMatchObject({ soundscapes: false, atmosphere: true, cues: true });
+    expect(preloadCues).toHaveBeenCalledWith([expect.stringMatching(BEAST_ROAR)]);
+    // Tapping the cue plays it over the soundtrack, at the writer's Energy (high).
+    await act(async () => { buttonBy(button => button.dataset.cuePhrase === 'the beast roared')!.click(); });
+    expect(playCue).toHaveBeenCalledWith(expect.stringMatching(BEAST_ROAR), { volume: 1 });
+
+    // Reaching the chapter's navigation is the chapter's end, for an End of chapter timer.
+    expect(observed.map(entry => entry.target?.getAttribute('aria-label'))).toEqual(['Chapters']);
+    act(() => observed[0].callback([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver));
+    expect(notifyChapterEnd).toHaveBeenCalledTimes(1);
+
+    // Chapter 2 has no cue: Sound Cues leave Audio settings.
+    await click(byLabel('Next Chapter'), 'Next Chapter');
+    expect(mixer.getState().availability.cues).toBe(false);
+
+    // The Fate page covers the chapter (and its note): the atmosphere fades out until the chapter is back.
+    const stopAtmosphere = vi.spyOn(mixer, 'stopAtmosphere');
+    await click(byLabel('Open Fate'), 'Open Fate');
+    expect(stopAtmosphere).toHaveBeenCalledTimes(1);
+    await click(button => button.textContent?.trim() === 'Back to reading', 'Back to reading');
+    expect(startAtmosphere).toHaveBeenCalledTimes(2);
+
+    expect(stopAll).not.toHaveBeenCalled();
+    act(() => root.unmount());
+    expect(stopAll).toHaveBeenCalledTimes(1);
+    root = createRoot(container);
+  });
+
+  it('the note mutes story audio with a tap, and a long-press opens Reader Settings at Audio', async () => {
+    const { controller, storyId } = await story({ written: 1 });
+    const { mixer, values } = mixerFor();
+    // A browser without speech still gets the note and the gear, for the soundtrack.
+    await mountWithMixer(mixer, <Host controller={controller} storyId={storyId} />);
+    expect(container.querySelector('[data-testid="read-aloud-player"]')).toBeNull();
+    expect(note()!.getAttribute('aria-label')).toBe('Mute story audio');
+
+    await act(async () => { note()!.click(); });
+    expect(mixer.getState().preferences.masterEnabled).toBe(false);
+    expect(note()!.getAttribute('aria-label')).toBe('Unmute story audio');
+    // The reader's mix is kept on the device, never in the story.
+    await flush(350);
+    expect(JSON.parse(values.get('audio-mixer')!)).toMatchObject({ masterEnabled: false });
+
+    await act(async () => { note()!.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })); });
+    const audio = await audioPanel();
+    const dialog = container.ownerDocument.querySelector<HTMLElement>('[role="dialog"]')!;
+    expect(dialog.getAttribute('aria-label') ?? dialog.querySelector('h2')!.textContent).toBe('Reader Settings');
+    expect(audio.scrollIntoView).toHaveBeenCalled();
+    // Without speech, Narration only says so.
+    expect([...dialog.querySelectorAll('section h3')].map(heading => heading.textContent)).toEqual(['Audio', 'Narration']);
+    expect(dialog.querySelector('[data-testid="reader-settings-narration"]')!.textContent).toContain("This browser can't read aloud.");
+    // Only the layers this chapter uses: Atmosphere and Sound Cues, never Soundscapes or Voice yet.
+    expect(audio.textContent).toContain('Atmosphere');
+    expect(audio.textContent).toContain('Sound Cues');
+    expect(audio.textContent).not.toMatch(/Soundscapes|Voice/);
+  });
+
+  it('dips the soundtrack under Listen and keeps the reader active, and a sleep timer stops Listen too', async () => {
+    const { fake: speech, uninstall } = installFakeSpeechSynthesis();
+    vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
+    Range.prototype.getClientRects = () => [{ left: 10, top: 20, right: 90, bottom: 40, width: 80, height: 20 }] as unknown as DOMRectList;
+    try {
+      const { controller, storyId } = await story({ written: 1 });
+      const { mixer } = mixerFor();
+      const leases: { setDuck: ReturnType<typeof vi.fn>; release: ReturnType<typeof vi.fn> }[] = [];
+      const retainDuck = mixer.retainDuck.bind(mixer);
+      vi.spyOn(mixer, 'retainDuck').mockImplementation(() => {
+        const lease = retainDuck();
+        const spied = { setDuck: vi.fn(lease.setDuck), release: vi.fn(lease.release) };
+        leases.push(spied);
+        return spied;
+      });
+      const releaseActivity = vi.fn();
+      vi.spyOn(mixer, 'retainActivity').mockImplementation(() => releaseActivity);
+      let sleep = (_event: ReaderMixerSleepEvent) => undefined as void;
+      vi.spyOn(mixer, 'subscribeSleep').mockImplementation(listener => { sleep = listener; return () => undefined; });
+      await mountWithMixer(mixer, <Host controller={controller} storyId={storyId} readAloudVoices={PICKS} />);
+
+      // Settings now holds Audio first, then Narration.
+      await click(byLabel('Reader Settings'), 'Reader Settings');
+      await audioPanel();
+      expect([...container.ownerDocument.querySelectorAll('[role="dialog"] section h3')].map(heading => heading.textContent)).toEqual(['Audio', 'Narration']);
+      await click(byLabel('Close Reader Settings'), 'Close Reader Settings');
+
+      await click(button => button.textContent?.trim() === 'Listen', 'Listen');
+      await act(async () => { speech.start(); });
+      await flush();
+      expect(leases).toHaveLength(1);
+      expect(leases[0].setDuck).toHaveBeenCalledWith(0.6);
+      expect(mixer.retainActivity).toHaveBeenCalledTimes(1);
+
+      await click(byLabel('Pause'), 'Pause');
+      expect(leases[0].release).toHaveBeenCalled();
+      expect(releaseActivity).toHaveBeenCalled();
+
+      await click(byLabel('Resume'), 'Resume');
+      await act(async () => { speech.start(); });
+      await flush();
+      act(() => sleep({ choiceId: 'end-of-chapter', firedAt: Date.now() }));
+      await flush();
+      expect(buttonBy(button => button.textContent?.trim() === 'Listen')).toBeTruthy();
+    } finally {
+      uninstall();
+    }
   });
 });

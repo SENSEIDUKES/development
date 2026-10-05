@@ -7,7 +7,8 @@
  * the hidden look-ahead nowhere on screen, every blank Seed slot filled) → Manifest
  * Story → Story View → Start Story under the veil → Chapter 1 with its Sound
  * Cue → Listen (three voices from the writer's speaker tags, the spoken
- * sentence lit, Pause and Resume, Reader Settings → Narration with the speed
+ * sentence lit, Pause and Resume, the ghost note (mute, long-press to Audio),
+ * Reader Settings → Audio and Narration with the speed
  * kept on the device) → reload (no new request, nothing reads by itself) →
  * Back → Continue · Ch. 1 → Export story (the whole story as one file) → Back
  * → Home card → browser Back and Forward → a missing story goes Home.
@@ -270,15 +271,39 @@ async function walk(browser, viewport, sample) {
   await visibleButton('Resume').click();
   await page.waitForTimeout(60);
   check((await lastSpoken()).text === '“They are drowned,”', 'Resume should read the same line again from its start.');
-  await visibleButton('Reader Settings').click();
+  // The ghost note: the soundtrack's one control in the Reader, sitting above the Listen bar.
+  const note = page.getByTestId('story-audio-note').getByRole('button', { name: /story audio/ });
+  await note.waitFor();
+  const noteBox = await note.boundingBox();
+  const barBox = await page.getByTestId('read-aloud-player').boundingBox();
+  check(noteBox && barBox && noteBox.y + noteBox.height <= barBox.y + 1 && noteBox.x + noteBox.width <= viewport.width,
+    `The note should sit above the Listen bar, inside the screen (${JSON.stringify({ noteBox, barBox })}).`);
+  // A tap mutes the whole soundtrack, and the reader's mix is kept on the device.
+  await note.click();
+  // The mixer saves a moment after the last change (and at once when the page is hidden).
+  await page.waitForTimeout(450);
+  const mutedMix = JSON.parse(await page.evaluate(() => localStorage.getItem('novelexpanded-reader-audio-mixer')) ?? '{}');
+  check(mutedMix.masterEnabled === false, `A tap on the note should mute story audio and save it, got ${JSON.stringify(mutedMix)}.`);
+  check(await page.getByTestId('story-audio-note').getByRole('button', { name: 'Unmute story audio' }).count() === 1, 'The muted note should offer to unmute.');
+  await page.getByTestId('story-audio-note').getByRole('button', { name: 'Unmute story audio' }).click();
+  // A long-press (right-click on a desktop) opens Reader Settings at Audio.
+  await page.getByTestId('story-audio-note').getByRole('button').click({ button: 'right' });
   const settings = page.getByRole('dialog', { name: 'Reader Settings' });
   await settings.waitFor();
-  check(JSON.stringify(await settings.locator('section h3').allTextContents()) === '["Narration"]', 'Reader Settings should hold Narration only.');
+  const audio = settings.getByTestId('reader-settings-audio');
+  await audio.locator('h3', { hasText: 'Audio' }).waitFor();
+  check(JSON.stringify(await settings.locator('section h3').allTextContents()) === '["Audio","Narration"]', `Reader Settings should hold Audio, then Narration, got ${JSON.stringify(await settings.locator('section h3').allTextContents())}.`);
+  check(await audio.getByRole('switch').count() > 0 && await audio.getByRole('slider').count() > 0, 'Audio should show the approved switches and sliders.');
+  check(await audio.getByText('Atmosphere', { exact: true }).count() > 0, 'Audio should offer the Atmosphere layer.');
+  check(!(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), 'Reader Settings must not scroll sideways.');
+  await page.waitForTimeout(300);
+  await shot('6c-reader-audio');
+  await settings.getByTestId('reader-settings-narration').scrollIntoViewIfNeeded();
   check(await settings.locator('select[data-voice-role]').count() === 3, 'Narration should offer three voices.');
   await settings.locator('label').filter({ hasText: '1.25×' }).click();
   const saved = JSON.parse(await page.evaluate(() => localStorage.getItem('novelexpanded-reader-read-aloud')) ?? '{}');
   check(saved.rate === 1.25, `The speed should be kept on the device, got ${JSON.stringify(saved)}.`);
-  await shot('6c-reader-settings');
+  await shot('6c-reader-narration');
   await settings.getByRole('button', { name: 'Close Reader Settings' }).click();
   await visibleButton('Stop').click();
   check(await visibleButton(/^Listen$/).isVisible(), 'Stop should bring Listen back.');

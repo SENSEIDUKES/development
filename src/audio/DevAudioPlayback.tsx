@@ -5,7 +5,6 @@ import {
   useAudioSession,
 } from '@seihouse/audio-player';
 import { useCallback, useEffect, useMemo, useRef, type PropsWithChildren } from 'react';
-import '@seihouse/audio-player/styles.css';
 
 const AUDIO_DATA_URI = /^data:(audio\/[a-z0-9.+-]+);base64,([a-z0-9+/]+=*)$/iu;
 const POST_QUEUE_PLAYBACK_DELAY_MS = 100;

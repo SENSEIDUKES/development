@@ -1,0 +1,718 @@
+{
+  "pack": {
+    "id": "sen-atmospheres",
+    "name": "SEN Atmospheres",
+    "version": "1.0.0",
+    "archiveSha256": "6ac16557b482d346662cc22783fd48d484fb1c2adc3edd8414901cef58b8fe2b",
+    "reviewStatus": "ai-proposed sound identities and intensity"
+  },
+  "measurement": {
+    "method": "calibrated-w3c-k-biquads/bs1770-gates/v1",
+    "decoder": "@audio/decode 3.12.0",
+    "measuredOn": "2026-10-05",
+    "tool": "@seihouse/audio-player 4.0.0 measure-loudness",
+    "audioSha256Verified": true
+  },
+  "entries": [
+    {
+      "id": "sen-atmosphere-rain-gentle-rain-1",
+      "label": "Gentle Rain 1",
+      "group": "Rain",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Rain/Gentle_Rain_1.mp3",
+      "primarySound": "water-drips",
+      "intensity": "medium",
+      "durationSeconds": 30.02,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -30.79,
+        "peakDb": -8.16
+      }
+    },
+    {
+      "id": "sen-atmosphere-rain-gentle-rain-2",
+      "label": "Gentle Rain 2",
+      "group": "Rain",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Rain/Gentle_Rain_2.mp3",
+      "primarySound": "water",
+      "intensity": "medium",
+      "durationSeconds": 30.02,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -33.68,
+        "peakDb": -15.48
+      }
+    },
+    {
+      "id": "sen-atmosphere-rain-gentle-rain-3",
+      "label": "Gentle Rain 3",
+      "group": "Rain",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Rain/Gentle_Rain_3.mp3",
+      "primarySound": "water-drips",
+      "intensity": "medium",
+      "durationSeconds": 30.02,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -40.4,
+        "peakDb": -20.86
+      }
+    },
+    {
+      "id": "sen-atmosphere-rain-gentle-rain-4",
+      "label": "Gentle Rain 4",
+      "group": "Rain",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Rain/Gentle_Rain_4.mp3",
+      "primarySound": "water-drips",
+      "intensity": "medium",
+      "durationSeconds": 30.02,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -29.4,
+        "peakDb": -4.07
+      }
+    },
+    {
+      "id": "sen-atmosphere-rain-gentle-rain-5",
+      "label": "Gentle Rain 5",
+      "group": "Rain",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Rain/Gentle_Rain_5.mp3",
+      "primarySound": "water-drips",
+      "intensity": "medium",
+      "durationSeconds": 30.02,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -36.77,
+        "peakDb": -19.34
+      }
+    },
+    {
+      "id": "sen-atmosphere-rain-heavy-rain-1",
+      "label": "Heavy Rain 1",
+      "group": "Rain",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Rain/Heavy_Rain_1.mp3",
+      "primarySound": "rain",
+      "intensity": "high",
+      "durationSeconds": 30.04,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -7.83,
+        "peakDb": 1.45
+      }
+    },
+    {
+      "id": "sen-atmosphere-rain-heavy-rain-2",
+      "label": "Heavy Rain 2",
+      "group": "Rain",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Rain/Heavy_Rain_2.mp3",
+      "primarySound": "rain",
+      "intensity": "high",
+      "durationSeconds": 30.04,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -16.22,
+        "peakDb": 0.24
+      }
+    },
+    {
+      "id": "sen-atmosphere-rain-heavy-rain-3",
+      "label": "Heavy Rain 3",
+      "group": "Rain",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Rain/Heavy_Rain_3.mp3",
+      "primarySound": "rain",
+      "intensity": "medium",
+      "durationSeconds": 30.04,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -17.97,
+        "peakDb": -0.63
+      }
+    },
+    {
+      "id": "sen-atmosphere-rain-heavy-rainstorm-1",
+      "label": "Heavy Rainstorm 1",
+      "group": "Rain",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Rain/Heavy_Rainstorm_1.mp3",
+      "primarySound": "rain",
+      "intensity": "high",
+      "durationSeconds": 30.02,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -13.71,
+        "peakDb": 0.86
+      }
+    },
+    {
+      "id": "sen-atmosphere-rain-heavy-rainstorm-2",
+      "label": "Heavy Rainstorm 2",
+      "group": "Rain",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Rain/Heavy_Rainstorm_2.mp3",
+      "primarySound": "water",
+      "intensity": "medium",
+      "durationSeconds": 30.02,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -15.84,
+        "peakDb": 0.78
+      }
+    },
+    {
+      "id": "sen-atmosphere-rain-heavy-rainstorm-3",
+      "label": "Heavy Rainstorm 3",
+      "group": "Rain",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Rain/Heavy_Rainstorm_3.mp3",
+      "primarySound": "rain",
+      "intensity": "high",
+      "durationSeconds": 30.02,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -14.74,
+        "peakDb": 0.45
+      }
+    },
+    {
+      "id": "sen-atmosphere-wind-gentle-wind-1",
+      "label": "Gentle Wind 1",
+      "group": "Wind",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Wind/Gentle_Wind_1.mp3",
+      "primarySound": "synthetic-drone",
+      "intensity": "low",
+      "durationSeconds": 30.04,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -41.92,
+        "peakDb": -15.72
+      }
+    },
+    {
+      "id": "sen-atmosphere-wind-gentle-wind-2",
+      "label": "Gentle Wind 2",
+      "group": "Wind",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Wind/Gentle_Wind_2.wav",
+      "primarySound": "traffic",
+      "intensity": "medium",
+      "durationSeconds": 28.57,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -25.66,
+        "peakDb": -0.39
+      }
+    },
+    {
+      "id": "sen-atmosphere-wind-gentle-wind-3",
+      "label": "Gentle Wind 3",
+      "group": "Wind",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Wind/Gentle_Wind_3.wav",
+      "primarySound": "water-drips",
+      "intensity": "low",
+      "durationSeconds": 31.58,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -41.91,
+        "peakDb": -9.31
+      }
+    },
+    {
+      "id": "sen-atmosphere-wind-strong-wind-1",
+      "label": "Strong Wind 1",
+      "group": "Wind",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Wind/Strong_Wind_1.wav",
+      "primarySound": "traffic",
+      "intensity": "medium",
+      "durationSeconds": 27.27,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -26.45,
+        "peakDb": -0.37
+      }
+    },
+    {
+      "id": "sen-atmosphere-wind-strong-wind-2",
+      "label": "Strong Wind 2",
+      "group": "Wind",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Wind/Strong_Wind_2.mp3",
+      "primarySound": "wind",
+      "intensity": "medium",
+      "durationSeconds": 30.04,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -25.12,
+        "peakDb": -0.18
+      }
+    },
+    {
+      "id": "sen-atmosphere-wind-strong-wind-3",
+      "label": "Strong Wind 3",
+      "group": "Wind",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Wind/Strong_Wind_3.mp3",
+      "primarySound": "traffic",
+      "intensity": "high",
+      "durationSeconds": 30.04,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -12.67,
+        "peakDb": 0.18
+      }
+    },
+    {
+      "id": "sen-atmosphere-waves-gentle-waves-1",
+      "label": "Gentle Waves 1",
+      "group": "Waves",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Waves/Gentle_Waves_1.mp3",
+      "primarySound": "water-waves",
+      "intensity": "medium",
+      "durationSeconds": 30.04,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -20.87,
+        "peakDb": -0.11
+      }
+    },
+    {
+      "id": "sen-atmosphere-waves-gentle-waves-2",
+      "label": "Gentle Waves 2",
+      "group": "Waves",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Waves/Gentle_Waves_2.mp3",
+      "primarySound": "ocean-waves",
+      "intensity": "medium",
+      "durationSeconds": 30.04,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -22.9,
+        "peakDb": 0.31
+      }
+    },
+    {
+      "id": "sen-atmosphere-waves-gentle-waves-3",
+      "label": "Gentle Waves 3",
+      "group": "Waves",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Waves/Gentle_Waves_3.mp3",
+      "primarySound": "water",
+      "intensity": "medium",
+      "durationSeconds": 30.04,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -25.49,
+        "peakDb": -4.13
+      }
+    },
+    {
+      "id": "sen-atmosphere-waves-strong-waves-1",
+      "label": "Strong Waves 1",
+      "group": "Waves",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Waves/Strong_Waves_1.mp3",
+      "primarySound": "ocean-waves",
+      "intensity": "high",
+      "durationSeconds": 30.04,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -17.67,
+        "peakDb": -2.11
+      }
+    },
+    {
+      "id": "sen-atmosphere-waves-strong-waves-2",
+      "label": "Strong Waves 2",
+      "group": "Waves",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Waves/Strong_Waves_2.mp3",
+      "primarySound": "ocean-waves",
+      "intensity": "high",
+      "durationSeconds": 30.04,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -12.92,
+        "peakDb": 0.52
+      }
+    },
+    {
+      "id": "sen-atmosphere-waves-strong-waves-3",
+      "label": "Strong Waves 3",
+      "group": "Waves",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Waves/Strong_Waves_3.mp3",
+      "primarySound": "ocean-waves",
+      "intensity": "high",
+      "durationSeconds": 30.04,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -17.46,
+        "peakDb": -1.52
+      }
+    },
+    {
+      "id": "sen-atmosphere-noise-cave-1",
+      "label": "Cave 1",
+      "group": "Places",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Noise/Cave_1.mp3",
+      "primarySound": "synthetic-drone",
+      "intensity": "low",
+      "durationSeconds": 30.04,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -22.79,
+        "peakDb": -2.77
+      }
+    },
+    {
+      "id": "sen-atmosphere-noise-cave-2",
+      "label": "Cave 2",
+      "group": "Places",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Noise/Cave_2.mp3",
+      "primarySound": "rumbling",
+      "intensity": "low",
+      "durationSeconds": 30.02,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -23.63,
+        "peakDb": -2.77
+      }
+    },
+    {
+      "id": "sen-atmosphere-noise-cyberpunk-city-1",
+      "label": "Cyberpunk City 1",
+      "group": "Places",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Noise/Cyberpunk_City_1.mp3",
+      "primarySound": "birds",
+      "intensity": "low",
+      "durationSeconds": 30.02,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -25.96,
+        "peakDb": -10.61
+      }
+    },
+    {
+      "id": "sen-atmosphere-noise-cyberpunk-city-2",
+      "label": "Cyberpunk City 2",
+      "group": "Places",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Noise/Cyberpunk_City_2.mp3",
+      "primarySound": "crowd-chatter",
+      "intensity": "medium",
+      "durationSeconds": 30.02,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -19.86,
+        "peakDb": -4.83
+      }
+    },
+    {
+      "id": "sen-atmosphere-noise-forest-1",
+      "label": "Forest 1",
+      "group": "Places",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Noise/Forest_1.mp3",
+      "primarySound": "birds",
+      "intensity": "low",
+      "durationSeconds": 30.02,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -46.89,
+        "peakDb": -27.05
+      }
+    },
+    {
+      "id": "sen-atmosphere-noise-forest-2",
+      "label": "Forest 2",
+      "group": "Places",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Noise/Forest_2.mp3",
+      "primarySound": "birds",
+      "intensity": "low",
+      "durationSeconds": 30.04,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -43.08,
+        "peakDb": -23.27
+      }
+    },
+    {
+      "id": "sen-atmosphere-noise-forest-3",
+      "label": "Forest 3",
+      "group": "Places",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Noise/Forest_3.mp3",
+      "primarySound": "birds",
+      "intensity": "low",
+      "durationSeconds": 30.04,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -42.51,
+        "peakDb": -17.76
+      }
+    },
+    {
+      "id": "sen-atmosphere-noise-horror-1",
+      "label": "Horror 1",
+      "group": "Places",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Noise/Horror_1.mp3",
+      "primarySound": "synthetic-drone",
+      "intensity": "low",
+      "durationSeconds": 30.02,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -25.31,
+        "peakDb": -7.58
+      }
+    },
+    {
+      "id": "sen-atmosphere-noise-modern-city-1",
+      "label": "Modern City 1",
+      "group": "Places",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Noise/Modern_City_1.mp3",
+      "primarySound": "crowd-chatter",
+      "intensity": "medium",
+      "durationSeconds": 30.02,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -20.68,
+        "peakDb": -8.06
+      }
+    },
+    {
+      "id": "sen-atmosphere-noise-under-water-1",
+      "label": "Under Water 1",
+      "group": "Places",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Noise/Under_Water_1.mp3",
+      "primarySound": "synthetic-drone",
+      "intensity": "low",
+      "durationSeconds": 30.04,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -17.04,
+        "peakDb": -0.39
+      }
+    },
+    {
+      "id": "sen-atmosphere-noise-village-1",
+      "label": "Village 1",
+      "group": "Places",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Noise/Village_1.mp3",
+      "primarySound": "birds",
+      "intensity": "medium",
+      "durationSeconds": 30.02,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -38.99,
+        "peakDb": -14.16
+      }
+    },
+    {
+      "id": "sen-atmosphere-crowd-crowd-chatter-1",
+      "label": "Crowd Chatter 1",
+      "group": "Crowd",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Crowd/Crowd_Chatter_1.mp3",
+      "primarySound": "crowd-chatter",
+      "intensity": "high",
+      "durationSeconds": 30.04,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -24.41,
+        "peakDb": -11.2
+      }
+    },
+    {
+      "id": "sen-atmosphere-crowd-crowd-chatter-2",
+      "label": "Crowd Chatter 2",
+      "group": "Crowd",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Crowd/Crowd_Chatter_2.mp3",
+      "primarySound": "crowd-chatter",
+      "intensity": "medium",
+      "durationSeconds": 30.04,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -23.93,
+        "peakDb": -10.75
+      }
+    },
+    {
+      "id": "sen-atmosphere-crowd-crowd-chatter-3",
+      "label": "Crowd Chatter 3",
+      "group": "Crowd",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Crowd/Crowd_Chatter_3.mp3",
+      "primarySound": "crowd-chatter",
+      "intensity": "medium",
+      "durationSeconds": 15.02,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -19.56,
+        "peakDb": -7.66
+      }
+    },
+    {
+      "id": "sen-atmosphere-crowd-crowd-cheer-1",
+      "label": "Crowd Cheer 1",
+      "group": "Crowd",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Crowd/Crowd_Cheer_1.mp3",
+      "primarySound": "crowd-cheering",
+      "intensity": "high",
+      "durationSeconds": 30.02,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -15.54,
+        "peakDb": -3.51
+      }
+    },
+    {
+      "id": "sen-atmosphere-crowd-crowd-roar-1",
+      "label": "Crowd Roar 1",
+      "group": "Crowd",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Crowd/Crowd_Roar_1.mp3",
+      "primarySound": "crowd-cheering",
+      "intensity": "high",
+      "durationSeconds": 30.04,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -6.8,
+        "peakDb": 0.78
+      }
+    },
+    {
+      "id": "sen-atmosphere-crowd-crowd-roar-2",
+      "label": "Crowd Roar 2",
+      "group": "Crowd",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Crowd/Crowd_Roar_2.mp3",
+      "primarySound": "crowd-cheering",
+      "intensity": "high",
+      "durationSeconds": 15.5,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -4.17,
+        "peakDb": 2.17
+      }
+    },
+    {
+      "id": "sen-atmosphere-crowd-crowd-roar-3",
+      "label": "Crowd Roar 3",
+      "group": "Crowd",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Crowd/Crowd_Roar_3.mp3",
+      "primarySound": "crowd-cheering",
+      "intensity": "high",
+      "durationSeconds": 30.04,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -4.11,
+        "peakDb": 1.37
+      }
+    },
+    {
+      "id": "sen-atmosphere-combat-ancient-battlefield-1",
+      "label": "Ancient Battlefield 1",
+      "group": "Combat",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Combat/Ancient_Battlefield_1.mp3",
+      "primarySound": "sword-clashes",
+      "intensity": "high",
+      "durationSeconds": 30.04,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -14.24,
+        "peakDb": 2.03
+      }
+    },
+    {
+      "id": "sen-atmosphere-combat-ancient-battlefield-2",
+      "label": "Ancient Battlefield 2",
+      "group": "Combat",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Combat/Ancient_Battlefield_2.mp3",
+      "primarySound": "sword-clashes",
+      "intensity": "high",
+      "durationSeconds": 15.91,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -13.75,
+        "peakDb": 1.21
+      }
+    },
+    {
+      "id": "sen-atmosphere-combat-ancient-battlefield-3",
+      "label": "Ancient Battlefield 3",
+      "group": "Combat",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Combat/Ancient_Battlefield_3.mp3",
+      "primarySound": "gunshot",
+      "intensity": "high",
+      "durationSeconds": 30.04,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -17.15,
+        "peakDb": 1.06
+      }
+    },
+    {
+      "id": "sen-atmosphere-combat-magic-arts-1",
+      "label": "Magic Arts 1",
+      "group": "Combat",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Combat/Magic_Arts_1.mp3",
+      "primarySound": "whoosh",
+      "intensity": "high",
+      "durationSeconds": 30.04,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -12.22,
+        "peakDb": 0.92
+      }
+    },
+    {
+      "id": "sen-atmosphere-combat-magic-arts-2",
+      "label": "Magic Arts 2",
+      "group": "Combat",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Combat/Magic_Arts_2.mp3",
+      "primarySound": "rumbling",
+      "intensity": "high",
+      "durationSeconds": 30.04,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -10.05,
+        "peakDb": 1.51
+      }
+    },
+    {
+      "id": "sen-atmosphere-combat-magic-arts-3",
+      "label": "Magic Arts 3",
+      "group": "Combat",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Combat/Magic_Arts_3.mp3",
+      "primarySound": "whoosh",
+      "intensity": "high",
+      "durationSeconds": 30.04,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -14.11,
+        "peakDb": 0.24
+      }
+    },
+    {
+      "id": "sen-atmosphere-combat-martial-arts-1",
+      "label": "Martial Arts 1",
+      "group": "Combat",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Combat/Martial_Arts_1.mp3",
+      "primarySound": "footsteps",
+      "intensity": "medium",
+      "durationSeconds": 15.05,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -24.08,
+        "peakDb": -2.44
+      }
+    },
+    {
+      "id": "sen-atmosphere-combat-martial-arts-2",
+      "label": "Martial Arts 2",
+      "group": "Combat",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Combat/Martial_Arts_2.mp3",
+      "primarySound": "thump",
+      "intensity": "medium",
+      "durationSeconds": 15.05,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -19.55,
+        "peakDb": 0.23
+      }
+    },
+    {
+      "id": "sen-atmosphere-combat-martial-arts-3",
+      "label": "Martial Arts 3",
+      "group": "Combat",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/atmosphere/Combat/Martial_Arts_3.wav",
+      "primarySound": "footsteps",
+      "intensity": "medium",
+      "durationSeconds": 16.67,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -25.11,
+        "peakDb": -2.13
+      }
+    }
+  ]
+}

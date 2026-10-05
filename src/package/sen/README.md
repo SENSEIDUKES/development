@@ -16,7 +16,7 @@ accounts, Energy, QI, first-party catalogs, Workshop state, or concrete APIs.
 | `./reader-runtime` | Required host ports for Reader/Codex state and services, and Read Aloud: spoken lines and speaker records, the three-voice script, voice choice, device preferences through `ReaderPreferenceStorage`, and the `useReadAloud` player over the browser's speech |
 | `./reader-chamber` | Portable Reader behavior and UI, including the anchored Mind Palace |
 | `./reader-codex` | Portable Codex behavior and UI |
-| `./inline-audio` | Sound Cues on the page: the glyph on the words a cue sits on and its inline playback (needs a host `NarrativeAudioProvider`) |
+| `./inline-audio` | Sound Cues on the page: the glyph on the words a cue sits on and its playback, through the host's reader mixer (`ReaderMixerProvider`) or, without one, a host `NarrativeAudioProvider` |
 | `./color-codes` | Single narrative Color Code authority |
 | `./cards` | Narrative and System card families |
 | `./manifestations` | Neutral manifestation capability and reveal UI |
@@ -32,6 +32,32 @@ accounts, Energy, QI, first-party catalogs, Workshop state, or concrete APIs.
 There is no `chapter-generation` or `codex-cards` compatibility entry. Legacy
 Chapter Generation was retired; HARNESS is the one canonical generated-story
 owner.
+
+**0.19.0 (breaking):** the Reader's sound is the SEIHouse audio player's
+reader mixer. `@seihouse/audio-player` ^4.0.0 is a new peer.
+
+- The HARNESS Reader (`./harness-generation`) plays its soundtrack through the
+  host's `ReaderMixerProvider`: the reader's chosen atmosphere starts on entry
+  and every layer stops on leaving; only the layers the chapter uses appear in
+  Audio settings (Sound Cues when it has some; soundscapes are not chosen
+  yet); the chapter's cues are warmed early; Listen dips the soundtrack and
+  keeps the reader active; a sleep timer that fires stops Listen too; reaching
+  the chapter's navigation is the chapter's end for an End of chapter timer.
+- The Reader shows the player's ghost note above the Listen bar (a tap mutes
+  story audio, a long-press opens Audio), and Reader Settings opens with an
+  Audio section (the player's `ReaderMixerPanel`, loaded only when the sheet
+  opens) before Narration. Without a mixer, neither appears.
+- `./inline-audio`: with a mixer, a Sound Cue plays over the soundtrack
+  (`MixerCueControl`), cues may overlap, and its loudness is the reader's
+  Sound Cues level times the moment's Energy (`SOUND_CUE_ENERGY_VOLUME`: low
+  0.6, medium 0.8, high 1). A tap that makes no sound says why (story audio
+  muted, Sound Cues off). `InlineAudio` needs a `ReaderMixerProvider` or a
+  `NarrativeAudioProvider`.
+- Host setup: create one mixer for the page (`createReaderMixer`, with your
+  atmospheres and saved mix), wrap the Reader in `ReaderMixerProvider`, import
+  `@seihouse/audio-player/styles.css` and
+  `@seihouse/audio-player/reader-ui/styles.css`, and add the player's
+  `dist/reader-ui.js` to Tailwind's `@source`.
 
 **0.18.0 (breaking):** a story runs 10 to 40 arcs.
 

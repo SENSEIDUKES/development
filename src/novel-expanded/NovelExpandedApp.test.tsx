@@ -18,6 +18,7 @@ import { BlueprintRequestError } from '../host/story-seed/blueprintGenerationCli
 import { createLocalStorySeedRepository } from '../host/story-seed/localStorySeedRepository';
 import { startHarnessStoryFromSeed } from '../host/story-seed/startHarnessStory';
 import { createLocalReaderPreferenceStorage } from '../host/reader/readerPreferenceStorage';
+import { createHostReaderMixer } from '../host/reader/readerMixer';
 import { installFakeSpeechSynthesis } from '../test-utils/fakeSpeechSynthesis';
 import { NovelExpandedApp } from './NovelExpandedApp';
 import { NOVEL_EXPANDED_STORAGE, type NovelExpandedServices } from './services';
@@ -105,7 +106,7 @@ const chaptersAction = () => worldInfo()?.querySelector<HTMLElement>('[data-worl
 const address = () => `${window.location.pathname}${window.location.search}`;
 const render = async (services: NovelExpandedServices, url = '/app/') => {
   window.history.replaceState(null, '', url);
-  await act(async () => root.render(<NovelExpandedApp services={services} />));
+  await act(async () => root.render(<NovelExpandedApp services={services} readerMixer={createHostReaderMixer(services.readerPreferences)} />));
   await flush(20);
 };
 const typeInto = async (input: HTMLInputElement, value: string) => {
@@ -246,6 +247,12 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
       await click(document.querySelector('button[aria-label="Reader Settings"]'), 'Reader Settings');
       await click(document.querySelector('input[name="read-aloud-rate"][value="1.5"]'), 'Speed 1.5×');
       expect(JSON.parse(window.localStorage.getItem('novelexpanded-reader-read-aloud')!)).toMatchObject({ v: 1, rate: 1.5 });
+
+      // The soundtrack: the note sits with the Listen bar, and its mute is kept with the reader's other device choices.
+      const note = document.querySelector<HTMLButtonElement>('[data-testid="read-aloud-player"] [data-testid="story-audio-note"] button');
+      expect(note?.getAttribute('aria-label')).toBe('Mute story audio');
+      await click(note, 'Mute story audio', 350);
+      expect(JSON.parse(window.localStorage.getItem('novelexpanded-reader-audio-mixer')!)).toMatchObject({ masterEnabled: false });
     } finally {
       uninstall();
       vi.unstubAllGlobals();

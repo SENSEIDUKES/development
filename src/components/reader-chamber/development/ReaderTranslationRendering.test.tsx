@@ -13,16 +13,17 @@ import { ReaderViewport } from '@seihouse/sen/reader-chamber';
 
 // Sound Cue controls mount a real playback adapter; the Reader's own audio
 // stack is not what this file is testing.
-vi.mock('../../../audio/playback', () => ({
-  useNarrativeAudio: () => ({
+vi.mock('../../../audio/playback', () => {
+  const playback = () => ({
     currentSource: null, currentTrackId: null, isMuted: false, isPlaying: false, volume: 1,
     load: vi.fn(), pause: vi.fn(), play: vi.fn(), setVolume: vi.fn(), stop: vi.fn(),
     subscribe: vi.fn(() => () => undefined),
     subscribeToTrackChange: vi.fn(() => () => undefined),
     subscribeToQueueEnd: vi.fn(() => () => undefined),
     toggleMute: vi.fn(),
-  }),
-}));
+  });
+  return { useNarrativeAudio: playback, useOptionalNarrativeAudio: playback };
+});
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 

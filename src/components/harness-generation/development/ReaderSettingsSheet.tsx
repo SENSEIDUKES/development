@@ -1,5 +1,6 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect, useRef } from 'react';
 import FocusLock from 'react-focus-lock';
+import type { ReaderMixer } from '@seihouse/audio-player';
 import { Play, RotateCcw, X } from 'lucide-react';
 import { READ_ALOUD_RATES, READ_ALOUD_ROLES, type ReadAloud, type ReadAloudRole, type ReadAloudVoice } from '@seihouse/sen/reader-runtime';
 import { getSenLanguageLabel, normalizeSenLanguageCode } from '../../../lib/language';
@@ -44,23 +45,38 @@ function VoicePicker({ role, readAloud, language }: { role: ReadAloudRole; readA
 }
 
 /**
- * Reader Settings: a sheet on phones and a side panel on wider screens. Its
- * first section is Narration, the three voices and the speed Read Aloud uses;
- * later sections join it here.
+ * The audio player's mixer view, built from the SEIHouse UI controls. It loads
+ * when Reader Settings first opens, so reading never waits for it.
  */
-export function ReaderSettingsSheet({ open, onClose, readAloud, language }: {
+const ReaderMixerPanel = lazy(() => import('@seihouse/audio-player/reader-ui').then(module => ({ default: module.ReaderMixerPanel })));
+
+/**
+ * Reader Settings: a sheet on phones and a side panel on wider screens. Audio
+ * comes first: the reader's mix of the story's soundtrack (presets, the
+ * layers the chapter uses, the atmosphere and the sleep timer). Narration
+ * follows: the three voices and the speed Read Aloud uses.
+ */
+export function ReaderSettingsSheet({ open, onClose, readAloud, language, mixer, section }: {
   open: boolean;
   onClose: () => void;
   readAloud: ReadAloud;
   /** The story's language: its voices are listed first. */
   language: string;
+  /** The host's reader mixer. Without one there is no Audio section. */
+  mixer?: ReaderMixer | null;
+  /** The section to bring into view when the sheet opens (the note's long-press opens Audio). */
+  section?: 'audio' | 'narration';
 }) {
+  const audioRef = useRef<HTMLElement>(null);
   useEffect(() => {
     if (!open) return undefined;
     const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
+  useEffect(() => {
+    if (open && section === 'audio') audioRef.current?.scrollIntoView?.({ block: 'start' });
+  }, [open, section]);
   if (!open) return null;
   return <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/60 sm:items-stretch sm:justify-end" onClick={onClose}>
     <FocusLock returnFocus>
@@ -73,6 +89,11 @@ export function ReaderSettingsSheet({ open, onClose, readAloud, language }: {
             <X className="h-4 w-4" aria-hidden />
           </button>
         </div>
+        {mixer && <section ref={audioRef} aria-label="Audio" data-testid="reader-settings-audio" className="mt-4 scroll-mt-4">
+          <Suspense fallback={<p role="status" className="text-sm text-neutral-400">Opening Audio…</p>}>
+            <ReaderMixerPanel mixer={mixer} titleAs="h3" />
+          </Suspense>
+        </section>}
         <section aria-labelledby="reader-settings-narration" data-testid="reader-settings-narration" className="mt-4 rounded-xl border border-white/10 bg-black/20 p-3 sm:p-4">
           <h3 id="reader-settings-narration" className="text-sm font-semibold text-neutral-100">Narration</h3>
           <p className="mt-1 text-xs leading-relaxed text-neutral-400">

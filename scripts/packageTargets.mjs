@@ -23,7 +23,7 @@ export const PACKAGE_TARGETS = {
       '@seihouse/sen/color-codes': ['COLOR_CODES', 'getColorCodeValue', 'resolveCharacterRelationshipColorCode'],
       '@seihouse/sen/cards': ['CodexCard', 'CodexHovercard', 'CharacterCard', 'LocationCard', 'SystemBlock', 'WorldNotice', 'FateResultCard'],
       '@seihouse/sen/reader-chamber': ['ReaderChamber', 'ReaderViewport'],
-      '@seihouse/sen/inline-audio': ['InlineAudio', 'InlineAudioControl', 'InlineAudioText'],
+      '@seihouse/sen/inline-audio': ['InlineAudio', 'InlineAudioControl', 'InlineAudioText', 'MixerCueControl', 'SOUND_CUE_ENERGY_VOLUME'],
       '@seihouse/sen/reader-codex': ['ReaderCodex', 'CodexSheetOverlay'],
       '@seihouse/sen/reader-runtime': ['ReaderRuntimeProvider', 'useReadAloud', 'buildReadAloudScript', 'findSpokenLines', 'chooseDefaultVoices', 'createWebSpeechEngine'],
       '@seihouse/sen/translation': ['ReaderTranslationController', 'ReaderTranslationRuntimeProvider'],

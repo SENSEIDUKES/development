@@ -1,5 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { Settings } from 'lucide-react';
+import { ReaderMixerNote } from '@seihouse/audio-player';
 import { TextHighlightEngine, type TextHighlightBlock, type TextHighlightOverlay } from '@seihouse/sen/text-highlight-engine';
 import { InlineAudioText } from '@seihouse/sen/inline-audio';
 import type { SoundCueAttachment } from '@seihouse/sen/audio';
@@ -27,6 +28,7 @@ import { ReadAloudPlayer } from './ReadAloudPlayer';
 import { ReaderSettingsSheet } from './ReaderSettingsSheet';
 import { useFollowNarration, type NarrationHighlight } from './useFollowNarration';
 import { useNextChapterWriter } from './useNextChapterWriter';
+import { useReaderSoundtrack } from './useReaderSoundtrack';
 import type { HarnessGenerationController } from '../shared/controller';
 import type { HarnessWorkspaceState } from '../../../narrative/generation';
 import { chapterTitleText } from '../../../narrative/chapterTitle';
@@ -75,7 +77,10 @@ function lineWhereTheReaderIs(script: ReadAloudScript, article: HTMLElement | nu
  * active layer, and Listen reads it aloud in three voices with the spoken
  * sentence lit. At the newest chapter, Next writes the next one (or, in Fate
  * Survival, asks for its direction first); the Fate page is one tap away.
- * Reader Settings holds Narration only; Codex and Mind Palace are not part of it.
+ * With the host's reader mixer, the story's soundtrack (the reader's
+ * atmosphere and the chapter's Sound Cues) plays through the SEIHouse audio
+ * player: a story audio note mutes it, and Reader Settings holds Audio and
+ * Narration. Codex and Mind Palace are not part of it.
  */
 export function HarnessReaderSession({
   state, storyId, onClose, controller, readerStateRepository, onGenerateNextChapter, onPlanArc, renderWriting, startOnOpen = false,
@@ -132,7 +137,11 @@ export function HarnessReaderSession({
   const topRef = useRef<HTMLDivElement>(null);
   const articleRef = useRef<HTMLElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
+  // The chapter's own navigation, held as state so the soundtrack sees it whenever it appears.
+  const [chapterEnd, setChapterEnd] = useState<HTMLElement | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsSection, setSettingsSection] = useState<'audio' | 'narration'>();
+  const openSettings = useCallback((section?: 'audio' | 'narration') => { setSettingsSection(section); setSettingsOpen(true); }, []);
   const chaptersRef = useRef(chapters);
   chaptersRef.current = chapters;
 
@@ -243,6 +252,10 @@ export function HarnessReaderSession({
     return block && { blockId: block.id, startOffset: sentenceStart, endOffset: sentenceEnd, selectedText: block.text.slice(sentenceStart, sentenceEnd) };
   }, [blocks, spokenBlock, sentenceStart, sentenceEnd]);
   const follow = useFollowNarration({ article: articleRef, highlight, active: reading, player: playerRef });
+  const mixer = useReaderSoundtrack({
+    chapterId: chapter?.id, soundCues: chapter?.soundCues, speaking: readAloud.status === 'playing',
+    onSleep: readAloud.stop, chapterEnd,
+  });
   const listen = () => readAloud.play(lineWhereTheReaderIs(readAloud.script(), articleRef.current));
   // After a Holdings link opens a chapter, the paragraph where the change happened comes into view.
   useEffect(() => {
@@ -301,8 +314,8 @@ export function HarnessReaderSession({
       <div ref={topRef} className="flex flex-wrap items-center justify-between gap-3">
         <button type="button" onClick={onClose} className={`${navButton} border-white/15 text-neutral-200 hover:border-white/30`}>Back</button>
         <p className="min-w-0 flex-1 truncate text-center font-mono text-[10px] uppercase tracking-[0.2em] text-cyan-200/60">{story.title}</p>
-        {readAloud.supported && <button type="button" aria-label="Reader Settings" title="Reader Settings" aria-haspopup="dialog"
-          onClick={() => setSettingsOpen(true)}
+        {(readAloud.supported || mixer) && <button type="button" aria-label="Reader Settings" title="Reader Settings" aria-haspopup="dialog"
+          onClick={() => openSettings()}
           className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-white/15 text-neutral-200 hover:border-white/30">
           <Settings className="h-4 w-4" aria-hidden />
         </button>}
@@ -324,7 +337,7 @@ export function HarnessReaderSession({
           </section>}
 
       {writer.error && <p role="alert" className="mt-6 text-sm text-amber-200">{writer.error}</p>}
-      <nav className="mt-8 flex items-center justify-between gap-3" aria-label="Chapters">
+      <nav ref={setChapterEnd} className="mt-8 flex items-center justify-between gap-3" aria-label="Chapters">
         <button type="button" aria-label="Previous Chapter" disabled={!previous} onClick={() => previous && openChapter(previous.chapterNumber)}
           className={`${navButton} border-white/15 text-neutral-200 hover:border-white/30`}>Previous</button>
         {later
@@ -335,9 +348,11 @@ export function HarnessReaderSession({
               className={`${navButton} border-cyan-300/50 bg-cyan-400/15 font-semibold text-cyan-50 hover:bg-cyan-400/25`}>{continueAfterLatest.label}</button>}
       </nav>
       {chapter && <ReadAloudPlayer readAloud={readAloud} onListen={listen} offscreen={follow.offscreen}
-        onBackToNarration={follow.backToNarration} playerRef={playerRef} />}
+        onBackToNarration={follow.backToNarration} playerRef={playerRef}
+        note={mixer && <ReaderMixerNote mixer={mixer} onOpenSettings={() => openSettings('audio')} />} />}
     </main>
-    <ReaderSettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} readAloud={readAloud} language={language} />
+    <ReaderSettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} readAloud={readAloud} language={language}
+      mixer={mixer} section={settingsSection} />
     {writing}
   </>;
 }

@@ -36,13 +36,21 @@ rewrites and every page survives a reload.
 The app writes chapters exactly as the Workshop's HARNESS page does:
 
 - the official CAPA skills (`src/host/generation/capa/`), installed in memory, so the app never writes the Workshop's imported-skill inventory;
-- the Library's sound words and Sound Cues (`LIBRARY_BASE_MEDIA`);
+- the Library's sound words and Sound Cues (`LIBRARY_BASE_MEDIA`), played through the reader mixer below;
 - story memory read only on request (`useLibraryStories`);
 - the Model Router's chapter model (`useModelPreference('chapters')`), the one choice shared with the Workshop;
 - VERSA on the Aura Veil.
 
 The app opens only once its stories are open and the skills are installed. If
 either fails, it says so plainly, with Retry.
+
+## Sound
+
+The app's one sound owner is SEIHouse's audio player: `main.tsx` creates one
+reader mixer for the page (`createHostReaderMixer`, with SEN Atmospheres,
+Volume 1) and `NovelExpandedApp` provides it. The reader's mix is saved with
+their other device preferences (`novelexpanded-reader-audio-mixer`). The older
+single-channel player is not used by the app.
 
 ## Its own storage
 
@@ -131,6 +139,8 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 - `scripts/verifyNovelExpandedApp.browser.mjs`: the walk in Chromium at 390px and 1440px against the dev server, with stubbed APIs and a stand-in for the browser's speech (headless Chromium has no voices).
 
 ## History
+
+- **2026-10-05** — The Reader's sound is SEIHouse's audio player: the reader's atmosphere under the chapter, Sound Cues over it at their Energy (they can overlap now), Listen dipping it, a sleep timer, a note above the Listen bar that mutes it (long-press opens Audio), and Reader Settings → Audio before Narration. The mix is kept on this device. The older single-channel player is gone from the app.
 
 - **2026-10-04** — The access token lifts the chapter limit. Chapters had a limit of 6 every 30 minutes per visitor that the token never lifted, so testing stopped at the seventh. Now the token is saved on this device and sent with every chapter, the server lets it past the limit, and a chapter refused at the limit asks for the token once and is written with it. Visitors without it keep the limit.
 - **2026-10-03** — From the five-chapter test: every chapter keeps the point of view the story opened in; a reply far short of a chapter is never saved, and the Reader says so with Next ready to try again; titles drop a "Chapter N:" the writer added, so the Reader and Listen say the number once; a thing first shown taken in hand is recorded in Holdings.

@@ -14,4 +14,4 @@ export * from './relics';
 export * from './presentation';
 
 /** The Library package surface version, bumped with the published package. */
-export const LIBRARY_PACKAGE_VERSION = '0.18.1';
+export const LIBRARY_PACKAGE_VERSION = '0.19.0';

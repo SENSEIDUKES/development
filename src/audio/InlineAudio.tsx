@@ -16,7 +16,9 @@ import {
   type InlineAudioTextSegment,
   type SoundCueAttachment,
 } from './inlineAudio';
-import { useNarrativeAudio, type NarrativeAudioPlayback } from './playback';
+import { useOptionalReaderMixer, type ReaderMixer, type ReaderMixerState } from '@seihouse/audio-player';
+import type { AudioEnergy } from './audioTags';
+import { useOptionalNarrativeAudio, type NarrativeAudioPlayback } from './playback';
 import './InlineAudio.css';
 
 export type InlineAudioStatus = 'idle' | 'loading' | 'playing' | 'error';
@@ -129,14 +131,95 @@ export function InlineAudioControl({ cue, playback }: InlineAudioControlProps) {
     }
   }, [words, playback, resolution, trackId]);
 
+  if (!resolution.ok) return null;
+  return <CueButton cue={cue} status={status} statusId={statusId} words={words} sound={sound} error={localError} onActivate={activate} />;
+}
+
+/**
+ * How loud a cue plays within the reader's Sound Cues level: the Energy the
+ * writer gave the moment. A cue with no Energy plays as medium.
+ */
+export const SOUND_CUE_ENERGY_VOLUME: Readonly<Record<AudioEnergy, number>> = Object.freeze({ low: 0.6, medium: 0.8, high: 1 });
+
+export interface MixerCueControlProps {
+  cue: SoundCueAttachment;
+  mixer: ReaderMixer;
+}
+
+/** Why a tap did not play, from the mixer's own state, in the reader's words. */
+function skippedCueMessage(state: ReaderMixerState): string {
+  if (!state.preferences.masterEnabled) return 'Story audio is muted. Tap the note to turn it on.';
+  if (!state.preferences.layers.cues.enabled || state.preferences.layers.cues.level <= 0) return 'Sound Cues are off in Audio settings.';
+  if (state.layers.cues.status === 'blocked') return 'Playback was blocked. Tap the highlight again to retry.';
+  return 'The story cue could not be played.';
+}
+
+/**
+ * A Sound Cue played through the reader's mixer: it plays over the music and
+ * atmosphere without stopping them, cues may overlap, and its loudness is the
+ * reader's Sound Cues level times the moment's Energy.
+ */
+export function MixerCueControl({ cue, mixer }: MixerCueControlProps) {
+  const statusId = useId();
+  const [status, setStatus] = useState<InlineAudioStatus>('idle');
+  const [localError, setLocalError] = useState<string | null>(null);
+  const resolution = useMemo(() => resolvePlayableSoundCue(cue), [cue]);
+  const url = resolution.ok ? resolution.publicUrl.trim() : null;
+  const words = cue.anchor.selectedText;
+  const sound = cue.payload.sound;
+  const [listening, setListening] = useState(false);
+
+  // While this cue is sounding, follow the mixer until the Sound Cues layer
+  // settles: it fails on this cue, or nothing is playing any more.
+  useEffect(() => {
+    if (!listening || !url) return undefined;
+    const follow = (state: ReaderMixerState) => {
+      const cues = state.layers.cues;
+      if (cues.status === 'failed' && cues.current === url) {
+        setLocalError(cues.failure || 'The story cue could not be played.');
+        setStatus('error');
+        setListening(false);
+      } else if (state.activeCues === 0 && cues.status !== 'blocked') {
+        setStatus('idle');
+        setListening(false);
+      }
+    };
+    return mixer.subscribe(follow);
+  }, [listening, mixer, url]);
+
+  const activate = useCallback(() => {
+    setLocalError(null);
+    if (!resolution.ok || !url) {
+      setLocalError(resolution.ok ? 'The story cue could not be resolved.' : resolution.message);
+      setStatus('error');
+      return;
+    }
+    const played = mixer.playCue(url, { volume: SOUND_CUE_ENERGY_VOLUME[cue.payload.energy ?? 'medium'] });
+    if (!played) {
+      setLocalError(skippedCueMessage(mixer.getState()));
+      setStatus('error');
+      return;
+    }
+    setStatus('playing');
+    setListening(true);
+  }, [cue.payload.energy, mixer, resolution, url]);
+
+  if (!resolution.ok) return null;
+  return <CueButton cue={cue} status={status} statusId={statusId} words={words} sound={sound} error={localError} onActivate={activate} />;
+}
+
+/** The glyph on a cue's words and its screen-reader status, shared by both playback routes. */
+function CueButton({ cue, status, statusId, words, sound, error, onActivate }: {
+  cue: SoundCueAttachment; status: InlineAudioStatus; statusId: string; words: string; sound: string;
+  error: string | null; onActivate: () => void;
+}) {
   const stateMessage = status === 'loading'
     ? `Loading ${sound} for ${words}.`
     : status === 'playing'
       ? `Playing ${sound} for ${words}.`
       : status === 'error'
-        ? localError ?? `The ${sound} for ${words} is unavailable.`
+        ? error ?? `The ${sound} for ${words} is unavailable.`
         : '';
-  if (!resolution.ok) return null;
   return (
     <>
       <button
@@ -150,7 +233,7 @@ export function InlineAudioControl({ cue, playback }: InlineAudioControlProps) {
         aria-busy={status === 'loading' || undefined}
         aria-describedby={status === 'idle' ? undefined : statusId}
         aria-label={`${status === 'playing' ? 'Replay' : 'Play'} ${sound} for ${words}`}
-        onClick={activate}
+        onClick={onActivate}
       >
         <LibrarySoundGlyph className="inline-world-cue__glyph" />
       </button>
@@ -167,9 +250,16 @@ export interface InlineAudioProps {
   cue: SoundCueAttachment;
 }
 
-/** Production-portable Reader primitive bound to the one shared audio owner. */
+/**
+ * Production-portable Reader primitive. With the host's reader mixer (the
+ * SEIHouse audio player) a cue plays over the soundtrack; a host that supplies
+ * only a single-channel `NarrativeAudioProvider` keeps that route.
+ */
 export function InlineAudio({ cue }: InlineAudioProps) {
-  const playback = useNarrativeAudio();
+  const mixer = useOptionalReaderMixer();
+  const playback = useOptionalNarrativeAudio();
+  if (mixer) return <MixerCueControl cue={cue} mixer={mixer} />;
+  if (!playback) throw new Error('Sound Cues require a host ReaderMixerProvider or NarrativeAudioProvider.');
   return <InlineAudioControl cue={cue} playback={playback} />;
 }
 

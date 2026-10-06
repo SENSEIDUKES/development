@@ -41,7 +41,6 @@ const scriptedProvider = (replies = [...CHAPTERS]) => {
   const adapter: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [{ id: 'test-model', label: 'Test' }], defaultModel: 'test-model' }),
     generate,
-    recoverMemory: async () => ({ rawProviderResponse: JSON.stringify({ events: [] }), providerReceipt: receipt }),
     arcOperation: async () => ({ rawProviderResponse: JSON.stringify({ plan: GOAL, destinedEnding: 'Mara reclaims her name.' }), providerReceipt: receipt }),
   };
   const hold = () => {

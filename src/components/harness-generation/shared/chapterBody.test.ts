@@ -60,7 +60,6 @@ const adapter = (...outputs: HarnessGenerationResponse[]) => {
       defaultModel: 'google/gemini-3.1-flash-lite',
     }),
     generate,
-    recoverMemory: async () => response(JSON.stringify({ events: [] })),
     arcOperation: async () => response(JSON.stringify({
       plan: { arcNumber: 1, goals: [{ id: 'arc-1-goal', text: 'Open the sect gate.', chapters: 30 }] },
       destinedEnding: 'Bring the story to its true conclusion.',

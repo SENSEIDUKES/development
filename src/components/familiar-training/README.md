@@ -1,5 +1,11 @@
 # Familiar Bonds
 
+Where `reference/` exists, it holds the old production version, kept as reference
+material for the remake; it is not edited or refreshed. New features do not get a
+reference folder. Old systems stay until each is remade on the new path; never
+reconnect them as they are or re-sync with the old production app. The destination
+is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
+
 - **Source repository:** SENSEIDUKES/development (born here; no production original)
 - **Source location:** `src/components/familiar-training/` (bond panel, name-effect panel, name
   renderer, signature registry), `src/library/familiars/` (contracts, client, `activeNameEffect`),
@@ -7,8 +13,8 @@
 - **Workshop previews:** `?preview=familiar-training` (in the Workshop's Rewards section);
   `?preview=reward-loop` (Familiar tab); `?preview=user-profile&cave=/home/familiar`
 - **Created:** 2026-09-23
-- **Last Workshop update:** 2026-09-25
-- **Last source comparison:** 2026-09-23 (this repository; there is no production original)
+- **Last recorded Workshop update:** 2026-09-25
+- **Historical source inspection:** 2026-09-23 (this repository; there is no production original)
 - **Status:** approved reconstruction (Workshop Replica Mode B), development skeleton
 - **Package:** `@seihouse/library/familiar`
 
@@ -112,12 +118,24 @@ Phoenix is active while the name wears Lightning Mastery.
 - Custom Familiars: how a cultivator makes one and which mastered elements it may channel.
 - Whether a public profile shows the name effect (it does not today).
 
-## Transfer
+## Implementation inventory
 
-Copy `development/`, `src/library/familiars/`, `src/server/familiars/` and both migrations. Serve
-`/api/library-economy?capability=familiars`, mount `FamiliarsClientProvider`, pass the profile's
-equipped Familiar as `activeFamiliarId`, and leave `src/workshop/previews/familiar-training/`
-behind.
+The packages and NovelExpanded app built here are the destination. Keep Workshop
+controls, fixtures and adapters outside reusable package entries; another repository
+changes only when the owner asks. Historical references stay untouched.
+
+The existing local files named by this inventory are:
+
+- `development/`
+- `src/library/familiars/`
+- `src/server/familiars/`
+- `src/workshop/previews/familiar-training/`
+
+## Host boundary
+
+`FamiliarsClientProvider` talks to `/api/library-economy?capability=familiars`.
+The host supplies the profile's equipped Familiar as `activeFamiliarId`.
+Workshop previews and the account service remain separate.
 
 ## Workshop history
 

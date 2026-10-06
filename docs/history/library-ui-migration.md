@@ -1,3 +1,5 @@
+> Historical record (as of 2026-09-19). It describes the repository as it was then and is not current.
+
 # Library UI ownership migration — updated 2026-09-19
 
 | Package | Repository | Ownership |
@@ -7,11 +9,11 @@
 | `@seihouse/sen@0.5.0` | development | Portable narrative behavior, neutral UI, and host contracts |
 | `@seihouse/library@0.3.0` | development | First-party behavior, orchestration, and Library presentation composition |
 
-UI PR [#53](https://github.com/SENSEIDUKES/UI/pull/53) established the original split. Coordinated UI PR [#68](https://github.com/SENSEIDUKES/UI/pull/68) completes the stateless presentation transfer used by the current artifacts; see [provenance](../vendor/ui-artifacts.json). Universal UI does not depend on Library UI. SEN does not import, re-export, bundle, or depend on Library UI or Library. Library links to SEN and Library UI as peers.
+UI PR [#53](https://github.com/SENSEIDUKES/UI/pull/53) established the original split. Coordinated UI PR [#68](https://github.com/SENSEIDUKES/UI/pull/68) completes the stateless presentation transfer used by the current artifacts; see [provenance](../../vendor/ui-artifacts.json). Universal UI does not depend on Library UI. SEN does not import, re-export, bundle, or depend on Library UI or Library. Library links to SEN and Library UI as peers.
 
 ## Consumer integration
 
-The current SEN subpaths are documented in [`src/package/sen/README.md`](../src/package/sen/README.md). Chapter Generation is no longer public and remains a Workshop diagnostic while HARNESS is canonical. The former `codex-cards` compatibility entry is removed; its portable pieces are reachable through `reader-codex`. First-party state, storage, media catalogs, entitlements, and event orchestration are owned by Library or the host. Universal card primitives remain available through `@seihouse/ui` and SEN's cards entry.
+The current SEN subpaths are documented in [`src/package/sen/README.md`](../../src/package/sen/README.md). Chapter Generation is no longer public and remains a Workshop diagnostic while HARNESS is canonical. The former `codex-cards` compatibility entry is removed; its portable pieces are reachable through `reader-codex`. First-party state, storage, media catalogs, entitlements, and event orchestration are owned by Library or the host. Universal card primitives remain available through `@seihouse/ui` and SEN's cards entry.
 
 SEN's `presentation` entry exposes typed slots and `NarrativePresentationProvider`. Its defaults adapt universal SEIHouse primitives to existing narrative callbacks. Ambient decoration defaults to absent. Hosts can override individual slots; nested providers inherit the surrounding presentation. React 19 is the supported peer contract, matching canonical UI.
 

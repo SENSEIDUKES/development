@@ -1,12 +1,18 @@
 # Library Shell
 
+Where `reference/` exists, it holds the old production version, kept as reference
+material for the remake; it is not edited or refreshed. New features do not get a
+reference folder. Old systems stay until each is remade on the new path; never
+reconnect them as they are or re-sync with the old production app. The destination
+is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
+
 - **Source repositories:** `SENSEIDUKES/Light-Novels`, `SENSEIDUKES/development`; UI dependencies from `SENSEIDUKES/UI`.
 - **Source locations:** Light-Novels `src/components/GlobalHeader.tsx` (`GlobalHeader`), `src/components/DaoInsights.tsx` (`DaoInsights`), and the collection navigation in `src/components/LibraryScreen.tsx` (`LibraryScreen`). Development `src/components/story-seed/development/CreationModal.tsx` (`CreationModal`), `StorySeedHeader.tsx`, `StorySeedSelector.tsx`, `StorySeedMobileNavigation.tsx`, and `StorySeedSettings.tsx`.
 - **Workshop preview:** `?preview=library-shell`
-- **Replica created:** 2026-09-08
-- **Last Workshop update:** 2026-09-28
-- **Last source comparison:** 2026-09-08
-- **Replica status:** under refinement; locked captures plus Development workspaces on the canonical `SEIAppHeader` and `SEIAppShell`.
+- **First Workshop record:** 2026-09-08
+- **Last recorded Workshop update:** 2026-09-28
+- **Historical source inspection:** 2026-09-08
+- **Implementation status:** under refinement; locked captures plus Development workspaces on the canonical `SEIAppHeader` and `SEIAppShell`.
 
 ## Top navigation update
 
@@ -107,9 +113,9 @@ The Library Shell tab's **Laptop navigation** control switches the Development f
 
 ## Capture boundary
 
-The locked reference area records two existing systems for comparison. Its captures remain unchanged. The separate Development area now proves the shared header family and responsive navigation in the active Story Seed and Cultivator Cave; see [component contracts](../../../docs/library-header-family.md). Main Library was read at `4a3dd02b6640b2ec50d8d1d136e37fb808249ed2` and Story Seed at development `7e1302bd2d5c3205706ddb1362607abed6a850e6`; neither was re-read on 2026-09-09, so their source-comparison dates are unchanged. The vendored UI artifacts now come from UI commit `42961e48e78ee816f9c2801a37a7f66af8aa2ae2` (UI PR #60), which adds `SEIAppHeader`, `SEIAppShell` and the compact `LibraryHeaderBadge` presentation.
 
-`reference/main-library/` freezes the global header, DAO presentation and animation logic, production theme stylesheet, and the exact collection-tab fragment that displays sync state. It localizes the source font payloads so external network and CSP changes cannot alter the captured layout. `reference/story-seed/` freezes the current shell components, section model, settings body, supporting pure helpers, and CSS. `StorySeedShell.tsx` copies the shell JSX from `CreationModal`; its domain editor, Story Bank, and Help children are explicit host slots. This capture is distinct from the older locked reference inside the existing Story Seed Workshop.
+
+`reference/main-library/` freezes the global header, DAO presentation and animation logic, production theme stylesheet, and the exact collection-tab fragment that displays sync state. It localizes the source font payloads so external network and CSP changes cannot alter the captured layout. `reference/story-seed/` freezes the current shell components, section model, settings body, supporting pure helpers, and CSS. `StorySeedShell.tsx` copies the shell JSX from `CreationModal`; its domain editor, Story Bank, and Help children are explicit host slots. This capture is distinct from the older historical reference inside the existing Story Seed Workshop.
 
 `development/LibraryShell.ts` exports the workspace system: `WorkspaceHeader` as a thin adapter over the canonical `SEIAppHeader`, `WorkspaceShell` as a thin adapter over `SEIAppShell`, and the shared header-action presentation. The custom `HeaderFoundation` and the old `WorkspaceHeader` visual implementation are gone; only one header system remains. `MainLibraryHeader` now supplies Home context and commands to the same shared top header; the locked homepage capture stays unchanged. See [header contract and ownership](../../../docs/library-header-family.md).
 
@@ -167,19 +173,23 @@ The Library emblem, VERSA mark, and the source-requested Alegreya, Alegreya SC, 
 
 ## Lock and provenance
 
-`capture-manifest.json` records source commits, verified source paths, SHA-256 hashes of source text and each adapted capture, and dependency/asset hashes. Text hashes normalize CRLF to LF for Windows checkout compatibility. `node scripts/checkLibraryShellCapture.mjs` detects changes to the locked captures or their reused presentation dependencies and rejects accidental production data access or live Story Seed implementation imports. Run it alongside `npm run check:ui-artifacts` and `npm run check:package-boundaries`.
+`capture-manifest.json` records source commits, verified source paths, SHA-256 hashes of source text and each adapted capture, and dependency/asset hashes. Text hashes normalize CRLF to LF for Windows checkout compatibility. The unused capture-check script was retired on 2026-10-06 because it pins removed vendor archives. The provenance manifest is kept. Use `npm run check:ui-artifacts` and `npm run check:package-boundaries` for the current source graph.
 
-The capture reuses canonical presentation packages and type contracts rather than cloning shared UI or defining another schema. A dependency hash change requires an explicit source comparison and recapture decision; it must not silently change the baseline. The dependency list is a drift guard, not a new package or distribution mechanism.
+The capture reuses canonical presentation packages and type contracts rather than cloning shared UI or defining another schema. Historical captures and their provenance remain unchanged; they are not re-compared or recaptured. The dependency list is a drift guard, not a new package or distribution mechanism.
 
 ## Validation
 
-See [validation evidence](../../../docs/library-shell-validation.md) for the checked viewports, interactions, source comparisons, and exact limits of verification.
+See [validation evidence](../../../docs/history/library-shell-validation.md) for the checked viewports, interactions, source comparisons, and exact limits of verification.
 
-## Transfer guidance
+## Implementation inventory
 
-Nothing in this PR is transferred back automatically. Light-Novels and locked references are unchanged; active Development Story Seed and Cultivator Cave now consume the header family. The source components named above remain their production owners.
+The packages and NovelExpanded app built here are the destination. Keep Workshop
+controls, fixtures and adapters outside reusable package entries; another repository
+changes only when the owner asks. Historical references stay untouched.
 
-For an eventual approved change, identify the owning lane first. The footer would transfer `LibraryFooter.tsx`, `LibraryFooterSocialIcons.tsx`, `library-footer.css` and `MainLibraryFooter.tsx` to replace the footer block in Light-Novels `src/App.tsx`, with the host supplying its router callback, Help opener, social URLs and legal pages. Main header/DAO changes would target Light-Novels `src/components/GlobalHeader.tsx`, `src/components/DaoInsights.tsx`, relevant `src/index.css` rules, and only if needed the collection fragment in `src/components/LibraryScreen.tsx`. Story Seed changes would target its existing development header, selector, mobile navigation, settings, `CreationModal` integration, and `story-seed.css`, then ship through the established SEN package and Library host presentation adapter. Shared visual primitives would be changed in UI, published/packed first, then consumed by the hosts. Do not copy the frame HTML, Workshop wrappers, mock context, fixture data, content slots, or capture manifest into a production application.
+The existing local files named by this inventory are:
+
+- `src/App.tsx`
 
 ## Workshop history
 

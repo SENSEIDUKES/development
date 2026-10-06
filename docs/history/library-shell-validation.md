@@ -1,6 +1,8 @@
+> Historical record (as of 2026-09-08). It describes the repository as it was then and is not current.
+
 # Library Shell capture validation
 
-Validated on **2026-09-08** against the commits recorded in [capture provenance](../src/components/library-shell/capture-manifest.json). Scope and ownership are documented in the [Library Shell README](../src/components/library-shell/README.md).
+Validated on **2026-09-08** against the commits recorded in [capture provenance](../../src/components/library-shell/capture-manifest.json). Scope and ownership are documented in the [Library Shell README](../../src/components/library-shell/README.md).
 
 ## Source fidelity
 

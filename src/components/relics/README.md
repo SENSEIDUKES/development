@@ -1,12 +1,18 @@
 # Fate Survival Relics (formerly Relics Gallery)
 
+Where `reference/` exists, it holds the old production version, kept as reference
+material for the remake; it is not edited or refreshed. New features do not get a
+reference folder. Old systems stay until each is remade on the new path; never
+reconnect them as they are or re-sync with the old production app. The destination
+is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
+
 - **Source repository:** SENSEIDUKES/Light-Novels
 - **Source location:** `src/components/UserProfileInventoryPanel.tsx` (cards), `src/components/ModalsAndToasts.tsx` (the `unlockedArtifactAlert` reveal flow)
 - **Workshop preview:** `?preview=relics-gallery` (in the Workshop's Rewards section)
-- **Replica created:** 2026-07-29
-- **Last Workshop update:** 2026-09-23
-- **Last source comparison:** 2026-07-29
-- **Replica status:** approved reconstruction — development rebuilds Relics as Fate Survival rewards; `reference/` keeps production's retired inventory Relic reveal
+- **First Workshop record:** 2026-07-29
+- **Last recorded Workshop update:** 2026-09-23
+- **Historical source inspection:** 2026-07-29
+- **Implementation status:** approved reconstruction — development rebuilds Relics as Fate Survival rewards; `reference/` keeps production's retired inventory Relic reveal
 
 ## What a Relic is now
 
@@ -19,8 +25,8 @@ The server rules live in [`src/server/relics/README.md`](../../server/relics/REA
 ## Folder layout
 
 ```text
-reference/RelicReveal.tsx               — locked replica of production's inventory Relic reveal
-shared/types.ts                         — CosmicArtifact types kept only for the locked references
+reference/RelicReveal.tsx               — historical production inventory Relic reveal
+shared/types.ts                         — CosmicArtifact types kept only for the historical references
 development/RelicReveal.tsx             — the Relic Reveal for a Fate Survival Relic
 development/FateSurvivalRelicsPanel.tsx — the cultivator's Relics, each opening its reveal
 development/index.ts                    — package entry (`@seihouse/library/relics`)
@@ -44,11 +50,26 @@ haptics that the Mystery Scroll reveal uses — so both rewards reveal the same 
 The Fate Survival judge, the outcome → rarity mapping, Relic names and amounts, and whether a
 public profile shows Relic names (it does today, under the "Relic names" visibility switch).
 
-## Transfer
+## Implementation inventory
 
-Copy `development/` with `src/components/rewards/development/`, `src/library/relics/`, and
-`src/server/relics/` with its migration. Serve `/api/library-economy?capability=relics` and mount
-`RelicsClientProvider`. Leave `reference/`, `shared/types.ts` and the Workshop preview behind.
+The packages and NovelExpanded app built here are the destination. Keep Workshop
+controls, fixtures and adapters outside reusable package entries; another repository
+changes only when the owner asks. Historical references stay untouched.
+
+The existing local files named by this inventory are:
+
+- `development/`
+- `src/components/rewards/development/`
+- `src/library/relics/`
+- `src/server/relics/`
+- `reference/`
+- `shared/types.ts`
+
+## Host boundary
+
+`RelicsClientProvider` talks to `/api/library-economy?capability=relics`.
+The reward reveal uses `src/components/rewards/development/`; historical CosmicArtifact
+contracts in `shared/types.ts` and the reference reveal remain for the old system.
 
 ## Workshop history
 

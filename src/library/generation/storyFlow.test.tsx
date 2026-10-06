@@ -32,7 +32,6 @@ const scriptedModel = () => {
         nextProgression: 'Mara climbs the bell tower.', nextWorldBuilding: 'The keeper explains the drowned law.', nextConflict: 'The tide wardens seize the causeway.',
       })), providerReceipt: receipt };
     },
-    recoverMemory,
     arcOperation: async () => ({ rawProviderResponse: JSON.stringify({ plan: GOAL, destinedEnding: 'Mara reclaims her name.' }), providerReceipt: receipt }),
   };
   return { adapter, recoverMemory, release: () => release() };

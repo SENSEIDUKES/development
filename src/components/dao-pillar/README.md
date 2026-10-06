@@ -1,5 +1,11 @@
 # Daily Dao Pillar
 
+Where `reference/` exists, it holds the old production version, kept as reference
+material for the remake; it is not edited or refreshed. New features do not get a
+reference folder. Old systems stay until each is remade on the new path; never
+reconnect them as they are or re-sync with the old production app. The destination
+is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
+
 - **Source repository:** SENSEIDUKES/development (born here; no production original)
 - **Source location:** `src/components/dao-pillar/` (client contracts, calendar hook, and the view),
   `src/server/dao-pillar/` (the server-owned calendar, see its README) and `src/server/qi/`
@@ -9,8 +15,8 @@
   `?preview=reward-loop` for the live calendar on the development economy
   (`/api/library-economy?capability=dao-pillar`)
 - **Created:** 2026-09-18
-- **Last Workshop update:** 2026-09-23
-- **Last source comparison:** 2026-09-18 (Light-Novels inspected for the profile's daily
+- **Last recorded Workshop update:** 2026-09-23
+- **Historical source inspection:** 2026-09-18 (Light-Novels inspected for the profile's daily
   check-in, `awardDirectQi`, and the cultivation profile schema; it has no calendar to compare)
 - **Status:** approved reconstruction (Workshop Replica Mode B), first theme live
 - **Visual target:** the approved "BETA TEST" reference; `public/dao-pillar/beta-test-banner.jpg`
@@ -48,17 +54,30 @@ balance. Without a `DaoPillarClientProvider` the card says the Dao Pillar is
 not connected and the destination explains the same. Public views never mount it.
 
 The legacy controller members (`dailyClaim`, `handleCheckIn`, `handleRepairPillar`, `isCracked`,
-`daysTo3`, `daysTo10`) stay on the services contract because the locked reference page still
+`daysTo3`, `daysTo10`) stay on the services contract because the historical reference page still
 reads them; the Cave no longer does.
 
-## Transfer
+## Implementation inventory
 
-Copy `src/components/dao-pillar/`, `src/server/dao-pillar/`, `src/server/qi/`, the two migrations
-under `database/migrations/`, `public/dao-pillar/`, and mount `DaoPillarClientProvider` with
-`createHttpDaoPillarClient({ token })` where `EnergyClientProvider` is mounted. Serve
-`/api/library-economy?capability=dao-pillar` from the host with a durable `DaoPillarRepository` and `QiLedger` and the
-host's own token verifier (`production` identity mode). Leave `src/workshop/previews/dao-pillar/`
-behind.
+The packages and NovelExpanded app built here are the destination. Keep Workshop
+controls, fixtures and adapters outside reusable package entries; another repository
+changes only when the owner asks. Historical references stay untouched.
+
+The existing local files named by this inventory are:
+
+- `src/components/dao-pillar/`
+- `src/server/dao-pillar/`
+- `src/server/qi/`
+- `database/migrations/`
+- `public/dao-pillar/`
+- `src/workshop/previews/dao-pillar/`
+
+## Host boundary
+
+`DaoPillarClientProvider` uses `createHttpDaoPillarClient({ token })`. The host serves
+`/api/library-economy?capability=dao-pillar` with a durable `DaoPillarRepository`,
+`QiLedger` and its own token verifier (`production` identity mode). Workshop fixtures
+under `src/workshop/previews/dao-pillar/` remain separate from that boundary.
 
 ## Verification
 

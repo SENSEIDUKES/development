@@ -1,5 +1,11 @@
 # Create (Creator Space)
 
+Where `reference/` exists, it holds the old production version, kept as reference
+material for the remake; it is not edited or refreshed. New features do not get a
+reference folder. Old systems stay until each is remade on the new path; never
+reconnect them as they are or re-sync with the old production app. The destination
+is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
+
 - **Source repository:** `SENSEIDUKES/development` (born here; no production original)
 - **Source location:** `src/components/creator-space/` (page and display contracts);
   host adapter `src/workshop/previews/creator-space/CreatorSpaceHost.tsx`
@@ -11,8 +17,8 @@
   direct: `/library-shell.html?variant=development&source=main-library&screen=creator-space`
   (add `&worlds=sample` for the sample set)
 - **Created:** 2026-09-26
-- **Last Workshop update:** 2026-09-26
-- **Last source comparison:** 2026-09-26 (Library shell navigation, Home cards, Energy,
+- **Last recorded Workshop update:** 2026-09-26
+- **Historical source inspection:** 2026-09-26 (Library shell navigation, Home cards, Energy,
   and the chapter workspace were inspected in this repository)
 - **Status:** approved reconstruction (Workshop Replica Mode B), first usable pass
 
@@ -89,17 +95,24 @@ To support Continue and Studio, the Library chapter workspace gained two additiv
 parameters by its Workshop wrapper. Story Seed's existing "start story" handoff already
 sent `story=<id>`; it now opens that story instead of the list's first.
 
-## Transfer notes
+## Implementation inventory
 
-For an approved production move: `development/CreatorSpace.tsx`,
-`development/creator-space.css`, `shared/creatorSpaceContracts.ts`, and the package entry,
-together with the Library shell route/navigation changes (`libraryRoutes.ts`,
-`LibraryNavigation.tsx`, `MainLibraryNavigation.tsx`, `MainLibraryFooter.tsx`,
-`main-library/GlobalHeader.tsx`). Dependencies: `@seihouse/library-ui`, `@seihouse/ui`,
-`lucide-react`, the Library Energy entry and `useLibraryAssets`. The production host writes
-its own adapter: its story list and cover art, its Energy client, and its routes for Story
-Seed, Energy and the chapter workspace. Do not transfer `CreatorSpaceHost`, the sample data,
-the Workshop entry or `worlds=sample`.
+The packages and NovelExpanded app built here are the destination. Keep Workshop
+controls, fixtures and adapters outside reusable package entries; another repository
+changes only when the owner asks. Historical references stay untouched.
+
+The existing local files named by this inventory are:
+
+- `development/CreatorSpace.tsx`
+- `development/creator-space.css`
+- `shared/creatorSpaceContracts.ts`
+
+## Host boundary
+
+The page depends on `@seihouse/library-ui`, `@seihouse/ui`, `lucide-react`, the Library
+Energy entry and `useLibraryAssets`. The host supplies its story list and cover art,
+Energy client, and destinations for Story Seed, Energy and the chapter workspace.
+`CreatorSpaceHost`, sample data, the Workshop entry and `worlds=sample` are preview-only.
 
 ## Known limits
 

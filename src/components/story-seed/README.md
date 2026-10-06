@@ -1,12 +1,18 @@
 # Story Seed
 
+Where `reference/` exists, it holds the old production version, kept as reference
+material for the remake; it is not edited or refreshed. New features do not get a
+reference folder. Old systems stay until each is remade on the new path; never
+reconnect them as they are or re-sync with the old production app. The destination
+is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
+
 - **Source repository:** `SENSEIDUKES/Light-Novels`
 - **Source location:** `src/components/CreationModal.tsx` (default export `CreationModal`)
 - **Workshop preview:** `?preview=story-seed` (`&state=<scenario-id>` deep-links a state)
-- **Replica created:** 2026-08-01
-- **Last Workshop update:** 2026-10-06
-- **Last source comparison:** 2026-08-10
-- **Lifecycle status:** finalized Workshop feature; refactored, optimized, and ready for production transfer
+- **First Workshop record:** 2026-08-01
+- **Last recorded Workshop update:** 2026-10-06
+- **Historical source inspection:** 2026-08-10
+- **Lifecycle status:** finalized Workshop feature; refactored, optimized, and active implementation built here
 
 The source path, `/api/generate-blueprint` route, Blueprint prompt, response
 cleaner, and canonical production Blueprint fields were verified against
@@ -68,11 +74,11 @@ shared/
   stubs.ts                        Workshop-only app/store boundary
 
 reference/
-  locked production comparison replica; do not refine in place
+  historical old production version; not edited or refreshed
 ```
 
 `reference/SeedLibraryPanel.tsx` and the old flat intake vocabulary remain
-only inside the locked reference replica. They are comparison evidence, not
+only inside the historical reference replica. They are comparison evidence, not
 active development code. `legacySeedImport.ts` is also intentional: it is the
 single compatibility boundary that lets previously exported seed files open
 without leaking old field names into current state or UI.
@@ -107,7 +113,7 @@ infrastructure.
 - The auth backdrop uses the local optimized poster under
   `public/story-seed/`; its video is deferred and is skipped for reduced
   motion, data saver, and slow connections.
-- The locked Reference pane and named preview scenarios remain deterministic.
+- The historical Reference pane and named preview scenarios remain deterministic.
   Manual manifestation in Development calls Gemini; starting a story remains
   a no-op because Chapter Generation owns that separate test flow.
 
@@ -143,31 +149,22 @@ Authentication:
 Scenario scripts interact with rendered controls and DOM IDs. They do not
 reach into React internals or bypass form state.
 
-## Transfer notes
+## Implementation inventory
 
-When this finalized feature is approved for production transfer:
+The packages and NovelExpanded app built here are the destination. Keep Workshop
+controls, fixtures and adapters outside reusable package entries; another repository
+changes only when the owner asks. Historical references stay untouched.
 
-1. Copy the required files from `development/`, including the `blueprint/`,
-   `workspaces/`, and `workspaces/origin/` folders plus `story-seed.css` and
-   `public/story-seed/library-auth-backdrop.jpg` when transferring the auth
-   gate.
-2. Reuse the supporting Library primitives already owned by
-   `src/components/library/`.
-3. Transfer only the shared domain modules needed by the production owner,
-   including the Blueprint client/finalizer when production adopts this pass.
-   Transfer `src/server/story-seed-blueprint/config.ts`, `prompt.ts`,
-   `generate.ts`, `http.ts`, and `vercelHandler.ts`; the temporary shared bearer
-   helper at `src/server/shared/bearerToken.ts`; the Vercel entry
-   `api/generate-blueprint.js`; and `scripts/buildStorySeedBlueprintApi.mjs`.
-   Those files provide and bundle the endpoint required for manifestation.
-4. Replace `shared/stubs.ts` and `workshopStorySeedStorage.ts` with the real
-   app store, auth, and repository integrations. Replace the Development bearer
-   token with production authentication while keeping Gemini server-side.
-5. Keep Workshop navigation, access-token controls, preview controls,
-   route-loading boundaries, fixtures, and scenario adapters behind.
-6. After production integration, refresh `reference/`, update
-   `source.lastCompared`, and begin the next Workshop cycle from the newly
-   synchronized source.
+The existing local files named by this inventory are:
+
+- `development/`
+- `public/story-seed/library-auth-backdrop.jpg`
+- `src/components/library/`
+- `src/server/story-seed-blueprint/config.ts`
+- `src/server/shared/bearerToken.ts`
+- `scripts/buildStorySeedBlueprintApi.mjs`
+- `shared/stubs.ts`
+- `reference/`
 
 ## Validation
 

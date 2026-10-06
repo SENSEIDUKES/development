@@ -1,12 +1,18 @@
 # Card Workshop
 
+Where `reference/` exists, it holds the old production version, kept as reference
+material for the remake; it is not edited or refreshed. New features do not get a
+reference folder. Old systems stay until each is remade on the new path; never
+reconnect them as they are or re-sync with the old production app. The destination
+is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
+
 - **Source repository:** `SENSEIDUKES/Light-Novels`
 - **Verified source locations:** `src/components/ReaderViewport.tsx`, `src/components/SystemBlock.tsx`, `src/components/FateResultCard.tsx`
 - **Workshop preview:** `?preview=card-workshop`
-- **Replica created:** 2026-08-14
-- **Last Workshop update:** 2026-08-25
-- **Last source comparison:** 2026-08-22
-- **Replica status:** under refinement
+- **First Workshop record:** 2026-08-14
+- **Last recorded Workshop update:** 2026-08-25
+- **Historical source inspection:** 2026-08-22
+- **Implementation status:** under refinement
 
 ## Purpose
 
@@ -92,19 +98,23 @@ development page never scrolls horizontally.
 ## Mock and production boundaries
 
 - Fixtures are static local objects, including the three expanded System Prompt breakdowns with their local character entries and the Structured Mechanical status screen, plus real Library test images under `/public/card-workshop/test-images`.
-- Development Codex reveals use the Manifest backdrop pool under `/public/manifest-backdrops`; the locked Reference keeps its existing placeholder.
+- Development Codex reveals use the Manifest backdrop pool under `/public/manifest-backdrops`; the historical Reference keeps its existing placeholder.
 - The Workshop makes no model, generation, API, database, story-write, persistence, or production-media calls.
 - The contextual Worldcue starts from a block-scoped resolved annotation only;
   the model-safe fixture chooses category, variation, and semantic tags while
   application logic selects the approved public Library Cue.
-- Reference mode uses locked production presentation replicas and has no Development controls.
+- Reference mode uses historical production presentation and has no Development controls.
 - Bestiary and Faction records remain informational and expose no Codex image-generation action.
 - Fate panels and System routing retain their existing presentation; the Structured Mechanical example renders as a modern status screen from the optional application-owned `status` payload, with the in-flow card carrying the level pill and semantic HP/QI/EXP meters and its orb opening the holographic stat panel that holds the full two-column stat grid with signed deltas, active effects, and abilities — while mechanical events without a `status` payload keep the legacy plain-rows panel, and its TTS summary stays collapsed behind the centered chevron; the compact Narrative System Prompt renders as an event-tinted System window with a small orb emblem, direct headline, optional flavor text, a single-term classification line, flat key/value rows with direction arrows on changed values and values spread to the right edge, a full-width reserved status badge, character-linked TTS prose, and clean flat outcome rows of meaning-colored text (with signs on genuine mathematical changes) while keeping the semantic System color system.
 - Regular System Prompt `presentation` explicitly selects the unchanged Narrative Notification, unchanged LitRPG/Mechanical Display, or the static World Notice document surface; `promptType` keeps the same semantic color meaning across all three. World Notices use direct document titles, optional flavor, and plain-text entries/details without controls, Codex links, hovercards, or TTS ownership.
 
-## Transfer notes
+## Implementation inventory
 
-The active Development presentation owners are:
+The packages and NovelExpanded app built here are the destination. Keep Workshop
+controls, fixtures and adapters outside reusable package entries; another repository
+changes only when the owner asks. Historical references stay untouched.
+
+The existing local files named by this inventory are:
 
 - `src/components/reader-chamber/development/CodexCard.tsx`
 - `src/audio/InlineAudio.tsx`
@@ -114,8 +124,5 @@ The active Development presentation owners are:
 - `src/components/reader-chamber/development/SystemStatusPanel.tsx`
 - `src/components/reader-chamber/development/SystemOrbEmblem.tsx`
 - `src/components/reader-chamber/development/WorldNotice.tsx`
-- `src/components/library/LibrarySoundGlyph.tsx`
 
-`Light-Novels` `main` was inspected at commit `f89cb41` on 2026-08-22. Its current Reader, System, and Fate source paths remain the comparison baseline; this Workshop change does not modify that repository.
-
-Do not transfer Workshop controls, fixtures, contextual Reader harness, or preview overrides into production.
+Historical source inspection: `Light-Novels` `main` at commit `f89cb41` on 2026-08-22. Its captured Reader, System and Fate presentation remains reference material.

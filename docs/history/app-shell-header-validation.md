@@ -1,3 +1,5 @@
+> Historical record (as of 2026-09-09). It describes the repository as it was then and is not current.
+
 # App-shell header verification — 2026-09-09
 
 The duplicate Public View toolbar belongs to the private Cultivator Cave in the current code. It was removed there; Settings retains Preview Public View. Story Seed retains its non-duplicate Save Draft, Settings, Story Bank and Manifest actions.

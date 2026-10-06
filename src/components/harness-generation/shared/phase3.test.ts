@@ -1,3 +1,4 @@
+import { seedLegacyChapterEvents } from '../../../test-utils/seedLegacyChapterEvents';
 import { describe, expect, it, vi } from 'vitest';
 import { HarnessCapabilityRegistry, resolveHarnessEntity, type HarnessCapabilityHandler } from '@seihouse/sen/harness-generation';
 import { appendHarnessCorrection, buildCanonicalStoryView } from './canonicalState';
@@ -28,7 +29,7 @@ const response = (reply: unknown, source: 'reported' | 'estimated' | 'unavailabl
 
 /**
  * Chapter replies carry prose only. A fixture's `events` are served by the
- * separate memory extraction call for the chapter whose prose they belong to.
+ * historical stored event fixtures for the chapter whose prose they belong to.
  */
 const adapter = (...outputs: Array<HarnessGenerationResponse | Error>) => {
   const memoryByProse = new Map<string, unknown[]>();
@@ -49,10 +50,9 @@ const adapter = (...outputs: Array<HarnessGenerationResponse | Error>) => {
   const value: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [{ id: 'gemini-test', label: 'Gemini test' }], defaultModel: 'gemini-test' }),
     generate,
-    recoverMemory: async request => response({ events: memoryByProse.get(request.prose) ?? [] }),
     arcOperation: async request => response({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 30 }] }, destinedEnding: 'Bring the story to its true conclusion.' }),
   };
-  return { value, generate };
+  return { value, generate, memoryByProse };
 };
 
 const semanticEvent = (overrides: Partial<HarnessSemanticEvent> = {}): HarnessSemanticEvent => ({
@@ -174,6 +174,7 @@ describe('Harness Generation Phase 3 deterministic story harness', () => {
     await controller.hydrate();
     const story = await controller.createStory({ premise: 'A harbor city bargains with an impossible tide.' });
     await controller.generateNextChapter(story.id, 'gemini-test');
+    await seedLegacyChapterEvents(controller, repository, { events: provider.memoryByProse.get(controller.snapshot().chapters.at(-1)!.prose) ?? [] });
     const first = controller.snapshot();
     expect(first.chapters).toHaveLength(1);
     expect(first.events).toHaveLength(5);
@@ -202,6 +203,7 @@ describe('Harness Generation Phase 3 deterministic story harness', () => {
     await controller.hydrate();
     const story = await controller.createStory({ premise: 'A bell records the city’s forgotten days.' });
     await controller.generateNextChapter(story.id, 'gemini-test');
+    await seedLegacyChapterEvents(controller, repository, { events: provider.memoryByProse.get(controller.snapshot().chapters.at(-1)!.prose) ?? [] });
     expect(controller.snapshot().chapters[0].prose).toContain('harbor bell');
     expect(controller.snapshot().capabilityReceipts[0].status).toBe('failed');
     const reloaded = new HarnessGenerationController({ repository, modelAdapter: provider.value, runtime: runtime() });
@@ -240,6 +242,7 @@ describe('Harness Generation Phase 3 deterministic story harness', () => {
     await first.hydrate();
     const story = await first.createStory({ premise: 'A city prepares to leave itself behind.' });
     await first.generateNextChapter(story.id, 'gemini-test');
+    await seedLegacyChapterEvents(first, repository, { events: provider.memoryByProse.get(first.snapshot().chapters.at(-1)!.prose) ?? [] });
     const upgraded = new HarnessGenerationController({ repository, modelAdapter: provider.value, runtime: runtime(), capabilityRegistry: new HarnessCapabilityRegistry([handler('2.0.0')]) });
     await upgraded.hydrate();
     await upgraded.replayStory(story.id);
@@ -257,6 +260,7 @@ describe('Harness Generation Phase 3 deterministic story harness', () => {
     await controller.hydrate();
     const story = await controller.createStory({ premise: 'An archive remembers everyone except its keeper.' });
     await controller.generateNextChapter(story.id, 'gemini-test');
+    await seedLegacyChapterEvents(controller, repository, { events: provider.memoryByProse.get(controller.snapshot().chapters.at(-1)!.prose) ?? [] });
     const record = controller.snapshot().canonicalRecords.find(item => item.kind === 'character')!;
     await controller.addCorrection(story.id, { kind: 'correct-fact', reason: 'Author correction.', targetRecordIds: [record.id], replacement: { kind: 'character', label: 'Mara Vale', evidence: 'Her full canonical name is Mara Vale.', facts: { description: 'Mara is Mara Vale.' } } });
     const corrected = controller.snapshot();

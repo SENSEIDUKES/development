@@ -1,3 +1,4 @@
+import { seedLegacyChapterEvents } from '../../../test-utils/seedLegacyChapterEvents';
 import { describe, expect, it, vi } from 'vitest';
 import { appendHarnessCorrection, buildCanonicalStoryView } from './canonicalState';
 import { compileStoryInformationPacket } from './context';
@@ -8,7 +9,7 @@ import { type HarnessGenerationRequest, type HarnessGenerationResponse } from '@
 
 interface ChapterFixture { chapter: HarnessGenerationResponse; memory: HarnessGenerationResponse }
 
-/** Prose comes from the chapter call; thread memory from the separate extraction call. */
+/** Prose comes from the chapter call; historical thread events are seeded into stored chapters. */
 const chapterReply = (state: 'open' | 'resolved', supported = true): ChapterFixture => {
   const prose = state === 'open' ? 'The gate remained sealed. Opening it remained their task.'
     : 'They opened the gate. Their task was resolved.';
@@ -34,7 +35,6 @@ const setup = async (...replies: ChapterFixture[]) => {
     return asWrittenChapter(reply.chapter);
   });
   const modelAdapter = { generate,
-    recoverMemory: async () => memories.shift()!,
     getServerInfo: async () => ({ provider: 'gemini' as const, configured: true, models: [], defaultModel: 'fixture' }),
     arcOperation: async (request: { storyInformation: { chapterNumber: number } }) => ({ rawProviderResponse: JSON.stringify({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 30 }] }, destinedEnding: 'Bring the story to its true conclusion.' }), providerReceipt: { provider: 'fixture' as const, model: 'fixture', generatedAt: 'now', usage: { source: 'unavailable' as const } } }),
   };
@@ -44,14 +44,18 @@ const setup = async (...replies: ChapterFixture[]) => {
   } });
   await controller.hydrate();
   const story = await controller.createStory({ premise: 'Open the gate.' });
-  return { controller, repository, modelAdapter, generate, story };
+  const write = async (target = controller) => {
+    await target.generateNextChapter(story.id, 'fixture');
+    await seedLegacyChapterEvents(target, repository, JSON.parse(memories.shift()!.rawProviderResponse));
+  };
+  return { controller, repository, modelAdapter, generate, story, write };
 };
 
 describe('Current thread state and continuation', () => {
   it('keeps history but stops handing a resolved task forward, including after replay and reload', async () => {
-    const { controller, repository, modelAdapter, generate, story } = await setup(chapterReply('open'), chapterReply('resolved'), chapterReply('open'));
-    await controller.generateNextChapter(story.id, 'fixture');
-    await controller.generateNextChapter(story.id, 'fixture');
+    const { controller, repository, modelAdapter, generate, story, write } = await setup(chapterReply('open'), chapterReply('resolved'), chapterReply('open'));
+    await write();
+    await write();
     const beforeReplay = controller.snapshot();
     await controller.replayStory(story.id, beforeReplay.chapters[0].id);
     const reloaded = new HarnessGenerationController({ repository, modelAdapter });
@@ -67,16 +71,16 @@ describe('Current thread state and continuation', () => {
     expect(JSON.stringify(context.canonicalState)).not.toContain('Open the gate');
     expect(JSON.stringify(context)).not.toContain('Opening the gate remains unresolved.');
     expect(JSON.stringify(context)).not.toContain('The gate task is resolved.');
-    await reloaded.generateNextChapter(story.id, 'fixture');
+    await write(reloaded);
     expect(JSON.stringify(generate.mock.calls[2][0].storyInformation)).not.toContain('handoff');
     // A later, evidenced reopening is legitimate; closure is not permanent deletion.
     expect(buildCanonicalStoryView(reloaded.snapshot(), story.id).currentThreads[0].facts.state).toBe('open');
   });
 
   it('does not let an unsupported closure override an established open thread', async () => {
-    const { controller, story } = await setup(chapterReply('open'), chapterReply('resolved', false));
-    await controller.generateNextChapter(story.id, 'fixture');
-    await controller.generateNextChapter(story.id, 'fixture');
+    const { controller, story, write } = await setup(chapterReply('open'), chapterReply('resolved', false));
+    await write();
+    await write();
     const state = controller.snapshot();
     const view = buildCanonicalStoryView(state, story.id);
     expect(view.threads.some(record => record.confidence === 'unresolved')).toBe(true);
@@ -86,9 +90,9 @@ describe('Current thread state and continuation', () => {
   });
 
   it('handles legacy exact labels, explicit corrections, and separate identities without deleting evidence', async () => {
-    const { controller, story } = await setup(chapterReply('open'), chapterReply('resolved'));
-    await controller.generateNextChapter(story.id, 'fixture');
-    await controller.generateNextChapter(story.id, 'fixture');
+    const { controller, story, write } = await setup(chapterReply('open'), chapterReply('resolved'));
+    await write();
+    await write();
     const state = controller.snapshot();
     const history = buildCanonicalStoryView(state, story.id).threads;
     history[0].entityId = undefined;

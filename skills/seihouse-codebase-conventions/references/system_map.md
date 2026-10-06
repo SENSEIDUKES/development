@@ -137,20 +137,21 @@ the result; they should not independently decide or persist rewards.
 
 ## Workshop and Themes
 
-The `development` repository supports faithful visual replicas and approved real system
-reconstruction. Select the mode using [Workshop Replica](../../workshop-replica/SKILL.md).
-Faithful replicas keep one feature folder, locked reference, active development copy,
-optional shared code, one workspace preview, and one manifest entry. Reconstruction
+The new path is built in this repository: SEN, Library and NovelExpanded at `/app/`.
+`NOVEL_EXPANDED.md` decides what gets built. Use [Workshop Replica](../../workshop-replica/SKILL.md)
+for importing a surface from another repository or approved reconstruction; reconstruction
 follows [DEVELOPMENT_RECONSTRUCTION.md](../../../DEVELOPMENT_RECONSTRUCTION.md).
 
-Workshop controls Reader/Reader Codex presentation and theme packages. Themes should
-use shared tokens, primitives, and package contracts rather than scattered one-off
-values. Reader and Reader Codex may be themed together while remaining distinct systems.
+Old systems, including Reader Chamber and Reader Codex, remain foundations for their
+future remakes. Do not delete or reconnect them as they are. Existing `reference/`
+folders are historical old production versions, never edited, refreshed or re-synced.
+New features use one `development/` folder, optional genuinely shared code, one
+FeatureWorkspace preview, one manifest entry and a README with a short dated history.
+Themes use shared tokens, primitives and package contracts rather than scattered values.
 
-Every manifest `source.path` and transfer instruction must point to a verified current
-file in the named source repository. Production renames require synchronized Workshop
-imports, filenames, feature READMEs, manifests, and transfer notes without silently
-changing visual behavior.
+Verify source paths when importing a surface. New feature metadata points at this
+repository, and no source-comparison date or synchronization cycle is required.
+Never change another repository without the owner's explicit request.
 
 ## Audio ownership
 

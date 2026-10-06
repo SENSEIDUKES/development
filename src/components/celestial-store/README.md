@@ -1,5 +1,11 @@
 # Celestial Store
 
+Where `reference/` exists, it holds the old production version, kept as reference
+material for the remake; it is not edited or refreshed. New features do not get a
+reference folder. Old systems stay until each is remade on the new path; never
+reconnect them as they are or re-sync with the old production app. The destination
+is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
+
 - **Source repository:** SENSEIDUKES/development (born here; no production original)
 - **Source location:** `src/components/celestial-store/` (Store configuration, daily rotation,
   account port, and the page), `src/host/familiar/catalogue.ts` (the one Familiar registry it
@@ -8,8 +14,8 @@
   `?preview=user-profile&cave=/home/store` for the live Cave destination against the
   development QI ledger and Energy account
 - **Created:** 2026-09-22
-- **Last Workshop update:** 2026-09-22
-- **Last source comparison:** 2026-09-22 (the attached reference art is the visual target; the
+- **Last recorded Workshop update:** 2026-09-22
+- **Historical source inspection:** 2026-09-22 (the attached reference art is the visual target; the
   Familiar catalogue, Energy pricing, and profile Store stub were inspected in this repository)
 - **Status:** approved reconstruction (Workshop Replica Mode B), first rotation live
 - **Visual target:** the supplied Celestial Store reference — midnight navy, antique gold and
@@ -63,12 +69,22 @@ set, and **deducts no QI or Energy and persists nothing**. Equipping goes throug
 mocked profile save as the Settings Familiar tab. The `?preview=celestial-store` workspace
 drives the panel with preview props only.
 
-## Transfer
+## Implementation inventory
 
-Production needs `src/components/celestial-store/` plus the `celestialStore` member on the
-User Profile services port, a real adapter that persists ownership on the account and
-performs the ledger deductions server-side, and a host decision on where the Store's
-entry points live (the Cave button today; bottom navigation later, deliberately not yet).
+The packages and NovelExpanded app built here are the destination. Keep Workshop
+controls, fixtures and adapters outside reusable package entries; another repository
+changes only when the owner asks. Historical references stay untouched.
+
+The existing local files named by this inventory are:
+
+- `src/components/celestial-store/`
+
+## Host boundary
+
+The `celestialStore` member of the User Profile services port is the account boundary.
+A durable host adapter must persist account ownership and perform ledger deductions
+server-side. The Cave button is the current entry point; future bottom-navigation
+placement remains undecided.
 
 ## Workshop history
 

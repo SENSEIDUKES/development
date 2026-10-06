@@ -29,7 +29,7 @@ application. Library may depend on SEN; SEN must never depend on Library.
 
 Package entry barrels re-export canonical feature implementations from `development/`
 and `shared/`; do not duplicate implementations inside package entries. Keep Workshop
-shells, mocks, locked references, and server code out of published entries. Trace imports
+shells, mocks, historical references, and server code out of published entries. Trace imports
 to verify that SEN does not reach Library or Library UI.
 
 Before reading, changing, or discussing HARNESS implementation, read its authoritative
@@ -49,7 +49,7 @@ Discover this wiring yourself; the product owner supplies behavior, not a backen
 
 Production remains authoritative for existing integrated production concepts, contracts,
 and persisted compatibility values. DEV is authoritative for an approved reconstructed
-system until transfer. Do not force a reconstruction to mirror obsolete production
+system built here in SEN, Library and NovelExpanded. Do not force a reconstruction to mirror obsolete production
 architecture or naming merely because it was previously shipped.
 
 Development-only state does not require artificial backward compatibility unless a
@@ -62,8 +62,8 @@ never authorizes changing database values, routes, storage keys, object paths, e
 bindings, or historical records.
 
 Inspect paths, branches, and exports independently in every relevant repository before
-writing source metadata, imports, or transfer notes. A successful DEV build cannot prove
-a production path exists. Production changes and transfer require a separate authorized task.
+writing source metadata or import guidance. A successful DEV build cannot prove
+a production path exists. Never change another repository unless the owner asks.
 
 ## Trace the existing owner
 
@@ -93,9 +93,8 @@ instead of guessing. Update guidance only when the task includes that maintenanc
 
 Use the relevant checks in [change protocol](references/change_protocol.md). Verify
 behavior and its nearest regression, not only types. For renames, search stale terms and
-update affected imports, exports, tests, docs, manifests, and verified transfer notes;
-explain intentionally retained compatibility strings. Do not edit locked references
-except during an authorized source synchronization.
+update affected imports, exports, tests, docs and manifests;
+explain intentionally retained compatibility strings. Do not edit or refresh historical references; never re-sync them with the old production app.
 
 Report the owner changed, requested outcome, preserved or deliberately replaced contracts,
 checks actually run, and remaining limitations or guidance conflicts. Do not claim source

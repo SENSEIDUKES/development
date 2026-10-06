@@ -102,7 +102,7 @@ Every feature preview is wrapped by `FeatureWorkspace`, which owns the responsiv
 **Workshop Controls** menu. Preview wrappers supply only the sections they need
 from the canonical Pages, States, Scenes, Effects, and Advanced structure. The
 menu may reuse Library surface primitives, but it is Workshop tooling: product
-navigation stays inside the Reference and Development components being tested.
+navigation stays inside the old production version, where one exists, and the active Development implementation.
 
 ## Packages
 
@@ -117,6 +117,13 @@ receives — `@seihouse/sen/*` and `@seihouse/library/*`, aliased to
 `src/package/sen/*` and `src/package/library/*` — so a preview never renders
 something a consumer could not.
 
-## Moving work into another application
+## Building the new path
 
-Workshop components should stay portable: minimal dependencies, no auth, no database, and no production persistence. Once approved, transfer into a corresponding application may happen only as a separate, explicitly authorized integration task. Transfer the actual component, styles, and required assets; do not import the Workshop shell, mock controls, or preview-only state.
+SEN, Library and NovelExpanded at `/app/` are built here, guided by `NOVEL_EXPANDED.md`.
+Keep reusable components portable and keep Workshop controls and mocks outside the packages
+and app. Old systems remain until their remake; never reconnect them as they are or
+re-sync them with the old production app. Existing `reference/` folders are historical
+and never edited or refreshed. New features get `development/`, genuinely shared code
+only when needed, one FeatureWorkspace preview, one manifest entry pointing at this
+repository and a README with a short dated history. Never change another repository
+unless the owner explicitly asks.

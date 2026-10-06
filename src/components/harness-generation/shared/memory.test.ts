@@ -1,3 +1,4 @@
+import { seedLegacyChapterEvents } from '../../../test-utils/seedLegacyChapterEvents';
 import { describe, expect, it, vi } from 'vitest';
 import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
@@ -5,7 +6,7 @@ import { writtenChapter } from '../../../test-utils/writtenChapter';
 import { buildCanonicalStoryView } from '@seihouse/sen/harness-generation';
 import { createHarnessSenStory } from '@seihouse/sen/harness-generation';
 import { resolveHarnessEntity } from '@seihouse/sen/harness-generation';
-import { type HarnessGenerationControllerOptions, type HarnessGenerationModelAdapter, type HarnessGenerationResponse, type HarnessMemoryRecoveryRequest } from '@seihouse/sen/harness-generation';
+import { type HarnessGenerationModelAdapter, type HarnessGenerationResponse } from '@seihouse/sen/harness-generation';
 
 // Synthetic regression prose, not the user's saved Start Now chapter.
 const prose = [
@@ -27,53 +28,69 @@ const events = [
   { description: 'Find a replacement core.', category: 'plot-thread', subjects: ['Replace the core'], evidence: prose.split('\n')[6], facts: { state: 'open' } },
 ];
 /** The chapter as saved: the synthetic prose, then the rest of the written chapter. */
-const savedProse = writtenChapter({ prose }).prose;
 const reply = (body: unknown): HarnessGenerationResponse => ({
   rawProviderResponse: JSON.stringify(body), providerReceipt: { provider: 'gemini', model: 'fixture',
     generatedAt: '2026-09-05T12:00:00Z', usage: { source: 'unavailable' } },
 });
-const setup = async (rich = false, options: Pick<HarnessGenerationControllerOptions, 'chapterMemory'> = {}) => {
+const setup = async () => {
   const repository = new InMemoryHarnessGenerationRepository();
-  // The chapter call returns prose only. The automatic post-commit extraction
-  // returns either evidenced events or four generic summaries; later explicit
-  // recoveries return the evidenced events unless a test overrides one call.
   const generate = vi.fn(async () => reply(writtenChapter({ title: 'Synthetic memory fixture', prose })));
-  const recoverMemory = vi.fn(async (_request: HarnessMemoryRecoveryRequest) => reply({ events }));
-  if (!rich) recoverMemory.mockImplementationOnce(async () => reply({ events: ['A stranger arrives.', 'Danger grows.', 'A choice is made.', 'The journey begins.'] }));
   const modelAdapter: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
-    generate, recoverMemory,
+    generate,
     arcOperation: async request => reply({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 30 }] }, destinedEnding: 'Bring the story to its true conclusion.' }),
   };
-  const controller = new HarnessGenerationController({ repository, modelAdapter, ...options });
+  const controller = new HarnessGenerationController({ repository, modelAdapter });
   await controller.hydrate();
   const story = await controller.createStory({ premise: 'A traveler meets a dungeon intelligence.', identities: [
     { kind: 'character', name: 'Aria', aliases: ['Dungeon Voice'], evidence: 'Aria is the dungeon intelligence.' },
     { kind: 'character', name: 'Xie Jin', evidence: 'Xie Jin is a traveler.' },
   ] });
   await controller.generateNextChapter(story.id, 'fixture');
-  return { repository, generate, recoverMemory, modelAdapter, controller, story,
+  await seedLegacyChapterEvents(controller, repository, { events });
+  return { repository, generate, modelAdapter, controller, story,
     chapter: controller.snapshot().chapters[0] };
 };
 
 describe('Useful, evidenced chapter memory', () => {
-  it('reads memory after every chapter by default, and only when asked for a host that chose on-request', async () => {
-    const automatic = await setup(true);
-    expect(automatic.recoverMemory).toHaveBeenCalledTimes(1);
-
-    const onRequest = await setup(true, { chapterMemory: 'on-request' });
-    // The chapter is saved and returned without a memory call.
-    expect(onRequest.chapter.prose).toBe(savedProse);
-    expect(onRequest.recoverMemory).not.toHaveBeenCalled();
-    expect(onRequest.controller.snapshot().memoryRecoveries ?? []).toEqual([]);
-    // Asked for, the same extraction reads the saved prose.
-    await onRequest.controller.recoverChapterMemory(onRequest.chapter.id, 'fixture');
-    expect(onRequest.recoverMemory).toHaveBeenCalledTimes(1);
-    expect(onRequest.recoverMemory.mock.calls[0][0].prose).toBe(savedProse);
+  it('commits without extraction or an incomplete-memory warning and keeps historical receipts untouched on reload', async () => {
+    const repository = new InMemoryHarnessGenerationRepository();
+    const generate = vi.fn(async () => reply(writtenChapter({ prose })));
+    const retiredCall = vi.fn(async () => { throw new Error('Retired memory call must never run'); });
+    // A host object from an older version may still carry this method; the controller ignores it.
+    const modelAdapter = { generate, recoverMemory: retiredCall,
+      getServerInfo: async () => ({ provider: 'fixture', configured: true, models: [], defaultModel: 'fixture' }),
+      arcOperation: async () => reply({ plan: { arcNumber: 1, goals: [{ id: 'goal', text: 'Repair the dungeon', chapters: 30 }] }, destinedEnding: 'The dungeon is repaired.' }),
+    };
+    const controller = new HarnessGenerationController({ repository, modelAdapter });
+    await controller.hydrate();
+    const story = await controller.createStory({ premise: 'Repair the dungeon.' });
+    await controller.generateNextChapter(story.id, 'fixture');
+    const state = controller.snapshot();
+    expect(state.attempts[0]).toMatchObject({ stage: 'committed', postCommitProcessing: 'complete' });
+    expect(state.attempts[0].warnings.some(warning => warning.code === 'capability_unresolved')).toBe(false);
+    expect(state.memoryRecoveries).toBeUndefined();
+    expect(generate).toHaveBeenCalledTimes(1);
+    expect(retiredCall).not.toHaveBeenCalled();
+    for (const status of ['request_started', 'raw_received', 'applied', 'failed'] as const) {
+      const saved = structuredClone(state);
+      saved.memoryRecoveries = [{ id: 'old-memory', storyId: story.id, chapterId: saved.chapters[0].id,
+        request: { operation: 'recover-memory', storyId: story.id, chapterId: saved.chapters[0].id, model: 'fixture', prose: saved.chapters[0].prose, foundation: saved.foundations[0] },
+        startedAt: '2026-09-05', status, rawProviderResponse: '{"events":[]}', eventIds: [],
+      }];
+      saved.attempts[0].warnings.push({ code: 'capability_unresolved', message: 'Prose is saved, but story memory is incomplete: historical warning.' });
+      await repository.save(saved);
+      const reloaded = new HarnessGenerationController({ repository, modelAdapter });
+      await reloaded.hydrate();
+      expect(reloaded.snapshot()).toEqual(saved);
+      expect(await repository.load()).toEqual(saved);
+      expect(retiredCall).not.toHaveBeenCalled();
+    }
   });
 
+
   it('retires a previous fallback when replay now interprets the same event successfully', async () => {
-    const { controller, repository, modelAdapter, story } = await setup(true);
+    const { controller, repository, modelAdapter, story } = await setup();
     const state = controller.snapshot();
     const source = state.canonicalRecords.find(record => record.sourceEventId)!;
     const receipt = state.capabilityReceipts.find(receipt => receipt.sourceEventId === source.sourceEventId)!;
@@ -89,7 +106,7 @@ describe('Useful, evidenced chapter memory', () => {
   });
 
   it('keeps a semantic canonical match as one record when replay assigns it a new generated id', async () => {
-    const { controller, repository, modelAdapter, story } = await setup(true);
+    const { controller, repository, modelAdapter, story } = await setup();
     const state = controller.snapshot();
     const source = state.canonicalRecords.find(record => record.sourceEventId)!;
     const receipt = state.capabilityReceipts.find(item => item.sourceEventId === source.sourceEventId)!;
@@ -116,20 +133,9 @@ describe('Useful, evidenced chapter memory', () => {
       .toContain('semantic-fallback');
   });
 
-  it('reports partially malformed subject and fact fields instead of claiming complete interpretation', async () => {
-    const { controller, recoverMemory, chapter } = await setup();
-    recoverMemory.mockImplementationOnce(async () => reply({ memory: { characters: [{
-      description: 'Aria is the dungeon intelligence.', evidence: prose.split('\n')[0],
-      subjects: [{ name: 'Aria', kind: 'character' }, { name: 'invalid', kind: 'invented' }],
-      facts: { identity: 'intelligence', invalid: 42 },
-    }] } }));
-    await controller.recoverChapterMemory(chapter.id, 'fixture');
-    expect(controller.snapshot().attempts[0].postCommitProcessing).toBe('warnings');
-    expect(controller.snapshot().memoryRecoveries!.at(-1)!.warnings).toHaveLength(2);
-  });
 
   it('routes consequential memory and preserves Foundation identity across repeated mentions and aliases', async () => {
-    const { controller, story, chapter } = await setup(true);
+    const { controller, story, chapter } = await setup();
     const state = controller.snapshot();
     const view = buildCanonicalStoryView(state, story.id);
     const aria = view.characters.filter(record => record.label === 'Aria');
@@ -148,33 +154,9 @@ describe('Useful, evidenced chapter memory', () => {
     expect(buildCanonicalStoryView(controller.snapshot(), story.id).relationships[0].confidence).toBe('resolved');
   });
 
-  it('labels generic summaries as incomplete and recovers from persisted prose without another chapter call', async () => {
-    const { controller, repository, modelAdapter, generate, recoverMemory, story, chapter } = await setup();
-    expect(controller.snapshot().attempts[0]).toMatchObject({ stage: 'committed', postCommitProcessing: 'warnings', preservedEvents: [] });
-    expect(JSON.stringify(generate.mock.results[0])).not.toContain('events');
-    const before = controller.snapshot();
-    const reloaded = new HarnessGenerationController({ repository, modelAdapter });
-    await reloaded.hydrate();
-    await reloaded.recoverChapterMemory(chapter.id, 'fixture');
-    const after = reloaded.snapshot();
-    expect(recoverMemory.mock.calls[0][0].prose).toBe(savedProse);
-    expect(after.chapters[0].prose).toBe(before.chapters[0].prose);
-    expect(after.stories[0].head).toEqual(before.stories[0].head);
-    expect(after.attempts[0].rawProviderResponse).toBe(before.attempts[0].rawProviderResponse);
-    expect(after.events.slice(0, 4)).toEqual(before.events);
-    expect(after.memoryRecoveries![0]).toMatchObject({ status: 'applied', rawProviderResponse: expect.any(String) });
-    expect(buildCanonicalStoryView(after, story.id).timeline[0].facts.deadline).toBe('six hours');
-    expect(generate).toHaveBeenCalledTimes(1);
-    expect(after.attempts[0].postCommitProcessing).toBe('complete');
-    expect(before.attempts[0].warnings.some(warning => warning.code === 'capability_unresolved')).toBe(true);
-    expect(after.attempts[0].warnings.some(warning => warning.code === 'capability_unresolved')).toBe(false);
-    await reloaded.recoverChapterMemory(chapter.id, 'fixture');
-    expect(reloaded.snapshot().events).toHaveLength(after.events.length);
-    expect(reloaded.snapshot().chapters[0].prose).toBe(savedProse);
-  });
 
   it('keeps extracted memory out of the Reader instead of inventing a System Panel', async () => {
-    const { controller, story } = await setup(true);
+    const { controller, story } = await setup();
     const state = controller.snapshot();
     // Memory interpreted successfully: the records exist and are resolved.
     expect(buildCanonicalStoryView(state, story.id).records.length).toBeGreaterThan(0);
@@ -185,43 +167,7 @@ describe('Useful, evidenced chapter memory', () => {
     expect(chapter.generatedContent).toBe(state.chapters[0].prose);
   });
 
-  it('keeps unsupported evidence unresolved and prevents ready projections', async () => {
-    const { controller, recoverMemory, chapter } = await setup();
-    recoverMemory.mockImplementationOnce(async () => reply({ events: [{ ...events[1], evidence: 'The dungeon is perfectly safe.' }] }));
-    await controller.recoverChapterMemory(chapter.id, 'fixture');
-    const state = controller.snapshot();
-    const record = state.canonicalRecords.find(record => record.kind === 'location-world')!;
-    expect(record.confidence).toBe('unresolved');
-    expect(state.projections.filter(item => item.sourceCanonicalRecordIds.includes(record.id)).every(item => item.status === 'unresolved')).toBe(true);
-    expect(state.attempts[0].postCommitProcessing).toBe('warnings');
-  });
 
-  it('retries a saved raw extraction after a failed derived write without calling the model again', async () => {
-    const { controller, repository, recoverMemory, chapter } = await setup();
-    const save = repository.save.bind(repository);
-    let writes = 0;
-    vi.spyOn(repository, 'save').mockImplementation(async state => {
-      writes += 1;
-      if (writes === 3) throw new Error('Derived memory write failed.');
-      await save(state);
-    });
-    await expect(controller.recoverChapterMemory(chapter.id, 'fixture')).rejects.toThrow('Derived memory write failed');
-    expect(controller.snapshot().events).toHaveLength(4);
-    expect(controller.snapshot().memoryRecoveries!.at(-1)!.status).toBe('raw_received');
-    await controller.recoverChapterMemory(chapter.id, 'fixture');
-    // One automatic extraction after commit, one explicit request; the retry reused the saved raw extraction.
-    expect(recoverMemory).toHaveBeenCalledTimes(2);
-    expect(controller.snapshot().chapters[0].prose).toBe(savedProse);
-    expect(controller.snapshot().memoryRecoveries![0].status).toBe('applied');
-  });
 
-  it('preserves malformed recovery output and allows an explicit fresh extraction', async () => {
-    const { controller, recoverMemory, chapter } = await setup();
-    recoverMemory.mockImplementationOnce(async () => reply({ prose: 'Attempted rewrite.' }));
-    await expect(controller.recoverChapterMemory(chapter.id, 'fixture')).rejects.toThrow('no event list');
-    expect(controller.snapshot().memoryRecoveries!.at(-1)).toMatchObject({ status: 'failed', rawProviderResponse: expect.stringContaining('Attempted rewrite') });
-    await controller.recoverChapterMemory(chapter.id, 'fixture');
-    expect(controller.snapshot().chapters[0].prose).toBe(savedProse);
-    expect(recoverMemory).toHaveBeenCalledTimes(3);
-  });
+
 });

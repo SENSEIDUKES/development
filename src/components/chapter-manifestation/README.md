@@ -1,12 +1,18 @@
 # Chapter Generation Manifestation
 
+Where `reference/` exists, it holds the old production version, kept as reference
+material for the remake; it is not edited or refreshed. New features do not get a
+reference folder. Old systems stay until each is remade on the new path; never
+reconnect them as they are or re-sync with the old production app. The destination
+is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
+
 - **Source repository:** SENSEIDUKES/Light-Novels
 - **Source location:** `src/components/AILoadingVeil.tsx`
 - **Workshop preview:** `?preview=chapter-generation-manifestation`
-- **Replica created:** 2026-07-29
-- **Last Workshop update:** 2026-10-01
-- **Last source comparison:** 2026-07-29
-- **Replica status:** under refinement
+- **First Workshop record:** 2026-07-29
+- **Last recorded Workshop update:** 2026-10-01
+- **Historical source inspection:** 2026-07-29
+- **Implementation status:** under refinement
 
 ## Workshop history
 
@@ -182,22 +188,36 @@ The workshop has two top-level areas, switched at the top of the page:
 
 No stores, auth, Firebase, or generation callbacks. Operation logic stays in the caller; the system only renders a task card.
 
-### Files needed for transfer
+### Implementation inventory
 
-- `shared/taskCard.ts`, `shared/manifestation.ts`, `shared/manifestationReveal.ts`, `shared/CompactIndicator.tsx`
-- `development/LoadingVeilCard.tsx`, `development/LoadingSystem.tsx`, `development/AILoadingVeil.tsx`, `development/ManifestationChamber.tsx`, `development/NarrativeManifestationZone.tsx`, `development/MediaManifestationZone.tsx`, `development/ManifestationReveal.tsx`, `development/vessels/CelestialScrollVessel.tsx`, `development/omen-scenes.tsx`, `development/SwordCultivatorClash.tsx`, `development/CelestialChannel.tsx`, and the full `development/journey-scrubber/` folder (scrubber, three travelers, traveler registry, trail presets, destination families — once approved, transfer as the new reference implementation)
-- Agent profiles from `src/lib/agents.ts` (already present in the source app)
+The packages and NovelExpanded app built here are the destination. Keep Workshop
+controls, fixtures and adapters outside reusable package entries; another repository
+changes only when the owner asks. Historical references stay untouched.
 
-### Transfer notes
+The existing local files named by this inventory are:
+
+- `shared/taskCard.ts`
+- `shared/manifestation.ts`
+- `shared/manifestationReveal.ts`
+- `shared/CompactIndicator.tsx`
+- `development/LoadingVeilCard.tsx`
+- `development/LoadingSystem.tsx`
+- `development/AILoadingVeil.tsx`
+- `development/NarrativeManifestationZone.tsx`
+- `development/MediaManifestationZone.tsx`
+- `development/omen-scenes.tsx`
+- `src/lib/agents.ts`
+
+### Host and compatibility notes
 
 - Requires `lucide-react` and `motion/react`.
 - Callers keep their own operation state; they only build a `LoadingTaskCard` (or reuse `buildAILoadingTaskCard`) and pass `active`, `minimized`, and `onMinimizedChange`. Minimizing the veil is navigation-driven: flip `minimized` when the user leaves the generation page; the veil itself renders no minimize control.
 - Route short/background tasks with `preferredMode: 'compact'` on the card.
 - The veil assumes a `100dvh` viewport container and `overflow: hidden` at the root; host pages must not add their own vertical scroll inside the manifestation experience.
-- Manifestation scenes go through `ManifestationChamber`'s `scene`/`ambient`/`foreground` slots; respect the Layer 2 particle cap instead of layering inside scenes. The chamber's `data-celestial-foreground` marker only works while the shared `ParticleEffect` keeps its foreground-zone behavior — do not strip that selector when transferring.
+- Manifestation scenes go through `ManifestationChamber`'s `scene`/`ambient`/`foreground` slots; respect the Layer 2 particle cap instead of layering inside scenes. The chamber's `data-celestial-foreground` marker only works while the shared `ParticleEffect` keeps its foreground-zone behavior — do not strip that selector in host integrations.
 - The veil's active zone resolves from the task card's `manifestation` spec — keep `buildManifestationSpec` (or the caller's own equivalent) populating it. Narrative callers may name an `omenSceneId` registered in `omen-scenes.tsx` or omit it for the system-selected pick; media callers pass `mediaReveal` progression and the finished `mediaAsset` when the operation completes (a supplied asset implies `revealed`). Do not route Reader Chamber, Codex, or Narration operations into these cards — they own dedicated manifestation logic.
-- The Manifestation Reveal mechanic (`development/ManifestationReveal.tsx`) and the shared contract (`shared/manifestationReveal.ts`) are vessel-agnostic — when transferring, keep the vessel out of the mechanic. `MediaManifestationZone` is the only current consumer; it adapts the media data into the vessel's `asset` / `mediaKind` props and hands the result to the mechanic. To add a new vessel, create a component that renders the artwork for each `ManifestationRevealState` and pass it as the `vessel` prop — the mechanic stays unchanged.
-- The journey scrubber expects a normalized 0–1 `progress` prop; keep the caller-side normalization (`task.progress / 100`) when transferring. Pass `travelerId` / `trailStyle` / `destinationId` only with ids registered in `travelers.ts` / `trails.tsx` / `destinations.tsx` — unknown ids fall back to `cultivator` + `qi-glow` + `door`. A new traveler is one component honoring `TravelerRenderProps` plus one registry entry; a new trail preset is one component honoring `TrailMarkerProps` (one milestone marker, lit + unlit states, local space centered on (0,0)) plus one registry entry; a new destination family is one component honoring `DestinationRenderProps` (ground at (0,0), shared geometry) plus one registry entry. Reduced-motion fallbacks are each component's own responsibility.
+- The Manifestation Reveal mechanic (`development/ManifestationReveal.tsx`) and the shared contract (`shared/manifestationReveal.ts`) are vessel-agnostic — in host integrations, keep the vessel out of the mechanic. `MediaManifestationZone` is the only current consumer; it adapts the media data into the vessel's `asset` / `mediaKind` props and hands the result to the mechanic. To add a new vessel, create a component that renders the artwork for each `ManifestationRevealState` and pass it as the `vessel` prop — the mechanic stays unchanged.
+- The journey scrubber expects a normalized 0–1 `progress` prop; keep the caller-side normalization (`task.progress / 100`) in host integrations. Pass `travelerId` / `trailStyle` / `destinationId` only with ids registered in `travelers.ts` / `trails.tsx` / `destinations.tsx` — unknown ids fall back to `cultivator` + `qi-glow` + `door`. A new traveler is one component honoring `TravelerRenderProps` plus one registry entry; a new trail preset is one component honoring `TrailMarkerProps` (one milestone marker, lit + unlit states, local space centered on (0,0)) plus one registry entry; a new destination family is one component honoring `DestinationRenderProps` (ground at (0,0), shared geometry) plus one registry entry. Reduced-motion fallbacks are each component's own responsibility.
 
 ### 2026-09-06 — Library UI ownership migration
 

@@ -1,3 +1,5 @@
+> Historical record (as of 2026-09-19). It describes the repository as it was then and is not current.
+
 # HARNESS Chapter Generation Audit
 
 **Date:** 2026-09-19

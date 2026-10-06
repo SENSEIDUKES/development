@@ -1,62 +1,78 @@
 # Library header family
 
-Updated 2026-09-09. Development Home, Story Seed and Cultivator Cave use one `WorkspaceHeader` over the existing `SEIAppHeader`. The existing `LibraryHeaderBadge mode="app-header"` supplies the logo and custom plaque through `LibraryPresentationProvider`. UI packages and their pinned artifacts are unchanged.
+Current behavior checked against `WorkspaceHeader.tsx`, `WorkspaceHeaderUtilities.tsx`,
+`WorkspaceShell.tsx` and their Library navigation consumers on 2026-10-06. This is the
+Library's presentation layer, not a direction to connect old systems to NovelExpanded.
 
-> **2026-09-28 — Header center.** `WorkspaceHeader` takes an optional `center` node. While main mode shows the laptop Pathways sidebar, it passes it to `SEIAppHeader`'s `center` slot (UI 0.9.0), in the middle of the row between the logo and badge and Help and Search; `GlobalHeader` passes Dao Insights there, and `MainLibraryHomeInsights` steps aside. On phones and tablets, and with the strip setting, the badge returns and Dao Insights stays in Home content as described below.
+## Current composition
 
-## Top navigation contract
+`WorkspaceHeader` is a Library adapter over the canonical `SEIAppHeader` and `SEIToolbar`.
+The Library badge supplies emblem, title and subtitle through the narrative presentation
+provider. An optional Back button occupies the branding slot. Home links preserve native
+modified-click behavior; the host may intercept an ordinary click for local navigation.
 
-The top row is **Logo — Library Header Badge — optional page context — Help — Search**. `contextualItem` is an optional page-supplied React node: the public Cave passes Public View. Home passes none — Dao Insights lives in Home's own content, beneath the featured area and above the collection tabs (`MainLibraryHomeInsights`), so it never competes with the page title for the header row. A missing item consumes no slot or placeholder. The title receives a reserved minimum width above 479px. On narrower phones, tighter horizontal spacing and 13px title typography preserve the existing plaque height for current page names. Titles never ellipsize; unusually long host titles wrap as a fallback. The plaque shape, border, glow and colors are unchanged. Pages should supply a compact contextual emblem with its full accessible name on phones.
+The actions row contains optional page context, the host-provided persistent accessory,
+Help and Search. On laptops with the Pathways sidebar showing, optional `center` content
+sits between identity and utilities; Home puts Dao Insights there. The centered slot is
+absent with the strip setting or without supplied content. On narrower layouts, the
+page's existing placement handles that content.
 
-Help and Search are two separate, individually visible controls at every width — 320px included — and are never consolidated into a "…" overflow menu. Each keeps its own 44px touch target and its own focus return: closing a dialog restores focus to the control that opened it. Search is the far-right control. Below 640px it is an emblem; desktop also displays its label. It opens the existing `WorkspaceSheet` / canonical `SEIDialog` with a labeled search field and a filtered list of host-provided destinations and actions. Filtering uses labels and descriptions, ignores case and surrounding whitespace, announces the result count or no results, and resets on reopening. Disabled/loading commands stay unavailable. Selection closes the modal before invoking the existing host callback, allowing the host to open a dialog or navigate without competing focus traps. This is navigation search; no Library story index or remote search service is introduced.
+Commands and status supplied by a page appear in the toolbar below the identity row;
+there is no empty toolbar when neither is present. Search merges page destinations and
+commands by ID, preferring explicitly supplied search items. It filters labels and
+descriptions in a modal, keeps disabled/loading commands unavailable and closes before
+calling the host action. It is local navigation search, not a remote story-search service.
+Help uses the host callback or the existing lazy-loaded Library Help menu, retaining its
+written guidance and audio owner. Header utilities own transient overlay state only.
 
-Help is the small `?` emblem. It opens the existing `LibraryHelpMenu`, including the original topic data, written guidance, filtering, and optional spoken lines. The default menu is loaded on demand and portaled out of the header so the header's blur cannot constrain its overlay. Hosts provide the existing `DevAudioPlaybackProvider` / narrative audio provider, just as for Story Seed Help. Story Seed passes its existing Help callback and preload/expanded state so its header and unchanged bottom Help entry still open the same experience. No help text or audio mapping was rewritten.
-
-Page commands a host still supplies remain available in the existing shared button/overflow controls, composed in `SEIToolbar` immediately below the top row. The redundant private Cave toolbar was removed because Preview Public View already lives in Settings. Public Exit remains available.
-
-Story Seed supplies no header commands at all: that toolbar row read as a second header above its form. Save Draft, Manifest and the small save/generation status are a compact page-owned action row at the top of Story Seed's content, and Settings and Story Bank are entries in Story Seed's workspace navigation — drawn by the shell's workspace mode as the desktop rail, the section drawer and the task bar — and in Search. Story Seed's header uses the same Celestial Library emblem as Home and the Cave, and its logo returns to Library Home. All four keep their original callbacks, eligibility rules, disabled reasons, loading indicators and saved feedback. Home's previous Command Hub destinations and descriptions are retained in Search, including profile/Celestial Tools, Shortcut Spells, conditional active-story commands, and disabled companion realms. Dao Insights keeps its existing modal and provider/clipboard adapters.
-
-The follow-on bottom navigation architecture is documented in [Library navigation](library-navigation.md). Page content, existing Help content, reference replicas, data contracts and production repositories remain unchanged.
-
-## Ownership and inputs
+## Owners and inputs
 
 | Owner / input | Responsibility |
 | --- | --- |
-| `SEIAppHeader`, `SEIAppShell`, `SEIToolbar`, `SEIDialog` | Canonical layout and dialog primitives |
-| `WorkspaceHeader` | Composes badge, optional context, Help, Search and the existing page commands |
-| `title`, `subtitle`, `emblem`, `home`, `back` | Existing badge identity and navigation contracts; modified home clicks retain native link behavior |
-| `contextualItem` | Optional page-supplied node; no domain behavior in the slot |
-| `searchItems: readonly HeaderSearchItem[]` | Existing host destinations with stable IDs, labels, optional descriptions and callbacks |
-| `help?: HeaderAction` | Optional existing page Help owner; otherwise the Library Help menu is reused |
-| `primaryAction`, `secondaryActions`, `overflowActions`, `status` | Existing host commands/status, in the page toolbar; commands also participate in Search |
-| `landmark` | `banner` when standalone, `none` inside `WorkspaceShell` to avoid nested banners |
-| `WorkspaceHeaderUtilities` | Transient overlay/query state and presentation; no store, routing or remote data access |
-| `WorkspaceShell` | Uses `SEIAppShell` (UI 0.6.0): a fixed frame whose `<main>` scrolls, with the rail revealed by `sidebarBreakpoint="lg"` (1024px) and scrolling on its own. Accepts `mainRef` for hosts that reset or restore scroll. The Reader Chamber is never a consumer |
-| Feature adapters | Continue to own eligibility, page state, content, navigation and side effects |
+| `SEIAppHeader`, `SEIAppShell`, `SEIToolbar`, `SEIDialog` | Canonical layout, scrolling frame, toolbar and dialog behavior |
+| `WorkspaceHeader` | Library identity and action composition; no routing, story or storage logic |
+| `title`, `subtitle`, `emblem`, `home`, `back` | Host-provided identity and navigation callbacks |
+| `contextualItem`, `center` | Optional page content, including desktop Dao Insights |
+| `WorkspaceHeaderAccessoryProvider` | Host-owned persistent actions shared across headers |
+| `searchItems`, page commands, `help`, `status` | Existing page destinations, eligibility, Help and status |
+| `landmark` | `banner` alone, `none` when `WorkspaceShell` supplies the banner |
+| `WorkspaceShell` | Fixed frame, scrolling main region, desktop rail and remembered sidebar width |
+| Feature adapters | Page state, data, eligibility and side effects |
 
-`HeaderSearchItem` extends the existing `HeaderAction` with an optional description. IDs must be unique. Header commands are merged into search items by ID; an explicitly supplied search item takes precedence. SEN continues to use the narrative presentation contract and never imports Library UI. Home's `MainLibraryHeader` stays in the Library composition and is not exported through SEN.
+The header uses canonical touch targets, focus behavior and safe areas. Search uses the
+shared sheet/dialog's focus containment, Escape restoration and scroll lock. The main
+region scrolls inside the shell while its header and desktop rail stay in place. Global
+navigation clearance belongs to the main region, not measured sticky offsets.
 
-The header supplies 44px touch targets and visible focus rings. Search uses the canonical modal's initial focus, Tab containment, Escape, scroll lock and final focus; the reused Help menu retains its own focus handling. Safe areas come from the canonical header and shared sheet. Browsing screens scroll inside the shell's `<main>`, so the header and the desktop rail stay put without sticky offsets or measured heights; the clearance above the fixed global strip is the main region's bottom padding. Reduced motion retains the existing behavior.
+## Consumers and boundaries
 
-## Previews and validation
+Home, Story Seed and Cultivator Cave reuse the header family. Story Seed has no duplicate
+header command row: Save Draft, Manifest and status live in its content action row;
+Story Bank and Settings use workspace navigation and Search. Its logo returns to Home.
+The Cave retains Settings and its existing public Exit; the redundant private toolbar
+is gone. Hosts keep all existing callbacks, loading states and disabled reasons.
 
-Use `?preview=library-shell`, choose **Development**, and select Main Library, Story Seed, Cultivator Cave or **Header slot states**. The latter has present, absent and long-context fixtures. Preview controls include 320px, 390px, tablet, desktop and landscape sizes, simulated notches, reduced motion, and a public Cave toggle. Help and Search are opened with their real controls in every configuration.
+SEN remains independent of Library and Library UI. `MainLibraryHeader` and first-party
+shell adapters are Library owners. Older Reader and Codex implementations remain outside
+this shell and are kept for their remakes. Historical references and capture provenance
+are retained, never refreshed. The retired capture-check script is not a current check.
 
-Direct routes:
+## Inspection and validation
 
-- `/library-shell.html?variant=development&source=header-states&state=context-present`
-- `/library-shell.html?variant=development&source=header-states&state=context-absent`
-- `/library-shell.html?variant=development&source=header-states&state=long-context`
-- `/library-shell.html?variant=development&source=main-library&state=linked`
-- `/library-shell.html?variant=development&source=story-seed&state=filled-intake`
-- `/library-shell.html?variant=development&source=cultivator-cave&state=developed-cultivator&cave=/public/home`
+Use `?preview=library-shell`, Development, and Main Library, Story Seed, Cultivator Cave
+or Header slot states. Direct fixtures include
+`/library-shell.html?variant=development&source=header-states&state=context-present`
+and `state=context-absent` or `state=long-context`; the existing source routes remain.
 
-`WorkspaceHeader.test.tsx` and `WorkspaceHeaderActions.test.tsx` cover composition, optional content, Help reuse, filtering, disabled commands, callback dispatch and focus. `scripts/verifyLibraryHeader.mjs` is the browser verification function; run it with the Browser skill's established `tab`, `viewport` and local `baseUrl` handles. It launches no second browser. It asserts responsive geometry across 40 fixtures at 320, 375, 390, 430, 480, 640, 768 and 1440px, keyboard order, modal Tab containment, Escape return, guidance preservation and landscape safe areas. See [current verification evidence](library-top-navigation-validation.md).
+`WorkspaceHeader.test.tsx` and `WorkspaceHeaderActions.test.tsx` check optional content,
+actions, Help, filtering and focus. `scripts/verifyLibraryHeader.mjs` provides browser
+checks. [Earlier verification evidence](history/library-top-navigation-validation.md)
+is historical; use current tests and package-boundary checks for today's graph.
+Workshop routing, mocks, manifests and controls stay outside package consumers.
 
-The capture guard still hashes every locked capture, dependency and font. Its live Story Seed import prohibition is scoped to frozen captures and their shared adapters; active Development code intentionally reuses the existing Library Help implementation. Package-boundary checks cover the active graph.
+## History
 
-## Transfer inventory
-
-For an approved future transfer, include `WorkspaceHeader.tsx`, `WorkspaceHeaderUtilities.tsx`, `WorkspaceHeaderActions.tsx`, `WorkspaceShell.tsx`, `WorkspaceSheet.tsx`, `workspaceMedia.ts`, their adjacent styles, and the existing narrative presentation/audio providers and `LibraryHelpMenu` dependency. Home additionally uses `MainLibraryHeader.tsx`, `main-library/GlobalHeader.tsx`, `MainLibraryHomeInsights.tsx` and `mainLibraryClipboard.tsx` for the Home placement of the unchanged Dao content, and `shared/MainLibraryAdapter.tsx`. Story Seed and Cave retain their own adapters. The current UI/Library UI packages already provide the required primitives.
-
-Keep iframe routing, preview fixtures, `header-theme.css`, Workshop controls, tests, capture manifests and documentation out of runtime transfers. No production integration or package publication is part of this change.
+- **2026-09-09:** Home, Story Seed and Cave adopted the shared header family with optional context, Help, Search and existing page actions.
+- **2026-09-27:** Story Seed commands moved into its content action row and workspace navigation; browsing screens adopted the fixed shell frame.
+- **2026-09-28:** Home gained centered Dao Insights while the laptop Pathways sidebar is showing.
+- **2026-10-06:** Rewrote the body from current code and folded dated notes into this history. No behavior changed.

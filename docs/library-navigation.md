@@ -1,69 +1,73 @@
 # Library navigation architecture
 
-> **2026-09-28 — Pathways sidebar on laptops.** From 1024px, main mode shows the Pathways sidebar (`LibrarySectionSidebar` → `LibraryNavigationDrawerPanel variant="pathways"` from Library UI 0.9.0) instead of the bottom strip: the reader's picture, name and rank (the host's `profile`), Home — Create — Discover — Profile, Settings in the footer slot and the host's artwork. It is open by default (`sidebarBehavior="click"`): the star minimizes it to the 72px icon rail, a double tap or double click on the rail expands it, and hover or focus never changes its width. `WorkspaceShell` applies one choice (open or minimized) to every main-mode page; the host remembers it through `LibraryDesktopNavigationProvider`'s `sidebarMode` and `onSidebarModeChange`, otherwise it lasts for the visit. A page's own sub-pages nest under the active pathway only when the page supplies a `sectionMenu` itself — the Cultivator Cave's pages sit under Profile. `MainLibraryNavigation` supplies Home, Create and Discover sections only with the strip setting, since those sections are already on the page, in header Search and in the footer. Phones and tablets keep the strip. `LibraryDesktopNavigationProvider value="strip"` keeps the strip at every width; `useLibraryPathways()` reports whether the sidebar is showing. Workspace mode uses the Pathways styling with its rail always open. See the [Library Shell README](../src/components/library-shell/README.md).
+Current behavior checked against `LibraryNavigation.tsx`, `MainLibraryNavigation.tsx`,
+`libraryRoutes.ts` and `WorkspaceShell.tsx` on 2026-10-06. This describes the Library
+Shell; it does not mean these older pages have been connected to NovelExpanded.
 
-> **2026-09-27 — Two modes.** `LibraryNavigation` has a main mode (the global strip) and a workspace mode (`mode="workspace"` with a `LibraryWorkspaceDefinition`): the shell draws a focused task's bar — Sections, its tools, Back — in the strip's place and style, its Sections drawer, and its desktop rail through `LibrarySectionSidebar`. Story Seed now uses workspace mode instead of its own navigation system; its controls and behavior are unchanged. See the [Library Shell README](../src/components/library-shell/README.md).
->
-> **2026-09-26 — Create replaces Library.** The strip is now **Home — Create — Discover — Profile**. Create opens its own page, `{ screen: 'creator-space' }` ([Create](../src/components/creator-space/README.md)). My Library (`screen: home`, `collection: my-library`) is unchanged and still reachable from header Search and the footer; it and story `detail` now select Home, since both are Home views. The section outline's `library` group became `create` (Creator Space, Story Seed, Seed Bank); My Library, Recently Read and Bookmarks moved under Home. The sections below describe the 2026-09-09 four-entry strip; read "Library" there as today's Create slot.
+## Destinations
 
-Updated 2026-09-09. Navigation-only Development change, continuing the shared header in PR #190. No existing page body, card, content, image, field, reward, storage operation, or locked reference was redesigned. Production repositories and vendored UI artifacts are unchanged.
+Main navigation is **Home — Create — Discover — Profile**. My Library is a Home
+collection, not a global navigation entry. Re-selecting the current location is a no-op.
 
-## Ownership and contract
-
-`development/LibraryNavigation.tsx` is the Library Shell owner of the default bottom strip: **Home — Library — Discover — Profile**. It composes the existing `LibraryBottomNavigation`. Pages pass `location` and the existing router callback `onNavigate`. The optional `sectionMenu` configuration remains available for an existing desktop rail. They do not build another global bar.
-
-`libraryRoutes.ts` centralizes global labels, route targets, active matching, navigation modes, and the Section outline. Route state remains host-owned; the shell derives selection without another router or store. `LibraryLocation` carries the existing `screen`, LibraryScreen `collection`, and optional `cave` path. Re-selecting the same location does not add history. Nested Cave routes stay under Profile, `sects`/`pricing` under Home, story `detail` under Library, and `challenge` under Discover. Unknown standard pages have no falsely selected destination.
-
-The main Section control and drawer were removed on 2026-09-09 at user request. Page destinations remain in top Search. Search uses the existing dialog for focus containment and Escape restoration, and dispatches selected actions after the dialog releases focus. Story Seed’s separate Sections control and drawer are unchanged. No hidden global Section trigger or empty-menu experience remains.
-
-The strip remains available on standard pages at mobile and desktop widths. Its stylesheet owns fixed placement, minimum 44px targets, labels, content clearance, and bottom/side safe-area insets. The existing Cave rail remains at its existing breakpoint and receives clearance above the strip. The rail retains its page definition; Cave Search exposes the same destinations.
-
-## Existing destinations
-
-| Global entry | Existing host destination | Existing related destinations |
+| Entry | Host destination | Related existing destinations |
 | --- | --- | --- |
-| Home | `screen: home`, `collection: featured` (Immortal Hub) | Immortal Hub; Sects (`sects`); Tiers (`pricing`) |
-| Create (was Library until 2026-09-26) | `screen: creator-space` | Creator Space; Story Seed (`creator`); Seed Bank (existing Cave `/stories`). My Library (`screen: home`, `collection: my-library`) now sits under Home |
-| Discover | `screen: home`, `collection: challenges` | Fate Survival Challenges |
-| Profile | `screen: profile`, `cave: /home` | Cave Home, Stories, Relics; public view also exposes its existing Exit action |
+| Home | `screen: home`, `collection: featured` | Immortal Hub, My Library, Sects, Tiers |
+| Create | `screen: creator-space` | Creator Space, Story Seed (`creator`), Seed Bank (Cave `/stories`) |
+| Discover | `screen: home`, `collection: challenges` | Existing Fate Survival collection; no separate Discover screen |
+| Profile | `screen: profile`, `cave: /home` | Cave pages, Seed Bank, Settings and public Exit |
 
-Discover currently lands on the existing Fate Survival collection because this repository has no separate Discover screen. No new discovery page was built. Immortal Hub keeps its existing content and creator access. The seed listing uses the existing services and export behavior in `UserProfileStoriesPanel`; no storage system or seed persistence path was added.
+`MainLibraryNavigation` maps the existing routes and only supplies section actions that
+exist. Hosts retain ownership of navigation, story data, account data and persistence.
+Header Search and the footer expose existing page destinations; there is no global
+Sections drawer. Unknown standard pages receive no falsely selected pathway.
 
-`LIBRARY_SECTION_OUTLINE` and page definitions retain the requested organization for existing rails; they no longer create a global drawer. Only existing host destinations are used. Unfinished pages and media storage are not invented. Support stays with universal Help; no Support or debug entry was added to global navigation. Existing privileged/development tools remain in their current owners.
+## Responsive main navigation
 
-## Preserved workspaces and Cave migration
+Phones and tablets use the labelled bottom strip with safe-area spacing and content
+clearance. From 1024px, the default is the Pathways sidebar: the host's reader picture,
+name and rank, the four destinations, Settings and optional host artwork. The star
+minimizes the open sidebar to its 72px icon rail; double click or double tap expands it.
+Hover and focus do not change its width. `WorkspaceShell` applies one shared choice:
+the host's controlled `sidebarMode` and `onSidebarModeChange`, or the visit's local state.
+`LibraryDesktopNavigationProvider value="strip"` keeps the strip at every width.
 
-- `creator` / `story-seed` uses workspace mode. Story Seed supplies its workspace definition and the shell draws its bar (Sections, Story Bank, Settings, Back), drawer and desktop rail; Help, Settings, Manifest eligibility and behavior are unchanged.
-- `reader` / `codex` uses immersive mode. The shell never adds the global strip to those routes, even if a caller requests standard mode.
-- Other specialized workspaces can explicitly supply `mode="workspace"` or `mode="immersive"`; their navigation components are retained.
-- The Cave's old bottom bar and its placement/placeholder CSS were removed. `/home`, `/stories`, `/relics`, `/settings` and all existing child/public routes are unchanged. Settings is still the existing button under Daily Dao Pillar, outside the global strip. Public Exit returns to the same previous Cave path as before.
-- `UserProfileHome`, Cave page panels, Story Seed components, Reader Chamber components and frozen references received no changes in this bottom-navigation work.
+A page's supplied sub-pages nest under its active pathway. The Cave supplies these;
+`MainLibraryNavigation` omits Home, Create and Discover section menus in sidebar mode
+because the page, Search and footer already expose them. With the strip setting, its
+page-specific sections remain available. The fixed shell owns the scrolling main region
+and rail; the page never draws a competing global bar.
 
-## Preview and transfer
+## Focused workspaces and immersive routes
 
-Use the existing `?preview=library-shell` workspace and Development. Main Library now includes Home, Library, Discover, Sects, Tiers, and immersive Reader route states; Cave and Story Seed remain their existing configurations. The direct route is `/library-shell.html?variant=development&source=main-library&state=library` (also `linked`, `discover`, `sects`, `tiers`, `reader`). Cave: `source=cultivator-cave&state=developed-cultivator`; public paths use `&cave=/public/home`. Safe areas use `&safeArea=on` or `landscape`.
+Story Seed uses workspace mode with a `LibraryWorkspaceDefinition`. The same shell draws
+Sections, task tools (Story Bank and Settings) and Back on the task bar, a Sections drawer
+on phones/tablets and an always-open Pathways-style rail on desktop. Selection closes the
+drawer before its existing callback; reaching the desktop breakpoint closes an open drawer.
+Story Seed supplies destinations and commands, not a second navigation system.
 
-The Main Library capture still has a clearly labeled content slot, not the full production LibraryScreen. Global actions within it update existing screen/tab fixture state and browser history; Profile and Story Seed open their existing full Workshop previews. The standalone Cave preview uses the same navigation transport to reach Home, Library and Discover. These are local preview adapters, not production data integration.
+Reader and Codex routes use immersive mode and receive no global strip, even if a caller
+requests standard mode. Their existing implementations remain untouched. Cave routes
+`/home`, `/stories`, `/relics`, `/settings` and child/public routes keep their existing
+owners. Public Exit retains its existing callback; Settings is not a fifth global entry.
 
-Transfer `LibraryNavigation.tsx`, `MainLibraryNavigation.tsx`, `libraryRoutes.ts`, `library-navigation.css`, and their existing shared shell/dialog dependencies together with the changed `UserProfile.tsx` and removal of its old dock CSS. Hosts supply `onNavigateLibrary(location)` to UserProfile and their real LibraryScreen active collection to `MainLibraryNavigation`. Keep `libraryPreviewNavigation.ts`, mocks, preview controls and browser verification scripts in Development. This work adds no published SEN exports or SEN-to-Library dependency.
+## Inspection and validation
 
-## Validation
+Use `?preview=library-shell`, Development, or the standalone
+`/library-shell.html?variant=development&source=main-library&state=library` fixture.
+The fixture state name `library` is retained; it is not today's navigation label.
+Cave fixtures use `source=cultivator-cave`; Story Seed uses `source=story-seed`.
+These adapters simulate existing routes and browser history, not production integration.
 
-Focused component tests cover four-entry global order/selection, existing route callbacks, current-route no-ops, presence/absence of page configuration, retained rails, Cave navigation through Search and public Exit, and the real Story Seed Sections control. `scripts/verifyLibraryNavigation.mjs` checks four standard destinations at five widths, Search keyboard/focus behavior, Cave routes, global transitions/history, safe areas and specialized exclusions. Existing Cave verification scripts now use Search for page navigation.
+Focused tests cover order, selection, route no-ops, sidebar/strip behavior, workspace
+controls and immersive exclusions. `scripts/verifyLibraryNavigation.mjs` exercises the
+browser matrix. Historical results are in [the history folder](history/README.md), not
+current readiness claims. Current package ownership and import boundaries remain enforced
+by `check:ownership`, `check:package-boundaries` and `check:app`.
 
-Browser evidence is local desktop-browser emulation. It does not establish physical iOS behavior, production authentication/storage, a new discovery backend, or a completed design for unfinished pages.
+## History
 
-Original five-entry implementation, verified 2026-09-09 (historical):
-
-- `npx vitest run src/components/library-shell/development src/components/user-profile src/components/story-seed`: 162 tests (before the four-entry follow-up) across 9 files passed.
-- `npm run build`, `npm run build:package`, `npm run check:package-boundaries`, `npm run check:ui-artifacts`: passed.
-- Locked capture integrity: all 14 captures, 11 dependencies and 18 fonts passed.
-- Browser: 20 layout/Section combinations (four standard destinations at 320, 390, 768, 1024 and 1440px) passed. Pointer and keyboard entry, Tab/Shift+Tab wrapping, Escape restoration, destination heading focus, Cave settings/history/public Exit, global Home/Library/Discover/Profile transitions and Back/Forward passed.
-- Simulated 34px bottom inset: navigation height 115.25px, content clearance 130px. Landscape with 44px side and 21px bottom insets: navigation height 102.24px, clearance 117px; Section remained inside the viewport. Both used reduced motion.
-- Real Story Seed preview: original Sections, Story Bank, Help, Settings and eligible Manifest controls retained; original section drawer opens. Immersive Reader route fixture excludes the global strip. Reader implementation files are unchanged.
-
-The browser matrix and interaction groups were run separately after correcting verification timing around dialog focus guards and Story Seed's initial fixture hydration. The older Cave scripts were updated for the new entry path; their broader reward/account scenarios were not re-run as part of this navigation change.
-
-Four-entry follow-up, 2026-09-09: removed the global Section trigger, drawer and obsolete styling. The 159 focused tests across 9 files pass, including the real Story Seed Sections drawer and Cave Search destination focus. The production build and package-boundary check pass. The 20 standard-page/viewport combinations pass with four controls, unchanged clearance and minimum touch targets. Story Seed's original navigation and immersive exclusions also pass in the browser. Search dispatch now waits for dialog focus restoration before calling a host action.
-
-The follow-up interaction run also passes Search initial focus, forward/reverse Tab containment, Escape restoration, Cave routes/public Exit, global transitions and Back/Forward, and 34px bottom/44px side safe-area simulations. Navigation heights and clearances remain those listed above. Browser checks wait for Search initial focus and the global navigation landmark after full-page transitions before asserting geometry.
+- **2026-09-09:** Verified global navigation and Search; removed the global Sections control while retaining Story Seed's own Sections.
+- **2026-09-26:** Create replaced Library in global navigation; My Library became a Home collection.
+- **2026-09-27:** Unified main and workspace navigation; Story Seed supplies its focused task definition to the shell.
+- **2026-09-28:** Added the laptop Pathways sidebar, remembered open/minimized choice and optional all-width strip setting.
+- **2026-10-06:** Rewrote the body from current code and folded dated notes into this history. No behavior changed.

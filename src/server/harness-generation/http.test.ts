@@ -78,27 +78,9 @@ describe('Harness Generation HTTP boundary', () => {
     expect(missing.status).toBe(400);
     expect(generate).toHaveBeenCalledOnce();
   });
-  it('serializes recovery as evidence extraction, with no chapter-generation response schema', async () => {
-    const generate = vi.fn(async (_input: HarnessTextGenerationRequest) => ({ rawProviderResponse: '{"memory":{}}',
-      providerReceipt: { provider: 'gemini' as const, model: request().model, generatedAt: '2026-09-05', usage: { source: 'unavailable' as const } } }));
-    const original = request();
-    const revision = { ...foundation(), input: { ...foundation().input, intendedDirection: 'Future plan must not become an extracted fact.' } };
-    const result = await handleHarnessGenerationHttp({ method: 'POST', body: JSON.stringify({
-      operation: 'recover-memory', storyId: original.storyId, chapterId: 'saved', model: original.model,
-      prose: 'Aria warned that the core would collapse in six hours.', foundation: revision,
-    }) }, { environment, providerFactory: () => ({ provider: 'gemini', model: original.model, generate }) });
-    expect(result.status).toBe(200);
-    expect(generate).toHaveBeenCalledOnce();
-    const input = generate.mock.calls[0][0] as unknown as { userPrompt: string; temperature: number; responseJsonSchema: { properties: Record<string, unknown> } };
-    expect(input.userPrompt).toContain('collapse in six hours');
-    expect(input.userPrompt).not.toContain('Future plan');
-    expect(input.temperature).toBe(0);
-    expect(Object.keys(input.responseJsonSchema.properties)).toEqual(['memory']);
-  });
-
-  it('rejects unknown operations and empty recovery identities before contacting the provider', async () => {
+  it('rejects unknown operations and the retired memory operation before contacting the provider', async () => {
     for (const body of [{ ...request(), operation: 'unknown' }, {
-      ...request(), operation: 'recover-memory', chapterId: ' ', prose: 'Saved prose.',
+      ...request(), operation: 'recover-memory', chapterId: 'saved', prose: 'Saved prose.',
     }]) expect((await handleHarnessGenerationHttp({ method: 'POST', body }, { environment })).status).toBe(400);
   });
   it('rejects sound words outside the Sound Cue pack limits before contacting the provider, and asks for no list of sounds in the reply', async () => {

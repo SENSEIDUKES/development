@@ -1,10 +1,16 @@
 # SEN Arc Goals
 
+Where `reference/` exists, it holds the old production version, kept as reference
+material for the remake; it is not edited or refreshed. New features do not get a
+reference folder. Old systems stay until each is remade on the new path; never
+reconnect them as they are or re-sync with the old production app. The destination
+is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
+
 - **Created:** 2026-09-13
-- **Last Workshop update:** 2026-10-03
+- **Last recorded Workshop update:** 2026-10-03
 - **Status:** neutral SEN contract integrated with the DEV HARNESS host
 - **Preview:** existing Story Seed ARC workspace and HARNESS Reader Codex chapter recaps
-- **Source comparison:** DEV implementation audited 2026-09-13; no production replica imported
+- **Historical source inspection:** DEV implementation audited 2026-09-13; no production replica imported
 
 `shared/arcGoals.ts` is the single authority for arc length, position, goal structure,
 validation, sequential segments, completion predicates, active goal selection,
@@ -92,12 +98,13 @@ adapter must support that plan operation before its first model call. HARNESS pe
 remains the existing local IndexedDB boundary; this work does not add account/cloud story
 synchronization.
 
-## Transfer and verification
+## Implementation inventory
 
-Transfer the neutral arc module and package entry alongside the modified Story Seed,
-HARNESS, Reader/Codex adapters, and server prompt/transport changes. Keep Workshop
-fixtures and navigation out of consumers. No locked reference, Author Skill manifest,
-production repository, authentication, Postgres, or R2 configuration was changed.
+The packages and NovelExpanded app built here are the destination. Keep Workshop
+controls, fixtures and adapters outside reusable package entries; another repository
+changes only when the owner asks. Historical references stay untouched.
+
+## Verification
 
 Focused tests cover allocation invariants, schema resets, seed export round trips,
 frozen requests, deadline enforcement, evidence-backed completion, unrestricted

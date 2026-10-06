@@ -1,14 +1,20 @@
 # Light Novels Home
 
+Where `reference/` exists, it holds the old production version, kept as reference
+material for the remake; it is not edited or refreshed. New features do not get a
+reference folder. Old systems stay until each is remade on the new path; never
+reconnect them as they are or re-sync with the old production app. The destination
+is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
+
 - **Source repository:** `SENSEIDUKES/Light-Novels`
 - **Source location:** `src/components/LibraryScreen.tsx`, export `LibraryScreen`; `src/components/StoryDetailScreen.tsx`, export `StoryDetailScreen`
 - **Inspected source commit:** `4a3dd02b6640b2ec50d8d1d136e37fb808249ed2` (clean local source checkout)
 - **Workshop preview:** `?preview=light-novels-home`
 - **Responsive Home:** `/library-shell.html?variant=development&source=main-library&screen=home&collection=featured`
-- **Replica created:** 2026-09-09
-- **Last Workshop update:** 2026-09-11
-- **Last source comparison:** 2026-09-09
-- **Replica status:** under refinement — multimedia presentation skeleton in the existing Home/detail flow
+- **First Workshop record:** 2026-09-09
+- **Last recorded Workshop update:** 2026-09-11
+- **Historical source inspection:** 2026-09-09
+- **Implementation status:** under refinement — multimedia presentation skeleton in the existing Home/detail flow
 
 ## Boundary and ownership
 
@@ -30,7 +36,7 @@ The extraction retains the source hero JSX, video sequence, six-second backdrop 
 
 These compatibility values are retained. Home and Profile remain mounted while inactive so navigation does not discard unrelated local edits or Home filters. Only the active screen's header and global strip are visible. Back/Forward updates the current destination. Story Seed keeps its existing separate document and specialized navigation. The Home hero's Carve New Destiny opens that existing local Story Seed preview.
 
-The Home Workshop entry provides Original Reference / Development / Compare. The existing Library Shell Workshop entry defaults to its Library fixture. Its other fixture controls and locked shell references remain available. The original Library Shell source-comparison date was not advanced.
+
 
 ## Multimedia visual trial
 
@@ -42,17 +48,35 @@ The existing `screen=detail` path was a content placeholder in Development. `ref
 
 This is a Library-owned presentation of the SEN multimedia concept. No SEN export, backend model, permanent expression schema, storage, purchasing, QR, reader, game launcher, or Portal infrastructure is introduced. The small display props and mock relationship map are local to the trial; fixtures stay in Workshop. Components also accept no expansions, in which case no seals or overview section render.
 
-## Transfer guidance
+## Implementation inventory
 
-An approved future production extraction needs `development/LightNovelsHome.tsx`, `shared/homeContracts.ts`, and `shared/home.css`, the existing `@seihouse/library-ui`, `@seihouse/ui`, `motion`, and `lucide-react` dependencies, and a host adapter that supplies published-world display fields and the existing production navigation/acquisition callbacks. Preserve the source public media assets or supply approved local equivalents. Do not transfer Workshop wrappers, fixtures, in-memory navigation transport, or the reference copy.
+The packages and NovelExpanded app built here are the destination. Keep Workshop
+controls, fixtures and adapters outside reusable package entries; another repository
+changes only when the owner asks. Historical references stay untouched.
 
-For the multimedia presentation, also transfer `development/WorldExpressions.tsx` and `development/world-expressions.css`. Integrate its content section into the verified production `src/components/StoryDetailScreen.tsx`; preserve that page's account/story logic. The Development detail extraction and `shared/storyDetailContracts.ts` are a preview adapter for that integration, not a replacement for the complete production page. Supply real display data and approved art only in a separately authorized phase.
+The existing local files named by this inventory are:
+
+- `development/LightNovelsHome.tsx`
+- `shared/homeContracts.ts`
+- `shared/home.css`
+- `development/WorldExpressions.tsx`
+- `development/world-expressions.css`
+- `shared/storyDetailContracts.ts`
+
+## Host boundary
+
+The display uses `@seihouse/library-ui`, `@seihouse/ui`, `motion` and `lucide-react`.
+The host supplies published-world display fields, navigation/acquisition callbacks
+and approved public media. Workshop wrappers, fixtures and in-memory navigation
+transport are preview-only. `WorldExpressions` is the multimedia presentation;
+`shared/storyDetailContracts.ts` and the Development detail extraction are a preview
+adapter, not a complete account/story page.
 
 ## Verification
 
-The multimedia trial passes `npm run build`, the 40 existing Library Shell/Workshop tests, `check:package-boundaries`, and `checkLibraryShellCapture.mjs`. Local browser checks cover 320/390/768/1024/1440px, loaded artwork, a single homepage novel, labeled seals, three connected-media cards, disabled adaptation actions, horizontal keyboard scrolling, direct detail reload, Back/Forward, genre/sort retention, return focus, reduced motion, and 34px bottom safe-area spacing. The original comparison has no seals or connected-media section. Measurements are in `output/playwright/multimedia-world/verification.json`; the build log is beside it. Browser interaction generated no Fetch/XHR requests. This is local preview verification, not a hosted deployment or live account test.
+The multimedia trial passes `npm run build`, the 40 existing Library Shell/Workshop tests, `check:package-boundaries`, and the then-used capture check (now retired). Local browser checks cover 320/390/768/1024/1440px, loaded artwork, a single homepage novel, labeled seals, three connected-media cards, disabled adaptation actions, horizontal keyboard scrolling, direct detail reload, Back/Forward, genre/sort retention, return focus, reduced motion, and 34px bottom safe-area spacing. The original comparison has no seals or connected-media section. Measurements are in `output/playwright/multimedia-world/verification.json`; the build log is beside it. Browser interaction generated no Fetch/XHR requests. This is local preview verification, not a hosted deployment or live account test.
 
-See `artifacts/standalone-home/` for local production browser evidence and the two mobile screenshots. The screenshot browser renders the 390 by 844 CSS viewport at the host display scale; the supplied images capture that rendered area without the tool's black padding.
+See `docs/history/standalone-home/` for local production browser evidence and the two mobile screenshots. The screenshot browser renders the 390 by 844 CSS viewport at the host display scale; the supplied images capture that rendered area without the tool's black padding.
 
 The build, focused navigation/header/profile/Workshop tests, package boundary checks, and existing locked-capture guard pass. No full production Library/Discover body or production account/backend behavior is claimed as covered.
 

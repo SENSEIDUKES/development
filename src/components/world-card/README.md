@@ -1,5 +1,11 @@
 # World Card
 
+Where `reference/` exists, it holds the old production version, kept as reference
+material for the remake; it is not edited or refreshed. New features do not get a
+reference folder. Old systems stay until each is remade on the new path; never
+reconnect them as they are or re-sync with the old production app. The destination
+is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
+
 The Full, Compact, and Info cover cards are faces of one Library world card
 renderer. Home and Create render it through host-specific adapters in this
 folder; the Info page composes its cover face.
@@ -13,8 +19,8 @@ folder; the Info page composes its cover face.
 - **Workshop preview:** `?preview=world-card` (Components → World Card)
 - **Package:** `@seihouse/library/world-card` (owner `library`)
 - **Created:** 2026-09-27
-- **Last Workshop update:** 2026-10-01
-- **Last source comparison:** 2026-09-27
+- **Last recorded Workshop update:** 2026-10-01
+- **Historical source inspection:** 2026-09-27
 - **Status:** active
 
 The Workshop Pages controls include a viewport switcher: current browser,
@@ -56,7 +62,7 @@ depend on the Library card.
 - `development/WorldCard.tsx` owns the Full, Compact, and Info cover faces. Create supplies its world, cover, and selection through `face="compact"`; there is no separate Compact component.
 - `development/WorldCardCover.tsx` handles static art for every face; Compact keeps its celestial wash when art is missing.
 - `development/` is the active Workshop version, which the real pages render.
-- `reference/` is locked. It holds:
+- `reference/` is historical and not edited. It holds:
   - the Full card as the production replica renders it;
   - the Compact tile as it stood before extraction.
 
@@ -322,16 +328,30 @@ belong outside this component and the Workshop fixtures. Branch creation must
 respect the source creator's permission; each new branch starts private.
 These are documented product requirements, not behavior implemented here.
 
-## Transfer
+## Implementation inventory
 
-Copy `development/`, `shared/` and `development/world-card.css`. Then:
+The packages and NovelExpanded app built here are the destination. Keep Workshop
+controls, fixtures and adapters outside reusable package entries; another repository
+changes only when the owner asks. Historical references stay untouched.
 
-- have the host's Home grid and Create row render `WorldCard` with the appropriate face, and the world detail render `WorldCardInfo`, which composes the Info cover face;
-- pass the host's reading action as `onRead`, the viewer's known `readingPosition` when there is one, and `onOpenCodex` only when that destination works;
-- supply world display data, optional per-world `videoUrl`, optional creator lettering resolved from the creator profile, public publication status or personal-library creator status, authorized panel synopsis/tags/activity/branching permission, and destinations from the host;
-- include the `@seihouse/sen/motion-picture` entry, compatible `@seihouse/ui@0.10.1` components, and `@seihouse/library-ui@0.9.0` (`LibraryPanel`, `LibraryCard`, `LibraryButton`).
+The existing local files named by this inventory are:
 
-Leave behind the Workshop preview, its sample data and the `reference/` folder.
+- `development/`
+- `shared/`
+- `development/world-card.css`
+- `reference/`
+
+## Host boundary
+
+Home and Create render `WorldCard` with the appropriate face; `WorldCardInfo` composes
+the Info cover face. The host supplies `onRead`, a known `readingPosition`, and
+`onOpenCodex` only where that destination works. It also supplies world display data,
+optional `videoUrl`, creator lettering, publication/personal-library status, authorized
+synopsis/tags/activity/branching permission, and working destinations.
+
+The display uses `@seihouse/sen/motion-picture`, compatible `@seihouse/ui@0.10.1`
+components and `@seihouse/library-ui@0.9.0` (`LibraryPanel`, `LibraryCard`, `LibraryButton`).
+Workshop sample data and reference material remain outside the host adapter.
 
 ## Workshop history
 

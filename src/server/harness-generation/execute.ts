@@ -1,9 +1,9 @@
-import { type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessMemoryRecoveryRequest, type HarnessArcRequest } from '@seihouse/sen/harness-generation';
+import { type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessArcRequest } from '@seihouse/sen/harness-generation';
 import {
   resolveConfiguredHarnessModel,
   type ResolvedHarnessGenerationConfig,
 } from './config';
-import { buildHarnessGenerationPrompt, buildHarnessMemoryRecoveryPrompt, buildHarnessArcPrompt } from './prompt';
+import { buildHarnessGenerationPrompt, buildHarnessArcPrompt } from './prompt';
 import { createHarnessTextProvider, type HarnessTextModelProvider } from './provider';
 import { requireTextModelKey, resolveReasoningLevel } from '../model-router/catalog';
 
@@ -18,7 +18,7 @@ export class HarnessGenerationExecutionError extends Error {
 }
 
 export const executeHarnessGeneration = async (
-  request: HarnessGenerationRequest | HarnessMemoryRecoveryRequest | HarnessArcRequest,
+  request: HarnessGenerationRequest | HarnessArcRequest,
   config: ResolvedHarnessGenerationConfig,
   providerFactory?: HarnessProviderFactory,
   /** Router Advanced setting from the request body; checked against the catalog. */
@@ -30,9 +30,7 @@ export const executeHarnessGeneration = async (
     ? providerFactory({ apiKey, model })
     : createHarnessTextProvider(model, config);
   const chapter = 'operation' in request ? undefined : buildHarnessGenerationPrompt(request);
-  const prompt = chapter ?? ('operation' in request && request.operation === 'recover-memory'
-    ? buildHarnessMemoryRecoveryPrompt(request as HarnessMemoryRecoveryRequest)
-    : buildHarnessArcPrompt(request as HarnessArcRequest));
+  const prompt = chapter ?? buildHarnessArcPrompt(request as HarnessArcRequest);
   try {
     const result = await provider.generate({
       systemInstruction: prompt.systemInstruction,

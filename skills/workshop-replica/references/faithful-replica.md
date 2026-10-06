@@ -8,22 +8,10 @@ refinement.
 
 This procedure applies only to Mode A. For reconstruction, follow the [skill entrypoint](../SKILL.md).
 
-For shared production concepts, the main `Light-Novels` repository is the naming source
-of truth. Use the current verified production name when creating or updating Workshop
-files, metadata, imports, and transfer instructions.
-
-Current examples include:
-
-- `ReaderCodex`
-- `CreationModal`
-- `StorySteeringModal`
-- `ClosedDoorCultivationModal`
-- `ParticleEffect`
-- `DestinedEndingCard`
-- `ManifestationImage`
-- `profilePicture`
-
-Do not reintroduce retired developer-facing synonyms into new Workshop replicas.
+`NOVEL_EXPANDED.md` governs what is built in SEN, Library and NovelExpanded here.
+For an import, verify the requested source's current path and exported symbol;
+its existing compatibility contracts remain evidence, not a requirement to keep
+remaking the old production architecture.
 
 A developer-facing rename does not authorize changing persisted values, API route
 strings, database fields, storage keys, or historical schema names. Preserve verified
@@ -78,7 +66,7 @@ Identify:
 
 ### Source-path verification is mandatory
 
-Before writing `source.path`, transfer instructions, or import guidance:
+Before writing `source.path` or import guidance:
 
 1. Verify the file exists in the named source repository.
 2. Verify the path against the intended source branch or commit.
@@ -168,15 +156,13 @@ tools, not SEN product UI.
 
 ## Phase 5: Keep the Result Portable
 
-Every feature gets exactly one folder with a `reference/` and `development/` split—never
+Every feature gets exactly one folder with `development/` and optional genuinely shared code—never
 a second component folder, preview folder, or homepage card for a “V2”:
 
 ```text
 src/
   components/
     <target-name>/
-      reference/
-        <TargetComponent>.tsx
       development/
         <TargetComponent>.tsx
       shared/
@@ -190,14 +176,14 @@ src/
         previewStates.ts
 ```
 
-Adapt file names to the repository's existing structure rather than forcing unnecessary
-reorganization, but do not skip the `reference/` versus `development/` split. The
-reference copy is the trustworthy comparison point; the development copy absorbs every
-Workshop change.
+Adapt file names to the existing structure. Existing `reference/` folders hold old
+production versions as historical material for their remakes. Never edit, refresh or
+re-sync them; new features do not get one. Keep old systems until each is remade on
+the new path; never reconnect them as they are.
 
 Separate:
 
-- reusable UI (`reference/` and `development/`)
+- reusable UI (`development/` and genuinely shared code)
 - preview-only wrapper (`Workspace.tsx`, built on `FeatureWorkspace`)
 - mock data
 - state simulator
@@ -221,7 +207,7 @@ Reuse existing Workshop systems when they genuinely fit the target:
 - reusable reward and presentation components
 
 Verify every reused component's current file path and export before updating a manifest
-or transfer note. Do not force an existing effect onto a target that needs its own visual
+or import guidance. Do not force an existing effect onto a target that needs its own visual
 identity.
 
 ## Phase 7: Register the Replica
@@ -231,7 +217,7 @@ Add the replica to the Workshop's existing discovery system.
 At minimum:
 
 - add one entry to `src/workshop/manifest.ts` with `source.repository`, verified
-  `source.path`, and `source.lastCompared`;
+  `source.path` pointing at this repository; no source-comparison date is required;
 - register the feature's `Workspace.tsx` in the `previewRegistry` in `src/App.tsx`;
 - give it a stable preview ID;
 - make it reachable by direct URL;
@@ -240,61 +226,15 @@ At minimum:
 
 One feature gets one manifest entry, not one entry per visual version.
 
-## Production Rename Synchronization
+## History and destination
 
-When the source component is renamed or moved after a replica already exists, update the
-Workshop in one focused synchronization pass:
+New features get one README with their purpose, ownership, source facts when imported,
+mock boundaries and a short dated history using real dates. Keep existing history
+entries as written. No replica-creation or source-comparison dates are required.
 
-1. Verify the new source path and export in `Light-Novels`.
-2. Rename matching Workshop component filenames and symbols when they represent the
-   same production concept.
-3. Update both `reference/` and `development/` imports without altering visuals.
-4. Update workspace imports, preview registry references, and manifest metadata.
-5. Update the feature README's source location and transfer instructions.
-6. Search the Workshop repository for the retired developer-facing name.
-7. Keep intentionally persisted/API compatibility strings unchanged and report them.
-8. Build the Workshop and open the preview.
-
-Do not rename only the file while leaving stale exported symbols, props, test names,
-manifest paths, or transfer notes behind.
-
-## Required Dating and History Metadata
-
-Every replicated component or page must include a local README with metadata near the
-top:
-
-```markdown
-# <Component or Page Name>
-
-- **Source repository:** <owner/repository>
-- **Source location:** <verified route or file path>
-- **Workshop preview:** `?preview=<id>`
-- **Replica created:** YYYY-MM-DD
-- **Last Workshop update:** YYYY-MM-DD
-- **Last source comparison:** YYYY-MM-DD
-- **Replica status:** faithful replica | under refinement | approved | transferred back
-```
-
-Use the real current date. Never invent or reuse an old date.
-
-Whenever an agent materially changes the replica:
-
-1. Update **Last Workshop update**.
-2. Add a concise entry under `## Workshop history`.
-3. Update **Last source comparison** only when the source implementation was actually
-   inspected again.
-4. Update status when the lifecycle changes.
-
-Use:
-
-```markdown
-## Workshop history
-
-- **YYYY-MM-DD:** Created faithful Workshop replica and local state simulator.
-- **YYYY-MM-DD:** Refined portal animation and reduced-motion behavior.
-```
-
-Do not create noisy history entries for formatting-only changes.
+The packages and NovelExpanded app at `/app/` are the destination now. Never change
+another repository unless the owner explicitly asks. Do not synchronize imports,
+filenames or historical reference material with the old production app.
 
 ## Component README Requirements
 
@@ -306,8 +246,7 @@ Document:
 - reusable Workshop dependencies
 - production dependencies intentionally excluded
 - known visual differences from the source
-- exact verified files needed for later transfer
-- transfer notes and cautions
+- current SEN, Library or app owner and reusable dependencies
 
 ## Accuracy Checks
 
@@ -324,7 +263,7 @@ Test at minimum:
 - reduced-motion preference
 
 The replica should be accurate enough that decisions made in the Workshop remain
-trustworthy when transferred back.
+trustworthy when used by the packages and NovelExpanded app.
 
 ## Final Verification
 
@@ -337,10 +276,10 @@ Before finishing:
 5. Confirm no secrets or environment assumptions were copied.
 6. Confirm mobile, tablet, and desktop layouts remain trustworthy.
 7. Confirm existing Workshop previews still work.
-8. Confirm README dates and history are current.
+8. Confirm the README has a short history using real dates.
 9. Verify every manifest `source.path` exists in the named repository.
 10. Search for stale retired developer-facing names in the feature folder, manifest,
-    registry, README, and transfer instructions.
+    registry and README.
 11. List every file added or changed.
 12. State remaining visual differences or risks honestly.
 
@@ -348,14 +287,14 @@ Before finishing:
 
 Report:
 
-- what was replicated or synchronized
+- what was imported or reconstructed
 - direct preview route
 - states available
 - production systems intentionally excluded
 - verified source path and export
 - build/test result
 - files changed
-- current README dates
+- a short dated README history
 - intentionally retained compatibility strings
 - remaining differences or risks
 

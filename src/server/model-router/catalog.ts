@@ -44,6 +44,7 @@ export interface GenerationConsumer {
   modelChoice: 'router' | 'server-default';
 }
 
+// HARNESS registers chapter writing and arc planning through one shared entry; memory extraction is retired.
 export const GENERATION_CONSUMERS: readonly GenerationConsumer[] = [
   { name: 'Harness Generation', capability: 'chapters', entry: 'src/server/harness-generation/execute.ts', modelChoice: 'router' },
   { name: 'Story Seed Blueprint', capability: 'chapters', entry: 'src/server/story-seed-blueprint/http.ts', modelChoice: 'router' },

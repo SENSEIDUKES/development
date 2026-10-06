@@ -37,6 +37,5 @@ export const writerWithAccessToken = (
     getServerInfo: () => writer.getServerInfo(),
     generate: request => withToken(() => writer.generate(request)),
     ...(writer.arcOperation ? { arcOperation: request => withToken(() => writer.arcOperation!(request)) } : {}),
-    ...(writer.recoverMemory ? { recoverMemory: request => withToken(() => writer.recoverMemory!(request)) } : {}),
   };
 };

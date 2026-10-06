@@ -32,7 +32,6 @@ const scriptedModel = ({ configured = true } = {}) => {
   const adapter: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured, models: [{ id: 'fixture', label: 'Fixture' }, { id: 'remembered', label: 'Remembered' }], defaultModel: 'fixture' }),
     generate: generate as unknown as HarnessGenerationModelAdapter['generate'],
-    recoverMemory,
     arcOperation: async () => ({ rawProviderResponse: JSON.stringify({ plan: GOAL, destinedEnding: 'Mara reclaims her name.' }), providerReceipt: receipt }),
   };
   return { adapter, generate, recoverMemory, release: () => release() };

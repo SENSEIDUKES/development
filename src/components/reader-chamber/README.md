@@ -1,12 +1,18 @@
 # Reader Chamber
 
+Where `reference/` exists, it holds the old production version, kept as reference
+material for the remake; it is not edited or refreshed. New features do not get a
+reference folder. Old systems stay until each is remade on the new path; never
+reconnect them as they are or re-sync with the old production app. The destination
+is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
+
 - **Source repository:** SENSEIDUKES/Light-Novels
 - **Source location:** `src/components/ReaderChamber.tsx` and `src/components/ReaderViewport.tsx` (verified on `origin/main` @ `f89cb41`)
 - **Workshop preview:** `?preview=reader-chamber`
-- **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-10-01
-- **Last source comparison:** 2026-08-22
-- **Replica status:** under refinement
+- **First Workshop record:** 2026-07-31
+- **Last recorded Workshop update:** 2026-10-01
+- **Historical source inspection:** 2026-08-22
+- **Implementation status:** under refinement
 
 ## Workshop history
 
@@ -162,7 +168,7 @@
 ## Folder layout
 
 ```
-reference/                    — untouched replica of production, locked
+reference/                    — old production version, historical and not edited
   ReaderChamber.tsx
   ReaderViewport.tsx
   ReaderHeader.tsx
@@ -365,7 +371,7 @@ All substitutions are import-level aliases only — JSX is byte-identical to pro
   caches, dialogs, and responsive layouts are present, but live AI/media generation,
   authentication, quota charging, and remote persistence do not run in the Workshop.
 - **Alter Fate opens the host's Fate page** in development; production's
-  branch panel remains only in the locked reference. The migrated Codex context
+  branch panel remains only in the historical reference. The migrated Codex context
   dialog uses `react-focus-lock` like production.
 - **Audio is intentionally partial** — the mixer's music, atmosphere, and
   narration remain inert. Only valid persisted Worldcues play, through the
@@ -382,7 +388,7 @@ All substitutions are import-level aliases only — JSX is byte-identical to pro
   `border-neutral-850/855`, and `animate-fadeIn`/`animate-fade-in` are no-ops in BOTH
   repos (no token/keyframes anywhere), so parity there is automatic.
 - **Mock story genre is `Xianxia`**. The development Reader no longer reacts to
-  a genre string; the locked reference's Fate Survival banner would still render
+  a genre string; the historical reference's Fate Survival banner would still render
   for a story whose genre is literally "Fate Survival".
 - **Chapter Visual Memories are removed** — the Reader no longer renders a chapter-hero component or invokes an end-of-chapter image trigger. Existing chapter media data is left intact for compatibility and Manga Studio is unchanged.
 - **Shared store between Compare panes** — the mock store is a module singleton, so
@@ -395,107 +401,70 @@ All substitutions are import-level aliases only — JSX is byte-identical to pro
   `reader-codex/development/codexManifestBackdrop.ts`, whose pool is the five
   local "IMMORTAL LAND" Manifest landscapes in `public/manifest-backdrops/`.
 
-## Exact files needed for transfer (verified)
+## Implementation inventory
 
-When a development/ change is approved, transfer these to Light-Novels, reversing
-the import rewrites (`../shared/X` → `../lib/X` / `../hooks/X` / `../store/X`,
-`./X` unchanged) and mapping the Reader Codex imports back to production's
-existing owners — `reader-codex/development/CodexHovercard.tsx` →
-`src/components/CodexHovercard.tsx`, `codexHighlighting` → `lib/codexHighlighting`,
-and the Codex Card ambience/accent helpers per the Reader Codex README:
+The packages and NovelExpanded app built here are the destination. Keep Workshop
+controls, fixtures and adapters outside reusable package entries; another repository
+changes only when the owner asks. Historical references stay untouched.
 
-- `development/ReaderChamber.tsx` → `src/components/ReaderChamber.tsx`
-- `development/ReaderViewport.tsx` → `src/components/ReaderViewport.tsx`
-- `src/audio/InlineAudio.tsx` + `InlineAudio.css` → new production Reader
-  primitive/style files, adapted to production's owning `@seihouse/audio-player`
-  session rather than copying the Workshop `DevAudioPlaybackProvider`
-- `development/ReaderHeader.tsx` → `src/components/ReaderHeader.tsx`
-- `development/ReaderSettings.tsx` → `src/components/ReaderSettings.tsx` (new file;
-  on transfer, delete `src/components/ReaderPreferencesPanel.tsx` and
-  `src/components/ReaderControls/ImmersionSettings.tsx` from production — their
-  controls now live inside `ReaderSettings.tsx`)
-- `development/ReaderControls/*` → `src/components/ReaderControls/*` (on transfer,
-  delete `src/components/ReaderControls/ChapterNavigation.tsx` — the bottom action
-  bar is now inline in `ReaderControls/index.tsx`)
-- `development/CosmicBookmarksPanel.tsx` → `src/components/CosmicBookmarksPanel.tsx`
-- `development/VirtualizedList.tsx` → `src/components/VirtualizedList.tsx`
-- `development/AlterFatePanel.tsx` → `src/components/AlterFatePanel.tsx`
-- `development/ParticleSystem.tsx` → `src/components/ParticleSystem.tsx`
-- `development/SystemBlock.tsx` → `src/components/SystemBlock.tsx`
-- `development/SystemPromptMechanical.tsx` → new `src/components/SystemPromptMechanical.tsx`
-- `development/SystemStatusPanel.tsx` → new `src/components/SystemStatusPanel.tsx` (the Structured Mechanical stat panel and the status-screen primitives it shares with the compact card)
-- `development/SystemOrbEmblem.tsx` → new `src/components/SystemOrbEmblem.tsx` (the shared System emblem: the Expanded Info action on both the Narrative and Mechanical cards)
-- `development/WorldNotice.tsx` → new `src/components/WorldNotice.tsx`
-- `development/FateResultCard.tsx` → `src/components/FateResultCard.tsx`
-- `shared/systemPromptPresentation.ts` → new `src/lib/systemPromptPresentation.ts` (transfer with all four System presentation consumers so their route and semantic-color contract stays singular)
-- `development/CodexCard.tsx` → `src/components/CodexCard.tsx`
-- `development/CodexCardInscription.css` → `src/components/CodexCardInscription.css`
-  (new file; the inscribed-name title styles imported by `CodexCard.tsx`)
-- `development/CodexCardSeal.css` → `src/components/CodexCardSeal.css`
-  (new file; the Manifest seal idle-breath keyframes and reduced-motion backstop
-  imported by `CodexCard.tsx`)
-- `src/components/library/LibraryCard.tsx` and its existing shared Library dependencies (including `LibraryDragonCycleIcon`, which the Manifest seal reuses unchanged) → the source application's compatible Library foundation before transferring `CodexCard`
-- `shared/mindPalace.ts` → the Reader's shared library (anchored Mind Palace passages; `CosmicBookmarksPanel.tsx` and `ReaderViewport.tsx` depend on it)
-- `development/SystemColorLegend.tsx` → `src/components/SystemColorLegend.tsx`
-- `development/ContextInspector.tsx` → `src/components/ContextInspector.tsx`
-- Style changes from `shared/reader-chamber.css` → merge back into `src/index.css`
-- `src/audio/inlineAudio.ts` → the provider-neutral action and catalog-resolution
-  contract; the host must supply its own approved catalog and media resolver
+The existing local files named by this inventory are:
 
-Workshop-only — never transfer: `shared/stubs.ts`, `shared/types.ts` (production
-`src/types.ts` is authoritative), `shared/trackLibrary.ts` (production
-`lib/audio/musicResolver.ts` is authoritative), everything under
-`src/workshop/previews/reader-chamber/`, the manifest entry, and the registry line.
-`getReaderChamberSurfaceClass` is a Card Workshop presentation seam, not production API.
-`soundCues` (SEN `SoundCueAttachment` records, replacing production's
-`audioMoments`) is chapter-owned generation output rather than a Workshop prop.
-Transfer its placement (`placeSoundCues`), accepted-result persistence, Reader
-adapter, and block-scoped rendering together; do not copy the preview fixtures
-as data.
+- `development/ReaderChamber.tsx`
+- `development/ReaderViewport.tsx`
+- `src/audio/InlineAudio.tsx`
+- `development/ReaderHeader.tsx`
+- `development/ReaderSettings.tsx`
+- `development/CosmicBookmarksPanel.tsx`
+- `development/ParticleSystem.tsx`
+- `development/SystemBlock.tsx`
+- `development/SystemPromptMechanical.tsx`
+- `development/SystemStatusPanel.tsx`
+- `development/SystemOrbEmblem.tsx`
+- `development/WorldNotice.tsx`
+- `development/FateResultCard.tsx`
+- `development/CodexCard.tsx`
+- `development/CodexCardInscription.css`
+- `development/CodexCardSeal.css`
+- `shared/mindPalace.ts`
+- `development/SystemColorLegend.tsx`
+- `development/ContextInspector.tsx`
+- `shared/reader-chamber.css`
+- `src/audio/inlineAudio.ts`
+- `shared/stubs.ts`
+- `shared/types.ts`
+- `shared/trackLibrary.ts`
+- `src/workshop/previews/reader-chamber/`
 
-## Transfer notes and cautions
+## Compatibility notes
 
-- The chamber root uses `overflow-clip` instead of `overflow-hidden` — this is
-  load-bearing, not cosmetic. `overflow-hidden` creates a scroll container that
-  silently disables the header's `position: sticky`; `clip` keeps the exact
-  same visual clipping while letting the sticky header (and its
-  scroll-direction hide/show) work. Do not revert it to `hidden` on transfer.
-- The header **Back** button falls back to `window.history.back()` when no
-  `onBack` prop is passed — wire it to the production navigation handler on
-  transfer.
-- On transfer, delete production `src/components/AudioWidget.tsx` — the header
-  master-mute shortcut was replaced by the header Audio button, which opens the
-  Audio section of `ReaderSettings.tsx` (the `AudioMenu` keeps the same master
-  switch and volume).
-- The `reference/` and `development/` files import shared code from `../shared/…`;
-  production paths were `../lib/…`, `../hooks/…`, `../store/…`, `../types`. Reverse
-  the mapping exactly (see "What was mocked").
-- `ReaderViewport.tsx` carries one deliberate rewrite: `chapterNumbers.at(-1)` →
-  index access (Workshop tsconfig targets ES2020 without `Array.prototype.at`).
-  Safe to carry back, or restore `.at(-1)`.
-- `ReaderChamber.tsx` carries two strict-null coercions (`cue.danger ?? 0`) and a
-  prop cast (`handleUpdatePreference`) required by the Workshop's stricter
-  tsconfig; both are behavior-identical.
-- Production still has `AlterFatePanel`, `ReaderFateAlerts` and
-  `FateSurvivalExplanation` in its Reader. On transfer, retire them with the
-  development Reader and give the host an `onOpenFate` target; do not carry the
-  reference panel's branch copy ("Sundert The Timeline", a production typo kept
-  verbatim in `reference/`) forward.
-- `ReaderCodexStoryPatch` in `shared/types.ts` now mirrors production's intentional
-  allowlist, preventing the Reader/Codex callback from overwriting unrelated story fields.
-- lucide icons: on transfer, either keep the aliased imports (they exist in current
-  lucide-react) or restore the legacy names if production's version still has them.
-
-## Lifecycle
-
-1. **Import** — copy production's current implementation into `reference/`.
-2. **Fork once** — `development/` starts as a copy of `reference/`.
-3. **Refine** — every Workshop task modifies `development/` only.
-4. **Approve** — once approved, transfer `development/` back to Light-Novels.
-5. **Resynchronize** — refresh `reference/` from the newly integrated production
-   code, record the new comparison date, and reset `development/` for the next
-   redesign cycle. There is no V2/V3 — only "what production currently is" vs "what
-   we are currently trying to make it become."
+- The chamber root uses `overflow-clip`. `overflow-hidden` creates a scroll container
+  that disables the header's `position: sticky`; `clip` preserves clipping and the
+  sticky header's scroll-direction hide/show.
+- Header Back falls back to `window.history.back()` when no `onBack` is supplied.
+- Reader Settings owns the Audio section; the header Audio button opens it and
+  `AudioMenu` retains the master switch and volume.
+- Historical imports use `../shared/…` in place of the old source application's
+  `../lib/…`, `../hooks/…`, `../store/…` and `../types`; see “What was mocked”.
+- `ReaderViewport.tsx` uses index access rather than `chapterNumbers.at(-1)` for
+  the Workshop's ES2020 compatibility. Reader Chamber's `cue.danger ?? 0` coercions
+  and `handleUpdatePreference` cast are behavior-identical strict-null adaptations.
+- `ReaderCodexStoryPatch` in `shared/types.ts` mirrors the intentional field allowlist,
+  preventing Reader/Codex callbacks from overwriting unrelated story fields.
+- The `onOpenFate` callback is host-owned. Historical Fate panels and their source
+  wording remain in the reference; they are not reconnected or retired by this work.
+- `getReaderChamberSurfaceClass` is a Card Workshop presentation seam, not a public
+  application API. `shared/stubs.ts`, fixture types, track-library adapters and
+  Workshop previews remain local compatibility material.
+- `soundCues` are chapter-owned SEN `SoundCueAttachment` records. Placement,
+  accepted-result persistence, Reader adaptation and block-scoped rendering belong
+  together; preview fixtures are not story data.
+- The System presentation helper keeps one route and semantic-color contract for
+  its four presentation consumers. `mindPalace.ts` supplies anchored passages for
+  `CosmicBookmarksPanel` and `ReaderViewport`.
+- Codex Card name/seal styles belong with `CodexCard.tsx`; the seal uses the existing
+  Library foundation and `LibraryDragonCycleIcon`. The provider-neutral Inline Audio
+  contract requires a host-approved catalogue and media resolver.
+- Aliased lucide imports remain supported by the current `lucide-react` dependency.
 
 ### 2026-09-06 — Library UI ownership migration
 

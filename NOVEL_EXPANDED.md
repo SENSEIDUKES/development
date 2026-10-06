@@ -383,7 +383,8 @@ Update it whenever it changes.
     or `knows` the first time the story shows something already held). It ends
     its reply with the main character's closing list; a tag written there instead
     of the prose is still recorded, at the chapter's end. Each name becomes a Codex
-    entry with an app-made ID; plain rules flag what cannot be true; nothing is
+    entry with an app-made ID; plain rules flag what cannot be true (moving up a
+    stage while still learning is progress, kept as that stage, never a check); nothing is
     stored that could count twice. The Reader's **Holdings** page shows it all,
     each change linked to its passage, with the checks worth testing. Chapters
     written before this have nothing recorded. The tag system is defined in
@@ -425,7 +426,7 @@ Update it whenever it changes.
     Holdings checks on it and fixes the small problems quietly: a corrected tag,
     one corrected sentence, or two names merged into one entry. It never reads
     the chapter: each problem becomes a small case (the sentence, its tags, what
-    the record shows), and one short call with the chapter's own model, at its
+    the record shows, and what the chapter itself recorded about it earlier), and one short call with the chapter's own model, at its
     lowest reasoning, answers them. That call is made only when a check flags
     a problem in that chapter which the plain rules cannot settle: a chapter
     with nothing flagged makes no call, and a problem left from an earlier

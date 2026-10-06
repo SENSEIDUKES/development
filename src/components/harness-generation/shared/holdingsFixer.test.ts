@@ -99,6 +99,16 @@ describe('Holdings fixer: the cases', () => {
     expect(planHoldingsFix(inputFor(state, latest, 'off'))).toEqual({ cases: [], settled: [] });
   });
 
+  it('shows the fixer what the chapter itself recorded about the item before the sentence', async () => {
+    const { state, latest } = await written(reply(['[[gained: MC | Rusted Iron Sword]] Ye Chen lifted the old blade from the rack. He tested its edge.',
+      'Hours passed. [[gained: MC | Rusted Iron Sword]] He picked up the rusted sword again.']));
+    const plan = planHoldingsFix(inputFor(state, latest));
+    expect(plan.cases.map(planned => planned.case.record)).toEqual([[
+      'Ye Chen before this chapter: nothing recorded.',
+      'Rusted Iron Sword: earlier in this chapter, gained: “Ye Chen lifted the old blade from the rack.”',
+    ]]);
+  });
+
   it('settles a closing-list problem without asking when the chapter never names the item, and asks when it does', async () => {
     const { state, latest } = await written(reply([SWORD], { mainCharacterHoldings: ['Rusted Iron Sword'] }),
       reply(['Ye Chen found a silver bell in the dust and kept it.'], { mainCharacterHoldings: ['Rusted Iron Sword', 'Silver Bell', 'Jade Slip'] }));

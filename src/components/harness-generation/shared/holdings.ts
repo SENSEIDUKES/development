@@ -517,12 +517,14 @@ export function deriveHoldings({ entries, chapters, mainCharacterName }: {
           break;
         case 'learned':
           if (!ability || ability.stage === 'learning') {
-            holder.abilities.set(key, { entryId: key, name: targetName!, stage: 'learned', ...(payload.level ? { level: payload.level } : {}), sealed: false, usable: true, events: [...(ability?.events ?? []), event] });
+            holder.abilities.set(key, { entryId: key, name: targetName!, stage: 'learned', ...(payload.level ? { level: payload.level } : ability?.level ? { level: ability.level } : {}), sealed: false, usable: true, events: [...(ability?.events ?? []), event] });
             took();
           } else flag('already-learned', `${holder.name} learns ${quoted}, which they already know.`);
           break;
         case 'improved':
-          if (!ability || ability.stage === 'learning') flag('not-learned', `${holder.name} improves ${quoted} before learning it.`);
+          // Moving up a stage while still learning is progress, as cultivation stories tell it: the stage is
+          // recorded and the ability stays learning until it is learned.
+          if (!ability) flag('not-learned', `${holder.name} improves ${quoted} before learning it.`);
           else if (ability.sealed) flag('sealed-state', `${holder.name} improves ${quoted} while it is sealed.`);
           else { ability.level = payload.level; ability.events.push(event); took(); }
           break;

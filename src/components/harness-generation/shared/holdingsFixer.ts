@@ -153,6 +153,13 @@ export function planHoldingsFix({ chapter, chapters, entries, mainCharacterName,
 
   // Problems on a sentence: one case per sentence, with every problem found there.
   const changes = chapter.holdingChanges ?? [];
+  /** Whether a saved change of this chapter sits on an earlier sentence than the one at this place. */
+  const isBefore = (recordId: string, blockId: string, start: number) => {
+    const anchor = changes.find(change => change.id === recordId)?.anchor;
+    if (!anchor) return false;
+    const [here, there] = [paragraphIndexOf(chapter, anchor.blockId), paragraphIndexOf(chapter, blockId)];
+    return here < there || (here === there && anchor.endOffset <= start);
+  };
   const bySentence = new Map<string, { change: HoldingChangeAttachment; flags: HoldingFlag[] }>();
   for (const flag of flags.filter(item => item.recordId)) {
     const change = changes.find(entry => entry.id === flag.recordId);
@@ -175,14 +182,19 @@ export function planHoldingsFix({ chapter, chapters, entries, mainCharacterName,
       const name = entryName(holder, holder);
       record.push(holdingsLine(before.characters.find(character => character.entryId === holder), name, 'before this chapter'));
     }
+    const eventLine = (target: string, when: string, event: CharacterHoldings['history'][number]) =>
+      `${target}: ${when}, ${event.verb}${event.count ? ` ${event.count}` : ''}${event.level ? ` ${event.level}` : ''}: “${event.passage.text}”`;
     for (const entry of onSentence) {
       if (!entry.payload.target) continue;
       const target = entryName(entry.payload.target.entryId, entry.payload.target.name);
       const history = before.characters.find(character => character.entryId === entry.payload.holder.entryId)?.history
         .filter(event => event.target === target).slice(-HISTORY_LIMIT) ?? [];
-      for (const event of history) {
-        record.push(`${target}: Chapter ${event.passage.chapterNumber}, ${event.verb}${event.count ? ` ${event.count}` : ''}: “${event.passage.text}”`);
-      }
+      for (const event of history) record.push(eventLine(target, `Chapter ${event.passage.chapterNumber}`, event));
+      // What this chapter itself recorded about it before this sentence: the case is never judged without it.
+      const earlier = now.characters.find(character => character.entryId === entry.payload.holder.entryId)?.history
+        .filter(event => event.target === target && event.passage.chapterId === chapter.id && isBefore(event.passage.recordId, blockId, start))
+        .slice(-HISTORY_LIMIT) ?? [];
+      for (const event of earlier) record.push(eventLine(target, 'earlier in this chapter', event));
     }
     const answers: HarnessHoldingsFixAnswer[] = ['record',
       ...(policy === 'records-and-sentences' && !carriesSpans(chapter, blockId, start, end) ? ['prose' as const] : []),

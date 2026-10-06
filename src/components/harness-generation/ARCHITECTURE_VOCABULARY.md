@@ -151,8 +151,10 @@ rewritten chapter changes the result. Taking a thing in hand or putting it
 away shows the character has it, so the first time the story shows a thing
 that way, it is recorded as held. Its rules flag a change that cannot be true
 and leave it out: losing what is not held, a second gain without a count,
-improving or sealing what was never learned, a count or level the record
-cannot match. After an edit, every later chapter is checked again.
+improving what was never begun, sealing what was never learned, a count or
+level the record cannot match. Moving up a stage while still learning is
+progress: the stage is recorded, and the ability stays learning until it is
+learned, keeping that stage. After an edit, every later chapter is checked again.
 
 **Closing list** (`closingHoldings`, the reply's `mainCharacterHoldings`): the
 main character's things and abilities by name after the chapter. Each list is
@@ -162,8 +164,9 @@ against the Holdings page.
 
 **Holdings fixer** (`shared/holdingsFixer.ts`, run after commit by the
 controller): the chapter's own flags (`chapterHoldingFlags`) become small
-cases (`planHoldingsFix`): a sentence with its neighbours, its tags and what
-the record showed; a closing-list name with the chapter's sentences that name
+cases (`planHoldingsFix`): a sentence with its neighbours, its tags, what
+the record showed before the chapter and what the chapter itself recorded
+about the same item before that sentence; a closing-list name with the chapter's sentences that name
 it after the chapter's own last tag for it (all of them, when it has none);
 or two names that may be one entry. A closing-list name with no such sentence
 (the chapter never names it, or names it only up to its own last tag for it)

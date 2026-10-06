@@ -17,7 +17,7 @@ const replies = [
     paragraphs: [
       'The armory was cold.',
       '[[gained: MC | Rusted Iron Sword]] Ye Chen lifted the old blade from the rack. [[equipped: MC | Rusted Iron Sword]] He tested its weight.',
-      '[[learning: MC | Cloud Step]] Ye Chen began to practise the footwork.',
+      '[[learning: MC | Cloud Step]] Ye Chen began to practise the footwork. [[improved: MC | Cloud Step | First Stage]] By dusk his feet found the first stage.',
     ],
     mainCharacterHoldings: ['Rusted Iron Sword', 'Cloud Step', 'Silver Bell'],
   },
@@ -87,8 +87,9 @@ describe('The Holdings page in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(card.textContent).toContain('Ye Chen');
     expect(card.textContent).toContain('Main character');
     expect(card.querySelector('[aria-label="Ye Chen: In hand"]')!.textContent).toContain('Rusted Iron Sword');
-    expect(card.querySelector('[aria-label="Ye Chen: Learning"]')!.textContent).toContain('Cloud Step');
-    expect([...card.querySelectorAll('button')].map(button => button.textContent)).toEqual(['Ch. 1 · gained', 'Ch. 1 · took up', 'Ch. 1 · began learning']);
+    // A stage reached while still learning is shown, and is a change, not a check.
+    expect(card.querySelector('[aria-label="Ye Chen: Learning"]')!.textContent).toContain('Cloud Step · First Stage');
+    expect([...card.querySelectorAll('button')].map(button => button.textContent)).toEqual(['Ch. 1 · gained', 'Ch. 1 · took up', 'Ch. 1 · began learning', 'Ch. 1 · improved → First Stage']);
     // The jade sword was never held, so losing it is a check, not a change.
     expect(card.textContent).not.toContain('Jade Sword');
     const checks = holdings.querySelector('[data-testid="holdings-checks"]')!;

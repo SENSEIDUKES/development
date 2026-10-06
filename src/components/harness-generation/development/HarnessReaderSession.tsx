@@ -20,8 +20,10 @@ import {
 import { harnessParagraphBlockId } from '../shared/chapterBody';
 import { harnessStoryMode, nextArcStep } from '../shared/arcState';
 import { pendingChapterDirection } from '../shared/chapterDirection';
+import { chapterRewriteGap, latestStoryChapter } from '../shared/chapterRewrite';
 import { protagonistNames } from '../shared/speakers';
 import { BlueprintArcPage } from './BlueprintArcPage';
+import { ChapterRewrite } from './ChapterRewrite';
 import { FatePage } from './FatePage';
 import { HoldingsPage } from './HoldingsPage';
 import { ReadAloudPlayer } from './ReadAloudPlayer';
@@ -80,10 +82,11 @@ function lineWhereTheReaderIs(script: ReadAloudScript, article: HTMLElement | nu
  * With the host's reader mixer, the story's soundtrack (the reader's
  * atmosphere and the chapter's Sound Cues) plays through the SEIHouse audio
  * player: a story audio note mutes it, and Reader Settings holds Audio and
- * Narration. Codex and Mind Palace are not part of it.
+ * Narration. At the end of the newest chapter, until the next one is written,
+ * the reader may have it written again. Codex and Mind Palace are not part of it.
  */
 export function HarnessReaderSession({
-  state, storyId, onClose, controller, readerStateRepository, onGenerateNextChapter, onPlanArc, renderWriting, startOnOpen = false,
+  state, storyId, onClose, controller, readerStateRepository, onGenerateNextChapter, onRewriteChapter, onPlanArc, renderWriting, startOnOpen = false,
   readerPreferences, readAloudVoices,
 }: {
   state: HarnessWorkspaceState; storyId: string; onClose: () => void; controller: HarnessGenerationController;
@@ -92,6 +95,12 @@ export function HarnessReaderSession({
    * newest chapter, and from the Fate page. Absent when the host cannot generate here.
    */
   onGenerateNextChapter?: () => Promise<void>;
+  /**
+   * Writes the newest chapter again with the host's model, with the reader's
+   * optional note on what to change. Offered at the end of the newest chapter
+   * only, until the next one is written. Absent when the host cannot generate here.
+   */
+  onRewriteChapter?: (note?: string) => Promise<void>;
   /**
    * Plans the goals of the arc the next chapter begins, with the host's model.
    * When a new arc begins, the World Blueprint's goal section reappears for
@@ -129,7 +138,7 @@ export function HarnessReaderSession({
   const [holdingsOpen, setHoldingsOpen] = useState(false);
   /** A paragraph to bring into view once its chapter is on screen: where a holding change happened. */
   const [passageTarget, setPassageTarget] = useState<string>();
-  const writer = useNextChapterWriter(controller, storyId, onGenerateNextChapter);
+  const writer = useNextChapterWriter(controller, storyId, onGenerateNextChapter, onRewriteChapter);
   const [storageError, setStorageError] = useState('');
   const readerStateRef = useRef<ReaderStoryState | undefined>(undefined);
   const persistEnabled = useRef(Boolean(readerStateRepository));
@@ -311,6 +320,15 @@ export function HarnessReaderSession({
   const index = chapter ? chapters.indexOf(chapter) : -1;
   const previous = index > 0 ? chapters[index - 1] : undefined;
   const later = index >= 0 && index < chapters.length - 1 ? chapters[index + 1] : undefined;
+  // Rewrite this chapter: only the newest chapter, and only while nothing is built on it yet. It
+  // stays in place while its own rewrite is written, so a failed one keeps the reader's note.
+  const rewritable = Boolean(onRewriteChapter && chapter && !later && latestStoryChapter(state, storyId)?.id === chapter.id
+    && (writer.writing || !chapterRewriteGap(state, storyId)));
+  const rewriteChapter = async (note?: string) => {
+    const rewritten = await writer.rewrite(note);
+    if (rewritten) openChapter(rewritten);
+    return Boolean(rewritten);
+  };
 
   return <>
     <main className="mx-auto w-full min-w-0 max-w-3xl px-4 pb-12 pt-4" data-testid="harness-reader">
@@ -350,6 +368,7 @@ export function HarnessReaderSession({
               disabled={continueAfterLatest.busy} aria-busy={continueAfterLatest.busy || undefined} onClick={continueAfterLatest.run}
               className={`${navButton} border-cyan-300/50 bg-cyan-400/15 font-semibold text-cyan-50 hover:bg-cyan-400/25`}>{continueAfterLatest.label}</button>}
       </nav>
+      {rewritable && chapter && <ChapterRewrite key={chapter.id} chapterNumber={chapter.chapterNumber} disabled={writer.writing} onRewrite={rewriteChapter} />}
       {chapter && <ReadAloudPlayer readAloud={readAloud} onListen={listen} offscreen={follow.offscreen}
         onBackToNarration={follow.backToNarration} playerRef={playerRef}
         note={mixer && <ReaderMixerNote mixer={mixer} onOpenSettings={() => openSettings('audio')} />} />}

@@ -13,6 +13,7 @@ import {
 } from '@seihouse/sen/harness-generation';
 import { LIBRARY_SOUND_WORDS } from '../../../host/media/libraryCatalog';
 import { HARNESS_RESPONSE_CONTRACT } from '../../../server/harness-generation/prompt';
+import { HOLDINGS_FIXER_INSTRUCTIONS } from '../../../server/harness-generation/holdingsFixer';
 
 /**
  * The writer's instructions, read from the live code: every block of text the
@@ -33,7 +34,8 @@ export type WriterInstructionId =
   | 'clear-reading'
   | 'easy-read'
   | 'literal-reading'
-  | 'official-requirements';
+  | 'official-requirements'
+  | 'holdings-fixer';
 
 export interface WriterInstruction {
   id: WriterInstructionId;
@@ -105,7 +107,16 @@ export const SOME_STORIES: readonly WriterInstruction[] = [
   },
 ];
 
-export const WRITER_INSTRUCTIONS: readonly WriterInstruction[] = [...EVERY_CHAPTER, ...SOME_STORIES];
+/** Read after a chapter, by a separate small call: never by the chapter writer. */
+export const AFTER_A_CHAPTER: readonly WriterInstruction[] = [
+  {
+    id: 'holdings-fixer', title: 'Holdings fixer', source: 'HARNESS',
+    when: 'After a chapter is saved, only when its holdings checks found problems that need a model: one short call with the chapter\'s model, which reads these instructions and the small cases (a sentence, its tags, what the record shows), never the whole chapter.',
+    text: HOLDINGS_FIXER_INSTRUCTIONS,
+  },
+];
+
+export const WRITER_INSTRUCTIONS: readonly WriterInstruction[] = [...EVERY_CHAPTER, ...SOME_STORIES, ...AFTER_A_CHAPTER];
 
 /**
  * Everything a default English story's writer reads before the story, exactly

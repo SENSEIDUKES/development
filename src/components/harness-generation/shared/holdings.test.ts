@@ -151,6 +151,23 @@ describe('working out holdings', () => {
     expect(abilities(state)).toEqual([['Cloud Step', 'learned', 'Minor Success', false, true]]);
   });
 
+  it('records a stage reached while still learning, and keeps it when the ability is learned', () => {
+    // The owner's Sundered Heavens story, Chapter 4: the body art begun, then its first stage reached.
+    const run = story();
+    run.write(4, [
+      '[[learning: MC | Heaven-Shattering Body Cultivation]] Closing his eyes, he abandoned all orthodox notions of qi circulation.',
+      '[[improved: MC | Heaven-Shattering Body Cultivation | Stage 1]] The agonizing ache subsided into a cold, dense solidity.',
+    ]);
+    let state = run.derive();
+    expect(state.flags).toEqual([]);
+    expect(abilities(state)).toEqual([['Heaven-Shattering Body Cultivation', 'learning', 'Stage 1', false, false]]);
+    expect(main(state).abilities[0].events.map(event => event.verb)).toEqual(['learning', 'improved']);
+    expect(holdingsSection(state, 'Ye Chen').characters[0].learning).toEqual(['Heaven-Shattering Body Cultivation (Stage 1)']);
+    run.write(6, ['[[learned: MC | Heaven-Shattering Body Cultivation]] The art held at last.']);
+    state = run.derive();
+    expect(abilities(state)).toEqual([['Heaven-Shattering Body Cultivation', 'learned', 'Stage 1', false, true]]);
+  });
+
   it('sets rank, and reads a starting kit the story only reveals', () => {
     const run = story();
     run.write(1, ['[[rank: MC | Qi Condensation 3]] He sat to cultivate. [[has: MC | Jade Pendant]] His mother\'s pendant was warm. [[knows: MC | Iron Palm | Initial]] His palm struck.']);

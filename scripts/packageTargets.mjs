@@ -32,7 +32,7 @@ export const PACKAGE_TARGETS = {
       '@seihouse/sen/audio': ['parseAudioCues', 'createMediaCatalog', 'placeSoundCues', 'NarrativeAudioProvider'],
       '@seihouse/sen/story-seed': ['StoryFoundationEditor', 'createEmptyStorySeedInput', 'parseStorySeedJson', 'describeStoryLengthProblem'],
       '@seihouse/sen/generation': ['readMarks', 'TAG_WORDS'],
-      '@seihouse/sen/harness-generation': ['HarnessGenerationController', 'createHarnessSenStory', 'HarnessReaderSession', 'SEN_SPEAKERS_SKILL', 'SEN_HOLDINGS_SKILL', 'SEN_SOUND_CUES_SKILL', 'HARNESS_TAG_RULES', 'deriveHoldings', 'holdingsSection', 'HoldingsPage', 'harnessFailedWrite', 'chapterTitleText'],
+      '@seihouse/sen/harness-generation': ['HarnessGenerationController', 'createHarnessSenStory', 'HarnessReaderSession', 'SEN_SPEAKERS_SKILL', 'SEN_HOLDINGS_SKILL', 'SEN_SOUND_CUES_SKILL', 'HARNESS_TAG_RULES', 'deriveHoldings', 'holdingsSection', 'HoldingsPage', 'harnessFailedWrite', 'chapterTitleText', 'chapterRewriteGap', 'withoutLatestChapter', 'planHoldingsFix', 'applyHoldingsFixes', 'CHAPTER_REWRITE_NOTE_LIMIT'],
       '@seihouse/sen/arc-goals': ['ARC_LENGTH', 'STORY_LENGTH_ARCS'],
     },
     smokeTypes: `
@@ -48,8 +48,12 @@ export const PACKAGE_TARGETS = {
       declare const speaker: SpeakerAttachment;
       void picks; void script; void speaker.payload.protagonist;
       import type { StorySeedInput, StorySeedRepository } from '@seihouse/sen/story-seed';
-      import type { HarnessStory, HarnessGenerationModelAdapter, CodexEntry, HoldingChangeAttachment, HoldingsSection } from '@seihouse/sen/harness-generation';
+      import type { HarnessStory, HarnessGenerationModelAdapter, CodexEntry, HoldingChangeAttachment, HoldingsSection, HarnessHoldingsFixRecord, HarnessHoldingsFixerPolicy, HarnessChapterRewrite } from '@seihouse/sen/harness-generation';
       declare const change: HoldingChangeAttachment;
+      const fixerPolicy: HarnessHoldingsFixerPolicy = 'records-only';
+      declare const fixRecord: HarnessHoldingsFixRecord;
+      const rewriteRequest: HarnessChapterRewrite = { replacesChapterId: 'publisher-chapter', previous: { title: 'A Title' } };
+      void fixerPolicy; void fixRecord.fixes; void rewriteRequest;
       const entry: Pick<CodexEntry, 'kind' | 'name'> = { kind: 'thing', name: 'Publisher Relic' };
       const holdings: HoldingsSection = { characters: [{ name: 'Publisher Hero', mainCharacter: true, inHand: [entry.name] }] };
       void change.payload.verb; void holdings;

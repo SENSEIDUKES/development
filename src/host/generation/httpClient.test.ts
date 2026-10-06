@@ -46,3 +46,18 @@ it("sends the owner's access token when the host has one, and reports the server
   token.current = undefined;
   expect(createSavedAccessToken().current).toBeUndefined();
 });
+
+it('sends the Holdings fixer to the same route with the token, and a refusal comes back as an error, never a prompt', async () => {
+  const token = createSavedAccessToken();
+  token.current = 'owner-token';
+  const fetchMock = vi.fn(async () => new Response(JSON.stringify(receipt), { status: 200 }));
+  vi.stubGlobal('fetch', fetchMock);
+  const client = new HarnessGenerationHttpClient(undefined, () => token.current);
+  const request = { operation: 'fix-holdings', storyId: 's', chapterId: 'c', chapterNumber: 2, model: 'google/gemini-3.8-flash', language: 'en', cases: [] } as const;
+  await client.fixHoldings({ ...request, cases: [] });
+  const [endpoint, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+  expect(endpoint).toBe('/api/harness-generation');
+  expect(JSON.parse(init.body as string)).toMatchObject({ operation: 'fix-holdings', chapterNumber: 2 });
+  expect((init.headers as Record<string, string>).Authorization).toBe('Bearer owner-token');
+  token.current = undefined;
+});

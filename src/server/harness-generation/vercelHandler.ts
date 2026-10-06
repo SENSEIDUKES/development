@@ -14,6 +14,22 @@ const guardHarnessGeneration = createPublicGenerationGuard({
   limit: 6,
   windowMs: 30 * 60 * 1_000,
 });
+/** The Holdings fixer's small check after a chapter keeps its own count, so it never uses up a visitor's chapters. */
+const guardHoldingsFixer = createPublicGenerationGuard({
+  key: 'harness-generation-fixer',
+  limit: 6,
+  windowMs: 30 * 60 * 1_000,
+});
+
+/** The operation a request body names, read without trusting it. */
+const requestOperation = (body: unknown): unknown => {
+  try {
+    const parsed = typeof body === 'string' ? JSON.parse(body) : body;
+    return parsed && typeof parsed === 'object' ? (parsed as { operation?: unknown }).operation : undefined;
+  } catch {
+    return undefined;
+  }
+};
 
 interface RequestLike {
   method?: string;
@@ -29,8 +45,9 @@ interface ResponseLike {
 
 export default async function harnessGenerationHandler(request: RequestLike, response: ResponseLike) {
   // The owner's access token lifts the visitor limit.
+  const guard = requestOperation(request.body) === 'fix-holdings' ? guardHoldingsFixer : guardHarnessGeneration;
   const admission: PublicGenerationGuardResult = request.method?.toUpperCase() === 'POST'
-    ? ownerTokenAdmission(request, developmentAccessToken(process.env)) ?? guardHarnessGeneration(request)
+    ? ownerTokenAdmission(request, developmentAccessToken(process.env)) ?? guard(request)
     : { allowed: true };
   const result = admission.allowed
     ? await handleHarnessGenerationHttp(

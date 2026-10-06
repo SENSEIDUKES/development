@@ -86,6 +86,29 @@ export interface HoldingChangeAttachment extends ManuscriptAttachment<HoldingCha
 /** A change's id: its sentence, and its place among the chapter's changes (one sentence can hold several). */
 export const holdingChangeId = (blockId: string, start: number, end: number, index: number) => `holding:${blockId}:${start}-${end}:${index}`;
 
+/** The checks the holdings rules run, by kind: what each flag says cannot be true. */
+export type HoldingFlagKind =
+  /** Equipping, putting away or losing something the record does not show them holding. */
+  | 'not-held'
+  /** Gaining again, without a count, something they already hold. */
+  | 'already-held'
+  /** A count the record cannot match: a has tag that disagrees, or losing more than they hold. */
+  | 'count-mismatch'
+  /** Improving or sealing an ability they have not learned. */
+  | 'not-learned'
+  /** Starting to learn, or learning, an ability they already know. */
+  | 'already-learned'
+  /** A known ability's level that disagrees with the record. */
+  | 'level-differs'
+  /** Improving a sealed ability, or unsealing one that is not sealed. */
+  | 'sealed-state'
+  /** The writer's closing list leaves out something the record holds. */
+  | 'closing-unlisted'
+  /** The writer's closing list holds something no tag recorded. */
+  | 'closing-untagged'
+  /** Two entries of one kind whose names are close enough to be the same. */
+  | 'possible-duplicate';
+
 /** One character's holdings as the writer reads them: exact names, in a few short lists. */
 export interface HoldingsSectionCharacter {
   name: string;

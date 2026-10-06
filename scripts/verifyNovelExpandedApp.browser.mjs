@@ -9,7 +9,9 @@
  * Cue → Listen (three voices from the writer's speaker tags, the spoken
  * sentence lit, Pause and Resume, the ghost note (mute, long-press to Audio),
  * Reader Settings → Audio and Narration with the speed
- * kept on the device) → reload (no new request, nothing reads by itself) →
+ * kept on the device) → Holdings → Rewrite this chapter with a note (the new
+ * version under the veil, the Holdings fixer's one quiet call settling its
+ * holdings, nothing of it on screen) → reload (no new request, nothing reads by itself) →
  * Back → Continue · Ch. 1 → Export story (the whole story as one file) → Back
  * → Home card → browser Back and Forward → a missing story goes Home.
  *
@@ -57,6 +59,22 @@ const chapter = {
   nextWorldBuilding: 'The keeper explains the drowned law.',
   nextConflict: 'The tide wardens seize the causeway.',
 };
+
+/** Chapter 1 written again at the reader's request: the key is gained twice, which the Holdings fixer settles. */
+const rewritten = {
+  ...chapter,
+  title: 'The Hidden Key',
+  paragraphs: [
+    'The tide pulled back from the drowned gate, and [[sound: beast roar | the beast roared | high]] across the causeway.',
+    '[[gained: MC | Bell Key]] Mara found the bell key under the gate. She hid it in her sleeve.',
+    '[[gained: MC | Bell Key]] Later she touched the bell key again to be sure.',
+    '[[@MC]] “Ring the bells,” Ye Chen said.',
+    chapter.paragraphs.at(-1),
+  ],
+  mainCharacterHoldings: ['Bell Key'],
+  recap: 'Mara hides the bell key.',
+};
+const REWRITE_NOTE = 'Let Mara keep the key hidden.';
 
 const check = (condition, message) => { if (!condition) throw new Error(message); };
 
@@ -148,7 +166,7 @@ async function walk(browser, viewport, sample) {
   await context.addInitScript(installSpeechStandIn);
   const page = await context.newPage();
   const problems = [];
-  const counts = { chapters: 0, memory: 0, blueprints: 0, chaptersWithToken: 0 };
+  const counts = { chapters: 0, memory: 0, blueprints: 0, chaptersWithToken: 0, rewrites: [], fixes: [] };
   page.on('pageerror', error => problems.push(`page error: ${error.message}`));
   page.on('request', request => {
     const path = new URL(request.url()).pathname;
@@ -172,6 +190,15 @@ async function walk(browser, viewport, sample) {
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rawProviderResponse: JSON.stringify({ plan: { goals: [{ text: 'Reach the gate.', chapters: 30 }] }, lookahead: [], destinedEnding: 'Mara reclaims her name.' }), providerReceipt: receipt }) });
       return;
     }
+    // The Holdings fixer's one small call after a chapter: it settles the key gained twice.
+    if (body.operation === 'fix-holdings') {
+      counts.fixes.push({ cases: body.cases, token: request.headers().authorization === `Bearer ${TOKEN}` });
+      const fixes = body.cases.map(entry => (entry.tags?.includes('gained: MC | Bell Key')
+        ? { case: entry.id, outcome: 'record', tags: '[[has: MC | Bell Key]]', reason: 'She already had it.' }
+        : { case: entry.id, outcome: 'fine', reason: 'Nothing to change.' }));
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rawProviderResponse: JSON.stringify({ fixes }), providerReceipt: receipt }) });
+      return;
+    }
     if (!body.immediateChapterRequest) {
       counts.memory += 1;
       await route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: 'Memory is read only on request.' }) });
@@ -180,9 +207,11 @@ async function walk(browser, viewport, sample) {
     counts.chapters += 1;
     // The token given for the Blueprint rides with chapters too, lifting the visitor limit.
     if (request.headers().authorization === `Bearer ${TOKEN}`) counts.chaptersWithToken += 1;
+    if (body.immediateChapterRequest.rewrite) counts.rewrites.push(body.immediateChapterRequest);
     // Long enough for the veil to be seen.
     await new Promise(resolve => setTimeout(resolve, 1200));
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rawProviderResponse: JSON.stringify(chapter), providerReceipt: receipt }) });
+    const reply = body.immediateChapterRequest.rewrite ? rewritten : chapter;
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rawProviderResponse: JSON.stringify(reply), providerReceipt: receipt }) });
   });
   const shot = name => page.screenshot({ path: `${OUTPUT}/${viewport.name}-${name}.png`, fullPage: false });
   const address = () => { const url = new URL(page.url()); return `${url.pathname}${url.search}`; };
@@ -364,11 +393,36 @@ async function walk(browser, viewport, sample) {
   await holdingsPage.getByRole('button', { name: /^Ch\. 1 · took up/ }).click();
   await page.locator('[data-chapter-number="1"]').waitFor();
   check(await page.getByTestId('holdings-page').count() === 0, 'A change\'s link should open its chapter.');
+  check(counts.fixes.length === 0, `A chapter whose only problem is a closing-list name it never mentions asks no fixer, saw ${counts.fixes.length}.`);
+
+  // 3d. Rewrite this chapter: at the newest chapter's end, with a note; the new version under the veil.
+  const rewriteLink = visibleButton('Rewrite this chapter');
+  await rewriteLink.scrollIntoViewIfNeeded();
+  await rewriteLink.click();
+  const rewriteForm = page.getByRole('form', { name: 'Rewrite Chapter 1' });
+  await rewriteForm.waitFor();
+  await rewriteForm.locator('textarea').fill(REWRITE_NOTE);
+  check(!(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), 'The rewrite box must not scroll sideways.');
+  await shot('6e-rewrite');
+  await rewriteForm.getByRole('button', { name: 'Rewrite Chapter 1' }).click();
+  await page.locator('img[alt="VERSA"]').first().waitFor();
+  await page.locator('[data-chapter-number="1"] h1', { hasText: 'The Hidden Key' }).waitFor({ timeout: 20_000 });
+  await page.locator('img[alt="VERSA"]').first().waitFor({ state: 'hidden', timeout: 10_000 });
+  check(counts.rewrites.length === 1 && counts.rewrites[0].chapterNumber === 1 && counts.rewrites[0].rewrite.note === REWRITE_NOTE
+    && counts.rewrites[0].rewrite.previous.title === 'Low Tide', `The rewrite should ask for Chapter 1 again with the note, got ${JSON.stringify(counts.rewrites)}.`);
+  check(counts.fixes.length === 1 && counts.fixes[0].token && counts.fixes[0].cases.length === 1,
+    `The Holdings fixer should make one quiet call with the token, got ${JSON.stringify(counts.fixes)}.`);
+  const rewrittenText = await page.locator('[data-chapter-number="1"]').textContent();
+  check(rewrittenText.includes('She hid it in her sleeve.') && !rewrittenText.includes('Mara counted the bells'), 'The new version should replace the old one.');
+  const body = await page.textContent('body');
+  check(!body.includes('[[') && !/fixer|Holdings fixer/i.test(body), 'Neither tags nor the fixer may reach the page.');
+  check(await page.locator('[role="alert"]').count() === 0, 'A rewrite that worked shows no message.');
+  await shot('6f-rewritten');
 
   // 4. A reload stays on Chapter 1, writes nothing, keeps the speed, and reads nothing by itself.
   await page.reload();
   await page.locator('[data-chapter-number="1"]').waitFor();
-  check(counts.chapters === 1, `A reload must not write a chapter, saw ${counts.chapters} requests.`);
+  check(counts.chapters === 2, `A reload must not write a chapter, saw ${counts.chapters} requests.`);
   await page.waitForTimeout(300);
   check((await spoken()).length === 0, 'Nothing should be read aloud until the reader taps Listen.');
   await visibleButton('Reader Settings').click();
@@ -389,6 +443,10 @@ async function walk(browser, viewport, sample) {
   check(address().includes(archive.story?.id), 'Export story should save this story.');
   check(archive.chapters?.length === 1 && archive.attempts?.[0]?.storyInformation && archive.attempts[0].rawProviderResponse,
     'Export story should carry the chapter, its Story Information and the writer\'s reply.');
+  // The set-aside version stays with its attempt, and the chapter carries the fixer's record.
+  check(archive.attempts.length === 2 && archive.attempts[0].replacedByChapterId === archive.chapters[0].id,
+    'Export story should keep the replaced version on its attempt.');
+  check(archive.chapters[0].fixer?.fixes?.some(fix => fix.outcome === 'fixed-tags'), `Export story should carry the fixer's record, got ${JSON.stringify(archive.chapters[0].fixer)}.`);
   await visibleButton('Back to your stories').click();
   await page.getByTestId('novel-expanded-home').waitFor();
   check(address() === '/app/', `Back from Story View should go Home, got ${address()}`);

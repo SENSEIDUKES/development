@@ -13,6 +13,12 @@ SEN engine and the two UI packages. Library owns SEIHouse users, products,
 economy, community and business policy. Authentication enforcement, secrets,
 durable ledgers and concrete infrastructure stay in the host/backend.
 
+**0.20.0:** includes 0.19.1 above; requires `@seihouse/sen` 0.22.0. `useLibraryStories` returns
+`rewriteLatestChapter(storyId, note?)`, written with the current model, and takes
+`holdingsFixer` (how far SEN's Holdings fixer goes; the Familiar's control point);
+`StoryPages` gives the Reader its Rewrite this chapter. The server Model Router entry
+adds `lowestReasoningLevel`, which the Holdings fixer's call uses.
+
 **0.19.0:** requires `@seihouse/sen` 0.19.0 (the Reader's sound is the
 SEIHouse audio player's reader mixer; the host supplies `ReaderMixerProvider`).
 

@@ -72,6 +72,8 @@ export {
   type TranslationPackageSelection,
 } from '../../narrative/translationSkill';
 export { buildImmediateChapterRequest } from '../../components/harness-generation/shared/immediateChapterRequest';
+export { activeAttemptForStory, isBlockingAttempt } from '../../components/harness-generation/shared/attempts';
+export { chapterRewriteGap, latestStoryChapter, readRewriteNote, withoutLatestChapter } from '../../components/harness-generation/shared/chapterRewrite';
 export { attemptChapterPath, chapterDirectionGap, pendingChapterDirection, validateChapterDirectionChoice } from '../../components/harness-generation/shared/chapterDirection';
 export {
   FATE_PRESSURE_RHYTHM_CONFIG,
@@ -125,6 +127,20 @@ export {
   type ReadHoldingTag,
   type ResolvedHoldingChanges,
 } from '../../components/harness-generation/shared/holdings';
+export {
+  HOLDINGS_FIXER_CASE_LIMIT,
+  applyHoldingsFixes,
+  chapterHoldingFlags,
+  holdingTagText,
+  planHoldingsFix,
+  readFixTags,
+  readHoldingsFixReply,
+  type HoldingsFixApplyInput,
+  type HoldingsFixInput,
+  type HoldingsFixPlan,
+  type HoldingsFixPlanCase,
+  type HoldingsFixResult,
+} from '../../components/harness-generation/shared/holdingsFixer';
 export * from '../../narrative/holdings';
 export { createHarnessSenStory } from '../../components/harness-generation/shared/senAdapter';
 export * from '../../narrative/generation';

@@ -55,7 +55,11 @@ type StoredWorkspace = Record<string, unknown> & { schemaVersion: number };
  * decision: every earlier story was a test story planned in 100-chapter arcs,
  * so that storage is kept untouched and the page starts fresh.
  */
-const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => StoredWorkspace> = {};
+const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => StoredWorkspace> = {
+  // 28 adds only optional fields (a rewrite request and its replaced-by record,
+  // a chapter's Holdings fixer record): every saved story reads as it is.
+  27: stored => ({ ...stored, schemaVersion: 28 }),
+};
 
 /**
  * Upgrades saved storage from an earlier schema version through each explicit
@@ -76,8 +80,8 @@ export const migrateHarnessWorkspaceState = (value: unknown): HarnessWorkspaceSt
 /**
  * Reads saved Harness Generation storage. Current storage is read as is;
  * storage from an earlier version with an explicit migration is upgraded with
- * every story, chapter and plan kept (none today: nothing before schema 27
- * upgrades). Anything else (an earlier or unknown version, or an
+ * every story, chapter and plan kept (schema 27 upgrades; nothing before it
+ * does). Anything else (an earlier or unknown version, or an
  * unrecognized shape) cannot be read and yields an empty workspace; hosts keep
  * an untouched copy of it (see the IndexedDB repository) before replacing it.
  * Every structural change to a persisted field must bump

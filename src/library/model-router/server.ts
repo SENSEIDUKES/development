@@ -10,7 +10,7 @@ import {
 
 export type { ModelCapability, ReasoningLevel } from './catalog';
 export { CHAPTER_MODELS, IMAGE_MODELS, TTS_MODELS, AUDIO_MODELS, VIDEO_MODELS, THREE_D_MODELS, REASONING_LEVELS } from './catalog';
-export { DEFAULT_CHAPTER_MODEL, DEFAULT_TTS_MODEL, MODEL_PROVIDERS, providerKey, providerModelName, resolveChapterModelRoute, resolveReasoningLevel, textModelProvider, textModelLabel, requireTextModelKey, missingKeyMessage, isMissingKeyMessage } from './catalog';
+export { DEFAULT_CHAPTER_MODEL, DEFAULT_TTS_MODEL, MODEL_PROVIDERS, lowestReasoningLevel, providerKey, providerModelName, resolveChapterModelRoute, resolveReasoningLevel, textModelProvider, textModelLabel, requireTextModelKey, missingKeyMessage, isMissingKeyMessage } from './catalog';
 export type { ModelEnvironment, ModelProviderId, ModelStage, ModelReasoning, RoutedModel, ChapterModelRoute } from './catalog';
 export { generateOpenRouterText } from './openRouter';
 export type { OpenRouterTextRequest, OpenRouterTextResult } from './openRouter';

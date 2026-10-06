@@ -43,13 +43,16 @@ import {
   type SemanticEventPreservationInput,
   type SemanticEventPreservationResult,
 } from './responseAcceptance';
+import { activeAttemptForStory } from './attempts';
+import { chapterRewriteGap, latestStoryChapter, readRewriteNote, withoutLatestChapter } from './chapterRewrite';
 import { protagonistNames } from './speakers';
 import { declaredCharacters, resolveHoldingChanges } from './holdings';
+import { applyHoldingsFixes, planHoldingsFix } from './holdingsFixer';
 import {
   createEmptyHarnessWorkspaceState,
   type HarnessGenerationRepository,
 } from './repository';
-import type { ChapterDirectionChoice, HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessCapabilityReceipt, HarnessStory, HarnessStoryVisibility, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
+import type { ChapterDirectionChoice, HarnessChapterRewrite, HarnessHoldingsFixerPolicy, HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessCapabilityReceipt, HarnessStory, HarnessStoryVisibility, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
 
 export type HarnessEventPreserver = (
   rawEvents: unknown[],
@@ -67,16 +70,16 @@ export interface HarnessGenerationControllerOptions {
   installedSkills?: HarnessSkillManifest[];
   /** Host-authorized media selection and freezing. Never enters CAPA or provider requests. */
   media?: NarrativeMediaPort;
+  /**
+   * How far the Holdings fixer may go after a chapter commits: `off`, the
+   * chapter's holding records only, or its records and one sentence at a time
+   * (the default). It runs only with an adapter that offers `fixHoldings`.
+   */
+  holdingsFixer?: HarnessHoldingsFixerPolicy;
 }
 
 type WorkspaceListener = (state: HarnessWorkspaceState) => void;
 type PersistedCheckpoint = 'raw_received' | 'prose_accepted' | 'events_preserved' | 'committed' | 'generation_failed';
-
-const blockingAttempt = (attempt: HarnessGenerationAttempt) => ![
-  'committed',
-  'generation_failed',
-  'abandoned',
-].includes(attempt.stage);
 
 const duplicateWarning = (warnings: HarnessWarning[], next: HarnessWarning) =>
   warnings.some(existing => existing.code === next.code && existing.message === next.message);
@@ -98,9 +101,6 @@ const attemptById = (state: HarnessWorkspaceState, attemptId: string): HarnessGe
   if (!attempt) throw new Error('The requested Harness generation attempt no longer exists.');
   return attempt;
 };
-
-const activeAttemptForStory = (state: HarnessWorkspaceState, storyId: string) =>
-  state.attempts.find(attempt => attempt.storyId === storyId && blockingAttempt(attempt));
 
 /** Saved chapter functions, oldest first. Chapters without a saved function are skipped. */
 const chapterFunctionHistory = (state: HarnessWorkspaceState, storyId: string): ChapterFunctionRecord[] =>
@@ -137,6 +137,7 @@ export class HarnessGenerationController {
   private readonly capabilityRegistry: HarnessCapabilityRegistry;
   private skillCatalog: ReadonlyMap<string, HarnessSkillManifest>;
   private media?: NarrativeMediaPort;
+  private holdingsFixer: HarnessHoldingsFixerPolicy;
   private readonly listeners = new Set<WorkspaceListener>();
   private state = createEmptyHarnessWorkspaceState();
   private hydrated = false;
@@ -150,6 +151,12 @@ export class HarnessGenerationController {
     this.capabilityRegistry = options.capabilityRegistry ?? new HarnessCapabilityRegistry();
     this.skillCatalog = createHarnessSkillCatalog(includeBundledHarnessSkills(options.installedSkills ?? []));
     this.media = options.media;
+    this.holdingsFixer = options.holdingsFixer ?? 'records-and-sentences';
+  }
+
+  /** The host's choice for chapters committed from now on (in the Library, the Familiar's). */
+  setHoldingsFixer(policy: HarnessHoldingsFixerPolicy): void {
+    this.holdingsFixer = policy;
   }
 
   subscribe(listener: WorkspaceListener): () => void {
@@ -234,6 +241,17 @@ export class HarnessGenerationController {
     let changed = false;
     for (const attempt of recovered.attempts) {
       if (attempt.stage !== 'request_started') continue;
+      // A rewrite never holds the story: the chapter it was replacing is still
+      // saved, so the reader can simply ask again.
+      if (attempt.immediateChapterRequest.rewrite) {
+        attempt.stage = 'generation_failed';
+        attempt.failure = {
+          stage: 'provider',
+          message: `The browser closed while Chapter ${attempt.chapterNumber} was being rewritten, so it was kept as it was.`,
+        };
+        changed = true;
+        continue;
+      }
       attempt.stage = 'provider_outcome_unknown';
       attempt.failure = {
         stage: 'provider',
@@ -805,26 +823,65 @@ export class HarnessGenerationController {
   }
 
   /**
+   * Rewrite this chapter: writes the story's latest chapter again, as one new
+   * attempt with the reader's optional note on what to change. The request is
+   * prepared from the story as it stood before that chapter, with the same
+   * direction the chapter was written with, and shows the writer the replaced
+   * version's title and recap. The chapter stays saved, and is what the reader
+   * reads, until the new version commits in its place; if the rewrite fails,
+   * nothing about the story changes.
+   */
+  async rewriteLatestChapter(storyId: string, model: string, note?: string): Promise<HarnessWorkspaceState> {
+    return this.generateNextChapterInternal(storyId, model, undefined, undefined, { note: readRewriteNote(note) });
+  }
+
+  /**
+   * The story as it stood before its latest chapter, ready to write that
+   * chapter again: its direction back in place and Rhythm's recommendation
+   * worked out again for it.
+   */
+  private rewriteSource(storyId: string) {
+    const gap = chapterRewriteGap(this.state, storyId);
+    if (gap) throw new Error(gap);
+    const replaced = latestStoryChapter(this.state, storyId)!;
+    const source = withoutLatestChapter(this.state, storyId);
+    const story = findStory(source, storyId)!;
+    const direction = this.state.attempts.find(attempt => attempt.id === replaced.attemptId)?.immediateChapterRequest.direction;
+    if (direction) story.nextChapterDirection = cloneHarnessValue(direction);
+    refreshRhythmRecommendation(source, story, this.runtime.now());
+    return { source, replaced };
+  }
+
+  /**
    * Frozen-input reuse is reachable only from the explicit retry path: a
    * retried provider request resends exactly what the abandoned attempt froze
-   * instead of rebuilding it from newer story state.
+   * instead of rebuilding it from newer story state. A rewrite (`rewrite`, or
+   * frozen inputs that carry one) prepares and checks everything against the
+   * story as it stood before the chapter it replaces.
    */
   private async generateNextChapterInternal(
     storyId: string,
     model: string,
     batchId?: string,
     frozen?: Pick<HarnessGenerationAttempt, 'capaPrompt' | 'storyInformation' | 'immediateChapterRequest' | 'missionReminder' | 'mediaLoadout'>,
+    rewrite?: { note?: string },
   ): Promise<HarnessWorkspaceState> {
     this.assertHydrated();
     if (this.generating) throw new Error('A Harness chapter request is already running.');
     if (!model.trim()) throw new Error('Choose a configured Harness model before generating a chapter.');
-    let story = findStory(this.state, storyId);
-    if (!story) throw new Error('Open a Harness story before generating a chapter.');
+    if (!findStory(this.state, storyId)) throw new Error('Open a Harness story before generating a chapter.');
     const activeAttempt = activeAttemptForStory(this.state, storyId);
     if (activeAttempt) {
       throw new Error('Finish or explicitly retry the current chapter checkpoint before generating another chapter.');
     }
-    const foundation = findFoundationRevision(this.state, story.activeFoundationRevisionId);
+    const rewriting = Boolean(rewrite || frozen?.immediateChapterRequest.rewrite);
+    const prepared = rewriting ? this.rewriteSource(storyId) : undefined;
+    if (prepared && frozen?.immediateChapterRequest.rewrite && frozen.immediateChapterRequest.rewrite.replacesChapterId !== prepared.replaced.id) {
+      throw new Error(`Chapter ${prepared.replaced.chapterNumber} is not the chapter this rewrite was asked for.`);
+    }
+    const source = prepared?.source ?? this.state;
+    const story = findStory(source, storyId)!;
+    const foundation = findFoundationRevision(source, story.activeFoundationRevisionId);
     if (!foundation) throw new Error('The active Story Foundation revision is missing. Restore a local export before continuing.');
     if (!this.modelAdapter.arcOperation) {
       throw new Error('This Harness adapter cannot create the authoritative Arc Plan required before chapter generation.');
@@ -841,6 +898,8 @@ export class HarnessGenerationController {
     const planGap = arcPlanGap(story, foundation.input);
     if (planGap) throw new Error(planGap);
     if (needsArcPlan(story, foundation.input) || !hasDestinedEnding(foundation.input)) {
+      // A chapter being written again was planned when it was first written.
+      if (prepared) throw new Error(`Chapter ${prepared.replaced.chapterNumber} has no saved arc plan, so it cannot be rewritten.`);
       this.generating = true;
       try { await this.prepareArcPlan(storyId, model); }
       finally { this.generating = false; }
@@ -863,8 +922,14 @@ export class HarnessGenerationController {
     // Immediate Chapter Request. Story Information and the Immediate Chapter
     // Request are frozen first so an equipped Translation glossary is selected
     // against exactly the inputs this attempt sends, and replays with them.
-    const storyInformation = frozen ? cloneHarnessValue({ ...frozen.storyInformation, attemptId }) : compileStoryInformationPacket(this.state, story, foundation, attemptId, this.runtime);
-    const immediateChapterRequest = frozen ? cloneHarnessValue(frozen.immediateChapterRequest) : buildImmediateChapterRequest(story);
+    const storyInformation = frozen ? cloneHarnessValue({ ...frozen.storyInformation, attemptId }) : compileStoryInformationPacket(source, story, foundation, attemptId, this.runtime);
+    // A rewrite shows the writer what it replaces: the title and recap, never the prose.
+    const rewriteRequest: HarnessChapterRewrite | undefined = prepared && !frozen ? {
+      replacesChapterId: prepared.replaced.id,
+      ...(rewrite?.note ? { note: rewrite.note } : {}),
+      previous: { title: prepared.replaced.title, ...(prepared.replaced.recap?.text ? { recap: prepared.replaced.recap.text } : {}) },
+    } : undefined;
+    const immediateChapterRequest = frozen ? cloneHarnessValue(frozen.immediateChapterRequest) : buildImmediateChapterRequest(story, rewriteRequest);
     // Media is frozen before CAPA: its sound words fill the Sound Cues slot.
     const mediaLoadout = frozen
       ? cloneHarnessValue(frozen.mediaLoadout)
@@ -909,7 +974,8 @@ export class HarnessGenerationController {
       batch.updatedAt = startedAt;
     }
     // This must succeed before the request leaves the browser. On reload a
-    // saved request_started checkpoint becomes provider_outcome_unknown.
+    // saved request_started checkpoint becomes provider_outcome_unknown (a
+    // rewrite's fails instead: the chapter it was replacing is still saved).
     this.generating = true;
     try {
       await this.persist(requestStarted);
@@ -1059,7 +1125,17 @@ export class HarnessGenerationController {
         'The accepted chapter checkpoint is incomplete and cannot be committed safely.',
       );
     }
-    if (story.head.nextChapterNumber !== attempt.chapterNumber) {
+    // A rewrite commits only over the chapter it was asked to replace, while
+    // that is still the latest. Otherwise it is set aside: the chapter stays.
+    const rewrite = attempt.immediateChapterRequest.rewrite;
+    if (rewrite) {
+      if (story.head.lastCommittedChapterId !== rewrite.replacesChapterId || story.head.nextChapterNumber !== attempt.chapterNumber + 1) {
+        return this.appendFailure(attemptId, {
+          stage: 'persistence',
+          message: `Chapter ${attempt.chapterNumber} changed before its new version could be saved, so it was kept as it was.`,
+        });
+      }
+    } else if (story.head.nextChapterNumber !== attempt.chapterNumber) {
       return this.blockForIntegrityReview(
         attemptId,
         'The story head changed before this chapter could commit. Resolve the competing local checkpoint before continuing.',
@@ -1082,7 +1158,9 @@ export class HarnessGenerationController {
     }
 
     const committedAt = this.runtime.now();
-    const candidate = cloneHarnessValue(base);
+    // A rewrite first takes the story back to before the chapter it replaces,
+    // in the same write that commits the new version.
+    const candidate = rewrite ? withoutLatestChapter(base, attempt.storyId) : cloneHarnessValue(base);
     const commitAttempt = attemptById(candidate, attemptId);
     const commitStory = findStory(candidate, attempt.storyId)!;
     if (!commitAttempt.acceptedDraft || !commitAttempt.pendingChapterId) {
@@ -1138,6 +1216,12 @@ export class HarnessGenerationController {
     candidate.chapters.push(chapter);
     candidate.events.push(...committedEvents);
     if (holdings?.created.length) candidate.codexEntries.push(...holdings.created);
+    if (rewrite) {
+      // The replaced version's attempt keeps its reply, so an export still shows it.
+      const replacedAttemptId = base.chapters.find(entry => entry.id === rewrite.replacesChapterId)?.attemptId;
+      const replaced = candidate.attempts.find(entry => entry.id === replacedAttemptId);
+      if (replaced) replaced.replacedByChapterId = chapter.id;
+    }
     commitStory.head = {
       nextChapterNumber: commitAttempt.chapterNumber + 1,
       lastCommittedChapterId: chapter.id,
@@ -1167,6 +1251,9 @@ export class HarnessGenerationController {
       return this.snapshot();
     }
     await this.replayStory(commitAttempt.storyId, chapterId);
+    // The Holdings fixer settles the chapter's small holdings problems before
+    // anything is planned or written from it.
+    await this.fixCommittedHoldings(attemptId, chapterId);
     // A story without a planned length plans its next arc as soon as the
     // last chapter of one commits; a story with one waits for the reader.
     const committedStory = findStory(this.state, commitAttempt.storyId);
@@ -1180,6 +1267,84 @@ export class HarnessGenerationController {
       }
     }
     return this.snapshot();
+  }
+
+  /**
+   * The Holdings fixer, after a chapter commits: the chapter's holdings
+   * problems become small cases, the ones nothing in the chapter can fix are
+   * settled without asking, and only when some are left does one short call
+   * with the chapter's own model answer them; a chapter its checks do not
+   * flag is never asked about. A fix stands only when it leaves fewer problems; the
+   * record of every case is kept on the chapter. Nothing here can undo the
+   * commit: a failed call or write leaves the chapter as it was committed.
+   */
+  private async fixCommittedHoldings(attemptId: string, chapterId: string) {
+    const policy = this.holdingsFixer;
+    const attempt = this.state.attempts.find(entry => entry.id === attemptId);
+    const chapter = this.state.chapters.find(entry => entry.id === chapterId);
+    const story = chapter ? findStory(this.state, chapter.storyId) : undefined;
+    if (policy === 'off' || !this.modelAdapter.fixHoldings || !attempt || !chapter || !story) return;
+    // Only chapters written with the Holdings skill carry holdings to check.
+    if (!attempt.capaPrompt.skills.some(skill => skill.slot === 'holdings' && skill.authoring)) return;
+    const mainCharacterName = attempt.storyInformation.currentStory.cast?.find(member => member.isMainCharacter)?.name;
+    const input = {
+      chapter,
+      chapters: this.state.chapters.filter(entry => entry.storyId === story.id),
+      entries: this.state.codexEntries.filter(entry => entry.storyId === story.id),
+      mainCharacterName, locale: story.originalLanguage, policy,
+    };
+    const plan = planHoldingsFix(input);
+    if (!plan.cases.length && !plan.settled.length) return;
+    const wasGenerating = this.generating;
+    this.generating = true;
+    try {
+      let response: Awaited<ReturnType<NonNullable<HarnessGenerationModelAdapter['fixHoldings']>>> | undefined;
+      let error: string | undefined;
+      if (plan.cases.length) {
+        const choice = attempt.immediateChapterRequest.direction?.choice;
+        const direction = choice ? (choice.kind === 'reader' ? choice.text : choice.suggestion ?? choice.chapterFunction) : undefined;
+        try {
+          response = await this.modelAdapter.fixHoldings({
+            operation: 'fix-holdings', storyId: story.id, chapterId, chapterNumber: chapter.chapterNumber, model: attempt.model,
+            language: story.originalLanguage, ...(mainCharacterName ? { mainCharacter: mainCharacterName } : {}),
+            ...(direction ? { direction } : {}),
+            cases: plan.cases.map(planned => cloneHarnessValue(planned.case)),
+          });
+        } catch (cause) {
+          error = errorMessage(cause, 'The Holdings fixer could not be reached.');
+        }
+      }
+      // The chapter must still be the one checked: the story's latest, as it was.
+      if (latestStoryChapter(this.state, story.id)?.id !== chapterId) return;
+      const now = this.runtime.now();
+      const fixed = applyHoldingsFixes({
+        ...input, plan, reply: response?.rawProviderResponse, error,
+        declared: declaredCharacters(attempt.storyInformation.currentStory),
+        createdAt: now, createId: () => this.runtime.createId('hcx'),
+      });
+      const candidate = cloneHarnessValue(this.state);
+      const index = candidate.chapters.findIndex(entry => entry.id === chapterId);
+      candidate.chapters[index] = {
+        ...fixed.chapter,
+        fixer: {
+          checkedAt: now,
+          ...(plan.cases.length ? { model: attempt.model } : {}),
+          ...(response ? { providerReceipt: response.providerReceipt, rawProviderResponse: response.rawProviderResponse } : {}),
+          ...(error ? { error } : {}),
+          fixes: fixed.fixes,
+        },
+      };
+      // Entries keep their places; a merged one is gone and the fixer's new ones follow.
+      const updated = new Map(fixed.entries.map(entry => [entry.id, entry]));
+      const known = new Set(candidate.codexEntries.map(entry => entry.id));
+      candidate.codexEntries = [
+        ...candidate.codexEntries.filter(entry => entry.storyId !== story.id || updated.has(entry.id)).map(entry => updated.get(entry.id) ?? entry),
+        ...fixed.entries.filter(entry => !known.has(entry.id)),
+      ];
+      try { await this.persist(candidate); } catch { /* The chapter stays as it was committed. */ }
+    } finally {
+      this.generating = wasGenerating;
+    }
   }
 
   /**
@@ -1349,6 +1514,11 @@ export class HarnessGenerationController {
     if (attempt.stage !== 'generation_failed' && attempt.stage !== 'provider_outcome_unknown') {
       throw new Error('Only a failed or unknown provider request may be retried with a new model call.');
     }
+    // A rewrite is tried again only while the chapter it replaces is still the latest.
+    const rewrite = attempt.immediateChapterRequest.rewrite;
+    if (rewrite && latestStoryChapter(this.state, attempt.storyId)?.id !== rewrite.replacesChapterId) {
+      throw new Error(`Chapter ${attempt.chapterNumber} is no longer the latest chapter, so its rewrite cannot be tried again.`);
+    }
     const abandoned = cloneHarnessValue(this.state);
     const abandonedAttempt = attemptById(abandoned, attemptId);
     abandonedAttempt.stage = 'abandoned';
@@ -1360,10 +1530,12 @@ export class HarnessGenerationController {
     // resent unchanged only while the story head still points at the chapter
     // they were prepared for. Otherwise the retry rebuilds for the current head.
     const story = findStory(this.state, attempt.storyId);
-    const sameChapter = story?.head.nextChapterNumber === attempt.immediateChapterRequest.chapterNumber;
+    // A rewrite's chapter is the latest one (checked above), and its direction
+    // is the one that chapter was written with, which cannot change.
+    const sameChapter = rewrite ? true : story?.head.nextChapterNumber === attempt.immediateChapterRequest.chapterNumber;
     // A reader who changed this chapter's direction after the failure gets the
     // new direction: the request is rebuilt instead of resent.
-    const sameDirection = (story ? pendingChapterDirection(story)?.id : undefined) === attempt.immediateChapterRequest.direction?.id;
+    const sameDirection = rewrite ? true : (story ? pendingChapterDirection(story)?.id : undefined) === attempt.immediateChapterRequest.direction?.id;
     // The same holds for the managed skills: a changed Reading Mode or a
     // different Translation package resolution rebuilds the request, so a
     // stale CAPA Prompt is never resent.
@@ -1375,6 +1547,8 @@ export class HarnessGenerationController {
       missionReminder: attempt.missionReminder,
       mediaLoadout: attempt.mediaLoadout,
     } : undefined;
+    // A rebuilt rewrite keeps the reader's note.
+    if (rewrite) return this.generateNextChapterInternal(attempt.storyId, attempt.model, undefined, frozen, { note: rewrite.note });
     return this.generateNextChapterInternal(attempt.storyId, attempt.model, attempt.batchId, frozen);
   }
 

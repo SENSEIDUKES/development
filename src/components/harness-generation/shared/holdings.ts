@@ -6,6 +6,7 @@ import {
   type CodexEntryKind,
   type HoldingChangeAttachment,
   type HoldingChangePayload,
+  type HoldingFlagKind,
   type HoldingRef,
   type HoldingVerb,
   type HoldingsSection,
@@ -15,6 +16,8 @@ import type { WordTag } from '../../../narrative/marks';
 import type { CurrentStoryProjection } from '../../../narrative/generation';
 import { normalizeIdentityLabel } from './canonicalProjection';
 import { isMainCharacterTag } from './speakers';
+
+export type { HoldingFlagKind } from '../../../narrative/holdings';
 
 /**
  * Holdings in the HARNESS: the writer's change tags read into holding changes
@@ -338,28 +341,6 @@ export interface CharacterHoldings {
   history: HoldingEvent[];
 }
 
-export type HoldingFlagKind =
-  /** Equipping, putting away or losing something the record does not show them holding. */
-  | 'not-held'
-  /** Gaining again, without a count, something they already hold. */
-  | 'already-held'
-  /** A count the record cannot match: a has tag that disagrees, or losing more than they hold. */
-  | 'count-mismatch'
-  /** Improving or sealing an ability they have not learned. */
-  | 'not-learned'
-  /** Starting to learn, or learning, an ability they already know. */
-  | 'already-learned'
-  /** A known ability's level that disagrees with the record. */
-  | 'level-differs'
-  /** Improving a sealed ability, or unsealing one that is not sealed. */
-  | 'sealed-state'
-  /** The writer's closing list leaves out something the record holds. */
-  | 'closing-unlisted'
-  /** The writer's closing list holds something no tag recorded. */
-  | 'closing-untagged'
-  /** Two entries of one kind whose names are close enough to be the same. */
-  | 'possible-duplicate';
-
 export interface HoldingFlag {
   kind: HoldingFlagKind;
   /** Plain words, for the people checking the story. */
@@ -368,6 +349,8 @@ export interface HoldingFlag {
   chapterNumber?: number;
   recordId?: string;
   entryIds?: string[];
+  /** The closing-list name it is about. */
+  name?: string;
 }
 
 export interface HoldingsState {
@@ -534,12 +517,14 @@ export function deriveHoldings({ entries, chapters, mainCharacterName }: {
           break;
         case 'learned':
           if (!ability || ability.stage === 'learning') {
-            holder.abilities.set(key, { entryId: key, name: targetName!, stage: 'learned', ...(payload.level ? { level: payload.level } : {}), sealed: false, usable: true, events: [...(ability?.events ?? []), event] });
+            holder.abilities.set(key, { entryId: key, name: targetName!, stage: 'learned', ...(payload.level ? { level: payload.level } : ability?.level ? { level: ability.level } : {}), sealed: false, usable: true, events: [...(ability?.events ?? []), event] });
             took();
           } else flag('already-learned', `${holder.name} learns ${quoted}, which they already know.`);
           break;
         case 'improved':
-          if (!ability || ability.stage === 'learning') flag('not-learned', `${holder.name} improves ${quoted} before learning it.`);
+          // Moving up a stage while still learning is progress, as cultivation stories tell it: the stage is
+          // recorded and the ability stays learning until it is learned.
+          if (!ability) flag('not-learned', `${holder.name} improves ${quoted} before learning it.`);
           else if (ability.sealed) flag('sealed-state', `${holder.name} improves ${quoted} while it is sealed.`);
           else { ability.level = payload.level; ability.events.push(event); took(); }
           break;
@@ -567,13 +552,13 @@ export function deriveHoldings({ entries, chapters, mainCharacterName }: {
       const who = main?.name ?? mainCharacterName ?? 'the main character';
       for (const item of recorded) {
         if (!listed.some(value => matches(recordedNames(item), value))) {
-          flags.push({ kind: 'closing-unlisted', chapterId: chapter.id, chapterNumber: chapter.chapterNumber, entryIds: [item.entryId],
+          flags.push({ kind: 'closing-unlisted', chapterId: chapter.id, chapterNumber: chapter.chapterNumber, entryIds: [item.entryId], name: item.name,
             message: `Chapter ${chapter.chapterNumber}: the writer's closing list for ${who} leaves out ‘${item.name}’. It may have been lost without a tag.` });
         }
       }
       for (const value of listed) {
         if (!recorded.some(item => matches(recordedNames(item), value))) {
-          flags.push({ kind: 'closing-untagged', chapterId: chapter.id, chapterNumber: chapter.chapterNumber,
+          flags.push({ kind: 'closing-untagged', chapterId: chapter.id, chapterNumber: chapter.chapterNumber, name: value,
             message: `Chapter ${chapter.chapterNumber}: the writer's closing list for ${who} includes ‘${value}’, which no tag recorded.` });
         }
       }

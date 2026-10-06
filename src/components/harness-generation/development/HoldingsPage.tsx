@@ -34,7 +34,7 @@ function CharacterCard({ character, onReadPassage }: { character: CharacterHoldi
     { title: 'In hand', items: character.things.filter(thing => thing.equipped).map(thing => ({ key: thing.entryId, name: thing.name, note: thing.count > 1 ? `×${thing.count}` : undefined, events: thing.events })) },
     { title: 'Carried', items: character.things.filter(thing => !thing.equipped).map(thing => ({ key: thing.entryId, name: thing.name, note: thing.count > 1 ? `×${thing.count}` : undefined, events: thing.events })) },
     { title: 'Knows', items: character.abilities.filter(ability => ability.stage === 'learned').map(ability => ({ key: ability.entryId, name: ability.name, note: [ability.level, ability.sealed ? 'sealed' : undefined].filter(Boolean).join(' · ') || undefined, events: ability.events })) },
-    { title: 'Learning', items: character.abilities.filter(ability => ability.stage === 'learning').map(ability => ({ key: ability.entryId, name: ability.name, note: undefined, events: ability.events })) },
+    { title: 'Learning', items: character.abilities.filter(ability => ability.stage === 'learning').map(ability => ({ key: ability.entryId, name: ability.name, note: ability.level, events: ability.events })) },
   ].filter(list => list.items.length);
   const nothing = !character.rank && !lists.length;
   return <article className="rounded-xl border border-white/10 bg-white/[0.03] p-4" aria-labelledby={`holdings-${character.entryId}`} data-testid="holdings-character">

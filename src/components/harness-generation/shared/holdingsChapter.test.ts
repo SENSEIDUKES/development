@@ -150,7 +150,7 @@ describe('HARNESS holdings through change tags', () => {
     expect(state.codexEntries).toHaveLength(6);
     // What the writer actually receives: the Holdings skill, the section, and the closing list it must return.
     const prompt = buildHarnessGenerationPrompt(writer.generate.mock.calls[1][0]);
-    expect(prompt.systemInstruction).toContain('CAPA SKILL [Holdings] — SEN Holdings v2.0.0');
+    expect(prompt.systemInstruction).toContain('CAPA SKILL [Holdings] — SEN Holdings v2.1.0');
     expect(prompt.userPrompt).toContain('HOLDINGS (what each character has now, by exact name; the main character first)\nYe Chen (main character)\n- in hand: Rusted Iron Sword\n- carries: Spirit Pill ×3\n- learning: Cloud Step\n\nElder Qin\n- carries: Jade Gourd');
     expect(prompt.responseJsonSchema.required).toContain('mainCharacterHoldings');
 
@@ -186,5 +186,17 @@ describe('HARNESS holdings through change tags', () => {
     // An empty list is an answer: the main character holds nothing.
     const empty = acceptHarnessModelResponse(reply(['He slept.'], { mainCharacterHoldings: [] }), 1, { holdingsExpected: true });
     expect(empty.accepted && empty.draft.closingHoldings).toEqual([]);
+  });
+
+  it('records tags the writer put in the closing list instead of the prose, at the chapter\'s end', () => {
+    const accepted = acceptHarnessModelResponse(reply(['The hive woke.', 'He held it close.'], {
+      mainCharacterHoldings: ['[[gained: MC | Broodmother Core]]', 'Rusted Iron Sword ×1'],
+    }), 1, { holdingsExpected: true });
+    if (!accepted.accepted) throw new Error(accepted.reason);
+    expect(accepted.draft.closingHoldings).toEqual(['Broodmother Core', 'Rusted Iron Sword ×1']);
+    expect(accepted.draft.holdingChanges?.map(change => [change.payload.verb, change.payload.target?.name, change.anchor.selectedText]))
+      .toEqual([['gained', 'Broodmother Core', 'He held it close.']]);
+    expect(accepted.warnings.find(warning => warning.code === 'holding_tags_incomplete')?.message)
+      .toBe('1 tag was written in the closing list instead of the prose and was recorded at the chapter\'s end.');
   });
 });

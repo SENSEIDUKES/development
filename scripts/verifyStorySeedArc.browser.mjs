@@ -117,6 +117,17 @@ try {
     assert.equal(exportedSeed.additionalCharacters.find(entry => entry.name === 'The Keeper')?.role, 'Gatekeeper ally');
     assert.equal(exportedSeed.factions.find(entry => entry.name === 'The Gate')?.description, 'Guardians of the pass.');
     assert.equal(exportedSeed.mainCharacter.age, '26');
+    // The length saves as it is typed, with no save step, and drops the look-ahead written for 11 arcs.
+    assert.equal(await page.getByRole('button', { name: 'Save length' }).count(), 0);
+    await page.locator('#blueprint-arc-count-input').fill('14');
+    assert.match(await page.getByTestId('blueprint-arc-goals').first().textContent(), /Arc 1 of 14 arcs/);
+    assert.equal(await page.getByRole('button', { name: 'Save length' }).count(), 0);
+    const relengthened = page.waitForEvent('download');
+    await button('Export Seed + Blueprint').click();
+    let longer = ''; for await (const chunk of await (await relengthened).createReadStream()) longer += chunk;
+    assert.equal(JSON.parse(longer).seed.story.optional.arcCount, 14);
+    assert.equal(JSON.parse(longer).blueprint.estimatedArcs, 14);
+    assert(!longer.includes('LOOKAHEAD_HIDDEN'));
     await button('Refine Details').click();
     await section('Characters');
     assert.equal(await page.locator('#char-role-blueprint-character-the-keeper').inputValue(), 'Gatekeeper ally');

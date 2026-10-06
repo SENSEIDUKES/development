@@ -616,6 +616,7 @@ export interface HarnessWarning {
     | 'ignored_story_ending'
     | 'unconfirmed_arc_completion'
     | 'sound_cue_set_aside'
+    | 'sound_tag_moved'
     | 'prose_marks_removed'
     | 'speaker_tags_incomplete'
     | 'holding_tags_incomplete';

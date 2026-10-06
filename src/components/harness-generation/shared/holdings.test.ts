@@ -4,6 +4,7 @@ import type { CodexEntry } from '../../../narrative/holdings';
 import { harnessParagraphBlockId } from './chapterBody';
 import {
   deriveHoldings,
+  holdingName,
   holdingsSection,
   namesNearlyMatch,
   placeHoldingChanges,
@@ -275,5 +276,21 @@ describe('the Holdings section', () => {
         { name: 'Elder Qin', carries: ['Jade Gourd'] },
       ],
     });
+  });
+});
+
+describe('Holdings keep things and abilities, not notes', () => {
+  const tag = (source: string) => readMarks(source).wordTags[0];
+  it('takes a count or a description out of a name, and sets aside a note about the story', () => {
+    expect(holdingName('Neural Swarm-Sync (nine hundred drones linked)')).toEqual({ name: 'Neural Swarm-Sync' });
+    expect(holdingName('Spirit Pill ×3')).toEqual({ name: 'Spirit Pill', count: 3 });
+    expect(holdingName('3 Spirit Pills')).toEqual({ name: 'Spirit Pills', count: 3 });
+    expect(holdingName('Broodmother Core — still cracked')).toEqual({ name: 'Broodmother Core' });
+    expect(holdingName('Nine Heavens Thunder Tribulation Body Refining Art')).toEqual({ name: 'Nine Heavens Thunder Tribulation Body Refining Art' });
+    expect(holdingName("Elder Han's banner sighted, three riders descending early")).toEqual({ note: "Elder Han's banner sighted, three riders descending early" });
+    expect(holdingName('Caravan arrives in nine days')).toEqual({ note: 'Caravan arrives in nine days' });
+    expect(holdingName('Ninefold Day Sutra')).toEqual({ name: 'Ninefold Day Sutra' });
+    expect(readHoldingTag(tag('[[gained: MC | Spirit Pill ×3]]'))).toEqual({ ok: true, change: { verb: 'gained', holder: { name: 'MC' }, target: { name: 'Spirit Pill' }, count: 3 } });
+    expect(readHoldingTag(tag("[[knows: MC | Elder Han's banner sighted, three riders descending early]]"))).toMatchObject({ ok: false });
   });
 });

@@ -803,7 +803,9 @@ export const normalizeWorldBlueprint = (
   const arcOneScope = source.arcOneScope === 'whole-story' || source.arcOneScope === 'opening'
     ? source.arcOneScope
     : arcOneScopeFor(savedArcs ?? estimatedArcs);
-  const arcLookahead = readArcLookahead(source, estimatedArcs);
+  // The look-ahead was written for the Blueprint's saved length; a story now
+  // set to another length drops it rather than steer toward the old ending.
+  const arcLookahead = savedArcs !== undefined && savedArcs !== estimatedArcs ? [] : readArcLookahead(source, estimatedArcs);
 
   return {
     blueprintVersion: sourceMetadata('blueprintVersion') || WORLD_BLUEPRINT_VERSION,
@@ -1261,8 +1263,10 @@ export const mirrorSeedIntoBlueprint = (blueprint: WorldBlueprint, seed: StorySe
     majorFactions: (worldFoundations.factions || []).filter(entry => text(entry.name)).map(factionBlueprintEntry),
     arcPlans: alignArcOneWithSeed(blueprint.arcPlans, seed),
     estimatedArcs,
-    // The look-ahead keeps only arcs the story's length still has.
-    arcLookahead: blueprint.arcLookahead?.length && fitArcLookahead(blueprint.arcLookahead, estimatedArcs).length
+    // The look-ahead was written for one length: a changed length drops it,
+    // and the next arcs are planned from where the story is.
+    arcLookahead: estimatedArcs === blueprint.estimatedArcs && blueprint.arcLookahead?.length
+      && fitArcLookahead(blueprint.arcLookahead, estimatedArcs).length
       ? fitArcLookahead(blueprint.arcLookahead, estimatedArcs) : undefined,
     hardPins: validateHardPinInputs(seed.story.optional.hardPins ?? []),
     funSettings: normalizeFunSettings(seed.story.optional.funSettings),

@@ -348,7 +348,9 @@ Update it whenever it changes.
   - **Story Length is set from the start:** the Story Seed's ARC page asks how many
     arcs of 30 chapters the story should run, 10 to 40 (300 to 1,200 chapters); left
     blank, the World Blueprint suggests one in that range, written by the same model
-    the chapters are.
+    the chapters are. The Blueprint's length box saves as you type, with no separate
+    save step, and a changed length throws away the private look-ahead written for
+    the old one.
   - **Story Language and Reading Mode come from the Story Seed:** chapters are
     written in the story's language, one of 11 today, and Clear Reading, Easy Read
     or Literal Reading loads SEN's matching Accessibility skill on every chapter.
@@ -363,13 +365,21 @@ Update it whenever it changes.
     else), and the HARNESS records whether it is the main character. That is what gives Listen its three voices. A line
     the writer left untagged is voiced from its narration, as a reader tells: the Side voice when the
     narration names someone else ("Lin Xiao said"), otherwise the Protagonist voice, as production read it.
-  - **Holdings, the first information tags:** what each character has, uses,
-    knows and is. Every chapter, the writer reads the Holdings section (the
-    main character first), uses only what is there, and tags each change where
+    A placeholder copied from the instructions (`[[@Name]]`) counts as no tag.
+  - **Sound tags never leave broken lines:** the writer wraps words already in its
+    sentence. A tag written on its own line or between sentences has its words
+    removed, and its sound moves onto the nearby words that say the same thing, or
+    onto the nearest sentence.
+  - **Holdings, the first information tags:** the things each character owns, the
+    abilities they can use, and their rank. Never plot facts: a name keeps no
+    count or description inside it, and a name that reads as a note about the
+    story (a sighting, a countdown) is set aside. Every chapter, the writer reads
+    the Holdings section (the main character first), uses only what is there, and tags each change where
     it happens (`[[gained: MC | Thing]]`, `lost`, `equipped`, `unequipped`,
     `learning`, `learned`, `improved`, `sealed`, `unsealed`, `rank`, and `has`
     or `knows` the first time the story shows something already held). It ends
-    its reply with the main character's closing list. Each name becomes a Codex
+    its reply with the main character's closing list; a tag written there instead
+    of the prose is still recorded, at the chapter's end. Each name becomes a Codex
     entry with an app-made ID; plain rules flag what cannot be true; nothing is
     stored that could count twice. The Reader's **Holdings** page shows it all,
     each change linked to its passage, with the checks worth testing. Chapters
@@ -381,7 +391,10 @@ Update it whenever it changes.
     and tells every later chapter to keep it. A reply far short of a chapter
     (under a quarter of its 1,800-word minimum) is a failed write: nothing is
     saved, and the Reader says so with Next ready to try again. A chapter's
-    title is its name alone; the Reader numbers it.
+    title is its name alone; the Reader numbers it. The writer is told roughly how
+    many words each paragraph needs to reach the minimum, never to carry a
+    countdown ("nine days remain") into a recap, since later chapters read it
+    after time has passed, and never to lean on a pet word.
   - **The writer's tags, in one strict shape:** every tag kind is taught the
     same way (its job, its format, what is required, what is forbidden, and a
     check before it returns), and what every tag shares is said once. Sounds

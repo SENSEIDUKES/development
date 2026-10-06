@@ -19,6 +19,9 @@ import { createLocalStorySeedRepository } from '../host/story-seed/localStorySee
 import { startHarnessStoryFromSeed } from '../host/story-seed/startHarnessStory';
 import { createLocalReaderPreferenceStorage } from '../host/reader/readerPreferenceStorage';
 import { createHostReaderMixer } from '../host/reader/readerMixer';
+import { SEN_SOUNDSCAPES } from '../host/media/soundscapeCatalog';
+import { piecesForMood, storySoundtrack } from '@seihouse/sen/reader-runtime';
+import { APP_MUSIC_MOOD } from './appMusic';
 import { installFakeSpeechSynthesis } from '../test-utils/fakeSpeechSynthesis';
 import { NovelExpandedApp } from './NovelExpandedApp';
 import { NOVEL_EXPANDED_STORAGE, type NovelExpandedServices } from './services';
@@ -103,10 +106,11 @@ const buttonByText = (text: string, scope: ParentNode = document) => [...scope.q
 const worldInfo = () => document.querySelector<HTMLElement>('[data-testid="harness-world-info"]');
 const chaptersAction = () => worldInfo()?.querySelector<HTMLElement>('[data-world-info-chapters="action"]');
 const address = () => `${window.location.pathname}${window.location.search}`;
-const render = async (services: NovelExpandedServices, url = '/app/') => {
+const render = async (services: NovelExpandedServices, url = '/app/', readerMixer = createHostReaderMixer(services.readerPreferences)) => {
   window.history.replaceState(null, '', url);
-  await act(async () => root.render(<NovelExpandedApp services={services} readerMixer={createHostReaderMixer(services.readerPreferences)} />));
+  await act(async () => root.render(<NovelExpandedApp services={services} readerMixer={readerMixer} />));
   await flush(20);
+  return readerMixer;
 };
 const typeInto = async (input: HTMLInputElement, value: string) => {
   await act(async () => {
@@ -256,6 +260,27 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
       uninstall();
       vi.unstubAllGlobals();
     }
+  });
+
+  it('plays its own calm music from SEN Soundscapes on every page, with no model, until the Reader takes over', async () => {
+    const story = scriptedWriter();
+    const services = appServices(story.writer);
+    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
+    const mixer = await render(services);
+    const soundtrack = storySoundtrack(mixer);
+    const calm = piecesForMood(APP_MUSIC_MOOD, SEN_SOUNDSCAPES).map(piece => piece.id);
+    const first = soundtrack.piece();
+    expect(calm).toContain(first?.id);
+    expect(mixer.getState().layers.soundscapes.requested).toContain(first!.id);
+
+    // The same piece plays on through World Info and the veil while Chapter 1 is written.
+    await click(container.querySelector(`#home-world-${created.id} button[aria-label^="Open ${created.title}"]`), 'the Home card');
+    await click(chaptersAction(), 'Start Story', 10);
+    expect(document.querySelector('img[alt="VERSA"]')?.closest('.fixed')?.textContent).toContain('Chapter 1');
+    expect(soundtrack.piece()).toBe(first);
+    expect(story.generate).toHaveBeenCalledTimes(1);
+    story.release();
+    await flush(50);
   });
 
   it('sends an unknown story home instead of a developer page', async () => {

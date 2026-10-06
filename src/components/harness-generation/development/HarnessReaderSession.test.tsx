@@ -13,6 +13,9 @@ import type { ReadAloudVoicePicks, ReaderPreferenceStorage, ReaderStateRepositor
 import { installFakeSpeechSynthesis, type FakeSpeechSynthesis } from '../../../test-utils/fakeSpeechSynthesis';
 import { ReaderMixerProvider, type ReaderMixer, type ReaderMixerSleepEvent } from '@seihouse/audio-player';
 import { createHostReaderMixer } from '../../../host/reader/readerMixer';
+import { SEN_ATMOSPHERES } from '../../../host/media/atmosphereCatalog';
+import { SEN_SOUNDSCAPES } from '../../../host/media/soundscapeCatalog';
+import { storySoundtrack } from '@seihouse/sen/reader-runtime';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -424,7 +427,14 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
   const mixerFor = () => {
     const values = new Map<string, string>();
     const storage: ReaderPreferenceStorage = { read: key => values.get(key) ?? null, write: (key, value) => { values.set(key, value); }, remove: key => { values.delete(key); } };
-    return { mixer: createHostReaderMixer(storage), values };
+    return { mixer: createHostReaderMixer(storage), values, storage };
+  };
+  const choose = async (select: HTMLSelectElement, value: string) => {
+    await act(async () => {
+      select.value = value;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+      await Promise.resolve();
+    });
   };
   const mountWithMixer = async (mixer: ReaderMixer, element: React.ReactElement) => {
     await act(async () => { root.render(renderWithDevAudio(<ReaderMixerProvider mixer={mixer}>{element}</ReaderMixerProvider>)); });
@@ -458,8 +468,8 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
     await mountWithMixer(mixer, <Host controller={controller} storyId={storyId} />);
 
     expect(startAtmosphere).toHaveBeenCalledTimes(1);
-    // Chapter 1 has a Sound Cue: Sound Cues show in Audio and its sound is warmed. Soundscapes are not chosen yet.
-    expect(mixer.getState().availability).toMatchObject({ soundscapes: false, atmosphere: true, cues: true });
+    // Chapter 1 has a Sound Cue: Sound Cues show in Audio and its sound is warmed. The music always shows.
+    expect(mixer.getState().availability).toMatchObject({ soundscapes: true, atmosphere: true, cues: true });
     expect(preloadCues).toHaveBeenCalledWith([expect.stringMatching(BEAST_ROAR)]);
     // Tapping the cue plays it over the soundtrack, at the writer's Energy (high).
     await act(async () => { buttonBy(button => button.dataset.cuePhrase === 'the beast roared')!.click(); });
@@ -489,6 +499,41 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
     root = createRoot(container);
   });
 
+  it('lets the reader keep their own music and atmosphere from Reader Settings, or give the choice back to each chapter', async () => {
+    const { controller, storyId } = await story({ written: 1 });
+    const { mixer, values, storage } = mixerFor();
+    await mountWithMixer(mixer, <Host controller={controller} storyId={storyId} readerPreferences={storage} />);
+    await act(async () => { note()!.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })); });
+    const audio = await audioPanel();
+    const scene = audio.querySelector<HTMLElement>('[data-testid="reader-soundtrack-choice"]')!;
+    const piece = scene.querySelector<HTMLSelectElement>('#reader-soundtrack-piece')!;
+    const atmosphere = scene.querySelector<HTMLSelectElement>('#reader-soundtrack-atmosphere')!;
+    // Automatic until the reader chooses; the atmosphere is chosen here, beside the music, not in the mixer's own picker.
+    expect([piece.value, atmosphere.value]).toEqual(['automatic', 'automatic']);
+    const mixerPanel = [...audio.children].find(child => !child.contains(scene))!;
+    expect(mixerPanel.textContent).toContain('Atmosphere');
+    expect(mixerPanel.textContent).not.toContain('Gentle Rain 1');
+    expect([...piece.querySelectorAll('optgroup')].map(group => group.label)).toEqual(['Adventure', 'Ambient', 'Emotions', 'Fighting', 'War']);
+    expect(scene.querySelector('[data-testid="reader-soundtrack-now"]')!.textContent).toBe('Now: Gentle Rain 1');
+
+    const lament = SEN_SOUNDSCAPES.find(entry => entry.mood === 'sad')!;
+    const waves = SEN_ATMOSPHERES.find(option => option.group === 'Waves')!;
+    await choose(piece, lament.id);
+    await choose(atmosphere, waves.id);
+    expect(storySoundtrack(mixer).piece()?.id).toBe(lament.id);
+    expect(mixer.getPreferences().atmosphereId).toBe(waves.id);
+    expect(scene.querySelector('[data-testid="reader-soundtrack-now"]')!.textContent).toBe(`Now: ${lament.label} · ${waves.label}`);
+    // Kept on the device, for every story.
+    expect(JSON.parse(values.get('soundtrack-choice')!)).toMatchObject({ soundscape: { pieceId: lament.id }, atmosphere: { atmosphereId: waves.id } });
+
+    // Back to Automatic: the chapter (written before scenes) chooses nothing, so its piece goes and the atmosphere stays.
+    await choose(piece, 'automatic');
+    await choose(atmosphere, 'automatic');
+    expect(storySoundtrack(mixer).piece()).toBeUndefined();
+    expect(mixer.getPreferences().atmosphereId).toBe(waves.id);
+    expect(JSON.parse(values.get('soundtrack-choice')!)).toMatchObject({ soundscape: 'automatic', atmosphere: 'automatic' });
+  });
+
   it('the note mutes story audio with a tap, and a long-press opens Reader Settings at Audio', async () => {
     const { controller, storyId } = await story({ written: 1 });
     const { mixer, values } = mixerFor();
@@ -512,10 +557,11 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
     // Without speech, Narration only says so.
     expect([...dialog.querySelectorAll('section h3')].map(heading => heading.textContent)).toEqual(['Audio', 'Narration']);
     expect(dialog.querySelector('[data-testid="reader-settings-narration"]')!.textContent).toContain("This browser can't read aloud.");
-    // Only the layers this chapter uses: Atmosphere and Sound Cues, never Soundscapes or Voice yet.
+    // The layers this chapter uses: the music, the atmosphere and Sound Cues, never Voice yet.
+    expect(audio.textContent).toContain('Soundscapes');
     expect(audio.textContent).toContain('Atmosphere');
     expect(audio.textContent).toContain('Sound Cues');
-    expect(audio.textContent).not.toMatch(/Soundscapes|Voice/);
+    expect(audio.textContent).not.toMatch(/Voice/);
   });
 
   it('dips the soundtrack under Listen and keeps the reader active, and a sleep timer stops Listen too', async () => {

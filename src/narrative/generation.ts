@@ -844,6 +844,18 @@ export interface StoryInformationPacket {
   diagnostics: StoryInformationDiagnostics;
 }
 
+/**
+ * The music and atmosphere a chapter is read with, chosen once by its writer
+ * at the chapter's start (never more than one of each, so a passing fight
+ * never changes them).
+ */
+export interface HarnessChapterScene {
+  /** A mood of the chapter's soundscapes: its pieces of that mood play one after another. */
+  soundscape?: string;
+  /** The id of one atmosphere from the host's atmosphere catalog. */
+  atmosphere?: string;
+}
+
 export interface HarnessChapter {
   id: string;
   storyId: string;
@@ -877,6 +889,8 @@ export interface HarnessChapter {
   holdingChanges?: HoldingChangeAttachment[];
   /** The writer's closing list for this chapter, checked against the holdings it leaves. */
   closingHoldings?: string[];
+  /** The chapter's music and atmosphere, as its writer chose them. Absent before scenes were chosen. */
+  scene?: HarnessChapterScene;
   /** Pack/version provenance of the frozen catalog that produced this media. */
   mediaLoadout: FrozenNarrativeMedia;
   plan?: HarnessModelPlan;

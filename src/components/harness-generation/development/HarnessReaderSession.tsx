@@ -9,13 +9,16 @@ import {
   applyReaderStatePatch,
   buildReadAloudScript,
   createReaderStoryState,
+  readSoundtrackChoice,
   resolveReaderOpeningChapter,
   useReadAloud,
+  writeSoundtrackChoice,
   type ReadAloudScript,
   type ReadAloudVoicePicks,
   type ReaderPreferenceStorage,
   type ReaderStateRepository,
   type ReaderStoryState,
+  type SoundtrackChoice,
 } from '@seihouse/sen/reader-runtime';
 import { harnessParagraphBlockId } from '../shared/chapterBody';
 import { harnessStoryMode, nextArcStep } from '../shared/arcState';
@@ -30,7 +33,7 @@ import { ReadAloudPlayer } from './ReadAloudPlayer';
 import { ReaderSettingsSheet } from './ReaderSettingsSheet';
 import { useFollowNarration, type NarrationHighlight } from './useFollowNarration';
 import { useNextChapterWriter } from './useNextChapterWriter';
-import { useReaderSoundtrack } from './useReaderSoundtrack';
+import { readingScene, useReaderSoundtrack } from './useReaderSoundtrack';
 import type { HarnessGenerationController } from '../shared/controller';
 import type { HarnessWorkspaceState } from '../../../narrative/generation';
 import { chapterTitleText } from '../../../narrative/chapterTitle';
@@ -268,9 +271,17 @@ export function HarnessReaderSession({
     return block && { blockId: block.id, startOffset: sentenceStart, endOffset: sentenceEnd, selectedText: block.text.slice(sentenceStart, sentenceEnd) };
   }, [blocks, spokenBlock, sentenceStart, sentenceEnd]);
   const follow = useFollowNarration({ article: articleRef, highlight, active: reading, player: playerRef });
+  // The chapter's scene (its music and atmosphere), unless the reader chose their own.
+  const [soundtrackChoice, setSoundtrackChoice] = useState<SoundtrackChoice>(() => readSoundtrackChoice(readerPreferences));
+  const chooseSoundtrack = useCallback((choice: SoundtrackChoice) => {
+    setSoundtrackChoice(choice);
+    writeSoundtrackChoice(readerPreferences, choice);
+  }, [readerPreferences]);
+  const scene = useMemo(() => (chapter ? readingScene(chapters, chapter.chapterNumber) : undefined), [chapters, chapter]);
+  const pieces = useMemo(() => chapter?.mediaLoadout?.soundscapes.map(entry => entry.track), [chapter]);
   const mixer = useReaderSoundtrack({
-    active: Boolean(story && readerState && chapter),
-    chapterId: chapter?.id, soundCues: chapter?.soundCues,
+    active: Boolean(story && readerState),
+    chapterId: chapter?.id, soundCues: chapter?.soundCues, scene, pieces, choice: soundtrackChoice,
     speaking: readAloud.status === 'playing', listenEnded: readAloud.status === 'ended',
     onSleep: readAloud.stop, chapterEnd,
   });
@@ -380,7 +391,7 @@ export function HarnessReaderSession({
         note={mixer && <ReaderMixerNote mixer={mixer} onOpenSettings={() => openSettings('audio')} />} />}
     </main>
     <ReaderSettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} readAloud={readAloud} language={language}
-      mixer={mixer} section={settingsSection} />
+      mixer={mixer} section={settingsSection} soundtrack={{ choice: soundtrackChoice, onChoice: chooseSoundtrack, pieces: pieces ?? [] }} />
     {writing}
   </>;
 }

@@ -17,12 +17,20 @@ export function createHostReaderMixer(storage: ReaderPreferenceStorage): ReaderM
 
 /**
  * Loops play as the files are made: no overlap at the loop point. The owner's
- * atmospheres are exported to loop, and he trims their silence himself; the
+ * atmospheres are exported to loop, with any silence trimmed in the files; the
  * player's short overlap was audible as a dip at every loop.
  */
 export const HOST_LOOP_CROSSFADE_MS = 0;
 
-/** The host mixer's settings: the SEN Atmospheres catalog, the reader's saved mix, and loops as the files are made. */
+/**
+ * SEN Soundscapes are composed pieces with their own opening and ending: each
+ * plays once and the soundtrack moves to the next piece of its mood, with a
+ * short fade over the last seconds so an ending is heard, not cut.
+ */
+export const HOST_SOUNDSCAPE_PLAYS = 1;
+export const HOST_SOUNDSCAPE_END_FADE_MS = 3_000;
+
+/** The host mixer's settings: the SEN Atmospheres catalog, the reader's saved mix, loops as the files are made, and pieces of music played whole. */
 export function hostReaderMixerOptions(storage: ReaderPreferenceStorage): ReaderMixerOptions {
   let saved: ReaderMixerPreferencesInput | null = null;
   try {
@@ -35,6 +43,8 @@ export function hostReaderMixerOptions(storage: ReaderPreferenceStorage): Reader
   return {
     atmospheres: SEN_ATMOSPHERES,
     loopCrossfadeMs: HOST_LOOP_CROSSFADE_MS,
+    soundscapeMaxPlays: HOST_SOUNDSCAPE_PLAYS,
+    soundscapeRestFadeMs: HOST_SOUNDSCAPE_END_FADE_MS,
     defaultPreferences: { ...DEFAULT_READER_MIXER_PREFERENCES, atmosphereId: DEFAULT_ATMOSPHERE_ID },
     initialPreferences: saved,
     onPreferencesChange: preferences => storage.write(READER_MIXER_PREFERENCE_KEY, JSON.stringify(preferences)),

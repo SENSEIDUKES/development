@@ -12,6 +12,7 @@ import { startHarnessStoryFromSeed } from '../host/story-seed/startHarnessStory'
 import { AGENTS } from '../lib/agents';
 import { AccessTokenSheet, type AccessTokenRequest } from './AccessTokenSheet';
 import { writerWithAccessToken, type AskForAccessToken } from './accessToken';
+import { useAppMusic } from './appMusic';
 import { CreatePage } from './CreatePage';
 import { HomePage } from './HomePage';
 import { HOME_ROUTE, useAppRoute } from './routes';
@@ -24,9 +25,12 @@ import { startedSeedIds } from './storyCreationRuntime';
  * way as the Workshop's: the official CAPA skills, the Library's sound words
  * and Sound Cues, memory read only on request, and the Model Router's choice.
  * Its one sound owner is the reader mixer (the SEIHouse audio player), made
- * once by the page that mounts the app and kept for the page's lifetime.
+ * once by the page that mounts the app and kept for the page's lifetime: the
+ * app's own music plays through it on every page, and each chapter's scene
+ * in the Reader.
  */
 export function NovelExpandedApp({ services, readerMixer }: { services: NovelExpandedServices; readerMixer: ReaderMixer }) {
+  useAppMusic(readerMixer);
   return <ReaderMixerProvider mixer={readerMixer}>
     <LibraryPresentationProvider assets={LIBRARY_ASSETS} backdrops={MANIFEST_BACKDROPS}>
       <NovelExpandedPages services={services} />

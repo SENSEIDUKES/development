@@ -40,6 +40,17 @@ describe('Media Pack contracts', () => {
     ]);
   });
 
+  it('keeps a soundscape\'s name, group and measured loudness, and refuses a measurement it cannot read', () => {
+    const entry = soundscape().entries[0];
+    const loudness = { kind: 'integrated', lufs: -11.7, peakDb: 0.3 };
+    expect(validateMediaPack(soundscape({ entries: [{ ...entry, label: ' Storm Drums ', group: 'Fighting', loudness }] })).entries).toEqual([
+      { ...entry, label: 'Storm Drums', group: 'Fighting', loudness },
+    ]);
+    expect(() => validateMediaPack(soundscape({ entries: [{ ...entry, loudness: { kind: 'integrated', lufs: 'loud', peakDb: 0 } }] }))).toThrow('loudness needs');
+    expect(() => validateMediaPack(soundscape({ entries: [{ ...entry, loudness: { ...loudness, gain: 2 } }] }))).toThrow('unsupported field gain');
+    expect(() => validateMediaPack(soundscape({ entries: [{ ...entry, label: ' ' }] }))).toThrow('label must be readable text');
+  });
+
   it('holds a Sound Cue Pack\'s words and recordings to one another, with its cue category as the parent tag', () => {
     expect(validateMediaPack(soundCues())).toMatchObject({
       sounds: [{ word: 'clockwork roar', example: 'the clockwork beast roared' }],

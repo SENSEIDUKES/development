@@ -45,6 +45,10 @@ describe('The host reader mixer', () => {
     expect(hostReaderMixerOptions(memory().storage).loopCrossfadeMs).toBe(0);
   });
 
+  it('plays each piece of music once, whole, with a short fade over its ending, so the next piece can follow', () => {
+    expect(hostReaderMixerOptions(memory().storage)).toMatchObject({ soundscapeMaxPlays: 1, soundscapeRestFadeMs: 3_000 });
+  });
+
   it('starts from the default mix when the saved mix is damaged', () => {
     const mixer = createHostReaderMixer(memory('{not json').storage);
     expect(mixer.getState().preferences).toMatchObject({ atmosphereId: DEFAULT_ATMOSPHERE_ID, masterEnabled: true });

@@ -1,4 +1,5 @@
 import type { LoudnessMeasurement, ReaderAtmosphereOption } from '@seihouse/audio-player';
+import type { SceneAtmosphere } from '@seihouse/sen/audio';
 import atmospheres from './data/sen-atmospheres-v1.json';
 
 /**
@@ -19,3 +20,15 @@ export const SEN_ATMOSPHERES: readonly ReaderAtmosphereOption[] = Object.freeze(
 
 /** A new reader starts on gentle rain, as the mixer's own default mix does. */
 export const DEFAULT_ATMOSPHERE_ID = 'sen-atmosphere-rain-gentle-rain-1';
+
+/**
+ * The atmospheres a chapter's writer may choose, by word: each bed's name
+ * without its number ("Gentle Rain 2" is "gentle rain"), so the beds that
+ * share a name take turns among the chapters that choose it.
+ */
+export const SEN_SCENE_ATMOSPHERES: readonly SceneAtmosphere[] = Object.freeze(SEN_ATMOSPHERES.map(option => ({
+  id: option.id,
+  word: option.label.replace(/\s+\d+$/, '').trim().toLowerCase(),
+  label: option.label,
+  ...(option.group ? { group: option.group } : {}),
+})));

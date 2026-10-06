@@ -1,7 +1,36 @@
 import type { SceneAudioTrack } from '@seihouse/sen/audio';
+import soundscapes from './data/sen-soundscapes-v1.json';
+
+/**
+ * SEN Soundscapes, Volume 1: the 43 pieces of music under the story, and the
+ * soundscapes every new chapter is written with. The records come from the
+ * `sen-soundscapes-volume-1` SPP (1.0.1); the loudness beside each was
+ * measured from the exact file (its SHA-256 matched the pack), so the reader
+ * mixer plays every piece at one reference level. The pack's titles, moods and
+ * tags are AI proposals the owner can edit; two pieces that share a title are
+ * numbered. Each piece is composed, with its own opening and ending, so pieces
+ * follow one another rather than loop.
+ */
+export const SEN_SOUNDSCAPES: readonly SceneAudioTrack[] = Object.freeze(soundscapes.entries.map(entry => ({
+  id: entry.id,
+  label: entry.label,
+  group: entry.group,
+  mood: entry.mood,
+  moods: [...entry.moods],
+  tags: [...entry.tags],
+  url: entry.url,
+  loudness: { kind: 'integrated' as const, lufs: entry.loudness.lufs, peakDb: entry.loudness.peakDb },
+})));
+
+/** Where the pack's records came from, for the media each chapter is written with. */
+export const SEN_SOUNDSCAPES_PROVENANCE = Object.freeze({ catalogId: soundscapes.pack.id, version: soundscapes.pack.version });
 
 const CDN = 'https://celestialaudio.seihouse.org/AUDIO';
 
+/**
+ * The older Reader Chamber's soundscape list, kept for its remake. New
+ * chapters and the NovelExpanded app use SEN Soundscapes, Volume 1 (above).
+ */
 export const TRACK_LIBRARY: SceneAudioTrack[] = [
   { id: 'ADVENTURE_4_BANISHED', mood: 'adventure', moods: ['adventure', 'tribulation'], tags: ['banished', 'exile', 'journey', 'wilderness'], url: `${CDN}/ADVENTURE/ADVENTURE_4_BANISHED.wav` },
   { id: 'ADVENTURE_LEVELING_UP', mood: 'adventure', moods: ['adventure', 'excitement'], tags: ['training', 'growth', 'breakthrough', 'level-up', 'cultivation'], url: `${CDN}/ADVENTURE/ADVENTURE_LEVELING_UP.mp3` },

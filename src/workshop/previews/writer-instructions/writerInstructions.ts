@@ -5,13 +5,16 @@ import {
   SEN_NOVEL_AUTHOR_SKILL,
   SEN_READING_MODE_SKILLS,
   SEN_SOUND_CUES_SKILL,
+  SEN_SOUNDTRACK_SKILL,
   SEN_SPEAKERS_SKILL,
   assembleCapaPrompt,
   buildHarnessOfficialOutputRequirements,
   presentSoundVocabulary,
+  presentSoundtrackVocabulary,
   type HarnessSkillManifest,
 } from '@seihouse/sen/harness-generation';
-import { LIBRARY_SOUND_WORDS } from '../../../host/media/libraryCatalog';
+import { soundtrackVocabulary } from '@seihouse/sen/audio';
+import { LIBRARY_BASE_MEDIA, LIBRARY_SOUND_WORDS } from '../../../host/media/libraryCatalog';
 import { HARNESS_RESPONSE_CONTRACT } from '../../../server/harness-generation/prompt';
 import { HOLDINGS_FIXER_INSTRUCTIONS } from '../../../server/harness-generation/holdingsFixer';
 
@@ -27,6 +30,7 @@ export type WriterInstructionId =
   | 'author'
   | 'tag-rules'
   | 'sound-cues'
+  | 'soundtrack'
   | 'speakers'
   | 'holdings'
   | 'response-contract'
@@ -54,6 +58,9 @@ const skillText = (skill: HarnessSkillManifest) => skill.instructions!.trim();
 /** The story's sound list as the writer sees it, here with the default library a story starts with. */
 const DEFAULT_SOUND_LIST = presentSoundVocabulary(LIBRARY_SOUND_WORDS);
 
+/** The story's music moods and atmospheres as the writer sees them, from the default soundscapes and atmospheres. */
+const DEFAULT_SOUNDTRACK_WORDS = soundtrackVocabulary(LIBRARY_BASE_MEDIA);
+
 /** Read on every chapter, in this order. */
 export const EVERY_CHAPTER: readonly WriterInstruction[] = [
   {
@@ -70,6 +77,11 @@ export const EVERY_CHAPTER: readonly WriterInstruction[] = [
     id: 'sound-cues', title: 'Sound Cues', source: skillSource(SEN_SOUND_CUES_SKILL),
     when: 'Every chapter of a story with sound words. The list is the story\'s Sound Cue Pack; shown here with the default library.',
     text: `${skillText(SEN_SOUND_CUES_SKILL)}\n${DEFAULT_SOUND_LIST}`,
+  },
+  {
+    id: 'soundtrack', title: 'Soundtrack', source: skillSource(SEN_SOUNDTRACK_SKILL),
+    when: 'Every chapter of a story with music or atmospheres. The lists are the story\'s soundscapes and atmospheres; shown here with SEN Soundscapes and SEN Atmospheres, Volume 1.',
+    text: `${skillText(SEN_SOUNDTRACK_SKILL)}\n${presentSoundtrackVocabulary(DEFAULT_SOUNDTRACK_WORDS)}`,
   },
   {
     id: 'speakers', title: 'Speakers', source: skillSource(SEN_SPEAKERS_SKILL),
@@ -120,15 +132,16 @@ export const WRITER_INSTRUCTIONS: readonly WriterInstruction[] = [...EVERY_CHAPT
 
 /**
  * Everything a default English story's writer reads before the story, exactly
- * as the HARNESS assembles it: the CAPA Prompt with the default sound list,
- * then the response contract. The page's blocks are this text, in this order.
+ * as the HARNESS assembles it: the CAPA Prompt with the default sound list and
+ * soundtrack words, then the response contract. The page's blocks are this text, in this order.
  */
 export const defaultSystemInstruction = () => [
   assembleCapaPrompt({
     capturedAt: 'now',
     originalLanguage: 'en',
-    skills: [SEN_NOVEL_AUTHOR_SKILL, SEN_SOUND_CUES_SKILL, SEN_SPEAKERS_SKILL, SEN_HOLDINGS_SKILL],
+    skills: [SEN_NOVEL_AUTHOR_SKILL, SEN_SOUND_CUES_SKILL, SEN_SOUNDTRACK_SKILL, SEN_SPEAKERS_SKILL, SEN_HOLDINGS_SKILL],
     soundVocabulary: LIBRARY_SOUND_WORDS,
+    soundtrackVocabulary: DEFAULT_SOUNDTRACK_WORDS,
   }).text,
   HARNESS_RESPONSE_CONTRACT,
 ].join('\n\n');

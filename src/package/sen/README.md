@@ -1,5 +1,31 @@
 # `@seihouse/sen`
 
+**0.23.0 (2026-10-06, breaking):** Phase 4: audio that's always there, and writing
+that survives leaving. **The chapter being written belongs to the controller:**
+`HarnessGenerationController.chapterWrite(storyId)` (`HarnessChapterWrite`, announced
+to listeners when it starts and ends) is the one write every surface sees, and
+`writeNextChapter(storyId, model)` finishes a write a closed browser interrupted (a
+saved reply with no new model call; a cut-off request asked again) before writing a
+new one. `nextChapterWaitsOnReader` is exported. **Music and atmosphere:**
+`./reader-runtime` exports `StorySoundtrack` and `storySoundtrack(mixer)` (pieces of
+one mood follow one another on the reader mixer; a hold plays over the host's own
+music), `piecesForMood`, `SoundtrackRequest`, and the reader's choice
+(`SoundtrackChoice`, `readSoundtrackChoice`, `writeSoundtrackChoice`,
+`SOUNDTRACK_CHOICE_KEY`, `DEFAULT_SOUNDTRACK_CHOICE`). `HarnessReaderSession` plays
+the atmosphere from the moment it opens (Chapter 1's writing screen included) and
+under its own pages, locks the music and atmosphere into each chapter's scene
+(Automatic), and Reader Settings › Audio gains Scene (Automatic or the reader's own
+piece and atmosphere). **The writer chooses the scene:** the tiny SEN language gains
+`[[soundtrack: Music Mood | Atmosphere]]` (`MarkReading.soundtracks`, required;
+`SoundtrackTag`, `SOUNDTRACK_TAG_WORDS`); `SEN_SOUNDTRACK_SKILL` (1.0.0) fills a new
+`soundtrack` CAPA slot managed by the Media Loadout (`HarnessSkillSlotId` widens);
+`presentSoundtrackVocabulary`, `chapterSoundtrack`, `HarnessChapter.scene`
+(`HarnessChapterScene`), the warning `soundtrack_incomplete`, and the frozen
+`soundtrackVocabulary` on the loadout and CAPA Prompt. `./audio`: `SceneAudioTrack`
+may carry `label` and `loudness`; `FrozenNarrativeMedia.atmospheres` (`SceneAtmosphere`)
+and `MediaCatalog.atmospheres` (required); `soundtrackVocabulary`. Saved stories move
+to schema 29 with an upgrade that keeps them as they are.
+
 **0.22.0 (2026-10-06):** Phase 3. **Rewrite this chapter:**
 `HarnessGenerationController.rewriteLatestChapter(storyId, model, note?)` writes the
 story's newest chapter again from the story as it stood before it, and replaces it only
@@ -39,7 +65,7 @@ accounts, Energy, QI, first-party catalogs, Workshop state, or concrete APIs.
 | `@seihouse/sen` | Neutral presentation contracts/defaults and version |
 | `./contracts` | Story, chapter, block, identity, voice, usage and language contracts |
 | `./presentation` | Product-neutral presentation provider and slots |
-| `./reader-runtime` | Required host ports for Reader/Codex state and services, and Read Aloud: spoken lines and speaker records, the three-voice script, voice choice, device preferences through `ReaderPreferenceStorage`, and the `useReadAloud` player over the browser's speech |
+| `./reader-runtime` | Required host ports for Reader/Codex state and services, Read Aloud (spoken lines and speaker records, the three-voice script, voice choice, device preferences through `ReaderPreferenceStorage`, and the `useReadAloud` player over the browser's speech), and the story's soundtrack: `StorySoundtrack` on the host's reader mixer and the reader's Automatic or own choice of music and atmosphere |
 | `./reader-chamber` | Portable Reader behavior and UI, including the anchored Mind Palace |
 | `./reader-codex` | Portable Codex behavior and UI |
 | `./inline-audio` | Sound Cues on the page: the glyph on the words a cue sits on and its playback, through the host's reader mixer (`ReaderMixerProvider`) or, without one, a host `NarrativeAudioProvider` |

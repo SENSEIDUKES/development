@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReaderPreferenceStorage } from '@seihouse/sen/reader-runtime';
 import { installAudioMediaStubs } from '../../test-utils/renderWithDevAudio';
 import { DEFAULT_ATMOSPHERE_ID, SEN_ATMOSPHERES } from '../media/atmosphereCatalog';
-import { createHostReaderMixer, READER_MIXER_PREFERENCE_KEY } from './readerMixer';
+import { createHostReaderMixer, hostReaderMixerOptions, READER_MIXER_PREFERENCE_KEY } from './readerMixer';
 
 const memory = (initial?: string) => {
   const values = new Map<string, string>(initial === undefined ? [] : [[READER_MIXER_PREFERENCE_KEY, initial]]);
@@ -39,6 +39,14 @@ describe('The host reader mixer', () => {
 
     const again = createHostReaderMixer(storage).getState().preferences;
     expect(again).toMatchObject({ atmosphereId: waves.id, masterEnabled: false });
+  });
+
+  it('loops atmospheres as their files are made, with no overlap at the loop point', () => {
+    expect(hostReaderMixerOptions(memory().storage).loopCrossfadeMs).toBe(0);
+  });
+
+  it('plays each piece of music once, whole, with a short fade over its ending, so the next piece can follow', () => {
+    expect(hostReaderMixerOptions(memory().storage)).toMatchObject({ soundscapeMaxPlays: 1, soundscapeRestFadeMs: 3_000 });
   });
 
   it('starts from the default mix when the saved mix is damaged', () => {

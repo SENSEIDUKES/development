@@ -40,6 +40,17 @@ describe('Media Pack contracts', () => {
     ]);
   });
 
+  it('keeps a soundscape\'s name, group and measured loudness, and refuses a measurement it cannot read', () => {
+    const entry = soundscape().entries[0];
+    const loudness = { kind: 'integrated', lufs: -11.7, peakDb: 0.3 };
+    expect(validateMediaPack(soundscape({ entries: [{ ...entry, label: ' Storm Drums ', group: 'Fighting', loudness }] })).entries).toEqual([
+      { ...entry, label: 'Storm Drums', group: 'Fighting', loudness },
+    ]);
+    expect(() => validateMediaPack(soundscape({ entries: [{ ...entry, loudness: { kind: 'integrated', lufs: 'loud', peakDb: 0 } }] }))).toThrow('loudness needs');
+    expect(() => validateMediaPack(soundscape({ entries: [{ ...entry, loudness: { ...loudness, gain: 2 } }] }))).toThrow('unsupported field gain');
+    expect(() => validateMediaPack(soundscape({ entries: [{ ...entry, label: ' ' }] }))).toThrow('label must be readable text');
+  });
+
   it('holds a Sound Cue Pack\'s words and recordings to one another, with its cue category as the parent tag', () => {
     expect(validateMediaPack(soundCues())).toMatchObject({
       sounds: [{ word: 'clockwork roar', example: 'the clockwork beast roared' }],
@@ -118,6 +129,14 @@ describe('Media Pack contracts', () => {
       capturedAt: '2026-09-16T00:00:01.000Z',
     });
     expect(expired.soundscapes).toBeUndefined();
+  });
+
+  it('freezes the host\'s atmospheres with every attempt, whatever pack is equipped', () => {
+    const atmospheres = [{ id: 'host.forest-1', word: 'forest', label: 'Forest 1', group: 'Places' }];
+    const port = createLibraryMediaPort({ registered: [], entitlements: [], base: { capturedAt: 'base', soundscapes: [], soundCues: [], atmospheres } });
+    expect(port.freeze(undefined, '2026-10-06T00:00:00.000Z').atmospheres).toEqual(atmospheres);
+    // Media frozen without atmospheres stays without them.
+    expect(createLibraryMediaPort({ registered: [], entitlements: [] }).freeze(undefined, 'now')).not.toHaveProperty('atmospheres');
   });
 
   it('lets an equipped Sound Cue Pack replace the default sound set, keeping recordings that answer no word', () => {

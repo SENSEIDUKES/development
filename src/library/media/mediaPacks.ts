@@ -367,6 +367,8 @@ export function createAuthorizedMediaCatalog(snapshot?: FrozenMediaLoadout, base
     soundCues: parseAudioCues(cueEntries),
     soundCueProvenanceByUrl,
     sounds,
+    // A pack holds music and recordings; the atmospheres a chapter may choose are the host's.
+    atmospheres: structuredClone(base.atmospheres),
   };
 }
 
@@ -403,6 +405,7 @@ export function createLibraryMediaPort(input: {
           provenance: catalog.soundCueProvenanceByUrl.get(cue.public_url)!,
         })),
         sounds: catalog.sounds,
+        ...(catalog.atmospheres.length ? { atmospheres: catalog.atmospheres } : {}),
       };
     },
   };

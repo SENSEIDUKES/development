@@ -13,7 +13,7 @@ describe('readMarks', () => {
 
   it('leaves text without marks exactly as it was', () => {
     const plain = 'The sign read [[CLOSED]], and [Level 2] flashed; a lone ]] stays.';
-    expect(readMarks(plain)).toEqual({ text: plain, sounds: [], soundIssues: [], marks: [], issues: [], speakers: [], speakerIssues: [], wordTags: [], wordTagIssues: [] });
+    expect(readMarks(plain)).toEqual({ text: plain, sounds: [], soundIssues: [], marks: [], issues: [], speakers: [], speakerIssues: [], wordTags: [], wordTagIssues: [], soundtracks: [] });
   });
 
   it('reads the slips a writer makes', () => {
@@ -36,14 +36,14 @@ describe('readMarks', () => {
   });
 
   it('removes a point mark without leaving a double space, and reports it', () => {
-    expect(readMarks('Wei Lin [[1]] drew his sword.')).toEqual({ text: 'Wei Lin drew his sword.', sounds: [], soundIssues: [], marks: [], issues: [{ kind: 'point', id: 1 }], speakers: [], speakerIssues: [], wordTags: [], wordTagIssues: [] });
+    expect(readMarks('Wei Lin [[1]] drew his sword.')).toEqual({ text: 'Wei Lin drew his sword.', sounds: [], soundIssues: [], marks: [], issues: [{ kind: 'point', id: 1 }], speakers: [], speakerIssues: [], wordTags: [], wordTagIssues: [], soundtracks: [] });
     expect(readMarks('[[3]] Dawn broke.').text).toBe('Dawn broke.');
   });
 
   it('keeps the words of a mark that never closes', () => {
     expect(readMarks('He [[4|drew his sword as the beast lunged.')).toEqual({
       text: 'He drew his sword as the beast lunged.', sounds: [], soundIssues: [], marks: [], issues: [{ kind: 'unclosed', id: 4 }], speakers: [], speakerIssues: [],
-      wordTags: [], wordTagIssues: [],
+      wordTags: [], wordTagIssues: [], soundtracks: [],
     });
   });
 
@@ -117,7 +117,7 @@ describe('speaker tags', () => {
 
   it('leaves ordinary brackets, emails and untagged names alone', () => {
     for (const plain of ['[Level 2] flashed.', 'The sign read [[CLOSED]].', 'Write to name@example.com today.', '[[Mara]] waited.', 'He said [@Mara] later.']) {
-      expect(readMarks(plain)).toEqual({ text: plain, sounds: [], soundIssues: [], marks: [], issues: [], speakers: [], speakerIssues: [], wordTags: [], wordTagIssues: [] });
+      expect(readMarks(plain)).toEqual({ text: plain, sounds: [], soundIssues: [], marks: [], issues: [], speakers: [], speakerIssues: [], wordTags: [], wordTagIssues: [], soundtracks: [] });
     }
   });
 
@@ -125,6 +125,28 @@ describe('speaker tags', () => {
     const samples = ['[[@A]] x [[@B|y]] z', '［［＠林］］と[[@Mo|3]]', 'x [[1|a [[@B]] b]] [[@C', '[[@]]', '  [[@Mara]]  “Go.”  '];
     for (const sample of samples) expect(readMarks(sample).text).not.toMatch(/[[［]{1,2}\s*[@＠]/);
     expect(readMarks('  [[@Mara]]  “Go.”  ').speakers).toEqual([{ name: 'Mara', offset: 0 }]);
+  });
+
+  it('reads the chapter\'s soundtrack tag, in any of its spellings, and leaves nothing of it in the prose', () => {
+    const reading = readMarks('[[soundtrack: mystical | forest]] The mist lay low over the pines.');
+    expect(reading.text).toBe('The mist lay low over the pines.');
+    expect(reading.soundtracks).toEqual([{ parts: ['mystical', 'forest'], offset: 0 }]);
+    const spellings: Array<[string, string[]]> = [
+      ['［［Soundtrack：sad｜gentle rain］］雨が降った。', ['sad', 'gentle rain']],
+      ['[[Scene: tension]] He waited.', ['tension']],
+      ['[[sound-track: war | ancient battlefield] He waited.', ['war', 'ancient battlefield']],
+      ['[[music: epic|]] He waited.', ['epic']],
+    ];
+    for (const [sample, parts] of spellings) {
+      const read = readMarks(sample);
+      expect(read.soundtracks.map(tag => tag.parts)).toEqual([parts]);
+      expect(read.text).not.toMatch(/[[［]/);
+    }
+    // One left open is removed through its sentence, and nothing is read from it.
+    const open = readMarks('[[soundtrack: mystical | forest. The mist lay low.');
+    expect(open).toMatchObject({ text: 'The mist lay low.', soundtracks: [] });
+    // A second tag later in the paragraph is read too: which one counts is the chapter's decision.
+    expect(readMarks('[[soundtrack: sad | cave]] He wept. [[soundtrack: war | forest]] They charged.').soundtracks.map(tag => tag.parts[0])).toEqual(['sad', 'war']);
   });
 
   it('strips tags from fields that carry none', () => {
@@ -185,7 +207,7 @@ describe('word tags', () => {
 
   it('leaves a bracketed note with no pipe and no tag word alone', () => {
     for (const plain of ['The board read [[Note: back soon]].', '[[Wei Lin]] waited.', 'He said: [gained] nothing.']) {
-      expect(readMarks(plain)).toEqual({ text: plain, sounds: [], soundIssues: [], marks: [], issues: [], speakers: [], speakerIssues: [], wordTags: [], wordTagIssues: [] });
+      expect(readMarks(plain)).toEqual({ text: plain, sounds: [], soundIssues: [], marks: [], issues: [], speakers: [], speakerIssues: [], wordTags: [], wordTagIssues: [], soundtracks: [] });
     }
   });
 
@@ -193,6 +215,28 @@ describe('word tags', () => {
     const samples = ['[[gained: MC | A]] x [[lost: MC | B | broken]] y', '［［learned：MC｜剣術］］と', 'x [[1|a [[has: MC | B]] b]] [[sealed: MC | C', '[[rank: MC]]', '  [[knows: MC | Iron Palm]]  It.  '];
     for (const sample of samples) expect(readMarks(sample).text).not.toMatch(/[[［]{1,2}\s*[A-Za-z]+\s*[:：]/);
     expect(readMarks('  [[knows: MC | Iron Palm]]  It.  ').wordTags).toEqual([{ word: 'knows', parts: ['MC', 'Iron Palm'], offset: 0 }]);
+  });
+
+  it('reads the chapter\'s soundtrack tag, in any of its spellings, and leaves nothing of it in the prose', () => {
+    const reading = readMarks('[[soundtrack: mystical | forest]] The mist lay low over the pines.');
+    expect(reading.text).toBe('The mist lay low over the pines.');
+    expect(reading.soundtracks).toEqual([{ parts: ['mystical', 'forest'], offset: 0 }]);
+    const spellings: Array<[string, string[]]> = [
+      ['［［Soundtrack：sad｜gentle rain］］雨が降った。', ['sad', 'gentle rain']],
+      ['[[Scene: tension]] He waited.', ['tension']],
+      ['[[sound-track: war | ancient battlefield] He waited.', ['war', 'ancient battlefield']],
+      ['[[music: epic|]] He waited.', ['epic']],
+    ];
+    for (const [sample, parts] of spellings) {
+      const read = readMarks(sample);
+      expect(read.soundtracks.map(tag => tag.parts)).toEqual([parts]);
+      expect(read.text).not.toMatch(/[[［]/);
+    }
+    // One left open is removed through its sentence, and nothing is read from it.
+    const open = readMarks('[[soundtrack: mystical | forest. The mist lay low.');
+    expect(open).toMatchObject({ text: 'The mist lay low.', soundtracks: [] });
+    // A second tag later in the paragraph is read too: which one counts is the chapter's decision.
+    expect(readMarks('[[soundtrack: sad | cave]] He wept. [[soundtrack: war | forest]] They charged.').soundtracks.map(tag => tag.parts[0])).toEqual(['sad', 'war']);
   });
 
   it('strips tags from fields that carry none', () => {

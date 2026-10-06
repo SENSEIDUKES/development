@@ -2,8 +2,10 @@ import { lazy, Suspense, useEffect, useRef } from 'react';
 import FocusLock from 'react-focus-lock';
 import type { ReaderMixer } from '@seihouse/audio-player';
 import { Play, RotateCcw, X } from 'lucide-react';
-import { READ_ALOUD_RATES, READ_ALOUD_ROLES, type ReadAloud, type ReadAloudRole, type ReadAloudVoice } from '@seihouse/sen/reader-runtime';
+import { READ_ALOUD_RATES, READ_ALOUD_ROLES, type ReadAloud, type ReadAloudRole, type ReadAloudVoice, type SoundtrackChoice } from '@seihouse/sen/reader-runtime';
+import type { SceneAudioTrack } from '@seihouse/sen/audio';
 import { getSenLanguageLabel, normalizeSenLanguageCode } from '../../../lib/language';
+import { SoundtrackChoicePanel } from './SoundtrackChoicePanel';
 
 const ROLE_TITLES: Record<ReadAloudRole, string> = { narrator: 'Narrator', protagonist: 'Protagonist', side: 'Side characters' };
 const ROLE_HELP: Record<ReadAloudRole, string> = {
@@ -53,10 +55,11 @@ const ReaderMixerPanel = lazy(() => import('@seihouse/audio-player/reader-ui').t
 /**
  * Reader Settings: a sheet on phones and a side panel on wider screens. Audio
  * comes first: the reader's mix of the story's soundtrack (presets, the
- * layers the chapter uses, the atmosphere and the sleep timer). Narration
- * follows: the three voices and the speed Read Aloud uses.
+ * layers the chapter uses and the sleep timer), then the Scene: each
+ * chapter's own music and atmosphere (Automatic) or the reader's own.
+ * Narration follows: the three voices and the speed Read Aloud uses.
  */
-export function ReaderSettingsSheet({ open, onClose, readAloud, language, mixer, section }: {
+export function ReaderSettingsSheet({ open, onClose, readAloud, language, mixer, section, soundtrack }: {
   open: boolean;
   onClose: () => void;
   readAloud: ReadAloud;
@@ -66,6 +69,8 @@ export function ReaderSettingsSheet({ open, onClose, readAloud, language, mixer,
   mixer?: ReaderMixer | null;
   /** The section to bring into view when the sheet opens (the note's long-press opens Audio). */
   section?: 'audio' | 'narration';
+  /** Who chooses the music and atmosphere, and the pieces the chapter on screen can play. */
+  soundtrack?: { choice: SoundtrackChoice; onChoice: (choice: SoundtrackChoice) => void; pieces: readonly SceneAudioTrack[] };
 }) {
   const audioRef = useRef<HTMLElement>(null);
   useEffect(() => {
@@ -91,8 +96,10 @@ export function ReaderSettingsSheet({ open, onClose, readAloud, language, mixer,
         </div>
         {mixer && <section ref={audioRef} aria-label="Audio" data-testid="reader-settings-audio" className="mt-4 scroll-mt-4">
           <Suspense fallback={<p role="status" className="text-sm text-neutral-400">Opening Audio…</p>}>
-            <ReaderMixerPanel mixer={mixer} titleAs="h3" />
+            {/* The atmosphere is chosen in Scene below, beside the music, so the panel's own picker is hidden. */}
+            <ReaderMixerPanel mixer={mixer} titleAs="h3" showAtmospherePicker={!soundtrack} />
           </Suspense>
+          {soundtrack && <SoundtrackChoicePanel mixer={mixer} choice={soundtrack.choice} onChoice={soundtrack.onChoice} pieces={soundtrack.pieces} />}
         </section>}
         <section aria-labelledby="reader-settings-narration" data-testid="reader-settings-narration" className="mt-4 rounded-xl border border-white/10 bg-black/20 p-3 sm:p-4">
           <h3 id="reader-settings-narration" className="text-sm font-semibold text-neutral-100">Narration</h3>

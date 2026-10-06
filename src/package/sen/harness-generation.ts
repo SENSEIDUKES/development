@@ -7,6 +7,7 @@
 export {
   HarnessGenerationController,
   exportHarnessStory,
+  type HarnessChapterWrite,
   type HarnessEventPreserver,
   type HarnessGenerationControllerOptions,
 } from '../../components/harness-generation/shared/controller';
@@ -74,7 +75,7 @@ export {
 export { buildImmediateChapterRequest } from '../../components/harness-generation/shared/immediateChapterRequest';
 export { activeAttemptForStory, isBlockingAttempt } from '../../components/harness-generation/shared/attempts';
 export { chapterRewriteGap, latestStoryChapter, readRewriteNote, withoutLatestChapter } from '../../components/harness-generation/shared/chapterRewrite';
-export { attemptChapterPath, chapterDirectionGap, pendingChapterDirection, validateChapterDirectionChoice } from '../../components/harness-generation/shared/chapterDirection';
+export { attemptChapterPath, chapterDirectionGap, nextChapterWaitsOnReader, pendingChapterDirection, validateChapterDirectionChoice } from '../../components/harness-generation/shared/chapterDirection';
 export {
   FATE_PRESSURE_RHYTHM_CONFIG,
   buildRhythmRecommendation,
@@ -98,6 +99,8 @@ export {
 export { SEN_FATE_SURVIVAL_INSTRUCTIONS, SEN_FATE_SURVIVAL_SKILL } from '../../components/harness-generation/shared/fateSurvivalSkill';
 export { SEN_READING_MODE_SKILLS } from '../../components/harness-generation/shared/readingModeSkills';
 export { SEN_SOUND_CUES_INSTRUCTIONS, SEN_SOUND_CUES_SKILL, presentSoundVocabulary } from '../../components/harness-generation/shared/soundCuesSkill';
+export { SEN_SOUNDTRACK_INSTRUCTIONS, SEN_SOUNDTRACK_SKILL, presentSoundtrackVocabulary } from '../../components/harness-generation/shared/soundtrackSkill';
+export { chapterSoundtrack, type ChapterSoundtrackReading } from '../../components/harness-generation/shared/soundtrack';
 export { SEN_SPEAKERS_INSTRUCTIONS, SEN_SPEAKERS_SKILL } from '../../components/harness-generation/shared/speakersSkill';
 export { SEN_HOLDINGS_INSTRUCTIONS, SEN_HOLDINGS_SKILL } from '../../components/harness-generation/shared/holdingsSkill';
 export { HARNESS_TAG_RULES } from '../../components/harness-generation/shared/tagRules';

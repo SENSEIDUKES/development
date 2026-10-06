@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { ReaderMixerProvider, type ReaderMixer } from '@seihouse/audio-player';
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import { StoryPages, storyHomeWorlds, useLibraryStories } from '@seihouse/library/stories';
-import { findStory, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
+import { findStory, nextChapterWaitsOnReader, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import { NarrativeButton } from '@seihouse/sen/presentation';
 import { useModelPreference } from '../host/generation/modelPreference';
 import { LIBRARY_ASSETS } from '../host/media/libraryAssets';
@@ -12,6 +12,7 @@ import { startHarnessStoryFromSeed } from '../host/story-seed/startHarnessStory'
 import { AGENTS } from '../lib/agents';
 import { AccessTokenSheet, type AccessTokenRequest } from './AccessTokenSheet';
 import { writerWithAccessToken, type AskForAccessToken } from './accessToken';
+import { useAppMusic } from './appMusic';
 import { CreatePage } from './CreatePage';
 import { HomePage } from './HomePage';
 import { HOME_ROUTE, useAppRoute } from './routes';
@@ -24,9 +25,12 @@ import { startedSeedIds } from './storyCreationRuntime';
  * way as the Workshop's: the official CAPA skills, the Library's sound words
  * and Sound Cues, memory read only on request, and the Model Router's choice.
  * Its one sound owner is the reader mixer (the SEIHouse audio player), made
- * once by the page that mounts the app and kept for the page's lifetime.
+ * once by the page that mounts the app and kept for the page's lifetime: the
+ * app's own music plays through it on every page, and each chapter's scene
+ * in the Reader.
  */
 export function NovelExpandedApp({ services, readerMixer }: { services: NovelExpandedServices; readerMixer: ReaderMixer }) {
+  useAppMusic(readerMixer);
   return <ReaderMixerProvider mixer={readerMixer}>
     <LibraryPresentationProvider assets={LIBRARY_ASSETS} backdrops={MANIFEST_BACKDROPS}>
       <NovelExpandedPages services={services} />
@@ -107,6 +111,11 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     onHome={() => navigate(HOME_ROUTE)}
     onStartStory={async payload => {
       const story = await startHarnessStoryFromSeed(stories.controller, payload);
+      // Chapter 1 begins at once, while the reader looks over the World Card, so it is
+      // ready (or nearly) when they start reading. A chapter that waits on the reader
+      // (Fate Survival's first direction) waits; a failed start is simply tried again by
+      // Start Story, which shows any reason.
+      if (!nextChapterWaitsOnReader(stories.controller.snapshot(), story.id)) void stories.generateNextChapter(story.id).catch(() => undefined);
       // The new story replaces Create, so Back from it goes Home.
       navigate({ page: 'story', storyId: story.id }, { replace: true });
     }} />;

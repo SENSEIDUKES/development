@@ -14,6 +14,21 @@ export interface MediaResourceProvenance {
   source?: { path: string; digest: string };
 }
 
+/**
+ * One atmosphere a writer may choose for a chapter: the word it is chosen by
+ * and the host's bed it plays. Several beds may share a word ("forest" for
+ * Forest 1, 2 and 3); the chapters that choose it take turns among them.
+ */
+export interface SceneAtmosphere {
+  /** The host's atmosphere id, as its reader mixer knows it. */
+  id: string;
+  /** What the writer writes, lower case ("gentle rain"). */
+  word: string;
+  /** The bed's own name, where a reader sees it. */
+  label?: string;
+  group?: string;
+}
+
 /** Serializable, authorized resources frozen before a generation attempt. */
 export interface FrozenNarrativeMedia {
   capturedAt: string;
@@ -21,6 +36,8 @@ export interface FrozenNarrativeMedia {
   soundCues: Array<{ cue: AudioCue; provenance: MediaResourceProvenance }>;
   /** The sound words these Sound Cue recordings answer, each with its example. */
   sounds?: SoundWord[];
+  /** The atmospheres a chapter may choose. Absent from media frozen before chapters chose them. */
+  atmospheres?: SceneAtmosphere[];
 }
 
 export interface NarrativeMediaPort {
@@ -34,6 +51,7 @@ export interface MediaCatalog {
   soundCues: AudioCuesLoadResult;
   soundCueProvenanceByUrl: ReadonlyMap<string, MediaResourceProvenance>;
   sounds: SoundWord[];
+  atmospheres: SceneAtmosphere[];
 }
 
 export interface ResolvedSoundscape {
@@ -51,6 +69,7 @@ export function createMediaCatalog(snapshot?: FrozenNarrativeMedia): MediaCatalo
     soundCues: parseAudioCues(snapshot?.soundCues.map(entry => entry.cue) ?? []),
     soundCueProvenanceByUrl: new Map(snapshot?.soundCues.map(entry => [entry.cue.public_url, entry.provenance]) ?? []),
     sounds: structuredClone(snapshot?.sounds ?? []),
+    atmospheres: structuredClone(snapshot?.atmospheres ?? []),
   };
 }
 

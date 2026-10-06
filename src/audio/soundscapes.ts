@@ -1,3 +1,5 @@
+import type { LoudnessMeasurement } from '@seihouse/audio-player';
+
 /**
  * Client-safe SEN soundscape catalog and deterministic resolver. The built-in
  * tracks remain the base experience; an authorized Media Loadout may append
@@ -13,6 +15,8 @@ export const isSoundscapeRegion = (value: unknown): value is SoundscapeRegion =>
 
 export interface SceneAudioTrack {
   id: string;
+  /** The piece's name, where a reader chooses music. */
+  label?: string;
   mood: string;
   moods: string[];
   tags: string[];
@@ -21,6 +25,8 @@ export interface SceneAudioTrack {
   url: string;
   /** Optional host-supplied display grouping, independent of URL layout. */
   group?: string;
+  /** Measured loudness of the exact file, so the reader mixer plays every piece at one level. */
+  loudness?: LoudnessMeasurement;
 }
 export interface SoundscapeIntent {
   blockId: string;
@@ -45,10 +51,22 @@ const isPublicHttpsUrl = (value: string): boolean => {
   }
 };
 
+const isMeasuredLevel = (value: unknown) => value === null || (typeof value === 'number' && Number.isFinite(value));
+
+const validateLoudness = (value: unknown, id: string): LoudnessMeasurement => {
+  if (!isPlainObject(value)) throw new Error(`Soundscape track ${id} loudness must be a measurement.`);
+  const unexpected = Object.keys(value).find(key => !['kind', 'lufs', 'peakDb'].includes(key));
+  if (unexpected) throw new Error(`Soundscape track ${id} loudness contains unsupported field ${unexpected}.`);
+  if ((value.kind !== 'integrated' && value.kind !== 'momentary-max') || !isMeasuredLevel(value.lufs) || !isMeasuredLevel(value.peakDb)) {
+    throw new Error(`Soundscape track ${id} loudness needs a kind, LUFS and peak.`);
+  }
+  return { kind: value.kind, lufs: value.lufs as number | null, peakDb: value.peakDb as number | null };
+};
+
 /** Validate the existing soundscape track contract without inventing a second audio shape. */
 export function validateSceneAudioTrack(value: unknown): SceneAudioTrack {
   if (!isPlainObject(value)) throw new Error('Soundscape catalog entries must be plain objects.');
-  const allowed = new Set(['id', 'mood', 'moods', 'tags', 'region', 'url', 'group']);
+  const allowed = new Set(['id', 'label', 'mood', 'moods', 'tags', 'region', 'url', 'group', 'loudness']);
   const unexpected = Object.keys(value).find(key => !allowed.has(key));
   if (unexpected) throw new Error(`Soundscape catalog entry contains unsupported field ${unexpected}.`);
   if (typeof value.id !== 'string' || !value.id.trim()) throw new Error('Soundscape track id is required.');
@@ -65,13 +83,22 @@ export function validateSceneAudioTrack(value: unknown): SceneAudioTrack {
   if (typeof value.url !== 'string' || !isPublicHttpsUrl(value.url)) {
     throw new Error(`Soundscape track ${value.id} needs a public HTTPS playback URL.`);
   }
+  for (const field of ['label', 'group'] as const) {
+    const text = value[field];
+    if (text !== undefined && (typeof text !== 'string' || !text.trim())) {
+      throw new Error(`Soundscape track ${value.id} ${field} must be readable text.`);
+    }
+  }
   return {
     id: value.id.trim(),
+    ...(typeof value.label === 'string' ? { label: value.label.trim() } : {}),
     mood: value.mood.trim(),
     moods: [...new Set(value.moods.map(item => item.trim()))],
     tags: [...new Set(value.tags.map(item => item.trim()))],
     ...(value.region ? { region: value.region } : {}),
     url: value.url,
+    ...(typeof value.group === 'string' ? { group: value.group.trim() } : {}),
+    ...(value.loudness !== undefined ? { loudness: validateLoudness(value.loudness, value.id) } : {}),
   };
 }
 

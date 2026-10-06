@@ -1,0 +1,1218 @@
+{
+  "pack": {
+    "id": "sen-soundscapes-volume-1",
+    "name": "SEN Soundscapes — Volume 1",
+    "version": "1.0.1",
+    "archiveSha256": "2b76aeb727c81d9c0bbda761373154f52ffe1d9a88059b292d381c9544a6e594",
+    "reviewStatus": "ai-proposed titles, moods and tags"
+  },
+  "measurement": {
+    "method": "calibrated-w3c-k-biquads/bs1770-gates/v1",
+    "decoder": "@audio/decode 3.12.0",
+    "measuredOn": "2026-10-06",
+    "tool": "@seihouse/audio-player 4.0.0 measureLoudnessPcm",
+    "audioSha256Verified": true
+  },
+  "entries": [
+    {
+      "id": "SEN_VOL1_ADVENTURE_1",
+      "label": "Grand Orchestral Fanfare 1",
+      "group": "Adventure",
+      "mood": "triumph",
+      "moods": [
+        "triumphant",
+        "adventure",
+        "excitement",
+        "mystical",
+        "serenity"
+      ],
+      "tags": [
+        "adventure",
+        "triumph",
+        "orchestral",
+        "heroic",
+        "epic"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/ADVENTURE/1.%20ADVENTURE.mp3",
+      "durationSeconds": 153.91,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.68,
+        "peakDb": 0.28
+      }
+    },
+    {
+      "id": "SEN_VOL1_ADVENTURE_2",
+      "label": "Ancient Flute Melancholy",
+      "group": "Adventure",
+      "mood": "serenity",
+      "moods": [
+        "serenity",
+        "mystical",
+        "sad",
+        "ambient"
+      ],
+      "tags": [
+        "traditional",
+        "folk",
+        "meditative",
+        "peaceful",
+        "contemplative"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/ADVENTURE/2.%20ADVENTURE.mp3",
+      "durationSeconds": 152.56,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.18,
+        "peakDb": 0.42
+      }
+    },
+    {
+      "id": "SEN_VOL1_ADVENTURE_3",
+      "label": "Mystical Fanfare and Melodic Journey",
+      "group": "Adventure",
+      "mood": "mystical",
+      "moods": [
+        "mystical",
+        "adventure",
+        "mystery",
+        "serenity",
+        "triumph"
+      ],
+      "tags": [
+        "adventure",
+        "fantasy",
+        "cinematic",
+        "traditional",
+        "ornate",
+        "soaring",
+        "majestic",
+        "ethereal"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/ADVENTURE/3.%20ADVENTURE.wav",
+      "durationSeconds": 174.99,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.29,
+        "peakDb": 0.58
+      }
+    },
+    {
+      "id": "SEN_VOL1_ADVENTURE_4",
+      "label": "Mystical Overture and Epic Journey",
+      "group": "Adventure",
+      "mood": "adventure",
+      "moods": [
+        "adventure",
+        "mystical",
+        "excitement",
+        "tension",
+        "triumph"
+      ],
+      "tags": [
+        "adventure",
+        "orchestral",
+        "cinematic",
+        "fantasy",
+        "battle",
+        "epic"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/ADVENTURE/4.%20ADVENTURE.wav",
+      "durationSeconds": 160.42,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -10.85,
+        "peakDb": 0.6
+      }
+    },
+    {
+      "id": "SEN_VOL1_ADVENTURE_5",
+      "label": "Traditional Eastern Flute Lament",
+      "group": "Adventure",
+      "mood": "sad",
+      "moods": [
+        "sad",
+        "mystical",
+        "tragedy",
+        "ambient"
+      ],
+      "tags": [
+        "mystical",
+        "tragedy",
+        "ambient",
+        "serenity",
+        "historical",
+        "meditative"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/ADVENTURE/5.%20ADVENTURE.mp3",
+      "durationSeconds": 145.55,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -10.01,
+        "peakDb": -0.11
+      }
+    },
+    {
+      "id": "SEN_VOL1_ADVENTURE_6",
+      "label": "Ancient Flute Melodies",
+      "group": "Adventure",
+      "mood": "mystical",
+      "moods": [
+        "mystical",
+        "serenity",
+        "adventure",
+        "mystery",
+        "tragedy"
+      ],
+      "tags": [
+        "adventure",
+        "mystical",
+        "ambient",
+        "travel",
+        "serenity"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/ADVENTURE/6.%20ADVENTURE.wav",
+      "durationSeconds": 164.08,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -10.96,
+        "peakDb": 0.36
+      }
+    },
+    {
+      "id": "SEN_VOL1_ADVENTURE_7",
+      "label": "Traditional Eastern Mystic Soundscape",
+      "group": "Adventure",
+      "mood": "mystical",
+      "moods": [
+        "mystical",
+        "serene",
+        "mysterious",
+        "somber",
+        "tragedy",
+        "mystery"
+      ],
+      "tags": [
+        "ambient",
+        "adventure",
+        "mystical",
+        "serenity",
+        "mystery",
+        "tragedy",
+        "traditional",
+        "cinematic"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/ADVENTURE/7.%20ADVENTURE.mp3",
+      "durationSeconds": 152.06,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.02,
+        "peakDb": 0.35
+      }
+    },
+    {
+      "id": "SEN_VOL1_ADVENTURE_8",
+      "label": "Epic Fantasy Battle Theme",
+      "group": "Adventure",
+      "mood": "excitement",
+      "moods": [
+        "excitement",
+        "adventure",
+        "fighting",
+        "boss-fight",
+        "triumph"
+      ],
+      "tags": [
+        "orchestral",
+        "epic",
+        "cinematic",
+        "action",
+        "heroic",
+        "fantasy",
+        "fast-paced"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/ADVENTURE/8.%20ADVENTURE.mp3",
+      "durationSeconds": 182.39,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.67,
+        "peakDb": 0.36
+      }
+    },
+    {
+      "id": "SEN_VOL1_ADVENTURE_9",
+      "label": "Mystical Vocal Chant and Orchestral Ascent",
+      "group": "Adventure",
+      "mood": "mystical",
+      "moods": [
+        "mystical",
+        "ambient",
+        "tension",
+        "tragedy"
+      ],
+      "tags": [
+        "cinematic",
+        "atmospheric",
+        "orchestral",
+        "ethereal",
+        "epic"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/ADVENTURE/9%20ADVENTURE.mp3",
+      "durationSeconds": 178.99,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.76,
+        "peakDb": 0.29
+      }
+    },
+    {
+      "id": "SEN_VOL1_ADVENTURE_10",
+      "label": "Traditional Eastern Instrumental Medley",
+      "group": "Adventure",
+      "mood": "serenity",
+      "moods": [
+        "serenity",
+        "mystical",
+        "travel",
+        "ambient"
+      ],
+      "tags": [
+        "ambient",
+        "meditative",
+        "serenity",
+        "mystical",
+        "travel",
+        "traditional",
+        "acoustic"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/ADVENTURE/10%20ADVENTURE.mp3",
+      "durationSeconds": 177.87,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.32,
+        "peakDb": 0.2
+      }
+    },
+    {
+      "id": "SEN_VOL1_AMBIENT_1",
+      "label": "Ancient Journey 1",
+      "group": "Ambient",
+      "mood": "adventure",
+      "moods": [
+        "adventure",
+        "mystical",
+        "triumph",
+        "serenity",
+        "excitement"
+      ],
+      "tags": [
+        "adventure",
+        "travel",
+        "mystical",
+        "cinematic",
+        "traditional",
+        "orchestral"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/AMBIENT/1.%20AMBEINT.wav",
+      "durationSeconds": 161.65,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -10.41,
+        "peakDb": 0.53
+      }
+    },
+    {
+      "id": "SEN_VOL1_AMBIENT_2",
+      "label": "Melancholic Piano Melody",
+      "group": "Ambient",
+      "mood": "sad",
+      "moods": [
+        "sad",
+        "tragedy",
+        "serenity",
+        "mystery"
+      ],
+      "tags": [
+        "sad",
+        "serenity",
+        "mystery",
+        "melancholy",
+        "reflective",
+        "solitary"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/AMBIENT/2.%20AMBEINT.wav",
+      "durationSeconds": 90.2,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.28,
+        "peakDb": 0.17
+      }
+    },
+    {
+      "id": "SEN_VOL1_AMBIENT_3",
+      "label": "Ethereal Mystical Soundscape",
+      "group": "Ambient",
+      "mood": "mystical",
+      "moods": [
+        "mystical",
+        "ambient",
+        "mystery",
+        "dread",
+        "tragedy"
+      ],
+      "tags": [
+        "mystical",
+        "ambient",
+        "serenity",
+        "suspenseful",
+        "ethereal",
+        "cinematic",
+        "orchestral"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/AMBIENT/3.%20AMBEINT.mp3",
+      "durationSeconds": 148.22,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.17,
+        "peakDb": 0.6
+      }
+    },
+    {
+      "id": "SEN_VOL1_AMBIENT_4",
+      "label": "Ambient Soundscape with Vocalization",
+      "group": "Ambient",
+      "mood": "mystical",
+      "moods": [
+        "mystical",
+        "serene",
+        "ambient",
+        "mystery"
+      ],
+      "tags": [
+        "ambient",
+        "serenity",
+        "mystery",
+        "mystical",
+        "atmospheric",
+        "ethereal"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/AMBIENT/4.%20AMBEINT.mp3",
+      "durationSeconds": 172.38,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.03,
+        "peakDb": 0.11
+      }
+    },
+    {
+      "id": "SEN_VOL1_AMBIENT_5",
+      "label": "Ancient Temple Serenade",
+      "group": "Ambient",
+      "mood": "mystical",
+      "moods": [
+        "mystical",
+        "adventure",
+        "ambient",
+        "tragedy",
+        "serenity"
+      ],
+      "tags": [
+        "adventure",
+        "ambient",
+        "mystical",
+        "serenity",
+        "tragedy",
+        "cinematic",
+        "historical",
+        "folk"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/AMBIENT/5.%20AMBEINT.mp3",
+      "durationSeconds": 156.58,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -10.65,
+        "peakDb": 0.48
+      }
+    },
+    {
+      "id": "SEN_VOL1_AMBIENT_6",
+      "label": "Ancient Journey 2",
+      "group": "Ambient",
+      "mood": "mystical",
+      "moods": [
+        "mystical",
+        "adventure",
+        "ambient",
+        "serenity",
+        "mystery",
+        "triumph"
+      ],
+      "tags": [
+        "adventure",
+        "ambient",
+        "travel",
+        "serenity",
+        "mystery",
+        "mystical",
+        "cinematic",
+        "orchestral"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/AMBIENT/6.%20AMBEINT.wav",
+      "durationSeconds": 159.24,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.15,
+        "peakDb": 0.16
+      }
+    },
+    {
+      "id": "SEN_VOL1_AMBIENT_7",
+      "label": "Solitary Lute Reflection",
+      "group": "Ambient",
+      "mood": "melancholic",
+      "moods": [
+        "melancholic",
+        "contemplative",
+        "sad",
+        "mystical",
+        "serene"
+      ],
+      "tags": [
+        "ambient",
+        "meditation",
+        "solitary",
+        "traditional",
+        "acoustic"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/AMBIENT/7.%20AMBEINT.mp3",
+      "durationSeconds": 173.09,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -10.92,
+        "peakDb": 0.47
+      }
+    },
+    {
+      "id": "SEN_VOL1_AMBIENT_8",
+      "label": "Ancient Melancholy Flute",
+      "group": "Ambient",
+      "mood": "sad",
+      "moods": [
+        "sad",
+        "tragedy",
+        "mystical",
+        "serenity",
+        "ambient"
+      ],
+      "tags": [
+        "ambient",
+        "sad",
+        "tragedy",
+        "mystical",
+        "historical",
+        "cinematic"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/AMBIENT/8.%20AMBEINT.mp3",
+      "durationSeconds": 171,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -10.79,
+        "peakDb": -0.13
+      }
+    },
+    {
+      "id": "SEN_VOL1_AMBIENT_9",
+      "label": "Melancholy Zither Melody",
+      "group": "Ambient",
+      "mood": "melancholy",
+      "moods": [
+        "melancholy",
+        "contemplative",
+        "serene",
+        "nostalgic",
+        "sad"
+      ],
+      "tags": [
+        "ambient",
+        "mystical",
+        "acoustic",
+        "solitary",
+        "meditative"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/AMBIENT/9.%20AMBEINT.mp3",
+      "durationSeconds": 181,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.36,
+        "peakDb": 0.13
+      }
+    },
+    {
+      "id": "SEN_VOL1_AMBIENT_10",
+      "label": "Ancient Echoes",
+      "group": "Ambient",
+      "mood": "serenity",
+      "moods": [
+        "serenity",
+        "mystery",
+        "mystical",
+        "ambient"
+      ],
+      "tags": [
+        "ambient",
+        "serenity",
+        "mystery",
+        "mystical",
+        "meditative",
+        "traditional",
+        "cinematic",
+        "reflective"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/AMBIENT/10.%20AMBEINT.mp3",
+      "durationSeconds": 177.21,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.58,
+        "peakDb": 0.19
+      }
+    },
+    {
+      "id": "SEN_VOL1_EMOTIONS_1",
+      "label": "Melancholic String Lament",
+      "group": "Emotions",
+      "mood": "sad",
+      "moods": [
+        "sad",
+        "tragedy",
+        "mystery"
+      ],
+      "tags": [
+        "ambient",
+        "sad",
+        "tragedy",
+        "mystical"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/EMOTIONS/1.%20EMOTIONS.mp3",
+      "durationSeconds": 95.84,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -10.74,
+        "peakDb": 0.16
+      }
+    },
+    {
+      "id": "SEN_VOL1_EMOTIONS_2",
+      "label": "Ancient Lament",
+      "group": "Emotions",
+      "mood": "melancholic",
+      "moods": [
+        "melancholic",
+        "mystical",
+        "sad",
+        "tragedy"
+      ],
+      "tags": [
+        "ambient",
+        "mysterious",
+        "ethnic",
+        "soundscape"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/EMOTIONS/2.%20EMOTIONS.mp3",
+      "durationSeconds": 176.59,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.13,
+        "peakDb": -0.1
+      }
+    },
+    {
+      "id": "SEN_VOL1_EMOTIONS_3",
+      "label": "Melancholic Wind Instrument Melody",
+      "group": "Emotions",
+      "mood": "sad",
+      "moods": [
+        "sad",
+        "tragedy",
+        "mystery",
+        "serenity"
+      ],
+      "tags": [
+        "ambient",
+        "melancholic",
+        "reflective",
+        "cinematic",
+        "emotional"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/EMOTIONS/3.%20EMOTIONS.mp3",
+      "durationSeconds": 145.92,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.09,
+        "peakDb": 0.05
+      }
+    },
+    {
+      "id": "SEN_VOL1_EMOTIONS_4",
+      "label": "Mystic Woods Travel Theme",
+      "group": "Emotions",
+      "mood": "mystical",
+      "moods": [
+        "mystical",
+        "adventure",
+        "mystery",
+        "suspenseful",
+        "tension"
+      ],
+      "tags": [
+        "adventure",
+        "travel",
+        "mystery",
+        "mystical",
+        "instrumental",
+        "cinematic",
+        "ethnic"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/EMOTIONS/4.%20EMOTIONS.mp3",
+      "durationSeconds": 161.96,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -12.11,
+        "peakDb": 0.49
+      }
+    },
+    {
+      "id": "SEN_VOL1_EMOTIONS_5",
+      "label": "Melancholic Flute Soundscape",
+      "group": "Emotions",
+      "mood": "sad",
+      "moods": [
+        "sad",
+        "tragedy",
+        "mystery",
+        "serenity",
+        "dread"
+      ],
+      "tags": [
+        "ambient",
+        "historical",
+        "cinematic",
+        "melancholic",
+        "meditative"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/EMOTIONS/5.%20EMOTIONS.wav",
+      "durationSeconds": 181.05,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.09,
+        "peakDb": 1.08
+      }
+    },
+    {
+      "id": "SEN_VOL1_EMOTIONS_6",
+      "label": "Mystical Fanfare and Orchestral Ascent",
+      "group": "Emotions",
+      "mood": "mystical",
+      "moods": [
+        "mystical",
+        "adventure",
+        "mystery",
+        "triumph",
+        "serenity"
+      ],
+      "tags": [
+        "orchestral",
+        "cinematic",
+        "fantasy",
+        "epic",
+        "soundscape"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/EMOTIONS/6.%20EMOTIONS.mp3",
+      "durationSeconds": 166.16,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.22,
+        "peakDb": 0.58
+      }
+    },
+    {
+      "id": "SEN_VOL1_EMOTIONS_7",
+      "label": "Melancholic Vocal Lament",
+      "group": "Emotions",
+      "mood": "sad",
+      "moods": [
+        "sad",
+        "tragedy",
+        "mystery",
+        "dread"
+      ],
+      "tags": [
+        "ambient",
+        "cinematic",
+        "orchestral",
+        "lament",
+        "dramatic",
+        "soundscape"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/EMOTIONS/7.%20EMOTIONS.mp3",
+      "durationSeconds": 156.11,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.34,
+        "peakDb": 0.37
+      }
+    },
+    {
+      "id": "SEN_VOL1_EMOTIONS_8",
+      "label": "Traditional Winds and Strings Lament",
+      "group": "Emotions",
+      "mood": "sad",
+      "moods": [
+        "sad",
+        "mystical",
+        "tragedy",
+        "tension"
+      ],
+      "tags": [
+        "ambient",
+        "historical",
+        "dramatic",
+        "cinematic",
+        "traditional"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/EMOTIONS/8.%20ADVENTURE.mp3",
+      "durationSeconds": 159.37,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.05,
+        "peakDb": 0.65
+      }
+    },
+    {
+      "id": "SEN_VOL1_EMOTIONS_9",
+      "label": "Grand Orchestral Fanfare 2",
+      "group": "Emotions",
+      "mood": "triumph",
+      "moods": [
+        "triumph",
+        "adventure",
+        "excitement",
+        "mystical"
+      ],
+      "tags": [
+        "orchestral",
+        "cinematic",
+        "epic",
+        "fantasy",
+        "heroic",
+        "soundscape",
+        "dramatic"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/EMOTIONS/9.%20EMOTIONS.mp3",
+      "durationSeconds": 160.5,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.88,
+        "peakDb": 0.3
+      }
+    },
+    {
+      "id": "SEN_VOL1_EMOTIONS_10",
+      "label": "Melancholic Flute and Cello Lament",
+      "group": "Emotions",
+      "mood": "sad",
+      "moods": [
+        "sad",
+        "tragedy",
+        "mystical",
+        "serenity",
+        "ambient"
+      ],
+      "tags": [
+        "ambient",
+        "sad",
+        "mystical",
+        "tragedy",
+        "serenity"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/EMOTIONS/10.%20EMOTIONS.mp3",
+      "durationSeconds": 154.98,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.43,
+        "peakDb": -0.01
+      }
+    },
+    {
+      "id": "SEN_VOL1_FIGHTING_1",
+      "label": "Epic Tribal Drums and Brass Theme",
+      "group": "Fighting",
+      "mood": "epic",
+      "moods": [
+        "epic",
+        "tension",
+        "dread",
+        "fighting",
+        "war",
+        "triumph"
+      ],
+      "tags": [
+        "cinematic",
+        "orchestral",
+        "percussive",
+        "dramatic",
+        "battle",
+        "intense"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/FIGHTING/1.%20Fighting.mp3",
+      "durationSeconds": 180.66,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.27,
+        "peakDb": 0.6
+      }
+    },
+    {
+      "id": "SEN_VOL1_FIGHTING_2",
+      "label": "Tribal Drums and Flute Soundscape",
+      "group": "Fighting",
+      "mood": "adventure",
+      "moods": [
+        "adventure",
+        "mystical",
+        "tension",
+        "excitement"
+      ],
+      "tags": [
+        "adventure",
+        "mystical",
+        "ritual",
+        "travel",
+        "percussion",
+        "cinematic",
+        "soundscape"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/FIGHTING/2.%20Fighting.mp3",
+      "durationSeconds": 150.99,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.29,
+        "peakDb": 0.77
+      }
+    },
+    {
+      "id": "SEN_VOL1_FIGHTING_3",
+      "label": "Traditional Eastern Instrumental Ensemble",
+      "group": "Fighting",
+      "mood": "mystical",
+      "moods": [
+        "mystical",
+        "adventure",
+        "ambient",
+        "tension"
+      ],
+      "tags": [
+        "adventure",
+        "mystical",
+        "travel",
+        "tension",
+        "traditional"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/FIGHTING/3.%20Fighting.mp3",
+      "durationSeconds": 114.86,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.39,
+        "peakDb": 0.37
+      }
+    },
+    {
+      "id": "SEN_VOL1_FIGHTING_4",
+      "label": "Epic Tribal Battle Theme",
+      "group": "Fighting",
+      "mood": "fighting",
+      "moods": [
+        "fighting",
+        "war",
+        "tension",
+        "dread",
+        "excitement"
+      ],
+      "tags": [
+        "boss-fight",
+        "war",
+        "fighting",
+        "adventure",
+        "tension",
+        "percussion",
+        "cinematic",
+        "choir"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/FIGHTING/4.%20Fighting.mp3",
+      "durationSeconds": 152.48,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.33,
+        "peakDb": 0.46
+      }
+    },
+    {
+      "id": "SEN_VOL1_FIGHTING_5",
+      "label": "Tribal Drums and Chants",
+      "group": "Fighting",
+      "mood": "triumph",
+      "moods": [
+        "triumphant",
+        "excitement",
+        "mystical",
+        "adventure",
+        "triumph"
+      ],
+      "tags": [
+        "tribal",
+        "ceremonial",
+        "percussive",
+        "rhythmic",
+        "action",
+        "epic"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/FIGHTING/5.%20Fighting.mp3",
+      "durationSeconds": 153.97,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.39,
+        "peakDb": 0.39
+      }
+    },
+    {
+      "id": "SEN_VOL1_FIGHTING_6",
+      "label": "Tribal Drums of the Mystical Realm",
+      "group": "Fighting",
+      "mood": "tension",
+      "moods": [
+        "tension",
+        "dread",
+        "fighting",
+        "boss-fight",
+        "mystical"
+      ],
+      "tags": [
+        "percussive",
+        "cinematic",
+        "intense",
+        "epic",
+        "dark",
+        "ritualistic",
+        "action"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/FIGHTING/6.%20Fighting.mp3",
+      "durationSeconds": 175.99,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -12.54,
+        "peakDb": 0.31
+      }
+    },
+    {
+      "id": "SEN_VOL1_FIGHTING_7",
+      "label": "Mystical Winds and Rhythmic Journey",
+      "group": "Fighting",
+      "mood": "mystical",
+      "moods": [
+        "mystical",
+        "adventure",
+        "suspenseful",
+        "dread",
+        "mysterious",
+        "tension",
+        "mystery"
+      ],
+      "tags": [
+        "adventure",
+        "mystical",
+        "tension",
+        "world-music",
+        "cinematic",
+        "rhythmic"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/FIGHTING/7.%20Fighting.mp3",
+      "durationSeconds": 181.34,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -12.33,
+        "peakDb": 0.68
+      }
+    },
+    {
+      "id": "SEN_VOL1_FIGHTING_8",
+      "label": "Oriental Cinematic Epic Theme",
+      "group": "Fighting",
+      "mood": "epic",
+      "moods": [
+        "epic",
+        "adventure",
+        "mystical",
+        "tension",
+        "triumph",
+        "excitement"
+      ],
+      "tags": [
+        "epic",
+        "cinematic",
+        "percussive",
+        "orchestral",
+        "ethnic",
+        "dramatic",
+        "action"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/FIGHTING/8.%20Fighting.mp3",
+      "durationSeconds": 177.4,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -12.04,
+        "peakDb": 0.31
+      }
+    },
+    {
+      "id": "SEN_VOL1_FIGHTING_9",
+      "label": "Traditional Eastern Fantasy Instrumental Theme",
+      "group": "Fighting",
+      "mood": "mystical",
+      "moods": [
+        "mystical",
+        "adventure",
+        "mystery",
+        "tension",
+        "excitement",
+        "dread"
+      ],
+      "tags": [
+        "cinematic",
+        "percussive",
+        "traditional",
+        "epic",
+        "dramatic",
+        "rhythmic",
+        "atmospheric"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/FIGHTING/9.%20Fighting.mp3",
+      "durationSeconds": 178.89,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.37,
+        "peakDb": 0.23
+      }
+    },
+    {
+      "id": "SEN_VOL1_FIGHTING_10",
+      "label": "Melancholic Wind Flute Soundscape",
+      "group": "Fighting",
+      "mood": "mystical",
+      "moods": [
+        "mystical",
+        "sad",
+        "ambient",
+        "mystery"
+      ],
+      "tags": [
+        "ambient",
+        "mystical",
+        "cinematic",
+        "traditional",
+        "meditative"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/FIGHTING/10.%20Fighting.mp3",
+      "durationSeconds": 156.4,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.7,
+        "peakDb": 0.15
+      }
+    },
+    {
+      "id": "SEN_VOL1_WAR_1",
+      "label": "Tribal Drums and Chants in Ritual",
+      "group": "War",
+      "mood": "epic",
+      "moods": [
+        "epic",
+        "fighting",
+        "tension",
+        "dread",
+        "excitement"
+      ],
+      "tags": [
+        "percussion",
+        "taiko",
+        "chants",
+        "tribal",
+        "cinematic",
+        "battle",
+        "rhythmic"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/WAR/1.%20WAR.wav",
+      "durationSeconds": 172.3,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.76,
+        "peakDb": 0.28
+      }
+    },
+    {
+      "id": "SEN_VOL1_WAR_2",
+      "label": "Heavy Ritual Chant",
+      "group": "War",
+      "mood": "dread",
+      "moods": [
+        "dread",
+        "tension",
+        "fighting",
+        "excitement"
+      ],
+      "tags": [
+        "fighting",
+        "boss-fight",
+        "tension",
+        "dread",
+        "heavy",
+        "percussive",
+        "choir"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/WAR/2.%20WAR.mp3",
+      "durationSeconds": 147.41,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -11.75,
+        "peakDb": 0.43
+      }
+    },
+    {
+      "id": "SEN_VOL1_WAR_3",
+      "label": "Epic Tribal Chants and Percussion",
+      "group": "War",
+      "mood": "fighting",
+      "moods": [
+        "fighting",
+        "war",
+        "tension",
+        "dread",
+        "excitement"
+      ],
+      "tags": [
+        "percussion",
+        "chants",
+        "tribal",
+        "battle",
+        "dramatic",
+        "aggressive",
+        "epic"
+      ],
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Volumn%201/WAR/3.%20WAR.mp3",
+      "durationSeconds": 59.87,
+      "loudness": {
+        "kind": "integrated",
+        "lufs": -10.91,
+        "peakDb": 0.5
+      }
+    }
+  ]
+}

@@ -6,10 +6,12 @@ import type { CapaPrompt, HarnessSelectedTranslationGlossary, HarnessSkillLoadou
 import { SEN_FATE_SURVIVAL_SKILL } from './fateSurvivalSkill';
 import { SEN_READING_MODE_SKILLS } from './readingModeSkills';
 import { SEN_SOUND_CUES_SKILL, presentSoundVocabulary } from './soundCuesSkill';
+import { SEN_SOUNDTRACK_SKILL, presentSoundtrackVocabulary } from './soundtrackSkill';
 import { SEN_SPEAKERS_SKILL } from './speakersSkill';
 import { SEN_HOLDINGS_SKILL } from './holdingsSkill';
 import { HARNESS_TAG_RULES } from './tagRules';
 import type { SoundWord } from '../../../audio/soundWords';
+import type { SoundtrackVocabulary } from '../../../audio/soundtrackVocabulary';
 
 /** The story state that fills a managed CAPA slot. */
 export type CapaSlotManager = 'fate-mode' | 'story-language' | 'reading-mode' | 'media-loadout' | 'always';
@@ -30,8 +32,10 @@ export interface CapaSlotDefinition {
    * - `reading-mode`: the story's Reading Mode. Standard leaves the slot empty;
    *   each other mode loads SEN's matching bundled skill.
    * - `media-loadout`: the attempt's frozen Media Loadout. A story with sound
-   *   words loads SEN's Sound Cues skill with those words; one without leaves
-   *   the slot empty.
+   *   words loads SEN's Sound Cues skill with those words; one with music moods
+   *   or atmospheres loads SEN's Soundtrack skill with them. Without them the
+   *   slot is empty. A host without the Soundtrack skill leaves its slot empty
+   *   and never fails a chapter.
    * - `always`: every chapter. SEN's skill for the slot (Speakers, Holdings)
    *   loads whenever the host has it; a host without it leaves the slot empty
    *   and never fails a chapter.
@@ -66,6 +70,7 @@ export const CAPA_SCHEMA: readonly CapaSlotDefinition[] = [
   { id: 'accessibility', label: 'Accessibility', description: 'Writes chapters in the story\'s Reading Mode.', managedBy: 'reading-mode', installable: false },
   { id: 'translation', label: 'Translation', description: 'Writes chapters in the story\'s Story Language when it is not English.', managedBy: 'story-language', installable: true },
   { id: 'soundCues', label: 'Sound Cues', description: 'Tags the words where a sound happens and names it from the story\'s sound words.', managedBy: 'media-loadout', installable: false, writesTags: true },
+  { id: 'soundtrack', label: 'Soundtrack', description: 'Chooses the music mood and atmosphere a chapter is read with, once, at its start.', managedBy: 'media-loadout', installable: false, writesTags: true },
   { id: 'speakers', label: 'Speakers', description: 'Tags who speaks each spoken line, so the Reader can give each its voice.', managedBy: 'always', installable: false, writesTags: true },
   { id: 'holdings', label: 'Holdings', description: 'Keeps what every character has, uses, knows and is: tags each change where it happens and lists what the main character holds after the chapter.', managedBy: 'always', installable: false, writesTags: true },
 ] as const;
@@ -84,11 +89,16 @@ const HARNESS_SKILL_APPLICATIONS: readonly HarnessSkillApplication[] = [
 
 export const harnessSkillKey = (reference: HarnessSkillReference) => `${reference.id}@${reference.version}`;
 
-const MANAGED_SLOT_REASONS: Record<Exclude<CapaSlotManager, 'always'>, string> = {
+const MANAGED_SLOT_REASONS: Record<Exclude<CapaSlotManager, 'always' | 'media-loadout'>, string> = {
   'fate-mode': 'The Fate slot follows the story\'s Fate mode: Fate Survival loads its skill on every chapter, and Regular Reader mode leaves it empty.',
   'story-language': 'The Translation slot follows the story\'s Story Language: a non-English story loads that language\'s installed writing package on every chapter, and an English story leaves it empty.',
   'reading-mode': 'The Accessibility slot follows the story\'s Reading Mode: Clear Reading, Easy Read and Literal Reading load SEN\'s matching skill on every chapter, and Standard leaves it empty.',
-  'media-loadout': 'The Sound Cues slot follows the story\'s Media Loadout: a story with sound words loads SEN\'s Sound Cues skill with them on every chapter, and one without leaves it empty.',
+};
+
+/** Why each slot the story's Media Loadout fills does. */
+const MEDIA_SLOT_REASONS: Readonly<Partial<Record<HarnessSkillSlotId, string>>> = {
+  soundCues: 'The Sound Cues slot follows the story\'s Media Loadout: a story with sound words loads SEN\'s Sound Cues skill with them on every chapter, and one without leaves it empty.',
+  soundtrack: 'The Soundtrack slot follows the story\'s Media Loadout: a story with music moods or atmospheres loads SEN\'s Soundtrack skill with them on every chapter, and one without leaves it empty.',
 };
 
 /** Why each slot that loads on every chapter does. */
@@ -101,7 +111,8 @@ const ALWAYS_SLOT_REASONS: Readonly<Partial<Record<HarnessSkillSlotId, string>>>
 export const managedCapaSlotReason = (slot: HarnessSkillSlotId) => {
   const manager = CAPA_SCHEMA.find(definition => definition.id === slot)?.managedBy;
   if (!manager) return undefined;
-  return manager === 'always' ? ALWAYS_SLOT_REASONS[slot] : MANAGED_SLOT_REASONS[manager];
+  if (manager === 'always') return ALWAYS_SLOT_REASONS[slot];
+  return manager === 'media-loadout' ? MEDIA_SLOT_REASONS[slot] : MANAGED_SLOT_REASONS[manager];
 };
 
 export const HARNESS_SKILL_INSTRUCTION_LIMIT = 16_000;
@@ -199,6 +210,7 @@ const resolveManagedSkill = (
   catalog: ReadonlyMap<string, HarnessSkillManifest>,
   fateMode: HarnessStoryMode,
   soundVocabulary: readonly SoundWord[],
+  soundtrack: SoundtrackVocabulary | undefined,
 ): HarnessSkillManifest | undefined => {
   switch (manager) {
     // Never required: without it the chapter is simply written without that slot's tags.
@@ -207,6 +219,10 @@ const resolveManagedSkill = (
       return skill ? resolveHarnessSkill(catalog, skill) : undefined;
     }
     case 'media-loadout': {
+      // Never required either: without it the Reader goes on with the soundtrack before.
+      if (slot === 'soundtrack') {
+        return soundtrack?.moods.length || soundtrack?.atmospheres.length ? resolveHarnessSkill(catalog, SEN_SOUNDTRACK_SKILL) : undefined;
+      }
       if (!soundVocabulary.length) return undefined;
       const manifest = resolveHarnessSkill(catalog, SEN_SOUND_CUES_SKILL);
       if (!manifest) throw new Error('The Sound Cues skill is not installed in this host, so a chapter with sound words cannot be written.');
@@ -244,10 +260,12 @@ export const resolveManagedCapaSkills = (
   fateMode: HarnessStoryMode = 'regular',
   /** The story's sound words from the attempt's frozen Media Loadout. */
   soundVocabulary: readonly SoundWord[] = [],
+  /** The music moods and atmosphere words of the attempt's frozen Media Loadout. */
+  soundtrack?: SoundtrackVocabulary,
 ): Partial<Record<HarnessSkillSlotId, HarnessSkillManifest>> => Object.fromEntries(
   CAPA_SCHEMA.flatMap(slot => {
     if (!slot.managedBy) return [];
-    const skill = resolveManagedSkill(slot.id, slot.managedBy, story, catalog, fateMode, soundVocabulary);
+    const skill = resolveManagedSkill(slot.id, slot.managedBy, story, catalog, fateMode, soundVocabulary, soundtrack);
     return skill ? [[slot.id, skill]] : [];
   }),
 );
@@ -271,13 +289,15 @@ export const freezeHarnessSkillLoadout = (
   fateMode: HarnessStoryMode = 'regular',
   /** The story's sound words from the attempt's frozen Media Loadout. Any fill the Sound Cues slot. */
   soundVocabulary: readonly SoundWord[] = [],
+  /** The music moods and atmosphere words of the attempt's frozen Media Loadout. Any fill the Soundtrack slot. */
+  soundtrack?: SoundtrackVocabulary,
 ): HarnessSkillLoadoutSnapshot => {
   const unsupportedSlot = Object.keys(story.skillLoadout ?? {})
     .find(slot => !CAPA_SCHEMA.some(definition => definition.id === slot));
   if (unsupportedSlot) {
     throw new Error(`${unsupportedSlot} is not a supported CAPA skill slot.`);
   }
-  const managed = resolveManagedCapaSkills(story, catalog, fateMode, soundVocabulary);
+  const managed = resolveManagedCapaSkills(story, catalog, fateMode, soundVocabulary, soundtrack);
   const skills = CAPA_SCHEMA.flatMap(slot => {
     // A managed slot ignores the story's loadout: story state decides it.
     if (slot.managedBy) {
@@ -301,6 +321,7 @@ export const freezeHarnessSkillLoadout = (
   return {
     skills, capturedAt, originalLanguage: story.originalLanguage,
     ...(managed.soundCues ? { soundVocabulary: cloneHarnessValue([...soundVocabulary]) } : {}),
+    ...(managed.soundtrack && soundtrack ? { soundtrackVocabulary: cloneHarnessValue(soundtrack) } : {}),
   };
 };
 
@@ -389,6 +410,11 @@ export const assembleCapaPrompt = (
   const soundVocabulary = ordered.some(skill => skill.slot === 'soundCues' && isAuthoringSkill(skill)) && loadout.soundVocabulary?.length
     ? loadout.soundVocabulary
     : undefined;
+  // The Soundtrack skill carries the story's frozen music moods and atmospheres.
+  const soundtrackVocabulary = ordered.some(skill => skill.slot === 'soundtrack' && isAuthoringSkill(skill))
+    && (loadout.soundtrackVocabulary?.moods.length || loadout.soundtrackVocabulary?.atmospheres.length)
+    ? loadout.soundtrackVocabulary
+    : undefined;
   const authoring = ordered.filter(isAuthoringSkill);
   const sections = authoring.map(skill => [
     `CAPA SKILL [${slotLabel(skill.slot)}] — ${skill.name} v${skill.version}`,
@@ -399,6 +425,8 @@ export const assembleCapaPrompt = (
       : []),
     // The story's sound words close the Sound Cues section as its example list.
     ...(skill.slot === 'soundCues' && soundVocabulary ? [presentSoundVocabulary(soundVocabulary)] : []),
+    // The story's moods and atmospheres close the Soundtrack section as its lists.
+    ...(skill.slot === 'soundtrack' && soundtrackVocabulary ? [presentSoundtrackVocabulary(soundtrackVocabulary)] : []),
   ].join('\n'));
   // The official requirements travel only when a reader-facing adapter is
   // loaded or the story is not written in English.
@@ -431,5 +459,6 @@ export const assembleCapaPrompt = (
     estimatedTokens,
     ...(translationGlossary ? { translationGlossary: cloneHarnessValue(translationGlossary) } : {}),
     ...(soundVocabulary ? { soundVocabulary: cloneHarnessValue(soundVocabulary) } : {}),
+    ...(soundtrackVocabulary ? { soundtrackVocabulary: cloneHarnessValue(soundtrackVocabulary) } : {}),
   };
 };

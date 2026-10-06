@@ -266,7 +266,7 @@ describe('Harness Generation HTTP boundary', () => {
     expect(result).toMatchObject({ status: 400, body: { error: expect.stringContaining('premise') } });
   });
 
-  it('sends GLM, Qwen and DeepSeek the reasoning level that finishes a chapter when the reader chose none', async () => {
+  it('sends each model its default reasoning (low, or lower where that finishes a chapter) when the reader chose none', async () => {
     const sent: Array<[string, unknown]> = [];
     const write = (model: string, reasoningLevel?: string) => handleHarnessGenerationHttp(
       { method: 'POST', body: { ...request(), model, ...(reasoningLevel ? { reasoningLevel } : {}) } },
@@ -288,9 +288,9 @@ describe('Harness Generation HTTP boundary', () => {
       ['openrouter/z-ai/glm-5.3-flash', 'low'],
       ['openrouter/qwen/qwen3.8-flash', 'none'],
       ['openrouter/deepseek/deepseek-v4.1-flash', 'none'],
-      // The reader's own choice wins; every other model still sends nothing.
+      // The reader's own choice wins; low goes by default; a model without levels sends nothing.
       ['openrouter/z-ai/glm-5.3-flash', 'medium'],
-      ['openrouter/openai/gpt-6-luna', undefined],
+      ['openrouter/openai/gpt-6-luna', 'low'],
       ['openrouter/minimax/minimax-m2.7', undefined],
     ]);
   });

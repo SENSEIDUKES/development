@@ -78,6 +78,7 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
       onGenerateNextChapter={stories.canGenerate ? () => stories.generateNextChapter(storyId) : undefined}
       onPlanArc={stories.canGenerate ? () => stories.planArc(storyId) : undefined}
       renderWriting={writingAgent ? writing => <AILoadingVeil agent={writingAgent} isGenerating={writing.active}
+        completed={state.chapters.some(chapter => chapter.storyId === storyId && chapter.chapterNumber === writing.chapterNumber)}
         generationPhase="chapter" generatingChapterNum={writing.chapterNumber} progress={null}
         generationProgressMessage={null} estimatedSecondsRemaining={null} activeAgentId="versa"
         streamingBlocksCount={0} isVeilMinimized={false} setIsVeilMinimized={keepVeilOpen} /> : undefined}

@@ -71,8 +71,26 @@ apps supply their own configuration and keep their prompts, auth, UI and saved
 work in their own code. Status reports key presence and `implemented`
 separately; catalog-only media models are not executable.
 
+## Gemini request settings
+
+Gemini requests use provider-default sampling: the Router never sends
+`temperature`, `top_p`/`topP`, or `top_k`/`topK` to Google or to a Gemini model
+through OpenRouter. The shared request's `temperature` remains available for
+other providers. Gemini already uses `thinkingLevel`, never `thinkingBudget`;
+the provider boundary checks the chosen level against the model catalog and
+omits unsupported or unknown levels so the provider default applies.
+OpenRouter receives supported Gemini choices as `reasoning.effort`.
+
+Supported levels follow Google's [thinking documentation](https://ai.google.dev/gemini-api/docs/thinking).
+Prompts, response schemas, token limits, timeouts, model choices, and saved work
+are unchanged.
+
 ## Workshop history
 
+- 2026-10-06 — Removed custom Gemini sampling from the Google and OpenRouter
+  routes ahead of Google's parameter deprecation. Thinking levels were already
+  in use; both routes now check Gemini levels at the provider boundary. Other
+  providers keep their existing sampling and reasoning settings.
 - 2026-10-04 — The Story Seed Blueprint follows the Router (`modelChoice:
   'router'`). It always used the server's Blueprint model
   (`STORY_SEED_BLUEPRINT_MODEL`, else the chapter default: Gemini 3.1 Flash

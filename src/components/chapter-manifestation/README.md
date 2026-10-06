@@ -10,11 +10,13 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - **Source location:** `src/components/AILoadingVeil.tsx`
 - **Workshop preview:** `?preview=chapter-generation-manifestation`
 - **First Workshop record:** 2026-07-29
-- **Last recorded Workshop update:** 2026-10-01
+- **Last recorded Workshop update:** 2026-10-06
 - **Historical source inspection:** 2026-07-29
 - **Implementation status:** under refinement
 
 ## Workshop history
+
+- **2026-10-06:** Connected the live generation journey to elapsed time and successful completion. Whole-response chapter and media calls advance the traveler without inventing a percentage; a supplied estimate or the previous successful run in this mounted session sets the pace. It stays short of the gate while pending, then has one second to arrive before the existing exit fade. A failed or cancelled run never claims arrival. The Library Reader signals success only for a saved chapter; prompts, requests, acceptance, story data and the shared UI artwork are unchanged. Library 0.19.1.
 
 - **2026-10-01:** **Two screens, connected.** The Aura Veil now has one narrative manifestation screen and one media reveal, not three narrative and four media operations. The Workshop's Operation control is a single **Manifestation** choice, Narrative (`chapter`) or Media reveal (`cover`). In the Development veil every narrative operation shows the same screen (the narrative lines rotate for all of them) and every media operation the same reveal. The bottom pill names the chapter and adds a percentage only when progress is known: the new `progress` prop (`null` when unknown) lets a caller whose chapter arrives whole say so, and the journey scrubber then drifts instead of showing a made-up number. Omitted, the Workshop simulation's streamed-passages estimate is unchanged. **First real caller:** the Library's HARNESS Reader shows this veil (Versa, Narrative, "Chapter N") while it writes a chapter. The SEN taxonomy (`shared/manifestation.ts`), the Library task card builder, the standalone Manifestation Reveal area and the locked `reference/` veil are unchanged.
 - **2026-09-25:** Retired the `steer` ("Sovereign Shift", "trigger the subsequent 10 chapters") and `alter-fate` ("Fate Alteration", "your chosen divergence") narrative operations with the flows they served: persistent steering and the Alter Fate timeline fork were replaced by the reader's one-chapter direction, which is written as an ordinary `chapter` operation. Narrative operations are now World Blueprint, Initial Arc, and Chapter; nothing else in the veil changed.
@@ -143,9 +145,11 @@ The chamber is `isolate`d, so no effect — inside or outside — can slip betwe
 
 ### Journey scrubber contract
 
-Progress in the Development veil renders as `journey-scrubber/JourneyScrubber`:
+Progress in the Development veil renders through the canonical `LibraryScrubber`
+from `@seihouse/library-ui`; the Library owns its generation lifecycle:
 
-- **Progress:** one normalized 0–1 prop (`null` = indeterminate drift). Callers map their own units (passages, steps, bytes) onto the range; nothing in the scrubber knows about passage counts.
+- **Progress:** one normalized 0–1 position. `LoadingSystem` follows known task progress; with unknown progress it advances from elapsed time, using the supplied initial estimate or the previous successful duration for that operation in this mounted session (45 seconds until either is available). This is a visual journey, not a generated-work percentage: unknown progress keeps both the pill and accessible description free of a made-up number. It never reaches the destination while the operation is pending.
+- **Completion:** the host sets `completed` only after success, or supplies a finished measured task / revealed media asset. When `active` ends, the primary veil retains the result for one second so the scrubber's 800ms arrival finishes before the existing fade. Failures and cancellations close without arrival. A new run resets its position; minimization does not restart the clock. No timer changes a request or writes story data.
 - **Layers:** status (`title` / `state` / `detail` — optional; omit for a path-only scrubber, as the Aura Veil now does), path, milestone markers, destination gate, and the traveler are separable — each can change without touching the others.
 - **Travelers:** swappable through `travelerId` and the registry in `journey-scrubber/travelers.ts`. A traveler honors `TravelerRenderProps` (accents, `moving`, `arrived`, glow filter) and a local-space contract (feet/anchor at (0,0), ~30–40px tall, facing right). Registered options: `cultivator` (default and fallback — universal runner), `sword-rider` (glides on a flying sword, qi scarf flutter; no leg cycle — cultivation power), `spirit-beast` (trotting celestial fox, bushy tail, happy hop on arrival — mystical companion). Movement loops stay decoupled from position, and reduced-motion users get a static traveler.
 - **Aura trails:** the milestone-marker rendering is a preset system in `journey-scrubber/trails.tsx`, selected with the `trailStyle` prop. Presets are picked by stable id — never free-form config. Registered presets: `qi-glow` (default — the classic glowing dots), `starlight-trail` (markers become twinkling four-point stars), `scroll-trail` (markers become tiny rolled scrolls). A preset honors `TrailMarkerProps` and renders one marker (lit + unlit states) in local space centered on (0,0); marker positions along the shared curve and the lit state (lit once the traveler passes) stay scrubber-owned. The lit path behind the traveler is a single shared rendering (the qi-glow trail), identical across presets. Path, gate, status text, and the indeterminate drift stay shared. Under reduced motion, star twinkle and scroll pulse become static and calm.
@@ -164,7 +168,9 @@ Progress in the Development veil renders as `journey-scrubber/JourneyScrubber`:
 
 ## What was mocked
 
-Nothing beyond the AILoadingVeil replica boundary — the system is presentation-only; the Workshop preview simulator drives it with local state.
+The Workshop preview simulator supplies local generation state. Live Library stories
+supply the real writing lifecycle and a successful saved-chapter signal. Journey timing
+is presentation-only; it does not create progress events, write story data or change generation.
 
 ### Preview states
 

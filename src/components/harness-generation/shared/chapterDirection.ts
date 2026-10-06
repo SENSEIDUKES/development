@@ -6,7 +6,9 @@ import {
   type HarnessGenerationAttempt,
   type HarnessStory,
   type HarnessStoryMode,
+  type HarnessWorkspaceState,
 } from '../../../narrative/generation';
+import { harnessStoryMode, nextArcStep } from './arcState';
 
 /**
  * Checks one reader choice for the next chapter and returns the clean value to
@@ -34,6 +36,20 @@ export function validateChapterDirectionChoice(choice: ChapterDirectionChoice, m
 /** The reader's pending choice for the story's next chapter, if they made one. */
 export const pendingChapterDirection = (story: HarnessStory) =>
   story.nextChapterDirection?.forChapter === story.head.nextChapterNumber ? story.nextChapterDirection : undefined;
+
+/**
+ * Whether the story's next chapter waits on the reader before it can be
+ * written: an ended story, an arc whose goals still need planning or the
+ * reader's review, or a Fate Survival chapter without the reader's direction.
+ * When nothing waits, a host may begin the chapter without being asked, as
+ * the NovelExpanded app begins Chapter 1 the moment a story is made.
+ */
+export function nextChapterWaitsOnReader(state: Pick<HarnessWorkspaceState, 'stories' | 'foundations' | 'arcPlanOperations'>, storyId: string): boolean {
+  const story = state.stories.find(entry => entry.id === storyId);
+  if (!story || story.conclusion || nextArcStep(state, storyId)) return true;
+  const foundation = state.foundations.find(entry => entry.id === story.activeFoundationRevisionId)?.input;
+  return harnessStoryMode(foundation) === 'survival' && !pendingChapterDirection(story);
+}
 
 /**
  * Why the next chapter cannot be requested yet in this mode, if it cannot.

@@ -221,6 +221,7 @@ export function HarnessReaderSession({
           : undefined;
 
   // Start Story: the first chapter begins once, as soon as the Reader can begin it.
+  // One already being written (begun as the story was made) is that start.
   const continueRef = useRef(continueAfterLatest);
   continueRef.current = continueAfterLatest;
   const started = useRef(false);
@@ -228,8 +229,12 @@ export function HarnessReaderSession({
   useEffect(() => {
     if (!readyToStart || started.current) return;
     started.current = true;
-    continueRef.current?.run();
-  }, [readyToStart]);
+    if (!writer.writing) continueRef.current?.run();
+  }, [readyToStart, writer.writing]);
+  // A chapter written while the reader waited opens when it is saved, wherever its write began.
+  useEffect(() => {
+    if (writer.written) openChapter(writer.written);
+  }, [writer.written, openChapter]);
 
   // Read Aloud follows the chapter on screen: another page or the writing screen
   // over the chapter pauses it until the chapter is back. The soundtrack plays on

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { ReaderMixerProvider, type ReaderMixer } from '@seihouse/audio-player';
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import { StoryPages, storyHomeWorlds, useLibraryStories } from '@seihouse/library/stories';
-import { findStory, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
+import { findStory, nextChapterWaitsOnReader, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import { NarrativeButton } from '@seihouse/sen/presentation';
 import { useModelPreference } from '../host/generation/modelPreference';
 import { LIBRARY_ASSETS } from '../host/media/libraryAssets';
@@ -107,6 +107,11 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     onHome={() => navigate(HOME_ROUTE)}
     onStartStory={async payload => {
       const story = await startHarnessStoryFromSeed(stories.controller, payload);
+      // Chapter 1 begins at once, while the reader looks over the World Card, so it is
+      // ready (or nearly) when they start reading. A chapter that waits on the reader
+      // (Fate Survival's first direction) waits; a failed start is simply tried again by
+      // Start Story, which shows any reason.
+      if (!nextChapterWaitsOnReader(stories.controller.snapshot(), story.id)) void stories.generateNextChapter(story.id).catch(() => undefined);
       // The new story replaces Create, so Back from it goes Home.
       navigate({ page: 'story', storyId: story.id }, { replace: true });
     }} />;

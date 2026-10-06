@@ -173,6 +173,32 @@ describe('The HARNESS Reader', { timeout: 20_000 }, () => {
     expect(buttonBy(byLabel('Next Chapter: Write Chapter 2'))).toBeTruthy();
   });
 
+  it('a chapter keeps writing when the reader leaves: back in the Reader it is still writing, never begun twice, and opens when saved', async () => {
+    const { controller, storyId, generate, hold } = await story();
+    const renderWriting = (writing: HarnessReaderWriting) => (writing.active ? <div data-testid="writing-screen">Chapter {writing.chapterNumber}</div> : null);
+    // Chapter 1 begins before the Reader opens, as the app begins it the moment a story is made.
+    const release = hold();
+    const background = controller.generateNextChapter(storyId, 'test-model');
+    await mount(<Host controller={controller} storyId={storyId} renderWriting={renderWriting} startOnOpen />);
+    // Start Story finds it already being written: the writing screen, and no second write.
+    expect(container.querySelector('[data-testid="writing-screen"]')!.textContent).toBe('Chapter 1');
+    expect(buttonBy(byLabel('Next Chapter: Writing Chapter 1…'))!.disabled).toBe(true);
+    expect(generate).toHaveBeenCalledTimes(1);
+
+    // The reader leaves and comes back: still writing, still one write.
+    act(() => root.unmount());
+    root = createRoot(container);
+    await mount(<Host controller={controller} storyId={storyId} renderWriting={renderWriting} startOnOpen />);
+    expect(container.querySelector('[data-testid="writing-screen"]')!.textContent).toBe('Chapter 1');
+    expect(generate).toHaveBeenCalledTimes(1);
+
+    await act(async () => { release(); await background; });
+    await flush();
+    expect(container.querySelector('[data-testid="writing-screen"]')).toBeNull();
+    expect(chapterOnScreen(1)!.textContent).toContain('The tide pulled back from the drowned gate.');
+    expect(generate).toHaveBeenCalledTimes(1);
+  });
+
   it('a write that stops far short of a chapter saves nothing, says so, and the reader tries again', async () => {
     const { controller, storyId } = await story({ replies: [STOPPED_WRITE_REPLY, ...CHAPTERS] });
     await mount(<Host controller={controller} storyId={storyId} />);

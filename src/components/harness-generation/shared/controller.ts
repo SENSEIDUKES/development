@@ -78,6 +78,22 @@ export interface HarnessGenerationControllerOptions {
   holdingsFixer?: HarnessHoldingsFixerPolicy;
 }
 
+/**
+ * A chapter being written right now: the story's next chapter, or its latest
+ * written again. Every surface reads the same record, so a reader who leaves
+ * the Reader and returns sees the write still going, never starts a second
+ * one, and is told when it ends. It is never saved: a closed browser ends it.
+ */
+export interface HarnessChapterWrite {
+  storyId: string;
+  chapterNumber: number;
+  kind: 'next' | 'rewrite';
+  /** The chapter a rewrite replaces. */
+  replacesChapterId?: string;
+  /** Settles when the write has ended, the chapter saved or not. */
+  done: Promise<void>;
+}
+
 type WorkspaceListener = (state: HarnessWorkspaceState) => void;
 type PersistedCheckpoint = 'raw_received' | 'prose_accepted' | 'events_preserved' | 'committed' | 'generation_failed';
 
@@ -142,6 +158,7 @@ export class HarnessGenerationController {
   private state = createEmptyHarnessWorkspaceState();
   private hydrated = false;
   private generating = false;
+  private writing?: HarnessChapterWrite;
 
   constructor(options: HarnessGenerationControllerOptions) {
     this.repository = options.repository;
@@ -182,6 +199,34 @@ export class HarnessGenerationController {
 
   snapshot(): HarnessWorkspaceState {
     return cloneHarnessValue(this.state);
+  }
+
+  /** The chapter being written for this story right now, whichever surface started it. */
+  chapterWrite(storyId: string): HarnessChapterWrite | undefined {
+    return this.writing?.storyId === storyId ? { ...this.writing } : undefined;
+  }
+
+  /**
+   * Runs one chapter write as the controller's single write, announced to
+   * every listener when it starts and when it ends. A second write while one
+   * is running is refused before anything starts.
+   */
+  private async trackChapterWrite(
+    write: Omit<HarnessChapterWrite, 'done'>,
+    run: () => Promise<HarnessWorkspaceState>,
+  ): Promise<HarnessWorkspaceState> {
+    if (this.writing || this.generating) throw new Error('A Harness chapter request is already running.');
+    let settle: () => void = () => undefined;
+    const done = new Promise<void>(resolve => { settle = resolve; });
+    this.writing = { ...write, done };
+    this.notify();
+    try {
+      return await run();
+    } finally {
+      this.writing = undefined;
+      settle();
+      this.notify();
+    }
   }
 
   private notify() {
@@ -819,7 +864,25 @@ export class HarnessGenerationController {
     model: string,
     batchId?: string,
   ): Promise<HarnessWorkspaceState> {
-    return this.generateNextChapterInternal(storyId, model, batchId);
+    return this.trackChapterWrite(
+      { storyId, kind: 'next', chapterNumber: findStory(this.state, storyId)?.head.nextChapterNumber ?? 1 },
+      () => this.generateNextChapterInternal(storyId, model, batchId),
+    );
+  }
+
+  /**
+   * The reader's Write: finishes the story's interrupted chapter when there
+   * is one, or writes the next. A chapter whose reply was saved resumes from
+   * its checkpoint without a new model call; one whose request the browser
+   * closed on is asked for again with what it froze (rebuilt when the story
+   * moved on). Nothing is written twice: only a chapter that never committed
+   * is resumed.
+   */
+  async writeNextChapter(storyId: string, model: string): Promise<HarnessWorkspaceState> {
+    const interrupted = activeAttemptForStory(this.state, storyId);
+    if (!interrupted) return this.generateNextChapter(storyId, model);
+    if (interrupted.stage === 'provider_outcome_unknown') return this.retryModelRequest(interrupted.id);
+    return this.retryAppropriateStage(interrupted.id);
   }
 
   /**
@@ -832,7 +895,11 @@ export class HarnessGenerationController {
    * nothing about the story changes.
    */
   async rewriteLatestChapter(storyId: string, model: string, note?: string): Promise<HarnessWorkspaceState> {
-    return this.generateNextChapterInternal(storyId, model, undefined, undefined, { note: readRewriteNote(note) });
+    const replaced = latestStoryChapter(this.state, storyId);
+    return this.trackChapterWrite(
+      { storyId, kind: 'rewrite', chapterNumber: replaced?.chapterNumber ?? 1, ...(replaced ? { replacesChapterId: replaced.id } : {}) },
+      () => this.generateNextChapterInternal(storyId, model, undefined, undefined, { note: readRewriteNote(note) }),
+    );
   }
 
   /**
@@ -1481,8 +1548,20 @@ export class HarnessGenerationController {
   }
 
   async retryAppropriateStage(attemptId: string): Promise<HarnessWorkspaceState> {
-    await this.retryAppropriateStageInternal(attemptId);
-    return this.snapshot();
+    return this.trackChapterWrite(this.attemptWrite(attemptId), async () => {
+      await this.retryAppropriateStageInternal(attemptId);
+      return this.snapshot();
+    });
+  }
+
+  /** What an attempt being tried again writes, for the shared write record. */
+  private attemptWrite(attemptId: string): Omit<HarnessChapterWrite, 'done'> {
+    const attempt = attemptById(this.state, attemptId);
+    const rewrite = attempt.immediateChapterRequest.rewrite;
+    return {
+      storyId: attempt.storyId, chapterNumber: attempt.chapterNumber, kind: rewrite ? 'rewrite' : 'next',
+      ...(rewrite ? { replacesChapterId: rewrite.replacesChapterId } : {}),
+    };
   }
 
   private async retryAppropriateStageInternal(attemptId: string): Promise<HarnessWorkspaceState> {
@@ -1510,6 +1589,10 @@ export class HarnessGenerationController {
 
   async retryModelRequest(attemptId: string): Promise<HarnessWorkspaceState> {
     this.assertHydrated();
+    return this.trackChapterWrite(this.attemptWrite(attemptId), () => this.retryModelRequestInternal(attemptId));
+  }
+
+  private async retryModelRequestInternal(attemptId: string): Promise<HarnessWorkspaceState> {
     const attempt = attemptById(this.state, attemptId);
     if (attempt.stage !== 'generation_failed' && attempt.stage !== 'provider_outcome_unknown') {
       throw new Error('Only a failed or unknown provider request may be retried with a new model call.');

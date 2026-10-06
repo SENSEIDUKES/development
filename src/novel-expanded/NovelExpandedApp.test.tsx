@@ -325,7 +325,8 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
       if (accessToken !== 'right-token') throw new BlueprintRequestError('A valid Development Story Seed access token is required.', 401);
       return blueprint!;
     });
-    const services = appServices(scriptedWriter().writer, { storySeeds: seeds, requestWorldBlueprint: requestWorldBlueprint as unknown as NovelExpandedServices['requestWorldBlueprint'] });
+    const writer = scriptedWriter();
+    const services = appServices(writer.writer, { storySeeds: seeds, requestWorldBlueprint: requestWorldBlueprint as unknown as NovelExpandedServices['requestWorldBlueprint'] });
     await render(services, '/app/');
     // Home's Carve New Destiny opens Create.
     await click(buttonByText('Carve New Destiny', container), 'Carve New Destiny', 20);
@@ -354,10 +355,63 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     expect(started.skillLoadout).toEqual(createOfficialCapaDefaultLoadout(record.seed.story.required.style));
     expect(address()).toBe(`/app/?story=${started.id}`);
     expect(worldInfo()!.querySelector('h1')!.textContent).toBe(started.title);
+    // A Fate Survival story's Chapter 1 waits on the reader's direction, so nothing is written early.
+    await flush(20);
+    expect(writer.generate).not.toHaveBeenCalled();
 
     // The started story replaced Create, so the browser's Back goes Home.
     await act(async () => { window.history.back(); });
     await flush(30);
     expect(address()).toBe('/app/');
+  });
+
+  it('a Regular story: Manifest Story begins Chapter 1 at once, and Start Story opens it without writing it twice', async () => {
+    const record = createMockStorySeedRecord({ userId: NOVEL_EXPANDED_READER_ID });
+    record.seed.story.optional.fateSurvival = { ...record.seed.story.optional.fateSurvival, enabled: false };
+    const { blueprint, ...withoutBlueprint } = record;
+    const seeds = createLocalStorySeedRepository({ storageKey: 'test-novelexpanded-seeds' });
+    seeds.reset([withoutBlueprint]);
+    const writer = scriptedWriter();
+    const services = appServices(writer.writer, { storySeeds: seeds, requestWorldBlueprint: (async () => blueprint!) as unknown as NovelExpandedServices['requestWorldBlueprint'] });
+    services.accessToken.current = 'owner-token';
+    await render(services, '/app/');
+    await click(buttonByText('Carve New Destiny', container), 'Carve New Destiny', 20);
+    await click(buttonByText('Story Bank', container), 'Story Bank', 200);
+    await click(buttonByText('Use Seed', container), 'Use Seed', 200);
+    await click(buttonByText('Refine Details', container), 'Refine Details', 200);
+    await click([...container.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.includes('Manifest World Blueprint') && !button.disabled), 'Manifest World Blueprint', 300);
+    await click(buttonByText('Manifest Story', container), 'Manifest Story', 50);
+    const [started] = (services.stories as InMemoryHarnessGenerationRepository).snapshot().stories;
+    expect(address()).toBe(`/app/?story=${started.id}`);
+    // Chapter 1 is already being written while the reader looks over the World Card.
+    expect(writer.generate).toHaveBeenCalledTimes(1);
+
+    // Start Story finds it still being written: the veil, never a second write; it opens when saved.
+    await click(chaptersAction(), 'Start Story', 10);
+    expect(document.querySelector('img[alt="VERSA"]')?.closest('.fixed')?.textContent).toContain('Chapter 1');
+    await act(async () => { writer.release(); });
+    await flush(20);
+    expect(document.querySelector('[data-chapter-number="1"]')!.textContent).toContain('The tide pulled back from the drowned gate.');
+    expect(writer.generate).toHaveBeenCalledTimes(1);
+  });
+
+  it('a chapter keeps writing when the reader leaves the Reader, and is there when they come back', async () => {
+    const story = scriptedWriter();
+    const services = appServices(story.writer);
+    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
+    await render(services);
+    await click(container.querySelector(`#home-world-${created.id} button[aria-label^="Open ${created.title}"]`), 'the Home card');
+    await click(chaptersAction(), 'Start Story', 10);
+    expect(story.generate).toHaveBeenCalledTimes(1);
+
+    // Back out mid-write: the chapter is still being written.
+    await click(buttonByText('Back'), 'Back', 10);
+    expect(address()).toBe(`/app/?story=${created.id}`);
+    await act(async () => { story.release(); });
+    await flush(20);
+    // Come back: Chapter 1 is there, written once.
+    await click(chaptersAction(), 'Continue', 10);
+    expect(document.querySelector('[data-chapter-number="1"]')!.textContent).toContain('The tide pulled back from the drowned gate.');
+    expect(story.generate).toHaveBeenCalledTimes(1);
   });
 });

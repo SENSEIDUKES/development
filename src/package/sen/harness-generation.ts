@@ -7,6 +7,7 @@
 export {
   HarnessGenerationController,
   exportHarnessStory,
+  type HarnessChapterWrite,
   type HarnessEventPreserver,
   type HarnessGenerationControllerOptions,
 } from '../../components/harness-generation/shared/controller';
@@ -74,7 +75,7 @@ export {
 export { buildImmediateChapterRequest } from '../../components/harness-generation/shared/immediateChapterRequest';
 export { activeAttemptForStory, isBlockingAttempt } from '../../components/harness-generation/shared/attempts';
 export { chapterRewriteGap, latestStoryChapter, readRewriteNote, withoutLatestChapter } from '../../components/harness-generation/shared/chapterRewrite';
-export { attemptChapterPath, chapterDirectionGap, pendingChapterDirection, validateChapterDirectionChoice } from '../../components/harness-generation/shared/chapterDirection';
+export { attemptChapterPath, chapterDirectionGap, nextChapterWaitsOnReader, pendingChapterDirection, validateChapterDirectionChoice } from '../../components/harness-generation/shared/chapterDirection';
 export {
   FATE_PRESSURE_RHYTHM_CONFIG,
   buildRhythmRecommendation,

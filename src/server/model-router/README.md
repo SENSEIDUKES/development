@@ -77,8 +77,9 @@ Gemini requests use provider-default sampling: the Router never sends
 `temperature`, `top_p`/`topP`, or `top_k`/`topK` to Google or to a Gemini model
 through OpenRouter. The shared request's `temperature` remains available for
 other providers. Gemini already uses `thinkingLevel`, never `thinkingBudget`;
-the provider boundary checks the chosen level against the model catalog and
-omits unsupported or unknown levels so the provider default applies.
+the provider boundary checks the chosen level against the model catalog; an
+unsupported level falls back to the model's sent default (low), and an unknown
+model gets none, so the provider default applies.
 OpenRouter receives supported Gemini choices as `reasoning.effort`.
 
 Supported levels follow Google's [thinking documentation](https://ai.google.dev/gemini-api/docs/thinking).
@@ -87,6 +88,7 @@ are unchanged.
 
 ## Workshop history
 
+- 2026-10-06 — Low is the default reasoning level. In the owner's tests across five models, low wrote chapters as well as higher levels and far faster, so every model offering it now sends low when the reader chooses no level (`ModelReasoning.sendDefault`): Gemini 3.8, 3.7 and 3.5 Flash, Gemini 3.1 Pro Preview (was its own default, high), GPT-6 Luna and Luna Pro, and Gemini 3.8 Flash through OpenRouter. Models already lower keep their level (the Flash Lite models think at minimal on their own; Qwen and DeepSeek are sent none; GLM was already sent low), and MiniMax and Trinity have no levels to send. A reader's own choice in Advanced settings still wins. The Story Seed Blueprint follows the chapter model, so it is sent low too.
 - 2026-10-06 — Removed custom Gemini sampling from the Google and OpenRouter
   routes ahead of Google's parameter deprecation. Thinking levels were already
   in use; both routes now check Gemini levels at the provider boundary. Other

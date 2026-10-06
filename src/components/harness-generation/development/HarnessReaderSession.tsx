@@ -231,8 +231,9 @@ export function HarnessReaderSession({
     continueRef.current?.run();
   }, [readyToStart]);
 
-  // Read Aloud and the soundtrack follow the chapter on screen. Another page or
-  // the writing screen over the chapter silences them until the chapter is back.
+  // Read Aloud follows the chapter on screen: another page or the writing screen
+  // over the chapter pauses it until the chapter is back. The soundtrack plays on
+  // under them; only leaving the Reader stops it.
   const chapter = chapters.find(entry => entry.chapterNumber === selectedChapter) ?? chapters.at(-1);
   const covered = fateOpen || arcOpen || holdingsOpen || writer.writing;
   const language = story?.originalLanguage ?? 'en';
@@ -263,7 +264,7 @@ export function HarnessReaderSession({
   }, [blocks, spokenBlock, sentenceStart, sentenceEnd]);
   const follow = useFollowNarration({ article: articleRef, highlight, active: reading, player: playerRef });
   const mixer = useReaderSoundtrack({
-    active: Boolean(story && readerState && chapter) && !covered,
+    active: Boolean(story && readerState && chapter),
     chapterId: chapter?.id, soundCues: chapter?.soundCues,
     speaking: readAloud.status === 'playing', listenEnded: readAloud.status === 'ended',
     onSleep: readAloud.stop, chapterEnd,

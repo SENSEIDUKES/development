@@ -9,11 +9,10 @@ export const LISTEN_DUCK = 0.6;
  * The Reader's part of the reader mixer (the host's SEIHouse audio player),
  * for the chapter on screen:
  *
- * - The reader's chosen atmosphere plays while the chapter is on screen. A
- *   page over it (Fate, Holdings, an arc's page) or the writing screen fades
- *   it out until the chapter is back, keeping a sleep timer; leaving the
- *   Reader stops every layer and ends the session. The reader's mix itself is
- *   never changed here.
+ * - The reader's chosen atmosphere plays while the Reader holds a chapter,
+ *   under the Reader's own pages too (Fate, Holdings, an arc's page) and the
+ *   writing screen: only leaving the Reader stops every layer and ends the
+ *   session. The reader's mix itself is never changed here.
  * - Only what the chapter uses appears in Audio settings: Sound Cues when it
  *   has some. Soundscapes are not chosen by the new Reader yet.
  * - The chapter's cues are warmed before their words are reached.
@@ -27,7 +26,7 @@ export const LISTEN_DUCK = 0.6;
  * Without a mixer (a host that supplies none) it does nothing.
  */
 export function useReaderSoundtrack({ active, chapterId, soundCues, speaking, listenEnded, onSleep, chapterEnd }: {
-  /** True while the chapter is on screen, where the story audio note can silence it. */
+  /** True while the Reader holds a chapter (its pages and the writing screen included), where the story audio note can silence it. */
   active: boolean;
   /** The chapter on screen. */
   chapterId?: string;

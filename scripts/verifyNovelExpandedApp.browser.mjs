@@ -266,7 +266,7 @@ async function walk(browser, viewport, sample) {
   check(/^\/app\/\?story=[^&]+$/.test(storyAddress), `Manifest Story should open Story View, got ${storyAddress}`);
   await shot('4-story-view');
   await page.locator('[data-world-info-chapters="action"]').click();
-  await page.locator('[data-testid="generation-overlay"][data-familiar-id="quill"] [aria-label="Quill, Working"]').waitFor();
+  await page.locator('[data-testid="generation-overlay"][data-familiar-id="quill"] [aria-label="Quill, Waving"]').waitFor();
   check(address() === `${storyAddress}&read=1`, `Start Story should open the Reader, got ${address()}`);
   const veil = page.getByTestId('generation-overlay');
   const familiarStyle = await veil.evaluate(element => {

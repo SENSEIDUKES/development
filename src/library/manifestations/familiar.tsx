@@ -2,6 +2,9 @@ import { createContext, useContext, type CSSProperties, type ReactNode } from 'r
 import type { FamiliarDefinition } from '../../components/familiar/shared/familiar';
 import { familiarElement, familiarElementColors } from '../familiars/appearance';
 
+/** One brief generation greeting every 3.5 seconds, with a neutral pose between waves. */
+export const GENERATION_FAMILIAR_WAVE_INTERVAL_MS = 3500;
+
 /** The host's equipped character. Selection and ownership remain in the host profile. */
 export interface LoadingFamiliarPresentation {
   familiar: FamiliarDefinition;

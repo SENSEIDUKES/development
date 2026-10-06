@@ -51,14 +51,17 @@ describe('The Generation Overlay has two screens', () => {
       const veil = container.querySelector<HTMLElement>('[data-testid="generation-overlay"]')!;
       expect(veil.dataset.familiarId).toBe(id);
       expect(veil.style.getPropertyValue('--veil-accent')).toBe(accent);
-      expect(veil.querySelector(`[aria-label="${familiar.displayName}, ${familiar.animations.running.label}"]`)).toBeTruthy();
+      expect(veil.querySelector(`[aria-label="${familiar.displayName}, ${familiar.animations.waving.label}"]`)).toBeTruthy();
+      const underline = veil.querySelector('.generation-overlay-familiar-underline');
+      expect(underline?.getAttribute('aria-hidden')).toBe('true');
+      expect(underline?.querySelector('button, [role="button"], [tabindex]')).toBeNull();
       expect(veil.querySelector('[data-celestial-foreground]')).toBeTruthy();
       expect(veil.querySelector('img[src="/versa.png"]')).toBeNull();
       expect(veil.textContent).not.toMatch(/\d+%/);
     }
   });
 
-  it('changes equipment without restarting the active journey, then shows the ready animation on arrival', () => {
+  it('changes equipment without restarting the active journey, then shows the ready pose on arrival', () => {
     clock();
     const renderFamiliar = (id: string, active = true, completed = false) => act(() => root.render(
       <LoadingFamiliarProvider value={loadingFamiliarPresentation(familiarCatalogueEntry(id)!.definition)}>

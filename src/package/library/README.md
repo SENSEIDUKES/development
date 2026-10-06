@@ -1,5 +1,14 @@
 # `@seihouse/library`
 
+**0.21.0 presentation refinement (2026-10-06):** Generation Familiars rest in
+their neutral pose and play one supplied wave every 3.5 seconds. The hero no
+longer bobs; its aura and drop shadows are softer, and a still underline uses
+the regular Familiar shadow styling with the equipped palette. It has no
+actions or focus target. `FamiliarSprite.repeatEveryMs` opts into one-shot
+cadence; omitted, the original supplied continuous playback is unchanged.
+Reduced motion, visibility and pause still stop playback. Arrival holds the
+review pose. Generation timing and data are unchanged.
+
 **0.21.0 (2026-10-06):** The generation veil wears the host's equipped Familiar,
 using its supplied working/review animations and elemental accent colors across
 the aura, journey, chamber, status and compact indicator. Pass `loadingFamiliar`

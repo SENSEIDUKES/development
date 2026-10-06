@@ -16,6 +16,8 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 
 ## Workshop history
 
+- **2026-10-06:** Calmed the equipped Familiar in both generation overlay modes: one complete supplied wave every 3.5 seconds, resting in its neutral pose between waves, with no hero bobbing. Softened the hero aura and drop shadows, and reused the regular Familiar underline as a still, decorative accent-colored base. It has no click, focus or action behavior. Arrival keeps the ready pose; regular Familiar playback, generation travel, requests and stored data are unchanged.
+
 - **2026-10-06:** Made Generation Overlay, Status Message, Progress Indicator, Ambient Effects, Progress Label and Compact Generation Overlay the canonical component names, with matching active files and public exports. Renamed the controller, view, styles, task adapter and current callers; Workshop labels use the same vocabulary. The original published exports remain compatible. Historical references, routes, saved data, generation timing, Familiar art and colors are unchanged.
 
 - **2026-10-06:** The Development veil follows the host's equipped Familiar, rendering its existing working animation and its review animation on successful arrival. Aura, particles, path and gate, chamber decoration, narrative scene, status pill and compact accents share that Familiar's element colors. The profile session projects its committed selection through `LoadingFamiliarProvider`; no second equipment store exists. NovelExpanded visitors use the catalogue default, Quill; a host supplies `equippedFamiliarId` when it has a profile. Workshop Effects can inspect every Familiar without changing equipment or ownership. Shared UI art, timing, generation, acceptance and saved stories are unchanged. Library 0.21.0.
@@ -111,8 +113,9 @@ then retains the completed presentation for arrival before closing. Failure or
 cancellation never claims success. The Progress Label shows no invented percentage.
 
 The host supplies its equipped Familiar through `LoadingFamiliarProvider` or
-`LibraryPresentationProvider.loadingFamiliar`. Its supplied working animation is
-shown during generation, and its review animation on arrival. Aura, Ambient Effects,
+`LibraryPresentationProvider.loadingFamiliar`. Its supplied wave plays once every 3.5 seconds, with a neutral pose between
+waves and a still review pose on arrival. The softened aura and decorative
+accent-colored underline ground the character without an action control. Aura, Ambient Effects,
 Progress Indicator, chamber decoration, Progress Label and compact accents share
 its elemental colors. Equipment changes preserve the running journey. Visitors
 use Quill when the host supplies that default; the presentation grants no ownership

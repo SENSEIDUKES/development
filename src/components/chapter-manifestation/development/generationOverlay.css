@@ -6,7 +6,10 @@
 .progress-label-title { color: color-mix(in srgb, var(--veil-soft) 30%, white); }
 .progress-label-divider { background: rgba(var(--veil-soft-rgb), 0.35); }
 .status-message-sparkle { color: rgba(var(--veil-accent-rgb), 0.65); }
-.generation-overlay-familiar { filter: drop-shadow(0 0 18px rgba(var(--veil-soft-rgb), 0.8)) drop-shadow(0 0 46px rgba(var(--veil-accent-rgb), 0.55)); }
+.generation-overlay-familiar-aura { opacity: 0.6; }
+.generation-overlay-familiar { filter: drop-shadow(0 0 14px rgba(var(--veil-soft-rgb), 0.35)) drop-shadow(0 0 32px rgba(var(--veil-accent-rgb), 0.2)); }
+.generation-overlay-familiar-underline { position: absolute; z-index: 10; left: 50%; bottom: -26px; transform: translateX(-50%); cursor: default; pointer-events: none; }
+.generation-overlay-familiar-underline span { background: rgba(var(--veil-accent-rgb), 0.25); border-color: rgba(var(--veil-soft-rgb), 0.4); }
 
 /* The pinned Library UI chamber has no palette prop. Adapt its decoration
    inside this veil only; retain its geometry, motion, stacking and calm zone.

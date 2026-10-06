@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Compass, Maximize2, Loader2 } from 'lucide-react';
 import type { LoadingTaskCard } from '../../../library/manifestations/taskCard';
 import { FamiliarSprite } from '../../familiar/development/FamiliarSprite';
-import { loadingPalette, loadingPaletteStyle, type LoadingFamiliarPresentation } from '../../../library/manifestations/familiar';
+import { GENERATION_FAMILIAR_WAVE_INTERVAL_MS, loadingPalette, loadingPaletteStyle, type LoadingFamiliarPresentation } from '../../../library/manifestations/familiar';
 import './generationOverlay.css';
 
 export interface CompactGenerationOverlayProps {
@@ -134,7 +134,7 @@ export default function CompactGenerationOverlay({ task, familiar, onExpand }: C
 
         {/* Main Icon Content Wrapper */}
         <div className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center overflow-hidden relative shadow-inner">
-          {familiar ? <div className="w-full"><FamiliarSprite familiar={familiar.familiar} activity="running" /></div> : task.icon.kind === 'image' ? (
+          {familiar ? <div className="w-full"><FamiliarSprite familiar={familiar.familiar} animation="waving" repeatEveryMs={GENERATION_FAMILIAR_WAVE_INTERVAL_MS} /></div> : task.icon.kind === 'image' ? (
             <img
               src={task.icon.src}
               alt={task.icon.alt}

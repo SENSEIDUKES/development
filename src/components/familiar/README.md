@@ -77,7 +77,10 @@ intentionally not runtime dependencies.
 
 - `GenerationOverlay` reads the equipped definition through Library's
   `LoadingFamiliarProvider` (or `LibraryPresentationProvider.loadingFamiliar`).
-  It reuses `FamiliarSprite` and the original working/review clips. Element
+  It reuses `FamiliarSprite`: a wave every 3.5 seconds with a neutral pose
+  between waves, followed by a still review pose on arrival. The overlay
+  underline uses the regular shadow styling with its elemental colors and
+  no interaction. `repeatEveryMs` is opt-in; regular playback is unchanged. Element
   affinities and form/veil colors now share `src/library/familiars/appearance.ts`;
   the account's mastered name effect does not change the Familiar's own palette.
   The provider is a projection of the existing host profile, with no storage or
@@ -277,6 +280,11 @@ desktop hover, 320/390px viewport centering, desktop centering, tray alignment a
 Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
+
+- 2026-10-06: Added opt-in one-shot sprite cadence for generation: a complete
+  wave every 3.5 seconds, neutral between waves, pausing for hidden documents,
+  offscreen sprites and reduced motion. The overlay uses a quieter aura and a
+  static accent-colored underline. Default Familiar playback is unchanged.
 
 - 2026-10-06: Generation veils use the equipped Familiar's supplied working and
   review clips. The existing profile session supplies the choice; elemental

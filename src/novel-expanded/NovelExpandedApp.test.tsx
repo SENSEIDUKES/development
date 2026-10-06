@@ -158,7 +158,7 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
     expect(document.querySelector('[data-testid="harness-reader"]')).toBeTruthy();
     const veil = document.querySelector<HTMLElement>('[data-testid="generation-overlay"]')!;
     expect(veil.dataset.familiarId).toBe(equippedFamiliarId ?? 'quill');
-    expect(veil.querySelector(`[aria-label="${equippedFamiliarId ? 'Phoenix' : 'Quill'}, Working"]`)).toBeTruthy();
+    expect(veil.querySelector(`[aria-label="${equippedFamiliarId ? 'Phoenix' : 'Quill'}, Waving"]`)).toBeTruthy();
     expect(veil.textContent).toContain('Chapter 1');
     expect(veil.style.getPropertyValue('--veil-accent')).toBe(equippedFamiliarId ? '#ff6a13' : '#2589ff');
     expect(document.querySelector('img[alt="VERSA"]')).toBeNull();

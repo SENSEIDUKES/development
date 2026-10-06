@@ -7,7 +7,7 @@ import { ProgressIndicator } from './ProgressIndicator';
 import { ProgressLabel } from './ProgressLabel';
 import { StatusMessage } from './StatusMessage';
 import { FamiliarSprite } from '../../familiar/development/FamiliarSprite';
-import { loadingPalette, loadingPaletteStyle, type LoadingFamiliarPresentation } from '../../../library/manifestations/familiar';
+import { GENERATION_FAMILIAR_WAVE_INTERVAL_MS, loadingPalette, loadingPaletteStyle, type LoadingFamiliarPresentation } from '../../../library/manifestations/familiar';
 import './generationOverlay.css';
 
 /**
@@ -141,6 +141,7 @@ export default function GenerationOverlayView({ task, familiar, journeyProgress,
           sits lower and more centered instead of cramped at the top. */}
       <div className="relative z-10 flex-none h-[32dvh] min-h-[196px] flex items-end justify-center pointer-events-none">
         <div className={`relative w-32 h-32 sm:w-36 sm:h-36 ${emblemClassName ?? ''} flex items-center justify-center shrink-0`}>
+          <div className={`absolute inset-0 ${familiar ? 'generation-overlay-familiar-aura' : ''}`} aria-hidden="true">
           <CelestialSigil />
 
           {/* Ground pool — a grounded shadow that doesn't rise with her */}
@@ -250,13 +251,16 @@ export default function GenerationOverlayView({ task, familiar, journeyProgress,
               />
             ))}
 
+          </div>
           <motion.div
             className="relative z-10 w-full h-full flex items-center justify-center"
-            animate={reduceMotion ? { y: 0 } : { y: [0, -6, 0] }}
+            animate={reduceMotion || familiar ? { y: 0 } : { y: [0, -6, 0] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
           >
             {familiar ? <div className="generation-overlay-familiar w-[92%]">
-              <FamiliarSprite familiar={familiar.familiar} activity={normalizedProgress === 1 ? 'ready' : 'running'} />
+              <FamiliarSprite familiar={familiar.familiar} activity={normalizedProgress === 1 ? 'ready' : undefined}
+                animation={normalizedProgress === 1 ? undefined : 'waving'} paused={normalizedProgress === 1}
+                repeatEveryMs={normalizedProgress === 1 ? undefined : GENERATION_FAMILIAR_WAVE_INTERVAL_MS} />
             </div> : <img
               src={task.icon.src}
               alt={task.icon.alt}
@@ -265,6 +269,7 @@ export default function GenerationOverlayView({ task, familiar, journeyProgress,
               style={immersive ? { filter: 'drop-shadow(0 0 18px rgba(var(--veil-soft-rgb),0.8)) drop-shadow(0 0 46px rgba(var(--veil-accent-rgb),0.55))' } : { filter: 'drop-shadow(0 0 15px rgba(4, 172, 255, 0.4))' }}
             />}
           </motion.div>
+          {familiar && <div className="familiar-shadow generation-overlay-familiar-underline" aria-hidden="true"><span /></div>}
         </div>
       </div>
 

@@ -65,6 +65,67 @@ const open = async () => {
 const snapshot = (balance: number): EnergyAccountSnapshot => ({ uid: 'test-account', balance, held: 3, available: balance - 3, prices: [], activity: [], developmentControls: { initialGrant: 500, defaultGrant: 100, maxGrant: 10000 }, updatedAt: '2026-09-20T00:00:00Z' });
 
 describe('Familiar sprite playback', () => {
+  it('rests between complete waves spaced 3.5 seconds apart, including parent rerenders', () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'performance'] });
+    const render = () => act(() => root.render(<FamiliarSprite familiar={celestialGuardian} animation="waving" repeatEveryMs={3500} />));
+    const pose = () => container.querySelector('.familiar-sprite')?.getAttribute('data-familiar-pose');
+    render();
+    imageLoaded();
+    const resting = atlas().style.transform;
+    expect(resting).toBe('translate(-75%, 0%)');
+    act(() => vi.advanceTimersByTime(1500));
+    render();
+    act(() => vi.advanceTimersByTime(1999));
+    expect(atlas().style.transform).toBe(resting);
+    expect(pose()).toBe('resting');
+    act(() => vi.advanceTimersByTime(1));
+    expect(atlas().style.transform).not.toBe(resting);
+    expect(pose()).toBe('playing');
+    act(() => vi.advanceTimersByTime(699));
+    expect(pose()).toBe('playing');
+    act(() => vi.advanceTimersByTime(1));
+    expect(atlas().style.transform).toBe(resting);
+    expect(pose()).toBe('resting');
+    act(() => vi.advanceTimersByTime(2799));
+    expect(pose()).toBe('resting');
+    act(() => vi.advanceTimersByTime(1));
+    expect(pose()).toBe('playing');
+    act(() => root.render(null));
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('keeps intermittent waves neutral while paused, offscreen, backgrounded or under reduced motion', () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'performance'] });
+    let intersect!: IntersectionObserverCallback;
+    vi.stubGlobal('IntersectionObserver', class { constructor(callback: IntersectionObserverCallback) { intersect = callback; } observe() {} disconnect() {} });
+    const render = (paused = false) => act(() => root.render(<FamiliarSprite familiar={celestialGuardian} animation="waving" repeatEveryMs={3500} paused={paused} />));
+    const visible = (isIntersecting: boolean) => act(() => intersect([{ isIntersecting }] as IntersectionObserverEntry[], {} as IntersectionObserver));
+    render();
+    imageLoaded();
+    expect(vi.getTimerCount()).toBe(0);
+    visible(true);
+    act(() => vi.advanceTimersByTime(3500));
+    expect(container.querySelector('.familiar-sprite')?.getAttribute('data-familiar-pose')).toBe('playing');
+    render(true);
+    expect(atlas().style.transform).toBe('translate(-75%, 0%)');
+    expect(vi.getTimerCount()).toBe(0);
+    render();
+    visible(false);
+    expect(vi.getTimerCount()).toBe(0);
+    visible(true);
+    reduced = true;
+    act(() => mediaListeners.forEach(listener => listener()));
+    expect(vi.getTimerCount()).toBe(0);
+    reduced = false;
+    act(() => mediaListeners.forEach(listener => listener()));
+    expect(vi.getTimerCount()).toBe(1);
+    vi.spyOn(document, 'hidden', 'get').mockReturnValue(true);
+    act(() => document.dispatchEvent(new Event('visibilitychange')));
+    act(() => vi.advanceTimersByTime(10_000));
+    expect(atlas().style.transform).toBe('translate(-75%, 0%)');
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
   it('uses exact supplied idle durations, skips unused cells, loops, pauses, and clears timers', () => {
     vi.useFakeTimers();
     act(() => root.render(<FamiliarSprite familiar={celestialGuardian} />));

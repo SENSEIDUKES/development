@@ -137,5 +137,11 @@ describe('The Aura Veil has two screens', () => {
     expect(position()).toBe(1);
     advance(1000);
     expect(container.querySelector('[data-testid="generation-veil"]')).toBeNull();
+    // An explicit failure overrides a stale finished progress value from the host.
+    const stale = { ...task, progress: 100 };
+    act(() => root.render(<LoadingSystem active task={stale} minimized={false} onMinimizedChange={() => undefined} />));
+    advance(250);
+    act(() => root.render(<LoadingSystem active={false} completed={false} task={stale} minimized={false} onMinimizedChange={() => undefined} />));
+    expect(container.querySelector('[data-testid="generation-veil"]')).toBeNull();
   });
 });

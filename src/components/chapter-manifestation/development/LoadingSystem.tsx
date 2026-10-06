@@ -61,7 +61,7 @@ const DEFAULT_COMPACT_GRACE_MS = 1200;
  */
 export default function LoadingSystem({
   active,
-  completed = false,
+  completed,
   task,
   mode = 'auto',
   minimized,
@@ -79,8 +79,8 @@ export default function LoadingSystem({
   const displayTask = task ?? lastTask.current;
   const journey = useGenerationJourney({
     active: active && Boolean(task),
-    completed: completed || displayTask?.progress === 100
-      || (displayTask?.manifestation.mode === 'media' && displayTask.manifestation.reveal === 'revealed'),
+    completed: completed ?? (displayTask?.progress === 100
+      || (displayTask?.manifestation.mode === 'media' && displayTask.manifestation.reveal === 'revealed')),
     operation: displayTask?.activePhaseId ?? '',
     identity: JSON.stringify([displayTask?.activePhaseId, displayTask?.trackerTitle]),
     progress: displayTask?.progress ?? null,

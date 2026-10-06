@@ -1,5 +1,11 @@
 # Chapter Generation (retired)
 
+Where `reference/` exists, it holds the old production version, kept as reference
+material for the remake; it is not edited or refreshed. New features do not get a
+reference folder. Old systems stay until each is remade on the new path; never
+reconnect them as they are or re-sync with the old production app. The destination
+is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
+
 > **Retired 2026-09-25.** The legacy Chapter Generation pipeline, its Workshop
 > route (`?preview=chapter-generation-flow`), and its deployed
 > `/api/chapter-generation` endpoint were removed with the old Fate Survival
@@ -11,9 +17,9 @@
 > full implementation and its history remain in git.
 
 - **Source repository:** `SENSEIDUKES/Light-Novels`
-- **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-09-25 (retired)
-- **Last source comparison:** 2026-08-09
+- **First Workshop record:** 2026-07-31
+- **Last recorded Workshop update:** 2026-09-25 (retired)
+- **Historical source inspection:** 2026-08-09
 
 ## What remains here, and why
 

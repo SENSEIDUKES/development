@@ -1,4 +1,4 @@
-import { type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessGenerationServerInfo, type HarnessMemoryRecoveryRequest, type HarnessArcRequest } from '@seihouse/sen/harness-generation';
+import { type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessGenerationServerInfo, type HarnessArcRequest } from '@seihouse/sen/harness-generation';
 import { readReasoningPreference } from './modelPreference';
 
 const withReasoningLevel = <T extends { model: string }>(request: T): T & { reasoningLevel?: string } => {
@@ -75,11 +75,7 @@ export class HarnessGenerationHttpClient implements HarnessGenerationModelAdapte
 
   async arcOperation(request: HarnessArcRequest): Promise<HarnessGenerationResponse> { return this.post(request); }
 
-  async recoverMemory(request: HarnessMemoryRecoveryRequest): Promise<HarnessGenerationResponse> {
-    return this.post(request);
-  }
-
-  private async post(request: HarnessGenerationRequest | HarnessMemoryRecoveryRequest | HarnessArcRequest): Promise<HarnessGenerationResponse> {
+  private async post(request: HarnessGenerationRequest | HarnessArcRequest): Promise<HarnessGenerationResponse> {
     const token = this.accessToken?.()?.trim();
     const response = await fetch(this.endpoint, {
       method: 'POST',

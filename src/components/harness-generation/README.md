@@ -1,5 +1,11 @@
 # Harness Generation
 
+Where `reference/` exists, it holds the old production version, kept as reference
+material for the remake; it is not edited or refreshed. New features do not get a
+reference folder. Old systems stay until each is remade on the new path; never
+reconnect them as they are or re-sync with the old production app. The destination
+is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
+
 > **Before changing Harness Generation behavior:** read
 > [ARCHITECTURE_VOCABULARY.md](./ARCHITECTURE_VOCABULARY.md) first. It is
 > the single authoritative source for HARNESS, CAPA, CAPA Schema, CAPA
@@ -24,12 +30,14 @@ existing Chapter Generation feature.
 
 | Field | Value |
 | --- | --- |
-| Replica creation date | 2026-08-29 |
-| Last Workshop update | 2026-10-06 |
-| Last source comparison | 2026-09-12 — verified the creative author direction in `Light-Novels/src/server/prompts.ts` on `main` before extracting the Author skill |
+| First Workshop record | 2026-08-29 |
+| Last recorded Workshop update | 2026-10-06 |
+| Historical source inspection | 2026-09-12 — verified the creative author direction in `Light-Novels/src/server/prompts.ts` on `main` before extracting the Author skill |
 | Lifecycle status | Reader-directed continuation (Fate page) in a Reader on the Text Highlight Engine that reads aloud in three voices over the SEIHouse audio player's soundtrack, with holdings tagged by the writer and checked by plain rules, the story's point of view kept from its opening, and failed writes never saved |
 
 ### History
+
+- **2026-10-06:** Removed the separate memory model call, its on-request control and the recurring story-memory-incomplete warning. Chapter writing, acceptance, saving, Reader behavior, recaps, canonical-state readers and Holdings are unchanged. Historical stored extraction fields remain readable and ignored; no schema migration. SEN 0.21.0 removes the controller method/option and adapter method; Library’s peer range remains valid.
 
 - **2026-10-06 (Phase 1 fixes from the owner's Sovereign Hive test):** Fixes only, no new features. **Sound tags:** 14 of 15 sound tags in the test sat on their own line or between sentences, with words of their own, leaving lower-case fragments ("his pick scraped salt crystal") and repeated phrases. Sound Cues 2.1.0 asks for tags around words already in the sentence, and acceptance now settles any tag that still lands outside a sentence (`soundTagRepair.ts`): its words are removed, its sound moves onto the nearby words that echo them (within the cue's 8-word limit), else onto the nearest sentence, and the chapter carries a `sound_tag_moved` warning. A paragraph never starts with the full stop a tag left behind. **Speakers:** Chapter 3 copied `[[@Name]]` from the instructions for 14 of Bo's lines. A placeholder speaker now counts as no tag (unless the story has someone by that name), so the line is voiced from its narration, and Speakers 2.1.0 shows no placeholder name to copy. **Holdings:** the list had grown into a notebook (plot facts, names with counts in them, and Chapter 1's tags written inside the closing list). `holdingName` takes a count or description out of a name ("Spirit Pill ×3", "3 Spirit Pills", "Core (cracked)"), keeps a number that belongs to the name ("1000 Year Ginseng"), and sets aside a name that reads as a note (a sentence, a sighting, a countdown); tags written in the closing list are recorded at the chapter's end, once, never repeating a change the prose already tagged; Holdings 2.1.0 asks for things and abilities only. **Writer:** the response contract keeps countdowns out of recaps and says an older recap's span of time counts from its own chapter ("nine days" had stood still for four chapters), and forbids leaning on a pet word ("arithmetic" ×13); the chapter request gives a words-per-paragraph guide and calls anything under the minimum too short (two chapters had come in at 1,594 and 1,248 words). Recorded in the Writer Instructions history. SEN 0.20.0.
 - **2026-10-05 (The Reader's soundtrack is the SEIHouse audio player):** The owner's audio player (`@seihouse/audio-player` 4.0.0) replaces the single-channel player as the Reader's sound. `useReaderSoundtrack` (this folder) connects `HarnessReaderSession` to the host's reader mixer: the reader's chosen atmosphere plays while the chapter is on screen and fades out while a page covers it (Fate, Holdings, an arc's page, the writing screen), keeping a sleep timer, and leaving the Reader stops every layer; only the layers the chapter uses appear (Sound Cues when it has some; soundscapes are not chosen yet); the chapter's cues are warmed; while Listen speaks, the soundtrack dips (`LISTEN_DUCK`, 0.6) and the reader counts as active; a sleep timer that fires stops Listen too; the chapter's navigation coming into view, or Listen finishing the chapter, is the chapter's end. The player's ghost note sits above the Listen bar (tap mutes, long-press opens Audio; with no speech it still shows), and Reader Settings opens with Audio (the player's approved `ReaderMixerPanel`, loaded when the sheet first opens) before Narration. Sound Cues play through the mixer (`MixerCueControl`), overlapping, at their Energy. Without a host mixer none of this appears. SEN 0.19.0, Library 0.19.0.
@@ -81,7 +89,7 @@ existing Chapter Generation feature.
 - **2026-09-29 (Basic paragraph counter):** The most basic chapter length control, with no story styles yet. For every chapter the HARNESS rolls an exact paragraph count from one range, 50–100 (`HARNESS_CHAPTER_PARAGRAPH_RANGE`, `harnessChapterParagraphTarget`). The roll is seeded by story and chapter number, so chapters vary in length while a retry keeps its number; it is frozen on the Immediate Chapter Request as `chapterScale.paragraphs`. The response schema requires exactly that many paragraphs (`minItems` = `maxItems`), the request says "exactly N paragraph entries" beside the unchanged word range, and `http.ts` refuses a count that is not a whole number from 1 to 600. A chapter that misses is kept, never retried, and flagged (`chapter_paragraphs_off_target`, `metrics.paragraphTarget`); the Workshop chapter row shows the count asked beside the count returned. Schema 23 upgrades schema 22 unchanged. Styles with their own ranges come after this is proven with a real model.
 - **2026-09-29 (Tiny SEN language, part 1: the switch):** Chapters now speak the tiny SEN language, with narration and Sound Cues only. **Writer:** the model wraps the one to five words where a sound happens (`[[n|words]]`) and names it in a flat list (`soundCues: [{mark, sound, energy?}]`), choosing only from the story's sound words. The new managed CAPA slot **Sound Cues** (`media-loadout`, after Translation) carries SEN's bundled `SEN_SOUND_CUES_SKILL`; the story's frozen words close it as an example list whose header says the lines show how to mark and are not text for the chapter. A story with no sound words gets no section and no schema field. **Response contract:** `buildHarnessChapterResponseSchema(words)` drops dialogue, manifestations, System Panels, soundscapes and creature events; `soundCues` follows `paragraphs` with the words as an enum and a cap of ten; the contract keeps its no-invented-IDs guard and carries no Sound Cue wording. `http.ts` checks the words against the pack limits and answers 400 otherwise. **HARNESS:** media is frozen before CAPA; acceptance strips every mark from every reply string, then `placeSoundCues` places each cue on whole words (1–5, never in a system line, no overlap, first ten in reading order), picks that word's recording (matching Energy first, stable rotation), and stores a `SoundCueAttachment` span on paragraph `c{n}-p{i}`; set-aside cues become plain warnings. **Storage:** schema 22; `HarnessChapter` keeps paragraphs, prose and metrics, gains `soundCues`, loses `blocks`, `audioMoments` and `soundscapes`; by the product owner's decision there is no upgrade step, so earlier workspaces are kept untouched and the page starts fresh. **Reader:** one narration block per paragraph with its Sound Cues; the memory-based speaker guess is gone until dialogue is rebuilt. `acceptedChapterMedia.ts` and the World Cue intent system are deleted. SEN 0.8.0, Library 0.7.0.
 - **2026-09-29 (Tiny SEN language, part 1: foundation):** First half of narration + Sound Cues in the tiny SEN language; how chapters are written is unchanged until part 2. **Sound words:** a Sound Cue recording now names the event it answers (`metadata.sound`, e.g. "blade drawn"), and a catalog declares its words with a 1–5 word example each (`SoundWord`, `validateSoundWords`, `soundVocabulary`). The default library's 92 Sound Cue recordings carry 30 starter words (`src/audio/data/library-sounds.v1.json`) and Energy read from their names. **Studio tags:** SENSEI's tagging system (`src/audio/audioTags.ts`): a Sound Cue's parent is its cue category, a Soundscape's parent is ADVENTURE, AMBIENT, EMOTIONS, FIGHTING, WAR or SPECIAL, and both share Tone, Energy and Tension. **Packs:** a Sound Cue Pack declares `sounds`, every recording names a declared word, and an equipped pack replaces the default Sound Cue set (words and recordings); the frozen Media Loadout carries the attempt's words and the Media Loadout panel lists them. **Marks:** `src/narrative/marks.ts` reads and removes `[[n|words]]` marks, tolerating the slips a writer makes, for part 2's contract. See `MEDIA_LOADOUT.md` and `src/audio/README.md`.
-- **2026-09-26 (Story Settings: Translation and Accessibility):** Implements `docs/translation-accessibility-audit.md` with one product rule: users configure the story, the HARNESS decides the skills. **Story Settings:** the Story Seed's Settings sheet now holds Story Language (the existing Original Language control, moved there; the Blueprint Review confirms it read-only) and a new Reading Mode (production's Standard, Clear Reading, Easy Read, Literal Reading, `seed.story.optional.chapterWritingStyle`, kept out of every Blueprint request). A new seed takes the account's defaults; a saved seed keeps its own. The story copies both at creation (`HarnessStory.originalLanguage`, `HarnessStory.chapterWritingStyle`), and the novel page's Story Settings panel shows the Story Language and lets the owner change the Reading Mode for chapters still to come, in plain terms. **Managed slots:** `managedBy` now has three kinds. Accessibility (`reading-mode`) loads SEN's bundled skill for the mode (`SEN_READING_MODE_SKILLS`, production's instructions word for word), nothing for Standard. Translation (`story-language`) loads nothing for English, otherwise the one installed `generation` package for the language through `resolveTranslationPackage`, the rule Reader translation now shares; with none the chapter is still written and Story Settings says no specialized writing package is installed; competing packages are refused with a message. Neither slot is ever equipped by hand (`createStory`, `setSkillSlot`, initial loadouts and per-slot uploads all refuse), while Translation packages stay installable (`CapaSlotDefinition.installable`). **Prompt:** the Official Output Requirements travel only when Accessibility or Translation is loaded; a non-English story without a package gets only a one-line Story Language requirement and the machine-facing English rule; an English, Standard chapter carries none (about 320 estimated tokens saved). **Retry:** a failed chapter resends its frozen inputs only while the managed skills the story resolves still match, so a changed Reading Mode or package resolution rebuilds the request. **Surfaces:** the CAPA slot panel and SPP intake render only for a host that sets `showHarnessInternals` (the Workshop does); there the managed slots are read-only inspection cards. The Workshop's Dyslexic Readability sample is retired. Schema 21 removes hand-saved Translation and Accessibility references; a story without a Reading Mode reads as Standard. SEN 0.7.0, Library 0.5.0.
+- **2026-09-26 (Story Settings: Translation and Accessibility):** Implements `docs/history/translation-accessibility-audit.md` with one product rule: users configure the story, the HARNESS decides the skills. **Story Settings:** the Story Seed's Settings sheet now holds Story Language (the existing Original Language control, moved there; the Blueprint Review confirms it read-only) and a new Reading Mode (production's Standard, Clear Reading, Easy Read, Literal Reading, `seed.story.optional.chapterWritingStyle`, kept out of every Blueprint request). A new seed takes the account's defaults; a saved seed keeps its own. The story copies both at creation (`HarnessStory.originalLanguage`, `HarnessStory.chapterWritingStyle`), and the novel page's Story Settings panel shows the Story Language and lets the owner change the Reading Mode for chapters still to come, in plain terms. **Managed slots:** `managedBy` now has three kinds. Accessibility (`reading-mode`) loads SEN's bundled skill for the mode (`SEN_READING_MODE_SKILLS`, production's instructions word for word), nothing for Standard. Translation (`story-language`) loads nothing for English, otherwise the one installed `generation` package for the language through `resolveTranslationPackage`, the rule Reader translation now shares; with none the chapter is still written and Story Settings says no specialized writing package is installed; competing packages are refused with a message. Neither slot is ever equipped by hand (`createStory`, `setSkillSlot`, initial loadouts and per-slot uploads all refuse), while Translation packages stay installable (`CapaSlotDefinition.installable`). **Prompt:** the Official Output Requirements travel only when Accessibility or Translation is loaded; a non-English story without a package gets only a one-line Story Language requirement and the machine-facing English rule; an English, Standard chapter carries none (about 320 estimated tokens saved). **Retry:** a failed chapter resends its frozen inputs only while the managed skills the story resolves still match, so a changed Reading Mode or package resolution rebuilds the request. **Surfaces:** the CAPA slot panel and SPP intake render only for a host that sets `showHarnessInternals` (the Workshop does); there the managed slots are read-only inspection cards. The Workshop's Dyslexic Readability sample is retired. Schema 21 removes hand-saved Translation and Accessibility references; a story without a Reading Mode reads as Standard. SEN 0.7.0, Library 0.5.0.
 - **2026-09-26 (Library Create):** The Library workspace can open a requested novel: `initialStoryId` selects it once the stored stories load (the pre-hydration snapshot is empty, so the request waits for them; unknown ids fall back to the first story), and `initialFocus: 'next-chapter'` brings its Generate Chapter panel into view and focus once. The Workshop wrapper reads them from `story` and `focus`, which Library Create's Continue and Studio send, and which fixes Story Seed's existing "start story" handoff (it already sent `story=`). No HARNESS concept, contract or persistence changed.
 - **2026-09-25 (Fate Phase 2):** Persistent steering is replaced by the reader's
   one-chapter direction. The HARNESS Reader's Alter Fate opens a new SEN **Fate
@@ -417,9 +425,8 @@ existing Chapter Generation feature.
   into a frozen Harness Foundation; manual premise entry remains a secondary
   development fallback.
 
-## Source and transfer boundary
-
-- `reference/` is a locked independent-baseline message. No legacy generator
+## Implementation inventory and boundaries
+- `reference/` is a historical independent-baseline message. No legacy generator
   component is copied or rendered there.
 - `development/` contains the active client workspace.
 - `shared/` owns the portable Foundation, response boundary, context compiler,
@@ -452,10 +459,8 @@ path uses, though the Reader no longer edits. SEN stays provider-neutral.
    retry and replay stages remain unchanged.
 5. Atomically append a chapter with its paragraphs and placed Sound Cues,
    attempt receipt, and updated story head.
-6. Run the separate memory extraction on the committed prose when the host
-   adapter supports it, unless the host reads memory only on request
-   (`chapterMemory: 'on-request'`, which the Library uses); its failure leaves
-   the chapter committed and retryable from the inspection panel.
+6. Replay existing committed events deterministically, with no memory model call.
+   New chapter state comes from tags; historical canonical-state readers remain.
 
 Only a committed chapter enters the next context snapshot.
 
@@ -601,9 +606,8 @@ exceed an artificially small budget rather than disappearing silently.
 `replayStory(id, chapterId)` reprocesses a selected chapter's committed events
 through the deterministic capabilities without a model call. Stable event
 identities make repeated repair idempotent; older repairs do not become the latest
-story state merely because they ran later. Dropped or incomplete memory is repaired
-by re-running the separate extraction, which reuses a saved raw extraction before
-requesting a new one. The Reader preview derives chapter-scoped memory. Its reading settings
+story state merely because they ran later. Historical extraction fields are retained as stored evidence and are ignored;
+there is no extraction or recovery operation. The Reader preview derives chapter-scoped memory. Its reading settings
 and edits are session-local; durable story changes belong to the reader's chapter
 directions and corrections. Fully malformed optional output still requires usable source evidence;
 replay does not invent missing facts or call the model again.
@@ -641,51 +645,26 @@ for the story opening, while committed prose anchors continuation. Arc promises,
 mysteries, and endings are future direction, not chapter deadlines or already
 established events. Existing saved snapshots remain readable without migration.
 
-## Chapter memory and recovery
+## Retired memory call and historical state
 
-The chapter-writing call returns no memory. After a chapter commits, the
-separate extraction call reads the exact saved prose and returns the categorized
-memory contract; the HARNESS runs it automatically when the host adapter
-supports extraction and leaves the explicit recovery control for retries. Typed
-subjects distinguish a character's progression from a dungeon or module's state. Deterministic routing covers characters, decisions, relationships,
-locations, factions, deadlines, timeline, progression, open threads, mysteries,
-clues, revelations, and artifacts. Foundation names and declared aliases establish
-stable identity references; repeated chapter evidence retains separate provenance.
+The separate automatic/on-request memory model call, client method, server operation,
+and Workshop recovery control are removed. Chapters no longer receive the recurring
+“story memory incomplete” warning. Chapter writing, acceptance, saving, replay and the
+Reader retain their existing paths. Sound Cues, speakers and Holdings come from tags;
+recaps come from the chapter response.
 
-Every event preserves a chapter quote and structured fact values. Replay checks
-that the quote occurs in committed prose and that literal quantities, ranks, and
-deadlines occur in that quote. This verifies provenance, not semantic entailment:
-descriptions remain inspectable model interpretations. Missing subjects, unsupported
-quotes, ambiguous references, malformed fields, and generic-only summaries leave
-interpretation incomplete and prevent unsupported projections becoming ready.
+Current Canonical State and its deterministic readers remain. Existing committed events,
+canonical records, corrections and previously saved chapter checkpoints are still read;
+the removed call produces no new event records. Historical `memoryRecoveries` requests,
+raw replies, usage receipts and status fields remain stored and readable, but are never
+resumed or applied. No stored data or schema version changes, and no migration is needed.
+Deterministic replay of existing events remains available without a provider call.
+Tests seed historical records directly to check their readers and saved-story compatibility.
 
-The existing inspection panel separates **prose saved** from **memory interpretation
-incomplete**. **Recover memory from saved prose** makes an explicit extraction call
-through the configured host adapter, the same call the HARNESS makes automatically
-after a commit. It reads the exact saved chapter and identity
-references, checkpoints raw output before interpretation, and appends evidence
-without changing prose, the original provider reply, or story order. Failed local
-writes retry the received extraction; deterministic **Replay** makes no model call.
-Exports include recovery requests, raw responses, usage receipts, and failures.
-Existing schema-2 saves remain readable; the recovery history and identity fields
-are optional additions. Hosts without extraction support receive an explicit error.
-
-The captured Start Now regression covers Aria's AI identity, the forty-eight-hour
-collapse threat, the conditional end-of-week seizure, F-Tier prototype difficulty,
-0.04% initial energy, and Xie Jin's risky bypass decision. A live extraction of
-the saved chapter produced nine events while preserving all prose and the original
-four summaries. A mistyped thread remains visibly unresolved. The deterministic
-fixture checks both the automatic post-commit extraction and an explicit recovery; the optional live test runs only when
-`HARNESS_MEMORY_EXPORT` and `HARNESS_MEMORY_ENV` point to an author export and a
-server environment file. `HARNESS_MEMORY_OUTPUT` optionally writes inspection
-artifacts. `HARNESS_MEMORY_REPLAY=1` reprocesses saved extraction without a model call.
-
-## Transfer notes
-
-Copy the `development/` and `shared/` code, its package barrel, and the server
-route as one feature. Leave the Workshop preview, manifest registration,
-reference pane, and local Development endpoint guard behind unless the target
-application explicitly needs them.
+## Implementation inventory and boundaries
+The active `development/` and `shared/` implementation is exposed through its
+package barrel and the host server route. Workshop previews and controls remain
+separate from the packages and app.
 
 ### 2026-09-06 — Library UI ownership migration
 

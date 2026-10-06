@@ -1,4 +1,4 @@
-import { HARNESS_MAX_CHAPTER_PARAGRAPHS, type HarnessArcRequest, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessMemoryRecoveryRequest } from '@seihouse/sen/harness-generation';
+import { HARNESS_MAX_CHAPTER_PARAGRAPHS, type HarnessArcRequest, type HarnessGenerationRequest, type HarnessGenerationResponse } from '@seihouse/sen/harness-generation';
 import { validateSoundWords } from '@seihouse/sen/audio';
 import {
   harnessGenerationServerInfo,
@@ -59,16 +59,9 @@ const requirePacket = (packet: unknown) => {
   }
 };
 
-const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessMemoryRecoveryRequest | HarnessArcRequest => {
+const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessArcRequest => {
   const parsed = typeof body === 'string' ? JSON.parse(body) : body;
   if (!isRecord(parsed)) throw new Error('The Harness Generation request must be a JSON object.');
-  if (parsed.operation === 'recover-memory') {
-    requireFoundation(parsed.foundation);
-    if (![parsed.storyId, parsed.chapterId, parsed.model, parsed.prose].every(value => typeof value === 'string' && value.trim())) {
-      throw new Error('Memory recovery requires a story, saved chapter prose, chapter identity, and configured model.');
-    }
-    return parsed as unknown as HarnessMemoryRecoveryRequest;
-  }
   if (parsed.operation === 'plan-arc') {
     if (!isRecord(parsed.storyInformation) || !isRecord(parsed.storyInformation.storyHead) || typeof parsed.model !== 'string'
       || typeof parsed.storyId !== 'string') throw new Error('Arc operations require a frozen Story Information Packet.');
@@ -147,7 +140,7 @@ export const handleHarnessGenerationHttp = async (
     };
   }
 
-  let parsed: HarnessGenerationRequest | HarnessMemoryRecoveryRequest | HarnessArcRequest;
+  let parsed: HarnessGenerationRequest | HarnessArcRequest;
   try {
     parsed = parseRequest(request.body);
   } catch (error) {

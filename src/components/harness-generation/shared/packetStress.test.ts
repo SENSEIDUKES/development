@@ -1,3 +1,4 @@
+import { seedLegacyChapterEvents } from '../../../test-utils/seedLegacyChapterEvents';
 import { describe, expect, it } from 'vitest';
 import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
@@ -50,7 +51,6 @@ export const runPacketStress = async (chapterCount: number) => {
   const adapter: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ configured: true, provider: 'gemini', defaultModel: 'fixture', models: [] }),
     generate: async request => { requests.push(structuredClone(request)); chapter += 1; return response(writtenChapter(stressChapter(chapter))); },
-    recoverMemory: async request => response(stressMemory(request.prose)),
     arcOperation: async () => response({ plan: { arcNumber: 1, goals: [{ id: 'arc-1-goal', text: 'Carry Yi Chen through the outer court.', chapters: 30 }] }, destinedEnding: 'Yi Chen leads the Azure Sect to glory.' }),
   };
   const repository = new InMemoryHarnessGenerationRepository();
@@ -61,7 +61,10 @@ export const runPacketStress = async (chapterCount: number) => {
     cast: [{ name: 'Yi Chen', role: 'Disciple', isMainCharacter: true }], openingSituation: 'Yi Chen waits at the outer gate.',
   });
   if ('setHardPins' in controller) await (controller as HarnessGenerationController).setHardPins(story.id, [{ text: 'Make Yi Chen take the Azure Sect to glory throughout the entire story.' }]);
-  for (let n = 1; n <= chapterCount; n += 1) await controller.generateNextChapter(story.id, 'fixture');
+  for (let n = 1; n <= chapterCount; n += 1) {
+    await controller.generateNextChapter(story.id, 'fixture');
+    await seedLegacyChapterEvents(controller, repository, stressMemory(controller.snapshot().chapters.at(-1)!.prose));
+  }
   const size = (request: HarnessGenerationRequest) => {
     const prompt = buildHarnessGenerationPrompt(request);
     return { system: prompt.systemInstruction.length, user: prompt.userPrompt.length, schema: JSON.stringify(prompt.responseJsonSchema).length,

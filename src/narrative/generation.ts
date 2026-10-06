@@ -1127,11 +1127,13 @@ export interface HarnessWorkspaceState {
   corrections: HarnessAuthorCorrection[];
   batches: HarnessBatchRun[];
   arcPlanOperations: HarnessArcPlanOperation[];
+  /** Historical extraction receipts only: preserved in saved stories, never resumed or applied. */
   memoryRecoveries?: HarnessMemoryRecovery[];
   /** Every story's Codex entries: the people, things and abilities its holdings name, each with an app-made ID. */
   codexEntries: CodexEntry[];
 }
 
+/** Historical stored request shape, not a supported provider operation. */
 export interface HarnessMemoryRecoveryRequest {
   operation: 'recover-memory';
   storyId: string;
@@ -1200,7 +1202,6 @@ export interface HarnessGenerationModelAdapter {
   getServerInfo(): Promise<HarnessGenerationServerInfo>;
   generate(request: HarnessGenerationRequest): Promise<HarnessGenerationResponse>;
   arcOperation?(request: HarnessArcRequest): Promise<HarnessGenerationResponse>;
-  recoverMemory?(request: HarnessMemoryRecoveryRequest): Promise<HarnessGenerationResponse>;
 }
 
 export interface HarnessArcRequest {

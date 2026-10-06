@@ -856,6 +856,8 @@ function SemanticEventList({ events }: { events: HarnessSemanticEvent[] }) {
 function Diagnostics({ attempt }: { attempt?: HarnessGenerationAttempt }) {
   if (!attempt) return null;
   const usage = attempt.providerReceipt?.usage;
+  // Hide the retired extraction warning without rewriting saved attempts.
+  const warnings = attempt.warnings.filter(warning => warning.code !== 'capability_unresolved');
   return (
     <LibraryPanel as="section" padding="md" aria-labelledby="harness-diagnostics-title">
       <div className="flex items-center gap-2">
@@ -876,11 +878,11 @@ function Diagnostics({ attempt }: { attempt?: HarnessGenerationAttempt }) {
           {usage?.inputTokens !== undefined && <p className="mt-1 text-neutral-400">{usage.inputTokens} input · {usage.outputTokens ?? '—'} output</p>}
         </div>
       </div>
-      {attempt.warnings.length > 0 && (
+      {warnings.length > 0 && (
         <div className="mt-4">
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-gold-accent">Warnings and recoveries</p>
           <ul className="mt-2 space-y-2 text-xs leading-relaxed text-neutral-300">
-            {attempt.warnings.map((warning, index) => <li key={`${warning.code}-${index}`}>• {warning.message}</li>)}
+            {warnings.map((warning, index) => <li key={`${warning.code}-${index}`}>• {warning.message}</li>)}
           </ul>
         </div>
       )}
@@ -930,7 +932,6 @@ function HarnessInspection({
   attempt,
   busy,
   onReplay,
-  onRecover,
   onCorrection,
 }: {
   state: HarnessWorkspaceState;
@@ -938,7 +939,6 @@ function HarnessInspection({
   attempt?: HarnessGenerationAttempt;
   busy: boolean;
   onReplay: () => void;
-  onRecover: (chapterId: string) => void;
   onCorrection: (input: {
     kind: HarnessCorrectionKind;
     reason: string;
@@ -982,20 +982,6 @@ function HarnessInspection({
         <LibraryButton type="button" size="sm" variant="secondary" icon={RefreshCcw} onClick={onReplay} loading={busy}>Replay committed events</LibraryButton>
       </div>
       <p className="mt-2 text-sm leading-relaxed text-neutral-400">These records are replayable views over committed evidence. They never replace chapter prose or original events.</p>
-      <div className="mt-3 space-y-3">
-        {state.chapters.filter(chapter => chapter.storyId === story.id).map(chapter => {
-          const chapterAttempt = state.attempts.find(entry => entry.id === chapter.attemptId);
-          const recovery = state.memoryRecoveries?.filter(entry => entry.chapterId === chapter.id).at(-1);
-          return <div key={chapter.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 p-3 text-xs">
-            <div><p className="text-neutral-200">Chapter {chapter.chapterNumber}: prose saved · {chapterAttempt?.postCommitProcessing === 'complete' ? 'memory interpreted' : 'memory interpretation incomplete'}</p>
-              {recovery && <p className="mt-1 text-neutral-400">Memory recovery: {recovery.status.replace(/_/g, ' ')}{recovery.failure ? ` · ${recovery.failure}` : ''}</p>}
-            </div>
-            <LibraryButton type="button" size="sm" variant="secondary" disabled={busy} onClick={() => onRecover(chapter.id)}>Recover memory from saved prose</LibraryButton>
-            {recovery?.rawProviderResponse && <details className="w-full min-w-0"><summary className="cursor-pointer text-neutral-400">Saved memory extraction</summary><pre className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap break-words text-neutral-400">{recovery.rawProviderResponse}</pre></details>}
-          </div>;
-        })}
-      </div>
-
       <div className="mt-5 grid gap-3 lg:grid-cols-2">
         {groups.map(([label, records]) => (
           <details key={label} className="rounded-xl border border-white/10 bg-black/20 p-3">
@@ -1756,7 +1742,6 @@ export function HarnessGenerationWorkspace({
               attempt={attempt}
               busy={busy}
               onReplay={replay}
-              onRecover={chapterId => { void run(() => controller.recoverChapterMemory(chapterId, model)); }}
               onCorrection={addCorrection}
             />}
 

@@ -8,11 +8,11 @@ export type WorkshopCategory =
   | 'other';
 
 export interface WorkshopSource {
-  /** Repository containing the production implementation this feature is compared against. */
+  /** Repository owning this feature; new entries point here, older entries retain historical provenance. */
   repository: string;
-  /** File path of the production implementation, relative to that repository. */
+  /** Implementation path relative to that repository, or retained historical source path. */
   path: string;
-  /** Date the Original Reference was last checked against the real production implementation. */
+  /** Retained historical comparison metadata; new entries may use a DEV-native description, not a required date. */
   lastCompared: string;
 }
 
@@ -129,7 +129,8 @@ export function getWorkshopVersionLabel(version: WorkshopEntry['version']) {
 
 /**
  * One entry per actual feature — never per version. A feature's Original
- * Reference vs Development split lives inside its own Workshop page
+ * Reference (the old production version, where one exists) and active
+ * Development implementation live inside its own Workshop page
  * (see FeatureWorkspace), not as a second manifest entry or homepage card.
  * Array order is display order inside each section and group.
  */

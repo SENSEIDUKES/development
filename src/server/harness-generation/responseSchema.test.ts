@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { HARNESS_RESPONSE_CONTRACT, buildHarnessChapterResponseSchema, buildHarnessMemoryRecoveryPrompt, presentHoldings, presentImmediateChapterRequest } from './prompt';
+import { HARNESS_RESPONSE_CONTRACT, buildHarnessChapterResponseSchema, presentHoldings, presentImmediateChapterRequest } from './prompt';
 
 /** The schema every story receives: sound words travel in the CAPA Prompt, never here. */
 const HARNESS_CHAPTER_RESPONSE_SCHEMA = buildHarnessChapterResponseSchema();
@@ -109,15 +109,7 @@ describe('HARNESS chapter response schema shape', () => {
     expect(Object.keys(HARNESS_CHAPTER_RESPONSE_SCHEMA.properties)).not.toContain('prose');
   });
 
-  it('keeps the thirteen-category memory contract on the separate extraction call only', () => {
-    const memory = buildHarnessMemoryRecoveryPrompt({
-      operation: 'recover-memory', storyId: 's', chapterId: 'c', model: 'google/gemini-3.1-flash-lite', prose: 'Saved prose.',
-      foundation: { id: 'f', storyId: 's', revision: 1, createdAt: 'now', input: { premise: 'A premise.' } },
-    });
-    const memorySchema = memory.responseJsonSchema as { properties: { memory: { properties: Record<string, unknown> } } };
-    expect(Object.keys(memorySchema.properties.memory.properties)).toHaveLength(13);
-    expect(JSON.stringify(HARNESS_CHAPTER_RESPONSE_SCHEMA)).not.toContain('characters');
-  });
+
 });
 
 describe('the Holdings section the writer reads', () => {

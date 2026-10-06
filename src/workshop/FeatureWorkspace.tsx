@@ -34,9 +34,9 @@ export interface WorkshopControlsConfig {
 
 export interface FeatureWorkspaceProps {
   entry: WorkshopEntry;
-  /** Renders the untouched, locked replica of production. Never edited during normal Workshop tweaking. */
+  /** Renders the old production version, where one exists. Historical references are never edited or refreshed. */
   renderReference: () => React.ReactNode;
-  /** Renders the active Workshop version. The only version agents are allowed to change. */
+  /** Renders the active implementation built here; shared, server and host owners may also change within scope. */
   renderDevelopment: () => React.ReactNode;
   /** Preview-only options rendered by the shared Workshop Controls menu. */
   workshopControls?: WorkshopControlsConfig;
@@ -198,7 +198,7 @@ function WorkshopControls({ config }: { config?: WorkshopControlsConfig }) {
 
 /**
  * The one shared shell every Workshop feature opens into: Original Reference,
- * Development, and an optional Compare viewing mode over the same preview
+ * Development (the active implementation), and optional Compare over the same preview
  * canvas. This is the structural guarantee that no feature can quietly grow
  * a second homepage card — a "V2" is just a Development version inside this
  * shell, never a new entry point.

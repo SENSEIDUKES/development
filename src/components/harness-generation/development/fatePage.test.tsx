@@ -62,7 +62,6 @@ const createModel = () => {
       if (failures.shift()) throw new Error('The provider timed out.');
       return { rawProviderResponse: writtenChapterReply(chapterReply(request.immediateChapterRequest.chapterNumber)), providerReceipt: receipt };
     },
-    recoverMemory: async () => ({ rawProviderResponse: JSON.stringify({ events: [] }), providerReceipt: receipt }),
     arcOperation: vi.fn(),
   };
   return { requests, failNext: () => failures.push(1), modelAdapter };

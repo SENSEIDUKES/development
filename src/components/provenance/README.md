@@ -1,11 +1,17 @@
 # Provenance
 
+Where `reference/` exists, it holds the old production version, kept as reference
+material for the remake; it is not edited or refreshed. New features do not get a
+reference folder. Old systems stay until each is remade on the new path; never
+reconnect them as they are or re-sync with the old production app. The destination
+is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
+
 - **Source reference:** `https://lines.seihouse.org/LIBRARY/images/ICONS/Header/SENSEIHOUSEProvenance.svg`
 - **Workshop location:** Home → Provenance tab
-- **Replica created:** 2026-09-11
-- **Last Workshop update:** 2026-09-27
-- **Last source comparison:** 2026-09-11
-- **Replica status:** under refinement
+- **First Workshop record:** 2026-09-11
+- **Last recorded Workshop update:** 2026-09-27
+- **Historical source inspection:** 2026-09-11
+- **Implementation status:** under refinement
 
 ## Purpose
 
@@ -84,15 +90,19 @@ There is no Firestore, Postgres, R2, API, network request, hashing, C2PA,
 cryptographic verification, blockchain, public verification route, or
 production integration in this feature.
 
-## Transfer notes
+## Implementation inventory
 
-Future integration should keep `ProvenanceBadge` and `ProvenanceDetails`
-record-driven. A host adapter may retrieve a record and pass it to the UI, but
-must establish its trust through an authoritative recording or verification
-path first; fetching, authentication, storage, hashing, and verification remain
-outside the components. Public details should not expose raw user, asset,
-fingerprint, or parent identifiers by default.
+The packages and NovelExpanded app built here are the destination. Keep Workshop
+controls, fixtures and adapters outside reusable package entries; another repository
+changes only when the owner asks. Historical references stay untouched.
 
-Before publishing this module, choose a cross-product package owner that can be
-consumed by SEN, SEA, and other SEIHouse generators without making SEN depend on
-Library. Package publication and production transfer are deliberately deferred.
+## Evidence and package boundary
+
+Keep `ProvenanceBadge` and `ProvenanceDetails` record-driven. A host adapter may
+retrieve a record and pass it to the UI, but must establish its trust through an
+authoritative recording or verification path first. Fetching, authentication,
+storage, hashing and verification remain outside the components. Public details
+should not expose raw user, asset, fingerprint or parent identifiers by default.
+
+Package publication is deferred until a cross-product owner can be consumed by
+SEN, SEA and other SEIHouse generators without making SEN depend on Library.

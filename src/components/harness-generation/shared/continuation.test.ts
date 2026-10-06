@@ -1,3 +1,4 @@
+import { seedLegacyChapterEvents } from '../../../test-utils/seedLegacyChapterEvents';
 import { describe, expect, it } from 'vitest';
 import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import { HarnessCapabilityRegistry, resolveHarnessEntity, type HarnessCapabilityContext } from '@seihouse/sen/harness-generation';
@@ -25,7 +26,7 @@ const READER_DIRECTIONS: Record<number, string> = {
 };
 
 describe('Steered continuation and SEN boundaries', () => {
-  it('projects typed memory and keeps recovered mechanical details distinct from writer events', async () => {
+  it('reads historical typed events and updated mechanical details without another model call', async () => {
     const prose = 'Mara has 16 sparks. Captain Iven says, "Stay together." Mara spends her sparks and has 0 sparks. The bell has 3 charges.';
     const measurement = (value: string) => ({ description: 'Mara checks her balance.', evidence: prose, facts: {},
       subjects: [{ name: 'Mara', kind: 'character' }], details: { mechanics: { subject: 'Mara', name: 'Sparks', value, unit: 'sparks' } } });
@@ -33,10 +34,7 @@ describe('Steered continuation and SEN boundaries', () => {
     let request: HarnessGenerationRequest | undefined;
     const response = (body: unknown) => ({ rawProviderResponse: JSON.stringify(body),
       providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: 'now', usage: { source: 'unavailable' as const } } });
-    // The chapter call returns prose only; the separate extraction call returns
-    // the grouped memory contract, first automatically after commit, then on an
-    // explicit recovery with a newer balance.
-    let extractions = 0;
+    const repository = new InMemoryHarnessGenerationRepository();
     const modelAdapter: HarnessGenerationModelAdapter = {
       getServerInfo: async () => ({ configured: true, provider: 'gemini', defaultModel: 'fixture', models: [] }),
       arcOperation,
@@ -44,15 +42,16 @@ describe('Steered continuation and SEN boundaries', () => {
         writes++; request = input;
         return response(writtenChapter({ prose, arcCompletion: { goalId: 'arc-1-goal', completed: false, evidence: '' } }));
       },
-      recoverMemory: async () => response(extractions++ === 0 ? { memory: {
+
+    };
+    const historical = { memory: {
         characters: [{ description: 'Iven addresses Mara.', evidence: prose, facts: {}, subjects: [{ name: 'Iven', kind: 'character' }],
           details: { character: { name: 'Iven', role: 'Captain', relationshipToMC: 'Ally' }, speech: { speaker: 'Iven', quote: '"Stay together."' } } }],
         progression: [measurement('16')],
         artifacts: [{ description: 'The bell has 3 charges.', evidence: prose, facts: {}, subjects: [{ name: 'bell', kind: 'artifact' }],
           details: { mechanics: { subject: 'bell', name: 'Charges', value: '3', unit: 'charges' } } }],
-      } } : { memory: { progression: [measurement('0')] } }),
-    };
-    const controller = new HarnessGenerationController({ repository: new InMemoryHarnessGenerationRepository(), modelAdapter });
+      } };
+    const controller = new HarnessGenerationController({ repository, modelAdapter });
     await controller.hydrate();
     const story = await controller.createStory({ premise: 'Mara and Iven evacuate the islands.',
       cast: [{ name: 'Mara', role: 'Courier', isMainCharacter: true }],
@@ -60,13 +59,14 @@ describe('Steered continuation and SEN boundaries', () => {
         { name: 'Iven', aliases: ['Captain'], kind: 'character', evidence: 'Iven is the captain.' }],
     });
     await controller.generateNextChapter(story.id, 'fixture');
+    await seedLegacyChapterEvents(controller, repository, historical);
     const before = controller.snapshot();
     const schema = buildHarnessGenerationPrompt(request!).responseJsonSchema;
     expect(Object.keys(schema.properties)).not.toContain('memory');
-    expect(before.memoryRecoveries?.map(recovery => recovery.status)).toEqual(['applied']);
+    expect(before.memoryRecoveries).toBeUndefined();
     expect(before.attempts[0].preservedEvents).toEqual([]);
     expect(createHarnessSenStory(before, story.id).memory?.characters).toHaveLength(2);
-    await controller.recoverChapterMemory(before.chapters[0].id, 'fixture');
+    await seedLegacyChapterEvents(controller, repository, { memory: { progression: [measurement('0')] } });
     await controller.replayStory(story.id);
     const repaired = controller.snapshot();
     expect(repaired.events.slice(0, before.events.length)).toEqual(before.events);
@@ -103,16 +103,7 @@ describe('Steered continuation and SEN boundaries', () => {
           prose: `Mara meets Iven. Iven is her ${relationship}. "We remember the burned bridge." Iven speaks as captain. Mara has ${n} sparks.`,
         })), providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: new Date().toISOString(), usage: { source: 'unavailable' } } };
       },
-      recoverMemory: async request => {
-        const n = Number(/has (\d+) sparks/.exec(request.prose)![1]);
-        const relationship = n === 1 ? 'Enemy' : 'Ally';
-        return { rawProviderResponse: JSON.stringify({ events: [
-          { description: 'Mara is the protagonist.', category: 'character', subjects: ['Mara'], evidence: 'Mara meets Iven.', details: { character: { name: 'Mara', role: 'Protagonist', isMainCharacter: true } } },
-          { description: `Iven is now an ${relationship}; the burned bridge still limits their escape.`, category: 'character,relationship', subjects: ['Iven', 'Mara'], evidence: `Iven is her ${relationship}.`,
-            details: { character: { name: 'Iven', role: 'Captain', relationshipToMC: relationship }, speech: { speaker: 'Iven', quote: '"We remember the burned bridge."' } } },
-          { description: `Mara has ${n} sparks.`, category: 'progression', subjects: ['Mara'], evidence: `Mara has ${n} sparks.`, details: { mechanics: { subject: 'Mara', name: 'Sparks', value: n, unit: 'sparks' } } },
-        ] }), providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: new Date().toISOString(), usage: { source: 'unavailable' } } };
-      },
+
     };
     let controller = new HarnessGenerationController({ repository, modelAdapter: provider, capabilityRegistry: new Registry() });
     await controller.hydrate();
@@ -121,6 +112,12 @@ describe('Steered continuation and SEN boundaries', () => {
       const direction = READER_DIRECTIONS[n];
       if (direction) await controller.chooseChapterDirection(story.id, { kind: 'reader', text: direction });
       await controller.generateNextChapter(story.id, 'fixture');
+      const relationship = n === 1 ? 'Enemy' : 'Ally';
+      await seedLegacyChapterEvents(controller, repository, { events: [
+        { description: 'Mara is the protagonist.', category: 'character', subjects: ['Mara'], evidence: 'Mara meets Iven.', details: { character: { name: 'Mara', role: 'Protagonist', isMainCharacter: true } } },
+        { description: `Iven is now an ${relationship}; the burned bridge still limits their escape.`, category: 'character,relationship', subjects: ['Iven', 'Mara'], evidence: `Iven is her ${relationship}.`, details: { character: { name: 'Iven', role: 'Captain', relationshipToMC: relationship }, speech: { speaker: 'Iven', quote: '"We remember the burned bridge."' } } },
+        { description: `Mara has ${n} sparks.`, category: 'progression', subjects: ['Mara'], evidence: `Mara has ${n} sparks.`, details: { mechanics: { subject: 'Mara', name: 'Sparks', value: n, unit: 'sparks' } } },
+      ] });
       if (n === 7) {
         expect(controller.snapshot().attempts.at(-1)?.postCommitProcessing).toBe('failed');
         expect(controller.snapshot().chapters).toHaveLength(7);
@@ -216,7 +213,7 @@ describe('Steered continuation and SEN boundaries', () => {
     ]);
   });
 
-  it('repeats memory extraction without rewriting prose or duplicating equal descriptions', async () => {
+  it('replays historical events without rewriting prose or duplicating equal descriptions', async () => {
     const repository = new InMemoryHarnessGenerationRepository();
     let calls = 0;
     const modelAdapter: HarnessGenerationModelAdapter = {
@@ -226,22 +223,22 @@ describe('Steered continuation and SEN boundaries', () => {
         calls++;
         return { rawProviderResponse: JSON.stringify(writtenChapter({ prose: 'Mara has 0 sparks. Iven has 13 sparks.' })), providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: 'now', usage: { source: 'unavailable' } } };
       },
-      recoverMemory: async () => ({ rawProviderResponse: JSON.stringify({ events: [
-        { description: 'The transfer completes.', details: { mechanics: { subject: 'Mara', name: 'Sparks', value: '0' } } },
-        { description: 'The transfer completes.', details: { mechanics: { subject: 'Iven', name: 'Sparks', value: '13' } } },
-        { character: { name: 'Mara', role: 'Courier', isMainCharacter: true } },
-      ] }), providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: 'now', usage: { source: 'unavailable' } } }),
+
     };
     const original = new HarnessGenerationController({ repository, modelAdapter });
     await original.hydrate();
     const story = await original.createStory({ premise: 'Transfer the sparks.' });
     await original.generateNextChapter(story.id, 'fixture');
+    await seedLegacyChapterEvents(original, repository, { events: [
+        { description: 'The transfer completes.', details: { mechanics: { subject: 'Mara', name: 'Sparks', value: '0' } } },
+        { description: 'The transfer completes.', details: { mechanics: { subject: 'Iven', name: 'Sparks', value: '13' } } },
+        { character: { name: 'Mara', role: 'Courier', isMainCharacter: true } },
+      ] });
     const before = original.snapshot();
     expect(before.events).toHaveLength(3);
     expect(before.attempts[0].preservedEvents).toEqual([]);
     const repaired = new HarnessGenerationController({ repository, modelAdapter });
     await repaired.hydrate();
-    await repaired.recoverChapterMemory(before.chapters[0].id, 'fixture');
     await repaired.replayStory(story.id, before.chapters[0].id);
     expect(repaired.snapshot().events).toHaveLength(3);
     expect(repaired.snapshot().events.slice(0, 2).map(event => event.details?.mechanics?.value)).toEqual(['0', '13']);

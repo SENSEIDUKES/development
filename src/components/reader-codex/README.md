@@ -1,12 +1,18 @@
 # Reader Codex
 
+Where `reference/` exists, it holds the old production version, kept as reference
+material for the remake; it is not edited or refreshed. New features do not get a
+reference folder. Old systems stay until each is remade on the new path; never
+reconnect them as they are or re-sync with the old production app. The destination
+is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
+
 - **Source repository:** SENSEIDUKES/Light-Novels
 - **Source location:** `src/components/ReaderCodex.tsx`, `src/components/CodexSheetOverlay.tsx`, and `src/components/CodexHovercard.tsx` (verified against `origin/main` @ `66643f6`)
 - **Workshop preview:** `?preview=reader-codex`
-- **Replica created:** 2026-08-11
-- **Last Workshop update:** 2026-09-13
-- **Last source comparison:** 2026-08-18
-- **Replica status:** under refinement
+- **First Workshop record:** 2026-08-11
+- **Last recorded Workshop update:** 2026-09-13
+- **Historical source inspection:** 2026-08-18
+- **Implementation status:** under refinement
 
 ## Workshop history
 
@@ -79,7 +85,7 @@ development/
 shared/
   codex/                    — production section/component tree
   hooks/                    — pure hooks and local production-service adapters
-  CodexHovercard.tsx        — now serves only the locked Reference Reader path
+  CodexHovercard.tsx        — now serves only the historical Reference Reader path
   codexHighlighting.ts
   codexContext.ts
   codexEntryContext.ts
@@ -184,38 +190,31 @@ flow can still be inspected and tested without beginning a backend pass.
 No dedicated production static assets exist for the Codex. Production imagery
 comes from story/entity media records; DEV supplies local fixture URLs.
 
-## Transfer notes
+## Implementation inventory
 
-The verified production implementation is already authoritative. If a future
-Development-fork refinement is approved for transfer, map:
+The packages and NovelExpanded app built here are the destination. Keep Workshop
+controls, fixtures and adapters outside reusable package entries; another repository
+changes only when the owner asks. Historical references stay untouched.
 
-- `development/ReaderCodex.tsx` → `src/components/ReaderCodex.tsx`
-- `development/CodexSheetOverlay.tsx` → `src/components/CodexSheetOverlay.tsx`
-- `development/CodexHovercard.tsx` → `src/components/CodexHovercard.tsx`
-- `development/codexEntityAccent.ts` and `development/CodexCardAmbience.tsx` →
-  **new production files; no existing owner.** Production's inline Codex Card
-  lives in `src/components/ReaderViewport.tsx`, and there is no `src/lib`
-  accent helper or shared ambience component today, so this mapping is pending
-  an integration decision: expected destinations are
-  `src/lib/codexEntityAccent.ts` and `src/components/CodexCardAmbience.tsx`,
-  imported by both production Codex Card surfaces (`ReaderViewport.tsx` and
-  `CodexHovercard.tsx`). The mote keyframes live in DEV `src/styles.css`
-  (`--animate-codex-mote`) and move into production `src/index.css`
-- `development/codexManifestBackdrop.ts` → production's reveal backdrop pool
-  lives inline in `src/components/ReaderViewport.tsx` (`FALLBACK_BACKDROPS`,
-  the R2 `LIBRARY BACKDROPS` URLs); the Workshop pool swaps in the published
-  `lines.seihouse.org/LIBRARY/images/MANFEST/` "IMMORTAL LAND" landscapes as
-  local files. On transfer, point the pool at the production MANFEST URLs (or
-  keep production's existing pool) — do not copy `public/manifest-backdrops/`
-  into the production app.
-- `shared/codex/**` → `src/components/codex/**`
-- pure shared hooks/utilities back to their verified `src/hooks`, `src/lib`,
-  `src/contracts`, and `src/utils` owners
-- `reader-codex.css` rules into production `src/index.css`
+The existing local files named by this inventory are:
 
-Never transfer Workshop compatibility adapters, mock fixtures, preview routes,
-or local media/voice/glossary simulators over production's real services.
+- `development/ReaderCodex.tsx`
+- `development/CodexSheetOverlay.tsx`
+- `development/CodexHovercard.tsx`
+- `development/codexEntityAccent.ts`
+- `development/CodexCardAmbience.tsx`
+- `src/styles.css`
+- `public/manifest-backdrops/`
 
 ### 2026-09-06 — Library UI ownership migration
 
 Reusable presentation now comes from the canonical Library UI package. Portable SEN surfaces resolve presentation through the host provider; the first-party Workshop supplies LibraryPresentationProvider. Domain, generation, persistence, media, and locked reference sources are unchanged.
+
+## Presentation boundary
+
+`codexEntityAccent.ts` and `CodexCardAmbience.tsx` are Development presentation
+helpers; their mote keyframes live in `src/styles.css` (`--animate-codex-mote`).
+`codexManifestBackdrop.ts` uses the five local IMMORTAL LAND landscapes from the
+published MANFEST collection. Historical production used an inline backdrop pool
+in ReaderViewport. Compatibility adapters, mock fixtures, preview routes and local
+media/voice/glossary simulators remain separate from real host services.

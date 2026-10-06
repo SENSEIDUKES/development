@@ -1,3 +1,4 @@
+import { seedLegacyChapterEvents } from '../../../test-utils/seedLegacyChapterEvents';
 import { describe, expect, it, vi } from 'vitest';
 import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
@@ -20,18 +21,14 @@ const setup = async () => {
       providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: runtime.now(), usage: { source: 'unavailable' } },
     }),
     generate: async () => ({ rawProviderResponse: JSON.stringify(writtenChapter({ prose })), providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: runtime.now(), usage: { source: 'unavailable' } } }),
-    recoverMemory: async () => ({ rawProviderResponse: JSON.stringify({ events: [
-      { description: 'Iven speaks while Mara checks her sparks.', category: 'character', subjects: ['Iven'], evidence: prose,
-        details: { character: { name: 'Iven', role: 'Captain' }, speech: { speaker: 'Iven', quote: '"Stay together."' },
-          mechanics: { subject: 'Mara', name: 'Sparks', value: '16', unit: 'sparks' } } },
-    ] }), providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: runtime.now(), usage: { source: 'unavailable' } } }),
+
   };
   const repository = new InMemoryHarnessGenerationRepository();
   const controller = new HarnessGenerationController({ repository, modelAdapter, runtime });
   await controller.hydrate();
   const story = await controller.createStory({ premise: 'Mara and Iven cross the sea.',
     cast: [{ name: 'Mara', isMainCharacter: true }, { name: 'Iven', role: 'Captain' }] });
-  return { controller, repository, story, runtime, modelAdapter };
+  return { controller, repository, story, runtime, modelAdapter, prose };
 };
 
 describe('Chapter direction review regressions', () => {
@@ -52,8 +49,9 @@ describe('Chapter direction review regressions', () => {
   });
 
   it('carries cast identity and the latest resource balance as current canonical state, without the prose', async () => {
-    const { controller, story } = await setup();
+    const { controller, repository, story, prose } = await setup();
     await controller.generateNextChapter(story.id, 'fixture');
+    await seedLegacyChapterEvents(controller, repository, { events: [{ description: 'Iven speaks while Mara checks her sparks.', category: 'character', subjects: ['Iven'], evidence: prose, details: { character: { name: 'Iven', role: 'Captain' }, speech: { speaker: 'Iven', quote: '"Stay together."' }, mechanics: { subject: 'Mara', name: 'Sparks', value: '16', unit: 'sparks' } } }] });
     const state = controller.snapshot();
     expect(state.canonicalRecords.filter(record => record.kind === 'character').map(record => record.label)).toContain('Mara');
     const context = compileStoryInformationPacket(state, state.stories[0], state.foundations[0], 'next');
@@ -69,8 +67,9 @@ describe('Chapter direction review regressions', () => {
   });
 
   it('does not let unchecked later quantities or spending alter SEN memory', async () => {
-    const { controller, story } = await setup();
+    const { controller, repository, story, prose } = await setup();
     await controller.generateNextChapter(story.id, 'fixture');
+    await seedLegacyChapterEvents(controller, repository, { events: [{ description: 'Iven speaks while Mara checks her sparks.', category: 'character', subjects: ['Iven'], evidence: prose, details: { character: { name: 'Iven', role: 'Captain' }, speech: { speaker: 'Iven', quote: '"Stay together."' }, mechanics: { subject: 'Mara', name: 'Sparks', value: '16', unit: 'sparks' } } }] });
     const state = controller.snapshot();
     state.events.push({ ...state.events[0], id: 'unsupported-quantity', description: 'Mara has 99 sparks.',
       evidence: 'Mara has 99 sparks.', evidenceVerified: undefined,
@@ -81,8 +80,9 @@ describe('Chapter direction review regressions', () => {
   });
 
   it('keeps an earlier character through later ambiguity and correction of its identity', async () => {
-    const { controller, story, runtime } = await setup();
+    const { controller, repository, story, runtime, prose } = await setup();
     await controller.generateNextChapter(story.id, 'fixture');
+    await seedLegacyChapterEvents(controller, repository, { events: [{ description: 'Iven speaks while Mara checks her sparks.', category: 'character', subjects: ['Iven'], evidence: prose, details: { character: { name: 'Iven', role: 'Captain' }, speech: { speaker: 'Iven', quote: '"Stay together."' }, mechanics: { subject: 'Mara', name: 'Sparks', value: '16', unit: 'sparks' } } }] });
     await controller.generateNextChapter(story.id, 'fixture');
     const state = controller.snapshot();
     const original = state.canonicalRecords.find(record => record.label === 'Iven')!;
@@ -101,7 +101,7 @@ describe('Chapter direction review regressions', () => {
       .toEqual([{ name: 'Iven' }]);
     const locale = vi.spyOn(String.prototype, 'toLocaleLowerCase').mockImplementation(function (this: string) { return this.toLowerCase().replaceAll('i', 'ı'); });
     try {
-      const { controller, story } = await setup();
+      const { controller, repository, story, prose } = await setup();
       await controller.generateNextChapter(story.id, 'fixture');
       const sen = createHarnessSenStory(controller.snapshot(), story.id);
       expect(sen.memory?.characters).toHaveLength(2);

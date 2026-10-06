@@ -37,7 +37,7 @@ The app writes chapters exactly as the Workshop's HARNESS page does:
 
 - the official CAPA skills (`src/host/generation/capa/`), installed in memory, so the app never writes the Workshop's imported-skill inventory;
 - the Library's sound words and Sound Cues (`LIBRARY_BASE_MEDIA`), played through the reader mixer below;
-- story memory read only on request (`useLibraryStories`);
+- chapter tags and recaps recorded in the chapter write, with no separate memory call;
 - the Model Router's chapter model (`useModelPreference('chapters')`), the one choice shared with the Workshop;
 - VERSA on the Aura Veil.
 

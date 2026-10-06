@@ -1,3 +1,5 @@
+> Historical record (as of 2026-09-09). It describes the repository as it was then and is not current.
+
 # Library top navigation verification
 
 Verified locally on 2026-09-09. These checks cover the Development header and Workshop adapters. They do not claim a Light-Novels production integration, live account search, or playback of remote help audio.

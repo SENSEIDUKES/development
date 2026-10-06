@@ -334,9 +334,10 @@ Update it whenever it changes.
     Codex, Mind Palace, reader translation or read marks.
   - **The Aura Veil has two screens:** one narrative manifestation and one media
     reveal. The narrative one shows while a chapter is written.
-  - **The memory call after each chapter is off** in the Library; it runs only
-    on request until the tag records replace it, and then it is deleted.
-    Holdings never use it: the writer tags them in the same reply.
+  - **The separate memory call is retired.** Tags record Sound Cues, speakers and
+    Holdings in the chapter write. There is no follow-up or on-request memory
+    extraction, and no “story memory incomplete” warning. Historical saved records
+    remain readable; Holdings never use them.
   - **The NovelExpanded app has its own address, `/app/`**, linked from the
     Workshop home. It shows only the core application spine: Home → Create
     (Story Seed and World Blueprint) → Story View (World Info) → Reader. It

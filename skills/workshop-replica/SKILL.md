@@ -16,15 +16,17 @@ Use for isolated visual refinement of an imported production page, component,
 animation, or flow. Follow the detailed [faithful replica procedure](references/faithful-replica.md).
 
 Verify the exact source repository, branch or commit, path, and exported symbol. Preserve
-presentation before refinement. Maintain a locked `reference/`, active `development/`,
-and optional genuinely shared code in one feature folder. Keep local preview state,
+presentation before refinement. Use one active `development/` folder and optional genuinely shared code. Existing
+`reference/` folders are historical old production versions, never edited or refreshed;
+new features do not get one. Keep local preview state,
 mocks, and Workshop controls separate from portable UI; no production dependencies,
 credentials, or real API calls belong in this simulation.
 
 Use one workspace preview, registry route, manifest entry, and homepage card per feature.
 Do not create versioned folders or routes. Record source metadata, mock boundaries,
-known differences, verified transfer files, creation/update/comparison dates, and dated
-history. Change the source-comparison date only after inspecting the source again.
+known differences and a short dated history using real dates. New manifest source
+metadata points at this repository; no replica-creation or source-comparison dates
+are required.
 Verify responsive layouts, meaningful states, keyboard/focus behavior, accessibility,
 reduced motion, direct preview access, and the absence of production calls.
 
@@ -45,28 +47,25 @@ Its reconstruction policy governs over Mode A's mock-only restrictions.
   verify the requested end-to-end behavior before claiming completion; record blockers honestly.
 - Retain canonical ownership, portable package boundaries, and the SEN/Library dependency
   direction. Keep server infrastructure and Workshop controls outside portable entries.
-- Reuse the existing feature workspace and route when applicable. Keep an existing locked
+- Reuse the existing feature workspace and route when applicable. Keep an existing historical
   reference intact; reconstruction does not require copying the obsolete system into new
   reference folders or limiting real changes to a visual `development/` component folder.
 - Identify retained infrastructure, replaced responsibilities, downstream consumers, and
   deferred work. Verify the protected connections actually work where authorized and
   available; distinguish local, mocked, and real-provider evidence.
 
-## Source authority and transfer
+## Build authority and repository boundary
 
-Production governs existing integrated concepts and persisted compatibility contracts.
-DEV governs the approved reconstructed design until production integration. Apply the
-compatibility rules in Codebase Conventions; development-only state does not automatically
-require migration or dual reads. Report and deliberately resolve contradictory guidance.
+The new path is built here in SEN, Library and NovelExpanded at `/app/`;
+`NOVEL_EXPANDED.md` decides what gets built. Keep old systems until each is remade;
+never delete one for being unused by the new path, reconnect one as it is, or re-sync
+with the old production app. The packages and the app are the destination now.
 
-Never infer file paths or exports across repositories. Verify each source path in its
-own repository and branch before recording it. Production renames require synchronized
-replica metadata only where the same integrated concept still applies.
-
-Production transfer remains a separate, explicitly authorized task. Provide exact verified
-component, style, asset, dependency, and integration notes for that task; exclude Workshop
-navigation, controls, mocks, and simulators. After authorized integration, resynchronize
-references from the inspected source and update comparison metadata.
+Preserve existing persisted and external contracts under Codebase Conventions.
+When importing a surface, verify the source repository, path and symbol; do not infer
+cross-repository paths. Keep source facts and mock boundaries in the feature README,
+with a short dated history. Never edit or refresh historical reference folders.
+Never change another repository unless the owner explicitly asks.
 
 Report the selected mode, outcome, verified source linkage, changed files, validation,
 intentional mock or infrastructure boundaries, and any remaining differences or blockers.

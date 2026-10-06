@@ -1,5 +1,11 @@
 # User Profile
 
+Where `reference/` exists, it holds the old production version, kept as reference
+material for the remake; it is not edited or refreshed. New features do not get a
+reference folder. Old systems stay until each is remade on the new path; never
+reconnect them as they are or re-sync with the old production app. The destination
+is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
+
 - **Source repository:** SENSEIDUKES/Light-Novels
 - **Source location:** `src/components/UserProfile.tsx` (default export `UserProfile`), with
   `src/components/UserProfileAdminPanel.tsx`, `src/components/UserProfileInventoryPanel.tsx`,
@@ -7,10 +13,10 @@
   `src/components/UserProfileStoriesPanel.tsx`, and the page's controller hook
   `src/hooks/useUserProfile.ts`
 - **Workshop preview:** `?preview=user-profile`
-- **Replica created:** 2026-09-08
-- **Last Workshop update:** 2026-09-28
-- **Last source comparison:** 2026-09-10
-- **Replica status:** `@seihouse/library/profile` surface consuming separate Library economy capabilities
+- **First Workshop record:** 2026-09-08
+- **Last recorded Workshop update:** 2026-09-28
+- **Historical source inspection:** 2026-09-10
+- **Implementation status:** `@seihouse/library/profile` surface consuming separate Library economy capabilities
 
 ### 2026-09-22 — Catalogue-driven Familiar preview
 
@@ -309,12 +315,12 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 ## Folder layout
 
 ```text
-reference/    — untouched replica of production, locked
+reference/    — old production version, historical and not edited
 development/  — the Cultivator Cave redesign
 shared/       — the services port, domain types, and the unforked offering-week helper
 ```
 
-`reference/` still contains the ten production files listed under *The locked reference*.
+`reference/` still contains the ten production files listed under *The historical reference*.
 `development/` now contains:
 
 | File | Role in the Cave |
@@ -341,7 +347,7 @@ shared/       — the services port, domain types, and the unforked offering-wee
 `shared/` retains Profile types, the offering-week helper, and the host service
 port. Cultivation, permanent DAO XP, and spendable-QI contracts live under
 `src/library/cultivation/`.
-Legacy daily-claim members remain only for the locked reference; the active Cave
+Legacy daily-claim members remain only for the historical reference; the active Cave
 refreshes its Qi projection after a Dao Pillar reward.
 
 ## The Cultivator Cave
@@ -530,7 +536,7 @@ OAuth / loading / error states,
 each destination and its return path, relic inspection with attunement and a full Offering Hall
 submission, the daily refinement and pillar repair, the status-effect cards and empty state, the
 Settings sections, identity editing, the language confirmation, the owner's Switchboard, the stage
-helper, and a check that the locked reference still renders the original page.
+helper, and a check that the historical reference still renders the original page.
 
 The public view has its own block: entering it from the header, the preserved identity against the
 four swapped areas, the Public View indicator, the name centred with the badge outside the heading,
@@ -580,7 +586,7 @@ issues no external network request beyond the Workshop shell's own Google Fonts 
    sit above the Workshop Controls panel (`z-[200]`). Production has no such panel; the classes are
    harmless there.
 
-## The locked reference
+## The historical reference
 
 `reference/` is the production page exactly as imported on 2026-09-08 and must not be edited during
 Workshop work. It contains `UserProfile.tsx`, `UserProfileAdminPanel.tsx`,
@@ -588,56 +594,27 @@ Workshop work. It contains `UserProfile.tsx`, `UserProfileAdminPanel.tsx`,
 `UserProfileStoriesPanel.tsx`, `qi.ts`, `chapterWritingStyle.ts`, and `userProfile.css`, with the
 five import-wiring edits described in the first history entry.
 
-## Exact files needed for transfer
+## Implementation inventory
 
-Once the Cave is approved, copy back from `development/`:
+The packages and NovelExpanded app built here are the destination. Keep Workshop
+controls, fixtures and adapters outside reusable package entries; another repository
+changes only when the owner asks. Historical references stay untouched.
 
-- `UserProfile.tsx`, `UserProfileAdminPanel.tsx`, `UserProfileInventoryPanel.tsx`,
-  `UserProfilePortraitModal.tsx`, `UserProfileSettingsPanel.tsx`, `UserProfileStoriesPanel.tsx`,
-  `UserProfileCaveDestination.tsx`,
-  `UserProfileStatusEffectsPanel.tsx`, `UserProfileHome.tsx`, `UserProfilePublicPanel.tsx`,
-  `caveNavigation.tsx`, `caveEnvironment.ts`, `publicProfile.ts`, `displayName.ts`
-  → `src/components/` in Light-Novels.
-- Transfer `StoryAuthGate.tsx` and `public/story-seed/library-auth-backdrop.jpg` with the Cave, or
-  consume the gate from the SEN package once that package version is installed in Light-Novels.
-- `rankVisuals.ts` → a new `src/lib/rankVisuals.ts` for `RANKS`, `getRankForDaoXp`, and
-  `resolvePermanentDaoXp`. Transfer `progression.ts`'s `DAO_RANKS`, `getDaoRankData`, and
-  dependent aura helpers into the matching exports in `src/lib/qi.ts`; retain `getRankForQi`
-  only as a compatibility alias for `getRankForDaoXp`, using permanent DAO XP. Production's
-  `AURA_TIERS`, `getAuraColorForXp`, and the two magic `colorHex` strings are gone; see *The
-  rank colour system* for what replaces them and for the `displayNameColor` compatibility rules.
-- `userProfile.css` → the aura block in `src/index.css` plus the Cave ornament rules. The per-tier
-  `.aura-gradient-violet-gold` / `.aura-animated-custom` classes are replaced by the rank-agnostic
-  `.aura-gradient-text` / `.aura-spectrum-text` pair.
-- The host must serve the five `manifest-backdrops/immortal-land-*.jpg` files and
-  `icons/sacred-tree.svg` at the same paths, or `caveEnvironment.ts` must be pointed at the
-  production image URLs.
-- The host must provide `@seihouse/library-ui`, `@seihouse/ui`, and `@seihouse/library/relics`
-  (Light-Novels already consumes the UI packages).
+The existing local files named by this inventory are:
 
-Then restore the production wiring. Either revert the port, or — the smaller diff — keep the port
-and mount one real adapter in `App.tsx`:
+- `development/`
+- `src/components/`
+- `public/story-seed/library-auth-backdrop.jpg`
 
-```tsx
-const services: UserProfileServices = {
-  useController: useUserProfile,
-  authenticate: dispatchFirebaseAuthentication,
-  localOnlyMode: LOCAL_ONLY_MODE,
-  setLocalOnlyMode,
-  requestLibrarySync: () => { void storyStorage.performSync({ deep: true }); },
-  submitCurrentWeekOfferings,
-  listStorySeeds,
-  downloadStorySeed,
-  downloadStorySeedCollection,
-};
-```
+## Compatibility notes
 
-### Transfer cautions
+The host services port owns authentication, local-only state, Library sync, offerings,
+Story Seed lists/downloads and profile edits. It is separate from Workshop mocks.
+`shared/types.ts` and `shared/offeringWeek.ts` are trimmed historical contracts; they
+must not replace a complete host domain model. Approved backdrop assets and the
+sacred-tree icon retain their paths. The reusable display consumes `@seihouse/library-ui`,
+`@seihouse/ui` and `@seihouse/library/relics`.
 
-- **Do not transfer** `shared/types.ts` or `shared/offeringWeek.ts`. Light-Novels owns `src/types.ts`
-  and `src/lib/artifacts.ts`; the Workshop copies are trimmed and would regress those files.
-- **Do not transfer** anything under `src/workshop/previews/user-profile/` or the test file's mock
-  imports.
 - Persisted values and API compatibility strings were kept exactly as production has them —
   `defaultChapterWritingStyle` option strings, the language option values including their native
   script suffixes, `premiumTier` and `role` unions, `offeringWeekId` / `status` on artifacts, the
@@ -647,21 +624,11 @@ const services: UserProfileServices = {
 - **`displayNameColor` is the one exception.** Its vocabulary changed with the rank colour system:
   it now stores a `rank:<id>` token, or a raw hex for a Master custom spectrum. No migration is
   required — `resolveRankVisual` reads every legacy value production wrote, mapped by the DAO XP
-  threshold it was unlocked at (see *The rank colour system*). Keep that legacy map when
-  transferring, or existing cultivators lose their aura.
+  threshold it was unlocked at (see *The rank colour system*). Keep that legacy map so existing cultivators retain their aura.
 - The cave environment choice is not persisted. Adding a profile field for it is a production
   schema decision, not a Workshop one.
 - `AdminStoryRow` narrows what production types `any[]`. If the admin overview grows a field the
   panel renders, add it to the interface rather than widening it back to `any`.
-
-## Lifecycle
-
-1. **Import** — copy production's current implementation into `reference/`. *(done 2026-09-08)*
-2. **Fork once** — `development/` starts as a copy of `reference/`. *(done 2026-09-08)*
-3. **Refine** — every Workshop task modifies `development/` only. *(in progress: Cultivator Cave)*
-4. **Approve** — transfer `development/` back to Light-Novels in a separate task.
-5. **Resynchronize** — refresh `reference/` from the integrated production code, update
-   `source.lastCompared`, and reset `development/` for the next cycle.
 
 ## Shared App Header and shell — 2026-09-09
 

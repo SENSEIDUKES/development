@@ -53,12 +53,9 @@ identities. It names the entry and the problem. The base
 The first-party soundscape and cue catalogs live under `src/host/media/` and
 remain host records; they are not part of SEN or repackaged as portable data.
 
-The optional SPP host adapter in
-`src/workshop/previews/harness-generation/sppMediaPacks.ts` accepts only an
-explicitly selected JSON asset from validated `intakePack` content. No filename
-is special. The selected manifest record supplies the source path and digest.
-Its `seihouse.harness.media-packs.v1` storage key is separate from the v3 SPP
-skill inventory.
+The unused Workshop SPP media-pack adapter and its separate local storage key were
+removed on 2026-10-06. Active host media records, media validation, entitlements,
+loadout freezing and playback remain in their existing owners.
 
 ## Freeze, resolution, persistence, and playback
 

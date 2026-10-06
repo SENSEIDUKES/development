@@ -1,5 +1,11 @@
 # Rewards — Achievements, Mystery Scrolls and the reward reveal
 
+Where `reference/` exists, it holds the old production version, kept as reference
+material for the remake; it is not edited or refreshed. New features do not get a
+reference folder. Old systems stay until each is remade on the new path; never
+reconnect them as they are or re-sync with the old production app. The destination
+is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
+
 - **Source repository:** SENSEIDUKES/development (born here; no production original)
 - **Source location:** `src/components/rewards/` (panels and the shared reward reveal),
   `src/library/rewards/` (contracts and the client), `src/server/achievements/`,
@@ -9,8 +15,8 @@
   `?preview=reward-loop` (the whole reward system on one account),
   `?preview=user-profile&cave=/rewards` (the Cave's Rewards destination)
 - **Created:** 2026-09-23
-- **Last Workshop update:** 2026-09-23
-- **Last source comparison:** 2026-09-23 (this repository; the reveal art descends from the Relic
+- **Last recorded Workshop update:** 2026-09-23
+- **Historical source inspection:** 2026-09-23 (this repository; the reveal art descends from the Relic
   Reveal replica of Light-Novels, last compared 2026-07-29)
 - **Status:** approved reconstruction (Workshop Replica Mode B), development skeleton
 - **Package:** `@seihouse/library/rewards` (Library-owned; SEN never depends on it)
@@ -86,13 +92,27 @@ product decision:
 - Light-Novels still stores `qi`, special reserves and the relic inventory on the profile; retiring
   or backfilling those fields is a separate production task.
 
-## Transfer
+## Implementation inventory
 
-Copy `src/components/rewards/`, `src/library/rewards/`, `src/server/achievements/`,
-`src/server/rewards/`, `src/server/dao-xp/`, and the migrations above. Mount
-`AchievementsClientProvider` with `createHttpAchievementsClient({ token })` next to the other
-economy providers and serve `/api/library-economy?capability=achievements` from the host. Leave
-`src/workshop/previews/achievements/` and `src/workshop/previews/rewards/` behind.
+The packages and NovelExpanded app built here are the destination. Keep Workshop
+controls, fixtures and adapters outside reusable package entries; another repository
+changes only when the owner asks. Historical references stay untouched.
+
+The existing local files named by this inventory are:
+
+- `src/components/rewards/`
+- `src/library/rewards/`
+- `src/server/achievements/`
+- `src/server/rewards/`
+- `src/server/dao-xp/`
+- `src/workshop/previews/achievements/`
+- `src/workshop/previews/rewards/`
+
+## Host boundary
+
+`AchievementsClientProvider` uses `createHttpAchievementsClient({ token })`.
+The host serves `/api/library-economy?capability=achievements`. Workshop achievements
+and reward fixtures remain outside the account service.
 
 ## The Reward Loop workspace
 

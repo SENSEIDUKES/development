@@ -1,3 +1,5 @@
+> Historical record (as of 2026-09-27). It describes the repository as it was then and is not current.
+
 # Provenance audit — 2026-09-27
 
 ## Assessment

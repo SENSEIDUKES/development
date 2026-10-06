@@ -39,7 +39,6 @@ import { CHAPTER_RECAP_TEXT_LIMIT, validateHardPinInputs, type HardPin, type Har
 import {
   acceptHarnessModelResponse,
   preserveSemanticEvents,
-  readHarnessMemoryEvents,
   verifyHarnessEventEvidence,
   type SemanticEventPreservationInput,
   type SemanticEventPreservationResult,
@@ -50,7 +49,7 @@ import {
   createEmptyHarnessWorkspaceState,
   type HarnessGenerationRepository,
 } from './repository';
-import type { ChapterDirectionChoice, HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessCapabilityReceipt, HarnessStory, HarnessStoryVisibility, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessMemoryRecovery, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
+import type { ChapterDirectionChoice, HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessCapabilityReceipt, HarnessStory, HarnessStoryVisibility, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
 
 export type HarnessEventPreserver = (
   rawEvents: unknown[],
@@ -68,13 +67,6 @@ export interface HarnessGenerationControllerOptions {
   installedSkills?: HarnessSkillManifest[];
   /** Host-authorized media selection and freezing. Never enters CAPA or provider requests. */
   media?: NarrativeMediaPort;
-  /**
-   * When story memory is read from a committed chapter. `after-commit` (the
-   * default) runs the separate extraction after every chapter; `on-request`
-   * runs it only when asked ("Recover memory from saved prose"), so a chapter
-   * returns as soon as it is saved.
-   */
-  chapterMemory?: 'after-commit' | 'on-request';
 }
 
 type WorkspaceListener = (state: HarnessWorkspaceState) => void;
@@ -145,7 +137,6 @@ export class HarnessGenerationController {
   private readonly capabilityRegistry: HarnessCapabilityRegistry;
   private skillCatalog: ReadonlyMap<string, HarnessSkillManifest>;
   private media?: NarrativeMediaPort;
-  private readonly chapterMemory: 'after-commit' | 'on-request';
   private readonly listeners = new Set<WorkspaceListener>();
   private state = createEmptyHarnessWorkspaceState();
   private hydrated = false;
@@ -159,7 +150,6 @@ export class HarnessGenerationController {
     this.capabilityRegistry = options.capabilityRegistry ?? new HarnessCapabilityRegistry();
     this.skillCatalog = createHarnessSkillCatalog(includeBundledHarnessSkills(options.installedSkills ?? []));
     this.media = options.media;
-    this.chapterMemory = options.chapterMemory ?? 'after-commit';
   }
 
   subscribe(listener: WorkspaceListener): () => void {
@@ -242,12 +232,6 @@ export class HarnessGenerationController {
     const loaded = await this.repository.load();
     const recovered = cloneHarnessValue(loaded);
     let changed = false;
-    for (const recovery of recovered.memoryRecoveries ?? []) {
-      if (recovery.status !== 'request_started') continue;
-      recovery.status = 'provider_outcome_unknown';
-      recovery.failure = 'The browser closed during memory extraction. Retry explicitly; the chapter is already saved.';
-      changed = true;
-    }
     for (const attempt of recovered.attempts) {
       if (attempt.stage !== 'request_started') continue;
       attempt.stage = 'provider_outcome_unknown';
@@ -962,33 +946,7 @@ export class HarnessGenerationController {
     } finally {
       this.generating = false;
     }
-    return this.extractCommittedChapterMemory(attemptId);
-  }
-
-  /**
-   * Story memory is never part of the chapter-writing call. After a chapter
-   * commits, the existing separate extraction reads the saved prose through
-   * the host adapter, unless the host asked for memory only on request. Its
-   * outcome never changes the committed chapter; an explicit "Recover memory
-   * from saved prose" retries it.
-   */
-  private async extractCommittedChapterMemory(attemptId: string): Promise<HarnessWorkspaceState> {
-    if (this.chapterMemory === 'on-request') return this.snapshot();
-    const attempt = this.state.attempts.find(candidate => candidate.id === attemptId);
-    const chapterId = attempt?.committedChapterId;
-    if (!attempt || attempt.stage !== 'committed' || !chapterId || !this.modelAdapter.recoverMemory) return this.snapshot();
-    if (this.state.memoryRecoveries?.some(recovery => recovery.chapterId === chapterId && recovery.status === 'applied')) return this.snapshot();
-    try {
-      return await this.recoverChapterMemory(chapterId, attempt.model);
-    } catch (error) {
-      const candidate = cloneHarnessValue(this.state);
-      addWarnings(attemptById(candidate, attemptId), [{
-        code: 'capability_unresolved',
-        message: `Automatic memory extraction did not complete (${errorMessage(error, 'unknown error')}). The chapter is committed; recover memory from saved prose to retry.`,
-      }]);
-      try { await this.persist(candidate); } catch { this.state = candidate; this.notify(); }
-      return this.snapshot();
-    }
+    return this.snapshot();
   }
 
   private async acceptRawResponse(attemptId: string): Promise<HarnessWorkspaceState> {
@@ -1046,8 +1004,8 @@ export class HarnessGenerationController {
         message: 'The prose checkpoint is missing, so semantic events cannot be preserved safely.',
       });
     }
-    // The chapter reply carries no memory: story memory is extracted by the
-    // separate post-commit process, so the writer lane preserves nothing here.
+    // The chapter reply carries no memory; legacy event checkpoints remain readable.
+    // New chapter state comes from the writer's tags, not another model call.
     const rawEvents = providedRawEvents ?? [];
     let preserved: SemanticEventPreservationResult;
     try {
@@ -1224,111 +1182,6 @@ export class HarnessGenerationController {
     return this.snapshot();
   }
 
-  /** A separate extraction call reads frozen prose; it never requests a new chapter. */
-  async recoverChapterMemory(chapterId: string, model: string): Promise<HarnessWorkspaceState> {
-    this.assertHydrated();
-    if (this.generating) throw new Error('Wait for the active Harness operation to finish.');
-    const chapter = this.state.chapters.find(chapter => chapter.id === chapterId);
-    if (!chapter) throw new Error('Choose a saved chapter before recovering memory.');
-    if (activeAttemptForStory(this.state, chapter.storyId)) throw new Error('Finish the pending chapter checkpoint before recovering memory.');
-    const foundation = findFoundationRevision(this.state, chapter.foundationRevisionId);
-    if (!foundation) throw new Error('The saved chapter Foundation is missing.');
-    this.generating = true;
-    let candidate = cloneHarnessValue(this.state);
-    candidate.memoryRecoveries ??= [];
-    let recovery = candidate.memoryRecoveries.find(entry => entry.chapterId === chapterId && entry.status === 'raw_received');
-    try {
-      if (!recovery) {
-        if (!this.modelAdapter.recoverMemory) throw new Error('This host has not configured memory extraction.');
-        recovery = {
-          id: this.runtime.createId('hmem'), storyId: chapter.storyId, chapterId,
-          startedAt: this.runtime.now(), status: 'request_started',
-          request: { operation: 'recover-memory', storyId: chapter.storyId, chapterId, model,
-            prose: chapter.prose, foundation: cloneHarnessValue(foundation) },
-        };
-        candidate.memoryRecoveries.push(recovery);
-        await this.persist(candidate);
-        const response = await this.modelAdapter.recoverMemory(recovery.request);
-        // Do not mutate the durable snapshot until the raw response is saved.
-        candidate = cloneHarnessValue(this.state);
-        recovery = candidate.memoryRecoveries!.find(entry => entry.id === recovery!.id)!;
-        recovery.rawProviderResponse = response.rawProviderResponse;
-        recovery.providerReceipt = response.providerReceipt;
-        recovery.status = 'raw_received';
-        await this.persist(candidate);
-      } else await this.persist(candidate);
-
-      const recoveryId = recovery.id;
-      let rawEvents: unknown[];
-      try { rawEvents = readHarnessMemoryEvents(recovery.rawProviderResponse!); }
-      catch (error) {
-        candidate = cloneHarnessValue(this.state);
-        const invalid = candidate.memoryRecoveries!.find(entry => entry.id === recoveryId)!;
-        invalid.status = 'failed';
-        invalid.failure = errorMessage(error, 'Unreadable memory extraction.');
-        await this.persist(candidate);
-        throw error;
-      }
-      const preserved = preserveSemanticEvents(rawEvents, {
-        storyId: chapter.storyId, attemptId: chapter.attemptId, chapterNumber: chapter.chapterNumber,
-        createdAt: recovery.startedAt, prose: chapter.prose, eventNamespace: recoveryId,
-      }, this.runtime);
-      // A readable extraction that found no developments applies normally: a
-      // chapter may legitimately establish no new memory. Only unreadable
-      // entries fail, leaving the raw extraction saved for inspection.
-      if (preserved.rejected.length) {
-        candidate = cloneHarnessValue(this.state);
-        const invalid = candidate.memoryRecoveries!.find(entry => entry.id === recoveryId)!;
-        invalid.status = 'failed';
-        invalid.failure = 'Some recovered events were unreadable; the raw extraction is saved for inspection.';
-        await this.persist(candidate);
-        throw new Error(invalid.failure);
-      }
-      candidate = cloneHarnessValue(this.state);
-      recovery = candidate.memoryRecoveries!.find(entry => entry.id === recoveryId)!;
-      const savedChapter = candidate.chapters.find(entry => entry.id === chapterId)!;
-      const fingerprint = (event: HarnessWorkspaceState['events'][number]) => JSON.stringify([
-        event.category, event.subjects, event.subjectKinds, event.description, event.evidence, event.facts, event.details,
-      ]);
-      recovery.eventIds = [];
-      for (const event of preserved.events) {
-        const existing = candidate.events.find(entry => entry.chapterId === chapterId && fingerprint(entry) === fingerprint(event));
-        if (existing) recovery.eventIds.push(existing.id);
-        else {
-          const recovered = { ...event, chapterId, recoveryId };
-          candidate.events.push(recovered);
-          savedChapter.eventIds.push(recovered.id);
-          recovery.eventIds.push(recovered.id);
-        }
-      }
-      recovery.status = 'applied';
-      recovery.warnings = preserved.warnings.map(warning => warning.message);
-      recovery.failure = undefined;
-      // Applying events and their recovery receipt is atomic; prose/head/attempt stay intact.
-      await this.persist(candidate);
-      return await this.replayStory(chapter.storyId, chapterId);
-    } catch (error) {
-      // Keep any received raw extraction retryable after a failed persistence write.
-      // Never keep unsaved derived events as though they were applied.
-      const retained = cloneHarnessValue(this.state);
-      const received = candidate.memoryRecoveries?.find(entry => entry.id === recovery?.id);
-      let failed: HarnessMemoryRecovery | undefined = retained.memoryRecoveries?.find(entry => entry.id === recovery?.id);
-      if (received?.rawProviderResponse && failed && !failed.rawProviderResponse) {
-        Object.assign(failed, { rawProviderResponse: received.rawProviderResponse, providerReceipt: received.providerReceipt, status: 'raw_received' });
-      }
-      if (failed) {
-        failed.failure = errorMessage(error, 'Memory recovery failed.');
-        if (failed.status === 'request_started') failed.status = 'failed';
-      }
-      this.state = retained;
-      this.notify();
-      try { await this.repository.save(retained); } catch { /* The raw checkpoint remains retryable in memory. */ }
-      throw error;
-    } finally {
-      this.generating = false;
-    }
-  }
-
   /**
    * Deterministic replay never calls the provider and only reads committed chapters.
    * Stable derived IDs make the operation idempotent across reloads and upgrades.
@@ -1425,33 +1278,21 @@ export class HarnessGenerationController {
     for (const chapter of committedChapters) {
       const attempt = candidate.attempts.find(entry => entry.id === chapter.attemptId);
       if (!attempt) continue;
-      const recoveredMemory = candidate.memoryRecoveries?.filter(recovery => recovery.chapterId === chapter.id && recovery.status === 'applied').at(-1);
-      const memoryEventIds = recoveredMemory?.eventIds ?? chapter.eventIds;
-      const memoryEventIdSet = new Set(memoryEventIds);
       const receipts = candidate.capabilityReceipts.filter(receipt =>
-        memoryEventIdSet.has(receipt.sourceEventId) && receipt.status !== 'superseded',
+        chapter.eventIds.includes(receipt.sourceEventId) && receipt.status !== 'superseded',
       );
-      // An applied extraction that reported no developments is a complete
-      // answer, not missing interpretation: nothing was left uninterpreted.
-      const emptyExtractionComplete = Boolean(recoveredMemory)
-        && !recoveredMemory!.eventIds?.length && !recoveredMemory!.warnings?.length;
       attempt.postCommitProcessing = receipts.some(receipt => receipt.status === 'failed')
         ? 'failed'
-        : (!receipts.length && !emptyExtractionComplete) || receipts.some(receipt => receipt.status === 'unresolved')
-          || (recoveredMemory ? Boolean(recoveredMemory.warnings?.length)
-            : Boolean(attempt.rejectedEvents?.length) || attempt.warnings.some(warning => ['optional_event_field_omitted', 'invalid_events_omitted'].includes(warning.code))) ? 'warnings' : 'complete';
-      // Memory extraction completes after the commit; stale incompleteness
-      // warnings from the earlier pass must not outlive a complete result.
+        : receipts.some(receipt => receipt.status === 'unresolved')
+          || Boolean(attempt.rejectedEvents?.length)
+          || attempt.warnings.some(warning => ['optional_event_field_omitted', 'invalid_events_omitted'].includes(warning.code))
+          ? 'warnings' : 'complete';
       if (attempt.postCommitProcessing === 'complete') {
-        attempt.warnings = attempt.warnings.filter(warning => !['capability_unresolved', 'capability_failed'].includes(warning.code));
+        attempt.warnings = attempt.warnings.filter(warning => warning.code !== 'capability_failed');
       }
       if (attempt.postCommitProcessing === 'failed') addWarnings(attempt, [{
         code: 'capability_failed',
         message: 'One or more deterministic capabilities failed. The chapter remains committed and can be replayed.',
-      }]);
-      if (attempt.postCommitProcessing === 'warnings') addWarnings(attempt, [{
-        code: 'capability_unresolved',
-        message: 'Prose is saved, but story memory is incomplete: evidence, subjects, or specific interpretation are missing. Recover memory from saved prose to fill these gaps without rewriting the chapter.',
       }]);
     }
 
@@ -1476,7 +1317,7 @@ export class HarnessGenerationController {
 
   async retryAppropriateStage(attemptId: string): Promise<HarnessWorkspaceState> {
     await this.retryAppropriateStageInternal(attemptId);
-    return this.extractCommittedChapterMemory(attemptId);
+    return this.snapshot();
   }
 
   private async retryAppropriateStageInternal(attemptId: string): Promise<HarnessWorkspaceState> {

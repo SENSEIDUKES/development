@@ -1,12 +1,18 @@
 # Closed-Door Cultivation
 
+Where `reference/` exists, it holds the old production version, kept as reference
+material for the remake; it is not edited or refreshed. New features do not get a
+reference folder. Old systems stay until each is remade on the new path; never
+reconnect them as they are or re-sync with the old production app. The destination
+is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
+
 - **Source repository:** SENSEIDUKES/Light-Novels
 - **Source location:** `src/components/ClosedDoorCultivationModal.tsx`
 - **Workshop preview:** `?preview=idle-cultivation`
-- **Replica created:** 2026-07-29
-- **Last Workshop update:** 2026-09-23
-- **Last source comparison:** 2026-07-30
-- **Replica status:** development focus & accessibility enhancements
+- **First Workshop record:** 2026-07-29
+- **Last recorded Workshop update:** 2026-09-23
+- **Historical source inspection:** 2026-07-30
+- **Implementation status:** development focus & accessibility enhancements
 
 - **2026-09-23:** The Workshop entry moved into the new Rewards section (Recurring rewards, beside the Daily Dao Pillar). The component is unchanged: its future mechanic is undecided, so its idle-QI reward behavior is kept as it is, even where it overlaps the Dao Pillar.
 - **2026-08-25:** Moved to the Library lane. Cultivation and Qi progression are Library product behavior, so this surface now publishes as `@seihouse/library/cultivation` instead of `@seihouse/sen/closed-door-cultivation`. The modal stays props-driven — the host still owns reward calculation and persistence — and its behavior and styling are unchanged.
@@ -52,7 +58,7 @@
 ## Folder layout
 
 ```
-reference/ClosedDoorCultivationModal.tsx    — untouched replica of production, locked
+reference/ClosedDoorCultivationModal.tsx    — old production version, historical and not edited
 development/ClosedDoorCultivationModal.tsx  — active Workshop version, starts as a copy of reference
 ```
 
@@ -64,7 +70,7 @@ The entire SVG cultivator, particle flight animation (`motion/react`), claim/col
 
 ## What changed in Development vs Reference
 
-Development adds `aria-modal="true"` to the dialog container, automatic focus movement to the claim button on entrance, focus restoration on close, Escape-to-dismiss support (detached during claim animation), focus trapping for Tab navigation within the modal, focus coordination with the collapsed orb button, parametric reward amount announcements, live status announcements via `aria-live="polite"`, progression description accessibility linking, visible focus rings on the collapsed orb button, a per-instance `useId` dialog title id (Compare-safe), a local contrast aura and text-shadow behind the "Closed-Door Cultivation" label, a larger collapsed orb badge, a module-load `LOW_POWER_DEVICE` constant in place of per-render hardware checks, a low-power tier that drops the two large ink-aura blur layers, a framer-motion shimmer sweep in place of SMIL, a shorter 5s auto-collapse timer plus collapse-on-first-page-interaction, and a visible retry message after a failed claim. Reference remains the locked pre-audit replica.
+Development adds `aria-modal="true"` to the dialog container, automatic focus movement to the claim button on entrance, focus restoration on close, Escape-to-dismiss support (detached during claim animation), focus trapping for Tab navigation within the modal, focus coordination with the collapsed orb button, parametric reward amount announcements, live status announcements via `aria-live="polite"`, progression description accessibility linking, visible focus rings on the collapsed orb button, a per-instance `useId` dialog title id (Compare-safe), a local contrast aura and text-shadow behind the "Closed-Door Cultivation" label, a larger collapsed orb badge, a module-load `LOW_POWER_DEVICE` constant in place of per-render hardware checks, a low-power tier that drops the two large ink-aura blur layers, a framer-motion shimmer sweep in place of SMIL, a shorter 5s auto-collapse timer plus collapse-on-first-page-interaction, and a visible retry message after a failed claim. Reference remains the historical pre-audit version.
 
 ## What was mocked
 
@@ -82,15 +88,16 @@ Nothing in the component itself: the production component is props-driven (`qiEa
 - Zustand Global Store (`useAppStore`)
 - Data fetching logic
 
-### Exact files needed for transfer
+### Implementation inventory
 
-- `development/ClosedDoorCultivationModal.tsx` (once approved) → `ClosedDoorCultivationModal.tsx` in Light-Novels.
-- The mock library grid in the preview is workshop-only — do not transfer.
+The packages and NovelExpanded app built here are the destination. Keep Workshop
+controls, fixtures and adapters outside reusable package entries; another repository
+changes only when the owner asks. Historical references stay untouched.
 
-## Lifecycle
+The existing local files named by this inventory are:
 
-1. **Import** — copy production's current implementation into `reference/`.
-2. **Fork once** — `development/` starts as a copy of `reference/`.
-3. **Refine** — every Workshop task modifies `development/` only.
-4. **Approve** — once approved, transfer `development/` back to Light-Novels.
-5. **Resynchronize** — refresh `reference/` from the newly integrated production code, record the new comparison date, and reset `development/` for the next redesign cycle. There is no V2/V3 — only "what production currently is" vs "what we are currently trying to make it become."
+- `development/ClosedDoorCultivationModal.tsx`
+
+## Current build rule
+
+Follow the build-and-remake rule at the top of this README; keep a short dated history.

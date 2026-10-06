@@ -1,10 +1,16 @@
 # Motion Picture
 
+Where `reference/` exists, it holds the old production version, kept as reference
+material for the remake; it is not edited or refreshed. New features do not get a
+reference folder. Old systems stay until each is remade on the new path; never
+reconnect them as they are or re-sync with the old production app. The destination
+is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
+
 - Source: `SENSEIDUKES/Light-Novels`, `src/components/StoryDetailScreen.tsx` (the `motionCoverActive` aura layers, the "Canva Video Peak Overlay", and the Canva toggle button), inspected on branch `main` at commit `647165a`.
 - Preview: Workshop **Shared → Motion Picture** and `?preview=motion-picture`.
-- Replica created: 2026-09-22.
-- Last Workshop update: 2026-09-22.
-- Last source comparison: 2026-09-22.
+- First Workshop record: 2026-09-22.
+- Last recorded Workshop update: 2026-09-22.
+- Historical source inspection: 2026-09-22.
 - Lifecycle: production behavior captured in `reference/`; a reusable, item-neutral rebuild under development.
 - Owner: SEN-shaped presentation. The component reaches no Library surface, no store, and no catalogue, so it can move into `@seihouse/sen` when an entry is wanted.
 
@@ -106,21 +112,25 @@ The Development pane carries three things, in the order they are useful:
   Familiar clip, host-remembered playback, a differently coloured plate, and an item with
   no clip at all.
 
-## Transfer notes
+## Implementation inventory
 
-Production integration is a separate, explicitly authorized task. For it:
+The packages and NovelExpanded app built here are the destination. Keep Workshop
+controls, fixtures and adapters outside reusable package entries; another repository
+changes only when the owner asks. Historical references stay untouched.
 
-- `development/MotionPicture.tsx`, `development/useDominantColor.ts`, and
-  `development/motion-picture.css` are the whole component; `lucide-react` is its only
-  dependency.
-- `StoryDetailScreen.tsx` would supply `stillUrl={story.imageUrl}`,
-  `videoUrl={story.videoUrl}`, and bind `playing`/`onPlayingChange` to
-  `motionCoverActive` through the existing `updateStory` patch, replacing the inline aura
-  block, the video overlay, and both copies of the Canva button.
-- Nothing in this folder should travel: `reference/`, the Workshop preview, and the mock
-  clip URL are all inspection-only.
-- Supplying `videoUrl` is still unsolved in production and is not in this component's
-  scope; it renders whatever clip a host hands it.
+The existing local files named by this inventory are:
+
+- `development/MotionPicture.tsx`
+- `development/useDominantColor.ts`
+- `development/motion-picture.css`
+- `reference/`
+
+## Host boundary
+
+`lucide-react` is the component's only dependency. The host supplies `stillUrl`,
+optional `videoUrl`, and optional `playing`/`onPlayingChange`; producing or storing a
+video is outside this component. `reference/`, Workshop previews and mock clip URLs
+are inspection-only.
 
 ## Workshop history
 

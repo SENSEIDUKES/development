@@ -68,7 +68,7 @@ export function useLibraryStories({
   preferredModel,
 }: LibraryStoriesOptions): LibraryStories {
   const controller = useMemo(
-    () => new HarnessGenerationController({ repository, modelAdapter, chapterMemory: 'on-request', media: createLibraryMediaPort({ registered: registeredMediaPacks, entitlements: mediaPackEntitlements, base: baseMedia }) }),
+    () => new HarnessGenerationController({ repository, modelAdapter, media: createLibraryMediaPort({ registered: registeredMediaPacks, entitlements: mediaPackEntitlements, base: baseMedia }) }),
     // The inventory and media follow below without replacing the controller.
     [repository, modelAdapter],
   );

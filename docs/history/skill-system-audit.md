@@ -1,3 +1,5 @@
+> Historical record (as of 2026-09-17). It describes the repository as it was then and is not current.
+
 # Skill system audit — 2026-09-17
 
 ## Scope and baseline
@@ -106,4 +108,4 @@ Status uses Git's no-renames view so every removed and created path is explicit.
 | A | `skills/sensei-skill/SKILL.md` |
 | M | `skills/workshop-replica/SKILL.md` |
 | A | `skills/workshop-replica/references/faithful-replica.md` |
-| A | `docs/skill-system-audit.md` |
+| A | `docs/history/skill-system-audit.md` |

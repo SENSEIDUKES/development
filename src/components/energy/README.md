@@ -1,5 +1,11 @@
 # Energy
 
+Where `reference/` exists, it holds the old production version, kept as reference
+material for the remake; it is not edited or refreshed. New features do not get a
+reference folder. Old systems stay until each is remade on the new path; never
+reconnect them as they are or re-sync with the old production app. The destination
+is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
+
 - **Source repository:** SENSEIDUKES/development (born here; no production original)
 - **Source location:** `src/components/energy/` (client contracts and reusable UI) and
   `src/server/energy/` (the server-owned ledger, see its README)
@@ -7,8 +13,8 @@
   for the live profile emblem and panel on the development economy
   (`/api/library-economy?capability=energy`)
 - **Created:** 2026-09-18
-- **Last Workshop update:** 2026-09-23
-- **Last source comparison:** 2026-09-18 (Light-Novels inspected for authentication,
+- **Last recorded Workshop update:** 2026-09-23
+- **Historical source inspection:** 2026-09-18 (Light-Novels inspected for authentication,
   idempotency and Postgres conventions; it has no Energy system to compare against)
 - **Status:** approved reconstruction (Workshop Replica Mode B), packaged Library capability
 
@@ -73,20 +79,26 @@ settled-charge refund must be an append-only server adjustment that preserves
   (15), soundscape (20), and video (30–50) as **projected**. A variable video reservation requires
   a trusted whole-number quote in that range; no current generation owner calls this boundary.
 
-## Transfer
+## Implementation inventory
 
-These surfaces are portable: copy `src/components/energy/` whole, mount `EnergyClientProvider`
-with a client built from the host's own token (`createHttpEnergyClient({ token: … })`) at the app
-shell, and serve `/api/energy` from `src/server/energy`. The Workshop-only
-`src/workshop/previews/energy/` stays behind.
+The packages and NovelExpanded app built here are the destination. Keep Workshop
+controls, fixtures and adapters outside reusable package entries; another repository
+changes only when the owner asks. Historical references stay untouched.
 
-What the host serves that route over is **not settled**. `EnergyRepository` is the storage
-boundary; `PostgresEnergyRepository` and the SQL migrations are the current durable reference
-implementation; DEV itself runs the in-memory implementation for previewing, so balances reset
-when the process or Vercel instance changes. The durable adapter and the host repository will be
-chosen during production-repository reconstruction — see
-[the server README](../../server/energy/README.md). Nothing here has been wired to or verified
-against a production deployment.
+The existing local files named by this inventory are:
+
+- `src/components/energy/`
+- `src/workshop/previews/energy/`
+
+## Host boundary
+
+`EnergyClientProvider` takes a client built from the host's own token with
+`createHttpEnergyClient({ token: … })`. `EnergyRepository` is the storage boundary;
+`PostgresEnergyRepository` and the SQL migrations are the current durable example.
+DEV runs an in-memory adapter for previews, so balances reset when the process or
+Vercel instance changes. A deployed host's durable adapter is still undecided; see
+[the server README](../../server/energy/README.md). Nothing here has been wired to
+or verified against a production deployment.
 
 ## Workshop history
 

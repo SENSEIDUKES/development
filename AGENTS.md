@@ -4,7 +4,7 @@ Read this file before making changes.
 
 ## Purpose
 
-This repository is the **SEN Development space**: a centralized development, reconstruction, and preview environment for SEN and Library components and the main `SENSEIDUKES/Light-Novels` application.
+This repository is the **SEN Development space**: a centralized development, reconstruction, and preview environment for SEN and Library components and the NovelExpanded app built here at `/app/`.
 
 ### SEN and Library are two products, not one
 
@@ -98,29 +98,37 @@ When the user asks to bring a real page, screen, component, animation, or flow f
 
 ## Core rule
 
-Build workshop pieces so the finished component can be moved cleanly into `Light-Novels` or another SEN application.
+Build the new path here: SEN (`@seihouse/sen`), Library (`@seihouse/library`), and
+NovelExpanded at `/app/` (`src/novel-expanded/`). `NOVEL_EXPANDED.md` decides what gets built.
+Keep portable components separate from the Workshop shell. Approved reconstruction
+follows `DEVELOPMENT_RECONSTRUCTION.md` and may include real system infrastructure.
 
-For faithful replicas, use mock data and preview-only wrappers while keeping components portable and separate from the Workshop shell. Approved reconstruction follows `DEVELOPMENT_RECONSTRUCTION.md` and may include real system infrastructure.
+Old systems stay until each is remade on the new path. Never delete a system because
+the new path does not use it yet, never reconnect it as it is, and never re-sync with
+the old production app. Existing `reference/` folders hold the old production version
+as historical material for its remake; they are not edited or refreshed. New features
+have no `reference/` folder.
 
 ## Organization
 
 - `src/workshop/manifest.ts` lists every workshop entry shown on the home screen — **one entry per feature, never one per version.**
-- `src/workshop/FeatureWorkspace.tsx` is the shared shell every feature preview opens into: an Original Reference / Development / Compare switch over one shared preview canvas.
+- `src/workshop/FeatureWorkspace.tsx` is the shared shell every feature preview opens into: an Original Reference / Development / Compare switch over one shared preview canvas. Original Reference is the old production version, where one exists.
 - `src/workshop/previews/<feature>/` contains the workspace preview wrapper (built on `FeatureWorkspace`), mock data, and preview-state simulators for that feature.
 - `src/App.tsx` resolves `?preview=<id>` through a `previewRegistry` map — add one line per feature, never a new `if` block.
 - Reusable component logic lives in `src/components/<feature-name>/`, split into:
-  - `reference/` — an untouched, locked replica of what exists in production. Never modified during normal Workshop tweaking.
-  - `development/` — the active Workshop version. Starts as a copy of `reference/`. This is the active folder for visual refinements; reconstruction may also change the relevant shared, server, and integration owners.
-  - `shared/` (when it applies) — logic genuinely identical between the two, such as shared utilities or components that have no fork yet.
+  - `reference/` — the old production version, kept as historical reference for its remake. Never edited or refreshed.
+  - `development/` — the active implementation, built here. Package entries import from this folder; keep its name. Reconstruction may also change the relevant shared, server, and integration owners.
+  - `shared/` (when it applies) — logic genuinely shared by implementations or consumers, such as shared utilities.
 - `src/package/` holds the entry barrels for the two published packages —
   `src/package/sen/` for `@seihouse/sen` (the portable engine: surface
   primitives, Color Codes, cards, Reader Chamber, Reader Codex,
-  Manifestations, audio, Story Seed, Chapter Generation) and
+  Manifestations, motion picture, audio, Story Seed, HARNESS, Reader Runtime,
+  Text Highlight Engine, arc goals, translation, presentation and contracts) and
   `src/package/library/` for `@seihouse/library` (SEIHouse's own surfaces:
   cultivation and the relic economy). Neither contains components of its own:
   entries re-export `development/` and `shared/` code so the Workshop and the
   packages always render the same source. Workshop shells, preview mocks,
-  locked `reference/` replicas, and host-owned `src/server/` code stay out of
+  historical `reference/` material, and host-owned `src/server/` code stay out of
   client entries. The `@seihouse/library/model-router-server` entry is the
   explicit server-only provider exception; no SEN entry may reach a Library
   surface.
@@ -140,34 +148,24 @@ Never create a second homepage card, a second manifest entry, a second preview f
 
 When adding a new experiment:
 
-1. Give it a focused feature folder under `src/components/` with `reference/` and `development/` subfolders (`shared/` only if something is genuinely unforked).
-2. Add a workspace preview wrapper under `src/workshop/previews/<feature>/`, built on `FeatureWorkspace`.
-3. Add one entry to `src/workshop/manifest.ts`, including `source.repository`, `source.path`, `source.lastCompared`, its Workshop `section` (Pages, Customization, Systems, or Components), its explicit package `owner` (matching `scripts/ownershipInventory.mjs`), and `status`. Retire an entry by setting `status: 'archived'` (with `replacedBy`/`archiveNote`), never by deleting it or its route.
-4. Register it in the `previewRegistry` in `src/App.tsx`. Make it reachable through a simple `?preview=<id>` URL.
-5. Add one component README (at the feature folder root) containing source information, current dates, Workshop history, mock boundaries, and transfer instructions.
-6. Document any files that must be copied into the source application.
+1. Give it one focused feature folder under `src/components/` with `development/`, plus `shared/` only when something is genuinely shared. Do not create a `reference/` folder.
+2. Add one workspace preview under `src/workshop/previews/<feature>/`, built on `FeatureWorkspace`.
+3. Add one entry to `src/workshop/manifest.ts`, with `source.repository` and `source.path` pointing at this repository (for example, `Not applicable — DEV-native primitive`), its Workshop `section` (Pages, Customization, Rewards, Systems, or Components), explicit package `owner` (matching `scripts/ownershipInventory.mjs`), and `status`. No source-comparison date is required. Retire an entry with `status: 'archived'` (and `replacedBy`/`archiveNote`), keeping its implementation and route.
+4. Register it in `previewRegistry` in `src/App.tsx` at one stable `?preview=<id>` URL.
+5. Add one component README with its purpose, current ownership, preview boundaries, and a short dated history.
 
-### Lifecycle for an approved faithful-replica change
+### Build and remake lifecycle
 
-For reconstructed systems, use Mode B in Workshop Replica and the reconstruction policy. Production governs existing integrated contracts; DEV governs the approved reconstructed design until separately authorized transfer.
-
-1. **Import** — copy production's current implementation into `reference/`.
-2. **Fork once** — `development/` starts as a copy of `reference/`.
-3. **Refine** — every Workshop task modifies `development/` only.
-4. **Approve** — once approved, transfer `development/` back to the production repository through a separate task.
-5. **Resynchronize** — after production integration, refresh `reference/` from the newly synchronized production code, update `source.lastCompared`, and reset `development/` for the next redesign cycle.
+1. Read `NOVEL_EXPANDED.md` and locate the existing owner in SEN, Library or the app.
+2. Keep the old implementation and historical references while remaking the feature on the new path.
+3. Build and verify the active implementation in its existing `development/` folder and the relevant shared, server or host owners.
+4. Use the same feature workspace and route. Do not reconnect the old implementation, refresh references, or synchronize with `Light-Novels`.
+5. The packages and NovelExpanded app are the destination. Changes to another repository require the owner's explicit request.
 
 ## Dating requirement
 
-Every replicated page or component must record:
-
-- replica creation date
-- last Workshop update date
-- last source comparison date
-- current lifecycle status
-- a concise dated Workshop history
-
-Use the real current calendar date. Update the history whenever the replica receives a material visual or structural change. Do not update the source-comparison date unless the source was actually inspected again.
+READMEs keep a short dated history, using real dates. Keep existing history entries.
+No replica-creation or source-comparison dates are required.
 
 ## Working style
 
@@ -189,4 +187,6 @@ Keep the local or forwarded preview available, usually on port `5173`. After cha
 
 ## Final integration
 
-Do not automatically change a source application unless the user explicitly asks. When a Workshop piece is approved, identify the exact component, styles, assets, and dependencies needed for transfer, and leave Workshop-only navigation, mocks, and preview controls behind.
+The SEN and Library packages and the NovelExpanded app are the destination now.
+Never change another repository unless the owner explicitly asks. Keep Workshop-only
+navigation, mocks and preview controls out of package entries and the app.

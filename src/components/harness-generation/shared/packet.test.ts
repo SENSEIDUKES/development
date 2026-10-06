@@ -1,3 +1,4 @@
+import { seedLegacyChapterEvents } from '../../../test-utils/seedLegacyChapterEvents';
 import { describe, expect, it, vi } from 'vitest';
 import { HarnessGenerationController, projectCanonicalState, exportHarnessStory } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
@@ -49,7 +50,6 @@ const setup = async (options: { throughHttp?: boolean } = {}) => {
       if (result.status !== 200) throw new Error(`HTTP ${result.status}: ${JSON.stringify(result.body)}`);
       return result.body as HarnessGenerationResponse;
     }),
-    recoverMemory: async request => response(memories.get(request.prose) ?? { events: [] }),
     arcOperation: vi.fn(async () => response({ plan, destinedEnding: 'Yi Chen leads the Azure Sect to glory.' })),
   };
   const repository = new InMemoryHarnessGenerationRepository();
@@ -61,14 +61,18 @@ const setup = async (options: { throughHttp?: boolean } = {}) => {
     sourceSnapshot: { kind: 'story-seed', sourceId: 'seed-77', sourceUpdatedAt: 'a', schemaVersion: 3, seed: { marker: 'COMPLETE SEED SNAPSHOT' } },
   });
   await controller.setHardPins(story.id, [{ text: 'Make Yi Chen take the Azure Sect to glory throughout the entire story.' }, { text: 'Never kill Elder Mu.' }]);
-  return { controller, repository, adapter, requests, providerInputs, story };
+  const write = async (model = 'fixture') => {
+    await controller.generateNextChapter(story.id, model);
+    await seedLegacyChapterEvents(controller, repository, memories.get(controller.snapshot().chapters.at(-1)!.prose));
+  };
+  return { controller, repository, adapter, requests, providerInputs, story, write };
 };
 
 describe('Compact long-story generation packet', () => {
   it('delivers the ten sections to the provider once, in the approved order, with nothing else', async () => {
     const run = await setup();
-    await run.controller.generateNextChapter(run.story.id, 'fixture');
-    await run.controller.generateNextChapter(run.story.id, 'fixture');
+    await run.write();
+    await run.write();
     const prompt = buildHarnessGenerationPrompt(run.requests[1]);
     expect(prompt.measurement.sections.map(section => section.section)).toEqual(PACKET_SECTION_ORDER);
     const markers = ['CAPA SKILL [Author]', 'CURRENT STORY INFORMATION', 'DESTINED ENDING AND HARD PINS', 'ACTIVE ARC GOAL', 'FATE PRESSURE RHYTHM DIRECTION', 'PREVIOUSLY ON', 'CURRENT CANONICAL STATE', 'HOLDINGS (what each character has now', 'MISSION REMINDER:', 'IMMEDIATE CHAPTER REQUEST'];
@@ -91,8 +95,8 @@ describe('Compact long-story generation packet', () => {
 
   it('sends Chapter 2 the saved Chapter 1 recap, resulting canonical state, and the persisted rhythm direction', async () => {
     const run = await setup();
-    await run.controller.generateNextChapter(run.story.id, 'fixture');
-    await run.controller.generateNextChapter(run.story.id, 'fixture');
+    await run.write();
+    await run.write();
     const state = run.controller.snapshot();
     const packet = run.requests[1].storyInformation;
     expect(packet.previouslyOn).toEqual([{ chapterNumber: 1, title: 'The Gate, Day 1', recap: 'Recap 1: Yi Chen climbed higher.' }]);
@@ -111,12 +115,12 @@ describe('Compact long-story generation packet', () => {
 
   it('freezes the exact packet with the attempt so a provider retry resends the frozen inputs, and replay never rebuilds it', async () => {
     const run = await setup();
-    await run.controller.generateNextChapter(run.story.id, 'fixture');
+    await run.write();
     let fail = true;
     const generate = run.adapter.generate as ReturnType<typeof vi.fn<(request: HarnessGenerationRequest) => Promise<HarnessGenerationResponse>>>;
     const original = generate.getMockImplementation()!;
     generate.mockImplementation(async (request: HarnessGenerationRequest) => { if (fail) { fail = false; throw new Error('provider down'); } return original(request); });
-    await run.controller.generateNextChapter(run.story.id, 'fixture');
+    await run.write();
     const failed = run.controller.snapshot().attempts.at(-1)!;
     expect(failed.stage).toBe('generation_failed');
     // Newer story state between failure and retry must not leak into the retried request.
@@ -140,16 +144,16 @@ describe('Compact long-story generation packet', () => {
 
   it('rebuilds the inputs instead of resending a frozen packet once the story head has moved past its chapter', async () => {
     const run = await setup();
-    await run.controller.generateNextChapter(run.story.id, 'fixture');
+    await run.write();
     let fail = true;
     const generate = run.adapter.generate as ReturnType<typeof vi.fn<(request: HarnessGenerationRequest) => Promise<HarnessGenerationResponse>>>;
     const original = generate.getMockImplementation()!;
     generate.mockImplementation(async (request: HarnessGenerationRequest) => { if (fail) { fail = false; throw new Error('provider down'); } return original(request); });
-    await run.controller.generateNextChapter(run.story.id, 'fixture');
+    await run.write();
     const failed = run.controller.snapshot().attempts.at(-1)!;
     expect(failed.stage).toBe('generation_failed');
     // A failed attempt does not block the story: Chapter 2 commits from a fresh request.
-    await run.controller.generateNextChapter(run.story.id, 'fixture');
+    await run.write();
     expect(run.controller.snapshot().chapters.map(chapter => chapter.chapterNumber)).toEqual([1, 2]);
     // Retrying the stale failure must not resend Chapter 2's frozen packet as Chapter 3.
     await run.controller.retryModelRequest(failed.id);
@@ -165,8 +169,8 @@ describe('Compact long-story generation packet', () => {
 
   it('persists the measured size of the exact serialized provider request', async () => {
     const run = await setup({ throughHttp: true });
-    await run.controller.generateNextChapter(run.story.id, 'google/gemini-3.1-flash-lite');
-    await run.controller.generateNextChapter(run.story.id, 'google/gemini-3.1-flash-lite');
+    await run.write('google/gemini-3.1-flash-lite');
+    await run.write('google/gemini-3.1-flash-lite');
     expect(run.controller.snapshot().attempts.map(attempt => attempt.failure?.message ?? attempt.stage)).toEqual(['committed', 'committed']);
     const attempt = run.controller.snapshot().attempts[1];
     const sent = run.providerInputs[1];

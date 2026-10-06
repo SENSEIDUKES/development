@@ -1,10 +1,16 @@
 # Familiar
 
+Where `reference/` exists, it holds the old production version, kept as reference
+material for the remake; it is not edited or refreshed. New features do not get a
+reference folder. Old systems stay until each is remade on the new path; never
+reconnect them as they are or re-sync with the old production app. The destination
+is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
+
 - Source: supplied `Familiars/Packages/` collection (not a Git repository), containing eleven validated Familiar packages.
 - Preview: Workshop **Customization → Familiar** and `?preview=familiar`.
-- Replica created: 2026-09-20.
-- Last Workshop update: 2026-09-25.
-- Last source comparison: 2026-09-22.
+- First Workshop record: 2026-09-20.
+- Last recorded Workshop update: 2026-09-25.
+- Historical source inspection: 2026-09-22.
 - Lifecycle: supplied source packages retained; the reusable renderer, host catalogue, and Energy interaction remain in Development.
 - Owner: Library. This first-party companion is not a SEN narrative capability.
 
@@ -118,27 +124,11 @@ it is not a capacity. Establishing an account cap would require a separate Energ
 policy change. Loading, missing client, and request failures never fabricate a balance.
 Retry uses the same client, and reopening fetches a fresh server snapshot.
 
-## Transfer
+## Implementation inventory
 
-Profile Settings → Customization → Familiar uses the reusable `FamiliarSelection`
-with host-supplied `UserProfileServices.familiars`. Development passes all eleven
-catalogue entries for inspection, including their host-supplied rarity and Quill's
-`isDefault` status. Reduced motion or an image-load failure uses the local neutral crop.
-Hosted GIF URLs belong in the host catalogue and can be replaced without changing the
-renderer or selection component. The optional
-`handleFamiliarChange` controller port saves only `UserProfile.familiarId`; the Workshop
-adapter retains this in the existing profile state for the session, as with its other
-profile edits. There is no new store or claim that this is production persistence.
-An unavailable option is disabled, and the host save path must validate entitlement.
-No purchase, earning rule, or unlock backend is introduced by this selector.
-
-Consume `Familiar` or `FamiliarSprite` from `@seihouse/library/familiar` with Library
-styles and existing UI peer dependencies. Supply a `FamiliarDefinition` with the host's
-asset URL. For this character, transfer the host definition, metadata, timing data, and
-sprite sheet and adapt the URL to the destination's asset host. Mount the destination's
-existing `EnergyClientProvider` with its verified current-user token. Keep the Workshop
-identity adapter, selectors, stage, reference GIFs, and navigation in Development.
-No Light-Novels files were changed.
+The packages and NovelExpanded app built here are the destination. Keep Workshop
+controls, fixtures and adapters outside reusable package entries; another repository
+changes only when the owner asks. Historical references stay untouched.
 
 ### Floating companion and product-page integration — 2026-09-20
 
@@ -208,6 +198,26 @@ reserves space for persistent host navigation. Production should retain minimize
 state in the app shell and render `FamiliarRecall` in its header while minimized.
 Both surfaces must sit under the same authenticated `EnergyClientProvider`;
 Development supplies that provider at the product session boundary.
+
+## Host boundary
+
+Profile Settings → Customization → Familiar uses the reusable `FamiliarSelection`
+with host-supplied `UserProfileServices.familiars`. Development passes all eleven
+catalogue entries for inspection, including their host-supplied rarity and Quill's
+`isDefault` status. Reduced motion or an image-load failure uses the local neutral crop.
+Hosted GIF URLs belong in the host catalogue and can be replaced without changing the
+renderer or selection component. The optional
+`handleFamiliarChange` controller port saves only `UserProfile.familiarId`; the Workshop
+adapter retains this in the existing profile state for the session, as with its other
+profile edits. There is no new store or claim that this is production persistence.
+An unavailable option is disabled, and the host save path must validate entitlement.
+No purchase, earning rule, or unlock backend is introduced by this selector.
+
+Consume `Familiar` or `FamiliarSprite` from `@seihouse/library/familiar` with Library
+styles and existing UI peer dependencies. The host supplies `FamiliarDefinition`,
+asset URLs and `EnergyClientProvider` with its verified current-user token. Definition,
+metadata, timing data and sprite sheet belong together. Workshop identity adapters,
+selectors, stage, reference GIFs and navigation are preview-only.
 
 ## Verification
 

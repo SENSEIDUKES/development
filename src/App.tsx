@@ -110,7 +110,8 @@ const WriterInstructionsWorkspace = lazy(() =>
 /**
  * One entry per manifest id. Adding a feature means adding one line here —
  * never a new `if` block per version. There is no separate registry entry
- * for a "V2"; a feature's Original Reference / Development split lives
+ * for a "V2"; Original Reference (the old production version, where one exists)
+ * and the active Development implementation live
  * inside its own workspace component (see FeatureWorkspace).
  */
 const previewRegistry: Record<string, ComponentType> = {

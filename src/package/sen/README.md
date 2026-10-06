@@ -1,5 +1,13 @@
 # `@seihouse/sen`
 
+**0.21.0 (2026-10-06):** Retired the separate memory model call and its warning.
+Removed `HarnessGenerationController.recoverChapterMemory`, the `chapterMemory`
+controller option, and `HarnessGenerationModelAdapter.recoverMemory`. Historical
+`HarnessMemoryRecovery` / request storage types stay exported so saved fields remain
+readable and ignored. Chapter writing, acceptance, saving, recaps, canonical-state
+readers and Holdings are unchanged. Library's `>=0.19.0` SEN peer range includes 0.21.0.
+
+
 SEN is the portable expanded-narrative engine. A publisher supplies content,
 branding, accounts, storage, media, and—if desired—a generation method. AI is
 optional. SEN has no dependency on Celestial Library, Library UI, Library

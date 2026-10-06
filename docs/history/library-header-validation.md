@@ -1,3 +1,5 @@
+> Historical record (as of 2026-09-08). It describes the repository as it was then and is not current.
+
 # Header family validation
 
 Validated 2026-09-08 against the local Vite preview at port 5186.

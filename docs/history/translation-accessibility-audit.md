@@ -1,3 +1,5 @@
+> Historical record (as of 2026-09-26). It describes the repository as it was then and is not current.
+
 # Translation and Accessibility Activation Audit
 
 **Date:** 2026-09-26
@@ -14,7 +16,7 @@
 
 HARNESS, CAPA, CAPA Schema, CAPA Skill, CAPA Prompt, Story Information Packet, Immediate
 Chapter Request, and Generation Model Call are used exactly as defined in
-[ARCHITECTURE_VOCABULARY.md](../src/components/harness-generation/ARCHITECTURE_VOCABULARY.md).
+[ARCHITECTURE_VOCABULARY.md](../../src/components/harness-generation/ARCHITECTURE_VOCABULARY.md).
 Statements about current behavior cite the file and line that produce it. Proposed design is
 marked **Recommendation**.
 
@@ -78,7 +80,7 @@ marked **Recommendation**.
 - **Separate from canon.** It is its own model call, registered in the Model Router as
   "Reader Translation" (`src/server/model-router/catalog.ts:250`). It produces a cached,
   reversible overlay and never touches the Generation Model Call or canon; see
-  [READER_TRANSLATION.md](../src/components/reader-chamber/READER_TRANSLATION.md).
+  [READER_TRANSLATION.md](../../src/components/reader-chamber/READER_TRANSLATION.md).
 
 ## 2. How Accessibility works today
 

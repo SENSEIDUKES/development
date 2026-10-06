@@ -9,6 +9,8 @@
  */
 export interface AILoadingVeilProps {
   isGenerating: boolean;
+  /** Successful result received and saved; false for failure or cancellation. */
+  completed?: boolean;
   generationPhase: string | null;
   generationProgressMessage: string | null;
   estimatedSecondsRemaining: number | null;

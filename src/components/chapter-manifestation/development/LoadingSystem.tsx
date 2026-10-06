@@ -3,12 +3,15 @@ import { AnimatePresence } from 'motion/react';
 import type { LoadingTaskCard } from '../../../library/manifestations/taskCard';
 import LoadingVeilCard from './LoadingVeilCard';
 import CompactIndicator from './CompactIndicator';
+import { useGenerationJourney } from '../../../library/manifestations/useGenerationJourney';
 
 export type LoadingSystemMode = 'auto' | 'primary' | 'compact';
 
 export interface LoadingSystemProps {
   /** Whether the operation is currently running. */
   active: boolean;
+  /** True only once the operation has succeeded. Failure/cancellation never triggers arrival. */
+  completed?: boolean;
   /** The normalized task card to present, or null when idle. */
   task: LoadingTaskCard | null;
   /**
@@ -58,6 +61,7 @@ const DEFAULT_COMPACT_GRACE_MS = 1200;
  */
 export default function LoadingSystem({
   active,
+  completed,
   task,
   mode = 'auto',
   minimized,
@@ -70,8 +74,20 @@ export default function LoadingSystem({
   destinationId,
   onMediaUnseal,
 }: LoadingSystemProps) {
+  const lastTask = React.useRef(task);
+  if (task) lastTask.current = task;
+  const displayTask = task ?? lastTask.current;
+  const journey = useGenerationJourney({
+    active: active && Boolean(task),
+    completed: completed ?? (displayTask?.progress === 100
+      || (displayTask?.manifestation.mode === 'media' && displayTask.manifestation.reveal === 'revealed')),
+    operation: displayTask?.activePhaseId ?? '',
+    identity: JSON.stringify([displayTask?.activePhaseId, displayTask?.trackerTitle]),
+    progress: displayTask?.progress ?? null,
+    estimatedSecondsRemaining: displayTask?.estimatedSecondsRemaining ?? null,
+  });
   const resolvedMode: Exclude<LoadingSystemMode, 'auto'> =
-    mode === 'auto' ? (task?.preferredMode ?? 'primary') : mode;
+    mode === 'auto' ? (displayTask?.preferredMode ?? 'primary') : mode;
 
   // Compact mode waits out a grace window so very short tasks stay hidden.
   const [compactReady, setCompactReady] = React.useState(false);
@@ -82,11 +98,11 @@ export default function LoadingSystem({
     return () => clearTimeout(id);
   }, [active, compactGraceMs]);
 
-  if (!task) return null;
+  if (!displayTask) return null;
 
-  const showPrimary = active && resolvedMode === 'primary' && !minimized;
+  const showPrimary = ((active && Boolean(task)) || journey.arriving) && resolvedMode === 'primary' && !minimized;
   const showCompact =
-    active &&
+    active && Boolean(task) &&
     !showPrimary &&
     compactReady &&
     (resolvedMode === 'compact' || minimized);
@@ -96,7 +112,8 @@ export default function LoadingSystem({
       {showPrimary && (
         <LoadingVeilCard
           key="primary-veil"
-          task={task}
+          task={journey.arriving && displayTask.progress !== null ? { ...displayTask, progress: 100 } : displayTask}
+          journeyProgress={journey.progress}
           backdrop={backdrop}
           emblemClassName={emblemClassName}
           travelerId={travelerId}
@@ -108,7 +125,7 @@ export default function LoadingSystem({
       {showCompact && (
         <CompactIndicator
           key="compact-indicator"
-          task={task}
+          task={displayTask}
           onExpand={resolvedMode === 'primary' ? () => onMinimizedChange(false) : undefined}
         />
       )}

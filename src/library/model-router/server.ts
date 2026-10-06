@@ -3,6 +3,7 @@ import { geminiThinkingConfig } from './geminiThinking';
 import { generateOpenRouterText } from './openRouter';
 import {
   providerModelName,
+  resolveReasoningLevel,
   textModelProvider,
   type ReasoningLevel,
 } from './catalog';
@@ -27,6 +28,7 @@ export interface TextGenerationRequest {
   model: string;
   systemInstruction: string;
   userPrompt: string;
+  /** Custom sampling for non-Gemini models only; Gemini uses provider defaults. */
   temperature: number;
   maxOutputTokens: number;
   timeoutMs: number;
@@ -104,11 +106,12 @@ export function createModelRouter(config: ModelRouterConfig) {
           const response = await client.models.generateContent({
             model: providerModelName(request.model), contents: request.userPrompt,
             config: {
-              systemInstruction: request.systemInstruction, temperature: request.temperature,
+              systemInstruction: request.systemInstruction,
               maxOutputTokens: request.maxOutputTokens,
               ...(request.responseFormat === 'json' ? { responseMimeType: 'application/json' } : {}),
               ...(request.responseJsonSchema ? { responseJsonSchema: request.responseJsonSchema } : {}),
-              ...geminiThinkingConfig(request.reasoningLevel), abortSignal: signal,
+              ...geminiThinkingConfig(resolveReasoningLevel(`google/${providerModelName(request.model)}`, request.reasoningLevel)),
+              abortSignal: signal,
             },
           });
           if (response.candidates?.[0]?.finishReason === 'MAX_TOKENS') {

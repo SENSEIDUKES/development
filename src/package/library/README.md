@@ -1,11 +1,19 @@
 # `@seihouse/library`
 
+**0.19.1 (2026-10-06):** The generation veil's traveler advances during whole-response
+generation and arrives before the veil closes on success. Unknown work shows no
+invented percentage. Failure/cancellation never signals arrival. Chapter saving,
+Reader behavior and SEN's public contracts are unchanged.
+The Model Router also omits deprecated custom sampling for Gemini, directly
+and through OpenRouter, and checks thinking levels against the model catalog.
+Gemini uses model-default sampling; other providers keep their settings.
+
 Celestial Library's client-safe product behavior, assembled on the portable
 SEN engine and the two UI packages. Library owns SEIHouse users, products,
 economy, community and business policy. Authentication enforcement, secrets,
 durable ledgers and concrete infrastructure stay in the host/backend.
 
-**0.20.0:** requires `@seihouse/sen` 0.22.0. `useLibraryStories` returns
+**0.20.0:** includes 0.19.1 above; requires `@seihouse/sen` 0.22.0. `useLibraryStories` returns
 `rewriteLatestChapter(storyId, note?)`, written with the current model, and takes
 `holdingsFixer` (how far SEN's Holdings fixer goes; the Familiar's control point);
 `StoryPages` gives the Reader its Rewrite this chapter. The server Model Router entry
@@ -164,8 +172,11 @@ const result = await router.generate({
 ```
 
 `text` handles Gemini and OpenRouter text and returns text plus optional
-provider token usage. `tts` takes a server-chosen voice ID and returns MPEG
-bytes from ElevenLabs. Provider errors use the stable `ModelRouterError.code`;
+provider token usage. `temperature` applies to non-Gemini models; Gemini uses
+provider-default sampling and supported `reasoningLevel` values are sent as
+thinking levels (OpenRouter uses `reasoning.effort`). An unsupported or unknown
+Gemini level is omitted to use the model default. `tts` takes a server-chosen
+voice ID and returns MPEG bytes from ElevenLabs. Provider errors use the stable `ModelRouterError.code`;
 apps should branch on that code rather than parsing message text. Apps decide
 their own HTTP message and retry policy. Image, music, video and 3D entries are
 catalog information only and have no generation adapter. A configured key

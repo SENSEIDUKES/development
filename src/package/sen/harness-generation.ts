@@ -72,6 +72,8 @@ export {
   type TranslationPackageSelection,
 } from '../../narrative/translationSkill';
 export { buildImmediateChapterRequest } from '../../components/harness-generation/shared/immediateChapterRequest';
+export { activeAttemptForStory, isBlockingAttempt } from '../../components/harness-generation/shared/attempts';
+export { chapterRewriteGap, latestStoryChapter, readRewriteNote, withoutLatestChapter } from '../../components/harness-generation/shared/chapterRewrite';
 export { attemptChapterPath, chapterDirectionGap, pendingChapterDirection, validateChapterDirectionChoice } from '../../components/harness-generation/shared/chapterDirection';
 export {
   FATE_PRESSURE_RHYTHM_CONFIG,

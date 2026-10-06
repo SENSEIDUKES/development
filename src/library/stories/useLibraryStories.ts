@@ -44,6 +44,8 @@ export interface LibraryStories {
   canGenerate: boolean;
   /** Writes the story's next chapter with the current model. */
   generateNextChapter: (storyId: string) => Promise<void>;
+  /** Writes the story's latest chapter again with the current model, with the reader's optional note. */
+  rewriteLatestChapter: (storyId: string, note?: string) => Promise<void>;
   /** Plans the goals of the arc a story's next chapter begins, with the chosen model. */
   planArc: (storyId: string) => Promise<void>;
 }
@@ -128,6 +130,9 @@ export function useLibraryStories({
   const generateNextChapter = useCallback(async (storyId: string) => {
     await controller.generateNextChapter(storyId, model);
   }, [controller, model]);
+  const rewriteLatestChapter = useCallback(async (storyId: string, note?: string) => {
+    await controller.rewriteLatestChapter(storyId, model, note);
+  }, [controller, model]);
   const planArc = useCallback(async (storyId: string) => {
     await controller.planNextArc(storyId, model);
   }, [controller, model]);
@@ -137,6 +142,7 @@ export function useLibraryStories({
     controller, state, serverInfo, model, setModel, loadError: storageError ?? writerError, retry,
     canGenerate: Boolean(state && serverInfo?.configured && model),
     generateNextChapter,
+    rewriteLatestChapter,
     planArc,
   };
 }

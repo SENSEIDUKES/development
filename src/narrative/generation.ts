@@ -18,8 +18,10 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * each arc when it begins (the Foundation keeps Arc 1 and a hidden look-ahead
  * instead of a whole roadmap); 25 adds the optional speaker records; 26 adds
  * holdings: each chapter's holding changes and closing list, and the
- * workspace's Codex entries. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 27 as const;
+ * workspace's Codex entries; 27 counts arcs of 30 chapters (nothing before it
+ * upgrades); 28 adds the optional rewrite request and replaced-by record, and
+ * each chapter's optional Holdings fixer record. */
+export const HARNESS_GENERATION_SCHEMA_VERSION = 28 as const;
 
 /** Output buckets assign processor categories; legacy event arrays remain readable. */
 export const HARNESS_MEMORY_CATEGORIES = {
@@ -394,6 +396,12 @@ export interface ImmediateChapterRequest {
   /** The reader's choice for this chapter. Absent when Rhythm chooses automatically. */
   direction?: HarnessChapterDirection;
   /**
+   * Present when the reader asked for the story's latest chapter to be written
+   * again. The request is prepared from the story as it stood before that
+   * chapter, which stays saved until the new version commits in its place.
+   */
+  rewrite?: HarnessChapterRewrite;
+  /**
    * The HARNESS-owned chapter-scale target for this attempt. It is mechanics,
    * not a CAPA skill and not canonical Story Information: the Pacing skill
    * decides how the chapter uses the space this range allows.
@@ -408,6 +416,19 @@ export interface ImmediateChapterRequest {
      */
     paragraphs?: number;
   };
+}
+
+/** The longest note a reader may leave when asking for a chapter to be written again. */
+export const CHAPTER_REWRITE_NOTE_LIMIT = 1_200 as const;
+
+/** The reader's request to write the story's latest chapter again. */
+export interface HarnessChapterRewrite {
+  /** The saved chapter the new version replaces when it commits. */
+  replacesChapterId: string;
+  /** What the reader wants changed, in their words. Absent when they left no note. */
+  note?: string;
+  /** The version being replaced, as the writer is shown it: its title and saved recap, never its prose. */
+  previous: { title: string; recap?: string };
 }
 
 /** One path for the next chapter, chosen by the reader. */
@@ -919,6 +940,12 @@ export interface HarnessGenerationAttempt {
   rejectedEvents?: HarnessRejectedEventDiagnostic[];
   pendingChapterId?: string;
   committedChapterId?: string;
+  /**
+   * Set when the reader had this attempt's chapter written again: the chapter
+   * that replaced it. The attempt keeps the replaced version's reply and
+   * accepted draft, so an export still shows it.
+   */
+  replacedByChapterId?: string;
   batchId?: string;
   postCommitProcessing?: 'not_started' | 'complete' | 'warnings' | 'failed';
   warnings: HarnessWarning[];

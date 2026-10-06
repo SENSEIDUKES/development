@@ -76,6 +76,7 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
       readerStateRepository={readerStateRepository} startOnOpen={startOnOpen}
       readerPreferences={readerPreferences} readAloudVoices={LIBRARY_READ_ALOUD_VOICES}
       onGenerateNextChapter={stories.canGenerate ? () => stories.generateNextChapter(storyId) : undefined}
+      onRewriteChapter={stories.canGenerate ? note => stories.rewriteLatestChapter(storyId, note) : undefined}
       onPlanArc={stories.canGenerate ? () => stories.planArc(storyId) : undefined}
       renderWriting={writingAgent ? writing => <AILoadingVeil agent={writingAgent} isGenerating={writing.active}
         generationPhase="chapter" generatingChapterNum={writing.chapterNumber} progress={null}

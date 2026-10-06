@@ -1,4 +1,4 @@
-import { HARNESS_MAX_CHAPTER_PARAGRAPHS, type HarnessArcRequest, type HarnessGenerationRequest, type HarnessGenerationResponse } from '@seihouse/sen/harness-generation';
+import { CHAPTER_REWRITE_NOTE_LIMIT, HARNESS_MAX_CHAPTER_PARAGRAPHS, type HarnessArcRequest, type HarnessGenerationRequest, type HarnessGenerationResponse } from '@seihouse/sen/harness-generation';
 import { validateSoundWords } from '@seihouse/sen/audio';
 import {
   harnessGenerationServerInfo,
@@ -103,6 +103,16 @@ const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessArcReque
   const paragraphs = isRecord(immediate.chapterScale) ? immediate.chapterScale.paragraphs : undefined;
   if (paragraphs !== undefined && (!Number.isInteger(paragraphs) || Number(paragraphs) < 1 || Number(paragraphs) > HARNESS_MAX_CHAPTER_PARAGRAPHS)) {
     throw new Error(`The chapter paragraph count must be a whole number from 1 to ${HARNESS_MAX_CHAPTER_PARAGRAPHS}.`);
+  }
+  // A rewrite names the chapter it replaces and shows its title; the reader's note stays within its limit.
+  const rewrite = immediate.rewrite;
+  if (rewrite !== undefined) {
+    const previous = isRecord(rewrite) ? rewrite.previous : undefined;
+    if (!isRecord(rewrite) || typeof rewrite.replacesChapterId !== 'string' || !rewrite.replacesChapterId.trim()
+      || !isRecord(previous) || typeof previous.title !== 'string' || (previous.recap !== undefined && typeof previous.recap !== 'string')
+      || (rewrite.note !== undefined && (typeof rewrite.note !== 'string' || !rewrite.note.trim() || rewrite.note.length > CHAPTER_REWRITE_NOTE_LIMIT))) {
+      throw new Error(`A chapter rewrite needs the chapter it replaces with its title, and a note of at most ${CHAPTER_REWRITE_NOTE_LIMIT.toLocaleString()} characters.`);
+    }
   }
   if (typeof parsed.model !== 'string') throw new Error('Choose a configured Harness Generation model.');
   return parsed as unknown as HarnessGenerationRequest;

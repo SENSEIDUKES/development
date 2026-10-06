@@ -29,6 +29,18 @@ describe('planHarnessWorkspaceLoad', () => {
     }
   });
 
+  it('upgrades a schema 27 workspace with every story and chapter kept, keeping a copy of the original', () => {
+    const stored = { ...createEmptyHarnessWorkspaceState(), schemaVersion: 27, stories: [{ id: 'a' }], chapters: [{ id: 'c1' }] };
+    const plan = planHarnessWorkspaceLoad(stored, now);
+    // 28 adds only optional fields: the rewrite request and its replaced-by record, and the Holdings fixer record.
+    expect(HARNESS_GENERATION_SCHEMA_VERSION).toBe(28);
+    expect(plan.state).toEqual({ ...stored, schemaVersion: 28 });
+    expect(plan.preserve).toEqual({
+      key: `${PRESERVED_WORKSPACE_PREFIX}v27:2026-09-24T12:00:00.000Z`,
+      record: { preservedAt: now(), reason: 'migrated', schemaVersion: 27, workspace: stored },
+    });
+  });
+
   it('preserves a current-version workspace whose shape cannot be read', () => {
     const stored = { schemaVersion: HARNESS_GENERATION_SCHEMA_VERSION, stories: 'broken' };
     const plan = planHarnessWorkspaceLoad(stored, now);

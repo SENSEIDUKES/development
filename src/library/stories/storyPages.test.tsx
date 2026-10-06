@@ -175,6 +175,30 @@ describe('A story\'s own pages for any host', { timeout: 20_000 }, () => {
     }
   });
 
+  it('the Reader writes the newest chapter again with the host\'s model when the reader asks', async () => {
+    const model = scriptedModel();
+    model.release();
+    const repository = new InMemoryHarnessGenerationRepository();
+    const story = await createSeededStory(repository, model.adapter, 'The Drowned Name');
+    const writer = new HarnessGenerationController({ repository, modelAdapter: model.adapter });
+    await writer.hydrate();
+    await writer.generateNextChapter(story.id, 'fixture');
+    await act(async () => root.render(renderWithDevAudio(<StoryHost repository={repository} adapter={model.adapter} storyId={story.id}
+      preferredModel="remembered" />)));
+    await flush();
+    await click(chaptersAction(), 'Start Reading');
+    await flush();
+    expect(container.querySelector('[data-chapter-number="1"]')).toBeTruthy();
+
+    await click(buttonByText('Rewrite this chapter'), 'Rewrite this chapter');
+    await click(buttonByText('Rewrite Chapter 1'), 'Rewrite Chapter 1');
+    await flush();
+    expect(model.generate).toHaveBeenCalledTimes(2);
+    expect(model.generate.mock.calls[1][0]).toMatchObject({ model: 'remembered', immediateChapterRequest: { chapterNumber: 1, rewrite: { previous: { title: 'Low Tide' } } } });
+    expect(container.querySelector('[data-chapter-number="1"]')).toBeTruthy();
+    expect(container.querySelector('[role="alert"]')).toBeNull();
+  });
+
   it('says plainly when a story is gone, and when storage cannot open, then opens on Retry', async () => {
     const model = scriptedModel();
     const repository = new InMemoryHarnessGenerationRepository();

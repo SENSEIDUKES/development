@@ -69,9 +69,9 @@ const story = async ({ written = 0, replies }: { written?: number; replies?: str
 };
 
 /** A host like the Library workspace: it follows the controller and writes chapters with its model. */
-function Host({ controller, storyId, readerState, renderWriting, startOnOpen, canWrite = true, readerPreferences, readAloudVoices }: {
+function Host({ controller, storyId, readerState, renderWriting, startOnOpen, canWrite = true, canRewrite = false, readerPreferences, readAloudVoices }: {
   controller: HarnessGenerationController; storyId: string; readerState?: ReaderStateRepository;
-  renderWriting?: (writing: HarnessReaderWriting) => React.ReactNode; startOnOpen?: boolean; canWrite?: boolean;
+  renderWriting?: (writing: HarnessReaderWriting) => React.ReactNode; startOnOpen?: boolean; canWrite?: boolean; canRewrite?: boolean;
   readerPreferences?: ReaderPreferenceStorage; readAloudVoices?: ReadAloudVoicePicks;
 }) {
   const [state, setState] = useState(controller.snapshot());
@@ -79,7 +79,8 @@ function Host({ controller, storyId, readerState, renderWriting, startOnOpen, ca
   return <HarnessReaderSession state={state} storyId={storyId} controller={controller} onClose={() => undefined}
     readerStateRepository={readerState} renderWriting={renderWriting} startOnOpen={startOnOpen}
     readerPreferences={readerPreferences} readAloudVoices={readAloudVoices}
-    onGenerateNextChapter={canWrite ? async () => { await controller.generateNextChapter(storyId, 'test-model'); } : undefined} />;
+    onGenerateNextChapter={canWrite ? async () => { await controller.generateNextChapter(storyId, 'test-model'); } : undefined}
+    onRewriteChapter={canRewrite ? async note => { await controller.rewriteLatestChapter(storyId, 'test-model', note); } : undefined} />;
 }
 
 let container: HTMLDivElement;
@@ -185,6 +186,77 @@ describe('The HARNESS Reader', { timeout: 20_000 }, () => {
     await click(byLabel('Next Chapter: Write Chapter 1'), 'Write Chapter 1');
     expect(chapterOnScreen(1)!.textContent).toContain('The tide pulled back from the drowned gate.');
     expect(container.querySelector('[role="alert"]')).toBeNull();
+  });
+
+  it('Rewrite this chapter: offered at the end of the newest chapter only, written with the reader\'s note, opened from its top', async () => {
+    const rewritten = reply('The Keeper Returns', ['The keeper had waited three nights for her.', 'He did not ask for her name this time.']);
+    const { controller, storyId, generate, hold } = await story({ written: 2, replies: [...CHAPTERS, rewritten] });
+    const seen: HarnessReaderWriting[] = [];
+    const renderWriting = (writing: HarnessReaderWriting) => { seen.push(writing); return writing.active ? <div data-testid="writing-screen">Chapter {writing.chapterNumber}</div> : null; };
+    await mount(<Host controller={controller} storyId={storyId} canRewrite renderWriting={renderWriting} />);
+    const rewriteLink = () => buttonBy(button => button.textContent === 'Rewrite this chapter');
+    // An earlier chapter is never offered.
+    expect(chapterOnScreen(1)).toBeTruthy();
+    expect(rewriteLink()).toBeUndefined();
+    await click(byLabel('Next Chapter'), 'Next Chapter');
+    expect(chapterOnScreen(2)).toBeTruthy();
+
+    await click(button => button.textContent === 'Rewrite this chapter', 'Rewrite this chapter');
+    const note = container.querySelector<HTMLTextAreaElement>('form[aria-label="Rewrite Chapter 2"] textarea')!;
+    expect(container.querySelector(`label[for="${note.id}"]`)!.textContent).toBe('What should change? Optional');
+    act(() => {
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(note, 'Let the keeper wait longer.');
+      note.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    const scrolled = vi.mocked(Element.prototype.scrollIntoView).mock.calls.length;
+    const release = hold();
+    await click(button => button.textContent === 'Rewrite Chapter 2', 'Rewrite Chapter 2');
+    // The writing screen covers the chapter while it is written again.
+    expect(container.querySelector('[data-testid="writing-screen"]')!.textContent).toBe('Chapter 2');
+    await act(async () => { release(); });
+    await flush();
+
+    expect(generate).toHaveBeenCalledTimes(3);
+    expect(generate.mock.calls[2][0]).toMatchObject({ immediateChapterRequest: { chapterNumber: 2, rewrite: { note: 'Let the keeper wait longer.', previous: { title: 'The Bell Keeper' } } } });
+    expect(container.querySelector('[data-testid="writing-screen"]')).toBeNull();
+    expect(seen.at(-1)).toEqual({ active: false, chapterNumber: 2 });
+    const shown = chapterOnScreen(2)!;
+    expect(shown.querySelector('h1')!.textContent).toBe('The Keeper Returns');
+    expect(shown.textContent).toContain('The keeper had waited three nights for her.');
+    expect(shown.textContent).not.toContain('A keeper waited on the causeway with a lantern.');
+    expect(vi.mocked(Element.prototype.scrollIntoView).mock.calls.length).toBeGreaterThan(scrolled);
+    // Still the newest chapter: it may be written again, with a fresh, empty note.
+    expect(rewriteLink()).toBeTruthy();
+    expect(container.querySelector('form[aria-label="Rewrite Chapter 2"]')).toBeNull();
+    expect(controller.snapshot().stories[0].head.nextChapterNumber).toBe(3);
+  });
+
+  it('a rewrite that fails keeps the chapter and the note, and says the chapter is unchanged', async () => {
+    const { controller, storyId, generate } = await story({ written: 1 });
+    generate.mockRejectedValueOnce(new Error('The writer is busy.'));
+    await mount(<Host controller={controller} storyId={storyId} canRewrite />);
+    await click(button => button.textContent === 'Rewrite this chapter', 'Rewrite this chapter');
+    const note = container.querySelector<HTMLTextAreaElement>('form[aria-label="Rewrite Chapter 1"] textarea')!;
+    act(() => {
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(note, 'Shorter, please.');
+      note.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await click(button => button.textContent === 'Rewrite Chapter 1', 'Rewrite Chapter 1');
+
+    expect(container.querySelector('[role="alert"]')!.textContent).toBe('Chapter 1 was not rewritten. The writer is busy. Chapter 1 is unchanged.');
+    expect(chapterOnScreen(1)!.textContent).toContain('The tide pulled back from the drowned gate.');
+    expect(container.querySelector<HTMLTextAreaElement>('form[aria-label="Rewrite Chapter 1"] textarea')!.value).toBe('Shorter, please.');
+    // Cancel closes the box; the chapter goes on as it was.
+    await click(button => button.textContent === 'Cancel', 'Cancel');
+    expect(container.querySelector('form[aria-label="Rewrite Chapter 1"]')).toBeNull();
+    expect(buttonBy(byLabel('Next Chapter: Write Chapter 2'))).toBeTruthy();
+  });
+
+  it('offers no rewrite where the host cannot write chapters', async () => {
+    const { controller, storyId } = await story({ written: 1 });
+    await mount(<Host controller={controller} storyId={storyId} canWrite={false} />);
+    expect(chapterOnScreen(1)).toBeTruthy();
+    expect(buttonBy(button => button.textContent === 'Rewrite this chapter')).toBeUndefined();
   });
 
   it('Start Story begins Chapter 1 as the Reader opens, once', async () => {

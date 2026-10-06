@@ -1,6 +1,6 @@
 import { validateHardPinInputs } from '@seihouse/sen/harness-generation';
 import { ARC_LENGTH, ARC_LOOKAHEAD_SCHEMA, ARC_PLAN_DRAFT_SCHEMA, MAX_ARC_LOOKAHEAD, createArcChapterPosition } from '@seihouse/sen/arc-goals';
-import { type HarnessArcRequest, type HarnessChapterDirection, type HarnessGenerationRequest, type HarnessStoryMode, type HarnessMissionReminder, type HarnessRequestMeasurement, type ImmediateChapterRequest, type PacketSectionId, type StoryInformationPacket } from '@seihouse/sen/harness-generation';
+import { type HarnessArcRequest, type HarnessChapterDirection, type HarnessChapterRewrite, type HarnessGenerationRequest, type HarnessStoryMode, type HarnessMissionReminder, type HarnessRequestMeasurement, type ImmediateChapterRequest, type PacketSectionId, type StoryInformationPacket } from '@seihouse/sen/harness-generation';
 import { GENERATION_PACKET_BUDGET } from '@seihouse/sen/harness-generation';
 import { CHAPTER_FUNCTIONS } from '@seihouse/sen/harness-generation';
 
@@ -203,6 +203,20 @@ const presentReaderDirection = ({ choice }: HarnessChapterDirection) => choice.k
     `The reader chose this path for this chapter only. Write the chapter so its primary function is ${choice.chapterFunction}${choice.suggestion ? ', developing that idea' : ''}.`,
   ].join('\n');
 
+/**
+ * A rewrite: the reader asked for this chapter again. The writer sees the
+ * version being replaced only as its title and recap, so it writes the
+ * chapter afresh instead of editing the old prose.
+ */
+const presentChapterRewrite = (chapterNumber: number, { note, previous }: HarnessChapterRewrite) => [
+  `REWRITE: the reader asked for Chapter ${chapterNumber} to be written again. The version they set aside:`,
+  `"${previous.title}"${previous.recap ? ` — ${previous.recap}` : ''}`,
+  note
+    ? `THE READER'S NOTE: ${note}\nWrite Chapter ${chapterNumber} again from the same point in the story so it does what the note asks. Keep the events above where the note leaves them alone and they still fit.`
+    : `The reader left no note. Write a new version of Chapter ${chapterNumber} from the same point in the story with the same direction, taking a fresh approach to its events and their telling.`,
+  'Never reuse the set-aside version\'s wording. Nothing in it happened unless you write it again.',
+].join('\n');
+
 /** Presents the Immediate Chapter Request: the one instruction for the chapter being generated now. */
 export const presentImmediateChapterRequest = (request: ImmediateChapterRequest) => [
   'IMMEDIATE CHAPTER REQUEST',
@@ -214,7 +228,8 @@ export const presentImmediateChapterRequest = (request: ImmediateChapterRequest)
     'This is the size of the chapter, not a summary length. Write the scene fully: let events happen on the page with description, dialogue, and consequence rather than reporting them. Your Pacing skill decides how this chapter uses that space; it does not change the size.',
   ].join('\n'),
   request.direction ? presentReaderDirection(request.direction) : 'The reader left this chapter\'s path to the HARNESS: follow the Fate Pressure Rhythm Direction and continue from committed developments and the Foundation.',
-  'Write the next chapter now. Return only the requested JSON object.',
+  ...(request.rewrite ? [presentChapterRewrite(request.chapterNumber, request.rewrite)] : []),
+  `${request.rewrite ? `Write Chapter ${request.chapterNumber} again now.` : 'Write the next chapter now.'} Return only the requested JSON object.`,
 ].join('\n\n');
 
 /**

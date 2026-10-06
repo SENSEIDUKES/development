@@ -120,6 +120,31 @@ describe('Harness Generation HTTP boundary', () => {
     expect(generate).not.toHaveBeenCalled();
   });
 
+  it('sends a chapter rewrite with the reader\'s note, and refuses a malformed one or a note past its limit before contacting the provider', async () => {
+    const generate = vi.fn(async (_input: HarnessTextGenerationRequest) => ({ rawProviderResponse: '{}',
+      providerReceipt: { provider: 'gemini' as const, model: request().model, generatedAt: '2026-10-06', usage: { source: 'unavailable' as const } } }));
+    const providerFactory = () => ({ provider: 'gemini' as const, model: request().model, generate });
+    const rewriting = (rewrite: unknown) => {
+      const body = request();
+      body.immediateChapterRequest = { ...body.immediateChapterRequest, rewrite: rewrite as never };
+      return handleHarnessGenerationHttp({ method: 'POST', body }, { environment, providerFactory });
+    };
+    for (const rewrite of [
+      'Make it darker.',
+      { note: 'Make it darker.', previous: { title: 'The Keeper' } },
+      { replacesChapterId: 'chapter-2', note: 'Make it darker.' },
+      { replacesChapterId: 'chapter-2', note: '   ', previous: { title: 'The Keeper' } },
+      { replacesChapterId: 'chapter-2', note: 'x'.repeat(1_201), previous: { title: 'The Keeper' } },
+    ]) expect((await rewriting(rewrite)).status).toBe(400);
+    expect(generate).not.toHaveBeenCalled();
+
+    expect((await rewriting({ replacesChapterId: 'chapter-2', note: 'Make it darker.', previous: { title: 'The Keeper', recap: 'Lin met the keeper.' } })).status).toBe(200);
+    expect(generate).toHaveBeenCalledTimes(1);
+    const sent = generate.mock.calls[0][0].userPrompt;
+    expect(sent).toContain('REWRITE: the reader asked for Chapter 1 to be written again. The version they set aside:\n"The Keeper" — Lin met the keeper.');
+    expect(sent).toContain('THE READER\'S NOTE: Make it darker.');
+  });
+
   it('reports independent model configuration', async () => {
     const result = await handleHarnessGenerationHttp({ method: 'GET' }, { environment });
     expect(result.status).toBe(200);

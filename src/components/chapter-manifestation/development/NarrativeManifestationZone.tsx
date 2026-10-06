@@ -13,7 +13,7 @@ export interface NarrativeManifestationZoneProps {
 }
 
 /**
- * Narrative manifestation zone — the Aura Veil's active zone for story and
+ * Narrative manifestation zone — the Generation Overlay's active zone for story and
  * narrative-generation operations (World Blueprint, Initial Arc, Chapter).
  * The ManifestationChamber hosts a system-selected
  * omen scene from the narrative registry, behind the chamber's three-layer

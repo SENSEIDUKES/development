@@ -11,8 +11,8 @@ import { buildManifestationSpec, type ManifestationSpec, type MediaRevealState, 
  * render it without knowing where it came from.
  */
 
-/** Inputs the AILoadingVeil adapter resolves before building the card. */
-export interface AILoadingTaskInput {
+/** Inputs the GenerationOverlay adapter resolves before building the card. */
+export interface GenerationOverlayTaskInput {
   generationPhase: string | null;
   generationProgressMessage: string | null;
   estimatedSecondsRemaining: number | null;
@@ -24,7 +24,7 @@ export interface AILoadingTaskInput {
   /** Resolved 0–100 progress, or null for indeterminate. */
   progress: number | null;
   /**
-   * Optional Aura Veil overrides: an explicit narrative omen scene, or the
+   * Optional Generation Overlay overrides: an explicit narrative omen scene, or the
    * media reveal progression / finished asset. Omit for the taxonomy
    * defaults (system-selected omen scene; unsealing scroll).
    */
@@ -56,11 +56,11 @@ export const AI_PHASE_PHRASES: Record<string, string> = {
 };
 
 /**
- * Normalize the AILoadingVeil generation signals into a LoadingTaskCard.
+ * Normalize the GenerationOverlay generation signals into a LoadingTaskCard.
  * Preserves every piece of information the original veils received —
  * phase copy, chapter tracker, passages count, and time estimates.
  */
-export function buildAILoadingTaskCard(input: AILoadingTaskInput, agent: LoadingAgentPresentation): LoadingTaskCard {
+export function buildGenerationOverlayTaskCard(input: GenerationOverlayTaskInput, agent: LoadingAgentPresentation): LoadingTaskCard {
   const isChapter = input.generationPhase === 'chapter';
   const chapterNum = input.generatingChapterNum;
   const passages = input.streamingBlocksCount;
@@ -96,7 +96,7 @@ export function buildAILoadingTaskCard(input: AILoadingTaskInput, agent: Loading
     colorClass: agent.colorClass,
     // Scout and other short retrieval tasks never block the screen.
     preferredMode: agent.id === 'scout' ? 'compact' : 'primary',
-    // Aura Veil manifestation spec — mode and active zone resolved from the
+    // Generation Overlay manifestation spec — mode and active zone resolved from the
     // operation id via the shared taxonomy.
     manifestation: buildManifestationSpec(phaseId, {
       sceneId: input.omenSceneId,

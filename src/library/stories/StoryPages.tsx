@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { findStory, HarnessReaderSession } from '@seihouse/sen/harness-generation';
 import type { ReaderPreferenceStorage, ReaderStateRepository } from '@seihouse/sen/reader-runtime';
-import AILoadingVeil from '../../components/chapter-manifestation/development/AILoadingVeil';
+import GenerationOverlay from '../../components/chapter-manifestation/development/GenerationOverlay';
 import { StoryDetailScreen } from '../../components/light-novels-home/development/StoryDetailScreen';
 import type { LoadingAgentPresentation } from '../manifestations/taskCard';
 import { LIBRARY_READ_ALOUD_VOICES } from './readAloudVoices';
@@ -26,7 +26,7 @@ export interface StoryPagesProps {
   readerStateRepository?: ReaderStateRepository;
   /** Host-owned device preferences: the reader's narration voices and speed. */
   readerPreferences?: ReaderPreferenceStorage;
-  /** The agent the Aura Veil shows while a chapter is written (the host owns agent art). Without it, Next says it is writing. */
+  /** The agent the Generation Overlay shows while a chapter is written (the host owns agent art). Without it, Next says it is writing. */
   writingAgent?: LoadingAgentPresentation;
 }
 
@@ -35,7 +35,7 @@ const keepVeilOpen = () => undefined;
 
 /**
  * One story's own pages: its World Info page (Start Story, Start Reading,
- * Continue) and the Reader, with the Aura Veil while a chapter is written.
+ * Continue) and the Reader, with the Generation Overlay while a chapter is written.
  * The host decides which page shows and keeps this mounted, keyed by story,
  * as the reader moves between them, so Start Story still begins Chapter 1 once
  * the Reader opens.
@@ -78,7 +78,7 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
       onGenerateNextChapter={stories.canGenerate ? () => stories.generateNextChapter(storyId) : undefined}
       onRewriteChapter={stories.canGenerate ? note => stories.rewriteLatestChapter(storyId, note) : undefined}
       onPlanArc={stories.canGenerate ? () => stories.planArc(storyId) : undefined}
-      renderWriting={writingAgent ? writing => <AILoadingVeil agent={writingAgent} isGenerating={writing.active}
+      renderWriting={writingAgent ? writing => <GenerationOverlay agent={writingAgent} isGenerating={writing.active}
         completed={state.chapters.some(chapter => chapter.storyId === storyId && chapter.chapterNumber === writing.chapterNumber)}
         generationPhase="chapter" generatingChapterNum={writing.chapterNumber} progress={null}
         generationProgressMessage={null} estimatedSecondsRemaining={null} activeAgentId="versa"

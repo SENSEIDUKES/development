@@ -1,5 +1,5 @@
 /**
- * Aura Veil manifestation modes — the shared contract behind the veil's
+ * Generation Overlay manifestation modes — the shared contract behind the veil's
  * active manifestation zone.
  *
  * One shared manifestation shell (Versa presence, aura + ambient atmosphere,
@@ -18,7 +18,7 @@
  * Only the active manifestation zone and the operation-specific language
  * change between the modes; the shell is identical.
  *
- * EXPLICIT EXCLUSIONS — never route these through the Aura Veil modes:
+ * EXPLICIT EXCLUSIONS — never route these through the Generation Overlay modes:
  * Reader Chamber manifestation, Codex manifestation, and Narration. Those
  * systems already have (or will have) their own dedicated manifestation
  * logic. `AURA_VEIL_EXCLUDED_SYSTEMS` names them so future callers can
@@ -50,7 +50,7 @@ export type MediaOperation = (typeof MEDIA_OPERATIONS)[number];
 
 /**
  * Systems with their own dedicated manifestation logic. They must NOT be
- * routed through the Aura Veil's narrative or media modes.
+ * routed through the Generation Overlay's narrative or media modes.
  */
 export const AURA_VEIL_EXCLUDED_SYSTEMS = [
   'reader-chamber',
@@ -75,10 +75,10 @@ export const MEDIA_KIND_LABEL: Record<MediaKind, string> = {
 };
 
 /**
- * Media reveal progression inside the media active zone. The Aura Veil's
+ * Media reveal progression inside the media active zone. The Generation Overlay's
  * media mode adopts the agnostic Manifestation Reveal mechanic (see
  * `manifestationReveal.ts`) — the type stays in this file so existing
- * callers (the AILoadingVeil chain and the task card builder) keep their
+ * callers (the GenerationOverlay chain and the task card builder) keep their
  * import paths, but the source of truth lives in the shared reveal
  * contract.
  *
@@ -90,7 +90,7 @@ export const MEDIA_KIND_LABEL: Record<MediaKind, string> = {
  *
  * The reveal never advances this progression itself — the caller owns every
  * transition. `MediaRevealState` is a named alias of the agnostic
- * `ManifestationRevealState` for the Aura Veil's media layer.
+ * `ManifestationRevealState` for the Generation Overlay's media layer.
  */
 export type MediaRevealState = ManifestationRevealState;
 

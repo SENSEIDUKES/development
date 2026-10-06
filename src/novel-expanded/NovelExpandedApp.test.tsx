@@ -156,7 +156,7 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
     await click(chaptersAction(), 'Start Story', 10);
     expect(address()).toBe(`/app/?story=${created.id}&read=1`);
     expect(document.querySelector('[data-testid="harness-reader"]')).toBeTruthy();
-    const veil = document.querySelector<HTMLElement>('[data-testid="generation-veil"]')!;
+    const veil = document.querySelector<HTMLElement>('[data-testid="generation-overlay"]')!;
     expect(veil.dataset.familiarId).toBe(equippedFamiliarId ?? 'quill');
     expect(veil.querySelector(`[aria-label="${equippedFamiliarId ? 'Phoenix' : 'Quill'}, Working"]`)).toBeTruthy();
     expect(veil.textContent).toContain('Chapter 1');

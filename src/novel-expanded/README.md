@@ -24,7 +24,7 @@ rewrites and every page survives a reload.
 | Home | `/app/` | The reader's stories, newest first, and Carve New Destiny |
 | Create | `/app/?page=create` | The Library's Story Seed journey: the seed, its World Blueprint, Manifest Story |
 | Story View | `/app/?story=<id>` | The story's World Info page: Start Story, Start Reading, Continue, and Export story (the whole story as one file, for sharing a test) |
-| Reader | `/app/?story=<id>&read=1` | The reading-only Reader, with the Aura Veil while a chapter is written |
+| Reader | `/app/?story=<id>&read=1` | The reading-only Reader, with the Generation Overlay while a chapter is written |
 
 - Moving inside the app adds a browser history entry, so Back and Forward walk the same pages.
 - Manifest Story replaces Create with the new story, so Back from it goes Home.
@@ -39,7 +39,7 @@ The app writes chapters exactly as the Workshop's HARNESS page does:
 - the Library's sound words and Sound Cues (`LIBRARY_BASE_MEDIA`), played through the reader mixer below;
 - chapter tags and recaps recorded in the chapter write, with no separate memory call;
 - the Model Router's chapter model (`useModelPreference('chapters')`), the one choice shared with the Workshop;
-- the equipped Familiar on the Aura Veil, with its animation and elemental accents.
+- the equipped Familiar on the Generation Overlay, with its animation and elemental accents.
 
 `NovelExpandedApp.equippedFamiliarId` accepts the host profile's current choice
 and updates the veil when it changes. There are no account or equipment screens

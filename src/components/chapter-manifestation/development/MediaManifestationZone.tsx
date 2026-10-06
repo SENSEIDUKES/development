@@ -81,7 +81,7 @@ export interface MediaManifestationZoneProps {
 }
 
 /**
- * Media manifestation zone — the Aura Veil's active zone for standalone
+ * Media manifestation zone — the Generation Overlay's active zone for standalone
  * media-generation operations (Cover Art, Image, Audio, Visual / Motion,
  * and future standalone asset types). Same ManifestationChamber and
  * layering contract as the narrative zone; what changes is the scene: the

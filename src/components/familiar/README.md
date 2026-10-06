@@ -75,7 +75,7 @@ intentionally not runtime dependencies.
 
 ## Modular integration
 
-- Generation presentation reads the equipped definition through Library's
+- `GenerationOverlay` reads the equipped definition through Library's
   `LoadingFamiliarProvider` (or `LibraryPresentationProvider.loadingFamiliar`).
   It reuses `FamiliarSprite` and the original working/review clips. Element
   affinities and form/veil colors now share `src/library/familiars/appearance.ts`;

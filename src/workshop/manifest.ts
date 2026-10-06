@@ -361,7 +361,7 @@ export const workshopEntries: WorkshopEntry[] = [
     owner: 'sen',
     status: 'active',
     title: 'Harness Generation',
-    description: 'Standalone checkpoint-first novel core: a premise-first Story Foundation, one model call per chapter written in the tiny SEN language (narration plus sound tags the writer puts on its own words), independent IndexedDB persistence, tolerant prose acceptance, semantic-event ledger, and continuity directed one chapter at a time from the Reader\'s Fate page, in Regular Reader or Fate Survival mode. A story opens on its World Info page; Start Story writes Chapter 1 under the Aura Veil in a Reader on the Text Highlight Engine. Listen reads chapters aloud in three voices (Narrator, Protagonist, Side) with the spoken sentence lit, from the speakers the writer tags. Holdings: the writer reads what each character has, uses only that, and tags every change; plain rules check it, and the Reader\'s Holdings page shows it with the passage behind each change.',
+    description: 'Standalone checkpoint-first novel core: a premise-first Story Foundation, one model call per chapter written in the tiny SEN language (narration plus sound tags the writer puts on its own words), independent IndexedDB persistence, tolerant prose acceptance, semantic-event ledger, and continuity directed one chapter at a time from the Reader\'s Fate page, in Regular Reader or Fate Survival mode. A story opens on its World Info page; Start Story writes Chapter 1 under the Generation Overlay in a Reader on the Text Highlight Engine. Listen reads chapters aloud in three voices (Narrator, Protagonist, Side) with the spoken sentence lit, from the speakers the writer tags. Holdings: the writer reads what each character has, uses only that, and tags every change; plain rules check it, and the Reader\'s Holdings page shows it with the passage behind each change.',
     category: 'other',
     version: 'v1.5',
     source: {
@@ -390,8 +390,8 @@ export const workshopEntries: WorkshopEntry[] = [
     section: 'systems',
     owner: 'library',
     status: 'active',
-    title: 'Chapter Generation Manifestation',
-    description: 'Aura Veil state simulator with two workshop areas — the full-shell Aura Veil (two screens: one narrative manifestation and one media reveal, driven by one task-card format; the HARNESS Reader shows the narrative screen while it writes a chapter) and a focused standalone Manifestation Reveal preview for the agnostic sealed → unsealing → revealed mechanic and its current celestial scroll vessel.',
+    title: 'Generation Overlay',
+    description: 'Generation Overlay state simulator with two workshop areas — the full-screen Generation Overlay (two screens: one narrative manifestation and one media reveal, driven by one task-card format; the HARNESS Reader shows the narrative screen while it writes a chapter) and a focused standalone Manifestation Reveal preview for the agnostic sealed → unsealing → revealed mechanic and its current celestial scroll vessel.',
     category: 'animations',
     version: 'v1.7',
     source: {

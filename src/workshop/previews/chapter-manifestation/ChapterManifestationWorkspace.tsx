@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AGENTS } from '../../../lib/agents';
 import ReferenceAILoadingVeil from '../../../components/chapter-manifestation/reference/AILoadingVeil';
-import { AILoadingVeil as DevelopmentAILoadingVeil, LoadingFamiliarProvider, loadingFamiliarPresentation } from '@seihouse/library/manifestations';
+import { GenerationOverlay as GenerationOverlay, LoadingFamiliarProvider, loadingFamiliarPresentation } from '@seihouse/library/manifestations';
 import { defaultFamiliar, familiarCatalogue, familiarCatalogueEntry } from '../../../host/familiar/catalogue';
 import { defaultDestinationFor } from '@seihouse/library-ui';
 import {
@@ -23,7 +23,7 @@ import {
 } from './manifestationRevealPreview';
 
 /**
- * The Aura Veil's two screens: one narrative manifestation (a chapter being
+ * The Generation Overlay's two screens: one narrative manifestation (a chapter being
  * written, the HARNESS Reader's write) and one media reveal (cover art, the
  * first media asset a story gets). Reader Chamber, Codex, and Narration are
  * deliberately absent — they own dedicated manifestation logic.
@@ -36,12 +36,12 @@ const MANIFESTATIONS: { id: Exclude<GenerationPhase, null>; label: string }[] = 
 ];
 
 /**
- * The two top-level workshop areas inside this feature. The Aura Veil
+ * The two top-level workshop areas inside this feature. The Generation Overlay
  * segment is the existing full-shell simulation (Reference / Development /
  * Compare); the Manifestation Reveal segment is the focused standalone
  * preview for the agnostic mechanic.
  */
-type WorkshopArea = 'aura-veil' | 'manifestation-reveal';
+type WorkshopArea = 'generation-overlay' | 'manifestation-reveal';
 
 /**
  * Journey scrubber cosmetics — Workshop-only preview state for the
@@ -97,7 +97,7 @@ function useScrubberCosmetics() {
  * `revealed` after ~1.6s. The reveal pills stay as manual overrides and
  * cancel any pending auto-advance.
  *
- * These controls live in the Aura Veil segment only — the standalone
+ * These controls live in the Generation Overlay segment only — the standalone
  * Manifestation Reveal preview has its own dedicated control surface in
  * `manifestationRevealPreview.tsx`.
  */
@@ -186,7 +186,7 @@ function useGenerationSimulation() {
     setEstimatedSecondsRemaining(null);
   };
 
-  const openVeil = () => {
+  const openOverlay = () => {
     resetRun();
     setActiveAgentId('versa');
     setPhase(veilPhase);
@@ -201,7 +201,7 @@ function useGenerationSimulation() {
     setIsGenerating(true);
   };
 
-  const openVersaCompact = () => {
+  const openCompactOverlay = () => {
     resetRun();
     setActiveAgentId('versa');
     setPhase('chapter');
@@ -237,8 +237,8 @@ function useGenerationSimulation() {
     generatingChapterNum,
     veilPhase,
     setVeilPhase,
-    openVeil,
-    openVersaCompact,
+    openOverlay,
+    openCompactOverlay,
     openScoutCompact,
     stopSimulation,
   };
@@ -323,9 +323,9 @@ function PillOptionGroup({
   );
 }
 
-/* ─── Aura Veil segment controls ───────────────────────────────────────── */
+/* ─── Generation Overlay segment controls ───────────────────────────────────────── */
 
-function AuraVeilSimulationControls({
+function GenerationOverlaySimulationControls({
   sim,
   cosmetics,
   media,
@@ -342,7 +342,7 @@ function AuraVeilSimulationControls({
     return (
       <ControlGroup
         icon={<Wand2 size={14} className="text-portal" />}
-        title="Journey Scrubber"
+        title="Progress Indicator"
         hint="Cosmetic slots for the scrubber's traveler, trail, and destination. Picking a traveler applies its recommended destination; the destination remains independently selectable."
       >
         <PillOptionGroup
@@ -371,13 +371,13 @@ function AuraVeilSimulationControls({
     return (
       <ControlGroup
         icon={<Minimize2 size={14} className="text-portal" />}
-        title="Compact Indicators"
+        title="Compact Generation Overlay"
         hint="Open a compact background or retrieval task to inspect the persistent floating indicator."
       >
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <button
             type="button"
-            onClick={sim.openVersaCompact}
+            onClick={sim.openCompactOverlay}
             className="workshop-touch-target flex items-center justify-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm font-medium text-amber-500 transition-colors hover:bg-amber-500/20"
           >
             <Minimize2 size={14} /> Familiar — Background
@@ -399,7 +399,7 @@ function AuraVeilSimulationControls({
       <ControlGroup
         icon={<Layers size={14} className="text-human" />}
         title="Manifestation"
-        hint="The Aura Veil has two screens. Narrative shows the omen scene while a chapter is written; Media reveal shows the Manifestation Reveal while a media asset forms."
+        hint="The Generation Overlay has two screens. Narrative shows the omen scene while a chapter is written; Media reveal shows the Manifestation Reveal while a media asset forms."
       >
         <PillOptionGroup
           label="Screen"
@@ -433,15 +433,15 @@ function AuraVeilSimulationControls({
       <ControlGroup
         icon={<Sparkles size={14} className="text-amber-300" />}
         title="Simulation"
-        hint="Open the Aura Veil in primary or compact mode, or stop the running simulation."
+        hint="Open the Generation Overlay in primary or compact mode, or stop the running simulation."
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
             type="button"
-            onClick={sim.openVeil}
+            onClick={sim.openOverlay}
             className="workshop-touch-target flex items-center justify-center gap-2 px-4 py-3 bg-human/20 border border-human/40 hover:bg-human/30 text-human text-sm font-semibold tracking-wide rounded-lg transition-colors"
           >
-            <Sparkles size={15} /> Open Veil
+            <Sparkles size={15} /> Open Generation Overlay
           </button>
           <button
             type="button"
@@ -458,7 +458,7 @@ function AuraVeilSimulationControls({
   );
 }
 
-function VeilCanvas({ Veil, sim }: { Veil: typeof ReferenceAILoadingVeil; sim: ReturnType<typeof useGenerationSimulation> }) {
+function ReferenceOverlayCanvas({ Veil, sim }: { Veil: typeof ReferenceAILoadingVeil; sim: ReturnType<typeof useGenerationSimulation> }) {
   return (
     <div className="relative min-h-[calc(100vh-11rem)] bg-neutral-950 p-4 sm:p-8 font-sans text-neutral-200">
       <div className="p-6 border border-neutral-800/50 rounded-lg text-neutral-400 text-sm">
@@ -484,7 +484,7 @@ function VeilCanvas({ Veil, sim }: { Veil: typeof ReferenceAILoadingVeil; sim: R
  * cosmetics and media reveal overrides from the Workshop controls forwarded
  * into the Development veil.
  */
-function DevelopmentVeilCanvas({
+function DevelopmentOverlayCanvas({
   sim,
   cosmetics,
   media,
@@ -498,7 +498,7 @@ function DevelopmentVeilCanvas({
       <div className="p-6 border border-neutral-800/50 rounded-lg text-neutral-400 text-sm">
         Background app content... (Testing minimize state visibility)
       </div>
-      <DevelopmentAILoadingVeil
+      <GenerationOverlay
         agent={sim.activeAgentId === 'scout' ? AGENTS.SCOUT : AGENTS.VERSA}
         isGenerating={sim.isGenerating}
         generationPhase={sim.phase}
@@ -524,9 +524,9 @@ function DevelopmentVeilCanvas({
 
 const AREA_OPTIONS: { id: WorkshopArea; label: string; description: string; icon: React.ReactNode }[] = [
   {
-    id: 'aura-veil',
-    label: 'Aura Veil',
-    description: 'Full-shell simulation: equipped Familiar, journey scrubber, active manifestation zone.',
+    id: 'generation-overlay',
+    label: 'Generation Overlay',
+    description: 'Full-shell simulation: equipped Familiar, progress indicator, active manifestation zone.',
     icon: <Layers size={14} />,
   },
   {
@@ -583,21 +583,21 @@ export function ChapterManifestationWorkspace() {
   const cosmetics = useScrubberCosmetics();
   const media = useMediaPreview();
   const revealPreview = useManifestationRevealPreview();
-  const [area, setArea] = useState<WorkshopArea>('aura-veil');
+  const [area, setArea] = useState<WorkshopArea>('generation-overlay');
   const [familiarId, setFamiliarId] = useState(defaultFamiliar.definition.id);
 
   const controlSections: WorkshopControlSection[] = [
     {
       id: 'pages',
-      description: 'Choose the full Aura Veil shell or the focused Development-only reveal mechanic.',
+      description: 'Choose the full Generation Overlay shell or the focused Development-only reveal mechanic.',
       content: <WorkshopPageControls area={area} onChange={setArea} />,
     },
-    ...(area === 'aura-veil'
+    ...(area === 'generation-overlay'
       ? [
           {
             id: 'states' as const,
             description: 'Choose the narrative or media screen, force media reveal progression, and run or stop the shared veil simulation.',
-            content: <AuraVeilSimulationControls sim={sim} cosmetics={cosmetics} media={media} section="states" />,
+            content: <GenerationOverlaySimulationControls sim={sim} cosmetics={cosmetics} media={media} section="states" />,
           },
           {
             id: 'effects' as const,
@@ -609,13 +609,13 @@ export function ChapterManifestationWorkspace() {
                   {familiarCatalogue.map(entry => <option key={entry.definition.id} value={entry.definition.id}>{entry.definition.displayName}</option>)}
                 </select>
               </label>
-              <AuraVeilSimulationControls sim={sim} cosmetics={cosmetics} media={media} section="effects" />
+              <GenerationOverlaySimulationControls sim={sim} cosmetics={cosmetics} media={media} section="effects" />
             </>,
           },
           {
             id: 'advanced' as const,
             description: 'Open compact background-task indicators without changing the component navigation.',
-            content: <AuraVeilSimulationControls sim={sim} cosmetics={cosmetics} media={media} section="advanced" />,
+            content: <GenerationOverlaySimulationControls sim={sim} cosmetics={cosmetics} media={media} section="advanced" />,
           },
         ]
       : [
@@ -645,18 +645,18 @@ export function ChapterManifestationWorkspace() {
   return (
     <FeatureWorkspace
       entry={entry}
-      allowCompare={area === 'aura-veil'}
+      allowCompare={area === 'generation-overlay'}
       workshopControls={workshopControls}
-      renderReference={() => area === 'aura-veil' ? (
-        <VeilCanvas Veil={ReferenceAILoadingVeil} sim={sim} />
+      renderReference={() => area === 'generation-overlay' ? (
+        <ReferenceOverlayCanvas Veil={ReferenceAILoadingVeil} sim={sim} />
       ) : (
         <div className="flex min-h-[50vh] items-center justify-center bg-neutral-950 p-6 text-center text-sm text-white/45">
           Manifestation Reveal is a Development-only mechanic and has no locked Original Reference pane.
         </div>
       )}
-      renderDevelopment={() => area === 'aura-veil' ? (
+      renderDevelopment={() => area === 'generation-overlay' ? (
         <LoadingFamiliarProvider value={loadingFamiliarPresentation(familiarCatalogueEntry(familiarId)!.definition)}>
-          <DevelopmentVeilCanvas sim={sim} cosmetics={cosmetics} media={media} />
+          <DevelopmentOverlayCanvas sim={sim} cosmetics={cosmetics} media={media} />
         </LoadingFamiliarProvider>
       ) : (
         <ManifestationRevealPreview controller={revealPreview} />

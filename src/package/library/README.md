@@ -10,6 +10,12 @@ profile session. Selection remains host-owned, with no equipment store or write.
 `familiarElementColors`; form glows keep their existing colors. The published
 `LIBRARY_PACKAGE_VERSION` now matches the manifest. SEN stays at 0.22.0.
 
+The same 0.21.0 release adds the canonical `./manifestations` names:
+`GenerationOverlay`, `StatusMessage`, `ProgressIndicator`, `AmbientEffects`,
+`ProgressLabel` and `CompactGenerationOverlay`. Active callers and Workshop labels
+use them. Prior published names remain compatibility exports of the same components.
+See [the naming map](../../components/chapter-manifestation/README.md#canonical-names).
+
 **0.19.1 (2026-10-06):** The generation veil's traveler advances during whole-response
 generation and arrives before the veil closes on success. Unknown work shows no
 invented percentage. Failure/cancellation never signals arrival. Chapter saving,

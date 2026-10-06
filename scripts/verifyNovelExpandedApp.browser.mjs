@@ -266,9 +266,9 @@ async function walk(browser, viewport, sample) {
   check(/^\/app\/\?story=[^&]+$/.test(storyAddress), `Manifest Story should open Story View, got ${storyAddress}`);
   await shot('4-story-view');
   await page.locator('[data-world-info-chapters="action"]').click();
-  await page.locator('[data-testid="generation-veil"][data-familiar-id="quill"] [aria-label="Quill, Working"]').waitFor();
+  await page.locator('[data-testid="generation-overlay"][data-familiar-id="quill"] [aria-label="Quill, Working"]').waitFor();
   check(address() === `${storyAddress}&read=1`, `Start Story should open the Reader, got ${address()}`);
-  const veil = page.getByTestId('generation-veil');
+  const veil = page.getByTestId('generation-overlay');
   const familiarStyle = await veil.evaluate(element => {
     const style = getComputedStyle(element);
     const ring = element.querySelector('[data-celestial-foreground] > .z-0 > svg circle');
@@ -282,18 +282,18 @@ async function walk(browser, viewport, sample) {
     new DOMMatrix(getComputedStyle(element).transform).m41);
   const startX = await travelerX();
   await page.waitForFunction(start => {
-    const veil = document.querySelector('[data-testid="generation-veil"]');
+    const veil = document.querySelector('[data-testid="generation-overlay"]');
     const progress = Number(veil?.getAttribute('data-journey-progress'));
     return progress > start && progress < 1;
   }, startProgress);
   check(!(await veil.textContent()).match(/\d+%/), 'A whole-response writer must not show an invented percentage.');
   await shot('5-veil');
-  await page.waitForFunction(() => document.querySelector('[data-testid="generation-veil"]')?.getAttribute('data-journey-progress') === '1');
+  await page.waitForFunction(() => document.querySelector('[data-testid="generation-overlay"]')?.getAttribute('data-journey-progress') === '1');
   check(await veil.isVisible(), 'The veil should remain while the traveler arrives.');
   // Observe the actual SVG arrival, rather than sleeping through it on a busy runner.
   // The shared UI stops the traveler just before the gate (95% of the path).
   await page.waitForFunction(() => {
-    const veil = document.querySelector('[data-testid="generation-veil"]');
+    const veil = document.querySelector('[data-testid="generation-overlay"]');
     const svg = veil?.querySelector('svg[aria-label="Generation complete"]');
     const traveler = svg?.lastElementChild;
     const gate = traveler?.previousElementSibling;

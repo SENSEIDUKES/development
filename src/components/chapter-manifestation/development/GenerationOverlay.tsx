@@ -1,10 +1,10 @@
 import React from 'react';
-import LoadingSystem from './LoadingSystem';
-import { buildAILoadingTaskCard, type LoadingAgentPresentation } from '../../../library/manifestations/taskCard';
+import GenerationOverlayController from './GenerationOverlayController';
+import { buildGenerationOverlayTaskCard, type LoadingAgentPresentation } from '../../../library/manifestations/taskCard';
 import { manifestationModeForOperation, type MediaRevealState, type RevealedMediaAsset } from '@seihouse/sen/manifestations';
 import { NARRATIVE_STATUS_LINES, MEDIA_STATUS_LINES } from '../../../library/manifestations/statusLines';
-import { AmbientEffect as ParticleEffect } from '@seihouse/sen/presentation';
-import type { AILoadingVeilProps } from '../../../library/manifestations/loadingVeil';
+import { AmbientEffects } from './AmbientEffects';
+import type { GenerationOverlaySignals } from '../../../library/manifestations/generationOverlay';
 import { useLoadingFamiliar } from '../../../library/manifestations/familiar';
 
 /**
@@ -13,7 +13,7 @@ import { useLoadingFamiliar } from '../../../library/manifestations/familiar';
  * controls). Production callers omit them and get the registry/taxonomy
  * defaults.
  */
-interface DevelopmentAILoadingVeilProps extends AILoadingVeilProps {
+export interface GenerationOverlayProps extends GenerationOverlaySignals {
   agent: LoadingAgentPresentation;
   travelerId?: string;
   trailStyle?: string;
@@ -37,9 +37,8 @@ interface DevelopmentAILoadingVeilProps extends AILoadingVeilProps {
 }
 
 /**
- * DEV copy of AILoadingVeil — the experimental veil under active iteration.
- * Diverges from the reference (AILoadingVeil) so visual changes can be
- * compared side by side in the Workshop preview:
+ * Generation Overlay — the host adapter for full-screen and compact generation
+ * presentation. Historical reference code stays separate in the Workshop:
  * - the atmospheric phase phrase is dropped for a more compact card
  * - the phase marker pill beneath the card is dropped
  * - 2026-07-30: the card is a single 100dvh mobile composition — Versa hero,
@@ -66,7 +65,7 @@ interface DevelopmentAILoadingVeilProps extends AILoadingVeilProps {
  *   (`progress`), so a HARNESS chapter write never shows a made-up number.
  * First real caller: the Library's HARNESS Reader, while it writes a chapter.
  */
-export default function AILoadingVeil({
+export default function GenerationOverlay({
   agent,
   isGenerating,
   completed,
@@ -85,7 +84,7 @@ export default function AILoadingVeil({
   mediaAsset,
   onMediaUnseal,
   progress
-}: DevelopmentAILoadingVeilProps) {
+}: GenerationOverlayProps) {
   const [quoteIndex, setQuoteIndex] = React.useState(0);
   // Scout remains a short retrieval indicator; generation wears the equipped Familiar.
   const equippedFamiliar = useLoadingFamiliar();
@@ -134,7 +133,7 @@ export default function AILoadingVeil({
     : (generationProgressMessage || 'Manifesting spiritual matrices');
 
   const task = {
-    ...buildAILoadingTaskCard({
+    ...buildGenerationOverlayTaskCard({
       generationPhase,
       generationProgressMessage,
       estimatedSecondsRemaining,
@@ -154,7 +153,7 @@ export default function AILoadingVeil({
   };
 
   return (
-    <LoadingSystem
+    <GenerationOverlayController
       active={isGenerating}
       completed={completed}
       task={task}
@@ -167,7 +166,7 @@ export default function AILoadingVeil({
       destinationId={destinationId}
       onMediaUnseal={onMediaUnseal}
       backdrop={
-        <ParticleEffect
+        <AmbientEffects
           accent={familiar?.accent ?? (activeAgentId === 'scout' ? '#04ACFF' : '#c22e1f')}
           speedScale={0.47}
           dispersion={0.96}

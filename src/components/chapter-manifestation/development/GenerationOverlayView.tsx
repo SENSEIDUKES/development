@@ -1,13 +1,14 @@
 import React from 'react';
-import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
-import { Sparkles } from 'lucide-react';
+import { motion, useReducedMotion } from 'motion/react';
 import type { LoadingTaskCard } from '../../../library/manifestations/taskCard';
 import NarrativeManifestationZone from './NarrativeManifestationZone';
 import MediaManifestationZone from './MediaManifestationZone';
-import { LibraryScrubber } from '@seihouse/library-ui';
+import { ProgressIndicator } from './ProgressIndicator';
+import { ProgressLabel } from './ProgressLabel';
+import { StatusMessage } from './StatusMessage';
 import { FamiliarSprite } from '../../familiar/development/FamiliarSprite';
 import { loadingPalette, loadingPaletteStyle, type LoadingFamiliarPresentation } from '../../../library/manifestations/familiar';
-import './loadingVeil.css';
+import './generationOverlay.css';
 
 /**
  * Celestial field — a quiet scatter of fixed star points behind the agent
@@ -34,11 +35,11 @@ const CelestialSigil: React.FC = () => {
   );
 };
 
-export interface LoadingVeilCardProps {
+export interface GenerationOverlayViewProps {
   task: LoadingTaskCard;
   /** The host's equipped Familiar; omitted for legacy agent presentations. */
   familiar?: LoadingFamiliarPresentation | null;
-  /** Time-based travel supplied by LoadingSystem; separate from any measured task percentage. */
+  /** Time-based travel supplied by GenerationOverlayController; separate from any measured task percentage. */
   journeyProgress?: number;
   /**
    * Optional cinematic backdrop (e.g. the celestial particle field) rendered
@@ -68,11 +69,11 @@ export interface LoadingVeilCardProps {
 }
 
 /**
- * DEV copy of LoadingVeil — the Aura Veil shell: one shared manifestation
+ * Generation Overlay view — the full-screen shell: one shared manifestation
  * shell hosting two manifestation modes. The shell is identical across both:
  * 1. Equipped Familiar — supplied character animation + elemental aura;
  *    legacy agent callers may still supply an emblem
- * 2. Journey scrubber — a path-only curved qi path: a cultivator traveler
+ * 2. Progress Indicator — a path-only curved qi path: a cultivator traveler
  *    runs toward a destination gate as normalized progress advances, with
  *    an illuminated trail behind it (replaces the old thin progress bar).
  *    No status text above the arc — chapter identity and progress live with
@@ -83,7 +84,7 @@ export interface LoadingVeilCardProps {
  *    chamber with a system-selected omen scene; MediaManifestationZone
  *    renders the same chamber with the agnostic celestial scroll reveal.
  *    Both inherit the chamber's isolated three-layer stacking contract.
- * 4. Chapter line + evolving status line — a persistent "Chapter N | X%"
+ * 4. Progress Label + Status Message — a persistent "Chapter N | X%"
  *    line above the rotating quote at the bottom of the chamber; the quote
  *    is the only text that changes, and the language set changes per mode.
  *
@@ -102,12 +103,12 @@ export interface LoadingVeilCardProps {
  * bright core, twin counter-rotating cloak wisps, grounded pool, six motes.
  * First real caller: the Library's HARNESS Reader, while it writes a chapter.
  */
-export default function LoadingVeilCard({ task, familiar, journeyProgress, backdrop, emblemClassName, travelerId, trailStyle, destinationId, onMediaUnseal }: LoadingVeilCardProps) {
+export default function GenerationOverlayView({ task, familiar, journeyProgress, backdrop, emblemClassName, travelerId, trailStyle, destinationId, onMediaUnseal }: GenerationOverlayViewProps) {
   const immersive = task.agentId === 'versa' || Boolean(familiar);
   const palette = loadingPalette(familiar, task.agentId);
   const reduceMotion = useReducedMotion();
 
-  // LoadingSystem supplies the elapsed-time journey separately, so unknown work
+  // GenerationOverlayController supplies the elapsed-time journey separately, so unknown work
   // never gains a made-up percentage. Direct card consumers can still supply measured progress.
   const normalizedProgress =
     journeyProgress ?? (task.progress === null ? null : Math.min(1, Math.max(0, task.progress / 100)));
@@ -120,9 +121,9 @@ export default function LoadingVeilCard({ task, familiar, journeyProgress, backd
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, scale: 0.985, transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1] } }}
       transition={{ duration: 0.25 }}
-      className={`generation-veil fixed inset-0 h-[100dvh] ${backdrop ? 'bg-void/70' : 'bg-void/95'} backdrop-blur-md z-[9999] isolate flex flex-col overflow-hidden text-center select-none`}
+      className={`generation-overlay fixed inset-0 h-[100dvh] ${backdrop ? 'bg-void/70' : 'bg-void/95'} backdrop-blur-md z-[9999] isolate flex flex-col overflow-hidden text-center select-none`}
       style={loadingPaletteStyle(palette)}
-      data-testid="generation-veil"
+      data-testid="generation-overlay"
       data-familiar-id={familiar?.familiar.id}
       data-journey-progress={normalizedProgress ?? undefined}
     >
@@ -254,7 +255,7 @@ export default function LoadingVeilCard({ task, familiar, journeyProgress, backd
             animate={reduceMotion ? { y: 0 } : { y: [0, -6, 0] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
           >
-            {familiar ? <div className="generation-veil-familiar w-[92%]">
+            {familiar ? <div className="generation-overlay-familiar w-[92%]">
               <FamiliarSprite familiar={familiar.familiar} activity={normalizedProgress === 1 ? 'ready' : 'running'} />
             </div> : <img
               src={task.icon.src}
@@ -267,14 +268,14 @@ export default function LoadingVeilCard({ task, familiar, journeyProgress, backd
         </div>
       </div>
 
-      {/* ── Zone 2 · Journey scrubber ───────────────────────────────────────
+      {/* ── Zone 2 · Progress Indicator ───────────────────────────────────────
           Path-only presentation — no status text above the arc. The chapter
           identity and progress now live with the quote at the bottom (Zone 4),
           so the traveler walks the curved qi path toward the gate on its own.
           Progress arrives as the task card's 0–100 value, normalized here
-          to the scrubber's 0–1 contract; LoadingSystem advances unknown work with time. */}
+          to the scrubber's 0–1 contract; GenerationOverlayController advances unknown work with time. */}
       <div className="relative z-10 flex-none px-6 pt-3">
-        <LibraryScrubber
+        <ProgressIndicator
           progress={normalizedProgress}
           role={timeBasedJourney ? 'img' : 'progressbar'}
           aria-label={timeBasedJourney ? (normalizedProgress === 1 ? 'Generation complete' : 'Generation in progress') : undefined}
@@ -316,7 +317,7 @@ export default function LoadingVeilCard({ task, familiar, journeyProgress, backd
         </div>
       )}
 
-      {/* ── Zone 4 · Chapter pill + evolving line ───────────────────
+      {/* ── Zone 4 · Progress Label + Status Message ───────────────────
           Consolidated status hierarchy at the bottom of the chamber: a
           persistent chapter pill ("Chapter 1 ｜ 42%") in a softly glowing
           accent-tinted capsule above the rotating quote — the only text
@@ -324,37 +325,8 @@ export default function LoadingVeilCard({ task, familiar, journeyProgress, backd
           ("Chapter 1" alone otherwise); a card with no title renders the
           quote alone. */}
       <div className="relative z-10 flex-none px-6 pt-3 pb-7 flex flex-col items-center justify-center min-h-[44px]">
-        {task.trackerTitle && (
-          <div
-            className="generation-veil-pill mb-2 inline-flex items-center gap-2.5 rounded-full border px-4 py-1 backdrop-blur-sm"
-          >
-            <span className="generation-veil-pill-title font-sans text-xs sm:text-sm tracking-wide font-medium">
-              {task.trackerTitle}
-            </span>
-            {task.progress !== null && <>
-              <span aria-hidden="true" className="generation-veil-pill-divider h-3 w-px" />
-              <span className="generation-veil-pill-title font-sans text-xs sm:text-sm tracking-wide font-semibold">
-                {Math.round(task.progress)}%
-              </span>
-            </>}
-          </div>
-        )}
-        <div className="flex items-center justify-center gap-3">
-          <Sparkles size={10} className="generation-veil-sparkle shrink-0" />
-          <AnimatePresence mode="wait">
-            <motion.span
-              key={task.status}
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.45, ease: 'easeInOut' }}
-              className="font-serif italic text-sm text-neutral-300 leading-snug"
-            >
-              &ldquo;{task.status}&rdquo;
-            </motion.span>
-          </AnimatePresence>
-          <Sparkles size={10} className="generation-veil-sparkle shrink-0" />
-        </div>
+        <ProgressLabel label={task.trackerTitle} progress={task.progress} />
+        <StatusMessage message={task.status} />
       </div>
     </motion.div>
   );

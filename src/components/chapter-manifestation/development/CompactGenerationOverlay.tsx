@@ -4,9 +4,9 @@ import { Compass, Maximize2, Loader2 } from 'lucide-react';
 import type { LoadingTaskCard } from '../../../library/manifestations/taskCard';
 import { FamiliarSprite } from '../../familiar/development/FamiliarSprite';
 import { loadingPalette, loadingPaletteStyle, type LoadingFamiliarPresentation } from '../../../library/manifestations/familiar';
-import './loadingVeil.css';
+import './generationOverlay.css';
 
-export interface CompactIndicatorProps {
+export interface CompactGenerationOverlayProps {
   task: LoadingTaskCard;
   familiar?: LoadingFamiliarPresentation | null;
   /** Shown when the operation can be expanded back to the primary veil. */
@@ -18,13 +18,13 @@ export interface CompactIndicatorProps {
  * short, or background operations. Pure presentation driven by the same
  * LoadingTaskCard the primary veil consumes.
  */
-export default function CompactIndicator({ task, familiar, onExpand }: CompactIndicatorProps) {
+export default function CompactGenerationOverlay({ task, familiar, onExpand }: CompactGenerationOverlayProps) {
   const isVersa = !familiar && task.agentId === 'versa';
   const palette = loadingPalette(familiar, task.agentId);
   const [showDetails, setShowDetails] = React.useState(false);
 
   return (
-    <div className="generation-compact fixed bottom-32 left-6 z-[9999] flex flex-col items-start select-none" style={loadingPaletteStyle(palette)} data-familiar-id={familiar?.familiar.id}>
+    <div className="compact-generation-overlay fixed bottom-32 left-6 z-[9999] flex flex-col items-start select-none" style={loadingPaletteStyle(palette)} data-familiar-id={familiar?.familiar.id}>
       <AnimatePresence>
         {showDetails && (
           <motion.div

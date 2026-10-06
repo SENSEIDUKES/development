@@ -2,7 +2,7 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { AILoadingVeil, LoadingSystem, LoadingFamiliarProvider, loadingFamiliarPresentation, buildAILoadingTaskCard } from '@seihouse/library/manifestations';
+import { GenerationOverlay, GenerationOverlayController, LoadingFamiliarProvider, loadingFamiliarPresentation, buildGenerationOverlayTaskCard } from '@seihouse/library/manifestations';
 import { familiarCatalogueEntry } from '../../../host/familiar/catalogue';
 
 // Keep the real scrubber and veil; omit only the exit fade so its retained lifetime is testable.
@@ -25,18 +25,18 @@ afterEach(() => { act(() => root.unmount()); container.remove(); vi.useRealTimer
 
 const show = (props: { generationPhase: string; progress?: number | null; streamingBlocksCount?: number;
   active?: boolean; completed?: boolean; chapterNumber?: number; minimized?: boolean; remaining?: number | null }) => act(() => root.render(
-  <AILoadingVeil agent={VERSA} isGenerating={props.active ?? true} completed={props.completed}
+  <GenerationOverlay agent={VERSA} isGenerating={props.active ?? true} completed={props.completed}
     generationPhase={props.generationPhase} generatingChapterNum={props.chapterNumber ?? 3}
     progress={props.progress} streamingBlocksCount={props.streamingBlocksCount ?? 0}
     generationProgressMessage={null} estimatedSecondsRemaining={props.remaining ?? null} activeAgentId="versa"
     isVeilMinimized={props.minimized ?? false} setIsVeilMinimized={() => undefined} />,
 ));
 
-const position = () => Number(container.querySelector('[data-testid="generation-veil"]')?.getAttribute('data-journey-progress'));
+const position = () => Number(container.querySelector('[data-testid="generation-overlay"]')?.getAttribute('data-journey-progress'));
 const advance = (ms: number) => act(() => vi.advanceTimersByTime(ms));
 const clock = () => vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'performance', 'Date'] });
 
-describe('The Aura Veil has two screens', () => {
+describe('The Generation Overlay has two screens', () => {
   it.each([
     ['quill', '#2589ff'], ['phoenix', '#ff6a13'], ['celestial-moon-moth', '#6bd6f0'],
     ['celestial-guardian', '#d5b668'], ['galaxy-octopus', '#994bfa'],
@@ -44,11 +44,11 @@ describe('The Aura Veil has two screens', () => {
     const familiar = familiarCatalogueEntry(id)!.definition;
     for (const phase of ['chapter', 'cover']) {
       act(() => root.render(<LoadingFamiliarProvider value={loadingFamiliarPresentation(familiar)}>
-        <AILoadingVeil agent={VERSA} isGenerating generationPhase={phase} generatingChapterNum={3}
+        <GenerationOverlay agent={VERSA} isGenerating generationPhase={phase} generatingChapterNum={3}
           progress={null} streamingBlocksCount={0} generationProgressMessage={null} estimatedSecondsRemaining={null}
           activeAgentId="versa" isVeilMinimized={false} setIsVeilMinimized={() => undefined} />
       </LoadingFamiliarProvider>));
-      const veil = container.querySelector<HTMLElement>('[data-testid="generation-veil"]')!;
+      const veil = container.querySelector<HTMLElement>('[data-testid="generation-overlay"]')!;
       expect(veil.dataset.familiarId).toBe(id);
       expect(veil.style.getPropertyValue('--veil-accent')).toBe(accent);
       expect(veil.querySelector(`[aria-label="${familiar.displayName}, ${familiar.animations.running.label}"]`)).toBeTruthy();
@@ -62,7 +62,7 @@ describe('The Aura Veil has two screens', () => {
     clock();
     const renderFamiliar = (id: string, active = true, completed = false) => act(() => root.render(
       <LoadingFamiliarProvider value={loadingFamiliarPresentation(familiarCatalogueEntry(id)!.definition)}>
-        <AILoadingVeil agent={VERSA} isGenerating={active} completed={completed} generationPhase="chapter"
+        <GenerationOverlay agent={VERSA} isGenerating={active} completed={completed} generationPhase="chapter"
           generatingChapterNum={3} progress={null} streamingBlocksCount={0} generationProgressMessage={null}
           estimatedSecondsRemaining={null} activeAgentId="versa" isVeilMinimized={false} setIsVeilMinimized={() => undefined} />
       </LoadingFamiliarProvider>,
@@ -77,7 +77,7 @@ describe('The Aura Veil has two screens', () => {
     expect(position()).toBe(1);
     expect(container.querySelector('[aria-label="Phoenix, Thoughtful review"]')).toBeTruthy();
     advance(1000);
-    expect(container.querySelector('[data-testid="generation-veil"]')).toBeNull();
+    expect(container.querySelector('[data-testid="generation-overlay"]')).toBeNull();
   });
 
   it('narrative: names the chapter, with a percentage only when progress is known', () => {
@@ -123,9 +123,9 @@ describe('The Aura Veil has two screens', () => {
     expect(position()).toBe(1);
     expect(container.querySelector('svg[aria-label="Generation complete"]')).toBeTruthy();
     advance(999);
-    expect(container.querySelector('[data-testid="generation-veil"]')).toBeTruthy();
+    expect(container.querySelector('[data-testid="generation-overlay"]')).toBeTruthy();
     advance(1);
-    expect(container.querySelector('[data-testid="generation-veil"]')).toBeNull();
+    expect(container.querySelector('[data-testid="generation-overlay"]')).toBeNull();
   });
 
   it('retains a very fast result long enough to arrive, and resets for the next chapter', () => {
@@ -147,7 +147,7 @@ describe('The Aura Veil has two screens', () => {
     show({ generationPhase: 'chapter', progress: null });
     advance(5000);
     show({ generationPhase: 'chapter', progress: null, active: false, completed: false });
-    expect(container.querySelector('[data-testid="generation-veil"]')).toBeNull();
+    expect(container.querySelector('[data-testid="generation-overlay"]')).toBeNull();
     expect(container.querySelector('[aria-label="Generation complete"]')).toBeNull();
     show({ generationPhase: 'chapter', progress: null });
     expect(position()).toBeLessThan(0.05);
@@ -174,21 +174,21 @@ describe('The Aura Veil has two screens', () => {
 
   it('retains the successful task for arrival even when the host clears its task card', () => {
     clock();
-    const task = buildAILoadingTaskCard({ generationPhase: 'chapter', generatingChapterNum: 3,
+    const task = buildGenerationOverlayTaskCard({ generationPhase: 'chapter', generatingChapterNum: 3,
       generationProgressMessage: null, estimatedSecondsRemaining: null, activeAgentId: 'versa',
       streamingBlocksCount: 0, statusQuote: 'Writing', progress: null,
     }, VERSA);
-    act(() => root.render(<LoadingSystem active task={task} minimized={false} onMinimizedChange={() => undefined} />));
+    act(() => root.render(<GenerationOverlayController active task={task} minimized={false} onMinimizedChange={() => undefined} />));
     advance(2000);
-    act(() => root.render(<LoadingSystem active={false} completed task={null} minimized={false} onMinimizedChange={() => undefined} />));
+    act(() => root.render(<GenerationOverlayController active={false} completed task={null} minimized={false} onMinimizedChange={() => undefined} />));
     expect(position()).toBe(1);
     advance(1000);
-    expect(container.querySelector('[data-testid="generation-veil"]')).toBeNull();
+    expect(container.querySelector('[data-testid="generation-overlay"]')).toBeNull();
     // An explicit failure overrides a stale finished progress value from the host.
     const stale = { ...task, progress: 100 };
-    act(() => root.render(<LoadingSystem active task={stale} minimized={false} onMinimizedChange={() => undefined} />));
+    act(() => root.render(<GenerationOverlayController active task={stale} minimized={false} onMinimizedChange={() => undefined} />));
     advance(250);
-    act(() => root.render(<LoadingSystem active={false} completed={false} task={stale} minimized={false} onMinimizedChange={() => undefined} />));
-    expect(container.querySelector('[data-testid="generation-veil"]')).toBeNull();
+    act(() => root.render(<GenerationOverlayController active={false} completed={false} task={stale} minimized={false} onMinimizedChange={() => undefined} />));
+    expect(container.querySelector('[data-testid="generation-overlay"]')).toBeNull();
   });
 });

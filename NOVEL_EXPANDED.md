@@ -426,8 +426,12 @@ Update it whenever it changes.
     one corrected sentence, or two names merged into one entry. It never reads
     the chapter: each problem becomes a small case (the sentence, its tags, what
     the record shows), and one short call with the chapter's own model, at its
-    lowest reasoning, answers them, only when a model must decide. A closing
-    list that names something the chapter never mentions is settled without a
+    lowest reasoning, answers them. That call is made only when a check flags
+    a problem in that chapter which the plain rules cannot settle: a chapter
+    with nothing flagged makes no call, and a problem left from an earlier
+    chapter never makes a later one call. A closing list that is off where no
+    sentence of the chapter could show a change (the chapter never names the
+    item, or names it only up to its own last tag for it) is settled without a
     call. A fix stands only when it leaves fewer problems; a contradiction too
     big for one sentence is recorded and left as it is. The reader sees none of
     it; each chapter keeps a record of what was checked and changed, in the

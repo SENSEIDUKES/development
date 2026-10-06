@@ -120,6 +120,37 @@ describe('Holdings fixer: the cases', () => {
     expect(flagsOf(state, result.chapter, result.entries).map(flag => flag.kind)).toEqual(['closing-untagged']);
     expect(result.entries.find(entry => entry.name === 'Silver Bell')!.origin).toEqual({ source: 'tag', chapterId: latest.id, chapterNumber: 2 });
   });
+
+  it('settles a closing-list problem without asking when the chapter\'s own last tag for the item is its last word, and asks only about a sentence after it', async () => {
+    const PILL = '[[gained: MC | Spirit Pill]] He pocketed a spirit pill.';
+    const TAKEN = '[[gained: MC | Rusted Iron Sword]] Ye Chen lifted the rusted iron sword from the rack.';
+    const lastWord = 'The chapter\'s own tag is its last word on it, and nothing after that tag names it, so only the closing list is off; nothing needs fixing.';
+    const leftOut = ['the writer\'s closing list for Ye Chen leaves out ‘Rusted Iron Sword’. It may have been lost without a tag.'];
+
+    // Gained here and never named after: the list only left it out.
+    const held = await written(reply([PILL, TAKEN, 'He walked home in the rain.'], { mainCharacterHoldings: ['Spirit Pill'] }));
+    expect(planHoldingsFix(inputFor(held.state, held.latest))).toEqual({ cases: [], settled: [{ checks: ['closing-unlisted'], problems: leftOut, outcome: 'fine', reason: lastWord }] });
+
+    // Lost here and still listed: the loss is the last word.
+    const spent = await written(reply([PILL, '[[lost: MC | Spirit Pill]] Ye Chen swallowed the spirit pill.'], { mainCharacterHoldings: ['Spirit Pill'] }));
+    expect(planHoldingsFix(inputFor(spent.state, spent.latest))).toEqual({ cases: [], settled: [{
+      checks: ['closing-untagged'], problems: ['the writer\'s closing list for Ye Chen includes ‘Spirit Pill’, which no tag recorded.'], outcome: 'fine', reason: lastWord,
+    }] });
+
+    // Named again after it was gained: that sentence may show it lost without a tag, so it alone is asked about.
+    const broken = await written(reply([PILL, TAKEN, 'The rusted iron sword snapped against the stone.'], { mainCharacterHoldings: ['Spirit Pill'] }));
+    const plan = planHoldingsFix(inputFor(broken.state, broken.latest));
+    expect(plan.settled).toEqual([]);
+    expect(plan.cases.map(planned => planned.case)).toEqual([{
+      id: 'c1', problems: leftOut,
+      record: ['Ye Chen after this chapter: has Spirit Pill, Rusted Iron Sword.'],
+      mentions: [{ id: 'm1', sentence: 'The rusted iron sword snapped against the stone.' }],
+      answers: ['record', 'fine'],
+    }]);
+    const { result } = apply(broken.state, broken.latest, [{ case: 'c1', outcome: 'record', sentence: 'm1', tags: '[[lost: MC | Rusted Iron Sword]]', reason: 'It snapped.' }]);
+    expect(result.fixes).toMatchObject([{ outcome: 'fixed-tags', blockId: 'c1-p3', after: '[[lost: MC | Rusted Iron Sword]]', reason: 'It snapped.' }]);
+    expect(flagsOf(broken.state, result.chapter, result.entries)).toEqual([]);
+  });
 });
 
 describe('Holdings fixer: the answers', () => {

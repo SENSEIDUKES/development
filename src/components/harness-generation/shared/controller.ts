@@ -1272,8 +1272,9 @@ export class HarnessGenerationController {
   /**
    * The Holdings fixer, after a chapter commits: the chapter's holdings
    * problems become small cases, the ones nothing in the chapter can fix are
-   * settled without asking, and one short call with the chapter's own model
-   * answers the rest. A fix stands only when it leaves fewer problems; the
+   * settled without asking, and only when some are left does one short call
+   * with the chapter's own model answer them; a chapter its checks do not
+   * flag is never asked about. A fix stands only when it leaves fewer problems; the
    * record of every case is kept on the chapter. Nothing here can undo the
    * commit: a failed call or write leaves the chapter as it was committed.
    */

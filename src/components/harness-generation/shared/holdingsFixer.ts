@@ -26,11 +26,16 @@ import {
 /**
  * The Holdings fixer: after a chapter commits, the HARNESS checks the holdings
  * it changed (the same checks the Holdings page shows) and settles the small
- * problems quietly, keeping a record on the chapter. It never reads or sends
- * the whole chapter: each problem becomes a small case (the sentence it is on,
- * the tags there, what the record shows) and one short call answers them all.
- * Closing-list problems about an item the chapter never names are settled
- * without asking. A fix stands only when it leaves the chapter with fewer
+ * problems quietly, keeping a record on the chapter. The checks are plain
+ * rules; the model is asked only when one of them flags a problem in this
+ * chapter that the rules cannot settle themselves, so a chapter with nothing
+ * flagged, or flagged only with what needs no fixing, makes no call. It never
+ * reads or sends the whole chapter: each problem becomes a small case (the
+ * sentence it is on, the tags there, what the record shows) and one short call
+ * answers them all. A closing list that disagrees with the record about an
+ * item no sentence names after the chapter's own last tag for it (or at all)
+ * is settled without asking: nothing in the chapter could show a change the
+ * tags missed. A fix stands only when it leaves the chapter with fewer
  * problems; a contradiction too big for one sentence is recorded, never
  * forced. How far it may go (records only, or a sentence too) is the host's
  * choice: in the Library, the Familiar's.
@@ -194,16 +199,30 @@ export function planHoldingsFix({ chapter, chapters, entries, mainCharacterName,
     });
   }
 
-  // The closing list against the record: only an item the chapter names can be fixed in it.
+  // The closing list against the record: only a sentence that names the item, after the chapter's own
+  // last tag for it, can show a change the tags missed, so only such sentences are asked about.
   const main = now.characters.find(character => character.mainCharacter);
+  const sentenceAfter = (sentence: { blockId: string; start: number }, anchor: SpanAnchor) => {
+    const [here, there] = [paragraphIndexOf(chapter, sentence.blockId), paragraphIndexOf(chapter, anchor.blockId)];
+    return here > there || (here === there && sentence.start >= anchor.endOffset);
+  };
   for (const flag of flags.filter(item => item.kind === 'closing-unlisted' || item.kind === 'closing-untagged')) {
     const entry = flag.entryIds?.[0] ? entries.find(candidate => candidate.id === flag.entryIds![0]) : undefined;
     const names = entry ? [entry.name, ...(entry.aliases ?? [])] : flag.name ? [flag.name] : [];
-    const mentions = sentencesNaming(chapter, names, locale).slice(0, MENTION_LIMIT);
+    const named = sentencesNaming(chapter, names, locale);
     const problem = withoutChapterLabel(flag.message);
-    if (!mentions.length) {
+    if (!named.length) {
       settled.push({ checks: [flag.kind], problems: [problem], outcome: 'fine',
         reason: 'The chapter never names it, so only the closing list is off; nothing in the chapter needs fixing.' });
+      continue;
+    }
+    const keys = new Set(names.map(normalizeIdentityLabel));
+    const lastTag = main?.history.filter(event => event.passage.chapterId === chapter.id && event.target && keys.has(normalizeIdentityLabel(event.target))).at(-1);
+    const tagged = lastTag ? changes.find(change => change.id === lastTag.passage.recordId)?.anchor : undefined;
+    const mentions = (tagged ? named.filter(sentence => sentenceAfter(sentence, tagged)) : named).slice(0, MENTION_LIMIT);
+    if (!mentions.length) {
+      settled.push({ checks: [flag.kind], problems: [problem], outcome: 'fine',
+        reason: 'The chapter\'s own tag is its last word on it, and nothing after that tag names it, so only the closing list is off; nothing needs fixing.' });
       continue;
     }
     cases.push({

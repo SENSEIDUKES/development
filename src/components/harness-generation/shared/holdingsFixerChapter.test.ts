@@ -120,6 +120,34 @@ describe('The Holdings fixer after a chapter commits', () => {
     });
   });
 
+  it('is asked only when a check flags something in the chapter itself that the rules cannot settle', async () => {
+    const run = await setup();
+    // Nothing flagged: nothing asked, nothing recorded.
+    await run.write(SWORD);
+    await run.write(reply(['Ye Chen trained alone in the yard.']));
+    // A closing list wrong three ways, none of which a sentence of the chapter could fix: settled without asking.
+    await run.write(reply(['[[gained: MC | Silver Bell]] Ye Chen found a silver bell in the dust.'], { mainCharacterHoldings: ['Jade Slip'] }));
+    expect(run.fixHoldings).not.toHaveBeenCalled();
+    const before = run.controller.snapshot();
+    expect([1, 2].map(number => chapterNumbered(before, number).fixer)).toEqual([undefined, undefined]);
+    expect(chapterNumbered(before, 3).fixer).not.toHaveProperty('model');
+    expect(chapterNumbered(before, 3).fixer!.fixes.map(fix => [fix.checks[0], fix.outcome])).toEqual([
+      ['closing-unlisted', 'fine'], ['closing-unlisted', 'fine'], ['closing-untagged', 'fine'],
+    ]);
+
+    // The chapter's own problem is asked about, once.
+    run.fixHoldings.mockResolvedValueOnce(fixes({ case: 'c1', outcome: 'fine', reason: 'He picks it up again; nothing to change.' }));
+    await run.write(AGAIN);
+    expect(run.fixHoldings).toHaveBeenCalledTimes(1);
+    // Answered "fine", it stays flagged, and a later chapter never asks about it again.
+    await run.write(reply(['Ye Chen rested by the well.']));
+    await run.write(reply(['Ye Chen walked to the gate at dawn.']));
+    expect(run.fixHoldings).toHaveBeenCalledTimes(1);
+    const after = run.controller.snapshot();
+    expect(flags(after).filter(flag => flag.chapterNumber === 4).map(flag => flag.kind)).toEqual(['already-held']);
+    expect([5, 6].map(number => chapterNumbered(after, number).fixer)).toEqual([undefined, undefined]);
+  });
+
   it('does nothing when the host turns it off or offers no fixer, and the host can change its mind', async () => {
     const off = await setup({ policy: 'off' });
     await off.write(SWORD);

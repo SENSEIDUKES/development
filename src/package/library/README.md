@@ -2,8 +2,11 @@
 
 **0.19.1 (2026-10-06):** The generation veil's traveler advances during whole-response
 generation and arrives before the veil closes on success. Unknown work shows no
-invented percentage. Failure/cancellation never signals arrival. Chapter requests,
-saving, Reader behavior and SEN's public contracts are unchanged.
+invented percentage. Failure/cancellation never signals arrival. Chapter saving,
+Reader behavior and SEN's public contracts are unchanged.
+The Model Router also omits deprecated custom sampling for Gemini, directly
+and through OpenRouter, and checks thinking levels against the model catalog.
+Gemini uses model-default sampling; other providers keep their settings.
 
 Celestial Library's client-safe product behavior, assembled on the portable
 SEN engine and the two UI packages. Library owns SEIHouse users, products,
@@ -163,8 +166,11 @@ const result = await router.generate({
 ```
 
 `text` handles Gemini and OpenRouter text and returns text plus optional
-provider token usage. `tts` takes a server-chosen voice ID and returns MPEG
-bytes from ElevenLabs. Provider errors use the stable `ModelRouterError.code`;
+provider token usage. `temperature` applies to non-Gemini models; Gemini uses
+provider-default sampling and supported `reasoningLevel` values are sent as
+thinking levels (OpenRouter uses `reasoning.effort`). An unsupported or unknown
+Gemini level is omitted to use the model default. `tts` takes a server-chosen
+voice ID and returns MPEG bytes from ElevenLabs. Provider errors use the stable `ModelRouterError.code`;
 apps should branch on that code rather than parsing message text. Apps decide
 their own HTTP message and retry policy. Image, music, video and 3D entries are
 catalog information only and have no generation adapter. A configured key

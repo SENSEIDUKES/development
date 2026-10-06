@@ -1,10 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createModelRouter, generateOpenRouterText, ModelRouterError, type GenerationRequest } from './server';
+import type { GenerateContentParameters } from '@google/genai';
+import { CHAPTER_MODELS, createModelRouter, generateOpenRouterText, ModelRouterError, type GenerationRequest } from './server';
 
 const textRequest = {
   capability: 'text' as const, model: 'openrouter/openai/gpt-6-luna',
   systemInstruction: 'system', userPrompt: 'prompt', temperature: 0.8,
   maxOutputTokens: 100, timeoutMs: 1000, responseFormat: 'json' as const,
+};
+
+const expectNoDeprecatedGeminiFields = (config: object) => {
+  expect(JSON.stringify(config)).not.toMatch(/"(?:thinkingBudget|thinking_budget|temperature|topP|top_p|topK|top_k)"\s*:/);
 };
 
 describe('published Model Router server contract', () => {
@@ -114,6 +119,75 @@ describe('published Model Router server contract', () => {
     generateContent.mockResolvedValueOnce({ text: 'partial', candidates: [{ finishReason: 'MAX_TOKENS' }] } as never);
     await expect(router.generate({ ...textRequest, model: 'google/gemini-3.8-flash' }))
       .rejects.toMatchObject({ code: 'output-limit' });
+  });
+
+  it.each(CHAPTER_MODELS.filter(model => model.provider === 'gemini').flatMap(model =>
+    [undefined, ...model.reasoning!.levels].map(level => [model.id, level] as const),
+  ))('sends only supported thinking levels and default sampling to %s (%s)', async (model, reasoningLevel) => {
+    const generateContent = vi.fn(async (_request: GenerateContentParameters) => ({ text: 'answer' }));
+    const router = createModelRouter({
+      credentials: { gemini: 'secret' },
+      createGeminiClient: () => ({ models: { generateContent } }) as never,
+    });
+    await router.generate({ ...textRequest, model, reasoningLevel });
+    const sent = generateContent.mock.calls[0][0];
+    expectNoDeprecatedGeminiFields(sent.config!);
+    expect(sent.config).toMatchObject({
+      systemInstruction: 'system', maxOutputTokens: 100, responseMimeType: 'application/json',
+      abortSignal: expect.any(AbortSignal),
+    });
+    expect(sent.config!.thinkingConfig).toEqual(reasoningLevel ? { thinkingLevel: reasoningLevel.toUpperCase() } : undefined);
+  });
+
+  it.each([
+    ['google/gemini-3.8-flash', 'minimal', undefined],
+    ['gemini-3.8-flash', 'high', 'HIGH'],
+    ['google/gemini-3.1-pro-preview', 'xhigh', undefined],
+    ['google/gemini-unlisted', 'high', undefined],
+  ] as const)('uses supported thinking or the model default for %s (%s)', async (model, reasoningLevel, expected) => {
+    const generateContent = vi.fn(async (_request: GenerateContentParameters) => ({ text: 'answer' }));
+    const router = createModelRouter({
+      credentials: { gemini: 'secret' },
+      createGeminiClient: () => ({ models: { generateContent } }) as never,
+    });
+    await router.generate({ ...textRequest, model, reasoningLevel });
+    const sent = generateContent.mock.calls[0][0];
+    expectNoDeprecatedGeminiFields(sent.config!);
+    expect(sent.config!.thinkingConfig).toEqual(expected ? { thinkingLevel: expected } : undefined);
+  });
+
+  it.each([
+    ['openrouter/google/gemini-3.8-flash', 'high', 'high'],
+    ['google/gemini-3.8-flash', 'medium', 'medium'],
+    ['openrouter/google/gemini-3.8-flash', 'minimal', undefined],
+    ['openrouter/google/gemini-3.8-flash', undefined, undefined],
+    ['openrouter/google/gemini-unlisted', 'high', undefined],
+  ] as const)('omits deprecated sampling on OpenRouter Gemini %s (%s)', async (model, reasoningEffort, expected) => {
+    let sent: Record<string, unknown> = {};
+    await generateOpenRouterText({
+      ...textRequest, apiKey: 'secret', model, reasoningEffort,
+      fetchImpl: vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+        sent = JSON.parse(init!.body as string);
+        return new Response(JSON.stringify({ choices: [{ message: { content: 'answer' }, finish_reason: 'stop' }] }));
+      }) as typeof fetch,
+    });
+    expectNoDeprecatedGeminiFields(sent);
+    expect(sent.model).toBe(model.replace(/^openrouter\//, ''));
+    expect(sent.reasoning).toEqual(expected ? { effort: expected } : undefined);
+    expect(sent.messages).toEqual([{ role: 'system', content: 'system' }, { role: 'user', content: 'prompt' }]);
+    expect(sent.max_tokens).toBeGreaterThan(textRequest.maxOutputTokens);
+  });
+
+  it('keeps non-Gemini OpenRouter sampling and reasoning unchanged', async () => {
+    const fetchMock = vi.fn(async (_url: RequestInfo | URL, _init?: RequestInit) => new Response(JSON.stringify({
+      choices: [{ message: { content: 'answer' }, finish_reason: 'stop' }],
+    })));
+    await createModelRouter({ credentials: { openrouter: 'secret' }, fetch: fetchMock }).generate({
+      ...textRequest, reasoningLevel: 'xhigh',
+    });
+    expect(JSON.parse(fetchMock.mock.calls[0][1]!.body as string)).toMatchObject({
+      temperature: textRequest.temperature, reasoning: { effort: 'xhigh' },
+    });
   });
 
   it('synthesizes speech bytes and checks the returned artifact', async () => {

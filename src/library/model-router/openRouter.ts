@@ -1,4 +1,4 @@
-import { CHAPTER_MODELS, providerModelName } from './catalog';
+import { CHAPTER_MODELS, providerModelName, resolveReasoningLevel } from './catalog';
 
 const OPENROUTER_CHAT_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
 
@@ -15,6 +15,7 @@ export interface OpenRouterTextRequest {
   model: string;
   systemInstruction: string;
   userPrompt: string;
+  /** Custom sampling for non-Gemini models only; Gemini uses provider defaults. */
   temperature: number;
   maxOutputTokens: number;
   responseFormat: 'json' | 'text';
@@ -98,6 +99,12 @@ export async function generateOpenRouterText(request: OpenRouterTextRequest): Pr
   const timeout = request.timeoutMs ? setTimeout(forwardAbort, request.timeoutMs) : undefined;
   try {
     const format = responseFormat(request);
+    // A bare OpenRouter name keeps its vendor, including google/gemini-….
+    const model = request.model.replace(/^openrouter\//, '');
+    const isGemini = /^google\/gemini-/i.test(model);
+    const reasoningEffort = isGemini
+      ? resolveReasoningLevel(model, request.reasoningEffort)
+      : request.reasoningEffort;
     const response = await (request.fetchImpl ?? fetch)(OPENROUTER_CHAT_ENDPOINT, {
       method: 'POST',
       signal: controller.signal,
@@ -108,15 +115,15 @@ export async function generateOpenRouterText(request: OpenRouterTextRequest): Pr
         ...(request.attribution?.title ? { 'X-Title': request.attribution.title } : {}),
       },
       body: JSON.stringify({
-        model: providerModelName(request.model),
+        model,
         messages: [
           { role: 'system', content: request.systemInstruction },
           { role: 'user', content: request.userPrompt },
         ],
-        temperature: request.temperature,
+        ...(isGemini ? {} : { temperature: request.temperature }),
         max_tokens: request.maxOutputTokens + REASONING_HEADROOM_TOKENS,
         ...(format ? { response_format: format } : {}),
-        ...(request.reasoningEffort ? { reasoning: { effort: request.reasoningEffort } } : {}),
+        ...(reasoningEffort ? { reasoning: { effort: reasoningEffort } } : {}),
         ...(catalogEntry(request.model)?.fastestProvider ? { provider: { sort: 'throughput' } } : {}),
       }),
     });

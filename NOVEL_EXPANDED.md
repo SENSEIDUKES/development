@@ -296,7 +296,7 @@ when its words change. That means:
   right, so its categories, and what the model is told to document, can be designed
   on purpose.
 
-## Where we are (2026-10-05)
+## Where we are (2026-10-06)
 
 The current implementation status, and the only section that says what is built.
 Update it whenever it changes.
@@ -318,10 +318,10 @@ Update it whenever it changes.
     **The soundtrack is SEIHouse's own audio player** (its reader mixer): the
     reader's chosen **atmosphere** (50 beds from SEN Atmospheres, Volume 1,
     each measured so the player can level it toward −20 LUFS) plays under the
-    chapter. The levels are not even yet: 22 beds are too quiet to reach −20
-    even at the player's largest boost and need re-exporting, and until the
-    audio host allows the player to process its files (CORS), it can only turn
-    loud beds down, never quiet ones up. Sound Cues play
+    chapter. Every SEIHouse audio host now gives the player permission to
+    process its files (CORS, on every response), so it turns loud beds down and
+    quiet ones up. The levels are not even yet: 22 beds are too quiet to reach
+    −20 even at the player's largest boost and need re-exporting. Sound Cues play
     over it at the loudness of their Energy, Listen dips it, and a **sleep
     timer** stops it, Listen included. A small **note** above the Listen bar
     mutes all story audio with a tap; a long-press opens Audio settings.

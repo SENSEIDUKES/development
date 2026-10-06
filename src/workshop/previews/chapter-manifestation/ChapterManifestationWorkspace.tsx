@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { AGENTS } from '../../../lib/agents';
 import ReferenceAILoadingVeil from '../../../components/chapter-manifestation/reference/AILoadingVeil';
-import { AILoadingVeil as DevelopmentAILoadingVeil } from '@seihouse/library/manifestations';
+import { AILoadingVeil as DevelopmentAILoadingVeil, LoadingFamiliarProvider, loadingFamiliarPresentation } from '@seihouse/library/manifestations';
+import { defaultFamiliar, familiarCatalogue, familiarCatalogueEntry } from '../../../host/familiar/catalogue';
 import { defaultDestinationFor } from '@seihouse/library-ui';
 import {
   manifestationModeForOperation,
@@ -379,7 +380,7 @@ function AuraVeilSimulationControls({
             onClick={sim.openVersaCompact}
             className="workshop-touch-target flex items-center justify-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm font-medium text-amber-500 transition-colors hover:bg-amber-500/20"
           >
-            <Minimize2 size={14} /> Versa — Background
+            <Minimize2 size={14} /> Familiar — Background
           </button>
           <button
             type="button"
@@ -525,7 +526,7 @@ const AREA_OPTIONS: { id: WorkshopArea; label: string; description: string; icon
   {
     id: 'aura-veil',
     label: 'Aura Veil',
-    description: 'Full-shell simulation: Versa hero, journey scrubber, active manifestation zone.',
+    description: 'Full-shell simulation: equipped Familiar, journey scrubber, active manifestation zone.',
     icon: <Layers size={14} />,
   },
   {
@@ -583,6 +584,7 @@ export function ChapterManifestationWorkspace() {
   const media = useMediaPreview();
   const revealPreview = useManifestationRevealPreview();
   const [area, setArea] = useState<WorkshopArea>('aura-veil');
+  const [familiarId, setFamiliarId] = useState(defaultFamiliar.definition.id);
 
   const controlSections: WorkshopControlSection[] = [
     {
@@ -599,8 +601,16 @@ export function ChapterManifestationWorkspace() {
           },
           {
             id: 'effects' as const,
-            description: 'Tune Development-only traveler, trail, and destination cosmetics.',
-            content: <AuraVeilSimulationControls sim={sim} cosmetics={cosmetics} media={media} section="effects" />,
+            description: 'Inspect the equipped Familiar and its palette, then tune traveler, trail, and destination cosmetics.',
+            content: <>
+              <label className="flex flex-col gap-2 p-4 text-sm">
+                Equipped Familiar (preview)
+                <select aria-label="Equipped Familiar (preview)" value={familiarId} onChange={event => setFamiliarId(event.target.value)} className="min-h-11 rounded-lg border border-white/15 bg-zinc-950 px-3">
+                  {familiarCatalogue.map(entry => <option key={entry.definition.id} value={entry.definition.id}>{entry.definition.displayName}</option>)}
+                </select>
+              </label>
+              <AuraVeilSimulationControls sim={sim} cosmetics={cosmetics} media={media} section="effects" />
+            </>,
           },
           {
             id: 'advanced' as const,
@@ -645,7 +655,9 @@ export function ChapterManifestationWorkspace() {
         </div>
       )}
       renderDevelopment={() => area === 'aura-veil' ? (
-        <DevelopmentVeilCanvas sim={sim} cosmetics={cosmetics} media={media} />
+        <LoadingFamiliarProvider value={loadingFamiliarPresentation(familiarCatalogueEntry(familiarId)!.definition)}>
+          <DevelopmentVeilCanvas sim={sim} cosmetics={cosmetics} media={media} />
+        </LoadingFamiliarProvider>
       ) : (
         <ManifestationRevealPreview controller={revealPreview} />
       )}

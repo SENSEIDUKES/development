@@ -27,3 +27,5 @@ export {
 } from '../../components/chapter-manifestation/development/omen-scenes';
 
 export * from '../../library/manifestations/taskCard';
+export { LoadingFamiliarProvider, loadingFamiliarPresentation } from '../../library/manifestations/familiar';
+export type { LoadingFamiliarPresentation } from '../../library/manifestations/familiar';

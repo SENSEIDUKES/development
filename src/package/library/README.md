@@ -1,5 +1,15 @@
 # `@seihouse/library`
 
+**0.21.0 (2026-10-06):** The generation veil wears the host's equipped Familiar,
+using its supplied working/review animations and elemental accent colors across
+the aura, journey, chamber, status and compact indicator. Pass `loadingFamiliar`
+to `LibraryPresentationProvider`, built with `loadingFamiliarPresentation`;
+`./manifestations` also exports `LoadingFamiliarProvider` for a host's existing
+profile session. Selection remains host-owned, with no equipment store or write.
+`./familiar` exports the shared `familiarElement`, `FAMILIAR_ELEMENT_AFFINITY`, and
+`familiarElementColors`; form glows keep their existing colors. The published
+`LIBRARY_PACKAGE_VERSION` now matches the manifest. SEN stays at 0.22.0.
+
 **0.19.1 (2026-10-06):** The generation veil's traveler advances during whole-response
 generation and arrives before the veil closes on success. Unknown work shows no
 invented percentage. Failure/cancellation never signals arrival. Chapter saving,

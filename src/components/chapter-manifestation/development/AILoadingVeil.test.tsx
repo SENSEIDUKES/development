@@ -2,7 +2,8 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { AILoadingVeil, LoadingSystem, buildAILoadingTaskCard } from '@seihouse/library/manifestations';
+import { AILoadingVeil, LoadingSystem, LoadingFamiliarProvider, loadingFamiliarPresentation, buildAILoadingTaskCard } from '@seihouse/library/manifestations';
+import { familiarCatalogueEntry } from '../../../host/familiar/catalogue';
 
 // Keep the real scrubber and veil; omit only the exit fade so its retained lifetime is testable.
 vi.mock('motion/react', async importOriginal => ({
@@ -16,8 +17,11 @@ const VERSA = { id: 'versa', name: 'VERSA', logoUrl: '/versa.png', colorClass: '
 
 let container: HTMLDivElement;
 let root: Root;
-beforeEach(() => { container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container); });
-afterEach(() => { act(() => root.unmount()); container.remove(); vi.useRealTimers(); });
+beforeEach(() => {
+  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+  container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container);
+});
+afterEach(() => { act(() => root.unmount()); container.remove(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 
 const show = (props: { generationPhase: string; progress?: number | null; streamingBlocksCount?: number;
   active?: boolean; completed?: boolean; chapterNumber?: number; minimized?: boolean; remaining?: number | null }) => act(() => root.render(
@@ -33,6 +37,49 @@ const advance = (ms: number) => act(() => vi.advanceTimersByTime(ms));
 const clock = () => vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'performance', 'Date'] });
 
 describe('The Aura Veil has two screens', () => {
+  it.each([
+    ['quill', '#2589ff'], ['phoenix', '#ff6a13'], ['celestial-moon-moth', '#6bd6f0'],
+    ['celestial-guardian', '#d5b668'], ['galaxy-octopus', '#994bfa'],
+  ])('shows the equipped %s with its elemental palette in narrative and media generation', (id, accent) => {
+    const familiar = familiarCatalogueEntry(id)!.definition;
+    for (const phase of ['chapter', 'cover']) {
+      act(() => root.render(<LoadingFamiliarProvider value={loadingFamiliarPresentation(familiar)}>
+        <AILoadingVeil agent={VERSA} isGenerating generationPhase={phase} generatingChapterNum={3}
+          progress={null} streamingBlocksCount={0} generationProgressMessage={null} estimatedSecondsRemaining={null}
+          activeAgentId="versa" isVeilMinimized={false} setIsVeilMinimized={() => undefined} />
+      </LoadingFamiliarProvider>));
+      const veil = container.querySelector<HTMLElement>('[data-testid="generation-veil"]')!;
+      expect(veil.dataset.familiarId).toBe(id);
+      expect(veil.style.getPropertyValue('--veil-accent')).toBe(accent);
+      expect(veil.querySelector(`[aria-label="${familiar.displayName}, ${familiar.animations.running.label}"]`)).toBeTruthy();
+      expect(veil.querySelector('[data-celestial-foreground]')).toBeTruthy();
+      expect(veil.querySelector('img[src="/versa.png"]')).toBeNull();
+      expect(veil.textContent).not.toMatch(/\d+%/);
+    }
+  });
+
+  it('changes equipment without restarting the active journey, then shows the ready animation on arrival', () => {
+    clock();
+    const renderFamiliar = (id: string, active = true, completed = false) => act(() => root.render(
+      <LoadingFamiliarProvider value={loadingFamiliarPresentation(familiarCatalogueEntry(id)!.definition)}>
+        <AILoadingVeil agent={VERSA} isGenerating={active} completed={completed} generationPhase="chapter"
+          generatingChapterNum={3} progress={null} streamingBlocksCount={0} generationProgressMessage={null}
+          estimatedSecondsRemaining={null} activeAgentId="versa" isVeilMinimized={false} setIsVeilMinimized={() => undefined} />
+      </LoadingFamiliarProvider>,
+    ));
+    renderFamiliar('quill');
+    advance(5000);
+    const before = position();
+    renderFamiliar('phoenix');
+    expect(position()).toBeGreaterThanOrEqual(before);
+    expect(container.querySelector('[data-familiar-id="phoenix"]')).toBeTruthy();
+    renderFamiliar('phoenix', false, true);
+    expect(position()).toBe(1);
+    expect(container.querySelector('[aria-label="Phoenix, Thoughtful review"]')).toBeTruthy();
+    advance(1000);
+    expect(container.querySelector('[data-testid="generation-veil"]')).toBeNull();
+  });
+
   it('narrative: names the chapter, with a percentage only when progress is known', () => {
     show({ generationPhase: 'chapter', progress: null });
     expect(container.textContent).toContain('Chapter 3');

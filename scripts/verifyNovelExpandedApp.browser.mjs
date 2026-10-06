@@ -266,9 +266,17 @@ async function walk(browser, viewport, sample) {
   check(/^\/app\/\?story=[^&]+$/.test(storyAddress), `Manifest Story should open Story View, got ${storyAddress}`);
   await shot('4-story-view');
   await page.locator('[data-world-info-chapters="action"]').click();
-  await page.locator('img[alt="VERSA"]').first().waitFor();
+  await page.locator('[data-testid="generation-veil"][data-familiar-id="quill"] [aria-label="Quill, Working"]').waitFor();
   check(address() === `${storyAddress}&read=1`, `Start Story should open the Reader, got ${address()}`);
   const veil = page.getByTestId('generation-veil');
+  const familiarStyle = await veil.evaluate(element => {
+    const style = getComputedStyle(element);
+    const ring = element.querySelector('[data-celestial-foreground] > .z-0 > svg circle');
+    return { accent: style.getPropertyValue('--veil-accent').trim(), ring: ring && getComputedStyle(ring).stroke,
+      artwork: element.querySelector('.familiar-sprite-atlas')?.getAttribute('src') };
+  });
+  check(familiarStyle.accent === '#2589ff' && familiarStyle.ring === 'rgb(37, 137, 255)', `Quill's veil and chamber should share its Lightning palette: ${JSON.stringify(familiarStyle)}`);
+  check(familiarStyle.artwork === '/familiars/quill/spritesheet.webp', 'The veil should use Quill’s supplied animation atlas.');
   const startProgress = Number(await veil.getAttribute('data-journey-progress'));
   const travelerX = () => veil.locator('svg[aria-label^="Generation"] > g').last().evaluate(element =>
     new DOMMatrix(getComputedStyle(element).transform).m41);
@@ -302,7 +310,7 @@ async function walk(browser, viewport, sample) {
   await shot('5b-veil-arrived');
   await page.locator('[data-chapter-number="1"]').waitFor({ timeout: 20_000 });
   await page.locator('[data-chapter-number="1"] [data-action-type="world-cue"][data-sound]').first().waitFor();
-  await page.locator('img[alt="VERSA"]').first().waitFor({ state: 'hidden', timeout: 10_000 });
+  await veil.waitFor({ state: 'hidden', timeout: 10_000 });
   await shot('6-chapter-1');
   check(counts.chapters === 1, `One chapter request expected, saw ${counts.chapters}.`);
 
@@ -405,9 +413,9 @@ async function walk(browser, viewport, sample) {
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), 'The rewrite box must not scroll sideways.');
   await shot('6e-rewrite');
   await rewriteForm.getByRole('button', { name: 'Rewrite Chapter 1' }).click();
-  await page.locator('img[alt="VERSA"]').first().waitFor();
+  await veil.waitFor();
   await page.locator('[data-chapter-number="1"] h1', { hasText: 'The Hidden Key' }).waitFor({ timeout: 20_000 });
-  await page.locator('img[alt="VERSA"]').first().waitFor({ state: 'hidden', timeout: 10_000 });
+  await veil.waitFor({ state: 'hidden', timeout: 10_000 });
   check(counts.rewrites.length === 1 && counts.rewrites[0].chapterNumber === 1 && counts.rewrites[0].rewrite.note === REWRITE_NOTE
     && counts.rewrites[0].rewrite.previous.title === 'Low Tide', `The rewrite should ask for Chapter 1 again with the note, got ${JSON.stringify(counts.rewrites)}.`);
   check(counts.fixes.length === 1 && counts.fixes[0].token && counts.fixes[0].cases.length === 1,

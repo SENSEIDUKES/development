@@ -1,0 +1,49 @@
+.generation-veil-pill {
+  border-color: rgba(var(--veil-soft-rgb), 0.25);
+  background: linear-gradient(to bottom, rgba(var(--veil-accent-rgb), 0.15), rgba(var(--veil-accent-rgb), 0.05));
+  box-shadow: 0 0 20px rgba(var(--veil-accent-rgb), 0.22), inset 0 1px 0 rgba(var(--veil-soft-rgb), 0.14);
+}
+.generation-veil-pill-title { color: color-mix(in srgb, var(--veil-soft) 30%, white); }
+.generation-veil-pill-divider { background: rgba(var(--veil-soft-rgb), 0.35); }
+.generation-veil-sparkle { color: rgba(var(--veil-accent-rgb), 0.65); }
+.generation-veil-familiar { filter: drop-shadow(0 0 18px rgba(var(--veil-soft-rgb), 0.8)) drop-shadow(0 0 46px rgba(var(--veil-accent-rgb), 0.55)); }
+
+/* The pinned Library UI chamber has no palette prop. Adapt its decoration
+   inside this veil only; retain its geometry, motion, stacking and calm zone.
+   Images and supplied Familiar atlas cells are never tinted. */
+.generation-veil[data-familiar-id] [data-celestial-foreground] > .z-0 > div:nth-of-type(2) {
+  background: radial-gradient(circle at 50% 55%, rgba(var(--veil-accent-rgb), 0.14) 0%, rgba(var(--veil-accent-rgb), 0.08) 45%, transparent 72%) !important;
+}
+.generation-veil[data-familiar-id] [data-celestial-foreground] > .z-0 > svg [stroke] { stroke: var(--veil-accent); }
+.generation-veil[data-familiar-id] [data-celestial-foreground] > .z-0 > svg path { fill: var(--veil-accent); }
+.generation-veil[data-familiar-id] [data-celestial-foreground] > .z-20 > span {
+  background: var(--veil-soft) !important;
+  box-shadow: 0 0 6px var(--veil-soft) !important;
+}
+
+/* The narrative scene keeps two contrasting riders; both now belong to
+   the Familiar palette. Target authored paint, never a media reveal image. */
+.generation-veil[data-familiar-id] [data-celestial-foreground] :is([stroke="#a855f7" i], [stroke="#ef4444" i], [stroke="#7e22ce" i]) { stroke: var(--veil-accent); }
+.generation-veil[data-familiar-id] [data-celestial-foreground] :is([stroke="#c084fc" i], [stroke="#d8b4fe" i], [stroke="#fca5a5" i], [stroke="#e8e4f0" i]) { stroke: var(--veil-soft); }
+.generation-veil[data-familiar-id] [data-celestial-foreground] :is([fill="#a855f7" i], [fill="#ef4444" i], [fill="#f87171" i]) { fill: var(--veil-accent); }
+.generation-veil[data-familiar-id] [data-celestial-foreground] :is([fill="#c084fc" i], [fill="#d8b4fe" i], [fill="#fca5a5" i], [fill="#f5f0ff" i], [fill="#fff1f0" i]) { fill: var(--veil-soft); }
+.generation-veil[data-familiar-id] [data-celestial-foreground] :is([stop-color="#a855f7" i], [stop-color="#ef4444" i], [stop-color="#7e22ce" i], [stop-color="#4c1d95" i], [stop-color="#7f1d1d" i]) { stop-color: var(--veil-accent); }
+.generation-veil[data-familiar-id] [data-celestial-foreground] :is([stop-color="#c084fc" i], [stop-color="#d8b4fe" i], [stop-color="#fca5a5" i], [stop-color="#f5f0ff" i], [stop-color="#fff1f0" i]) { stop-color: var(--veil-soft); }
+
+.generation-veil[data-familiar-id] .generation-media-core {
+  background: radial-gradient(circle at 50% 55%, rgba(var(--veil-accent-rgb), 0.13) 0%, rgba(var(--veil-accent-rgb), 0.07) 45%, transparent 72%) !important;
+}
+.generation-veil[data-familiar-id] .generation-media-wisp {
+  background: conic-gradient(from 0deg, transparent 0%, rgba(var(--veil-accent-rgb), 0.22) 18%, transparent 40%, rgba(var(--veil-soft-rgb), 0.16) 65%, transparent 88%) !important;
+}
+.generation-compact[data-familiar-id] [class*="border-portal"] { border-color: rgba(var(--veil-accent-rgb), 0.4); }
+.generation-compact[data-familiar-id] [class~="hover:border-portal/50"]:hover { border-color: rgba(var(--veil-accent-rgb), 0.5); }
+.generation-compact[data-familiar-id] [class~="hover:border-portal/80"]:hover { border-color: rgba(var(--veil-accent-rgb), 0.8); }
+.generation-compact[data-familiar-id] .text-portal { color: var(--veil-accent); }
+.generation-compact[data-familiar-id] [class~="hover:text-portal"]:hover { color: var(--veil-accent); }
+.generation-compact[data-familiar-id] .bg-portal { background-color: var(--veil-accent); }
+.generation-compact[data-familiar-id] .bg-gradient-to-tr { background-image: linear-gradient(to top right, rgba(var(--veil-accent-rgb), 0.1), rgba(var(--veil-soft-rgb), 0.05)); }
+
+@media (prefers-reduced-motion: reduce) {
+  .generation-veil-familiar { transform: none; }
+}

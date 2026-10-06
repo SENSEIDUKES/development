@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { LoadingFamiliarProvider, type LoadingFamiliarPresentation } from '../../library/manifestations/familiar';
 import { LibraryAssetsProvider, type LibraryAssets } from '../../library/assets';
 import * as LibraryUI from '@seihouse/library-ui';
 import {
@@ -45,14 +46,19 @@ export function LibraryPresentationProvider({
   children,
   backdrops = [],
   assets = {},
+  loadingFamiliar = null,
 }: {
   children: ReactNode;
   backdrops?: readonly string[];
   assets?: LibraryAssets;
+  /** The host's equipped Familiar, projected into generation presentation. */
+  loadingFamiliar?: LoadingFamiliarPresentation | null;
 }) {
   return (
     <NarrativePresentationProvider components={components}>
-      <LibraryAssetsProvider value={assets}><NarrativeArtProvider value={{ Icon: LibraryNarrativeIcon, backdrops }}>{children}</NarrativeArtProvider></LibraryAssetsProvider>
+      <LoadingFamiliarProvider value={loadingFamiliar}>
+        <LibraryAssetsProvider value={assets}><NarrativeArtProvider value={{ Icon: LibraryNarrativeIcon, backdrops }}>{children}</NarrativeArtProvider></LibraryAssetsProvider>
+      </LoadingFamiliarProvider>
     </NarrativePresentationProvider>
   );
 }

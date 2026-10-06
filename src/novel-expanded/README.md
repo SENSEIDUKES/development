@@ -39,7 +39,12 @@ The app writes chapters exactly as the Workshop's HARNESS page does:
 - the Library's sound words and Sound Cues (`LIBRARY_BASE_MEDIA`), played through the reader mixer below;
 - chapter tags and recaps recorded in the chapter write, with no separate memory call;
 - the Model Router's chapter model (`useModelPreference('chapters')`), the one choice shared with the Workshop;
-- VERSA on the Aura Veil.
+- the equipped Familiar on the Aura Veil, with its animation and elemental accents.
+
+`NovelExpandedApp.equippedFamiliarId` accepts the host profile's current choice
+and updates the veil when it changes. There are no account or equipment screens
+in this app yet, so visitors use the existing catalogue default, Quill. This is
+presentation only: it grants no ownership and writes no profile or equipment data.
 
 The app opens only once its stories are open and the skills are installed. If
 either fails, it says so plainly, with Retry.
@@ -139,6 +144,10 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 - `scripts/verifyNovelExpandedApp.browser.mjs`: the walk in Chromium at 390px and 1440px against the dev server, with stubbed APIs and a stand-in for the browser's speech (headless Chromium has no voices).
 
 ## History
+
+- **2026-10-06** — The generation veil uses the host's equipped Familiar and its
+  elemental colors. Visitors use Quill, the catalogue default. A host can pass
+  `equippedFamiliarId`; there is no new profile, equipment store or account page.
 
 - **2026-10-06** — Rewrite this chapter: at the end of the newest chapter, until the next one is written, the Reader offers one quiet link to have it written again, with an optional note; the writing screen covers it, and a failed rewrite keeps the chapter and the note. After each chapter is saved, SEN's Holdings fixer quietly settles the chapter's small holdings problems and keeps a record on the chapter (in Export story). It sends the reader's access token when there is one, and never asks for it: a refused check is only recorded.
 - **2026-10-05** — The Reader's sound is SEIHouse's audio player: the reader's atmosphere under the chapter, Sound Cues over it at their Energy (they can overlap now), Listen dipping it, a sleep timer, a note above the Listen bar that mutes it (long-press opens Audio), and Reader Settings → Audio before Narration. The mix is kept on this device. The older single-channel player is gone from the app.

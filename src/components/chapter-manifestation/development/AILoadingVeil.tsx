@@ -5,6 +5,7 @@ import { manifestationModeForOperation, type MediaRevealState, type RevealedMedi
 import { NARRATIVE_STATUS_LINES, MEDIA_STATUS_LINES } from '../../../library/manifestations/statusLines';
 import { AmbientEffect as ParticleEffect } from '@seihouse/sen/presentation';
 import type { AILoadingVeilProps } from '../../../library/manifestations/loadingVeil';
+import { useLoadingFamiliar } from '../../../library/manifestations/familiar';
 
 /**
  * Development-only extension of the shared veil props: optional journey
@@ -86,6 +87,13 @@ export default function AILoadingVeil({
   progress
 }: DevelopmentAILoadingVeilProps) {
   const [quoteIndex, setQuoteIndex] = React.useState(0);
+  // Scout remains a short retrieval indicator; generation wears the equipped Familiar.
+  const equippedFamiliar = useLoadingFamiliar();
+  const familiar = agent.id === 'scout' ? null : equippedFamiliar;
+  const presentedAgent = familiar ? {
+    id: familiar.familiar.id, name: familiar.familiar.displayName,
+    logoUrl: familiar.familiar.placeholderUrl ?? agent.logoUrl, colorClass: agent.colorClass,
+  } : agent;
 
   // Two screens, whatever the operation: one narrative manifestation (any
   // story or chapter writing) and one media reveal (any media asset). A call
@@ -137,7 +145,7 @@ export default function AILoadingVeil({
       progress: progressWidth,
       mediaReveal: resolvedMediaReveal,
       mediaAsset,
-    }, agent),
+    }, presentedAgent),
     // Compact card: no atmospheric phrase and no phase marker pill.
     description: '',
     operationTitle: '',
@@ -150,6 +158,7 @@ export default function AILoadingVeil({
       active={isGenerating}
       completed={completed}
       task={task}
+      familiar={familiar}
       mode="auto"
       minimized={isVeilMinimized}
       onMinimizedChange={setIsVeilMinimized}
@@ -159,7 +168,7 @@ export default function AILoadingVeil({
       onMediaUnseal={onMediaUnseal}
       backdrop={
         <ParticleEffect
-          accent={activeAgentId === 'scout' ? '#04ACFF' : '#c22e1f'}
+          accent={familiar?.accent ?? (activeAgentId === 'scout' ? '#04ACFF' : '#c22e1f')}
           speedScale={0.47}
           dispersion={0.96}
         />

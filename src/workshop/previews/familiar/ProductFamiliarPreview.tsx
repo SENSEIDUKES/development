@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { FamiliarCompanion, FamiliarRecall, type FamiliarCompanionProps } from '@seihouse/library/familiar';
 import { WorkspaceHeaderAccessoryProvider } from '@seihouse/library/shell';
+import { LoadingFamiliarProvider, loadingFamiliarPresentation } from '@seihouse/library/manifestations';
 import { EnergyClientProvider, createHttpEnergyClient } from '@seihouse/library/energy';
 import { defaultFamiliar, familiarCatalogueEntry } from '../../../host/familiar/catalogue';
 import { developmentIdentityToken } from '../../../server/identity/authentication';
@@ -27,11 +28,17 @@ export function ProductFamiliarSession({ children, initialState = DEFAULT_USER_P
   useEffect(() => setMinimized(initiallyMinimized), [selection.uid, initiallyMinimized]);
   const value = useMemo(() => ({ selection, reportProfile, minimized, setMinimized }), [selection, minimized]);
   const client = useMemo(() => createHttpEnergyClient({ token: () => selection.uid ? developmentIdentityToken(selection.uid) : null }), [selection.uid]);
+  const loadingFamiliar = useMemo(() => {
+    const familiar = selection.uid ? familiarCatalogueEntry(selection.familiarId)?.definition : undefined;
+    return loadingFamiliarPresentation(familiar ?? defaultFamiliar.definition);
+  }, [selection.uid, selection.familiarId]);
   if (parent) return <>{children}</>;
   return <SelectionContext.Provider value={value}>
-    <EnergyClientProvider client={client}>
-      <WorkspaceHeaderAccessoryProvider accessory={<ProductFamiliarRecall />}>{children}</WorkspaceHeaderAccessoryProvider>
-    </EnergyClientProvider>
+    <LoadingFamiliarProvider value={loadingFamiliar}>
+      <EnergyClientProvider client={client}>
+        <WorkspaceHeaderAccessoryProvider accessory={<ProductFamiliarRecall />}>{children}</WorkspaceHeaderAccessoryProvider>
+      </EnergyClientProvider>
+    </LoadingFamiliarProvider>
   </SelectionContext.Provider>;
 }
 

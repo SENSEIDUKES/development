@@ -4,6 +4,7 @@ import type { LoadingTaskCard } from '../../../library/manifestations/taskCard';
 import LoadingVeilCard from './LoadingVeilCard';
 import CompactIndicator from './CompactIndicator';
 import { useGenerationJourney } from '../../../library/manifestations/useGenerationJourney';
+import type { LoadingFamiliarPresentation } from '../../../library/manifestations/familiar';
 
 export type LoadingSystemMode = 'auto' | 'primary' | 'compact';
 
@@ -14,6 +15,8 @@ export interface LoadingSystemProps {
   completed?: boolean;
   /** The normalized task card to present, or null when idle. */
   task: LoadingTaskCard | null;
+  /** Equipped character presentation; selection stays host-owned. */
+  familiar?: LoadingFamiliarPresentation | null;
   /**
    * 'auto' follows task.preferredMode; 'primary' and 'compact' force a mode.
    * Primary falls back to the compact indicator whenever minimized.
@@ -63,6 +66,7 @@ export default function LoadingSystem({
   active,
   completed,
   task,
+  familiar,
   mode = 'auto',
   minimized,
   onMinimizedChange,
@@ -114,6 +118,7 @@ export default function LoadingSystem({
           key="primary-veil"
           task={journey.arriving && displayTask.progress !== null ? { ...displayTask, progress: 100 } : displayTask}
           journeyProgress={journey.progress}
+          familiar={familiar}
           backdrop={backdrop}
           emblemClassName={emblemClassName}
           travelerId={travelerId}
@@ -126,6 +131,7 @@ export default function LoadingSystem({
         <CompactIndicator
           key="compact-indicator"
           task={displayTask}
+          familiar={familiar}
           onExpand={resolvedMode === 'primary' ? () => onMinimizedChange(false) : undefined}
         />
       )}

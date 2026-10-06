@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ReaderMixerProvider, type ReaderMixer } from '@seihouse/audio-player';
-import { LibraryPresentationProvider } from '@seihouse/library/presentation';
+import { LibraryPresentationProvider, loadingFamiliarPresentation } from '@seihouse/library/presentation';
 import { StoryPages, storyHomeWorlds, useLibraryStories } from '@seihouse/library/stories';
 import { findStory, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import { NarrativeButton } from '@seihouse/sen/presentation';
@@ -10,6 +10,7 @@ import { LIBRARY_BASE_MEDIA } from '../host/media/libraryCatalog';
 import { MANIFEST_BACKDROPS } from '../host/reader/manifestBackdrops';
 import { startHarnessStoryFromSeed } from '../host/story-seed/startHarnessStory';
 import { AGENTS } from '../lib/agents';
+import { defaultFamiliar, familiarCatalogueEntry } from '../host/familiar/catalogue';
 import { AccessTokenSheet, type AccessTokenRequest } from './AccessTokenSheet';
 import { writerWithAccessToken, type AskForAccessToken } from './accessToken';
 import { CreatePage } from './CreatePage';
@@ -26,9 +27,17 @@ import { startedSeedIds } from './storyCreationRuntime';
  * Its one sound owner is the reader mixer (the SEIHouse audio player), made
  * once by the page that mounts the app and kept for the page's lifetime.
  */
-export function NovelExpandedApp({ services, readerMixer }: { services: NovelExpandedServices; readerMixer: ReaderMixer }) {
+export function NovelExpandedApp({ services, readerMixer, equippedFamiliarId }: {
+  services: NovelExpandedServices;
+  readerMixer: ReaderMixer;
+  /** The host profile's equipped choice. Visitors use the catalogue's default Familiar. */
+  equippedFamiliarId?: string;
+}) {
+  const loadingFamiliar = useMemo(() => loadingFamiliarPresentation(
+    (familiarCatalogueEntry(equippedFamiliarId) ?? defaultFamiliar).definition,
+  ), [equippedFamiliarId]);
   return <ReaderMixerProvider mixer={readerMixer}>
-    <LibraryPresentationProvider assets={LIBRARY_ASSETS} backdrops={MANIFEST_BACKDROPS}>
+    <LibraryPresentationProvider assets={LIBRARY_ASSETS} backdrops={MANIFEST_BACKDROPS} loadingFamiliar={loadingFamiliar}>
       <NovelExpandedPages services={services} />
     </LibraryPresentationProvider>
   </ReaderMixerProvider>;

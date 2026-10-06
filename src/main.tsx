@@ -1,5 +1,6 @@
 import { LIBRARY_ASSETS } from './host/media/libraryAssets';
-import { LibraryPresentationProvider } from '@seihouse/library/presentation';
+import { LibraryPresentationProvider, loadingFamiliarPresentation } from '@seihouse/library/presentation';
+import { defaultFamiliar } from './host/familiar/catalogue';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
@@ -19,7 +20,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ReaderMixerProvider mixer={readerMixer}>
       <DevAudioPlaybackProvider>
-        <ReaderPreviewRuntime><StoryCreationPreviewRuntime><LibraryPresentationProvider assets={LIBRARY_ASSETS} backdrops={MANIFEST_BACKDROPS}><App /></LibraryPresentationProvider></StoryCreationPreviewRuntime></ReaderPreviewRuntime>
+        <ReaderPreviewRuntime><StoryCreationPreviewRuntime><LibraryPresentationProvider assets={LIBRARY_ASSETS} backdrops={MANIFEST_BACKDROPS} loadingFamiliar={loadingFamiliarPresentation(defaultFamiliar.definition)}><App /></LibraryPresentationProvider></StoryCreationPreviewRuntime></ReaderPreviewRuntime>
       </DevAudioPlaybackProvider>
     </ReaderMixerProvider>
   </React.StrictMode>,

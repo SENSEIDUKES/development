@@ -1,10 +1,13 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { Sparkles } from 'lucide-react';
 import type { LoadingTaskCard } from '../../../library/manifestations/taskCard';
 import NarrativeManifestationZone from './NarrativeManifestationZone';
 import MediaManifestationZone from './MediaManifestationZone';
 import { LibraryScrubber } from '@seihouse/library-ui';
+import { FamiliarSprite } from '../../familiar/development/FamiliarSprite';
+import { loadingPalette, loadingPaletteStyle, type LoadingFamiliarPresentation } from '../../../library/manifestations/familiar';
+import './loadingVeil.css';
 
 /**
  * Celestial field — a quiet scatter of fixed star points behind the agent
@@ -33,6 +36,8 @@ const CelestialSigil: React.FC = () => {
 
 export interface LoadingVeilCardProps {
   task: LoadingTaskCard;
+  /** The host's equipped Familiar; omitted for legacy agent presentations. */
+  familiar?: LoadingFamiliarPresentation | null;
   /** Time-based travel supplied by LoadingSystem; separate from any measured task percentage. */
   journeyProgress?: number;
   /**
@@ -65,8 +70,8 @@ export interface LoadingVeilCardProps {
 /**
  * DEV copy of LoadingVeil — the Aura Veil shell: one shared manifestation
  * shell hosting two manifestation modes. The shell is identical across both:
- * 1. Versa hero — emblem + refined violet aura at the top, sized to fill
- *    her zone naturally with less dead space around her
+ * 1. Equipped Familiar — supplied character animation + elemental aura;
+ *    legacy agent callers may still supply an emblem
  * 2. Journey scrubber — a path-only curved qi path: a cultivator traveler
  *    runs toward a destination gate as normalized progress advances, with
  *    an illuminated trail behind it (replaces the old thin progress bar).
@@ -78,7 +83,7 @@ export interface LoadingVeilCardProps {
  *    chamber with a system-selected omen scene; MediaManifestationZone
  *    renders the same chamber with the agnostic celestial scroll reveal.
  *    Both inherit the chamber's isolated three-layer stacking contract.
- * 4. Chapter line + Versa's evolving line — a persistent "Chapter N | X%"
+ * 4. Chapter line + evolving status line — a persistent "Chapter N | X%"
  *    line above the rotating quote at the bottom of the chamber; the quote
  *    is the only text that changes, and the language set changes per mode.
  *
@@ -93,12 +98,14 @@ export interface LoadingVeilCardProps {
  * the cinematic backdrop is pinned to z-0, and all content zones sit at
  * z-10, so shared particles can never drift above the chamber's scene.
  *
- * Aura work (kept from the previous pass): saturated violet nebula with a
+ * Aura work: an elemental nebula with a
  * bright core, twin counter-rotating cloak wisps, grounded pool, six motes.
  * First real caller: the Library's HARNESS Reader, while it writes a chapter.
  */
-export default function LoadingVeilCard({ task, journeyProgress, backdrop, emblemClassName, travelerId, trailStyle, destinationId, onMediaUnseal }: LoadingVeilCardProps) {
-  const isVersa = task.agentId === 'versa';
+export default function LoadingVeilCard({ task, familiar, journeyProgress, backdrop, emblemClassName, travelerId, trailStyle, destinationId, onMediaUnseal }: LoadingVeilCardProps) {
+  const immersive = task.agentId === 'versa' || Boolean(familiar);
+  const palette = loadingPalette(familiar, task.agentId);
+  const reduceMotion = useReducedMotion();
 
   // LoadingSystem supplies the elapsed-time journey separately, so unknown work
   // never gains a made-up percentage. Direct card consumers can still supply measured progress.
@@ -113,8 +120,10 @@ export default function LoadingVeilCard({ task, journeyProgress, backdrop, emble
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, scale: 0.985, transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1] } }}
       transition={{ duration: 0.25 }}
-      className={`fixed inset-0 h-[100dvh] ${backdrop ? 'bg-void/70' : 'bg-void/95'} backdrop-blur-md z-[9999] isolate flex flex-col overflow-hidden text-center select-none`}
+      className={`generation-veil fixed inset-0 h-[100dvh] ${backdrop ? 'bg-void/70' : 'bg-void/95'} backdrop-blur-md z-[9999] isolate flex flex-col overflow-hidden text-center select-none`}
+      style={loadingPaletteStyle(palette)}
       data-testid="generation-veil"
+      data-familiar-id={familiar?.familiar.id}
       data-journey-progress={normalizedProgress ?? undefined}
     >
       {/* Cinematic backdrop — pinned to z-0 so shared particles always stay
@@ -125,23 +134,23 @@ export default function LoadingVeilCard({ task, journeyProgress, backdrop, emble
         </div>
       )}
 
-      {/* ── Zone 1 · Versa hero ─────────────────────────────────────────────
+      {/* ── Zone 1 · Equipped character ─────────────────────────────────────────────
           Emblem + aura, sized up to fill her zone naturally. The zone grew
-          into the space the scrubber status text used to occupy, so Versa
+          into the space the scrubber status text used to occupy; the character
           sits lower and more centered instead of cramped at the top. */}
       <div className="relative z-10 flex-none h-[32dvh] min-h-[196px] flex items-end justify-center pointer-events-none">
         <div className={`relative w-32 h-32 sm:w-36 sm:h-36 ${emblemClassName ?? ''} flex items-center justify-center shrink-0`}>
           <CelestialSigil />
 
           {/* Ground pool — a grounded shadow that doesn't rise with her */}
-          {isVersa && (
+          {immersive && (
             <motion.div
               aria-hidden="true"
               className="absolute left-1/2 bottom-[8%] -translate-x-1/2 rounded-[50%]"
               style={{
                 width: '72%',
                 height: '15%',
-                background: 'radial-gradient(ellipse at 50% 50%, rgba(168,85,247,0.5) 0%, rgba(76,29,149,0.3) 55%, transparent 80%)',
+                background: 'radial-gradient(ellipse at 50% 50%, rgba(var(--veil-accent-rgb),0.5) 0%, rgba(var(--veil-accent-rgb),0.3) 55%, transparent 80%)',
                 filter: 'blur(5px)',
               }}
               animate={{ opacity: [0.65, 1, 0.65], scaleX: [0.92, 1, 0.92] }}
@@ -149,18 +158,18 @@ export default function LoadingVeilCard({ task, journeyProgress, backdrop, emble
             />
           )}
 
-          {isVersa ? (
+          {immersive ? (
             <>
-              {/* Nebula heart — saturated violet mass, breathing slowly.
+              {/* Nebula heart — saturated elemental glow, breathing slowly.
                   Radius pulled in ~20% and glow softened ~15% so the aura
-                  stays wrapped around Versa instead of bleeding onto the
+                  stays wrapped around the character instead of bleeding onto the
                   scrubber beneath her. */}
               <motion.div
                 aria-hidden="true"
                 className="absolute inset-[-34%] rounded-full"
                 style={{
                   background:
-                    'radial-gradient(circle at 50% 52%, rgba(233,213,255,0.42) 0%, rgba(192,132,252,0.38) 22%, rgba(147,51,234,0.32) 45%, rgba(88,28,135,0.24) 66%, transparent 82%)',
+                    'radial-gradient(circle at 50% 52%, rgba(var(--veil-soft-rgb),0.42) 0%, rgba(var(--veil-soft-rgb),0.38) 22%, rgba(var(--veil-accent-rgb),0.32) 45%, rgba(var(--veil-accent-rgb),0.24) 66%, transparent 82%)',
                   filter: 'blur(26px)',
                   mixBlendMode: 'screen',
                 }}
@@ -173,7 +182,7 @@ export default function LoadingVeilCard({ task, journeyProgress, backdrop, emble
                 className="absolute inset-[-6%] rounded-full"
                 style={{
                   background:
-                    'radial-gradient(circle at 50% 58%, rgba(243,232,255,0.55) 0%, rgba(216,180,254,0.34) 40%, transparent 70%)',
+                    'radial-gradient(circle at 50% 58%, rgba(var(--veil-soft-rgb),0.55) 0%, rgba(var(--veil-soft-rgb),0.34) 40%, transparent 70%)',
                   filter: 'blur(12px)',
                   mixBlendMode: 'screen',
                 }}
@@ -190,15 +199,15 @@ export default function LoadingVeilCard({ task, journeyProgress, backdrop, emble
             />
           )}
 
-          {/* Cloak energy — twin counter-rotating violet wisps */}
-          {isVersa && (
+          {/* Aura energy — twin counter-rotating elemental wisps */}
+          {immersive && (
             <>
               <motion.div
                 aria-hidden="true"
                 className="absolute inset-[-8%] rounded-full"
                 style={{
                   background:
-                    'conic-gradient(from 0deg, rgba(168,85,247,0) 0%, rgba(168,85,247,0.47) 18%, rgba(168,85,247,0) 40%, rgba(139,92,246,0.38) 65%, rgba(168,85,247,0) 88%, rgba(168,85,247,0) 100%)',
+                    'conic-gradient(from 0deg, rgba(var(--veil-accent-rgb),0) 0%, rgba(var(--veil-accent-rgb),0.47) 18%, rgba(var(--veil-accent-rgb),0) 40%, rgba(var(--veil-accent-rgb),0.38) 65%, rgba(var(--veil-accent-rgb),0) 88%, rgba(var(--veil-accent-rgb),0) 100%)',
                   filter: 'blur(8px)',
                   mixBlendMode: 'screen',
                 }}
@@ -210,7 +219,7 @@ export default function LoadingVeilCard({ task, journeyProgress, backdrop, emble
                 className="absolute inset-[-17%] rounded-full"
                 style={{
                   background:
-                    'conic-gradient(from 180deg, rgba(216,180,254,0) 0%, rgba(216,180,254,0.3) 22%, rgba(216,180,254,0) 46%, rgba(147,51,234,0.26) 70%, rgba(216,180,254,0) 92%, rgba(216,180,254,0) 100%)',
+                    'conic-gradient(from 180deg, rgba(var(--veil-soft-rgb),0) 0%, rgba(var(--veil-soft-rgb),0.3) 22%, rgba(var(--veil-soft-rgb),0) 46%, rgba(var(--veil-accent-rgb),0.26) 70%, rgba(var(--veil-soft-rgb),0) 92%, rgba(var(--veil-soft-rgb),0) 100%)',
                   filter: 'blur(14px)',
                   mixBlendMode: 'screen',
                 }}
@@ -221,7 +230,7 @@ export default function LoadingVeilCard({ task, journeyProgress, backdrop, emble
           )}
 
           {/* Qi motes rising past her */}
-          {isVersa &&
+          {immersive &&
             [0, 1, 2, 3, 4, 5].map(i => (
               <motion.span
                 key={i}
@@ -232,8 +241,8 @@ export default function LoadingVeilCard({ task, journeyProgress, backdrop, emble
                   bottom: '14%',
                   width: 3,
                   height: 3,
-                  background: 'rgba(233,213,255,0.95)',
-                  boxShadow: '0 0 7px rgba(192,132,252,0.95), 0 0 14px rgba(168,85,247,0.6)',
+                  background: 'rgba(var(--veil-soft-rgb),0.95)',
+                  boxShadow: '0 0 7px rgba(var(--veil-soft-rgb),0.95), 0 0 14px rgba(var(--veil-accent-rgb),0.6)',
                 }}
                 animate={{ y: [0, -(48 + i * 8)], opacity: [0, 0.95, 0], x: [0, (i % 2 === 0 ? 1 : -1) * 6] }}
                 transition={{ duration: 3 + i * 0.35, repeat: Infinity, delay: i * 0.55, ease: 'easeOut' }}
@@ -242,16 +251,18 @@ export default function LoadingVeilCard({ task, journeyProgress, backdrop, emble
 
           <motion.div
             className="relative z-10 w-full h-full flex items-center justify-center"
-            animate={{ y: [0, -6, 0] }}
+            animate={reduceMotion ? { y: 0 } : { y: [0, -6, 0] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
           >
-            <img
+            {familiar ? <div className="generation-veil-familiar w-[92%]">
+              <FamiliarSprite familiar={familiar.familiar} activity={normalizedProgress === 1 ? 'ready' : 'running'} />
+            </div> : <img
               src={task.icon.src}
               alt={task.icon.alt}
               className="w-full h-full object-contain"
               referrerPolicy="no-referrer"
-              style={isVersa ? { filter: 'drop-shadow(0 0 18px rgba(192,132,252,0.8)) drop-shadow(0 0 46px rgba(147,51,234,0.55))' } : { filter: 'drop-shadow(0 0 15px rgba(4, 172, 255, 0.4))' }}
-            />
+              style={immersive ? { filter: 'drop-shadow(0 0 18px rgba(var(--veil-soft-rgb),0.8)) drop-shadow(0 0 46px rgba(var(--veil-accent-rgb),0.55))' } : { filter: 'drop-shadow(0 0 15px rgba(4, 172, 255, 0.4))' }}
+            />}
           </motion.div>
         </div>
       </div>
@@ -270,8 +281,9 @@ export default function LoadingVeilCard({ task, journeyProgress, backdrop, emble
           travelerId={travelerId}
           trailStyle={trailStyle}
           destinationId={destinationId}
-          accent={isVersa ? '#a855f7' : '#04ACFF'}
-          accentSoft={isVersa ? '#d8b4fe' : '#7dd3fc'}
+          accent={palette.accent}
+          accentSoft={palette.accentSoft}
+          destinationAccent={familiar ? palette.accent : undefined}
         />
       </div>
 
@@ -290,13 +302,13 @@ export default function LoadingVeilCard({ task, journeyProgress, backdrop, emble
           chamber sizes to this real box via cqmin — it always fits instead of
           overflowing and being hard-clipped by overflow-hidden (kept as the
           safety net). */}
-      {isVersa && (
+      {immersive && (
         <div className="relative z-10 flex-1 min-h-0 flex items-center justify-center overflow-hidden [container-type:size]">
           {task.manifestation.mode === 'media' ? (
-            <MediaManifestationZone isVersa={isVersa} spec={task.manifestation} onUnseal={onMediaUnseal} />
+            <MediaManifestationZone isVersa={immersive} spec={task.manifestation} onUnseal={onMediaUnseal} />
           ) : (
             <NarrativeManifestationZone
-              isVersa={isVersa}
+              isVersa={immersive}
               sceneId={task.manifestation.sceneId}
               seed={task.trackerTitle}
             />
@@ -304,7 +316,7 @@ export default function LoadingVeilCard({ task, journeyProgress, backdrop, emble
         </div>
       )}
 
-      {/* ── Zone 4 · Chapter pill + Versa's evolving line ───────────────────
+      {/* ── Zone 4 · Chapter pill + evolving line ───────────────────
           Consolidated status hierarchy at the bottom of the chamber: a
           persistent chapter pill ("Chapter 1 ｜ 42%") in a softly glowing
           accent-tinted capsule above the rotating quote — the only text
@@ -314,25 +326,21 @@ export default function LoadingVeilCard({ task, journeyProgress, backdrop, emble
       <div className="relative z-10 flex-none px-6 pt-3 pb-7 flex flex-col items-center justify-center min-h-[44px]">
         {task.trackerTitle && (
           <div
-            className={`mb-2 inline-flex items-center gap-2.5 rounded-full border px-4 py-1 backdrop-blur-sm ${
-              isVersa
-                ? 'border-purple-300/25 bg-gradient-to-b from-purple-400/15 to-purple-500/5 shadow-[0_0_20px_rgba(168,85,247,0.22),inset_0_1px_0_rgba(233,213,255,0.14)]'
-                : 'border-sky-300/25 bg-gradient-to-b from-sky-400/15 to-sky-500/5 shadow-[0_0_20px_rgba(4,172,255,0.22),inset_0_1px_0_rgba(224,242,254,0.14)]'
-            }`}
+            className="generation-veil-pill mb-2 inline-flex items-center gap-2.5 rounded-full border px-4 py-1 backdrop-blur-sm"
           >
-            <span className={`font-sans text-xs sm:text-sm tracking-wide font-medium ${isVersa ? 'text-purple-100/90' : 'text-sky-100/90'}`}>
+            <span className="generation-veil-pill-title font-sans text-xs sm:text-sm tracking-wide font-medium">
               {task.trackerTitle}
             </span>
             {task.progress !== null && <>
-              <span aria-hidden="true" className={`h-3 w-px ${isVersa ? 'bg-purple-300/35' : 'bg-sky-300/35'}`} />
-              <span className={`font-sans text-xs sm:text-sm tracking-wide font-semibold ${isVersa ? 'text-purple-50' : 'text-sky-50'}`}>
+              <span aria-hidden="true" className="generation-veil-pill-divider h-3 w-px" />
+              <span className="generation-veil-pill-title font-sans text-xs sm:text-sm tracking-wide font-semibold">
                 {Math.round(task.progress)}%
               </span>
             </>}
           </div>
         )}
         <div className="flex items-center justify-center gap-3">
-          <Sparkles size={10} className={`${isVersa ? 'text-human/60' : 'text-portal/60'} shrink-0`} />
+          <Sparkles size={10} className="generation-veil-sparkle shrink-0" />
           <AnimatePresence mode="wait">
             <motion.span
               key={task.status}
@@ -345,7 +353,7 @@ export default function LoadingVeilCard({ task, journeyProgress, backdrop, emble
               &ldquo;{task.status}&rdquo;
             </motion.span>
           </AnimatePresence>
-          <Sparkles size={10} className={`${isVersa ? 'text-human/60' : 'text-portal/60'} shrink-0`} />
+          <Sparkles size={10} className="generation-veil-sparkle shrink-0" />
         </div>
       </div>
     </motion.div>

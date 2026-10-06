@@ -2,9 +2,13 @@ import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Compass, Maximize2, Loader2 } from 'lucide-react';
 import type { LoadingTaskCard } from '../../../library/manifestations/taskCard';
+import { FamiliarSprite } from '../../familiar/development/FamiliarSprite';
+import { loadingPalette, loadingPaletteStyle, type LoadingFamiliarPresentation } from '../../../library/manifestations/familiar';
+import './loadingVeil.css';
 
 export interface CompactIndicatorProps {
   task: LoadingTaskCard;
+  familiar?: LoadingFamiliarPresentation | null;
   /** Shown when the operation can be expanded back to the primary veil. */
   onExpand?: () => void;
 }
@@ -14,12 +18,13 @@ export interface CompactIndicatorProps {
  * short, or background operations. Pure presentation driven by the same
  * LoadingTaskCard the primary veil consumes.
  */
-export default function CompactIndicator({ task, onExpand }: CompactIndicatorProps) {
-  const isVersa = task.agentId === 'versa';
+export default function CompactIndicator({ task, familiar, onExpand }: CompactIndicatorProps) {
+  const isVersa = !familiar && task.agentId === 'versa';
+  const palette = loadingPalette(familiar, task.agentId);
   const [showDetails, setShowDetails] = React.useState(false);
 
   return (
-    <div className="fixed bottom-32 left-6 z-[9999] flex flex-col items-start select-none">
+    <div className="generation-compact fixed bottom-32 left-6 z-[9999] flex flex-col items-start select-none" style={loadingPaletteStyle(palette)} data-familiar-id={familiar?.familiar.id}>
       <AnimatePresence>
         {showDetails && (
           <motion.div
@@ -93,7 +98,13 @@ export default function CompactIndicator({ task, onExpand }: CompactIndicatorPro
         className={`relative w-14 h-14 rounded-full bg-zinc-950/90 border ${isVersa ? 'border-amber-500/40 hover:border-amber-500/80' : 'border-portal/40 hover:border-portal/80'} flex items-center justify-center cursor-pointer pointer-events-auto transition-all duration-300 outline-none`}
         animate={{
           scale: [1, 1.04, 1],
-          boxShadow: isVersa
+          boxShadow: familiar
+            ? [
+                '0 0 10px rgba(var(--veil-accent-rgb), 0.15)',
+                '0 0 25px rgba(var(--veil-accent-rgb), 0.65)',
+                '0 0 10px rgba(var(--veil-accent-rgb), 0.15)',
+              ]
+            : isVersa
             ? [
                 "0 0 10px rgba(245, 158, 11, 0.15)",
                 "0 0 25px rgba(245, 158, 11, 0.65)",
@@ -123,7 +134,7 @@ export default function CompactIndicator({ task, onExpand }: CompactIndicatorPro
 
         {/* Main Icon Content Wrapper */}
         <div className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center overflow-hidden relative shadow-inner">
-          {task.icon.kind === 'image' ? (
+          {familiar ? <div className="w-full"><FamiliarSprite familiar={familiar.familiar} activity="running" /></div> : task.icon.kind === 'image' ? (
             <img
               src={task.icon.src}
               alt={task.icon.alt}

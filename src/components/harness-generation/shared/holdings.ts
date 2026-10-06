@@ -6,6 +6,7 @@ import {
   type CodexEntryKind,
   type HoldingChangeAttachment,
   type HoldingChangePayload,
+  type HoldingFlagKind,
   type HoldingRef,
   type HoldingVerb,
   type HoldingsSection,
@@ -15,6 +16,8 @@ import type { WordTag } from '../../../narrative/marks';
 import type { CurrentStoryProjection } from '../../../narrative/generation';
 import { normalizeIdentityLabel } from './canonicalProjection';
 import { isMainCharacterTag } from './speakers';
+
+export type { HoldingFlagKind } from '../../../narrative/holdings';
 
 /**
  * Holdings in the HARNESS: the writer's change tags read into holding changes
@@ -337,28 +340,6 @@ export interface CharacterHoldings {
   /** Every change that took effect for this character, in story order. */
   history: HoldingEvent[];
 }
-
-export type HoldingFlagKind =
-  /** Equipping, putting away or losing something the record does not show them holding. */
-  | 'not-held'
-  /** Gaining again, without a count, something they already hold. */
-  | 'already-held'
-  /** A count the record cannot match: a has tag that disagrees, or losing more than they hold. */
-  | 'count-mismatch'
-  /** Improving or sealing an ability they have not learned. */
-  | 'not-learned'
-  /** Starting to learn, or learning, an ability they already know. */
-  | 'already-learned'
-  /** A known ability's level that disagrees with the record. */
-  | 'level-differs'
-  /** Improving a sealed ability, or unsealing one that is not sealed. */
-  | 'sealed-state'
-  /** The writer's closing list leaves out something the record holds. */
-  | 'closing-unlisted'
-  /** The writer's closing list holds something no tag recorded. */
-  | 'closing-untagged'
-  /** Two entries of one kind whose names are close enough to be the same. */
-  | 'possible-duplicate';
 
 export interface HoldingFlag {
   kind: HoldingFlagKind;

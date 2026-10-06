@@ -250,7 +250,9 @@ Blueprint, arc and sharing decision.
 Reading and directing are the heart of the product: the loop most users live in. A
 reader who wants to kill the sect leader instead of sparing them says so and hits
 Next Chapter, and the next chapter makes it happen. Today the reader's direction lives
-on the Fate page (`FatePage`), opened from the Reader.
+on the Fate page (`FatePage`), opened from the Reader. A reader who does not like the
+newest chapter can have it written again, with a note on what to change, until they
+move on to the next one.
 
 ## The HARNESS is invisible
 
@@ -410,6 +412,28 @@ Update it whenever it changes.
   - **Export story,** on World Info, saves a story as one file: every chapter
     with the exact instructions, Story Information and request the writer was
     given, and its raw reply. It is how a test is shared.
+  - **Rewrite this chapter:** at the end of the newest chapter, until the next
+    one is written, a quiet link lets the reader have it written again, with an
+    optional note on what to change. The new version is written from the story
+    as it stood before that chapter, with the same direction; the writer sees
+    the set-aside version's title and recap and the note, never its prose.
+    Everything worked out from the old version (its holdings, the goals it
+    reached or missed, an ending it wrote) goes with it. The reader keeps the old
+    version until the new one is saved; a failed rewrite changes nothing and
+    keeps the note. The set-aside version stays in the export.
+  - **The Holdings fixer, unseen:** after each chapter is saved, SEN runs the
+    Holdings checks on it and fixes the small problems quietly: a corrected tag,
+    one corrected sentence, or two names merged into one entry. It never reads
+    the chapter: each problem becomes a small case (the sentence, its tags, what
+    the record shows), and one short call with the chapter's own model, at its
+    lowest reasoning, answers them, only when a model must decide. A closing
+    list that names something the chapter never mentions is settled without a
+    call. A fix stands only when it leaves fewer problems; a contradiction too
+    big for one sentence is recorded and left as it is. The reader sees none of
+    it; each chapter keeps a record of what was checked and changed, in the
+    export, and the fixer's instructions are on the Writer Instructions page.
+    The Library sets how far it may go (records only, or off), which is where
+    the Familiar will control it.
 - **Not tested yet:**
   - real generation with a real model on the Vercel preview: a real Blueprint
     (Arc 1 only, filled slots), a real arc planned at a new arc, and real
@@ -425,6 +449,9 @@ Update it whenever it changes.
     as equipped; all four are fixed. Both runs also showed loose tag wording:
     no speaker tags in either Chapter 1, and 36% of sounds lost. The tags are
     now taught in one strict shape, and the test runs again on a new story;
+  - Rewrite this chapter and the Holdings fixer with a real model: how often the
+    fixer is called, what it costs next to a chapter, and whether its fixes
+    hold (each chapter's record in the export shows it);
   - Listen on real phones (iPhone Safari, Android Chrome), whose voices differ
     from device to device.
 - **Not yet as [The World Blueprint](#the-world-blueprint) describes:**
@@ -469,7 +496,10 @@ Update it whenever it changes.
    The app can move to its own repository once SEN is stable enough to install
    as a package.
 4. **Rebuild the remaining kinds** one at a time, then design the Codex.
-5. **Cinematic scrolling**, the Reader's default way to read: the page moves
+5. **The Familiar over the Holdings fixer:** the Library's Familiar decides how far
+   the fixer goes, and what to do with the contradictions it records as too big
+   to fix quietly.
+6. **Cinematic scrolling**, the Reader's default way to read: the page moves
    with Listen's voice (its playhead is ready for it), and later Sound Cues and
    manifestations fire as the voice reaches them. AI narration (generated once
    per language, stored and shared) comes after, on the same script.
@@ -486,7 +516,9 @@ Update it whenever it changes.
 | Story View | The story's own page: cover art, the story, Enter. Built today as the World Info page (`WorldCardInfo`), where Start Story or Start Reading leads into the Reader Chamber. |
 | Reader Chamber | Where chapters are read: a HARNESS story's chapters on the Text Highlight Engine with Sound Cues, Listen and the soundtrack (`HarnessReaderSession`). The older Reader Chamber preview (`?preview=reader-chamber`) is not part of this path. |
 | Listen / Read Aloud | The Reader reading a chapter aloud in three voices with the spoken sentence lit (`useReadAloud`, SEN's `reader-runtime`). Its voices and speed live in Reader Settings → Narration. |
-| Reader Settings | The Reader's settings sheet. Narration is its only section today. |
+| Reader Settings | The Reader's settings sheet: Audio, then Narration. |
+| Rewrite this chapter | The reader's request to write the newest chapter again, with an optional note (`rewriteLatestChapter`, `chapterRewriteGap`). |
+| Holdings fixer | SEN's unseen check after each chapter, which settles small holdings problems and keeps a record on the chapter (`planHoldingsFix`, `applyHoldingsFixes`, the `fix-holdings` call). The Library, later the Familiar, sets how far it goes. |
 | Text Highlight Engine (manuscript lab) | The manuscript editor at `?preview=text-highlight-engine`. |
 | Story Settings | The only place a user meets the HARNESS: language, reading mode, CAPA skills and media. |
 | Harness Generation | The developer instrument for the HARNESS (`?preview=harness-generation`). Never a product page. |

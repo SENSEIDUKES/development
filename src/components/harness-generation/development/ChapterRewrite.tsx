@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { CHAPTER_REWRITE_NOTE_LIMIT } from '../../../narrative/generation';
 
 /**
@@ -15,6 +15,11 @@ export function ChapterRewrite({ chapterNumber, disabled, onRewrite }: {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState('');
   const noteId = useId();
+  const formRef = useRef<HTMLFormElement>(null);
+  // The box opens at the chapter's end, where the Listen bar sits: bring all of it into view.
+  useEffect(() => {
+    if (open) formRef.current?.scrollIntoView?.({ block: 'center' });
+  }, [open]);
 
   if (!open) {
     return <div className="mt-4 flex justify-center">
@@ -31,7 +36,7 @@ export function ChapterRewrite({ chapterNumber, disabled, onRewrite }: {
     else setOpen(true);
   };
 
-  return <form aria-label={`Rewrite Chapter ${chapterNumber}`} className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4"
+  return <form ref={formRef} aria-label={`Rewrite Chapter ${chapterNumber}`} className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4"
     onSubmit={event => { event.preventDefault(); void rewrite(); }}>
     <label htmlFor={noteId} className="text-sm text-neutral-200">
       What should change? <span className="text-neutral-500">Optional</span>

@@ -1289,7 +1289,7 @@ export interface HarnessHoldingsFixRequest {
 /** One problem the fixer looked at, and what became of it. */
 export interface HarnessHoldingsFix {
   /** The checks that found it. */
-  checks: import('../components/harness-generation/shared/holdings').HoldingFlagKind[];
+  checks: import('./holdings').HoldingFlagKind[];
   /** What they found, in plain words. */
   problems: string[];
   /**

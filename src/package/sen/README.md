@@ -1,5 +1,23 @@
 # `@seihouse/sen`
 
+**0.22.0 (2026-10-06):** Phase 3. **Rewrite this chapter:**
+`HarnessGenerationController.rewriteLatestChapter(storyId, model, note?)` writes the
+story's newest chapter again from the story as it stood before it, and replaces it only
+when the new version commits; `chapterRewriteGap`, `latestStoryChapter`,
+`withoutLatestChapter` and `readRewriteNote` are exported, `ImmediateChapterRequest`
+gains `rewrite` (`HarnessChapterRewrite`, `CHAPTER_REWRITE_NOTE_LIMIT`), an attempt gains
+`replacedByChapterId`, and `HarnessReaderSession` takes `onRewriteChapter`.
+**Holdings fixer:** after each chapter commits, the controller settles the chapter's
+holdings problems through an optional adapter method,
+`HarnessGenerationModelAdapter.fixHoldings` (`HarnessHoldingsFixRequest`), and keeps
+the record on `HarnessChapter.fixer`; the controller option `holdingsFixer` and
+`setHoldingsFixer` take a `HarnessHoldingsFixerPolicy`. `planHoldingsFix`,
+`applyHoldingsFixes`, `chapterHoldingFlags`, `holdingTagText`, `readFixTags`,
+`readHoldingsFixReply` and `HOLDINGS_FIXER_CASE_LIMIT` are exported, and a closing-list
+`HoldingFlag` carries the item's `name`. `activeAttemptForStory` and
+`isBlockingAttempt` are exported. Saved stories move to schema 28 with an upgrade that
+keeps them as they are. `SEN_PACKAGE_VERSION` reads 0.22.0 (it had stayed at 0.20.0).
+
 **0.21.0 (2026-10-06):** Retired the separate memory model call and its warning.
 Removed `HarnessGenerationController.recoverChapterMemory`, the `chapterMemory`
 controller option, and `HarnessGenerationModelAdapter.recoverMemory`. Historical

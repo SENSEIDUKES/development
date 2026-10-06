@@ -69,4 +69,29 @@ describe('Stray sound tags', () => {
     expect(settled.text).toBe('Below his feet, the hive stirred.');
     expect(settled.wordTags[0].offset).toBe(0);
   });
+
+  it('never moves a sound onto words another sound already holds, trying the next sentence instead', () => {
+    const settled = settleStraySoundTags(read(
+      'The caravan halted. [[sound: thunder | Thunder rolled]] over the pass.',
+      '[[sound: wind | a cold gust]]',
+    ));
+    expect(settled).toMatchObject({ removed: 1, moved: 1 });
+    const [first] = settled.readings;
+    // The nearest sentence's first words hold the thunder already, so the wind takes the sentence before it.
+    expect(first.sounds.map(tag => tag.sound)).toEqual(['wind', 'thunder']);
+    expect(wrapped(first)).toEqual(['The caravan halted', 'Thunder rolled']);
+  });
+
+  it('looks past paragraphs left empty for the nearest prose', () => {
+    const settled = settleStraySoundTags(read(
+      'The gate groaned open. Dust fell.',
+      '[[sound: wind | a cold gust]]',
+      '[[sound: bell | a far bell]]',
+      'Nobody moved.',
+    ));
+    expect(settled).toMatchObject({ removed: 2, moved: 2 });
+    // Both look back past the emptied paragraphs: the first takes the nearest sentence, the second the one before it.
+    expect(wrapped(settled.readings[0])).toEqual(['The gate groaned open', 'Dust fell']);
+    expect(settled.readings[3].sounds).toEqual([]);
+  });
 });

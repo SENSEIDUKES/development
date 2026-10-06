@@ -44,9 +44,10 @@ owner.
 - A placeholder speaker tag copied from the instructions (`[[@Name]]`) counts
   as no tag, so its lines take their speaker from the narration.
 - Holdings keep things and abilities only: `holdingName` takes a count or a
-  description out of a name and sets aside a name that reads as a note (a
-  sentence, a sighting, a countdown). Tags written into the closing list
-  instead of the prose are recorded at the chapter's end.
+  description out of a name, keeps a number that belongs to it ("1000 Year
+  Ginseng"), and sets aside a name that reads as a note (a sentence, a
+  sighting, a countdown). Tags written into the closing list instead of the
+  prose are recorded at the chapter's end, never twice.
 - Sound Cues, Speakers and Holdings skills 2.1.0; the response contract keeps
   countdowns out of recaps and pet words out of chapters, and the chapter
   request gives a words-per-paragraph guide.

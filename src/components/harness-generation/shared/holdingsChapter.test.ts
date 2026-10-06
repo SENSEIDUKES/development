@@ -199,4 +199,15 @@ describe('HARNESS holdings through change tags', () => {
     expect(accepted.warnings.find(warning => warning.code === 'holding_tags_incomplete')?.message)
       .toBe('1 tag was written in the closing list instead of the prose and was recorded at the chapter\'s end.');
   });
+
+  it('never counts a change twice when the closing list repeats a tag the prose already holds', () => {
+    const accepted = acceptHarnessModelResponse(reply(['[[gained: MC | Spirit Pill | 3]] He pocketed the pills.', 'He slept.'], {
+      mainCharacterHoldings: ['[[gained: MC | Spirit Pill | 3]]', '[[gained: Ye Chen | Spirit Pill ×3]]', '[[gained: MC | Jade Slip]]', '[[gained: MC | Jade Slip]]'],
+    }), 1, { holdingsExpected: true, protagonistNames: { names: ['Ye Chen'], others: [] } });
+    if (!accepted.accepted) throw new Error(accepted.reason);
+    expect(accepted.draft.holdingChanges?.map(change => [change.payload.verb, change.payload.target?.name, change.payload.count, change.anchor.selectedText]))
+      .toEqual([['gained', 'Spirit Pill', 3, 'He pocketed the pills.'], ['gained', 'Jade Slip', undefined, 'He slept.']]);
+    expect(accepted.warnings.find(warning => warning.code === 'holding_tags_incomplete')?.message)
+      .toBe('1 tag was written in the closing list instead of the prose and was recorded at the chapter\'s end.');
+  });
 });

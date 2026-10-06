@@ -8,8 +8,9 @@ import { settleStraySoundTags } from './soundTagRepair';
 import type { SpeakerAttachment } from '../../../narrative/speech';
 import { chapterTitleText } from '../../../narrative/chapterTitle';
 import type { HoldingChangeAttachment } from '../../../narrative/holdings';
-import { placeSpeakers, type ProtagonistNames } from './speakers';
-import { placeHoldingChanges } from './holdings';
+import { isMainCharacterTag, isProtagonist, placeSpeakers, type ProtagonistNames } from './speakers';
+import { holdingName, placeHoldingChanges } from './holdings';
+import { normalizeIdentityLabel } from './canonicalProjection';
 import { ignoredSoundCueListWarning, stripReplyMarks } from './chapterSignals';
 import {
   harnessChapterBody,
@@ -404,6 +405,15 @@ const acceptedSpeakers = (
   return placement.speakers;
 };
 
+/** One holding tag's change in words: its verb, who (the main character however named), and the thing, ability or rank. */
+const holdingTagKey = (tag: WordTag, protagonist?: ProtagonistNames) => {
+  const [holder = '', ...rest] = tag.parts;
+  const who = isMainCharacterTag(holder) || (protagonist ? isProtagonist(holder, protagonist) : false) ? 'main character' : normalizeIdentityLabel(holder);
+  const named = tag.word === 'rank' ? undefined : holdingName(rest[0] ?? '');
+  const what = named && 'name' in named ? named.name : tag.word === 'rank' ? rest.join(' ') : rest[0] ?? '';
+  return `${tag.word}|${who}|${normalizeIdentityLabel(what)}`;
+};
+
 /**
  * Reads the writer's holding tags into holding changes on the sentences they
  * point at, and its closing list of the main character's holdings. Tags it
@@ -418,9 +428,16 @@ const acceptedHoldings = (
   options: HarnessResponseAcceptanceOptions,
 ): { changes: HoldingChangeAttachment[]; closing?: string[] } => {
   const raw = parsed.mainCharacterHoldings;
-  // Tags written into the closing list instead of the prose still record their change, at the chapter's end.
+  // Tags written into the closing list instead of the prose still record their change, at the chapter's end,
+  // once: a tag the prose already holds, or the list repeats, is the same change and is not counted again.
   const listed = Array.isArray(raw) ? raw.map(nonEmptyString).filter((entry): entry is string => Boolean(entry)).map(entry => readMarks(entry)) : undefined;
-  const listedTags = listed?.flatMap(entry => entry.wordTags) ?? [];
+  const recorded = new Set(marked.read.flatMap(paragraph => paragraph.wordTags).map(tag => holdingTagKey(tag, options.protagonistNames)));
+  const listedTags = (listed?.flatMap(entry => entry.wordTags) ?? []).filter(tag => {
+    const key = holdingTagKey(tag, options.protagonistNames);
+    if (recorded.has(key)) return false;
+    recorded.add(key);
+    return true;
+  });
   const paragraphs = marked.read.map((paragraph, index) => ({ blockId: harnessParagraphBlockId(chapterNumber, index), text: paragraph.text, wordTags: [...paragraph.wordTags] }));
   const last = paragraphs.at(-1);
   if (last && listedTags.length) last.wordTags.push(...listedTags.map(tag => ({ ...tag, offset: last.text.length })));

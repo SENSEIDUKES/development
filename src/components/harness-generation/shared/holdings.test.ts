@@ -290,6 +290,14 @@ describe('Holdings keep things and abilities, not notes', () => {
     expect(holdingName("Elder Han's banner sighted, three riders descending early")).toEqual({ note: "Elder Han's banner sighted, three riders descending early" });
     expect(holdingName('Caravan arrives in nine days')).toEqual({ note: 'Caravan arrives in nine days' });
     expect(holdingName('Ninefold Day Sutra')).toEqual({ name: 'Ninefold Day Sutra' });
+    // A number can be part of a name: it stays unless it is marked as a count, is one, or comes before a plural.
+    for (const name of ['1000 Year Ginseng', '100 Beast Banner', '9 Suns Art', '1000 Year Lotus', 'Nine Day Sutra', '3 Spirit Pill']) {
+      expect(holdingName(name), name).toEqual({ name });
+    }
+    expect(holdingName('3x Spirit Pill')).toEqual({ name: 'Spirit Pill', count: 3 });
+    expect(holdingName('100 × Spirit Stone')).toEqual({ name: 'Spirit Stone', count: 100 });
+    expect(holdingName('100 Spirit Stones')).toEqual({ name: 'Spirit Stones', count: 100 });
+    expect(holdingName('1 Spirit Pill')).toEqual({ name: 'Spirit Pill', count: 1 });
     expect(readHoldingTag(tag('[[gained: MC | Spirit Pill ×3]]'))).toEqual({ ok: true, change: { verb: 'gained', holder: { name: 'MC' }, target: { name: 'Spirit Pill' }, count: 3 } });
     expect(readHoldingTag(tag("[[knows: MC | Elder Han's banner sighted, three riders descending early]]"))).toMatchObject({ ok: false });
   });

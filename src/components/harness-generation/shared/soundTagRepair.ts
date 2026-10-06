@@ -69,6 +69,9 @@ const contentWords = (text: string, locale?: string) => new Set(
     .filter(word => word.length > 2 && !STOP_WORDS.has(word)),
 );
 
+/** Whether a range shares any text with a sound already placed in its paragraph. */
+const overlapsSound = (range: WordRange, taken: readonly SoundTag[]) => taken.some(tag => range.start < tag.end && range.end > tag.start);
+
 /** The words of `text` that best say what the orphan's words said: at most the cue's word limit, first to last match. */
 const bestEcho = (text: string, words: Set<string>, taken: readonly SoundTag[], locale?: string) => {
   const ranges = wordRanges(text, locale);
@@ -82,7 +85,7 @@ const bestEcho = (text: string, words: Set<string>, taken: readonly SoundTag[], 
       if (words.has(keys[next])) { seen.add(keys[next]); last = next; }
     }
     const range = { start: ranges[first].start, end: ranges[last].end };
-    if (taken.some(tag => range.start < tag.end && range.end > tag.start)) continue;
+    if (overlapsSound(range, taken)) continue;
     if (!best || seen.size > best.score) best = { score: seen.size, range };
   }
   return best;
@@ -98,8 +101,9 @@ const sentenceWords = (text: string, sentence: { start: number; end: number }, l
  * Settles every stray sound tag in a chapter's paragraphs, read in order.
  * Returns the paragraphs with each stray tag's words removed and its sound
  * moved, how many stray tags had their words removed, and how many of their
- * sounds found a sentence to move to (a chapter with no other prose has none). A paragraph left empty is kept empty here;
- * the caller drops it as it drops any paragraph that held only tags.
+ * sounds found words to move to without overlapping another sound. A
+ * paragraph left empty is kept empty here; the caller drops it as it drops
+ * any paragraph that held only tags.
  */
 export function settleStraySoundTags<T extends Reading>(readings: readonly T[], locale?: string): { readings: T[]; moved: number; removed: number } {
   const settled: T[] = [];
@@ -119,16 +123,28 @@ export function settleStraySoundTags<T extends Reading>(readings: readonly T[], 
       reading = { ...reading, ...removeRange(without, start, end) };
       orphans.push({ sound: current, words, paragraph, offset: start });
     }
-    settled.push(trimLeadingStrayPunctuation(reading));
+    const trimmed = trimLeadingStrayPunctuation(reading);
+    // Punctuation trimmed from the paragraph's start moves this paragraph's orphans back with the text.
+    const shift = reading.text.length - trimmed.text.length;
+    if (shift) for (const orphan of orphans) if (orphan.paragraph === paragraph) orphan.offset = Math.max(0, orphan.offset - shift);
+    settled.push(trimmed);
   });
   if (!orphans.length) return { readings: settled, moved: 0, removed: 0 };
 
   let moved = 0;
 
+  /** The nearest paragraph with prose before or after one, past any left empty. */
+  const nearestWithText = (from: number, step: -1 | 1) => {
+    for (let index = from + step; index >= 0 && index < settled.length; index += step) if (settled[index].text) return index;
+    return undefined;
+  };
+
   for (const orphan of orphans) {
     const echoes = contentWords(orphan.words, locale);
-    const near = [orphan.paragraph, orphan.paragraph - 1, orphan.paragraph + 1]
-      .filter(index => index >= 0 && index < settled.length && settled[index].text);
+    const previous = nearestWithText(orphan.paragraph, -1);
+    const following = nearestWithText(orphan.paragraph, 1);
+    const own = settled[orphan.paragraph].text ? orphan.paragraph : undefined;
+    const near = [own, previous, following].filter((index): index is number => index !== undefined);
     // First choice: words nearby that say what the stray words said, in this paragraph, then the one before, then after.
     let target: { paragraph: number; range: WordRange } | undefined;
     let score = 0;
@@ -136,20 +152,21 @@ export function settleStraySoundTags<T extends Reading>(readings: readonly T[], 
       const echo = bestEcho(settled[index].text, echoes, settled[index].sounds, locale);
       if (echo && echo.score > score) { score = echo.score; target = { paragraph: index, range: echo.range }; }
     }
-    // Otherwise the sentence nearest before it: in its own paragraph, else the paragraph before, else after.
+    // Otherwise the nearest sentence whose first words hold no sound yet: before it in its own
+    // paragraph, then in the paragraph before, then after it, then in the paragraph after.
     if (!target) {
-      const own = settled[orphan.paragraph].text;
-      const ownSentences = own ? splitSentences(own, locale) : [];
-      const before = ownSentences.filter(sentence => sentence.end <= orphan.offset).at(-1);
-      const previous = near.find(index => index < orphan.paragraph);
-      const following = near.find(index => index > orphan.paragraph);
-      const pick = before ? { paragraph: orphan.paragraph, sentence: before }
-        : previous !== undefined ? { paragraph: previous, sentence: splitSentences(settled[previous].text, locale).at(-1) }
-          : ownSentences[0] ? { paragraph: orphan.paragraph, sentence: ownSentences[0] }
-            : following !== undefined ? { paragraph: following, sentence: splitSentences(settled[following].text, locale)[0] }
-              : undefined;
-      const range = pick?.sentence && sentenceWords(settled[pick.paragraph].text, pick.sentence, locale);
-      if (pick && range) target = { paragraph: pick.paragraph, range };
+      const sentencesOf = (index: number | undefined) => (index === undefined ? [] : splitSentences(settled[index].text, locale).map(sentence => ({ paragraph: index, sentence })));
+      const ownSentences = sentencesOf(own);
+      const candidates = [
+        ...ownSentences.filter(({ sentence }) => sentence.end <= orphan.offset).reverse(),
+        ...sentencesOf(previous).reverse(),
+        ...ownSentences.filter(({ sentence }) => sentence.end > orphan.offset),
+        ...sentencesOf(following),
+      ];
+      for (const candidate of candidates) {
+        const range = sentenceWords(settled[candidate.paragraph].text, candidate.sentence, locale);
+        if (range && !overlapsSound(range, settled[candidate.paragraph].sounds)) { target = { paragraph: candidate.paragraph, range }; break; }
+      }
     }
     if (!target) continue;
     moved += 1;

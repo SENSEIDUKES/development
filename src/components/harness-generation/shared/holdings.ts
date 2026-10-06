@@ -41,29 +41,49 @@ const toNumber = (digits: string) => Number(digits.replace(/[０-９]/g, digit =
 /** A description or count a writer put inside a name: "(nine hundred drones)", " — still cracked". */
 const NAME_DESCRIPTION = /\s*(?:[(（][^()（）]*[)）]|\s[—–]\s.*)\s*$/u;
 const NAME_COUNT_AFTER = /\s*[x×]\s*([0-9０-９]{1,6})\s*$/i;
-const NAME_COUNT_BEFORE = /^([0-9０-９]{1,6})\s*[x×]?\s+/i;
+/** "3x Spirit Pill", "3 × Spirit Pill": a count before a name, marked as one. */
+const NAME_COUNT_BEFORE_MARKED = /^([0-9０-９]{1,6})\s*[x×]\s+/i;
+/**
+ * "3 Spirit Pills": a bare number before a name. Names begin with numbers too
+ * ("1000 Year Ginseng", "9 Suns Art"), so it is a count only when it is one,
+ * or when the name after it is plural.
+ */
+const NAME_COUNT_BEFORE = /^([0-9０-９]{1,6})\s+/;
+/** A last word that reads as an English plural ("Pills", "Stones"), not "Moss", "Lotus", "Iris" or "Sun's". */
+const PLURAL_NAME = /(?<![sSuUiI'’])s$/u;
 /** Punctuation that makes a name read as a note about the story ("banner sighted, three riders"). */
 const NOTE_PUNCTUATION = /[,;!?，；！？]|\.\s/u;
-/** A span of time in a name ("Caravan in nine days"): a countdown that goes stale, never a holding. */
-const NOTE_TIME_SPAN = /\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|a few|several)\s+(?:days?|nights?|hours?|weeks?|months?|years?)\b/i;
+/**
+ * A span of time in a name ("Caravan in nine days"): a countdown that goes
+ * stale, never a holding. Only plural spans count, since names hold singular
+ * ones ("1000 Year Ginseng", "Nine Day Sutra").
+ */
+const NOTE_TIME_SPAN = /\b(?:\d+|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|a few|several)\s+(?:days|nights|hours|weeks|months|years)\b/i;
 /** More words than any thing or technique name. */
 const NAME_WORD_LIMIT = 8;
 
 /**
  * A thing's or ability's one stable name, as a writer wrote it: a description
  * in brackets or after a dash is dropped, and a count written into the name
- * ("Spirit Pill ×3", "3 Spirit Pills") is taken out of it. A name that reads
- * as a note (a sentence, a list, a sighting, a countdown) is no name.
+ * ("Spirit Pill ×3", "3x Spirit Pill", "3 Spirit Pills") is taken out of it,
+ * while a number that is part of the name stays ("1000 Year Ginseng"). A name
+ * that reads as a note (a sentence, a list, a sighting, a countdown) is no name.
  */
 export function holdingName(written: string): { name: string; count?: number } | { note: string } {
   let name = written.trim();
   while (NAME_DESCRIPTION.test(name) && name.replace(NAME_DESCRIPTION, '').trim()) name = name.replace(NAME_DESCRIPTION, '').trim();
   let count: number | undefined;
   const after = name.match(NAME_COUNT_AFTER);
-  const before = after ? null : name.match(NAME_COUNT_BEFORE);
-  if (after || before) {
-    const rest = name.replace(after ? NAME_COUNT_AFTER : NAME_COUNT_BEFORE, '').trim();
-    if (rest) { name = rest; count = toNumber((after ?? before)![1]) || undefined; }
+  const marked = after ? null : name.match(NAME_COUNT_BEFORE_MARKED);
+  const bare = after || marked ? null : name.match(NAME_COUNT_BEFORE);
+  const pattern = after ? NAME_COUNT_AFTER : marked ? NAME_COUNT_BEFORE_MARKED : NAME_COUNT_BEFORE;
+  const found = after ?? marked ?? bare;
+  if (found) {
+    const rest = name.replace(pattern, '').trim();
+    const number = toNumber(found[1]);
+    // A bare number stays in the name unless it is a count: one, or before a plural.
+    const counts = !bare || number === 1 || PLURAL_NAME.test(rest.split(/\s+/).at(-1) ?? '');
+    if (rest && counts) { name = rest; count = number || undefined; }
   }
   // A slip of punctuation at its end is no note ("rusted iron sword!").
   const inner = name.replace(/[.!?。！？]+$/u, '');

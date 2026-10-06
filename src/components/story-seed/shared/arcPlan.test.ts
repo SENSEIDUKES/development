@@ -66,6 +66,20 @@ describe('Story Seed arc plans', () => {
     expect(shorter.blueprint.arcLookahead).toEqual(lookahead);
   });
 
+  it('drops a look-ahead written for another length when the Seed\'s Story Length changes', () => {
+    const seed = createEmptyStorySeedInput();
+    seed.story.required = { premise: 'An exile returns.', genre: 'Fantasy', style: 'chinese', storyTags: ['exile'] };
+    seed.story.optional.arcCount = 12;
+    const reviewed = reconcileStorySeedBlueprint(seed, { arcPlans: [arcOne], estimatedArcs: 12, arcLookahead: lookahead });
+    expect(reviewed.blueprint.arcLookahead).toEqual(lookahead);
+    const longer = { ...reviewed.seed, story: { ...reviewed.seed.story, optional: { ...reviewed.seed.story.optional, arcCount: 20 } } };
+    // Mirroring the Seed edit, and reopening the saved pair, both drop it.
+    expect(mirrorSeedIntoBlueprint(reviewed.blueprint, longer).arcLookahead).toBeUndefined();
+    expect(reconcileStorySeedBlueprint(longer, reviewed.blueprint).blueprint.arcLookahead).toBeUndefined();
+    // The same length keeps it.
+    expect(mirrorSeedIntoBlueprint(reviewed.blueprint, reviewed.seed).arcLookahead).toEqual(lookahead);
+  });
+
   it('drops the removed long-term goal field during normalization', () => {
     const empty = createEmptyStorySeedInput();
     const seed = normalizeStorySeedInput({ ...empty, story: {

@@ -49,7 +49,7 @@ describe('HARNESS chapter response schema shape', () => {
     expect(buildHarnessChapterResponseSchema(73).properties.paragraphs).toMatchObject({ type: 'array', items: { type: 'string' }, minItems: 73, maxItems: 73 });
     expect(buildHarnessChapterResponseSchema().properties.paragraphs).not.toHaveProperty('minItems');
     expect(presentImmediateChapterRequest({ chapterNumber: 3, continuation: true, chapterScale: { minWords: 1_800, maxWords: 2_500, paragraphs: 73 } }))
-      .toContain('CHAPTER SCALE: exactly 73 paragraph entries, 1,800 to 2,500 words in all.');
+      .toContain('CHAPTER SCALE: exactly 73 paragraph entries, 1,800 to 2,500 words in all: about 25 to 34 words a paragraph.');
   });
 
   it('asks for the closing list of the main character\'s holdings only when the Holdings skill is loaded, as a plain list of names', () => {

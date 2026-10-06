@@ -99,10 +99,12 @@ export { SEN_SOUND_CUES_INSTRUCTIONS, SEN_SOUND_CUES_SKILL, presentSoundVocabula
 export { SEN_SPEAKERS_INSTRUCTIONS, SEN_SPEAKERS_SKILL } from '../../components/harness-generation/shared/speakersSkill';
 export { SEN_HOLDINGS_INSTRUCTIONS, SEN_HOLDINGS_SKILL } from '../../components/harness-generation/shared/holdingsSkill';
 export { HARNESS_TAG_RULES } from '../../components/harness-generation/shared/tagRules';
+export { isStraySoundTag, settleStraySoundTags, trimLeadingStrayPunctuation } from '../../components/harness-generation/shared/soundTagRepair';
 export {
   HOLDINGS_SECTION_OTHER_CHARACTERS,
   declaredCharacters,
   deriveHoldings,
+  holdingName,
   holdingTargetKind,
   holdingsSection,
   namesNearlyMatch,

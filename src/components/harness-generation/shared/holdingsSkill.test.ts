@@ -18,7 +18,7 @@ import { defaultHarnessRuntime } from './ids';
 
 describe('SEN Holdings skill', () => {
   it('teaches every holdings tag word, each form reading as the change it names', () => {
-    expect(SEN_HOLDINGS_SKILL).toMatchObject({ id: 'seihouse.sen-holdings', version: '2.0.0', slot: 'holdings', applications: ['generation'] });
+    expect(SEN_HOLDINGS_SKILL).toMatchObject({ id: 'seihouse.sen-holdings', version: '2.1.0', slot: 'holdings', applications: ['generation'] });
     const examples = readMarks(SEN_HOLDINGS_INSTRUCTIONS).wordTags;
     // Every tag word of the language is taught, and nothing else is written as a tag.
     expect([...new Set(examples.map(tag => tag.word))].sort()).toEqual(Object.keys(TAG_WORDS).sort());
@@ -36,7 +36,10 @@ describe('SEN Holdings skill', () => {
     expect(SEN_HOLDINGS_INSTRUCTIONS).toMatch(/Characters use only what they have\. A new thing or ability comes only when the story earns it\./);
     expect(SEN_HOLDINGS_INSTRUCTIONS).toMatch(/A found manual treated as a learned technique, or a learned technique as mastered\./);
     expect(SEN_HOLDINGS_INSTRUCTIONS).toMatch(/Tags for plans, promises, dreams, memories or lies\./);
-    expect(lines.at(-1)).toBe('CHECK BEFORE YOU RETURN: Every change has its tag, and mainCharacterHoldings lists by exact name everything the main character has, knows or is learning.');
+    expect(lines.at(-1)).toBe('CHECK BEFORE YOU RETURN: Every change has its tag in the prose, and mainCharacterHoldings lists by exact name, with no tags, every thing the main character owns and every ability they know or are learning.');
+    // Things and abilities only, each with one clean name: never the story's events or a count inside a name.
+    expect(SEN_HOLDINGS_INSTRUCTIONS).toContain('Each keeps one short exact name, with no count or description inside it; a count goes in its own place.');
+    expect(SEN_HOLDINGS_INSTRUCTIONS).toMatch(/Events, news, deadlines, places, people or alliances as things or abilities\./);
   });
 
   it('never speaks of the retired dialogue contract, Sound Cues, numbered marks or the packet\'s headings', () => {
@@ -53,7 +56,7 @@ describe('SEN Holdings skill', () => {
     story.skillLoadout = { author: { id: SEN_NOVEL_AUTHOR_SKILL.id, version: SEN_NOVEL_AUTHOR_SKILL.version } };
     const bundled = freezeHarnessSkillLoadout(story, createHarnessSkillCatalog(includeBundledHarnessSkills([])), 'now');
     expect(bundled.skills.map(skill => skill.slot)).toEqual(['author', 'speakers', 'holdings']);
-    expect(assembleCapaPrompt(bundled).text).toContain('CAPA SKILL [Holdings] — SEN Holdings v2.0.0');
+    expect(assembleCapaPrompt(bundled).text).toContain('CAPA SKILL [Holdings] — SEN Holdings v2.1.0');
     // A host whose catalog lacks the skill writes the chapter without holding tags.
     const minimal = freezeHarnessSkillLoadout(story, createHarnessSkillCatalog([SEN_NOVEL_AUTHOR_SKILL]), 'now');
     expect(minimal.skills.map(skill => skill.slot)).toEqual(['author']);

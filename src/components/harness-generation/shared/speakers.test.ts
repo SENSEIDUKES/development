@@ -117,3 +117,19 @@ describe('placeSpeakers', () => {
     expect(placed(...chapter)).toEqual(placed(...chapter));
   });
 });
+
+describe('a placeholder copied from a tag form', () => {
+  it('counts as no tag, so its lines take their speaker from the narration', () => {
+    const result = placed('[[@Name]] “Twenty years,” Bo said. “Twenty years in this mine.”', '[[@Elder Mo]] “Enough.”');
+    expect(result.placeholders).toBe(1);
+    expect(result.untagged).toBe(2);
+    expect(result.lines).toEqual([['c1-p2', '“Enough.”', 'Elder Mo', false]]);
+  });
+
+  it('is a real speaker when the story has someone by that name', () => {
+    const named = protagonistNames({ cast: [{ name: 'Wei Lin', isMainCharacter: true }, { name: 'Speaker' }] });
+    const result = placeSpeakers({ paragraphs: paragraphs('[[@Speaker]] “Order.”'), protagonist: named });
+    expect(result.placeholders).toBe(0);
+    expect(result.speakers.map(record => record.payload.speaker)).toEqual(['Speaker']);
+  });
+});

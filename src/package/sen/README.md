@@ -33,6 +33,27 @@ There is no `chapter-generation` or `codex-cards` compatibility entry. Legacy
 Chapter Generation was retired; HARNESS is the one canonical generated-story
 owner.
 
+**0.20.0:** the fixes from the owner's Sovereign Hive test (Phase 1).
+
+- A sound tag written beside its sentence instead of around its words
+  (`isStraySoundTag`) no longer leaves broken lines: its words are removed and
+  its sound moves onto the nearby words that echo them, or the nearest
+  sentence (`settleStraySoundTags`, warning `sound_tag_moved`). A paragraph
+  never starts with the full stop a tag left behind
+  (`trimLeadingStrayPunctuation`).
+- A placeholder speaker tag copied from the instructions (`[[@Name]]`) counts
+  as no tag, so its lines take their speaker from the narration.
+- Holdings keep things and abilities only: `holdingName` takes a count or a
+  description out of a name, keeps a number that belongs to it ("1000 Year
+  Ginseng"), and sets aside a name that reads as a note (a sentence, a
+  sighting, a countdown). Tags written into the closing list instead of the
+  prose are recorded at the chapter's end, never twice.
+- Sound Cues, Speakers and Holdings skills 2.1.0; the response contract keeps
+  countdowns out of recaps and pet words out of chapters, and the chapter
+  request gives a words-per-paragraph guide.
+- A Story Seed Blueprint drops its hidden look-ahead when the story's length
+  changes, and the review saves a length as it is typed.
+
 **0.19.0 (breaking):** the Reader's sound is the SEIHouse audio player's
 reader mixer. `@seihouse/audio-player` ^4.0.0 is a new peer.
 

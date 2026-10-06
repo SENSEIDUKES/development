@@ -4,6 +4,7 @@ import type { CodexEntry } from '../../../narrative/holdings';
 import { harnessParagraphBlockId } from './chapterBody';
 import {
   deriveHoldings,
+  holdingName,
   holdingsSection,
   namesNearlyMatch,
   placeHoldingChanges,
@@ -275,5 +276,29 @@ describe('the Holdings section', () => {
         { name: 'Elder Qin', carries: ['Jade Gourd'] },
       ],
     });
+  });
+});
+
+describe('Holdings keep things and abilities, not notes', () => {
+  const tag = (source: string) => readMarks(source).wordTags[0];
+  it('takes a count or a description out of a name, and sets aside a note about the story', () => {
+    expect(holdingName('Neural Swarm-Sync (nine hundred drones linked)')).toEqual({ name: 'Neural Swarm-Sync' });
+    expect(holdingName('Spirit Pill ×3')).toEqual({ name: 'Spirit Pill', count: 3 });
+    expect(holdingName('3 Spirit Pills')).toEqual({ name: 'Spirit Pills', count: 3 });
+    expect(holdingName('Broodmother Core — still cracked')).toEqual({ name: 'Broodmother Core' });
+    expect(holdingName('Nine Heavens Thunder Tribulation Body Refining Art')).toEqual({ name: 'Nine Heavens Thunder Tribulation Body Refining Art' });
+    expect(holdingName("Elder Han's banner sighted, three riders descending early")).toEqual({ note: "Elder Han's banner sighted, three riders descending early" });
+    expect(holdingName('Caravan arrives in nine days')).toEqual({ note: 'Caravan arrives in nine days' });
+    expect(holdingName('Ninefold Day Sutra')).toEqual({ name: 'Ninefold Day Sutra' });
+    // A number can be part of a name: it stays unless it is marked as a count, is one, or comes before a plural.
+    for (const name of ['1000 Year Ginseng', '100 Beast Banner', '9 Suns Art', '1000 Year Lotus', 'Nine Day Sutra', '3 Spirit Pill']) {
+      expect(holdingName(name), name).toEqual({ name });
+    }
+    expect(holdingName('3x Spirit Pill')).toEqual({ name: 'Spirit Pill', count: 3 });
+    expect(holdingName('100 × Spirit Stone')).toEqual({ name: 'Spirit Stone', count: 100 });
+    expect(holdingName('100 Spirit Stones')).toEqual({ name: 'Spirit Stones', count: 100 });
+    expect(holdingName('1 Spirit Pill')).toEqual({ name: 'Spirit Pill', count: 1 });
+    expect(readHoldingTag(tag('[[gained: MC | Spirit Pill ×3]]'))).toEqual({ ok: true, change: { verb: 'gained', holder: { name: 'MC' }, target: { name: 'Spirit Pill' }, count: 3 } });
+    expect(readHoldingTag(tag("[[knows: MC | Elder Han's banner sighted, three riders descending early]]"))).toMatchObject({ ok: false });
   });
 });

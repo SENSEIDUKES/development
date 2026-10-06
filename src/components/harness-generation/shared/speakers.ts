@@ -74,12 +74,27 @@ export function isProtagonist(speaker: string, protagonist: ProtagonistNames): b
   return keys.some(holds) && !protagonist.others.some(other => holds(normalizeIdentityLabel(other)));
 }
 
+/** Words from the instructions' tag forms, never a speaker: a writer that copies one has named nobody. */
+const PLACEHOLDER_SPEAKERS = new Set(['name', 'speaker', 'character', 'someone', 'their name', 'character name', 'speaker name']);
+
+/**
+ * Whether a tag names nobody: a placeholder copied from a tag form
+ * (`[[@Name]]`), unless the story really has someone by that name.
+ */
+export const isPlaceholderSpeaker = (speaker: string, protagonist: ProtagonistNames) => {
+  const label = normalizeIdentityLabel(speaker);
+  return PLACEHOLDER_SPEAKERS.has(label)
+    && ![...protagonist.names, ...protagonist.others].some(name => normalizeIdentityLabel(name) === label);
+};
+
 export interface SpeakerPlacement {
   speakers: SpeakerAttachment[];
   /** Spoken lines no tag named. */
   untagged: number;
   /** Tags that named no spoken line. */
   unused: number;
+  /** Placeholder tags (`[[@Name]]`) read as no tag: their lines take the speaker from the narration. */
+  placeholders: number;
 }
 
 /** Who a tag says is speaking: the main character's own tag is saved under the name the story gives them. */
@@ -92,7 +107,8 @@ const speakerOf = (tag: string, protagonist: ProtagonistNames) => ({
  * Places one speaker record on every spoken line a tag names. Each line takes
  * the nearest tag before it in its paragraph, or the paragraph's first tag
  * when none comes before it; a paragraph that opens by continuing a speech
- * the paragraph before never closed keeps that speaker.
+ * the paragraph before never closed keeps that speaker. A placeholder copied
+ * from a tag form (`[[@Name]]`) counts as no tag.
  */
 export function placeSpeakers({ paragraphs, protagonist }: {
   paragraphs: ReadonlyArray<{ blockId: string; text: string; speakers: readonly SpeakerTag[] }>;
@@ -101,10 +117,13 @@ export function placeSpeakers({ paragraphs, protagonist }: {
   const placed: SpeakerAttachment[] = [];
   let untagged = 0;
   let unused = 0;
+  let placeholders = 0;
   /** The speaker of a speech that ran on past the end of the paragraph before. */
   let continuing: ReturnType<typeof speakerOf> | undefined;
   for (const { blockId, text, speakers } of paragraphs) {
-    const tags = [...speakers].sort((left, right) => left.offset - right.offset);
+    const named = speakers.filter(tag => !isPlaceholderSpeaker(tag.name, protagonist));
+    placeholders += speakers.length - named.length;
+    const tags = [...named].sort((left, right) => left.offset - right.offset);
     const lines = findSpokenLines(text);
     const used = new Set<number>();
     const opening = text.length - text.trimStart().length;
@@ -127,5 +146,5 @@ export function placeSpeakers({ paragraphs, protagonist }: {
     continuing = lines.length ? carried : undefined;
     unused += tags.length - used.size;
   }
-  return { speakers: placed, untagged, unused };
+  return { speakers: placed, untagged, unused, placeholders };
 }

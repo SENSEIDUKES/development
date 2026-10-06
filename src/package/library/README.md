@@ -1,5 +1,10 @@
 # `@seihouse/library`
 
+**0.19.1 (2026-10-06):** The generation veil's traveler advances during whole-response
+generation and arrives before the veil closes on success. Unknown work shows no
+invented percentage. Failure/cancellation never signals arrival. Chapter requests,
+saving, Reader behavior and SEN's public contracts are unchanged.
+
 Celestial Library's client-safe product behavior, assembled on the portable
 SEN engine and the two UI packages. Library owns SEIHouse users, products,
 economy, community and business policy. Authentication enforcement, secrets,

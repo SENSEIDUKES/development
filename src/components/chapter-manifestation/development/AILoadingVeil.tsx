@@ -28,8 +28,8 @@ interface DevelopmentAILoadingVeilProps extends AILoadingVeilProps {
   onMediaUnseal?: () => void;
   /**
    * The caller's known progress, 0–100, or null when it is unknown (a HARNESS
-   * chapter arrives whole, so its writer passes null): the scrubber drifts and
-   * no percentage shows. Omitted, the narrative screen estimates progress
+   * chapter arrives whole, so its writer passes null): the journey advances
+   * with elapsed time, without a percentage. Omitted, the narrative screen estimates progress
    * from streamed passages, as the Workshop simulation does.
    */
   progress?: number | null;
@@ -68,6 +68,7 @@ interface DevelopmentAILoadingVeilProps extends AILoadingVeilProps {
 export default function AILoadingVeil({
   agent,
   isGenerating,
+  completed,
   generationPhase,
   generationProgressMessage,
   estimatedSecondsRemaining,
@@ -97,7 +98,7 @@ export default function AILoadingVeil({
   const passagesWoven = streamingBlocksCount;
   const progressWidth = progress !== undefined
     ? (progress === null ? null : Math.min(Math.max(progress, 0), 100))
-    : isNarrativeScreen
+    : isNarrativeScreen && passagesWoven > 0
       ? Math.min(6 + passagesWoven * 4.5, 96)
       : null;
 
@@ -147,6 +148,7 @@ export default function AILoadingVeil({
   return (
     <LoadingSystem
       active={isGenerating}
+      completed={completed}
       task={task}
       mode="auto"
       minimized={isVeilMinimized}

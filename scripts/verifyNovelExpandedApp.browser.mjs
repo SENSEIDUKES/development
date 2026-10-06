@@ -239,7 +239,38 @@ async function walk(browser, viewport, sample) {
   await page.locator('[data-world-info-chapters="action"]').click();
   await page.locator('img[alt="VERSA"]').first().waitFor();
   check(address() === `${storyAddress}&read=1`, `Start Story should open the Reader, got ${address()}`);
+  const veil = page.getByTestId('generation-veil');
+  const startProgress = Number(await veil.getAttribute('data-journey-progress'));
+  const travelerX = () => veil.locator('svg[aria-label^="Generation"] > g').last().evaluate(element =>
+    new DOMMatrix(getComputedStyle(element).transform).m41);
+  const startX = await travelerX();
+  await page.waitForFunction(start => {
+    const veil = document.querySelector('[data-testid="generation-veil"]');
+    const progress = Number(veil?.getAttribute('data-journey-progress'));
+    return progress > start && progress < 1;
+  }, startProgress);
+  check(!(await veil.textContent()).match(/\d+%/), 'A whole-response writer must not show an invented percentage.');
   await shot('5-veil');
+  await page.waitForFunction(() => document.querySelector('[data-testid="generation-veil"]')?.getAttribute('data-journey-progress') === '1');
+  check(await veil.isVisible(), 'The veil should remain while the traveler arrives.');
+  // Observe the actual SVG arrival, rather than sleeping through it on a busy runner.
+  // The shared UI stops the traveler just before the gate (95% of the path).
+  await page.waitForFunction(() => {
+    const veil = document.querySelector('[data-testid="generation-veil"]');
+    const svg = veil?.querySelector('svg[aria-label="Generation complete"]');
+    const traveler = svg?.lastElementChild;
+    const gate = traveler?.previousElementSibling;
+    if (!traveler || !gate) return false;
+    const x = new DOMMatrix(getComputedStyle(traveler).transform).m41;
+    const gateX = new DOMMatrix(getComputedStyle(gate).transform).m41;
+    if (x < gateX - 20) return false;
+    window.__veilArrival = { x, opacity: Number(getComputedStyle(veil).opacity) };
+    return true;
+  });
+  const arrival = await page.evaluate(() => window.__veilArrival);
+  check(arrival.x > startX + 250, `The traveler should reach the destination before closing (${startX} → ${arrival.x}).`);
+  check(arrival.opacity >= 0.95, `The veil should not fade until the traveler has arrived, got opacity ${arrival.opacity}.`);
+  await shot('5b-veil-arrived');
   await page.locator('[data-chapter-number="1"]').waitFor({ timeout: 20_000 });
   await page.locator('[data-chapter-number="1"] [data-action-type="world-cue"][data-sound]').first().waitFor();
   await page.locator('img[alt="VERSA"]').first().waitFor({ state: 'hidden', timeout: 10_000 });

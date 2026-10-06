@@ -33,6 +33,8 @@ const CelestialSigil: React.FC = () => {
 
 export interface LoadingVeilCardProps {
   task: LoadingTaskCard;
+  /** Time-based travel supplied by LoadingSystem; separate from any measured task percentage. */
+  journeyProgress?: number;
   /**
    * Optional cinematic backdrop (e.g. the celestial particle field) rendered
    * behind the veil content. When present, the veil's dark wash lightens so
@@ -95,13 +97,14 @@ export interface LoadingVeilCardProps {
  * bright core, twin counter-rotating cloak wisps, grounded pool, six motes.
  * First real caller: the Library's HARNESS Reader, while it writes a chapter.
  */
-export default function LoadingVeilCard({ task, backdrop, emblemClassName, travelerId, trailStyle, destinationId, onMediaUnseal }: LoadingVeilCardProps) {
+export default function LoadingVeilCard({ task, journeyProgress, backdrop, emblemClassName, travelerId, trailStyle, destinationId, onMediaUnseal }: LoadingVeilCardProps) {
   const isVersa = task.agentId === 'versa';
 
-  // Normalize the task card's 0–100 progress onto the scrubber's 0–1 range;
-  // null (indeterminate) passes through unchanged.
+  // LoadingSystem supplies the elapsed-time journey separately, so unknown work
+  // never gains a made-up percentage. Direct card consumers can still supply measured progress.
   const normalizedProgress =
-    task.progress === null ? null : Math.min(1, Math.max(0, task.progress / 100));
+    journeyProgress ?? (task.progress === null ? null : Math.min(1, Math.max(0, task.progress / 100)));
+  const timeBasedJourney = task.progress === null && journeyProgress !== undefined;
 
   return (
     <motion.div
@@ -111,6 +114,8 @@ export default function LoadingVeilCard({ task, backdrop, emblemClassName, trave
       exit={{ opacity: 0, scale: 0.985, transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1] } }}
       transition={{ duration: 0.25 }}
       className={`fixed inset-0 h-[100dvh] ${backdrop ? 'bg-void/70' : 'bg-void/95'} backdrop-blur-md z-[9999] isolate flex flex-col overflow-hidden text-center select-none`}
+      data-testid="generation-veil"
+      data-journey-progress={normalizedProgress ?? undefined}
     >
       {/* Cinematic backdrop — pinned to z-0 so shared particles always stay
           behind every content zone, including the chamber's scene layer. */}
@@ -256,10 +261,12 @@ export default function LoadingVeilCard({ task, backdrop, emblemClassName, trave
           identity and progress now live with the quote at the bottom (Zone 4),
           so the traveler walks the curved qi path toward the gate on its own.
           Progress arrives as the task card's 0–100 value, normalized here
-          to the scrubber's 0–1 contract; null keeps the indeterminate drift. */}
+          to the scrubber's 0–1 contract; LoadingSystem advances unknown work with time. */}
       <div className="relative z-10 flex-none px-6 pt-3">
         <LibraryScrubber
           progress={normalizedProgress}
+          role={timeBasedJourney ? 'img' : 'progressbar'}
+          aria-label={timeBasedJourney ? (normalizedProgress === 1 ? 'Generation complete' : 'Generation in progress') : undefined}
           travelerId={travelerId}
           trailStyle={trailStyle}
           destinationId={destinationId}

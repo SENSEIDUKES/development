@@ -4,6 +4,7 @@ import { allFamiliarOptions, defaultFamiliar, familiarCatalogue, familiarCatalog
 const expectedRarities = {
   'celestial-guardian': 'epic',
   'celestial-moon-moth': 'epic',
+  'frostforged-golem': 'rare',
   'little-monkey-king': 'rare',
   phoenix: 'epic',
   'nine-tailed-fox': 'rare',
@@ -18,6 +19,7 @@ const expectedRarities = {
 const expectedNeutralColumns = {
   'celestial-guardian': 6,
   'celestial-moon-moth': 0,
+  'frostforged-golem': 6,
   'little-monkey-king': 0,
   phoenix: 0,
   'nine-tailed-fox': 6,
@@ -31,7 +33,7 @@ const expectedNeutralColumns = {
 
 describe('Library Familiar catalogue', () => {
   it('has one complete renderer definition and the assigned rank for every supplied Familiar', () => {
-    expect(familiarCatalogue).toHaveLength(11);
+    expect(familiarCatalogue).toHaveLength(12);
     expect(Object.fromEntries(familiarCatalogue.map(entry => [entry.definition.id, entry.definition.rarity]))).toEqual(expectedRarities);
     expect(Object.fromEntries(familiarCatalogue.map(entry => [entry.definition.id, entry.definition.animations.neutral.columns[0]]))).toEqual(expectedNeutralColumns);
     for (const entry of familiarCatalogue) {
@@ -39,8 +41,11 @@ describe('Library Familiar catalogue', () => {
       expect(familiarCatalogueEntry(familiar.id)).toBe(entry);
       expect([familiar.columns, familiar.rows, familiar.cellWidth, familiar.cellHeight]).toEqual([8, 11, 192, 208]);
       expect(Object.keys(familiar.animations)).toHaveLength(26);
-      if (familiar.id === 'quill') expect(entry.heroUrl).toBe('/familiars/quill/previews/waving.gif');
-      else expect(entry.heroUrl).toMatch(/^https:\/\/media\.seihouse\.org\/SEN\/GIF\/.+\.gif$/);
+      if (familiar.id === 'quill' || familiar.id === 'frostforged-golem') {
+        expect(entry.heroUrl).toBe(`/familiars/${familiar.id}/previews/waving.gif`);
+      } else {
+        expect(entry.heroUrl).toMatch(/^https:\/\/media\.seihouse\.org\/SEN\/GIF\/.+\.gif$/);
+      }
       for (const clip of Object.values(familiar.animations)) {
         expect(clip.row).toBeLessThan(familiar.rows);
         expect(clip.columns.every(column => column >= 0 && column < familiar.columns)).toBe(true);
@@ -78,5 +83,6 @@ describe('Library Familiar catalogue', () => {
     expect(familiarCatalogueEntry('phoenix')?.heroUrl).toBe('https://media.seihouse.org/SEN/GIF/pheonix.gif');
     expect(familiarCatalogueEntry('celestial-guardian')?.heroUrl).toBe('https://media.seihouse.org/SEN/GIF/celestial%20Guardian.gif');
     expect(familiarCatalogueEntry('quill')?.heroUrl).toBe('/familiars/quill/previews/waving.gif');
+    expect(familiarCatalogueEntry('frostforged-golem')?.heroUrl).toBe('/familiars/frostforged-golem/previews/waving.gif');
   });
 });

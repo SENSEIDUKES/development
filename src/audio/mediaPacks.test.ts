@@ -131,6 +131,14 @@ describe('Media Pack contracts', () => {
     expect(expired.soundscapes).toBeUndefined();
   });
 
+  it('freezes the host\'s atmospheres with every attempt, whatever pack is equipped', () => {
+    const atmospheres = [{ id: 'host.forest-1', word: 'forest', label: 'Forest 1', group: 'Places' }];
+    const port = createLibraryMediaPort({ registered: [], entitlements: [], base: { capturedAt: 'base', soundscapes: [], soundCues: [], atmospheres } });
+    expect(port.freeze(undefined, '2026-10-06T00:00:00.000Z').atmospheres).toEqual(atmospheres);
+    // Media frozen without atmospheres stays without them.
+    expect(createLibraryMediaPort({ registered: [], entitlements: [] }).freeze(undefined, 'now')).not.toHaveProperty('atmospheres');
+  });
+
   it('lets an equipped Sound Cue Pack replace the default sound set, keeping recordings that answer no word', () => {
     const base: FrozenNarrativeMedia = {
       capturedAt: 'base',

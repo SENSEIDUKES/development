@@ -1,6 +1,7 @@
 import { arcGoalResolved, arcGoalSegments, arcPlanFromDraft, createArcChapterPosition, editArcPlan, normalizeArcLookahead, type ArcPlan } from '../../arc-goals/shared/arcGoals';
 import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '../../../lib/language';
 import { emptyNarrativeMedia, soundVocabulary, type FrozenNarrativeMedia, type NarrativeMediaPort, type MediaResourceReference, type MediaSelectionSlot } from '../../../audio/media';
+import { soundtrackVocabulary, type SoundtrackVocabulary } from '../../../audio/soundtrackVocabulary';
 import type { SoundWord } from '../../../audio/soundWords';
 import { arcGoalEditState, arcPlanGap, arcPlanningContext, arcReviewGap, commitHarnessArc, harnessArcContext, harnessArcPlan, harnessStoryMode, missingRequiredEnding, needsArcPlan, readArcReply, routeCompleteGap, storyConclusionGap, withArcGoalReview, arcGoalReview } from './arcState';
 import {
@@ -472,6 +473,18 @@ export class HarnessGenerationController {
     const story = findStory(this.state, storyId);
     if (!story) throw new Error('Open a Harness story before inspecting its sound words.');
     return soundVocabulary(this.media?.freeze(story.mediaLoadout, this.runtime.now()));
+  }
+
+  /**
+   * The music moods and atmosphere words the next attempt would freeze for
+   * this story, which the Soundtrack slot gives the writer. For inspection;
+   * never persisted here.
+   */
+  describeSoundtrackVocabulary(storyId: string): SoundtrackVocabulary {
+    this.assertHydrated();
+    const story = findStory(this.state, storyId);
+    if (!story) throw new Error('Open a Harness story before inspecting its soundtrack words.');
+    return soundtrackVocabulary(this.media?.freeze(story.mediaLoadout, this.runtime.now()));
   }
 
   async setSkillSlot(
@@ -1003,7 +1016,7 @@ export class HarnessGenerationController {
       : this.media?.freeze(story.mediaLoadout, startedAt) ?? emptyNarrativeMedia(startedAt);
     // The Fate slot follows the chapter's frozen Fate mode: every Fate Survival call carries its skill.
     const capaPrompt = frozen ? cloneHarnessValue(frozen.capaPrompt) : assembleCapaPrompt(
-      freezeHarnessSkillLoadout(story, this.skillCatalog, startedAt, storyInformation.storyDirection.fateMode ?? 'regular', soundVocabulary(mediaLoadout)),
+      freezeHarnessSkillLoadout(story, this.skillCatalog, startedAt, storyInformation.storyDirection.fateMode ?? 'regular', soundVocabulary(mediaLoadout), soundtrackVocabulary(mediaLoadout)),
       { storyInformation, immediateChapterRequest },
     );
     // Frozen beside the CAPA Prompt; presented as its own section at the provider boundary.
@@ -1105,6 +1118,7 @@ export class HarnessGenerationController {
       protagonistNames: protagonistNames(attempt.storyInformation.currentStory, attempt.storyInformation.canonicalState.characters),
       speakersExpected: attempt.capaPrompt.skills.some(skill => skill.slot === 'speakers' && skill.authoring),
       holdingsExpected: attempt.capaPrompt.skills.some(skill => skill.slot === 'holdings' && skill.authoring),
+      soundtrackExpected: attempt.capaPrompt.skills.some(skill => skill.slot === 'soundtrack' && skill.authoring),
     });
     if (!acceptance.accepted) {
       return this.appendFailure(attemptId, {
@@ -1268,6 +1282,7 @@ export class HarnessGenerationController {
       ...(acceptedDraft.speakers ? { speakers: cloneHarnessValue(acceptedDraft.speakers) } : {}),
       ...(holdings?.changes.length ? { holdingChanges: holdings.changes } : {}),
       ...(acceptedDraft.closingHoldings ? { closingHoldings: [...acceptedDraft.closingHoldings] } : {}),
+      ...(acceptedDraft.scene ? { scene: cloneHarnessValue(acceptedDraft.scene) } : {}),
       mediaLoadout: cloneHarnessValue(commitAttempt.mediaLoadout),
       ...(acceptedDraft.plan ? { plan: acceptedDraft.plan } : {}),
       // The recap and rhythm metadata are saved exactly once, with their own
@@ -1644,7 +1659,7 @@ export class HarnessGenerationController {
     try {
       const fateMode = attempt.storyInformation.storyDirection.fateMode ?? 'regular';
       // The Sound Cues slot compares against the attempt's own frozen media, which a retry reuses.
-      const current = Object.values(resolveManagedCapaSkills(story, this.skillCatalog, fateMode, soundVocabulary(attempt.mediaLoadout)))
+      const current = Object.values(resolveManagedCapaSkills(story, this.skillCatalog, fateMode, soundVocabulary(attempt.mediaLoadout), soundtrackVocabulary(attempt.mediaLoadout)))
         .filter((skill): skill is HarnessSkillManifest => Boolean(skill));
       return managedCapaSkillSignature(current) === managedCapaSkillSignature(attempt.capaPrompt.skills);
     } catch {

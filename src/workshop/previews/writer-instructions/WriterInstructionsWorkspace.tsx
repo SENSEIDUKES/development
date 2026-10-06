@@ -3,7 +3,7 @@ import { WRITER_INSTRUCTIONS_HISTORY, lastChange } from './writerInstructionsHis
 import './writer-instructions.css';
 
 /** The tag instructions are open on arrival; the long ones wait for a tap. */
-const OPEN_ON_ARRIVAL: ReadonlySet<WriterInstructionId> = new Set(['tag-rules', 'sound-cues', 'speakers', 'holdings']);
+const OPEN_ON_ARRIVAL: ReadonlySet<WriterInstructionId> = new Set(['tag-rules', 'sound-cues', 'soundtrack', 'speakers', 'holdings']);
 const TITLES = new Map(WRITER_INSTRUCTIONS.map(block => [block.id, block.title]));
 
 function InstructionBlock({ block }: { block: WriterInstruction }) {

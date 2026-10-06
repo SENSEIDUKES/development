@@ -39,6 +39,7 @@ describe('Writer Instructions', () => {
       skill('author', 'Author'),
       block('tag-rules').text,
       skill('sound-cues', 'Sound Cues'),
+      skill('soundtrack', 'Soundtrack'),
       skill('speakers', 'Speakers'),
       skill('holdings', 'Holdings'),
       block('response-contract').text,
@@ -52,7 +53,7 @@ describe('Writer Instructions', () => {
       expect(markup).toContain(`data-instruction="${id}"`);
       expect(markup).toContain(source);
     }
-    for (const id of ['tag-rules', 'sound-cues', 'speakers', 'holdings']) expect(markup).toMatch(new RegExp(`<details[^>]*open=""[^>]*data-instruction="${id}"`));
+    for (const id of ['tag-rules', 'sound-cues', 'soundtrack', 'speakers', 'holdings']) expect(markup).toMatch(new RegExp(`<details[^>]*open=""[^>]*data-instruction="${id}"`));
     expect(markup).not.toMatch(/<details[^>]*open=""[^>]*data-instruction="response-contract"/);
     expect(markup).toContain('Every paragraph with a quotation mark starts with a speaker tag naming a real character.');
     expect(markup.replace(/<[^>]+>/g, '')).toContain('SEN Speakers v2.1.0 · 128 words · changed 2026-10-06');

@@ -15,7 +15,7 @@ import { ReaderMixerProvider, type ReaderMixer, type ReaderMixerSleepEvent } fro
 import { createHostReaderMixer } from '../../../host/reader/readerMixer';
 import { SEN_ATMOSPHERES } from '../../../host/media/atmosphereCatalog';
 import { SEN_SOUNDSCAPES } from '../../../host/media/soundscapeCatalog';
-import { storySoundtrack } from '@seihouse/sen/reader-runtime';
+import { piecesForMood, storySoundtrack } from '@seihouse/sen/reader-runtime';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -497,6 +497,34 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
     act(() => root.unmount());
     expect(stopAll).toHaveBeenCalledTimes(1);
     root = createRoot(container);
+  });
+
+  it('plays the music and atmosphere each chapter\'s writer chose at its start', async () => {
+    const { controller, storyId } = await story({
+      written: 2,
+      replies: [
+        reply('Low Tide', ['[[soundtrack: fighting | ancient battlefield]] The tide pulled back from the drowned gate.', 'Mara counted the bells.']),
+        reply('The Bell Keeper', ['[[soundtrack: sad | gentle rain]] A keeper waited on the causeway with a lantern.', 'He asked for her name.']),
+      ],
+    });
+    const beds = (word: string) => LIBRARY_BASE_MEDIA.atmospheres!.filter(entry => entry.word === word).map(entry => entry.id);
+    const saved = controller.snapshot().chapters;
+    // The beds that share a word take turns: Chapter 2 hears the second gentle rain.
+    expect(saved.map(chapter => chapter.scene)).toEqual([
+      { soundscape: 'fighting', atmosphere: beds('ancient battlefield')[0] },
+      { soundscape: 'sad', atmosphere: beds('gentle rain')[1] },
+    ]);
+    expect(saved[0].paragraphs[0]).toBe('The tide pulled back from the drowned gate.');
+
+    const { mixer } = mixerFor();
+    await mountWithMixer(mixer, <Host controller={controller} storyId={storyId} />);
+    const moodOf = (mood: string) => piecesForMood(mood, SEN_SOUNDSCAPES).map(piece => piece.id);
+    expect(moodOf('fighting')).toContain(storySoundtrack(mixer).piece()?.id);
+    expect(mixer.getPreferences().atmosphereId).toBe(beds('ancient battlefield')[0]);
+
+    await click(byLabel('Next Chapter'), 'Next Chapter');
+    expect(moodOf('sad')).toContain(storySoundtrack(mixer).piece()?.id);
+    expect(mixer.getPreferences().atmosphereId).toBe(beds('gentle rain')[1]);
   });
 
   it('lets the reader keep their own music and atmosphere from Reader Settings, or give the choice back to each chapter', async () => {

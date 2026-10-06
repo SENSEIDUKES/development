@@ -10,6 +10,7 @@ import { chapterTitleText } from '../../../narrative/chapterTitle';
 import type { HoldingChangeAttachment } from '../../../narrative/holdings';
 import { isMainCharacterTag, isProtagonist, placeSpeakers, type ProtagonistNames } from './speakers';
 import { holdingName, placeHoldingChanges } from './holdings';
+import { chapterSoundtrack } from './soundtrack';
 import { normalizeIdentityLabel } from './canonicalProjection';
 import { ignoredSoundCueListWarning, stripReplyMarks } from './chapterSignals';
 import {
@@ -22,7 +23,7 @@ import {
 } from './chapterBody';
 import { HARNESS_MEMORY_CATEGORIES } from '../../../narrative/generation';
 import { CHAPTER_FUNCTIONS, CHAPTER_RECAP_TEXT_LIMIT, isChapterFunction, type ChapterFunction, type NextChapterSuggestions } from '../../../narrative/storyDirection';
-import type { HarnessAcceptedChapterDraft, HarnessChapterRhythm, HarnessModelPlan, HarnessRejectedEventDiagnostic, HarnessSemanticEvent, HarnessWarning, HarnessEventDetails, HarnessCanonicalKind } from '../../../narrative/generation';
+import type { HarnessAcceptedChapterDraft, HarnessChapterRhythm, HarnessChapterScene, HarnessModelPlan, HarnessRejectedEventDiagnostic, HarnessSemanticEvent, HarnessWarning, HarnessEventDetails, HarnessCanonicalKind } from '../../../narrative/generation';
 
 type ParsedResponse = {
   accepted: true;
@@ -253,6 +254,8 @@ export interface HarnessResponseAcceptanceOptions {
   speakersExpected?: boolean;
   /** The writer was asked for holdings tags and a closing list, so a missing list is worth flagging. */
   holdingsExpected?: boolean;
+  /** The writer was asked to choose the chapter's soundtrack, so a chapter without one is worth flagging. */
+  soundtrackExpected?: boolean;
 }
 
 /**
@@ -300,6 +303,8 @@ const readParagraphMarks = (paragraphs: readonly string[], warnings: HarnessWarn
   const read: MarkReading[] = [];
   let loose: MarkReading['speakers'] = [];
   let looseWords: WordTag[] = [];
+  // The chapter's soundtrack tags in reading order, a paragraph that held nothing else included.
+  const soundtracks: MarkReading['soundtracks'] = [];
   let wordTagIssues = 0;
   let soundTagIssues = 0;
   const options = soundWords?.length ? { soundWords: soundWords.map(sound => sound.word) } : {};
@@ -314,6 +319,7 @@ const readParagraphMarks = (paragraphs: readonly string[], warnings: HarnessWarn
   for (const reading of settled.readings) {
     wordTagIssues += reading.wordTagIssues.length;
     soundTagIssues += reading.soundIssues.length;
+    soundtracks.push(...reading.soundtracks);
     if (!reading.text) {
       loose = [...loose, ...reading.speakers.map(tag => ({ ...tag, offset: 0 }))];
       looseWords = [...looseWords, ...reading.wordTags.map(tag => ({ ...tag, offset: 0 }))];
@@ -341,7 +347,29 @@ const readParagraphMarks = (paragraphs: readonly string[], warnings: HarnessWarn
       message: `Removed ${soundTagIssues} unusable sound tag${soundTagIssues === 1 ? '' : 's'} (unclosed, nested, empty, or naming no sound or no words) and kept the prose.`,
     });
   }
-  return { read, strandedTags, wordTagIssues };
+  return { read, strandedTags, wordTagIssues, soundtracks };
+};
+
+/**
+ * The chapter's scene from its soundtrack tag (`chapterSoundtrack`): the first
+ * counts, and what it chose plays for the whole chapter. What could not be
+ * used is flagged, never fatal; without a choice the Reader goes on with the
+ * scene before.
+ */
+const acceptedScene = (
+  tags: MarkReading['soundtracks'],
+  chapterNumber: number,
+  warnings: HarnessWarning[],
+  options: HarnessResponseAcceptanceOptions,
+): HarnessChapterScene | undefined => {
+  const reading = chapterSoundtrack(tags, options.media, chapterNumber);
+  const problems = [
+    ...(!tags.length && options.soundtrackExpected ? ['the writer chose no soundtrack, so the Reader goes on with the one before'] : []),
+    ...(reading.unknown.length ? [`${reading.unknown.map(word => `“${word}”`).join(' and ')} ${reading.unknown.length === 1 ? 'is' : 'are'} not in the story's soundtrack words and ${reading.unknown.length === 1 ? 'was' : 'were'} not used`] : []),
+    ...(reading.extra ? [`${reading.extra} more soundtrack tag${reading.extra === 1 ? ' was' : 's were'} removed: only the first counts`] : []),
+  ];
+  if (problems.length) warnings.push({ code: 'soundtrack_incomplete', message: `${problems.join('; ')}.`.replace(/^./, letter => letter.toUpperCase()) });
+  return reading.scene;
 };
 
 /**
@@ -487,7 +515,7 @@ export const acceptHarnessModelResponse = (
     // writer's tags out of them, keeps the clean text exactly as written,
     // derives the readable prose from it, and places the Sound Cues its sound tags name.
     const source = acceptedChapterBody(parsed, warnings);
-    const marked = source ? readParagraphMarks(source, warnings, options.soundVocabulary, options.locale) : { read: [], strandedTags: 0, wordTagIssues: 0 };
+    const marked = source ? readParagraphMarks(source, warnings, options.soundVocabulary, options.locale) : { read: [], strandedTags: 0, wordTagIssues: 0, soundtracks: [] };
     const body = marked.read.length ? harnessChapterBody(marked.read.map(reading => reading.text), options.paragraphTarget) : undefined;
     if (!body || looksLikeRefusal(body.prose)) {
       return {
@@ -509,6 +537,7 @@ export const acceptHarnessModelResponse = (
     const speakers = acceptedSpeakers(marked, chapterNumber, warnings, options);
     // The closing list is read as written, so a tag put there instead of the prose is not lost.
     const holdings = acceptedHoldings(reply, marked, chapterNumber, warnings, options);
+    const scene = acceptedScene(marked.soundtracks, chapterNumber, warnings, options);
     // The chapter's number is the HARNESS's: a "Chapter 3:" the writer put before its title is dropped.
     const writtenTitle = nonEmptyString(parsed.title);
     const title = writtenTitle ? nonEmptyString(chapterTitleText(writtenTitle)) : undefined;
@@ -533,6 +562,7 @@ export const acceptHarnessModelResponse = (
         ...(speakers.length ? { speakers } : {}),
         ...(holdings.changes.length ? { holdingChanges: holdings.changes } : {}),
         ...(holdings.closing ? { closingHoldings: holdings.closing } : {}),
+        ...(scene ? { scene } : {}),
         title: title ?? chapterTitleFallback(chapterNumber),
         titleSource: title ? 'model' : 'harness-fallback',
         ...(plan ? { plan } : {}),

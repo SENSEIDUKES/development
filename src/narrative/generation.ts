@@ -886,6 +886,12 @@ export interface HarnessChapter {
   rhythm?: HarnessChapterRhythm;
   /** How this chapter's path was decided. Absent for chapters committed before paths were recorded. */
   path?: HarnessChapterPath;
+  /**
+   * What the Holdings fixer checked after the chapter committed and what it
+   * changed: its holding records, or a sentence. Absent when it found nothing
+   * to look at, or did not run.
+   */
+  fixer?: HarnessHoldingsFixRecord;
   eventIds: string[];
   responseMode: 'json' | 'plain-prose-recovery';
   createdAt: string;
@@ -1229,6 +1235,93 @@ export interface HarnessGenerationModelAdapter {
   getServerInfo(): Promise<HarnessGenerationServerInfo>;
   generate(request: HarnessGenerationRequest): Promise<HarnessGenerationResponse>;
   arcOperation?(request: HarnessArcRequest): Promise<HarnessGenerationResponse>;
+  /** The Holdings fixer's one small call after a chapter commits. Without it, the fixer does not run. */
+  fixHoldings?(request: HarnessHoldingsFixRequest): Promise<HarnessGenerationResponse>;
+}
+
+/**
+ * How far the Holdings fixer may go: not at all, a chapter's holding records
+ * only, or its records and, one at a time, a sentence of its prose. The host
+ * (in the Library, the Familiar) chooses.
+ */
+export type HarnessHoldingsFixerPolicy = 'off' | 'records-only' | 'records-and-sentences';
+
+/** What the fixer may answer a case with. */
+export type HarnessHoldingsFixAnswer = 'record' | 'prose' | 'fine' | 'major';
+
+/**
+ * One small problem the Holdings fixer is asked about: the sentence it is on
+ * (or the sentences that name the item, or two names that may be one), what
+ * the checks found there, and what the record shows. Never the whole chapter.
+ */
+export interface HarnessHoldingsFixCase {
+  id: string;
+  /** What the checks found, in plain words. */
+  problems: string[];
+  /** The sentence the problem is on, with the sentences around it. */
+  passage?: { before?: string; sentence: string; after?: string };
+  /** Every holding tag that sentence carries, as the record has it. */
+  tags?: string;
+  /** What the record shows: what the holder had, and the item's history. */
+  record?: string[];
+  /** Sentences of the chapter that name the item, each with the id an answer uses. */
+  mentions?: Array<{ id: string; sentence: string }>;
+  /** The answers this case allows. */
+  answers: HarnessHoldingsFixAnswer[];
+}
+
+/** The Holdings fixer's call: the chapter's small problems, with the chapter's own model. */
+export interface HarnessHoldingsFixRequest {
+  operation: 'fix-holdings';
+  storyId: string;
+  chapterId: string;
+  chapterNumber: number;
+  model: string;
+  /** The story's language: a corrected sentence is written in it. */
+  language: string;
+  /** The main character, whom tags name MC. */
+  mainCharacter?: string;
+  /** The reader's direction for the chapter, so a change they asked for stays. */
+  direction?: string;
+  cases: HarnessHoldingsFixCase[];
+}
+
+/** One problem the fixer looked at, and what became of it. */
+export interface HarnessHoldingsFix {
+  /** The checks that found it. */
+  checks: import('../components/harness-generation/shared/holdings').HoldingFlagKind[];
+  /** What they found, in plain words. */
+  problems: string[];
+  /**
+   * `fixed-tags`: the record was corrected. `fixed-sentence`: one sentence was
+   * corrected. `merged`: two names became one entry. `fine`: nothing was
+   * wrong. `major`: a contradiction no small fix can settle, kept as it is.
+   * `skipped`: no fix was safe to make.
+   */
+  outcome: 'fixed-tags' | 'fixed-sentence' | 'merged' | 'fine' | 'major' | 'skipped';
+  /** The paragraph it was in. */
+  blockId?: string;
+  /** The tags or sentence before the fix. */
+  before?: string;
+  /** The tags or sentence after it. */
+  after?: string;
+  /** The fixer's reason, or why nothing was changed. */
+  reason?: string;
+  /** For a merge: the entry kept and the name it now also answers to, so a rewrite of the chapter can take it back. */
+  merged?: { keptEntryId: string; alias?: string };
+}
+
+/** The Holdings fixer's record on a chapter: what it checked and what it changed. */
+export interface HarnessHoldingsFixRecord {
+  checkedAt: string;
+  /** The model asked, when one was. Problems settled without a call ask none. */
+  model?: string;
+  providerReceipt?: HarnessProviderReceipt;
+  /** The fixer's reply as it came back, for inspection. */
+  rawProviderResponse?: string;
+  /** Why the call did not complete. The chapter stays as it was committed. */
+  error?: string;
+  fixes: HarnessHoldingsFix[];
 }
 
 export interface HarnessArcRequest {

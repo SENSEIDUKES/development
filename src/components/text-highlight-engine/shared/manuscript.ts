@@ -323,8 +323,10 @@ function rebaseSentences(
  * Spans wholly before an edit stay, spans after it shift, spans overlapping it are detached — never moved.
  * An edit that only touches a span but glues letters onto its first or last word ("sword" into "swords")
  * changes its words as surely as an overlapping one, so that span is detached too: words stay whole.
+ * `text` is the paragraph after the edit. Exported so a saved chapter's span attachments follow an edit
+ * by the same rule as the manuscript's.
  */
-function rebaseSpan(anchor: Extract<ManuscriptAnchor, { level: 'span' }>, start: number, removed: number, inserted: number, text: string, locale: string): ManuscriptAnchor {
+export function rebaseSpan(anchor: Extract<ManuscriptAnchor, { level: 'span' }>, start: number, removed: number, inserted: number, text: string, locale: string): ManuscriptAnchor {
   if (anchor.detached) return anchor;
   const delta = inserted - removed;
   const shifted = { ...anchor, startOffset: anchor.startOffset + delta, endOffset: anchor.endOffset + delta };

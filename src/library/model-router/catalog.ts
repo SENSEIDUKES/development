@@ -250,5 +250,12 @@ export const resolveReasoningLevel = (model: string, requested: unknown): Reason
   return chosen ?? (reasoning?.sendDefault ? reasoning.defaultLevel : undefined);
 };
 
+/**
+ * The least reasoning a model accepts, for small, quick checks (the Holdings
+ * fixer): its lowest level, or nothing to send when it has no levels.
+ */
+export const lowestReasoningLevel = (model: string): ReasoningLevel | undefined =>
+  CHAPTER_MODELS.find(option => option.id === model)?.reasoning?.levels[0];
+
 export const isMissingKeyMessage = (message: string): boolean =>
   /(?:GEMINI_API_KEY|OPENROUTER_API_KEY) is not configured/.test(message);

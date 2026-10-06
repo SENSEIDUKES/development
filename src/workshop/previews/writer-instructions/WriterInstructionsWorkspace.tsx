@@ -1,4 +1,4 @@
-import { EVERY_CHAPTER, SOME_STORIES, WRITER_INSTRUCTIONS, countWords, type WriterInstruction, type WriterInstructionId } from './writerInstructions';
+import { AFTER_A_CHAPTER, EVERY_CHAPTER, SOME_STORIES, WRITER_INSTRUCTIONS, countWords, type WriterInstruction, type WriterInstructionId } from './writerInstructions';
 import { WRITER_INSTRUCTIONS_HISTORY, lastChange } from './writerInstructionsHistory';
 import './writer-instructions.css';
 
@@ -51,6 +51,14 @@ export function WriterInstructionsWorkspace() {
       <section aria-labelledby="writer-instructions-some">
         <h2 id="writer-instructions-some">Only in some stories</h2>
         {SOME_STORIES.map(block => <InstructionBlock key={block.id} block={block} />)}
+      </section>
+
+      <section aria-labelledby="writer-instructions-after">
+        <h2 id="writer-instructions-after">After a chapter</h2>
+        <p className="writer-instructions__note">
+          Not the chapter writer: a separate small check that settles a saved chapter&rsquo;s holdings problems quietly and keeps a record on the chapter.
+        </p>
+        {AFTER_A_CHAPTER.map(block => <InstructionBlock key={block.id} block={block} />)}
       </section>
 
       <section aria-labelledby="writer-instructions-history">

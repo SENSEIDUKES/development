@@ -47,11 +47,12 @@ import { activeAttemptForStory } from './attempts';
 import { chapterRewriteGap, latestStoryChapter, readRewriteNote, withoutLatestChapter } from './chapterRewrite';
 import { protagonistNames } from './speakers';
 import { declaredCharacters, resolveHoldingChanges } from './holdings';
+import { applyHoldingsFixes, planHoldingsFix } from './holdingsFixer';
 import {
   createEmptyHarnessWorkspaceState,
   type HarnessGenerationRepository,
 } from './repository';
-import type { ChapterDirectionChoice, HarnessChapterRewrite, HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessCapabilityReceipt, HarnessStory, HarnessStoryVisibility, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
+import type { ChapterDirectionChoice, HarnessChapterRewrite, HarnessHoldingsFixerPolicy, HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessCapabilityReceipt, HarnessStory, HarnessStoryVisibility, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
 
 export type HarnessEventPreserver = (
   rawEvents: unknown[],
@@ -69,6 +70,12 @@ export interface HarnessGenerationControllerOptions {
   installedSkills?: HarnessSkillManifest[];
   /** Host-authorized media selection and freezing. Never enters CAPA or provider requests. */
   media?: NarrativeMediaPort;
+  /**
+   * How far the Holdings fixer may go after a chapter commits: `off`, the
+   * chapter's holding records only, or its records and one sentence at a time
+   * (the default). It runs only with an adapter that offers `fixHoldings`.
+   */
+  holdingsFixer?: HarnessHoldingsFixerPolicy;
 }
 
 type WorkspaceListener = (state: HarnessWorkspaceState) => void;
@@ -130,6 +137,7 @@ export class HarnessGenerationController {
   private readonly capabilityRegistry: HarnessCapabilityRegistry;
   private skillCatalog: ReadonlyMap<string, HarnessSkillManifest>;
   private media?: NarrativeMediaPort;
+  private holdingsFixer: HarnessHoldingsFixerPolicy;
   private readonly listeners = new Set<WorkspaceListener>();
   private state = createEmptyHarnessWorkspaceState();
   private hydrated = false;
@@ -143,6 +151,12 @@ export class HarnessGenerationController {
     this.capabilityRegistry = options.capabilityRegistry ?? new HarnessCapabilityRegistry();
     this.skillCatalog = createHarnessSkillCatalog(includeBundledHarnessSkills(options.installedSkills ?? []));
     this.media = options.media;
+    this.holdingsFixer = options.holdingsFixer ?? 'records-and-sentences';
+  }
+
+  /** The host's choice for chapters committed from now on (in the Library, the Familiar's). */
+  setHoldingsFixer(policy: HarnessHoldingsFixerPolicy): void {
+    this.holdingsFixer = policy;
   }
 
   subscribe(listener: WorkspaceListener): () => void {
@@ -1237,6 +1251,9 @@ export class HarnessGenerationController {
       return this.snapshot();
     }
     await this.replayStory(commitAttempt.storyId, chapterId);
+    // The Holdings fixer settles the chapter's small holdings problems before
+    // anything is planned or written from it.
+    await this.fixCommittedHoldings(attemptId, chapterId);
     // A story without a planned length plans its next arc as soon as the
     // last chapter of one commits; a story with one waits for the reader.
     const committedStory = findStory(this.state, commitAttempt.storyId);
@@ -1250,6 +1267,83 @@ export class HarnessGenerationController {
       }
     }
     return this.snapshot();
+  }
+
+  /**
+   * The Holdings fixer, after a chapter commits: the chapter's holdings
+   * problems become small cases, the ones nothing in the chapter can fix are
+   * settled without asking, and one short call with the chapter's own model
+   * answers the rest. A fix stands only when it leaves fewer problems; the
+   * record of every case is kept on the chapter. Nothing here can undo the
+   * commit: a failed call or write leaves the chapter as it was committed.
+   */
+  private async fixCommittedHoldings(attemptId: string, chapterId: string) {
+    const policy = this.holdingsFixer;
+    const attempt = this.state.attempts.find(entry => entry.id === attemptId);
+    const chapter = this.state.chapters.find(entry => entry.id === chapterId);
+    const story = chapter ? findStory(this.state, chapter.storyId) : undefined;
+    if (policy === 'off' || !this.modelAdapter.fixHoldings || !attempt || !chapter || !story) return;
+    // Only chapters written with the Holdings skill carry holdings to check.
+    if (!attempt.capaPrompt.skills.some(skill => skill.slot === 'holdings' && skill.authoring)) return;
+    const mainCharacterName = attempt.storyInformation.currentStory.cast?.find(member => member.isMainCharacter)?.name;
+    const input = {
+      chapter,
+      chapters: this.state.chapters.filter(entry => entry.storyId === story.id),
+      entries: this.state.codexEntries.filter(entry => entry.storyId === story.id),
+      mainCharacterName, locale: story.originalLanguage, policy,
+    };
+    const plan = planHoldingsFix(input);
+    if (!plan.cases.length && !plan.settled.length) return;
+    const wasGenerating = this.generating;
+    this.generating = true;
+    try {
+      let response: Awaited<ReturnType<NonNullable<HarnessGenerationModelAdapter['fixHoldings']>>> | undefined;
+      let error: string | undefined;
+      if (plan.cases.length) {
+        const choice = attempt.immediateChapterRequest.direction?.choice;
+        const direction = choice ? (choice.kind === 'reader' ? choice.text : choice.suggestion ?? choice.chapterFunction) : undefined;
+        try {
+          response = await this.modelAdapter.fixHoldings({
+            operation: 'fix-holdings', storyId: story.id, chapterId, chapterNumber: chapter.chapterNumber, model: attempt.model,
+            language: story.originalLanguage, ...(mainCharacterName ? { mainCharacter: mainCharacterName } : {}),
+            ...(direction ? { direction } : {}),
+            cases: plan.cases.map(planned => cloneHarnessValue(planned.case)),
+          });
+        } catch (cause) {
+          error = errorMessage(cause, 'The Holdings fixer could not be reached.');
+        }
+      }
+      // The chapter must still be the one checked: the story's latest, as it was.
+      if (latestStoryChapter(this.state, story.id)?.id !== chapterId) return;
+      const now = this.runtime.now();
+      const fixed = applyHoldingsFixes({
+        ...input, plan, reply: response?.rawProviderResponse, error,
+        declared: declaredCharacters(attempt.storyInformation.currentStory),
+        createdAt: now, createId: () => this.runtime.createId('hcx'),
+      });
+      const candidate = cloneHarnessValue(this.state);
+      const index = candidate.chapters.findIndex(entry => entry.id === chapterId);
+      candidate.chapters[index] = {
+        ...fixed.chapter,
+        fixer: {
+          checkedAt: now,
+          ...(plan.cases.length ? { model: attempt.model } : {}),
+          ...(response ? { providerReceipt: response.providerReceipt, rawProviderResponse: response.rawProviderResponse } : {}),
+          ...(error ? { error } : {}),
+          fixes: fixed.fixes,
+        },
+      };
+      // Entries keep their places; a merged one is gone and the fixer's new ones follow.
+      const updated = new Map(fixed.entries.map(entry => [entry.id, entry]));
+      const known = new Set(candidate.codexEntries.map(entry => entry.id));
+      candidate.codexEntries = [
+        ...candidate.codexEntries.filter(entry => entry.storyId !== story.id || updated.has(entry.id)).map(entry => updated.get(entry.id) ?? entry),
+        ...fixed.entries.filter(entry => !known.has(entry.id)),
+      ];
+      try { await this.persist(candidate); } catch { /* The chapter stays as it was committed. */ }
+    } finally {
+      this.generating = wasGenerating;
+    }
   }
 
   /**

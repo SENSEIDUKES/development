@@ -368,6 +368,8 @@ export interface HoldingFlag {
   chapterNumber?: number;
   recordId?: string;
   entryIds?: string[];
+  /** The closing-list name it is about. */
+  name?: string;
 }
 
 export interface HoldingsState {
@@ -567,13 +569,13 @@ export function deriveHoldings({ entries, chapters, mainCharacterName }: {
       const who = main?.name ?? mainCharacterName ?? 'the main character';
       for (const item of recorded) {
         if (!listed.some(value => matches(recordedNames(item), value))) {
-          flags.push({ kind: 'closing-unlisted', chapterId: chapter.id, chapterNumber: chapter.chapterNumber, entryIds: [item.entryId],
+          flags.push({ kind: 'closing-unlisted', chapterId: chapter.id, chapterNumber: chapter.chapterNumber, entryIds: [item.entryId], name: item.name,
             message: `Chapter ${chapter.chapterNumber}: the writer's closing list for ${who} leaves out ‘${item.name}’. It may have been lost without a tag.` });
         }
       }
       for (const value of listed) {
         if (!recorded.some(item => matches(recordedNames(item), value))) {
-          flags.push({ kind: 'closing-untagged', chapterId: chapter.id, chapterNumber: chapter.chapterNumber,
+          flags.push({ kind: 'closing-untagged', chapterId: chapter.id, chapterNumber: chapter.chapterNumber, name: value,
             message: `Chapter ${chapter.chapterNumber}: the writer's closing list for ${who} includes ‘${value}’, which no tag recorded.` });
         }
       }

@@ -127,6 +127,20 @@ export {
   type ReadHoldingTag,
   type ResolvedHoldingChanges,
 } from '../../components/harness-generation/shared/holdings';
+export {
+  HOLDINGS_FIXER_CASE_LIMIT,
+  applyHoldingsFixes,
+  chapterHoldingFlags,
+  holdingTagText,
+  planHoldingsFix,
+  readFixTags,
+  readHoldingsFixReply,
+  type HoldingsFixApplyInput,
+  type HoldingsFixInput,
+  type HoldingsFixPlan,
+  type HoldingsFixPlanCase,
+  type HoldingsFixResult,
+} from '../../components/harness-generation/shared/holdingsFixer';
 export * from '../../narrative/holdings';
 export { createHarnessSenStory } from '../../components/harness-generation/shared/senAdapter';
 export * from '../../narrative/generation';

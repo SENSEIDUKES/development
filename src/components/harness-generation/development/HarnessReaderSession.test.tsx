@@ -8,7 +8,7 @@ import { createRoot } from '../../../test-utils/createReaderRoot';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { STOPPED_WRITE_REPLY, writtenChapter } from '../../../test-utils/writtenChapter';
 import { installAudioMediaStubs, renderWithDevAudio } from '../../../test-utils/renderWithDevAudio';
-import { HarnessGenerationController, HarnessReaderSession, type HarnessGenerationModelAdapter, type HarnessReaderWriting } from '@seihouse/sen/harness-generation';
+import { HarnessGenerationController, HarnessReaderSession, type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessReaderWriting } from '@seihouse/sen/harness-generation';
 import type { ReadAloudVoicePicks, ReaderPreferenceStorage, ReaderStateRepository, ReaderStoryState } from '@seihouse/sen/reader-runtime';
 import { installFakeSpeechSynthesis, type FakeSpeechSynthesis } from '../../../test-utils/fakeSpeechSynthesis';
 import { ReaderMixerProvider, type ReaderMixer, type ReaderMixerSleepEvent } from '@seihouse/audio-player';
@@ -217,7 +217,8 @@ describe('The HARNESS Reader', { timeout: 20_000 }, () => {
     await flush();
 
     expect(generate).toHaveBeenCalledTimes(3);
-    expect(generate.mock.calls[2][0]).toMatchObject({ immediateChapterRequest: { chapterNumber: 2, rewrite: { note: 'Let the keeper wait longer.', previous: { title: 'The Bell Keeper' } } } });
+    expect((generate.mock.calls[2] as unknown as [HarnessGenerationRequest])[0])
+      .toMatchObject({ immediateChapterRequest: { chapterNumber: 2, rewrite: { note: 'Let the keeper wait longer.', previous: { title: 'The Bell Keeper' } } } });
     expect(container.querySelector('[data-testid="writing-screen"]')).toBeNull();
     expect(seen.at(-1)).toEqual({ active: false, chapterNumber: 2 });
     const shown = chapterOnScreen(2)!;

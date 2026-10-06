@@ -11,7 +11,8 @@ export type AskForAccessToken = (request: Pick<AccessTokenRequest, 'reason' | 'r
  * visitor limit without a token (429), or for a token the server did not
  * accept (401), asks for the token and is sent again with it: the server
  * refused it before any model call, so nothing is written twice. Cancelling
- * keeps the server's own message.
+ * keeps the server's own message. The Holdings fixer never asks: a refused
+ * check is recorded on its chapter and the reader sees nothing.
  */
 export const writerWithAccessToken = (
   writer: HarnessGenerationModelAdapter,
@@ -37,5 +38,7 @@ export const writerWithAccessToken = (
     getServerInfo: () => writer.getServerInfo(),
     generate: request => withToken(() => writer.generate(request)),
     ...(writer.arcOperation ? { arcOperation: request => withToken(() => writer.arcOperation!(request)) } : {}),
+    // The Holdings fixer runs unseen: it sends the token the reader already gave and never asks for one.
+    ...(writer.fixHoldings ? { fixHoldings: request => writer.fixHoldings!(request) } : {}),
   };
 };

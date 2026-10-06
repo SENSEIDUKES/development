@@ -1,4 +1,4 @@
-import { CHAPTER_REWRITE_NOTE_LIMIT, HARNESS_MAX_CHAPTER_PARAGRAPHS, type HarnessArcRequest, type HarnessGenerationRequest, type HarnessGenerationResponse } from '@seihouse/sen/harness-generation';
+import { CHAPTER_REWRITE_NOTE_LIMIT, HARNESS_MAX_CHAPTER_PARAGRAPHS, HOLDINGS_FIXER_CASE_LIMIT, type HarnessArcRequest, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessHoldingsFixRequest } from '@seihouse/sen/harness-generation';
 import { validateSoundWords } from '@seihouse/sen/audio';
 import {
   harnessGenerationServerInfo,
@@ -11,6 +11,7 @@ import {
   HarnessGenerationExecutionError,
   type HarnessProviderFactory,
 } from './execute';
+import { executeHoldingsFix } from './holdingsFixer';
 
 export interface HarnessGenerationHttpRequest {
   method?: string;
@@ -59,9 +60,36 @@ const requirePacket = (packet: unknown) => {
   }
 };
 
-const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessArcRequest => {
+/** The longest text one fixer case may carry anywhere: a sentence, a problem, a record line. */
+const FIX_CASE_TEXT_LIMIT = 2_000;
+const FIX_ANSWERS = new Set(['record', 'prose', 'fine', 'major']);
+
+/** A Holdings fixer request: a few small cases, each within its limits. */
+const parseHoldingsFix = (parsed: Record<string, unknown>): HarnessHoldingsFixRequest => {
+  const shortText = (value: unknown) => typeof value === 'string' && value.length <= FIX_CASE_TEXT_LIMIT;
+  const texts = (value: unknown, required = false) => value === undefined ? !required
+    : Array.isArray(value) && value.length <= 12 && value.every(shortText) && (!required || value.length > 0);
+  const cases = parsed.cases;
+  const valid = [parsed.storyId, parsed.chapterId, parsed.model, parsed.language].every(value => typeof value === 'string' && value.trim())
+    && Number.isInteger(parsed.chapterNumber) && Number(parsed.chapterNumber) >= 1
+    && (parsed.mainCharacter === undefined || shortText(parsed.mainCharacter))
+    && (parsed.direction === undefined || (typeof parsed.direction === 'string' && parsed.direction.length <= CHAPTER_REWRITE_NOTE_LIMIT))
+    && Array.isArray(cases) && cases.length >= 1 && cases.length <= HOLDINGS_FIXER_CASE_LIMIT
+    && cases.every(entry => isRecord(entry) && typeof entry.id === 'string' && texts(entry.problems, true)
+      && Array.isArray(entry.answers) && entry.answers.length > 0 && entry.answers.every(answer => FIX_ANSWERS.has(answer as string))
+      && (entry.passage === undefined || (isRecord(entry.passage) && shortText(entry.passage.sentence)
+        && (entry.passage.before === undefined || shortText(entry.passage.before)) && (entry.passage.after === undefined || shortText(entry.passage.after))))
+      && (entry.tags === undefined || shortText(entry.tags)) && texts(entry.record)
+      && (entry.mentions === undefined || (Array.isArray(entry.mentions) && entry.mentions.length <= 3
+        && entry.mentions.every(mention => isRecord(mention) && typeof mention.id === 'string' && shortText(mention.sentence)))));
+  if (!valid) throw new Error(`A Holdings fixer request needs its chapter, model and language, and 1 to ${HOLDINGS_FIXER_CASE_LIMIT} small cases.`);
+  return parsed as unknown as HarnessHoldingsFixRequest;
+};
+
+const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessArcRequest | HarnessHoldingsFixRequest => {
   const parsed = typeof body === 'string' ? JSON.parse(body) : body;
   if (!isRecord(parsed)) throw new Error('The Harness Generation request must be a JSON object.');
+  if (parsed.operation === 'fix-holdings') return parseHoldingsFix(parsed);
   if (parsed.operation === 'plan-arc') {
     if (!isRecord(parsed.storyInformation) || !isRecord(parsed.storyInformation.storyHead) || typeof parsed.model !== 'string'
       || typeof parsed.storyId !== 'string') throw new Error('Arc operations require a frozen Story Information Packet.');
@@ -150,7 +178,7 @@ export const handleHarnessGenerationHttp = async (
     };
   }
 
-  let parsed: HarnessGenerationRequest | HarnessArcRequest;
+  let parsed: HarnessGenerationRequest | HarnessArcRequest | HarnessHoldingsFixRequest;
   try {
     parsed = parseRequest(request.body);
   } catch (error) {
@@ -161,7 +189,10 @@ export const handleHarnessGenerationHttp = async (
   try {
     const config = resolveHarnessGenerationConfig(dependencies.environment);
     const reasoningLevel = (parsed as { reasoningLevel?: unknown }).reasoningLevel;
-    const result = await executeHarnessGeneration(parsed, config, dependencies.providerFactory, reasoningLevel);
+    // The Holdings fixer thinks as little as the model allows, whatever the reader chose for chapters.
+    const result = 'operation' in parsed && parsed.operation === 'fix-holdings'
+      ? await executeHoldingsFix(parsed, config, dependencies.providerFactory)
+      : await executeHarnessGeneration(parsed as HarnessGenerationRequest | HarnessArcRequest, config, dependencies.providerFactory, reasoningLevel);
     return {
       status: 200,
       body: result satisfies HarnessGenerationResponse,

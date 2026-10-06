@@ -73,8 +73,8 @@ export function readRewriteNote(note: string | undefined): string | undefined {
 /**
  * The workspace as it stood before the story's latest chapter was saved. That
  * chapter is gone, with everything worked out from it: the Codex entries it
- * brought in, the goals it achieved or missed, the route it broke and the
- * ending it reached. So is anything chosen after reading it (a direction for
+ * brought in (and a name its Holdings fixer added to an older one), the goals
+ * it achieved or missed, the route it broke and the ending it reached. So is anything chosen after reading it (a direction for
  * the chapter after it), and the story head points back at it. Its attempt
  * stays, with the replaced version's reply. The input is never changed.
  */
@@ -94,6 +94,13 @@ export function withoutLatestChapter(state: HarnessWorkspaceState, storyId: stri
   next.codexEntries = next.codexEntries.filter(entry => entry.storyId !== storyId || !(
     (entry.origin.source === 'tag' && entry.origin.chapterId === id) || (usedHere.has(entry.id) && !usedEarlier.has(entry.id))
   ));
+  // A name the Holdings fixer taught an older entry, when it merged one of the chapter's own into it.
+  for (const { merged } of latest.fixer?.fixes ?? []) {
+    const kept = merged?.alias ? next.codexEntries.find(entry => entry.id === merged.keptEntryId) : undefined;
+    if (!kept?.aliases) continue;
+    kept.aliases = kept.aliases.filter(alias => alias !== merged!.alias);
+    if (!kept.aliases.length) delete kept.aliases;
+  }
 
   const previous = next.chapters.filter(chapter => chapter.storyId === storyId && chapter.chapterNumber < chapterNumber)
     .sort((left, right) => left.chapterNumber - right.chapterNumber).at(-1);

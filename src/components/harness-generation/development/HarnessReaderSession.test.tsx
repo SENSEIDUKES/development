@@ -128,6 +128,9 @@ describe('The HARNESS Reader', { timeout: 20_000 }, () => {
     // One engine paragraph per HARNESS paragraph, on the chapter's own block ids (the fourth is the rest of the chapter).
     const first = chapterOnScreen(1)!;
     expect(first.querySelector('h1')!.textContent).toBe('Low Tide');
+    // Beside the title, the chapter's saved word count (a testing aid while length is tuned).
+    const saved = harness.snapshot().chapters.find(chapter => chapter.storyId === storyId && chapter.chapterNumber === 1)!;
+    expect(first.querySelector('[data-testid="harness-reader-word-count"]')!.textContent).toBe(` · ${saved.metrics.wordCount.toLocaleString()} words`);
     expect([...first.querySelectorAll('[data-sen-text-block]')].map(block => block.getAttribute('data-sen-text-block'))).toEqual(['c1-p1', 'c1-p2', 'c1-p3', 'c1-p4']);
     // The Sound Cue sits on the words the writer marked; no mark is left in the prose.
     expect(first.querySelector('[data-cue-annotation]')!.getAttribute('data-cue-annotation')).toBe('the beast roared');

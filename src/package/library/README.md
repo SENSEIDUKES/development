@@ -1,7 +1,7 @@
 # `@seihouse/library`
 
 **0.23.1 (2026-10-06):** adopts universal UI 0.11.0, Library UI 0.10.0 and SEN
-0.24.1. The desktop Pathways sidebar uses the UI package's two-way double tap/click
+0.24.2. The desktop Pathways sidebar uses the UI package's two-way double tap/click
 instead of a star, with a keyboard-focus-only width control. Its scrollbar appears
 only during scrolling/dragging and its frame has a gold-and-cyan bevel. The host's
 remembered `pinned`/`compact` preference and mobile navigation are preserved.

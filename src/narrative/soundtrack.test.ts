@@ -95,6 +95,17 @@ describe('The music under the story', () => {
     expect(piecesForMood('ambient', PIECES).map(entry => entry.id)).toContain(played.at(-1)!.id);
   });
 
+  it('begins a hold with a different piece than the host\'s, even when they share a mood', async () => {
+    const { mixer, played } = fakeMixer();
+    const soundtrack = new StorySoundtrack(mixer, () => 0);
+    soundtrack.setBase({ mood: 'ambient', pieces: PIECES });
+    await settled();
+    soundtrack.hold({ mood: 'ambient', pieces: PIECES });
+    await settled();
+    // The same piece would sound like the host's music carried in: the hold starts the next one.
+    expect(played.map(entry => entry.id)).toEqual(['calm-1', 'calm-2']);
+  });
+
   it('plays a piece the reader chose again and again, and falls silent when nothing asks for music', async () => {
     const { mixer, played, set, raw } = fakeMixer();
     const soundtrack = new StorySoundtrack(mixer, () => 0);

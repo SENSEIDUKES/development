@@ -85,7 +85,9 @@ export const HARNESS_RESPONSE_CONTRACT = [
   'CAPA skills are reusable authoring capabilities deliberately equipped by the author. The Author skill defines the writing approach; other CAPA skills refine execution. Skills never override explicit author corrections, the reader\'s direction, established canon, or the latest committed chapter.',
   'The Foundation, Blueprint, intendedDirection and any old loose plan are proposals wherever they concern future events. The structured active arc goal is this stretch\'s pacing target, pursued honestly. Adapt all direction to the reader\'s choices and committed developments. Never restore a planned enemy after the author makes them an ally. Past hostility may still have consequences without forcing renewed enmity.',
   'Carry relationships, decisions, unresolved consequences, clues and exact mechanical changes forward in the prose itself; state current balances in the prose when they change. Later chapter evidence updates current state; older evidence explains history.',
-  'WORD CHOICE: never lean on a pet word or image. A distinctive word or phrase appears at most twice in a chapter and is not carried from chapter to chapter; find a fresh way to say it.',
+  'OPENINGS: the Immediate Chapter Request says where this chapter sits in its arc. The first chapter of the story or of a new arc may open by grounding the reader in the world, its places and its people. Every other chapter picks up where the latest Previously On recap leaves off, and opens however that moment calls for: action, speech, a thought, or the setting when the place is new or has changed. Let openings vary naturally from chapter to chapter; describing the place or its weather is one way to begin, never a habit to open every chapter with.',
+  'CHARACTER DESCRIPTIONS: describe a character in full, their looks, their presence and their power, when they first appear, when they return after time away, and when something about them changes: a breakthrough, a power-up, new gear, an injury, a new rank. Those moments deserve the full picture. Between them, touch the description lightly (a glance, a gesture, a flicker of their power) instead of repeating the whole portrait every chapter.',
+  'WORD CHOICE: never lean on a pet word or image. A distinctive word or phrase appears at most twice in a chapter; find a fresh way to say it.',
 ].join('\n\n');
 
 export interface PresentedPacketSection { section: PacketSectionId; text: string }
@@ -217,10 +219,23 @@ const presentChapterRewrite = (chapterNumber: number, { note, previous }: Harnes
   'Never reuse the set-aside version\'s wording. Nothing in it happened unless you write it again.',
 ].join('\n');
 
+/**
+ * Where the chapter sits in its arc, worked out from its number (every arc is
+ * the same length): the first chapter of the story or of an arc grounds the
+ * reader in the world; any other chapter picks up mid-stride.
+ */
+const presentArcPosition = (chapterNumber: number) => {
+  const { arcNumber, chapterInArc, chaptersInArc } = createArcChapterPosition(chapterNumber);
+  if (chapterNumber === 1) return `WHERE THIS CHAPTER SITS: Chapter 1 of ${chaptersInArc} in Arc 1. The reader meets this world, its places and its people for the first time.`;
+  if (chapterInArc === 1) return `WHERE THIS CHAPTER SITS: Chapter 1 of ${chaptersInArc} in Arc ${arcNumber}. A new stretch of the story begins: ground the reader again in the world, its places and its people, then move.`;
+  return `WHERE THIS CHAPTER SITS: Chapter ${chapterInArc} of ${chaptersInArc} in Arc ${arcNumber}. The reader is already in the story: pick up from where the latest Previously On recap leaves off, and spend description on what is new or changed.`;
+};
+
 /** Presents the Immediate Chapter Request: the one instruction for the chapter being generated now. */
 export const presentImmediateChapterRequest = (request: ImmediateChapterRequest) => [
   'IMMEDIATE CHAPTER REQUEST',
   `Write Chapter ${request.chapterNumber}${request.continuation ? ', continuing directly from the latest committed chapter above' : ', the opening chapter of this story'}.`,
+  presentArcPosition(request.chapterNumber),
   [
     request.chapterScale.paragraphs
       ? `CHAPTER SCALE: exactly ${request.chapterScale.paragraphs} paragraph entries, ${request.chapterScale.minWords.toLocaleString()} to ${request.chapterScale.maxWords.toLocaleString()} words in all: about ${Math.round(request.chapterScale.minWords / request.chapterScale.paragraphs)} to ${Math.round(request.chapterScale.maxWords / request.chapterScale.paragraphs)} words a paragraph. Fill every paragraph; never pad with empty or one-word entries. Fewer than ${request.chapterScale.minWords.toLocaleString()} words is too short.`

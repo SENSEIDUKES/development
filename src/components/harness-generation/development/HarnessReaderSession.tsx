@@ -428,7 +428,9 @@ const ChapterView = memo(function ChapterView({ chapter, blocks, locale, article
     return byBlock;
   }, [chapter]);
   return <article ref={articleRef} className="mt-6" data-chapter-number={chapter.chapterNumber} lang={locale} aria-labelledby={`harness-reader-chapter-${chapter.chapterNumber}`}>
-    <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-500">Chapter {chapter.chapterNumber}</p>
+    {/* The word count is a testing aid while chapter length is being tuned. */}
+    <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-500">Chapter {chapter.chapterNumber}
+      <span data-testid="harness-reader-word-count"> · {chapter.metrics.wordCount.toLocaleString(locale)} words</span></p>
     <h1 id={`harness-reader-chapter-${chapter.chapterNumber}`} data-read-aloud-title="" data-speaking={highlight === 'title' ? '' : undefined}
       className={`mt-1 rounded font-display text-2xl text-white transition-colors sm:text-3xl ${highlight === 'title' ? 'bg-cyan-300/15' : ''}`}>{chapterTitleText(chapter.title) || chapter.title}</h1>
     <TextHighlightEngine blocks={blocks} onBlocksChange={keepProse} editable={false} locale={locale} overlay={overlay}

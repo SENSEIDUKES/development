@@ -1,10 +1,11 @@
 import { createContext, useContext, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { SEIAppHeader, SEIToolbar } from '@seihouse/ui';
 import { NarrativeButton as LibraryButton, NarrativeHeaderBadge as LibraryHeaderBadge } from '@seihouse/sen/presentation';
 import { ArrowLeft } from 'lucide-react';
 import { HeaderActionButton, HeaderOverflow, type HeaderAction } from './WorkspaceHeaderActions';
 import { useCompactHeader } from './workspaceMedia';
-import { useLibraryPathways } from './LibraryNavigation';
+import { useLibraryPathways, useLibrarySoundSlot } from './LibraryNavigation';
 import { WorkspaceHeaderUtilities, type HeaderSearchItem } from './WorkspaceHeaderUtilities';
 import './workspace-header.css';
 
@@ -19,6 +20,8 @@ const HeaderSoundContext = createContext<ReactNode>(null);
  * The host's sound control (Library: `HeaderSoundControl`) for every Library
  * header beneath it, including headers a Library page draws itself, such as
  * Story Seed's. A header's own `sound` wins; `sound={null}` leaves it out.
+ * Like a header's own, it floats above the bottom bar while the bar is on
+ * screen (see `WorkspaceHeaderProps.sound`).
  */
 export function WorkspaceHeaderSoundProvider({ sound, children }: { sound: ReactNode; children: ReactNode }) {
   return <HeaderSoundContext.Provider value={sound}>{children}</HeaderSoundContext.Provider>;
@@ -47,9 +50,12 @@ export interface WorkspaceHeaderProps {
    */
   center?: ReactNode;
   /**
-   * The host's sound control (Library: `HeaderSoundControl`), just
-   * before Help and Search, on every size, so the reader can always mute.
-   * Without it the host's `WorkspaceHeaderSoundProvider` supplies one.
+   * The host's sound control (Library: `HeaderSoundControl`), so the reader
+   * can always mute. Where there is room (laptops) it sits just before Help
+   * and Search. While a Library bottom bar is on screen (phones and tablets)
+   * it floats just above the bar's right end instead, as the Reader's note
+   * floats above its Listen bar. Without it the host's
+   * `WorkspaceHeaderSoundProvider` supplies one.
    */
   sound?: ReactNode;
 }
@@ -73,6 +79,9 @@ export function WorkspaceHeader({ title, subtitle, emblem, home, back, primaryAc
   const showCenter = pathways && center != null && center !== false;
   const accessory = useContext(HeaderAccessoryContext);
   const hostSound = useContext(HeaderSoundContext);
+  const soundControl = sound === undefined ? hostSound : sound;
+  // Phones and tablets: the note floats above the bottom bar, not in the header.
+  const soundPlace = useLibrarySoundSlot();
   const commands = [...secondaryActions, ...(primaryAction ? [primaryAction] : []), ...overflowActions];
   const searchCommands = [...searchItems, ...commands.filter(action => !searchItems.some(item => item.id === action.id))];
   return <>
@@ -104,10 +113,11 @@ export function WorkspaceHeader({ title, subtitle, emblem, home, back, primaryAc
     actions={<>
       {contextualItem != null && contextualItem !== false && contextualItem !== '' && <div className="workspace-header-context">{contextualItem}</div>}
       {accessory}
-      {sound === undefined ? hostSound : sound}
+      {!soundPlace.floating && soundControl}
       <WorkspaceHeaderUtilities items={searchCommands} help={help} />
     </>}
   />
+  {soundPlace.slot && soundControl != null && soundControl !== false && createPortal(soundControl, soundPlace.slot)}
   {(status || commands.length > 0) && <SEIToolbar aria-label={`${title} actions`} rovingFocus={false}
     className="workspace-header-toolbar" start={
       status && <p role="status" className="workspace-header-status" data-tone={status.tone ?? 'neutral'} title={status.label}>

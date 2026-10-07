@@ -4,7 +4,10 @@
 `destinations`: the strip and the Pathways sidebar show only those, in the Library's
 order, and Settings shows only beside Profile (all four, as before, when omitted).
 `WorkspaceHeaderSoundProvider` gives every Library header beneath it the host's sound
-control, Story Seed's included; a header's own `sound` wins. `useStoredLibrarySidebarMode`
+control, Story Seed's included; a header's own `sound` wins. While a Library bottom bar
+is on screen (phones and tablets) a header's sound control floats just above the bar's
+right end instead of sitting in the header, as the Reader's note floats above its Listen
+bar (`useLibraryBottomBar`, `useLibrarySoundSlot`). `useStoredLibrarySidebarMode`
 keeps the Pathways sidebar's open or minimized choice in the host's device preferences
 (`LIBRARY_SIDEBAR_MODE_KEY`, `readLibrarySidebarMode`). `useLibraryLegalDocuments` gives a
 host the footer's draft Terms, Privacy and Cookies in their sheet; `MainLibraryFooter`

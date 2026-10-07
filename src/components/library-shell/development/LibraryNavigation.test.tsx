@@ -3,7 +3,10 @@ import { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
-import { LIBRARY_EMBLEM, LibraryNavigation, LibrarySectionSidebar, useLibraryWorkspace, type LibraryWorkspaceDefinition } from '@seihouse/library/shell';
+import {
+  LIBRARY_EMBLEM, LibraryDesktopNavigationProvider, LibraryNavigation, LibrarySectionSidebar, WorkspaceHeader, WorkspaceHeaderSoundProvider,
+  useLibraryWorkspace, type LibraryWorkspaceDefinition,
+} from '@seihouse/library/shell';
 import { MainLibraryNavigation } from './MainLibraryNavigation';
 import { activeLibraryDestination, librarySectionItems, type LibraryDestination, type LibraryLocation } from '@seihouse/library/shell';
 import { StorySeedWorkspaceChrome } from '../../story-seed/development/StorySeedWorkspaceChrome';
@@ -176,4 +179,45 @@ it('draws any workspace from its definition: Sections only with sections, tools 
   await click(button('Panels', bar())); expect(tool).toHaveBeenCalledTimes(1);
   await click(button('Leave', bar())); expect(onBack).toHaveBeenCalledTimes(1);
   expect(globalNav()).toBeNull();
+});
+
+it('floats a header\'s music note just above the bottom bar while the bar is on screen, and keeps it in the header on laptops', async () => {
+  const media = (desktop: boolean) => vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: desktop && query === '(min-width: 1024px)', addEventListener: vi.fn(), removeEventListener: vi.fn(), addListener: vi.fn(), removeListener: vi.fn(),
+  }));
+  const notes = () => Array.from(container.querySelectorAll<HTMLElement>('button[aria-label="Mute sound"]'));
+  const spot = () => container.querySelector<HTMLElement>('[data-library-sound-slot]')!;
+  const home = (header: React.ReactNode) => <LibraryNavigation location={{ screen: 'home', collection: 'featured' }} onNavigate={vi.fn()}>{header}</LibraryNavigation>;
+  const studio: LibraryWorkspaceDefinition = { label: 'Studio sections', closeLabel: 'Close studio sections', barLabel: 'Studio navigation', sections: [], back: { onBack: vi.fn() } };
+
+  // Phones and tablets: above the strip's right end, never in the header too; the spot follows the bar's height.
+  await render(home(<WorkspaceHeader title="Home" landmark="none" sound={<button aria-label="Mute sound">Note</button>} />));
+  expect(notes()).toHaveLength(1);
+  expect(notes()[0].closest('[data-library-sound-slot]')).toBe(spot());
+  expect(notes()[0].closest('.workspace-header')).toBeNull();
+  expect(spot().style.getPropertyValue('--library-bar-height')).toMatch(/px$/);
+  // The host's note (its provider) floats the same way, here over a workspace's own bar.
+  await render(<WorkspaceHeaderSoundProvider sound={<button aria-label="Mute sound">Note</button>}>
+    <LibraryNavigation mode="workspace" workspace={studio}><WorkspaceHeader title="Studio" landmark="none" /></LibraryNavigation>
+  </WorkspaceHeaderSoundProvider>);
+  expect(notes()).toHaveLength(1);
+  expect(notes()[0].closest('[data-library-sound-slot]')).not.toBeNull();
+
+  // Laptops: the sidebar and the rail replace the bars, so it sits in the header and the spot is empty.
+  media(true);
+  await render(home(<WorkspaceHeader title="Home" landmark="none" sound={<button aria-label="Mute sound">Note</button>} />));
+  expect(notes()).toHaveLength(1);
+  expect(notes()[0].closest('.workspace-header')).not.toBeNull();
+  expect(spot().childElementCount).toBe(0);
+  // A host that keeps the strip on laptops keeps the note floating above it.
+  await render(<LibraryDesktopNavigationProvider value="strip">
+    {home(<WorkspaceHeader title="Home" landmark="none" sound={<button aria-label="Mute sound">Note</button>} />)}
+  </LibraryDesktopNavigationProvider>);
+  expect(notes()).toHaveLength(1);
+  expect(notes()[0].closest('[data-library-sound-slot]')).not.toBeNull();
+  // Without Library navigation (no bar at all) a header keeps its own note.
+  media(false);
+  await render(<WorkspaceHeader title="Alone" landmark="none" sound={<button aria-label="Mute sound">Note</button>} />);
+  expect(notes()).toHaveLength(1);
+  expect(notes()[0].closest('.workspace-header')).not.toBeNull();
 });

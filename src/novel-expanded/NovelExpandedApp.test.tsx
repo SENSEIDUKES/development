@@ -108,6 +108,13 @@ const buttonByText = (text: string, scope: ParentNode = document) => [...scope.q
 const worldInfo = () => document.querySelector<HTMLElement>('[data-testid="harness-world-info"]');
 const chaptersAction = () => worldInfo()?.querySelector<HTMLElement>('[data-world-info-chapters="action"]');
 const address = () => `${window.location.pathname}${window.location.search}`;
+const shell = () => document.querySelector<HTMLElement>('[data-testid="novel-expanded-shell"]');
+const strip = () => document.querySelector<HTMLElement>('nav[aria-label="Library global navigation"]');
+const footer = () => document.querySelector<HTMLElement>('[data-library-footer]');
+/** The music note on phones and tablets: floating just above the bottom bar, as in the Reader. */
+const floatingNote = () => document.querySelector<HTMLButtonElement>('[data-library-sound-slot] .header-sound-control button');
+/** The music note on laptops: in the header. */
+const headerNote = () => document.querySelector<HTMLButtonElement>('header .header-sound-control button');
 const render = async (services: NovelExpandedServices, url = '/app/', readerMixer = createHostReaderMixer(services.readerPreferences), equippedFamiliarId?: string) => {
   window.history.replaceState(null, '', url);
   await act(async () => root.render(<NovelExpandedApp services={services} readerMixer={readerMixer} equippedFamiliarId={equippedFamiliarId} />));
@@ -293,11 +300,12 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
     await flush(50);
   });
 
-  it('puts the music note in Home\'s header while Menu music is on; off, the menus are silent and the note goes', async () => {
+  it('floats the music note above Home\'s bar while Menu music is on; off, the menus are silent and the note goes', async () => {
     const services = appServices(scriptedWriter().writer);
     const mixer = await render(services);
-    const note = () => container.querySelector<HTMLButtonElement>('header .header-sound-control button');
+    const note = () => floatingNote();
     expect(note()?.getAttribute('aria-label')).toBe('Mute sound');
+    expect(headerNote()).toBeNull();
     expect(storySoundtrack(mixer).piece()).toBeDefined();
     // One tap silences the app at once.
     await act(async () => { note()!.click(); });
@@ -336,10 +344,6 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
   });
 });
 
-const shell = () => document.querySelector<HTMLElement>('[data-testid="novel-expanded-shell"]');
-const strip = () => document.querySelector<HTMLElement>('nav[aria-label="Library global navigation"]');
-const footer = () => document.querySelector<HTMLElement>('[data-library-footer]');
-const headerNote = () => document.querySelector<HTMLButtonElement>('header .header-sound-control button');
 
 describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
   it('holds Home and World Info with the app\'s two places, and leaves the Reader full-screen', async () => {
@@ -353,7 +357,9 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     expect(header.querySelector('[data-slot="library-header-badge-title"]')?.textContent).toBe('NovelExpanded');
     expect(header.querySelector('button[aria-label="Help"]')).toBeTruthy();
     expect(header.querySelector('button[aria-label="Search"]')).toBeTruthy();
-    expect(headerNote()).toBeTruthy();
+    // On a phone the music note floats above the bar, not in the header.
+    expect(floatingNote()).toBeTruthy();
+    expect(headerNote()).toBeNull();
     expect([...strip()!.querySelectorAll('button')].map(button => button.textContent)).toEqual(['Home', 'Create']);
     expect(strip()!.querySelector('[aria-current="page"]')?.textContent).toBe('Home');
     // Only places the app has built: no Discover or Profile, so no Settings either.
@@ -370,7 +376,7 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     await click(container.querySelector(`#home-world-${created.id} button[aria-label^="Open ${created.title}"]`), 'the Home card');
     expect(worldInfo()!.closest('[data-testid="novel-expanded-shell"]')).toBeTruthy();
     expect(strip()!.querySelector('[aria-current="page"]')?.textContent).toBe('Home');
-    expect(headerNote()).toBeTruthy();
+    expect(floatingNote()).toBeTruthy();
     expect(footer()).toBeTruthy();
     expect(document.querySelectorAll('main')).toHaveLength(1);
 
@@ -380,6 +386,8 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     expect(shell()).toBeNull();
     expect(strip()).toBeNull();
     expect(footer()).toBeNull();
+    // The Reader keeps its own note above its Listen bar.
+    expect(floatingNote()).toBeNull();
     expect(story.generate).toHaveBeenCalledTimes(1);
     await act(async () => { story.release(); });
     await flush(10);
@@ -396,11 +404,12 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     await click(buttonByText('Create', strip()!), 'Create in the navigation', 20);
     expect(address()).toBe('/app/?page=create');
     expect(document.querySelector('[data-testid="novel-expanded-create"]')).toBeTruthy();
-    // Story Seed's own task bar stands where the global strip was; its header carries the note.
+    // Story Seed's own task bar stands where the global strip was; the note floats above it.
     expect(strip()).toBeNull();
     const bar = document.querySelector<HTMLElement>('nav[aria-label="Story Seed navigation"]')!;
     expect([...bar.querySelectorAll('button')].map(button => button.textContent)).toEqual(['Sections', 'Story Bank', 'Settings', 'Back']);
-    expect(headerNote()).toBeTruthy();
+    expect(floatingNote()).toBeTruthy();
+    expect(headerNote()).toBeNull();
     await click(buttonByText('Back', bar), 'Back on the task bar', 20);
     expect(address()).toBe('/app/');
   });
@@ -430,6 +439,20 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     const page = document.querySelector('[data-legal-document="privacy"]');
     expect(page?.getAttribute('data-legal-status')).toBe('placeholder');
     expect(page?.querySelector('[role="note"]')?.textContent).toContain('Draft placeholder');
+  });
+
+  it('keeps the music note in the header on laptops, where the sidebar and the rail replace the bars', async () => {
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: query === '(min-width: 1024px)', media: query, onchange: null,
+      addEventListener: vi.fn(), removeEventListener: vi.fn(), addListener: vi.fn(), removeListener: vi.fn(), dispatchEvent: vi.fn(),
+    }));
+    await render(appServices(scriptedWriter().writer));
+    expect(headerNote()).toBeTruthy();
+    expect(floatingNote()).toBeNull();
+    await click(buttonByText('Create', document.querySelector<HTMLElement>('nav[aria-label="Library pathways"]')!), 'Create in the sidebar', 20);
+    expect(address()).toBe('/app/?page=create');
+    expect(headerNote()).toBeTruthy();
+    expect(floatingNote()).toBeNull();
   });
 
   it('opens the laptop sidebar the way the reader left it on this device', async () => {

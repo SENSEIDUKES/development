@@ -64,3 +64,14 @@
   .library-navigation-layout[data-library-desktop-navigation='sidebar'] > .library-global-navigation { display: none !important; }
   .library-navigation-layout[data-library-desktop-navigation='sidebar'] { --library-bottom-clearance: 0px; }
 }
+
+/* While a bottom bar is on screen, a header's sound control (the music note)
+   floats just above the bar's right end, as the Reader's note floats above its
+   Listen bar. The bar's height, safe area included, comes from the bar itself. */
+.library-sound-slot {
+  position: fixed;
+  z-index: 81;
+  inset-inline-end: max(1rem, var(--sh-safe-right, env(safe-area-inset-right, 0px)));
+  inset-block-end: calc(var(--library-bar-height, 5.125rem) + .5rem);
+}
+.library-sound-slot:empty { display: none; }

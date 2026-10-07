@@ -35,6 +35,11 @@ Hover and focus do not change its width. `WorkspaceShell` applies one shared cho
 the host's controlled `sidebarMode` and `onSidebarModeChange`, or the visit's local state.
 `LibraryDesktopNavigationProvider value="strip"` keeps the strip at every width.
 
+While a bottom bar is on screen (the strip, or a workspace's task bar), a header's
+music note floats just above the bar's right end instead of sitting in the header, as
+the Reader's note floats above its Listen bar (`useLibraryBottomBar`,
+`useLibrarySoundSlot`); on laptops it stays in the header.
+
 A page's supplied sub-pages nest under its active pathway. The Cave supplies these;
 `MainLibraryNavigation` omits Home, Create and Discover section menus in sidebar mode
 because the page, Search and footer already expose them. With the strip setting, its
@@ -75,4 +80,5 @@ by `check:ownership`, `check:package-boundaries` and `check:app`.
 - **2026-09-27:** Unified main and workspace navigation; Story Seed supplies its focused task definition to the shell.
 - **2026-09-28:** Added the laptop Pathways sidebar, remembered open/minimized choice and optional all-width strip setting.
 - **2026-10-06:** Rewrote the body from current code and folded dated notes into this history. No behavior changed.
+- **2026-10-07 (later):** The music note floats just above the bottom bar on phones and tablets.
 - **2026-10-07:** Hosts list their places (`destinations`); Settings follows Profile. NovelExpanded shows Home and Create and remembers the sidebar choice on the device.

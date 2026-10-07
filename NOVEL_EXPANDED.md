@@ -346,16 +346,28 @@ Update it whenever it changes.
     The Reader never opens to it: it always plays its own music, each
     chapter's scene, or for a chapter written before scenes and while a
     chapter is written, mystical pieces. Leaving the Reader brings the menu
-    music back. A browser starts sound on the reader's first tap.
+    music back. Browsers and phones start no sound before the reader's first
+    tap (scrolling does not count), so the music begins with the first tap
+    anywhere, on Home too; until then the music note says to tap.
+  - **Leaving the page never stops the sound:** another tab, another app to
+    send a text, a locked phone. The app never pauses the music or the
+    atmosphere for it, and time away does not count toward the ten minutes
+    without a touch after which the music rests. Sound a phone paused meanwhile
+    plays on when the reader comes back (a phone that hushes Listen's voice
+    gets the line read again). Only the reader's own mute and the sleep timer
+    stop it.
   - **Menu music is the reader's choice, and one tap silences it:** Profile
     Settings › Customization › Sound has a **Menu music** switch (on for a new
-    reader, kept on the device). While it is on, the **music note** sits in the
-    Library shell header beside Help and Search: a tap mutes all sound at once
-    (the same switch as the Reader's note); hovering it with a mouse, or holding
-    it on a phone, opens a **Music volume** slider right there. Off, the menus
-    are silent and the note leaves the header; the Reader keeps its own music.
-    The note shows in every header in the app (Home, World Info and Create),
-    and the switch lives in the Workshop's Profile until Profile comes to the app.
+    reader, kept on the device). While it is on, the **music note** shows on
+    every page of the app outside the Reader (Home, World Info and Create): a
+    tap mutes all sound at once (the same switch as the Reader's note);
+    hovering it with a mouse, or holding it on a phone, opens a **Music
+    volume** slider right there. On phones and tablets it floats just above
+    the bottom bar's right end, as the Reader's note floats above its Listen
+    bar, faint while the page scrolls; on laptops it sits in the header beside
+    Help and Search. Off, the menus are silent and the note goes; the Reader
+    keeps its own music. The switch lives in the Workshop's Profile until
+    Profile comes to the app.
   - **A chapter's soundtrack, in the tiny SEN language:** at the very start of
     every chapter the writer writes one soundtrack tag, the mood of its music
     and its atmosphere (`[[soundtrack: mystical | forest]]`), from the story's
@@ -388,7 +400,8 @@ Update it whenever it changes.
     device. `npm run check:app` fails the build if it reaches an old system
     ([`src/novel-expanded/README.md`](./src/novel-expanded/README.md)).
   - **The app sits in the Library Shell:** Home and World Info have the
-    Library's header (NovelExpanded, the music note, Help and Search), its
+    Library's header (NovelExpanded, Help and Search, and the music note on
+    laptops; on phones and tablets the note floats above the bottom bar), its
     navigation and its footer. The navigation shows only the app's two places,
     Home and Create: the bottom strip on phones and tablets, the Pathways
     sidebar on laptops, which opens the way the reader last left it on the

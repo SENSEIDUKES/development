@@ -34,7 +34,7 @@ written guidance and audio owner. Header utilities own transient overlay state o
 | `title`, `subtitle`, `emblem`, `home`, `back` | Host-provided identity and navigation callbacks |
 | `contextualItem`, `center` | Optional page content, including desktop Dao Insights |
 | `WorkspaceHeaderAccessoryProvider` | Host-owned persistent actions shared across headers |
-| `sound`, `WorkspaceHeaderSoundProvider` | The host's sound control (the music note) before Help and Search; the provider gives it to every header beneath it, Story Seed's included |
+| `sound`, `WorkspaceHeaderSoundProvider` | The host's sound control (the music note) before Help and Search on laptops; while a Library bottom bar is on screen (phones and tablets) it floats just above the bar's right end instead. The provider gives it to every header beneath it, Story Seed's included |
 | `searchItems`, page commands, `help`, `status` | Existing page destinations, eligibility, Help and status |
 | `landmark` | `banner` alone, `none` when `WorkspaceShell` supplies the banner |
 | `WorkspaceShell` | Fixed frame, scrolling main region, desktop rail and remembered sidebar width |
@@ -78,4 +78,5 @@ Workshop routing, mocks, manifests and controls stay outside package consumers.
 - **2026-09-27:** Story Seed commands moved into its content action row and workspace navigation; browsing screens adopted the fixed shell frame.
 - **2026-09-28:** Home gained centered Dao Insights while the laptop Pathways sidebar is showing.
 - **2026-10-06:** Rewrote the body from current code and folded dated notes into this history. No behavior changed.
+- **2026-10-07 (later):** On phones and tablets a header's music note floats just above the bottom bar's right end, as the Reader's note does above its Listen bar; on laptops it stays in the header.
 - **2026-10-07:** `WorkspaceHeaderSoundProvider` lets a host put its music note in every header once; NovelExpanded's Home, World Info and Create use it.

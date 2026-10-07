@@ -31,7 +31,7 @@ it('inspects every catalogue Familiar and remounts the renderer for the chosen p
   act(() => root.render(<FamiliarPreview />));
   const [catalogue] = container.querySelectorAll<HTMLSelectElement>('select');
   expect(catalogue.value).toBe('quill');
-  expect(catalogue.options).toHaveLength(11);
+  expect(catalogue.options).toHaveLength(12);
   expect(container.textContent).toContain('common · Default');
 
   const setValue = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')!.set!;

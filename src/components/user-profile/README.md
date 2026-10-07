@@ -14,14 +14,14 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
   `src/hooks/useUserProfile.ts`
 - **Workshop preview:** `?preview=user-profile`
 - **First Workshop record:** 2026-09-08
-- **Last recorded Workshop update:** 2026-09-28
+- **Last recorded Workshop update:** 2026-10-06
 - **Historical source inspection:** 2026-09-10
 - **Implementation status:** `@seihouse/library/profile` surface consuming separate Library economy capabilities
 
 ### 2026-09-22 — Catalogue-driven Familiar preview
 
 Development profile fixtures start with Quill, the catalogue's separately declared
-default, selected. The Familiar section renders all eleven currently inspectable
+default, selected. The Familiar section renders all twelve currently inspectable
 catalogue options with their host-supplied ranks; no rank determines availability,
 ownership, acquisition, or pricing. The existing
 profile controller reports loaded and successfully saved Familiar selections to
@@ -60,6 +60,9 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 
 ## Workshop history
 
+- **2026-10-06:** The Familiar selector now includes Frostforged Golem as the twelfth
+  Library package, with a host-supplied Rare tier. Rarity remains descriptive and does
+  not change profile-owned selection, availability, or persistence.
 - **2026-09-28:** On laptops (1024px and wider) the Cave's short separate rail is replaced by the Library Shell's Pathways sidebar: the Cave's pages (Home, Stories, Rewards…) nest under the active Profile pathway, with Settings in the sidebar footer. `UserProfile` supplies the signed-in reader's portrait, name and DAO rank to the top of the sidebar (never a viewed public profile's), and a Guest reader entry when signed out. `UserProfile` still supplies the same destination definition; phones and tablets are unchanged. See [Library Shell](../library-shell/README.md).
 - **2026-09-27:** The Cave header's emblem is the shared Celestial Library emblem (`LIBRARY_EMBLEM`), the same one Home and Story Seed carry, instead of the host's asset-slot image; its Return to Library behavior is unchanged.
 - **2026-09-26 Reading Mode:** The Writing Preferences field is now labelled "Default Reading Mode"

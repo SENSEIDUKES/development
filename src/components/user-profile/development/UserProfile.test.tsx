@@ -859,7 +859,7 @@ describe('Cultivator Cave settings', () => {
     await click(byText('[aria-label="Customization sections"] [role="tab"]', 'Familiar'));
     const selection = document.querySelector('[aria-label="Familiar selection"]')!;
     expect(selection.closest('[role="tabpanel"]')?.hasAttribute('hidden')).toBe(false);
-    expect(selection.querySelectorAll('article')).toHaveLength(11);
+    expect(selection.querySelectorAll('article')).toHaveLength(12);
     expect(selection.querySelector('img')?.getAttribute('src')).toBe('/familiars/celestial-guardian/neutral.png');
     expect(selection.querySelectorAll('[data-rarity="epic"]')).toHaveLength(3);
     const quill = [...selection.querySelectorAll<HTMLElement>('article')].find(article => article.textContent?.includes('Quill'))!;

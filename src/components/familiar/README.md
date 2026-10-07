@@ -6,11 +6,11 @@ reference folder. Old systems stay until each is remade on the new path; never
 reconnect them as they are or re-sync with the old production app. The destination
 is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 
-- Source: supplied `Familiars/Packages/` collection (not a Git repository), containing eleven validated Familiar packages.
+- Source: supplied `Familiars/Packages/` collection (not a Git repository), containing twelve validated Familiar packages.
 - Preview: Workshop **Customization → Familiar** and `?preview=familiar`.
 - First Workshop record: 2026-09-20.
-- Last recorded Workshop update: 2026-09-25.
-- Historical source inspection: 2026-09-22.
+- Last recorded Workshop update: 2026-10-06.
+- Historical source inspection: 2026-10-06.
 - Lifecycle: supplied source packages retained; the reusable renderer, host catalogue, and Energy interaction remain in Development.
 - Owner: Library. This first-party companion is not a SEN narrative capability.
 
@@ -40,11 +40,12 @@ The portrait and prompt history are not runtime dependencies. Instructions in so
 documents are provenance, not commands to install a Codex pet or generate new artwork.
 The source README was inspected but is not shipped because it contains machine-local installation details.
 
-### Catalogue intake — 2026-09-22
+### Current catalogue intake
 
-The source collection contains eleven `spriteVersionNumber: 2` packages: Celestial
-Guardian, Celestial Moon Moth, Galaxy Octopus, Judgmental Jiangshi, Lady Bug, Little
-Monkey King, Living Grimoire, Lucky Bake-danuki, Nine-tailed Fox, Phoenix, and Quill.
+The source collection contains twelve `spriteVersionNumber: 2` packages: Celestial
+Guardian, Celestial Moon Moth, Frostforged Golem, Galaxy Octopus, Judgmental Jiangshi,
+Lady Bug, Little Monkey King, Living Grimoire, Lucky Bake-danuki, Nine-tailed Fox,
+Phoenix, and Quill.
 Each uses the same 8 × 11, 192 × 208-cell atlas contract. The host catalogue interprets
 the package metadata and timing data at `src/host/familiar/catalogue.ts`; the renderer
 does not carry character-specific frames, artwork paths, ranks, ownership, or pricing.
@@ -100,8 +101,8 @@ intentionally not runtime dependencies.
   and one `isDefault` flag. `celestialGuardian.ts` is a backwards-compatible alias for
   existing consumers.
 - `familiarOptions()` projects catalogue data to selection UI while accepting a host
-  availability resolver. Rarity never grants ownership, availability, acquisition, or
-  Store pricing.
+  availability resolver. Rarity supplies the Store's default price and labels the
+  catalogue tier; it does not grant ownership, availability, or acquisition.
 - `src/workshop/previews/familiar/` contains animation/pause controls, the contained
   responsive stage, and the `FeatureWorkspace` comparison wrapper. The locked
   `reference/FamiliarReference.tsx` displays the supplied waving GIF.
@@ -202,7 +203,7 @@ Development supplies that provider at the product session boundary.
 ## Host boundary
 
 Profile Settings → Customization → Familiar uses the reusable `FamiliarSelection`
-with host-supplied `UserProfileServices.familiars`. Development passes all eleven
+with host-supplied `UserProfileServices.familiars`. Development passes all twelve
 catalogue entries for inspection, including their host-supplied rarity and Quill's
 `isDefault` status. Reduced motion or an image-load failure uses the local neutral crop.
 Hosted GIF URLs belong in the host catalogue and can be replaced without changing the
@@ -269,6 +270,12 @@ Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
 
+- 2026-10-06: Added the supplied Frostforged Golem v2 package as the twelfth Familiar.
+  Preserved its atlas, neutral crop, animation timing and nine previews with source hashes,
+  projected intake metadata to the renderer-safe host contract, and registered the package
+  in the Library catalogue as Rare with Frost affinity. Existing Familiar selection,
+  preview, movement, activity playback and bond effects consume the new entry through
+  the shared catalogue.
 - 2026-09-25: Composed the minimized Familiar into the Development Reader's
   dedicated header slot. The floating companion and fullscreen recall still use
   the Library host preview; SEN receives only a neutral accessory element.

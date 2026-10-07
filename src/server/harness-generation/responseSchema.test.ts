@@ -52,6 +52,26 @@ describe('HARNESS chapter response schema shape', () => {
       .toContain('CHAPTER SCALE: exactly 73 paragraph entries, 1,800 to 2,500 words in all: about 25 to 34 words a paragraph.');
   });
 
+  it('tells the writer where the chapter sits in its arc: the first chapter of the story or of an arc grounds the reader, any other opens in motion', () => {
+    const request = (chapterNumber: number) => presentImmediateChapterRequest({ chapterNumber, continuation: chapterNumber > 1, chapterScale: { minWords: 1_800, maxWords: 2_500, paragraphs: 50 } });
+    expect(request(1)).toContain('WHERE THIS CHAPTER SITS: Chapter 1 of 30 in Arc 1. The reader meets this world, its places and its people for the first time.');
+    expect(request(7)).toContain('WHERE THIS CHAPTER SITS: Chapter 7 of 30 in Arc 1. The reader is already in the story: open in motion from where the latest Previously On recap leaves off');
+    expect(request(30)).toContain('Chapter 30 of 30 in Arc 1. The reader is already in the story');
+    expect(request(31)).toContain('WHERE THIS CHAPTER SITS: Chapter 1 of 30 in Arc 2. A new stretch of the story begins: ground the reader again in the world, its places and its people, then move.');
+    expect(request(38)).toContain('Chapter 8 of 30 in Arc 2. The reader is already in the story');
+    // It follows the chapter it describes, before the scale.
+    expect(request(7).indexOf('Write Chapter 7')).toBeLessThan(request(7).indexOf('WHERE THIS CHAPTER SITS'));
+    expect(request(7).indexOf('WHERE THIS CHAPTER SITS')).toBeLessThan(request(7).indexOf('CHAPTER SCALE'));
+  });
+
+  it('opens a continuing chapter in motion, keeps full character portraits for the moments that earn them, and limits pet words within the chapter', () => {
+    expect(HARNESS_RESPONSE_CONTRACT).toContain('Every other chapter opens in motion: a character acting, speaking or thinking, picking up where the latest Previously On recap leaves off. Never open it by describing the place, its air or its weather');
+    expect(HARNESS_RESPONSE_CONTRACT).toContain('when they first appear, when they return after time away, and when something about them changes: a breakthrough, a power-up, new gear, an injury, a new rank.');
+    expect(HARNESS_RESPONSE_CONTRACT).toContain('A distinctive word or phrase appears at most twice in a chapter; find a fresh way to say it.');
+    // The writer sees recaps, never earlier chapters' prose, so it is never asked to avoid words it cannot see.
+    expect(HARNESS_RESPONSE_CONTRACT).not.toContain('from chapter to chapter');
+  });
+
   it('asks for the closing list of the main character\'s holdings only when the Holdings skill is loaded, as a plain list of names', () => {
     const withHoldings = buildHarnessChapterResponseSchema(50, { holdings: true });
     expect(withHoldings.properties.mainCharacterHoldings).toEqual({

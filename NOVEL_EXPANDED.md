@@ -438,7 +438,17 @@ Update it whenever it changes.
     title is its name alone; the Reader numbers it. The writer is told roughly how
     many words each paragraph needs to reach the minimum, never to carry a
     countdown ("nine days remain") into a recap, since later chapters read it
-    after time has passed, and never to lean on a pet word.
+    after time has passed, and never to lean on a pet word within a chapter.
+  - **Openings and descriptions, in plain wording only:** each chapter is told
+    where it sits in its arc ("Chapter 7 of 30 in Arc 1"). The first chapter of
+    the story or of a new arc may ground the reader in the world; every other
+    chapter opens in motion, from where the last recap leaves off, never by
+    describing the place or its weather. A character gets the full portrait
+    when they first appear, come back after time away, or change (a
+    breakthrough, a power-up, new gear, an injury, a new rank), and a light
+    touch between. The writer still gets the same Story Information on every
+    chapter; nothing is withheld. Some repetition is the AI's mark and the
+    author's to polish; this only makes it rarer.
   - **The writer's tags, in one strict shape:** every tag kind is taught the
     same way (its job, its format, what is required, what is forbidden, and a
     check before it returns), and what every tag shares is said once. Sounds

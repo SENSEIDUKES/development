@@ -20,6 +20,11 @@ export interface WriterInstructionsChange {
  */
 export const WRITER_INSTRUCTIONS_HISTORY: readonly WriterInstructionsChange[] = [
   {
+    date: '2026-10-07',
+    summary: 'From SENSEI\'s Sundered Heavens test: 7 of 8 chapters opened by describing the scenery ("The soot of Rust-Vein Gorge…", "The soot of the mid-tier processing terrace…", "The soot-stained morning wind…"), and Gu Chen\'s full portrait came back nearly every chapter. The response contract now says how a chapter opens: the first chapter of the story or of a new arc may ground the reader in the world, its places and its people; every other chapter opens in motion, picking up from the latest recap, never by describing the place, its air or its weather. Character descriptions: full when a character first appears, returns after time away, or changes (a breakthrough, a power-up, new gear, an injury, a new rank), the genre\'s best moments; a light touch between them. The pet-word rule keeps its limit within a chapter and drops "not carried from chapter to chapter", which the writer could never check: it sees recaps, not earlier chapters. The chapter request (not a recorded block) now says where the chapter sits in its arc (Chapter 7 of 30 in Arc 1) and what that means for its opening.',
+    changed: { 'response-contract': '17990b6ea4a675' },
+  },
+  {
     date: '2026-10-06',
     summary: 'Phase 4. The Soundtrack instructions begin (SEN Soundtrack 1.0.0): at the very start of every chapter the writer chooses, once, the mood of its music and its atmosphere ([[soundtrack: Music Mood | Atmosphere]]) from the story\'s own lists: the music moods at least three pieces of SEN Soundscapes, Volume 1 share, and the SEN Atmospheres words. Never a second tag, so a passing fight never brings on war music (SENSEI\'s rule: one atmosphere per chapter, chosen at its start). The Reader plays that chapter\'s pieces and atmosphere.',
     changed: { soundtrack: '1744f98aa68929' },

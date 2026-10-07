@@ -317,23 +317,52 @@ Update it whenever it changes.
     browser's own voices in three parts: the Narrator for the prose, the
     Protagonist voice for the main character's spoken lines, the Side voice for
     everyone else's. The sentence being spoken is lit and the page follows it.
-    **The soundtrack is SEIHouse's own audio player** (its reader mixer): the
-    reader's chosen **atmosphere** (50 beds from SEN Atmospheres, Volume 1,
-    each measured so the player can level it toward −20 LUFS) plays under the
-    chapter. Every SEIHouse audio host now gives the player permission to
-    process its files (CORS, on every response), so it turns loud beds down and
-    quiet ones up. The levels are not even yet: 22 beds are too quiet to reach
-    −20 even at the player's largest boost and need re-exporting. Sound Cues play
-    over it at the loudness of their Energy, Listen dips it, and a **sleep
-    timer** stops it, Listen included. A small **note** above the Listen bar
-    mutes all story audio with a tap; a long-press opens Audio settings.
-    **Reader Settings** opens with **Audio** (presets, master, the atmosphere
-    and Sound Cues levels, the atmosphere choice and the sleep timer, showing
-    only what the chapter uses), then **Narration** (the three voices and the
-    speed, remembered on the device for each story language). The mix is
-    remembered on the device, never in the story. **Holdings**
-    lists what each character has now, for checking the chapters (below). No
-    Codex, Mind Palace, reader translation or read marks.
+    **The soundtrack is SEIHouse's own audio player** (its reader mixer), and
+    each chapter has its own scene: **music** (pieces of one mood from SEN
+    Soundscapes, Volume 1, one after another) and one **atmosphere** (a bed from
+    SEN Atmospheres, Volume 1), both chosen by the chapter's writer once, at its
+    start (below). Every piece and bed was measured so the player can level it
+    toward −20 LUFS, and every SEIHouse audio host gives the player permission
+    to process its files (CORS, on every response), so it turns loud files down
+    and quiet ones up. The levels are not even yet: 22 beds are too quiet to
+    reach −20 even at the player's largest boost and need re-exporting. The
+    atmosphere plays from the moment the Reader opens (while Chapter 1 is
+    written too) and under the Reader's own pages (Fate, Holdings, an arc's
+    page); only leaving the Reader stops it. Atmosphere loops play as their
+    files are made, with no overlap at the loop point. Sound Cues play over it
+    at the loudness of their Energy, Listen dips it, and a **sleep timer** stops
+    it, Listen included. A small **note** above the Listen bar mutes all story
+    audio with a tap; a long-press opens Audio settings. **Reader Settings**
+    opens with **Audio** (presets, master, the Soundscapes, Atmosphere and Sound
+    Cues levels and the sleep timer), then **Scene**: Automatic plays each
+    chapter's own music and atmosphere; a piece or an atmosphere the reader
+    chooses stays, whatever the chapters choose. Then **Narration** (the three
+    voices and the speed, remembered on the device for each story language). The
+    mix and the Scene choice are remembered on the device, never in the story.
+    **Holdings** lists what each character has now, for checking the chapters
+    (below). No Codex, Mind Palace, reader translation or read marks.
+  - **Music everywhere in the app, with no model:** NovelExpanded plays calm
+    pieces of SEN Soundscapes on Home, Create and World Info and while a
+    chapter is written; when a chapter opens in the Reader, its own scene takes
+    over, and leaving the Reader brings the app's music back. A browser starts
+    sound on the reader's first tap.
+  - **A chapter's soundtrack, in the tiny SEN language:** at the very start of
+    every chapter the writer writes one soundtrack tag, the mood of its music
+    and its atmosphere (`[[soundtrack: mystical | forest]]`), from the story's
+    own lists (the 15 moods at least three pieces share; 20 atmosphere words).
+    Only the first counts, so a passing fight never brings on war music. Beds
+    that share a word take turns from chapter to chapter, and a chapter that
+    chose nothing goes on with the scene before it.
+  - **Writing survives leaving the Reader:** the chapter being written belongs
+    to the story, not to the screen. Back out mid-write and it keeps writing;
+    come back and it is still writing, or there. A write a closed browser cut
+    off is finished by the reader's next Write (a saved reply needs no new
+    model call). In the app, Chapter 1 begins the moment the story is made
+    (Manifest Story), so it is ready, or nearly, when the reader starts; a Fate
+    Survival story's first chapter waits for the reader's direction.
+  - **Low reasoning by default:** every model that offers a `low` reasoning
+    level is sent it unless the reader chooses another, since testing found low
+    as good and far faster.
   - **The Aura Veil has two screens:** one narrative manifestation and one media
     reveal. The narrative one shows while a chapter is written.
   - **The separate memory call is retired.** Tags record Sound Cues, speakers and
@@ -458,7 +487,12 @@ Update it whenever it changes.
     fixer is called, what it costs next to a chapter, and whether its fixes
     hold (each chapter's record in the export shows it);
   - Listen on real phones (iPhone Safari, Android Chrome), whose voices differ
-    from device to device.
+    from device to device;
+  - the soundtrack tag with a real model: whether the writer chooses one mood
+    and atmosphere that fit each chapter, and keeps to one tag;
+  - the music on an iPhone: eight SEN Soundscapes files are named `.wav` but
+    hold MP3, and their server labels them WAV, which Safari may refuse until
+    they are renamed or relabelled.
 - **Not yet as [The World Blueprint](#the-world-blueprint) describes:**
   branching, and the warnings on Blueprint changes, are not built.
 - **Not connected yet:**
@@ -471,8 +505,6 @@ Update it whenever it changes.
     rewards, Familiars, the Celestial Store, Creator Space) are Library package
     entries the Workshop previews; the NovelExpanded app uses none of them yet.
 - **Not rebuilt yet:**
-  - soundscapes (the music under a scene): the audio player plays them, but
-    nothing chooses one for a chapter yet;
   - manifestations;
   - System Panels, including the Fate Survival result card;
   - creature events.

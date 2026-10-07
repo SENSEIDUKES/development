@@ -25,6 +25,15 @@ The same 0.21.0 release adds the canonical `./manifestations` names:
 use them. Prior published names remain compatibility exports of the same components.
 See [the naming map](../../components/chapter-manifestation/README.md#canonical-names).
 
+**0.21.0 (2026-10-06):** requires `@seihouse/sen` 0.23.0. `useLibraryStories`'s
+`generateNextChapter` finishes a chapter a closed browser interrupted before writing a
+new one (`writeNextChapter`). The Library media port freezes the host's atmospheres
+with every attempt (`baseMedia.atmospheres`), so the writer can choose one. The Model
+Router sends `low` reasoning by default to every model that offers it (Gemini 3.8, 3.7
+and 3.5 Flash, Gemini 3.1 Pro Preview, GPT-6 Luna and Luna Pro, Gemini 3.8 Flash on
+OpenRouter); a reader's own choice still wins. The Harness Generation page shows the
+Soundtrack slot. `LIBRARY_PACKAGE_VERSION` reads 0.21.0 (it had stayed at 0.19.0).
+
 **0.19.1 (2026-10-06):** The generation veil's traveler advances during whole-response
 generation and arrives before the veil closes on success. Unknown work shows no
 invented percentage. Failure/cancellation never signals arrival. Chapter saving,

@@ -8,6 +8,7 @@ export const FAMILIAR_ELEMENT_AFFINITY: Readonly<Record<string, FamiliarElement>
   'little-monkey-king': 'lightning',
   quill: 'lightning',
   'celestial-moon-moth': 'frost',
+  'frostforged-golem': 'frost',
   'celestial-guardian': 'celestial',
   'lucky-bake-danuki': 'celestial',
   'galaxy-octopus': 'void',

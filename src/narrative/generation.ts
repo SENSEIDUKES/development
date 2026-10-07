@@ -2,6 +2,7 @@ import type { SoundCueAttachment } from '../audio/inlineAudio';
 import type { SpeakerAttachment } from './speech';
 import type { CodexEntry, HoldingChangeAttachment, HoldingsSection } from './holdings';
 import type { SoundWord } from '../audio/soundWords';
+import type { SoundtrackVocabulary } from '../audio/soundtrackVocabulary';
 import type { FrozenNarrativeMedia, ResolvedSoundscape, StoryMediaSelection } from '../audio/media';
 import type { SenLanguageCode } from '../lib/language';
 import type { ChapterWritingStyle } from './readingMode';
@@ -21,7 +22,7 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * workspace's Codex entries; 27 counts arcs of 30 chapters (nothing before it
  * upgrades); 28 adds the optional rewrite request and replaced-by record, and
  * each chapter's optional Holdings fixer record. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 28 as const;
+export const HARNESS_GENERATION_SCHEMA_VERSION = 29 as const;
 
 /** Output buckets assign processor categories; legacy event arrays remain readable. */
 export const HARNESS_MEMORY_CATEGORIES = {
@@ -239,6 +240,7 @@ export type HarnessSkillSlotId =
   | 'accessibility'
   | 'translation'
   | 'soundCues'
+  | 'soundtrack'
   | 'speakers'
   | 'holdings';
 
@@ -323,6 +325,8 @@ export interface HarnessSkillLoadoutSnapshot {
   originalLanguage?: SenLanguageCode;
   /** The story's sound words from the attempt's frozen Media Loadout; they fill the Sound Cues slot. */
   soundVocabulary?: SoundWord[];
+  /** The music moods and atmosphere words of the attempt's frozen Media Loadout; they fill the Soundtrack slot. */
+  soundtrackVocabulary?: SoundtrackVocabulary;
 }
 
 /** One equipped CAPA Skill recorded in the CAPA Prompt. Its instructions live only in `CapaPrompt.text`. */
@@ -360,6 +364,8 @@ export interface CapaPrompt {
    * cues only for them, on every retry and replay.
    */
   soundVocabulary?: SoundWord[];
+  /** The music moods and atmosphere words the Soundtrack section gave the writer, frozen with it. */
+  soundtrackVocabulary?: SoundtrackVocabulary;
 }
 
 /**
@@ -565,6 +571,8 @@ export interface HarnessAcceptedChapterDraft {
   holdingChanges?: HoldingChangeAttachment[];
   /** The writer's closing list: the main character's things and abilities by name, after this chapter. */
   closingHoldings?: string[];
+  /** The chapter's music and atmosphere, from the writer's soundtrack tag. */
+  scene?: HarnessChapterScene;
   title: string;
   titleSource: 'model' | 'harness-fallback';
   plan?: HarnessModelPlan;
@@ -640,6 +648,7 @@ export interface HarnessWarning {
     | 'sound_tag_moved'
     | 'prose_marks_removed'
     | 'speaker_tags_incomplete'
+    | 'soundtrack_incomplete'
     | 'holding_tags_incomplete';
   message: string;
 }
@@ -844,6 +853,18 @@ export interface StoryInformationPacket {
   diagnostics: StoryInformationDiagnostics;
 }
 
+/**
+ * The music and atmosphere a chapter is read with, chosen once by its writer
+ * at the chapter's start (never more than one of each, so a passing fight
+ * never changes them).
+ */
+export interface HarnessChapterScene {
+  /** A mood of the chapter's soundscapes: its pieces of that mood play one after another. */
+  soundscape?: string;
+  /** The id of one atmosphere from the host's atmosphere catalog. */
+  atmosphere?: string;
+}
+
 export interface HarnessChapter {
   id: string;
   storyId: string;
@@ -877,6 +898,8 @@ export interface HarnessChapter {
   holdingChanges?: HoldingChangeAttachment[];
   /** The writer's closing list for this chapter, checked against the holdings it leaves. */
   closingHoldings?: string[];
+  /** The chapter's music and atmosphere, as its writer chose them. Absent before scenes were chosen. */
+  scene?: HarnessChapterScene;
   /** Pack/version provenance of the frozen catalog that produced this media. */
   mediaLoadout: FrozenNarrativeMedia;
   plan?: HarnessModelPlan;

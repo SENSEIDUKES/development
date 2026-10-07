@@ -31,9 +31,11 @@ export interface ModelReasoning {
    */
   defaultLevel: ReasoningLevel;
   /**
-   * The Router sends `defaultLevel` itself when the reader chooses none: the
-   * provider's own default thinks past the chapter deadline (HARNESS waits
-   * 170 seconds) and the chapter never arrives.
+   * The Router sends `defaultLevel` itself when the reader chooses none. Low is
+   * sent wherever a model offers it: in the owner's tests across five models
+   * (2026-10-06) it wrote chapters as well as higher levels and far faster.
+   * Some models' own defaults also think past the chapter deadline (HARNESS
+   * waits 170 seconds) and the chapter never arrives.
    */
   sendDefault?: true;
 }
@@ -79,14 +81,14 @@ const OPENROUTER_PATTERN = /^openrouter\/[a-z0-9][a-z0-9._-]*\/[a-z0-9~][a-z0-9.
 
 /** Text models for chapter generation, newest first within each provider. */
 export const CHAPTER_MODELS: readonly RoutedModel[] = [
-  { id: 'google/gemini-3.8-flash', label: 'Gemini 3.8 Flash', provider: 'gemini', stage: 'current', reasoning: { levels: GEMINI_THREE_LEVELS, defaultLevel: 'medium' } },
-  { id: 'google/gemini-3.7-flash', label: 'Gemini 3.7 Flash', provider: 'gemini', stage: 'current', reasoning: { levels: GEMINI_THREE_LEVELS, defaultLevel: 'medium' } },
-  { id: 'google/gemini-3.5-flash', label: 'Gemini 3.5 Flash', provider: 'gemini', stage: 'current', reasoning: { levels: GEMINI_FOUR_LEVELS, defaultLevel: 'medium' } },
+  { id: 'google/gemini-3.8-flash', label: 'Gemini 3.8 Flash', provider: 'gemini', stage: 'current', reasoning: { levels: GEMINI_THREE_LEVELS, defaultLevel: 'low', sendDefault: true } },
+  { id: 'google/gemini-3.7-flash', label: 'Gemini 3.7 Flash', provider: 'gemini', stage: 'current', reasoning: { levels: GEMINI_THREE_LEVELS, defaultLevel: 'low', sendDefault: true } },
+  { id: 'google/gemini-3.5-flash', label: 'Gemini 3.5 Flash', provider: 'gemini', stage: 'current', reasoning: { levels: GEMINI_FOUR_LEVELS, defaultLevel: 'low', sendDefault: true } },
   { id: 'google/gemini-3.5-flash-lite', label: 'Gemini 3.5 Flash Lite', provider: 'gemini', stage: 'current', reasoning: { levels: GEMINI_FOUR_LEVELS, defaultLevel: 'minimal' } },
-  { id: 'google/gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro Preview', provider: 'gemini', stage: 'preview', reasoning: { levels: GEMINI_THREE_LEVELS, defaultLevel: 'high' } },
+  { id: 'google/gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro Preview', provider: 'gemini', stage: 'preview', reasoning: { levels: GEMINI_THREE_LEVELS, defaultLevel: 'low', sendDefault: true } },
   { id: 'google/gemini-3.1-flash-lite', label: 'Gemini 3.1 Flash Lite', provider: 'gemini', stage: 'current', reasoning: { levels: GEMINI_FOUR_LEVELS, defaultLevel: 'minimal' } },
-  { id: 'openrouter/openai/gpt-6-luna', label: 'GPT-6 Luna · OpenRouter', provider: 'openrouter', stage: 'current', reasoning: { levels: OPENAI_LEVELS, defaultLevel: 'medium' } },
-  { id: 'openrouter/openai/gpt-6-luna-pro', label: 'GPT-6 Luna Pro · OpenRouter', provider: 'openrouter', stage: 'current', reasoning: { levels: OPENAI_LEVELS, defaultLevel: 'medium' } },
+  { id: 'openrouter/openai/gpt-6-luna', label: 'GPT-6 Luna · OpenRouter', provider: 'openrouter', stage: 'current', reasoning: { levels: OPENAI_LEVELS, defaultLevel: 'low', sendDefault: true } },
+  { id: 'openrouter/openai/gpt-6-luna-pro', label: 'GPT-6 Luna Pro · OpenRouter', provider: 'openrouter', stage: 'current', reasoning: { levels: OPENAI_LEVELS, defaultLevel: 'low', sendDefault: true } },
   // GLM, Qwen and DeepSeek think past the chapter deadline on their own defaults.
   // Their sent defaults finished full chapters on 2026-10-04: GLM low on its
   // fastest provider in 17s and 25s, Qwen none in 25-78s, DeepSeek none in
@@ -96,7 +98,7 @@ export const CHAPTER_MODELS: readonly RoutedModel[] = [
   { id: 'openrouter/minimax/minimax-m2.7', label: 'MiniMax M2.7 · OpenRouter', provider: 'openrouter', stage: 'current' },
   { id: 'openrouter/arcee-ai/trinity-large-thinking', label: 'Trinity Large Thinking · OpenRouter', provider: 'openrouter', stage: 'current' },
   { id: 'openrouter/deepseek/deepseek-v4.1-flash', label: 'DeepSeek V4.1 Flash · OpenRouter', provider: 'openrouter', stage: 'current', reasoning: { levels: OPEN_MODEL_LEVELS, defaultLevel: 'none', sendDefault: true } },
-  { id: 'openrouter/google/gemini-3.8-flash', label: 'Gemini 3.8 Flash · OpenRouter', provider: 'openrouter', stage: 'current', reasoning: { levels: GEMINI_THREE_LEVELS, defaultLevel: 'medium' } },
+  { id: 'openrouter/google/gemini-3.8-flash', label: 'Gemini 3.8 Flash · OpenRouter', provider: 'openrouter', stage: 'current', reasoning: { levels: GEMINI_THREE_LEVELS, defaultLevel: 'low', sendDefault: true } },
 ];
 
 /**

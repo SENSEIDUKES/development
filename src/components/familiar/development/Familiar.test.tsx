@@ -266,7 +266,7 @@ describe('Familiar selection', () => {
   it('renders ranks and the catalogue default without inferring either in the selection component', async () => {
     await act(async () => root.render(<FamiliarSelection options={allFamiliarOptions} onSelect={vi.fn()} />));
     const articles = Array.from(container.querySelectorAll<HTMLElement>('article'));
-    expect(articles).toHaveLength(11);
+    expect(articles).toHaveLength(12);
     expect(articles.find(article => article.textContent?.includes('Celestial Guardian'))?.querySelector('[data-rarity]')?.textContent).toBe('epic');
     const quill = articles.find(article => article.textContent?.includes('Quill'))!;
     expect(quill.querySelector('[data-rarity]')?.textContent).toBe('common');

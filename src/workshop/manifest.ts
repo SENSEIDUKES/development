@@ -319,9 +319,9 @@ export const workshopEntries: WorkshopEntry[] = [
   },
   {
     id: 'familiar', section: 'customization', owner: 'library', status: 'active', title: 'Familiar',
-    description: 'Inspect eleven supplied Familiar atlases, ranks, and hosted heroes through the reusable sprite renderer and live Energy interaction.',
+    description: 'Inspect twelve supplied Familiar atlases, ranks, and hosted heroes through the reusable sprite renderer and live Energy interaction.',
     category: 'animations', version: 'v1.0',
-    source: { repository: 'Supplied Familiar packages', path: 'Familiars/Packages/', lastCompared: '2026-09-22' },
+    source: { repository: 'Supplied Familiar packages', path: 'Familiars/Packages/', lastCompared: '2026-10-06' },
   },
   {
     id: 'relics-gallery',

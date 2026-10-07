@@ -88,7 +88,7 @@ it('tunes the selected model\'s reasoning from Advanced settings', async () => {
   await click(row('google/gemini-3.8-flash')!);
   await click(document.querySelector<HTMLButtonElement>('[aria-label="Advanced settings"]')!);
   const levels = () => [...document.querySelectorAll<HTMLButtonElement>('[aria-label="Reasoning level"] button')];
-  expect(levels().map(button => button.textContent)).toEqual(['Default (medium)', 'low', 'medium', 'high']);
+  expect(levels().map(button => button.textContent)).toEqual(['Default (low)', 'low', 'medium', 'high']);
   await click(levels().find(button => button.textContent === 'high')!);
   expect(readReasoningPreference('google/gemini-3.8-flash')).toBe('high');
   expect(document.querySelector('[data-model="google/gemini-3.8-flash"]')?.textContent).toContain('high');

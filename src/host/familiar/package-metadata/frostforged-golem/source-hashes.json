@@ -1,0 +1,16 @@
+{
+  "pet.json": "46db970c5b8f4a0571be2f35b51a30fe17fd56b14d00c201500aacdcf2a0308c",
+  "pet-request.json": "74e6bdf960cfadf50658abe64d7b771bb23821577f87f671ed70bb05c5f18a43",
+  "animation-timing.json": "70be4d5b94a0676a5656057f6615a586f3437a6252078dba38641301c06a33ce",
+  "spritesheet.webp": "12891944997036e9e65fb9f3d9877ae7fd65629fd7c9d8a2d0caea7982dec69b",
+  "neutral.png": "1018ba201db1670c9e9379d1c74a7c9e0004b062a68caec0d18b23aadc76f0c4",
+  "previews/idle.gif": "6e523ec683aecb9f3623e5e1942d3e06ca99e3e34ec275f8d85b54e9184a1131",
+  "previews/running-right.gif": "3cafb1137210652537ee203dda61f7eb44a5e300790307ffcb213cdd64bba9e8",
+  "previews/running-left.gif": "b4235ef94113c8c49cb0a6567f0dc785348ea745cb873b6fd06db73c3e551363",
+  "previews/waving.gif": "1292e0d0dad83d907cf4fc77ae569f6912bf18f59c5a724123d59eb4200b3b9f",
+  "previews/jumping.gif": "b5b22f34d0dfdbe2fe6e1f3e3f4b8a7f5a8ff2011d67ec89af3321dc6b33b053",
+  "previews/failed.gif": "522dde7521960cc87d1709fa9b879d1c9f7fc59f5f654c9e29408a6142764c03",
+  "previews/waiting.gif": "41176424dee386a992648ac02370ff0445e621518278e1381d3d9a13144e2ee3",
+  "previews/running.gif": "733f77bd94bb979df6c9d566db5cc355416eab1cf21688cba7c339ce7fc96f74",
+  "previews/review.gif": "7fd8a5bbe155bcdc5c77624d9e59b8e83a0265361cf70f890b31c5fd26b081be"
+}

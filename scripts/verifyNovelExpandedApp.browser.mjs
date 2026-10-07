@@ -6,9 +6,12 @@
  * `/app` → empty Home → Create → token sheet → World Blueprint (Arc 1 only,
  * the hidden look-ahead nowhere on screen, every blank Seed slot filled) → Manifest
  * Story → Story View → Start Story under the veil → Chapter 1 with its Sound
- * Cue → Listen (three voices from the writer's speaker tags, the spoken
+ * Cue and its own soundtrack (the app's calm music on every page before it,
+ * the chapter's fighting music and battlefield atmosphere in the Reader, the
+ * app's music again after it) → Listen (three voices from the writer's speaker tags, the spoken
  * sentence lit, Pause and Resume, the ghost note (mute, long-press to Audio),
- * Reader Settings → Audio and Narration with the speed
+ * Reader Settings → Audio (with Scene: the reader's own piece kept on the
+ * device) and Narration with the speed
  * kept on the device) → Holdings → Rewrite this chapter with a note (the new
  * version under the veil, the Holdings fixer's one quiet call settling its
  * holdings, nothing of it on screen) → reload (no new request, nothing reads by itself) →
@@ -17,7 +20,9 @@
  *
  * Headless Chromium has no voices, so a stand-in for the browser's speech is
  * installed before the app loads; each line ends on its own after a moment,
- * or waits for the walk while `__speechHold` is set.
+ * or waits for the walk while `__speechHold` is set. SEIHouse's audio files are
+ * answered with ten seconds of silence, so the walk sees which music and
+ * atmosphere the app asks for without downloading them.
  *
  * It fails on any page error, any memory request, and any module request into
  * the Workshop, the older Reader or Codex (its narration included), or the
@@ -37,11 +42,27 @@ const SHARED_READER_CONTRACTS = /\/src\/components\/reader-(?:chamber\/shared\/(
 const FORBIDDEN_MODULE = /\/src\/(?:workshop\/|library\/generation\/|components\/reader-(?:chamber|codex)\/|host\/reader\/webSpeechNarration)/;
 
 const receipt = { provider: 'gemini', model: 'fixture', generatedAt: '2026-10-01T12:00:00.000Z', usage: { source: 'unavailable' } };
+const SOUNDSCAPES = JSON.parse(readFileSync('src/host/media/data/sen-soundscapes-v1.json', 'utf8')).entries;
+const ATMOSPHERES = JSON.parse(readFileSync('src/host/media/data/sen-atmospheres-v1.json', 'utf8')).entries;
+/** The pieces of SEN Soundscapes that answer a mood, by their file names. */
+const piecesOf = mood => new Set(SOUNDSCAPES.filter(piece => piece.mood === mood || piece.moods.includes(mood)).map(piece => new URL(piece.url).pathname));
+const SOUNDSCAPE_PATH = /\/SEN\/AUDIO\/SOUNDSCAPE\/Volumn%201\//;
+const BATTLEFIELD = new URL(ATMOSPHERES.find(bed => bed.label === 'Ancient Battlefield 1').url).pathname;
+/** Ten seconds of silence (8-bit mono, 8 kHz WAV), answering every SEIHouse audio file. */
+const SILENCE = (() => {
+  const samples = 8000 * 10;
+  const wav = Buffer.alloc(44 + samples, 128);
+  wav.write('RIFF', 0); wav.writeUInt32LE(36 + samples, 4); wav.write('WAVE', 8); wav.write('fmt ', 12);
+  wav.writeUInt32LE(16, 16); wav.writeUInt16LE(1, 20); wav.writeUInt16LE(1, 22); wav.writeUInt32LE(8000, 24);
+  wav.writeUInt32LE(8000, 28); wav.writeUInt16LE(1, 32); wav.writeUInt16LE(8, 34); wav.write('data', 36); wav.writeUInt32LE(samples, 40);
+  return wav;
+})();
 const chapter = {
   title: 'Low Tide',
   paragraphs: [
-    // The writer puts a sound tag on the words where a sound happens, naming one of the Library's sound words.
-    'The tide pulled back from the drowned gate, and [[sound: beast roar | the beast roared | high]] across the causeway.',
+    // The writer chooses the chapter's music and atmosphere once, at its start; the writer puts a
+    // sound tag on the words where a sound happens, naming one of the Library's sound words.
+    '[[soundtrack: fighting | ancient battlefield]] The tide pulled back from the drowned gate, and [[sound: beast roar | the beast roared | high]] across the causeway.',
     // The writer tags what changes in what a character has, where it happens.
     '[[gained: MC | Bell Key]] Mara counted the bells that no longer rang. [[equipped: MC | Bell Key]] She turned the old key in her palm.',
     // The writer tags who speaks: the main character with their own tag, then someone else by name.
@@ -172,6 +193,23 @@ async function walk(browser, viewport, sample) {
     const path = new URL(request.url()).pathname;
     if (/\.[cm]?[jt]sx?$/.test(path) && FORBIDDEN_MODULE.test(path) && !SHARED_READER_CONTRACTS.test(path)) problems.push(`module request: ${path}`);
   });
+  // Every SEIHouse audio file is answered with silence; what was asked for is kept, in order.
+  const audioAsked = [];
+  await context.route('https://media.seihouse.org/**', async route => {
+    audioAsked.push(new URL(route.request().url()).pathname);
+    await route.fulfill({ status: 200, contentType: 'audio/wav', headers: { 'Access-Control-Allow-Origin': '*' }, body: SILENCE });
+  });
+  const pieces = () => audioAsked.filter(path => SOUNDSCAPE_PATH.test(path));
+  /** Waits until the music asks for a piece of this mood, after the given number of audio requests. */
+  const musicOf = async (mood, after = 0) => {
+    const wanted = piecesOf(mood);
+    for (let tries = 0; tries < 60; tries += 1) {
+      const asked = audioAsked.slice(after).filter(path => SOUNDSCAPE_PATH.test(path));
+      if (asked.some(path => wanted.has(path))) return asked.filter(path => wanted.has(path));
+      await page.waitForTimeout(100);
+    }
+    throw new Error(`The music should play a ${mood} piece, asked for ${JSON.stringify(audioAsked.slice(after))}.`);
+  };
   await context.route('**/api/generate-blueprint', async route => {
     counts.blueprints += 1;
     const authorized = route.request().headers().authorization === `Bearer ${TOKEN}`;
@@ -228,6 +266,9 @@ async function walk(browser, viewport, sample) {
   await page.evaluate(record => localStorage.setItem('novelexpanded-story-seeds-v1', JSON.stringify([record])), sample.record);
   await visibleButton('Carve New Destiny').click();
   await page.getByTestId('novel-expanded-create').waitFor();
+  // The app's own music starts with the first tap: calm pieces, with no model.
+  await musicOf('ambient');
+  check(pieces().every(path => piecesOf('ambient').has(path)), `The app's music should be calm pieces only, got ${JSON.stringify(pieces())}.`);
   check(address() === '/app/?page=create', `Create should be /app/?page=create, got ${address()}`);
   await visibleButton(/^Story Bank$/).click();
   await visibleButton(/^Use Seed$/).click();
@@ -313,6 +354,10 @@ async function walk(browser, viewport, sample) {
   await veil.waitFor({ state: 'hidden', timeout: 10_000 });
   await shot('6-chapter-1');
   check(counts.chapters === 1, `One chapter request expected, saw ${counts.chapters}.`);
+  // The chapter's own scene, as its writer chose it: fighting music and the battlefield.
+  await musicOf('fighting');
+  for (let tries = 0; tries < 40 && !audioAsked.includes(BATTLEFIELD); tries += 1) await page.waitForTimeout(100);
+  check(audioAsked.includes(BATTLEFIELD), `The chapter's atmosphere should be Ancient Battlefield 1, asked for ${JSON.stringify(audioAsked)}.`);
 
   // 3b. Listen: three voices, the spoken sentence lit, Pause and Resume, Reader Settings → Narration.
   const spoken = () => page.evaluate(() => window.__spoken.map(line => ({ ...line })));
@@ -363,6 +408,22 @@ async function walk(browser, viewport, sample) {
   check(JSON.stringify(await settings.locator('section h3').allTextContents()) === '["Audio","Narration"]', `Reader Settings should hold Audio, then Narration, got ${JSON.stringify(await settings.locator('section h3').allTextContents())}.`);
   check(await audio.getByRole('switch').count() > 0 && await audio.getByRole('slider').count() > 0, 'Audio should show the approved switches and sliders.');
   check(await audio.getByText('Atmosphere', { exact: true }).count() > 0, 'Audio should offer the Atmosphere layer.');
+  check(await audio.getByText('Soundscapes', { exact: true }).count() > 0, 'Audio should offer the Soundscapes layer.');
+  // Scene: Automatic until the reader keeps a piece of their own, on this device.
+  const scene = audio.getByTestId('reader-soundtrack-choice');
+  check(await scene.locator('#reader-soundtrack-piece').inputValue() === 'automatic' && await scene.locator('#reader-soundtrack-atmosphere').inputValue() === 'automatic',
+    'Scene should start on Automatic.');
+  const lament = SOUNDSCAPES.find(piece => piece.mood === 'sad');
+  const beforeChoice = audioAsked.length;
+  await scene.locator('#reader-soundtrack-piece').selectOption(lament.id);
+  const choice = JSON.parse(await page.evaluate(() => localStorage.getItem('novelexpanded-reader-soundtrack-choice')) ?? '{}');
+  check(choice.soundscape?.pieceId === lament.id, `The reader's own piece should be kept on the device, got ${JSON.stringify(choice)}.`);
+  for (let tries = 0; tries < 40 && !audioAsked.slice(beforeChoice).includes(new URL(lament.url).pathname); tries += 1) await page.waitForTimeout(100);
+  check(audioAsked.slice(beforeChoice).includes(new URL(lament.url).pathname), 'The reader\'s own piece should play at once.');
+  await scene.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(200);
+  await shot('6c-reader-scene');
+  await scene.locator('#reader-soundtrack-piece').selectOption('automatic');
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), 'Reader Settings must not scroll sideways.');
   await page.waitForTimeout(300);
   await shot('6c-reader-audio');
@@ -438,8 +499,11 @@ async function walk(browser, viewport, sample) {
   await page.keyboard.press('Escape');
 
   // 5. Back to Story View (Continue · Ch. 1), then Home with the story's card.
+  const beforeLeaving = audioAsked.length;
   await visibleButton(/^Back$/).click();
   await page.getByTestId('harness-world-info').waitFor();
+  // Leaving the Reader brings the app's calm music back.
+  await musicOf('ambient', beforeLeaving);
   check(address() === storyAddress, `Back from the Reader should open Story View, got ${address()}`);
   check((await page.locator('[data-world-info-chapters="action"]').textContent()).includes('Continue · Ch. 1'), 'Story View should continue at Chapter 1.');
   // Export story saves the whole story as one file, with what the writer was given for each chapter.

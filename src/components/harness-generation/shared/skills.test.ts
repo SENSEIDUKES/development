@@ -6,7 +6,7 @@ import { createEmptyHarnessWorkspaceState } from '@seihouse/sen/harness-generati
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { CAPA_SCHEMA, SEN_READING_MODE_SKILLS, assembleCapaPrompt, buildHarnessOfficialOutputRequirements, createHarnessSkillCatalog, freezeHarnessSkillLoadout, validateHarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import { type HarnessSkillManifest, type HarnessSkillSlotId } from '@seihouse/sen/harness-generation';
-import { SEN_FATE_SURVIVAL_SKILL, SEN_HOLDINGS_SKILL, SEN_NOVEL_AUTHOR_SKILL, SEN_SOUND_CUES_SKILL, SEN_SPEAKERS_SKILL, includeBundledHarnessSkills } from '@seihouse/sen/harness-generation';
+import { SEN_FATE_SURVIVAL_SKILL, SEN_HOLDINGS_SKILL, SEN_NOVEL_AUTHOR_SKILL, SEN_SOUND_CUES_SKILL, SEN_SOUNDTRACK_SKILL, SEN_SPEAKERS_SKILL, includeBundledHarnessSkills } from '@seihouse/sen/harness-generation';
 import { SEN_LIGHT_NOVEL_AUTHOR_INSTRUCTIONS } from '../../../lib/senLightNovelAuthorInstructions';
 
 const pacingSkill = (): HarnessSkillManifest => ({
@@ -118,28 +118,30 @@ describe('Harness installed skills', () => {
         generationSkill('continuity', 'Preserve established canon.'),
         SEN_HOLDINGS_SKILL,
         SEN_SPEAKERS_SKILL,
+        SEN_SOUNDTRACK_SKILL,
         SEN_SOUND_CUES_SKILL,
         SEN_FATE_SURVIVAL_SKILL,
         pacingSkill(),
         SEN_NOVEL_AUTHOR_SKILL,
       ],
       soundVocabulary: [{ word: 'blade drawn', example: 'drew his sword' }, { word: 'chime', example: 'a soft chime', meaning: 'a small bright chime' }],
+      soundtrackVocabulary: { moods: ['mystical', 'war'], atmospheres: ['forest', 'cave'] },
     });
     expect(CAPA_SCHEMA.map(slot => slot.id)).toEqual([
-      'author', 'pacing', 'fate', 'continuity', 'style', 'accessibility', 'translation', 'soundCues', 'speakers', 'holdings',
+      'author', 'pacing', 'fate', 'continuity', 'style', 'accessibility', 'translation', 'soundCues', 'soundtrack', 'speakers', 'holdings',
     ]);
-    // Fate, Accessibility, Translation and Sound Cues follow story state, Speakers and Holdings load on every chapter; the rest are equipped by hand.
+    // Fate, Accessibility, Translation, Sound Cues and Soundtrack follow story state, Speakers and Holdings load on every chapter; the rest are equipped by hand.
     expect(CAPA_SCHEMA.filter(slot => slot.managedBy).map(slot => [slot.id, slot.managedBy])).toEqual([
-      ['fate', 'fate-mode'], ['accessibility', 'reading-mode'], ['translation', 'story-language'], ['soundCues', 'media-loadout'], ['speakers', 'always'], ['holdings', 'always'],
+      ['fate', 'fate-mode'], ['accessibility', 'reading-mode'], ['translation', 'story-language'], ['soundCues', 'media-loadout'], ['soundtrack', 'media-loadout'], ['speakers', 'always'], ['holdings', 'always'],
     ]);
-    // Installable is separate from equippable: Translation packages install; SEN fills Fate, Accessibility, Sound Cues, Speakers and Holdings.
+    // Installable is separate from equippable: Translation packages install; SEN fills Fate, Accessibility, Sound Cues, Soundtrack, Speakers and Holdings.
     expect(CAPA_SCHEMA.filter(slot => slot.installable).map(slot => slot.id)).toEqual([
       'author', 'pacing', 'continuity', 'style', 'translation',
     ]);
     expect(capa.skills.map(skill => skill.slot)).toEqual([
-      'author', 'pacing', 'fate', 'continuity', 'style', 'accessibility', 'translation', 'soundCues', 'speakers', 'holdings',
+      'author', 'pacing', 'fate', 'continuity', 'style', 'accessibility', 'translation', 'soundCues', 'soundtrack', 'speakers', 'holdings',
     ]);
-    expect(capa.skills.map(skill => skill.authoring)).toEqual([true, true, true, true, true, true, true, true, true, true]);
+    expect(capa.skills.map(skill => skill.authoring)).toEqual([true, true, true, true, true, true, true, true, true, true, true]);
     const headers = capa.text.match(/^CAPA SKILL \[[^\]]+\]/gm);
     expect(headers).toEqual([
       'CAPA SKILL [Author]',
@@ -150,11 +152,16 @@ describe('Harness installed skills', () => {
       'CAPA SKILL [Accessibility]',
       'CAPA SKILL [Translation]',
       'CAPA SKILL [Sound Cues]',
+      'CAPA SKILL [Soundtrack]',
       'CAPA SKILL [Speakers]',
       'CAPA SKILL [Holdings]',
     ]);
+    // The story's moods and atmospheres close the Soundtrack section, after one example tag.
+    const soundtrackSection = capa.text.slice(capa.text.indexOf('CAPA SKILL [Soundtrack]'), capa.text.indexOf('CAPA SKILL [Speakers]'));
+    expect(soundtrackSection.trim().endsWith('EXAMPLE (choose your own for each chapter): [[soundtrack: mystical | forest]]\nMUSIC MOODS: mystical, war\nATMOSPHERES: forest, cave')).toBe(true);
+    expect(capa.soundtrackVocabulary).toEqual({ moods: ['mystical', 'war'], atmospheres: ['forest', 'cave'] });
     // The story's sound words close the Sound Cues section, after an example made from the first, and nothing else carries them.
-    const soundSection = capa.text.slice(capa.text.indexOf('CAPA SKILL [Sound Cues]'), capa.text.indexOf('CAPA SKILL [Speakers]'));
+    const soundSection = capa.text.slice(capa.text.indexOf('CAPA SKILL [Sound Cues]'), capa.text.indexOf('CAPA SKILL [Soundtrack]'));
     expect(soundSection).toContain('EXAMPLE: [[sound: blade drawn | drew his sword | medium]]\nSOUND WORDS (each with example words; write your own):\nblade drawn: drew his sword\nchime: a soft chime (a small bright chime)');
     expect(capa.text.split('drew his sword')).toHaveLength(3);
     expect(capa.soundVocabulary).toEqual([{ word: 'blade drawn', example: 'drew his sword' }, { word: 'chime', example: 'a soft chime', meaning: 'a small bright chime' }]);
@@ -165,10 +172,11 @@ describe('Harness installed skills', () => {
     expect(capa.text.endsWith(buildHarnessOfficialOutputRequirements({ accessibility: true, translation: true })!)).toBe(true);
     expect(capa.text.split('HARNESS OFFICIAL OUTPUT REQUIREMENTS')).toHaveLength(2);
     expect(capa.text.indexOf('CAPA SKILL [Translation]')).toBeLessThan(capa.text.indexOf('CAPA SKILL [Sound Cues]'));
-    expect(capa.text.indexOf('CAPA SKILL [Sound Cues]')).toBeLessThan(capa.text.indexOf('CAPA SKILL [Speakers]'));
+    expect(capa.text.indexOf('CAPA SKILL [Sound Cues]')).toBeLessThan(capa.text.indexOf('CAPA SKILL [Soundtrack]'));
+    expect(capa.text.indexOf('CAPA SKILL [Soundtrack]')).toBeLessThan(capa.text.indexOf('CAPA SKILL [Speakers]'));
     expect(capa.text.indexOf('CAPA SKILL [Speakers]')).toBeLessThan(capa.text.indexOf('CAPA SKILL [Holdings]'));
     expect(capa.text.indexOf('CAPA SKILL [Holdings]')).toBeLessThan(capa.text.indexOf('HARNESS OFFICIAL OUTPUT REQUIREMENTS'));
-    expect(capa.skills).toHaveLength(10);
+    expect(capa.skills).toHaveLength(11);
     expect(capa.estimatedTokens).toBeGreaterThan(0);
   });
 

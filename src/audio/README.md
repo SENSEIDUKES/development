@@ -22,11 +22,12 @@ The current split is:
 | Finished Sound Cue rules (1–8 whole words, at most 10 per chapter) | SEN | `soundCueRules.ts` |
 | Sound words (the event a recording answers, with an example) | SEN | `soundWords.ts`, `soundVocabulary` in `media.ts` |
 | Studio tags (parent + Tone, Energy, Tension) | SEN | `audioTags.ts` |
-| Portable soundscape intent and resolved track shape | SEN | `soundscapes.ts` |
+| Portable soundscape intent and resolved track shape (a piece may carry its name and measured loudness) | SEN | `soundscapes.ts` |
+| The words a chapter's soundtrack is chosen with: music moods and atmosphere words | SEN | `soundtrackVocabulary.ts`, `SceneAtmosphere` in `media.ts` |
 | Media URL safety and generic media records | SEN | `mediaUrl.ts`, `media.ts` |
 | Host-supplied playback port | SEN contract | `playback.tsx` |
 | Celestial Library packs and entitlement policy | Library | `src/library/media/mediaPacks.ts` |
-| First-party cue and soundscape records | Host | `src/host/media/libraryCatalog.ts`, `src/host/media/soundscapeCatalog.ts` |
+| First-party cue and soundscape records: SEN Soundscapes, Volume 1 (43 pieces with measured loudness), the soundscapes every chapter is written with | Host | `src/host/media/libraryCatalog.ts`, `src/host/media/soundscapeCatalog.ts`, `src/host/media/data/sen-soundscapes-v1.json` |
 | The reader mixer a host creates: SEN Atmospheres, Volume 1 (50 beds with measured loudness) and the reader's saved mix | Host (the NovelExpanded app and the Workshop) | `src/host/reader/readerMixer.ts`, `src/host/media/atmosphereCatalog.ts`, `src/host/media/data/sen-atmospheres-v1.json` |
 | Single-channel browser player for the older Workshop previews | Host (the Workshop only) | `DevAudioPlayback.tsx` |
 
@@ -63,8 +64,9 @@ that starts or ends inside a word widens to the whole word, in the story's
 language. The
 recording is one of that word's, preferring the Energy asked for, chosen by a
 stable rotation so repeated sounds vary and the same input always gives the
-same cue. Soundscapes, when rebuilt, are passage-level only and at most two
-per chapter.
+same cue. Soundscapes are chapter-level: the writer chooses one music mood
+and one atmosphere at the chapter's start (the soundtrack tag), and the Reader
+plays pieces of that mood, one after another, under the whole chapter.
 
 A finished cue is a manuscript span attachment:
 
@@ -122,8 +124,9 @@ dark), Energy (low, medium, high) and Tension (calm, suspenseful, urgent),
 kept as `metadata.studio_tags`. A Sound Cue's parent is its cue category
 (artifacts, atmosphere, beasts, factions, locations, system, weapons). A
 Soundscape's parent is one of `SOUNDSCAPE_PARENT_TAGS` (ADVENTURE, AMBIENT,
-EMOTIONS, FIGHTING, WAR, SPECIAL); soundscape tracks adopt the tags when
-Soundscapes are rebuilt.
+EMOTIONS, FIGHTING, WAR, SPECIAL); SEN Soundscapes, Volume 1 groups its pieces
+by the first five, and its pieces adopt the full tags when the pack is graded
+with them.
 
 The default library tags its 92 Sound Cue recordings with 30 starter words
 (`data/library-sounds.v1.json`) and reads Energy from the size a recording's

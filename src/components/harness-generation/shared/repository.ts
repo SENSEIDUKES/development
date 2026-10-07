@@ -59,6 +59,9 @@ const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => 
   // 28 adds only optional fields (a rewrite request and its replaced-by record,
   // a chapter's Holdings fixer record): every saved story reads as it is.
   27: stored => ({ ...stored, schemaVersion: 28 }),
+  // 29 adds only optional fields (a chapter's scene, the atmospheres in frozen
+  // media, a frozen soundtrack vocabulary): every saved story reads as it is.
+  28: stored => ({ ...stored, schemaVersion: 29 }),
 };
 
 /**

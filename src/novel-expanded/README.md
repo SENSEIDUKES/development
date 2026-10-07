@@ -54,8 +54,16 @@ either fails, it says so plainly, with Retry.
 The app's one sound owner is SEIHouse's audio player: `main.tsx` creates one
 reader mixer for the page (`createHostReaderMixer`, with SEN Atmospheres,
 Volume 1) and `NovelExpandedApp` provides it. The reader's mix is saved with
-their other device preferences (`novelexpanded-reader-audio-mixer`). The older
+their other device preferences (`novelexpanded-reader-audio-mixer`), and so is
+their Scene choice (`novelexpanded-reader-soundtrack-choice`). The older
 single-channel player is not used by the app.
+
+The app has its own music (`appMusic.ts`): calm pieces of SEN Soundscapes,
+Volume 1 (`APP_MUSIC_MOOD`, ambient), one after another, on Home, Create, World
+Info and while a chapter is written, with no model and nothing to wait for (a
+browser starts sound on the reader's first tap). In the Reader each chapter's
+own scene takes over, as its writer chose it; leaving the Reader brings the
+app's music back.
 
 ## Its own storage
 
@@ -110,7 +118,8 @@ task needs something the list does not allow.
 | --- | --- |
 | `app/index.html` (repository root) | The app's page; loads `main.tsx` |
 | `main.tsx` | Stylesheets (`src/host/styles/theme.css`, `@seihouse/sen/styles.css`) and the real services |
-| `NovelExpandedApp.tsx` | Providers, the opening gate, and the four pages |
+| `NovelExpandedApp.tsx` | Providers, the opening gate, and the four pages; Chapter 1 begins at Manifest Story |
+| `appMusic.ts` | The app's own music, from SEN Soundscapes, on every page and while a chapter is written |
 | `routes.ts` | Addresses and history |
 | `services.ts` | Storage, the writer, the official skills and the Blueprint client |
 | `HomePage.tsx` | Home inside the Library workspace shell |
@@ -149,6 +158,7 @@ request through the Library's `planArc`; the reader reviews or edits the goals
   elemental colors. Visitors use Quill, the catalogue default. A host can pass
   `equippedFamiliarId`; there is no new profile, equipment store or account page.
 
+- **2026-10-06** — Phase 4. The app plays its own music from SEN Soundscapes, Volume 1 on every page and while a chapter is written, and in the Reader each chapter's own music and atmosphere, chosen by its writer (Reader Settings → Audio → Scene lets the reader keep their own instead). The atmosphere and Sound Cues keep playing under the Reader's own pages. Chapter 1 begins the moment the story is made, while the reader looks over World Info (a Fate Survival story waits for its first direction); a chapter keeps writing when the reader leaves the Reader, and the reader's next Write finishes one a closed browser cut off. Models that offer `low` reasoning get it by default.
 - **2026-10-06** — Rewrite this chapter: at the end of the newest chapter, until the next one is written, the Reader offers one quiet link to have it written again, with an optional note; the writing screen covers it, and a failed rewrite keeps the chapter and the note. After each chapter is saved, SEN's Holdings fixer quietly settles the chapter's small holdings problems and keeps a record on the chapter (in Export story). It sends the reader's access token when there is one, and never asks for it: a refused check is only recorded.
 - **2026-10-05** — The Reader's sound is SEIHouse's audio player: the reader's atmosphere under the chapter, Sound Cues over it at their Energy (they can overlap now), Listen dipping it, a sleep timer, a note above the Listen bar that mutes it (long-press opens Audio), and Reader Settings → Audio before Narration. The mix is kept on this device. The older single-channel player is gone from the app.
 

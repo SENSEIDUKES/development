@@ -13,6 +13,9 @@ import type { ReadAloudVoicePicks, ReaderPreferenceStorage, ReaderStateRepositor
 import { installFakeSpeechSynthesis, type FakeSpeechSynthesis } from '../../../test-utils/fakeSpeechSynthesis';
 import { ReaderMixerProvider, type ReaderMixer, type ReaderMixerSleepEvent } from '@seihouse/audio-player';
 import { createHostReaderMixer } from '../../../host/reader/readerMixer';
+import { SEN_ATMOSPHERES } from '../../../host/media/atmosphereCatalog';
+import { SEN_SOUNDSCAPES } from '../../../host/media/soundscapeCatalog';
+import { piecesForMood, storySoundtrack } from '@seihouse/sen/reader-runtime';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -171,6 +174,32 @@ describe('The HARNESS Reader', { timeout: 20_000 }, () => {
     // The closing screen keeps the number of the chapter it was writing.
     expect(seen.at(-1)).toEqual({ active: false, chapterNumber: 1 });
     expect(buttonBy(byLabel('Next Chapter: Write Chapter 2'))).toBeTruthy();
+  });
+
+  it('a chapter keeps writing when the reader leaves: back in the Reader it is still writing, never begun twice, and opens when saved', async () => {
+    const { controller, storyId, generate, hold } = await story();
+    const renderWriting = (writing: HarnessReaderWriting) => (writing.active ? <div data-testid="writing-screen">Chapter {writing.chapterNumber}</div> : null);
+    // Chapter 1 begins before the Reader opens, as the app begins it the moment a story is made.
+    const release = hold();
+    const background = controller.generateNextChapter(storyId, 'test-model');
+    await mount(<Host controller={controller} storyId={storyId} renderWriting={renderWriting} startOnOpen />);
+    // Start Story finds it already being written: the writing screen, and no second write.
+    expect(container.querySelector('[data-testid="writing-screen"]')!.textContent).toBe('Chapter 1');
+    expect(buttonBy(byLabel('Next Chapter: Writing Chapter 1…'))!.disabled).toBe(true);
+    expect(generate).toHaveBeenCalledTimes(1);
+
+    // The reader leaves and comes back: still writing, still one write.
+    act(() => root.unmount());
+    root = createRoot(container);
+    await mount(<Host controller={controller} storyId={storyId} renderWriting={renderWriting} startOnOpen />);
+    expect(container.querySelector('[data-testid="writing-screen"]')!.textContent).toBe('Chapter 1');
+    expect(generate).toHaveBeenCalledTimes(1);
+
+    await act(async () => { release(); await background; });
+    await flush();
+    expect(container.querySelector('[data-testid="writing-screen"]')).toBeNull();
+    expect(chapterOnScreen(1)!.textContent).toContain('The tide pulled back from the drowned gate.');
+    expect(generate).toHaveBeenCalledTimes(1);
   });
 
   it('a write that stops far short of a chapter saves nothing, says so, and the reader tries again', async () => {
@@ -398,7 +427,14 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
   const mixerFor = () => {
     const values = new Map<string, string>();
     const storage: ReaderPreferenceStorage = { read: key => values.get(key) ?? null, write: (key, value) => { values.set(key, value); }, remove: key => { values.delete(key); } };
-    return { mixer: createHostReaderMixer(storage), values };
+    return { mixer: createHostReaderMixer(storage), values, storage };
+  };
+  const choose = async (select: HTMLSelectElement, value: string) => {
+    await act(async () => {
+      select.value = value;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+      await Promise.resolve();
+    });
   };
   const mountWithMixer = async (mixer: ReaderMixer, element: React.ReactElement) => {
     await act(async () => { root.render(renderWithDevAudio(<ReaderMixerProvider mixer={mixer}>{element}</ReaderMixerProvider>)); });
@@ -432,8 +468,8 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
     await mountWithMixer(mixer, <Host controller={controller} storyId={storyId} />);
 
     expect(startAtmosphere).toHaveBeenCalledTimes(1);
-    // Chapter 1 has a Sound Cue: Sound Cues show in Audio and its sound is warmed. Soundscapes are not chosen yet.
-    expect(mixer.getState().availability).toMatchObject({ soundscapes: false, atmosphere: true, cues: true });
+    // Chapter 1 has a Sound Cue: Sound Cues show in Audio and its sound is warmed. The music always shows.
+    expect(mixer.getState().availability).toMatchObject({ soundscapes: true, atmosphere: true, cues: true });
     expect(preloadCues).toHaveBeenCalledWith([expect.stringMatching(BEAST_ROAR)]);
     // Tapping the cue plays it over the soundtrack, at the writer's Energy (high).
     await act(async () => { buttonBy(button => button.dataset.cuePhrase === 'the beast roared')!.click(); });
@@ -448,17 +484,82 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
     await click(byLabel('Next Chapter'), 'Next Chapter');
     expect(mixer.getState().availability.cues).toBe(false);
 
-    // The Fate page covers the chapter (and its note): the atmosphere fades out until the chapter is back.
+    // The Reader's own pages never quiet it: the atmosphere plays on under Fate and Holdings.
     const stopAtmosphere = vi.spyOn(mixer, 'stopAtmosphere');
     await click(byLabel('Open Fate'), 'Open Fate');
-    expect(stopAtmosphere).toHaveBeenCalledTimes(1);
     await click(button => button.textContent?.trim() === 'Back to reading', 'Back to reading');
-    expect(startAtmosphere).toHaveBeenCalledTimes(2);
+    await click(byLabel('Open Holdings'), 'Open Holdings');
+    await click(button => button.textContent?.trim() === 'Back to reading', 'Back to reading');
+    expect(stopAtmosphere).not.toHaveBeenCalled();
+    expect(startAtmosphere).toHaveBeenCalledTimes(1);
 
     expect(stopAll).not.toHaveBeenCalled();
     act(() => root.unmount());
     expect(stopAll).toHaveBeenCalledTimes(1);
     root = createRoot(container);
+  });
+
+  it('plays the music and atmosphere each chapter\'s writer chose at its start', async () => {
+    const { controller, storyId } = await story({
+      written: 2,
+      replies: [
+        reply('Low Tide', ['[[soundtrack: fighting | ancient battlefield]] The tide pulled back from the drowned gate.', 'Mara counted the bells.']),
+        reply('The Bell Keeper', ['[[soundtrack: sad | gentle rain]] A keeper waited on the causeway with a lantern.', 'He asked for her name.']),
+      ],
+    });
+    const beds = (word: string) => LIBRARY_BASE_MEDIA.atmospheres!.filter(entry => entry.word === word).map(entry => entry.id);
+    const saved = controller.snapshot().chapters;
+    // The beds that share a word take turns: Chapter 2 hears the second gentle rain.
+    expect(saved.map(chapter => chapter.scene)).toEqual([
+      { soundscape: 'fighting', atmosphere: beds('ancient battlefield')[0] },
+      { soundscape: 'sad', atmosphere: beds('gentle rain')[1] },
+    ]);
+    expect(saved[0].paragraphs[0]).toBe('The tide pulled back from the drowned gate.');
+
+    const { mixer } = mixerFor();
+    await mountWithMixer(mixer, <Host controller={controller} storyId={storyId} />);
+    const moodOf = (mood: string) => piecesForMood(mood, SEN_SOUNDSCAPES).map(piece => piece.id);
+    expect(moodOf('fighting')).toContain(storySoundtrack(mixer).piece()?.id);
+    expect(mixer.getPreferences().atmosphereId).toBe(beds('ancient battlefield')[0]);
+
+    await click(byLabel('Next Chapter'), 'Next Chapter');
+    expect(moodOf('sad')).toContain(storySoundtrack(mixer).piece()?.id);
+    expect(mixer.getPreferences().atmosphereId).toBe(beds('gentle rain')[1]);
+  });
+
+  it('lets the reader keep their own music and atmosphere from Reader Settings, or give the choice back to each chapter', async () => {
+    const { controller, storyId } = await story({ written: 1 });
+    const { mixer, values, storage } = mixerFor();
+    await mountWithMixer(mixer, <Host controller={controller} storyId={storyId} readerPreferences={storage} />);
+    await act(async () => { note()!.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })); });
+    const audio = await audioPanel();
+    const scene = audio.querySelector<HTMLElement>('[data-testid="reader-soundtrack-choice"]')!;
+    const piece = scene.querySelector<HTMLSelectElement>('#reader-soundtrack-piece')!;
+    const atmosphere = scene.querySelector<HTMLSelectElement>('#reader-soundtrack-atmosphere')!;
+    // Automatic until the reader chooses; the atmosphere is chosen here, beside the music, not in the mixer's own picker.
+    expect([piece.value, atmosphere.value]).toEqual(['automatic', 'automatic']);
+    const mixerPanel = [...audio.children].find(child => !child.contains(scene))!;
+    expect(mixerPanel.textContent).toContain('Atmosphere');
+    expect(mixerPanel.textContent).not.toContain('Gentle Rain 1');
+    expect([...piece.querySelectorAll('optgroup')].map(group => group.label)).toEqual(['Adventure', 'Ambient', 'Emotions', 'Fighting', 'War']);
+    expect(scene.querySelector('[data-testid="reader-soundtrack-now"]')!.textContent).toBe('Now: Gentle Rain 1');
+
+    const lament = SEN_SOUNDSCAPES.find(entry => entry.mood === 'sad')!;
+    const waves = SEN_ATMOSPHERES.find(option => option.group === 'Waves')!;
+    await choose(piece, lament.id);
+    await choose(atmosphere, waves.id);
+    expect(storySoundtrack(mixer).piece()?.id).toBe(lament.id);
+    expect(mixer.getPreferences().atmosphereId).toBe(waves.id);
+    expect(scene.querySelector('[data-testid="reader-soundtrack-now"]')!.textContent).toBe(`Now: ${lament.label} · ${waves.label}`);
+    // Kept on the device, for every story.
+    expect(JSON.parse(values.get('soundtrack-choice')!)).toMatchObject({ soundscape: { pieceId: lament.id }, atmosphere: { atmosphereId: waves.id } });
+
+    // Back to Automatic: the chapter (written before scenes) chooses nothing, so its piece goes and the atmosphere stays.
+    await choose(piece, 'automatic');
+    await choose(atmosphere, 'automatic');
+    expect(storySoundtrack(mixer).piece()).toBeUndefined();
+    expect(mixer.getPreferences().atmosphereId).toBe(waves.id);
+    expect(JSON.parse(values.get('soundtrack-choice')!)).toMatchObject({ soundscape: 'automatic', atmosphere: 'automatic' });
   });
 
   it('the note mutes story audio with a tap, and a long-press opens Reader Settings at Audio', async () => {
@@ -484,10 +585,11 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
     // Without speech, Narration only says so.
     expect([...dialog.querySelectorAll('section h3')].map(heading => heading.textContent)).toEqual(['Audio', 'Narration']);
     expect(dialog.querySelector('[data-testid="reader-settings-narration"]')!.textContent).toContain("This browser can't read aloud.");
-    // Only the layers this chapter uses: Atmosphere and Sound Cues, never Soundscapes or Voice yet.
+    // The layers this chapter uses: the music, the atmosphere and Sound Cues, never Voice yet.
+    expect(audio.textContent).toContain('Soundscapes');
     expect(audio.textContent).toContain('Atmosphere');
     expect(audio.textContent).toContain('Sound Cues');
-    expect(audio.textContent).not.toMatch(/Soundscapes|Voice/);
+    expect(audio.textContent).not.toMatch(/Voice/);
   });
 
   it('dips the soundtrack under Listen and keeps the reader active, and a sleep timer stops Listen too', async () => {

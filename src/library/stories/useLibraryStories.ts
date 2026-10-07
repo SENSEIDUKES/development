@@ -49,7 +49,10 @@ export interface LibraryStories {
   retry: () => void;
   /** True when a chapter can be written now. */
   canGenerate: boolean;
-  /** Writes the story's next chapter with the current model. */
+  /**
+   * Writes the story's next chapter with the current model, or finishes the
+   * one a closed browser interrupted (from its saved reply when there is one).
+   */
   generateNextChapter: (storyId: string) => Promise<void>;
   /** Writes the story's latest chapter again with the current model, with the reader's optional note. */
   rewriteLatestChapter: (storyId: string, note?: string) => Promise<void>;
@@ -137,7 +140,7 @@ export function useLibraryStories({
     if (writerError) setWriterAttempt(value => value + 1);
   }, [storageError, writerError]);
   const generateNextChapter = useCallback(async (storyId: string) => {
-    await controller.generateNextChapter(storyId, model);
+    await controller.writeNextChapter(storyId, model);
   }, [controller, model]);
   const rewriteLatestChapter = useCallback(async (storyId: string, note?: string) => {
     await controller.rewriteLatestChapter(storyId, model, note);

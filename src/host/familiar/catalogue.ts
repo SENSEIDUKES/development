@@ -5,6 +5,9 @@ import celestialGuardianTiming from './package-metadata/celestial-guardian/anima
 import celestialMoonMothPet from './package-metadata/celestial-moon-moth/pet.json';
 import celestialMoonMothRequest from './package-metadata/celestial-moon-moth/pet-request.json';
 import celestialMoonMothTiming from './package-metadata/celestial-moon-moth/animation-timing.json';
+import frostforgedGolemPet from './package-metadata/frostforged-golem/pet.json';
+import frostforgedGolemRequest from './package-metadata/frostforged-golem/pet-request.json';
+import frostforgedGolemTiming from './package-metadata/frostforged-golem/animation-timing.json';
 import galaxyOctopusPet from './package-metadata/galaxy-octopus/pet.json';
 import galaxyOctopusRequest from './package-metadata/galaxy-octopus/pet-request.json';
 import galaxyOctopusTiming from './package-metadata/galaxy-octopus/animation-timing.json';
@@ -142,6 +145,8 @@ export const familiarCatalogue: readonly FamiliarCatalogueEntry[] = [
     animationLabels: { running: 'Working with timepiece' } }),
   defineFamiliar({ pet: celestialMoonMothPet, request: celestialMoonMothRequest, timing: celestialMoonMothTiming,
     heroUrl: 'https://media.seihouse.org/SEN/GIF/Celestial%20Moon%20Moth.gif', rarity: 'epic', neutralColumn: 0 }),
+  defineFamiliar({ pet: frostforgedGolemPet, request: frostforgedGolemRequest, timing: frostforgedGolemTiming,
+    heroUrl: '/familiars/frostforged-golem/previews/waving.gif', rarity: 'rare', neutralColumn: 6 }),
   defineFamiliar({ pet: littleMonkeyKingPet, request: littleMonkeyKingRequest, timing: littleMonkeyKingTiming,
     heroUrl: 'https://media.seihouse.org/SEN/GIF/little%20monkey%20king.gif', rarity: 'rare', neutralColumn: 0 }),
   defineFamiliar({ pet: phoenixPet, request: phoenixRequest, timing: phoenixTiming,

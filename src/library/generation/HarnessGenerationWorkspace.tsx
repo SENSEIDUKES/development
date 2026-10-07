@@ -1,6 +1,6 @@
 import { StoryFoundationEditor } from '@seihouse/sen/story-seed';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import type { FrozenNarrativeMedia, SoundWord } from '@seihouse/sen/audio';
+import type { FrozenNarrativeMedia, SoundWord, SoundtrackVocabulary } from '@seihouse/sen/audio';
 import { BookOpen, CheckCircle2, CircleAlert, Compass, Download, FileText, ListTree, LoaderCircle, Pause, Pin, Play, Plus, Puzzle, RefreshCcw, Volume2 } from 'lucide-react';
 import { CHAPTER_FUNCTIONS, CHAPTER_FUNCTION_LABELS, FATE_MODE_LABELS, FATE_PRESSURE_RHYTHM_CONFIG, FateArcGoalCard, FateConclusion, FateDestinedEnding, FatePathChooser, HARD_PIN_LIMIT, arcPlanGap, arcReviewGap, chapterDirectionGap, describeChapterPath, harnessStoryMode, nextArcStep } from '@seihouse/sen/harness-generation';
 import type { ChapterDirectionChoice, HardPinInput, HarnessChapter, HarnessMissionReminder, StoryFoundationRevision } from '@seihouse/sen/harness-generation';
@@ -10,7 +10,7 @@ import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-
 import { findFoundationRevision, findStory } from '@seihouse/sen/harness-generation';
 import { buildCanonicalStoryView } from '@seihouse/sen/harness-generation';
 import { GENERATION_PACKET_BUDGET, PACKET_SECTION_ORDER } from '@seihouse/sen/harness-generation';
-import { ALWAYS_LOADED_SKILLS, CAPA_SCHEMA, SEN_FATE_SURVIVAL_SKILL, SEN_READING_MODE_SKILLS, SEN_SOUND_CUES_SKILL, buildHarnessOfficialOutputRequirements, harnessSkillKey, resolveStoryLanguagePackage, type CapaSlotManager } from '@seihouse/sen/harness-generation';
+import { ALWAYS_LOADED_SKILLS, CAPA_SCHEMA, SEN_FATE_SURVIVAL_SKILL, SEN_READING_MODE_SKILLS, SEN_SOUND_CUES_SKILL, SEN_SOUNDTRACK_SKILL, buildHarnessOfficialOutputRequirements, harnessSkillKey, resolveStoryLanguagePackage, type CapaSlotManager } from '@seihouse/sen/harness-generation';
 import { getSenLanguageLabel, normalizeChapterWritingStyle, type ChapterWritingStyle } from '@seihouse/sen/contracts';
 import { StorySettingsPanel } from './StorySettingsPanel';
 import { includeBundledHarnessSkills } from '@seihouse/sen/harness-generation';
@@ -264,6 +264,7 @@ const managedSlotInspection = (
   fateMode: HarnessStoryMode,
   installedSkills: HarnessSkillManifest[],
   soundWords: readonly SoundWord[],
+  soundtrackWords: SoundtrackVocabulary,
 ): { status: 'Loaded' | 'Not used' | 'No package' | 'Blocked'; summary: string; skill?: HarnessSkillManifest } => {
   switch (slot.managedBy) {
     case 'always': {
@@ -279,6 +280,15 @@ const managedSlotInspection = (
         : { status: 'No package', summary: 'This host has no Speakers skill, so chapters are written without speaker tags and Read Aloud takes every speaker from the narration.' };
     }
     case 'media-loadout':
+      if (slot.id === 'soundtrack') {
+        const loaded = installedSkills.some(installed => installed.id === SEN_SOUNDTRACK_SKILL.id && installed.version === SEN_SOUNDTRACK_SKILL.version);
+        if (!soundtrackWords.moods.length && !soundtrackWords.atmospheres.length) {
+          return { status: 'Not used', summary: 'This story has no music moods or atmospheres, so this slot stays empty. It follows the story\'s Media Loadout and is never equipped by hand.' };
+        }
+        return loaded
+          ? { status: 'Loaded', skill: SEN_SOUNDTRACK_SKILL, summary: `${SEN_SOUNDTRACK_SKILL.name} v${SEN_SOUNDTRACK_SKILL.version} loads with this story's ${soundtrackWords.moods.length} music moods and ${soundtrackWords.atmospheres.length} atmospheres: the writer chooses one of each at every chapter's start.` }
+          : { status: 'No package', summary: 'This host has no Soundtrack skill, so chapters choose no music or atmosphere and the Reader goes on with what plays.' };
+      }
       return soundWords.length
         ? { status: 'Loaded', skill: SEN_SOUND_CUES_SKILL, summary: `${SEN_SOUND_CUES_SKILL.name} v${SEN_SOUND_CUES_SKILL.version} loads with this story's ${soundWords.length} sound words from its Media Loadout.` }
         : { status: 'Not used', summary: 'This story has no sound words, so this slot stays empty. It follows the story\'s Media Loadout and is never equipped by hand.' };
@@ -314,6 +324,7 @@ function SkillLoadoutPanel({
   fateMode,
   installedSkills,
   soundWords,
+  soundtrackWords,
   busy,
   onChange,
   renderSlotSkillImport,
@@ -325,6 +336,8 @@ function SkillLoadoutPanel({
   installedSkills: HarnessSkillManifest[];
   /** The story's sound words, which fill the Media Loadout-managed Sound Cues slot. */
   soundWords: readonly SoundWord[];
+  /** The story's music moods and atmospheres, which fill the Media Loadout-managed Soundtrack slot. */
+  soundtrackWords: SoundtrackVocabulary;
   busy: boolean;
   onChange: (slot: HarnessSkillSlotId, reference?: HarnessSkillReference) => void;
   renderSlotSkillImport?: HarnessGenerationWorkspaceProps['renderSlotSkillImport'];
@@ -355,7 +368,7 @@ function SkillLoadoutPanel({
             <h2 id="harness-skills-title" className="font-display text-xl text-white">CAPA skill slots</h2>
           </div>
           <p className="mt-2 max-w-3xl text-sm leading-relaxed text-neutral-400">
-            The Author skill tells the model how to write. Equipped generation skills are assembled once, in schema order, into the CAPA Prompt frozen with each chapter attempt. Fate, Accessibility, Translation and Sound Cues follow the story's Fate mode, Reading Mode, Story Language and Media Loadout; Speakers loads on every chapter.
+            The Author skill tells the model how to write. Equipped generation skills are assembled once, in schema order, into the CAPA Prompt frozen with each chapter attempt. Fate, Accessibility, Translation, Sound Cues and Soundtrack follow the story's Fate mode, Reading Mode, Story Language and Media Loadout; Speakers and Holdings load on every chapter.
           </p>
         </div>
         <span className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-cyan-100">
@@ -372,7 +385,7 @@ function SkillLoadoutPanel({
       <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {CAPA_SCHEMA.map(slot => {
           if (slot.managedBy) {
-            const managed = managedSlotInspection(slot as ManagedCapaSlot, story, fateMode, installedSkills, soundWords);
+            const managed = managedSlotInspection(slot as ManagedCapaSlot, story, fateMode, installedSkills, soundWords, soundtrackWords);
             const loaded = managed.status === 'Loaded';
             const blocked = managed.status === 'Blocked';
             return (
@@ -1359,6 +1372,11 @@ export function HarnessGenerationWorkspace({
     try { return controller.describeSoundVocabulary(selectedStory.id); }
     catch { return []; }
   }, [controller, state, selectedStory]);
+  const soundtrackWords = useMemo<SoundtrackVocabulary>(() => {
+    if (!state || !selectedStory) return { moods: [], atmospheres: [] };
+    try { return controller.describeSoundtrackVocabulary(selectedStory.id); }
+    catch { return { moods: [], atmospheres: [] }; }
+  }, [controller, state, selectedStory]);
   const missionReminder = useMemo<HarnessMissionReminder | { error: string } | undefined>(() => {
     if (!state || !selectedStory) return undefined;
     try { return controller.describeMissionReminder(selectedStory.id); }
@@ -1585,6 +1603,7 @@ export function HarnessGenerationWorkspace({
                 fateMode={selectedMode}
                 installedSkills={availableSkills}
                 soundWords={soundWords}
+                soundtrackWords={soundtrackWords}
                 busy={busy}
                 onChange={setSkillSlot}
                 renderSlotSkillImport={renderSlotSkillImport}

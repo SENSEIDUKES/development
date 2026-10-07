@@ -146,6 +146,21 @@ export type SoundTagIssue =
 /** The words a sound tag may open with, letter case and hyphens aside: `[[sfx: …]]` is `[[sound: …]]`. */
 export const SOUND_TAG_WORDS = ['sound', 'sounds', 'sfx', 'sound cue', 'sound effect'] as const;
 
+/**
+ * A soundtrack tag: the chapter's music and atmosphere, chosen once at its
+ * start (`[[soundtrack: mystical | forest]]`). Which parts are words of the
+ * story's soundtrack is decided where the chapter is accepted.
+ */
+export interface SoundtrackTag {
+  /** The parts between the pipes, trimmed, in order: the music's mood, then the atmosphere. */
+  parts: string[];
+  /** UTF-16 offset in the clean text. */
+  offset: number;
+}
+
+/** The words a soundtrack tag may open with, letter case and hyphens aside: `[[scene: …]]` is `[[soundtrack: …]]`. */
+export const SOUNDTRACK_TAG_WORDS = ['soundtrack', 'sound track', 'scene', 'music'] as const;
+
 export interface MarkReadingOptions {
   /**
    * The story's sound words. With them, a sound tag whose words and sound word
@@ -170,6 +185,8 @@ export interface MarkReading {
   /** Word tags in reading order. */
   wordTags: WordTag[];
   wordTagIssues: WordTagIssue[];
+  /** Soundtrack tags in reading order; one that never closed is removed with nothing read from it. */
+  soundtracks: SoundtrackTag[];
 }
 
 const TAG_WORD_SPELLINGS = new Map<string, TagWord>(
@@ -221,6 +238,11 @@ const SOUND_POINT = new RegExp(String.raw`${OPEN}${GAP}${SOUND_TAG_WORD}${GAP}${
 const SOUND_UNCLOSED = new RegExp(String.raw`${OPEN}${GAP}${SOUND_TAG_WORD}${GAP}${COLON}[^\[\]［］|｜\n.!?。！？“"「]{0,120}[.!?。！？]?`, 'iy');
 /** `| high]]`: the Energy written after a sound tag's words, closing it. */
 const SOUND_CLOSE_WITH_PART = new RegExp(String.raw`[|｜]${GAP}([^\[\]［］|｜\n]{0,24}?)${GAP}${CLOSE}`, 'y');
+const SOUNDTRACK_TAG_WORD = String.raw`(?:sound[ \t-]?track|scene|music)`;
+/** `[[soundtrack: mystical | forest]]` `［［soundtrack：mystical｜forest］］` `[[Scene: mystical]]` */
+const SOUNDTRACK_TAG = new RegExp(String.raw`${OPEN}${GAP}${SOUNDTRACK_TAG_WORD}${GAP}${COLON}([^\[\]［］\n]{0,120})${CLOSE}`, 'iy');
+/** A soundtrack tag that never closes: removed through the end of the sentence it ran into. */
+const SOUNDTRACK_UNCLOSED = new RegExp(String.raw`${OPEN}${GAP}${SOUNDTRACK_TAG_WORD}${GAP}${COLON}[^\[\]［］\n.!?。！？“"「]{0,120}[.!?。！？]?`, 'iy');
 
 const toNumber = (digits: string) => Number(digits.replace(/[０-９]/g, digit => String(digit.charCodeAt(0) - 0xff10)));
 const isSpace = (character: string | undefined) => character !== undefined && /[ \t　]/.test(character);
@@ -252,6 +274,7 @@ export function readMarks(source: string, { soundWords }: MarkReadingOptions = {
   const speakerIssues: SpeakerTagIssue[] = [];
   const wordTags: WordTag[] = [];
   const wordTagIssues: WordTagIssue[] = [];
+  const soundtracks: SoundtrackTag[] = [];
   const used = new Set<number>();
   /** Spans open in the text, outermost first: an inner one's closing is consumed without ending the outer. */
   const spans: OpenSpan[] = [];
@@ -330,6 +353,17 @@ export function readMarks(source: string, { soundWords }: MarkReadingOptions = {
       if (unclosedTag) {
         speakerIssues.push({ kind: 'unnamed' });
         index = skipDoubledSpace(index + unclosedTag[0].length);
+        continue;
+      }
+      const soundtrack = matchAt(SOUNDTRACK_TAG, source, index);
+      if (soundtrack) {
+        soundtracks.push({ parts: soundtrack[1].split(PIPE).map(part => part.trim()).filter(Boolean), offset: text.length });
+        index = skipDoubledSpace(index + soundtrack[0].length);
+        continue;
+      }
+      const unclosedSoundtrack = matchAt(SOUNDTRACK_UNCLOSED, source, index);
+      if (unclosedSoundtrack) {
+        index = skipDoubledSpace(index + unclosedSoundtrack[0].length);
         continue;
       }
       const sound = matchAt(SOUND_OPEN, source, index);
@@ -431,6 +465,7 @@ export function readMarks(source: string, { soundWords }: MarkReadingOptions = {
     speakerIssues,
     wordTags: wordTags.map(tag => ({ ...tag, offset: at(tag.offset) })),
     wordTagIssues,
+    soundtracks: soundtracks.map(tag => ({ ...tag, offset: at(tag.offset) })),
   };
 }
 

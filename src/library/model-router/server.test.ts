@@ -136,15 +136,19 @@ describe('published Model Router server contract', () => {
       systemInstruction: 'system', maxOutputTokens: 100, responseMimeType: 'application/json',
       abortSignal: expect.any(AbortSignal),
     });
-    expect(sent.config!.thinkingConfig).toEqual(reasoningLevel ? { thinkingLevel: reasoningLevel.toUpperCase() } : undefined);
+    // With no level chosen, the model's sent default (low) goes instead.
+    const reasoning = CHAPTER_MODELS.find(entry => entry.id === model)!.reasoning!;
+    const level = reasoningLevel ?? (reasoning.sendDefault ? reasoning.defaultLevel : undefined);
+    expect(sent.config!.thinkingConfig).toEqual(level ? { thinkingLevel: level.toUpperCase() } : undefined);
   });
 
   it.each([
-    ['google/gemini-3.8-flash', 'minimal', undefined],
+    ['google/gemini-3.8-flash', 'minimal', 'LOW'],
     ['gemini-3.8-flash', 'high', 'HIGH'],
-    ['google/gemini-3.1-pro-preview', 'xhigh', undefined],
+    ['google/gemini-3.1-pro-preview', 'xhigh', 'LOW'],
+    ['google/gemini-3.5-flash-lite', 'xhigh', undefined],
     ['google/gemini-unlisted', 'high', undefined],
-  ] as const)('uses supported thinking or the model default for %s (%s)', async (model, reasoningLevel, expected) => {
+  ] as const)('uses supported thinking or the model\'s sent default for %s (%s)', async (model, reasoningLevel, expected) => {
     const generateContent = vi.fn(async (_request: GenerateContentParameters) => ({ text: 'answer' }));
     const router = createModelRouter({
       credentials: { gemini: 'secret' },
@@ -159,8 +163,8 @@ describe('published Model Router server contract', () => {
   it.each([
     ['openrouter/google/gemini-3.8-flash', 'high', 'high'],
     ['google/gemini-3.8-flash', 'medium', 'medium'],
-    ['openrouter/google/gemini-3.8-flash', 'minimal', undefined],
-    ['openrouter/google/gemini-3.8-flash', undefined, undefined],
+    ['openrouter/google/gemini-3.8-flash', 'minimal', 'low'],
+    ['openrouter/google/gemini-3.8-flash', undefined, 'low'],
     ['openrouter/google/gemini-unlisted', 'high', undefined],
   ] as const)('omits deprecated sampling on OpenRouter Gemini %s (%s)', async (model, reasoningEffort, expected) => {
     let sent: Record<string, unknown> = {};

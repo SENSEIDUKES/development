@@ -23,7 +23,7 @@ import { InMemoryFamiliarRepository } from './inMemoryFamiliarRepository';
 import { FamiliarConflictError } from './repository';
 import { FamiliarService } from './service';
 import { FAMILIAR_SIGNATURES, validateSignatures, type FamiliarSignatureDefinition } from './signatures';
-import { bondTitleEffect, FAMILIAR_BOND_LADDER, FamiliarBondLadderError, masteryEffect, validateBondLadder, type FamiliarBondRankDefinition } from './training';
+import { bondTitleEffect, FAMILIAR_BOND_LADDER, familiarElement, FamiliarBondLadderError, masteryEffect, validateBondLadder, type FamiliarBondRankDefinition } from './training';
 
 const principal: LibraryPrincipal = { uid: 'tamer-1', role: 'user', identity: 'development', developmentAccess: true };
 const quill = defaultFamiliar.definition.id;
@@ -47,6 +47,7 @@ describe('Familiar bonds', () => {
       'Fire', 'Lightning', 'Frost', 'Water', 'Wind', 'Earth',
       'Nature', 'Poison', 'Metal', 'Space', 'Celestial', 'Void',
     ]);
+    expect(familiarElement('frostforged-golem')).toBe('frost');
     expect(validateBondLadder()).toBe(FAMILIAR_BOND_LADDER);
   });
 

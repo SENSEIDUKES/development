@@ -1,9 +1,19 @@
 # Private UI artifacts
 
-The UI tarball is built from merged UI PR [#87](https://github.com/SENSEIDUKES/UI/pull/87), merge commit `d3c630181b5fb35cbb9be50847c96fff2dbd5e4a`. The unchanged Library UI tarball remains from PR [#84](https://github.com/SENSEIDUKES/UI/pull/84), merge commit `ced1de35ec65358e1e2e927079e6b98ddf68e7af`:
+Both UI tarballs are built from UI PR [#90](https://github.com/SENSEIDUKES/UI/pull/90), source commit `099a460566eb236b4b1c067015431508129d13c8`:
 
-- `@seihouse/ui@0.10.1`: universal SEIHouse primitives and experience tokens, including the refined `SEIBadge` and `ElementalTitle`, the `SEIAppHeader` application chrome, the `SEIAppShell` scaffold, the shared overlay scrollbar, and the Pathways navigation panel.
-- `@seihouse/library-ui@0.9.0`: stateless Celestial Library presentation, including the transferred icon family, manifestation chamber/scenes/vessel, journey scrubber, Cave backdrop and particles, and the Library skin over the Pathways panel (`LibraryNavigationDrawerPanel`). Its `@seihouse/ui` peer is `^0.10.0`; its skin supplies the gold gradient scrollbar and the gold-edged star. Domain behavior remains in `@seihouse/library`.
+- `@seihouse/ui@0.11.0`: universal SEIHouse primitives and experience tokens, including the application shell, shared overlay scrollbar and Pathways panel. The opt-in `double-tap` sidebar behavior toggles both widths and offers a keyboard-focus-only control; `automatic` and `click` remain available.
+- `@seihouse/library-ui@0.10.0`: stateless Celestial Library presentation. Its `@seihouse/ui` peer is `^0.11.0`; its navigation skin supplies scroll-only gold thumbs and a stationary gold-and-cyan edge bevel. Domain behavior and persistence remain in `@seihouse/library` and its host.
+
+The locked `@seihouse/audio-player@4.0.0` Git build declares an exact optional UI
+0.10.1 peer. Development scopes an npm override to that package's UI peer, using
+the root UI tarball, and the packed-consumer smoke checks apply the same override.
+Hosts combining these SEN/Library releases with that audio build need the same
+override until its peer declaration is updated; the audio build itself is unchanged.
+
+```json
+"overrides": { "@seihouse/audio-player": { "@seihouse/ui": "$@seihouse/ui" } }
+```
 
 `ui-artifacts.json` records source provenance and SHA-512 integrity. The root manifest pins these files, and `package-lock.json` records their integrity. Run `npm ci` followed by `npm run check:ui-artifacts` to verify the installed dependency inputs.
 
@@ -30,3 +40,7 @@ npm pack ./packages/seihouse-library-ui --pack-destination /path/to/development/
 ```
 
 UI's `pnpm test:package` checks repeated-pack integrity and fresh ESM, TypeScript, and Tailwind CSS consumption. Development's `npm run test:package` installs SEN and Library into consumers outside the repository; the SEN consumer must have no Library UI installed.
+
+## History
+
+- **2026-10-06:** Adopted UI 0.11.0 and Library UI 0.10.0 from one UI source commit for two-way drawer gestures, scroll-only thumbs and the Library bevel. Recorded the audio build's scoped peer override.

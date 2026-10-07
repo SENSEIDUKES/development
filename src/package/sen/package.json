@@ -1,6 +1,6 @@
 {
   "name": "@seihouse/sen",
-  "version": "0.24.1",
+  "version": "0.24.2",
   "description": "SEIHouse Expanded Novels: an embeddable expanded-narrative engine — expanded reading behavior, structured chapter contracts, Color Codes, Codex behavior, cards, and the narrative surfaces built on them.",
   "type": "module",
   "sideEffects": [
@@ -90,7 +90,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-focus-lock": ">=2",
-    "@seihouse/ui": "0.10.1",
+    "@seihouse/ui": "0.11.0",
     "@seihouse/audio-player": "^4.0.0"
   }
 }

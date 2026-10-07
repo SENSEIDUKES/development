@@ -152,7 +152,7 @@ it('nests a page\'s own sub-pages under the active pathway and moves Dao Insight
   expect(navigate).toHaveBeenCalledWith({ screen: 'creator-space' });
 });
 
-it('opens the Pathways sidebar by default, minimizes it with the star and expands it with a double tap, remembered for every page', async () => {
+it('opens Pathways by default and remembers two-way double-tap width changes across pages without a star', async () => {
   vi.stubGlobal('matchMedia', (query: string) => ({ media: query, matches: query.includes('min-width: 1024px'),
     addEventListener: vi.fn(), removeEventListener: vi.fn(), addListener: vi.fn(), removeListener: vi.fn() }));
   // The host remembers the choice; here, a stand-in for its settings.
@@ -164,11 +164,19 @@ it('opens the Pathways sidebar by default, minimizes it with the star and expand
   </LibraryNavigation></LibraryDesktopNavigationProvider>;
   await render(page('first'));
   const shell = () => document.querySelector('[data-slot="app-shell"]')!;
-  const star = () => document.querySelector<HTMLButtonElement>('[data-slot="navigation-pin"]')!;
-  expect(shell().getAttribute('data-sidebar-behavior')).toBe('click');
+  const toggle = () => document.querySelector<HTMLButtonElement>('[data-slot="navigation-toggle"]')!;
+  expect(document.querySelector('[data-slot="navigation-pin"]')).toBeNull();
+  expect(shell().getAttribute('data-sidebar-behavior')).toBe('double-tap');
   expect(shell().getAttribute('data-sidebar-collapsed')).toBeNull();
-  expect(star().getAttribute('aria-label')).toBe('Minimize sidebar');
-  await click(star());
+  expect(toggle().getAttribute('aria-label')).toBe('Minimize sidebar');
+  const tap = (x = 30, y = 400) => act(async () => {
+    const rail = document.querySelector('[data-slot="app-shell-sidebar"]')!;
+    rail.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: x, clientY: y }));
+    rail.dispatchEvent(new MouseEvent('pointerup', { bubbles: true, button: 0, clientX: x, clientY: y }));
+  });
+  await tap();
+  expect(remember).not.toHaveBeenCalled();
+  await tap(32, 402);
   expect(remember).toHaveBeenCalledWith('compact');
   // Another page mounts minimized; focus inside the rail never opens it.
   await render(page('second'));
@@ -176,15 +184,15 @@ it('opens the Pathways sidebar by default, minimizes it with the star and expand
   await act(async () => { document.querySelector<HTMLElement>('nav[aria-label="Library pathways"] button')!.focus(); });
   expect(shell().getAttribute('data-sidebar-collapsed')).toBe('true');
   // A double tap anywhere on the minimized rail expands it; a single tap does not.
-  const rail = document.querySelector('[data-slot="app-shell-sidebar"]')!;
-  const tap = (x = 30, y = 400) => act(async () => {
-    rail.dispatchEvent(new MouseEvent('pointerup', { bubbles: true, button: 0, clientX: x, clientY: y }));
-  });
   remember.mockClear();
   await tap();
   expect(remember).not.toHaveBeenCalled();
   await tap(32, 402);
   expect(remember).toHaveBeenCalledWith('pinned');
+  await render(page('third'));
+  expect(shell().getAttribute('data-sidebar-collapsed')).toBeNull();
+  await click(toggle());
+  expect(remember).toHaveBeenLastCalledWith('compact');
 });
 
 it('opens the sidebar by default when the host remembers nothing', async () => {

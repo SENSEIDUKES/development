@@ -248,6 +248,9 @@ under `reference/light-novels/`, so every relative import is production's own.
   `motion` wrapper, the footer, the Codex sheet, the error toast from
   `ModalsAndToasts.tsx`, keyboard shortcuts and the audio conductor. Production's global
   header (app navigation) is not part of the Reader and is not included.
+- **Inventory:** [`PRODUCTION_READER.md`](./PRODUCTION_READER.md) lists every feature and
+  option of this Reader by the job it does, with what is duplicated, unfinished, fixed to
+  one genre or looks wrong, as the starting point for the redesign.
 
 ## What stands in for production
 

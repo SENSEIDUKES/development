@@ -38,7 +38,7 @@ import {
 } from '@seihouse/ui';
 import { DEFAULT_SEN_LANGUAGE_CODE, SEN_LANGUAGES, normalizeSenLanguageCode } from '@seihouse/sen/contracts';
 import type { AppUser, ChapterWritingStyle, Story } from './types';
-import { useUserProfileServices, type UserProfileController } from './userProfileServices';
+import { notYetBuiltNote, useUserProfileServices, type UserProfileController, type UserProfileFeature } from './userProfileServices';
 import { CHAPTER_WRITING_STYLE_OPTIONS, normalizeChapterWritingStyle } from './chapterWritingStyle';
 import {
   MASTER_RANK,
@@ -121,13 +121,22 @@ export function UserProfileSettingsPanel({
   // Production reads the local-only flag and its setter from `lib/firebase` and
   // calls the deep library sync on `lib/storage`. All three arrive through the
   // injected services port instead.
+  const services = useUserProfileServices();
   const {
     localOnlyMode: LOCAL_ONLY_MODE,
     setLocalOnlyMode,
     requestLibrarySync,
     familiars = [],
     soundPreferences,
-  } = useUserProfileServices();
+  } = services;
+  // A piece the host has not built yet still shows, disabled, with its note.
+  const notYetBuilt = (feature: UserProfileFeature) => notYetBuiltNote(services, feature);
+  const shortcutsNote = notYetBuilt('shortcuts');
+  const redeemNote = notYetBuilt('redeem-code');
+  const signOutNote = notYetBuilt('sign-out');
+  const syncNote = notYetBuilt('sync');
+  const backupNote = notYetBuilt('backup');
+  const routerNote = notYetBuilt('model-router');
   const {
     profile,
     formData,
@@ -195,14 +204,14 @@ export function UserProfileSettingsPanel({
 
   // ---- Harmony (production behaviour, verbatim) ----------------------------
   const isHarmonizing = syncStatus === 'syncing';
-  const harmonyDetail = syncStatus === 'offline'
+  const harmonyStatusDetail = syncStatus === 'offline'
     ? 'Offline'
     : isHarmonizing
       ? 'Harmonizing…'
       : syncStatus === 'error'
         ? 'Needs attention'
         : 'Press to sync';
-  const harmonyTitle = syncStatus === 'offline'
+  const harmonyStatusTitle = syncStatus === 'offline'
     ? LOCAL_ONLY_MODE
       ? 'Harmony is in legacy device-only mode. Activate to reconnect cloud storage.'
       : 'Harmony is offline. Reconnect, then activate it to reconcile your devices.'
@@ -211,6 +220,9 @@ export function UserProfileSettingsPanel({
       : syncStatus === 'error'
         ? 'Harmony needs attention. Activate it to reconcile queued and remote changes.'
         : 'Activate Harmony to reconcile every story and chapter across your devices.';
+  // A host without sync shows Harmony unconnected, with its note.
+  const harmonyDetail = syncNote ? 'Not connected' : harmonyStatusDetail;
+  const harmonyTitle = syncNote ?? harmonyStatusTitle;
   const activateHarmony = () => {
     if (LOCAL_ONLY_MODE) {
       setLocalOnlyMode(false);
@@ -526,7 +538,8 @@ export function UserProfileSettingsPanel({
             </SEIDisclosure>
 
             <SEIDisclosure value="shortcuts" heading="Keyboard Shortcuts" icon={Keyboard} supportingText="Keyboard controls and navigation help.">
-              <LibraryButton variant="secondary" fullWidth icon={Keyboard} onClick={() => setIsShortcutsOpen(true)}>Shortcuts</LibraryButton>
+              <LibraryButton variant="secondary" fullWidth icon={Keyboard} disabled={Boolean(shortcutsNote)} onClick={() => setIsShortcutsOpen(true)}>Shortcuts</LibraryButton>
+              <NotYetBuiltNote note={shortcutsNote} />
             </SEIDisclosure>
           </SEIDisclosureGroup>
         </SEITabsPanel>
@@ -542,11 +555,13 @@ export function UserProfileSettingsPanel({
                   <p className="mt-1 break-all text-sm text-neutral-200">{profile?.username || 'Not available'}</p>
                   <p className="mt-2 text-xs leading-relaxed text-neutral-400">Set at account creation. Changing your username requires a separate account process.</p>
                 </div>
-              <LibraryButton variant="secondary" fullWidth icon={Gift} onClick={onRedeemCode}>Redeem Code</LibraryButton>
+              <LibraryButton variant="secondary" fullWidth icon={Gift} disabled={Boolean(redeemNote)} onClick={onRedeemCode}>Redeem Code</LibraryButton>
+              <NotYetBuiltNote note={redeemNote} />
               <div className="pt-1">
-                <LibraryButton variant="danger" fullWidth icon={SENExitIcon} onClick={onLogout}>
+                <LibraryButton variant="danger" fullWidth icon={SENExitIcon} disabled={Boolean(signOutNote)} onClick={onLogout}>
                   Sever Link
                 </LibraryButton>
+                <NotYetBuiltNote note={signOutNote} />
               </div>
             </SEIDisclosure>
             {/* ---- Public profile -------------------------------------------- */}
@@ -594,7 +609,7 @@ export function UserProfileSettingsPanel({
                 <button
                   type="button"
                   onClick={activateHarmony}
-                  disabled={isHarmonizing}
+                  disabled={isHarmonizing || Boolean(syncNote)}
                   title={harmonyTitle}
                   aria-label={`Harmony: ${harmonyDetail}`}
                   aria-busy={isHarmonizing}
@@ -617,6 +632,7 @@ export function UserProfileSettingsPanel({
                     <span className="sr-only">Activate to reconcile every story and chapter now.</span>
                   )}
                 </button>
+                <NotYetBuiltNote note={syncNote} />
                 {lastSavedTime ? (
                   <p className="font-mono text-[10px] tracking-wider text-neutral-400">
                     Saved on device: {new Date(lastSavedTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
@@ -638,13 +654,14 @@ export function UserProfileSettingsPanel({
                   tabIndex={-1}
                   aria-hidden="true"
                 />
-                <LibraryButton variant="secondary" fullWidth icon={Upload} onClick={() => importInputRef.current?.click()}>
+                <LibraryButton variant="secondary" fullWidth icon={Upload} disabled={Boolean(backupNote)} onClick={() => importInputRef.current?.click()}>
                   Import Scroll
                 </LibraryButton>
-                <LibraryButton variant="secondary" fullWidth icon={Download} disabled={stories.length === 0} onClick={handleExportLibrary}>
+                <LibraryButton variant="secondary" fullWidth icon={Download} disabled={stories.length === 0 || Boolean(backupNote)} onClick={handleExportLibrary}>
                   Backup All
                 </LibraryButton>
               </div>
+              <NotYetBuiltNote note={backupNote} />
             </SEIDisclosure>
 
           </SEIDisclosureGroup>
@@ -658,11 +675,12 @@ export function UserProfileSettingsPanel({
                   Configure custom model presets, routing overrides, or API credential endpoints.
                 </p>
                 <div className="flex flex-col gap-2 sm:flex-row">
-                  <LibraryButton variant="secondary" fullWidth icon={Sliders} title="Aether Router" onClick={() => setIsSettingsOpen(true)}>
+                  <LibraryButton variant="secondary" fullWidth icon={Sliders} title="Aether Router" disabled={Boolean(routerNote)} onClick={() => setIsSettingsOpen(true)}>
                     Aether Router
                   </LibraryButton>
 
                 </div>
+                <NotYetBuiltNote note={routerNote} />
               </div>
             </SEIDisclosure>
 
@@ -682,6 +700,11 @@ export function UserProfileSettingsPanel({
       </SEITabs>
     </div>
   );
+}
+
+/** A host's note beside a piece it has not built yet (for example "Not in the app yet."). */
+function NotYetBuiltNote({ note }: { note?: string }) {
+  return note ? <p className="pt-1 font-sans text-xs text-neutral-400" data-cave-not-yet-built>{note}</p> : null;
 }
 
 /**

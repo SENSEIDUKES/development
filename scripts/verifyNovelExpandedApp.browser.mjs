@@ -286,15 +286,17 @@ async function walk(browser, viewport, sample) {
   check(address() === '/app/', `/app should land on /app/, got ${address()}`);
   check((await page.textContent('body')).includes('Your stories appear here'), 'The empty Home should say where stories appear.');
   await shot('1-home-empty');
-  // The Library Shell: the app's two places (the strip on phones, the Pathways sidebar on laptops), the footer, the note.
+  // The Library Shell: the app's places (the strip on phones, the Pathways sidebar on laptops), the footer, the note.
   const laptop = viewport.width >= 1024;
   const navigation = () => (laptop ? page.locator('[data-slot="app-shell-sidebar"] nav[aria-label="Library pathways"]')
     : page.locator('nav[aria-label="Library global navigation"]'));
-  const places = (await navigation().getByRole('button').allTextContents()).map(text => text.trim());
-  check(JSON.stringify(places) === JSON.stringify(['Home', 'Create']), `The navigation should offer Home and Create only, got ${JSON.stringify(places)}.`);
+  // Settings sits beside Profile, in the sidebar's footer on laptops.
+  const places = (await navigation().getByRole('button').allTextContents()).map(text => text.trim()).filter(text => text !== 'Settings');
+  check(JSON.stringify(places) === JSON.stringify(['Home', 'Create', 'Profile']), `The navigation should offer Home, Create and Profile, got ${JSON.stringify(places)}.`);
   check(await navigation().isVisible(), `The ${laptop ? 'Pathways sidebar' : 'bottom strip'} should show.`);
+  if (laptop) check(await page.locator('[data-slot="app-shell-sidebar"]').getByRole('button', { name: 'Settings' }).isVisible(), 'Settings should sit beside Profile in the sidebar.');
   const shellText = await page.getByTestId('novel-expanded-shell').innerText();
-  check(!/\b(?:Discover|Profile|Settings)\b/.test(shellText), 'No place the app has not built may show.');
+  check(!/\bDiscover\b/.test(shellText), 'Discover, which the app has not built, may not show.');
   // The music note: floating just above the bottom bar's right end on phones (as the Reader's note floats above its
   // Listen bar), in the header on laptops, and only ever once.
   const musicNote = () => page.locator(laptop ? 'header .header-sound-control button' : '[data-library-sound-slot] .header-sound-control button')
@@ -643,7 +645,8 @@ async function walk(browser, viewport, sample) {
     const doubleClickSidebar = async () => {
       const sidebar = page.locator('[data-slot="app-shell-sidebar"]');
       const box = await sidebar.boundingBox();
-      await sidebar.dblclick({ position: { x: box.width / 2, y: box.height - 24 } });
+      // On the artwork, below the pathways and above Settings at the foot.
+      await sidebar.dblclick({ position: { x: box.width / 2, y: box.height * 0.6 } });
     };
     await doubleClickSidebar();
     await page.waitForFunction(() => localStorage.getItem('novelexpanded-reader-library-sidebar-mode') === 'compact', null, { timeout: 5_000 })
@@ -657,6 +660,68 @@ async function walk(browser, viewport, sample) {
     await page.waitForFunction(() => localStorage.getItem('novelexpanded-reader-library-sidebar-mode') === 'pinned', null, { timeout: 5_000 })
       .catch(async () => check(false, `A second double click should open the sidebar again, got ${await sidebarMode()}.`));
   }
+
+  // 6c. Profile: the Library's Cave for this device's reader, on the practice account (the most QI, every Familiar).
+  await navigation().getByRole('button', { name: 'Profile' }).click();
+  await page.getByTestId('novel-expanded-profile').waitFor();
+  check(address() === '/app/?page=profile&cave=%2Fhome', `Profile in the navigation should open the Cave, got ${address()}`);
+  await page.locator('[data-cave-qi]').filter({ hasText: '1,000,000 to spend' }).waitFor({ timeout: 10_000 });
+  await noteInPlace('The Cave');
+  check(await page.evaluate(() => document.documentElement.scrollWidth) <= viewport.width, 'The Cave must never scroll sideways.');
+  // The Familiar's recall sits in the header, beside the music note on laptops and never on it.
+  const boxesMeet = (a, b) => a && b && a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+  const recall = page.locator('.workspace-header .familiar-recall').filter({ visible: true });
+  check(await recall.count() === 1, 'The Familiar\'s recall should sit in the Cave\'s header.');
+  if (laptop) check(!boxesMeet(await recall.boundingBox(), await musicNote().first().boundingBox()), 'The Familiar\'s recall and the music note should sit side by side.');
+  await shot('8-profile');
+  // Summoned, the Familiar floats clear of the bottom bar and the music note.
+  await recall.click();
+  await page.getByRole('button', { name: 'Expand Familiar' }).click();
+  const companion = page.locator('.familiar-companion');
+  await companion.waitFor();
+  await page.waitForTimeout(400);
+  const companionBox = await companion.boundingBox();
+  check(companionBox && companionBox.x >= 0 && companionBox.x + companionBox.width <= viewport.width && companionBox.y >= 0
+    && companionBox.y + companionBox.height <= viewport.height, `The Familiar should float inside the screen, got ${JSON.stringify(companionBox)}.`);
+  if (!laptop) {
+    const noteBox = await musicNote().first().boundingBox();
+    check(!boxesMeet(companionBox, noteBox) && companionBox.y + companionBox.height <= noteBox.y,
+      `On a phone the Familiar should start above the music note, got ${JSON.stringify({ companionBox, noteBox })}.`);
+  }
+  await shot('8b-profile-familiar');
+  // The Familiar floats over the page, so it goes back to the header before the page under it is used.
+  await companion.locator('.familiar-trigger').click();
+  await page.getByRole('button', { name: 'Minimize Familiar' }).click();
+  await companion.waitFor({ state: 'detached' });
+  check(await recall.count() === 1, 'Minimized, the Familiar should return to the header.');
+  // Settings: the reader's choices are kept on this device; what needs a server says it is not in the app yet.
+  const settingsButton = visibleButton(/^Settings$/);
+  // Centred, so the phone's bottom bar never covers it.
+  await settingsButton.evaluate(element => element.scrollIntoView({ block: 'center' }));
+  await settingsButton.click();
+  await page.locator('[data-cave-settings]').waitFor();
+  check(address() === '/app/?page=profile&cave=%2Fsettings', `Settings should be the Cave's Settings page, got ${address()}`);
+  await page.getByRole('tab', { name: 'Account' }).click();
+  check(await visibleButton(/^Sever Link$/).isDisabled(), 'Sever Link should wait for accounts.');
+  const accountNotes = await page.locator('[data-cave-not-yet-built]').filter({ visible: true }).allTextContents();
+  check(accountNotes.length >= 3 && accountNotes.every(note => note === 'Not in the app yet.'), `The account pieces should each say they are not in the app yet, got ${JSON.stringify(accountNotes)}.`);
+  await shot('8c-settings-account');
+  await page.getByRole('tab', { name: 'Customization' }).click();
+  await page.getByRole('tab', { name: 'Familiar' }).click();
+  await visibleButton('Select Phoenix').click();
+  await page.waitForFunction(() => JSON.parse(localStorage.getItem('novelexpanded-reader-profile') ?? '{}').familiarId === 'phoenix', null, { timeout: 5_000 })
+    .catch(() => check(false, 'A Familiar chosen in Settings should be kept on this device.'));
+  // The app's one Familiar becomes the one just chosen, and a new visit keeps it.
+  await page.locator('.workspace-header [aria-label="Show Phoenix actions"]').filter({ visible: true }).waitFor({ timeout: 5_000 });
+  await shot('8d-settings-familiar');
+  await page.reload();
+  await page.locator('[data-cave-settings]').waitFor();
+  check(await page.locator('.workspace-header [aria-label="Show Phoenix actions"]').filter({ visible: true }).count() === 1,
+    'After a reload the header should recall the Phoenix the reader chose.');
+  // On laptops the Cave's own pages (its Home among them) nest under Profile; the Library's Home comes first.
+  await navigation().getByRole('button', { name: 'Home', exact: true }).first().click();
+  await page.getByTestId('novel-expanded-home').waitFor();
+  check(address() === '/app/', `Home in the Cave's navigation should go Home, got ${address()}`);
 
   // 7. A story the app does not have goes Home.
   await page.goto(`${BASE}/app/?story=hst_missing&read=1`);

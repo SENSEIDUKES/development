@@ -17,7 +17,7 @@ import { buildPublicProfile, developmentPublicRecord, DEFAULT_PUBLIC_PROFILE_VIS
 import { CAVE_DESTINATIONS, CAVE_PUBLIC_DESTINATIONS, publicCavePath, resolveCaveRoute } from './caveNavigation';
 import { publicCreatorWorlds, type CreatorWorld, type PublicCreator } from './creatorWorlds';
 import { previewPublicCreators } from '../../../workshop/previews/user-profile/publicCreatorData';
-import { type AppUser } from '@seihouse/library/profile';
+import { type AppUser, type UserProfileNotYetBuilt } from '@seihouse/library/profile';
 import { EnergyClientProvider, type EnergyClient } from '@seihouse/library/energy';
 import { createLocalEnergyClient } from '../../../workshop/previews/energy/localEnergyClient';
 import { DaoPillarClientProvider } from '@seihouse/library/dao-pillar';
@@ -106,6 +106,8 @@ interface RenderOptions {
    * did, in place of the local calendar and QI fixtures.
    */
   rewards?: WorkshopAccountSeed;
+  /** Pieces the host has not built yet, each shown with its note. */
+  notYetBuilt?: UserProfileNotYetBuilt;
 }
 
 /** The developed cultivator's rewards: sealed scrolls, a Relic, a trained Quill. */
@@ -148,7 +150,7 @@ describe('Home portrait access and generation progress', () => {
   });
 });
 
-async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), onNavigateHome = vi.fn(), Component = UserProfile, adapter = {}, accountControls, publicCreators, energyClient = null, daoPillar = {}, qiBalance, rewards }: RenderOptions = {}) {
+async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), onNavigateHome = vi.fn(), Component = UserProfile, adapter = {}, accountControls, publicCreators, energyClient = null, daoPillar = {}, qiBalance, rewards, notYetBuilt }: RenderOptions = {}) {
   const scenario = getPreviewScenario(state);
   if (rewards) return renderCaveWithEconomy({ state, onLogout, onNavigateHome, adapter, accountControls, publicCreators, rewards });
   // The calendar is server truth: the developed cultivator's twelve-day streak
@@ -168,7 +170,7 @@ async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), 
   const qiClient: QiClient = { async getSnapshot() { return { uid, balance: (await ledger.getAccount(uid))?.balance ?? 0, transactions: await ledger.listTransactions(uid, 100) }; } };
   const logExcludedAction = vi.fn();
   const onSignIn = vi.fn<(account: AppUser) => void>();
-  const services = createMockUserProfileServices({ state, logExcludedAction, onSignIn, ...adapter });
+  const services = { ...createMockUserProfileServices({ state, logExcludedAction, onSignIn, ...adapter }), ...(notYetBuilt ? { notYetBuilt } : {}) };
   const useOriginalController = services.useController;
   let controller: UserProfileController;
   services.useController = props => { controller = useOriginalController(props); return controller; };
@@ -2078,5 +2080,45 @@ describe('identity rank progression and cultivator bio', () => {
     await click(stories.querySelector('input')!);
     await navigateTo(publicCavePath('worlds', 'workshop-cultivator'));
     expect(container.querySelectorAll('[data-cave-world]')).toHaveLength(2);
+  });
+});
+
+describe('Cave pieces a host has not built yet', () => {
+  const NOTE = 'Not in the app yet.';
+  const button = (label: string) => [...document.body.querySelectorAll<HTMLButtonElement>('button')]
+    .find(candidate => (candidate.textContent ?? '').replace(/\s+/g, ' ').trim() === label);
+
+  it('still show, disabled, each with the host\'s note', async () => {
+    await renderCave({ notYetBuilt: { note: NOTE, features: ['portrait-generation', 'shortcuts', 'redeem-code', 'sign-out', 'sync', 'backup', 'model-router', 'inbox'] } });
+    await navigateTo('/settings');
+    const notes = [...document.body.querySelectorAll('[data-cave-not-yet-built]')].map(note => note.textContent);
+    // Shortcuts, Redeem Code, Sever Link, Harmony, Backup and the Aether Router.
+    expect(notes).toEqual(Array(6).fill(NOTE));
+    for (const label of ['Shortcuts', 'Redeem Code', 'Sever Link', 'Import Scroll', 'Backup All', 'Aether Router']) {
+      expect(button(label)?.disabled, label).toBe(true);
+    }
+    const harmony = document.body.querySelector<HTMLButtonElement>('button[aria-label^="Harmony"]')!;
+    expect(harmony.disabled).toBe(true);
+    expect(harmony.getAttribute('aria-label')).toBe('Harmony: Not connected');
+    // What the host has built stays the reader's.
+    expect(button('Guard Changes')).toBeTruthy();
+    expect(button('Open Divine Mirror')?.disabled).toBe(false);
+
+    // The portrait builder opens; Manifest Portrait waits, with the note.
+    await click(button('Open Divine Mirror')!);
+    expect(button('Manifest Portrait')?.disabled).toBe(true);
+    expect(document.body.querySelector('.portrait-builder-footer-note')?.textContent?.trim()).toBe(NOTE);
+
+    await navigateTo('/home/inbox');
+    expect(text()).toContain(NOTE);
+  });
+
+  it('without a host\'s note, every piece is the controller\'s', async () => {
+    await renderCave();
+    await navigateTo('/settings');
+    expect(document.body.querySelectorAll('[data-cave-not-yet-built]')).toHaveLength(0);
+    for (const label of ['Shortcuts', 'Redeem Code', 'Sever Link', 'Import Scroll', 'Aether Router']) {
+      expect(button(label)?.disabled, label).toBe(false);
+    }
   });
 });

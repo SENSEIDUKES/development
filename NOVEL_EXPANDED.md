@@ -359,15 +359,14 @@ Update it whenever it changes.
   - **Menu music is the reader's choice, and one tap silences it:** Profile
     Settings › Customization › Sound has a **Menu music** switch (on for a new
     reader, kept on the device). While it is on, the **music note** shows on
-    every page of the app outside the Reader (Home, World Info and Create): a
-    tap mutes all sound at once (the same switch as the Reader's note);
+    every page of the app outside the Reader (Home, World Info, Create and
+    Profile): a tap mutes all sound at once (the same switch as the Reader's note);
     hovering it with a mouse, or holding it on a phone, opens a **Music
     volume** slider right there. On phones and tablets it floats just above
     the bottom bar's right end, as the Reader's note floats above its Listen
     bar, faint while the page scrolls; on laptops it sits in the header beside
     Help and Search. Off, the menus are silent and the note goes; the Reader
-    keeps its own music. The switch lives in the Workshop's Profile until
-    Profile comes to the app.
+    keeps its own music. The switch is in the app's own Profile Settings too.
   - **A chapter's soundtrack, in the tiny SEN language:** at the very start of
     every chapter the writer writes one soundtrack tag, the mood of its music
     and its atmosphere (`[[soundtrack: mystical | forest]]`), from the story's
@@ -408,8 +407,29 @@ Update it whenever it changes.
     device. Search opens the reader's stories; the footer offers Help and the
     draft Terms, Privacy and Cookies. Create is Story Seed in the shell's
     workspace mode (Sections, Story Bank, Settings, Back). The Reader stays
-    full-screen. Discover and Profile join the navigation when their pages come
-    to the app.
+    full-screen. Discover joins the navigation when its page comes to the app.
+  - **Profile is in the app, with what it connects to,** so the pieces can be
+    seen working together and refined there. Profile is a third place in the
+    navigation (Home, Create, Profile, with Settings beside it); it is the
+    Library's Cultivator Cave, whole:
+    - **The reader's profile is kept on the device:** the Dao Name and its aura,
+      the languages, the default Reading Mode, the equipped Familiar and its
+      size. It is the one record every surface reads, so a choice in Settings
+      shows everywhere at once, and Create starts new Story Seeds from its
+      reading language and Reading Mode.
+    - **A practice economy:** QI, Energy, the Daily Dao Pillar, rewards and
+      Familiars run on the Library's real economy, in the page. Until the
+      database it is a practice account: 1,000,000 QI and every Familiar
+      unlocked, so each can be tested; what the reader does with it lasts for
+      the visit, and a reload opens the account again.
+    - **What needs a server says so:** portrait generation, Keyboard
+      Shortcuts, Redeem Code, Sever Link, Harmony sync, backup and import, the
+      Aether Router and the Inbox show, disabled, with "Not in the app yet."
+    - **One Familiar for the app:** minimized to its recall in every Library
+      header (beside the music note on laptops); summoned, it floats over the
+      pages and keeps its place, starting on phones just above the bottom bar
+      and the music note, never on them. It stays out of the immersive Reader,
+      and the writing veil wears the same Familiar.
   - **Story Length is set from the start:** the Story Seed's ARC page asks how many
     arcs of 30 chapters the story should run, 10 to 40 (300 to 1,200 chapters); left
     blank, the World Blueprint suggests one in that range, written by the same model
@@ -545,9 +565,11 @@ Update it whenever it changes.
   - The World Info page has no cover art yet: the media reveal is not connected
     to a cover generator.
   - The Text Highlight Engine's tools (fixes, cue placement) are not in the Reader.
-  - The Library's account and metagame surfaces (profile, cultivation, Relics,
-    rewards, Familiars, the Celestial Store, Creator Space) are Library package
-    entries the Workshop previews; the NovelExpanded app uses none of them yet.
+  - The app's Profile runs on the device and a practice economy: there are no
+    accounts, database or server-side storage yet, so nothing the economy holds
+    survives a reload, and the account and server pieces wait.
+  - Creator Space and Discover are Library package entries the Workshop
+    previews; the NovelExpanded app does not use them yet.
 - **Not rebuilt yet:**
   - manifestations;
   - System Panels, including the Fate Survival result card;
@@ -565,18 +587,22 @@ Update it whenever it changes.
    View → Reader Chamber, including the manifestation sequence and World Cards. The
    new path (Story Seed → HARNESS → new reader) is connected; what remains is how it
    looks and feels.
-3. **Grow the NovelExpanded app** (`/app/`) piece by piece. Piece 1, the core
-   application spine at its own address with a check that fails the build if the
-   app imports an old system, is built, and so is piece 2, the Library Shell
-   around it. Next pieces:
+3. **Grow the NovelExpanded app** (`/app/`) piece by piece, until it is the
+   whole app the owner wants. Piece 1, the core application spine at its own
+   address with a check that fails the build if the app imports an old system,
+   is built; so are piece 2, the Library Shell around it, and piece 3, Profile
+   with everything it connects to. Next pieces:
    - Story Settings (CAPA and media slots) inside Create and Story View, leaving
      the developer page;
    - cover art on Story View through the media reveal;
    - a Workshop switch to inspect the app's stories;
-   - real accounts and server-side storage.
+   - Discover.
 
-   The app can move to its own repository once SEN is stable enough to install
-   as a package.
+   **The owner's plan:** assemble the app here, a piece at a time, until it is
+   right; then copy it into its own repository and build the database there
+   (accounts, server-side storage, a kept economy), which completes it. The
+   app's host pieces (`src/host/`) are where the device and practice stand-ins
+   live, so that is where the database's real ones replace them.
 4. **Rebuild the remaining kinds** one at a time, then design the Codex.
 5. **The Familiar over the Holdings fixer:** the Library's Familiar decides how far
    the fixer goes, and what to do with the contradictions it records as too big
@@ -593,7 +619,7 @@ Update it whenever it changes.
 | SEN | SEIHouse Expanded Novels: the product-independent, licensable expanded-novel engine (`@seihouse/sen`). [The product family](#the-product-family). |
 | Expanded Novels | SEIHouse's first-party product on SEN, at NovelExpanded.com. In code, the Library (`@seihouse/library`), presented as the Celestial Library. |
 | SEA | SEIHouse Expanded Albums: SEIHouse's expanded-music product, separate from SEN. It inherits the shared infrastructure SEN pressure-tests. |
-| NovelExpanded app | Expanded Novels' app at NovelExpanded.com. Built at `/app/` (piece 1: the core application spine of Home, Create, Story View and Reader; piece 2: the Library Shell around it), in `src/novel-expanded/`. |
+| NovelExpanded app | Expanded Novels' app at NovelExpanded.com. Built at `/app/` (piece 1: the core application spine of Home, Create, Story View and Reader; piece 2: the Library Shell around it; piece 3: Profile, with the Familiar and a practice economy), in `src/novel-expanded/`. |
 | Story Seed / World Blueprint | Where a story is created (`?preview=story-seed`, and Create in the app). The Blueprint is the novel's transferable core: what a reader takes to make their own version ([The World Blueprint](#the-world-blueprint)). |
 | Story View | The story's own page: cover art, the story, Enter. Built today as the World Info page (`WorldCardInfo`), where Start Story or Start Reading leads into the Reader Chamber. |
 | Reader Chamber | Where chapters are read: a HARNESS story's chapters on the Text Highlight Engine with Sound Cues, Listen and the soundtrack (`HarnessReaderSession`). The older Reader Chamber preview (`?preview=reader-chamber`) is not part of this path. |

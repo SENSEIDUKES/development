@@ -13,6 +13,14 @@ describe('NovelExpanded addresses', () => {
     for (const page of pages) expect(parseRoute(routeSearch(page))).toEqual(page);
   });
 
+  it('gives the Profile its address, with the Cave\'s own page when there is one', () => {
+    const pages: NovelExpandedRoute[] = [{ page: 'profile' }, { page: 'profile', cave: '/settings' }, { page: 'profile', cave: '/home/familiar' }];
+    expect(pages.map(routeSearch)).toEqual(['?page=profile', '?page=profile&cave=%2Fsettings', '?page=profile&cave=%2Fhome%2Ffamiliar']);
+    for (const page of pages) expect(parseRoute(routeSearch(page))).toEqual(page);
+    // The Cave writes its page into the same address as it moves.
+    expect(parseRoute('?page=profile&cave=/rewards')).toEqual({ page: 'profile', cave: '/rewards' });
+  });
+
   it('keeps an id that needs escaping intact', () => {
     const route: NovelExpandedRoute = { page: 'read', storyId: 'hst a&b' };
     expect(parseRoute(routeSearch(route))).toEqual(route);

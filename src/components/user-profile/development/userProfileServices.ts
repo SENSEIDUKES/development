@@ -151,7 +151,35 @@ export interface UserProfileController {
   routingConfig: unknown;
 }
 
+/**
+ * The account and server pieces of the Cave a host may not have built yet:
+ * portrait generation (the Divine Mirror), Keyboard Shortcuts, code
+ * redemption, signing out (Sever Link), Harmony sync, library backup and
+ * import, the Aether Router, and the Inbox.
+ */
+export type UserProfileFeature =
+  | 'portrait-generation'
+  | 'shortcuts'
+  | 'redeem-code'
+  | 'sign-out'
+  | 'sync'
+  | 'backup'
+  | 'model-router'
+  | 'inbox';
+
+/** What a host has not built yet, and the one note the Cave shows beside each (for example "Not in the app yet."). */
+export interface UserProfileNotYetBuilt {
+  note: string;
+  features: readonly UserProfileFeature[];
+}
+
 export interface UserProfileServices {
+  /**
+   * Pieces this host has not built yet. Each still shows, disabled, with the
+   * note beside it, so a reader sees what is coming and no control does
+   * nothing. Omitted, every piece is the controller's.
+   */
+  notYetBuilt?: UserProfileNotYetBuilt;
   /** The host's Familiar catalogue. Which ones the cultivator owns comes from the Store account. */
   familiars?: readonly FamiliarOption[];
   /**
@@ -189,6 +217,11 @@ export interface UserProfileServices {
   /** Production: `downloadStorySeed` / `downloadStorySeedCollection` from `src/lib/storySeedFormat.ts`. */
   downloadStorySeed: (seed: StorySeed) => Promise<void>;
   downloadStorySeedCollection: (seeds: StorySeed[]) => Promise<void>;
+}
+
+/** The host's note for a piece it has not built yet, or undefined when the piece is the controller's. */
+export function notYetBuiltNote(services: Pick<UserProfileServices, 'notYetBuilt'>, feature: UserProfileFeature): string | undefined {
+  return services.notYetBuilt?.features.includes(feature) ? services.notYetBuilt.note : undefined;
 }
 
 const UserProfileServicesContext = createContext<UserProfileServices | null>(null);

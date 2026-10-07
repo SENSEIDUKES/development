@@ -1,10 +1,13 @@
 # NovelExpanded app
 
 The NovelExpanded app as its own place, at **`/app/`** on every preview and
-deployment. It holds only the core application spine from [`NOVEL_EXPANDED.md`](../../NOVEL_EXPANDED.md),
+deployment. It holds the core application spine from [`NOVEL_EXPANDED.md`](../../NOVEL_EXPANDED.md),
 the minimum path through the product:
 
 **Home → Create (Story Seed and World Blueprint) → Story View (World Info) → Reader**
+
+and, beside it, the reader's **Profile** (the Library's Cultivator Cave) with
+everything it connects to: Settings, the Familiar, and the economy the Cave shows.
 
 The Workshop is where systems are built and inspected one at a time. The app is
 where they are used together, the way a reader meets them.
@@ -25,8 +28,9 @@ rewrites and every page survives a reload.
 | Create | `/app/?page=create` | The Library's Story Seed journey: the seed, its World Blueprint, Manifest Story |
 | Story View | `/app/?story=<id>` | The story's World Info page: Start Story, Start Reading, Continue, and Export story (the whole story as one file, for sharing a test) |
 | Reader | `/app/?story=<id>&read=1` | The reading-only Reader, with the Generation Overlay while a chapter is written |
+| Profile | `/app/?page=profile` | The Library's Cultivator Cave; its own pages in `cave` (Settings: `&cave=/settings`) |
 
-- Home and Story View sit in the Library Shell; Create is Story Seed in the shell's workspace mode; the Reader is full-screen (below).
+- Home and Story View sit in the Library Shell; Create is Story Seed in the shell's workspace mode; Profile is the Cave, which draws the same shell itself; the Reader is full-screen (below).
 - Moving inside the app adds a browser history entry, so Back and Forward walk the same pages.
 - Manifest Story replaces Create with the new story, so Back from it goes Home.
 - `/app` without the slash redirects to `/app/` (the Vite dev and preview servers, and `vercel.json`).
@@ -39,29 +43,74 @@ same one the Workshop's Library preview shows, with only the places the app has
 built:
 
 - **Home and Story View** (`AppShell.tsx`): the Library header (NovelExpanded,
-  Help and Search), the navigation and the footer around the page.
+  the Familiar's recall, Help and Search), the navigation and the footer around
+  the page.
   - **The music note** (while Menu music is on): on phones and tablets it floats
     just above the bottom bar's right end, as the Reader's note floats above its
     Listen bar, faint while the page scrolls; on laptops it sits in the header
     before Help and Search.
-  - **Navigation:** Home and Create; on phones and tablets the bottom strip, and
-    from 1024px the Pathways sidebar. Story View keeps Home selected. Discover and
-    Profile join when their pages come to the app, so Settings, a Profile page,
-    waits with them.
+  - **Navigation:** Home, Create and Profile (`appPlaces.ts`, given to every
+    Library navigation in the app by `LibraryDestinationsProvider`, the Cave's
+    included); on phones and tablets the bottom strip, and from 1024px the
+    Pathways sidebar, with Settings at its foot beside Profile. Story View keeps
+    Home selected. Discover joins when its page comes to the app.
   - **The sidebar's choice is kept:** a double tap or double click switches it
     between open and the icon rail, and it opens that way on the next visit.
-  - **Search** finds Home, Create and each of the reader's stories, and opens its
-    World Info.
-  - **The footer** has Explore (Your stories, Create a story), Support (Help) and
-    the legal row. Terms, Privacy and Cookies open the Library's draft documents,
+  - **Search** finds Home, Create, Profile, Settings and each of the reader's
+    stories, and opens its World Info.
+  - **The footer** has Explore (Your stories, Create a story, Your profile),
+    Support (Help, Settings) and the legal row. Terms, Privacy and Cookies open the Library's draft documents,
     marked as drafts. Social channels wait for published addresses.
 - **Create** is Story Seed in the shell's workspace mode: its task bar (Sections,
   Story Bank, Settings, Back) stands where the strip was, with the same music note
   (`WorkspaceHeaderSoundProvider`), floating above the task bar on phones and
   tablets and in Story Seed's header on laptops.
+- **Profile** is the Library's Cave (`LibraryProfile`, below), with its own
+  header, navigation and pages; its logo returns Home.
 - **The Reader** stays outside the shell. It is immersive and scrolls the page
   itself. Story View is framed by the shell through `StoryPages`' `frame`, so Start
   Story still begins Chapter 1 when the Reader opens.
+
+## Profile
+
+`ProfilePage.tsx` mounts the Library's Cultivator Cave (`@seihouse/library/profile`)
+for this device's one reader, who is always signed in (there are no accounts yet).
+It is the Cave the Workshop's User Profile preview shows, on the app's own services:
+
+- **The reader's profile, on this device** (`src/host/profile/`). The Dao Name and
+  its aura, the languages (with the Cave's 30-second confirmation), the default
+  Reading Mode, the equipped Familiar and its size are saved in the reader's
+  device preferences (`novelexpanded-reader-profile`) the moment they change. It
+  is the one record every surface reads: the Cave, the floating Familiar, the
+  writing veil's Familiar, and Create, where a new Story Seed starts from the
+  profile's reading language and Reading Mode.
+- **A practice economy** (`src/host/economy/`). QI, DAO XP, Energy, the Daily Dao
+  Pillar, rewards and Familiars are the Library's real economy, every ledger and
+  rule of `/api/library-economy`, running in the page. Until the database, it is
+  a practice account: it opens with 1,000,000 QI and every Familiar unlocked, so
+  each can be equipped, trained and shown; what the reader does with it (a Dao
+  Pillar claim, an offering, a purchase) lasts for the visit, and a reload opens
+  the account again. Nothing reaches a server.
+- **What needs a server says so.** Portrait generation (the Divine Mirror),
+  Keyboard Shortcuts, Redeem Code, Sever Link, Harmony sync, backup and import,
+  the Aether Router and the Inbox still show, disabled, with "Not in the app
+  yet." The reader is not an owner, so the Akashic Switchboard does not show.
+- **Its Stories page** lists the reader's stories and their Story Seeds, and
+  exports a seed the way Story Seed does.
+
+## The Familiar
+
+`AppFamiliar.tsx` gives the app one Familiar, the profile's equipped one:
+
+- It starts minimized: its recall sits in every Library header (Home, World Info,
+  Create, the Cave), beside the music note on laptops. Summoned, it floats over
+  the page and keeps its place from page to page.
+- On phones and tablets it starts at the bottom right just above the bottom bar
+  and the music note floating over it, never on them (the Library's
+  `useLibraryBottomClearance`), and it can be dragged anywhere above them.
+- A Familiar or size chosen in the Cave changes it at once, and the writing veil
+  wears the same Familiar.
+- The Reader is immersive: the Familiar and its recall stay out of it.
 
 ## Same chapters as the Workshop
 
@@ -71,12 +120,7 @@ The app writes chapters exactly as the Workshop's HARNESS page does:
 - the Library's sound words and Sound Cues (`LIBRARY_BASE_MEDIA`), played through the reader mixer below;
 - chapter tags and recaps recorded in the chapter write, with no separate memory call;
 - the Model Router's chapter model (`useModelPreference('chapters')`), the one choice shared with the Workshop;
-- the equipped Familiar on the Generation Overlay, with its animation and elemental accents.
-
-`NovelExpandedApp.equippedFamiliarId` accepts the host profile's current choice
-and updates the veil when it changes. There are no account or equipment screens
-in this app yet, so visitors use the existing catalogue default, Quill. This is
-presentation only: it grants no ownership and writes no profile or equipment data.
+- the equipped Familiar on the Generation Overlay, with its animation and elemental accents: the reader's profile's (Quill, the catalogue default, for a new reader).
 
 The app opens only once its stories are open and the skills are installed. If
 either fails, it says so plainly, with Retry.
@@ -120,6 +164,8 @@ Workshop's, so neither can overwrite the other (`services.ts`):
 | The laptop sidebar open or minimized | localStorage `novelexpanded-reader-library-sidebar-mode` |
 | The access token | localStorage `seihouse-development-access-token`, shared with the Workshop |
 | Story Seeds | localStorage `novelexpanded-story-seeds-v1` |
+| The reader's profile (name, aura, languages, Reading Mode, Familiar) | localStorage `novelexpanded-reader-profile` |
+| The practice economy (QI, Energy, Dao Pillar, rewards, Familiars) | The page only: a reload opens it again |
 
 A story started in the app shows on the app's Home, not on the Workshop's
 developer page, and the other way round. There are no accounts yet: every seed
@@ -148,7 +194,7 @@ there, when the app reaches:
 - an older system's entry: `@seihouse/sen/reader-chamber`, `reader-codex`, `cards`, `translation`, or `@seihouse/library/generation`;
 - the HARNESS developer page (`src/library/generation/`);
 - the older Reader's code in `src/components/reader-chamber/` or `reader-codex/`, apart from five contracts the current Reader shares (reading language, manifestation eligibility, reading anchors, the semantic reading position, the Codex types);
-- from its own files, a package entry outside its list: `@seihouse/library/{stories,story-seed,home,shell,presentation}` and `@seihouse/sen/{story-seed,harness-generation,presentation,reader-runtime,styles.css}`.
+- from its own files, a package entry outside its list: `@seihouse/library/{stories,story-seed,home,shell,presentation,profile,familiar}` and `@seihouse/sen/{story-seed,harness-generation,presentation,reader-runtime,styles.css}`. Profile and Familiar joined on 2026-10-07, when the owner brought the Profile into the app.
 
 It runs in `check:app`, `verify`, `npm run build` (before `vite build`, so a
 deployment cannot ship an app that breaks it) and CI. When it fails, reconnect
@@ -161,13 +207,16 @@ task needs something the list does not allow.
 | --- | --- |
 | `app/index.html` (repository root) | The app's page; loads `main.tsx` |
 | `main.tsx` | Stylesheets (`src/host/styles/theme.css`, `@seihouse/sen/styles.css`), the Library scrollbar on the page, and the real services |
-| `NovelExpandedApp.tsx` | Providers (the mixer, the music note for every Library header, the remembered sidebar), the opening gate, and the four pages; Chapter 1 begins at Manifest Story |
-| `AppShell.tsx` | The Library Shell around Home and Story View: header, navigation (Home, Create), footer |
+| `NovelExpandedApp.tsx` | Providers (the mixer, the app's places, the music note for every Library header, the remembered sidebar, the economy), the opening gate, the Familiar and the pages; Chapter 1 begins at Manifest Story |
+| `AppShell.tsx` | The Library Shell around Home and Story View: header, navigation, footer |
+| `appPlaces.ts` | The app's places (Home, Create, Profile) and where each page sits in the Library's navigation |
+| `ProfilePage.tsx` | Profile: the Library's Cave on the device profile and the practice economy |
+| `AppFamiliar.tsx` | The app's one Familiar: the header recall and the floating companion |
 | `appMusic.ts` | The app's own music, from SEN Soundscapes, on every page and while a chapter is written |
 | `routes.ts` | Addresses and history |
-| `services.ts` | Storage, the writer, the official skills and the Blueprint client |
+| `services.ts` | Storage, the writer, the official skills, the Blueprint client, the reader's profile and the practice economy |
 | `HomePage.tsx` | Home: the reader's stories, in `AppShell` |
-| `CreatePage.tsx` | Create: `CreationModal` in a guest Story Seed runtime; asks for the token before a Blueprint |
+| `CreatePage.tsx` | Create: `CreationModal` in a guest Story Seed runtime, starting new seeds from the profile's defaults; asks for the token before a Blueprint |
 | `AccessTokenSheet.tsx` | The access token sheet, one for the whole app |
 | `accessToken.ts` | The chapter writer with the owner's token: a chapter at the limit asks for it and is sent again |
 | `storyCreationRuntime.ts` | The guest Story Seed runtime; which seeds already became stories |
@@ -188,17 +237,19 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 - Story Settings (CAPA and media slots) inside Create and Story View.
 - Cover art on Story View.
-- Profile, accounts and server-side storage.
-- Discover. It and Profile join the shell's navigation when their pages come.
+- Accounts and server-side storage: the database, and with it a kept economy, portrait generation, sync, backup, codes, the Inbox and sign-out.
+- Discover. It joins the shell's navigation when its page comes.
 
 ## Verification
 
-- `src/novel-expanded/*.test.ts(x)`: the four pages, browser Back, an unknown story, the token sheet, a skill load failure.
+- `src/novel-expanded/*.test.ts(x)`: the four pages and Profile, browser Back, an unknown story, the token sheet, a skill load failure, the Familiar across pages and out of the Reader, Settings kept on the device, Create's defaults from the profile.
+- `src/host/profile/*.test.ts(x)` and `src/host/economy/practiceEconomy.test.ts`: the device profile, the Cave's controller over it, and the practice account.
 - `scripts/checkNovelExpandedApp.test.ts`: the guard, including the real app.
 - `scripts/verifyNovelExpandedApp.browser.mjs`: the walk in Chromium at 390px and 1440px against the dev server, with stubbed APIs and a stand-in for the browser's speech (headless Chromium has no voices).
 
 ## History
 
+- **2026-10-07** — Profile comes to the app, with everything it connects to: the Library's Cultivator Cave in the navigation (Home, Create, Profile; Settings beside Profile on laptops, and in Search and the footer), on the reader's profile kept on this device and a practice economy in the page (1,000,000 QI and every Familiar unlocked, fresh each visit, until the database). The account and server pieces show "Not in the app yet." One Familiar for the app: its recall in every Library header, summoned it floats above the bottom bar and the music note on phones and keeps its place across pages, and it stays out of the Reader; the writing veil wears the same Familiar. Create starts new Story Seeds from the profile's reading language and Reading Mode.
 - **2026-10-07** — Sound on phones: the music note floats just above the bottom bar's right end outside the Reader too (in the header on laptops), and leaving the page (another tab, another app, a locked phone) never stops the sound; time away does not count toward the idle rest, and sound a phone paused plays on at return. Checked that the first tap anywhere on Home starts the menu music, under a browser's no-sound-before-a-tap rule.
 - **2026-10-07** — The Library Shell, in full: Home and Story View sit in the Library's header, navigation and footer, with the app's two places, Home and Create (the strip on phones, the Pathways sidebar on laptops, remembered on this device); Search opens the reader's stories; the footer offers Help and the draft legal pages. Create is Story Seed in the shell's workspace mode, and its header now carries the music note too. The Reader stays full-screen. Discover and Profile join when their pages come to the app.
 - **2026-10-07** — Menu music is the reader's: a music note in Home's header mutes all sound with one tap, and hovering it (or holding it on a phone) opens a Music volume slider. It shows while the Menu music setting is on (on by default, kept on this device; its switch is in Profile Settings › Sound, in the Workshop until Profile comes to the app); off, the menus are silent. The Reader never opens to the menu music: it plays its own (each chapter's scene, or mystical pieces for a chapter written before scenes and while a chapter is written), and leaving it brings the menu music back.

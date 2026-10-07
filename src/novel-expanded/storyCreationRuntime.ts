@@ -7,11 +7,17 @@ import { AGENTS } from '../lib/agents';
 /** The app has no accounts yet: every Story Seed belongs to this browser's one reader. */
 export const NOVEL_EXPANDED_READER_ID = 'novelexpanded-reader';
 
+/** The Story Seed a story started from, if it started from one. */
+export function storySourceSeedId(state: HarnessWorkspaceState, story: HarnessWorkspaceState['stories'][number]): string | undefined {
+  const source = findFoundationRevision(state, story.activeFoundationRevisionId)?.input.sourceSnapshot;
+  return source?.kind === 'story-seed' && source.sourceId ? source.sourceId : undefined;
+}
+
 /** The Story Seeds the reader's stories started from, so the Story Bank can mark them. */
 export function startedSeedIds(state: HarnessWorkspaceState): string[] {
   return state.stories.flatMap(story => {
-    const source = findFoundationRevision(state, story.activeFoundationRevisionId)?.input.sourceSnapshot;
-    return source?.kind === 'story-seed' && source.sourceId ? [source.sourceId] : [];
+    const seedId = storySourceSeedId(state, story);
+    return seedId ? [seedId] : [];
   });
 }
 

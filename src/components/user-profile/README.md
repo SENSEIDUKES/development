@@ -60,6 +60,7 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 
 ## Workshop history
 
+- **2026-10-07:** The Cave comes to the NovelExpanded app (`src/novel-expanded/ProfilePage.tsx`), its first host outside the Workshop, on host-owned device services (`src/host/profile/`) and a practice economy (`src/host/economy/`). For it the services port takes `notYetBuilt` (`note` and `features`): the account and server pieces a host has not built yet (portrait generation, Keyboard Shortcuts, Redeem Code, Sever Link, Harmony sync, backup and import, the Aether Router, the Inbox) still show, disabled, with the host's note beside each (`notYetBuiltNote`; see "Pieces a host has not built yet" below). `UserProfile` takes `homeHref` for its header logo (`/` when omitted), and its Library navigation takes the host's places from `LibraryDestinationsProvider`. The Workshop passes neither, so its Cave is unchanged.
 - **2026-10-06:** The Familiar selector now includes Frostforged Golem as the twelfth
   Library package, with a host-supplied Rare tier. Rarity remains descriptive and does
   not change profile-owned selection, availability, or persistence.
@@ -892,3 +893,24 @@ Changed only the shared page header title to Profile. Cultivator Cave terminolog
 
 Settings › Customization › Appearance gains a **Sound** section after Cave Environment with one switch, **Menu music**: calm music on the menus, on for a new reader, kept on the device. It shows only when the host supplies `soundPreferences` (its reader-preference storage) through the services port; the Workshop mock supplies the Workshop's own. The Profile header shows the music note (`HeaderSoundControl`) while it is on. The switch and the note read one value (`useMenuMusic`) and change together.
 
+
+## Pieces a host has not built yet — 2026-10-07
+
+A host can bring the Cave in before it has every server behind it. The services port's
+optional `notYetBuilt` names those pieces and one note (NovelExpanded: "Not in the app
+yet."):
+
+| Feature | Where it shows |
+| --- | --- |
+| `portrait-generation` | The Divine Mirror's Manifest Portrait, disabled; the note in the builder's footer |
+| `shortcuts` | Settings › Accessibility › Keyboard Shortcuts |
+| `redeem-code` | Settings › Account › Redeem Code, and the Redeem Code page |
+| `sign-out` | Settings › Account › Sever Link |
+| `sync` | Settings › Account › Harmony & Sync (Harmony reads "Not connected") |
+| `backup` | Settings › Account › Import Scroll and Backup All |
+| `model-router` | Settings › Advanced › Aether Router |
+| `inbox` | The Inbox page |
+
+Each control still shows, disabled, with the note beside it (`data-cave-not-yet-built`),
+so a reader sees what is coming and no control does nothing. Everything else stays the
+controller's. Omitted, the Cave is as before. `notYetBuiltNote(services, feature)` reads it.

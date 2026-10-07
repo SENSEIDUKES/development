@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { FamiliarCompanion, FamiliarRecall, type FamiliarCompanionProps } from '@seihouse/library/familiar';
-import { WorkspaceHeaderAccessoryProvider } from '@seihouse/library/shell';
+import { WorkspaceHeaderAccessoryProvider, useLibraryBottomClearance } from '@seihouse/library/shell';
 import { LoadingFamiliarProvider, loadingFamiliarPresentation } from '@seihouse/library/manifestations';
 import { EnergyClientProvider, createHttpEnergyClient } from '@seihouse/library/energy';
 import { defaultFamiliar, familiarCatalogueEntry } from '../../../host/familiar/catalogue';
@@ -67,6 +67,9 @@ export function ProductFamiliarSurface({ children, viewport = false, headerRecal
   const boundary = useRef<HTMLDivElement>(null);
   const uid = context?.selection.uid;
   const familiar = familiarCatalogueEntry(context?.selection.familiarId)?.definition;
+  // Above the Library's bottom bar and the music note floating over it, as in the app.
+  const clearance = useLibraryBottomClearance();
+  const inset = clearance ? Math.max(bottomInset ?? 0, clearance + 8) : bottomInset;
   if (parentSurface) return <>{children}</>;
   return <SurfaceContext.Provider value={true}>
     <div ref={boundary} className="product-familiar-surface">
@@ -74,7 +77,7 @@ export function ProductFamiliarSurface({ children, viewport = false, headerRecal
       {children}
       {uid && familiar &&
         <FamiliarCompanion key={`${uid}:${familiar.id}`} familiar={familiar} boundaryRef={viewport ? undefined : boundary} activity={activity} animation={animation} paused={paused}
-          size={context.selection.familiarSize} minimized={context.minimized} onMinimize={() => context.setMinimized(true)} bottomInset={bottomInset} />
+          size={context.selection.familiarSize} minimized={context.minimized} onMinimize={() => context.setMinimized(true)} bottomInset={inset} />
       }
     </div>
   </SurfaceContext.Provider>;

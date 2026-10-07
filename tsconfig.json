@@ -24,5 +24,6 @@
     }
   },
   "include": ["src", "api", "vite.config.ts"],
+  "exclude": ["src/components/reader-chamber/reference"],
   "references": []
 }

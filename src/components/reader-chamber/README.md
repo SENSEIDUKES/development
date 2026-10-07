@@ -7,15 +7,17 @@ reconnect them as they are or re-sync with the old production app. The destinati
 is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 
 - **Source repository:** SENSEIDUKES/Light-Novels
-- **Source location:** `src/components/ReaderChamber.tsx` and `src/components/ReaderViewport.tsx` (verified on `origin/main` @ `f89cb41`)
+- **Source location:** the Reader screen `src/components/ReaderScreen.tsx` (export `ReaderScreen`), which mounts `src/components/ReaderChamber.tsx` (default export), plus the overlays production's `src/App.tsx` mounts beside it: `CodexSheetOverlay`, `KeyboardShortcuts`, `ParticleSystem` and `AtmosphericAudio` (verified on `main` @ `647165a`, 2026-09-16)
+- **Original Reference:** a byte-for-byte copy of that Reader in `reference/light-novels/`, copied 2026-10-07 at the owner's request; see “Original Reference: production's Reader” below
 - **Workshop preview:** `?preview=reader-chamber`
 - **First Workshop record:** 2026-07-31
-- **Last recorded Workshop update:** 2026-10-01
-- **Historical source inspection:** 2026-08-22
+- **Last recorded Workshop update:** 2026-10-07
+- **Historical source inspection:** 2026-08-22 (the older copy), 2026-10-07 (the current Original Reference)
 - **Implementation status:** under refinement
 
 ## Workshop history
 
+- **2026-10-07:** The Original Reference is production's actual Reader again. The owner found the Workshop copy was not the Reader production shows, and asked for the real one so its ideas and customization options can be studied before the Reader is redesigned. The older copy had been taken from production in late July and later adapted: it lacked the whole outer Reader screen (the top bar with genre and title, clock, chapter and total word counts, Lore Glossary and Codex, and the arc progress line), the Lore Glossary panel, the welcome-back recap, the steering screen and the keyboard shortcuts, it predated features such as the cinematic vignettes and the four System notice frames, parts of it had been rewired to development code, and the Workshop never passed Alter Fate, so its button was hidden. At the owner's explicit request, and as a deliberate exception to the rule that reference folders are never refreshed, `reference/` now holds production's Reader exactly as Light-Novels `main` has it at `647165a`: 119 files copied unchanged into `reference/light-novels/`, mirroring production's `src/` so not one import was rewritten. Eight production services are replaced at their own paths by marked Workshop seams (app state, Firebase, story storage, persistence, the media service and its resolver, and the embedding search), `firebase/auth` resolves to a local stand-in for this folder only, and production's direct AI routes are answered locally while the Reader is on screen. `reference/snapshot.json` records the commit and every file's fingerprint, and `reference/snapshot.test.ts` fails if a copied file is ever edited. The copy is type-checked under production's own compiler settings (`tsconfig.reference.json`); the Workshop loads it through a glob so this repository's strict program never checks production code. The Original Reference pane has its own sample story and **Scenes** (eighteen production surfaces, each opened through production's own control); the Development Reader and its controls are unchanged. The Card Workshop's locked reference keeps rendering exactly as before: its three borrowed files (`SystemBlock`, `FateResultCard`, `ManifestationImage`) moved into `card-workshop/reference/`, and `shared/alterFateLock.ts` and `shared/trackLibrary.ts`, which only the older copy used, were removed. `PRODUCTION_READER.md` lists everything production's Reader does, as the starting point for designing the Reader as one clear piece.
 - **2026-10-01:** `InlineAudio.tsx`, `InlineAudio.css` and their tests moved to `src/audio/` and are published from `@seihouse/sen/inline-audio`, no longer from this entry. `ReaderViewport` imports them from there. Sound Cue rendering is shared by every SEN reader, and the HARNESS Reader now renders cues without reaching this folder.
 - **2026-09-27:** The Reader stays outside the Library Shell. Library browsing screens now scroll inside the App Shell's fixed frame, but the Reader is immersive and its cinematic scrolling depends on the document scroller, so `library-shell/development/ReaderScrollBoundary.test.ts` guards that boundary. The overlay gate now listens for scroll on the Reader's real scroll surface (the document, or a host's inner scroller) instead of the prose container, which never scrolls; `findReaderScroller` is shared with the scroll-direction header.
 - **2026-09-25 (Fate Phase 2):** The development Reader no longer carries the
@@ -168,26 +170,24 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 ## Folder layout
 
 ```
-reference/                    — old production version, historical and not edited
-  ReaderChamber.tsx
-  ReaderViewport.tsx
-  ReaderHeader.tsx
-  ReaderPreferencesPanel.tsx
-  ReaderControls/             — index.tsx, types.ts, PlaybackControls.tsx,
-                                ChapterNavigation.tsx, ImmersionSettings.tsx, AudioMenu.tsx
-  CosmicBookmarksPanel.tsx
-  VirtualizedList.tsx
-  AlterFatePanel.tsx
-  ParticleSystem.tsx
-  AudioWidget.tsx
-  SystemBlock.tsx
-  FateResultCard.tsx
-  CodexCard.tsx
-  ReaderFateAlerts.tsx
-  FateSurvivalExplanation.tsx
-  SystemColorLegend.tsx
-  ContextInspector.tsx
-development/                  — active Workshop version; started as an exact copy of reference/
+reference/                    — production's Reader, copied unchanged (owner request, 2026-10-07)
+  light-novels/src/           — Light-Novels src/ @ 647165a, same paths: components/ReaderScreen.tsx,
+                                ReaderChamber.tsx, ReaderViewport.tsx, ReaderControls/, codex/,
+                                hooks/, lib/, contracts/, utils/, types.ts … (119 verbatim files)
+                                plus 8 marked WORKSHOP SEAM stand-ins at production's own paths:
+                                store/useAppStore.ts, store/useGenerationStore.ts, lib/firebase.ts,
+                                lib/storage.ts, lib/persistence/index.ts, lib/rag.ts,
+                                lib/media/mediaAssetClient.ts, lib/media/privateMediaResolver.ts
+  host/                       — the Workshop's stand-in for production's App around the Reader:
+                                ProductionReaderHost.tsx (page frame, footer, Codex sheet, error
+                                toast, shortcuts, audio; simulated story-engine actions),
+                                workshopStory.ts (sample story in production's shapes),
+                                productionApiGuard.ts (answers production's AI routes locally),
+                                firebaseAuth.ts (the `firebase/auth` stand-in),
+                                production-reader.css (production's src/index.css, scoped)
+  snapshot.json               — source commit and every file's fingerprint
+  snapshot.test.ts            — fails if a copied production file changes
+development/                  — active Workshop version; started as an exact copy of the older reference
   (same files, except: ReaderSettings.tsx replaces ReaderPreferencesPanel.tsx;
    ReaderControls/ no longer contains ImmersionSettings.tsx or
    ChapterNavigation.tsx; AudioWidget.tsx, AlterFatePanel.tsx,
@@ -205,41 +205,83 @@ shared/                       — code genuinely identical between the two forks
   stubs.ts                    — mock external store (useAppStore + selectIsGenerating, no
                                 zustand), LOCAL_ONLY_MODE, inert hook stubs, inert audio engine
   readerPlayback.ts           — pure extractSFXCues (verbatim) + inert useReaderPlayback
-  id.ts, readerTypography.ts, readerLegend.ts, alterFateLock.ts, colorCodes.ts,
+  id.ts, readerTypography.ts, readerLegend.ts, colorCodes.ts,
   systemColors.ts (compatibility re-export),
   dialect.ts, autoCuePolicy.ts, manifestationEligibility.ts,
   cinematicScroll/anchors.ts, effects/cinematicEffectGovernor.ts
                             — pure libs copied (near-)verbatim from production
-  trackLibrary.ts             — static TRACK_LIBRARY catalog for the Audio Menu (display only)
 ```
 
-Both forks render inside `src/workshop/previews/reader-chamber/ReaderChamberWorkspace.tsx`,
-which shares one mock story and one categorized preview-control panel rendered through the
-shared Workshop Controls menu — see "Available preview states" for the canonical Pages /
-States / Effects mapping.
+Both render inside `src/workshop/previews/reader-chamber/ReaderChamberWorkspace.tsx`.
+The Original Reference loads `reference/host/ProductionReaderHost.tsx` lazily with its own
+sample story and Scenes (`productionScenarios.ts`); Development keeps the shared mock story
+and its Pages / States / Effects controls — see "Available preview states".
 
-## What was copied
+## Original Reference: production's Reader
 
-The full Reader Chamber presentation tree from `src/components/` in Light-Novels:
-`ReaderChamber.tsx` (default export, `ReaderChamberProps`), `ReaderViewport.tsx`,
-`ReaderHeader.tsx` (+ `AudioWidget`), `ReaderPreferencesPanel.tsx`, the whole
-`ReaderControls/` folder, `CosmicBookmarksPanel.tsx` (+ `VirtualizedList`),
-`AlterFatePanel.tsx`, `ParticleSystem.tsx`, `SystemBlock.tsx` (+ `FateResultCard`,
-`lib/systemColors.ts`),
-`ReaderFateAlerts.tsx` (+ `FateSurvivalExplanation`), `SystemColorLegend.tsx`,
-`ContextInspector.tsx`, plus the pure libraries listed under `shared/` above and the
-reader-specific styling from `src/index.css` (`.light-novel-reader`,
-`.reader-prose`/`.reader-paragraph` + CJK variants, `.gold-accent`/`.jade-accent`,
-holographic-panel + keyframes, `.reading-focus-active/dimmed`, menacing/screen-shake
-animations, `:root` reader CSS vars + entity-highlight palette vars incl. `data-palette`,
-`.highlight-*` classes, custom scrollbar). The 5 hard-coded public R2 backdrop URLs in
-`ReaderViewport.tsx` (`FALLBACK_BACKDROPS`) were kept for visual fidelity and back
-Codex-term reveal cards when the mock chapter marks an entity as a reveal.
+Copied 2026-10-07 from SENSEIDUKES/Light-Novels `main` @ `647165a` (2026-09-16), the
+latest production commit: the Reader screen and everything it imports, followed from
+five entry points production mounts together — `ReaderScreen` (top bar, recap,
+steering hand-off, Lore Glossary, and the chamber), `CodexSheetOverlay` (production's
+Living Codex), `KeyboardShortcuts`, `ParticleSystem` and `AtmosphericAudio` (the
+reader's music, atmosphere and story-cue conductor). The files keep production's paths
+under `reference/light-novels/`, so every relative import is production's own.
 
-Styling caveat: `@theme` tokens were NOT duplicated — the Workshop `src/styles.css`
-already carries the same font and color tokens.
+- **Unchanged:** 119 files, byte-identical to production. `snapshot.json` lists each with
+  its production SHA-256 and `snapshot.test.ts` re-checks them on every test run.
+- **Seams:** 8 files at production paths stand in for production services; each starts
+  with a `WORKSHOP SEAM` header naming what it replaces. `firebase/auth` (one import in
+  `ReaderScreen`) resolves to `host/firebaseAuth.ts` through `vite.config.ts` and
+  `tsconfig.reference.json`, for this folder only.
+- **Styles:** production's `src/index.css` is reproduced as `host/production-reader.css`,
+  generated rather than hand edited: every rule is scoped to `.production-reader-frame`,
+  keyframes carry an `ln-` prefix, and production's colour tokens (including its lighter
+  neutral, gray, zinc, slate and stone shades) are re-applied on the frame, with the
+  Workshop-only tokens production never had (such as `gold-accent`) unset there. Fonts are
+  the same Google Fonts both repositories load.
+- **Type checking:** `npm run typecheck` checks the copy under production's compiler
+  settings (`tsconfig.reference.json`, not strict) after this repository's strict check;
+  `tsconfig.json` leaves the folder out, and the Workshop imports the host through
+  `import.meta.glob`, so the strict program never follows into it.
+- **Page frame:** `host/ProductionReaderHost.tsx` reproduces what production's
+  `src/App.tsx` puts around the Reader: the page frame and star field, the
+  `motion` wrapper, the footer, the Codex sheet, the error toast from
+  `ModalsAndToasts.tsx`, keyboard shortcuts and the audio conductor. Production's global
+  header (app navigation) is not part of the Reader and is not included.
 
-## What was mocked
+## What stands in for production
+
+### Original Reference
+
+- **App state** (`store/useAppStore.ts`): a zustand-compatible store holding only the
+  fields the Reader, Codex and shortcuts read, with production's setter behavior and
+  production's own `updateStory` rules. `selectIsGenerating` keeps production's definition.
+- **Story storage** (`lib/storage.ts`): chapter bodies live apart from the story, as in
+  production; the Reader loads each one through `storyStorage.getChapterContent`.
+- **Sign-in** (`lib/firebase.ts`, `host/firebaseAuth.ts`): always production's local-only
+  mode, signed out, so the sign-in gate never appears.
+- **Persistence** (`lib/persistence/index.ts`): the Lore Glossary, profile saves and the
+  image quota answer from memory.
+- **Media** (`lib/media/*`): a manifested portrait is kept in memory and shown from its
+  own URL.
+- **Embedding search** (`lib/rag.ts`): the steering screen gets the latest chapter
+  summaries in order instead of a vector search.
+- **Direct AI routes** (`host/productionApiGuard.ts`, while the Reader is on screen):
+  steering suggestions, the Codex glossary and portraits return sample answers in
+  production's response shape; translation and voice cards return the error production
+  shows when those services are down; anything else under `/api/foundation/` or
+  `/api/persistence` is refused. Every other request passes through untouched.
+- **Story-engine actions** (`host/ProductionReaderHost.tsx`): mark read, seal and Codex
+  memory edits work for real; the continuity check returns two sample warnings; writing
+  a chapter streams a sample chapter in; steering adds three unwritten chapters;
+  Alter Fate and five-chapter writing show a Workshop notice describing what production
+  would do.
+- **Sample story** (`host/workshopStory.ts`): "Ashes of the Ninth Meridian" in
+  production's own shapes, six chapters each exercising a different part of the Reader
+  (see the file header), with characters, factions, places, artifacts, a technique,
+  karma and relationships, two bookmarks and a Lore Glossary.
+
+### Development preview
 
 - **`useAppStore` / `selectIsGenerating`** — a tiny external store on
   `useSyncExternalStore` (no zustand), exposing the same call signatures
@@ -272,6 +314,20 @@ already carries the same font and color tokens.
   `assignedRevealBackdrops` writes are local and harmless.
 
 ## Available preview states
+
+**Scenes (Original Reference)** — production's own Reader, each scene reloading the
+sample story and opening its surface through production's control:
+
+- Reading: Chapter 1 (System panels, World Card, reveals), Chapter 3 (dialogue and a
+  continuity note), Chapter 4 (older prose chapter with hard continuity warnings),
+  Chapter 5 (sealed death-flag chapter), fullscreen reading
+- Panels and settings: Reader Settings ("Aetherial Styles"), Immersion settings,
+  Bookmarks ("The Chronicle Anchors"), Lore Glossary, Codex sheet, keyboard shortcuts
+- Story moments: Alter Fate (Branch), sealing a chapter (Continuity Guard), Chapter 6
+  unwritten (write it), a chapter being written, the welcome-back recap, steering the
+  next arc, a Fate Survival story
+
+The Pages / States / Effects controls below drive the Development Reader.
 
 The preview controls now live inside the shared Workshop Controls menu (Pages / States /
 Effects / Advanced), rendered by `FeatureWorkspace`. Each scenario in
@@ -332,74 +388,71 @@ line so the current state is never ambiguous.
 
 ## Production dependencies intentionally excluded
 
-- zustand stores (`store/useAppStore`, `store/useGenerationStore`) → `shared/stubs.ts`
-- Firebase (`lib/firebase`, `LOCAL_ONLY_MODE`) → constant `true`
-- storyStorage / IndexedDB persistence
-- Generation pipeline (`onGenerateChapter`/`onGenerateNextFiveChapters` log only)
-- Scene and narration audio engines (`useReaderPlayback` internals,
-  `hooks/audio/useAudioMix` playback, `audioMixSettings`, `lib/vibration`, and
-  `lib/narrativeCues`) — settings state is real; inline World Cues are the narrow
-  exception and play through the existing DEV audio owner.
-- `hooks/useChapterTranslation`, `hooks/useCinematicScroll`, and
-  `hooks/useReadingPosition` — inert stubs
-- Production Codex authentication, quota, persistence, image/audio generation,
-  private-media renewal, and Gemini glossary services — represented by local,
-  deterministic compatibility adapters. See `../reader-codex/README.md` for the
-  exact boundary and transfer map.
+Neither pane reaches production: no Firebase, Data Connect, IndexedDB storage manager,
+media upload service, embedding search, quota charging, AI generation or translation
+call. The Original Reference replaces those at their own paths (see “What stands in
+for production”); the Development preview uses `shared/stubs.ts` and its local adapters.
+Public media still loads as it does in production: the Original Reference's reveal
+backdrops come from production's public R2 bucket, and its music, atmosphere and cue
+sounds from SEIHouse's public audio host.
 
-## Dead code dropped while copying
+## Exact copy
 
-- Unused `SystemBlock` import inside `ReaderChamber.tsx` (production keeps it, unused).
-- Unused `stories` / `activeStoryId` / `saveStories` / `routingConfig` selectors
-  (source `ReaderChamber.tsx` lines 101–104).
-
-## Icon substitutions (lucide-react version difference)
-
-The Workshop's `lucide-react@^1.27.0` removed several legacy aliases the source uses.
-All substitutions are import-level aliases only — JSX is byte-identical to production:
-
-- `Loader2` → `LoaderCircle as Loader2` (ReaderViewport)
-- `Sliders` → `SlidersHorizontal as Sliders` (ReaderHeader, ReaderSettings)
-- `AlertTriangle` → `TriangleAlert as AlertTriangle` (SystemBlock, FateSurvivalExplanation)
-- `AlertCircle` → `CircleAlert as AlertCircle` (FateResultCard)
-- `CheckCircle` → `CircleCheck as CheckCircle` (FateResultCard)
-- `HelpCircle` → `CircleQuestionMark as HelpCircle` (FateSurvivalExplanation)
+Nothing was dropped or rewritten in the Original Reference: no unused imports were
+removed and no icons were substituted. Every icon production imports exists in this
+repository's `lucide-react`, and production's strict-null patterns are checked under
+production's own compiler settings.
 
 ## Known visual differences from the source
+
+### Original Reference
+
+- **Surroundings:** production's global header (app navigation) sits above the Reader
+  in production and is not included; the Workshop's own chrome sits around the frame.
+  Production screens outside the Reader (story detail, home, creator, profile) show a
+  Workshop placeholder with a way back, for example after Back or a shortcut key.
+- **Audio engine:** the reader's music and atmosphere run on this repository's
+  `@seihouse/audio-player` 4.0.0, which still offers production's `createSceneMixEngine`;
+  production pins an earlier commit of the same package.
+- **Sample content:** the story, portraits and landscapes are Workshop material;
+  manifested portraits, steering suggestions, the Codex glossary and written chapters
+  are sample answers, so their wording is not what production's writers would produce.
+- **Simulated actions:** Alter Fate's timeline fork and five-chapter writing are
+  described in a Workshop notice rather than run; translation and voice cards show
+  production's service-down error.
+- **The separate Reader Codex Workshop entry** still shows its older adapted Codex copy;
+  the Codex sheet opened from this Reader is production's.
+- **Compare:** the two panes no longer share a store, so they no longer navigate in
+  lockstep; both bottom bars are viewport-fixed and overlap.
+
+### Development
 
 - **Codex service actions are local** — the migrated UI, navigation, edit controls,
   caches, dialogs, and responsive layouts are present, but live AI/media generation,
   authentication, quota charging, and remote persistence do not run in the Workshop.
-- **Alter Fate opens the host's Fate page** in development; production's
-  branch panel remains only in the historical reference. The migrated Codex context
-  dialog uses `react-focus-lock` like production.
+- **Alter Fate opens the host's Fate page** in development; production's branch panel
+  lives in the Original Reference. The migrated Codex context dialog uses
+  `react-focus-lock` like production.
 - **Audio is intentionally partial** — the mixer's music, atmosphere, and
   narration remain inert. Only valid persisted Worldcues play, through the
   single shared DEV audio session and only after their own tap target is used.
 - **No TTS sync highlighting** — `activeChunks` is always empty, so the
   portal-colored narration span and `reading-focus-*` classes never activate;
   the play/pause vinyl still flips and spins.
-- **Neutral/gray/zinc/slate/stone shade drift** — production overrides
-  `--color-neutral-500/600/700` (lighter) and the gray/zinc/slate/stone 500–700
-  ranges in its `@theme`; the Workshop tokens were intentionally left untouched, so
-  some muted text renders a shade darker. Conversely `text-gold-accent` resolves in
-  the Workshop (token exists here, not in production) where production falls back to
-  inherited color. `text-jade-accent`, `text-neutral-350/550/650`,
-  `border-neutral-850/855`, and `animate-fadeIn`/`animate-fade-in` are no-ops in BOTH
-  repos (no token/keyframes anywhere), so parity there is automatic.
-- **Mock story genre is `Xianxia`**. The development Reader no longer reacts to
-  a genre string; the historical reference's Fate Survival banner would still render
-  for a story whose genre is literally "Fate Survival".
+- **Neutral/gray/zinc/slate/stone shade drift** — production lightens
+  `--color-neutral-500/600/700` and the gray/zinc/slate/stone 500–700 ranges; the
+  Development Reader uses the Workshop tokens, so some muted text renders a shade
+  darker, and `text-gold-accent` resolves here where production falls back to the
+  inherited colour. (The Original Reference re-applies production's tokens.)
+- **The development Reader no longer reacts to a genre string**; production's Fate
+  Survival banner renders in the Original Reference for a story whose genre is
+  literally "Fate Survival".
 - **Chapter Visual Memories are removed** — the Reader no longer renders a chapter-hero component or invokes an end-of-chapter image trigger. Existing chapter media data is left intact for compatibility and Manga Studio is unchanged.
-- **Shared store between Compare panes** — the mock store is a module singleton, so
-  in Compare mode both panes navigate/toggle in lockstep (intended: same data on
-  both sides). The bottom control bar is viewport-`fixed`, so the two bars overlap
-  exactly in Compare mode.
-- **R2 backdrop URLs** — Reference keeps the 5 hard-coded public
-  `FALLBACK_BACKDROPS` R2 URLs; Development resolves the same
-  `FALLBACK_BACKDROPS` / `getFallbackBackdrop` names from
-  `reader-codex/development/codexManifestBackdrop.ts`, whose pool is the five
-  local "IMMORTAL LAND" Manifest landscapes in `public/manifest-backdrops/`.
+- **R2 backdrop URLs** — Development resolves `FALLBACK_BACKDROPS` /
+  `getFallbackBackdrop` from `reader-codex/development/codexManifestBackdrop.ts`, whose
+  pool is the five local "IMMORTAL LAND" Manifest landscapes in
+  `public/manifest-backdrops/`; the Original Reference keeps production's five public
+  R2 URLs.
 
 ## Implementation inventory
 
@@ -432,7 +485,6 @@ The existing local files named by this inventory are:
 - `src/audio/inlineAudio.ts`
 - `shared/stubs.ts`
 - `shared/types.ts`
-- `shared/trackLibrary.ts`
 - `src/workshop/previews/reader-chamber/`
 
 ## Compatibility notes
@@ -443,8 +495,9 @@ The existing local files named by this inventory are:
 - Header Back falls back to `window.history.back()` when no `onBack` is supplied.
 - Reader Settings owns the Audio section; the header Audio button opens it and
   `AudioMenu` retains the master switch and volume.
-- Historical imports use `../shared/…` in place of the old source application's
-  `../lib/…`, `../hooks/…`, `../store/…` and `../types`; see “What was mocked”.
+- The Original Reference keeps production's imports exactly; it mirrors Light-Novels'
+  `src/` so `../lib/…`, `../hooks/…`, `../store/…` and `../types` resolve as they do in
+  production, with production's services replaced at those same paths.
 - `ReaderViewport.tsx` uses index access rather than `chapterNumbers.at(-1)` for
   the Workshop's ES2020 compatibility. Reader Chamber's `cue.danger ?? 0` coercions
   and `handleUpdatePreference` cast are behavior-identical strict-null adaptations.
@@ -453,8 +506,8 @@ The existing local files named by this inventory are:
 - The `onOpenFate` callback is host-owned. Historical Fate panels and their source
   wording remain in the reference; they are not reconnected or retired by this work.
 - `getReaderChamberSurfaceClass` is a Card Workshop presentation seam, not a public
-  application API. `shared/stubs.ts`, fixture types, track-library adapters and
-  Workshop previews remain local compatibility material.
+  application API. `shared/stubs.ts`, fixture types and Workshop previews remain local
+  compatibility material.
 - `soundCues` are chapter-owned SEN `SoundCueAttachment` records. Placement,
   accepted-result persistence, Reader adaptation and block-scoped rendering belong
   together; preview fixtures are not story data.

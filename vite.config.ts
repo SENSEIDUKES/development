@@ -25,6 +25,22 @@ const novelExpandedAddress = (): Plugin => {
   };
 };
 
+/**
+ * The production Reader snapshot (src/components/reader-chamber/reference/)
+ * imports `firebase/auth` for its sign-in gate. The Workshop has no Firebase,
+ * so for that folder only, the import resolves to its local stand-in.
+ */
+const productionReaderSnapshot = (): Plugin => {
+  const snapshot = fileURLToPath(new URL('./src/components/reader-chamber/reference/', import.meta.url));
+  const firebaseAuth = fileURLToPath(new URL('./src/components/reader-chamber/reference/host/firebaseAuth.ts', import.meta.url));
+  return {
+    name: 'production-reader-snapshot',
+    enforce: 'pre',
+    resolveId: (source, importer) =>
+      source === 'firebase/auth' && importer?.startsWith(snapshot) ? firebaseAuth : null,
+  };
+};
+
 export default defineConfig(({ mode }) => {
   const loadedEnvironment = loadEnv(mode, process.cwd(), '');
   const serverEnvironment = { ...loadedEnvironment, ...process.env };
@@ -40,6 +56,7 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       novelExpandedAddress(),
+      productionReaderSnapshot(),
       react(),
       tailwindcss(),
       developmentApisPlugin(serverEnvironment),

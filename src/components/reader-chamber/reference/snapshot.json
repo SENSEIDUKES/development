@@ -1,0 +1,661 @@
+{
+  "repository": "SENSEIDUKES/Light-Novels",
+  "branch": "main",
+  "commit": "647165ad775e2c61add21c6cd4e6849d04fa1c92",
+  "commitDate": "2026-09-16",
+  "copiedOn": "2026-10-07",
+  "entryPoints": [
+    "src/components/ReaderScreen.tsx",
+    "src/components/CodexSheetOverlay.tsx",
+    "src/components/KeyboardShortcuts.tsx",
+    "src/components/ParticleSystem.tsx",
+    "src/components/AtmosphericAudio.tsx"
+  ],
+  "note": "Every \"verbatim\" file is byte-identical to production at this commit; its productionSha256 is checked by productionReaderSnapshot.test.ts. A \"seam\" file sits at production's path but is a Workshop stand-in; its productionSha256 records the production file it replaces.",
+  "packageSeams": {
+    "firebase/auth": "host/firebaseAuth.ts"
+  },
+  "derived": {
+    "host/production-reader.css": {
+      "from": "src/index.css",
+      "productionSha256": "1952a7b9b18044412e66db32dc275e327bcb5bdefd10f5c19f03af5340d57ce5"
+    }
+  },
+  "files": [
+    {
+      "path": "src/components/AlterFatePanel.tsx",
+      "role": "verbatim",
+      "productionSha256": "02c0aef326e0dba96a340f6dc17fe51e43d17087b879a2cf38f4c04fad826d16"
+    },
+    {
+      "path": "src/components/AtmosphericAudio.tsx",
+      "role": "verbatim",
+      "productionSha256": "98b0a377b1a953363b94cffbcf8561f907f992ab0150894236a5a8b9e8b3db8a"
+    },
+    {
+      "path": "src/components/AudioWidget.tsx",
+      "role": "verbatim",
+      "productionSha256": "a4546798738ab14272fa94e39189e245ffb46a48a3a75b6a09184d4d2f0ea378"
+    },
+    {
+      "path": "src/components/CodexHovercard.tsx",
+      "role": "verbatim",
+      "productionSha256": "6a68fa078c691e491f98b59b7fdc0be5f974ea53a006e1c5092550a0a5c7f102"
+    },
+    {
+      "path": "src/components/CodexSheetOverlay.tsx",
+      "role": "verbatim",
+      "productionSha256": "564676d3a68aa5a5f4859db7d6f46ecb907966576be939342d960e01c1e3e2ca"
+    },
+    {
+      "path": "src/components/ContextInspector.tsx",
+      "role": "verbatim",
+      "productionSha256": "db5235a482fb1aec671a137cd6434421a00a64fbe55d849270f847e98c41a84c"
+    },
+    {
+      "path": "src/components/CosmicBookmarksPanel.tsx",
+      "role": "verbatim",
+      "productionSha256": "af34bafee851c8c95cd6969c927c287470b55c0f3cb3842500d47b278ac70f5c"
+    },
+    {
+      "path": "src/components/DestinyChoicePanel.tsx",
+      "role": "verbatim",
+      "productionSha256": "8d54c4e4613499577e472680bebbcba04b123abe3bfb203175bc214ab4c23b4a"
+    },
+    {
+      "path": "src/components/FateResultCard.tsx",
+      "role": "verbatim",
+      "productionSha256": "7e3d30f6296b79c6be655ad4d397cf4bf215bbe44b47e605c0bf71d94def5845"
+    },
+    {
+      "path": "src/components/FateSurvivalExplanation.tsx",
+      "role": "verbatim",
+      "productionSha256": "69d36ee9ba9ed303f8534ff4e3f0dcc34f4930b0e29167870b3d6ef01a31fa7c"
+    },
+    {
+      "path": "src/components/GlossarySidePanel.tsx",
+      "role": "verbatim",
+      "productionSha256": "d07ccdd564a0de79322b3a51709f82c8bc0f1409bb4d5cde33f6fb51154aa240"
+    },
+    {
+      "path": "src/components/KeyboardShortcuts.tsx",
+      "role": "verbatim",
+      "productionSha256": "d23b1176d63064133b37397f603ccd6ea517acb7115dc80823e5a1b2a406761b"
+    },
+    {
+      "path": "src/components/ManifestationImage.tsx",
+      "role": "verbatim",
+      "productionSha256": "5317f7ec1d22c3bd71567d2a993426d27b9fddde3a749fdba821c238b79555fc"
+    },
+    {
+      "path": "src/components/ParticleSystem.tsx",
+      "role": "verbatim",
+      "productionSha256": "b8620ca732c1c3c1631612ea508ce26ed9f24c70d9b85c31350743e647e2c6a5"
+    },
+    {
+      "path": "src/components/ReaderChamber.tsx",
+      "role": "verbatim",
+      "productionSha256": "541996c55ad2cadf7e5f6fe32fa03cad1a4236df22993ac376500ee853627879"
+    },
+    {
+      "path": "src/components/ReaderCodex.tsx",
+      "role": "verbatim",
+      "productionSha256": "f885abaa8dbca63012f85a94b92f25968e89f596d8d981296fcfa1eaf5dc99c7"
+    },
+    {
+      "path": "src/components/ReaderControls/AudioMenu.tsx",
+      "role": "verbatim",
+      "productionSha256": "e02e7daf85cf2522d22ad0d9e2021161951cb8c792919fccefc24c165119152d"
+    },
+    {
+      "path": "src/components/ReaderControls/ChapterNavigation.tsx",
+      "role": "verbatim",
+      "productionSha256": "a001f28faac36110d2a7f9d4c23ad113a62ea36b1327574e5e973964dca0ac32"
+    },
+    {
+      "path": "src/components/ReaderControls/ImmersionSettings.tsx",
+      "role": "verbatim",
+      "productionSha256": "e327ab4ad76e5a90c4341450f0ef147074140da422ee8a4538515a7dff7b574f"
+    },
+    {
+      "path": "src/components/ReaderControls/PlaybackControls.tsx",
+      "role": "verbatim",
+      "productionSha256": "4fb73f441e306cc38761836b729d84c88a02770e35a1c53caa054b0adeb5e4da"
+    },
+    {
+      "path": "src/components/ReaderControls/index.tsx",
+      "role": "verbatim",
+      "productionSha256": "a37989b2aa06f5e2dcf2644d4b5db85f0b0cde8cfa6e43b217952cbfffb0bdd6"
+    },
+    {
+      "path": "src/components/ReaderControls/types.ts",
+      "role": "verbatim",
+      "productionSha256": "19430031660966277812cd1654cf9824f9dfa8c6af5e7341032eaa5deaeb9b5b"
+    },
+    {
+      "path": "src/components/ReaderFateAlerts.tsx",
+      "role": "verbatim",
+      "productionSha256": "62b1398a5529850f08b7f479e3095c245de85d56655bf8623ebf03182c6c2942"
+    },
+    {
+      "path": "src/components/ReaderHeader.tsx",
+      "role": "verbatim",
+      "productionSha256": "35299003491d3aa687a00c0490e5c46e39dd06ba6b88d5baa55188a77fb59167"
+    },
+    {
+      "path": "src/components/ReaderPreferencesPanel.tsx",
+      "role": "verbatim",
+      "productionSha256": "88092f1088157dee8280c01f0939092370eda694759c0dd1ee0e45cb849955a7"
+    },
+    {
+      "path": "src/components/ReaderScreen.tsx",
+      "role": "verbatim",
+      "productionSha256": "ff606835c100c88ce646949322dcacab963013ec09de29f5048e0cf4b83e466c"
+    },
+    {
+      "path": "src/components/ReaderViewport.tsx",
+      "role": "verbatim",
+      "productionSha256": "b9c61e052af9d8e796fbe82a3299bf6458b9973c34587818f14f6e4ab9b4a425"
+    },
+    {
+      "path": "src/components/RecapScreen.tsx",
+      "role": "verbatim",
+      "productionSha256": "6553d58c945582ff72ce7817042c91e76f82970c88fc6273f1c59aa55c878e4c"
+    },
+    {
+      "path": "src/components/StorySteeringModal.tsx",
+      "role": "verbatim",
+      "productionSha256": "58cf929d44c68cdea2ad41eaf6b80ce3a708ee931293646ddfb4d474132b77d0"
+    },
+    {
+      "path": "src/components/SystemBlock.tsx",
+      "role": "verbatim",
+      "productionSha256": "b2ccaca06fc2ce6e69189ca847ff8d57dda472dca4e3549b4600bddb78151bc4"
+    },
+    {
+      "path": "src/components/SystemColorLegend.tsx",
+      "role": "verbatim",
+      "productionSha256": "849af87b15b39293d43652066561309a71fc371bce7fe03e654895ea89ece6a9"
+    },
+    {
+      "path": "src/components/VirtualizedList.tsx",
+      "role": "verbatim",
+      "productionSha256": "73d8688b93f39658b2def9590c2e9e7eea8a0d5d067233f58d7de9de0ad00bf0"
+    },
+    {
+      "path": "src/components/WorldEntityCard.tsx",
+      "role": "verbatim",
+      "productionSha256": "d042f973f9f10d88087efbf966e1a93ced457435d1e3e11018bcdf4d9d2bc082"
+    },
+    {
+      "path": "src/components/codex/CodexContext.tsx",
+      "role": "verbatim",
+      "productionSha256": "137084de28ee7a9e4ed4c51f72330ad11b5dbadde4e4c8d5212cc454aa99c071"
+    },
+    {
+      "path": "src/components/codex/CodexEntryContextDialog.tsx",
+      "role": "verbatim",
+      "productionSha256": "937663ccbf1463ab1dc342b73df048ba76d01ab2771677cbc244f8aae5ef185a"
+    },
+    {
+      "path": "src/components/codex/CodexEntryContextFields.tsx",
+      "role": "verbatim",
+      "productionSha256": "6197379f56a394211cd1af856de6db009fc017014554f6eaefea9fca4a81e364"
+    },
+    {
+      "path": "src/components/codex/ReaderCodexArtifacts.tsx",
+      "role": "verbatim",
+      "productionSha256": "1e2dfeff43bec274004a690ac4436318bf375993d14d7dd026f90545fca10906"
+    },
+    {
+      "path": "src/components/codex/ReaderCodexCharacters.tsx",
+      "role": "verbatim",
+      "productionSha256": "fb2bc095c55577b722bb99ee842fbd7cd9ced70ec15abef2f2338525790e4dd5"
+    },
+    {
+      "path": "src/components/codex/ReaderCodexCollage.tsx",
+      "role": "verbatim",
+      "productionSha256": "4e5a97153ec8b3d82c2c160fa0fd0ae4f7dbc72b79a687b3cc2a600403e6f345"
+    },
+    {
+      "path": "src/components/codex/ReaderCodexDashboards.tsx",
+      "role": "verbatim",
+      "productionSha256": "82b6c5501aa4263fb66e5b01dcf67e66b34c94aa06366d93f89418649b9207fb"
+    },
+    {
+      "path": "src/components/codex/ReaderCodexFactions.tsx",
+      "role": "verbatim",
+      "productionSha256": "9f1b6be57e00e183a7d863c37add9c429f73699918584288fca6aee3dd55ccd1"
+    },
+    {
+      "path": "src/components/codex/ReaderCodexFate.tsx",
+      "role": "verbatim",
+      "productionSha256": "479f3fac74ce6a039e34755270dccb3515a3d60b36619d975c1429c448783807"
+    },
+    {
+      "path": "src/components/codex/ReaderCodexGlossary.tsx",
+      "role": "verbatim",
+      "productionSha256": "a715d34c8fe5f646610f127241a2f3baa364547cc26cbc346623904ca08674f1"
+    },
+    {
+      "path": "src/components/codex/ReaderCodexImageGallery.tsx",
+      "role": "verbatim",
+      "productionSha256": "65e0e2b769313cdc6408f9a460d2014a4350cb0aa8838aeb439a28d0c32968da"
+    },
+    {
+      "path": "src/components/codex/ReaderCodexMysteries.tsx",
+      "role": "verbatim",
+      "productionSha256": "c4e36928f0af1d07aa0c546ed0ecfd68657990d39546caa8d7bb6c838484ee78"
+    },
+    {
+      "path": "src/components/codex/ReaderCodexPower.tsx",
+      "role": "verbatim",
+      "productionSha256": "68c9e67918e748c80d8a8cda1374f905ff91ac03d45bb1486bfa88e53583a144"
+    },
+    {
+      "path": "src/components/codex/ReaderCodexRelations.tsx",
+      "role": "verbatim",
+      "productionSha256": "6fa83da0704108380a50c551263efcde396b6562d92f47dc53d69634acad6f1d"
+    },
+    {
+      "path": "src/components/codex/ReaderCodexTimeline.tsx",
+      "role": "verbatim",
+      "productionSha256": "e0d6add8ad1b4da9e100c7111f2f643826b647a01d2fa183fe54dd966e346b01"
+    },
+    {
+      "path": "src/components/codex/character-cards/CharacterCard.tsx",
+      "role": "verbatim",
+      "productionSha256": "cc7a833947ad62db8a26768679d7c2f0b05899ca36a17b60c78f99f5caa57493"
+    },
+    {
+      "path": "src/components/codex/character-cards/CharacterEditCard.tsx",
+      "role": "verbatim",
+      "productionSha256": "49dd2abc54bf23424bf23a31a3b4b3b1034320211de88b6fcbd1e6120ccf79a0"
+    },
+    {
+      "path": "src/components/codex/character-profiles/CharacterProfile.tsx",
+      "role": "verbatim",
+      "productionSha256": "39fb6e4636bdefc051be2b40aed513513009fa44f66b6dd90206934ee23774a6"
+    },
+    {
+      "path": "src/components/codex/entityImageHistory.ts",
+      "role": "verbatim",
+      "productionSha256": "d19a59340e967e1d4fd56b23cf13d9dc72064a32029db33fef5ea8218962f7d1"
+    },
+    {
+      "path": "src/components/codex/location-cards/LocationCard.tsx",
+      "role": "verbatim",
+      "productionSha256": "cdb4a577a3060ba911200b30c44db840a489b24cf6da08c250593df28b309bbb"
+    },
+    {
+      "path": "src/components/codex/location-profiles/LocationProfile.tsx",
+      "role": "verbatim",
+      "productionSha256": "2f7344c1edc7af367445dcf5883fb4e1b3535912cf1828074e329ad7e7b12fdb"
+    },
+    {
+      "path": "src/contracts/assetIdentity.ts",
+      "role": "verbatim",
+      "productionSha256": "671b3f23a3b1e040508140731b70f576491e1adbac2040138f9ce41b2d68e75b"
+    },
+    {
+      "path": "src/contracts/mediaAssets.ts",
+      "role": "verbatim",
+      "productionSha256": "47e10829d547cffd17155fbddeedb953908f601399c3d61b77bf7a8cbfceeb6a"
+    },
+    {
+      "path": "src/hooks/audio/useAtmosphericAudio.ts",
+      "role": "verbatim",
+      "productionSha256": "387fca2b9d0ffd6f39ab29758e67fd6b80a849db1960fc24fb3e2f85afaa1b5a"
+    },
+    {
+      "path": "src/hooks/audio/useAudioMix.ts",
+      "role": "verbatim",
+      "productionSha256": "54a404194f11567f734e12a56765f847a4cfe52441c87b761b4a5e30ab8a4be5"
+    },
+    {
+      "path": "src/hooks/audio/useVoicePreferences.ts",
+      "role": "verbatim",
+      "productionSha256": "ccf54f8f5a6165531547c95fd9d2b4bac869f23dc80c1db9f24f17b33b2cdc23"
+    },
+    {
+      "path": "src/hooks/useChapterTranslation.ts",
+      "role": "verbatim",
+      "productionSha256": "cf27b834bc91a9f231ff5d625f032af3d5c8e80585032f5cb9955a84ce65142b"
+    },
+    {
+      "path": "src/hooks/useCinematicScroll.ts",
+      "role": "verbatim",
+      "productionSha256": "31b58e640881d1ec72f8d3fde9152002d2455bd9b8931a3e7684989d840dc5fc"
+    },
+    {
+      "path": "src/hooks/useCodexAnalytics.ts",
+      "role": "verbatim",
+      "productionSha256": "6fdc2630aa0cbad409e401278e99fe72eb3c2522da81bb8b7fd23e3f9bdd9d5a"
+    },
+    {
+      "path": "src/hooks/useCodexCharacterEditing.ts",
+      "role": "verbatim",
+      "productionSha256": "485dc4a29a73b63a29f432acb74d64916a3bdd8acf25b79f9eaec3afef09cbd2"
+    },
+    {
+      "path": "src/hooks/useCodexDeletions.ts",
+      "role": "verbatim",
+      "productionSha256": "f8f10d9c6de7e95041b4204022975a06f415eae45945bb395d9515ea9ace37cb"
+    },
+    {
+      "path": "src/hooks/useCodexImageEvolution.ts",
+      "role": "verbatim",
+      "productionSha256": "9f82157871b891d35f17765d52f5d11a1e6142417cf644b55c4fa726098442cc"
+    },
+    {
+      "path": "src/hooks/useCodexLocations.ts",
+      "role": "verbatim",
+      "productionSha256": "e9a4d210fb553b2f7185db054f3c2cb262c746a281cd3d280c0fd76b73e10eea"
+    },
+    {
+      "path": "src/hooks/useCodexVoiceCards.ts",
+      "role": "verbatim",
+      "productionSha256": "b2d7249e9e94b662ac28d5ad2aadb32aa0c85dec42f5d8635bed944c937a3eab"
+    },
+    {
+      "path": "src/hooks/useHistoricalMediaUrls.ts",
+      "role": "verbatim",
+      "productionSha256": "22ff518a4b69b148c5a9e37d5ead4ff10161fd62608918ee08c22365d0778223"
+    },
+    {
+      "path": "src/hooks/useImageManifest.ts",
+      "role": "verbatim",
+      "productionSha256": "e9ce8f420fa55d00d086b75c0117a22e3c820c96271a07b77cf232c956b15d0b"
+    },
+    {
+      "path": "src/hooks/useReaderPlayback.ts",
+      "role": "verbatim",
+      "productionSha256": "385e8ea81731f204fc4345261166c30cbb9bcdf0575a427056f4034f32f64de3"
+    },
+    {
+      "path": "src/hooks/useReaderVisuals.ts",
+      "role": "verbatim",
+      "productionSha256": "8aeb776664365057ad295cbe284001aecb1a3035993d500bb021e1da15a41b91"
+    },
+    {
+      "path": "src/hooks/useReadingPosition.ts",
+      "role": "verbatim",
+      "productionSha256": "4a44ab98496dea3bf1711c5a310cf5bbb142d8ce2a662ac2591bd871740120e5"
+    },
+    {
+      "path": "src/lib/agents.ts",
+      "role": "verbatim",
+      "productionSha256": "a375df05653a1c25fa29b87354d2e70384989e742da2e9eb7ed43b82b28eff78"
+    },
+    {
+      "path": "src/lib/alterFateLock.ts",
+      "role": "verbatim",
+      "productionSha256": "a137b3ecac798616e063f0086b39ac05647cfcde21ffdf594872e5c4c01066c7"
+    },
+    {
+      "path": "src/lib/artifacts.ts",
+      "role": "verbatim",
+      "productionSha256": "ba9ae2b63bb89e03bc95e321656f0c34647cb9d6e4790c7a43e75c33fc17e98d"
+    },
+    {
+      "path": "src/lib/audio/ambienceSoundCatalog.ts",
+      "role": "verbatim",
+      "productionSha256": "07e4abcb238280e14bd8b4c8fd31938528f3fb055c183fbda5d098d9a63450f9"
+    },
+    {
+      "path": "src/lib/audio/audioMixSettings.ts",
+      "role": "verbatim",
+      "productionSha256": "988c865b00b02449d391f9e47618903037cc585aa659265da22d2dc143a5411a"
+    },
+    {
+      "path": "src/lib/audio/autoCuePolicy.ts",
+      "role": "verbatim",
+      "productionSha256": "66e3c4fb987f278b3aa000c0b06ff418712289aca55416a91bf83baae4c15c46"
+    },
+    {
+      "path": "src/lib/audio/cardSoundCatalog.ts",
+      "role": "verbatim",
+      "productionSha256": "b0b48ea1ba08517a684d97cf1e0f0fb45b66f274ea5d24e176516100a82a4d07"
+    },
+    {
+      "path": "src/lib/audio/cardSoundPlayer.ts",
+      "role": "verbatim",
+      "productionSha256": "2b037509c36579f227e3075e102d7d62562473be1342e00b89d0cd03112d8c33"
+    },
+    {
+      "path": "src/lib/audio/celestial_library_catalog_cleaned.json",
+      "role": "verbatim",
+      "productionSha256": "1ab1dc7afb67590c8eab2bbe4b70295908609e9bcd34ffc672c1a4722b482f67"
+    },
+    {
+      "path": "src/lib/audio/musicResolver.ts",
+      "role": "verbatim",
+      "productionSha256": "bcbfefe6954f02cd30a00b233e27b8aa2a5ef79c3e5be5a83f34220b33c6729f"
+    },
+    {
+      "path": "src/lib/chapterMomentousness.ts",
+      "role": "verbatim",
+      "productionSha256": "98efe43c2883f5d4f2646d396c2d76203f7bcff7864a2a1f1c34c9c7ee046faa"
+    },
+    {
+      "path": "src/lib/chapterViews.ts",
+      "role": "verbatim",
+      "productionSha256": "77baeddd06c8b6d378f6f295c5f8779dab5de2e040dcf71b5f514a6fae7c0fc5"
+    },
+    {
+      "path": "src/lib/chapterWritingStyle.ts",
+      "role": "verbatim",
+      "productionSha256": "28686af895b2c9e47128461c11b3655d0b362c2cab9b21c9009233a33022171e"
+    },
+    {
+      "path": "src/lib/cinematicScroll/anchors.ts",
+      "role": "verbatim",
+      "productionSha256": "314ddb84658bdd7c45029ad0f645cfdd5ae84b87fd8080af8c6e9b373199a216"
+    },
+    {
+      "path": "src/lib/cinematicScroll/scrollSurface.ts",
+      "role": "verbatim",
+      "productionSha256": "233fa43174afcdce095f0d8d50c27aaad1aa59ca0f95df70bc63f261721873fa"
+    },
+    {
+      "path": "src/lib/cinematicScroll/springController.ts",
+      "role": "verbatim",
+      "productionSha256": "13a0e930bf02822ff698b7432526787b76a95a37f95f88eb897013e975c0e8be"
+    },
+    {
+      "path": "src/lib/cinematicScroll/stateMachine.ts",
+      "role": "verbatim",
+      "productionSha256": "1c99d87341b2ae9d1420719760cdef80689c6f16ab7ae2ce3affd2d59e74e728"
+    },
+    {
+      "path": "src/lib/closedDoorCultivation.ts",
+      "role": "verbatim",
+      "productionSha256": "5b60360069af983e651236aedbd20b217c3bdb84dbff183e239a0d6ccf53e48a"
+    },
+    {
+      "path": "src/lib/codexContext.ts",
+      "role": "verbatim",
+      "productionSha256": "5501be7ceb99af53a0b8d03f2370dffcf80be9849a3b2d3b78c00e8ffc0d4fee"
+    },
+    {
+      "path": "src/lib/codexEntryContext.ts",
+      "role": "verbatim",
+      "productionSha256": "59cd47a3c1018e2dcc1f05fd24c7c84b1d667e2bf374add327618da568c9938c"
+    },
+    {
+      "path": "src/lib/codexHighlighting.ts",
+      "role": "verbatim",
+      "productionSha256": "88da228fa9e482a249015207ee9e1b6b9278522ac1336d1360fafa794477145c"
+    },
+    {
+      "path": "src/lib/contextBlocks.ts",
+      "role": "verbatim",
+      "productionSha256": "3244da1af9a9b7fa1dd03fb535cd47b228236f335824e54c21f8c3c43319cb43"
+    },
+    {
+      "path": "src/lib/dialect.ts",
+      "role": "verbatim",
+      "productionSha256": "b4e4ffeed29234ca49c345fd2f2e424230ad76af72936b6175ef00168b7edd26"
+    },
+    {
+      "path": "src/lib/effects/cinematicEffectGovernor.ts",
+      "role": "verbatim",
+      "productionSha256": "5a003d1637f59c3c75a799e8401868cd0ab2aae173eca0faeb4a09cd78da83ac"
+    },
+    {
+      "path": "src/lib/encryption.ts",
+      "role": "verbatim",
+      "productionSha256": "e3aa24b42f08bb62b83af5aee550f45704c93522fe0114e1b7e1bf758ee49abb"
+    },
+    {
+      "path": "src/lib/env.ts",
+      "role": "verbatim",
+      "productionSha256": "7d822a5f7533bebc5d4c07c147db130d8830b8be6a325c1213a35b339ed3b483"
+    },
+    {
+      "path": "src/lib/firebase.ts",
+      "role": "seam",
+      "productionSha256": "181334827fe6087a13ad5aa38c7e87d93e46943faf37b17a108651540dfb14d7"
+    },
+    {
+      "path": "src/lib/hubStories.ts",
+      "role": "verbatim",
+      "productionSha256": "12292bbc26ca90d191a62f27b2c5449c9bde7a24ca8ac34d82272520d60c0dce"
+    },
+    {
+      "path": "src/lib/id.ts",
+      "role": "verbatim",
+      "productionSha256": "095ddb103a873718194ce1bdddf419fd826477fb67febac43f51c00fbb075c73"
+    },
+    {
+      "path": "src/lib/manifestationEligibility.ts",
+      "role": "verbatim",
+      "productionSha256": "995a4b346a518f291f22eb6cb4872b01e196c8d5cefdcc854a1df11edbb3f6b0"
+    },
+    {
+      "path": "src/lib/media/localMediaDescriptors.ts",
+      "role": "verbatim",
+      "productionSha256": "4cf4e701f0c1b11cdad9b66fb8522ecffeea6b0a1129331da6d49e3c6bd82464"
+    },
+    {
+      "path": "src/lib/media/mediaAssetClient.ts",
+      "role": "seam",
+      "productionSha256": "081470909baa2baa757e0d279d71765da0d7de4335d14d57672809a1e75398c7"
+    },
+    {
+      "path": "src/lib/media/privateMediaResolver.ts",
+      "role": "seam",
+      "productionSha256": "b84f1a1eb3689698c687759786ad05aa6db134c5183afad76e34b308f0938c06"
+    },
+    {
+      "path": "src/lib/narration/progress.ts",
+      "role": "verbatim",
+      "productionSha256": "408b7937221d15e91c86b5b321e68a22f280e0b0d617dd0fb85106305d066992"
+    },
+    {
+      "path": "src/lib/narrativeCues.ts",
+      "role": "verbatim",
+      "productionSha256": "a403e76a21e4e1aeb7a62ccf9aa633b93c826c26db497eb9075424887beacd45"
+    },
+    {
+      "path": "src/lib/persistence/index.ts",
+      "role": "seam",
+      "productionSha256": "9a1b7db5cd09b01a7680072b0402b73c54b8399ce974e7b36d24abe0567f4a36"
+    },
+    {
+      "path": "src/lib/qi.ts",
+      "role": "verbatim",
+      "productionSha256": "6f1cebe5a7a37e84a51188734085c85bb5b71a53c12053aa9d7990fa1e21b4b5"
+    },
+    {
+      "path": "src/lib/quota.ts",
+      "role": "verbatim",
+      "productionSha256": "bf388a56e476f50e8469f9bb5f1b73d09df2816a8a2ca5e1cec2cf5f938595d4"
+    },
+    {
+      "path": "src/lib/rag.ts",
+      "role": "seam",
+      "productionSha256": "dde571329832057615e0e6af719447ca8f3f8861269d4690b6411e54d5260c89"
+    },
+    {
+      "path": "src/lib/readerLegend.ts",
+      "role": "verbatim",
+      "productionSha256": "3657068677ee9fc9bb0050cfc94a81d40b253a5cccef381a51c7cd72faaee813"
+    },
+    {
+      "path": "src/lib/readerTypography.ts",
+      "role": "verbatim",
+      "productionSha256": "9e68c086383037d8b6a6e2aad42aafb9a1a417179fc395d8de28ef946a242f3d"
+    },
+    {
+      "path": "src/lib/relicDropEngine.ts",
+      "role": "verbatim",
+      "productionSha256": "9d5bebadfb546aeb76ec54a7635a23ba62461be5161ecc6bc945cbf42a5df050"
+    },
+    {
+      "path": "src/lib/slimMemoryForRequest.ts",
+      "role": "verbatim",
+      "productionSha256": "032a84b57c4b2a2d2f28addcc34875e1bcfd39bc997c4f5b70be51383c81bbd5"
+    },
+    {
+      "path": "src/lib/storage.ts",
+      "role": "seam",
+      "productionSha256": "0a5dbd7cf4c09db9719c371b93de720ccef31e2fe878a282831369219b83a84e"
+    },
+    {
+      "path": "src/lib/systemColors.ts",
+      "role": "verbatim",
+      "productionSha256": "4afb1a44813a99183ee7ce6103a4064004e9fb613df8a8aaddcfb020610da5a7"
+    },
+    {
+      "path": "src/lib/userProfileCache.ts",
+      "role": "verbatim",
+      "productionSha256": "438d2b7852e664e75c88239985294d1d2c934e99fa3cb4c0ada48a7cbbe3b18f"
+    },
+    {
+      "path": "src/lib/vibration.ts",
+      "role": "verbatim",
+      "productionSha256": "f8d16c85334a64d80a58c433e4a7af66160f8d0042e8636690a3862e5cc35df0"
+    },
+    {
+      "path": "src/lib/voice/kokoroVoiceRegistry.ts",
+      "role": "verbatim",
+      "productionSha256": "7e023447d98ac91514d09ebff40e4f5cb4848ca712fe48140e0238e9b95fc6fb"
+    },
+    {
+      "path": "src/lib/voice/voiceResolver.ts",
+      "role": "verbatim",
+      "productionSha256": "01755ab4e79082b83099c0465dc758f26ccb333c4eef0e0ebfbe8ad0207b0fdf"
+    },
+    {
+      "path": "src/lib/voice/webSpeechCast.ts",
+      "role": "verbatim",
+      "productionSha256": "19650669e2a3880941bfbe4c09fa344cc687311f841e5fccc48dd5c0e9a92733"
+    },
+    {
+      "path": "src/store/useAppStore.ts",
+      "role": "seam",
+      "productionSha256": "bda4584cb62afbc7785e520c5b891bd4264a7464e9be5a8dfb6d987ee9a21a38"
+    },
+    {
+      "path": "src/store/useGenerationStore.ts",
+      "role": "seam",
+      "productionSha256": "0bf98f276b14000d4b1f7ce7509715f6941fa7455183a84e511d3a0b344b98f7"
+    },
+    {
+      "path": "src/types.ts",
+      "role": "verbatim",
+      "productionSha256": "3752563f29c6ebc6a344ecffa114954103f0ea619730ccec6f5d95a9bbf29afa"
+    },
+    {
+      "path": "src/utils/downloadUtils.ts",
+      "role": "verbatim",
+      "productionSha256": "25be434406a105a9051c02785f4b5aaeed6491348e5a6c594266fe7a7ff5391e"
+    },
+    {
+      "path": "src/utils/textUtils.ts",
+      "role": "verbatim",
+      "productionSha256": "44e9f026d365d9133b6da95a1ace1441dd916d6a2e50ff55467ea79a935911f7"
+    }
+  ]
+}

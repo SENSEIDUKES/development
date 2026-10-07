@@ -1,6 +1,6 @@
 import React from 'react';
-import { SystemBlock } from '../../reader-chamber/reference/SystemBlock';
-import { ManifestationImage } from '../../reader-chamber/reference/ManifestationImage';
+import { SystemBlock } from './SystemBlock';
+import { ManifestationImage } from './ManifestationImage';
 import type { Chapter, SystemEvent } from '../../reader-chamber/shared/types';
 import { CodexRevealCardReference } from './CodexRevealCardReference';
 

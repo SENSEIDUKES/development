@@ -16,6 +16,7 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 
 ## Workshop history
 
+- **2026-10-07:** The Reader Chamber's Original Reference is now production's own Reader, copied unchanged from Light-Novels `main` @ `647165a`, and its Codex buttons open production's own `CodexSheetOverlay` and `ReaderCodex` from that copy (`reader-chamber/reference/light-novels/src/components/`). This feature's Original Reference and Development are unchanged; its reference remains the older adapted copy.
 - **2026-09-13:** Added the quiet arc-goal inspector and host-owned editing callback beside chapter recaps.
 
 - **2026-09-11:** Reused the source-owned SEN Characters mark for the Living Codex Portraits destination and the SEN Search mark in Glossary search. Character data, Codex navigation, filtering, and the locked reference remain unchanged.

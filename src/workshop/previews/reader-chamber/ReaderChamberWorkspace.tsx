@@ -1,7 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useState } from 'react';
 import { ProductFamiliarHeaderAccessory, ProductFamiliarSession, ProductFamiliarSurface, useProductFamiliarPreview } from '../familiar/ProductFamiliarPreview';
-import ReferenceReaderChamber from '../../../components/reader-chamber/reference/ReaderChamber';
-import { CodexSheetOverlay as ReferenceCodexSheetOverlay } from '../../../components/reader-codex/reference/CodexSheetOverlay';
 import {
   DEFAULT_READER_TYPOGRAPHY,
   ReaderChamber as DevelopmentReaderChamber,
@@ -15,7 +13,7 @@ import {
   updateMockStory,
   useAppStore,
 } from '../../../components/reader-chamber/shared/stubs';
-import { FeatureWorkspace, type WorkshopControlsConfig } from '../../FeatureWorkspace';
+import { FeatureWorkspace, type WorkshopControlsConfig, type WorkspaceView } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import {
   ARC_TITLE,
@@ -33,18 +31,34 @@ import {
   type PreviewCategory,
   type PreviewState,
 } from './previewStates';
+import {
+  DEFAULT_PRODUCTION_SCENE,
+  PRODUCTION_SCENE_GROUPS,
+  PRODUCTION_SCENES,
+  runProductionSceneAction,
+  type ProductionReaderScenario,
+} from './productionScenarios';
 
 type ReaderTab = 'reader' | 'codex' | 'memory';
 
-type CodexOverlayComponent = typeof ReferenceCodexSheetOverlay;
+/**
+ * The Original Reference is production's own Reader screen, copied unchanged
+ * from Light-Novels and checked under production's compiler settings
+ * (tsconfig.reference.json). It loads through a glob so this strict program
+ * never type-checks production code under this repository's rules.
+ */
+type ProductionReaderHostComponent = React.ComponentType<{ scenario: ProductionReaderScenario }>;
+const productionReaderModules = import.meta.glob<{ default: ProductionReaderHostComponent }>(
+  '../../../components/reader-chamber/reference/host/ProductionReaderHost.tsx',
+);
+const loadProductionReader = () => Object.values(productionReaderModules)[0]();
+const ProductionReaderHost = React.lazy(loadProductionReader);
 
 function PreviewCanvas({
   children,
-  CodexOverlay,
   onJumpToChapter,
 }: {
   children: React.ReactElement;
-  CodexOverlay: CodexOverlayComponent;
   onJumpToChapter: (chapterNumber: number) => void;
 }) {
   const [isCodexOpen, setIsCodexOpen] = useState(false);
@@ -67,7 +81,7 @@ function PreviewCanvas({
   return (
     <div className="relative">
       {chamber}
-      <CodexOverlay
+      <DevelopmentCodexSheetOverlay
         isOpen={isCodexOpen}
         onClose={() => setIsCodexOpen(false)}
         activeStory={activeStory}
@@ -83,9 +97,7 @@ function PreviewCanvas({
 }
 
 /** Click real in-chamber buttons by their accessible label so preview states
- *  drive the production interaction path (toggles, drawers, modals). Both
- *  panes render `id="reader-chamber-root"`, so in Compare mode this reaches
- *  the reference and development chambers alike. */
+ *  drive the chamber's own interaction path (toggles, drawers, modals). */
 function clickInChamber(predicate: (button: HTMLButtonElement) => boolean) {
   document
     .querySelectorAll<HTMLButtonElement>('#reader-chamber-root button')
@@ -106,6 +118,10 @@ export function ReaderChamberWorkspace() {
   const [isGenerating, setIsGenerating] = useState(false);
   const activeStory = useAppStore((s) => s.stories[0]);
   const isReaderFullscreen = useAppStore((s) => s.isReaderFullscreen);
+  const [view, setView] = useState<WorkspaceView>('development');
+  const [productionSceneId, setProductionSceneId] = useState(DEFAULT_PRODUCTION_SCENE.id);
+  const [productionMount, setProductionMount] = useState(0);
+  const productionScene = PRODUCTION_SCENES.find((scene) => scene.id === productionSceneId) ?? DEFAULT_PRODUCTION_SCENE;
 
   // Boot the mock store with a fresh story.
   useEffect(() => {
@@ -144,6 +160,22 @@ export function ReaderChamberWorkspace() {
     }, 180);
     return () => clearTimeout(timer);
   }, [activeState]);
+
+  const applyProductionScene = useCallback((sceneId: string) => {
+    setProductionSceneId(sceneId);
+    setProductionMount((count) => count + 1);
+  }, []);
+
+  useEffect(() => {
+    const action = productionScene.action;
+    if (!action || view === 'development') return;
+    let attempts = 0;
+    const timer = window.setInterval(() => {
+      attempts += 1;
+      if (runProductionSceneAction(action) || attempts > 20) window.clearInterval(timer);
+    }, 250);
+    return () => window.clearInterval(timer);
+  }, [productionScene, productionMount, view]);
 
   const updateStoryFields: UpdateStoryFields = useCallback(
     (storyId, updates, options) =>
@@ -274,113 +306,142 @@ export function ReaderChamberWorkspace() {
       Active state · {activeScenario.label}
     </p>
   ) : null;
-  const workshopControls: WorkshopControlsConfig = {
-    defaultSection: 'states',
-    description: MOCK_READER_FALLBACK_LABEL,
-    sections: [
-      {
-        id: 'pages',
-        description: 'Open Reader-owned pages through their real buttons, or choose the active mock chapter.',
-        content: (
-          <div className="space-y-5">
-            <section>
-              {sectionHeading('Reader pages')}
-              {stateList('pages')}
-            </section>
-            {chipGroup(
-              'Chapter',
-              chapters.map((chapter) => (
+  const productionScenes = {
+    id: 'scenes' as const,
+    description: 'Production’s own Reader (Light-Novels main @ 647165a) with a sample story. Each scene reloads the story and opens its surface through production’s own control.',
+    content: (
+      <div className="space-y-5">
+        {PRODUCTION_SCENE_GROUPS.map((group) => (
+          <section key={group.id}>
+            {sectionHeading(group.label)}
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {PRODUCTION_SCENES.filter((scene) => scene.group === group.id).map((scene) => (
                 <button
-                  key={chapter.number}
+                  key={scene.id}
                   type="button"
-                  aria-pressed={selectedChapterNum === chapter.number}
-                  onClick={() => setSelectedChapterNum(chapter.number)}
-                  className={`${chipButton(selectedChapterNum === chapter.number)} min-w-[2.75rem]`}
+                  onClick={() => applyProductionScene(scene.id)}
+                  className={stateButton(productionScene.id === scene.id)}
                 >
-                  {chapter.number}
+                  {scene.label}
                 </button>
-              )),
-            )}
-            {activeStatus}
-          </div>
-        ),
-      },
-      {
-        id: 'states',
-        description: 'Apply deterministic reading, generation, modal, and drawer states to every mounted pane.',
-        content: (
-          <div className="space-y-5">
-            <section>
-              {sectionHeading('Reading states')}
-              {stateList('reading')}
-            </section>
-            <section>
-              {sectionHeading('Menus and drawers')}
-              {stateList('menus')}
-            </section>
-            {activeStatus}
-          </div>
-        ),
-      },
-      {
-        id: 'effects',
-        description: 'Preview Reader-owned theme and particle preferences without persisting them.',
-        content: (
-          <div className="space-y-4">
-            {chipGroup(
-              'Theme',
-              READER_THEMES.map((theme) => (
-                <button
-                  key={theme}
-                  type="button"
-                  aria-pressed={currentTheme === theme}
-                  onClick={() => patchReaderPreferences({ themeOverride: theme })}
-                  className={chipButton(currentTheme === theme)}
-                >
-                  {theme}
-                </button>
-              )),
-            )}
-            {chipGroup(
-              'Particles',
-              PARTICLE_INTENSITIES.map((intensity) => (
-                <button
-                  key={intensity}
-                  type="button"
-                  aria-pressed={currentParticles === intensity}
-                  onClick={() => patchReaderPreferences({ particleIntensity: intensity })}
-                  className={chipButton(currentParticles === intensity)}
-                >
-                  {intensity}
-                </button>
-              )),
-            )}
-            {activeStatus}
-          </div>
-        ),
-      },
-    ],
+              ))}
+            </div>
+          </section>
+        ))}
+        <p className="text-[10px] font-mono uppercase tracking-widest text-white/40">
+          Active scene · {productionScene.label}
+        </p>
+      </div>
+    ),
   };
+  const developmentSections = [
+    {
+      id: 'pages' as const,
+      description: 'Open Reader-owned pages through their real buttons, or choose the active mock chapter.',
+      content: (
+        <div className="space-y-5">
+          <section>
+            {sectionHeading('Reader pages')}
+            {stateList('pages')}
+          </section>
+          {chipGroup(
+            'Chapter',
+            chapters.map((chapter) => (
+              <button
+                key={chapter.number}
+                type="button"
+                aria-pressed={selectedChapterNum === chapter.number}
+                onClick={() => setSelectedChapterNum(chapter.number)}
+                className={`${chipButton(selectedChapterNum === chapter.number)} min-w-[2.75rem]`}
+              >
+                {chapter.number}
+              </button>
+            )),
+          )}
+          {activeStatus}
+        </div>
+      ),
+    },
+    {
+      id: 'states' as const,
+      description: 'Apply deterministic reading, generation, modal, and drawer states to the Development Reader.',
+      content: (
+        <div className="space-y-5">
+          <section>
+            {sectionHeading('Reading states')}
+            {stateList('reading')}
+          </section>
+          <section>
+            {sectionHeading('Menus and drawers')}
+            {stateList('menus')}
+          </section>
+          {activeStatus}
+        </div>
+      ),
+    },
+    {
+      id: 'effects' as const,
+      description: 'Preview Reader-owned theme and particle preferences without persisting them.',
+      content: (
+        <div className="space-y-4">
+          {chipGroup(
+            'Theme',
+            READER_THEMES.map((theme) => (
+              <button
+                key={theme}
+                type="button"
+                aria-pressed={currentTheme === theme}
+                onClick={() => patchReaderPreferences({ themeOverride: theme })}
+                className={chipButton(currentTheme === theme)}
+              >
+                {theme}
+              </button>
+            )),
+          )}
+          {chipGroup(
+            'Particles',
+            PARTICLE_INTENSITIES.map((intensity) => (
+              <button
+                key={intensity}
+                type="button"
+                aria-pressed={currentParticles === intensity}
+                onClick={() => patchReaderPreferences({ particleIntensity: intensity })}
+                className={chipButton(currentParticles === intensity)}
+              >
+                {intensity}
+              </button>
+            )),
+          )}
+          {activeStatus}
+        </div>
+      ),
+    },
+  ];
+  // The Original Reference has its own scenes; Development keeps its states.
+  const workshopControls: WorkshopControlsConfig = view === 'reference'
+    ? { defaultSection: 'scenes', description: 'Original Reference · production Reader with a sample story', sections: [productionScenes] }
+    : {
+      defaultSection: 'states',
+      description: MOCK_READER_FALLBACK_LABEL,
+      sections: view === 'compare' ? [...developmentSections, productionScenes] : developmentSections,
+    };
 
   return (
     <FeatureWorkspace
       entry={entry}
       workshopControls={workshopControls}
       allowCompare
+      onReferenceIntent={() => void loadProductionReader()}
+      onViewChange={setView}
       renderReference={() => (
-        <PreviewCanvas
-          key={`reference-${activeState}`}
-          CodexOverlay={ReferenceCodexSheetOverlay}
-          onJumpToChapter={setSelectedChapterNum}
-        >
-          <ReferenceReaderChamber {...chamberProps} />
-        </PreviewCanvas>
+        <Suspense fallback={<div className="flex min-h-[50vh] items-center justify-center text-sm text-white/40">Loading the production Reader…</div>}>
+          <ProductionReaderHost key={`production-${productionScene.id}-${productionMount}`} scenario={productionScene.scenario} />
+        </Suspense>
       )}
       renderDevelopment={() => (
         <ProductFamiliarSession><ProductFamiliarSurface bottomInset={80} headerRecall={!isReaderFullscreen}>
         <PreviewCanvas
           key={`development-${activeState}`}
-          CodexOverlay={DevelopmentCodexSheetOverlay}
           onJumpToChapter={setSelectedChapterNum}
         >
           <DevelopmentReaderWithFamiliar {...chamberProps} />

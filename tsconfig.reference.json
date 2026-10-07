@@ -1,0 +1,29 @@
+{
+  // The production Reader snapshot in src/components/reader-chamber/reference/
+  // is checked here under the Light-Novels compiler settings it was written
+  // for (main @ 647165a: not strict), instead of under this repository's strict
+  // settings. tsconfig.json leaves the folder out; the Workshop loads it
+  // through import.meta.glob, so the strict program never follows into it.
+  "compilerOptions": {
+    "target": "ES2022",
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+    "module": "ESNext",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "allowJs": true,
+    "jsx": "react-jsx",
+    "types": ["node", "vite/client"],
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "strict": false,
+    "noEmit": true,
+    "paths": {
+      "firebase/auth": ["./src/components/reader-chamber/reference/host/firebaseAuth.ts"]
+    }
+  },
+  "include": ["src/components/reader-chamber/reference"]
+}

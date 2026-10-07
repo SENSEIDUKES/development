@@ -348,7 +348,7 @@ export const CARD_PRESETS: CardPreset[] = [
     description: 'Legacy chapter-level artwork retained only for the locked production Reference pane.',
     explanation: {
       componentName: 'ManifestationImage',
-      sourceFile: 'src/components/reader-chamber/reference/ManifestationImage.tsx',
+      sourceFile: 'src/components/card-workshop/reference/ManifestationImage.tsx',
       currentTrigger: 'Legacy Reference snapshot only',
       entityOrEventType: 'chapter_crux_image (not an active entity card)',
       codexDestination: 'Legacy Reference snapshot only',

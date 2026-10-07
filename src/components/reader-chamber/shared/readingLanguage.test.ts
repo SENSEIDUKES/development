@@ -2,12 +2,15 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { getSenTextDirection, resolveReadingLanguageCode } from '@seihouse/sen/contracts';
 
-const readerChamberSources = ['development', 'reference'].map(fork => ({
+// The Original Reference is production's Reader copied unchanged, so it keeps
+// production's own language-name mapper; only the Development Reader is held
+// to the shared contract.
+const readerChamberSources = ['development'].map(fork => ({
   fork,
   source: readFileSync(new URL(`../${fork}/ReaderChamber.tsx`, import.meta.url), 'utf8'),
 }));
 
-const readerViewportSources = ['development', 'reference'].map(fork => ({
+const readerViewportSources = ['development'].map(fork => ({
   fork,
   source: readFileSync(new URL(`../${fork}/ReaderViewport.tsx`, import.meta.url), 'utf8'),
 }));

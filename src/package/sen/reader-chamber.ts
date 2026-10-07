@@ -13,7 +13,7 @@
  *
  * `ReaderChamber`, `ReaderViewport`, and `ReaderControls/AudioMenu` still
  * import the Workshop's mock application state directly (`shared/stubs`,
- * `shared/trackLibrary`, `MOCK_VOICES`), so those mocks are bundled into this
+ * `MOCK_VOICES`), so those mocks are bundled into this
  * entry today rather than excluded from it. They are temporary DEV runtime
  * dependencies, not a real store or audio catalog — replacing them with a
  * host-supplied store and audio catalog is follow-up work for production

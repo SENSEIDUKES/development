@@ -15,7 +15,7 @@
     "check:ownership": "node scripts/checkOwnership.mjs",
     "check:app": "node scripts/checkNovelExpandedApp.mjs",
     "test:package": "npm run check:ui-artifacts && npm run check:package-boundaries && npm run build:package && node scripts/smokePackage.mjs sen && node scripts/smokePackage.mjs library",
-    "typecheck": "tsc -b",
+    "typecheck": "tsc -b && tsc -p tsconfig.reference.json",
     "test": "vitest run",
     "test:ownership": "vitest run scripts/ownershipGraph.test.ts",
     "test:chapter-manifestation": "vitest run src/components/chapter-manifestation",

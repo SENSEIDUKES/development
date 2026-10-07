@@ -226,13 +226,13 @@ export const workshopEntries: WorkshopEntry[] = [
     owner: 'sen',
     status: 'active',
     title: 'Reader Chamber',
-    description: 'The full reading UI with chapter-scoped Reader Codex memory, a Mind Palace of kept passages anchored to their exact text, an Alter Fate entry that opens the host\'s Fate page, and Sound Cues placed on the exact words a chapter marks, played from the approved Library catalog.',
+    description: 'The full reading UI with chapter-scoped Reader Codex memory, a Mind Palace of kept passages anchored to their exact text, an Alter Fate entry that opens the host\'s Fate page, and Sound Cues placed on the exact words a chapter marks, played from the approved Library catalog. The Original Reference is production\'s own Reader screen, copied unchanged, with a sample story and scenes for every production surface.',
     category: 'reader-ui',
-    version: 'v1.6',
+    version: 'v1.7',
     source: {
       repository: 'SENSEIDUKES/Light-Novels',
-      path: 'src/components/ReaderChamber.tsx; src/components/ReaderViewport.tsx',
-      lastCompared: '2026-08-22',
+      path: 'src/components/ReaderScreen.tsx; src/components/ReaderChamber.tsx; src/components/CodexSheetOverlay.tsx',
+      lastCompared: '2026-10-07',
     },
   },
   {

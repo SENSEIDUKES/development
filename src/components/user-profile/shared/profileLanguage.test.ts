@@ -10,10 +10,13 @@ const SOURCE_ROOT = fileURLToPath(new URL('../../..', import.meta.url));
 /** The single file allowed to name a retired field, to document its removal. */
 const REMOVAL_NOTE = join('story-seed', 'shared', 'storyAdministrativeMetadata.ts');
 
+/** Production's Reader, copied unchanged as the Reader Chamber's Original Reference; it keeps production's own fields. */
+const PRODUCTION_SNAPSHOT = join('reader-chamber', 'reference', 'light-novels');
+
 /** Contract sources only: a test may still name a retired field to prove it is gone. */
 const sourceFiles = (directory: string): string[] => readdirSync(directory).flatMap(entry => {
   const path = join(directory, entry);
-  if (statSync(path).isDirectory()) return sourceFiles(path);
+  if (statSync(path).isDirectory()) return path.endsWith(PRODUCTION_SNAPSHOT) ? [] : sourceFiles(path);
   return /\.tsx?$/.test(entry) && !/\.test\.tsx?$/.test(entry) ? [path] : [];
 });
 

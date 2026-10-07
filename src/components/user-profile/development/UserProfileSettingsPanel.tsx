@@ -17,6 +17,7 @@ import {
   Keyboard,
   LockKeyhole,
   Mountain,
+  Music,
   RefreshCw,
   Shield,
   Sliders,
@@ -50,6 +51,8 @@ import {
   resolveRankVisual,
 } from '../../../library/cultivation/progression';
 import { CAVE_ENVIRONMENTS } from './caveEnvironment';
+import { useMenuMusic } from '../../../library/sound/menuMusic';
+import type { ReaderPreferenceStorage } from '@seihouse/sen/reader-runtime';
 import {
   DISPLAY_NAME_MAX_VISIBLE,
   clampDisplayName,
@@ -123,6 +126,7 @@ export function UserProfileSettingsPanel({
     setLocalOnlyMode,
     requestLibrarySync,
     familiars = [],
+    soundPreferences,
   } = useUserProfileServices();
   const {
     profile,
@@ -451,6 +455,9 @@ export function UserProfileSettingsPanel({
               </div>
             </SEIDisclosure>
 
+            {/* ---- Sound ------------------------------------------------------ */}
+            {soundPreferences && <SoundSettings storage={soundPreferences} />}
+
           </SEIDisclosureGroup>
             </SEITabsPanel>
             <SEITabsPanel value="familiar" keepMounted className="pt-4">
@@ -675,4 +682,24 @@ export function UserProfileSettingsPanel({
       </SEITabs>
     </div>
   );
+}
+
+/**
+ * Sound: the reader's Menu music, kept on the device. On, calm music plays on
+ * the menus and the music note in the header mutes it or sets its volume; off,
+ * the menus are silent and the note leaves the header. The Reader keeps its
+ * own music either way.
+ */
+function SoundSettings({ storage }: { storage: ReaderPreferenceStorage }) {
+  const [menuMusic, setMenuMusic] = useMenuMusic(storage);
+  return <SEIDisclosure value="sound" heading="Sound" icon={Music} supportingText="Music on the menus.">
+    <div className="space-y-2 pt-1">
+      <SEISwitch isSelected={menuMusic} onChange={setMenuMusic} size="compact" className="!min-h-11 sm:!min-h-11">
+        Menu music
+      </SEISwitch>
+      <p className="font-sans text-xs text-neutral-400">
+        Calm music on Home, Create and World Info. The music note in the header mutes it at once; hover it, or hold it on a phone, for its volume.
+      </p>
+    </div>
+  </SEIDisclosure>;
 }

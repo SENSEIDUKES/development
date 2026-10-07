@@ -85,7 +85,7 @@ export const PACKAGE_TARGETS = {
       '@seihouse/library/dao-pillar': ['DaoPillarView', 'DaoPillarClientProvider'],
       '@seihouse/library/relics': ['RelicReveal', 'FateSurvivalRelicsPanel', 'RelicsClientProvider', 'createHttpRelicsClient'],
       '@seihouse/library/rewards': ['AchievementsPanel', 'MysteryScrollReveal', 'RewardRevealCard', 'AchievementsClientProvider', 'createHttpAchievementsClient', 'describeRewardGrants'],
-      '@seihouse/library/shell': ['LibraryNavigation', 'WorkspaceShell', 'WorkspaceHeader'],
+      '@seihouse/library/shell': ['LibraryNavigation', 'WorkspaceShell', 'WorkspaceHeader', 'HeaderSoundControl', 'useMenuMusic', 'readMenuMusic'],
       '@seihouse/library/home': ['LightNovelsHome', 'StoryDetailScreen'],
       '@seihouse/library/world-card': ['WorldCard', 'WorldCardInfo'],
       '@seihouse/library/story-seed': ['CreationModal', 'StoryCreationProvider', 'harnessStoryStartFromSeed'],

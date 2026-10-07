@@ -1,5 +1,14 @@
 # `@seihouse/sen`
 
+**0.24.0 (2026-10-07):** The Reader never opens to the host's music. `StorySoundtrack`
+carries a piece on only between requests of one kind: the host's music never follows the
+reader into a hold, nor a hold's piece back out. The Reader always holds its own music:
+the chapter's mood when a piece answers it, else `READER_MUSIC_MOOD` (`mystical`), which
+also plays while Chapter 1 is written. `HarnessReaderSession` takes optional
+`soundscapes`, the host's pieces for the Reader before the story has a chapter. Leaving
+the Reader no longer stops the music itself (it cancels the sleep timer and stops the
+atmosphere), so the soundtrack moves from the Reader's music to the host's in one step.
+
 **0.23.0 (2026-10-06, breaking):** Phase 4: audio that's always there, and writing
 that survives leaving. **The chapter being written belongs to the controller:**
 `HarnessGenerationController.chapterWrite(storyId)` (`HarnessChapterWrite`, announced

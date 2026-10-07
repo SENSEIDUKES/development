@@ -16,7 +16,7 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 
 ## Workshop history
 
-- **2026-10-07:** Replaced automatic greetings with one supplied wave on touch or mouse hover, then a neutral pose. Holding hover never loops; keyboard activation also greets. Both generation modes use this behavior. The softer aura and inactive underline stay; regular Familiar playback and generation behavior are unchanged. Merged current main while preserving its music, background chapter writing and Frostforged Golem (Frost affinity). Library 0.22.0, SEN 0.23.0.
+- **2026-10-07:** Replaced automatic greetings with one supplied wave on touch or mouse hover, then a neutral pose. Holding hover never loops; keyboard activation also greets. Both generation modes use this behavior. The softer aura and inactive underline stay; regular Familiar playback and generation behavior are unchanged. Merged current main while preserving its music, background chapter writing and Frostforged Golem (Frost affinity). Library 0.23.0, SEN 0.24.0.
 
 - **2026-10-06:** Calmed the equipped Familiar in both generation overlay modes: one complete supplied wave every 3.5 seconds, resting in its neutral pose between waves, with no hero bobbing. Softened the hero aura and drop shadows, and reused the regular Familiar underline as a still, decorative accent-colored base. It has no click, focus or action behavior. Arrival keeps the ready pose; regular Familiar playback, generation travel, requests and stored data are unchanged.
 

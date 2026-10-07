@@ -1,0 +1,54 @@
+.header-sound-control {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  /* The header is always readable: the note never fades while the page scrolls. */
+  --sap-reader-mixer-note-ghost-opacity: 1;
+  --sap-reader-mixer-note-fg: currentColor;
+}
+
+.header-sound-control-popover {
+  position: absolute;
+  inset-block-start: calc(100% + 6px);
+  inset-inline-end: 0;
+  z-index: 60;
+  display: grid;
+  gap: 8px;
+  width: min(232px, calc(100vw - 32px));
+  padding: 12px 14px;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: 12px;
+  background: rgb(12 12 12 / 0.96);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.55);
+  color: #dfd8cf;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 13px;
+}
+
+/* Bridges the gap to the note, so a mouse moving down to the slider never leaves the control. */
+.header-sound-control-popover::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: -8px;
+  height: 8px;
+}
+
+.header-sound-control-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.header-sound-control-popover input[type="range"] {
+  width: 100%;
+  min-height: 32px;
+  accent-color: #d6b46a;
+  touch-action: none;
+}
+
+.header-sound-control-hint {
+  margin: 0;
+  color: #a3a3a3;
+  font-size: 12px;
+}

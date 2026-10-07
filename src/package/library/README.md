@@ -1,6 +1,6 @@
 # `@seihouse/library`
 
-**0.22.0 (2026-10-07):** The Generation Overlay shows the host's equipped Familiar
+**0.23.0 (2026-10-07):** The Generation Overlay shows the host's equipped Familiar
 with matching elemental colors and stays in its neutral pose until touched or
 hovered. One supplied wave plays per interaction, then returns to neutral; holding
 hover does not loop. Keyboard activation also greets. Both full and compact modes
@@ -21,8 +21,16 @@ The canonical `./manifestations` names are `GenerationOverlay`, `StatusMessage`,
 `CompactGenerationOverlay`. Active callers and Workshop labels use them. Prior
 published names remain compatibility exports of the same components. See
 [the naming map](../../components/chapter-manifestation/README.md#canonical-names).
-SEN stays at 0.23.0, and the existing `>=0.23.0` peer range is preserved. The newer
+SEN stays at 0.24.0, and the existing `>=0.24.0` peer range is preserved. The newer
 music and chapter-writing behavior is unchanged.
+
+**0.22.0 (2026-10-07):** requires `@seihouse/sen` 0.24.0 and names `@seihouse/audio-player`
+`^4.0.0` as a peer. `./shell` adds `HeaderSoundControl` (the reader mixer's music note for
+`WorkspaceHeader`'s new `sound` slot: a tap mutes, hover or a held finger opens a Music
+volume slider) and the reader's Menu music setting (`useMenuMusic`, `readMenuMusic`,
+`writeMenuMusic`, `MENU_MUSIC_KEY`). `./profile`'s services port takes optional
+`soundPreferences`, which shows Settings › Sound and its Menu music switch.
+`StoryPages` takes optional `soundscapes`, the Reader's music before a story has a chapter.
 
 **0.21.0 (2026-10-06):** requires `@seihouse/sen` 0.23.0. `useLibraryStories`'s
 `generateNextChapter` finishes a chapter a closed browser interrupted before writing a

@@ -8,7 +8,7 @@
  * Story → Story View → Start Story under the veil → Chapter 1 with its Sound
  * Cue and its own soundtrack (the app's calm music on every page before it,
  * the chapter's fighting music and battlefield atmosphere in the Reader, the
- * app's music again after it) → Listen (three voices from the writer's speaker tags, the spoken
+ * app's music again after it, never carried into the Reader) → Listen (three voices from the writer's speaker tags, the spoken
  * sentence lit, Pause and Resume, the ghost note (mute, long-press to Audio),
  * Reader Settings → Audio (with Scene: the reader's own piece kept on the
  * device) and Narration with the speed
@@ -16,7 +16,7 @@
  * version under the veil, the Holdings fixer's one quiet call settling its
  * holdings, nothing of it on screen) → reload (no new request, nothing reads by itself) →
  * Back → Continue · Ch. 1 → Export story (the whole story as one file) → Back
- * → Home card → browser Back and Forward → a missing story goes Home.
+ * → Home card, its header's music note (tap mutes; hover or hold opens the Music volume) → browser Back and Forward → a missing story goes Home.
  *
  * Headless Chromium has no voices, so a stand-in for the browser's speech is
  * installed before the app loads; each line ends on its own after a moment,
@@ -529,6 +529,44 @@ async function walk(browser, viewport, sample) {
   check(address() === '/app/', `Back from Story View should go Home, got ${address()}`);
   await page.getByRole('button', { name: /^Open .+, 1 chapters/ }).first().waitFor();
   await shot('7-home-with-story');
+
+  // The music note in Home's header (Menu music is on for a new reader): a tap mutes all sound, and hovering it
+  // (a mouse) or holding it (a finger) opens the Music volume, which sets the music's level in the saved mix.
+  const savedMix = async () => JSON.parse(await page.evaluate(() => localStorage.getItem('novelexpanded-reader-audio-mixer')) ?? '{}');
+  const headerNote = page.locator('header .header-sound-control button').first();
+  await headerNote.waitFor();
+  check(await headerNote.getAttribute('aria-label') === 'Mute sound', `Home's header note should offer to mute, got ${await headerNote.getAttribute('aria-label')}.`);
+  const headerNoteBox = await headerNote.boundingBox();
+  check(headerNoteBox && headerNoteBox.width >= 44 && headerNoteBox.height >= 44 && headerNoteBox.x + headerNoteBox.width <= viewport.width,
+    `The header note should be a 44px target inside the screen, got ${JSON.stringify(headerNoteBox)}.`);
+  await shot('7b-home-sound');
+  // The mix is saved a moment after it changes.
+  const savedSoon = (test, what) => page.waitForFunction(test, null, { timeout: 5_000 }).catch(() => check(false, what));
+  await headerNote.click();
+  await savedSoon(() => JSON.parse(localStorage.getItem('novelexpanded-reader-audio-mixer') ?? '{}').masterEnabled === false, 'A tap on the header note should mute all sound and keep it in the saved mix.');
+  check(await headerNote.getAttribute('aria-label') === 'Unmute sound', `Muted, the header note should offer to unmute, got ${await headerNote.getAttribute('aria-label')}.`);
+  await headerNote.click();
+  await savedSoon(() => JSON.parse(localStorage.getItem('novelexpanded-reader-audio-mixer') ?? '{}').masterEnabled === true, 'A second tap should unmute.');
+  if (viewport.width >= 1024) {
+    await headerNote.hover();
+  } else {
+    await headerNote.dispatchEvent('pointerdown', { pointerType: 'touch', button: 0, isPrimary: true });
+    await page.waitForTimeout(650);
+    await headerNote.dispatchEvent('pointerup', { pointerType: 'touch', button: 0, isPrimary: true });
+  }
+  const volume = page.locator('.header-sound-control input[type="range"]').first();
+  await volume.waitFor();
+  check((await savedMix()).masterEnabled === true, 'Opening the volume should never mute.');
+  await volume.fill('60');
+  await savedSoon(() => Math.abs((JSON.parse(localStorage.getItem('novelexpanded-reader-audio-mixer') ?? '{}').layers?.soundscapes?.level ?? 0) - 0.6) < 0.01,
+    'The slider should set the music\'s level in the saved mix.');
+  const volumeBox = await page.locator('.header-sound-control-popover').boundingBox();
+  check(volumeBox && volumeBox.x >= 0 && volumeBox.x + volumeBox.width <= viewport.width, `The volume should fit the screen, got ${JSON.stringify(volumeBox)}.`);
+  await shot('7c-sound-slider');
+  await page.keyboard.press('Escape');
+  if (viewport.width >= 1024) await page.mouse.move(viewport.width / 2, viewport.height / 2);
+  else await page.locator('body').dispatchEvent('pointerdown', { pointerType: 'touch', button: 0 });
+  await page.locator('.header-sound-control input[type="range"]').waitFor({ state: 'detached' });
 
   // 6. The browser's Back and Forward walk the same pages.
   await page.goBack();

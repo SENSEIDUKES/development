@@ -154,6 +154,7 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## History
 
+- **2026-10-07** — Menu music is the reader's: a music note in Home's header mutes all sound with one tap, and hovering it (or holding it on a phone) opens a Music volume slider. It shows while the Menu music setting is on (on by default, kept on this device; its switch is in Profile Settings › Sound, in the Workshop until Profile comes to the app); off, the menus are silent. The Reader never opens to the menu music: it plays its own (each chapter's scene, or mystical pieces for a chapter written before scenes and while a chapter is written), and leaving it brings the menu music back.
 - **2026-10-06** — The generation veil uses the host's equipped Familiar and its
   elemental colors. Visitors use Quill, the catalogue default. A host can pass
   `equippedFamiliarId`; there is no new profile, equipment store or account page.

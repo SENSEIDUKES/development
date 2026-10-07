@@ -28,7 +28,7 @@ const MediaZoneAmbient: React.FC<{ reveal: MediaRevealState }> = ({ reveal }) =>
   return (
     <>
       <motion.div
-        className="absolute inset-[10%] rounded-full"
+        className="generation-media-core absolute inset-[10%] rounded-full"
         style={{
           background:
             'radial-gradient(circle at 50% 55%, rgba(245,185,66,0.13) 0%, rgba(181,126,30,0.07) 45%, transparent 72%)',
@@ -40,7 +40,7 @@ const MediaZoneAmbient: React.FC<{ reveal: MediaRevealState }> = ({ reveal }) =>
         <>
           <motion.div
             aria-hidden="true"
-            className="absolute inset-[16%] rounded-full"
+            className="generation-media-wisp absolute inset-[16%] rounded-full"
             style={{
               background:
                 'conic-gradient(from 0deg, rgba(245,185,66,0) 0%, rgba(245,185,66,0.22) 18%, rgba(245,185,66,0) 40%, rgba(255,233,176,0.16) 65%, rgba(245,185,66,0) 88%, rgba(245,185,66,0) 100%)',
@@ -52,7 +52,7 @@ const MediaZoneAmbient: React.FC<{ reveal: MediaRevealState }> = ({ reveal }) =>
           />
           <motion.div
             aria-hidden="true"
-            className="absolute inset-[24%] rounded-full"
+            className="generation-media-wisp absolute inset-[24%] rounded-full"
             style={{
               background:
                 'conic-gradient(from 180deg, rgba(255,233,176,0) 0%, rgba(255,233,176,0.14) 22%, rgba(255,233,176,0) 46%, rgba(245,185,66,0.12) 70%, rgba(255,233,176,0) 92%, rgba(255,233,176,0) 100%)',
@@ -81,7 +81,7 @@ export interface MediaManifestationZoneProps {
 }
 
 /**
- * Media manifestation zone — the Aura Veil's active zone for standalone
+ * Media manifestation zone — the Generation Overlay's active zone for standalone
  * media-generation operations (Cover Art, Image, Audio, Visual / Motion,
  * and future standalone asset types). Same ManifestationChamber and
  * layering contract as the narrative zone; what changes is the scene: the

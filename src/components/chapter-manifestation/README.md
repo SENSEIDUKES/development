@@ -1,4 +1,4 @@
-# Chapter Generation Manifestation
+# Generation Overlay
 
 Where `reference/` exists, it holds the old production version, kept as reference
 material for the remake; it is not edited or refreshed. New features do not get a
@@ -15,6 +15,14 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - **Implementation status:** under refinement
 
 ## Workshop history
+
+- **2026-10-07:** Replaced automatic greetings with one supplied wave on touch or mouse hover, then a neutral pose. Holding hover never loops; keyboard activation also greets. Both generation modes use this behavior. The softer aura and inactive underline stay; regular Familiar playback and generation behavior are unchanged. Merged current main while preserving its music, background chapter writing and Frostforged Golem (Frost affinity). Library 0.23.0, SEN 0.24.0.
+
+- **2026-10-06:** Calmed the equipped Familiar in both generation overlay modes: one complete supplied wave every 3.5 seconds, resting in its neutral pose between waves, with no hero bobbing. Softened the hero aura and drop shadows, and reused the regular Familiar underline as a still, decorative accent-colored base. It has no click, focus or action behavior. Arrival keeps the ready pose; regular Familiar playback, generation travel, requests and stored data are unchanged.
+
+- **2026-10-06:** Made Generation Overlay, Status Message, Progress Indicator, Ambient Effects, Progress Label and Compact Generation Overlay the canonical component names, with matching active files and public exports. Renamed the controller, view, styles, task adapter and current callers; Workshop labels use the same vocabulary. The original published exports remain compatible. Historical references, routes, saved data, generation timing, Familiar art and colors are unchanged.
+
+- **2026-10-06:** The Development veil follows the host's equipped Familiar, rendering its existing working animation and its review animation on successful arrival. Aura, particles, path and gate, chamber decoration, narrative scene, status pill and compact accents share that Familiar's element colors. The profile session projects its committed selection through `LoadingFamiliarProvider`; no second equipment store exists. NovelExpanded visitors use the catalogue default, Quill; a host supplies `equippedFamiliarId` when it has a profile. Workshop Effects can inspect every Familiar without changing equipment or ownership. Shared UI art, timing, generation, acceptance and saved stories are unchanged. Library 0.21.0.
 
 - **2026-10-06:** Connected the live generation journey to elapsed time and successful completion. Whole-response chapter and media calls advance the traveler without inventing a percentage; a supplied estimate or the previous successful run in this mounted session sets the pace. It stays short of the gate while pending, then has one second to arrive before the existing exit fade. A failed or cancelled run never claims arrival. The Library Reader signals success only for a saved chapter; prompts, requests, acceptance, story data and the shared UI artwork are unchanged. Library 0.19.1.
 
@@ -64,64 +72,75 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - **2026-07-30:** Pre-merge visual fixes. **Versa hero:** the `CelestialSigil`'s three spinning crimson rings (plus cardinal sparks and tick marks) were removed — they competed with the violet aura and their 240px reach overlapped the journey scrubber beneath her; the quiet static star field remains. **Destination integration:** every destination family now renders a shared `DestinationGround` beneath its marker — a soft bed in the journey accent echoing the path's glow bed, plus a lit terminus mote at the exact path end point — so the gate reads as the trail's final milestone instead of a pasted-on icon. The per-family red ground ellipses are gone; marker structures, arrival reactions, and the family registry contract are unchanged.
 - **2026-07-31:** Fixed the chamber being hard-clipped by its zone on mobile — the portal ring was visibly sliced by two horizontal seams above and below the scene. Root cause: the chamber sized itself from viewport units (`w-[min(88vw,52dvh)] sm:w-[min(72vw,56dvh)]`), guessing at its host zone instead of measuring it. On phones that square came out ~1.4× taller than the real active-manifestation zone, whose `overflow-hidden` then cut the chamber's top and bottom (narrative and media zones alike, and latently on desktop, where the sm rule also over-sized the square). The zone is now a size query container (`[container-type:size]` on Zone 3 in `LoadingVeilCard`) and the chamber sizes to 88% of the zone's smaller dimension (`w-[88cqmin]` on the `ManifestationChamber` root), so it always fits the actual box on any viewport. The zone's `overflow-hidden` stays as the safety net; the chamber's three-layer stacking contract, `data-celestial-foreground` marker, and all zone content are unchanged.
 
-## Folder layout
+## Canonical names
 
-```
-reference/AILoadingVeil.tsx    — untouched adapter, feeds a LoadingTaskCard into reference/LoadingSystem
-reference/LoadingSystem.tsx    — orchestrator: routes primary veil vs compact indicator
-reference/LoadingVeil.tsx      — full-screen immersive veil presentation
+These are the actual component and public export names. Use them in tasks,
+agent instructions and new code. All six are exported from
+`@seihouse/library/manifestations` and have matching files in `development/`.
 
-development/AILoadingVeil.tsx   — active Workshop adapter (formerly DevLoadingVeil)
-development/LoadingSystem.tsx   — active orchestrator (formerly DevLoadingSystem)
-development/LoadingVeilCard.tsx — active veil presentation: the Aura Veil shell (circular-chamber composition)
-development/ManifestationChamber.tsx — circular portal + three-layer stacking contract every active zone inherits
-development/NarrativeManifestationZone.tsx — narrative mode's active zone: chamber + system-selected omen scene
-development/MediaManifestationZone.tsx     — media mode's active zone: agnostic reveal mechanic + celestial scroll vessel + golden ambient
-development/ManifestationReveal.tsx        — agnostic sealed → unsealing → revealed mechanic (tap-to-unseal, accessibility, reduced motion, containment)
-development/ManifestationReveal.test.tsx   — focused tests for the agnostic reveal mechanic
-development/vessels/CelestialScrollVessel.tsx — the current visual vessel: celestial scroll artwork (sealed / unsealing / revealed)
-development/omen-scenes.tsx      — narrative omen scene registry + system selection (seeded per operation)
-development/SwordCultivatorClash.tsx — stage-only looping clash diorama (registered omen scene)
-development/CelestialChannel.tsx     — stage-only calm orbit diorama (registered omen scene)
-development/journey-scrubber/JourneyScrubber.tsx     — journey progress presentation: curved qi path, trail slot, milestones, gate, status layers
-development/journey-scrubber/CultivatorTraveler.tsx  — default traveler (running hooded cultivator)
-development/journey-scrubber/SwordRiderTraveler.tsx  — sword-rider traveler (gliding on a flying sword)
-development/journey-scrubber/SpiritBeastTraveler.tsx — spirit-beast traveler (trotting celestial fox)
-development/journey-scrubber/travelers.ts            — traveler registry + swap contract
-development/journey-scrubber/trails.tsx              — aura trail preset registry (qi-glow, starlight-trail, scroll-trail)
-development/journey-scrubber/destinations.tsx        — destination family registry (door, sect, cave) + per-traveler defaults
+| Name | Responsibility | File |
+| --- | --- | --- |
+| **Generation Overlay** (`GenerationOverlay`) | Adapts the host's generation signals into the full-screen or compact presentation. | `development/GenerationOverlay.tsx` |
+| **Status Message** (`StatusMessage`) | The changing line such as “Cooking the chapter”, with its existing transition. | `development/StatusMessage.tsx` |
+| **Progress Indicator** (`ProgressIndicator`) | The traveler, illuminated path and destination gate. | `development/ProgressIndicator.tsx` |
+| **Ambient Effects** (`AmbientEffects`) | The background particle field. | `development/AmbientEffects.tsx` |
+| **Progress Label** (`ProgressLabel`) | The operation/chapter name and a percentage when measured progress exists. | `development/ProgressLabel.tsx` |
+| **Compact Generation Overlay** (`CompactGenerationOverlay`) | The floating background indicator and its expandable details. | `development/CompactGenerationOverlay.tsx` |
 
-shared/taskCard.ts              — LoadingTaskCard format + buildAILoadingTaskCard, used by both versions
-shared/manifestation.ts         — Aura Veil manifestation modes: operation taxonomy, ManifestationSpec, per-mode language
-shared/manifestationReveal.ts   — agnostic Manifestation Reveal contract: state, content shape, aria-label / interactivity helpers
-shared/CompactIndicator.tsx     — floating corner widget, identical in both versions
-```
+Two supporting components keep the responsibilities separate:
+`GenerationOverlayController.tsx` owns display routing, the compact grace period
+and the elapsed-time journey; `GenerationOverlayView.tsx` composes the full-screen
+layout, equipped Familiar, progress indicator, activity scene, progress label and
+status message. `generationOverlay.css` supplies the Familiar accents.
 
-## What this is
+`ProgressIndicator` delegates to the existing `LibraryScrubber` in
+`@seihouse/library-ui`. `AmbientEffects` delegates to SEN's existing `AmbientEffect`.
+These named Library components add no DOM wrapper or duplicate implementation.
+The original UI geometry, particle engine and motion remain owned by those packages.
 
-A single reusable loading system for operation UI. Every operation normalizes its live information into one interchangeable **LoadingTaskCard** (`shared/taskCard.ts`): operation name, icon, status, description, progress, and phases — plus tracker detail, time estimate, and compact-mode copy.
+## Generation signals and behavior
 
-Two visual modes render the same card:
+`src/library/manifestations/generationOverlay.ts` defines the host signals.
+`buildGenerationOverlayTaskCard` in `src/library/manifestations/taskCard.ts`
+normalizes them into SEN's existing `LoadingTaskCard`; it creates no new task format.
+The controller renders either `GenerationOverlayView` or `CompactGenerationOverlay`.
+Compact tasks retain the 1200ms grace period. Navigation can minimize a generation
+operation; the full-screen overlay has no manual minimize button.
 
-- **Primary veil** — full-screen immersive presentation for blocking operations. Minimizes to compact mode through navigation (the caller flips `minimized`), never through a control on the veil itself.
-- **Compact indicator** (`shared/CompactIndicator.tsx`) — floating corner widget for minimized, short, or background operations.
+The Progress Indicator uses measured progress when supplied. With unknown progress,
+the controller advances it using elapsed time and the initial estimate or a previous
+successful run in the mounted session (45 seconds until one exists). This represents
+the wait, not a measured model percentage. It stays short of the gate until success,
+then retains the completed presentation for arrival before closing. Failure or
+cancellation never claims success. The Progress Label shows no invented percentage.
 
-`LoadingSystem` is the orchestrator and only entry point: it routes between the modes and keeps very short tasks hidden. Compact mode waits out a grace window (`compactGraceMs`, default 1200ms); tasks that finish inside it never render, because they complete too quickly to communicate useful information.
+The host supplies its equipped Familiar through `LoadingFamiliarProvider` or
+`LibraryPresentationProvider.loadingFamiliar`. Its supplied wave plays once when
+touched or hovered, then returns to its neutral pose. Holding hover never loops;
+keyboard activation also greets. Arrival holds the review pose. The aura is softened,
+and the accent-colored underline stays a decorative base, with no actions.
+Aura, Ambient Effects,
+Progress Indicator, chamber decoration, Progress Label and compact accents share
+its elemental colors. Equipment changes preserve the running journey. Visitors
+use Quill when the host supplies that default; the presentation grants no ownership
+and writes no equipment data.
 
-### Aura Veil manifestation modes
+## Activity scenes and media reveal
 
-The primary veil (the **Aura Veil**) is one shared manifestation shell hosting two manifestation modes, resolved per operation and carried on the task card as `manifestation` (taxonomy in `shared/manifestation.ts`):
+`NarrativeManifestationZone.tsx` hosts the system-selected narrative omen scene.
+`MediaManifestationZone.tsx` hosts SEN's agnostic Manifestation Reveal with the
+celestial scroll vessel supplied by Library UI. Media reveal state stays caller-owned:
+sealed → unsealing → revealed. A supplied finished asset implies revealed.
 
-- **Narrative manifestation** — one screen for every story and narrative-generation operation (the taxonomy still names World Blueprint `blueprint`, Initial Arc `initial-arc` and Chapter `chapter`; the HARNESS Reader's chapter write is the live caller). Renders `NarrativeManifestationZone`: the chamber hosting a **system-selected omen scene** from the `omen-scenes` registry. Scenes are never user-selected — an explicit `sceneId` on the spec wins, otherwise the pick is seeded deterministically by the operation's tracker title so the same operation always omens the same scene (`sword-cultivator-clash` is the fallback).
-- **Media manifestation** — one reveal for every standalone media-generation operation outside the Reader Chamber and Codex (the taxonomy names Cover Art `cover`, Image `image`, Audio `audio` and Visual / Motion `visual`, which change only the placeholder label; future asset types join `MEDIA_OPERATIONS` + `MediaKind`). Renders `MediaManifestationZone`: the same chamber hosting the **Manifestation Reveal** — a vessel-agnostic `sealed` → `unsealing` → `revealed` mechanic, currently hosted by the celestial scroll vessel (`development/vessels/CelestialScrollVessel`). The mechanic owns the state routing, tap-to-unseal, accessibility, reduced motion, and containment; the vessel owns the artwork for each state. The Aura Veil's media zone wires the media data through both, and the chamber's golden ambient atmosphere stays shared.
-
-**Shell invariants (identical across modes):** Versa presence (hero zone), aura and ambient atmosphere (emblem aura + cinematic backdrop), status and progress presentation (journey scrubber + layered status), and the shared responsive 100dvh layout. Only the active manifestation zone and the operation-specific language change: narrative operations rotate `NARRATIVE_STATUS_LINES` during a chapter, media operations rotate `MEDIA_STATUS_LINES` and track the reveal progression ("Manifestation sealed" → "Unsealing the manifestation" → "Manifestation Complete").
-
-**Explicit exclusions:** Reader Chamber manifestation, Codex manifestation, and Narration are **never** routed through these two modes (`AURA_VEIL_EXCLUDED_SYSTEMS`). Those systems already have — or will have — their own dedicated manifestation logic.
+Both use Library UI's existing chamber and isolated three-layer stacking contract.
+Ambient Effects respect `data-celestial-foreground`; retain that selector and its
+foreground calm zone. Supplied Familiar atlas cells and revealed media are not tinted.
+Reader Chamber, Reader Codex and narration keep their own manifestation logic and
+are never routed through this overlay.
 
 ### Manifestation Reveal contract
 
-`shared/manifestationReveal.ts` defines the agnostic reveal mechanic. The Aura Veil's media mode is one caller; the celestial scroll is the current (and only) vessel.
+SEN exports the agnostic reveal mechanic from `@seihouse/sen/manifestations`; `shared/manifestationReveal.ts` is the historical reference adapter. The Generation Overlay's media mode is one caller; the celestial scroll is the current (and only) vessel.
 
 - **State** — `ManifestationRevealState` = `'sealed' | 'unsealing' | 'revealed'`. Caller-owned. The reveal never advances itself; `onUnseal` is a tap notification, not a state mutation.
 - **Content** — `RevealedContent` = `{ src?, alt?, placeholderLabel? }`. The mechanic's view of the asset; the vessel decides how to render either a finished asset or a placeholder.
@@ -141,89 +160,39 @@ Every manifestation scene renders inside `ManifestationChamber`, which enforces:
 - **Layer 1 (z-10, scene):** the scene itself — characters, trails, rings, core effects — always visually clear.
 - **Layer 2 (z-20, above):** a small controlled amount of scene-specific foreground particles, capped by `CHAMBER_FOREGROUND_MOTE_LIMIT` (6). `ChamberForegroundMotes` is the standard set.
 
-The chamber is `isolate`d, so no effect — inside or outside — can slip between layers. The chamber root carries `data-celestial-foreground`, so the shared `ParticleEffect` dims its particles around whatever scene is inside. New scenes inherit all of this by being passed as `scene`; do not add z-index or particle workarounds inside scene components.
+The chamber is `isolate`d, so no effect — inside or outside — can slip between layers. The chamber root carries `data-celestial-foreground`, so the `AmbientEffects` dims its particles around whatever scene is inside. New scenes inherit all of this by being passed as `scene`; do not add z-index or particle workarounds inside scene components.
 
-### Journey scrubber contract
+### Progress Indicator contract
 
-Progress in the Development veil renders through the canonical `LibraryScrubber`
-from `@seihouse/library-ui`; the Library owns its generation lifecycle:
+The `ProgressIndicator` component renders through `LibraryScrubber`
+from `@seihouse/library-ui`; Library owns its generation lifecycle:
 
-- **Progress:** one normalized 0–1 position. `LoadingSystem` follows known task progress; with unknown progress it advances from elapsed time, using the supplied initial estimate or the previous successful duration for that operation in this mounted session (45 seconds until either is available). This is a visual journey, not a generated-work percentage: unknown progress keeps both the pill and accessible description free of a made-up number. It never reaches the destination while the operation is pending.
-- **Completion:** the host sets `completed` only after success, or supplies a finished measured task / revealed media asset. When `active` ends, the primary veil retains the result for one second so the scrubber's 800ms arrival finishes before the existing fade. Failures and cancellations close without arrival. A new run resets its position; minimization does not restart the clock. No timer changes a request or writes story data.
-- **Layers:** status (`title` / `state` / `detail` — optional; omit for a path-only scrubber, as the Aura Veil now does), path, milestone markers, destination gate, and the traveler are separable — each can change without touching the others.
-- **Travelers:** swappable through `travelerId` and the registry in `journey-scrubber/travelers.ts`. A traveler honors `TravelerRenderProps` (accents, `moving`, `arrived`, glow filter) and a local-space contract (feet/anchor at (0,0), ~30–40px tall, facing right). Registered options: `cultivator` (default and fallback — universal runner), `sword-rider` (glides on a flying sword, qi scarf flutter; no leg cycle — cultivation power), `spirit-beast` (trotting celestial fox, bushy tail, happy hop on arrival — mystical companion). Movement loops stay decoupled from position, and reduced-motion users get a static traveler.
-- **Aura trails:** the milestone-marker rendering is a preset system in `journey-scrubber/trails.tsx`, selected with the `trailStyle` prop. Presets are picked by stable id — never free-form config. Registered presets: `qi-glow` (default — the classic glowing dots), `starlight-trail` (markers become twinkling four-point stars), `scroll-trail` (markers become tiny rolled scrolls). A preset honors `TrailMarkerProps` and renders one marker (lit + unlit states) in local space centered on (0,0); marker positions along the shared curve and the lit state (lit once the traveler passes) stay scrubber-owned. The lit path behind the traveler is a single shared rendering (the qi-glow trail), identical across presets. Path, gate, status text, and the indeterminate drift stay shared. Under reduced motion, star twinkle and scroll pulse become static and calm.
-- **Destinations:** the endpoint marker is a family registry in `journey-scrubber/destinations.tsx`, selected with the `destinationId` prop. Registered families: `door` (Door / Gate — portals, thresholds, rifts; the fallback), `sect` (Sect / Temple — arches, pavilions; for cultivators and humanoids), `cave` (Cave — dens and caverns; for beasts and creatures). All share one local-space contract (ground at (0,0), ~30px tall) and identical geometry — only the marker art and arrival reaction differ. When `destinationId` is omitted, the selected traveler's recommendation applies (`DEFAULT_DESTINATION_BY_TRAVELER`: cultivator → sect, sword-rider → door, spirit-beast → cave); selection is otherwise independent, and future relic packages can re-theme a family without touching scrubber logic. Unknown ids fall back to `door`. The Workshop simulator exposes all three cosmetic slots as Development-only controls; production callers omit the props and get the defaults.
+- **Progress:** one normalized 0–1 position. `GenerationOverlayController` follows known task progress; with unknown progress it advances from elapsed time, using the supplied initial estimate or the previous successful duration for that operation in this mounted session (45 seconds until either is available). This is a visual journey, not a generated-work percentage: unknown progress keeps both the pill and accessible description free of a made-up number. It never reaches the destination while the operation is pending.
+- **Completion:** the host sets `completed` only after success, or supplies a finished measured task / revealed media asset. When `active` ends, the full-screen overlay retains the result for one second so the scrubber's 800ms arrival finishes before the existing fade. Failures and cancellations close without arrival. A new run resets its position; minimization does not restart the clock. No timer changes a request or writes story data.
+- **Layers:** status (`title` / `state` / `detail` — optional; omit for a path-only scrubber, as the Generation Overlay now does), path, milestone markers, destination gate, and the traveler are separable — each can change without touching the others.
+- **Travelers:** swappable through `travelerId` and the registry in Library UI's traveler registry. A traveler honors `TravelerRenderProps` (accents, `moving`, `arrived`, glow filter) and a local-space contract (feet/anchor at (0,0), ~30–40px tall, facing right). Registered options: `cultivator` (default and fallback — universal runner), `sword-rider` (glides on a flying sword, qi scarf flutter; no leg cycle — cultivation power), `spirit-beast` (trotting celestial fox, bushy tail, happy hop on arrival — mystical companion). Movement loops stay decoupled from position, and reduced-motion users get a static traveler.
+- **Aura trails:** the milestone-marker rendering is a preset system in Library UI's trail registry, selected with the `trailStyle` prop. Presets are picked by stable id — never free-form config. Registered presets: `qi-glow` (default — the classic glowing dots), `starlight-trail` (markers become twinkling four-point stars), `scroll-trail` (markers become tiny rolled scrolls). A preset honors `TrailMarkerProps` and renders one marker (lit + unlit states) in local space centered on (0,0); marker positions along the shared curve and the lit state (lit once the traveler passes) stay scrubber-owned. The lit path behind the traveler is a single shared rendering (the qi-glow trail), identical across presets. Path, gate, status text, and the indeterminate drift stay shared. Under reduced motion, star twinkle and scroll pulse become static and calm.
+- **Destinations:** the endpoint marker is a family registry in Library UI's destination registry, selected with the `destinationId` prop. Registered families: `door` (Door / Gate — portals, thresholds, rifts; the fallback), `sect` (Sect / Temple — arches, pavilions; for cultivators and humanoids), `cave` (Cave — dens and caverns; for beasts and creatures). All share one local-space contract (ground at (0,0), ~30px tall) and identical geometry — only the marker art and arrival reaction differ. When `destinationId` is omitted, the selected traveler's recommendation applies (`DEFAULT_DESTINATION_BY_TRAVELER`: cultivator → sect, sword-rider → door, spirit-beast → cave); selection is otherwise independent, and future relic packages can re-theme a family without touching scrubber logic. Unknown ids fall back to `door`. The Workshop simulator exposes all three cosmetic slots as Development-only controls; production callers omit the props and get the defaults.
 - **Motion:** the traveler loop is decoupled from position; position eases from progress. Reduced-motion users get a static traveler and calm, non-looping glows.
 
-## What changed in Development vs Reference
+## Workshop and compatibility
 
-- Compact card: no atmospheric phrase, no phase marker pill.
-- Consolidated status wording: the scrubber is path-only (no "Chapter · Manifesting N/20 · ~Ns" block); a persistent "Chapter N | X%" line sits above Versa's rotating quote at the bottom of the chamber.
-- Versa's floating emblem inside a deepened violet aura (saturated nebula + bright core + counter-rotating wisps) and a `ParticleEffect` backdrop tinted to the active agent.
-- The whole veil is a locked 100dvh circular-chamber composition: Versa hero on top, a path-only journey scrubber (curved qi path with a swappable traveler, preset-driven lit trail, and destination gate) instead of the thin progress bar, an active manifestation zone switched by the operation's manifestation mode (narrative omen scene vs media scroll reveal, both inside `ManifestationChamber`'s enforced layering contract), and the consolidated status at the bottom — "Chapter N | X%" above Versa's rotating evolving line with mode-specific language. No card, no carousel, no scene-selection UI, no manual minimize control.
-- Aura Veil modes: narrative operations (blueprint, initial-arc, chapter) render `NarrativeManifestationZone` with a system-selected omen scene; media operations (cover, image, audio, visual) render `MediaManifestationZone` with the Manifestation Reveal mechanic hosted by the celestial scroll vessel (sealed → unsealing → revealed, optional framed asset). Reader Chamber / Codex / Narration are excluded by contract.
-- Workshop structure (2026-08-15): the page has a top-level "Workshop area" segment switcher with two areas — **Aura Veil** (the existing full-shell simulation, with Operation / Manifestation Reveal (dev chain) / Journey Scrubber / Simulation / Compact Indicators control groups) and **Manifestation Reveal** (a focused standalone preview for the agnostic mechanic on its own, with manual state pills, Play sequence, Mock asset / Placeholder content, Tap to unseal on/off, vessel kind, and Compact / Full size containment). The Aura Veil's external media API (`mediaReveal` / `mediaAsset` / `onMediaUnseal`) is unchanged.
-- Scout's presentation stays a compact card without the animation zone.
+The existing preview route remains `?preview=chapter-generation-manifestation`,
+under **Systems → Generation Overlay**. Its page areas are **Generation Overlay**
+and the standalone **Manifestation Reveal**. Effects includes the preview-only
+Familiar selector and Progress Indicator cosmetics. States runs or stops the
+simulation; Advanced opens the Compact Generation Overlay or Scout retrieval.
+No preview choice changes stored equipment, ownership or generation requests.
 
-## What was mocked
+Historical `reference/` files and their reference-only shared adapters are untouched.
+The package retains the published names `AILoadingVeil`, `LoadingSystem`,
+`LoadingVeilCard`, `CompactIndicator`, `buildAILoadingTaskCard` and their types as
+compatibility exports of the current implementations. Active callers use the
+canonical names. Existing `isVeilMinimized` / `setIsVeilMinimized` host props remain
+compatible; routes, storage keys, saved stories and provider requests are unchanged.
+The original filenames below remain historical records, not current integration advice.
 
-The Workshop preview simulator supplies local generation state. Live Library stories
-supply the real writing lifecycle and a successful saved-chapter signal. Journey timing
-is presentation-only; it does not create progress events, write story data or change generation.
-
-### Preview states
-
-The workshop has two top-level areas, switched at the top of the page:
-
-- **Aura Veil** (the existing full-shell simulation):
-  - Primary veil — one Manifestation choice between the two screens, Narrative (a chapter being written) and Media reveal (cover art), switched between Reference and Development via the workspace control.
-  - Media reveal — Development-only controls (visible only when Media reveal is selected) for the reveal progression (sealed / unsealing / revealed) and revealed content (mock asset vs placeholder vista).
-  - Journey scrubber — Development-only controls for traveler, aura trail, and destination.
-  - Simulation — open the Aura Veil, open a compact indicator, or stop the running simulation.
-  - Compact indicators — Versa background and Scout retrieval compact tasks.
-- **Manifestation Reveal** (a focused standalone preview for the agnostic mechanic):
-  - State — manual pills for sealed / unsealing / revealed.
-  - Sequence — Play the full sequence, or Reset to the initial state.
-  - Revealed content — switch between a supplied mock asset and the vessel's empty placeholder.
-  - Tap to unseal — on / off, controls whether the sealed scene is interactive.
-  - Vessel kind — Cover Art / Image / Audio / Visual / Motion, used to label the placeholder.
-  - Containment — Compact (small previews) vs Full size (full zone fill).
-
-### Production dependencies intentionally excluded
-
-No stores, auth, Firebase, or generation callbacks. Operation logic stays in the caller; the system only renders a task card.
-
-### Implementation inventory
-
-The packages and NovelExpanded app built here are the destination. Keep Workshop
-controls, fixtures and adapters outside reusable package entries; another repository
-changes only when the owner asks. Historical references stay untouched.
-
-The existing local files named by this inventory are:
-
-- `shared/taskCard.ts`
-- `shared/manifestation.ts`
-- `shared/manifestationReveal.ts`
-- `shared/CompactIndicator.tsx`
-- `development/LoadingVeilCard.tsx`
-- `development/LoadingSystem.tsx`
-- `development/AILoadingVeil.tsx`
-- `development/NarrativeManifestationZone.tsx`
-- `development/MediaManifestationZone.tsx`
-- `development/omen-scenes.tsx`
-- `src/lib/agents.ts`
-
-### Host and compatibility notes
-
-- Requires `lucide-react` and `motion/react`.
-- Callers keep their own operation state; they only build a `LoadingTaskCard` (or reuse `buildAILoadingTaskCard`) and pass `active`, `minimized`, and `onMinimizedChange`. Minimizing the veil is navigation-driven: flip `minimized` when the user leaves the generation page; the veil itself renders no minimize control.
-- Route short/background tasks with `preferredMode: 'compact'` on the card.
-- The veil assumes a `100dvh` viewport container and `overflow: hidden` at the root; host pages must not add their own vertical scroll inside the manifestation experience.
-- Manifestation scenes go through `ManifestationChamber`'s `scene`/`ambient`/`foreground` slots; respect the Layer 2 particle cap instead of layering inside scenes. The chamber's `data-celestial-foreground` marker only works while the shared `ParticleEffect` keeps its foreground-zone behavior — do not strip that selector in host integrations.
-- The veil's active zone resolves from the task card's `manifestation` spec — keep `buildManifestationSpec` (or the caller's own equivalent) populating it. Narrative callers may name an `omenSceneId` registered in `omen-scenes.tsx` or omit it for the system-selected pick; media callers pass `mediaReveal` progression and the finished `mediaAsset` when the operation completes (a supplied asset implies `revealed`). Do not route Reader Chamber, Codex, or Narration operations into these cards — they own dedicated manifestation logic.
-- The Manifestation Reveal mechanic (`development/ManifestationReveal.tsx`) and the shared contract (`shared/manifestationReveal.ts`) are vessel-agnostic — in host integrations, keep the vessel out of the mechanic. `MediaManifestationZone` is the only current consumer; it adapts the media data into the vessel's `asset` / `mediaKind` props and hands the result to the mechanic. To add a new vessel, create a component that renders the artwork for each `ManifestationRevealState` and pass it as the `vessel` prop — the mechanic stays unchanged.
-- The journey scrubber expects a normalized 0–1 `progress` prop; keep the caller-side normalization (`task.progress / 100`) in host integrations. Pass `travelerId` / `trailStyle` / `destinationId` only with ids registered in `travelers.ts` / `trails.tsx` / `destinations.tsx` — unknown ids fall back to `cultivator` + `qi-glow` + `door`. A new traveler is one component honoring `TravelerRenderProps` plus one registry entry; a new trail preset is one component honoring `TrailMarkerProps` (one milestone marker, lit + unlit states, local space centered on (0,0)) plus one registry entry; a new destination family is one component honoring `DestinationRenderProps` (ground at (0,0), shared geometry) plus one registry entry. Reduced-motion fallbacks are each component's own responsibility.
+## Earlier ownership records
 
 ### 2026-09-06 — Library UI ownership migration
 

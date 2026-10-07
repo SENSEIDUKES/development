@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { ProductFamiliarSession, ProductFamiliarSurface, useProductFamiliarPreview } from './ProductFamiliarPreview';
 import { WorkspaceHeader } from '@seihouse/library/shell';
+import { GenerationOverlay } from '@seihouse/library/manifestations';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let container: HTMLDivElement;
@@ -55,6 +56,25 @@ it('resolves the profile selection through the catalogue instead of hard-coding 
   render();
   click('Equip Phoenix');
   expect(document.querySelector('.familiar-companion [role="img"]')?.getAttribute('aria-label')).toContain('Phoenix');
+});
+
+it('projects committed profile equipment into the generation veil and uses Quill for visitors', () => {
+  act(() => root.render(<ProductFamiliarSession>
+    <ProfileEvents />
+    <GenerationOverlay agent={{ id: 'versa', name: 'VERSA', logoUrl: '/versa.png', colorClass: 'text-human' }}
+      isGenerating generationPhase="chapter" generatingChapterNum={1} generationProgressMessage={null}
+      estimatedSecondsRemaining={null} activeAgentId="versa" streamingBlocksCount={0}
+      isVeilMinimized={false} setIsVeilMinimized={() => undefined} progress={null} />
+  </ProductFamiliarSession>));
+  const veil = () => container.querySelector<HTMLElement>('[data-testid="generation-overlay"]')!;
+  expect(veil().dataset.familiarId).toBe('quill');
+  click('Equip Phoenix');
+  expect(veil().dataset.familiarId).toBe('phoenix');
+  expect(veil().style.getPropertyValue('--veil-accent')).toBe('#ff6a13');
+  click('Switch account');
+  expect(veil().dataset.familiarId).toBe('celestial-guardian');
+  click('Sign out');
+  expect(veil().dataset.familiarId).toBe('quill');
 });
 
 it('opens header actions before explicitly expanding a minimized pet and preserves its profile size', async () => {

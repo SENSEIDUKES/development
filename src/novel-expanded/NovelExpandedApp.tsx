@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ReaderMixerProvider, type ReaderMixer } from '@seihouse/audio-player';
-import { LibraryPresentationProvider } from '@seihouse/library/presentation';
+import { LibraryPresentationProvider, loadingFamiliarPresentation } from '@seihouse/library/presentation';
 import { HeaderSoundControl, useMenuMusic } from '@seihouse/library/shell';
 import { StoryPages, storyHomeWorlds, useLibraryStories } from '@seihouse/library/stories';
 import { findStory, nextChapterWaitsOnReader, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
@@ -11,6 +11,7 @@ import { LIBRARY_BASE_MEDIA } from '../host/media/libraryCatalog';
 import { MANIFEST_BACKDROPS } from '../host/reader/manifestBackdrops';
 import { startHarnessStoryFromSeed } from '../host/story-seed/startHarnessStory';
 import { AGENTS } from '../lib/agents';
+import { defaultFamiliar, familiarCatalogueEntry } from '../host/familiar/catalogue';
 import { AccessTokenSheet, type AccessTokenRequest } from './AccessTokenSheet';
 import { writerWithAccessToken, type AskForAccessToken } from './accessToken';
 import { APP_SOUNDSCAPES, useAppMusic } from './appMusic';
@@ -32,11 +33,19 @@ import { startedSeedIds } from './storyCreationRuntime';
  * set its volume), and the Reader's own music and each chapter's scene in
  * the Reader.
  */
-export function NovelExpandedApp({ services, readerMixer }: { services: NovelExpandedServices; readerMixer: ReaderMixer }) {
+export function NovelExpandedApp({ services, readerMixer, equippedFamiliarId }: {
+  services: NovelExpandedServices;
+  readerMixer: ReaderMixer;
+  /** The host profile's equipped choice. Visitors use the catalogue's default Familiar. */
+  equippedFamiliarId?: string;
+}) {
+  const loadingFamiliar = useMemo(() => loadingFamiliarPresentation(
+    (familiarCatalogueEntry(equippedFamiliarId) ?? defaultFamiliar).definition,
+  ), [equippedFamiliarId]);
   const [menuMusic] = useMenuMusic(services.readerPreferences);
   useAppMusic(readerMixer, menuMusic);
   return <ReaderMixerProvider mixer={readerMixer}>
-    <LibraryPresentationProvider assets={LIBRARY_ASSETS} backdrops={MANIFEST_BACKDROPS}>
+    <LibraryPresentationProvider assets={LIBRARY_ASSETS} backdrops={MANIFEST_BACKDROPS} loadingFamiliar={loadingFamiliar}>
       <NovelExpandedPages services={services} />
     </LibraryPresentationProvider>
   </ReaderMixerProvider>;

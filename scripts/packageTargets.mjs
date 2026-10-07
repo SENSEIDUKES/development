@@ -91,7 +91,7 @@ export const PACKAGE_TARGETS = {
       '@seihouse/library/story-seed': ['CreationModal', 'StoryCreationProvider', 'harnessStoryStartFromSeed'],
       '@seihouse/library/generation': ['HarnessGenerationWorkspace'],
       '@seihouse/library/media': ['createLibraryMediaPort', 'validateMediaPack'],
-      '@seihouse/library/manifestations': ['AILoadingVeil'],
+      '@seihouse/library/manifestations': ['GenerationOverlay', 'CompactGenerationOverlay', 'StatusMessage', 'ProgressIndicator', 'AmbientEffects', 'ProgressLabel', 'AILoadingVeil'],
       '@seihouse/library/stories': ['useLibraryStories', 'StoryPages', 'harnessStoryDisplay', 'storyHomeWorlds', 'LIBRARY_READ_ALOUD_VOICES'],
     },
     smokeTypes: `

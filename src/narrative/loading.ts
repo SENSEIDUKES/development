@@ -45,7 +45,7 @@ export interface LoadingTaskCard {
   preferredMode: 'primary' | 'compact';
 
   /**
-   * Aura Veil manifestation spec — which manifestation mode (narrative /
+   * Generation Overlay manifestation spec — which manifestation mode (narrative /
    * media) and active zone the primary veil renders, resolved from the
    * operation via the taxonomy in shared/manifestation.ts. Reader Chamber,
    * Codex, and Narration manifestations never appear here; they own their

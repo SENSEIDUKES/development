@@ -9,7 +9,7 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - Source: supplied `Familiars/Packages/` collection (not a Git repository), containing twelve validated Familiar packages.
 - Preview: Workshop **Customization → Familiar** and `?preview=familiar`.
 - First Workshop record: 2026-09-20.
-- Last recorded Workshop update: 2026-10-06.
+- Last recorded Workshop update: 2026-10-07.
 - Historical source inspection: 2026-10-06.
 - Lifecycle: supplied source packages retained; the reusable renderer, host catalogue, and Energy interaction remain in Development.
 - Owner: Library. This first-party companion is not a SEN narrative capability.
@@ -75,6 +75,19 @@ row mirrors the right-running row at the same scale, with matching per-frame bou
 intentionally not runtime dependencies.
 
 ## Modular integration
+
+- `GenerationOverlay` reads the equipped definition through Library's
+  `LoadingFamiliarProvider` (or `LibraryPresentationProvider.loadingFamiliar`).
+  It reuses `FamiliarSprite`: one wave on touch or mouse hover, then a neutral pose.
+  Holding hover never loops; keyboard activation also greets. Arrival holds the
+  review pose. The overlay underline uses the regular shadow styling with its
+  elemental colors and no interaction. `playOnce` is an opt-in request counter;
+  regular playback is unchanged. Element
+  affinities and form/veil colors now share `src/library/familiars/appearance.ts`;
+  the account's mastered name effect does not change the Familiar's own palette.
+  The provider is a projection of the existing host profile, with no storage or
+  selection writes. NovelExpanded visitors use Quill until the host supplies a
+  profile choice; the app still has no account/equipment page.
 
 - `shared/familiar.ts` describes a host-provided atlas and animation clips.
 - `development/FamiliarSprite.tsx` crops/scales the sheet and owns only playback.
@@ -269,6 +282,22 @@ desktop hover, 320/390px viewport centering, desktop centering, tray alignment a
 Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
+
+- 2026-10-07: Generation greetings now play once on touch or hover, then rest
+  in the neutral pose. Holding hover never repeats; keyboard activation also
+  greets. The sprite accepts an opt-in `playOnce` request counter, replacing
+  the unreleased automatic cadence. Visibility, pause and reduced motion
+  suppress requests without replaying them later. Default playback is unchanged.
+
+- 2026-10-06: Added opt-in one-shot sprite cadence for generation: a complete
+  wave every 3.5 seconds, neutral between waves, pausing for hidden documents,
+  offscreen sprites and reduced motion. The overlay uses a quieter aura and a
+  static accent-colored underline. Default Familiar playback is unchanged.
+
+- 2026-10-06: Generation veils use the equipped Familiar's supplied working and
+  review clips. The existing profile session supplies the choice; elemental
+  affinity and color definitions are shared with Familiar forms, without
+  changing ownership, training, acquisition or name-effect choices.
 
 - 2026-10-06: Added the supplied Frostforged Golem v2 package as the twelfth Familiar.
   Preserved its atlas, neutral crop, animation timing and nine previews with source hashes,

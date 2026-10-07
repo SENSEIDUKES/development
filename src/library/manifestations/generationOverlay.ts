@@ -1,13 +1,9 @@
 /**
- * The shared loading-veil contract.
- *
- * The veil's props are the production contract both the locked `reference/`
- * replica and the Development veil implement, so they live in `shared/` where
- * the published entry can reach them. A published surface must never import
- * from a `reference/` replica: those are Workshop-only snapshots, verified out
- * of the package by `scripts/checkPackageBoundaries.mjs`.
+ * Generation overlay signals supplied by the host. Existing minimize prop
+ * names remain compatible with published callers. Historical reference code
+ * stays outside the package; this contract has no reference imports.
  */
-export interface AILoadingVeilProps {
+export interface GenerationOverlaySignals {
   isGenerating: boolean;
   /** Successful result received and saved; false for failure or cancellation. */
   completed?: boolean;

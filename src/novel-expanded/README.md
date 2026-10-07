@@ -24,7 +24,7 @@ rewrites and every page survives a reload.
 | Home | `/app/` | The reader's stories, newest first, and Carve New Destiny |
 | Create | `/app/?page=create` | The Library's Story Seed journey: the seed, its World Blueprint, Manifest Story |
 | Story View | `/app/?story=<id>` | The story's World Info page: Start Story, Start Reading, Continue, and Export story (the whole story as one file, for sharing a test) |
-| Reader | `/app/?story=<id>&read=1` | The reading-only Reader, with the Aura Veil while a chapter is written |
+| Reader | `/app/?story=<id>&read=1` | The reading-only Reader, with the Generation Overlay while a chapter is written |
 
 - Moving inside the app adds a browser history entry, so Back and Forward walk the same pages.
 - Manifest Story replaces Create with the new story, so Back from it goes Home.
@@ -39,7 +39,12 @@ The app writes chapters exactly as the Workshop's HARNESS page does:
 - the Library's sound words and Sound Cues (`LIBRARY_BASE_MEDIA`), played through the reader mixer below;
 - chapter tags and recaps recorded in the chapter write, with no separate memory call;
 - the Model Router's chapter model (`useModelPreference('chapters')`), the one choice shared with the Workshop;
-- VERSA on the Aura Veil.
+- the equipped Familiar on the Generation Overlay, with its animation and elemental accents.
+
+`NovelExpandedApp.equippedFamiliarId` accepts the host profile's current choice
+and updates the veil when it changes. There are no account or equipment screens
+in this app yet, so visitors use the existing catalogue default, Quill. This is
+presentation only: it grants no ownership and writes no profile or equipment data.
 
 The app opens only once its stories are open and the skills are installed. If
 either fails, it says so plainly, with Retry.
@@ -150,6 +155,10 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 ## History
 
 - **2026-10-07** — Menu music is the reader's: a music note in Home's header mutes all sound with one tap, and hovering it (or holding it on a phone) opens a Music volume slider. It shows while the Menu music setting is on (on by default, kept on this device; its switch is in Profile Settings › Sound, in the Workshop until Profile comes to the app); off, the menus are silent. The Reader never opens to the menu music: it plays its own (each chapter's scene, or mystical pieces for a chapter written before scenes and while a chapter is written), and leaving it brings the menu music back.
+- **2026-10-06** — The generation veil uses the host's equipped Familiar and its
+  elemental colors. Visitors use Quill, the catalogue default. A host can pass
+  `equippedFamiliarId`; there is no new profile, equipment store or account page.
+
 - **2026-10-06** — Phase 4. The app plays its own music from SEN Soundscapes, Volume 1 on every page and while a chapter is written, and in the Reader each chapter's own music and atmosphere, chosen by its writer (Reader Settings → Audio → Scene lets the reader keep their own instead). The atmosphere and Sound Cues keep playing under the Reader's own pages. Chapter 1 begins the moment the story is made, while the reader looks over World Info (a Fate Survival story waits for its first direction); a chapter keeps writing when the reader leaves the Reader, and the reader's next Write finishes one a closed browser cut off. Models that offer `low` reasoning get it by default.
 - **2026-10-06** — Rewrite this chapter: at the end of the newest chapter, until the next one is written, the Reader offers one quiet link to have it written again, with an optional note; the writing screen covers it, and a failed rewrite keeps the chapter and the note. After each chapter is saved, SEN's Holdings fixer quietly settles the chapter's small holdings problems and keeps a record on the chapter (in Export story). It sends the reader's access token when there is one, and never asks for it: a refused check is only recorded.
 - **2026-10-05** — The Reader's sound is SEIHouse's audio player: the reader's atmosphere under the chapter, Sound Cues over it at their Energy (they can overlap now), Listen dipping it, a sleep timer, a note above the Listen bar that mutes it (long-press opens Audio), and Reader Settings → Audio before Narration. The mix is kept on this device. The older single-channel player is gone from the app.

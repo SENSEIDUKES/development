@@ -1,5 +1,29 @@
 # `@seihouse/library`
 
+**0.23.0 (2026-10-07):** The Generation Overlay shows the host's equipped Familiar
+with matching elemental colors and stays in its neutral pose until touched or
+hovered. One supplied wave plays per interaction, then returns to neutral; holding
+hover does not loop. Keyboard activation also greets. Both full and compact modes
+use this behavior; successful arrival holds the review pose. The aura is softer,
+the hero no longer bobs, and its underline stays decorative and inactive. Reduced
+motion, visibility and pause stop playback. `FamiliarSprite.playOnce` is an optional
+request counter; omitted, existing continuous playback is unchanged.
+
+Pass `loadingFamiliar` to `LibraryPresentationProvider`, built with
+`loadingFamiliarPresentation`; `./manifestations` also exports
+`LoadingFamiliarProvider` for a host's existing profile session. Selection remains
+host-owned, with no equipment store or write. `./familiar` exports shared
+`familiarElement`, `FAMILIAR_ELEMENT_AFFINITY` and `familiarElementColors`; form
+glows keep their colors, including the new Frostforged Golem's Frost affinity.
+
+The canonical `./manifestations` names are `GenerationOverlay`, `StatusMessage`,
+`ProgressIndicator`, `AmbientEffects`, `ProgressLabel` and
+`CompactGenerationOverlay`. Active callers and Workshop labels use them. Prior
+published names remain compatibility exports of the same components. See
+[the naming map](../../components/chapter-manifestation/README.md#canonical-names).
+SEN stays at 0.24.0, and the existing `>=0.24.0` peer range is preserved. The newer
+music and chapter-writing behavior is unchanged.
+
 **0.22.0 (2026-10-07):** requires `@seihouse/sen` 0.24.0 and names `@seihouse/audio-player`
 `^4.0.0` as a peer. `./shell` adds `HeaderSoundControl` (the reader mixer's music note for
 `WorkspaceHeader`'s new `sound` slot: a tap mutes, hover or a held finger opens a Music

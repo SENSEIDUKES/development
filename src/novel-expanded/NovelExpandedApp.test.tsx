@@ -108,9 +108,9 @@ const buttonByText = (text: string, scope: ParentNode = document) => [...scope.q
 const worldInfo = () => document.querySelector<HTMLElement>('[data-testid="harness-world-info"]');
 const chaptersAction = () => worldInfo()?.querySelector<HTMLElement>('[data-world-info-chapters="action"]');
 const address = () => `${window.location.pathname}${window.location.search}`;
-const render = async (services: NovelExpandedServices, url = '/app/', readerMixer = createHostReaderMixer(services.readerPreferences)) => {
+const render = async (services: NovelExpandedServices, url = '/app/', readerMixer = createHostReaderMixer(services.readerPreferences), equippedFamiliarId?: string) => {
   window.history.replaceState(null, '', url);
-  await act(async () => root.render(<NovelExpandedApp services={services} readerMixer={readerMixer} />));
+  await act(async () => root.render(<NovelExpandedApp services={services} readerMixer={readerMixer} equippedFamiliarId={equippedFamiliarId} />));
   await flush(20);
   return readerMixer;
 };
@@ -146,23 +146,28 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
     expect(container.textContent).not.toContain('Curated worlds');
   });
 
-  it('opens a story from Home, starts it under the veil, and walks back with the app and the browser', async () => {
+  it.each([undefined, 'phoenix'])('opens a story under the equipped Familiar (%s) and walks back with the app and browser', async equippedFamiliarId => {
     const story = scriptedWriter();
     const services = appServices(story.writer);
     const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
     // The Model Router's chapter model is the one choice shared with the Workshop.
     writeModelPreference('chapters', 'remembered');
-    await render(services);
+    await render(services, '/app/', undefined, equippedFamiliarId);
 
     await click(container.querySelector(`#home-world-${created.id} button[aria-label^="Open ${created.title}"]`), 'the Home card');
     expect(address()).toBe(`/app/?story=${created.id}`);
     expect(worldInfo()!.querySelector('h1')!.textContent).toBe(created.title);
 
-    // Start Story opens the Reader and writes Chapter 1 under VERSA's veil.
+    // Start Story opens the Reader and writes Chapter 1 under the equipped Familiar's veil.
     await click(chaptersAction(), 'Start Story', 10);
     expect(address()).toBe(`/app/?story=${created.id}&read=1`);
     expect(document.querySelector('[data-testid="harness-reader"]')).toBeTruthy();
-    expect(document.querySelector('img[alt="VERSA"]')?.closest('.fixed')?.textContent).toContain('Chapter 1');
+    const veil = document.querySelector<HTMLElement>('[data-testid="generation-overlay"]')!;
+    expect(veil.dataset.familiarId).toBe(equippedFamiliarId ?? 'quill');
+    expect(veil.querySelector(`[aria-label="${equippedFamiliarId ? 'Phoenix' : 'Quill'}, Waving"]`)).toBeTruthy();
+    expect(veil.textContent).toContain('Chapter 1');
+    expect(veil.style.getPropertyValue('--veil-accent')).toBe(equippedFamiliarId ? '#ff6a13' : '#2589ff');
+    expect(document.querySelector('img[alt="VERSA"]')).toBeNull();
     expect(story.generate).toHaveBeenCalledTimes(1);
     const request = story.generate.mock.calls[0][0];
     expect(request.model).toBe('remembered');
@@ -280,7 +285,7 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
     expect(soundtrack.piece()).toBe(first);
     // The Reader never opens to it: the veil while Chapter 1 is written plays the Reader's own music.
     await click(chaptersAction(), 'Start Story', 10);
-    expect(document.querySelector('img[alt="VERSA"]')?.closest('.fixed')?.textContent).toContain('Chapter 1');
+    expect(document.querySelector('[data-testid="generation-overlay"]')?.textContent).toContain('Chapter 1');
     expect(soundtrack.piece()).not.toBe(first);
     expect(piecesForMood(READER_MUSIC_MOOD, SEN_SOUNDSCAPES).map(piece => piece.id)).toContain(soundtrack.piece()?.id);
     expect(story.generate).toHaveBeenCalledTimes(1);
@@ -440,7 +445,7 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
 
     // Start Story finds it still being written: the veil, never a second write; it opens when saved.
     await click(chaptersAction(), 'Start Story', 10);
-    expect(document.querySelector('img[alt="VERSA"]')?.closest('.fixed')?.textContent).toContain('Chapter 1');
+    expect(document.querySelector('[data-testid="generation-overlay"]')?.textContent).toContain('Chapter 1');
     await act(async () => { writer.release(); });
     await flush(20);
     expect(document.querySelector('[data-chapter-number="1"]')!.textContent).toContain('The tide pulled back from the drowned gate.');

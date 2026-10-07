@@ -188,6 +188,8 @@ async function walk(browser, viewport, sample) {
   const page = await context.newPage();
   const problems = [];
   const counts = { chapters: 0, memory: 0, blueprints: 0, chaptersWithToken: 0, rewrites: [], fixes: [] };
+  let releaseFirstChapter;
+  const firstChapterReady = new Promise(resolve => { releaseFirstChapter = resolve; });
   page.on('pageerror', error => problems.push(`page error: ${error.message}`));
   page.on('request', request => {
     const path = new URL(request.url()).pathname;
@@ -246,8 +248,10 @@ async function walk(browser, viewport, sample) {
     // The token given for the Blueprint rides with chapters too, lifting the visitor limit.
     if (request.headers().authorization === `Bearer ${TOKEN}`) counts.chaptersWithToken += 1;
     if (body.immediateChapterRequest.rewrite) counts.rewrites.push(body.immediateChapterRequest);
-    // Long enough for the veil to be seen.
-    await new Promise(resolve => setTimeout(resolve, 1200));
+    // Chapter 1 now starts in World Info. Hold the fixture until the walk has
+    // observed its pending journey, rather than racing screenshots on a busy runner.
+    if (counts.chapters === 1) await firstChapterReady;
+    else await new Promise(resolve => setTimeout(resolve, 1200));
     const reply = body.immediateChapterRequest.rewrite ? rewritten : chapter;
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rawProviderResponse: JSON.stringify(reply), providerReceipt: receipt }) });
   });
@@ -307,26 +311,35 @@ async function walk(browser, viewport, sample) {
   check(/^\/app\/\?story=[^&]+$/.test(storyAddress), `Manifest Story should open Story View, got ${storyAddress}`);
   await shot('4-story-view');
   await page.locator('[data-world-info-chapters="action"]').click();
-  await page.locator('img[alt="VERSA"]').first().waitFor();
+  await page.locator('[data-testid="generation-overlay"][data-familiar-id="quill"] [aria-label="Quill, Waving"]').waitFor();
   check(address() === `${storyAddress}&read=1`, `Start Story should open the Reader, got ${address()}`);
-  const veil = page.getByTestId('generation-veil');
+  const veil = page.getByTestId('generation-overlay');
+  const familiarStyle = await veil.evaluate(element => {
+    const style = getComputedStyle(element);
+    const ring = element.querySelector('[data-celestial-foreground] > .z-0 > svg circle');
+    return { accent: style.getPropertyValue('--veil-accent').trim(), ring: ring && getComputedStyle(ring).stroke,
+      artwork: element.querySelector('.familiar-sprite-atlas')?.getAttribute('src') };
+  });
+  check(familiarStyle.accent === '#2589ff' && familiarStyle.ring === 'rgb(37, 137, 255)', `Quill's veil and chamber should share its Lightning palette: ${JSON.stringify(familiarStyle)}`);
+  check(familiarStyle.artwork === '/familiars/quill/spritesheet.webp', 'The veil should use Quill’s supplied animation atlas.');
   const startProgress = Number(await veil.getAttribute('data-journey-progress'));
   const travelerX = () => veil.locator('svg[aria-label^="Generation"] > g').last().evaluate(element =>
     new DOMMatrix(getComputedStyle(element).transform).m41);
   const startX = await travelerX();
   await page.waitForFunction(start => {
-    const veil = document.querySelector('[data-testid="generation-veil"]');
+    const veil = document.querySelector('[data-testid="generation-overlay"]');
     const progress = Number(veil?.getAttribute('data-journey-progress'));
     return progress > start && progress < 1;
   }, startProgress);
   check(!(await veil.textContent()).match(/\d+%/), 'A whole-response writer must not show an invented percentage.');
   await shot('5-veil');
-  await page.waitForFunction(() => document.querySelector('[data-testid="generation-veil"]')?.getAttribute('data-journey-progress') === '1');
+  releaseFirstChapter();
+  await page.waitForFunction(() => document.querySelector('[data-testid="generation-overlay"]')?.getAttribute('data-journey-progress') === '1');
   check(await veil.isVisible(), 'The veil should remain while the traveler arrives.');
   // Observe the actual SVG arrival, rather than sleeping through it on a busy runner.
   // The shared UI stops the traveler just before the gate (95% of the path).
   await page.waitForFunction(() => {
-    const veil = document.querySelector('[data-testid="generation-veil"]');
+    const veil = document.querySelector('[data-testid="generation-overlay"]');
     const svg = veil?.querySelector('svg[aria-label="Generation complete"]');
     const traveler = svg?.lastElementChild;
     const gate = traveler?.previousElementSibling;
@@ -343,7 +356,7 @@ async function walk(browser, viewport, sample) {
   await shot('5b-veil-arrived');
   await page.locator('[data-chapter-number="1"]').waitFor({ timeout: 20_000 });
   await page.locator('[data-chapter-number="1"] [data-action-type="world-cue"][data-sound]').first().waitFor();
-  await page.locator('img[alt="VERSA"]').first().waitFor({ state: 'hidden', timeout: 10_000 });
+  await veil.waitFor({ state: 'hidden', timeout: 10_000 });
   await shot('6-chapter-1');
   check(counts.chapters === 1, `One chapter request expected, saw ${counts.chapters}.`);
   // The chapter's own scene, as its writer chose it: fighting music and the battlefield.
@@ -466,9 +479,9 @@ async function walk(browser, viewport, sample) {
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), 'The rewrite box must not scroll sideways.');
   await shot('6e-rewrite');
   await rewriteForm.getByRole('button', { name: 'Rewrite Chapter 1' }).click();
-  await page.locator('img[alt="VERSA"]').first().waitFor();
+  await veil.waitFor();
   await page.locator('[data-chapter-number="1"] h1', { hasText: 'The Hidden Key' }).waitFor({ timeout: 20_000 });
-  await page.locator('img[alt="VERSA"]').first().waitFor({ state: 'hidden', timeout: 10_000 });
+  await veil.waitFor({ state: 'hidden', timeout: 10_000 });
   check(counts.rewrites.length === 1 && counts.rewrites[0].chapterNumber === 1 && counts.rewrites[0].rewrite.note === REWRITE_NOTE
     && counts.rewrites[0].rewrite.previous.title === 'Low Tide', `The rewrite should ask for Chapter 1 again with the note, got ${JSON.stringify(counts.rewrites)}.`);
   check(counts.fixes.length === 1 && counts.fixes[0].token && counts.fixes[0].cases.length === 1,

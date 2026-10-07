@@ -1,24 +1,27 @@
 import React from 'react';
 import { AnimatePresence } from 'motion/react';
 import type { LoadingTaskCard } from '../../../library/manifestations/taskCard';
-import LoadingVeilCard from './LoadingVeilCard';
-import CompactIndicator from './CompactIndicator';
+import GenerationOverlayView from './GenerationOverlayView';
+import CompactGenerationOverlay from './CompactGenerationOverlay';
 import { useGenerationJourney } from '../../../library/manifestations/useGenerationJourney';
+import type { LoadingFamiliarPresentation } from '../../../library/manifestations/familiar';
 
-export type LoadingSystemMode = 'auto' | 'primary' | 'compact';
+export type GenerationOverlayControllerMode = 'auto' | 'primary' | 'compact';
 
-export interface LoadingSystemProps {
+export interface GenerationOverlayControllerProps {
   /** Whether the operation is currently running. */
   active: boolean;
   /** True only once the operation has succeeded. Failure/cancellation never triggers arrival. */
   completed?: boolean;
   /** The normalized task card to present, or null when idle. */
   task: LoadingTaskCard | null;
+  /** Equipped character presentation; selection stays host-owned. */
+  familiar?: LoadingFamiliarPresentation | null;
   /**
    * 'auto' follows task.preferredMode; 'primary' and 'compact' force a mode.
    * Primary falls back to the compact indicator whenever minimized.
    */
-  mode?: LoadingSystemMode;
+  mode?: GenerationOverlayControllerMode;
   minimized: boolean;
   onMinimizedChange: (minimized: boolean) => void;
   /**
@@ -48,21 +51,21 @@ export interface LoadingSystemProps {
 const DEFAULT_COMPACT_GRACE_MS = 1200;
 
 /**
- * Development copy of LoadingSystem — routes the primary slot to
- * development/LoadingVeilCard (the veil under active iteration) instead of
- * reference/LoadingVeil, so the two stay comparable in the Workshop. Compact
- * mode is unchanged and still shares shared/CompactIndicator.
+ * Generation overlay controller: routes the current full-screen and compact
+ * presentations and owns their visibility and journey lifetime. Historical
+ * reference files remain separate Workshop material.
  *
  * 2026-07-30: the primary veil no longer exposes a manual minimize control.
  * Minimization is navigation-driven — the caller flips `minimized` when the
- * user leaves the generation page — so LoadingVeilCard's `onMinimize` prop
+ * user leaves the generation page — so GenerationOverlayView's `onMinimize` prop
  * is gone. `onMinimizedChange` still drives the compact indicator's expand.
  * First real caller: the Library's HARNESS Reader, while it writes a chapter.
  */
-export default function LoadingSystem({
+export default function GenerationOverlayController({
   active,
   completed,
   task,
+  familiar,
   mode = 'auto',
   minimized,
   onMinimizedChange,
@@ -73,7 +76,7 @@ export default function LoadingSystem({
   trailStyle,
   destinationId,
   onMediaUnseal,
-}: LoadingSystemProps) {
+}: GenerationOverlayControllerProps) {
   const lastTask = React.useRef(task);
   if (task) lastTask.current = task;
   const displayTask = task ?? lastTask.current;
@@ -86,7 +89,7 @@ export default function LoadingSystem({
     progress: displayTask?.progress ?? null,
     estimatedSecondsRemaining: displayTask?.estimatedSecondsRemaining ?? null,
   });
-  const resolvedMode: Exclude<LoadingSystemMode, 'auto'> =
+  const resolvedMode: Exclude<GenerationOverlayControllerMode, 'auto'> =
     mode === 'auto' ? (displayTask?.preferredMode ?? 'primary') : mode;
 
   // Compact mode waits out a grace window so very short tasks stay hidden.
@@ -110,10 +113,11 @@ export default function LoadingSystem({
   return (
     <AnimatePresence>
       {showPrimary && (
-        <LoadingVeilCard
+        <GenerationOverlayView
           key="primary-veil"
           task={journey.arriving && displayTask.progress !== null ? { ...displayTask, progress: 100 } : displayTask}
           journeyProgress={journey.progress}
+          familiar={familiar}
           backdrop={backdrop}
           emblemClassName={emblemClassName}
           travelerId={travelerId}
@@ -123,9 +127,10 @@ export default function LoadingSystem({
         />
       )}
       {showCompact && (
-        <CompactIndicator
+        <CompactGenerationOverlay
           key="compact-indicator"
           task={displayTask}
+          familiar={familiar}
           onExpand={resolvedMode === 'primary' ? () => onMinimizedChange(false) : undefined}
         />
       )}

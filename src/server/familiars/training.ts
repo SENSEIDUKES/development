@@ -24,7 +24,10 @@ import {
   type FamiliarElementalTitleEffect,
   type FamiliarForm,
   type FamiliarUnlock,
+  familiarElement,
+  familiarElementColors,
 } from '@seihouse/library/familiar';
+export { FAMILIAR_ELEMENT_AFFINITY, familiarElement } from '@seihouse/library/familiar';
 
 export interface FamiliarBondRankDefinition {
   rank: FamiliarBondRank;
@@ -32,11 +35,6 @@ export interface FamiliarBondRankDefinition {
   qiRequired: number;
   unlocks: (element: FamiliarElement) => FamiliarUnlock[];
 }
-
-const ELEMENT_GLOW: Readonly<Partial<Record<FamiliarElement, string>>> = {
-  fire: '#ff6a13', lightning: '#2589ff', frost: '#6bd6f0', celestial: '#d5b668', void: '#994bfa',
-};
-const DEFAULT_FORM_GLOW = '#d5b668';
 
 const INTENSITY_LABELS: Readonly<Record<FamiliarEffectIntensity, string>> = {
   subtle: 'Whisper', active: 'Blaze', legendary: 'Ascendant',
@@ -66,7 +64,7 @@ export const radiantForm = (element: FamiliarElement): FamiliarForm => ({
   id: 'radiant',
   label: 'Radiant form',
   description: `Placeholder form: the Familiar’s artwork wreathed in ${FAMILIAR_ELEMENT_LABELS[element].toLowerCase()} light until dedicated form artwork is supplied.`,
-  treatment: { glow: ELEMENT_GLOW[element] ?? DEFAULT_FORM_GLOW, saturate: 1.25, brightness: 1.08, hueRotate: 0 },
+  treatment: { glow: familiarElementColors(element).accent, saturate: 1.25, brightness: 1.08, hueRotate: 0 },
 });
 
 export const FAMILIAR_BOND_LADDER: readonly FamiliarBondRankDefinition[] = [
@@ -78,24 +76,6 @@ export const FAMILIAR_BOND_LADDER: readonly FamiliarBondRankDefinition[] = [
   },
   { rank: 'legendary', qiRequired: 10_000, unlocks: element => [{ kind: 'mastery', element, effect: masteryEffect(element) }] },
 ];
-
-/** The element each Familiar channels. Unlisted Familiars fall back to Celestial. */
-export const FAMILIAR_ELEMENT_AFFINITY: Readonly<Record<string, FamiliarElement>> = {
-  phoenix: 'fire',
-  'nine-tailed-fox': 'fire',
-  'lady-bug': 'fire',
-  'little-monkey-king': 'lightning',
-  quill: 'lightning',
-  'celestial-moon-moth': 'frost',
-  'frostforged-golem': 'frost',
-  'celestial-guardian': 'celestial',
-  'lucky-bake-danuki': 'celestial',
-  'galaxy-octopus': 'void',
-  'judgmental-jiangshi': 'void',
-  'living-grimoire': 'void',
-};
-
-export const familiarElement = (familiarId: string): FamiliarElement => FAMILIAR_ELEMENT_AFFINITY[familiarId] ?? 'celestial';
 
 /** QI that completes a bond: reaching Legendary. */
 export const MAX_BOND_QI = (ladder = FAMILIAR_BOND_LADDER) => ladder[ladder.length - 1].qiRequired;

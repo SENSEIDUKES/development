@@ -22,6 +22,8 @@ import { createHostReaderMixer } from '../host/reader/readerMixer';
 import { SEN_SOUNDSCAPES } from '../host/media/soundscapeCatalog';
 import { piecesForMood, storySoundtrack } from '@seihouse/sen/reader-runtime';
 import { APP_MUSIC_MOOD } from './appMusic';
+import { writeMenuMusic } from '@seihouse/library/shell';
+import { READER_MUSIC_MOOD } from '../components/harness-generation/development/useReaderSoundtrack';
 import { installFakeSpeechSynthesis } from '../test-utils/fakeSpeechSynthesis';
 import { NovelExpandedApp } from './NovelExpandedApp';
 import { NOVEL_EXPANDED_STORAGE, type NovelExpandedServices } from './services';
@@ -262,7 +264,7 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
     }
   });
 
-  it('plays its own calm music from SEN Soundscapes on every page, with no model, until the Reader takes over', async () => {
+  it('plays its own calm music from SEN Soundscapes on its menus, with no model, and never into the Reader', async () => {
     const story = scriptedWriter();
     const services = appServices(story.writer);
     const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
@@ -273,14 +275,39 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
     expect(calm).toContain(first?.id);
     expect(mixer.getState().layers.soundscapes.requested).toContain(first!.id);
 
-    // The same piece plays on through World Info and the veil while Chapter 1 is written.
+    // The same piece plays on through World Info.
     await click(container.querySelector(`#home-world-${created.id} button[aria-label^="Open ${created.title}"]`), 'the Home card');
+    expect(soundtrack.piece()).toBe(first);
+    // The Reader never opens to it: the veil while Chapter 1 is written plays the Reader's own music.
     await click(chaptersAction(), 'Start Story', 10);
     expect(document.querySelector('img[alt="VERSA"]')?.closest('.fixed')?.textContent).toContain('Chapter 1');
-    expect(soundtrack.piece()).toBe(first);
+    expect(soundtrack.piece()).not.toBe(first);
+    expect(piecesForMood(READER_MUSIC_MOOD, SEN_SOUNDSCAPES).map(piece => piece.id)).toContain(soundtrack.piece()?.id);
     expect(story.generate).toHaveBeenCalledTimes(1);
     story.release();
     await flush(50);
+  });
+
+  it('puts the music note in Home\'s header while Menu music is on; off, the menus are silent and the note goes', async () => {
+    const services = appServices(scriptedWriter().writer);
+    const mixer = await render(services);
+    const note = () => container.querySelector<HTMLButtonElement>('header .header-sound-control button');
+    expect(note()?.getAttribute('aria-label')).toBe('Mute sound');
+    expect(storySoundtrack(mixer).piece()).toBeDefined();
+    // One tap silences the app at once.
+    await act(async () => { note()!.click(); });
+    expect(mixer.getState().preferences.masterEnabled).toBe(false);
+    await act(async () => { note()!.click(); });
+
+    // Turned off (Profile Settings › Sound): the menus fall silent and the note leaves the header.
+    await act(async () => { writeMenuMusic(services.readerPreferences, false); });
+    await flush(5);
+    expect(note()).toBeNull();
+    expect(storySoundtrack(mixer).piece()).toBeUndefined();
+    await act(async () => { writeMenuMusic(services.readerPreferences, true); });
+    await flush(5);
+    expect(note()).not.toBeNull();
+    expect(storySoundtrack(mixer).piece()).toBeDefined();
   });
 
   it('sends an unknown story home instead of a developer page', async () => {

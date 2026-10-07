@@ -18,6 +18,7 @@
 
 import React, { createContext, createElement, useContext } from 'react';
 import { type SenLanguageCode } from '@seihouse/sen/contracts';
+import type { ReaderPreferenceStorage } from '@seihouse/sen/reader-runtime';
 import type { DaoRankData } from '../../../library/cultivation/progression';
 import type { FamiliarOption } from '../../familiar/shared/familiar';
 import type { CelestialStoreAccountServices } from '../../celestial-store/shared/storeAccount';
@@ -158,6 +159,12 @@ export interface UserProfileServices {
    * both server-owned. Without it the Store shows purchases as not connected.
    */
   celestialStore?: CelestialStoreAccountServices;
+  /**
+   * Host-owned device storage for the reader's sound settings (the same
+   * storage as the Reader's preferences). With it, Settings shows Sound and
+   * its Menu music switch; without it (a host with no sound), it does not.
+   */
+  soundPreferences?: ReaderPreferenceStorage;
   /** Production: `useUserProfile(props)` from `src/hooks/useUserProfile.ts`. */
   useController: (props: UserProfileControllerProps) => UserProfileController;
 

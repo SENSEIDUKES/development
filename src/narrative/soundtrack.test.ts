@@ -52,7 +52,7 @@ describe('The music under the story', () => {
     expect(new Set(played.map(entry => entry.scene)).size).toBe(5);
   });
 
-  it('lets a hold take over, keeps a piece that already answers it, and returns to the host\'s music on release', async () => {
+  it('lets a hold take over, keeps a piece that answers the next hold, and returns to the host\'s music on release', async () => {
     const { mixer, played, raw } = fakeMixer();
     const soundtrack = new StorySoundtrack(mixer, () => 0);
     soundtrack.setBase({ mood: 'ambient', pieces: PIECES });
@@ -69,10 +69,17 @@ describe('The music under the story', () => {
     again();
     await settled();
     expect(played.map(entry => entry.id)).toEqual(['calm-1', 'fight-1', 'calm-1']);
-    // A mood the piece playing answers keeps it, without a restart.
-    soundtrack.hold({ mood: 'serenity', pieces: PIECES });
+    // The host's music never carries into a hold, even one its piece answers:
+    // the hold starts its own play (the Reader never opens to the menus' music).
+    expect(piecesForMood('serenity', PIECES).map(entry => entry.id)).toContain('calm-1');
+    const calm = soundtrack.hold({ mood: 'serenity', pieces: PIECES });
     await settled();
-    expect(played).toHaveLength(3);
+    expect(played).toHaveLength(4);
+    expect(new Set(played.map(entry => entry.scene)).size).toBe(4);
+    // Nor a hold's piece back out: releasing it starts the host's own play.
+    calm();
+    await settled();
+    expect(played).toHaveLength(5);
     expect(raw.stopSoundscape).not.toHaveBeenCalled();
   });
 

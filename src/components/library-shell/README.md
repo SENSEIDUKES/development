@@ -266,3 +266,8 @@ Minimized Familiars use the shared header's generic
 `WorkspaceHeaderAccessoryProvider` slot for a callback button. The slot is
 host-provided content and owns no Familiar or account state. Size and visibility
 remain with the profile/app owners.
+
+## The music note in the header — 2026-10-07
+
+`HeaderSoundControl` puts the reader mixer's music note in the shell header, through `WorkspaceHeader`'s new `sound` slot just before Help and Search, at every width. It reuses the audio player's own `ReaderMixerNote`: a tap mutes or unmutes all sound (the mixer's master switch, the same as the Reader's note). Hovering it with a mouse, holding it about half a second with a finger, or ArrowUp/ArrowDown from the keyboard opens a **Music volume** slider bound to the Soundscapes level; it closes when the mouse leaves (after a short grace), on a tap outside, or on Escape. Both are the reader's saved mix, shared with Reader Settings › Audio. Without a reader mixer it renders nothing. The host shows it only while the reader's **Menu music** setting (`useMenuMusic`, `src/library/sound/menuMusic.ts`, kept in the host's reader preferences under `menu-music`, on by default) is on; Profile Settings › Sound changes that setting. NovelExpanded's Home and the Workshop's Profile header carry it now. The Library package now names `@seihouse/audio-player` as a peer, as SEN already does.
+

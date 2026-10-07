@@ -35,6 +35,7 @@
  * (`celestialStore` below is replaced by the Familiar account there).
  */
 
+import { createLocalReaderPreferenceStorage } from '../../../host/reader/readerPreferenceStorage';
 import type React from 'react';
 import { allFamiliarOptions } from '../../../host/familiar/catalogue';
 import { normalizeFamiliarSize } from '@seihouse/library/familiar';
@@ -94,6 +95,8 @@ export interface MockUserProfileServicesOptions {
    */
   onSignIn: (account: AppUser) => void;
 }
+
+const WORKSHOP_SOUND_PREFERENCES = createLocalReaderPreferenceStorage('workshop.reader.');
 
 export function createMockUserProfileServices({
   state,
@@ -922,6 +925,8 @@ export function createMockUserProfileServices({
     useController,
     familiars: allFamiliarOptions,
     celestialStore: celestialStore ?? { useStoreAccount },
+    // The Workshop's own reader preferences: Menu music and the header's note share them with its reader mixer.
+    soundPreferences: WORKSHOP_SOUND_PREFERENCES,
 
     localOnlyMode: scenario.localOnlyMode,
     setLocalOnlyMode: next =>

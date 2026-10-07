@@ -46,8 +46,10 @@ const pieceTrack = (piece: SceneAudioTrack): Track => ({
  *   plays, the newest first; releasing it returns to the one beneath, or to
  *   the host's music, or to silence.
  *
- * A new request whose mood the piece playing already answers keeps that
- * piece, so the music never restarts for nothing. Changes made together (a
+ * A new request of the same kind whose mood the piece playing already
+ * answers keeps that piece, so the music never restarts for nothing. Between
+ * kinds the music always changes: the host's music never carries into a
+ * hold (the Reader has its own), nor a hold's piece back out to the host's. Changes made together (a
  * hold released and the next one taken as the Reader turns a chapter) are
  * settled once, a moment later. A piece that cannot be played is skipped for
  * the next of its mood.
@@ -55,7 +57,7 @@ const pieceTrack = (piece: SceneAudioTrack): Track => ({
 export class StorySoundtrack {
   private base?: SoundtrackRequest;
   private readonly holds: Array<{ request: SoundtrackRequest }> = [];
-  private current?: { piece: SceneAudioTrack; request: SoundtrackRequest };
+  private current?: { piece: SceneAudioTrack; request: SoundtrackRequest; fromBase: boolean };
   /** Pieces that would not play since music last played: skipped while another remains. */
   private readonly failed = new Set<string>();
   private plays = 0;
@@ -153,9 +155,12 @@ export class StorySoundtrack {
     const choices = this.choices(request);
     const current = this.current;
     const sounding = this.status !== 'idle' && this.status !== 'failed' && this.status !== 'resting';
-    if (current && sounding && choices.some(piece => piece.id === current.piece.id && piece.url === current.piece.url)) {
+    // A piece carries on only between requests of one kind: the host's music never follows the reader into a hold, nor a hold's back out.
+    const fromBase = request === this.base;
+    const sameKind = current?.fromBase === fromBase;
+    if (current && sounding && sameKind && choices.some(piece => piece.id === current.piece.id && piece.url === current.piece.url)) {
       // The piece playing answers it already: it plays on, and what follows it comes from this request.
-      this.current = { piece: current.piece, request };
+      this.current = { piece: current.piece, request, fromBase };
       return;
     }
     this.failed.clear();
@@ -171,7 +176,7 @@ export class StorySoundtrack {
   }
 
   private start(piece: SceneAudioTrack, request: SoundtrackRequest) {
-    this.current = { piece, request };
+    this.current = { piece, request, fromBase: request === this.base };
     this.plays += 1;
     // A new scene for every play, so a piece can follow itself.
     this.mixer.playSoundscape(pieceTrack(piece), { scene: `soundtrack-${this.plays}` });

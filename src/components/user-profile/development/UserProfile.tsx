@@ -2,6 +2,8 @@ import { useLibraryAssets } from '../../../library/assets';
 import { UserProfileHome } from './UserProfileHome';
 import type { CaveAccountControls } from './caveAccountControls';
 import { WorkspaceHeader } from '../../library-shell/development/WorkspaceHeader';
+import { HeaderSoundControl } from '../../library-shell/development/HeaderSoundControl';
+import { useMenuMusic } from '../../../library/sound/menuMusic';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Eye,
@@ -102,7 +104,9 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   // Production calls `useUserProfile(...)` and reads the Firebase local-only flag
   // directly. Both arrive through the injected services port here, so this file
   // carries no Firebase, PostgreSQL, or generation dependency of its own.
-  const { useController: useUserProfile, localOnlyMode, authenticate, familiars = [], celestialStore } = useUserProfileServices();
+  const { useController: useUserProfile, localOnlyMode, authenticate, familiars = [], celestialStore, soundPreferences } = useUserProfileServices();
+  // The header's music note shows while the reader's Menu music is on, where the host has sound.
+  const [menuMusic] = useMenuMusic(soundPreferences);
   const hostController = useUserProfile({ currentUser, stories, onLogout, onNavigateHome });
   // Familiar ownership and purchases are host account state behind the same
   // services port as everything else; without a Store service the page still
@@ -569,6 +573,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
             <Eye size={20} aria-hidden="true" /><span>Public View</span>
           </button> : undefined}
           searchItems={navigationItems.map(item => ({ id: item.id, label: item.label, pressed: item.active, onAction: item.onSelect }))}
+          sound={soundPreferences && menuMusic ? <HeaderSoundControl /> : undefined}
         />}
       >
         <div className="cave-workspace-body mx-auto w-full max-w-7xl px-4 pb-12 pt-3 sm:px-6 sm:pt-5">

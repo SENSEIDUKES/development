@@ -36,6 +36,11 @@ export interface WorkspaceHeaderProps {
    * right. Home puts Dao Insights here.
    */
   center?: ReactNode;
+  /**
+   * The host's sound control (Library: `HeaderSoundControl`), just
+   * before Help and Search, on every size, so the reader can always mute.
+   */
+  sound?: ReactNode;
 }
 
 /**
@@ -51,7 +56,7 @@ export interface WorkspaceHeaderProps {
  */
 export function WorkspaceHeader({ title, subtitle, emblem, home, back, primaryAction,
   secondaryActions = [], overflowActions = [], contextualItem, help, searchItems = [],
-  status, landmark = 'banner', center }: WorkspaceHeaderProps) {
+  status, landmark = 'banner', center, sound }: WorkspaceHeaderProps) {
   const compact = useCompactHeader();
   const pathways = useLibraryPathways();
   const showCenter = pathways && center != null && center !== false;
@@ -87,6 +92,7 @@ export function WorkspaceHeader({ title, subtitle, emblem, home, back, primaryAc
     actions={<>
       {contextualItem != null && contextualItem !== false && contextualItem !== '' && <div className="workspace-header-context">{contextualItem}</div>}
       {accessory}
+      {sound}
       <WorkspaceHeaderUtilities items={searchCommands} help={help} />
     </>}
   />

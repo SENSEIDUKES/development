@@ -3,7 +3,10 @@
  * Walks the NovelExpanded app in Chromium at phone (390px) and laptop (1440px)
  * widths against a running dev server, with both APIs stubbed:
  *
- * `/app` → empty Home → Create → token sheet → World Blueprint (Arc 1 only,
+ * `/app` → empty Home in the Library Shell (the app's two places, Home and
+ * Create, on the phone strip or the laptop sidebar, and the footer) → Create
+ * (Story Seed in the shell's workspace mode, the music note in its header) →
+ * token sheet → World Blueprint (Arc 1 only,
  * the hidden look-ahead nowhere on screen, every blank Seed slot filled) → Manifest
  * Story → Story View → Start Story under the veil → Chapter 1 with its Sound
  * Cue and its own soundtrack (the app's calm music on every page before it,
@@ -16,7 +19,9 @@
  * version under the veil, the Holdings fixer's one quiet call settling its
  * holdings, nothing of it on screen) → reload (no new request, nothing reads by itself) →
  * Back → Continue · Ch. 1 → Export story (the whole story as one file) → Back
- * → Home card, its header's music note (tap mutes; hover or hold opens the Music volume) → browser Back and Forward → a missing story goes Home.
+ * → Home card, its header's music note (tap mutes; hover or hold opens the Music volume) → browser Back and Forward →
+ * Create from the navigation (on laptops, a minimized sidebar stays minimized after a reload) → a missing story goes Home.
+ * World Info sits in the shell; the Reader never does.
  *
  * Headless Chromium has no voices, so a stand-in for the browser's speech is
  * installed before the app loads; each line ends on its own after a moment,
@@ -198,7 +203,18 @@ async function walk(browser, viewport, sample) {
   // Every SEIHouse audio file is answered with silence; what was asked for is kept, in order.
   const audioAsked = [];
   await context.route('https://media.seihouse.org/**', async route => {
-    audioAsked.push(new URL(route.request().url()).pathname);
+    const url = route.request().url();
+    // The Library emblem is an image there too: fetched for real when the network allows, so the pictures show it.
+    if (/\.(?:jpe?g|png|webp|svg)$/i.test(new URL(url).pathname)) {
+      try {
+        const response = await fetch(url);
+        await route.fulfill({ status: response.status, contentType: response.headers.get('content-type') ?? 'image/jpeg', body: Buffer.from(await response.arrayBuffer()) });
+      } catch {
+        await route.fulfill({ status: 404, body: '' });
+      }
+      return;
+    }
+    audioAsked.push(new URL(url).pathname);
     await route.fulfill({ status: 200, contentType: 'audio/wav', headers: { 'Access-Control-Allow-Origin': '*' }, body: SILENCE });
   });
   const pieces = () => audioAsked.filter(path => SOUNDSCAPE_PATH.test(path));
@@ -265,11 +281,28 @@ async function walk(browser, viewport, sample) {
   check(address() === '/app/', `/app should land on /app/, got ${address()}`);
   check((await page.textContent('body')).includes('Your stories appear here'), 'The empty Home should say where stories appear.');
   await shot('1-home-empty');
+  // The Library Shell: the app's two places (the strip on phones, the Pathways sidebar on laptops), the footer, the note.
+  const laptop = viewport.width >= 1024;
+  const navigation = () => (laptop ? page.locator('[data-slot="app-shell-sidebar"] nav[aria-label="Library pathways"]')
+    : page.locator('nav[aria-label="Library global navigation"]'));
+  const places = (await navigation().getByRole('button').allTextContents()).map(text => text.trim());
+  check(JSON.stringify(places) === JSON.stringify(['Home', 'Create']), `The navigation should offer Home and Create only, got ${JSON.stringify(places)}.`);
+  check(await navigation().isVisible(), `The ${laptop ? 'Pathways sidebar' : 'bottom strip'} should show.`);
+  const shellText = await page.getByTestId('novel-expanded-shell').innerText();
+  check(!/\b(?:Discover|Profile|Settings)\b/.test(shellText), 'No place the app has not built may show.');
+  check(await page.locator('header .header-sound-control button').filter({ visible: true }).count() === 1, "Home's header should carry the music note.");
+  check(await page.evaluate(() => document.documentElement.scrollWidth) <= viewport.width, 'The shell must never scroll sideways.');
+  await page.locator('#novel-expanded-main').evaluate(main => main.scrollTo({ top: main.scrollHeight }));
+  await page.locator('[data-library-footer]').waitFor();
+  check((await page.locator('[data-library-footer]').innerText()).includes('NovelExpanded'), 'The footer should carry the NovelExpanded title.');
+  await shot('1b-home-footer');
+  await page.locator('#novel-expanded-main').evaluate(main => main.scrollTo({ top: 0 }));
 
   // 2. Create, from a banked Story Seed, asks for the token before its Blueprint.
   await page.evaluate(record => localStorage.setItem('novelexpanded-story-seeds-v1', JSON.stringify([record])), sample.record);
   await visibleButton('Carve New Destiny').click();
   await page.getByTestId('novel-expanded-create').waitFor();
+  check(await page.locator('header .header-sound-control button').filter({ visible: true }).count() === 1, "Story Seed's header should carry the music note.");
   // The app's own music starts with the first tap: calm pieces, with no model.
   await musicOf('ambient');
   check(pieces().every(path => piecesOf('ambient').has(path)), `The app's music should be calm pieces only, got ${JSON.stringify(pieces())}.`);
@@ -309,10 +342,12 @@ async function walk(browser, viewport, sample) {
   await page.getByTestId('harness-world-info').waitFor();
   const storyAddress = address();
   check(/^\/app\/\?story=[^&]+$/.test(storyAddress), `Manifest Story should open Story View, got ${storyAddress}`);
+  check(await page.locator('[data-testid="novel-expanded-shell"] [data-testid="harness-world-info"]').count() === 1, 'World Info should sit in the Library Shell.');
   await shot('4-story-view');
   await page.locator('[data-world-info-chapters="action"]').click();
   await page.locator('[data-testid="generation-overlay"][data-familiar-id="quill"] [aria-label="Quill, Waving"]').waitFor();
   check(address() === `${storyAddress}&read=1`, `Start Story should open the Reader, got ${address()}`);
+  check(await page.getByTestId('novel-expanded-shell').count() === 0, 'The Reader must stay outside the Library Shell.');
   const veil = page.getByTestId('generation-overlay');
   const familiarStyle = await veil.evaluate(element => {
     const style = getComputedStyle(element);
@@ -575,6 +610,32 @@ async function walk(browser, viewport, sample) {
   await page.goForward();
   await page.getByTestId('novel-expanded-home').waitFor();
   check(address() === '/app/', `Browser Forward should return Home, got ${address()}`);
+
+  // 6b. Create from the navigation opens Story Seed; on laptops a minimized Pathways sidebar stays minimized.
+  await navigation().getByRole('button', { name: 'Create' }).click();
+  await page.getByTestId('novel-expanded-create').waitFor();
+  check(address() === '/app/?page=create', `Create in the navigation should open Create, got ${address()}`);
+  await page.goBack();
+  await page.getByTestId('novel-expanded-home').waitFor();
+  if (laptop) {
+    const sidebarMode = () => page.evaluate(() => localStorage.getItem('novelexpanded-reader-library-sidebar-mode'));
+    const doubleClickSidebar = async () => {
+      const sidebar = page.locator('[data-slot="app-shell-sidebar"]');
+      const box = await sidebar.boundingBox();
+      await sidebar.dblclick({ position: { x: box.width / 2, y: box.height - 24 } });
+    };
+    await doubleClickSidebar();
+    await page.waitForFunction(() => localStorage.getItem('novelexpanded-reader-library-sidebar-mode') === 'compact', null, { timeout: 5_000 })
+      .catch(() => check(false, 'A double click should minimize the sidebar and keep the choice on this device.'));
+    await page.waitForTimeout(400);
+    await shot('7d-sidebar-compact');
+    await page.reload();
+    await page.getByTestId('novel-expanded-home').waitFor();
+    check(await page.locator('[data-slot="app-shell"][data-sidebar-mode="compact"]').count() === 1, 'A minimized sidebar should stay minimized after a reload.');
+    await doubleClickSidebar();
+    await page.waitForFunction(() => localStorage.getItem('novelexpanded-reader-library-sidebar-mode') === 'pinned', null, { timeout: 5_000 })
+      .catch(async () => check(false, `A second double click should open the sidebar again, got ${await sidebarMode()}.`));
+  }
 
   // 7. A story the app does not have goes Home.
   await page.goto(`${BASE}/app/?story=hst_missing&read=1`);

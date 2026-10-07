@@ -54,6 +54,13 @@ export interface LibraryWorkspaceDefinition {
 export interface LibraryMainNavigationProps {
   location: LibraryLocation;
   onNavigate: (location: LibraryLocation) => void;
+  /**
+   * The places this host has built, shown in the Library's order. All four
+   * when omitted. A host leaves out a place it does not have rather than show
+   * a control that leads nowhere; Settings, a Profile page, shows only with
+   * Profile.
+   */
+  destinations?: readonly LibraryDestination[];
   /** The page's own destinations for its optional desktop rail. */
   sectionMenu?: LibrarySectionMenu;
   /**
@@ -84,12 +91,17 @@ interface WorkspaceState {
   openDrawer: () => void;
   closeDrawer: () => void;
 }
+type LibraryPlace = typeof LIBRARY_DESTINATIONS[number];
 interface MainState {
   location: LibraryLocation;
   onNavigate: (location: LibraryLocation) => void;
   selected: LibraryDestination | undefined;
+  /** The host's places, in the Library's order. */
+  places: readonly LibraryPlace[];
   profile?: LibraryNavigationDrawerProfile;
 }
+const libraryPlaces = (destinations?: readonly LibraryDestination[]): readonly LibraryPlace[] =>
+  destinations ? LIBRARY_DESTINATIONS.filter(place => destinations.includes(place.id)) : LIBRARY_DESTINATIONS;
 interface NavigationContextValue {
   menu: LibrarySectionMenu | null;
   workspace: WorkspaceState | null;
@@ -168,15 +180,17 @@ export function LibrarySectionSidebar() {
 
 function PathwaysSidebar({ main, menu }: { main: MainState; menu: LibrarySectionMenu | null }) {
   const { navigationArtwork } = useLibraryAssets();
-  const { location, onNavigate, selected, profile } = main;
+  const { location, onNavigate, selected, places, profile } = main;
   const go = (target: LibraryLocation) => { if (libraryLocationKey(location) !== libraryLocationKey(target)) onNavigate(target); };
   // The page's own sections nest under the pathway you are on (e.g. Profile → Home, Stories, Rewards).
   const nested = menu?.sections.flatMap(section => section.items) ?? [];
   const settings: LibraryLocation = { screen: 'profile', cave: '/settings' };
+  // Settings is a Profile page, so a host without Profile has no Settings here either.
+  const withSettings = places.some(place => place.id === 'profile');
   // The Celestial Library logo stays in the header; the top of the sidebar is the reader's.
   return <LibraryNavigationDrawerPanel variant="pathways"
     aria-label="Library pathways" profile={profile}
-    sections={[{ id: 'pathways', label: 'Pathways', items: LIBRARY_DESTINATIONS.map(({ id, label, location: target }) => ({
+    sections={[{ id: 'pathways', label: 'Pathways', items: places.map(({ id, label, location: target }) => ({
       id, label, active: selected === id,
       icon: id === 'profile' ? <SENProfileIcon size={20} /> : <SENNavigationIcon name={icons[id]} size={20} />,
       onSelect: () => go(target),
@@ -184,10 +198,10 @@ function PathwaysSidebar({ main, menu }: { main: MainState; menu: LibrarySection
         id: childId, label: childLabel, icon, active, onSelect,
       })) : undefined,
     })) }]}
-    footer={{ divider: true, items: [
+    footer={withSettings ? { divider: true, items: [
       { id: 'settings', label: 'Settings', icon: <SENSettingsIcon size={18} />,
         active: location.screen === 'profile' && Boolean(location.cave?.startsWith('/settings')), onSelect: () => go(settings) },
-    ] }}
+    ] } : undefined}
     artwork={navigationArtwork ? { type: 'image', src: navigationArtwork } : undefined} />;
 }
 
@@ -200,25 +214,27 @@ export function useLibraryWorkspace() {
 
 /**
  * The Library's one navigation system. Main mode is Home, Create, Discover,
- * Profile: the bottom strip on phones and tablets and, from 1024px, the
- * Pathways sidebar (`LibrarySectionSidebar`) with a page's own sub-pages (the
- * Cave's) nested under the active pathway. Workspace mode is a
+ * Profile, or the subset a host has built (`destinations`): the bottom strip
+ * on phones and tablets and, from 1024px, the Pathways sidebar
+ * (`LibrarySectionSidebar`) with a page's own sub-pages (the Cave's) nested
+ * under the active pathway. Workspace mode is a
  * focused task's own bar, Sections drawer and rail, drawn by the same shell
  * from the task's definition. Pages supply destinations, never a strip.
  */
 export function LibraryNavigation(props: LibraryNavigationProps) {
   if ('workspace' in props) return <WorkspaceNavigation workspace={props.workspace}>{props.children}</WorkspaceNavigation>;
-  const { location, onNavigate, sectionMenu, profile, mode, children } = props;
+  const { location, onNavigate, destinations, sectionMenu, profile, mode, children } = props;
   // Immersive and workspace routes cannot be overridden by the standard default.
   const routeMode = libraryNavigationMode(location.screen);
   const resolvedMode = routeMode !== 'standard' ? routeMode : mode ?? 'standard';
-  const main = resolvedMode === 'standard' ? { location, onNavigate, selected: activeLibraryDestination(location), profile } : null;
+  const places = libraryPlaces(destinations);
+  const main = resolvedMode === 'standard' ? { location, onNavigate, selected: activeLibraryDestination(location), places, profile } : null;
   return <Context.Provider value={{ menu: sectionMenu ?? null, workspace: null, main }}>
-    {main ? <MainNavigation location={location} onNavigate={onNavigate}>{children}</MainNavigation> : children}
+    {main ? <MainNavigation location={location} onNavigate={onNavigate} places={places}>{children}</MainNavigation> : children}
   </Context.Provider>;
 }
 
-function MainNavigation({ location, onNavigate, children }: Pick<LibraryMainNavigationProps, 'location' | 'onNavigate' | 'children'>) {
+function MainNavigation({ location, onNavigate, places, children }: Pick<LibraryMainNavigationProps, 'location' | 'onNavigate' | 'children'> & { places: readonly LibraryPlace[] }) {
   const selected = activeLibraryDestination(location);
   const desktopNavigation = useLibraryDesktopNavigation();
   // From 1024px the Pathways sidebar replaces the strip unless the host keeps the strip.
@@ -226,7 +242,7 @@ function MainNavigation({ location, onNavigate, children }: Pick<LibraryMainNavi
     data-library-desktop-navigation={desktopNavigation}>
     {children}
     <LibraryBottomNavigation aria-label="Library global navigation" className="library-global-navigation" showLabels
-      items={LIBRARY_DESTINATIONS.map(({ id, label, location: target }) => {
+      items={places.map(({ id, label, location: target }) => {
         const icon = id === 'profile' ? <SENProfileIcon size={20} /> : <SENNavigationIcon name={icons[id]} size={20} />;
         return { id, label, icon, active: selected === id,
           onSelect: () => { if (libraryLocationKey(location) !== libraryLocationKey(target)) onNavigate(target); } };

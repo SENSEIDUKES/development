@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ReaderMixerProvider, type ReaderMixer } from '@seihouse/audio-player';
 import { LibraryPresentationProvider, loadingFamiliarPresentation } from '@seihouse/library/presentation';
-import { HeaderSoundControl, useMenuMusic } from '@seihouse/library/shell';
+import {
+  HeaderSoundControl, LibraryDesktopNavigationProvider, WorkspaceHeaderSoundProvider, useMenuMusic, useStoredLibrarySidebarMode,
+} from '@seihouse/library/shell';
 import { StoryPages, storyHomeWorlds, useLibraryStories } from '@seihouse/library/stories';
 import { findStory, nextChapterWaitsOnReader, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import { NarrativeButton } from '@seihouse/sen/presentation';
@@ -13,6 +15,7 @@ import { startHarnessStoryFromSeed } from '../host/story-seed/startHarnessStory'
 import { AGENTS } from '../lib/agents';
 import { defaultFamiliar, familiarCatalogueEntry } from '../host/familiar/catalogue';
 import { AccessTokenSheet, type AccessTokenRequest } from './AccessTokenSheet';
+import { AppShell } from './AppShell';
 import { writerWithAccessToken, type AskForAccessToken } from './accessToken';
 import { APP_SOUNDSCAPES, useAppMusic } from './appMusic';
 import { CreatePage } from './CreatePage';
@@ -29,9 +32,10 @@ import { startedSeedIds } from './storyCreationRuntime';
  * Its one sound owner is the reader mixer (the SEIHouse audio player), made
  * once by the page that mounts the app and kept for the page's lifetime: the
  * app's own music plays through it on its menus (while the reader's Menu
- * music setting is on, with the music note in Home's header to mute it or
- * set its volume), and the Reader's own music and each chapter's scene in
- * the Reader.
+ * music setting is on, with the music note in every Library header to mute
+ * it or set its volume), and the Reader's own music and each chapter's scene
+ * in the Reader. Home and World Info sit in the Library Shell (`AppShell`),
+ * Create in its workspace mode; the Reader stays outside, immersive.
  */
 export function NovelExpandedApp({ services, readerMixer, equippedFamiliarId }: {
   services: NovelExpandedServices;
@@ -44,9 +48,16 @@ export function NovelExpandedApp({ services, readerMixer, equippedFamiliarId }: 
   ), [equippedFamiliarId]);
   const [menuMusic] = useMenuMusic(services.readerPreferences);
   useAppMusic(readerMixer, menuMusic);
+  // The laptop sidebar opens the way the reader last left it, on this device.
+  const [sidebarMode, setSidebarMode] = useStoredLibrarySidebarMode(services.readerPreferences);
   return <ReaderMixerProvider mixer={readerMixer}>
     <LibraryPresentationProvider assets={LIBRARY_ASSETS} backdrops={MANIFEST_BACKDROPS} loadingFamiliar={loadingFamiliar}>
-      <NovelExpandedPages services={services} />
+      <LibraryDesktopNavigationProvider value="sidebar" sidebarMode={sidebarMode} onSidebarModeChange={setSidebarMode}>
+        {/* The music note in every Library header, Story Seed's included, while Menu music is on. */}
+        <WorkspaceHeaderSoundProvider sound={menuMusic ? <HeaderSoundControl /> : null}>
+          <NovelExpandedPages services={services} />
+        </WorkspaceHeaderSoundProvider>
+      </LibraryDesktopNavigationProvider>
     </LibraryPresentationProvider>
   </ReaderMixerProvider>;
 }
@@ -82,7 +93,6 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   askForToken: AskForAccessToken;
 }): ReactNode {
   const [route, navigate] = useAppRoute();
-  const [menuMusic] = useMenuMusic(services.readerPreferences);
   const [chapterModel] = useModelPreference('chapters');
   const [skills, setSkills] = useState<HarnessSkillManifest[]>();
   const [skillsError, setSkillsError] = useState<string>();
@@ -138,10 +148,11 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     page={route.page === 'read' ? 'read' : 'info'} readerStateRepository={services.readerState}
     readerPreferences={services.readerPreferences} soundscapes={APP_SOUNDSCAPES}
     writingAgent={AGENTS.VERSA} backLabel="Back to your stories"
+    // World Info sits in the Library Shell; the Reader never does.
+    frame={info => <AppShell route={{ page: 'story', storyId }} navigate={navigate} stories={worlds} mainLabel="World Info">{info}</AppShell>}
     onOpenReader={() => navigate({ page: 'read', storyId })}
     onCloseReader={() => navigate({ page: 'story', storyId })}
     onBack={() => navigate(HOME_ROUTE)} />;
 
-  return <HomePage worlds={worlds} sound={menuMusic ? <HeaderSoundControl /> : undefined} onCreate={() => navigate({ page: 'create' })}
-    onOpenStory={id => navigate({ page: 'story', storyId: id })} />;
+  return <HomePage worlds={worlds} navigate={navigate} />;
 }

@@ -14,6 +14,16 @@ export function WorkspaceHeaderAccessoryProvider({ accessory, children }: { acce
   return <HeaderAccessoryContext.Provider value={accessory}>{children}</HeaderAccessoryContext.Provider>;
 }
 
+const HeaderSoundContext = createContext<ReactNode>(null);
+/**
+ * The host's sound control (Library: `HeaderSoundControl`) for every Library
+ * header beneath it, including headers a Library page draws itself, such as
+ * Story Seed's. A header's own `sound` wins; `sound={null}` leaves it out.
+ */
+export function WorkspaceHeaderSoundProvider({ sound, children }: { sound: ReactNode; children: ReactNode }) {
+  return <HeaderSoundContext.Provider value={sound}>{children}</HeaderSoundContext.Provider>;
+}
+
 export interface WorkspaceHeaderProps {
   title: string;
   subtitle?: string;
@@ -39,6 +49,7 @@ export interface WorkspaceHeaderProps {
   /**
    * The host's sound control (Library: `HeaderSoundControl`), just
    * before Help and Search, on every size, so the reader can always mute.
+   * Without it the host's `WorkspaceHeaderSoundProvider` supplies one.
    */
   sound?: ReactNode;
 }
@@ -61,6 +72,7 @@ export function WorkspaceHeader({ title, subtitle, emblem, home, back, primaryAc
   const pathways = useLibraryPathways();
   const showCenter = pathways && center != null && center !== false;
   const accessory = useContext(HeaderAccessoryContext);
+  const hostSound = useContext(HeaderSoundContext);
   const commands = [...secondaryActions, ...(primaryAction ? [primaryAction] : []), ...overflowActions];
   const searchCommands = [...searchItems, ...commands.filter(action => !searchItems.some(item => item.id === action.id))];
   return <>
@@ -92,7 +104,7 @@ export function WorkspaceHeader({ title, subtitle, emblem, home, back, primaryAc
     actions={<>
       {contextualItem != null && contextualItem !== false && contextualItem !== '' && <div className="workspace-header-context">{contextualItem}</div>}
       {accessory}
-      {sound}
+      {sound === undefined ? hostSound : sound}
       <WorkspaceHeaderUtilities items={searchCommands} help={help} />
     </>}
   />

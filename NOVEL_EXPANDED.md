@@ -11,7 +11,7 @@
 > context.
 
 - **Created:** 2026-09-29
-- **Last updated:** 2026-10-01
+- **Last updated:** 2026-10-07
 - **Owner:** SENSEI, SEIHouse Productions
 
 ## Vision and build state
@@ -21,7 +21,7 @@ map, what SEN and Expanded Novels each cover, who they serve, and how SEIHouse m
 to sustain them. The capabilities it names are vision: they say where the product is
 going, not what exists.
 
-The second half is how we build it. [Where we are](#where-we-are-2026-10-01) is the
+The second half is how we build it. [Where we are](#where-we-are-2026-10-07) is the
 only section that says what is built today. A capability the first half names that
 Where we are does not list is not built. Knowing the whole product should shape every
 decision, but it is not a work order: build what the task asks for, and never
@@ -298,7 +298,7 @@ when its words change. That means:
   right, so its categories, and what the model is told to document, can be designed
   on purpose.
 
-## Where we are (2026-10-06)
+## Where we are (2026-10-07)
 
 The current implementation status, and the only section that says what is built.
 Update it whenever it changes.
@@ -354,9 +354,8 @@ Update it whenever it changes.
     (the same switch as the Reader's note); hovering it with a mouse, or holding
     it on a phone, opens a **Music volume** slider right there. Off, the menus
     are silent and the note leaves the header; the Reader keeps its own music.
-    Today the note shows in Home's header; Create and World Info gain it when
-    they move onto the Library shell, and the switch lives in the Workshop's
-    Profile until Profile comes to the app.
+    The note shows in every header in the app (Home, World Info and Create),
+    and the switch lives in the Workshop's Profile until Profile comes to the app.
   - **A chapter's soundtrack, in the tiny SEN language:** at the very start of
     every chapter the writer writes one soundtrack tag, the mood of its music
     and its atmosphere (`[[soundtrack: mystical | forest]]`), from the story's
@@ -388,6 +387,16 @@ Update it whenever it changes.
     which unlocks Blueprints and lifts the chapter limit, saving it on this
     device. `npm run check:app` fails the build if it reaches an old system
     ([`src/novel-expanded/README.md`](./src/novel-expanded/README.md)).
+  - **The app sits in the Library Shell:** Home and World Info have the
+    Library's header (NovelExpanded, the music note, Help and Search), its
+    navigation and its footer. The navigation shows only the app's two places,
+    Home and Create: the bottom strip on phones and tablets, the Pathways
+    sidebar on laptops, which opens the way the reader last left it on the
+    device. Search opens the reader's stories; the footer offers Help and the
+    draft Terms, Privacy and Cookies. Create is Story Seed in the shell's
+    workspace mode (Sections, Story Bank, Settings, Back). The Reader stays
+    full-screen. Discover and Profile join the navigation when their pages come
+    to the app.
   - **Story Length is set from the start:** the Story Seed's ARC page asks how many
     arcs of 30 chapters the story should run, 10 to 40 (300 to 1,200 chapters); left
     blank, the World Blueprint suggests one in that range, written by the same model
@@ -545,7 +554,8 @@ Update it whenever it changes.
    looks and feels.
 3. **Grow the NovelExpanded app** (`/app/`) piece by piece. Piece 1, the core
    application spine at its own address with a check that fails the build if the
-   app imports an old system, is built. Next pieces:
+   app imports an old system, is built, and so is piece 2, the Library Shell
+   around it. Next pieces:
    - Story Settings (CAPA and media slots) inside Create and Story View, leaving
      the developer page;
    - cover art on Story View through the media reveal;
@@ -570,7 +580,7 @@ Update it whenever it changes.
 | SEN | SEIHouse Expanded Novels: the product-independent, licensable expanded-novel engine (`@seihouse/sen`). [The product family](#the-product-family). |
 | Expanded Novels | SEIHouse's first-party product on SEN, at NovelExpanded.com. In code, the Library (`@seihouse/library`), presented as the Celestial Library. |
 | SEA | SEIHouse Expanded Albums: SEIHouse's expanded-music product, separate from SEN. It inherits the shared infrastructure SEN pressure-tests. |
-| NovelExpanded app | Expanded Novels' app at NovelExpanded.com. Built at `/app/` (piece 1: the core application spine of Home, Create, Story View and Reader), in `src/novel-expanded/`. |
+| NovelExpanded app | Expanded Novels' app at NovelExpanded.com. Built at `/app/` (piece 1: the core application spine of Home, Create, Story View and Reader; piece 2: the Library Shell around it), in `src/novel-expanded/`. |
 | Story Seed / World Blueprint | Where a story is created (`?preview=story-seed`, and Create in the app). The Blueprint is the novel's transferable core: what a reader takes to make their own version ([The World Blueprint](#the-world-blueprint)). |
 | Story View | The story's own page: cover art, the story, Enter. Built today as the World Info page (`WorldCardInfo`), where Start Story or Start Reading leads into the Reader Chamber. |
 | Reader Chamber | Where chapters are read: a HARNESS story's chapters on the Text Highlight Engine with Sound Cues, Listen and the soundtrack (`HarnessReaderSession`). The older Reader Chamber preview (`?preview=reader-chamber`) is not part of this path. |

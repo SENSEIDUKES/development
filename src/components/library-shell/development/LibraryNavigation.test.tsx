@@ -5,7 +5,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import { LIBRARY_EMBLEM, LibraryNavigation, LibrarySectionSidebar, useLibraryWorkspace, type LibraryWorkspaceDefinition } from '@seihouse/library/shell';
 import { MainLibraryNavigation } from './MainLibraryNavigation';
-import { activeLibraryDestination, librarySectionItems, type LibraryLocation } from '@seihouse/library/shell';
+import { activeLibraryDestination, librarySectionItems, type LibraryDestination, type LibraryLocation } from '@seihouse/library/shell';
 import { StorySeedWorkspaceChrome } from '../../story-seed/development/StorySeedWorkspaceChrome';
 import { createEmptyStorySeedInput } from '@seihouse/sen/story-seed';
 
@@ -65,6 +65,28 @@ it('uses ordered global destinations, preserves host routes and updates selectio
   // Home's My Library collection keeps Home selected now that its tab is Create.
   await render(page({ screen: 'home', collection: 'my-library' }));
   expect(globalNav().querySelector('[aria-current="page"]')?.textContent).toBe('Home');
+});
+
+it('shows only the places a host has built, with Settings only beside Profile', async () => {
+  const navigate = vi.fn();
+  const page = (location: LibraryLocation, destinations?: readonly LibraryDestination[]) => <LibraryNavigation location={location}
+    onNavigate={navigate} destinations={destinations}><LibrarySectionSidebar /></LibraryNavigation>;
+  const pathways = () => container.querySelector('nav[aria-label="Library pathways"]')!;
+  await render(page({ screen: 'detail' }, ['home', 'create']));
+  expect(Array.from(globalNav().querySelectorAll('button')).map(button => button.textContent)).toEqual(['Home', 'Create']);
+  // A story's own page belongs to Home.
+  expect(globalNav().querySelector('[aria-current="page"]')?.textContent).toBe('Home');
+  // Nowhere: not in the strip, the sidebar's pathways, or its footer.
+  for (const absent of ['Discover', 'Profile', 'Settings']) expect(container.textContent).not.toContain(absent);
+  expect(button('Create', pathways())).toBeDefined();
+  await click(button('Create', globalNav()));
+  expect(navigate).toHaveBeenLastCalledWith({ screen: 'creator-space' });
+  await click(button('Home', pathways()));
+  expect(navigate).toHaveBeenLastCalledWith({ screen: 'home', collection: 'featured' });
+  // Without a list, every place shows, and Settings sits with Profile.
+  await render(page({ screen: 'home', collection: 'featured' }));
+  expect(Array.from(globalNav().querySelectorAll('button')).map(button => button.textContent)).toEqual(['Home', 'Create', 'Discover', 'Profile']);
+  expect(button('Settings', container)).toBeDefined();
 });
 
 it('keeps four destinations with or without page options and preserves page state', async () => {

@@ -54,13 +54,15 @@ const createSeededStory = async (repository: InMemoryHarnessGenerationRepository
 };
 
 /** A host the way the app is one: it decides the page and keys StoryPages by story, never by page. */
-function StoryHost({ repository, adapter, readerState, storyId, preferredModel, onStories }: {
+function StoryHost({ repository, adapter, readerState, storyId, preferredModel, onStories, framed = false }: {
   repository: HarnessGenerationRepository;
   adapter: HarnessGenerationModelAdapter;
   readerState?: ReaderStateRepository;
   storyId: string;
   preferredModel?: string;
   onStories?: (stories: LibraryStories) => void;
+  /** World Info inside the host's own browsing frame, as the app's Library Shell does. */
+  framed?: boolean;
 }) {
   const stories = useLibraryStories({ repository, modelAdapter: adapter, preferredModel });
   onStories?.(stories);
@@ -68,6 +70,7 @@ function StoryHost({ repository, adapter, readerState, storyId, preferredModel, 
   if (page === 'home') return <p data-testid="story-host-home">Your stories</p>;
   return <StoryPages key={storyId} stories={stories} storyId={storyId} page={page} readerStateRepository={readerState}
     writingAgent={VERSA} backLabel="Back to your stories"
+    frame={framed ? info => <div data-testid="host-frame"><main>{info}</main></div> : undefined}
     onOpenReader={() => setPage('read')} onCloseReader={() => setPage('info')} onBack={() => setPage('home')} />;
 }
 
@@ -136,6 +139,31 @@ describe('A story\'s own pages for any host', { timeout: 20_000 }, () => {
     // World Info's way back carries the host's name for it.
     await click(worldInfo()!.querySelector<HTMLButtonElement>('button[aria-label="Back to your stories"]'), 'Back to your stories');
     expect(container.querySelector('[data-testid="story-host-home"]')).toBeTruthy();
+  });
+
+  it('World Info sits inside a host\'s frame, and Start Story still writes Chapter 1 once the Reader opens outside it', async () => {
+    const model = scriptedModel();
+    const repository = new InMemoryHarnessGenerationRepository();
+    const story = await createSeededStory(repository, model.adapter, 'The Drowned Name');
+    await act(async () => root.render(renderWithDevAudio(<StoryHost repository={repository} adapter={model.adapter}
+      readerState={new MemoryReaderStateRepository()} storyId={story.id} framed />)));
+    await flush();
+
+    // The frame owns the page's one <main>; World Info is its content.
+    const frame = container.querySelector('[data-testid="host-frame"]')!;
+    expect(frame.contains(worldInfo())).toBe(true);
+    expect(worldInfo()!.tagName).toBe('DIV');
+    expect(container.querySelectorAll('main')).toHaveLength(1);
+
+    // The Reader is never framed, and StoryPages stays mounted across the move.
+    await click(chaptersAction(), 'Start Story');
+    await flush();
+    expect(container.querySelector('[data-testid="host-frame"]')).toBeNull();
+    expect(container.querySelector('[data-testid="harness-reader"]')).toBeTruthy();
+    expect(model.generate).toHaveBeenCalledTimes(1);
+    await act(async () => { model.release(); });
+    await flush();
+    expect(container.querySelector('[data-chapter-number="1"]')).toBeTruthy();
   });
 
   it('World Info saves the whole story as one file, so a test can be shared', async () => {

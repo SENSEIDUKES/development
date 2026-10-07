@@ -5,7 +5,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
-import { WorkspaceHeader } from '@seihouse/library/shell';
+import { WorkspaceHeader, WorkspaceHeaderSoundProvider } from '@seihouse/library/shell';
 import { MainLibraryHeader } from './MainLibraryHeader';
 import { STORY_SEED_HELP_ITEMS } from '@seihouse/library/story-seed';
 
@@ -29,6 +29,21 @@ const fill = async (input: HTMLInputElement, value: string) => { await act(async
   Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value);
   input.dispatchEvent(new Event('input', { bubbles: true }));
 }); };
+
+it('puts the host\'s sound control on every header beneath it, unless a header sets its own', async () => {
+  const controls = () => Array.from(container.querySelector('header')!.querySelectorAll('button'))
+    .map(element => element.getAttribute('aria-label') ?? element.textContent);
+  const host = (header: React.ReactNode) => <WorkspaceHeaderSoundProvider sound={<button aria-label="Mute music">Note</button>}>{header}</WorkspaceHeaderSoundProvider>;
+  // Just before Help and Search, like a header's own sound.
+  await render(host(<WorkspaceHeader title="Story Seed" />));
+  expect(controls()).toEqual(['Mute music', 'Help', 'Search']);
+  await render(host(<WorkspaceHeader title="Story Seed" sound={<button aria-label="Page sound">Page</button>} />));
+  expect(controls()).toEqual(['Page sound', 'Help', 'Search']);
+  await render(host(<WorkspaceHeader title="Story Seed" sound={null} />));
+  expect(controls()).toEqual(['Help', 'Search']);
+  await render(<WorkspaceHeader title="Story Seed" />);
+  expect(controls()).toEqual(['Help', 'Search']);
+});
 
 it('keeps logo, canonical badge, optional context, Help and Search in document order', async () => {
   await render(<WorkspaceHeader title="Long Library workspace title" emblem={{ src: '/favicon.jpg', alt: 'Library' }}

@@ -1,8 +1,10 @@
 # Library navigation architecture
 
 Current behavior checked against `LibraryNavigation.tsx`, `MainLibraryNavigation.tsx`,
-`libraryRoutes.ts` and `WorkspaceShell.tsx` on 2026-10-06. This describes the Library
-Shell; it does not mean these older pages have been connected to NovelExpanded.
+`libraryRoutes.ts` and `WorkspaceShell.tsx` on 2026-10-07. This describes the Library
+Shell. NovelExpanded (`/app/`) uses it with its own two places, Home and Create
+(`src/novel-expanded/AppShell.tsx`); the older Library pages behind Discover and Profile
+are not connected to it.
 
 ## Destinations
 
@@ -16,7 +18,9 @@ collection, not a global navigation entry. Re-selecting the current location is 
 | Discover | `screen: home`, `collection: challenges` | Existing Fate Survival collection; no separate Discover screen |
 | Profile | `screen: profile`, `cave: /home` | Cave pages, Seed Bank, Settings and public Exit |
 
-`MainLibraryNavigation` maps the existing routes and only supplies section actions that
+A host lists the places it has built (`destinations`, all four when omitted); a place it
+has not built is left out rather than shown dead, and Settings, a Profile page, shows
+only beside Profile. `MainLibraryNavigation` maps the existing routes and only supplies section actions that
 exist. Hosts retain ownership of navigation, story data, account data and persistence.
 Header Search and the footer expose existing page destinations; there is no global
 Sections drawer. Unknown standard pages receive no falsely selected pathway.
@@ -71,3 +75,4 @@ by `check:ownership`, `check:package-boundaries` and `check:app`.
 - **2026-09-27:** Unified main and workspace navigation; Story Seed supplies its focused task definition to the shell.
 - **2026-09-28:** Added the laptop Pathways sidebar, remembered open/minimized choice and optional all-width strip setting.
 - **2026-10-06:** Rewrote the body from current code and folded dated notes into this history. No behavior changed.
+- **2026-10-07:** Hosts list their places (`destinations`); Settings follows Profile. NovelExpanded shows Home and Create and remembers the sidebar choice on the device.

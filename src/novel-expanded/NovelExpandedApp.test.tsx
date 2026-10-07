@@ -22,7 +22,7 @@ import { createHostReaderMixer } from '../host/reader/readerMixer';
 import { SEN_SOUNDSCAPES } from '../host/media/soundscapeCatalog';
 import { piecesForMood, storySoundtrack } from '@seihouse/sen/reader-runtime';
 import { APP_MUSIC_MOOD } from './appMusic';
-import { writeMenuMusic } from '@seihouse/library/shell';
+import { LIBRARY_SIDEBAR_MODE_KEY, writeMenuMusic } from '@seihouse/library/shell';
 import { READER_MUSIC_MOOD } from '../components/harness-generation/development/useReaderSoundtrack';
 import { installFakeSpeechSynthesis } from '../test-utils/fakeSpeechSynthesis';
 import { NovelExpandedApp } from './NovelExpandedApp';
@@ -333,6 +333,111 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
     fail = false;
     await click(buttonByText('Retry', container), 'Retry', 20);
     expect(document.querySelector('[data-testid="novel-expanded-home"]')).toBeTruthy();
+  });
+});
+
+const shell = () => document.querySelector<HTMLElement>('[data-testid="novel-expanded-shell"]');
+const strip = () => document.querySelector<HTMLElement>('nav[aria-label="Library global navigation"]');
+const footer = () => document.querySelector<HTMLElement>('[data-library-footer]');
+const headerNote = () => document.querySelector<HTMLButtonElement>('header .header-sound-control button');
+
+describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
+  it('holds Home and World Info with the app\'s two places, and leaves the Reader full-screen', async () => {
+    const story = scriptedWriter();
+    const services = appServices(story.writer);
+    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
+    await render(services);
+
+    // Home: the Library header, the navigation and the footer around the reader's stories.
+    const header = shell()!.querySelector('header')!;
+    expect(header.querySelector('[data-slot="library-header-badge-title"]')?.textContent).toBe('NovelExpanded');
+    expect(header.querySelector('button[aria-label="Help"]')).toBeTruthy();
+    expect(header.querySelector('button[aria-label="Search"]')).toBeTruthy();
+    expect(headerNote()).toBeTruthy();
+    expect([...strip()!.querySelectorAll('button')].map(button => button.textContent)).toEqual(['Home', 'Create']);
+    expect(strip()!.querySelector('[aria-current="page"]')?.textContent).toBe('Home');
+    // Only places the app has built: no Discover or Profile, so no Settings either.
+    const sidebar = document.querySelector('[data-slot="app-shell-sidebar"]')!;
+    expect(sidebar.textContent).toContain('Create');
+    for (const absent of ['Discover', 'Profile', 'Settings']) expect(document.body.textContent).not.toContain(absent);
+    expect(footer()!.querySelector('[data-footer-title]')?.textContent).toBe('NovelExpanded');
+    expect([...footer()!.querySelectorAll('.library-footer-legal-link')].map(link => link.textContent)).toEqual(['Terms', 'Privacy', 'Cookies']);
+    // No channel is published yet, so the footer shows none.
+    expect(footer()!.querySelector('.library-footer-social')).toBeNull();
+    expect(document.querySelectorAll('main')).toHaveLength(1);
+
+    // World Info: the same shell, with Home selected.
+    await click(container.querySelector(`#home-world-${created.id} button[aria-label^="Open ${created.title}"]`), 'the Home card');
+    expect(worldInfo()!.closest('[data-testid="novel-expanded-shell"]')).toBeTruthy();
+    expect(strip()!.querySelector('[aria-current="page"]')?.textContent).toBe('Home');
+    expect(headerNote()).toBeTruthy();
+    expect(footer()).toBeTruthy();
+    expect(document.querySelectorAll('main')).toHaveLength(1);
+
+    // The Reader: immersive, outside the shell, and Start Story still writes Chapter 1.
+    await click(chaptersAction(), 'Start Story', 10);
+    expect(document.querySelector('[data-testid="harness-reader"]')).toBeTruthy();
+    expect(shell()).toBeNull();
+    expect(strip()).toBeNull();
+    expect(footer()).toBeNull();
+    expect(story.generate).toHaveBeenCalledTimes(1);
+    await act(async () => { story.release(); });
+    await flush(10);
+
+    // Back in World Info, Home in the navigation goes Home.
+    await click(buttonByText('Back'), 'Back', 10);
+    await click(buttonByText('Home', strip()!), 'Home in the navigation');
+    expect(address()).toBe('/app/');
+    expect(document.querySelector('[data-testid="novel-expanded-home"]')).toBeTruthy();
+  });
+
+  it('Create in the navigation opens Story Seed in the shell\'s workspace mode, with the music note', async () => {
+    await render(appServices(scriptedWriter().writer));
+    await click(buttonByText('Create', strip()!), 'Create in the navigation', 20);
+    expect(address()).toBe('/app/?page=create');
+    expect(document.querySelector('[data-testid="novel-expanded-create"]')).toBeTruthy();
+    // Story Seed's own task bar stands where the global strip was; its header carries the note.
+    expect(strip()).toBeNull();
+    const bar = document.querySelector<HTMLElement>('nav[aria-label="Story Seed navigation"]')!;
+    expect([...bar.querySelectorAll('button')].map(button => button.textContent)).toEqual(['Sections', 'Story Bank', 'Settings', 'Back']);
+    expect(headerNote()).toBeTruthy();
+    await click(buttonByText('Back', bar), 'Back on the task bar', 20);
+    expect(address()).toBe('/app/');
+  });
+
+  it('Search opens the reader\'s stories; the footer opens Help and the draft legal pages', async () => {
+    const story = scriptedWriter();
+    const services = appServices(story.writer);
+    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
+    await render(services);
+
+    await click(shell()!.querySelector('header button[aria-label="Search"]'), 'Search', 20);
+    const results = document.querySelector<HTMLElement>('[role="dialog"]')!;
+    for (const label of ['Your stories', 'Create a story', created.title]) expect(results.querySelector(`button[aria-label="${label}"]`)).toBeTruthy();
+    await click(results.querySelector(`button[aria-label="${created.title}"]`), 'the story in Search', 60);
+    expect(address()).toBe(`/app/?story=${created.id}`);
+    expect(worldInfo()).toBeTruthy();
+
+    const menus = footer()!;
+    expect(document.body.textContent).not.toContain('Library Help');
+    await click(buttonByText('Support', menus), 'Support');
+    await click(buttonByText('Help', menus), 'Help in the footer', 60);
+    expect(document.body.textContent).toContain('Library Help');
+    await act(async () => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); });
+    await flush(30);
+
+    await click(buttonByText('Privacy', footer()!), 'Privacy', 30);
+    const page = document.querySelector('[data-legal-document="privacy"]');
+    expect(page?.getAttribute('data-legal-status')).toBe('placeholder');
+    expect(page?.querySelector('[role="note"]')?.textContent).toContain('Draft placeholder');
+  });
+
+  it('opens the laptop sidebar the way the reader left it on this device', async () => {
+    const services = appServices(scriptedWriter().writer);
+    services.readerPreferences.write(LIBRARY_SIDEBAR_MODE_KEY, 'compact');
+    await render(services);
+    expect(document.querySelector('[data-sidebar-mode]')?.getAttribute('data-sidebar-mode')).toBe('compact');
+    expect(window.localStorage.getItem(`${NOVEL_EXPANDED_STORAGE.readerPreferences}${LIBRARY_SIDEBAR_MODE_KEY}`)).toBe('compact');
   });
 });
 

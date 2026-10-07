@@ -25,7 +25,7 @@ import {
 } from '@seihouse/ui';
 import { StoryAuthGate, STORY_AUTH_DISSOLVE_MS } from '@seihouse/library/story-seed';
 import type { AppUser, Story } from './types';
-import { useUserProfileServices } from './userProfileServices';
+import { notYetBuiltNote, useUserProfileServices } from './userProfileServices';
 import {
   DEFAULT_CAVE_ENVIRONMENT_ID,
   getCaveEnvironment,
@@ -79,6 +79,8 @@ interface UserProfileProps {
   stories: Story[];
   onLogout: () => void;
   onNavigateHome: () => void;
+  /** The address of the host's Home, for the header logo's link (`/` when omitted). */
+  homeHref?: string;
   onNavigateLibrary: (location: LibraryLocation) => void;
   accountControls?: CaveAccountControls;
   /** Host-supplied public records, keyed by the viewed creator, never the viewer. */
@@ -100,11 +102,12 @@ interface UserProfileProps {
  * Boost, and Settings becomes Exit. Public routes render only from the built
  * public presentation, so no private panel is mounted behind a public URL.
  */
-export default function UserProfile({ currentUser, stories, onLogout, onNavigateHome, onNavigateLibrary, accountControls, publicCreators = [] }: UserProfileProps) {
+export default function UserProfile({ currentUser, stories, onLogout, onNavigateHome, homeHref = '/', onNavigateLibrary, accountControls, publicCreators = [] }: UserProfileProps) {
   // Production calls `useUserProfile(...)` and reads the Firebase local-only flag
   // directly. Both arrive through the injected services port here, so this file
   // carries no Firebase, PostgreSQL, or generation dependency of its own.
-  const { useController: useUserProfile, localOnlyMode, authenticate, familiars = [], celestialStore, soundPreferences } = useUserProfileServices();
+  const services = useUserProfileServices();
+  const { useController: useUserProfile, localOnlyMode, authenticate, familiars = [], celestialStore, soundPreferences } = services;
   // The header's music note shows while the reader's Menu music is on, where the host has sound.
   const [menuMusic] = useMenuMusic(soundPreferences);
   const hostController = useUserProfile({ currentUser, stories, onLogout, onNavigateHome });
@@ -395,7 +398,8 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
           <UserProfileCaveDestination id={view} title={view === 'inbox' ? 'Inbox' : 'Redeem Code'}
             onBack={view === 'redeem-code' ? () => navigate('/settings') : returnHome}
             backLabel={view === 'redeem-code' ? 'Return to Settings' : 'Return to cave'}>
-            <p className="text-neutral-400">{view === 'inbox' ? 'Inbox is not connected in this preview.' : 'Code redemption is not connected in this preview.'}</p>
+            <p className="text-neutral-400">{notYetBuiltNote(services, view === 'inbox' ? 'inbox' : 'redeem-code')
+              ?? (view === 'inbox' ? 'Inbox is not connected in this preview.' : 'Code redemption is not connected in this preview.')}</p>
           </UserProfileCaveDestination>
         );
       case 'store':
@@ -566,7 +570,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
         sidebar={pathwaysSidebar || caveSidebarMounted ? <LibrarySectionSidebar /> : undefined}
         header={<WorkspaceHeader title="Profile" landmark="none"
           emblem={LIBRARY_EMBLEM}
-          home={{ href: '/', label: 'Return to Library', onNavigate: onNavigateHome }}
+          home={{ href: homeHref, label: 'Return to Library', onNavigate: onNavigateHome }}
           contextualItem={isPublicView ? <button type="button" onClick={exitPublicView}
             aria-label="Exit public view" title="Exit public view"
             className="workspace-header-public-view min-h-11 min-w-11 justify-center rounded-full cursor-pointer hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7dd3ff]">
@@ -619,6 +623,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
           handleApplyPortrait={handleApplyPortrait}
           daoData={daoData}
           profile={profile}
+          generationNote={notYetBuiltNote(services, 'portrait-generation')}
         />
       )}
 

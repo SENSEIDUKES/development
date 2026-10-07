@@ -4,8 +4,8 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import {
-  LIBRARY_EMBLEM, LibraryDesktopNavigationProvider, LibraryNavigation, LibrarySectionSidebar, WorkspaceHeader, WorkspaceHeaderSoundProvider,
-  useLibraryWorkspace, type LibraryWorkspaceDefinition,
+  LIBRARY_EMBLEM, LibraryDesktopNavigationProvider, LibraryDestinationsProvider, LibraryNavigation, LibrarySectionSidebar, WorkspaceHeader,
+  WorkspaceHeaderSoundProvider, useLibraryBottomClearance, useLibraryWorkspace, type LibraryWorkspaceDefinition,
 } from '@seihouse/library/shell';
 import { MainLibraryNavigation } from './MainLibraryNavigation';
 import { activeLibraryDestination, librarySectionItems, type LibraryDestination, type LibraryLocation } from '@seihouse/library/shell';
@@ -181,6 +181,21 @@ it('draws any workspace from its definition: Sections only with sections, tools 
   expect(globalNav()).toBeNull();
 });
 
+it('gives every Library navigation beneath it the host\'s places, and a navigation\'s own list still wins', async () => {
+  const navigate = vi.fn();
+  const strip = () => Array.from(globalNav().querySelectorAll('button')).map(button => button.textContent);
+  // A page that draws its own navigation (the Cave) names no places: the host's apply.
+  await render(<LibraryDestinationsProvider destinations={['home', 'create', 'profile']}>
+    <LibraryNavigation location={{ screen: 'profile', cave: '/home' }} onNavigate={navigate}><p>Cave</p></LibraryNavigation>
+  </LibraryDestinationsProvider>);
+  expect(strip()).toEqual(['Home', 'Create', 'Profile']);
+  expect(globalNav().querySelector('[aria-current="page"]')?.textContent).toBe('Profile');
+  await render(<LibraryDestinationsProvider destinations={['home', 'create', 'profile']}>
+    <LibraryNavigation location={{ screen: 'detail' }} onNavigate={navigate} destinations={['home']}><p>Story</p></LibraryNavigation>
+  </LibraryDestinationsProvider>);
+  expect(strip()).toEqual(['Home']);
+});
+
 it('floats a header\'s music note just above the bottom bar while the bar is on screen, and keeps it in the header on laptops', async () => {
   const media = (desktop: boolean) => vi.stubGlobal('matchMedia', (query: string) => ({
     matches: desktop && query === '(min-width: 1024px)', addEventListener: vi.fn(), removeEventListener: vi.fn(), addListener: vi.fn(), removeListener: vi.fn(),
@@ -220,4 +235,36 @@ it('floats a header\'s music note just above the bottom bar while the bar is on 
   await render(<WorkspaceHeader title="Alone" landmark="none" sound={<button aria-label="Mute sound">Note</button>} />);
   expect(notes()).toHaveLength(1);
   expect(notes()[0].closest('.workspace-header')).not.toBeNull();
+});
+
+it('tells a host how much of the screen\'s bottom the bar and the floating note cover, so its own floating pieces stay above them', async () => {
+  // A phone 844px tall: the bar is 82px; the note floats 8px above it and is 44px tall.
+  const tall = 844;
+  vi.stubGlobal('innerHeight', tall);
+  const heights = new Map([['library-global-navigation', 82], ['library-sound-slot', 44]]);
+  const height = (element: Element) => [...heights].find(([name]) => element.classList.contains(name))?.[1] ?? 0;
+  const offsetHeight = vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) {
+    return this.classList.contains('library-sound-slot') && !this.childElementCount ? 0 : height(this);
+  });
+  const rect = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+    const top = this.classList.contains('library-sound-slot') ? tall - 82 - 8 - 44 : tall - height(this);
+    return { top, bottom: top + height(this), left: 0, right: 390, width: 390, height: height(this), x: 0, y: top, toJSON: () => ({}) } as DOMRect;
+  });
+  let seen = -1;
+  function Probe() { seen = useLibraryBottomClearance(); return null; }
+  const home = (sound?: React.ReactNode) => <LibraryNavigation location={{ screen: 'home', collection: 'featured' }} onNavigate={vi.fn()}>
+    <WorkspaceHeader title="Home" landmark="none" sound={sound ?? null} />
+  </LibraryNavigation>;
+
+  // The bar alone, then the bar with the note floating above it.
+  await render(<><Probe />{home()}</>);
+  expect(seen).toBe(82);
+  await render(<><Probe />{home(<button aria-label="Mute sound">Note</button>)}</>);
+  await act(async () => { window.dispatchEvent(new Event('resize')); });
+  expect(seen).toBe(82 + 8 + 44);
+  // No Library bar on screen: nothing is covered.
+  await render(<Probe />);
+  expect(seen).toBe(0);
+  offsetHeight.mockRestore();
+  rect.mockRestore();
 });

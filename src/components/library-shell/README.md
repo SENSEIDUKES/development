@@ -193,6 +193,7 @@ The existing local files named by this inventory are:
 
 ## Workshop history
 
+- **2026-10-07 (Profile):** `LibraryDestinationsProvider` gives every Library navigation beneath it the host's places, including the Cave's own (a navigation's `destinations` still wins), and `useLibraryBottomClearance()` says how much of the screen's bottom the bar and the floating music note cover, so a host's own floating pieces (the Familiar) stay above them. NovelExpanded's places are now Home, Create and Profile, with Settings beside Profile. The Workshop's Familiar surfaces keep above the bar and the note the same way (see "The app's places and the Familiar above the bar" below).
 - **2026-10-07 (later):** While a bottom bar is on screen (phones and tablets), a header's music note now floats just above the bar's right end, as the Reader's note floats above its Listen bar, instead of sitting in the header; on laptops it stays in the header (`useLibraryBottomBar`, `useLibrarySoundSlot`; see "The music note floats above the bar" below). The Workshop's Profile note follows the same rule.
 
 - **2026-10-07:** NovelExpanded's Home and World Info moved onto the shell with its own two places (Home, Create); added `destinations`, `WorkspaceHeaderSoundProvider`, `useStoredLibrarySidebarMode` and `useLibraryLegalDocuments` (see "NovelExpanded on the shell" below). The Workshop's Library preview and locked captures are unchanged.
@@ -322,3 +323,21 @@ Library's `StoryPages` takes a `frame` for World Info, so a host can put World I
 its shell while the Reader, rendered by the same mounted `StoryPages`, stays outside it.
 The Workshop's Library preview is unchanged and keeps all four places.
 
+
+## The app's places and the Familiar above the bar — 2026-10-07
+
+NovelExpanded brought the Profile in, and with it the Cave, which draws its own
+`LibraryNavigation`. So the host's places now reach every Library navigation in a host
+through `LibraryDestinationsProvider`, a page's own included; a navigation's
+`destinations` still wins, and with neither all four places show. NovelExpanded lists
+Home, Create and Profile, so Settings shows beside Profile (the Pathways sidebar's
+foot on laptops); Discover joins when its page does.
+
+The floating Familiar and the floating music note share the bottom-right corner of a
+phone. `useLibraryBottomClearance()` is how far up from the screen's bottom the Library's
+own bottom chrome reaches: the bar on screen (its safe area included) and, while the
+note floats, the note above it. It is 0 when no bar is on screen, as on laptops.
+`LibraryNavigation` measures it from the bar and the note's spot as they change. A host
+passes it, plus a small gap, as the Familiar's `bottomInset`: the Familiar then starts
+just above the note and can be dragged anywhere above that line. NovelExpanded and the
+Workshop's Familiar surfaces both do.

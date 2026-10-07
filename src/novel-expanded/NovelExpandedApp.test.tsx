@@ -28,6 +28,8 @@ import { installFakeSpeechSynthesis } from '../test-utils/fakeSpeechSynthesis';
 import { NovelExpandedApp } from './NovelExpandedApp';
 import { NOVEL_EXPANDED_STORAGE, type NovelExpandedServices } from './services';
 import { NOVEL_EXPANDED_READER_ID } from './storyCreationRuntime';
+import { createDeviceProfileStore } from '../host/profile/deviceProfile';
+import { createPracticeEconomy } from '../host/economy/practiceEconomy';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -68,17 +70,22 @@ beforeAll(async () => {
     new Uint8Array(await readFile(path.resolve(__dirname, '../host/generation/capa/official-capa', definition.archiveFile))));
 });
 
-const appServices = (writer: HarnessGenerationModelAdapter, overrides: Partial<NovelExpandedServices> = {}): NovelExpandedServices => ({
-  stories: new InMemoryHarnessGenerationRepository(),
-  readerState: new MemoryReaderStateRepository(),
-  readerPreferences: createLocalReaderPreferenceStorage(NOVEL_EXPANDED_STORAGE.readerPreferences),
-  storySeeds: createLocalStorySeedRepository({ storageKey: 'test-novelexpanded-seeds' }),
-  writer,
-  installSkills: async () => officialSkills,
-  requestWorldBlueprint: vi.fn(),
-  accessToken: { current: undefined },
-  ...overrides,
-});
+const appServices = (writer: HarnessGenerationModelAdapter, overrides: Partial<NovelExpandedServices> = {}): NovelExpandedServices => {
+  const readerPreferences = overrides.readerPreferences ?? createLocalReaderPreferenceStorage(NOVEL_EXPANDED_STORAGE.readerPreferences);
+  return {
+    stories: new InMemoryHarnessGenerationRepository(),
+    readerState: new MemoryReaderStateRepository(),
+    readerPreferences,
+    storySeeds: createLocalStorySeedRepository({ storageKey: 'test-novelexpanded-seeds' }),
+    writer,
+    installSkills: async () => officialSkills,
+    requestWorldBlueprint: vi.fn(),
+    accessToken: { current: undefined },
+    profile: createDeviceProfileStore({ storage: readerPreferences, uid: NOVEL_EXPANDED_READER_ID }),
+    economy: createPracticeEconomy({ uid: NOVEL_EXPANDED_READER_ID }).clients,
+    ...overrides,
+  };
+};
 
 /** A Regular Reader story's seed: Next writes the next chapter (Fate Survival waits on the reader's direction). */
 const regularSeedRecord = (): StorySeedRecord => {
@@ -115,9 +122,9 @@ const footer = () => document.querySelector<HTMLElement>('[data-library-footer]'
 const floatingNote = () => document.querySelector<HTMLButtonElement>('[data-library-sound-slot] .header-sound-control button');
 /** The music note on laptops: in the header. */
 const headerNote = () => document.querySelector<HTMLButtonElement>('header .header-sound-control button');
-const render = async (services: NovelExpandedServices, url = '/app/', readerMixer = createHostReaderMixer(services.readerPreferences), equippedFamiliarId?: string) => {
+const render = async (services: NovelExpandedServices, url = '/app/', readerMixer = createHostReaderMixer(services.readerPreferences)) => {
   window.history.replaceState(null, '', url);
-  await act(async () => root.render(<NovelExpandedApp services={services} readerMixer={readerMixer} equippedFamiliarId={equippedFamiliarId} />));
+  await act(async () => root.render(<NovelExpandedApp services={services} readerMixer={readerMixer} />));
   await flush(20);
   return readerMixer;
 };
@@ -130,6 +137,14 @@ const typeInto = async (input: HTMLInputElement, value: string) => {
 
 beforeEach(() => {
   installAudioMediaStubs();
+  // The Cave measures its name and badges as they change.
+  if (!('ResizeObserver' in globalThis)) {
+    (globalThis as { ResizeObserver?: unknown }).ResizeObserver = class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
+  }
   window.localStorage.clear();
   window.scrollTo = vi.fn() as unknown as typeof window.scrollTo;
   Object.defineProperty(window, 'matchMedia', {
@@ -159,7 +174,9 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
     const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
     // The Model Router's chapter model is the one choice shared with the Workshop.
     writeModelPreference('chapters', 'remembered');
-    await render(services, '/app/', undefined, equippedFamiliarId);
+    // The reader's profile on this device is where the equipped Familiar is kept.
+    if (equippedFamiliarId) services.profile.save({ familiarId: equippedFamiliarId });
+    await render(services, '/app/');
 
     await click(container.querySelector(`#home-world-${created.id} button[aria-label^="Open ${created.title}"]`), 'the Home card');
     expect(address()).toBe(`/app/?story=${created.id}`);
@@ -346,7 +363,7 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
 
 
 describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
-  it('holds Home and World Info with the app\'s two places, and leaves the Reader full-screen', async () => {
+  it('holds Home and World Info with the app\'s places, and leaves the Reader full-screen', async () => {
     const story = scriptedWriter();
     const services = appServices(story.writer);
     const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
@@ -360,12 +377,13 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     // On a phone the music note floats above the bar, not in the header.
     expect(floatingNote()).toBeTruthy();
     expect(headerNote()).toBeNull();
-    expect([...strip()!.querySelectorAll('button')].map(button => button.textContent)).toEqual(['Home', 'Create']);
+    expect([...strip()!.querySelectorAll('button')].map(button => button.textContent)).toEqual(['Home', 'Create', 'Profile']);
     expect(strip()!.querySelector('[aria-current="page"]')?.textContent).toBe('Home');
-    // Only places the app has built: no Discover or Profile, so no Settings either.
+    // Only places the app has built: no Discover. Settings sits beside Profile in the laptop sidebar.
     const sidebar = document.querySelector('[data-slot="app-shell-sidebar"]')!;
     expect(sidebar.textContent).toContain('Create');
-    for (const absent of ['Discover', 'Profile', 'Settings']) expect(document.body.textContent).not.toContain(absent);
+    expect(sidebar.textContent).toContain('Settings');
+    expect(document.body.textContent).not.toContain('Discover');
     expect(footer()!.querySelector('[data-footer-title]')?.textContent).toBe('NovelExpanded');
     expect([...footer()!.querySelectorAll('.library-footer-legal-link')].map(link => link.textContent)).toEqual(['Terms', 'Privacy', 'Cookies']);
     // No channel is published yet, so the footer shows none.
@@ -598,5 +616,88 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     await click(chaptersAction(), 'Continue', 10);
     expect(document.querySelector('[data-chapter-number="1"]')!.textContent).toContain('The tide pulled back from the drowned gate.');
     expect(story.generate).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
+  const cave = () => document.querySelector<HTMLElement>('[data-testid="novel-expanded-profile"]');
+  const recall = (name = 'Quill') => document.querySelector<HTMLButtonElement>(`.workspace-header [aria-label="Show ${name} actions"]`);
+  const companion = () => document.querySelector<HTMLElement>('.familiar-companion');
+  const summon = async (name = 'Quill') => {
+    await click(recall(name), `the ${name} recall`);
+    await click(document.querySelector('[aria-label="Expand Familiar"]'), 'Expand Familiar');
+  };
+
+  it('opens the Cave from the navigation, on the practice account, inside the app\'s places', async () => {
+    await render(appServices(scriptedWriter().writer));
+    await click(buttonByText('Profile', strip()!), 'Profile in the navigation', 100);
+    expect(address()).toBe('/app/?page=profile&cave=%2Fhome');
+    expect(cave()).toBeTruthy();
+    // The Cave draws the Library's navigation itself, with the app's places.
+    expect([...strip()!.querySelectorAll('button')].map(button => button.textContent)).toEqual(['Home', 'Create', 'Profile']);
+    expect(strip()!.querySelector('[aria-current="page"]')?.textContent).toBe('Profile');
+    // The practice account opens with the most QI a tester could want.
+    expect(cave()!.querySelector('[data-cave-qi]')?.textContent).toBe('1,000,000 to spend');
+    // The music note floats above the Cave's bar on a phone, and the Familiar's recall sits in its header.
+    expect(floatingNote()).toBeTruthy();
+    expect(recall()).toBeTruthy();
+    // The Cave's logo goes Home, and so does Home in the navigation.
+    expect(document.querySelector<HTMLAnchorElement>('.workspace-header a[aria-label="Return to Library"]')?.getAttribute('href')).toBe('/app/');
+    await click(buttonByText('Home', strip()!), 'Home in the navigation');
+    expect(address()).toBe('/app/');
+    expect(document.querySelector('[data-testid="novel-expanded-home"]')).toBeTruthy();
+  });
+
+  it('Settings keeps the reader\'s choices on the device; what needs a server says it is not in the app yet', async () => {
+    const services = appServices(scriptedWriter().writer);
+    await render(services, '/app/?page=profile&cave=/settings', undefined);
+    await flush(100);
+    expect(cave()!.querySelector('[data-cave-settings]')).toBeTruthy();
+    // Account and server pieces still show, each disabled with the note.
+    const notes = [...cave()!.querySelectorAll('[data-cave-not-yet-built]')].map(note => note.textContent);
+    expect(notes.length).toBeGreaterThanOrEqual(6);
+    expect(new Set(notes)).toEqual(new Set(['Not in the app yet.']));
+    for (const name of ['Sever Link', 'Redeem Code', 'Shortcuts', 'Aether Router', 'Import Scroll']) {
+      expect(buttonByText(name, cave()!)?.disabled, name).toBe(true);
+    }
+    // Every Familiar is unlocked on the practice account; choosing one equips it everywhere at once.
+    await click(buttonByText('Select Phoenix', cave()!), 'Select Phoenix', 20);
+    expect(services.profile.read().familiarId).toBe('phoenix');
+    expect(recall('Phoenix')).toBeTruthy();
+    expect(recall('Quill')).toBeNull();
+  });
+
+  it('a new Story Seed in Create starts from the profile\'s reading language and Reading Mode', async () => {
+    const services = appServices(scriptedWriter().writer);
+    services.profile.save({ defaultReadingLanguage: 'ja', defaultChapterWritingStyle: 'Easy Read' });
+    await render(services, '/app/?page=create');
+    await click(buttonByText('Save Draft') ?? buttonByText('Saved'), 'Save Draft', 200);
+    const saved = await services.storySeeds.list(NOVEL_EXPANDED_READER_ID);
+    expect(saved.map(record => [record.originalLanguage, record.seed.story.optional.chapterWritingStyle])).toEqual([['ja', 'Easy Read']]);
+  });
+
+  it('one Familiar for the app: summoned once, it stays from page to page, and keeps out of the Reader', async () => {
+    const story = scriptedWriter();
+    const services = appServices(story.writer);
+    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
+    await render(services);
+    // It starts minimized, its recall in the header.
+    expect(companion()).toBeNull();
+    await summon();
+    expect(companion()).toBeTruthy();
+    expect(recall()).toBeNull();
+    // Profile and Create keep the same companion.
+    const summoned = companion();
+    await click(buttonByText('Profile', strip()!), 'Profile in the navigation', 50);
+    expect(companion()).toBe(summoned);
+    await click(buttonByText('Home', strip()!), 'Home in the navigation');
+    // The Reader is immersive: no Familiar and no recall.
+    await click(container.querySelector(`#home-world-${created.id} button[aria-label^="Open ${created.title}"]`), 'the Home card');
+    await click(chaptersAction(), 'Start Story', 10);
+    expect(document.querySelector('[data-testid="harness-reader"]')).toBeTruthy();
+    expect(companion()).toBeNull();
+    expect(recall()).toBeNull();
+    await act(async () => { story.release(); });
+    await flush(10);
   });
 });

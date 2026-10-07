@@ -2,11 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { ReaderMixerProvider, type ReaderMixer } from '@seihouse/audio-player';
 import { LibraryPresentationProvider, loadingFamiliarPresentation } from '@seihouse/library/presentation';
 import {
-  HeaderSoundControl, LibraryDesktopNavigationProvider, WorkspaceHeaderSoundProvider, useMenuMusic, useStoredLibrarySidebarMode,
+  HeaderSoundControl, LibraryDesktopNavigationProvider, LibraryDestinationsProvider, WorkspaceHeaderSoundProvider, useMenuMusic, useStoredLibrarySidebarMode,
 } from '@seihouse/library/shell';
 import { StoryPages, storyHomeWorlds, useLibraryStories } from '@seihouse/library/stories';
 import { findStory, nextChapterWaitsOnReader, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import { NarrativeButton } from '@seihouse/sen/presentation';
+import { EconomyClientProviders } from '../host/economy/EconomyClientProviders';
 import { useModelPreference } from '../host/generation/modelPreference';
 import { LIBRARY_ASSETS } from '../host/media/libraryAssets';
 import { LIBRARY_BASE_MEDIA } from '../host/media/libraryCatalog';
@@ -14,38 +15,48 @@ import { MANIFEST_BACKDROPS } from '../host/reader/manifestBackdrops';
 import { startHarnessStoryFromSeed } from '../host/story-seed/startHarnessStory';
 import { AGENTS } from '../lib/agents';
 import { defaultFamiliar, familiarCatalogueEntry } from '../host/familiar/catalogue';
+import { useDeviceProfile } from '../host/profile/deviceProfile';
 import { AccessTokenSheet, type AccessTokenRequest } from './AccessTokenSheet';
+import { AppFamiliar } from './AppFamiliar';
+import { APP_DESTINATIONS } from './appPlaces';
 import { AppShell } from './AppShell';
 import { writerWithAccessToken, type AskForAccessToken } from './accessToken';
 import { APP_SOUNDSCAPES, useAppMusic } from './appMusic';
 import { CreatePage } from './CreatePage';
 import { HomePage } from './HomePage';
+import { ProfilePage } from './ProfilePage';
 import { HOME_ROUTE, useAppRoute } from './routes';
 import type { NovelExpandedServices } from './services';
-import { startedSeedIds } from './storyCreationRuntime';
+import { NOVEL_EXPANDED_READER_ID, startedSeedIds, storySourceSeedId } from './storyCreationRuntime';
 
 /**
  * NovelExpanded: Home → Create (Story Seed and World Blueprint) → Story View
- * (World Info) → Reader, and nothing else. Its chapters are written the same
- * way as the Workshop's: the official CAPA skills, the Library's sound words
- * and Sound Cues, memory read only on request, and the Model Router's choice.
+ * (World Info) → Reader, with the reader's Profile beside them. Its chapters
+ * are written the same way as the Workshop's: the official CAPA skills, the
+ * Library's sound words and Sound Cues, memory read only on request, and the
+ * Model Router's choice.
  * Its one sound owner is the reader mixer (the SEIHouse audio player), made
  * once by the page that mounts the app and kept for the page's lifetime: the
  * app's own music plays through it on its menus (while the reader's Menu
  * music setting is on, with the music note in every Library header to mute
  * it or set its volume), and the Reader's own music and each chapter's scene
  * in the Reader. Home and World Info sit in the Library Shell (`AppShell`),
- * Create in its workspace mode; the Reader stays outside, immersive.
+ * Create in its workspace mode, and Profile is the Library's Cave; the Reader
+ * stays outside, immersive.
+ * The reader's profile (`services.profile`) is the one record of their name,
+ * languages, Reading Mode and Familiar: the Cave edits it, the floating
+ * Familiar and the writing veil wear its Familiar, and Create starts new
+ * Story Seeds from its defaults. Every page shares the one economy account
+ * (`services.economy`).
  */
-export function NovelExpandedApp({ services, readerMixer, equippedFamiliarId }: {
+export function NovelExpandedApp({ services, readerMixer }: {
   services: NovelExpandedServices;
   readerMixer: ReaderMixer;
-  /** The host profile's equipped choice. Visitors use the catalogue's default Familiar. */
-  equippedFamiliarId?: string;
 }) {
+  const profile = useDeviceProfile(services.profile);
   const loadingFamiliar = useMemo(() => loadingFamiliarPresentation(
-    (familiarCatalogueEntry(equippedFamiliarId) ?? defaultFamiliar).definition,
-  ), [equippedFamiliarId]);
+    (familiarCatalogueEntry(profile.familiarId) ?? defaultFamiliar).definition,
+  ), [profile.familiarId]);
   const [menuMusic] = useMenuMusic(services.readerPreferences);
   useAppMusic(readerMixer, menuMusic);
   // The laptop sidebar opens the way the reader last left it, on this device.
@@ -53,10 +64,15 @@ export function NovelExpandedApp({ services, readerMixer, equippedFamiliarId }: 
   return <ReaderMixerProvider mixer={readerMixer}>
     <LibraryPresentationProvider assets={LIBRARY_ASSETS} backdrops={MANIFEST_BACKDROPS} loadingFamiliar={loadingFamiliar}>
       <LibraryDesktopNavigationProvider value="sidebar" sidebarMode={sidebarMode} onSidebarModeChange={setSidebarMode}>
-        {/* The music note in every Library header, Story Seed's included, while Menu music is on. */}
-        <WorkspaceHeaderSoundProvider sound={menuMusic ? <HeaderSoundControl /> : null}>
-          <NovelExpandedPages services={services} />
-        </WorkspaceHeaderSoundProvider>
+        {/* The app's places in every Library navigation, the Cave's included. */}
+        <LibraryDestinationsProvider destinations={APP_DESTINATIONS}>
+          {/* The music note in every Library header, Story Seed's and the Cave's included, while Menu music is on. */}
+          <WorkspaceHeaderSoundProvider sound={menuMusic ? <HeaderSoundControl /> : null}>
+            <EconomyClientProviders clients={services.economy}>
+              <NovelExpandedPages services={services} />
+            </EconomyClientProviders>
+          </WorkspaceHeaderSoundProvider>
+        </LibraryDestinationsProvider>
       </LibraryDesktopNavigationProvider>
     </LibraryPresentationProvider>
   </ReaderMixerProvider>;
@@ -93,6 +109,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   askForToken: AskForAccessToken;
 }): ReactNode {
   const [route, navigate] = useAppRoute();
+  const profile = useDeviceProfile(services.profile);
   const [chapterModel] = useModelPreference('chapters');
   const [skills, setSkills] = useState<HarnessSkillManifest[]>();
   const [skillsError, setSkillsError] = useState<string>();
@@ -114,24 +131,37 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   const { state } = stories;
   const worlds = useMemo(() => state ? storyHomeWorlds(state) : [], [state]);
   const seedIds = useMemo(() => state ? startedSeedIds(state) : [], [state]);
+  // The Cave's Stories page: each story, and the Story Seed it started from.
+  const caveStories = useMemo(() => state ? state.stories.map(story => ({
+    id: story.id, title: story.title, userId: NOVEL_EXPANDED_READER_ID, sourceSeedId: storySourceSeedId(state, story),
+  })) : [], [state]);
   const storyId = route.page === 'story' || route.page === 'read' ? route.storyId : undefined;
   const missing = Boolean(state && storyId && !findStory(state, storyId));
   // A story that is not here (an old link, another browser) goes Home.
   useEffect(() => { if (missing) navigate(HOME_ROUTE, { replace: true }); }, [missing, navigate]);
 
+  // One Familiar around every page, at the same place in the tree, so it keeps its
+  // place as the reader moves; the Reader is immersive, so it stays out of it.
+  const withFamiliar = (page: ReactNode) =>
+    <AppFamiliar profile={profile} present={Boolean(state && skills) && route.page !== 'read'}>{page}</AppFamiliar>;
+
   if (!state || !skills) {
     const error = skillsError ?? stories.loadError;
-    return <main className="mx-auto flex min-h-screen max-w-xl flex-col items-center justify-center gap-4 px-4 text-center font-sans">
+    return withFamiliar(<main className="mx-auto flex min-h-screen max-w-xl flex-col items-center justify-center gap-4 px-4 text-center font-sans">
       {error
         ? <>
             <p role="alert" className="text-sm text-amber-200">{error}</p>
             <NarrativeButton onClick={() => { if (skillsError) setSkillsAttempt(value => value + 1); stories.retry(); }}>Retry</NarrativeButton>
           </>
         : <p role="status" className="text-sm text-neutral-400">Opening your stories…</p>}
-    </main>;
+    </main>);
   }
 
-  if (route.page === 'create') return <CreatePage services={services} askForToken={askForToken} startedSeedIds={seedIds} chapterModel={stories.model || undefined}
+  if (route.page === 'profile') return withFamiliar(<ProfilePage services={services} stories={caveStories} navigate={navigate} />);
+
+  if (route.page === 'create') return withFamiliar(<CreatePage services={services} askForToken={askForToken} startedSeedIds={seedIds} chapterModel={stories.model || undefined}
+    // A new Story Seed starts from the profile's languages and Reading Mode.
+    accountDefaultLanguage={profile.defaultReadingLanguage} accountDefaultChapterWritingStyle={profile.defaultChapterWritingStyle}
     onHome={() => navigate(HOME_ROUTE)}
     onStartStory={async payload => {
       const story = await startHarnessStoryFromSeed(stories.controller, payload);
@@ -142,9 +172,9 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
       if (!nextChapterWaitsOnReader(stories.controller.snapshot(), story.id)) void stories.generateNextChapter(story.id).catch(() => undefined);
       // The new story replaces Create, so Back from it goes Home.
       navigate({ page: 'story', storyId: story.id }, { replace: true });
-    }} />;
+    }} />);
 
-  if (storyId) return missing ? null : <StoryPages key={storyId} stories={stories} storyId={storyId}
+  if (storyId) return withFamiliar(missing ? null : <StoryPages key={storyId} stories={stories} storyId={storyId}
     page={route.page === 'read' ? 'read' : 'info'} readerStateRepository={services.readerState}
     readerPreferences={services.readerPreferences} soundscapes={APP_SOUNDSCAPES}
     writingAgent={AGENTS.VERSA} backLabel="Back to your stories"
@@ -152,7 +182,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     frame={info => <AppShell route={{ page: 'story', storyId }} navigate={navigate} stories={worlds} mainLabel="World Info">{info}</AppShell>}
     onOpenReader={() => navigate({ page: 'read', storyId })}
     onCloseReader={() => navigate({ page: 'story', storyId })}
-    onBack={() => navigate(HOME_ROUTE)} />;
+    onBack={() => navigate(HOME_ROUTE)} />);
 
-  return <HomePage worlds={worlds} navigate={navigate} />;
+  return withFamiliar(<HomePage worlds={worlds} navigate={navigate} />);
 }

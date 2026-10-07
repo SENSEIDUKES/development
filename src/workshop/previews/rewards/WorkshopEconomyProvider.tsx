@@ -5,44 +5,25 @@
  * reset a scenario.
  */
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
-import { DaoXpClientProvider, QiClientProvider, useDaoXpAccount, useQiAccount } from '@seihouse/library/cultivation';
-import { EnergyClientProvider, useEnergyAccount, type EnergyAccountState } from '@seihouse/library/energy';
-import { DaoPillarClientProvider } from '@seihouse/library/dao-pillar';
-import { AchievementsClientProvider, useAchievements, useAchievementsStore, useRefreshWhenReplaced } from '@seihouse/library/rewards';
-import { RelicsClientProvider, useRelics, useRelicsStore } from '@seihouse/library/relics';
-import { FamiliarsClientProvider, useFamiliars } from '@seihouse/library/familiar';
+import { useDaoXpAccount, useQiAccount } from '@seihouse/library/cultivation';
+import { useEnergyAccount, type EnergyAccountState } from '@seihouse/library/energy';
+import { useAchievements, useAchievementsStore, useRefreshWhenReplaced } from '@seihouse/library/rewards';
+import { useRelics, useRelicsStore } from '@seihouse/library/relics';
+import { useFamiliars } from '@seihouse/library/familiar';
 import type { DevelopmentEconomy } from '../../../server/economy/developmentRuntime';
+import { EconomyClientProviders } from '../../../host/economy/EconomyClientProviders';
 import { seedWorkshopAccount, type WorkshopAccountSeed } from './rewardScenarios';
 import {
   createInProcessEconomyFetch,
   createWorkshopEconomy,
   createWorkshopEconomyClients,
   createWorkshopSimulators,
-  type WorkshopEconomyClients,
   type WorkshopEconomyFaults,
   type WorkshopEconomyOptions,
 } from './workshopEconomy';
 
 /** Every economy client provider for one account; `null` clients mean not connected. */
-export function EconomyClientProviders({ clients, children }: { clients: WorkshopEconomyClients | null; children: ReactNode }) {
-  return (
-    <EnergyClientProvider client={clients?.energy ?? null}>
-      <DaoPillarClientProvider client={clients?.daoPillar ?? null}>
-        <QiClientProvider client={clients?.qi ?? null}>
-          <DaoXpClientProvider client={clients?.daoXp ?? null}>
-            <AchievementsClientProvider client={clients?.achievements ?? null}>
-              <RelicsClientProvider client={clients?.relics ?? null}>
-                <FamiliarsClientProvider client={clients?.familiars ?? null}>
-                  {children}
-                </FamiliarsClientProvider>
-              </RelicsClientProvider>
-            </AchievementsClientProvider>
-          </DaoXpClientProvider>
-        </QiClientProvider>
-      </DaoPillarClientProvider>
-    </EnergyClientProvider>
-  );
-}
+export { EconomyClientProviders };
 
 /**
  * Energy's hook keeps its state per component, so one shared read lets every

@@ -2,9 +2,10 @@
 
 Current behavior checked against `LibraryNavigation.tsx`, `MainLibraryNavigation.tsx`,
 `libraryRoutes.ts` and `WorkspaceShell.tsx` on 2026-10-07. This describes the Library
-Shell. NovelExpanded (`/app/`) uses it with its own two places, Home and Create
-(`src/novel-expanded/AppShell.tsx`); the older Library pages behind Discover and Profile
-are not connected to it.
+Shell. NovelExpanded (`/app/`) uses it with its own places, Home, Create and Profile
+(`src/novel-expanded/appPlaces.ts`): its Home and World Info in `AppShell.tsx`, and the
+Library's Cave, which draws its own navigation, as its Profile. Discover is not connected
+to it yet.
 
 ## Destinations
 
@@ -20,7 +21,9 @@ collection, not a global navigation entry. Re-selecting the current location is 
 
 A host lists the places it has built (`destinations`, all four when omitted); a place it
 has not built is left out rather than shown dead, and Settings, a Profile page, shows
-only beside Profile. `MainLibraryNavigation` maps the existing routes and only supplies section actions that
+only beside Profile. `LibraryDestinationsProvider` gives that list to every Library
+navigation beneath it, including one a Library page draws itself (the Cave's); a
+navigation's own `destinations` wins. `MainLibraryNavigation` maps the existing routes and only supplies section actions that
 exist. Hosts retain ownership of navigation, story data, account data and persistence.
 Header Search and the footer expose existing page destinations; there is no global
 Sections drawer. Unknown standard pages receive no falsely selected pathway.
@@ -80,5 +83,6 @@ by `check:ownership`, `check:package-boundaries` and `check:app`.
 - **2026-09-27:** Unified main and workspace navigation; Story Seed supplies its focused task definition to the shell.
 - **2026-09-28:** Added the laptop Pathways sidebar, remembered open/minimized choice and optional all-width strip setting.
 - **2026-10-06:** Rewrote the body from current code and folded dated notes into this history. No behavior changed.
+- **2026-10-07 (Profile):** `LibraryDestinationsProvider` carries a host's places into the Cave's own navigation; NovelExpanded shows Home, Create and Profile, with Settings. `useLibraryBottomClearance()` gives a host the height of the bar and the floating note, so its Familiar stays above them.
 - **2026-10-07 (later):** The music note floats just above the bottom bar on phones and tablets.
 - **2026-10-07:** Hosts list their places (`destinations`); Settings follows Profile. NovelExpanded shows Home and Create and remembers the sidebar choice on the device.

@@ -1,5 +1,19 @@
 # `@seihouse/library`
 
+**0.25.0 (2026-10-07):** what a host needs to bring the Cave and the Familiar into its
+own app. `./shell`: `LibraryDestinationsProvider` gives every Library navigation beneath
+it the host's places, the ones a Library page draws itself included (the Cave's); a
+navigation's own `destinations` still wins. `useLibraryBottomClearance` says how much of
+the screen's bottom the Library's bottom bar and the sound control floating above it
+cover (0 with no bar, as on laptops), so a host keeps its own floating pieces, such as
+the Familiar, above them. `./profile`: `LibraryProfile` takes `homeHref` for its header
+logo (`/` when omitted), and the services port takes `notYetBuilt` (`note`, `features`):
+the account and server pieces a host has not built yet (portrait generation, Keyboard
+Shortcuts, code redemption, Sever Link, Harmony sync, backup and import, the Aether
+Router, the Inbox) still show, disabled, each with the host's note
+(`notYetBuiltNote`). Omitted, everything is the controller's, as before. NovelExpanded
+uses all of it. Requires `@seihouse/sen` 0.24.2, as before.
+
 **0.24.0 (2026-10-07):** the shell takes a host's own places. `LibraryNavigation` takes
 `destinations`: the strip and the Pathways sidebar show only those, in the Library's
 order, and Settings shows only beside Profile (all four, as before, when omitted).

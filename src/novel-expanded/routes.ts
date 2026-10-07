@@ -1,20 +1,24 @@
 import { useCallback, useEffect, useState } from 'react';
 
 /**
- * The app's four pages, in the order a reader meets them. Each is a query on
- * the app's own address, so the deployment needs no rewrites and every page
- * survives a reload.
+ * The app's pages: the four of its spine, in the order a reader meets them,
+ * and the reader's Profile. Each is a query on the app's own address, so the
+ * deployment needs no rewrites and every page survives a reload.
  *
  * - Home: `/app/`
  * - Create (Story Seed and World Blueprint): `/app/?page=create`
  * - Story View (World Info): `/app/?story=<id>`
  * - Reader: `/app/?story=<id>&read=1`
+ * - Profile (the Cultivator Cave): `/app/?page=profile`, with the Cave's own
+ *   page in `cave` (Settings: `&cave=/settings`). The Cave moves between its
+ *   pages itself, through that one parameter.
  */
 export type NovelExpandedRoute =
   | { page: 'home' }
   | { page: 'create' }
   | { page: 'story'; storyId: string }
-  | { page: 'read'; storyId: string };
+  | { page: 'read'; storyId: string }
+  | { page: 'profile'; cave?: string };
 
 export const HOME_ROUTE: NovelExpandedRoute = { page: 'home' };
 
@@ -23,6 +27,10 @@ export function parseRoute(search: string): NovelExpandedRoute {
   const storyId = query.get('story')?.trim();
   if (storyId) return query.get('read') === '1' ? { page: 'read', storyId } : { page: 'story', storyId };
   if (query.get('page') === 'create') return { page: 'create' };
+  if (query.get('page') === 'profile') {
+    const cave = query.get('cave')?.trim();
+    return cave ? { page: 'profile', cave } : { page: 'profile' };
+  }
   return HOME_ROUTE;
 }
 
@@ -32,6 +40,7 @@ export function routeSearch(route: NovelExpandedRoute): string {
     case 'create': return '?page=create';
     case 'story': return `?story=${encodeURIComponent(route.storyId)}`;
     case 'read': return `?story=${encodeURIComponent(route.storyId)}&read=1`;
+    case 'profile': return `?${new URLSearchParams(route.cave ? { page: 'profile', cave: route.cave } : { page: 'profile' })}`;
   }
 }
 

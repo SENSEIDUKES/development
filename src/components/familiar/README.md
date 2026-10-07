@@ -283,6 +283,13 @@ Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
 
+- 2026-10-07: The Familiar comes to the NovelExpanded app (`src/novel-expanded/AppFamiliar.tsx`):
+  one companion for the app, the profile's equipped Familiar and size, minimized to its
+  recall in every Library header at first, kept out of the immersive Reader, and summoned
+  above the bottom bar and the floating music note (`bottomInset` from the Library's
+  `useLibraryBottomClearance`). The app's practice account owns every Familiar, so each
+  can be equipped from Settings or the Celestial Store. The Workshop's Familiar surfaces
+  keep above the bar and the note the same way.
 - 2026-10-07: Generation greetings now play once on touch or hover, then rest
   in the neutral pose. Holding hover never repeats; keyboard activation also
   greets. The sprite accepts an opt-in `playOnce` request counter, replacing

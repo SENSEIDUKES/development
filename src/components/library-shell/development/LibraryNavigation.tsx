@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { List } from 'lucide-react';
 import {
   LibraryBottomNavigation, LibraryNavigationDrawer, LibraryNavigationDrawerPanel,
@@ -55,8 +55,9 @@ export interface LibraryMainNavigationProps {
   location: LibraryLocation;
   onNavigate: (location: LibraryLocation) => void;
   /**
-   * The places this host has built, shown in the Library's order. All four
-   * when omitted. A host leaves out a place it does not have rather than show
+   * The places this host has built, shown in the Library's order. When
+   * omitted, the host's `LibraryDestinationsProvider` decides, and without one
+   * all four show. A host leaves out a place it does not have rather than show
    * a control that leads nowhere; Settings, a Profile page, shows only with
    * Profile.
    */
@@ -102,6 +103,15 @@ interface MainState {
 }
 const libraryPlaces = (destinations?: readonly LibraryDestination[]): readonly LibraryPlace[] =>
   destinations ? LIBRARY_DESTINATIONS.filter(place => destinations.includes(place.id)) : LIBRARY_DESTINATIONS;
+const DestinationsContext = createContext<readonly LibraryDestination[] | undefined>(undefined);
+/**
+ * The places a host has built, for every Library navigation beneath it,
+ * including the ones a Library page draws itself (the Cave's). A navigation's
+ * own `destinations` wins. Without either, all four show.
+ */
+export function LibraryDestinationsProvider({ destinations, children }: { destinations: readonly LibraryDestination[]; children: ReactNode }) {
+  return <DestinationsContext.Provider value={destinations}>{children}</DestinationsContext.Provider>;
+}
 interface NavigationContextValue {
   menu: LibrarySectionMenu | null;
   workspace: WorkspaceState | null;
@@ -169,6 +179,32 @@ export function useLibrarySoundSlot(): { floating: boolean; slot: HTMLElement | 
   const floating = useLibraryBottomBar();
   return { floating, slot: floating ? soundSlot : null };
 }
+/**
+ * How much of the screen's bottom edge the Library's own bottom chrome covers,
+ * in pixels: the bottom bar on screen (its safe area included) and the sound
+ * control floating just above it. 0 when no bar is on screen, as on laptops
+ * with the Pathways sidebar. One bar is on screen at a time, so this is the
+ * page's, readable anywhere: a host keeps its own floating pieces (the
+ * Familiar) above it.
+ */
+let bottomClearance = 0;
+const bottomClearanceListeners = new Set<() => void>();
+function publishBottomClearance(next: number) {
+  if (next === bottomClearance) return;
+  bottomClearance = next;
+  bottomClearanceListeners.forEach(listener => listener());
+}
+const subscribeBottomClearance = (listener: () => void) => {
+  bottomClearanceListeners.add(listener);
+  return () => { bottomClearanceListeners.delete(listener); };
+};
+export function useLibraryBottomClearance(): number {
+  return useSyncExternalStore(subscribeBottomClearance, () => bottomClearance, () => 0);
+}
+/** The height from an on-screen element's top edge to the bottom of the viewport; 0 while it is hidden. */
+const coveredBelow = (element: HTMLElement) =>
+  element.offsetHeight ? Math.max(0, window.innerHeight - element.getBoundingClientRect().top) : 0;
+
 /**
  * The sidebar preference for a shell whose rail is the Pathways sidebar, or
  * null elsewhere (workspace mode, the strip setting, no Library navigation).
@@ -248,8 +284,9 @@ export function useLibraryWorkspace() {
  */
 export function LibraryNavigation(props: LibraryNavigationProps) {
   const [soundSlot, setSoundSlot] = useState<HTMLElement | null>(null);
+  const hostDestinations = useContext(DestinationsContext);
   if ('workspace' in props) return <WorkspaceNavigation workspace={props.workspace}>{props.children}</WorkspaceNavigation>;
-  const { location, onNavigate, destinations, sectionMenu, profile, mode, children } = props;
+  const { location, onNavigate, destinations = hostDestinations, sectionMenu, profile, mode, children } = props;
   // Immersive and workspace routes cannot be overridden by the standard default.
   const routeMode = libraryNavigationMode(location.screen);
   const resolvedMode = routeMode !== 'standard' ? routeMode : mode ?? 'standard';
@@ -275,12 +312,22 @@ function LibrarySoundSlot({ onSlot }: { onSlot: (slot: HTMLElement | null) => vo
   useEffect(() => {
     const bar = slot?.parentElement?.querySelector<HTMLElement>(':scope > .library-global-navigation');
     if (!slot || !bar) return undefined;
-    const follow = () => slot.style.setProperty('--library-bar-height', `${bar.offsetHeight}px`);
+    // The spot follows the bar; the page's bottom clearance covers both (see useLibraryBottomClearance).
+    const follow = () => {
+      slot.style.setProperty('--library-bar-height', `${bar.offsetHeight}px`);
+      publishBottomClearance(Math.round(Math.max(coveredBelow(bar), coveredBelow(slot))));
+    };
     follow();
-    if (typeof ResizeObserver === 'undefined') return undefined;
-    const observer = new ResizeObserver(follow);
-    observer.observe(bar);
-    return () => observer.disconnect();
+    window.addEventListener('resize', follow);
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(follow);
+    // The bar's size changes with the safe area and at the laptop breakpoint; the spot's, as the sound arrives or leaves.
+    observer?.observe(bar);
+    observer?.observe(slot);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', follow);
+      publishBottomClearance(0);
+    };
   }, [slot]);
   return <div ref={ref} className="library-sound-slot" data-library-sound-slot="" />;
 }

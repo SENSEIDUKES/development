@@ -26,6 +26,8 @@ interface UserProfilePortraitModalProps {
   handleApplyPortrait: () => void;
   daoData: any;
   profile: UserProfile | null;
+  /** The host's note when it has not built portrait generation yet: Manifest Portrait shows disabled, with the note. */
+  generationNote?: string;
 }
 
 export const UserProfilePortraitModal: React.FC<UserProfilePortraitModalProps> = ({
@@ -45,7 +47,8 @@ export const UserProfilePortraitModal: React.FC<UserProfilePortraitModalProps> =
   handleGeneratePortrait,
   handleApplyPortrait,
   daoData,
-  profile
+  profile,
+  generationNote,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -146,12 +149,14 @@ export const UserProfilePortraitModal: React.FC<UserProfilePortraitModalProps> =
         </div>
 
         <footer className="portrait-builder-footer">
-          <p className="portrait-builder-footer-note">{generatedPortraitUrl ? 'A new face. The same cultivation journey.' : 'Review your portrait before applying it.'}</p>
+          <p className="portrait-builder-footer-note" data-cave-not-yet-built={!generatedPortraitUrl && generationNote ? '' : undefined}>
+            {generatedPortraitUrl ? 'A new face. The same cultivation journey.' : generationNote ?? 'Review your portrait before applying it.'}
+          </p>
           <div className="portrait-builder-actions">
             {generatedPortraitUrl ? <>
               <LibraryButton variant="secondary" icon={RefreshCw} onClick={handleGeneratePortrait} disabled={isSavingPortrait}>Regenerate</LibraryButton>
               <LibraryButton onClick={handleApplyPortrait} disabled={isSavingPortrait}>{isSavingPortrait ? 'Saving Portrait...' : 'Accept & Apply'}</LibraryButton>
-            </> : <LibraryButton icon={Camera} onClick={handleGeneratePortrait} disabled={isGeneratingPortrait}>
+            </> : <LibraryButton icon={Camera} onClick={handleGeneratePortrait} disabled={isGeneratingPortrait || Boolean(generationNote)}>
               {isGeneratingPortrait ? <span role="status">Manifesting {PORTRAIT_GENERATION_LABELS[generationStep] ?? 'Completing'}...</span> : 'Manifest Portrait'}
             </LibraryButton>}
           </div>

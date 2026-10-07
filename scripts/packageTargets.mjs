@@ -78,14 +78,14 @@ export const PACKAGE_TARGETS = {
     smokeExports: {
       '@seihouse/library': ['LIBRARY_PACKAGE_VERSION'],
       '@seihouse/library/presentation': ['LibraryPresentationProvider'],
-      '@seihouse/library/profile': ['LibraryProfile', 'UserProfileServicesProvider'],
+      '@seihouse/library/profile': ['LibraryProfile', 'UserProfileServicesProvider', 'notYetBuiltNote'],
       '@seihouse/library/energy': ['EnergyPanel', 'EnergyClientProvider', 'createHttpEnergyClient'],
       '@seihouse/library/familiar': ['Familiar', 'FamiliarSprite', 'FamiliarSelection', 'FamiliarCompanion', 'FamiliarRecall', 'FamiliarTrainingPanel', 'FamiliarsClientProvider', 'createHttpFamiliarsClient', 'activeNameEffect', 'ElementalEffectPanel', 'FamiliarNameEffect'],
       '@seihouse/library/cultivation': ['ClosedDoorCultivationModal', 'QiClientProvider', 'createHttpQiClient', 'DaoXpClientProvider', 'createHttpDaoXpClient', 'getDaoRankData'],
       '@seihouse/library/dao-pillar': ['DaoPillarView', 'DaoPillarClientProvider'],
       '@seihouse/library/relics': ['RelicReveal', 'FateSurvivalRelicsPanel', 'RelicsClientProvider', 'createHttpRelicsClient'],
       '@seihouse/library/rewards': ['AchievementsPanel', 'MysteryScrollReveal', 'RewardRevealCard', 'AchievementsClientProvider', 'createHttpAchievementsClient', 'describeRewardGrants'],
-      '@seihouse/library/shell': ['LibraryNavigation', 'WorkspaceShell', 'WorkspaceHeader', 'HeaderSoundControl', 'useMenuMusic', 'readMenuMusic'],
+      '@seihouse/library/shell': ['LibraryNavigation', 'LibraryDestinationsProvider', 'useLibraryBottomClearance', 'WorkspaceShell', 'WorkspaceHeader', 'HeaderSoundControl', 'useMenuMusic', 'readMenuMusic'],
       '@seihouse/library/home': ['LightNovelsHome', 'StoryDetailScreen'],
       '@seihouse/library/world-card': ['WorldCard', 'WorldCardInfo'],
       '@seihouse/library/story-seed': ['CreationModal', 'StoryCreationProvider', 'harnessStoryStartFromSeed'],
@@ -95,7 +95,7 @@ export const PACKAGE_TARGETS = {
       '@seihouse/library/stories': ['useLibraryStories', 'StoryPages', 'harnessStoryDisplay', 'storyHomeWorlds', 'LIBRARY_READ_ALOUD_VOICES'],
     },
     smokeTypes: `
-      import type { UserProfileServices } from '@seihouse/library/profile';
+      import type { UserProfileFeature, UserProfileNotYetBuilt, UserProfileServices } from '@seihouse/library/profile';
       import type { EnergyClient } from '@seihouse/library/energy';
       import type { FamiliarDefinition, FamiliarSelectionProps } from '@seihouse/library/familiar';
       import type { QiClient } from '@seihouse/library/cultivation';
@@ -106,7 +106,7 @@ export const PACKAGE_TARGETS = {
       import type { HarnessGenerationWorkspaceProps } from '@seihouse/library/generation';
       import type { LibraryStories, LibraryStoriesOptions, StoryPagesProps } from '@seihouse/library/stories';
       import type { ModelRouterConfig, TextGenerationRequest, SpeechGenerationRequest, GenerationResult } from '@seihouse/library/model-router-server';
-      type All = [UserProfileServices, EnergyClient, FamiliarDefinition, FamiliarSelectionProps, QiClient, DaoXpClient, FateSurvivalRelicView, RelicsClient, AchievementsClient, MysteryScrollView, RewardGrant, FamiliarsClient, FamiliarTrainingSnapshot, HarnessGenerationWorkspaceProps, LibraryStories, LibraryStoriesOptions, StoryPagesProps, ModelRouterConfig, TextGenerationRequest, SpeechGenerationRequest, GenerationResult];
+      type All = [UserProfileServices, UserProfileFeature, UserProfileNotYetBuilt, EnergyClient, FamiliarDefinition, FamiliarSelectionProps, QiClient, DaoXpClient, FateSurvivalRelicView, RelicsClient, AchievementsClient, MysteryScrollView, RewardGrant, FamiliarsClient, FamiliarTrainingSnapshot, HarnessGenerationWorkspaceProps, LibraryStories, LibraryStoriesOptions, StoryPagesProps, ModelRouterConfig, TextGenerationRequest, SpeechGenerationRequest, GenerationResult];
     `,
   },
 };

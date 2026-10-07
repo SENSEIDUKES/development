@@ -1,10 +1,12 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, type ComponentProps } from 'react';
 import { CreationModal, StoryCreationProvider } from '@seihouse/library/story-seed';
 import type { InitialStoryGenerationPayload } from '@seihouse/sen/story-seed';
 import { BlueprintRequestError } from '../host/story-seed/blueprintGenerationClient';
 import type { AskForAccessToken } from './accessToken';
 import type { NovelExpandedServices } from './services';
 import { useNovelExpandedStoryCreation } from './storyCreationRuntime';
+
+type CreationModalProps = ComponentProps<typeof CreationModal>;
 
 export interface CreatePageProps {
   /** `accessToken`: the owner's token, saved on this device, so leaving Create never forgets it. */
@@ -15,13 +17,17 @@ export interface CreatePageProps {
   startedSeedIds: readonly string[];
   /** The model chapters are written with; the World Blueprint is written by the same one. */
   chapterModel?: string;
+  /** The profile's default reading language: a new Story Seed's Original Language starts there. */
+  accountDefaultLanguage?: CreationModalProps['accountDefaultLanguage'];
+  /** The profile's default Reading Mode: a new Story Seed starts with it. */
+  accountDefaultChapterWritingStyle?: CreationModalProps['accountDefaultChapterWritingStyle'];
   onHome: () => void;
   /** Manifest Story: the host starts the story and shows it. */
   onStartStory: (payload: InitialStoryGenerationPayload) => Promise<void>;
 }
 
 /** Create: the Story Seed and its World Blueprint, the same journey the Library ships. */
-export function CreatePage({ services, askForToken, startedSeedIds, chapterModel, onHome, onStartStory }: CreatePageProps) {
+export function CreatePage({ services, askForToken, startedSeedIds, chapterModel, accountDefaultLanguage, accountDefaultChapterWritingStyle, onHome, onStartStory }: CreatePageProps) {
   const runtime = useNovelExpandedStoryCreation(services.storySeeds, startedSeedIds);
   const activeRequest = useRef<AbortController | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -63,6 +69,7 @@ export function CreatePage({ services, askForToken, startedSeedIds, chapterModel
   return <StoryCreationProvider value={runtime}>
     <div className="min-h-screen bg-void" data-testid="novel-expanded-create">
       <CreationModal onNavigateHome={onHome} onStartStory={onStartStory} isGenerating={generating} error={null}
+        accountDefaultLanguage={accountDefaultLanguage} accountDefaultChapterWritingStyle={accountDefaultChapterWritingStyle}
         onGenerateBlueprint={payload => withToken('The World Blueprint needs the development access token. Nothing was changed.',
           (accessToken, signal) => services.requestWorldBlueprint(payload, accessToken, signal, chapterModel))} />
     </div>

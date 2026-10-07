@@ -15,10 +15,15 @@ import { ownershipOf } from './ownershipInventory.mjs';
 export const APP_PAGE = 'app/index.html';
 const APP_SOURCE = 'src/novel-expanded/';
 
-/** The package entries the app's own files may import. */
+/**
+ * The package entries the app's own files may import. Profile and Familiar
+ * joined on 2026-10-07, when the owner brought the Profile and everything it
+ * connects to (the Cave, the floating Familiar) into the app.
+ */
 export const APP_ENTRIES = new Set([
   '@seihouse/library/stories', '@seihouse/library/story-seed', '@seihouse/library/home',
   '@seihouse/library/shell', '@seihouse/library/presentation',
+  '@seihouse/library/profile', '@seihouse/library/familiar',
   '@seihouse/sen/story-seed', '@seihouse/sen/harness-generation', '@seihouse/sen/presentation',
   '@seihouse/sen/reader-runtime', '@seihouse/sen/styles.css',
 ]);

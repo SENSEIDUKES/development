@@ -70,9 +70,11 @@ try {
     name: `${target.id}-package-smoke-consumer`,
     private: true,
     type: 'module',
+    // The locked audio build still declares UI 0.10.1; validate the host's scoped override.
+    overrides: { '@seihouse/audio-player': { '@seihouse/ui': `file:${join(root, 'vendor/seihouse-ui-0.11.0.tgz')}` } },
   }, null, 2));
   runNpm(
-    ['install', '--ignore-scripts', ...peers, join(root, 'vendor/seihouse-ui-0.10.1.tgz'), ...(target.id === 'library' ? [join(root, 'vendor/seihouse-library-ui-0.9.0.tgz')] : []), audioPlayer, ...dependencyTarballs, tarballPath],
+    ['install', '--ignore-scripts', ...peers, join(root, 'vendor/seihouse-ui-0.11.0.tgz'), ...(target.id === 'library' ? [join(root, 'vendor/seihouse-library-ui-0.10.0.tgz')] : []), audioPlayer, ...dependencyTarballs, tarballPath],
     consumerDirectory,
   );
 

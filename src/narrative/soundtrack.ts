@@ -165,7 +165,9 @@ export class StorySoundtrack {
     }
     this.failed.clear();
     const own = 'mood' in request ? choices.filter(piece => lower(piece.mood) === lower(request.mood)) : [];
-    this.start(this.pick(own.length ? own : choices)!, request);
+    // A new request begins with a different piece than the one it replaces, while it has another.
+    const replaced = current && current.request !== request ? current.piece : undefined;
+    this.start(this.pick(own.length ? own : choices, replaced)!, request);
   }
 
   private pick(pieces: readonly SceneAudioTrack[], after?: SceneAudioTrack): SceneAudioTrack | undefined {

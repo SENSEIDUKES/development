@@ -1,5 +1,7 @@
 # `@seihouse/sen`
 
+**0.24.1 (2026-10-07):** The HARNESS Reader shows each chapter's word count beside its number (`Chapter 7 · 2,174 words`), a testing aid while chapter length is tuned. When the music switches between the host's and a hold (the Reader), the new request starts with a different piece than the one playing whenever it has another, so the Reader never seems to open on the menu's piece.
+
 **0.24.0 (2026-10-07):** The Reader never opens to the host's music. `StorySoundtrack`
 carries a piece on only between requests of one kind: the host's music never follows the
 reader into a hold, nor a hold's piece back out. The Reader always holds its own music:

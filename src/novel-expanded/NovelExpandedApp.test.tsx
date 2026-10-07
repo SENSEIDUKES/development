@@ -281,7 +281,7 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
     // The same piece plays on through World Info and the veil while Chapter 1 is written.
     await click(container.querySelector(`#home-world-${created.id} button[aria-label^="Open ${created.title}"]`), 'the Home card');
     await click(chaptersAction(), 'Start Story', 10);
-    expect(document.querySelector('img[alt="VERSA"]')?.closest('.fixed')?.textContent).toContain('Chapter 1');
+    expect(document.querySelector('[data-testid="generation-overlay"]')?.textContent).toContain('Chapter 1');
     expect(soundtrack.piece()).toBe(first);
     expect(story.generate).toHaveBeenCalledTimes(1);
     story.release();
@@ -418,7 +418,7 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
 
     // Start Story finds it still being written: the veil, never a second write; it opens when saved.
     await click(chaptersAction(), 'Start Story', 10);
-    expect(document.querySelector('img[alt="VERSA"]')?.closest('.fixed')?.textContent).toContain('Chapter 1');
+    expect(document.querySelector('[data-testid="generation-overlay"]')?.textContent).toContain('Chapter 1');
     await act(async () => { writer.release(); });
     await flush(20);
     expect(document.querySelector('[data-chapter-number="1"]')!.textContent).toContain('The tide pulled back from the drowned gate.');

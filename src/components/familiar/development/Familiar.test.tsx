@@ -65,62 +65,77 @@ const open = async () => {
 const snapshot = (balance: number): EnergyAccountSnapshot => ({ uid: 'test-account', balance, held: 3, available: balance - 3, prices: [], activity: [], developmentControls: { initialGrant: 500, defaultGrant: 100, maxGrant: 10000 }, updatedAt: '2026-09-20T00:00:00Z' });
 
 describe('Familiar sprite playback', () => {
-  it('rests between complete waves spaced 3.5 seconds apart, including parent rerenders', () => {
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'performance'] });
-    const render = () => act(() => root.render(<FamiliarSprite familiar={celestialGuardian} animation="waving" repeatEveryMs={3500} />));
+  it('stays neutral until requested, plays one complete wave, and does not restart or repeat it', () => {
+    vi.useFakeTimers();
+    const render = (request = 0) => act(() => root.render(<FamiliarSprite familiar={celestialGuardian} animation="waving" playOnce={request} />));
     const pose = () => container.querySelector('.familiar-sprite')?.getAttribute('data-familiar-pose');
     render();
     imageLoaded();
     const resting = atlas().style.transform;
     expect(resting).toBe('translate(-75%, 0%)');
-    act(() => vi.advanceTimersByTime(1500));
+    act(() => vi.advanceTimersByTime(20_000));
     render();
-    act(() => vi.advanceTimersByTime(1999));
     expect(atlas().style.transform).toBe(resting);
     expect(pose()).toBe('resting');
-    act(() => vi.advanceTimersByTime(1));
+    expect(vi.getTimerCount()).toBe(0);
+    render(1);
     expect(atlas().style.transform).not.toBe(resting);
     expect(pose()).toBe('playing');
-    act(() => vi.advanceTimersByTime(699));
+    act(() => vi.advanceTimersByTime(300));
+    render(2); // Another interaction during a wave must not restart it.
+    act(() => vi.advanceTimersByTime(399));
     expect(pose()).toBe('playing');
     act(() => vi.advanceTimersByTime(1));
     expect(atlas().style.transform).toBe(resting);
     expect(pose()).toBe('resting');
-    act(() => vi.advanceTimersByTime(2799));
+    act(() => vi.advanceTimersByTime(20_000));
+    render(2);
     expect(pose()).toBe('resting');
-    act(() => vi.advanceTimersByTime(1));
+    expect(vi.getTimerCount()).toBe(0);
+    render(3);
     expect(pose()).toBe('playing');
     act(() => root.render(null));
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it('keeps intermittent waves neutral while paused, offscreen, backgrounded or under reduced motion', () => {
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'performance'] });
+  it('ignores requests while paused, offscreen, backgrounded or under reduced motion without replaying later', () => {
+    vi.useFakeTimers();
     let intersect!: IntersectionObserverCallback;
     vi.stubGlobal('IntersectionObserver', class { constructor(callback: IntersectionObserverCallback) { intersect = callback; } observe() {} disconnect() {} });
-    const render = (paused = false) => act(() => root.render(<FamiliarSprite familiar={celestialGuardian} animation="waving" repeatEveryMs={3500} paused={paused} />));
+    let request = 0;
+    const render = (paused = false) => act(() => root.render(<FamiliarSprite familiar={celestialGuardian} animation="waving" playOnce={request} paused={paused} />));
+    const wave = (paused = false) => { request += 1; render(paused); };
     const visible = (isIntersecting: boolean) => act(() => intersect([{ isIntersecting }] as IntersectionObserverEntry[], {} as IntersectionObserver));
     render();
     imageLoaded();
+    wave(); // Offscreen.
     expect(vi.getTimerCount()).toBe(0);
     visible(true);
-    act(() => vi.advanceTimersByTime(3500));
+    expect(vi.getTimerCount()).toBe(0);
+    wave();
     expect(container.querySelector('.familiar-sprite')?.getAttribute('data-familiar-pose')).toBe('playing');
     render(true);
+    wave(true);
     expect(atlas().style.transform).toBe('translate(-75%, 0%)');
     expect(vi.getTimerCount()).toBe(0);
     render();
+    expect(vi.getTimerCount()).toBe(0);
+    wave();
     visible(false);
     expect(vi.getTimerCount()).toBe(0);
     visible(true);
     reduced = true;
     act(() => mediaListeners.forEach(listener => listener()));
+    wave();
     expect(vi.getTimerCount()).toBe(0);
     reduced = false;
     act(() => mediaListeners.forEach(listener => listener()));
+    expect(vi.getTimerCount()).toBe(0);
+    wave();
     expect(vi.getTimerCount()).toBe(1);
     vi.spyOn(document, 'hidden', 'get').mockReturnValue(true);
     act(() => document.dispatchEvent(new Event('visibilitychange')));
+    wave();
     act(() => vi.advanceTimersByTime(10_000));
     expect(atlas().style.transform).toBe('translate(-75%, 0%)');
     expect(vi.getTimerCount()).toBe(0);

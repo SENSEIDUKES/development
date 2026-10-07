@@ -40,6 +40,7 @@ describe('The Generation Overlay has two screens', () => {
   it.each([
     ['quill', '#2589ff'], ['phoenix', '#ff6a13'], ['celestial-moon-moth', '#6bd6f0'],
     ['celestial-guardian', '#d5b668'], ['galaxy-octopus', '#994bfa'],
+    ['frostforged-golem', '#6bd6f0'],
   ])('shows the equipped %s with its elemental palette in narrative and media generation', (id, accent) => {
     const familiar = familiarCatalogueEntry(id)!.definition;
     for (const phase of ['chapter', 'cover']) {
@@ -59,6 +60,44 @@ describe('The Generation Overlay has two screens', () => {
       expect(veil.querySelector('img[src="/versa.png"]')).toBeNull();
       expect(veil.textContent).not.toMatch(/\d+%/);
     }
+  });
+
+  it.each([false, true])('waves only on mouse hover, touch or keyboard activation (compact: %s)', minimized => {
+    clock();
+    const familiar = familiarCatalogueEntry('celestial-guardian')!.definition;
+    act(() => root.render(<LoadingFamiliarProvider value={loadingFamiliarPresentation(familiar)}>
+      <GenerationOverlay agent={VERSA} isGenerating generationPhase="chapter" generatingChapterNum={3}
+        progress={null} streamingBlocksCount={0} generationProgressMessage={null} estimatedSecondsRemaining={null}
+        activeAgentId="versa" isVeilMinimized={minimized} setIsVeilMinimized={() => undefined} />
+    </LoadingFamiliarProvider>));
+    if (minimized) advance(1200); // The existing grace window precedes the compact card.
+    const sprite = container.querySelector<HTMLElement>('.familiar-sprite')!;
+    const artwork = container.querySelector<HTMLImageElement>('.familiar-sprite-atlas')!;
+    act(() => artwork.dispatchEvent(new Event('load')));
+    const greeting = sprite.closest('button')!;
+    const pointer = (type: string, pointerType: string) => act(() => {
+      const event = new MouseEvent(type, { bubbles: true });
+      Object.defineProperty(event, 'pointerType', { value: pointerType });
+      greeting.dispatchEvent(event);
+    });
+    advance(10_000);
+    expect(sprite.dataset.familiarPose).toBe('resting');
+    pointer('pointerover', 'touch'); // Touch hover must not greet before contact.
+    expect(sprite.dataset.familiarPose).toBe('resting');
+    pointer('pointerdown', 'touch');
+    expect(sprite.dataset.familiarPose).toBe('playing');
+    advance(700);
+    expect(sprite.dataset.familiarPose).toBe('resting');
+    pointer('pointerout', 'touch');
+    pointer('pointerover', 'mouse');
+    expect(sprite.dataset.familiarPose).toBe('playing');
+    advance(10_000); // Holding hover must not loop.
+    expect(sprite.dataset.familiarPose).toBe('resting');
+    act(() => greeting.click()); // Native keyboard activation has detail 0.
+    expect(sprite.dataset.familiarPose).toBe('playing');
+    advance(700);
+    expect(sprite.dataset.familiarPose).toBe('resting');
+    if (minimized) expect(greeting.querySelector('button')).toBeNull();
   });
 
   it('changes equipment without restarting the active journey, then shows the ready pose on arrival', () => {

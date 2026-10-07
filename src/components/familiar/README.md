@@ -9,7 +9,7 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - Source: supplied `Familiars/Packages/` collection (not a Git repository), containing twelve validated Familiar packages.
 - Preview: Workshop **Customization → Familiar** and `?preview=familiar`.
 - First Workshop record: 2026-09-20.
-- Last recorded Workshop update: 2026-10-06.
+- Last recorded Workshop update: 2026-10-07.
 - Historical source inspection: 2026-10-06.
 - Lifecycle: supplied source packages retained; the reusable renderer, host catalogue, and Energy interaction remain in Development.
 - Owner: Library. This first-party companion is not a SEN narrative capability.
@@ -78,10 +78,11 @@ intentionally not runtime dependencies.
 
 - `GenerationOverlay` reads the equipped definition through Library's
   `LoadingFamiliarProvider` (or `LibraryPresentationProvider.loadingFamiliar`).
-  It reuses `FamiliarSprite`: a wave every 3.5 seconds with a neutral pose
-  between waves, followed by a still review pose on arrival. The overlay
-  underline uses the regular shadow styling with its elemental colors and
-  no interaction. `repeatEveryMs` is opt-in; regular playback is unchanged. Element
+  It reuses `FamiliarSprite`: one wave on touch or mouse hover, then a neutral pose.
+  Holding hover never loops; keyboard activation also greets. Arrival holds the
+  review pose. The overlay underline uses the regular shadow styling with its
+  elemental colors and no interaction. `playOnce` is an opt-in request counter;
+  regular playback is unchanged. Element
   affinities and form/veil colors now share `src/library/familiars/appearance.ts`;
   the account's mastered name effect does not change the Familiar's own palette.
   The provider is a projection of the existing host profile, with no storage or
@@ -281,6 +282,12 @@ desktop hover, 320/390px viewport centering, desktop centering, tray alignment a
 Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
+
+- 2026-10-07: Generation greetings now play once on touch or hover, then rest
+  in the neutral pose. Holding hover never repeats; keyboard activation also
+  greets. The sprite accepts an opt-in `playOnce` request counter, replacing
+  the unreleased automatic cadence. Visibility, pause and reduced motion
+  suppress requests without replaying them later. Default playback is unchanged.
 
 - 2026-10-06: Added opt-in one-shot sprite cadence for generation: a complete
   wave every 3.5 seconds, neutral between waves, pausing for hidden documents,

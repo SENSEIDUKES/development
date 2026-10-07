@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Compass, Maximize2, Loader2 } from 'lucide-react';
 import type { LoadingTaskCard } from '../../../library/manifestations/taskCard';
 import { FamiliarSprite } from '../../familiar/development/FamiliarSprite';
-import { GENERATION_FAMILIAR_WAVE_INTERVAL_MS, loadingPalette, loadingPaletteStyle, type LoadingFamiliarPresentation } from '../../../library/manifestations/familiar';
+import { loadingPalette, loadingPaletteStyle, type LoadingFamiliarPresentation } from '../../../library/manifestations/familiar';
 import './generationOverlay.css';
 
 export interface CompactGenerationOverlayProps {
@@ -22,6 +22,7 @@ export default function CompactGenerationOverlay({ task, familiar, onExpand }: C
   const isVersa = !familiar && task.agentId === 'versa';
   const palette = loadingPalette(familiar, task.agentId);
   const [showDetails, setShowDetails] = React.useState(false);
+  const [waveRequest, setWaveRequest] = React.useState(0);
 
   return (
     <div className="compact-generation-overlay fixed bottom-32 left-6 z-[9999] flex flex-col items-start select-none" style={loadingPaletteStyle(palette)} data-familiar-id={familiar?.familiar.id}>
@@ -91,13 +92,15 @@ export default function CompactGenerationOverlay({ task, familiar, onExpand }: C
       <motion.button
         tabIndex={0}
         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }}
-        onClick={() => setShowDetails(prev => !prev)}
+        onClick={event => { setShowDetails(prev => !prev); if (event.detail === 0) setWaveRequest(value => value + 1); }}
+        onPointerEnter={event => { if (event.pointerType === 'mouse') setWaveRequest(value => value + 1); }}
+        onPointerDown={event => { if (event.pointerType !== 'mouse') setWaveRequest(value => value + 1); }}
         onMouseEnter={() => setShowDetails(true)}
         onMouseLeave={() => setShowDetails(false)}
         aria-label={showDetails ? "Hide generation details" : "Show generation details"}
         className={`relative w-14 h-14 rounded-full bg-zinc-950/90 border ${isVersa ? 'border-amber-500/40 hover:border-amber-500/80' : 'border-portal/40 hover:border-portal/80'} flex items-center justify-center cursor-pointer pointer-events-auto transition-all duration-300 outline-none`}
         animate={{
-          scale: [1, 1.04, 1],
+          scale: familiar ? 1 : [1, 1.04, 1],
           boxShadow: familiar
             ? [
                 '0 0 10px rgba(var(--veil-accent-rgb), 0.15)',
@@ -134,7 +137,7 @@ export default function CompactGenerationOverlay({ task, familiar, onExpand }: C
 
         {/* Main Icon Content Wrapper */}
         <div className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center overflow-hidden relative shadow-inner">
-          {familiar ? <div className="w-full"><FamiliarSprite familiar={familiar.familiar} animation="waving" repeatEveryMs={GENERATION_FAMILIAR_WAVE_INTERVAL_MS} /></div> : task.icon.kind === 'image' ? (
+          {familiar ? <div className="w-full"><FamiliarSprite familiar={familiar.familiar} animation="waving" playOnce={waveRequest} /></div> : task.icon.kind === 'image' ? (
             <img
               src={task.icon.src}
               alt={task.icon.alt}

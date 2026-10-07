@@ -16,6 +16,8 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 
 ## Workshop history
 
+- **2026-10-07:** Replaced automatic greetings with one supplied wave on touch or mouse hover, then a neutral pose. Holding hover never loops; keyboard activation also greets. Both generation modes use this behavior. The softer aura and inactive underline stay; regular Familiar playback and generation behavior are unchanged. Merged current main while preserving its music, background chapter writing and Frostforged Golem (Frost affinity). Library 0.22.0, SEN 0.23.0.
+
 - **2026-10-06:** Calmed the equipped Familiar in both generation overlay modes: one complete supplied wave every 3.5 seconds, resting in its neutral pose between waves, with no hero bobbing. Softened the hero aura and drop shadows, and reused the regular Familiar underline as a still, decorative accent-colored base. It has no click, focus or action behavior. Arrival keeps the ready pose; regular Familiar playback, generation travel, requests and stored data are unchanged.
 
 - **2026-10-06:** Made Generation Overlay, Status Message, Progress Indicator, Ambient Effects, Progress Label and Compact Generation Overlay the canonical component names, with matching active files and public exports. Renamed the controller, view, styles, task adapter and current callers; Workshop labels use the same vocabulary. The original published exports remain compatible. Historical references, routes, saved data, generation timing, Familiar art and colors are unchanged.
@@ -113,9 +115,11 @@ then retains the completed presentation for arrival before closing. Failure or
 cancellation never claims success. The Progress Label shows no invented percentage.
 
 The host supplies its equipped Familiar through `LoadingFamiliarProvider` or
-`LibraryPresentationProvider.loadingFamiliar`. Its supplied wave plays once every 3.5 seconds, with a neutral pose between
-waves and a still review pose on arrival. The softened aura and decorative
-accent-colored underline ground the character without an action control. Aura, Ambient Effects,
+`LibraryPresentationProvider.loadingFamiliar`. Its supplied wave plays once when
+touched or hovered, then returns to its neutral pose. Holding hover never loops;
+keyboard activation also greets. Arrival holds the review pose. The aura is softened,
+and the accent-colored underline stays a decorative base, with no actions.
+Aura, Ambient Effects,
 Progress Indicator, chamber decoration, Progress Label and compact accents share
 its elemental colors. Equipment changes preserve the running journey. Visitors
 use Quill when the host supplies that default; the presentation grants no ownership

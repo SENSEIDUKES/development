@@ -188,6 +188,8 @@ async function walk(browser, viewport, sample) {
   const page = await context.newPage();
   const problems = [];
   const counts = { chapters: 0, memory: 0, blueprints: 0, chaptersWithToken: 0, rewrites: [], fixes: [] };
+  let releaseFirstChapter;
+  const firstChapterReady = new Promise(resolve => { releaseFirstChapter = resolve; });
   page.on('pageerror', error => problems.push(`page error: ${error.message}`));
   page.on('request', request => {
     const path = new URL(request.url()).pathname;
@@ -246,8 +248,10 @@ async function walk(browser, viewport, sample) {
     // The token given for the Blueprint rides with chapters too, lifting the visitor limit.
     if (request.headers().authorization === `Bearer ${TOKEN}`) counts.chaptersWithToken += 1;
     if (body.immediateChapterRequest.rewrite) counts.rewrites.push(body.immediateChapterRequest);
-    // Long enough for the veil to be seen.
-    await new Promise(resolve => setTimeout(resolve, 1200));
+    // Chapter 1 now starts in World Info. Hold the fixture until the walk has
+    // observed its pending journey, rather than racing screenshots on a busy runner.
+    if (counts.chapters === 1) await firstChapterReady;
+    else await new Promise(resolve => setTimeout(resolve, 1200));
     const reply = body.immediateChapterRequest.rewrite ? rewritten : chapter;
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rawProviderResponse: JSON.stringify(reply), providerReceipt: receipt }) });
   });
@@ -329,6 +333,7 @@ async function walk(browser, viewport, sample) {
   }, startProgress);
   check(!(await veil.textContent()).match(/\d+%/), 'A whole-response writer must not show an invented percentage.');
   await shot('5-veil');
+  releaseFirstChapter();
   await page.waitForFunction(() => document.querySelector('[data-testid="generation-overlay"]')?.getAttribute('data-journey-progress') === '1');
   check(await veil.isVisible(), 'The veil should remain while the traveler arrives.');
   // Observe the actual SVG arrival, rather than sleeping through it on a busy runner.

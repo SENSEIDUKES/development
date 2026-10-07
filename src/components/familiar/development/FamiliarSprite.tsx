@@ -9,28 +9,30 @@ export interface FamiliarSpriteProps {
   activity?: FamiliarActivity;
   animation?: string;
   paused?: boolean;
-  /** Optional interval between one-shot clip starts; rest in the neutral pose between them. */
-  repeatEveryMs?: number;
+  /** Change this request value to play the selected clip once, then return to neutral. */
+  playOnce?: number;
   statusId?: string;
 }
 
 /** Select an atlas clip without reloading unchanged artwork. */
-export function FamiliarSprite({ familiar, activity, animation, paused = false, repeatEveryMs, statusId }: FamiliarSpriteProps) {
+export function FamiliarSprite({ familiar, activity, animation, paused = false, playOnce, statusId }: FamiliarSpriteProps) {
   const selectedAnimation = animation ?? familiarActivityAnimation(familiar, activity) ?? 'idle';
   const clip = familiar.animations[selectedAnimation] ?? familiar.animations.idle;
-  return <SpritePlayback key={familiar.spriteUrl} familiar={familiar} clip={clip} paused={paused} repeatEveryMs={repeatEveryMs} statusId={statusId} />;
+  return <SpritePlayback key={familiar.spriteUrl} familiar={familiar} clip={clip} paused={paused} playOnce={playOnce} statusId={statusId} />;
 }
 
 /** Play supplied frame timings while respecting pause, visibility, and reduced motion. */
-function SpritePlayback({ familiar, clip, paused, repeatEveryMs, statusId }: {
+function SpritePlayback({ familiar, clip, paused, playOnce, statusId }: {
   familiar: FamiliarDefinition;
   clip: FamiliarDefinition['animations'][string];
   paused: boolean;
-  repeatEveryMs?: number;
+  playOnce?: number;
   statusId?: string;
 }) {
-  const intermittent = repeatEveryMs !== undefined && Number.isFinite(repeatEveryMs) && repeatEveryMs > 0;
-  const restingClip = intermittent ? (familiar.animations.neutral ?? familiar.animations.idle ?? clip) : clip;
+  const oneShot = playOnce !== undefined;
+  const restingClip = oneShot ? (familiar.animations.neutral ?? familiar.animations.idle ?? clip) : clip;
+  const lastRequest = useRef(playOnce);
+  const requestPlayback = useRef<(() => void) | null>(null);
   const frame = useRef(0);
   const sprite = useRef<HTMLSpanElement>(null);
   const image = useRef<HTMLImageElement>(null);
@@ -54,7 +56,7 @@ function SpritePlayback({ familiar, clip, paused, repeatEveryMs, statusId }: {
   }, []);
 
   useEffect(() => {
-    if (intermittent) {
+    if (oneShot) {
       const paint = (currentClip: typeof clip, index: number, pose: 'resting' | 'playing') => {
         if (image.current) image.current.style.transform = `translate(${-currentClip.columns[index] * 100 / familiar.columns}%, ${-currentClip.row * 100 / familiar.rows}%)`;
         if (sprite.current) {
@@ -64,24 +66,29 @@ function SpritePlayback({ familiar, clip, paused, repeatEveryMs, statusId }: {
       };
       const rest = () => paint(restingClip, 0, 'resting');
       rest();
+      requestPlayback.current = null;
       if (!loaded || failed || paused || reducedMotion || !visible || clip.columns.length < 2) return;
-      let timer: number;
-      const play = () => {
-        const started = performance.now();
+      let timer: number | undefined;
+      let playing = false;
+      requestPlayback.current = () => {
+        if (playing) return;
+        playing = true;
         const advance = (index: number) => {
           paint(clip, index, 'playing');
           timer = window.setTimeout(() => {
             if (index + 1 < clip.columns.length) advance(index + 1);
             else {
               rest();
-              timer = window.setTimeout(play, Math.max(0, repeatEveryMs! - (performance.now() - started)));
+              playing = false;
             }
           }, clip.durations[index]);
         };
         advance(0);
       };
-      timer = window.setTimeout(play, repeatEveryMs);
-      return () => window.clearTimeout(timer);
+      return () => {
+        window.clearTimeout(timer);
+        requestPlayback.current = null;
+      };
     }
     if (!loaded || failed || paused || reducedMotion || !visible || clip.columns.length < 2) return;
     // Frame playback changes only the image transform, not React state or layout.
@@ -94,7 +101,14 @@ function SpritePlayback({ familiar, clip, paused, repeatEveryMs, statusId }: {
     };
     timer = window.setTimeout(advance, clip.durations[frame.current]);
     return () => window.clearTimeout(timer);
-  }, [clip, familiar.columns, familiar.rows, loaded, failed, paused, reducedMotion, visible, intermittent, repeatEveryMs, restingClip]);
+  }, [clip, familiar.columns, familiar.rows, loaded, failed, paused, reducedMotion, visible, oneShot, restingClip]);
+
+  useEffect(() => {
+    if (playOnce !== lastRequest.current) {
+      lastRequest.current = playOnce;
+      if (playOnce !== undefined) requestPlayback.current?.();
+    }
+  }, [playOnce]);
 
   const style = {
     aspectRatio: `${familiar.cellWidth} / ${familiar.cellHeight}`,
@@ -111,7 +125,7 @@ function SpritePlayback({ familiar, clip, paused, repeatEveryMs, statusId }: {
   };
 
   return <span className="familiar-artwork">
-    <span ref={sprite} className="familiar-sprite" style={style} role="img" aria-label={`${familiar.displayName}, ${clip.label}`} data-familiar-frame="0" data-familiar-pose={intermittent ? 'resting' : undefined}>
+    <span ref={sprite} className="familiar-sprite" style={style} role="img" aria-label={`${familiar.displayName}, ${clip.label}`} data-familiar-frame="0" data-familiar-pose={oneShot ? 'resting' : undefined}>
     {familiar.placeholderUrl && !loaded && !failed && <img
       className="familiar-sprite-placeholder" src={familiar.placeholderUrl} alt="" draggable={false} decoding="async"
     />}

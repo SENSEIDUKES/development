@@ -7,7 +7,7 @@ import { ProgressIndicator } from './ProgressIndicator';
 import { ProgressLabel } from './ProgressLabel';
 import { StatusMessage } from './StatusMessage';
 import { FamiliarSprite } from '../../familiar/development/FamiliarSprite';
-import { GENERATION_FAMILIAR_WAVE_INTERVAL_MS, loadingPalette, loadingPaletteStyle, type LoadingFamiliarPresentation } from '../../../library/manifestations/familiar';
+import { loadingPalette, loadingPaletteStyle, type LoadingFamiliarPresentation } from '../../../library/manifestations/familiar';
 import './generationOverlay.css';
 
 /**
@@ -107,6 +107,7 @@ export default function GenerationOverlayView({ task, familiar, journeyProgress,
   const immersive = task.agentId === 'versa' || Boolean(familiar);
   const palette = loadingPalette(familiar, task.agentId);
   const reduceMotion = useReducedMotion();
+  const [waveRequest, setWaveRequest] = React.useState(0);
 
   // GenerationOverlayController supplies the elapsed-time journey separately, so unknown work
   // never gains a made-up percentage. Direct card consumers can still supply measured progress.
@@ -257,11 +258,15 @@ export default function GenerationOverlayView({ task, familiar, journeyProgress,
             animate={reduceMotion || familiar ? { y: 0 } : { y: [0, -6, 0] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
           >
-            {familiar ? <div className="generation-overlay-familiar w-[92%]">
+            {familiar ? <button type="button" className="generation-overlay-familiar w-[92%]"
+              aria-label={`Wave with ${familiar.familiar.displayName}`} disabled={normalizedProgress === 1}
+              onPointerEnter={event => { if (event.pointerType === 'mouse') setWaveRequest(value => value + 1); }}
+              onPointerDown={event => { if (event.pointerType !== 'mouse') setWaveRequest(value => value + 1); }}
+              onClick={event => { if (event.detail === 0) setWaveRequest(value => value + 1); }}>
               <FamiliarSprite familiar={familiar.familiar} activity={normalizedProgress === 1 ? 'ready' : undefined}
                 animation={normalizedProgress === 1 ? undefined : 'waving'} paused={normalizedProgress === 1}
-                repeatEveryMs={normalizedProgress === 1 ? undefined : GENERATION_FAMILIAR_WAVE_INTERVAL_MS} />
-            </div> : <img
+                playOnce={normalizedProgress === 1 ? undefined : waveRequest} />
+            </button> : <img
               src={task.icon.src}
               alt={task.icon.alt}
               className="w-full h-full object-contain"

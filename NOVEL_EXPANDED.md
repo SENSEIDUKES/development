@@ -442,8 +442,9 @@ Update it whenever it changes.
   - **Openings and descriptions, in plain wording only:** each chapter is told
     where it sits in its arc ("Chapter 7 of 30 in Arc 1"). The first chapter of
     the story or of a new arc may ground the reader in the world; every other
-    chapter opens in motion, from where the last recap leaves off, never by
-    describing the place or its weather. A character gets the full portrait
+    chapter picks up from where the last recap leaves off and opens however
+    the moment calls for, so openings vary: the setting is one way to begin,
+    never a habit. A character gets the full portrait
     when they first appear, come back after time away, or change (a
     breakthrough, a power-up, new gear, an injury, a new rank), and a light
     touch between. The writer still gets the same Story Information on every

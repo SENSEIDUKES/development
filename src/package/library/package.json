@@ -1,9 +1,12 @@
 {
   "name": "@seihouse/library",
-  "version": "0.21.0",
+  "version": "0.22.0",
   "description": "Celestial Library product capabilities: accounts, Profile, Energy, cultivation, rewards, Relics, navigation and story creation.",
   "type": "module",
-  "sideEffects": ["**/*.css", "./dist/model-router-browser.js"],
+  "sideEffects": [
+    "**/*.css",
+    "./dist/model-router-browser.js"
+  ],
   "files": [
     "dist"
   ],
@@ -92,14 +95,15 @@
     "./styles.css": "./dist/library.css"
   },
   "peerDependencies": {
-    "@seihouse/sen": ">=0.23.0",
+    "@seihouse/sen": ">=0.24.0",
     "lucide-react": ">=1",
     "motion": ">=12",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-focus-lock": "^2.13.7",
     "@seihouse/library-ui": "0.9.0",
-    "@seihouse/ui": "0.10.1"
+    "@seihouse/ui": "0.10.1",
+    "@seihouse/audio-player": "^4.0.0"
   },
   "dependencies": {
     "@google/genai": "^2.16.0"

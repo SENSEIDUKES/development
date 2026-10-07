@@ -10,7 +10,7 @@ import { SEN_ATMOSPHERES } from '../../../host/media/atmosphereCatalog';
 import { SEN_SOUNDSCAPES } from '../../../host/media/soundscapeCatalog';
 import { createHostReaderMixer } from '../../../host/reader/readerMixer';
 import { installAudioMediaStubs } from '../../../test-utils/renderWithDevAudio';
-import { readingScene, useReaderSoundtrack } from './useReaderSoundtrack';
+import { READER_MUSIC_MOOD, readerMood, readingScene, useReaderSoundtrack } from './useReaderSoundtrack';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -20,7 +20,7 @@ const memory = (): ReaderPreferenceStorage => {
 };
 
 /** The Reader's use of the hook: whether it is open, its chapter's scene, and whether Listen has finished the chapter. */
-function Reader({ active, chapterId = 'c1', listenEnded = false, onSleep = () => undefined, scene, pieces = SEN_SOUNDSCAPES, choice = DEFAULT_SOUNDTRACK_CHOICE }: {
+function Reader({ active, chapterId, listenEnded = false, onSleep = () => undefined, scene, pieces = SEN_SOUNDSCAPES, choice = DEFAULT_SOUNDTRACK_CHOICE }: {
   active: boolean; chapterId?: string; listenEnded?: boolean; onSleep?: () => void;
   scene?: HarnessChapterScene; pieces?: readonly SceneAudioTrack[]; choice?: SoundtrackChoice;
 }) {
@@ -67,9 +67,10 @@ describe('The Reader soundtrack', () => {
     expect(stopAtmosphere).not.toHaveBeenCalled();
     expect(stopAll).not.toHaveBeenCalled();
 
-    // Leaving the Reader ends the session.
+    // Leaving the Reader ends the session and its atmosphere; the music is the soundtrack's.
     act(() => root.unmount());
-    expect(stopAll).toHaveBeenCalledTimes(1);
+    expect(stopAtmosphere).toHaveBeenCalledTimes(1);
+    expect(stopAll).not.toHaveBeenCalled();
     expect(mixer.getState().sleepTimer.status).toBe('off');
   });
 
@@ -93,10 +94,10 @@ describe('The Reader soundtrack', () => {
     expect(soundtrack.piece()).toBe(fighting);
     expect(mixer.getPreferences().atmosphereId).toBe(camp.id);
 
-    // A chapter written before scenes: the host's music returns, and the atmosphere stays.
+    // A chapter written before scenes: the Reader's own music, never the host's, and the atmosphere stays.
     render(<Reader active chapterId="c0" />);
     await settle();
-    expect(moodOf('ambient')).toContain(soundtrack.piece()?.id);
+    expect(moodOf(READER_MUSIC_MOOD)).toContain(soundtrack.piece()?.id);
     expect(mixer.getPreferences().atmosphereId).toBe(camp.id);
 
     render(<Reader active chapterId="c3" scene={{ soundscape: 'sad' }} />);
@@ -106,6 +107,41 @@ describe('The Reader soundtrack', () => {
     await settle();
     expect(moodOf('ambient')).toContain(soundtrack.piece()?.id);
     soundtrack.setBase(undefined);
+  });
+
+  it('never opens to the host\'s music: a chapter without a scene, and the writing screen, play the Reader\'s own', async () => {
+    const soundtrack = storySoundtrack(mixer);
+    soundtrack.setBase({ mood: 'ambient', pieces: SEN_SOUNDSCAPES });
+    await settle();
+    const calm = soundtrack.piece();
+    expect(moodOf('ambient')).toContain(calm?.id);
+
+    // Chapter 1 being written: no chapter yet, the host's pieces.
+    render(<Reader active chapterId={undefined} />);
+    await settle();
+    expect(soundtrack.piece()).not.toBe(calm);
+    expect(moodOf(READER_MUSIC_MOOD)).toContain(soundtrack.piece()?.id);
+    // Even a calm piece that also answers the Reader's mood is not carried in.
+    expect(mixer.getState().layers.soundscapes.requested).toBe(`id:${soundtrack.piece()!.id}`);
+
+    // A mood none of the story's pieces answers plays the Reader's own too.
+    render(<Reader active chapterId="c1" scene={{ soundscape: 'jazz' }} />);
+    await settle();
+    expect(moodOf(READER_MUSIC_MOOD)).toContain(soundtrack.piece()?.id);
+
+    // Leaving gives the menus their own music back.
+    act(() => root.unmount());
+    await settle();
+    expect(moodOf('ambient')).toContain(soundtrack.piece()?.id);
+    soundtrack.setBase(undefined);
+  });
+
+  it('chooses the chapter\'s mood when a piece answers it, else the Reader\'s, else the first piece\'s', () => {
+    expect(readerMood('sad', SEN_SOUNDSCAPES)).toBe('sad');
+    expect(readerMood(undefined, SEN_SOUNDSCAPES)).toBe(READER_MUSIC_MOOD);
+    expect(readerMood('jazz', SEN_SOUNDSCAPES)).toBe(READER_MUSIC_MOOD);
+    const sad = SEN_SOUNDSCAPES.filter(piece => piece.mood === 'sad' && !piece.moods.includes(READER_MUSIC_MOOD));
+    expect(readerMood(undefined, sad)).toBe('sad');
   });
 
   it('keeps the reader\'s own piece and atmosphere, whatever the chapter chose', async () => {

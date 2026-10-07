@@ -800,7 +800,7 @@ describe('Cultivator Cave settings', () => {
     const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('[aria-label="Settings categories"] [role="tab"]'));
     expect(tabs.map(tab => tab.textContent)).toEqual(['Customization', 'Accessibility', 'Account', 'Advanced']);
     const visibleHeadings = () => Array.from(document.querySelectorAll('[data-cave-settings] [data-slot="disclosure-heading"]')).filter(node => !node.closest('[hidden]')).map(node => node.textContent);
-    expect(visibleHeadings()).toEqual(['Identity & Cultivator Aura', 'Cultivator Portrait', 'Cave Environment']);
+    expect(visibleHeadings()).toEqual(['Identity & Cultivator Aura', 'Cultivator Portrait', 'Cave Environment', 'Sound']);
     await act(async () => controller().setFormData(previous => ({ ...previous, displayName: 'Cloud Reader' })));
     await click(tabs[1]);
     expect(visibleHeadings()).toEqual(['Language', 'Writing Preferences', 'Keyboard Shortcuts']);
@@ -827,6 +827,7 @@ describe('Cultivator Cave settings', () => {
       'Identity & Cultivator Aura',
       'Cultivator Portrait',
       'Cave Environment',
+      'Sound',
       'Language',
       'Writing Preferences',
       'Keyboard Shortcuts',
@@ -938,6 +939,22 @@ describe('Cultivator Cave settings', () => {
     await press(selected(environmentLabel), 'ArrowDown');
     expect(selected(environmentLabel).textContent).toContain(CAVE_ENVIRONMENTS[1].name);
     expect(document.activeElement).toBe(selected(environmentLabel));
+  });
+
+  it('turns Menu music off and on from Sound, kept on the device', async () => {
+    localStorage.removeItem('workshop.reader.menu-music');
+    await renderCave();
+    await click(byText('[data-cave-account-actions] button', 'Settings'));
+    await click(byText('[data-slot="disclosure-trigger"]', 'Sound'));
+    const menuMusic = () => Array.from(document.querySelectorAll<HTMLElement>('[data-cave-settings] [role="switch"], [data-cave-settings] input[type="checkbox"]'))
+      .find(control => control.closest('label')?.textContent?.includes('Menu music'))!;
+    expect(menuMusic()).toBeTruthy();
+    expect((menuMusic() as HTMLInputElement).checked ?? menuMusic().getAttribute('aria-checked') === 'true').toBe(true);
+    await click(menuMusic());
+    expect(localStorage.getItem('workshop.reader.menu-music')).toBe('off');
+    await click(menuMusic());
+    expect(localStorage.getItem('workshop.reader.menu-music')).toBe('on');
+    localStorage.removeItem('workshop.reader.menu-music');
   });
 
   it('keeps an enabled Aura tab stop when a legacy selected rank is now locked', async () => {

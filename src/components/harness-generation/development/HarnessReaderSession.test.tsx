@@ -16,6 +16,7 @@ import { createHostReaderMixer } from '../../../host/reader/readerMixer';
 import { SEN_ATMOSPHERES } from '../../../host/media/atmosphereCatalog';
 import { SEN_SOUNDSCAPES } from '../../../host/media/soundscapeCatalog';
 import { piecesForMood, storySoundtrack } from '@seihouse/sen/reader-runtime';
+import { READER_MUSIC_MOOD } from './useReaderSoundtrack';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -493,9 +494,12 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(stopAtmosphere).not.toHaveBeenCalled();
     expect(startAtmosphere).toHaveBeenCalledTimes(1);
 
-    expect(stopAll).not.toHaveBeenCalled();
+    const cancelSleepTimer = vi.spyOn(mixer, 'cancelSleepTimer');
     act(() => root.unmount());
-    expect(stopAll).toHaveBeenCalledTimes(1);
+    // Leaving ends the session and the atmosphere; the music is left to the soundtrack.
+    expect(stopAtmosphere).toHaveBeenCalledTimes(1);
+    expect(cancelSleepTimer).toHaveBeenCalledTimes(1);
+    expect(stopAll).not.toHaveBeenCalled();
     root = createRoot(container);
   });
 
@@ -542,7 +546,10 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(mixerPanel.textContent).toContain('Atmosphere');
     expect(mixerPanel.textContent).not.toContain('Gentle Rain 1');
     expect([...piece.querySelectorAll('optgroup')].map(group => group.label)).toEqual(['Adventure', 'Ambient', 'Emotions', 'Fighting', 'War']);
-    expect(scene.querySelector('[data-testid="reader-soundtrack-now"]')!.textContent).toBe('Now: Gentle Rain 1');
+    // A chapter written before scenes plays the Reader's own music, never the host's.
+    const own = storySoundtrack(mixer).piece();
+    expect(piecesForMood(READER_MUSIC_MOOD, SEN_SOUNDSCAPES).map(piece => piece.id)).toContain(own?.id);
+    expect(scene.querySelector('[data-testid="reader-soundtrack-now"]')!.textContent).toBe(`Now: ${own!.label} · Gentle Rain 1`);
 
     const lament = SEN_SOUNDSCAPES.find(entry => entry.mood === 'sad')!;
     const waves = SEN_ATMOSPHERES.find(option => option.group === 'Waves')!;
@@ -554,10 +561,10 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
     // Kept on the device, for every story.
     expect(JSON.parse(values.get('soundtrack-choice')!)).toMatchObject({ soundscape: { pieceId: lament.id }, atmosphere: { atmosphereId: waves.id } });
 
-    // Back to Automatic: the chapter (written before scenes) chooses nothing, so its piece goes and the atmosphere stays.
+    // Back to Automatic: the chapter (written before scenes) chooses nothing, so the Reader's own music returns and the atmosphere stays.
     await choose(piece, 'automatic');
     await choose(atmosphere, 'automatic');
-    expect(storySoundtrack(mixer).piece()).toBeUndefined();
+    expect(piecesForMood(READER_MUSIC_MOOD, SEN_SOUNDSCAPES).map(entry => entry.id)).toContain(storySoundtrack(mixer).piece()?.id);
     expect(mixer.getPreferences().atmosphereId).toBe(waves.id);
     expect(JSON.parse(values.get('soundtrack-choice')!)).toMatchObject({ soundscape: 'automatic', atmosphere: 'automatic' });
   });

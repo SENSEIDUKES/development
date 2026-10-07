@@ -3,7 +3,7 @@ import { Settings } from 'lucide-react';
 import { ReaderMixerNote } from '@seihouse/audio-player';
 import { TextHighlightEngine, type TextHighlightBlock, type TextHighlightOverlay } from '@seihouse/sen/text-highlight-engine';
 import { InlineAudioText } from '@seihouse/sen/inline-audio';
-import type { SoundCueAttachment } from '@seihouse/sen/audio';
+import type { SceneAudioTrack, SoundCueAttachment } from '@seihouse/sen/audio';
 import {
   READ_ALOUD_SCRIPT_VERSION,
   applyReaderStatePatch,
@@ -90,7 +90,7 @@ function lineWhereTheReaderIs(script: ReadAloudScript, article: HTMLElement | nu
  */
 export function HarnessReaderSession({
   state, storyId, onClose, controller, readerStateRepository, onGenerateNextChapter, onRewriteChapter, onPlanArc, renderWriting, startOnOpen = false,
-  readerPreferences, readAloudVoices,
+  readerPreferences, readAloudVoices, soundscapes,
 }: {
   state: HarnessWorkspaceState; storyId: string; onClose: () => void; controller: HarnessGenerationController;
   /**
@@ -128,6 +128,12 @@ export function HarnessReaderSession({
   readerPreferences?: ReaderPreferenceStorage;
   /** The host's preferred narration voices, by story language and role. SEN prefers none. */
   readAloudVoices?: ReadAloudVoicePicks;
+  /**
+   * The host's soundscapes: the Reader's own music before the story has a
+   * chapter to take its pieces from (Chapter 1 being written). Without them,
+   * the Reader is silent until then.
+   */
+  soundscapes?: readonly SceneAudioTrack[];
 }) {
   const story = state.stories.find(entry => entry.id === storyId);
   const chapters = useMemo(() => state.chapters
@@ -278,7 +284,9 @@ export function HarnessReaderSession({
     writeSoundtrackChoice(readerPreferences, choice);
   }, [readerPreferences]);
   const scene = useMemo(() => (chapter ? readingScene(chapters, chapter.chapterNumber) : undefined), [chapters, chapter]);
-  const pieces = useMemo(() => chapter?.mediaLoadout?.soundscapes.map(entry => entry.track), [chapter]);
+  // The chapter's soundscapes; before the story has a chapter, the newest one's or the host's.
+  const loadout = chapter?.mediaLoadout ?? chapters.at(-1)?.mediaLoadout;
+  const pieces = useMemo(() => loadout?.soundscapes.map(entry => entry.track) ?? soundscapes, [loadout, soundscapes]);
   const mixer = useReaderSoundtrack({
     active: Boolean(story && readerState),
     chapterId: chapter?.id, soundCues: chapter?.soundCues, scene, pieces, choice: soundtrackChoice,

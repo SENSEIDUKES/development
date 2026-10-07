@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useOptionalReaderMixer, type ReaderMixer } from '@seihouse/audio-player';
 import { resolvePlayableSoundCue, type SceneAudioTrack, type SoundCueAttachment } from '@seihouse/sen/audio';
-import { storySoundtrack, type SoundtrackChoice, type SoundtrackRequest } from '@seihouse/sen/reader-runtime';
+import { piecesForMood, storySoundtrack, type SoundtrackChoice, type SoundtrackRequest } from '@seihouse/sen/reader-runtime';
 import type { HarnessChapter, HarnessChapterScene } from '../../../narrative/generation';
 
 /** How far the soundtrack drops while Listen reads aloud: the player's own narration duck. */
@@ -25,6 +25,20 @@ export function readingScene(chapters: readonly Pick<HarnessChapter, 'chapterNum
 }
 
 /**
+ * The Reader's music when its chapter chose none it can play (a chapter
+ * written before scenes, the writing screen of Chapter 1, a mood none of the
+ * story's pieces answers): the mood most of SEN Soundscapes share.
+ */
+export const READER_MUSIC_MOOD = 'mystical';
+
+/** The mood the Reader plays: the chapter's, when a piece answers it; else its own; else the first piece's. */
+export function readerMood(mood: string | undefined, pieces: readonly SceneAudioTrack[]): string {
+  if (mood && piecesForMood(mood, pieces).length) return mood;
+  if (piecesForMood(READER_MUSIC_MOOD, pieces).length) return READER_MUSIC_MOOD;
+  return pieces[0]?.mood ?? READER_MUSIC_MOOD;
+}
+
+/**
  * The Reader's part of the reader mixer (the host's SEIHouse audio player),
  * for the chapter on screen:
  *
@@ -32,12 +46,15 @@ export function readingScene(chapters: readonly Pick<HarnessChapter, 'chapterNum
  *   (the writing screen of Chapter 1 included) and under the Reader's own
  *   pages (Fate, Holdings, an arc's page). Leaving the Reader stops it and
  *   ends the listening session (a sleep timer with it); the host's own music,
- *   if it has some, plays on outside.
+ *   if it has some, plays on outside, never restarted: a piece that carried
+ *   into the Reader (a chapter without a scene) carries back out.
  * - Each chapter is read with its own scene (see {@link readingScene}).
  *   Automatic (the default): its music, pieces of the mood its writer chose
  *   one after another, takes over from whatever was playing, and its
- *   atmosphere replaces the one before. Without a scene (chapters written
- *   before scenes), the host's music and the atmosphere playing go on. The
+ *   atmosphere replaces the one before. The Reader always plays its own
+ *   music, never the host's: a chapter without a scene (written before
+ *   scenes) and the writing screen play {@link READER_MUSIC_MOOD}, and the
+ *   atmosphere playing goes on. The
  *   reader's own choice of a piece or an atmosphere stays, whatever the
  *   chapters choose. The reader's levels are never changed here.
  * - Audio settings show the music, the atmosphere, and Sound Cues when the
@@ -75,9 +92,11 @@ export function useReaderSoundtrack({ active, chapterId, soundCues, scene, piece
 }): ReaderMixer | null {
   const mixer = useOptionalReaderMixer();
 
-  // Leaving the Reader ends its listening session; the host's music, if any, comes back.
+  // Leaving the Reader ends its listening session (a sleep timer with it). The
+  // music is the soundtrack's: the Reader's hold is released, so the host's
+  // music comes back, and a piece that already answers it plays on unbroken.
   useEffect(() => (mixer ? () => {
-    mixer.stopAll();
+    mixer.cancelSleepTimer();
     storySoundtrack(mixer).resume();
   } : undefined), [mixer]);
   useEffect(() => {
@@ -94,14 +113,14 @@ export function useReaderSoundtrack({ active, chapterId, soundCues, scene, piece
     if (mixer.getPreferences().atmosphereId !== atmosphereId) mixer.setAtmosphere(atmosphereId);
   }, [mixer, active, atmosphereId]);
 
-  // The music: the reader's own piece, or the chapter's mood. Without either, the music playing goes on.
+  // The music: the reader's own piece, or the chapter's mood, or the Reader's own. Never the host's.
   const chosenId = choice.soundscape === 'automatic' ? undefined : choice.soundscape.pieceId;
   const mood = scene?.soundscape;
   useEffect(() => {
-    if (!mixer || !active) return undefined;
-    const chosen = chosenId ? pieces?.find(piece => piece.id === chosenId) : undefined;
-    const request: SoundtrackRequest | undefined = chosen ? { piece: chosen } : mood && pieces?.length ? { mood, pieces } : undefined;
-    return request ? storySoundtrack(mixer).hold(request) : undefined;
+    if (!mixer || !active || !pieces?.length) return undefined;
+    const chosen = chosenId ? pieces.find(piece => piece.id === chosenId) : undefined;
+    const request: SoundtrackRequest = chosen ? { piece: chosen } : { mood: readerMood(mood, pieces), pieces };
+    return storySoundtrack(mixer).hold(request);
   }, [mixer, active, chosenId, mood, pieces]);
 
   const cueUrls = useMemo(() => [...new Set((soundCues ?? []).flatMap(cue => {

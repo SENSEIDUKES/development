@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ReaderMixerProvider, type ReaderMixer } from '@seihouse/audio-player';
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
+import { HeaderSoundControl, useMenuMusic } from '@seihouse/library/shell';
 import { StoryPages, storyHomeWorlds, useLibraryStories } from '@seihouse/library/stories';
 import { findStory, nextChapterWaitsOnReader, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import { NarrativeButton } from '@seihouse/sen/presentation';
@@ -12,7 +13,7 @@ import { startHarnessStoryFromSeed } from '../host/story-seed/startHarnessStory'
 import { AGENTS } from '../lib/agents';
 import { AccessTokenSheet, type AccessTokenRequest } from './AccessTokenSheet';
 import { writerWithAccessToken, type AskForAccessToken } from './accessToken';
-import { useAppMusic } from './appMusic';
+import { APP_SOUNDSCAPES, useAppMusic } from './appMusic';
 import { CreatePage } from './CreatePage';
 import { HomePage } from './HomePage';
 import { HOME_ROUTE, useAppRoute } from './routes';
@@ -26,11 +27,14 @@ import { startedSeedIds } from './storyCreationRuntime';
  * and Sound Cues, memory read only on request, and the Model Router's choice.
  * Its one sound owner is the reader mixer (the SEIHouse audio player), made
  * once by the page that mounts the app and kept for the page's lifetime: the
- * app's own music plays through it on every page, and each chapter's scene
- * in the Reader.
+ * app's own music plays through it on its menus (while the reader's Menu
+ * music setting is on, with the music note in Home's header to mute it or
+ * set its volume), and the Reader's own music and each chapter's scene in
+ * the Reader.
  */
 export function NovelExpandedApp({ services, readerMixer }: { services: NovelExpandedServices; readerMixer: ReaderMixer }) {
-  useAppMusic(readerMixer);
+  const [menuMusic] = useMenuMusic(services.readerPreferences);
+  useAppMusic(readerMixer, menuMusic);
   return <ReaderMixerProvider mixer={readerMixer}>
     <LibraryPresentationProvider assets={LIBRARY_ASSETS} backdrops={MANIFEST_BACKDROPS}>
       <NovelExpandedPages services={services} />
@@ -69,6 +73,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   askForToken: AskForAccessToken;
 }): ReactNode {
   const [route, navigate] = useAppRoute();
+  const [menuMusic] = useMenuMusic(services.readerPreferences);
   const [chapterModel] = useModelPreference('chapters');
   const [skills, setSkills] = useState<HarnessSkillManifest[]>();
   const [skillsError, setSkillsError] = useState<string>();
@@ -122,12 +127,12 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
 
   if (storyId) return missing ? null : <StoryPages key={storyId} stories={stories} storyId={storyId}
     page={route.page === 'read' ? 'read' : 'info'} readerStateRepository={services.readerState}
-    readerPreferences={services.readerPreferences}
+    readerPreferences={services.readerPreferences} soundscapes={APP_SOUNDSCAPES}
     writingAgent={AGENTS.VERSA} backLabel="Back to your stories"
     onOpenReader={() => navigate({ page: 'read', storyId })}
     onCloseReader={() => navigate({ page: 'story', storyId })}
     onBack={() => navigate(HOME_ROUTE)} />;
 
-  return <HomePage worlds={worlds} onCreate={() => navigate({ page: 'create' })}
+  return <HomePage worlds={worlds} sound={menuMusic ? <HeaderSoundControl /> : undefined} onCreate={() => navigate({ page: 'create' })}
     onOpenStory={id => navigate({ page: 'story', storyId: id })} />;
 }

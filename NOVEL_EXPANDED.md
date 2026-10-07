@@ -342,10 +342,21 @@ Update it whenever it changes.
     **Holdings** lists what each character has now, for checking the chapters
     (below). No Codex, Mind Palace, reader translation or read marks.
   - **Music everywhere in the app, with no model:** NovelExpanded plays calm
-    pieces of SEN Soundscapes on Home, Create and World Info and while a
-    chapter is written; when a chapter opens in the Reader, its own scene takes
-    over, and leaving the Reader brings the app's music back. A browser starts
-    sound on the reader's first tap.
+    pieces of SEN Soundscapes on Home, Create and World Info (**Menu music**).
+    The Reader never opens to it: it always plays its own music, each
+    chapter's scene, or for a chapter written before scenes and while a
+    chapter is written, mystical pieces. Leaving the Reader brings the menu
+    music back. A browser starts sound on the reader's first tap.
+  - **Menu music is the reader's choice, and one tap silences it:** Profile
+    Settings › Customization › Sound has a **Menu music** switch (on for a new
+    reader, kept on the device). While it is on, the **music note** sits in the
+    Library shell header beside Help and Search: a tap mutes all sound at once
+    (the same switch as the Reader's note); hovering it with a mouse, or holding
+    it on a phone, opens a **Music volume** slider right there. Off, the menus
+    are silent and the note leaves the header; the Reader keeps its own music.
+    Today the note shows in Home's header; Create and World Info gain it when
+    they move onto the Library shell, and the switch lives in the Workshop's
+    Profile until Profile comes to the app.
   - **A chapter's soundtrack, in the tiny SEN language:** at the very start of
     every chapter the writer writes one soundtrack tag, the mood of its music
     and its atmosphere (`[[soundtrack: mystical | forest]]`), from the story's

@@ -887,3 +887,8 @@ Validation: 80 profile component tests, production build, package boundaries and
 Changed only the shared page header title to Profile. Cultivator Cave terminology, routes, theme and contents remain unchanged.
 
 - **2026-09-09 header emblem follow-up:** Profile now uses the existing SEN logo in its shared clickable header emblem. The existing Home callback is preserved. `public/icons/sacred-tree.svg` and `CAVE_EMBLEM_SRC` remain available for future use; the sacred tree is no longer displayed in the Profile header.
+
+## Sound: Menu music — 2026-10-07
+
+Settings › Customization › Appearance gains a **Sound** section after Cave Environment with one switch, **Menu music**: calm music on the menus, on for a new reader, kept on the device. It shows only when the host supplies `soundPreferences` (its reader-preference storage) through the services port; the Workshop mock supplies the Workshop's own. The Profile header shows the music note (`HeaderSoundControl`) while it is on. The switch and the note read one value (`useMenuMusic`) and change together.
+

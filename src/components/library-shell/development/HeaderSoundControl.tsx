@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent, type PointerEve
 import { ReaderMixerNote, useOptionalReaderMixer, useReaderMixerState, type ReaderMixer, type ReaderMixerNoteLabels } from '@seihouse/audio-player';
 import './header-sound-control.css';
 
-/** The note's words in the header, where it is the app's sound and not only a story's. */
+/** The note's words in the Library shell, where it is the app's sound and not only a story's. */
 export const HEADER_SOUND_LABELS: Partial<ReaderMixerNoteLabels> = {
   mute: 'Mute sound',
   unmute: 'Unmute sound',
@@ -20,13 +20,16 @@ const LEAVE_GRACE_MS = 250;
 const HOLD_MS = 500;
 
 /**
- * The music note in the Library shell header: the reader can always silence
- * the app at once. A tap or click mutes and unmutes all of its sound (the
- * reader mixer's master switch, the same as the Reader's note). Hovering it
- * with a mouse, holding it with a finger, or ArrowUp/ArrowDown from the
- * keyboard opens a Music volume slider, the Soundscapes level, right there;
- * it closes when the mouse leaves, on a tap outside, or on Escape. Both are
- * the reader's saved mix, shared with Reader Settings › Audio.
+ * The music note of the Library shell: the reader can always silence the app
+ * at once. On laptops it sits in the header; while a bottom bar is on screen
+ * (phones and tablets) the header floats it just above the bar's right end,
+ * the Reader's ghost note outside the Reader (`WorkspaceHeader`'s `sound`).
+ * A tap or click mutes and unmutes all of its sound (the reader mixer's
+ * master switch, the same as the Reader's note). Hovering it with a mouse,
+ * holding it with a finger, or ArrowUp/ArrowDown from the keyboard opens a
+ * Music volume slider, the Soundscapes level, right there; it closes when
+ * the mouse leaves, on a tap outside, or on Escape. Both are the reader's
+ * saved mix, shared with Reader Settings › Audio.
  *
  * It shows nothing without a reader mixer (a host that has no sound).
  */

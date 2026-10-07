@@ -1,10 +1,8 @@
-import { useRef, useState } from 'react';
 import type { MainLibraryAdapter } from '../shared/MainLibraryAdapter';
 import { normalizeSenLanguageCode } from '@seihouse/sen/contracts';
 import { LibraryFooter, type LibraryFooterAction, type LibraryFooterGroup, type LibraryFooterSocialLink } from './LibraryFooter';
 import { libraryNavigationMode, type LibraryLocation } from './libraryRoutes';
-import { LIBRARY_LEGAL_DOCUMENTS, type LibraryLegalDocument } from './libraryLegal';
-import { LibraryLegalSheet } from './LibraryLegalSheet';
+import { useLibraryLegalDocuments } from './LibraryLegalSheet';
 
 export interface MainLibraryFooterProps {
   adapter: MainLibraryAdapter;
@@ -28,8 +26,7 @@ export interface MainLibraryFooterProps {
  * carry the footer, matching the global navigation's exclusions.
  */
 export function MainLibraryFooter({ adapter, location, onNavigate, onOpenHelp, social, legal }: MainLibraryFooterProps) {
-  const [legalDocument, setLegalDocument] = useState<LibraryLegalDocument | null>(null);
-  const legalOpenerRef = useRef<HTMLElement | null>(null);
+  const libraryLegal = useLibraryLegalDocuments();
   if (libraryNavigationMode(location.screen) === 'immersive') return null;
   const go = (target: LibraryLocation) => () => onNavigate(target);
   const groups: LibraryFooterGroup[] = [
@@ -61,12 +58,8 @@ export function MainLibraryFooter({ adapter, location, onNavigate, onOpenHelp, s
     code: normalizeSenLanguageCode(adapter.userProfile.interfaceLanguage),
     onOpenSettings: go({ screen: 'profile', cave: '/settings' }),
   } : undefined;
-  const legalRow = legal ?? LIBRARY_LEGAL_DOCUMENTS.map(document => ({ id: document.id, label: document.label, onSelect: () => {
-    legalOpenerRef.current = globalThis.document?.activeElement instanceof HTMLElement ? globalThis.document.activeElement : null;
-    setLegalDocument(document);
-  } }));
   return <>
-    <LibraryFooter groups={groups} social={social} legal={legalRow} language={language} />
-    {!legal && <LibraryLegalSheet document={legalDocument} onClose={() => setLegalDocument(null)} returnFocusRef={legalOpenerRef} />}
+    <LibraryFooter groups={groups} social={social} legal={legal ?? libraryLegal.legal} language={language} />
+    {!legal && libraryLegal.sheet}
   </>;
 }

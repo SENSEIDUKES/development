@@ -35,6 +35,11 @@ export function routeSearch(route: NovelExpandedRoute): string {
   }
 }
 
+/** The page's address on this deployment, for real links (`/app/` and its queries). */
+export function routeHref(route: NovelExpandedRoute): string {
+  return `${window.location.pathname}${routeSearch(route)}`;
+}
+
 export type Navigate = (route: NovelExpandedRoute, options?: { replace?: boolean }) => void;
 
 /**
@@ -50,7 +55,7 @@ export function useAppRoute(): [NovelExpandedRoute, Navigate] {
     return () => window.removeEventListener('popstate', follow);
   }, []);
   const navigate = useCallback<Navigate>((next, { replace = false } = {}) => {
-    const url = `${window.location.pathname}${routeSearch(next)}`;
+    const url = routeHref(next);
     if (replace) window.history.replaceState(null, '', url);
     else window.history.pushState(null, '', url);
     setRoute(next);

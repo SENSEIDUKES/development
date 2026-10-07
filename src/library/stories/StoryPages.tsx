@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { findStory, HarnessReaderSession } from '@seihouse/sen/harness-generation';
 import type { ReaderPreferenceStorage, ReaderStateRepository } from '@seihouse/sen/reader-runtime';
 import type { SceneAudioTrack } from '@seihouse/sen/audio';
@@ -31,6 +31,12 @@ export interface StoryPagesProps {
   soundscapes?: readonly SceneAudioTrack[];
   /** The agent the Generation Overlay shows while a chapter is written (the host owns agent art). Without it, Next says it is writing. */
   writingAgent?: LoadingAgentPresentation;
+  /**
+   * The host's browsing frame around World Info (the app's Library Shell). The
+   * frame owns the page's `<main>`, so World Info is its content. The Reader is
+   * never framed: it is immersive and scrolls the page itself.
+   */
+  frame?: (page: ReactNode) => ReactNode;
 }
 
 /** The veil stays open while a chapter is written; there is no minimized state here. */
@@ -43,7 +49,7 @@ const keepVeilOpen = () => undefined;
  * as the reader moves between them, so Start Story still begins Chapter 1 once
  * the Reader opens.
  */
-export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader, onBack, backLabel, readerStateRepository, readerPreferences, soundscapes, writingAgent }: StoryPagesProps) {
+export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader, onBack, backLabel, readerStateRepository, readerPreferences, soundscapes, writingAgent, frame }: StoryPagesProps) {
   const { state, controller, loadError } = stories;
   /** Set by Start Story, so the Reader begins Chapter 1 as it opens. */
   const [startOnOpen, setStartOnOpen] = useState(false);
@@ -98,9 +104,11 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
     }
   };
 
-  return <>
+  // Inside a host's frame, World Info is the frame's content, not a second <main>.
+  const Page = frame ? 'div' : 'main';
+  const info = <>
     {writerAlert}
-    <main className="px-4 pb-12 pt-4 sm:px-6 sm:pt-6" data-testid="harness-world-info">
+    <Page className="px-4 pb-12 pt-4 sm:px-6 sm:pt-6" data-testid="harness-world-info">
       <StoryDetailScreen story={display} backLabel={backLabel} readingPosition={readingPosition}
         onBack={onBack}
         onRead={() => { setStartOnOpen(false); onOpenReader(); }}
@@ -112,8 +120,9 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
         <p className="min-w-0 flex-1 text-xs text-neutral-500">Saves a file with every chapter and what the writer was given for it, so a test can be shared.</p>
         {exportProblem && <p role="alert" className="w-full text-xs text-amber-200">{exportProblem}</p>}
       </div>
-    </main>
+    </Page>
   </>;
+  return frame ? <>{frame(info)}</> : info;
 }
 
 function LoadAlert({ message, onRetry }: { message: string; onRetry: () => void }) {

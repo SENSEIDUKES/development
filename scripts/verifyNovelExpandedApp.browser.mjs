@@ -3,7 +3,10 @@
  * Walks the NovelExpanded app in Chromium at phone (390px) and laptop (1440px)
  * widths against a running dev server, with both APIs stubbed:
  *
- * `/app` → empty Home → Create → token sheet → World Blueprint (Arc 1 only,
+ * `/app` → empty Home in the Library Shell (the app's two places, Home and
+ * Create, on the phone strip or the laptop sidebar, and the footer) → Create
+ * (Story Seed in the shell's workspace mode, with the music note) →
+ * token sheet → World Blueprint (Arc 1 only,
  * the hidden look-ahead nowhere on screen, every blank Seed slot filled) → Manifest
  * Story → Story View → Start Story under the veil → Chapter 1 with its Sound
  * Cue and its own soundtrack (the app's calm music on every page before it,
@@ -16,7 +19,14 @@
  * version under the veil, the Holdings fixer's one quiet call settling its
  * holdings, nothing of it on screen) → reload (no new request, nothing reads by itself) →
  * Back → Continue · Ch. 1 → Export story (the whole story as one file) → Back
- * → Home card, its header's music note (tap mutes; hover or hold opens the Music volume) → browser Back and Forward → a missing story goes Home.
+ * → Home card, its music note (tap mutes; hover or hold opens the Music volume) → browser Back and Forward →
+ * Create from the navigation (on laptops, a minimized sidebar stays minimized after a reload) → a missing story goes Home.
+ * World Info sits in the shell; the Reader never does. The music note floats just above the bottom bar's right end
+ * on phones, as the Reader's note does above its Listen bar, and sits in the header on laptops.
+ *
+ * Then, in a Chromium that starts no sound before the reader's first tap (as phones and browsers do), the
+ * sound rules: Home's music waits for that tap, the first tap anywhere on Home starts it, and leaving the page
+ * (another tab, another app) never stops it.
  *
  * Headless Chromium has no voices, so a stand-in for the browser's speech is
  * installed before the app loads; each line ends on its own after a moment,
@@ -198,7 +208,18 @@ async function walk(browser, viewport, sample) {
   // Every SEIHouse audio file is answered with silence; what was asked for is kept, in order.
   const audioAsked = [];
   await context.route('https://media.seihouse.org/**', async route => {
-    audioAsked.push(new URL(route.request().url()).pathname);
+    const url = route.request().url();
+    // The Library emblem is an image there too: fetched for real when the network allows, so the pictures show it.
+    if (/\.(?:jpe?g|png|webp|svg)$/i.test(new URL(url).pathname)) {
+      try {
+        const response = await fetch(url);
+        await route.fulfill({ status: response.status, contentType: response.headers.get('content-type') ?? 'image/jpeg', body: Buffer.from(await response.arrayBuffer()) });
+      } catch {
+        await route.fulfill({ status: 404, body: '' });
+      }
+      return;
+    }
+    audioAsked.push(new URL(url).pathname);
     await route.fulfill({ status: 200, contentType: 'audio/wav', headers: { 'Access-Control-Allow-Origin': '*' }, body: SILENCE });
   });
   const pieces = () => audioAsked.filter(path => SOUNDSCAPE_PATH.test(path));
@@ -265,11 +286,41 @@ async function walk(browser, viewport, sample) {
   check(address() === '/app/', `/app should land on /app/, got ${address()}`);
   check((await page.textContent('body')).includes('Your stories appear here'), 'The empty Home should say where stories appear.');
   await shot('1-home-empty');
+  // The Library Shell: the app's two places (the strip on phones, the Pathways sidebar on laptops), the footer, the note.
+  const laptop = viewport.width >= 1024;
+  const navigation = () => (laptop ? page.locator('[data-slot="app-shell-sidebar"] nav[aria-label="Library pathways"]')
+    : page.locator('nav[aria-label="Library global navigation"]'));
+  const places = (await navigation().getByRole('button').allTextContents()).map(text => text.trim());
+  check(JSON.stringify(places) === JSON.stringify(['Home', 'Create']), `The navigation should offer Home and Create only, got ${JSON.stringify(places)}.`);
+  check(await navigation().isVisible(), `The ${laptop ? 'Pathways sidebar' : 'bottom strip'} should show.`);
+  const shellText = await page.getByTestId('novel-expanded-shell').innerText();
+  check(!/\b(?:Discover|Profile|Settings)\b/.test(shellText), 'No place the app has not built may show.');
+  // The music note: floating just above the bottom bar's right end on phones (as the Reader's note floats above its
+  // Listen bar), in the header on laptops, and only ever once.
+  const musicNote = () => page.locator(laptop ? 'header .header-sound-control button' : '[data-library-sound-slot] .header-sound-control button')
+    .filter({ visible: true });
+  const noteInPlace = async where => {
+    check(await musicNote().count() === 1, `${where} should carry the music note ${laptop ? 'in its header' : 'just above its bottom bar'}.`);
+    check(await page.locator('.header-sound-control button').filter({ visible: true }).count() === 1, `${where} should show the music note once.`);
+    if (laptop) return;
+    const note = await musicNote().boundingBox();
+    const bar = await page.locator('.library-global-navigation').filter({ visible: true }).boundingBox();
+    check(note && bar && note.y + note.height <= bar.y && bar.y - (note.y + note.height) <= 16 && viewport.width - (note.x + note.width) <= 24,
+      `${where}'s music note should float just above the bar's right end, got ${JSON.stringify({ note, bar })}.`);
+  };
+  await noteInPlace('Home');
+  check(await page.evaluate(() => document.documentElement.scrollWidth) <= viewport.width, 'The shell must never scroll sideways.');
+  await page.locator('#novel-expanded-main').evaluate(main => main.scrollTo({ top: main.scrollHeight }));
+  await page.locator('[data-library-footer]').waitFor();
+  check((await page.locator('[data-library-footer]').innerText()).includes('NovelExpanded'), 'The footer should carry the NovelExpanded title.');
+  await shot('1b-home-footer');
+  await page.locator('#novel-expanded-main').evaluate(main => main.scrollTo({ top: 0 }));
 
   // 2. Create, from a banked Story Seed, asks for the token before its Blueprint.
   await page.evaluate(record => localStorage.setItem('novelexpanded-story-seeds-v1', JSON.stringify([record])), sample.record);
   await visibleButton('Carve New Destiny').click();
   await page.getByTestId('novel-expanded-create').waitFor();
+  await noteInPlace('Story Seed');
   // The app's own music starts with the first tap: calm pieces, with no model.
   await musicOf('ambient');
   check(pieces().every(path => piecesOf('ambient').has(path)), `The app's music should be calm pieces only, got ${JSON.stringify(pieces())}.`);
@@ -309,10 +360,12 @@ async function walk(browser, viewport, sample) {
   await page.getByTestId('harness-world-info').waitFor();
   const storyAddress = address();
   check(/^\/app\/\?story=[^&]+$/.test(storyAddress), `Manifest Story should open Story View, got ${storyAddress}`);
+  check(await page.locator('[data-testid="novel-expanded-shell"] [data-testid="harness-world-info"]').count() === 1, 'World Info should sit in the Library Shell.');
   await shot('4-story-view');
   await page.locator('[data-world-info-chapters="action"]').click();
   await page.locator('[data-testid="generation-overlay"][data-familiar-id="quill"] [aria-label="Quill, Waving"]').waitFor();
   check(address() === `${storyAddress}&read=1`, `Start Story should open the Reader, got ${address()}`);
+  check(await page.getByTestId('novel-expanded-shell').count() === 0, 'The Reader must stay outside the Library Shell.');
   const veil = page.getByTestId('generation-overlay');
   const familiarStyle = await veil.evaluate(element => {
     const style = getComputedStyle(element);
@@ -530,21 +583,21 @@ async function walk(browser, viewport, sample) {
   await page.getByRole('button', { name: /^Open .+, 1 chapters/ }).first().waitFor();
   await shot('7-home-with-story');
 
-  // The music note in Home's header (Menu music is on for a new reader): a tap mutes all sound, and hovering it
-  // (a mouse) or holding it (a finger) opens the Music volume, which sets the music's level in the saved mix.
+  // Home's music note (Menu music is on for a new reader): a tap mutes all sound, and hovering it (a mouse) or holding
+  // it (a finger) opens the Music volume, which sets the music's level in the saved mix.
   const savedMix = async () => JSON.parse(await page.evaluate(() => localStorage.getItem('novelexpanded-reader-audio-mixer')) ?? '{}');
-  const headerNote = page.locator('header .header-sound-control button').first();
-  await headerNote.waitFor();
-  check(await headerNote.getAttribute('aria-label') === 'Mute sound', `Home's header note should offer to mute, got ${await headerNote.getAttribute('aria-label')}.`);
+  await noteInPlace('Home with a story');
+  const headerNote = musicNote().first();
+  check(await headerNote.getAttribute('aria-label') === 'Mute sound', `Home's music note should offer to mute, got ${await headerNote.getAttribute('aria-label')}.`);
   const headerNoteBox = await headerNote.boundingBox();
   check(headerNoteBox && headerNoteBox.width >= 44 && headerNoteBox.height >= 44 && headerNoteBox.x + headerNoteBox.width <= viewport.width,
-    `The header note should be a 44px target inside the screen, got ${JSON.stringify(headerNoteBox)}.`);
+    `The music note should be a 44px target inside the screen, got ${JSON.stringify(headerNoteBox)}.`);
   await shot('7b-home-sound');
   // The mix is saved a moment after it changes.
   const savedSoon = (test, what) => page.waitForFunction(test, null, { timeout: 5_000 }).catch(() => check(false, what));
   await headerNote.click();
-  await savedSoon(() => JSON.parse(localStorage.getItem('novelexpanded-reader-audio-mixer') ?? '{}').masterEnabled === false, 'A tap on the header note should mute all sound and keep it in the saved mix.');
-  check(await headerNote.getAttribute('aria-label') === 'Unmute sound', `Muted, the header note should offer to unmute, got ${await headerNote.getAttribute('aria-label')}.`);
+  await savedSoon(() => JSON.parse(localStorage.getItem('novelexpanded-reader-audio-mixer') ?? '{}').masterEnabled === false, 'A tap on the music note should mute all sound and keep it in the saved mix.');
+  check(await headerNote.getAttribute('aria-label') === 'Unmute sound', `Muted, the music note should offer to unmute, got ${await headerNote.getAttribute('aria-label')}.`);
   await headerNote.click();
   await savedSoon(() => JSON.parse(localStorage.getItem('novelexpanded-reader-audio-mixer') ?? '{}').masterEnabled === true, 'A second tap should unmute.');
   if (viewport.width >= 1024) {
@@ -562,6 +615,9 @@ async function walk(browser, viewport, sample) {
     'The slider should set the music\'s level in the saved mix.');
   const volumeBox = await page.locator('.header-sound-control-popover').boundingBox();
   check(volumeBox && volumeBox.x >= 0 && volumeBox.x + volumeBox.width <= viewport.width, `The volume should fit the screen, got ${JSON.stringify(volumeBox)}.`);
+  // Floating above the bar on phones, the volume opens upward, above the note.
+  if (!laptop) check(volumeBox && volumeBox.y >= 0 && volumeBox.y + volumeBox.height <= headerNoteBox.y + 1,
+    `On a phone the volume should open above the note, got ${JSON.stringify({ volumeBox, note: headerNoteBox })}.`);
   await shot('7c-sound-slider');
   await page.keyboard.press('Escape');
   if (viewport.width >= 1024) await page.mouse.move(viewport.width / 2, viewport.height / 2);
@@ -576,6 +632,32 @@ async function walk(browser, viewport, sample) {
   await page.getByTestId('novel-expanded-home').waitFor();
   check(address() === '/app/', `Browser Forward should return Home, got ${address()}`);
 
+  // 6b. Create from the navigation opens Story Seed; on laptops a minimized Pathways sidebar stays minimized.
+  await navigation().getByRole('button', { name: 'Create' }).click();
+  await page.getByTestId('novel-expanded-create').waitFor();
+  check(address() === '/app/?page=create', `Create in the navigation should open Create, got ${address()}`);
+  await page.goBack();
+  await page.getByTestId('novel-expanded-home').waitFor();
+  if (laptop) {
+    const sidebarMode = () => page.evaluate(() => localStorage.getItem('novelexpanded-reader-library-sidebar-mode'));
+    const doubleClickSidebar = async () => {
+      const sidebar = page.locator('[data-slot="app-shell-sidebar"]');
+      const box = await sidebar.boundingBox();
+      await sidebar.dblclick({ position: { x: box.width / 2, y: box.height - 24 } });
+    };
+    await doubleClickSidebar();
+    await page.waitForFunction(() => localStorage.getItem('novelexpanded-reader-library-sidebar-mode') === 'compact', null, { timeout: 5_000 })
+      .catch(() => check(false, 'A double click should minimize the sidebar and keep the choice on this device.'));
+    await page.waitForTimeout(400);
+    await shot('7d-sidebar-compact');
+    await page.reload();
+    await page.getByTestId('novel-expanded-home').waitFor();
+    check(await page.locator('[data-slot="app-shell"][data-sidebar-mode="compact"]').count() === 1, 'A minimized sidebar should stay minimized after a reload.');
+    await doubleClickSidebar();
+    await page.waitForFunction(() => localStorage.getItem('novelexpanded-reader-library-sidebar-mode') === 'pinned', null, { timeout: 5_000 })
+      .catch(async () => check(false, `A second double click should open the sidebar again, got ${await sidebarMode()}.`));
+  }
+
   // 7. A story the app does not have goes Home.
   await page.goto(`${BASE}/app/?story=hst_missing&read=1`);
   await page.getByTestId('novel-expanded-home').waitFor();
@@ -587,8 +669,79 @@ async function walk(browser, viewport, sample) {
   return problems;
 }
 
+/**
+ * The sound rules, in a Chromium that starts no sound before the reader's first tap (scrolling does not count),
+ * as phones and browsers do: Home's music waits for that tap, the first tap anywhere on Home starts it, and
+ * leaving the page (another tab, another app) never stops it.
+ */
+async function soundRules(strict, viewport) {
+  const touch = viewport.width < 1024;
+  const context = await strict.newContext({ viewport: { width: viewport.width, height: viewport.height }, hasTouch: touch });
+  // Every media element the app plays, so the walk can tell what is sounding.
+  await context.addInitScript(() => {
+    const play = HTMLMediaElement.prototype.play;
+    window.__played = new Set();
+    HTMLMediaElement.prototype.play = function () { window.__played.add(this); return play.call(this); };
+  });
+  await context.route('https://media.seihouse.org/**', route => (/\.(?:jpe?g|png|webp|svg|mp4)$/i.test(new URL(route.request().url()).pathname)
+    ? route.fulfill({ status: 404, body: '' })
+    : route.fulfill({ status: 200, contentType: 'audio/wav', headers: { 'Access-Control-Allow-Origin': '*' }, body: SILENCE })));
+  const page = await context.newPage();
+  const problems = [];
+  page.on('pageerror', error => problems.push(`page error: ${error.message}`));
+  try {
+    /** The music piece sounding now, with where it is in the piece, or null. */
+    const music = () => page.evaluate(source => {
+      const playing = [...window.__played].find(element => !element.paused && new RegExp(source).test(element.currentSrc));
+      return playing ? { time: playing.currentTime } : null;
+    }, SOUNDSCAPE_PATH.source);
+    const note = page.locator('.header-sound-control button').filter({ visible: true }).first();
+    await page.goto(`${BASE}/app/`);
+    await page.getByTestId('novel-expanded-home').waitFor();
+    await page.waitForTimeout(1_500);
+    check(await music() === null, 'No music may sound before the reader\'s first tap.');
+    check(await note.getAttribute('aria-label') === 'Tap to start sound', `Before the first tap the note should say to tap, got ${await note.getAttribute('aria-label')}.`);
+
+    // The first tap anywhere on Home (here its empty top corner, no control there) starts the music.
+    const home = await page.getByTestId('novel-expanded-home').boundingBox();
+    if (touch) await page.touchscreen.tap(home.x + home.width - 8, home.y + 6);
+    else await page.mouse.click(home.x + home.width - 8, home.y + 6);
+    let started = null;
+    for (let tries = 0; tries < 50 && !started; tries += 1) {
+      started = await music();
+      if (!started) await page.waitForTimeout(100);
+    }
+    check(started, 'The first tap anywhere on Home should start the music.');
+    check(await note.getAttribute('aria-label') === 'Mute sound', `Once the music plays the note should offer to mute, got ${await note.getAttribute('aria-label')}.`);
+
+    // Leaving the page (another tab, another app to send a text) never stops it.
+    await page.evaluate(() => {
+      Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
+      Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    const away = await music();
+    await page.waitForTimeout(1_500);
+    const still = await music();
+    check(away && still && still.time > away.time, `The music should play on while the page is hidden, got ${JSON.stringify({ away, still })}.`);
+    await page.evaluate(() => {
+      delete document.visibilityState;
+      delete document.hidden;
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    check(await music(), 'The music should still be playing back on the page.');
+  } catch (error) {
+    problems.push(error.message);
+  }
+  await context.close();
+  return problems;
+}
+
 mkdirSync(OUTPUT, { recursive: true });
-const browser = await chromium.launch(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE } : {});
+const launchOptions = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE } : {};
+const browser = await chromium.launch(launchOptions);
+// Phones and browsers start no sound before the reader's first tap; this one follows that rule.
+const strict = await chromium.launch({ ...launchOptions, args: ['--autoplay-policy=document-user-activation-required'] });
 try {
   const sample = await sampleSeed(browser);
   const problems = [];
@@ -596,6 +749,9 @@ try {
     const found = await walk(browser, viewport, sample);
     problems.push(...found.map(problem => `${viewport.name}: ${problem}`));
     console.log(`[novel-expanded] ${viewport.name} ${viewport.width}px: walked Home → Create → Story View → Reader → Home${found.length ? ` with ${found.length} problem(s)` : ''}`);
+    const sound = await soundRules(strict, viewport);
+    problems.push(...sound.map(problem => `${viewport.name} (sound rules): ${problem}`));
+    console.log(`[novel-expanded] ${viewport.name} ${viewport.width}px: sound rules (first tap starts the music; leaving the page keeps it)${sound.length ? ` with ${sound.length} problem(s)` : ''}`);
   }
   if (problems.length) {
     for (const problem of problems) console.error(`  ${problem}`);
@@ -605,4 +761,5 @@ try {
   }
 } finally {
   await browser.close();
+  await strict.close();
 }

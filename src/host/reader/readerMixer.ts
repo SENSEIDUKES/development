@@ -9,10 +9,44 @@ export const READER_MIXER_PREFERENCE_KEY = 'audio-mixer';
  * A host's one reader mixer: the SEIHouse audio player's Soundscapes,
  * Atmosphere, Sound Cues and Voice layers, with the SEN Atmospheres catalog
  * and the reader's saved mix. Created once, outside React, so a page's
- * Reader, its Audio settings and the ghost note all share it.
+ * Reader, its Audio settings and the ghost note all share it. Leaving the
+ * page never stops it (see {@link keepPlayingWhileAway}).
  */
 export function createHostReaderMixer(storage: ReaderPreferenceStorage): ReaderMixer {
-  return createReaderMixer(hostReaderMixerOptions(storage));
+  const mixer = createReaderMixer(hostReaderMixerOptions(storage));
+  keepPlayingWhileAway(mixer);
+  return mixer;
+}
+
+/**
+ * Leaving the page (another tab, another app to send a text, a locked phone)
+ * never stops the sound. The player does not pause while the page is hidden
+ * (`pauseWhenHidden: false` in {@link hostReaderMixerOptions}); time away is
+ * not idleness, so the player's idle pause counts only time on the page; and
+ * on return, sound the browser or the phone paused meanwhile plays on. The
+ * sleep timer and the reader's own mute still stop it. Returns the stop.
+ */
+export function keepPlayingWhileAway(mixer: ReaderMixer): () => void {
+  if (typeof document === 'undefined') return () => undefined;
+  let releaseActivity: (() => void) | undefined;
+  const stop = () => {
+    document.removeEventListener('visibilitychange', follow);
+    releaseActivity?.();
+    releaseActivity = undefined;
+  };
+  function follow() {
+    if (mixer.isDisposed()) { stop(); return; }
+    if (document.visibilityState === 'hidden') {
+      releaseActivity ??= mixer.retainActivity();
+      return;
+    }
+    releaseActivity?.();
+    releaseActivity = undefined;
+    mixer.unlock();
+  }
+  document.addEventListener('visibilitychange', follow);
+  if (document.visibilityState === 'hidden') follow();
+  return stop;
 }
 
 /**
@@ -45,6 +79,8 @@ export function hostReaderMixerOptions(storage: ReaderPreferenceStorage): Reader
     loopCrossfadeMs: HOST_LOOP_CROSSFADE_MS,
     soundscapeMaxPlays: HOST_SOUNDSCAPE_PLAYS,
     soundscapeRestFadeMs: HOST_SOUNDSCAPE_END_FADE_MS,
+    // Leaving the page never stops the sound (see keepPlayingWhileAway).
+    pauseWhenHidden: false,
     defaultPreferences: { ...DEFAULT_READER_MIXER_PREFERENCES, atmosphereId: DEFAULT_ATMOSPHERE_ID },
     initialPreferences: saved,
     onPreferencesChange: preferences => storage.write(READER_MIXER_PREFERENCE_KEY, JSON.stringify(preferences)),

@@ -54,6 +54,13 @@ export interface LibraryWorkspaceDefinition {
 export interface LibraryMainNavigationProps {
   location: LibraryLocation;
   onNavigate: (location: LibraryLocation) => void;
+  /**
+   * The places this host has built, shown in the Library's order. All four
+   * when omitted. A host leaves out a place it does not have rather than show
+   * a control that leads nowhere; Settings, a Profile page, shows only with
+   * Profile.
+   */
+  destinations?: readonly LibraryDestination[];
   /** The page's own destinations for its optional desktop rail. */
   sectionMenu?: LibrarySectionMenu;
   /**
@@ -84,16 +91,23 @@ interface WorkspaceState {
   openDrawer: () => void;
   closeDrawer: () => void;
 }
+type LibraryPlace = typeof LIBRARY_DESTINATIONS[number];
 interface MainState {
   location: LibraryLocation;
   onNavigate: (location: LibraryLocation) => void;
   selected: LibraryDestination | undefined;
+  /** The host's places, in the Library's order. */
+  places: readonly LibraryPlace[];
   profile?: LibraryNavigationDrawerProfile;
 }
+const libraryPlaces = (destinations?: readonly LibraryDestination[]): readonly LibraryPlace[] =>
+  destinations ? LIBRARY_DESTINATIONS.filter(place => destinations.includes(place.id)) : LIBRARY_DESTINATIONS;
 interface NavigationContextValue {
   menu: LibrarySectionMenu | null;
   workspace: WorkspaceState | null;
   main: MainState | null;
+  /** Where a header's sound control floats while the bottom bar is on screen. */
+  soundSlot?: HTMLElement | null;
 }
 const Context = createContext<NavigationContextValue>({ menu: null, workspace: null, main: null });
 
@@ -133,6 +147,29 @@ export function useLibraryPathways() {
   return Boolean(main) && desktopNavigation === 'sidebar' && desktop;
 }
 /**
+ * True while a Library bottom bar is on screen: main mode's strip (phones and
+ * tablets, or every width with the `strip` setting) or a workspace's task bar
+ * (phones and tablets).
+ */
+export function useLibraryBottomBar() {
+  const { main, workspace } = useContext(Context);
+  const desktopNavigation = useLibraryDesktopNavigation();
+  const desktop = useDesktopNavigation();
+  if (workspace) return !desktop;
+  return Boolean(main) && (!desktop || desktopNavigation === 'strip');
+}
+/**
+ * Where a Library header's sound control goes. While a bottom bar is on
+ * screen it floats just above the bar's right end (`slot`, null for the
+ * moment before the spot is on the page), as the Reader's note floats above
+ * its Listen bar; elsewhere it sits in the header.
+ */
+export function useLibrarySoundSlot(): { floating: boolean; slot: HTMLElement | null } {
+  const { soundSlot = null } = useContext(Context);
+  const floating = useLibraryBottomBar();
+  return { floating, slot: floating ? soundSlot : null };
+}
+/**
  * The sidebar preference for a shell whose rail is the Pathways sidebar, or
  * null elsewhere (workspace mode, the strip setting, no Library navigation).
  * `WorkspaceShell` applies it, so every main-mode page shares one choice: the
@@ -168,15 +205,17 @@ export function LibrarySectionSidebar() {
 
 function PathwaysSidebar({ main, menu }: { main: MainState; menu: LibrarySectionMenu | null }) {
   const { navigationArtwork } = useLibraryAssets();
-  const { location, onNavigate, selected, profile } = main;
+  const { location, onNavigate, selected, places, profile } = main;
   const go = (target: LibraryLocation) => { if (libraryLocationKey(location) !== libraryLocationKey(target)) onNavigate(target); };
   // The page's own sections nest under the pathway you are on (e.g. Profile → Home, Stories, Rewards).
   const nested = menu?.sections.flatMap(section => section.items) ?? [];
   const settings: LibraryLocation = { screen: 'profile', cave: '/settings' };
+  // Settings is a Profile page, so a host without Profile has no Settings here either.
+  const withSettings = places.some(place => place.id === 'profile');
   // The Celestial Library logo stays in the header; the top of the sidebar is the reader's.
   return <LibraryNavigationDrawerPanel variant="pathways"
     aria-label="Library pathways" profile={profile}
-    sections={[{ id: 'pathways', label: 'Pathways', items: LIBRARY_DESTINATIONS.map(({ id, label, location: target }) => ({
+    sections={[{ id: 'pathways', label: 'Pathways', items: places.map(({ id, label, location: target }) => ({
       id, label, active: selected === id,
       icon: id === 'profile' ? <SENProfileIcon size={20} /> : <SENNavigationIcon name={icons[id]} size={20} />,
       onSelect: () => go(target),
@@ -184,10 +223,10 @@ function PathwaysSidebar({ main, menu }: { main: MainState; menu: LibrarySection
         id: childId, label: childLabel, icon, active, onSelect,
       })) : undefined,
     })) }]}
-    footer={{ divider: true, items: [
+    footer={withSettings ? { divider: true, items: [
       { id: 'settings', label: 'Settings', icon: <SENSettingsIcon size={18} />,
         active: location.screen === 'profile' && Boolean(location.cave?.startsWith('/settings')), onSelect: () => go(settings) },
-    ] }}
+    ] } : undefined}
     artwork={navigationArtwork ? { type: 'image', src: navigationArtwork } : undefined} />;
 }
 
@@ -200,33 +239,65 @@ export function useLibraryWorkspace() {
 
 /**
  * The Library's one navigation system. Main mode is Home, Create, Discover,
- * Profile: the bottom strip on phones and tablets and, from 1024px, the
- * Pathways sidebar (`LibrarySectionSidebar`) with a page's own sub-pages (the
- * Cave's) nested under the active pathway. Workspace mode is a
+ * Profile, or the subset a host has built (`destinations`): the bottom strip
+ * on phones and tablets and, from 1024px, the Pathways sidebar
+ * (`LibrarySectionSidebar`) with a page's own sub-pages (the Cave's) nested
+ * under the active pathway. Workspace mode is a
  * focused task's own bar, Sections drawer and rail, drawn by the same shell
  * from the task's definition. Pages supply destinations, never a strip.
  */
 export function LibraryNavigation(props: LibraryNavigationProps) {
+  const [soundSlot, setSoundSlot] = useState<HTMLElement | null>(null);
   if ('workspace' in props) return <WorkspaceNavigation workspace={props.workspace}>{props.children}</WorkspaceNavigation>;
-  const { location, onNavigate, sectionMenu, profile, mode, children } = props;
+  const { location, onNavigate, destinations, sectionMenu, profile, mode, children } = props;
   // Immersive and workspace routes cannot be overridden by the standard default.
   const routeMode = libraryNavigationMode(location.screen);
   const resolvedMode = routeMode !== 'standard' ? routeMode : mode ?? 'standard';
-  const main = resolvedMode === 'standard' ? { location, onNavigate, selected: activeLibraryDestination(location), profile } : null;
-  return <Context.Provider value={{ menu: sectionMenu ?? null, workspace: null, main }}>
-    {main ? <MainNavigation location={location} onNavigate={onNavigate}>{children}</MainNavigation> : children}
+  const places = libraryPlaces(destinations);
+  const main = resolvedMode === 'standard' ? { location, onNavigate, selected: activeLibraryDestination(location), places, profile } : null;
+  return <Context.Provider value={{ menu: sectionMenu ?? null, workspace: null, main, soundSlot: main ? soundSlot : null }}>
+    {main ? <MainNavigation location={location} onNavigate={onNavigate} places={places} onSoundSlot={setSoundSlot}>{children}</MainNavigation> : children}
   </Context.Provider>;
 }
 
-function MainNavigation({ location, onNavigate, children }: Pick<LibraryMainNavigationProps, 'location' | 'onNavigate' | 'children'>) {
+/**
+ * The spot where a header's sound control floats while the bottom bar is on
+ * screen: just above the bar's right end, as the Reader's note floats above
+ * its Listen bar. It follows the bar's height, the safe area included, and is
+ * empty (and hidden) when the sound sits in the header.
+ */
+function LibrarySoundSlot({ onSlot }: { onSlot: (slot: HTMLElement | null) => void }) {
+  const [slot, setSlot] = useState<HTMLDivElement | null>(null);
+  const ref = useCallback((element: HTMLDivElement | null) => {
+    setSlot(element);
+    onSlot(element);
+  }, [onSlot]);
+  useEffect(() => {
+    const bar = slot?.parentElement?.querySelector<HTMLElement>(':scope > .library-global-navigation');
+    if (!slot || !bar) return undefined;
+    const follow = () => slot.style.setProperty('--library-bar-height', `${bar.offsetHeight}px`);
+    follow();
+    if (typeof ResizeObserver === 'undefined') return undefined;
+    const observer = new ResizeObserver(follow);
+    observer.observe(bar);
+    return () => observer.disconnect();
+  }, [slot]);
+  return <div ref={ref} className="library-sound-slot" data-library-sound-slot="" />;
+}
+
+function MainNavigation({ location, onNavigate, places, onSoundSlot, children }: Pick<LibraryMainNavigationProps, 'location' | 'onNavigate' | 'children'> & {
+  places: readonly LibraryPlace[];
+  onSoundSlot: (slot: HTMLElement | null) => void;
+}) {
   const selected = activeLibraryDestination(location);
   const desktopNavigation = useLibraryDesktopNavigation();
   // From 1024px the Pathways sidebar replaces the strip unless the host keeps the strip.
   return <div className="library-navigation-layout" data-library-mode="main" data-library-destination={selected}
     data-library-desktop-navigation={desktopNavigation}>
     {children}
+    <LibrarySoundSlot onSlot={onSoundSlot} />
     <LibraryBottomNavigation aria-label="Library global navigation" className="library-global-navigation" showLabels
-      items={LIBRARY_DESTINATIONS.map(({ id, label, location: target }) => {
+      items={places.map(({ id, label, location: target }) => {
         const icon = id === 'profile' ? <SENProfileIcon size={20} /> : <SENNavigationIcon name={icons[id]} size={20} />;
         return { id, label, icon, active: selected === id,
           onSelect: () => { if (libraryLocationKey(location) !== libraryLocationKey(target)) onNavigate(target); } };
@@ -236,6 +307,7 @@ function MainNavigation({ location, onNavigate, children }: Pick<LibraryMainNavi
 
 function WorkspaceNavigation({ workspace, children }: { workspace: LibraryWorkspaceDefinition; children: ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [soundSlot, setSoundSlot] = useState<HTMLElement | null>(null);
   // The rail replaces the drawer from the desktop breakpoint; never leave one open behind it.
   useEffect(() => {
     const desktop = window.matchMedia(DESKTOP_NAVIGATION_QUERY);
@@ -259,9 +331,10 @@ function WorkspaceNavigation({ workspace, children }: { workspace: LibraryWorksp
     { id: 'back', label: back.label ?? 'Back', icon: <SENExitIcon size={20} aria-hidden="true" />,
       onSelect: () => { setDrawerOpen(false); back.onBack(); } },
   ];
-  return <Context.Provider value={{ menu: null, workspace: state, main: null }}>
+  return <Context.Provider value={{ menu: null, workspace: state, main: null, soundSlot }}>
     <div className="library-navigation-layout" data-library-mode="workspace">
       {children}
+      <LibrarySoundSlot onSlot={setSoundSlot} />
       {/* The same bar and placement as the global strip; only the items differ.
           From the desktop breakpoint the rail and the header take over. */}
       <LibraryBottomNavigation aria-label={workspace.barLabel} className="library-global-navigation library-workspace-navigation"

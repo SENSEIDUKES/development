@@ -52,3 +52,23 @@
   color: #a3a3a3;
   font-size: 12px;
 }
+
+/* Floating above the bottom bar on phones and tablets it is the Reader's ghost
+   note: faint while the page scrolls, clear when it is still, touched or
+   focused. A soft shadow keeps it readable over pictures, and its volume opens
+   upward, above the note. */
+.library-sound-slot .header-sound-control {
+  --sap-reader-mixer-note-ghost-opacity: initial;
+  color: #f2ece4;
+}
+.library-sound-slot .sap-reader-mixer-note__glyph {
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.9));
+}
+.library-sound-slot .header-sound-control-popover {
+  inset-block-start: auto;
+  inset-block-end: calc(100% + 6px);
+}
+.library-sound-slot .header-sound-control-popover::before {
+  inset-block-start: auto;
+  inset-block-end: -8px;
+}

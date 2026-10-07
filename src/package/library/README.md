@@ -1,5 +1,20 @@
 # `@seihouse/library`
 
+**0.24.0 (2026-10-07):** the shell takes a host's own places. `LibraryNavigation` takes
+`destinations`: the strip and the Pathways sidebar show only those, in the Library's
+order, and Settings shows only beside Profile (all four, as before, when omitted).
+`WorkspaceHeaderSoundProvider` gives every Library header beneath it the host's sound
+control, Story Seed's included; a header's own `sound` wins. While a Library bottom bar
+is on screen (phones and tablets) a header's sound control floats just above the bar's
+right end instead of sitting in the header, as the Reader's note floats above its Listen
+bar (`useLibraryBottomBar`, `useLibrarySoundSlot`). `useStoredLibrarySidebarMode`
+keeps the Pathways sidebar's open or minimized choice in the host's device preferences
+(`LIBRARY_SIDEBAR_MODE_KEY`, `readLibrarySidebarMode`). `useLibraryLegalDocuments` gives a
+host the footer's draft Terms, Privacy and Cookies in their sheet; `MainLibraryFooter`
+uses it, unchanged. `./stories`' `StoryPages` takes `frame`, the host's browsing frame
+around World Info (the Reader is never framed). NovelExpanded uses all of it. Requires
+`@seihouse/sen` 0.24.2, as before.
+
 **0.23.1 (2026-10-06):** adopts universal UI 0.11.0, Library UI 0.10.0 and SEN
 0.24.2. The desktop Pathways sidebar uses the UI package's two-way double tap/click
 instead of a star, with a keyboard-focus-only width control. Its scrollbar appears

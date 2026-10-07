@@ -10,7 +10,7 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - **Source locations:** Light-Novels `src/components/GlobalHeader.tsx` (`GlobalHeader`), `src/components/DaoInsights.tsx` (`DaoInsights`), and the collection navigation in `src/components/LibraryScreen.tsx` (`LibraryScreen`). Development `src/components/story-seed/development/CreationModal.tsx` (`CreationModal`), `StorySeedHeader.tsx`, `StorySeedSelector.tsx`, `StorySeedMobileNavigation.tsx`, and `StorySeedSettings.tsx`.
 - **Workshop preview:** `?preview=library-shell`
 - **First Workshop record:** 2026-09-08
-- **Last recorded Workshop update:** 2026-09-28
+- **Last recorded Workshop update:** 2026-10-07
 - **Historical source inspection:** 2026-09-08
 - **Implementation status:** under refinement; locked captures plus Development workspaces on the canonical `SEIAppHeader` and `SEIAppShell`.
 
@@ -193,6 +193,10 @@ The existing local files named by this inventory are:
 
 ## Workshop history
 
+- **2026-10-07 (later):** While a bottom bar is on screen (phones and tablets), a header's music note now floats just above the bar's right end, as the Reader's note floats above its Listen bar, instead of sitting in the header; on laptops it stays in the header (`useLibraryBottomBar`, `useLibrarySoundSlot`; see "The music note floats above the bar" below). The Workshop's Profile note follows the same rule.
+
+- **2026-10-07:** NovelExpanded's Home and World Info moved onto the shell with its own two places (Home, Create); added `destinations`, `WorkspaceHeaderSoundProvider`, `useStoredLibrarySidebarMode` and `useLibraryLegalDocuments` (see "NovelExpanded on the shell" below). The Workshop's Library preview and locked captures are unchanged.
+
 - **2026-10-06:** Adopted UI 0.11.0 / Library UI 0.10.0. The package owns two-way double tap/click, with no star and a keyboard-focus-only width control. Library navigation scrollbars appear only during scrolling/dragging; a gold-and-cyan bevel frames the stationary edge. Removed Development's local expansion handler and hidden-star CSS, preserving the host's stored width choice.
 
 - **2026-09-28 (second follow-up):** Adopted UI 0.10.0 / Library UI 0.9.0 (UI PR #84). The sidebar is open by default: the star minimizes it to the icon rail, and a double tap or double click on the rail (which shows no star) expands it; hover and focus never open it. Every scrolling surface in the shell uses the shared overlay scrollbar in Library gold. Locked captures and source-comparison dates are unchanged.
@@ -271,5 +275,50 @@ remain with the profile/app owners.
 
 ## The music note in the header — 2026-10-07
 
-`HeaderSoundControl` puts the reader mixer's music note in the shell header, through `WorkspaceHeader`'s new `sound` slot just before Help and Search, at every width. It reuses the audio player's own `ReaderMixerNote`: a tap mutes or unmutes all sound (the mixer's master switch, the same as the Reader's note). Hovering it with a mouse, holding it about half a second with a finger, or ArrowUp/ArrowDown from the keyboard opens a **Music volume** slider bound to the Soundscapes level; it closes when the mouse leaves (after a short grace), on a tap outside, or on Escape. Both are the reader's saved mix, shared with Reader Settings › Audio. Without a reader mixer it renders nothing. The host shows it only while the reader's **Menu music** setting (`useMenuMusic`, `src/library/sound/menuMusic.ts`, kept in the host's reader preferences under `menu-music`, on by default) is on; Profile Settings › Sound changes that setting. NovelExpanded's Home and the Workshop's Profile header carry it now. The Library package now names `@seihouse/audio-player` as a peer, as SEN already does.
+`HeaderSoundControl` puts the reader mixer's music note in the shell header, through `WorkspaceHeader`'s new `sound` slot just before Help and Search (a host can supply it once for every header with `WorkspaceHeaderSoundProvider`, below). On phones and tablets it floats above the bottom bar instead (see "The music note floats above the bar"). It reuses the audio player's own `ReaderMixerNote`: a tap mutes or unmutes all sound (the mixer's master switch, the same as the Reader's note). Hovering it with a mouse, holding it about half a second with a finger, or ArrowUp/ArrowDown from the keyboard opens a **Music volume** slider bound to the Soundscapes level; it closes when the mouse leaves (after a short grace), on a tap outside, or on Escape. Both are the reader's saved mix, shared with Reader Settings › Audio. Without a reader mixer it renders nothing. The host shows it only while the reader's **Menu music** setting (`useMenuMusic`, `src/library/sound/menuMusic.ts`, kept in the host's reader preferences under `menu-music`, on by default) is on; Profile Settings › Sound changes that setting. Every header in NovelExpanded (Home, World Info and Story Seed) and the Workshop's Profile header carry it. The Library package now names `@seihouse/audio-player` as a peer, as SEN already does.
+
+## The music note floats above the bar — 2026-10-07
+
+On phones and tablets the Library's music note leaves the header. Wherever a
+Library bottom bar is on screen (main mode's strip below 1024px, or at every width
+with the `strip` setting; a workspace's task bar below 1024px), `WorkspaceHeader`
+places its `sound` (its own, or the host's from `WorkspaceHeaderSoundProvider`) in a
+spot `LibraryNavigation` keeps just above the bar's right end: 8px above the bar,
+16px from the screen's edge (more with a safe area), following the bar's measured
+height. That is the Reader's technique: its ghost note floats above the right end
+of its Listen bar. Floating, the note is the same ghost note, faint while the page
+scrolls and clear when it is still, touched or focused; a soft shadow keeps it
+readable over pictures, and its Music volume opens upward, above it. On laptops the
+sidebar or the rail replaces the bar and the note sits in the header, before Help
+and Search, as before. One note shows at a time. A header outside Library
+navigation keeps its note in the header. `useLibraryBottomBar()` tells a surface
+whether a bottom bar is on screen; `useLibrarySoundSlot()` is the header's placement.
+
+## NovelExpanded on the shell — 2026-10-07
+
+NovelExpanded (`/app/`) is the shell's first host outside the Workshop
+(`src/novel-expanded/AppShell.tsx`). Its Home and each story's World Info sit in
+`WorkspaceShell` with the Library header (NovelExpanded, the music note, Help and Search),
+main-mode `LibraryNavigation` and `LibraryFooter`; Create is Story Seed in workspace mode;
+the Reader stays outside. Four host-facing pieces made that possible without a second
+navigation, header or footer:
+
+- **`destinations` on `LibraryNavigation`.** A host lists the places it has built, in the
+  Library's order; the strip and the Pathways sidebar show only those, and Settings, a
+  Profile page, shows only beside Profile. NovelExpanded lists Home and Create, so Discover
+  and Profile join when their pages do. Omitted, all four show, as in the Workshop.
+- **`WorkspaceHeaderSoundProvider`.** The host's sound control for every Library header
+  beneath it, including headers a Library page draws itself (Story Seed's). A header's
+  own `sound` wins; `sound={null}` leaves it out. It floats above the bottom bar on
+  phones and tablets like any header's note (above).
+- **`useStoredLibrarySidebarMode(storage)`.** The Pathways sidebar's open or minimized
+  choice in the host's device preferences (`library-sidebar-mode`), for
+  `LibraryDesktopNavigationProvider`; open when nothing readable is saved.
+- **`useLibraryLegalDocuments()`.** Terms, Privacy and Cookies for a host without hosted
+  pages: each opens the Library's draft document in `LibraryLegalSheet`. `MainLibraryFooter`
+  now uses the same helper; its behavior is unchanged.
+
+Library's `StoryPages` takes a `frame` for World Info, so a host can put World Info inside
+its shell while the Reader, rendered by the same mounted `StoryPages`, stays outside it.
+The Workshop's Library preview is unchanged and keeps all four places.
 

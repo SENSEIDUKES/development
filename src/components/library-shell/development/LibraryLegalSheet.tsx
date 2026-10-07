@@ -1,6 +1,7 @@
-import type { RefObject } from 'react';
+import { useRef, useState, type ReactNode, type RefObject } from 'react';
 import { WorkspaceSheet } from './WorkspaceSheet';
-import type { LibraryLegalDocument } from './libraryLegal';
+import { LIBRARY_LEGAL_DOCUMENTS, type LibraryLegalDocument } from './libraryLegal';
+import type { LibraryFooterAction } from './LibraryFooter';
 import './library-footer.css';
 
 /** Reads one legal document in the Library's standard sheet. */
@@ -21,4 +22,20 @@ export function LibraryLegalSheet({ document, onClose, returnFocusRef }: {
       </section>)}
     </article>}
   </WorkspaceSheet>;
+}
+
+/**
+ * The footer's Terms, Privacy and Cookies for a host without hosted pages of
+ * its own: each opens the Library's own document (`LIBRARY_LEGAL_DOCUMENTS`)
+ * in `LibraryLegalSheet`, and focus returns to the link that opened it. Pass
+ * `legal` to `LibraryFooter` and render `sheet` beside it.
+ */
+export function useLibraryLegalDocuments(): { legal: readonly LibraryFooterAction[]; sheet: ReactNode } {
+  const [open, setOpen] = useState<LibraryLegalDocument | null>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
+  const legal = LIBRARY_LEGAL_DOCUMENTS.map(document => ({ id: document.id, label: document.label, onSelect: () => {
+    openerRef.current = globalThis.document?.activeElement instanceof HTMLElement ? globalThis.document.activeElement : null;
+    setOpen(document);
+  } }));
+  return { legal, sheet: <LibraryLegalSheet document={open} onClose={() => setOpen(null)} returnFocusRef={openerRef} /> };
 }

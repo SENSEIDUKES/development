@@ -10,7 +10,7 @@ The Workshop is where systems are built and inspected one at a time. The app is
 where they are used together, the way a reader meets them.
 
 - Created: 2026-10-01 (piece 1)
-- Last updated: 2026-10-06
+- Last updated: 2026-10-07
 - Owner: `host` (`scripts/ownershipInventory.mjs`). The app is a host of the
   Library and SEN packages, like any outside app would be.
 
@@ -26,10 +26,42 @@ rewrites and every page survives a reload.
 | Story View | `/app/?story=<id>` | The story's World Info page: Start Story, Start Reading, Continue, and Export story (the whole story as one file, for sharing a test) |
 | Reader | `/app/?story=<id>&read=1` | The reading-only Reader, with the Generation Overlay while a chapter is written |
 
+- Home and Story View sit in the Library Shell; Create is Story Seed in the shell's workspace mode; the Reader is full-screen (below).
 - Moving inside the app adds a browser history entry, so Back and Forward walk the same pages.
 - Manifest Story replaces Create with the new story, so Back from it goes Home.
 - `/app` without the slash redirects to `/app/` (the Vite dev and preview servers, and `vercel.json`).
 - A story id the app does not have goes Home.
+
+## The Library Shell
+
+The app's pages sit in the Library's own shell (`@seihouse/library/shell`), the
+same one the Workshop's Library preview shows, with only the places the app has
+built:
+
+- **Home and Story View** (`AppShell.tsx`): the Library header (NovelExpanded,
+  Help and Search), the navigation and the footer around the page.
+  - **The music note** (while Menu music is on): on phones and tablets it floats
+    just above the bottom bar's right end, as the Reader's note floats above its
+    Listen bar, faint while the page scrolls; on laptops it sits in the header
+    before Help and Search.
+  - **Navigation:** Home and Create; on phones and tablets the bottom strip, and
+    from 1024px the Pathways sidebar. Story View keeps Home selected. Discover and
+    Profile join when their pages come to the app, so Settings, a Profile page,
+    waits with them.
+  - **The sidebar's choice is kept:** a double tap or double click switches it
+    between open and the icon rail, and it opens that way on the next visit.
+  - **Search** finds Home, Create and each of the reader's stories, and opens its
+    World Info.
+  - **The footer** has Explore (Your stories, Create a story), Support (Help) and
+    the legal row. Terms, Privacy and Cookies open the Library's draft documents,
+    marked as drafts. Social channels wait for published addresses.
+- **Create** is Story Seed in the shell's workspace mode: its task bar (Sections,
+  Story Bank, Settings, Back) stands where the strip was, with the same music note
+  (`WorkspaceHeaderSoundProvider`), floating above the task bar on phones and
+  tablets and in Story Seed's header on laptops.
+- **The Reader** stays outside the shell. It is immersive and scrolls the page
+  itself. Story View is framed by the shell through `StoryPages`' `frame`, so Start
+  Story still begins Chapter 1 when the Reader opens.
 
 ## Same chapters as the Workshop
 
@@ -60,10 +92,20 @@ single-channel player is not used by the app.
 
 The app has its own music (`appMusic.ts`): calm pieces of SEN Soundscapes,
 Volume 1 (`APP_MUSIC_MOOD`, ambient), one after another, on Home, Create, World
-Info and while a chapter is written, with no model and nothing to wait for (a
-browser starts sound on the reader's first tap). In the Reader each chapter's
-own scene takes over, as its writer chose it; leaving the Reader brings the
-app's music back.
+Info and while a chapter is written, with no model and nothing to wait for. In
+the Reader each chapter's own scene takes over, as its writer chose it; leaving
+the Reader brings the app's music back.
+
+- **The first tap starts it.** Browsers and phones start no sound before the
+  reader's first tap, and scrolling does not count. The music begins with the
+  first tap anywhere, on Home as on any page; until then the music note says to
+  tap. The browser walk checks this in a Chromium that follows that rule.
+- **Leaving the page never stops it** (`keepPlayingWhileAway` in
+  `src/host/reader/readerMixer.ts`): another tab, another app, a locked phone.
+  The mixer does not pause while the page is hidden (`pauseWhenHidden: false`),
+  time away does not count toward its idle rest (ten minutes without a touch on
+  the page), and on return anything the browser or the phone paused plays on.
+  The reader's mute and the sleep timer still stop it.
 
 ## Its own storage
 
@@ -75,6 +117,7 @@ Workshop's, so neither can overwrite the other (`services.ts`):
 | Stories | IndexedDB `novelexpanded-harness-stories-v1` |
 | Reading places | IndexedDB `novelexpanded-reader-state-v1` |
 | Narration voices and speed (Reader Settings) | localStorage `novelexpanded-reader-read-aloud` |
+| The laptop sidebar open or minimized | localStorage `novelexpanded-reader-library-sidebar-mode` |
 | The access token | localStorage `seihouse-development-access-token`, shared with the Workshop |
 | Story Seeds | localStorage `novelexpanded-story-seeds-v1` |
 
@@ -117,12 +160,13 @@ task needs something the list does not allow.
 | File | Responsibility |
 | --- | --- |
 | `app/index.html` (repository root) | The app's page; loads `main.tsx` |
-| `main.tsx` | Stylesheets (`src/host/styles/theme.css`, `@seihouse/sen/styles.css`) and the real services |
-| `NovelExpandedApp.tsx` | Providers, the opening gate, and the four pages; Chapter 1 begins at Manifest Story |
+| `main.tsx` | Stylesheets (`src/host/styles/theme.css`, `@seihouse/sen/styles.css`), the Library scrollbar on the page, and the real services |
+| `NovelExpandedApp.tsx` | Providers (the mixer, the music note for every Library header, the remembered sidebar), the opening gate, and the four pages; Chapter 1 begins at Manifest Story |
+| `AppShell.tsx` | The Library Shell around Home and Story View: header, navigation (Home, Create), footer |
 | `appMusic.ts` | The app's own music, from SEN Soundscapes, on every page and while a chapter is written |
 | `routes.ts` | Addresses and history |
 | `services.ts` | Storage, the writer, the official skills and the Blueprint client |
-| `HomePage.tsx` | Home inside the Library workspace shell |
+| `HomePage.tsx` | Home: the reader's stories, in `AppShell` |
 | `CreatePage.tsx` | Create: `CreationModal` in a guest Story Seed runtime; asks for the token before a Blueprint |
 | `AccessTokenSheet.tsx` | The access token sheet, one for the whole app |
 | `accessToken.ts` | The chapter writer with the owner's token: a chapter at the limit asks for it and is sent again |
@@ -145,6 +189,7 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 - Story Settings (CAPA and media slots) inside Create and Story View.
 - Cover art on Story View.
 - Profile, accounts and server-side storage.
+- Discover. It and Profile join the shell's navigation when their pages come.
 
 ## Verification
 
@@ -154,6 +199,8 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## History
 
+- **2026-10-07** — Sound on phones: the music note floats just above the bottom bar's right end outside the Reader too (in the header on laptops), and leaving the page (another tab, another app, a locked phone) never stops the sound; time away does not count toward the idle rest, and sound a phone paused plays on at return. Checked that the first tap anywhere on Home starts the menu music, under a browser's no-sound-before-a-tap rule.
+- **2026-10-07** — The Library Shell, in full: Home and Story View sit in the Library's header, navigation and footer, with the app's two places, Home and Create (the strip on phones, the Pathways sidebar on laptops, remembered on this device); Search opens the reader's stories; the footer offers Help and the draft legal pages. Create is Story Seed in the shell's workspace mode, and its header now carries the music note too. The Reader stays full-screen. Discover and Profile join when their pages come to the app.
 - **2026-10-07** — Menu music is the reader's: a music note in Home's header mutes all sound with one tap, and hovering it (or holding it on a phone) opens a Music volume slider. It shows while the Menu music setting is on (on by default, kept on this device; its switch is in Profile Settings › Sound, in the Workshop until Profile comes to the app); off, the menus are silent. The Reader never opens to the menu music: it plays its own (each chapter's scene, or mystical pieces for a chapter written before scenes and while a chapter is written), and leaving it brings the menu music back.
 - **2026-10-06** — The generation veil uses the host's equipped Familiar and its
   elemental colors. Visitors use Quill, the catalogue default. A host can pass

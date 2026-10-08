@@ -4,6 +4,7 @@ dist
 generated/harness-generation-api
 generated/story-seed-blueprint-api
 generated/story-cover-api
+generated/image-lab-api
 generated/codex-voice-api
 generated/reader-translation-api
 generated/model-router-api

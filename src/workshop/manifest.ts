@@ -391,7 +391,7 @@ export const workshopEntries: WorkshopEntry[] = [
     owner: 'workshop',
     status: 'active',
     title: 'Image Prompts',
-    description: 'Every prompt an image model is given, by kind of image: cover art (the app\'s own, from the live code), the Divine Mirror profile picture, Codex portraits, places and artifacts, chapter scene art and Familiar art (the old app\'s, quoted word for word), each with its rules, then the ideas for images that change over time. A dated history records every change; a test fails until a change is written there.',
+    description: 'Every prompt an image model is given, by kind of image: cover art (the app\'s own, from the live code), the Divine Mirror profile picture, Codex portraits, places and artifacts, chapter scene art and Familiar art (the old app\'s, quoted word for word), each with its rules, then the ideas for images that change over time. The Image Lab makes an image from any prompt with a Model Router image model. A dated history records every change; a test fails until a change is written there.',
     category: 'other',
     version: 'v1.0',
     source: {

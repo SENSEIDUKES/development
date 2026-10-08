@@ -1,7 +1,7 @@
 import type { StoryCoverRequest } from '@seihouse/library/stories';
 import { createModelRouter, DEFAULT_IMAGE_MODEL, IMAGE_MODELS, ModelRouterError } from '@seihouse/library/model-router-server';
 import { MODEL_PROVIDERS, providerKey, type ModelEnvironment } from '../model-router/catalog';
-import { buildStoryCoverPrompt } from './prompt';
+import { buildStoryCoverPrompt, STORY_COVER_ASPECT_RATIO, STORY_COVER_FIELD_LIMITS } from './prompt';
 
 export interface StoryCoverHttpRequest {
   method?: string;
@@ -24,13 +24,12 @@ export interface StoryCoverHttpDependencies {
   onAnswer?: (answer: { model: string; durationMs: number }) => void;
 }
 
-/** Visitors may make a few covers; the owner's access token lifts the limit (the owner's choice, 2026-10-08). */
-export const STORY_COVER_VISITOR_LIMIT = { key: 'story-cover', limit: 3, windowMs: 30 * 60 * 1_000 } as const;
+export { STORY_COVER_VISITOR_LIMIT } from './limits';
 
 /** A cover is one image; Nano Banana 2 usually answers in well under a minute. */
 export const STORY_COVER_TIMEOUT_MS = 120_000;
 
-const LIMITS = { title: 160, genre: 80, style: 20, synopsis: 1_200, tag: 40, tags: 12, mainCharacter: 80, tone: 300, world: 800 } as const;
+const LIMITS = STORY_COVER_FIELD_LIMITS;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -95,7 +94,7 @@ export async function handleStoryCoverHttp(
   const started = Date.now();
   try {
     const result = await generate({
-      capability: 'image', model, prompt: buildStoryCoverPrompt(parsed.story), aspectRatio: '2:3', timeoutMs: STORY_COVER_TIMEOUT_MS,
+      capability: 'image', model, prompt: buildStoryCoverPrompt(parsed.story), aspectRatio: STORY_COVER_ASPECT_RATIO, timeoutMs: STORY_COVER_TIMEOUT_MS,
     });
     if (result.capability !== 'image') throw new ModelRouterError('provider-error', 'The configured model returned no image.');
     dependencies.onAnswer?.({ model, durationMs: Date.now() - started });

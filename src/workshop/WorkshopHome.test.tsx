@@ -47,7 +47,7 @@ const ACTIVE_GROUPS = {
   Pages: ['light-novels-home', 'library-shell', 'creator-space', 'story-seed', 'reader-chamber', 'reader-codex', 'user-profile', 'celestial-store'],
   Rewards: ['reward-loop', 'achievements', 'relics-gallery', 'familiar-training', 'dao-pillar', 'idle-cultivation'],
   Customization: ['familiar'],
-  Systems: ['novel-expanded-docs', 'library-help', 'harness-generation', 'writer-instructions', 'chapter-generation-manifestation', 'character-voice', 'provenance', 'energy'],
+  Systems: ['novel-expanded-docs', 'library-help', 'harness-generation', 'writer-instructions', 'image-prompts', 'chapter-generation-manifestation', 'character-voice', 'provenance', 'energy'],
   Components: ['library-components', 'icons', 'text-highlight-engine', 'motion-picture', 'world-card', 'celestial-backdrop', 'card-workshop'],
 };
 
@@ -132,7 +132,7 @@ describe('WorkshopHome', () => {
       'harness-generation': 'sen', 'chapter-generation-manifestation': 'library', 'character-voice': 'sen', provenance: 'deferred', energy: 'library', 'model-router': 'deferred',
       'text-highlight-engine': 'sen', 'motion-picture': 'sen', 'world-card': 'library', 'celestial-backdrop': 'library-ui', 'card-workshop': 'workshop',
       'library-components': 'library-ui', icons: 'library-ui', 'novel-expanded-docs': 'workshop', 'library-help': 'library',
-      'chapter-generation-flow': 'workshop', 'writer-instructions': 'workshop',
+      'chapter-generation-flow': 'workshop', 'writer-instructions': 'workshop', 'image-prompts': 'workshop',
     });
   });
 

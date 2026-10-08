@@ -102,6 +102,10 @@ const LibraryHelpPreviewWorkspace = lazy(() =>
   import('./workshop/previews/library-help/LibraryHelpPreviewWorkspace')
     .then(module => ({ default: module.LibraryHelpPreviewWorkspace })),
 );
+const ImagePromptsWorkspace = lazy(() =>
+  import('./workshop/previews/image-prompts/ImagePromptsWorkspace')
+    .then(module => ({ default: module.ImagePromptsWorkspace })),
+);
 const WriterInstructionsWorkspace = lazy(() =>
   import('./workshop/previews/writer-instructions/WriterInstructionsWorkspace')
     .then(module => ({ default: module.WriterInstructionsWorkspace })),
@@ -136,6 +140,7 @@ const previewRegistry: Record<string, ComponentType> = {
   'icons': IconsWorkspace,
   'novel-expanded-docs': NovelExpandedDocsWorkspace,
   'writer-instructions': WriterInstructionsWorkspace,
+  'image-prompts': ImagePromptsWorkspace,
   'reader-codex': ReaderCodexWorkspace,
   'reader-chamber': ReaderChamberWorkspace,
   'relics-gallery': RelicsWorkspace,

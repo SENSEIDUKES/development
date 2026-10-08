@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useId, type ReactNode } from 'react';
 import { type StorySeedInput } from '@seihouse/sen/story-seed';
 import {
   CHAPTER_WRITING_STYLE_DESCRIPTIONS,
@@ -25,6 +25,8 @@ interface StorySeedSettingsProps {
   storyLanguage?: { value: SenLanguageCode; onChange: (language: SenLanguageCode) => void };
   /** Tells the workspace the author chose a Reading Mode, so an account default no longer replaces it. */
   onReadingModeChange?: (mode: ChapterWritingStyle) => void;
+  /** The host's Story Settings (skills and media), after the Reading Mode. */
+  children?: ReactNode;
 }
 
 /** The complete seed subset rendered by the shared Settings body. */
@@ -123,7 +125,7 @@ const MatureAudienceSetting = ({ checked, onChange }: MatureAudienceSettingProps
  * story's reader-experience defaults. The author configures the story here;
  * how chapters are then written is decided from these settings.
  */
-export const StorySeedSettings = ({ seed, updateSeed, storyLanguage, onReadingModeChange }: StorySeedSettingsProps) => (
+export const StorySeedSettings = ({ seed, updateSeed, storyLanguage, onReadingModeChange, children }: StorySeedSettingsProps) => (
   <>
     {storyLanguage && <StoryLanguageSetting {...storyLanguage} />}
     <ReadingModeSetting
@@ -137,5 +139,6 @@ export const StorySeedSettings = ({ seed, updateSeed, storyLanguage, onReadingMo
       checked={seed.story.optional.intendedForMatureAudiences}
       onChange={checked => updateSeed(setIntendedForMatureAudiences(checked))}
     />
+    {children}
   </>
 );

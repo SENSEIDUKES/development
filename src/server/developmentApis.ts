@@ -3,6 +3,7 @@ import { createDevelopmentEconomy } from '../server/economy/developmentRuntime';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { handleHarnessGenerationHttp } from '../server/harness-generation/http';
 import { handleStorySeedBlueprintHttp } from '../server/story-seed-blueprint/http';
+import { handleStoryCoverHttp, STORY_COVER_VISITOR_LIMIT } from '../server/story-cover/http';
 import { handleReaderTranslationHttp } from '../server/reader-translation/http';
 import { handleCodexVoiceQuoteHttp } from '../server/audio/codexVoiceQuoteHttp';
 import { createConfiguredCodexVoiceQuoteService } from '../server/audio/codexVoiceQuote';
@@ -50,6 +51,7 @@ export const generationApis = (
     limit: 6,
     windowMs: 30 * 60 * 1_000,
   });
+  const guardStoryCover = createPublicGenerationGuard(STORY_COVER_VISITOR_LIMIT);
   const guardCodexVoiceQuote = createPublicGenerationGuard({
     key: 'codex-voice-quote',
     limit: 8,
@@ -98,6 +100,7 @@ export const generationApis = (
       if (
         pathname !== '/api/harness-generation'
         && pathname !== '/api/generate-blueprint'
+        && pathname !== '/api/story-cover'
         && pathname !== '/api/codex-voice-quote'
         && pathname !== '/api/reader-translation'
       ) {
@@ -110,6 +113,8 @@ export const generationApis = (
           : pathname === '/api/harness-generation'
               // The owner's access token lifts the visitor limit.
               ? ownerTokenAdmission(request, developmentAccessToken(environment)) ?? guardHarnessGeneration(request)
+            : pathname === '/api/story-cover'
+              ? ownerTokenAdmission(request, developmentAccessToken(environment)) ?? guardStoryCover(request)
             : pathname === '/api/codex-voice-quote'
               ? guardCodexVoiceQuote(request)
             : pathname === '/api/reader-translation'
@@ -134,6 +139,18 @@ export const generationApis = (
               environment,
               onError: error => console.error('[story-seed-blueprint]', error),
               onAnswer: ({ model, durationMs }) => console.info(`[story-seed-blueprint] ${model} answered in ${Math.round(durationMs / 1000)}s`),
+            },
+          );
+          writeJson(response, result.status, result.body, result.headers);
+          return;
+        }
+        if (pathname === '/api/story-cover') {
+          const result = await handleStoryCoverHttp(
+            { method: request.method, body, headers: request.headers },
+            {
+              environment,
+              onError: error => console.error('[story-cover]', error),
+              onAnswer: ({ model, durationMs }) => console.info(`[story-cover] ${model} answered in ${Math.round(durationMs / 1000)}s`),
             },
           );
           writeJson(response, result.status, result.body, result.headers);

@@ -4,8 +4,9 @@ import { LibraryPresentationProvider, loadingFamiliarPresentation } from '@seiho
 import {
   HeaderSoundControl, LibraryDesktopNavigationProvider, LibraryDestinationsProvider, WorkspaceHeaderSoundProvider, useMenuMusic, useStoredLibrarySidebarMode,
 } from '@seihouse/library/shell';
-import { StoryPages, storyHomeWorlds, useLibraryStories } from '@seihouse/library/stories';
+import { CreateStorySettings, StoryPages, storyHomeWorlds, useLibraryStories, useStorySettingsDraft } from '@seihouse/library/stories';
 import { findStory, nextChapterWaitsOnReader, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
+import { createOfficialCapaDefaultLoadout } from '../host/generation/capa/officialCapaSkills';
 import { NarrativeButton } from '@seihouse/sen/presentation';
 import { EconomyClientProviders } from '../host/economy/EconomyClientProviders';
 import { useModelPreference } from '../host/generation/modelPreference';
@@ -20,7 +21,8 @@ import { AccessTokenSheet, type AccessTokenRequest } from './AccessTokenSheet';
 import { AppFamiliar } from './AppFamiliar';
 import { APP_DESTINATIONS } from './appPlaces';
 import { AppShell } from './AppShell';
-import { writerWithAccessToken, type AskForAccessToken } from './accessToken';
+import { coverRequesterWithAccessToken, writerWithAccessToken, type AskForAccessToken } from './accessToken';
+import { useStoryCovers } from '../host/media/storyCovers';
 import { APP_SOUNDSCAPES, useAppMusic } from './appMusic';
 import { CreatePage } from './CreatePage';
 import { HomePage } from './HomePage';
@@ -111,6 +113,10 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   const [route, navigate] = useAppRoute();
   const profile = useDeviceProfile(services.profile);
   const [chapterModel] = useModelPreference('chapters');
+  // Covers are made with the Model Router's image choice, read when each is asked for.
+  const [imageModel] = useModelPreference('images');
+  const requestCover = useMemo(() => coverRequesterWithAccessToken(services.requestStoryCover, services.accessToken, askForToken, () => imageModel), [services, askForToken, imageModel]);
+  const covers = useStoryCovers(services.storyCovers, requestCover);
   const [skills, setSkills] = useState<HarnessSkillManifest[]>();
   const [skillsError, setSkillsError] = useState<string>();
   const [skillsAttempt, setSkillsAttempt] = useState(0);
@@ -129,7 +135,9 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     baseMedia: LIBRARY_BASE_MEDIA, preferredModel: chapterModel,
   });
   const { state } = stories;
-  const worlds = useMemo(() => state ? storyHomeWorlds(state) : [], [state]);
+  // Story Settings chosen in Create, kept on this device until Manifest applies them.
+  const [settingsDraft, setSettingsDraft] = useStorySettingsDraft(services.readerPreferences);
+  const worlds = useMemo(() => state ? storyHomeWorlds(state, covers) : [], [state, covers]);
   const seedIds = useMemo(() => state ? startedSeedIds(state) : [], [state]);
   // The Cave's Stories page: each story, and the Story Seed it started from.
   const caveStories = useMemo(() => state ? state.stories.map(story => ({
@@ -162,9 +170,16 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   if (route.page === 'create') return withFamiliar(<CreatePage services={services} askForToken={askForToken} startedSeedIds={seedIds} chapterModel={stories.model || undefined}
     // A new Story Seed starts from the profile's languages and Reading Mode.
     accountDefaultLanguage={profile.defaultReadingLanguage} accountDefaultChapterWritingStyle={profile.defaultChapterWritingStyle}
+    renderStorySettings={({ seed, originalLanguage }) => <CreateStorySettings stories={stories}
+      defaults={createOfficialCapaDefaultLoadout(seed.story.required.style)}
+      originalLanguage={originalLanguage} chapterWritingStyle={seed.story.optional.chapterWritingStyle}
+      fateMode={seed.story.optional.fateSurvival.enabled ? 'survival' : 'regular'}
+      draft={settingsDraft} onDraftChange={setSettingsDraft} />}
     onHome={() => navigate(HOME_ROUTE)}
     onStartStory={async payload => {
-      const story = await startHarnessStoryFromSeed(stories.controller, payload);
+      const story = await startHarnessStoryFromSeed(stories.controller, payload, { draft: settingsDraft, installedSkills: stories.skills });
+      // The draft is the new story's now; the next story starts from its own defaults.
+      setSettingsDraft({});
       // Chapter 1 begins at once, while the reader looks over the World Card, so it is
       // ready (or nearly) when they start reading. A chapter that waits on the reader
       // (Fate Survival's first direction) waits; a failed start is simply tried again by
@@ -177,7 +192,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   if (storyId) return withFamiliar(missing ? null : <StoryPages key={storyId} stories={stories} storyId={storyId}
     page={route.page === 'read' ? 'read' : 'info'} readerStateRepository={services.readerState}
     readerPreferences={services.readerPreferences} soundscapes={APP_SOUNDSCAPES}
-    writingAgent={AGENTS.VERSA} backLabel="Back to your stories"
+    writingAgent={AGENTS.VERSA} backLabel="Back to your stories" covers={covers}
     // World Info sits in the Library Shell; the Reader never does.
     frame={info => <AppShell route={{ page: 'story', storyId }} navigate={navigate} stories={worlds} mainLabel="World Info">{info}</AppShell>}
     onOpenReader={() => navigate({ page: 'read', storyId })}

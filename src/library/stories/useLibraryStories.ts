@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { FrozenNarrativeMedia } from '@seihouse/sen/audio';
 import {
   HarnessGenerationController,
+  includeBundledHarnessSkills,
   type HarnessGenerationModelAdapter,
   type HarnessGenerationRepository,
   type HarnessHoldingsFixerPolicy,
@@ -58,6 +59,11 @@ export interface LibraryStories {
   rewriteLatestChapter: (storyId: string, note?: string) => Promise<void>;
   /** Plans the goals of the arc a story's next chapter begins, with the chosen model. */
   planArc: (storyId: string) => Promise<void>;
+  /** The skills Story Settings offers: the host's installed skills and SEN's bundled ones. */
+  skills: HarnessSkillManifest[];
+  /** The host's registered Media Packs, and the reader's unlocks, for Story Settings' Media Loadout. */
+  mediaPacks: readonly MediaPack[];
+  mediaPackEntitlements: readonly MediaPackEntitlement[];
 }
 
 const EMPTY_SKILLS: HarnessSkillManifest[] = [];
@@ -149,6 +155,7 @@ export function useLibraryStories({
     await controller.planNextArc(storyId, model);
   }, [controller, model]);
   const state = opened ? snapshot : undefined;
+  const skills = useMemo(() => includeBundledHarnessSkills(installedSkills), [installedSkills]);
 
   return {
     controller, state, serverInfo, model, setModel, loadError: storageError ?? writerError, retry,
@@ -156,5 +163,8 @@ export function useLibraryStories({
     generateNextChapter,
     rewriteLatestChapter,
     planArc,
+    skills,
+    mediaPacks: registeredMediaPacks,
+    mediaPackEntitlements,
   };
 }

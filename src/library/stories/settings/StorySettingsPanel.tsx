@@ -8,6 +8,7 @@ import {
   type ChapterWritingStyle,
 } from '@seihouse/sen/contracts';
 import { resolveStoryLanguagePackage, type HarnessSkillManifest, type HarnessStory } from '@seihouse/sen/harness-generation';
+import type { StorySettingsValues } from './storySettingsValues';
 import { NarrativePanel as LibraryPanel } from '@seihouse/sen/presentation';
 
 /**
@@ -28,8 +29,8 @@ export const storyLanguageNotice = (
 };
 
 /**
- * Story Settings on the novel page: the story's own configuration in plain
- * terms. The owner reads the Story Language fixed at the start and chooses the
+ * Story Settings' language and Reading Mode: the story's own configuration in
+ * plain terms, on Story View and the HARNESS developer page. The owner reads the Story Language fixed at the start and chooses the
  * Reading Mode for chapters still to come; the HARNESS turns both into its own
  * internal skills, which this panel never names.
  */
@@ -38,12 +39,15 @@ export function StorySettingsPanel({
   installedSkills,
   busy,
   onReadingModeChange,
+  title = 'Story Settings',
 }: {
-  story: HarnessStory;
+  story: StorySettingsValues;
   /** The host's installed packages, read only to explain the Story Language. */
   installedSkills: readonly HarnessSkillManifest[];
   busy: boolean;
   onReadingModeChange: (mode: ChapterWritingStyle) => void;
+  /** The panel's heading: Story Settings on its own, its part's name inside Story View's Story Settings. */
+  title?: string;
 }) {
   const titleId = useId();
   const readingModeId = useId();
@@ -53,7 +57,7 @@ export function StorySettingsPanel({
     <LibraryPanel as="section" padding="md" aria-labelledby={titleId} data-testid="story-settings">
       <div className="flex items-center gap-2">
         <Languages size={18} className="text-cyan-200" aria-hidden="true" />
-        <h2 id={titleId} className="font-display text-xl text-white">Story Settings</h2>
+        <h2 id={titleId} className="font-display text-xl text-white">{title}</h2>
       </div>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <div>

@@ -224,3 +224,37 @@ describe('published Model Router server contract', () => {
     expect(ModelRouterError).toBeDefined();
   });
 });
+
+describe('Model Router images', () => {
+  const imageRequest = { capability: 'image' as const, model: 'google/gemini-3.1-flash-image', prompt: 'A cover.', aspectRatio: '2:3', timeoutMs: 1000 };
+
+  it('makes an image with Gemini, asking for an image reply in the requested shape', async () => {
+    const generateContent = vi.fn(async (_request: GenerateContentParameters) => ({
+      candidates: [{ content: { parts: [{ text: 'Here it is.' }, { inlineData: { data: 'aW1hZ2U=', mimeType: 'image/png' } }] } }],
+    }));
+    const router = createModelRouter({ credentials: { gemini: 'secret' }, createGeminiClient: () => ({ models: { generateContent } }) as never });
+    expect(await router.generate(imageRequest)).toEqual({ capability: 'image', provider: 'gemini', model: imageRequest.model, data: 'aW1hZ2U=', mimeType: 'image/png' });
+    expect(generateContent.mock.calls[0][0]).toMatchObject({
+      model: 'gemini-3.1-flash-image', contents: 'A cover.',
+      config: { responseModalities: ['IMAGE'], imageConfig: { aspectRatio: '2:3' }, abortSignal: expect.any(AbortSignal) },
+    });
+  });
+
+  it('makes an image through OpenRouter from the data URL on its reply', async () => {
+    const fetchMock = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+      expect(JSON.parse(String(init?.body))).toMatchObject({ model: 'openai/gpt-5.4-image-2', modalities: ['image', 'text'], image_config: { aspect_ratio: '2:3' } });
+      return new Response(JSON.stringify({ choices: [{ message: { images: [{ image_url: { url: 'data:image/jpeg;base64,aW1hZ2U=' } }] } }] }), { status: 200 });
+    });
+    const router = createModelRouter({ credentials: { openrouter: 'secret' }, fetch: fetchMock as typeof fetch });
+    expect(await router.generate({ ...imageRequest, model: 'openrouter/openai/gpt-5.4-image-2' }))
+      .toMatchObject({ capability: 'image', provider: 'openrouter', data: 'aW1hZ2U=', mimeType: 'image/jpeg' });
+  });
+
+  it('refuses a model that is not an image model, a reply without an image, and a missing key', async () => {
+    const generateContent = vi.fn(async () => ({ candidates: [{ content: { parts: [{ text: 'No image today.' }] } }] }));
+    const router = createModelRouter({ credentials: { gemini: 'secret' }, createGeminiClient: () => ({ models: { generateContent } }) as never });
+    await expect(router.generate({ ...imageRequest, model: 'google/gemini-3.8-flash' })).rejects.toMatchObject({ code: 'invalid-model' });
+    await expect(router.generate(imageRequest)).rejects.toMatchObject({ code: 'provider-error', message: 'The configured model returned no image.' });
+    await expect(createModelRouter({ credentials: {} }).generate(imageRequest)).rejects.toMatchObject({ code: 'missing-credential' });
+  });
+});

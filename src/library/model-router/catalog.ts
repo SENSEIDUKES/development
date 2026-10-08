@@ -109,13 +109,20 @@ export const CHAPTER_MODELS: readonly RoutedModel[] = [
  */
 export const DEFAULT_CHAPTER_MODEL = 'google/gemini-3.1-flash-lite';
 
-/** Image models. Catalogued for the Router; no DEV surface calls them yet. */
+/** Image models, chosen in the Router's Images tab: story covers are made with the choice. */
 export const IMAGE_MODELS: readonly RoutedModel[] = [
   { id: 'google/gemini-3.1-flash-image', label: 'Nano Banana 2 (Gemini 3.1 Flash Image)', provider: 'gemini', stage: 'current' },
   { id: 'google/gemini-3-pro-image', label: 'Nano Banana Pro (Gemini 3 Pro Image)', provider: 'gemini', stage: 'current' },
   { id: 'google/gemini-3.1-flash-lite-image', label: 'Nano Banana 2 Lite (Gemini 3.1 Flash Lite Image)', provider: 'gemini', stage: 'current' },
   { id: 'openrouter/openai/gpt-5.4-image-2', label: 'GPT-5.4 Image 2 · OpenRouter', provider: 'openrouter', stage: 'current' },
 ];
+
+/** The image model covers are made with when the reader chooses none: Nano Banana 2 (the owner's choice, 2026-10-08). */
+export const DEFAULT_IMAGE_MODEL = 'google/gemini-3.1-flash-image';
+
+/** The provider that serves an image model, or undefined when the Router does not list it. */
+export const imageModelProvider = (model: string): ModelProviderId | undefined =>
+  IMAGE_MODELS.find(option => option.id === model)?.provider;
 
 /** Text-to-speech models served by ElevenLabs. */
 export const TTS_MODELS: readonly RoutedModel[] = [

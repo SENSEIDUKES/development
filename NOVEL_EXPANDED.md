@@ -21,7 +21,7 @@ map, what SEN and Expanded Novels each cover, who they serve, and how SEIHouse m
 to sustain them. The capabilities it names are vision: they say where the product is
 going, not what exists.
 
-The second half is how we build it. [Where we are](#where-we-are-2026-10-07) is the
+The second half is how we build it. [Where we are](#where-we-are-2026-10-08) is the
 only section that says what is built today. A capability the first half names that
 Where we are does not list is not built. Knowing the whole product should shape every
 decision, but it is not a work order: build what the task asks for, and never
@@ -298,7 +298,7 @@ when its words change. That means:
   right, so its categories, and what the model is told to document, can be designed
   on purpose.
 
-## Where we are (2026-10-07)
+## Where we are (2026-10-08)
 
 The current implementation status, and the only section that says what is built.
 Update it whenever it changes.
@@ -430,6 +430,30 @@ Update it whenever it changes.
       pages and keeps its place, starting on phones just above the bottom bar
       and the music note, never on them. It stays out of the immersive Reader,
       and the writing veil wears the same Familiar.
+  - **Story Settings are in the app, off the developer page** (piece 4). The
+    story's own settings, the only place a reader meets the HARNESS:
+    - **On Story View**, closed until opened: the Story Language (fixed when the
+      story began), the Reading Mode, the **CAPA skill slots** (choose the Author,
+      Pacing, Continuity and Style skills; Fate, Accessibility, Translation, Sound
+      Cues, Soundtrack, Speakers and Holdings follow the story's own choices and
+      say so) and the **Media Loadout** (with no other packs yet, the Library's own
+      sounds, and the sound words the writer may use). A change applies to the
+      chapters written from then on, and waits while one is being written.
+    - **In Create**, Story Seed's Settings holds the language and Reading Mode, then
+      the CAPA skills and media the story will start with. What the reader changes
+      waits on the device until Manifest Story makes it the new story's.
+    - The Harness Generation developer page shows the same panels, with its own
+      inspection added (each skill's instructions, the Official Requirements, slot
+      uploads).
+  - **Cover art on Story View, through the media reveal** (piece 5): **Manifest
+    cover** makes a cover from the story's own words (its title, genre, tradition,
+    logline, main character, tone, world and tags; never its chapters) behind the
+    Aura Veil's media reveal: the scroll unseals while it is made and opens on the
+    finished cover, then World Info and Home's card wear it. **New cover** makes
+    another, which replaces it. Covers are made with the Model Router's image
+    choice, **Nano Banana 2** unless the reader picks another in its Images tab;
+    visitors may make 3 every 30 minutes and the owner's access token lifts the
+    limit. Until the database, a cover is kept on the device, beside the stories.
   - **Story Length is set from the start:** the Story Seed's ARC page asks how many
     arcs of 30 chapters the story should run, 10 to 40 (300 to 1,200 chapters); left
     blank, the World Blueprint suggests one in that range, written by the same model
@@ -560,10 +584,8 @@ Update it whenever it changes.
 - **Not yet as [The World Blueprint](#the-world-blueprint) describes:**
   branching, and the warnings on Blueprint changes, are not built.
 - **Not connected yet:**
-  - The CAPA skill and media slots still sit on the Harness Generation page, not in
-    Story Settings.
-  - The World Info page has no cover art yet: the media reveal is not connected
-    to a cover generator.
+  - Covers live on the device, not in R2: the database (and an account) will
+    keep them. No real model has made a cover yet; the first owner test will.
   - The Text Highlight Engine's tools (fixes, cue placement) are not in the Reader.
   - The app's Profile runs on the device and a practice economy: there are no
     accounts, database or server-side storage yet, so nothing the economy holds
@@ -590,11 +612,10 @@ Update it whenever it changes.
 3. **Grow the NovelExpanded app** (`/app/`) piece by piece, until it is the
    whole app the owner wants. Piece 1, the core application spine at its own
    address with a check that fails the build if the app imports an old system,
-   is built; so are piece 2, the Library Shell around it, and piece 3, Profile
-   with everything it connects to. Next pieces:
-   - Story Settings (CAPA and media slots) inside Create and Story View, leaving
-     the developer page;
-   - cover art on Story View through the media reveal;
+   is built; so are piece 2, the Library Shell around it, piece 3, Profile
+   with everything it connects to, piece 4, Story Settings in Create and Story
+   View, and piece 5, cover art on Story View through the media reveal. Next
+   pieces:
    - a Workshop switch to inspect the app's stories;
    - Discover.
 
@@ -619,14 +640,14 @@ Update it whenever it changes.
 | SEN | SEIHouse Expanded Novels: the product-independent, licensable expanded-novel engine (`@seihouse/sen`). [The product family](#the-product-family). |
 | Expanded Novels | SEIHouse's first-party product on SEN, at NovelExpanded.com. In code, the Library (`@seihouse/library`), presented as the Celestial Library. |
 | SEA | SEIHouse Expanded Albums: SEIHouse's expanded-music product, separate from SEN. It inherits the shared infrastructure SEN pressure-tests. |
-| NovelExpanded app | Expanded Novels' app at NovelExpanded.com. Built at `/app/` (piece 1: the core application spine of Home, Create, Story View and Reader; piece 2: the Library Shell around it; piece 3: Profile, with the Familiar and a practice economy), in `src/novel-expanded/`. |
+| NovelExpanded app | Expanded Novels' app at NovelExpanded.com. Built at `/app/` (piece 1: the core application spine of Home, Create, Story View and Reader; piece 2: the Library Shell around it; piece 3: Profile, with the Familiar and a practice economy; piece 4: Story Settings in Create and Story View; piece 5: cover art on Story View), in `src/novel-expanded/`. |
 | Story Seed / World Blueprint | Where a story is created (`?preview=story-seed`, and Create in the app). The Blueprint is the novel's transferable core: what a reader takes to make their own version ([The World Blueprint](#the-world-blueprint)). |
-| Story View | The story's own page: cover art, the story, Enter. Built today as the World Info page (`WorldCardInfo`), where Start Story or Start Reading leads into the Reader Chamber. |
+| Story View | The story's own page: cover art, the story, Enter. Built today as the World Info page (`WorldCardInfo`), where Start Story or Start Reading leads into the Reader Chamber, with Manifest cover and the story's Story Settings below it. |
 | Reader Chamber | Where chapters are read: a HARNESS story's chapters on the Text Highlight Engine with Sound Cues, Listen and the soundtrack (`HarnessReaderSession`). The older Reader Chamber preview (`?preview=reader-chamber`) is not part of this path. |
 | Listen / Read Aloud | The Reader reading a chapter aloud in three voices with the spoken sentence lit (`useReadAloud`, SEN's `reader-runtime`). Its voices and speed live in Reader Settings → Narration. |
 | Reader Settings | The Reader's settings sheet: Audio, then Narration. |
 | Rewrite this chapter | The reader's request to write the newest chapter again, with an optional note (`rewriteLatestChapter`, `chapterRewriteGap`). |
 | Holdings fixer | SEN's unseen check after each chapter, which settles small holdings problems and keeps a record on the chapter (`planHoldingsFix`, `applyHoldingsFixes`, the `fix-holdings` call). The Library, later the Familiar, sets how far it goes. |
 | Text Highlight Engine (manuscript lab) | The manuscript editor at `?preview=text-highlight-engine`. |
-| Story Settings | The only place a user meets the HARNESS: language, reading mode, CAPA skills and media. |
+| Story Settings | The only place a user meets the HARNESS: language, reading mode, CAPA skills and media. On Story View (`StorySettings`) and in Create's Settings (`CreateStorySettings`), from `@seihouse/library/stories`. |
 | Harness Generation | The developer instrument for the HARNESS (`?preview=harness-generation`). Never a product page. |

@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
  * starting model and write it back when their own selector changes, so there
  * is one choice everywhere. The server still validates every model it is sent.
  */
-export type ModelPreferenceCapability = 'chapters';
+export type ModelPreferenceCapability = 'chapters' | 'images';
 
 const STORAGE_KEY = 'seihouse.model-router.selection.v1';
 const CHANGE_EVENT = 'seihouse:model-router-selection';

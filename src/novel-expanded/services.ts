@@ -12,6 +12,8 @@ import { IndexedDbReaderStateRepository } from '../host/reader/readerStateStorag
 import { createLocalStorySeedRepository } from '../host/story-seed/localStorySeedRepository';
 import { requestWorldBlueprint } from '../host/story-seed/blueprintGenerationClient';
 import { createDeviceProfileStore, type DeviceProfileStore } from '../host/profile/deviceProfile';
+import { requestStoryCover } from '../host/media/storyCoverClient';
+import { IndexedDbStoryCoverStore, type StoryCoverStore } from '../host/media/storyCovers';
 import { NOVEL_EXPANDED_READER_ID } from './storyCreationRuntime';
 
 /**
@@ -23,6 +25,7 @@ export const NOVEL_EXPANDED_STORAGE = {
   stories: 'novelexpanded-harness-stories-v1',
   readerState: 'novelexpanded-reader-state-v1',
   storySeeds: 'novelexpanded-story-seeds-v1',
+  storyCovers: 'novelexpanded-story-covers-v1',
   /** The prefix of the reader's device preferences (narration voices and speed, the mix, the profile). */
   readerPreferences: 'novelexpanded-reader-',
 } as const;
@@ -49,6 +52,10 @@ export interface NovelExpandedServices {
    * until the database, a practice account in the page, fresh each visit.
    */
   economy: LibraryEconomyClients;
+  /** Each story's cover art, kept on this device until the database keeps it. */
+  storyCovers: StoryCoverStore;
+  /** The cover server: one cover from a story's own words, with the Router's image model. */
+  requestStoryCover: typeof requestStoryCover;
 }
 
 export function createNovelExpandedServices(): NovelExpandedServices {
@@ -68,5 +75,7 @@ export function createNovelExpandedServices(): NovelExpandedServices {
     profile: createDeviceProfileStore({ storage: readerPreferences, uid: NOVEL_EXPANDED_READER_ID }),
     // The practice account opens with the most QI a tester could want and every Familiar.
     economy: createPracticeEconomy({ uid: NOVEL_EXPANDED_READER_ID }).clients,
+    storyCovers: new IndexedDbStoryCoverStore(NOVEL_EXPANDED_STORAGE.storyCovers),
+    requestStoryCover,
   };
 }

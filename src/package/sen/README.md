@@ -1,5 +1,10 @@
 # `@seihouse/sen`
 
+**0.25.0 (2026-10-08):** Story Settings before a story exists. The HARNESS controller's
+`describeMediaSelection(selection)` says which sound words and music words a story would
+start with under a Media Loadout, before the story is created, so a host's Create can show
+them beside the skills it chooses. Nothing else changes.
+
 **0.24.3 (2026-10-08):** Sound Cues are earned by the prose. SEN Sound Cues 2.2.0
 tells the writer to tag a sound only where its own sentence already describes it (a
 chapter may have none), and the sound list it receives names each sound and its

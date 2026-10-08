@@ -165,3 +165,60 @@ export async function generateOpenRouterText(request: OpenRouterTextRequest): Pr
     request.abortSignal?.removeEventListener('abort', forwardAbort);
   }
 }
+
+export interface OpenRouterImageRequest {
+  apiKey: string;
+  /** Router model id (`openrouter/openai/gpt-5.4-image-2`). */
+  model: string;
+  prompt: string;
+  /** Requested shape, such as `2:3`; models that cannot honor it may ignore it. */
+  aspectRatio?: string;
+  timeoutMs: number;
+  attribution?: { referer?: string; title?: string };
+  fetchImpl?: typeof fetch;
+}
+
+/** A data URL image as OpenRouter returns it: `data:image/png;base64,…`. */
+const DATA_URL = /^data:(image\/[a-z0-9.+-]+);base64,([a-z0-9+/=\s]+)$/i;
+
+/**
+ * One image through OpenRouter's chat completions with image output. The
+ * image arrives as a data URL on the reply's message. The key never leaves
+ * the server.
+ */
+export async function generateOpenRouterImage(request: OpenRouterImageRequest): Promise<{ data: string; mimeType: string }> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), request.timeoutMs);
+  try {
+    const response = await (request.fetchImpl ?? fetch)(OPENROUTER_CHAT_ENDPOINT, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        Authorization: `Bearer ${request.apiKey}`,
+        'Content-Type': 'application/json',
+        ...(request.attribution?.referer ? { 'HTTP-Referer': request.attribution.referer } : {}),
+        ...(request.attribution?.title ? { 'X-Title': request.attribution.title } : {}),
+      },
+      body: JSON.stringify({
+        model: request.model.replace(/^openrouter\//, ''),
+        messages: [{ role: 'user', content: request.prompt }],
+        modalities: ['image', 'text'],
+        ...(request.aspectRatio ? { image_config: { aspect_ratio: request.aspectRatio } } : {}),
+      }),
+    });
+    const body = await response.json().catch(() => undefined) as {
+      error?: { message?: string };
+      choices?: Array<{ message?: { images?: Array<{ image_url?: { url?: string } }> } }>;
+    } | undefined;
+    if (!response.ok || body?.error) throw new Error(`OpenRouter ${response.status}: ${body?.error?.message ?? response.statusText}`);
+    const url = body?.choices?.[0]?.message?.images?.[0]?.image_url?.url ?? '';
+    const match = DATA_URL.exec(url);
+    if (!match) throw new Error('The configured model returned no image.');
+    return { mimeType: match[1].toLowerCase(), data: match[2].replace(/\s/g, '') };
+  } catch (error) {
+    if (controller.signal.aborted) throw Object.assign(new Error('The OpenRouter image did not finish before the deadline.'), { name: 'AbortError' });
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+}

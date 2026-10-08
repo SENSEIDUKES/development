@@ -1,7 +1,8 @@
 import { GoogleGenAI } from '@google/genai';
 import { geminiThinkingConfig } from './geminiThinking';
-import { generateOpenRouterText } from './openRouter';
+import { generateOpenRouterImage, generateOpenRouterText } from './openRouter';
 import {
+  imageModelProvider,
   providerModelName,
   resolveReasoningLevel,
   textModelProvider,
@@ -10,10 +11,10 @@ import {
 
 export type { ModelCapability, ReasoningLevel } from './catalog';
 export { CHAPTER_MODELS, IMAGE_MODELS, TTS_MODELS, AUDIO_MODELS, VIDEO_MODELS, THREE_D_MODELS, REASONING_LEVELS } from './catalog';
-export { DEFAULT_CHAPTER_MODEL, DEFAULT_TTS_MODEL, MODEL_PROVIDERS, lowestReasoningLevel, providerKey, providerModelName, resolveChapterModelRoute, resolveReasoningLevel, textModelProvider, textModelLabel, requireTextModelKey, missingKeyMessage, isMissingKeyMessage } from './catalog';
+export { DEFAULT_CHAPTER_MODEL, DEFAULT_IMAGE_MODEL, DEFAULT_TTS_MODEL, imageModelProvider, MODEL_PROVIDERS, lowestReasoningLevel, providerKey, providerModelName, resolveChapterModelRoute, resolveReasoningLevel, textModelProvider, textModelLabel, requireTextModelKey, missingKeyMessage, isMissingKeyMessage } from './catalog';
 export type { ModelEnvironment, ModelProviderId, ModelStage, ModelReasoning, RoutedModel, ChapterModelRoute } from './catalog';
-export { generateOpenRouterText } from './openRouter';
-export type { OpenRouterTextRequest, OpenRouterTextResult } from './openRouter';
+export { generateOpenRouterImage, generateOpenRouterText } from './openRouter';
+export type { OpenRouterImageRequest, OpenRouterTextRequest, OpenRouterTextResult } from './openRouter';
 export { geminiThinkingConfig } from './geminiThinking';
 
 export interface ModelRouterConfig {
@@ -45,11 +46,23 @@ export interface SpeechGenerationRequest {
   timeoutMs: number;
 }
 
-export type GenerationRequest = TextGenerationRequest | SpeechGenerationRequest;
+export interface ImageGenerationRequest {
+  capability: 'image';
+  /** An id from the Router's image list (`IMAGE_MODELS`). */
+  model: string;
+  prompt: string;
+  /** The image's shape, such as `2:3` for a cover. */
+  aspectRatio?: string;
+  timeoutMs: number;
+}
+
+export type GenerationRequest = TextGenerationRequest | SpeechGenerationRequest | ImageGenerationRequest;
 export interface TokenUsage { inputTokens: number; outputTokens: number; totalTokens: number }
 export type GenerationResult =
   | { capability: 'text'; provider: 'gemini' | 'openrouter'; model: string; text: string; usage?: TokenUsage }
-  | { capability: 'tts'; provider: 'elevenlabs'; model: string; bytes: Uint8Array; mimeType: 'audio/mpeg' };
+  | { capability: 'tts'; provider: 'elevenlabs'; model: string; bytes: Uint8Array; mimeType: 'audio/mpeg' }
+  /** `data` is the image's bytes in base64, as the providers return them. */
+  | { capability: 'image'; provider: 'gemini' | 'openrouter'; model: string; data: string; mimeType: string };
 
 export class ModelRouterError extends Error {
   constructor(readonly code: 'unsupported-capability' | 'invalid-model' | 'missing-credential' | 'timeout' | 'output-limit' | 'provider-error', message: string) {
@@ -59,6 +72,9 @@ export class ModelRouterError extends Error {
 }
 
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
+/** About 7.5 MB of image: well past a 2K cover, and inside a Vercel reply. */
+const MAX_IMAGE_BASE64_LENGTH = 10 * 1024 * 1024;
+const IMAGE_MIME_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const isSpeechModel = (model: string) => /^[a-z0-9][a-z0-9._-]{1,79}$/iu.test(model);
 const detail = (error: unknown) => error instanceof Error ? error.message : 'Unknown provider error';
 const requireCredential = (value: string | undefined, name: string) => {
@@ -159,6 +175,42 @@ export function createModelRouter(config: ModelRouterConfig) {
         });
       } catch (error) {
         if (error instanceof ModelRouterError) throw error;
+        throw new ModelRouterError('provider-error', detail(error));
+      }
+    }
+    if (request.capability === 'image') {
+      const provider = imageModelProvider(request.model);
+      if (provider !== 'gemini' && provider !== 'openrouter') throw new ModelRouterError('invalid-model', `Model '${request.model}' cannot make images.`);
+      const key = requireCredential(config.credentials[provider], provider === 'gemini' ? 'GEMINI_API_KEY' : 'OPENROUTER_API_KEY');
+      const accept = (image: { data?: string; mimeType?: string } | undefined) => {
+        const mimeType = image?.mimeType?.toLowerCase() ?? '';
+        if (!image?.data || !IMAGE_MIME_TYPES.has(mimeType)) throw new ModelRouterError('provider-error', 'The configured model returned no image.');
+        if (image.data.length > MAX_IMAGE_BASE64_LENGTH) throw new ModelRouterError('provider-error', 'The configured model returned an oversized image.');
+        return { capability: 'image' as const, provider, model: request.model, data: image.data, mimeType };
+      };
+      try {
+        if (provider === 'openrouter') {
+          return accept(await generateOpenRouterImage({
+            apiKey: key, model: request.model, prompt: request.prompt, aspectRatio: request.aspectRatio,
+            timeoutMs: request.timeoutMs, attribution: config.openRouterAttribution, fetchImpl,
+          }));
+        }
+        return await withTimeout(request.timeoutMs, async signal => {
+          const client = config.createGeminiClient?.(key) ?? new GoogleGenAI({ apiKey: key });
+          const response = await client.models.generateContent({
+            model: providerModelName(request.model), contents: request.prompt,
+            config: {
+              responseModalities: ['IMAGE'],
+              ...(request.aspectRatio ? { imageConfig: { aspectRatio: request.aspectRatio } } : {}),
+              abortSignal: signal,
+            },
+          });
+          const part = response.candidates?.[0]?.content?.parts?.find(item => item.inlineData?.data);
+          return accept(part?.inlineData);
+        });
+      } catch (error) {
+        if (error instanceof ModelRouterError) throw error;
+        if ((error as Error)?.name === 'AbortError') throw new ModelRouterError('timeout', `The provider exceeded the ${Math.ceil(request.timeoutMs / 1000)} second deadline.`);
         throw new ModelRouterError('provider-error', detail(error));
       }
     }

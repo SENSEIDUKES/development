@@ -13,7 +13,7 @@ The Workshop is where systems are built and inspected one at a time. The app is
 where they are used together, the way a reader meets them.
 
 - Created: 2026-10-01 (piece 1)
-- Last updated: 2026-10-07
+- Last updated: 2026-10-08
 - Owner: `host` (`scripts/ownershipInventory.mjs`). The app is a host of the
   Library and SEN packages, like any outside app would be.
 
@@ -26,7 +26,7 @@ rewrites and every page survives a reload.
 | --- | --- | --- |
 | Home | `/app/` | The reader's stories, newest first, and Carve New Destiny |
 | Create | `/app/?page=create` | The Library's Story Seed journey: the seed, its World Blueprint, Manifest Story |
-| Story View | `/app/?story=<id>` | The story's World Info page: Start Story, Start Reading, Continue, and Export story (the whole story as one file, for sharing a test) |
+| Story View | `/app/?story=<id>` | The story's World Info page: Start Story, Start Reading, Continue, Manifest cover, Story Settings, and Export story (the whole story as one file, for sharing a test) |
 | Reader | `/app/?story=<id>&read=1` | The reading-only Reader, with the Generation Overlay while a chapter is written |
 | Profile | `/app/?page=profile` | The Library's Cultivator Cave; its own pages in `cave` (Settings: `&cave=/settings`) |
 
@@ -98,6 +98,41 @@ It is the Cave the Workshop's User Profile preview shows, on the app's own servi
 - **Its Stories page** lists the reader's stories and their Story Seeds, and
   exports a seed the way Story Seed does.
 
+## Story Settings
+
+The story's own settings, the only place a reader meets the HARNESS (the
+Library's `StorySettings` and `CreateStorySettings`, `@seihouse/library/stories`):
+
+- **Story View:** below the World Card, closed until opened: the Story Language
+  (fixed when the story began), the Reading Mode, the CAPA skill slots (the
+  Author, Pacing, Continuity and Style skills to choose from the official
+  ones; the managed slots say what fills them) and the Media Loadout (the
+  Library's own sounds, with the sound words the writer may use; the app has
+  no other packs yet). A change applies to chapters written from then on; while
+  a chapter is being written the settings wait and say so.
+- **Create:** Story Seed's Settings sheet holds the Story Language and Reading
+  Mode, then the CAPA skills and media the story will start with (the Style
+  skill follows the Seed's tradition unless changed). What the reader changes
+  is a draft on this device (`novelexpanded-reader-create-story-settings`):
+  Manifest Story starts the story with it (`startHarnessStoryFromSeed`), then
+  clears it. A chosen skill no longer installed, or a pack no longer unlocked,
+  falls back to the default.
+
+## Cover art
+
+Story View's **Manifest cover** makes the story's cover from its own words
+(title, genre, tradition, logline, main character, tone, world and tags; never
+its chapters) through `/api/story-cover`, behind the Aura Veil's media reveal:
+the scroll unseals while it is made and opens on the finished cover; then World
+Info and Home's card wear it. **New cover** makes another, which replaces it.
+
+- The image model is the Model Router's Images choice (`useModelPreference('images')`),
+  Nano Banana 2 (`google/gemini-3.1-flash-image`) unless the reader picks another.
+- Visitors may make 3 covers every 30 minutes; the owner's access token lifts the
+  limit, asked for in the same sheet as chapters (`coverRequesterWithAccessToken`).
+- Covers are kept on this device (`src/host/media/storyCovers.ts`, IndexedDB
+  `novelexpanded-story-covers-v1`) until the database keeps them in R2.
+
 ## The Familiar
 
 `AppFamiliar.tsx` gives the app one Familiar, the profile's equipped one:
@@ -164,6 +199,8 @@ Workshop's, so neither can overwrite the other (`services.ts`):
 | The laptop sidebar open or minimized | localStorage `novelexpanded-reader-library-sidebar-mode` |
 | The access token | localStorage `seihouse-development-access-token`, shared with the Workshop |
 | Story Seeds | localStorage `novelexpanded-story-seeds-v1` |
+| Story Settings chosen in Create, until Manifest | localStorage `novelexpanded-reader-create-story-settings` |
+| Covers | IndexedDB `novelexpanded-story-covers-v1` |
 | The reader's profile (name, aura, languages, Reading Mode, Familiar) | localStorage `novelexpanded-reader-profile` |
 | The practice economy (QI, Energy, Dao Pillar, rewards, Familiars) | The page only: a reload opens it again |
 
@@ -180,7 +217,8 @@ reaches the limit, and saves it on this device. A token the server does not
 accept is forgotten and asked for again.
 
 Chapter writing (`/api/harness-generation`) allows a visitor without the token
-6 requests per 30 minutes, the Workshop's limit; with it there is no limit. A
+6 requests per 30 minutes, the Workshop's limit, and covers (`/api/story-cover`)
+3; with it there is no limit. A
 chapter refused at the limit asks for the token and is sent again with it. The
 server refused it before any model call, so nothing is written twice.
 
@@ -220,6 +258,7 @@ task needs something the list does not allow.
 | `AccessTokenSheet.tsx` | The access token sheet, one for the whole app |
 | `accessToken.ts` | The chapter writer with the owner's token: a chapter at the limit asks for it and is sent again |
 | `storyCreationRuntime.ts` | The guest Story Seed runtime; which seeds already became stories |
+| `src/host/media/storyCovers.ts`, `storyCoverClient.ts` | Covers kept on the device, and the cover server's client |
 
 Story View and the Reader are the Library's `StoryPages` (`@seihouse/library/stories`).
 
@@ -235,20 +274,21 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## Not in the app yet
 
-- Story Settings (CAPA and media slots) inside Create and Story View.
-- Cover art on Story View.
 - Accounts and server-side storage: the database, and with it a kept economy, portrait generation, sync, backup, codes, the Inbox and sign-out.
 - Discover. It joins the shell's navigation when its page comes.
 
 ## Verification
 
-- `src/novel-expanded/*.test.ts(x)`: the four pages and Profile, browser Back, an unknown story, the token sheet, a skill load failure, the Familiar across pages and out of the Reader, Settings kept on the device, Create's defaults from the profile.
+- `src/novel-expanded/*.test.ts(x)`: the four pages and Profile, browser Back, an unknown story, the token sheet, a skill load failure, the Familiar across pages and out of the Reader, Settings kept on the device, Create's defaults from the profile, Story Settings chosen in Create becoming the new story's, a pack no longer unlocked, a cover made with the Router's image model and worn on World Info and Home, and the token asked for at the cover limit.
+- `src/library/stories/storySettings.test.tsx`: Story View's Story Settings (closed until opened, a Reading Mode saved, waiting while a chapter is written), the cover behind the media reveal, and the Create draft.
+- `src/server/story-cover/http.test.ts` and `src/library/model-router/server.test.ts`: the cover route (Nano Banana 2 by default, the Router's choice, clipped fields, plain failures) and the Router's image calls (Gemini and OpenRouter).
 - `src/host/profile/*.test.ts(x)` and `src/host/economy/practiceEconomy.test.ts`: the device profile, the Cave's controller over it, and the practice account.
 - `scripts/checkNovelExpandedApp.test.ts`: the guard, including the real app.
-- `scripts/verifyNovelExpandedApp.browser.mjs`: the walk in Chromium at 390px and 1440px against the dev server, with stubbed APIs and a stand-in for the browser's speech (headless Chromium has no voices).
+- `scripts/verifyNovelExpandedApp.browser.mjs`: the walk in Chromium at 390px and 1440px against the dev server, with stubbed APIs (a stand-in cover among them) and a stand-in for the browser's speech (headless Chromium has no voices): Create's Story Settings, Story View's Story Settings, and Manifest cover through the media reveal to World Info and Home.
 
 ## History
 
+- **2026-10-08** — Story Settings and cover art come to the app. Story View has the story's Story Settings (language, Reading Mode, CAPA skill slots, media), closed until opened, and Create's Settings holds the skills and media a new story starts with, kept on the device until Manifest. Manifest cover on Story View makes a cover from the story's own words behind the media reveal, with the Model Router's image choice (Nano Banana 2 by default); World Info and Home wear it, and it is kept on the device. Visitors may make 3 covers every 30 minutes; the access token lifts the limit.
 - **2026-10-07** — Profile comes to the app, with everything it connects to: the Library's Cultivator Cave in the navigation (Home, Create, Profile; Settings beside Profile on laptops, and in Search and the footer), on the reader's profile kept on this device and a practice economy in the page (1,000,000 QI and every Familiar unlocked, fresh each visit, until the database). The account and server pieces show "Not in the app yet." One Familiar for the app: its recall in every Library header, summoned it floats above the bottom bar and the music note on phones and keeps its place across pages, and it stays out of the Reader; the writing veil wears the same Familiar. Create starts new Story Seeds from the profile's reading language and Reading Mode.
 - **2026-10-07** — Sound on phones: the music note floats just above the bottom bar's right end outside the Reader too (in the header on laptops), and leaving the page (another tab, another app, a locked phone) never stops the sound; time away does not count toward the idle rest, and sound a phone paused plays on at return. Checked that the first tap anywhere on Home starts the menu music, under a browser's no-sound-before-a-tap rule.
 - **2026-10-07** — The Library Shell, in full: Home and Story View sit in the Library's header, navigation and footer, with the app's two places, Home and Create (the strip on phones, the Pathways sidebar on laptops, remembered on this device); Search opens the reader's stories; the footer offers Help and the draft legal pages. Create is Story Seed in the shell's workspace mode, and its header now carries the music note too. The Reader stays full-screen. Discover and Profile join when their pages come to the app.

@@ -15,6 +15,7 @@ import { createOfficialCapaDefaultLoadout, installOfficialCapaSkillsInMemory, OF
 import { HarnessGenerationRequestError } from '../host/generation/httpClient';
 import { writeModelPreference } from '../host/generation/modelPreference';
 import { BlueprintRequestError } from '../host/story-seed/blueprintGenerationClient';
+import { StoryCoverRequestError } from '../host/media/storyCoverClient';
 import { createLocalStorySeedRepository } from '../host/story-seed/localStorySeedRepository';
 import { startHarnessStoryFromSeed } from '../host/story-seed/startHarnessStory';
 import { createLocalReaderPreferenceStorage } from '../host/reader/readerPreferenceStorage';
@@ -27,6 +28,8 @@ import { READER_MUSIC_MOOD } from '../components/harness-generation/development/
 import { installFakeSpeechSynthesis } from '../test-utils/fakeSpeechSynthesis';
 import { NovelExpandedApp } from './NovelExpandedApp';
 import { NOVEL_EXPANDED_STORAGE, type NovelExpandedServices } from './services';
+import { createMemoryStoryCoverStore } from '../host/media/storyCovers';
+import { readStorySettingsDraft, writeStorySettingsDraft } from '@seihouse/library/stories';
 import { NOVEL_EXPANDED_READER_ID } from './storyCreationRuntime';
 import { createDeviceProfileStore } from '../host/profile/deviceProfile';
 import { createPracticeEconomy } from '../host/economy/practiceEconomy';
@@ -83,6 +86,8 @@ const appServices = (writer: HarnessGenerationModelAdapter, overrides: Partial<N
     accessToken: { current: undefined },
     profile: createDeviceProfileStore({ storage: readerPreferences, uid: NOVEL_EXPANDED_READER_ID }),
     economy: createPracticeEconomy({ uid: NOVEL_EXPANDED_READER_ID }).clients,
+    storyCovers: createMemoryStoryCoverStore(),
+    requestStoryCover: vi.fn(async () => new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' })),
     ...overrides,
   };
 };
@@ -616,6 +621,99 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     await click(chaptersAction(), 'Continue', 10);
     expect(document.querySelector('[data-chapter-number="1"]')!.textContent).toContain('The tide pulled back from the drowned gate.');
     expect(story.generate).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('NovelExpanded: Story Settings and cover art', { timeout: 30_000 }, () => {
+  it('Create\'s Settings holds the story\'s CAPA skills and media; what the reader changes there is the new story\'s', async () => {
+    const record = createMockStorySeedRecord({ userId: NOVEL_EXPANDED_READER_ID });
+    record.seed.story.optional.fateSurvival = { ...record.seed.story.optional.fateSurvival, enabled: false };
+    const { blueprint, ...withoutBlueprint } = record;
+    const seeds = createLocalStorySeedRepository({ storageKey: 'test-novelexpanded-seeds' });
+    seeds.reset([withoutBlueprint]);
+    const writer = scriptedWriter();
+    const services = appServices(writer.writer, { storySeeds: seeds, requestWorldBlueprint: (async () => blueprint!) as unknown as NovelExpandedServices['requestWorldBlueprint'] });
+    services.accessToken.current = 'owner-token';
+    await render(services, '/app/?page=create');
+
+    // Story Seed's Settings: the language and Reading Mode, then the skills and media the story starts with.
+    const bar = document.querySelector<HTMLElement>('nav[aria-label="Story Seed navigation"]')!;
+    await click(buttonByText('Settings', bar), 'Settings on the task bar', 50);
+    const settings = document.querySelector<HTMLElement>('[data-testid="create-story-settings"]');
+    expect(settings, 'Expected Story Settings in Create').toBeTruthy();
+    const pacing = settings!.querySelector<HTMLSelectElement>('#harness-skill-pacing')!;
+    expect(pacing.value).not.toBe('');
+    // The reader takes Pacing off; the choice waits on this device until Manifest.
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')!.set!.call(pacing, '');
+      pacing.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await flush(20);
+    expect(readStorySettingsDraft(services.readerPreferences)).toEqual({ skills: { pacing: null } });
+    await click(document.querySelector('button[aria-label="Close settings"]'), 'Close settings', 50);
+
+    await click(buttonByText('Story Bank', container), 'Story Bank', 200);
+    await click(buttonByText('Use Seed', container), 'Use Seed', 200);
+    await click(buttonByText('Refine Details', container), 'Refine Details', 200);
+    await click([...container.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.includes('Manifest World Blueprint') && !button.disabled), 'Manifest World Blueprint', 300);
+    await click(buttonByText('Manifest Story', container), 'Manifest Story', 50);
+    const [started] = (services.stories as InMemoryHarnessGenerationRepository).snapshot().stories;
+    const { pacing: _pacing, ...withoutPacing } = createOfficialCapaDefaultLoadout(record.seed.story.required.style);
+    expect(started.skillLoadout).toEqual(withoutPacing);
+    // The draft became the story's; the next story starts from its own defaults.
+    expect(readStorySettingsDraft(services.readerPreferences)).toEqual({});
+  });
+
+  it('a Create draft naming a pack no longer unlocked starts the story with the Library\'s own sounds', async () => {
+    const services = appServices(scriptedWriter().writer);
+    writeStorySettingsDraft(services.readerPreferences, { media: { soundCues: { id: 'gone-pack', version: '1.0.0' } } });
+    const controller = new HarnessGenerationController({ repository: services.stories, modelAdapter: services.writer, installedSkills: officialSkills });
+    await controller.hydrate();
+    const record = regularSeedRecord();
+    const story = await startHarnessStoryFromSeed(controller, buildInitialStoryGenerationPayload(record.seed, createStoryAdministrativeMetadata({
+      storyId: 'story-1', creatorId: record.userId, sourceSeedId: record.id, originalLanguage: 'en',
+    }), record.blueprint!, 10), { draft: readStorySettingsDraft(services.readerPreferences), installedSkills: officialSkills });
+    expect(story.mediaLoadout).toBeUndefined();
+    expect(story.skillLoadout).toEqual(createOfficialCapaDefaultLoadout(record.seed.story.required.style));
+  });
+
+  it('Story View makes a cover with the Router\'s image model, keeps it on the device, and Home wears it', async () => {
+    // jsdom has no object URLs; a browser shows the kept image through one.
+    Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:cover-1'), revokeObjectURL: vi.fn() });
+    writeModelPreference('images', 'google/gemini-3-pro-image');
+    const storyCovers = createMemoryStoryCoverStore();
+    const requestStoryCover = vi.fn(async () => new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' }));
+    const writer = scriptedWriter();
+    const services = appServices(writer.writer, { storyCovers, requestStoryCover });
+    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, writer.writer);
+    await render(services, `/app/?story=${created.id}`);
+
+    await click(buttonByText('Manifest cover'), 'Manifest cover', 20);
+    expect(requestStoryCover).toHaveBeenCalledWith(expect.objectContaining({ title: created.title }), { model: 'google/gemini-3-pro-image', accessToken: undefined });
+    expect((await storyCovers.loadAll()).map(cover => cover.storyId)).toEqual([created.id]);
+    expect(worldInfo()!.querySelector('[data-world-card="info-cover"] img')?.getAttribute('src')).toBe('blob:cover-1');
+
+    await click(document.querySelector('button[aria-label="Back to your stories"]'), 'Back to your stories', 20);
+    expect(container.querySelector(`#home-world-${created.id} img`)?.getAttribute('src')).toBe('blob:cover-1');
+  });
+
+  it('asks for the access token when covers reach the visitor limit, then makes the cover with it', async () => {
+    Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:cover-2'), revokeObjectURL: vi.fn() });
+    const requestStoryCover = vi.fn(async (_story: unknown, options?: { accessToken?: string }) => {
+      if (!options?.accessToken) throw new StoryCoverRequestError('This Development action has reached its temporary request limit.', 429);
+      return new Blob([new Uint8Array([1])], { type: 'image/png' });
+    });
+    const writer = scriptedWriter();
+    const services = appServices(writer.writer, { requestStoryCover: requestStoryCover as unknown as NovelExpandedServices['requestStoryCover'] });
+    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, writer.writer);
+    await render(services, `/app/?story=${created.id}`);
+    await click(buttonByText('Manifest cover'), 'Manifest cover', 20);
+    const sheet = document.querySelector<HTMLFormElement>('[data-testid="access-token-sheet"]')!;
+    expect(sheet.textContent).toContain('covers are limited to 3 every 30 minutes');
+    await typeInto(sheet.querySelector('input[type="password"]')!, 'owner-token');
+    await click(buttonByText('Continue', sheet), 'Continue', 50);
+    expect(requestStoryCover.mock.calls.map(call => call[1]?.accessToken)).toEqual([undefined, 'owner-token']);
+    expect(services.accessToken.current).toBe('owner-token');
   });
 });
 

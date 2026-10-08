@@ -124,7 +124,7 @@ describe('Model Router status', () => {
     // Story covers are made through the Router's image models, Nano Banana 2 unless the reader chooses another.
     expect(status.capabilities.find(capability => capability.id === 'images')?.models[0].implemented).toBe(true);
     expect(status.capabilities.find(capability => capability.id === 'images')?.defaultModel).toBe('google/gemini-3.1-flash-image');
-    expect(status.capabilities.find(capability => capability.id === 'images')?.consumers).toEqual([{ name: 'Story Cover', modelChoice: 'router' }]);
+    expect(status.capabilities.find(capability => capability.id === 'images')?.consumers).toEqual([{ name: 'Story Cover', modelChoice: 'router' }, { name: 'Image Lab', modelChoice: 'router' }]);
     expect(status.capabilities.find(capability => capability.id === 'tts')?.models[0].implemented).toBe(true);
     expect(status.capabilities[2].defaultModel).toBe('eleven_multilingual_v2');
   });

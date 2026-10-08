@@ -53,6 +53,7 @@ export const GENERATION_CONSUMERS: readonly GenerationConsumer[] = [
   { name: 'Reader Translation', capability: 'chapters', entry: 'src/server/reader-translation/http.ts', modelChoice: 'server-default' },
   { name: 'Codex Voice Quote', capability: 'tts', entry: 'src/server/audio/codexVoiceQuote.ts', modelChoice: 'server-default' },
   { name: 'Story Cover', capability: 'images', entry: 'src/server/story-cover/http.ts', modelChoice: 'router' },
+  { name: 'Image Lab', capability: 'images', entry: 'src/server/image-lab/http.ts', modelChoice: 'router' },
 ];
 
 export const PROVIDER_ADAPTERS: readonly string[] = [

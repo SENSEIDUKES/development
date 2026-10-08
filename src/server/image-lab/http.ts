@@ -2,7 +2,8 @@ import { createModelRouter, DEFAULT_IMAGE_MODEL, IMAGE_MODELS, ModelRouterError 
 import { MODEL_PROVIDERS, providerKey, type ModelEnvironment } from '../model-router/catalog';
 import { hasValidBearerToken } from '../shared/bearerToken';
 import { developmentAccessToken } from '../shared/publicGenerationGuard';
-import { IMAGE_LAB_ASPECT_RATIOS, IMAGE_LAB_PROMPT_LIMIT, IMAGE_LAB_TIMEOUT_MS } from './limits';
+import { parseAttachedImage } from '../shared/imageAttachments';
+import { IMAGE_LAB_ASPECT_RATIOS, IMAGE_LAB_ATTACHMENT_LIMIT, IMAGE_LAB_PROMPT_LIMIT, IMAGE_LAB_TIMEOUT_MS } from './limits';
 
 export interface ImageLabHttpRequest {
   method?: string;
@@ -38,7 +39,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
  * The Workshop's Image Lab: one image from a prompt the owner writes, to try
  * and refine image prompts. Any prompt can be sent, so only the owner's
  * Development access token may use it. The image model is the Router's (Nano
- * Banana 2 when none is chosen); the reply is the image in base64, kept by
+ * Banana 2 Lite when none is chosen); the reply is the image in base64, kept by
  * nobody.
  */
 export async function handleImageLabHttp(request: ImageLabHttpRequest, dependencies: ImageLabHttpDependencies): Promise<ImageLabHttpResponse> {
@@ -58,6 +59,15 @@ export async function handleImageLabHttp(request: ImageLabHttpRequest, dependenc
   const aspectRatio = parsed.aspectRatio ?? '1:1';
   if (!IMAGE_LAB_ASPECT_RATIOS.includes(aspectRatio as never)) return errorResponse(400, `Choose a shape: ${IMAGE_LAB_ASPECT_RATIOS.join(', ')}.`);
 
+  const attached = parsed.images ?? [];
+  if (!Array.isArray(attached) || attached.length > IMAGE_LAB_ATTACHMENT_LIMIT) return errorResponse(400, `Attach up to ${IMAGE_LAB_ATTACHMENT_LIMIT} image.`);
+  const referenceImages: Array<{ data: string; mimeType: string }> = [];
+  for (const value of attached) {
+    const read = parseAttachedImage(value);
+    if ('error' in read) return errorResponse(read.tooLarge ? 413 : 400, read.error);
+    referenceImages.push(read.image);
+  }
+
   const model = (parsed.model as string | undefined) || DEFAULT_IMAGE_MODEL;
   const option = IMAGE_MODELS.find(item => item.id === model);
   if (!option || (option.provider !== 'gemini' && option.provider !== 'openrouter')) return errorResponse(400, `Model '${model}' cannot make images.`);
@@ -67,7 +77,7 @@ export async function handleImageLabHttp(request: ImageLabHttpRequest, dependenc
   const generate = dependencies.generate ?? createModelRouter({ credentials: { [option.provider]: key } }).generate;
   const started = Date.now();
   try {
-    const result = await generate({ capability: 'image', model, prompt, aspectRatio: aspectRatio as string, timeoutMs: IMAGE_LAB_TIMEOUT_MS });
+    const result = await generate({ capability: 'image', model, prompt, aspectRatio: aspectRatio as string, ...(referenceImages.length ? { referenceImages } : {}), timeoutMs: IMAGE_LAB_TIMEOUT_MS });
     if (result.capability !== 'image') throw new ModelRouterError('provider-error', 'The configured model returned no image.');
     const durationMs = Date.now() - started;
     dependencies.onAnswer?.({ model, durationMs });

@@ -21,7 +21,7 @@ import { AccessTokenSheet, type AccessTokenRequest } from './AccessTokenSheet';
 import { AppFamiliar } from './AppFamiliar';
 import { APP_DESTINATIONS } from './appPlaces';
 import { AppShell } from './AppShell';
-import { coverRequesterWithAccessToken, writerWithAccessToken, type AskForAccessToken } from './accessToken';
+import { coverRequesterWithAccessToken, portraitMakerWithAccessToken, writerWithAccessToken, type AskForAccessToken } from './accessToken';
 import { useStoryCovers } from '../host/media/storyCovers';
 import { APP_SOUNDSCAPES, useAppMusic } from './appMusic';
 import { CreatePage } from './CreatePage';
@@ -117,6 +117,8 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   const [imageModel] = useModelPreference('images');
   const requestCover = useMemo(() => coverRequesterWithAccessToken(services.requestStoryCover, services.accessToken, askForToken, () => imageModel), [services, askForToken, imageModel]);
   const covers = useStoryCovers(services.storyCovers, requestCover);
+  // The profile picture uses the same image choice and token.
+  const portraits = useMemo(() => portraitMakerWithAccessToken(services.requestProfilePicture, services.accessToken, askForToken, () => imageModel), [services, askForToken, imageModel]);
   const [skills, setSkills] = useState<HarnessSkillManifest[]>();
   const [skillsError, setSkillsError] = useState<string>();
   const [skillsAttempt, setSkillsAttempt] = useState(0);
@@ -165,7 +167,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     </main>);
   }
 
-  if (route.page === 'profile') return withFamiliar(<ProfilePage services={services} stories={caveStories} navigate={navigate} />);
+  if (route.page === 'profile') return withFamiliar(<ProfilePage services={services} stories={caveStories} navigate={navigate} portraits={portraits} />);
 
   if (route.page === 'create') return withFamiliar(<CreatePage services={services} askForToken={askForToken} startedSeedIds={seedIds} chapterModel={stories.model || undefined}
     // A new Story Seed starts from the profile's languages and Reading Mode.

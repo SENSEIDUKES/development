@@ -161,3 +161,24 @@
   .image-rule-cards { grid-template-columns: 1fr 1fr; }
   .image-prompts__tabs { flex-wrap: wrap; overflow: visible; }
 }
+
+/* Image Lab: attached image, tries and choosing a variation */
+.image-lab__attachment { display: grid; grid-template-columns: 4rem 1fr auto; gap: 0.75rem; align-items: center; padding: 0.5rem; border: 1px solid var(--wi-line); border-radius: 0.6rem; background: var(--ip-card); font-size: 0.85rem; color: #d8d1c5; }
+.image-lab__attachment img { width: 4rem; height: 4rem; object-fit: cover; border-radius: 0.4rem; }
+.image-lab__attachment small { color: var(--wi-muted); }
+.image-lab__tries { display: grid; gap: 1.5rem; margin: 1.5rem 0 0; padding: 0; list-style: none; }
+.image-lab__try-meta { margin: 0 0 0.5rem; font-size: 0.75rem; color: var(--wi-muted); }
+.image-lab__tries .image-lab__gallery { margin: 0; }
+.image-lab__gallery li[data-chosen] figure { border-color: var(--wi-accent); box-shadow: 0 0 0 2px var(--wi-accent); }
+@media (min-width: 640px) {
+  .image-lab__gallery[data-count='1'] { grid-template-columns: minmax(0, 22rem); }
+  .image-lab__gallery[data-count='3'] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* Every image made carries its own download button. */
+.image-lab__gallery figure { position: relative; }
+.image-lab__download { position: absolute; top: .5rem; right: .5rem; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: rgba(15, 13, 11, .78); border: 1px solid rgba(236, 231, 221, .25); color: #f4efe6; }
+.image-lab__download:hover { background: rgba(15, 13, 11, .95); border-color: var(--wi-accent); }
+.image-lab__download:focus-visible { outline: 2px solid var(--wi-accent); outline-offset: 2px; }
+.image-lab__make-wrap { position: relative; }
+.image-lab__cost { margin: .5rem 0 0; font-size: .75rem; color: var(--wi-muted); text-align: center; }

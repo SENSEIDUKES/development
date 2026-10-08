@@ -117,12 +117,12 @@ export function describeEnergyLedgerContract(
     it('prices reservations from the shared catalog', async () => {
       const { service, principal } = await setup();
       expect(service.getPrice('chapter.generate')).toEqual(resolveEnergyPrice('chapter.generate'));
-      expect(ENERGY_PRICE_CATALOG.find(entry => entry.actionId === 'image.generate')?.price).toBe(3);
+      expect(ENERGY_PRICE_CATALOG.find(entry => entry.actionId === 'image.generate')?.price).toBe(5);
       const image = await service.reserve(principal, { actionId: 'image.generate', idempotencyKey: 'img-1' });
-      expect(image.reservation.amount).toBe(3);
+      expect(image.reservation.amount).toBe(5);
       const chapters = await service.reserve(principal, { actionId: 'chapter.generate', idempotencyKey: 'ch-1', quantity: 5 });
       expect(chapters.reservation.amount).toBe(5);
-      expect(await service.getBalance(principal)).toEqual({ balance: 500, held: 8, available: 492 });
+      expect(await service.getBalance(principal)).toEqual({ balance: 500, held: 10, available: 490 });
       await expect(service.reserve(principal, { actionId: 'narration.generate', idempotencyKey: 'nar-1' })).rejects.toThrow(/no price yet/);
     });
 
@@ -149,7 +149,7 @@ export function describeEnergyLedgerContract(
       const { service, principal } = await setup();
       await service.reserve(principal, { actionId: 'chapter.generate', idempotencyKey: 'a', quantity: 498 });
       await expect(service.reserve(principal, { actionId: 'image.generate', idempotencyKey: 'b' })).rejects.toBeInstanceOf(InsufficientEnergyError);
-      await expect(service.reserve(principal, { actionId: 'image.generate', idempotencyKey: 'b' })).rejects.toMatchObject({ required: 3, available: 2 });
+      await expect(service.reserve(principal, { actionId: 'image.generate', idempotencyKey: 'b' })).rejects.toMatchObject({ required: 5, available: 2 });
       expect(await service.getBalance(principal)).toEqual({ balance: 500, held: 498, available: 2 });
       expect((await service.listTransactions(principal)).filter(entry => entry.kind === 'reserve')).toHaveLength(1);
     });
@@ -157,7 +157,7 @@ export function describeEnergyLedgerContract(
     it('returns held Energy when a reservation is released, idempotently', async () => {
       const { service, principal } = await setup();
       const { reservation } = await service.reserve(principal, { actionId: 'image.generate', idempotencyKey: 'img-1' });
-      expect((await service.getBalance(principal)).available).toBe(497);
+      expect((await service.getBalance(principal)).available).toBe(495);
       const released = await service.release(principal, { reservationId: reservation.id, reason: 'provider timeout' });
       expect(released.replayed).toBe(false);
       expect(released.reservation.status).toBe('released');
@@ -192,7 +192,7 @@ export function describeEnergyLedgerContract(
       await service.settle(principal, { reservationId: reservation.id });
       const replay = await service.settle(principal, { reservationId: reservation.id });
       expect(replay.replayed).toBe(true);
-      expect((await service.getBalance(principal)).balance).toBe(497);
+      expect((await service.getBalance(principal)).balance).toBe(495);
       expect((await service.listTransactions(principal)).filter(entry => entry.kind === 'charge')).toHaveLength(1);
     });
 
@@ -202,11 +202,11 @@ export function describeEnergyLedgerContract(
       const retry = await service.reserve(principal, { actionId: 'image.generate', idempotencyKey: 'img-1' });
       expect(retry.replayed).toBe(true);
       expect(retry.reservation.id).toBe(first.reservation.id);
-      expect(await service.getBalance(principal)).toEqual({ balance: 500, held: 3, available: 497 });
+      expect(await service.getBalance(principal)).toEqual({ balance: 500, held: 5, available: 495 });
       expect(await service.findReservation(principal, 'img-1')).toMatchObject({ id: first.reservation.id, status: 'held' });
       const regeneration = await service.reserve(principal, { actionId: 'image.generate', idempotencyKey: 'img-2' });
       expect(regeneration.reservation.id).not.toBe(first.reservation.id);
-      expect((await service.getBalance(principal)).held).toBe(6);
+      expect((await service.getBalance(principal)).held).toBe(10);
     });
 
     it('spends settled Energy directly for a Store purchase, once per key', async () => {
@@ -267,8 +267,8 @@ export function describeEnergyLedgerContract(
         await expect(service.reserve(principal, { actionId: 'image.generate', idempotencyKey: 'img-2' })).rejects.toThrow(/no price yet/);
         return service.settle(principal, { reservationId: reservation.id });
       });
-      expect(settled.transaction).toMatchObject({ kind: 'charge', amount: 3, description: 'Image generated' });
-      expect(await service.getBalance(principal)).toEqual({ balance: 497, held: 0, available: 497 });
+      expect(settled.transaction).toMatchObject({ kind: 'charge', amount: 5, description: 'Image generated' });
+      expect(await service.getBalance(principal)).toEqual({ balance: 495, held: 0, available: 495 });
     });
 
     it('releases a reservation whose action was unpriced after it was taken', async () => {
@@ -276,26 +276,26 @@ export function describeEnergyLedgerContract(
       const { reservation } = await service.reserve(principal, { actionId: 'image.generate', idempotencyKey: 'img-1' });
       const released = await withCatalogPrice('image.generate', null, () =>
         service.release(principal, { reservationId: reservation.id, reason: 'provider failure' }));
-      expect(released.transaction).toMatchObject({ kind: 'release', amount: 3, description: 'Image not generated — Energy returned' });
+      expect(released.transaction).toMatchObject({ kind: 'release', amount: 5, description: 'Image not generated — Energy returned' });
       expect(await service.getBalance(principal)).toEqual({ balance: 500, held: 0, available: 500 });
     });
 
     it('charges the amount reserved at the time, not the catalog price at settlement', async () => {
       const { service, principal } = await setup();
       const cheap = await service.reserve(principal, { actionId: 'image.generate', idempotencyKey: 'before' });
-      expect(cheap.reservation.amount).toBe(3);
-      expect(cheap.reservation.metadata).toMatchObject({ pricing: { unitPrice: 3, quantity: 1 } });
+      expect(cheap.reservation.amount).toBe(5);
+      expect(cheap.reservation.metadata).toMatchObject({ pricing: { unitPrice: 5, quantity: 1 } });
       await withCatalogPrice('image.generate', 50, async () => {
         // A reservation taken after the change pays the new price...
         const dear = await service.reserve(principal, { actionId: 'image.generate', idempotencyKey: 'after' });
         expect(dear.reservation.amount).toBe(50);
         // ...while the earlier one still settles at the price it was taken at.
         const settled = await service.settle(principal, { reservationId: cheap.reservation.id });
-        expect(settled.transaction.amount).toBe(3);
+        expect(settled.transaction.amount).toBe(5);
         const returned = await service.release(principal, { reservationId: dear.reservation.id });
         expect(returned.transaction.amount).toBe(50);
       });
-      expect(await service.getBalance(principal)).toEqual({ balance: 497, held: 0, available: 497 });
+      expect(await service.getBalance(principal)).toEqual({ balance: 495, held: 0, available: 495 });
     });
 
     it('still refuses to charge or release twice once the price has changed', async () => {

@@ -13,6 +13,7 @@ import { createLocalStorySeedRepository } from '../host/story-seed/localStorySee
 import { requestWorldBlueprint } from '../host/story-seed/blueprintGenerationClient';
 import { createDeviceProfileStore, type DeviceProfileStore } from '../host/profile/deviceProfile';
 import { requestStoryCover } from '../host/media/storyCoverClient';
+import { requestProfilePicture } from '../host/media/profilePictureClient';
 import { IndexedDbStoryCoverStore, type StoryCoverStore } from '../host/media/storyCovers';
 import { NOVEL_EXPANDED_READER_ID } from './storyCreationRuntime';
 
@@ -56,6 +57,8 @@ export interface NovelExpandedServices {
   storyCovers: StoryCoverStore;
   /** The cover server: one cover from a story's own words, with the Router's image model. */
   requestStoryCover: typeof requestStoryCover;
+  /** The profile picture server: one portrait from the reader's photo, with the Router's image model. */
+  requestProfilePicture: typeof requestProfilePicture;
 }
 
 export function createNovelExpandedServices(): NovelExpandedServices {
@@ -77,5 +80,6 @@ export function createNovelExpandedServices(): NovelExpandedServices {
     economy: createPracticeEconomy({ uid: NOVEL_EXPANDED_READER_ID }).clients,
     storyCovers: new IndexedDbStoryCoverStore(NOVEL_EXPANDED_STORAGE.storyCovers),
     requestStoryCover,
+    requestProfilePicture,
   };
 }

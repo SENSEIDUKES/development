@@ -115,20 +115,22 @@ export interface UserProfileController {
   ) => Promise<void>;
   isSavingChapterWritingStyle: boolean;
 
-  // Divine Mirror portrait flow
+  // Profile picture: the reader's photo, then portraits to choose from
   showPortraitModal: boolean;
   setShowPortraitModal: (show: boolean) => void;
   portraitUploadFile: File | null;
   setPortraitUploadFile: (file: File | null) => void;
+  /** The chosen photo as a data URL, for its preview. */
   portraitUploadBase64: string;
   setPortraitUploadBase64: (base64: string) => void;
-  portraitDesc: string;
-  setPortraitDesc: (description: string) => void;
   isGeneratingPortrait: boolean;
   isSavingPortrait: boolean;
-  generatedPortraitUrl: string;
+  /** The portraits made from the photo (three, or fewer when some could not be made). */
+  generatedPortraitUrls: string[];
+  /** Which of them the reader has chosen. */
+  chosenPortrait: number;
+  setChosenPortrait: (index: number) => void;
   portraitError: string;
-  generationStep: number;
   handleFileChange: (file: File) => void;
   handleDrag: (event: React.DragEvent) => void;
   handleDrop: (event: React.DragEvent) => void;
@@ -153,7 +155,7 @@ export interface UserProfileController {
 
 /**
  * The account and server pieces of the Cave a host may not have built yet:
- * portrait generation (the Divine Mirror), Keyboard Shortcuts, code
+ * portrait generation (the profile picture), Keyboard Shortcuts, code
  * redemption, signing out (Sever Link), Harmony sync, library backup and
  * import, the Aether Router, and the Inbox.
  */

@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildStoryCoverPrompt } from '../../../server/story-cover/prompt';
 import { fingerprintText } from '../writer-instructions/writerInstructions';
 import { DEFAULT_IMAGE_MODEL, IMAGE_MODELS } from '@seihouse/library/model-router-server';
-import { COVER_DEFAULT_MODEL_LABEL, COVER_PROMPT_SHAPE, IMAGE_KINDS, IMAGE_PROMPTS } from './imagePrompts';
+import { COVER_DEFAULT_MODEL_LABEL, COVER_PROMPT_SHAPE, COVER_PROMPT_TEMPLATE, COVER_TITLE_OFF, COVER_TITLE_ON, IMAGE_KINDS, IMAGE_PROMPTS, PROFILE_PICTURE_PROMPT, RETIRED_IMAGE_PROMPTS } from './imagePrompts';
 import { IMAGE_PROMPTS_HISTORY, lastChange } from './imagePromptsHistory';
 import { ImagePromptsWorkspace } from './ImagePromptsWorkspace';
 import { DEVELOPMENT_ACCESS_TOKEN_KEY } from '../../../host/generation/accessToken';
@@ -18,18 +18,26 @@ describe('The Image Prompts page', () => {
     expect(lastChange(id)?.changed[id], `"${prompt.title}" changed. Add an entry at the top of IMAGE_PROMPTS_HISTORY (src/workshop/previews/image-prompts/imagePromptsHistory.ts) with today's date, what changed and why in plain words, and '${id}': '${fingerprint}'.`).toBe(fingerprint);
   });
 
-  it('keeps the history well formed: dates newest first, a real summary, only known prompts', () => {
-    const ids = new Set(IMAGE_PROMPTS.map(prompt => prompt.id));
+  it('keeps the history well formed: dates newest first, a real summary, only known or retired prompts', () => {
+    const ids = new Set<string>([...IMAGE_PROMPTS.map(prompt => prompt.id), ...Object.keys(RETIRED_IMAGE_PROMPTS)]);
     IMAGE_PROMPTS_HISTORY.forEach((change, index) => {
       expect(change.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
       if (index > 0) expect(change.date <= IMAGE_PROMPTS_HISTORY[index - 1].date).toBe(true);
       expect(change.summary.length).toBeGreaterThan(20);
-      for (const id of Object.keys(change.changed)) expect(ids.has(id as never), id).toBe(true);
+      for (const id of Object.keys(change.changed)) expect(ids.has(id), id).toBe(true);
     });
   });
 
-  it('shows the cover prompt the server builds, never a copy', () => {
-    const cover = IMAGE_PROMPTS.find(prompt => prompt.id === 'cover')!;
+  it('shows the approved cover template with both title instructions', () => {
+    const text = (id: string) => IMAGE_PROMPTS.find(prompt => prompt.id === id)?.text;
+    expect(text('cover')).toBe(COVER_PROMPT_TEMPLATE);
+    expect(text('cover')).toContain('{title instruction}');
+    expect(text('cover-title-on')).toBe(COVER_TITLE_ON);
+    expect(text('cover-title-off')).toBe(COVER_TITLE_OFF);
+  });
+
+  it('shows the cover prompt the server builds today, never a copy', () => {
+    const cover = IMAGE_PROMPTS.find(prompt => prompt.id === 'cover-current')!;
     expect(cover.text).toBe(COVER_PROMPT_SHAPE);
     expect(cover.text).toBe(buildStoryCoverPrompt({
       title: '{title}', genre: '{genre}', style: 'chinese', synopsis: '{logline, else premise}',
@@ -63,30 +71,62 @@ describe('The Image Prompts page', () => {
     unmount();
   });
 
-  it('sends a prompt card to the Image Lab, makes the image with the saved token and shows it', async () => {
+  it('sends the profile picture prompt to the Image Lab with a photo, makes three and lets one be chosen', async () => {
     window.localStorage.setItem(DEVELOPMENT_ACCESS_TOKEN_KEY, 'owner-token');
     const fetcher = vi.fn(async (url: string, init?: RequestInit) => {
       if (url === '/api/model-router') return Response.json({ capabilities: [{ id: 'images', defaultModel: DEFAULT_IMAGE_MODEL, models: IMAGE_MODELS.map(model => ({ ...model, available: true })) }] });
       return Response.json({ image: btoa('png-bytes'), mimeType: 'image/png', model: JSON.parse(String(init?.body)).model, durationMs: 4200 });
     });
     const { container, unmount } = await renderPage(fetcher as unknown as typeof fetch);
-    const cover = container.querySelector('[data-image-prompt="cover"]')!;
-    const tryButton = [...cover.querySelectorAll('button')].find(button => button.textContent === 'Try this prompt')!;
-    act(() => tryButton.click());
+    const profile = container.querySelector('[data-image-prompt="profile-picture"]')!;
+    act(() => [...profile.querySelectorAll('button')].find(button => button.textContent === 'Try this prompt')!.click());
     const lab = container.querySelector<HTMLElement>('[data-image-lab]')!;
     expect(lab.closest<HTMLElement>('[role="tabpanel"]')!.hidden).toBe(false);
-    expect(lab.querySelector('textarea')!.value).toBe(COVER_PROMPT_SHAPE);
-    expect(lab.querySelectorAll('select')[1].value).toBe('2:3');
-    expect(lab.textContent).toContain('Replace them with real words first');
+    expect(lab.querySelector('textarea')!.value).toBe(PROFILE_PICTURE_PROMPT);
+    const [, shape, variations] = lab.querySelectorAll('select');
+    expect(shape.value).toBe('1:1');
+    expect(variations.value).toBe('3');
 
-    const make = [...lab.querySelectorAll('button')].find(button => button.textContent === 'Make image')!;
-    await act(async () => make.click());
-    const call = fetcher.mock.calls.find(([url]) => url === '/api/image-lab')!;
-    expect(new Headers(call[1]!.headers).get('Authorization')).toBe('Bearer owner-token');
-    expect(JSON.parse(String(call[1]!.body))).toEqual({ prompt: COVER_PROMPT_SHAPE, model: DEFAULT_IMAGE_MODEL, aspectRatio: '2:3' });
-    expect(lab.querySelector('img')?.getAttribute('src')).toBe('blob:image-1');
-    expect(lab.querySelector('a[download]')?.getAttribute('download')).toMatch(/\.png$/);
+    const file = new File(['photo-bytes'], 'me.jpg', { type: 'image/jpeg' });
+    const input = lab.querySelector<HTMLInputElement>('[data-image-lab-file]')!;
+    Object.defineProperty(input, 'files', { value: [file], configurable: true });
+    act(() => { input.dispatchEvent(new Event('change', { bubbles: true })); });
+    await waitFor(() => lab.querySelector('[data-image-lab-attachment]'));
+    expect(lab.querySelector('[data-image-lab-attachment]')?.textContent).toContain('me.jpg');
+
+    await act(async () => [...lab.querySelectorAll('button')].find(button => button.textContent === 'Make 3 images')!.click());
+    const calls = fetcher.mock.calls.filter(([url]) => url === '/api/image-lab');
+    expect(calls).toHaveLength(3);
+    expect(new Headers(calls[0][1]!.headers).get('Authorization')).toBe('Bearer owner-token');
+    expect(JSON.parse(String(calls[0][1]!.body))).toEqual({
+      prompt: PROFILE_PICTURE_PROMPT, model: DEFAULT_IMAGE_MODEL, aspectRatio: '1:1',
+      images: [{ data: btoa('photo-bytes'), mimeType: 'image/jpeg' }],
+    });
+    const made = lab.querySelectorAll('[data-image-lab-try] figure img');
+    expect(made).toHaveLength(3);
+    expect(lab.querySelector('[data-image-lab-try]')?.textContent).toContain('with me.jpg');
     expect(lab.querySelector('figcaption')?.textContent).toContain(COVER_DEFAULT_MODEL_LABEL);
+
+    const chooseButtons = () => [...lab.querySelectorAll<HTMLButtonElement>('[data-image-lab-try] button[aria-pressed]')];
+    act(() => chooseButtons()[1].click());
+    expect(chooseButtons().map(button => button.getAttribute('aria-pressed'))).toEqual(['false', 'true', 'false']);
+    expect(lab.querySelectorAll('[data-chosen]')).toHaveLength(1);
+    unmount();
+  });
+
+  it('makes one image for prompts that are simply what the reader gets', async () => {
+    window.localStorage.setItem(DEVELOPMENT_ACCESS_TOKEN_KEY, 'owner-token');
+    const fetcher = vi.fn(async (url: string) => url === '/api/model-router'
+      ? Response.json({ capabilities: [] })
+      : Response.json({ image: btoa('png-bytes'), mimeType: 'image/png', model: DEFAULT_IMAGE_MODEL, durationMs: 1000 }));
+    const { container, unmount } = await renderPage(fetcher as unknown as typeof fetch);
+    const codex = container.querySelector('[data-image-prompt="old-codex-character"]')!;
+    act(() => [...codex.querySelectorAll('button')].find(button => button.textContent === 'Try this prompt')!.click());
+    const lab = container.querySelector<HTMLElement>('[data-image-lab]')!;
+    expect(lab.querySelectorAll('select')[2].value).toBe('1');
+    await act(async () => [...lab.querySelectorAll('button')].find(button => button.textContent === 'Make image')!.click());
+    expect(fetcher.mock.calls.filter(([url]) => url === '/api/image-lab')).toHaveLength(1);
+    expect(lab.querySelector('button[aria-pressed]')).toBeNull();
     unmount();
   });
 
@@ -127,6 +167,16 @@ afterEach(() => {
   window.localStorage.clear();
   objectUrls = 0;
 });
+
+/** Reading a file is asynchronous: wait for what it shows. */
+async function waitFor<T>(find: () => T | null | undefined): Promise<T> {
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    const found = find();
+    if (found) return found;
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 5)); });
+  }
+  throw new Error('Waited too long.');
+}
 
 async function renderPage(fetcher?: typeof fetch) {
   const fallback = (async () => Response.json({ capabilities: [] })) as unknown as typeof fetch;

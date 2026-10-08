@@ -9,3 +9,4 @@ export {
 } from './EnergyDeductionNotice';
 export { EnergyInsufficientState, describeInsufficientEnergy, type EnergyInsufficientStateProps } from './EnergyInsufficientState';
 export { EnergyPanel, type EnergyPanelProps } from './EnergyPanel';
+export { EnergySpendFloater, type EnergySpendBurst } from './EnergySpendFloater';

@@ -3,10 +3,11 @@
  * app, until its database). The profile record lives on this device
  * (`deviceProfile.ts`); balances, rewards and Familiar ownership come from the
  * Library economy's own clients, mounted by the host; and the account and
- * server pieces (portrait generation, sign-out, sync, backup, the Aether
- * Router, code redemption, the Inbox) still show, each with the host's note.
+ * server pieces (sign-out, sync, backup, the Aether Router, code redemption,
+ * the Inbox) still show, each with the host's note. The profile picture is
+ * made by the host's portrait maker when it gives one.
  */
-import { useCallback, useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
 import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '@seihouse/sen/contracts';
 import type { ReaderPreferenceStorage } from '@seihouse/sen/reader-runtime';
 import { downloadStorySeed, downloadStorySeedCollection, reconcileStorySeedBlueprint, type StorySeedRecord, type StorySeedRepository } from '@seihouse/sen/story-seed';
@@ -45,9 +46,19 @@ export interface DeviceProfileServicesOptions {
   storySeeds?: { repository: StorySeedRepository; ownerId: string };
   /** What this host has not built yet, each shown with the note. */
   notYetBuilt?: UserProfileNotYetBuilt;
+  /** Makes the profile picture: portraits from the reader's photo, and the chosen one made ready to keep. */
+  portraits?: DevicePortraitMaker;
 }
 
-export function createDeviceProfileServices({ store, familiars, celestialStore, soundPreferences, storySeeds, notYetBuilt }: DeviceProfileServicesOptions): UserProfileServices {
+/** The host's profile picture maker. */
+export interface DevicePortraitMaker {
+  /** Portraits from the reader's photo; `problem` says why any could not be made. */
+  make(photo: File): Promise<{ images: Blob[]; problem?: string }>;
+  /** The chosen portrait as a data URL small enough to keep in the profile record. */
+  keep(portrait: Blob): Promise<string>;
+}
+
+export function createDeviceProfileServices({ store, familiars, celestialStore, soundPreferences, storySeeds, notYetBuilt, portraits }: DeviceProfileServicesOptions): UserProfileServices {
   const records = async () => storySeeds ? storySeeds.repository.list(storySeeds.ownerId) : [];
   const generationNote = notYetBuilt?.features.includes('portrait-generation') ? notYetBuilt.note : undefined;
   return {
@@ -55,7 +66,7 @@ export function createDeviceProfileServices({ store, familiars, celestialStore, 
     familiars,
     celestialStore,
     soundPreferences,
-    useController: props => useDeviceProfileController(store, props, { familiars, generationNote }),
+    useController: props => useDeviceProfileController(store, props, { familiars, generationNote, portraits }),
     // The host signs its one device reader in; the Spirit Link gate never shows.
     authenticate: noop,
     localOnlyMode: false,
@@ -78,13 +89,14 @@ export function createDeviceProfileServices({ store, familiars, celestialStore, 
 /**
  * The Cave's controller over the device record: edits, the 30-second
  * language confirmation, the default Reading Mode, the equipped Familiar and
- * its size, and the portrait builder's reference image. Saves are immediate;
- * there is no server to wait on.
+ * its size, and the profile picture (portraits from the reader's photo, the
+ * chosen one kept in the record). Saves are immediate; there is no server to
+ * wait on.
  */
 export function useDeviceProfileController(
   store: DeviceProfileStore,
   { currentUser, stories }: UserProfileControllerProps,
-  { familiars, generationNote }: { familiars: readonly FamiliarOption[]; generationNote?: string },
+  { familiars, generationNote, portraits }: { familiars: readonly FamiliarOption[]; generationNote?: string; portraits?: DevicePortraitMaker },
 ): UserProfileController {
   const record = useDeviceProfile(store);
   const profile = currentUser ? record : null;
@@ -98,11 +110,15 @@ export function useDeviceProfileController(
   const [adminSearchQuery, setAdminSearchQuery] = useState('');
   const [pendingLanguageChange, setPendingLanguageChange] = useState<UserProfileController['pendingLanguageChange']>(null);
   const [countdown, setCountdown] = useState(LANGUAGE_CONFIRM_SECONDS);
-  const [showPortraitModal, setShowPortraitModal] = useState(false);
+  const [showPortraitModal, setPortraitModalOpen] = useState(false);
   const [portraitUploadFile, setPortraitUploadFile] = useState<File | null>(null);
   const [portraitUploadBase64, setPortraitUploadBase64] = useState('');
-  const [portraitDesc, setPortraitDesc] = useState('');
   const [portraitError, setPortraitError] = useState('');
+  const [madePortraits, setMadePortraits] = useState<Array<{ url: string; image: Blob }>>([]);
+  const [chosenPortrait, setChosenPortrait] = useState(0);
+  const [isGeneratingPortrait, setIsGeneratingPortrait] = useState(false);
+  const [isSavingPortrait, setIsSavingPortrait] = useState(false);
+  const portraitUrls = useRef<string[]>([]);
 
   /** Saves `changes` and brings the form's copy of exactly those fields up to date, leaving other drafts alone. */
   const commit = useCallback((changes: Partial<UserProfile>) => {
@@ -210,19 +226,38 @@ export function useDeviceProfileController(
     commit({ familiarSize: normalizeFamiliarSize(size) });
   }, [commit, profile]);
 
-  // The portrait builder keeps its reference image in the page; generating needs the host's image service.
+  // The profile picture: the photo stays in the page; portraits are shown through object URLs until one is kept.
+  const releasePortraits = useCallback(() => {
+    portraitUrls.current.forEach(url => URL.revokeObjectURL(url));
+    portraitUrls.current = [];
+    setMadePortraits([]);
+    setChosenPortrait(0);
+  }, []);
+  useEffect(() => () => portraitUrls.current.forEach(url => URL.revokeObjectURL(url)), []);
+
+  const setShowPortraitModal = useCallback((show: boolean) => {
+    setPortraitModalOpen(show);
+    if (show) return;
+    // Each visit to the builder starts fresh: no photo, no portraits.
+    releasePortraits();
+    setPortraitUploadFile(null);
+    setPortraitUploadBase64('');
+    setPortraitError('');
+  }, [releasePortraits]);
+
   const handleFileChange = useCallback((file: File) => {
     if (!file.type.startsWith('image/')) {
-      setPortraitError('The Divine Mirror only accepts visual images.');
+      setPortraitError('Choose a JPG, PNG or WebP photo.');
       return;
     }
     setPortraitError('');
+    releasePortraits();
     setPortraitUploadFile(file);
     const reader = new FileReader();
     reader.onload = () => setPortraitUploadBase64(String(reader.result ?? ''));
-    reader.onerror = () => setPortraitError('Failed to read mortal image stream.');
+    reader.onerror = () => setPortraitError('That photo could not be read. Try another.');
     reader.readAsDataURL(file);
-  }, []);
+  }, [releasePortraits]);
   const handleDrag = useCallback((event: DragEvent) => {
     event.preventDefault();
     event.stopPropagation();
@@ -233,9 +268,51 @@ export function useDeviceProfileController(
     const file = event.dataTransfer.files?.[0];
     if (file) handleFileChange(file);
   }, [handleFileChange]);
-  const handleGeneratePortrait = useCallback(() => {
-    setPortraitError(generationNote ?? 'Portrait generation is not available.');
-  }, [generationNote]);
+
+  const handleGeneratePortrait = useCallback(async () => {
+    if (!portraits) {
+      setPortraitError(generationNote ?? 'Portrait generation is not available.');
+      return;
+    }
+    if (!portraitUploadFile) {
+      setPortraitError('Choose a photo first.');
+      return;
+    }
+    setIsGeneratingPortrait(true);
+    setPortraitError('');
+    try {
+      const { images, problem } = await portraits.make(portraitUploadFile);
+      if (!images.length) {
+        setPortraitError(problem ?? 'The portraits could not be made. Try again.');
+        return;
+      }
+      releasePortraits();
+      const made = images.map(image => ({ url: URL.createObjectURL(image), image }));
+      portraitUrls.current = made.map(portrait => portrait.url);
+      setMadePortraits(made);
+      if (problem) setPortraitError(problem);
+    } catch (generationError) {
+      setPortraitError(generationError instanceof Error ? generationError.message : 'The portraits could not be made. Try again.');
+    } finally {
+      setIsGeneratingPortrait(false);
+    }
+  }, [generationNote, portraitUploadFile, portraits, releasePortraits]);
+
+  const handleApplyPortrait = useCallback(async () => {
+    const chosen = madePortraits[chosenPortrait];
+    if (!portraits || !chosen || !profile) return;
+    setIsSavingPortrait(true);
+    setPortraitError('');
+    try {
+      commit({ avatarUrl: await portraits.keep(chosen.image), activePortraitId: `portrait-${Date.now()}` });
+      setShowPortraitModal(false);
+    } catch {
+      setPortraitError('The portrait could not be kept on this device. Try again.');
+    } finally {
+      setIsSavingPortrait(false);
+    }
+  }, [chosenPortrait, commit, madePortraits, portraits, profile, setShowPortraitModal]);
+  const generatedPortraitUrls = useMemo(() => madePortraits.map(portrait => portrait.url), [madePortraits]);
 
   const rank = getDaoRankData(resolvePermanentDaoXp(profile?.dao_xp, profile?.dao_rank) ?? 0);
   return {
@@ -288,18 +365,17 @@ export function useDeviceProfileController(
     setPortraitUploadFile,
     portraitUploadBase64,
     setPortraitUploadBase64,
-    portraitDesc,
-    setPortraitDesc,
-    isGeneratingPortrait: false,
-    isSavingPortrait: false,
-    generatedPortraitUrl: '',
+    isGeneratingPortrait,
+    isSavingPortrait,
+    generatedPortraitUrls,
+    chosenPortrait,
+    setChosenPortrait,
     portraitError,
-    generationStep: 0,
     handleFileChange,
     handleDrag,
     handleDrop,
     handleGeneratePortrait,
-    handleApplyPortrait: noop,
+    handleApplyPortrait,
     handleLogin: noop,
     daoData: rank,
     activeStoriesCount: stories.filter(story => !story.deleted).length,

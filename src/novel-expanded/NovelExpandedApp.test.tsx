@@ -88,6 +88,7 @@ const appServices = (writer: HarnessGenerationModelAdapter, overrides: Partial<N
     economy: createPracticeEconomy({ uid: NOVEL_EXPANDED_READER_ID }).clients,
     storyCovers: createMemoryStoryCoverStore(),
     requestStoryCover: vi.fn(async () => new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' })),
+    requestProfilePicture: vi.fn(async () => new Blob([new Uint8Array([4, 5, 6])], { type: 'image/png' })),
     ...overrides,
   };
 };
@@ -763,6 +764,38 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(services.profile.read().familiarId).toBe('phoenix');
     expect(recall('Phoenix')).toBeTruthy();
     expect(recall('Quill')).toBeNull();
+  });
+
+  it('makes the profile picture from the reader\'s photo: three to choose from, the chosen one kept on the device', async () => {
+    let n = 0;
+    const requestProfilePicture = vi.fn(async () => new Blob([new Uint8Array([++n])], { type: 'image/png' }));
+    const services = appServices(scriptedWriter().writer, { requestProfilePicture, accessToken: { current: 'owner-token' } });
+    await render(services, '/app/?page=profile&cave=/home', undefined);
+    await flush(100);
+    await click(cave()!.querySelector('[data-cave-portrait] button'), 'the portrait', 20);
+    const dialog = () => document.body.querySelector<HTMLElement>('[role="dialog"]')!;
+    expect(dialog().textContent).toContain('Profile picture');
+    expect(dialog().textContent).not.toContain('Divine Mirror');
+    const make = () => [...dialog().querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.startsWith('Make my portraits'));
+    // A photo first; the cost shows beside the button.
+    expect(make()?.disabled).toBe(true);
+    expect(dialog().querySelector('.energy-action-cost')?.textContent).toBe('15');
+    const input = dialog().querySelector<HTMLInputElement>('[data-portrait-photo]')!;
+    Object.defineProperty(input, 'files', { value: [new File(['me'], 'me.jpg', { type: 'image/jpeg' })], configurable: true });
+    await act(async () => { input.dispatchEvent(new Event('change', { bubbles: true })); });
+    await flush(20);
+    await click(make(), 'Make my portraits', 50);
+    expect(requestProfilePicture).toHaveBeenCalledTimes(3);
+    expect(requestProfilePicture).toHaveBeenCalledWith({ data: btoa('me'), mimeType: 'image/jpeg' }, expect.objectContaining({ accessToken: 'owner-token' }));
+    const choices = [...dialog().querySelectorAll<HTMLButtonElement>('.portrait-builder-choice')];
+    expect(choices).toHaveLength(3);
+    expect(dialog().querySelectorAll('.portrait-builder-download')).toHaveLength(3);
+    expect(dialog().querySelector('[data-energy-spend]')?.getAttribute('data-energy-spend')).toBe('15');
+    await click(choices[1], 'the second portrait');
+    await click(buttonByText('Use this portrait', dialog()), 'Use this portrait', 50);
+    expect(services.profile.read().avatarUrl).toBe(`data:image/png;base64,${btoa(String.fromCharCode(2))}`);
+    expect(document.body.querySelector('[role="dialog"]')).toBeNull();
+    expect(cave()!.querySelector('[data-cave-portrait] img')?.getAttribute('src')).toBe(services.profile.read().avatarUrl);
   });
 
   it('a new Story Seed in Create starts from the profile\'s reading language and Reading Mode', async () => {

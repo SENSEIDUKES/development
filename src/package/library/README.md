@@ -1,5 +1,16 @@
 # `@seihouse/library`
 
+**0.27.0 (2026-10-08):** The profile picture, images at 5 Energy, Nano Banana 2 Lite.
+`./profile`: the portrait builder is **Profile picture**: a photo of the reader, three
+portraits to choose from (each with a download button), "Use this portrait" or "Make three
+more". The controller gives `generatedPortraitUrls`, `chosenPortrait` and `setChosenPortrait`
+in place of `generatedPortraitUrl`, `generationStep`, `portraitDesc` and `setPortraitDesc`
+(breaking for a host's controller). `./energy`: images cost 5 Energy (projected), and
+`EnergySpendFloater` shows Energy leaving as "−5" floaters. `./stories`: Story View's cover
+shows its cost, floaters and a download button. `./model-router-server`: an image request
+may carry `referenceImages` (a photo the model works from), and `DEFAULT_IMAGE_MODEL` is
+Nano Banana 2 Lite (`google/gemini-3.1-flash-lite-image`).
+
 **0.26.0 (2026-10-08):** Story Settings and cover art for a host's stories. `./stories`:
 World Info (`StoryPages`) has the story's **Story Settings**, closed until opened: its
 language, Reading Mode, CAPA skill slots and Media Loadout (`StorySettings`), the same

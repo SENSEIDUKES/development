@@ -1,4 +1,5 @@
-import type { ImageLabAspectRatio } from '../../../server/image-lab/limits';
+import { base64ToBlob, blobToBase64, shrinkImage } from '../../../host/media/imageFiles';
+import { IMAGE_LAB_ATTACHMENT_MAX_BASE64, IMAGE_LAB_ATTACHMENT_TYPES, type ImageLabAspectRatio } from '../../../server/image-lab/limits';
 
 export interface ImageLabRequest {
   prompt: string;
@@ -6,6 +7,14 @@ export interface ImageLabRequest {
   model?: string;
   aspectRatio: ImageLabAspectRatio;
   token: string;
+  /** A photo or other image the model works from. */
+  attachment?: ImageLabAttachment;
+}
+
+export interface ImageLabAttachment {
+  name: string;
+  data: string;
+  mimeType: string;
 }
 
 export interface ImageLabImage {
@@ -26,11 +35,6 @@ export interface ImageModelChoices {
   defaultModel?: string;
 }
 
-const decodeBase64 = (data: string, mimeType: string) => {
-  const bytes = Uint8Array.from(atob(data), character => character.charCodeAt(0));
-  return new Blob([bytes], { type: mimeType });
-};
-
 /** One image from the Image Lab (`/api/image-lab`), with the owner's access token. */
 export async function generateLabImage(request: ImageLabRequest, fetcher: typeof fetch = fetch): Promise<ImageLabImage> {
   let response: Response;
@@ -38,7 +42,12 @@ export async function generateLabImage(request: ImageLabRequest, fetcher: typeof
     response = await fetcher('/api/image-lab', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${request.token}` },
-      body: JSON.stringify({ prompt: request.prompt, ...(request.model ? { model: request.model } : {}), aspectRatio: request.aspectRatio }),
+      body: JSON.stringify({
+        prompt: request.prompt,
+        ...(request.model ? { model: request.model } : {}),
+        aspectRatio: request.aspectRatio,
+        ...(request.attachment ? { images: [{ data: request.attachment.data, mimeType: request.attachment.mimeType }] } : {}),
+      }),
     });
   } catch {
     throw new Error('The Image Lab could not be reached. Check the connection and try again.');
@@ -49,7 +58,7 @@ export async function generateLabImage(request: ImageLabRequest, fetcher: typeof
   }
   if (typeof body?.image !== 'string' || typeof body.mimeType !== 'string') throw new Error('The Image Lab sent back no image.');
   return {
-    blob: decodeBase64(body.image, body.mimeType),
+    blob: base64ToBlob(body.image, body.mimeType),
     mimeType: body.mimeType,
     model: typeof body.model === 'string' ? body.model : request.model ?? '',
     durationMs: typeof body.durationMs === 'number' ? body.durationMs : 0,
@@ -66,4 +75,19 @@ export async function loadImageModels(fetcher: typeof fetch = fetch): Promise<Im
     models: (images?.models ?? []).map(({ id, label, available }) => ({ id, label, available })),
     ...(images?.defaultModel ? { defaultModel: images.defaultModel } : {}),
   };
+}
+
+/** The longest side an attached image is sent at: plenty for a likeness, small enough to send. */
+const ATTACHMENT_MAX_SIDE = 1280;
+
+/**
+ * A file the owner attached, ready to send: made smaller when the browser can,
+ * so a phone photo fits in one request. Refuses what the model cannot read.
+ */
+export async function readAttachment(file: File): Promise<ImageLabAttachment> {
+  const blob = (await shrinkImage(file, ATTACHMENT_MAX_SIDE)) ?? file;
+  if (!IMAGE_LAB_ATTACHMENT_TYPES.includes(blob.type as never)) throw new Error('Attach a PNG, JPEG or WebP image.');
+  const data = await blobToBase64(blob);
+  if (data.length > IMAGE_LAB_ATTACHMENT_MAX_BASE64) throw new Error('This image is too large to send. Use a smaller photo.');
+  return { name: file.name, data, mimeType: blob.type };
 }

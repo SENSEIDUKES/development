@@ -137,7 +137,7 @@ describe('Reusable Energy pieces', () => {
     await render(<><EnergyActionCost actionId="chapter.generate" /><EnergyActionCost actionId="image.generate" /><EnergyActionCost actionId="narration.generate" /><EnergyActionCost price={7} /></>);
     const costs = Array.from(container.querySelectorAll('.energy-action-cost'));
     // The Energy mark is drawn artwork now, so only the number is text.
-    expect(costs.map(cost => cost.textContent)).toEqual(['1', '3', '7']);
+    expect(costs.map(cost => cost.textContent)).toEqual(['1', '5', '7']);
     expect(costs.every(cost => cost.querySelector('[data-sen-navigation-icon="energy"]'))).toBe(true);
     expect(costs[0].getAttribute('aria-label')).toBe('Costs 1 Energy (projected)');
     expect(ENERGY_PRICE_CATALOG.find(entry => entry.actionId === 'narration.generate')?.price).toBeNull();

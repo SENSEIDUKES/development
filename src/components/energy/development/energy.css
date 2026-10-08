@@ -198,3 +198,49 @@
     :where(.economy-standard-grid) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
 }
+
+/* Energy spent: "−5" floaters rising from the control that spent it. */
+@layer components {
+  :where(.energy-spend-floater) {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: visible;
+  }
+  :where(.energy-spend-floater__sr) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  :where(.energy-spend-floater__item) {
+    position: absolute;
+    top: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.15em;
+    transform: translate(-50%, 0);
+    color: #f1dc93;
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 1px 6px rgb(0 0 0 / 0.65), 0 0 12px rgb(241 220 147 / 0.45);
+    white-space: nowrap;
+    opacity: 0;
+    animation: energy-spend-rise 1.4s ease-out forwards;
+  }
+  @keyframes energy-spend-rise {
+    0% { opacity: 0; transform: translate(-50%, 0.25rem) scale(0.9); }
+    15% { opacity: 1; transform: translate(-50%, -0.4rem) scale(1.05); }
+    100% { opacity: 0; transform: translate(-50%, -2.6rem) scale(1); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :where(.energy-spend-floater__item) { animation-name: energy-spend-fade; }
+    @keyframes energy-spend-fade {
+      0%, 100% { opacity: 0; transform: translate(-50%, -1rem); }
+      20%, 70% { opacity: 1; transform: translate(-50%, -1rem); }
+    }
+  }
+}

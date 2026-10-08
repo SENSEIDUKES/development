@@ -4,19 +4,19 @@ import { buildStoryCoverPrompt } from './prompt';
 import { ModelRouterError } from '@seihouse/library/model-router-server';
 
 const story = { title: 'The Drowned Name', genre: 'Xianxia', style: 'chinese', synopsis: 'A courier returns to the drowned city.', mainCharacter: 'Mara', tags: ['revenge', 'water'] };
-const image = { capability: 'image' as const, provider: 'gemini' as const, model: 'google/gemini-3.1-flash-image', data: 'aW1hZ2U=', mimeType: 'image/png' };
+const image = { capability: 'image' as const, provider: 'gemini' as const, model: 'google/gemini-3.1-flash-lite-image', data: 'aW1hZ2U=', mimeType: 'image/png' };
 const environment = { GEMINI_API_KEY: 'secret-gemini' };
 
 describe('The story cover route', () => {
-  it('makes one cover with Nano Banana 2 by default, in portrait, and answers with the image', async () => {
+  it('makes one cover with Nano Banana 2 Lite by default, in portrait, and answers with the image', async () => {
     const generate = vi.fn(async () => image);
     const onAnswer = vi.fn();
     const result = await handleStoryCoverHttp({ method: 'POST', body: { story } }, { environment, generate, onAnswer });
-    expect(result).toMatchObject({ status: 200, body: { image: 'aW1hZ2U=', mimeType: 'image/png', model: 'google/gemini-3.1-flash-image' } });
+    expect(result).toMatchObject({ status: 200, body: { image: 'aW1hZ2U=', mimeType: 'image/png', model: 'google/gemini-3.1-flash-lite-image' } });
     expect(generate).toHaveBeenCalledWith(expect.objectContaining({
-      capability: 'image', model: 'google/gemini-3.1-flash-image', aspectRatio: '2:3', timeoutMs: STORY_COVER_TIMEOUT_MS,
+      capability: 'image', model: 'google/gemini-3.1-flash-lite-image', aspectRatio: '2:3', timeoutMs: STORY_COVER_TIMEOUT_MS,
     }));
-    expect(onAnswer).toHaveBeenCalledWith(expect.objectContaining({ model: 'google/gemini-3.1-flash-image' }));
+    expect(onAnswer).toHaveBeenCalledWith(expect.objectContaining({ model: 'google/gemini-3.1-flash-lite-image' }));
     expect(JSON.stringify(result.body)).not.toContain('secret');
   });
 

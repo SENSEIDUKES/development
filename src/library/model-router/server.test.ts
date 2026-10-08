@@ -250,6 +250,27 @@ describe('Model Router images', () => {
       .toMatchObject({ capability: 'image', provider: 'openrouter', data: 'aW1hZ2U=', mimeType: 'image/jpeg' });
   });
 
+  it('gives Gemini and OpenRouter an attached photo beside the prompt', async () => {
+    const photo = { data: 'cGhvdG8=', mimeType: 'image/jpeg' };
+    const generateContent = vi.fn(async (_request: GenerateContentParameters) => ({
+      candidates: [{ content: { parts: [{ inlineData: { data: 'aW1hZ2U=', mimeType: 'image/png' } }] } }],
+    }));
+    const gemini = createModelRouter({ credentials: { gemini: 'secret' }, createGeminiClient: () => ({ models: { generateContent } }) as never });
+    await gemini.generate({ ...imageRequest, referenceImages: [photo] });
+    expect(generateContent.mock.calls[0][0].contents).toEqual([{ role: 'user', parts: [{ text: 'A cover.' }, { inlineData: photo }] }]);
+
+    const fetchMock = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+      expect(JSON.parse(String(init?.body)).messages[0].content).toEqual([
+        { type: 'text', text: 'A cover.' },
+        { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,cGhvdG8=' } },
+      ]);
+      return new Response(JSON.stringify({ choices: [{ message: { images: [{ image_url: { url: 'data:image/png;base64,aW1hZ2U=' } }] } }] }), { status: 200 });
+    });
+    const openRouter = createModelRouter({ credentials: { openrouter: 'secret' }, fetch: fetchMock as typeof fetch });
+    await openRouter.generate({ ...imageRequest, model: 'openrouter/openai/gpt-5.4-image-2', referenceImages: [photo] });
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
   it('refuses a model that is not an image model, a reply without an image, and a missing key', async () => {
     const generateContent = vi.fn(async () => ({ candidates: [{ content: { parts: [{ text: 'No image today.' }] } }] }));
     const router = createModelRouter({ credentials: { gemini: 'secret' }, createGeminiClient: () => ({ models: { generateContent } }) as never });

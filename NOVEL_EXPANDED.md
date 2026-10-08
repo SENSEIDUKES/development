@@ -422,7 +422,9 @@ Update it whenever it changes.
       database it is a practice account: 1,000,000 QI and every Familiar
       unlocked, so each can be tested; what the reader does with it lasts for
       the visit, and a reload opens the account again.
-    - **What needs a server says so:** portrait generation, Keyboard
+    - **The profile picture:** made from the reader's photo, three to choose
+      from, the chosen one kept on the device.
+    - **What needs a server says so:** Keyboard
       Shortcuts, Redeem Code, Sever Link, Harmony sync, backup and import, the
       Aether Router and the Inbox show, disabled, with "Not in the app yet."
     - **One Familiar for the app:** minimized to its recall in every Library

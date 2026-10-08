@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useFamiliarStoreAccount } from '@seihouse/library/familiar';
 import { LibraryProfile, UserProfileServicesProvider, type AppUser, type Story, type UserProfileFeature } from '@seihouse/library/profile';
 import { allFamiliarOptions } from '../host/familiar/catalogue';
-import { createDeviceProfileServices } from '../host/profile/deviceProfileServices';
+import { createDeviceProfileServices, type DevicePortraitMaker } from '../host/profile/deviceProfileServices';
 import { appRouteFor } from './appPlaces';
 import { HOME_ROUTE, routeHref, type Navigate } from './routes';
 import type { NovelExpandedServices } from './services';
@@ -16,7 +16,7 @@ export const NOT_IN_THE_APP_YET = 'Not in the app yet.';
 
 /** The Cave's account and server pieces: shown, each with the note, until the database and its services arrive. */
 const NOT_YET_BUILT: readonly UserProfileFeature[] = [
-  'portrait-generation', 'shortcuts', 'redeem-code', 'sign-out', 'sync', 'backup', 'model-router', 'inbox',
+  'shortcuts', 'redeem-code', 'sign-out', 'sync', 'backup', 'model-router', 'inbox',
 ];
 
 /** Familiar ownership is the economy's: the Store charges QI or Energy and grants the Familiar there. */
@@ -27,12 +27,15 @@ const FAMILIAR_STORE = { useStoreAccount: useFamiliarStoreAccount };
  * record (Dao Name and aura, languages, Reading Mode, Familiar) is saved on
  * this device; its balances, Dao Pillar, rewards and Familiars are the
  * Library economy's practice account (`services.economy`); its Stories page
- * lists the reader's stories and Story Seeds. What needs a server shows with
- * "Not in the app yet." The Cave draws its own Library header and navigation
- * and moves between its pages itself.
+ * lists the reader's stories and Story Seeds; its profile picture is made from
+ * the reader's photo (three to choose from) and kept on this device. What
+ * needs a server shows with "Not in the app yet." The Cave draws its own
+ * Library header and navigation and moves between its pages itself.
  */
-export function ProfilePage({ services, stories, navigate }: {
+export function ProfilePage({ services, stories, navigate, portraits }: {
   services: Pick<NovelExpandedServices, 'profile' | 'readerPreferences' | 'storySeeds'>;
+  /** Makes the profile picture from the reader's photo. */
+  portraits?: DevicePortraitMaker;
   /** The reader's stories, for the Cave's Stories page. */
   stories: Story[];
   navigate: Navigate;
@@ -44,7 +47,8 @@ export function ProfilePage({ services, stories, navigate }: {
     soundPreferences: services.readerPreferences,
     storySeeds: { repository: services.storySeeds, ownerId: NOVEL_EXPANDED_READER_ID },
     notYetBuilt: { note: NOT_IN_THE_APP_YET, features: NOT_YET_BUILT },
-  }), [services.profile, services.readerPreferences, services.storySeeds]);
+    portraits,
+  }), [portraits, services.profile, services.readerPreferences, services.storySeeds]);
   return <div data-testid="novel-expanded-profile">
     <UserProfileServicesProvider services={profileServices}>
       <LibraryProfile currentUser={DEVICE_READER} stories={stories}

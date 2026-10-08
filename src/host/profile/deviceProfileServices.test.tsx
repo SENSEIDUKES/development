@@ -93,7 +93,56 @@ describe('The Cave on the device\'s profile', () => {
     expect(services.notYetBuilt?.features).toEqual(['portrait-generation', 'sync']);
     await run(() => controller.handleGeneratePortrait());
     expect(controller.portraitError).toBe('Not in the app yet.');
-    expect(controller.generatedPortraitUrl).toBe('');
+    expect(controller.generatedPortraitUrls).toEqual([]);
+  });
+
+  it('makes three portraits from the reader\'s photo, keeps the one chosen, and starts fresh next time', async () => {
+    let urls = 0;
+    const createUrl = vi.spyOn(URL, 'createObjectURL').mockImplementation(() => `blob:portrait-${++urls}`);
+    const revokeUrl = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    const images = [1, 2, 3].map(n => new Blob([String(n)], { type: 'image/png' }));
+    const make = vi.fn(async () => ({ images }));
+    const keep = vi.fn(async (portrait: Blob) => `data:image/jpeg;base64,kept-${await portrait.text()}`);
+    services = createDeviceProfileServices({ store, familiars: allFamiliarOptions, portraits: { make, keep } });
+    await mount();
+    await run(() => controller.setShowPortraitModal(true));
+    // A photo first: without one nothing is asked for.
+    await run(() => controller.handleGeneratePortrait());
+    expect(controller.portraitError).toBe('Choose a photo first.');
+    const photo = new File(['me'], 'me.jpg', { type: 'image/jpeg' });
+    await run(() => controller.handleFileChange(photo));
+    await run(() => controller.handleGeneratePortrait());
+    expect(make).toHaveBeenCalledWith(photo);
+    expect(controller.generatedPortraitUrls).toEqual(['blob:portrait-1', 'blob:portrait-2', 'blob:portrait-3']);
+    expect(controller.portraitError).toBe('');
+    await run(() => controller.setChosenPortrait(2));
+    await run(() => controller.handleApplyPortrait());
+    expect(keep).toHaveBeenCalledWith(images[2]);
+    expect(store.read().avatarUrl).toBe('data:image/jpeg;base64,kept-3');
+    expect(controller.showPortraitModal).toBe(false);
+    expect(controller.generatedPortraitUrls).toEqual([]);
+    expect(controller.portraitUploadFile).toBeNull();
+    expect(revokeUrl).toHaveBeenCalledWith('blob:portrait-1');
+    createUrl.mockRestore();
+    revokeUrl.mockRestore();
+  });
+
+  it('shows the portraits that were made and says why the others were not, or why none were', async () => {
+    vi.spyOn(URL, 'createObjectURL').mockImplementation(() => 'blob:only');
+    const make = vi.fn()
+      .mockResolvedValueOnce({ images: [new Blob(['1'])], problem: '2 of 3 portraits could not be made.' })
+      .mockResolvedValueOnce({ images: [], problem: 'The portrait could not be made. Try again, or try another photo.' });
+    services = createDeviceProfileServices({ store, familiars: allFamiliarOptions, portraits: { make, keep: vi.fn() } });
+    await mount();
+    await run(() => controller.handleFileChange(new File(['me'], 'me.jpg', { type: 'image/jpeg' })));
+    await run(() => controller.handleGeneratePortrait());
+    expect(controller.generatedPortraitUrls).toEqual(['blob:only']);
+    expect(controller.portraitError).toBe('2 of 3 portraits could not be made.');
+    await run(() => controller.handleGeneratePortrait());
+    // A failed retry keeps the portraits already made.
+    expect(controller.generatedPortraitUrls).toEqual(['blob:only']);
+    expect(controller.portraitError).toBe('The portrait could not be made. Try again, or try another photo.');
+    vi.restoreAllMocks();
   });
 
   it('lists the reader\'s own Story Seeds for the Stories page', async () => {

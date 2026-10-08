@@ -117,8 +117,8 @@ export const IMAGE_MODELS: readonly RoutedModel[] = [
   { id: 'openrouter/openai/gpt-5.4-image-2', label: 'GPT-5.4 Image 2 · OpenRouter', provider: 'openrouter', stage: 'current' },
 ];
 
-/** The image model covers are made with when the reader chooses none: Nano Banana 2 (the owner's choice, 2026-10-08). */
-export const DEFAULT_IMAGE_MODEL = 'google/gemini-3.1-flash-image';
+/** The image model used when the reader chooses none: Nano Banana 2 Lite (the owner's choice, 2026-10-08, for now). */
+export const DEFAULT_IMAGE_MODEL = 'google/gemini-3.1-flash-lite-image';
 
 /** The provider that serves an image model, or undefined when the Router does not list it. */
 export const imageModelProvider = (model: string): ModelProviderId | undefined =>

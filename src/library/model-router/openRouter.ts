@@ -173,6 +173,8 @@ export interface OpenRouterImageRequest {
   prompt: string;
   /** Requested shape, such as `2:3`; models that cannot honor it may ignore it. */
   aspectRatio?: string;
+  /** Images the model works from, sent beside the prompt as data URLs. */
+  referenceImages?: Array<{ data: string; mimeType: string }>;
   timeoutMs: number;
   attribution?: { referer?: string; title?: string };
   fetchImpl?: typeof fetch;
@@ -201,7 +203,12 @@ export async function generateOpenRouterImage(request: OpenRouterImageRequest): 
       },
       body: JSON.stringify({
         model: request.model.replace(/^openrouter\//, ''),
-        messages: [{ role: 'user', content: request.prompt }],
+        messages: [{
+          role: 'user',
+          content: request.referenceImages?.length
+            ? [{ type: 'text', text: request.prompt }, ...request.referenceImages.map(image => ({ type: 'image_url', image_url: { url: `data:${image.mimeType};base64,${image.data}` } }))]
+            : request.prompt,
+        }],
         modalities: ['image', 'text'],
         ...(request.aspectRatio ? { image_config: { aspect_ratio: request.aspectRatio } } : {}),
       }),

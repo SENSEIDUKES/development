@@ -28,17 +28,19 @@ const largestVocabulary = (): SoundWord[] => validateSoundWords(Array.from({ len
 
 describe('SEN Sound Cues skill', () => {
   it('teaches the sound tag with the same numbers placement enforces, in its five parts', () => {
-    expect(SEN_SOUND_CUES_SKILL).toMatchObject({ id: 'seihouse.sen-sound-cues', version: '2.1.0', slot: 'soundCues', applications: ['generation'] });
+    expect(SEN_SOUND_CUES_SKILL).toMatchObject({ id: 'seihouse.sen-sound-cues', version: '2.2.0', slot: 'soundCues', applications: ['generation'] });
     const lines = SEN_SOUND_CUES_INSTRUCTIONS.split('\n');
     expect(lines[0]).toMatch(/^JOB: /);
     expect(lines).toContain('FORMAT: [[sound: Sound Word | Words | Energy]], in place of those words inside your sentence.');
     // The owner's test: tags written on their own line, with words of their own, left broken lines behind.
-    expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain('FORBIDDEN: Any sound word not on the list. A tag on its own line or between sentences. Words written only for the tag, or repeating the sentence.');
+    expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain('FORBIDDEN: Any sound word not on the list. A tag on its own line or between sentences. Words written only for the tag, or repeating the sentence. Adding or bending a sentence to fit a sound.');
+    // The owner's rule: a cue is earned by the prose, and a chapter may have none.
+    expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain('a chapter may have none');
     expect(lines.filter(line => /^(?:REQUIRED|FORBIDDEN|CHECK BEFORE YOU RETURN):/.test(line)).map(line => line.split(':')[0])).toEqual(['REQUIRED', 'FORBIDDEN', 'CHECK BEFORE YOU RETURN']);
     expect(lines.at(-1)).toMatch(/^CHECK BEFORE YOU RETURN: /);
     expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain(`the few words of your own sentence where it happens, at most ${SOUND_CUE_RULES.maxWords}.`);
     expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain(`at most ${SOUND_CUE_RULES.maxWords} words and an energy`);
-    expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain(`At most ${SOUND_CUE_RULES.maxPerChapter} per chapter.`);
+    expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain(`at most ${SOUND_CUE_RULES.maxPerChapter}.`);
     expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain(`${AUDIO_ENERGIES.slice(0, -1).join(', ')} or ${AUDIO_ENERGIES.at(-1)}`);
   });
 
@@ -53,15 +55,16 @@ describe('SEN Sound Cues skill', () => {
     }
   });
 
-  it('shows one example tag made from the first word, then every word with example words it fits', () => {
+  it('shows one example tag made from the first word, then every word with its meaning and no phrase to copy', () => {
     const list = presentSoundVocabulary([{ word: 'blade drawn', example: 'drew his sword' }, { word: 'chime', example: 'a soft chime', meaning: 'a small bright chime' }]);
     const [example, header, ...lines] = list.split('\n');
     expect(example).toBe('EXAMPLE: [[sound: blade drawn | drew his sword | medium]]');
     // The example is a real tag: the reader keeps its words and reads its sound and Energy.
     const reading = readMarks(example.slice('EXAMPLE: '.length));
     expect(reading).toMatchObject({ text: 'drew his sword', sounds: [{ sound: 'blade drawn', energy: 'medium', start: 0, end: 14 }], soundIssues: [] });
-    expect(header).toBe('SOUND WORDS (each with example words; write your own):');
-    expect(lines).toEqual(['blade drawn: drew his sword', 'chime: a soft chime (a small bright chime)']);
+    expect(header).toBe('SOUND WORDS (the sounds that can play; tag your own words, never words written to fit one):');
+    // The owner's Sundered Heavens test: given phrases ("iron scraped stone"), the writer copied them into the chapter.
+    expect(lines).toEqual(['blade drawn', 'chime (a small bright chime)']);
     expect(presentSoundVocabulary([])).toBe('');
   });
 

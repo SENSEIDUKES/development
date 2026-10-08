@@ -86,7 +86,9 @@ describe('HARNESS Sound Cues through sound tags', () => {
     expect(request.capaPrompt.soundVocabulary).toEqual(LIBRARY_SOUND_WORDS);
     expect(request.capaPrompt.text).toContain('FORMAT: [[sound: Sound Word | Words | Energy]]');
     expect(request.capaPrompt.text).toContain('EXAMPLE: [[sound: beast roar | the beast roared | medium]]');
-    expect(request.capaPrompt.text).toContain('\nblade drawn: drew his sword\n');
+    expect(request.capaPrompt.text).toContain('\nblade drawn\n');
+    // The list names sounds; it hands the writer no phrases to copy into the chapter.
+    expect(request.capaPrompt.text).not.toContain('drew his sword');
     const { responseJsonSchema, systemInstruction } = buildHarnessGenerationPrompt(request);
     expect(responseJsonSchema.properties).not.toHaveProperty('soundCues');
     expect(Object.keys(responseJsonSchema.properties).slice(0, 3)).toEqual(['title', 'plan', 'paragraphs']);

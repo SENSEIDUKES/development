@@ -45,12 +45,32 @@ describe('Stray sound tags', () => {
     expect(wrapped(settled)).toEqual(['rail sounded the midday mark']);
   });
 
-  it('with no words to echo, takes the sentence before, keeping the cue within its word limit', () => {
+  it('drops a sound whose words nothing nearby says, rather than guessing a place for it', () => {
     const [settled] = settleStraySoundTags(read(
       'The cavern swallowed every lamp the miners had carried down that morning. [[sound: wind | a cold draft]]',
     )).readings;
     expect(settled.text).toBe('The cavern swallowed every lamp the miners had carried down that morning.');
-    expect(wrapped(settled)).toEqual(['The cavern swallowed every lamp the miners had']);
+    expect(settled.sounds).toEqual([]);
+  });
+
+  it('never lands on one shared word when the tag said more (the owner\'s "Key" and "drew")', () => {
+    const settled = settleStraySoundTags(read(
+      '[[sound: artifact resonates | the key hummed softly | low]] The bronze Inner Storehouse Key fit the primary slot.',
+      '[[sound: blade drawn | drew his sword | medium]] Liu Ruyan drew her frost-patterned longsword.',
+    ));
+    expect(settled).toMatchObject({ removed: 2, moved: 0 });
+    expect(settled.readings.map(reading => reading.text)).toEqual([
+      'The bronze Inner Storehouse Key fit the primary slot.',
+      'Liu Ruyan drew her frost-patterned longsword.',
+    ]);
+    expect(settled.readings.flatMap(reading => reading.sounds)).toEqual([]);
+  });
+
+  it('moves a sound onto the next sentence when it repeats the tag\'s words', () => {
+    const [settled] = settleStraySoundTags(read(
+      '[[sound: metal scrape | the internal tumblers sheared | low]] With a brittle snap, the internal tumblers sheared along their micro-fractures.',
+    )).readings;
+    expect(wrapped(settled)).toEqual(['internal tumblers sheared']);
   });
 
   it('keeps the tags around it in place when it removes words', () => {
@@ -60,8 +80,8 @@ describe('Stray sound tags', () => {
     expect(settled.text).toBe('“Down,” Bo hissed. The roof gave way. “Run!”');
     expect(settled.speakers).toEqual([{ name: 'Bo', offset: 0 }]);
     expect(settled.wordTags[0].offset).toBe(settled.text.indexOf('The roof'));
-    // Its one echo, "roof", is where the stones fell.
-    expect(wrapped(settled)).toEqual(['roof']);
+    // Only "roof" echoes "stones fell from the roof": too little to say it, so the sound is dropped.
+    expect(settled.sounds).toEqual([]);
   });
 
   it('removes the full stop a tag left at the start of a paragraph', () => {
@@ -70,28 +90,12 @@ describe('Stray sound tags', () => {
     expect(settled.wordTags[0].offset).toBe(0);
   });
 
-  it('never moves a sound onto words another sound already holds, trying the next sentence instead', () => {
+  it('never moves a sound onto words another sound already holds', () => {
     const settled = settleStraySoundTags(read(
       'The caravan halted. [[sound: thunder | Thunder rolled]] over the pass.',
-      '[[sound: wind | a cold gust]]',
+      '[[sound: storm | thunder rolled]]',
     ));
-    expect(settled).toMatchObject({ removed: 1, moved: 1 });
-    const [first] = settled.readings;
-    // The nearest sentence's first words hold the thunder already, so the wind takes the sentence before it.
-    expect(first.sounds.map(tag => tag.sound)).toEqual(['wind', 'thunder']);
-    expect(wrapped(first)).toEqual(['The caravan halted', 'Thunder rolled']);
-  });
-
-  it('looks past paragraphs left empty for the nearest prose', () => {
-    const settled = settleStraySoundTags(read(
-      'The gate groaned open. Dust fell.',
-      '[[sound: wind | a cold gust]]',
-      '[[sound: bell | a far bell]]',
-      'Nobody moved.',
-    ));
-    expect(settled).toMatchObject({ removed: 2, moved: 2 });
-    // Both look back past the emptied paragraphs: the first takes the nearest sentence, the second the one before it.
-    expect(wrapped(settled.readings[0])).toEqual(['The gate groaned open', 'Dust fell']);
-    expect(settled.readings[3].sounds).toEqual([]);
+    expect(settled).toMatchObject({ removed: 1, moved: 0 });
+    expect(settled.readings[0].sounds.map(tag => tag.sound)).toEqual(['thunder']);
   });
 });

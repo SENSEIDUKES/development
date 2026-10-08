@@ -162,8 +162,9 @@ describe('Harness installed skills', () => {
     expect(capa.soundtrackVocabulary).toEqual({ moods: ['mystical', 'war'], atmospheres: ['forest', 'cave'] });
     // The story's sound words close the Sound Cues section, after an example made from the first, and nothing else carries them.
     const soundSection = capa.text.slice(capa.text.indexOf('CAPA SKILL [Sound Cues]'), capa.text.indexOf('CAPA SKILL [Soundtrack]'));
-    expect(soundSection).toContain('EXAMPLE: [[sound: blade drawn | drew his sword | medium]]\nSOUND WORDS (each with example words; write your own):\nblade drawn: drew his sword\nchime: a soft chime (a small bright chime)');
-    expect(capa.text.split('drew his sword')).toHaveLength(3);
+    expect(soundSection).toContain('EXAMPLE: [[sound: blade drawn | drew his sword | medium]]\nSOUND WORDS (the sounds that can play; tag your own words, never words written to fit one):\nblade drawn\nchime (a small bright chime)');
+    // The phrase appears once, in the format example: the list itself hands the writer no phrases to copy.
+    expect(capa.text.split('drew his sword')).toHaveLength(2);
     expect(capa.soundVocabulary).toEqual([{ word: 'blade drawn', example: 'drew his sword' }, { word: 'chime', example: 'a soft chime', meaning: 'a small bright chime' }]);
     expect(capa.text.split(SEN_LIGHT_NOVEL_AUTHOR_INSTRUCTIONS.trim())).toHaveLength(2);
     expect(capa.text).toContain('Use readable paragraph boundaries.');

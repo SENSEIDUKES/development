@@ -124,7 +124,7 @@ describe('HARNESS Media Loadout runtime integration', () => {
     expect(request.capaPrompt.text).not.toContain('Media Pack');
     // The equipped pack replaces the default words: only its sound words reach the writer.
     expect(request.capaPrompt.soundVocabulary).toEqual([{ word: 'clockwork roar', example: 'the clockwork beast roared' }]);
-    expect(request.capaPrompt.text).toContain('\nclockwork roar: the clockwork beast roared\n');
+    expect(request.capaPrompt.text).toContain('\nclockwork roar\n');
 
     const committed = controller.snapshot().chapters[0];
     expect(committed.paragraphs[0]).toBe('Rain crossed the mountain pass as the clockwork beast roared across the stones.');

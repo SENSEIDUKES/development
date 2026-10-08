@@ -1,4 +1,3 @@
-import { splitSentences } from '../../text-highlight-engine/shared/manuscript';
 import { SOUND_CUE_RULES } from '../../../audio/soundCueRules';
 import type { MarkReading, SoundTag } from '../../../narrative/marks';
 import { wordRanges, type WordRange } from '../../../narrative/words';
@@ -8,9 +7,11 @@ import { wordRanges, type WordRange } from '../../../narrative/words';
  * around words in it. Such a tag's words were written only for the tag: left in
  * place they read as a broken line ("his pick scraped salt crystal", alone and
  * in lower case) or repeat the sentence before them. Those words are removed,
- * and the sound moves onto the nearby words that say the same thing, or, when
- * none do, onto the nearest sentence. Tags wrapping words inside a sentence are
- * never touched, and nothing else in the prose changes.
+ * and the sound moves onto nearby words that clearly say the same thing (two
+ * of its words, or its only one). When no words do, the sound is dropped: a
+ * sound the prose never describes has no place to play, and guessing one put
+ * cues on unrelated words ("stepping into the open as"). Tags wrapping words
+ * inside a sentence are never touched, and nothing else in the prose changes.
  */
 
 type Reading = Pick<MarkReading, 'text' | 'sounds' | 'speakers' | 'wordTags' | 'marks'>;
@@ -91,11 +92,8 @@ const bestEcho = (text: string, words: Set<string>, taken: readonly SoundTag[], 
   return best;
 };
 
-/** The first words of a sentence, up to the cue's word limit. */
-const sentenceWords = (text: string, sentence: { start: number; end: number }, locale?: string): WordRange | undefined => {
-  const words = wordRanges(text.slice(sentence.start, sentence.end), locale).slice(0, SOUND_CUE_RULES.maxWords);
-  return words.length ? { start: sentence.start + words[0].start, end: sentence.start + words.at(-1)!.end } : undefined;
-};
+/** How many of a stray tag's words nearby prose must repeat before its sound moves there: two, or its only one. */
+const requiredEcho = (words: Set<string>) => Math.min(2, words.size);
 
 /**
  * Settles every stray sound tag in a chapter's paragraphs, read in order.
@@ -145,29 +143,15 @@ export function settleStraySoundTags<T extends Reading>(readings: readonly T[], 
     const following = nearestWithText(orphan.paragraph, 1);
     const own = settled[orphan.paragraph].text ? orphan.paragraph : undefined;
     const near = [own, previous, following].filter((index): index is number => index !== undefined);
-    // First choice: words nearby that say what the stray words said, in this paragraph, then the one before, then after.
+    // Only words nearby that say what the stray words said: in this paragraph, the one before, or the one after.
     let target: { paragraph: number; range: WordRange } | undefined;
-    let score = 0;
+    let score = requiredEcho(echoes) - 1;
+    if (score < 0) continue;
     for (const index of near) {
       const echo = bestEcho(settled[index].text, echoes, settled[index].sounds, locale);
       if (echo && echo.score > score) { score = echo.score; target = { paragraph: index, range: echo.range }; }
     }
-    // Otherwise the nearest sentence whose first words hold no sound yet: before it in its own
-    // paragraph, then in the paragraph before, then after it, then in the paragraph after.
-    if (!target) {
-      const sentencesOf = (index: number | undefined) => (index === undefined ? [] : splitSentences(settled[index].text, locale).map(sentence => ({ paragraph: index, sentence })));
-      const ownSentences = sentencesOf(own);
-      const candidates = [
-        ...ownSentences.filter(({ sentence }) => sentence.end <= orphan.offset).reverse(),
-        ...sentencesOf(previous).reverse(),
-        ...ownSentences.filter(({ sentence }) => sentence.end > orphan.offset),
-        ...sentencesOf(following),
-      ];
-      for (const candidate of candidates) {
-        const range = sentenceWords(settled[candidate.paragraph].text, candidate.sentence, locale);
-        if (range && !overlapsSound(range, settled[candidate.paragraph].sounds)) { target = { paragraph: candidate.paragraph, range }; break; }
-      }
-    }
+    // Nothing nearby says it: the sound is dropped rather than put on words that never made it.
     if (!target) continue;
     moved += 1;
     const reading = settled[target.paragraph];

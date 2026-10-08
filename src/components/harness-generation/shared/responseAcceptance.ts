@@ -313,7 +313,7 @@ const readParagraphMarks = (paragraphs: readonly string[], warnings: HarnessWarn
   if (settled.removed) {
     warnings.push({
       code: 'sound_tag_moved',
-      message: `${settled.removed} sound tag${settled.removed === 1 ? ' was' : 's were'} written beside a sentence instead of around its words: the tag's own words were removed${settled.moved ? `, and ${settled.moved === settled.removed ? 'each' : settled.moved} sound moved onto the nearby sentence` : ''}.`,
+      message: `${settled.removed} sound tag${settled.removed === 1 ? ' was' : 's were'} written beside a sentence instead of around its words: the tag's own words were removed${settled.moved ? `, ${settled.moved === settled.removed ? 'each' : settled.moved} sound moved onto nearby words that say it` : ''}${settled.moved < settled.removed ? `, and ${settled.removed - settled.moved} with no such words ${settled.removed - settled.moved === 1 ? 'was' : 'were'} dropped` : ''}.`,
     });
   }
   for (const reading of settled.readings) {

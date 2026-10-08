@@ -1,5 +1,12 @@
 # `@seihouse/sen`
 
+**0.24.3 (2026-10-08):** Sound Cues are earned by the prose. SEN Sound Cues 2.2.0
+tells the writer to tag a sound only where its own sentence already describes it (a
+chapter may have none), and the sound list it receives names each sound and its
+meaning with no example phrases to copy. A sound tag written beside a sentence moves
+only onto nearby words that clearly say it (two of its words, or its only one) and is
+dropped otherwise; it is never put on the nearest sentence's first words.
+
 **0.24.2 (2026-10-06):** updates the universal UI peer to 0.11.0 for the
 coordinated Library navigation package adoption. Narrative behavior and public
 interfaces are unchanged; SEN still has no Library UI dependency.

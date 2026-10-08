@@ -21,13 +21,15 @@ export interface CreatePageProps {
   accountDefaultLanguage?: CreationModalProps['accountDefaultLanguage'];
   /** The profile's default Reading Mode: a new Story Seed starts with it. */
   accountDefaultChapterWritingStyle?: CreationModalProps['accountDefaultChapterWritingStyle'];
+  /** Story Settings in Create: the skills and media the new story starts with. */
+  renderStorySettings?: CreationModalProps['renderStorySettings'];
   onHome: () => void;
   /** Manifest Story: the host starts the story and shows it. */
   onStartStory: (payload: InitialStoryGenerationPayload) => Promise<void>;
 }
 
 /** Create: the Story Seed and its World Blueprint, the same journey the Library ships. */
-export function CreatePage({ services, askForToken, startedSeedIds, chapterModel, accountDefaultLanguage, accountDefaultChapterWritingStyle, onHome, onStartStory }: CreatePageProps) {
+export function CreatePage({ services, askForToken, startedSeedIds, chapterModel, accountDefaultLanguage, accountDefaultChapterWritingStyle, renderStorySettings, onHome, onStartStory }: CreatePageProps) {
   const runtime = useNovelExpandedStoryCreation(services.storySeeds, startedSeedIds);
   const activeRequest = useRef<AbortController | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -70,6 +72,7 @@ export function CreatePage({ services, askForToken, startedSeedIds, chapterModel
     <div className="min-h-screen bg-void" data-testid="novel-expanded-create">
       <CreationModal onNavigateHome={onHome} onStartStory={onStartStory} isGenerating={generating} error={null}
         accountDefaultLanguage={accountDefaultLanguage} accountDefaultChapterWritingStyle={accountDefaultChapterWritingStyle}
+        renderStorySettings={renderStorySettings}
         onGenerateBlueprint={payload => withToken('The World Blueprint needs the development access token. Nothing was changed.',
           (accessToken, signal) => services.requestWorldBlueprint(payload, accessToken, signal, chapterModel))} />
     </div>

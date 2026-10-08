@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   type ComponentType,
+  type ReactNode,
   type SetStateAction,
 } from 'react';
 import './story-seed.css';
@@ -60,6 +61,12 @@ export interface CreationModalProps {
    * its own, and absent means Standard.
    */
   accountDefaultChapterWritingStyle?: ChapterWritingStyle;
+  /**
+   * The host's Story Settings for the story this seed will become (its skills
+   * and media), shown in Settings after the Reading Mode. Story Seed only
+   * places it; the host owns what it holds.
+   */
+  renderStorySettings?: (seed: { seed: StorySeedInput; originalLanguage: SenLanguageCode }) => ReactNode;
 }
 
 /** Existing one-story generation default; Chapter Generation Pass 1 does not use it. */
@@ -128,7 +135,7 @@ const selectCreationModalStore = (state: StoryCreationSnapshot): CreationModalSt
   libraryStories: state.stories,
 });
 
-export default function CreationModal({ onNavigateHome, onStartStory, onGenerateBlueprint, isGenerating: isGeneratingProp, error, accountDefaultLanguage, accountDefaultChapterWritingStyle }: CreationModalProps) {
+export default function CreationModal({ onNavigateHome, onStartStory, onGenerateBlueprint, isGenerating: isGeneratingProp, error, accountDefaultLanguage, accountDefaultChapterWritingStyle, renderStorySettings }: CreationModalProps) {
   const runtime = useStoryCreationRuntime();
   const guestWorkspace = Boolean(runtime.guestOwnerId);
   const storeIsGenerating = useStoryCreationStore(state => state.isGenerating);
@@ -746,6 +753,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
         onNavigateHome={onNavigateHome}
         seed={seed} updateSeed={updateSeed} activeSection={activeSection} authorName={authorName}
         storyLanguage={storyLanguageSetting} onReadingModeChange={resolveReadingMode}
+        storySettings={renderStorySettings?.({ seed, originalLanguage })}
         onSelectSection={selectWorkspaceSection} isGenerating={isGenerating} savedFeedback={savedFeedback}
         showStoryBank={showStoryBank} helpOpen={helpOpen} canManifest={canGenerate}
         manifestLabel={isGenerating ? (activeAgentId === 'versa' ? 'VERSA is drafting...' : 'Manifesting...') : 'Manifest World Blueprint'}

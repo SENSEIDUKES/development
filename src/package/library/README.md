@@ -1,5 +1,19 @@
 # `@seihouse/library`
 
+**0.26.0 (2026-10-08):** Story Settings and cover art for a host's stories. `./stories`:
+World Info (`StoryPages`) has the story's **Story Settings**, closed until opened: its
+language, Reading Mode, CAPA skill slots and Media Loadout (`StorySettings`), the same
+panels the HARNESS developer page shows (which adds its inspection). A change applies to
+chapters written from then on and waits while one is being written. `CreateStorySettings`
+shows the skills and media a story will start with in Story Seed's Settings
+(`CreationModal`'s `renderStorySettings`), as a draft the host keeps
+(`useStorySettingsDraft`, `applyStorySettingsDraft`) until Manifest. `StoryPages` takes
+`covers` (`StoryCoverService`): World Info and Home wear the story's cover, and Manifest
+cover makes one from the story's own words (`storyCoverRequest`) behind the media reveal.
+`useLibraryStories` also returns the skills and Media Packs Story Settings offers.
+`./model-router-server`: image generation (`ImageGenerationRequest`, Gemini and OpenRouter),
+`DEFAULT_IMAGE_MODEL` (Nano Banana 2) and `imageModelProvider`. Requires `@seihouse/sen` 0.25.0.
+
 **0.25.0 (2026-10-07):** what a host needs to bring the Cave and the Familiar into its
 own app. `./shell`: `LibraryDestinationsProvider` gives every Library navigation beneath
 it the host's places, the ones a Library page draws itself included (the Cave's); a
@@ -204,8 +218,8 @@ removed; a real Mini face can be designed later. The Info cover uses
 | `./creator-space` | The Create page: Creator Space tiles, the Creator Toolkit preview and the Your worlds row over host-supplied worlds, Energy and destinations |
 | `./world-card` | The shared `WorldCard` with Full, Compact, and Info cover faces, plus its Info page — over host-supplied world display data and destinations |
 | `./story-seed` | Authenticated Story Bank, Help and branded creation journey; Story Seed Settings own the Story Language and Reading Mode a new story starts with |
-| `./generation` | First-party HARNESS workspace composition: the novel page and its Story Settings (Story Language, Reading Mode). HARNESS internals such as CAPA slots show only when a development host sets `showHarnessInternals` |
-| `./stories` | A reader's HARNESS stories over host-supplied storage and writer: `useLibraryStories` (one controller with the Library's defaults), `StoryPages` (a story's World Info page and its Reader, with the Aura Veil while a chapter is written), `harnessStoryDisplay` and `storyHomeWorlds` (Home cards, newest first) |
+| `./generation` | First-party HARNESS workspace composition: the novel page with the same Story Settings panels as `./stories`, plus the developer inspection (CAPA skill instructions, the Official Requirements, slot uploads) when a development host sets `showHarnessInternals` |
+| `./stories` | A reader's HARNESS stories over host-supplied storage and writer: `useLibraryStories` (one controller with the Library's defaults), `StoryPages` (a story's World Info page, with Manifest cover and its Story Settings, and its Reader, with the Aura Veil while a chapter is written), `harnessStoryDisplay` and `storyHomeWorlds` (Home cards, newest first, with the host's covers), `StorySettings` and `CreateStorySettings` (language, Reading Mode, CAPA skill slots, Media Loadout; Create's as a draft the host keeps), `storyCoverRequest` and the `StoryCoverService` port |
 | `./model-router-server` | Server-only Gemini/OpenRouter text and ElevenLabs speech routing; apps supply credentials, prompts, HTTP policy, and storage |
 | `./media` | First-party catalog selection and entitlement contracts |
 | `./manifestations` | Celestial manifestation orchestration around Library UI visuals |

@@ -4,8 +4,8 @@ import { NarrativeButton, NarrativeTextBox } from '@seihouse/sen/presentation';
 
 /** An open request for the token; `resolve` answers it with the token, or nothing when cancelled. */
 export interface AccessTokenRequest {
-  /** What needs it: a World Blueprint, or chapters past the visitor limit. */
-  reason: 'blueprint' | 'chapters';
+  /** What needs it: a World Blueprint, or chapters or covers past the visitor limit. */
+  reason: 'blueprint' | 'chapters' | 'covers';
   /** The server did not accept the last token. */
   rejected: boolean;
   resolve: (token: string | undefined) => void;
@@ -33,7 +33,9 @@ export function AccessTokenSheet({ request }: { request?: AccessTokenRequest }) 
       <p className="text-sm text-neutral-300">
         {request?.reason === 'chapters'
           ? 'Without your access token, chapters are limited to 6 every 30 minutes. Enter it to keep writing.'
-          : 'World Blueprints are still in development, so the server asks for your access token.'}
+          : request?.reason === 'covers'
+            ? 'Without your access token, covers are limited to 3 every 30 minutes. Enter it to make more.'
+            : 'World Blueprints are still in development, so the server asks for your access token.'}
         {' '}It is saved on this device, so you enter it once.
       </p>
       {request?.rejected && <p role="alert" className="text-sm text-amber-200">That token was not accepted. Check it and try again.</p>}

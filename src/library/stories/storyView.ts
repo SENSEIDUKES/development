@@ -1,14 +1,16 @@
 import { findFoundationRevision, findStory, type HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
 import type { StorySeedInput, WorldBlueprint } from '@seihouse/sen/story-seed';
 import type { StoryDetailDisplay } from '../../components/light-novels-home/shared/storyDetailContracts';
+import type { StoryCoverService } from './storyCover';
 
 /**
  * A HARNESS story as its World Info page shows it, from what the story already
  * knows: its title and genre, its Story Seed tags, its Blueprint logline (else
- * its premise), and how many chapters it has. Cover art, author and arc stay
- * empty, so the page leaves them out instead of inventing them.
+ * its premise), how many chapters it has, and its cover art when the host
+ * keeps one. Author and arc stay empty, so the page leaves them out instead
+ * of inventing them.
  */
-export function harnessStoryDisplay(state: HarnessWorkspaceState, storyId: string): StoryDetailDisplay | undefined {
+export function harnessStoryDisplay(state: HarnessWorkspaceState, storyId: string, covers?: Pick<StoryCoverService, 'coverUrl'>): StoryDetailDisplay | undefined {
   const story = findStory(state, storyId);
   if (!story) return undefined;
   const input = findFoundationRevision(state, story.activeFoundationRevisionId)?.input;
@@ -24,7 +26,7 @@ export function harnessStoryDisplay(state: HarnessWorkspaceState, storyId: strin
     genre: input?.genre?.trim() ?? '',
     createdAt: story.createdAt,
     reads: 0,
-    imageUrl: '',
+    imageUrl: covers?.coverUrl(story.id) ?? '',
     chapterCount: state.chapters.filter(chapter => chapter.storyId === story.id).length,
     ...(story.chapterWritingStyle ? { chapterWritingStyle: story.chapterWritingStyle } : {}),
     mcName: input?.cast?.find(member => member.isMainCharacter)?.name ?? '',
@@ -37,12 +39,12 @@ export function harnessStoryDisplay(state: HarnessWorkspaceState, storyId: strin
   };
 }
 
-/** The reader's stories as Home cards, newest first. */
-export function storyHomeWorlds(state: HarnessWorkspaceState): StoryDetailDisplay[] {
+/** The reader's stories as Home cards, newest first, each with its cover when the host keeps one. */
+export function storyHomeWorlds(state: HarnessWorkspaceState, covers?: Pick<StoryCoverService, 'coverUrl'>): StoryDetailDisplay[] {
   return [...state.stories]
     .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
     .flatMap(story => {
-      const display = harnessStoryDisplay(state, story.id);
+      const display = harnessStoryDisplay(state, story.id, covers);
       return display ? [display] : [];
     });
 }

@@ -1,6 +1,6 @@
 import { arcGoalResolved, arcGoalSegments, arcPlanFromDraft, createArcChapterPosition, editArcPlan, normalizeArcLookahead, type ArcPlan } from '../../arc-goals/shared/arcGoals';
 import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '../../../lib/language';
-import { emptyNarrativeMedia, soundVocabulary, type FrozenNarrativeMedia, type NarrativeMediaPort, type MediaResourceReference, type MediaSelectionSlot } from '../../../audio/media';
+import { emptyNarrativeMedia, soundVocabulary, type FrozenNarrativeMedia, type NarrativeMediaPort, type MediaResourceReference, type MediaSelectionSlot, type StoryMediaSelection } from '../../../audio/media';
 import { soundtrackVocabulary, type SoundtrackVocabulary } from '../../../audio/soundtrackVocabulary';
 import type { SoundWord } from '../../../audio/soundWords';
 import { arcGoalEditState, arcPlanGap, arcPlanningContext, arcReviewGap, commitHarnessArc, harnessArcContext, harnessArcPlan, harnessStoryMode, missingRequiredEnding, needsArcPlan, readArcReply, routeCompleteGap, storyConclusionGap, withArcGoalReview, arcGoalReview } from './arcState';
@@ -485,6 +485,16 @@ export class HarnessGenerationController {
     const story = findStory(this.state, storyId);
     if (!story) throw new Error('Open a Harness story before inspecting its soundtrack words.');
     return soundtrackVocabulary(this.media?.freeze(story.mediaLoadout, this.runtime.now()));
+  }
+
+  /**
+   * The sound words and soundtrack words a story would start with under this
+   * Media Loadout, before the story exists: Story Settings while a story is
+   * being created. For inspection; never persisted here.
+   */
+  describeMediaSelection(selection: StoryMediaSelection = {}): { sounds: SoundWord[]; soundtrack: SoundtrackVocabulary } {
+    const media = this.media?.freeze(selection, this.runtime.now());
+    return { sounds: soundVocabulary(media), soundtrack: soundtrackVocabulary(media) };
   }
 
   async setSkillSlot(

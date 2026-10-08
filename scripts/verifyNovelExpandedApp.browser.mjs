@@ -6,6 +6,7 @@
  * `/app` → empty Home in the Library Shell (the app's two places, Home and
  * Create, on the phone strip or the laptop sidebar, and the footer) → Create
  * (Story Seed in the shell's workspace mode, with the music note) →
+ * Story Settings in Create's Settings (the CAPA skill slots and media the story starts with) →
  * token sheet → World Blueprint (Arc 1 only,
  * the hidden look-ahead nowhere on screen, every blank Seed slot filled) → Manifest
  * Story → Story View → Start Story under the veil → Chapter 1 with its Sound
@@ -18,7 +19,8 @@
  * kept on the device) → Holdings → Rewrite this chapter with a note (the new
  * version under the veil, the Holdings fixer's one quiet call settling its
  * holdings, nothing of it on screen) → reload (no new request, nothing reads by itself) →
- * Back → Continue · Ch. 1 → Export story (the whole story as one file) → Back
+ * Back → Continue · Ch. 1 → Story Settings (closed until opened: language, Reading Mode, CAPA skills, media) →
+ * Manifest cover (the media reveal, then the cover on World Info and on Home's card) → Export story (the whole story as one file) → Back
  * → Home card, its music note (tap mutes; hover or hold opens the Music volume) → browser Back and Forward →
  * Create from the navigation (on laptops, a minimized sidebar stays minimized after a reload) → a missing story goes Home.
  * World Info sits in the shell; the Reader never does. The music note floats just above the bottom bar's right end
@@ -57,6 +59,8 @@ const ATMOSPHERES = JSON.parse(readFileSync('src/host/media/data/sen-atmospheres
 /** The pieces of SEN Soundscapes that answer a mood, by their file names. */
 const piecesOf = mood => new Set(SOUNDSCAPES.filter(piece => piece.mood === mood || piece.moods.includes(mood)).map(piece => new URL(piece.url).pathname));
 const SOUNDSCAPE_PATH = /\/SEN\/AUDIO\/SOUNDSCAPE\/Volumn%201\//;
+/** The stand-in cover the cover server answers with. */
+const COVER = readFileSync('public/card-workshop/test-images/lotus_lake_pavilion_portrait.jpg');
 const BATTLEFIELD = new URL(ATMOSPHERES.find(bed => bed.label === 'Ancient Battlefield 1').url).pathname;
 /** Ten seconds of silence (8-bit mono, 8 kHz WAV), answering every SEIHouse audio file. */
 const SILENCE = (() => {
@@ -197,7 +201,7 @@ async function walk(browser, viewport, sample) {
   await context.addInitScript(installSpeechStandIn);
   const page = await context.newPage();
   const problems = [];
-  const counts = { chapters: 0, memory: 0, blueprints: 0, chaptersWithToken: 0, rewrites: [], fixes: [] };
+  const counts = { chapters: 0, memory: 0, blueprints: 0, chaptersWithToken: 0, rewrites: [], fixes: [], covers: [] };
   let releaseFirstChapter;
   const firstChapterReady = new Promise(resolve => { releaseFirstChapter = resolve; });
   page.on('pageerror', error => problems.push(`page error: ${error.message}`));
@@ -239,6 +243,13 @@ async function walk(browser, viewport, sample) {
     await route.fulfill(authorized
       ? { status: 200, contentType: 'application/json', body: JSON.stringify(sample.blueprint) }
       : { status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'A valid Development Story Seed access token is required.' }) });
+  });
+  // The cover server: one portrait from the story's own words, a moment later, as Nano Banana 2 answers.
+  await context.route('**/api/story-cover', async route => {
+    const request = route.request();
+    counts.covers.push({ body: request.postDataJSON(), token: request.headers().authorization === `Bearer ${TOKEN}` });
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ image: COVER.toString('base64'), mimeType: 'image/jpeg', model: 'google/gemini-3.1-flash-image' }) });
   });
   await context.route('**/api/harness-generation', async route => {
     const request = route.request();
@@ -327,6 +338,18 @@ async function walk(browser, viewport, sample) {
   await musicOf('ambient');
   check(pieces().every(path => piecesOf('ambient').has(path)), `The app's music should be calm pieces only, got ${JSON.stringify(pieces())}.`);
   check(address() === '/app/?page=create', `Create should be /app/?page=create, got ${address()}`);
+  // Story Settings in Create: Story Seed's Settings holds the language and Reading Mode, then the CAPA skill
+  // slots and media the story will start with.
+  await visibleButton(/^Settings$/).click();
+  const createSettings = page.getByTestId('create-story-settings').filter({ visible: true }).first();
+  await createSettings.waitFor();
+  check(await createSettings.locator('#harness-skill-author').count() === 1, 'Create\'s Story Settings should offer the Author skill slot.');
+  check((await createSettings.innerText()).includes('The Library\'s own Sound Cues'), 'Create\'s Story Settings should show the Library\'s own sounds.');
+  check(await page.evaluate(() => document.documentElement.scrollWidth) <= viewport.width, 'Create\'s Settings must never scroll sideways.');
+  await page.waitForTimeout(400);
+  await shot('2a-create-story-settings');
+  await page.keyboard.press('Escape');
+  await createSettings.waitFor({ state: 'hidden' });
   await visibleButton(/^Story Bank$/).click();
   await visibleButton(/^Use Seed$/).click();
   await visibleButton(/^Refine Details$/).click();
@@ -566,6 +589,38 @@ async function walk(browser, viewport, sample) {
   await musicOf('ambient', beforeLeaving);
   check(address() === storyAddress, `Back from the Reader should open Story View, got ${address()}`);
   check((await page.locator('[data-world-info-chapters="action"]').textContent()).includes('Continue · Ch. 1'), 'Story View should continue at Chapter 1.');
+  // Story Settings: closed until opened, then the story's language, Reading Mode, CAPA skills and media.
+  const storySettings = page.getByTestId('story-view-settings');
+  await storySettings.scrollIntoViewIfNeeded();
+  check(await page.getByTestId('story-settings').count() === 0, 'Story Settings should stay closed until the reader opens it.');
+  await storySettings.getByRole('button', { name: /Story Settings/ }).click();
+  await page.getByTestId('story-settings-language').waitFor();
+  check(await storySettings.locator('#harness-skill-author').count() === 1 && await storySettings.locator('[data-testid="harness-fate-slot"]').count() === 1,
+    'Story View\'s Story Settings should show the hand and managed CAPA slots.');
+  check(await storySettings.locator('[data-testid="harness-official-requirements"]').count() === 0, 'The developer page\'s inspection stays off Story View.');
+  check(await page.evaluate(() => document.documentElement.scrollWidth) <= viewport.width, 'Story Settings must never scroll sideways.');
+  await shot('4c-story-settings');
+  await storySettings.getByRole('button', { name: /Story Settings/ }).click();
+  // Manifest cover: the media reveal while the cover is made, then World Info and Home wear it.
+  await page.getByTestId('story-cover').scrollIntoViewIfNeeded();
+  await visibleButton('Manifest cover').click();
+  await page.locator('[data-testid="generation-overlay"]').waitFor();
+  await page.waitForTimeout(700);
+  await shot('4d-cover-reveal');
+  await page.locator('[data-testid="generation-overlay"] image[href^="blob:"]').waitFor({ state: 'attached', timeout: 10_000 });
+  await page.waitForTimeout(900);
+  await shot('4e-cover-revealed');
+  await page.locator('[data-testid="generation-overlay"]').waitFor({ state: 'hidden', timeout: 15_000 });
+  check(counts.covers.length === 1, `One cover request expected, saw ${counts.covers.length}.`);
+  check(counts.covers[0]?.token, 'The cover should carry the owner\'s token, which lifts the visitor limit.');
+  check(!JSON.stringify(counts.covers[0]?.body ?? {}).includes('Chapter 1'), 'A cover is made from the story\'s own words, never its chapters.');
+  const infoCover = page.locator('[data-world-card="info-cover"] img');
+  await infoCover.waitFor();
+  check((await infoCover.getAttribute('src'))?.startsWith('blob:'), 'World Info should wear the new cover.');
+  check(await infoCover.evaluate(image => image.complete && image.naturalWidth > 0), 'The cover should load on World Info.');
+  check(await visibleButton('New cover').count() === 1, 'With a cover, the button should offer a new one.');
+  await page.locator('#novel-expanded-main').evaluate(main => main.scrollTo({ top: 0 }));
+  await shot('4f-story-view-cover');
   // Export story saves the whole story as one file, with what the writer was given for each chapter.
   await page.getByTestId('story-export').scrollIntoViewIfNeeded();
   await shot('4b-story-export');
@@ -583,6 +638,7 @@ async function walk(browser, viewport, sample) {
   await page.getByTestId('novel-expanded-home').waitFor();
   check(address() === '/app/', `Back from Story View should go Home, got ${address()}`);
   await page.getByRole('button', { name: /^Open .+, 1 chapters/ }).first().waitFor();
+  check((await page.locator('[id^="home-world-"] img').first().getAttribute('src'))?.startsWith('blob:'), 'Home\'s card should wear the story\'s cover.');
   await shot('7-home-with-story');
 
   // Home's music note (Menu music is on for a new reader): a tap mutes all sound, and hovering it (a mouse) or holding

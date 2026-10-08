@@ -1,6 +1,8 @@
 import type { HarnessGenerationModelAdapter } from '@seihouse/sen/harness-generation';
 import type { AccessTokenStore } from '../host/generation/accessToken';
 import { HarnessGenerationRequestError } from '../host/generation/httpClient';
+import { StoryCoverRequestError, type requestStoryCover } from '../host/media/storyCoverClient';
+import type { StoryCoverRequester } from '../host/media/storyCovers';
 import type { AccessTokenRequest } from './AccessTokenSheet';
 
 /** Asks for the owner's access token; resolves with it, or nothing when cancelled. */
@@ -41,4 +43,30 @@ export const writerWithAccessToken = (
     // The Holdings fixer runs unseen: it sends the token the reader already gave and never asks for one.
     ...(writer.fixHoldings ? { fixHoldings: request => writer.fixHoldings!(request) } : {}),
   };
+};
+
+/**
+ * The cover maker with the owner's access token, the same way as chapters: a
+ * cover refused for the visitor limit without a token (429), or for a token
+ * the server did not accept (401), asks for the token and is asked for again.
+ * The server refused it before any model call, so nothing is made twice.
+ */
+export const coverRequesterWithAccessToken = (
+  request: typeof requestStoryCover,
+  token: AccessTokenStore,
+  ask: AskForAccessToken,
+  model: () => string | undefined,
+): StoryCoverRequester => async story => {
+  for (;;) {
+    try {
+      return await request(story, { model: model(), accessToken: token.current });
+    } catch (error) {
+      const status = error instanceof StoryCoverRequestError ? error.status : undefined;
+      if (status !== 401 && !(status === 429 && !token.current)) throw error;
+      if (status === 401) token.current = undefined;
+      const entered = await ask({ reason: 'covers', rejected: status === 401 });
+      if (!entered) throw error;
+      token.current = entered;
+    }
+  }
 };

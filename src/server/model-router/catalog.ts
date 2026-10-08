@@ -6,7 +6,7 @@ import {
   type ModelCapability,
 } from '@seihouse/library/model-router-server';
 
-export { CHAPTER_MODELS, IMAGE_MODELS, TTS_MODELS, AUDIO_MODELS, VIDEO_MODELS, THREE_D_MODELS, DEFAULT_CHAPTER_MODEL, DEFAULT_TTS_MODEL, lowestReasoningLevel, providerModelName, resolveReasoningLevel, textModelProvider, textModelLabel } from '@seihouse/library/model-router-server';
+export { CHAPTER_MODELS, IMAGE_MODELS, TTS_MODELS, AUDIO_MODELS, VIDEO_MODELS, THREE_D_MODELS, DEFAULT_CHAPTER_MODEL, DEFAULT_IMAGE_MODEL, DEFAULT_TTS_MODEL, lowestReasoningLevel, providerModelName, resolveReasoningLevel, textModelProvider, textModelLabel } from '@seihouse/library/model-router-server';
 export const isMissingKeyMessage = (message: string) => /(?:GEMINI_API_KEY|OPENROUTER_API_KEY|OpenRouter-Dev) is not configured/.test(message);
 import { MODEL_PROVIDERS as sharedProviders } from '@seihouse/library/model-router-server';
 export const MODEL_PROVIDERS = {
@@ -52,6 +52,7 @@ export const GENERATION_CONSUMERS: readonly GenerationConsumer[] = [
   { name: 'Story Seed Blueprint', capability: 'chapters', entry: 'src/server/story-seed-blueprint/http.ts', modelChoice: 'router' },
   { name: 'Reader Translation', capability: 'chapters', entry: 'src/server/reader-translation/http.ts', modelChoice: 'server-default' },
   { name: 'Codex Voice Quote', capability: 'tts', entry: 'src/server/audio/codexVoiceQuote.ts', modelChoice: 'server-default' },
+  { name: 'Story Cover', capability: 'images', entry: 'src/server/story-cover/http.ts', modelChoice: 'router' },
 ];
 
 export const PROVIDER_ADAPTERS: readonly string[] = [

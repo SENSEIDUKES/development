@@ -92,7 +92,7 @@ export const PACKAGE_TARGETS = {
       '@seihouse/library/generation': ['HarnessGenerationWorkspace'],
       '@seihouse/library/media': ['createLibraryMediaPort', 'validateMediaPack'],
       '@seihouse/library/manifestations': ['GenerationOverlay', 'CompactGenerationOverlay', 'StatusMessage', 'ProgressIndicator', 'AmbientEffects', 'ProgressLabel', 'AILoadingVeil'],
-      '@seihouse/library/stories': ['useLibraryStories', 'StoryPages', 'harnessStoryDisplay', 'storyHomeWorlds', 'LIBRARY_READ_ALOUD_VOICES'],
+      '@seihouse/library/stories': ['useLibraryStories', 'StoryPages', 'harnessStoryDisplay', 'storyHomeWorlds', 'LIBRARY_READ_ALOUD_VOICES', 'StorySettings', 'CreateStorySettings', 'useStorySettingsDraft', 'applyStorySettingsDraft', 'storyCoverRequest'],
     },
     smokeTypes: `
       import type { UserProfileFeature, UserProfileNotYetBuilt, UserProfileServices } from '@seihouse/library/profile';
@@ -104,9 +104,9 @@ export const PACKAGE_TARGETS = {
       import type { FamiliarsClient, FamiliarTrainingSnapshot } from '@seihouse/library/familiar';
       import type { DaoXpClient } from '@seihouse/library/cultivation';
       import type { HarnessGenerationWorkspaceProps } from '@seihouse/library/generation';
-      import type { LibraryStories, LibraryStoriesOptions, StoryPagesProps } from '@seihouse/library/stories';
-      import type { ModelRouterConfig, TextGenerationRequest, SpeechGenerationRequest, GenerationResult } from '@seihouse/library/model-router-server';
-      type All = [UserProfileServices, UserProfileFeature, UserProfileNotYetBuilt, EnergyClient, FamiliarDefinition, FamiliarSelectionProps, QiClient, DaoXpClient, FateSurvivalRelicView, RelicsClient, AchievementsClient, MysteryScrollView, RewardGrant, FamiliarsClient, FamiliarTrainingSnapshot, HarnessGenerationWorkspaceProps, LibraryStories, LibraryStoriesOptions, StoryPagesProps, ModelRouterConfig, TextGenerationRequest, SpeechGenerationRequest, GenerationResult];
+      import type { LibraryStories, LibraryStoriesOptions, StoryPagesProps, StoryCoverRequest, StoryCoverService, StorySettingsDraft } from '@seihouse/library/stories';
+      import type { ModelRouterConfig, TextGenerationRequest, SpeechGenerationRequest, ImageGenerationRequest, GenerationResult } from '@seihouse/library/model-router-server';
+      type All = [UserProfileServices, UserProfileFeature, UserProfileNotYetBuilt, EnergyClient, FamiliarDefinition, FamiliarSelectionProps, QiClient, DaoXpClient, FateSurvivalRelicView, RelicsClient, AchievementsClient, MysteryScrollView, RewardGrant, FamiliarsClient, FamiliarTrainingSnapshot, HarnessGenerationWorkspaceProps, LibraryStories, LibraryStoriesOptions, StoryPagesProps, StoryCoverRequest, StoryCoverService, StorySettingsDraft, ModelRouterConfig, TextGenerationRequest, SpeechGenerationRequest, ImageGenerationRequest, GenerationResult];
     `,
   },
 };

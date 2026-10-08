@@ -121,7 +121,10 @@ describe('Model Router status', () => {
     expect(chapters.models.find(model => model.id === 'openrouter/openai/gpt-6-luna')?.available).toBe(false);
     expect(chapters.models.find(model => model.id === 'google/gemini-3.8-flash')?.available).toBe(true);
     expect(chapters.models.find(model => model.id === 'google/gemini-3.8-flash')?.implemented).toBe(true);
-    expect(status.capabilities.find(capability => capability.id === 'images')?.models[0].implemented).toBe(false);
+    // Story covers are made through the Router's image models, Nano Banana 2 unless the reader chooses another.
+    expect(status.capabilities.find(capability => capability.id === 'images')?.models[0].implemented).toBe(true);
+    expect(status.capabilities.find(capability => capability.id === 'images')?.defaultModel).toBe('google/gemini-3.1-flash-image');
+    expect(status.capabilities.find(capability => capability.id === 'images')?.consumers).toEqual([{ name: 'Story Cover', modelChoice: 'router' }]);
     expect(status.capabilities.find(capability => capability.id === 'tts')?.models[0].implemented).toBe(true);
     expect(status.capabilities[2].defaultModel).toBe('eleven_multilingual_v2');
   });

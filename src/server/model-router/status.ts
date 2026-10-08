@@ -1,6 +1,7 @@
 import {
   AUDIO_MODELS,
   CHAPTER_MODELS,
+  DEFAULT_IMAGE_MODEL,
   DEFAULT_TTS_MODEL,
   GENERATION_CONSUMERS,
   type GenerationConsumer,
@@ -89,6 +90,9 @@ export function modelRouterStatus(environment: ModelEnvironment): ModelRouterSta
       })),
   ];
   const ttsDefault = environment.ELEVENLABS_MODEL_ID?.trim() || DEFAULT_TTS_MODEL;
+  // Story covers: the reader's Router choice, else this.
+  const configuredImageDefault = environment.STORY_COVER_DEFAULT_MODEL?.trim();
+  const imageDefault = IMAGE_MODELS.some(model => model.id === configuredImageDefault) ? configuredImageDefault! : DEFAULT_IMAGE_MODEL;
   const ttsModels: RoutedModel[] = TTS_MODELS.some(model => model.id === ttsDefault)
     ? [...TTS_MODELS]
     : [...TTS_MODELS, { id: ttsDefault, label: ttsDefault, provider: 'elevenlabs', stage: 'current' }];
@@ -109,8 +113,9 @@ export function modelRouterStatus(environment: ModelEnvironment): ModelRouterSta
         label: 'Images',
         description: 'Image models for covers, portraits, and scene art.',
         consumers: consumersFor('images'),
+        defaultModel: imageDefault,
         providers: providerStatus(environment, ['gemini', 'openrouter']),
-        models: modelStatus(environment, IMAGE_MODELS),
+        models: modelStatus(environment, IMAGE_MODELS, imageDefault, true),
       },
       {
         id: 'tts',

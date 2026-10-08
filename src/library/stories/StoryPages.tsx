@@ -6,6 +6,9 @@ import GenerationOverlay from '../../components/chapter-manifestation/developmen
 import { StoryDetailScreen } from '../../components/light-novels-home/development/StoryDetailScreen';
 import type { LoadingAgentPresentation } from '../manifestations/taskCard';
 import { LIBRARY_READ_ALOUD_VOICES } from './readAloudVoices';
+import { StorySettings } from './settings/StorySettings';
+import { StoryCoverManifest } from './StoryCoverManifest';
+import { storyCoverRequest, type StoryCoverService } from './storyCover';
 import { downloadHarnessStory } from './storyExport';
 import { harnessStoryDisplay } from './storyView';
 import type { LibraryStories } from './useLibraryStories';
@@ -37,6 +40,11 @@ export interface StoryPagesProps {
    * never framed: it is immersive and scrolls the page itself.
    */
   frame?: (page: ReactNode) => ReactNode;
+  /**
+   * The host's cover service: World Info shows the story's cover and offers
+   * Manifest cover, behind the media reveal. Without it, World Info has no cover.
+   */
+  covers?: StoryCoverService;
 }
 
 /** The veil stays open while a chapter is written; there is no minimized state here. */
@@ -44,12 +52,12 @@ const keepVeilOpen = () => undefined;
 
 /**
  * One story's own pages: its World Info page (Start Story, Start Reading,
- * Continue) and the Reader, with the Generation Overlay while a chapter is written.
+ * Continue, its cover art, and the story's Story Settings) and the Reader, with the Generation Overlay while a chapter is written.
  * The host decides which page shows and keeps this mounted, keyed by story,
  * as the reader moves between them, so Start Story still begins Chapter 1 once
  * the Reader opens.
  */
-export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader, onBack, backLabel, readerStateRepository, readerPreferences, soundscapes, writingAgent, frame }: StoryPagesProps) {
+export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader, onBack, backLabel, readerStateRepository, readerPreferences, soundscapes, writingAgent, frame, covers }: StoryPagesProps) {
   const { state, controller, loadError } = stories;
   /** Set by Start Story, so the Reader begins Chapter 1 as it opens. */
   const [startOnOpen, setStartOnOpen] = useState(false);
@@ -72,7 +80,7 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
       ? <LoadAlert message={loadError} onRetry={stories.retry} />
       : <p role="status" className="text-sm text-neutral-400">Opening your story…</p>}
   </main>;
-  const display = findStory(state, storyId) ? harnessStoryDisplay(state, storyId) : undefined;
+  const display = findStory(state, storyId) ? harnessStoryDisplay(state, storyId, covers) : undefined;
   if (!display) return <main className="mx-auto max-w-3xl px-4 py-6">
     <p role="alert" className="text-sm text-amber-200">This story is no longer available.</p>
   </main>;
@@ -113,6 +121,8 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
         onBack={onBack}
         onRead={() => { setStartOnOpen(false); onOpenReader(); }}
         onStart={() => { setStartOnOpen(true); onOpenReader(); }} />
+      {covers && <StoryCoverManifest covers={covers} storyId={storyId} request={storyCoverRequest(state, storyId)!} agent={writingAgent} />}
+      <StorySettings stories={stories} storyId={storyId} />
       {/* For testing: the whole story as one file, so a test can be shared. */}
       <div className="mx-auto mt-10 flex max-w-5xl flex-wrap items-center gap-x-3 gap-y-2 border-t border-white/10 pt-4" data-testid="story-export">
         <button type="button" onClick={exportStory}

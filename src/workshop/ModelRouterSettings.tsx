@@ -1,8 +1,9 @@
 /**
  * Workshop-wide Model Router: a gear button that opens the router from any
  * Workshop page. Pick a capability, then a provider, then a model. Chapters
- * models are selectable; the choice is saved in this browser and the features
- * marked "follows router" use it. Images and TTS are shown for reference.
+ * and Images models are selectable; the choice is saved in this browser and
+ * the features marked "follows router" use it. TTS and the rest are shown for
+ * reference.
  * "Used by" comes from `GENERATION_CONSUMERS` in the server catalog. The
  * Advanced button tunes the selected model's reasoning level.
  */
@@ -39,7 +40,6 @@ const CAPABILITY_LABELS = {
 
 /** Why a capability's model is not chosen here. */
 const SERVER_OWNED_NOTE: Partial<Record<ModelRouterCapabilityStatus['id'], string>> = {
-  images: 'No Workshop surface generates images yet. These are the models the router will offer once one does.',
   tts: 'The voice model is set on the server (ELEVENLABS_MODEL_ID). Codex voice requests never accept a model from the browser.',
   audio: 'Gemini Lyria models are listed for reference; audio generation is not connected to a Workshop feature yet.',
   video: 'Gemini Veo models are listed for reference; video generation is not connected to a Workshop feature yet.',
@@ -159,8 +159,8 @@ function AdvancedSettings({ model, level, onChange }: {
 }
 
 function CapabilityPanel({ capability }: { capability: ModelRouterCapabilityStatus }) {
-  const [saved, setSaved] = useModelPreference('chapters');
-  const selectable = capability.id === 'chapters';
+  const selectable = capability.id === 'chapters' || capability.id === 'images';
+  const [saved, setSaved] = useModelPreference(capability.id === 'images' ? 'images' : 'chapters');
   const savedIsOffered = selectable && capability.models.some(model => model.id === saved && model.available);
   const selectedId = selectable && savedIsOffered ? saved : capability.defaultModel;
   const selectedProvider = capability.models.find(model => model.id === selectedId)?.provider;
@@ -178,7 +178,7 @@ function CapabilityPanel({ capability }: { capability: ModelRouterCapabilityStat
     <div className="space-y-2.5" role="tabpanel" aria-label={`${capability.label} router`}>
       <div className="flex items-start justify-between gap-2">
         <ProviderPicker providers={capability.providers} models={capability.models} active={activeProvider.id} onPick={setProvider} />
-        {selectable && (
+        {capability.id === 'chapters' && (
           <button type="button" aria-label="Advanced settings" aria-expanded={advancedOpen} title="Advanced settings"
             onClick={() => setAdvancedOpen(open => !open)}
             className={`workshop-touch-target grid h-7 w-7 shrink-0 place-items-center rounded-full border transition-colors ${advancedOpen
@@ -188,7 +188,7 @@ function CapabilityPanel({ capability }: { capability: ModelRouterCapabilityStat
           </button>
         )}
       </div>
-      {selectable && advancedOpen && (
+      {capability.id === 'chapters' && advancedOpen && (
         <AdvancedSettings model={selectedModel} level={selectedModel ? reasoning[selectedModel.id] : undefined}
           onChange={level => selectedModel && setReasoning(selectedModel.id, level)} />
       )}
@@ -197,7 +197,7 @@ function CapabilityPanel({ capability }: { capability: ModelRouterCapabilityStat
       )}
       {note && <p className="text-[11px] leading-snug text-white/45">{note}</p>}
       <ul className="space-y-0.5 rounded-lg border border-white/10 bg-white/[0.02] p-1"
-        role={selectable ? 'radiogroup' : undefined} aria-label={selectable ? `${activeProvider.label} chapter models` : undefined}>
+        role={selectable ? 'radiogroup' : undefined} aria-label={selectable ? `${activeProvider.label} ${capability.id === 'images' ? 'image' : 'chapter'} models` : undefined}>
         {models.map(model => (
           <ModelRow key={model.id} model={model} selectable={selectable}
             reasoningLevel={selectable && model.reasoning?.levels.some(level => level === reasoning[model.id]) ? reasoning[model.id] : undefined}

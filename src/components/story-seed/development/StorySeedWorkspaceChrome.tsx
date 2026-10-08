@@ -25,6 +25,8 @@ interface StorySeedWorkspaceChromeProps {
   storyLanguage?: { value: SenLanguageCode; onChange: (language: SenLanguageCode) => void };
   /** Reported when the author picks a Reading Mode in Settings. */
   onReadingModeChange?: (mode: ChapterWritingStyle) => void;
+  /** The host's Story Settings (skills and media), shown in Settings after the Reading Mode. */
+  storySettings?: ReactNode;
   activeSection: SeedSectionId;
   /** Who the drawer says is creating; omitted or null reads as a guest author. */
   authorName?: string | null;
@@ -154,7 +156,9 @@ function StorySeedChromeContent(props: StorySeedChromeContentProps) {
   const settingsSheet = <WorkspaceSheet open={settingsOpen} onOpenChange={setSettingsOpen} title="Story Seed settings" closeLabel="Close settings"
     returnFocusRef={settingsReturnFocusRef}
     footer={<HeaderActionButton action={save} primary />}>
-    <StorySeedSettings seed={props.seed} updateSeed={props.updateSeed} storyLanguage={props.storyLanguage} onReadingModeChange={props.onReadingModeChange} />
+    <StorySeedSettings seed={props.seed} updateSeed={props.updateSeed} storyLanguage={props.storyLanguage} onReadingModeChange={props.onReadingModeChange}>
+      {props.storySettings}
+    </StorySeedSettings>
   </WorkspaceSheet>;
   // The compatibility layouts render one slot each and add no shell of their own.
   // The header slot carries the page action row with it, so a host mounting only

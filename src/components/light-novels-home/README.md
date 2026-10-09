@@ -48,6 +48,8 @@ The existing `screen=detail` path was a content placeholder in Development. `ref
 
 This is a Library-owned presentation of the SEN multimedia concept. No SEN export, backend model, permanent expression schema, storage, purchasing, QR, reader, game launcher, or Portal infrastructure is introduced. The small display props and mock relationship map are local to the trial; fixtures stay in Workshop. Components also accept no expansions, in which case no seals or overview section render.
 
+**2026-10-09:** `WorldExpressions` is now World Info's **Portal**: the world card's Portal card opens it below Open Codex and Information.
+
 ## Implementation inventory
 
 The packages and NovelExpanded app built here are the destination. Keep Workshop

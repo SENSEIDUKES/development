@@ -1,3 +1,4 @@
+import type { WorldExpansionPreview } from '../../light-novels-home/development/WorldExpressions';
 import type { ReactNode } from 'react';
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
 import type { StoryDetailDisplay } from '../../light-novels-home/shared/storyDetailContracts';
@@ -26,11 +27,12 @@ export interface WorldCardInfoProps {
    */
   onOpenBlueprint?: () => void;
   /**
-   * World Info's Shop card: opens the creator's own shop. A host passes it only
-   * when the creator has linked their shop to this world; without it there is
-   * no Shop card.
+   * World Info's Portal: the world's connected media (the novel, and its
+   * manga, game and other adaptations). Opening it shows them on the page.
+   * Without it there is no Portal card; with no adaptations it says the
+   * novel stands alone so far.
    */
-  onOpenShop?: () => void;
+  portal?: { expansions: readonly WorldExpansionPreview[] };
   /**
    * The viewer's reading language for this world, chosen in the Information
    * panel. Without it the panel shows the world's language but offers no switch.

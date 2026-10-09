@@ -369,13 +369,13 @@ Workshop sample data and reference material remain outside the host adapter.
 
 ## Workshop history
 
-- **2026-10-09** — **Shop card.** `WorldCardInfo` (and `StoryDetailScreen`) take
-  `onOpenShop`: a Shop card beside Open Codex and Information ("SENSEI's Store")
-  that opens the creator's own Store. A host passes it only when the creator has
-  linked their shop to the world (the Library's `StoryPages` checks the story's
-  Link my Shop), so a world without one shows no Shop. On laptops an odd last
-  card spans the row. The Workshop's Info page shows it when every destination
-  is on.
+- **2026-10-09** — **Portal.** `WorldCardInfo` (and `StoryDetailScreen`) take
+  `portal` (`{ expansions }`): a Portal card between Open Codex and Information
+  ("Novel · Manga · Game") that opens the world's connected media below the
+  cards, on the page: Home's `WorldExpressions` lane (the novel, then each
+  adaptation). With no adaptations it says the world is a novel so far. Without
+  `portal` there is no card. On laptops an odd last card spans the row. (A Shop
+  card was tried here the same day and taken out by the owner.)
 - **2026-10-09** — **Verification, filled out.** The Info format mark's
   Verification panel adds the world's activity (the Full card's dot and label)
   and its views, shows Began and Last updated side by side, and ends with an

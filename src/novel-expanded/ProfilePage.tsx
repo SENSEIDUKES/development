@@ -32,15 +32,13 @@ const FAMILIAR_STORE = { useStoreAccount: useFamiliarStoreAccount };
  * needs a server shows with "Not in the app yet." The Cave draws its own
  * Library header and navigation and moves between its pages itself.
  */
-export function ProfilePage({ services, stories, navigate, portraits, returnTo }: {
+export function ProfilePage({ services, stories, navigate, portraits }: {
   services: Pick<NovelExpandedServices, 'profile' | 'readerPreferences' | 'storySeeds'>;
   /** Makes the profile picture from the reader's photo. */
   portraits?: DevicePortraitMaker;
   /** The reader's stories, for the Cave's Stories page. */
   stories: Story[];
   navigate: Navigate;
-  /** The world the Cave was opened from (its Shop card): the Store's Back and Exit return there. */
-  returnTo?: { label: string; onReturn: () => void };
 }) {
   const profileServices = useMemo(() => createDeviceProfileServices({
     store: services.profile,
@@ -57,7 +55,7 @@ export function ProfilePage({ services, stories, navigate, portraits, returnTo }
         homeHref={routeHref(HOME_ROUTE)} onNavigateHome={() => navigate(HOME_ROUTE)}
         onNavigateLibrary={location => { const next = appRouteFor(location); if (next) navigate(next); }}
         // Sever Link is not in the app yet: there is no account to leave.
-        onLogout={() => undefined} returnTo={returnTo} />
+        onLogout={() => undefined} />
     </UserProfileServicesProvider>
   </div>;
 }

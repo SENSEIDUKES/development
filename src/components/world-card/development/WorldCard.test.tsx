@@ -347,6 +347,35 @@ it('shows Open Codex only when supplied and an Information row that opens the wo
   expect(container.querySelector('.world-card-info-information')).toBeNull();
 });
 
+it('opens the world\'s Portal under the cards: its connected media, or the novel alone so far', async () => {
+  const expansions = [
+    { medium: 'manga' as const, title: 'The Last Lotus: Ink', description: 'A manga adaptation.', imageUrl: '/manga.png' },
+    { medium: 'game' as const, title: 'Lotus Duels', description: 'A duel game in this world.', imageUrl: '/game.png' },
+  ];
+  // Without the host's Portal there is no card.
+  act(() => root.render(<WorldCardInfo story={infoStory} />));
+  expect(container.querySelector('.world-card-info-portal')).toBeNull();
+
+  act(() => root.render(<WorldCardInfo story={infoStory} portal={{ expansions }} />));
+  const portal = container.querySelector<HTMLButtonElement>('button.world-card-info-portal')!;
+  expect(portal.querySelector('.world-card-info-tool-title')?.textContent).toBe('Portal');
+  expect(portal.querySelector('.world-card-info-tool-description')?.textContent).toBe('Novel · Manga · Game');
+  expect(portal.getAttribute('aria-expanded')).toBe('false');
+  expect(container.querySelector('[data-testid="world-info-portal"]')).toBeNull();
+  act(() => portal.click());
+  expect(portal.getAttribute('aria-expanded')).toBe('true');
+  const media = container.querySelector<HTMLElement>('[data-testid="world-info-portal"]')!;
+  expect([...media.querySelectorAll('h3')].map(title => title.textContent)).toEqual([infoStory.title, 'The Last Lotus: Ink', 'Lotus Duels']);
+  act(() => portal.click());
+  expect(container.querySelector('[data-testid="world-info-portal"]')).toBeNull();
+
+  act(() => root.render(<WorldCardInfo story={{ ...infoStory, id: 'alone' }} portal={{ expansions: [] }} />));
+  const alone = container.querySelector<HTMLButtonElement>('button.world-card-info-portal')!;
+  expect(alone.querySelector('.world-card-info-tool-description')?.textContent).toBe('This world’s other media');
+  act(() => alone.click());
+  expect(container.querySelector('[data-testid="world-info-portal"]')?.textContent).toContain('is a novel so far');
+});
+
 it('shows the world language, rating and permissions, and offers a first translation in the reader’s language', async () => {
   const onChange = vi.fn();
   const story: StoryDetailDisplay = {

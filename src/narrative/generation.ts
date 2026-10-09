@@ -200,12 +200,6 @@ export interface HarnessStory {
    */
   authorNotes?: string;
   /**
-   * Whether the creator links their own shop to this world, so readers can
-   * open it from the world's page. The host decides which shop that is and
-   * shows it only when it can. Absent means not linked.
-   */
-  shopLinked?: boolean;
-  /**
    * Each arc's goal review, one entry per arc: the plan is reviewed (edited or
    * accepted as written) before the arc's first chapter. Fate Survival's review
    * is its one-time edit, locked when that arc's generation begins; a story with

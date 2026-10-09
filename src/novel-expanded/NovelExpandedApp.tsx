@@ -5,7 +5,6 @@ import {
   HeaderSoundControl, LibraryDesktopNavigationProvider, LibraryDestinationsProvider, WorkspaceHeaderSoundProvider, useMenuMusic, useStoredLibrarySidebarMode,
 } from '@seihouse/library/shell';
 import { CreateStorySettings, StoryPages, storyHomeWorlds, useLibraryStories, useStorySettingsDraft } from '@seihouse/library/stories';
-import { publicCavePath } from '@seihouse/library/profile';
 import { findStory, nextChapterWaitsOnReader, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import { createOfficialCapaDefaultLoadout } from '../host/generation/capa/officialCapaSkills';
 import { NarrativeButton } from '@seihouse/sen/presentation';
@@ -168,12 +167,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     </main>);
   }
 
-  if (route.page === 'profile') {
-    // Opened from a world's Shop card: leaving the Store goes back to that world.
-    const fromStory = route.from && state ? findStory(state, route.from) : undefined;
-    return withFamiliar(<ProfilePage services={services} stories={caveStories} navigate={navigate} portraits={portraits}
-      returnTo={fromStory ? { label: `Back to ${fromStory.title}`, onReturn: () => navigate({ page: 'story', storyId: fromStory.id }) } : undefined} />);
-  }
+  if (route.page === 'profile') return withFamiliar(<ProfilePage services={services} stories={caveStories} navigate={navigate} portraits={portraits} />);
 
   if (route.page === 'create') return withFamiliar(<CreatePage services={services} askForToken={askForToken} startedSeedIds={seedIds} chapterModel={stories.model || undefined}
     // A new Story Seed starts from the profile's languages and Reading Mode.
@@ -206,8 +200,6 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
       mainLabel={route.page === 'blueprint' ? 'Blueprint' : 'World Info'}>{info}</AppShell>}
     // Every story on this device is the reader's own, so its Blueprint opens for its creator.
     onOpenBlueprint={() => navigate({ page: 'blueprint', storyId })}
-    // The Shop card (shown only while Link my Shop is on) opens the reader's own Store.
-    onOpenShop={() => navigate({ page: 'profile', cave: publicCavePath('storefront', NOVEL_EXPANDED_READER_ID), from: storyId })}
     onCloseBlueprint={() => navigate({ page: 'story', storyId })}
     onOpenReader={() => navigate({ page: 'read', storyId })}
     onCloseReader={() => navigate({ page: 'story', storyId })}

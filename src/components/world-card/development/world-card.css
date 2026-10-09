@@ -441,6 +441,9 @@
 }
 .world-card-info-information:hover { border-color: rgba(4, 172, 255, 0.4); }
 .world-card-info-information:focus-visible { outline: none; box-shadow: 0 0 0 2px #000, 0 0 0 4px rgba(4, 172, 255, 0.7); }
+.world-card-info-portal[aria-expanded='true'] .world-card-info-tool-chevron { transform: rotate(90deg); }
+.world-card-info-portal-media { margin-top: 1rem; }
+.world-card-info-portal-empty { padding: 1rem; border: 1px dashed var(--world-info-line); border-radius: 1rem; color: #cdd2de; font-size: 0.875rem; line-height: 1.5; text-align: center; }
 .world-card-info-information .world-card-info-tool-art { font-family: var(--font-sen-sans, sans-serif); font-size: 0.625rem; font-weight: 700; letter-spacing: 0.04em; }
 .world-card-info-tool-title { display: block; color: #f7f7fa; font-family: var(--font-display, serif); font-size: 1rem; font-weight: 700; line-height: 1.2; }
 .world-card-info-tool-description { display: block; color: #cdd2de; font-family: var(--font-serif, serif); font-size: 0.75rem; line-height: 1.3; overflow-wrap: anywhere; }

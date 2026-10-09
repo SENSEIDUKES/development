@@ -538,27 +538,20 @@ export class HarnessGenerationController {
   }
 
   /**
-   * Saves what the creator shows readers beside the story: their Author's
-   * notes (an empty value removes them) and whether their shop is linked to
-   * the world. Neither reaches the chapter writer, so a chapter waiting on the
-   * reader does not hold them back.
+   * Saves the creator's Author's notes, shown to readers with the world's
+   * information; an empty value removes them. They never reach the chapter
+   * writer, so a chapter waiting on the reader does not hold them back.
    */
-  async setStoryPresentation(storyId: string, changes: { authorNotes?: string; shopLinked?: boolean }): Promise<HarnessStory> {
+  async setAuthorNotes(storyId: string, notes: string): Promise<HarnessStory> {
     this.assertHydrated();
     if (this.generating) throw new Error('Wait for the chapter being written before saving.');
     const candidate = cloneHarnessValue(this.state);
     const story = findStory(candidate, storyId);
-    if (!story) throw new Error('Open a Harness story before changing what it shows readers.');
-    if (changes.authorNotes !== undefined) {
-      const notes = changes.authorNotes.trim();
-      if (notes.length > AUTHOR_NOTES_LIMIT) throw new Error(`Author's notes can be at most ${AUTHOR_NOTES_LIMIT} characters.`);
-      if (notes) story.authorNotes = notes;
-      else delete story.authorNotes;
-    }
-    if (changes.shopLinked !== undefined) {
-      if (changes.shopLinked) story.shopLinked = true;
-      else delete story.shopLinked;
-    }
+    if (!story) throw new Error('Open a Harness story before changing its Author\'s notes.');
+    const trimmed = notes.trim();
+    if (trimmed.length > AUTHOR_NOTES_LIMIT) throw new Error(`Author's notes can be at most ${AUTHOR_NOTES_LIMIT} characters.`);
+    if (trimmed) story.authorNotes = trimmed;
+    else delete story.authorNotes;
     story.updatedAt = this.runtime.now();
     await this.persist(candidate);
     return cloneHarnessValue(story);

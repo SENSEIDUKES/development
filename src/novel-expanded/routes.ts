@@ -12,8 +12,7 @@ import { useCallback, useEffect, useState } from 'react';
  * - A story's Blueprint: `/app/?story=<id>&blueprint=1`
  * - Profile (the Cultivator Cave): `/app/?page=profile`, with the Cave's own
  *   page in `cave` (Settings: `&cave=/settings`). The Cave moves between its
- *   pages itself, through that one parameter. `from=<story id>` marks a Cave
- *   opened from a world (its Shop card), so leaving the Store returns there.
+ *   pages itself, through that one parameter.
  */
 export type NovelExpandedRoute =
   | { page: 'home' }
@@ -21,7 +20,7 @@ export type NovelExpandedRoute =
   | { page: 'story'; storyId: string }
   | { page: 'read'; storyId: string }
   | { page: 'blueprint'; storyId: string }
-  | { page: 'profile'; cave?: string; from?: string };
+  | { page: 'profile'; cave?: string };
 
 export const HOME_ROUTE: NovelExpandedRoute = { page: 'home' };
 
@@ -33,8 +32,7 @@ export function parseRoute(search: string): NovelExpandedRoute {
   if (query.get('page') === 'create') return { page: 'create' };
   if (query.get('page') === 'profile') {
     const cave = query.get('cave')?.trim();
-    const from = query.get('from')?.trim();
-    return { page: 'profile', ...(cave ? { cave } : {}), ...(from ? { from } : {}) };
+    return cave ? { page: 'profile', cave } : { page: 'profile' };
   }
   return HOME_ROUTE;
 }
@@ -46,7 +44,7 @@ export function routeSearch(route: NovelExpandedRoute): string {
     case 'story': return `?story=${encodeURIComponent(route.storyId)}`;
     case 'read': return `?story=${encodeURIComponent(route.storyId)}&read=1`;
     case 'blueprint': return `?story=${encodeURIComponent(route.storyId)}&blueprint=1`;
-    case 'profile': return `?${new URLSearchParams({ page: 'profile', ...(route.cave ? { cave: route.cave } : {}), ...(route.from ? { from: route.from } : {}) })}`;
+    case 'profile': return `?${new URLSearchParams(route.cave ? { page: 'profile', cave: route.cave } : { page: 'profile' })}`;
   }
 }
 

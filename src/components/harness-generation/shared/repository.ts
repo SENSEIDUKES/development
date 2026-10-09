@@ -62,8 +62,8 @@ const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => 
   // 29 adds only optional fields (a chapter's scene, the atmospheres in frozen
   // media, a frozen soundtrack vocabulary): every saved story reads as it is.
   28: stored => ({ ...stored, schemaVersion: 29 }),
-  // 30 adds only optional story fields (the creator's Author's notes and a
-  // linked shop): every saved story reads as it is.
+  // 30 adds only an optional story field (the creator's Author's notes):
+  // every saved story reads as it is.
   29: stored => ({ ...stored, schemaVersion: 30 }),
 };
 

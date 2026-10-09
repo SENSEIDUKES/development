@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { HomeWorld } from './homeContracts';
+import type { WorldExpansionPreview } from '../development/WorldExpressions';
 
 export type { WorldActivityStatus } from './homeContracts';
 
@@ -54,8 +55,8 @@ export interface StoryDetailScreenProps {
   onOpenCodex?: () => void;
   /** See `WorldCardInfoProps.onOpenBlueprint`. */
   onOpenBlueprint?: () => void;
-  /** See `WorldCardInfoProps.onOpenShop`. */
-  onOpenShop?: () => void;
+  /** See `WorldCardInfoProps.portal`. */
+  portal?: { expansions: readonly WorldExpansionPreview[] };
   onOpenTimeline?: () => void;
   /** The viewer's known reading position, when the host has one. */
   readingPosition?: { chapterNumber: number };

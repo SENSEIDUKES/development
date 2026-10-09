@@ -15,6 +15,9 @@ import { StoryBlueprintPage, type StoryBlueprintAccess, type StoryBlueprintViewP
 import type { LibraryStories } from './useLibraryStories';
 import { EnergyCostMeter } from '../../components/energy/development/EnergyCostMeter';
 
+/** A HARNESS story's Portal: the novel alone, until adaptations of it exist. */
+const NO_ADAPTATIONS_YET = { expansions: [] } as const;
+
 export interface StoryPagesProps {
   stories: LibraryStories;
   storyId: string;
@@ -25,11 +28,6 @@ export interface StoryPagesProps {
    * Info has no Blueprint button.
    */
   onOpenBlueprint?: () => void;
-  /**
-   * World Info's Shop card: open the creator's shop. It shows only while the
-   * story's creator has Link my Shop on in Story Settings.
-   */
-  onOpenShop?: () => void;
   /** Who views the Blueprint page; a host that owns every story on the device passes the creator. */
   blueprintAccess?: StoryBlueprintAccess;
   /** The Blueprint page's Copy, for a reader the creator allows to copy. */
@@ -75,7 +73,7 @@ const keepVeilOpen = () => undefined;
  * as the reader moves between them, so Start Story still begins Chapter 1 once
  * the Reader opens.
  */
-export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader, onBack, backLabel, readerStateRepository, readerPreferences, soundscapes, writingAgent, frame, covers, onOpenBlueprint, onOpenShop, blueprintAccess = { view: 'creator' }, onCopyBlueprint, onCloseBlueprint }: StoryPagesProps) {
+export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader, onBack, backLabel, readerStateRepository, readerPreferences, soundscapes, writingAgent, frame, covers, onOpenBlueprint, blueprintAccess = { view: 'creator' }, onCopyBlueprint, onCloseBlueprint }: StoryPagesProps) {
   const { state, controller, loadError } = stories;
   /** Set by Start Story, so the Reader begins Chapter 1 as it opens. */
   const [startOnOpen, setStartOnOpen] = useState(false);
@@ -132,8 +130,6 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
     }
   };
 
-  // The Shop card only while the creator has linked their shop to this world.
-  const shop = onOpenShop && state && findStory(state, storyId)?.shopLinked ? onOpenShop : undefined;
   // Inside a host's frame, World Info is the frame's content, not a second <main>.
   const Page = frame ? 'div' : 'main';
   if (page === 'blueprint') {
@@ -152,11 +148,11 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
       {covers
         ? <CoveredStoryDetail covers={covers} storyId={storyId} request={storyCoverRequest(state, storyId)!} agent={writingAgent}
             story={display} backLabel={backLabel} readingPosition={readingPosition} onBack={onBack}
-            onOpenBlueprint={onOpenBlueprint} onOpenShop={shop}
+            onOpenBlueprint={onOpenBlueprint} portal={NO_ADAPTATIONS_YET}
             onRead={() => { setStartOnOpen(false); onOpenReader(); }}
             onStart={() => { setStartOnOpen(true); onOpenReader(); }} />
         : <StoryDetailScreen story={display} backLabel={backLabel} readingPosition={readingPosition}
-            onBack={onBack} onOpenBlueprint={onOpenBlueprint} onOpenShop={shop}
+            onBack={onBack} onOpenBlueprint={onOpenBlueprint} portal={NO_ADAPTATIONS_YET}
             onRead={() => { setStartOnOpen(false); onOpenReader(); }}
             onStart={() => { setStartOnOpen(true); onOpenReader(); }} />}
       <StorySettings stories={stories} storyId={storyId} />

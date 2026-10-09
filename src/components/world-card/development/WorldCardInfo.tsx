@@ -1,5 +1,5 @@
-import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
-import { BookOpen, ChevronDown, ChevronRight, ChevronUp, DraftingCompass, Film, Flower2, Info, Sparkles, Square } from 'lucide-react';
+import { useId, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { BookOpen, ChevronDown, ChevronRight, ChevronUp, DraftingCompass, Film, Flower2, Info, Orbit, Sparkles, Square } from 'lucide-react';
 import { ElementalTitle, SEIBadge } from '@seihouse/ui';
 import { LibraryButton, LibraryCard, LibraryIcon, LibraryPanel, ManifestButton, type LibraryIconName } from '@seihouse/library-ui';
 import { getTagMetadata, normalizeStoryTagIdentity, STORY_TAG_COLOR_ACCENTS, type StoryTagMetadata } from '@seihouse/sen/story-seed';
@@ -8,6 +8,7 @@ import { useDominantColor } from '@seihouse/sen/motion-picture';
 import { WorldCard } from './WorldCard';
 import { WorldCardBackdropVideo, type WorldCardBackdropVideoHandle } from './WorldCardBackdropVideo';
 import { WorldCardFormatPanel } from './WorldCardFormatPanel';
+import { WorldExpressions, type WorldExpansionPreview } from '../../light-novels-home/development/WorldExpressions';
 import { WorldCardInformationPanel, worldInformationSummary } from './WorldCardInformationPanel';
 import type { StoryDetailDisplay } from '../../light-novels-home/shared/storyDetailContracts';
 import './world-card.css';
@@ -25,7 +26,7 @@ import './world-card.css';
  * This is the public view a reader sees. It shows no owner or library states
  * (visibility, draft, acquisition); the owner's view is a separate Story View.
  */
-export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, onOpenBlueprint, onOpenShop, readingPosition, coverAction, readingLanguage }: WorldCardInfoProps) {
+export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, onOpenBlueprint, portal, readingPosition, coverAction, readingLanguage }: WorldCardInfoProps) {
   const detail = 'author' in story ? story : undefined;
   const coverUrl = story.imageUrl?.trim() || undefined;
   const videoUrl = 'videoUrl' in story ? story.videoUrl?.trim() || undefined : undefined;
@@ -119,13 +120,7 @@ export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, onOpenBluep
 
       <WorldSynopsis key={story.id} storyId={story.id} synopsis={detail?.synopsis?.trim()} />
 
-      {(onOpenCodex || onOpenShop || detail) && <div className="world-card-info-tools">
-        {onOpenCodex && <StoryToolCard icon="navigation-book" title="Open Codex"
-          description="Explore the lore, sects, and world" onOpen={onOpenCodex} />}
-        {onOpenShop && <StoryToolCard icon="navigation-store" title="Shop"
-          description={creatorName ? `${creatorName}’s Store` : 'The creator’s Store'} onOpen={onOpenShop} />}
-        {detail && <InformationToolRow key={story.id} world={detail} readingLanguage={readingLanguage} />}
-      </div>}
+      <WorldInfoTools key={`${story.id}-tools`} world={detail} onOpenCodex={onOpenCodex} portal={portal} readingLanguage={readingLanguage} />
     </div>
   </LibraryPanel>;
 }
@@ -226,6 +221,52 @@ function StoryToolCard({ icon, title, description, onOpen }: {
     </div>
   </LibraryCard>;
 }
+
+/**
+ * The cards under the synopsis: Open Codex, Portal and Information. Portal
+ * opens the world's connected media below the cards, on this page.
+ */
+function WorldInfoTools({ world, onOpenCodex, portal, readingLanguage }: {
+  world?: StoryDetailDisplay;
+  onOpenCodex?: () => void;
+  portal?: WorldCardInfoProps['portal'];
+  readingLanguage?: WorldCardInfoProps['readingLanguage'];
+}) {
+  const [portalOpen, setPortalOpen] = useState(false);
+  const portalId = useId();
+  const showPortal = Boolean(portal && world);
+  if (!onOpenCodex && !world) return null;
+  return <>
+    <div className="world-card-info-tools">
+      {onOpenCodex && <StoryToolCard icon="navigation-book" title="Open Codex"
+        description="Explore the lore, sects, and world" onOpen={onOpenCodex} />}
+      {showPortal && <button type="button" className="world-card-info-tool world-card-info-information world-card-info-portal"
+        aria-expanded={portalOpen} aria-controls={portalId} onClick={() => setPortalOpen(open => !open)}>
+        <span className="world-card-info-tool-content">
+          <span className="world-card-info-tool-art" aria-hidden="true"><Orbit size={24} aria-hidden="true" /></span>
+          <span className="world-card-info-tool-text">
+            <span className="world-card-info-tool-title font-display">Portal</span>
+            <span className="world-card-info-tool-description">{portalSummary(portal!.expansions)}</span>
+          </span>
+          <ChevronRight size={22} aria-hidden="true" className="world-card-info-tool-chevron" />
+        </span>
+      </button>}
+      {world && <InformationToolRow world={world} readingLanguage={readingLanguage} />}
+    </div>
+    {showPortal && portalOpen && <div id={portalId} className="world-card-info-portal-media" data-testid="world-info-portal">
+      {portal!.expansions.length
+        ? <WorldExpressions world={world!} expansions={portal!.expansions} />
+        : <p className="world-card-info-portal-empty">
+            {world!.title} is a novel so far. Its manga, games and other media will open here once they exist.
+          </p>}
+    </div>}
+  </>;
+}
+
+/** The Portal card's line: the world's media, the novel first ("Novel · Manga · Game"). */
+const portalSummary = (expansions: readonly WorldExpansionPreview[]) => expansions.length
+  ? ['Novel', ...expansions.map(expansion => expansion.medium === 'manga' ? 'Manga' : 'Game')].join(' · ')
+  : 'This world’s other media';
 
 /**
  * Information: the world's language (and a way to read it in the reader's

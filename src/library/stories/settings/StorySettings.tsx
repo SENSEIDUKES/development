@@ -9,7 +9,7 @@ import {
 import type { MediaPackReference, StoryMediaLoadoutSlot } from '../../media/mediaPacks';
 import type { LibraryStories } from '../useLibraryStories';
 import { MediaLoadoutPanel } from './MediaLoadoutPanel';
-import { StoryPresentationPanel } from './StoryPresentationPanel';
+import { AuthorNotesPanel } from './AuthorNotesPanel';
 import { StorySettingsPanel } from './StorySettingsPanel';
 import { StorySkillSlots } from './StorySkillSlots';
 
@@ -18,7 +18,7 @@ const NO_SOUNDTRACK: SoundtrackVocabulary = { moods: [], atmospheres: [] };
 /**
  * Story Settings on Story View: the only place a reader meets the HARNESS.
  * The story's language and Reading Mode, its CAPA skill slots, its Media
- * Loadout, and its Author's notes and Shop, closed until the reader opens them. A change applies to chapters
+ * Loadout and its Author's notes, closed until the reader opens them. A change applies to chapters
  * written from then on; while a chapter is being written they wait, and say so.
  */
 export function StorySettings({ stories, storyId }: { stories: LibraryStories; storyId: string }) {
@@ -57,7 +57,7 @@ export function StorySettings({ stories, storyId }: { stories: LibraryStories; s
         <span className="font-display text-lg text-white">Story Settings</span>
       </span>
       <span className="flex items-center gap-2 text-xs text-neutral-400">
-        <span className="hidden sm:inline">Language, Reading Mode, skills, sounds, notes and Shop</span>
+        <span className="hidden sm:inline">Language, Reading Mode, skills, sounds and notes</span>
         <ChevronDown size={18} aria-hidden="true" className={`transition-transform motion-reduce:transition-none ${open ? 'rotate-180' : ''}`} />
       </span>
     </button>
@@ -74,8 +74,8 @@ export function StorySettings({ stories, storyId }: { stories: LibraryStories; s
       <MediaLoadoutPanel story={story} packs={stories.mediaPacks} entitlements={stories.mediaPackEntitlements}
         soundWords={soundWords} busy={busy}
         onChange={(slot: StoryMediaLoadoutSlot, reference?: MediaPackReference) => change(() => controller.setMediaSelection(story.id, slot, reference))} />
-      <StoryPresentationPanel story={story} busy={busy}
-        onSave={changes => change(() => controller.setStoryPresentation(story.id, changes))} />
+      <AuthorNotesPanel story={story} busy={busy}
+        onSave={notes => change(() => controller.setAuthorNotes(story.id, notes))} />
     </div>}
   </section>;
 }

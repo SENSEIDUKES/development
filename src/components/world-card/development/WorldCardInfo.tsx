@@ -1,5 +1,5 @@
-import { useId, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
-import { BookOpen, ChevronDown, ChevronRight, ChevronUp, DraftingCompass, Film, Flower2, Info, Orbit, Sparkles, Square } from 'lucide-react';
+import { useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { BookOpen, ChevronDown, ChevronRight, ChevronUp, DraftingCompass, Film, Flower2, Info, Orbit, Settings2, Sparkles, Square } from 'lucide-react';
 import { ElementalTitle, SEIBadge } from '@seihouse/ui';
 import { LibraryButton, LibraryCard, LibraryIcon, LibraryPanel, ManifestButton, type LibraryIconName } from '@seihouse/library-ui';
 import { getTagMetadata, normalizeStoryTagIdentity, STORY_TAG_COLOR_ACCENTS, type StoryTagMetadata } from '@seihouse/sen/story-seed';
@@ -7,9 +7,10 @@ import type { WorldCardInfoProps } from '../shared/worldCardContracts';
 import { useDominantColor } from '@seihouse/sen/motion-picture';
 import { WorldCard } from './WorldCard';
 import { WorldCardBackdropVideo, type WorldCardBackdropVideoHandle } from './WorldCardBackdropVideo';
-import { WorldCardFormatPanel } from './WorldCardFormatPanel';
 import { WorldExpressions, type WorldExpansionPreview } from '../../light-novels-home/development/WorldExpressions';
 import { WorldCardInformationPanel, worldInformationSummary } from './WorldCardInformationPanel';
+import { WorldCardSettings } from './WorldCardSettings';
+import { WorldCardFormatSymbol } from './WorldCardFormatSymbol';
 import type { StoryDetailDisplay } from '../../light-novels-home/shared/storyDetailContracts';
 import './world-card.css';
 
@@ -26,7 +27,7 @@ import './world-card.css';
  * This is the public view a reader sees. It shows no owner or library states
  * (visibility, draft, acquisition); the owner's view is a separate Story View.
  */
-export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, onOpenBlueprint, portal, readingPosition, coverAction, readingLanguage }: WorldCardInfoProps) {
+export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, onOpenBlueprint, portal, settings, readingPosition, coverAction, readingLanguage }: WorldCardInfoProps) {
   const detail = 'author' in story ? story : undefined;
   const coverUrl = story.imageUrl?.trim() || undefined;
   const videoUrl = 'videoUrl' in story ? story.videoUrl?.trim() || undefined : undefined;
@@ -57,8 +58,6 @@ export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, onOpenBluep
         <div className="world-card-info-cover">
           <WorldCard face="info" world={story} />
           {coverAction && <div className="world-card-info-cover-action">{coverAction}</div>}
-          {/* The format mark, as on the Full card: it opens the story's information (views and more to come). */}
-          {detail && <WorldCardFormatPanel key={story.id} world={detail} triggerClassName="world-card-base-format world-card-info-format" />}
           {/* MP: plays or stops the clip behind the page, so a reader whose phone would not start it (Low Power Mode) can. */}
           {videoUrl && <button type="button" className="world-card-base-format world-card-info-motion" aria-pressed={clipPlaying}
             aria-label={`${clipPlaying ? 'Stop' : 'Play'} motion for ${story.title}`}
@@ -120,7 +119,7 @@ export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, onOpenBluep
 
       <WorldSynopsis key={story.id} storyId={story.id} synopsis={detail?.synopsis?.trim()} />
 
-      <WorldInfoTools key={`${story.id}-tools`} world={detail} onOpenCodex={onOpenCodex} portal={portal} readingLanguage={readingLanguage} />
+      <WorldInfoTools key={`${story.id}-tools`} world={detail} onOpenCodex={onOpenCodex} portal={portal} settings={settings} readingLanguage={readingLanguage} />
     </div>
   </LibraryPanel>;
 }
@@ -222,43 +221,72 @@ function StoryToolCard({ icon, title, description, onOpen }: {
   </LibraryCard>;
 }
 
+/** A card that opens its part of the page below the cards (Portal, Settings). */
+function ExpandingToolCard({ icon, title, description, open, controls, onToggle, className }: {
+  icon: ReactNode; title: string; description: string; open: boolean; controls: string; onToggle: () => void; className: string;
+}) {
+  return <button type="button" className={`world-card-info-tool world-card-info-information world-card-info-expanding ${className}`}
+    aria-expanded={open} aria-controls={controls} onClick={onToggle}>
+    <ToolCardFace icon={icon} title={title} description={description} />
+  </button>;
+}
+
+/** The inside of a tool card: its art, its name and its line, and the arrow. */
+function ToolCardFace({ icon, title, description }: { icon: ReactNode; title: string; description: string }) {
+  return <span className="world-card-info-tool-content">
+    <span className="world-card-info-tool-art" aria-hidden="true">{icon}</span>
+    <span className="world-card-info-tool-text">
+      <span className="world-card-info-tool-title font-display">{title}</span>
+      <span className="world-card-info-tool-description">{description}</span>
+    </span>
+    <ChevronRight size={22} aria-hidden="true" className="world-card-info-tool-chevron" />
+  </span>;
+}
+
 /**
- * The cards under the synopsis: Open Codex, Portal and Information. Portal
- * opens the world's connected media below the cards, on this page.
+ * The cards under the synopsis: Codex, Portal, Information and Settings.
+ * Information opens everything that describes the world, marked with its
+ * format; Portal (its other media) and Settings (what the reader changes
+ * about their reading) open below the cards, on this page, one at a time.
  */
-function WorldInfoTools({ world, onOpenCodex, portal, readingLanguage }: {
+function WorldInfoTools({ world, onOpenCodex, portal, settings, readingLanguage }: {
   world?: StoryDetailDisplay;
   onOpenCodex?: () => void;
   portal?: WorldCardInfoProps['portal'];
+  settings?: ReactNode;
   readingLanguage?: WorldCardInfoProps['readingLanguage'];
 }) {
-  const [portalOpen, setPortalOpen] = useState(false);
+  const [open, setOpen] = useState<'portal' | 'settings'>();
   const portalId = useId();
+  const settingsId = useId();
   const showPortal = Boolean(portal && world);
+  const showSettings = Boolean(world && (settings || readingLanguage));
   if (!onOpenCodex && !world) return null;
+  const toggle = (part: 'portal' | 'settings') => setOpen(current => current === part ? undefined : part);
+  const format = world?.format?.trim();
   return <>
     <div className="world-card-info-tools">
-      {onOpenCodex && <StoryToolCard icon="navigation-book" title="Open Codex"
+      {onOpenCodex && <StoryToolCard icon="navigation-book" title="Codex"
         description="Explore the lore, sects, and world" onOpen={onOpenCodex} />}
-      {showPortal && <button type="button" className="world-card-info-tool world-card-info-information world-card-info-portal"
-        aria-expanded={portalOpen} aria-controls={portalId} onClick={() => setPortalOpen(open => !open)}>
-        <span className="world-card-info-tool-content">
-          <span className="world-card-info-tool-art" aria-hidden="true"><Orbit size={24} aria-hidden="true" /></span>
-          <span className="world-card-info-tool-text">
-            <span className="world-card-info-tool-title font-display">Portal</span>
-            <span className="world-card-info-tool-description">{portalSummary(portal!.expansions)}</span>
-          </span>
-          <ChevronRight size={22} aria-hidden="true" className="world-card-info-tool-chevron" />
-        </span>
-      </button>}
-      {world && <InformationToolRow world={world} readingLanguage={readingLanguage} />}
+      {showPortal && <ExpandingToolCard className="world-card-info-portal" icon={<Orbit size={24} aria-hidden="true" />}
+        title="Portal" description={portalSummary(portal!.expansions)}
+        open={open === 'portal'} controls={portalId} onToggle={() => toggle('portal')} />}
+      {world && <WorldCardInformationPanel world={world} triggerClassName="world-card-info-tool world-card-info-information"
+        trigger={<ToolCardFace title="Information" description={worldInformationSummary(world) || 'About this world'}
+          icon={format ? <WorldCardFormatSymbol format={format} /> : <Info size={24} aria-hidden="true" />} />} />}
+      {showSettings && <ExpandingToolCard className="world-card-info-settings-card" icon={<Settings2 size={24} aria-hidden="true" />}
+        title="Settings" description={readingLanguage ? 'Language, Reading Mode and more' : 'Reading Mode and more'}
+        open={open === 'settings'} controls={settingsId} onToggle={() => toggle('settings')} />}
     </div>
-    {showPortal && portalOpen && <div id={portalId} className="world-card-info-portal-media" data-testid="world-info-portal">
+    {showPortal && open === 'portal' && <div id={portalId} className="world-card-info-portal-media" data-testid="world-info-portal">
       {portal!.expansions.length
         ? <WorldExpressions world={world!} expansions={portal!.expansions} />
         : <p className="world-card-info-portal-empty">
             {world!.title} is a novel so far. Its manga, games and other media will open here once they exist.
           </p>}
+    </div>}
+    {showSettings && open === 'settings' && <div id={settingsId} className="world-card-info-settings-panel">
+      <WorldCardSettings world={world!} readingLanguage={readingLanguage}>{settings}</WorldCardSettings>
     </div>}
   </>;
 }
@@ -267,20 +295,3 @@ function WorldInfoTools({ world, onOpenCodex, portal, readingLanguage }: {
 const portalSummary = (expansions: readonly WorldExpansionPreview[]) => expansions.length
   ? ['Novel', ...expansions.map(expansion => expansion.medium === 'manga' ? 'Manga' : 'Game')].join(' · ')
   : 'This world’s other media';
-
-/**
- * Information: the world's language (and a way to read it in the reader's
- * own), its rating and the creator's permissions.
- */
-function InformationToolRow({ world, readingLanguage }: { world: StoryDetailDisplay; readingLanguage?: WorldCardInfoProps['readingLanguage'] }) {
-  const summary = worldInformationSummary(world);
-  return <WorldCardInformationPanel world={world} readingLanguage={readingLanguage} triggerClassName="world-card-info-tool world-card-info-information"
-    trigger={<span className="world-card-info-tool-content">
-      <span className="world-card-info-tool-art" aria-hidden="true"><Info size={24} aria-hidden="true" /></span>
-      <span className="world-card-info-tool-text">
-        <span className="world-card-info-tool-title font-display">Information</span>
-        <span className="world-card-info-tool-description">{summary || 'Language, rating and permissions'}</span>
-      </span>
-      <ChevronRight size={22} aria-hidden="true" className="world-card-info-tool-chevron" />
-    </span>} />;
-}

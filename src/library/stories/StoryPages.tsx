@@ -130,6 +130,8 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
     }
   };
 
+  // Story Settings live in World Info's Settings card.
+  const settings = <StorySettings stories={stories} storyId={storyId} />;
   // Inside a host's frame, World Info is the frame's content, not a second <main>.
   const Page = frame ? 'div' : 'main';
   if (page === 'blueprint') {
@@ -148,14 +150,13 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
       {covers
         ? <CoveredStoryDetail covers={covers} storyId={storyId} request={storyCoverRequest(state, storyId)!} agent={writingAgent}
             story={display} backLabel={backLabel} readingPosition={readingPosition} onBack={onBack}
-            onOpenBlueprint={onOpenBlueprint} portal={NO_ADAPTATIONS_YET}
+            onOpenBlueprint={onOpenBlueprint} portal={NO_ADAPTATIONS_YET} settings={settings}
             onRead={() => { setStartOnOpen(false); onOpenReader(); }}
             onStart={() => { setStartOnOpen(true); onOpenReader(); }} />
         : <StoryDetailScreen story={display} backLabel={backLabel} readingPosition={readingPosition}
-            onBack={onBack} onOpenBlueprint={onOpenBlueprint} portal={NO_ADAPTATIONS_YET}
+            onBack={onBack} onOpenBlueprint={onOpenBlueprint} portal={NO_ADAPTATIONS_YET} settings={settings}
             onRead={() => { setStartOnOpen(false); onOpenReader(); }}
             onStart={() => { setStartOnOpen(true); onOpenReader(); }} />}
-      <StorySettings stories={stories} storyId={storyId} />
       {/* For testing: the whole story as one file, so a test can be shared. */}
       <div className="mx-auto mt-10 flex max-w-5xl flex-wrap items-center gap-x-3 gap-y-2 border-t border-white/10 pt-4" data-testid="story-export">
         <button type="button" onClick={exportStory}

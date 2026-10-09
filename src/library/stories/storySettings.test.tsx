@@ -80,6 +80,8 @@ const click = async (element: HTMLElement | null | undefined, label: string) => 
   await flush();
 };
 const settings = () => container.querySelector<HTMLElement>('[data-testid="story-view-settings"]');
+/** World Info's Settings card, which holds Story Settings. */
+const settingsCard = () => container.querySelector<HTMLButtonElement>('button.world-card-info-settings-card');
 const buttonByText = (text: string) => [...container.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.trim() === text);
 const select = async (element: HTMLSelectElement, value: string) => {
   await act(async () => {
@@ -98,7 +100,7 @@ beforeEach(() => {
 });
 afterEach(() => { act(() => root.unmount()); container.remove(); vi.useRealTimers(); });
 
-describe('Story Settings on Story View', () => {
+describe('Story Settings in World Info\'s Settings card', () => {
   it('opens to the story\'s language, Reading Mode, CAPA skills and media, and saves a Reading Mode for the chapters to come', async () => {
     const writer = gatedWriter();
     const repository = new InMemoryHarnessGenerationRepository();
@@ -107,7 +109,7 @@ describe('Story Settings on Story View', () => {
     await flush();
 
     // Closed until the reader opens it, so World Info stays about the story.
-    const toggle = settings()!.querySelector<HTMLButtonElement>('button[aria-expanded]')!;
+    const toggle = settingsCard()!;
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
     expect(container.querySelector('[data-testid="story-settings"]')).toBeNull();
     await click(toggle, 'Story Settings');
@@ -126,13 +128,13 @@ describe('Story Settings on Story View', () => {
     expect(findStory(latest!.state!, story.id)!.chapterWritingStyle).toBe('Easy Read');
   });
 
-  it('saves Author\'s notes for the bottom of the world\'s Verification panel', async () => {
+  it('saves Author\'s notes for the bottom of the world\'s Information', async () => {
     const writer = gatedWriter();
     const repository = new InMemoryHarnessGenerationRepository();
     const story = await createStory(repository, writer.adapter);
     await act(async () => root.render(renderWithDevAudio(<Host repository={repository} adapter={writer.adapter} storyId={story.id} />)));
     await flush();
-    await click(settings()!.querySelector<HTMLButtonElement>('button[aria-expanded]'), 'Story Settings');
+    await click(settingsCard(), 'Settings');
     const panel = container.querySelector<HTMLElement>('[data-testid="story-settings-author-notes"]')!;
 
     const notes = panel.querySelector<HTMLTextAreaElement>('textarea')!;
@@ -143,8 +145,8 @@ describe('Story Settings on Story View', () => {
     await click(buttonByText('Save notes'), 'Save notes');
     expect(findStory(latest!.state!, story.id)!.authorNotes).toBe('Arc 2 lands this month.');
     expect(buttonByText('Save notes')!.disabled).toBe(true);
-    await click(container.querySelector<HTMLButtonElement>('button.world-card-info-format'), 'format mark');
-    expect(document.body.querySelector('[data-testid="world-format-notes"]')!.textContent).toContain('Arc 2 lands this month.');
+    await click(container.querySelector<HTMLButtonElement>('button.world-card-info-information:not(.world-card-info-expanding)'), 'Information');
+    expect(document.body.querySelector('[data-testid="world-information-notes"]')!.textContent).toContain('Arc 2 lands this month.');
     // There is no Shop on World Info.
     expect(container.querySelector('[aria-label^="Shop:"]')).toBeNull();
   });
@@ -155,7 +157,7 @@ describe('Story Settings on Story View', () => {
     const story = await createStory(repository, writer.adapter);
     await act(async () => root.render(renderWithDevAudio(<Host repository={repository} adapter={writer.adapter} storyId={story.id} />)));
     await flush();
-    await click(settings()!.querySelector<HTMLButtonElement>('button[aria-expanded]'), 'Story Settings');
+    await click(settingsCard(), 'Settings');
 
     let writing: Promise<void> | undefined;
     await act(async () => { writing = latest!.generateNextChapter(story.id); });

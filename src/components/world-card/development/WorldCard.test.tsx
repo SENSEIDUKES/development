@@ -241,10 +241,12 @@ it('uses the artwork-only WorldCard on Info while keeping creator and progress o
   expect(cover.style.getPropertyValue('--world-card-glow')).not.toBe('');
   expect(cover.querySelector('.world-card-base-overlay')).toBeNull();
   expect(cover.querySelector('.world-card-base-details')).toBeNull();
-  // The format mark sits on the Info cover (beside the card, not inside it) and opens verification and provenance.
+  // The format mark is off the Info cover: it marks the Information card under the synopsis instead.
   expect(cover.querySelector('.world-card-base-format')).toBeNull();
-  const format = page.querySelector<HTMLButtonElement>('.world-card-info-cover button.world-card-info-format')!;
-  expect(format.getAttribute('aria-label')).toBe(`Verification and provenance for ${story.title}, Novel`);
+  expect(page.querySelector('.world-card-info-cover .world-card-info-format')).toBeNull();
+  const information = page.querySelector<HTMLButtonElement>('button.world-card-info-information:not(.world-card-info-expanding)')!;
+  expect(information.getAttribute('aria-label')).toBe(`Information about ${story.title}, Novel`);
+  expect(information.querySelector('[data-sen-icon="story-scroll"]')).not.toBeNull();
   expect(cover.querySelector('.world-card-base-open')).toBeNull();
   expect(page.querySelector('h1')?.textContent).toBe(story.title);
   expect(page.querySelector('[data-element="lightning"]')?.textContent).toContain('SENSEI');
@@ -322,29 +324,33 @@ it('turns the reading pill into Begin Story for a story with no chapters that th
   expect(onStart).toHaveBeenCalledTimes(1);
 });
 
-it('shows Open Codex only when supplied and an Information row that opens the world information', async () => {
+const informationCard = () => container.querySelector<HTMLButtonElement>('button.world-card-info-information:not(.world-card-info-expanding)');
+const settingsCard = () => container.querySelector<HTMLButtonElement>('button.world-card-info-settings-card');
+
+it('lays out Codex, Portal, Information and Settings, each only when it has somewhere to go', async () => {
   const onOpenCodex = vi.fn();
-  act(() => root.render(<WorldCardInfo story={infoStory} onOpenCodex={onOpenCodex} />));
-  const codex = container.querySelector<HTMLElement>('[role="button"][aria-label^="Open Codex"]')!;
+  act(() => root.render(<WorldCardInfo story={infoStory} onOpenCodex={onOpenCodex} portal={{ expansions: [] }}
+    settings={<p>Reading Mode</p>} />));
+  const titles = [...container.querySelectorAll('.world-card-info-tools .world-card-info-tool-title')].map(title => title.textContent);
+  expect(titles).toEqual(['Codex', 'Portal', 'Information', 'Settings']);
+  const codex = container.querySelector<HTMLElement>('[role="button"][aria-label^="Codex"]')!;
   act(() => codex.click());
   expect(onOpenCodex).toHaveBeenCalledTimes(1);
   expect(container.textContent).not.toContain('Fate Timeline');
 
+  // Information alone, when the host supplies nothing else.
   act(() => root.render(<WorldCardInfo story={infoStory} />));
-  expect(container.textContent).not.toContain('Open Codex');
+  expect([...container.querySelectorAll('.world-card-info-tools .world-card-info-tool-title')].map(title => title.textContent)).toEqual(['Information']);
   expect(container.querySelector('button:disabled')).toBeNull();
-  const information = container.querySelector<HTMLButtonElement>('button.world-card-info-information')!;
-  expect(information.getAttribute('aria-label')).toBe('World information for The Last Lotus');
-  expect(information.querySelector('.world-card-info-tool-title')?.textContent).toBe('Information');
-  // Nothing shared yet: the row says what it holds, and the panel says so plainly.
-  expect(information.querySelector('.world-card-info-tool-description')?.textContent).toBe('Language, rating and permissions');
-  await act(async () => information.click());
+  expect(informationCard()!.querySelector('.world-card-info-tool-description')?.textContent).toBe('Novel');
+  await act(async () => informationCard()!.click());
   const panel = document.body.querySelector('.world-card-information-panel')!;
-  expect(panel.textContent).toContain('No information has been shared for this world yet.');
+  expect(panel.querySelector('h2, [class*="information-title"]')?.textContent).toBe('Information');
+  expect(panel.textContent).toContain('The creator has not written notes for this world yet.');
   expect(panel.textContent).not.toContain('A lotus blooms.');
 
   act(() => root.render(<WorldCardInfo story={{ id: 'ashes', title: 'Ashes', chapterCount: 3, status: 'draft', updatedAt: '2026-09-01' }} />));
-  expect(container.querySelector('.world-card-info-information')).toBeNull();
+  expect(container.querySelector('.world-card-info-tools')).toBeNull();
 });
 
 it('opens the world\'s Portal under the cards: its connected media, or the novel alone so far', async () => {
@@ -376,17 +382,24 @@ it('opens the world\'s Portal under the cards: its connected media, or the novel
   expect(container.querySelector('[data-testid="world-info-portal"]')?.textContent).toContain('is a novel so far');
 });
 
-it('shows the world language, rating and permissions, and offers a first translation in the reader’s language', async () => {
-  const onChange = vi.fn();
+it('Information holds everything about the world: creator, activity, views, dates, verification, language, rating, permissions, provenance and notes', async () => {
   const story: StoryDetailDisplay = {
-    ...infoStory, originalLanguage: 'en', readingLanguages: ['ja'], matureContent: true,
+    ...infoStory, senVerified: true, provenanceUrl: 'https://example.test/provenance/lotus',
+    activityStatus: 'active-this-week', reads: 1280, createdAt: '2026-09-09T12:00:00Z', updatedAt: '2026-10-08T12:00:00Z',
+    authorNotes: 'Arc 2 lands this month.', originalLanguage: 'en', readingLanguages: ['ja'], matureContent: true,
     permissions: { visibility: 'public', branching: false, blueprint: 'copy' },
   };
-  act(() => root.render(<WorldCardInfo story={story} readingLanguage={{ onChange }} />));
-  const information = container.querySelector<HTMLButtonElement>('button.world-card-info-information')!;
-  expect(information.querySelector('.world-card-info-tool-description')?.textContent).toBe('English · Rated 18+');
-  await act(async () => information.click());
+  act(() => root.render(<WorldCardInfo story={story} />));
+  expect(informationCard()!.querySelector('.world-card-info-tool-description')?.textContent).toBe('Novel · English · Rated 18+');
+  await act(async () => informationCard()!.click());
   const panel = document.body.querySelector<HTMLElement>('.world-card-information-panel')!;
+  expect(panel.textContent).toContain('SENSEI');
+  expect(panel.querySelector('[data-testid="world-information-activity"]')?.textContent).toContain('Active this week');
+  expect(panel.querySelector('[data-testid="world-information-views"]')?.textContent).toContain('1,280');
+  const dates = panel.querySelector('[data-testid="world-information-dates"]')!;
+  expect(dates.textContent).toContain('Began');
+  expect(dates.textContent).toContain('Last updated');
+  expect(panel.querySelector('[data-testid="world-information-verification"]')?.textContent).toContain('SEN Verified');
   expect(panel.textContent).toContain('Written in');
   expect(panel.textContent).toContain('English');
   expect(panel.textContent).toContain('Also readable in');
@@ -395,61 +408,53 @@ it('shows the world language, rating and permissions, and offers a first transla
   expect(panel.textContent).toContain('Public · anyone can find it');
   expect(panel.textContent).toContain('Not allowed');
   expect(panel.textContent).toContain('Readers can view and copy it');
-
-  const select = panel.querySelector<HTMLSelectElement>('select')!;
-  expect(select.value).toBe('en');
-  // A language already made reads at once; a new one makes this reader its first.
-  await act(async () => { select.value = 'ja'; select.dispatchEvent(new Event('change', { bubbles: true })); });
-  expect(onChange).toHaveBeenLastCalledWith('ja');
-  expect(panel.querySelector('[data-testid="world-information-first-reader"]')).toBeNull();
-  await act(async () => { select.value = 'es'; select.dispatchEvent(new Event('change', { bubbles: true })); });
-  expect(onChange).toHaveBeenLastCalledWith('es');
-  expect(panel.querySelector('[data-testid="world-information-first-reader"]')?.textContent).toContain('No one has read this world in Spanish yet. You will be the first');
-});
-
-it('shows the world language without a switch when the host offers no reading language', async () => {
-  act(() => root.render(<WorldCardInfo story={{ ...infoStory, originalLanguage: 'en', matureContent: false }} />));
-  const information = container.querySelector<HTMLButtonElement>('button.world-card-info-information')!;
-  expect(information.querySelector('.world-card-info-tool-description')?.textContent).toBe('English · All ages');
-  await act(async () => information.click());
-  const panel = document.body.querySelector<HTMLElement>('.world-card-information-panel')!;
-  expect(panel.querySelector('select')).toBeNull();
-  expect(panel.querySelector('[data-rating="all-ages"]')?.textContent).toBe('All ages');
-});
-
-it('opens verification and provenance from the format mark in Info, linking provenance records only when supplied', async () => {
-  act(() => root.render(<WorldCardInfo story={{
-    ...infoStory, senVerified: true, provenanceUrl: 'https://example.test/provenance/lotus',
-    activityStatus: 'active-this-week', reads: 1280, createdAt: '2026-09-09T12:00:00Z', updatedAt: '2026-10-08T12:00:00Z',
-    authorNotes: 'Arc 2 lands this month.',
-  }} />));
-  const format = container.querySelector<HTMLButtonElement>('button.world-card-info-format')!;
-  await act(async () => format.click());
-  let panel = document.body.querySelector<HTMLElement>('.world-card-information-panel')!;
-  expect(panel.textContent).toContain('Verification');
-  // Activity and views, as on the Full card's panel; when it began and when it last changed, side by side.
-  expect(panel.querySelector('[data-testid="world-format-activity"]')?.textContent).toContain('Active this week');
-  expect(panel.querySelector('[data-testid="world-format-views"]')?.textContent).toContain('1,280');
-  const dates = panel.querySelector('[data-testid="world-format-dates"]')!;
-  expect(dates.textContent).toContain('Began');
-  expect(dates.textContent).toContain('2026');
-  expect(dates.textContent).toContain('Last updated');
-  expect(panel.querySelector('[data-testid="world-format-notes"]')?.textContent).toBe('Author’s notesArc 2 lands this month.');
-  expect(panel.querySelector('[data-testid="world-format-verification"]')?.textContent).toContain('SEN Verified');
-  const link = panel.querySelector<HTMLAnchorElement>('[data-testid="world-format-provenance"]')!;
+  const link = panel.querySelector<HTMLAnchorElement>('[data-testid="world-information-provenance"]')!;
   expect(link.getAttribute('href')).toBe('https://example.test/provenance/lotus');
   expect(link.getAttribute('target')).toBe('_blank');
-  // The story panel (synopsis, tags) stays on the Full and Compact cards, not here.
-  expect(panel.textContent).not.toContain('A lotus blooms.');
+  expect(panel.querySelector('[data-testid="world-information-notes"]')?.textContent).toBe('Author’s notesArc 2 lands this month.');
+  // What the reader changes is in Settings, not here.
+  expect(panel.querySelector('select')).toBeNull();
   await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
 
-  act(() => root.render(<WorldCardInfo story={{ ...infoStory, senVerified: false }} />));
-  await act(async () => container.querySelector<HTMLButtonElement>('button.world-card-info-format')!.click());
-  panel = [...document.body.querySelectorAll<HTMLElement>('.world-card-information-panel')].at(-1)!;
-  expect(panel.querySelector('[data-testid="world-format-verification"]')?.textContent).toContain('Not verified yet');
-  expect(panel.querySelector('[data-testid="world-format-provenance"]')).toBeNull();
-  expect(panel.textContent).toContain('Provenance records will be linked here once this world has them.');
-  expect(panel.querySelector('[data-testid="world-format-notes"]')?.textContent).toContain('The creator has not written notes for this world yet.');
+  act(() => root.render(<WorldCardInfo story={{ ...infoStory, id: 'plain', senVerified: false, matureContent: false }} />));
+  await act(async () => informationCard()!.click());
+  const plain = [...document.body.querySelectorAll<HTMLElement>('.world-card-information-panel')].at(-1)!;
+  expect(plain.querySelector('[data-testid="world-information-verification"]')?.textContent).toContain('Not verified yet');
+  expect(plain.querySelector('[data-rating="all-ages"]')?.textContent).toBe('All ages');
+  expect(plain.querySelector('[data-testid="world-information-provenance"]')).toBeNull();
+  expect(plain.textContent).toContain('Provenance records will be linked here once this world has them.');
+});
+
+it('Settings opens below the cards with Read it in, a first translation in a new language, and the host\'s story settings', async () => {
+  const onChange = vi.fn();
+  act(() => root.render(<WorldCardInfo story={{ ...infoStory, originalLanguage: 'en', readingLanguages: ['ja'] }}
+    readingLanguage={{ onChange }} settings={<p data-testid="host-settings">Reading Mode</p>} />));
+  const card = settingsCard()!;
+  expect(card.getAttribute('aria-expanded')).toBe('false');
+  expect(container.querySelector('[data-testid="world-info-settings"]')).toBeNull();
+  act(() => card.click());
+  const settings = container.querySelector<HTMLElement>('[data-testid="world-info-settings"]')!;
+  expect(settings.querySelector('[data-testid="host-settings"]')).not.toBeNull();
+  const select = settings.querySelector<HTMLSelectElement>('select')!;
+  expect(select.value).toBe('en');
+  await act(async () => { select.value = 'ja'; select.dispatchEvent(new Event('change', { bubbles: true })); });
+  expect(onChange).toHaveBeenLastCalledWith('ja');
+  expect(settings.querySelector('[data-testid="world-settings-first-reader"]')).toBeNull();
+  await act(async () => { select.value = 'es'; select.dispatchEvent(new Event('change', { bubbles: true })); });
+  expect(onChange).toHaveBeenLastCalledWith('es');
+  expect(settings.querySelector('[data-testid="world-settings-first-reader"]')?.textContent).toContain('No one has read this world in Spanish yet. You will be the first');
+
+  // Opening Portal closes Settings: one part opens below the cards at a time.
+  act(() => root.render(<WorldCardInfo story={{ ...infoStory, originalLanguage: 'en' }} readingLanguage={{ onChange }}
+    portal={{ expansions: [] }} />));
+  act(() => settingsCard()!.click());
+  act(() => container.querySelector<HTMLButtonElement>('button.world-card-info-portal')!.click());
+  expect(container.querySelector('[data-testid="world-info-settings"]')).toBeNull();
+  expect(container.querySelector('[data-testid="world-info-portal"]')).not.toBeNull();
+
+  // No language switch and no host settings: no Settings card.
+  act(() => root.render(<WorldCardInfo story={{ ...infoStory, id: 'none' }} />));
+  expect(settingsCard()).toBeNull();
 });
 
 it('paints story tags in their Story Seed catalog colors and leaves unknown tags neutral', () => {

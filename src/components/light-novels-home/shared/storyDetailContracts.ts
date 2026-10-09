@@ -16,8 +16,9 @@ export interface StoryDetailDisplay extends HomeWorld {
   /** Aggregate number of worlds branched from this seed. Zero is a known count. */
   branchCount?: number;
   /**
-   * World Info's Information panel. Every value comes from the host and is
-   * left out when unknown; the panel shows only what it is given.
+   * World Info's Information panel (and Settings' Read it in). Every value
+   * comes from the host and is left out when unknown; the panel shows only
+   * what it is given.
    */
   /** The language the world is written in (a SEN language code, e.g. `en`). */
   originalLanguage?: string;
@@ -27,11 +28,11 @@ export interface StoryDetailDisplay extends HomeWorld {
   matureContent?: boolean;
   /** What the creator allows; a host leaves out what it does not know. */
   permissions?: WorldPermissions;
-  /** Where the world's provenance records open; the format mark links to it only when supplied. */
+  /** Where the world's provenance records open; Information links to it only when supplied. */
   provenanceUrl?: string;
   /** When the world last changed (its newest chapter or edit), shown beside when it began. */
   updatedAt?: string;
-  /** The creator's own notes to readers, shown at the bottom of Verification. */
+  /** The creator's own notes to readers, shown at the bottom of Information. */
   authorNotes?: string;
 }
 
@@ -57,6 +58,8 @@ export interface StoryDetailScreenProps {
   onOpenBlueprint?: () => void;
   /** See `WorldCardInfoProps.portal`. */
   portal?: { expansions: readonly WorldExpansionPreview[] };
+  /** See `WorldCardInfoProps.settings`. */
+  settings?: ReactNode;
   onOpenTimeline?: () => void;
   /** The viewer's known reading position, when the host has one. */
   readingPosition?: { chapterNumber: number };

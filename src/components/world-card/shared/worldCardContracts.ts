@@ -34,8 +34,14 @@ export interface WorldCardInfoProps {
    */
   portal?: { expansions: readonly WorldExpansionPreview[] };
   /**
-   * The viewer's reading language for this world, chosen in the Information
-   * panel. Without it the panel shows the world's language but offers no switch.
+   * World Info's Settings, opened below the cards: the host's story settings
+   * (Reading Mode and the rest), after Read it in when \`readingLanguage\` is
+   * given. With neither there is no Settings card.
+   */
+  settings?: ReactNode;
+  /**
+   * The viewer's reading language for this world, chosen in Settings (Read
+   * it in). Without it Settings offers no language switch.
    */
   readingLanguage?: { current?: string; onChange: (language: string) => void };
   /** The viewer's known reading position; the reading pill says Continue only when supplied. */

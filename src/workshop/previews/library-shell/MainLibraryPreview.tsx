@@ -117,7 +117,7 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
   const body = <>
     <div className="px-4 py-8 max-w-7xl mx-auto w-full">
       {developmentNavigation && <div hidden={!isHome}>
-        <Home active={isHome} worlds={homePreviewWorlds}
+        <Home active={isHome} worlds={homePreviewWorlds} featuredWorlds={homePreviewWorlds}
           onCreateStory={() => navigate({ screen: 'creator' })} onOpenWorld={id => {
             worldOpenerRef.current = document.getElementById(`home-world-${id}`);
             setActiveCreatorWorld(null);

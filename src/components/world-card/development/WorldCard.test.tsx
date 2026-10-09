@@ -20,9 +20,9 @@ const world: HomeWorld = {
   mcName: 'Ye Chen', powerStage: 'Foundation', creatorName: 'SENSEI', format: 'Novel', acquired: true,
 };
 
-it('keeps format, creator and the SEN sash on the 2:3 art, with the title and details beneath', () => {
+it('keeps format, creator and an awarded SEN sash on the 2:3 art, with the title and details beneath', () => {
   const onOpen = vi.fn();
-  act(() => root.render(<WorldCard world={world} onOpen={onOpen} />));
+  act(() => root.render(<WorldCard world={world} senSash onOpen={onOpen} />));
 
   const tile = container.querySelector<HTMLElement>('[data-world-card-tile="full"]')!;
   expect(tile.getAttribute('data-cover-shape')).toBe('tall');
@@ -50,6 +50,10 @@ it('keeps format, creator and the SEN sash on the 2:3 art, with the title and de
   act(() => open.click());
   act(() => (caption as HTMLElement).click());
   expect(onOpen).toHaveBeenCalledTimes(2);
+
+  // The sash is the host's award: without it, no card wears one.
+  act(() => root.render(<WorldCard world={world} onOpen={onOpen} />));
+  expect(container.querySelector('.world-card-ribbon')).toBeNull();
 });
 
 it('shows the Branching badge only when the creator has enabled branching, keeping the badge row either way', () => {
@@ -418,7 +422,7 @@ it('shows each trimmed tag once', () => {
 it('spotlights a world in the wide Feature card with its cover, sash, details and synopsis', () => {
   const onOpen = vi.fn();
   act(() => root.render(<WorldCardFeature world={{ ...world, synopsis: 'A lotus blooms.', branchingEnabled: true }}
-    displayStatus={{ view: 'public', value: 'ongoing' }} onOpen={onOpen} />));
+    displayStatus={{ view: 'public', value: 'ongoing' }} senSash onOpen={onOpen} />));
   const card = container.querySelector<HTMLElement>('[data-world-card="feature"]')!;
   expect(card.querySelector('.world-card-banner-eyebrow')?.textContent).toBe('Featured');
   expect(card.querySelector('h3')?.textContent).toBe('The Last Lotus');
@@ -438,4 +442,21 @@ it('spotlights a world in the wide Feature card with its cover, sash, details an
   expect(container.querySelector('.world-card-banner-eyebrow')?.textContent).toBe('New on SEN');
   expect(container.querySelector('.world-card-banner-synopsis')).toBeNull();
   expect(container.querySelector('.world-card-banner-byline')).toBeNull();
+  expect(container.querySelector('.world-card-ribbon')).toBeNull();
+  expect(container.querySelector('video')).toBeNull();
+});
+
+it('loops the world’s own motion picture, muted, behind the Feature card', () => {
+  const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined);
+  act(() => root.render(<WorldCardFeature world={{ ...world, videoUrl: '/lotus.mp4' }} onOpen={() => {}} />));
+  const video = container.querySelector<HTMLVideoElement>('.world-card-banner-video')!;
+  expect(video.getAttribute('src')).toBe('/lotus.mp4');
+  expect(video.getAttribute('poster')).toBe('/lotus.png');
+  expect(video.loop).toBe(true);
+  expect(video.muted).toBe(true);
+  expect(video.getAttribute('aria-hidden')).toBe('true');
+  expect(play).toHaveBeenCalled();
+  // The still cover stays on the right.
+  expect(container.querySelector('.world-card-banner-cover img')?.getAttribute('src')).toBe('/lotus.png');
+  play.mockRestore();
 });

@@ -13,13 +13,13 @@ const world: CreatorWorld = {
   creatorName: 'SENSEI', creatorTitle: { element: 'lightning', intensity: 'rare' },
 };
 
-it('uses the shared image card with the SEN sash, and the title and chapter/status beneath', () => {
+it('uses the shared image card with an awarded SEN sash, and the title and chapter/status beneath', () => {
   const container = document.createElement('div');
   document.body.append(container);
   const root = createRoot(container);
   const onOpen = vi.fn();
 
-  act(() => root.render(<WorldCard face="compact" world={world} selected onOpen={onOpen} />));
+  act(() => root.render(<WorldCard face="compact" world={world} selected senSash onOpen={onOpen} />));
   const card = container.querySelector<HTMLElement>('[data-world-card="compact"]')!;
   expect(card.classList.contains('world-card-base')).toBe(true);
   expect(card.getAttribute('data-selected')).toBe('true');

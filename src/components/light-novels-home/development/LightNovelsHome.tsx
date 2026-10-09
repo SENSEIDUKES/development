@@ -5,10 +5,29 @@ import { LibraryPanel, ManifestButton, ParticleEffect } from '@seihouse/library-
 import { SEIFilterChip, SEISelect, SEIEmptyState } from '@seihouse/ui';
 import type { LightNovelsHomeProps } from '../shared/homeContracts';
 import { WorldCard } from '../../world-card/development/WorldCard';
+import { WorldCardFeature } from '../../world-card/development/WorldCardFeature';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { LibraryDiscoveryIcon as SENDiscoveryIcon, LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
 import '../shared/home.css';
 /** Existing LibraryScreen Home presentation. Data and navigation belong to the host. */
-export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWorld, emptyState, children }: LightNovelsHomeProps) {
+/** How long each Featured slide stays before the next, unless the reader is pointing at or focused in it. */
+const FEATURE_SLIDE_MS = 8000;
+
+export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWorld, emptyState, featuredWorlds = [], children }: LightNovelsHomeProps) {
+  // Featured: Featured Ascension first, then each featured world's Feature card.
+  const slideCount = 1 + featuredWorlds.length;
+  const [slide, setSlide] = useState(0);
+  const [slidesHeld, setSlidesHeld] = useState(false);
+  const currentSlide = slide % slideCount;
+  const heroActive = active && currentSlide === 0;
+  const showSlide = (next: number) => setSlide(((next % slideCount) + slideCount) % slideCount);
+  useEffect(() => {
+    if (!active || slideCount < 2 || slidesHeld) return;
+    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const timer = setTimeout(() => setSlide(current => (current + 1) % slideCount), FEATURE_SLIDE_MS);
+    return () => clearTimeout(timer);
+  }, [active, slideCount, slidesHeld, slide]);
+
   const { homeVideos: HERO_VIDEOS = [], homeImages: CELESTIAL_FALLBACK_IMAGES = [] } = useLibraryAssets();
   const [currentVideoIdx, setCurrentVideoIdx] = useState(0);
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
@@ -18,17 +37,17 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
 
   // Rotate backup celestial library images every 6 seconds
   useEffect(() => {
-    if (!active || CELESTIAL_FALLBACK_IMAGES.length < 2) return;
+    if (!heroActive || CELESTIAL_FALLBACK_IMAGES.length < 2) return;
     const interval = setInterval(() => {
       setCurrentImageIdx((prev) => (prev + 1) % CELESTIAL_FALLBACK_IMAGES.length);
     }, 6000);
     return () => clearInterval(interval);
-  }, [active, CELESTIAL_FALLBACK_IMAGES.length]);
+  }, [heroActive, CELESTIAL_FALLBACK_IMAGES.length]);
 
   useEffect(() => {
     const video = heroVideoRef.current;
     if (video) {
-      if (!active) { video.pause(); return; }
+      if (!heroActive) { video.pause(); return; }
       // Force muted and playsInline properties programmatically to bypass browser autoplay blocks
       video.muted = true;
       video.defaultMuted = true;
@@ -47,7 +66,7 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
           });
       }
     }
-  }, [currentVideoIdx, active]);
+  }, [currentVideoIdx, heroActive]);
 
   // Filter and sort states for the 'Immortal Hub' tab
   const [selectedGenre, setSelectedGenre] = useState<string>('All');
@@ -80,12 +99,17 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
       transition={{ duration: 0.3 }}
       className="space-y-12 pb-10"
     >
+      <section aria-roledescription="carousel" aria-label="Featured" className="space-y-3" data-home-featured
+        onPointerEnter={() => setSlidesHeld(true)} onPointerLeave={() => setSlidesHeld(false)}
+        onFocus={() => setSlidesHeld(true)} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setSlidesHeld(false); }}>
+      {/* Featured Ascension stays mounted while another slide shows, so its video resumes where it was. */}
       <LibraryPanel
         padding="none"
-        className="relative overflow-hidden h-60 sm:h-80 flex items-end"
+        className={`relative overflow-hidden h-60 sm:h-80 items-end${currentSlide === 0 ? ' flex' : ' hidden'}`}
+        aria-hidden={currentSlide === 0 ? undefined : true}
       >
         <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">
-          {active && <ParticleEffect accent="#cffafe" />}
+          {heroActive && <ParticleEffect accent="#cffafe" />}
         </div>
         {/* Layer 1: Rotating Celestial Backdrops (Constantly visible behind the video, or fully displayed if video fails to play) */}
         <AnimatePresence initial={false}>
@@ -171,6 +195,23 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
           </div>
         </div>
       </LibraryPanel>
+      {currentSlide > 0 && <WorldCardFeature key={featuredWorlds[currentSlide - 1].id} world={featuredWorlds[currentSlide - 1]}
+        displayStatus={featuredWorlds[currentSlide - 1].publicationStatus ? { view: 'public', value: featuredWorlds[currentSlide - 1].publicationStatus! } : undefined}
+        onOpen={() => onOpenWorld(featuredWorlds[currentSlide - 1].id)} />}
+      {slideCount > 1 && <div className="home-featured-controls">
+        <button type="button" className="home-featured-step" aria-label="Previous featured" onClick={() => showSlide(currentSlide - 1)}>
+          <ChevronLeft aria-hidden="true" />
+        </button>
+        <div className="home-featured-dots" role="group" aria-label="Featured slides">
+          {Array.from({ length: slideCount }, (_, index) => <button key={index} type="button" className="home-featured-dot"
+            aria-label={index === 0 ? 'Featured Ascension' : `Featured: ${featuredWorlds[index - 1].title}`}
+            aria-current={index === currentSlide ? 'true' : undefined} onClick={() => showSlide(index)} />)}
+        </div>
+        <button type="button" className="home-featured-step" aria-label="Next featured" onClick={() => showSlide(currentSlide + 1)}>
+          <ChevronRight aria-hidden="true" />
+        </button>
+      </div>}
+      </section>
 
       {children}
       <div className="space-y-6 motion-safe:animate-fadeIn">

@@ -364,11 +364,16 @@ Workshop sample data and reference material remain outside the host adapter.
   branching. The caption keeps one height so a grid lines up. The **SEN sash**
   crosses every cover's lower-right corner like a bound book's ribbon, in
   celestial night glass trimmed with gold hairlines and the gold star either
-  side of SEN; the Info cover wears it too. New **Feature card**
+  side of SEN. The sash is kept for a distinction the host awards (`senSash`;
+  for example, a completed novel) and is off by default; the Workshop's *SEN
+  sash* control shows it. New **Feature card**
   (`WorldCardFeature`): a wide banner the size of Home's Featured hero (15rem,
   20rem from 640px), the world's cover on the right, that cover blurred in its
   own color behind a gold eyebrow, title, byline, details, synopsis and
-  Branching. The Workshop adds Feature card and Home grid views.
+  Branching; when the world has a motion picture, it loops muted behind the
+  band (still when the reader prefers reduced motion). Home's Featured hero
+  cycles through Feature cards. The Workshop adds Feature card and Home grid
+  views.
 
 - **2026-10-01** — **Start Story.** `WorldCardInfoProps` (and
   `StoryDetailScreen`) take `onStart`. A story with no chapters whose host can

@@ -20,7 +20,7 @@ type WorldCardFaceProps =
 /**
  * The Library world card. Its faces share one cover frame, glow, and motion behavior.
  * Full (the tall 2:3 cover) and Compact (square) keep the art clean (format, motion and creator
- * on Full; the SEN sash on both) and put the title and details in the caption beneath, so a grid
+ * on Full; the SEN sash when the host awards it) and put the title and details in the caption beneath, so a grid
  * of many lines up.
  */
 export function WorldCard(props: WorldCardFaceProps) {
@@ -73,7 +73,7 @@ export function WorldCard(props: WorldCardFaceProps) {
         <button type="button" className="world-card-base-open" onClick={props.onOpen} aria-label={openLabel} />
         <WorldCardStoryPanel key={world.id} world={fullWorld!} />
       </>}
-      <WorldCardRibbon />
+      {!info && props.senSash && <WorldCardRibbon />}
       {!compact && !info && creatorName && <div className="world-card-base-overlay">
         <span className="world-card-base-creator">
           {creatorTitle

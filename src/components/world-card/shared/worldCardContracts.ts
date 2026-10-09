@@ -37,6 +37,11 @@ export interface WorldCardProps {
   onOpen: () => void;
   /** Host-supplied progress for the surface showing this card. Unknown status stays hidden. */
   displayStatus?: WorldCardDisplayStatus;
+  /**
+   * Shows the SEN sash across the cover's corner. Off unless the host awards it; the sash is
+   * reserved for a distinction the host defines (for example, a completed novel).
+   */
+  senSash?: boolean;
 }
 
 /** Feature card: a wide banner for a world the host wants to spotlight (Home's featured row). */
@@ -47,6 +52,11 @@ export interface WorldCardFeatureProps {
   displayStatus?: WorldCardDisplayStatus;
   /** The gold line above the title; defaults to "Featured". */
   label?: string;
+  /**
+   * Shows the SEN sash across the cover's corner. Off unless the host awards it; the sash is
+   * reserved for a distinction the host defines (for example, a completed novel).
+   */
+  senSash?: boolean;
 }
 
 /** Compact card: the creator's world tile on Create, square art with its caption beneath. */
@@ -59,4 +69,9 @@ export interface WorldCardCompactProps {
   selected?: boolean;
   /** Opens this world's Info page; the host owns navigation. */
   onOpen: () => void;
+  /**
+   * Shows the SEN sash across the cover's corner. Off unless the host awards it; the sash is
+   * reserved for a distinction the host defines (for example, a completed novel).
+   */
+  senSash?: boolean;
 }

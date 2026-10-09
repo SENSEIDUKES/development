@@ -355,6 +355,10 @@ Workshop sample data and reference material remain outside the host adapter.
 
 ## Workshop history
 
+- **2026-10-09** — **Cover slot.** `WorldCardInfo` takes `coverAction`: the host's
+  own controls laid over the Info cover in its frame (the app's World Info makes
+  covers there: Manifest on an empty cover, a small Manifest and download on a kept one).
+
 - **2026-10-09** — **Clean cards, the SEN sash, the Feature card.** Full keeps
   its 2:3 cover at its original Home size; Compact (Create's "Your worlds") is
   square. Both keep the art clean: on Full only the format mark and motion

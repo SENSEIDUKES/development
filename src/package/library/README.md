@@ -1,5 +1,12 @@
 # `@seihouse/library`
 
+**0.28.0 (2026-10-09):** Covers are made on the cover. `./stories`: `StoryCoverService`
+replaces `manifest(storyId, request)` with `make(storyId, request, count)` (one cover or
+three, `STORY_COVER_CHOICES`), `keep(storyId, madeUrl)` and `letGo(madeUrls)` (breaking for a
+host's cover service). World Info's empty cover says Manifest and offers one cover or three to
+choose from, each at an image's Energy; three open a picker. `./world-card`: `WorldCardInfo`
+(and `StoryDetailScreen`) take `coverAction`, the host's controls laid over the cover.
+
 **0.27.0 (2026-10-08):** The profile picture, images at 5 Energy, Nano Banana 2 Lite.
 `./profile`: the portrait builder is **Profile picture**: a photo of the reader, three
 portraits to choose from (each with a download button), "Use this portrait" or "Make three
@@ -233,7 +240,7 @@ removed; a real Mini face can be designed later. The Info cover uses
 | `./world-card` | The shared `WorldCard` with Full, Compact, and Info cover faces, plus its Info page — over host-supplied world display data and destinations |
 | `./story-seed` | Authenticated Story Bank, Help and branded creation journey; Story Seed Settings own the Story Language and Reading Mode a new story starts with |
 | `./generation` | First-party HARNESS workspace composition: the novel page with the same Story Settings panels as `./stories`, plus the developer inspection (CAPA skill instructions, the Official Requirements, slot uploads) when a development host sets `showHarnessInternals` |
-| `./stories` | A reader's HARNESS stories over host-supplied storage and writer: `useLibraryStories` (one controller with the Library's defaults), `StoryPages` (a story's World Info page, with Manifest cover and its Story Settings, and its Reader, with the Aura Veil while a chapter is written), `harnessStoryDisplay` and `storyHomeWorlds` (Home cards, newest first, with the host's covers), `StorySettings` and `CreateStorySettings` (language, Reading Mode, CAPA skill slots, Media Loadout; Create's as a draft the host keeps), `storyCoverRequest` and the `StoryCoverService` port |
+| `./stories` | A reader's HARNESS stories over host-supplied storage and writer: `useLibraryStories` (one controller with the Library's defaults), `StoryPages` (a story's World Info page, with Manifest on its cover and its Story Settings, and its Reader, with the Aura Veil while a chapter is written), `harnessStoryDisplay` and `storyHomeWorlds` (Home cards, newest first, with the host's covers), `StorySettings` and `CreateStorySettings` (language, Reading Mode, CAPA skill slots, Media Loadout; Create's as a draft the host keeps), `storyCoverRequest`, `STORY_COVER_CHOICES` and the `StoryCoverService` port (make one or three, keep one, let go of the rest) |
 | `./model-router-server` | Server-only Gemini/OpenRouter text and ElevenLabs speech routing; apps supply credentials, prompts, HTTP policy, and storage |
 | `./media` | First-party catalog selection and entitlement contracts |
 | `./manifestations` | Celestial manifestation orchestration around Library UI visuals |

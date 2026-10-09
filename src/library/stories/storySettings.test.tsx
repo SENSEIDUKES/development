@@ -50,21 +50,21 @@ const createStory = async (repository: InMemoryHarnessGenerationRepository, adap
 
 let latest: LibraryStories | undefined;
 let latestCovers: StoryCoverService | undefined;
+const keep = vi.fn();
+const letGo = vi.fn();
 function Host({ repository, adapter, storyId, makeCover }: {
   repository: InMemoryHarnessGenerationRepository; adapter: HarnessGenerationModelAdapter; storyId: string;
-  /** The host's cover maker; the host keeps what it makes, as the app does. */
-  makeCover?: StoryCoverService['manifest'];
+  /** The host's cover maker; the host keeps the one chosen, as the app does. */
+  makeCover?: StoryCoverService['make'];
 }) {
   const stories = useLibraryStories({ repository, modelAdapter: adapter });
   latest = stories;
   const [urls, setUrls] = useState<Record<string, string>>({});
   const covers = useMemo<StoryCoverService | undefined>(() => makeCover && {
     coverUrl: id => urls[id],
-    manifest: async (id, request) => {
-      const url = await makeCover(id, request);
-      setUrls(current => ({ ...current, [id]: url }));
-      return url;
-    },
+    make: makeCover,
+    keep: async (id, url) => { keep(id, url); setUrls(current => ({ ...current, [id]: url })); },
+    letGo,
   }, [makeCover, urls]);
   latestCovers = covers;
   return <StoryPages stories={stories} storyId={storyId} page="info" writingAgent={VERSA} covers={covers}
@@ -148,48 +148,93 @@ describe('Story Settings on Story View', () => {
 });
 
 describe('Cover art on Story View', () => {
-  it('Manifest cover makes one behind the media reveal; World Info and Home then wear it', async () => {
+  const manifestOnCover = () => container.querySelector<HTMLButtonElement>('[aria-label="Manifest cover art"]');
+  const option = (count: number) => document.querySelector<HTMLButtonElement>(`.story-cover-option[data-count="${count}"]`);
+
+  it('Manifest on the cover offers one cover or three, at each image\'s Energy; one is revealed and worn on World Info and Home', async () => {
     const writer = gatedWriter();
     const repository = new InMemoryHarnessGenerationRepository();
     const story = await createStory(repository, writer.adapter);
-    let finish: (url: string) => void = () => undefined;
-    const manifest = vi.fn((_storyId: string) => new Promise<string>(resolve => { finish = resolve; }));
-    await act(async () => root.render(renderWithDevAudio(<Host repository={repository} adapter={writer.adapter} storyId={story.id} makeCover={manifest} />)));
+    let finish: (urls: string[]) => void = () => undefined;
+    const make = vi.fn((_storyId: string, _request: unknown, _count: number) => new Promise<{ urls: string[] }>(resolve => { finish = urls => resolve({ urls }); }));
+    await act(async () => root.render(renderWithDevAudio(<Host repository={repository} adapter={writer.adapter} storyId={story.id} makeCover={make} />)));
     await flush();
 
-    await click(buttonByText('Manifest cover'), 'Manifest cover');
+    // No cover yet: the cover itself says Manifest; there is no button beneath it.
+    expect(manifestOnCover()!.textContent).toContain('Manifest');
+    expect(container.querySelector('[data-world-card="info"] [data-testid="story-cover"]')).toBeTruthy();
+    expect(buttonByText('Manifest cover')).toBeUndefined();
+    await click(manifestOnCover(), 'Manifest on the cover');
+    expect(option(1)!.textContent).toContain('One cover');
+    expect(option(1)!.querySelector('.energy-action-cost')!.textContent).toContain('5');
+    expect(option(3)!.textContent).toContain('Three to choose from');
+    expect(option(3)!.querySelector('.energy-action-cost')!.textContent).toContain('15');
+
+    await click(option(1), 'One cover');
     // The cover is made from the story's own words.
-    expect(manifest).toHaveBeenCalledWith(story.id, expect.objectContaining({ title: 'The Drowned Name', genre: 'Xianxia', mainCharacter: 'Mara' }));
+    expect(make).toHaveBeenCalledWith(story.id, expect.objectContaining({ title: 'The Drowned Name', genre: 'Xianxia', mainCharacter: 'Mara' }), 1);
     // The media reveal: the scroll unseals while the cover is made.
-    const overlay = container.querySelector('[data-testid="generation-overlay"]');
-    expect(overlay).toBeTruthy();
+    expect(container.querySelector('[data-testid="generation-overlay"]')).toBeTruthy();
     expect(container.querySelector('[data-reveal-state="unsealing"], [data-state="unsealing"]')).toBeTruthy();
 
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    await act(async () => { finish('blob:cover-1'); });
+    await act(async () => { finish(['blob:cover-1']); });
     await flush();
-    // The scroll opens on the finished cover.
+    // One cover is kept as it is revealed: the scroll opens on it.
+    expect(keep).toHaveBeenCalledWith(story.id, 'blob:cover-1');
     expect(container.querySelector('image[href="blob:cover-1"]')).toBeTruthy();
     await act(async () => { vi.advanceTimersByTime(COVER_REVEAL_HOLD_MS + 2_000); });
     await flush(50);
     vi.useRealTimers();
 
     expect(container.querySelector<HTMLImageElement>('[data-world-card="info"] img')?.getAttribute('src')).toBe('blob:cover-1');
-    expect(buttonByText('New cover')).toBeTruthy();
+    // A kept cover keeps a small Manifest and its download in its corner.
+    expect(container.querySelector('[aria-label="Manifest a new cover"]')).toBeTruthy();
+    expect(container.querySelector('[data-testid="story-cover-download"]')?.getAttribute('href')).toBe('blob:cover-1');
     expect(storyHomeWorlds(latest!.state!, latestCovers)[0].imageUrl).toBe('blob:cover-1');
+  });
+
+  it('three covers open a picker: the reader keeps one and the others are let go', async () => {
+    const writer = gatedWriter();
+    const repository = new InMemoryHarnessGenerationRepository();
+    const story = await createStory(repository, writer.adapter);
+    const make = vi.fn(async () => ({ urls: ['blob:a', 'blob:b', 'blob:c'] }));
+    keep.mockClear();
+    letGo.mockClear();
+    await act(async () => root.render(renderWithDevAudio(<Host repository={repository} adapter={writer.adapter} storyId={story.id} makeCover={make} />)));
+    await flush();
+    await click(manifestOnCover(), 'Manifest on the cover');
+    await click(option(3), 'Three to choose from');
+    expect(make).toHaveBeenCalledWith(story.id, expect.anything(), 3);
+
+    const choices = () => [...document.querySelectorAll<HTMLButtonElement>('.story-cover-choice')];
+    expect(choices().map(choice => choice.querySelector('img')!.getAttribute('src'))).toEqual(['blob:a', 'blob:b', 'blob:c']);
+    expect(choices()[0].getAttribute('aria-pressed')).toBe('true');
+    // Every cover made can be downloaded, chosen or not.
+    expect(document.querySelectorAll('.story-cover-choice-download')).toHaveLength(3);
+    await click(choices()[1], 'Cover 2');
+    expect(choices()[1].getAttribute('aria-pressed')).toBe('true');
+    await click([...document.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent === 'Use this cover'), 'Use this cover');
+
+    expect(keep).toHaveBeenCalledWith(story.id, 'blob:b');
+    expect(letGo).toHaveBeenCalledWith(['blob:a', 'blob:c']);
+    expect(document.querySelector('.story-cover-choice')).toBeNull();
+    expect(container.querySelector<HTMLImageElement>('[data-world-card="info"] img')?.getAttribute('src')).toBe('blob:b');
   });
 
   it('says why a cover could not be made, and World Info keeps going without one', async () => {
     const writer = gatedWriter();
     const repository = new InMemoryHarnessGenerationRepository();
     const story = await createStory(repository, writer.adapter);
-    const failing = vi.fn(async (): Promise<string> => { throw new Error('The cover could not be made. Nothing was changed; please try again.'); });
+    const failing = vi.fn(async () => ({ urls: [], problem: 'The cover could not be made. Nothing was changed; please try again.' }));
     await act(async () => root.render(renderWithDevAudio(<Host repository={repository} adapter={writer.adapter} storyId={story.id} makeCover={failing} />)));
     await flush();
-    await click(buttonByText('Manifest cover'), 'Manifest cover');
+    await click(manifestOnCover(), 'Manifest on the cover');
+    await click(option(1), 'One cover');
     await flush();
     expect(container.querySelector('[data-testid="story-cover"] [role="alert"]')!.textContent).toContain('Nothing was changed');
-    expect(buttonByText('Manifest cover')!.disabled).toBe(false);
+    expect(manifestOnCover()!.disabled).toBe(false);
+    expect(keep).not.toHaveBeenCalledWith(story.id, expect.anything());
   });
 
   it('builds the request from the story alone: title, genre, premise and main character', async () => {

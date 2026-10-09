@@ -20,7 +20,7 @@
  * version under the veil, the Holdings fixer's one quiet call settling its
  * holdings, nothing of it on screen) → reload (no new request, nothing reads by itself) →
  * Back → Continue · Ch. 1 → Story Settings (closed until opened: language, Reading Mode, CAPA skills, media) →
- * Manifest cover (the media reveal, then the cover on World Info and on Home's card) → Export story (the whole story as one file) → Back
+ * Manifest on the cover (one or three; three unseal, then the picker; the kept cover on World Info and on Home's card) → Export story (the whole story as one file) → Back
  * → Home card, its music note (tap mutes; hover or hold opens the Music volume) → browser Back and Forward →
  * Create from the navigation (on laptops, a minimized sidebar stays minimized after a reload) → a missing story goes Home.
  * World Info sits in the shell; the Reader never does. The music note floats just above the bottom bar's right end
@@ -605,26 +605,37 @@ async function walk(browser, viewport, sample) {
   check(await page.evaluate(() => document.documentElement.scrollWidth) <= viewport.width, 'Story Settings must never scroll sideways.');
   await shot('4c-story-settings');
   await storySettings.getByRole('button', { name: /Story Settings/ }).click();
-  // Manifest cover: the media reveal while the cover is made, then World Info and Home wear it.
-  await page.getByTestId('story-cover').scrollIntoViewIfNeeded();
-  await visibleButton('Manifest cover').click();
+  // Manifest on the cover: one cover or three; three unseal behind the veil, then the picker, then World Info and Home wear the one kept.
+  const coverManifest = page.locator('[data-world-card="info"] [aria-label="Manifest cover art"]');
+  await coverManifest.scrollIntoViewIfNeeded();
+  await shot('4d-cover-manifest');
+  await coverManifest.click();
+  const threeCovers = page.locator('.story-cover-option[data-count="3"]');
+  await threeCovers.waitFor();
+  check((await page.locator('.story-cover-option[data-count="1"]').textContent())?.includes('5'), 'One cover should cost 5 Energy.');
+  check((await threeCovers.textContent())?.includes('15'), 'Three covers should cost 15 Energy.');
+  await page.waitForTimeout(500);
+  await shot('4e-cover-choice');
+  await threeCovers.click();
   await page.locator('[data-testid="generation-overlay"]').waitFor();
-  await page.waitForTimeout(700);
-  await shot('4d-cover-reveal');
-  await page.locator('[data-testid="generation-overlay"] image[href^="blob:"]').waitFor({ state: 'attached', timeout: 10_000 });
-  await page.waitForTimeout(900);
-  await shot('4e-cover-revealed');
-  await page.locator('[data-testid="generation-overlay"]').waitFor({ state: 'hidden', timeout: 15_000 });
-  check(counts.covers.length === 1, `One cover request expected, saw ${counts.covers.length}.`);
-  check(counts.covers[0]?.token, 'The cover should carry the owner\'s token, which lifts the visitor limit.');
+  await page.locator('.story-cover-choice').nth(2).waitFor({ timeout: 15_000 });
+  await page.waitForTimeout(1200);
+  await shot('4f-cover-picker');
+  check(await page.evaluate(() => document.documentElement.scrollWidth) <= viewport.width, 'The cover picker must never scroll sideways.');
+  await page.locator('.story-cover-choice').nth(1).click();
+  await visibleButton('Use this cover').click();
+  await page.locator('.story-cover-choice').first().waitFor({ state: 'detached' });
+  await page.waitForTimeout(500);
+  check(counts.covers.length === 3, `Three cover requests expected, saw ${counts.covers.length}.`);
+  check(counts.covers.every(cover => cover.token), 'Each cover should carry the owner\'s token, which lifts the visitor limit.');
   check(!JSON.stringify(counts.covers[0]?.body ?? {}).includes('Chapter 1'), 'A cover is made from the story\'s own words, never its chapters.');
   const infoCover = page.locator('[data-world-card="info-cover"] img');
   await infoCover.waitFor();
   check((await infoCover.getAttribute('src'))?.startsWith('blob:'), 'World Info should wear the new cover.');
   check(await infoCover.evaluate(image => image.complete && image.naturalWidth > 0), 'The cover should load on World Info.');
-  check(await visibleButton('New cover').count() === 1, 'With a cover, the button should offer a new one.');
+  check(await page.locator('[data-world-card="info"] [aria-label="Manifest a new cover"]').count() === 1, 'A kept cover should keep a small Manifest in its corner.');
   await page.locator('#novel-expanded-main').evaluate(main => main.scrollTo({ top: 0 }));
-  await shot('4f-story-view-cover');
+  await shot('4g-story-view-cover');
   // Export story saves the whole story as one file, with what the writer was given for each chapter.
   await page.getByTestId('story-export').scrollIntoViewIfNeeded();
   await shot('4b-story-export');

@@ -27,5 +27,7 @@ export interface StoryDetailScreenProps {
   onOpenTimeline?: () => void;
   /** The viewer's known reading position, when the host has one. */
   readingPosition?: { chapterNumber: number };
+  /** See `WorldCardInfoProps.coverAction`. */
+  coverAction?: ReactNode;
   children?: ReactNode;
 }

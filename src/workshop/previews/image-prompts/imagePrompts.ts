@@ -1,15 +1,16 @@
 import {
-  DEFAULT_COVER_LOOK,
+  COVER_PROMPT_TEMPLATE,
+  COVER_TITLE_OFF,
+  COVER_TITLE_ON,
+  COVER_TRADITIONS,
   STORY_COVER_ASPECT_RATIO,
   STORY_COVER_FIELD_LIMITS,
-  TRADITION_LOOK,
-  buildStoryCoverPrompt,
 } from '../../../server/story-cover/prompt';
 import { STORY_COVER_VISITOR_LIMIT } from '../../../server/story-cover/limits';
 import { PROFILE_PICTURE_ASPECT_RATIO, PROFILE_PICTURE_PROMPT, PROFILE_PICTURE_VARIATIONS } from '../../../server/profile-picture/prompt';
 import { PROFILE_PICTURE_VISITOR_LIMIT } from '../../../server/profile-picture/limits';
 
-export { PROFILE_PICTURE_PROMPT };
+export { COVER_PROMPT_TEMPLATE, COVER_TITLE_OFF, COVER_TITLE_ON, PROFILE_PICTURE_PROMPT };
 
 /**
  * Every image prompt SEIHouse has written, by kind of image, with its rules.
@@ -80,32 +81,8 @@ export interface ImageKind {
 const OLD_APP = 'Light-Novels';
 const old = (path: string) => `${OLD_APP} ${path} @ 647165a`;
 
-/** The cover prompt with every field shown as its brace, so its shape reads at a glance. */
-export const COVER_PROMPT_SHAPE = buildStoryCoverPrompt({
-  title: '{title}', genre: '{genre}', style: 'chinese', synopsis: '{logline, else premise}',
-  mainCharacter: '{main character}', tone: '{tone}', world: '{world facts}', tags: ['{story tags}'],
-});
-
 const limitLine = Object.entries(STORY_COVER_FIELD_LIMITS)
   .map(([field, limit]) => `${field} ${limit.toLocaleString('en')}`).join(', ');
-
-/** The owner's approved cover template (2026-10-08). {title instruction} is one of the two below. */
-export const COVER_PROMPT_TEMPLATE = `Create professional Eastern fantasy novel cover art, drawing on Chinese webnovel, Japanese light novel, or Korean webnovel illustration appropriate to this story.
-Title: {title}
-Tradition: {tradition}
-Genre: {genre}
-Story: {logline, else premise}
-Main character: {visual description}
-Tone: {tone}
-World: {world facts}
-Themes: {story tags}
-Let the story details guide the art style, clothing, setting, colors, and atmosphere. Feature a compelling character, scene, or symbol that captures this novel.
-Vertical 2:3 composition, striking focal point, detailed illustration, readable at thumbnail size.
-{title instruction}
-No logos, signatures, or watermarks.`;
-
-export const COVER_TITLE_ON = 'The only lettering is the exact title “{title}”, displayed once in expressive, clearly readable typography suited to the cover. Do not invent subtitles, volume numbers, author names, or other lettering.';
-export const COVER_TITLE_OFF = 'No lettering. The title will appear beneath the artwork.';
 
 /**
  * Prompts taken off the page, by the title they had, so the history still
@@ -116,6 +93,7 @@ export const RETIRED_IMAGE_PROMPTS: Record<string, string> = {
   'old-portrait-writer': 'The old app\'s profile prompt writer (removed)',
   'old-portrait-request': 'The old app\'s profile request with the photo (removed)',
   'old-portrait-fallback': 'The old app\'s profile prompt without a photo (removed)',
+  'cover-current': 'What the app sends today (replaced by the approved template, 2026-10-09)',
 };
 
 /**
@@ -141,35 +119,28 @@ export const IMAGE_KINDS: ImageKind[] = [
     title: 'Cover art',
     status: 'in-the-app',
     variations: 3,
-    summary: 'Story View\'s Manifest cover: one cover from the story\'s own words, behind the media reveal, worn on World Info and Home.',
+    summary: 'World Info\'s cover says Manifest: the reader makes one cover (5 Energy) or three to choose from (15), from the story\'s own words, and the one they keep is worn on World Info and Home.',
     prompts: [
       {
         id: 'cover',
         title: 'Cover art prompt',
-        source: 'The owner\'s approved template (2026-10-08); the app connects it with World Cards',
-        when: 'Each Manifest cover or New cover. The braces are filled from the story: its title, Story Seed tradition, genre, Blueprint logline (else its premise), main character, tone, world facts and story tags; never its chapters. {title instruction} is one of the two title instructions below.',
+        source: 'src/server/story-cover/prompt.ts (COVER_PROMPT_TEMPLATE), the owner\'s approved template (2026-10-08)',
+        when: 'Each cover made, once per cover. A line whose field the story does not have is left out. The braces are filled from the story: its title, Story Seed tradition, genre, Blueprint logline (else its premise), main character, tone, world facts and story tags; never its chapters. {title instruction} is one of the two title instructions below.',
         text: COVER_PROMPT_TEMPLATE,
       },
       {
         id: 'cover-title-on',
         title: 'Title instruction: title enabled',
-        source: 'The owner\'s approved template (2026-10-08)',
-        when: 'Fills {title instruction} when the title is drawn on the cover.',
+        source: 'src/server/story-cover/prompt.ts (COVER_TITLE_ON)',
+        when: 'Fills {title instruction}: the app draws the title on every cover today.',
         text: COVER_TITLE_ON,
       },
       {
         id: 'cover-title-off',
         title: 'Title instruction: title disabled',
-        source: 'The owner\'s approved template (2026-10-08)',
-        when: 'Fills {title instruction} when the title is shown beneath the artwork instead.',
+        source: 'src/server/story-cover/prompt.ts (COVER_TITLE_OFF)',
+        when: 'Fills {title instruction} when the title is shown beneath the artwork instead (not offered yet).',
         text: COVER_TITLE_OFF,
-      },
-      {
-        id: 'cover-current',
-        title: 'What the app sends today',
-        source: 'src/server/story-cover/prompt.ts (buildStoryCoverPrompt)',
-        when: 'Each Manifest cover or New cover until the approved template is connected with World Cards. One cover, no lettering.',
-        text: COVER_PROMPT_SHAPE,
       },
       {
         id: 'old-cover',
@@ -187,10 +158,10 @@ export const IMAGE_KINDS: ImageKind[] = [
       },
     ],
     rules: [
-      { title: 'Look by tradition', text: [...Object.entries(TRADITION_LOOK).map(([style, look]) => `${style}: ${look}`), `no tradition: ${DEFAULT_COVER_LOOK}`].join('\n') },
-      { title: 'Three to choose from', text: 'Each request makes three covers and the reader chooses the one they want. (The app makes one today; three is the approved design.)' },
+      { title: 'Tradition', text: [...Object.entries(COVER_TRADITIONS).map(([style, name]) => `${style}: ${name}`), 'no tradition: the Tradition line is left out'].join('\n') },
+      { title: 'One or three', text: 'The reader chooses: one cover (5 Energy), kept as soon as it is made, or three to choose from (15 Energy), each its own request; the one they keep becomes the cover and the others are let go.' },
       { title: 'Shape', text: `Portrait, ${STORY_COVER_ASPECT_RATIO}, like a book cover (the World Card's own shape). The old app made every image square (1:1).` },
-      { title: 'The title on the cover', text: 'The approved template draws the exact title once when the title is turned on, and no lettering when it is off (the title then shows beneath the artwork). What the app sends today carries no text of any kind.' },
+      { title: 'The title on the cover', text: 'The exact title is drawn once on every cover (title enabled is the default). Title disabled, with no lettering, is ready for when the reader is offered the choice.' },
       { title: 'Field limits', text: `Each field is clipped on the server, so a request can never carry a long prompt of its own: ${limitLine} (at most ${STORY_COVER_FIELD_LIMITS.tags} tags).` },
       { title: 'Model', text: `The Model Router's Images choice (the Router lists every image model it offers); ${COVER_DEFAULT_MODEL_LABEL} when none is chosen.` },
       { title: 'Who may make one', text: `Visitors may make ${STORY_COVER_VISITOR_LIMIT.limit} every ${STORY_COVER_VISITOR_LIMIT.windowMs / 60_000} minutes; the owner's access token lifts the limit. A cover is kept on the device until the database keeps it.` },

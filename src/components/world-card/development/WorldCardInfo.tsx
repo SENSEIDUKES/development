@@ -20,7 +20,7 @@ import './world-card.css';
  * This is the public view a reader sees. It shows no owner or library states
  * (visibility, draft, acquisition); the owner's view is a separate Story View.
  */
-export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, readingPosition }: WorldCardInfoProps) {
+export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, readingPosition, coverAction }: WorldCardInfoProps) {
   const detail = 'author' in story ? story : undefined;
   const coverUrl = story.imageUrl?.trim() || undefined;
   const creatorName = story.creatorName?.trim() || detail?.author?.trim();
@@ -38,6 +38,7 @@ export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, readingPosi
       <div className="world-card-info-hero">
         <div className="world-card-info-cover">
           <WorldCard face="info" world={story} />
+          {coverAction && <div className="world-card-info-cover-action">{coverAction}</div>}
         </div>
         <div className="world-card-info-identity">
           <header>

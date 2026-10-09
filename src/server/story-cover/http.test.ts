@@ -58,14 +58,21 @@ describe('The story cover route', () => {
 });
 
 describe('The cover prompt', () => {
-  it('paints the story in its tradition\'s look and draws no lettering', () => {
+  it('fills the approved template from the story and draws the exact title once', () => {
     const prompt = buildStoryCoverPrompt(story);
-    expect(prompt).toContain('Chinese web novel cover painting');
+    expect(prompt.startsWith('Create professional Eastern fantasy novel cover art')).toBe(true);
     expect(prompt).toContain('Title: The Drowned Name');
+    expect(prompt).toContain('Tradition: Chinese webnovel');
+    expect(prompt).toContain('Genre: Xianxia');
     expect(prompt).toContain('Main character: Mara');
     expect(prompt).toContain('Themes: revenge, water');
-    expect(prompt).toContain('portrait (2:3)');
-    expect(prompt).toContain('Draw no text at all');
-    expect(buildStoryCoverPrompt({ title: 'Plain' })).toContain('a web novel cover painting');
+    expect(prompt).toContain('Vertical 2:3 composition');
+    expect(prompt).toContain('the exact title “The Drowned Name”, displayed once');
+    expect(prompt).not.toContain('{');
+    // A field the story does not have leaves its line out; without the title, no lettering.
+    const plain = buildStoryCoverPrompt({ title: 'Plain' }, { title: false });
+    expect(plain).not.toContain('Tradition:');
+    expect(plain).not.toContain('Genre:');
+    expect(plain).toContain('No lettering. The title will appear beneath the artwork.');
   });
 });

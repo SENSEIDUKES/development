@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
 import type { StoryDetailDisplay } from '../../light-novels-home/shared/storyDetailContracts';
 import type { CreatorWorld, CreatorWorldStatus } from '../../creator-space/shared/creatorSpaceContracts';
@@ -19,6 +20,11 @@ export interface WorldCardInfoProps {
   onOpenCodex?: () => void;
   /** The viewer's known reading position; the Chapters card says Continue Reading only when supplied. */
   readingPosition?: { chapterNumber: number };
+  /**
+   * The host's own controls laid over the cover, such as making cover art. The
+   * slot fills the cover's frame; the host decides what it shows.
+   */
+  coverAction?: ReactNode;
 }
 
 /** Artwork-only face on the Info page; story details remain in the page layout. */

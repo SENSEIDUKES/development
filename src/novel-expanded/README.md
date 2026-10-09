@@ -26,7 +26,7 @@ rewrites and every page survives a reload.
 | --- | --- | --- |
 | Home | `/app/` | The reader's stories, newest first, and Carve New Destiny |
 | Create | `/app/?page=create` | The Library's Story Seed journey: the seed, its World Blueprint, Manifest Story |
-| Story View | `/app/?story=<id>` | The story's World Info page: Start Story, Start Reading, Continue, Manifest cover, Story Settings, and Export story (the whole story as one file, for sharing a test) |
+| Story View | `/app/?story=<id>` | The story's World Info page: Start Story, Start Reading, Continue, Manifest on the cover, Story Settings, and Export story (the whole story as one file, for sharing a test) |
 | Reader | `/app/?story=<id>&read=1` | The reading-only Reader, with the Generation Overlay while a chapter is written |
 | Profile | `/app/?page=profile` | The Library's Cultivator Cave; its own pages in `cave` (Settings: `&cave=/settings`) |
 
@@ -138,18 +138,26 @@ Library's `StorySettings` and `CreateStorySettings`, `@seihouse/library/stories`
 
 ## Cover art
 
-Story View's **Manifest cover** makes the story's cover from its own words
-(title, genre, tradition, logline, main character, tone, world and tags; never
-its chapters) through `/api/story-cover`, behind the Aura Veil's media reveal:
-the scroll unseals while it is made and opens on the finished cover; then World
-Info and Home's card wear it. **New cover** makes another, which replaces it.
+The cover on World Info is where covers are made. A story without one shows
+**Manifest** across its cover; tapping it offers **One cover** (5 Energy) or
+**Three to choose from** (15 Energy). The covers are made from the story's own
+words (title, genre, tradition, logline, main character, tone, world and tags;
+never its chapters) with the owner's approved cover template, the title drawn
+on, through `/api/story-cover`, one request per cover, behind the Aura Veil's
+media reveal. One cover is kept and revealed; three open a picker where they
+come alive one after another, and the reader keeps one ("Use this cover"; the
+others are let go, and each can be downloaded first). A kept cover shows a
+small Manifest and a download in its lower corners, and World Info and Home's
+card wear it.
 
 - The image model is the Model Router's Images choice (`useModelPreference('images')`),
-  Nano Banana 2 (`google/gemini-3.1-flash-image`) unless the reader picks another.
-- Visitors may make 3 covers every 30 minutes; the owner's access token lifts the
-  limit, asked for in the same sheet as chapters (`coverRequesterWithAccessToken`).
+  Nano Banana 2 Lite unless the reader picks another.
+- Visitors may make 3 covers every 30 minutes, so three to choose from uses the
+  whole allowance; the owner's access token lifts the limit, asked for once for
+  all three in the same sheet as chapters (`coverMakerWithAccessToken`).
 - Covers are kept on this device (`src/host/media/storyCovers.ts`, IndexedDB
-  `novelexpanded-story-covers-v1`) until the database keeps them in R2.
+  `novelexpanded-story-covers-v1`) until the database keeps them in R2; covers
+  made but not kept are never saved.
 
 ## The Familiar
 
@@ -302,10 +310,11 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 - `src/server/story-cover/http.test.ts`, `src/server/profile-picture/http.test.ts` and `src/library/model-router/server.test.ts`: the cover and profile picture routes (Nano Banana 2 Lite by default, the Router's choice, clipped fields or a readable photo, plain failures) and the Router's image calls (Gemini and OpenRouter, with an attached photo).
 - `src/host/profile/*.test.ts(x)` and `src/host/economy/practiceEconomy.test.ts`: the device profile, the Cave's controller over it, and the practice account.
 - `scripts/checkNovelExpandedApp.test.ts`: the guard, including the real app.
-- `scripts/verifyNovelExpandedApp.browser.mjs`: the walk in Chromium at 390px and 1440px against the dev server, with stubbed APIs (a stand-in cover among them) and a stand-in for the browser's speech (headless Chromium has no voices): Create's Story Settings, Story View's Story Settings, and Manifest cover through the media reveal to World Info and Home.
+- `scripts/verifyNovelExpandedApp.browser.mjs`: the walk in Chromium at 390px and 1440px against the dev server, with stubbed APIs (a stand-in cover among them) and a stand-in for the browser's speech (headless Chromium has no voices): Create's Story Settings, Story View's Story Settings, and Manifest on the cover (three to choose from, the picker) to World Info and Home.
 
 ## History
 
+- **2026-10-09** — Covers are made on the cover: World Info's empty cover says Manifest, and the reader chooses one cover (5 Energy) or three to choose from (15). Three come alive in a picker and the reader keeps one; the others are let go. Every cover uses the owner's approved template with the title drawn on. The Manifest cover button beneath World Info is gone.
 - **2026-10-09** — One Energy badge everywhere Energy shows: the Profile home's balance, the Store, the cost beside Make my portraits and New cover, beside Write Chapter in the Reader (1 Energy, with "−1" as each chapter arrives) and beside Manifest in Story Seed (a chapter's price for now). Practice only.
 - **2026-10-08** — The profile picture comes to the app: the reader's photo goes straight to the image model with the approved prompt, three portraits to choose from, the chosen one kept on the device. Images default to Nano Banana 2 Lite for now. Every image made (portraits, covers) has a download button, and shows its Energy cost (5 per image) with "−5" floaters as it arrives; nothing is taken yet.
 - **2026-10-08** — Story Settings and cover art come to the app. Story View has the story's Story Settings (language, Reading Mode, CAPA skill slots, media), closed until opened, and Create's Settings holds the skills and media a new story starts with, kept on the device until Manifest. Manifest cover on Story View makes a cover from the story's own words behind the media reveal, with the Model Router's image choice (Nano Banana 2 by default); World Info and Home wear it, and it is kept on the device. Visitors may make 3 covers every 30 minutes; the access token lifts the limit.

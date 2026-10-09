@@ -24,4 +24,4 @@ export {
   STORY_SETTINGS_DRAFT_KEY,
   type StorySettingsDraft,
 } from '../../library/stories/settings/storySettingsDraft';
-export { storyCoverRequest, type StoryCoverRequest, type StoryCoverService } from '../../library/stories/storyCover';
+export { STORY_COVER_CHOICES, storyCoverRequest, type MadeStoryCovers, type StoryCoverChoice, type StoryCoverRequest, type StoryCoverService } from '../../library/stories/storyCover';

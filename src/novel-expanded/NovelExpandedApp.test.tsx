@@ -693,7 +693,10 @@ describe('NovelExpanded: Story Settings and cover art', { timeout: 30_000 }, () 
     const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, writer.writer);
     await render(services, `/app/?story=${created.id}`);
 
-    await click(buttonByText('Manifest cover'), 'Manifest cover', 20);
+    // The cover itself says Manifest; one cover is made and worn.
+    await click(worldInfo()!.querySelector('[aria-label="Manifest cover art"]'), 'Manifest on the cover', 20);
+    await click(document.querySelector('.story-cover-option[data-count="1"]'), 'One cover', 20);
+    expect(requestStoryCover).toHaveBeenCalledTimes(1);
     expect(requestStoryCover).toHaveBeenCalledWith(expect.objectContaining({ title: created.title }), { model: 'google/gemini-3-pro-image', accessToken: undefined });
     expect((await storyCovers.loadAll()).map(cover => cover.storyId)).toEqual([created.id]);
     expect(worldInfo()!.querySelector('[data-world-card="info-cover"] img')?.getAttribute('src')).toBe('blob:cover-1');
@@ -702,8 +705,9 @@ describe('NovelExpanded: Story Settings and cover art', { timeout: 30_000 }, () 
     expect(container.querySelector(`#home-world-${created.id} img`)?.getAttribute('src')).toBe('blob:cover-1');
   });
 
-  it('asks for the access token when covers reach the visitor limit, then makes the cover with it', async () => {
-    Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:cover-2'), revokeObjectURL: vi.fn() });
+  it('asks for the access token once when three covers reach the visitor limit, then makes all three with it', async () => {
+    let made = 0;
+    Object.assign(URL, { createObjectURL: vi.fn(() => `blob:cover-${++made}`), revokeObjectURL: vi.fn() });
     const requestStoryCover = vi.fn(async (_story: unknown, options?: { accessToken?: string }) => {
       if (!options?.accessToken) throw new StoryCoverRequestError('This Development action has reached its temporary request limit.', 429);
       return new Blob([new Uint8Array([1])], { type: 'image/png' });
@@ -712,13 +716,16 @@ describe('NovelExpanded: Story Settings and cover art', { timeout: 30_000 }, () 
     const services = appServices(writer.writer, { requestStoryCover: requestStoryCover as unknown as NovelExpandedServices['requestStoryCover'] });
     const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, writer.writer);
     await render(services, `/app/?story=${created.id}`);
-    await click(buttonByText('Manifest cover'), 'Manifest cover', 20);
+    await click(worldInfo()!.querySelector('[aria-label="Manifest cover art"]'), 'Manifest on the cover', 20);
+    await click(document.querySelector('.story-cover-option[data-count="3"]'), 'Three to choose from', 20);
     const sheet = document.querySelector<HTMLFormElement>('[data-testid="access-token-sheet"]')!;
     expect(sheet.textContent).toContain('covers are limited to 3 every 30 minutes');
     await typeInto(sheet.querySelector('input[type="password"]')!, 'owner-token');
     await click(buttonByText('Continue', sheet), 'Continue', 50);
-    expect(requestStoryCover.mock.calls.map(call => call[1]?.accessToken)).toEqual([undefined, 'owner-token']);
+    // Asked for once; the three refused are asked for again with the token.
+    expect(requestStoryCover.mock.calls.map(call => call[1]?.accessToken)).toEqual([undefined, undefined, undefined, 'owner-token', 'owner-token', 'owner-token']);
     expect(services.accessToken.current).toBe('owner-token');
+    expect(document.querySelectorAll('.story-cover-choice')).toHaveLength(3);
   });
 });
 

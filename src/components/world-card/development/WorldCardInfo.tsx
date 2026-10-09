@@ -7,9 +7,9 @@ import type { WorldCardInfoProps } from '../shared/worldCardContracts';
 import { useDominantColor } from '@seihouse/sen/motion-picture';
 import { WorldCard } from './WorldCard';
 import { WorldCardBackdropVideo, type WorldCardBackdropVideoHandle } from './WorldCardBackdropVideo';
-import { WorldCardFormatSymbol } from './WorldCardFormatSymbol';
-import { WorldCardStoryPanel } from './WorldCardStoryPanel';
-import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
+import { WorldCardFormatPanel } from './WorldCardFormatPanel';
+import { WorldCardInformationPanel, worldInformationSummary } from './WorldCardInformationPanel';
+import type { StoryDetailDisplay } from '../../light-novels-home/shared/storyDetailContracts';
 import './world-card.css';
 
 /**
@@ -25,7 +25,7 @@ import './world-card.css';
  * This is the public view a reader sees. It shows no owner or library states
  * (visibility, draft, acquisition); the owner's view is a separate Story View.
  */
-export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, onOpenBlueprint, readingPosition, coverAction }: WorldCardInfoProps) {
+export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, onOpenBlueprint, readingPosition, coverAction, readingLanguage }: WorldCardInfoProps) {
   const detail = 'author' in story ? story : undefined;
   const coverUrl = story.imageUrl?.trim() || undefined;
   const videoUrl = 'videoUrl' in story ? story.videoUrl?.trim() || undefined : undefined;
@@ -57,7 +57,7 @@ export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, onOpenBluep
           <WorldCard face="info" world={story} />
           {coverAction && <div className="world-card-info-cover-action">{coverAction}</div>}
           {/* The format mark, as on the Full card: it opens the story's information (views and more to come). */}
-          {detail && <WorldCardStoryPanel key={story.id} world={detail} triggerClassName="world-card-base-format world-card-info-format" />}
+          {detail && <WorldCardFormatPanel key={story.id} world={detail} triggerClassName="world-card-base-format world-card-info-format" />}
           {/* MP: plays or stops the clip behind the page, so a reader whose phone would not start it (Low Power Mode) can. */}
           {videoUrl && <button type="button" className="world-card-base-format world-card-info-motion" aria-pressed={clipPlaying}
             aria-label={`${clipPlaying ? 'Stop' : 'Play'} motion for ${story.title}`}
@@ -122,7 +122,7 @@ export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, onOpenBluep
       {(onOpenCodex || detail) && <div className="world-card-info-tools">
         {onOpenCodex && <StoryToolCard icon="navigation-book" title="Open Codex"
           description="Explore the lore, sects, and world" onOpen={onOpenCodex} />}
-        {detail && <InformationToolRow world={detail} />}
+        {detail && <InformationToolRow key={story.id} world={detail} readingLanguage={readingLanguage} />}
       </div>}
     </div>
   </LibraryPanel>;
@@ -226,19 +226,17 @@ function StoryToolCard({ icon, title, description, onOpen }: {
 }
 
 /**
- * Information: the world's format mark and name, opening the same story information
- * dialog as the Full card's format mark. Provenance records will live here later.
+ * Information: the world's language (and a way to read it in the reader's
+ * own), its rating and the creator's permissions.
  */
-function InformationToolRow({ world }: { world: HomeWorld }) {
-  const format = world.format?.trim();
-  return <WorldCardStoryPanel world={world} triggerClassName="world-card-info-tool world-card-info-information"
+function InformationToolRow({ world, readingLanguage }: { world: StoryDetailDisplay; readingLanguage?: WorldCardInfoProps['readingLanguage'] }) {
+  const summary = worldInformationSummary(world);
+  return <WorldCardInformationPanel world={world} readingLanguage={readingLanguage} triggerClassName="world-card-info-tool world-card-info-information"
     trigger={<span className="world-card-info-tool-content">
-      <span className="world-card-info-tool-art" aria-hidden="true">
-        {format ? <WorldCardFormatSymbol format={format} /> : <Info size={24} aria-hidden="true" />}
-      </span>
+      <span className="world-card-info-tool-art" aria-hidden="true"><Info size={24} aria-hidden="true" /></span>
       <span className="world-card-info-tool-text">
         <span className="world-card-info-tool-title font-display">Information</span>
-        {format && <span className="world-card-info-tool-description">{format}</span>}
+        <span className="world-card-info-tool-description">{summary || 'Language, rating and permissions'}</span>
       </span>
       <ChevronRight size={22} aria-hidden="true" className="world-card-info-tool-chevron" />
     </span>} />;

@@ -25,6 +25,11 @@ export interface WorldCardInfoProps {
    * so a host leaves it out for a reader when the creator has sharing turned off.
    */
   onOpenBlueprint?: () => void;
+  /**
+   * The viewer's reading language for this world, chosen in the Information
+   * panel. Without it the panel shows the world's language but offers no switch.
+   */
+  readingLanguage?: { current?: string; onChange: (language: string) => void };
   /** The viewer's known reading position; the reading pill says Continue only when supplied. */
   readingPosition?: { chapterNumber: number };
   /**

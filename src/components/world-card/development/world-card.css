@@ -186,6 +186,28 @@
 .world-card-story-panel-tags { display: flex; flex-wrap: wrap; gap: 0.375rem; }
 .world-card-story-panel-tags li { max-width: 100%; padding: 0.125rem 0.5rem; border-radius: 999px; background: #ffffff0a; border: 1px solid #ffffff1f; color: #b6e3ff; font-size: 0.75rem; }
 
+/* World Info's Information and Verification panels: plain facts in rows. */
+.world-card-story-panel.world-card-information-panel { max-height: min(40rem, calc(100dvh - 24px)); }
+.world-card-information-title { margin: 0 1.5rem 0.75rem 0; color: #f3f4f6; font-size: 1rem; font-weight: 600; }
+.world-card-information-panel h4 { display: flex; align-items: center; gap: 0.375rem; }
+.world-card-information-panel h4 svg { width: 0.875rem; height: 0.875rem; flex: none; }
+.world-card-information-panel dl { display: grid; gap: 0.5rem; margin: 0; }
+.world-card-information-fact { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.25rem 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #ffffff10; }
+.world-card-information-fact dt { margin: 0; }
+.world-card-information-fact dd { margin: 0; color: #e5e7eb; text-align: right; }
+.world-card-information-reading { display: grid; gap: 0.375rem; margin-top: 0.75rem; }
+.world-card-information-reading label { color: #aeb7c6; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.world-card-information-reading select { min-height: 2.75rem; padding: 0 0.75rem; border: 1px solid #39414e; border-radius: 0.625rem; background: #151b26; color: #e5e7eb; font-size: 0.875rem; }
+.world-card-information-reading select:focus-visible { outline: 2px solid #6fd6ff; outline-offset: 2px; }
+.world-card-information-first { padding: 0.5rem 0.625rem; border: 1px solid rgba(111, 214, 255, 0.3); border-radius: 0.625rem; background: rgba(111, 214, 255, 0.08); color: #c9efff; }
+.world-card-information-panel section > p { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.world-card-information-note { color: #aeb7c6; }
+.world-card-information-verified { display: inline-flex; align-items: center; gap: 0.25rem; color: #b7eaff; font-weight: 600; }
+.world-card-information-verified svg { width: 0.875rem; height: 0.875rem; }
+.world-card-information-link { display: inline-flex; align-items: center; gap: 0.375rem; min-height: 2.75rem; margin-top: 0.75rem; color: #6fd6ff; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.world-card-information-link svg { width: 0.875rem; height: 0.875rem; }
+.world-card-information-panel > div > dl + p, .world-card-information-panel dl + .world-card-information-note { margin-top: 0.75rem; }
+
 /*
  * Info page — Celestial glass, presented the way Audible presents a title:
  * on a phone a big centered cover, the reading pill, then the title, meta and

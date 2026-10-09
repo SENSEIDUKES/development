@@ -108,7 +108,8 @@ pieces rather than page-local cards or buttons:
 | Reading pill | `ManifestButton` (`lg`) in Home's night-glass colors |
 | Open Codex | `LibraryCard` (`interactive` when a destination exists) |
 | Backdrop clip | `WorldCardBackdropVideo` (shared with the Feature card) |
-| Format mark on the cover, Information row | `WorldCardStoryPanel` (the Full card's format dialog): the cover's corner mark and the row each open it |
+| Format mark on the cover | `WorldCardFormatPanel`: Verification (format, creator, start date, SEN verification, provenance link) |
+| Information row | `WorldCardInformationPanel`: language and Read it in, rating, permissions |
 | Synopsis More / Less | `LibraryButton` (`ghost`) |
 
 - **Backdrop.** Behind the hero sits this world's own cover, blurred and
@@ -190,12 +191,16 @@ pieces rather than page-local cards or buttons:
   - There is no hero read button and no fixed bottom bar.
 - **Secondary tools.** Open Codex is a quieter `LibraryCard` row led by the
   Library's own book artwork, shown only when the host supplies its handler.
-  The **Information** row replaces the former mock Fate Timeline. It shows
-  the world's format mark and format name (for example the Novel scroll and
-  "Novel") under the title Information. It opens the same story information
-  dialog as the Full card's format mark: synopsis, World standing with views,
-  Activity, branching, and tags. This row is where the world's real provenance
-  records will live later. It appears for a Library world with story details;
+  The **Information** row replaces the former mock Fate Timeline. It shows an
+  Info mark, the title Information and a short line such as "English · Rated
+  18+". It opens the world's information: the language it is written in and is
+  already readable in, a "Read it in" switch when the host passes
+  `readingLanguage` (a language no one has read it in yet makes this reader the
+  first, translated as they read), its rating (Rated 18+ or All ages) and the
+  creator's permissions (visibility, branching, Blueprint). The cover's format
+  mark opens Verification instead: format, creator, start date, SEN
+  verification, and a link to the world's provenance records when the host has
+  one. It appears for a Library world with story details;
   a Create world without them has no Information row. Fate Timeline is no longer part of the Info page, and `onOpenTimeline`
   is gone from `WorldCardInfoProps`. There are no disabled placeholders. There is no Characters section (characters belong in
   the Codex) and no bookmark.
@@ -364,6 +369,18 @@ Workshop sample data and reference material remain outside the host adapter.
 
 ## Workshop history
 
+- **2026-10-09** — **Information and Verification.** World Info's Information
+  row opens `WorldCardInformationPanel`: the language the world is written in and
+  the languages it is already readable in, a "Read it in" switch when the host
+  passes `readingLanguage` (choosing a language no one has read it in yet says the
+  reader will be the first), the Rated 18+ or All ages rating, and the creator's
+  permissions (visibility, branching, Blueprint). The row's line reads e.g.
+  "English · Rated 18+". In Info the cover's format mark opens
+  `WorldCardFormatPanel` instead of the story panel: format, creator, start date,
+  SEN verification, and a link to the world's provenance records when the host
+  supplies `provenanceUrl`. Full and Compact cards keep the story panel. The app
+  fills language, the Seed's 18+ choice and visibility from the story; it offers
+  no language switch yet, because its Reader does not translate.
 - **2026-10-09** — **Info cards stay stacked on narrow phones.** Under 380px
   (small phones, and any phone with zoom or larger text) Open Codex and
   Information no longer squeeze side by side, where "Open Codex" broke onto two

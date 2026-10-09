@@ -1,4 +1,4 @@
-import type { HomeWorld, StoryDetailDisplay, WorldActivityStatus } from '@seihouse/library/home';
+import type { HomeWorld, StoryDetailDisplay, WorldActivityStatus, WorldPermissions } from '@seihouse/library/home';
 import type { CreatorWorld } from '@seihouse/library/creator-space';
 import { featuredNovel } from '../light-novels-home/previewData';
 import { SAMPLE_CREATOR_WORLDS } from '../creator-space/previewData';
@@ -36,7 +36,16 @@ export interface WorldCardPreviewState {
 const LONG_TITLE = 'The Last Lotus of the Jade Empire and the Thousand-Year Oath Beneath the Silent Pavilion';
 
 /** The featured novel with the chosen states applied to the full card and overview. */
-export function previewStory({ recentlyRead, titleLength, cover, activity, reading }: WorldCardPreviewState): StoryDetailDisplay {
+/** What each Blueprint state means for the world's Information panel. */
+const BLUEPRINT_PERMISSIONS: Record<WorldCardBlueprintPreview, WorldPermissions> = {
+  'creator': { visibility: 'private', blueprint: 'off' },
+  'creator-shared': { visibility: 'public', blueprint: 'view' },
+  'reader-copy': { visibility: 'public', blueprint: 'copy' },
+  'reader-view': { visibility: 'public', blueprint: 'view' },
+  'reader-off': { visibility: 'public', blueprint: 'off' },
+};
+
+export function previewStory({ recentlyRead, titleLength, cover, activity, reading, blueprint }: WorldCardPreviewState): StoryDetailDisplay {
   return {
     ...featuredNovel,
     ...(reading === 'new-story' ? { chapterCount: 0, currentArc: '' } : {}),
@@ -44,6 +53,12 @@ export function previewStory({ recentlyRead, titleLength, cover, activity, readi
     imageUrl: cover === 'missing' ? '' : featuredNovel.imageUrl,
     recentlyRead: recentlyRead === 'yes',
     activityStatus: activity === 'hidden' ? undefined : activity,
+    // Information and Verification panels: sample language, rating, permissions and provenance.
+    originalLanguage: 'en',
+    readingLanguages: ['ja'],
+    matureContent: true,
+    permissions: { ...BLUEPRINT_PERMISSIONS[blueprint], branching: featuredNovel.branchingEnabled },
+    provenanceUrl: '?preview=provenance',
   } satisfies HomeWorld & StoryDetailDisplay;
 }
 

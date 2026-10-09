@@ -1,5 +1,15 @@
 # `@seihouse/library`
 
+**0.29.0 (2026-10-09):** World Info's Information and Verification panels. `./home`:
+`StoryDetailDisplay` gains `originalLanguage`, `readingLanguages`, `matureContent`,
+`permissions` (`WorldPermissions`: visibility, branching, blueprint) and `provenanceUrl`.
+`./world-card`: Information opens the world's language (with a "Read it in" switch when the
+host passes `readingLanguage`; a language no one has read yet makes this reader the first),
+its Rated 18+ or All ages rating, and the creator's permissions. In Info the format mark opens
+Verification: format, creator, start date, SEN verification and a provenance link when the host
+has one. Full and Compact cards keep the story panel. New exports `WorldCardInformationPanel`,
+`WorldCardFormatPanel`, `languageName`, `worldInformationSummary`.
+
 **0.28.0 (2026-10-09):** Covers are made on the cover. `./stories`: `StoryCoverService`
 replaces `manifest(storyId, request)` with `make(storyId, request, count)` (one cover or
 three, `STORY_COVER_CHOICES`), `keep(storyId, madeUrl)` and `letGo(madeUrls)` (breaking for a

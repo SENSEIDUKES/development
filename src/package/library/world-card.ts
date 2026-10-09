@@ -10,3 +10,5 @@ export * from '../../components/world-card/shared/worldCardContracts';
 export * from '../../components/world-card/development/WorldCardInfo';
 export { WorldCard, WORLD_STATUS_LABELS } from '../../components/world-card/development/WorldCard';
 export { WorldCardFeature } from '../../components/world-card/development/WorldCardFeature';
+export { WorldCardInformationPanel, languageName, worldInformationSummary } from '../../components/world-card/development/WorldCardInformationPanel';
+export { WorldCardFormatPanel } from '../../components/world-card/development/WorldCardFormatPanel';

@@ -89,6 +89,7 @@ describe('A story\'s way in: World Info, then the Reader', { timeout: 20_000 }, 
       originalLanguage: 'en', permissions: { visibility: 'private' },
     });
     expect(display.matureContent).toBeUndefined();
+    expect(display.updatedAt).toBe(repository.snapshot().stories.find(story => story.id === storyId)!.updatedAt);
     expect(harnessStoryDisplay(repository.snapshot(), 'missing')).toBeUndefined();
   });
 

@@ -28,6 +28,10 @@ export interface StoryDetailDisplay extends HomeWorld {
   permissions?: WorldPermissions;
   /** Where the world's provenance records open; the format mark links to it only when supplied. */
   provenanceUrl?: string;
+  /** When the world last changed (its newest chapter or edit), shown beside when it began. */
+  updatedAt?: string;
+  /** The creator's own notes to readers, shown at the bottom of Verification. */
+  authorNotes?: string;
 }
 
 /** The creator's permissions for a world, as the host records them. */

@@ -27,6 +27,7 @@ export function harnessStoryDisplay(state: HarnessWorkspaceState, storyId: strin
     title: story.title,
     genre: input?.genre?.trim() ?? '',
     createdAt: story.createdAt,
+    updatedAt: story.updatedAt,
     reads: 0,
     imageUrl: covers?.coverUrl(story.id) ?? '',
     chapterCount: state.chapters.filter(chapter => chapter.storyId === story.id).length,

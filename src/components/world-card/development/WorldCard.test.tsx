@@ -389,11 +389,23 @@ it('shows the world language without a switch when the host offers no reading la
 });
 
 it('opens verification and provenance from the format mark in Info, linking provenance records only when supplied', async () => {
-  act(() => root.render(<WorldCardInfo story={{ ...infoStory, senVerified: true, provenanceUrl: 'https://example.test/provenance/lotus' }} />));
+  act(() => root.render(<WorldCardInfo story={{
+    ...infoStory, senVerified: true, provenanceUrl: 'https://example.test/provenance/lotus',
+    activityStatus: 'active-this-week', reads: 1280, createdAt: '2026-09-09T12:00:00Z', updatedAt: '2026-10-08T12:00:00Z',
+    authorNotes: 'Arc 2 lands this month.',
+  }} />));
   const format = container.querySelector<HTMLButtonElement>('button.world-card-info-format')!;
   await act(async () => format.click());
   let panel = document.body.querySelector<HTMLElement>('.world-card-information-panel')!;
   expect(panel.textContent).toContain('Verification');
+  // Activity and views, as on the Full card's panel; when it began and when it last changed, side by side.
+  expect(panel.querySelector('[data-testid="world-format-activity"]')?.textContent).toContain('Active this week');
+  expect(panel.querySelector('[data-testid="world-format-views"]')?.textContent).toContain('1,280');
+  const dates = panel.querySelector('[data-testid="world-format-dates"]')!;
+  expect(dates.textContent).toContain('Began');
+  expect(dates.textContent).toContain('2026');
+  expect(dates.textContent).toContain('Last updated');
+  expect(panel.querySelector('[data-testid="world-format-notes"]')?.textContent).toBe('Author’s notesArc 2 lands this month.');
   expect(panel.querySelector('[data-testid="world-format-verification"]')?.textContent).toContain('SEN Verified');
   const link = panel.querySelector<HTMLAnchorElement>('[data-testid="world-format-provenance"]')!;
   expect(link.getAttribute('href')).toBe('https://example.test/provenance/lotus');
@@ -408,6 +420,7 @@ it('opens verification and provenance from the format mark in Info, linking prov
   expect(panel.querySelector('[data-testid="world-format-verification"]')?.textContent).toContain('Not verified yet');
   expect(panel.querySelector('[data-testid="world-format-provenance"]')).toBeNull();
   expect(panel.textContent).toContain('Provenance records will be linked here once this world has them.');
+  expect(panel.querySelector('[data-testid="world-format-notes"]')?.textContent).toContain('The creator has not written notes for this world yet.');
 });
 
 it('paints story tags in their Story Seed catalog colors and leaves unknown tags neutral', () => {

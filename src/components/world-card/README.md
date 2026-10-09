@@ -108,7 +108,7 @@ pieces rather than page-local cards or buttons:
 | Reading pill | `ManifestButton` (`lg`) in Home's night-glass colors |
 | Open Codex | `LibraryCard` (`interactive` when a destination exists) |
 | Backdrop clip | `WorldCardBackdropVideo` (shared with the Feature card) |
-| Format mark on the cover | `WorldCardFormatPanel`: Verification (format, creator, start date, SEN verification, provenance link) |
+| Format mark on the cover | `WorldCardFormatPanel`: Verification (format, creator, activity, views, Began / Last updated, SEN verification, provenance link, Author's notes) |
 | Information row | `WorldCardInformationPanel`: language and Read it in, rating, permissions |
 | Synopsis More / Less | `LibraryButton` (`ghost`) |
 
@@ -198,8 +198,8 @@ pieces rather than page-local cards or buttons:
   `readingLanguage` (a language no one has read it in yet makes this reader the
   first, translated as they read), its rating (Rated 18+ or All ages) and the
   creator's permissions (visibility, branching, Blueprint). The cover's format
-  mark opens Verification instead: format, creator, start date, SEN
-  verification, and a link to the world's provenance records when the host has
+  mark opens Verification instead: format, creator, activity, views, Began
+  and Last updated, SEN verification, Author's notes, and a link to the world's provenance records when the host has
   one. It appears for a Library world with story details;
   a Create world without them has no Information row. Fate Timeline is no longer part of the Info page, and `onOpenTimeline`
   is gone from `WorldCardInfoProps`. There are no disabled placeholders. There is no Characters section (characters belong in
@@ -369,6 +369,12 @@ Workshop sample data and reference material remain outside the host adapter.
 
 ## Workshop history
 
+- **2026-10-09** — **Verification, filled out.** The Info format mark's
+  Verification panel adds the world's activity (the Full card's dot and label)
+  and its views, shows Began and Last updated side by side, and ends with an
+  Author's notes section (`authorNotes`; until the creator writes some it says
+  so). The app supplies each story's last-updated date; its views stay 0 until a
+  real view count exists.
 - **2026-10-09** — **Information and Verification.** World Info's Information
   row opens `WorldCardInformationPanel`: the language the world is written in and
   the languages it is already readable in, a "Read it in" switch when the host

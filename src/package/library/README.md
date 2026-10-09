@@ -7,7 +7,9 @@
 host passes `readingLanguage`; a language no one has read yet makes this reader the first),
 its Rated 18+ or All ages rating, and the creator's permissions. In Info the format mark opens
 Verification: format, creator, start date, SEN verification and a provenance link when the host
-has one. Full and Compact cards keep the story panel. New exports `WorldCardInformationPanel`,
+has one, plus its activity, views, Began and Last updated dates side by side, and Author's
+notes at the bottom (`StoryDetailDisplay` also gains `updatedAt` and `authorNotes`). Full and
+Compact cards keep the story panel. New exports `WorldCardInformationPanel`,
 `WorldCardFormatPanel`, `languageName`, `worldInformationSummary`.
 
 **0.28.0 (2026-10-09):** Covers are made on the cover. `./stories`: `StoryCoverService`

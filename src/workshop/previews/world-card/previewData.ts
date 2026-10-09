@@ -59,6 +59,8 @@ export function previewStory({ recentlyRead, titleLength, cover, activity, readi
     matureContent: true,
     permissions: { ...BLUEPRINT_PERMISSIONS[blueprint], branching: featuredNovel.branchingEnabled },
     provenanceUrl: '?preview=provenance',
+    updatedAt: '2026-10-08T18:00:00Z',
+    authorNotes: 'Ye Chen’s story began as a single image: a lotus opening on dead water.\nThank you for reading — Arc 2 lands this month.',
   } satisfies HomeWorld & StoryDetailDisplay;
 }
 

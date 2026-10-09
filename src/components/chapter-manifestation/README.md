@@ -16,6 +16,7 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 
 ## Workshop history
 
+- **2026-10-09:** The cover's media reveal now opens from World Info's cover (`useStoryCoverManifest`): one cover is revealed on the scroll as before; three close the veil into the Library's cover picker.
 - **2026-10-08:** The media reveal has its first real caller: Story View's Manifest cover (`StoryCoverManifest` in the Library's stories) opens the veil's media screen with `generationPhase="cover"`, holds the scroll in unsealing while the host's cover service makes the image, then passes the finished cover as `mediaAsset` so the scroll opens on it, and closes the veil a moment later. The veil, its states and the scroll vessel are unchanged. Library 0.26.0.
 
 - **2026-10-07:** Replaced automatic greetings with one supplied wave on touch or mouse hover, then a neutral pose. Holding hover never loops; keyboard activation also greets. Both generation modes use this behavior. The softer aura and inactive underline stay; regular Familiar playback and generation behavior are unchanged. Merged current main while preserving its music, background chapter writing and Frostforged Golem (Frost affinity). Library 0.23.0, SEN 0.24.0.

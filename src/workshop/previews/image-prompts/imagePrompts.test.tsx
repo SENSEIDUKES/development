@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildStoryCoverPrompt } from '../../../server/story-cover/prompt';
 import { fingerprintText } from '../writer-instructions/writerInstructions';
 import { DEFAULT_IMAGE_MODEL, IMAGE_MODELS } from '@seihouse/library/model-router-server';
-import { COVER_DEFAULT_MODEL_LABEL, COVER_PROMPT_SHAPE, COVER_PROMPT_TEMPLATE, COVER_TITLE_OFF, COVER_TITLE_ON, IMAGE_KINDS, IMAGE_PROMPTS, PROFILE_PICTURE_PROMPT, RETIRED_IMAGE_PROMPTS } from './imagePrompts';
+import { COVER_DEFAULT_MODEL_LABEL, COVER_PROMPT_TEMPLATE, COVER_TITLE_OFF, COVER_TITLE_ON, IMAGE_KINDS, IMAGE_PROMPTS, PROFILE_PICTURE_PROMPT, RETIRED_IMAGE_PROMPTS } from './imagePrompts';
 import { IMAGE_PROMPTS_HISTORY, lastChange } from './imagePromptsHistory';
 import { ImagePromptsWorkspace } from './ImagePromptsWorkspace';
 import { DEVELOPMENT_ACCESS_TOKEN_KEY } from '../../../host/generation/accessToken';
@@ -36,13 +36,15 @@ describe('The Image Prompts page', () => {
     expect(text('cover-title-off')).toBe(COVER_TITLE_OFF);
   });
 
-  it('shows the cover prompt the server builds today, never a copy', () => {
-    const cover = IMAGE_PROMPTS.find(prompt => prompt.id === 'cover-current')!;
-    expect(cover.text).toBe(COVER_PROMPT_SHAPE);
-    expect(cover.text).toBe(buildStoryCoverPrompt({
-      title: '{title}', genre: '{genre}', style: 'chinese', synopsis: '{logline, else premise}',
-      mainCharacter: '{main character}', tone: '{tone}', world: '{world facts}', tags: ['{story tags}'],
-    }));
+  it('shows the cover template the server fills, never a copy', () => {
+    const story = { title: 'The Drowned Name', style: 'chinese', synopsis: 'A courier returns.', tags: ['revenge'] };
+    const prompt = buildStoryCoverPrompt(story);
+    expect(prompt).toContain('Title: The Drowned Name');
+    expect(prompt).toContain('Tradition: Chinese webnovel');
+    expect(prompt).toContain(COVER_TITLE_ON.replace('{title}', 'The Drowned Name'));
+    expect(prompt).not.toContain('Genre:');
+    expect(buildStoryCoverPrompt(story, { title: false })).toContain(COVER_TITLE_OFF);
+    expect(IMAGE_PROMPTS.some(entry => entry.id === ('cover-current' as never))).toBe(false);
   });
 
   it('names the Model Router\'s default image model for covers', () => {

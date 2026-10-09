@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ComponentProps, type ReactNode } from 'react';
 import { findStory, HarnessReaderSession } from '@seihouse/sen/harness-generation';
 import type { ReaderPreferenceStorage, ReaderStateRepository } from '@seihouse/sen/reader-runtime';
 import type { SceneAudioTrack } from '@seihouse/sen/audio';
@@ -7,7 +7,7 @@ import { StoryDetailScreen } from '../../components/light-novels-home/developmen
 import type { LoadingAgentPresentation } from '../manifestations/taskCard';
 import { LIBRARY_READ_ALOUD_VOICES } from './readAloudVoices';
 import { StorySettings } from './settings/StorySettings';
-import { StoryCoverManifest } from './StoryCoverManifest';
+import { useStoryCoverManifest } from './StoryCoverManifest';
 import { storyCoverRequest, type StoryCoverService } from './storyCover';
 import { downloadHarnessStory } from './storyExport';
 import { harnessStoryDisplay } from './storyView';
@@ -120,11 +120,15 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
   const info = <>
     {writerAlert}
     <Page className="px-4 pb-12 pt-4 sm:px-6 sm:pt-6" data-testid="harness-world-info">
-      <StoryDetailScreen story={display} backLabel={backLabel} readingPosition={readingPosition}
-        onBack={onBack}
-        onRead={() => { setStartOnOpen(false); onOpenReader(); }}
-        onStart={() => { setStartOnOpen(true); onOpenReader(); }} />
-      {covers && <StoryCoverManifest covers={covers} storyId={storyId} request={storyCoverRequest(state, storyId)!} agent={writingAgent} />}
+      {covers
+        ? <CoveredStoryDetail covers={covers} storyId={storyId} request={storyCoverRequest(state, storyId)!} agent={writingAgent}
+            story={display} backLabel={backLabel} readingPosition={readingPosition} onBack={onBack}
+            onRead={() => { setStartOnOpen(false); onOpenReader(); }}
+            onStart={() => { setStartOnOpen(true); onOpenReader(); }} />
+        : <StoryDetailScreen story={display} backLabel={backLabel} readingPosition={readingPosition}
+            onBack={onBack}
+            onRead={() => { setStartOnOpen(false); onOpenReader(); }}
+            onStart={() => { setStartOnOpen(true); onOpenReader(); }} />}
       <StorySettings stories={stories} storyId={storyId} />
       {/* For testing: the whole story as one file, so a test can be shared. */}
       <div className="mx-auto mt-10 flex max-w-5xl flex-wrap items-center gap-x-3 gap-y-2 border-t border-white/10 pt-4" data-testid="story-export">
@@ -144,4 +148,14 @@ function LoadAlert({ message, onRetry }: { message: string; onRetry: () => void 
     <button type="button" onClick={onRetry}
       className="rounded-full border border-amber-200/40 px-3 py-1 text-xs font-semibold text-amber-100 hover:border-amber-200/70">Retry</button>
   </div>;
+}
+
+/** World Info with its cover made on the cover itself (Manifest, the choice, the reveal and the picker). */
+function CoveredStoryDetail({ covers, storyId, request, agent, ...detail }: Parameters<typeof useStoryCoverManifest>[0]
+  & Omit<ComponentProps<typeof StoryDetailScreen>, 'coverAction'>) {
+  const { onCover, overPage } = useStoryCoverManifest({ covers, storyId, request, agent });
+  return <>
+    <StoryDetailScreen {...detail} coverAction={onCover} />
+    {overPage}
+  </>;
 }

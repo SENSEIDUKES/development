@@ -57,14 +57,29 @@ export function storyCoverRequest(state: HarnessWorkspaceState, storyId: string)
   return request;
 }
 
+/** How many covers a reader may ask for at once: one, or three to choose from. */
+export const STORY_COVER_CHOICES = [1, 3] as const;
+export type StoryCoverChoice = typeof STORY_COVER_CHOICES[number];
+
+/** Covers just made: each address shows one until it is kept or let go. */
+export interface MadeStoryCovers {
+  urls: string[];
+  /** Why some (or, with no urls, all) of the covers asked for could not be made. */
+  problem?: string;
+}
+
 /**
- * The host's cover service: makes a cover image for a story and keeps it.
- * Covers are the host's media (the app keeps them on the device until the
- * database), so the Library only asks for one and shows it.
+ * The host's cover service: makes cover images for a story and keeps the one
+ * the reader chooses. Covers are the host's media (the app keeps them on the
+ * device until the database), so the Library only asks for them and shows them.
  */
 export interface StoryCoverService {
   /** The story's kept cover, as an address an `<img>` can show, or undefined. */
   coverUrl: (storyId: string) => string | undefined;
-  /** Makes a new cover from the request, keeps it as the story's cover, and resolves with its address. */
-  manifest: (storyId: string, request: StoryCoverRequest) => Promise<string>;
+  /** Makes `count` covers from the request. None is kept yet; each made address shows one. */
+  make: (storyId: string, request: StoryCoverRequest, count: StoryCoverChoice) => Promise<MadeStoryCovers>;
+  /** Keeps one made cover as the story's cover, replacing any cover before it. */
+  keep: (storyId: string, madeUrl: string) => Promise<void>;
+  /** Lets go of made covers the reader did not keep. */
+  letGo: (madeUrls: readonly string[]) => void;
 }

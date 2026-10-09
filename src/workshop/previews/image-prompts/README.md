@@ -46,10 +46,12 @@ flagged, since they are filled in for each image in the app.
 
 ## What it shows
 
-- **Cover art** (in the app): the Manifest cover prompt, from
-  `buildStoryCoverPrompt` with each field shown in braces; its rules (the look
-  for each tradition, 2:3, no lettering, field limits, the Model Router's image
-  model, the visitor limit); and the old app's two cover prompts to compare.
+- **Cover art** (in the app): the owner's approved cover template, read from
+  the server (`COVER_PROMPT_TEMPLATE`) with each field in braces, and its two
+  title instructions (title on, the default; title off); its rules (tradition,
+  one cover or three to choose from, 2:3, the title, field limits, the Model
+  Router's image model, the visitor limit); and the old app's two cover prompts
+  to compare.
 - **Profile picture**: the owner's approved prompt (2026-10-08), sent to the
   image model with the reader's photo. The old app's two-step portrait (a text
   model writing the prompt from the photo) and its evolving by rank were

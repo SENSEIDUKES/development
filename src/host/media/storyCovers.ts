@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { StoryCoverRequest, StoryCoverService } from '@seihouse/library/stories';
+import type { StoryCoverChoice, StoryCoverRequest, StoryCoverService } from '@seihouse/library/stories';
 
 /** The cover art the host keeps for its stories, one image per story. */
 export interface StoryCoverStore {
@@ -7,8 +7,8 @@ export interface StoryCoverStore {
   save(storyId: string, image: Blob): Promise<void>;
 }
 
-/** Makes one cover image from a story's own words. */
-export type StoryCoverRequester = (story: StoryCoverRequest) => Promise<Blob>;
+/** Makes several cover images at once; `problem` says why any could not be made. */
+export type StoryCoverMaker = (story: StoryCoverRequest, count: StoryCoverChoice) => Promise<{ images: Blob[]; problem?: string }>;
 
 const DATABASE_VERSION = 1;
 const STORE_NAME = 'covers';
@@ -76,13 +76,16 @@ export function createMemoryStoryCoverStore(): StoryCoverStore {
 }
 
 /**
- * The Library's cover service over the host's store and cover server. Each
- * kept cover is shown through an object URL, released when it is replaced or
- * the page goes. A cover the device cannot keep is still shown for the visit.
+ * The Library's cover service over the host's store and cover server. Covers
+ * just made are shown through object URLs until the reader keeps one; the kept
+ * cover is saved and shown through its own URL, released when it is replaced
+ * or the page goes. A cover the device cannot keep is still shown for the visit.
  */
-export function useStoryCovers(store: StoryCoverStore, request: StoryCoverRequester): StoryCoverService {
+export function useStoryCovers(store: StoryCoverStore, maker: StoryCoverMaker): StoryCoverService {
   const [urls, setUrls] = useState<Record<string, string>>({});
   const shown = useRef(new Map<string, string>());
+  /** Covers made and not yet kept or let go, by their address. */
+  const made = useRef(new Map<string, Blob>());
   const show = useCallback((storyId: string, image: Blob) => {
     const url = URL.createObjectURL(image);
     const previous = shown.current.get(storyId);
@@ -102,14 +105,38 @@ export function useStoryCovers(store: StoryCoverStore, request: StoryCoverReques
   }, [store, show]);
   useEffect(() => {
     const urlsShown = shown.current;
-    return () => { for (const url of urlsShown.values()) URL.revokeObjectURL(url); urlsShown.clear(); };
+    const urlsMade = made.current;
+    return () => {
+      for (const url of [...urlsShown.values(), ...urlsMade.keys()]) URL.revokeObjectURL(url);
+      urlsShown.clear();
+      urlsMade.clear();
+    };
   }, []);
 
-  const manifest = useCallback(async (storyId: string, story: StoryCoverRequest) => {
-    const image = await request(story);
-    try { await store.save(storyId, image); } catch { /* Shown for the visit; the device would not keep it. */ }
-    return show(storyId, image);
-  }, [request, store, show]);
+  const make = useCallback(async (_storyId: string, story: StoryCoverRequest, count: StoryCoverChoice) => {
+    const { images, problem } = await maker(story, count);
+    const madeUrls = images.map(image => {
+      const url = URL.createObjectURL(image);
+      made.current.set(url, image);
+      return url;
+    });
+    return { urls: madeUrls, ...(problem ? { problem } : {}) };
+  }, [maker]);
 
-  return useMemo(() => ({ coverUrl: (storyId: string) => urls[storyId], manifest }), [urls, manifest]);
+  const letGo = useCallback((madeUrls: readonly string[]) => {
+    for (const url of madeUrls) {
+      if (!made.current.delete(url)) continue;
+      URL.revokeObjectURL(url);
+    }
+  }, []);
+
+  const keep = useCallback(async (storyId: string, madeUrl: string) => {
+    const image = made.current.get(madeUrl);
+    if (!image) throw new Error('That cover is no longer here. Make it again.');
+    try { await store.save(storyId, image); } catch { /* Shown for the visit; the device would not keep it. */ }
+    show(storyId, image);
+    letGo([madeUrl]);
+  }, [store, show, letGo]);
+
+  return useMemo(() => ({ coverUrl: (storyId: string) => urls[storyId], make, keep, letGo }), [urls, make, keep, letGo]);
 }

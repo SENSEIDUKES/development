@@ -447,13 +447,15 @@ Update it whenever it changes.
     - The Harness Generation developer page shows the same panels, with its own
       inspection added (each skill's instructions, the Official Requirements, slot
       uploads).
-  - **Cover art on Story View, through the media reveal** (piece 5): **Manifest
-    cover** makes a cover from the story's own words (its title, genre, tradition,
-    logline, main character, tone, world and tags; never its chapters) behind the
-    Aura Veil's media reveal: the scroll unseals while it is made and opens on the
-    finished cover, then World Info and Home's card wear it. **New cover** makes
-    another, which replaces it. Covers are made with the Model Router's image
-    choice, **Nano Banana 2** unless the reader picks another in its Images tab;
+  - **Cover art, made on the cover** (piece 5, remade 2026-10-09): World Info's
+    empty cover says **Manifest**; the reader chooses one cover (5 Energy) or three
+    to choose from (15). Covers come from the story's own words (its title, genre,
+    tradition, logline, main character, tone, world and tags; never its chapters)
+    with the owner's approved cover template, the title drawn on, behind the Aura
+    Veil's media reveal. One is revealed and worn; three come alive in a picker and
+    the reader keeps one. World Info and Home's card wear it; a kept cover keeps a
+    small Manifest and a download on its corner. Covers are made with the Model
+    Router's image choice, **Nano Banana 2 Lite** unless the reader picks another;
     visitors may make 3 every 30 minutes and the owner's access token lifts the
     limit. Until the database, a cover is kept on the device, beside the stories.
   - **Story Length is set from the start:** the Story Seed's ARC page asks how many
@@ -644,7 +646,7 @@ Update it whenever it changes.
 | SEA | SEIHouse Expanded Albums: SEIHouse's expanded-music product, separate from SEN. It inherits the shared infrastructure SEN pressure-tests. |
 | NovelExpanded app | Expanded Novels' app at NovelExpanded.com. Built at `/app/` (piece 1: the core application spine of Home, Create, Story View and Reader; piece 2: the Library Shell around it; piece 3: Profile, with the Familiar and a practice economy; piece 4: Story Settings in Create and Story View; piece 5: cover art on Story View), in `src/novel-expanded/`. |
 | Story Seed / World Blueprint | Where a story is created (`?preview=story-seed`, and Create in the app). The Blueprint is the novel's transferable core: what a reader takes to make their own version ([The World Blueprint](#the-world-blueprint)). |
-| Story View | The story's own page: cover art, the story, Enter. Built today as the World Info page (`WorldCardInfo`), where Start Story or Start Reading leads into the Reader Chamber, with Manifest cover and the story's Story Settings below it. |
+| Story View | The story's own page: cover art, the story, Enter. Built today as the World Info page (`WorldCardInfo`), where Start Story or Start Reading leads into the Reader Chamber, with Manifest on its cover and the story's Story Settings below it. |
 | Reader Chamber | Where chapters are read: a HARNESS story's chapters on the Text Highlight Engine with Sound Cues, Listen and the soundtrack (`HarnessReaderSession`). The older Reader Chamber preview (`?preview=reader-chamber`) is not part of this path. |
 | Listen / Read Aloud | The Reader reading a chapter aloud in three voices with the spoken sentence lit (`useReadAloud`, SEN's `reader-runtime`). Its voices and speed live in Reader Settings → Narration. |
 | Reader Settings | The Reader's settings sheet: Audio, then Narration. |

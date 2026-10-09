@@ -15,6 +15,14 @@ export interface ImagePromptsChange {
  */
 export const IMAGE_PROMPTS_HISTORY: ImagePromptsChange[] = [
   {
+    date: '2026-10-09',
+    summary: 'The approved cover template is connected: every cover the app makes now uses it, filled from the story\'s own words, with the title drawn on (title enabled is the default). A line whose field the story lacks is left out. "What the app sends today" is retired, since the app now sends the approved template.',
+    changed: {
+      cover: '07aee0fcffbf50',
+      'cover-title-on': '0e13d762ba1769',
+    },
+  },
+  {
     date: '2026-10-08',
     summary: 'The owner rewrote the profile picture: the reader\'s photo now goes straight to the image model with one prompt, turning them into a donghua-style cultivator that keeps their likeness and skin tone. The old app\'s extra step (a text model reading the photo to write the prompt, so the image model never saw the photo) is removed, with its prompt writer, its request and its no-photo prompt, and so is the portrait evolving with Dao Rank, realm and artifacts.',
     changed: {

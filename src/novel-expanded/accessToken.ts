@@ -2,7 +2,7 @@ import type { HarnessGenerationModelAdapter } from '@seihouse/sen/harness-genera
 import type { AccessTokenStore } from '../host/generation/accessToken';
 import { HarnessGenerationRequestError } from '../host/generation/httpClient';
 import { StoryCoverRequestError, type requestStoryCover } from '../host/media/storyCoverClient';
-import type { StoryCoverRequester } from '../host/media/storyCovers';
+import type { StoryCoverMaker } from '../host/media/storyCovers';
 import { PROFILE_PICTURE_CHOICES, ProfilePictureRequestError, keptPortrait, readProfilePhoto, type requestProfilePicture } from '../host/media/profilePictureClient';
 import { blobToDataUrl } from '../host/media/imageFiles';
 import type { DevicePortraitMaker } from '../host/profile/deviceProfileServices';
@@ -49,38 +49,67 @@ export const writerWithAccessToken = (
 };
 
 /**
- * The cover maker with the owner's access token, the same way as chapters: a
- * cover refused for the visitor limit without a token (429), or for a token
- * the server did not accept (401), asks for the token and is asked for again.
- * The server refused it before any model call, so nothing is made twice.
+ * Several images asked for at once with the owner's access token, each its own
+ * request. When the visitor limit (429 without a token) or a token the server
+ * did not accept (401) stops any of them, the token is asked for once and
+ * those are asked for again; the server refused them before any model call, so
+ * nothing is made twice. `problem` says why any could not be made.
  */
-export const coverRequesterWithAccessToken = (
+async function makeSeveralWithAccessToken(count: number, send: () => Promise<Blob>, options: {
+  token: AccessTokenStore;
+  ask: AskForAccessToken;
+  reason: 'covers' | 'portraits';
+  /** The HTTP status of a refused request, when it was refused by the server. */
+  status: (error: unknown) => number | undefined;
+  /** What the images are called, for the problem line ("covers", "portraits"). */
+  noun: string;
+}): Promise<{ images: Blob[]; problem?: string }> {
+  const { token, ask, reason, status, noun } = options;
+  let results = await Promise.allSettled(Array.from({ length: count }, send));
+  const needsToken = (result: PromiseSettledResult<Blob>) => {
+    if (result.status !== 'rejected') return false;
+    const code = status(result.reason);
+    return code === 401 || (code === 429 && !token.current);
+  };
+  // Which were refused for the token is decided before the token changes.
+  const refused = results.map(needsToken);
+  if (refused.some(Boolean)) {
+    const rejected = results.some((result, index) => refused[index] && status((result as PromiseRejectedResult).reason) === 401);
+    if (rejected) token.current = undefined;
+    const entered = await ask({ reason, rejected });
+    if (entered) {
+      token.current = entered;
+      results = await Promise.all(results.map((result, index) => refused[index] ? Promise.allSettled([send()]).then(([again]) => again) : result));
+    }
+  }
+  const images = results.flatMap(result => result.status === 'fulfilled' ? [result.value] : []);
+  const failures = results.filter((result): result is PromiseRejectedResult => result.status === 'rejected');
+  const failure = failures[0]?.reason instanceof Error ? failures[0].reason.message : undefined;
+  const problem = !failures.length ? undefined
+    : images.length ? `${failures.length} of ${count} ${noun} could not be made. ${failure ?? ''}`.trim()
+      : failure;
+  return { images, ...(problem ? { problem } : {}) };
+}
+
+/**
+ * The cover maker with the owner's access token: one cover, or three to
+ * choose from, each its own request to the cover server (see
+ * `makeSeveralWithAccessToken`).
+ */
+export const coverMakerWithAccessToken = (
   request: typeof requestStoryCover,
   token: AccessTokenStore,
   ask: AskForAccessToken,
   model: () => string | undefined,
-): StoryCoverRequester => async story => {
-  for (;;) {
-    try {
-      return await request(story, { model: model(), accessToken: token.current });
-    } catch (error) {
-      const status = error instanceof StoryCoverRequestError ? error.status : undefined;
-      if (status !== 401 && !(status === 429 && !token.current)) throw error;
-      if (status === 401) token.current = undefined;
-      const entered = await ask({ reason: 'covers', rejected: status === 401 });
-      if (!entered) throw error;
-      token.current = entered;
-    }
-  }
-};
+): StoryCoverMaker => (story, count) => makeSeveralWithAccessToken(count,
+  () => request(story, { model: model(), accessToken: token.current }),
+  { token, ask, reason: 'covers', noun: 'covers', status: error => error instanceof StoryCoverRequestError ? error.status : undefined });
 
 /**
  * The profile picture maker with the owner's access token: the reader's photo
- * is made small enough to send, then three portraits are asked for at once,
- * each its own request. When the visitor limit (429 without a token) or a
- * token the server did not accept (401) stops any of them, the token is asked
- * for once and those are asked for again; the server refused them before any
- * model call. The chosen portrait is kept small, as a data URL.
+ * is made small enough to send, then three portraits are asked for at once
+ * (see `makeSeveralWithAccessToken`). The chosen portrait is kept small, as a
+ * data URL.
  */
 export const portraitMakerWithAccessToken = (
   request: typeof requestProfilePicture,
@@ -90,28 +119,8 @@ export const portraitMakerWithAccessToken = (
 ): DevicePortraitMaker => ({
   make: async file => {
     const photo = await readProfilePhoto(file);
-    const send = () => request(photo, { model: model(), accessToken: token.current });
-    let results = await Promise.allSettled(Array.from({ length: PROFILE_PICTURE_CHOICES }, send));
-    const needsToken = (result: PromiseSettledResult<Blob>) => result.status === 'rejected' && result.reason instanceof ProfilePictureRequestError
-      && (result.reason.status === 401 || (result.reason.status === 429 && !token.current));
-    // Which were refused for the token is decided before the token changes.
-    const refused = results.map(needsToken);
-    if (refused.some(Boolean)) {
-      const rejected = results.some((result, index) => refused[index] && (result as PromiseRejectedResult).reason.status === 401);
-      if (rejected) token.current = undefined;
-      const entered = await ask({ reason: 'portraits', rejected });
-      if (entered) {
-        token.current = entered;
-        results = await Promise.all(results.map((result, index) => refused[index] ? Promise.allSettled([send()]).then(([again]) => again) : result));
-      }
-    }
-    const images = results.flatMap(result => result.status === 'fulfilled' ? [result.value] : []);
-    const failures = results.filter((result): result is PromiseRejectedResult => result.status === 'rejected');
-    const reason = failures[0]?.reason instanceof Error ? failures[0].reason.message : undefined;
-    const problem = !failures.length ? undefined
-      : images.length ? `${failures.length} of ${PROFILE_PICTURE_CHOICES} portraits could not be made. ${reason ?? ''}`.trim()
-        : reason;
-    return { images, ...(problem ? { problem } : {}) };
+    return makeSeveralWithAccessToken(PROFILE_PICTURE_CHOICES, () => request(photo, { model: model(), accessToken: token.current }),
+      { token, ask, reason: 'portraits', noun: 'portraits', status: error => error instanceof ProfilePictureRequestError ? error.status : undefined });
   },
   keep: async portrait => blobToDataUrl(await keptPortrait(portrait)),
 });

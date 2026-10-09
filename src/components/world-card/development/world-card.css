@@ -234,7 +234,10 @@
   display: grid; grid-template-columns: minmax(5.5rem, 33%) minmax(0, 1fr); grid-template-areas: 'cover identity' 'tags tags';
   gap: 0.6rem 0.75rem; align-items: center;
 }
-.world-card-info-cover { grid-area: cover; width: 100%; }
+.world-card-info-cover { position: relative; grid-area: cover; width: 100%; }
+/* The host's controls over the cover (for example making cover art) share the cover's frame and corners. */
+.world-card-info-cover-action { position: absolute; inset: 0; z-index: 6; overflow: hidden; border-radius: 1.25rem; pointer-events: none; }
+.world-card-info-cover-action > * { pointer-events: auto; }
 .world-card-info-identity { grid-area: identity; display: flex; min-width: 0; flex-direction: column; gap: 0.4rem; }
 .world-card-info-tags { grid-area: tags; }
 @media (min-width: 380px) {

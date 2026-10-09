@@ -53,8 +53,12 @@ export interface ImageGenerationRequest {
   prompt: string;
   /** The image's shape, such as `2:3` for a cover. */
   aspectRatio?: string;
+  /** Images the model works from, such as a reader's photo (base64, as `data`). */
+  referenceImages?: ImageInput[];
   timeoutMs: number;
 }
+
+export interface ImageInput { data: string; mimeType: string }
 
 export type GenerationRequest = TextGenerationRequest | SpeechGenerationRequest | ImageGenerationRequest;
 export interface TokenUsage { inputTokens: number; outputTokens: number; totalTokens: number }
@@ -191,14 +195,17 @@ export function createModelRouter(config: ModelRouterConfig) {
       try {
         if (provider === 'openrouter') {
           return accept(await generateOpenRouterImage({
-            apiKey: key, model: request.model, prompt: request.prompt, aspectRatio: request.aspectRatio,
+            apiKey: key, model: request.model, prompt: request.prompt, aspectRatio: request.aspectRatio, referenceImages: request.referenceImages,
             timeoutMs: request.timeoutMs, attribution: config.openRouterAttribution, fetchImpl,
           }));
         }
         return await withTimeout(request.timeoutMs, async signal => {
           const client = config.createGeminiClient?.(key) ?? new GoogleGenAI({ apiKey: key });
           const response = await client.models.generateContent({
-            model: providerModelName(request.model), contents: request.prompt,
+            model: providerModelName(request.model),
+            contents: request.referenceImages?.length
+              ? [{ role: 'user', parts: [{ text: request.prompt }, ...request.referenceImages.map(image => ({ inlineData: { data: image.data, mimeType: image.mimeType } }))] }]
+              : request.prompt,
             config: {
               responseModalities: ['IMAGE'],
               ...(request.aspectRatio ? { imageConfig: { aspectRatio: request.aspectRatio } } : {}),

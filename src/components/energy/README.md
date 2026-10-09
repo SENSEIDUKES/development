@@ -102,6 +102,20 @@ or verified against a production deployment.
 
 ## Workshop history
 
+- **2026-10-09 the Energy badge** — Every Energy number wears one badge: the Energy mark and
+  the number in a gold-outlined pill, a balance (`EnergyAmount`, so the Profile home, the
+  Store and the Energy page) or a cost (`EnergyActionCost`). `EnergyCostMeter` puts an
+  action's price beside its control and floats "−price" as each result arrives: the Reader's
+  Write Chapter button (1 Energy). The Story Seed's Manifest shows a chapter's price for now,
+  as a World Blueprint has no price of its own yet. Practice only: nothing is taken.
+
+- **2026-10-08 images at 5, Energy leaving** — Images cost 5 Energy each (`image.generate`,
+  the owner's price; still projected). `EnergySpendFloater` shows Energy leaving the way games
+  do: a "−5" with the Energy mark rises from the control that spent it and fades, one per item
+  made, with one spoken line for screen readers and a fade in place under reduced motion. The
+  profile picture builder, Story View's cover and the Workshop's Image Lab show the cost and the
+  floaters; nothing is taken from a balance yet (practice).
+
 - **2026-09-23 reward rework** — The page reads DAO XP from its own ledger and explains that it
   alone sets the Cultivator Rank, which only chooses colours. QI copy names where it is spent
   (the Celestial Store, Familiar training) and earned (the Dao Pillar, Mystery Scrolls). The

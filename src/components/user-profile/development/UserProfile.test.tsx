@@ -122,7 +122,7 @@ describe('Home portrait access and generation progress', () => {
     expect(portrait.getAttribute('aria-label')).toBe(state === 'new-cultivator' ? 'Add cultivator portrait' : 'Change cultivator portrait');
     await click(portrait);
     expect(controller().showPortraitModal).toBe(true);
-    expect(document.body.querySelector('[role="dialog"]')?.textContent).toContain('Cultivator Portrait Builder');
+    expect(document.body.querySelector('[role="dialog"]')?.textContent).toContain('Profile picture');
     expect(new URL(window.location.href).searchParams.get('cave')).not.toBe('/settings');
   });
 
@@ -133,20 +133,38 @@ describe('Home portrait access and generation progress', () => {
     expect(container.querySelector('[data-cave-portrait] button')).toBeNull();
   });
 
-  it('renders every generation step and safely handles unexpected steps', async () => {
+  it('offers the portraits made from the photo to choose from, each with its own download', async () => {
     const { controller } = await renderCave();
     const props = controller();
-    for (const generationStep of [0, 1, 2, 3, 4, 5, 6, -1]) {
-      await act(async () => {
-        root.render(<UserProfilePortraitModal {...props} showPortraitModal isGeneratingPortrait
-          generatedPortraitUrl="" generationStep={generationStep} />);
-      });
-      const status = document.body.querySelector('[role="status"]')?.textContent;
-      expect(status).toMatch(/^Manifesting .+\.\.\.$/);
-      expect(status).not.toContain('undefined');
-      if (generationStep === 4) expect(status).toBe('Manifesting Finishing Touches...');
-      if (generationStep >= 5 || generationStep < 0) expect(status).toBe('Manifesting Completing...');
-    }
+    const setChosenPortrait = vi.fn();
+    const urls = ['blob:one', 'blob:two', 'blob:three'];
+    await act(async () => {
+      root.render(<UserProfilePortraitModal {...props} showPortraitModal generatedPortraitUrls={urls} chosenPortrait={1} setChosenPortrait={setChosenPortrait} />);
+    });
+    const choices = [...document.body.querySelectorAll<HTMLButtonElement>('.portrait-builder-choice')];
+    expect(choices.map(choice => choice.getAttribute('aria-pressed'))).toEqual(['false', 'true', 'false']);
+    expect(document.body.querySelector('.portrait-builder-frame img')?.getAttribute('src')).toBe('blob:two');
+    expect([...document.body.querySelectorAll('.portrait-builder-download')].map(link => link.getAttribute('href'))).toEqual(urls);
+    await click(choices[2]);
+    expect(setChosenPortrait).toHaveBeenCalledWith(2);
+    expect(document.body.textContent).toContain('Use this portrait');
+    expect(document.body.textContent).toContain('Make three more');
+    expect(document.body.querySelector('[data-energy-spend]')?.getAttribute('data-energy-spend')).toBe('15');
+  });
+
+  it('says it is making the portraits while it waits, and shows the cost before', async () => {
+    const { controller } = await renderCave();
+    const props = controller();
+    const photo = new File(['photo'], 'me.jpg', { type: 'image/jpeg' });
+    await act(async () => {
+      root.render(<UserProfilePortraitModal {...props} showPortraitModal portraitUploadFile={photo} generatedPortraitUrls={[]} />);
+    });
+    expect(document.body.querySelector('[data-energy-action]') ?? document.body.querySelector('.energy-action-cost')).not.toBeNull();
+    expect(document.body.querySelector('.energy-action-cost')?.textContent).toBe('15');
+    await act(async () => {
+      root.render(<UserProfilePortraitModal {...props} showPortraitModal portraitUploadFile={photo} isGeneratingPortrait generatedPortraitUrls={[]} />);
+    });
+    expect(document.body.querySelector('[role="status"]')?.textContent).toBe('Making your portraits…');
   });
 });
 
@@ -475,7 +493,7 @@ describe('Cultivator Cave home', () => {
     expect(panel.querySelector('[data-economy-section="qi"]')?.textContent).toContain('1 QI = $0.002');
     expect(panel.querySelector('[data-economy-section="dao-xp"]')?.textContent).toContain('Master50,000 DAO XP');
     expect(panel.querySelector('[data-energy-action="chapter.generate"]')?.textContent).toContain('1');
-    expect(panel.querySelector('[data-energy-action="image.generate"]')?.textContent).toContain('3');
+    expect(panel.querySelector('[data-energy-action="image.generate"]')?.textContent).toContain('5');
     expect(panel.querySelector('[data-energy-action="short-cue.generate"]')?.textContent).toContain('3');
     expect(panel.querySelector('[data-energy-action="long-cue.generate"]')?.textContent).toContain('15');
     expect(panel.querySelector('[data-energy-action="soundscape.generate"]')?.textContent).toContain('20');
@@ -802,7 +820,7 @@ describe('Cultivator Cave settings', () => {
     const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('[aria-label="Settings categories"] [role="tab"]'));
     expect(tabs.map(tab => tab.textContent)).toEqual(['Customization', 'Accessibility', 'Account', 'Advanced']);
     const visibleHeadings = () => Array.from(document.querySelectorAll('[data-cave-settings] [data-slot="disclosure-heading"]')).filter(node => !node.closest('[hidden]')).map(node => node.textContent);
-    expect(visibleHeadings()).toEqual(['Identity & Cultivator Aura', 'Cultivator Portrait', 'Cave Environment', 'Sound']);
+    expect(visibleHeadings()).toEqual(['Identity & Cultivator Aura', 'Profile picture', 'Cave Environment', 'Sound']);
     await act(async () => controller().setFormData(previous => ({ ...previous, displayName: 'Cloud Reader' })));
     await click(tabs[1]);
     expect(visibleHeadings()).toEqual(['Language', 'Writing Preferences', 'Keyboard Shortcuts']);
@@ -827,7 +845,7 @@ describe('Cultivator Cave settings', () => {
     );
     expect(headings).toEqual([
       'Identity & Cultivator Aura',
-      'Cultivator Portrait',
+      'Profile picture',
       'Cave Environment',
       'Sound',
       'Language',
@@ -1057,11 +1075,11 @@ describe('Cultivator Cave settings', () => {
       .some(control => control.className.includes('!min-h-11'))).toBe(true);
     expect(byText<HTMLButtonElement>('button', 'Preview Public View').className).toContain('!min-h-11');
 
-    await click(byText('[data-slot="disclosure-trigger"]', 'Cultivator Portrait'));
-    const mirror = byText<HTMLButtonElement>('button', 'Open Divine Mirror');
+    await click(byText('[data-slot="disclosure-trigger"]', 'Profile picture'));
+    const mirror = byText<HTMLButtonElement>('button', 'Change profile picture');
     expect(mirror.className).toContain('!min-h-11');
     await click(mirror);
-    const close = document.body.querySelector<HTMLButtonElement>('[aria-label="Close Portrait Builder"]')!;
+    const close = document.body.querySelector<HTMLButtonElement>('[aria-label="Close Profile picture"]')!;
     expect(close.className).toContain('h-11');
     expect(close.className).toContain('w-11');
     expect(close.className).toContain('focus-visible:outline');
@@ -1437,8 +1455,8 @@ describe('Cave overlays and history', () => {
   it('dismisses the portrait when history selects another destination', async () => {
     await renderCave();
     await click(byText('[data-cave-account-actions] button', 'Settings'));
-    await click(byText('button', 'Open Divine Mirror'));
-    expect(document.body.querySelector('[role="dialog"]')?.textContent).toContain('Cultivator Portrait Builder');
+    await click(byText('button', 'Change profile picture'));
+    expect(document.body.querySelector('[role="dialog"]')?.textContent).toContain('Profile picture');
     await act(async () => {
       history.replaceState(null, '', '/?preview=user-profile&cave=/stories');
       window.dispatchEvent(new PopStateEvent('popstate'));
@@ -2102,11 +2120,11 @@ describe('Cave pieces a host has not built yet', () => {
     expect(harmony.getAttribute('aria-label')).toBe('Harmony: Not connected');
     // What the host has built stays the reader's.
     expect(button('Guard Changes')).toBeTruthy();
-    expect(button('Open Divine Mirror')?.disabled).toBe(false);
+    expect(button('Change profile picture')?.disabled).toBe(false);
 
-    // The portrait builder opens; Manifest Portrait waits, with the note.
-    await click(button('Open Divine Mirror')!);
-    expect(button('Manifest Portrait')?.disabled).toBe(true);
+    // The profile picture builder opens; Make my portraits waits, with the note.
+    await click(button('Change profile picture')!);
+    expect([...document.body.querySelectorAll<HTMLButtonElement>('button')].find(candidate => candidate.textContent?.startsWith('Make my portraits'))?.disabled).toBe(true);
     expect(document.body.querySelector('.portrait-builder-footer-note')?.textContent?.trim()).toBe(NOTE);
 
     await navigateTo('/home/inbox');

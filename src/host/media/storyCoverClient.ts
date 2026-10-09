@@ -1,4 +1,5 @@
 import type { StoryCoverRequest } from '@seihouse/library/stories';
+import { base64ToBlob } from './imageFiles';
 
 export const STORY_COVER_ENDPOINT = '/api/story-cover';
 
@@ -9,13 +10,6 @@ export class StoryCoverRequestError extends Error {
     this.name = 'StoryCoverRequestError';
   }
 }
-
-const imageBlob = (base64: string, mimeType: string): Blob => {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
-  return new Blob([bytes], { type: mimeType });
-};
 
 /**
  * Asks the cover server for one cover made from the story's own words, with
@@ -42,5 +36,5 @@ export async function requestStoryCover(story: StoryCoverRequest, options: {
   if (typeof body?.image !== 'string' || typeof body.mimeType !== 'string' || !body.mimeType.startsWith('image/')) {
     throw new StoryCoverRequestError('The cover server answered without an image.', 502);
   }
-  return imageBlob(body.image, body.mimeType);
+  return base64ToBlob(body.image, body.mimeType);
 }

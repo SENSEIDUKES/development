@@ -11,6 +11,7 @@ export {
   type LibraryStoriesOptions,
 } from '../../library/stories/useLibraryStories';
 export { StoryPages, type StoryPagesProps } from '../../library/stories/StoryPages';
+export { BlueprintEnergyCost } from '../../library/stories/BlueprintEnergyCost';
 export { harnessStoryDisplay, storyHomeWorlds } from '../../library/stories/storyView';
 export { LIBRARY_READ_ALOUD_VOICES } from '../../library/stories/readAloudVoices';
 export { StorySettings } from '../../library/stories/settings/StorySettings';

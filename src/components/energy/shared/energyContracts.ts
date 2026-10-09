@@ -58,7 +58,7 @@ export interface EnergyPriceEntry {
  */
 export const ENERGY_PRICE_CATALOG: readonly EnergyPriceEntry[] = [
   { actionId: 'chapter.generate', label: 'Chapter', price: 1, projected: true },
-  { actionId: 'image.generate', label: 'Image', price: 3, projected: true },
+  { actionId: 'image.generate', label: 'Image', price: 5, projected: true },
   { actionId: 'short-cue.generate', label: 'Short cue', price: 3, projected: true },
   { actionId: 'long-cue.generate', label: 'Long cue', price: 15, projected: true },
   { actionId: 'soundscape.generate', label: 'Soundscape', price: 20, projected: true },

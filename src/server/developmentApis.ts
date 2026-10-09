@@ -5,6 +5,7 @@ import { handleHarnessGenerationHttp } from '../server/harness-generation/http';
 import { handleStorySeedBlueprintHttp } from '../server/story-seed-blueprint/http';
 import { handleStoryCoverHttp, STORY_COVER_VISITOR_LIMIT } from '../server/story-cover/http';
 import { handleImageLabHttp } from '../server/image-lab/http';
+import { handleProfilePictureHttp, PROFILE_PICTURE_VISITOR_LIMIT } from '../server/profile-picture/http';
 import { handleReaderTranslationHttp } from '../server/reader-translation/http';
 import { handleCodexVoiceQuoteHttp } from '../server/audio/codexVoiceQuoteHttp';
 import { createConfiguredCodexVoiceQuoteService } from '../server/audio/codexVoiceQuote';
@@ -53,6 +54,7 @@ export const generationApis = (
     windowMs: 30 * 60 * 1_000,
   });
   const guardStoryCover = createPublicGenerationGuard(STORY_COVER_VISITOR_LIMIT);
+  const guardProfilePicture = createPublicGenerationGuard(PROFILE_PICTURE_VISITOR_LIMIT);
   const guardCodexVoiceQuote = createPublicGenerationGuard({
     key: 'codex-voice-quote',
     limit: 8,
@@ -103,6 +105,7 @@ export const generationApis = (
         && pathname !== '/api/generate-blueprint'
         && pathname !== '/api/story-cover'
         && pathname !== '/api/image-lab'
+        && pathname !== '/api/profile-picture'
         && pathname !== '/api/codex-voice-quote'
         && pathname !== '/api/reader-translation'
       ) {
@@ -117,6 +120,8 @@ export const generationApis = (
               ? ownerTokenAdmission(request, developmentAccessToken(environment)) ?? guardHarnessGeneration(request)
             : pathname === '/api/story-cover'
               ? ownerTokenAdmission(request, developmentAccessToken(environment)) ?? guardStoryCover(request)
+            : pathname === '/api/profile-picture'
+              ? ownerTokenAdmission(request, developmentAccessToken(environment)) ?? guardProfilePicture(request)
             : pathname === '/api/codex-voice-quote'
               ? guardCodexVoiceQuote(request)
             : pathname === '/api/reader-translation'
@@ -153,6 +158,18 @@ export const generationApis = (
               environment,
               onError: error => console.error('[story-cover]', error),
               onAnswer: ({ model, durationMs }) => console.info(`[story-cover] ${model} answered in ${Math.round(durationMs / 1000)}s`),
+            },
+          );
+          writeJson(response, result.status, result.body, result.headers);
+          return;
+        }
+        if (pathname === '/api/profile-picture') {
+          const result = await handleProfilePictureHttp(
+            { method: request.method, body, headers: request.headers },
+            {
+              environment,
+              onError: error => console.error('[profile-picture]', error),
+              onAnswer: ({ model, durationMs }) => console.info(`[profile-picture] ${model} answered in ${Math.round(durationMs / 1000)}s`),
             },
           );
           writeJson(response, result.status, result.body, result.headers);

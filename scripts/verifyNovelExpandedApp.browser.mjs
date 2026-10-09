@@ -833,6 +833,8 @@ async function soundRules(strict, viewport) {
       if (!started) await page.waitForTimeout(100);
     }
     check(started, 'The first tap anywhere on Home should start the music.');
+    // The note follows the mixer a moment after the sound starts, so its label is given a short while to change.
+    await note.and(page.locator('[aria-label="Mute sound"]')).waitFor({ timeout: 3_000 }).catch(() => undefined);
     check(await note.getAttribute('aria-label') === 'Mute sound', `Once the music plays the note should offer to mute, got ${await note.getAttribute('aria-label')}.`);
 
     // Leaving the page (another tab, another app to send a text) never stops it.

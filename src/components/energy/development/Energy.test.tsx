@@ -7,7 +7,7 @@ import { EnergyClientProvider, createHttpEnergyClient, type EnergyClient } from 
 import { useEnergyAccount, type EnergyAccountState } from '@seihouse/library/energy';
 import { ENERGY_ITEM_PRICES, ENERGY_PACKS, QI_ITEM_PRICES, QI_PACKS, QiAmount, type QiAccountState } from '@seihouse/library/cultivation';
 import { createLocalEnergyClient } from '../../../workshop/previews/energy/localEnergyClient';
-import { EnergyActionCost, EnergyBalanceIndicator, EnergyDeductionNotice, EnergyInsufficientState, EnergyPanel, energyDeductionToast } from '@seihouse/library/energy';
+import { EnergyActionCost, EnergyBalanceIndicator, EnergyCostMeter, EnergyDeductionNotice, EnergyInsufficientState, EnergyPanel, energyDeductionToast } from '@seihouse/library/energy';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -119,6 +119,21 @@ describe('Energy client hook', () => {
 });
 
 describe('Reusable Energy pieces', () => {
+  it('wears one Energy badge for a balance and for a cost', async () => {
+    await render(<><EnergyBalanceIndicator account={{ available: 540 }} /><EnergyActionCost actionId="image.generate" /></>);
+    const badges = Array.from(container.querySelectorAll('.energy-badge'));
+    expect(badges.map(badge => badge.textContent)).toEqual(['540', '5']);
+  });
+
+  it('floats the price up as each new result arrives, never for those already there', async () => {
+    await render(<EnergyCostMeter actionId="chapter.generate" made={3} />);
+    expect(container.querySelector('.energy-action-cost')?.textContent).toBe('1');
+    expect(container.querySelector('[data-energy-spend]')).toBeNull();
+    await render(<EnergyCostMeter actionId="chapter.generate" made={4} />);
+    expect(container.querySelector('[data-energy-spend]')?.getAttribute('data-energy-spend')).toBe('1');
+    expect(container.querySelectorAll('.energy-spend-floater__item')).toHaveLength(1);
+  });
+
   it('announces QI balance changes through one persistent status region', async () => {
     await render(<QiAmount amount={2_500} label="QI balance 2,500" />);
     const status = container.querySelector<HTMLElement>('[data-qi-status]');
@@ -137,7 +152,7 @@ describe('Reusable Energy pieces', () => {
     await render(<><EnergyActionCost actionId="chapter.generate" /><EnergyActionCost actionId="image.generate" /><EnergyActionCost actionId="narration.generate" /><EnergyActionCost price={7} /></>);
     const costs = Array.from(container.querySelectorAll('.energy-action-cost'));
     // The Energy mark is drawn artwork now, so only the number is text.
-    expect(costs.map(cost => cost.textContent)).toEqual(['1', '3', '7']);
+    expect(costs.map(cost => cost.textContent)).toEqual(['1', '5', '7']);
     expect(costs.every(cost => cost.querySelector('[data-sen-navigation-icon="energy"]'))).toBe(true);
     expect(costs[0].getAttribute('aria-label')).toBe('Costs 1 Energy (projected)');
     expect(ENERGY_PRICE_CATALOG.find(entry => entry.actionId === 'narration.generate')?.price).toBeNull();

@@ -44,11 +44,11 @@ export async function verifyCaveWorkspace(tab, viewport, cdp, report = () => {},
   };
   const profileControlGeometry = async () => {
     await ensureDisclosure('Public Profile What other cultivators see, and the way in.');
-    await ensureDisclosure('Cultivator Portrait Cast your likeness through the Divine Mirror.');
+    await ensureDisclosure('Profile picture A cultivator portrait made from your photo.');
     await ensureDisclosure('Language Interface dialect and automatic translation.');
     await ensureDisclosure('Writing Preferences Defaults copied onto newly created stories.');
-    await button('Open Divine Mirror').click();
-    await tab.playwright.getByRole('dialog', { name: 'Cultivator Portrait Builder' }).waitFor({ state: 'visible' });
+    await button('Change profile picture').click();
+    await tab.playwright.getByRole('dialog', { name: 'Profile picture' }).waitFor({ state: 'visible' });
     const controls = await tab.playwright.evaluate(() => {
       const namedButton = name => [...document.querySelectorAll('button')]
         .find(button => button.textContent.trim() === name);
@@ -58,8 +58,8 @@ export async function verifyCaveWorkspace(tab, viewport, cdp, report = () => {},
         ['display-name', document.querySelector('#cave-display-name')],
         ['custom-spectrum', document.querySelector('[aria-label="Custom spectrum"]')],
         ['public-preview', namedButton('Preview Public View')],
-        ['portrait-open', namedButton('Open Divine Mirror')],
-        ['portrait-close', document.querySelector('[aria-label="Close Portrait Builder"]')],
+        ['portrait-open', namedButton('Change profile picture')],
+        ['portrait-close', document.querySelector('[aria-label="Close Profile picture"]')],
         ['visibility-switch', labelForSwitch],
         ['preferred-language', document.querySelector('#cave-preferred-language')],
         ['translation-language', document.querySelector('#cave-translation-language')],
@@ -75,7 +75,7 @@ export async function verifyCaveWorkspace(tab, viewport, cdp, report = () => {},
         }),
       };
     });
-    await button('Close Portrait Builder').click();
+    await button('Close Profile picture').click();
     return controls;
   };
   const results = [];
@@ -132,15 +132,15 @@ export async function verifyCaveWorkspace(tab, viewport, cdp, report = () => {},
     assert.match(await tab.playwright.evaluate(() => document.activeElement?.textContent ?? ''), /Identity/);
     assert.equal(await tab.playwright.evaluate(() => document.activeElement?.matches(':focus-visible')), true);
 
-    await button('Cultivator Portrait Cast your likeness through the Divine Mirror.').click();
-    await button('Open Divine Mirror').click();
-    await tab.playwright.getByRole('dialog', { name: 'Cultivator Portrait Builder' }).waitFor({ state: 'visible' });
-    await button('Close Portrait Builder').press('Shift+Tab');
+    await button('Profile picture A cultivator portrait made from your photo.').click();
+    await button('Change profile picture').click();
+    await tab.playwright.getByRole('dialog', { name: 'Profile picture' }).waitFor({ state: 'visible' });
+    await button('Close Profile picture').press('Shift+Tab');
     await eventually(() => tab.playwright.evaluate(() => Boolean(document.activeElement?.closest('[role="dialog"]'))), 'dialog must contain keyboard focus');
-    await button('Close Portrait Builder').press('Escape');
+    await button('Close Profile picture').press('Escape');
     await tab.playwright.getByRole('dialog').waitFor({ state: 'hidden' });
-    assert.equal(await tab.playwright.evaluate(() => document.activeElement?.textContent?.trim()), 'Open Divine Mirror');
-    await button('Open Divine Mirror').click();
+    assert.equal(await tab.playwright.evaluate(() => document.activeElement?.textContent?.trim()), 'Change profile picture');
+    await button('Change profile picture').click();
     await tab.back();
     await tab.playwright.getByRole('dialog').waitFor({ state: 'hidden' });
     assert.equal(await button('Settings').isVisible(), true);

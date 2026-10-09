@@ -413,7 +413,7 @@ export function UserProfileSettingsPanel({
             </SEIDisclosure>
 
             {/* ---- Portrait -------------------------------------------------- */}
-            <SEIDisclosure value="portrait" heading="Cultivator Portrait" icon={Camera} supportingText="Cast your likeness through the Divine Mirror.">
+            <SEIDisclosure value="portrait" heading="Profile picture" icon={Camera} supportingText="A cultivator portrait made from your photo.">
               <div className="flex items-center gap-4 pt-1">
                 <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-[#d4af37]/50 bg-black">
                   {formData.avatarUrl || profile?.avatarUrl ? (
@@ -424,10 +424,10 @@ export function UserProfileSettingsPanel({
                 </div>
                 <div className="min-w-0 flex-1 space-y-2">
                   <p className="font-sans text-[11px] text-neutral-400">
-                    {profile?.activePortraitId ? 'A sealed portrait is active.' : 'No portrait has been sealed yet.'}
+                    {profile?.avatarUrl ? 'Your profile picture is set.' : 'No profile picture yet.'}
                   </p>
                   <LibraryButton variant="secondary" size="sm" icon={Sparkles} disabled={!profile} onClick={onOpenPortrait} className="!min-h-11">
-                    Open Divine Mirror
+                    {profile?.avatarUrl ? 'Change profile picture' : 'Make a profile picture'}
                   </LibraryButton>
                 </div>
               </div>

@@ -4,8 +4,8 @@
  *
  * Light-Novels' `useUserProfile()` still returns the retired economy's
  * members: the legacy daily check-in and cracked pillar, the special-QI
- * reserves, Relic attunement with the equipped artifact, and weekly
- * offerings. The development Cave's port (`../development/userProfileServices.ts`,
+ * reserves, Relic attunement with the equipped artifact, weekly offerings,
+ * and the Divine Mirror's one-portrait flow. The development Cave's port (`../development/userProfileServices.ts`,
  * published as `@seihouse/library/profile`) removed them. This Workshop-owned
  * adapter rebuilds production's port as that contract plus the retired
  * members, behind its own provider, so the locked reference renders exactly as
@@ -66,6 +66,11 @@ export interface UserProfileController extends Omit<DevelopmentUserProfileContro
   handleRepairPillar: () => Promise<void> | void;
   handleCheckIn: () => Promise<void> | void;
   handleAttuneArtifact: (artifactId: string) => Promise<void>;
+  /** Production's Divine Mirror: an optional description beside the photo, one portrait, and its rotating steps. */
+  portraitDesc: string;
+  setPortraitDesc: (description: string) => void;
+  generatedPortraitUrl: string;
+  generationStep: number;
 }
 
 export interface UserProfileServices extends Omit<DevelopmentUserProfileServices, 'useController'> {

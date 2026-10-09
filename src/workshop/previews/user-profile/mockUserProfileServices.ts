@@ -177,6 +177,9 @@ export function createMockUserProfileServices({
     const [generatedPortraitUrl, setGeneratedPortraitUrl] = useState('');
     const [portraitError, setPortraitError] = useState('');
     const [generationStep, setGenerationStep] = useState(0);
+    // The development builder offers three to choose from; the reference shows the first.
+    const [generatedPortraitUrls, setGeneratedPortraitUrls] = useState<string[]>([]);
+    const [chosenPortrait, setChosenPortrait] = useState(0);
 
     // ---- Profile snapshot -------------------------------------------------
     // Production calls `getUserProfile(uid)` here. The mock resolves the
@@ -441,7 +444,7 @@ export function createMockUserProfileServices({
       [commitProfile, isSavingChapterWritingStyle, profile],
     );
 
-    // ---- Divine Mirror portrait ------------------------------------------
+    // ---- Profile picture (production's Divine Mirror) ----------------------
     const handleFileChange = useCallback((file: File) => {
       // Production does exactly this before uploading. The read stays local:
       // the base64 never leaves the browser in the Workshop.
@@ -477,6 +480,8 @@ export function createMockUserProfileServices({
       setIsGeneratingPortrait(true);
       setPortraitError('');
       setGeneratedPortraitUrl('');
+      setGeneratedPortraitUrls([]);
+      setChosenPortrait(0);
       setGenerationStep(0);
 
       // Production advances the same six messages on this cadence while the
@@ -488,7 +493,9 @@ export function createMockUserProfileServices({
       try {
         await failIfScenarioFails('Celestial connection timed out. Please retry.');
         await delay(PORTRAIT_GENERATE_MS);
-        setGeneratedPortraitUrl(portraitUploadBase64 || PREVIEW_PORTRAIT_URL);
+        const made = portraitUploadBase64 || PREVIEW_PORTRAIT_URL;
+        setGeneratedPortraitUrl(made);
+        setGeneratedPortraitUrls([made, PREVIEW_PORTRAIT_URL, made]);
       } catch (generateError) {
         setPortraitError(
           generateError instanceof Error
@@ -502,7 +509,8 @@ export function createMockUserProfileServices({
     }, [portraitUploadBase64]);
 
     const handleApplyPortrait = useCallback(async () => {
-      if (!generatedPortraitUrl || isSavingPortrait || !profile) return;
+      const chosenUrl = generatedPortraitUrls[chosenPortrait] ?? generatedPortraitUrl;
+      if (!chosenUrl || isSavingPortrait || !profile) return;
       const epoch = accountEpoch.current;
       setIsSavingPortrait(true);
       setPortraitError('');
@@ -513,12 +521,14 @@ export function createMockUserProfileServices({
         if (!mounted.current || epoch !== accountEpoch.current || !profileRef.current) return;
         commitProfile({
           ...profileRef.current,
-          avatarUrl: generatedPortraitUrl,
+          avatarUrl: chosenUrl,
           activePortraitId: `portrait_${generateId(8)}`,
           updatedAt: new Date().toISOString(),
         });
         setShowPortraitModal(false);
         setGeneratedPortraitUrl('');
+        setGeneratedPortraitUrls([]);
+        setChosenPortrait(0);
         setPortraitUploadFile(null);
         setPortraitUploadBase64('');
       } catch (applyError) {
@@ -528,7 +538,7 @@ export function createMockUserProfileServices({
       } finally {
         setIsSavingPortrait(false);
       }
-    }, [commitProfile, generatedPortraitUrl, isSavingPortrait, profile]);
+    }, [chosenPortrait, commitProfile, generatedPortraitUrl, generatedPortraitUrls, isSavingPortrait, profile]);
 
     // ---- Akashic Switchboard ---------------------------------------------
     const fetchAdminData = useCallback(async () => {
@@ -842,6 +852,9 @@ export function createMockUserProfileServices({
       isGeneratingPortrait,
       isSavingPortrait,
       generatedPortraitUrl,
+      generatedPortraitUrls,
+      chosenPortrait,
+      setChosenPortrait,
       portraitError,
       generationStep,
       handleFileChange,

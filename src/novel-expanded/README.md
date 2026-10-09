@@ -91,8 +91,15 @@ It is the Cave the Workshop's User Profile preview shows, on the app's own servi
   each can be equipped, trained and shown; what the reader does with it (a Dao
   Pillar claim, an offering, a purchase) lasts for the visit, and a reload opens
   the account again. Nothing reaches a server.
-- **What needs a server says so.** Portrait generation (the Divine Mirror),
-  Keyboard Shortcuts, Redeem Code, Sever Link, Harmony sync, backup and import,
+- **The profile picture is made from the reader's photo.** Profile's portrait
+  builder sends the photo (made smaller first) to `/api/profile-picture` with
+  the approved prompt, three times, and shows the three portraits to choose
+  from, each with a download button; the chosen one is kept, small, in the
+  profile on this device. It uses the Model Router's image choice (Nano Banana
+  2 Lite by default); visitors may make 2 sets of 3 every 30 minutes, and the
+  access token lifts the limit. Each portrait shows 5 Energy leaving (practice:
+  nothing is taken yet).
+- **What needs a server says so.** Keyboard Shortcuts, Redeem Code, Sever Link, Harmony sync, backup and import,
   the Aether Router and the Inbox still show, disabled, with "Not in the app
   yet." The reader is not an owner, so the Akashic Switchboard does not show.
 - **Its Stories page** lists the reader's stories and their Story Seeds, and
@@ -274,20 +281,22 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## Not in the app yet
 
-- Accounts and server-side storage: the database, and with it a kept economy, portrait generation, sync, backup, codes, the Inbox and sign-out.
+- Accounts and server-side storage: the database, and with it a kept economy, sync, backup, codes, the Inbox and sign-out.
 - Discover. It joins the shell's navigation when its page comes.
 
 ## Verification
 
-- `src/novel-expanded/*.test.ts(x)`: the four pages and Profile, browser Back, an unknown story, the token sheet, a skill load failure, the Familiar across pages and out of the Reader, Settings kept on the device, Create's defaults from the profile, Story Settings chosen in Create becoming the new story's, a pack no longer unlocked, a cover made with the Router's image model and worn on World Info and Home, and the token asked for at the cover limit.
+- `src/novel-expanded/*.test.ts(x)`: the four pages and Profile, browser Back, an unknown story, the token sheet, a skill load failure, the Familiar across pages and out of the Reader, Settings kept on the device, Create's defaults from the profile, Story Settings chosen in Create becoming the new story's, a pack no longer unlocked, a cover made with the Router's image model and worn on World Info and Home, the token asked for at the cover limit, and a profile picture made from a photo (three to choose from, the chosen one kept) with the token asked for once at the limit.
 - `src/library/stories/storySettings.test.tsx`: Story View's Story Settings (closed until opened, a Reading Mode saved, waiting while a chapter is written), the cover behind the media reveal, and the Create draft.
-- `src/server/story-cover/http.test.ts` and `src/library/model-router/server.test.ts`: the cover route (Nano Banana 2 by default, the Router's choice, clipped fields, plain failures) and the Router's image calls (Gemini and OpenRouter).
+- `src/server/story-cover/http.test.ts`, `src/server/profile-picture/http.test.ts` and `src/library/model-router/server.test.ts`: the cover and profile picture routes (Nano Banana 2 Lite by default, the Router's choice, clipped fields or a readable photo, plain failures) and the Router's image calls (Gemini and OpenRouter, with an attached photo).
 - `src/host/profile/*.test.ts(x)` and `src/host/economy/practiceEconomy.test.ts`: the device profile, the Cave's controller over it, and the practice account.
 - `scripts/checkNovelExpandedApp.test.ts`: the guard, including the real app.
 - `scripts/verifyNovelExpandedApp.browser.mjs`: the walk in Chromium at 390px and 1440px against the dev server, with stubbed APIs (a stand-in cover among them) and a stand-in for the browser's speech (headless Chromium has no voices): Create's Story Settings, Story View's Story Settings, and Manifest cover through the media reveal to World Info and Home.
 
 ## History
 
+- **2026-10-09** — One Energy badge everywhere Energy shows: the Profile home's balance, the Store, the cost beside Make my portraits and New cover, beside Write Chapter in the Reader (1 Energy, with "−1" as each chapter arrives) and beside Manifest in Story Seed (a chapter's price for now). Practice only.
+- **2026-10-08** — The profile picture comes to the app: the reader's photo goes straight to the image model with the approved prompt, three portraits to choose from, the chosen one kept on the device. Images default to Nano Banana 2 Lite for now. Every image made (portraits, covers) has a download button, and shows its Energy cost (5 per image) with "−5" floaters as it arrives; nothing is taken yet.
 - **2026-10-08** — Story Settings and cover art come to the app. Story View has the story's Story Settings (language, Reading Mode, CAPA skill slots, media), closed until opened, and Create's Settings holds the skills and media a new story starts with, kept on the device until Manifest. Manifest cover on Story View makes a cover from the story's own words behind the media reveal, with the Model Router's image choice (Nano Banana 2 by default); World Info and Home wear it, and it is kept on the device. Visitors may make 3 covers every 30 minutes; the access token lifts the limit.
 - **2026-10-07** — Profile comes to the app, with everything it connects to: the Library's Cultivator Cave in the navigation (Home, Create, Profile; Settings beside Profile on laptops, and in Search and the footer), on the reader's profile kept on this device and a practice economy in the page (1,000,000 QI and every Familiar unlocked, fresh each visit, until the database). The account and server pieces show "Not in the app yet." One Familiar for the app: its recall in every Library header, summoned it floats above the bottom bar and the music note on phones and keeps its place across pages, and it stays out of the Reader; the writing veil wears the same Familiar. Create starts new Story Seeds from the profile's reading language and Reading Mode.
 - **2026-10-07** — Sound on phones: the music note floats just above the bottom bar's right end outside the Reader too (in the header on laptops), and leaving the page (another tab, another app, a locked phone) never stops the sound; time away does not count toward the idle rest, and sound a phone paused plays on at return. Checked that the first tap anywhere on Home starts the menu music, under a browser's no-sound-before-a-tap rule.

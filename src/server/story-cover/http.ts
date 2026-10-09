@@ -68,7 +68,7 @@ const parseRequest = (body: unknown): { story: StoryCoverRequest; model?: string
 
 /**
  * The story cover route: one image made from the story's own words, with the
- * image model chosen in the Model Router (Nano Banana 2 when none is). The
+ * image model chosen in the Model Router (Nano Banana 2 Lite when none is). The
  * reply is the image itself, in base64; the host keeps it.
  */
 export async function handleStoryCoverHttp(

@@ -25,13 +25,19 @@ its rules as short cards, two across on a laptop.
 
 Makes one image from any prompt, so a prompt can be refined by seeing what it
 makes. **Try this prompt** on a card sends its words here (covers at 2:3,
-everything else square, as each was made). Choose an image model from the Model
+everything else square, as each was made; cover art and the profile picture
+ask for three images to choose from). **Attach an image** sends a photo or
+other image to the model beside the prompt (PNG, JPEG or WebP; made smaller in
+the browser first, so a phone photo fits). **Images per try** is 1, or 3 to
+choose from: each try's images sit together with a **Choose** button. Choose an image model from the Model
 Router (it starts on the Router's Images choice; changing it here does not
 change the Router) and a shape, then **Make image**. Words in braces are
 flagged, since they are filled in for each image in the app.
 
 - **Server:** `POST /api/image-lab` (`src/server/image-lab/http.ts`, registered
-  in the Router as **Image Lab**), up to 8,000 characters, 2 minutes per image.
+  in the Router as **Image Lab**), up to 8,000 characters and one attached
+  image, 2 minutes per image. Three variations are three calls, so one refusal
+  does not cost the others.
 - **Who may use it:** only the owner's Development access token, since any
   prompt can be sent. The token is kept on this device, shared with the rest of
   the Workshop.
@@ -44,9 +50,14 @@ flagged, since they are filled in for each image in the app.
   `buildStoryCoverPrompt` with each field shown in braces; its rules (the look
   for each tradition, 2:3, no lettering, field limits, the Model Router's image
   model, the visitor limit); and the old app's two cover prompts to compare.
-- **Profile picture (the Divine Mirror)**: the old app's two-step portrait: the
-  prompt writer's instructions with the 9 Dao Rank looks, the request sent with
-  the photo, and the prompt used without a photo.
+- **Profile picture**: the owner's approved prompt (2026-10-08), sent to the
+  image model with the reader's photo. The old app's two-step portrait (a text
+  model writing the prompt from the photo) and its evolving by rank were
+  removed.
+
+Cover art and the profile picture give the reader **three to choose from**;
+every other image (Codex, chapter scenes) is one image, and that is what the
+reader gets.
 - **Codex portraits** (characters and beasts) and **Codex places, artifacts and
   factions**: the old app's prompts and its milestone evolution rules.
 - **Chapter scene art (Visual Memory)**: the old app's automatic image for
@@ -55,8 +66,7 @@ flagged, since they are filled in for each image in the app.
 - **Familiar art**: the style contract and each Familiar's style notes, made
   outside the app (removed from the repository in 27e89a1, quoted from before).
 - **Images that change over time**: ideas, not built: the owner's main
-  character across the ages (16, 100 and 10,000 years), a profile picture that
-  evolves, and Codex evolution that keeps a character recognizable.
+  character across the ages (16, 100 and 10,000 years) and Codex evolution that keeps a character recognizable.
 - **History:** every change, newest first, in plain words.
 
 ## Sources
@@ -88,3 +98,12 @@ the server's reason it failed.
 - **2026-10-08** — The owner's review: good information, hard to use on a
   phone. Rebuilt as tabs with prompt cards and short rule cards, and added the
   Image Lab to make an image from any prompt.
+- **2026-10-08** — The owner's direction: the profile picture is simply
+  "Profile picture"; the Image Lab can attach an image; cover art and the
+  profile picture make three to choose from, every other image one.
+- **2026-10-08** — Fixes and the profile picture in the app. The cover tab
+  shows the approved template and, beside it, "What the app sends today"
+  until World Cards connect it. The profile picture is now in the app
+  (`/api/profile-picture`), read here from the live code. Images default to
+  Nano Banana 2 Lite. Every image made has a download button on it, and the
+  Make button shows its Energy cost (5 per image) with "−5" floaters.

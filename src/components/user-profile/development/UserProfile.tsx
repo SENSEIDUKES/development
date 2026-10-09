@@ -166,16 +166,14 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
     showPortraitModal,
     setShowPortraitModal,
     portraitUploadFile,
-    setPortraitUploadFile,
     portraitUploadBase64,
-    setPortraitUploadBase64,
-    portraitDesc,
-    setPortraitDesc,
     isGeneratingPortrait,
     isSavingPortrait,
-    generatedPortraitUrl,
+    generatedPortraitUrls,
+    chosenPortrait,
+    setChosenPortrait,
     portraitError,
-    generationStep,
+    handleFileChange,
     handleGeneratePortrait,
     handleApplyPortrait,
   } = controller;
@@ -603,22 +601,20 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
         />
       ) : null}
 
-      {/* Divine Mirror of the Soul Modal */}
+      {/* Profile picture */}
       {showPortraitModal && (
         <UserProfilePortraitModal
           showPortraitModal={showPortraitModal}
           setShowPortraitModal={setShowPortraitModal}
           portraitUploadFile={portraitUploadFile}
-          setPortraitUploadFile={setPortraitUploadFile}
           portraitUploadBase64={portraitUploadBase64}
-          setPortraitUploadBase64={setPortraitUploadBase64}
-          portraitDesc={portraitDesc}
-          setPortraitDesc={setPortraitDesc}
           isGeneratingPortrait={isGeneratingPortrait}
           isSavingPortrait={isSavingPortrait}
           portraitError={portraitError}
-          generatedPortraitUrl={generatedPortraitUrl}
-          generationStep={generationStep}
+          generatedPortraitUrls={generatedPortraitUrls}
+          chosenPortrait={chosenPortrait}
+          setChosenPortrait={setChosenPortrait}
+          handleFileChange={handleFileChange}
           handleGeneratePortrait={handleGeneratePortrait}
           handleApplyPortrait={handleApplyPortrait}
           daoData={daoData}

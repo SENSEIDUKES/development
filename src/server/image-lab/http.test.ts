@@ -1,17 +1,18 @@
 import { describe, expect, it, vi } from 'vitest';
 import { ModelRouterError } from '@seihouse/library/model-router-server';
 import { handleImageLabHttp, IMAGE_LAB_PROMPT_LIMIT, IMAGE_LAB_TIMEOUT_MS } from './http';
+import { IMAGE_LAB_ATTACHMENT_MAX_BASE64 } from './limits';
 
 const environment = { GEMINI_API_KEY: 'secret-gemini', STORY_SEED_BLUEPRINT_ACCESS_TOKEN: 'owner-token' };
 const owner = { authorization: 'Bearer owner-token' };
-const image = { capability: 'image' as const, provider: 'gemini' as const, model: 'google/gemini-3.1-flash-image', data: 'aW1hZ2U=', mimeType: 'image/png' };
+const image = { capability: 'image' as const, provider: 'gemini' as const, model: 'google/gemini-3.1-flash-lite-image', data: 'aW1hZ2U=', mimeType: 'image/png' };
 
 describe('The Image Lab route', () => {
-  it('makes an image from the owner\'s prompt with Nano Banana 2 by default, square unless asked otherwise', async () => {
+  it('makes an image from the owner\'s prompt with Nano Banana 2 Lite by default, square unless asked otherwise', async () => {
     const generate = vi.fn(async () => image);
     const result = await handleImageLabHttp({ method: 'POST', headers: owner, body: { prompt: '  A jade dragon over misty peaks.  ' } }, { environment, generate });
-    expect(result).toMatchObject({ status: 200, body: { image: 'aW1hZ2U=', mimeType: 'image/png', model: 'google/gemini-3.1-flash-image' } });
-    expect(generate).toHaveBeenCalledWith({ capability: 'image', model: 'google/gemini-3.1-flash-image', prompt: 'A jade dragon over misty peaks.', aspectRatio: '1:1', timeoutMs: IMAGE_LAB_TIMEOUT_MS });
+    expect(result).toMatchObject({ status: 200, body: { image: 'aW1hZ2U=', mimeType: 'image/png', model: 'google/gemini-3.1-flash-lite-image' } });
+    expect(generate).toHaveBeenCalledWith({ capability: 'image', model: 'google/gemini-3.1-flash-lite-image', prompt: 'A jade dragon over misty peaks.', aspectRatio: '1:1', timeoutMs: IMAGE_LAB_TIMEOUT_MS });
     expect(JSON.stringify(result.body)).not.toContain('secret');
   });
 
@@ -46,5 +47,23 @@ describe('The Image Lab route', () => {
       .toEqual({ error: 'The image could not be made: The configured model returned no image.' });
     const late = vi.fn(async () => { throw new ModelRouterError('timeout', 'late'); });
     expect((await handleImageLabHttp({ method: 'POST', headers: owner, body: { prompt: 'A cover.' } }, { environment, generate: late })).status).toBe(502);
+  });
+
+  it('gives an attached photo to the image model beside the prompt', async () => {
+    const generate = vi.fn(async () => image);
+    const photo = { data: 'cGhvdG8=', mimeType: 'image/jpeg' };
+    await handleImageLabHttp({ method: 'POST', headers: owner, body: { prompt: 'Transform the person in the supplied photo.', images: [photo] } }, { environment, generate });
+    expect(generate).toHaveBeenCalledWith(expect.objectContaining({ prompt: 'Transform the person in the supplied photo.', referenceImages: [photo] }));
+  });
+
+  it('refuses more than one attachment, a file that is not an image, and one too large to send', async () => {
+    const generate = vi.fn(async () => image);
+    const post = (images: unknown) => handleImageLabHttp({ method: 'POST', headers: owner, body: { prompt: 'A portrait.', images } }, { environment, generate });
+    const photo = { data: 'cGhvdG8=', mimeType: 'image/png' };
+    expect(await post([photo, photo])).toMatchObject({ status: 400 });
+    expect(await post([{ data: 'cGhvdG8=', mimeType: 'application/pdf' }])).toMatchObject({ status: 400 });
+    expect(await post([{ data: 'not base64!', mimeType: 'image/png' }])).toMatchObject({ status: 400 });
+    expect(await post([{ data: 'A'.repeat(IMAGE_LAB_ATTACHMENT_MAX_BASE64 + 4), mimeType: 'image/png' }])).toMatchObject({ status: 413 });
+    expect(generate).not.toHaveBeenCalled();
   });
 });

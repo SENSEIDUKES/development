@@ -6,6 +6,10 @@ import {
   buildStoryCoverPrompt,
 } from '../../../server/story-cover/prompt';
 import { STORY_COVER_VISITOR_LIMIT } from '../../../server/story-cover/limits';
+import { PROFILE_PICTURE_ASPECT_RATIO, PROFILE_PICTURE_PROMPT, PROFILE_PICTURE_VARIATIONS } from '../../../server/profile-picture/prompt';
+import { PROFILE_PICTURE_VISITOR_LIMIT } from '../../../server/profile-picture/limits';
+
+export { PROFILE_PICTURE_PROMPT };
 
 /**
  * Every image prompt SEIHouse has written, by kind of image, with its rules.
@@ -20,6 +24,10 @@ import { STORY_COVER_VISITOR_LIMIT } from '../../../server/story-cover/limits';
 
 export type ImagePromptId =
   | 'cover'
+  | 'cover-title-on'
+  | 'cover-title-off'
+  | 'cover-current'
+  | 'profile-picture'
   | 'old-cover'
   | 'old-cover-sage'
   | 'old-portrait-writer'
@@ -65,6 +73,8 @@ export interface ImageKind {
   summary: string;
   prompts: ImagePrompt[];
   rules: ImageRule[];
+  /** Images made for each request: three to choose from, or one that is simply what the reader gets. */
+  variations: 1 | 3;
 }
 
 const OLD_APP = 'Light-Novels';
@@ -79,11 +89,40 @@ export const COVER_PROMPT_SHAPE = buildStoryCoverPrompt({
 const limitLine = Object.entries(STORY_COVER_FIELD_LIMITS)
   .map(([field, limit]) => `${field} ${limit.toLocaleString('en')}`).join(', ');
 
+/** The owner's approved cover template (2026-10-08). {title instruction} is one of the two below. */
+export const COVER_PROMPT_TEMPLATE = `Create professional Eastern fantasy novel cover art, drawing on Chinese webnovel, Japanese light novel, or Korean webnovel illustration appropriate to this story.
+Title: {title}
+Tradition: {tradition}
+Genre: {genre}
+Story: {logline, else premise}
+Main character: {visual description}
+Tone: {tone}
+World: {world facts}
+Themes: {story tags}
+Let the story details guide the art style, clothing, setting, colors, and atmosphere. Feature a compelling character, scene, or symbol that captures this novel.
+Vertical 2:3 composition, striking focal point, detailed illustration, readable at thumbnail size.
+{title instruction}
+No logos, signatures, or watermarks.`;
+
+export const COVER_TITLE_ON = 'The only lettering is the exact title “{title}”, displayed once in expressive, clearly readable typography suited to the cover. Do not invent subtitles, volume numbers, author names, or other lettering.';
+export const COVER_TITLE_OFF = 'No lettering. The title will appear beneath the artwork.';
+
+/**
+ * Prompts taken off the page, by the title they had, so the history still
+ * names them. The old app's two-step profile picture was removed on
+ * 2026-10-08: the photo now goes straight to the image model.
+ */
+export const RETIRED_IMAGE_PROMPTS: Record<string, string> = {
+  'old-portrait-writer': 'The old app\'s profile prompt writer (removed)',
+  'old-portrait-request': 'The old app\'s profile request with the photo (removed)',
+  'old-portrait-fallback': 'The old app\'s profile prompt without a photo (removed)',
+};
+
 /**
  * The cover's default image model, as the Model Router names it. The router's
  * catalog is server-only, so a test keeps this in step with it.
  */
-export const COVER_DEFAULT_MODEL_LABEL = 'Nano Banana 2 (Gemini 3.1 Flash Image)';
+export const COVER_DEFAULT_MODEL_LABEL = 'Nano Banana 2 Lite (Gemini 3.1 Flash Lite Image)';
 
 /** The old app's shared art direction, added to every image after its own prompt. */
 const OLD_STYLE_WRAPPER = `{prompt}. Style: {style}. Solo subject, centered, no borders, no text.
@@ -101,13 +140,35 @@ export const IMAGE_KINDS: ImageKind[] = [
     id: 'cover',
     title: 'Cover art',
     status: 'in-the-app',
+    variations: 3,
     summary: 'Story View\'s Manifest cover: one cover from the story\'s own words, behind the media reveal, worn on World Info and Home.',
     prompts: [
       {
         id: 'cover',
         title: 'Cover art prompt',
+        source: 'The owner\'s approved template (2026-10-08); the app connects it with World Cards',
+        when: 'Each Manifest cover or New cover. The braces are filled from the story: its title, Story Seed tradition, genre, Blueprint logline (else its premise), main character, tone, world facts and story tags; never its chapters. {title instruction} is one of the two title instructions below.',
+        text: COVER_PROMPT_TEMPLATE,
+      },
+      {
+        id: 'cover-title-on',
+        title: 'Title instruction: title enabled',
+        source: 'The owner\'s approved template (2026-10-08)',
+        when: 'Fills {title instruction} when the title is drawn on the cover.',
+        text: COVER_TITLE_ON,
+      },
+      {
+        id: 'cover-title-off',
+        title: 'Title instruction: title disabled',
+        source: 'The owner\'s approved template (2026-10-08)',
+        when: 'Fills {title instruction} when the title is shown beneath the artwork instead.',
+        text: COVER_TITLE_OFF,
+      },
+      {
+        id: 'cover-current',
+        title: 'What the app sends today',
         source: 'src/server/story-cover/prompt.ts (buildStoryCoverPrompt)',
-        when: 'Each Manifest cover or New cover. The braces are filled from the story: its title, genre, Story Seed tradition, Blueprint logline (else its premise), main character, tone, world facts and story tags; never its chapters. A field the story lacks is left out.',
+        when: 'Each Manifest cover or New cover until the approved template is connected with World Cards. One cover, no lettering.',
         text: COVER_PROMPT_SHAPE,
       },
       {
@@ -127,8 +188,9 @@ export const IMAGE_KINDS: ImageKind[] = [
     ],
     rules: [
       { title: 'Look by tradition', text: [...Object.entries(TRADITION_LOOK).map(([style, look]) => `${style}: ${look}`), `no tradition: ${DEFAULT_COVER_LOOK}`].join('\n') },
+      { title: 'Three to choose from', text: 'Each request makes three covers and the reader chooses the one they want. (The app makes one today; three is the approved design.)' },
       { title: 'Shape', text: `Portrait, ${STORY_COVER_ASPECT_RATIO}, like a book cover (the World Card's own shape). The old app made every image square (1:1).` },
-      { title: 'No lettering', text: 'The cover carries no text of any kind: World Info and Home show the title beside the art.' },
+      { title: 'The title on the cover', text: 'The approved template draws the exact title once when the title is turned on, and no lettering when it is off (the title then shows beneath the artwork). What the app sends today carries no text of any kind.' },
       { title: 'Field limits', text: `Each field is clipped on the server, so a request can never carry a long prompt of its own: ${limitLine} (at most ${STORY_COVER_FIELD_LIMITS.tags} tags).` },
       { title: 'Model', text: `The Model Router's Images choice (the Router lists every image model it offers); ${COVER_DEFAULT_MODEL_LABEL} when none is chosen.` },
       { title: 'Who may make one', text: `Visitors may make ${STORY_COVER_VISITOR_LIMIT.limit} every ${STORY_COVER_VISITOR_LIMIT.windowMs / 60_000} minutes; the owner's access token lifts the limit. A cover is kept on the device until the database keeps it.` },
@@ -137,66 +199,34 @@ export const IMAGE_KINDS: ImageKind[] = [
   },
   {
     id: 'profile-picture',
-    title: 'Profile picture (the Divine Mirror)',
-    status: 'old-app',
-    summary: 'The reader\'s own cultivator portrait in the Cave. In the app the Divine Mirror shows "Not in the app yet." The old app wrote it in two steps: a text model wrote the image prompt from the reader\'s photo and progress, then the image model painted it.',
+    title: 'Profile picture',
+    status: 'in-the-app',
+    variations: 3,
+    summary: 'The reader\'s portrait as a cultivator, made from their photo in the Profile page\'s portrait builder. The photo goes straight to the image model with this prompt.',
     prompts: [
       {
-        id: 'old-portrait-writer',
-        title: 'Step 1: the prompt writer\'s instructions',
-        source: old('src/server/routes/mediaRouter.ts:69-92'),
-        when: 'When the reader uploaded a photo (gemini-2.5-flash read the photo and wrote the image prompt). The braces are the reader\'s current novel realm and equipped Cosmic Artifact, read once, when they pressed Generate.',
-        text: `You are a mystical portrait artist of the immortal realms.
-Your task is to analyze the user's uploaded portrait photo, their custom preferences, and their spiritual progression metrics to forge a stunning, anime/light novel-style "Cultivator Portrait" that is deeply attuned to their achievements.
-
-SPIRITUAL PROGRESSION RULES (Incorporate these elements into the prompt based on the user's details):
-- DAO RANK ATTUNEMENT (Dresses, robes, and environmental grandeur):
-  * "Mortal Reader" -> Simple, humble coarse linen apprentice garments, a simple wooden hairpin, basic mountain landscape.
-  * "Wandering Disciple" -> Light blue and white flowing silk robes, soft radiant blue aura, holding a simple steel cultivator sword or wooden talisman.
-  * "Outer Sect Scribe" -> Cyan-tinted scholarly robes, surrounded by drifting scrolls, glowing ink droplets, holding an elegant calligraphy brush.
-  * "Inner Sect Scholar" -> Deep emerald-green research silk robes, glowing jade ornaments, floating ancient texts with green spiritual scripture.
-  * "Dao Adept" -> Royal violet star robes, crackles of violet lightning or spiritual flame, a crown of celestial quartz.
-  * "Spirit Author" -> Imperial gold-threaded robes, a divine brush of pure amber light tracing glowing sigils in the sky, surrounded by mythical qi phantoms.
-  * "Heavenly Chronicler" -> Brilliant gold-leaf vestments, a celestial halo behind their head, constellations, gold particle sparks and starry nebulae in the background.
-  * "Sage of Branching Paths" -> Shifting translucent prism or rainbow-gradient silk, holding a faceted glass lotus/mirror, standing amidst branching pathways of light and parallel reality portals.
-  * "Dao Master" -> Primordial nebulae/void dark robes, a dual yin-yang cosmic matrix spinning in their background, shattering glass-like reality patterns, eyes glowing with pure, unmitigated divine consciousness.
-
-- CULTIVATION POWER STAGE (Aura and visual power level):
-  * Reflect the user's current novel power stage "{power stage, else None}" in their energy lines (e.g., if it mentions "Qi Condensation", show delicate visible wisps of Qi; if "Foundation Establishment", show a solid glowing core; if "Nascent Soul", show a mini radiant projection of their soul; if "Core Formation", a spinning golden sphere at the dantian).
-
-- EQUIPPED COSMIC ARTIFACT (To be actively held or floating beside them):
-  * If an artifact is equipped ({"artifact name": description (rarity rarity), else None}), you MUST seamlessly paint this artifact into the scene. For example, if it's a sword, they are wielding it; if it's a mirror/gourd/talisman, it is floating near their hand, glowing with power proportional to its rarity.
-
-GENERAL CONSTRAINTS:
-1. The prompt MUST retain the user's apparent gender, facial structure, expression, hair style (adapted elegantly to Xianxia style), and overall physical vibe from their uploaded photo, but ascended into an immortal form.
-2. The response must be ONLY the raw prompt string for the image generator (no introduction, explanation, or markdown quotes). Keep it under 200 words.`,
-      },
-      {
-        id: 'old-portrait-request',
-        title: 'Step 1: the request with the photo',
-        source: old('src/server/routes/mediaRouter.ts:106'),
-        when: 'Sent with the photo. The description is the reader\'s own (up to 2,000 characters); the rank and XP are their Dao Rank.',
-        text: 'Analyze this image, my description: "{description, else None}", Dao Rank: "{Dao Rank, else Mortal Reader}" (XP: {Dao XP, else 0}), Power Stage: "{power stage, else None}", Equipped Artifact: {artifact name, else None}, and write a detailed progression-attuned anime-style image generator prompt.',
-      },
-      {
-        id: 'old-portrait-fallback',
-        title: 'Without a photo',
-        source: old('src/server/routes/mediaRouter.ts:123'),
-        when: 'When no photo was given, or Step 1 failed: this is the image prompt itself. The old shared style was then added (the portrait style, at 1:1).',
-        text: 'A majestic celestial cultivator matching rank "{Dao Rank, else Mortal Reader}" and power stage "{power stage, else None}", professional anime character portrait, fantasy webnovel style, intricate details, sharp focus, celestial backlighting, clean high contrast colors. User traits: {description, else "mystical eyes, elegant robes, swirling Qi aura, starry background"}{, holding or floating with {artifact name}, when one is equipped}',
+        id: 'profile-picture',
+        title: 'Profile picture prompt',
+        source: 'src/server/profile-picture/prompt.ts (PROFILE_PICTURE_PROMPT)',
+        when: 'When the reader makes their portrait: sent to the image model together with their photo.',
+        text: PROFILE_PICTURE_PROMPT,
       },
     ],
     rules: [
-      { title: 'It grows with the reader', text: 'Robes, aura and scene follow the 9 Dao Ranks (Mortal Reader 0 Qi, Wandering Disciple 100, Outer Sect Scribe 300, Inner Sect Scholar 750, Dao Adept 1,500, Spirit Author 3,000, Heavenly Chronicler 6,000, Sage of Branching Paths 12,000, Dao Master 25,000), the realm the reader\'s story has reached, and the Cosmic Artifact they carry. But only when the reader made a new one: nothing changed it on a rank-up or breakthrough.' },
-      { title: 'The photo is a guide only', text: 'The photo was read to write the prompt (keeping the reader\'s apparent gender, face, expression, hair and presence) and never given to the image model or kept.' },
-      { title: 'Each portrait remembers its moment', text: 'A kept portrait recorded the rank, XP, realm and artifact it was made at, so a timeline of portraits by rank was possible; no page ever showed one.' },
-      { title: 'Shape', text: 'Square (1:1), shown in a circle.' },
+      { title: 'The photo goes to the image model', text: 'The reader\'s photo is given to the image model with the prompt, so it paints from the photo itself and keeps their likeness and skin tone.' },
+      { title: 'One portrait, no evolving', text: 'The portrait does not change with Dao Rank, realm or artifacts, and keeps no timeline of past portraits. A reader makes a new one only when they choose to.' },
+      { title: 'Three to choose from', text: `Each request makes ${PROFILE_PICTURE_VARIATIONS} portraits and the reader chooses the one they want; Make three more starts again.` },
+      { title: 'Shape', text: `Square (${PROFILE_PICTURE_ASPECT_RATIO}), shown in a circle.` },
+      { title: 'Model', text: `The Model Router's Images choice; ${COVER_DEFAULT_MODEL_LABEL} when none is chosen.` },
+      { title: 'Who may make one', text: `Visitors may make ${PROFILE_PICTURE_VISITOR_LIMIT.limit / PROFILE_PICTURE_VARIATIONS} sets of ${PROFILE_PICTURE_VARIATIONS} every ${PROFILE_PICTURE_VISITOR_LIMIT.windowMs / 60_000} minutes; the owner's access token lifts the limit. The photo is never kept; the chosen portrait is kept on the device until the database keeps it.` },
+      { title: 'Trying it in the Image Lab', text: 'Try this prompt, then Attach an image with a photo: the Lab sends both to the image model and makes three to choose from.' },
     ],
   },
   {
     id: 'codex-portraits',
     title: 'Codex portraits (characters and beasts)',
     status: 'old-app',
+    variations: 1,
     summary: 'A character\'s or beast\'s image in the Codex. The new Codex waits (NOVEL_EXPANDED.md), so nothing makes these now; the Workshop\'s Codex shows stand-in art.',
     prompts: [
       {
@@ -215,6 +245,7 @@ GENERAL CONSTRAINTS:
       },
     ],
     rules: [
+      { title: 'One image, no choosing', text: 'One image is made and it is what the reader gets, like fate: no variations to choose from.' },
       { title: 'Evolution at milestones', text: 'A character\'s power level or status changing (a breakthrough, a major status change), or a beast\'s, marked it "pending evolution". When the arc ended, it became ready: the reader could make one new image, with the arc\'s summary added as "recent arc events affecting their aura". One image per entry, and a new one only after a milestone.' },
       { title: 'Every version kept', text: 'Each image was kept in the entry\'s history with the chapter it was made at and its prompt, and the reader could go back to any of them.' },
       { title: 'No likeness carried over', text: 'Each new image was made from words alone, with no earlier image given to the model, so a character\'s face and look could change from one version to the next. This is the consistency problem to solve before portraits evolve again.' },
@@ -226,6 +257,7 @@ GENERAL CONSTRAINTS:
     id: 'codex-places',
     title: 'Codex places, artifacts and factions',
     status: 'old-app',
+    variations: 1,
     summary: 'Images for the Codex\'s locations and artifacts, and a first image from a reveal card for any entry, factions included.',
     prompts: [
       {
@@ -251,6 +283,7 @@ GENERAL CONSTRAINTS:
       },
     ],
     rules: [
+      { title: 'One image, no choosing', text: 'One image is made and it is what the reader gets, like fate: no variations to choose from.' },
       { title: 'Evolution at milestones', text: 'A location\'s atmosphere or safety changing, or an artifact changing owner or condition, unlocked one new image at the arc\'s end, as for characters.' },
       { title: 'Not every noun', text: 'The old writer was told: "The Codex is a durable visual canon, not a record of every noun in the chapter." One-scene props, generic weapons, temporary rooms, unnamed guards and passing disciples were never added.' },
     ],
@@ -259,6 +292,7 @@ GENERAL CONSTRAINTS:
     id: 'chapter-scene',
     title: 'Chapter scene art (Visual Memory)',
     status: 'old-app',
+    variations: 1,
     summary: 'An image of a momentous chapter\'s defining moment, made automatically. The Aura Veil\'s media reveal is ready to show such an image.',
     prompts: [
       {
@@ -270,6 +304,7 @@ GENERAL CONSTRAINTS:
       },
     ],
     rules: [
+      { title: 'One image, no choosing', text: 'One image is made and it is what the reader gets, like fate: no variations to choose from.' },
       { title: 'Only momentous chapters', text: 'A chapter had to score as momentous (a breakthrough, turning point, evolution, betrayal, ascension, conquest, destruction, calamity, rival battle, romance or first kiss), and at most 3 chapters in an arc got one. These did not count against the reader\'s daily images.' },
       { title: 'Brand palette', text: 'Its style named SEIHouse\'s palette: #000000, #FAFAFA, #8B0000, #04ACFF.' },
     ],
@@ -278,6 +313,7 @@ GENERAL CONSTRAINTS:
     id: 'old-shared',
     title: 'The old app\'s shared art direction',
     status: 'old-app',
+    variations: 1,
     summary: 'Added by the old app\'s image router to every image after its own prompt. The new cover prompt carries its own direction instead.',
     prompts: [
       {
@@ -297,6 +333,7 @@ GENERAL CONSTRAINTS:
     id: 'familiar-art',
     title: 'Familiar art',
     status: 'outside-the-app',
+    variations: 1,
     summary: 'The Familiars\' animation sheets were made outside the app from a reference image of each, then kept as art. Their rules were removed from the repository on 2026-09-22 ("Secure Familiar renderer metadata"); they are quoted from the commit before.',
     prompts: [
       {
@@ -333,7 +370,6 @@ quill: none.` },
  */
 export const IMAGE_IDEAS: ImageRule[] = [
   { title: 'The main character across the ages (the owner\'s idea)', text: 'Codex portraits that update at milestones, showing the main character at 16 beside his 100-year self, and beside his 10,000-year self. Never built: the old app had no age-progression or side-by-side portrait. It needs the same face carried from image to image, which means giving the model the earlier portrait as a reference image (the Nano Banana models accept one), not words alone.' },
-  { title: 'A profile picture that evolves', text: 'The old Divine Mirror dressed the reader by Dao Rank, realm and artifact, but only when they made a new one. An evolving portrait would offer a new one at each rank, keeping the reader\'s likeness from their current portrait, and keep the earlier ones as a timeline (each old portrait already recorded its rank).' },
   { title: 'Codex evolution, with consistency', text: 'The old Codex unlocked a new image after a breakthrough, a status change, or an artifact changing hands, at the arc\'s end. To keep a character recognizable, each new version should be made from the previous one (as a reference image) plus what changed.' },
 ];
 

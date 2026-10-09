@@ -16,10 +16,10 @@ interface EnergyAmountProps {
 const formatter = new Intl.NumberFormat('en-US');
 export const formatEnergy = (amount: number) => formatter.format(amount);
 
-/** The single Energy mark + number rendering every Energy surface shares. */
+/** The single Energy mark + number rendering every Energy surface shares, in the Energy badge. */
 export function EnergyAmount({ amount, size = 'md', state = 'ready', className = '', label }: EnergyAmountProps) {
   return (
-    <span className={`energy-amount ${className}`.trim()} data-energy-size={size} data-energy-state={state} aria-label={label} role="img">
+    <span className={`energy-amount energy-badge ${className}`.trim()} data-energy-size={size} data-energy-state={state} aria-label={label} role="img">
       <LibraryNavigationIcon name="energy" size="1em" className="energy-glyph" aria-hidden="true" />
       <span aria-hidden="true">{state === 'ready' && amount !== null ? formatEnergy(amount) : '—'}</span>
     </span>

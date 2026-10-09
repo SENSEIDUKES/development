@@ -3,6 +3,9 @@ import type { AccessTokenStore } from '../host/generation/accessToken';
 import { HarnessGenerationRequestError } from '../host/generation/httpClient';
 import { StoryCoverRequestError, type requestStoryCover } from '../host/media/storyCoverClient';
 import type { StoryCoverRequester } from '../host/media/storyCovers';
+import { PROFILE_PICTURE_CHOICES, ProfilePictureRequestError, keptPortrait, readProfilePhoto, type requestProfilePicture } from '../host/media/profilePictureClient';
+import { blobToDataUrl } from '../host/media/imageFiles';
+import type { DevicePortraitMaker } from '../host/profile/deviceProfileServices';
 import type { AccessTokenRequest } from './AccessTokenSheet';
 
 /** Asks for the owner's access token; resolves with it, or nothing when cancelled. */
@@ -70,3 +73,45 @@ export const coverRequesterWithAccessToken = (
     }
   }
 };
+
+/**
+ * The profile picture maker with the owner's access token: the reader's photo
+ * is made small enough to send, then three portraits are asked for at once,
+ * each its own request. When the visitor limit (429 without a token) or a
+ * token the server did not accept (401) stops any of them, the token is asked
+ * for once and those are asked for again; the server refused them before any
+ * model call. The chosen portrait is kept small, as a data URL.
+ */
+export const portraitMakerWithAccessToken = (
+  request: typeof requestProfilePicture,
+  token: AccessTokenStore,
+  ask: AskForAccessToken,
+  model: () => string | undefined,
+): DevicePortraitMaker => ({
+  make: async file => {
+    const photo = await readProfilePhoto(file);
+    const send = () => request(photo, { model: model(), accessToken: token.current });
+    let results = await Promise.allSettled(Array.from({ length: PROFILE_PICTURE_CHOICES }, send));
+    const needsToken = (result: PromiseSettledResult<Blob>) => result.status === 'rejected' && result.reason instanceof ProfilePictureRequestError
+      && (result.reason.status === 401 || (result.reason.status === 429 && !token.current));
+    // Which were refused for the token is decided before the token changes.
+    const refused = results.map(needsToken);
+    if (refused.some(Boolean)) {
+      const rejected = results.some((result, index) => refused[index] && (result as PromiseRejectedResult).reason.status === 401);
+      if (rejected) token.current = undefined;
+      const entered = await ask({ reason: 'portraits', rejected });
+      if (entered) {
+        token.current = entered;
+        results = await Promise.all(results.map((result, index) => refused[index] ? Promise.allSettled([send()]).then(([again]) => again) : result));
+      }
+    }
+    const images = results.flatMap(result => result.status === 'fulfilled' ? [result.value] : []);
+    const failures = results.filter((result): result is PromiseRejectedResult => result.status === 'rejected');
+    const reason = failures[0]?.reason instanceof Error ? failures[0].reason.message : undefined;
+    const problem = !failures.length ? undefined
+      : images.length ? `${failures.length} of ${PROFILE_PICTURE_CHOICES} portraits could not be made. ${reason ?? ''}`.trim()
+        : reason;
+    return { images, ...(problem ? { problem } : {}) };
+  },
+  keep: async portrait => blobToDataUrl(await keptPortrait(portrait)),
+});

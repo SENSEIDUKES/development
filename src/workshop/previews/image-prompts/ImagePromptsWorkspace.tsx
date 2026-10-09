@@ -1,13 +1,13 @@
 import { useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { STORY_COVER_ASPECT_RATIO } from '../../../server/story-cover/prompt';
 import type { ImageLabAspectRatio } from '../../../server/image-lab/limits';
-import { IMAGE_IDEAS, IMAGE_KINDS, IMAGE_PROMPTS, IMAGE_STATUS_LABEL, countWords, type ImageKind, type ImagePrompt, type ImagePromptId, type ImageRule } from './imagePrompts';
+import { IMAGE_IDEAS, IMAGE_KINDS, IMAGE_PROMPTS, IMAGE_STATUS_LABEL, RETIRED_IMAGE_PROMPTS, countWords, type ImageKind, type ImagePrompt, type ImagePromptId, type ImageRule } from './imagePrompts';
 import { IMAGE_PROMPTS_HISTORY, lastChange } from './imagePromptsHistory';
 import { ImageLab, type ImageLabProps } from './ImageLab';
 import '../writer-instructions/writer-instructions.css';
 import './image-prompts.css';
 
-const TITLES = new Map(IMAGE_PROMPTS.map(prompt => [prompt.id, prompt.title]));
+const TITLES = new Map<string, string>([...Object.entries(RETIRED_IMAGE_PROMPTS), ...IMAGE_PROMPTS.map(prompt => [prompt.id, prompt.title] as const)]);
 
 type TabId = 'lab' | ImageKind['id'] | 'ideas' | 'history';
 interface Tab { id: TabId; label: string; status?: ImageKind['status'] }
@@ -115,7 +115,7 @@ export function ImagePromptsWorkspace({ fetcher }: { fetcher?: typeof fetch } = 
     select(TABS[(index + step + TABS.length) % TABS.length].id, true);
   };
   const tryPrompt = (prompt: ImagePrompt, kind: ImageKind) => {
-    setIncoming(current => ({ prompt: prompt.text, shape: shapeFor(kind), key: (current?.key ?? 0) + 1 }));
+    setIncoming(current => ({ prompt: prompt.text, shape: shapeFor(kind), variations: kind.variations, key: (current?.key ?? 0) + 1 }));
     select('lab');
     topRef.current?.scrollIntoView?.({ block: 'start' });
   };

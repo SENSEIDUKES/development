@@ -16,7 +16,6 @@
 .portrait-builder-shell { display: flex; flex-direction: column; padding: 0 !important; overflow: hidden !important; }
 .portrait-builder-header { display: flex; flex-shrink: 0; align-items: flex-start; gap: 1rem; padding: 1.5rem; border-bottom: 1px solid #d4af3726; }
 .portrait-builder-header > div { flex: 1; min-width: 0; }
-.portrait-builder-eyebrow { margin: 0 0 .65rem; font-size: .65rem; letter-spacing: .2em; text-transform: uppercase; color: #d6bd77; }
 .portrait-builder-title { margin: 0; font-family: var(--font-serif, Georgia, serif); font-size: 1.55rem !important; font-weight: 500 !important; line-height: 1.25; color: #f3e4b0 !important; }
 .portrait-builder-intro { margin: .65rem 0 0 !important; font-size: .85rem !important; line-height: 1.6; color: #b3bfc9 !important; }
 .portrait-builder-close { display: grid; place-items: center; flex-shrink: 0; border-radius: 50%; border: 1px solid #d4af3733; background: #070f1855; color: #cbd3dc; cursor: pointer; }
@@ -29,7 +28,6 @@
 .portrait-builder-frame::before { content: ''; position: absolute; width: 7px; height: 7px; top: -12px; left: calc(50% - 3px); background: #e2c46a; transform: rotate(45deg); }
 .portrait-builder-identity p { margin: 1.1rem 0 .25rem; font-family: var(--font-serif, Georgia, serif); font-size: 1.2rem; color: #f3e4b0; overflow-wrap: anywhere; }
 .portrait-builder-identity span { font-size: .75rem; color: #c0cbd4; }
-.portrait-builder-caption { max-width: 24ch; margin: .85rem auto 0; font-size: .75rem; line-height: 1.65; color: #a7b3bd; }
 .portrait-builder-fields { display: grid; gap: 1.4rem; min-width: 0; }
 .portrait-builder-label { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .5rem; margin: 0 0 .65rem; font-size: .85rem; font-weight: 500; color: #ece4ce; }
 .portrait-builder-label span { font-size: .7rem; font-weight: 400; color: #a7b3bd; }
@@ -37,18 +35,25 @@
 .portrait-builder-upload > svg { flex-shrink: 0; }
 .portrait-builder-upload > span { min-width: 0; font-size: .85rem; }
 .portrait-builder-upload small { display: block; margin-top: .35rem; font-size: .7rem; line-height: 1.5; color: #a7b3bd; overflow-wrap: anywhere; }
-.portrait-builder-upload:hover { border-color: #e2c46a; background: #d4af3710; }
+.portrait-builder-upload:hover:not(:disabled) { border-color: #e2c46a; background: #d4af3710; }
+.portrait-builder-upload:disabled { opacity: .55; cursor: not-allowed; }
+.portrait-builder-choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; min-width: 0; }
+.portrait-builder-choice-wrap { position: relative; min-width: 0; }
+.portrait-builder-download { position: absolute; left: .3rem; bottom: .3rem; display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; background: #0c141bcc; color: #f3e4b0; border: 1px solid #d4af3755; }
+.portrait-builder-download::before { content: ''; position: absolute; inset: -.375rem; } /* a 44px touch target around the small icon */
+.portrait-builder-download:hover { background: #0c141b; border-color: #e2c46a; }
+.portrait-builder-download:focus-visible { outline: 2px solid #7dd3ff; outline-offset: 2px; }
+.portrait-builder-choice { position: relative; width: 100%; aspect-ratio: 1; padding: 0; border: 2px solid #d4af3733; border-radius: .9rem; overflow: hidden; background: #06121e; cursor: pointer; }
+.portrait-builder-choice img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.portrait-builder-choice:hover:not(:disabled) { border-color: #d4af3799; }
+.portrait-builder-choice[aria-pressed='true'] { border-color: #e2c46a; box-shadow: 0 0 0 3px #d4af3740; }
+.portrait-builder-choice > svg { position: absolute; top: .4rem; right: .4rem; padding: .15rem; border-radius: 50%; background: #e2c46a; color: #0c141b; }
 .portrait-builder-hint { margin: .65rem 0 0; font-size: .75rem; line-height: 1.65; color: #a7b3bd; }
-.portrait-builder-description { display: block; box-sizing: border-box; width: 100%; min-height: 8rem; resize: vertical; padding: .85rem; border: 1px solid #77859555; border-radius: .85rem; background: #08111b88; color: #e4e8ec; font: inherit; font-size: .85rem; line-height: 1.7; }
-.portrait-builder-description::placeholder { color: #9daab6; }
-.portrait-builder-close:focus-visible, .portrait-builder-upload:focus-visible, .portrait-builder-description:focus-visible { outline: 2px solid #7dd3ff; outline-offset: 3px; }
+.portrait-builder-close:focus-visible, .portrait-builder-upload:focus-visible, .portrait-builder-choice:focus-visible { outline: 2px solid #7dd3ff; outline-offset: 3px; }
 .portrait-builder-close:disabled { opacity: .5; cursor: not-allowed; }
-.portrait-builder-result { padding: 1.5rem; border: 1px solid #d4af3733; border-radius: 1rem; background: #d4af3708; color: #e2c46a; }
-.portrait-builder-result h3 { margin: 1rem 0 .75rem; font-family: var(--font-serif, Georgia, serif); font-size: 1.4rem; color: #f3e4b0; }
-.portrait-builder-result > p { font-size: .85rem; line-height: 1.75; color: #bcc7cf; }
 .portrait-builder-footer { flex-shrink: 0; display: grid; gap: 1rem; padding: 1.15rem 1.5rem; border-top: 1px solid #d4af3726; background: #060d144d; }
 .portrait-builder-footer-note { margin: 0; text-align: center; font-size: .75rem; color: #a7b3bd; }
-.portrait-builder-actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+.portrait-builder-actions { position: relative; display: flex; flex-wrap: wrap; gap: .75rem; }
 .portrait-builder-actions > button { flex: 1; min-width: 0; min-height: 44px; white-space: normal; overflow-wrap: anywhere; }
 .portrait-builder-error { padding: .85rem 1rem; margin-bottom: 1rem; border: 1px solid #e7988866; border-radius: .8rem; background: #56251e55; color: #ffd1c8; font-size: .85rem; line-height: 1.6; }
 @media (max-width: 600px) {
@@ -57,7 +62,6 @@
   .portrait-builder-layout { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
   .portrait-builder-mirror { padding: .35rem .5rem .85rem; }
   .portrait-builder-frame { width: 8rem; margin: 1rem auto; }
-  .portrait-builder-caption { max-width: 32ch; }
   .portrait-builder-footer { padding: 1rem 1.1rem; gap: .75rem; }
 }
 @media (max-width: 380px) {

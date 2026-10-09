@@ -13,7 +13,7 @@ const world: CreatorWorld = {
   creatorName: 'SENSEI', creatorTitle: { element: 'lightning', intensity: 'rare' },
 };
 
-it('uses the shared image card with only a title and the chapter/status badge', () => {
+it('uses the shared image card with the SEN sash, and the title and chapter/status beneath', () => {
   const container = document.createElement('div');
   document.body.append(container);
   const root = createRoot(container);
@@ -26,10 +26,13 @@ it('uses the shared image card with only a title and the chapter/status badge', 
   expect(card.getAttribute('aria-pressed')).toBeNull();
   expect(card.getAttribute('aria-label')).toContain('Ch. 24 · Draft');
   expect(card.getAttribute('aria-label')).not.toContain('creator SENSEI');
-  expect(card.querySelector('.world-card-base-title')?.textContent).toBe(world.title);
-  expect(card.querySelector('.world-card-base-details')?.getAttribute('data-slot')).toBe('badge');
-  expect(card.querySelector('.world-card-base-details')?.textContent).toBe('Ch. 24Draft');
-  expect(card.querySelectorAll('.world-card-base-details svg')).toHaveLength(2);
+  expect(card.querySelector('.world-card-ribbon')?.textContent).toBe('SEN');
+  expect(card.textContent).not.toContain(world.title);
+  const tile = container.querySelector('[data-world-card-tile="compact"]')!;
+  expect(tile.getAttribute('data-cover-shape')).toBe('square');
+  expect(tile.querySelector('.world-card-caption h3')?.textContent).toBe(world.title);
+  expect(tile.querySelector('.world-card-caption-details')?.textContent).toBe('Ch. 24 · Draft');
+  expect(tile.querySelector('.world-card-caption-features')).toBeNull();
   expect(card.querySelector('.world-card-base-creator')).toBeNull();
   expect(card.querySelector('.world-card-base-format')).toBeNull();
   expect(card.querySelector('.motion-picture-control')).toBeNull();
@@ -47,7 +50,7 @@ it('keeps a missing compact cover as the existing celestial wash', () => {
   act(() => root.render(<WorldCard face="compact" world={{ ...world, imageUrl: undefined, creatorName: undefined, creatorTitle: undefined }} onOpen={() => {}} />));
   expect(container.querySelector('.world-card-compact-media img')).toBeNull();
   expect(container.textContent).not.toContain('Cover unavailable');
-  expect(container.querySelector('.world-card-base-details')?.textContent).toBe('Ch. 24Draft');
+  expect(container.querySelector('.world-card-caption-details')?.textContent).toBe('Ch. 24 · Draft');
   expect(container.querySelector('.world-card-base-creator')).toBeNull();
   act(() => root.unmount());
   container.remove();

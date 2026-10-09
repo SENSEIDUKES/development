@@ -1,7 +1,7 @@
 import { useState, type CSSProperties } from 'react';
-import { BookOpen, FileText } from 'lucide-react';
-import { ElementalTitle, SEIBadge } from '@seihouse/ui';
-import { LibraryCard, LibraryCardMedia, LibraryCardTitle } from '@seihouse/library-ui';
+import { GitBranch } from 'lucide-react';
+import { ElementalTitle } from '@seihouse/ui';
+import { LibraryCard, LibraryCardMedia } from '@seihouse/library-ui';
 import { MotionPicture, useDominantColor } from '@seihouse/sen/motion-picture';
 import type { WorldCardCompactProps, WorldCardInfoCoverProps, WorldCardProps } from '../shared/worldCardContracts';
 import { WorldCardCover } from './WorldCardCover';
@@ -16,7 +16,19 @@ type WorldCardFaceProps =
   | ({ face: 'compact' } & WorldCardCompactProps)
   | WorldCardInfoCoverProps;
 
-/** The Library world card. Its faces share one cover frame, glow, and motion behavior. */
+/** The art's shape on the Full and Compact cards. The Info cover keeps the 2:3 cover. */
+export type WorldCardCoverShape = 'square' | 'tall';
+
+/** Every world on SEN carries the expanded experience; the sash says so, like a format mark. */
+function WorldCardRibbon() {
+  return <span className="world-card-ribbon" aria-hidden="true"><span>SEN</span></span>;
+}
+
+/**
+ * The Library world card. Its faces share one cover frame, glow, and motion behavior.
+ * Full and Compact keep the art clean (format, motion and creator on Full; the SEN sash on
+ * both) and put the title and details in the caption beneath, so a grid of many lines up.
+ */
 export function WorldCard(props: WorldCardFaceProps) {
   const compact = props.face === 'compact';
   const info = props.face === 'info';
@@ -39,54 +51,61 @@ export function WorldCard(props: WorldCardFaceProps) {
     : displayStatus?.view === 'public'
       ? displayStatus.value === 'ongoing' ? 'On Going' : 'Completed'
       : displayStatus?.view === 'library' ? WORLD_STATUS_LABELS[displayStatus.value] : undefined;
+  const coverShape: WorldCardCoverShape = props.face === 'info' ? 'tall' : props.coverShape ?? 'square';
+  const genre = fullWorld?.genre?.trim();
+  const details = [genre, `Ch. ${world.chapterCount}`, statusLabel].filter(Boolean).join(' · ');
   const openLabel = compact
     ? `Open ${world.title}, Ch. ${world.chapterCount} · ${statusLabel}`
     : `Open ${world.title}, ${world.chapterCount} chapters${creatorName ? `, creator ${creatorName}` : ''}${fullWorld?.format ? `, format ${fullWorld.format}` : ''}${statusLabel ? `, ${statusLabel}` : ''}`;
-  return <LibraryCard
+  const card = <LibraryCard
     {...interactionProps}
     padding="none"
     contentClassName="gap-0"
     id={`${compact ? 'creator-world' : info ? 'info-world' : 'home-world'}-${world.id}`}
-    className={`world-card-base h-full${compact ? ' world-card-compact' : ''}`}
+    className={`world-card-base${info ? ' h-full' : ''}${compact ? ' world-card-compact' : ''}`}
     style={{ '--world-card-glow': glowColor } as CSSProperties}
     data-world-card={compact ? 'compact' : info ? 'info-cover' : 'full'}
     data-selected={compact && props.selected ? 'true' : undefined}
     aria-label={compact ? openLabel : undefined}
     data-motion-playing={motionAvailable && motionPlaying ? 'true' : undefined}
   >
-    <LibraryCardMedia className={`world-card-base-media${compact ? ' world-card-compact-media' : ' aspect-[2/3]'}`}>
+    <LibraryCardMedia className={`world-card-base-media${compact ? ' world-card-compact-media' : ''}`}>
       {motionAvailable && motionWorld
         ? <MotionPicture className="world-card-base-motion" stillUrl={imageUrl!} videoUrl={videoUrl!}
             alt={`${world.title} cover`} glow={false} onPlayingChange={setMotionPlaying}
             stillFallback={<WorldCardCover src="" title={world.title} decorative />} />
         : <WorldCardCover src={imageUrl} title={world.title} decorative={!info} loading={info ? 'eager' : 'lazy'} compact={compact}
             fallbackCover={compact && props.fallbackCover} />}
-      {compact && <span className="world-card-compact-gradient" aria-hidden="true" />}
       {!compact && !info && <>
         <button type="button" className="world-card-base-open" onClick={props.onOpen} aria-label={openLabel} />
         <WorldCardStoryPanel key={world.id} world={fullWorld!} />
       </>}
-      {!info && <div className="world-card-base-overlay">
-        <LibraryCardTitle as="h3" className="world-card-base-title font-display">{world.title}</LibraryCardTitle>
-        <div className="world-card-base-meta">
-          <SEIBadge size="sm" variant="neutral" className="world-card-base-details">
-            <span className="world-card-base-chapters">
-              <BookOpen size={12} aria-hidden="true" />Ch. {world.chapterCount}
-            </span>
-            {statusLabel && <span className="world-card-base-status">
-              <FileText size={12} aria-hidden="true" />{statusLabel}
-            </span>}
-          </SEIBadge>
-          {!compact && creatorName && <span className="world-card-base-creator">
-            {creatorTitle
-              ? <ElementalTitle as="span" element={creatorTitle.element}
-                  intensity={creatorTitle.intensity} color={creatorTitle.color}>
-                  {creatorName}
-                </ElementalTitle>
-              : creatorName}
-          </span>}
-        </div>
+      <WorldCardRibbon />
+      {!compact && !info && creatorName && <div className="world-card-base-overlay">
+        <span className="world-card-base-creator">
+          {creatorTitle
+            ? <ElementalTitle as="span" element={creatorTitle.element}
+                intensity={creatorTitle.intensity} color={creatorTitle.color}>
+                {creatorName}
+              </ElementalTitle>
+            : creatorName}
+        </span>
       </div>}
     </LibraryCardMedia>
   </LibraryCard>;
+  if (info) return card;
+
+  // The caption repeats the art's open action for pointers; keyboards and screen readers use the art's own control.
+  return <div className="world-card-tile" data-cover-shape={coverShape} data-world-card-tile={compact ? 'compact' : 'full'}>
+    {card}
+    <div className="world-card-caption" onClick={props.onOpen}>
+      <h3 className="world-card-caption-title font-display">{world.title}</h3>
+      <p className="world-card-caption-details">{details}</p>
+      {!compact && <ul className="world-card-caption-features" aria-label="Features">
+        {fullWorld?.branchingEnabled === true && <li className="world-card-feature">
+          <GitBranch aria-hidden="true" />Branching
+        </li>}
+      </ul>}
+    </div>
+  </div>;
 }

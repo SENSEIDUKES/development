@@ -19,37 +19,48 @@ const world: HomeWorld = {
   mcName: 'Ye Chen', powerStage: 'Foundation', creatorName: 'SENSEI', format: 'Novel', acquired: true,
 };
 
-it('opens the portrait card with title, creator and a chapter-format row on the image', () => {
+it('keeps format, creator and the SEN sash on square art, with the title and details beneath', () => {
   const onOpen = vi.fn();
   act(() => root.render(<WorldCard world={world} onOpen={onOpen} />));
 
-  const card = container.querySelector('[data-world-card="full"]')!;
+  const tile = container.querySelector<HTMLElement>('[data-world-card-tile="full"]')!;
+  expect(tile.getAttribute('data-cover-shape')).toBe('square');
+  const card = tile.querySelector('[data-world-card="full"]')!;
   expect((card as HTMLElement).style.getPropertyValue('--world-card-glow')).not.toBe('');
   const open = card.querySelector<HTMLButtonElement>('.world-card-base-open')!;
   expect(open.getAttribute('aria-label')).toBe('Open The Last Lotus, 24 chapters, creator SENSEI, format Novel');
   const media = card.querySelector('.world-card-base-media')!;
-  expect(media.querySelector('.world-card-base-overlay')).not.toBeNull();
-  for (const value of ['The Last Lotus', 'SENSEI', 'Ch. 24']) {
-    expect(card.textContent).toContain(value);
-    expect(media.textContent).toContain(value);
-  }
+  // On the art: format mark, creator and the SEN sash only. The title lives in the caption.
+  expect(media.querySelector(':scope > .world-card-base-format .sr-only')?.textContent).toBe('Novel');
   expect(card.querySelector('[data-sen-icon="story-scroll"]')).not.toBeNull();
-  expect(card.querySelector('.world-card-base-chapters svg[aria-hidden="true"]')).not.toBeNull();
-  expect(media.querySelector(':scope > .world-card-base-format')).not.toBeNull();
-  expect(media.querySelector('.world-card-base-details .world-card-base-format')).toBeNull();
-  expect(card.querySelector('.world-card-base-format .sr-only')?.textContent).toBe('Novel');
-  expect(card.querySelector('.world-card-base-format')?.textContent).not.toContain('NOVEL');
-  expect(card.querySelector('.world-card-base-chapter-count')).toBeNull();
-  expect(card.querySelector('.world-card-base-details')?.getAttribute('data-slot')).toBe('badge');
-  expect([...card.querySelector('.world-card-base-meta')!.children].map((element) => element.className)).toEqual([
-    expect.stringContaining('world-card-base-details'), 'world-card-base-creator',
-  ]);
-  expect(card.querySelector('.world-card-base-details .world-card-base-creator')).toBeNull();
-  for (const value of ['Xianxia', 'Standard', 'Creator', 'Format', 'Manga', 'Ye Chen', 'Foundation', '1,280', 'Sealed', 'Draft', 'Unacquired', 'Recently read']) {
-    expect(card.textContent).not.toContain(value);
+  expect(media.querySelector('.world-card-base-creator')?.textContent).toBe('SENSEI');
+  expect(media.querySelector('.world-card-ribbon')?.textContent).toBe('SEN');
+  expect(media.querySelector('.world-card-ribbon')?.getAttribute('aria-hidden')).toBe('true');
+  expect(media.textContent).not.toContain('The Last Lotus');
+  expect(media.textContent).not.toContain('Ch. 24');
+
+  const caption = tile.querySelector('.world-card-caption')!;
+  expect(caption.querySelector('h3')?.textContent).toBe('The Last Lotus');
+  expect(caption.querySelector('.world-card-caption-details')?.textContent).toBe('Xianxia · Ch. 24');
+  for (const value of ['Standard', 'Creator', 'Format', 'Manga', 'Ye Chen', 'Foundation', '1,280', 'Sealed', 'Draft', 'Unacquired', 'Recently read']) {
+    expect(tile.textContent).not.toContain(value);
   }
   act(() => open.click());
-  expect(onOpen).toHaveBeenCalledOnce();
+  act(() => (caption as HTMLElement).click());
+  expect(onOpen).toHaveBeenCalledTimes(2);
+
+  act(() => root.render(<WorldCard world={world} coverShape="tall" onOpen={onOpen} />));
+  expect(container.querySelector('[data-world-card-tile="full"]')?.getAttribute('data-cover-shape')).toBe('tall');
+});
+
+it('shows the Branching badge only when the creator has enabled branching, keeping the badge row either way', () => {
+  act(() => root.render(<WorldCard world={{ ...world, branchingEnabled: true }} onOpen={() => {}} />));
+  expect(container.querySelector('.world-card-caption-features')?.textContent).toBe('Branching');
+  act(() => root.render(<WorldCard world={{ ...world, branchingEnabled: false }} onOpen={() => {}} />));
+  expect(container.querySelector('.world-card-caption-features')?.textContent).toBe('');
+  act(() => root.render(<WorldCard world={world} onOpen={() => {}} />));
+  expect(container.querySelector('.world-card-caption-features')).not.toBeNull();
+  expect(container.querySelector('.world-card-feature')).toBeNull();
 });
 
 it('renders host-supplied creator lettering without assigning an element to other creators', () => {
@@ -112,25 +123,20 @@ it('does not infer hidden activity or branching permission from missing data', a
   expect(panel.textContent).not.toContain('Quiet');
 });
 
-it('keeps chapter and host-selected status in the bottom row', () => {
+it('puts chapter and host-selected status in the caption details', () => {
   act(() => root.render(<WorldCard world={world} displayStatus={{ view: 'public', value: 'ongoing' }} onOpen={() => {}} />));
-  const card = container.querySelector('[data-world-card="full"]')!;
-  const details = card.querySelector('.world-card-base-details')!;
-  expect([...details.children].map((item) => item.className)).toEqual([
-    'world-card-base-chapters', 'world-card-base-status',
-  ]);
-  expect(details.textContent).toContain('Ch. 24On Going');
-  expect(details.querySelector('.world-card-base-status svg')).not.toBeNull();
-  expect(card.querySelector('.world-card-base-open')?.getAttribute('aria-label')).toContain('On Going');
+  const details = () => container.querySelector('.world-card-caption-details')?.textContent;
+  expect(details()).toBe('Xianxia · Ch. 24 · On Going');
+  expect(container.querySelector('.world-card-base-open')?.getAttribute('aria-label')).toContain('On Going');
 
   act(() => root.render(<WorldCard world={world} displayStatus={{ view: 'public', value: 'completed' }} onOpen={() => {}} />));
-  expect(details.textContent).toContain('Ch. 24Completed');
+  expect(details()).toBe('Xianxia · Ch. 24 · Completed');
 
   act(() => root.render(<WorldCard world={{ ...world, draft: false }} displayStatus={{ view: 'library', value: 'draft' }} onOpen={() => {}} />));
-  expect(details.textContent).toContain('Ch. 24Draft');
+  expect(details()).toBe('Xianxia · Ch. 24 · Draft');
 
   act(() => root.render(<WorldCard world={world} displayStatus={{ view: 'library', value: 'complete' }} onOpen={() => {}} />));
-  expect(details.textContent).toContain('Ch. 24Complete');
+  expect(details()).toBe('Xianxia · Ch. 24 · Complete');
 });
 
 it('plays only this world’s supplied motion clip without opening the world', () => {
@@ -173,9 +179,9 @@ it('keeps acquisition and reading states off the card and handles missing covers
   act(() => image.dispatchEvent(new Event('error')));
   expect(container.textContent).toContain('Cover unavailable');
 
-  act(() => root.render(<WorldCard world={{ ...world, creatorName: undefined, format: undefined }} onOpen={() => {}} />));
-  expect(container.querySelector('.world-card-base-meta')?.textContent).toBe('Ch. 24');
-  expect(container.querySelector('.world-card-base-details')?.textContent).toBe('Ch. 24');
+  act(() => root.render(<WorldCard world={{ ...world, creatorName: undefined, format: undefined, genre: '' }} onOpen={() => {}} />));
+  expect(container.querySelector('.world-card-base-creator')).toBeNull();
+  expect(container.querySelector('.world-card-caption-details')?.textContent).toBe('Ch. 24');
 
   act(() => root.render(<WorldCard world={{ ...world, format: 'Manga' }} onOpen={() => {}} />));
   expect(container.textContent).toContain('MANGA');

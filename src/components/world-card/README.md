@@ -355,6 +355,17 @@ Workshop sample data and reference material remain outside the host adapter.
 
 ## Workshop history
 
+- **2026-10-09** — **Audible-style cards.** Full and Compact show clean art,
+  square by default (`coverShape="tall"` keeps the 2:3 cover; the Workshop's
+  *Card art shape* control compares them). On the art: the format mark, the
+  motion picture control, the creator's name and a gold **SEN** sash on every
+  card, since every world carries the expanded experience. The title, then
+  genre · chapters · status, sit in a caption beneath, with one feature row:
+  a **Branching** badge when the host says the creator enabled branching. The
+  caption keeps the same height with or without a badge so a grid lines up.
+  The Info cover keeps its 2:3 shape and gains the sash. A **Home grid** view
+  shows several cards side by side. Cover generation still makes 2:3 art.
+
 - **2026-10-01** — **Start Story.** `WorldCardInfoProps` (and
   `StoryDetailScreen`) take `onStart`. A story with no chapters whose host can
   start it shows its Chapters card as **Start Story →**; with chapters, the card

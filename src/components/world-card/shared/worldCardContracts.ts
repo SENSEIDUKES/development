@@ -27,7 +27,7 @@ export interface WorldCardInfoCoverProps {
   face: 'info';
 }
 
-/** Full card: the 2:3 discovery card on Home. */
+/** Full card: the discovery card on Home, square art with its caption beneath. */
 export type WorldCardDisplayStatus =
   | { view: 'public'; value: 'ongoing' | 'completed' }
   | { view: 'library'; value: CreatorWorldStatus };
@@ -37,6 +37,8 @@ export interface WorldCardProps {
   onOpen: () => void;
   /** Host-supplied progress for the surface showing this card. Unknown status stays hidden. */
   displayStatus?: WorldCardDisplayStatus;
+  /** The art's shape: square (default) or the 2:3 tall cover. */
+  coverShape?: 'square' | 'tall';
 }
 
 /** Compact card: the creator's world tile on Create. */
@@ -49,4 +51,6 @@ export interface WorldCardCompactProps {
   selected?: boolean;
   /** Opens this world's Info page; the host owns navigation. */
   onOpen: () => void;
+  /** The art's shape: square (default) or the 2:3 tall cover. */
+  coverShape?: 'square' | 'tall';
 }

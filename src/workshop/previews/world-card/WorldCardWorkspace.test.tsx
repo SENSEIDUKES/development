@@ -9,7 +9,7 @@ import type { WorldCardPreviewState } from './previewData';
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const state: WorldCardPreviewState = {
-  recentlyRead: 'no', titleLength: 'standard', cover: 'art',
+  recentlyRead: 'no', titleLength: 'standard', cover: 'art', shape: 'square',
   activity: 'active-this-week', cardStatus: 'public-ongoing', destinations: 'all', reading: 'start',
 };
 

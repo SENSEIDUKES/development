@@ -70,7 +70,7 @@ export function StoryCoverManifest({ covers, storyId, request, agent }: {
         </button>
         <EnergySpendFloater burst={spent} note="practice: nothing is taken yet" />
       </span>
-      {imagePrice > 0 && <EnergyActionCost price={imagePrice} />}
+      {imagePrice > 0 && <EnergyActionCost actionId="image.generate" />}
       {coverUrl && <a href={coverUrl} download={`${request.title.replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '') || 'cover'}-cover.png`}
         aria-label="Download cover" title="Download cover" data-testid="story-cover-download"
         className="inline-grid h-11 w-11 place-items-center rounded-full border border-[#d4af37]/45 text-[#f3dc8a] hover:border-[#d4af37]/80">

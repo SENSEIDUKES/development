@@ -127,6 +127,24 @@ describe('The Cave on the device\'s profile', () => {
     revokeUrl.mockRestore();
   });
 
+  it('lets go of portraits that arrive after the builder was closed: the next visit starts fresh', async () => {
+    const createUrl = vi.spyOn(URL, 'createObjectURL').mockImplementation(() => 'blob:late');
+    let finish: (value: { images: Blob[] }) => void = () => undefined;
+    const make = vi.fn(() => new Promise<{ images: Blob[] }>(resolve => { finish = resolve; }));
+    services = createDeviceProfileServices({ store, familiars: allFamiliarOptions, portraits: { make, keep: vi.fn() } });
+    await mount();
+    await run(() => controller.setShowPortraitModal(true));
+    await run(() => controller.handleFileChange(new File(['me'], 'me.jpg', { type: 'image/jpeg' })));
+    let pending: unknown;
+    await run(() => { pending = controller.handleGeneratePortrait(); });
+    await run(() => controller.setShowPortraitModal(false));
+    await run(async () => { finish({ images: [new Blob(['1'])] }); await pending; });
+    await run(() => controller.setShowPortraitModal(true));
+    expect(controller.generatedPortraitUrls).toEqual([]);
+    expect(createUrl).not.toHaveBeenCalled();
+    vi.restoreAllMocks();
+  });
+
   it('shows the portraits that were made and says why the others were not, or why none were', async () => {
     vi.spyOn(URL, 'createObjectURL').mockImplementation(() => 'blob:only');
     const make = vi.fn()

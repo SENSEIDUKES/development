@@ -123,31 +123,34 @@ export function ImageLab({ incoming, fetcher }: ImageLabProps) {
     if (!savedToken) return;
     setWorking(true);
     setProblem(undefined);
-    const tryId = `${Date.now()}`;
-    const request = { prompt: prompt.trim(), model: chosenModel, aspectRatio: shape, token: savedToken, ...(attachment ? { attachment } : {}) };
-    // Each variation is its own call, so one refusal does not cost the others.
-    const results = await Promise.allSettled(Array.from({ length: variations }, () => generateLabImage(request, fetcher)));
-    const images = results.flatMap((result, index) => result.status === 'fulfilled' ? [{
-      id: `${tryId}-${index + 1}`,
-      url: keepUrl(result.value.blob),
-      model: result.value.model,
-      seconds: Math.max(1, Math.round(result.value.durationMs / 1000)),
-      extension: result.value.mimeType.split('/')[1]?.replace('jpeg', 'jpg') || 'png',
-    }] : []);
-    const failures = results.filter((result): result is PromiseRejectedResult => result.status === 'rejected');
-    if (failures.length) {
-      const reason = failures[0].reason instanceof Error ? failures[0].reason.message : 'The image could not be made.';
-      setProblem(variations > 1 ? `${failures.length} of ${variations} images could not be made. ${reason}` : reason);
+    try {
+      const tryId = `${Date.now()}`;
+      const request = { prompt: prompt.trim(), model: chosenModel, aspectRatio: shape, token: savedToken, ...(attachment ? { attachment } : {}) };
+      // Each variation is its own call, so one refusal does not cost the others.
+      const results = await Promise.allSettled(Array.from({ length: variations }, () => generateLabImage(request, fetcher)));
+      const images = results.flatMap((result, index) => result.status === 'fulfilled' ? [{
+        id: `${tryId}-${index + 1}`,
+        url: keepUrl(result.value.blob),
+        model: result.value.model,
+        seconds: Math.max(1, Math.round(result.value.durationMs / 1000)),
+        extension: result.value.mimeType.split('/')[1]?.replace('jpeg', 'jpg') || 'png',
+      }] : []);
+      const failures = results.filter((result): result is PromiseRejectedResult => result.status === 'rejected');
+      if (failures.length) {
+        const reason = failures[0].reason instanceof Error ? failures[0].reason.message : 'The image could not be made.';
+        setProblem(variations > 1 ? `${failures.length} of ${variations} images could not be made. ${reason}` : reason);
+      }
+      if (images.length) {
+        if (imagePrice) setSpent(previous => ({ key: (previous?.key ?? 0) + 1, amount: imagePrice, count: images.length }));
+        setTries(current => [{
+          id: tryId, prompt: request.prompt, shape, images, failed: failures.length,
+          ...(attachment ? { attachmentName: attachment.name } : {}),
+          madeAt: new Date().toLocaleTimeString('en', { hour: 'numeric', minute: '2-digit' }),
+        }, ...current]);
+      }
+    } finally {
+      setWorking(false);
     }
-    if (images.length) {
-      if (imagePrice) setSpent(previous => ({ key: (previous?.key ?? 0) + 1, amount: imagePrice, count: images.length }));
-      setTries(current => [{
-        id: tryId, prompt: request.prompt, shape, images, failed: failures.length,
-        ...(attachment ? { attachmentName: attachment.name } : {}),
-        madeAt: new Date().toLocaleTimeString('en', { hour: 'numeric', minute: '2-digit' }),
-      }, ...current]);
-    }
-    setWorking(false);
   };
 
   const choose = (tryId: string, imageId: string) => setTries(current => current.map(item => item.id === tryId

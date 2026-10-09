@@ -119,6 +119,8 @@ export function useDeviceProfileController(
   const [isGeneratingPortrait, setIsGeneratingPortrait] = useState(false);
   const [isSavingPortrait, setIsSavingPortrait] = useState(false);
   const portraitUrls = useRef<string[]>([]);
+  // Each visit to the builder is its own session: portraits that arrive after it closed are let go.
+  const portraitSession = useRef(0);
 
   /** Saves `changes` and brings the form's copy of exactly those fields up to date, leaving other drafts alone. */
   const commit = useCallback((changes: Partial<UserProfile>) => {
@@ -238,6 +240,7 @@ export function useDeviceProfileController(
   const setShowPortraitModal = useCallback((show: boolean) => {
     setPortraitModalOpen(show);
     if (show) return;
+    portraitSession.current += 1;
     // Each visit to the builder starts fresh: no photo, no portraits.
     releasePortraits();
     setPortraitUploadFile(null);
@@ -280,8 +283,10 @@ export function useDeviceProfileController(
     }
     setIsGeneratingPortrait(true);
     setPortraitError('');
+    const session = portraitSession.current;
     try {
       const { images, problem } = await portraits.make(portraitUploadFile);
+      if (session !== portraitSession.current) return;
       if (!images.length) {
         setPortraitError(problem ?? 'The portraits could not be made. Try again.');
         return;
@@ -292,6 +297,7 @@ export function useDeviceProfileController(
       setMadePortraits(made);
       if (problem) setPortraitError(problem);
     } catch (generationError) {
+      if (session !== portraitSession.current) return;
       setPortraitError(generationError instanceof Error ? generationError.message : 'The portraits could not be made. Try again.');
     } finally {
       setIsGeneratingPortrait(false);

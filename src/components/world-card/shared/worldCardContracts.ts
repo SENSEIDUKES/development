@@ -18,7 +18,7 @@ export interface WorldCardInfoProps {
    */
   onStart?: () => void;
   onOpenCodex?: () => void;
-  /** The viewer's known reading position; the Chapters card says Continue Reading only when supplied. */
+  /** The viewer's known reading position; the reading pill says Continue only when supplied. */
   readingPosition?: { chapterNumber: number };
   /**
    * The host's own controls laid over the cover, such as making cover art. The

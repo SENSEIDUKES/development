@@ -187,10 +187,9 @@
 .world-card-story-panel-tags li { max-width: 100%; padding: 0.125rem 0.5rem; border-radius: 999px; background: #ffffff0a; border: 1px solid #ffffff1f; color: #b6e3ff; font-size: 0.75rem; }
 
 /*
- * Info page — Celestial glass, phone-first and at a glance. On a phone the
- * whole overview (cover, title, states, synopsis, Chapters, tools)
- * is sized to sit between the host's header and bottom navigation, as in the
- * approved reference; cover and title stay side by side at every width.
+ * Info page — Celestial glass, presented the way Audible presents a title:
+ * on a phone a big centered cover, the reading pill, then the title, meta and
+ * tags, centered; from 768px the cover stands beside the rest.
  * Views, branches and activity are not shown: they have no real source yet.
  */
 .world-card-info {
@@ -202,23 +201,32 @@
   isolation: isolate;
   border-color: var(--world-info-line-strong);
 }
-/* This world's own cover as a soft reflection in the upper right of the glass. */
-.world-card-info-reflection {
-  position: absolute; z-index: 0; top: 0; right: 0; width: 72%; height: 50%; pointer-events: none;
-  background-size: cover; background-position: center 18%; background-repeat: no-repeat;
-  filter: blur(8px) saturate(0.85) brightness(0.85); opacity: 0.42; transform: scale(1.06);
-  -webkit-mask-image: radial-gradient(ellipse 85% 80% at 78% 22%, #000 22%, rgba(0, 0, 0, 0.5) 50%, transparent 76%);
-  mask-image: radial-gradient(ellipse 85% 80% at 78% 22%, #000 22%, rgba(0, 0, 0, 0.5) 50%, transparent 76%);
+/*
+ * The backdrop: this world's own cover, blurred and washed in its own color,
+ * with its motion picture looping over it when it has one. It fills the top of
+ * the page behind the hero and fades into the glass below. Decorative only.
+ */
+.world-card-info-backdrop {
+  position: absolute; inset: 0 0 auto; z-index: 0; height: min(46rem, 92%); overflow: hidden; pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(90% 70% at 50% 18%, color-mix(in srgb, var(--world-card-glow, rgba(4, 172, 255, 0.6)) 70%, transparent), transparent 75%);
+  -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
 }
+.world-card-info-backdrop-art {
+  position: absolute; inset: -2rem; background-size: cover; background-position: center 22%; background-repeat: no-repeat;
+  filter: blur(24px) saturate(1.25) brightness(0.85); opacity: 0.95;
+}
+.world-card-info-video { position: absolute; inset: 0; width: 100%; height: 100%; object-position: center 30%; }
+.world-card-info-video[data-playing='true'] { opacity: 0.55; }
 .world-card-info-scrim {
-  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  position: absolute; inset: 0; pointer-events: none;
   background:
-    radial-gradient(80% 45% at 100% 0%, rgba(110, 96, 230, 0.12), transparent 70%),
-    linear-gradient(180deg, rgba(8, 10, 24, 0.3) 0%, rgba(8, 10, 24, 0.72) 34%, rgba(7, 9, 20, 0.9) 56%, rgba(6, 8, 18, 0.94) 100%);
+    linear-gradient(180deg, rgba(6, 8, 18, 0.05) 0%, rgba(6, 8, 18, 0.25) 40%, rgba(6, 8, 18, 0.75) 78%, rgba(6, 8, 18, 0.95) 100%);
 }
-.world-card-info-body { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 0.625rem; padding: 0.75rem; }
-@media (min-width: 640px) { .world-card-info-body { gap: 1.1rem; padding: 1.5rem; } }
-@media (min-width: 1024px) { .world-card-info-body { gap: 1.25rem; padding: 2rem; } }
+.world-card-info-body { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 0.9rem; padding: 1.5rem 1rem 1rem; }
+@media (min-width: 640px) { .world-card-info-body { gap: 1.2rem; padding: 2rem 1.75rem 1.5rem; } }
+@media (min-width: 1024px) { .world-card-info-body { gap: 1.4rem; padding: 2.5rem 2.5rem 2rem; } }
 
 /* On the Info cover the motion control steps aside while the clip plays, keeping the small frame clear; keyboard focus still shows it. */
 .world-card-info-cover .world-card-base[data-motion-playing='true'] .motion-picture-control:not(:focus-visible) { opacity: 0; pointer-events: none; }
@@ -226,34 +234,72 @@
 @media (prefers-reduced-motion: reduce) { .world-card-info-cover .motion-picture-control { transition: none; } }
 
 /*
- * Hero: cover beside the identity column at every width. On narrow phones the
- * tags run full width beneath so the hero stays short; from 380px they join
- * the column beside the cover, as in the reference.
+ * Hero, as Audible presents a title: on a phone everything is one centered
+ * column — the big cover, the reading pill, the states, the title, the byline,
+ * the meta line and the tags. From 768px the cover stands on the left and the
+ * rest sits beside it, left aligned.
  */
-.world-card-info-hero {
-  display: grid; grid-template-columns: minmax(5.5rem, 33%) minmax(0, 1fr); grid-template-areas: 'cover identity' 'tags tags';
-  gap: 0.6rem 0.75rem; align-items: center;
-}
-.world-card-info-cover { position: relative; grid-area: cover; width: 100%; }
+.world-card-info-hero { display: flex; flex-direction: column; align-items: center; gap: 1.1rem; }
+/* On a phone the cover is the Compact card's square; beside the text it is the tall cover again. */
+.world-card-info-cover { --world-card-aspect: 1 / 1; position: relative; width: min(72vw, 17rem); filter: drop-shadow(0 18px 36px rgb(0 0 0 / 0.55)); }
 /* The host's controls over the cover (for example making cover art) share the cover's frame and corners. */
 .world-card-info-cover-action { position: absolute; inset: 0; z-index: 6; overflow: hidden; border-radius: 1.25rem; pointer-events: none; }
 .world-card-info-cover-action > * { pointer-events: auto; }
-.world-card-info-identity { grid-area: identity; display: flex; min-width: 0; flex-direction: column; gap: 0.4rem; }
-.world-card-info-tags { grid-area: tags; }
-@media (min-width: 380px) {
-  .world-card-info-hero { grid-template-areas: 'cover identity' 'cover tags'; row-gap: 0.4rem; }
-  .world-card-info-identity { align-self: end; }
-  .world-card-info-tags { align-self: start; }
+.world-card-info-identity { display: flex; width: 100%; min-width: 0; flex-direction: column; align-items: center; gap: 0.6rem; text-align: center; }
+.world-card-info-identity > header { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
+.world-card-info-states, .world-card-info-tags { justify-content: center; }
+/* Phone: the reading pill with the story's states beside it, one row. */
+.world-card-info-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.6rem; }
+/* The current arc is shown beside the cover only; on a phone the pill already says where the reader is. */
+@media (max-width: 767.98px) { .world-card-info-arc { display: none !important; } }
+@media (min-width: 768px) {
+  .world-card-info-hero { display: grid; grid-template-columns: 15rem minmax(0, 1fr); align-items: center; column-gap: 2.25rem; }
+  .world-card-info-cover { --world-card-aspect: 2 / 3; width: 100%; }
+  .world-card-info-actions { display: contents; }
+  .world-card-info-states { order: -1; }
+  .world-card-info-identity { align-items: flex-start; text-align: left; }
+  .world-card-info-identity > header { align-items: flex-start; }
+  .world-card-info-states, .world-card-info-tags, .world-card-info-meta { justify-content: flex-start; }
+  /* Beside the cover the pill follows the title and tags, as the last line of the column. */
+  .world-card-info-read, .world-card-info-read-unavailable { order: 10; margin-top: 0.4rem; }
 }
-@media (min-width: 640px) {
-  .world-card-info-hero { grid-template-columns: 13rem minmax(0, 1fr); column-gap: 1.75rem; row-gap: 0.8rem; }
-  .world-card-info-identity { gap: 0.8rem; }
+@media (min-width: 1024px) { .world-card-info-hero { grid-template-columns: 17rem minmax(0, 1fr); column-gap: 3rem; } }
+
+/* The one reading action: Home's night-glass Carve New Destiny button, never gold. */
+.world-card-info .library-glass-button.world-card-info-read {
+  min-width: 11rem; border-radius: 999px;
+  --glass-fill: rgba(9, 11, 22, 0.78);
+  --glass-fill-hover: rgba(18, 20, 38, 0.84);
+  --glass-fill-press: rgba(6, 8, 16, 0.88);
+  --glass-light: rgba(255, 255, 255, 0.07);
+  --glass-edge: rgba(255, 255, 255, 0.14);
+  --glass-glow: rgba(4, 172, 255, 0.22);
+  --glass-glow-hover: rgba(124, 92, 255, 0.4);
+  --glass-text: #f2efe8;
+  --glass-text-hover: #ffffff;
 }
-@media (min-width: 1024px) { .world-card-info-hero { grid-template-columns: 15rem minmax(0, 1fr); column-gap: 2.25rem; } }
+@media (min-width: 768px) { .world-card-info .library-glass-button.world-card-info-read { min-width: 14rem; } }
+.world-card-info-read-unavailable { margin: 0; color: #b3b9c8; font-size: 0.8125rem; }
+
+/* Meta: genre | chapters | current arc, one quiet line. */
+.world-card-info-meta {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; margin: 0; row-gap: 0.2rem;
+  color: #d6dae5; font-family: var(--font-serif, serif); font-size: 0.875rem; line-height: 1.35;
+}
+.world-card-info-meta > * + *::before { content: '|'; margin-inline: 0.55rem; color: rgb(214 218 229 / 0.45); }
+/* The current arc takes its own line under genre and chapters. */
+.world-card-info-meta > .world-card-info-arc { flex-basis: 100%; justify-content: inherit; color: #b9c0cf; font-size: 0.9em; }
+.world-card-info-meta > .world-card-info-arc::before { content: none; }
+@media (min-width: 640px) { .world-card-info-meta { font-size: 1rem; } }
+@media (min-width: 768px) {
+  .world-card-info-meta { justify-content: flex-start; }
+  /* Beside the cover the text sits over the clip, so the backdrop darkens behind it. */
+  .world-card-info-scrim { background: linear-gradient(90deg, rgba(6, 8, 18, 0.1) 15%, rgba(6, 8, 18, 0.6) 55%, rgba(6, 8, 18, 0.45) 100%), linear-gradient(180deg, rgba(6, 8, 18, 0.05) 0%, rgba(6, 8, 18, 0.25) 40%, rgba(6, 8, 18, 0.75) 78%, rgba(6, 8, 18, 0.95) 100%); }
+}
 
 .world-card-info-title {
   margin: 0; font-weight: 700; line-height: 1.05; letter-spacing: -0.005em;
-  font-size: clamp(1.3rem, 5.8vw, 3.4rem); overflow-wrap: anywhere; text-wrap: balance;
+  font-size: clamp(1.75rem, 7.5vw, 3.4rem); overflow-wrap: anywhere; text-wrap: balance;
   background-image: linear-gradient(165deg, #fbf5e6 0%, #f4f1ea 38%, #bfe9ff 62%, #7fd9ff 82%, #5fcfff 100%);
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
@@ -279,15 +325,14 @@
 .world-card-info-pill-status[data-status='ongoing'] { border-color: rgba(52, 211, 153, 0.62); background: rgba(6, 50, 38, 0.42); color: #5fe3ad; }
 .world-card-info-status-dot { width: 0.4rem; height: 0.4rem; flex: none; border-radius: 999px; background: currentColor; box-shadow: 0 0 6px currentColor; }
 .world-card-info-pill-sealed svg { color: var(--world-info-gold); }
-.world-card-info-genre { display: inline-flex; align-items: center; gap: 0.25rem; padding-inline: 0.15rem; color: #f1f2f7; font-family: var(--font-serif, serif); font-size: 0.8125rem; }
+.world-card-info-genre { display: inline-flex; align-items: center; gap: 0.3rem; color: #f1f2f7; }
 .world-card-info-genre svg { flex: none; width: 1rem; height: 1rem; color: var(--world-info-gold); }
 @media (min-width: 640px) {
   .world-card-info-pills { gap: 0.45rem; }
   .world-card-info-pill { min-height: 2rem; gap: 0.4rem; padding-inline: 0.8rem; font-size: 0.875rem; }
   .world-card-info-pill svg { width: 0.95rem; height: 0.95rem; }
   .world-card-info-status-dot { width: 0.55rem; height: 0.55rem; }
-  .world-card-info-genre { font-size: 1rem; }
-  .world-card-info-genre svg { width: 1.35rem; height: 1.35rem; }
+  .world-card-info-genre svg { width: 1.2rem; height: 1.2rem; }
 }
 
 /* Gold hairline with a small star ornament. */
@@ -312,48 +357,6 @@
   .world-card-info-more { font-size: 1.1rem; }
 }
 
-/* Chapters card — the only reading action — sits on a faint second card, like a stack of chapters. */
-.world-card-info-chapters-stack { position: relative; padding-top: 0.3rem; }
-.world-card-info-chapters-stack::before {
-  content: ''; position: absolute; top: 0; left: 0.1rem; right: 0.1rem; height: 1.5rem; pointer-events: none;
-  border: 1px solid var(--world-info-line); border-bottom: 0; border-radius: 1.1rem 1.1rem 0 0; background: rgba(14, 16, 36, 0.55);
-}
-.world-card-info-chapters { position: relative; flex-direction: row; align-items: stretch; min-height: 4.25rem; border-color: var(--world-info-line-strong); }
-.world-card-info-chapters > [data-slot='card-media'] { display: block; width: 23%; max-width: 16rem; background: #07111d; }
-.world-card-info-chapters > [data-slot='card-media'] .world-card-cover-image { object-position: center 26%; }
-.world-card-info-chapters > [data-slot='card-media']::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent 50%, rgba(10, 12, 26, 0.85)); }
-@media (min-width: 480px) { .world-card-info-chapters > [data-slot='card-media'] { width: 30%; } }
-@media (min-width: 640px) { .world-card-info-chapters > [data-slot='card-media'] { width: 34%; } .world-card-info-chapters { min-height: 7rem; } }
-.world-card-info-chapters > [data-slot='card-content'] { container-type: inline-size; justify-content: center; }
-.world-card-info-chapters-content {
-  display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: 'count' 'arc' 'cue';
-  align-items: center; gap: 0.15rem 0; padding: 0.6rem 0.7rem;
-}
-.world-card-info-chapters-count { grid-area: count; margin: 0; color: #f7f7fa; font-size: 1.1rem; font-weight: 700; line-height: 1.1; white-space: nowrap; }
-.world-card-info-chapters-arc { grid-area: arc; margin: 0; color: #d6dae5; font-family: var(--font-serif, serif); font-size: 0.8125rem; line-height: 1.3; overflow-wrap: anywhere; }
-.world-card-info-chapters-cue, .world-card-info-chapters-unavailable { grid-area: cue; }
-.world-card-info-chapters-cue {
-  margin-top: 0.1rem; max-width: 10rem; color: var(--world-info-gold-text);
-  font-family: var(--font-display, serif); font-size: 0.9rem; font-weight: 700; line-height: 1.2; text-wrap: balance;
-}
-.world-card-info-chapters-cue svg { display: inline-block; width: 1rem; height: 1rem; margin-left: 0.25rem; vertical-align: -0.2em; transition: transform 200ms ease-out; }
-.world-card-info-chapters-unavailable { margin-top: 0.1rem; color: #b3b9c8; font-size: 0.75rem; }
-/* Room for one row: count | divider | cue, with the arc underneath — as in the reference. */
-@container (min-width: 13.5rem) {
-  .world-card-info-chapters-content { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: 'count cue' 'arc arc'; column-gap: 0.4rem; row-gap: 0.25rem; }
-  .world-card-info-chapters-cue, .world-card-info-chapters-unavailable { justify-self: end; margin-top: 0; padding-left: 0.45rem; border-left: 1px solid var(--world-info-line-strong); text-align: right; }
-}
-@container (min-width: 22rem) {
-  .world-card-info-chapters-content { padding: 1rem 1.25rem; column-gap: 1.25rem; }
-  .world-card-info-chapters-count { font-size: 1.75rem; }
-  .world-card-info-chapters-arc { font-size: 1rem; }
-  .world-card-info-chapters-cue { max-width: none; padding-left: 1.25rem; font-size: 1.25rem; }
-  .world-card-info-chapters-cue svg { width: 1.2rem; height: 1.2rem; }
-}
-.world-card-info-chapters:hover .world-card-info-chapters-cue svg,
-.world-card-info-chapters:focus-visible .world-card-info-chapters-cue svg { transform: translateX(3px); }
-
-/* Quieter tools: Library artwork on the left, title and line, gold chevron. */
 .world-card-info-tools { display: grid; gap: 0.5rem; }
 .world-card-info-tools > :only-child { grid-column: 1 / -1; }
 @media (min-width: 768px) { .world-card-info-tools { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; } }
@@ -401,9 +404,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .world-card-info-chapters-cue svg, .world-card-info-tool-chevron, .world-card-info-information { transition: none; }
-  .world-card-info-chapters:hover .world-card-info-chapters-cue svg,
-  .world-card-info-chapters:focus-visible .world-card-info-chapters-cue svg,
+  .world-card-info-tool-chevron, .world-card-info-information { transition: none; }
   .world-card-info-tool:hover .world-card-info-tool-chevron,
   .world-card-info-tool:focus-visible .world-card-info-tool-chevron { transform: none; }
 }
@@ -433,14 +434,13 @@
   position: absolute; inset: -12%; z-index: -2; background-image: var(--world-card-banner-art, none);
   background-size: cover; background-position: center 25%; filter: blur(18px) saturate(1.15) brightness(0.65); transform: scale(1.05);
 }
-.world-card-banner-video {
-  position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: center 30%; pointer-events: none;
-  /* Hidden until it actually plays: a phone that will not start it (Low Power Mode) keeps the soft backdrop, never a still frame with a play button. */
-  opacity: 0; transition: opacity 600ms ease-out;
-}
-.world-card-banner-video[data-playing='true'] { opacity: 1; }
-.world-card-banner-video::-webkit-media-controls,
-.world-card-banner-video::-webkit-media-controls-start-playback-button { display: none !important; -webkit-appearance: none; }
+.world-card-banner-video { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-position: center 30%; }
+/* A world's motion picture behind a surface: hidden until it actually plays, so a phone that will
+   not start it (Low Power Mode) keeps the soft backdrop, never a still frame with a play button. */
+.world-card-backdrop-video { object-fit: cover; pointer-events: none; opacity: 0; transition: opacity 600ms ease-out; }
+.world-card-backdrop-video[data-playing='true'] { opacity: 1; }
+.world-card-backdrop-video::-webkit-media-controls,
+.world-card-backdrop-video::-webkit-media-controls-start-playback-button { display: none !important; -webkit-appearance: none; }
 .world-card-banner-wash {
   position: absolute; inset: 0; z-index: -1;
   background:

@@ -105,29 +105,36 @@ pieces rather than page-local cards or buttons:
 | Creator name | `ElementalTitle` when the host supplies `creatorTitle`, otherwise plain text |
 | Publication status, Recently read, story tags | `SEIBadge` |
 | Story tag colors | Story Seed tag catalog (`getTagMetadata`, `STORY_TAG_COLOR_ACCENTS` from `@seihouse/sen/story-seed`) |
-| Chapters card, Open Codex | `LibraryCard` (`interactive` when a destination exists) |
+| Reading pill | `ManifestButton` (`lg`) in Home's night-glass colors |
+| Open Codex | `LibraryCard` (`interactive` when a destination exists) |
+| Backdrop clip | `WorldCardBackdropVideo` (shared with the Feature card) |
 | Information row | `WorldCardStoryPanel` (the Full card's format dialog) with the row as its trigger |
 | Synopsis More / Less | `LibraryButton` (`ghost`) |
 
-- **Cover reflection.** The glass carries a faint, blurred copy of this
-  world's own `imageUrl` behind a dark indigo scrim. The layer is decorative
-  and hidden from assistive technology. It is not rendered when the world has
-  no cover, so the panel falls back to its own glass. It never uses another
-  world's art.
-- **At a glance on a phone.** On a phone the whole overview, from the back row
-  down to the Information row, is sized to fit between the Library shell's header
-  and its bottom navigation. This is checked in the shell at 390 × 844. At
-  320 × 693 (the width of a phone with Display Zoom) it fits through the
-  Chapters card.
-- **Hero.** The cover and the title always sit side by side; the hero never
-  stacks.
-  - The cover takes about a third of the width and keeps the World Card's own
-    edge and glow.
-  - The column beside it holds the title (cream shading to cyan), `by` +
-    creator, and the publication status / Recently read / genre pills.
-  - The story tags join that column from 380px. On narrower phones they run
-    full width under the hero. This slot holds story tags only; Cultivation
-    Rate is not shown.
+- **Backdrop.** Behind the hero sits this world's own cover, blurred and
+  washed in its own sampled color (`useDominantColor`). When the world has a
+  motion picture, `WorldCardBackdropVideo` loops it silently over that, the
+  same piece the Feature card uses. The clip shows only once it truly plays and
+  stays still under reduced motion. The backdrop fades into the glass below,
+  is hidden from assistive technology, and is not drawn without a cover. It
+  never uses another world's art.
+- **Presented the way Audible presents a title.** On a phone everything is one
+  centered column, in this order:
+  1. the big cover, square like the Compact card (about 72% of the width, up
+     to 17rem);
+  2. one row: the page's one reading action, a night-glass pill (Home's Carve
+     New Destiny `ManifestButton` look, never gold): Continue · Ch. N, Start
+     Reading, or Start Story while a story the host can start has no chapters
+     (without a working destination it says "Reading isn’t available here
+     yet"); the publication status and Recently read badges sit beside it;
+  3. the title (cream shading to cyan) and `by` + creator;
+  4. one meta line, genre | chapters (the current arc is shown beside the
+     cover only, from 768px);
+  5. the story tags.
+  The synopsis, Open Codex and Information follow. From 768px the cover stands
+  on the left as the tall cover and the rest sits beside it, left aligned:
+  states, title, byline, meta with the current arc, tags, then the pill. The Chapters card is gone; its count, current arc and
+  reading action now live in the meta line and the pill.
 - **Story tags in their catalog colors.** Each tag resolves against the Story
   Seed tag catalog. It shows its catalog label with its category's color dot
   and a matching tinted border (for example Politics & War in purple, Destiny &
@@ -355,6 +362,19 @@ Workshop sample data and reference material remain outside the host adapter.
 
 ## Workshop history
 
+- **2026-10-09** — **World Info, Audible style.** A big centered cover over a
+  backdrop made from the cover's own art and color, with the world's motion
+  picture looping behind it when it has one. Under the cover, the reading pill,
+  then status, title, byline, a genre | chapters line with the current arc, and
+  the tags, all centered; from 768px the cover stands beside them. Nothing was
+  removed: the Chapters card's count, arc and action moved into the meta line
+  and the pill. The backdrop clip is the shared `WorldCardBackdropVideo`, which
+  now also counts a successful `play()` as playing, so a clip that starts
+  before React listens no longer stays invisible (this fixes the Feature card
+  too). After SENSEI's phone review: the pill is Home's dark night-glass
+  button instead of gold, the phone cover is the Compact card's square, the
+  status sits beside a shorter pill, and the current arc shows beside the cover
+  only. The laptop layout is unchanged.
 - **2026-10-09** — **Cover slot.** `WorldCardInfo` takes `coverAction`: the host's
   own controls laid over the Info cover in its frame (the app's World Info makes
   covers there: Manifest on an empty cover, a small Manifest and download on a kept one).

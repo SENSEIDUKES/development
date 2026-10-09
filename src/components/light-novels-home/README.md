@@ -82,6 +82,9 @@ The build, focused navigation/header/profile/Workshop tests, package boundary ch
 
 ## Workshop history
 
+- **2026-10-09:** Featured, refined: one fixed gold **Featured** name with its slide dots in the top-left (the slides no longer carry their own label; "Featured Ascension" is gone), small ghost-glass arrows on the slide's edges for pointers, and a sideways swipe on touch (a swipe never opens the card). Carve New Destiny wears the NovelExpanded app's dark night glass with its spectral rim and halo, so a bright backdrop cannot wash it gold.
+- **2026-10-09:** Featured now cycles. Featured Ascension stays first and stays mounted (its video pauses while another slide shows); after it come the host's `featuredWorlds`, each as a World Card Feature card of the same size. Arrows and one dot per slide sit beneath; slides advance every 8 seconds unless the reader is pointing at or focused in them, or prefers reduced motion. Without `featuredWorlds`, Featured Ascension stands alone. The NovelExpanded app features its newest five stories that have a cover; the Workshop features the sample novel.
+
 - **2026-09-11:** Reused the source-owned SEN Discovery mark for the empty Worlds collection state. Collection behavior, responsive layout, and the locked reference remain unchanged.
 
 - **2026-09-11:** Replaced the generic sparkle on the existing Carve New

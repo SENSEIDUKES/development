@@ -3,3 +3,52 @@
   background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.85) 50%, rgba(0,0,0,1) 100%);
 }
 [data-light-novels-home] .text-gold-accent { color: #D4AF37; }
+
+/* Featured: one fixed name with its slide dots in the top-left, small glass arrows on the edges
+   for pointers, and sideways swipes on touch. */
+[data-light-novels-home] .home-featured { position: relative; touch-action: pan-y; }
+[data-light-novels-home] .home-featured-label {
+  position: absolute; z-index: 20; top: 1rem; left: 1.25rem; display: flex; align-items: center; gap: 0.6rem; pointer-events: none;
+  color: #d4af37; font-family: var(--font-sc, serif); font-size: 0.625rem; font-weight: 700; letter-spacing: 0.25em; text-transform: uppercase;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
+}
+@media (min-width: 640px) { [data-light-novels-home] .home-featured-label { top: 1.75rem; left: 2.75rem; font-size: 0.75rem; } }
+[data-light-novels-home] .home-featured-dots { display: flex; align-items: center; pointer-events: auto; }
+/* Each dot keeps a 1.5rem tap target around its small mark. */
+[data-light-novels-home] .home-featured-dot { position: relative; width: 1.1rem; height: 1.5rem; }
+[data-light-novels-home] .home-featured-dot::after {
+  content: ''; position: absolute; left: 50%; top: 50%; width: 0.35rem; height: 0.35rem; border-radius: 999px;
+  background: rgba(229, 231, 235, 0.45); transform: translate(-50%, -50%); transition: background-color 200ms ease-out, width 200ms ease-out;
+}
+[data-light-novels-home] .home-featured-dot[aria-current='true']::after { width: 0.9rem; background: #d4af37; box-shadow: 0 0 6px rgba(212, 175, 55, 0.6); }
+[data-light-novels-home] .home-featured-step {
+  position: absolute; z-index: 20; top: 50%; display: inline-grid; place-items: center; width: 2rem; height: 2rem; transform: translateY(-50%);
+  border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 999px; background: rgba(5, 11, 18, 0.18); color: #f5f5f5;
+  backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); opacity: 0.75; transition: opacity 150ms ease-out, background-color 150ms ease-out;
+}
+[data-light-novels-home] .home-featured-step[data-side='previous'] { left: 0.4rem; }
+[data-light-novels-home] .home-featured-step[data-side='next'] { right: 0.4rem; }
+[data-light-novels-home] .home-featured:hover .home-featured-step,
+[data-light-novels-home] .home-featured-step:focus-visible { opacity: 1; }
+[data-light-novels-home] .home-featured-step:hover { background: rgba(5, 11, 18, 0.4); }
+[data-light-novels-home] .home-featured-step svg { width: 1rem; height: 1rem; }
+/* Touch screens swipe; the arrows step aside unless a keyboard reaches them. */
+@media (hover: none) { [data-light-novels-home] .home-featured-step:not(:focus-visible) { opacity: 0; pointer-events: none; } }
+[data-light-novels-home] :is(.home-featured-step, .home-featured-dot):focus-visible { outline: 2px solid #04acff; outline-offset: 2px; border-radius: 999px; }
+@media (prefers-reduced-motion: reduce) {
+  [data-light-novels-home] .home-featured-step, [data-light-novels-home] .home-featured-dot::after { transition: none; }
+}
+
+/* Carve New Destiny on Featured: the dark night glass of the NovelExpanded app, its spectral rim and
+   rainbow halo kept, so a bright backdrop behind it can never wash it gold. */
+[data-light-novels-home] .home-featured .library-glass-button[data-variant='manifest'] {
+  --glass-fill: rgba(9, 11, 22, 0.78);
+  --glass-fill-hover: rgba(18, 20, 38, 0.84);
+  --glass-fill-press: rgba(6, 8, 16, 0.88);
+  --glass-light: rgba(255, 255, 255, 0.07);
+  --glass-edge: rgba(255, 255, 255, 0.14);
+  --glass-glow: rgba(4, 172, 255, 0.22);
+  --glass-glow-hover: rgba(124, 92, 255, 0.4);
+  --glass-text: #f2efe8;
+  --glass-text-hover: #ffffff;
+}

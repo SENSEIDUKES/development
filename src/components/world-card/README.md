@@ -355,6 +355,26 @@ Workshop sample data and reference material remain outside the host adapter.
 
 ## Workshop history
 
+- **2026-10-09** — **Clean cards, the SEN sash, the Feature card.** Full keeps
+  its 2:3 cover at its original Home size; Compact (Create's "Your worlds") is
+  square. Both keep the art clean: on Full only the format mark and motion
+  picture control (both in ghost glass), the creator's name and the sash. The
+  title, then genre | chapters | status, sit in a caption beneath, with one
+  feature row: a **Branching** badge when the host says the creator enabled
+  branching. The caption keeps one height so a grid lines up. The **SEN sash**
+  crosses every cover's lower-right corner like a bound book's ribbon, in
+  celestial night glass trimmed with gold hairlines and the gold star either
+  side of SEN. The sash is kept for a distinction the host awards (`senSash`;
+  for example, a completed novel) and is off by default; the Workshop's *SEN
+  sash* control shows it. New **Feature card**
+  (`WorldCardFeature`): a wide banner the size of Home's Featured hero (15rem,
+  20rem from 640px), the world's cover on the right, that cover blurred in its
+  own color behind a gold eyebrow, title, byline, details, synopsis and
+  Branching; when the world has a motion picture, it loops muted behind the
+  band (still when the reader prefers reduced motion). Home's Featured hero
+  cycles through Feature cards. The Workshop adds Feature card and Home grid
+  views.
+
 - **2026-10-01** — **Start Story.** `WorldCardInfoProps` (and
   `StoryDetailScreen`) take `onStart`. A story with no chapters whose host can
   start it shows its Chapters card as **Start Story →**; with chapters, the card

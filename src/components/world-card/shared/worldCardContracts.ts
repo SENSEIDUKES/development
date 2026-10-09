@@ -27,7 +27,7 @@ export interface WorldCardInfoCoverProps {
   face: 'info';
 }
 
-/** Full card: the 2:3 discovery card on Home. */
+/** Full card: the discovery card on Home, the 2:3 cover with its caption beneath. */
 export type WorldCardDisplayStatus =
   | { view: 'public'; value: 'ongoing' | 'completed' }
   | { view: 'library'; value: CreatorWorldStatus };
@@ -37,9 +37,29 @@ export interface WorldCardProps {
   onOpen: () => void;
   /** Host-supplied progress for the surface showing this card. Unknown status stays hidden. */
   displayStatus?: WorldCardDisplayStatus;
+  /**
+   * Shows the SEN sash across the cover's corner. Off unless the host awards it; the sash is
+   * reserved for a distinction the host defines (for example, a completed novel).
+   */
+  senSash?: boolean;
 }
 
-/** Compact card: the creator's world tile on Create. */
+/** Feature card: a wide banner for a world the host wants to spotlight (Home's featured row). */
+export interface WorldCardFeatureProps {
+  world: HomeWorld;
+  onOpen: () => void;
+  /** Host-supplied progress, as on the Full card. Unknown status stays hidden. */
+  displayStatus?: WorldCardDisplayStatus;
+  /** The gold line above the title; defaults to "Featured". `null` leaves it out (a host that names the row itself). */
+  label?: string | null;
+  /**
+   * Shows the SEN sash across the cover's corner. Off unless the host awards it; the sash is
+   * reserved for a distinction the host defines (for example, a completed novel).
+   */
+  senSash?: boolean;
+}
+
+/** Compact card: the creator's world tile on Create, square art with its caption beneath. */
 export interface WorldCardCompactProps {
   world: CreatorWorld;
   /** Resolved art; the host picks a fallback for worlds with no cover yet. */
@@ -49,4 +69,9 @@ export interface WorldCardCompactProps {
   selected?: boolean;
   /** Opens this world's Info page; the host owns navigation. */
   onOpen: () => void;
+  /**
+   * Shows the SEN sash across the cover's corner. Off unless the host awards it; the sash is
+   * reserved for a distinction the host defines (for example, a completed novel).
+   */
+  senSash?: boolean;
 }

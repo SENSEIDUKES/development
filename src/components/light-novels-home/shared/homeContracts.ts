@@ -31,5 +31,10 @@ export interface LightNovelsHomeProps {
   onOpenWorld: (id: string) => void;
   /** What the list says while it has no worlds. Without it, Home keeps the catalog's wording. */
   emptyState?: { title: string; description: string };
+  /**
+   * Worlds the Featured hero cycles through after Featured Ascension, each as a Feature card.
+   * Without them, Featured Ascension stands alone.
+   */
+  featuredWorlds?: readonly HomeWorld[];
   children?: ReactNode;
 }

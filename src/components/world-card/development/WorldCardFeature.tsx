@@ -40,7 +40,7 @@ export function WorldCardFeature({ world, onOpen, displayStatus, label = 'Featur
     : displayStatus?.view === 'library' ? WORLD_STATUS_LABELS[displayStatus.value] : undefined;
   const genre = world.genre?.trim();
   const synopsis = world.synopsis?.trim();
-  const details = [genre, `Ch. ${world.chapterCount}`, statusLabel].filter(Boolean).join(' · ');
+  const details = [genre, `Ch. ${world.chapterCount}`, statusLabel].filter(Boolean).join(' | ');
   const openLabel = `Open ${world.title}, ${world.chapterCount} chapters${world.creatorName ? `, creator ${world.creatorName}` : ''}${statusLabel ? `, ${statusLabel}` : ''}`;
 
   return <article className="world-card-banner" data-world-card="feature" id={`feature-world-${world.id}`}
@@ -50,7 +50,7 @@ export function WorldCardFeature({ world, onOpen, displayStatus, label = 'Featur
       muted loop playsInline autoPlay preload="metadata" aria-hidden="true" tabIndex={-1} />}
     <span className="world-card-banner-wash" aria-hidden="true" />
     <div className="world-card-banner-body">
-      <p className="world-card-banner-eyebrow">{label}</p>
+      {label && <p className="world-card-banner-eyebrow">{label}</p>}
       <h3 className="world-card-banner-title font-display">{world.title}</h3>
       {world.creatorName && <p className="world-card-banner-byline">
         <span className="world-card-banner-by">by</span>

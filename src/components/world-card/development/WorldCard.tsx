@@ -46,7 +46,7 @@ export function WorldCard(props: WorldCardFaceProps) {
       ? displayStatus.value === 'ongoing' ? 'On Going' : 'Completed'
       : displayStatus?.view === 'library' ? WORLD_STATUS_LABELS[displayStatus.value] : undefined;
   const genre = fullWorld?.genre?.trim();
-  const details = [genre, `Ch. ${world.chapterCount}`, statusLabel].filter(Boolean).join(' · ');
+  const details = [genre, `Ch. ${world.chapterCount}`, statusLabel].filter(Boolean).join(' | ');
   const openLabel = compact
     ? `Open ${world.title}, Ch. ${world.chapterCount} · ${statusLabel}`
     : `Open ${world.title}, ${world.chapterCount} chapters${creatorName ? `, creator ${creatorName}` : ''}${fullWorld?.format ? `, format ${fullWorld.format}` : ''}${statusLabel ? `, ${statusLabel}` : ''}`;

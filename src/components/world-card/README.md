@@ -359,7 +359,7 @@ Workshop sample data and reference material remain outside the host adapter.
   its 2:3 cover at its original Home size; Compact (Create's "Your worlds") is
   square. Both keep the art clean: on Full only the format mark and motion
   picture control (both in ghost glass), the creator's name and the sash. The
-  title, then genre · chapters · status, sit in a caption beneath, with one
+  title, then genre | chapters | status, sit in a caption beneath, with one
   feature row: a **Branching** badge when the host says the creator enabled
   branching. The caption keeps one height so a grid lines up. The **SEN sash**
   crosses every cover's lower-right corner like a bound book's ribbon, in

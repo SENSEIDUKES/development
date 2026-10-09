@@ -50,8 +50,8 @@ export interface WorldCardFeatureProps {
   onOpen: () => void;
   /** Host-supplied progress, as on the Full card. Unknown status stays hidden. */
   displayStatus?: WorldCardDisplayStatus;
-  /** The gold line above the title; defaults to "Featured". */
-  label?: string;
+  /** The gold line above the title; defaults to "Featured". `null` leaves it out (a host that names the row itself). */
+  label?: string | null;
   /**
    * Shows the SEN sash across the cover's corner. Off unless the host awards it; the sash is
    * reserved for a distinction the host defines (for example, a completed novel).

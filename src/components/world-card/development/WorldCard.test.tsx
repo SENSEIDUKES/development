@@ -43,7 +43,7 @@ it('keeps format, creator and an awarded SEN sash on the 2:3 art, with the title
 
   const caption = tile.querySelector('.world-card-caption')!;
   expect(caption.querySelector('h3')?.textContent).toBe('The Last Lotus');
-  expect(caption.querySelector('.world-card-caption-details')?.textContent).toBe('Xianxia · Ch. 24');
+  expect(caption.querySelector('.world-card-caption-details')?.textContent).toBe('Xianxia | Ch. 24');
   for (const value of ['Standard', 'Creator', 'Format', 'Manga', 'Ye Chen', 'Foundation', '1,280', 'Sealed', 'Draft', 'Unacquired', 'Recently read']) {
     expect(tile.textContent).not.toContain(value);
   }
@@ -129,17 +129,17 @@ it('does not infer hidden activity or branching permission from missing data', a
 it('puts chapter and host-selected status in the caption details', () => {
   act(() => root.render(<WorldCard world={world} displayStatus={{ view: 'public', value: 'ongoing' }} onOpen={() => {}} />));
   const details = () => container.querySelector('.world-card-caption-details')?.textContent;
-  expect(details()).toBe('Xianxia · Ch. 24 · On Going');
+  expect(details()).toBe('Xianxia | Ch. 24 | On Going');
   expect(container.querySelector('.world-card-base-open')?.getAttribute('aria-label')).toContain('On Going');
 
   act(() => root.render(<WorldCard world={world} displayStatus={{ view: 'public', value: 'completed' }} onOpen={() => {}} />));
-  expect(details()).toBe('Xianxia · Ch. 24 · Completed');
+  expect(details()).toBe('Xianxia | Ch. 24 | Completed');
 
   act(() => root.render(<WorldCard world={{ ...world, draft: false }} displayStatus={{ view: 'library', value: 'draft' }} onOpen={() => {}} />));
-  expect(details()).toBe('Xianxia · Ch. 24 · Draft');
+  expect(details()).toBe('Xianxia | Ch. 24 | Draft');
 
   act(() => root.render(<WorldCard world={world} displayStatus={{ view: 'library', value: 'complete' }} onOpen={() => {}} />));
-  expect(details()).toBe('Xianxia · Ch. 24 · Complete');
+  expect(details()).toBe('Xianxia | Ch. 24 | Complete');
 });
 
 it('plays only this world’s supplied motion clip without opening the world', () => {
@@ -427,7 +427,7 @@ it('spotlights a world in the wide Feature card with its cover, sash, details an
   expect(card.querySelector('.world-card-banner-eyebrow')?.textContent).toBe('Featured');
   expect(card.querySelector('h3')?.textContent).toBe('The Last Lotus');
   expect(card.querySelector('.world-card-banner-byline')?.textContent).toBe('bySENSEI');
-  expect(card.querySelector('.world-card-banner-details')?.textContent).toBe('Xianxia · Ch. 24 · On Going');
+  expect(card.querySelector('.world-card-banner-details')?.textContent).toBe('Xianxia | Ch. 24 | On Going');
   expect(card.querySelector('.world-card-banner-synopsis')?.textContent).toBe('A lotus blooms.');
   expect(card.querySelector('.world-card-feature')?.textContent).toBe('Branching');
   expect(card.querySelector('.world-card-banner-cover img')?.getAttribute('src')).toBe('/lotus.png');

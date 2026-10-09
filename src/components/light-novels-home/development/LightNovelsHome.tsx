@@ -12,12 +12,16 @@ import '../shared/home.css';
 /** Existing LibraryScreen Home presentation. Data and navigation belong to the host. */
 /** How long each Featured slide stays before the next, unless the reader is pointing at or focused in it. */
 const FEATURE_SLIDE_MS = 8000;
+/** How far a finger must travel sideways before Featured turns. */
+const SWIPE_PX = 40;
 
 export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWorld, emptyState, featuredWorlds = [], children }: LightNovelsHomeProps) {
-  // Featured: Featured Ascension first, then each featured world's Feature card.
+  // Featured: the Carve New Destiny slide first, then each featured world's Feature card.
   const slideCount = 1 + featuredWorlds.length;
   const [slide, setSlide] = useState(0);
   const [slidesHeld, setSlidesHeld] = useState(false);
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+  const swiped = useRef(false);
   const currentSlide = slide % slideCount;
   const heroActive = active && currentSlide === 0;
   const showSlide = (next: number) => setSlide(((next % slideCount) + slideCount) % slideCount);
@@ -99,10 +103,33 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
       transition={{ duration: 0.3 }}
       className="space-y-12 pb-10"
     >
-      <section aria-roledescription="carousel" aria-label="Featured" className="space-y-3" data-home-featured
+      <section aria-roledescription="carousel" aria-label="Featured" className="home-featured" data-home-featured
         onPointerEnter={() => setSlidesHeld(true)} onPointerLeave={() => setSlidesHeld(false)}
-        onFocus={() => setSlidesHeld(true)} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setSlidesHeld(false); }}>
-      {/* Featured Ascension stays mounted while another slide shows, so its video resumes where it was. */}
+        onFocus={() => setSlidesHeld(true)} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setSlidesHeld(false); }}
+        onPointerDown={event => { swipeStart.current = event.pointerType === 'mouse' ? null : { x: event.clientX, y: event.clientY }; swiped.current = false; }}
+        onPointerUp={event => {
+          const start = swipeStart.current;
+          swipeStart.current = null;
+          if (!start || slideCount < 2) return;
+          const dx = event.clientX - start.x;
+          // A sideways swipe turns the slide; a mostly vertical one is the page scrolling.
+          if (Math.abs(dx) < SWIPE_PX || Math.abs(dx) < Math.abs(event.clientY - start.y)) return;
+          swiped.current = true;
+          showSlide(currentSlide + (dx < 0 ? 1 : -1));
+        }}
+        onPointerCancel={() => { swipeStart.current = null; }}
+        // A swipe ends on the card; it must not also open it.
+        onClickCapture={event => { if (swiped.current) { swiped.current = false; event.preventDefault(); event.stopPropagation(); } }}>
+      {/* The section's own name stays put while the slides change beneath it, with one dot per slide. */}
+      <div className="home-featured-label">
+        <span>Featured</span>
+        {slideCount > 1 && <span className="home-featured-dots" role="group" aria-label="Featured slides">
+          {Array.from({ length: slideCount }, (_, index) => <button key={index} type="button" className="home-featured-dot"
+            aria-label={index === 0 ? 'Defying the Heavens' : featuredWorlds[index - 1].title}
+            aria-current={index === currentSlide ? 'true' : undefined} onClick={() => showSlide(index)} />)}
+        </span>}
+      </div>
+      {/* The first slide stays mounted while another shows, so its video resumes where it was. */}
       <LibraryPanel
         padding="none"
         className={`relative overflow-hidden h-60 sm:h-80 items-end${currentSlide === 0 ? ' flex' : ' hidden'}`}
@@ -171,9 +198,6 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
 
         <div className="relative z-10 p-5 sm:p-12 w-full flex justify-between items-end">
           <div className="max-w-2xl space-y-2 sm:space-y-3">
-            <span className="font-sc text-gold-accent font-bold uppercase tracking-[0.25em] text-[10px] sm:text-xs">
-              Featured Ascension
-            </span>
             <h2 className="font-display font-bold text-2xl sm:text-4xl md:text-5xl text-signal leading-tight tracking-tight drop-shadow-lg">
               Defying the Heavens
             </h2>
@@ -195,22 +219,18 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
           </div>
         </div>
       </LibraryPanel>
-      {currentSlide > 0 && <WorldCardFeature key={featuredWorlds[currentSlide - 1].id} world={featuredWorlds[currentSlide - 1]}
+      {currentSlide > 0 && <WorldCardFeature key={featuredWorlds[currentSlide - 1].id} world={featuredWorlds[currentSlide - 1]} label={null}
         displayStatus={featuredWorlds[currentSlide - 1].publicationStatus ? { view: 'public', value: featuredWorlds[currentSlide - 1].publicationStatus! } : undefined}
         onOpen={() => onOpenWorld(featuredWorlds[currentSlide - 1].id)} />}
-      {slideCount > 1 && <div className="home-featured-controls">
-        <button type="button" className="home-featured-step" aria-label="Previous featured" onClick={() => showSlide(currentSlide - 1)}>
+      {/* Small glass arrows on the slide's edges for pointers; touch swipes instead. */}
+      {slideCount > 1 && <>
+        <button type="button" className="home-featured-step" data-side="previous" aria-label="Previous featured" onClick={() => showSlide(currentSlide - 1)}>
           <ChevronLeft aria-hidden="true" />
         </button>
-        <div className="home-featured-dots" role="group" aria-label="Featured slides">
-          {Array.from({ length: slideCount }, (_, index) => <button key={index} type="button" className="home-featured-dot"
-            aria-label={index === 0 ? 'Featured Ascension' : `Featured: ${featuredWorlds[index - 1].title}`}
-            aria-current={index === currentSlide ? 'true' : undefined} onClick={() => showSlide(index)} />)}
-        </div>
-        <button type="button" className="home-featured-step" aria-label="Next featured" onClick={() => showSlide(currentSlide + 1)}>
+        <button type="button" className="home-featured-step" data-side="next" aria-label="Next featured" onClick={() => showSlide(currentSlide + 1)}>
           <ChevronRight aria-hidden="true" />
         </button>
-      </div>}
+      </>}
       </section>
 
       {children}

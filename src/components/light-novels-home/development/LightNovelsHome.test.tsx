@@ -16,7 +16,7 @@ const world = (id: string, title: string): HomeWorld => ({
   mcName: 'Ye Chen', powerStage: 'Foundation', synopsis: `${title} begins.`,
 });
 
-it('keeps Featured Ascension and cycles to each featured world as a Feature card', () => {
+it('keeps the Carve New Destiny slide and cycles to each featured world, under one fixed Featured name', () => {
   const onOpenWorld = vi.fn();
   const featured = [world('lotus', 'The Last Lotus'), world('moons', 'Nine Moons')];
   // Inactive: the slides do not advance on their own and the hero's motion stays off.
@@ -25,15 +25,20 @@ it('keeps Featured Ascension and cycles to each featured world as a Feature card
 
   const hero = () => container.querySelector('[data-home-featured] > [aria-hidden]') ;
   const dots = () => [...container.querySelectorAll<HTMLButtonElement>('.home-featured-dot')];
-  expect(dots().map(dot => dot.getAttribute('aria-label'))).toEqual(['Featured Ascension', 'Featured: The Last Lotus', 'Featured: Nine Moons']);
+  expect(dots().map(dot => dot.getAttribute('aria-label'))).toEqual(['Defying the Heavens', 'The Last Lotus', 'Nine Moons']);
   expect(dots()[0].getAttribute('aria-current')).toBe('true');
-  expect(container.textContent).toContain('Featured Ascension');
+  expect(container.querySelector('.home-featured-label')?.textContent).toBe('Featured');
+  expect(container.textContent).not.toContain('Featured Ascension');
+  expect(container.textContent).toContain('Carve New Destiny');
   expect(container.querySelector('[data-world-card="feature"]')).toBeNull();
 
   act(() => container.querySelector<HTMLButtonElement>('[aria-label="Next featured"]')!.click());
   expect(hero()).not.toBeNull();
   expect(container.querySelector('[data-world-card="feature"] h3')?.textContent).toBe('The Last Lotus');
   expect(dots()[1].getAttribute('aria-current')).toBe('true');
+  // The name stays where it was; the card does not repeat it.
+  expect(container.querySelector('.home-featured-label')?.textContent).toBe('Featured');
+  expect(container.querySelector('.world-card-banner-eyebrow')).toBeNull();
 
   act(() => dots()[2].click());
   expect(container.querySelector('[data-world-card="feature"] h3')?.textContent).toBe('Nine Moons');
@@ -48,10 +53,34 @@ it('keeps Featured Ascension and cycles to each featured world as a Feature card
   expect(container.querySelector('[data-world-card="feature"] h3')?.textContent).toBe('Nine Moons');
 });
 
-it('leaves Featured Ascension alone without featured worlds', () => {
+it('leaves the Carve New Destiny slide alone without featured worlds', () => {
   act(() => root.render(<LightNovelsHome active={false} worlds={[]} onCreateStory={() => {}} onOpenWorld={() => {}} />));
-  expect(container.textContent).toContain('Featured Ascension');
-  expect(container.querySelector('.home-featured-controls')).toBeNull();
+  expect(container.querySelector('.home-featured-label')?.textContent).toBe('Featured');
+  expect(container.querySelector('.home-featured-dot')).toBeNull();
+  expect(container.querySelector('.home-featured-step')).toBeNull();
+});
+
+it('turns with a sideways swipe, and the swipe does not open the card', () => {
+  const onOpenWorld = vi.fn();
+  const featured = [world('lotus', 'The Last Lotus')];
+  act(() => root.render(<LightNovelsHome active={false} worlds={featured} featuredWorlds={featured} onCreateStory={() => {}} onOpenWorld={onOpenWorld} />));
+  const section = container.querySelector<HTMLElement>('[data-home-featured]')!;
+  const swipe = (from: number, to: number, target: Element = section, dy = 0) => act(() => {
+    target.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch', clientX: from, clientY: 100 }));
+    target.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerType: 'touch', clientX: to, clientY: 100 + dy }));
+  });
+  swipe(300, 120);
+  expect(container.querySelector('[data-world-card="feature"] h3')?.textContent).toBe('The Last Lotus');
+  // A swipe that ends on the card turns back and does not open it.
+  const open = container.querySelector<HTMLButtonElement>('.world-card-banner-open')!;
+  swipe(100, 300, open);
+  act(() => open.click());
+  expect(onOpenWorld).not.toHaveBeenCalled();
+  expect(container.querySelector('[data-world-card="feature"]')).toBeNull();
+  // A mostly vertical drag is the page scrolling, and a short one is a tap.
+  swipe(300, 240, section, 200);
+  swipe(300, 280);
+  expect(container.querySelector('[data-world-card="feature"]')).toBeNull();
 });
 
 it('advances on its own while active, and holds while the reader points at it', () => {

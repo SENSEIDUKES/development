@@ -31,7 +31,7 @@ it('uses the shared image card with an awarded SEN sash, and the title and chapt
   const tile = container.querySelector('[data-world-card-tile="compact"]')!;
   expect(tile.getAttribute('data-cover-shape')).toBe('square');
   expect(tile.querySelector('.world-card-caption h3')?.textContent).toBe(world.title);
-  expect(tile.querySelector('.world-card-caption-details')?.textContent).toBe('Ch. 24 · Draft');
+  expect(tile.querySelector('.world-card-caption-details')?.textContent).toBe('Ch. 24 | Draft');
   expect(tile.querySelector('.world-card-caption-features')).toBeNull();
   expect(card.querySelector('.world-card-base-creator')).toBeNull();
   expect(card.querySelector('.world-card-base-format')).toBeNull();
@@ -50,7 +50,7 @@ it('keeps a missing compact cover as the existing celestial wash', () => {
   act(() => root.render(<WorldCard face="compact" world={{ ...world, imageUrl: undefined, creatorName: undefined, creatorTitle: undefined }} onOpen={() => {}} />));
   expect(container.querySelector('.world-card-compact-media img')).toBeNull();
   expect(container.textContent).not.toContain('Cover unavailable');
-  expect(container.querySelector('.world-card-caption-details')?.textContent).toBe('Ch. 24 · Draft');
+  expect(container.querySelector('.world-card-caption-details')?.textContent).toBe('Ch. 24 | Draft');
   expect(container.querySelector('.world-card-base-creator')).toBeNull();
   act(() => root.unmount());
   container.remove();

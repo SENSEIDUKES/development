@@ -451,7 +451,11 @@ it('loops the world’s own motion picture, muted, behind the Feature card', () 
   act(() => root.render(<WorldCardFeature world={{ ...world, videoUrl: '/lotus.mp4' }} onOpen={() => {}} />));
   const video = container.querySelector<HTMLVideoElement>('.world-card-banner-video')!;
   expect(video.getAttribute('src')).toBe('/lotus.mp4');
-  expect(video.getAttribute('poster')).toBe('/lotus.png');
+  // Hidden until it plays: no still frame or play button where autoplay is refused.
+  expect(video.getAttribute('poster')).toBeNull();
+  expect(video.getAttribute('data-playing')).toBeNull();
+  act(() => { video.dispatchEvent(new Event('playing')); });
+  expect(video.getAttribute('data-playing')).toBe('true');
   expect(video.loop).toBe(true);
   expect(video.muted).toBe(true);
   expect(video.getAttribute('aria-hidden')).toBe('true');

@@ -105,7 +105,7 @@
 }
 .world-card-base-format { position: absolute; z-index: 5; top: 0.5rem; left: 0.5rem; font-family: sans-serif; font-size: 0.625rem; line-height: 1; letter-spacing: 0.04em; }
 .world-card-base-format svg { flex: none; }
-.world-card-base-overlay { position: absolute; z-index: 5; inset: auto 0 0; display: flex; min-width: 0; padding: clamp(0.5rem, 4cqw, 0.75rem); padding-right: 38cqw; pointer-events: none; }
+.world-card-base-overlay { position: absolute; z-index: 5; inset: auto 0 0; display: flex; justify-content: center; min-width: 0; padding: clamp(0.5rem, 4cqw, 0.75rem); pointer-events: none; }
 .world-card-base-creator { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #e5e5e5; font-family: sans-serif; font-size: clamp(0.625rem, 6.5cqw, 0.8125rem); font-weight: 600; line-height: 1.2; text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9); }
 
 /* The SEN sash: a band across the cover's lower-right corner, like the ribbon of a bound book.
@@ -421,7 +421,10 @@
   background: #07111d; box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
   transition: border-color 200ms cubic-bezier(0, 0, 0.2, 1), box-shadow 200ms cubic-bezier(0, 0, 0.2, 1);
 }
-@media (min-width: 640px) { .world-card-banner { height: 20rem; padding: 2.5rem; gap: 2rem; } }
+@media (min-width: 640px) {
+  .world-card-banner { height: 20rem; padding: 2.5rem; gap: 2rem; }
+  .world-card-banner-cover { --world-card-banner-cover-height: calc(20rem - 5rem); }
+}
 .world-card-banner:hover, .world-card-banner:focus-within {
   border-color: color-mix(in srgb, var(--world-card-glow) 70%, white);
   box-shadow: 0 0 28px 2px color-mix(in srgb, var(--world-card-glow) 45%, transparent), 0 18px 48px rgba(0, 0, 0, 0.5);
@@ -430,7 +433,14 @@
   position: absolute; inset: -12%; z-index: -2; background-image: var(--world-card-banner-art, none);
   background-size: cover; background-position: center 25%; filter: blur(18px) saturate(1.15) brightness(0.65); transform: scale(1.05);
 }
-.world-card-banner-video { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: center 30%; pointer-events: none; }
+.world-card-banner-video {
+  position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: center 30%; pointer-events: none;
+  /* Hidden until it actually plays: a phone that will not start it (Low Power Mode) keeps the soft backdrop, never a still frame with a play button. */
+  opacity: 0; transition: opacity 600ms ease-out;
+}
+.world-card-banner-video[data-playing='true'] { opacity: 1; }
+.world-card-banner-video::-webkit-media-controls,
+.world-card-banner-video::-webkit-media-controls-start-playback-button { display: none !important; -webkit-appearance: none; }
 .world-card-banner-wash {
   position: absolute; inset: 0; z-index: -1;
   background:
@@ -463,8 +473,12 @@
 /* Wide screens: the hero's large title on one line, so the synopsis keeps its room. */
 @media (min-width: 1024px) { .world-card-banner-title { font-size: 3rem; -webkit-line-clamp: 1; line-clamp: 1; } }
 .world-card-banner .world-card-caption-features { min-height: 0; }
+/* The cover's size is set outright (the band's inner height, at 2:3): iOS Safari sizes an
+   auto grid column for a stretched aspect-ratio item at nothing and lets the cover spill out. */
 .world-card-banner-cover {
-  position: relative; z-index: 1; align-self: stretch; aspect-ratio: 2 / 3; overflow: hidden;
+  --world-card-banner-cover-height: calc(15rem - 2.5rem);
+  position: relative; z-index: 1; align-self: center; flex: none; overflow: hidden;
+  width: calc(var(--world-card-banner-cover-height) * 2 / 3); height: var(--world-card-banner-cover-height);
   border: 1px solid rgba(235, 243, 255, 0.4); border-radius: 0.9rem; background: #07111d;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3), 0 0 26px color-mix(in srgb, var(--world-card-glow) 40%, transparent), 0 14px 32px rgba(0, 0, 0, 0.55);
 }

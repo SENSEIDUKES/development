@@ -1,4 +1,4 @@
-import { useEffect, useRef, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { GitBranch } from 'lucide-react';
 import { ElementalTitle } from '@seihouse/ui';
 import { useDominantColor } from '@seihouse/sen/motion-picture';
@@ -25,6 +25,8 @@ export function WorldCardFeature({ world, onOpen, displayStatus, label = 'Featur
   // The world's own motion picture, when it has one, loops silently behind the band.
   const videoUrl = world.videoUrl?.trim() && !prefersReducedMotion() ? world.videoUrl.trim() : undefined;
   const videoRef = useRef<HTMLVideoElement>(null);
+  // The clip shows only once it truly plays, so a phone that will not start it keeps the backdrop.
+  const [playing, setPlaying] = useState(false);
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -46,8 +48,9 @@ export function WorldCardFeature({ world, onOpen, displayStatus, label = 'Featur
   return <article className="world-card-banner" data-world-card="feature" id={`feature-world-${world.id}`}
     style={{ '--world-card-glow': glowColor, ...(imageUrl ? { '--world-card-banner-art': `url("${imageUrl.replace(/"/g, '%22')}")` } : {}) } as CSSProperties}>
     <span className="world-card-banner-backdrop" aria-hidden="true" />
-    {videoUrl && <video ref={videoRef} className="world-card-banner-video" src={videoUrl} poster={imageUrl}
-      muted loop playsInline autoPlay preload="metadata" aria-hidden="true" tabIndex={-1} />}
+    {videoUrl && <video ref={videoRef} className="world-card-banner-video" src={videoUrl}
+      muted loop playsInline autoPlay preload="metadata" aria-hidden="true" tabIndex={-1}
+      data-playing={playing ? 'true' : undefined} onPlaying={() => setPlaying(true)} onPause={() => setPlaying(false)} />}
     <span className="world-card-banner-wash" aria-hidden="true" />
     <div className="world-card-banner-body">
       {label && <p className="world-card-banner-eyebrow">{label}</p>}

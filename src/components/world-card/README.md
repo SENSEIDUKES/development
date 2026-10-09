@@ -122,14 +122,16 @@ pieces rather than page-local cards or buttons:
   centered column, in this order:
   1. the big cover, square like the Compact card (about 72% of the width, up
      to 17rem);
-  2. one row: the page's one reading action, a night-glass pill (Home's Carve
-     New Destiny `ManifestButton` look, never gold): Continue · Ch. N, Start
-     Reading, or Start Story while a story the host can start has no chapters
+  2. the page's one reading action, a night-glass pill (Home's Carve New
+     Destiny `ManifestButton` look, never gold). It only ever says **Continue**,
+     or **Begin Story** while a story the host can start has no chapters; the
+     chapter it continues at is in its accessible name, not on the pill
      (without a working destination it says "Reading isn’t available here
-     yet"); the publication status and Recently read badges sit beside it;
+     yet"). Recently read sits beside it when it applies;
   3. the title (cream shading to cyan) and `by` + creator;
-  4. one meta line, genre | chapters (the current arc is shown beside the
-     cover only, from 768px);
+  4. one meta line: genre | chapters | publication status (for example
+     "Xianxia | 24 Chapters | On Going"). The current arc is shown beside the
+     cover only, from 768px, where the status is a badge above the title;
   5. the story tags.
   The synopsis, Open Codex and Information follow. From 768px the cover stands
   on the left as the tall cover and the rest sits beside it, left aligned:
@@ -375,6 +377,11 @@ Workshop sample data and reference material remain outside the host adapter.
   button instead of gold, the phone cover is the Compact card's square, the
   status sits beside a shorter pill, and the current arc shows beside the cover
   only. The laptop layout is unchanged.
+- **2026-10-09** — **Continue or Begin Story.** The reading pill says only
+  Continue (or Begin Story for a story with no chapters); the chapter number
+  left the pill and lives in its accessible name. On phones the publication
+  status moved into the meta line ("Xianxia | 24 Chapters | On Going"); the
+  laptop keeps its badge.
 - **2026-10-09** — **Cover slot.** `WorldCardInfo` takes `coverAction`: the host's
   own controls laid over the Info cover in its frame (the app's World Info makes
   covers there: Manifest on an empty cover, a small Manifest and download on a kept one).

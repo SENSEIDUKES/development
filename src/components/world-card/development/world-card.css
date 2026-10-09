@@ -251,7 +251,16 @@
 /* Phone: the reading pill with the story's states beside it, one row. */
 .world-card-info-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.6rem; }
 /* The current arc is shown beside the cover only; on a phone the pill already says where the reader is. */
-@media (max-width: 767.98px) { .world-card-info-arc { display: none !important; } }
+@media (max-width: 767.98px) {
+  .world-card-info-arc { display: none !important; }
+  /* On a phone the publication status reads in the meta line, not as a badge beside the pill. */
+  .world-card-info-states .world-card-info-pill-status { display: none; }
+  .world-card-info-states:not(:has(.world-card-info-pill:not(.world-card-info-pill-status))) { display: none; }
+}
+.world-card-info-meta-status { display: inline-flex; align-items: center; gap: 0.35rem; color: #e6e8f4; }
+.world-card-info-meta > .world-card-info-meta-status::before { margin-right: calc(0.55rem - 0.35rem); }
+.world-card-info-meta-status[data-status='ongoing'] { color: #5fe3ad; }
+@media (min-width: 768px) { .world-card-info-meta > .world-card-info-meta-status { display: none; } }
 @media (min-width: 768px) {
   .world-card-info-hero { display: grid; grid-template-columns: 15rem minmax(0, 1fr); align-items: center; column-gap: 2.25rem; }
   .world-card-info-cover { --world-card-aspect: 2 / 3; width: 100%; }

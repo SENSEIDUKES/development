@@ -19,7 +19,7 @@
  * kept on the device) → Holdings → Rewrite this chapter with a note (the new
  * version under the veil, the Holdings fixer's one quiet call settling its
  * holdings, nothing of it on screen) → reload (no new request, nothing reads by itself) →
- * Back → Continue · Ch. 1 → Story Settings (closed until opened: language, Reading Mode, CAPA skills, media) →
+ * Back → Continue → Story Settings (closed until opened: language, Reading Mode, CAPA skills, media) →
  * Manifest on the cover (one or three; three unseal, then the picker; the kept cover on World Info and on Home's card) → Export story (the whole story as one file) → Back
  * → Home card, its music note (tap mutes; hover or hold opens the Music volume) → browser Back and Forward →
  * Create from the navigation (on laptops, a minimized sidebar stays minimized after a reload) → a missing story goes Home.
@@ -585,14 +585,15 @@ async function walk(browser, viewport, sample) {
   check(await page.locator('input[name="read-aloud-rate"][value="1.25"]').isChecked(), 'The saved speed should come back after a reload.');
   await page.keyboard.press('Escape');
 
-  // 5. Back to Story View (Continue · Ch. 1), then Home with the story's card.
+  // 5. Back to Story View (Continue), then Home with the story's card.
   const beforeLeaving = audioAsked.length;
   await visibleButton(/^Back$/).click();
   await page.getByTestId('harness-world-info').waitFor();
   // Leaving the Reader brings the app's calm music back.
   await musicOf('ambient', beforeLeaving);
   check(address() === storyAddress, `Back from the Reader should open Story View, got ${address()}`);
-  check((await page.locator('[data-world-info-chapters="action"]').textContent()).includes('Continue · Ch. 1'), 'Story View should continue at Chapter 1.');
+  check((await page.locator('[data-world-info-chapters="action"]').textContent()).trim() === 'Continue', 'Story View should say Continue.');
+  check((await page.locator('[data-world-info-chapters="action"]').getAttribute('aria-label')).startsWith('Continue at Chapter 1'), 'Story View should continue at Chapter 1.');
   // Story Settings: closed until opened, then the story's language, Reading Mode, CAPA skills and media.
   const storySettings = page.getByTestId('story-view-settings');
   await storySettings.scrollIntoViewIfNeeded();

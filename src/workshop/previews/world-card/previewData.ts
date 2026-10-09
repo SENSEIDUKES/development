@@ -11,7 +11,7 @@ export type WorldCardCover = 'art' | 'missing';
 export type WorldCardSashPreview = 'hidden' | 'shown';
 /** Which host destinations the Info page receives, to review unavailable actions. */
 export type WorldCardDestinations = 'all' | 'reading-only' | 'none';
-/** `new-story`: a story with no chapters yet, whose host can start it (Start Story). */
+/** `new-story`: a story with no chapters yet, whose host can start it (Begin Story). */
 export type WorldCardReadingPreview = 'start' | 'chapter-7' | 'new-story';
 export type WorldCardStatusPreview = 'public-ongoing' | 'public-completed'
   | 'library-draft' | 'library-shared' | 'library-public' | 'library-complete';

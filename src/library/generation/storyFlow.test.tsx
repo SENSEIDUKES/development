@@ -103,7 +103,7 @@ describe('A story\'s way in: World Info, then the Reader', { timeout: 20_000 }, 
     expect(worldInfo()!.textContent).toContain(LOGLINE);
     expect(worldInfo()!.textContent).toContain('Xianxia');
     const start = worldInfo()!.querySelector<HTMLElement>('[data-world-info-chapters="action"]');
-    expect(start?.textContent).toContain('Start Story');
+    expect(start?.textContent).toBe('Begin Story');
 
     // Start Story opens the Reader and begins Chapter 1 at once, with Versa's veil over it.
     await click(start, 'Start Story');
@@ -125,7 +125,7 @@ describe('A story\'s way in: World Info, then the Reader', { timeout: 20_000 }, 
     await click(buttonByText('Back'), 'Back');
     await flush();
     expect(worldInfo()).toBeTruthy();
-    expect(worldInfo()!.querySelector('[data-world-info-chapters="action"]')!.textContent).toContain('Continue · Ch. 1');
+    expect(worldInfo()!.querySelector('[data-world-info-chapters="action"]')!.textContent).toBe('Continue');
 
     // Back from World Info returns to the panel, with the story still selected.
     await click(worldInfo()!.querySelector<HTMLButtonElement>('button[aria-label="Back to novels"]'), 'Back to novels');

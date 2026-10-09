@@ -72,7 +72,7 @@ it('keeps connected media off the Info page and reports each supplied destinatio
   </LibraryPresentationProvider>));
   const start = container.querySelector<HTMLElement>('[data-world-info-chapters="action"]')!;
   expect(container.querySelector('[data-world-info-meta]')?.textContent).toContain('No chapters yet');
-  expect(start.textContent).toContain('Start Story');
+  expect(start.textContent).toBe('Begin Story');
   act(() => start.click());
   expect(onAction).toHaveBeenLastCalledWith('Start story The Last Lotus of the Jade Empire');
 

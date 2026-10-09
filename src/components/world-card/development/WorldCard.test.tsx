@@ -276,16 +276,18 @@ it('puts the single reading action in a pill under the cover and names the known
   expect(readingActions).toHaveLength(1);
   expect(container.querySelectorAll('[role="button"], button:not(.motion-picture-control):not(.world-card-info-information)')).toHaveLength(1);
   const chapters = readingActions[0];
-  expect(chapters.textContent).toContain('Start Reading');
-  expect(chapters.getAttribute('aria-label')).toBe('Start Reading: The Last Lotus, 24 Chapters, current arc Silent Pavilion');
+  expect(chapters.textContent).toBe('Continue');
+  expect(chapters.getAttribute('aria-label')).toBe('Continue: The Last Lotus, 24 Chapters, current arc Silent Pavilion');
   // The pill sits in the hero, right after the cover.
   expect(chapters.closest('.world-card-info-hero')).not.toBeNull();
   act(() => chapters.click());
   expect(onRead).toHaveBeenCalledTimes(1);
 
   act(() => root.render(<WorldCardInfo story={infoStory} onRead={onRead} readingPosition={{ chapterNumber: 7 }} />));
-  expect(container.querySelector('[data-world-info-chapters]')?.textContent).toContain('Continue · Ch. 7');
-  expect(container.textContent).not.toContain('Start Reading');
+  // The pill still says only Continue; the chapter it continues at is spoken, not shown.
+  const resume = container.querySelector('[data-world-info-chapters]')!;
+  expect(resume.textContent).toBe('Continue');
+  expect(resume.getAttribute('aria-label')).toBe('Continue at Chapter 7: The Last Lotus, 24 Chapters, current arc Silent Pavilion');
 
   act(() => root.render(<WorldCardInfo story={{ ...infoStory, currentArc: '' }} />));
   const staticCard = container.querySelector<HTMLElement>('[data-world-info-chapters]')!;
@@ -300,23 +302,22 @@ it('puts the single reading action in a pill under the cover and names the known
   expect(container.querySelector('[data-world-info-meta]')?.textContent).toContain('No chapters yet');
 });
 
-it('turns the reading pill into Start Story for a story with no chapters that the host can start', () => {
+it('turns the reading pill into Begin Story for a story with no chapters that the host can start', () => {
   const onRead = vi.fn();
   const onStart = vi.fn();
   act(() => root.render(<WorldCardInfo story={{ ...infoStory, chapterCount: 0, currentArc: '' }} onRead={onRead} onStart={onStart} />));
   const start = container.querySelector<HTMLElement>('button[data-world-info-chapters="action"]')!;
   expect(container.querySelector('[data-world-info-meta]')?.textContent).toContain('No chapters yet');
-  expect(start.textContent).toContain('Start Story');
-  expect(start.getAttribute('aria-label')).toBe('Start Story: The Last Lotus, No chapters yet');
+  expect(start.textContent).toBe('Begin Story');
+  expect(start.getAttribute('aria-label')).toBe('Begin Story: The Last Lotus, No chapters yet');
   act(() => start.click());
   expect(onStart).toHaveBeenCalledTimes(1);
   expect(onRead).not.toHaveBeenCalled();
 
-  // Once the story has chapters, the same pill reads them; Start Story is gone.
+  // Once the story has chapters, the same pill reads them; Begin Story is gone.
   act(() => root.render(<WorldCardInfo story={infoStory} onRead={onRead} onStart={onStart} />));
   const read = container.querySelector<HTMLElement>('button[data-world-info-chapters="action"]')!;
-  expect(read.textContent).toContain('Start Reading');
-  expect(read.textContent).not.toContain('Start Story');
+  expect(read.textContent).toBe('Continue');
   act(() => read.click());
   expect(onRead).toHaveBeenCalledTimes(1);
   expect(onStart).toHaveBeenCalledTimes(1);
@@ -414,7 +415,8 @@ it('orders the hero as Audible does: cover, reading pill with states, title, byl
   expect(identity.textContent).toContain('SENSEI');
   expect(identity.textContent).not.toContain('Sealed');
   expect(identity.querySelector('[aria-label="Story status: On Going"]')).not.toBeNull();
-  expect(identity.querySelector('[data-world-info-meta]')?.textContent).toBe('Genre: Xianxia24 ChaptersCurrent arc · Silent Pavilion');
+  // The meta line carries the status too; a phone shows it there, a laptop shows the badge instead.
+  expect(identity.querySelector('[data-world-info-meta]')?.textContent).toBe('Genre: Xianxia24 ChaptersOn GoingCurrent arc · Silent Pavilion');
   const tags = identity.querySelector('[aria-label="Story tags"]')!;
   expect(tags.getAttribute('aria-label')).toBe('Story tags');
   expect(tags.textContent).toBe('found family');

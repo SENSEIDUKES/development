@@ -16,10 +16,10 @@ import './world-card.css';
  * Info page: the world's full overview, presented the way Audible presents a
  * title. A big cover stands centered over a backdrop made from the cover's own
  * art and color, with the world's motion picture looping behind it when it has
- * one. Under the cover sits the page's one reading action (Continue · Ch. N,
- * Start Reading, or Start Story while a story the host can start has no
- * chapters), then the states, the title, the byline, one meta line (genre |
- * chapters | current arc) and the tags, all centered. The synopsis, Open Codex
+ * one. Under the cover sits the page's one reading action, which only ever
+ * says Continue, or Begin Story while a story the host can start has no
+ * chapters; then the title, the byline, one meta line (genre | chapters, and
+ * on a phone the publication status) and the tags, all centered. The synopsis, Open Codex
  * and the Information row follow. From 768px the cover stands beside the rest.
  * Every value and destination comes from the host; unknown values are omitted.
  * This is the public view a reader sees. It shows no owner or library states
@@ -86,6 +86,10 @@ export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, readingPosi
               <Flower2 size={16} aria-hidden="true" /><span className="sr-only">Genre: </span>{genre}
             </span>}
             <span className="world-card-info-chapter-count">{countLabel}</span>
+            {/* On a phone the publication status joins this line; beside the cover it stays a badge above the title. */}
+            {publicationLabel && <span className="world-card-info-meta-status" data-status={detail?.publicationStatus}>
+              <span className="world-card-info-status-dot" aria-hidden="true" />{publicationLabel}
+            </span>}
             {currentArc && <span className="world-card-info-arc">Current arc · {currentArc}</span>}
           </p>
           {tags.length > 0 && <ul className="world-card-info-pills world-card-info-tags" aria-label="Story tags">
@@ -172,14 +176,16 @@ function ReadingAction({ title, count, countLabel, currentArc, onRead, onStart, 
   const resumeChapter = readingPosition && Number.isSafeInteger(readingPosition.chapterNumber) && readingPosition.chapterNumber > 0
     ? readingPosition.chapterNumber : undefined;
   const action = count > 0 ? onRead : onStart;
-  const actionLabel = count === 0 ? 'Start Story' : resumeChapter ? `Continue · Ch. ${resumeChapter}` : 'Start Reading';
+  // The pill says only Begin Story or Continue; where it continues is for assistive technology.
+  const actionLabel = count === 0 ? 'Begin Story' : 'Continue';
+  const spokenAction = resumeChapter ? `Continue at Chapter ${resumeChapter}` : actionLabel;
   if (!action) return count > 0
     ? <p className="world-card-info-read-unavailable" data-world-info-chapters="static">Reading isn’t available here yet</p>
     : null;
   // The same night-glass button as Home's Carve New Destiny.
   return <ManifestButton size="lg" className="world-card-info-read" data-world-info-chapters="action"
     icon={count === 0 ? Sparkles : BookOpen}
-    aria-label={`${actionLabel}: ${title}, ${countLabel}${currentArc ? `, current arc ${currentArc}` : ''}`}
+    aria-label={`${spokenAction}: ${title}, ${countLabel}${currentArc ? `, current arc ${currentArc}` : ''}`}
     onClick={() => action()}>
     {actionLabel}
   </ManifestButton>;

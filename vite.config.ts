@@ -31,7 +31,7 @@ const novelExpandedAddress = (): Plugin => {
  * so for that folder only, the import resolves to its local stand-in.
  */
 const productionReaderSnapshot = (): Plugin => {
-  const snapshot = fileURLToPath(new URL('./src/components/reader-chamber/reference/', import.meta.url));
+  const snapshot = fileURLToPath(new URL('./src/components/reader-chamber/reference/', import.meta.url)).replaceAll('\\', '/');
   const firebaseAuth = fileURLToPath(new URL('./src/components/reader-chamber/reference/host/firebaseAuth.ts', import.meta.url));
   return {
     name: 'production-reader-snapshot',

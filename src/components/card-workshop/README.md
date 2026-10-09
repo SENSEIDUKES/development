@@ -118,7 +118,7 @@ changes only when the owner asks. Historical references stay untouched.
 The existing local files named by this inventory are:
 
 - `src/components/reader-chamber/development/CodexCard.tsx`
-- `src/audio/InlineAudio.tsx`
+- `src/audio/InlineAudioView.tsx`
 - `src/components/reader-chamber/development/ReaderViewport.tsx`
 - `src/components/reader-chamber/development/SystemBlock.tsx`
 - `src/components/reader-chamber/development/SystemPromptMechanical.tsx`

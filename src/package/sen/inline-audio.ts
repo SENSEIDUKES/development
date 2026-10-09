@@ -13,11 +13,11 @@ export {
   InlineAudioText,
   MixerCueControl,
   SOUND_CUE_ENERGY_VOLUME,
-} from '../../audio/InlineAudio';
+} from '../../audio/InlineAudioView';
 export type {
   InlineAudioControlProps,
   InlineAudioProps,
   MixerCueControlProps,
   InlineAudioStatus,
   InlineAudioTextProps,
-} from '../../audio/InlineAudio';
+} from '../../audio/InlineAudioView';

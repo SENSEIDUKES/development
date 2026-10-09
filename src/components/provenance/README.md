@@ -98,6 +98,10 @@ changes only when the owner asks. Historical references stay untouched.
 
 ## Evidence and package boundary
 
+**2026-10-09:** Badge and detail marks use the supplied `SENSEIHOUSEProvenance.svg`
+public R2 artwork through the Library skin. This changes only their appearance;
+mock statuses, record disclosure and the evidence boundary below are unchanged.
+
 Keep `ProvenanceBadge` and `ProvenanceDetails` record-driven. A host adapter may
 retrieve a record and pass it to the UI, but must establish its trust through an
 authoritative recording or verification path first. Fetching, authentication,

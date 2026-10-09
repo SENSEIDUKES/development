@@ -89,7 +89,7 @@ export function ProvenanceDetails({ record, className = '' }: ProvenanceDetailsP
       aria-label={`Provenance details for ${CONTENT_TYPE_LABELS[record.contentType]}`}
     >
       <div className="provenance-details-heading">
-        <span className="provenance-details-mark" aria-hidden="true">Ⓢ</span>
+        <span className="provenance-details-mark" data-sen-asset="provenance" aria-hidden="true">Ⓢ</span>
         <div>
           <h3>SEIHouse Provenance</h3>
           <p>

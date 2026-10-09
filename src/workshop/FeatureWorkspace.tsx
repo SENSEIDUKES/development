@@ -205,7 +205,7 @@ function WorkshopControls({ config }: { config?: WorkshopControlsConfig }) {
  */
 export function FeatureWorkspace({
   entry,
-  renderReference,
+  renderReference: originalReference,
   renderDevelopment,
   workshopControls,
   allowCompare = true,
@@ -214,6 +214,8 @@ export function FeatureWorkspace({
 }: FeatureWorkspaceProps) {
   const [view, setView] = useState<WorkspaceView>('development');
   const [mobilePane, setMobilePane] = useState<'reference' | 'development'>('development');
+  // Host artwork overrides apply only to the active implementation.
+  const renderReference = () => <div data-workshop-reference style={{ display: 'contents' }}>{originalReference()}</div>;
 
   useEffect(() => {
     if (!allowCompare && view === 'compare') {

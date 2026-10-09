@@ -29,6 +29,8 @@ export function WorkspaceHeaderSoundProvider({ sound, children }: { sound: React
 
 export interface WorkspaceHeaderProps {
   title: string;
+  /** Host-supplied identity in place of the default emblem and title badge. */
+  identity?: ReactNode;
   subtitle?: string;
   emblem?: { src: string; alt: string };
   home?: { href: string; label: string; onNavigate?: () => void };
@@ -73,7 +75,7 @@ export interface WorkspaceHeaderProps {
  */
 export function WorkspaceHeader({ title, subtitle, emblem, home, back, primaryAction,
   secondaryActions = [], overflowActions = [], contextualItem, help, searchItems = [],
-  status, landmark = 'banner', center, sound }: WorkspaceHeaderProps) {
+  status, landmark = 'banner', center, sound, identity }: WorkspaceHeaderProps) {
   const compact = useCompactHeader();
   const pathways = useLibraryPathways();
   const showCenter = pathways && center != null && center !== false;
@@ -98,7 +100,7 @@ export function WorkspaceHeader({ title, subtitle, emblem, home, back, primaryAc
       aria-label={back.label} onClick={back.onNavigate} />}
     center={showCenter ? <div className="workspace-header-center" data-header-center>{center}</div> : undefined}
     centerBreakpoint="lg"
-    appName={<span className="workspace-header-badge" onClick={event => {
+    appName={identity ?? <span className="workspace-header-badge" onClick={event => {
       // Canonical badge owns the link markup; the host may intercept ordinary navigation.
       if (home?.onNavigate && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey
         && (event.target as Element).closest('a')) {

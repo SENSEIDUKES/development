@@ -13,7 +13,7 @@ The Workshop is where systems are built and inspected one at a time. The app is
 where they are used together, the way a reader meets them.
 
 - Created: 2026-10-01 (piece 1)
-- Last updated: 2026-10-08
+- Last updated: 2026-10-09
 - Owner: `host` (`scripts/ownershipInventory.mjs`). The app is a host of the
   Library and SEN packages, like any outside app would be.
 
@@ -37,6 +37,17 @@ rewrites and every page survives a reload.
 - A story id the app does not have goes Home.
 
 ## The Library Shell
+
+- **2026-10-09** — The Home and World Info footer replaces its text title with
+  the same approved wordmark as the header, above “An Experience by SEIHouse”.
+
+- **2026-10-09** — Home and World Info use SENSEI's approved NovelExpanded
+  wordmark with the Familiar star in place of the title plaque, alongside the
+  original glowing Celestial Library dragon emblem. Both return to Home;
+  the Familiar, Help and Search keep their actions. The dragon falls back to
+  the existing local image when the media server cannot load.
+  The image is served locally from `public/novel-expanded/wordmark.png`.
+  Other pages retain their page-specific identity.
 
 The app's pages sit in the Library's own shell (`@seihouse/library/shell`), the
 same one the Workshop's Library preview shows, with only the places the app has

@@ -6,7 +6,7 @@ export function IconsWorkspace() {
     <CatalogWorkspacePage
       title="Icons"
       section="Components · Library UI"
-      description="Every current custom Celestial Library SVG glyph, rendered live."
+      description="All 33 Basic and Special icons from SEIHouse R2, with their public URLs."
     >
       <IconsGrid />
     </CatalogWorkspacePage>

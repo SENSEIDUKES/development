@@ -467,7 +467,7 @@ The existing local files named by this inventory are:
 
 - `development/ReaderChamber.tsx`
 - `development/ReaderViewport.tsx`
-- `src/audio/InlineAudio.tsx`
+- `src/audio/InlineAudioView.tsx`
 - `development/ReaderHeader.tsx`
 - `development/ReaderSettings.tsx`
 - `development/CosmicBookmarksPanel.tsx`

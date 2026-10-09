@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { BookOpen, Plus, ScrollText, Settings, UserRound } from 'lucide-react';
+import { LibraryStoriesIcon, LibraryBookIcon, LibraryStoryIcon, LibrarySettingsIcon, LibraryProfileIcon } from '@seihouse/library-ui';
 import {
   LIBRARY_EMBLEM, LibraryFooter, LibraryNavigation, LibrarySectionSidebar, WorkspaceHeader, WorkspaceShell,
   useLibraryDesktopNavigation, useLibraryLegalDocuments,
@@ -46,11 +46,11 @@ export function AppShell({ route, navigate, stories, mainLabel, children }: AppS
   const profile = () => navigate({ page: 'profile' });
   const settings = () => navigate({ page: 'profile', cave: '/settings' });
   const searchItems: HeaderSearchItem[] = [
-    { id: 'home', label: 'Your stories', description: 'Home: every story you have started', icon: BookOpen, onAction: home },
-    { id: 'create', label: 'Create a story', description: 'Plant a Story Seed and shape its World Blueprint', icon: Plus, onAction: create },
-    { id: 'profile', label: 'Profile', description: 'Your Cultivator Cave: rank, QI, Familiars and rewards', icon: UserRound, onAction: profile },
-    { id: 'settings', label: 'Settings', description: 'Your name, languages, sound, Familiar and Reading Mode', icon: Settings, onAction: settings },
-    ...stories.map(story => ({ id: `story-${story.id}`, label: story.title, description: 'Open its World Info', icon: ScrollText,
+    { id: 'home', label: 'Your stories', description: 'Home: every story you have started', icon: LibraryStoriesIcon, onAction: home },
+    { id: 'create', label: 'Create a story', description: 'Plant a Story Seed and shape its World Blueprint', icon: LibraryBookIcon, onAction: create },
+    { id: 'profile', label: 'Profile', description: 'Your Cultivator Cave: rank, QI, Familiars and rewards', icon: LibraryProfileIcon, onAction: profile },
+    { id: 'settings', label: 'Settings', description: 'Your name, languages, sound, Familiar and Reading Mode', icon: LibrarySettingsIcon, onAction: settings },
+    ...stories.map(story => ({ id: `story-${story.id}`, label: story.title, description: 'Open its World Info', icon: LibraryStoryIcon,
       onAction: () => navigate({ page: 'story', storyId: story.id }) })),
   ];
   // Only destinations the app has; social channels wait for published addresses.

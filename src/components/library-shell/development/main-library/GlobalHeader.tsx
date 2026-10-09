@@ -1,4 +1,5 @@
-import { BookOpen, Gem, Keyboard, PenLine, Plus, Scroll, ScrollText, Sliders, Users, PenTool, Sword } from 'lucide-react';
+import { Gem, Keyboard, PenLine, Scroll, ScrollText, Sliders, Users, PenTool, Sword } from 'lucide-react';
+import { LibraryHomeIcon, LibraryStoriesIcon, LibraryBookIcon } from '@seihouse/library-ui';
 import { useMainLibraryAdapter } from '../../shared/MainLibraryAdapter';
 import { WorkspaceHeader } from '../WorkspaceHeader';
 import type { HeaderSearchItem } from '../WorkspaceHeaderUtilities';
@@ -26,10 +27,10 @@ export function GlobalHeader({ landmark = 'banner' }: {
   const home = () => { adapter.setCurrentScreen('home'); adapter.setActiveStoryId(null); };
   // Descriptions are the existing Command Hub guidance, retained verbatim.
   const items: HeaderSearchItem[] = [
-    { id: 'home', label: 'Home', description: 'Return to the Light Novels homepage', icon: BookOpen, onAction: home },
-    { id: 'library', label: 'Library', description: 'Browse your accumulated scroll logs', icon: BookOpen, onAction: adapter.openLibrary ?? home },
+    { id: 'home', label: 'Home', description: 'Return to the Light Novels homepage', icon: LibraryHomeIcon, onAction: home },
+    { id: 'library', label: 'Library', description: 'Browse your accumulated scroll logs', icon: LibraryStoriesIcon, onAction: adapter.openLibrary ?? home },
     { id: 'creator-space', label: 'Creator Space', description: 'Your worlds, Energy and creator toolkit', icon: PenLine, onAction: () => adapter.setCurrentScreen('creator-space') },
-    { id: 'creator', label: 'Story Seed', description: 'Forge a new cosmic story seed', icon: Plus, onAction: () => adapter.setCurrentScreen('creator') },
+    { id: 'creator', label: 'Story Seed', description: 'Forge a new cosmic story seed', icon: LibraryBookIcon, onAction: () => adapter.setCurrentScreen('creator') },
     { id: 'sects', label: 'Sects', description: 'Earn rewards & shape worlds together', icon: Users, onAction: () => adapter.setCurrentScreen('sects') },
     { id: 'pricing', label: 'Tiers', description: 'Replenish your creative Qi', icon: Gem, onAction: () => adapter.setCurrentScreen('pricing') },
     { id: 'profile', label: 'Celestial Profile', description: 'Manage spirit link settings', icon: SENProfileIcon,

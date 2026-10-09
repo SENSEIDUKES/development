@@ -1,0 +1,155 @@
+/* R2 artwork for the existing Library renderer. Historical preview panes are excluded.
+ * The package renderer sets its bundled mask inline, hence the deliberate !important.
+ * Keep sizes, currentColor, semantic attributes and host interactions unchanged.
+ */
+
+.sen-icon[data-sen-icon="navigation-book"]:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENCreate.svg") !important;
+}
+
+.sen-icon[data-sen-icon="navigation-discovery"]:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENDiscovery.svg") !important;
+}
+
+svg.lucide-download:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENDownload.svg") !important;
+}
+
+.sen-icon[data-sen-icon="navigation-energy"]:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENEnergy.svg") !important;
+}
+
+.sen-icon[data-sen-icon="header-exit"]:not([data-workshop-reference] *),
+svg.lucide-log-out:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENExit.svg") !important;
+}
+
+.sen-icon[data-sen-icon="header-help"]:not([data-workshop-reference] *),
+svg.lucide-circle-help:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENHelp.svg") !important;
+}
+
+.sen-icon[data-sen-icon="navigation-home"]:not([data-workshop-reference] *),
+svg.lucide-house:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENHome.svg") !important;
+}
+
+.sen-icon[data-sen-icon="header-profile"]:not([data-workshop-reference] *),
+svg.lucide-user-round:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENProfile.svg") !important;
+}
+
+.sen-icon[data-sen-icon="header-profile-female"]:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENProfileFemale.svg") !important;
+}
+
+.sen-icon[data-sen-icon="header-qi-yin-yang"]:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENQi.svg") !important;
+}
+
+.sen-icon[data-sen-icon="header-qi"]:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENQiHead.svg") !important;
+}
+
+.sen-icon[data-sen-icon="navigation-relic"]:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENReward.svg") !important;
+}
+
+[data-sen-asset="provenance"]:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENSEIHOUSEProvenance.svg") !important;
+}
+
+.sen-icon[data-sen-icon="header-search"]:not([data-workshop-reference] *),
+svg.lucide-search:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENSearch.svg") !important;
+}
+
+.sen-icon[data-sen-icon="header-settings"]:not([data-workshop-reference] *),
+svg.lucide-settings:not([data-workshop-reference] *),
+svg.lucide-settings-2:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENSettings.svg") !important;
+}
+
+.sen-icon[data-sen-icon="story-bank"]:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENStorage.svg") !important;
+}
+
+.sen-icon[data-sen-icon="navigation-store"]:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENStore.svg") !important;
+}
+
+.sen-icon[data-sen-icon="story-ability"]:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENAbility.svg") !important;
+}
+
+.sen-icon[data-sen-icon="story-arc"]:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENArc.svg") !important;
+}
+
+.sen-icon[data-sen-icon="story-characters"]:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENCharacters.svg") !important;
+}
+
+.sen-icon[data-sen-icon="story-ally-faction"]:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENCompanion.svg") !important;
+}
+
+.sen-icon[data-sen-icon="story-enemy-faction"]:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENFaction.svg") !important;
+}
+
+.sen-icon[data-sen-icon="header-manifesting"]:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENManifesting.svg") !important;
+}
+
+.sen-icon[data-sen-icon="story-power-system"]:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENPowerSystem.svg") !important;
+}
+
+.sen-icon[data-sen-icon="navigation-stories"]:not([data-workshop-reference] *),
+.sen-icon[data-sen-icon="story-scroll"]:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENScroll.svg") !important;
+}
+
+.sen-icon[data-sen-icon="story-style-chinese"]:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENStyleChinese.svg") !important;
+}
+
+.sen-icon[data-sen-icon="story-style-japanese"]:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENStyleJapanese.svg") !important;
+}
+
+.sen-icon[data-sen-icon="story-style-korean"]:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENStyleKorean.svg") !important;
+}
+
+.sen-icon[data-sen-icon="story-world-identity"]:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENWorldIdentity.svg") !important;
+}
+
+/* Give matching generic SVG controls the same currentColor mask as LibraryIcon. */
+svg.lucide-download:not([data-workshop-reference] *),
+svg.lucide-search:not([data-workshop-reference] *),
+svg.lucide-settings:not([data-workshop-reference] *),
+svg.lucide-settings-2:not([data-workshop-reference] *),
+svg.lucide-circle-help:not([data-workshop-reference] *),
+svg.lucide-user-round:not([data-workshop-reference] *),
+svg.lucide-log-out:not([data-workshop-reference] *),
+svg.lucide-house:not([data-workshop-reference] *),
+[data-sen-asset="provenance"]:not([data-workshop-reference] *) {
+  background-color: currentColor;
+  -webkit-mask: var(--sen-icon-mask) center / contain no-repeat;
+  mask: var(--sen-icon-mask) center / contain no-repeat;
+}
+
+svg.lucide-download:not([data-workshop-reference] *) > *,
+svg.lucide-search:not([data-workshop-reference] *) > *,
+svg.lucide-settings:not([data-workshop-reference] *) > *,
+svg.lucide-settings-2:not([data-workshop-reference] *) > *,
+svg.lucide-circle-help:not([data-workshop-reference] *) > *,
+svg.lucide-user-round:not([data-workshop-reference] *) > *,
+svg.lucide-log-out:not([data-workshop-reference] *) > *,
+svg.lucide-house:not([data-workshop-reference] *) > *,
+[data-sen-asset="provenance"]:not([data-workshop-reference] *) > * {
+  opacity: 0;
+}

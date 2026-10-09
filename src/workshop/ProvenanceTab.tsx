@@ -249,7 +249,7 @@ export function ProvenanceTab() {
             ))}
           </ul>
           <div className="provenance-hub" aria-label="Shared provenance record contract">
-            <span aria-hidden="true">Ⓢ</span>
+            <span data-sen-asset="provenance" aria-hidden="true"><span>Ⓢ</span></span>
             <strong>Provenance Record</strong>
             <small>Source-agnostic contract</small>
           </div>

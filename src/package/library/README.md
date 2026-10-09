@@ -257,6 +257,11 @@ grants a boost, multiplier, discount or other advantage.
 visuals over SEN. Concrete CDN and public-directory locations are supplied as
 `LibraryAssets`; they are not embedded in the package.
 
+The Library's official icon artwork is selected by `./styles.css` from the public
+SEIHouse R2 Basic/Special folders. `./presentation` exports `LIBRARY_ICON_CATALOG`
+for inspection (exact keys, URLs, ETags and Library identifiers); the existing
+Library UI renderer and named adapters keep their contracts.
+
 ## Server Model Router
 
 Import `@seihouse/library/model-router-server` only in a trusted Node server.

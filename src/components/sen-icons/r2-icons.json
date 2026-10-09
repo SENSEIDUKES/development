@@ -1,0 +1,288 @@
+[
+  {
+    "file": "SENCreate.svg",
+    "key": "SEN/IMAGE/ICON/Basic/SENCreate.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENCreate.svg",
+    "etag": "dc2526eaed3d668414109058ebec425c",
+    "libraryIcons": [
+      "navigation-book"
+    ]
+  },
+  {
+    "file": "SENDiscovery.svg",
+    "key": "SEN/IMAGE/ICON/Basic/SENDiscovery.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENDiscovery.svg",
+    "etag": "da25ca4819bc34b2da65f7e37d9eb4a8",
+    "libraryIcons": [
+      "navigation-discovery"
+    ]
+  },
+  {
+    "file": "SENDownload.svg",
+    "key": "SEN/IMAGE/ICON/Basic/SENDownload.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENDownload.svg",
+    "etag": "c272ce2814845c34cad496f13ede5ae6",
+    "libraryIcons": []
+  },
+  {
+    "file": "SENEnergy.svg",
+    "key": "SEN/IMAGE/ICON/Basic/SENEnergy.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENEnergy.svg",
+    "etag": "5deccbd7e82e0b96760bab5938e863ef",
+    "libraryIcons": [
+      "navigation-energy"
+    ]
+  },
+  {
+    "file": "SENExit.svg",
+    "key": "SEN/IMAGE/ICON/Basic/SENExit.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENExit.svg",
+    "etag": "0602bbc484ef0c4c10c3359ca6ec0b11",
+    "libraryIcons": [
+      "header-exit"
+    ]
+  },
+  {
+    "file": "SENHelp.svg",
+    "key": "SEN/IMAGE/ICON/Basic/SENHelp.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENHelp.svg",
+    "etag": "ec788ae3aaf35d9eb71c869bad347812",
+    "libraryIcons": [
+      "header-help"
+    ]
+  },
+  {
+    "file": "SENHelpv2.svg",
+    "key": "SEN/IMAGE/ICON/Basic/SENHelpv2.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENHelpv2.svg",
+    "etag": "5f77de9b62b0f0a07421cb62d5b20725",
+    "libraryIcons": []
+  },
+  {
+    "file": "SENHome.svg",
+    "key": "SEN/IMAGE/ICON/Basic/SENHome.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENHome.svg",
+    "etag": "8072536e5b24131e788b39589c91b790",
+    "libraryIcons": [
+      "navigation-home"
+    ]
+  },
+  {
+    "file": "SENProfile.svg",
+    "key": "SEN/IMAGE/ICON/Basic/SENProfile.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENProfile.svg",
+    "etag": "1eb020549ffdb9f7d8756fd1a6854e67",
+    "libraryIcons": [
+      "header-profile"
+    ]
+  },
+  {
+    "file": "SENProfileFemale.svg",
+    "key": "SEN/IMAGE/ICON/Basic/SENProfileFemale.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENProfileFemale.svg",
+    "etag": "b898aef7458ed6539500674f84ddd965",
+    "libraryIcons": [
+      "header-profile-female"
+    ]
+  },
+  {
+    "file": "SENQi.svg",
+    "key": "SEN/IMAGE/ICON/Basic/SENQi.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENQi.svg",
+    "etag": "8db8372e3ac6de26ea5350bb091fdedb",
+    "libraryIcons": [
+      "header-qi-yin-yang"
+    ]
+  },
+  {
+    "file": "SENQiHead.svg",
+    "key": "SEN/IMAGE/ICON/Basic/SENQiHead.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENQiHead.svg",
+    "etag": "e7e2f02c8fa6723cbb01b9fce7dab3af",
+    "libraryIcons": [
+      "header-qi"
+    ]
+  },
+  {
+    "file": "SENReward.svg",
+    "key": "SEN/IMAGE/ICON/Basic/SENReward.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENReward.svg",
+    "etag": "381a8a6022a17eb49bf8e50b60369c48",
+    "libraryIcons": [
+      "navigation-relic"
+    ]
+  },
+  {
+    "file": "SENSEIHOUSEProvenance.svg",
+    "key": "SEN/IMAGE/ICON/Basic/SENSEIHOUSEProvenance.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENSEIHOUSEProvenance.svg",
+    "etag": "407ed7e288eb858a3670fcb1b5145fe9",
+    "libraryIcons": []
+  },
+  {
+    "file": "SENSearch.svg",
+    "key": "SEN/IMAGE/ICON/Basic/SENSearch.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENSearch.svg",
+    "etag": "a43167f94bfacc6d78279fb82a33bbd2",
+    "libraryIcons": [
+      "header-search"
+    ]
+  },
+  {
+    "file": "SENSearchv2.svg",
+    "key": "SEN/IMAGE/ICON/Basic/SENSearchv2.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENSearchv2.svg",
+    "etag": "a91b19064161eb6d48a034e6ca913a4f",
+    "libraryIcons": []
+  },
+  {
+    "file": "SENSettings.svg",
+    "key": "SEN/IMAGE/ICON/Basic/SENSettings.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENSettings.svg",
+    "etag": "893d0ed492274dd7e70df3f6af5efe54",
+    "libraryIcons": [
+      "header-settings"
+    ]
+  },
+  {
+    "file": "SENStorage.svg",
+    "key": "SEN/IMAGE/ICON/Basic/SENStorage.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENStorage.svg",
+    "etag": "212e41566d0280b0a8cdc7b0420d5754",
+    "libraryIcons": [
+      "story-bank"
+    ]
+  },
+  {
+    "file": "SENStore.svg",
+    "key": "SEN/IMAGE/ICON/Basic/SENStore.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENStore.svg",
+    "etag": "3377fa167ac6e44c71fd33d5e2bd90d4",
+    "libraryIcons": [
+      "navigation-store"
+    ]
+  },
+  {
+    "file": "SENAbility.svg",
+    "key": "SEN/IMAGE/ICON/Special/SENAbility.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENAbility.svg",
+    "etag": "1bde2d4556981606237f84c2be7fdc03",
+    "libraryIcons": [
+      "story-ability"
+    ]
+  },
+  {
+    "file": "SENArc.svg",
+    "key": "SEN/IMAGE/ICON/Special/SENArc.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENArc.svg",
+    "etag": "71e8ee82742d2b37d4a82eb8a27a28b7",
+    "libraryIcons": [
+      "story-arc"
+    ]
+  },
+  {
+    "file": "SENCharacters.svg",
+    "key": "SEN/IMAGE/ICON/Special/SENCharacters.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENCharacters.svg",
+    "etag": "c783fceb4d1edbdc7b95320eec4e4298",
+    "libraryIcons": [
+      "story-characters"
+    ]
+  },
+  {
+    "file": "SENCompanion.svg",
+    "key": "SEN/IMAGE/ICON/Special/SENCompanion.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENCompanion.svg",
+    "etag": "27ce1ba947aea2a088bf28efae23fffc",
+    "libraryIcons": [
+      "story-ally-faction"
+    ]
+  },
+  {
+    "file": "SENEnergySun.svg",
+    "key": "SEN/IMAGE/ICON/Special/SENEnergySun.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENEnergySun.svg",
+    "etag": "c108c7e74ab28559e84c7273940dc6e2",
+    "libraryIcons": []
+  },
+  {
+    "file": "SENFaction.svg",
+    "key": "SEN/IMAGE/ICON/Special/SENFaction.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENFaction.svg",
+    "etag": "be7f6784245ee2843cb32194894c59fd",
+    "libraryIcons": [
+      "story-enemy-faction"
+    ]
+  },
+  {
+    "file": "SENManifesting.svg",
+    "key": "SEN/IMAGE/ICON/Special/SENManifesting.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENManifesting.svg",
+    "etag": "1dcab51033220cbae51d5e5a35524c1c",
+    "libraryIcons": [
+      "header-manifesting"
+    ]
+  },
+  {
+    "file": "SENPowerSystem.svg",
+    "key": "SEN/IMAGE/ICON/Special/SENPowerSystem.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENPowerSystem.svg",
+    "etag": "e795c8a6944e366878fa892b15e5b265",
+    "libraryIcons": [
+      "story-power-system"
+    ]
+  },
+  {
+    "file": "SENScroll.svg",
+    "key": "SEN/IMAGE/ICON/Special/SENScroll.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENScroll.svg",
+    "etag": "2bab6e7809d12df745155aee2b414fde",
+    "libraryIcons": [
+      "navigation-stories",
+      "story-scroll"
+    ]
+  },
+  {
+    "file": "SENStyleChinese.svg",
+    "key": "SEN/IMAGE/ICON/Special/SENStyleChinese.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENStyleChinese.svg",
+    "etag": "a20bb8d0a30ad4d42f372f03e7c7c376",
+    "libraryIcons": [
+      "story-style-chinese"
+    ]
+  },
+  {
+    "file": "SENStyleJapanese.svg",
+    "key": "SEN/IMAGE/ICON/Special/SENStyleJapanese.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENStyleJapanese.svg",
+    "etag": "99c1c9cf4f979965e5303b099880a3aa",
+    "libraryIcons": [
+      "story-style-japanese"
+    ]
+  },
+  {
+    "file": "SENStyleKorean.svg",
+    "key": "SEN/IMAGE/ICON/Special/SENStyleKorean.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENStyleKorean.svg",
+    "etag": "60b7a0d9832055430d22f482d69d9a42",
+    "libraryIcons": [
+      "story-style-korean"
+    ]
+  },
+  {
+    "file": "SENWorld.svg",
+    "key": "SEN/IMAGE/ICON/Special/SENWorld.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENWorld.svg",
+    "etag": "da25ca4819bc34b2da65f7e37d9eb4a8",
+    "libraryIcons": []
+  },
+  {
+    "file": "SENWorldIdentity.svg",
+    "key": "SEN/IMAGE/ICON/Special/SENWorldIdentity.svg",
+    "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENWorldIdentity.svg",
+    "etag": "a3e758b3b5e1e666c65494b0b7c493ca",
+    "libraryIcons": [
+      "story-world-identity"
+    ]
+  }
+]

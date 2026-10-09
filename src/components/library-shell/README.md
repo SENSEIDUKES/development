@@ -1,5 +1,9 @@
 # Library Shell
 
+- **2026-10-09** — The footer statement reads “An Experience by SEIHouse”;
+  hosts can supply a brand mark through `identity` instead of the text title.
+  Its atmospheric background fades in at the top to avoid a blue-to-black seam.
+
 - **2026-10-09** — `WorkspaceHeader` accepts a host-owned `identity` in place
   of its default badge. NovelExpanded uses it for the approved wordmark;
   existing workspace titles and header utilities retain their presentation.

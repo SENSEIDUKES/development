@@ -391,7 +391,8 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     expect(sidebar.textContent).toContain('Create');
     expect(sidebar.textContent).toContain('Settings');
     expect(document.body.textContent).not.toContain('Discover');
-    expect(footer()!.querySelector('[data-footer-title]')?.textContent).toBe('NovelExpanded');
+    expect(footer()!.querySelector('.novel-expanded-footer-wordmark')?.getAttribute('alt')).toBe('NovelExpanded');
+    expect(footer()!.querySelector('.library-footer-statement')?.textContent).toBe('An Experience by SEIHouse');
     expect([...footer()!.querySelectorAll('.library-footer-legal-link')].map(link => link.textContent)).toEqual(['Terms', 'Privacy', 'Cookies']);
     // No channel is published yet, so the footer shows none.
     expect(footer()!.querySelector('.library-footer-social')).toBeNull();

@@ -38,6 +38,9 @@ rewrites and every page survives a reload.
 
 ## The Library Shell
 
+- **2026-10-09** — The Home and World Info footer replaces its text title with
+  the same approved wordmark as the header, above “An Experience by SEIHouse”.
+
 - **2026-10-09** — Home and World Info use SENSEI's approved NovelExpanded
   wordmark with the Familiar star in place of the title plaque, alongside the
   original glowing Celestial Library dragon emblem. Both return to Home;

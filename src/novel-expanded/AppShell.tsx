@@ -104,7 +104,9 @@ export function AppShell({ route, navigate, stories, mainLabel, children }: AppS
           home={{ href: routeHref(HOME_ROUTE), label: 'Return to your stories', onNavigate: home }}
           searchItems={searchItems} />}>
         {children}
-        <LibraryFooter groups={footerGroups} social={[]} legal={legal} />
+        <LibraryFooter groups={footerGroups} social={[]} legal={legal}
+          identity={<img className="novel-expanded-footer-wordmark" src="/novel-expanded/wordmark.png"
+            alt="NovelExpanded" width={1586} height={992} />} />
       </WorkspaceShell>
     </LibraryNavigation>
     {legalSheet}

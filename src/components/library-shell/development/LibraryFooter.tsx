@@ -8,7 +8,7 @@ import './library-footer.css';
 /** The footer's title, set above the company statement. */
 export const LIBRARY_FOOTER_TITLE = 'NovelExpanded';
 /** The company statement, read beneath the title. */
-export const LIBRARY_FOOTER_STATEMENT = 'A BETTER TIME CAPSULE AND TRANSLATOR OF ARTISTIC EXPRESSION';
+export const LIBRARY_FOOTER_STATEMENT = 'An Experience by SEIHouse';
 /** The legal line, dated from the current year so it never goes stale. */
 export function libraryFooterCopyright(year = new Date().getFullYear()) {
   return `© ${year} SEIHouse Productions LLC`;
@@ -46,6 +46,8 @@ export interface LibraryFooterLanguage {
   onOpenSettings: () => void;
 }
 export interface LibraryFooterProps extends Omit<HTMLAttributes<HTMLElement>, 'children'> {
+  /** Host-owned brand mark in place of the default text title. */
+  identity?: ReactNode;
   /** Closed accordions — Explore, SEIHouse, Support — with host destinations. */
   groups: readonly LibraryFooterGroup[];
   social: readonly LibraryFooterSocialLink[];
@@ -74,14 +76,14 @@ function FooterControl({ item, className, children, ...props }: { item: LibraryF
  * closed menus, the social row, the account's language entry and the legal row. Every
  * destination comes from the host; the footer holds no routes or URLs of its own.
  */
-export function LibraryFooter({ groups, social, legal, language, className = '', ...props }: LibraryFooterProps) {
+export function LibraryFooter({ groups, social, legal, language, identity, className = '', ...props }: LibraryFooterProps) {
   const visibleGroups = groups.map(group => ({ ...group, items: group.items.filter(hasDestination) })).filter(group => group.items.length > 0);
   const visibleSocial = social.filter(hasDestination);
   const visibleLegal = legal.filter(hasDestination);
   return <footer {...props} data-library-footer className={`library-footer ${className}`.trim()} aria-label="Celestial Library footer">
     <div className="library-footer-inner">
       <div className="library-footer-identity">
-        <p className="library-footer-title" data-footer-title>{LIBRARY_FOOTER_TITLE}</p>
+        {identity ?? <p className="library-footer-title" data-footer-title>{LIBRARY_FOOTER_TITLE}</p>}
         <p className="library-footer-statement">{LIBRARY_FOOTER_STATEMENT}</p>
       </div>
 

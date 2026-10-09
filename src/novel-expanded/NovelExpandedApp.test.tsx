@@ -212,7 +212,7 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
     // The Reader's Back returns to Story View, which now continues where the reader is.
     await click(buttonByText('Back'), 'Back', 10);
     expect(address()).toBe(`/app/?story=${created.id}`);
-    expect(chaptersAction()!.textContent).toContain('Continue · Ch. 1');
+    expect(chaptersAction()!.textContent).toBe('Continue');
 
     // Story View's Back goes Home, where the story's card now has its chapter.
     await click(worldInfo()!.querySelector('button[aria-label="Back to your stories"]'), 'Back to your stories');

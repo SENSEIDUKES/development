@@ -308,9 +308,10 @@ Update it whenever it changes.
   - Each chapter asks for exactly 50 paragraphs for now, so the writer's accuracy
     can be measured; the range to return to is 40 to 80 (#296).
   - **The way in works end to end in the Workshop:** Story Seed → World
-    Blueprint → **Start Story** → the story's **World Info** page → **Start
+    Blueprint → **Start Story** → the story's **World Info** page → **Begin
     Story** → the **Reader Chamber**, where Chapter 1 is written under the Aura
-    Veil and opens when it is saved. Returning readers get **Continue · Ch. N**.
+    Veil and opens when it is saved. Once a story has chapters the button says
+    **Continue**.
   - **The Reader Chamber is reading and listening:** chapters sit on the Text
     Highlight Engine (read-only), with Sound Cues active. Next writes the next
     chapter; Fate directs it. **Listen** reads the chapter aloud with the
@@ -646,7 +647,7 @@ Update it whenever it changes.
 | SEA | SEIHouse Expanded Albums: SEIHouse's expanded-music product, separate from SEN. It inherits the shared infrastructure SEN pressure-tests. |
 | NovelExpanded app | Expanded Novels' app at NovelExpanded.com. Built at `/app/` (piece 1: the core application spine of Home, Create, Story View and Reader; piece 2: the Library Shell around it; piece 3: Profile, with the Familiar and a practice economy; piece 4: Story Settings in Create and Story View; piece 5: cover art on Story View), in `src/novel-expanded/`. |
 | Story Seed / World Blueprint | Where a story is created (`?preview=story-seed`, and Create in the app). The Blueprint is the novel's transferable core: what a reader takes to make their own version ([The World Blueprint](#the-world-blueprint)). |
-| Story View | The story's own page: cover art, the story, Enter. Built today as the World Info page (`WorldCardInfo`), where Start Story or Start Reading leads into the Reader Chamber, with Manifest on its cover and the story's Story Settings below it. |
+| Story View | The story's own page: cover art, the story, Enter. Built today as the World Info page (`WorldCardInfo`), where Begin Story or Continue leads into the Reader Chamber, with Manifest on its cover and the story's Story Settings below it. |
 | Reader Chamber | Where chapters are read: a HARNESS story's chapters on the Text Highlight Engine with Sound Cues, Listen and the soundtrack (`HarnessReaderSession`). The older Reader Chamber preview (`?preview=reader-chamber`) is not part of this path. |
 | Listen / Read Aloud | The Reader reading a chapter aloud in three voices with the spoken sentence lit (`useReadAloud`, SEN's `reader-runtime`). Its voices and speed live in Reader Settings → Narration. |
 | Reader Settings | The Reader's settings sheet: Audio, then Narration. |

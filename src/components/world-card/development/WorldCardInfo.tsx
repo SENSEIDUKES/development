@@ -1,21 +1,26 @@
 import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
-import { ArrowRight, ChevronDown, ChevronRight, ChevronUp, Flower2, Info } from 'lucide-react';
+import { BookOpen, ChevronDown, ChevronRight, ChevronUp, Film, Flower2, Info, Sparkles, Square } from 'lucide-react';
 import { ElementalTitle, SEIBadge } from '@seihouse/ui';
-import { LibraryButton, LibraryCard, LibraryIcon, LibraryPanel, type LibraryIconName } from '@seihouse/library-ui';
+import { LibraryButton, LibraryCard, LibraryIcon, LibraryPanel, ManifestButton, type LibraryIconName } from '@seihouse/library-ui';
 import { getTagMetadata, normalizeStoryTagIdentity, STORY_TAG_COLOR_ACCENTS, type StoryTagMetadata } from '@seihouse/sen/story-seed';
 import type { WorldCardInfoProps } from '../shared/worldCardContracts';
+import { useDominantColor } from '@seihouse/sen/motion-picture';
 import { WorldCard } from './WorldCard';
-import { WorldCardCover } from './WorldCardCover';
+import { WorldCardBackdropVideo, type WorldCardBackdropVideoHandle } from './WorldCardBackdropVideo';
 import { WorldCardFormatSymbol } from './WorldCardFormatSymbol';
 import { WorldCardStoryPanel } from './WorldCardStoryPanel';
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
 import './world-card.css';
 
 /**
- * Info page: the world's full overview — cover, byline, states, tags,
- * synopsis, the Chapters card (its only reading action, or Start Story while a
- * story the host can start has no chapters), Open Codex, and the Information
- * row that opens the world's story information dialog.
+ * Info page: the world's full overview, presented the way Audible presents a
+ * title. A big cover stands centered over a backdrop made from the cover's own
+ * art and color, with the world's motion picture looping behind it when it has
+ * one. Under the cover sits the page's one reading action, which only ever
+ * says Continue, or Begin Story while a story the host can start has no
+ * chapters; then the title, the byline, one meta line (genre | chapters, and
+ * on a phone the publication status) and the tags, all centered. The synopsis, Open Codex
+ * and the Information row follow. From 768px the cover stands beside the rest.
  * Every value and destination comes from the host; unknown values are omitted.
  * This is the public view a reader sees. It shows no owner or library states
  * (visibility, draft, acquisition); the owner's view is a separate Story View.
@@ -23,24 +28,57 @@ import './world-card.css';
 export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, readingPosition, coverAction }: WorldCardInfoProps) {
   const detail = 'author' in story ? story : undefined;
   const coverUrl = story.imageUrl?.trim() || undefined;
+  const videoUrl = 'videoUrl' in story ? story.videoUrl?.trim() || undefined : undefined;
+  const backdropVideo = useRef<WorldCardBackdropVideoHandle>(null);
+  const [clipPlaying, setClipPlaying] = useState(false);
+  const glowColor = useDominantColor(coverUrl);
   const creatorName = story.creatorName?.trim() || detail?.author?.trim();
   const publicationLabel = detail?.publicationStatus === 'ongoing' ? 'On Going'
     : detail?.publicationStatus === 'completed' ? 'Completed' : undefined;
   const genre = detail?.genre?.trim();
+  const currentArc = detail?.currentArc?.trim();
   const tags = storyTags(detail?.tags);
+  const count = Number.isSafeInteger(story.chapterCount) && story.chapterCount > 0 ? story.chapterCount : 0;
+  const countLabel = count === 0 ? 'No chapters yet' : `${count.toLocaleString()} ${count === 1 ? 'Chapter' : 'Chapters'}`;
 
   return <LibraryPanel as="article" padding="none" className="world-card-info" data-world-card="info"
-    aria-labelledby={`world-info-title-${story.id}`}>
-    {coverUrl && <span className="world-card-info-reflection" aria-hidden="true"
-      style={{ backgroundImage: `url(${JSON.stringify(coverUrl)})` } as CSSProperties} />}
-    <span className="world-card-info-scrim" aria-hidden="true" />
+    aria-labelledby={`world-info-title-${story.id}`}
+    style={{ '--world-card-glow': glowColor } as CSSProperties}>
+    <div className="world-card-info-backdrop" aria-hidden="true">
+      {coverUrl && <span className="world-card-info-backdrop-art"
+        style={{ backgroundImage: `url(${JSON.stringify(coverUrl)})` } as CSSProperties} />}
+      {/* The world's own motion picture, when it has one, loops silently behind the cover. */}
+      <WorldCardBackdropVideo ref={backdropVideo} src={videoUrl} className="world-card-info-video" onPlayingChange={setClipPlaying} />
+      <span className="world-card-info-scrim" />
+    </div>
     <div className="world-card-info-body">
       <div className="world-card-info-hero">
         <div className="world-card-info-cover">
           <WorldCard face="info" world={story} />
           {coverAction && <div className="world-card-info-cover-action">{coverAction}</div>}
+          {/* The format mark, as on the Full card: it opens the story's information (views and more to come). */}
+          {detail && <WorldCardStoryPanel key={story.id} world={detail} triggerClassName="world-card-base-format world-card-info-format" />}
+          {/* MP: plays or stops the clip behind the page, so a reader whose phone would not start it (Low Power Mode) can. */}
+          {videoUrl && <button type="button" className="world-card-base-format world-card-info-motion" aria-pressed={clipPlaying}
+            aria-label={`${clipPlaying ? 'Stop' : 'Play'} motion for ${story.title}`}
+            onClick={() => clipPlaying ? backdropVideo.current?.pause() : backdropVideo.current?.play()}>
+            {clipPlaying ? <Square size={14} aria-hidden="true" /> : <Film size={17} aria-hidden="true" />}
+          </button>}
         </div>
         <div className="world-card-info-identity">
+          {/* On a phone the reading pill and the story's states share one row; beside the cover the states lead the column. */}
+          <div className="world-card-info-actions">
+            <ReadingAction title={story.title} count={count} countLabel={countLabel} currentArc={currentArc}
+              onRead={onRead} onStart={onStart} readingPosition={readingPosition} />
+            {(publicationLabel || detail?.recentlyRead) && <div className="world-card-info-pills world-card-info-states" role="group" aria-label="Story status">
+              {publicationLabel && <SEIBadge size="lg" variant={publicationLabel === 'On Going' ? 'success' : 'neutral'}
+                className="world-card-info-pill world-card-info-pill-status" data-status={detail?.publicationStatus}
+                aria-label={`Story status: ${publicationLabel}`}>
+                <span className="world-card-info-status-dot" aria-hidden="true" />{publicationLabel}
+              </SEIBadge>}
+              {detail?.recentlyRead && <SEIBadge size="lg" variant="info" className="world-card-info-pill">Recently read</SEIBadge>}
+            </div>}
+          </div>
           <header>
             <h1 id={`world-info-title-${story.id}`} className="world-card-info-title font-display">{story.title}</h1>
             {creatorName && <p className="world-card-info-byline">
@@ -53,29 +91,26 @@ export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, readingPosi
               </span>
             </p>}
           </header>
-          <div className="world-card-info-pills" role="group" aria-label="Story status">
-            {publicationLabel && <SEIBadge size="lg" variant={publicationLabel === 'On Going' ? 'success' : 'neutral'}
-              className="world-card-info-pill world-card-info-pill-status" data-status={detail?.publicationStatus}
-              aria-label={`Story status: ${publicationLabel}`}>
-              <span className="world-card-info-status-dot" aria-hidden="true" />{publicationLabel}
-            </SEIBadge>}
-            {detail?.recentlyRead && <SEIBadge size="lg" variant="info" className="world-card-info-pill">Recently read</SEIBadge>}
+          <p className="world-card-info-meta" data-world-info-meta="">
             {genre && <span className="world-card-info-genre">
-              <Flower2 size={22} aria-hidden="true" /><span className="sr-only">Genre: </span>{genre}
+              <Flower2 size={16} aria-hidden="true" /><span className="sr-only">Genre: </span><span className="world-card-info-genre-name">{genre}</span>
             </span>}
-          </div>
+            <span className="world-card-info-chapter-count">{countLabel}</span>
+            {/* On a phone the publication status joins this line; beside the cover it stays a badge above the title. */}
+            {publicationLabel && <span className="world-card-info-meta-status" data-status={detail?.publicationStatus}>
+              <span className="world-card-info-status-dot" aria-hidden="true" />{publicationLabel}
+            </span>}
+            {currentArc && <span className="world-card-info-arc">Current arc · {currentArc}</span>}
+          </p>
+          {tags.length > 0 && <ul className="world-card-info-pills world-card-info-tags" aria-label="Story tags">
+            {tags.map(tag => <li key={tag.key}><StoryTagChip {...tag} /></li>)}
+          </ul>}
         </div>
-        {tags.length > 0 && <ul className="world-card-info-pills world-card-info-tags" aria-label="Story tags">
-          {tags.map(tag => <li key={tag.key}><StoryTagChip {...tag} /></li>)}
-        </ul>}
       </div>
 
       <div className="world-card-info-divider" aria-hidden="true"><span /></div>
 
       <WorldSynopsis key={story.id} storyId={story.id} synopsis={detail?.synopsis?.trim()} />
-
-      <ChaptersCard story={story} currentArc={detail?.currentArc?.trim()} coverUrl={coverUrl}
-        onRead={onRead} onStart={onStart} readingPosition={readingPosition} />
 
       {(onOpenCodex || detail) && <div className="world-card-info-tools">
         {onOpenCodex && <StoryToolCard icon="navigation-book" title="Open Codex"
@@ -140,41 +175,30 @@ function WorldSynopsis({ storyId, synopsis }: { storyId: string; synopsis?: stri
 }
 
 /**
- * The page's only reading action: one tap target wired to the host's reading
- * action, or to its start action while the story has no chapters yet.
+ * The page's only reading action: one pill under the cover, wired to the
+ * host's reading action, or to its start action while the story has no
+ * chapters yet. Without a working destination it says so instead.
  */
-function ChaptersCard({ story, currentArc, coverUrl, onRead, onStart, readingPosition }: {
-  story: WorldCardInfoProps['story']; currentArc?: string; coverUrl?: string;
+function ReadingAction({ title, count, countLabel, currentArc, onRead, onStart, readingPosition }: {
+  title: string; count: number; countLabel: string; currentArc?: string;
   onRead?: () => void; onStart?: () => void; readingPosition?: WorldCardInfoProps['readingPosition'];
 }) {
-  const count = Number.isSafeInteger(story.chapterCount) && story.chapterCount > 0 ? story.chapterCount : 0;
   const resumeChapter = readingPosition && Number.isSafeInteger(readingPosition.chapterNumber) && readingPosition.chapterNumber > 0
     ? readingPosition.chapterNumber : undefined;
   const action = count > 0 ? onRead : onStart;
-  const readable = Boolean(action);
-  const actionLabel = count === 0 ? 'Start Story' : resumeChapter ? `Continue · Ch. ${resumeChapter}` : 'Start Reading';
-  const countLabel = count === 0 ? 'No chapters yet' : `${count.toLocaleString()} ${count === 1 ? 'Chapter' : 'Chapters'}`;
-  // LibraryCard wraps `media` in its own media slot; the slot is styled by .world-card-info-chapters.
-  const media = coverUrl ? <WorldCardCover src={coverUrl} title={story.title} decorative compact /> : undefined;
-  const content = <div className="world-card-info-chapters-content">
-    <p className="world-card-info-chapters-count font-display">{countLabel}</p>
-    {currentArc && <p className="world-card-info-chapters-arc">Current arc · {currentArc}</p>}
-    {readable
-      ? <span className="world-card-info-chapters-cue" aria-hidden="true">
-          <span className="whitespace-nowrap">{actionLabel}<ArrowRight size={18} /></span>
-        </span>
-      : count > 0 && <span className="world-card-info-chapters-unavailable">Reading isn’t available here yet</span>}
-  </div>;
-  const shared = { padding: 'none' as const, className: 'world-card-info-chapters', contentClassName: 'gap-0', media, 'data-world-info-chapters': readable ? 'action' : 'static' };
-
-  return <div className="world-card-info-chapters-stack">
-    {readable
-      ? <LibraryCard {...shared} interactive onClick={() => action!()}
-          aria-label={`${actionLabel}: ${story.title}, ${countLabel}${currentArc ? `, current arc ${currentArc}` : ''}`}>
-          {content}
-        </LibraryCard>
-      : <LibraryCard {...shared}>{content}</LibraryCard>}
-  </div>;
+  // The pill says only Begin Story or Continue; where it continues is for assistive technology.
+  const actionLabel = count === 0 ? 'Begin Story' : 'Continue';
+  const spokenAction = resumeChapter ? `Continue at Chapter ${resumeChapter}` : actionLabel;
+  if (!action) return count > 0
+    ? <p className="world-card-info-read-unavailable" data-world-info-chapters="static">Reading isn’t available here yet</p>
+    : null;
+  // The same night-glass button as Home's Carve New Destiny.
+  return <ManifestButton size="lg" className="world-card-info-read" data-world-info-chapters="action"
+    icon={count === 0 ? Sparkles : BookOpen}
+    aria-label={`${spokenAction}: ${title}, ${countLabel}${currentArc ? `, current arc ${currentArc}` : ''}`}
+    onClick={() => action()}>
+    {actionLabel}
+  </ManifestButton>;
 }
 
 /** Quieter secondary destinations; rendered only when the host supplies a working one. */

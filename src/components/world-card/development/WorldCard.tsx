@@ -28,7 +28,8 @@ export function WorldCard(props: WorldCardFaceProps) {
   const info = props.face === 'info';
   const { world } = props;
   const fullWorld = props.face === 'full' || props.face === undefined ? props.world : undefined;
-  const motionWorld = compact ? undefined : props.world;
+  // On Info the world's motion picture loops behind the whole page, so its cover stays a still with no motion control.
+  const motionWorld = compact || info ? undefined : props.world;
   const compactWorld = props.face === 'compact' ? props.world : undefined;
   const creatorName = world.creatorName;
   const creatorTitle = world.creatorTitle;

@@ -240,21 +240,25 @@ it('uses the artwork-only WorldCard on Info while keeping creator and progress o
   expect(cover.style.getPropertyValue('--world-card-glow')).not.toBe('');
   expect(cover.querySelector('.world-card-base-overlay')).toBeNull();
   expect(cover.querySelector('.world-card-base-details')).toBeNull();
-  // The format lives in the page's Information row, not on the Info cover.
+  // The format mark sits on the Info cover (beside the card, not inside it) and opens the story's information.
   expect(cover.querySelector('.world-card-base-format')).toBeNull();
+  const format = page.querySelector<HTMLButtonElement>('.world-card-info-cover button.world-card-info-format')!;
+  expect(format.getAttribute('aria-label')).toBe(`Story information for ${story.title}, Novel`);
   expect(cover.querySelector('.world-card-base-open')).toBeNull();
   expect(page.querySelector('h1')?.textContent).toBe(story.title);
   expect(page.querySelector('[data-element="lightning"]')?.textContent).toContain('SENSEI');
-  expect(page.querySelector('[data-world-info-chapters]')?.textContent).toContain('24 Chapters');
-  expect(page.querySelector('[data-world-info-chapters]')?.textContent).toContain('Current arc · Silent Pavilion');
+  expect(page.querySelector('[data-world-info-meta]')?.textContent).toContain('24 Chapters');
+  expect(page.querySelector('[data-world-info-meta]')?.textContent).toContain('Current arc · Silent Pavilion');
+  // The motion picture also loops, muted and hidden from assistive technology, behind the page.
+  const backdropVideo = page.querySelector<HTMLVideoElement>('.world-card-info-backdrop video')!;
+  expect(backdropVideo.getAttribute('src')).toBe(story.videoUrl);
+  expect(backdropVideo.muted).toBe(true);
+  expect(backdropVideo.loop).toBe(true);
+  expect(backdropVideo.closest('[aria-hidden="true"]')).not.toBeNull();
   expect(page.querySelector('[aria-label="Story status: On Going"]')).not.toBeNull();
+  // The clip already plays behind the page, so the cover is a still with no motion control.
   expect(cover.querySelector('video')).toBeNull();
-
-  act(() => cover.querySelector<HTMLButtonElement>('.motion-picture-control')!.click());
-  expect(cover.getAttribute('data-motion-playing')).toBe('true');
-  expect(cover.querySelector('video')?.getAttribute('src')).toBe(story.videoUrl);
-  act(() => cover.querySelector('video')!.dispatchEvent(new Event('ended')));
-  expect(cover.getAttribute('data-motion-playing')).toBeNull();
+  expect(page.querySelector('.motion-picture-control')).toBeNull();
   vi.restoreAllMocks();
 });
 
@@ -263,57 +267,55 @@ const infoStory: StoryDetailDisplay = {
   status: 'Manifesting', tags: ['found family'], branchCount: 12,
 };
 
-it('makes the Chapters card the single reading action and names the known reading position', () => {
+it('puts the single reading action in a pill under the cover and names the known reading position', () => {
   const onRead = vi.fn();
   act(() => root.render(<WorldCardInfo story={infoStory} onRead={onRead} />));
-  const readingActions = container.querySelectorAll<HTMLElement>('[role="button"][data-world-info-chapters="action"]');
+  const readingActions = container.querySelectorAll<HTMLButtonElement>('button[data-world-info-chapters="action"]');
   expect(readingActions).toHaveLength(1);
-  expect(container.querySelectorAll('[role="button"], button:not(.motion-picture-control):not(.world-card-info-information)')).toHaveLength(1);
+  expect(container.querySelectorAll('[role="button"], button:not(.world-card-info-format):not(.world-card-info-information)')).toHaveLength(1);
   const chapters = readingActions[0];
-  expect(chapters.textContent).toContain('Start Reading');
-  expect(chapters.getAttribute('aria-label')).toBe('Start Reading: The Last Lotus, 24 Chapters, current arc Silent Pavilion');
-  expect(chapters.getAttribute('tabindex')).toBe('0');
+  expect(chapters.textContent).toBe('Continue');
+  expect(chapters.getAttribute('aria-label')).toBe('Continue: The Last Lotus, 24 Chapters, current arc Silent Pavilion');
+  // The pill sits in the hero, right after the cover.
+  expect(chapters.closest('.world-card-info-hero')).not.toBeNull();
   act(() => chapters.click());
   expect(onRead).toHaveBeenCalledTimes(1);
-  act(() => chapters.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })));
-  expect(onRead).toHaveBeenCalledTimes(2);
-  act(() => chapters.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true })));
-  expect(onRead).toHaveBeenCalledTimes(3);
 
   act(() => root.render(<WorldCardInfo story={infoStory} onRead={onRead} readingPosition={{ chapterNumber: 7 }} />));
-  expect(container.querySelector('[data-world-info-chapters]')?.textContent).toContain('Continue · Ch. 7');
-  expect(container.textContent).not.toContain('Start Reading');
+  // The pill still says only Continue; the chapter it continues at is spoken, not shown.
+  const resume = container.querySelector('[data-world-info-chapters]')!;
+  expect(resume.textContent).toBe('Continue');
+  expect(resume.getAttribute('aria-label')).toBe('Continue at Chapter 7: The Last Lotus, 24 Chapters, current arc Silent Pavilion');
 
   act(() => root.render(<WorldCardInfo story={{ ...infoStory, currentArc: '' }} />));
   const staticCard = container.querySelector<HTMLElement>('[data-world-info-chapters]')!;
   expect(staticCard.getAttribute('data-world-info-chapters')).toBe('static');
-  expect(staticCard.getAttribute('role')).toBeNull();
-  expect(staticCard.getAttribute('tabindex')).toBeNull();
-  expect(staticCard.textContent).not.toContain('Start Reading');
-  expect(staticCard.textContent).not.toContain('Current arc');
+  expect(staticCard.tagName).toBe('P');
+  expect(staticCard.textContent).toBe('Reading isn’t available here yet');
+  expect(container.querySelector('[data-world-info-meta]')?.textContent).not.toContain('Current arc');
 
+  // No chapters and nothing to start: no action at all, and the meta line says so.
   act(() => root.render(<WorldCardInfo story={{ ...infoStory, chapterCount: 0 }} onRead={onRead} />));
-  expect(container.querySelector('[data-world-info-chapters]')?.getAttribute('data-world-info-chapters')).toBe('static');
-  expect(container.querySelector('[data-world-info-chapters]')?.textContent).toContain('No chapters yet');
+  expect(container.querySelector('[data-world-info-chapters]')).toBeNull();
+  expect(container.querySelector('[data-world-info-meta]')?.textContent).toContain('No chapters yet');
 });
 
-it('turns the Chapters card into Start Story for a story with no chapters that the host can start', () => {
+it('turns the reading pill into Begin Story for a story with no chapters that the host can start', () => {
   const onRead = vi.fn();
   const onStart = vi.fn();
   act(() => root.render(<WorldCardInfo story={{ ...infoStory, chapterCount: 0, currentArc: '' }} onRead={onRead} onStart={onStart} />));
-  const start = container.querySelector<HTMLElement>('[role="button"][data-world-info-chapters="action"]')!;
-  expect(start.textContent).toContain('No chapters yet');
-  expect(start.textContent).toContain('Start Story');
-  expect(start.getAttribute('aria-label')).toBe('Start Story: The Last Lotus, No chapters yet');
+  const start = container.querySelector<HTMLElement>('button[data-world-info-chapters="action"]')!;
+  expect(container.querySelector('[data-world-info-meta]')?.textContent).toContain('No chapters yet');
+  expect(start.textContent).toBe('Begin Story');
+  expect(start.getAttribute('aria-label')).toBe('Begin Story: The Last Lotus, No chapters yet');
   act(() => start.click());
   expect(onStart).toHaveBeenCalledTimes(1);
   expect(onRead).not.toHaveBeenCalled();
 
-  // Once the story has chapters, the same card reads them; Start Story is gone.
+  // Once the story has chapters, the same pill reads them; Begin Story is gone.
   act(() => root.render(<WorldCardInfo story={infoStory} onRead={onRead} onStart={onStart} />));
-  const read = container.querySelector<HTMLElement>('[role="button"][data-world-info-chapters="action"]')!;
-  expect(read.textContent).toContain('Start Reading');
-  expect(read.textContent).not.toContain('Start Story');
+  const read = container.querySelector<HTMLElement>('button[data-world-info-chapters="action"]')!;
+  expect(read.textContent).toBe('Continue');
   act(() => read.click());
   expect(onRead).toHaveBeenCalledTimes(1);
   expect(onStart).toHaveBeenCalledTimes(1);
@@ -375,16 +377,17 @@ it('offers More only when the synopsis overflows its four lines', () => {
   clientHeight.mockRestore();
 });
 
-it('reflects only this world’s own cover and omits metrics and connected media', () => {
+it('backs the page with only this world’s own cover and omits metrics and connected media', () => {
   act(() => root.render(<WorldCardInfo story={infoStory} />));
-  const reflection = container.querySelector<HTMLElement>('.world-card-info-reflection')!;
-  expect(reflection.getAttribute('aria-hidden')).toBe('true');
-  expect(reflection.style.backgroundImage).toContain('/lotus.png');
+  const backdrop = container.querySelector<HTMLElement>('.world-card-info-backdrop')!;
+  expect(backdrop.getAttribute('aria-hidden')).toBe('true');
+  expect(backdrop.querySelector<HTMLElement>('.world-card-info-backdrop-art')!.style.backgroundImage).toContain('/lotus.png');
+  // No motion picture, no backdrop video.
+  expect(backdrop.querySelector('video')).toBeNull();
   expect(container.querySelector('.world-expression-card, [aria-label^="Connected media for"]')).toBeNull();
 
   act(() => root.render(<WorldCardInfo story={{ ...infoStory, imageUrl: '  ' }} />));
-  expect(container.querySelector('.world-card-info-reflection')).toBeNull();
-  expect(container.querySelector('.world-card-info-chapters [data-slot="card-media"]')).toBeNull();
+  expect(container.querySelector('.world-card-info-backdrop-art')).toBeNull();
 
   act(() => root.render(<WorldCardInfo story={{ id: 'ashes', title: 'Ashes', chapterCount: 3, status: 'draft', updatedAt: '2026-09-01' }} />));
   expect(container.querySelector('[aria-label="World information"]')).toBeNull();
@@ -394,20 +397,63 @@ it('reflects only this world’s own cover and omits metrics and connected media
   expect(container.textContent).toContain('Synopsis is not available yet.');
 });
 
-it('keeps title, byline and states beside the cover, with the tags in the hero', () => {
-  act(() => root.render(<WorldCardInfo story={{ ...infoStory, publicationStatus: 'ongoing', cultivationRate: 'Heaven' }} />));
+it('orders the hero as Audible does: cover, reading pill with states, title, byline, meta, tags', () => {
+  act(() => root.render(<WorldCardInfo story={{ ...infoStory, publicationStatus: 'ongoing', cultivationRate: 'Heaven' }} onRead={() => {}} />));
   const hero = container.querySelector('.world-card-info-hero')!;
-  expect(hero.children).toHaveLength(3);
+  expect(hero.children).toHaveLength(2);
   expect(hero.children[0].querySelector('[data-world-card="info-cover"]')).not.toBeNull();
   const identity = hero.children[1];
+  expect([...identity.children].map(child => child.className.split(' ').find(name => name.startsWith('world-card-info-')) ?? child.tagName))
+    .toEqual(['world-card-info-actions', 'HEADER', 'world-card-info-meta', 'world-card-info-pills']);
+  // The reading pill and the story's states share one row.
+  const actions = identity.querySelector('.world-card-info-actions')!;
+  expect(actions.querySelector('[data-world-info-chapters="action"]')).not.toBeNull();
+  expect(actions.querySelector('[aria-label="Story status"]')).not.toBeNull();
   expect(identity.querySelector('h1')?.textContent).toBe('The Last Lotus');
   expect(identity.textContent).toContain('SENSEI');
   expect(identity.textContent).not.toContain('Sealed');
   expect(identity.querySelector('[aria-label="Story status: On Going"]')).not.toBeNull();
-  const tags = hero.children[2];
+  // The meta line carries the status too; a phone shows it there, a laptop shows the badge instead.
+  expect(identity.querySelector('[data-world-info-meta]')?.textContent).toBe('Genre: Xianxia24 ChaptersOn GoingCurrent arc · Silent Pavilion');
+  const tags = identity.querySelector('[aria-label="Story tags"]')!;
   expect(tags.getAttribute('aria-label')).toBe('Story tags');
   expect(tags.textContent).toBe('found family');
   expect(tags.textContent).not.toContain('Cultivation Rate');
+});
+
+it('shows the backdrop clip once it plays, even when autoplay began before React listened', async () => {
+  const paused = vi.spyOn(HTMLMediaElement.prototype, 'paused', 'get').mockReturnValue(false);
+  HTMLMediaElement.prototype.play = vi.fn().mockResolvedValue(undefined);
+  await act(async () => root.render(<WorldCardInfo story={{ ...infoStory, videoUrl: '/clip.mp4' }} />));
+  // No playing event ever arrived; the resolved play() alone reveals the clip.
+  expect(container.querySelector('.world-card-info-backdrop video')?.getAttribute('data-playing')).toBe('true');
+  paused.mockRestore();
+  vi.restoreAllMocks();
+});
+
+it('keeps an MP control on the Info cover that starts or stops the backdrop clip by the reader\'s tap', async () => {
+  const play = vi.fn().mockResolvedValue(undefined);
+  HTMLMediaElement.prototype.play = play;
+  HTMLMediaElement.prototype.pause = vi.fn();
+  await act(async () => root.render(<WorldCardInfo story={{ ...infoStory, videoUrl: '/clip.mp4' }} />));
+  // Autoplay was refused (jsdom never plays): the cover backdrop shows, and MP offers to play.
+  const mp = container.querySelector<HTMLButtonElement>('.world-card-info-cover button.world-card-info-motion')!;
+  expect(mp.getAttribute('aria-label')).toBe('Play motion for The Last Lotus');
+  expect(mp.getAttribute('aria-pressed')).toBe('false');
+  expect(container.querySelector('.world-card-info-backdrop-art')).not.toBeNull();
+  play.mockClear();
+  await act(async () => mp.click());
+  expect(play).toHaveBeenCalledTimes(1);
+  // Once the clip truly plays, MP stops it.
+  await act(async () => container.querySelector('.world-card-info-backdrop video')!.dispatchEvent(new Event('playing')));
+  expect(mp.getAttribute('aria-label')).toBe('Stop motion for The Last Lotus');
+  await act(async () => mp.click());
+  expect(HTMLMediaElement.prototype.pause).toHaveBeenCalledTimes(1);
+
+  // No clip, no MP.
+  await act(async () => root.render(<WorldCardInfo story={{ ...infoStory, videoUrl: undefined }} />));
+  expect(container.querySelector('.world-card-info-motion')).toBeNull();
+  vi.restoreAllMocks();
 });
 
 it('shows each trimmed tag once', () => {
@@ -451,7 +497,11 @@ it('loops the world’s own motion picture, muted, behind the Feature card', () 
   act(() => root.render(<WorldCardFeature world={{ ...world, videoUrl: '/lotus.mp4' }} onOpen={() => {}} />));
   const video = container.querySelector<HTMLVideoElement>('.world-card-banner-video')!;
   expect(video.getAttribute('src')).toBe('/lotus.mp4');
-  expect(video.getAttribute('poster')).toBe('/lotus.png');
+  // Hidden until it plays: no still frame or play button where autoplay is refused.
+  expect(video.getAttribute('poster')).toBeNull();
+  expect(video.getAttribute('data-playing')).toBeNull();
+  act(() => { video.dispatchEvent(new Event('playing')); });
+  expect(video.getAttribute('data-playing')).toBe('true');
   expect(video.loop).toBe(true);
   expect(video.muted).toBe(true);
   expect(video.getAttribute('aria-hidden')).toBe('true');

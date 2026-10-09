@@ -26,7 +26,7 @@ rewrites and every page survives a reload.
 | --- | --- | --- |
 | Home | `/app/` | The reader's stories, newest first, and Carve New Destiny |
 | Create | `/app/?page=create` | The Library's Story Seed journey: the seed, its World Blueprint, Manifest Story |
-| Story View | `/app/?story=<id>` | The story's World Info page: Start Story, Start Reading, Continue, Manifest on the cover, Story Settings, and Export story (the whole story as one file, for sharing a test) |
+| Story View | `/app/?story=<id>` | The story's World Info page: Begin Story or Continue, Manifest on the cover, Story Settings, and Export story (the whole story as one file, for sharing a test) |
 | Reader | `/app/?story=<id>&read=1` | The reading-only Reader, with the Generation Overlay while a chapter is written |
 | Profile | `/app/?page=profile` | The Library's Cultivator Cave; its own pages in `cave` (Settings: `&cave=/settings`) |
 

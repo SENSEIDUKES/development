@@ -105,7 +105,7 @@ describe('A story\'s own pages for any host', { timeout: 20_000 }, () => {
     await flush();
 
     expect(worldInfo()!.querySelector('h1')!.textContent).toBe('The Drowned Name');
-    expect(chaptersAction()!.textContent).toContain('Start Story');
+    expect(chaptersAction()!.textContent).toBe('Begin Story');
 
     // The host swaps the page; StoryPages stays mounted, so the Reader begins Chapter 1 at once.
     await click(chaptersAction(), 'Start Story');
@@ -127,7 +127,7 @@ describe('A story\'s own pages for any host', { timeout: 20_000 }, () => {
     // Back returns to World Info, which continues where the reader is.
     await click(buttonByText('Back'), 'Back');
     await flush();
-    expect(chaptersAction()!.textContent).toContain('Continue · Ch. 1');
+    expect(chaptersAction()!.textContent).toBe('Continue');
 
     // Opening the Reader again reads; it never writes another chapter by itself.
     await click(chaptersAction(), 'Continue');

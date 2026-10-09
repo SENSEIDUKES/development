@@ -273,8 +273,8 @@ function WorldCardWorkspaceShell() {
           <label className="flex flex-col gap-1 text-xs">Reading position
             <select className={selectClass} value={state.reading} onChange={event => update({ reading: event.target.value as WorldCardReadingPreview })}>
               <option value="chapter-7">Known: Chapter 7 (Continue)</option>
-              <option value="start">Not started (Start Reading)</option>
-              <option value="new-story">New story, no chapters (Start Story)</option>
+              <option value="start">Not started (Continue)</option>
+              <option value="new-story">New story, no chapters (Begin Story)</option>
             </select>
           </label>
         </div>,

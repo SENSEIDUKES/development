@@ -54,7 +54,7 @@
 .world-card-base .motion-picture-clip {
   transition: opacity 800ms ease-in-out, transform 200ms cubic-bezier(0, 0, 0.2, 1);
 }
-.world-card-base:is(:has(.world-card-base-open:active), [data-world-card='compact']:active, [data-world-card='info-cover']:active) :is(.world-card-cover-image, .world-card-cover-fallback, .motion-picture-still, .motion-picture-clip) {
+.world-card-base:is(:has(.world-card-base-open:active), [data-world-card='info-cover']:active) :is(.world-card-cover-image, .world-card-cover-fallback, .motion-picture-still, .motion-picture-clip) {
   transform: scale(1.015);
 }
 .world-card-base:is(:focus-visible, :has(.world-card-base-open:focus-visible)) { outline: 2px solid #04acff; outline-offset: 2px; }
@@ -105,8 +105,6 @@
 }
 .world-card-base-format { position: absolute; z-index: 5; top: 0.5rem; left: 0.5rem; font-family: sans-serif; font-size: 0.625rem; line-height: 1; letter-spacing: 0.04em; }
 .world-card-base-format svg { flex: none; }
-.world-card-base-overlay { position: absolute; z-index: 5; inset: auto 0 0; display: flex; justify-content: center; min-width: 0; padding: clamp(0.5rem, 4cqw, 0.75rem); pointer-events: none; }
-.world-card-base-creator { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #e5e5e5; font-family: sans-serif; font-size: clamp(0.625rem, 6.5cqw, 0.8125rem); font-weight: 600; line-height: 1.2; text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9); }
 
 /* The SEN sash: a band across the cover's lower-right corner, like the ribbon of a bound book.
    Celestial night glass trimmed in gold hairlines, with the Expanded Novels star either side of SEN. */
@@ -135,6 +133,8 @@
 }
 .world-card-tile:hover .world-card-caption-title,
 .world-card-tile:focus-within .world-card-caption-title { color: #70d0ff; }
+/* The creator's name, in their elemental lettering when the host supplies it, beneath the title. */
+.world-card-caption-creator { margin: 0; overflow: hidden; color: #e5e5e5; font-family: var(--font-sc, serif); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
 .world-card-caption-details { margin: 0; overflow: hidden; color: #aeb7c6; font-family: sans-serif; font-size: 0.75rem; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
 /* Feature badges keep their row even when a world has none, so captions stay one height. */
 .world-card-caption-features { display: flex; flex-wrap: wrap; gap: 0.3rem; min-height: 1.35rem; margin: 0.15rem 0 0; padding: 0; list-style: none; }
@@ -149,7 +149,7 @@
   .world-card-base, .world-card-caption-title { transition: none; }
   .world-card-base[data-motion-playing='true'] { animation: none; }
   .world-card-base :is(.world-card-cover-image, .world-card-cover-fallback, .motion-picture-still, .motion-picture-clip) { transition: none; }
-  .world-card-base:is(:has(.world-card-base-open:active), [data-world-card='compact']:active, [data-world-card='info-cover']:active) :is(.world-card-cover-image, .world-card-cover-fallback, .motion-picture-still, .motion-picture-clip) { transform: none; }
+  .world-card-base:is(:has(.world-card-base-open:active), [data-world-card='info-cover']:active) :is(.world-card-cover-image, .world-card-cover-fallback, .motion-picture-still, .motion-picture-clip) { transform: none; }
 }
 
 /* Compact: the same art and caption, sized for Create's row. */

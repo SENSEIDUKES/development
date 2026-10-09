@@ -22,6 +22,13 @@ export interface CreatorWorld {
   /** Host-supplied creator lettering for the World Card; absent when unknown. */
   creatorName?: string;
   creatorTitle?: { element: ElementalTitleEffect; intensity?: ElementalTitleIntensity; color?: string };
+  /** The World Card caption's genre, as on Home's card; absent when unknown. */
+  genre?: string;
+  /** The creator's branching permission; the caption shows Branching only when true. */
+  branchingEnabled?: boolean;
+  /** Optional information for the format mark's story dialog. */
+  synopsis?: string;
+  tags?: readonly string[];
 }
 
 /** The host's read of the creator's worlds, including its request lifecycle. */

@@ -364,6 +364,15 @@ Workshop sample data and reference material remain outside the host adapter.
 
 ## Workshop history
 
+- **2026-10-09** — **One caption for Full and Compact.** The creator's name left
+  the art and sits in the caption under the title (in their elemental lettering
+  when the host supplies it). Compact now carries the same caption as Full
+  (title, creator, genre | chapters | status, and the Branching badge) and the
+  same format mark on its art, opening the story information dialog. Compact
+  opens through the same open button as Full, so the format mark is its own
+  control. `CreatorWorld` gained optional `genre`, `branchingEnabled`,
+  `synopsis` and `tags`; the story dialog shows views only when the host
+  supplies them.
 - **2026-10-09** — **World Info, Audible style.** A big centered cover over a
   backdrop made from the cover's own art and color, with the world's motion
   picture looping behind it when it has one. Under the cover, the reading pill,

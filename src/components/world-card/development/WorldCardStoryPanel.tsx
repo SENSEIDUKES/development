@@ -9,8 +9,12 @@ import { WORLD_ACTIVITY_DISPLAY } from './worldActivityDisplay';
  * A read-only preview of host-authorized story information opened from its format.
  * The Full card opens it from its corner format mark; the Info page supplies its own Information row as the trigger.
  */
+/** What the story information dialog reads; a Home world and a creator's world both supply it. */
+export type WorldCardStoryPanelWorld = Pick<HomeWorld, 'title' | 'format' | 'synopsis' | 'tags' | 'senVerified' | 'activityStatus' | 'branchingEnabled'>
+  & { reads?: number };
+
 export function WorldCardStoryPanel({ world, trigger, triggerClassName = 'world-card-base-format' }: {
-  world: HomeWorld;
+  world: WorldCardStoryPanelWorld;
   trigger?: ReactNode;
   triggerClassName?: string;
 }) {
@@ -30,10 +34,10 @@ export function WorldCardStoryPanel({ world, trigger, triggerClassName = 'world-
           className="world-card-story-panel-verified" aria-label="SEN verified world">
           <BadgeCheck size={13} aria-hidden="true" />SEN Verified
         </SEIBadge>}
-        <SEIBadge size="sm" variant="neutral" className="world-card-story-panel-views"
+        {world.reads !== undefined && <SEIBadge size="sm" variant="neutral" className="world-card-story-panel-views"
           aria-label={`${world.reads.toLocaleString()} views`}>
           <Eye size={12} aria-hidden="true" />{world.reads.toLocaleString()}
-        </SEIBadge>
+        </SEIBadge>}
       </aside>
       <section aria-label="Synopsis">
         <h4>Synopsis</h4>

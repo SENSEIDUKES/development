@@ -1,3 +1,4 @@
+import type { WorldExpansionPreview } from '../../light-novels-home/development/WorldExpressions';
 import type { ReactNode } from 'react';
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
 import type { StoryDetailDisplay } from '../../light-novels-home/shared/storyDetailContracts';
@@ -25,6 +26,24 @@ export interface WorldCardInfoProps {
    * so a host leaves it out for a reader when the creator has sharing turned off.
    */
   onOpenBlueprint?: () => void;
+  /**
+   * World Info's Portal: the world's connected media (the novel, and its
+   * manga, game and other adaptations). Opening it shows them on the page.
+   * Without it there is no Portal card; with no adaptations it says the
+   * novel stands alone so far.
+   */
+  portal?: { expansions: readonly WorldExpansionPreview[] };
+  /**
+   * World Info's Settings, opened below the cards: the host's story settings
+   * (Reading Mode and the rest), after Read it in when \`readingLanguage\` is
+   * given. With neither there is no Settings card.
+   */
+  settings?: ReactNode;
+  /**
+   * The viewer's reading language for this world, chosen in Settings (Read
+   * it in). Without it Settings offers no language switch.
+   */
+  readingLanguage?: { current?: string; onChange: (language: string) => void };
   /** The viewer's known reading position; the reading pill says Continue only when supplied. */
   readingPosition?: { chapterNumber: number };
   /**

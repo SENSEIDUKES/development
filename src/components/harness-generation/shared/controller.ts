@@ -53,6 +53,7 @@ import {
   createEmptyHarnessWorkspaceState,
   type HarnessGenerationRepository,
 } from './repository';
+import { AUTHOR_NOTES_LIMIT } from '../../../narrative/generation';
 import type { ChapterDirectionChoice, HarnessChapterRewrite, HarnessHoldingsFixerPolicy, HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessCapabilityReceipt, HarnessStory, HarnessStoryVisibility, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
 
 export type HarnessEventPreserver = (
@@ -534,6 +535,26 @@ export class HarnessGenerationController {
     } finally {
       this.generating = false;
     }
+  }
+
+  /**
+   * Saves the creator's Author's notes, shown to readers with the world's
+   * information; an empty value removes them. They never reach the chapter
+   * writer, so a chapter waiting on the reader does not hold them back.
+   */
+  async setAuthorNotes(storyId: string, notes: string): Promise<HarnessStory> {
+    this.assertHydrated();
+    if (this.generating) throw new Error('Wait for the chapter being written before saving.');
+    const candidate = cloneHarnessValue(this.state);
+    const story = findStory(candidate, storyId);
+    if (!story) throw new Error('Open a Harness story before changing its Author\'s notes.');
+    const trimmed = notes.trim();
+    if (trimmed.length > AUTHOR_NOTES_LIMIT) throw new Error(`Author's notes can be at most ${AUTHOR_NOTES_LIMIT} characters.`);
+    if (trimmed) story.authorNotes = trimmed;
+    else delete story.authorNotes;
+    story.updatedAt = this.runtime.now();
+    await this.persist(candidate);
+    return cloneHarnessValue(story);
   }
 
   /**

@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { useLibraryAssets } from '@seihouse/library/presentation';
-import { WorldCard, WorldCardFeature } from '@seihouse/library/world-card';
+import { WorldCard, WorldCardFeature, languageName } from '@seihouse/library/world-card';
 import type { WorldCardDisplayStatus } from '@seihouse/library/world-card';
 import type { CreatorWorld } from '@seihouse/library/creator-space';
 import { WorldCardFullReference } from '../../../components/world-card/reference/WorldCardFull';
@@ -8,6 +8,7 @@ import { WorldCardCompactReference } from '../../../components/world-card/refere
 import { StoryDetailScreen as ReferenceStoryDetail } from '../../../components/light-novels-home/reference/StoryDetailScreen';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
+import { featuredExpansions } from '../light-novels-home/previewData';
 import {
   previewCreatorWorlds, previewHomeGrid, previewStory,
   type WorldCardBlueprintPreview, type WorldCardCover, type WorldCardSashPreview, type WorldCardDestinations, type WorldCardPreviewState,
@@ -124,6 +125,9 @@ export function WorldCardStage({ view, state, reference, onAction }: {
             onOpenCodex={state.destinations === 'all' ? () => onAction(`Open Codex for ${infoWorld.title}`) : undefined}
             // A reader of a creator with sharing off gets no Blueprint button at all.
             onOpenBlueprint={state.destinations === 'all' && state.blueprint !== 'reader-off' ? () => setBlueprintOpen(true) : undefined}
+            readingLanguage={{ onChange: language => onAction(`Read ${infoWorld.title} in ${languageName(language)}`) }}
+            // The Portal: the sample novel's manga and game, or the novel alone with every destination off.
+            portal={{ expansions: state.destinations === 'all' ? featuredExpansions : [] }}
             />}
     </Stage>}
     {!openedWorld && !reference && show('feature') && <Stage title="Feature card" note="Home's spotlight row. The cover stands on the right; the band is that cover, blurred, in its own color.">

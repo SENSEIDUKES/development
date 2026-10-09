@@ -35,4 +35,4 @@ export * from './presentation';
 export * from '../../lib/language';
 
 /** The package surface version, bumped with the published package. */
-export const SEN_PACKAGE_VERSION = '0.26.0';
+export const SEN_PACKAGE_VERSION = '0.27.0';

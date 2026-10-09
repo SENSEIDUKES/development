@@ -1,5 +1,4 @@
-import { useId, useMemo, useState } from 'react';
-import { ChevronDown, Settings2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import type { SoundWord, SoundtrackVocabulary } from '@seihouse/sen/audio';
 import type { ChapterWritingStyle } from '@seihouse/sen/contracts';
 import {
@@ -9,23 +8,23 @@ import {
 import type { MediaPackReference, StoryMediaLoadoutSlot } from '../../media/mediaPacks';
 import type { LibraryStories } from '../useLibraryStories';
 import { MediaLoadoutPanel } from './MediaLoadoutPanel';
+import { AuthorNotesPanel } from './AuthorNotesPanel';
 import { StorySettingsPanel } from './StorySettingsPanel';
 import { StorySkillSlots } from './StorySkillSlots';
 
 const NO_SOUNDTRACK: SoundtrackVocabulary = { moods: [], atmospheres: [] };
 
 /**
- * Story Settings on Story View: the only place a reader meets the HARNESS.
- * The story's language and Reading Mode, its CAPA skill slots and its Media
- * Loadout, closed until the reader opens them. A change applies to chapters
+ * Story Settings, inside World Info's Settings card: the only place a reader
+ * meets the HARNESS. The story's language and Reading Mode, its CAPA skill
+ * slots, its Media Loadout and its Author's notes; the card keeps them closed
+ * until the reader opens it. A change applies to chapters
  * written from then on; while a chapter is being written they wait, and say so.
  */
 export function StorySettings({ stories, storyId }: { stories: LibraryStories; storyId: string }) {
   const { state, controller } = stories;
-  const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [problem, setProblem] = useState<string>();
-  const panelId = useId();
   const story = state ? findStory(state, storyId) : undefined;
   const writing = Boolean(state && activeAttemptForStory(state, storyId));
   const fateMode = harnessStoryMode(state && story ? findFoundationRevision(state, story.activeFoundationRevisionId)?.input : undefined);
@@ -48,19 +47,7 @@ export function StorySettings({ stories, storyId }: { stories: LibraryStories; s
   };
   const busy = saving || writing;
 
-  return <section className="mx-auto mt-6 max-w-5xl" data-testid="story-view-settings" aria-label="Story Settings">
-    <button type="button" aria-expanded={open} aria-controls={panelId} onClick={() => setOpen(value => !value)}
-      className="flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/25 px-4 py-2 text-left hover:border-white/25">
-      <span className="flex items-center gap-2">
-        <Settings2 size={18} className="text-cyan-200" aria-hidden="true" />
-        <span className="font-display text-lg text-white">Story Settings</span>
-      </span>
-      <span className="flex items-center gap-2 text-xs text-neutral-400">
-        <span className="hidden sm:inline">Language, Reading Mode, skills and sounds</span>
-        <ChevronDown size={18} aria-hidden="true" className={`transition-transform motion-reduce:transition-none ${open ? 'rotate-180' : ''}`} />
-      </span>
-    </button>
-    {open && <div id={panelId} className="mt-3 space-y-4">
+  return <section className="space-y-4" data-testid="story-view-settings" aria-label="Story Settings">
       {writing && <p role="status" className="rounded-xl border border-cyan-300/20 bg-cyan-400/[0.06] p-3 text-sm text-cyan-50/85" data-testid="story-settings-writing">
         A chapter is being written. Settings can change again once it is finished.
       </p>}
@@ -73,6 +60,7 @@ export function StorySettings({ stories, storyId }: { stories: LibraryStories; s
       <MediaLoadoutPanel story={story} packs={stories.mediaPacks} entitlements={stories.mediaPackEntitlements}
         soundWords={soundWords} busy={busy}
         onChange={(slot: StoryMediaLoadoutSlot, reference?: MediaPackReference) => change(() => controller.setMediaSelection(story.id, slot, reference))} />
-    </div>}
+      <AuthorNotesPanel story={story} busy={busy}
+        onSave={notes => change(() => controller.setAuthorNotes(story.id, notes))} />
   </section>;
 }

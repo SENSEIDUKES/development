@@ -7,7 +7,8 @@ import type { StoryCoverService } from './storyCover';
  * A HARNESS story as its World Info page shows it, from what the story already
  * knows: its title and genre, its Story Seed tags, its Blueprint logline (else
  * its premise), how many chapters it has, and its cover art when the host
- * keeps one. Author and arc stay empty, so the page leaves them out instead
+ * keeps one, and for its Information panel its language, its Seed's mature
+ * rating and its visibility. Author and arc stay empty, so the page leaves them out instead
  * of inventing them.
  */
 export function harnessStoryDisplay(state: HarnessWorkspaceState, storyId: string, covers?: Pick<StoryCoverService, 'coverUrl'>): StoryDetailDisplay | undefined {
@@ -20,11 +21,13 @@ export function harnessStoryDisplay(state: HarnessWorkspaceState, storyId: strin
   const blueprint = source?.blueprint as Partial<WorldBlueprint> | undefined;
   const logline = typeof blueprint?.logline === 'string' ? blueprint.logline.trim() : '';
   const tags = seed?.story?.required?.storyTags;
+  const mature = seed?.story?.optional?.intendedForMatureAudiences;
   return {
     id: story.id,
     title: story.title,
     genre: input?.genre?.trim() ?? '',
     createdAt: story.createdAt,
+    updatedAt: story.updatedAt,
     reads: 0,
     imageUrl: covers?.coverUrl(story.id) ?? '',
     chapterCount: state.chapters.filter(chapter => chapter.storyId === story.id).length,
@@ -36,6 +39,11 @@ export function harnessStoryDisplay(state: HarnessWorkspaceState, storyId: strin
     currentArc: '',
     status: '',
     tags: Array.isArray(tags) ? tags.filter((tag): tag is string => typeof tag === 'string') : [],
+    // World Info's Information panel: only what the story records.
+    ...(story.originalLanguage ? { originalLanguage: story.originalLanguage } : {}),
+    ...(typeof mature === 'boolean' ? { matureContent: mature } : {}),
+    permissions: { visibility: story.visibility ?? 'private' },
+    ...(story.authorNotes ? { authorNotes: story.authorNotes } : {}),
   };
 }
 

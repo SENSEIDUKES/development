@@ -19,7 +19,7 @@
  * kept on the device) → Holdings → Rewrite this chapter with a note (the new
  * version under the veil, the Holdings fixer's one quiet call settling its
  * holdings, nothing of it on screen) → reload (no new request, nothing reads by itself) →
- * Back → Continue → Story Settings (closed until opened: language, Reading Mode, CAPA skills, media) →
+ * Back → Continue → World Info's Settings card (closed until opened: language, Reading Mode, CAPA skills, media) →
  * Manifest on the cover (one or three; three unseal, then the picker; the kept cover on World Info and on Home's card) → Export story (the whole story as one file) → Back
  * → Home card, its music note (tap mutes; hover or hold opens the Music volume) → browser Back and Forward →
  * Create from the navigation (on laptops, a minimized sidebar stays minimized after a reload) → a missing story goes Home.
@@ -594,18 +594,22 @@ async function walk(browser, viewport, sample) {
   check(address() === storyAddress, `Back from the Reader should open Story View, got ${address()}`);
   check((await page.locator('[data-world-info-chapters="action"]').textContent()).trim() === 'Continue', 'Story View should say Continue.');
   check((await page.locator('[data-world-info-chapters="action"]').getAttribute('aria-label')).startsWith('Continue at Chapter 1'), 'Story View should continue at Chapter 1.');
-  // Story Settings: closed until opened, then the story's language, Reading Mode, CAPA skills and media.
-  const storySettings = page.getByTestId('story-view-settings');
-  await storySettings.scrollIntoViewIfNeeded();
-  check(await page.getByTestId('story-settings').count() === 0, 'Story Settings should stay closed until the reader opens it.');
-  await storySettings.getByRole('button', { name: /Story Settings/ }).click();
+  // World Info's four cards, then Settings: closed until opened, it holds the story's language, Reading Mode, CAPA skills and media.
+  const cardTitles = await page.locator('.world-card-info-tools .world-card-info-tool-title').allTextContents();
+  check(JSON.stringify(cardTitles) === JSON.stringify(['Portal', 'Information', 'Settings']),
+    `World Info should show Portal, Information and Settings, got ${cardTitles.join(', ')}`);
+  const settingsCard = page.locator('button.world-card-info-settings-card');
+  await settingsCard.scrollIntoViewIfNeeded();
+  check(await page.getByTestId('story-settings').count() === 0, 'Story Settings should stay closed until the reader opens Settings.');
+  await settingsCard.click();
   await page.getByTestId('story-settings-language').waitFor();
+  const storySettings = page.getByTestId('story-view-settings');
   check(await storySettings.locator('#harness-skill-author').count() === 1 && await storySettings.locator('[data-testid="harness-fate-slot"]').count() === 1,
-    'Story View\'s Story Settings should show the hand and managed CAPA slots.');
+    'World Info\'s Settings should show the hand and managed CAPA slots.');
   check(await storySettings.locator('[data-testid="harness-official-requirements"]').count() === 0, 'The developer page\'s inspection stays off Story View.');
-  check(await page.evaluate(() => document.documentElement.scrollWidth) <= viewport.width, 'Story Settings must never scroll sideways.');
+  check(await page.evaluate(() => document.documentElement.scrollWidth) <= viewport.width, 'Settings must never scroll sideways.');
   await shot('4c-story-settings');
-  await storySettings.getByRole('button', { name: /Story Settings/ }).click();
+  await settingsCard.click();
   // Manifest on the cover: one cover or three; three unseal behind the veil, then the picker, then World Info and Home wear the one kept.
   const coverManifest = page.locator('[data-world-card="info"] [aria-label="Manifest cover art"]');
   await coverManifest.scrollIntoViewIfNeeded();

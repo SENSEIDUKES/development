@@ -29,14 +29,15 @@ describe('planHarnessWorkspaceLoad', () => {
     }
   });
 
-  it('upgrades a schema 27 or 28 workspace with every story and chapter kept, keeping a copy of the original', () => {
+  it('upgrades a schema 27, 28 or 29 workspace with every story and chapter kept, keeping a copy of the original', () => {
     // 28 adds only optional fields: the rewrite request and its replaced-by record, and the Holdings fixer record.
     // 29 adds only optional fields too: a chapter's scene, the atmospheres in frozen media, a frozen soundtrack vocabulary.
-    expect(HARNESS_GENERATION_SCHEMA_VERSION).toBe(29);
-    for (const schemaVersion of [27, 28]) {
+    // 30 adds only an optional story field: Author's notes.
+    expect(HARNESS_GENERATION_SCHEMA_VERSION).toBe(30);
+    for (const schemaVersion of [27, 28, 29]) {
       const stored = { ...createEmptyHarnessWorkspaceState(), schemaVersion, stories: [{ id: 'a' }], chapters: [{ id: 'c1' }] };
       const plan = planHarnessWorkspaceLoad(stored, now);
-      expect(plan.state).toEqual({ ...stored, schemaVersion: 29 });
+      expect(plan.state).toEqual({ ...stored, schemaVersion: 30 });
       expect(plan.preserve).toEqual({
         key: `${PRESERVED_WORKSPACE_PREFIX}v${schemaVersion}:2026-09-24T12:00:00.000Z`,
         record: { preservedAt: now(), reason: 'migrated', schemaVersion, workspace: stored },

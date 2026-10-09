@@ -29,7 +29,7 @@ rewrites and every page survives a reload.
 | Story View | `/app/?story=<id>` | The story's World Info page: Begin Story or Continue, Manifest on the cover, Story Settings, and Export story (the whole story as one file, for sharing a test) |
 | Reader | `/app/?story=<id>&read=1` | The reading-only Reader, with the Generation Overlay while a chapter is written |
 | Blueprint | `/app/?story=<id>&blueprint=1` | The story's own World Blueprint, opened from World Info's Blueprint button. Every story on the device is the reader's own, so it opens for its creator: editable while the novel is private, saved as a new Foundation revision the next chapter uses |
-| Profile | `/app/?page=profile` | The Library's Cultivator Cave; its own pages in `cave` (Settings: `&cave=/settings`) |
+| Profile | `/app/?page=profile` | The Library's Cultivator Cave; its own pages in `cave` (Settings: `&cave=/settings`). |
 
 - Home and Story View sit in the Library Shell; Create is Story Seed in the shell's workspace mode; Profile is the Cave, which draws the same shell itself; the Reader is full-screen (below).
 - Moving inside the app adds a browser history entry, so Back and Forward walk the same pages.
@@ -315,6 +315,7 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## History
 
+- **2026-10-09** — World Info's four cards: **Codex**, **Portal**, **Information** and **Settings**. Information, marked with the story's format, holds everything about the world, Author's notes last. Settings opens the story's Story Settings (language and Reading Mode, skills, media and Author's notes) below the cards, in place of the separate Story Settings panel. Portal opens the world's other media; every story is a novel so far, so it says so until adaptations exist.
 - **2026-10-09** — Covers are made on the cover: World Info's empty cover says Manifest, and the reader chooses one cover (5 Energy) or three to choose from (15). Three come alive in a picker and the reader keeps one; the others are let go. Every cover uses the owner's approved template with the title drawn on. The Manifest cover button beneath World Info is gone.
 - **2026-10-09** — One Energy badge everywhere Energy shows: the Profile home's balance, the Store, the cost beside Make my portraits and New cover, beside Write Chapter in the Reader (1 Energy, with "−1" as each chapter arrives) and beside Manifest in Story Seed (a chapter's price for now). Practice only.
 - **2026-10-08** — The profile picture comes to the app: the reader's photo goes straight to the image model with the approved prompt, three portraits to choose from, the chosen one kept on the device. Images default to Nano Banana 2 Lite for now. Every image made (portraits, covers) has a download button, and shows its Energy cost (5 per image) with "−5" floaters as it arrives; nothing is taken yet.

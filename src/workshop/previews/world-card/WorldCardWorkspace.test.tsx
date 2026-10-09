@@ -42,7 +42,7 @@ it('opens either Compact world in the existing Info stage and returns to the car
   container.remove();
 });
 
-it('keeps connected media off the Info page and reports each supplied destination', () => {
+it('keeps connected media closed in the Portal until opened and reports each supplied destination', () => {
   const container = document.createElement('div');
   document.body.append(container);
   const root = createRoot(container);
@@ -55,15 +55,18 @@ it('keeps connected media off the Info page and reports each supplied destinatio
   expect(container.querySelector('.world-expression-card')).toBeNull();
   act(() => container.querySelector<HTMLElement>('[data-world-info-chapters="action"]')!.click());
   expect(onAction).toHaveBeenLastCalledWith('Start reading The Last Lotus of the Jade Empire');
-  act(() => container.querySelector<HTMLElement>('[aria-label^="Open Codex"]')!.click());
+  act(() => container.querySelector<HTMLElement>('[aria-label^="Codex"]')!.click());
   expect(onAction).toHaveBeenLastCalledWith('Open Codex for The Last Lotus of the Jade Empire');
+  // The Portal opens the sample world's manga and game below the cards.
+  act(() => container.querySelector<HTMLButtonElement>('button.world-card-info-portal')!.click());
+  expect(container.querySelectorAll('.world-expression-card')).toHaveLength(3);
 
   act(() => root.render(<LibraryPresentationProvider>
     <WorldCardStage view="info" state={{ ...state, destinations: 'none', reading: 'chapter-7' }} reference={false} onAction={onAction} />
   </LibraryPresentationProvider>));
   expect(container.querySelector('[data-world-info-chapters="static"]')).not.toBeNull();
   expect(container.querySelector('[role="button"][data-world-info-chapters]')).toBeNull();
-  expect(container.querySelector('[aria-label^="Open Codex"]')).toBeNull();
+  expect(container.querySelector('[aria-label^="Codex"]')).toBeNull();
   expect(container.querySelector('[aria-label^="Fate Timeline"]')).toBeNull();
 
   // A new story with no chapters: the reading pill starts it.

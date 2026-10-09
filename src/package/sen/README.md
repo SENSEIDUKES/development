@@ -1,5 +1,10 @@
 # `@seihouse/sen`
 
+**0.27.0 (2026-10-09):** Author's notes. `HarnessStory` gains `authorNotes` (at most
+`AUTHOR_NOTES_LIMIT`, 2,000 characters); the HARNESS controller's `setAuthorNotes(storyId, notes)`
+saves them (an empty value removes them). They never reach the chapter writer. Saved workspaces
+upgrade from schema 29 to 30 as they are.
+
 **0.26.0 (2026-10-09):** `HarnessReaderSession` takes `renderWriteAside(chaptersWritten)`:
 whatever the host shows beside the button that writes the next chapter (the Library puts
 its Energy price there). It appears only when Next writes a chapter.

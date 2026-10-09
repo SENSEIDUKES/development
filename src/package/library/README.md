@@ -1,5 +1,19 @@
 # `@seihouse/library`
 
+**0.29.0 (2026-10-09):** World Info's four cards: Codex, Portal, Information, Settings.
+`./home`: `StoryDetailDisplay` gains `originalLanguage`, `readingLanguages`, `matureContent`,
+`permissions` (`WorldPermissions`: visibility, branching, blueprint), `provenanceUrl`, `updatedAt`
+and `authorNotes`. `./world-card`: the format mark leaves the Info cover and marks the
+**Information** card (`WorldCardInformationPanel`): format, creator, activity, views, Began and
+Last updated, SEN verification, language, rating, permissions, a provenance link when the host
+has one, and Author's notes. `WorldCardInfo` (and `StoryDetailScreen`) take `portal`
+(`{ expansions }`: the world's connected media, `WorldExpressions`, below the cards) and
+`settings` (the host's story settings in the **Settings** card, after Read it in when
+`readingLanguage` is given; `WorldCardSettings`). `./stories`: `StoryPages` gives every story its
+Portal (the novel alone until adaptations exist) and puts `StorySettings`, which gains
+**Author's notes**, in the Settings card. New exports `WorldCardInformationPanel`,
+`WorldCardSettings`, `languageName`, `worldInformationSummary`. Needs `@seihouse/sen` 0.27.0.
+
 **0.28.0 (2026-10-09):** Covers are made on the cover. `./stories`: `StoryCoverService`
 replaces `manifest(storyId, request)` with `make(storyId, request, count)` (one cover or
 three, `STORY_COVER_CHOICES`), `keep(storyId, madeUrl)` and `letGo(madeUrls)` (breaking for a

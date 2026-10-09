@@ -106,9 +106,11 @@ pieces rather than page-local cards or buttons:
 | Publication status, Recently read, story tags | `SEIBadge` |
 | Story tag colors | Story Seed tag catalog (`getTagMetadata`, `STORY_TAG_COLOR_ACCENTS` from `@seihouse/sen/story-seed`) |
 | Reading pill | `ManifestButton` (`lg`) in Home's night-glass colors |
-| Open Codex | `LibraryCard` (`interactive` when a destination exists) |
+| Codex | `LibraryCard` (`interactive` when a destination exists) |
 | Backdrop clip | `WorldCardBackdropVideo` (shared with the Feature card) |
-| Format mark on the cover, Information row | `WorldCardStoryPanel` (the Full card's format dialog): the cover's corner mark and the row each open it |
+| Portal card | the world's connected media (`WorldExpressions`) below the cards |
+| Information card (format symbol) | `WorldCardInformationPanel`: everything about the world, Author's notes last |
+| Settings card | `WorldCardSettings`: Read it in, then the host's story settings, below the cards |
 | Synopsis More / Less | `LibraryButton` (`ghost`) |
 
 - **Backdrop.** Behind the hero sits this world's own cover, blurred and
@@ -188,15 +190,25 @@ pieces rather than page-local cards or buttons:
   - Without the matching action (`onRead` with chapters, `onStart` without),
     the card is static text. It is not focusable and shows no arrow.
   - There is no hero read button and no fixed bottom bar.
-- **Secondary tools.** Open Codex is a quieter `LibraryCard` row led by the
+- **The four cards.** Under the synopsis: **Codex**, **Portal**, **Information**
+  and **Settings** (two by two from 768px, stacked on phones), each only when it
+  has somewhere to go. Codex is a quieter `LibraryCard` row led by the
   Library's own book artwork, shown only when the host supplies its handler.
-  The **Information** row replaces the former mock Fate Timeline. It shows
-  the world's format mark and format name (for example the Novel scroll and
-  "Novel") under the title Information. It opens the same story information
-  dialog as the Full card's format mark: synopsis, World standing with views,
-  Activity, branching, and tags. This row is where the world's real provenance
-  records will live later. It appears for a Library world with story details;
-  a Create world without them has no Information row. Fate Timeline is no longer part of the Info page, and `onOpenTimeline`
+  Portal (`portal`) opens the world's connected media below the cards.
+  **Information**, marked with the world's format symbol (the mark that used
+  to sit on the cover), opens everything that describes the world: format,
+  creator, activity, views, Began and Last updated, SEN verification, the
+  language it is written in and already readable in, its rating (Rated 18+ or
+  All ages), the creator's permissions (visibility, branching, Blueprint), a
+  link to its provenance records when the host has one, and Author's notes.
+  Its line reads e.g. "Novel · English · Rated 18+". **Settings** opens below
+  the cards what the reader changes about their reading: "Read it in" when the
+  host passes `readingLanguage` (a language no one has read it in yet makes
+  this reader the first, translated as they read), then the host's `settings`
+  (the app's Story Settings: language and Reading Mode, skills, media and
+  Author's notes). Portal and Settings open one at a time. Information appears
+  for a Library world with story details;
+  a Create world without them has none of the cards. Fate Timeline is no longer part of the Info page, and `onOpenTimeline`
   is gone from `WorldCardInfoProps`. There are no disabled placeholders. There is no Characters section (characters belong in
   the Codex) and no bookmark.
 - The page never uses fixed positioning, so the host's mobile bottom navigation
@@ -364,6 +376,39 @@ Workshop sample data and reference material remain outside the host adapter.
 
 ## Workshop history
 
+- **2026-10-09** — **Codex, Portal, Information, Settings.** The format mark
+  is off the Info cover: it now marks the **Information** card, which opens
+  everything that describes the world (what Verification held, plus the
+  language, rating and permissions). The old Information row's "Read it in"
+  moves to a new **Settings** card, which opens below the cards with the host's
+  story settings (`settings`); the app puts its Story Settings there, so they
+  are no longer a separate panel under World Info. Open Codex is now Codex.
+  `WorldCardFormatPanel` is gone; `WorldCardSettings` is new.
+- **2026-10-09** — **Portal.** `WorldCardInfo` (and `StoryDetailScreen`) take
+  `portal` (`{ expansions }`): a Portal card between Open Codex and Information
+  ("Novel · Manga · Game") that opens the world's connected media below the
+  cards, on the page: Home's `WorldExpressions` lane (the novel, then each
+  adaptation). With no adaptations it says the world is a novel so far. Without
+  `portal` there is no card. On laptops an odd last card spans the row. (A Shop
+  card was tried here the same day and taken out by the owner.)
+- **2026-10-09** — **Verification, filled out.** The Info format mark's
+  Verification panel adds the world's activity (the Full card's dot and label)
+  and its views, shows Began and Last updated side by side, and ends with an
+  Author's notes section (`authorNotes`; until the creator writes some it says
+  so). The app supplies each story's last-updated date; its views stay 0 until a
+  real view count exists.
+- **2026-10-09** — **Information and Verification.** World Info's Information
+  row opens `WorldCardInformationPanel`: the language the world is written in and
+  the languages it is already readable in, a "Read it in" switch when the host
+  passes `readingLanguage` (choosing a language no one has read it in yet says the
+  reader will be the first), the Rated 18+ or All ages rating, and the creator's
+  permissions (visibility, branching, Blueprint). The row's line reads e.g.
+  "English · Rated 18+". In Info the cover's format mark opens
+  `WorldCardFormatPanel` instead of the story panel: format, creator, start date,
+  SEN verification, and a link to the world's provenance records when the host
+  supplies `provenanceUrl`. Full and Compact cards keep the story panel. The app
+  fills language, the Seed's 18+ choice and visibility from the story; it offers
+  no language switch yet, because its Reader does not translate.
 - **2026-10-09** — **Info cards stay stacked on narrow phones.** Under 380px
   (small phones, and any phone with zoom or larger text) Open Codex and
   Information no longer squeeze side by side, where "Open Codex" broke onto two

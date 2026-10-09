@@ -241,10 +241,12 @@ it('uses the artwork-only WorldCard on Info while keeping creator and progress o
   expect(cover.style.getPropertyValue('--world-card-glow')).not.toBe('');
   expect(cover.querySelector('.world-card-base-overlay')).toBeNull();
   expect(cover.querySelector('.world-card-base-details')).toBeNull();
-  // The format mark sits on the Info cover (beside the card, not inside it) and opens the story's information.
+  // The format mark is off the Info cover: it marks the Information card under the synopsis instead.
   expect(cover.querySelector('.world-card-base-format')).toBeNull();
-  const format = page.querySelector<HTMLButtonElement>('.world-card-info-cover button.world-card-info-format')!;
-  expect(format.getAttribute('aria-label')).toBe(`Story information for ${story.title}, Novel`);
+  expect(page.querySelector('.world-card-info-cover .world-card-info-format')).toBeNull();
+  const information = page.querySelector<HTMLButtonElement>('button.world-card-info-information:not(.world-card-info-expanding)')!;
+  expect(information.getAttribute('aria-label')).toBe(`Information about ${story.title}, Novel`);
+  expect(information.querySelector('[data-sen-icon="story-scroll"]')).not.toBeNull();
   expect(cover.querySelector('.world-card-base-open')).toBeNull();
   expect(page.querySelector('h1')?.textContent).toBe(story.title);
   expect(page.querySelector('[data-element="lightning"]')?.textContent).toContain('SENSEI');
@@ -322,29 +324,137 @@ it('turns the reading pill into Begin Story for a story with no chapters that th
   expect(onStart).toHaveBeenCalledTimes(1);
 });
 
-it('shows Open Codex only when supplied and an Information row that opens the story information', async () => {
+const informationCard = () => container.querySelector<HTMLButtonElement>('button.world-card-info-information:not(.world-card-info-expanding)');
+const settingsCard = () => container.querySelector<HTMLButtonElement>('button.world-card-info-settings-card');
+
+it('lays out Codex, Portal, Information and Settings, each only when it has somewhere to go', async () => {
   const onOpenCodex = vi.fn();
-  act(() => root.render(<WorldCardInfo story={infoStory} onOpenCodex={onOpenCodex} />));
-  const codex = container.querySelector<HTMLElement>('[role="button"][aria-label^="Open Codex"]')!;
+  act(() => root.render(<WorldCardInfo story={infoStory} onOpenCodex={onOpenCodex} portal={{ expansions: [] }}
+    settings={<p>Reading Mode</p>} />));
+  const titles = [...container.querySelectorAll('.world-card-info-tools .world-card-info-tool-title')].map(title => title.textContent);
+  expect(titles).toEqual(['Codex', 'Portal', 'Information', 'Settings']);
+  const codex = container.querySelector<HTMLElement>('[role="button"][aria-label^="Codex"]')!;
   act(() => codex.click());
   expect(onOpenCodex).toHaveBeenCalledTimes(1);
   expect(container.textContent).not.toContain('Fate Timeline');
 
+  // Information alone, when the host supplies nothing else.
   act(() => root.render(<WorldCardInfo story={infoStory} />));
-  expect(container.textContent).not.toContain('Open Codex');
+  expect([...container.querySelectorAll('.world-card-info-tools .world-card-info-tool-title')].map(title => title.textContent)).toEqual(['Information']);
   expect(container.querySelector('button:disabled')).toBeNull();
-  const format = container.querySelector<HTMLButtonElement>('button.world-card-info-information')!;
-  expect(format.getAttribute('aria-label')).toBe('Story information for The Last Lotus, Novel');
-  expect(format.querySelector('.world-card-info-tool-title')?.textContent).toBe('Information');
-  expect(format.querySelector('.world-card-info-tool-description')?.textContent).toBe('Novel');
-  expect(format.querySelector('[data-sen-icon="story-scroll"]')).not.toBeNull();
-  await act(async () => format.click());
-  const panel = document.body.querySelector('.world-card-story-panel')!;
-  expect(panel.textContent).toContain('A lotus blooms.');
-  expect(panel.textContent).toContain('1,280');
+  expect(informationCard()!.querySelector('.world-card-info-tool-description')?.textContent).toBe('Novel');
+  await act(async () => informationCard()!.click());
+  const panel = document.body.querySelector('.world-card-information-panel')!;
+  expect(panel.querySelector('h2, [class*="information-title"]')?.textContent).toBe('Information');
+  expect(panel.textContent).toContain('The creator has not written notes for this world yet.');
+  expect(panel.textContent).not.toContain('A lotus blooms.');
 
   act(() => root.render(<WorldCardInfo story={{ id: 'ashes', title: 'Ashes', chapterCount: 3, status: 'draft', updatedAt: '2026-09-01' }} />));
-  expect(container.querySelector('.world-card-info-information')).toBeNull();
+  expect(container.querySelector('.world-card-info-tools')).toBeNull();
+});
+
+it('opens the world\'s Portal under the cards: its connected media, or the novel alone so far', async () => {
+  const expansions = [
+    { medium: 'manga' as const, title: 'The Last Lotus: Ink', description: 'A manga adaptation.', imageUrl: '/manga.png' },
+    { medium: 'game' as const, title: 'Lotus Duels', description: 'A duel game in this world.', imageUrl: '/game.png' },
+  ];
+  // Without the host's Portal there is no card.
+  act(() => root.render(<WorldCardInfo story={infoStory} />));
+  expect(container.querySelector('.world-card-info-portal')).toBeNull();
+
+  act(() => root.render(<WorldCardInfo story={infoStory} portal={{ expansions }} />));
+  const portal = container.querySelector<HTMLButtonElement>('button.world-card-info-portal')!;
+  expect(portal.querySelector('.world-card-info-tool-title')?.textContent).toBe('Portal');
+  expect(portal.querySelector('.world-card-info-tool-description')?.textContent).toBe('Novel · Manga · Game');
+  expect(portal.getAttribute('aria-expanded')).toBe('false');
+  expect(container.querySelector('[data-testid="world-info-portal"]')).toBeNull();
+  act(() => portal.click());
+  expect(portal.getAttribute('aria-expanded')).toBe('true');
+  const media = container.querySelector<HTMLElement>('[data-testid="world-info-portal"]')!;
+  expect([...media.querySelectorAll('h3')].map(title => title.textContent)).toEqual([infoStory.title, 'The Last Lotus: Ink', 'Lotus Duels']);
+  act(() => portal.click());
+  expect(container.querySelector('[data-testid="world-info-portal"]')).toBeNull();
+
+  act(() => root.render(<WorldCardInfo story={{ ...infoStory, id: 'alone' }} portal={{ expansions: [] }} />));
+  const alone = container.querySelector<HTMLButtonElement>('button.world-card-info-portal')!;
+  expect(alone.querySelector('.world-card-info-tool-description')?.textContent).toBe('This world’s other media');
+  act(() => alone.click());
+  expect(container.querySelector('[data-testid="world-info-portal"]')?.textContent).toContain('is a novel so far');
+});
+
+it('Information holds everything about the world: creator, activity, views, dates, verification, language, rating, permissions, provenance and notes', async () => {
+  const story: StoryDetailDisplay = {
+    ...infoStory, senVerified: true, provenanceUrl: 'https://example.test/provenance/lotus',
+    activityStatus: 'active-this-week', reads: 1280, createdAt: '2026-09-09T12:00:00Z', updatedAt: '2026-10-08T12:00:00Z',
+    authorNotes: 'Arc 2 lands this month.', originalLanguage: 'en', readingLanguages: ['ja'], matureContent: true,
+    permissions: { visibility: 'public', branching: false, blueprint: 'copy' },
+  };
+  act(() => root.render(<WorldCardInfo story={story} />));
+  expect(informationCard()!.querySelector('.world-card-info-tool-description')?.textContent).toBe('Novel · English · Rated 18+');
+  await act(async () => informationCard()!.click());
+  const panel = document.body.querySelector<HTMLElement>('.world-card-information-panel')!;
+  expect(panel.textContent).toContain('SENSEI');
+  expect(panel.querySelector('[data-testid="world-information-activity"]')?.textContent).toContain('Active this week');
+  expect(panel.querySelector('[data-testid="world-information-views"]')?.textContent).toContain('1,280');
+  const dates = panel.querySelector('[data-testid="world-information-dates"]')!;
+  expect(dates.textContent).toContain('Began');
+  expect(dates.textContent).toContain('Last updated');
+  expect(panel.querySelector('[data-testid="world-information-verification"]')?.textContent).toContain('SEN Verified');
+  expect(panel.textContent).toContain('Written in');
+  expect(panel.textContent).toContain('English');
+  expect(panel.textContent).toContain('Also readable in');
+  expect(panel.textContent).toContain('Japanese');
+  expect(panel.querySelector('[data-rating="mature"]')?.textContent).toBe('Rated 18+');
+  expect(panel.textContent).toContain('Public · anyone can find it');
+  expect(panel.textContent).toContain('Not allowed');
+  expect(panel.textContent).toContain('Readers can view and copy it');
+  const link = panel.querySelector<HTMLAnchorElement>('[data-testid="world-information-provenance"]')!;
+  expect(link.getAttribute('href')).toBe('https://example.test/provenance/lotus');
+  expect(link.getAttribute('target')).toBe('_blank');
+  expect(panel.querySelector('[data-testid="world-information-notes"]')?.textContent).toBe('Author’s notesArc 2 lands this month.');
+  // What the reader changes is in Settings, not here.
+  expect(panel.querySelector('select')).toBeNull();
+  await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+
+  act(() => root.render(<WorldCardInfo story={{ ...infoStory, id: 'plain', senVerified: false, matureContent: false }} />));
+  await act(async () => informationCard()!.click());
+  const plain = [...document.body.querySelectorAll<HTMLElement>('.world-card-information-panel')].at(-1)!;
+  expect(plain.querySelector('[data-testid="world-information-verification"]')?.textContent).toContain('Not verified yet');
+  expect(plain.querySelector('[data-rating="all-ages"]')?.textContent).toBe('All ages');
+  expect(plain.querySelector('[data-testid="world-information-provenance"]')).toBeNull();
+  expect(plain.textContent).toContain('Provenance records will be linked here once this world has them.');
+});
+
+it('Settings opens below the cards with Read it in, a first translation in a new language, and the host\'s story settings', async () => {
+  const onChange = vi.fn();
+  act(() => root.render(<WorldCardInfo story={{ ...infoStory, originalLanguage: 'en', readingLanguages: ['ja'] }}
+    readingLanguage={{ onChange }} settings={<p data-testid="host-settings">Reading Mode</p>} />));
+  const card = settingsCard()!;
+  expect(card.getAttribute('aria-expanded')).toBe('false');
+  expect(container.querySelector('[data-testid="world-info-settings"]')).toBeNull();
+  act(() => card.click());
+  const settings = container.querySelector<HTMLElement>('[data-testid="world-info-settings"]')!;
+  expect(settings.querySelector('[data-testid="host-settings"]')).not.toBeNull();
+  const select = settings.querySelector<HTMLSelectElement>('select')!;
+  expect(select.value).toBe('en');
+  await act(async () => { select.value = 'ja'; select.dispatchEvent(new Event('change', { bubbles: true })); });
+  expect(onChange).toHaveBeenLastCalledWith('ja');
+  expect(settings.querySelector('[data-testid="world-settings-first-reader"]')).toBeNull();
+  await act(async () => { select.value = 'es'; select.dispatchEvent(new Event('change', { bubbles: true })); });
+  expect(onChange).toHaveBeenLastCalledWith('es');
+  expect(settings.querySelector('[data-testid="world-settings-first-reader"]')?.textContent).toContain('No one has read this world in Spanish yet. You will be the first');
+
+  // Opening Portal closes Settings: one part opens below the cards at a time.
+  act(() => root.render(<WorldCardInfo story={{ ...infoStory, originalLanguage: 'en' }} readingLanguage={{ onChange }}
+    portal={{ expansions: [] }} />));
+  act(() => settingsCard()!.click());
+  act(() => container.querySelector<HTMLButtonElement>('button.world-card-info-portal')!.click());
+  expect(container.querySelector('[data-testid="world-info-settings"]')).toBeNull();
+  expect(container.querySelector('[data-testid="world-info-portal"]')).not.toBeNull();
+
+  // No language switch and no host settings: no Settings card.
+  act(() => root.render(<WorldCardInfo story={{ ...infoStory, id: 'none' }} />));
+  expect(settingsCard()).toBeNull();
 });
 
 it('paints story tags in their Story Seed catalog colors and leaves unknown tags neutral', () => {

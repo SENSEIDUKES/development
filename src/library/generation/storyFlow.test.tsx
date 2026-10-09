@@ -85,7 +85,11 @@ describe('A story\'s way in: World Info, then the Reader', { timeout: 20_000 }, 
     expect(display).toMatchObject({
       title: 'The Drowned Name', genre: 'Xianxia', synopsis: LOGLINE, tags: ['Revenge', 'Found Family'],
       mcName: 'Mara', chapterCount: 0, author: '', imageUrl: '', currentArc: '',
+      // The Information panel: the story's language and visibility; a Seed with no rating claims none.
+      originalLanguage: 'en', permissions: { visibility: 'private' },
     });
+    expect(display.matureContent).toBeUndefined();
+    expect(display.updatedAt).toBe(repository.snapshot().stories.find(story => story.id === storyId)!.updatedAt);
     expect(harnessStoryDisplay(repository.snapshot(), 'missing')).toBeUndefined();
   });
 

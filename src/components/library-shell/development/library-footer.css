@@ -24,6 +24,8 @@
   inset: 0;
   z-index: -1;
   pointer-events: none;
+  /* Fade the atmospheric tint in instead of exposing a rectangular top edge. */
+  mask-image: linear-gradient(to bottom, transparent, #000 4rem);
   background:
     radial-gradient(60% 45% at 50% 0%, rgba(4, 172, 255, 0.08), transparent 70%),
     radial-gradient(45% 35% at 50% 100%, rgba(212, 175, 55, 0.05), transparent 70%);

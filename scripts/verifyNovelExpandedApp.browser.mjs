@@ -325,7 +325,11 @@ async function walk(browser, viewport, sample) {
   check(await page.evaluate(() => document.documentElement.scrollWidth) <= viewport.width, 'The shell must never scroll sideways.');
   await page.locator('#novel-expanded-main').evaluate(main => main.scrollTo({ top: main.scrollHeight }));
   await page.locator('[data-library-footer]').waitFor();
-  check((await page.locator('[data-library-footer]').innerText()).includes('NovelExpanded'), 'The footer should carry the NovelExpanded title.');
+  const footerWordmark = page.locator('[data-library-footer]').getByRole('img', { name: 'NovelExpanded', exact: true });
+  await footerWordmark.waitFor();
+  check(await footerWordmark.evaluate(image => image.complete && image.naturalWidth > 0), 'The footer NovelExpanded wordmark should load.');
+  check((await page.locator('[data-library-footer] .library-footer-statement').textContent()) === 'An Experience by SEIHouse',
+    'The footer should carry the SEIHouse experience credit.');
   await shot('1b-home-footer');
   await page.locator('#novel-expanded-main').evaluate(main => main.scrollTo({ top: 0 }));
 

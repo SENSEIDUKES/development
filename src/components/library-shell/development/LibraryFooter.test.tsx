@@ -56,7 +56,7 @@ describe('LibraryFooter', () => {
     expect(identity.querySelector('[data-footer-title]')?.textContent).toBe(LIBRARY_FOOTER_TITLE);
     expect(LIBRARY_FOOTER_TITLE).toBe('NovelExpanded');
     expect(identity.querySelector('.library-footer-statement')?.textContent).toBe(LIBRARY_FOOTER_STATEMENT);
-    expect(LIBRARY_FOOTER_STATEMENT).toBe('A BETTER TIME CAPSULE AND TRANSLATOR OF ARTISTIC EXPRESSION');
+    expect(LIBRARY_FOOTER_STATEMENT).toBe('An Experience by SEIHouse');
     expect(footer().querySelector('img')).toBeNull();
   });
 

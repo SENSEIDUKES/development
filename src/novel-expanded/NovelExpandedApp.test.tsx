@@ -377,7 +377,8 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
 
     // Home: the Library header, the navigation and the footer around the reader's stories.
     const header = shell()!.querySelector('header')!;
-    expect(header.querySelector('[data-slot="library-header-badge-title"]')?.textContent).toBe('NovelExpanded');
+    expect(header.querySelector('.novel-expanded-wordmark img')?.getAttribute('alt')).toBe('NovelExpanded');
+    expect(header.querySelector('[data-slot="library-header-badge-title"]')).toBeNull();
     expect(header.querySelector('button[aria-label="Help"]')).toBeTruthy();
     expect(header.querySelector('button[aria-label="Search"]')).toBeTruthy();
     // On a phone the music note floats above the bar, not in the header.
@@ -390,7 +391,8 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     expect(sidebar.textContent).toContain('Create');
     expect(sidebar.textContent).toContain('Settings');
     expect(document.body.textContent).not.toContain('Discover');
-    expect(footer()!.querySelector('[data-footer-title]')?.textContent).toBe('NovelExpanded');
+    expect(footer()!.querySelector('.novel-expanded-footer-wordmark')?.getAttribute('alt')).toBe('NovelExpanded');
+    expect(footer()!.querySelector('.library-footer-statement')?.textContent).toBe('An Experience by SEIHouse');
     expect([...footer()!.querySelectorAll('.library-footer-legal-link')].map(link => link.textContent)).toEqual(['Terms', 'Privacy', 'Cookies']);
     // No channel is published yet, so the footer shows none.
     expect(footer()!.querySelector('.library-footer-social')).toBeNull();

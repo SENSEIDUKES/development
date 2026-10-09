@@ -8,8 +8,9 @@ describe('NovelExpanded addresses', () => {
       { page: 'create' },
       { page: 'story', storyId: 'hst_1' },
       { page: 'read', storyId: 'hst_1' },
+      { page: 'blueprint', storyId: 'hst_1' },
     ];
-    expect(pages.map(routeSearch)).toEqual(['', '?page=create', '?story=hst_1', '?story=hst_1&read=1']);
+    expect(pages.map(routeSearch)).toEqual(['', '?page=create', '?story=hst_1', '?story=hst_1&read=1', '?story=hst_1&blueprint=1']);
     for (const page of pages) expect(parseRoute(routeSearch(page))).toEqual(page);
   });
 

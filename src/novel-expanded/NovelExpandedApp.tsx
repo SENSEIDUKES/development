@@ -145,7 +145,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   const caveStories = useMemo(() => state ? state.stories.map(story => ({
     id: story.id, title: story.title, userId: NOVEL_EXPANDED_READER_ID, sourceSeedId: storySourceSeedId(state, story),
   })) : [], [state]);
-  const storyId = route.page === 'story' || route.page === 'read' ? route.storyId : undefined;
+  const storyId = route.page === 'story' || route.page === 'read' || route.page === 'blueprint' ? route.storyId : undefined;
   const missing = Boolean(state && storyId && !findStory(state, storyId));
   // A story that is not here (an old link, another browser) goes Home.
   useEffect(() => { if (missing) navigate(HOME_ROUTE, { replace: true }); }, [missing, navigate]);
@@ -192,11 +192,15 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     }} />);
 
   if (storyId) return withFamiliar(missing ? null : <StoryPages key={storyId} stories={stories} storyId={storyId}
-    page={route.page === 'read' ? 'read' : 'info'} readerStateRepository={services.readerState}
+    page={route.page === 'read' ? 'read' : route.page === 'blueprint' ? 'blueprint' : 'info'} readerStateRepository={services.readerState}
     readerPreferences={services.readerPreferences} soundscapes={APP_SOUNDSCAPES}
     writingAgent={AGENTS.VERSA} backLabel="Back to your stories" covers={covers}
     // World Info sits in the Library Shell; the Reader never does.
-    frame={info => <AppShell route={{ page: 'story', storyId }} navigate={navigate} stories={worlds} mainLabel="World Info">{info}</AppShell>}
+    frame={info => <AppShell route={{ page: 'story', storyId }} navigate={navigate} stories={worlds}
+      mainLabel={route.page === 'blueprint' ? 'Blueprint' : 'World Info'}>{info}</AppShell>}
+    // Every story on this device is the reader's own, so its Blueprint opens for its creator.
+    onOpenBlueprint={() => navigate({ page: 'blueprint', storyId })}
+    onCloseBlueprint={() => navigate({ page: 'story', storyId })}
     onOpenReader={() => navigate({ page: 'read', storyId })}
     onCloseReader={() => navigate({ page: 'story', storyId })}
     onBack={() => navigate(HOME_ROUTE)} />);

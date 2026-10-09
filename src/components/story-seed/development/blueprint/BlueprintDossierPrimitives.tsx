@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Pencil, Sparkle, type LucideIcon } from 'lucide-react';
 
 export const EditableChip = () => (
-  <span className="inline-flex items-center gap-1 rounded-full border border-[rgba(205,178,113,0.3)] bg-[rgba(205,178,113,0.05)] px-2 py-0.5 font-sc text-[9px] font-bold uppercase tracking-[0.18em] text-[#DDC58A]/80">
+  <span data-editable-chip="" className="inline-flex items-center gap-1 rounded-full border border-[rgba(205,178,113,0.3)] bg-[rgba(205,178,113,0.05)] px-2 py-0.5 font-sc text-[9px] font-bold uppercase tracking-[0.18em] text-[#DDC58A]/80">
     <Pencil size={9} aria-hidden="true" />
     Editable
   </span>

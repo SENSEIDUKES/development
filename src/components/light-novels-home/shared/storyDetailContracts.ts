@@ -24,6 +24,8 @@ export interface StoryDetailScreenProps {
   /** Starts a story that has no chapters yet; see `WorldCardInfoProps.onStart`. */
   onStart?: () => void;
   onOpenCodex?: () => void;
+  /** See `WorldCardInfoProps.onOpenBlueprint`. */
+  onOpenBlueprint?: () => void;
   onOpenTimeline?: () => void;
   /** The viewer's known reading position, when the host has one. */
   readingPosition?: { chapterNumber: number };

@@ -457,6 +457,21 @@ it('keeps an MP control on the Info cover that starts or stops the backdrop clip
   vi.restoreAllMocks();
 });
 
+it('puts a small Blueprint button beside the reading pill only when the host supplies one', () => {
+  const onOpenBlueprint = vi.fn();
+  act(() => root.render(<WorldCardInfo story={infoStory} onRead={() => {}} onOpenBlueprint={onOpenBlueprint} />));
+  const buttons = container.querySelector('.world-card-info-buttons')!;
+  expect(buttons.querySelector('[data-world-info-chapters="action"]')).not.toBeNull();
+  const blueprint = buttons.querySelector<HTMLButtonElement>('button.world-card-info-blueprint')!;
+  expect(blueprint.textContent).toContain('Blueprint');
+  expect(blueprint.getAttribute('aria-label')).toBe('Blueprint: The Last Lotus');
+  act(() => blueprint.click());
+  expect(onOpenBlueprint).toHaveBeenCalledTimes(1);
+
+  act(() => root.render(<WorldCardInfo story={infoStory} onRead={() => {}} />));
+  expect(container.querySelector('.world-card-info-blueprint')).toBeNull();
+});
+
 it('shows each trimmed tag once', () => {
   const error = vi.spyOn(console, 'error').mockImplementation(() => {});
   act(() => root.render(<WorldCardInfo story={{ ...infoStory, tags: ['Lore', ' Lore', '', 'found family', 'Found Family '] }} />));

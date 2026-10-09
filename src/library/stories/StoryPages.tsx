@@ -11,14 +11,26 @@ import { useStoryCoverManifest } from './StoryCoverManifest';
 import { storyCoverRequest, type StoryCoverService } from './storyCover';
 import { downloadHarnessStory } from './storyExport';
 import { harnessStoryDisplay } from './storyView';
+import { StoryBlueprintPage, type StoryBlueprintAccess, type StoryBlueprintViewProps } from './StoryBlueprint';
 import type { LibraryStories } from './useLibraryStories';
 import { EnergyCostMeter } from '../../components/energy/development/EnergyCostMeter';
 
 export interface StoryPagesProps {
   stories: LibraryStories;
   storyId: string;
-  /** Which of the story's pages shows: its World Info page or the Reader. */
-  page: 'info' | 'read';
+  /** Which of the story's pages shows: its World Info page, the Reader, or its Blueprint. */
+  page: 'info' | 'read' | 'blueprint';
+  /**
+   * World Info's Blueprint button: show the Blueprint page. Without it, World
+   * Info has no Blueprint button.
+   */
+  onOpenBlueprint?: () => void;
+  /** Who views the Blueprint page; a host that owns every story on the device passes the creator. */
+  blueprintAccess?: StoryBlueprintAccess;
+  /** The Blueprint page's Copy, for a reader the creator allows to copy. */
+  onCopyBlueprint?: StoryBlueprintViewProps['onCopy'];
+  /** The Blueprint page's Back. */
+  onCloseBlueprint?: () => void;
   /** World Info's Start Story, Start Reading or Continue: show the Reader. */
   onOpenReader: () => void;
   /** The Reader's Back. */
@@ -58,7 +70,7 @@ const keepVeilOpen = () => undefined;
  * as the reader moves between them, so Start Story still begins Chapter 1 once
  * the Reader opens.
  */
-export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader, onBack, backLabel, readerStateRepository, readerPreferences, soundscapes, writingAgent, frame, covers }: StoryPagesProps) {
+export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader, onBack, backLabel, readerStateRepository, readerPreferences, soundscapes, writingAgent, frame, covers, onOpenBlueprint, blueprintAccess = { view: 'creator' }, onCopyBlueprint, onCloseBlueprint }: StoryPagesProps) {
   const { state, controller, loadError } = stories;
   /** Set by Start Story, so the Reader begins Chapter 1 as it opens. */
   const [startOnOpen, setStartOnOpen] = useState(false);
@@ -117,16 +129,27 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
 
   // Inside a host's frame, World Info is the frame's content, not a second <main>.
   const Page = frame ? 'div' : 'main';
+  if (page === 'blueprint') {
+    const blueprint = <>
+      {writerAlert}
+      <Page className="px-4 pb-12 pt-4 sm:px-6 sm:pt-6" data-testid="harness-story-blueprint">
+        <StoryBlueprintPage stories={stories} storyId={storyId} access={blueprintAccess}
+          onBack={onCloseBlueprint ?? onBack} onCopy={onCopyBlueprint} />
+      </Page>
+    </>;
+    return frame ? <>{frame(blueprint)}</> : blueprint;
+  }
   const info = <>
     {writerAlert}
     <Page className="px-4 pb-12 pt-4 sm:px-6 sm:pt-6" data-testid="harness-world-info">
       {covers
         ? <CoveredStoryDetail covers={covers} storyId={storyId} request={storyCoverRequest(state, storyId)!} agent={writingAgent}
             story={display} backLabel={backLabel} readingPosition={readingPosition} onBack={onBack}
+            onOpenBlueprint={onOpenBlueprint}
             onRead={() => { setStartOnOpen(false); onOpenReader(); }}
             onStart={() => { setStartOnOpen(true); onOpenReader(); }} />
         : <StoryDetailScreen story={display} backLabel={backLabel} readingPosition={readingPosition}
-            onBack={onBack}
+            onBack={onBack} onOpenBlueprint={onOpenBlueprint}
             onRead={() => { setStartOnOpen(false); onOpenReader(); }}
             onStart={() => { setStartOnOpen(true); onOpenReader(); }} />}
       <StorySettings stories={stories} storyId={storyId} />

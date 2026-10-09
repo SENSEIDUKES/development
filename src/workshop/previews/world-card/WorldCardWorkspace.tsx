@@ -10,10 +10,12 @@ import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import {
   previewCreatorWorlds, previewHomeGrid, previewStory,
-  type WorldCardCover, type WorldCardSashPreview, type WorldCardDestinations, type WorldCardPreviewState,
+  type WorldCardBlueprintPreview, type WorldCardCover, type WorldCardSashPreview, type WorldCardDestinations, type WorldCardPreviewState,
   type WorldCardReadingPreview, type WorldCardRecentlyRead, type WorldCardStatusPreview, type WorldCardTitleLength,
 } from './previewData';
 import { StoryDetailScreen, type WorldActivityStatus } from '@seihouse/library/home';
+import { StoryBlueprintView, type StoryBlueprintAccess } from '@seihouse/library/stories';
+import { createFilledStorySeedInput, createMockBlueprint } from '../story-seed/previewData';
 
 const entry = workshopEntries.find(candidate => candidate.id === 'world-card')!;
 
@@ -38,7 +40,14 @@ type Viewport = keyof typeof VIEWPORTS;
 
 const DEFAULT_STATE: WorldCardPreviewState = {
   recentlyRead: 'no', titleLength: 'standard', cover: 'art', sash: 'hidden',
-  activity: 'active-this-week', cardStatus: 'public-ongoing', destinations: 'all', reading: 'chapter-7',
+  activity: 'active-this-week', cardStatus: 'public-ongoing', destinations: 'all', reading: 'chapter-7', blueprint: 'creator',
+};
+
+const BLUEPRINT_ACCESS: Record<Exclude<WorldCardBlueprintPreview, 'reader-off'>, StoryBlueprintAccess> = {
+  creator: { view: 'creator' },
+  'creator-shared': { view: 'creator' },
+  'reader-copy': { view: 'reader', creatorName: 'SENSEI', copy: true },
+  'reader-view': { view: 'reader', creatorName: 'SENSEI', copy: false },
 };
 
 const CARD_STATUS_PREVIEW: Record<WorldCardStatusPreview, WorldCardDisplayStatus> = {
@@ -88,8 +97,19 @@ export function WorldCardStage({ view, state, reference, onAction }: {
   const story = previewStory(state);
   const worlds = previewCreatorWorlds(state);
   const [openedWorld, setOpenedWorld] = useState<CreatorWorld | typeof story | null>(null);
+  const [blueprintOpen, setBlueprintOpen] = useState(false);
+  // The Workshop's sample Seed and Blueprint stand in for the world's own.
+  const [blueprintSnapshot] = useState(() => ({ seed: createFilledStorySeedInput(), blueprint: createMockBlueprint() }));
   const infoWorld = openedWorld?.id === story.id ? story : openedWorld ?? story;
   const show = (candidate: View) => view === 'all' || view === candidate;
+
+  if (blueprintOpen && !reference && state.blueprint !== 'reader-off') return <div className="mx-auto max-w-5xl px-4 py-6 sm:px-8" data-world-card-stage="development">
+    <StoryBlueprintView title={infoWorld.title} snapshot={blueprintSnapshot} destinedEnding="Ye Chen restores the last lotus and ends the empire's oath."
+      access={BLUEPRINT_ACCESS[state.blueprint]} isPrivate={state.blueprint !== 'creator-shared'}
+      onBack={() => setBlueprintOpen(false)}
+      onSave={async () => onAction(`Blueprint saved for ${infoWorld.title}`)}
+      onCopy={async () => onAction(`Blueprint copied from ${infoWorld.title} to your Story Seeds`)} />
+  </div>;
 
   return <div className="mx-auto max-w-5xl space-y-12 px-4 py-6 sm:px-8" data-world-card-stage={reference ? 'reference' : 'development'}>
     {(openedWorld || show('info')) && <Stage title="Info page">
@@ -102,6 +122,8 @@ export function WorldCardStage({ view, state, reference, onAction }: {
             onRead={state.destinations === 'none' ? undefined : () => onAction(`${state.reading === 'chapter-7' ? 'Continue' : 'Start'} reading ${infoWorld.title}`)}
             onStart={state.destinations === 'none' ? undefined : () => onAction(`Start story ${infoWorld.title}`)}
             onOpenCodex={state.destinations === 'all' ? () => onAction(`Open Codex for ${infoWorld.title}`) : undefined}
+            // A reader of a creator with sharing off gets no Blueprint button at all.
+            onOpenBlueprint={state.destinations === 'all' && state.blueprint !== 'reader-off' ? () => setBlueprintOpen(true) : undefined}
             />}
     </Stage>}
     {!openedWorld && !reference && show('feature') && <Stage title="Feature card" note="Home's spotlight row. The cover stands on the right; the band is that cover, blurred, in its own color.">
@@ -147,6 +169,7 @@ function readCanvasState(params: URLSearchParams): WorldCardPreviewState {
     cardStatus: pick(params.get('cardStatus'), Object.keys(CARD_STATUS_PREVIEW) as WorldCardStatusPreview[], DEFAULT_STATE.cardStatus),
     destinations: pick(params.get('destinations'), ['all', 'reading-only', 'none'], DEFAULT_STATE.destinations),
     reading: pick(params.get('reading'), ['start', 'chapter-7', 'new-story'], DEFAULT_STATE.reading),
+    blueprint: pick(params.get('blueprint'), ['creator', 'creator-shared', 'reader-copy', 'reader-view', 'reader-off'], DEFAULT_STATE.blueprint),
   };
 }
 
@@ -275,6 +298,15 @@ function WorldCardWorkspaceShell() {
               <option value="chapter-7">Known: Chapter 7 (Continue)</option>
               <option value="start">Not started (Continue)</option>
               <option value="new-story">New story, no chapters (Begin Story)</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-xs">Blueprint view
+            <select className={selectClass} value={state.blueprint} onChange={event => update({ blueprint: event.target.value as WorldCardBlueprintPreview })}>
+              <option value="creator">Creator, private novel (edit)</option>
+              <option value="creator-shared">Creator, shared novel (view)</option>
+              <option value="reader-copy">Reader, copy allowed</option>
+              <option value="reader-view">Reader, view only</option>
+              <option value="reader-off">Reader, sharing off (no button)</option>
             </select>
           </label>
         </div>,

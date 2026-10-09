@@ -30,7 +30,13 @@ export interface NovelBlueprintEditorProps {
   /** The novel's fixed destination, shown but never edited here. */
   destinedEnding?: string;
   busy?: boolean;
-  onSave: (next: NovelBlueprintSnapshot) => Promise<void>;
+  /**
+   * View-only: every field shows but none can change, and there is nothing to
+   * save (a reader viewing another creator's Blueprint, or a novel no longer private).
+   */
+  readOnly?: boolean;
+  /** Required unless `readOnly`. */
+  onSave?: (next: NovelBlueprintSnapshot) => Promise<void>;
 }
 
 /**
@@ -45,7 +51,7 @@ export interface NovelBlueprintEditorProps {
  * tradition, tags) and the story's original language. Arc Goals are edited
  * beside this editor under the novel's mode rules.
  */
-export function NovelBlueprintEditor({ snapshot, destinedEnding, busy = false, onSave }: NovelBlueprintEditorProps) {
+export function NovelBlueprintEditor({ snapshot, destinedEnding, busy = false, readOnly = false, onSave }: NovelBlueprintEditorProps) {
   const initial = useMemo(() => reconcileStorySeedBlueprint(snapshot.seed, snapshot.blueprint), [snapshot]);
   const [seed, setSeed] = useState<StorySeedInput>(initial.seed);
   const [blueprint, setBlueprintState] = useState<WorldBlueprint>(initial.blueprint);
@@ -77,6 +83,7 @@ export function NovelBlueprintEditor({ snapshot, destinedEnding, busy = false, o
     setSaving(true); setError('');
     try {
       const reconciled = reconcileStorySeedBlueprint(seed, blueprint);
+      if (!onSave) throw new Error('This Blueprint cannot be saved here.');
       await onSave(reconciled);
       setSaved(true);
     } catch (cause) {
@@ -86,7 +93,10 @@ export function NovelBlueprintEditor({ snapshot, destinedEnding, busy = false, o
   const disabled = busy || saving;
 
   return (
-    <div className="story-seed-development-surface seed-field-scope relative space-y-6" data-testid="novel-blueprint-editor">
+    <div className="story-seed-development-surface seed-field-scope relative space-y-6" data-testid="novel-blueprint-editor"
+      data-read-only={readOnly ? 'true' : undefined}>
+      {/* A disabled fieldset keeps every field visible and none editable. */}
+      <fieldset disabled={readOnly} className="novel-blueprint-fields m-0 min-w-0 space-y-6 border-0 p-0">
       <BlueprintHeaderSection
         blueprintVersion={blueprint.blueprintVersion}
         title={identity.title ?? ''}
@@ -142,7 +152,8 @@ export function NovelBlueprintEditor({ snapshot, destinedEnding, busy = false, o
         seed={seed}
         updateSeed={updateSeed}
       />
-      <LibraryPanel padding="sm" className="sm:p-5">
+      </fieldset>
+      {!readOnly && <LibraryPanel padding="sm" className="sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="max-w-xl text-xs leading-relaxed text-neutral-400">
             Saving records a new Foundation revision for this novel. Future chapters use it; chapters already written keep the Blueprint they were written with.
@@ -159,7 +170,7 @@ export function NovelBlueprintEditor({ snapshot, destinedEnding, busy = false, o
         </div>
         {error && <p role="alert" className="mt-3 text-sm text-red-300">{error}</p>}
         <p role="status" className="mt-2 text-xs text-emerald-200">{saved && !dirty ? 'Blueprint saved. The next chapter uses it.' : ''}</p>
-      </LibraryPanel>
+      </LibraryPanel>}
     </div>
   );
 }

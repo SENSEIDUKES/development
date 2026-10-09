@@ -364,6 +364,16 @@ Workshop sample data and reference material remain outside the host adapter.
 
 ## Workshop history
 
+- **2026-10-09** — **Blueprint button.** `WorldCardInfo` takes
+  `onOpenBlueprint`: a small Blueprint button beside the reading pill (side by
+  side on phones and laptops). The host owns the page and the view, and leaves
+  the button out entirely for a reader when the creator has sharing turned off.
+  The page is `StoryBlueprintView` / `StoryBlueprintPage` in
+  `@seihouse/library/stories`: the novel's own saved Seed and Blueprint in the
+  existing `NovelBlueprintEditor` — editable by its creator while the novel is
+  private, view-only otherwise (the editor gained `readOnly`), with Copy for a
+  reader the creator allows. The Workshop's Info page opens it, with a
+  Blueprint view control for each case.
 - **2026-10-09** — **One caption for Full and Compact.** The creator's name left
   the art and sits in the caption under the title (in their elemental lettering
   when the host supplies it). Compact now carries the same caption as Full

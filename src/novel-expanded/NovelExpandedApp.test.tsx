@@ -809,6 +809,31 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(cave()!.querySelector('[data-cave-portrait] img')?.getAttribute('src')).toBe(services.profile.read().avatarUrl);
   });
 
+  it('World Info\'s Blueprint opens the story\'s own Blueprint at its address; its creator edits and saves it, and Back returns', async () => {
+    const story = scriptedWriter();
+    const services = appServices(story.writer);
+    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
+    await render(services, `/app/?story=${created.id}`);
+    await click(worldInfo()!.querySelector('button.world-card-info-blueprint'), 'Blueprint', 20);
+    expect(address()).toBe(`/app/?story=${created.id}&blueprint=1`);
+    const page = document.querySelector<HTMLElement>('[data-story-blueprint]')!;
+    expect(page.getAttribute('data-blueprint-view')).toBe('creator');
+    expect(page.getAttribute('data-blueprint-editable')).toBe('true');
+    expect(page.querySelector('h1')?.textContent).toBe(created.title);
+    // The creator changes a field and saves: a new Foundation revision.
+    const before = (await services.stories.load()).foundations.filter(revision => revision.storyId === created.id).length;
+    const outline = page.querySelector<HTMLTextAreaElement>('textarea')!;
+    const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!;
+    await act(async () => { setter.call(outline, `${outline.value} Edited by its creator.`); outline.dispatchEvent(new Event('input', { bubbles: true })); });
+    await click(buttonByText('Save Blueprint', page), 'Save Blueprint', 50);
+    expect(page.querySelector('[role="status"]')?.textContent).toContain('Blueprint saved');
+    const after = (await services.stories.load()).foundations.filter(revision => revision.storyId === created.id).length;
+    expect(after).toBe(before + 1);
+    await click(document.querySelector('[aria-label="Back to World Info"]'), 'Back to World Info', 20);
+    expect(address()).toBe(`/app/?story=${created.id}`);
+    expect(worldInfo()).toBeTruthy();
+  });
+
   it('a new Story Seed in Create starts from the profile\'s reading language and Reading Mode', async () => {
     const services = appServices(scriptedWriter().writer);
     services.profile.save({ defaultReadingLanguage: 'ja', defaultChapterWritingStyle: 'Easy Read' });

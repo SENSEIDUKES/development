@@ -1,5 +1,9 @@
 # `@seihouse/sen`
 
+**0.26.0 (2026-10-09):** `HarnessReaderSession` takes `renderWriteAside(chaptersWritten)`:
+whatever the host shows beside the button that writes the next chapter (the Library puts
+its Energy price there). It appears only when Next writes a chapter.
+
 **0.25.0 (2026-10-08):** Story Settings before a story exists. The HARNESS controller's
 `describeMediaSelection(selection)` says which sound words and music words a story would
 start with under a Media Loadout, before the story is created, so a host's Create can show

@@ -89,7 +89,7 @@ function lineWhereTheReaderIs(script: ReadAloudScript, article: HTMLElement | nu
  * the reader may have it written again. Codex and Mind Palace are not part of it.
  */
 export function HarnessReaderSession({
-  state, storyId, onClose, controller, readerStateRepository, onGenerateNextChapter, onRewriteChapter, onPlanArc, renderWriting, startOnOpen = false,
+  state, storyId, onClose, controller, readerStateRepository, onGenerateNextChapter, onRewriteChapter, onPlanArc, renderWriting, renderWriteAside, startOnOpen = false,
   readerPreferences, readAloudVoices, soundscapes,
 }: {
   state: HarnessWorkspaceState; storyId: string; onClose: () => void; controller: HarnessGenerationController;
@@ -118,6 +118,12 @@ export function HarnessReaderSession({
    * and out. Without it, the Next button says the chapter is being written.
    */
   renderWriting?: (writing: HarnessReaderWriting) => ReactNode;
+  /**
+   * Shown beside the button that writes the next chapter, such as the host's
+   * price for a chapter. `chaptersWritten` counts the story's chapters, so a
+   * host can mark each new one as it arrives.
+   */
+  renderWriteAside?: (chaptersWritten: number) => ReactNode;
   /**
    * Begins a story that has no chapters yet as soon as the Reader opens:
    * Chapter 1 is written (Regular Reader) or its direction is asked for
@@ -218,7 +224,7 @@ export function HarnessReaderSession({
     const written = await writer.write();
     if (written) openChapter(written);
   };
-  const continueAfterLatest: { label: string; run: () => void; busy?: boolean } | undefined = !story ? undefined
+  const continueAfterLatest: { label: string; run: () => void; busy?: boolean; writes?: boolean } | undefined = !story ? undefined
     : story.conclusion
       ? { label: 'See how the story ended', run: () => openFate() }
       : arcStep
@@ -226,7 +232,7 @@ export function HarnessReaderSession({
         : mode === 'survival' && !pendingChapterDirection(story)
         ? { label: `Direct Chapter ${upcoming}`, run: () => openFate(true) }
         : onGenerateNextChapter
-          ? { label: writer.writing ? `Writing Chapter ${upcoming}…` : `Write Chapter ${upcoming}`, run: () => void writeNext(), busy: writer.writing }
+          ? { label: writer.writing ? `Writing Chapter ${upcoming}…` : `Write Chapter ${upcoming}`, run: () => void writeNext(), busy: writer.writing, writes: true }
           : undefined;
 
   // Start Story: the first chapter begins once, as soon as the Reader can begin it.
@@ -389,9 +395,12 @@ export function HarnessReaderSession({
         {later
           ? <button type="button" aria-label="Next Chapter" onClick={() => openChapter(later.chapterNumber)}
               className={`${navButton} border-white/15 text-neutral-200 hover:border-white/30`}>Next</button>
-          : continueAfterLatest && <button type="button" aria-label={`Next Chapter: ${continueAfterLatest.label}`}
-              disabled={continueAfterLatest.busy} aria-busy={continueAfterLatest.busy || undefined} onClick={continueAfterLatest.run}
-              className={`${navButton} border-cyan-300/50 bg-cyan-400/15 font-semibold text-cyan-50 hover:bg-cyan-400/25`}>{continueAfterLatest.label}</button>}
+          : continueAfterLatest && <span className="relative inline-flex items-center gap-2">
+              {continueAfterLatest.writes && renderWriteAside?.(chapters.length)}
+              <button type="button" aria-label={`Next Chapter: ${continueAfterLatest.label}`}
+                disabled={continueAfterLatest.busy} aria-busy={continueAfterLatest.busy || undefined} onClick={continueAfterLatest.run}
+                className={`${navButton} border-cyan-300/50 bg-cyan-400/15 font-semibold text-cyan-50 hover:bg-cyan-400/25`}>{continueAfterLatest.label}</button>
+            </span>}
       </nav>
       {rewritable && chapter && <ChapterRewrite key={chapter.id} chapterNumber={chapter.chapterNumber} disabled={writer.writing} onRewrite={rewriteChapter} />}
       {chapter && <ReadAloudPlayer readAloud={readAloud} onListen={listen} offscreen={follow.offscreen}

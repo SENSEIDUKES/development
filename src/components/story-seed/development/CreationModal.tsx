@@ -67,6 +67,8 @@ export interface CreationModalProps {
    * places it; the host owns what it holds.
    */
   renderStorySettings?: (seed: { seed: StorySeedInput; originalLanguage: SenLanguageCode }) => ReactNode;
+  /** Shown beside the Manifest button, such as the host's price for a World Blueprint. */
+  manifestAside?: ReactNode;
 }
 
 /** Existing one-story generation default; Chapter Generation Pass 1 does not use it. */
@@ -135,7 +137,7 @@ const selectCreationModalStore = (state: StoryCreationSnapshot): CreationModalSt
   libraryStories: state.stories,
 });
 
-export default function CreationModal({ onNavigateHome, onStartStory, onGenerateBlueprint, isGenerating: isGeneratingProp, error, accountDefaultLanguage, accountDefaultChapterWritingStyle, renderStorySettings }: CreationModalProps) {
+export default function CreationModal({ onNavigateHome, onStartStory, onGenerateBlueprint, isGenerating: isGeneratingProp, error, accountDefaultLanguage, accountDefaultChapterWritingStyle, renderStorySettings, manifestAside }: CreationModalProps) {
   const runtime = useStoryCreationRuntime();
   const guestWorkspace = Boolean(runtime.guestOwnerId);
   const storeIsGenerating = useStoryCreationStore(state => state.isGenerating);
@@ -863,6 +865,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
                 {requiredComplete}/{REQUIRED_STORY_SECTIONS.length} required
               </p>
 
+              {manifestAside && <span className="shrink-0 text-base">{manifestAside}</span>}
               <ManifestButton
                 size="lg"
                 icon={SENManifestingIcon}

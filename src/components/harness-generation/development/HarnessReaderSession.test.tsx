@@ -73,15 +73,16 @@ const story = async ({ written = 0, replies }: { written?: number; replies?: str
 };
 
 /** A host like the Library workspace: it follows the controller and writes chapters with its model. */
-function Host({ controller, storyId, readerState, renderWriting, startOnOpen, canWrite = true, canRewrite = false, readerPreferences, readAloudVoices }: {
+function Host({ controller, storyId, readerState, renderWriting, renderWriteAside, startOnOpen, canWrite = true, canRewrite = false, readerPreferences, readAloudVoices }: {
   controller: HarnessGenerationController; storyId: string; readerState?: ReaderStateRepository;
-  renderWriting?: (writing: HarnessReaderWriting) => React.ReactNode; startOnOpen?: boolean; canWrite?: boolean; canRewrite?: boolean;
+  renderWriting?: (writing: HarnessReaderWriting) => React.ReactNode; renderWriteAside?: (written: number) => React.ReactNode;
+  startOnOpen?: boolean; canWrite?: boolean; canRewrite?: boolean;
   readerPreferences?: ReaderPreferenceStorage; readAloudVoices?: ReadAloudVoicePicks;
 }) {
   const [state, setState] = useState(controller.snapshot());
   useEffect(() => { const stop = controller.subscribe(setState); return () => { stop(); }; }, [controller]);
   return <HarnessReaderSession state={state} storyId={storyId} controller={controller} onClose={() => undefined}
-    readerStateRepository={readerState} renderWriting={renderWriting} startOnOpen={startOnOpen}
+    readerStateRepository={readerState} renderWriting={renderWriting} renderWriteAside={renderWriteAside} startOnOpen={startOnOpen}
     readerPreferences={readerPreferences} readAloudVoices={readAloudVoices}
     onGenerateNextChapter={canWrite ? async () => { await controller.generateNextChapter(storyId, 'test-model'); } : undefined}
     onRewriteChapter={canRewrite ? async note => { await controller.rewriteLatestChapter(storyId, 'test-model', note); } : undefined} />;
@@ -178,6 +179,19 @@ describe('The HARNESS Reader', { timeout: 20_000 }, () => {
     // The closing screen keeps the number of the chapter it was writing.
     expect(seen.at(-1)).toEqual({ active: false, chapterNumber: 1 });
     expect(buttonBy(byLabel('Next Chapter: Write Chapter 2'))).toBeTruthy();
+  });
+
+  it('shows the host\'s aside beside Write, with how many chapters are written, and nowhere else', async () => {
+    const { controller, storyId } = await story();
+    const renderWriteAside = (written: number) => <span data-testid="write-aside">{written}</span>;
+    await mount(<Host controller={controller} storyId={storyId} renderWriteAside={renderWriteAside} />);
+    expect(container.querySelector('[data-testid="write-aside"]')?.textContent).toBe('0');
+    await click(byLabel('Next Chapter: Write Chapter 1'), 'Write Chapter 1');
+    await flush();
+    expect(container.querySelector('[data-testid="write-aside"]')?.textContent).toBe('1');
+    // Reading an earlier chapter, Next only opens the next one: no aside.
+    await mount(<Host controller={controller} storyId={storyId} renderWriteAside={renderWriteAside} canWrite={false} />);
+    expect(container.querySelector('[data-testid="write-aside"]')).toBeNull();
   });
 
   it('a chapter keeps writing when the reader leaves: back in the Reader it is still writing, never begun twice, and opens when saved', async () => {

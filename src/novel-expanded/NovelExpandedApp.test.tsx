@@ -428,6 +428,8 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     await click(buttonByText('Create', strip()!), 'Create in the navigation', 20);
     expect(address()).toBe('/app/?page=create');
     expect(document.querySelector('[data-testid="novel-expanded-create"]')).toBeTruthy();
+    // Manifest wears the Energy badge with the World Blueprint's price (a chapter's, for now).
+    expect(document.querySelector('[data-testid="novel-expanded-create"] .energy-badge[data-energy-action="chapter.generate"]')?.textContent).toBe('1');
     // Story Seed's own task bar stands where the global strip was; the note floats above it.
     expect(strip()).toBeNull();
     const bar = document.querySelector<HTMLElement>('nav[aria-label="Story Seed navigation"]')!;

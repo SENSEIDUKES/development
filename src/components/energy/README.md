@@ -102,6 +102,13 @@ or verified against a production deployment.
 
 ## Workshop history
 
+- **2026-10-09 the Energy badge** — Every Energy number wears one badge: the Energy mark and
+  the number in a gold-outlined pill, a balance (`EnergyAmount`, so the Profile home, the
+  Store and the Energy page) or a cost (`EnergyActionCost`). `EnergyCostMeter` puts an
+  action's price beside its control and floats "−price" as each result arrives: the Reader's
+  Write Chapter button (1 Energy). The Story Seed's Manifest shows a chapter's price for now,
+  as a World Blueprint has no price of its own yet. Practice only: nothing is taken.
+
 - **2026-10-08 images at 5, Energy leaving** — Images cost 5 Energy each (`image.generate`,
   the owner's price; still projected). `EnergySpendFloater` shows Energy leaving the way games
   do: a "−5" with the Energy mark rises from the control that spent it and fades, one per item

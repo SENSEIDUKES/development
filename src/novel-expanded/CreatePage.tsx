@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState, type ComponentProps } from 'react';
 import { CreationModal, StoryCreationProvider } from '@seihouse/library/story-seed';
+import { BlueprintEnergyCost } from '@seihouse/library/stories';
 import type { InitialStoryGenerationPayload } from '@seihouse/sen/story-seed';
 import { BlueprintRequestError } from '../host/story-seed/blueprintGenerationClient';
 import type { AskForAccessToken } from './accessToken';
@@ -72,7 +73,7 @@ export function CreatePage({ services, askForToken, startedSeedIds, chapterModel
     <div className="min-h-screen bg-void" data-testid="novel-expanded-create">
       <CreationModal onNavigateHome={onHome} onStartStory={onStartStory} isGenerating={generating} error={null}
         accountDefaultLanguage={accountDefaultLanguage} accountDefaultChapterWritingStyle={accountDefaultChapterWritingStyle}
-        renderStorySettings={renderStorySettings}
+        renderStorySettings={renderStorySettings} manifestAside={<BlueprintEnergyCost />}
         onGenerateBlueprint={payload => withToken('The World Blueprint needs the development access token. Nothing was changed.',
           (accessToken, signal) => services.requestWorldBlueprint(payload, accessToken, signal, chapterModel))} />
     </div>

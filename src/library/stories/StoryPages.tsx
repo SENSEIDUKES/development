@@ -12,6 +12,7 @@ import { storyCoverRequest, type StoryCoverService } from './storyCover';
 import { downloadHarnessStory } from './storyExport';
 import { harnessStoryDisplay } from './storyView';
 import type { LibraryStories } from './useLibraryStories';
+import { EnergyCostMeter } from '../../components/energy/development/EnergyCostMeter';
 
 export interface StoryPagesProps {
   stories: LibraryStories;
@@ -100,6 +101,8 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
         generationPhase="chapter" generatingChapterNum={writing.chapterNumber} progress={null}
         generationProgressMessage={null} estimatedSecondsRemaining={null} activeAgentId="versa"
         streamingBlocksCount={0} isVeilMinimized={false} setIsVeilMinimized={keepVeilOpen} /> : undefined}
+      // A chapter's Energy price beside Write, and "−1" as each arrives (practice: nothing is taken yet).
+      renderWriteAside={written => <EnergyCostMeter actionId="chapter.generate" made={written} note="practice: nothing is taken yet" />}
       onClose={() => { setStartOnOpen(false); onCloseReader(); }} />
   </>;
 

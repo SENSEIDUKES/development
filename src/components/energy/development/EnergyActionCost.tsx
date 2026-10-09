@@ -21,7 +21,7 @@ export function EnergyActionCost({ actionId, price, className = '' }: EnergyActi
   const display = entry ? formatEnergyPriceRange(entry) : formatEnergy(resolved);
   const label = `Costs ${display} Energy${entry?.projected ? ' (projected)' : ''}`;
   return (
-    <span className={`energy-action-cost ${className}`.trim()} data-energy-action={actionId ?? undefined} title={label} aria-label={label} role="img">
+    <span className={`energy-action-cost energy-badge ${className}`.trim()} data-energy-action={actionId ?? undefined} title={label} aria-label={label} role="img">
       <LibraryNavigationIcon name="energy" size="1em" className="energy-glyph" aria-hidden="true" />
       <span aria-hidden="true">{display}</span>
     </span>

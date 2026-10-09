@@ -9,14 +9,25 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - **Source repository:** SENSEIDUKES/Light-Novels
 - **Source location:** the Reader screen `src/components/ReaderScreen.tsx` (export `ReaderScreen`), which mounts `src/components/ReaderChamber.tsx` (default export), plus the overlays production's `src/App.tsx` mounts beside it: `CodexSheetOverlay`, `KeyboardShortcuts`, `ParticleSystem` and `AtmosphericAudio` (verified on `main` @ `647165a`, 2026-09-16)
 - **Original Reference:** a byte-for-byte copy of that Reader in `reference/light-novels/`, copied 2026-10-07 at the owner's request; see “Original Reference: production's Reader” below
-- **Workshop preview:** `?preview=reader-chamber`
+- **Workshop preview:** `?preview=reader-chamber`. Original Reference is production's Reader; Development is the NovelExpanded app's own Reader (since 2026-10-09)
+- **Development view:** the app's Reader, `HarnessReaderSession` (SEN, `src/components/harness-generation/development/`), hosted exactly as the app hosts it by Library's `StoryPages` on its read page. The older development Reader in `development/` is no longer on this card; its code stays for the Card Workshop, Reader Codex and Character Voice previews that use parts of it
 - **First Workshop record:** 2026-07-31
-- **Last recorded Workshop update:** 2026-10-07
+- **Last recorded Workshop update:** 2026-10-09
 - **Historical source inspection:** 2026-08-22 (the older copy), 2026-10-07 (the current Original Reference)
 - **Implementation status:** under refinement
 
 ## Workshop history
 
+- **2026-10-09 (Development is the app's Reader):** The owner asked for a place to work on the Reader inside the NovelExpanded app, which had drifted far from the Reader this card showed. Development now shows that Reader itself: Library's `StoryPages` on its read page over `useLibraryStories`, with the app's writing screen (VERSA), soundscapes, read-aloud voices and the official CAPA skills installed as the app installs them. So the Workshop and the app render the same component and cannot drift apart. Only the services differ (`src/workshop/previews/reader-chamber/`):
+  - **The story.** It is the owner's Sundered Heavens test (eight chapters written in the app on 2026-10-06), as Export story saved it. `sampleStory.json` is trimmed from 2.9 MB to 0.9 MB by leaving out copies the Reader never reads: each attempt's accepted draft, foundation snapshot and frozen media, and the recordings catalog inside each chapter's frozen media. The loader restores the snapshot and media from the identical records beside them.
+  - **Storage.** The story and the reading place are kept in memory, one copy per scene.
+  - **The writer calls no model.** Asked for a chapter, it waits about five seconds and answers with the reply the model gave for that chapter. The HARNESS then accepts and saves it exactly as it did then: replaying Chapter 8 gives back its prose, Sound Cues, speakers, holdings, soundtrack and path unchanged (`sampleStory.test.ts`). A chapter the story never had (Chapter 9) fails with that reason, which is how the Reader shows a writer that cannot help.
+  - **Scenes and pages.** **States** places the reader: Chapter 1, the middle, before the newest chapter ("Write Chapter 8"), on the newest chapter (Rewrite; Write Chapter 9), and the story start (Write Chapter 1). Going before a chapter uses SEN's own rewind (`withoutLatestChapter`), with Rhythm's recommendation worked out again as the HARNESS does before a rewrite. **Pages** opens Fate, Holdings or Reader Settings by pressing the Reader's own button. **Advanced** opens any story saved with the app's Export story, kept in the browser tab only.
+  - **Back** opens the story's World Info, as in the app; its Continue returns to the chapter.
+  - **The Familiar** is no longer drawn around the Development Reader: the app keeps it out of the Reader, which is immersive.
+  - **The older development Reader** (`development/`, `@seihouse/sen/reader-chamber`) left this view with its scenario list (`previewStates.ts`). Its code and package entry stay.
+  - **The Original Reference and its Scenes are unchanged.**
+  - **Workshop Controls.** A preview's open modal now covers them (`src/styles.css`), so Reader Settings is no longer hidden behind them on a phone.
 - **2026-10-07:** The Original Reference is production's actual Reader again. The owner found the Workshop copy was not the Reader production shows, and asked for the real one so its ideas and customization options can be studied before the Reader is redesigned. The older copy had been taken from production in late July and later adapted: it lacked the whole outer Reader screen (the top bar with genre and title, clock, chapter and total word counts, Lore Glossary and Codex, and the arc progress line), the Lore Glossary panel, the welcome-back recap, the steering screen and the keyboard shortcuts, it predated features such as the cinematic vignettes and the four System notice frames, parts of it had been rewired to development code, and the Workshop never passed Alter Fate, so its button was hidden. At the owner's explicit request, and as a deliberate exception to the rule that reference folders are never refreshed, `reference/` now holds production's Reader exactly as Light-Novels `main` has it at `647165a`: 119 files copied unchanged into `reference/light-novels/`, mirroring production's `src/` so not one import was rewritten. Eight production services are replaced at their own paths by marked Workshop seams (app state, Firebase, story storage, persistence, the media service and its resolver, and the embedding search), `firebase/auth` resolves to a local stand-in for this folder only, and production's direct AI routes are answered locally while the Reader is on screen. `reference/snapshot.json` records the commit and every file's fingerprint, and `reference/snapshot.test.ts` fails if a copied file is ever edited. The copy is type-checked under production's own compiler settings (`tsconfig.reference.json`); the Workshop loads it through a glob so this repository's strict program never checks production code. The Original Reference pane has its own sample story and **Scenes** (eighteen production surfaces, each opened through production's own control); the Development Reader and its controls are unchanged. The Card Workshop's locked reference keeps rendering exactly as before: its three borrowed files (`SystemBlock`, `FateResultCard`, `ManifestationImage`) moved into `card-workshop/reference/`, and `shared/alterFateLock.ts` and `shared/trackLibrary.ts`, which only the older copy used, were removed. `PRODUCTION_READER.md` lists everything production's Reader does, as the starting point for designing the Reader as one clear piece.
 - **2026-10-01:** `InlineAudio.tsx`, `InlineAudio.css` and their tests moved to `src/audio/` and are published from `@seihouse/sen/inline-audio`, no longer from this entry. `ReaderViewport` imports them from there. Sound Cue rendering is shared by every SEN reader, and the HARNESS Reader now renders cues without reaching this folder.
 - **2026-09-27:** The Reader stays outside the Library Shell. Library browsing screens now scroll inside the App Shell's fixed frame, but the Reader is immersive and its cinematic scrolling depends on the document scroller, so `library-shell/development/ReaderScrollBoundary.test.ts` guards that boundary. The overlay gate now listens for scroll on the Reader's real scroll surface (the document, or a host's inner scroller) instead of the prose container, which never scrolls; `findReaderScroller` is shared with the scroll-direction header.
@@ -212,10 +223,12 @@ shared/                       — code genuinely identical between the two forks
                             — pure libs copied (near-)verbatim from production
 ```
 
-Both render inside `src/workshop/previews/reader-chamber/ReaderChamberWorkspace.tsx`.
+The card is `src/workshop/previews/reader-chamber/ReaderChamberWorkspace.tsx`.
 The Original Reference loads `reference/host/ProductionReaderHost.tsx` lazily with its own
-sample story and Scenes (`productionScenarios.ts`); Development keeps the shared mock story
-and its Pages / States / Effects controls — see "Available preview states".
+sample story and Scenes (`productionScenarios.ts`). Development is the app's Reader
+(`AppReader.tsx`) on the owner's Sundered Heavens test (`sampleStory.json`, opened by
+`sampleStory.ts`), with the scenes in `readerScenes.ts`; see "Available preview states".
+The older development Reader in `development/` is no longer on this card.
 
 ## Original Reference: production's Reader
 
@@ -286,6 +299,24 @@ under `reference/light-novels/`, so every relative import is production's own.
 
 ### Development preview
 
+Development is the app's Reader, so nothing in it is replaced; only the services the
+app hands it differ (`src/workshop/previews/reader-chamber/`):
+
+- **Story storage:** an in-memory `HarnessGenerationRepository` holding the scene's copy
+  of the story, where the app keeps stories in the browser's IndexedDB.
+- **Reading place:** an in-memory `ReaderStateRepository`, opened on the scene's chapter.
+- **Writer:** `createReplayWriter` answers each chapter request with the reply that
+  chapter was written with, after about five seconds, and calls no model. It plans no
+  arcs and runs no Holdings fixer.
+- **Skills, media and preferences:** the official CAPA skills installed in memory as the
+  app installs them, the Library's base media, the app's soundscapes, and the
+  Workshop's own reader preferences (`workshop.reader.`), apart from the app's. Music
+  and sound play through the Workshop's one host mixer.
+
+### The older development Reader (no longer on this card)
+
+It ran on these stand-ins, which stay for the previews that still use its parts:
+
 - **`useAppStore` / `selectIsGenerating`** — a tiny external store on
   `useSyncExternalStore` (no zustand), exposing the same call signatures
   (`useAppStore(selector)` + `useAppStore.getState()`). All setters genuinely update
@@ -330,13 +361,29 @@ sample story and opening its surface through production's control:
   unwritten (write it), a chapter being written, the welcome-back recap, steering the
   next arc, a Fate Survival story
 
-The Pages / States / Effects controls below drive the Development Reader.
+**States (Development)** — where the reader is in the story. Each scene starts from a
+fresh copy of the story; switching between Development and Compare keeps what happened
+in it until another scene is chosen.
 
-The preview controls now live inside the shared Workshop Controls menu (Pages / States /
-Effects / Advanced), rendered by `FeatureWorkspace`. Each scenario in
-`src/workshop/previews/reader-chamber/previewStates.ts` carries a `category` field that
-maps it into the canonical section list. The mapping collapses the old Reader-specific
-labels into the shared menu while keeping every scenario reachable:
+- **Chapter 1** — all eight chapters written; the Reader opens on Chapter 1
+- **Chapter 4** — the middle of the story
+- **Write Chapter 8** — Chapter 8 not written yet: the Reader opens on Chapter 7, and
+  Write Chapter 8 writes it again from its saved reply behind VERSA's writing screen
+- **Chapter 8, the newest** — Rewrite writes it again from the same reply; Write
+  Chapter 9 shows the Reader's message when the writer cannot help
+- **Story start** — no chapter yet; Write Chapter 1 writes it from its saved reply
+
+**Pages (Development)** — Fate, Holdings and Reader Settings, each opened by pressing the
+Reader's own button. The story stays as it is.
+
+**Advanced (Development)** — open a story saved with the app's Export story; the scenes
+follow its chapter count. The file stays in the browser tab.
+
+### The older development Reader's states (no longer on this card)
+
+These drove the older development Reader until 2026-10-09; its scenario list
+(`previewStates.ts`) left with it. Each scenario carried a `category` field that
+mapped it into the canonical section list:
 
 - **`pages` (old)** → **Pages** section — alternate Reader Chamber states and full-screen conditions.
 - **`reading` (old)** → **States** section — normal reading states and reading setup.
@@ -394,7 +441,8 @@ line so the current state is never ambiguous.
 Neither pane reaches production: no Firebase, Data Connect, IndexedDB storage manager,
 media upload service, embedding search, quota charging, AI generation or translation
 call. The Original Reference replaces those at their own paths (see “What stands in
-for production”); the Development preview uses `shared/stubs.ts` and its local adapters.
+for production”); the Development preview runs the app's Reader on in-memory storage and
+a writer that replays saved chapters.
 Public media still loads as it does in production: the Original Reference's reveal
 backdrops come from production's public R2 bucket, and its music, atmosphere and cue
 sounds from SEIHouse's public audio host.
@@ -429,6 +477,17 @@ production's own compiler settings.
   lockstep; both bottom bars are viewport-fixed and overlap.
 
 ### Development
+
+Development is the app's Reader, so it looks as the app does, with these differences:
+
+- **Writing is a replay:** a chapter takes about five seconds instead of the writer's
+  real time, and only chapters the story already has can be written.
+- **World Info** (behind Back) has no Library Shell around it; in the app it sits in the
+  shell.
+- **Media hosts:** SEIHouse's media and audio hosts must be reachable for icons, sound
+  and music, as in the app.
+
+### The older development Reader (no longer on this card)
 
 - **Codex service actions are local** — the migrated UI, navigation, edit controls,
   caches, dialogs, and responsive layouts are present, but live AI/media generation,

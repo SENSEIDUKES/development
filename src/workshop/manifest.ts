@@ -226,9 +226,9 @@ export const workshopEntries: WorkshopEntry[] = [
     owner: 'sen',
     status: 'active',
     title: 'Reader Chamber',
-    description: 'The full reading UI with chapter-scoped Reader Codex memory, a Mind Palace of kept passages anchored to their exact text, an Alter Fate entry that opens the host\'s Fate page, and Sound Cues placed on the exact words a chapter marks, played from the approved Library catalog. The Original Reference is production\'s own Reader screen, copied unchanged, with a sample story and scenes for every production surface.',
+    description: 'Where chapters are read. Development is the NovelExpanded app\'s own Reader, exactly as the app hosts it: the chapter with its Sound Cues, Listen, the chapter\'s soundtrack, Fate, Holdings, Reader Settings, Rewrite, and Write Next Chapter behind VERSA\'s writing screen. It reads SENSEI\'s Sundered Heavens test, or any story saved with Export story; writing replays the saved chapters, so no model is called. The Original Reference is production\'s own Reader screen, copied unchanged, with a sample story and scenes for every production surface.',
     category: 'reader-ui',
-    version: 'v1.7',
+    version: 'v2.0',
     source: {
       repository: 'SENSEIDUKES/Light-Novels',
       path: 'src/components/ReaderScreen.tsx; src/components/ReaderChamber.tsx; src/components/CodexSheetOverlay.tsx',

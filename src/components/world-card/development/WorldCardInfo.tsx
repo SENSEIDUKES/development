@@ -1,12 +1,12 @@
 import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
-import { BookOpen, ChevronDown, ChevronRight, ChevronUp, Flower2, Info, Sparkles } from 'lucide-react';
+import { BookOpen, ChevronDown, ChevronRight, ChevronUp, Film, Flower2, Info, Sparkles, Square } from 'lucide-react';
 import { ElementalTitle, SEIBadge } from '@seihouse/ui';
 import { LibraryButton, LibraryCard, LibraryIcon, LibraryPanel, ManifestButton, type LibraryIconName } from '@seihouse/library-ui';
 import { getTagMetadata, normalizeStoryTagIdentity, STORY_TAG_COLOR_ACCENTS, type StoryTagMetadata } from '@seihouse/sen/story-seed';
 import type { WorldCardInfoProps } from '../shared/worldCardContracts';
 import { useDominantColor } from '@seihouse/sen/motion-picture';
 import { WorldCard } from './WorldCard';
-import { WorldCardBackdropVideo } from './WorldCardBackdropVideo';
+import { WorldCardBackdropVideo, type WorldCardBackdropVideoHandle } from './WorldCardBackdropVideo';
 import { WorldCardFormatSymbol } from './WorldCardFormatSymbol';
 import { WorldCardStoryPanel } from './WorldCardStoryPanel';
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
@@ -28,7 +28,9 @@ import './world-card.css';
 export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, readingPosition, coverAction }: WorldCardInfoProps) {
   const detail = 'author' in story ? story : undefined;
   const coverUrl = story.imageUrl?.trim() || undefined;
-  const videoUrl = 'videoUrl' in story ? story.videoUrl : undefined;
+  const videoUrl = 'videoUrl' in story ? story.videoUrl?.trim() || undefined : undefined;
+  const backdropVideo = useRef<WorldCardBackdropVideoHandle>(null);
+  const [clipPlaying, setClipPlaying] = useState(false);
   const glowColor = useDominantColor(coverUrl);
   const creatorName = story.creatorName?.trim() || detail?.author?.trim();
   const publicationLabel = detail?.publicationStatus === 'ongoing' ? 'On Going'
@@ -46,7 +48,7 @@ export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, readingPosi
       {coverUrl && <span className="world-card-info-backdrop-art"
         style={{ backgroundImage: `url(${JSON.stringify(coverUrl)})` } as CSSProperties} />}
       {/* The world's own motion picture, when it has one, loops silently behind the cover. */}
-      <WorldCardBackdropVideo src={videoUrl} className="world-card-info-video" />
+      <WorldCardBackdropVideo ref={backdropVideo} src={videoUrl} className="world-card-info-video" onPlayingChange={setClipPlaying} />
       <span className="world-card-info-scrim" />
     </div>
     <div className="world-card-info-body">
@@ -54,6 +56,14 @@ export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, readingPosi
         <div className="world-card-info-cover">
           <WorldCard face="info" world={story} />
           {coverAction && <div className="world-card-info-cover-action">{coverAction}</div>}
+          {/* The format mark, as on the Full card: it opens the story's information (views and more to come). */}
+          {detail && <WorldCardStoryPanel key={story.id} world={detail} triggerClassName="world-card-base-format world-card-info-format" />}
+          {/* MP: plays or stops the clip behind the page, so a reader whose phone would not start it (Low Power Mode) can. */}
+          {videoUrl && <button type="button" className="world-card-base-format world-card-info-motion" aria-pressed={clipPlaying}
+            aria-label={`${clipPlaying ? 'Stop' : 'Play'} motion for ${story.title}`}
+            onClick={() => clipPlaying ? backdropVideo.current?.pause() : backdropVideo.current?.play()}>
+            {clipPlaying ? <Square size={14} aria-hidden="true" /> : <Film size={17} aria-hidden="true" />}
+          </button>}
         </div>
         <div className="world-card-info-identity">
           {/* On a phone the reading pill and the story's states share one row; beside the cover the states lead the column. */}
@@ -83,7 +93,7 @@ export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, readingPosi
           </header>
           <p className="world-card-info-meta" data-world-info-meta="">
             {genre && <span className="world-card-info-genre">
-              <Flower2 size={16} aria-hidden="true" /><span className="sr-only">Genre: </span>{genre}
+              <Flower2 size={16} aria-hidden="true" /><span className="sr-only">Genre: </span><span className="world-card-info-genre-name">{genre}</span>
             </span>}
             <span className="world-card-info-chapter-count">{countLabel}</span>
             {/* On a phone the publication status joins this line; beside the cover it stays a badge above the title. */}

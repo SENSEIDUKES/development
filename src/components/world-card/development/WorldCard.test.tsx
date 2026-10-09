@@ -240,8 +240,10 @@ it('uses the artwork-only WorldCard on Info while keeping creator and progress o
   expect(cover.style.getPropertyValue('--world-card-glow')).not.toBe('');
   expect(cover.querySelector('.world-card-base-overlay')).toBeNull();
   expect(cover.querySelector('.world-card-base-details')).toBeNull();
-  // The format lives in the page's Information row, not on the Info cover.
+  // The format mark sits on the Info cover (beside the card, not inside it) and opens the story's information.
   expect(cover.querySelector('.world-card-base-format')).toBeNull();
+  const format = page.querySelector<HTMLButtonElement>('.world-card-info-cover button.world-card-info-format')!;
+  expect(format.getAttribute('aria-label')).toBe(`Story information for ${story.title}, Novel`);
   expect(cover.querySelector('.world-card-base-open')).toBeNull();
   expect(page.querySelector('h1')?.textContent).toBe(story.title);
   expect(page.querySelector('[data-element="lightning"]')?.textContent).toContain('SENSEI');
@@ -254,13 +256,9 @@ it('uses the artwork-only WorldCard on Info while keeping creator and progress o
   expect(backdropVideo.loop).toBe(true);
   expect(backdropVideo.closest('[aria-hidden="true"]')).not.toBeNull();
   expect(page.querySelector('[aria-label="Story status: On Going"]')).not.toBeNull();
+  // The clip already plays behind the page, so the cover is a still with no motion control.
   expect(cover.querySelector('video')).toBeNull();
-
-  act(() => cover.querySelector<HTMLButtonElement>('.motion-picture-control')!.click());
-  expect(cover.getAttribute('data-motion-playing')).toBe('true');
-  expect(cover.querySelector('video')?.getAttribute('src')).toBe(story.videoUrl);
-  act(() => cover.querySelector('video')!.dispatchEvent(new Event('ended')));
-  expect(cover.getAttribute('data-motion-playing')).toBeNull();
+  expect(page.querySelector('.motion-picture-control')).toBeNull();
   vi.restoreAllMocks();
 });
 
@@ -274,7 +272,7 @@ it('puts the single reading action in a pill under the cover and names the known
   act(() => root.render(<WorldCardInfo story={infoStory} onRead={onRead} />));
   const readingActions = container.querySelectorAll<HTMLButtonElement>('button[data-world-info-chapters="action"]');
   expect(readingActions).toHaveLength(1);
-  expect(container.querySelectorAll('[role="button"], button:not(.motion-picture-control):not(.world-card-info-information)')).toHaveLength(1);
+  expect(container.querySelectorAll('[role="button"], button:not(.world-card-info-format):not(.world-card-info-information)')).toHaveLength(1);
   const chapters = readingActions[0];
   expect(chapters.textContent).toBe('Continue');
   expect(chapters.getAttribute('aria-label')).toBe('Continue: The Last Lotus, 24 Chapters, current arc Silent Pavilion');
@@ -430,6 +428,31 @@ it('shows the backdrop clip once it plays, even when autoplay began before React
   // No playing event ever arrived; the resolved play() alone reveals the clip.
   expect(container.querySelector('.world-card-info-backdrop video')?.getAttribute('data-playing')).toBe('true');
   paused.mockRestore();
+  vi.restoreAllMocks();
+});
+
+it('keeps an MP control on the Info cover that starts or stops the backdrop clip by the reader\'s tap', async () => {
+  const play = vi.fn().mockResolvedValue(undefined);
+  HTMLMediaElement.prototype.play = play;
+  HTMLMediaElement.prototype.pause = vi.fn();
+  await act(async () => root.render(<WorldCardInfo story={{ ...infoStory, videoUrl: '/clip.mp4' }} />));
+  // Autoplay was refused (jsdom never plays): the cover backdrop shows, and MP offers to play.
+  const mp = container.querySelector<HTMLButtonElement>('.world-card-info-cover button.world-card-info-motion')!;
+  expect(mp.getAttribute('aria-label')).toBe('Play motion for The Last Lotus');
+  expect(mp.getAttribute('aria-pressed')).toBe('false');
+  expect(container.querySelector('.world-card-info-backdrop-art')).not.toBeNull();
+  play.mockClear();
+  await act(async () => mp.click());
+  expect(play).toHaveBeenCalledTimes(1);
+  // Once the clip truly plays, MP stops it.
+  await act(async () => container.querySelector('.world-card-info-backdrop video')!.dispatchEvent(new Event('playing')));
+  expect(mp.getAttribute('aria-label')).toBe('Stop motion for The Last Lotus');
+  await act(async () => mp.click());
+  expect(HTMLMediaElement.prototype.pause).toHaveBeenCalledTimes(1);
+
+  // No clip, no MP.
+  await act(async () => root.render(<WorldCardInfo story={{ ...infoStory, videoUrl: undefined }} />));
+  expect(container.querySelector('.world-card-info-motion')).toBeNull();
   vi.restoreAllMocks();
 });
 

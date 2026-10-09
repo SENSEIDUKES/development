@@ -108,7 +108,7 @@ pieces rather than page-local cards or buttons:
 | Reading pill | `ManifestButton` (`lg`) in Home's night-glass colors |
 | Open Codex | `LibraryCard` (`interactive` when a destination exists) |
 | Backdrop clip | `WorldCardBackdropVideo` (shared with the Feature card) |
-| Information row | `WorldCardStoryPanel` (the Full card's format dialog) with the row as its trigger |
+| Format mark on the cover, Information row | `WorldCardStoryPanel` (the Full card's format dialog): the cover's corner mark and the row each open it |
 | Synopsis More / Less | `LibraryButton` (`ghost`) |
 
 - **Backdrop.** Behind the hero sits this world's own cover, blurred and
@@ -382,6 +382,16 @@ Workshop sample data and reference material remain outside the host adapter.
   left the pill and lives in its accessible name. On phones the publication
   status moved into the meta line ("Xianxia | 24 Chapters | On Going"); the
   laptop keeps its badge.
+- **2026-10-09** — **Info cover controls and legible lettering.** The Info cover
+  is a still; its MP button (top-right) now plays or stops the clip looping
+  behind the page, so a reader whose phone refused to start it (Low Power Mode,
+  reduced motion) can start it with a tap. Whenever the clip is not playing,
+  the backdrop is the cover itself, only lightly softened. The format mark is back on the cover's
+  top-left corner, opening the story information dialog (where views and more
+  will live); the Information row below stays, to become the Blueprint
+  entrance later. A soft dark shade and a text shadow sit behind the title,
+  byline and meta so they read over any clip, and on phones the meta line stays
+  on one line (a long genre shortens) so no separator is left alone.
 - **2026-10-09** — **Cover slot.** `WorldCardInfo` takes `coverAction`: the host's
   own controls laid over the Info cover in its frame (the app's World Info makes
   covers there: Manifest on an empty cover, a small Manifest and download on a kept one).

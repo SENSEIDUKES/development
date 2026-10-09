@@ -214,8 +214,9 @@
   mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
 }
 .world-card-info-backdrop-art {
-  position: absolute; inset: -2rem; background-size: cover; background-position: center 22%; background-repeat: no-repeat;
-  filter: blur(24px) saturate(1.25) brightness(0.85); opacity: 0.95;
+  position: absolute; inset: -0.75rem; background-size: cover; background-position: center 22%; background-repeat: no-repeat;
+  /* The cover itself, softened only a little: it is the backdrop whenever the clip does not play. */
+  filter: blur(3px) saturate(1.15) brightness(0.8); opacity: 0.9;
 }
 .world-card-info-video { position: absolute; inset: 0; width: 100%; height: 100%; object-position: center 30%; }
 .world-card-info-video[data-playing='true'] { opacity: 0.55; }
@@ -228,10 +229,10 @@
 @media (min-width: 640px) { .world-card-info-body { gap: 1.2rem; padding: 2rem 1.75rem 1.5rem; } }
 @media (min-width: 1024px) { .world-card-info-body { gap: 1.4rem; padding: 2.5rem 2.5rem 2rem; } }
 
-/* On the Info cover the motion control steps aside while the clip plays, keeping the small frame clear; keyboard focus still shows it. */
-.world-card-info-cover .world-card-base[data-motion-playing='true'] .motion-picture-control:not(:focus-visible) { opacity: 0; pointer-events: none; }
-.world-card-info-cover .motion-picture-control { transition: opacity 200ms ease-out, background-color 200ms ease-out; }
-@media (prefers-reduced-motion: reduce) { .world-card-info-cover .motion-picture-control { transition: none; } }
+/* The format mark sits on the cover's top-left corner, above the host's cover controls. */
+.world-card-info-cover .world-card-info-format { z-index: 7; top: 0.65rem; left: 0.65rem; }
+/* MP on the top-right corner, as on the Full card; it drives the backdrop clip. */
+.world-card-info-cover .world-card-info-motion { z-index: 7; top: 0.65rem; right: 0.65rem; left: auto; }
 
 /*
  * Hero, as Audible presents a title: on a phone everything is one centered
@@ -245,7 +246,15 @@
 /* The host's controls over the cover (for example making cover art) share the cover's frame and corners. */
 .world-card-info-cover-action { position: absolute; inset: 0; z-index: 6; overflow: hidden; border-radius: 1.25rem; pointer-events: none; }
 .world-card-info-cover-action > * { pointer-events: auto; }
-.world-card-info-identity { display: flex; width: 100%; min-width: 0; flex-direction: column; align-items: center; gap: 0.6rem; text-align: center; }
+.world-card-info-identity { position: relative; isolation: isolate; display: flex; width: 100%; min-width: 0; flex-direction: column; align-items: center; gap: 0.6rem; text-align: center; }
+/* A soft dark shade just behind the lettering, so it reads over any motion picture. */
+.world-card-info-identity::before {
+  content: ''; position: absolute; z-index: -1; inset: -0.75rem -1rem; pointer-events: none;
+  background: radial-gradient(ellipse 60% 55% at 50% 50%, rgba(4, 6, 14, 0.62), rgba(4, 6, 14, 0.34) 60%, transparent 85%);
+}
+.world-card-info-byline, .world-card-info-meta { text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7), 0 0 14px rgba(0, 0, 0, 0.45); }
+/* The title's shading is clipped to its letters, so its shadow is a drop shadow on the whole word shape. */
+.world-card-info-title { filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.65)); }
 .world-card-info-identity > header { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
 .world-card-info-states, .world-card-info-tags { justify-content: center; }
 /* Phone: the reading pill with the story's states beside it, one row. */
@@ -253,6 +262,10 @@
 /* The current arc is shown beside the cover only; on a phone the pill already says where the reader is. */
 @media (max-width: 767.98px) {
   .world-card-info-arc { display: none !important; }
+  /* Genre | chapters | status stays one line; a long genre shortens instead of wrapping a lone separator. */
+  .world-card-info-meta { flex-wrap: nowrap; max-width: 100%; white-space: nowrap; font-size: clamp(0.75rem, 3.7vw, 0.875rem); }
+  .world-card-info-genre { min-width: 0; overflow: hidden; }
+  .world-card-info-genre-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   /* On a phone the publication status reads in the meta line, not as a badge beside the pill. */
   .world-card-info-states .world-card-info-pill-status { display: none; }
   .world-card-info-states:not(:has(.world-card-info-pill:not(.world-card-info-pill-status))) { display: none; }

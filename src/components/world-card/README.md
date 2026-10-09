@@ -364,6 +364,11 @@ Workshop sample data and reference material remain outside the host adapter.
 
 ## Workshop history
 
+- **2026-10-09** — **Info cards stay stacked on narrow phones.** Under 380px
+  (small phones, and any phone with zoom or larger text) Open Codex and
+  Information no longer squeeze side by side, where "Open Codex" broke onto two
+  lines and "Information" ran into its arrow. They stack full-width, as on any
+  phone.
 - **2026-10-09** — **Blueprint button.** `WorldCardInfo` takes
   `onOpenBlueprint`: a small Blueprint button beside the reading pill (side by
   side on phones and laptops). The host owns the page and the view, and leaves

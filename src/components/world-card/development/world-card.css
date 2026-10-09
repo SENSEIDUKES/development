@@ -415,16 +415,7 @@
 .world-card-info-tool-chevron { flex: none; width: 1.1rem; height: 1.1rem; color: var(--world-info-gold-text); transition: transform 200ms ease-out; }
 .world-card-info-tool:hover .world-card-info-tool-chevron,
 .world-card-info-tool:focus-visible .world-card-info-tool-chevron { transform: translateX(3px); }
-/* Narrow phones: Codex and Timeline sit side by side as compact tiles so the page still fits one screen. */
-@media (max-width: 379px) {
-  .world-card-info-tools { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .world-card-info-tool-content { gap: 0.35rem; min-height: 3rem; padding-right: 0.45rem; }
-  .world-card-info-tool-art { width: 2.4rem; }
-  .world-card-info-tool-art > :not(.sr-only) { width: 1.4rem !important; height: 1.4rem !important; }
-  .world-card-info-tool-title { font-size: 0.875rem; }
-  .world-card-info-tool-description { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-  .world-card-info-tool-chevron { width: 0.9rem; height: 0.9rem; }
-}
+/* Narrow phones (and phones with zoom or larger text) keep the cards stacked full-width, as on any phone, so their names never crowd the arrow. */
 @media (min-width: 640px) {
   .world-card-info-tool-content { min-height: 5.5rem; gap: 0.9rem; padding-right: 1rem; }
   .world-card-info-tool-art { width: 6.5rem; }

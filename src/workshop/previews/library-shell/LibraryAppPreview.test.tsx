@@ -115,12 +115,12 @@ it('opens the clicked Full and Compact worlds on their Info pages', async () => 
   await click('Back to novels');
   await click('Create');
 
-  await act(async () => container.querySelector<HTMLElement>('#creator-world-mock-lotus-empire')!.click());
+  await act(async () => container.querySelector<HTMLElement>('#creator-world-mock-lotus-empire .world-card-base-open')!.click());
   expect(container.querySelector('[data-story-detail] h1')?.textContent).toContain('The Last Lotus');
   expect(container.querySelector('[data-story-detail] [data-world-info-meta]')?.textContent).toContain('24 Chapters');
   await click('Back to novels');
 
-  const compact = container.querySelector<HTMLElement>('#creator-world-sample-nine-moons')!;
+  const compact = container.querySelector<HTMLElement>('#creator-world-sample-nine-moons .world-card-base-open')!;
   await act(async () => compact.click());
   expect(new URLSearchParams(location.search).get('screen')).toBe('detail');
   expect(container.querySelector('[data-story-detail] h1')?.textContent).toBe('Ashes of the Nine Moons');

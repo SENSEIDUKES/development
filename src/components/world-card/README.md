@@ -364,6 +364,30 @@ Workshop sample data and reference material remain outside the host adapter.
 
 ## Workshop history
 
+- **2026-10-09** — **Info cards stay stacked on narrow phones.** Under 380px
+  (small phones, and any phone with zoom or larger text) Open Codex and
+  Information no longer squeeze side by side, where "Open Codex" broke onto two
+  lines and "Information" ran into its arrow. They stack full-width, as on any
+  phone.
+- **2026-10-09** — **Blueprint button.** `WorldCardInfo` takes
+  `onOpenBlueprint`: a small Blueprint button beside the reading pill (side by
+  side on phones and laptops). The host owns the page and the view, and leaves
+  the button out entirely for a reader when the creator has sharing turned off.
+  The page is `StoryBlueprintView` / `StoryBlueprintPage` in
+  `@seihouse/library/stories`: the novel's own saved Seed and Blueprint in the
+  existing `NovelBlueprintEditor` — editable by its creator while the novel is
+  private, view-only otherwise (the editor gained `readOnly`), with Copy for a
+  reader the creator allows. The Workshop's Info page opens it, with a
+  Blueprint view control for each case.
+- **2026-10-09** — **One caption for Full and Compact.** The creator's name left
+  the art and sits in the caption under the title (in their elemental lettering
+  when the host supplies it). Compact now carries the same caption as Full
+  (title, creator, genre | chapters | status, and the Branching badge) and the
+  same format mark on its art, opening the story information dialog. Compact
+  opens through the same open button as Full, so the format mark is its own
+  control. `CreatorWorld` gained optional `genre`, `branchingEnabled`,
+  `synopsis` and `tags`; the story dialog shows views only when the host
+  supplies them.
 - **2026-10-09** — **World Info, Audible style.** A big centered cover over a
   backdrop made from the cover's own art and color, with the world's motion
   picture looping behind it when it has one. Under the cover, the reading pill,

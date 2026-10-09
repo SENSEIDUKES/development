@@ -8,7 +8,7 @@ import type { HarnessStory, StoryFoundationInput, StoryFoundationRevision } from
 import type { StorySeedInput, WorldBlueprint } from '@seihouse/sen/story-seed';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel } from '@seihouse/sen/presentation';
 import { NovelBlueprintEditor, type NovelBlueprintSnapshot } from '../../components/story-seed/development/NovelBlueprintEditor';
-import { createHarnessFoundationFromStorySeed } from '../story-seed/harnessFoundation';
+import { foundationFromNovelBlueprint } from '../story-seed/novelBlueprintFoundation';
 
 const statusCopy = (state: ReturnType<typeof arcGoalEditState>) => {
   if (state.status === 'completed') return 'Completed';
@@ -18,44 +18,7 @@ const statusCopy = (state: ReturnType<typeof arcGoalEditState>) => {
   return state.status === 'active' ? 'Active' : 'Upcoming';
 };
 
-/**
- * Builds the next Foundation revision from an edited Blueprint through the same
- * Story Seed mapping story creation uses. Values fixed once a novel begins
- * (its destination, arc count and the creation-only initial direction) are
- * carried from the current Foundation, never from the edit.
- */
-export const foundationFromNovelBlueprint = (
-  current: StoryFoundationInput,
-  next: NovelBlueprintSnapshot,
-  story: HarnessStory,
-): StoryFoundationInput => {
-  const source = current.sourceSnapshot;
-  const blueprint: WorldBlueprint = {
-    ...next.blueprint,
-    // The story's saved plans are the arcs' authority; a revision never carries them.
-    updatedAt: new Date().toISOString(),
-  };
-  const mapped = createHarnessFoundationFromStorySeed({
-    id: source?.sourceId ?? story.id,
-    userId: '',
-    title: story.title,
-    createdAt: story.createdAt,
-    updatedAt: blueprint.updatedAt!,
-    schemaVersion: source?.schemaVersion ?? 1,
-    originalLanguage: story.originalLanguage,
-    seed: next.seed,
-    blueprint,
-  } as Parameters<typeof createHarnessFoundationFromStorySeed>[0]);
-  const { initialArcLookahead: _lookahead, initialArcPlan: _initialPlan, initialHardPins: _pins, plannedArcCount: _count, destinedEnding: _ending, fateSurvival: _mode, ...editable } = mapped;
-  return {
-    ...editable,
-    ...(current.destinedEnding ? { destinedEnding: current.destinedEnding } : {}),
-    ...(current.plannedArcCount ? { plannedArcCount: current.plannedArcCount } : {}),
-    // Fate Pressure and the Fate mode are story settings, not Blueprint fields.
-    ...(current.fatePressure ? { fatePressure: current.fatePressure } : {}),
-    ...(current.fateSurvival ? { fateSurvival: { enabled: current.fateSurvival.enabled } } : {}),
-  };
-};
+export { foundationFromNovelBlueprint };
 
 /**
  * The novel's Blueprint: its Arc Goals under the novel's mode rules and its

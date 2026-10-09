@@ -356,3 +356,7 @@
   .story-seed-action-controls { flex: 1 1 100%; }
   .story-seed-action-controls > :last-child { flex: 1 1 auto; }
 }
+
+/* A view-only Blueprint (NovelBlueprintEditor readOnly): fields read as text, and edit controls step aside. */
+.novel-blueprint-fields:disabled :is(input, textarea, select) { opacity: 1; cursor: default; color: inherit; -webkit-text-fill-color: currentColor; }
+.novel-blueprint-fields:disabled :is(button, [data-editable-chip]) { display: none; }

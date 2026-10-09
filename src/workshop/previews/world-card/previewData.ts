@@ -13,6 +13,11 @@ export type WorldCardSashPreview = 'hidden' | 'shown';
 export type WorldCardDestinations = 'all' | 'reading-only' | 'none';
 /** `new-story`: a story with no chapters yet, whose host can start it (Begin Story). */
 export type WorldCardReadingPreview = 'start' | 'chapter-7' | 'new-story';
+/**
+ * Who opens the Blueprint: its creator (private or shared novel) or a reader (copy allowed, view
+ * only, or the creator's sharing turned off, when World Info offers no Blueprint button at all).
+ */
+export type WorldCardBlueprintPreview = 'creator' | 'creator-shared' | 'reader-copy' | 'reader-view' | 'reader-off';
 export type WorldCardStatusPreview = 'public-ongoing' | 'public-completed'
   | 'library-draft' | 'library-shared' | 'library-public' | 'library-complete';
 
@@ -25,6 +30,7 @@ export interface WorldCardPreviewState {
   cardStatus: WorldCardStatusPreview;
   destinations: WorldCardDestinations;
   reading: WorldCardReadingPreview;
+  blueprint: WorldCardBlueprintPreview;
 }
 
 const LONG_TITLE = 'The Last Lotus of the Jade Empire and the Thousand-Year Oath Beneath the Silent Pavilion';

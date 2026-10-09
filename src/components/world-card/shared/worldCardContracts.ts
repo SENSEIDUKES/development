@@ -18,6 +18,13 @@ export interface WorldCardInfoProps {
    */
   onStart?: () => void;
   onOpenCodex?: () => void;
+  /**
+   * Opens this world's Blueprint: editable for its creator while the novel is
+   * private, view-only (with copy when the creator allows) for anyone else.
+   * The host owns the page and decides the view; without it, no button shows,
+   * so a host leaves it out for a reader when the creator has sharing turned off.
+   */
+  onOpenBlueprint?: () => void;
   /** The viewer's known reading position; the reading pill says Continue only when supplied. */
   readingPosition?: { chapterNumber: number };
   /**

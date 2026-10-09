@@ -63,16 +63,17 @@ it('shows the creator workspace, its two readings and the world count', () => {
 it('selects the most recent world first and retargets exactly two actions to the tapped world', () => {
   const props = renderPage();
   const cards = Array.from(container.querySelectorAll<HTMLElement>('.world-card-compact'));
-  expect(cards.map(card => card.getAttribute('aria-label'))).toEqual([
-    'Open The Last Lotus of the Jade Empire, Ch. 24 · Draft',
-    'Open Ashes of the Nine Moons, Ch. 12 · Draft',
-    'Open The Pavilion Beneath the Lake, Ch. 40 · Complete',
+  const opens = cards.map(card => card.querySelector<HTMLElement>('.world-card-base-open')!);
+  expect(opens.map(open => open.getAttribute('aria-label'))).toEqual([
+    'Open The Last Lotus of the Jade Empire, 24 chapters, Draft',
+    'Open Ashes of the Nine Moons, 12 chapters, Draft',
+    'Open The Pavilion Beneath the Lake, 40 chapters, Complete',
   ]);
   expect(cards[0].getAttribute('data-selected')).toBe('true');
   expect(selected()?.querySelector('h3')?.textContent).toBe('The Last Lotus of the Jade Empire');
   expect(Array.from(selected()!.querySelectorAll('button')).map(item => item.textContent?.trim())).toEqual(['Continue', 'Studio']);
 
-  click(cards[1]);
+  click(opens[1]);
   expect(cards[1].getAttribute('data-selected')).toBe('true');
   expect(cards[0].getAttribute('data-selected')).toBeNull();
   expect(props.onOpenWorld).toHaveBeenCalledWith(WORLDS[0]);
@@ -88,7 +89,7 @@ it('selects the most recent world first and retargets exactly two actions to the
 
 it('keeps Studio open but stops Continue for a world that reached its ending', () => {
   const props = renderPage();
-  click(container.querySelectorAll<HTMLElement>('.world-card-compact')[2]);
+  click(container.querySelectorAll<HTMLElement>('.world-card-compact .world-card-base-open')[2]);
   expect((button('Continue') as HTMLButtonElement).disabled).toBe(true);
   expect(selected()?.textContent).toContain('This story has reached its ending.');
   click(button('Studio'));

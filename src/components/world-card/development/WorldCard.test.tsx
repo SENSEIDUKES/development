@@ -20,7 +20,7 @@ const world: HomeWorld = {
   mcName: 'Ye Chen', powerStage: 'Foundation', creatorName: 'SENSEI', format: 'Novel', acquired: true,
 };
 
-it('keeps format, creator and an awarded SEN sash on the 2:3 art, with the title and details beneath', () => {
+it('keeps the format mark and an awarded SEN sash on the 2:3 art, with the title, creator and details beneath', () => {
   const onOpen = vi.fn();
   act(() => root.render(<WorldCard world={world} senSash onOpen={onOpen} />));
 
@@ -31,10 +31,10 @@ it('keeps format, creator and an awarded SEN sash on the 2:3 art, with the title
   const open = card.querySelector<HTMLButtonElement>('.world-card-base-open')!;
   expect(open.getAttribute('aria-label')).toBe('Open The Last Lotus, 24 chapters, creator SENSEI, format Novel');
   const media = card.querySelector('.world-card-base-media')!;
-  // On the art: format mark, creator and the SEN sash only. The title lives in the caption.
+  // On the art: the format mark and the SEN sash only. The title and creator live in the caption.
   expect(media.querySelector(':scope > .world-card-base-format .sr-only')?.textContent).toBe('Novel');
   expect(card.querySelector('[data-sen-icon="story-scroll"]')).not.toBeNull();
-  expect(media.querySelector('.world-card-base-creator')?.textContent).toBe('SENSEI');
+  expect(media.textContent).not.toContain('SENSEI');
   expect(media.querySelector('.world-card-ribbon')?.textContent).toBe('SEN');
   expect(media.querySelectorAll('.world-card-ribbon-star')).toHaveLength(2);
   expect(media.querySelector('.world-card-ribbon')?.getAttribute('aria-hidden')).toBe('true');
@@ -43,6 +43,7 @@ it('keeps format, creator and an awarded SEN sash on the 2:3 art, with the title
 
   const caption = tile.querySelector('.world-card-caption')!;
   expect(caption.querySelector('h3')?.textContent).toBe('The Last Lotus');
+  expect(caption.querySelector('.world-card-caption-creator')?.textContent).toBe('SENSEI');
   expect(caption.querySelector('.world-card-caption-details')?.textContent).toBe('Xianxia | Ch. 24');
   for (const value of ['Standard', 'Creator', 'Format', 'Manga', 'Ye Chen', 'Foundation', '1,280', 'Sealed', 'Draft', 'Unacquired', 'Recently read']) {
     expect(tile.textContent).not.toContain(value);
@@ -68,11 +69,11 @@ it('shows the Branching badge only when the creator has enabled branching, keepi
 
 it('renders host-supplied creator lettering without assigning an element to other creators', () => {
   act(() => root.render(<WorldCard world={{ ...world, creatorTitle: { element: 'lightning', intensity: 'rare' } }} onOpen={() => {}} />));
-  expect(container.querySelector('.world-card-base-creator [data-element="lightning"]')?.textContent).toContain('SENSEI');
+  expect(container.querySelector('.world-card-caption-creator [data-element="lightning"]')?.textContent).toContain('SENSEI');
 
   act(() => root.render(<WorldCard world={world} onOpen={() => {}} />));
-  expect(container.querySelector('.world-card-base-creator')?.textContent).toBe('SENSEI');
-  expect(container.querySelector('.world-card-base-creator [data-element]')).toBeNull();
+  expect(container.querySelector('.world-card-caption-creator')?.textContent).toBe('SENSEI');
+  expect(container.querySelector('.world-card-caption-creator [data-element]')).toBeNull();
 });
 
 it('opens authorized story information without navigating or playing motion', async () => {
@@ -183,7 +184,7 @@ it('keeps acquisition and reading states off the card and handles missing covers
   expect(container.textContent).toContain('Cover unavailable');
 
   act(() => root.render(<WorldCard world={{ ...world, creatorName: undefined, format: undefined, genre: '' }} onOpen={() => {}} />));
-  expect(container.querySelector('.world-card-base-creator')).toBeNull();
+  expect(container.querySelector('.world-card-caption-creator')).toBeNull();
   expect(container.querySelector('.world-card-caption-details')?.textContent).toBe('Ch. 24');
 
   act(() => root.render(<WorldCard world={{ ...world, format: 'Manga' }} onOpen={() => {}} />));
@@ -454,6 +455,21 @@ it('keeps an MP control on the Info cover that starts or stops the backdrop clip
   await act(async () => root.render(<WorldCardInfo story={{ ...infoStory, videoUrl: undefined }} />));
   expect(container.querySelector('.world-card-info-motion')).toBeNull();
   vi.restoreAllMocks();
+});
+
+it('puts a small Blueprint button beside the reading pill only when the host supplies one', () => {
+  const onOpenBlueprint = vi.fn();
+  act(() => root.render(<WorldCardInfo story={infoStory} onRead={() => {}} onOpenBlueprint={onOpenBlueprint} />));
+  const buttons = container.querySelector('.world-card-info-buttons')!;
+  expect(buttons.querySelector('[data-world-info-chapters="action"]')).not.toBeNull();
+  const blueprint = buttons.querySelector<HTMLButtonElement>('button.world-card-info-blueprint')!;
+  expect(blueprint.textContent).toContain('Blueprint');
+  expect(blueprint.getAttribute('aria-label')).toBe('Blueprint: The Last Lotus');
+  act(() => blueprint.click());
+  expect(onOpenBlueprint).toHaveBeenCalledTimes(1);
+
+  act(() => root.render(<WorldCardInfo story={infoStory} onRead={() => {}} />));
+  expect(container.querySelector('.world-card-info-blueprint')).toBeNull();
 });
 
 it('shows each trimmed tag once', () => {

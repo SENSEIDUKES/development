@@ -14,7 +14,8 @@ export function appLibraryLocation(route: NovelExpandedRoute): LibraryLocation {
   switch (route.page) {
     case 'home': return { screen: 'home', collection: 'featured' };
     case 'create': return { screen: 'creator' };
-    case 'story': return { screen: 'detail' };
+    case 'story':
+    case 'blueprint': return { screen: 'detail' };
     case 'read': return { screen: 'reader' };
     case 'profile': return { screen: 'profile', cave: route.cave };
   }

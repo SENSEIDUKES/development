@@ -125,6 +125,8 @@ export function WorldCardStage({ view, state, reference, onAction }: {
             // A reader of a creator with sharing off gets no Blueprint button at all.
             onOpenBlueprint={state.destinations === 'all' && state.blueprint !== 'reader-off' ? () => setBlueprintOpen(true) : undefined}
             readingLanguage={{ onChange: language => onAction(`Read ${infoWorld.title} in ${languageName(language)}`) }}
+            // The creator's Store, as when they have Link my Shop on.
+            onOpenShop={state.destinations === 'all' ? () => onAction(`Open the creator’s Store from ${infoWorld.title}`) : undefined}
             />}
     </Stage>}
     {!openedWorld && !reference && show('feature') && <Stage title="Feature card" note="Home's spotlight row. The cover stands on the right; the band is that cover, blurred, in its own color.">

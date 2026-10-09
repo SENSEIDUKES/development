@@ -25,7 +25,7 @@ import './world-card.css';
  * This is the public view a reader sees. It shows no owner or library states
  * (visibility, draft, acquisition); the owner's view is a separate Story View.
  */
-export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, onOpenBlueprint, readingPosition, coverAction, readingLanguage }: WorldCardInfoProps) {
+export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, onOpenBlueprint, onOpenShop, readingPosition, coverAction, readingLanguage }: WorldCardInfoProps) {
   const detail = 'author' in story ? story : undefined;
   const coverUrl = story.imageUrl?.trim() || undefined;
   const videoUrl = 'videoUrl' in story ? story.videoUrl?.trim() || undefined : undefined;
@@ -119,9 +119,11 @@ export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, onOpenBluep
 
       <WorldSynopsis key={story.id} storyId={story.id} synopsis={detail?.synopsis?.trim()} />
 
-      {(onOpenCodex || detail) && <div className="world-card-info-tools">
+      {(onOpenCodex || onOpenShop || detail) && <div className="world-card-info-tools">
         {onOpenCodex && <StoryToolCard icon="navigation-book" title="Open Codex"
           description="Explore the lore, sects, and world" onOpen={onOpenCodex} />}
+        {onOpenShop && <StoryToolCard icon="navigation-store" title="Shop"
+          description={creatorName ? `${creatorName}’s Store` : 'The creator’s Store'} onOpen={onOpenShop} />}
         {detail && <InformationToolRow key={story.id} world={detail} readingLanguage={readingLanguage} />}
       </div>}
     </div>

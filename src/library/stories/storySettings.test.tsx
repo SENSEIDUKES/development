@@ -52,8 +52,9 @@ let latest: LibraryStories | undefined;
 let latestCovers: StoryCoverService | undefined;
 const keep = vi.fn();
 const letGo = vi.fn();
-function Host({ repository, adapter, storyId, makeCover }: {
+function Host({ repository, adapter, storyId, makeCover, onOpenShop }: {
   repository: InMemoryHarnessGenerationRepository; adapter: HarnessGenerationModelAdapter; storyId: string;
+  onOpenShop?: () => void;
   /** The host's cover maker; the host keeps the one chosen, as the app does. */
   makeCover?: StoryCoverService['make'];
 }) {
@@ -67,7 +68,7 @@ function Host({ repository, adapter, storyId, makeCover }: {
     letGo,
   }, [makeCover, urls]);
   latestCovers = covers;
-  return <StoryPages stories={stories} storyId={storyId} page="info" writingAgent={VERSA} covers={covers}
+  return <StoryPages stories={stories} storyId={storyId} page="info" writingAgent={VERSA} covers={covers} onOpenShop={onOpenShop}
     onOpenReader={() => undefined} onCloseReader={() => undefined} onBack={() => undefined} />;
 }
 
@@ -124,6 +125,45 @@ describe('Story Settings on Story View', () => {
 
     await select(container.querySelector<HTMLSelectElement>('[data-testid="story-settings"] select')!, 'Easy Read');
     expect(findStory(latest!.state!, story.id)!.chapterWritingStyle).toBe('Easy Read');
+  });
+
+  it('saves Author\'s notes for the Verification panel, and Link my Shop puts a Shop card on World Info only while it is on', async () => {
+    const writer = gatedWriter();
+    const repository = new InMemoryHarnessGenerationRepository();
+    const story = await createStory(repository, writer.adapter);
+    const onOpenShop = vi.fn();
+    await act(async () => root.render(renderWithDevAudio(<Host repository={repository} adapter={writer.adapter} storyId={story.id} onOpenShop={onOpenShop} />)));
+    await flush();
+    const shopCard = () => container.querySelector<HTMLElement>('[aria-label^="Shop:"]');
+    // Not linked: no Shop, even though the host can open one.
+    expect(shopCard()).toBeNull();
+    await click(settings()!.querySelector<HTMLButtonElement>('button[aria-expanded]'), 'Story Settings');
+    const panel = container.querySelector<HTMLElement>('[data-testid="story-settings-presentation"]')!;
+
+    const notes = panel.querySelector<HTMLTextAreaElement>('textarea')!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(notes, '  Arc 2 lands this month.  ');
+      notes.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await click(buttonByText('Save notes'), 'Save notes');
+    expect(findStory(latest!.state!, story.id)!.authorNotes).toBe('Arc 2 lands this month.');
+    expect(buttonByText('Save notes')!.disabled).toBe(true);
+    // The notes close the world's Verification panel.
+    await click(container.querySelector<HTMLButtonElement>('button.world-card-info-format'), 'format mark');
+    expect(document.body.querySelector('[data-testid="world-format-notes"]')!.textContent).toContain('Arc 2 lands this month.');
+    await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+    await flush();
+
+    const link = () => panel.querySelector<HTMLInputElement>('input[role="switch"]')!;
+    await click(link(), 'Link my Shop');
+    expect(findStory(latest!.state!, story.id)!.shopLinked).toBe(true);
+    expect(shopCard()!.textContent).toContain('Shop');
+    await click(shopCard(), 'Shop card');
+    expect(onOpenShop).toHaveBeenCalledTimes(1);
+
+    await click(link(), 'Link my Shop');
+    expect(findStory(latest!.state!, story.id)!.shopLinked).toBeUndefined();
+    expect(shopCard()).toBeNull();
   });
 
   it('waits while a chapter is being written, and says so', async () => {

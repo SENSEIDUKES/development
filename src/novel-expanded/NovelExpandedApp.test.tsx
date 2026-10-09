@@ -834,6 +834,35 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(worldInfo()).toBeTruthy();
   });
 
+  it('a world with Link my Shop on shows a Shop card that opens the reader\'s Store; leaving the Store returns to that world, not Home', async () => {
+    const story = scriptedWriter();
+    const services = appServices(story.writer);
+    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
+    await render(services, `/app/?story=${created.id}`);
+    const shopCard = () => worldInfo()?.querySelector<HTMLElement>('[aria-label^="Shop:"]');
+    // Not linked: no Shop card.
+    expect(shopCard()).toBeFalsy();
+    act(() => root.unmount());
+    root = createRoot(container);
+
+    const saved = await services.stories.load();
+    saved.stories.find(entry => entry.id === created.id)!.shopLinked = true;
+    await services.stories.save(saved);
+    await render(services, `/app/?story=${created.id}`);
+    await click(shopCard(), 'Shop card', 50);
+    expect(address()).toBe(`/app/?page=profile&cave=%2Fpublic%2Fcreators%2Fnovelexpanded-reader%2Fstorefront&from=${created.id}`);
+    expect(cave()!.querySelector('[data-cave-storefront]')).toBeTruthy();
+    // Back from the Store goes to the world it was opened from.
+    await click(cave()!.querySelector(`[aria-label="Back to ${created.title}"]`), 'Back to the world', 50);
+    expect(address()).toBe(`/app/?story=${created.id}`);
+    expect(worldInfo()).toBeTruthy();
+
+    // Exit from the public view does the same.
+    await click(shopCard(), 'Shop card', 50);
+    await click(document.querySelector('[aria-label="Exit public view"]'), 'Exit public view', 50);
+    expect(address()).toBe(`/app/?story=${created.id}`);
+  });
+
   it('a new Story Seed in Create starts from the profile\'s reading language and Reading Mode', async () => {
     const services = appServices(scriptedWriter().writer);
     services.profile.save({ defaultReadingLanguage: 'ja', defaultChapterWritingStyle: 'Easy Read' });

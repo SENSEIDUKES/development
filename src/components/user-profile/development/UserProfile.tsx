@@ -85,6 +85,12 @@ interface UserProfileProps {
   accountControls?: CaveAccountControls;
   /** Host-supplied public records, keyed by the viewed creator, never the viewer. */
   publicCreators?: readonly PublicCreator[];
+  /**
+   * The host page the Cave was opened from, such as a world whose Shop card
+   * opened the creator's Store. While set, the Store's Back and the public
+   * view's Exit return there instead of moving inside the Cave.
+   */
+  returnTo?: { label: string; onReturn: () => void };
 }
 
 /**
@@ -102,7 +108,7 @@ interface UserProfileProps {
  * Boost, and Settings becomes Exit. Public routes render only from the built
  * public presentation, so no private panel is mounted behind a public URL.
  */
-export default function UserProfile({ currentUser, stories, onLogout, onNavigateHome, homeHref = '/', onNavigateLibrary, accountControls, publicCreators = [] }: UserProfileProps) {
+export default function UserProfile({ currentUser, stories, onLogout, onNavigateHome, homeHref = '/', onNavigateLibrary, accountControls, publicCreators = [], returnTo }: UserProfileProps) {
   // Production calls `useUserProfile(...)` and reads the Firebase local-only flag
   // directly. Both arrive through the injected services port here, so this file
   // carries no Firebase, PostgreSQL, or generation dependency of its own.
@@ -187,10 +193,12 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   // the Cave page the cultivator was on; a direct public link falls back Home.
   const publicReturnPath = useRef<string | null>(null);
   const exitPublicView = useCallback(() => {
+    // Entered from a host page (a world's Shop): leaving goes back to it.
+    if (!publicReturnPath.current && returnTo) { returnTo.onReturn(); return; }
     const destination = publicReturnPath.current ?? '/home';
     publicReturnPath.current = null;
     navigate(destination);
-  }, [navigate]);
+  }, [navigate, returnTo]);
   const openPublicView = useCallback(() => {
     publicReturnPath.current = route.path;
     navigate(publicCavePath('home'));
@@ -357,7 +365,9 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
         return publicCreator ? (
           <UserProfileCaveDestination id={view} title={view === 'worlds' ? 'Worlds' : 'Store'}
             subtitle={viewedName} icon={<SENNavigationIcon name={view === 'worlds' ? 'discovery' : 'store'} size={18} />}
-            onBack={returnPublicHome} backLabel={`Return to ${viewedName}’s profile`}>
+            // The Store opened from a world's Shop card goes back to that world.
+            onBack={view === 'storefront' && returnTo ? returnTo.onReturn : returnPublicHome}
+            backLabel={view === 'storefront' && returnTo ? returnTo.label : `Return to ${viewedName}’s profile`}>
             <UserProfileCreatorPanel key={`${creatorId}-${view}`} creator={publicCreator} kind={view} />
           </UserProfileCaveDestination>
         ) : null;

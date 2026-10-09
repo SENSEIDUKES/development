@@ -9,7 +9,7 @@ import type { CreatorWorld } from '../../creator-space/shared/creatorSpaceContra
  * The overview itself is the World Card info page; this screen adds the way back.
  * Account tools, generation, history and persistence are outside this capture.
  */
-export function StoryDetailScreen({ story, onBack, backLabel = 'Back to novels', onRead, onStart, onOpenCodex, onOpenBlueprint, readingPosition, coverAction, readingLanguage, children }: Omit<StoryDetailScreenProps, 'story' | 'onOpenTimeline'> & { story: StoryDetailScreenProps['story'] | CreatorWorld }) {
+export function StoryDetailScreen({ story, onBack, backLabel = 'Back to novels', onRead, onStart, onOpenCodex, onOpenBlueprint, onOpenShop, readingPosition, coverAction, readingLanguage, children }: Omit<StoryDetailScreenProps, 'story' | 'onOpenTimeline'> & { story: StoryDetailScreenProps['story'] | CreatorWorld }) {
   return <div className="max-w-5xl mx-auto space-y-1 sm:space-y-5" data-story-detail>
     <div className="flex items-center justify-between gap-3">
       {/* The Library's standard back control, as in the workspace header and Profile. */}
@@ -19,7 +19,7 @@ export function StoryDetailScreen({ story, onBack, backLabel = 'Back to novels',
         <span className="hidden items-center min-[360px]:flex"><span className="h-1.5 w-1.5 rotate-45 border border-[#d4af37]" /><span className="h-px w-6 bg-[#d4af37]/80 sm:w-12" /></span>
       </p>
     </div>
-    <WorldCardInfo story={story} onRead={onRead} onStart={onStart} onOpenCodex={onOpenCodex} onOpenBlueprint={onOpenBlueprint} readingPosition={readingPosition} coverAction={coverAction} readingLanguage={readingLanguage} />
+    <WorldCardInfo story={story} onRead={onRead} onStart={onStart} onOpenCodex={onOpenCodex} onOpenBlueprint={onOpenBlueprint} onOpenShop={onOpenShop} readingPosition={readingPosition} coverAction={coverAction} readingLanguage={readingLanguage} />
     {children}
   </div>;
 }

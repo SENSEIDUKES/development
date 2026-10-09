@@ -20,6 +20,10 @@ describe('NovelExpanded addresses', () => {
     for (const page of pages) expect(parseRoute(routeSearch(page))).toEqual(page);
     // The Cave writes its page into the same address as it moves.
     expect(parseRoute('?page=profile&cave=/rewards')).toEqual({ page: 'profile', cave: '/rewards' });
+    // Opened from a world's Shop card, the address remembers the world.
+    const fromShop: NovelExpandedRoute = { page: 'profile', cave: '/public/creators/me/storefront', from: 'hst_1' };
+    expect(routeSearch(fromShop)).toBe('?page=profile&cave=%2Fpublic%2Fcreators%2Fme%2Fstorefront&from=hst_1');
+    expect(parseRoute(routeSearch(fromShop))).toEqual(fromShop);
   });
 
   it('keeps an id that needs escaping intact', () => {

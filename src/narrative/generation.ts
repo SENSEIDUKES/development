@@ -22,7 +22,10 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * workspace's Codex entries; 27 counts arcs of 30 chapters (nothing before it
  * upgrades); 28 adds the optional rewrite request and replaced-by record, and
  * each chapter's optional Holdings fixer record. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 29 as const;
+export const HARNESS_GENERATION_SCHEMA_VERSION = 30 as const;
+
+/** The most an Author's notes may hold, in characters. */
+export const AUTHOR_NOTES_LIMIT = 2000;
 
 /** Output buckets assign processor categories; legacy event arrays remain readable. */
 export const HARNESS_MEMORY_CATEGORIES = {
@@ -191,6 +194,17 @@ export interface HarnessStory {
   rhythmRecommendation?: import('../components/harness-generation/shared/rhythm').HarnessRhythmRecommendation;
   /** Who may read the novel. Arc Goals stay editable in Regular Reader mode only while it is private. Absent means private. */
   visibility?: HarnessStoryVisibility;
+  /**
+   * The creator's notes to readers, shown with the world's information. Never
+   * sent to the chapter writer. Absent means none.
+   */
+  authorNotes?: string;
+  /**
+   * Whether the creator links their own shop to this world, so readers can
+   * open it from the world's page. The host decides which shop that is and
+   * shows it only when it can. Absent means not linked.
+   */
+  shopLinked?: boolean;
   /**
    * Each arc's goal review, one entry per arc: the plan is reviewed (edited or
    * accepted as written) before the arc's first chapter. Fate Survival's review

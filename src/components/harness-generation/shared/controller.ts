@@ -53,6 +53,7 @@ import {
   createEmptyHarnessWorkspaceState,
   type HarnessGenerationRepository,
 } from './repository';
+import { AUTHOR_NOTES_LIMIT } from '../../../narrative/generation';
 import type { ChapterDirectionChoice, HarnessChapterRewrite, HarnessHoldingsFixerPolicy, HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessCapabilityReceipt, HarnessStory, HarnessStoryVisibility, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
 
 export type HarnessEventPreserver = (
@@ -534,6 +535,33 @@ export class HarnessGenerationController {
     } finally {
       this.generating = false;
     }
+  }
+
+  /**
+   * Saves what the creator shows readers beside the story: their Author's
+   * notes (an empty value removes them) and whether their shop is linked to
+   * the world. Neither reaches the chapter writer, so a chapter waiting on the
+   * reader does not hold them back.
+   */
+  async setStoryPresentation(storyId: string, changes: { authorNotes?: string; shopLinked?: boolean }): Promise<HarnessStory> {
+    this.assertHydrated();
+    if (this.generating) throw new Error('Wait for the chapter being written before saving.');
+    const candidate = cloneHarnessValue(this.state);
+    const story = findStory(candidate, storyId);
+    if (!story) throw new Error('Open a Harness story before changing what it shows readers.');
+    if (changes.authorNotes !== undefined) {
+      const notes = changes.authorNotes.trim();
+      if (notes.length > AUTHOR_NOTES_LIMIT) throw new Error(`Author's notes can be at most ${AUTHOR_NOTES_LIMIT} characters.`);
+      if (notes) story.authorNotes = notes;
+      else delete story.authorNotes;
+    }
+    if (changes.shopLinked !== undefined) {
+      if (changes.shopLinked) story.shopLinked = true;
+      else delete story.shopLinked;
+    }
+    story.updatedAt = this.runtime.now();
+    await this.persist(candidate);
+    return cloneHarnessValue(story);
   }
 
   /**

@@ -54,6 +54,8 @@ export interface StoryDetailScreenProps {
   onOpenCodex?: () => void;
   /** See `WorldCardInfoProps.onOpenBlueprint`. */
   onOpenBlueprint?: () => void;
+  /** See `WorldCardInfoProps.onOpenShop`. */
+  onOpenShop?: () => void;
   onOpenTimeline?: () => void;
   /** The viewer's known reading position, when the host has one. */
   readingPosition?: { chapterNumber: number };

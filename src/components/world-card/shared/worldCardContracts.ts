@@ -26,6 +26,12 @@ export interface WorldCardInfoProps {
    */
   onOpenBlueprint?: () => void;
   /**
+   * World Info's Shop card: opens the creator's own shop. A host passes it only
+   * when the creator has linked their shop to this world; without it there is
+   * no Shop card.
+   */
+  onOpenShop?: () => void;
+  /**
    * The viewer's reading language for this world, chosen in the Information
    * panel. Without it the panel shows the world's language but offers no switch.
    */

@@ -369,6 +369,13 @@ Workshop sample data and reference material remain outside the host adapter.
 
 ## Workshop history
 
+- **2026-10-09** — **Shop card.** `WorldCardInfo` (and `StoryDetailScreen`) take
+  `onOpenShop`: a Shop card beside Open Codex and Information ("SENSEI's Store")
+  that opens the creator's own Store. A host passes it only when the creator has
+  linked their shop to the world (the Library's `StoryPages` checks the story's
+  Link my Shop), so a world without one shows no Shop. On laptops an odd last
+  card spans the row. The Workshop's Info page shows it when every destination
+  is on.
 - **2026-10-09** — **Verification, filled out.** The Info format mark's
   Verification panel adds the world's activity (the Full card's dot and label)
   and its views, shows Began and Last updated side by side, and ends with an

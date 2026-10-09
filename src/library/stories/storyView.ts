@@ -43,6 +43,7 @@ export function harnessStoryDisplay(state: HarnessWorkspaceState, storyId: strin
     ...(story.originalLanguage ? { originalLanguage: story.originalLanguage } : {}),
     ...(typeof mature === 'boolean' ? { matureContent: mature } : {}),
     permissions: { visibility: story.visibility ?? 'private' },
+    ...(story.authorNotes ? { authorNotes: story.authorNotes } : {}),
   };
 }
 

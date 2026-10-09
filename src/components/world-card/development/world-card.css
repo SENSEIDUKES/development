@@ -418,7 +418,11 @@
 
 .world-card-info-tools { display: grid; gap: 0.5rem; }
 .world-card-info-tools > :only-child { grid-column: 1 / -1; }
-@media (min-width: 768px) { .world-card-info-tools { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; } }
+@media (min-width: 768px) {
+  .world-card-info-tools { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+  /* An odd last card (Codex, Shop, Information) spans the row instead of sitting half-empty. */
+  .world-card-info-tools > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+}
 .world-card-info-tool { border-color: var(--world-info-line); background-color: rgba(12, 14, 30, 0.6); }
 .world-card-info-tool-content { display: flex; align-items: center; gap: 0.7rem; min-height: 3.25rem; padding: 0 0.8rem 0 0; }
 .world-card-info-tool-text { min-width: 0; flex: 1; padding-block: 0.4rem; }

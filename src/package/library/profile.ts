@@ -3,3 +3,4 @@ export * from '../../components/user-profile/development/userProfileServices';
 export * from '../../components/user-profile/development/types';
 export * from '../../components/user-profile/development/creatorWorlds';
 export type { PublicActivitySummary } from '../../components/user-profile/development/publicProfile';
+export { publicCavePath, type CreatorDestination } from '../../components/user-profile/development/caveNavigation';

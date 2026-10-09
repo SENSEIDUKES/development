@@ -10,7 +10,12 @@ Verification: format, creator, start date, SEN verification and a provenance lin
 has one, plus its activity, views, Began and Last updated dates side by side, and Author's
 notes at the bottom (`StoryDetailDisplay` also gains `updatedAt` and `authorNotes`). Full and
 Compact cards keep the story panel. New exports `WorldCardInformationPanel`,
-`WorldCardFormatPanel`, `languageName`, `worldInformationSummary`.
+`WorldCardFormatPanel`, `languageName`, `worldInformationSummary`. Story Settings gains
+**Author's notes and Shop** (notes, and a Link my Shop switch). `WorldCardInfo`,
+`StoryDetailScreen` and `StoryPages` take `onOpenShop`: a Shop card that opens the creator's
+Store; `StoryPages` shows it only while the story's `shopLinked` is on. `./profile`:
+`LibraryProfile` takes `returnTo` (the Store's Back and the public view's Exit return to the
+page that opened it) and exports `publicCavePath`. Needs `@seihouse/sen` 0.27.0.
 
 **0.28.0 (2026-10-09):** Covers are made on the cover. `./stories`: `StoryCoverService`
 replaces `manifest(storyId, request)` with `make(storyId, request, count)` (one cover or

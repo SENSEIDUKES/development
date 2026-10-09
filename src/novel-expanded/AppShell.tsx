@@ -9,6 +9,7 @@ import {
 import { LibraryHelpMenu } from '@seihouse/library/story-seed';
 import { APP_DESTINATIONS, appLibraryLocation, appRouteFor } from './appPlaces';
 import { HOME_ROUTE, routeHref, type Navigate, type NovelExpandedRoute } from './routes';
+import './app-header.css';
 
 export interface AppShellProps {
   /** The page inside the shell: Home or a story's World Info. */
@@ -69,8 +70,37 @@ export function AppShell({ route, navigate, stories, mainLabel, children }: AppS
       onNavigate={location => { const next = appRouteFor(location); if (next) navigate(next); }}>
       <WorkspaceShell mainRef={mainRef} mainId="novel-expanded-main" mainAriaLabel={mainLabel} mainClassName="relative z-10 outline-none"
         sidebar={pathwaysSidebar ? <LibrarySectionSidebar /> : undefined} sidebarLabel="Library pathways"
-        header={<WorkspaceHeader landmark="none" title="NovelExpanded" subtitle="Read and direct your stories"
-          emblem={{ src: LIBRARY_EMBLEM.src, alt: 'NovelExpanded' }}
+        header={<WorkspaceHeader landmark="none" title="NovelExpanded"
+          identity={<div className="novel-expanded-header-identity">
+            <a className="novel-expanded-emblem group/emblem" href={routeHref(HOME_ROUTE)}
+              aria-label="Return to your stories" onClick={event => {
+                if (!event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
+                  event.preventDefault();
+                  home();
+                }
+              }}>
+              <span className="novel-expanded-emblem-art">
+                <span aria-hidden="true" className="library-spectrum-glow novel-expanded-emblem-aura" />
+                <span aria-hidden="true" className="library-spectrum-glow novel-expanded-emblem-ring" />
+                <img src={LIBRARY_EMBLEM.src} alt="" width={32} height={32}
+                  decoding="async" referrerPolicy="no-referrer" onError={event => {
+                    const image = event.currentTarget;
+                    if (image.getAttribute('src') !== '/library-shell/celestial-library.jpg') {
+                      image.src = '/library-shell/celestial-library.jpg';
+                    }
+                  }} />
+              </span>
+            </a>
+            <a className="novel-expanded-wordmark" href={routeHref(HOME_ROUTE)}
+              aria-label="NovelExpanded — return to your stories" onClick={event => {
+                if (!event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
+                  event.preventDefault();
+                  home();
+                }
+              }}>
+              <img src="/novel-expanded/wordmark.png" alt="NovelExpanded" width={1586} height={992} />
+            </a>
+          </div>}
           home={{ href: routeHref(HOME_ROUTE), label: 'Return to your stories', onNavigate: home }}
           searchItems={searchItems} />}>
         {children}

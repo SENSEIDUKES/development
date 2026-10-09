@@ -1,5 +1,9 @@
 # Library Shell
 
+- **2026-10-09** — `WorkspaceHeader` accepts a host-owned `identity` in place
+  of its default badge. NovelExpanded uses it for the approved wordmark;
+  existing workspace titles and header utilities retain their presentation.
+
 Where `reference/` exists, it holds the old production version, kept as reference
 material for the remake; it is not edited or refreshed. New features do not get a
 reference folder. Old systems stay until each is remade on the new path; never

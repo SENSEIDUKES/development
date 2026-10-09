@@ -377,7 +377,8 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
 
     // Home: the Library header, the navigation and the footer around the reader's stories.
     const header = shell()!.querySelector('header')!;
-    expect(header.querySelector('[data-slot="library-header-badge-title"]')?.textContent).toBe('NovelExpanded');
+    expect(header.querySelector('.novel-expanded-wordmark img')?.getAttribute('alt')).toBe('NovelExpanded');
+    expect(header.querySelector('[data-slot="library-header-badge-title"]')).toBeNull();
     expect(header.querySelector('button[aria-label="Help"]')).toBeTruthy();
     expect(header.querySelector('button[aria-label="Search"]')).toBeTruthy();
     // On a phone the music note floats above the bar, not in the header.

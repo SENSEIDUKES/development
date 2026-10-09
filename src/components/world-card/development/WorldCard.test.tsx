@@ -6,6 +6,7 @@ import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
 import type { StoryDetailDisplay } from '../../light-novels-home/shared/storyDetailContracts';
 import { WorldCard } from './WorldCard';
 import { WorldCardInfo } from './WorldCardInfo';
+import { WorldCardFeature } from './WorldCardFeature';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let container: HTMLDivElement;
@@ -19,12 +20,12 @@ const world: HomeWorld = {
   mcName: 'Ye Chen', powerStage: 'Foundation', creatorName: 'SENSEI', format: 'Novel', acquired: true,
 };
 
-it('keeps format, creator and the SEN sash on square art, with the title and details beneath', () => {
+it('keeps format, creator and the SEN sash on the 2:3 art, with the title and details beneath', () => {
   const onOpen = vi.fn();
   act(() => root.render(<WorldCard world={world} onOpen={onOpen} />));
 
   const tile = container.querySelector<HTMLElement>('[data-world-card-tile="full"]')!;
-  expect(tile.getAttribute('data-cover-shape')).toBe('square');
+  expect(tile.getAttribute('data-cover-shape')).toBe('tall');
   const card = tile.querySelector('[data-world-card="full"]')!;
   expect((card as HTMLElement).style.getPropertyValue('--world-card-glow')).not.toBe('');
   const open = card.querySelector<HTMLButtonElement>('.world-card-base-open')!;
@@ -35,6 +36,7 @@ it('keeps format, creator and the SEN sash on square art, with the title and det
   expect(card.querySelector('[data-sen-icon="story-scroll"]')).not.toBeNull();
   expect(media.querySelector('.world-card-base-creator')?.textContent).toBe('SENSEI');
   expect(media.querySelector('.world-card-ribbon')?.textContent).toBe('SEN');
+  expect(media.querySelectorAll('.world-card-ribbon-star')).toHaveLength(2);
   expect(media.querySelector('.world-card-ribbon')?.getAttribute('aria-hidden')).toBe('true');
   expect(media.textContent).not.toContain('The Last Lotus');
   expect(media.textContent).not.toContain('Ch. 24');
@@ -48,9 +50,6 @@ it('keeps format, creator and the SEN sash on square art, with the title and det
   act(() => open.click());
   act(() => (caption as HTMLElement).click());
   expect(onOpen).toHaveBeenCalledTimes(2);
-
-  act(() => root.render(<WorldCard world={world} coverShape="tall" onOpen={onOpen} />));
-  expect(container.querySelector('[data-world-card-tile="full"]')?.getAttribute('data-cover-shape')).toBe('tall');
 });
 
 it('shows the Branching badge only when the creator has enabled branching, keeping the badge row either way', () => {
@@ -414,4 +413,29 @@ it('shows each trimmed tag once', () => {
   expect(tags).toEqual(['Lore', 'found family']);
   expect(error).not.toHaveBeenCalled();
   error.mockRestore();
+});
+
+it('spotlights a world in the wide Feature card with its cover, sash, details and synopsis', () => {
+  const onOpen = vi.fn();
+  act(() => root.render(<WorldCardFeature world={{ ...world, synopsis: 'A lotus blooms.', branchingEnabled: true }}
+    displayStatus={{ view: 'public', value: 'ongoing' }} onOpen={onOpen} />));
+  const card = container.querySelector<HTMLElement>('[data-world-card="feature"]')!;
+  expect(card.querySelector('.world-card-banner-eyebrow')?.textContent).toBe('Featured');
+  expect(card.querySelector('h3')?.textContent).toBe('The Last Lotus');
+  expect(card.querySelector('.world-card-banner-byline')?.textContent).toBe('bySENSEI');
+  expect(card.querySelector('.world-card-banner-details')?.textContent).toBe('Xianxia · Ch. 24 · On Going');
+  expect(card.querySelector('.world-card-banner-synopsis')?.textContent).toBe('A lotus blooms.');
+  expect(card.querySelector('.world-card-feature')?.textContent).toBe('Branching');
+  expect(card.querySelector('.world-card-banner-cover img')?.getAttribute('src')).toBe('/lotus.png');
+  expect(card.querySelector('.world-card-banner-cover .world-card-ribbon')).not.toBeNull();
+  expect(card.style.getPropertyValue('--world-card-banner-art')).toBe('url("/lotus.png")');
+  const open = card.querySelector<HTMLButtonElement>('.world-card-banner-open')!;
+  expect(open.getAttribute('aria-label')).toBe('Open The Last Lotus, 24 chapters, creator SENSEI, On Going');
+  act(() => open.click());
+  expect(onOpen).toHaveBeenCalledOnce();
+
+  act(() => root.render(<WorldCardFeature world={{ ...world, synopsis: undefined, creatorName: undefined }} label="New on SEN" onOpen={() => {}} />));
+  expect(container.querySelector('.world-card-banner-eyebrow')?.textContent).toBe('New on SEN');
+  expect(container.querySelector('.world-card-banner-synopsis')).toBeNull();
+  expect(container.querySelector('.world-card-banner-byline')).toBeNull();
 });

@@ -355,16 +355,20 @@ Workshop sample data and reference material remain outside the host adapter.
 
 ## Workshop history
 
-- **2026-10-09** — **Audible-style cards.** Full and Compact show clean art,
-  square by default (`coverShape="tall"` keeps the 2:3 cover; the Workshop's
-  *Card art shape* control compares them). On the art: the format mark, the
-  motion picture control, the creator's name and a gold **SEN** sash on every
-  card, since every world carries the expanded experience. The title, then
-  genre · chapters · status, sit in a caption beneath, with one feature row:
-  a **Branching** badge when the host says the creator enabled branching. The
-  caption keeps the same height with or without a badge so a grid lines up.
-  The Info cover keeps its 2:3 shape and gains the sash. A **Home grid** view
-  shows several cards side by side. Cover generation still makes 2:3 art.
+- **2026-10-09** — **Clean cards, the SEN sash, the Feature card.** Full keeps
+  its 2:3 cover at its original Home size; Compact (Create's "Your worlds") is
+  square. Both keep the art clean: on Full only the format mark and motion
+  picture control (both in ghost glass), the creator's name and the sash. The
+  title, then genre · chapters · status, sit in a caption beneath, with one
+  feature row: a **Branching** badge when the host says the creator enabled
+  branching. The caption keeps one height so a grid lines up. The **SEN sash**
+  crosses every cover's lower-right corner like a bound book's ribbon, in
+  celestial night glass trimmed with gold hairlines and the gold star either
+  side of SEN; the Info cover wears it too. New **Feature card**
+  (`WorldCardFeature`): a wide banner the size of Home's Featured hero (15rem,
+  20rem from 640px), the world's cover on the right, that cover blurred in its
+  own color behind a gold eyebrow, title, byline, details, synopsis and
+  Branching. The Workshop adds Feature card and Home grid views.
 
 - **2026-10-01** — **Start Story.** `WorldCardInfoProps` (and
   `StoryDetailScreen`) take `onStart`. A story with no chapters whose host can

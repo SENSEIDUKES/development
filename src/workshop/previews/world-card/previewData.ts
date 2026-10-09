@@ -7,8 +7,6 @@ import { SAMPLE_CREATOR_WORLDS } from '../creator-space/previewData';
 export type WorldCardRecentlyRead = 'no' | 'yes';
 export type WorldCardTitleLength = 'standard' | 'long';
 export type WorldCardCover = 'art' | 'missing';
-/** The Full and Compact art: square (Audible-style) or the 2:3 tall cover, to compare. */
-export type WorldCardShapePreview = 'square' | 'tall';
 /** Which host destinations the Info page receives, to review unavailable actions. */
 export type WorldCardDestinations = 'all' | 'reading-only' | 'none';
 /** `new-story`: a story with no chapters yet, whose host can start it (Start Story). */
@@ -20,7 +18,6 @@ export interface WorldCardPreviewState {
   recentlyRead: WorldCardRecentlyRead;
   titleLength: WorldCardTitleLength;
   cover: WorldCardCover;
-  shape: WorldCardShapePreview;
   activity: WorldActivityStatus | 'hidden';
   cardStatus: WorldCardStatusPreview;
   destinations: WorldCardDestinations;

@@ -5,6 +5,7 @@ import { LibraryCard, LibraryCardMedia } from '@seihouse/library-ui';
 import { MotionPicture, useDominantColor } from '@seihouse/sen/motion-picture';
 import type { WorldCardCompactProps, WorldCardInfoCoverProps, WorldCardProps } from '../shared/worldCardContracts';
 import { WorldCardCover } from './WorldCardCover';
+import { WorldCardRibbon } from './WorldCardRibbon';
 import { WorldCardStoryPanel } from './WorldCardStoryPanel';
 import { WORLD_STATUS_LABELS } from './worldCardStatus';
 import './world-card.css';
@@ -16,18 +17,11 @@ type WorldCardFaceProps =
   | ({ face: 'compact' } & WorldCardCompactProps)
   | WorldCardInfoCoverProps;
 
-/** The art's shape on the Full and Compact cards. The Info cover keeps the 2:3 cover. */
-export type WorldCardCoverShape = 'square' | 'tall';
-
-/** Every world on SEN carries the expanded experience; the sash says so, like a format mark. */
-function WorldCardRibbon() {
-  return <span className="world-card-ribbon" aria-hidden="true"><span>SEN</span></span>;
-}
-
 /**
  * The Library world card. Its faces share one cover frame, glow, and motion behavior.
- * Full and Compact keep the art clean (format, motion and creator on Full; the SEN sash on
- * both) and put the title and details in the caption beneath, so a grid of many lines up.
+ * Full (the tall 2:3 cover) and Compact (square) keep the art clean (format, motion and creator
+ * on Full; the SEN sash on both) and put the title and details in the caption beneath, so a grid
+ * of many lines up.
  */
 export function WorldCard(props: WorldCardFaceProps) {
   const compact = props.face === 'compact';
@@ -51,7 +45,6 @@ export function WorldCard(props: WorldCardFaceProps) {
     : displayStatus?.view === 'public'
       ? displayStatus.value === 'ongoing' ? 'On Going' : 'Completed'
       : displayStatus?.view === 'library' ? WORLD_STATUS_LABELS[displayStatus.value] : undefined;
-  const coverShape: WorldCardCoverShape = props.face === 'info' ? 'tall' : props.coverShape ?? 'square';
   const genre = fullWorld?.genre?.trim();
   const details = [genre, `Ch. ${world.chapterCount}`, statusLabel].filter(Boolean).join(' · ');
   const openLabel = compact
@@ -96,7 +89,7 @@ export function WorldCard(props: WorldCardFaceProps) {
   if (info) return card;
 
   // The caption repeats the art's open action for pointers; keyboards and screen readers use the art's own control.
-  return <div className="world-card-tile" data-cover-shape={coverShape} data-world-card-tile={compact ? 'compact' : 'full'}>
+  return <div className="world-card-tile" data-cover-shape={compact ? 'square' : 'tall'} data-world-card-tile={compact ? 'compact' : 'full'}>
     {card}
     <div className="world-card-caption" onClick={props.onOpen}>
       <h3 className="world-card-caption-title font-display">{world.title}</h3>

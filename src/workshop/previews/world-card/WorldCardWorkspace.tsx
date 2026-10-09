@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { useLibraryAssets } from '@seihouse/library/presentation';
-import { WorldCard } from '@seihouse/library/world-card';
+import { WorldCard, WorldCardFeature } from '@seihouse/library/world-card';
 import type { WorldCardDisplayStatus } from '@seihouse/library/world-card';
 import type { CreatorWorld } from '@seihouse/library/creator-space';
 import { WorldCardFullReference } from '../../../components/world-card/reference/WorldCardFull';
@@ -10,7 +10,7 @@ import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import {
   previewCreatorWorlds, previewHomeGrid, previewStory,
-  type WorldCardCover, type WorldCardShapePreview, type WorldCardDestinations, type WorldCardPreviewState,
+  type WorldCardCover, type WorldCardDestinations, type WorldCardPreviewState,
   type WorldCardReadingPreview, type WorldCardRecentlyRead, type WorldCardStatusPreview, type WorldCardTitleLength,
 } from './previewData';
 import { StoryDetailScreen, type WorldActivityStatus } from '@seihouse/library/home';
@@ -18,11 +18,12 @@ import { StoryDetailScreen, type WorldActivityStatus } from '@seihouse/library/h
 const entry = workshopEntries.find(candidate => candidate.id === 'world-card')!;
 
 const VIEWS = {
-  all: { label: 'All views', description: 'The Info page, Full card, Home grid and Compact card together.' },
+  all: { label: 'All views', description: 'The Info page, Feature card, Full card, Home grid and Compact card together.' },
+  feature: { label: 'Feature card', description: 'The wide banner for a spotlighted world, at the stage’s full width.' },
   info: { label: 'Info page', description: 'The full world overview a reader lands on when they open a world.' },
-  full: { label: 'World Card', description: 'The discovery card at its Home grid width: art with the title and details beneath.' },
+  full: { label: 'World Card', description: 'The 2:3 discovery card at its Home grid width, with the title and details beneath.' },
   grid: { label: 'Home grid', description: 'Several World Cards side by side, as Home lays them out.' },
-  compact: { label: 'Compact', description: 'Create’s “Your worlds” tile. Tap a tile to open that world’s Info page.' },
+  compact: { label: 'Compact', description: 'Create’s square “Your worlds” tile. Tap a tile to open that world’s Info page.' },
 } as const;
 type View = keyof typeof VIEWS;
 
@@ -36,7 +37,7 @@ const VIEWPORTS = {
 type Viewport = keyof typeof VIEWPORTS;
 
 const DEFAULT_STATE: WorldCardPreviewState = {
-  recentlyRead: 'no', titleLength: 'standard', cover: 'art', shape: 'square',
+  recentlyRead: 'no', titleLength: 'standard', cover: 'art',
   activity: 'active-this-week', cardStatus: 'public-ongoing', destinations: 'all', reading: 'chapter-7',
 };
 
@@ -67,7 +68,7 @@ function Stage({ title, note, children }: { title: string; note?: string; childr
   </section>;
 }
 
-function CompactRow({ worlds, reference, shape, onOpen }: { worlds: readonly CreatorWorld[]; reference: boolean; shape: WorldCardShapePreview; onOpen: (world: CreatorWorld) => void }) {
+function CompactRow({ worlds, reference, onOpen }: { worlds: readonly CreatorWorld[]; reference: boolean; onOpen: (world: CreatorWorld) => void }) {
   const { homeImages = [] } = useLibraryAssets();
   const [selectedId, setSelectedId] = useState(worlds[0]?.id);
   return <ul className="flex gap-3 overflow-x-auto pb-4" aria-label="Your worlds">
@@ -75,7 +76,7 @@ function CompactRow({ worlds, reference, shape, onOpen }: { worlds: readonly Cre
       {reference
         ? <WorldCardCompactReference world={world} cover={world.imageUrl ?? fallbackCover(world.id, homeImages)} fallbackCover={!world.imageUrl}
             selected={world.id === selectedId} onSelect={() => setSelectedId(world.id)} />
-        : <WorldCard face="compact" coverShape={shape} world={world} cover={world.imageUrl ?? fallbackCover(world.id, homeImages)} fallbackCover={!world.imageUrl}
+        : <WorldCard face="compact" world={world} cover={world.imageUrl ?? fallbackCover(world.id, homeImages)} fallbackCover={!world.imageUrl}
             selected={world.id === selectedId} onOpen={() => { setSelectedId(world.id); const cover = world.imageUrl ?? fallbackCover(world.id, homeImages); onOpen(cover ? { ...world, imageUrl: cover } : world); }} />}
     </li>)}
   </ul>;
@@ -103,22 +104,25 @@ export function WorldCardStage({ view, state, reference, onAction }: {
             onOpenCodex={state.destinations === 'all' ? () => onAction(`Open Codex for ${infoWorld.title}`) : undefined}
             />}
     </Stage>}
+    {!openedWorld && !reference && show('feature') && <Stage title="Feature card" note="Home's spotlight row. The cover stands on the right; the band is that cover, blurred, in its own color.">
+      <WorldCardFeature world={story} displayStatus={CARD_STATUS_PREVIEW[state.cardStatus]} onOpen={() => setOpenedWorld(story)} />
+    </Stage>}
     {!openedWorld && show('full') && <Stage title="World Card" note="Home grid width.">
       <div className="w-[min(100%,13rem)]">
         {reference
           ? <WorldCardFullReference world={story} onOpen={() => onAction(`Open ${story.title}`)} />
-          : <WorldCard world={story} displayStatus={CARD_STATUS_PREVIEW[state.cardStatus]} coverShape={state.shape}
+          : <WorldCard world={story} displayStatus={CARD_STATUS_PREVIEW[state.cardStatus]}
               onOpen={() => setOpenedWorld(story)} />}
       </div>
     </Stage>}
     {!openedWorld && !reference && show('grid') && <Stage title="Home grid" note="Two across on a phone, more on wider screens.">
       <div className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-4 lg:grid-cols-5">
-        {previewHomeGrid(state).map(world => <WorldCard key={world.id} world={world} coverShape={state.shape}
+        {previewHomeGrid(state).map(world => <WorldCard key={world.id} world={world}
           displayStatus={CARD_STATUS_PREVIEW[state.cardStatus]} onOpen={() => world.id === story.id ? setOpenedWorld(story) : onAction(`Open ${world.title}`)} />)}
       </div>
     </Stage>}
     {!openedWorld && show('compact') && <Stage title="Compact" note="Create · Your worlds.">
-      <CompactRow key={`${reference}-${state.titleLength}-${state.cover}`} worlds={worlds} reference={reference} shape={state.shape} onOpen={setOpenedWorld} />
+      <CompactRow key={`${reference}-${state.titleLength}-${state.cover}`} worlds={worlds} reference={reference} onOpen={setOpenedWorld} />
     </Stage>}
   </div>;
 }
@@ -138,7 +142,6 @@ function readCanvasState(params: URLSearchParams): WorldCardPreviewState {
     recentlyRead: pick(params.get('recentlyRead'), ['no', 'yes'], DEFAULT_STATE.recentlyRead),
     titleLength: pick(params.get('titleLength'), ['standard', 'long'], DEFAULT_STATE.titleLength),
     cover: pick(params.get('cover'), ['art', 'missing'], DEFAULT_STATE.cover),
-    shape: pick(params.get('shape'), ['square', 'tall'], DEFAULT_STATE.shape),
     activity: pick(params.get('activity'), ['active-now', 'active-this-week', 'quiet', 'hidden'], DEFAULT_STATE.activity),
     cardStatus: pick(params.get('cardStatus'), Object.keys(CARD_STATUS_PREVIEW) as WorldCardStatusPreview[], DEFAULT_STATE.cardStatus),
     destinations: pick(params.get('destinations'), ['all', 'reading-only', 'none'], DEFAULT_STATE.destinations),
@@ -225,12 +228,6 @@ function WorldCardWorkspaceShell() {
                 <option value="library-public">Public</option>
                 <option value="library-complete">Complete</option>
               </optgroup>
-            </select>
-          </label>
-          <label className="flex flex-col gap-1 text-xs">Card art shape
-            <select className={selectClass} value={state.shape} onChange={event => update({ shape: event.target.value as WorldCardShapePreview })}>
-              <option value="square">Square</option>
-              <option value="tall">Tall (2:3)</option>
             </select>
           </label>
           <label className="flex flex-col gap-1 text-xs">Reader history

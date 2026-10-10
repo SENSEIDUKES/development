@@ -12,12 +12,13 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - **Workshop preview:** `?preview=reader-chamber`. Original Reference is production's Reader; Development is the NovelExpanded app's own Reader (since 2026-10-09)
 - **Development view:** the app's Reader, `HarnessReaderSession` (SEN, `src/components/harness-generation/development/`), hosted exactly as the app hosts it by Library's `StoryPages` on its read page. The older development Reader in `development/` is no longer on this card; its code stays for the Card Workshop, Reader Codex and Character Voice previews that use parts of it
 - **First Workshop record:** 2026-07-31
-- **Last recorded Workshop update:** 2026-10-09
+- **Last recorded Workshop update:** 2026-10-10
 - **Historical source inspection:** 2026-08-22 (the older copy), 2026-10-07 (the current Original Reference)
 - **Implementation status:** under refinement
 
 ## Workshop history
 
+- **2026-10-10:** Replaying Chapter 8 in the Development view now gives back two sentences with the names their holdings tags had swallowed ("a twist of Copper Hair Wire that bit", "which held Elder Yan's Spatial Pouch."); everything else in the chapter is as it was saved. See the Harness Generation README.
 - **2026-10-09 (Development is the app's Reader):** The owner asked for a place to work on the Reader inside the NovelExpanded app, which had drifted far from the Reader this card showed. Development now shows that Reader itself: Library's `StoryPages` on its read page over `useLibraryStories`, with the app's writing screen (VERSA), soundscapes, read-aloud voices and the official CAPA skills installed as the app installs them. So the Workshop and the app render the same component and cannot drift apart. Only the services differ (`src/workshop/previews/reader-chamber/`):
   - **The story.** It is the owner's Sundered Heavens test (eight chapters written in the app on 2026-10-06), as Export story saved it. `sampleStory.json` is trimmed from 2.9 MB to 0.9 MB by leaving out copies the Reader never reads: each attempt's accepted draft, foundation snapshot and frozen media, and the recordings catalog inside each chapter's frozen media. The loader restores the snapshot and media from the identical records beside them.
   - **Storage.** The story and the reading place are kept in memory, one copy per scene.

@@ -242,6 +242,25 @@ describe('word tags', () => {
   it('strips tags from fields that carry none', () => {
     expect(stripMarks('Previously, [[gained: MC | Sword]] Wei Lin took the sword.')).toBe('Previously, Wei Lin took the sword.');
   });
+
+  // From SENSEI's Sundered Heavens test (Chapters 7 and 8): the writer put the tag where the thing's name belongs.
+  it('keeps the name of a thing or ability whose tag stood in its place', () => {
+    const twist = readMarks('Gu Chen paused, tightening the crude bind of his ink-black hair with a twist of [[equipped: Gu Chen | Copper Hair Wire]] that bit sharply into his scalp.');
+    expect(twist.text).toBe('Gu Chen paused, tightening the crude bind of his ink-black hair with a twist of Copper Hair Wire that bit sharply into his scalp.');
+    expect(read(twist)).toEqual([['equipped', ['Gu Chen', 'Copper Hair Wire'], 'Copper Hair Wire that bit sharply into his scalp.']]);
+    expect(readMarks('patting the coarse leather hanging at his waist, which held [[equipped: Gu Chen | Elder Yan\'s Spatial Pouch]]. "Yan’s ledger noted it."').text)
+      .toBe('patting the coarse leather hanging at his waist, which held Elder Yan\'s Spatial Pouch. "Yan’s ledger noted it."');
+    expect(readMarks('"It has value," Gu Chen replied dryly, tucking [[equipped: MC | Elder Yan\'s Spatial Pouch]] securely into his inner tunic.').text)
+      .toBe('"It has value," Gu Chen replied dryly, tucking Elder Yan\'s Spatial Pouch securely into his inner tunic.');
+  });
+
+  it('adds no name where the tag is written as it should be: at a sentence start, or after the name itself', () => {
+    expect(readMarks('He paused. [[equipped: MC | Iron Pickaxe]] His pickaxe rested on his shoulder.').text).toBe('He paused. His pickaxe rested on his shoulder.');
+    expect(readMarks('[[has: MC | Copper Hair Wire]] A length of wire kept his hair back.').text).toBe('A length of wire kept his hair back.');
+    expect(readMarks('He drew the Ashen Sword [[equipped: MC | Ashen Sword]] and charged.').text).toBe('He drew the Ashen Sword and charged.');
+    expect(readMarks('He drew his sword [[equipped: MC | Ashen Sword]] and charged.').text).toBe('He drew his sword and charged.');
+    expect(readMarks('He bowed [[rank: MC | Outer Disciple]] and left.').text).toBe('He bowed and left.');
+  });
 });
 
 describe('sound tags', () => {

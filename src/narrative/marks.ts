@@ -39,6 +39,9 @@ import { normalizeSoundWord } from '../audio/soundWords';
  * still removed and reported, so no part of it leaks. An unknown word with a
  * pipe after its colon (`[[obtainedd: MC | Sword]]`) is a slipped tag: removed
  * and reported too. Without a pipe, `[[Note: …]]` is ordinary text.
+ * A word tag never takes words away: one written where its thing or ability's
+ * name belongs (`a twist of [[equipped: MC | Copper Hair Wire]] that bit`)
+ * leaves that name in the text in its place (see `namedInPlace`).
  *
  * A sound tag reads the same slips: letter case, spaces, full-width brackets,
  * colons and pipes, a single closing bracket, other words for "sound" ("sfx",
@@ -246,6 +249,47 @@ const SOUNDTRACK_UNCLOSED = new RegExp(String.raw`${OPEN}${GAP}${SOUNDTRACK_TAG_
 
 const toNumber = (digits: string) => Number(digits.replace(/[０-９]/g, digit => String(digit.charCodeAt(0) - 0xff10)));
 const isSpace = (character: string | undefined) => character !== undefined && /[ \t　]/.test(character);
+
+/** Words after which a noun must come: articles, possessives and prepositions. */
+const NEEDS_A_NOUN = new Set(['a', 'an', 'the', 'his', 'her', 'its', 'their', 'my', 'your', 'our', 'of', 'with', 'from', 'into', 'onto', 'in', 'on', 'at', 'by', 'for', 'under', 'over', 'upon', 'within', 'without', 'behind', 'beside', 'against', 'toward', 'towards', 'through', 'across']);
+/** Words that open a noun phrase of their own: what follows the tag names its object. */
+const OPENS_A_NOUN = new Set(['a', 'an', 'the', 'his', 'her', 'its', 'their', 'my', 'your', 'our']);
+const SUBJECTS = new Set(['i', 'he', 'she', 'it', 'we', 'they', 'you']);
+const WORD_CHARACTERS = /[\p{L}\p{N}'’-]+/gu;
+
+/**
+ * The name a word tag stood in for, when the sentence lacks the word it needed
+ * (SENSEI's Sundered Heavens test: `a twist of [[equipped: Gu Chen | Copper
+ * Hair Wire]] that bit`, `which held [[…]].`, `tucking [[…]] securely`). Only
+ * then: the tag follows a word in the middle of a sentence, not its subject;
+ * no new sentence, article or possessive follows it; the sentence does not
+ * already name the thing (its name's last word); and the word before it needs
+ * a noun, or the sentence ends straight after it, or an adverb in -ly follows.
+ */
+const namedInPlace = (before: string, after: string, name: string | undefined): string | undefined => {
+  const thing = name?.trim();
+  if (!thing) return undefined;
+  const lead = before.trimEnd();
+  const previous = lead.match(/[\p{L}\p{N}'’-]+$/u)?.[0]?.toLowerCase();
+  if (!previous || SUBJECTS.has(previous)) return undefined;
+  const following = after.replace(/\[\[[^\]]*\]\]/g, '').trimStart();
+  if (/^\p{Lu}/u.test(following)) return undefined;
+  const sentenceBefore = lead.slice(Math.max(...['.', '!', '?', '。', '！', '？', '\n'].map(stop => lead.lastIndexOf(stop))) + 1);
+  const sentenceAfter = following.split(/[.!?。！？\n]/u)[0];
+  // The name's last word is the thing itself (the wire of Copper Hair Wire): written already, the tag only marks it.
+  const head = thing.toLowerCase().match(WORD_CHARACTERS)?.at(-1);
+  const sentenceWords: string[] = `${sentenceBefore} ${sentenceAfter}`.toLowerCase().match(WORD_CHARACTERS) ?? [];
+  if (head && sentenceWords.includes(head)) return undefined;
+  // The word straight after the tag, when a word (not punctuation) comes next.
+  const next = following.match(/^[\p{L}\p{N}'’-]+/u)?.[0]?.toLowerCase();
+  if (next && OPENS_A_NOUN.has(next)) return undefined;
+  const leadWords: string[] = sentenceBefore.toLowerCase().match(WORD_CHARACTERS) ?? [];
+  if (NEEDS_A_NOUN.has(previous)) return thing;
+  if (/^[.!?;:,。！？]/u.test(following) && !OPENS_A_NOUN.has(leadWords.at(-2) ?? '')) return thing;
+  if (next?.endsWith('ly')) return thing;
+  return undefined;
+};
+
 const energyOf = (value: string | undefined): AudioEnergy | undefined => {
   const energy = value?.trim().toLowerCase();
   return (AUDIO_ENERGIES as readonly string[]).includes(energy ?? '') ? energy as AudioEnergy : undefined;
@@ -386,7 +430,16 @@ export function readMarks(source: string, { soundWords }: MarkReadingOptions = {
         const spelling = wordTag[1].trim().toLowerCase().replace(/[\s-]+/g, ' ');
         if (!word) wordTagIssues.push({ kind: 'unknown', word: wordTag[1].trim() });
         else if (parts.length < 2) wordTagIssues.push({ kind: 'incomplete', word });
-        else wordTags.push({ word, ...(spelling !== word ? { spelling } : {}), parts, offset: text.length });
+        else {
+          wordTags.push({ word, ...(spelling !== word ? { spelling } : {}), parts, offset: text.length });
+          const name = word === 'rank' ? undefined : namedInPlace(text, source.slice(index + wordTag[0].length), parts[1]);
+          if (name) {
+            // The tag stood where its name belongs: the name stays, with the text's own spacing around it.
+            text += isSpace(text.at(-1)) ? name : ` ${name}`;
+            index += wordTag[0].length;
+            continue;
+          }
+        }
         index = skipDoubledSpace(index + wordTag[0].length);
         continue;
       }

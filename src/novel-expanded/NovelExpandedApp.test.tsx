@@ -858,7 +858,7 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     await click(buttonByText('Profile', strip()!), 'Profile in the navigation', 50);
     expect(companion()).toBe(summoned);
     await click(buttonByText('Home', strip()!), 'Home in the navigation');
-    // The Reader keeps the same Familiar; minimized, its recall sits in the Reader's top bar beside Fate.
+    // The Reader keeps the same Familiar; minimized, its recall sits in the Reader's top bar beside Reader Settings.
     await click(container.querySelector(`#home-world-${created.id} button[aria-label^="Open ${created.title}"]`), 'the Home card');
     await click(chaptersAction(), 'Start Story', 10);
     expect(document.querySelector('[data-testid="harness-reader"]')).toBeTruthy();

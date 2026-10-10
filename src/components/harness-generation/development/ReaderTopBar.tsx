@@ -1,22 +1,23 @@
 import type { ReactNode, Ref } from 'react';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Settings } from 'lucide-react';
 
 const pill = 'inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-full border text-sm';
 
 /**
  * The Reader frame's top bar: Back (exit), the story and chapter, the host's own
- * companion (the Library's Familiar), and Fate. It stays at the top of the
- * screen while the chapter scrolls and fits one row on the narrowest phones:
- * Back shows its word from small tablets up, Fate always does. The Codex,
- * Listen, Reader Settings and the chapters are in the bottom bar.
+ * companion (the Library's Familiar), and Reader Settings: settings and what
+ * the reader is reading. It stays at the top of the screen while the chapter
+ * scrolls and fits one row on the narrowest phones; Back shows its word from
+ * small tablets up. What the reader acts with (the Codex, Listen, Fate and the
+ * chapters) is in the bottom bar.
  */
-export function ReaderTopBar({ storyTitle, place, onBack, onOpenFate, companion, barRef }: {
+export function ReaderTopBar({ storyTitle, place, onBack, onOpenSettings, companion, barRef }: {
   storyTitle: string;
   /** Where the reader is: "Chapter 3", or the story start. */
   place: string;
   onBack: () => void;
-  onOpenFate: () => void;
-  /** The host's companion beside Fate (the Library puts its Familiar here). */
+  onOpenSettings: () => void;
+  /** The host's companion beside Reader Settings (the Library puts its Familiar here). */
   companion?: ReactNode;
   barRef?: Ref<HTMLElement>;
 }) {
@@ -32,8 +33,10 @@ export function ReaderTopBar({ storyTitle, place, onBack, onOpenFate, companion,
         <p className="truncate text-xs text-neutral-400">{place}</p>
       </div>
       {companion && <div className="flex shrink-0 items-center" data-testid="reader-companion">{companion}</div>}
-      <button type="button" aria-label="Open Fate" title="Fate: decide what happens next" onClick={onOpenFate}
-        className={`${pill} border-cyan-300/30 px-4 text-cyan-50 hover:border-cyan-300/60`}>Fate</button>
+      <button type="button" aria-label="Reader Settings" title="Reader Settings" aria-haspopup="dialog" onClick={onOpenSettings}
+        className={`${pill} border-white/15 text-neutral-200 hover:border-white/30`}>
+        <Settings className="h-4 w-4" aria-hidden />
+      </button>
     </div>
   </header>;
 }

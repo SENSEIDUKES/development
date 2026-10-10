@@ -17,7 +17,7 @@ const READER_BOTTOM = 136;
  * note on phones and tablets, and above the page's corner on laptops. It
  * follows the profile: a Familiar or size chosen in the Cave changes it at
  * once. In the Reader (`reading`) its recall is in the Reader's top bar beside
- * Fate (the Library hands it over), and summoned it floats above the Reader's
+ * Reader Settings (the Library hands it over), and summoned it floats above the Reader's
  * bottom bar. It sits under the economy's providers: its Energy panel reads
  * the reader's account.
  */

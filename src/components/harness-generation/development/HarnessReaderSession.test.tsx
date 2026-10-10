@@ -354,6 +354,12 @@ describe('The HARNESS Reader', { timeout: 20_000 }, () => {
     // A panel is not modal: the chapter is not shut away from the reader.
     expect(panel.getAttribute('aria-modal')).toBeNull();
     expect(document.activeElement?.id).toBe('reader-settings-title');
+    // On a phone the sheet has two stops, its circle filled at full height and half filled at half.
+    expect(panel.getAttribute('data-stop')).toBe('full');
+    await click(byLabel('Show the chapter'), 'Show the chapter');
+    expect(panel.getAttribute('data-stop')).toBe('half');
+    await click(byLabel('Raise the panel'), 'Raise the panel');
+    expect(panel.getAttribute('data-stop')).toBe('full');
 
     // Opening another closes the first, and focus stays with the one just opened.
     buttonBy(byLabel('Open Fate'))!.focus();
@@ -756,14 +762,14 @@ describe('The Reader frame and its chapter body', { timeout: 20_000 }, () => {
     expect(article.className).toContain('max-w-[34em]');
     expect(article.querySelector<HTMLElement>('h1')!.style.fontFamily).toBe('"House Soft", serif');
 
-    // The top bar: Back, the story and chapter, (the host's companion,) Fate. The bottom bar: the Codex,
-    // Listen in the middle (none here: this browser has no speech), Reader Settings and the chapters.
+    // The top bar: Back, the story and chapter, (the host's companion,) Reader Settings. The bottom bar: the Codex,
+    // Listen in the middle (none here: this browser has no speech), Fate and the chapters.
     const bar = container.querySelector<HTMLElement>('[data-testid="reader-top-bar"]')!;
     expect(bar.textContent).toContain('Chapter 1');
-    expect([...bar.querySelectorAll('button')].map(button => button.getAttribute('aria-label'))).toEqual(['Back', 'Open Fate']);
+    expect([...bar.querySelectorAll('button')].map(button => button.getAttribute('aria-label'))).toEqual(['Back', 'Reader Settings']);
     const bottom = container.querySelector<HTMLElement>('[data-testid="reader-bottom-bar"]')!;
     expect([...bottom.querySelectorAll('button')].map(button => button.getAttribute('aria-label')))
-      .toEqual(['Open Codex', 'Reader Settings', 'Previous Chapter', 'Next Chapter: Write Chapter 2']);
+      .toEqual(['Open Codex', 'Open Fate', 'Previous Chapter', 'Next Chapter: Write Chapter 2']);
     expect(bottom.querySelector('[data-testid="reader-chapter-position"]')!.textContent).toBe('1/1');
 
     await click(byLabel('Reader Settings'), 'Reader Settings');

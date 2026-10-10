@@ -1,5 +1,5 @@
 import type { ComponentType, ReactNode, Ref } from 'react';
-import { BookOpen, ChevronLeft, ChevronRight, LocateFixed, Pause, Play, RotateCcw, Settings, SkipBack, SkipForward, Square } from 'lucide-react';
+import { BookOpen, ChevronLeft, ChevronRight, LocateFixed, Pause, Play, RotateCcw, SkipBack, SkipForward, Square, Zap } from 'lucide-react';
 import type { ReadAloud, ReadAloudRole } from '@seihouse/sen/reader-runtime';
 
 const ROLE_LABELS: Record<ReadAloudRole, string> = { narrator: 'Narrator', protagonist: 'Protagonist', side: 'Side character' };
@@ -23,15 +23,15 @@ export interface ReaderChapterStep {
 }
 
 /**
- * The Reader frame's bottom bar, always at the bottom of the screen: the
- * Codex on the left, Listen in the middle, Reader Settings and the chapters
- * (previous, where the reader is, next) on the right. While Listen reads, a
+ * The Reader frame's bottom bar, always at the bottom of the screen, holds
+ * what the reader acts with: the Codex on the left, Listen in the middle,
+ * Fate and the chapters (previous, where the reader is, next) on the right. While Listen reads, a
  * strip above it names who is speaking and steps a sentence back or forward,
  * stops, and offers the way back to the sentence when it has scrolled away.
  * The story audio note floats just above its right end. Where the browser
  * can't read aloud, the middle is empty and the rest stays.
  */
-export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarration, barRef, note, onOpenCodex, onOpenSettings, previous, next, position }: {
+export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarration, barRef, note, onOpenCodex, onOpenFate, previous, next, position }: {
   readAloud: ReadAloud;
   /** Starts reading where the reader is on the page. Absent before the story has a chapter. */
   onListen?: () => void;
@@ -41,7 +41,7 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
   /** The story audio note (the soundtrack's mute), placed above the bar. */
   note?: ReactNode;
   onOpenCodex: () => void;
-  onOpenSettings: () => void;
+  onOpenFate: () => void;
   previous?: ReaderChapterStep;
   next?: ReaderChapterStep;
   /** Where the reader is, such as "5/10". */
@@ -72,15 +72,16 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
         {status !== 'ended' && <IconButton label="Next sentence" icon={SkipForward} onClick={() => readAloud.skip(1)} />}
         <IconButton label="Stop" icon={Square} onClick={readAloud.stop} />
       </div>}
-      {/* Two equal sides keep Listen in the middle of the screen. */}
-      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1 pt-2 sm:gap-2">
-        <div className="flex justify-start">
+      {/* Two equal sides keep Listen in the middle of the screen. Where the right side can't fit in
+          its half (the narrowest phones), the left gives way, so nothing ever overlaps. */}
+      <div className="flex items-center gap-1 pt-2 sm:gap-2">
+        <div className="flex min-w-0 flex-1 basis-0 justify-start">
           <button type="button" aria-label="Open Codex" title="Codex: the story's world" onClick={onOpenCodex}
             className={`${round} gap-1.5 sm:px-4`}>
             <BookOpen className="h-4 w-4" aria-hidden /><span className="hidden text-sm sm:inline" aria-hidden>Codex</span>
           </button>
         </div>
-        <div className="flex justify-center">
+        <div className="flex shrink-0 justify-center">
           {center && CenterIcon
             ? <button type="button" aria-label={center.label} title={center.label} onClick={center.run} data-testid="read-aloud-play"
                 className="inline-flex h-14 w-14 items-center justify-center rounded-full border-2 border-cyan-200/70 bg-cyan-400 text-neutral-950 shadow-[0_0_24px_rgba(34,211,238,0.35)] hover:bg-cyan-300">
@@ -88,17 +89,18 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
               </button>
             : <span className="h-14 w-14" aria-hidden />}
         </div>
-        <div className="flex items-center justify-end gap-1 sm:gap-1.5">
-          <button type="button" aria-label="Reader Settings" title="Reader Settings" aria-haspopup="dialog" onClick={onOpenSettings} className={`${round} min-w-10 sm:min-w-11`}>
-            <Settings className="h-4 w-4" aria-hidden />
+        <div className="flex min-w-max flex-1 basis-0 items-center justify-end gap-1 sm:gap-1.5">
+          <button type="button" aria-label="Open Fate" title="Fate: decide what happens next" onClick={onOpenFate}
+            className={`${round} min-w-10 border-cyan-300/40 text-cyan-100 hover:border-cyan-300/70 sm:min-w-11`}>
+            <Zap className="h-4 w-4" aria-hidden />
           </button>
           <nav aria-label="Chapters" className="inline-flex shrink-0 items-center rounded-full border border-white/15">
             <button type="button" aria-label={previous?.label ?? 'Previous Chapter'} title={previous?.label ?? 'Previous Chapter'} disabled={!previous}
               onClick={previous?.run} className="inline-flex min-h-11 min-w-9 items-center justify-center rounded-l-full text-neutral-100 disabled:opacity-35 sm:min-w-10">
               <ChevronLeft className="h-4 w-4" aria-hidden />
             </button>
-            {/* Where the reader is ("5/10"); left out on the narrowest phones, where it would push Listen off the middle. */}
-            {position && <span className="font-mono text-[11px] tabular-nums text-neutral-300 max-[374px]:hidden sm:text-xs" data-testid="reader-chapter-position">{position}</span>}
+            {/* Where the reader is ("5/10"). */}
+            {position && <span className="font-mono text-[11px] tabular-nums text-neutral-300 sm:text-xs" data-testid="reader-chapter-position">{position}</span>}
             <button type="button" aria-label={next?.label ?? 'Next Chapter'} title={next?.label ?? 'Next Chapter'} disabled={!next || next.busy}
               aria-busy={next?.busy || undefined} onClick={next?.run}
               className="inline-flex min-h-11 min-w-9 items-center justify-center rounded-r-full text-neutral-100 disabled:opacity-35 sm:min-w-10">

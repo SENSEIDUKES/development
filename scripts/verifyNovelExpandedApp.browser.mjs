@@ -576,7 +576,7 @@ async function walk(browser, viewport, sample) {
   check(await visibleButton('Open Fate').isVisible() && await visibleButton('Reader Settings').isVisible() && await visibleButton('Open Codex').isVisible(),
     'Fate, the Codex and Reader Settings should be reachable at the chapter\'s end.');
   check(await page.getByTestId('reader-top-bar').getByTestId('reader-companion').getByRole('button', { name: /actions$/ }).isVisible(),
-    'The Familiar\'s recall should sit in the Reader\'s top bar beside Fate.');
+    'The Familiar\'s recall should sit in the Reader\'s top bar beside Reader Settings.');
   await shot('6c-reader-end');
 
   // 3c. Fate is a panel: the chapter stays on the page, readable beside (laptop) or above (phone) it.

@@ -349,10 +349,11 @@ Update it whenever it changes.
     the reading font from the font repo (SEIHouse/FONT-LAB), titles in a
     **SEIHouse Display** cut (Ink by default; Soft, Edge and Wide are there to
     test), with the earlier Noto Serif and Alegreya still to choose. A slim top
-    bar (Back, the story and chapter, the reader's **Familiar**, Fate) stays at
-    the top while reading, and a **bottom bar** stays at the bottom: the Codex,
-    **Listen** as a large button in the middle (as in the first Reader), Reader
-    Settings, and the chapters (previous, "5/10", next). The prose keeps about
+    bar (Back, the story and chapter, the reader's **Familiar**, Reader
+    Settings) stays at the top while reading, and a **bottom bar** stays at the
+    bottom with what the reader acts with: the Codex, **Listen** as a large
+    button in the middle (as in the first Reader), Fate, and the chapters
+    (previous, "5/10", next). The prose keeps about
     60 characters a line. The
     Reader is a **frame** around a **chapter body**: prose today, so a
     sequential-art view can take the body's place later. The frame is built

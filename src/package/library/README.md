@@ -2,7 +2,7 @@
 
 **0.31.0 (2026-10-10):** The Familiar in the Reader. `./stories`: `StoryPages` puts the host's
 header accessory (the Familiar's recall, from `WorkspaceHeaderAccessoryProvider`) in the Reader's
-top bar beside Fate. `./shell`: `useWorkspaceHeaderAccessory` reads that accessory, for a page that
+top bar beside Reader Settings. `./shell`: `useWorkspaceHeaderAccessory` reads that accessory, for a page that
 draws its own bar. Requires `@seihouse/sen` 0.29.
 
 **0.30.0 (2026-10-10):** The SEIHouse fonts in the Reader. `./stories`: `StoryPages` gives the

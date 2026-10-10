@@ -151,7 +151,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   useEffect(() => { if (missing) navigate(HOME_ROUTE, { replace: true }); }, [missing, navigate]);
 
   // One Familiar around every page, at the same place in the tree, so it keeps its
-  // place as the reader moves; in the Reader its recall sits in the top bar beside Fate.
+  // place as the reader moves; in the Reader its recall sits in the top bar beside Reader Settings.
   const withFamiliar = (page: ReactNode) =>
     <AppFamiliar profile={profile} present={Boolean(state && skills)} reading={route.page === 'read'}>{page}</AppFamiliar>;
 

@@ -79,7 +79,7 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
   const { state, controller, loadError } = stories;
   /** Set by Start Story, so the Reader begins Chapter 1 as it opens. */
   const [startOnOpen, setStartOnOpen] = useState(false);
-  // The Familiar's recall, from the app's header, rides in the Reader's top bar beside Fate.
+  // The Familiar's recall, from the app's header, rides in the Reader's top bar beside Reader Settings.
   const familiar = useWorkspaceHeaderAccessory();
   const [readingPosition, setReadingPosition] = useState<{ chapterNumber: number }>();
   const [exportProblem, setExportProblem] = useState<string>();

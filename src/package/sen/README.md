@@ -1,5 +1,11 @@
 # `@seihouse/sen`
 
+**0.27.1 (2026-10-10):** A holdings tag no longer takes words away. When the writer puts one
+where its thing's name belongs (`a twist of [[equipped: MC | Copper Hair Wire]] that bit`,
+`which held [[…]].`, `tucking [[…]] securely`), `readMarks` leaves the name in the text in its
+place, so the sentence keeps its noun and the change is still recorded on that sentence. Tags
+written as they should be, at a sentence's start or after the name itself, change nothing.
+
 **0.27.0 (2026-10-09):** Author's notes. `HarnessStory` gains `authorNotes` (at most
 `AUTHOR_NOTES_LIMIT`, 2,000 characters); the HARNESS controller's `setAuthorNotes(storyId, notes)`
 saves them (an empty value removes them). They never reach the chapter writer. Saved workspaces

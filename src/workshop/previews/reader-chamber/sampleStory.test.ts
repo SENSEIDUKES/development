@@ -78,13 +78,22 @@ describe('the Reader Chamber workspace story', () => {
     const written = await controller.writeNextChapter(storyId, REPLAY_MODEL);
     const original = chaptersOf(sample)[7];
     const chapter = chaptersOf(written).at(-1)!;
+    // Since 2026-10-10 a holdings tag written where its thing's name belongs leaves the name:
+    // two sentences that lost theirs when Chapter 8 was first saved now keep them.
+    const paragraphs = [...original.paragraphs];
+    paragraphs[0] = paragraphs[0].replace('a twist of that bit', 'a twist of Copper Hair Wire that bit');
+    paragraphs[2] = paragraphs[2].replace('which held .', 'which held Elder Yan\'s Spatial Pouch.');
+    expect(paragraphs).not.toEqual(original.paragraphs);
     expect(chapter).toMatchObject({
-      chapterNumber: 8, title: original.title, prose: original.prose, paragraphs: original.paragraphs,
+      chapterNumber: 8, title: original.title, paragraphs, prose: paragraphs.join('\n\n'),
       scene: original.scene, closingHoldings: original.closingHoldings, path: original.path,
     });
-    expect(chapter.soundCues?.map(cue => cue.anchor)).toEqual(original.soundCues?.map(cue => cue.anchor));
+    const placed = (attachments: ReadonlyArray<{ anchor: { blockId: string; selectedText: string } }> | undefined) =>
+      attachments?.map(({ anchor }) => [anchor.blockId, anchor.selectedText]);
+    expect(placed(chapter.soundCues)).toEqual(placed(original.soundCues));
     expect(chapter.speakers?.map(speaker => speaker.payload.speaker)).toEqual(original.speakers?.map(speaker => speaker.payload.speaker));
-    expect(chapter.holdingChanges?.map(change => change.anchor)).toEqual(original.holdingChanges?.map(change => change.anchor));
+    expect(chapter.holdingChanges?.map(change => change.anchor.blockId)).toEqual(original.holdingChanges?.map(change => change.anchor.blockId));
+    expect(chapter.holdingChanges?.[0].anchor.selectedText).toContain('a twist of Copper Hair Wire that bit');
     expect(written.stories[0].head.nextChapterNumber).toBe(9);
     const attempt = written.attempts.find(entry => entry.id === chapter.attemptId)!;
     expect(attempt.model).toBe(REPLAY_MODEL);

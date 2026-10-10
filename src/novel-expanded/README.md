@@ -223,6 +223,7 @@ Workshop's, so neither can overwrite the other (`services.ts`):
 | Stories | IndexedDB `novelexpanded-harness-stories-v1` |
 | Reading places | IndexedDB `novelexpanded-reader-state-v1` |
 | Narration voices and speed (Reader Settings) | localStorage `novelexpanded-reader-read-aloud` |
+| The Reader's text: font, title font, size, line spacing, weight (Reader Settings → Text) | localStorage `novelexpanded-reader-text-settings` |
 | The laptop sidebar open or minimized | localStorage `novelexpanded-reader-library-sidebar-mode` |
 | The access token | localStorage `seihouse-development-access-token`, shared with the Workshop |
 | Story Seeds | localStorage `novelexpanded-story-seeds-v1` |
@@ -271,7 +272,7 @@ task needs something the list does not allow.
 | File | Responsibility |
 | --- | --- |
 | `app/index.html` (repository root) | The app's page; loads `main.tsx` |
-| `main.tsx` | Stylesheets (`src/host/styles/theme.css`, `@seihouse/sen/styles.css`), the Library scrollbar on the page, and the real services |
+| `main.tsx` | Stylesheets (`src/host/styles/theme.css`, which also loads the SEIHouse fonts, SEIHouse Sans and the four SEIHouse Display cuts; `@seihouse/sen/styles.css`), the Library scrollbar on the page, and the real services |
 | `NovelExpandedApp.tsx` | Providers (the mixer, the app's places, the music note for every Library header, the remembered sidebar, the economy), the opening gate, the Familiar and the pages; Chapter 1 begins at Manifest Story |
 | `AppShell.tsx` | The Library Shell around Home and Story View: header, navigation, footer |
 | `appPlaces.ts` | The app's places (Home, Create, Profile) and where each page sits in the Library's navigation |
@@ -315,6 +316,7 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## History
 
+- **2026-10-10** — The Reader reads in the SEIHouse fonts from the font repo: SEIHouse Sans for the chapter, a SEIHouse Display cut for its title. Reader Settings opens with Text (font, title font, size, line spacing, weight), kept on the device. A slim top bar stays at the top while reading, and the prose keeps about 60 characters a line.
 - **2026-10-09** — World Info's four cards: **Codex**, **Portal**, **Information** and **Settings**. Information, marked with the story's format, holds everything about the world, Author's notes last. Settings opens the story's Story Settings (language and Reading Mode, skills, media and Author's notes) below the cards, in place of the separate Story Settings panel. Portal opens the world's other media; every story is a novel so far, so it says so until adaptations exist.
 - **2026-10-09** — Covers are made on the cover: World Info's empty cover says Manifest, and the reader chooses one cover (5 Energy) or three to choose from (15). Three come alive in a picker and the reader keeps one; the others are let go. Every cover uses the owner's approved template with the title drawn on. The Manifest cover button beneath World Info is gone.
 - **2026-10-09** — One Energy badge everywhere Energy shows: the Profile home's balance, the Store, the cost beside Make my portraits and New cover, beside Write Chapter in the Reader (1 Energy, with "−1" as each chapter arrives) and beside Manifest in Story Seed (a chapter's price for now). Practice only.

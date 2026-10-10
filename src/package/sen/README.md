@@ -1,5 +1,16 @@
 # `@seihouse/sen`
 
+**0.28.0 (2026-10-10):** The Reader is a frame around a swappable chapter body, and sets its
+text. `./harness-generation`: `HarnessReaderSession` takes `chapterBody` (a `ReaderChapterBody`;
+`ProseChapterBody` by default) and `readerFonts`; `ReaderChapterBodyProps`, `ReaderChapter` and
+`NarrationHighlight` are exported. A body keeps `data-chapter-number`, `data-read-aloud-title` and
+`data-sen-text-block` on what it draws. The frame's top bar stays on screen; the prose keeps about
+60 characters a line. Reader Settings opens with Text (font, title font, size, line spacing,
+weight). `./reader-runtime`: `ReaderFonts`, `ReaderFontChoice`, `DEFAULT_READER_FONTS`,
+`ReaderTextSettings` with `readReaderTextSettings`/`writeReaderTextSettings` (key `text-settings`)
+and `resolveReaderText`. `./text-highlight-engine`: a paragraph's line height follows
+`--sen-text-line-height` (1.85 without it).
+
 **0.27.1 (2026-10-10):** A holdings tag no longer takes words away. When the writer puts one
 where its thing's name belongs (`a twist of [[equipped: MC | Copper Hair Wire]] that bit`,
 `which held [[…]].`, `tucking [[…]] securely`), `readMarks` leaves the name in the text in its

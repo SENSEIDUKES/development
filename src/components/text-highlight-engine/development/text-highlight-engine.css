@@ -9,7 +9,8 @@
 .sen-text-highlight-root:focus-visible { outline: none; }
 .sen-text-highlight-controls, .sen-text-highlight-undo,
 .sen-text-highlight-controls button, .sen-text-highlight-undo button { box-sizing: border-box; }
-.sen-text-highlight [data-sen-text-block] { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.85; margin: 0 0 1.3em; min-height: 1.85em; }
+/* A host sets the line spacing with --sen-text-line-height (a multiple of the text size). */
+.sen-text-highlight [data-sen-text-block] { white-space: pre-wrap; overflow-wrap: anywhere; line-height: var(--sen-text-line-height, 1.85); margin: 0 0 1.3em; min-height: calc(var(--sen-text-line-height, 1.85) * 1em); }
 .sen-text-highlight [data-sen-text-block]::selection,
 .sen-text-highlight [data-sen-text-block] *::selection { background: transparent; color: inherit; }
 .sen-text-highlight [data-sen-text-block] { -webkit-touch-callout: none; }

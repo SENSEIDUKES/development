@@ -492,7 +492,7 @@ async function walk(browser, viewport, sample) {
   await settings.waitFor();
   const audio = settings.getByTestId('reader-settings-audio');
   await audio.locator('h3', { hasText: 'Audio' }).waitFor();
-  check(JSON.stringify(await settings.locator('section h3').allTextContents()) === '["Audio","Narration"]', `Reader Settings should hold Audio, then Narration, got ${JSON.stringify(await settings.locator('section h3').allTextContents())}.`);
+  check(JSON.stringify(await settings.locator('section h3').allTextContents()) === '["Text","Audio","Narration"]', `Reader Settings should hold Text, Audio, then Narration, got ${JSON.stringify(await settings.locator('section h3').allTextContents())}.`);
   check(await audio.getByRole('switch').count() > 0 && await audio.getByRole('slider').count() > 0, 'Audio should show the approved switches and sliders.');
   check(await audio.getByText('Atmosphere', { exact: true }).count() > 0, 'Audio should offer the Atmosphere layer.');
   check(await audio.getByText('Soundscapes', { exact: true }).count() > 0, 'Audio should offer the Soundscapes layer.');
@@ -514,6 +514,27 @@ async function walk(browser, viewport, sample) {
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), 'Reader Settings must not scroll sideways.');
   await page.waitForTimeout(300);
   await shot('6c-reader-audio');
+  // Text: SEIHouse Sans for the chapter and SEIHouse Display for its title, from the font repo; the reader's choices kept on the device.
+  const prose = page.locator('[data-chapter-number="1"]');
+  const proseFont = () => prose.evaluate(element => ({ family: getComputedStyle(element).fontFamily, size: getComputedStyle(element).fontSize,
+    title: getComputedStyle(element.querySelector('h1')).fontFamily }));
+  await page.evaluate(() => document.fonts.ready);
+  const before = await proseFont();
+  check(before.family.startsWith('"SEIHouse Sans"') && before.size === '17.2px' && before.title.startsWith('"SEIHouse Display Soft"'),
+    `The chapter should read in SEIHouse Sans at 17.2px under a Display Soft title, got ${JSON.stringify(before)}.`);
+  check(await page.evaluate(() => document.fonts.check('17px "SEIHouse Sans"') && [...document.fonts].some(face => face.family.replaceAll('"', '') === 'SEIHouse Sans' && face.status === 'loaded')),
+    'SEIHouse Sans should load from the app.');
+  const text = settings.getByTestId('reader-settings-text');
+  await text.scrollIntoViewIfNeeded();
+  await text.locator('label').filter({ has: page.locator('input[name="reader-text-size"][value="larger"]') }).click();
+  await text.locator('label').filter({ hasText: 'Display Edge' }).click();
+  const after = await proseFont();
+  check(after.size === '20px' && after.title.startsWith('"SEIHouse Display Edge"'), `Larger text and the Edge title should apply at once, got ${JSON.stringify(after)}.`);
+  const kept = JSON.parse(await page.evaluate(() => localStorage.getItem('novelexpanded-reader-text-settings')) ?? '{}');
+  check(kept.size === 'larger' && kept.titleFont === 'seihouse-display-edge', `The text settings should be kept on the device, got ${JSON.stringify(kept)}.`);
+  check(!(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), 'Reader Settings → Text must not scroll sideways.');
+  await shot('6c-reader-text');
+  await text.getByRole('button', { name: 'Reset text' }).click();
   await settings.getByTestId('reader-settings-narration').scrollIntoViewIfNeeded();
   check(await settings.locator('select[data-voice-role]').count() === 3, 'Narration should offer three voices.');
   await settings.locator('label').filter({ hasText: '1.25×' }).click();
@@ -533,6 +554,18 @@ async function walk(browser, viewport, sample) {
   }));
   check(layout.nav <= layout.player + 1, `The Listen bar should not cover the chapter navigation (${JSON.stringify(layout)}).`);
   check(!layout.wide, 'The Reader must not scroll sideways.');
+  // The top bar stays on screen at the chapter's end, in one row with a readable story title; the prose keeps about 60 characters a line.
+  const frame = await page.evaluate(() => {
+    const bar = document.querySelector('[data-testid="reader-top-bar"]').getBoundingClientRect();
+    const article = document.querySelector('[data-chapter-number]');
+    return { barTop: bar.top, barHeight: bar.height, title: document.querySelector('[data-testid="reader-story-title"]').getBoundingClientRect().width,
+      measure: article.getBoundingClientRect().width / parseFloat(getComputedStyle(article).fontSize) };
+  });
+  check(Math.abs(frame.barTop) <= 1 && frame.barHeight <= 80, `The top bar should stay at the top in one row (${JSON.stringify(frame)}).`);
+  check(frame.title >= 80, `The story title should keep room in the top bar (${JSON.stringify(frame)}).`);
+  check(frame.measure <= 36, `The prose should keep a reading measure of about 60 characters (${JSON.stringify(frame)}).`);
+  check(await visibleButton('Open Fate').isVisible() && await visibleButton('Reader Settings').isVisible(), 'Fate and Reader Settings should be reachable at the chapter\'s end.');
+  await shot('6c-reader-end');
 
   // 3c. Holdings: what the main character has now, each change linked to its passage, and the checks.
   await visibleButton('Open Holdings').click();

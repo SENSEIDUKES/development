@@ -29,13 +29,15 @@ const prefersReducedMotion = () => typeof window.matchMedia === 'function' && wi
  * scrolling on their own (wheel, touch or keys, never our own scrolling):
  * then `offscreen` turns true, so the player can offer a way back.
  */
-export function useFollowNarration({ article, highlight, active, player }: {
+export function useFollowNarration({ article, highlight, active, player, header }: {
   article: RefObject<HTMLElement | null>;
   highlight?: NarrationHighlight;
   /** Read Aloud is playing or paused. */
   active: boolean;
   /** The player bar, which covers the bottom of the visible area. */
   player: RefObject<HTMLElement | null>;
+  /** The Reader's top bar, which stays over the top of the visible area. */
+  header?: RefObject<HTMLElement | null>;
 }): { offscreen: boolean; backToNarration: () => void } {
   const [offscreen, setOffscreen] = useState(false);
   const manualAt = useRef(0);
@@ -54,8 +56,9 @@ export function useFollowNarration({ article, highlight, active, player }: {
     const scroller = scrollerFor(root);
     const area = scroller?.getBoundingClientRect() ?? { top: 0, bottom: window.innerHeight };
     const covered = player.current?.getBoundingClientRect().height ?? 0;
-    return { rect, scroller, top: area.top, bottom: area.bottom - covered };
-  }, [article, player]);
+    const bar = header?.current?.getBoundingClientRect?.();
+    return { rect, scroller, top: Math.max(area.top, bar?.bottom ?? area.top), bottom: area.bottom - covered };
+  }, [article, player, header]);
 
   const bringIntoView = useCallback(() => {
     const placed = measure();

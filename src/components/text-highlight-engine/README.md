@@ -45,6 +45,9 @@ const [blocks, setBlocks] = useState<TextHighlightBlock[]>([
 return <TextHighlightEngine blocks={blocks} onBlocksChange={setBlocks} />;
 ```
 
+A host sets the line spacing with the `--sen-text-line-height` custom property (1.85 by
+default) and the font, size and weight on any parent.
+
 Hosts supply unique, nonempty stable block IDs and synchronously accept local
 updates through `onBlocksChange(blocks, edit)`. Blocks are immutable values.
 `PassageEdit` reports `operation`, the original `selection`, and `before`/`after`
@@ -276,6 +279,9 @@ browser evidence out of the consuming surface. No integration was performed.
 
 ## Workshop history
 
+- **2026-10-10:** A paragraph's line height follows `--sen-text-line-height` (a multiple of the
+  text size; 1.85 without it, as before), so a host's line spacing reaches the paragraphs. The
+  HARNESS Reader sets it from Reader Settings → Text.
 - **2026-10-04:** Sound Cues fit 1–8 whole words (the owner's decision), for a
   cue placed by hand and one the writer tags alike, so a writer's natural
   phrase ("a horn blared across the terrace") keeps its sound.

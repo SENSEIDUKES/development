@@ -298,7 +298,7 @@ when its words change. That means:
   right, so its categories, and what the model is told to document, can be designed
   on purpose.
 
-## Where we are (2026-10-09)
+## Where we are (2026-10-10)
 
 The current implementation status, and the only section that says what is built.
 Update it whenever it changes.
@@ -334,7 +334,8 @@ Update it whenever it changes.
     at the loudness of their Energy, Listen dips it, and a **sleep timer** stops
     it, Listen included. A small **note** above the Listen bar mutes all story
     audio with a tap; a long-press opens Audio settings. **Reader Settings**
-    opens with **Audio** (presets, master, the Soundscapes, Atmosphere and Sound
+    opens with **Text** (the font, the title font, size, line spacing and
+    weight, remembered on the device), then **Audio** (presets, master, the Soundscapes, Atmosphere and Sound
     Cues levels and the sleep timer), then **Scene**: Automatic plays each
     chapter's own music and atmosphere; a piece or an atmosphere the reader
     chooses stays, whatever the chapters choose. Then **Narration** (the three
@@ -342,6 +343,14 @@ Update it whenever it changes.
     mix and the Scene choice are remembered on the device, never in the story.
     **Holdings** lists what each character has now, for checking the chapters
     (below). No Codex, Mind Palace, reader translation or read marks.
+  - **The Reader reads in the SEIHouse fonts:** chapters in **SEIHouse Sans**,
+    the reading font from the font repo (SEIHouse/FONT-LAB), titles in a
+    **SEIHouse Display** cut (Soft by default; Edge, Ink and Wide are there to
+    test), with the earlier Noto Serif and Alegreya still to choose. A slim top
+    bar (Back, the story and chapter, Holdings, Fate, Reader Settings) stays at
+    the top while reading, and the prose keeps about 60 characters a line. The
+    Reader is a **frame** around a **chapter body**: prose today, so a
+    sequential-art view can take the body's place later.
   - **A place to work on the Reader:** the Workshop's Reader Chamber card
     (`?preview=reader-chamber`) shows the app's Reader as its Development view.
     It is the same component the app renders, so the two cannot drift apart. It
@@ -658,7 +667,8 @@ Update it whenever it changes.
 | Story View | The story's own page: cover art, the story, Enter. Built today as the World Info page (`WorldCardInfo`), where Begin Story or Continue leads into the Reader Chamber, with Manifest on its cover and the story's Story Settings below it. |
 | Reader Chamber | Where chapters are read: a HARNESS story's chapters on the Text Highlight Engine with Sound Cues, Listen and the soundtrack (`HarnessReaderSession`). Its Workshop card (`?preview=reader-chamber`) shows this Reader as Development, beside production's Reader as the Original Reference; the older development Reader is no longer on it. |
 | Listen / Read Aloud | The Reader reading a chapter aloud in three voices with the spoken sentence lit (`useReadAloud`, SEN's `reader-runtime`). Its voices and speed live in Reader Settings → Narration. |
-| Reader Settings | The Reader's settings sheet: Audio, then Narration. |
+| Reader Settings | The Reader's settings sheet: Text, Audio, then Narration. |
+| Chapter body | What shows the chapter inside the Reader's frame: prose today (`ProseChapterBody`), sequential art later (`ReaderChapterBody`). |
 | Rewrite this chapter | The reader's request to write the newest chapter again, with an optional note (`rewriteLatestChapter`, `chapterRewriteGap`). |
 | Holdings fixer | SEN's unseen check after each chapter, which settles small holdings problems and keeps a record on the chapter (`planHoldingsFix`, `applyHoldingsFixes`, the `fix-holdings` call). The Library, later the Familiar, sets how far it goes. |
 | Text Highlight Engine (manuscript lab) | The manuscript editor at `?preview=text-highlight-engine`. |

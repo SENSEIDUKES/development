@@ -4,3 +4,4 @@ export * from '../../narrative/speech';
 export * from '../../narrative/readAloud';
 export * from '../../narrative/useReadAloud';
 export * from '../../narrative/soundtrack';
+export * from '../../narrative/readerText';

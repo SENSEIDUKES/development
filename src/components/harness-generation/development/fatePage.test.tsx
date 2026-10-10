@@ -25,7 +25,7 @@ const chapterReply = (n: number) => JSON.stringify({
 let container: HTMLDivElement;
 let root: Root;
 const flush = async (ms = 0) => { await act(async () => { await new Promise(resolve => setTimeout(resolve, ms)); }); };
-const buttonBy = (predicate: (button: HTMLButtonElement) => boolean) => [...container.querySelectorAll<HTMLButtonElement>('button')].find(predicate);
+const buttonBy = (predicate: (button: HTMLButtonElement) => boolean) => [...document.querySelectorAll<HTMLButtonElement>('button')].find(predicate);
 const click = async (predicate: (button: HTMLButtonElement) => boolean, label: string) => {
   const target = buttonBy(predicate);
   expect(target, `Expected ${label}`).toBeTruthy();
@@ -40,7 +40,7 @@ const typeInto = async (element: HTMLTextAreaElement, value: string) => {
     element.dispatchEvent(new Event('input', { bubbles: true }));
   });
 };
-const fatePage = () => container.querySelector<HTMLElement>('[data-testid="fate-page"]')!;
+const fatePage = () => document.querySelector<HTMLElement>('[data-testid="fate-page"]')!;
 const pathOption = (value: string) => fatePage().querySelector<HTMLInputElement>(`[data-testid="fate-path-chooser"] input[type="radio"][value="${value}"]`)!;
 const choosePath = async (value: string) => { await act(async () => { pathOption(value).click(); }); await flush(); };
 
@@ -86,8 +86,8 @@ const start = async (foundation: Partial<StoryFoundationInput>, prepare?: (contr
 
 /** This chapter is the one on screen, with its prose. */
 const showsChapter = async (chapterNumber: number) => {
-  for (let index = 0; index < 30 && !container.querySelector(`[data-chapter-number="${chapterNumber}"]`); index++) await flush(100);
-  expect(container.querySelector(`[data-chapter-number="${chapterNumber}"]`)?.textContent).toContain(`Mara walked the causeway on day ${chapterNumber}.`);
+  for (let index = 0; index < 30 && !document.querySelector(`[data-chapter-number="${chapterNumber}"]`); index++) await flush(100);
+  expect(document.querySelector(`[data-chapter-number="${chapterNumber}"]`)?.textContent).toContain(`Mara walked the causeway on day ${chapterNumber}.`);
 };
 
 /** The bottom bar's Next. At the newest chapter it names the action it runs. */
@@ -140,7 +140,7 @@ describe('The Fate page in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(run.controller.snapshot().chapters[1].path).toMatchObject({ kind: 'chapter-function', chapterFunction: 'conflict' });
 
     await click(byText('Read Chapter 2'), 'Read Chapter 2');
-    expect(container.querySelector('[data-testid="fate-page"]')).toBeNull();
+    expect(document.querySelector('[data-testid="fate-page"]')).toBeNull();
     expect(container.textContent).toContain('Mara walked the causeway on day 2.');
   });
 
@@ -205,7 +205,7 @@ describe('Next at the newest chapter in the HARNESS Reader', { timeout: 20_000 }
     expect(run.requests[1].storyInformation.rhythm?.recommendedFunction).toBeDefined();
     expect(run.controller.snapshot().chapters[1].path).toMatchObject({ kind: 'automatic' });
     await showsChapter(2);
-    expect(container.querySelector('[data-testid="fate-page"]')).toBeNull();
+    expect(document.querySelector('[data-testid="fate-page"]')).toBeNull();
     expect(container.textContent).toContain('Write Chapter 3');
 
     // An existing chapter: Previous, then Next, navigates without writing.
@@ -242,7 +242,7 @@ describe('Next at the newest chapter in the HARNESS Reader', { timeout: 20_000 }
     run.failNext();
     await act(async () => { nextChapterButton().click(); });
     await flush();
-    expect(container.querySelector('[role="alert"]')!.textContent).toContain('Its direction is kept');
+    expect(document.querySelector('[role="alert"]')!.textContent).toContain('Its direction is kept');
     expect(container.textContent).toContain('Mara walked the causeway on day 1.');
     expect(run.controller.snapshot().stories[0].nextChapterDirection?.choice).toEqual({ kind: 'reader', text: 'Mara rings the first bell herself.' });
 

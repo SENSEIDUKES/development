@@ -93,7 +93,8 @@ let container: HTMLDivElement;
 let root: Root;
 
 const flush = async (ms = 0) => { await act(async () => { await new Promise(resolve => setTimeout(resolve, ms)); }); };
-const buttonBy = (predicate: (button: HTMLButtonElement) => boolean) => [...container.querySelectorAll<HTMLButtonElement>('button')].find(predicate);
+// Panels open in a portal beside the Reader, so buttons are found anywhere on the page.
+const buttonBy = (predicate: (button: HTMLButtonElement) => boolean) => [...document.querySelectorAll<HTMLButtonElement>('button')].find(predicate);
 const byLabel = (label: string) => (button: HTMLButtonElement) => button.getAttribute('aria-label') === label;
 const click = async (predicate: (button: HTMLButtonElement) => boolean, label: string) => {
   const target = buttonBy(predicate);
@@ -320,16 +321,50 @@ describe('The HARNESS Reader', { timeout: 20_000 }, () => {
     expect(buttonBy(byLabel('Next Chapter: Write Chapter 2'))).toBeTruthy();
   });
 
-  it('says when the first chapter cannot be written here, and opens the Fate page from its header', async () => {
+  it('says when the first chapter cannot be written here, and opens the Fate panel from its header', async () => {
     const { controller, storyId } = await story();
     await mount(<Host controller={controller} storyId={storyId} canWrite={false} startOnOpen />);
     expect(container.querySelector('[aria-label="Story start"]')!.textContent).toContain('The first chapter can’t be written here yet.');
     expect(buttonBy(button => button.getAttribute('aria-label')?.startsWith('Next Chapter:') ?? false)).toBeUndefined();
 
     await click(byLabel('Open Fate'), 'Open Fate');
-    expect(container.querySelector('[data-testid="fate-page"]')).toBeTruthy();
+    const panel = document.querySelector<HTMLElement>('[data-testid="reader-panel-fate"]')!;
+    expect(panel.getAttribute('role')).toBe('dialog');
+    expect(panel.getAttribute('aria-labelledby')).toBe('fate-page-title');
+    expect(panel.querySelector('[data-testid="fate-page"]')).toBeTruthy();
     await click(button => button.textContent?.trim() === 'Back to reading', 'Back to reading');
+    expect(document.querySelector('[data-testid="reader-panel-fate"]')).toBeNull();
     expect(container.querySelector('[data-testid="harness-reader"]')).toBeTruthy();
+  });
+
+  it('keeps the chapter on the page under a panel, and gives focus back to what opened it', async () => {
+    const { controller, storyId } = await story({ written: 2 });
+    await mount(<Host controller={controller} storyId={storyId} />);
+    const chapter = chapterOnScreen(1)!;
+    const opener = buttonBy(byLabel('Open Holdings'))!;
+    opener.focus();
+
+    await click(byLabel('Open Holdings'), 'Open Holdings');
+    const panel = document.querySelector<HTMLElement>('[data-testid="reader-panel-holdings"]')!;
+    expect(panel.querySelector('[data-testid="holdings-page"]')).toBeTruthy();
+    // The same chapter, still on the page and readable: never hidden or taken away.
+    expect(chapterOnScreen(1)).toBe(chapter);
+    expect(container.querySelector<HTMLElement>('[data-testid="harness-reader"]')!.hidden).toBe(false);
+    // A panel is not modal: the chapter is not shut away from the reader.
+    expect(panel.getAttribute('aria-modal')).toBeNull();
+
+    // Opening another closes the first, and focus stays with the one just opened.
+    buttonBy(byLabel('Open Fate'))!.focus();
+    await click(byLabel('Open Fate'), 'Open Fate');
+    await flush(20);
+    expect(document.activeElement?.id).toBe('fate-page-title');
+    expect(document.querySelector('[data-testid="reader-panel-holdings"]')).toBeNull();
+    expect(document.querySelector('[data-testid="reader-panel-fate"]')).toBeTruthy();
+
+    await click(button => button.textContent?.trim() === 'Back to reading', 'Back to reading');
+    await flush(20);
+    expect(chapterOnScreen(1)).toBe(chapter);
+    expect(document.activeElement?.getAttribute('aria-label')).toBe('Open Fate');
   });
 });
 
@@ -415,22 +450,21 @@ describe('Read Aloud in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(container.ownerDocument.querySelector('[role="dialog"]')).toBeNull();
   });
 
-  it('pauses while the Fate page covers the chapter, and keeps listening into the next chapter', async () => {
+  it('reads on while the Fate panel is open over the chapter, and keeps listening into the next chapter', async () => {
     const { controller, storyId } = await story({ written: 2 });
     await mount(<Host controller={controller} storyId={storyId} readAloudVoices={PICKS} />);
     await click(button => button.textContent?.trim() === 'Listen', 'Listen');
     await next();
     const cancels = speech.cancels;
 
+    // A panel leaves the chapter on the page, so the voice is never cut off.
     await click(byLabel('Open Fate'), 'Open Fate');
-    expect(speech.cancels).toBeGreaterThan(cancels);
-    const spokenOnFate = speech.spoken.length;
-    await flush(20);
-    expect(speech.spoken.length).toBe(spokenOnFate);
+    expect(speech.cancels).toBe(cancels);
+    expect(container.querySelector('[data-testid="read-aloud-player"]')!.getAttribute('data-status')).toBe('playing');
 
     await click(button => button.textContent?.trim() === 'Back to reading', 'Back to reading');
     await flush();
-    // Still listening: the same line is read again from its start.
+    expect(speech.cancels).toBe(cancels);
     expect(lastSpoken().text).toBe('The tide pulled back from the drowned gate.');
 
     await click(byLabel('Next Chapter'), 'Next Chapter');

@@ -578,7 +578,29 @@ async function walk(browser, viewport, sample) {
   check((await holdingsPage.locator('[data-testid="holdings-checks"] summary').textContent()) === 'Checks (1)', 'The closing list should leave one check.');
   check(!(await page.textContent('body')).includes('[['), 'No tag may reach the Holdings page.');
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), 'The Holdings page must not scroll sideways.');
+  await page.waitForTimeout(400);
   await shot('6d-holdings');
+  // A panel never takes the chapter away: it stays on the page, readable beside (laptop) or above (phone) the panel.
+  const beside = () => page.evaluate(() => {
+    const panel = document.querySelector('[data-testid="reader-panel-holdings"]').getBoundingClientRect();
+    const article = document.querySelector('[data-chapter-number]').getBoundingClientRect();
+    return { panelLeft: panel.left, panelTop: panel.top, panelWidth: panel.width, articleRight: article.right, hidden: document.querySelector('[data-testid="harness-reader"]').hidden };
+  });
+  const open = await beside();
+  check(!open.hidden, 'The chapter must stay on the page under a panel.');
+  if (laptop) {
+    const settled = await beside();
+    check(settled.articleRight <= settled.panelLeft + 1, `On a laptop the chapter should sit beside the panel, not under it (${JSON.stringify(settled)}).`);
+  } else {
+    await visibleButton('Show the chapter').click();
+    await page.waitForTimeout(400);
+    const peek = await beside();
+    check(peek.panelTop >= viewport.height * 0.45, `Show the chapter should lower the sheet to half height (${JSON.stringify(peek)}).`);
+    await page.mouse.wheel(0, 300);
+    check(await page.getByTestId('holdings-page').count() === 1, 'Scrolling the chapter must not close the panel.');
+    await shot('6d-holdings-peek');
+    await visibleButton('Raise').click();
+  }
   await holdingsPage.getByRole('button', { name: /^Ch\. 1 · took up/ }).click();
   await page.locator('[data-chapter-number="1"]').waitFor();
   check(await page.getByTestId('holdings-page').count() === 0, 'A change\'s link should open its chapter.');

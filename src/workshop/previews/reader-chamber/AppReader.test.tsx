@@ -88,8 +88,8 @@ describe('the Reader Chamber workspace: the app\'s Reader', { timeout: 30_000 },
 
   it('opens a Reader page through the Reader\'s own button', async () => {
     await render('middle', { id: 'holdings', request: 1 });
-    await waitFor(() => container.querySelector('[data-testid="holdings-page"]'), 'the Holdings page');
-    expect(container.querySelector('[data-testid="holdings-page"]')!.textContent).toContain('Gu Chen');
+    await waitFor(() => document.querySelector('[data-testid="holdings-page"]'), 'the Holdings page');
+    expect(document.querySelector('[data-testid="holdings-page"]')!.textContent).toContain('Gu Chen');
   });
 
   it('keeps what happened in the scene when the Reader opens again, as when the Workshop view changes', async () => {

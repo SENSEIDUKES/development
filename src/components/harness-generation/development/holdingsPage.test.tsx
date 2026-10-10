@@ -35,7 +35,7 @@ const chapterReply = (n: number) => JSON.stringify({
 let container: HTMLDivElement;
 let root: Root;
 const flush = async (ms = 0) => { await act(async () => { await new Promise(resolve => setTimeout(resolve, ms)); }); };
-const buttonBy = (predicate: (button: HTMLButtonElement) => boolean) => [...container.querySelectorAll<HTMLButtonElement>('button')].find(predicate);
+const buttonBy = (predicate: (button: HTMLButtonElement) => boolean) => [...document.querySelectorAll<HTMLButtonElement>('button')].find(predicate);
 const click = async (predicate: (button: HTMLButtonElement) => boolean, label: string) => {
   const target = buttonBy(predicate);
   expect(target, `Expected ${label}`).toBeTruthy();
@@ -43,7 +43,7 @@ const click = async (predicate: (button: HTMLButtonElement) => boolean, label: s
   await flush();
 };
 const byLabel = (label: string) => (button: HTMLButtonElement) => button.getAttribute('aria-label') === label;
-const page = () => container.querySelector<HTMLElement>('[data-testid="holdings-page"]');
+const page = () => document.querySelector<HTMLElement>('[data-testid="holdings-page"]');
 
 function Host({ controller, storyId }: { controller: HarnessGenerationController; storyId: string }) {
   const [state, setState] = useState(controller.snapshot());
@@ -105,15 +105,15 @@ describe('The Holdings page in the HARNESS Reader', { timeout: 20_000 }, () => {
     scrolled.mockClear();
     await click(button => button.getAttribute('aria-label')?.startsWith('Ch. 1 · took up') ?? false, 'the took-up link');
     expect(page()).toBeNull();
-    expect(container.querySelector('[data-chapter-number="1"]')).toBeTruthy();
+    expect(document.querySelector('[data-chapter-number="1"]')).toBeTruthy();
     // The paragraph where the sword was taken up is brought into view.
-    const paragraph = container.querySelector('[data-sen-text-block="c1-p2"]')!;
+    const paragraph = document.querySelector('[data-sen-text-block="c1-p2"]')!;
     expect(paragraph.textContent).toContain('He tested its weight.');
     expect(scrolled.mock.contexts).toContain(paragraph);
 
     await click(byLabel('Open Holdings'), 'Open Holdings');
     await click(button => button.textContent === 'Back to reading', 'Back to reading');
     expect(page()).toBeNull();
-    expect(container.querySelector('[data-testid="harness-reader"]')).toBeTruthy();
+    expect(document.querySelector('[data-testid="harness-reader"]')).toBeTruthy();
   });
 });

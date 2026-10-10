@@ -10,13 +10,28 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - **Source location:** `src/components/LibraryScreen.tsx`, export `LibraryScreen`; `src/components/StoryDetailScreen.tsx`, export `StoryDetailScreen`
 - **Inspected source commit:** `4a3dd02b6640b2ec50d8d1d136e37fb808249ed2` (clean local source checkout)
 - **Workshop preview:** `?preview=light-novels-home`
-- **Responsive Home:** `/library-shell.html?variant=development&source=main-library&screen=home&collection=featured`
+- **Responsive Home (Development):** `/app/` — the actual Expanded Novels app
+- **Original Reference:** `/library-shell.html?variant=development&source=main-library&screen=home&collection=featured&homeReference=1`
 - **First Workshop record:** 2026-09-09
-- **Last recorded Workshop update:** 2026-09-11
+- **Last recorded Workshop update:** 2026-10-10
 - **Historical source inspection:** 2026-09-09
 - **Implementation status:** under refinement — multimedia presentation skeleton in the existing Home/detail flow
 
 ## Boundary and ownership
+
+The Home workspace's **Development** pane loads the actual NovelExpanded `/app/`
+document at the selected mobile, tablet or laptop viewport. This reuses
+`src/novel-expanded/HomePage.tsx` and `AppShell.tsx`, so the wordmark, footer,
+navigation, featured selection and empty state stay in sync automatically. It
+uses the same browser storage as opening the app directly: creating or editing a
+story is a real app action, not an isolated fixture operation. No preview seeding
+or reset is performed. The app remains a host; Workshop does not enter its import
+graph or package entries.
+
+**Original Reference** retains the old Light Novels Home with its historical
+presentation and sample world. **Compare** shows that reference beside the current
+app. The standalone Library Shell simulation remains available through its own
+workspace; the older preview behavior described below belongs to that simulation.
 
 Home is a Library-owned screen. `development/LightNovelsHome.tsx` renders independently with display data and callbacks; it imports no Library Shell, Workshop, app store, authentication, or backend. The existing shell document is the shared responsive preview host, not a prerequisite for rendering the component. The Workshop directory remains the intentional root landing page.
 
@@ -83,6 +98,8 @@ See `docs/history/standalone-home/` for local production browser evidence and th
 The build, focused navigation/header/profile/Workshop tests, package boundary checks, and existing locked-capture guard pass. No full production Library/Discover body or production account/backend behavior is claimed as covered.
 
 ## Workshop history
+
+- **2026-10-10:** Home Development now opens `/app/` directly, eliminating the separate simulated shell that had drifted from Expanded Novels. Renamed the existing Workshop card to Home, retained its stable route and Original Reference, and documented the same-change app/Workshop synchronization rule in `AGENTS.md`.
 
 - **2026-10-09:** Featured, refined: one fixed gold **Featured** name with its slide dots in the top-left (the slides no longer carry their own label; "Featured Ascension" is gone), small ghost-glass arrows on the slide's edges for pointers, and a sideways swipe on touch (a swipe never opens the card). Carve New Destiny wears the NovelExpanded app's dark night glass with its spectral rim and halo, so a bright backdrop cannot wash it gold.
 - **2026-10-09:** Featured now cycles. Featured Ascension stays first and stays mounted (its video pauses while another slide shows); after it come the host's `featuredWorlds`, each as a World Card Feature card of the same size. Arrows and one dot per slide sit beneath; slides advance every 8 seconds unless the reader is pointing at or focused in them, or prefers reduced motion. Without `featuredWorlds`, Featured Ascension stands alone. The NovelExpanded app features its newest five stories that have a cover; the Workshop features the sample novel.

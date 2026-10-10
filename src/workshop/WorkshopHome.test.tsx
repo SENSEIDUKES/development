@@ -44,7 +44,7 @@ function archiveToggle() {
 }
 
 const ACTIVE_GROUPS = {
-  Pages: ['light-novels-home', 'library-shell', 'creator-space', 'story-seed', 'reader-chamber', 'reader-codex', 'user-profile', 'celestial-store'],
+  Pages: ['light-novels-home', 'library-shell', 'creator-space', 'story-seed', 'reader-chamber', 'reader-codex', 'user-profile', 'celestial-store', 'user-shop'],
   Rewards: ['reward-loop', 'achievements', 'relics-gallery', 'familiar-training', 'dao-pillar', 'idle-cultivation'],
   Customization: ['familiar'],
   Systems: ['novel-expanded-docs', 'library-help', 'harness-generation', 'writer-instructions', 'image-prompts', 'chapter-generation-manifestation', 'character-voice', 'provenance', 'energy'],
@@ -95,7 +95,7 @@ describe('WorkshopHome', () => {
       { label: 'Create', ids: ['creator-space', 'story-seed'] },
       { label: 'Read', ids: ['reader-chamber', 'reader-codex'] },
       { label: 'Account', ids: ['user-profile'] },
-      { label: 'Commerce', ids: ['celestial-store'] },
+      { label: 'Commerce', ids: ['celestial-store', 'user-shop'] },
     ]);
   });
 
@@ -126,7 +126,7 @@ describe('WorkshopHome', () => {
     }
     expect(Object.fromEntries(workshopEntries.map((entry) => [entry.id, entry.owner]))).toEqual({
       'light-novels-home': 'library', 'library-shell': 'library', 'creator-space': 'library', 'story-seed': 'library',
-      'reader-chamber': 'sen', 'reader-codex': 'sen', 'user-profile': 'library', 'dao-pillar': 'library', 'celestial-store': 'library',
+      'reader-chamber': 'sen', 'reader-codex': 'sen', 'user-profile': 'library', 'dao-pillar': 'library', 'celestial-store': 'library', 'user-shop': 'library',
       'reward-loop': 'workshop', achievements: 'library', 'familiar-training': 'library',
       familiar: 'library', 'relics-gallery': 'library', 'idle-cultivation': 'library',
       'harness-generation': 'sen', 'chapter-generation-manifestation': 'library', 'character-voice': 'sen', provenance: 'deferred', energy: 'library', 'model-router': 'deferred',

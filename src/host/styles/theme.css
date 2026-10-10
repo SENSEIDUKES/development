@@ -3,7 +3,12 @@
  * Library UI styles, colour and font tokens, the page base and scrollbars.
  * The Workshop (src/styles.css) and the NovelExpanded app both start here.
  */
-@import url('https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,500;0,700;1,500;1,700&family=Alegreya+SC:wght@500;700&family=Noto+Serif:ital,wght@0,200;0,300;0,400;1,200;1,300;1,400&family=Rubik:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,500;0,700;1,500;1,700&family=Alegreya+SC:wght@500;700&family=Noto+Serif:ital,wght@0,200;0,300;0,400;0,500;1,200;1,300;1,400;1,500&family=Rubik:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap');
+/* The SEIHouse fonts, from SEIHouse/FONT-LAB (vendor/README.md): SEIHouse Sans for
+   reading (five weights with italics) and the four SEIHouse Display cuts for titles.
+   A face downloads only when text on the page uses it. */
+@import "@seihouse/seireader/sans.css";
+@import "@seihouse/living-titles/fonts.css";
 @import "tailwindcss";
 @import "@seihouse/library-ui/styles.css";
 @import "@seihouse/library/styles.css";

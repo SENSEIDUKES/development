@@ -1,0 +1,21 @@
+{
+  "repository": "https://github.com/SEIHouse/FONT-LAB",
+  "sourceCommit": "93954df1686f0ea6c975bc953431ae839eeee493",
+  "artifacts": {
+    "@seihouse/seireader": {
+      "version": "0.39.0",
+      "family": "SEIHouse Sans",
+      "file": "vendor/seihouse-seireader-0.39.0.tgz",
+      "integrity": "sha512-622pqYqU0OdusD0bhPpyrUECLvmewnSe6SnngPJ+JhmN7fvhME5jw3HNF5+AciwnR04X0gkf0XDJxCVgMq3RUQ==",
+      "built": "npm pack --ignore-scripts at the repository root; audited with verify_distribution.py --npm"
+    },
+    "@seihouse/living-titles": {
+      "version": "0.1.0",
+      "family": "SEIHouse Display Soft, Edge, Ink, Wide",
+      "file": "vendor/seihouse-living-titles-0.1.0.tgz",
+      "integrity": "sha512-kLC0CR7LEfsqEEKZrDD6xlp6BR+z5/QrVcXnIGm6+qVWMRbVRCrzQeooiW9kkr5PHPU6B+TZxqs2fj4Y8IgWNA==",
+      "built": "packages/living-titles/releases/seihouse-living-titles-0.1.0.tgz, copied unchanged with its release.json",
+      "release": "vendor/seihouse-living-titles-0.1.0.release.json"
+    }
+  }
+}

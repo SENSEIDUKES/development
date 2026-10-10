@@ -8,8 +8,8 @@ import { createRoot } from '../../../test-utils/createReaderRoot';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { STOPPED_WRITE_REPLY, writtenChapter } from '../../../test-utils/writtenChapter';
 import { installAudioMediaStubs, renderWithDevAudio } from '../../../test-utils/renderWithDevAudio';
-import { HarnessGenerationController, HarnessReaderSession, type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessReaderWriting } from '@seihouse/sen/harness-generation';
-import type { ReadAloudVoicePicks, ReaderPreferenceStorage, ReaderStateRepository, ReaderStoryState } from '@seihouse/sen/reader-runtime';
+import { HarnessGenerationController, HarnessReaderSession, type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessReaderWriting, type ReaderChapterBody } from '@seihouse/sen/harness-generation';
+import type { ReadAloudVoicePicks, ReaderFonts, ReaderPreferenceStorage, ReaderStateRepository, ReaderStoryState } from '@seihouse/sen/reader-runtime';
 import { installFakeSpeechSynthesis, type FakeSpeechSynthesis } from '../../../test-utils/fakeSpeechSynthesis';
 import { ReaderMixerProvider, type ReaderMixer, type ReaderMixerSleepEvent } from '@seihouse/audio-player';
 import { createHostReaderMixer } from '../../../host/reader/readerMixer';
@@ -73,17 +73,18 @@ const story = async ({ written = 0, replies }: { written?: number; replies?: str
 };
 
 /** A host like the Library workspace: it follows the controller and writes chapters with its model. */
-function Host({ controller, storyId, readerState, renderWriting, renderWriteAside, startOnOpen, canWrite = true, canRewrite = false, readerPreferences, readAloudVoices }: {
+function Host({ controller, storyId, readerState, renderWriting, renderWriteAside, startOnOpen, canWrite = true, canRewrite = false, readerPreferences, readAloudVoices, readerFonts, chapterBody }: {
   controller: HarnessGenerationController; storyId: string; readerState?: ReaderStateRepository;
   renderWriting?: (writing: HarnessReaderWriting) => React.ReactNode; renderWriteAside?: (written: number) => React.ReactNode;
   startOnOpen?: boolean; canWrite?: boolean; canRewrite?: boolean;
   readerPreferences?: ReaderPreferenceStorage; readAloudVoices?: ReadAloudVoicePicks;
+  readerFonts?: ReaderFonts; chapterBody?: ReaderChapterBody;
 }) {
   const [state, setState] = useState(controller.snapshot());
   useEffect(() => { const stop = controller.subscribe(setState); return () => { stop(); }; }, [controller]);
   return <HarnessReaderSession state={state} storyId={storyId} controller={controller} onClose={() => undefined}
     readerStateRepository={readerState} renderWriting={renderWriting} renderWriteAside={renderWriteAside} startOnOpen={startOnOpen}
-    readerPreferences={readerPreferences} readAloudVoices={readAloudVoices}
+    readerPreferences={readerPreferences} readAloudVoices={readAloudVoices} readerFonts={readerFonts} chapterBody={chapterBody}
     onGenerateNextChapter={canWrite ? async () => { await controller.generateNextChapter(storyId, 'test-model'); } : undefined}
     onRewriteChapter={canRewrite ? async note => { await controller.rewriteLatestChapter(storyId, 'test-model', note); } : undefined} />;
 }
@@ -136,9 +137,9 @@ describe('The HARNESS Reader', { timeout: 20_000 }, () => {
     // The Sound Cue sits on the words the writer marked; no mark is left in the prose.
     expect(first.querySelector('[data-cue-annotation]')!.getAttribute('data-cue-annotation')).toBe('the beast roared');
     expect(first.textContent).not.toContain('[[');
-    // Only Sound Cues: no Codex, no Mind Palace. A browser without speech gets no Listen and no Reader Settings.
+    // Only Sound Cues: no Codex, no Mind Palace. A browser without speech gets no Listen; Reader Settings stays for the text.
     expect(container.textContent).not.toMatch(/Codex|Mind Palace/);
-    expect(buttonBy(byLabel('Reader Settings'))).toBeUndefined();
+    expect(buttonBy(byLabel('Reader Settings'))).toBeTruthy();
     expect(container.querySelector('[data-testid="read-aloud-player"]')).toBeNull();
 
     await click(byLabel('Next Chapter'), 'Next Chapter');
@@ -387,7 +388,7 @@ describe('Read Aloud in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(buttonBy(button => button.textContent?.trim() === 'Listen')).toBeTruthy();
   });
 
-  it('Reader Settings holds only Narration: three voices with previews and the speed, saved on the device', async () => {
+  it('Reader Settings holds Text, then Narration: three voices with previews and the speed, saved on the device', async () => {
     const { controller, storyId } = await story({ written: 1 });
     const { storage, values } = memory();
     await mount(<Host controller={controller} storyId={storyId} readerPreferences={storage} readAloudVoices={PICKS} />);
@@ -395,7 +396,7 @@ describe('Read Aloud in the HARNESS Reader', { timeout: 20_000 }, () => {
     await click(byLabel('Reader Settings'), 'Reader Settings');
     const dialog = container.ownerDocument.querySelector<HTMLElement>('[role="dialog"]')!;
     expect(dialog.querySelector('h2')!.textContent).toBe('Reader Settings');
-    expect([...dialog.querySelectorAll('section h3')].map(heading => heading.textContent)).toEqual(['Narration']);
+    expect([...dialog.querySelectorAll('section h3')].map(heading => heading.textContent)).toEqual(['Text', 'Narration']);
     expect(dialog.textContent).not.toMatch(/Codex|Mind Palace|Audio|Customize|Accessibility/);
     const selected = (role: string) => {
       const select = dialog.querySelector<HTMLSelectElement>(`select[data-voice-role="${role}"]`)!;
@@ -607,7 +608,7 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(dialog.getAttribute('aria-label') ?? dialog.querySelector('h2')!.textContent).toBe('Reader Settings');
     expect(audio.scrollIntoView).toHaveBeenCalled();
     // Without speech, Narration only says so.
-    expect([...dialog.querySelectorAll('section h3')].map(heading => heading.textContent)).toEqual(['Audio', 'Narration']);
+    expect([...dialog.querySelectorAll('section h3')].map(heading => heading.textContent)).toEqual(['Text', 'Audio', 'Narration']);
     expect(dialog.querySelector('[data-testid="reader-settings-narration"]')!.textContent).toContain("This browser can't read aloud.");
     // The layers this chapter uses: the music, the atmosphere and Sound Cues, never Voice yet.
     expect(audio.textContent).toContain('Soundscapes');
@@ -637,10 +638,10 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
       vi.spyOn(mixer, 'subscribeSleep').mockImplementation(listener => { sleep = listener; return () => undefined; });
       await mountWithMixer(mixer, <Host controller={controller} storyId={storyId} readAloudVoices={PICKS} />);
 
-      // Settings now holds Audio first, then Narration.
+      // Settings holds Text, then Audio, then Narration.
       await click(byLabel('Reader Settings'), 'Reader Settings');
       await audioPanel();
-      expect([...container.ownerDocument.querySelectorAll('[role="dialog"] section h3')].map(heading => heading.textContent)).toEqual(['Audio', 'Narration']);
+      expect([...container.ownerDocument.querySelectorAll('[role="dialog"] section h3')].map(heading => heading.textContent)).toEqual(['Text', 'Audio', 'Narration']);
       await click(byLabel('Close Reader Settings'), 'Close Reader Settings');
 
       await click(button => button.textContent?.trim() === 'Listen', 'Listen');
@@ -663,5 +664,91 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
     } finally {
       uninstall();
     }
+  });
+});
+
+describe('The Reader frame and its chapter body', { timeout: 20_000 }, () => {
+  const FONTS: ReaderFonts = {
+    text: [{ id: 'house-sans', label: 'House Sans', family: '"House Sans", sans-serif' }, { id: 'house-serif', label: 'House Serif', family: '"House Serif", serif' }],
+    titles: [{ id: 'house-soft', label: 'House Soft', family: '"House Soft", serif' }, { id: 'house-edge', label: 'House Edge', family: '"House Edge", serif' }],
+  };
+  const memory = () => {
+    const values = new Map<string, string>();
+    const storage: ReaderPreferenceStorage = { read: key => values.get(key) ?? null, write: (key, value) => { values.set(key, value); }, remove: key => { values.delete(key); } };
+    return { values, storage };
+  };
+  const dialog = () => container.ownerDocument.querySelector<HTMLElement>('[role="dialog"]')!;
+  const pick = async (name: string, value: string) => {
+    await act(async () => { dialog().querySelector<HTMLInputElement>(`input[name="${name}"][value="${value}"]`)!.click(); });
+  };
+
+  it('sets the chapter in the host\'s fonts, and Reader Settings → Text changes and keeps them on the device', async () => {
+    const { controller, storyId } = await story({ written: 1 });
+    const { storage, values } = memory();
+    await mount(<Host controller={controller} storyId={storyId} readerPreferences={storage} readerFonts={FONTS} />);
+
+    // The host's first fonts, at the Reader's size and spacing, about 60 characters a line.
+    const article = chapterOnScreen(1)!;
+    expect(article.style.fontFamily).toBe('"House Sans", sans-serif');
+    expect(article.style.fontSize).toBe('1.075rem');
+    expect(article.style.getPropertyValue('--sen-text-line-height')).toBe('1.85');
+    expect(article.className).toContain('max-w-[34em]');
+    expect(article.querySelector<HTMLElement>('h1')!.style.fontFamily).toBe('"House Soft", serif');
+
+    // The bar holds Back, the story and chapter, and the Reader's pages.
+    const bar = container.querySelector<HTMLElement>('[data-testid="reader-top-bar"]')!;
+    expect(bar.textContent).toContain('Chapter 1');
+    expect([...bar.querySelectorAll('button')].map(button => button.getAttribute('aria-label'))).toEqual(['Back', 'Open Holdings', 'Open Fate', 'Reader Settings']);
+
+    await click(byLabel('Reader Settings'), 'Reader Settings');
+    expect([...dialog().querySelectorAll('[data-testid="reader-settings-text"] legend')].map(legend => legend.textContent))
+      .toEqual(['Font', 'Title font', 'Size', 'Line spacing', 'Weight']);
+    await pick('reader-text-font', 'house-serif');
+    await pick('reader-title-font', 'house-edge');
+    await pick('reader-text-size', 'larger');
+    await pick('reader-line-spacing', 'compact');
+    await pick('reader-text-weight', '300');
+    expect(article.style.fontFamily).toBe('"House Serif", serif');
+    expect(article.style.fontSize).toBe('1.25rem');
+    expect(article.style.getPropertyValue('--sen-text-line-height')).toBe('1.5');
+    expect(article.style.fontWeight).toBe('300');
+    expect(article.querySelector<HTMLElement>('h1')!.style.fontFamily).toBe('"House Edge", serif');
+    expect(JSON.parse(values.get('text-settings')!)).toEqual({ v: 1, font: 'house-serif', titleFont: 'house-edge', size: 'larger', lineSpacing: 'compact', weight: 300 });
+
+    // A new visit opens in the same settings; Reset text goes back to the host's first fonts.
+    act(() => root.unmount());
+    root = createRoot(container);
+    await mount(<Host controller={controller} storyId={storyId} readerPreferences={storage} readerFonts={FONTS} />);
+    expect(chapterOnScreen(1)!.style.fontFamily).toBe('"House Serif", serif');
+    await click(byLabel('Reader Settings'), 'Reader Settings');
+    await act(async () => { [...dialog().querySelectorAll('button')].find(button => button.textContent?.trim() === 'Reset text')!.click(); });
+    expect(chapterOnScreen(1)!.style.fontFamily).toBe('"House Sans", sans-serif');
+    expect(chapterOnScreen(1)!.style.fontSize).toBe('1.075rem');
+  });
+
+  it('shows another chapter body inside the same frame, with the passages it marks', async () => {
+    const { controller, storyId } = await story({ written: 2 });
+    const seen: string[] = [];
+    // A stand-in for a future sequential-art view: one panel per passage.
+    const Panels: ReaderChapterBody = ({ chapter, blocks, articleRef, text }) => {
+      seen.push(`${chapter.chapterNumber}:${text.font.id}`);
+      return <article ref={articleRef} data-chapter-number={chapter.chapterNumber} data-testid="panel-body">
+        <h1 data-read-aloud-title="">{chapter.title}</h1>
+        {blocks.map(block => <figure key={block.id} data-sen-text-block={block.id}><figcaption>{block.text}</figcaption></figure>)}
+      </article>;
+    };
+    await mount(<Host controller={controller} storyId={storyId} chapterBody={Panels} />);
+
+    const body = chapterOnScreen(1)!;
+    expect(body.getAttribute('data-testid')).toBe('panel-body');
+    expect([...body.querySelectorAll('figure')].map(figure => figure.getAttribute('data-sen-text-block'))).toEqual(['c1-p1', 'c1-p2', 'c1-p3', 'c1-p4']);
+    expect(container.querySelector('.sen-text-highlight-root')).toBeNull();
+    expect(seen.at(-1)).toBe('1:serif');
+    // The frame stays: the bar, the chapter navigation and Reader Settings.
+    expect(container.querySelector('[data-testid="reader-top-bar"]')).toBeTruthy();
+    await click(byLabel('Next Chapter'), 'Next Chapter');
+    expect(chapterOnScreen(2)!.getAttribute('data-testid')).toBe('panel-body');
+    await click(byLabel('Reader Settings'), 'Reader Settings');
+    expect(dialog().querySelector('h2')!.textContent).toBe('Reader Settings');
   });
 });

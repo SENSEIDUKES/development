@@ -1,23 +1,27 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
-import { Settings } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ReaderMixerNote } from '@seihouse/audio-player';
-import { TextHighlightEngine, type TextHighlightBlock, type TextHighlightOverlay } from '@seihouse/sen/text-highlight-engine';
-import { InlineAudioText } from '@seihouse/sen/inline-audio';
-import type { SceneAudioTrack, SoundCueAttachment } from '@seihouse/sen/audio';
+import type { TextHighlightBlock } from '@seihouse/sen/text-highlight-engine';
+import type { SceneAudioTrack } from '@seihouse/sen/audio';
 import {
+  DEFAULT_READER_FONTS,
   READ_ALOUD_SCRIPT_VERSION,
   applyReaderStatePatch,
   buildReadAloudScript,
   createReaderStoryState,
+  readReaderTextSettings,
   readSoundtrackChoice,
   resolveReaderOpeningChapter,
+  resolveReaderText,
   useReadAloud,
+  writeReaderTextSettings,
   writeSoundtrackChoice,
   type ReadAloudScript,
   type ReadAloudVoicePicks,
+  type ReaderFonts,
   type ReaderPreferenceStorage,
   type ReaderStateRepository,
   type ReaderStoryState,
+  type ReaderTextSettings,
   type SoundtrackChoice,
 } from '@seihouse/sen/reader-runtime';
 import { harnessParagraphBlockId } from '../shared/chapterBody';
@@ -29,14 +33,16 @@ import { BlueprintArcPage } from './BlueprintArcPage';
 import { ChapterRewrite } from './ChapterRewrite';
 import { FatePage } from './FatePage';
 import { HoldingsPage } from './HoldingsPage';
+import { ProseChapterBody } from './ProseChapterBody';
 import { ReadAloudPlayer } from './ReadAloudPlayer';
+import type { ReaderChapter, ReaderChapterBody } from './readerChapterBody';
 import { ReaderSettingsSheet } from './ReaderSettingsSheet';
+import { ReaderTopBar } from './ReaderTopBar';
 import { useFollowNarration, type NarrationHighlight } from './useFollowNarration';
 import { useNextChapterWriter } from './useNextChapterWriter';
 import { readingScene, useReaderSoundtrack } from './useReaderSoundtrack';
 import type { HarnessGenerationController } from '../shared/controller';
 import type { HarnessWorkspaceState } from '../../../narrative/generation';
-import { chapterTitleText } from '../../../narrative/chapterTitle';
 
 /** What the host's writing screen shows. */
 export interface HarnessReaderWriting {
@@ -46,12 +52,7 @@ export interface HarnessReaderWriting {
   chapterNumber: number;
 }
 
-/** The Reader shows chapters; it never edits them. */
-const keepProse = () => undefined;
-
 const navButton = 'min-h-11 rounded-full border px-4 text-sm disabled:cursor-not-allowed disabled:opacity-40';
-
-type ReaderChapter = HarnessWorkspaceState['chapters'][number];
 
 const NO_SCRIPT: ReadAloudScript = { version: READ_ALOUD_SCRIPT_VERSION, lines: [] };
 
@@ -62,14 +63,15 @@ const chapterBlocks = (chapter: ReaderChapter): TextHighlightBlock[] => chapter.
 
 /**
  * The first line to read when the reader taps Listen: the chapter title while
- * it is on screen, otherwise the first paragraph still in view.
+ * it is on screen, otherwise the first paragraph still in view. `top` is where
+ * the visible area begins, below the top bar.
  */
-function lineWhereTheReaderIs(script: ReadAloudScript, article: HTMLElement | null): number {
+function lineWhereTheReaderIs(script: ReadAloudScript, article: HTMLElement | null, top = 0): number {
   if (!article || typeof article.getBoundingClientRect !== 'function') return 0;
   const title = article.querySelector<HTMLElement>('[data-read-aloud-title]');
-  if (!title || title.getBoundingClientRect().bottom > 0) return 0;
+  if (!title || title.getBoundingClientRect().bottom > top) return 0;
   for (const block of article.querySelectorAll<HTMLElement>('[data-sen-text-block]')) {
-    if (block.getBoundingClientRect().bottom <= 0) continue;
+    if (block.getBoundingClientRect().bottom <= top) continue;
     const index = script.lines.findIndex(line => line.blockId === block.getAttribute('data-sen-text-block'));
     if (index >= 0) return index;
   }
@@ -77,11 +79,16 @@ function lineWhereTheReaderIs(script: ReadAloudScript, article: HTMLElement | nu
 }
 
 /**
- * The Reader for a HARNESS story. Each chapter's paragraphs sit on the Text
- * Highlight Engine (read-only, no tools yet) with its Sound Cues as the only
- * active layer, and Listen reads it aloud in three voices with the spoken
- * sentence lit. At the newest chapter, Next writes the next one (or, in Fate
- * Survival, asks for its direction first); the Fate page is one tap away.
+ * The Reader for a HARNESS story: a frame around a swappable chapter body.
+ * The frame is the top bar (Back, Holdings, Fate, Reader Settings), the
+ * chapter navigation, Listen and the Reader's own pages; the body shows the
+ * chapter on screen (`chapterBody`, prose by default: the paragraphs on the
+ * Text Highlight Engine, read-only, with Sound Cues as the only active layer).
+ * Listen reads the chapter aloud in three voices with the spoken sentence lit,
+ * and Reader Settings sets its text: font, title font, size, line spacing and
+ * weight, from the host's fonts. At the newest chapter, Next writes the next
+ * one (or, in Fate Survival, asks for its direction first); the Fate page is
+ * one tap away.
  * With the host's reader mixer, the story's soundtrack (the reader's
  * atmosphere and the chapter's Sound Cues) plays through the SEIHouse audio
  * player: a story audio note mutes it, and Reader Settings holds Audio and
@@ -90,7 +97,7 @@ function lineWhereTheReaderIs(script: ReadAloudScript, article: HTMLElement | nu
  */
 export function HarnessReaderSession({
   state, storyId, onClose, controller, readerStateRepository, onGenerateNextChapter, onRewriteChapter, onPlanArc, renderWriting, renderWriteAside, startOnOpen = false,
-  readerPreferences, readAloudVoices, soundscapes,
+  readerPreferences, readAloudVoices, soundscapes, readerFonts = DEFAULT_READER_FONTS, chapterBody: ChapterBody = ProseChapterBody,
 }: {
   state: HarnessWorkspaceState; storyId: string; onClose: () => void; controller: HarnessGenerationController;
   /**
@@ -140,6 +147,14 @@ export function HarnessReaderSession({
    * the Reader is silent until then.
    */
   soundscapes?: readonly SceneAudioTrack[];
+  /**
+   * The fonts Reader Settings offers for chapter text and titles, first ones
+   * first; the host loads their faces. Without them, SEN's own serif, sans and
+   * display fonts.
+   */
+  readerFonts?: ReaderFonts;
+  /** How a chapter is shown inside the frame. Prose by default; any body keeps the marks `ReaderChapterBodyProps` names. */
+  chapterBody?: ReaderChapterBody;
 }) {
   const story = state.stories.find(entry => entry.id === storyId);
   const chapters = useMemo(() => state.chapters
@@ -159,6 +174,7 @@ export function HarnessReaderSession({
   const persistEnabled = useRef(Boolean(readerStateRepository));
   const saveQueue = useRef<Promise<void>>(Promise.resolve());
   const topRef = useRef<HTMLDivElement>(null);
+  const barRef = useRef<HTMLElement>(null);
   const articleRef = useRef<HTMLElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
   // The chapter's own navigation, held as state so the soundtrack sees it whenever it appears.
@@ -166,6 +182,13 @@ export function HarnessReaderSession({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsSection, setSettingsSection] = useState<'audio' | 'narration'>();
   const openSettings = useCallback((section?: 'audio' | 'narration') => { setSettingsSection(section); setSettingsOpen(true); }, []);
+  // The reader's text settings: kept on the device, applied by the chapter body.
+  const [textSettings, setTextSettings] = useState<ReaderTextSettings>(() => readReaderTextSettings(readerPreferences));
+  const changeText = useCallback((next: ReaderTextSettings) => {
+    setTextSettings(next);
+    writeReaderTextSettings(readerPreferences, next);
+  }, [readerPreferences]);
+  const text = useMemo(() => resolveReaderText(textSettings, readerFonts), [textSettings, readerFonts]);
   const chaptersRef = useRef(chapters);
   chaptersRef.current = chapters;
 
@@ -282,7 +305,7 @@ export function HarnessReaderSession({
     const block = blocks.find(entry => entry.id === spokenBlock);
     return block && { blockId: block.id, startOffset: sentenceStart, endOffset: sentenceEnd, selectedText: block.text.slice(sentenceStart, sentenceEnd) };
   }, [blocks, spokenBlock, sentenceStart, sentenceEnd]);
-  const follow = useFollowNarration({ article: articleRef, highlight, active: reading, player: playerRef });
+  const follow = useFollowNarration({ article: articleRef, highlight, active: reading, player: playerRef, header: barRef });
   // The chapter's scene (its music and atmosphere), unless the reader chose their own.
   const [soundtrackChoice, setSoundtrackChoice] = useState<SoundtrackChoice>(() => readSoundtrackChoice(readerPreferences));
   const chooseSoundtrack = useCallback((choice: SoundtrackChoice) => {
@@ -299,7 +322,7 @@ export function HarnessReaderSession({
     speaking: readAloud.status === 'playing', listenEnded: readAloud.status === 'ended',
     onSleep: readAloud.stop, chapterEnd,
   });
-  const listen = () => readAloud.play(lineWhereTheReaderIs(readAloud.script(), articleRef.current));
+  const listen = () => readAloud.play(lineWhereTheReaderIs(readAloud.script(), articleRef.current, barRef.current?.getBoundingClientRect?.().bottom ?? 0));
   // After a Holdings link opens a chapter, the paragraph where the change happened comes into view.
   useEffect(() => {
     if (!passageTarget || holdingsOpen) return;
@@ -362,25 +385,16 @@ export function HarnessReaderSession({
   };
 
   return <>
-    <main className="mx-auto w-full min-w-0 max-w-3xl px-4 pb-12 pt-4" data-testid="harness-reader">
-      <div ref={topRef} className="flex flex-wrap items-center justify-between gap-3">
-        <button type="button" onClick={onClose} className={`${navButton} border-white/15 text-neutral-200 hover:border-white/30`}>Back</button>
-        <p className="min-w-0 flex-1 truncate text-center font-mono text-[10px] uppercase tracking-[0.2em] text-cyan-200/60">{story.title}</p>
-        {(readAloud.supported || mixer) && <button type="button" aria-label="Reader Settings" title="Reader Settings" aria-haspopup="dialog"
-          onClick={() => openSettings()}
-          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-white/15 text-neutral-200 hover:border-white/30">
-          <Settings className="h-4 w-4" aria-hidden />
-        </button>}
-        <button type="button" aria-label="Open Holdings" title="Holdings: what each character has now" onClick={openHoldings}
-          className={`${navButton} border-white/15 text-neutral-200 hover:border-white/30`}>Holdings</button>
-        <button type="button" aria-label="Open Fate" title="Fate: decide what happens next" onClick={() => openFate()}
-          className={`${navButton} border-cyan-300/30 text-cyan-50 hover:border-cyan-300/60`}>Fate</button>
-      </div>
+    <main className="mx-auto w-full min-w-0 max-w-3xl px-4 pb-12" data-testid="harness-reader">
+      {/* Where a new chapter scrolls to: the stuck bar itself is always in view. */}
+      <div ref={topRef} aria-hidden />
+      <ReaderTopBar barRef={barRef} storyTitle={story.title} place={chapter ? `Chapter ${chapter.chapterNumber}` : 'Story start'}
+        onBack={onClose} onOpenHoldings={openHoldings} onOpenFate={() => openFate()} onOpenSettings={() => openSettings()} />
       {storageError && <p role="alert" className="mt-3 text-sm text-amber-300">{storageError}</p>}
 
       {chapter
-        ? <ChapterView chapter={chapter} blocks={blocks} locale={story.originalLanguage} articleRef={articleRef}
-            highlight={highlight} reading={reading} />
+        ? <ChapterBody chapter={chapter} blocks={blocks} locale={story.originalLanguage} articleRef={articleRef}
+            highlight={highlight} reading={reading} text={text} />
         : <section className="py-16 text-center" aria-label="Story start">
             <h1 className="font-display text-3xl text-white">{story.title}</h1>
             <p className="mt-3 text-sm text-neutral-400">
@@ -408,45 +422,8 @@ export function HarnessReaderSession({
         note={mixer && <ReaderMixerNote mixer={mixer} onOpenSettings={() => openSettings('audio')} />} />}
     </main>
     <ReaderSettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} readAloud={readAloud} language={language}
-      mixer={mixer} section={settingsSection} soundtrack={{ choice: soundtrackChoice, onChoice: chooseSoundtrack, pieces: pieces ?? [] }} />
+      mixer={mixer} section={settingsSection} soundtrack={{ choice: soundtrackChoice, onChoice: chooseSoundtrack, pieces: pieces ?? [] }}
+      text={{ settings: textSettings, onChange: changeText, fonts: readerFonts }} />
     {writing}
   </>;
 }
-
-/** Behind the sentence being read aloud; a host theme may set its own. */
-const READ_ALOUD_TONE = 'var(--sen-read-aloud-highlight, rgba(103, 232, 249, 0.16))';
-
-/**
- * One chapter: its title and its paragraphs on the engine, with the Sound
- * Cues placed on their words and the sentence being read aloud lit. The
- * overlay stays mounted while Read Aloud is active, so moving from sentence
- * to sentence never replays its fade.
- */
-const ChapterView = memo(function ChapterView({ chapter, blocks, locale, articleRef, highlight, reading }: {
-  chapter: ReaderChapter; blocks: readonly TextHighlightBlock[]; locale?: string; articleRef: RefObject<HTMLElement | null>;
-  highlight?: NarrationHighlight; reading: boolean;
-}) {
-  const overlay = useMemo((): TextHighlightOverlay | undefined => {
-    if (!reading) return undefined;
-    if (!highlight || highlight === 'title') return { marks: [] };
-    return { marks: [{ id: 'read-aloud', selection: highlight, tone: READ_ALOUD_TONE }] };
-  }, [reading, highlight]);
-  const cuesByBlock = useMemo(() => {
-    const byBlock = new Map<string, SoundCueAttachment[]>();
-    for (const cue of chapter.soundCues ?? []) byBlock.set(cue.anchor.blockId, [...(byBlock.get(cue.anchor.blockId) ?? []), cue]);
-    return byBlock;
-  }, [chapter]);
-  return <article ref={articleRef} className="mt-6" data-chapter-number={chapter.chapterNumber} lang={locale} aria-labelledby={`harness-reader-chapter-${chapter.chapterNumber}`}>
-    {/* The word count is a testing aid while chapter length is being tuned. */}
-    <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-500">Chapter {chapter.chapterNumber}
-      <span data-testid="harness-reader-word-count"> · {chapter.metrics.wordCount.toLocaleString(locale)} words</span></p>
-    <h1 id={`harness-reader-chapter-${chapter.chapterNumber}`} data-read-aloud-title="" data-speaking={highlight === 'title' ? '' : undefined}
-      className={`mt-1 rounded font-display text-2xl text-white transition-colors sm:text-3xl ${highlight === 'title' ? 'bg-cyan-300/15' : ''}`}>{chapterTitleText(chapter.title) || chapter.title}</h1>
-    <TextHighlightEngine blocks={blocks} onBlocksChange={keepProse} editable={false} locale={locale} overlay={overlay}
-      className="mt-6 font-serif text-[1.075rem] leading-8 text-neutral-200 [&_p]:mb-5"
-      renderBlockText={block => {
-        const cues = cuesByBlock.get(block.id);
-        return cues?.length ? <InlineAudioText text={block.text} cues={cues} renderText={text => text} /> : block.text;
-      }} />
-  </article>;
-});

@@ -6,6 +6,7 @@ import GenerationOverlay from '../../components/chapter-manifestation/developmen
 import { StoryDetailScreen } from '../../components/light-novels-home/development/StoryDetailScreen';
 import type { LoadingAgentPresentation } from '../manifestations/taskCard';
 import { LIBRARY_READ_ALOUD_VOICES } from './readAloudVoices';
+import { LIBRARY_READER_FONTS } from './readerFonts';
 import { StorySettings } from './settings/StorySettings';
 import { useStoryCoverManifest } from './StoryCoverManifest';
 import { storyCoverRequest, type StoryCoverService } from './storyCover';
@@ -107,7 +108,7 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
     {writerAlert}
     <HarnessReaderSession state={state} storyId={storyId} controller={controller}
       readerStateRepository={readerStateRepository} startOnOpen={startOnOpen}
-      readerPreferences={readerPreferences} readAloudVoices={LIBRARY_READ_ALOUD_VOICES} soundscapes={soundscapes}
+      readerPreferences={readerPreferences} readAloudVoices={LIBRARY_READ_ALOUD_VOICES} readerFonts={LIBRARY_READER_FONTS} soundscapes={soundscapes}
       onGenerateNextChapter={stories.canGenerate ? () => stories.generateNextChapter(storyId) : undefined}
       onRewriteChapter={stories.canGenerate ? note => stories.rewriteLatestChapter(storyId, note) : undefined}
       onPlanArc={stories.canGenerate ? () => stories.planArc(storyId) : undefined}

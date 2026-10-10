@@ -41,6 +41,29 @@ npm pack ./packages/seihouse-library-ui --pack-destination /path/to/development/
 
 UI's `pnpm test:package` checks repeated-pack integrity and fresh ESM, TypeScript, and Tailwind CSS consumption. Development's `npm run test:package` installs SEN and Library into consumers outside the repository; the SEN consumer must have no Library UI installed.
 
+## SEIHouse fonts
+
+From SEIHouse/FONT-LAB at `93954df1686f0ea6c975bc953431ae839eeee493`, recorded with their
+integrity in `font-artifacts.json`:
+
+- `seihouse-seireader-0.39.0.tgz`: **SEIHouse Sans** 0.39 (formerly SEIReader), the reading
+  font: five weights with real italics. Packed as FONT-LAB's own distribution workflow packs it
+  (`npm pack --ignore-scripts` at its root) and audited there with
+  `python3 verify_distribution.py <the web ZIP> --npm <the tarball>`.
+- `seihouse-living-titles-0.1.0.tgz`: the Living Titles package, copied unchanged from
+  `packages/living-titles/releases/` with its `release.json` (here
+  `seihouse-living-titles-0.1.0.release.json`). Development uses only its `fonts.css`: the four
+  **SEIHouse Display** cuts (Soft, Edge, Ink, Wide), Regular. Its runtime is not imported.
+
+The host theme (`src/host/styles/theme.css`) registers both families for the Workshop and the
+NovelExpanded app; the Library offers them in the Reader (`LIBRARY_READER_FONTS`). A face is
+downloaded only when text on the page uses it. The licences travel inside the tarballs: SEIHouse
+Sans under the SEIHouse Sans Ecosystem License, which lets SEIHouse products ship it, and SEIHouse
+Display under its own notices for authorized SEIHouse products. To refresh, pack or copy the new
+release from FONT-LAB the same way, update `font-artifacts.json`, and run `npm ci`.
+
 ## History
 
+- **2026-10-10:** Added the SEIHouse fonts from FONT-LAB: SEIHouse Sans 0.39 and the Living Titles
+  0.1.0 package for the four SEIHouse Display cuts.
 - **2026-10-06:** Adopted UI 0.11.0 and Library UI 0.10.0 from one UI source commit for two-way drawer gestures, scroll-only thumbs and the Library bevel. Recorded the audio build's scoped peer override.

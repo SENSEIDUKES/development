@@ -2,7 +2,7 @@
 
 **0.30.0 (2026-10-10):** The SEIHouse fonts in the Reader. `./stories`: `StoryPages` gives the
 Reader `LIBRARY_READER_FONTS` (exported): SEIHouse Sans (the default) and Noto Serif for chapter
-text, and SEIHouse Display Soft (the default), Edge, Ink and Wide, and Alegreya for titles. The host
+text, and SEIHouse Display Ink (the default), Soft, Edge and Wide, and Alegreya for titles. The host
 loads the faces: `@seihouse/seireader/sans.css` and `@seihouse/living-titles/fonts.css`, from
 SEIHouse/FONT-LAB (Development's `src/host/styles/theme.css`); without them each stack falls back to
 the theme's fonts. Requires `@seihouse/sen` 0.28.

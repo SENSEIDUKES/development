@@ -345,7 +345,7 @@ Update it whenever it changes.
     (below). No Codex, Mind Palace, reader translation or read marks.
   - **The Reader reads in the SEIHouse fonts:** chapters in **SEIHouse Sans**,
     the reading font from the font repo (SEIHouse/FONT-LAB), titles in a
-    **SEIHouse Display** cut (Soft by default; Edge, Ink and Wide are there to
+    **SEIHouse Display** cut (Ink by default; Soft, Edge and Wide are there to
     test), with the earlier Noto Serif and Alegreya still to choose. A slim top
     bar (Back, the story and chapter, Holdings, Fate, Reader Settings) stays at
     the top while reading, and the prose keeps about 60 characters a line. The

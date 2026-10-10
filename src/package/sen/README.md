@@ -4,8 +4,8 @@
 text. `./harness-generation`: `HarnessReaderSession` takes `chapterBody` (a `ReaderChapterBody`;
 `ProseChapterBody` by default) and `readerFonts`; `ReaderChapterBodyProps`, `ReaderChapter` and
 `NarrationHighlight` are exported. A body keeps `data-chapter-number`, `data-read-aloud-title` and
-`data-sen-text-block` on what it draws. The frame's top bar stays on screen; the prose keeps about
-60 characters a line. Reader Settings opens with Text (font, title font, size, line spacing,
+`data-sen-text-block` on what it draws. The frame's top bar stays on screen; the prose column is 34em,
+about 60 characters a line in any font. Reader Settings opens with Text (font, title font, size, line spacing,
 weight). `./reader-runtime`: `ReaderFonts`, `ReaderFontChoice`, `DEFAULT_READER_FONTS`,
 `ReaderTextSettings` with `readReaderTextSettings`/`writeReaderTextSettings` (key `text-settings`)
 and `resolveReaderText`. `./text-highlight-engine`: a paragraph's line height follows

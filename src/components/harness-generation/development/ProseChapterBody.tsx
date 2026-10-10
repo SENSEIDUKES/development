@@ -15,7 +15,7 @@ const READ_ALOUD_TONE = 'var(--sen-read-aloud-highlight, rgba(103, 232, 249, 0.1
  * The chapter as prose: its title and its paragraphs on the Text Highlight
  * Engine, with the Sound Cues placed on their words and the sentence being
  * read aloud lit, in the reader's font, size, spacing and weight. The column
- * holds about 60 characters a line, the SEIHouse fonts' reading measure. The
+ * is 34em wide, about 60 characters a line in any font. The
  * overlay stays mounted while Read Aloud is active, so moving from sentence to
  * sentence never replays its fade.
  */
@@ -30,12 +30,13 @@ export const ProseChapterBody = memo(function ProseChapterBody({ chapter, blocks
     for (const cue of chapter.soundCues ?? []) byBlock.set(cue.anchor.blockId, [...(byBlock.get(cue.anchor.blockId) ?? []), cue]);
     return byBlock;
   }, [chapter]);
-  // Set on the article so `ch` measures the chapter's own text.
+  // Set on the article, so the column's `em` follows the reader's size. Measured in em, not ch:
+  // a ch is the font's own "0", so each font would set a different width.
   const prose = useMemo((): CSSProperties => ({
     fontFamily: text.font.family, fontSize: text.fontSize, fontWeight: text.fontWeight,
     fontSynthesis: 'none', fontKerning: 'normal', '--sen-text-line-height': text.lineHeight,
   } as CSSProperties), [text]);
-  return <article ref={articleRef} className="mx-auto mt-6 max-w-[60ch]" style={prose} data-chapter-number={chapter.chapterNumber} lang={locale}
+  return <article ref={articleRef} className="mx-auto mt-6 max-w-[34em]" style={prose} data-chapter-number={chapter.chapterNumber} lang={locale}
     aria-labelledby={`harness-reader-chapter-${chapter.chapterNumber}`}>
     {/* The word count is a testing aid while chapter length is being tuned. */}
     <p className="font-mono text-[10px] font-normal uppercase tracking-[0.2em] text-neutral-500">Chapter {chapter.chapterNumber}

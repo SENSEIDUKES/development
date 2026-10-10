@@ -119,9 +119,9 @@ describe('A story\'s own pages for any host', { timeout: 20_000 }, () => {
     await act(async () => { model.release(); });
     await flush();
     expect(container.querySelector('[data-chapter-number="1"]')!.textContent).toContain('The tide pulled back from the drowned gate.');
-    // The chapter reads in SEIHouse Sans, its title in SEIHouse Display Soft.
+    // The chapter reads in SEIHouse Sans, its title in SEIHouse Display Ink.
     expect(container.querySelector<HTMLElement>('[data-chapter-number="1"]')!.style.fontFamily).toMatch(/^"SEIHouse Sans"/);
-    expect(container.querySelector<HTMLElement>('[data-chapter-number="1"] h1')!.style.fontFamily).toMatch(/^"SEIHouse Display Soft"/);
+    expect(container.querySelector<HTMLElement>('[data-chapter-number="1"] h1')!.style.fontFamily).toMatch(/^"SEIHouse Display Ink"/);
     // A saved result finishes the journey while the veil still covers the Reader.
     expect(container.querySelector('[data-testid="generation-overlay"]')?.getAttribute('data-journey-progress')).toBe('1');
     // Story memory waits until it is asked for.

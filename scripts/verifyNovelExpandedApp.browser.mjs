@@ -520,8 +520,8 @@ async function walk(browser, viewport, sample) {
     title: getComputedStyle(element.querySelector('h1')).fontFamily }));
   await page.evaluate(() => document.fonts.ready);
   const before = await proseFont();
-  check(before.family.startsWith('"SEIHouse Sans"') && before.size === '17.2px' && before.title.startsWith('"SEIHouse Display Soft"'),
-    `The chapter should read in SEIHouse Sans at 17.2px under a Display Soft title, got ${JSON.stringify(before)}.`);
+  check(before.family.startsWith('"SEIHouse Sans"') && before.size === '17.2px' && before.title.startsWith('"SEIHouse Display Ink"'),
+    `The chapter should read in SEIHouse Sans at 17.2px under a Display Ink title, got ${JSON.stringify(before)}.`);
   check(await page.evaluate(() => document.fonts.check('17px "SEIHouse Sans"') && [...document.fonts].some(face => face.family.replaceAll('"', '') === 'SEIHouse Sans' && face.status === 'loaded')),
     'SEIHouse Sans should load from the app.');
   const text = settings.getByTestId('reader-settings-text');

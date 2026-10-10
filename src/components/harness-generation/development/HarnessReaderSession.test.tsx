@@ -692,7 +692,7 @@ describe('The Reader frame and its chapter body', { timeout: 20_000 }, () => {
     expect(article.style.fontFamily).toBe('"House Sans", sans-serif');
     expect(article.style.fontSize).toBe('1.075rem');
     expect(article.style.getPropertyValue('--sen-text-line-height')).toBe('1.85');
-    expect(article.className).toContain('max-w-[60ch]');
+    expect(article.className).toContain('max-w-[34em]');
     expect(article.querySelector<HTMLElement>('h1')!.style.fontFamily).toBe('"House Soft", serif');
 
     // The bar holds Back, the story and chapter, and the Reader's pages.

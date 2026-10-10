@@ -3,7 +3,7 @@ import FocusLock from 'react-focus-lock';
 import type { ReaderMixer } from '@seihouse/audio-player';
 import { Play, RotateCcw, X } from 'lucide-react';
 import {
-  DEFAULT_READER_TEXT_SETTINGS, READ_ALOUD_RATES, READ_ALOUD_ROLES, READER_LINE_SPACINGS, READER_TEXT_SIZES, READER_TEXT_WEIGHTS, resolveReaderText,
+  DEFAULT_READER_FONTS, DEFAULT_READER_TEXT_SETTINGS, READ_ALOUD_RATES, READ_ALOUD_ROLES, READER_LINE_SPACINGS, READER_TEXT_SIZES, READER_TEXT_WEIGHTS, resolveReaderText,
   type ReadAloud, type ReadAloudRole, type ReadAloudVoice, type ReaderFonts, type ReaderTextSettings, type SoundtrackChoice,
 } from '@seihouse/sen/reader-runtime';
 import type { SceneAudioTrack } from '@seihouse/sen/audio';
@@ -74,6 +74,9 @@ function PillChoice<Value extends string | number>({ title, name, value, options
 /** Text: the font, the title font, size, line spacing and weight, with a line set in them. */
 function TextSettings({ settings, fonts, onChange }: { settings: ReaderTextSettings; fonts: ReaderFonts; onChange: (next: ReaderTextSettings) => void }) {
   const resolved = resolveReaderText(settings, fonts);
+  // The same lists `resolveReaderText` falls back to, so an empty host list still offers SEN's own.
+  const textFonts = fonts.text.length ? fonts.text : DEFAULT_READER_FONTS.text;
+  const titleFonts = fonts.titles.length ? fonts.titles : DEFAULT_READER_FONTS.titles;
   const change = (patch: Partial<ReaderTextSettings>) => onChange({ ...settings, ...patch });
   return <section aria-labelledby="reader-settings-text" data-testid="reader-settings-text" className="mt-4 rounded-xl border border-white/10 bg-black/20 p-3 sm:p-4">
     <h3 id="reader-settings-text" className="text-sm font-semibold text-neutral-100">Text</h3>
@@ -84,9 +87,9 @@ function TextSettings({ settings, fonts, onChange }: { settings: ReaderTextSetti
       The tide pulled back, and the bells of the city answered.
     </div>
     <PillChoice title="Font" name="reader-text-font" value={resolved.font.id} onChange={font => change({ font })}
-      options={fonts.text.map(choice => ({ value: choice.id, label: choice.label, style: { fontFamily: choice.family } }))} />
-    {fonts.titles.length > 1 && <PillChoice title="Title font" name="reader-title-font" value={resolved.titleFont.id} onChange={titleFont => change({ titleFont })}
-      options={fonts.titles.map(choice => ({ value: choice.id, label: choice.label, style: { fontFamily: choice.family } }))} />}
+      options={textFonts.map(choice => ({ value: choice.id, label: choice.label, style: { fontFamily: choice.family } }))} />
+    {titleFonts.length > 1 && <PillChoice title="Title font" name="reader-title-font" value={resolved.titleFont.id} onChange={titleFont => change({ titleFont })}
+      options={titleFonts.map(choice => ({ value: choice.id, label: choice.label, style: { fontFamily: choice.family } }))} />}
     <PillChoice title="Size" name="reader-text-size" value={settings.size} onChange={size => change({ size })}
       options={READER_TEXT_SIZES.map((step, index) => ({ value: step.id, label: step.label, display: 'A', style: { fontSize: `${0.8 + index * 0.15}rem` } }))} />
     <PillChoice title="Line spacing" name="reader-line-spacing" value={settings.lineSpacing} onChange={lineSpacing => change({ lineSpacing })}

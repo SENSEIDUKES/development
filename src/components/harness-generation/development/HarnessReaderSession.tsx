@@ -36,6 +36,7 @@ import { HoldingsPage } from './HoldingsPage';
 import { ProseChapterBody } from './ProseChapterBody';
 import { ReadAloudPlayer } from './ReadAloudPlayer';
 import type { ReaderChapter, ReaderChapterBody } from './readerChapterBody';
+import { ReaderCodexPage } from './ReaderCodexPage';
 import { ReaderPanel } from './ReaderPanel';
 import { ReaderSettingsSheet } from './ReaderSettingsSheet';
 import { ReaderTopBar } from './ReaderTopBar';
@@ -56,17 +57,17 @@ export interface HarnessReaderWriting {
 /**
  * What is open over the chapter. One at a time, so opening one closes the
  * others, and the chapter itself never leaves:
- * - a **panel** (Fate, Holdings) leaves it visible and scrollable beside or
- *   under it, so the reader can look back at what they just read;
- * - a **step** (an arc's goals) takes the screen for a decision; the chapter
- *   waits underneath, at the reader's place;
- * - the **settings** sheet covers it briefly.
+ * - a **panel** (Fate, Reader Settings) leaves it visible and scrollable
+ *   beside or under it, so the reader can look back at what they just read
+ *   (or watch their text settings change it);
+ * - a **page** (the Codex, an arc's goals) takes the screen; the chapter waits
+ *   underneath, and the reader comes back to their place.
  */
 export type ReaderLayer =
   | { kind: 'panel'; id: 'fate'; focusDirection?: boolean }
-  | { kind: 'panel'; id: 'holdings' }
-  | { kind: 'step'; id: 'arc' }
-  | { kind: 'sheet'; id: 'settings'; section?: 'audio' | 'narration' };
+  | { kind: 'panel'; id: 'settings'; section?: 'audio' | 'narration' }
+  | { kind: 'page'; id: 'codex' }
+  | { kind: 'page'; id: 'arc' };
 
 const navButton = 'min-h-11 rounded-full border px-4 text-sm disabled:cursor-not-allowed disabled:opacity-40';
 
@@ -96,9 +97,10 @@ function lineWhereTheReaderIs(script: ReadAloudScript, article: HTMLElement | nu
 
 /**
  * The Reader for a HARNESS story: a frame around a swappable chapter body.
- * The frame is the top bar (Back, Holdings, Fate, Reader Settings), the
+ * The frame is the top bar (Back, Codex, Fate, Reader Settings), the
  * chapter navigation, Listen and what opens over the chapter (`ReaderLayer`:
- * the Fate and Holdings panels, an arc's step, Reader Settings). The chapter
+ * the Fate and Reader Settings panels; the Codex and an arc's goals as pages,
+ * the Codex holding Holdings among its pages). The chapter
  * never leaves the page for them, so the reader keeps their place; the body shows the
  * chapter on screen (`chapterBody`, prose by default: the paragraphs on the
  * Text Highlight Engine, read-only, with Sound Cues as the only active layer).
@@ -195,7 +197,7 @@ export function HarnessReaderSession({
   const playerRef = useRef<HTMLDivElement>(null);
   // The chapter's own navigation, held as state so the soundtrack sees it whenever it appears.
   const [chapterEnd, setChapterEnd] = useState<HTMLElement | null>(null);
-  const openSettings = useCallback((section?: 'audio' | 'narration') => setLayer({ kind: 'sheet', id: 'settings', section }), []);
+  const openSettings = useCallback((section?: 'audio' | 'narration') => setLayer({ kind: 'panel', id: 'settings', section }), []);
   // The reader's text settings: kept on the device, applied by the chapter body.
   const [textSettings, setTextSettings] = useState<ReaderTextSettings>(() => readReaderTextSettings(readerPreferences));
   const changeText = useCallback((next: ReaderTextSettings) => {
@@ -242,22 +244,27 @@ export function HarnessReaderSession({
   }, [readerStateRepository]);
 
   const upcoming = story?.head.nextChapterNumber ?? 1;
-  // A step takes the screen, so the reader's place is kept and given back when it closes.
-  const placeBeforeStep = useRef(0);
+  // A page takes the screen, so the reader's place is kept and given back when it closes.
+  const placeBeforePage = useRef(0);
+  const openPage = (id: 'codex' | 'arc') => {
+    if (layer?.kind !== 'page') placeBeforePage.current = window.scrollY;
+    setLayer({ kind: 'page', id });
+  };
   const openFate = (focusDirection = false) => { writer.reset(); setLayer({ kind: 'panel', id: 'fate', focusDirection }); };
-  const openArc = () => { writer.reset(); placeBeforeStep.current = window.scrollY; setLayer({ kind: 'step', id: 'arc' }); };
-  const openHoldings = () => setLayer({ kind: 'panel', id: 'holdings' });
-  const readChapter = (chapterNumber: number) => { setLayer(undefined); openChapter(chapterNumber); };
+  const openArc = () => { writer.reset(); openPage('arc'); };
+  const openCodex = () => openPage('codex');
+  // Reading another chapter from a page or panel opens it at its top, not at the old place.
+  const readChapter = (chapterNumber: number) => { placeBeforePage.current = 0; setLayer(undefined); openChapter(chapterNumber); };
   const openPassage = (chapterNumber: number, blockId: string) => {
     readChapter(chapterNumber);
     setPassageTarget(blockId);
   };
-  const stepOpen = layer?.kind === 'step';
+  const pageOpen = layer?.kind === 'page';
   useLayoutEffect(() => {
-    if (!stepOpen) return undefined;
+    if (!pageOpen) return undefined;
     window.scrollTo?.({ top: 0 });
-    return () => window.scrollTo?.({ top: placeBeforeStep.current });
-  }, [stepOpen]);
+    return () => window.scrollTo?.({ top: placeBeforePage.current });
+  }, [pageOpen]);
   // At the start of an arc, the next chapter waits for the arc's goals: planned, then reviewed in the World Blueprint.
   const arcStep = nextArcStep(state, storyId);
   // Next at the newest chapter. Regular Reader: write the next chapter (through
@@ -297,11 +304,11 @@ export function HarnessReaderSession({
   }, [writer.written, openChapter]);
 
   // Read Aloud follows the chapter on screen: a panel leaves the chapter there, so
-  // it reads on; a step or the writing screen in its place pauses it until the
+  // it reads on; a page or the writing screen in its place pauses it until the
   // chapter is back. The soundtrack plays on under all of them; only leaving the
   // Reader stops it.
   const chapter = chapters.find(entry => entry.chapterNumber === selectedChapter) ?? chapters.at(-1);
-  const covered = stepOpen || writer.writing;
+  const covered = pageOpen || writer.writing;
   const language = story?.originalLanguage ?? 'en';
   const blocks = useMemo(() => (chapter ? chapterBlocks(chapter) : []), [chapter]);
   // The main character as this chapter's writer was told: speech it left untagged is voiced from its narration.
@@ -378,11 +385,11 @@ export function HarnessReaderSession({
   return <>
     {/* On laptops a panel sits at the right, and the chapter moves over beside it. */}
     <div className={`transition-[padding] duration-200 motion-reduce:transition-none ${panel ? 'lg:pr-[28rem]' : ''}`}>
-    <main hidden={stepOpen} className="mx-auto w-full min-w-0 max-w-3xl px-4 pb-12" data-testid="harness-reader">
+    <main hidden={pageOpen} className="mx-auto w-full min-w-0 max-w-3xl px-4 pb-12" data-testid="harness-reader">
       {/* Where a new chapter scrolls to: the stuck bar itself is always in view. */}
       <div ref={topRef} aria-hidden />
       <ReaderTopBar barRef={barRef} storyTitle={story.title} place={chapter ? `Chapter ${chapter.chapterNumber}` : 'Story start'}
-        onBack={onClose} onOpenHoldings={openHoldings} onOpenFate={() => openFate()} onOpenSettings={() => openSettings()} />
+        onBack={onClose} onOpenCodex={openCodex} onOpenFate={() => openFate()} onOpenSettings={() => openSettings()} />
       {storageError && <p role="alert" className="mt-3 text-sm text-amber-300">{storageError}</p>}
 
       {chapter
@@ -415,7 +422,12 @@ export function HarnessReaderSession({
         note={mixer && <ReaderMixerNote mixer={mixer} onOpenSettings={() => openSettings('audio')} />} />}
     </main>
     </div>
-    {layer?.kind === 'step' && <main className="mx-auto w-full min-w-0 max-w-6xl">
+    {layer?.id === 'codex' && <main className="w-full min-w-0">
+      <ReaderCodexPage storyId={storyId} storyTitle={story.title} onBack={closeLayer}
+        mainCharacter={state.foundations.find(item => item.id === story.activeFoundationRevisionId)?.input.cast?.find(member => member.isMainCharacter)?.name}
+        pages={[{ id: 'holdings', label: 'Holdings', content: <HoldingsPage state={state} storyId={storyId} onReadPassage={openPassage} onReadChapter={readChapter} /> }]} />
+    </main>}
+    {layer?.id === 'arc' && <main className="mx-auto w-full min-w-0 max-w-6xl">
       <BlueprintArcPage state={state} storyId={storyId} controller={controller} onBack={closeLayer} onPlanArc={onPlanArc}
         onContinue={() => {
           setLayer(undefined);
@@ -427,9 +439,6 @@ export function HarnessReaderSession({
       <FatePage state={state} storyId={storyId} controller={controller} onBack={closeLayer} onOpenArc={openArc}
         onGenerateNextChapter={onGenerateNextChapter} writer={writer} focusDirection={layer?.id === 'fate' && layer.focusDirection}
         onReadChapter={readChapter} />
-    </ReaderPanel>
-    <ReaderPanel open={panel === 'holdings'} onClose={closeLayer} labelledBy="holdings-page-title" testId="reader-panel-holdings">
-      <HoldingsPage state={state} storyId={storyId} onBack={closeLayer} onReadPassage={openPassage} onReadChapter={readChapter} />
     </ReaderPanel>
     <ReaderSettingsSheet open={layer?.id === 'settings'} onClose={closeLayer} readAloud={readAloud} language={language}
       mixer={mixer} section={layer?.id === 'settings' ? layer.section : undefined} soundtrack={{ choice: soundtrackChoice, onChoice: chooseSoundtrack, pieces: pieces ?? [] }}

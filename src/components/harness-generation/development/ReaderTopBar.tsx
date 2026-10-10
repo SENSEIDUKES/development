@@ -1,21 +1,21 @@
 import type { Ref } from 'react';
-import { Backpack, ChevronLeft, Settings } from 'lucide-react';
+import { BookOpen, ChevronLeft, Settings } from 'lucide-react';
 
 const pill = 'inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-full border text-sm';
 
 /**
  * The Reader frame's top bar: Back, the story and chapter, and the Reader's
- * own pages (Holdings, Fate, Reader Settings). It stays at the top of the
+ * own pages (the Codex, Fate, Reader Settings). It stays at the top of the
  * screen while the chapter scrolls, so the pages are always one tap away, and
- * fits one row on the narrowest phones: Back and Holdings show their words
+ * fits one row on the narrowest phones: Back and Codex show their words
  * from small tablets up, Fate always does.
  */
-export function ReaderTopBar({ storyTitle, place, onBack, onOpenHoldings, onOpenFate, onOpenSettings, barRef }: {
+export function ReaderTopBar({ storyTitle, place, onBack, onOpenCodex, onOpenFate, onOpenSettings, barRef }: {
   storyTitle: string;
   /** Where the reader is: "Chapter 3", or the story start. */
   place: string;
   onBack: () => void;
-  onOpenHoldings: () => void;
+  onOpenCodex: () => void;
   onOpenFate: () => void;
   onOpenSettings: () => void;
   barRef?: Ref<HTMLElement>;
@@ -31,9 +31,9 @@ export function ReaderTopBar({ storyTitle, place, onBack, onOpenHoldings, onOpen
         <p className="truncate font-mono text-[10px] uppercase tracking-[0.2em] text-cyan-200/70" data-testid="reader-story-title">{storyTitle}</p>
         <p className="truncate text-xs text-neutral-400">{place}</p>
       </div>
-      <button type="button" aria-label="Open Holdings" title="Holdings: what each character has now" onClick={onOpenHoldings}
+      <button type="button" aria-label="Open Codex" title="Codex: the story's world" onClick={onOpenCodex}
         className={`${pill} border-white/15 text-neutral-200 hover:border-white/30 sm:px-4`}>
-        <Backpack className="h-4 w-4 sm:hidden" aria-hidden /><span className="hidden sm:inline" aria-hidden>Holdings</span>
+        <BookOpen className="h-4 w-4 sm:hidden" aria-hidden /><span className="hidden sm:inline" aria-hidden>Codex</span>
       </button>
       <button type="button" aria-label="Open Fate" title="Fate: decide what happens next" onClick={onOpenFate}
         className={`${pill} border-cyan-300/30 px-4 text-cyan-50 hover:border-cyan-300/60`}>Fate</button>

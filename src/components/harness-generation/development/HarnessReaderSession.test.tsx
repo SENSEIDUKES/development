@@ -138,8 +138,10 @@ describe('The HARNESS Reader', { timeout: 20_000 }, () => {
     // The Sound Cue sits on the words the writer marked; no mark is left in the prose.
     expect(first.querySelector('[data-cue-annotation]')!.getAttribute('data-cue-annotation')).toBe('the beast roared');
     expect(first.textContent).not.toContain('[[');
-    // Only Sound Cues: no Codex, no Mind Palace. A browser without speech gets no Listen; Reader Settings stays for the text.
-    expect(container.textContent).not.toMatch(/Codex|Mind Palace/);
+    // On the chapter, only Sound Cues: the Codex is its own page, opened from the top bar, and there is no Mind Palace.
+    // A browser without speech gets no Listen; Reader Settings stays for the text.
+    expect(first.textContent).not.toMatch(/Codex|Mind Palace/);
+    expect(container.textContent).not.toMatch(/Mind Palace/);
     expect(buttonBy(byLabel('Reader Settings'))).toBeTruthy();
     expect(container.querySelector('[data-testid="read-aloud-player"]')).toBeNull();
 
@@ -341,30 +343,55 @@ describe('The HARNESS Reader', { timeout: 20_000 }, () => {
     const { controller, storyId } = await story({ written: 2 });
     await mount(<Host controller={controller} storyId={storyId} />);
     const chapter = chapterOnScreen(1)!;
-    const opener = buttonBy(byLabel('Open Holdings'))!;
-    opener.focus();
+    buttonBy(byLabel('Reader Settings'))!.focus();
 
-    await click(byLabel('Open Holdings'), 'Open Holdings');
-    const panel = document.querySelector<HTMLElement>('[data-testid="reader-panel-holdings"]')!;
-    expect(panel.querySelector('[data-testid="holdings-page"]')).toBeTruthy();
+    await click(byLabel('Reader Settings'), 'Reader Settings');
+    const panel = document.querySelector<HTMLElement>('[data-testid="reader-settings"]')!;
+    expect(panel.getAttribute('role')).toBe('dialog');
     // The same chapter, still on the page and readable: never hidden or taken away.
     expect(chapterOnScreen(1)).toBe(chapter);
     expect(container.querySelector<HTMLElement>('[data-testid="harness-reader"]')!.hidden).toBe(false);
     // A panel is not modal: the chapter is not shut away from the reader.
     expect(panel.getAttribute('aria-modal')).toBeNull();
+    expect(document.activeElement?.id).toBe('reader-settings-title');
 
     // Opening another closes the first, and focus stays with the one just opened.
     buttonBy(byLabel('Open Fate'))!.focus();
     await click(byLabel('Open Fate'), 'Open Fate');
     await flush(20);
-    expect(document.activeElement?.id).toBe('fate-page-title');
-    expect(document.querySelector('[data-testid="reader-panel-holdings"]')).toBeNull();
+    expect(document.querySelector('[data-testid="reader-settings"]')).toBeNull();
     expect(document.querySelector('[data-testid="reader-panel-fate"]')).toBeTruthy();
+    expect(document.activeElement?.id).toBe('fate-page-title');
 
     await click(button => button.textContent?.trim() === 'Back to reading', 'Back to reading');
     await flush(20);
     expect(chapterOnScreen(1)).toBe(chapter);
     expect(document.activeElement?.getAttribute('aria-label')).toBe('Open Fate');
+  });
+
+  it('opens the Codex as its own page while the chapter waits underneath, with Holdings among its pages', async () => {
+    const { controller, storyId } = await story({ written: 2 });
+    await mount(<Host controller={controller} storyId={storyId} />);
+    const chapter = chapterOnScreen(1)!;
+
+    await click(byLabel('Open Codex'), 'Open Codex');
+    for (let tries = 0; tries < 50 && !document.querySelector('[data-codex-page="holdings"]'); tries++) await flush(20);
+    const codex = document.querySelector<HTMLElement>('[data-testid="reader-codex-page"]')!;
+    expect(codex.querySelector('h1')!.textContent).toBe('Codex');
+    expect(codex.textContent).toContain('The Living Codex');
+    // The chapter is kept, out of sight, at the reader's place.
+    expect(container.querySelector<HTMLElement>('[data-testid="harness-reader"]')!.hidden).toBe(true);
+    expect(chapterOnScreen(1)).toBe(chapter);
+
+    await click(button => button.getAttribute('data-codex-page') === 'holdings', 'the Codex\'s Holdings page');
+    expect(codex.querySelector('[data-testid="holdings-page"]')).toBeTruthy();
+    // Inside the Codex, Holdings has no way back of its own: the Codex page has it.
+    expect([...codex.querySelectorAll('button')].filter(button => button.textContent === 'Back to reading')).toHaveLength(1);
+
+    await click(button => button.textContent === 'Back to reading', 'Back to reading');
+    expect(document.querySelector('[data-testid="reader-codex-page"]')).toBeNull();
+    expect(container.querySelector<HTMLElement>('[data-testid="harness-reader"]')!.hidden).toBe(false);
+    expect(chapterOnScreen(1)).toBe(chapter);
   });
 });
 
@@ -537,11 +564,11 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
     await click(byLabel('Next Chapter'), 'Next Chapter');
     expect(mixer.getState().availability.cues).toBe(false);
 
-    // The Reader's own pages never quiet it: the atmosphere plays on under Fate and Holdings.
+    // What opens over the chapter never quiets it: the atmosphere plays on under Fate and the Codex.
     const stopAtmosphere = vi.spyOn(mixer, 'stopAtmosphere');
     await click(byLabel('Open Fate'), 'Open Fate');
     await click(button => button.textContent?.trim() === 'Back to reading', 'Back to reading');
-    await click(byLabel('Open Holdings'), 'Open Holdings');
+    await click(byLabel('Open Codex'), 'Open Codex');
     await click(button => button.textContent?.trim() === 'Back to reading', 'Back to reading');
     expect(stopAtmosphere).not.toHaveBeenCalled();
     expect(startAtmosphere).toHaveBeenCalledTimes(1);
@@ -732,7 +759,7 @@ describe('The Reader frame and its chapter body', { timeout: 20_000 }, () => {
     // The bar holds Back, the story and chapter, and the Reader's pages.
     const bar = container.querySelector<HTMLElement>('[data-testid="reader-top-bar"]')!;
     expect(bar.textContent).toContain('Chapter 1');
-    expect([...bar.querySelectorAll('button')].map(button => button.getAttribute('aria-label'))).toEqual(['Back', 'Open Holdings', 'Open Fate', 'Reader Settings']);
+    expect([...bar.querySelectorAll('button')].map(button => button.getAttribute('aria-label'))).toEqual(['Back', 'Open Codex', 'Open Fate', 'Reader Settings']);
 
     await click(byLabel('Reader Settings'), 'Reader Settings');
     expect([...dialog().querySelectorAll('[data-testid="reader-settings-text"] legend')].map(legend => legend.textContent))

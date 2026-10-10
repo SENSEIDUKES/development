@@ -45,6 +45,12 @@ export const SHARED_READER_CONTRACTS = new Set([
 
 const CODE = /\.[cm]?[jt]sx?$/;
 const OLD_READER = /^src\/components\/reader-(?:chamber|codex)\//;
+/**
+ * The Codex, which the owner brought into the Reader Chamber on 2026-10-10 as
+ * its own page, to design it there: the development Codex and the pieces it is
+ * built from. Its old production copy (`reference/`) stays out.
+ */
+export const CODEX_PAGE = /^src\/components\/reader-codex\/(?:development|shared)\//;
 /** The older Reader's own host pieces: its narration, never the new Read Aloud. */
 const OLD_READER_HOST = new Set(['src/host/reader/webSpeechNarration.ts']);
 
@@ -61,7 +67,7 @@ function fileProblem(file, classify) {
   if (!owner) return 'unowned code';
   if (['workshop', 'test', 'deferred'].includes(owner)) return `${owner} code`;
   if (file.startsWith('src/library/generation/')) return 'the HARNESS developer page';
-  if ((OLD_READER.test(file) && CODE.test(file) && !SHARED_READER_CONTRACTS.has(file)) || OLD_READER_HOST.has(file)) return 'the older Reader';
+  if ((OLD_READER.test(file) && CODE.test(file) && !SHARED_READER_CONTRACTS.has(file) && !CODEX_PAGE.test(file)) || OLD_READER_HOST.has(file)) return 'the older Reader';
   return undefined;
 }
 

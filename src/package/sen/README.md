@@ -1,11 +1,13 @@
 # `@seihouse/sen`
 
-**0.29.0 (2026-10-10):** The Reader's tools open over the chapter, never in its place.
+**0.29.0 (2026-10-10):** The Reader Chamber: what opens over the chapter never takes it away.
 `./harness-generation`: `HarnessReaderSession` keeps one `ReaderLayer` (exported): a panel (Fate,
-Holdings), a step (an arc's goals) or the settings sheet. `ReaderPanel` and `useWideReader` are
-exported: a non-modal panel over the chapter, which stays readable and scrollable (a two-height sheet
-below 1024px, a 28rem panel at the right from 1024px with the chapter beside it). Listen reads on under
-a panel; a step still pauses it and returns the reader to their place.
+Reader Settings) or a page (the Codex, an arc's goals). `ReaderPanel` and `useWideReader` are exported:
+a non-modal panel over the chapter, which stays readable and scrollable (a two-height sheet below
+1024px, a 28rem panel at the right from 1024px with the chapter beside it). The top bar's Codex button
+(in place of Holdings) opens the development Reader Codex as a page, with Holdings among its pages;
+`ReaderCodex` (in `./reader-codex`) takes `extraPages`. Listen reads on under a panel; a page still
+pauses it and returns the reader to their place.
 
 **0.28.0 (2026-10-10):** The Reader is a frame around a swappable chapter body, and sets its
 text. `./harness-generation`: `HarnessReaderSession` takes `chapterBody` (a `ReaderChapterBody`;

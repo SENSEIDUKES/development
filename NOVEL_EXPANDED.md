@@ -296,7 +296,8 @@ when its words change. That means:
   a side channel.
 - **The Codex waits.** It is designed after the expanded-novel reading experience is
   right, so its categories, and what the model is told to document, can be designed
-  on purpose.
+  on purpose. Its page is in the Reader Chamber (2026-10-10), as it is and not yet
+  filled with the story's world, so that design can happen there.
 
 ## Where we are (2026-10-10)
 
@@ -328,7 +329,7 @@ Update it whenever it changes.
     and quiet ones up. The levels are not even yet: 22 beds are too quiet to
     reach −20 even at the player's largest boost and need re-exporting. The
     atmosphere plays from the moment the Reader opens (while Chapter 1 is
-    written too) and under the Reader's panels and steps (Fate, Holdings, an
+    written too) and under what opens over the chapter (Fate, the Codex, an
     arc's goals); only leaving the Reader stops it. Atmosphere loops play as their
     files are made, with no overlap at the loop point. Sound Cues play over it
     at the loudness of their Energy, Listen dips it, and a **sleep timer** stops
@@ -341,8 +342,9 @@ Update it whenever it changes.
     chooses stays, whatever the chapters choose. Then **Narration** (the three
     voices and the speed, remembered on the device for each story language). The
     mix and the Scene choice are remembered on the device, never in the story.
-    **Holdings** lists what each character has now, for checking the chapters
-    (below). No Codex, Mind Palace, reader translation or read marks.
+    **Holdings**, one of the Codex's pages, lists what each character has now,
+    for checking the chapters (below). The Codex itself is not yet filled with
+    the story's world. No Mind Palace, reader translation or read marks.
   - **The Reader reads in the SEIHouse fonts:** chapters in **SEIHouse Sans**,
     the reading font from the font repo (SEIHouse/FONT-LAB), titles in a
     **SEIHouse Display** cut (Ink by default; Soft, Edge and Wide are there to
@@ -352,13 +354,16 @@ Update it whenever it changes.
     Reader is a **frame** around a **chapter body**: prose today, so a
     sequential-art view can take the body's place later. The frame is built
     to serve reading, never interrupt it: **the chapter never leaves the
-    page.** Fate and Holdings open as **panels** over it, with the chapter
-    still readable and scrollable, so the reader can look back at what they
-    just read while they decide: on phones a sheet that drops to half height
-    ("Show the chapter"), on laptops a panel at the right with the chapter
-    moved beside it. Listen reads on under a panel. An arc's goals are a
-    **step** that takes the screen, and the reader comes back to their exact
-    place. The Codex will open as a panel the same way.
+    page.** Fate and Reader Settings open as **panels** over it, with the
+    chapter still readable and scrollable, so the reader can look back at what
+    they just read while they decide: on phones a sheet that drops to half
+    height ("Show the chapter"), on laptops a panel at the right with the
+    chapter moved beside it. Listen reads on under a panel. **The Codex** is its
+    own page inside the Reader Chamber, opened from the top bar: the
+    development Codex, shown as it is and not yet filled with the story's
+    world, so it can be designed in the Reader. Holdings is one of its pages.
+    The Codex and an arc's goals take the screen, and the reader comes back to
+    their exact place.
   - **A place to work on the Reader:** the Workshop's Reader Chamber card
     (`?preview=reader-chamber`) shows the app's Reader as its Development view.
     It is the same component the app renders, so the two cannot drift apart. It

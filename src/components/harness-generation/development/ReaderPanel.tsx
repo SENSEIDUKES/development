@@ -20,7 +20,7 @@ export function useWideReader(): boolean {
 const DRAG_STEP = 72;
 
 /**
- * One of the Reader's panels (Fate, Holdings, and the Codex later): a tool
+ * One of the Reader's panels (Fate, Reader Settings): a tool
  * that opens over the reading without taking the chapter away. The chapter
  * stays on the page, visible, scrollable and reachable, so the reader can
  * look back at what they just read while they use it. It is a non-modal

@@ -44,6 +44,12 @@ const click = async (predicate: (button: HTMLButtonElement) => boolean, label: s
 };
 const byLabel = (label: string) => (button: HTMLButtonElement) => button.getAttribute('aria-label') === label;
 const page = () => document.querySelector<HTMLElement>('[data-testid="holdings-page"]');
+/** Holdings is a page of the Codex: open the Codex from the top bar, then its Holdings page. */
+const openHoldings = async () => {
+  await click(byLabel('Open Codex'), 'Open Codex');
+  for (let tries = 0; tries < 50 && !document.querySelector('[data-codex-page="holdings"]'); tries++) await flush(20);
+  await click(button => button.getAttribute('data-codex-page') === 'holdings', 'the Codex\'s Holdings page');
+};
 
 function Host({ controller, storyId }: { controller: HarnessGenerationController; storyId: string }) {
   const [state, setState] = useState(controller.snapshot());
@@ -77,11 +83,12 @@ beforeEach(() => {
 });
 afterEach(() => { act(() => root.unmount()); container.remove(); });
 
-describe('The Holdings page in the HARNESS Reader', { timeout: 20_000 }, () => {
+describe('Holdings, in the HARNESS Reader\'s Codex', { timeout: 20_000 }, () => {
   it('lists what each character has now, with the chapter behind each change and the checks worth testing', async () => {
     await start();
-    await click(byLabel('Open Holdings'), 'Open Holdings');
+    await openHoldings();
     const holdings = page()!;
+    expect(document.querySelector('[data-testid="reader-codex-page"]')!.contains(holdings)).toBe(true);
     expect(holdings).toBeTruthy();
     const card = holdings.querySelector('[data-testid="holdings-character"]')!;
     expect(card.textContent).toContain('Ye Chen');
@@ -98,9 +105,9 @@ describe('The Holdings page in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(checks.textContent).toContain('Chapter 2: Ye Chen loses ‘Jade Sword’, which the record does not show them holding.');
   });
 
-  it('opens the passage behind a change in the Reader, and returns to reading', async () => {
+  it('opens the passage behind a change in the Reader, and the Codex returns to reading', async () => {
     await start();
-    await click(byLabel('Open Holdings'), 'Open Holdings');
+    await openHoldings();
     const scrolled = vi.mocked(Element.prototype.scrollIntoView);
     scrolled.mockClear();
     await click(button => button.getAttribute('aria-label')?.startsWith('Ch. 1 · took up') ?? false, 'the took-up link');
@@ -111,9 +118,10 @@ describe('The Holdings page in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(paragraph.textContent).toContain('He tested its weight.');
     expect(scrolled.mock.contexts).toContain(paragraph);
 
-    await click(byLabel('Open Holdings'), 'Open Holdings');
+    await openHoldings();
     await click(button => button.textContent === 'Back to reading', 'Back to reading');
     expect(page()).toBeNull();
+    expect(document.querySelector('[data-testid="reader-codex-page"]')).toBeNull();
     expect(document.querySelector('[data-testid="harness-reader"]')).toBeTruthy();
   });
 });

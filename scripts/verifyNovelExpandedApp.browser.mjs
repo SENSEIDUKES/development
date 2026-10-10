@@ -37,8 +37,9 @@
  * atmosphere the app asks for without downloading them.
  *
  * It fails on any page error, any memory request, and any module request into
- * the Workshop, the older Reader or Codex (its narration included), or the
- * HARNESS developer page.
+ * the Workshop, the older Reader (its narration included) or the old
+ * production Codex, or the HARNESS developer page. The development Codex is
+ * the Reader's Codex page.
  *
  * Usage: start `npm run dev -- --host 127.0.0.1`, then
  *   node scripts/verifyNovelExpandedApp.browser.mjs [base URL]
@@ -52,6 +53,8 @@ const TOKEN = 'browser-walk-token';
 const VIEWPORTS = [{ name: 'phone', width: 390, height: 844 }, { name: 'laptop', width: 1440, height: 900 }];
 const SHARED_READER_CONTRACTS = /\/src\/components\/reader-(?:chamber\/shared\/(?:readerLanguage|manifestationEligibility|cinematicScroll\/anchors|cinematicScroll\/useSemanticReadingPosition)|codex\/shared\/types)\.ts/;
 const FORBIDDEN_MODULE = /\/src\/(?:workshop\/|library\/generation\/|components\/reader-(?:chamber|codex)\/|host\/reader\/webSpeechNarration)/;
+/** The Codex page the owner brought into the Reader Chamber on 2026-10-10 (as in `check:app`); its old production copy stays out. */
+const CODEX_PAGE = /\/src\/components\/reader-codex\/(?:development|shared)\//;
 
 const receipt = { provider: 'gemini', model: 'fixture', generatedAt: '2026-10-01T12:00:00.000Z', usage: { source: 'unavailable' } };
 const SOUNDSCAPES = JSON.parse(readFileSync('src/host/media/data/sen-soundscapes-v1.json', 'utf8')).entries;
@@ -207,7 +210,7 @@ async function walk(browser, viewport, sample) {
   page.on('pageerror', error => problems.push(`page error: ${error.message}`));
   page.on('request', request => {
     const path = new URL(request.url()).pathname;
-    if (/\.[cm]?[jt]sx?$/.test(path) && FORBIDDEN_MODULE.test(path) && !SHARED_READER_CONTRACTS.test(path)) problems.push(`module request: ${path}`);
+    if (/\.[cm]?[jt]sx?$/.test(path) && FORBIDDEN_MODULE.test(path) && !SHARED_READER_CONTRACTS.test(path) && !CODEX_PAGE.test(path)) problems.push(`module request: ${path}`);
   });
   // Every SEIHouse audio file is answered with silence; what was asked for is kept, in order.
   const audioAsked = [];
@@ -567,8 +570,40 @@ async function walk(browser, viewport, sample) {
   check(await visibleButton('Open Fate').isVisible() && await visibleButton('Reader Settings').isVisible(), 'Fate and Reader Settings should be reachable at the chapter\'s end.');
   await shot('6c-reader-end');
 
-  // 3c. Holdings: what the main character has now, each change linked to its passage, and the checks.
-  await visibleButton('Open Holdings').click();
+  // 3c. Fate is a panel: the chapter stays on the page, readable beside (laptop) or above (phone) it.
+  await visibleButton('Open Fate').click();
+  await page.getByTestId('reader-panel-fate').waitFor();
+  await page.waitForTimeout(400);
+  const beside = () => page.evaluate(() => {
+    const panel = document.querySelector('[data-testid="reader-panel-fate"]').getBoundingClientRect();
+    const article = document.querySelector('[data-chapter-number]').getBoundingClientRect();
+    return { panelLeft: panel.left, panelTop: panel.top, articleRight: article.right, hidden: document.querySelector('[data-testid="harness-reader"]').hidden };
+  });
+  const open = await beside();
+  check(!open.hidden, 'The chapter must stay on the page under the Fate panel.');
+  await shot('6d-fate-panel');
+  if (laptop) {
+    check(open.articleRight <= open.panelLeft + 1, `On a laptop the chapter should sit beside the panel, not under it (${JSON.stringify(open)}).`);
+  } else {
+    await visibleButton('Show the chapter').click();
+    await page.waitForTimeout(400);
+    const peek = await beside();
+    check(peek.panelTop >= viewport.height * 0.45, `Show the chapter should lower the sheet to half height (${JSON.stringify(peek)}).`);
+    await page.mouse.wheel(0, 300);
+    check(await page.getByTestId('reader-panel-fate').count() === 1, 'Scrolling the chapter must not close the panel.');
+    await shot('6d-fate-peek');
+  }
+  await page.getByTestId('reader-panel-fate').getByRole('button', { name: 'Back to reading' }).click();
+
+  // 3d. The Codex is its own page; Holdings is one of its pages: what the main character has now,
+  // each change linked to its passage, and the checks.
+  await visibleButton('Open Codex').click();
+  const codexPage = page.getByTestId('reader-codex-page');
+  await codexPage.locator('[data-codex-page="holdings"]').waitFor();
+  check(await page.evaluate(() => document.querySelector('[data-testid="harness-reader"]').hidden), 'The Codex page takes the screen while the chapter waits underneath.');
+  check(!(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), 'The Codex must not scroll sideways.');
+  await shot('6d-codex');
+  await codexPage.locator('[data-codex-page="holdings"]').click();
   const holdingsPage = page.getByTestId('holdings-page');
   await holdingsPage.waitFor();
   const inHand = await holdingsPage.locator('[aria-label$=": In hand"]').first().textContent();
@@ -578,32 +613,10 @@ async function walk(browser, viewport, sample) {
   check((await holdingsPage.locator('[data-testid="holdings-checks"] summary').textContent()) === 'Checks (1)', 'The closing list should leave one check.');
   check(!(await page.textContent('body')).includes('[['), 'No tag may reach the Holdings page.');
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), 'The Holdings page must not scroll sideways.');
-  await page.waitForTimeout(400);
   await shot('6d-holdings');
-  // A panel never takes the chapter away: it stays on the page, readable beside (laptop) or above (phone) the panel.
-  const beside = () => page.evaluate(() => {
-    const panel = document.querySelector('[data-testid="reader-panel-holdings"]').getBoundingClientRect();
-    const article = document.querySelector('[data-chapter-number]').getBoundingClientRect();
-    return { panelLeft: panel.left, panelTop: panel.top, panelWidth: panel.width, articleRight: article.right, hidden: document.querySelector('[data-testid="harness-reader"]').hidden };
-  });
-  const open = await beside();
-  check(!open.hidden, 'The chapter must stay on the page under a panel.');
-  if (laptop) {
-    const settled = await beside();
-    check(settled.articleRight <= settled.panelLeft + 1, `On a laptop the chapter should sit beside the panel, not under it (${JSON.stringify(settled)}).`);
-  } else {
-    await visibleButton('Show the chapter').click();
-    await page.waitForTimeout(400);
-    const peek = await beside();
-    check(peek.panelTop >= viewport.height * 0.45, `Show the chapter should lower the sheet to half height (${JSON.stringify(peek)}).`);
-    await page.mouse.wheel(0, 300);
-    check(await page.getByTestId('holdings-page').count() === 1, 'Scrolling the chapter must not close the panel.');
-    await shot('6d-holdings-peek');
-    await visibleButton('Raise').click();
-  }
   await holdingsPage.getByRole('button', { name: /^Ch\. 1 · took up/ }).click();
   await page.locator('[data-chapter-number="1"]').waitFor();
-  check(await page.getByTestId('holdings-page').count() === 0, 'A change\'s link should open its chapter.');
+  check(await page.getByTestId('holdings-page').count() === 0 && await page.getByTestId('reader-codex-page').count() === 0, 'A change\'s link should open its chapter.');
   check(counts.fixes.length === 0, `A chapter whose only problem is a closing-list name it never mentions asks no fixer, saw ${counts.fixes.length}.`);
 
   // 3d. Rewrite this chapter: at the newest chapter's end, with a note; the new version under the veil.

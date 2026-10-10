@@ -26,7 +26,7 @@ export function UserShopWorkspace() {
       description: 'The same creator shop page as User Profile, using local preview accounts. The pavilion has no items yet. Return opens the selected creator’s public profile.',
       defaultSection: 'states',
       sections: [{ id: 'states', content: <label className="flex flex-col gap-1 text-xs">Creator
-        <select className="min-h-11 rounded-lg border border-white/20 bg-black/30 p-2 text-sm text-white"
+        <select className="min-h-11 rounded-lg border border-white/20 bg-black/30 p-2 text-base text-white sm:text-sm"
           value={creatorId} onChange={event => setCreatorId(event.target.value)}>
           {creators.map(candidate => <option key={candidate.profile.uid} value={candidate.profile.uid}>{candidate.profile.displayName}</option>)}
         </select>

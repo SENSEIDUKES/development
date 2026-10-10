@@ -34,7 +34,7 @@ import { ChapterRewrite } from './ChapterRewrite';
 import { FatePage } from './FatePage';
 import { HoldingsPage } from './HoldingsPage';
 import { ProseChapterBody } from './ProseChapterBody';
-import { ReadAloudPlayer } from './ReadAloudPlayer';
+import { ReaderBottomBar } from './ReaderBottomBar';
 import type { ReaderChapter, ReaderChapterBody } from './readerChapterBody';
 import { ReaderCodexPage } from './ReaderCodexPage';
 import { ReaderPanel } from './ReaderPanel';
@@ -117,7 +117,7 @@ function lineWhereTheReaderIs(script: ReadAloudScript, article: HTMLElement | nu
  */
 export function HarnessReaderSession({
   state, storyId, onClose, controller, readerStateRepository, onGenerateNextChapter, onRewriteChapter, onPlanArc, renderWriting, renderWriteAside, startOnOpen = false,
-  readerPreferences, readAloudVoices, soundscapes, readerFonts = DEFAULT_READER_FONTS, chapterBody: ChapterBody = ProseChapterBody,
+  readerPreferences, readAloudVoices, soundscapes, readerFonts = DEFAULT_READER_FONTS, chapterBody: ChapterBody = ProseChapterBody, companion,
 }: {
   state: HarnessWorkspaceState; storyId: string; onClose: () => void; controller: HarnessGenerationController;
   /**
@@ -175,6 +175,8 @@ export function HarnessReaderSession({
   readerFonts?: ReaderFonts;
   /** How a chapter is shown inside the frame. Prose by default; any body keeps the marks `ReaderChapterBodyProps` names. */
   chapterBody?: ReaderChapterBody;
+  /** The host's companion in the top bar, beside Fate (the Library puts its Familiar there). */
+  companion?: ReactNode;
 }) {
   const story = state.stories.find(entry => entry.id === storyId);
   const chapters = useMemo(() => state.chapters
@@ -389,7 +391,7 @@ export function HarnessReaderSession({
       {/* Where a new chapter scrolls to: the stuck bar itself is always in view. */}
       <div ref={topRef} aria-hidden />
       <ReaderTopBar barRef={barRef} storyTitle={story.title} place={chapter ? `Chapter ${chapter.chapterNumber}` : 'Story start'}
-        onBack={onClose} onOpenCodex={openCodex} onOpenFate={() => openFate()} onOpenSettings={() => openSettings()} />
+        onBack={onClose} onOpenFate={() => openFate()} companion={companion} />
       {storageError && <p role="alert" className="mt-3 text-sm text-amber-300">{storageError}</p>}
 
       {chapter
@@ -403,23 +405,23 @@ export function HarnessReaderSession({
           </section>}
 
       {writer.error && <p role="alert" className="mt-6 text-sm text-amber-200">{writer.error}</p>}
-      <nav ref={setChapterEnd} className="mt-8 flex items-center justify-between gap-3" aria-label="Chapters">
-        <button type="button" aria-label="Previous Chapter" disabled={!previous} onClick={() => previous && openChapter(previous.chapterNumber)}
-          className={`${navButton} border-white/15 text-neutral-200 hover:border-white/30`}>Previous</button>
-        {later
-          ? <button type="button" aria-label="Next Chapter" onClick={() => openChapter(later.chapterNumber)}
-              className={`${navButton} border-white/15 text-neutral-200 hover:border-white/30`}>Next</button>
-          : continueAfterLatest && <span className="relative inline-flex items-center gap-2">
-              {continueAfterLatest.writes && renderWriteAside?.(chapters.length)}
-              <button type="button" aria-label={`Next Chapter: ${continueAfterLatest.label}`}
-                disabled={continueAfterLatest.busy} aria-busy={continueAfterLatest.busy || undefined} onClick={continueAfterLatest.run}
-                className={`${navButton} border-cyan-300/50 bg-cyan-400/15 font-semibold text-cyan-50 hover:bg-cyan-400/25`}>{continueAfterLatest.label}</button>
-            </span>}
-      </nav>
+      {/* The chapter's end: at the newest chapter, the story's next step (write, direct, or see how it ended). */}
+      <div ref={setChapterEnd} className="mt-8 flex min-h-11 items-center justify-end gap-3" data-testid="reader-chapter-end">
+        {!later && continueAfterLatest && <span className="relative inline-flex items-center gap-2">
+          {continueAfterLatest.writes && renderWriteAside?.(chapters.length)}
+          <button type="button" disabled={continueAfterLatest.busy} aria-busy={continueAfterLatest.busy || undefined} onClick={continueAfterLatest.run}
+            className={`${navButton} border-cyan-300/50 bg-cyan-400/15 font-semibold text-cyan-50 hover:bg-cyan-400/25`}>{continueAfterLatest.label}</button>
+        </span>}
+      </div>
       {rewritable && chapter && <ChapterRewrite key={chapter.id} chapterNumber={chapter.chapterNumber} disabled={writer.writing} onRewrite={rewriteChapter} />}
-      {chapter && <ReadAloudPlayer readAloud={readAloud} onListen={listen} offscreen={follow.offscreen}
-        onBackToNarration={follow.backToNarration} playerRef={playerRef}
-        note={mixer && <ReaderMixerNote mixer={mixer} onOpenSettings={() => openSettings('audio')} />} />}
+      <ReaderBottomBar readAloud={readAloud} onListen={chapter ? listen : undefined} offscreen={follow.offscreen}
+        onBackToNarration={follow.backToNarration} barRef={playerRef}
+        note={mixer && <ReaderMixerNote mixer={mixer} onOpenSettings={() => openSettings('audio')} />}
+        onOpenCodex={openCodex} onOpenSettings={() => openSettings()}
+        previous={previous ? { label: 'Previous Chapter', run: () => openChapter(previous.chapterNumber) } : undefined}
+        next={later ? { label: 'Next Chapter', run: () => openChapter(later.chapterNumber) }
+          : continueAfterLatest ? { label: `Next Chapter: ${continueAfterLatest.label}`, run: continueAfterLatest.run, busy: continueAfterLatest.busy } : undefined}
+        position={chapter ? `${chapter.chapterNumber}/${chapters.length}` : undefined} />
     </main>
     </div>
     {layer?.id === 'codex' && <main className="w-full min-w-0">

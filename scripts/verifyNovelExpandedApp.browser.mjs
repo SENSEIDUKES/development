@@ -474,13 +474,13 @@ async function walk(browser, viewport, sample) {
   await visibleButton('Resume').click();
   await page.waitForTimeout(60);
   check((await lastSpoken()).text === '“They are drowned,”', 'Resume should read the same line again from its start.');
-  // The ghost note: the soundtrack's one control in the Reader, sitting above the Listen bar.
+  // The ghost note: the soundtrack's one control in the Reader, sitting above the bottom bar.
   const note = page.getByTestId('story-audio-note').getByRole('button', { name: /story audio/ });
   await note.waitFor();
   const noteBox = await note.boundingBox();
-  const barBox = await page.getByTestId('read-aloud-player').boundingBox();
+  const barBox = await page.getByTestId('reader-bottom-bar').boundingBox();
   check(noteBox && barBox && noteBox.y + noteBox.height <= barBox.y + 1 && noteBox.x + noteBox.width <= viewport.width,
-    `The note should sit above the Listen bar, inside the screen (${JSON.stringify({ noteBox, barBox })}).`);
+    `The note should sit above the bottom bar, inside the screen (${JSON.stringify({ noteBox, barBox })}).`);
   // A tap mutes the whole soundtrack, and the reader's mix is kept on the device.
   await note.click();
   // The mixer saves a moment after the last change (and at once when the page is hidden).
@@ -550,12 +550,18 @@ async function walk(browser, viewport, sample) {
   // The bar never covers the chapter's own controls, and the page never scrolls sideways.
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await page.waitForTimeout(100);
-  const layout = await page.evaluate(() => ({
-    nav: document.querySelector('nav[aria-label="Chapters"]').getBoundingClientRect().bottom,
-    player: document.querySelector('[data-testid="read-aloud-player"]').getBoundingClientRect().top,
-    wide: document.documentElement.scrollWidth > window.innerWidth,
-  }));
-  check(layout.nav <= layout.player + 1, `The Listen bar should not cover the chapter navigation (${JSON.stringify(layout)}).`);
+  const layout = await page.evaluate(() => {
+    const bar = document.querySelector('[data-testid="reader-bottom-bar"]').getBoundingClientRect();
+    const play = document.querySelector('[data-testid="read-aloud-play"]').getBoundingClientRect();
+    return {
+      end: document.querySelector('[data-testid="reader-chapter-end"]').getBoundingClientRect().bottom,
+      bar: bar.top, barCenter: bar.left + bar.width / 2, playCenter: play.left + play.width / 2,
+      wide: document.documentElement.scrollWidth > window.innerWidth,
+    };
+  });
+  check(layout.end <= layout.bar + 1, `The bottom bar should not cover the chapter's end (${JSON.stringify(layout)}).`);
+  // As in the first Reader: Play in the middle of the bottom bar, the Codex to its left, Settings and the chapters to its right.
+  check(Math.abs(layout.playCenter - layout.barCenter) <= 2, `Play should sit in the middle of the bottom bar (${JSON.stringify(layout)}).`);
   check(!layout.wide, 'The Reader must not scroll sideways.');
   // The top bar stays on screen at the chapter's end, in one row with a readable story title; the prose keeps about 60 characters a line.
   const frame = await page.evaluate(() => {
@@ -567,7 +573,10 @@ async function walk(browser, viewport, sample) {
   check(Math.abs(frame.barTop) <= 1 && frame.barHeight <= 80, `The top bar should stay at the top in one row (${JSON.stringify(frame)}).`);
   check(frame.title >= 80, `The story title should keep room in the top bar (${JSON.stringify(frame)}).`);
   check(frame.measure <= 36, `The prose should keep a reading measure of about 60 characters (${JSON.stringify(frame)}).`);
-  check(await visibleButton('Open Fate').isVisible() && await visibleButton('Reader Settings').isVisible(), 'Fate and Reader Settings should be reachable at the chapter\'s end.');
+  check(await visibleButton('Open Fate').isVisible() && await visibleButton('Reader Settings').isVisible() && await visibleButton('Open Codex').isVisible(),
+    'Fate, the Codex and Reader Settings should be reachable at the chapter\'s end.');
+  check(await page.getByTestId('reader-top-bar').getByTestId('reader-companion').getByRole('button', { name: /actions$/ }).isVisible(),
+    'The Familiar\'s recall should sit in the Reader\'s top bar beside Fate.');
   await shot('6c-reader-end');
 
   // 3c. Fate is a panel: the chapter stays on the page, readable beside (laptop) or above (phone) it.

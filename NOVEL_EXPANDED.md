@@ -333,7 +333,7 @@ Update it whenever it changes.
     arc's goals); only leaving the Reader stops it. Atmosphere loops play as their
     files are made, with no overlap at the loop point. Sound Cues play over it
     at the loudness of their Energy, Listen dips it, and a **sleep timer** stops
-    it, Listen included. A small **note** above the Listen bar mutes all story
+    it, Listen included. A small **note** above the bottom bar mutes all story
     audio with a tap; a long-press opens Audio settings. **Reader Settings**
     opens with **Text** (the font, the title font, size, line spacing and
     weight, remembered on the device), then **Audio** (presets, master, the Soundscapes, Atmosphere and Sound
@@ -349,8 +349,11 @@ Update it whenever it changes.
     the reading font from the font repo (SEIHouse/FONT-LAB), titles in a
     **SEIHouse Display** cut (Ink by default; Soft, Edge and Wide are there to
     test), with the earlier Noto Serif and Alegreya still to choose. A slim top
-    bar (Back, the story and chapter, Holdings, Fate, Reader Settings) stays at
-    the top while reading, and the prose keeps about 60 characters a line. The
+    bar (Back, the story and chapter, the reader's **Familiar**, Fate) stays at
+    the top while reading, and a **bottom bar** stays at the bottom: the Codex,
+    **Listen** as a large button in the middle (as in the first Reader), Reader
+    Settings, and the chapters (previous, "5/10", next). The prose keeps about
+    60 characters a line. The
     Reader is a **frame** around a **chapter body**: prose today, so a
     sequential-art view can take the body's place later. The frame is built
     to serve reading, never interrupt it: **the chapter never leaves the
@@ -359,7 +362,7 @@ Update it whenever it changes.
     they just read while they decide: on phones a sheet that drops to half
     height ("Show the chapter"), on laptops a panel at the right with the
     chapter moved beside it. Listen reads on under a panel. **The Codex** is its
-    own page inside the Reader Chamber, opened from the top bar: the
+    own page inside the Reader Chamber, opened from the bottom bar: the
     development Codex, shown as it is and not yet filled with the story's
     world, so it can be designed in the Reader. Holdings is one of its pages.
     The Codex and an arc's goals take the screen, and the reader comes back to

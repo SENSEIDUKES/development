@@ -1,23 +1,23 @@
-import type { Ref } from 'react';
-import { BookOpen, ChevronLeft, Settings } from 'lucide-react';
+import type { ReactNode, Ref } from 'react';
+import { ChevronLeft } from 'lucide-react';
 
 const pill = 'inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-full border text-sm';
 
 /**
- * The Reader frame's top bar: Back, the story and chapter, and the Reader's
- * own pages (the Codex, Fate, Reader Settings). It stays at the top of the
- * screen while the chapter scrolls, so the pages are always one tap away, and
- * fits one row on the narrowest phones: Back and Codex show their words
- * from small tablets up, Fate always does.
+ * The Reader frame's top bar: Back (exit), the story and chapter, the host's own
+ * companion (the Library's Familiar), and Fate. It stays at the top of the
+ * screen while the chapter scrolls and fits one row on the narrowest phones:
+ * Back shows its word from small tablets up, Fate always does. The Codex,
+ * Listen, Reader Settings and the chapters are in the bottom bar.
  */
-export function ReaderTopBar({ storyTitle, place, onBack, onOpenCodex, onOpenFate, onOpenSettings, barRef }: {
+export function ReaderTopBar({ storyTitle, place, onBack, onOpenFate, companion, barRef }: {
   storyTitle: string;
   /** Where the reader is: "Chapter 3", or the story start. */
   place: string;
   onBack: () => void;
-  onOpenCodex: () => void;
   onOpenFate: () => void;
-  onOpenSettings: () => void;
+  /** The host's companion beside Fate (the Library puts its Familiar here). */
+  companion?: ReactNode;
   barRef?: Ref<HTMLElement>;
 }) {
   return <header ref={barRef} data-testid="reader-top-bar"
@@ -27,20 +27,13 @@ export function ReaderTopBar({ storyTitle, place, onBack, onOpenCodex, onOpenFat
         className={`${pill} border-white/15 text-neutral-200 hover:border-white/30 sm:pl-2 sm:pr-4`}>
         <ChevronLeft className="h-4 w-4" aria-hidden /><span className="hidden sm:inline" aria-hidden>Back</span>
       </button>
-      <div className="min-w-0 flex-1 px-1 text-center">
+      <div className="min-w-0 flex-1 px-1">
         <p className="truncate font-mono text-[10px] uppercase tracking-[0.2em] text-cyan-200/70" data-testid="reader-story-title">{storyTitle}</p>
         <p className="truncate text-xs text-neutral-400">{place}</p>
       </div>
-      <button type="button" aria-label="Open Codex" title="Codex: the story's world" onClick={onOpenCodex}
-        className={`${pill} border-white/15 text-neutral-200 hover:border-white/30 sm:px-4`}>
-        <BookOpen className="h-4 w-4 sm:hidden" aria-hidden /><span className="hidden sm:inline" aria-hidden>Codex</span>
-      </button>
+      {companion && <div className="flex shrink-0 items-center" data-testid="reader-companion">{companion}</div>}
       <button type="button" aria-label="Open Fate" title="Fate: decide what happens next" onClick={onOpenFate}
         className={`${pill} border-cyan-300/30 px-4 text-cyan-50 hover:border-cyan-300/60`}>Fate</button>
-      <button type="button" aria-label="Reader Settings" title="Reader Settings" aria-haspopup="dialog" onClick={onOpenSettings}
-        className={`${pill} border-white/15 text-neutral-200 hover:border-white/30`}>
-        <Settings className="h-4 w-4" aria-hidden />
-      </button>
     </div>
   </header>;
 }

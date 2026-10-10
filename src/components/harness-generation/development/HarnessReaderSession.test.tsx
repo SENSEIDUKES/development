@@ -555,8 +555,8 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
     await act(async () => { buttonBy(button => button.dataset.cuePhrase === 'the beast roared')!.click(); });
     expect(playCue).toHaveBeenCalledWith(expect.stringMatching(BEAST_ROAR), { volume: 1 });
 
-    // Reaching the chapter's navigation is the chapter's end, for an End of chapter timer.
-    expect(observed.map(entry => entry.target?.getAttribute('aria-label'))).toEqual(['Chapters']);
+    // Reaching the chapter's end (its next step, at the newest chapter) is the chapter's end, for an End of chapter timer.
+    expect(observed.map(entry => entry.target?.getAttribute('data-testid'))).toEqual(['reader-chapter-end']);
     act(() => observed[0].callback([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver));
     expect(notifyChapterEnd).toHaveBeenCalledTimes(1);
 
@@ -756,10 +756,15 @@ describe('The Reader frame and its chapter body', { timeout: 20_000 }, () => {
     expect(article.className).toContain('max-w-[34em]');
     expect(article.querySelector<HTMLElement>('h1')!.style.fontFamily).toBe('"House Soft", serif');
 
-    // The bar holds Back, the story and chapter, and the Reader's pages.
+    // The top bar: Back, the story and chapter, (the host's companion,) Fate. The bottom bar: the Codex,
+    // Listen in the middle (none here: this browser has no speech), Reader Settings and the chapters.
     const bar = container.querySelector<HTMLElement>('[data-testid="reader-top-bar"]')!;
     expect(bar.textContent).toContain('Chapter 1');
-    expect([...bar.querySelectorAll('button')].map(button => button.getAttribute('aria-label'))).toEqual(['Back', 'Open Codex', 'Open Fate', 'Reader Settings']);
+    expect([...bar.querySelectorAll('button')].map(button => button.getAttribute('aria-label'))).toEqual(['Back', 'Open Fate']);
+    const bottom = container.querySelector<HTMLElement>('[data-testid="reader-bottom-bar"]')!;
+    expect([...bottom.querySelectorAll('button')].map(button => button.getAttribute('aria-label')))
+      .toEqual(['Open Codex', 'Reader Settings', 'Previous Chapter', 'Next Chapter: Write Chapter 2']);
+    expect(bottom.querySelector('[data-testid="reader-chapter-position"]')!.textContent).toBe('1/1');
 
     await click(byLabel('Reader Settings'), 'Reader Settings');
     expect([...dialog().querySelectorAll('[data-testid="reader-settings-text"] legend')].map(legend => legend.textContent))

@@ -544,6 +544,12 @@
   }
 }
 
+/* A preview's open modal (Reader Settings, a dialog) covers the Workshop
+   Controls, as it covers everything in the app; closing it brings them back. */
+body:has([aria-modal='true']) [data-workshop-controls] {
+  z-index: 0;
+}
+
 .preview-stage {
   --celestial-accent: #f5b942;
   position: fixed;

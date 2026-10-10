@@ -298,7 +298,7 @@ when its words change. That means:
   right, so its categories, and what the model is told to document, can be designed
   on purpose.
 
-## Where we are (2026-10-08)
+## Where we are (2026-10-09)
 
 The current implementation status, and the only section that says what is built.
 Update it whenever it changes.
@@ -342,6 +342,14 @@ Update it whenever it changes.
     mix and the Scene choice are remembered on the device, never in the story.
     **Holdings** lists what each character has now, for checking the chapters
     (below). No Codex, Mind Palace, reader translation or read marks.
+  - **A place to work on the Reader:** the Workshop's Reader Chamber card
+    (`?preview=reader-chamber`) shows the app's Reader as its Development view.
+    It is the same component the app renders, so the two cannot drift apart. It
+    reads SENSEI's Sundered Heavens test or any story saved with Export story.
+    Its scenes put the reader on Chapter 1, in the middle, before the newest
+    chapter, on the newest one, or at the story start. Writing replays the
+    chapters the story already has, behind the writing screen, so no model is
+    called. Its Original Reference is production's Reader, for comparison.
   - **Music everywhere in the app, with no model:** NovelExpanded plays calm
     pieces of SEN Soundscapes on Home, Create and World Info (**Menu music**).
     The Reader never opens to it: it always plays its own music, each
@@ -648,7 +656,7 @@ Update it whenever it changes.
 | NovelExpanded app | Expanded Novels' app at NovelExpanded.com. Built at `/app/` (piece 1: the core application spine of Home, Create, Story View and Reader; piece 2: the Library Shell around it; piece 3: Profile, with the Familiar and a practice economy; piece 4: Story Settings in Create and Story View; piece 5: cover art on Story View), in `src/novel-expanded/`. |
 | Story Seed / World Blueprint | Where a story is created (`?preview=story-seed`, and Create in the app). The Blueprint is the novel's transferable core: what a reader takes to make their own version ([The World Blueprint](#the-world-blueprint)). |
 | Story View | The story's own page: cover art, the story, Enter. Built today as the World Info page (`WorldCardInfo`), where Begin Story or Continue leads into the Reader Chamber, with Manifest on its cover and the story's Story Settings below it. |
-| Reader Chamber | Where chapters are read: a HARNESS story's chapters on the Text Highlight Engine with Sound Cues, Listen and the soundtrack (`HarnessReaderSession`). The older Reader Chamber preview (`?preview=reader-chamber`) is not part of this path. |
+| Reader Chamber | Where chapters are read: a HARNESS story's chapters on the Text Highlight Engine with Sound Cues, Listen and the soundtrack (`HarnessReaderSession`). Its Workshop card (`?preview=reader-chamber`) shows this Reader as Development, beside production's Reader as the Original Reference; the older development Reader is no longer on it. |
 | Listen / Read Aloud | The Reader reading a chapter aloud in three voices with the spoken sentence lit (`useReadAloud`, SEN's `reader-runtime`). Its voices and speed live in Reader Settings → Narration. |
 | Reader Settings | The Reader's settings sheet: Audio, then Narration. |
 | Rewrite this chapter | The reader's request to write the newest chapter again, with an optional note (`rewriteLatestChapter`, `chapterRewriteGap`). |

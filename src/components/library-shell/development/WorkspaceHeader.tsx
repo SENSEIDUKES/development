@@ -15,6 +15,14 @@ export function WorkspaceHeaderAccessoryProvider({ accessory, children }: { acce
   return <HeaderAccessoryContext.Provider value={accessory}>{children}</HeaderAccessoryContext.Provider>;
 }
 
+/**
+ * The host's persistent header accessory (the Library's Familiar recall), for a
+ * page that draws its own bar instead of a Library header, such as the Reader.
+ */
+export function useWorkspaceHeaderAccessory(): ReactNode {
+  return useContext(HeaderAccessoryContext);
+}
+
 const HeaderSoundContext = createContext<ReactNode>(null);
 /**
  * The host's sound control (Library: `HeaderSoundControl`) for every Library

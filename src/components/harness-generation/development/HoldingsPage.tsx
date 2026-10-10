@@ -64,7 +64,8 @@ function CharacterCard({ character, onReadPassage }: { character: CharacterHoldi
 export function HoldingsPage({ state, storyId, onBack, onReadPassage, onReadChapter }: {
   state: HarnessWorkspaceState;
   storyId: string;
-  onBack: () => void;
+  /** Back to the chapter. Absent inside the Codex, whose page has its own way back. */
+  onBack?: () => void;
   /** Opens a chapter in the Reader at the paragraph where a change happened. */
   onReadPassage?: (chapterNumber: number, blockId: string) => void;
   /** Opens a chapter in the Reader. */
@@ -93,7 +94,7 @@ export function HoldingsPage({ state, storyId, onBack, onReadPassage, onReadChap
           <p className="truncate font-mono text-[10px] uppercase tracking-[0.2em] text-cyan-200/60">{story.title}</p>
           <h2 id="holdings-page-title" className="mt-1 font-display text-2xl text-white">Holdings</h2>
         </div>
-        <button type="button" onClick={onBack} className="min-h-11 rounded-full border border-white/15 px-4 text-sm text-neutral-200 hover:border-white/30">Back to reading</button>
+        {onBack && <button type="button" onClick={onBack} className="min-h-11 rounded-full border border-white/15 px-4 text-sm text-neutral-200 hover:border-white/30">Back to reading</button>}
       </div>
       <p className="text-sm text-neutral-400">What each character has now, worked out from the tags in every chapter. Each change links to the passage that made it.</p>
 

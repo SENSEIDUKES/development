@@ -38,10 +38,10 @@ export function readerScenes(total: number): ReaderScene[] {
 }
 
 /** Reader pages a Workshop shortcut opens by pressing the Reader's own button. */
-export type ReaderPage = 'fate' | 'holdings' | 'settings';
+export type ReaderPage = 'fate' | 'codex' | 'settings';
 
 export const READER_PAGES: ReadonlyArray<{ id: ReaderPage; label: string; button: string }> = [
   { id: 'fate', label: 'Fate', button: 'Open Fate' },
-  { id: 'holdings', label: 'Holdings', button: 'Open Holdings' },
+  { id: 'codex', label: 'Codex', button: 'Open Codex' },
   { id: 'settings', label: 'Reader Settings', button: 'Reader Settings' },
 ];

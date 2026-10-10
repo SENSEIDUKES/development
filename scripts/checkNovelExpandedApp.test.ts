@@ -37,20 +37,36 @@ describe('the NovelExpanded app guard', () => {
       'src/package/library/home.ts': [
         { specifier: '@seihouse/sen/reader-chamber', target: 'src/package/sen/reader-chamber.ts' },
         { specifier: '../../library/generation/storyFlow', target: 'src/library/generation/storyFlow.ts' },
-        { specifier: '../../components/reader-codex/development/ReaderCodex', target: 'src/components/reader-codex/development/ReaderCodex.tsx' },
+        { specifier: '../../components/reader-chamber/development/ReaderChamber', target: 'src/components/reader-chamber/development/ReaderChamber.tsx' },
       ],
       'src/package/sen/audio.ts': [],
       'src/workshop/manifest.ts': [],
       'src/library/generation/storyFlow.ts': [],
-      'src/components/reader-codex/development/ReaderCodex.tsx': [],
+      'src/components/reader-chamber/development/ReaderChamber.tsx': [],
     }), MAIN, ownershipOf);
     expect(violations).toEqual([
       'ENTRY_NOT_IN_APP src/novel-expanded/main.tsx → @seihouse/sen/audio',
       'RETIRED_ENTRY src/novel-expanded/main.tsx → src/novel-expanded/HomePage.tsx → src/package/library/home.ts → @seihouse/sen/reader-chamber',
       'WORKSHOP_CODE src/novel-expanded/main.tsx → src/novel-expanded/HomePage.tsx → src/workshop/manifest.ts',
       'THE_HARNESS_DEVELOPER_PAGE src/novel-expanded/main.tsx → src/novel-expanded/HomePage.tsx → src/package/library/home.ts → src/library/generation/storyFlow.ts',
-      'THE_OLDER_READER src/novel-expanded/main.tsx → src/novel-expanded/HomePage.tsx → src/package/library/home.ts → src/components/reader-codex/development/ReaderCodex.tsx',
+      'THE_OLDER_READER src/novel-expanded/main.tsx → src/novel-expanded/HomePage.tsx → src/package/library/home.ts → src/components/reader-chamber/development/ReaderChamber.tsx',
     ]);
+  });
+
+  it('lets in the Codex page the owner brought into the Reader Chamber, never the old production Codex', () => {
+    const { violations } = findAppViolations(graphOf({
+      [MAIN]: [
+        { specifier: '../components/reader-codex/development/ReaderCodex', target: 'src/components/reader-codex/development/ReaderCodex.tsx' },
+        { specifier: '../components/reader-codex/reference/ReaderCodex', target: 'src/components/reader-codex/reference/ReaderCodex.tsx' },
+      ],
+      'src/components/reader-codex/development/ReaderCodex.tsx': [
+        { specifier: '../shared/codex/ReaderCodexGlossary', target: 'src/components/reader-codex/shared/codex/ReaderCodexGlossary.tsx' },
+      ],
+      'src/components/reader-codex/shared/codex/ReaderCodexGlossary.tsx': [],
+      'src/components/reader-codex/reference/ReaderCodex.tsx': [],
+    }), MAIN, ownershipOf);
+    // The old production copy is Workshop reference material, so it stays out as Workshop code.
+    expect(violations).toEqual(['WORKSHOP_CODE src/novel-expanded/main.tsx → src/components/reader-codex/reference/ReaderCodex.tsx']);
   });
 
   it('keeps the older Reader\'s narration out: the app reads aloud only with SEN\'s Read Aloud', () => {

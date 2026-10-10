@@ -93,7 +93,8 @@ let container: HTMLDivElement;
 let root: Root;
 
 const flush = async (ms = 0) => { await act(async () => { await new Promise(resolve => setTimeout(resolve, ms)); }); };
-const buttonBy = (predicate: (button: HTMLButtonElement) => boolean) => [...container.querySelectorAll<HTMLButtonElement>('button')].find(predicate);
+// Panels open in a portal beside the Reader, so buttons are found anywhere on the page.
+const buttonBy = (predicate: (button: HTMLButtonElement) => boolean) => [...document.querySelectorAll<HTMLButtonElement>('button')].find(predicate);
 const byLabel = (label: string) => (button: HTMLButtonElement) => button.getAttribute('aria-label') === label;
 const click = async (predicate: (button: HTMLButtonElement) => boolean, label: string) => {
   const target = buttonBy(predicate);
@@ -137,8 +138,10 @@ describe('The HARNESS Reader', { timeout: 20_000 }, () => {
     // The Sound Cue sits on the words the writer marked; no mark is left in the prose.
     expect(first.querySelector('[data-cue-annotation]')!.getAttribute('data-cue-annotation')).toBe('the beast roared');
     expect(first.textContent).not.toContain('[[');
-    // Only Sound Cues: no Codex, no Mind Palace. A browser without speech gets no Listen; Reader Settings stays for the text.
-    expect(container.textContent).not.toMatch(/Codex|Mind Palace/);
+    // On the chapter, only Sound Cues: the Codex is its own page, opened from the top bar, and there is no Mind Palace.
+    // A browser without speech gets no Listen; Reader Settings stays for the text.
+    expect(first.textContent).not.toMatch(/Codex|Mind Palace/);
+    expect(container.textContent).not.toMatch(/Mind Palace/);
     expect(buttonBy(byLabel('Reader Settings'))).toBeTruthy();
     expect(container.querySelector('[data-testid="read-aloud-player"]')).toBeNull();
 
@@ -320,16 +323,81 @@ describe('The HARNESS Reader', { timeout: 20_000 }, () => {
     expect(buttonBy(byLabel('Next Chapter: Write Chapter 2'))).toBeTruthy();
   });
 
-  it('says when the first chapter cannot be written here, and opens the Fate page from its header', async () => {
+  it('says when the first chapter cannot be written here, and opens the Fate panel from its header', async () => {
     const { controller, storyId } = await story();
     await mount(<Host controller={controller} storyId={storyId} canWrite={false} startOnOpen />);
     expect(container.querySelector('[aria-label="Story start"]')!.textContent).toContain('The first chapter can’t be written here yet.');
     expect(buttonBy(button => button.getAttribute('aria-label')?.startsWith('Next Chapter:') ?? false)).toBeUndefined();
 
     await click(byLabel('Open Fate'), 'Open Fate');
-    expect(container.querySelector('[data-testid="fate-page"]')).toBeTruthy();
+    const panel = document.querySelector<HTMLElement>('[data-testid="reader-panel-fate"]')!;
+    expect(panel.getAttribute('role')).toBe('dialog');
+    expect(panel.getAttribute('aria-labelledby')).toBe('fate-page-title');
+    expect(panel.querySelector('[data-testid="fate-page"]')).toBeTruthy();
     await click(button => button.textContent?.trim() === 'Back to reading', 'Back to reading');
+    expect(document.querySelector('[data-testid="reader-panel-fate"]')).toBeNull();
     expect(container.querySelector('[data-testid="harness-reader"]')).toBeTruthy();
+  });
+
+  it('keeps the chapter on the page under a panel, and gives focus back to what opened it', async () => {
+    const { controller, storyId } = await story({ written: 2 });
+    await mount(<Host controller={controller} storyId={storyId} />);
+    const chapter = chapterOnScreen(1)!;
+    buttonBy(byLabel('Reader Settings'))!.focus();
+
+    await click(byLabel('Reader Settings'), 'Reader Settings');
+    const panel = document.querySelector<HTMLElement>('[data-testid="reader-settings"]')!;
+    expect(panel.getAttribute('role')).toBe('dialog');
+    // The same chapter, still on the page and readable: never hidden or taken away.
+    expect(chapterOnScreen(1)).toBe(chapter);
+    expect(container.querySelector<HTMLElement>('[data-testid="harness-reader"]')!.hidden).toBe(false);
+    // A panel is not modal: the chapter is not shut away from the reader.
+    expect(panel.getAttribute('aria-modal')).toBeNull();
+    expect(document.activeElement?.id).toBe('reader-settings-title');
+    // On a phone the sheet has two stops, its circle filled at full height and half filled at half.
+    expect(panel.getAttribute('data-stop')).toBe('full');
+    await click(byLabel('Show the chapter'), 'Show the chapter');
+    expect(panel.getAttribute('data-stop')).toBe('half');
+    await click(byLabel('Raise the panel'), 'Raise the panel');
+    expect(panel.getAttribute('data-stop')).toBe('full');
+
+    // Opening another closes the first, and focus stays with the one just opened.
+    buttonBy(byLabel('Open Fate'))!.focus();
+    await click(byLabel('Open Fate'), 'Open Fate');
+    await flush(20);
+    expect(document.querySelector('[data-testid="reader-settings"]')).toBeNull();
+    expect(document.querySelector('[data-testid="reader-panel-fate"]')).toBeTruthy();
+    expect(document.activeElement?.id).toBe('fate-page-title');
+
+    await click(button => button.textContent?.trim() === 'Back to reading', 'Back to reading');
+    await flush(20);
+    expect(chapterOnScreen(1)).toBe(chapter);
+    expect(document.activeElement?.getAttribute('aria-label')).toBe('Open Fate');
+  });
+
+  it('opens the Codex as its own page while the chapter waits underneath, with Holdings among its pages', async () => {
+    const { controller, storyId } = await story({ written: 2 });
+    await mount(<Host controller={controller} storyId={storyId} />);
+    const chapter = chapterOnScreen(1)!;
+
+    await click(byLabel('Open Codex'), 'Open Codex');
+    for (let tries = 0; tries < 50 && !document.querySelector('[data-codex-page="holdings"]'); tries++) await flush(20);
+    const codex = document.querySelector<HTMLElement>('[data-testid="reader-codex-page"]')!;
+    expect(codex.querySelector('h1')!.textContent).toBe('Codex');
+    expect(codex.textContent).toContain('The Living Codex');
+    // The chapter is kept, out of sight, at the reader's place.
+    expect(container.querySelector<HTMLElement>('[data-testid="harness-reader"]')!.hidden).toBe(true);
+    expect(chapterOnScreen(1)).toBe(chapter);
+
+    await click(button => button.getAttribute('data-codex-page') === 'holdings', 'the Codex\'s Holdings page');
+    expect(codex.querySelector('[data-testid="holdings-page"]')).toBeTruthy();
+    // Inside the Codex, Holdings has no way back of its own: the Codex page has it.
+    expect([...codex.querySelectorAll('button')].filter(button => button.textContent === 'Back to reading')).toHaveLength(1);
+
+    await click(button => button.textContent === 'Back to reading', 'Back to reading');
+    expect(document.querySelector('[data-testid="reader-codex-page"]')).toBeNull();
+    expect(container.querySelector<HTMLElement>('[data-testid="harness-reader"]')!.hidden).toBe(false);
+    expect(chapterOnScreen(1)).toBe(chapter);
   });
 });
 
@@ -415,22 +483,21 @@ describe('Read Aloud in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(container.ownerDocument.querySelector('[role="dialog"]')).toBeNull();
   });
 
-  it('pauses while the Fate page covers the chapter, and keeps listening into the next chapter', async () => {
+  it('reads on while the Fate panel is open over the chapter, and keeps listening into the next chapter', async () => {
     const { controller, storyId } = await story({ written: 2 });
     await mount(<Host controller={controller} storyId={storyId} readAloudVoices={PICKS} />);
     await click(button => button.textContent?.trim() === 'Listen', 'Listen');
     await next();
     const cancels = speech.cancels;
 
+    // A panel leaves the chapter on the page, so the voice is never cut off.
     await click(byLabel('Open Fate'), 'Open Fate');
-    expect(speech.cancels).toBeGreaterThan(cancels);
-    const spokenOnFate = speech.spoken.length;
-    await flush(20);
-    expect(speech.spoken.length).toBe(spokenOnFate);
+    expect(speech.cancels).toBe(cancels);
+    expect(container.querySelector('[data-testid="read-aloud-player"]')!.getAttribute('data-status')).toBe('playing');
 
     await click(button => button.textContent?.trim() === 'Back to reading', 'Back to reading');
     await flush();
-    // Still listening: the same line is read again from its start.
+    expect(speech.cancels).toBe(cancels);
     expect(lastSpoken().text).toBe('The tide pulled back from the drowned gate.');
 
     await click(byLabel('Next Chapter'), 'Next Chapter');
@@ -494,8 +561,8 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
     await act(async () => { buttonBy(button => button.dataset.cuePhrase === 'the beast roared')!.click(); });
     expect(playCue).toHaveBeenCalledWith(expect.stringMatching(BEAST_ROAR), { volume: 1 });
 
-    // Reaching the chapter's navigation is the chapter's end, for an End of chapter timer.
-    expect(observed.map(entry => entry.target?.getAttribute('aria-label'))).toEqual(['Chapters']);
+    // Reaching the chapter's end (its next step, at the newest chapter) is the chapter's end, for an End of chapter timer.
+    expect(observed.map(entry => entry.target?.getAttribute('data-testid'))).toEqual(['reader-chapter-end']);
     act(() => observed[0].callback([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver));
     expect(notifyChapterEnd).toHaveBeenCalledTimes(1);
 
@@ -503,11 +570,11 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
     await click(byLabel('Next Chapter'), 'Next Chapter');
     expect(mixer.getState().availability.cues).toBe(false);
 
-    // The Reader's own pages never quiet it: the atmosphere plays on under Fate and Holdings.
+    // What opens over the chapter never quiets it: the atmosphere plays on under Fate and the Codex.
     const stopAtmosphere = vi.spyOn(mixer, 'stopAtmosphere');
     await click(byLabel('Open Fate'), 'Open Fate');
     await click(button => button.textContent?.trim() === 'Back to reading', 'Back to reading');
-    await click(byLabel('Open Holdings'), 'Open Holdings');
+    await click(byLabel('Open Codex'), 'Open Codex');
     await click(button => button.textContent?.trim() === 'Back to reading', 'Back to reading');
     expect(stopAtmosphere).not.toHaveBeenCalled();
     expect(startAtmosphere).toHaveBeenCalledTimes(1);
@@ -695,10 +762,15 @@ describe('The Reader frame and its chapter body', { timeout: 20_000 }, () => {
     expect(article.className).toContain('max-w-[34em]');
     expect(article.querySelector<HTMLElement>('h1')!.style.fontFamily).toBe('"House Soft", serif');
 
-    // The bar holds Back, the story and chapter, and the Reader's pages.
+    // The top bar: Back, the story and chapter, (the host's companion,) Reader Settings. The bottom bar: the Codex,
+    // Listen in the middle (none here: this browser has no speech), Fate and the chapters.
     const bar = container.querySelector<HTMLElement>('[data-testid="reader-top-bar"]')!;
     expect(bar.textContent).toContain('Chapter 1');
-    expect([...bar.querySelectorAll('button')].map(button => button.getAttribute('aria-label'))).toEqual(['Back', 'Open Holdings', 'Open Fate', 'Reader Settings']);
+    expect([...bar.querySelectorAll('button')].map(button => button.getAttribute('aria-label'))).toEqual(['Back', 'Reader Settings']);
+    const bottom = container.querySelector<HTMLElement>('[data-testid="reader-bottom-bar"]')!;
+    expect([...bottom.querySelectorAll('button')].map(button => button.getAttribute('aria-label')))
+      .toEqual(['Open Codex', 'Open Fate', 'Previous Chapter', 'Next Chapter: Write Chapter 2']);
+    expect(bottom.querySelector('[data-testid="reader-chapter-position"]')!.textContent).toBe('1/1');
 
     await click(byLabel('Reader Settings'), 'Reader Settings');
     expect([...dialog().querySelectorAll('[data-testid="reader-settings-text"] legend')].map(legend => legend.textContent))

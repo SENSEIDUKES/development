@@ -1,5 +1,4 @@
 import { lazy, Suspense, useEffect, useRef, type CSSProperties } from 'react';
-import FocusLock from 'react-focus-lock';
 import type { ReaderMixer } from '@seihouse/audio-player';
 import { Play, RotateCcw, X } from 'lucide-react';
 import {
@@ -8,6 +7,7 @@ import {
 } from '@seihouse/sen/reader-runtime';
 import type { SceneAudioTrack } from '@seihouse/sen/audio';
 import { getSenLanguageLabel, normalizeSenLanguageCode } from '../../../lib/language';
+import { ReaderPanel } from './ReaderPanel';
 import { SoundtrackChoicePanel } from './SoundtrackChoicePanel';
 
 const legend = 'font-mono text-[10px] uppercase tracking-[0.18em] text-cyan-200/70';
@@ -110,7 +110,9 @@ function TextSettings({ settings, fonts, onChange }: { settings: ReaderTextSetti
 const ReaderMixerPanel = lazy(() => import('@seihouse/audio-player/reader-ui').then(module => ({ default: module.ReaderMixerPanel })));
 
 /**
- * Reader Settings: a sheet on phones and a side panel on wider screens. Text
+ * Reader Settings: one of the Reader's panels, beside the chapter on laptops
+ * and a sheet from the bottom on phones, so the chapter stays in view and
+ * shows each text change as it is made. Text
  * comes first: the reader's font, title font, size, line spacing and weight.
  * Audio follows: the reader's mix of the story's soundtrack (presets, the
  * layers the chapter uses and the sleep timer), then the Scene: each
@@ -134,19 +136,10 @@ export function ReaderSettingsSheet({ open, onClose, readAloud, language, mixer,
 }) {
   const audioRef = useRef<HTMLElement>(null);
   useEffect(() => {
-    if (!open) return undefined;
-    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
-  useEffect(() => {
     if (open && section === 'audio') audioRef.current?.scrollIntoView?.({ block: 'start' });
   }, [open, section]);
-  if (!open) return null;
-  return <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/60 sm:items-stretch sm:justify-end" onClick={onClose}>
-    <FocusLock returnFocus>
-      <div role="dialog" aria-modal="true" aria-labelledby="reader-settings-title" data-testid="reader-settings" onClick={event => event.stopPropagation()}
-        className="max-h-[85vh] w-screen max-w-md overflow-y-auto rounded-t-2xl border border-white/10 bg-neutral-950 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:h-full sm:max-h-none sm:w-[26rem] sm:rounded-none sm:rounded-l-2xl">
+  return <ReaderPanel open={open} onClose={onClose} labelledBy="reader-settings-title" testId="reader-settings">
+      <div className="p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="flex items-center justify-between gap-3">
           <h2 id="reader-settings-title" className="font-display text-xl text-white">Reader Settings</h2>
           <button type="button" aria-label="Close Reader Settings" onClick={onClose}
@@ -184,6 +177,5 @@ export function ReaderSettingsSheet({ open, onClose, readAloud, language, mixer,
               </>}
         </section>
       </div>
-    </FocusLock>
-  </div>;
+  </ReaderPanel>;
 }

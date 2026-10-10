@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, type ReactNode } from 'react';
 import '../shared/reader-codex.css';
 import {
   Network, Zap, Sword,
@@ -48,6 +48,18 @@ interface ReaderCodexProps {
   activeStory: StoryWorld;
   updateStoryFields: UpdateStoryFields;
   routingConfig?: MultiModelRouting;
+  /**
+   * The host's own pages, listed after Lore (the HARNESS Reader adds Holdings:
+   * what each character has now). Each is shown as it is given.
+   */
+  extraPages?: readonly ReaderCodexExtraPage[];
+}
+
+/** A page a host adds to the Codex. */
+export interface ReaderCodexExtraPage {
+  id: string;
+  label: string;
+  content: ReactNode;
 }
 
 // 1. Static high-fidelity Chinese cultivation vocabulary (Glossary defaults)
@@ -235,12 +247,13 @@ export default function ReaderCodex({
   onSwitchTab,
   activeStory,
   updateStoryFields,
-  routingConfig
+  routingConfig,
+  extraPages = [],
 }: ReaderCodexProps) {
   const { haptic: vibrate } = useReaderRuntime();
   const memory = useMemo(() => normalizeSparseMemory(rawMemory), [rawMemory]);
 
-  const [activePage, setActivePage] = useState<'portraits' | 'bestiary' | 'karma' | 'power' | 'artifacts' | 'fate' | 'lore'>('portraits');
+  const [activePage, setActivePage] = useState<'portraits' | 'bestiary' | 'karma' | 'power' | 'artifacts' | 'fate' | 'lore' | `extra:${string}`>('portraits');
 
   // Selection state for node inspection in Relationship Map & other grids
   const [selectedNodeChar, setSelectedNodeChar] = useState<Character | null>(null);
@@ -529,6 +542,16 @@ export default function ReaderCodex({
             <span>Lore</span>
           </button>
 
+          {/* The host's own pages */}
+          {extraPages.map(page => (
+            <button key={page.id} type="button" data-codex-page={page.id}
+              onClick={() => { vibrate?.('softTap'); setActivePage(`extra:${page.id}`); }}
+              className={codexTabClass(activePage === `extra:${page.id}`, 'neutral')}
+            >
+              <span>{page.label}</span>
+            </button>
+          ))}
+
           {/* Back navigation shortcut in horizontal list on mobile */}
           {onSwitchTab && onJumpToChapter && (
             <button
@@ -768,6 +791,8 @@ export default function ReaderCodex({
         {activePage === 'fate' && (
             <ReaderCodexFate canonicalCreatureTerminology />
         )}
+
+        {extraPages.map(page => activePage === `extra:${page.id}` && <div key={page.id}>{page.content}</div>)}
 
         {/* PAGE 6: LORE (Glossary) */}
         {activePage === 'lore' && (

@@ -288,8 +288,8 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
       await click(document.querySelector('input[name="read-aloud-rate"][value="1.5"]'), 'Speed 1.5×');
       expect(JSON.parse(window.localStorage.getItem('novelexpanded-reader-read-aloud')!)).toMatchObject({ v: 1, rate: 1.5 });
 
-      // The soundtrack: the note sits with the Listen bar, and its mute is kept with the reader's other device choices.
-      const note = document.querySelector<HTMLButtonElement>('[data-testid="read-aloud-player"] [data-testid="story-audio-note"] button');
+      // The soundtrack: the note sits with the Reader's bottom bar, and its mute is kept with the reader's other device choices.
+      const note = document.querySelector<HTMLButtonElement>('[data-testid="reader-bottom-bar"] [data-testid="story-audio-note"] button');
       expect(note?.getAttribute('aria-label')).toBe('Mute story audio');
       await click(note, 'Mute story audio', 350);
       expect(JSON.parse(window.localStorage.getItem('novelexpanded-reader-audio-mixer')!)).toMatchObject({ masterEnabled: false });
@@ -843,7 +843,7 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(saved.map(record => [record.originalLanguage, record.seed.story.optional.chapterWritingStyle])).toEqual([['ja', 'Easy Read']]);
   });
 
-  it('one Familiar for the app: summoned once, it stays from page to page, and keeps out of the Reader', async () => {
+  it('one Familiar for the app: summoned once, it stays from page to page, into the Reader, whose top bar holds its recall', async () => {
     const story = scriptedWriter();
     const services = appServices(story.writer);
     const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
@@ -858,12 +858,15 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     await click(buttonByText('Profile', strip()!), 'Profile in the navigation', 50);
     expect(companion()).toBe(summoned);
     await click(buttonByText('Home', strip()!), 'Home in the navigation');
-    // The Reader is immersive: no Familiar and no recall.
+    // The Reader keeps the same Familiar; minimized, its recall sits in the Reader's top bar beside Reader Settings.
     await click(container.querySelector(`#home-world-${created.id} button[aria-label^="Open ${created.title}"]`), 'the Home card');
     await click(chaptersAction(), 'Start Story', 10);
     expect(document.querySelector('[data-testid="harness-reader"]')).toBeTruthy();
+    expect(companion()).toBe(summoned);
+    await click(document.querySelector('[aria-label="Minimize Familiar"]'), 'Minimize Familiar');
     expect(companion()).toBeNull();
-    expect(recall()).toBeNull();
+    const bar = document.querySelector<HTMLElement>('[data-testid="reader-top-bar"]')!;
+    expect(bar.querySelector('[data-testid="reader-companion"] [aria-label="Show Quill actions"]')).toBeTruthy();
     await act(async () => { story.release(); });
     await flush(10);
   });

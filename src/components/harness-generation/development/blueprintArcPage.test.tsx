@@ -57,7 +57,7 @@ function Host({ controller, storyId }: { controller: HarnessGenerationController
 let container: HTMLDivElement;
 let root: Root;
 const flush = async (ms = 0) => { await act(async () => { await new Promise(resolve => setTimeout(resolve, ms)); }); };
-const buttonNamed = (text: string) => [...container.querySelectorAll<HTMLButtonElement>('button')]
+const buttonNamed = (text: string) => [...document.querySelectorAll<HTMLButtonElement>('button')]
   .find(button => button.textContent?.trim() === text || button.getAttribute('aria-label') === text);
 const click = async (text: string) => {
   const target = buttonNamed(text);
@@ -65,7 +65,7 @@ const click = async (text: string) => {
   await act(async () => { target!.click(); });
   await flush();
 };
-const page = () => container.querySelector<HTMLElement>('[data-testid="blueprint-arc-page"]');
+const page = () => document.querySelector<HTMLElement>('[data-testid="blueprint-arc-page"]');
 
 beforeEach(() => {
   Element.prototype.scrollIntoView = vi.fn();
@@ -88,7 +88,7 @@ describe('The World Blueprint reappears when a new arc begins', { timeout: 20_00
     expect(page()!.textContent).toContain('Arc 2 of 2 · the final arc');
     expect(run.arcOperation).toHaveBeenCalledTimes(1);
     expect(run.arcOperation.mock.calls[0][0].planning?.previousArcs).toEqual([{ arcNumber: 1, goals: [{ text: 'Reclaim her name.', outcome: 'missed' }] }]);
-    const goals = container.querySelector('[data-testid="blueprint-arc-goals"]')!;
+    const goals = document.querySelector('[data-testid="blueprint-arc-goals"]')!;
     expect(goals.textContent).toContain('Find the keeper of the drowned law.');
     expect(goals.textContent).toContain('Chapters 31–48');
     // The look-ahead is the planner's alone.
@@ -98,7 +98,7 @@ describe('The World Blueprint reappears when a new arc begins', { timeout: 20_00
     await flush();
     expect(page()).toBeNull();
     expect(run.controller.snapshot().stories[0].arcGoalReviews?.find(review => review.arcNumber === 2)).toMatchObject({ edited: false });
-    expect(container.querySelector('[data-chapter-number="31"]')).toBeTruthy();
+    expect(document.querySelector('[data-chapter-number="31"]')).toBeTruthy();
     expect(run.generate).toHaveBeenCalledTimes(2);
   });
 
@@ -108,7 +108,7 @@ describe('The World Blueprint reappears when a new arc begins', { timeout: 20_00
     await flush();
     await click('Next Chapter: Arc 2 begins');
     await click('Edit Arc 2 goals');
-    const input = container.querySelector<HTMLInputElement>('[data-testid="blueprint-arc-goals"] fieldset input')!;
+    const input = document.querySelector<HTMLInputElement>('[data-testid="blueprint-arc-goals"] fieldset input')!;
     await act(async () => {
       Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'Find the ferryman who keeps the law.');
       input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -117,7 +117,7 @@ describe('The World Blueprint reappears when a new arc begins', { timeout: 20_00
     expect(run.controller.snapshot().stories[0].arcGoalReviews?.find(review => review.arcNumber === 2)).toMatchObject({ edited: true });
     await click('Write Chapter 31');
     await flush();
-    expect(container.querySelector('[data-chapter-number="31"]')).toBeTruthy();
+    expect(document.querySelector('[data-chapter-number="31"]')).toBeTruthy();
   });
 
   it('Fate Survival: accepting the arc opens the direction for its first chapter', async () => {
@@ -127,7 +127,7 @@ describe('The World Blueprint reappears when a new arc begins', { timeout: 20_00
     await click('Next Chapter: Arc 2 begins');
     expect(buttonNamed('Edit Arc 2 goals (one time)')).toBeTruthy();
     await click('Accept and direct Chapter 31');
-    expect(container.querySelector('[data-testid="fate-page"]')).toBeTruthy();
+    expect(document.querySelector('[data-testid="fate-page"]')).toBeTruthy();
     expect(run.generate).toHaveBeenCalledTimes(1);
     expect(run.controller.snapshot().stories[0].arcGoalReviews?.find(review => review.arcNumber === 2)).toMatchObject({ edited: false });
   });
@@ -138,11 +138,11 @@ describe('The World Blueprint reappears when a new arc begins', { timeout: 20_00
     await act(async () => { root.render(renderWithDevAudio(<Host controller={run.controller} storyId={run.storyId} />)); });
     await flush();
     await click('Open Fate');
-    expect(container.querySelector('[data-testid="fate-arc-goal"]')!.textContent).toContain("Arc 2's goals are planned when it begins");
+    expect(document.querySelector('[data-testid="fate-arc-goal"]')!.textContent).toContain("Arc 2's goals are planned when it begins");
     await click('Begin Arc 2');
-    expect(container.querySelector('[role="alert"]')!.textContent).toContain('The planner is resting.');
+    expect(document.querySelector('[role="alert"]')!.textContent).toContain('The planner is resting.');
     await click('Plan Arc 2 again');
-    expect(container.querySelector('[data-testid="blueprint-arc-goals"]')!.textContent).toContain('Find the keeper of the drowned law.');
+    expect(document.querySelector('[data-testid="blueprint-arc-goals"]')!.textContent).toContain('Find the keeper of the drowned law.');
     expect(run.arcOperation).toHaveBeenCalledTimes(2);
   });
 });

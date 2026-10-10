@@ -36,6 +36,22 @@ The app itself lives in [`src/novel-expanded/`](./src/novel-expanded/README.md),
 
 `npm run check:app` (`scripts/checkNovelExpandedApp.mjs`) walks the app's import graph and fails, naming the chain, if it reaches Workshop, test or unowned code, an older system's entry (`@seihouse/sen/reader-chamber`, `reader-codex`, `cards`, `translation`, `@seihouse/library/generation`), the HARNESS developer page, the older Reader's code, or, from the app's own files, a package entry outside its list. It runs in `verify`, `npm run build` and CI. Never widen the list or reconnect an old system to make it pass; ask the owner.
 
+### Keep app surfaces and Workshop previews in sync
+
+When changing a surface in the NovelExpanded app, update its equivalent Workshop
+Development preview in the same change. The preview must show the current app
+presentation and behavior, including the surrounding shell, branding, navigation
+and relevant states. Prefer sharing the canonical package surface and host
+composition, or loading the app route in the existing preview iframe, over copying
+the page into a separate simulation. Home follows this rule at
+`?preview=light-novels-home`: Development loads `/app/` directly.
+
+Keep one existing manifest entry, workspace and preview route per feature. Keep
+historical `reference/` files and Original Reference unchanged; use Compare to
+inspect old and current versions. Clearly identify previews that use the app's
+real browser storage and actions instead of isolated fixtures. Verify the app and
+its Workshop preview at mobile and desktop sizes before claiming completion.
+
 ### Major system reconstruction
 
 For tasks that rebuild a real product system rather than only refining a visual Workshop component, read [`DEVELOPMENT_RECONSTRUCTION.md`](./DEVELOPMENT_RECONSTRUCTION.md) before implementation.

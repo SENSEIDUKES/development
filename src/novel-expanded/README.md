@@ -13,9 +13,26 @@ The Workshop is where systems are built and inspected one at a time. The app is
 where they are used together, the way a reader meets them.
 
 - Created: 2026-10-01 (piece 1)
-- Last updated: 2026-10-09
+- Last updated: 2026-10-10
 - Owner: `host` (`scripts/ownershipInventory.mjs`). The app is a host of the
   Library and SEN packages, like any outside app would be.
+
+## Workshop synchronization
+
+The existing Home workspace (`?preview=light-novels-home`, card **Home**)
+loads `/app/` directly in its Development pane at mobile, tablet and laptop
+sizes. It therefore shows the same shell, branding, Home states and saved browser
+stories as the app. Its actions use the app's real services and storage; it does
+not seed or reset stories. Original Reference keeps the historical Light Novels
+Home and Compare shows both.
+
+Changes to an app surface must keep its equivalent Workshop Development preview
+current in the same change, as required by `AGENTS.md`. Share source or load the
+app route instead of maintaining a separate copy of its presentation. Preserve
+historical references and verify both destinations on mobile and desktop.
+
+- **2026-10-10:** Connected the existing Home Workshop Development pane to the
+  actual app route to prevent shell and page drift; kept the original comparison.
 
 ## Pages and addresses
 

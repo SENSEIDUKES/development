@@ -35,7 +35,7 @@ const chapterReply = (n: number) => JSON.stringify({
 let container: HTMLDivElement;
 let root: Root;
 const flush = async (ms = 0) => { await act(async () => { await new Promise(resolve => setTimeout(resolve, ms)); }); };
-const buttonBy = (predicate: (button: HTMLButtonElement) => boolean) => [...container.querySelectorAll<HTMLButtonElement>('button')].find(predicate);
+const buttonBy = (predicate: (button: HTMLButtonElement) => boolean) => [...document.querySelectorAll<HTMLButtonElement>('button')].find(predicate);
 const click = async (predicate: (button: HTMLButtonElement) => boolean, label: string) => {
   const target = buttonBy(predicate);
   expect(target, `Expected ${label}`).toBeTruthy();
@@ -43,7 +43,13 @@ const click = async (predicate: (button: HTMLButtonElement) => boolean, label: s
   await flush();
 };
 const byLabel = (label: string) => (button: HTMLButtonElement) => button.getAttribute('aria-label') === label;
-const page = () => container.querySelector<HTMLElement>('[data-testid="holdings-page"]');
+const page = () => document.querySelector<HTMLElement>('[data-testid="holdings-page"]');
+/** Holdings is a page of the Codex: open the Codex from the top bar, then its Holdings page. */
+const openHoldings = async () => {
+  await click(byLabel('Open Codex'), 'Open Codex');
+  for (let tries = 0; tries < 50 && !document.querySelector('[data-codex-page="holdings"]'); tries++) await flush(20);
+  await click(button => button.getAttribute('data-codex-page') === 'holdings', 'the Codex\'s Holdings page');
+};
 
 function Host({ controller, storyId }: { controller: HarnessGenerationController; storyId: string }) {
   const [state, setState] = useState(controller.snapshot());
@@ -77,11 +83,12 @@ beforeEach(() => {
 });
 afterEach(() => { act(() => root.unmount()); container.remove(); });
 
-describe('The Holdings page in the HARNESS Reader', { timeout: 20_000 }, () => {
+describe('Holdings, in the HARNESS Reader\'s Codex', { timeout: 20_000 }, () => {
   it('lists what each character has now, with the chapter behind each change and the checks worth testing', async () => {
     await start();
-    await click(byLabel('Open Holdings'), 'Open Holdings');
+    await openHoldings();
     const holdings = page()!;
+    expect(document.querySelector('[data-testid="reader-codex-page"]')!.contains(holdings)).toBe(true);
     expect(holdings).toBeTruthy();
     const card = holdings.querySelector('[data-testid="holdings-character"]')!;
     expect(card.textContent).toContain('Ye Chen');
@@ -98,22 +105,23 @@ describe('The Holdings page in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(checks.textContent).toContain('Chapter 2: Ye Chen loses ‘Jade Sword’, which the record does not show them holding.');
   });
 
-  it('opens the passage behind a change in the Reader, and returns to reading', async () => {
+  it('opens the passage behind a change in the Reader, and the Codex returns to reading', async () => {
     await start();
-    await click(byLabel('Open Holdings'), 'Open Holdings');
+    await openHoldings();
     const scrolled = vi.mocked(Element.prototype.scrollIntoView);
     scrolled.mockClear();
     await click(button => button.getAttribute('aria-label')?.startsWith('Ch. 1 · took up') ?? false, 'the took-up link');
     expect(page()).toBeNull();
-    expect(container.querySelector('[data-chapter-number="1"]')).toBeTruthy();
+    expect(document.querySelector('[data-chapter-number="1"]')).toBeTruthy();
     // The paragraph where the sword was taken up is brought into view.
-    const paragraph = container.querySelector('[data-sen-text-block="c1-p2"]')!;
+    const paragraph = document.querySelector('[data-sen-text-block="c1-p2"]')!;
     expect(paragraph.textContent).toContain('He tested its weight.');
     expect(scrolled.mock.contexts).toContain(paragraph);
 
-    await click(byLabel('Open Holdings'), 'Open Holdings');
+    await openHoldings();
     await click(button => button.textContent === 'Back to reading', 'Back to reading');
     expect(page()).toBeNull();
-    expect(container.querySelector('[data-testid="harness-reader"]')).toBeTruthy();
+    expect(document.querySelector('[data-testid="reader-codex-page"]')).toBeNull();
+    expect(document.querySelector('[data-testid="harness-reader"]')).toBeTruthy();
   });
 });

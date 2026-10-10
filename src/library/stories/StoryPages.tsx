@@ -15,6 +15,7 @@ import { harnessStoryDisplay } from './storyView';
 import { StoryBlueprintPage, type StoryBlueprintAccess, type StoryBlueprintViewProps } from './StoryBlueprint';
 import type { LibraryStories } from './useLibraryStories';
 import { EnergyCostMeter } from '../../components/energy/development/EnergyCostMeter';
+import { useWorkspaceHeaderAccessory } from '../../components/library-shell/development/WorkspaceHeader';
 
 /** A HARNESS story's Portal: the novel alone, until adaptations of it exist. */
 const NO_ADAPTATIONS_YET = { expansions: [] } as const;
@@ -78,6 +79,8 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
   const { state, controller, loadError } = stories;
   /** Set by Start Story, so the Reader begins Chapter 1 as it opens. */
   const [startOnOpen, setStartOnOpen] = useState(false);
+  // The Familiar's recall, from the app's header, rides in the Reader's top bar beside Reader Settings.
+  const familiar = useWorkspaceHeaderAccessory();
   const [readingPosition, setReadingPosition] = useState<{ chapterNumber: number }>();
   const [exportProblem, setExportProblem] = useState<string>();
 
@@ -118,6 +121,7 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
         generationProgressMessage={null} estimatedSecondsRemaining={null} activeAgentId="versa"
         streamingBlocksCount={0} isVeilMinimized={false} setIsVeilMinimized={keepVeilOpen} /> : undefined}
       // A chapter's Energy price beside Write, and "−1" as each arrives (practice: nothing is taken yet).
+      companion={familiar}
       renderWriteAside={written => <EnergyCostMeter actionId="chapter.generate" made={written} note="practice: nothing is taken yet" />}
       onClose={() => { setStartOnOpen(false); onCloseReader(); }} />
   </>;

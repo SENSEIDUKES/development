@@ -486,17 +486,44 @@ async function walk(browser, viewport, sample) {
   // The mixer saves a moment after the last change (and at once when the page is hidden).
   await page.waitForTimeout(450);
   const mutedMix = JSON.parse(await page.evaluate(() => localStorage.getItem('novelexpanded-reader-audio-mixer')) ?? '{}');
-  check(mutedMix.masterEnabled === false, `A tap on the note should mute story audio and save it, got ${JSON.stringify(mutedMix)}.`);
+  check(mutedMix.masterEnabled === true && mutedMix.masterMuted === true, `A tap should mute without disabling Master or hiding the note, got ${JSON.stringify(mutedMix)}.`);
   check(await page.getByTestId('story-audio-note').getByRole('button', { name: 'Unmute story audio' }).count() === 1, 'The muted note should offer to unmute.');
   await page.getByTestId('story-audio-note').getByRole('button', { name: 'Unmute story audio' }).click();
-  // A long-press (right-click on a desktop) opens Reader Settings at Audio.
+  // Hold/right-click opens the quick Master fader; zero keeps the icon and unmute restores volume.
   await page.getByTestId('story-audio-note').getByRole('button').click({ button: 'right' });
+  const quickMaster = page.getByRole('slider', { name: 'Quick master volume', exact: true });
+  await quickMaster.waitFor();
+  await quickMaster.press('Home');
+  for (let step = 0; step < 37; step++) await quickMaster.press('ArrowRight');
+  check(await quickMaster.inputValue() === '37', 'The quick Master fader should set 37%.');
+  await quickMaster.press('Home');
+  check(await page.getByTestId('story-audio-note').getByRole('button', { name: 'Unmute story audio' }).count() === 1, 'Zero must leave the note available.');
+  await page.getByTestId('story-audio-note').getByRole('button', { name: 'Unmute story audio' }).click();
+  check(await quickMaster.inputValue() === '37', 'Unmute should restore the last nonzero Master level.');
+  await quickMaster.press('Escape');
+  await visibleButton('Reader Settings').click();
   const settings = page.getByRole('dialog', { name: 'Reader Settings' });
   await settings.waitFor();
   const audio = settings.getByTestId('reader-settings-audio');
   await audio.locator('h3', { hasText: 'Audio' }).waitFor();
   check(JSON.stringify(await settings.locator('section h3').allTextContents()) === '["Text","Audio","Narration"]', `Reader Settings should hold Text, Audio, then Narration, got ${JSON.stringify(await settings.locator('section h3').allTextContents())}.`);
   check(await audio.getByRole('switch').count() > 0 && await audio.getByRole('slider').count() > 0, 'Audio should show the approved switches and sliders.');
+  const settingsMaster = audio.getByRole('slider', { name: 'Master volume', exact: true });
+  check(await settingsMaster.inputValue() === '37', 'Settings should reflect the quick Master fader.');
+  await settingsMaster.press('Home');
+  for (let step = 0; step < 62; step++) await settingsMaster.press('ArrowRight');
+  await audio.getByRole('switch', { name: 'Master', exact: true }).press('Space');
+  await page.getByTestId('story-audio-note').getByRole('button').waitFor({ state: 'hidden' });
+  check(await page.getByTestId('story-audio-note').getByRole('button').count() === 0, 'Only Settings Master off hides the note.');
+  await audio.getByRole('switch', { name: 'Master', exact: true }).press('Space');
+  await page.getByTestId('story-audio-note').getByRole('button').waitFor();
+  await visibleButton('Close Reader Settings').click();
+  await page.getByTestId('story-audio-note').getByRole('button').click({ button: 'right' });
+  await quickMaster.waitFor();
+  check(await quickMaster.inputValue() === '62', 'The quick Master fader should reflect Settings changes.');
+  await quickMaster.press('Escape');
+  await visibleButton('Reader Settings').click();
+  await settings.waitFor();
   check(await audio.getByText('Atmosphere', { exact: true }).count() > 0, 'Audio should offer the Atmosphere layer.');
   check(await audio.getByText('Soundscapes', { exact: true }).count() > 0, 'Audio should offer the Soundscapes layer.');
   // Scene: Automatic until the reader keeps a piece of their own, on this device.

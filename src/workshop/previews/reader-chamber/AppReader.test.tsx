@@ -8,7 +8,7 @@ import type { HarnessSkillManifest, HarnessWorkspaceState } from '@seihouse/sen/
 import type { ReaderPreferenceStorage } from '@seihouse/sen/reader-runtime';
 import { installOfficialCapaSkillsInMemory } from '../../../host/generation/capa/officialCapaSkills';
 import { installAudioMediaStubs, renderWithDevAudio } from '../../../test-utils/renderWithDevAudio';
-import { AppReader } from './AppReader';
+import { AppReader, applyReaderAudioState } from './AppReader';
 import { ReaderMixerProvider, type ReaderMixer } from '@seihouse/audio-player';
 import { createHostReaderMixer } from '../../../host/reader/readerMixer';
 import { readerScenes, type ReaderPage, type ReaderSceneId } from './readerScenes';
@@ -110,10 +110,12 @@ describe('the Reader Chamber workspace: the app\'s Reader', { timeout: 30_000 },
     const mixer = createHostReaderMixer(preferences);
     audioMixer = mixer;
     const show = async (id: 'on' | 'muted' | 'settings', request: number) => {
+      if (id !== 'settings') await act(async () => applyReaderAudioState(mixer, id));
       await act(async () => root.render(renderWithDevAudio(<ReaderMixerProvider mixer={mixer}><AppReader run={run} skills={skills} readerPreferences={preferences} audio={{ id, request }} /></ReaderMixerProvider>)));
     };
     await show('muted', 1);
-    await waitFor(() => button('Unmute story audio'), 'muted note');
+    expect(mixer.getPreferences().masterEnabled).toBe(true);
+    expect(button('Unmute story audio')).not.toBeNull();
     await show('on', 2);
     await waitFor(() => button('Mute story audio'), 'sound on note');
     await show('settings', 3);

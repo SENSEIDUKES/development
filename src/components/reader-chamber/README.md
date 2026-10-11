@@ -608,3 +608,7 @@ the Reader canvas. It supports dragging and authoritative Energy inspection in
 normal and fullscreen reading states. The portable SEN Reader and locked reference
 have no Familiar dependency; production should mount it once in the Library app
 shell. See [Familiar transfer notes](../familiar/README.md).
+
+### 2026-10-10 — Reader soundtrack controls
+
+The floating note is white for sound on and gray for mute or active scrolling. Tap toggles soundtrack mute without hiding it; hold/right-click opens the compact Master fader. Both Master faders share the mixer's saved volume, and unmute restores the last nonzero level. Only the Reader Settings Master switch hides the note. Narration stays independent; the app and Development preview use the same SEN host composition.

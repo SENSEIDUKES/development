@@ -4,7 +4,8 @@ import { createLocalReaderPreferenceStorage } from '../../../host/reader/readerP
 import { installOfficialCapaSkillsInMemory } from '../../../host/generation/capa/officialCapaSkills';
 import { FeatureWorkspace, type WorkshopControlsConfig, type WorkspaceView } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
-import { AppReader } from './AppReader';
+import { AppReader, applyReaderAudioState } from './AppReader';
+import { useOptionalReaderMixer } from '@seihouse/audio-player';
 import { READER_PAGES, readerScenes, type ReaderPage, type ReaderSceneId } from './readerScenes';
 import { REPLAY_WRITING_MS, SAMPLE_STORY_TITLE, loadSampleStory, startSceneRun, storyExportToWorkspace } from './sampleStory';
 import {
@@ -39,6 +40,7 @@ const loadingNote = (text: string) => (
 );
 
 export function ReaderChamberWorkspace() {
+  const mixer = useOptionalReaderMixer();
   const entry = workshopEntries.find((e) => e.id === 'reader-chamber')!;
   const [view, setView] = useState<WorkspaceView>('development');
   const [productionSceneId, setProductionSceneId] = useState(DEFAULT_PRODUCTION_SCENE.id);
@@ -187,9 +189,13 @@ export function ReaderChamberWorkspace() {
         <div className="flex flex-wrap gap-2">
           {([{ id: 'on', label: 'Sound on' }, { id: 'muted', label: 'Muted' }, { id: 'settings', label: 'Audio settings' }] as const).map(option =>
             <button key={option.id} type="button" className={`${buttonBase} ${buttonTone(false)} px-3 py-2`}
-              onClick={() => setAudioRequest(current => ({ id: option.id, request: (current?.request ?? 0) + 1 }))}>{option.label}</button>)}
+              disabled={!mixer}
+              onClick={() => {
+                if (mixer && option.id !== 'settings') applyReaderAudioState(mixer, option.id);
+                setAudioRequest(current => ({ id: option.id, request: (current?.request ?? 0) + 1 }));
+              }}>{option.label}</button>)}
         </div>
-        <p className="text-xs leading-relaxed text-white/60">Tap the note to mute or unmute story audio. Hold it for Audio settings; right-click opens the same settings. Narration has its own Play button.</p>
+        <p className="text-xs leading-relaxed text-white/60">Tap the note to mute or unmute; it stays visible. Hold or right-click it for the mini Master volume slider. Zero volume keeps the icon visible. Only switching Master off in Reader Settings hides it. Sound on is white and fades to gray while scrolling; muted stays gray.</p>
         <p className="text-xs leading-relaxed text-white/60">In Audio settings, try the master and layer levels, presets and sleep timer. The note also reports when playback needs a tap or the sleep timer has stopped audio; those states depend on the browser and timer.</p>
       </section>,
     },

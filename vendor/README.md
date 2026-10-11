@@ -5,11 +5,12 @@ Both UI tarballs are built from UI PR [#90](https://github.com/SENSEIDUKES/UI/pu
 - `@seihouse/ui@0.11.0`: universal SEIHouse primitives and experience tokens, including the application shell, shared overlay scrollbar and Pathways panel. The opt-in `double-tap` sidebar behavior toggles both widths and offers a keyboard-focus-only control; `automatic` and `click` remain available.
 - `@seihouse/library-ui@0.10.0`: stateless Celestial Library presentation. Its `@seihouse/ui` peer is `^0.11.0`; its navigation skin supplies scroll-only gold thumbs and a stationary gold-and-cyan edge bevel. Domain behavior and persistence remain in `@seihouse/library` and its host.
 
-The locked `@seihouse/audio-player@4.0.0` Git build declares an exact optional UI
+The locked `@seihouse/audio-player@4.0.0` build declares an exact optional UI
 0.10.1 peer. Development scopes an npm override to that package's UI peer, using
 the root UI tarball, and the packed-consumer smoke checks apply the same override.
 Hosts combining these SEN/Library releases with that audio build need the same
-override until its peer declaration is updated; the audio build itself is unchanged.
+override until its peer declaration is updated. The Reader master-fader build below
+retains this peer declaration while adding the audio controls.
 
 ```json
 "overrides": { "@seihouse/audio-player": { "@seihouse/ui": "$@seihouse/ui" } }
@@ -67,3 +68,7 @@ release from FONT-LAB the same way, update `font-artifacts.json`, and run `npm c
 - **2026-10-10:** Added the SEIHouse fonts from FONT-LAB: SEIHouse Sans 0.39 and the Living Titles
   0.1.0 package for the four SEIHouse Display cuts.
 - **2026-10-06:** Adopted UI 0.11.0 and Library UI 0.10.0 from one UI source commit for two-way drawer gestures, scroll-only thumbs and the Library bevel. Recorded the audio build's scoped peer override.
+
+## Reader master-fader build — 2026-10-10
+
+`seihouse-audio-player-4.0.0-master-volume.tgz` is an unpublished AUDIO-PLAYER build from source commit `9873263d695479ccfb4bf7e5ecf10360ead8b09a`, tracked by [AUDIO-PLAYER PR #184](https://github.com/SENSEIDUKES/AUDIO-PLAYER/pull/184). It includes Master volume, independent note mute, last-nonzero volume restoration, live soundtrack gain, the Settings fader and regressions. Built with `npm pack` after the full `npm test` passed. It retains version 4.0.0 and existing dependencies and peers; the optional UI peer override remains required. SHA-512: `65598a80ca3e7495b507ba2375aa53fa6e251a65b5e4edd02bb2545a25eb047be4f2a0085560fe02fdc629a77e0aa985e531535cc6969ec613f24d63b07a50f4`. The package lock records npm integrity. This tarball preserves the exact consumer build without a registry publication.

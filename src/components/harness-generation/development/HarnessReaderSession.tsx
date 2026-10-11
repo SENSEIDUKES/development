@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { ReaderMixerNote } from '@seihouse/audio-player';
+import { ReaderAudioNote } from './ReaderAudioNote';
 import type { TextHighlightBlock } from '@seihouse/sen/text-highlight-engine';
 import type { SceneAudioTrack } from '@seihouse/sen/audio';
 import {
@@ -416,7 +416,7 @@ export function HarnessReaderSession({
       {rewritable && chapter && <ChapterRewrite key={chapter.id} chapterNumber={chapter.chapterNumber} disabled={writer.writing} onRewrite={rewriteChapter} />}
       <ReaderBottomBar readAloud={readAloud} onListen={chapter ? listen : undefined} offscreen={follow.offscreen}
         onBackToNarration={follow.backToNarration} barRef={playerRef}
-        note={mixer && <ReaderMixerNote mixer={mixer} onOpenSettings={() => openSettings('audio')} />}
+        note={mixer && <ReaderAudioNote mixer={mixer} />}
         onOpenCodex={openCodex} onOpenFate={() => openFate()}
         previous={previous ? { label: 'Previous Chapter', run: () => openChapter(previous.chapterNumber) } : undefined}
         next={later ? { label: 'Next Chapter', run: () => openChapter(later.chapterNumber) }

@@ -628,7 +628,7 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
     const { controller, storyId } = await story({ written: 1 });
     const { mixer, values, storage } = mixerFor();
     await mountWithMixer(mixer, <Host controller={controller} storyId={storyId} readerPreferences={storage} />);
-    await act(async () => { note()!.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })); });
+    await click(byLabel('Reader Settings'), 'Reader Settings');
     const audio = await audioPanel();
     const scene = audio.querySelector<HTMLElement>('[data-testid="reader-soundtrack-choice"]')!;
     const piece = scene.querySelector<HTMLSelectElement>('#reader-soundtrack-piece')!;
@@ -662,7 +662,7 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(JSON.parse(values.get('soundtrack-choice')!)).toMatchObject({ soundscape: 'automatic', atmosphere: 'automatic' });
   });
 
-  it('the note mutes story audio with a tap, and a long-press opens Reader Settings at Audio', async () => {
+  it('tap mutes without hiding the note, hold opens volume, and only Settings Master hides it', async () => {
     const { controller, storyId } = await story({ written: 1 });
     const { mixer, values } = mixerFor();
     // A browser without speech still gets the note and the gear, for the soundtrack.
@@ -670,18 +670,68 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(container.querySelector('[data-testid="read-aloud-player"]')).toBeNull();
     expect(note()!.getAttribute('aria-label')).toBe('Mute story audio');
 
+    await act(async () => { mixer.setMasterLevel(0); });
+    expect(mixer.getState().preferences.masterEnabled).toBe(true);
+    expect(note()).not.toBeNull();
+    await act(async () => { mixer.setMasterLevel(1); });
+
     await act(async () => { note()!.click(); });
-    expect(mixer.getState().preferences.masterEnabled).toBe(false);
+    expect(mixer.getState().preferences.masterEnabled).toBe(true);
+    expect(mixer.getState().preferences.masterMuted).toBe(true);
     expect(note()!.getAttribute('aria-label')).toBe('Unmute story audio');
     // The reader's mix is kept on the device, never in the story.
     await flush(350);
-    expect(JSON.parse(values.get('audio-mixer')!)).toMatchObject({ masterEnabled: false });
+    expect(JSON.parse(values.get('audio-mixer')!)).toMatchObject({ masterEnabled: true, masterMuted: true });
 
+    await act(async () => { note()!.click(); });
+    expect(mixer.getState().preferences.masterMuted).toBe(false);
+    await act(async () => { note()!.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0 })); });
+    await flush(650);
+    expect(container.querySelector('[aria-label="Quick master volume"]')).not.toBeNull();
+    expect(container.ownerDocument.querySelector('[role="dialog"]')).toBeNull();
+    await act(async () => { note()!.dispatchEvent(new MouseEvent('pointerup', { bubbles: true })); note()!.click(); });
+    expect(mixer.getPreferences().masterMuted).toBe(false);
+    await act(async () => { mixer.setMasterLevel(0); });
+    expect(note()).not.toBeNull();
+    expect(container.querySelector<HTMLInputElement>('input[aria-label="Quick master volume"]')!.value).toBe('0');
+    await act(async () => { container.querySelector('input[aria-label="Quick master volume"]')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); mixer.setMasterLevel(1); });
+
+    // Settings can restore the master switch even while the floating note is absent.
+    await click(byLabel('Reader Settings'), 'Reader Settings');
+    const masterPanel = await audioPanel();
+    const master = masterPanel.querySelector<HTMLElement>('.sap-reader-mixer__row--master [role="switch"]')!;
+    expect(master).not.toBeNull();
     await act(async () => { note()!.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })); });
+    const quickVolume = container.querySelector<HTMLInputElement>('input[aria-label="Quick master volume"]')!;
+    const settingsVolume = masterPanel.querySelector<HTMLInputElement>('input[type="range"]')!;
+    const changeVolume = async (input: HTMLInputElement, value: string) => act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await changeVolume(quickVolume, '37');
+    expect(settingsVolume.value).toBe('37');
+    await changeVolume(settingsVolume, '62');
+    expect(quickVolume.value).toBe('62');
+    await changeVolume(quickVolume, '0');
+    expect(settingsVolume.value).toBe('0');
+    expect(note()).not.toBeNull();
+    await act(async () => { note()!.click(); });
+    expect(mixer.getPreferences().masterLevel).toBe(0.62);
+    expect(quickVolume.value).toBe('62');
+    expect(settingsVolume.value).toBe('62');
+    await act(async () => { master.click(); });
+    expect(mixer.getState().preferences.masterEnabled).toBe(false);
+    expect(note()).toBeNull();
+    await act(async () => { master.click(); });
+    expect(mixer.getState().preferences.masterEnabled).toBe(true);
+    expect(note()!.getAttribute('aria-label')).toBe('Mute story audio');
+    await click(byLabel('Close Reader Settings'), 'Close Reader Settings');
+
+    await click(byLabel('Reader Settings'), 'Reader Settings');
     const audio = await audioPanel();
     const dialog = container.ownerDocument.querySelector<HTMLElement>('[role="dialog"]')!;
     expect(dialog.getAttribute('aria-label') ?? dialog.querySelector('h2')!.textContent).toBe('Reader Settings');
-    expect(audio.scrollIntoView).toHaveBeenCalled();
     // Without speech, Narration only says so.
     expect([...dialog.querySelectorAll('section h3')].map(heading => heading.textContent)).toEqual(['Text', 'Audio', 'Narration']);
     expect(dialog.querySelector('[data-testid="reader-settings-narration"]')!.textContent).toContain("This browser can't read aloud.");

@@ -1,0 +1,32 @@
+/* Keep the shared player's interactions and scroll signal; only skin the Reader note. */
+.sap-reader-mixer-note.reader-story-audio-note {
+  --sap-reader-mixer-note-fg: #fff;
+  --sap-reader-mixer-note-opacity: 1;
+  --sap-reader-mixer-note-ghost-opacity: 0.35;
+}
+
+/* Keep the mute state readable by color, without a crossed-out note. */
+.reader-story-audio-note .sap-reader-mixer-note__slash {
+  display: none;
+}
+
+.sap-reader-mixer-note.reader-story-audio-note:has(.sap-reader-mixer-note__slash),
+.sap-reader-mixer-note.reader-story-audio-note[data-scrolling='true'] {
+  opacity: 0.35;
+}
+
+.reader-audio-control { position: relative; }
+.reader-audio-volume {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  width: min(220px, calc(100vw - 32px));
+  padding: 12px;
+  border: 1px solid rgb(255 255 255 / 0.15);
+  border-radius: 12px;
+  background: #171717;
+  color: #fff;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.4);
+}
+.reader-audio-volume label { display: flex; justify-content: space-between; font-size: 12px; }
+.reader-audio-volume input { width: 100%; min-height: 44px; accent-color: #d6b46a; }

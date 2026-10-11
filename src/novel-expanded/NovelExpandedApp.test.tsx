@@ -292,7 +292,8 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
       const note = document.querySelector<HTMLButtonElement>('[data-testid="reader-bottom-bar"] [data-testid="story-audio-note"] button');
       expect(note?.getAttribute('aria-label')).toBe('Mute story audio');
       await click(note, 'Mute story audio', 350);
-      expect(JSON.parse(window.localStorage.getItem('novelexpanded-reader-audio-mixer')!)).toMatchObject({ masterEnabled: false });
+      expect(JSON.parse(window.localStorage.getItem('novelexpanded-reader-audio-mixer')!)).toMatchObject({ masterEnabled: true, masterMuted: true });
+      expect(document.querySelector('[data-testid="story-audio-note"]')).not.toBeNull();
     } finally {
       uninstall();
       vi.unstubAllGlobals();

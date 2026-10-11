@@ -6,11 +6,23 @@ import { AGENTS } from '../../../lib/agents';
 import { LIBRARY_BASE_MEDIA } from '../../../host/media/libraryCatalog';
 import { createDeviceProfileStore } from '../../../host/profile/deviceProfile';
 import { AppFamiliar } from '../../../novel-expanded/AppFamiliar';
+import type { ReaderMixer } from '@seihouse/audio-player';
 import type { ReaderSceneRun } from './sampleStory';
 import { READER_PAGES, type ReaderPage } from './readerScenes';
 
 /** The app's soundscapes (NovelExpanded's APP_SOUNDSCAPES): the Reader's music before a story has a chapter. */
 const SOUNDSCAPES = LIBRARY_BASE_MEDIA.soundscapes.map(entry => entry.track);
+
+/** Called directly by the Workshop button, preserving the browser's user activation. */
+export function applyReaderAudioState(mixer: ReaderMixer, state: 'on' | 'muted') {
+  if (state === 'muted') mixer.setMasterMuted(true);
+  else {
+    if (mixer.getState().sleepTimer.status === 'fired') mixer.resumeAudio();
+    mixer.setMasterEnabled(true);
+    mixer.setMasterMuted(false);
+    mixer.unlock();
+  }
+}
 
 export interface AppReaderProps {
   /** The scene's story, reading place and replaying writer. */
@@ -57,23 +69,16 @@ export function AppReader({ run, skills, readerPreferences, page, audio }: AppRe
     return () => window.clearInterval(timer);
   }, [page]);
 
-  // Preview shortcuts exercise the canonical note rather than rendering a copy.
+  // Open the canonical settings button, independently of the floating mini fader.
   useEffect(() => {
     if (!audio) return;
     setView('read');
+    if (audio.id !== 'settings') return;
     let tries = 0;
     const timer = window.setInterval(() => {
-      const note = containerRef.current?.querySelector<HTMLButtonElement>('[data-testid="story-audio-note"] button');
-      if (note && (note.checkVisibility?.() ?? true)) {
-        if (audio.id === 'settings') note.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
-        else {
-          const state = note.closest('[data-state]')?.getAttribute('data-state');
-          const target = audio.id === 'muted' ? 'muted' : 'on';
-          if (state !== target) {
-            note.click();
-            if (++tries <= 20) return;
-          }
-        }
+      const settings = containerRef.current?.querySelector<HTMLButtonElement>('button[aria-label="Reader Settings"]');
+      if (settings && (settings.checkVisibility?.() ?? true)) {
+        settings.click();
         window.clearInterval(timer);
       } else if (++tries > 80) window.clearInterval(timer);
     }, 100);

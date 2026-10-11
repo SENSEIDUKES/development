@@ -711,3 +711,7 @@ the full Arc Plan remains internal. Fun Settings are optional Current Story
 Information and cannot override canon, CAPA, ending, pins, or the current goal.
 They do not enter canonical state or CAPA. The saved HARNESS schema is now 18;
 existing Development reset behavior rejects stale state.
+
+### 2026-10-10 — Reader audio mute and synchronized Master faders
+
+The shared Reader note is white for sound on and gray when muted or actively scrolling, without a mute slash. Tap mutes without disabling Master or losing its volume. Hold or right-click opens a compact Master fader; it and the Settings fader read and update the same saved mixer state. Zero volume keeps the icon visible, and unmute restores the last nonzero level, including after preference reload. Only switching Master off in Reader Settings hides the note. Narration retains its independent controls. NovelExpanded and the Workshop share the canonical host composition; Workshop Sound on uses the direct click gesture to unlock playback.

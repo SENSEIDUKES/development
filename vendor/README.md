@@ -67,3 +67,7 @@ release from FONT-LAB the same way, update `font-artifacts.json`, and run `npm c
 - **2026-10-10:** Added the SEIHouse fonts from FONT-LAB: SEIHouse Sans 0.39 and the Living Titles
   0.1.0 package for the four SEIHouse Display cuts.
 - **2026-10-06:** Adopted UI 0.11.0 and Library UI 0.10.0 from one UI source commit for two-way drawer gestures, scroll-only thumbs and the Library bevel. Recorded the audio build's scoped peer override.
+
+## Reader master-fader build — 2026-10-10
+
+`seihouse-audio-player-4.0.0-master-controls.tgz` is an unpublished AUDIO-PLAYER build from source commit `405f8db8b32b4772335bd8a1667b88efde7a29e0`, tracked by [AUDIO-PLAYER PR #184](https://github.com/SENSEIDUKES/AUDIO-PLAYER/pull/184). It includes Master volume, independent note mute, last-nonzero volume restoration, live soundtrack gain, the Settings fader and regressions. Built with `npm pack` after the full `npm test` passed. It retains version 4.0.0 and existing dependencies and peers; the optional UI peer override remains required. SHA-512: `10409a62ef6c0af88fcb168a92648399492e8bed606b89be7212f545d9fc313f838320a3834ec79f13b8ae8d0dd707e90efc4cb791ffddea2d6253a83e7078bf`. The package lock records npm integrity. This tarball preserves the exact consumer build without a registry publication.

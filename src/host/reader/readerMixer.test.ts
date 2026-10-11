@@ -33,13 +33,18 @@ describe('The host reader mixer', () => {
     const first = createHostReaderMixer(storage);
     const waves = SEN_ATMOSPHERES.find(option => option.group === 'Waves')!;
     first.setAtmosphere(waves.id);
+    first.setMasterLevel(0.43);
+    first.setMasterLevel(0);
     first.setMasterEnabled(false);
     vi.advanceTimersByTime(400);
     expect(JSON.parse(values.get(READER_MIXER_PREFERENCE_KEY)!)).toMatchObject({ atmosphereId: waves.id, masterEnabled: false });
     first.dispose();
 
-    const again = createHostReaderMixer(storage).getState().preferences;
-    expect(again).toMatchObject({ atmosphereId: waves.id, masterEnabled: false });
+    const restored = createHostReaderMixer(storage);
+    expect(restored.getPreferences()).toMatchObject({ atmosphereId: waves.id, masterEnabled: false, masterLevel: 0, masterRestoreLevel: 0.43 });
+    restored.setMasterMuted(false);
+    expect(restored.getPreferences()).toMatchObject({ masterLevel: 0.43, masterEnabled: false });
+    restored.dispose();
   });
 
   it('loops atmospheres as their files are made, with no overlap at the loop point', () => {

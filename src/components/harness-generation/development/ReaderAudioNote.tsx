@@ -10,6 +10,10 @@ export function ReaderAudioNote({ mixer }: { mixer: ReaderMixer }) {
   const slider = useRef<HTMLInputElement>(null);
   const sliderId = useId();
   useEffect(() => {
+    if (!state?.preferences.masterEnabled) {
+      setOpen(false);
+      return;
+    }
     if (!open) return;
     slider.current?.focus();
     const outside = (event: PointerEvent) => {
@@ -17,7 +21,7 @@ export function ReaderAudioNote({ mixer }: { mixer: ReaderMixer }) {
     };
     document.addEventListener('pointerdown', outside, true);
     return () => document.removeEventListener('pointerdown', outside, true);
-  }, [open]);
+  }, [open, state?.preferences.masterEnabled]);
   if (!state?.preferences.masterEnabled) return null;
   const percent = Math.round((state.preferences.masterLevel ?? 1) * 100);
   return <div ref={root} className="reader-audio-control"

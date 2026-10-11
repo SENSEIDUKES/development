@@ -726,6 +726,7 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
     await act(async () => { master.click(); });
     expect(mixer.getState().preferences.masterEnabled).toBe(true);
     expect(note()!.getAttribute('aria-label')).toBe('Mute story audio');
+    expect(container.querySelector('input[aria-label="Quick master volume"]')).toBeNull();
     await click(byLabel('Close Reader Settings'), 'Close Reader Settings');
 
     await click(byLabel('Reader Settings'), 'Reader Settings');

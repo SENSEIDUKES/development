@@ -363,7 +363,7 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
     expect(storySoundtrack(mixer).piece()).toBeDefined();
     // One tap silences the app at once.
     await act(async () => { note()!.click(); });
-    expect(mixer.getState().preferences.masterEnabled).toBe(false);
+    expect(mixer.getState().preferences).toMatchObject({ masterEnabled: true, masterMuted: true });
     await act(async () => { note()!.click(); });
 
     // Turned off (Profile Settings › Sound): the menus fall silent and the note leaves the header.

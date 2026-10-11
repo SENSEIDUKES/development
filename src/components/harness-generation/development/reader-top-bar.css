@@ -1,0 +1,11 @@
+/* Transform only: preserve the sticky slot and the chapter's reading position. */
+.reader-top-bar {
+  transform: translateY(0);
+  transition: transform 180ms ease-out;
+}
+.reader-top-bar[data-scroll-hidden="true"] {
+  transform: translateY(calc(-100% - 4px));
+}
+@media (prefers-reduced-motion: reduce) {
+  .reader-top-bar { transition: none; }
+}

@@ -54,12 +54,12 @@ describe('The header\'s sound control', () => {
     render(<HeaderSoundControl />);
     expect(note().getAttribute('aria-label')).toBe('Mute sound');
     await act(async () => { note().click(); });
-    expect(mixer.getState().preferences.masterEnabled).toBe(false);
+    expect(mixer.getState().preferences).toMatchObject({ masterEnabled: true, masterMuted: true });
     expect(note().getAttribute('aria-label')).toBe('Unmute sound');
     await wait(350);
-    expect(JSON.parse(storage.values.get('audio-mixer')!)).toMatchObject({ masterEnabled: false });
+    expect(JSON.parse(storage.values.get('audio-mixer')!)).toMatchObject({ masterEnabled: true, masterMuted: true });
     await act(async () => { note().click(); });
-    expect(mixer.getState().preferences.masterEnabled).toBe(true);
+    expect(mixer.getState().preferences).toMatchObject({ masterEnabled: true, masterMuted: false });
     // A tap never opens the volume.
     expect(slider()).toBeNull();
   });

@@ -777,3 +777,11 @@ Reader Settings now exposes Text, Audio and Narration as accessible category tab
 The quick-volume capsule now grows from behind the note as one dense glass surface. The idle, unmuted note has a softer glass backing; both muted and scrolling ghost states leave only the gray glyph. The open capsule supplies its own backing, without stacking two surfaces. Reduced motion, reduced transparency and forced colors keep their respective fallbacks.
 
 Chapter and narration menus, Settings and Fate reuse SEIHouse UI's overlay scrollbar with Library navigation's gold thumb and scroll/drag-only visibility. The chapter keeps its original document scroll owner, with a scoped gold native scrollbar that hides at rest and cleans up on exit. Half-height panels size their scrollport to the visible area so the thumb and the last settings remain reachable. App and Workshop use the same Reader implementation.
+
+### 2026-10-11 — Opaque Reader bars
+
+The Library Reader top and bottom bars retain their blue-gray finish and navigation seams with fully opaque gradient stops in every transparency mode. Chapter words cannot show through either bar. The host explicitly defaults Master audio on; saved Settings choices still take precedence.
+
+### 2026-10-11 — Scroll-aware top bar and aligned audio note
+
+The top bar slides away after intentional downward scrolling and returns on upward scrolling, near the chapter top, when its controls receive focus, or when the chapter changes. Reader panels keep it available. It follows the same actual scroll container as narration, ignores small direction changes and elastic overscroll, preserves the sticky layout slot, and respects reduced motion. The audio note is anchored to the center of the Fate action instead of an independent page-edge inset, including when quick volume expands.

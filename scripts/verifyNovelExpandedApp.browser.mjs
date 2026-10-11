@@ -608,6 +608,9 @@ async function walk(browser, viewport, sample) {
   await page.waitForTimeout(220);
   check(await page.getByTestId('reader-top-bar').getAttribute('data-scroll-hidden') === 'false', 'The top bar should return on upward scroll.');
   // The returned top bar fits in one row; the prose keeps about 60 characters a line.
+  // Measure once its 180 ms slide has finished; a loaded runner can still be mid-slide at 220 ms.
+  await page.waitForFunction(() => Math.abs(document.querySelector('[data-testid="reader-top-bar"]').getBoundingClientRect().top) <= 1,
+    null, { timeout: 2000 }).catch(() => undefined);
   const frame = await page.evaluate(() => {
     const bar = document.querySelector('[data-testid="reader-top-bar"]').getBoundingClientRect();
     const article = document.querySelector('[data-chapter-number]');

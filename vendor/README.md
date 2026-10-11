@@ -9,7 +9,7 @@ The locked `@seihouse/audio-player@4.0.0` build declares an exact optional UI
 0.10.1 peer. Development scopes an npm override to that package's UI peer, using
 the root UI tarball, and the packed-consumer smoke checks apply the same override.
 Hosts combining these SEN/Library releases with that audio build need the same
-override until its peer declaration is updated. The Reader master-fader build below
+override until its peer declaration is updated. The Reader steady-pitch build below
 retains this peer declaration while adding the audio controls.
 
 ```json
@@ -69,6 +69,6 @@ release from FONT-LAB the same way, update `font-artifacts.json`, and run `npm c
   0.1.0 package for the four SEIHouse Display cuts.
 - **2026-10-06:** Adopted UI 0.11.0 and Library UI 0.10.0 from one UI source commit for two-way drawer gestures, scroll-only thumbs and the Library bevel. Recorded the audio build's scoped peer override.
 
-## Reader master-fader build — 2026-10-10
+## Reader steady-pitch build — 2026-10-11
 
-`seihouse-audio-player-4.0.0-master-volume.tgz` is an unpublished AUDIO-PLAYER build from source commit `9873263d695479ccfb4bf7e5ecf10360ead8b09a`, tracked by [AUDIO-PLAYER PR #184](https://github.com/SENSEIDUKES/AUDIO-PLAYER/pull/184). It includes Master volume, independent note mute, last-nonzero volume restoration, live soundtrack gain, the Settings fader and regressions. Built with `npm pack` after the full `npm test` passed. It retains version 4.0.0 and existing dependencies and peers; the optional UI peer override remains required. SHA-512: `65598a80ca3e7495b507ba2375aa53fa6e251a65b5e4edd02bb2545a25eb047be4f2a0085560fe02fdc629a77e0aa985e531535cc6969ec613f24d63b07a50f4`. The package lock records npm integrity. This tarball preserves the exact consumer build without a registry publication.
+`seihouse-audio-player-4.0.0-steady-pitch.tgz` is an unpublished AUDIO-PLAYER build from source commit `dad9c7d`, on branch `claude/mobile-audio-playback-tuning-2mkjde` (built on PR [#184](https://github.com/SENSEIDUKES/AUDIO-PLAYER/pull/184)'s Master volume, independent note mute and Settings fader). It keeps phone audio in tune: the mixer sets Safari's audio session type before creating its AudioContext and holds it, instead of switching it whenever sound starts or stops, which could retune a live context on iPhone so every layer played sharp or flat. The note no longer draws a "!" when audio waits for a tap: it dims instead, and it turns red only when a soundtrack loop actually failed to play, where a tap retries it. Built with `npm pack` after lint, format, typecheck, docs, unit tests (except `readerLoudness.test.ts`, which also fails on AUDIO-PLAYER `main` with a last-digit rounding difference), the package smoke test, the build and the preview smoke test passed. It retains version 4.0.0 and existing dependencies and peers; the optional UI peer override remains required. SHA-512: `2d61450cd88559f16217fae8e8fb27a328a8d6a957693c0c4c98c3b021259300f2cfadf16e4e241714900ff56dd222929b0c3675d9d2ea1b024498d8a8477c71`. The package lock records npm integrity. This tarball preserves the exact consumer build without a registry publication.

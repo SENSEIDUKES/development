@@ -44,16 +44,15 @@ UI's `pnpm test:package` checks repeated-pack integrity and fresh ESM, TypeScrip
 
 ## SEIHouse fonts
 
-From SEIHouse/FONT-LAB at `93954df1686f0ea6c975bc953431ae839eeee493`, recorded with their
-integrity in `font-artifacts.json`:
+From SEIHouse/FONT-LAB, recorded with source commits and integrity in `font-artifacts.json`:
 
 - `seihouse-seireader-0.39.0.tgz`: **SEIHouse Sans** 0.39 (formerly SEIReader), the reading
   font: five weights with real italics. Packed as FONT-LAB's own distribution workflow packs it
-  (`npm pack --ignore-scripts` at its root) and audited there with
+  (`npm pack --ignore-scripts` at its root at `93954df1686f0ea6c975bc953431ae839eeee493`) and audited there with
   `python3 verify_distribution.py <the web ZIP> --npm <the tarball>`.
-- `seihouse-living-titles-0.1.0.tgz`: the Living Titles package, copied unchanged from
+- `seihouse-living-titles-0.1.1.tgz`: the Living Titles package from `d7876fb31dd1c13106cdf0d0732e1a9c0d8f1849`, copied unchanged from
   `packages/living-titles/releases/` with its `release.json` (here
-  `seihouse-living-titles-0.1.0.release.json`). Development uses only its `fonts.css`: the four
+  `seihouse-living-titles-0.1.1.release.json`). Development uses only its `fonts.css`: the four
   **SEIHouse Display** cuts (Soft, Edge, Ink, Wide), Regular. Its runtime is not imported.
 
 The host theme (`src/host/styles/theme.css`) registers both families for the Workshop and the
@@ -65,6 +64,7 @@ release from FONT-LAB the same way, update `font-artifacts.json`, and run `npm c
 
 ## History
 
+- **2026-10-11:** Updated the Display package to FONT-LAB's Living Titles 0.1.1 release, with its original archive and release hashes. This release updates the tooling/runtime; its four shipped Regular font files have the same hashes as 0.1.0. Kept SEIHouse Sans 0.39 and its original source provenance unchanged.
 - **2026-10-10:** Added the SEIHouse fonts from FONT-LAB: SEIHouse Sans 0.39 and the Living Titles
   0.1.0 package for the four SEIHouse Display cuts.
 - **2026-10-06:** Adopted UI 0.11.0 and Library UI 0.10.0 from one UI source commit for two-way drawer gestures, scroll-only thumbs and the Library bevel. Recorded the audio build's scoped peer override.

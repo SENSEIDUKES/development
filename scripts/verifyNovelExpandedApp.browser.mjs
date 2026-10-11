@@ -595,14 +595,26 @@ async function walk(browser, viewport, sample) {
   check(layout.end <= layout.bar + 1, `The bottom bar should not cover the chapter's end (${JSON.stringify(layout)}).`);
   check(Math.abs(layout.codexCenter - layout.barCenter) <= 2, `Codex should sit in the middle of the bottom bar (${JSON.stringify(layout)}).`);
   check(!layout.wide, 'The Reader must not scroll sideways.');
-  // The top bar stays on screen at the chapter's end, in one row with a readable story title; the prose keeps about 60 characters a line.
+  // Downward reading clears the top bar; a small upward scroll brings the controls back.
+  await page.waitForTimeout(220);
+  check(await page.getByTestId('reader-top-bar').getAttribute('data-scroll-hidden') === 'true', 'The top bar should clear the page on downward scroll.');
+  const noteAlignment = await page.evaluate(() => {
+    const note = document.querySelector('[data-testid="story-audio-note"] button').getBoundingClientRect();
+    const fate = document.querySelector('button[aria-label="Open Fate"]').getBoundingClientRect();
+    return Math.abs((note.left + note.width / 2) - (fate.left + fate.width / 2));
+  });
+  check(noteAlignment <= 1, 'The audio note should be centered above Fate.');
+  await page.evaluate(() => window.scrollBy(0, -40));
+  await page.waitForTimeout(220);
+  check(await page.getByTestId('reader-top-bar').getAttribute('data-scroll-hidden') === 'false', 'The top bar should return on upward scroll.');
+  // The returned top bar fits in one row; the prose keeps about 60 characters a line.
   const frame = await page.evaluate(() => {
     const bar = document.querySelector('[data-testid="reader-top-bar"]').getBoundingClientRect();
     const article = document.querySelector('[data-chapter-number]');
     return { barTop: bar.top, barHeight: bar.height, title: document.querySelector('[data-testid="reader-story-title"]').getBoundingClientRect().width,
       measure: article.getBoundingClientRect().width / parseFloat(getComputedStyle(article).fontSize) };
   });
-  check(Math.abs(frame.barTop) <= 1 && frame.barHeight <= 80, `The top bar should stay at the top in one row (${JSON.stringify(frame)}).`);
+  check(Math.abs(frame.barTop) <= 1 && frame.barHeight <= 80, `The returned top bar should fit at the top in one row (${JSON.stringify(frame)}).`);
   check(frame.title >= 80, `The story title should keep room in the top bar (${JSON.stringify(frame)}).`);
   check(frame.measure <= 36, `The prose should keep a reading measure of about 60 characters (${JSON.stringify(frame)}).`);
   check(await visibleButton('Open Fate').isVisible() && await visibleButton('Reader Settings').isVisible() && await visibleButton('Open Codex').isVisible(),
@@ -784,10 +796,10 @@ async function walk(browser, viewport, sample) {
   // The mix is saved a moment after it changes.
   const savedSoon = (test, what) => page.waitForFunction(test, null, { timeout: 5_000 }).catch(() => check(false, what));
   await headerNote.click();
-  await savedSoon(() => JSON.parse(localStorage.getItem('novelexpanded-reader-audio-mixer') ?? '{}').masterEnabled === false, 'A tap on the music note should mute all sound and keep it in the saved mix.');
+  await savedSoon(() => { const mix = JSON.parse(localStorage.getItem('novelexpanded-reader-audio-mixer') ?? '{}'); return mix.masterEnabled === true && mix.masterMuted === true; }, 'A tap on the music note should mute sound without disabling Master.');
   check(await headerNote.getAttribute('aria-label') === 'Unmute sound', `Muted, the music note should offer to unmute, got ${await headerNote.getAttribute('aria-label')}.`);
   await headerNote.click();
-  await savedSoon(() => JSON.parse(localStorage.getItem('novelexpanded-reader-audio-mixer') ?? '{}').masterEnabled === true, 'A second tap should unmute.');
+  await savedSoon(() => { const mix = JSON.parse(localStorage.getItem('novelexpanded-reader-audio-mixer') ?? '{}'); return mix.masterEnabled === true && mix.masterMuted === false; }, 'A second tap should unmute.');
   if (viewport.width >= 1024) {
     await headerNote.hover();
   } else {

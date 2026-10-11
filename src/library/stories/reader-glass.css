@@ -16,6 +16,13 @@
   box-shadow: var(--reader-glass-light), 0 5px 18px #020b2044;
 }
 
+/* Stationary reading chrome must fully cover prose passing beneath it.
+   Preserve the glass palette and edge light without transmitting chapter text. */
+.reader-glass.reader-glass-bar {
+  --reader-glass-fill: linear-gradient(145deg, #203a4a, #0c1c32);
+  --reader-glass-solid: linear-gradient(145deg, #203a4a, #0c1c32);
+}
+
 /* Match Library navigation's stationary 3px seam (library-navigation.css),
    rotated along each edge that meets the chapter. No moving light or hit area. */
 .reader-glass-bar::after,

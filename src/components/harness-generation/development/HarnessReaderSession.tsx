@@ -390,10 +390,10 @@ export function HarnessReaderSession({
     {/* On laptops a panel sits at the right, and the chapter moves over beside it. */}
     <div className={`transition-[padding] duration-200 motion-reduce:transition-none ${panel ? 'lg:pr-[28rem]' : ''}`}>
     <main hidden={pageOpen} className="mx-auto w-full min-w-0 max-w-3xl px-4 pb-12" data-testid="harness-reader">
-      {/* Where a new chapter scrolls to: the stuck bar itself is always in view. */}
+      {/* A new chapter returns here and reveals its top bar. */}
       <div ref={topRef} aria-hidden />
       <ReaderTopBar barRef={barRef} storyTitle={story.title} place={chapter ? `Chapter ${chapter.chapterNumber}` : 'Story start'}
-        onBack={onClose} onOpenSettings={() => openSettings()} companion={companion} />
+        onBack={onClose} onOpenSettings={() => openSettings()} companion={companion} pinned={Boolean(panel) || pageOpen} />
       {storageError && <p role="alert" className="mt-3 text-sm text-amber-300">{storageError}</p>}
 
       {chapter

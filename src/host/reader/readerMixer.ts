@@ -81,7 +81,7 @@ export function hostReaderMixerOptions(storage: ReaderPreferenceStorage): Reader
     soundscapeRestFadeMs: HOST_SOUNDSCAPE_END_FADE_MS,
     // Leaving the page never stops the sound (see keepPlayingWhileAway).
     pauseWhenHidden: false,
-    defaultPreferences: { ...DEFAULT_READER_MIXER_PREFERENCES, atmosphereId: DEFAULT_ATMOSPHERE_ID },
+    defaultPreferences: { ...DEFAULT_READER_MIXER_PREFERENCES, masterEnabled: true, atmosphereId: DEFAULT_ATMOSPHERE_ID },
     initialPreferences: saved,
     onPreferencesChange: preferences => storage.write(READER_MIXER_PREFERENCE_KEY, JSON.stringify(preferences)),
   };

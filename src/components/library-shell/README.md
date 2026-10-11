@@ -349,3 +349,7 @@ note floats, the note above it. It is 0 when no bar is on screen, as on laptops.
 passes it, plus a small gap, as the Familiar's `bottomInset`: the Familiar then starts
 just above the note and can be dragged anywhere above that line. NovelExpanded and the
 Workshop's Familiar surfaces both do.
+
+### 2026-10-11 — Keep Master enabled when muting from the shell
+
+The shell music note now uses the same independent soundtrack mute as the Reader note. Tapping it saves Master mute without disabling the Master switch shared with Reader Settings. Explicit saved Master-off choices remain respected. Header and app regression coverage verifies the distinction.

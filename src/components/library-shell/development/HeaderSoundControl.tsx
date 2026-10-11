@@ -25,7 +25,7 @@ const HOLD_MS = 500;
  * (phones and tablets) the header floats it just above the bar's right end,
  * the Reader's ghost note outside the Reader (`WorkspaceHeader`'s `sound`).
  * A tap or click mutes and unmutes all of its sound (the reader mixer's
- * master switch, the same as the Reader's note). Hovering it with a mouse,
+ * mute state, without disabling Master, just like the Reader's note). Hovering it with a mouse,
  * holding it with a finger, or ArrowUp/ArrowDown from the keyboard opens a
  * Music volume slider, the Soundscapes level, right there; it closes when
  * the mouse leaves, on a tap outside, or on Escape. Both are the reader's
@@ -92,7 +92,7 @@ export function HeaderSoundControl({ mixer: mixerProp }: { mixer?: ReaderMixer }
   return <div ref={root} className="header-sound-control" data-open={open}
     onPointerEnter={enter} onPointerLeave={leave} onKeyDown={keys}
     onBlur={event => { if (!root.current?.contains(event.relatedTarget as Node | null)) setOpen(false); }}>
-    <ReaderMixerNote mixer={mixer} labels={HEADER_SOUND_LABELS} longPressMs={HOLD_MS}
+    <ReaderMixerNote mixer={mixer} muteMode="soundtrack-mute" labels={HEADER_SOUND_LABELS} longPressMs={HOLD_MS}
       onOpenSettings={() => setOpen(true)} className="header-sound-control-note" />
     {open && <div className="header-sound-control-popover" role="group" aria-label="Music volume">
       <label htmlFor={sliderId} className="header-sound-control-label">

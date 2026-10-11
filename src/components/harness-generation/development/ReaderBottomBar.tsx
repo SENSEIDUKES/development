@@ -76,7 +76,6 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
   const PlaybackIcon = playback?.icon;
   return <div ref={barRef} data-testid="reader-bottom-bar" role="region" aria-label="Reader controls"
     className="reader-glass reader-glass-bar sticky bottom-0 z-20 -mx-4 mt-8 border-t border-white/10 bg-neutral-950/90 px-[max(0.5rem,env(safe-area-inset-left))] pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur sm:px-[max(1rem,env(safe-area-inset-left))]">
-    {note && <div className="pointer-events-none absolute bottom-full right-4 mb-2 [&>*]:pointer-events-auto" data-testid="story-audio-note">{note}</div>}
     {listening && offscreen && <div className="absolute bottom-full left-4 mb-2" data-testid="back-to-narration-float">
       <IconButton label="Back to narration" icon={LocateFixed} onClick={onBackToNarration} />
     </div>}
@@ -153,10 +152,13 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
             <ChevronRight className="h-4 w-4" aria-hidden />
           </button>
         </nav>
+          <div className="relative shrink-0">
+          {note && <div className="pointer-events-none absolute bottom-full left-1/2 mb-4 -translate-x-1/2 [&>*]:pointer-events-auto" data-testid="story-audio-note">{note}</div>}
           <button type="button" aria-label="Open Fate" title="Fate: decide what happens next" onClick={onOpenFate}
             className={secondary}>
             <Zap className="h-6 w-6" aria-hidden />
           </button>
+          </div>
         </div>
       </div>
     </div>

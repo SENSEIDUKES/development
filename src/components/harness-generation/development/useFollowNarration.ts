@@ -13,7 +13,7 @@ const highlightKey = (highlight?: NarrationHighlight) =>
   !highlight ? '' : highlight === 'title' ? 'title' : `${highlight.blockId}:${highlight.startOffset}-${highlight.endOffset}`;
 
 /** The element whose scrolling moves the chapter: its nearest scrolling parent, or the page. */
-const scrollerFor = (element: HTMLElement): HTMLElement | undefined => {
+export const scrollerFor = (element: HTMLElement): HTMLElement | undefined => {
   for (let node = element.parentElement; node && node !== document.body; node = node.parentElement) {
     const { overflowY } = getComputedStyle(node);
     if ((overflowY === 'auto' || overflowY === 'scroll') && node.scrollHeight > node.clientHeight) return node;

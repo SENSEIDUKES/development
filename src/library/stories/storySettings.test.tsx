@@ -235,14 +235,13 @@ describe('Cover art on Story View', () => {
     const choices = () => [...document.querySelectorAll<HTMLButtonElement>('.story-cover-choice')];
     expect(choices().map(choice => choice.querySelector('img')!.getAttribute('src'))).toEqual(['blob:a', 'blob:b', 'blob:c']);
     expect(choices()[0].getAttribute('aria-pressed')).toBe('true');
-    // The chosen cover is shown large, with the one download in the picker.
+    // The chosen cover is shown large; every cover made can be downloaded, chosen or not.
     const stage = () => document.querySelector('[data-testid="story-cover-stage"]')!;
     expect(stage().querySelector('img')!.getAttribute('src')).toBe('blob:a');
-    expect(document.querySelectorAll('.story-cover-picker a[download]')).toHaveLength(1);
+    expect([...document.querySelectorAll('.story-cover-choice-download')].map(link => link.getAttribute('href'))).toEqual(['blob:a', 'blob:b', 'blob:c']);
     await click(choices()[1], 'Cover 2');
     expect(choices()[1].getAttribute('aria-pressed')).toBe('true');
     expect(stage().querySelector('img')!.getAttribute('src')).toBe('blob:b');
-    expect(stage().querySelector('a[download]')!.getAttribute('href')).toBe('blob:b');
     expect(stage().textContent).toContain('Cover 2 of 3');
     await click([...document.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent === 'Use this cover'), 'Use this cover');
 

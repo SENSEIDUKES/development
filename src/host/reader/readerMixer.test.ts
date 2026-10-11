@@ -4,7 +4,7 @@ import { createReaderMixer } from '@seihouse/audio-player';
 import type { ReaderPreferenceStorage } from '@seihouse/sen/reader-runtime';
 import { installAudioMediaStubs } from '../../test-utils/renderWithDevAudio';
 import { DEFAULT_ATMOSPHERE_ID, SEN_ATMOSPHERES } from '../media/atmosphereCatalog';
-import { createHostReaderMixer, hostReaderMixerOptions, keepPlayingWhileAway, READER_MIXER_PREFERENCE_KEY } from './readerMixer';
+import { createHostReaderMixer, hostReaderMixerOptions, keepPlayingWhileAway, READER_AUDIO_ON_KEY, READER_MIXER_PREFERENCE_KEY } from './readerMixer';
 
 const memory = (initial?: string) => {
   const values = new Map<string, string>(initial === undefined ? [] : [[READER_MIXER_PREFERENCE_KEY, initial]]);
@@ -24,6 +24,9 @@ describe('The host reader mixer', () => {
     const state = mixer.getState();
     expect(state.preferences.atmosphereId).toBe(DEFAULT_ATMOSPHERE_ID);
     expect(state.preferences.masterEnabled).toBe(true);
+    // The owner's mix: Master and Sound Cues full, Soundscapes 25%, Atmosphere 60%, all on.
+    expect(state.preferences).toMatchObject({ masterLevel: 1, masterMuted: false, layers: {
+      soundscapes: { enabled: true, level: 0.25 }, atmosphere: { enabled: true, level: 0.6 }, cues: { enabled: true, level: 1 } } });
     expect(state.atmosphereOptions.map(option => option.id)).toEqual(SEN_ATMOSPHERES.map(option => option.id));
     mixer.dispose();
   });
@@ -45,6 +48,24 @@ describe('The host reader mixer', () => {
     restored.setMasterMuted(false);
     expect(restored.getPreferences()).toMatchObject({ masterLevel: 0.43, masterEnabled: false });
     restored.dispose();
+  });
+
+  it('turns sound on once for a mix saved off by an earlier player, then keeps the reader\'s own choice', () => {
+    const old = { version: 3, masterEnabled: false, masterMuted: true, masterLevel: 0, masterRestoreLevel: 0.6,
+      layers: { soundscapes: { enabled: false, level: 0.4 }, atmosphere: { enabled: false, level: 0.2 }, cues: { enabled: false, level: 0.5 } } };
+    const { values, storage } = memory(JSON.stringify(old));
+    const first = createHostReaderMixer(storage);
+    expect(first.getPreferences()).toMatchObject({ masterEnabled: true, masterMuted: false, masterLevel: 0.6,
+      layers: { soundscapes: { enabled: true, level: 0.4 }, atmosphere: { enabled: true, level: 0.2 }, cues: { enabled: false } } });
+    expect(values.get(READER_AUDIO_ON_KEY)).toBe('1');
+    first.setMasterEnabled(false);
+    vi.advanceTimersByTime(400);
+    first.dispose();
+
+    // Off by the reader's own hand stays off.
+    const later = createHostReaderMixer(storage);
+    expect(later.getPreferences().masterEnabled).toBe(false);
+    later.dispose();
   });
 
   it('loops atmospheres as their files are made, with no overlap at the loop point', () => {

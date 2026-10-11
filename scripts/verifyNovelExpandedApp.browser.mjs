@@ -750,6 +750,8 @@ async function walk(browser, viewport, sample) {
   await page.locator('[data-testid="generation-overlay"]').waitFor();
   await page.locator('.story-cover-choice').nth(2).waitFor({ timeout: 15_000 });
   await page.waitForTimeout(1200);
+  await page.getByTestId('story-cover-stage').waitFor();
+  await page.waitForTimeout(1_000);
   await shot('4f-cover-picker');
   check(await page.evaluate(() => document.documentElement.scrollWidth) <= viewport.width, 'The cover picker must never scroll sideways.');
   await page.locator('.story-cover-choice').nth(1).click();
@@ -764,6 +766,7 @@ async function walk(browser, viewport, sample) {
   check((await infoCover.getAttribute('src'))?.startsWith('blob:'), 'World Info should wear the new cover.');
   check(await infoCover.evaluate(image => image.complete && image.naturalWidth > 0), 'The cover should load on World Info.');
   check(await page.locator('[data-world-card="info"] [aria-label="Manifest a new cover"]').count() === 1, 'A kept cover should keep a small Manifest in its corner.');
+  check(await page.locator('[data-world-card="info"] [data-testid="story-cover"] a[download]').count() === 0, 'A kept cover should carry no download; the Codex recovers covers.');
   await page.locator('#novel-expanded-main').evaluate(main => main.scrollTo({ top: 0 }));
   await shot('4g-story-view-cover');
   // Export story saves the whole story as one file, with what the writer was given for each chapter.

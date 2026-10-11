@@ -6,6 +6,15 @@ import { DEFAULT_ATMOSPHERE_ID, SEN_ATMOSPHERES } from '../media/atmosphereCatal
 export const READER_MIXER_PREFERENCE_KEY = 'audio-mixer';
 
 /**
+ * Marks a device whose saved mix has had sound turned on once. An earlier audio
+ * player shipped with Master off, and the mix is saved whole on any change, so
+ * devices from then kept "off" as if the reader had chosen it. The first visit
+ * after this marker arrived turns Master, its level and the music back on; from
+ * then on the reader's own choices are kept as saved.
+ */
+export const READER_AUDIO_ON_KEY = 'audio-mixer-on-v1';
+
+/**
  * A host's one reader mixer: the SEIHouse audio player's Soundscapes,
  * Atmosphere, Sound Cues and Voice layers, with the SEN Atmospheres catalog
  * and the reader's saved mix. Created once, outside React, so a page's
@@ -64,6 +73,24 @@ export const HOST_LOOP_CROSSFADE_MS = 0;
 export const HOST_SOUNDSCAPE_PLAYS = 1;
 export const HOST_SOUNDSCAPE_END_FADE_MS = 3_000;
 
+/**
+ * A new reader's mix, the owner's chosen balance: all on, Master and Sound Cues
+ * full, Soundscapes at a quarter under a 60% Atmosphere of gentle rain.
+ */
+export const HOST_DEFAULT_MIX = {
+  ...DEFAULT_READER_MIXER_PREFERENCES,
+  masterEnabled: true,
+  masterMuted: false,
+  masterLevel: 1,
+  layers: {
+    ...DEFAULT_READER_MIXER_PREFERENCES.layers,
+    soundscapes: { enabled: true, level: 0.25 },
+    atmosphere: { enabled: true, level: 0.6 },
+    cues: { enabled: true, level: 1 },
+  },
+  atmosphereId: DEFAULT_ATMOSPHERE_ID,
+};
+
 /** The host mixer's settings: the SEN Atmospheres catalog, the reader's saved mix, loops as the files are made, and pieces of music played whole. */
 export function hostReaderMixerOptions(storage: ReaderPreferenceStorage): ReaderMixerOptions {
   let saved: ReaderMixerPreferencesInput | null = null;
@@ -74,6 +101,20 @@ export function hostReaderMixerOptions(storage: ReaderPreferenceStorage): Reader
   } catch {
     // A damaged save starts from the default mix; the next change replaces it.
   }
+  if (!storage.read(READER_AUDIO_ON_KEY)) {
+    if (saved) {
+      const layers = saved.layers ?? {};
+      saved = {
+        ...saved,
+        masterEnabled: true,
+        masterMuted: false,
+        ...(saved.masterLevel === 0 ? { masterLevel: saved.masterRestoreLevel || 1 } : {}),
+        layers: { ...layers, soundscapes: { ...layers.soundscapes, enabled: true }, atmosphere: { ...layers.atmosphere, enabled: true } },
+      };
+      storage.write(READER_MIXER_PREFERENCE_KEY, JSON.stringify(saved));
+    }
+    storage.write(READER_AUDIO_ON_KEY, '1');
+  }
   return {
     atmospheres: SEN_ATMOSPHERES,
     loopCrossfadeMs: HOST_LOOP_CROSSFADE_MS,
@@ -81,7 +122,7 @@ export function hostReaderMixerOptions(storage: ReaderPreferenceStorage): Reader
     soundscapeRestFadeMs: HOST_SOUNDSCAPE_END_FADE_MS,
     // Leaving the page never stops the sound (see keepPlayingWhileAway).
     pauseWhenHidden: false,
-    defaultPreferences: { ...DEFAULT_READER_MIXER_PREFERENCES, masterEnabled: true, atmosphereId: DEFAULT_ATMOSPHERE_ID },
+    defaultPreferences: HOST_DEFAULT_MIX,
     initialPreferences: saved,
     onPreferencesChange: preferences => storage.write(READER_MIXER_PREFERENCE_KEY, JSON.stringify(preferences)),
   };

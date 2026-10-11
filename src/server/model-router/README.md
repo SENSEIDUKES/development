@@ -103,6 +103,12 @@ are unchanged.
   Blueprint model. A Blueprint has a chapter's deadline (170 seconds), says
   so when the model was still writing at it, and logs
   `[story-seed-blueprint] <model> answered in <N>s`.
+- 2026-10-11 — Added Claude Haiku 5.5 (`openrouter/anthropic/claude-haiku-5.5`)
+  to Chapters → OpenRouter for chapter-generation testing. It sends low
+  reasoning by default like the other models (levels low, medium, high). The
+  ID follows OpenRouter's dotted naming and was not checked against their live
+  catalog from the build sandbox. Every other model, saved choices and the
+  default are unchanged.
 - 2026-10-04 — Chapter generation restored for the new models. GLM 5.3 Flash,
   Qwen 3.8 Flash and DeepSeek V4.1 Flash, on their own reasoning defaults, were
   still writing at the HARNESS's 170-second deadline; the OpenRouter adapter

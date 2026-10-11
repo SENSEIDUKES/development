@@ -153,6 +153,7 @@ describe('Model Router reasoning levels', () => {
       ['openrouter/qwen/qwen3.8-flash', 'none'],
       ['openrouter/deepseek/deepseek-v4.1-flash', 'none'],
       ['openrouter/google/gemini-3.8-flash', 'low'],
+      ['openrouter/anthropic/claude-haiku-5.5', 'low'],
     ]);
     // No model is sent more reasoning than low unless the reader chooses it.
     const order = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'];

@@ -99,6 +99,10 @@ export const CHAPTER_MODELS: readonly RoutedModel[] = [
   { id: 'openrouter/arcee-ai/trinity-large-thinking', label: 'Trinity Large Thinking · OpenRouter', provider: 'openrouter', stage: 'current' },
   { id: 'openrouter/deepseek/deepseek-v4.1-flash', label: 'DeepSeek V4.1 Flash · OpenRouter', provider: 'openrouter', stage: 'current', reasoning: { levels: OPEN_MODEL_LEVELS, defaultLevel: 'none', sendDefault: true } },
   { id: 'openrouter/google/gemini-3.8-flash', label: 'Gemini 3.8 Flash · OpenRouter', provider: 'openrouter', stage: 'current', reasoning: { levels: GEMINI_THREE_LEVELS, defaultLevel: 'low', sendDefault: true } },
+  // Haiku 5.5 thinks by default (Anthropic's default effort is medium), so low is
+  // sent like the other models. Offered for chapter testing; not yet timed against
+  // the chapter deadline.
+  { id: 'openrouter/anthropic/claude-haiku-5.5', label: 'Claude Haiku 5.5 · OpenRouter', provider: 'openrouter', stage: 'current', reasoning: { levels: ALWAYS_REASONING_LEVELS, defaultLevel: 'low', sendDefault: true } },
 ];
 
 /**

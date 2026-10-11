@@ -3,12 +3,14 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { HarnessSkillManifest, HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
 import type { ReaderPreferenceStorage } from '@seihouse/sen/reader-runtime';
 import { installOfficialCapaSkillsInMemory } from '../../../host/generation/capa/officialCapaSkills';
 import { installAudioMediaStubs, renderWithDevAudio } from '../../../test-utils/renderWithDevAudio';
 import { AppReader } from './AppReader';
+import { ReaderMixerProvider, type ReaderMixer } from '@seihouse/audio-player';
+import { createHostReaderMixer } from '../../../host/reader/readerMixer';
 import { readerScenes, type ReaderPage, type ReaderSceneId } from './readerScenes';
 import { loadSampleStory, startSceneRun } from './sampleStory';
 
@@ -18,6 +20,7 @@ let sample: HarnessWorkspaceState;
 let skills: HarnessSkillManifest[];
 let container: HTMLDivElement;
 let root: Root;
+let audioMixer: ReaderMixer | undefined;
 
 const memoryPreferences = (): ReaderPreferenceStorage => {
   const values = new Map<string, string>();
@@ -31,11 +34,18 @@ beforeAll(async () => {
 });
 beforeEach(() => {
   installAudioMediaStubs();
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true, writable: true,
+    value: vi.fn().mockImplementation((media: string) => ({
+      matches: false, media, addEventListener: vi.fn(), removeEventListener: vi.fn(),
+    })),
+  });
+  vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
   container = document.createElement('div');
   document.body.appendChild(container);
   root = createRoot(container);
 });
-afterEach(() => { act(() => root.unmount()); container.remove(); });
+afterEach(() => { act(() => root.unmount()); audioMixer?.dispose(); audioMixer = undefined; container.remove(); vi.unstubAllGlobals(); });
 
 const flush = async (ms = 0) => { await act(async () => { await new Promise(resolve => setTimeout(resolve, ms)); }); };
 const waitFor = async (found: () => unknown, label: string) => {
@@ -60,6 +70,8 @@ describe('the Reader Chamber workspace: the app\'s Reader', { timeout: 30_000 },
     await waitFor(() => chapterTitle(1), 'Chapter 1 on screen');
     expect(chapterTitle(1)).toBe('Rust and Fractures');
     expect(button('Next Chapter')).toBeTruthy();
+    const topBar = container.querySelector('[data-testid="reader-top-bar"]')!;
+    expect(topBar.querySelector('[data-testid="reader-companion"] button[aria-label="Show Quill actions"]')).toBeTruthy();
     expect(container.querySelectorAll('[data-chapter-number="1"] p[data-sen-text-block], [data-chapter-number="1"] [data-sen-text-block]').length).toBeGreaterThanOrEqual(50);
   });
 
@@ -90,6 +102,23 @@ describe('the Reader Chamber workspace: the app\'s Reader', { timeout: 30_000 },
     await render('middle', { id: 'codex', request: 1 });
     await waitFor(() => document.querySelector('[data-codex-page="holdings"]'), 'the Codex page');
     expect(document.querySelector('[data-testid="reader-codex-page"] h1')!.textContent).toBe('Codex');
+  });
+
+  it('inspects the real audio note in on, muted and settings states', async () => {
+    const run = startSceneRun(sample, readerScenes(8)[0], 40);
+    const preferences = memoryPreferences();
+    const mixer = createHostReaderMixer(preferences);
+    audioMixer = mixer;
+    const show = async (id: 'on' | 'muted' | 'settings', request: number) => {
+      await act(async () => root.render(renderWithDevAudio(<ReaderMixerProvider mixer={mixer}><AppReader run={run} skills={skills} readerPreferences={preferences} audio={{ id, request }} /></ReaderMixerProvider>)));
+    };
+    await show('muted', 1);
+    await waitFor(() => button('Unmute story audio'), 'muted note');
+    await show('on', 2);
+    await waitFor(() => button('Mute story audio'), 'sound on note');
+    await show('settings', 3);
+    await waitFor(() => document.querySelector('[role="dialog"]'), 'Audio settings panel');
+    expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Audio');
   });
 
   it('keeps what happened in the scene when the Reader opens again, as when the Workshop view changes', async () => {

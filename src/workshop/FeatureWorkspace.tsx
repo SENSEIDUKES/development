@@ -14,7 +14,7 @@ import { LibraryButton, LibraryPanel } from '@seihouse/library-ui';
 import { getWorkshopVersionLabel, type WorkshopEntry } from './manifest';
 
 export type WorkspaceView = 'reference' | 'development' | 'compare';
-export type WorkshopControlSectionId = 'pages' | 'states' | 'scenes' | 'effects' | 'advanced';
+export type WorkshopControlSectionId = 'pages' | 'states' | 'scenes' | 'effects' | 'audio' | 'advanced';
 
 export interface WorkshopControlSection {
   id: WorkshopControlSectionId;
@@ -53,6 +53,7 @@ const WORKSHOP_CONTROL_SECTIONS = [
   { id: 'states', label: 'States', icon: Activity },
   { id: 'scenes', label: 'Scenes', icon: Clapperboard },
   { id: 'effects', label: 'Effects', icon: Sparkles },
+  { id: 'audio', label: 'Audio', icon: SlidersHorizontal },
   { id: 'advanced', label: 'Advanced', icon: SlidersHorizontal },
 ] as const satisfies readonly {
   id: WorkshopControlSectionId;

@@ -380,7 +380,7 @@ export function useReadAloud({
 
   const skip = useCallback((direction: 1 | -1) => {
     const state = live.current;
-    if (state.status === 'idle') return;
+    if (!engine.supported) return;
     const lines = scriptFor().lines;
     if (!lines.length) return;
     let target = Math.min(state.index, lines.length);
@@ -410,7 +410,7 @@ export function useReadAloud({
     state.index = target;
     state.status = 'paused';
     publish();
-  }, [halt, publish, scriptFor, speakAt]);
+  }, [engine, halt, publish, scriptFor, speakAt]);
 
   const updateVoices = useCallback((role: ReadAloudRole | undefined, voice: ReadAloudVoice | undefined) => {
     setPrefs(current => {

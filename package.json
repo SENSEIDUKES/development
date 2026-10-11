@@ -48,7 +48,7 @@
   },
   "dependencies": {
     "@google/genai": "^2.16.0",
-    "@seihouse/audio-player": "file:vendor/seihouse-audio-player-4.0.0-master-volume.tgz",
+    "@seihouse/audio-player": "file:vendor/seihouse-audio-player-4.0.0-steady-pitch.tgz",
     "@seihouse/library-ui": "file:vendor/seihouse-library-ui-0.10.0.tgz",
     "@seihouse/living-titles": "file:vendor/seihouse-living-titles-0.1.1.tgz",
     "@seihouse/seireader": "file:vendor/seihouse-seireader-0.39.0.tgz",

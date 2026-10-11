@@ -512,9 +512,9 @@ async function walk(browser, viewport, sample) {
   check(await settingsMaster.inputValue() === '37', 'Settings should reflect the quick Master fader.');
   await settingsMaster.press('Home');
   for (let step = 0; step < 62; step++) await settingsMaster.press('ArrowRight');
-  await audio.getByRole('switch', { name: 'Master', exact: true }).click();
+  await audio.getByRole('switch', { name: 'Master', exact: true }).press('Space');
   check(await page.getByTestId('story-audio-note').count() === 0, 'Only Settings Master off hides the note.');
-  await audio.getByRole('switch', { name: 'Master', exact: true }).click();
+  await audio.getByRole('switch', { name: 'Master', exact: true }).press('Space');
   await visibleButton('Close Reader Settings').click();
   await page.getByTestId('story-audio-note').getByRole('button').click({ button: 'right' });
   await quickMaster.waitFor();

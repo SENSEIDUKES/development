@@ -11,6 +11,8 @@ export const HEADER_SOUND_LABELS: Partial<ReaderMixerNoteLabels> = {
   soundOn: 'Sound on',
   muted: 'Sound muted',
   blocked: 'Sound needs a tap',
+  retry: 'Retry sound',
+  failed: 'Sound could not play',
   sleepStopped: 'Sound stopped by the sleep timer',
 };
 

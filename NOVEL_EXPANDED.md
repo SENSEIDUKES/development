@@ -675,20 +675,33 @@ When a session asks "what now?", start here:
    any code: the tag, its teaching, its rules, its home, and what the Codex
    shows. The [principles](./src/components/harness-generation/HARNESS_PRINCIPLES.md#translation-across-media-the-world-record)
    say what it must capture.
-3. **Either track's next piece** below, when the owner asks for it.
+3. **Agent:** right-to-left reading in the Reader (product track, item 1).
+4. **Either track's next piece** below, when the owner asks for it.
 
 ### The product track
 
-1. **Branching and Blueprint change warnings** ([its direction](#the-world-blueprint)):
+1. **Read in every script, starting with right-to-left.** The target is
+   roughly 60 languages, and the Reader today lays out only left-to-right
+   text. A story in Arabic, Hebrew, Persian or Urdu must read right to left:
+   the text, its alignment, the lit sentence during Listen, Sound Cue
+   highlights, and the Reader's own controls mirrored where a right-to-left
+   reader expects them (the chapter switcher's previous and next swap sides).
+   The direction comes from the story's language, never a reader's toggle.
+   Mixed text (an English name or a number inside Arabic) must keep its own
+   order. Each script also needs a reading font that covers it (where the
+   SEIHouse fonts do not, a fallback chosen on purpose). Vertical Japanese and Chinese text is a later,
+   separate step. Verified with a real right-to-left chapter in the Reader
+   Chamber workspace, on a phone and a laptop.
+2. **Branching and Blueprint change warnings** ([its direction](#the-world-blueprint)):
    a reader takes a published creator's Blueprint, keeps the Story Seed, and makes
    their own version; every Blueprint change carries a hard warning about what it
    could cause.
-2. **Refine the creation-to-reading interaction** in the Workshop: Story Seed → Story
+3. **Refine the creation-to-reading interaction** in the Workshop: Story Seed → Story
    View → Reader Chamber, including the manifestation sequence and World Cards. The
    new path (Story Seed → HARNESS → new reader) is connected; what remains is how it
    looks and feels. The Reader itself is worked on in the Reader Chamber workspace
    (`?preview=reader-chamber`), which renders the app's own Reader.
-3. **Grow the NovelExpanded app** (`/app/`) piece by piece, until it is the
+4. **Grow the NovelExpanded app** (`/app/`) piece by piece, until it is the
    whole app the owner wants. Piece 1, the core application spine at its own
    address with a check that fails the build if the app imports an old system,
    is built; so are piece 2, the Library Shell around it, piece 3, Profile
@@ -703,7 +716,7 @@ When a session asks "what now?", start here:
    (accounts, server-side storage, a kept economy), which completes it. The
    app's host pieces (`src/host/`) are where the device and practice stand-ins
    live, so that is where the database's real ones replace them.
-4. **Cinematic scrolling**, the Reader's default way to read: the page moves
+5. **Cinematic scrolling**, the Reader's default way to read: the page moves
    with Listen's voice (its playhead is ready for it), and later Sound Cues and
    manifestations fire as the voice reaches them. AI narration (generated once
    per language, stored and shared) comes after, on the same script.
@@ -761,11 +774,37 @@ Familiar decides how far the fixer goes, and what to do with the contradictions
 it records as too big to fix quietly.
 
 **Stage E5: translation across media.** The first other medium is a
-**sequential-art chapter body** in the Reader's frame (`ReaderChapterBody`),
-drawn from the scene and appearance records, with Sound Cues and speakers
-pinned to panels the way they are pinned to sentences today. Manga Studio, and
-later animation and game exports, are studio work on the same record; none of
-them adds anything medium-specific to the story itself.
+**sequential-art view** of the Reader. One Reader serves both prose and art,
+sharing its core (the story and its chapters, the reader's place, Next Chapter
+and Fate, the Codex, the music and atmosphere, Sound Cues and speakers, the
+settings storage), while each view owns its own layout: prose keeps its bars,
+text settings and cinematic scroll; art takes the whole screen, hides its
+controls until a tap in the middle, turns pages with the thumb, and goes
+straight on to the next chapter.
+
+1. **The thumb test, before anything is connected.** In the Reader Chamber
+   workspace, a sequential-art scene loads about three chapters of panel
+   images for Sundered Heavens (made with Manga Studio as it is today, by hand,
+   or placeholders) as the chapter body (`ReaderChapterBody`), in two modes:
+   **page flip** (manga, right to left) and **vertical strip** (manhwa and
+   manhua). Controls hide until a tap; a few Sound Cues and the chapter's
+   atmosphere are pinned to panels by hand. No HARNESS or Codex change. The
+   owner reads it on a phone, three chapters straight: can they go chapter to
+   chapter without thinking, do the controls stay out of the way, does a Sound
+   Cue on a panel feel right, do the Codex and Fate feel natural from the art?
+   If only the layout needed changing, the one-Reader design is confirmed; if
+   a shared part feels wrong (Fate interrupting the flow, for example), that
+   part splits, and the story, audio and Codex stay shared underneath.
+2. **The view, made real:** the frame lets a chapter body own its controls and
+   gestures, not only its content. Display settings (direction, fit, page or
+   strip) take the place of Text settings; Sound Cues fire when their panel
+   comes on screen; Listen reads the panels' dialogue or stays off.
+3. **Art from the record:** panels drawn from the scene and appearance records
+   (Stage E1), with Sound Cues and speakers pinned to panels the way they are
+   pinned to sentences today.
+
+Manga Studio, and later animation and game exports, are studio work on the
+same record; none of them adds anything medium-specific to the story itself.
 
 ## Names
 

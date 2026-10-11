@@ -429,11 +429,18 @@ describe('Read Aloud in the HARNESS Reader', { timeout: 20_000 }, () => {
     const { storage } = memory();
     await mount(<Host controller={controller} storyId={storyId} readerPreferences={storage} readAloudVoices={PICKS} />);
 
+    expect(buttonBy(byLabel('Previous sentence'))!.disabled).toBe(false);
+    expect(buttonBy(byLabel('Next sentence'))!.disabled).toBe(false);
+    expect(container.querySelector('[aria-label="Stop"]')).toBeNull();
     await click(button => button.textContent?.trim() === 'Listen', 'Listen');
     expect(lastSpoken().text).toBe('Chapter 1. Low Tide');
     expect(lastSpoken().voice?.name).toBe('Daniel');
     expect(container.querySelector('h1[data-speaking]')!.textContent).toBe('Low Tide');
     expect(container.querySelector('[data-testid="read-aloud-speaker"]')!.textContent).toBe('Narrator');
+    const controls = container.querySelector('[data-testid="reader-controls-row"]')!;
+    expect(container.querySelector('[data-testid="read-aloud-strip"]')).toBeNull();
+    expect([...controls.querySelectorAll('button')].map(button => button.getAttribute('aria-label')))
+      .toEqual(['Pause', 'Previous sentence', 'Next sentence', 'Open Codex', 'Previous Chapter', 'Next Chapter', 'Open Fate']);
 
     await next();
     expect(lastSpoken().text).toBe('The tide pulled back from the drowned gate.');
@@ -451,9 +458,10 @@ describe('Read Aloud in the HARNESS Reader', { timeout: 20_000 }, () => {
 
     await click(byLabel('Pause'), 'Pause');
     expect(container.querySelector('[data-testid="read-aloud-player"]')!.getAttribute('data-status')).toBe('paused');
-    await click(byLabel('Stop'), 'Stop');
-    expect(container.querySelector('[data-overlay-id="read-aloud"]')).toBeNull();
-    expect(buttonBy(button => button.textContent?.trim() === 'Listen')).toBeTruthy();
+    await click(byLabel('Resume'), 'Resume');
+    expect(container.querySelector('[data-testid="read-aloud-player"]')!.getAttribute('data-status')).toBe('playing');
+    expect(controls.querySelector('[aria-label="Stop"]')).toBeNull();
+    expect(controls.querySelector('[aria-label="Previous sentence"]')).toBeTruthy();
   });
 
   it('Reader Settings holds Text, then Narration: three voices with previews and the speed, saved on the device', async () => {
@@ -762,14 +770,14 @@ describe('The Reader frame and its chapter body', { timeout: 20_000 }, () => {
     expect(article.className).toContain('max-w-[34em]');
     expect(article.querySelector<HTMLElement>('h1')!.style.fontFamily).toBe('"House Soft", serif');
 
-    // The top bar: Back, the story and chapter, (the host's companion,) Reader Settings. The bottom bar: the Codex,
-    // Listen in the middle (none here: this browser has no speech), Fate and the chapters.
+    // The bottom bar mirrors playback and chapter controls around Codex.
     const bar = container.querySelector<HTMLElement>('[data-testid="reader-top-bar"]')!;
     expect(bar.textContent).toContain('Chapter 1');
-    expect([...bar.querySelectorAll('button')].map(button => button.getAttribute('aria-label'))).toEqual(['Back', 'Reader Settings']);
+    expect([...bar.querySelectorAll('button')].map(button => button.getAttribute('aria-label')))
+      .toEqual(['Back', 'Reader Settings']);
     const bottom = container.querySelector<HTMLElement>('[data-testid="reader-bottom-bar"]')!;
     expect([...bottom.querySelectorAll('button')].map(button => button.getAttribute('aria-label')))
-      .toEqual(['Open Codex', 'Open Fate', 'Previous Chapter', 'Next Chapter: Write Chapter 2']);
+      .toEqual(['Previous sentence', 'Next sentence', 'Open Codex', 'Previous Chapter', 'Next Chapter: Write Chapter 2', 'Open Fate']);
     expect(bottom.querySelector('[data-testid="reader-chapter-position"]')!.textContent).toBe('1/1');
 
     await click(byLabel('Reader Settings'), 'Reader Settings');

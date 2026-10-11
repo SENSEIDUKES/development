@@ -7,9 +7,9 @@ const pill = 'inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center
  * The Reader frame's top bar: Back (exit), the story and chapter, the host's own
  * companion (the Library's Familiar), and Reader Settings: settings and what
  * the reader is reading. It stays at the top of the screen while the chapter
- * scrolls and fits one row on the narrowest phones; Back shows its word from
- * small tablets up. What the reader acts with (the Codex, Listen, Fate and the
- * chapters) is in the bottom bar.
+ * scrolls. Chapter navigation lives between Codex and Fate in the bottom bar.
+ * Codex, Listen and Fate stay
+ * in the bottom bar.
  */
 export function ReaderTopBar({ storyTitle, place, onBack, onOpenSettings, companion, barRef }: {
   storyTitle: string;

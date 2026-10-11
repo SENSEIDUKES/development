@@ -91,6 +91,20 @@ describe('useReadAloud', () => {
     expect(lastSpoken().voice?.name).toBe('Daniel');
   });
 
+  it('can seek before listening without starting speech, then plays the selected sentence', () => {
+    mount();
+    act(() => player.skip(1));
+    expect(player.status).toBe('paused');
+    expect(player.line?.text).toBe('The tide went out.');
+    expect(texts()).toEqual([]);
+    act(() => player.skip(-1));
+    expect(player.line?.key).toBe('title');
+    expect(texts()).toEqual([]);
+    act(() => player.resume());
+    expect(lastSpoken().text).toBe('Chapter 1. Low Tide');
+    expect(player.status).toBe('playing');
+  });
+
   it('clears the browser\'s queue before every line and waits production\'s 50 ms after each line ends', () => {
     mount();
     act(() => player.play());

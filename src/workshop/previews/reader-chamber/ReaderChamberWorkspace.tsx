@@ -57,6 +57,7 @@ export function ReaderChamberWorkspace() {
   /** Bumped by every scene or story choice, so the Reader starts that scene afresh. */
   const [sceneRun, setSceneRun] = useState(0);
   const [pageRequest, setPageRequest] = useState<{ id: ReaderPage; request: number }>();
+  const [audioRequest, setAudioRequest] = useState<{ id: 'on' | 'muted' | 'settings'; request: number }>();
 
   useEffect(() => {
     let active = true;
@@ -179,6 +180,20 @@ export function ReaderChamberWorkspace() {
   };
   const developmentSections = [
     {
+      id: 'audio' as const,
+      description: 'The floating story audio symbol, using the Reader’s real soundtrack. These controls can play sound and change Workshop audio preferences.',
+      content: <section className="space-y-3">
+        {sectionHeading('Story audio symbol')}
+        <div className="flex flex-wrap gap-2">
+          {([{ id: 'on', label: 'Sound on' }, { id: 'muted', label: 'Muted' }, { id: 'settings', label: 'Audio settings' }] as const).map(option =>
+            <button key={option.id} type="button" className={`${buttonBase} ${buttonTone(false)} px-3 py-2`}
+              onClick={() => setAudioRequest(current => ({ id: option.id, request: (current?.request ?? 0) + 1 }))}>{option.label}</button>)}
+        </div>
+        <p className="text-xs leading-relaxed text-white/60">Tap the note to mute or unmute story audio. Hold it for Audio settings; right-click opens the same settings. Narration has its own Play button.</p>
+        <p className="text-xs leading-relaxed text-white/60">In Audio settings, try the master and layer levels, presets and sleep timer. The note also reports when playback needs a tap or the sleep timer has stopped audio; those states depend on the browser and timer.</p>
+      </section>,
+    },
+    {
       id: 'states' as const,
       description: `Where the reader is in ${storyTitle}. Each scene starts from a fresh copy of the story. Writing replays the reply each chapter was written with (about ${Math.round(REPLAY_WRITING_MS / 1000)} seconds); no model is called.`,
       content: (
@@ -293,6 +308,7 @@ export function ReaderChamberWorkspace() {
         skills={skills}
         readerPreferences={readerPreferences}
         page={pageRequest}
+        audio={audioRequest}
       />
     );
   };

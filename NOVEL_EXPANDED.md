@@ -350,10 +350,23 @@ Update it whenever it changes.
     **SEIHouse Display** cut (Ink by default; Soft, Edge and Wide are there to
     test), with the earlier Noto Serif and Alegreya still to choose. A slim top
     bar (Back, the story and chapter, the reader's **Familiar**, Reader
-    Settings) stays at the top while reading, and a **bottom bar** stays at the
-    bottom with what the reader acts with: the Codex, **Listen** as a large
-    button in the middle (as in the first Reader), Fate, and the chapters
-    (previous, "5/10", next). The prose keeps about
+    Settings) stays
+    at the top while reading, and a **bottom bar** stays at the
+    bottom with what the reader acts with: **Listen** and its skip controls
+    on the left, **Codex** as the large button in the middle, then the
+    **chapter switcher** — previous, "5/10", next — and Fate on the right.
+    Play and Fate anchor the outer edges; Codex sits in the middle. Each pill
+    centers in the space between its neighboring main actions at every screen
+    size. Play and Fate are gray; Codex is cyan.
+    Both control pills are smaller than the main actions. During Listen,
+    sentence navigation sits to the right of that same play/pause button,
+    with Back to narration floating above the bar on the left only when the
+    narrated sentence is out of view (the audio note floats on the right);
+    playback adds no second bottom row.
+    The skip buttons stay visible before playback starts and can choose a
+    sentence silently. The left playback button alone plays, pauses and resumes;
+    there is no separate Stop button.
+    The prose keeps about
     60 characters a line. The
     Reader is a **frame** around a **chapter body**: prose today, so a
     sequential-art view can take the body's place later. The frame is built

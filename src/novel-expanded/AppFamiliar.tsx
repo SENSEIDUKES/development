@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, type ReactNode, type RefObject } from 'react';
 import { FamiliarCompanion, FamiliarRecall } from '@seihouse/library/familiar';
 import type { UserProfile } from '@seihouse/library/profile';
 import { WorkspaceHeaderAccessoryProvider, useLibraryBottomClearance } from '@seihouse/library/shell';
@@ -21,7 +21,7 @@ const READER_BOTTOM = 136;
  * bottom bar. It sits under the economy's providers: its Energy panel reads
  * the reader's account.
  */
-export function AppFamiliar({ profile, present, reading = false, children }: { profile: UserProfile; present: boolean; reading?: boolean; children: ReactNode }) {
+export function AppFamiliar({ profile, present, reading = false, boundaryRef, children }: { profile: UserProfile; present: boolean; reading?: boolean; boundaryRef?: RefObject<HTMLElement | null>; children: ReactNode }) {
   const [minimized, setMinimized] = useState(true);
   const familiar = (familiarCatalogueEntry(profile.familiarId) ?? defaultFamiliar).definition;
   const clearance = useLibraryBottomClearance();
@@ -29,6 +29,6 @@ export function AppFamiliar({ profile, present, reading = false, children }: { p
   return <WorkspaceHeaderAccessoryProvider accessory={recall}>
     {children}
     {present && <FamiliarCompanion key={familiar.id} familiar={familiar} size={profile.familiarSize}
-      minimized={minimized} onMinimize={() => setMinimized(true)} bottomInset={reading ? READER_BOTTOM : clearance ? clearance + BOTTOM_GAP : 0} />}
+      boundaryRef={boundaryRef} minimized={minimized} onMinimize={() => setMinimized(true)} bottomInset={reading ? READER_BOTTOM : clearance ? clearance + BOTTOM_GAP : 0} />}
   </WorkspaceHeaderAccessoryProvider>;
 }

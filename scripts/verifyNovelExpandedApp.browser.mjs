@@ -466,6 +466,16 @@ async function walk(browser, viewport, sample) {
   check(protagonist.text === '“Ring the bells,”' && protagonist.voice === 'Rishi', `The main character's line should use the Protagonist voice (Rishi), got ${JSON.stringify(protagonist)}.`);
   check((await page.getByTestId('read-aloud-speaker').textContent()) === 'Ye Chen', 'The player should name who is speaking.');
   await shot('6b-listening');
+  // Scrolled away from the spoken sentence, Back to narration floats in the audio note's glass.
+  await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight }));
+  const backToNarration = page.getByTestId('back-to-narration-float').getByRole('button', { name: 'Back to narration' });
+  if (await backToNarration.waitFor({ timeout: 3_000 }).then(() => true, () => false)) {
+    const surface = await backToNarration.evaluate(button => getComputedStyle(button).backgroundImage);
+    check(surface.includes('gradient'), `Back to narration should wear the note's glass, got ${surface}.`);
+    await shot('6b-back-to-narration');
+    await backToNarration.click();
+    await page.waitForTimeout(400);
+  }
   for (let guard = 0; guard < 6 && !(await lastSpoken()).text.startsWith('“They'); guard += 1) await finishLine();
   const side = await lastSpoken();
   check(side.text === '“They are drowned,”' && side.voice === 'Samantha', `Someone else's line should use the Side voice (Samantha), got ${JSON.stringify(side)}.`);

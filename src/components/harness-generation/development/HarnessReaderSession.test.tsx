@@ -494,6 +494,8 @@ describe('Read Aloud in the HARNESS Reader', { timeout: 20_000 }, () => {
     const { storage, values } = memory();
     await mount(<Host controller={controller} storyId={storyId} readerPreferences={storage} readAloudVoices={PICKS} />);
 
+    // At normal speed the bar shows a quiet divider, not a number.
+    expect(container.querySelector('[data-testid="reader-narration-speed"]')!.textContent).toBe('∶');
     await click(byLabel('Narration playback speed'), 'speed picker');
     expect(buttonBy(byLabel('Narration speed: 1'))!.getAttribute('aria-pressed')).toBe('true');
     await click(byLabel('Narration speed: 0.5'), 'Half speed');

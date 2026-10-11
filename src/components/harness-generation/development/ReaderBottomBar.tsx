@@ -77,7 +77,11 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
   return <div ref={barRef} data-testid="reader-bottom-bar" role="region" aria-label="Reader controls"
     className="reader-glass reader-glass-bar sticky bottom-0 z-20 -mx-4 mt-8 border-t border-white/10 bg-neutral-950/90 px-[max(0.5rem,env(safe-area-inset-left))] pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur sm:px-[max(1rem,env(safe-area-inset-left))]">
     {listening && offscreen && <div className="absolute bottom-full left-4 mb-2" data-testid="back-to-narration-float">
-      <IconButton label="Back to narration" icon={LocateFixed} onClick={onBackToNarration} />
+      {/* A round glass button, like the story audio note floating on the other side. */}
+      <button type="button" aria-label="Back to narration" title="Back to narration" onClick={onBackToNarration}
+        className="reader-glass-float inline-flex h-11 w-11 items-center justify-center rounded-full text-neutral-100">
+        <LocateFixed className="h-5 w-5" aria-hidden />
+      </button>
     </div>}
     <div className="mx-auto max-w-3xl" data-testid={player ? 'read-aloud-player' : undefined} data-status={player ? status : undefined}>
       {notice && <p role="status" className="absolute bottom-full left-4 right-4 mb-2 rounded-lg bg-neutral-950/95 p-2 text-center text-xs text-amber-200">{notice}</p>}
@@ -94,7 +98,10 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
             <IconButton label="Previous sentence" icon={SkipBack} onClick={() => readAloud.skip(-1)} disabled={!player} className={`${pillStep} rounded-l-full`} />
             <SEIPopover open={picker === 'speed'} onOpenChange={open => setPicker(open ? 'speed' : undefined)}>
               <SEIPopoverTrigger aria-label="Narration playback speed" title={`Narration playback speed: ${readAloud.rate}×`} disabled={!supported} className={pickerTrigger}>
-                <span data-testid="reader-narration-speed" className="text-sm font-semibold text-cyan-100">{RATE_LABELS[readAloud.rate] ?? readAloud.rate}</span>
+                {/* At normal speed a quiet divider; a changed speed shows itself. */}
+                {readAloud.rate === 1
+                  ? <span data-testid="reader-narration-speed" className="text-base font-semibold leading-none text-neutral-400">∶</span>
+                  : <span data-testid="reader-narration-speed" className="text-sm font-semibold text-cyan-100">{RATE_LABELS[readAloud.rate] ?? readAloud.rate}</span>}
               </SEIPopoverTrigger>
               <SEIPopoverContent side="top" align="center" collisionPadding={8} variant="dark" initialFocus={currentSpeedButton}
                 className={pickerSurface} data-testid="reader-speed-picker">

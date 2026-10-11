@@ -785,3 +785,7 @@ The Library Reader top and bottom bars retain their blue-gray finish and navigat
 ### 2026-10-11 — Scroll-aware top bar and aligned audio note
 
 The top bar slides away after intentional downward scrolling and returns on upward scrolling, near the chapter top, when its controls receive focus, or when the chapter changes. Reader panels keep it available. It follows the same actual scroll container as narration, ignores small direction changes and elastic overscroll, preserves the sticky layout slot, and respects reduced motion. The audio note is anchored to the center of the Fate action instead of an independent page-edge inset, including when quick volume expands.
+
+### 2026-10-11 — Quieter speed control and a glass Back to narration
+
+From SENSEI: between the sentence skips, normal speed shows a dim divider (∶) instead of "1"; a changed speed still shows its value (½, 1½…), and the picker and its spoken label are unchanged. Back to narration floats in the same resting glass as the story audio note (Library's `reader-glass-float` skin) instead of a ghost outline.

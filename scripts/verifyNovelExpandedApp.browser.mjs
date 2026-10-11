@@ -545,23 +545,23 @@ async function walk(browser, viewport, sample) {
   check(saved.rate === 1.25, `The speed should be kept on the device, got ${JSON.stringify(saved)}.`);
   await shot('6c-reader-narration');
   await settings.getByRole('button', { name: 'Close Reader Settings' }).click();
-  await visibleButton('Stop').click();
-  check(await visibleButton(/^Listen$/).isVisible(), 'Stop should bring Listen back.');
+  await visibleButton('Pause').click();
+  check(await visibleButton('Resume').isVisible(), 'The main playback button should offer Resume after Pause.');
+  check(await visibleButton('Stop').count() === 0, 'Playback should have no separate Stop button.');
   // The bar never covers the chapter's own controls, and the page never scrolls sideways.
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await page.waitForTimeout(100);
   const layout = await page.evaluate(() => {
     const bar = document.querySelector('[data-testid="reader-bottom-bar"]').getBoundingClientRect();
-    const play = document.querySelector('[data-testid="read-aloud-play"]').getBoundingClientRect();
+    const codex = document.querySelector('[data-testid="reader-codex-button"]').getBoundingClientRect();
     return {
       end: document.querySelector('[data-testid="reader-chapter-end"]').getBoundingClientRect().bottom,
-      bar: bar.top, barCenter: bar.left + bar.width / 2, playCenter: play.left + play.width / 2,
+      bar: bar.top, barCenter: bar.left + bar.width / 2, codexCenter: codex.left + codex.width / 2,
       wide: document.documentElement.scrollWidth > window.innerWidth,
     };
   });
   check(layout.end <= layout.bar + 1, `The bottom bar should not cover the chapter's end (${JSON.stringify(layout)}).`);
-  // As in the first Reader: Play in the middle of the bottom bar, the Codex to its left, Settings and the chapters to its right.
-  check(Math.abs(layout.playCenter - layout.barCenter) <= 2, `Play should sit in the middle of the bottom bar (${JSON.stringify(layout)}).`);
+  check(Math.abs(layout.codexCenter - layout.barCenter) <= 2, `Codex should sit in the middle of the bottom bar (${JSON.stringify(layout)}).`);
   check(!layout.wide, 'The Reader must not scroll sideways.');
   // The top bar stays on screen at the chapter's end, in one row with a readable story title; the prose keeps about 60 characters a line.
   const frame = await page.evaluate(() => {

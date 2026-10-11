@@ -5,11 +5,12 @@ Both UI tarballs are built from UI PR [#90](https://github.com/SENSEIDUKES/UI/pu
 - `@seihouse/ui@0.11.0`: universal SEIHouse primitives and experience tokens, including the application shell, shared overlay scrollbar and Pathways panel. The opt-in `double-tap` sidebar behavior toggles both widths and offers a keyboard-focus-only control; `automatic` and `click` remain available.
 - `@seihouse/library-ui@0.10.0`: stateless Celestial Library presentation. Its `@seihouse/ui` peer is `^0.11.0`; its navigation skin supplies scroll-only gold thumbs and a stationary gold-and-cyan edge bevel. Domain behavior and persistence remain in `@seihouse/library` and its host.
 
-The locked `@seihouse/audio-player@4.0.0` Git build declares an exact optional UI
+The locked `@seihouse/audio-player@4.0.0` build declares an exact optional UI
 0.10.1 peer. Development scopes an npm override to that package's UI peer, using
 the root UI tarball, and the packed-consumer smoke checks apply the same override.
 Hosts combining these SEN/Library releases with that audio build need the same
-override until its peer declaration is updated; the audio build itself is unchanged.
+override until its peer declaration is updated. The Reader master-fader build below
+retains this peer declaration while adding the audio controls.
 
 ```json
 "overrides": { "@seihouse/audio-player": { "@seihouse/ui": "$@seihouse/ui" } }

@@ -15,8 +15,8 @@ function grouped<T extends { group?: string }>(items: readonly T[]): Array<[stri
   return [...groups];
 }
 
-const selectClass = 'min-h-11 w-full min-w-0 rounded-lg border border-white/15 bg-neutral-900 px-3 text-sm text-neutral-100';
-const labelClass = 'font-mono text-[10px] uppercase tracking-[0.18em] text-cyan-200/70';
+const selectClass = 'reader-settings-select w-full min-w-0';
+const labelClass = 'block text-sm font-medium text-neutral-200';
 
 /**
  * Who chooses the Reader's music and atmosphere. Automatic (the default)
@@ -39,10 +39,10 @@ export function SoundtrackChoicePanel({ mixer, choice, onChoice, pieces }: {
   const bed = atmospheres.find(option => option.id === state.preferences.atmosphereId);
   const pieceValue = choice.soundscape === AUTOMATIC ? AUTOMATIC : choice.soundscape.pieceId;
   const atmosphereValue = choice.atmosphere === AUTOMATIC ? AUTOMATIC : choice.atmosphere.atmosphereId;
-  return <fieldset data-testid="reader-soundtrack-choice" className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3 sm:p-4">
-    <legend className="px-1 text-sm font-semibold text-neutral-100">Scene</legend>
+  return <fieldset data-testid="reader-soundtrack-choice" className="reader-settings-group pb-4">
+    <legend className="px-1 text-sm font-medium text-neutral-200">Scene</legend>
     <p className="text-xs leading-relaxed text-neutral-400">
-      Automatic plays each chapter's own music and atmosphere, chosen as it was written. Choose your own to keep it, whatever the chapters choose.
+      Follow the chapter’s soundtrack, or keep your own selection.
     </p>
     {pieces.length > 0 && <div className="mt-3">
       <label htmlFor="reader-soundtrack-piece" className={labelClass}>Soundscape</label>

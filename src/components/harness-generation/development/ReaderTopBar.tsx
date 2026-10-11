@@ -1,7 +1,7 @@
 import type { ReactNode, Ref } from 'react';
 import { ChevronLeft, Settings } from 'lucide-react';
 
-const pill = 'inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-full border text-sm';
+const action = 'reader-glass-control inline-flex h-12 w-12 max-[380px]:h-11 max-[380px]:w-11 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/10 text-neutral-100 hover:bg-white/15 active:bg-white/20 motion-safe:transition-colors motion-safe:duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200';
 
 /**
  * The Reader frame's top bar: Back (exit), the story and chapter, the host's own
@@ -22,20 +22,20 @@ export function ReaderTopBar({ storyTitle, place, onBack, onOpenSettings, compan
   barRef?: Ref<HTMLElement>;
 }) {
   return <header ref={barRef} data-testid="reader-top-bar"
-    className="sticky top-0 z-30 -mx-4 border-b border-white/10 bg-neutral-950/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur">
-    <div className="mx-auto flex min-h-14 max-w-3xl items-center gap-1.5 sm:gap-2">
+    className="reader-glass reader-glass-bar sticky top-0 z-30 -mx-4 border-b border-white/10 bg-neutral-950/90 px-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))] pt-[env(safe-area-inset-top)] backdrop-blur sm:px-[max(1rem,env(safe-area-inset-left))] sm:pr-[max(1rem,env(safe-area-inset-right))]">
+    <div className="mx-auto flex max-w-3xl items-center gap-3 py-2 max-[380px]:gap-2">
       <button type="button" aria-label="Back" title="Back" onClick={onBack}
-        className={`${pill} border-white/15 text-neutral-200 hover:border-white/30 sm:pl-2 sm:pr-4`}>
-        <ChevronLeft className="h-4 w-4" aria-hidden /><span className="hidden sm:inline" aria-hidden>Back</span>
+        className={action}>
+        <ChevronLeft className="h-5 w-5" aria-hidden /><span className="sr-only">Back</span>
       </button>
       <div className="min-w-0 flex-1 px-1">
-        <p className="truncate font-mono text-[10px] uppercase tracking-[0.2em] text-cyan-200/70" data-testid="reader-story-title">{storyTitle}</p>
-        <p className="truncate text-xs text-neutral-400">{place}</p>
+        <p className="truncate text-sm font-medium leading-5 text-neutral-100" title={storyTitle} data-testid="reader-story-title">{storyTitle}</p>
+        <p className="truncate text-xs leading-5 text-neutral-400">{place}</p>
       </div>
       {companion && <div className="flex shrink-0 items-center" data-testid="reader-companion">{companion}</div>}
       <button type="button" aria-label="Reader Settings" title="Reader Settings" aria-haspopup="dialog" onClick={onOpenSettings}
-        className={`${pill} border-white/15 text-neutral-200 hover:border-white/30`}>
-        <Settings className="h-4 w-4" aria-hidden />
+        className={action}>
+        <Settings className="h-5 w-5" aria-hidden />
       </button>
     </div>
   </header>;

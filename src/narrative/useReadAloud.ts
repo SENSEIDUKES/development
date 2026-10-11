@@ -430,7 +430,7 @@ export function useReadAloud({
   const resetVoices = useCallback(() => updateVoices(undefined, undefined), [updateVoices]);
   const setRate = useCallback((rate: number) => {
     if (!Number.isFinite(rate)) return;
-    setPrefs(current => ({ ...current, rate: Math.min(2, Math.max(0.75, rate)) }));
+    setPrefs(current => ({ ...current, rate: Math.min(2, Math.max(0.5, rate)) }));
   }, []);
 
   const preview = useCallback((role: ReadAloudRole) => {

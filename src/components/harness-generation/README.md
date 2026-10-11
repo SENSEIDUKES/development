@@ -715,3 +715,65 @@ existing Development reset behavior rejects stale state.
 ### 2026-10-10 — Reader audio mute and synchronized Master faders
 
 The shared Reader note is white for sound on and gray when muted or actively scrolling, without a mute slash. Tap mutes without disabling Master or losing its volume. Hold or right-click opens a compact Master fader; it and the Settings fader read and update the same saved mixer state. Zero volume keeps the icon visible, and unmute restores the last nonzero level, including after preference reload. Only switching Master off in Reader Settings hides the note. Narration retains its independent controls. NovelExpanded and the Workshop share the canonical host composition; Workshop Sound on uses the direct click gesture to unlock playback.
+
+### 2026-10-10 — Narration speed in the playback pill
+
+The bottom bar places the narration speed selector between Previous sentence and Next sentence, mirroring the chapter pill. Its compact labels use fractions (½, ¾, 1¼, 1½, 1¾), without a multiplier symbol, while keeping the exact saved rates and explicit spoken labels. The speed and chapter selectors share popup styling, current-selection marks, keyboard focus and dismissal. Half speed is supported by the narration engine and saved preferences, and also appears in Reader Settings. The selector uses the existing saved Read Aloud rate, stays in sync with Reader Settings, and appears before narration starts. The app and Workshop render the same ReaderBottomBar.
+
+### 2026-10-10 — Chapter picker in the bottom bar
+
+The chapter pill shows only the current chapter number, without a total, and opens a scrollable list of saved chapter numbers and full titles, with the current chapter marked. Selection uses the Reader's existing chapter navigation and saves the reading place; Previous and Next retain their existing behavior, including the next writing step. The app and Workshop share this picker, and both control pills keep their compact layout on phones.
+
+### 2026-10-10 — Standard Reader bar visual refinement
+
+The shared app and Workshop Reader bar uses 48px main actions (44px on narrow phones), quiet charcoal secondary fills, thin borders and a cyan Codex accent without a persistent glow. Matching compact control pills remain centered between the three action anchors, with extended vertical hit areas and consistent hover, pressed and keyboard focus states. Narration, chapter selection and saved preferences retain their existing behavior.
+
+### 2026-10-10 — Matching standard Reader top bar
+
+The shared Reader top bar matches the bottom bar's quiet charcoal buttons, thin borders, responsive 48/44px action sizes and interaction states. A readable sentence-case story title and subdued chapter label clarify the hierarchy. The Familiar remains beside Settings on the right; sticky behavior and all actions are unchanged.
+
+### 2026-10-10 — Matching Reader selector menus
+
+Chapter and narration speed menus share a restrained dark surface, thin border, rounded corners, quiet section heading and consistent 44px minimum rows. Current selections use a neutral highlight with a small cyan check. Existing selection, saved preferences, scrolling, focus and dismissal behavior remain in the canonical shared Reader bar.
+
+### 2026-10-10 — Matching selector rims
+
+Chapter and narration speed menus share a subtle 2px perimeter using the navigation seam's gold-to-cyan palette. The decorative rim follows their rounded corners without receiving pointer events; the compact audio capsule stays unchanged.
+
+### 2026-10-10 — Library navigation seams
+
+Reader bars and panel edges that meet the chapter use Library navigation's stationary 3px gold-to-cyan seam, including its fine highlight. The top bar's lower edge and bottom bar's upper edge run horizontally; Reader panels use an upper edge on mobile and a left edge on desktop. Decoration lives in the Library skin, does not receive pointer events or change layout, and falls back to normal system borders in forced colors.
+
+### 2026-10-10 — Compact quick volume
+
+Holding the soundtrack note reveals a 48px-wide vertical volume capsule immediately above the note, using the same glass as Reader menus. The visible label and percentage box are removed; the native slider retains its accessible Master volume name and percentage value, keyboard adjustment, Escape/focus return and outside-tap dismissal. Tap still mutes independently, zero volume never hides the note, and only Settings' Master switch removes it. Volume still reads and writes the original mixer shared with Settings. Reduced motion skips the short reveal.
+
+### 2026-10-10 — Supporting Reader chrome
+
+The default Reader is quiet infrastructure around the story's System Panels and Manifestations; distinctive custom looks belong in the Workshop. Codex now uses the same blue-gray glass, pale icon and rim as its neighboring controls. Its spectrum halo is a faint, close accent (18% resting opacity, 3px extension, 6px blur), with restrained interaction feedback.
+
+### 2026-10-10 — Quieter Codex face, clearer halo
+
+The Codex face is now smoked graphite with an ivory icon and neutral rim. The shared Library spectrum remains its color accent: the halo extends 8px beyond the button, with 10px blur and 80% resting opacity. The existing reduced-motion and forced-colors treatments remain in place.
+
+### 2026-10-10 — Codex badge color and spectrum halo
+
+The Library Reader skin gives the central Codex action a violet-to-gold glass face, pale-gold book icon and warm rim. Its small halo uses Library UI's header emblem spectrum palette and shared 18-second flow animation. Decorative layers do not receive pointer events or change layout; reduced motion keeps the halo still and forced colors removes the decoration. The portable Reader's action and host boundary stay unchanged.
+
+### 2026-10-10 — Library glass in the Reader
+
+Library's `reader-glass.css`, included by its package stylesheet, skins the portable Reader's material hooks with the Familiar action dock's blue-gray gradient, warm rim and cool inset highlight. Top and bottom bars, secondary controls, chapter/speed menus and Reader panels share that treatment; settings and long menus use a denser body for contrast. The prose background, layout, actions and persistence stay unchanged. Nested controls do not add backdrop filters; touch devices and reduced-transparency preferences use a denser fallback. Library owns the skin, so SEN does not import Library styling and hosts can supply their own material. App and Workshop use the same source.
+
+### 2026-10-10 — Restored reading font choices
+
+The shared host catalogue offers Literata, Rubik and System Mono alongside Noto Serif, with SEIHouse Sans retained as the default and reset choice. Title choices use the shorter Ink, Soft, Edge and Wide labels without changing saved identifiers. Font picker labels use the interface font so opening Settings does not fetch unused alternatives. Literata uses the existing Google Fonts stylesheet with swap fallback and downloads when selected; Rubik can reuse the interface font, and System Mono uses installed system faces. App regression coverage checks selection, persistence, reset and unstyled picker labels.
+
+### 2026-10-10 — Reader Settings hierarchy and local presentation
+
+Reader Settings now exposes Text, Audio and Narration as accessible category tabs, with the heading, category switcher and Close button outside the scrolling content. Each category starts at the top when selected. Text groups typefaces separately from size, spacing and weight; the sample block is removed because the chapter is the live preview, including with the existing half-height sheet. Audio puts the original mixer’s Master switch and volume first, keeps individual layers and the sleep timer, and places presets and scene choices below. Narration leads with speed, then grouped voice selectors and previews. Host-scoped styling uses the same quiet surfaces, borders and cyan accents as the Reader bars; the audio-player source and all preference/storage contracts remain unchanged. The app and Workshop share this composition. Regression coverage verifies tab changes preserve saved speed and presets, the sample is absent, and the existing Master/quick-volume and app Reader flows still work.
+
+### 2026-10-11 — Connected audio glass and Reader scrollbars
+
+The quick-volume capsule now grows from behind the note as one dense glass surface. The idle, unmuted note has a softer glass backing; both muted and scrolling ghost states leave only the gray glyph. The open capsule supplies its own backing, without stacking two surfaces. Reduced motion, reduced transparency and forced colors keep their respective fallbacks.
+
+Chapter and narration menus, Settings and Fate reuse SEIHouse UI's overlay scrollbar with Library navigation's gold thumb and scroll/drag-only visibility. The chapter keeps its original document scroll owner, with a scoped gold native scrollbar that hides at rest and cleans up on exit. Half-height panels size their scrollport to the visible area so the thumb and the last settings remain reachable. App and Workshop use the same Reader implementation.

@@ -367,12 +367,12 @@ export interface ReadAloudPreferences {
 }
 
 export const READ_ALOUD_PREFERENCE_KEY = 'read-aloud';
-/** Slower than 0.75× would stretch a line past what network voices finish. */
-export const READ_ALOUD_RATES = [0.75, 1, 1.25, 1.5, 1.75, 2] as const;
+/** The reader's selectable narration speeds; the watchdog scales with the saved rate. */
+export const READ_ALOUD_RATES = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] as const;
 export const DEFAULT_READ_ALOUD_PREFERENCES: ReadAloudPreferences = { rate: 1, voices: {} };
 
 const clampRate = (rate: unknown) =>
-  typeof rate === 'number' && Number.isFinite(rate) ? Math.min(2, Math.max(0.75, rate)) : DEFAULT_READ_ALOUD_PREFERENCES.rate;
+  typeof rate === 'number' && Number.isFinite(rate) ? Math.min(2, Math.max(0.5, rate)) : DEFAULT_READ_ALOUD_PREFERENCES.rate;
 
 const storedVoice = (value: unknown): StoredReadAloudVoice | undefined => {
   if (!value || typeof value !== 'object') return undefined;

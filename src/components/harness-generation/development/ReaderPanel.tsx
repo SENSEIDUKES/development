@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type PointerEvent, type ReactNode } from 'react';
+import { useOverlayScrollbar } from '@seihouse/ui';
 
 /** From this width a panel sits beside the chapter; below it, it rises from the bottom. */
 const WIDE_READER = '(min-width: 1024px)';
@@ -42,12 +43,16 @@ const GLIDE = 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1)';
  * over beside it. Escape and the page's own Back to reading close it. Opening
  * moves focus to its heading; closing gives focus back to what opened it.
  */
-export function ReaderPanel({ open, onClose, labelledBy, testId, children }: {
+export function ReaderPanel({ open, onClose, labelledBy, testId, header, scrollKey, children }: {
   open: boolean;
   onClose: () => void;
   /** The id of the panel's heading, which names it. */
   labelledBy: string;
   testId?: string;
+  /** Optional persistent controls, outside the scrolling content. */
+  header?: ReactNode;
+  /** Changing a content section starts its scroll position at the top. */
+  scrollKey?: string;
   children: ReactNode;
 }) {
   const wide = useWideReader();
@@ -58,6 +63,11 @@ export function ReaderPanel({ open, onClose, labelledBy, testId, children }: {
   const [drag, setDrag] = useState<number>();
   const dragFrom = useRef<{ y: number; samples: { y: number; t: number }[] } | undefined>(undefined);
   const panel = useRef<HTMLElement>(null);
+  const scrollBody = useRef<HTMLDivElement>(null);
+  const scrollRef = useOverlayScrollbar<HTMLDivElement>({ fades: false }, scrollBody);
+  useLayoutEffect(() => {
+    if (open && scrollBody.current) scrollBody.current.scrollTop = 0;
+  }, [open, scrollKey]);
   const close = useRef(onClose);
   close.current = onClose;
   // What had focus as the panel opened, read before its contents can move focus themselves.
@@ -134,11 +144,12 @@ export function ReaderPanel({ open, onClose, labelledBy, testId, children }: {
     data-stop={wide ? undefined : stop}
     style={{
       transform: wide ? `translateX(${shown ? '0' : '100%'})` : `translateY(${offset})`,
+      height: wide ? undefined : `${(1 - STOP_AT[stop]) * 100}dvh`,
       transition: drag !== undefined || still ? 'none' : GLIDE,
     }}
     className={wide
-      ? 'fixed inset-y-0 right-0 z-[250] flex w-[28rem] flex-col border-l border-white/10 bg-neutral-950 pt-[env(safe-area-inset-top)] text-neutral-100 shadow-2xl'
-      : `fixed inset-x-0 top-0 z-[250] flex h-[100dvh] flex-col border-t border-white/10 bg-neutral-950 text-neutral-100 shadow-2xl ${stop === 'full' && drag === undefined ? 'rounded-none pt-[env(safe-area-inset-top)]' : 'rounded-t-2xl'}`}>
+      ? 'reader-glass reader-glass-panel fixed inset-y-0 right-0 z-[250] flex w-[28rem] flex-col border-l border-white/10 bg-neutral-950 pt-[env(safe-area-inset-top)] text-neutral-100 shadow-2xl'
+      : `reader-glass reader-glass-panel fixed inset-x-0 top-0 z-[250] flex h-[100dvh] flex-col border-t border-white/10 bg-neutral-950 text-neutral-100 shadow-2xl ${stop === 'full' && drag === undefined ? 'rounded-none pt-[env(safe-area-inset-top)]' : 'rounded-t-2xl'}`}>
     {!wide && <div className="relative flex h-11 shrink-0 items-center justify-center">
       {/* Dragged to move the sheet; the circle beside it shows the stop and does the same for everyone. */}
       <div aria-hidden className="absolute inset-0 cursor-grab touch-none active:cursor-grabbing"
@@ -153,9 +164,10 @@ export function ReaderPanel({ open, onClose, labelledBy, testId, children }: {
             : 'bg-[linear-gradient(to_top,rgb(165_243_252/0.8)_50%,transparent_50%)]'}`} />
       </button>
     </div>}
-    {/* At half height the end of the panel would sit below the screen: the space keeps it reachable. */}
-    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
-      style={{ paddingBottom: wide ? 'env(safe-area-inset-bottom)' : `calc(${STOP_AT[stop] * 100}dvh + env(safe-area-inset-bottom))` }}>
+    {header}
+    {/* Match the real visible height so the scrollbar stays reachable at either stop. */}
+    <div ref={scrollRef} className="reader-scroll-region min-h-0 flex-1 overflow-y-auto overscroll-contain"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       {children}
     </div>
   </section>;

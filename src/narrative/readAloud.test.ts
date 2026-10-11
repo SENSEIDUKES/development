@@ -218,7 +218,8 @@ describe('preferences', () => {
     expect(parseReadAloudPreferences(null)).toBe(DEFAULT_READ_ALOUD_PREFERENCES);
     expect(parseReadAloudPreferences('{not json')).toBe(DEFAULT_READ_ALOUD_PREFERENCES);
     expect(parseReadAloudPreferences('{"v":2,"rate":1.5}')).toBe(DEFAULT_READ_ALOUD_PREFERENCES);
-    expect(parseReadAloudPreferences('{"v":1,"rate":0.1}').rate).toBe(0.75);
+    expect(parseReadAloudPreferences('{"v":1,"rate":0.1}').rate).toBe(0.5);
+    expect(parseReadAloudPreferences('{"v":1,"rate":0.5}').rate).toBe(0.5);
     expect(parseReadAloudPreferences('{"v":1,"rate":9}').rate).toBe(2);
     expect(parseReadAloudPreferences('{"v":1,"rate":"fast"}').rate).toBe(1);
     expect(parseReadAloudPreferences(JSON.stringify({ v: 1, rate: 1, voices: { xx: { narrator: { uri: 'a', name: 'a', lang: 'en' } }, en: { narrator: { uri: 7 }, side: 'Daniel' } } })).voices).toEqual({});

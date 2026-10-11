@@ -222,6 +222,21 @@ describe('useReadAloud', () => {
     expect(JSON.parse(values.get('read-aloud')!).voices).toEqual({});
   });
 
+  it('speaks at half speed and restores it from device preferences after remounting', () => {
+    const { storage, values } = memoryStorage();
+    mount({ chapter: 1, storage });
+    act(() => player.setRate(0.5));
+    act(() => player.play(1));
+    expect(lastSpoken()).toMatchObject({ text: 'The tide went out.', rate: 0.5 });
+    expect(JSON.parse(values.get('read-aloud')!)).toMatchObject({ v: 1, rate: 0.5 });
+    act(() => root.unmount());
+    root = createRoot(container);
+    mount({ chapter: 1, storage });
+    expect(player.rate).toBe(0.5);
+    act(() => player.play(1));
+    expect(lastSpoken().rate).toBe(0.5);
+  });
+
   it('pauses while something covers the chapter, then reads the next chapter from its title', () => {
     mount();
     act(() => player.play(1));

@@ -1,5 +1,6 @@
-import { lazy, Suspense, useEffect, useRef, type CSSProperties } from 'react';
-import type { ReaderMixer } from '@seihouse/audio-player';
+import { lazy, Suspense, useEffect, useState, type CSSProperties } from 'react';
+import { useReaderMixerState, type ReaderMixer } from '@seihouse/audio-player';
+import { SEITabs, SEITabsList, SEITabsTrigger, SEITabsPanel } from '@seihouse/ui';
 import { Play, RotateCcw, X } from 'lucide-react';
 import {
   DEFAULT_READER_FONTS, DEFAULT_READER_TEXT_SETTINGS, READ_ALOUD_RATES, READ_ALOUD_ROLES, READER_LINE_SPACINGS, READER_TEXT_SIZES, READER_TEXT_WEIGHTS, resolveReaderText,
@@ -9,9 +10,10 @@ import type { SceneAudioTrack } from '@seihouse/sen/audio';
 import { getSenLanguageLabel, normalizeSenLanguageCode } from '../../../lib/language';
 import { ReaderPanel } from './ReaderPanel';
 import { SoundtrackChoicePanel } from './SoundtrackChoicePanel';
+import './ReaderSettingsSheet.css';
 
-const legend = 'font-mono text-[10px] uppercase tracking-[0.18em] text-cyan-200/70';
-const pillChoice = 'inline-flex min-h-11 min-w-14 items-center justify-center rounded-full border border-white/15 px-3 text-sm text-neutral-200 peer-checked:border-cyan-300/60 peer-checked:bg-cyan-400/15 peer-checked:text-cyan-50 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-cyan-300';
+const legend = 'reader-settings-label';
+const pillChoice = 'reader-settings-choice';
 
 const ROLE_TITLES: Record<ReadAloudRole, string> = { narrator: 'Narrator', protagonist: 'Protagonist', side: 'Side characters' };
 const ROLE_HELP: Record<ReadAloudRole, string> = {
@@ -29,12 +31,12 @@ function VoicePicker({ role, readAloud, language }: { role: ReadAloudRole; readA
   const chosen = readAloud.choice[role]?.voiceURI ?? '';
   const own = new Set(readAloud.languageVoices.map(voice => voice.voiceURI));
   const others = readAloud.voices.filter(voice => !own.has(voice.voiceURI));
-  return <div className="mt-4">
+  return <div className="reader-settings-voice">
     <label htmlFor={id} className={legend}>{ROLE_TITLES[role]}</label>
     <div className="mt-1 flex items-center gap-2">
       <select id={id} value={chosen} data-voice-role={role}
         onChange={event => readAloud.setVoice(role, readAloud.voices.find(voice => voice.voiceURI === event.target.value))}
-        className="min-h-11 min-w-0 flex-1 rounded-lg border border-white/15 bg-neutral-900 px-3 text-sm text-neutral-100">
+        className="reader-settings-select min-w-0 flex-1">
         {!chosen && <option value="">{`The device's ${plainLanguage(language)} voice`}</option>}
         {readAloud.languageVoices.length > 0 && <optgroup label={`${plainLanguage(language)} voices`}>
           {readAloud.languageVoices.map(voice => <option key={voice.voiceURI} value={voice.voiceURI}>{voiceLabel(voice)}</option>)}
@@ -44,24 +46,24 @@ function VoicePicker({ role, readAloud, language }: { role: ReadAloudRole; readA
         </optgroup>}
       </select>
       <button type="button" aria-label={`Preview the ${ROLE_TITLES[role]} voice`} title="Preview" onClick={() => readAloud.preview(role)}
-        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-white/15 text-neutral-100 hover:border-white/35">
+        className="reader-settings-icon">
         <Play className="h-4 w-4" aria-hidden />
       </button>
     </div>
-    <p className="mt-1 text-xs text-neutral-500">{ROLE_HELP[role]}</p>
+    <p className="reader-settings-help mt-1">{ROLE_HELP[role]}</p>
   </div>;
 }
 
-/** One row of radio pills, each label optionally drawn in its own style (a font in itself, a weight in its weight). */
+/** Grouped radio choices, optionally demonstrating a font, size or weight. */
 function PillChoice<Value extends string | number>({ title, name, value, options, onChange }: {
   title: string; name: string; value: Value;
   options: readonly { value: Value; label: string; display?: string; style?: CSSProperties }[];
   onChange: (value: Value) => void;
 }) {
-  return <fieldset className="mt-4">
+  return <fieldset className="reader-settings-field" data-control={name}>
     <legend className={legend}>{title}</legend>
-    <div className="mt-2 flex flex-wrap gap-2">
-      {options.map(option => <label key={String(option.value)} className="cursor-pointer">
+    <div className="reader-settings-options">
+      {options.map(option => <label key={String(option.value)} className="min-w-0 cursor-pointer">
         <input type="radio" name={name} value={String(option.value)} checked={value === option.value} onChange={() => onChange(option.value)} className="peer sr-only" />
         <span className={pillChoice} style={option.style}>
           {option.display ? <><span aria-hidden>{option.display}</span><span className="sr-only">{option.label}</span></> : option.label}
@@ -71,33 +73,31 @@ function PillChoice<Value extends string | number>({ title, name, value, options
   </fieldset>;
 }
 
-/** Text: the font, the title font, size, line spacing and weight, with a line set in them. */
+/** The chapter itself previews these settings, including beside the half-height sheet. */
 function TextSettings({ settings, fonts, onChange }: { settings: ReaderTextSettings; fonts: ReaderFonts; onChange: (next: ReaderTextSettings) => void }) {
   const resolved = resolveReaderText(settings, fonts);
   // The same lists `resolveReaderText` falls back to, so an empty host list still offers SEN's own.
   const textFonts = fonts.text.length ? fonts.text : DEFAULT_READER_FONTS.text;
   const titleFonts = fonts.titles.length ? fonts.titles : DEFAULT_READER_FONTS.titles;
   const change = (patch: Partial<ReaderTextSettings>) => onChange({ ...settings, ...patch });
-  return <section aria-labelledby="reader-settings-text" data-testid="reader-settings-text" className="mt-4 rounded-xl border border-white/10 bg-black/20 p-3 sm:p-4">
-    <h3 id="reader-settings-text" className="text-sm font-semibold text-neutral-100">Text</h3>
-    <p className="mt-1 text-xs leading-relaxed text-neutral-400">How every chapter reads. Your choices stay on this device.</p>
-    <div aria-hidden data-testid="reader-text-sample" className="mt-3 rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-neutral-200"
-      style={{ fontFamily: resolved.font.family, fontSize: resolved.fontSize, fontWeight: resolved.fontWeight, lineHeight: resolved.lineHeight, fontSynthesis: 'none' }}>
-      <span className="block text-lg text-white" style={{ fontFamily: resolved.titleFont.family, fontWeight: 400 }}>The Drowned Gate</span>
-      The tide pulled back, and the bells of the city answered.
-    </div>
+  return <section aria-labelledby="reader-settings-text" data-testid="reader-settings-text">
+    <h3 id="reader-settings-text" className="sr-only">Text</h3>
+    <div className="reader-settings-group">
     <PillChoice title="Font" name="reader-text-font" value={resolved.font.id} onChange={font => change({ font })}
-      options={textFonts.map(choice => ({ value: choice.id, label: choice.label, style: { fontFamily: choice.family } }))} />
+      options={textFonts.map(choice => ({ value: choice.id, label: choice.label }))} />
     {titleFonts.length > 1 && <PillChoice title="Title font" name="reader-title-font" value={resolved.titleFont.id} onChange={titleFont => change({ titleFont })}
-      options={titleFonts.map(choice => ({ value: choice.id, label: choice.label, style: { fontFamily: choice.family } }))} />}
+      options={titleFonts.map(choice => ({ value: choice.id, label: choice.label }))} />}
+    </div>
+    <div className="reader-settings-group">
     <PillChoice title="Size" name="reader-text-size" value={settings.size} onChange={size => change({ size })}
       options={READER_TEXT_SIZES.map((step, index) => ({ value: step.id, label: step.label, display: 'A', style: { fontSize: `${0.8 + index * 0.15}rem` } }))} />
     <PillChoice title="Line spacing" name="reader-line-spacing" value={settings.lineSpacing} onChange={lineSpacing => change({ lineSpacing })}
       options={READER_LINE_SPACINGS.map(step => ({ value: step.id, label: step.label }))} />
     <PillChoice title="Weight" name="reader-text-weight" value={settings.weight} onChange={weight => change({ weight })}
       options={READER_TEXT_WEIGHTS.map(step => ({ value: step.id, label: step.label, style: { fontFamily: resolved.font.family, fontWeight: step.id, fontSynthesis: 'none' } }))} />
+    </div>
     <button type="button" onClick={() => onChange(DEFAULT_READER_TEXT_SETTINGS)}
-      className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full border border-white/15 px-4 text-sm text-neutral-200 hover:border-white/35">
+      className="reader-settings-reset">
       <RotateCcw className="h-4 w-4" aria-hidden /> Reset text
     </button>
   </section>;
@@ -105,19 +105,28 @@ function TextSettings({ settings, fonts, onChange }: { settings: ReaderTextSetti
 
 /**
  * The audio player's mixer view, built from the SEIHouse UI controls. It loads
- * when Reader Settings first opens, so reading never waits for it.
+ * when the Audio category first opens, so reading never waits for it.
  */
 const ReaderMixerPanel = lazy(() => import('@seihouse/audio-player/reader-ui').then(module => ({ default: module.ReaderMixerPanel })));
+
+/** Host composition keeps presets secondary to Master and individual levels. */
+function AudioPresets({ mixer }: { mixer: ReaderMixer }) {
+  const state = useReaderMixerState(mixer);
+  if (!state?.presets.length) return null;
+  return <div className="reader-settings-group">
+    <PillChoice title="Presets" name="reader-audio-preset" value={state.activePresetId ?? ''}
+      onChange={id => mixer.applyPreset(id)} options={state.presets.map(preset => ({ value: preset.id, label: preset.label }))} />
+  </div>;
+}
+
+type SettingsSection = 'text' | 'audio' | 'narration';
 
 /**
  * Reader Settings: one of the Reader's panels, beside the chapter on laptops
  * and a sheet from the bottom on phones, so the chapter stays in view and
- * shows each text change as it is made. Text
- * comes first: the reader's font, title font, size, line spacing and weight.
- * Audio follows: the reader's mix of the story's soundtrack (presets, the
- * layers the chapter uses and the sleep timer), then the Scene: each
- * chapter's own music and atmosphere (Automatic) or the reader's own.
- * Narration follows: the three voices and the speed Read Aloud uses.
+ * shows each text change as it is made. Persistent category tabs expose one
+ * task at a time: Text, Audio, or Narration. The mixer and saved preferences
+ * remain the owners of all changes; switching tabs does not reset them.
  */
 export function ReaderSettingsSheet({ open, onClose, readAloud, language, mixer, section, soundtrack, text }: {
   open: boolean;
@@ -127,55 +136,76 @@ export function ReaderSettingsSheet({ open, onClose, readAloud, language, mixer,
   language: string;
   /** The host's reader mixer. Without one there is no Audio section. */
   mixer?: ReaderMixer | null;
-  /** The section to bring into view when the sheet opens (the note's long-press opens Audio). */
+  /** The category to open directly, when requested by the host. */
   section?: 'audio' | 'narration';
   /** Who chooses the music and atmosphere, and the pieces the chapter on screen can play. */
   soundtrack?: { choice: SoundtrackChoice; onChoice: (choice: SoundtrackChoice) => void; pieces: readonly SceneAudioTrack[] };
   /** The reader's text settings and the fonts on offer. Without them there is no Text section. */
   text?: { settings: ReaderTextSettings; onChange: (next: ReaderTextSettings) => void; fonts: ReaderFonts };
 }) {
-  const audioRef = useRef<HTMLElement>(null);
+  const initialSection: SettingsSection = section === 'audio' && mixer ? 'audio'
+    : section === 'narration' ? 'narration' : text ? 'text' : mixer ? 'audio' : 'narration';
+  const [activeSection, setActiveSection] = useState<SettingsSection>(initialSection);
   useEffect(() => {
-    if (open && section === 'audio') audioRef.current?.scrollIntoView?.({ block: 'start' });
-  }, [open, section]);
-  return <ReaderPanel open={open} onClose={onClose} labelledBy="reader-settings-title" testId="reader-settings">
-      <div className="p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-        <div className="flex items-center justify-between gap-3">
-          <h2 id="reader-settings-title" className="font-display text-xl text-white">Reader Settings</h2>
+    if (open) setActiveSection(initialSection);
+  }, [open, initialSection]);
+  return <SEITabs value={activeSection} onValueChange={value => setActiveSection(value as SettingsSection)} className="reader-settings-scope">
+    <ReaderPanel open={open} onClose={onClose} labelledBy="reader-settings-title" testId="reader-settings" scrollKey={activeSection}
+      header={<div className="reader-settings-header">
+        <div className="reader-settings-heading">
+          <h2 id="reader-settings-title">Reader Settings</h2>
           <button type="button" aria-label="Close Reader Settings" onClick={onClose}
-            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-white/15 text-neutral-200 hover:border-white/35">
+            className="reader-settings-icon">
             <X className="h-4 w-4" aria-hidden />
           </button>
         </div>
-        {text && <TextSettings settings={text.settings} fonts={text.fonts} onChange={text.onChange} />}
-        {mixer && <section ref={audioRef} aria-label="Audio" data-testid="reader-settings-audio" className="mt-4 scroll-mt-4">
+        <SEITabsList aria-label="Reader settings categories" className="reader-settings-tabs">
+          {text && <SEITabsTrigger value="text" className="reader-settings-tab">Text</SEITabsTrigger>}
+          {mixer && <SEITabsTrigger value="audio" className="reader-settings-tab">Audio</SEITabsTrigger>}
+          <SEITabsTrigger value="narration" className="reader-settings-tab">Narration</SEITabsTrigger>
+        </SEITabsList>
+      </div>}>
+      <div className="reader-settings-body">
+        {text && <SEITabsPanel value="text" className="reader-settings-page">
+          <TextSettings settings={text.settings} fonts={text.fonts} onChange={text.onChange} />
+        </SEITabsPanel>}
+        {mixer && <SEITabsPanel value="audio" className="reader-settings-page">
+        <section aria-label="Audio" data-testid="reader-settings-audio">
+          <h3 className="sr-only">Audio</h3>
+          <p className="reader-settings-help mb-3">The story’s music, atmosphere and sound effects.</p>
           <Suspense fallback={<p role="status" className="text-sm text-neutral-400">Opening Audio…</p>}>
             {/* The atmosphere is chosen in Scene below, beside the music, so the panel's own picker is hidden. */}
-            <ReaderMixerPanel mixer={mixer} titleAs="h3" showAtmospherePicker={!soundtrack} />
+            <ReaderMixerPanel mixer={mixer} showTitle={false} showPresets={false} showAtmospherePicker={!soundtrack} />
           </Suspense>
+          <AudioPresets mixer={mixer} />
           {soundtrack && <SoundtrackChoicePanel mixer={mixer} choice={soundtrack.choice} onChoice={soundtrack.onChoice} pieces={soundtrack.pieces} />}
-        </section>}
-        <section aria-labelledby="reader-settings-narration" data-testid="reader-settings-narration" className="mt-4 rounded-xl border border-white/10 bg-black/20 p-3 sm:p-4">
-          <h3 id="reader-settings-narration" className="text-sm font-semibold text-neutral-100">Narration</h3>
-          <p className="mt-1 text-xs leading-relaxed text-neutral-400">
-            Three voices read the story when you tap Listen. Your choices stay on this device, for each story language.
-            Voices on this device start at once; an online voice can pause before its lines.
-          </p>
+        </section></SEITabsPanel>}
+        <SEITabsPanel value="narration" className="reader-settings-page">
+        <section aria-labelledby="reader-settings-narration" data-testid="reader-settings-narration">
+          <h3 id="reader-settings-narration" className="sr-only">Narration</h3>
+          <p className="reader-settings-help mb-3">Voices and speed for reading aloud in {plainLanguage(language)}.</p>
           {!readAloud.supported
             ? <p role="note" className="mt-3 text-sm text-amber-200">This browser can't read aloud.</p>
             : <>
                 {readAloud.languageVoices.length === 0 && <p role="note" className="mt-3 text-sm text-amber-200">
                   {`This device has no ${plainLanguage(language)} voice. Add one in your device's speech settings; until then the device chooses how to read ${plainLanguage(language)}.`}
                 </p>}
-                {READ_ALOUD_ROLES.map(role => <VoicePicker key={role} role={role} readAloud={readAloud} language={language} />)}
+                <div className="reader-settings-group">
                 <PillChoice title="Speed" name="read-aloud-rate" value={readAloud.rate} onChange={readAloud.setRate}
                   options={READ_ALOUD_RATES.map(rate => ({ value: rate, label: `${rate}×` }))} />
+                </div>
+                <div className="reader-settings-group">
+                  {READ_ALOUD_ROLES.map(role => <VoicePicker key={role} role={role} readAloud={readAloud} language={language} />)}
+                </div>
+                <p className="reader-settings-help">Online voices may take a moment to start.</p>
                 <button type="button" onClick={readAloud.resetVoices}
-                  className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full border border-white/15 px-4 text-sm text-neutral-200 hover:border-white/35">
+                  className="reader-settings-reset">
                   <RotateCcw className="h-4 w-4" aria-hidden /> Reset voices
                 </button>
               </>}
-        </section>
+        </section></SEITabsPanel>
+        <p className="reader-settings-help reader-settings-saved">Changes are saved on this device.</p>
       </div>
-  </ReaderPanel>;
+    </ReaderPanel>
+  </SEITabs>;
 }

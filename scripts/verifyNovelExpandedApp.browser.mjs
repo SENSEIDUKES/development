@@ -494,7 +494,7 @@ async function walk(browser, viewport, sample) {
   const quickMaster = page.getByRole('slider', { name: 'Quick master volume', exact: true });
   await quickMaster.waitFor();
   await quickMaster.press('Home');
-  for (let step = 0; step < 37; step++) await quickMaster.press('ArrowRight');
+  for (let step = 0; step < 37; step++) await quickMaster.press('ArrowUp');
   check(await quickMaster.inputValue() === '37', 'The quick Master fader should set 37%.');
   await quickMaster.press('Home');
   check(await page.getByTestId('story-audio-note').getByRole('button', { name: 'Unmute story audio' }).count() === 1, 'Zero must leave the note available.');
@@ -504,9 +504,10 @@ async function walk(browser, viewport, sample) {
   await visibleButton('Reader Settings').click();
   const settings = page.getByRole('dialog', { name: 'Reader Settings' });
   await settings.waitFor();
+  check(JSON.stringify(await settings.getByRole('tab').allTextContents()) === '["Text","Audio","Narration"]', 'Reader Settings should offer Text, Audio, and Narration categories.');
+  await settings.getByRole('tab', { name: 'Audio', exact: true }).click();
   const audio = settings.getByTestId('reader-settings-audio');
-  await audio.locator('h3', { hasText: 'Audio' }).waitFor();
-  check(JSON.stringify(await settings.locator('section h3').allTextContents()) === '["Text","Audio","Narration"]', `Reader Settings should hold Text, Audio, then Narration, got ${JSON.stringify(await settings.locator('section h3').allTextContents())}.`);
+  await audio.locator('.sap-reader-mixer').waitFor();
   check(await audio.getByRole('switch').count() > 0 && await audio.getByRole('slider').count() > 0, 'Audio should show the approved switches and sliders.');
   const settingsMaster = audio.getByRole('slider', { name: 'Master volume', exact: true });
   check(await settingsMaster.inputValue() === '37', 'Settings should reflect the quick Master fader.');
@@ -524,6 +525,8 @@ async function walk(browser, viewport, sample) {
   await quickMaster.press('Escape');
   await visibleButton('Reader Settings').click();
   await settings.waitFor();
+  await settings.getByRole('tab', { name: 'Audio', exact: true }).click();
+  await audio.locator('.sap-reader-mixer').waitFor();
   check(await audio.getByText('Atmosphere', { exact: true }).count() > 0, 'Audio should offer the Atmosphere layer.');
   check(await audio.getByText('Soundscapes', { exact: true }).count() > 0, 'Audio should offer the Soundscapes layer.');
   // Scene: Automatic until the reader keeps a piece of their own, on this device.
@@ -555,9 +558,10 @@ async function walk(browser, viewport, sample) {
   check(await page.evaluate(() => document.fonts.check('17px "SEIHouse Sans"') && [...document.fonts].some(face => face.family.replaceAll('"', '') === 'SEIHouse Sans' && face.status === 'loaded')),
     'SEIHouse Sans should load from the app.');
   const text = settings.getByTestId('reader-settings-text');
+  await settings.getByRole('tab', { name: 'Text', exact: true }).click();
   await text.scrollIntoViewIfNeeded();
   await text.locator('label').filter({ has: page.locator('input[name="reader-text-size"][value="larger"]') }).click();
-  await text.locator('label').filter({ hasText: 'Display Edge' }).click();
+  await text.locator('label').filter({ has: page.locator('input[name="reader-title-font"][value="seihouse-display-edge"]') }).click();
   const after = await proseFont();
   check(after.size === '20px' && after.title.startsWith('"SEIHouse Display Edge"'), `Larger text and the Edge title should apply at once, got ${JSON.stringify(after)}.`);
   const kept = JSON.parse(await page.evaluate(() => localStorage.getItem('novelexpanded-reader-text-settings')) ?? '{}');
@@ -565,6 +569,7 @@ async function walk(browser, viewport, sample) {
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), 'Reader Settings → Text must not scroll sideways.');
   await shot('6c-reader-text');
   await text.getByRole('button', { name: 'Reset text' }).click();
+  await settings.getByRole('tab', { name: 'Narration', exact: true }).click();
   await settings.getByTestId('reader-settings-narration').scrollIntoViewIfNeeded();
   check(await settings.locator('select[data-voice-role]').count() === 3, 'Narration should offer three voices.');
   await settings.locator('label').filter({ hasText: '1.25×' }).click();
@@ -686,6 +691,7 @@ async function walk(browser, viewport, sample) {
   await page.waitForTimeout(300);
   check((await spoken()).length === 0, 'Nothing should be read aloud until the reader taps Listen.');
   await visibleButton('Reader Settings').click();
+  await page.getByRole('dialog', { name: 'Reader Settings' }).getByRole('tab', { name: 'Narration', exact: true }).click();
   check(await page.locator('input[name="read-aloud-rate"][value="1.25"]').isChecked(), 'The saved speed should come back after a reload.');
   await page.keyboard.press('Escape');
 

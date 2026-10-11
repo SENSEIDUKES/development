@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ReaderAudioNote } from './ReaderAudioNote';
+import { useReaderDocumentScrollbar } from './useReaderDocumentScrollbar';
 import type { TextHighlightBlock } from '@seihouse/sen/text-highlight-engine';
 import type { SceneAudioTrack } from '@seihouse/sen/audio';
 import {
@@ -184,6 +185,7 @@ export function HarnessReaderSession({
     .sort((left, right) => left.chapterNumber - right.chapterNumber), [state.chapters, storyId]);
   const [readerState, setReaderState] = useState<ReaderStoryState>();
   const [selectedChapter, setSelectedChapter] = useState(1);
+  useReaderDocumentScrollbar();
   const [layer, setLayer] = useState<ReaderLayer>();
   const closeLayer = useCallback(() => setLayer(undefined), []);
   /** A paragraph to bring into view once its chapter is on screen: where a holding change happened. */
@@ -421,7 +423,7 @@ export function HarnessReaderSession({
         previous={previous ? { label: 'Previous Chapter', run: () => openChapter(previous.chapterNumber) } : undefined}
         next={later ? { label: 'Next Chapter', run: () => openChapter(later.chapterNumber) }
           : continueAfterLatest ? { label: `Next Chapter: ${continueAfterLatest.label}`, run: continueAfterLatest.run, busy: continueAfterLatest.busy } : undefined}
-        position={chapter ? `${chapter.chapterNumber}/${chapters.length}` : undefined} />
+        chapterSelection={chapter ? { current: chapter.chapterNumber, entries: chapters.map(entry => ({ number: entry.chapterNumber, title: entry.title })), onSelect: openChapter } : undefined} />
     </main>
     </div>
     {layer?.id === 'codex' && <main className="w-full min-w-0">

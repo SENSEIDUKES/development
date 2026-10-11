@@ -270,6 +270,35 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
     expect(accessToken.current).toBe('owner-token');
   });
 
+  it('offers the restored reading fonts, keeps Sans as default, and saves the selected face', async () => {
+    const story = scriptedWriter();
+    const services = appServices(story.writer);
+    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
+    await render(services, `/app/?story=${created.id}`);
+    await click(chaptersAction(), 'Start Story', 10);
+    await act(async () => { story.release(); });
+    await flush(10);
+    const article = () => document.querySelector<HTMLElement>('[data-chapter-number="1"]')!;
+    expect(article().style.fontFamily).toContain('SEIHouse Sans');
+    await click(document.querySelector('button[aria-label="Reader Settings"]'), 'Reader Settings');
+    expect([...document.querySelectorAll<HTMLInputElement>('input[name="reader-text-font"]')].map(input => input.value))
+      .toEqual(['seihouse-sans', 'noto-serif', 'literata', 'rubik', 'system-mono']);
+    // Font names do not render all the alternate faces just by opening Settings.
+    for (const label of document.querySelectorAll<HTMLElement>('[data-control="reader-text-font"] .reader-settings-choice, [data-control="reader-title-font"] .reader-settings-choice')) {
+      expect(label.style.fontFamily).toBe('');
+    }
+    for (const [id, family] of [['literata', 'Literata'], ['rubik', 'Rubik'], ['system-mono', 'ui-monospace']]) {
+      await click(document.querySelector(`input[name="reader-text-font"][value="${id}"]`), id);
+      expect(article().style.fontFamily).toContain(family);
+      expect(JSON.parse(window.localStorage.getItem('novelexpanded-reader-text-settings')!)).toMatchObject({ font: id });
+    }
+    await click(document.querySelector('button[aria-label="Close Reader Settings"]'), 'Close Settings');
+    await click(document.querySelector('button[aria-label="Reader Settings"]'), 'Reader Settings');
+    expect(document.querySelector<HTMLInputElement>('input[name="reader-text-font"][value="system-mono"]')!.checked).toBe(true);
+    await click(buttonByText('Reset text'), 'Reset text');
+    expect(article().style.fontFamily).toContain('SEIHouse Sans');
+  });
+
   it('reads a chapter aloud in the Library\'s voices and keeps the reader\'s speed on this device', async () => {
     const { fake: speech, uninstall } = installFakeSpeechSynthesis();
     vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
@@ -285,6 +314,7 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
       await click(buttonByText('Listen'), 'Listen');
       expect(speech.spoken.map(utterance => [utterance.text, utterance.voice?.name])).toEqual([['Chapter 1. Low Tide', 'Daniel']]);
       await click(document.querySelector('button[aria-label="Reader Settings"]'), 'Reader Settings');
+      await click([...document.querySelectorAll('[role="tab"]')].find(tab => tab.textContent === 'Narration'), 'Narration tab');
       await click(document.querySelector('input[name="read-aloud-rate"][value="1.5"]'), 'Speed 1.5×');
       expect(JSON.parse(window.localStorage.getItem('novelexpanded-reader-read-aloud')!)).toMatchObject({ v: 1, rate: 1.5 });
 

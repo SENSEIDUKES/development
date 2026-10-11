@@ -161,6 +161,31 @@ describe('The HARNESS Reader', { timeout: 20_000 }, () => {
     expect(chapterOnScreen(1)).toBeTruthy();
   });
 
+  it('chooses any saved chapter by its full title, marks the current one, and restores the chosen place after reload', async () => {
+    const { harness, controller, storyId } = await story({ written: 3, replies: [...CHAPTERS, reply('The Drowned Gate', ['Mara crossed the gate.'])] });
+    const canonBefore = harness.snapshot();
+    const readerState = new MemoryReaderStateRepository();
+    await mount(<Host controller={controller} storyId={storyId} readerState={readerState} />);
+    await click(byLabel('Select chapter: Chapter 1'), 'chapter picker');
+    expect(buttonBy(byLabel('Chapter 1: Low Tide'))!.getAttribute('aria-current')).toBe('page');
+    expect(buttonBy(byLabel('Chapter 3: The Drowned Gate'))!.getAttribute('aria-current')).toBeNull();
+    await click(byLabel('Chapter 3: The Drowned Gate'), 'Chapter 3');
+    expect(chapterOnScreen(3)!.textContent).toContain('Mara crossed the gate.');
+    expect(buttonBy(byLabel('Select chapter: Chapter 3'))).toBeTruthy();
+    expect(readerState.records.get(storyId)?.lastReadChapter).toBe(3);
+    expect(harness.snapshot()).toEqual(canonBefore);
+    await click(byLabel('Previous Chapter'), 'Previous Chapter');
+    expect(chapterOnScreen(2)).toBeTruthy();
+    await click(byLabel('Select chapter: Chapter 2'), 'chapter picker');
+    expect(buttonBy(byLabel('Chapter 2: The Bell Keeper'))!.getAttribute('aria-current')).toBe('page');
+    await click(byLabel('Chapter 3: The Drowned Gate'), 'Chapter 3');
+    act(() => root.unmount());
+    root = createRoot(container);
+    await mount(<Host controller={controller} storyId={storyId} readerState={readerState} />);
+    expect(chapterOnScreen(3)).toBeTruthy();
+    expect(buttonBy(byLabel('Select chapter: Chapter 3'))).toBeTruthy();
+  });
+
   it('a new story: Write Chapter 1 shows the host writing screen until the chapter is saved, then opens it', async () => {
     const { controller, storyId, hold } = await story();
     const seen: HarnessReaderWriting[] = [];
@@ -440,7 +465,7 @@ describe('Read Aloud in the HARNESS Reader', { timeout: 20_000 }, () => {
     const controls = container.querySelector('[data-testid="reader-controls-row"]')!;
     expect(container.querySelector('[data-testid="read-aloud-strip"]')).toBeNull();
     expect([...controls.querySelectorAll('button')].map(button => button.getAttribute('aria-label')))
-      .toEqual(['Pause', 'Previous sentence', 'Next sentence', 'Open Codex', 'Previous Chapter', 'Next Chapter', 'Open Fate']);
+      .toEqual(['Pause', 'Previous sentence', 'Narration playback speed', 'Next sentence', 'Open Codex', 'Previous Chapter', 'Select chapter: Chapter 1', 'Next Chapter', 'Open Fate']);
 
     await next();
     expect(lastSpoken().text).toBe('The tide pulled back from the drowned gate.');
@@ -464,15 +489,24 @@ describe('Read Aloud in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(controls.querySelector('[aria-label="Previous sentence"]')).toBeTruthy();
   });
 
-  it('Reader Settings holds Text, then Narration: three voices with previews and the speed, saved on the device', async () => {
+  it('Reader Settings separates Text and Narration, with saved voices and speed across category changes', async () => {
     const { controller, storyId } = await story({ written: 1 });
     const { storage, values } = memory();
     await mount(<Host controller={controller} storyId={storyId} readerPreferences={storage} readAloudVoices={PICKS} />);
 
+    await click(byLabel('Narration playback speed'), 'speed picker');
+    expect(buttonBy(byLabel('Narration speed: 1'))!.getAttribute('aria-pressed')).toBe('true');
+    await click(byLabel('Narration speed: 0.5'), 'Half speed');
+    expect(container.querySelector('[data-testid="reader-narration-speed"]')!.textContent).toBe('½');
+    expect(JSON.parse(values.get('read-aloud')!)).toMatchObject({ v: 1, rate: 0.5 });
     await click(byLabel('Reader Settings'), 'Reader Settings');
     const dialog = container.ownerDocument.querySelector<HTMLElement>('[role="dialog"]')!;
     expect(dialog.querySelector('h2')!.textContent).toBe('Reader Settings');
-    expect([...dialog.querySelectorAll('section h3')].map(heading => heading.textContent)).toEqual(['Text', 'Narration']);
+    expect([...dialog.querySelectorAll('[role="tab"]')].map(tab => tab.textContent)).toEqual(['Text', 'Narration']);
+    expect(dialog.querySelector('[data-testid="reader-settings-text"]')).not.toBeNull();
+    expect(dialog.querySelector('[data-testid="reader-settings-narration"]')).toBeNull();
+    expect(dialog.querySelector('[data-testid="reader-text-sample"]')).toBeNull();
+    await click(button => button.getAttribute('role') === 'tab' && button.textContent === 'Narration', 'Narration tab');
     expect(dialog.textContent).not.toMatch(/Codex|Mind Palace|Audio|Customize|Accessibility/);
     const selected = (role: string) => {
       const select = dialog.querySelector<HTMLSelectElement>(`select[data-voice-role="${role}"]`)!;
@@ -481,11 +515,24 @@ describe('Read Aloud in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect([selected('narrator'), selected('protagonist'), selected('side')]).toEqual(['Daniel (en-GB)', 'Rishi (en-IN)', 'Samantha (en-US)']);
     expect(dialog.querySelector('optgroup')!.getAttribute('label')).toBe('English voices');
 
+    expect(dialog.querySelector<HTMLInputElement>('input[name="read-aloud-rate"][value="0.5"]')!.checked).toBe(true);
+    await act(async () => { dialog.querySelector<HTMLInputElement>('input[name="read-aloud-rate"][value="1.5"]')!.click(); });
+    const speed = container.querySelector('[data-testid="reader-narration-speed"]')!;
+    expect(speed.textContent).toBe('1½');
+    expect(dialog.querySelector<HTMLInputElement>('input[name="read-aloud-rate"][value="1.5"]')!.checked).toBe(true);
+    expect(JSON.parse(values.get('read-aloud')!)).toMatchObject({ v: 1, rate: 1.5 });
     await act(async () => { dialog.querySelector<HTMLInputElement>('input[name="read-aloud-rate"][value="1.25"]')!.click(); });
+    expect(speed.textContent).toBe('1¼');
     expect(JSON.parse(values.get('read-aloud')!)).toMatchObject({ v: 1, rate: 1.25 });
     await act(async () => { buttonBy(byLabel('Preview the Side characters voice'))!.click(); });
     await flush();
     expect(lastSpoken().voice?.name).toBe('Samantha');
+    expect(lastSpoken().rate).toBe(1.25);
+
+    await click(button => button.getAttribute('role') === 'tab' && button.textContent === 'Text', 'Text tab');
+    expect(dialog.querySelector('[data-testid="reader-settings-narration"]')).toBeNull();
+    await click(button => button.getAttribute('role') === 'tab' && button.textContent === 'Narration', 'Narration tab');
+    expect(dialog.querySelector<HTMLInputElement>('input[name="read-aloud-rate"][value="1.25"]')!.checked).toBe(true);
 
     await click(byLabel('Close Reader Settings'), 'Close Reader Settings');
     expect(container.ownerDocument.querySelector('[role="dialog"]')).toBeNull();
@@ -537,7 +584,8 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
   const note = () => container.querySelector<HTMLButtonElement>('[data-testid="story-audio-note"] button');
   /** Opens the lazily loaded Audio panel and waits for it. */
   const audioPanel = async () => {
-    for (let tries = 0; tries < 50 && !container.ownerDocument.querySelector('[data-testid="reader-settings-audio"] h3'); tries++) await flush(20);
+    await click(button => button.getAttribute('role') === 'tab' && button.textContent === 'Audio', 'Audio tab');
+    for (let tries = 0; tries < 50 && !container.ownerDocument.querySelector('[data-testid="reader-settings-audio"] .sap-reader-mixer'); tries++) await flush(20);
     return container.ownerDocument.querySelector<HTMLElement>('[data-testid="reader-settings-audio"]')!;
   };
 
@@ -635,7 +683,7 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
     const atmosphere = scene.querySelector<HTMLSelectElement>('#reader-soundtrack-atmosphere')!;
     // Automatic until the reader chooses; the atmosphere is chosen here, beside the music, not in the mixer's own picker.
     expect([piece.value, atmosphere.value]).toEqual(['automatic', 'automatic']);
-    const mixerPanel = [...audio.children].find(child => !child.contains(scene))!;
+    const mixerPanel = audio.querySelector('.sap-reader-mixer')!;
     expect(mixerPanel.textContent).toContain('Atmosphere');
     expect(mixerPanel.textContent).not.toContain('Gentle Rain 1');
     expect([...piece.querySelectorAll('optgroup')].map(group => group.label)).toEqual(['Adventure', 'Ambient', 'Emotions', 'Fighting', 'War']);
@@ -660,6 +708,15 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(piecesForMood(READER_MUSIC_MOOD, SEN_SOUNDSCAPES).map(entry => entry.id)).toContain(storySoundtrack(mixer).piece()?.id);
     expect(mixer.getPreferences().atmosphereId).toBe(waves.id);
     expect(JSON.parse(values.get('soundtrack-choice')!)).toMatchObject({ soundscape: 'automatic', atmosphere: 'automatic' });
+
+    // Presets still use the mixer's own state after moving below the primary levels.
+    const preset = mixer.getState().presets.find(preset => preset.label === 'Cinematic')!;
+    expect(preset).toBeTruthy();
+    await act(async () => { audio.querySelector<HTMLInputElement>(`input[name="reader-audio-preset"][value="${preset.id}"]`)!.click(); });
+    expect(mixer.getState().activePresetId).toBe(preset.id);
+    await click(button => button.getAttribute('role') === 'tab' && button.textContent === 'Text', 'Text tab');
+    const reopened = await audioPanel();
+    expect(reopened.querySelector<HTMLInputElement>(`input[name="reader-audio-preset"][value="${preset.id}"]`)!.checked).toBe(true);
   });
 
   it('tap mutes without hiding the note, hold opens volume, and only Settings Master hides it', async () => {
@@ -688,6 +745,7 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
     await act(async () => { note()!.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0 })); });
     await flush(650);
     expect(container.querySelector('[aria-label="Quick master volume"]')).not.toBeNull();
+    expect(container.querySelector('input[aria-label="Quick master volume"]')!.getAttribute('aria-orientation')).toBe('vertical');
     expect(container.ownerDocument.querySelector('[role="dialog"]')).toBeNull();
     await act(async () => { note()!.dispatchEvent(new MouseEvent('pointerup', { bubbles: true })); note()!.click(); });
     expect(mixer.getPreferences().masterMuted).toBe(false);
@@ -733,14 +791,15 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
     const audio = await audioPanel();
     const dialog = container.ownerDocument.querySelector<HTMLElement>('[role="dialog"]')!;
     expect(dialog.getAttribute('aria-label') ?? dialog.querySelector('h2')!.textContent).toBe('Reader Settings');
-    // Without speech, Narration only says so.
-    expect([...dialog.querySelectorAll('section h3')].map(heading => heading.textContent)).toEqual(['Text', 'Audio', 'Narration']);
-    expect(dialog.querySelector('[data-testid="reader-settings-narration"]')!.textContent).toContain("This browser can't read aloud.");
+    expect([...dialog.querySelectorAll('[role="tab"]')].map(tab => tab.textContent)).toEqual(['Text', 'Audio', 'Narration']);
     // The layers this chapter uses: the music, the atmosphere and Sound Cues, never Voice yet.
     expect(audio.textContent).toContain('Soundscapes');
     expect(audio.textContent).toContain('Atmosphere');
     expect(audio.textContent).toContain('Sound Cues');
     expect(audio.textContent).not.toMatch(/Voice/);
+    // Without speech, Narration explains its unavailable state.
+    await click(button => button.getAttribute('role') === 'tab' && button.textContent === 'Narration', 'Narration tab');
+    expect(dialog.querySelector('[data-testid="reader-settings-narration"]')!.textContent).toContain("This browser can't read aloud.");
   });
 
   it('dips the soundtrack under Listen and keeps the reader active, and a sleep timer stops Listen too', async () => {
@@ -767,7 +826,7 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
       // Settings holds Text, then Audio, then Narration.
       await click(byLabel('Reader Settings'), 'Reader Settings');
       await audioPanel();
-      expect([...container.ownerDocument.querySelectorAll('[role="dialog"] section h3')].map(heading => heading.textContent)).toEqual(['Text', 'Audio', 'Narration']);
+      expect([...container.ownerDocument.querySelectorAll('[role="dialog"] [role="tab"]')].map(tab => tab.textContent)).toEqual(['Text', 'Audio', 'Narration']);
       await click(byLabel('Close Reader Settings'), 'Close Reader Settings');
 
       await click(button => button.textContent?.trim() === 'Listen', 'Listen');
@@ -828,8 +887,8 @@ describe('The Reader frame and its chapter body', { timeout: 20_000 }, () => {
       .toEqual(['Back', 'Reader Settings']);
     const bottom = container.querySelector<HTMLElement>('[data-testid="reader-bottom-bar"]')!;
     expect([...bottom.querySelectorAll('button')].map(button => button.getAttribute('aria-label')))
-      .toEqual(['Previous sentence', 'Next sentence', 'Open Codex', 'Previous Chapter', 'Next Chapter: Write Chapter 2', 'Open Fate']);
-    expect(bottom.querySelector('[data-testid="reader-chapter-position"]')!.textContent).toBe('1/1');
+      .toEqual(['Previous sentence', 'Narration playback speed', 'Next sentence', 'Open Codex', 'Previous Chapter', 'Select chapter: Chapter 1', 'Next Chapter: Write Chapter 2', 'Open Fate']);
+    expect(bottom.querySelector('[data-testid="reader-chapter-position"]')!.textContent).toBe('1');
 
     await click(byLabel('Reader Settings'), 'Reader Settings');
     expect([...dialog().querySelectorAll('[data-testid="reader-settings-text"] legend')].map(legend => legend.textContent))

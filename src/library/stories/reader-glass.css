@@ -1,0 +1,287 @@
+/* Library skin for the portable Reader's material hooks. The recipe comes from
+   familiar.css's .familiar-actions: blue-gray glass, warm rim, cool top light.
+   Keep it here in the host; SEN supplies layout and behavior without Library branding.
+   Portaled selector menus carry the same hooks, so they need no ancestor scope. */
+.reader-glass {
+  --reader-glass-fill: linear-gradient(145deg, #29495a99, #0c1c3299);
+  --reader-glass-solid: linear-gradient(145deg, #29495aeb, #0c1c32eb);
+  --reader-glass-edge: #d6bd8766;
+  --reader-glass-light: inset 0 1px 0 #e3f6ff26;
+  --reader-seam-colors: #cbb57822, #f3e2b399 18%, #c9a24a77 55%, #49c9fa66 82%, #cbb57822;
+}
+
+.reader-glass.reader-glass {
+  background: var(--reader-glass-solid);
+  border-color: var(--reader-glass-edge);
+  box-shadow: var(--reader-glass-light), 0 5px 18px #020b2044;
+}
+
+/* Match Library navigation's stationary 3px seam (library-navigation.css),
+   rotated along each edge that meets the chapter. No moving light or hit area. */
+.reader-glass-bar::after,
+.reader-glass-panel::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  top: -1px;
+  height: 3px;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(var(--reader-seam-angle, 90deg), var(--reader-seam-colors));
+  box-shadow: 0 1px 0 #fff1, 0 3px 7px #49c9fa22;
+}
+header.reader-glass-bar::after {
+  top: auto;
+  bottom: -1px;
+  box-shadow: 0 -1px 0 #fff1, 0 -3px 7px #49c9fa22;
+}
+@media (min-width: 1024px) {
+  .reader-glass-panel::after {
+    --reader-seam-angle: 180deg;
+    inset-block: 0;
+    left: -1px;
+    right: auto;
+    width: 3px;
+    height: auto;
+    box-shadow: 1px 0 0 #fff1, 3px 0 7px #49c9fa22;
+  }
+}
+
+/* A quieter, continuous rim for the two floating Reader selectors.
+   Keep this separate from the quick-volume capsule's glass surface. */
+.reader-glass-picker { position: relative; }
+.reader-glass-picker::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 2px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(135deg, var(--reader-seam-colors));
+  opacity: .7;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+}
+
+.reader-glass.reader-glass-panel,
+.reader-glass.reader-glass-menu {
+  /* More body behind long lists and settings than the small companion dock. */
+  --reader-glass-fill: linear-gradient(145deg, #203a4ad9, #0c1c32e6);
+  --reader-glass-solid: linear-gradient(145deg, #203a4a, #0c1c32);
+  box-shadow: var(--reader-glass-light), 0 16px 48px #020b2066;
+}
+
+/* One dense surface grows up from the audio note; prose must not compete
+   with the small volume track. The note stays above the capsule's base. */
+.reader-glass.reader-audio-volume {
+  --reader-glass-fill: linear-gradient(145deg, #203a4af5, #0c1c32fa);
+  --reader-glass-solid: linear-gradient(145deg, #203a4a, #0c1c32);
+}
+
+/* Idle, audible notes get a soft resting surface. Ghost mode leaves just the
+   glyph; the expanded volume capsule supplies its own continuous backing. */
+.reader-audio-control::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid #d6bd8733;
+  border-radius: 999px;
+  background: linear-gradient(145deg, #29495a99, #0c1c32b3);
+  box-shadow: inset 0 1px 0 #e3f6ff1f, 0 3px 12px #020b2033;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+.reader-audio-control:not(:has(.reader-audio-volume, .sap-reader-mixer-note__slash, .reader-story-audio-note[data-scrolling='true']))::before {
+  opacity: 1;
+}
+
+/* Same gold thumb tokens as Library navigation. Menus use the shared overlay;
+   the chapter preserves document scrolling and its native scrollbar. */
+.reader-scroll-region,
+html[data-reader-scrollbar] {
+  --sh-scrollbar-thumb: linear-gradient(180deg, #f3e2b3b3, #c9a24a99, #8a6a2a80);
+  --sh-scrollbar-thumb-hover: linear-gradient(180deg, #f3e2b3, #c9a24a, #8a6a2a);
+  --sh-scrollbar-glow: 0 0 7px #c9a24a66;
+}
+.reader-scroll-region[data-overlay-scroll]:not([data-scrolling="true"])
+  > [data-slot="scrollbar-overlay"]:not([data-dragging="true"])
+  > [data-slot="scrollbar-thumb"] {
+  opacity: 0;
+  pointer-events: none;
+}
+html[data-reader-scrollbar] { scrollbar-color: transparent transparent; }
+html[data-reader-scrollbar][data-reader-scrolling] { scrollbar-color: #c9a24a99 transparent; }
+@supports selector(::-webkit-scrollbar) {
+  html[data-reader-scrollbar],
+  html[data-reader-scrollbar][data-reader-scrolling] { scrollbar-width: auto; scrollbar-color: auto; }
+  html[data-reader-scrollbar]::-webkit-scrollbar-button,
+  html[data-reader-scrollbar] body::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+  html[data-reader-scrollbar]::-webkit-scrollbar-track,
+  html[data-reader-scrollbar] body::-webkit-scrollbar-track { background: transparent; }
+  html[data-reader-scrollbar]::-webkit-scrollbar-thumb,
+  html[data-reader-scrollbar] body::-webkit-scrollbar-thumb { background: transparent; box-shadow: none; }
+  html[data-reader-scrollbar][data-reader-scrolling]::-webkit-scrollbar-thumb,
+  html[data-reader-scrollbar][data-reader-scrolling] body::-webkit-scrollbar-thumb {
+    background: var(--sh-scrollbar-thumb);
+    box-shadow: var(--sh-scrollbar-glow);
+  }
+  html[data-reader-scrollbar][data-reader-scrolling]::-webkit-scrollbar-thumb:hover,
+  html[data-reader-scrollbar][data-reader-scrolling] body::-webkit-scrollbar-thumb:hover {
+    background: var(--sh-scrollbar-thumb-hover);
+  }
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .reader-glass.reader-glass {
+    background: var(--reader-glass-fill);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    backdrop-filter: blur(16px) saturate(140%);
+  }
+}
+
+/* Nested controls get their depth from light, not a second backdrop sampler. */
+.reader-glass-control.reader-glass-control,
+.reader-settings-scope.reader-settings-scope .reader-settings-icon {
+  background: linear-gradient(145deg, #b9dbe51c, #29495a1a);
+  border-color: #d6bd8744;
+  box-shadow: inset 0 1px 0 #e3f6ff1f;
+  color: #e2f4ff;
+}
+.reader-glass-control:is(button):enabled:hover,
+.reader-settings-scope.reader-settings-scope .reader-settings-icon:hover {
+  background: #8bdbff26;
+  border-color: #d6bd8766;
+}
+.reader-glass-control:is(button):enabled:active,
+.reader-settings-scope.reader-settings-scope .reader-settings-icon:active { background: #8bdbff38; }
+/* Codex uses the same blue-gray control glass with only a faint halo from the
+   exact library-spectrum-glow palette and shared 18s keyframe from Library UI.
+   Two small, non-interactive layers keep the luminous edge behind a legible face. */
+.reader-glass-primary.reader-glass-primary {
+  --reader-codex-face: linear-gradient(145deg, #b9dbe51c, #29495a1a);
+  position: relative;
+  isolation: isolate;
+  overflow: visible;
+  background: transparent;
+  border-color: #d6bd8744;
+  color: #e2f4ff;
+  box-shadow: inset 0 1px 0 #e3f6ff1f;
+}
+.reader-glass-primary::before,
+.reader-glass-primary::after {
+  content: '';
+  position: absolute;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.reader-glass-primary::before {
+  z-index: -2;
+  inset: -3px;
+  background: linear-gradient(115deg, #04acff, #7c5cff, rgba(212, 175, 55, 0.7), #04acff);
+  background-size: 300% 300%;
+  filter: blur(6px);
+  /* Keep the spectrum outside the translucent face so it stays blue-gray. */
+  -webkit-mask-image: radial-gradient(circle, transparent calc(50% - 3px), #000 calc(50% - 1px));
+  mask-image: radial-gradient(circle, transparent calc(50% - 3px), #000 calc(50% - 1px));
+  opacity: .18;
+  animation: library-spectrum-flow 18s ease-in-out infinite;
+}
+.reader-glass-primary::after {
+  z-index: -1;
+  inset: 0;
+  background: var(--reader-codex-face);
+}
+.reader-glass-primary.reader-glass-primary:hover {
+  --reader-codex-face: #8bdbff26;
+  border-color: #d6bd8766;
+}
+.reader-glass-primary:hover::before,
+.reader-glass-primary:focus-visible::before { opacity: .28; }
+.reader-glass-primary.reader-glass-primary:active {
+  --reader-codex-face: #8bdbff38;
+}
+.reader-glass-primary.reader-glass-primary:focus-visible { outline-color: #a5f3fc; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reader-glass-primary::before { animation: none; }
+  .reader-audio-control::before { transition: none; }
+}
+
+.reader-settings-scope.reader-settings-scope {
+  --reader-settings-border: #d6bd872e;
+  --reader-settings-muted: #b1c4d2;
+  --reader-settings-accent: #96ddf9;
+  color: #eef7ff;
+}
+.reader-settings-scope.reader-settings-scope .reader-settings-group,
+.reader-settings-scope.reader-settings-scope .reader-settings-tabs {
+  background: linear-gradient(145deg, #b9dbe50a, #07142624);
+  box-shadow: inset 0 1px 0 #e3f6ff0d;
+}
+.reader-settings-scope.reader-settings-scope .reader-settings-tab[aria-selected="true"],
+.reader-settings-scope.reader-settings-scope .reader-settings-options input:checked + .reader-settings-choice {
+  background: #8bdbff26;
+  color: #eef7ff;
+}
+.reader-settings-scope.reader-settings-scope .reader-settings-choice { color: #cfdee8; }
+.reader-settings-scope.reader-settings-scope .reader-settings-label { color: #e2f4ff; }
+.reader-settings-scope.reader-settings-scope .reader-settings-select {
+  background: #0c1c3280;
+  color: #eef7ff;
+}
+.reader-settings-scope.reader-settings-scope .reader-settings-select option { background: #0c1c32; }
+.reader-settings-scope.reader-settings-scope .sap-reader-mixer {
+  --sap-reader-mixer-bg: #07142624;
+  --sap-reader-mixer-fg: #eef7ff;
+  --sh-text-muted: var(--reader-settings-muted);
+  --sh-field-surface: #0c1c32;
+  --sh-field-border: var(--reader-settings-border);
+  --sh-progress-track: #b1c4d226;
+  box-shadow: inset 0 1px 0 #e3f6ff0d;
+}
+
+/* Match the companion's touch fallback: retain its material, avoid sampling
+   the moving chapter underneath large sheets during a mobile scroll. */
+@media (hover: none) and (pointer: coarse), (prefers-reduced-transparency: reduce) {
+  .reader-audio-control::before {
+    background: linear-gradient(145deg, #29495aeb, #0c1c32eb);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .reader-glass.reader-glass {
+    background: var(--reader-glass-solid);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@media (forced-colors: active) {
+  html[data-reader-scrollbar],
+  html[data-reader-scrollbar][data-reader-scrolling] { scrollbar-color: auto; }
+  html[data-reader-scrollbar]::-webkit-scrollbar-thumb,
+  html[data-reader-scrollbar] body::-webkit-scrollbar-thumb,
+  html[data-reader-scrollbar][data-reader-scrolling]::-webkit-scrollbar-thumb,
+  html[data-reader-scrollbar][data-reader-scrolling] body::-webkit-scrollbar-thumb { background: CanvasText; }
+  .reader-glass.reader-glass,
+  .reader-glass-primary.reader-glass-primary,
+  .reader-glass-control.reader-glass-control,
+  .reader-settings-scope.reader-settings-scope .reader-settings-icon {
+    background: Canvas;
+    color: CanvasText;
+    border-color: ButtonText;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .reader-glass-primary::before,
+  .reader-audio-control::before,
+  .reader-glass-primary::after,
+  .reader-glass-bar::after,
+  .reader-glass-panel::after,
+  .reader-glass-picker::after { display: none; }
+}

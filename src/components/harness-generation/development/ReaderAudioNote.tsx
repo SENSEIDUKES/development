@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { ReaderMixerNote, useReaderMixerState, type ReaderMixer } from '@seihouse/audio-player';
 import './reader-audio-note.css';
 
@@ -8,7 +8,6 @@ export function ReaderAudioNote({ mixer }: { mixer: ReaderMixer }) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const slider = useRef<HTMLInputElement>(null);
-  const sliderId = useId();
   useEffect(() => {
     if (!state?.preferences.masterEnabled) {
       setOpen(false);
@@ -36,10 +35,10 @@ export function ReaderAudioNote({ mixer }: { mixer: ReaderMixer }) {
       }
     }}>
     <ReaderMixerNote mixer={mixer} muteMode="soundtrack-mute" className="reader-story-audio-note" onOpenSettings={() => setOpen(true)} />
-    {open && <div className="reader-audio-volume" role="group" aria-label="Quick master volume">
-      <label htmlFor={sliderId}>Master <span>{percent}%</span></label>
-      <input ref={slider} id={sliderId} type="range" min="0" max="100" step="1"
-        aria-label="Quick master volume" aria-valuetext={`${percent}%`} value={percent}
+    {open && <div className="reader-audio-volume reader-glass reader-glass-menu" role="group" aria-label="Quick master volume">
+      <input ref={slider} type="range" min="0" max="100" step="1"
+        aria-label="Quick master volume" aria-orientation="vertical" aria-valuetext={`${percent}%`} value={percent}
+        style={{ '--reader-audio-level': `${percent}%` } as CSSProperties}
         onChange={event => mixer.setMasterLevel(Number(event.target.value) / 100)} />
     </div>}
   </div>;

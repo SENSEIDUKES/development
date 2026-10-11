@@ -1,0 +1,85 @@
+.reader-settings-scope {
+  font-family: var(--font-sans, system-ui), sans-serif;
+  color: #f5f5f5;
+  color-scheme: dark;
+  --reader-settings-border: rgb(255 255 255 / .1);
+  --reader-settings-muted: #a3a3a3;
+  --reader-settings-accent: #a5f3fc;
+}
+
+.reader-settings-header {
+  flex: none;
+  padding: 8px 16px 16px;
+  border-bottom: 1px solid var(--reader-settings-border);
+}
+
+.reader-settings-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.reader-settings-heading h2 { margin: 0; font: inherit; font-size: 20px; font-weight: 600; letter-spacing: -.025em; }
+.reader-settings-heading h2:focus { outline: none; }
+.reader-settings-scope .reader-settings-tabs { display: flex; width: 100%; gap: 4px; padding: 4px; border: 1px solid var(--reader-settings-border); border-radius: 14px; background: rgb(255 255 255 / .035); }
+.reader-settings-scope .reader-settings-tab { flex: 1; min-width: 0; min-height: 44px; justify-content: center; padding: 8px; border: 0; border-radius: 10px; background: transparent; color: var(--reader-settings-muted); font: inherit; font-size: 14px; font-weight: 500; box-shadow: none; }
+.reader-settings-scope .reader-settings-tab[aria-selected="true"] { background: rgb(255 255 255 / .1); color: #fafafa; }
+.reader-settings-body { padding: 16px 16px max(16px, env(safe-area-inset-bottom)); }
+.reader-settings-scope .reader-settings-page { padding: 0; margin: 0; outline-offset: 2px; }
+.reader-settings-group { padding: 0 14px; margin-bottom: 16px; border: 1px solid var(--reader-settings-border); border-radius: 16px; background: rgb(255 255 255 / .025); }
+.reader-settings-field { min-width: 0; margin: 0; padding: 16px 0; border: 0; }
+.reader-settings-field + .reader-settings-field, .reader-settings-voice + .reader-settings-voice { border-top: 1px solid var(--reader-settings-border); }
+.reader-settings-label { float: left; width: 100%; margin-bottom: 10px; color: #e5e5e5; font-size: 14px; font-weight: 500; line-height: 20px; }
+.reader-settings-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); clear: both; gap: 6px; }
+.reader-settings-field:is([data-control="reader-text-font"], [data-control="reader-title-font"], [data-control="reader-audio-preset"]) .reader-settings-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.reader-settings-field[data-control="reader-text-size"] .reader-settings-options { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.reader-settings-field[data-control="read-aloud-rate"] .reader-settings-options { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.reader-settings-choice { display: flex; align-items: center; justify-content: center; min-height: 44px; height: 100%; padding: 8px; border: 1px solid transparent; border-radius: 10px; color: #c7c7c7; background: rgb(255 255 255 / .04); font-size: 13px; line-height: 20px; text-align: center; overflow-wrap: anywhere; }
+.reader-settings-options input:checked + .reader-settings-choice { background: rgb(255 255 255 / .11); color: #fafafa; border-color: rgb(165 243 252 / .45); }
+.reader-settings-options input:focus-visible + .reader-settings-choice { outline: 2px solid var(--reader-settings-accent); outline-offset: 2px; }
+.reader-settings-icon { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; flex: none; border-radius: 50%; border: 1px solid var(--reader-settings-border); background: rgb(255 255 255 / .08); color: #f5f5f5; }
+.reader-settings-reset { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 12px; border-radius: 10px; color: #d4d4d4; font-size: 13px; }
+.reader-settings-icon:hover, .reader-settings-reset:hover, .reader-settings-choice:hover { background: rgb(255 255 255 / .12); }
+.reader-settings-icon:active, .reader-settings-reset:active { background: rgb(255 255 255 / .16); }
+.reader-settings-scope button:focus-visible, .reader-settings-select:focus-visible { outline: 2px solid var(--reader-settings-accent); outline-offset: 2px; }
+.reader-settings-help { color: var(--reader-settings-muted); font-size: 12px; line-height: 1.6; }
+.reader-settings-saved { padding: 16px 0 0; }
+.reader-settings-voice { min-width: 0; padding: 16px 0; }
+.reader-settings-voice .reader-settings-label { float: none; display: block; margin-bottom: 4px; }
+.reader-settings-select { min-height: 44px; max-width: 100%; border: 1px solid var(--reader-settings-border); border-radius: 10px; padding: 8px 10px; background: #202020; color: #f5f5f5; font: inherit; font-size: 13px; text-overflow: ellipsis; }
+
+/* Theme the package's existing controls locally; it still owns all audio state. */
+.reader-settings-scope .sap-reader-mixer {
+  --sap-reader-mixer-bg: rgb(255 255 255 / .025);
+  --sap-reader-mixer-fg: #f5f5f5;
+  --sap-reader-mixer-muted: var(--reader-settings-muted);
+  --sap-reader-mixer-border: var(--reader-settings-border);
+  --sap-reader-mixer-focus: var(--reader-settings-accent);
+  --sap-reader-mixer-radius: 16px;
+  --sap-reader-mixer-padding: 14px;
+  --sap-reader-mixer-gap: 10px;
+  --sap-reader-mixer-font: 14px/1.5 var(--font-sans, system-ui), sans-serif;
+  --sh-accent: #a5f3fc;
+  --sh-interactive-primary: #67d4e3;
+  --sh-interactive-primary-hover: #a5f3fc;
+  --sh-progress-track: #303030;
+  --sh-control-thumb: #f5f5f5;
+  --sh-control-thumb-border: rgb(0 0 0 / .12);
+  --sh-text-primary: #f5f5f5;
+  --sh-text-muted: #a3a3a3;
+  --sh-field-surface: #202020;
+  --sh-field-border: rgb(255 255 255 / .1);
+  --sh-focus-ring: #a5f3fc;
+  margin-bottom: 16px;
+}
+.reader-settings-scope .sap-reader-mixer__sleep { border-top: 1px solid var(--reader-settings-border); padding-top: 14px; }
+.reader-settings-scope .sap-reader-mixer__name { font-size: 14px; }
+.reader-settings-scope .sap-reader-mixer__level { margin-top: -6px; }
+.reader-settings-scope .sap-reader-mixer__status:empty { display: none; }
+.reader-settings-scope .sap-reader-mixer__sleep-select { border-radius: 10px; font-size: 13px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .reader-settings-tab, .reader-settings-choice, .reader-settings-icon, .reader-settings-reset { transition: color 150ms, background-color 150ms, border-color 150ms; }
+}

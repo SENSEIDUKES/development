@@ -37,6 +37,7 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-10-11 (Why the HARNESS exists, and the plan):** Documentation only. [HARNESS_PRINCIPLES.md](./HARNESS_PRINCIPLES.md) records the owner's framing: the HARNESS is not a story generator but the engine that keeps long-form narrative reliable on cheap, replaceable models, under one principle (the model proposes; the engine decides and remembers). It lists the nine problems it solves with a plain status for each, the rules that follow, and the world record the Codex needs so a story can be translated into sequential art, animation or games (with the artist test and the save-game test). `NOVEL_EXPANDED.md` › What comes next is now a staged plan in two tracks, with a Next up list for handoffs.
 - **2026-10-10 (center the pills between anchored actions):** Play and Alter Fate stay at the outer edges, Codex stays centered, and each compact pill centers within the gap between neighboring main actions. Gray outer actions and cyan Codex are retained.
 - **2026-10-10 (compact centered Reader controls):** The whole action group stays centered at desktop and mobile sizes. Play/Pause and Alter Fate use gray circles while Codex stays cyan. Both control pills are shorter and narrower than the main actions; behavior is unchanged.
 - **2026-10-10 (matching control pills):** The two playback skip controls now share a single outlined pill matching the chapter selector, using the same border, rounded ends, height and compact sizing. Their playback behavior is unchanged.

@@ -11,7 +11,7 @@
 > context.
 
 - **Created:** 2026-09-29
-- **Last updated:** 2026-10-07
+- **Last updated:** 2026-10-11
 - **Owner:** SENSEI, SEIHouse Productions
 
 ## Vision and build state
@@ -258,7 +258,9 @@ move on to the next one.
 
 The HARNESS writes every chapter, but no reader ever visits it. It is an
 implementation system inside SEN, not SEN itself. A user only meets it as **Story
-Settings**, which hold the CAPA skill slots and the media slots.
+Settings**, which hold the CAPA skill slots and the media slots. Why it is built the
+way it is (the problems it solves and the one principle behind them) is in
+[HARNESS_PRINCIPLES.md](./src/components/harness-generation/HARNESS_PRINCIPLES.md).
 
 The Workshop's Harness Generation page (`?preview=harness-generation`, with its
 internals shown only through `showHarnessInternals`) is a developer instrument, never
@@ -297,7 +299,9 @@ when its words change. That means:
 - **The Codex waits.** It is designed after the expanded-novel reading experience is
   right, so its categories, and what the model is told to document, can be designed
   on purpose. Its page is in the Reader Chamber (2026-10-10), as it is and not yet
-  filled with the story's world, so that design can happen there.
+  filled with the story's world, so that design can happen there. What it must
+  hold so a story can be translated into other media is in
+  [the HARNESS principles](./src/components/harness-generation/HARNESS_PRINCIPLES.md#translation-across-media-the-world-record).
 
 ## Where we are (2026-10-10)
 
@@ -653,6 +657,28 @@ Update it whenever it changes.
 
 ## What comes next
 
+The plan, in stages, so any session can pick up where the last one stopped. Two
+tracks run side by side: **the product** (what a reader sees and does) and **the
+engine and its world record** (what the HARNESS and the Codex know). The order
+inside each track is the order to build in; the owner can reorder it. Why the
+engine track is shaped this way is in
+[HARNESS_PRINCIPLES.md](./src/components/harness-generation/HARNESS_PRINCIPLES.md).
+
+### Next up
+
+When a session asks "what now?", start here:
+
+1. **Owner:** run the next real-model test (Stage E0) on a new story and export
+   it. Everything after it depends on knowing the strict tags hold.
+2. **Agent:** design the first information tag, **first appearance with
+   appearance** (Stage E1, step 1), as a written proposal for the owner before
+   any code: the tag, its teaching, its rules, its home, and what the Codex
+   shows. The [principles](./src/components/harness-generation/HARNESS_PRINCIPLES.md#translation-across-media-the-world-record)
+   say what it must capture.
+3. **Either track's next piece** below, when the owner asks for it.
+
+### The product track
+
 1. **Branching and Blueprint change warnings** ([its direction](#the-world-blueprint)):
    a reader takes a published creator's Blueprint, keeps the Story Seed, and makes
    their own version; every Blueprint change carries a hard warning about what it
@@ -660,7 +686,8 @@ Update it whenever it changes.
 2. **Refine the creation-to-reading interaction** in the Workshop: Story Seed → Story
    View → Reader Chamber, including the manifestation sequence and World Cards. The
    new path (Story Seed → HARNESS → new reader) is connected; what remains is how it
-   looks and feels.
+   looks and feels. The Reader itself is worked on in the Reader Chamber workspace
+   (`?preview=reader-chamber`), which renders the app's own Reader.
 3. **Grow the NovelExpanded app** (`/app/`) piece by piece, until it is the
    whole app the owner wants. Piece 1, the core application spine at its own
    address with a check that fails the build if the app imports an old system,
@@ -676,14 +703,69 @@ Update it whenever it changes.
    (accounts, server-side storage, a kept economy), which completes it. The
    app's host pieces (`src/host/`) are where the device and practice stand-ins
    live, so that is where the database's real ones replace them.
-4. **Rebuild the remaining kinds** one at a time, then design the Codex.
-5. **The Familiar over the Holdings fixer:** the Library's Familiar decides how far
-   the fixer goes, and what to do with the contradictions it records as too big
-   to fix quietly.
-6. **Cinematic scrolling**, the Reader's default way to read: the page moves
+4. **Cinematic scrolling**, the Reader's default way to read: the page moves
    with Listen's voice (its playhead is ready for it), and later Sound Cues and
    manifestations fire as the voice reaches them. AI narration (generated once
    per language, stored and shared) comes after, on the same script.
+
+### The engine track: the world record and the Codex
+
+**Stage E0: prove what is built.** Basic first: nothing new is added on top of
+tags that have not been measured with a real model. The tests are the ones
+under [Not tested yet](#where-we-are-2026-10-10): the 10-chapter holdings test
+with the strict tag shape, speaker tags, the soundtrack tag, Rewrite and the
+Holdings fixer. Done when an exported story shows the tags landing reliably
+(the Holdings page agrees with the prose, speakers are tagged from Chapter 1,
+few sounds lost). A cost check can ride along: the same test on a second, cheaper
+model added to the Model Router, comparing tag accuracy and each chapter's
+receipt.
+
+**Stage E1: the information tags, one at a time.** Each is a new kind in the
+tiny SEN language, built with the five parts the
+[vocabulary](./src/components/harness-generation/ARCHITECTURE_VOCABULARY.md#the-tag-system-the-tiny-sen-language)
+defines, proven with a real model before the next begins, and shown on the
+Codex page as a plain list for checking (as Holdings is today). Together they
+complete the [world record](./src/components/harness-generation/HARNESS_PRINCIPLES.md#translation-across-media-the-world-record).
+
+1. **First appearance, with appearance:** when a character, thing or place first
+   appears, and later when its look changes (a scar, new robes, a
+   breakthrough). The writer tags the moment; the full description can be
+   gathered by a small separate step after the chapter is saved, registered in
+   the Model Router, so the writer's job stays small.
+2. **Place:** places become Codex entries, and the record knows where each
+   character is.
+3. **Scene:** where a story scene starts, where it is, when (time of day,
+   conditions) and who is present. With appearance, this is what an artist
+   needs to draw a panel.
+4. **Status:** alive, wounded, transformed, sealed away, and so on.
+5. **Ties:** allied, hostile, related, bound.
+
+**Stage E2: design the Codex on the record.** Only now, with real entries to
+show, is the Codex designed for readers ("the Codex waits", [How we
+build](#how-we-build)): its categories (characters, places, things and
+abilities, factions, the timeline), each entry linked to the passages that
+made it, Holdings becoming one section of a character's entry. Done when the
+record passes the two tests in the principles: **the artist test** and **the
+save-game test**.
+
+**Stage E3: recall for long stories.** The Codex says which entities matter to
+the next chapter; a recall step picks the earlier passages about them, so the
+Story Information Packet stays small at any length. Start with a Workshop
+experiment on an exported story (can it find the right passages?) before
+wiring it into the writer. This is where an embedding model fits.
+
+**Stage E4: the remaining kinds.** System Panels (including the Fate Survival
+result card), manifestations and creature events, one at a time, in the same
+tiny SEN language. Then **the Familiar over the Holdings fixer**: the Library's
+Familiar decides how far the fixer goes, and what to do with the contradictions
+it records as too big to fix quietly.
+
+**Stage E5: translation across media.** The first other medium is a
+**sequential-art chapter body** in the Reader's frame (`ReaderChapterBody`),
+drawn from the scene and appearance records, with Sound Cues and speakers
+pinned to panels the way they are pinned to sentences today. Manga Studio, and
+later animation and game exports, are studio work on the same record; none of
+them adds anything medium-specific to the story itself.
 
 ## Names
 

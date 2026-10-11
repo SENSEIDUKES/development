@@ -67,7 +67,11 @@ first. It is the single authoritative definition of HARNESS, CAPA, CAPA
 Schema, CAPA Skill, CAPA Prompt, Story Information, Story Information
 Packet, Immediate Chapter Request, Generation Model Call, and Generated
 Chapter, and it documents where current code already matches or diverges
-from that vocabulary. Use those terms as defined there; do not invent
+from that vocabulary.
+Read [`HARNESS_PRINCIPLES.md`](./src/components/harness-generation/HARNESS_PRINCIPLES.md)
+with it: why the HARNESS exists (the problems it solves, the one principle
+behind them, and the world record the Codex needs to translate a story into
+other media). The staged plan for what comes next is in `NOVEL_EXPANDED.md`. Use those terms as defined there; do not invent
 parallel terminology, schemas, assemblers, or context systems for a
 concept it already defines.
 

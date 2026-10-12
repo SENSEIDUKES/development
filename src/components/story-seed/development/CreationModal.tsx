@@ -69,6 +69,12 @@ export interface CreationModalProps {
   renderStorySettings?: (seed: { seed: StorySeedInput; originalLanguage: SenLanguageCode }) => ReactNode;
   /** Shown beside the Manifest button, such as the host's price for a World Blueprint. */
   manifestAside?: ReactNode;
+  /**
+   * A saved Story Seed to open for editing when Create opens, such as a spark
+   * the host just planted in the Story Bank. An id the bank does not hold
+   * leaves a new seed.
+   */
+  initialSeedId?: string;
 }
 
 /** Existing one-story generation default; Chapter Generation Pass 1 does not use it. */
@@ -137,7 +143,7 @@ const selectCreationModalStore = (state: StoryCreationSnapshot): CreationModalSt
   libraryStories: state.stories,
 });
 
-export default function CreationModal({ onNavigateHome, onStartStory, onGenerateBlueprint, isGenerating: isGeneratingProp, error, accountDefaultLanguage, accountDefaultChapterWritingStyle, renderStorySettings, manifestAside }: CreationModalProps) {
+export default function CreationModal({ onNavigateHome, onStartStory, onGenerateBlueprint, isGenerating: isGeneratingProp, error, accountDefaultLanguage, accountDefaultChapterWritingStyle, renderStorySettings, manifestAside, initialSeedId }: CreationModalProps) {
   const runtime = useStoryCreationRuntime();
   const guestWorkspace = Boolean(runtime.guestOwnerId);
   const storeIsGenerating = useStoryCreationStore(state => state.isGenerating);
@@ -706,6 +712,22 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     setActiveSection(id);
     setShowStoryBank(false);
   }, []);
+  // The host's initial seed opens once, after the owner (and so the bank) is known.
+  const openInitialSeed = useLatestCallback(handleEditSeed);
+  const openedInitialSeedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!initialSeedId || !seedOwnerId || openedInitialSeedRef.current === initialSeedId) return;
+    let cancelled = false;
+    runtime.repository.list(seedOwnerId).then(records => {
+      if (cancelled) return;
+      // Marked only once it has opened, so an effect run that is cancelled
+      // (Strict Mode's double run, an owner change) never skips it.
+      openedInitialSeedRef.current = initialSeedId;
+      const record = records.find(item => item.id === initialSeedId);
+      if (record) openInitialSeed(record);
+    }, error => console.error('The Story Seed to open could not be loaded:', error));
+    return () => { cancelled = true; };
+  }, [initialSeedId, seedOwnerId, runtime.repository, openInitialSeed]);
   const requestSaveDraft = useLatestCallback(handleSaveDraft);
   const requestStartStory = useLatestCallback(handleStartStoryClick);
   const requestExportCurrentSeed = useLatestCallback(handleExportCurrentSeed);

@@ -25,13 +25,15 @@ export interface CreatePageProps {
   accountDefaultChapterWritingStyle?: CreationModalProps['accountDefaultChapterWritingStyle'];
   /** Story Settings in Create: the skills and media the new story starts with. */
   renderStorySettings?: CreationModalProps['renderStorySettings'];
+  /** A saved Story Seed to open, such as a spark begun from Home. */
+  seedId?: string;
   onHome: () => void;
   /** Manifest Story: the host starts the story and shows it. */
   onStartStory: (payload: InitialStoryGenerationPayload) => Promise<void>;
 }
 
 /** Create: the Story Seed and its World Blueprint, the same journey the Library ships. */
-export function CreatePage({ services, askForToken, startedSeedIds, chapterModel, accountDefaultLanguage, accountDefaultChapterWritingStyle, renderStorySettings, onHome, onStartStory }: CreatePageProps) {
+export function CreatePage({ services, askForToken, startedSeedIds, chapterModel, accountDefaultLanguage, accountDefaultChapterWritingStyle, renderStorySettings, seedId, onHome, onStartStory }: CreatePageProps) {
   const runtime = useNovelExpandedStoryCreation(services.storySeeds, startedSeedIds);
   const activeRequest = useRef<AbortController | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -74,7 +76,7 @@ export function CreatePage({ services, askForToken, startedSeedIds, chapterModel
     <div className="min-h-screen bg-void" data-testid="novel-expanded-create">
       <CreationModal onNavigateHome={onHome} onStartStory={onStartStory} isGenerating={generating} error={null}
         accountDefaultLanguage={accountDefaultLanguage} accountDefaultChapterWritingStyle={accountDefaultChapterWritingStyle}
-        renderStorySettings={renderStorySettings} manifestAside={<BlueprintEnergyCost />}
+        renderStorySettings={renderStorySettings} manifestAside={<BlueprintEnergyCost />} initialSeedId={seedId}
         onGenerateBlueprint={payload => isLocalDevelopmentModel(chapterModel)
           ? track(signal => services.requestWorldBlueprint(payload, '', signal, chapterModel))
           : withToken('The World Blueprint needs the development access token. Nothing was changed.',

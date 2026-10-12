@@ -7,6 +7,8 @@ import { handleStoryCoverHttp, STORY_COVER_VISITOR_LIMIT } from '../server/story
 import { handleImageLabHttp } from '../server/image-lab/http';
 import { handleProfilePictureHttp, PROFILE_PICTURE_VISITOR_LIMIT } from '../server/profile-picture/http';
 import { handleReaderTranslationHttp } from '../server/reader-translation/http';
+import { handleStorySparkHttp } from '../server/story-spark/http';
+import { STORY_SPARK_VISITOR_LIMIT } from '../server/story-spark/limits';
 import { handleCodexVoiceQuoteHttp } from '../server/audio/codexVoiceQuoteHttp';
 import { createConfiguredCodexVoiceQuoteService } from '../server/audio/codexVoiceQuote';
 import { modelRouterStatus } from '../server/model-router/status';
@@ -55,6 +57,7 @@ export const generationApis = (
   });
   const guardStoryCover = createPublicGenerationGuard(STORY_COVER_VISITOR_LIMIT);
   const guardProfilePicture = createPublicGenerationGuard(PROFILE_PICTURE_VISITOR_LIMIT);
+  const guardStorySpark = createPublicGenerationGuard(STORY_SPARK_VISITOR_LIMIT);
   const guardCodexVoiceQuote = createPublicGenerationGuard({
     key: 'codex-voice-quote',
     limit: 8,
@@ -108,6 +111,7 @@ export const generationApis = (
         && pathname !== '/api/profile-picture'
         && pathname !== '/api/codex-voice-quote'
         && pathname !== '/api/reader-translation'
+        && pathname !== '/api/story-spark'
       ) {
         next();
         return;
@@ -126,6 +130,8 @@ export const generationApis = (
               ? guardCodexVoiceQuote(request)
             : pathname === '/api/reader-translation'
               ? guardReaderTranslation(request)
+            : pathname === '/api/story-spark'
+              ? ownerTokenAdmission(request, developmentAccessToken(environment)) ?? guardStorySpark(request)
               : { allowed: true };
         if (!admission.allowed) {
           writeJson(response, admission.status ?? 403, {
@@ -196,6 +202,14 @@ export const generationApis = (
               service: codexVoiceQuoteService,
               onError: error => console.error('[codex-voice]', error),
             },
+          );
+          writeJson(response, result.status, result.body, result.headers);
+          return;
+        }
+        if (pathname === '/api/story-spark') {
+          const result = await handleStorySparkHttp(
+            { method: request.method, body, headers: request.headers },
+            { environment, onError: error => console.error('[story-spark]', error) },
           );
           writeJson(response, result.status, result.body, result.headers);
           return;

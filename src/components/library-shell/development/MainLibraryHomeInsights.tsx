@@ -1,31 +1,30 @@
 import { MotionConfig } from 'motion/react';
-import { MainLibraryAdapterContext } from '../shared/MainLibraryAdapter';
+import type { DaoSparkHost } from '../shared/MainLibraryAdapter';
 import { DaoInsights } from './main-library/DaoInsights';
-import { MainLibraryClipboardProvider } from './mainLibraryClipboard';
-import type { MainLibraryHeaderAdapter } from './MainLibraryHeader';
+import { MainLibraryClipboardProvider, type MainLibraryCopyText } from './mainLibraryClipboard';
 import { useLibraryPathways } from './LibraryNavigation';
 import './main-library/main-library-header.css';
 
 /**
  * Dao Insights in its Home placement: directly under the featured area and
- * above the Library collection tabs.
+ * above the Library collection tabs. Only the placement is decided here; the
+ * Story Spark panel itself is `DaoInsights`.
  *
- * This is a placement only. `DaoInsights` itself is untouched — the same
- * quotes, the same 14-second rotation, the same category filtering, the same
- * modal, clipboard writer, provider check and static fallback — it simply
- * renders in Home's content column instead of the top header's context slot,
- * where it competed with the page title for a phone's header row.
+ * In the Main Library the header's center carries it on laptops, where the
+ * Pathways sidebar is shown, so Home leaves it out there. A host whose header
+ * has no Dao Insights (NovelExpanded) passes `everyWidth` to keep it in Home.
  */
-export function MainLibraryHomeInsights({ adapter }: { adapter: MainLibraryHeaderAdapter }) {
-  // With the Pathways sidebar the header's center carries Dao Insights instead.
-  if (useLibraryPathways()) return null;
-  return <MainLibraryAdapterContext.Provider value={adapter}>
-    <MainLibraryClipboardProvider copyText={adapter.copyText}>
-      <MotionConfig reducedMotion="user">
-        <div className="main-library-home-insights" data-home-dao-insights>
-          <DaoInsights />
-        </div>
-      </MotionConfig>
-    </MainLibraryClipboardProvider>
-  </MainLibraryAdapterContext.Provider>;
+export function MainLibraryHomeInsights({ adapter, everyWidth = false }: {
+  adapter: { copyText: MainLibraryCopyText; daoSparks?: DaoSparkHost };
+  everyWidth?: boolean;
+}) {
+  const pathways = useLibraryPathways();
+  if (pathways && !everyWidth) return null;
+  return <MainLibraryClipboardProvider copyText={adapter.copyText}>
+    <MotionConfig reducedMotion="user">
+      <div className="main-library-home-insights" data-home-dao-insights>
+        <DaoInsights host={adapter.daoSparks} />
+      </div>
+    </MotionConfig>
+  </MainLibraryClipboardProvider>;
 }

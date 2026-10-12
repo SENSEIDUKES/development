@@ -67,6 +67,10 @@ const DaoPillarWorkspace = lazy(() =>
   import('./workshop/previews/dao-pillar/DaoPillarWorkspace')
     .then(module => ({ default: module.DaoPillarWorkspace })),
 );
+const DaoInsightsWorkspace = lazy(() =>
+  import('./workshop/previews/dao-insights/DaoInsightsWorkspace')
+    .then(module => ({ default: module.DaoInsightsWorkspace })),
+);
 const EnergyWorkspace = lazy(() =>
   import('./workshop/previews/energy/EnergyWorkspace')
     .then(module => ({ default: module.EnergyWorkspace })),
@@ -131,6 +135,7 @@ const previewRegistry: Record<string, ComponentType> = {
   'chapter-generation-manifestation': ChapterManifestationWorkspace,
   'dao-pillar': DaoPillarWorkspace,
   'energy': EnergyWorkspace,
+  'dao-insights': DaoInsightsWorkspace,
   'model-router': ModelRouterWorkspace,
   'provenance': ProvenanceWorkspace,
   'familiar': FamiliarWorkspace,

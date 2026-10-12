@@ -139,8 +139,8 @@ music and chapter-writing behavior is unchanged.
 
 **0.22.0 (2026-10-07):** requires `@seihouse/sen` 0.24.0 and names `@seihouse/audio-player`
 `^4.0.0` as a peer. `./shell` adds `HeaderSoundControl` (the reader mixer's music note for
-`WorkspaceHeader`'s new `sound` slot: a tap mutes, hover or a held finger opens a Music
-volume slider) and the reader's Menu music setting (`useMenuMusic`, `readMenuMusic`,
+`WorkspaceHeader`'s new `sound` slot: a tap mutes, a held finger opens a Music
+volume slider; since 2026-10-12 it is the Reader's own note and opens its Master volume) and the reader's Menu music setting (`useMenuMusic`, `readMenuMusic`,
 `writeMenuMusic`, `MENU_MUSIC_KEY`). `./profile`'s services port takes optional
 `soundPreferences`, which shows Settings › Sound and its Menu music switch.
 `StoryPages` takes optional `soundscapes`, the Reader's music before a story has a chapter.

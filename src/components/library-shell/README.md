@@ -1,5 +1,6 @@
 # Library Shell
 
+- **2026-10-12** — One music note, from SENSEI: `HeaderSoundControl` now renders the Reader's own note (SEN's `ReaderAudioNote`, exported from `@seihouse/sen/harness-generation`) instead of a copy, so the two can no longer drift apart. Home's note wears the Reader's look (white, its resting glass, faint while muted instead of crossed out), and holding it or ArrowUp opens the Reader's quick **Master** volume capsule; the separate Music volume popover and opening on hover are gone. Only its words ("Mute sound") are the shell's. In a laptop header the capsule opens downward.
 - **2026-10-09** — The footer statement reads “An Experience by SEIHouse”;
   hosts can supply a brand mark through `identity` instead of the text title.
   Its atmospheric background fades in at the top to avoid a blue-to-black seam.
@@ -284,7 +285,7 @@ remain with the profile/app owners.
 
 ## The music note in the header — 2026-10-07
 
-`HeaderSoundControl` puts the reader mixer's music note in the shell header, through `WorkspaceHeader`'s new `sound` slot just before Help and Search (a host can supply it once for every header with `WorkspaceHeaderSoundProvider`, below). On phones and tablets it floats above the bottom bar instead (see "The music note floats above the bar"). It reuses the audio player's own `ReaderMixerNote`: a tap mutes or unmutes all sound (the mixer's master switch, the same as the Reader's note). Hovering it with a mouse, holding it about half a second with a finger, or ArrowUp/ArrowDown from the keyboard opens a **Music volume** slider bound to the Soundscapes level; it closes when the mouse leaves (after a short grace), on a tap outside, or on Escape. Both are the reader's saved mix, shared with Reader Settings › Audio. Without a reader mixer it renders nothing. The host shows it only while the reader's **Menu music** setting (`useMenuMusic`, `src/library/sound/menuMusic.ts`, kept in the host's reader preferences under `menu-music`, on by default) is on; Profile Settings › Sound changes that setting. Every header in NovelExpanded (Home, World Info and Story Seed) and the Workshop's Profile header carry it. The Library package now names `@seihouse/audio-player` as a peer, as SEN already does.
+`HeaderSoundControl` puts the reader mixer's music note in the shell header, through `WorkspaceHeader`'s new `sound` slot just before Help and Search (a host can supply it once for every header with `WorkspaceHeaderSoundProvider`, below). On phones and tablets it floats above the bottom bar instead (see "The music note floats above the bar"). It is the Reader's own note (SEN's `ReaderAudioNote`), with the shell's words: a tap mutes or unmutes all sound, the same as in the Reader. Holding it with a finger or mouse, or ArrowUp/ArrowDown from the keyboard, opens the Reader's quick **Master volume** capsule; it closes on a tap outside or on Escape. Both are the reader's saved mix, shared with Reader Settings › Audio. Without a reader mixer, or while Master is off in Settings, it renders nothing. The host shows it only while the reader's **Menu music** setting (`useMenuMusic`, `src/library/sound/menuMusic.ts`, kept in the host's reader preferences under `menu-music`, on by default) is on; Profile Settings › Sound changes that setting. Every header in NovelExpanded (Home, World Info and Story Seed) and the Workshop's Profile header carry it. The Library package now names `@seihouse/audio-player` as a peer, as SEN already does.
 
 ## The music note floats above the bar — 2026-10-07
 
@@ -297,7 +298,7 @@ spot `LibraryNavigation` keeps just above the bar's right end: 8px above the bar
 height. That is the Reader's technique: its ghost note floats above the right end
 of its Listen bar. Floating, the note is the same ghost note, faint while the page
 scrolls and clear when it is still, touched or focused; a soft shadow keeps it
-readable over pictures, and its Music volume opens upward, above it. On laptops the
+readable over pictures, and its Master volume grows upward from it. On laptops the
 sidebar or the rail replaces the bar and the note sits in the header, before Help
 and Search, as before. One note shows at a time. A header outside Library
 navigation keeps its note in the header. `useLibraryBottomBar()` tells a surface

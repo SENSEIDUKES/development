@@ -64,27 +64,21 @@ describe('The header\'s sound control', () => {
     expect(slider()).toBeNull();
   });
 
-  it('opens the Music volume on hover, sets the music\'s level from it, and closes when the mouse leaves', async () => {
+  it('is the Reader\'s own note: a mouse passing over opens nothing, and its volume is the quick Master volume', async () => {
     render(<HeaderSoundControl />);
+    expect(container.querySelector('.reader-audio-control .reader-story-audio-note')).not.toBeNull();
     act(() => pointer(control(), 'pointerover', 'mouse'));
-    expect(slider()).not.toBeNull();
-    expect(slider()!.getAttribute('aria-label') ?? container.querySelector('label')!.textContent).toContain('Music volume');
-    expect(Number(slider()!.value)).toBe(Math.round(mixer.getState().preferences.layers.soundscapes.level * 100));
-
+    expect(slider()).toBeNull();
+    act(() => { note().focus(); note().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true })); });
+    expect(slider()!.getAttribute('aria-label')).toBe('Quick master volume');
     act(() => {
       Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(slider(), '60');
       slider()!.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    expect(mixer.getState().preferences.layers.soundscapes.level).toBeCloseTo(0.6);
-    // Only the music: the master switch and the other layers are untouched.
+    expect(mixer.getState().preferences.masterLevel).toBeCloseTo(0.6);
     expect(mixer.getState().preferences.masterEnabled).toBe(true);
     await wait(350);
-    expect(JSON.parse(storage.values.get('audio-mixer')!).layers.soundscapes.level).toBeCloseTo(0.6);
-
-    act(() => pointer(control(), 'pointerout', 'mouse'));
-    expect(slider()).not.toBeNull(); // a moment's grace to reach it
-    await wait(300);
-    expect(slider()).toBeNull();
+    expect(JSON.parse(storage.values.get('audio-mixer')!).masterLevel).toBeCloseTo(0.6);
   });
 
   it('opens on a held finger without muting, and closes on a tap outside or Escape', async () => {
@@ -93,7 +87,7 @@ describe('The header\'s sound control', () => {
     act(() => pointer(control(), 'pointerover', 'touch'));
     expect(slider()).toBeNull();
     act(() => pointer(note(), 'pointerdown', 'touch'));
-    await wait(550);
+    await wait(650); // the Reader's hold
     expect(slider()).not.toBeNull();
     // Lifting the finger is not a tap.
     act(() => pointer(note(), 'pointerup', 'touch'));

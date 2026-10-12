@@ -6,6 +6,7 @@ import { BlueprintRequestError } from '../host/story-seed/blueprintGenerationCli
 import type { AskForAccessToken } from './accessToken';
 import type { NovelExpandedServices } from './services';
 import { useNovelExpandedStoryCreation } from './storyCreationRuntime';
+import { isLocalDevelopmentModel } from '../host/generation/modelPreference';
 
 type CreationModalProps = ComponentProps<typeof CreationModal>;
 
@@ -74,8 +75,10 @@ export function CreatePage({ services, askForToken, startedSeedIds, chapterModel
       <CreationModal onNavigateHome={onHome} onStartStory={onStartStory} isGenerating={generating} error={null}
         accountDefaultLanguage={accountDefaultLanguage} accountDefaultChapterWritingStyle={accountDefaultChapterWritingStyle}
         renderStorySettings={renderStorySettings} manifestAside={<BlueprintEnergyCost />}
-        onGenerateBlueprint={payload => withToken('The World Blueprint needs the development access token. Nothing was changed.',
-          (accessToken, signal) => services.requestWorldBlueprint(payload, accessToken, signal, chapterModel))} />
+        onGenerateBlueprint={payload => isLocalDevelopmentModel(chapterModel)
+          ? track(signal => services.requestWorldBlueprint(payload, '', signal, chapterModel))
+          : withToken('The World Blueprint needs the development access token. Nothing was changed.',
+            (accessToken, signal) => services.requestWorldBlueprint(payload, accessToken, signal, chapterModel))} />
     </div>
   </StoryCreationProvider>;
 }

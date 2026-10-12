@@ -104,7 +104,7 @@ function ProviderPicker({ providers, models, active, onPick }: {
         return (
           <button key={provider.id} type="button" role="tab" aria-selected={active === provider.id} data-provider={provider.id}
             onClick={() => onPick(provider.id)}
-            title={provider.configured ? 'Key configured' : `Needs ${provider.keyVariable}`}
+            title={provider.id === 'lmstudio' ? 'Local development · no API key needed' : provider.configured ? 'Key configured' : `Needs ${provider.keyVariable}`}
             className={`workshop-touch-target flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors ${active === provider.id
               ? 'border-cyan-400/40 bg-cyan-500/15 text-cyan-50'
               : 'border-white/10 text-white/60 hover:bg-white/5'}`}>
@@ -195,6 +195,7 @@ function CapabilityPanel({ capability }: { capability: ModelRouterCapabilityStat
       {!activeProvider.configured && (
         <p className="text-[11px] text-white/45">Add <span className="font-mono">{activeProvider.keyVariable}</span> in Vercel to use these models.</p>
       )}
+      {activeProvider.id === 'lmstudio' && <p className="text-[11px] leading-snug text-white/45">Uses the text model currently loaded in LM Studio at localhost:1234. Start its server and keep one text model loaded. No API key needed; local development only.</p>}
       {note && <p className="text-[11px] leading-snug text-white/45">{note}</p>}
       <ul className="space-y-0.5 rounded-lg border border-white/10 bg-white/[0.02] p-1"
         role={selectable ? 'radiogroup' : undefined} aria-label={selectable ? `${activeProvider.label} ${capability.id === 'images' ? 'image' : 'chapter'} models` : undefined}>

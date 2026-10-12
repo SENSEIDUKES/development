@@ -18,7 +18,7 @@ export interface HarnessTextGenerationResult {
   providerReceipt: HarnessProviderReceipt;
 }
 export interface HarnessTextModelProvider {
-  readonly provider: 'gemini' | 'openrouter';
+  readonly provider: 'gemini' | 'openrouter' | 'lmstudio';
   readonly model: string;
   generate(request: HarnessTextGenerationRequest): Promise<HarnessTextGenerationResult>;
 }
@@ -26,7 +26,7 @@ export interface HarnessTextModelProvider {
 const estimateTokens = (value: string) => Math.max(1, Math.ceil(value.trim().length / 4));
 
 class RoutedHarnessTextProvider implements HarnessTextModelProvider {
-  readonly provider: 'gemini' | 'openrouter';
+  readonly provider: 'gemini' | 'openrouter' | 'lmstudio';
   constructor(
     private readonly apiKey: string,
     readonly model: string,
@@ -38,15 +38,17 @@ class RoutedHarnessTextProvider implements HarnessTextModelProvider {
   }
   async generate(request: HarnessTextGenerationRequest): Promise<HarnessTextGenerationResult> {
     const startedAt = Date.now();
+    const timeoutMs = this.provider === 'lmstudio' ? 15 * 60_000 : request.timeoutMs;
     try {
       const router = createModelRouter({
         credentials: { [this.provider]: this.apiKey },
+        localDevelopment: this.provider === 'lmstudio' && this.apiKey === 'local-dev',
         openRouterAttribution: DEVELOPMENT_OPENROUTER_ATTRIBUTION,
       });
       const result = await router.generate({
         capability: 'text', model: this.model, systemInstruction: request.systemInstruction,
         userPrompt: request.userPrompt, temperature: request.temperature,
-        maxOutputTokens: request.maxOutputTokens, timeoutMs: request.timeoutMs,
+        maxOutputTokens: request.maxOutputTokens, timeoutMs,
         responseFormat: 'json', responseJsonSchema: request.responseJsonSchema,
         reasoningLevel: request.reasoningLevel ?? (this.reasoningEffort as ReasoningLevel | undefined),
       });
@@ -56,7 +58,7 @@ class RoutedHarnessTextProvider implements HarnessTextModelProvider {
       return {
         rawProviderResponse: result.text,
         providerReceipt: {
-          provider: this.provider, model: this.model, generatedAt: new Date().toISOString(),
+          provider: this.provider, model: this.provider === 'lmstudio' ? result.model : this.model, generatedAt: new Date().toISOString(),
           durationMs: Date.now() - startedAt,
           usage: {
             source: result.usage ? 'reported' : 'estimated',
@@ -68,9 +70,9 @@ class RoutedHarnessTextProvider implements HarnessTextModelProvider {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown provider error';
       if (error instanceof ModelRouterError && error.code === 'timeout') {
-        throw new Error(`The provider exceeded the Harness Generation ${Math.ceil(request.timeoutMs / 1000)} second deadline.`);
+        throw new Error(`The provider exceeded the Harness Generation ${Math.ceil(timeoutMs / 1000)} second deadline.`);
       }
-      throw new Error(`${this.provider === 'gemini' ? 'Gemini' : 'OpenRouter'} Harness Generation failed: ${message}`);
+      throw new Error(`${this.provider === 'lmstudio' ? 'LM Studio' : this.provider === 'gemini' ? 'Gemini' : 'OpenRouter'} Harness Generation failed: ${message}`);
     }
   }
 }
@@ -87,6 +89,7 @@ export const createHarnessTextProvider = (
   config: Pick<ResolvedHarnessGenerationConfig, 'keys' | 'reasoningEffort'>,
 ): HarnessTextModelProvider => {
   const apiKey = requireTextModelKey(model, config.keys);
+  if (textModelProvider(model) === 'lmstudio') return new RoutedHarnessTextProvider(apiKey, model);
   return textModelProvider(model) === 'openrouter'
     ? new OpenRouterHarnessTextProvider(apiKey, model, config.reasoningEffort)
     : new GeminiHarnessTextProvider(apiKey, model);

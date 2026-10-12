@@ -1,5 +1,5 @@
 import { type BlueprintGenerationPayload, type WorldBlueprint } from '@seihouse/sen/story-seed';
-import { readReasoningPreference } from '../generation/modelPreference';
+import { isLocalDevelopmentModel, readReasoningPreference } from '../generation/modelPreference';
 
 const ENDPOINT = '/api/generate-blueprint';
 /** Longer than the server's 180-second route, so the server's own answer, a deadline included, arrives first. */
@@ -17,7 +17,7 @@ export class BlueprintRequestError extends Error {
   }
 }
 
-const requestSignalWithTimeout = (callerSignal?: AbortSignal) => {
+const requestSignalWithTimeout = (callerSignal?: AbortSignal, timeoutMs = REQUEST_TIMEOUT_MS) => {
   const controller = new AbortController();
   let timedOut = false;
   const abortFromCaller = () => controller.abort(callerSignal?.reason);
@@ -26,7 +26,7 @@ const requestSignalWithTimeout = (callerSignal?: AbortSignal) => {
   const timeout = setTimeout(() => {
     timedOut = true;
     controller.abort();
-  }, REQUEST_TIMEOUT_MS);
+  }, timeoutMs);
 
   return {
     signal: controller.signal,
@@ -61,15 +61,15 @@ const postBlueprintRequest = async (
   signal?: AbortSignal,
 ): Promise<Record<string, unknown>> => {
   const token = accessToken.trim();
-  if (!token) throw new Error(messages.missingToken);
-  const request = requestSignalWithTimeout(signal);
+  if (!token && !isLocalDevelopmentModel(payload.model)) throw new Error(messages.missingToken);
+  const request = requestSignalWithTimeout(signal, isLocalDevelopmentModel(payload.model) ? 15 * 60_000 + 20_000 : REQUEST_TIMEOUT_MS);
   try {
     const response = await fetch(ENDPOINT, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
-        Authorization: `Bearer ${token}`,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify(payload),
       signal: request.signal,

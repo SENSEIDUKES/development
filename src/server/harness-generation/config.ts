@@ -18,7 +18,7 @@ export interface ResolvedHarnessGenerationConfig {
   apiKey?: string;
   /** Every provider credential the Model Router can route to. */
   keys: ChapterModelRoute['keys'];
-  provider: 'gemini' | 'openrouter';
+  provider: 'gemini' | 'openrouter' | 'lmstudio';
   reasoningEffort?: string;
   models: Array<{ id: string; label: string }>;
   defaultModel: string;
@@ -61,7 +61,7 @@ export const harnessGenerationServerInfo = (
   const config = resolveHarnessGenerationConfig(environment);
   return {
     provider: config.provider,
-    configured: Boolean(config.keys.gemini || config.keys.openrouter),
+    configured: Boolean(config.keys.gemini || config.keys.openrouter || config.keys.lmstudio),
     models: config.models,
     defaultModel: config.defaultModel,
   };

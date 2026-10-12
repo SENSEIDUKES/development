@@ -2,6 +2,7 @@ import { GoogleGenAI } from '@google/genai';
 import { geminiThinkingConfig } from './geminiThinking';
 import { generateOpenRouterImage, generateOpenRouterText } from './openRouter';
 import {
+  isLocalModelDevelopment,
   imageModelProvider,
   providerModelName,
   resolveReasoningLevel,
@@ -13,11 +14,14 @@ export type { ModelCapability, ReasoningLevel } from './catalog';
 export { CHAPTER_MODELS, IMAGE_MODELS, TTS_MODELS, AUDIO_MODELS, VIDEO_MODELS, THREE_D_MODELS, REASONING_LEVELS } from './catalog';
 export { DEFAULT_CHAPTER_MODEL, DEFAULT_IMAGE_MODEL, DEFAULT_TTS_MODEL, imageModelProvider, MODEL_PROVIDERS, lowestReasoningLevel, providerKey, providerModelName, resolveChapterModelRoute, resolveReasoningLevel, textModelProvider, textModelLabel, requireTextModelKey, missingKeyMessage, isMissingKeyMessage } from './catalog';
 export type { ModelEnvironment, ModelProviderId, ModelStage, ModelReasoning, RoutedModel, ChapterModelRoute } from './catalog';
+export { LOCAL_LM_STUDIO_MODEL, isLocalModelDevelopment } from './catalog';
 export { generateOpenRouterImage, generateOpenRouterText } from './openRouter';
 export type { OpenRouterImageRequest, OpenRouterTextRequest, OpenRouterTextResult } from './openRouter';
 export { geminiThinkingConfig } from './geminiThinking';
 
 export interface ModelRouterConfig {
+  /** Explicit host opt-in; also requires a development runtime, never a deployment. */
+  localDevelopment?: boolean;
   credentials: { gemini?: string; openrouter?: string; elevenlabs?: string };
   openRouterAttribution?: { referer?: string; title?: string };
   fetch?: typeof fetch;
@@ -63,7 +67,7 @@ export interface ImageInput { data: string; mimeType: string }
 export type GenerationRequest = TextGenerationRequest | SpeechGenerationRequest | ImageGenerationRequest;
 export interface TokenUsage { inputTokens: number; outputTokens: number; totalTokens: number }
 export type GenerationResult =
-  | { capability: 'text'; provider: 'gemini' | 'openrouter'; model: string; text: string; usage?: TokenUsage }
+  | { capability: 'text'; provider: 'gemini' | 'openrouter' | 'lmstudio'; model: string; text: string; usage?: TokenUsage }
   | { capability: 'tts'; provider: 'elevenlabs'; model: string; bytes: Uint8Array; mimeType: 'audio/mpeg' }
   /** `data` is the image's bytes in base64, as the providers return them. */
   | { capability: 'image'; provider: 'gemini' | 'openrouter'; model: string; data: string; mimeType: string };
@@ -101,6 +105,50 @@ export function createModelRouter(config: ModelRouterConfig) {
     if (request.capability === 'text') {
       const provider = textModelProvider(request.model);
       if (!provider) throw new ModelRouterError('invalid-model', `Model '${request.model}' cannot generate text.`);
+      if (provider === 'lmstudio') {
+        if (!config.localDevelopment || !isLocalModelDevelopment(process.env)) {
+          throw new ModelRouterError('invalid-model', 'Local (LM Studio) is only available in local development.');
+        }
+        try {
+          return await withTimeout(request.timeoutMs, async signal => {
+            // Native metadata distinguishes loaded LLMs from downloaded and embedding models.
+            const models = await fetchImpl('http://localhost:1234/api/v0/models', { signal });
+            if (!models.ok) throw new ModelRouterError('provider-error', `LM Studio model discovery returned HTTP ${models.status}.`);
+            const list = await models.json() as { data?: Array<{ id?: string; state?: string; type?: string }> };
+            const loaded = Array.isArray(list.data) ? list.data.filter(model => model.state === 'loaded'
+              && ['llm', 'vlm'].includes(model.type ?? '') && typeof model.id === 'string' && model.id.trim()) : [];
+            if (!loaded.length) throw new ModelRouterError('provider-error', 'Load a text model in LM Studio before generating.');
+            if (loaded.length !== 1) throw new ModelRouterError('provider-error', 'Keep one text model loaded in LM Studio so the Router can select it unambiguously.');
+            const model = loaded[0].id!;
+            const response = await fetchImpl('http://localhost:1234/v1/chat/completions', {
+              method: 'POST', signal, headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                model, messages: [{ role: 'system', content: request.systemInstruction }, { role: 'user', content: request.userPrompt }],
+                temperature: request.temperature, max_tokens: request.maxOutputTokens, stream: false,
+                ...(request.responseFormat === 'json' ? { response_format: request.responseJsonSchema
+                  ? { type: 'json_schema', json_schema: { name: 'response', strict: true, schema: request.responseJsonSchema } }
+                  : { type: 'json_object' } } : {}),
+              }),
+            });
+            if (!response.ok) throw new ModelRouterError('provider-error', `LM Studio returned HTTP ${response.status}.`);
+            const body = await response.json() as { choices?: Array<{ finish_reason?: string; message?: { content?: string } }>; usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number } };
+            const choice = body.choices?.[0];
+            if (choice?.finish_reason === 'length') throw new ModelRouterError('output-limit', 'LM Studio stopped at the output token limit before the reply was complete.');
+            const text = choice?.message?.content;
+            if (typeof text !== 'string' || !text.trim()) throw new ModelRouterError('provider-error', 'LM Studio returned an empty response.');
+            const usage = body.usage;
+            return { capability: 'text' as const, provider, model, text,
+              ...(Number.isFinite(usage?.prompt_tokens) && Number.isFinite(usage?.completion_tokens) ? { usage: {
+                inputTokens: usage!.prompt_tokens!, outputTokens: usage!.completion_tokens!,
+                totalTokens: Number.isFinite(usage!.total_tokens) ? usage!.total_tokens! : usage!.prompt_tokens! + usage!.completion_tokens!,
+              } } : {}),
+            };
+          });
+        } catch (error) {
+          if (error instanceof ModelRouterError) throw error;
+          throw new ModelRouterError('provider-error', 'Could not reach LM Studio at http://localhost:1234. Start its local server and load a text model.');
+        }
+      }
       const key = requireCredential(config.credentials[provider], provider === 'gemini' ? 'GEMINI_API_KEY' : 'OPENROUTER_API_KEY');
       if (provider === 'openrouter') {
         try {

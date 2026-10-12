@@ -43,7 +43,7 @@ const visitorKey = (request: RequestWithHeaders): string => {
   return forwarded || header(request, 'x-real-ip') || 'unknown-visitor';
 };
 
-const isSameOriginBrowserRequest = (request: RequestWithHeaders): boolean => {
+export const isSameOriginBrowserRequest = (request: RequestWithHeaders): boolean => {
   const origin = header(request, 'origin');
   const host = header(request, 'host');
   if (!origin || !host) return false;

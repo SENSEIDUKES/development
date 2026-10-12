@@ -606,6 +606,11 @@ async function walk(browser, viewport, sample) {
   check(Math.abs(layout.codexCenter - layout.barCenter) <= 2, `Codex should sit in the middle of the bottom bar (${JSON.stringify(layout)}).`);
   check(!layout.wide, 'The Reader must not scroll sideways.');
   // Downward reading clears the top bar; a small upward scroll brings the controls back.
+  // Start from the top: on a wide screen the Reader can already rest at the bottom,
+  // and scrolling to where it already is reads no movement.
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(150);
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await page.waitForTimeout(220);
   check(await page.getByTestId('reader-top-bar').getAttribute('data-scroll-hidden') === 'true', 'The top bar should clear the page on downward scroll.');
   const noteAlignment = await page.evaluate(() => {

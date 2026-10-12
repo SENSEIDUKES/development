@@ -17,6 +17,8 @@ import {
 } from "./generate";
 import { missingKeyMessage, providerKey, resolveChapterModelRoute, resolveReasoningLevel, textModelProvider } from "../model-router/catalog";
 import { ModelRouterError } from "@seihouse/library/model-router-server";
+import { isLocalModelDevelopment, LOCAL_LM_STUDIO_MODEL } from '../model-router/catalog';
+import { isSameOriginBrowserRequest } from '../shared/publicGenerationGuard';
 
 export interface StorySeedBlueprintHttpRequest {
   method?: string;
@@ -105,15 +107,25 @@ export async function handleStorySeedBlueprintHttp(
       headers: { Allow: "GET, POST", "Cache-Control": "no-store" },
     };
   }
-  if (!config.accessToken) {
+  // Keyless local inference may be tested without a cloud-provider access token.
+  // Parse only in local dev here; other providers retain their existing auth order.
+  let localPayload: BlueprintHttpPayload | undefined;
+  if (isLocalModelDevelopment(dependencies.environment)) {
+    try { localPayload = parseRequest(request.body); } catch { /* Normal validation below. */ }
+  }
+  const localInference = localPayload?.model === LOCAL_LM_STUDIO_MODEL;
+  if (localInference && !isSameOriginBrowserRequest(request)) {
+    return errorResponse(403, 'Local LM Studio generation must be started from the local preview.');
+  }
+  if (!localInference && !config.accessToken) {
     return errorResponse(503, "STORY_SEED_BLUEPRINT_ACCESS_TOKEN is not configured on the Development server.");
   }
-  if (!hasValidBearerToken(request, config.accessToken)) {
+  if (!localInference && !hasValidBearerToken(request, config.accessToken!)) {
     return errorResponse(401, "A valid Development Story Seed access token is required.");
   }
   let parsed: BlueprintHttpPayload;
   try {
-    parsed = parseRequest(request.body);
+    parsed = localPayload ?? parseRequest(request.body);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Invalid JSON request.";
     return errorResponse(400, message === "Unexpected end of JSON input"
@@ -137,7 +149,9 @@ export async function handleStorySeedBlueprintHttp(
     if (!key) return errorResponse(503, missingKeyMessage(model));
     apiKey = key;
   }
-  const chosen = { ...config, model, provider: textModelProvider(model)!, apiKey: apiKey! };
+  const chosen = { ...config, model, provider: textModelProvider(model)!, apiKey: apiKey!,
+    ...(localInference ? { timeoutMs: 15 * 60_000 } : {}),
+  };
 
   const started = Date.now();
   try {

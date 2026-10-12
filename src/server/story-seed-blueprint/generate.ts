@@ -167,6 +167,15 @@ export class OpenRouterWorldBlueprintProvider implements WorldBlueprintModelProv
   }
 }
 
+class LocalWorldBlueprintProvider implements WorldBlueprintModelProvider {
+  constructor(private readonly model: string, private readonly apiKey: string) {}
+  async generate(request: BlueprintModelRequest<object>): Promise<unknown> {
+    return parseBlueprintResponse(createModelRouter({ credentials: {}, localDevelopment: this.apiKey === 'local-dev' }).generate({
+      capability: 'text', model: this.model, ...request, responseFormat: 'json',
+    }), request.maxOutputTokens);
+  }
+}
+
 /** The model stopped at its output limit: the Blueprint is incomplete. */
 export class BlueprintOutputLimitError extends Error {
   constructor(maxOutputTokens: number) {
@@ -195,7 +204,9 @@ export class BlueprintRoadmapError extends Error {
 /** Route the configured Blueprint model to its provider through the Model Router. */
 export const createWorldBlueprintProvider = (
   config: Pick<ResolvedStorySeedBlueprintConfig, "provider" | "model"> & { apiKey: string },
-): WorldBlueprintModelProvider => config.provider === "openrouter"
+): WorldBlueprintModelProvider => config.provider === "lmstudio"
+  ? new LocalWorldBlueprintProvider(config.model, config.apiKey)
+  : config.provider === "openrouter"
   ? new OpenRouterWorldBlueprintProvider(config.apiKey, config.model)
   : new GeminiWorldBlueprintProvider(config.apiKey, config.model);
 

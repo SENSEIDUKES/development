@@ -8,6 +8,10 @@ import { useCallback, useEffect, useState } from 'react';
  */
 export type ModelPreferenceCapability = 'chapters' | 'images';
 
+/** Browser convenience only; the server independently enforces the local-development gate. */
+export const isLocalDevelopmentModel = (model?: string): boolean =>
+  import.meta.env.DEV && model === 'lmstudio/loaded';
+
 const STORAGE_KEY = 'seihouse.model-router.selection.v1';
 const CHANGE_EVENT = 'seihouse:model-router-selection';
 

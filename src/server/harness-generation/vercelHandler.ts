@@ -21,6 +21,13 @@ const guardHoldingsFixer = createPublicGenerationGuard({
   windowMs: 30 * 60 * 1_000,
 });
 
+/** A changed chapter's reread before the next chapter keeps its own count too: it never uses up a visitor's chapters. */
+const guardChapterReread = createPublicGenerationGuard({
+  key: 'harness-generation-reread',
+  limit: 6,
+  windowMs: 30 * 60 * 1_000,
+});
+
 /** The operation a request body names, read without trusting it. */
 const requestOperation = (body: unknown): unknown => {
   try {
@@ -45,7 +52,8 @@ interface ResponseLike {
 
 export default async function harnessGenerationHandler(request: RequestLike, response: ResponseLike) {
   // The owner's access token lifts the visitor limit.
-  const guard = requestOperation(request.body) === 'fix-holdings' ? guardHoldingsFixer : guardHarnessGeneration;
+  const operation = requestOperation(request.body);
+  const guard = operation === 'fix-holdings' ? guardHoldingsFixer : operation === 'reread-chapter' ? guardChapterReread : guardHarnessGeneration;
   const admission: PublicGenerationGuardResult = request.method?.toUpperCase() === 'POST'
     ? ownerTokenAdmission(request, developmentAccessToken(process.env)) ?? guard(request)
     : { allowed: true };

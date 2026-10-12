@@ -49,13 +49,14 @@ import { chapterRewriteGap, latestStoryChapter, readRewriteNote, withoutLatestCh
 import { harnessParagraphBlockId } from './chapterBody';
 import { protagonistNames } from './speakers';
 import { declaredCharacters, resolveHoldingChanges } from './holdings';
+import { applyChapterReread, needsReread } from './chapterReread';
 import { applyHoldingsFixes, planHoldingsFix } from './holdingsFixer';
 import {
   createEmptyHarnessWorkspaceState,
   type HarnessGenerationRepository,
 } from './repository';
 import { AUTHOR_NOTES_LIMIT } from '../../../narrative/generation';
-import type { ChapterDirectionChoice, HarnessChapter, HarnessChapterRewrite, HarnessHoldingsFixerPolicy, HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessCapabilityReceipt, HarnessStory, HarnessStoryVisibility, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
+import type { ChapterDirectionChoice, HarnessChapter, HarnessChapterRereadRecord, HarnessChapterRewrite, HarnessHoldingsFixerPolicy, HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessCapabilityReceipt, HarnessStory, HarnessStoryVisibility, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
 
 export type HarnessEventPreserver = (
   rawEvents: unknown[],
@@ -1141,6 +1142,15 @@ export class HarnessGenerationController {
     // resends the direction its attempt already carries.
     const directionGap = frozen?.immediateChapterRequest.direction ? undefined : chapterDirectionGap(story, harnessStoryMode(foundation.input));
     if (directionGap) throw new Error(directionGap);
+    // The next chapter seals the one before it. If the reader changed that one in Create mode, it is read
+    // again first, once, so what the story remembers matches the words they kept. A retry already passed here.
+    const sealing = rewriting || frozen ? undefined : latestStoryChapter(this.state, storyId);
+    if (sealing && needsReread(sealing)) {
+      this.generating = true;
+      try { await this.rereadChangedChapter(sealing.id, model); }
+      finally { this.generating = false; }
+      return this.generateNextChapterInternal(storyId, model, batchId, frozen, rewrite);
+    }
     const attemptId = this.runtime.createId('hga');
     const startedAt = this.runtime.now();
     // The HARNESS prepares the Generation Model Call inputs separately: the
@@ -1510,6 +1520,55 @@ export class HarnessGenerationController {
    * record of every case is kept on the chapter. Nothing here can undo the
    * commit: a failed call or write leaves the chapter as it was committed.
    */
+  /**
+   * The reread of a chapter the reader changed: its paragraphs as they kept
+   * them go to the model, which returns them word for word with the speaker
+   * and holding tags put back, the main character's closing list and a fresh
+   * recap. It never holds the story: without the host's reread, or when it
+   * fails, the chapter stays as the reader left it and the failure is kept.
+   */
+  private async rereadChangedChapter(chapterId: string, model: string) {
+    const chapter = this.state.chapters.find(entry => entry.id === chapterId)!;
+    const story = findStory(this.state, chapter.storyId)!;
+    const attempt = this.state.attempts.find(entry => entry.id === chapter.attemptId);
+    const wrote = (slot: string) => Boolean(attempt?.capaPrompt.skills.some(skill => skill.slot === slot && skill.authoring));
+    const tags = { speakers: wrote('speakers'), holdings: wrote('holdings') };
+    const currentStory = attempt?.storyInformation.currentStory;
+    const mainCharacter = currentStory?.cast?.find(member => member.isMainCharacter)?.name;
+    const at = this.runtime.now();
+    const record: HarnessChapterRereadRecord = { at, model };
+    let next: HarnessChapter = chapter;
+    let entries = this.state.codexEntries.filter(entry => entry.storyId === story.id);
+    if (!this.modelAdapter.rereadChapter) record.error = 'This host cannot reread a chapter, so it was kept as the reader left it.';
+    else {
+      try {
+        const response = await this.modelAdapter.rereadChapter({
+          operation: 'reread-chapter', storyId: story.id, chapterId, chapterNumber: chapter.chapterNumber, model,
+          language: story.originalLanguage, ...(mainCharacter ? { mainCharacter } : {}), tags, paragraphs: [...chapter.paragraphs],
+        });
+        record.providerReceipt = response.providerReceipt;
+        record.rawProviderResponse = response.rawProviderResponse;
+        const result = applyChapterReread({
+          chapter, reply: response.rawProviderResponse, ...tags, locale: story.originalLanguage, entries,
+          protagonist: currentStory ? protagonistNames(currentStory, attempt?.storyInformation.canonicalState.characters) : { names: [], others: [] },
+          declared: currentStory ? declaredCharacters(currentStory) : [], createdAt: at, createId: () => this.runtime.createId('hcx'),
+        });
+        next = result.chapter;
+        entries = result.entries;
+        if (result.warnings.length) record.warnings = result.warnings;
+      } catch (cause) {
+        record.error = errorMessage(cause, 'The reread could not be reached.');
+      }
+    }
+    const candidate = cloneHarnessValue(this.state);
+    const index = candidate.chapters.findIndex(entry => entry.id === chapterId);
+    candidate.chapters[index] = { ...next, authoring: { ...(next.authoring ?? { editedAt: at }), reread: record } };
+    candidate.codexEntries = [...candidate.codexEntries.filter(entry => entry.storyId !== story.id), ...entries];
+    const latest = findStory(candidate, story.id);
+    if (latest) latest.updatedAt = at;
+    await this.persist(candidate);
+  }
+
   private async fixCommittedHoldings(attemptId: string, chapterId: string) {
     const policy = this.holdingsFixer;
     const attempt = this.state.attempts.find(entry => entry.id === attemptId);

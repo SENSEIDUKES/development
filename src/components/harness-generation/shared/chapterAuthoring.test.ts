@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   HarnessGenerationController,
   type HarnessArcRequest,
+  type HarnessChapterRereadRequest,
   type HarnessGenerationModelAdapter,
   type HarnessGenerationRequest,
 } from '@seihouse/sen/harness-generation';
@@ -27,14 +28,20 @@ const reply = (title: string, paragraphs: string[]) => ({
 let ids = 0;
 const runtime = { now: () => '2026-10-12T12:00:00.000Z', createId: (prefix: string) => `${prefix}-${++ids}` };
 
-const setup = async () => {
+const setup = async (reread?: (request: HarnessChapterRereadRequest) => Record<string, unknown> | string) => {
   const outputs: Array<Record<string, unknown>> = [];
+  const rereads: HarnessChapterRereadRequest[] = [];
   const modelAdapter: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ configured: true, provider: 'fixture', defaultModel: 'fixture', models: [] }),
     generate: vi.fn(async (_request: HarnessGenerationRequest) => ({
       rawProviderResponse: JSON.stringify(writtenChapter(outputs.shift() ?? reply('Onward', ['Lin waded on.']))), providerReceipt: receipt,
     })),
     arcOperation: async (_request: HarnessArcRequest) => ({ rawProviderResponse: '{}', providerReceipt: receipt }),
+    ...(reread ? { rereadChapter: async (request: HarnessChapterRereadRequest) => {
+      rereads.push(structuredClone(request));
+      const answer = reread(request);
+      return { rawProviderResponse: typeof answer === 'string' ? answer : JSON.stringify(answer), providerReceipt: receipt };
+    } } : {}),
   };
   const repository = new InMemoryHarnessGenerationRepository();
   const controller = new HarnessGenerationController({ repository, modelAdapter, runtime });
@@ -45,7 +52,7 @@ const setup = async () => {
   });
   const write = async (next: Record<string, unknown>) => { outputs.push(next); await controller.generateNextChapter(story.id, 'fixture'); };
   const chapters = () => [...controller.snapshot().chapters].sort((left, right) => left.chapterNumber - right.chapterNumber);
-  return { controller, repository, write, chapters };
+  return { controller, repository, write, chapters, rereads };
 };
 
 describe('Create mode: authoring the newest chapter', () => {
@@ -93,9 +100,12 @@ describe('Create mode: authoring the newest chapter', () => {
       soundCues: chapter.soundCues, speakers: chapter.speakers, holdingChanges: chapter.holdingChanges, waiting: [waiting as never],
     });
     expect(run.chapters()[0].authoring).toEqual({ editedAt: '2026-10-12T12:00:00.000Z', waiting: [waiting] });
-    // Writing the next chapter seals this one: what still waits is let go, and the mark stays for the reread.
+    // Writing the next chapter seals this one: what still waits is let go. This host cannot reread, so the
+    // chapter is kept as the reader left it, the reason is kept, and the story goes on.
     await run.write(reply('The Bridge', ['Lin crossed the rope bridge.']));
-    expect(run.chapters()[0].authoring).toEqual({ editedAt: '2026-10-12T12:00:00.000Z' });
+    expect(run.chapters()[0].authoring).toEqual({ editedAt: '2026-10-12T12:00:00.000Z',
+      reread: { at: '2026-10-12T12:00:00.000Z', model: 'fixture', error: 'This host cannot reread a chapter, so it was kept as the reader left it.' } });
+    expect(run.chapters()[0].paragraphs[0]).toBe('Lin knotted the rope to the rail.');
     expect(run.chapters()[1].authoring).toBeUndefined();
   });
 
@@ -108,5 +118,67 @@ describe('Create mode: authoring the newest chapter', () => {
     const paragraphs = second.paragraphs.map((paragraph, index) => index === 0 ? 'Lin crossed the swaying bridge.' : paragraph);
     await run.controller.authorChapter(second.id, { paragraphs, soundCues: second.soundCues, speakers: second.speakers, holdingChanges: second.holdingChanges });
     expect(run.chapters()[1].paragraphs[0]).toBe('Lin crossed the swaying bridge.');
+  });
+});
+
+describe('The reread at the seal of a changed chapter', () => {
+  const keeper = '"Hold the rail," Elder Qin said.';
+  it('rereads a changed chapter once, before the next chapter, and puts its speakers, holdings and recap back on the kept words', async () => {
+    const run = await setup(request => ({
+      paragraphs: request.paragraphs.map(paragraph => paragraph === keeper ? `[[@Elder Qin]] ${paragraph}`
+        : paragraph.startsWith('Lin knotted') ? `[[gained: MC | Rope Coil]] ${paragraph}` : paragraph),
+      recap: 'Lin knots the rope and Elder Qin steadies her.',
+      mainCharacterHoldings: ['Rope Coil'],
+    }));
+    await run.write(reply('The Flood', ['Lin tied the rope to the rail.', keeper]));
+    const [chapter] = run.chapters();
+    const paragraphs = chapter.paragraphs.map((paragraph, index) => index === 0 ? 'Lin knotted the rope to the rail.' : paragraph);
+    await run.controller.authorChapter(chapter.id, { paragraphs });
+    expect(run.chapters()[0].speakers).toBeUndefined();
+
+    await run.write(reply('The Bridge', ['Lin crossed the rope bridge.']));
+    // One reread, of the chapter as the reader left it, with the tags it was written with.
+    expect(run.rereads).toHaveLength(1);
+    expect(run.rereads[0]).toMatchObject({ operation: 'reread-chapter', chapterId: chapter.id, chapterNumber: 1, model: 'fixture', mainCharacter: 'Lin', paragraphs });
+    const [reread, next] = run.chapters();
+    expect(reread.paragraphs).toEqual(paragraphs);
+    expect(reread.speakers?.map(speaker => [speaker.payload.speaker, speaker.anchor.blockId])).toEqual([['Elder Qin', 'c1-p2']]);
+    expect(reread.holdingChanges?.map(change => [change.payload.verb, change.payload.target?.name, change.anchor.blockId])).toEqual([['gained', 'Rope Coil', 'c1-p1']]);
+    expect(reread.closingHoldings).toEqual(['Rope Coil']);
+    expect(reread.recap).toMatchObject({ text: 'Lin knots the rope and Elder Qin steadies her.', source: 'model' });
+    expect(reread.authoring?.reread).toMatchObject({ model: 'fixture', providerReceipt: receipt });
+    expect(reread.authoring?.reread?.error).toBeUndefined();
+    expect(next.chapterNumber).toBe(2);
+
+    // A chapter that was only read is never reread.
+    await run.write(reply('The Tower', ['Lin climbed the tower.']));
+    expect(run.rereads).toHaveLength(1);
+  });
+
+  it('a paragraph that came back with other words keeps its tags; a reply it cannot use keeps the chapter and never holds the story', async () => {
+    const changedWords = await setup(request => ({
+      paragraphs: request.paragraphs.map(paragraph => paragraph === keeper ? `[[@Lin]] "Hold on," Elder Qin said.` : paragraph),
+      recap: 'Lin ties the rope.',
+    }));
+    await changedWords.write(reply('The Flood', ['Lin tied the rope to the rail.', keeper]));
+    const [first] = changedWords.chapters();
+    const speakers = first.speakers;
+    await changedWords.controller.authorChapter(first.id, {
+      paragraphs: first.paragraphs.map((paragraph, index) => index === 0 ? 'Lin knotted the rope.' : paragraph), speakers, holdingChanges: first.holdingChanges,
+    });
+    await changedWords.write(reply('The Bridge', ['Lin crossed the rope bridge.']));
+    expect(changedWords.chapters()[0].speakers).toEqual(speakers);
+    expect(changedWords.chapters()[0].authoring?.reread?.warnings).toEqual(['1 paragraph came back with different words, so it keeps the tags it had']);
+
+    const unusable = await setup(() => ({ paragraphs: ['Only one.'], recap: 'Nothing.' }));
+    await unusable.write(reply('The Flood', ['Lin tied the rope to the rail.', 'The water rose.']));
+    const [chapter] = unusable.chapters();
+    const paragraphs = chapter.paragraphs.map((paragraph, index) => index === 1 ? 'The black water rose.' : paragraph);
+    await unusable.controller.authorChapter(chapter.id, { paragraphs });
+    await unusable.write(reply('The Bridge', ['Lin crossed the rope bridge.']));
+    expect(unusable.chapters()).toHaveLength(2);
+    expect(unusable.chapters()[0].paragraphs).toEqual(paragraphs);
+    expect(unusable.chapters()[0].recap?.text).toBe(chapter.recap?.text);
+    expect(unusable.chapters()[0].authoring?.reread?.error).toBe(`The reread returned 1 paragraphs; the chapter has ${paragraphs.length}.`);
   });
 });

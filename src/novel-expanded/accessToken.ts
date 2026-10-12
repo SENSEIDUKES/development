@@ -45,6 +45,8 @@ export const writerWithAccessToken = (
     ...(writer.arcOperation ? { arcOperation: request => withToken(() => writer.arcOperation!(request)) } : {}),
     // The Holdings fixer runs unseen: it sends the token the reader already gave and never asks for one.
     ...(writer.fixHoldings ? { fixHoldings: request => writer.fixHoldings!(request) } : {}),
+    // A changed chapter's reread comes before the next chapter, so it asks for the token as a chapter does.
+    ...(writer.rereadChapter ? { rereadChapter: request => withToken(() => writer.rereadChapter!(request)) } : {}),
   };
 };
 

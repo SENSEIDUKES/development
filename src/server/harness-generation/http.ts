@@ -1,4 +1,4 @@
-import { CHAPTER_REWRITE_NOTE_LIMIT, HARNESS_MAX_CHAPTER_PARAGRAPHS, HOLDINGS_FIXER_CASE_LIMIT, type HarnessArcRequest, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessHoldingsFixRequest } from '@seihouse/sen/harness-generation';
+import { CHAPTER_REWRITE_NOTE_LIMIT, HARNESS_MAX_CHAPTER_PARAGRAPHS, HOLDINGS_FIXER_CASE_LIMIT, type HarnessArcRequest, type HarnessChapterRereadRequest, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessHoldingsFixRequest } from '@seihouse/sen/harness-generation';
 import { validateSoundWords } from '@seihouse/sen/audio';
 import {
   harnessGenerationServerInfo,
@@ -12,6 +12,7 @@ import {
   type HarnessProviderFactory,
 } from './execute';
 import { executeHoldingsFix } from './holdingsFixer';
+import { executeChapterReread } from './chapterReread';
 
 export interface HarnessGenerationHttpRequest {
   method?: string;
@@ -86,10 +87,27 @@ const parseHoldingsFix = (parsed: Record<string, unknown>): HarnessHoldingsFixRe
   return parsed as unknown as HarnessHoldingsFixRequest;
 };
 
-const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessArcRequest | HarnessHoldingsFixRequest => {
+/** A paragraph of a chapter, at most: the chapter writer's own limits keep a reread within one chapter. */
+const REREAD_PARAGRAPH_LIMIT = 20_000;
+
+/** The reread carries one chapter's paragraphs, in the story's language, and which tags to put back. */
+const parseChapterReread = (parsed: Record<string, unknown>): HarnessChapterRereadRequest => {
+  const { paragraphs, tags } = parsed;
+  const valid = typeof parsed.storyId === 'string' && typeof parsed.chapterId === 'string' && typeof parsed.model === 'string'
+    && typeof parsed.language === 'string' && Number.isInteger(parsed.chapterNumber) && Number(parsed.chapterNumber) >= 1
+    && (parsed.mainCharacter === undefined || typeof parsed.mainCharacter === 'string')
+    && isRecord(tags) && typeof tags.speakers === 'boolean' && typeof tags.holdings === 'boolean'
+    && Array.isArray(paragraphs) && paragraphs.length >= 1 && paragraphs.length <= HARNESS_MAX_CHAPTER_PARAGRAPHS
+    && paragraphs.every(paragraph => typeof paragraph === 'string' && paragraph.trim() && paragraph.length <= REREAD_PARAGRAPH_LIMIT);
+  if (!valid) throw new Error(`A chapter reread needs its chapter, model and language, which tags to put back, and 1 to ${HARNESS_MAX_CHAPTER_PARAGRAPHS} paragraphs.`);
+  return parsed as unknown as HarnessChapterRereadRequest;
+};
+
+const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessArcRequest | HarnessHoldingsFixRequest | HarnessChapterRereadRequest => {
   const parsed = typeof body === 'string' ? JSON.parse(body) : body;
   if (!isRecord(parsed)) throw new Error('The Harness Generation request must be a JSON object.');
   if (parsed.operation === 'fix-holdings') return parseHoldingsFix(parsed);
+  if (parsed.operation === 'reread-chapter') return parseChapterReread(parsed);
   if (parsed.operation === 'plan-arc') {
     if (!isRecord(parsed.storyInformation) || !isRecord(parsed.storyInformation.storyHead) || typeof parsed.model !== 'string'
       || typeof parsed.storyId !== 'string') throw new Error('Arc operations require a frozen Story Information Packet.');
@@ -178,7 +196,7 @@ export const handleHarnessGenerationHttp = async (
     };
   }
 
-  let parsed: HarnessGenerationRequest | HarnessArcRequest | HarnessHoldingsFixRequest;
+  let parsed: HarnessGenerationRequest | HarnessArcRequest | HarnessHoldingsFixRequest | HarnessChapterRereadRequest;
   try {
     parsed = parseRequest(request.body);
   } catch (error) {
@@ -190,9 +208,12 @@ export const handleHarnessGenerationHttp = async (
     const config = resolveHarnessGenerationConfig(dependencies.environment);
     const reasoningLevel = (parsed as { reasoningLevel?: unknown }).reasoningLevel;
     // The Holdings fixer thinks as little as the model allows, whatever the reader chose for chapters.
-    const result = 'operation' in parsed && parsed.operation === 'fix-holdings'
-      ? await executeHoldingsFix(parsed, config, dependencies.providerFactory)
-      : await executeHarnessGeneration(parsed as HarnessGenerationRequest | HarnessArcRequest, config, dependencies.providerFactory, reasoningLevel);
+    const operation = 'operation' in parsed ? parsed.operation : undefined;
+    const result = operation === 'fix-holdings'
+      ? await executeHoldingsFix(parsed as HarnessHoldingsFixRequest, config, dependencies.providerFactory)
+      : operation === 'reread-chapter'
+        ? await executeChapterReread(parsed as HarnessChapterRereadRequest, config, dependencies.providerFactory)
+        : await executeHarnessGeneration(parsed as HarnessGenerationRequest | HarnessArcRequest, config, dependencies.providerFactory, reasoningLevel);
     return {
       status: 200,
       body: result satisfies HarnessGenerationResponse,

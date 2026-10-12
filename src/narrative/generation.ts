@@ -572,6 +572,38 @@ export type HarnessModelPlan = string | {
 export interface HarnessChapterAuthoring {
   editedAt: string;
   waiting?: Array<SoundCueAttachment | SpeakerAttachment | HoldingChangeAttachment>;
+  /** The reread at the chapter's seal, once it ran: what the model returned, or why it could not. */
+  reread?: HarnessChapterRereadRecord;
+}
+
+/** One reread of a changed chapter. It never holds the story: a failed reread leaves the chapter as the reader left it. */
+export interface HarnessChapterRereadRecord {
+  at: string;
+  model: string;
+  providerReceipt?: HarnessGenerationResponse['providerReceipt'];
+  rawProviderResponse?: string;
+  error?: string;
+  warnings?: string[];
+}
+
+/**
+ * The reread call: a changed chapter's paragraphs as the reader left them,
+ * returned word for word with the tags put back, before the next chapter is
+ * written. Not a Generation Model Call; it writes no prose.
+ */
+export interface HarnessChapterRereadRequest {
+  operation: 'reread-chapter';
+  storyId: string;
+  chapterId: string;
+  chapterNumber: number;
+  model: string;
+  /** The story's language. */
+  language: string;
+  /** The main character, whom tags name MC. */
+  mainCharacter?: string;
+  /** Which tags the chapter was written with; only those are put back. */
+  tags: { speakers: boolean; holdings: boolean };
+  paragraphs: string[];
 }
 
 export interface HarnessChapterMetrics {
@@ -1294,6 +1326,8 @@ export interface HarnessGenerationModelAdapter {
   arcOperation?(request: HarnessArcRequest): Promise<HarnessGenerationResponse>;
   /** The Holdings fixer's one small call after a chapter commits. Without it, the fixer does not run. */
   fixHoldings?(request: HarnessHoldingsFixRequest): Promise<HarnessGenerationResponse>;
+  /** Rereads a chapter the reader changed, when it is sealed. Without it, a changed chapter is kept as the reader left it. */
+  rereadChapter?(request: HarnessChapterRereadRequest): Promise<HarnessGenerationResponse>;
 }
 
 /**

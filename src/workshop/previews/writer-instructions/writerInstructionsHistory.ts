@@ -20,6 +20,11 @@ export interface WriterInstructionsChange {
  */
 export const WRITER_INSTRUCTIONS_HISTORY: readonly WriterInstructionsChange[] = [
   {
+    date: '2026-10-12',
+    summary: 'New, from SENSEI: the chapter reread. A chapter the reader changed in the Reader\'s Create mode is read again once, as the next chapter seals it, so what the story remembers matches the words they kept. A separate call, not the chapter writer: it gets the chapter\'s paragraphs as the reader left them and the same tag teaching the writer had (the tag rules, Speakers and Holdings, only those the chapter was written with), returns every paragraph word for word with its tags put back, writes a fresh recap and the main character\'s closing list, and writes no prose. A chapter that was only read is never reread.',
+    changed: { 'chapter-reread': '1231a143d5a58c' },
+  },
+  {
     date: '2026-10-11',
     summary: 'Sound Words are the story\'s own, apart from its recordings: a story keeps a list of at most 30, chosen from a preset (the Library\'s own, or one installed from a Sound Words .spp package) and edited in Story Settings, and changing its Sound Cue pack never changes them. SEN Sound Cues 2.3.0 gives the writer the words alone, one per line, after the same header: the example tag made from the first word ([[sound: beast roar | the beast roared | medium]]) and the meanings after some words are gone, so nothing in the list can be copied into a chapter. The instruction itself is unchanged. The Library\'s preset renames three words: "beast growl" is now "growl", "creature screech" "screech" and "blade drawn" "unsheathe"; their recordings answer the new words, with the same files.',
     changed: { 'sound-cues': '05b0f51d5edcd6' },

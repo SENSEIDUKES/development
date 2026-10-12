@@ -17,6 +17,7 @@ import { soundtrackVocabulary } from '@seihouse/sen/audio';
 import { LIBRARY_BASE_MEDIA, LIBRARY_SOUND_WORDS } from '../../../host/media/libraryCatalog';
 import { HARNESS_RESPONSE_CONTRACT } from '../../../server/harness-generation/prompt';
 import { HOLDINGS_FIXER_INSTRUCTIONS } from '../../../server/harness-generation/holdingsFixer';
+import { buildChapterRereadInstructions } from '../../../server/harness-generation/chapterReread';
 
 /**
  * The writer's instructions, read from the live code: every block of text the
@@ -39,7 +40,8 @@ export type WriterInstructionId =
   | 'easy-read'
   | 'literal-reading'
   | 'official-requirements'
-  | 'holdings-fixer';
+  | 'holdings-fixer'
+  | 'chapter-reread';
 
 export interface WriterInstruction {
   id: WriterInstructionId;
@@ -125,6 +127,11 @@ export const AFTER_A_CHAPTER: readonly WriterInstruction[] = [
     id: 'holdings-fixer', title: 'Holdings fixer', source: 'HARNESS',
     when: 'After a chapter is saved, only when its holdings checks found problems that need a model: one short call with the chapter\'s model, which reads these instructions and the small cases (a sentence, its tags, what the record shows), never the whole chapter.',
     text: HOLDINGS_FIXER_INSTRUCTIONS,
+  },
+  {
+    id: 'chapter-reread', title: 'Chapter reread', source: 'HARNESS',
+    when: "Only for a chapter the reader changed in Create mode, once, as the next chapter seals it: one call with the chapter's paragraphs as the reader left them, which returns them word for word with the tags put back, a fresh recap and the main character's closing list. Shown with both tag kinds; a chapter written without one is reread without it.",
+    text: buildChapterRereadInstructions({ speakers: true, holdings: true }),
   },
 ];
 

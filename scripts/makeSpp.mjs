@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * Makes a `.spp` (SEIHouse Productions Package) from a folder, the way a zip
  * is made from one: `npm run spp -- "path/to/My Pack"`, or right-click the

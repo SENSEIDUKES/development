@@ -27,14 +27,16 @@
     "name": "webkit-phone",
     "width": 390,
     "height": 844,
-    "passed": null,
-    "blocked": "WebKit is not installed in this environment; the Linux CI job runs this case."
+    "touchActivation": true,
+    "nativeTouchSelectionHandles": "not tested",
+    "passed": true
   },
   {
     "name": "webkit-tablet",
     "width": 768,
     "height": 1024,
-    "passed": null,
-    "blocked": "WebKit is not installed in this environment; the Linux CI job runs this case."
+    "touchActivation": true,
+    "nativeTouchSelectionHandles": "not tested",
+    "passed": true
   }
 ]

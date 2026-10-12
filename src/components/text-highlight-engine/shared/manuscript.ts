@@ -48,6 +48,8 @@ export const createManuscriptId: ManuscriptIdFactory = kind => {
 export interface ManuscriptOptions {
   createId?: ManuscriptIdFactory;
   locale?: string;
+  /** The most words the page may hold. The prototype's 500 unless a host sets its own (a saved chapter is longer). */
+  wordLimit?: number;
 }
 
 interface TextRange { start: number; end: number }
@@ -142,10 +144,10 @@ export const countManuscriptWords = (manuscript: Pick<Manuscript, 'paragraphs'>)
   }, 0);
 
 /** A new draft page. Every paragraph and sentence gets its permanent ID here. */
-export function createManuscript(texts: readonly string[], { createId = createManuscriptId, locale = 'en' }: ManuscriptOptions = {}): Manuscript {
+export function createManuscript(texts: readonly string[], { createId = createManuscriptId, locale = 'en', wordLimit = MANUSCRIPT_PROTOTYPE_WORD_LIMIT }: ManuscriptOptions = {}): Manuscript {
   const manuscript: Manuscript = { status: 'draft', locale, paragraphs: texts.map(text => createParagraph(text, locale, createId)) };
-  if (countManuscriptWords(manuscript) > MANUSCRIPT_PROTOTYPE_WORD_LIMIT) {
-    throw new RangeError(`A prototype manuscript holds at most ${MANUSCRIPT_PROTOTYPE_WORD_LIMIT} words.`);
+  if (countManuscriptWords(manuscript) > wordLimit) {
+    throw new RangeError(`A manuscript holds at most ${wordLimit} words.`);
   }
   return manuscript;
 }
@@ -351,7 +353,8 @@ const replaceParagraph = (manuscript: Manuscript, paragraph: ManuscriptParagraph
  * that paragraph's saved sentences and attachments exactly.
  */
 export function applyPassageEdit<Payload>(
-  state: ManuscriptState<Payload>, edit: PassageEdit, { createId = createManuscriptId }: Pick<ManuscriptOptions, 'createId'> = {},
+  state: ManuscriptState<Payload>, edit: PassageEdit,
+  { createId = createManuscriptId, wordLimit = MANUSCRIPT_PROTOTYPE_WORD_LIMIT }: Pick<ManuscriptOptions, 'createId' | 'wordLimit'> = {},
 ): ManuscriptEditResult<Payload> {
   const { manuscript } = state;
   if (manuscript.status === 'sealed') return { ok: false, reason: 'sealed' };
@@ -387,7 +390,7 @@ export function applyPassageEdit<Payload>(
     sentences: rebaseSentences(paragraph, edit.after.text, start, removed, inserted, manuscript.locale, createId),
   };
   const nextManuscript = replaceParagraph(manuscript, next);
-  if (edit.operation === 'replace' && countManuscriptWords(nextManuscript) > MANUSCRIPT_PROTOTYPE_WORD_LIMIT) return { ok: false, reason: 'word-limit' };
+  if (edit.operation === 'replace' && countManuscriptWords(nextManuscript) > wordLimit) return { ok: false, reason: 'word-limit' };
   return { ok: true, state: {
     manuscript: nextManuscript,
     attachments: state.attachments.map(moveWithText),

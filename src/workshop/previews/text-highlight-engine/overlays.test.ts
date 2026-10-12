@@ -4,7 +4,7 @@ import {
   type ManuscriptAttachment, type ManuscriptIdFactory, type ManuscriptState, type PassageSelection,
 } from '@seihouse/sen/text-highlight-engine';
 import { createPreviewManuscript, previewParagraphs } from './previewData';
-import { ATTACHMENT_COLORS, OVERLAY_KINDS, attachmentMarks, structurePins } from './overlays';
+import { ATTACHMENT_COLORS, OVERLAY_KINDS, attachmentMarks, structurePins } from '@seihouse/sen/text-highlight-engine';
 
 const ids = (): ManuscriptIdFactory => { let count = 0; return kind => `${kind[0]}${++count}`; };
 const words = (state: ManuscriptState<string>, index: number, phrase: string): PassageSelection => {

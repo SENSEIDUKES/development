@@ -25,7 +25,8 @@ export const ENGINE_PARTS: readonly EnginePart[] = [
   { name: 'Placement Rules', owns: 'what a finished attachment may be, per kind of effect: a Sound Cue sits on 1–8 whole words, at most 10 per chapter (Soundscapes, not built yet: passage-level only, at most 2), plus word edges for any language. Manual placement meets these as a person selects; the HARNESS enforces them when it resolves model direction', files: ['src/audio/soundCueRules.ts', 'src/narrative/words.ts'] },
   { name: 'Manuscript', owns: 'the plain page under the prose: permanent paragraph and sentence IDs, saved sentences, paragraph / sentence / span anchors, the one edit rule for attachments, and draft / sealed', files: [`${SHARED}/manuscript.ts`] },
   { name: 'Manuscript Inspector', owns: 'the lab panel under the page: the selection’s address (with the model’s P/S form of it), every attachment with its status, and the saved page structure', files: [`${LAB}/ManuscriptInspector.tsx`] },
-  { name: 'Manuscript Lab', owns: 'the Workshop page itself: the sample paragraphs, the Cue attach levels, the Overlays switch and its key (one color per kind of effect: Sound Cues blue), Reset sample and Seal chapter', files: [`${LAB}/TextHighlightEngineWorkspace.tsx`, `${LAB}/previewData.ts`, `${LAB}/overlays.ts`] },
+  { name: 'Authoring', owns: 'what the lab and the Reader’s Create mode share: the Overlays switch and its key (one color per kind of effect: Sound Cues blue), the page’s P/S numbering pins, and the Sound Cue actions (Media → Audio → Cue, Remove cue here)', files: [`${DEV}/ManuscriptAuthoring.tsx`, `${SHARED}/overlayModes.ts`] },
+  { name: 'Manuscript Lab', owns: 'the Workshop page itself: the sample paragraphs, Reset sample and Seal chapter', files: [`${LAB}/TextHighlightEngineWorkspace.tsx`, `${LAB}/previewData.ts`] },
 ];
 
 export const partBrief = (part: EnginePart) =>

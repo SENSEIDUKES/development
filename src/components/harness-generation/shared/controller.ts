@@ -46,6 +46,7 @@ import {
 } from './responseAcceptance';
 import { activeAttemptForStory } from './attempts';
 import { chapterRewriteGap, latestStoryChapter, readRewriteNote, withoutLatestChapter } from './chapterRewrite';
+import { harnessParagraphBlockId } from './chapterBody';
 import { protagonistNames } from './speakers';
 import { declaredCharacters, resolveHoldingChanges } from './holdings';
 import { applyHoldingsFixes, planHoldingsFix } from './holdingsFixer';
@@ -54,7 +55,7 @@ import {
   type HarnessGenerationRepository,
 } from './repository';
 import { AUTHOR_NOTES_LIMIT } from '../../../narrative/generation';
-import type { ChapterDirectionChoice, HarnessChapterRewrite, HarnessHoldingsFixerPolicy, HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessCapabilityReceipt, HarnessStory, HarnessStoryVisibility, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
+import type { ChapterDirectionChoice, HarnessChapter, HarnessChapterRewrite, HarnessHoldingsFixerPolicy, HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessCapabilityReceipt, HarnessStory, HarnessStoryVisibility, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
 
 export type HarnessEventPreserver = (
   rawEvents: unknown[],
@@ -456,6 +457,53 @@ export class HarnessGenerationController {
     await this.persist(candidate);
   }
 
+  /**
+   * Saves the reader's own changes to the newest chapter from the Reader's
+   * Create mode: its words and the attachments on them (Sound Cues, speakers,
+   * holding changes), all as span anchors on its `c{n}-p{i}` paragraphs.
+   * Only the newest chapter, and only while nothing is built on it (the same
+   * rule as rewriting it): moving on to the next chapter seals it. The
+   * paragraphs keep their number, every paragraph keeps some words, and every
+   * placed attachment must sit exactly on its words. Effects whose words a
+   * change replaced wait in `waiting`, off the page, until the chapter is
+   * sealed. The chapter is marked as changed, so it is read again at its seal.
+   */
+  async authorChapter(chapterId: string, changes: Pick<HarnessChapter, 'paragraphs' | 'soundCues' | 'speakers' | 'holdingChanges'>
+    & { waiting?: NonNullable<HarnessChapter['authoring']>['waiting'] }): Promise<void> {
+    this.assertHydrated();
+    if (this.generating) throw new Error('Wait for the active Harness operation before changing a chapter.');
+    const candidate = cloneHarnessValue(this.state);
+    const chapter = candidate.chapters.find(entry => entry.id === chapterId);
+    if (!chapter) throw new Error('Choose a saved chapter before changing it.');
+    if (latestStoryChapter(candidate, chapter.storyId)?.id !== chapter.id || chapterRewriteGap(candidate, chapter.storyId)) {
+      throw new Error(`Chapter ${chapter.chapterNumber} is sealed: only the newest chapter, before anything is built on it, can be changed.`);
+    }
+    const paragraphs = changes.paragraphs.map(paragraph => paragraph.trim());
+    if (paragraphs.length !== chapter.paragraphs.length) throw new Error('A chapter keeps its paragraphs when it is changed.');
+    if (paragraphs.some(paragraph => !paragraph)) throw new Error('Every paragraph needs some words.');
+    const blocks = new Map(paragraphs.map((text, index) => [harnessParagraphBlockId(chapter.chapterNumber, index), text]));
+    const onItsWords = (attachment: { anchor: { blockId: string; startOffset: number; endOffset: number; selectedText: string; detached?: true } }) => {
+      const text = blocks.get(attachment.anchor.blockId);
+      return !attachment.anchor.detached && text?.slice(attachment.anchor.startOffset, attachment.anchor.endOffset) === attachment.anchor.selectedText;
+    };
+    for (const attachment of [...changes.soundCues ?? [], ...changes.speakers ?? [], ...changes.holdingChanges ?? []]) {
+      if (!onItsWords(attachment)) throw new Error('Every Sound Cue, speaker and holding change must sit on its words before the chapter is saved.');
+    }
+    chapter.paragraphs = paragraphs;
+    chapter.prose = paragraphs.join('\n\n');
+    chapter.metrics = { ...chapter.metrics, wordCount: paragraphs.reduce((total, paragraph) => total + paragraph.split(/\s+/u).length, 0), paragraphCount: paragraphs.length };
+    for (const key of ['soundCues', 'speakers', 'holdingChanges'] as const) {
+      const list = changes[key];
+      if (list?.length) (chapter as Record<typeof key, unknown>)[key] = cloneHarnessValue(list);
+      else delete chapter[key];
+    }
+    const now = this.runtime.now();
+    chapter.authoring = { editedAt: now, ...(changes.waiting?.length ? { waiting: cloneHarnessValue(changes.waiting) } : {}) };
+    const story = findStory(candidate, chapter.storyId);
+    if (story) story.updatedAt = now;
+    await this.persist(candidate);
+  }
+
   /** The Mission Reminder the next attempt would freeze, for inspection. Never persisted here and never sent. */
   describeMissionReminder(storyId: string) {
     this.assertHydrated();
@@ -463,6 +511,18 @@ export class HarnessGenerationController {
     if (!story) throw new Error('Open a Harness story before inspecting its Mission Reminder.');
     const mode = harnessStoryMode(findFoundationRevision(this.state, story.activeFoundationRevisionId)?.input);
     return buildMissionReminder(assembleCapaPrompt(freezeHarnessSkillLoadout(story, this.skillCatalog, this.runtime.now(), mode)));
+  }
+
+  /**
+   * The story's media as the host's media port offers it now, frozen for
+   * inspection (Create mode's Sound Cue choices when a chapter's own frozen
+   * catalog holds none). Never persisted here.
+   */
+  describeStoryMedia(storyId: string): FrozenNarrativeMedia | undefined {
+    this.assertHydrated();
+    const story = findStory(this.state, storyId);
+    if (!story) throw new Error('Open a Harness story before inspecting its media.');
+    return this.media?.freeze(story.mediaLoadout, this.runtime.now());
   }
 
   /**
@@ -1332,6 +1392,8 @@ export class HarnessGenerationController {
     const candidate = rewrite ? withoutLatestChapter(base, attempt.storyId) : cloneHarnessValue(base);
     const commitAttempt = attemptById(candidate, attemptId);
     const commitStory = findStory(candidate, attempt.storyId)!;
+    // A new chapter seals the one before it: effects still waiting for a new spot there are let go.
+    for (const sealed of candidate.chapters) if (sealed.storyId === attempt.storyId && sealed.authoring?.waiting) delete sealed.authoring.waiting;
     if (!commitAttempt.acceptedDraft || !commitAttempt.pendingChapterId) {
       throw new Error('The accepted chapter checkpoint changed before it could commit.');
     }

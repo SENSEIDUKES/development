@@ -279,6 +279,12 @@ browser evidence out of the consuming surface. No integration was performed.
 
 ## Workshop history
 
+- **2026-10-12:** The lab's authoring tools are now SEN's, shared with the HARNESS Reader's Create mode:
+  `ManuscriptAuthoring.tsx` (the Overlays switch and its key, and `soundCueActions`: Media → Audio →
+  Cue and Remove cue here) and `shared/overlayModes.ts` (`structurePins`, `attachmentMarks`, one color
+  per kind), moved from the Workshop folder without changing what they do. A host may set the page's
+  `wordLimit` (`createManuscript`, `applyPassageEdit`); the lab keeps the prototype's 500 words, and the
+  Reader sets none, since a chapter is longer.
 - **2026-10-10:** A paragraph's line height follows `--sen-text-line-height` (a multiple of the
   text size; 1.85 without it, as before), so a host's line spacing reaches the paragraphs. The
   HARNESS Reader sets it from Reader Settings → Text.

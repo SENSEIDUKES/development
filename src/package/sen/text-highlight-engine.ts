@@ -21,3 +21,9 @@ export {
   type ManuscriptAttachment, type ManuscriptState, type ManuscriptEditResult,
 } from '../../components/text-highlight-engine/shared/manuscript';
 export type { OverlayMark, OverlayPin, TextHighlightOverlay } from '../../components/text-highlight-engine/shared/overlay';
+export {
+  ATTACHMENT_COLORS, OVERLAY_KINDS, attachmentMarks, structurePins, type ManuscriptOverlayMode,
+} from '../../components/text-highlight-engine/shared/overlayModes';
+export {
+  ManuscriptOverlaySwitch, placedSoundCue, placedSoundCues, soundCueActions,
+} from '../../components/text-highlight-engine/development/ManuscriptAuthoring';

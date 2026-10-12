@@ -465,7 +465,7 @@ describe('Read Aloud in the HARNESS Reader', { timeout: 20_000 }, () => {
     const controls = container.querySelector('[data-testid="reader-controls-row"]')!;
     expect(container.querySelector('[data-testid="read-aloud-strip"]')).toBeNull();
     expect([...controls.querySelectorAll('button')].map(button => button.getAttribute('aria-label')))
-      .toEqual(['Pause', 'Previous sentence', 'Narration playback speed', 'Next sentence', 'Open Codex', 'Previous Chapter', 'Select chapter: Chapter 1', 'Next Chapter', 'Open Fate']);
+      .toEqual(['Pause', 'Previous sentence', 'Narration playback speed', 'Next sentence', 'Open Codex', 'Previous Chapter', 'Open Fate', 'Next Chapter', 'Create mode']);
 
     await next();
     expect(lastSpoken().text).toBe('The tide pulled back from the drowned gate.');
@@ -877,20 +877,22 @@ describe('The Reader frame and its chapter body', { timeout: 20_000 }, () => {
     // The host's first fonts, at the Reader's size and spacing, about 60 characters a line.
     const article = chapterOnScreen(1)!;
     expect(article.style.fontFamily).toBe('"House Sans", sans-serif');
-    expect(article.style.fontSize).toBe('1.075rem');
+    // On a wide screen the frame's scale enlarges the text and its measure lets the lines run a little longer.
+    expect(article.style.fontSize).toBe('calc(1.075rem * var(--reader-scale, 1))');
     expect(article.style.getPropertyValue('--sen-text-line-height')).toBe('1.85');
-    expect(article.className).toContain('max-w-[34em]');
+    expect(article.className).toContain('max-w-[var(--reader-measure,34em)]');
     expect(article.querySelector<HTMLElement>('h1')!.style.fontFamily).toBe('"House Soft", serif');
 
-    // The bottom bar mirrors playback and chapter controls around Codex.
+    // The top bar's story and chapter open the chapter list; the bottom bar mirrors playback and the chapter arrows, Fate between them, around Codex.
     const bar = container.querySelector<HTMLElement>('[data-testid="reader-top-bar"]')!;
-    expect(bar.textContent).toContain('Chapter 1');
+    expect(bar.querySelector('[data-testid="reader-place"]')!.textContent).toBe('Chapter 1 · Low Tide');
     expect([...bar.querySelectorAll('button')].map(button => button.getAttribute('aria-label')))
-      .toEqual(['Back', 'Reader Settings']);
+      .toEqual(['Back', 'Select chapter: Chapter 1', 'Reader Settings']);
     const bottom = container.querySelector<HTMLElement>('[data-testid="reader-bottom-bar"]')!;
     expect([...bottom.querySelectorAll('button')].map(button => button.getAttribute('aria-label')))
-      .toEqual(['Previous sentence', 'Narration playback speed', 'Next sentence', 'Open Codex', 'Previous Chapter', 'Select chapter: Chapter 1', 'Next Chapter: Write Chapter 2', 'Open Fate']);
-    expect(bottom.querySelector('[data-testid="reader-chapter-position"]')!.textContent).toBe('1');
+      .toEqual(['Previous sentence', 'Narration playback speed', 'Next sentence', 'Open Codex', 'Previous Chapter', 'Open Fate', 'Next Chapter: Write Chapter 2', 'Create mode']);
+    // The far right keeps the coming Create mode's place.
+    expect(bottom.querySelector('[data-testid="reader-create-slot"]')).toBeTruthy();
 
     await click(byLabel('Reader Settings'), 'Reader Settings');
     expect([...dialog().querySelectorAll('[data-testid="reader-settings-text"] legend')].map(legend => legend.textContent))
@@ -901,7 +903,7 @@ describe('The Reader frame and its chapter body', { timeout: 20_000 }, () => {
     await pick('reader-line-spacing', 'compact');
     await pick('reader-text-weight', '300');
     expect(article.style.fontFamily).toBe('"House Serif", serif');
-    expect(article.style.fontSize).toBe('1.25rem');
+    expect(article.style.fontSize).toBe('calc(1.25rem * var(--reader-scale, 1))');
     expect(article.style.getPropertyValue('--sen-text-line-height')).toBe('1.5');
     expect(article.style.fontWeight).toBe('300');
     expect(article.querySelector<HTMLElement>('h1')!.style.fontFamily).toBe('"House Edge", serif');
@@ -915,7 +917,7 @@ describe('The Reader frame and its chapter body', { timeout: 20_000 }, () => {
     await click(byLabel('Reader Settings'), 'Reader Settings');
     await act(async () => { [...dialog().querySelectorAll('button')].find(button => button.textContent?.trim() === 'Reset text')!.click(); });
     expect(chapterOnScreen(1)!.style.fontFamily).toBe('"House Sans", sans-serif');
-    expect(chapterOnScreen(1)!.style.fontSize).toBe('1.075rem');
+    expect(chapterOnScreen(1)!.style.fontSize).toBe('calc(1.075rem * var(--reader-scale, 1))');
   });
 
   it('shows another chapter body inside the same frame, with the passages it marks', async () => {
@@ -942,5 +944,45 @@ describe('The Reader frame and its chapter body', { timeout: 20_000 }, () => {
     expect(chapterOnScreen(2)!.getAttribute('data-testid')).toBe('panel-body');
     await click(byLabel('Reader Settings'), 'Reader Settings');
     expect(dialog().querySelector('h2')!.textContent).toBe('Reader Settings');
+  });
+});
+
+describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
+  // The overlay measures the page as it changes size.
+  const rects = Range.prototype.getClientRects;
+  beforeEach(() => {
+    vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
+    Range.prototype.getClientRects = () => [{ left: 100, top: 200, right: 170, bottom: 222, width: 70, height: 22 }] as unknown as DOMRectList;
+  });
+  afterEach(() => { vi.unstubAllGlobals(); Range.prototype.getClientRects = rects; });
+  it('opens the newest chapter on the Text Highlight Engine with its overlays; an earlier chapter is sealed', async () => {
+    const { controller, storyId } = await story({ written: 2 });
+    await mount(<Host controller={controller} storyId={storyId} />);
+    const create = () => buttonBy(byLabel('Create mode'))!;
+    // Chapter 1: the story has moved on from it, so it is sealed.
+    expect(chapterOnScreen(1)).toBeTruthy();
+    expect(create().disabled).toBe(true);
+    expect(create().title).toBe('Only the newest chapter can be changed');
+    await click(byLabel('Next Chapter'), 'Next Chapter');
+    expect(create().disabled).toBe(false);
+    await click(byLabel('Create mode'), 'Create mode');
+    expect(create().getAttribute('aria-pressed')).toBe('true');
+    const authoring = container.querySelector<HTMLElement>('[data-testid="chapter-authoring"]')!;
+    expect(authoring.getAttribute('data-chapter-number')).toBe('2');
+    expect(authoring.querySelector('[data-testid="create-mode-saving"]')!.textContent).toBe('Saved');
+    // The Cues overlay is on: its legend explains the page's numbering, and Off hides it.
+    expect(authoring.querySelector('[data-testid="overlay-legend"]')!.textContent).toContain('P2 S6');
+    await click(button => button.textContent === 'Off' && button.closest('[data-testid="overlay-switch"]') !== null, 'Overlays off');
+    expect(authoring.querySelector('[data-testid="overlay-legend"]')).toBeNull();
+    expect(authoring.textContent).toContain('Mara');
+    // Back to reading: the chapter is prose again.
+    await click(byLabel('Create mode'), 'Back to reading');
+    expect(container.querySelector('[data-testid="chapter-authoring"]')).toBeNull();
+    expect(chapterOnScreen(2)).toBeTruthy();
+    // Another chapter closes Create mode.
+    await click(byLabel('Create mode'), 'Create mode');
+    await click(byLabel('Previous Chapter'), 'Previous Chapter');
+    expect(container.querySelector('[data-testid="chapter-authoring"]')).toBeNull();
+    expect(create().getAttribute('aria-pressed')).toBe('false');
   });
 });

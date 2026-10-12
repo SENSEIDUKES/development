@@ -26,11 +26,13 @@ import {
   type SoundtrackChoice,
 } from '@seihouse/sen/reader-runtime';
 import { harnessParagraphBlockId } from '../shared/chapterBody';
+import { chapterTitleText } from '../../../narrative/chapterTitle';
 import { harnessStoryMode, nextArcStep } from '../shared/arcState';
 import { pendingChapterDirection } from '../shared/chapterDirection';
 import { chapterRewriteGap, latestStoryChapter } from '../shared/chapterRewrite';
 import { protagonistNames } from '../shared/speakers';
 import { BlueprintArcPage } from './BlueprintArcPage';
+import { ChapterAuthoring } from './ChapterAuthoring';
 import { ChapterRewrite } from './ChapterRewrite';
 import { FatePage } from './FatePage';
 import { HoldingsPage } from './HoldingsPage';
@@ -44,6 +46,8 @@ import { ReaderTopBar } from './ReaderTopBar';
 import { useFollowNarration, type NarrationHighlight } from './useFollowNarration';
 import { useNextChapterWriter } from './useNextChapterWriter';
 import { readingScene, useReaderSoundtrack } from './useReaderSoundtrack';
+import { useChapterFinished } from './useChapterFinished';
+import './reader-frame.css';
 import type { HarnessGenerationController } from '../shared/controller';
 import type { HarnessWorkspaceState } from '../../../narrative/generation';
 
@@ -98,8 +102,11 @@ function lineWhereTheReaderIs(script: ReadAloudScript, article: HTMLElement | nu
 
 /**
  * The Reader for a HARNESS story: a frame around a swappable chapter body.
- * The frame is the top bar (Back, Codex, Fate, Reader Settings), the
- * chapter navigation, Listen and what opens over the chapter (`ReaderLayer`:
+ * The frame fills the screen: the top bar (Back, the story and chapter, which
+ * open the chapter list, and Reader Settings) and the bottom bar (Listen,
+ * Codex, the chapter arrows with Fate between them) run edge to edge, and on a
+ * wide screen the chapter grows with it, so it never sits small in the middle.
+ * A panel shrinks the frame beside it. What opens over the chapter (`ReaderLayer`:
  * the Fate and Reader Settings panels; the Codex and an arc's goals as pages,
  * the Codex holding Holdings among its pages). The chapter
  * never leaves the page for them, so the reader keeps their place; the body shows the
@@ -108,8 +115,9 @@ function lineWhereTheReaderIs(script: ReadAloudScript, article: HTMLElement | nu
  * Listen reads the chapter aloud in three voices with the spoken sentence lit,
  * and Reader Settings sets its text: font, title font, size, line spacing and
  * weight, from the host's fonts. At the newest chapter, Next writes the next
- * one (or, in Fate Survival, asks for its direction first); the Fate page is
- * one tap away.
+ * one; the Fate page is one tap away. In Fate Survival every chapter goes
+ * through Fate: at the newest chapter Fate opens once the reader reaches its
+ * last paragraph, and Next waits until Fate has the next chapter's direction.
  * With the host's reader mixer, the story's soundtrack (the reader's
  * atmosphere and the chapter's Sound Cues) plays through the SEIHouse audio
  * player: a story audio note mutes it, and Reader Settings holds Audio and
@@ -233,6 +241,7 @@ export function HarnessReaderSession({
 
   const openChapter = useCallback((chapterNumber: number) => {
     setSelectedChapter(chapterNumber);
+    setCreating(false);
     topRef.current?.scrollIntoView?.({ block: 'start' });
     const current = readerStateRef.current;
     if (!current) return;
@@ -264,6 +273,8 @@ export function HarnessReaderSession({
     setPassageTarget(blockId);
   };
   const pageOpen = layer?.kind === 'page';
+  // Create mode: the reader authors the chapter on screen in place. It closes when another chapter opens.
+  const [creating, setCreating] = useState(false);
   useLayoutEffect(() => {
     if (!pageOpen) return undefined;
     window.scrollTo?.({ top: 0 });
@@ -280,13 +291,13 @@ export function HarnessReaderSession({
     const written = await writer.write();
     if (written) openChapter(written);
   };
-  const continueAfterLatest: { label: string; run: () => void; busy?: boolean; writes?: boolean } | undefined = !story ? undefined
+  const continueAfterLatest: { label: string; run: () => void; busy?: boolean; writes?: boolean; direct?: boolean } | undefined = !story ? undefined
     : story.conclusion
       ? { label: 'See how the story ended', run: () => openFate() }
       : arcStep
         ? { label: `Arc ${arcStep.arcNumber} begins`, run: openArc }
         : mode === 'survival' && !pendingChapterDirection(story)
-        ? { label: `Direct Chapter ${upcoming}`, run: () => openFate(true) }
+        ? { label: `Direct Chapter ${upcoming}`, run: () => openFate(true), direct: true }
         : onGenerateNextChapter
           ? { label: writer.writing ? `Writing Chapter ${upcoming}…` : `Write Chapter ${upcoming}`, run: () => void writeNext(), busy: writer.writing, writes: true }
           : undefined;
@@ -356,6 +367,13 @@ export function HarnessReaderSession({
     speaking: readAloud.status === 'playing', listenEnded: readAloud.status === 'ended',
     onSleep: readAloud.stop, chapterEnd,
   });
+  // Fate Survival goes through Fate every chapter: at the newest one, Fate opens once the reader
+  // reaches its last paragraph (scrolling to it, or Listen reading it), and Next waits for Fate.
+  const survivalAtNewest = mode === 'survival' && Boolean(chapter) && chapter === chapters.at(-1) && !story?.conclusion
+    && !(story && pendingChapterDirection(story));
+  const finished = useChapterFinished({ article: articleRef, chapterEnd, chapterId: chapter?.id, watch: survivalAtNewest, listened: readAloud.status === 'ended' });
+  const fateLocked = survivalAtNewest && !finished;
+  const fateCalls = survivalAtNewest && finished && Boolean(continueAfterLatest?.direct);
   const listen = () => readAloud.play(lineWhereTheReaderIs(readAloud.script(), articleRef.current, barRef.current?.getBoundingClientRect?.().bottom ?? 0));
   // After a Holdings link opens a chapter, the paragraph where the change happened comes into view.
   useEffect(() => {
@@ -379,6 +397,9 @@ export function HarnessReaderSession({
   // stays in place while its own rewrite is written, so a failed one keeps the reader's note.
   const rewritable = Boolean(onRewriteChapter && chapter && !later && latestStoryChapter(state, storyId)?.id === chapter.id
     && (writer.writing || !chapterRewriteGap(state, storyId)));
+  // Only the newest chapter, before anything is built on it, can be changed: moving on seals it.
+  const authorable = Boolean(chapter && !later && latestStoryChapter(state, storyId)?.id === chapter.id && !writer.writing && !chapterRewriteGap(state, storyId));
+  const authoring = creating && authorable && chapter;
   const rewriteChapter = async (note?: string) => {
     const rewritten = await writer.rewrite(note);
     if (rewritten) openChapter(rewritten);
@@ -387,16 +408,20 @@ export function HarnessReaderSession({
 
   const panel = layer?.kind === 'panel' ? layer.id : undefined;
   return <>
-    {/* On laptops a panel sits at the right, and the chapter moves over beside it. */}
-    <div className={`transition-[padding] duration-200 motion-reduce:transition-none ${panel ? 'lg:pr-[28rem]' : ''}`}>
-    <main hidden={pageOpen} className="mx-auto w-full min-w-0 max-w-3xl px-4 pb-12" data-testid="harness-reader">
+    {/* The frame fills the screen; on laptops a panel sits at the right and the frame shrinks beside it. */}
+    <div className={`reader-frame transition-[padding] duration-200 motion-reduce:transition-none ${panel ? 'lg:pr-[28rem]' : ''}`} data-panel={panel}>
+    <main hidden={pageOpen} className="w-full min-w-0 px-4 pb-12" data-testid="harness-reader">
       {/* A new chapter returns here and reveals its top bar. */}
       <div ref={topRef} aria-hidden />
-      <ReaderTopBar barRef={barRef} storyTitle={story.title} place={chapter ? `Chapter ${chapter.chapterNumber}` : 'Story start'}
+      <ReaderTopBar barRef={barRef} storyTitle={story.title} place={chapter ? `Chapter ${chapter.chapterNumber} · ${chapterTitleText(chapter.title) || chapter.title}` : 'Story start'}
+        chapterSelection={chapter ? { current: chapter.chapterNumber, entries: chapters.map(entry => ({ number: entry.chapterNumber, title: entry.title })), onSelect: openChapter } : undefined}
         onBack={onClose} onOpenSettings={() => openSettings()} companion={companion} pinned={Boolean(panel) || pageOpen} />
+      <div className="reader-column">
       {storageError && <p role="alert" className="mt-3 text-sm text-amber-300">{storageError}</p>}
 
-      {chapter
+      {authoring
+        ? <ChapterAuthoring key={chapter.id} chapter={chapter} controller={controller} locale={story.originalLanguage} text={text} articleRef={articleRef} />
+        : chapter
         ? <ChapterBody chapter={chapter} blocks={blocks} locale={story.originalLanguage} articleRef={articleRef}
             highlight={highlight} reading={reading} text={text} />
         : <section className="py-16 text-center" aria-label="Story start">
@@ -415,15 +440,22 @@ export function HarnessReaderSession({
             className={`${navButton} border-cyan-300/50 bg-cyan-400/15 font-semibold text-cyan-50 hover:bg-cyan-400/25`}>{continueAfterLatest.label}</button>
         </span>}
       </div>
-      {rewritable && chapter && <ChapterRewrite key={chapter.id} chapterNumber={chapter.chapterNumber} disabled={writer.writing} onRewrite={rewriteChapter} />}
+      {rewritable && chapter && !authoring && <ChapterRewrite key={chapter.id} chapterNumber={chapter.chapterNumber} disabled={writer.writing} onRewrite={rewriteChapter} />}
+      </div>
       <ReaderBottomBar readAloud={readAloud} onListen={chapter ? listen : undefined} offscreen={follow.offscreen}
         onBackToNarration={follow.backToNarration} barRef={playerRef}
         note={mixer && <ReaderAudioNote mixer={mixer} />}
-        onOpenCodex={openCodex} onOpenFate={() => openFate()}
+        onOpenCodex={openCodex} fate={{ run: () => openFate(fateCalls), disabled: fateLocked, attention: fateCalls }}
+        create={chapter ? {
+          active: Boolean(authoring), onToggle: () => setCreating(!authoring),
+          unavailable: authorable ? undefined : later ? 'Only the newest chapter can be changed' : 'This chapter is sealed: the story has moved on from it',
+        } : undefined}
         previous={previous ? { label: 'Previous Chapter', run: () => openChapter(previous.chapterNumber) } : undefined}
         next={later ? { label: 'Next Chapter', run: () => openChapter(later.chapterNumber) }
-          : continueAfterLatest ? { label: `Next Chapter: ${continueAfterLatest.label}`, run: continueAfterLatest.run, busy: continueAfterLatest.busy } : undefined}
-        chapterSelection={chapter ? { current: chapter.chapterNumber, entries: chapters.map(entry => ({ number: entry.chapterNumber, title: entry.title })), onSelect: openChapter } : undefined} />
+          : continueAfterLatest ? {
+              label: `Next Chapter: ${continueAfterLatest.label}`, run: continueAfterLatest.run, busy: continueAfterLatest.busy,
+              disabled: fateLocked || fateCalls,
+            } : undefined} />
     </main>
     </div>
     {layer?.id === 'codex' && <main className="w-full min-w-0">

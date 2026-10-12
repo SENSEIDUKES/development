@@ -1,10 +1,11 @@
-import {
-  resolveAnchor,
-  type Manuscript, type ManuscriptState, type OverlayMark, type OverlayPin,
-} from '@seihouse/sen/text-highlight-engine';
+import { resolveAnchor, type Manuscript, type ManuscriptState } from './manuscript';
+import type { OverlayMark, OverlayPin } from './overlay';
 
-/** The lab's overlays, like a strategy game's map modes: each shows one kind of added effect. */
-export type LabOverlay = 'off' | 'cues';
+/**
+ * The page's overlays, like a strategy game's map modes: each shows one kind of
+ * added effect. The Workshop lab and the Reader's Create mode share them.
+ */
+export type ManuscriptOverlayMode = 'off' | 'cues';
 
 /**
  * One color per kind of added effect, so every effect of a kind is found at a
@@ -17,7 +18,7 @@ export const ATTACHMENT_COLORS: Readonly<Record<string, { label: string; tone: s
 };
 
 /** The attachment kinds each overlay shows. */
-export const OVERLAY_KINDS: Readonly<Record<Exclude<LabOverlay, 'off'>, readonly string[]>> = {
+export const OVERLAY_KINDS: Readonly<Record<Exclude<ManuscriptOverlayMode, 'off'>, readonly string[]>> = {
   cues: ['sound-cue'],
 };
 

@@ -1,4 +1,5 @@
 import { LightNovelsHome, type HomeWorld } from '@seihouse/library/home';
+import type { UserProfile } from '@seihouse/library/profile';
 import { AppShell } from './AppShell';
 import type { Navigate } from './routes';
 
@@ -14,11 +15,12 @@ const FEATURED_STORIES = 5;
  * Home: the reader's stories, newest first, and the way to start a new one, inside the Library Shell.
  * Featured cycles through the newest stories that have a cover.
  */
-export function HomePage({ worlds, navigate }: {
+export function HomePage({ worlds, navigate, readerProfile }: {
   worlds: readonly HomeWorld[];
   navigate: Navigate;
+  readerProfile: UserProfile;
 }) {
-  return <AppShell route={{ page: 'home' }} navigate={navigate} stories={worlds} mainLabel="Your stories">
+  return <AppShell route={{ page: 'home' }} navigate={navigate} stories={worlds} readerProfile={readerProfile} mainLabel="Your stories">
     <div className="mx-auto w-full max-w-7xl px-4 py-8" data-testid="novel-expanded-home">
       <LightNovelsHome worlds={worlds} emptyState={EMPTY_LIST}
         featuredWorlds={worlds.filter(world => world.imageUrl.trim()).slice(0, FEATURED_STORIES)}

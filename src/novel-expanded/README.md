@@ -13,7 +13,7 @@ The Workshop is where systems are built and inspected one at a time. The app is
 where they are used together, the way a reader meets them.
 
 - Created: 2026-10-01 (piece 1)
-- Last updated: 2026-10-11
+- Last updated: 2026-10-12
 - Owner: `host` (`scripts/ownershipInventory.mjs`). The app is a host of the
   Library and SEN packages, like any outside app would be.
 
@@ -55,6 +55,12 @@ rewrites and every page survives a reload.
 - A story id the app does not have goes Home.
 
 ## The Library Shell
+
+- **2026-10-12** — Home and World Info pass the device reader's saved name and
+  portrait into the Pathways profile header, with rank from the shared DAO XP
+  account; selecting it opens Profile. The sidebar keeps its landscape in the
+  remaining space on shorter laptops beneath the NovelExpanded wordmark.
+  Home's Workshop Development iframe uses this same app composition.
 
 - **2026-10-09** — The Home and World Info footer replaces its text title with
   the same approved wordmark as the header, above “An Experience by SEIHouse”.

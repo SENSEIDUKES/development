@@ -37,7 +37,13 @@
 .familiar-recall > span { display: block; width: 32px; }
 .familiar-recall-container { flex-shrink: 0; }
 .familiar-header-actions { max-width: none; }
-.familiar-recall:focus-visible, .familiar-size-control :focus-visible { outline: 2px solid #96ddf9; outline-offset: 3px; }
+/* Focus follows the Familiar's silhouette, without the header's blue box. */
+.familiar-recall-container .familiar-recall:focus-visible { outline: none; box-shadow: none; }
+.familiar-recall:focus-visible > span { filter: drop-shadow(0 0 3px #d6bd87); }
+.familiar-size-control :focus-visible { outline: 2px solid #96ddf9; outline-offset: 3px; }
+@media (forced-colors: active) {
+  .familiar-recall-container .familiar-recall:focus-visible { outline: 2px solid Highlight; outline-offset: 3px; }
+}
 .familiar-size-control { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin: 20px 0; padding: 16px; border: 1px solid #d6bd8744; border-radius: 12px; }
 .familiar-size-control label { color: #f0e2bf; font-weight: 600; }
 .familiar-size-slider { display: flex; align-items: center; flex: 1 1 240px; gap: 12px; min-width: 0; }

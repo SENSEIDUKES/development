@@ -212,7 +212,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     writingAgent={AGENTS.VERSA} backLabel="Back to your stories" covers={covers}
     // World Info sits in the Library Shell; the Reader never does.
     frame={info => <AppShell route={{ page: 'story', storyId }} navigate={navigate} stories={worlds}
-      mainLabel={route.page === 'blueprint' ? 'Blueprint' : 'World Info'}>{info}</AppShell>}
+      readerProfile={profile} mainLabel={route.page === 'blueprint' ? 'Blueprint' : 'World Info'}>{info}</AppShell>}
     // Every story on this device is the reader's own, so its Blueprint opens for its creator.
     onOpenBlueprint={() => navigate({ page: 'blueprint', storyId })}
     onCloseBlueprint={() => navigate({ page: 'story', storyId })}
@@ -220,5 +220,5 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     onCloseReader={() => navigate({ page: 'story', storyId })}
     onBack={() => navigate(HOME_ROUTE)} />);
 
-  return withFamiliar(<HomePage worlds={worlds} navigate={navigate} />);
+  return withFamiliar(<HomePage worlds={worlds} navigate={navigate} readerProfile={profile} />);
 }

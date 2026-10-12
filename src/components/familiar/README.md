@@ -9,7 +9,7 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - Source: supplied `Familiars/Packages/` collection (not a Git repository), containing twelve validated Familiar packages.
 - Preview: Workshop **Customization → Familiar** and `?preview=familiar`.
 - First Workshop record: 2026-09-20.
-- Last recorded Workshop update: 2026-10-07.
+- Last recorded Workshop update: 2026-10-12.
 - Historical source inspection: 2026-10-06.
 - Lifecycle: supplied source packages retained; the reusable renderer, host catalogue, and Energy interaction remain in Development.
 - Owner: Library. This first-party companion is not a SEN narrative capability.
@@ -282,6 +282,10 @@ desktop hover, 320/390px viewport centering, desktop centering, tray alignment a
 Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
+
+- 2026-10-12: Removed the header recall's blue focus box. Keyboard focus uses
+  a gold glow around the sprite; forced colors keeps the system focus outline.
+  Recall, expansion, dismissal and focus return keep their existing behavior.
 
 - 2026-10-07: The Familiar comes to the NovelExpanded app (`src/novel-expanded/AppFamiliar.tsx`):
   one companion for the app, the profile's equipped Familiar and size, minimized to its

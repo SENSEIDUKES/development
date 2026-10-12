@@ -593,6 +593,8 @@ async function walk(browser, viewport, sample) {
   // The bar never covers the chapter's own controls, and the page never scrolls sideways.
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await page.waitForTimeout(100);
+  // A panel closed just before slides the frame back to full width; measure once it has.
+  await page.waitForFunction(() => getComputedStyle(document.querySelector('.reader-frame')).paddingRight === '0px', null, { timeout: 2000 }).catch(() => undefined);
   const layout = await page.evaluate(() => {
     const bar = document.querySelector('[data-testid="reader-bottom-bar"]').getBoundingClientRect();
     const codex = document.querySelector('[data-testid="reader-codex-button"]').getBoundingClientRect();
@@ -600,8 +602,16 @@ async function walk(browser, viewport, sample) {
       end: document.querySelector('[data-testid="reader-chapter-end"]').getBoundingClientRect().bottom,
       bar: bar.top, barCenter: bar.left + bar.width / 2, codexCenter: codex.left + codex.width / 2,
       wide: document.documentElement.scrollWidth > window.innerWidth,
+      // The frame fills the screen: both bars run edge to edge, and match in height.
+      barWidth: bar.width, top: document.querySelector('[data-testid="reader-top-bar"]').getBoundingClientRect().width,
+      // The frame spans the page (less any scrollbar the browser draws beside it).
+      frame: document.querySelector('.reader-frame').getBoundingClientRect().width, page: window.innerWidth,
+      heights: ['reader-top-bar', 'reader-bottom-bar'].map(id => document.querySelector(`[data-testid="${id}"]`).getBoundingClientRect().height),
     };
   });
+  check(layout.frame >= layout.page - 24 && layout.barWidth >= layout.frame - 1 && layout.top >= layout.frame - 1,
+    `Both Reader bars should run edge to edge (${JSON.stringify(layout)}).`);
+  check(Math.abs(layout.heights[0] - layout.heights[1]) <= 2, `The Reader's top and bottom bars should match in height (${JSON.stringify(layout)}).`);
   check(layout.end <= layout.bar + 1, `The bottom bar should not cover the chapter's end (${JSON.stringify(layout)}).`);
   check(Math.abs(layout.codexCenter - layout.barCenter) <= 2, `Codex should sit in the middle of the bottom bar (${JSON.stringify(layout)}).`);
   check(!layout.wide, 'The Reader must not scroll sideways.');
@@ -615,10 +625,10 @@ async function walk(browser, viewport, sample) {
   check(await page.getByTestId('reader-top-bar').getAttribute('data-scroll-hidden') === 'true', 'The top bar should clear the page on downward scroll.');
   const noteAlignment = await page.evaluate(() => {
     const note = document.querySelector('[data-testid="story-audio-note"] button').getBoundingClientRect();
-    const fate = document.querySelector('button[aria-label="Open Fate"]').getBoundingClientRect();
-    return Math.abs((note.left + note.width / 2) - (fate.left + fate.width / 2));
+    const slot = document.querySelector('[data-testid="reader-create-slot"]').getBoundingClientRect();
+    return Math.abs((note.left + note.width / 2) - (slot.left + slot.width / 2));
   });
-  check(noteAlignment <= 1, 'The audio note should be centered above Fate.');
+  check(noteAlignment <= 1, 'The audio note should be centered above the bottom bar\'s right end.');
   await page.evaluate(() => window.scrollBy(0, -40));
   await page.waitForTimeout(220);
   check(await page.getByTestId('reader-top-bar').getAttribute('data-scroll-hidden') === 'false', 'The top bar should return on upward scroll.');
@@ -634,7 +644,8 @@ async function walk(browser, viewport, sample) {
   });
   check(Math.abs(frame.barTop) <= 1 && frame.barHeight <= 80, `The returned top bar should fit at the top in one row (${JSON.stringify(frame)}).`);
   check(frame.title >= 80, `The story title should keep room in the top bar (${JSON.stringify(frame)}).`);
-  check(frame.measure <= 36, `The prose should keep a reading measure of about 60 characters (${JSON.stringify(frame)}).`);
+  // About 60 characters a line, up to about 66 on a wide screen.
+  check(frame.measure <= 39, `The prose should keep a reading measure of 60 to 66 characters (${JSON.stringify(frame)}).`);
   check(await visibleButton('Open Fate').isVisible() && await visibleButton('Reader Settings').isVisible() && await visibleButton('Open Codex').isVisible(),
     'Fate, the Codex and Reader Settings should be reachable at the chapter\'s end.');
   check(await page.getByTestId('reader-top-bar').getByTestId('reader-companion').getByRole('button', { name: /actions$/ }).isVisible(),

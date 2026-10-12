@@ -15,7 +15,9 @@ const READ_ALOUD_TONE = 'var(--sen-read-aloud-highlight, rgba(103, 232, 249, 0.1
  * The chapter as prose: its title and its paragraphs on the Text Highlight
  * Engine, with the Sound Cues placed on their words and the sentence being
  * read aloud lit, in the reader's font, size, spacing and weight. The column
- * is 34em wide, about 60 characters a line in any font. The
+ * is 34em wide, about 60 characters a line in any font. On a wide screen the
+ * frame's `--reader-scale` enlarges the text and title and `--reader-measure`
+ * lets the lines run to 38em, so the chapter fills the page. The
  * overlay stays mounted while Read Aloud is active, so moving from sentence to
  * sentence never replays its fade.
  */
@@ -33,17 +35,17 @@ export const ProseChapterBody = memo(function ProseChapterBody({ chapter, blocks
   // Set on the article, so the column's `em` follows the reader's size. Measured in em, not ch:
   // a ch is the font's own "0", so each font would set a different width.
   const prose = useMemo((): CSSProperties => ({
-    fontFamily: text.font.family, fontSize: text.fontSize, fontWeight: text.fontWeight,
+    fontFamily: text.font.family, fontSize: `calc(${text.fontSize} * var(--reader-scale, 1))`, fontWeight: text.fontWeight,
     fontSynthesis: 'none', fontKerning: 'normal', '--sen-text-line-height': text.lineHeight,
   } as CSSProperties), [text]);
-  return <article ref={articleRef} className="mx-auto mt-6 max-w-[34em]" style={prose} data-chapter-number={chapter.chapterNumber} lang={locale}
+  return <article ref={articleRef} className="mx-auto mt-6 max-w-[var(--reader-measure,34em)]" style={prose} data-chapter-number={chapter.chapterNumber} lang={locale}
     aria-labelledby={`harness-reader-chapter-${chapter.chapterNumber}`}>
     {/* The word count is a testing aid while chapter length is being tuned. */}
     <p className="font-mono text-[10px] font-normal uppercase tracking-[0.2em] text-neutral-500">Chapter {chapter.chapterNumber}
       <span data-testid="harness-reader-word-count"> · {chapter.metrics.wordCount.toLocaleString(locale)} words</span></p>
     <h1 id={`harness-reader-chapter-${chapter.chapterNumber}`} data-read-aloud-title="" data-speaking={highlight === 'title' ? '' : undefined}
       style={{ fontFamily: text.titleFont.family }}
-      className={`mt-1 rounded text-2xl font-normal text-white transition-colors sm:text-3xl ${highlight === 'title' ? 'bg-cyan-300/15' : ''}`}>{chapterTitleText(chapter.title) || chapter.title}</h1>
+      className={`mt-1 rounded text-[length:calc(1.5rem*var(--reader-scale,1))] font-normal text-white transition-colors sm:text-[length:calc(1.875rem*var(--reader-scale,1))] ${highlight === 'title' ? 'bg-cyan-300/15' : ''}`}>{chapterTitleText(chapter.title) || chapter.title}</h1>
     <TextHighlightEngine blocks={blocks} onBlocksChange={keepProse} editable={false} locale={locale} overlay={overlay}
       className="mt-6 text-neutral-200"
       renderBlockText={block => {

@@ -465,7 +465,7 @@ describe('Read Aloud in the HARNESS Reader', { timeout: 20_000 }, () => {
     const controls = container.querySelector('[data-testid="reader-controls-row"]')!;
     expect(container.querySelector('[data-testid="read-aloud-strip"]')).toBeNull();
     expect([...controls.querySelectorAll('button')].map(button => button.getAttribute('aria-label')))
-      .toEqual(['Pause', 'Previous sentence', 'Narration playback speed', 'Next sentence', 'Open Codex', 'Previous Chapter', 'Select chapter: Chapter 1', 'Next Chapter', 'Open Fate']);
+      .toEqual(['Pause', 'Previous sentence', 'Narration playback speed', 'Next sentence', 'Open Codex', 'Previous Chapter', 'Open Fate', 'Next Chapter']);
 
     await next();
     expect(lastSpoken().text).toBe('The tide pulled back from the drowned gate.');
@@ -877,20 +877,22 @@ describe('The Reader frame and its chapter body', { timeout: 20_000 }, () => {
     // The host's first fonts, at the Reader's size and spacing, about 60 characters a line.
     const article = chapterOnScreen(1)!;
     expect(article.style.fontFamily).toBe('"House Sans", sans-serif');
-    expect(article.style.fontSize).toBe('1.075rem');
+    // On a wide screen the frame's scale enlarges the text and its measure lets the lines run a little longer.
+    expect(article.style.fontSize).toBe('calc(1.075rem * var(--reader-scale, 1))');
     expect(article.style.getPropertyValue('--sen-text-line-height')).toBe('1.85');
-    expect(article.className).toContain('max-w-[34em]');
+    expect(article.className).toContain('max-w-[var(--reader-measure,34em)]');
     expect(article.querySelector<HTMLElement>('h1')!.style.fontFamily).toBe('"House Soft", serif');
 
-    // The bottom bar mirrors playback and chapter controls around Codex.
+    // The top bar's story and chapter open the chapter list; the bottom bar mirrors playback and the chapter arrows, Fate between them, around Codex.
     const bar = container.querySelector<HTMLElement>('[data-testid="reader-top-bar"]')!;
-    expect(bar.textContent).toContain('Chapter 1');
+    expect(bar.querySelector('[data-testid="reader-place"]')!.textContent).toBe('Chapter 1 · Low Tide');
     expect([...bar.querySelectorAll('button')].map(button => button.getAttribute('aria-label')))
-      .toEqual(['Back', 'Reader Settings']);
+      .toEqual(['Back', 'Select chapter: Chapter 1', 'Reader Settings']);
     const bottom = container.querySelector<HTMLElement>('[data-testid="reader-bottom-bar"]')!;
     expect([...bottom.querySelectorAll('button')].map(button => button.getAttribute('aria-label')))
-      .toEqual(['Previous sentence', 'Narration playback speed', 'Next sentence', 'Open Codex', 'Previous Chapter', 'Select chapter: Chapter 1', 'Next Chapter: Write Chapter 2', 'Open Fate']);
-    expect(bottom.querySelector('[data-testid="reader-chapter-position"]')!.textContent).toBe('1');
+      .toEqual(['Previous sentence', 'Narration playback speed', 'Next sentence', 'Open Codex', 'Previous Chapter', 'Open Fate', 'Next Chapter: Write Chapter 2']);
+    // The far right keeps the coming Create mode's place.
+    expect(bottom.querySelector('[data-testid="reader-create-slot"]')).toBeTruthy();
 
     await click(byLabel('Reader Settings'), 'Reader Settings');
     expect([...dialog().querySelectorAll('[data-testid="reader-settings-text"] legend')].map(legend => legend.textContent))
@@ -901,7 +903,7 @@ describe('The Reader frame and its chapter body', { timeout: 20_000 }, () => {
     await pick('reader-line-spacing', 'compact');
     await pick('reader-text-weight', '300');
     expect(article.style.fontFamily).toBe('"House Serif", serif');
-    expect(article.style.fontSize).toBe('1.25rem');
+    expect(article.style.fontSize).toBe('calc(1.25rem * var(--reader-scale, 1))');
     expect(article.style.getPropertyValue('--sen-text-line-height')).toBe('1.5');
     expect(article.style.fontWeight).toBe('300');
     expect(article.querySelector<HTMLElement>('h1')!.style.fontFamily).toBe('"House Edge", serif');
@@ -915,7 +917,7 @@ describe('The Reader frame and its chapter body', { timeout: 20_000 }, () => {
     await click(byLabel('Reader Settings'), 'Reader Settings');
     await act(async () => { [...dialog().querySelectorAll('button')].find(button => button.textContent?.trim() === 'Reset text')!.click(); });
     expect(chapterOnScreen(1)!.style.fontFamily).toBe('"House Sans", sans-serif');
-    expect(chapterOnScreen(1)!.style.fontSize).toBe('1.075rem');
+    expect(chapterOnScreen(1)!.style.fontSize).toBe('calc(1.075rem * var(--reader-scale, 1))');
   });
 
   it('shows another chapter body inside the same frame, with the passages it marks', async () => {

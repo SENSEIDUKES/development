@@ -191,6 +191,43 @@ describe('The Fate page in the HARNESS Reader', { timeout: 20_000 }, () => {
 });
 
 describe('Next at the newest chapter in the HARNESS Reader', { timeout: 20_000 }, () => {
+  it('Fate Survival: Fate and Next stay closed until the reader reaches the last paragraph; then Fate calls and Next waits for it', async () => {
+    let observed: { callback: IntersectionObserverCallback; target: Element }[] = [];
+    vi.stubGlobal('IntersectionObserver', class {
+      constructor(private callback: IntersectionObserverCallback) {}
+      observe(target: Element) { observed.push({ callback: this.callback, target }); }
+      disconnect() { observed = observed.filter(entry => entry.callback !== this.callback); }
+    });
+    try {
+      await start({ fateSurvival: { enabled: true } }, async (controller, storyId) => {
+        await controller.acceptArcGoals(storyId, 1);
+        await controller.chooseChapterDirection(storyId, { kind: 'reader', text: 'Mara wakes on the causeway.' });
+        await controller.generateNextChapter(storyId, 'test-model');
+      }, { openFate: false });
+      const fate = () => buttonBy(byLabel('Open Fate'))!;
+      expect(fate().disabled).toBe(true);
+      expect(fate().title).toBe('Fate opens when you reach the end of the chapter');
+      expect(nextChapterButton().disabled).toBe(true);
+      // The chapter's last paragraph is what is watched.
+      const last = observed.find(entry => entry.target.getAttribute('data-sen-text-block'))!;
+      expect(last.target).toBe([...document.querySelectorAll('article [data-sen-text-block]')].at(-1));
+      act(() => last.callback([{ isIntersecting: false } as IntersectionObserverEntry], {} as IntersectionObserver));
+      expect(fate().disabled).toBe(true);
+      act(() => last.callback([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver));
+      // Reached: Fate calls for the next chapter's direction, and Next waits for it.
+      expect(fate().disabled).toBe(false);
+      expect(fate().getAttribute('data-attention')).toBe('true');
+      expect(nextChapterButton().getAttribute('aria-label')).toBe('Next Chapter: Direct Chapter 2');
+      expect(nextChapterButton().disabled).toBe(true);
+      expect(observed.filter(entry => entry.target.getAttribute('data-sen-text-block'))).toEqual([]);
+      await act(async () => { fate().click(); });
+      await flush();
+      expect(document.activeElement).toBe(pathOption('progression'));
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('Regular Reader: writes the next chapter through Rhythm and opens it; on earlier chapters Next only navigates', async () => {
     const run = await start({}, async (controller, storyId) => { await controller.generateNextChapter(storyId, 'test-model'); }, { openFate: false });
     expect(container.textContent).toContain('Mara walked the causeway on day 1.');
@@ -223,8 +260,11 @@ describe('Next at the newest chapter in the HARNESS Reader', { timeout: 20_000 }
       await controller.chooseChapterDirection(storyId, { kind: 'reader', text: 'Mara wakes on the causeway.' });
       await controller.generateNextChapter(storyId, 'test-model');
     }, { openFate: false });
+    // Every chapter goes through Fate: Next waits, and Fate calls for the reader.
     expect(nextChapterButton().getAttribute('aria-label')).toBe('Next Chapter: Direct Chapter 2');
-    await act(async () => { nextChapterButton().click(); });
+    expect(nextChapterButton().disabled).toBe(true);
+    expect(buttonBy(byLabel('Open Fate'))!.getAttribute('data-attention')).toBe('true');
+    await act(async () => { buttonBy(byLabel('Open Fate'))!.click(); });
     await flush();
     // The Fate page opens at the step the chapter waits on: its four paths, the first one focused, the keyboard not yet up.
     expect(document.activeElement).toBe(pathOption('progression'));
@@ -239,6 +279,8 @@ describe('Next at the newest chapter in the HARNESS Reader', { timeout: 20_000 }
 
     // With the direction given, Next writes it. A failed write keeps it for the retry.
     expect(nextChapterButton().getAttribute('aria-label')).toBe('Next Chapter: Write Chapter 2');
+    expect(nextChapterButton().disabled).toBe(false);
+    expect(buttonBy(byLabel('Open Fate'))!.getAttribute('data-attention')).toBeNull();
     run.failNext();
     await act(async () => { nextChapterButton().click(); });
     await flush();
@@ -254,7 +296,8 @@ describe('Next at the newest chapter in the HARNESS Reader', { timeout: 20_000 }
     expect(run.controller.snapshot().stories[0].nextChapterDirection).toBeUndefined();
     // Chapter 3 waits on a new direction. The reader takes the writer's suggested path instead of writing one.
     expect(nextChapterButton().getAttribute('aria-label')).toBe('Next Chapter: Direct Chapter 3');
-    await act(async () => { nextChapterButton().click(); });
+    expect(nextChapterButton().disabled).toBe(true);
+    await act(async () => { buttonBy(byLabel('Open Fate'))!.click(); });
     await flush();
     await choosePath('progression');
     await click(byText('Set Chapter 3’s path'), 'Set path');

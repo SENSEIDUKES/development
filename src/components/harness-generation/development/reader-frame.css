@@ -1,0 +1,26 @@
+/*
+ * The Reader frame fills the screen. Its bars run edge to edge, and on a wide
+ * screen the chapter grows with it in steps, so the page reads as it does
+ * beside an open panel instead of a small column in the middle:
+ * `--reader-scale` enlarges the chapter's text and title, and
+ * `--reader-measure` lets its lines run a little longer (34em, about 60
+ * characters a line, up to 38em, about 66). A panel takes 28rem at the right
+ * from 1024px, so the steps start that much later while one is open.
+ */
+.reader-frame { --reader-scale: 1; --reader-measure: 34em; }
+@media (min-width: 1280px) { .reader-frame:not([data-panel]) { --reader-scale: 1.12; --reader-measure: 38em; } }
+@media (min-width: 1440px) { .reader-frame:not([data-panel]) { --reader-scale: 1.22; } }
+@media (min-width: 1680px) { .reader-frame:not([data-panel]) { --reader-scale: 1.32; } }
+@media (min-width: 1920px) { .reader-frame:not([data-panel]) { --reader-scale: 1.4; } }
+@media (min-width: 1728px) { .reader-frame[data-panel] { --reader-scale: 1.12; --reader-measure: 38em; } }
+@media (min-width: 1888px) { .reader-frame[data-panel] { --reader-scale: 1.22; } }
+@media (min-width: 2128px) { .reader-frame[data-panel] { --reader-scale: 1.32; } }
+
+/* What is read sits in the middle: the chapter, its end and anything said about it. */
+.reader-column {
+  margin-inline: auto;
+  max-width: calc(48rem * var(--reader-scale, 1));
+}
+
+/* Both bars are 4.5rem tall (plus the safe area), so the frame's top and bottom match. */
+.reader-bar-row { min-height: 4.5rem; }

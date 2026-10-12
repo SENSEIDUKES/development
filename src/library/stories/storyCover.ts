@@ -17,6 +17,11 @@ export interface StoryCoverRequest {
   tone?: string;
   /** The world, in a few lines. */
   world?: string;
+  /**
+   * Letter the title on the cover. A title is what a story earns by reaching its
+   * ending, destined or failed; until then its covers carry no lettering.
+   */
+  titled?: boolean;
 }
 
 const text = (value: unknown): string | undefined => {
@@ -28,8 +33,9 @@ const text = (value: unknown): string | undefined => {
 /**
  * A story's cover request, from what the story already knows: its title and
  * genre, its Story Seed's tradition and tags, its Blueprint logline (else its
- * premise), its main character, tone and world. The cover server clips each
- * field to its own limit.
+ * premise), its main character, tone and world. A story that has reached its
+ * ending asks for its title on the cover. The cover server clips each field to
+ * its own limit.
  */
 export function storyCoverRequest(state: HarnessWorkspaceState, storyId: string): StoryCoverRequest | undefined {
   const story = findStory(state, storyId);
@@ -40,7 +46,7 @@ export function storyCoverRequest(state: HarnessWorkspaceState, storyId: string)
   const blueprint = source?.blueprint as Partial<WorldBlueprint> | undefined;
   const tags = seed?.story?.required?.storyTags;
   const request: StoryCoverRequest = { title: text(story.title) ?? 'Untitled' };
-  const fields: Array<[Exclude<keyof StoryCoverRequest, 'title' | 'tags'>, unknown]> = [
+  const fields: Array<[Exclude<keyof StoryCoverRequest, 'title' | 'tags' | 'titled'>, unknown]> = [
     ['genre', input?.genre],
     ['style', seed?.story?.required?.style],
     ['synopsis', text(blueprint?.logline) ?? input?.premise],
@@ -54,6 +60,7 @@ export function storyCoverRequest(state: HarnessWorkspaceState, storyId: string)
   }
   const tagList = Array.isArray(tags) ? tags.flatMap(tag => text(tag) ?? []) : [];
   if (tagList.length) request.tags = tagList;
+  if (story.conclusion) request.titled = true;
   return request;
 }
 

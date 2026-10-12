@@ -38,17 +38,3 @@
 @media (prefers-reduced-motion: reduce) {
   [data-light-novels-home] .home-featured-step, [data-light-novels-home] .home-featured-dot::after { transition: none; }
 }
-
-/* Carve New Destiny on Featured: the dark night glass of the NovelExpanded app, its spectral rim and
-   rainbow halo kept, so a bright backdrop behind it can never wash it gold. */
-[data-light-novels-home] .home-featured .library-glass-button[data-variant='manifest'] {
-  --glass-fill: rgba(9, 11, 22, 0.78);
-  --glass-fill-hover: rgba(18, 20, 38, 0.84);
-  --glass-fill-press: rgba(6, 8, 16, 0.88);
-  --glass-light: rgba(255, 255, 255, 0.07);
-  --glass-edge: rgba(255, 255, 255, 0.14);
-  --glass-glow: rgba(4, 172, 255, 0.22);
-  --glass-glow-hover: rgba(124, 92, 255, 0.4);
-  --glass-text: #f2efe8;
-  --glass-text-hover: #ffffff;
-}

@@ -275,6 +275,8 @@ describe('Cover art on Story View', () => {
     expect(container.querySelector('[data-world-card="info"] [data-testid="story-cover"]')).toBeTruthy();
     expect(buttonByText('Manifest cover')).toBeUndefined();
     await click(manifestOnCover(), 'Manifest on the cover');
+    // An unfinished story's cover carries no title yet.
+    expect(document.querySelector('.story-cover-dialog-intro')!.textContent).toContain('Its title is added when the story reaches its ending.');
     expect(option(1)!.textContent).toContain('One cover');
     expect(option(1)!.querySelector('.energy-action-cost')!.textContent).toContain('5');
     expect(option(3)!.textContent).toContain('Three to choose from');
@@ -283,6 +285,7 @@ describe('Cover art on Story View', () => {
     await click(option(1), 'One cover');
     // The cover is made from the story's own words.
     expect(make).toHaveBeenCalledWith(story.id, expect.objectContaining({ title: 'The Drowned Name', genre: 'Xianxia', mainCharacter: 'Mara' }), 1);
+    expect(make.mock.calls[0][1]).not.toHaveProperty('titled');
     // The media reveal: the scroll unseals while the cover is made.
     expect(container.querySelector('[data-testid="generation-overlay"]')).toBeTruthy();
     expect(container.querySelector('[data-reveal-state="unsealing"], [data-state="unsealing"]')).toBeTruthy();
@@ -302,6 +305,33 @@ describe('Cover art on Story View', () => {
     expect(container.querySelector('.world-card-base-format[aria-label="Manifest a new cover"]')).toBeTruthy();
     expect(container.querySelector('[data-testid="story-cover"] a[download]')).toBeNull();
     expect(storyHomeWorlds(latest!.state!, latestCovers)[0].imageUrl).toBe('blob:cover-1');
+  });
+
+  it.each(['destined-ending-reached', 'fate-failed'] as const)('a story that has reached its ending (%s) earns its title: Manifest offers to regenerate the cover with it', async outcome => {
+    const writer = gatedWriter();
+    const repository = new InMemoryHarnessGenerationRepository();
+    const story = await createStory(repository, writer.adapter);
+    const ended = repository.snapshot();
+    findStory(ended, story.id)!.conclusion = { outcome, reason: 'story-ended', chapterNumber: 1, evidence: 'The tide closed over the city.', recordedAt: '2026-10-12T00:00:00.000Z' };
+    await repository.save(ended);
+    const make = vi.fn(async () => ({ urls: ['blob:untitled'] }));
+    await act(async () => root.render(renderWithDevAudio(<Host repository={repository} adapter={writer.adapter} storyId={story.id} makeCover={make} />)));
+    await flush();
+    await click(manifestOnCover(), 'Manifest on the cover');
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    await click(option(1), 'One cover');
+    await flush();
+    await act(async () => { vi.advanceTimersByTime(COVER_REVEAL_HOLD_MS + 2_000); });
+    await flush(50);
+    vi.useRealTimers();
+    expect(make).toHaveBeenLastCalledWith(story.id, expect.objectContaining({ title: 'The Drowned Name', titled: true }), 1);
+    expect(storyCoverRequest(latest!.state!, story.id)?.titled).toBe(true);
+
+    // With a cover kept, the small Manifest on its corner regenerates it with the title.
+    const recast = () => container.querySelector<HTMLButtonElement>('.world-card-base-format[aria-label="Regenerate with a title"]');
+    await click(recast(), 'Regenerate with a title');
+    expect(document.querySelector('.story-cover-dialog-title')!.textContent).toBe('Regenerate with a title');
+    expect(document.querySelector('.story-cover-dialog-intro')!.textContent).toContain('its cover now carries its title');
   });
 
   it('three covers open a picker: the reader keeps one and the others are let go', async () => {

@@ -15,9 +15,9 @@ Vertical 2:3 composition, striking focal point, detailed illustration, readable 
 {title instruction}
 No logos, signatures, or watermarks.`;
 
-/** {title instruction} when the title is drawn on the cover (the default). */
+/** {title instruction} once the story has reached its ending, destined or failed: the title is drawn on the cover. */
 export const COVER_TITLE_ON = 'The only lettering is the exact title “{title}”, displayed once in expressive, clearly readable typography suited to the cover. Do not invent subtitles, volume numbers, author names, or other lettering.';
-/** {title instruction} when the title is shown beneath the artwork instead. */
+/** {title instruction} until the story has reached its ending: the title is shown beneath the artwork instead. */
 export const COVER_TITLE_OFF = 'No lettering. The title will appear beneath the artwork.';
 
 /** Each Story Seed tradition, as the cover prompt names it. */
@@ -36,7 +36,8 @@ export const STORY_COVER_FIELD_LIMITS = { title: 160, genre: 80, style: 20, syno
 /**
  * The cover prompt: the approved template filled from the story's own words.
  * A line whose field the story does not have is left out. The exact title is
- * drawn once unless `title` is false; then the art carries no lettering.
+ * drawn once only on a titled cover (a story that has reached its ending, or
+ * `title: true`); otherwise the art carries no lettering.
  */
 export function buildStoryCoverPrompt(request: StoryCoverRequest, options: { title?: boolean } = {}): string {
   const fields: Record<string, string | undefined> = {
@@ -49,7 +50,7 @@ export function buildStoryCoverPrompt(request: StoryCoverRequest, options: { tit
     '{world facts}': request.world,
     '{story tags}': request.tags?.length ? request.tags.join(', ') : undefined,
   };
-  const titleInstruction = (options.title ?? true) ? COVER_TITLE_ON.replace('{title}', request.title) : COVER_TITLE_OFF;
+  const titleInstruction = (options.title ?? request.titled === true) ? COVER_TITLE_ON.replace('{title}', request.title) : COVER_TITLE_OFF;
   return COVER_PROMPT_TEMPLATE.split('\n').flatMap(line => {
     if (line === '{title instruction}') return [titleInstruction];
     const brace = Object.keys(fields).find(key => line.includes(key));

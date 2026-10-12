@@ -1,7 +1,8 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { SoundCueAttachment } from '../../../audio/inlineAudio';
 import { SOUND_CUE_RULES } from '../../../audio/soundCueRules';
-import { useNarrativeAudio } from '../../../audio/playback';
+import { useOptionalNarrativeAudio } from '../../../audio/playback';
+import { useOptionalReaderMixer } from '@seihouse/audio-player';
 import { isMediaResourceProvenance, type MediaCatalog } from '../../../audio/media';
 import { isPlayableMediaUrl } from '../../../audio/mediaUrl';
 import { AUDIO_CUE_CATEGORIES, type AudioCue } from '../../../audio/cues';
@@ -27,10 +28,19 @@ const cueLabel = (cue: AudioCue) => {
     .filter(Boolean).join(' · ') || cue.metadata.broad_variation;
 };
 
-/** The host supplies its approved catalog. Preview and placed glyph share one audio owner. */
+/**
+ * The host supplies its approved catalog. Preview and placed glyph share one
+ * audio owner: with the host's reader mixer (the Reader), a preview plays as
+ * the placed cue will, through the mixer; otherwise through the host's
+ * single-channel player.
+ */
 export function ManualCuePicker({ block, selection, catalog, existing, occupiedSelections = [], onPlace, onRemove, onClose }: ManualCuePickerProps) {
-  const playback = useNarrativeAudio();
+  const mixer = useOptionalReaderMixer();
+  const narrative = useOptionalNarrativeAudio();
+  if (!mixer && !narrative) throw new Error('Sound Cue previews require a host ReaderMixerProvider or NarrativeAudioProvider.');
+  const playback = narrative!;
   const playbackRef = useRef(playback);
+  const [mixerProblem, setMixerProblem] = useState(false);
   const previewTrackRef = useRef<string | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const categoryId = useId();
@@ -58,10 +68,21 @@ export function ManualCuePicker({ block, selection, catalog, existing, occupiedS
   useEffect(() => { playbackRef.current = playback; }, [playback]);
   useEffect(() => {
     headingRef.current?.focus({ preventScroll: true });
-    return () => { if (previewTrackRef.current) playbackRef.current.stop(previewTrackRef.current); };
-  }, []);
+    return () => { if (!mixer && previewTrackRef.current) playbackRef.current?.stop(previewTrackRef.current); };
+  }, [mixer]);
+  // Through the mixer, a preview that cannot load says so, as a placed cue would.
+  useEffect(() => mixer?.subscribe(state => {
+    if (previewTrackRef.current && state.layers.cues.status === 'failed') setMixerProblem(true);
+  }), [mixer]);
 
   const preview = (cue: AudioCue) => {
+    setError(null);
+    if (mixer) {
+      setMixerProblem(false);
+      previewTrackRef.current = cue.public_url;
+      if (!mixer.playCue(cue.public_url)) setMixerProblem(true);
+      return;
+    }
     const trackId = `manual-cue-preview:${cue.public_url}`;
     if (playback.currentTrackId === trackId && playback.isPlaying) playback.stop(trackId);
     else playback.replace({ id: trackId, source: cue.public_url, title: cue.metadata.description, artist: 'Sound Cue preview' });
@@ -87,7 +108,7 @@ export function ManualCuePicker({ block, selection, catalog, existing, occupiedS
     <h3 ref={headingRef} tabIndex={-1} className="sen-manual-cue-picker__heading">Sound Cue for “{selection.selectedText}”</h3>
     {existing && <button type="button" onClick={() => { onRemove(selection); onClose(); }}>Remove cue</button>}
     {error && <p role="alert">{error}</p>}
-    {playback.hasError && previewTrackRef.current === playback.currentTrackId && <p role="alert">Audio preview is unavailable.</p>}
+    {(mixer ? mixerProblem : playback.hasError && previewTrackRef.current === playback.currentTrackId) && <p role="alert">Audio preview is unavailable.</p>}
     <div className="sen-manual-cue-picker__filters">
       <div><label htmlFor={categoryId}>Category</label>
         <select id={categoryId} value={category} onChange={event => setCategory(event.target.value)}>

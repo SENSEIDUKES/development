@@ -238,6 +238,8 @@ function CueButton({ cue, status, statusId, words, sound, error, onActivate }: {
         aria-busy={status === 'loading' || undefined}
         aria-describedby={status === 'idle' ? undefined : statusId}
         aria-label={`${status === 'playing' ? 'Replay' : 'Play'} ${sound} for ${words}`}
+        // A cue that failed says why when hovered, not only to screen readers.
+        title={status === 'error' ? stateMessage : undefined}
         onClick={onActivate}
       >
         <LibrarySoundGlyph className="inline-world-cue__glyph" />

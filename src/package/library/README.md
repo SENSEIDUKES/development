@@ -290,6 +290,14 @@ Library UI renderer and named adapters keep their contracts.
 
 ## Server Model Router
 
+**2026-10-12:** Local development text inference can use `LOCAL_LM_STUDIO_MODEL`
+(`lmstudio/loaded`) with `createModelRouter({ credentials: {}, localDevelopment:
+true })`. Execution additionally requires `NODE_ENV=development` and neither
+`VERCEL` nor `VERCEL_ENV`. It discovers the single loaded text model from LM
+Studio on localhost:1234, sends OpenAI-compatible chat requests under `/v1`
+without authentication, and returns its actual model ID in the result. See the
+[local provider setup](../../server/model-router/README.md#local-lm-studio).
+
 Import `@seihouse/library/model-router-server` only in a trusted Node server.
 An app owns its API route, authentication, prompt, model allowlist, and saved
 work. Pass its server credentials into the router; never serialize them into a

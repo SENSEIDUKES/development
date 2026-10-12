@@ -333,6 +333,8 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## History
 
+- **2026-10-12** — Local LM Studio can manifest a Blueprint in Create without the cloud Development access token. The server enforces same-origin local development, and local generation gets a 15-minute deadline for slower on-device models. Cloud-provider access rules and deadlines are unchanged.
+
 - **2026-10-11** — Cover picker refined, from SENSEI: both cover dialogs wear the Reader's blue-gray glass with the navigation seam; each cover in the picker carries its own download again (only World Info's kept cover has none); Use this cover is the night-glass button World Info's Continue wears, never gold.
 - **2026-10-11** — Cover picker polished, from SENSEI: the chosen cover shows large (as World Info will wear it) with "Cover 2 of 3" and one download, over a row of all three; Not now and Use this cover share one even row. A kept cover on World Info carries no download (covers will be recovered from the Codex) and its Manifest is a top-left ghost-glass corner control matching MP.
 - **2026-10-11** — Sound on by default, from SENSEI: a new device starts on the owner's mix (Master and Sound Cues 100%, Soundscapes 25%, Atmosphere 60%, all on). A mix saved while an earlier player defaulted Master off is switched back on once (Master, its level and the music layers); later choices are kept as saved.

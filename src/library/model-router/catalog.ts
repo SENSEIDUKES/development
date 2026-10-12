@@ -15,7 +15,7 @@
 
 export type ModelEnvironment = Record<string, string | undefined>;
 export type ModelCapability = 'chapters' | 'images' | 'tts' | 'audio' | 'video' | '3d';
-export type ModelProviderId = 'gemini' | 'openrouter' | 'elevenlabs' | 'tripo';
+export type ModelProviderId = 'gemini' | 'openrouter' | 'elevenlabs' | 'tripo' | 'lmstudio';
 export type ModelStage = 'current' | 'preview' | 'legacy';
 
 /** Reasoning (thinking) levels across providers, lowest to highest. */
@@ -69,6 +69,7 @@ const ALWAYS_REASONING_LEVELS: readonly ReasoningLevel[] = ['low', 'medium', 'hi
  * lists every environment name accepted, in priority order.
  */
 export const MODEL_PROVIDERS: Record<ModelProviderId, { label: string; keyVariable: string; keyVariables: readonly string[] }> = {
+  lmstudio: { label: 'Local (LM Studio)', keyVariable: '', keyVariables: [] },
   gemini: { label: 'Google Gemini', keyVariable: 'GEMINI_API_KEY', keyVariables: ['GEMINI_API_KEY'] },
   openrouter: { label: 'OpenRouter', keyVariable: 'OPENROUTER_API_KEY', keyVariables: ['OPENROUTER_API_KEY'] },
   elevenlabs: { label: 'ElevenLabs', keyVariable: 'ELEVENLABS_API_KEY', keyVariables: ['ELEVENLABS_API_KEY'] },
@@ -156,7 +157,14 @@ export const THREE_D_MODELS: readonly RoutedModel[] = [
 
 export const DEFAULT_TTS_MODEL = 'eleven_multilingual_v2';
 
+export const LOCAL_LM_STUDIO_MODEL = 'lmstudio/loaded';
+/** Local inference is never offered by a deployment or a production preview. */
+export const isLocalModelDevelopment = (environment: ModelEnvironment): boolean =>
+  environment.NODE_ENV === 'development' && !environment.VERCEL && !environment.VERCEL_ENV;
+
 export const providerKey = (environment: ModelEnvironment, provider: ModelProviderId): string | undefined => {
+  // Compatibility marker for consumers that require a credential; never sent as authentication.
+  if (provider === 'lmstudio') return isLocalModelDevelopment(environment) ? 'local-dev' : undefined;
   for (const name of MODEL_PROVIDERS[provider].keyVariables) {
     const raw = environment[name]?.trim();
     if (raw && raw !== 'MY_GEMINI_API_KEY') return raw;
@@ -165,7 +173,8 @@ export const providerKey = (environment: ModelEnvironment, provider: ModelProvid
 };
 
 /** Which provider serves a chapter-capable text model id, or undefined when the id is not routable. */
-export const textModelProvider = (model: string): 'gemini' | 'openrouter' | undefined => {
+export const textModelProvider = (model: string): 'gemini' | 'openrouter' | 'lmstudio' | undefined => {
+  if (model === LOCAL_LM_STUDIO_MODEL) return 'lmstudio';
   if (GEMINI_TEXT_PATTERN.test(model)) return 'gemini';
   if (OPENROUTER_PATTERN.test(model)) return 'openrouter';
   return undefined;
@@ -181,6 +190,7 @@ const titleCase = (value: string) => value
   .join(' ');
 
 export const textModelLabel = (model: string): string => {
+  if (model === LOCAL_LM_STUDIO_MODEL) return 'Currently loaded model';
   const known = CHAPTER_MODELS.find(option => option.id === model);
   if (known) return known.label;
   const name = providerModelName(model);
@@ -200,7 +210,7 @@ const asOpenRouterId = (model: string) => model.startsWith(OPENROUTER_PREFIX) ? 
 export interface ChapterModelRoute {
   models: Array<{ id: string; label: string }>;
   defaultModel: string;
-  keys: Partial<Record<'gemini' | 'openrouter', string>>;
+  keys: Partial<Record<'gemini' | 'openrouter' | 'lmstudio', string>>;
 }
 
 /**
@@ -219,13 +229,15 @@ export const resolveChapterModelRoute = (
   const keys = {
     gemini: providerKey(environment, 'gemini'),
     openrouter: providerKey(environment, 'openrouter'),
+    ...(isLocalModelDevelopment(environment) ? { lmstudio: 'local-dev' } : {}),
   };
   const pinned = csv(environment[listVariable]);
   const extras = csv(environment.OPENROUTER_MODELS).map(asOpenRouterId);
   const catalog = CHAPTER_MODELS
     .filter(model => model.provider !== 'openrouter' || keys.openrouter)
     .map(model => model.id);
-  const ids = [...new Set([...pinned, ...extras, ...catalog])].filter(model => textModelProvider(model));
+  const ids = [...new Set([...pinned, ...extras, ...catalog, ...(keys.lmstudio ? [LOCAL_LM_STUDIO_MODEL] : [])])]
+    .filter(model => textModelProvider(model) && (textModelProvider(model) !== 'lmstudio' || keys.lmstudio));
   if (!ids.length) throw new Error(`${listVariable} does not contain a valid chapter model.`);
   const requested = environment[defaultVariable]?.trim();
   const defaultModel = requested && ids.includes(requested)
@@ -239,6 +251,7 @@ export const resolveChapterModelRoute = (
 };
 
 export const missingKeyMessage = (model: string): string => {
+  if (model === LOCAL_LM_STUDIO_MODEL) return 'Local (LM Studio) is only available in local development.';
   const provider = textModelProvider(model) ?? 'gemini';
   return `${MODEL_PROVIDERS[provider].keyVariable} is not configured on the server.`;
 };

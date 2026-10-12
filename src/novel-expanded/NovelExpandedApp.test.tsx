@@ -524,6 +524,27 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
 });
 
 describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
+  it('manifests a local LM Studio Blueprint without opening the access-token sheet', async () => {
+    const record = createMockStorySeedRecord({ userId: NOVEL_EXPANDED_READER_ID });
+    const { blueprint, ...withoutBlueprint } = record;
+    const seeds = createLocalStorySeedRepository({ storageKey: 'test-novelexpanded-seeds' });
+    seeds.reset([withoutBlueprint]);
+    const requestWorldBlueprint = vi.fn(async () => blueprint!);
+    const writer = { ...scriptedWriter().writer, getServerInfo: async () => ({ provider: 'lmstudio', configured: true,
+      models: [{ id: 'lmstudio/loaded', label: 'Currently loaded model' }], defaultModel: 'lmstudio/loaded' }) };
+    const services = appServices(writer, { storySeeds: seeds, requestWorldBlueprint });
+    await render(services, '/app/?page=create');
+    await click(buttonByText('Story Bank', container), 'Story Bank', 200);
+    await click(buttonByText('Use Seed', container), 'Use Seed', 200);
+    await click(buttonByText('Refine Details', container), 'Refine Details', 200);
+    await click([...container.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.includes('Manifest World Blueprint') && !button.disabled), 'Manifest World Blueprint', 300);
+    expect(document.querySelector('[data-testid="access-token-sheet"]')).toBeNull();
+    expect(requestWorldBlueprint).toHaveBeenCalledOnce();
+    expect((requestWorldBlueprint.mock.calls[0] as unknown[])[1]).toBe('');
+    expect((requestWorldBlueprint.mock.calls[0] as unknown[])[3]).toBe('lmstudio/loaded');
+    expect(services.accessToken.current).toBeUndefined();
+  });
+
   it('keeps the access token on this device: leaving Create and coming back does not ask again', async () => {
     const record = createMockStorySeedRecord({ userId: NOVEL_EXPANDED_READER_ID });
     const { blueprint, ...withoutBlueprint } = record;

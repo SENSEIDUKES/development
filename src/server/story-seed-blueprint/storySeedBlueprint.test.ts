@@ -314,6 +314,42 @@ describe("protected Story Seed World Blueprint generation", () => {
     expect(providerFactory).not.toHaveBeenCalled();
   });
 
+  it('allows same-origin local LM Studio Blueprints without a Development token', async () => {
+    const provider = new RecordingProvider();
+    const providerFactory = vi.fn(() => provider);
+    const response = await handleStorySeedBlueprintHttp({ method: 'POST',
+      headers: { origin: 'http://127.0.0.1:5173', host: '127.0.0.1:5173' },
+      body: { storySeed: canonicalSeed(), model: 'lmstudio/loaded' },
+    }, { environment: { NODE_ENV: 'development' }, providerFactory });
+    expect(response.status).toBe(200);
+    expect(providerFactory).toHaveBeenCalledWith('local-dev', 'lmstudio/loaded');
+    expect(provider.requests[0].timeoutMs).toBe(900_000);
+  });
+
+  it.each([
+    { environment: { NODE_ENV: 'production' }, headers: { origin: 'http://127.0.0.1:5173', host: '127.0.0.1:5173' }, status: 503 },
+    { environment: { NODE_ENV: 'development', VERCEL_ENV: 'preview' }, headers: { origin: 'http://127.0.0.1:5173', host: '127.0.0.1:5173' }, status: 503 },
+    { environment: { NODE_ENV: 'development' }, headers: { origin: 'https://other.example', host: '127.0.0.1:5173' }, status: 403 },
+    { environment: { NODE_ENV: 'development' }, headers: {}, status: 403 },
+  ])('keeps the local Blueprint exception inside its boundary: %j', async ({ environment: localEnvironment, headers, status }) => {
+    const providerFactory = vi.fn(() => new RecordingProvider());
+    const response = await handleStorySeedBlueprintHttp({ method: 'POST', headers,
+      body: { storySeed: canonicalSeed(), model: 'lmstudio/loaded' },
+    }, { environment: localEnvironment, providerFactory });
+    expect(response.status).toBe(status);
+    expect(providerFactory).not.toHaveBeenCalled();
+  });
+
+  it('still requires the cloud Blueprint access token in local development', async () => {
+    const providerFactory = vi.fn(() => new RecordingProvider());
+    const response = await handleStorySeedBlueprintHttp({ method: 'POST',
+      headers: { origin: 'http://127.0.0.1:5173', host: '127.0.0.1:5173' },
+      body: { storySeed: canonicalSeed(), model: 'google/gemini-3.8-flash' },
+    }, { environment: { NODE_ENV: 'development', GEMINI_API_KEY: 'g' }, providerFactory });
+    expect(response.status).toBe(503);
+    expect(providerFactory).not.toHaveBeenCalled();
+  });
+
   it("rejects an incomplete model result instead of normalizing it into false success", async () => {
     const onError = vi.fn();
     const provider = new RecordingProvider({

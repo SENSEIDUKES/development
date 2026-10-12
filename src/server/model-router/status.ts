@@ -1,4 +1,6 @@
 import {
+  isLocalModelDevelopment,
+  textModelProvider,
   AUDIO_MODELS,
   CHAPTER_MODELS,
   DEFAULT_IMAGE_MODEL,
@@ -85,7 +87,7 @@ export function modelRouterStatus(environment: ModelEnvironment): ModelRouterSta
       .filter(model => !CHAPTER_MODELS.some(known => known.id === model.id))
       .map(model => ({
         ...model,
-        provider: model.id.startsWith('openrouter/') ? 'openrouter' as const : 'gemini' as const,
+        provider: textModelProvider(model.id)!,
         stage: 'current' as const,
       })),
   ];
@@ -105,7 +107,7 @@ export function modelRouterStatus(environment: ModelEnvironment): ModelRouterSta
         description: 'Text models that write chapters, Story Seed Blueprints, and reader translations.',
         consumers: consumersFor('chapters'),
         defaultModel: chapters.defaultModel,
-        providers: providerStatus(environment, ['gemini', 'openrouter']),
+        providers: providerStatus(environment, ['gemini', 'openrouter', ...(isLocalModelDevelopment(environment) ? ['lmstudio' as const] : [])]),
         models: modelStatus(environment, chapterModels, chapters.defaultModel, true),
       },
       {

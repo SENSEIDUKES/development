@@ -71,6 +71,44 @@ apps supply their own configuration and keep their prompts, auth, UI and saved
 work in their own code. Status reports key presence and `implemented`
 separately; catalog-only media models are not executable.
 
+## Local (LM Studio)
+
+During `npm run dev`, Chapters includes **Local (LM Studio)** → **Currently
+loaded model**. The saved `lmstudio/loaded` choice follows whichever text model
+is loaded when generation starts; no model name or API key is configured here.
+Start LM Studio's server on port 1234 and keep one text model loaded. Chapters,
+arc planning, the Holdings fixer and Story Seed Blueprints use the existing
+Router and validation paths.
+
+Requests use `http://localhost:1234/v1/chat/completions` without an Authorization
+header. Discovery reads `http://localhost:1234/api/v0/models` (LM Studio 0.3.6+)
+to distinguish loaded text models from downloaded and embedding models. The
+[OpenAI model list](https://lmstudio.ai/docs/developer/openai-compat/models) may
+also list downloaded models when just-in-time loading is enabled; the
+[native metadata](https://lmstudio.ai/docs/developer/rest/endpoints) explicitly
+reports loaded state. No loaded text model, multiple loaded text models,
+connection failures, empty replies, output limits and deadlines report errors;
+the Router never loads a model itself or falls back to a cloud provider.
+
+Local inference requires an explicit server opt-in (`localDevelopment: true`)
+and a `NODE_ENV=development` runtime with neither `VERCEL` nor `VERCEL_ENV` set.
+The Vite development middleware enables it; `npm run preview`, builds and
+deployments do not. Production also excludes pinned or saved local selections
+from its allowed chapter models. The internal `local-dev` credential marker
+only carries permission through existing factories and is never sent to LM
+Studio. Generation receipts record the model discovered from LM Studio.
+
+The app's Create page and shared Blueprint client do not ask for a Development
+access token when the selected model is `lmstudio/loaded` in a development
+build. The Blueprint endpoint independently permits that exception only in
+local development for a same-origin browser request. Cloud-provider requests
+retain their existing token requirement. A checkout may select local inference
+by setting `HARNESS_GENERATION_DEFAULT_MODEL=lmstudio/loaded` in its ignored
+`.env.local`; deployed model lists still exclude the local route.
+Development's local chapter and Blueprint requests wait up to 15 minutes for
+local inference; cloud-provider deadlines stay unchanged. The Blueprint client
+waits 20 seconds longer so the server can report its own timeout.
+
 ## Gemini request settings
 
 Gemini requests use provider-default sampling: the Router never sends
@@ -87,6 +125,13 @@ Prompts, response schemas, token limits, timeouts, model choices, and saved work
 are unchanged.
 
 ## Workshop history
+
+- 2026-10-12 — Added Local (LM Studio) for local development text generation,
+  following the loaded model through the existing chapter and Blueprint paths.
+  Other providers, their settings and the default model are unchanged.
+- 2026-10-12 — Removed the cloud Development-token prerequisite from local
+  LM Studio Blueprint testing in Create and the shared client, with a
+  same-origin, local-development-only exception at the server boundary.
 
 - 2026-10-06 — Low is the default reasoning level. In the owner's tests across five models, low wrote chapters as well as higher levels and far faster, so every model offering it now sends low when the reader chooses no level (`ModelReasoning.sendDefault`): Gemini 3.8, 3.7 and 3.5 Flash, Gemini 3.1 Pro Preview (was its own default, high), GPT-6 Luna and Luna Pro, and Gemini 3.8 Flash through OpenRouter. Models already lower keep their level (the Flash Lite models think at minimal on their own; Qwen and DeepSeek are sent none; GLM was already sent low), and MiniMax and Trinity have no levels to send. A reader's own choice in Advanced settings still wins. The Story Seed Blueprint follows the chapter model, so it is sent low too.
 - 2026-10-06 — Removed custom Gemini sampling from the Google and OpenRouter

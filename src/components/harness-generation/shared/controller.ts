@@ -1,8 +1,8 @@
 import { arcGoalResolved, arcGoalSegments, arcPlanFromDraft, createArcChapterPosition, editArcPlan, normalizeArcLookahead, type ArcPlan } from '../../arc-goals/shared/arcGoals';
 import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '../../../lib/language';
-import { emptyNarrativeMedia, soundVocabulary, type FrozenNarrativeMedia, type NarrativeMediaPort, type MediaResourceReference, type MediaSelectionSlot, type StoryMediaSelection } from '../../../audio/media';
+import { answeredSoundWords, emptyNarrativeMedia, soundVocabulary, withStorySoundWords, type FrozenNarrativeMedia, type NarrativeMediaPort, type MediaResourceReference, type MediaSelectionSlot, type StoryMediaSelection } from '../../../audio/media';
 import { soundtrackVocabulary, type SoundtrackVocabulary } from '../../../audio/soundtrackVocabulary';
-import type { SoundWord } from '../../../audio/soundWords';
+import { validateSoundWordList, type SoundWord } from '../../../audio/soundWords';
 import { arcGoalEditState, arcPlanGap, arcPlanningContext, arcReviewGap, commitHarnessArc, harnessArcContext, harnessArcPlan, harnessStoryMode, missingRequiredEnding, needsArcPlan, readArcReply, routeCompleteGap, storyConclusionGap, withArcGoalReview, arcGoalReview } from './arcState';
 import {
   createHarnessStory,
@@ -466,14 +466,32 @@ export class HarnessGenerationController {
   }
 
   /**
-   * The sound words the next attempt would freeze for this story: its equipped
-   * Sound Cue Pack's, or the default library's. For inspection; never persisted here.
+   * The sound words the next attempt would give the writer: the story's own
+   * words that one of its recordings answers. For inspection; never persisted here.
    */
   describeSoundVocabulary(storyId: string): SoundWord[] {
     this.assertHydrated();
     const story = findStory(this.state, storyId);
     if (!story) throw new Error('Open a Harness story before inspecting its sound words.');
-    return soundVocabulary(this.media?.freeze(story.mediaLoadout, this.runtime.now()));
+    const media = this.media?.freeze(story.mediaLoadout, this.runtime.now());
+    return media ? soundVocabulary(withStorySoundWords(media, story.soundWords)) : [];
+  }
+
+  /**
+   * The story's sound words as Story Settings shows them: its own list (or,
+   * for a story that has never kept one, its recordings' words), and which of
+   * them a recording answers now. For inspection; never persisted here.
+   */
+  describeSoundWords(storyId: string): { words: string[]; answered: string[] } {
+    this.assertHydrated();
+    const story = findStory(this.state, storyId);
+    if (!story) throw new Error('Open a Harness story before inspecting its sound words.');
+    const media = this.media?.freeze(story.mediaLoadout, this.runtime.now());
+    const answered = answeredSoundWords(media);
+    return {
+      words: story.soundWords ? [...story.soundWords] : (media?.sounds ?? []).map(sound => sound.word),
+      answered: [...answered],
+    };
   }
 
   /**
@@ -490,12 +508,17 @@ export class HarnessGenerationController {
 
   /**
    * The sound words and soundtrack words a story would start with under this
-   * Media Loadout, before the story exists: Story Settings while a story is
-   * being created. For inspection; never persisted here.
+   * Media Loadout and its chosen sound words, before the story exists: Story
+   * Settings while a story is being created, with the words a recording
+   * answers. For inspection; never persisted here.
    */
-  describeMediaSelection(selection: StoryMediaSelection = {}): { sounds: SoundWord[]; soundtrack: SoundtrackVocabulary } {
+  describeMediaSelection(selection: StoryMediaSelection = {}, soundWords?: readonly string[]): { sounds: SoundWord[]; soundtrack: SoundtrackVocabulary; answered: string[] } {
     const media = this.media?.freeze(selection, this.runtime.now());
-    return { sounds: soundVocabulary(media), soundtrack: soundtrackVocabulary(media) };
+    return {
+      sounds: media ? soundVocabulary(withStorySoundWords(media, soundWords)) : [],
+      soundtrack: soundtrackVocabulary(media),
+      answered: [...answeredSoundWords(media)],
+    };
   }
 
   async setSkillSlot(
@@ -591,6 +614,11 @@ export class HarnessGenerationController {
     if (activeAttemptForStory(candidate, storyId)) {
       throw new Error('Finish or explicitly retry the current chapter checkpoint before changing the Media Loadout.');
     }
+    // The story's sound words are its own: a story that has never kept a list
+    // keeps the words its recordings answer now, whatever the new pack answers.
+    if (!story.soundWords) {
+      story.soundWords = (this.media?.freeze(story.mediaLoadout, this.runtime.now()).sounds ?? []).map(sound => sound.word);
+    }
     const loadout = { ...(story.mediaLoadout ?? {}) };
     if (!reference) {
       delete loadout[slot];
@@ -600,6 +628,33 @@ export class HarnessGenerationController {
       this.media.validateSelection(loadout, this.runtime.now());
     }
     story.mediaLoadout = loadout;
+    story.updatedAt = this.runtime.now();
+    this.generating = true;
+    try {
+      await this.persist(candidate);
+      return cloneHarnessValue(story);
+    } finally {
+      this.generating = false;
+    }
+  }
+
+  /**
+   * Replaces the story's own sound words (at most 30; an empty list plays no
+   * Sound Cues). They apply to chapters written from now on; saved chapters
+   * keep their cues. A word no recording answers is kept, and never reaches
+   * the writer.
+   */
+  async setSoundWords(storyId: string, words: readonly string[]): Promise<HarnessStory> {
+    this.assertHydrated();
+    if (this.generating) throw new Error('Wait for the active Harness update before changing the sound words.');
+    const soundWords = validateSoundWordList(words);
+    const candidate = cloneHarnessValue(this.state);
+    const story = findStory(candidate, storyId);
+    if (!story) throw new Error('Open a Harness story before changing its sound words.');
+    if (activeAttemptForStory(candidate, storyId)) {
+      throw new Error('Finish or explicitly retry the current chapter checkpoint before changing the sound words.');
+    }
+    story.soundWords = soundWords;
     story.updatedAt = this.runtime.now();
     this.generating = true;
     try {
@@ -1041,10 +1096,11 @@ export class HarnessGenerationController {
       previous: { title: prepared.replaced.title, ...(prepared.replaced.recap?.text ? { recap: prepared.replaced.recap.text } : {}) },
     } : undefined;
     const immediateChapterRequest = frozen ? cloneHarnessValue(frozen.immediateChapterRequest) : buildImmediateChapterRequest(story, rewriteRequest);
-    // Media is frozen before CAPA: its sound words fill the Sound Cues slot.
+    // Media is frozen before CAPA, with the story's own sound words: those a
+    // recording answers fill the Sound Cues slot.
     const mediaLoadout = frozen
       ? cloneHarnessValue(frozen.mediaLoadout)
-      : this.media?.freeze(story.mediaLoadout, startedAt) ?? emptyNarrativeMedia(startedAt);
+      : withStorySoundWords(this.media?.freeze(story.mediaLoadout, startedAt) ?? emptyNarrativeMedia(startedAt), story.soundWords);
     // The Fate slot follows the chapter's frozen Fate mode: every Fate Survival call carries its skill.
     const capaPrompt = frozen ? cloneHarnessValue(frozen.capaPrompt) : assembleCapaPrompt(
       freezeHarnessSkillLoadout(story, this.skillCatalog, startedAt, storyInformation.storyDirection.fateMode ?? 'regular', soundVocabulary(mediaLoadout), soundtrackVocabulary(mediaLoadout)),

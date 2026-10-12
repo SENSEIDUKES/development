@@ -1,6 +1,6 @@
 import { StoryFoundationEditor } from '@seihouse/sen/story-seed';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import type { FrozenNarrativeMedia, SoundWord, SoundtrackVocabulary } from '@seihouse/sen/audio';
+import type { FrozenNarrativeMedia, SoundWord, SoundWordsPreset, SoundtrackVocabulary } from '@seihouse/sen/audio';
 import { BookOpen, CheckCircle2, CircleAlert, Compass, Download, FileText, ListTree, LoaderCircle, Pause, Pin, Play, Plus, RefreshCcw } from 'lucide-react';
 import { CHAPTER_FUNCTIONS, CHAPTER_FUNCTION_LABELS, FATE_MODE_LABELS, FATE_PRESSURE_RHYTHM_CONFIG, FateArcGoalCard, FateConclusion, FateDestinedEnding, FatePathChooser, HARD_PIN_LIMIT, arcPlanGap, arcReviewGap, chapterDirectionGap, describeChapterPath, harnessStoryMode, nextArcStep } from '@seihouse/sen/harness-generation';
 import type { ChapterDirectionChoice, HardPinInput, HarnessChapter, HarnessMissionReminder, StoryFoundationRevision } from '@seihouse/sen/harness-generation';
@@ -15,11 +15,12 @@ import { type ChapterWritingStyle } from '@seihouse/sen/contracts';
 import { StorySettingsPanel } from '../stories/settings/StorySettingsPanel';
 import { StorySkillSlots } from '../stories/settings/StorySkillSlots';
 import { MediaLoadoutPanel } from '../stories/settings/MediaLoadoutPanel';
+import { SoundWordsPanel } from '../stories/settings/SoundWordsPanel';
 import { includeBundledHarnessSkills } from '@seihouse/sen/harness-generation';
 import { type HarnessGenerationRepository } from '@seihouse/sen/harness-generation';
 import type { ReaderPreferenceStorage, ReaderStateRepository } from '@seihouse/sen/reader-runtime';
 import { NovelBlueprintTab } from './NovelBlueprintTab';
-import { useLibraryStories } from '../stories/useLibraryStories';
+import { useLibraryStories, type LibraryStoriesOptions } from '../stories/useLibraryStories';
 import { StoryPages } from '../stories/StoryPages';
 import { downloadHarnessStory } from '../stories/storyExport';
 import type { LoadingAgentPresentation } from '../manifestations/taskCard';
@@ -28,6 +29,11 @@ import { type HarnessGenerationAttempt, type HarnessGenerationModelAdapter, type
 export interface HarnessGenerationWorkspaceProps {
   /** Host-selected first-party records; never a built-in SEN catalog. */
   baseMedia?: FrozenNarrativeMedia;
+  /** The host's Sound Words presets (the first is a new story's), and its package installer. */
+  soundWordPresets?: readonly SoundWordsPreset[];
+  importSoundWords?: (file: Blob) => Promise<SoundWordsPreset>;
+  /** Installs a Soundscape or Sound Cue package, with the reader's unlock for it. */
+  importMediaPack?: LibraryStoriesOptions['importMediaPack'];
   /** Injection points keep the live UI testable without a provider or browser database. */
   repository: HarnessGenerationRepository;
   modelAdapter: HarnessGenerationModelAdapter;
@@ -685,6 +691,9 @@ export function HarnessGenerationWorkspace({
   renderSlotSkillImport,
   registeredMediaPacks = EMPTY_MEDIA_PACKS,
   baseMedia,
+  soundWordPresets,
+  importSoundWords,
+  importMediaPack,
   mediaPackEntitlements = EMPTY_MEDIA_ENTITLEMENTS,
   onGrantDevelopmentMediaReward,
   preferredModel,
@@ -706,7 +715,7 @@ export function HarnessGenerationWorkspace({
   // The stories, their controller and the writer: the same Library setup the app uses.
   const stories = useLibraryStories({
     repository: injectedRepository, modelAdapter: injectedAdapter, installedSkills,
-    registeredMediaPacks, mediaPackEntitlements, baseMedia, preferredModel,
+    registeredMediaPacks, mediaPackEntitlements, baseMedia, preferredModel, soundWordPresets, importSoundWords, importMediaPack,
   });
   const { controller, state, serverInfo, model, setModel } = stories;
   const [selectedStoryId, setSelectedStoryId] = useState<string>();
@@ -949,6 +958,11 @@ export function HarnessGenerationWorkspace({
     if (!state || !selectedStory) return [];
     try { return controller.describeSoundVocabulary(selectedStory.id); }
     catch { return []; }
+  }, [controller, state, selectedStory]);
+  const storySoundWords = useMemo<{ words: string[]; answered: string[] }>(() => {
+    if (!state || !selectedStory) return { words: [], answered: [] };
+    try { return controller.describeSoundWords(selectedStory.id); }
+    catch { return { words: [], answered: [] }; }
   }, [controller, state, selectedStory]);
   const soundtrackWords = useMemo<SoundtrackVocabulary>(() => {
     if (!state || !selectedStory) return { moods: [], atmospheres: [] };
@@ -1196,10 +1210,22 @@ export function HarnessGenerationWorkspace({
                 story={selectedStory}
                 packs={registeredMediaPacks}
                 entitlements={mediaPackEntitlements}
-                soundWords={soundWords}
                 busy={busy}
+                defaults={stories.mediaDefaults}
+                onImport={stories.importMediaPack}
                 onGrant={onGrantDevelopmentMediaReward ? grantDevelopmentMediaReward : undefined}
                 onChange={setMediaLoadoutSlot}
+              />
+            )}
+
+            {selectedStory && novelTab === 'novel' && (
+              <SoundWordsPanel
+                words={storySoundWords.words}
+                answered={storySoundWords.answered}
+                presets={stories.soundWordPresets}
+                busy={busy}
+                onChange={words => { void run(() => controller.setSoundWords(selectedStory.id, words)); }}
+                onImport={stories.importSoundWords}
               />
             )}
 

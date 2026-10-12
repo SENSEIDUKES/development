@@ -1,7 +1,7 @@
 # Portable narrative audio
 
 - **Created:** 2026-08-19
-- **Last updated:** 2026-10-09
+- **Last updated:** 2026-10-11
 - **Ownership status:** SEN contracts separated from Library catalogs and host playback
 
 ## Ownership
@@ -11,6 +11,10 @@ contracts. It describes what a story asks to play and the accepted resolved
 record that may be persisted with a chapter. It does not own a first-party
 catalog, entitlement, CDN location, provider credential, account, playback
 engine, or business rule.
+
+**2026-10-11:** Recordings can live in a package installed on the device: `spp://<package id>/<version>/assets/…` (`packageMediaUrl`) is playable wherever a public HTTPS file is (`isPlayableMediaUrl`), and saved chapters keep it. The host keeps the package's bytes and gives its reader mixer the device's address for each file (`src/host/media/deviceMediaPacks.ts`).
+
+**2026-10-11:** A story's sound words are its own, apart from its recordings (at most 30; see Sound words). The writer sees the words alone. The Library's "beast growl", "creature screech" and "blade drawn" are now "growl", "screech" and "unsheathe"; their recordings answer the new words with the same files and URLs.
 
 **2026-10-09:** The view uses `InlineAudioView.tsx` so it cannot resolve to the contract `inlineAudio.ts` or emit the same declaration filename on Windows. Public `@seihouse/sen/inline-audio` exports and behavior are unchanged.
 
@@ -110,15 +114,32 @@ UI component.
 ## Sound words and Studio tags
 
 A Sound Cue recording names its **sound word** (`metadata.sound`): the event it
-answers, in plain lowercase English ("blade drawn"). A catalog declares its
-words once (`SoundWord {word, example, meaning?}`), each with a 1–5 word
-example of the words a writer tags for it ("drew his sword") and an optional
-one-line meaning. The writer sees each as one line, `blade drawn: drew his
-sword`, after one example tag made from the first word. `validateSoundWords` holds a list to its limits
-(`SOUND_WORD_LIMITS`: at most 32 words; words of one to three lowercase words;
-plain-text examples and meanings). `soundVocabulary(media)` gives a story's
-words: the declared words that a playable recording answers, in declared order.
+answers, in plain lowercase English ("unsheathe"). A catalog declares the words
+its recordings answer (`SoundWord {word, example?, meaning?}`); an example and a
+meaning are for the people who curate it and never reach the writer.
+`validateSoundWords` holds a catalog's list to its limits (`SOUND_WORD_LIMITS`:
+at most 30 words of one to three lowercase words; plain-text examples and
+meanings).
+
+A **story keeps its own sound words** (`HarnessStory.soundWords`), apart from
+its recordings: a list of at most 30 (`validateSoundWordList`), started from a
+`SoundWordsPreset` and edited in Story Settings. Changing the story's Sound Cue
+pack never changes them; an empty list plays no Sound Cues; a story from before
+the list existed keeps its recordings' words until it is edited. Each attempt
+freezes them, the word alone (`withStorySoundWords`), and
+`soundVocabulary(media)` gives the writer those a playable recording answers
+(`answeredSoundWords`), in the story's order, one per line with nothing else.
+A word no recording answers stays the story's, and a tag naming it is set aside.
 The word names what happened; it is never a file, asset or catalog row.
+
+The host installs presets from **Sound Words `.spp` packages**
+(`src/host/media/soundWordPacks.ts`): a data-only package whose
+`seihouse.sound-words` manifest extension names a JSON list of words
+(`{ "vocabulary": "assets/words.json" }`). The existing SPP intake checks the
+container first; a package that is also a CAPA skill, or a version installed
+again with different words, is refused. The Library's own preset is its 30
+words. To make a package from a folder with a `words.txt`, see
+[`templates/spp/`](../../templates/spp/README.md).
 
 Every recording is also described by SEIHouse **Studio tags** (`audioTags.ts`):
 one parent and at most one value on each shared axis, Tone (bright, neutral,

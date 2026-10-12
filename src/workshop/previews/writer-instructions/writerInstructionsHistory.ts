@@ -20,6 +20,11 @@ export interface WriterInstructionsChange {
  */
 export const WRITER_INSTRUCTIONS_HISTORY: readonly WriterInstructionsChange[] = [
   {
+    date: '2026-10-11',
+    summary: 'Sound Words are the story\'s own, apart from its recordings: a story keeps a list of at most 30, chosen from a preset (the Library\'s own, or one installed from a Sound Words .spp package) and edited in Story Settings, and changing its Sound Cue pack never changes them. SEN Sound Cues 2.3.0 gives the writer the words alone, one per line, after the same header: the example tag made from the first word ([[sound: beast roar | the beast roared | medium]]) and the meanings after some words are gone, so nothing in the list can be copied into a chapter. The instruction itself is unchanged. The Library\'s preset renames three words: "beast growl" is now "growl", "creature screech" "screech" and "blade drawn" "unsheathe"; their recordings answer the new words, with the same files.',
+    changed: { 'sound-cues': '05b0f51d5edcd6' },
+  },
+  {
     date: '2026-10-08',
     summary: 'From SENSEI\'s Sundered Heavens test (chapters 6, 7, 9 and 11): the writer kept writing sound tags as words of their own beside a sentence, often copying the sound list\'s example phrases ("iron scraped stone", "drew his sword", "power surged through him", "alarm horns blared"), and the HARNESS then moved each sound onto a guess ("Key", "drew", "stepping into the open as"). A sound is earned by the prose: SEN Sound Cues 2.2.0 tells the writer to write the chapter as the story needs it and tag a sound only where its own sentence already describes it, that a chapter may have none, and never to add or bend a sentence to fit a sound. The sound list (not a recorded block) now names each sound and its meaning, with no example phrases to copy. The HARNESS no longer guesses: a sound tag written beside a sentence moves only onto nearby words that clearly say it, and is dropped otherwise.',
     changed: { 'sound-cues': '00e7de2bfa3b59' },

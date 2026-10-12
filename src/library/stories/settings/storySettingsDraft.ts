@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { validateSoundWordList, type SoundWordsPreset } from '@seihouse/sen/audio';
 import type { HarnessSkillReference, HarnessSkillSlotId } from '@seihouse/sen/harness-generation';
 import type { ReaderPreferenceStorage } from '@seihouse/sen/reader-runtime';
 import type { MediaPackReference, StoryMediaLoadoutSlot } from '../../media/mediaPacks';
@@ -11,6 +12,8 @@ import type { MediaPackReference, StoryMediaLoadoutSlot } from '../../media/medi
 export interface StorySettingsDraft {
   skills?: Partial<Record<HarnessSkillSlotId, HarnessSkillReference | null>>;
   media?: Partial<Record<StoryMediaLoadoutSlot, MediaPackReference>>;
+  /** The story's sound words, when the reader changed them from the first preset's. An empty list plays no Sound Cues. */
+  soundWords?: string[];
 }
 
 /** Where a host's device preferences keep the Create draft. */
@@ -44,13 +47,16 @@ export function readStorySettingsDraft(storage: ReaderPreferenceStorage): StoryS
     }
     if (Object.keys(media).length) draft.media = media;
   }
+  if (parsed.soundWords !== undefined) {
+    try { draft.soundWords = validateSoundWordList(parsed.soundWords); } catch { /* Damaged: the first preset's words. */ }
+  }
   return draft;
 }
 
 /** Saves the draft; an empty one is removed. A device that refuses keeps it for the visit. */
 export function writeStorySettingsDraft(storage: ReaderPreferenceStorage, draft: StorySettingsDraft): void {
   try {
-    if (!draft.skills && !draft.media) storage.remove(STORY_SETTINGS_DRAFT_KEY);
+    if (!draft.skills && !draft.media && !draft.soundWords) storage.remove(STORY_SETTINGS_DRAFT_KEY);
     else storage.write(STORY_SETTINGS_DRAFT_KEY, JSON.stringify(draft));
   } catch {
     // The visit keeps the draft in memory.
@@ -75,6 +81,15 @@ export function applyStorySettingsDraft(
   // Author is never empty: a story needs someone to write it.
   if (!loadout.author && defaults.author) loadout.author = defaults.author;
   return loadout;
+}
+
+/**
+ * The sound words a story being created will start with: the reader's, or
+ * the host's first preset's. A host with no presets leaves them to the
+ * story's recordings (`undefined`).
+ */
+export function createSoundWords(draft: StorySettingsDraft, presets: readonly SoundWordsPreset[]): string[] | undefined {
+  return draft.soundWords ?? (presets[0] ? [...presets[0].words] : undefined);
 }
 
 /** The Create draft, kept on the host's device preferences as it changes. */

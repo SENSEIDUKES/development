@@ -1,6 +1,7 @@
 import { intakePack, type PackContent, type PackInput } from 'seihouse-productions-package';
 import { CAPA_SCHEMA, createHarnessSkillCatalog, HARNESS_SKILL_INSTRUCTION_LIMIT, validateHarnessSkillManifest, validateTranslationGlossaryResource, harnessSkillKey, type HarnessSkillApplication, type HarnessSkillManifest, type HarnessSkillSlotId, type HarnessTranslationGlossaryResource } from '@seihouse/sen/harness-generation';
 import type { SenLanguageCode } from '@seihouse/sen';
+import type { SkillPackage } from '@seihouse/library/stories';
 import { extractDocxInstructionText, isDocxInstructionFile } from './docxInstructions';
 
 export const SPP_SKILL_TEXT_LIMIT = HARNESS_SKILL_INSTRUCTION_LIMIT;
@@ -23,6 +24,13 @@ export async function inspectHarnessSpp(input: PackInput): Promise<PackContent> 
 
 /** Namespaced manifest extension a package uses to declare its CAPA slot. */
 export const SPP_CAPA_EXTENSION = 'seihouse.capa';
+
+/**
+ * Namespaced manifest extension a Sound Words package uses to name its word
+ * list (`{ "vocabulary": "<path of a JSON asset>" }`). Such a package is data
+ * only: it is never installed as a CAPA skill.
+ */
+export const SPP_SOUND_WORDS_EXTENSION = 'seihouse.sound-words';
 
 /** Media types that carry instruction text directly. */
 const SPP_TEXT_MEDIA_TYPES = ['text/plain', 'text/markdown'];
@@ -144,8 +152,11 @@ export function createHarnessSppSkill(
   slot: HarnessSkillSlotId,
   translationSelection?: HarnessSppTranslationSelection,
 ): HarnessSkillManifest {
-  const instructions = readHarnessSppText(content, path);
   const { manifest } = content;
+  if (manifest.extensions?.[SPP_SOUND_WORDS_EXTENSION] !== undefined) {
+    throw new Error(`${manifest.name.trim()} is a Sound Words package: choose it in a story's Sound Words, not as a CAPA skill.`);
+  }
+  const instructions = readHarnessSppText(content, path);
   // A package that declares a CAPA slot may only be installed into that slot,
   // whichever entry point the host used.
   const declaredSlot = declaredHarnessSppSlot(content);
@@ -188,8 +199,29 @@ export function createHarnessSppSkill(
   });
 }
 
-export function loadHarnessSppSkills(storage: Pick<Storage, 'getItem'>): HarnessSkillManifest[] {
-  const value: unknown = JSON.parse(storage.getItem(SPP_SKILL_STORAGE_KEY) ?? '[]');
+/**
+ * The Library's skill package intake (`SkillPackageIntake`) over this host's
+ * SPP checks: the package is validated first, then shown and installed only
+ * through the functions above.
+ */
+export async function inspectHarnessSkillPackage(input: Blob): Promise<SkillPackage> {
+  const content = await inspectHarnessSpp(input);
+  const { manifest } = content;
+  return {
+    id: manifest.id,
+    name: manifest.name,
+    version: manifest.version,
+    manifestJson: JSON.stringify(manifest, null, 2),
+    files: manifest.files.map(({ path, mediaType }) => ({ path, mediaType })),
+    instructionPaths: harnessSppInstructionFiles(content).map(file => file.path),
+    defaultInstructionPath: defaultHarnessSppInstructionPath(content),
+    read: path => readHarnessSppText(content, path),
+    create: (path, slot, translation) => createHarnessSppSkill(content, path, slot, translation),
+  };
+}
+
+export function loadHarnessSppSkills(storage: Pick<Storage, 'getItem'>, key = SPP_SKILL_STORAGE_KEY): HarnessSkillManifest[] {
+  const value: unknown = JSON.parse(storage.getItem(key) ?? '[]');
   if (!Array.isArray(value) || value.length > 64) throw new Error('The saved SPP skill inventory is invalid.');
   const skills = value.map(item => {
     const skill = validateHarnessSkillManifest(item);
@@ -199,13 +231,13 @@ export function loadHarnessSppSkills(storage: Pick<Storage, 'getItem'>): Harness
   return [...createHarnessSkillCatalog(skills).values()];
 }
 
-export function saveHarnessSppSkill(storage: Pick<Storage, 'setItem'>, installed: HarnessSkillManifest[], skill: HarnessSkillManifest) {
+export function saveHarnessSppSkill(storage: Pick<Storage, 'setItem'>, installed: HarnessSkillManifest[], skill: HarnessSkillManifest, key = SPP_SKILL_STORAGE_KEY) {
   const previous = installed.find(item => harnessSkillKey(item) === harnessSkillKey(skill));
   if (previous && JSON.stringify(previous) !== JSON.stringify(skill)) {
     throw new Error('This package version is already installed with different content. Import a new package version.');
   }
   const next = previous ? installed : [...installed, skill];
   if (next.length > 64) throw new Error('The local SPP skill inventory is full (64 skills).');
-  storage.setItem(SPP_SKILL_STORAGE_KEY, JSON.stringify(next));
+  storage.setItem(key, JSON.stringify(next));
   return next;
 }

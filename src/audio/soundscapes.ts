@@ -1,4 +1,5 @@
 import type { LoudnessMeasurement } from '@seihouse/audio-player';
+import { isPackageMediaUrl } from './mediaUrl';
 
 /**
  * Client-safe SEN soundscape catalog and deterministic resolver. The built-in
@@ -80,8 +81,8 @@ export function validateSceneAudioTrack(value: unknown): SceneAudioTrack {
   if (value.region !== undefined && !isSoundscapeRegion(value.region)) {
     throw new Error(`Soundscape track ${value.id} has an unsupported cultural region.`);
   }
-  if (typeof value.url !== 'string' || !isPublicHttpsUrl(value.url)) {
-    throw new Error(`Soundscape track ${value.id} needs a public HTTPS playback URL.`);
+  if (typeof value.url !== 'string' || !(isPublicHttpsUrl(value.url) || isPackageMediaUrl(value.url))) {
+    throw new Error(`Soundscape track ${value.id} needs a public HTTPS playback URL or a file in an installed package.`);
   }
   for (const field of ['label', 'group'] as const) {
     const text = value[field];

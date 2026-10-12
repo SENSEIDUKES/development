@@ -1,5 +1,20 @@
 # `@seihouse/library`
 
+**0.32.0 (2026-10-11):** Sound Words in Story Settings. `./stories`: `SoundWordsPanel`
+(exported) is the story's own sound words in `StorySettings`, `CreateStorySettings` and the
+HARNESS developer page: a preset fills the list, the reader adds, changes and removes words
+(at most 30, a count beside them), a word no recording plays is marked, and an empty list
+plays no Sound Cues. `useLibraryStories` takes the host's `soundWordPresets` (the first is a
+new story's) and `importSoundWords` (a Sound Words `.spp` installer); `StorySettingsDraft`
+gains `soundWords` and `createSoundWords(draft, presets)` gives the words a new story
+starts with. The Media Loadout no longer lists the story's words: its pack cards say which
+sounds a pack plays. Readers install their own: `useLibraryStories` takes `skillIntake` and
+`installSkill` (each hand-equipped CAPA slot in Story Settings and Create gets an SPP upload,
+`SkillPackageImport`, moved here from the Workshop, over the host's `SkillPackageIntake`) and
+`importMediaPack` (the Media Loadout's **Import .spp**, which equips the pack in its slot). A
+slot with no pack shows the Library's own media as equipped (`mediaDefaults`), and the
+Soundscapes slot no longer says new chapters ignore it.
+
 **0.31.0 (2026-10-10):** The Familiar in the Reader. `./stories`: `StoryPages` puts the host's
 header accessory (the Familiar's recall, from `WorkspaceHeaderAccessoryProvider`) in the Reader's
 top bar beside Reader Settings. `./shell`: `useWorkspaceHeaderAccessory` reads that accessory, for a page that

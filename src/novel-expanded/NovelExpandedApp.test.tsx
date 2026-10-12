@@ -21,6 +21,9 @@ import { startHarnessStoryFromSeed } from '../host/story-seed/startHarnessStory'
 import { createLocalReaderPreferenceStorage } from '../host/reader/readerPreferenceStorage';
 import { createHostReaderMixer } from '../host/reader/readerMixer';
 import { SEN_SOUNDSCAPES } from '../host/media/soundscapeCatalog';
+import { LIBRARY_SOUND_WORDS_PRESET } from '../host/media/soundWordPacks';
+import { createMemoryDeviceMediaPackStore, DeviceMediaUrls } from '../host/media/deviceMediaPacks';
+import { createPack } from 'seihouse-productions-package';
 import { piecesForMood, storySoundtrack } from '@seihouse/sen/reader-runtime';
 import { APP_MUSIC_MOOD } from './appMusic';
 import { LIBRARY_SIDEBAR_MODE_KEY, writeMenuMusic } from '@seihouse/library/shell';
@@ -82,6 +85,9 @@ const appServices = (writer: HarnessGenerationModelAdapter, overrides: Partial<N
     storySeeds: createLocalStorySeedRepository({ storageKey: 'test-novelexpanded-seeds' }),
     writer,
     installSkills: async () => officialSkills,
+    saveImportedSkill: vi.fn(() => []),
+    mediaPacks: createMemoryDeviceMediaPackStore(),
+    deviceMedia: new DeviceMediaUrls(),
     requestWorldBlueprint: vi.fn(),
     accessToken: { current: undefined },
     profile: createDeviceProfileStore({ storage: readerPreferences, uid: NOVEL_EXPANDED_READER_ID }),
@@ -686,6 +692,12 @@ describe('NovelExpanded: Story Settings and cover art', { timeout: 30_000 }, () 
     });
     await flush(20);
     expect(readStorySettingsDraft(services.readerPreferences)).toEqual({ skills: { pacing: null } });
+    // The story's Sound Words start from the Library's preset; the reader takes one away.
+    const soundWords = settings!.querySelector<HTMLElement>('[data-testid="story-settings-sound-words"]')!;
+    expect(soundWords.querySelector('[data-testid="sound-words-count"]')?.textContent).toBe('30/30');
+    await click(soundWords.querySelector('button[aria-label="Remove chime"]'), 'Remove chime', 20);
+    const chosenWords = LIBRARY_SOUND_WORDS_PRESET.words.filter(word => word !== 'chime');
+    expect(readStorySettingsDraft(services.readerPreferences)).toEqual({ skills: { pacing: null }, soundWords: chosenWords });
     await click(document.querySelector('button[aria-label="Close settings"]'), 'Close settings', 50);
 
     await click(buttonByText('Story Bank', container), 'Story Bank', 200);
@@ -696,8 +708,35 @@ describe('NovelExpanded: Story Settings and cover art', { timeout: 30_000 }, () 
     const [started] = (services.stories as InMemoryHarnessGenerationRepository).snapshot().stories;
     const { pacing: _pacing, ...withoutPacing } = createOfficialCapaDefaultLoadout(record.seed.story.required.style);
     expect(started.skillLoadout).toEqual(withoutPacing);
+    expect(started.soundWords).toEqual(chosenWords);
     // The draft became the story's; the next story starts from its own defaults.
     expect(readStorySettingsDraft(services.readerPreferences)).toEqual({});
+  });
+
+  it('Create\'s Settings installs a skill package into a slot and keeps it on the device for the new story', async () => {
+    const services = appServices(scriptedWriter().writer);
+    await render(services, '/app/?page=create');
+    const bar = document.querySelector<HTMLElement>('nav[aria-label="Story Seed navigation"]')!;
+    await click(buttonByText('Settings', bar), 'Settings on the task bar', 50);
+    const settings = document.querySelector<HTMLElement>('[data-testid="create-story-settings"]')!;
+    // The Library's own media counts as equipped.
+    expect(settings.querySelector('[data-testid="media-loadout-count"]')?.textContent).toBe('2/2 equipped');
+    const styleImport = [...settings.querySelectorAll('details')].find(details => details.querySelector('summary')?.textContent === 'Upload SPP to Style')!;
+    expect(styleImport, 'Expected an upload on the Style slot').toBeTruthy();
+    const bytes = new Uint8Array(await createPack({
+      name: 'Grand Style', description: 'Test-only style.',
+      files: [{ path: 'assets/style.md', mediaType: 'text/markdown', data: new Uint8Array(new TextEncoder().encode('Write with grandeur.')) }],
+      extensions: { 'seihouse.capa': { slot: 'style' } } as never,
+    }));
+    const input = styleImport.querySelector<HTMLInputElement>('input[type="file"]')!;
+    Object.defineProperty(input, 'files', { value: [new File([bytes], 'Grand Style v1.0.0.spp')], configurable: true });
+    await act(async () => { input.dispatchEvent(new Event('change', { bubbles: true })); });
+    await flush(100);
+    await click([...styleImport.querySelectorAll('button')].find(button => button.textContent === 'Install and equip in Style') ?? null, 'Install and equip', 100);
+    const draft = readStorySettingsDraft(services.readerPreferences);
+    expect(draft.skills?.style?.id).toMatch(/^spp:/);
+    expect(services.saveImportedSkill).toHaveBeenCalledWith(expect.objectContaining({ id: draft.skills!.style!.id, slot: 'style', instructions: 'Write with grandeur.' }));
+    expect(settings.querySelector<HTMLSelectElement>('#harness-skill-style')!.value).toContain(draft.skills!.style!.id);
   });
 
   it('a Create draft naming a pack no longer unlocked starts the story with the Library\'s own sounds', async () => {
@@ -711,6 +750,20 @@ describe('NovelExpanded: Story Settings and cover art', { timeout: 30_000 }, () 
     }), record.blueprint!, 10), { draft: readStorySettingsDraft(services.readerPreferences), installedSkills: officialSkills });
     expect(story.mediaLoadout).toBeUndefined();
     expect(story.skillLoadout).toEqual(createOfficialCapaDefaultLoadout(record.seed.story.required.style));
+    // A host with no presets leaves the words to the story's recordings.
+    expect(story.soundWords).toBeUndefined();
+  });
+
+  it('a story started without changing its Sound Words keeps the first preset\'s as its own', async () => {
+    const services = appServices(scriptedWriter().writer);
+    const controller = new HarnessGenerationController({ repository: services.stories, modelAdapter: services.writer, installedSkills: officialSkills });
+    await controller.hydrate();
+    const record = regularSeedRecord();
+    const story = await startHarnessStoryFromSeed(controller, buildInitialStoryGenerationPayload(record.seed, createStoryAdministrativeMetadata({
+      storyId: 'story-1', creatorId: record.userId, sourceSeedId: record.id, originalLanguage: 'en',
+    }), record.blueprint!, 10), { draft: {}, installedSkills: officialSkills, soundWordPresets: [LIBRARY_SOUND_WORDS_PRESET] });
+    expect(story.soundWords).toEqual(LIBRARY_SOUND_WORDS_PRESET.words);
+    expect(story.soundWords).not.toBe(LIBRARY_SOUND_WORDS_PRESET.words);
   });
 
   it('Story View makes a cover with the Router\'s image model, keeps it on the device, and Home wears it', async () => {

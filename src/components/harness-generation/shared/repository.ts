@@ -65,6 +65,10 @@ const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => 
   // 30 adds only an optional story field (the creator's Author's notes):
   // every saved story reads as it is.
   29: stored => ({ ...stored, schemaVersion: 30 }),
+  // 31 adds only an optional story field (the story's own sound words): every
+  // saved story reads as it is and keeps its recordings' words until edited;
+  // every chapter keeps the cues it saved and every attempt what it froze.
+  30: stored => ({ ...stored, schemaVersion: 31 }),
 };
 
 /**

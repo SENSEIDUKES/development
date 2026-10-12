@@ -3,7 +3,7 @@ import { wholeWordRange } from '../narrative/words';
 import type { AudioEnergy } from './audioTags';
 import { SOUND_CUE_KIND, type SoundCueAttachment } from './inlineAudio';
 import { isMediaResourceProvenance, type FrozenNarrativeMedia } from './media';
-import { isPublicHttpsMediaUrl } from './mediaUrl';
+import { isPlayableMediaUrl } from './mediaUrl';
 import { extractReaderVisibleAudioText, isReaderSystemLine } from './readerVisibleText';
 import { SOUND_CUE_RULES, soundCueWordIssue } from './soundCueRules';
 import { normalizeSoundWord, type SoundWord } from './soundWords';
@@ -104,7 +104,7 @@ export function placeSoundCues(input: {
     }
     const recordings = input.recordings
       .filter(({ cue, provenance }) => cue.metadata.sound === tag.sound
-        && isPublicHttpsMediaUrl(cue.public_url) && isMediaResourceProvenance(provenance))
+        && isPlayableMediaUrl(cue.public_url) && isMediaResourceProvenance(provenance))
       .sort((left, right) => left.cue.public_url.localeCompare(right.cue.public_url));
     const matching = tag.energy ? recordings.filter(({ cue }) => cue.metadata.studio_tags?.energy === tag.energy) : [];
     const pool = matching.length ? matching : recordings;

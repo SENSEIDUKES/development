@@ -88,14 +88,18 @@ describe('the Reader Chamber workspace story', () => {
       chapterNumber: 8, title: original.title, paragraphs, prose: paragraphs.join('\n\n'),
       scene: original.scene, closingHoldings: original.closingHoldings, path: original.path,
     });
+    const attempt = written.attempts.find(entry => entry.id === chapter.attemptId)!;
     const placed = (attachments: ReadonlyArray<{ anchor: { blockId: string; selectedText: string } }> | undefined) =>
       attachments?.map(({ anchor }) => [anchor.blockId, anchor.selectedText]);
-    expect(placed(chapter.soundCues)).toEqual(placed(original.soundCues));
+    // Since 2026-10-11 the Library's "blade drawn" is "unsheathe": the reply Chapter 8 was written
+    // with still names "blade drawn", so written again today that one cue is set aside, the prose kept.
+    expect(original.soundCues?.map(cue => cue.payload.sound)).toContain('blade drawn');
+    expect(placed(chapter.soundCues)).toEqual(placed(original.soundCues?.filter(cue => cue.payload.sound !== 'blade drawn')));
+    expect(attempt.warnings.map(warning => warning.message)).toContain('The "blade drawn" sound on “She drew her slender steel sword” is not one of this story\'s sound words; it was set aside.');
     expect(chapter.speakers?.map(speaker => speaker.payload.speaker)).toEqual(original.speakers?.map(speaker => speaker.payload.speaker));
     expect(chapter.holdingChanges?.map(change => change.anchor.blockId)).toEqual(original.holdingChanges?.map(change => change.anchor.blockId));
     expect(chapter.holdingChanges?.[0].anchor.selectedText).toContain('a twist of Copper Hair Wire that bit');
     expect(written.stories[0].head.nextChapterNumber).toBe(9);
-    const attempt = written.attempts.find(entry => entry.id === chapter.attemptId)!;
     expect(attempt.model).toBe(REPLAY_MODEL);
     expect(attempt.providerReceipt?.provider).toBe('workshop-replay');
   });

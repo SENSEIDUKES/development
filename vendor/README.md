@@ -24,9 +24,13 @@ No registry publication or repository visibility change is required.
 
 ## SPP intake adapter
 
-`seihouse-productions-package-0.1.0.tgz` is built from the official standalone
-`SENSEIDUKES/seihouse-productions-package` source at
-`350e3c0aa55bd853767e685a45551b9f8b20fc24` using `npm exec -- tsup` and `npm pack`.
+`seihouse-productions-package-0.2.0.tgz` is built from the official standalone
+`SENSEIDUKES/seihouse-productions-package` source at `37d82c412384afc663d490a3b9c3abe4f4af3de0`
+(`350e3c0` plus one change, merged as SEIHouse/SEIHouse-Package#12), built with `npm run build`
+and `npm pack`. 0.2.0 (2026-10-11) adds only `MAX_LIMITS`, a safety ceiling above the
+unchanged defaults (1 GiB packs, 512 MiB files, 4096 entries), so a host can raise its
+own limits to keep audio. The SPP repository's later document-intake changes on its
+`main` (readable text added to Word files at packing) are not in it.
 The package lock pins the tarball integrity. Its included `SPP_AGENT_SETUP.md`
 governs intake: validate first, select manifest files explicitly, then pass decoded
 content into the host's existing model context. SPP is a Development host dependency;

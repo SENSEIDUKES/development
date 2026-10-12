@@ -21,8 +21,9 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * holdings: each chapter's holding changes and closing list, and the
  * workspace's Codex entries; 27 counts arcs of 30 chapters (nothing before it
  * upgrades); 28 adds the optional rewrite request and replaced-by record, and
- * each chapter's optional Holdings fixer record. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 30 as const;
+ * each chapter's optional Holdings fixer record; 31 adds the story's optional
+ * own sound words. */
+export const HARNESS_GENERATION_SCHEMA_VERSION = 31 as const;
 
 /** The most an Author's notes may hold, in characters. */
 export const AUTHOR_NOTES_LIMIT = 2000;
@@ -188,6 +189,14 @@ export interface HarnessStory {
   skillLoadout?: Partial<Record<HarnessSkillSlotId, HarnessSkillReference>>;
   /** Entitled Media Packs equipped for this story. Separate from CAPA skills. */
   mediaLoadout?: StoryMediaSelection;
+  /**
+   * The story's own sound words (at most 30): the only sounds its writer may
+   * name, kept apart from its recordings, so changing the Sound Cue pack never
+   * changes them. Chosen from a preset and edited in Story Settings. An empty
+   * list means the story plays no Sound Cues. Absent (a story from before the
+   * list existed) means the words its recordings answer, until it is edited.
+   */
+  soundWords?: string[];
   /** User-created story-wide intentions (at most `HARD_PIN_LIMIT`). Only the user writes them. */
   hardPins?: HardPin[];
   /** The deterministic Fate Pressure recommendation for the next chapter, refreshed at every commit. */

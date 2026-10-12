@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import '../host/styles/theme.css';
 import '@seihouse/sen/styles.css';
 import { createHostReaderMixer } from '../host/reader/readerMixer';
+import { playDeviceMediaThrough } from '../host/media/deviceMediaPacks';
 import { NovelExpandedApp } from './NovelExpandedApp';
 import { createNovelExpandedServices } from './services';
 
@@ -11,7 +12,8 @@ import { createNovelExpandedServices } from './services';
 document.body.classList.add('library-scrollbars');
 const services = createNovelExpandedServices();
 // One mixer for the page's lifetime, saved with the reader's other device preferences.
-const readerMixer = createHostReaderMixer(services.readerPreferences);
+// It plays the recordings of packs installed on this device too.
+const readerMixer = playDeviceMediaThrough(createHostReaderMixer(services.readerPreferences), services.deviceMedia);
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

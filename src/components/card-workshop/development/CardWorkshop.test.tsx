@@ -1096,7 +1096,7 @@ describe('CardWorkshopView', () => {
       .toBe('Rain Court bell tolled once');
 
     const foxCueAction = reader?.querySelector<HTMLButtonElement>(
-      'button[aria-label="Play beast growl for a Vermilion Debt Fox growled"]',
+      'button[aria-label="Play growl for a Vermilion Debt Fox growled"]',
     );
     const foxCodexAction = [...(reader?.querySelectorAll<HTMLElement>('[role="button"]') ?? [])]
       .find(element => element.textContent === 'Vermilion Debt Fox');

@@ -14,6 +14,7 @@
     "check:package-boundaries": "node scripts/checkPackageBoundaries.mjs",
     "check:ownership": "node scripts/checkOwnership.mjs",
     "check:app": "node scripts/checkNovelExpandedApp.mjs",
+    "spp": "node scripts/makeSpp.mjs",
     "test:package": "npm run check:ui-artifacts && npm run check:package-boundaries && npm run build:package && node scripts/smokePackage.mjs sen && node scripts/smokePackage.mjs library",
     "typecheck": "tsc -b && tsc -p tsconfig.reference.json",
     "test": "vitest run",
@@ -60,7 +61,7 @@
     "react": "latest",
     "react-dom": "latest",
     "react-focus-lock": "^2.13.7",
-    "seihouse-productions-package": "file:vendor/seihouse-productions-package-0.1.0.tgz",
+    "seihouse-productions-package": "file:vendor/seihouse-productions-package-0.2.0.tgz",
     "typescript": "latest",
     "vite": "latest"
   },

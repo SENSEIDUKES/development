@@ -1,4 +1,4 @@
-import { isPublicHttpsMediaUrl, createMediaCatalog, type MediaCatalog, type MediaResourceProvenance, type NarrativeMediaPort, type StoryMediaSelection, type FrozenNarrativeMedia } from '@seihouse/sen/audio';
+import { isPlayableMediaUrl, createMediaCatalog, type MediaCatalog, type MediaResourceProvenance, type NarrativeMediaPort, type StoryMediaSelection, type FrozenNarrativeMedia } from '@seihouse/sen/audio';
 import { parseAudioCues, type AudioCue } from '@seihouse/sen/audio';
 import { validateSceneAudioCatalog, type SceneAudioTrack } from '@seihouse/sen/audio';
 import { validateSoundWords, type SoundWord } from '@seihouse/sen/audio';
@@ -171,7 +171,7 @@ const validateSoundCueEntries = (value: unknown, sounds: readonly SoundWord[]): 
     if (declaredCategory !== undefined && declaredCategory !== cue.category) {
       throw new Error(`Sound Cue ${cue.file_path} has incompatible category data.`);
     }
-    if (!isPublicHttpsMediaUrl(cue.public_url)) throw new Error(`Sound Cue ${cue.file_path} needs a public HTTPS playback URL.`);
+    if (!isPlayableMediaUrl(cue.public_url)) throw new Error(`Sound Cue ${cue.file_path} needs a public HTTPS playback URL or a file in an installed package.`);
     if (!SUPPORTED_AUDIO_FILE.test(cue.file_path)) throw new Error(`Sound Cue ${cue.file_path} uses an unsupported file type.`);
   }
   const filePaths = new Set<string>();
@@ -200,7 +200,7 @@ export function validateMediaPack(value: unknown): MediaPack {
   if (value.type === 'soundscape') {
     const entries = validateSceneAudioCatalog(value.entries);
     entries.forEach(entry => {
-      if (!isPublicHttpsMediaUrl(entry.url)) throw new Error(`Soundscape ${entry.id} needs a public HTTPS playback URL.`);
+      if (!isPlayableMediaUrl(entry.url)) throw new Error(`Soundscape ${entry.id} needs a public HTTPS playback URL or a file in an installed package.`);
     });
     return { ...base, type: 'soundscape', entries };
   }

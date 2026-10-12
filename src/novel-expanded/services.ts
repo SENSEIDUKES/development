@@ -7,6 +7,8 @@ import { createSavedAccessToken, type AccessTokenStore } from '../host/generatio
 import { HarnessGenerationHttpClient } from '../host/generation/httpClient';
 import { IndexedDbHarnessGenerationRepository } from '../host/generation/indexedDbRepository';
 import { installOfficialCapaSkillsInMemory } from '../host/generation/capa/officialCapaSkills';
+import { loadHarnessSppSkills, saveHarnessSppSkill } from '../host/generation/capa/sppSkills';
+import { DeviceMediaUrls, IndexedDbDeviceMediaPackStore, type DeviceMediaPackStore } from '../host/media/deviceMediaPacks';
 import { createLocalReaderPreferenceStorage } from '../host/reader/readerPreferenceStorage';
 import { IndexedDbReaderStateRepository } from '../host/reader/readerStateStorage';
 import { createLocalStorySeedRepository } from '../host/story-seed/localStorySeedRepository';
@@ -27,6 +29,12 @@ export const NOVEL_EXPANDED_STORAGE = {
   readerState: 'novelexpanded-reader-state-v1',
   storySeeds: 'novelexpanded-story-seeds-v1',
   storyCovers: 'novelexpanded-story-covers-v1',
+  /** The Sound Words presets installed from `.spp` packages. */
+  soundWords: 'novelexpanded-sound-words-v1',
+  /** The skills installed from `.spp` packages, beside the official ones. */
+  importedSkills: 'novelexpanded-imported-skills-v1',
+  /** The Soundscape and Sound Cue packs installed from `.spp` packages, recordings and all. */
+  mediaPacks: 'novelexpanded-media-packs-v1',
   /** The prefix of the reader's device preferences (narration voices and speed, the mix, the profile). */
   readerPreferences: 'novelexpanded-reader-',
 } as const;
@@ -40,8 +48,14 @@ export interface NovelExpandedServices {
   storySeeds: StorySeedRepository;
   /** The chapter writer: the server route that calls the model. */
   writer: HarnessGenerationModelAdapter;
-  /** The official CAPA skills a new story is equipped with. */
+  /** The official CAPA skills a new story is equipped with, and those the reader installed. */
   installSkills: () => Promise<HarnessSkillManifest[]>;
+  /** Keeps a skill the reader installed from a package on this device; returns those installed. */
+  saveImportedSkill: (skill: HarnessSkillManifest) => HarnessSkillManifest[];
+  /** The Soundscape and Sound Cue packs installed on this device. */
+  mediaPacks: DeviceMediaPackStore;
+  /** Where this device plays the recordings of installed packs. */
+  deviceMedia: DeviceMediaUrls;
   /** The World Blueprint server, behind the development access token. */
   requestWorldBlueprint: typeof requestWorldBlueprint;
   /** The owner's development access token, saved on this device: it unlocks Blueprints and lifts the chapter limit. */
@@ -61,6 +75,11 @@ export interface NovelExpandedServices {
   requestProfilePicture: typeof requestProfilePicture;
 }
 
+/** The skills the reader installed on this device; a damaged inventory reads as none. */
+const readImportedSkills = (): HarnessSkillManifest[] => {
+  try { return loadHarnessSppSkills(localStorage, NOVEL_EXPANDED_STORAGE.importedSkills); } catch { return []; }
+};
+
 export function createNovelExpandedServices(): NovelExpandedServices {
   const accessToken = createSavedAccessToken();
   const readerPreferences = createLocalReaderPreferenceStorage(NOVEL_EXPANDED_STORAGE.readerPreferences);
@@ -71,8 +90,16 @@ export function createNovelExpandedServices(): NovelExpandedServices {
     storySeeds: createLocalStorySeedRepository({ storageKey: NOVEL_EXPANDED_STORAGE.storySeeds }),
     // Chapters carry the owner's token, which lifts the visitor limit.
     writer: new HarnessGenerationHttpClient(undefined, () => accessToken.current),
-    // Held in memory: the app never writes the Workshop's imported-skill inventory.
-    installSkills: () => installOfficialCapaSkillsInMemory(),
+    // The official skills are held in memory; the reader's own are kept under the app's key,
+    // never in the Workshop's imported-skill inventory.
+    installSkills: async () => {
+      const official = await installOfficialCapaSkillsInMemory();
+      const own = readImportedSkills().filter(skill => !official.some(item => item.id === skill.id && item.version === skill.version));
+      return [...official, ...own];
+    },
+    saveImportedSkill: skill => saveHarnessSppSkill(localStorage, readImportedSkills(), skill, NOVEL_EXPANDED_STORAGE.importedSkills),
+    mediaPacks: new IndexedDbDeviceMediaPackStore(NOVEL_EXPANDED_STORAGE.mediaPacks),
+    deviceMedia: new DeviceMediaUrls(),
     requestWorldBlueprint,
     accessToken,
     profile: createDeviceProfileStore({ storage: readerPreferences, uid: NOVEL_EXPANDED_READER_ID }),

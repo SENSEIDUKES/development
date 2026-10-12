@@ -23,8 +23,16 @@ export { LIBRARY_READ_ALOUD_VOICES } from '../../library/stories/readAloudVoices
 export { LIBRARY_READER_FONTS } from '../../library/stories/readerFonts';
 export { StorySettings } from '../../library/stories/settings/StorySettings';
 export { CreateStorySettings, type CreateStorySettingsProps } from '../../library/stories/settings/CreateStorySettings';
+export { SoundWordsPanel } from '../../library/stories/settings/SoundWordsPanel';
+export {
+  SkillPackageImport,
+  type SkillPackage,
+  type SkillPackageIntake,
+  type SkillPackageTranslation,
+} from '../../library/stories/settings/SkillPackageImport';
 export {
   applyStorySettingsDraft,
+  createSoundWords,
   readStorySettingsDraft,
   useStorySettingsDraft,
   writeStorySettingsDraft,

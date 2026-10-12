@@ -2,7 +2,7 @@ import type { ManuscriptAnchor, ManuscriptAttachment } from '../components/text-
 import type { AudioEnergy, AudioTags } from './audioTags';
 import type { AudioCueCategory } from './cues';
 import { isMediaResourceProvenance, type MediaResourceProvenance } from './media';
-import { isPublicHttpsMediaUrl } from './mediaUrl';
+import { isPlayableMediaUrl } from './mediaUrl';
 
 /**
  * Sound Cues: a sound played on the exact words where it happens in the prose.
@@ -68,7 +68,7 @@ export function resolvePlayableSoundCue(value: SoundCueAttachment): PlayableSoun
     return { ok: false, reason: 'invalid-cue', message: 'This Sound Cue record is incomplete.' };
   }
   if (anchor.detached) return { ok: false, reason: 'detached', message: 'An edit changed these words, so the cue came off the page.' };
-  if (typeof payload.cue.publicUrl !== 'string' || !isPublicHttpsMediaUrl(payload.cue.publicUrl) || !isMediaResourceProvenance(payload.cue.provenance)) {
+  if (typeof payload.cue.publicUrl !== 'string' || !isPlayableMediaUrl(payload.cue.publicUrl) || !isMediaResourceProvenance(payload.cue.provenance)) {
     return { ok: false, reason: 'unavailable', message: 'This Sound Cue recording is not available.' };
   }
   return { ok: true, publicUrl: payload.cue.publicUrl };

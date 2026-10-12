@@ -111,6 +111,11 @@ describe('HARNESS Media Loadout runtime integration', () => {
       soundscapes: { id: soundscapes.id, version: soundscapes.version },
       soundCues: { id: soundCues.id, version: soundCues.version },
     });
+    // The story's sound words are its own: equipping recordings kept the words it had (none, on this host).
+    expect(controller.snapshot().stories[0].soundWords).toEqual([]);
+    expect(controller.describeSoundWords(story.id)).toEqual({ words: [], answered: ['clockwork roar'] });
+    await controller.setSoundWords(story.id, ['Clockwork Roar']);
+    expect(controller.snapshot().stories[0].soundWords).toEqual(['clockwork roar']);
 
     await controller.generateNextChapter(story.id, 'fixture');
     const request = provider.generate.mock.calls[0][0] as HarnessGenerationRequest;
@@ -122,8 +127,9 @@ describe('HARNESS Media Loadout runtime integration', () => {
     expect(serializedRequest).not.toContain(soundCues.id);
     expect(serializedRequest).not.toContain('fixtures.r2.dev');
     expect(request.capaPrompt.text).not.toContain('Media Pack');
-    // The equipped pack replaces the default words: only its sound words reach the writer.
-    expect(request.capaPrompt.soundVocabulary).toEqual([{ word: 'clockwork roar', example: 'the clockwork beast roared' }]);
+    // The story's own word reaches the writer, alone: the pack's example stays with its recordings.
+    expect(request.capaPrompt.soundVocabulary).toEqual([{ word: 'clockwork roar' }]);
+    expect(request.capaPrompt.text).not.toContain('the clockwork beast roared');
     expect(request.capaPrompt.text).toContain('\nclockwork roar\n');
 
     const committed = controller.snapshot().chapters[0];
@@ -135,7 +141,7 @@ describe('HARNESS Media Loadout runtime integration', () => {
     expect(committed.mediaLoadout).toMatchObject({
       soundscapes: [{ provenance: { catalogId: soundscapes.id, version: '1.0.0', source: soundscapes.source } }],
       soundCues: [{ provenance: { catalogId: soundCues.id, version: '1.0.0', source: soundCues.source } }],
-      sounds: [{ word: 'clockwork roar', example: 'the clockwork beast roared' }],
+      sounds: [{ word: 'clockwork roar' }],
     });
 
     const committedBeforeChanges = JSON.stringify(committed);

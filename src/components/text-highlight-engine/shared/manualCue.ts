@@ -1,6 +1,6 @@
 import { SOUND_CUE_KIND, resolvePlayableSoundCue, type SoundCueAttachment } from '../../../audio/inlineAudio';
 import { isMediaResourceProvenance, type MediaCatalog } from '../../../audio/media';
-import { isPublicHttpsMediaUrl } from '../../../audio/mediaUrl';
+import { isPlayableMediaUrl } from '../../../audio/mediaUrl';
 import { soundCueWordIssue } from '../../../audio/soundCueRules';
 import type { AudioCue } from '../../../audio/cues';
 import { wholeWordRange } from '../../../narrative/words';
@@ -52,7 +52,7 @@ export function createManualSoundCue(
   const provenance = catalog.soundCueProvenanceByUrl.get(chosen.public_url);
   const sound = approved?.metadata.sound;
   if (!approved || !sound || !provenance || !isMediaResourceProvenance(provenance)
-    || !isPublicHttpsMediaUrl(approved.public_url)
+    || !isPlayableMediaUrl(approved.public_url)
     || approved.category !== chosen.category) {
     return { ok: false, reason: 'unavailable-cue' };
   }

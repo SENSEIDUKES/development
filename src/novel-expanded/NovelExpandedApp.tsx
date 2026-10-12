@@ -12,6 +12,9 @@ import { EconomyClientProviders } from '../host/economy/EconomyClientProviders';
 import { useModelPreference } from '../host/generation/modelPreference';
 import { LIBRARY_ASSETS } from '../host/media/libraryAssets';
 import { LIBRARY_BASE_MEDIA } from '../host/media/libraryCatalog';
+import { useSoundWordsPresets } from '../host/media/useSoundWordsPresets';
+import { useDeviceMediaPacks } from '../host/media/useDeviceMediaPacks';
+import { inspectHarnessSkillPackage } from '../host/generation/capa/sppSkills';
 import { MANIFEST_BACKDROPS } from '../host/reader/manifestBackdrops';
 import { startHarnessStoryFromSeed } from '../host/story-seed/startHarnessStory';
 import { AGENTS } from '../lib/agents';
@@ -28,7 +31,7 @@ import { CreatePage } from './CreatePage';
 import { HomePage } from './HomePage';
 import { ProfilePage } from './ProfilePage';
 import { HOME_ROUTE, useAppRoute } from './routes';
-import type { NovelExpandedServices } from './services';
+import { NOVEL_EXPANDED_STORAGE, type NovelExpandedServices } from './services';
 import { NOVEL_EXPANDED_READER_ID, startedSeedIds, storySourceSeedId } from './storyCreationRuntime';
 
 /**
@@ -132,9 +135,21 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     return () => { active = false; };
   }, [services, skillsAttempt]);
 
+  // Sound Words presets: the Library's own, then any installed from a package on this device.
+  const soundWords = useSoundWordsPresets(NOVEL_EXPANDED_STORAGE.soundWords);
+  // Soundscape and Sound Cue packs installed on this device: the reader's own, always unlocked.
+  const mediaPacks = useDeviceMediaPacks(services.mediaPacks, services.deviceMedia);
+  // A skill the reader installs from a package is kept on this device and offered with the official ones.
+  const installSkill = useCallback((skill: HarnessSkillManifest) => {
+    services.saveImportedSkill(skill);
+    setSkills(current => current && [...current.filter(item => item.id !== skill.id || item.version !== skill.version), skill]);
+  }, [services]);
   const stories = useLibraryStories({
     repository: services.stories, modelAdapter: writer, installedSkills: skills,
     baseMedia: LIBRARY_BASE_MEDIA, preferredModel: chapterModel,
+    soundWordPresets: soundWords.presets, importSoundWords: soundWords.importPack,
+    registeredMediaPacks: mediaPacks.packs, mediaPackEntitlements: mediaPacks.entitlements, importMediaPack: mediaPacks.importPack,
+    skillIntake: inspectHarnessSkillPackage, installSkill,
   });
   const { state } = stories;
   // Story Settings chosen in Create, kept on this device until Manifest applies them.
@@ -179,7 +194,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
       draft={settingsDraft} onDraftChange={setSettingsDraft} />}
     onHome={() => navigate(HOME_ROUTE)}
     onStartStory={async payload => {
-      const story = await startHarnessStoryFromSeed(stories.controller, payload, { draft: settingsDraft, installedSkills: stories.skills });
+      const story = await startHarnessStoryFromSeed(stories.controller, payload, { draft: settingsDraft, installedSkills: stories.skills, soundWordPresets: stories.soundWordPresets });
       // The draft is the new story's now; the next story starts from its own defaults.
       setSettingsDraft({});
       // Chapter 1 begins at once, while the reader looks over the World Card, so it is

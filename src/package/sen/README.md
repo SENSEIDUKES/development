@@ -1,5 +1,23 @@
 # `@seihouse/sen`
 
+**0.30.0 (2026-10-11):** A story's Sound Words are its own, apart from its recordings.
+`HarnessStory` gains `soundWords` (at most 30; an empty list plays no Sound Cues; absent, a
+story from before keeps its recordings' words). The HARNESS controller's
+`setSoundWords(storyId, words)` saves them and `describeSoundWords(storyId)` gives them with
+the words a recording answers now; changing the Sound Cue pack (`setMediaSelection`) never
+changes them, and `describeMediaSelection(selection, soundWords?)` also returns `answered`.
+Each attempt freezes the story's words, the word alone, and the writer receives those a
+recording plays; a word without one stays the story's. `./audio`: `validateSoundWordList`,
+`SoundWordsPreset`, `answeredSoundWords` and `withStorySoundWords`; `SOUND_WORD_LIMITS.maxWords`
+is 30 and a `SoundWord`'s `example` is optional. SEN Sound Cues 2.3.0: the list is the words
+alone, one per line, with no example tag or meanings. Saved workspaces upgrade from schema
+30 to 31 as they are: chapters keep their cues and attempts what they froze.
+Recordings may live in a package installed on the device: `packageMediaUrl`,
+`readPackageMediaUrl` and `isPackageMediaUrl` name a file in an installed `.spp`
+(`spp://<package id>/<version>/assets/…`), and `isPlayableMediaUrl` (a public HTTPS file
+or such a file) replaces the HTTPS-only check wherever SEN places, accepts or plays a
+recording; the host turns the address into one its player can play.
+
 **0.29.0 (2026-10-10):** The Reader Chamber: what opens over the chapter never takes it away.
 `./harness-generation`: `HarnessReaderSession` keeps one `ReaderLayer` (exported): a panel (Fate,
 Reader Settings) or a page (the Codex, an arc's goals). `ReaderPanel` and `useWideReader` are exported:

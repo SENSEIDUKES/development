@@ -1,0 +1,43 @@
+/*
+ * Expanded Novels' buttons wear night glass, never gold. The Library UI kit tints its
+ * `primary` and `manifest` buttons gold; every Library surface takes this dark glass
+ * instead, with Manifest keeping its spectral rim and violet aura. Home's Carve New
+ * Destiny was the first to wear it.
+ *
+ * Same layer as the kit, one element selector stronger than its variants and weaker
+ * than its unavailable state, so a disabled button still reads as unavailable and a
+ * class a host passes in still wins.
+ */
+@layer components {
+  :is(button, a).library-glass-button:is([data-variant='primary'], [data-variant='manifest']) {
+    --glass-fill: rgba(9, 11, 22, 0.78);
+    --glass-fill-hover: rgba(18, 20, 38, 0.84);
+    --glass-fill-press: rgba(6, 8, 16, 0.88);
+    --glass-light: rgba(255, 255, 255, 0.07);
+    --glass-edge: rgba(255, 255, 255, 0.14);
+    --glass-glow: rgba(4, 172, 255, 0.22);
+    --glass-glow-hover: rgba(124, 92, 255, 0.4);
+    --glass-text: #f2efe8;
+    --glass-text-hover: #ffffff;
+  }
+  :is(button, a).library-glass-button[data-variant='primary'] {
+    --glass-rim-a: rgba(255, 255, 255, 0.78);
+    --glass-rim-b: rgba(190, 215, 255, 0.34);
+    --glass-rim-c: rgba(255, 255, 255, 0.07);
+  }
+
+  @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    :is(button, a).library-glass-button:is([data-variant='primary'], [data-variant='manifest']) {
+      --glass-fill: rgba(9, 11, 22, 0.94);
+      --glass-fill-hover: rgba(18, 20, 38, 0.95);
+      --glass-fill-press: rgba(6, 8, 16, 0.96);
+    }
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    :is(button, a).library-glass-button:is([data-variant='primary'], [data-variant='manifest']) {
+      --glass-fill: rgb(9, 11, 22);
+      --glass-fill-hover: rgb(18, 20, 38);
+      --glass-fill-press: rgb(6, 8, 16);
+    }
+  }
+}

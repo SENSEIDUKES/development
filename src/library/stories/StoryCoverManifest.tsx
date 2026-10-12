@@ -39,6 +39,10 @@ const coverFileName = (title: string, index?: number) =>
  * chosen cover large over a row of all three (each with its download), and
  * the reader keeps the one they want.
  *
+ * A cover's title is earned: until the story reaches its ending (destined or
+ * failed) its covers carry no lettering, and once it has, Manifest offers to
+ * regenerate the cover with its title.
+ *
  * Returns what sits on the cover (for World Info's cover slot) and what opens
  * above the page (the choice, the veil and the picker).
  */
@@ -126,6 +130,8 @@ export function useStoryCoverManifest({ covers, storyId, request, agent }: {
   };
 
   const making = phase === 'making';
+  const regenerateWithTitle = Boolean(coverUrl && request.titled);
+  const recastLabel = regenerateWithTitle ? 'Regenerate with a title' : 'Manifest a new cover';
   const onCover = <div className="story-cover-on" data-testid="story-cover" data-cover={coverUrl ? 'kept' : 'none'} data-phase={phase}>
     {!coverUrl
       ? <button type="button" className="story-cover-manifest" onClick={() => setPhase('choosing')} disabled={phase !== 'idle'}
@@ -134,7 +140,7 @@ export function useStoryCoverManifest({ covers, storyId, request, agent }: {
           <span>{making && !agent ? 'Manifesting…' : 'Manifest'}</span>
         </button>
       : <button type="button" className="world-card-base-format story-cover-recast" onClick={() => setPhase('choosing')}
-          disabled={phase !== 'idle'} aria-label="Manifest a new cover" title="Manifest a new cover">
+          disabled={phase !== 'idle'} aria-label={recastLabel} title={recastLabel}>
           <LibraryManifestingIcon size={17} aria-hidden="true" />
         </button>}
     {making && !agent && coverUrl && <span className="story-cover-busy" role="status">Manifesting…</span>}
@@ -147,8 +153,10 @@ export function useStoryCoverManifest({ covers, storyId, request, agent }: {
     <SEIDialog open={phase === 'choosing'} onOpenChange={open => { if (!open) setPhase('idle'); }}>
       <SEIDialogContent variant="dark" className="story-cover-dialog reader-glass" bodyClassName="story-cover-dialog-body">
         <span className="story-cover-dialog-seam" aria-hidden="true" />
-        <SEIDialogTitle className="story-cover-dialog-title">Manifest cover</SEIDialogTitle>
-        <SEIDialogDescription className="story-cover-dialog-intro">Cover art made from your story's own words.</SEIDialogDescription>
+        <SEIDialogTitle className="story-cover-dialog-title">{regenerateWithTitle ? 'Regenerate with a title' : 'Manifest cover'}</SEIDialogTitle>
+        <SEIDialogDescription className="story-cover-dialog-intro">{request.titled
+          ? 'Your story has reached its ending, so its cover now carries its title.'
+          : "Cover art made from your story's own words. Its title is added when the story reaches its ending."}</SEIDialogDescription>
         <div className="story-cover-options" role="group" aria-label="How many covers">
           {STORY_COVER_CHOICES.map(count => <button key={count} type="button" className="story-cover-option" data-count={count}
             onClick={() => void manifest(count)}>

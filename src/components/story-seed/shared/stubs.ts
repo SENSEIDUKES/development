@@ -15,7 +15,7 @@
  *   `CreationModal`'s auth-gated screen is reachable only via the
  *   `auth-gated` preview state, which forces it with a local override.
  * - `AGENTS` — just the `VERSA` profile object CreationModal/BlueprintReview
- *   render for the "VERSA is drafting…" generating state.
+ *   render beside the "Manifesting…" generating state.
  * - `mockLogin` — stands in for `signInWithPopup(auth, new
  *   GoogleAuthProvider())`; flips the mock `currentUser` instead of opening
  *   real Google auth.

@@ -160,14 +160,18 @@ The cover on World Info is where covers are made. A story without one shows
 **Manifest** across its cover; tapping it offers **One cover** (5 Energy) or
 **Three to choose from** (15 Energy). The covers are made from the story's own
 words (title, genre, tradition, logline, main character, tone, world and tags;
-never its chapters) with the owner's approved cover template, the title drawn
-on, through `/api/story-cover`, one request per cover, behind the Aura Veil's
+never its chapters) with the owner's approved cover template, through
+`/api/story-cover`, one request per cover, behind the Aura Veil's
 media reveal. One cover is kept and revealed; three open a picker where they
 come alive one after another, and the reader keeps one ("Use this cover"; the
 others are let go, and each can be downloaded first). A kept cover shows a
 small Manifest and a download in its lower corners, and World Info and Home's
 card wear it.
 
+- **A title is earned.** Until the story reaches its ending (the destined ending,
+  or a failed fate: either is a finished story) its covers carry no lettering.
+  Once it has, the request asks for the title (`titled`), and the Manifest on a
+  kept cover offers **Regenerate with a title**.
 - The image model is the Model Router's Images choice (`useModelPreference('images')`),
   Nano Banana 2 Lite unless the reader picks another.
 - Visitors may make 3 covers every 30 minutes, so three to choose from uses the
@@ -334,6 +338,7 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 ## History
 
 - **2026-10-12** — The Reader fills the screen, from SENSEI's clean-up list. On a laptop both bars run edge to edge and the chapter grows with the screen (larger text, slightly longer lines); a panel shrinks it beside itself. Tapping the story and chapter in the header opens the chapter list; the bottom bar's chapter arrows hold Fate between them, and the far right keeps the place of the coming Create mode. In Fate Survival, Fate and Next stay greyed at the newest chapter until the reader reaches its last paragraph; then Fate lights up, and Next waits for the next chapter's direction. The Workshop's Reader Chamber renders the same Reader.
+- **2026-10-12** — Clean-up, from SENSEI's list: a cover's title is now earned. Covers carry no lettering until the story reaches its ending, destined or failed; then Manifest on the cover offers **Regenerate with a title**. Every Library `primary` and `manifest` button wears the night glass Home's Carve New Destiny wears, never the Library UI kit's gold (`components/library-presentation/night-glass.css`, one rule in place of three per-button copies), and so do the cover's own Manifest, its choices and the Retry on Story View. Story Seed says "Manifesting…" while a Blueprint is made, never "VERSA is drafting".
 - **2026-10-12** — Local LM Studio can manifest a Blueprint in Create without the cloud Development access token. The server enforces same-origin local development, and local generation gets a 15-minute deadline for slower on-device models. Cloud-provider access rules and deadlines are unchanged.
 - **2026-10-11** — Your own skills and media, from SENSEI: every hand-equipped CAPA slot in Story Settings (Create and World Info) has an SPP upload that installs the skill on this device and equips it; the Media Loadout imports Soundscape and Sound Cue packages (your own recordings, up to 1 GB a package), keeps them on this device (`novelexpanded-media-packs-v1`) and equips them, and its recordings play from the device in the Reader. With no pack, the Library's own Soundscapes and Sound Cues show as equipped (2/2), and the Soundscapes slot no longer claims new chapters ignore it.
 - **2026-10-11** — Sound Words, from SENSEI's plan (its first part): Story Settings in Create and on World Info has a Sound Words card: a preset fills the story's own list (the Library's 30, or one installed from a Sound Words `.spp`), and the reader adds, changes and removes words, at most 30. Changing the Sound Cue pack never changes them; a word no recording plays is marked and never reaches the writer; an empty list plays no Sound Cues. The writer sees the words alone. The Library's "beast growl", "creature screech" and "blade drawn" are now "growl", "screech" and "unsheathe".

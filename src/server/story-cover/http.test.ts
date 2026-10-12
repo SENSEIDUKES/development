@@ -38,6 +38,18 @@ describe('The story cover route', () => {
     expect(await handleStoryCoverHttp({ method: 'GET' }, { environment })).toMatchObject({ status: 405 });
   });
 
+  it('letters the title only on a story that has reached its ending', async () => {
+    const generate = vi.fn(async (_request: { prompt: string }) => image);
+    await handleStoryCoverHttp({ method: 'POST', body: { story } }, { environment, generate: generate as never });
+    await handleStoryCoverHttp({ method: 'POST', body: { story: { ...story, titled: true } } }, { environment, generate: generate as never });
+    const [untitled, titled] = generate.mock.calls.map(call => call[0].prompt);
+    expect(untitled).toContain('No lettering.');
+    expect(untitled).not.toContain('“The Drowned Name”');
+    expect(titled).toContain('the exact title “The Drowned Name”, displayed once');
+    expect(await handleStoryCoverHttp({ method: 'POST', body: { story: { ...story, titled: 'yes' } } }, { environment }))
+      .toMatchObject({ status: 400 });
+  });
+
   it('clips each field, so a request cannot carry a long prompt of its own', async () => {
     const generate = vi.fn(async (_request: { prompt: string }) => image);
     await handleStoryCoverHttp({ method: 'POST', body: { story: { ...story, synopsis: 'x'.repeat(5_000), tags: Array.from({ length: 30 }, (_, index) => `tag-${index}`) } } }, { environment, generate: generate as never });
@@ -58,8 +70,8 @@ describe('The story cover route', () => {
 });
 
 describe('The cover prompt', () => {
-  it('fills the approved template from the story and draws the exact title once', () => {
-    const prompt = buildStoryCoverPrompt(story);
+  it('fills the approved template from the story and draws the exact title once, on a story that has reached its ending', () => {
+    const prompt = buildStoryCoverPrompt({ ...story, titled: true });
     expect(prompt.startsWith('Create professional Eastern fantasy novel cover art')).toBe(true);
     expect(prompt).toContain('Title: The Drowned Name');
     expect(prompt).toContain('Tradition: Chinese webnovel');
@@ -69,8 +81,8 @@ describe('The cover prompt', () => {
     expect(prompt).toContain('Vertical 2:3 composition');
     expect(prompt).toContain('the exact title “The Drowned Name”, displayed once');
     expect(prompt).not.toContain('{');
-    // A field the story does not have leaves its line out; without the title, no lettering.
-    const plain = buildStoryCoverPrompt({ title: 'Plain' }, { title: false });
+    // A field the story does not have leaves its line out; until the ending, no lettering.
+    const plain = buildStoryCoverPrompt({ title: 'Plain' });
     expect(plain).not.toContain('Tradition:');
     expect(plain).not.toContain('Genre:');
     expect(plain).toContain('No lettering. The title will appear beneath the artwork.');

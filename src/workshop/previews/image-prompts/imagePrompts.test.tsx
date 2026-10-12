@@ -38,12 +38,12 @@ describe('The Image Prompts page', () => {
 
   it('shows the cover template the server fills, never a copy', () => {
     const story = { title: 'The Drowned Name', style: 'chinese', synopsis: 'A courier returns.', tags: ['revenge'] };
-    const prompt = buildStoryCoverPrompt(story);
+    const prompt = buildStoryCoverPrompt({ ...story, titled: true });
     expect(prompt).toContain('Title: The Drowned Name');
     expect(prompt).toContain('Tradition: Chinese webnovel');
     expect(prompt).toContain(COVER_TITLE_ON.replace('{title}', 'The Drowned Name'));
     expect(prompt).not.toContain('Genre:');
-    expect(buildStoryCoverPrompt(story, { title: false })).toContain(COVER_TITLE_OFF);
+    expect(buildStoryCoverPrompt(story)).toContain(COVER_TITLE_OFF);
     expect(IMAGE_PROMPTS.some(entry => entry.id === ('cover-current' as never))).toBe(false);
   });
 

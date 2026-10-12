@@ -758,7 +758,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
         storySettings={renderStorySettings?.({ seed, originalLanguage })}
         onSelectSection={selectWorkspaceSection} isGenerating={isGenerating} savedFeedback={savedFeedback}
         showStoryBank={showStoryBank} helpOpen={helpOpen} canManifest={canGenerate}
-        manifestLabel={isGenerating ? (activeAgentId === 'versa' ? 'VERSA is drafting...' : 'Manifesting...') : 'Manifest World Blueprint'}
+        manifestLabel={isGenerating ? 'Manifesting...' : 'Manifest World Blueprint'}
         manifestDisabledReason={missing.length ? `Manifest disabled — missing: ${missingRequiredLabels}` : undefined}
         manifestIndicator={activeAgentId === 'versa' ? <img src={runtime.authorMarkUrl} className="h-5 w-5 animate-pulse object-contain" alt="" aria-hidden="true" /> : undefined}
         status={isGenerating ? 'Creating your World Blueprint' : savedFeedback ? 'Draft saved' : missing.length ? `Missing required: ${missingRequiredLabels}` : 'All required Story inputs complete'}
@@ -881,7 +881,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
                 className="shrink-0"
               >
                 {isGenerating ? (
-                  <span>{activeAgentId === 'versa' ? 'VERSA is drafting...' : 'Manifesting...'}</span>
+                  <span>Manifesting...</span>
                 ) : (
                   <>
                     <span className="hidden sm:inline">Manifest World Blueprint</span>

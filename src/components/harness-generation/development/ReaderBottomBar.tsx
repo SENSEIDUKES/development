@@ -1,6 +1,6 @@
 import { useRef, useState, type ComponentType, type ReactNode, type Ref } from 'react';
 import { SEIOverlayScrollbar, SEIPopover, SEIPopoverContent, SEIPopoverTitle, SEIPopoverTrigger } from '@seihouse/ui';
-import { BookOpen, Check, ChevronLeft, ChevronRight, LocateFixed, Pause, Play, RotateCcw, SkipBack, SkipForward, Zap } from 'lucide-react';
+import { BookOpen, Check, ChevronLeft, ChevronRight, Compass, LocateFixed, Pause, Play, RotateCcw, SkipBack, SkipForward } from 'lucide-react';
 import { READ_ALOUD_RATES, type ReadAloud, type ReadAloudRole } from '@seihouse/sen/reader-runtime';
 import { controlFeedback, pickerHeading, pickerList, pickerRow, pickerSelected, pickerSurface } from './readerPicker';
 
@@ -34,9 +34,9 @@ const controlPill = 'reader-glass-control inline-flex shrink-0 items-center just
 const pillTarget = `relative after:absolute after:inset-x-0 after:-inset-y-1 ${controlFeedback}`;
 const pillStep = `inline-flex h-9 min-w-8 max-[480px]:min-w-6 max-[380px]:min-w-5 items-center justify-center text-neutral-100 enabled:hover:bg-white/10 enabled:active:bg-white/15 disabled:opacity-35 ${pillTarget}`;
 const pickerTrigger = `inline-flex h-9 w-9 max-[480px]:w-8 max-[380px]:w-7 items-center justify-center rounded-md font-mono tabular-nums hover:bg-white/10 active:bg-white/15 disabled:opacity-35 ${pillTarget}`;
-// Fate sits inside the chapter pill, between its arrows: a round glass step a little larger than they are.
-const fateStep = `mx-0.5 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/10 text-neutral-100 enabled:hover:bg-white/15 enabled:active:bg-white/20 disabled:cursor-not-allowed disabled:opacity-35 ${controlFeedback}`;
-const fateCalling = 'border-cyan-200/60 bg-cyan-400/25 text-cyan-50 shadow-[0_0_14px_rgba(103,232,249,0.35)]';
+// Fate (a compass) sits inside the chapter pill between its arrows, a plain step like them, so both pills match.
+// When the next chapter waits on it, only its icon takes the portal's cyan.
+const fateCalling = 'text-cyan-200';
 
 function IconButton({ label, icon: Icon, onClick, disabled, className = round }: {
   label: string; icon: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>; onClick: () => void; disabled?: boolean; className?: string;
@@ -143,8 +143,8 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
           </button>
           <button type="button" aria-label="Open Fate" data-testid="reader-fate-button" data-attention={fate.attention || undefined}
             title={fate.disabled ? 'Fate opens when you reach the end of the chapter' : fate.attention ? 'Fate: direct the next chapter' : 'Fate: decide what happens next'}
-            onClick={fate.run} disabled={fate.disabled} className={`${fateStep} ${fate.attention ? fateCalling : ''}`}>
-            <Zap className="h-5 w-5" aria-hidden />
+            onClick={fate.run} disabled={fate.disabled} className={`${pickerTrigger} ${fate.attention ? fateCalling : ''}`}>
+            <Compass className="h-4 w-4" aria-hidden />
           </button>
           <button type="button" aria-label={next?.label ?? 'Next Chapter'} title={next?.label ?? 'Next Chapter'} disabled={!next || next.busy || next.disabled}
             aria-busy={next?.busy || undefined} onClick={next?.run}

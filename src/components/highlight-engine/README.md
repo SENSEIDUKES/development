@@ -1,25 +1,33 @@
-# Text Highlight Engine
+# Highlight Engine
 
-SEN-owned plain-text selection and local editing, plus the manuscript page that
-SEN features point at. No Reader, chapter, generation, translation, Library,
-storage, or server dependency.
+SEN's engine for highlighting part of a story and attaching something to it:
+select, edit, place an effect, see every effect in an overlay. Today it works
+on prose (plain-text selection and local editing, plus the manuscript page that
+SEN features point at); later the same engine highlights images, the panels of
+sequential art (NOVEL_EXPANDED.md, Stage E5). No Reader, chapter, generation,
+translation, Library, storage, or server dependency.
+
+Its name is the Highlight Engine, never "Text Highlight Engine" (renamed
+2026-10-12). Names that describe the prose surface alone keep "text":
+`TextHighlightBlock`, `TextHighlightOverlay`, the `sen-text-highlight-*` classes
+and `--sen-text-line-height`. An image surface will get its own beside them.
 
 - Created: **2026-09-26**; last Workshop update: **2026-10-04**
 - Lifecycle: active standalone prototype; the Workshop tab is the manuscript lab
 - Source: this Development repository; no production replica or source comparison
-- Workshop: `?preview=text-highlight-engine`
-- Package: `@seihouse/sen/text-highlight-engine`
+- Workshop: `?preview=highlight-engine`
+- Package: `@seihouse/sen/highlight-engine`
 
 ## Anatomy
 
 Each part has one file and one job, so it can be audited on its own for
 accessibility, viewport fit, power use, and look and feel. The Workshop's
 **Parts** board copies a ready-to-send brief for any of them
-(`src/workshop/previews/text-highlight-engine/parts.ts`, kept in step with this list).
+(`src/workshop/previews/highlight-engine/parts.ts`, kept in step with this list).
 
 | Part | File | Owns |
 | --- | --- | --- |
-| Text Highlight Engine | `development/TextHighlightEngine.tsx` | Puts the parts together over the host's paragraphs; owns the edit and undo records it reports |
+| Highlight Engine | `development/HighlightEngine.tsx` | Puts the parts together over the host's paragraphs; owns the edit and undo records it reports |
 | Selection Tracker | `development/useSelectionTracker.ts`, `shared/selection.ts`, `development/measure.ts` | Reads the browser selection; keeps the canonical selection (paragraph + exact positions); measures it; clears it on Escape or an outside tap; moves the first Tab of each selection into the Action Bar; opens Remove mode on right-click (selecting the word under the pointer when nothing is selected), the ContextMenu key or Shift+F10 |
 | Selection Highlight | `development/SelectionHighlight.tsx` | The tinted marks over the selected words |
 | Action Bar | `development/ActionBar.tsx`, `shared/actions.ts` | The one floating bar, with two faces. **Add**: Edit, the host's nested actions, Back, an action's panel, and Save / Delete Passage while editing. **Remove**: Undo, the host's removals and Delete Passage, as a vertical list like a desktop context menu, removals in red. An action a host marks unavailable stays visible, dimmed, with its reason. It owns its position, touch sizing and labels. On touch screens (`pointer: coarse`) its buttons stack vertically, the Add bar ends with a Remove row, and while the phone's own selection menu can show it keeps a 72 px band above and below the selection clear |
@@ -36,13 +44,13 @@ part of the SEN package.
 ## Host contract
 
 ```tsx
-import { TextHighlightEngine, type TextHighlightBlock } from '@seihouse/sen/text-highlight-engine';
+import { HighlightEngine, type TextHighlightBlock } from '@seihouse/sen/highlight-engine';
 import '@seihouse/sen/styles.css';
 
 const [blocks, setBlocks] = useState<TextHighlightBlock[]>([
   { id: 'paragraph-1', text: 'The harbor was quiet that morning.' },
 ]);
-return <TextHighlightEngine blocks={blocks} onBlocksChange={setBlocks} />;
+return <HighlightEngine blocks={blocks} onBlocksChange={setBlocks} />;
 ```
 
 A host sets the line spacing with the `--sen-text-line-height` custom property (1.85 by
@@ -255,21 +263,21 @@ Who enforces them:
 
 ## Verification and transfer
 
-Run `npm exec -- vitest run src/components/text-highlight-engine`,
+Run `npm exec -- vitest run src/components/highlight-engine`,
 `npm run test:workshop`, `npm run typecheck`, `npm run check:ownership`,
 `npm run test:package`, and `npm run build`.
 
-With Vite running, `node scripts/verifyTextHighlightEngine.mjs` runs isolated
+With Vite running, `node scripts/verifyHighlightEngine.mjs` runs isolated
 Chromium desktop/phone/tablet and WebKit phone/tablet checks; install those Playwright
 browser binaries first if needed. It writes screenshots and a results JSON to
-`output/playwright/text-highlight-engine/`. A desktop drag uses real mouse
+`output/playwright/highlight-engine/`. A desktop drag uses real mouse
 events; mobile tests use scripted ranges and actual tap events.
 On Windows, WebKit cases explicitly report `blocked` if its measured viewport
 differs from the requested width; this local DPI mismatch also misdirects native
 taps. A blocked case is not a pass. Run those cases on a compatible runner for
 WebKit evidence; the Chromium cases remain independently verified.
 The Linux CI job runs all five browser cases and uploads their screenshots and
-results as `text-highlight-engine-browser-evidence`.
+results as `highlight-engine-browser-evidence`.
 
 Consumers import the package entry and SEN stylesheet. For a source transfer,
 carry `development/` and `shared/` (excluding tests), the public barrel and its
@@ -279,6 +287,7 @@ browser evidence out of the consuming surface. No integration was performed.
 
 ## Workshop history
 
+- **2026-10-12 (renamed):** From SENSEI: the Text Highlight Engine is now the **Highlight Engine**, because the same engine will highlight images for sequential art, not only text. Its folder (`src/components/highlight-engine/`), component (`HighlightEngine`, `HighlightEngineProps`), package entry (`@seihouse/sen/highlight-engine`), Workshop route (`?preview=highlight-engine`) and browser check (`scripts/verifyHighlightEngine.mjs`) are renamed. The prose surface keeps its text names (see above). Earlier entries keep the old name.
 - **2026-10-12 (cue previews through the Reader's mixer):** SENSEI reported a placed cue that would not play although its preview had. The preview played through the host's single-channel player and the placed cue through the reader mixer, two different routes; the app has no single-channel player at all, so its Create mode picker could not open. With a reader mixer the Cue Picker now previews through it, exactly as the placed cue will play, and says "Audio preview is unavailable" when the mixer will not or cannot play it; without one it keeps the single-channel player. A cue that failed now shows why when hovered.
 - **2026-10-12:** The lab's authoring tools are now SEN's, shared with the HARNESS Reader's Create mode:
   `ManuscriptAuthoring.tsx` (the Overlays switch and its key, and `soundCueActions`: Media → Audio →

@@ -1,4 +1,4 @@
-import { createManuscript, type ManuscriptIdFactory } from '@seihouse/sen/text-highlight-engine';
+import { createManuscript, type ManuscriptIdFactory } from '@seihouse/sen/highlight-engine';
 
 /** Three short pre-made paragraphs for the lab page: action, world-building, and a breakthrough. */
 export const previewParagraphs: readonly string[] = [

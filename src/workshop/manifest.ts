@@ -160,10 +160,10 @@ export const workshopEntries: WorkshopEntry[] = [
     source: { repository: 'SENSEIDUKES/development', path: 'src/components/story-seed/development/StorySeedHelpMenu.tsx; src/components/story-seed/development/storySeedHelp.ts', lastCompared: '2026-09-27' },
   },
   {
-    id: 'text-highlight-engine', title: 'Text Highlight Engine',
-    description: 'The manuscript lab: three pre-made paragraphs saved with permanent paragraph and sentence addresses. Select prose to see its address, edit it, or attach a Sound Cue to 1–8 whole words (up to 10 per chapter); right-click or use the Remove row for Undo, Remove cue here and Delete Passage; switch on the Cues overlay to see every Sound Cue in blue and the page numbered the way the model addresses it (¶ paragraph numbers in the margin, small raised sentence numbers); then seal the chapter.',
+    id: 'highlight-engine', title: 'Highlight Engine',
+    description: 'The Highlight Engine (text today, sequential-art images later). The manuscript lab: three pre-made paragraphs saved with permanent paragraph and sentence addresses. Select prose to see its address, edit it, or attach a Sound Cue to 1–8 whole words (up to 10 per chapter); right-click or use the Remove row for Undo, Remove cue here and Delete Passage; switch on the Cues overlay to see every Sound Cue in blue and the page numbered the way the model addresses it (¶ paragraph numbers in the margin, small raised sentence numbers); then seal the chapter.',
     category: 'reader-ui', section: 'components', owner: 'sen', status: 'active', version: 'v1.8',
-    source: { repository: 'SENSEIDUKES/development', path: 'src/components/text-highlight-engine/', lastCompared: 'Not applicable — DEV-native primitive' },
+    source: { repository: 'SENSEIDUKES/development', path: 'src/components/highlight-engine/', lastCompared: 'Not applicable — DEV-native primitive' },
   },
   {
     id: 'light-novels-home', section: 'pages', group: 'home', owner: 'library', status: 'active', title: 'Home',
@@ -367,7 +367,7 @@ export const workshopEntries: WorkshopEntry[] = [
     owner: 'sen',
     status: 'active',
     title: 'Harness Generation',
-    description: 'Standalone checkpoint-first novel core: a premise-first Story Foundation, one model call per chapter written in the tiny SEN language (narration plus sound tags the writer puts on its own words), independent IndexedDB persistence, tolerant prose acceptance, semantic-event ledger, and continuity directed one chapter at a time from the Reader\'s Fate page, in Regular Reader or Fate Survival mode. A story opens on its World Info page; Start Story writes Chapter 1 under the Generation Overlay in a Reader on the Text Highlight Engine. Listen reads chapters aloud in three voices (Narrator, Protagonist, Side) with the spoken sentence lit, from the speakers the writer tags. Holdings: the writer reads what each character has, uses only that, and tags every change; plain rules check it, and the Reader\'s Holdings page shows it with the passage behind each change.',
+    description: 'Standalone checkpoint-first novel core: a premise-first Story Foundation, one model call per chapter written in the tiny SEN language (narration plus sound tags the writer puts on its own words), independent IndexedDB persistence, tolerant prose acceptance, semantic-event ledger, and continuity directed one chapter at a time from the Reader\'s Fate page, in Regular Reader or Fate Survival mode. A story opens on its World Info page; Start Story writes Chapter 1 under the Generation Overlay in a Reader on the Highlight Engine. Listen reads chapters aloud in three voices (Narrator, Protagonist, Side) with the spoken sentence lit, from the speakers the writer tags. Holdings: the writer reads what each character has, uses only that, and tags every change; plain rules check it, and the Reader\'s Holdings page shows it with the passage behind each change.',
     category: 'other',
     version: 'v1.5',
     source: {

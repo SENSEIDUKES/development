@@ -106,7 +106,7 @@ that supplies only a single-channel `NarrativeAudioProvider` keeps that route,
 one cue at a time. `InlineAudio` needs one or the other.
 
 A cue an author places by hand is the same record with `origin: 'manual'`
-(`createManualSoundCue` in the Text Highlight Engine): the recording must be
+(`createManualSoundCue` in the Highlight Engine): the recording must be
 one the host's catalog approves and must name a sound word, and the selection
 meets the same finished-cue rules. Audio contracts remain independent of that
 UI component.

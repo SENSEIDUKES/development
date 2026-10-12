@@ -9,7 +9,7 @@ import { ActionBar } from './ActionBar';
 import { UndoNotice } from './UndoNotice';
 import { OverlayLayer } from './OverlayLayer';
 
-export interface TextHighlightEngineProps {
+export interface HighlightEngineProps {
   blocks: readonly TextHighlightBlock[];
   onBlocksChange: (blocks: TextHighlightBlock[], edit: PassageEdit) => void;
   onSelectionChange?: (selection: PassageSelection | null) => void;
@@ -28,15 +28,15 @@ export interface TextHighlightEngineProps {
 }
 
 /**
- * Text Highlight Engine: puts the named parts together over the host's
+ * Highlight Engine: puts the named parts together over the host's
  * paragraphs — Selection Tracker, Selection Highlight, Inline Editor, Action
  * Bar (Add and Remove), Undo Notice and Overlay Layer — and owns the edit and
  * undo records it reports.
  */
-export function TextHighlightEngine({
+export function HighlightEngine({
   blocks, onBlocksChange, onSelectionChange, actions = [], removeActions = [], renderBlockText, editable = true, overlay, locale,
   className = '', style,
-}: TextHighlightEngineProps) {
+}: HighlightEngineProps) {
   const tracker = useSelectionTracker(blocks, onSelectionChange, { removable: editable, locale });
   const { rootRef, controlsRef, editorRef, selection, sourceText, editing, actionOpen, rectangles, clear } = tracker;
   const [replacement, setReplacement] = useState('');

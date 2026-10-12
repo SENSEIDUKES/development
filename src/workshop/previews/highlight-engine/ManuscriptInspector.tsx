@@ -1,7 +1,7 @@
 import {
   locateSelection, resolveAnchor,
   type ManuscriptAddress, type ManuscriptAttachment, type ManuscriptParagraph, type ManuscriptSentence, type ManuscriptState, type PassageSelection,
-} from '@seihouse/sen/text-highlight-engine';
+} from '@seihouse/sen/highlight-engine';
 
 const LEVEL_LABEL = { span: 'Words', sentence: 'Sentence', paragraph: 'Paragraph' } as const;
 const STATUS_LABEL = { placed: 'Placed', changed: 'Words changed', missing: 'Missing' } as const;

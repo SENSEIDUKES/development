@@ -2,7 +2,7 @@
 import { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { TextHighlightEngine } from './TextHighlightEngine';
+import { HighlightEngine } from './HighlightEngine';
 import type { PassageAction } from '../shared/actions';
 import type { PassageSelection, TextHighlightBlock } from '../shared/selection';
 
@@ -17,7 +17,7 @@ const initial = [{ id: 'a', text: 'Before middle after.' }, { id: 'b', text: 'An
 function Host({ actions, removeActions }: { actions?: PassageAction[]; removeActions?: PassageAction[] }) {
   const [blocks, setBlocks] = useState(initial); update = setBlocks;
   const [fixed, setFixedState] = useState(false); setFixed = setFixedState;
-  return <TextHighlightEngine blocks={blocks} onBlocksChange={(next, edit) => { changed(next, edit); setBlocks(next); }} onSelectionChange={selections}
+  return <HighlightEngine blocks={blocks} onBlocksChange={(next, edit) => { changed(next, edit); setBlocks(next); }} onSelectionChange={selections}
     editable={!fixed} actions={actions} removeActions={removeActions} />;
 }
 const button = (name: string) => Array.from(document.querySelectorAll('button')).find(node => node.textContent === name);
@@ -48,7 +48,7 @@ beforeEach(() => {
 });
 afterEach(() => { act(() => root.unmount()); container.remove(); document.getSelection()?.removeAllRanges(); vi.unstubAllGlobals(); vi.useRealTimers(); });
 
-describe('Text Highlight Engine', () => {
+describe('Highlight Engine', () => {
   it('captures the final drag range before keyboard focus enters Edit', async () => {
     await select(7, 11);
     act(() => {
@@ -200,7 +200,7 @@ describe('Text Highlight Engine', () => {
     });
     // A host that rebuilds an identical overlay on every render must not cause repeated work.
     for (let render = 0; render < 3; render += 1) {
-      act(() => overlayRoot.render(<TextHighlightEngine blocks={initial} onBlocksChange={vi.fn()} overlay={overlay()} />));
+      act(() => overlayRoot.render(<HighlightEngine blocks={initial} onBlocksChange={vi.fn()} overlay={overlay()} />));
     }
     const layers = extra.querySelectorAll('.sen-text-highlight-overlay');
     expect(layers).toHaveLength(2);
@@ -221,7 +221,7 @@ describe('Text Highlight Engine', () => {
     expect(parseFloat(second.style.left)).toBeGreaterThanOrEqual(100 + 6.5 + 3);
     expect(extra.querySelector('.sen-overlay-label')).toBeNull();
     expect(extra.querySelector('[data-sen-text-block="a"]')!.textContent).toBe(initial[0].text);
-    act(() => overlayRoot.render(<TextHighlightEngine blocks={initial} onBlocksChange={vi.fn()} />));
+    act(() => overlayRoot.render(<HighlightEngine blocks={initial} onBlocksChange={vi.fn()} />));
     expect(extra.querySelector('.sen-text-highlight-overlay')).toBeNull();
     act(() => overlayRoot.unmount()); extra.remove();
   });

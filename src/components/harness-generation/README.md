@@ -33,7 +33,7 @@ existing Chapter Generation feature.
 | First Workshop record | 2026-08-29 |
 | Last recorded Workshop update | 2026-10-10 |
 | Historical source inspection | 2026-09-12 — verified the creative author direction in `Light-Novels/src/server/prompts.ts` on `main` before extracting the Author skill |
-| Lifecycle status | Reader-directed continuation (Fate page) in a Reader on the Text Highlight Engine that reads aloud in three voices over the SEIHouse audio player's soundtrack, each chapter with the music and atmosphere its writer chose, with holdings tagged by the writer, checked by plain rules and quietly fixed after each chapter by the Holdings fixer, the newest chapter rewritable with a note, a chapter's writing kept going when the reader leaves, the story's point of view kept from its opening, and failed writes never saved |
+| Lifecycle status | Reader-directed continuation (Fate page) in a Reader on the Highlight Engine that reads aloud in three voices over the SEIHouse audio player's soundtrack, each chapter with the music and atmosphere its writer chose, with holdings tagged by the writer, checked by plain rules and quietly fixed after each chapter by the Holdings fixer, the newest chapter rewritable with a note, a chapter's writing kept going when the reader leaves, the story's point of view kept from its opening, and failed writes never saved |
 
 ### History
 
@@ -473,7 +473,7 @@ generation cycle, prompts, planning, processing, or persistence.
 screen: the top bar (`ReaderTopBar.tsx`, whose story and chapter open the chapter
 list), the bottom bar (`ReaderBottomBar.tsx`: Listen, Codex, the chapter arrows
 with Fate between them), Reader Settings and the Fate, Holdings and arc pages. The chapter on screen is its body (`readerChapterBody.ts`),
-prose by default (`ProseChapterBody.tsx`: the read-only Text Highlight Engine with
+prose by default (`ProseChapterBody.tsx`: the read-only Highlight Engine with
 the Sound Cues, in the reader's text settings). It owns no second persistence
 path; the reading place is host Reader state and the text settings are a device
 preference.

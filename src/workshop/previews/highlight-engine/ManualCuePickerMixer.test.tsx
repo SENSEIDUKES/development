@@ -4,7 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ReaderMixerProvider, type ReaderMixer, type ReaderMixerState } from '@seihouse/audio-player';
 import { createMediaCatalog } from '@seihouse/sen/audio';
-import { ManualCuePicker } from '@seihouse/sen/text-highlight-engine';
+import { ManualCuePicker } from '@seihouse/sen/highlight-engine';
 import { LIBRARY_BASE_MEDIA } from '../../../host/media/libraryCatalog';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;

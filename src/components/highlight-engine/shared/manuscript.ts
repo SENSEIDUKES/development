@@ -346,7 +346,7 @@ const replaceParagraph = (manuscript: Manuscript, paragraph: ManuscriptParagraph
 });
 
 /**
- * Applies one Text Highlight Engine edit to the page and every attachment on
+ * Applies one Highlight Engine edit to the page and every attachment on
  * it. This is the only place edits move attachments: paragraph and sentence
  * attachments follow their IDs and read as changed when their words change;
  * spans stay, shift, or are detached. Undo of the latest deletion restores

@@ -3,8 +3,8 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NarrativeAudioProvider, type NarrativeAudioPlayback } from '../../../audio/playback';
-import { passageRange } from '@seihouse/sen/text-highlight-engine';
-import { TextHighlightEnginePreview } from './TextHighlightEngineWorkspace';
+import { passageRange } from '@seihouse/sen/highlight-engine';
+import { HighlightEnginePreview } from './HighlightEngineWorkspace';
 import { previewParagraphs } from './previewData';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -71,7 +71,7 @@ beforeEach(() => {
   vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
   Range.prototype.getClientRects = () => [{ left: 100, top: 200, right: 230, bottom: 222, width: 130, height: 22 }] as unknown as DOMRectList;
   host = document.createElement('div'); document.body.append(host); root = createRoot(host);
-  act(() => root.render(<NarrativeAudioProvider value={playback}><TextHighlightEnginePreview /></NarrativeAudioProvider>));
+  act(() => root.render(<NarrativeAudioProvider value={playback}><HighlightEnginePreview /></NarrativeAudioProvider>));
 });
 afterEach(() => { act(() => root.unmount()); host.remove(); document.getSelection()?.removeAllRanges(); vi.unstubAllGlobals(); });
 

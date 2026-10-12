@@ -1,5 +1,5 @@
 import type { ComponentType, RefObject } from 'react';
-import type { TextHighlightBlock } from '@seihouse/sen/text-highlight-engine';
+import type { TextHighlightBlock } from '@seihouse/sen/highlight-engine';
 import type { ResolvedReaderText } from '@seihouse/sen/reader-runtime';
 import type { HarnessWorkspaceState } from '../../../narrative/generation';
 import type { NarrationHighlight } from './useFollowNarration';

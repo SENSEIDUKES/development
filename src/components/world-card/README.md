@@ -164,7 +164,7 @@ pieces rather than page-local cards or buttons:
   Unacquired acquisition labels and Draft are gone. Only the viewer's own
   **Recently read** remains. The owner's view of a world they are still
   building is a separate, future surface: NovelExpanded's **Story View**. It
-  will sit inside Studio, with the Text Highlight Engine and custom soundscape
+  will sit inside Studio, with the Highlight Engine and custom soundscape
   and Sound Cue packs close at hand, and it is not a variant of this page.
 - **No placeholder metrics.** Views, Branches, and Activity are not shown on
   the Info page. They have no real source yet, so the page isn't built around

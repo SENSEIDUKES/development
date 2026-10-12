@@ -1,4 +1,4 @@
-import type { ManuscriptAnchor, ManuscriptAttachment } from '../components/text-highlight-engine/shared/manuscript';
+import type { ManuscriptAnchor, ManuscriptAttachment } from '../components/highlight-engine/shared/manuscript';
 import type { AudioEnergy, AudioTags } from './audioTags';
 import type { AudioCueCategory } from './cues';
 import { isMediaResourceProvenance, type MediaResourceProvenance } from './media';

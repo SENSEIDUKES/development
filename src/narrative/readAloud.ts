@@ -1,4 +1,4 @@
-import { splitSentences } from '../components/text-highlight-engine/shared/manuscript';
+import { splitSentences } from '../components/highlight-engine/shared/manuscript';
 import { isSenLanguageCode, normalizeSenLanguageCode, senSpeechLanguageTags, type SenLanguageCode } from '../lib/language';
 import type { ReaderPreferenceStorage } from './readerRuntime';
 import { chapterTitleText } from './chapterTitle';

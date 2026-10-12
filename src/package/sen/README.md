@@ -1,5 +1,12 @@
 # `@seihouse/sen`
 
+**0.31.0 (2026-10-12, breaking):** The Text Highlight Engine is the **Highlight Engine**: it
+highlights prose today and will highlight images for sequential art. The entry
+`./text-highlight-engine` is now `./highlight-engine`; `TextHighlightEngine` and
+`TextHighlightEngineProps` are now `HighlightEngine` and `HighlightEngineProps`. The prose
+surface's own names (`TextHighlightBlock`, `TextHighlightOverlay`, the `sen-text-highlight-*`
+classes) are unchanged.
+
 **0.30.0 (2026-10-11):** A story's Sound Words are its own, apart from its recordings.
 `HarnessStory` gains `soundWords` (at most 30; an empty list plays no Sound Cues; absent, a
 story from before keeps its recordings' words). The HARNESS controller's
@@ -37,7 +44,7 @@ text. `./harness-generation`: `HarnessReaderSession` takes `chapterBody` (a `Rea
 about 60 characters a line in any font. Reader Settings opens with Text (font, title font, size, line spacing,
 weight). `./reader-runtime`: `ReaderFonts`, `ReaderFontChoice`, `DEFAULT_READER_FONTS`,
 `ReaderTextSettings` with `readReaderTextSettings`/`writeReaderTextSettings` (key `text-settings`)
-and `resolveReaderText`. `./text-highlight-engine`: a paragraph's line height follows
+and `resolveReaderText`. `./highlight-engine`: a paragraph's line height follows
 `--sen-text-line-height` (1.85 without it).
 
 **0.27.1 (2026-10-10):** A holdings tag no longer takes words away. When the writer puts one
@@ -145,7 +152,7 @@ accounts, Energy, QI, first-party catalogs, Workshop state, or concrete APIs.
 
 | Import | Owner responsibility |
 | --- | --- |
-| `./text-highlight-engine` | Single-block selection, nested actions, local editing, host-approved manual cue placement, and the manuscript page (permanent paragraph/sentence IDs, paragraph/sentence/span anchors, one edit rule, draft/sealed); no chapter dependency |
+| `./highlight-engine` | Single-block selection, nested actions, local editing, host-approved manual cue placement, and the manuscript page (permanent paragraph/sentence IDs, paragraph/sentence/span anchors, one edit rule, draft/sealed); no chapter dependency |
 | `@seihouse/sen` | Neutral presentation contracts/defaults and version |
 | `./contracts` | Story, chapter, block, identity, voice, usage and language contracts |
 | `./presentation` | Product-neutral presentation provider and slots |
@@ -369,7 +376,7 @@ HARNESS Reader now renders Sound Cues without reaching the older Reader
 Chamber, its Codex cards or their styles.
 
 **0.9.0 (breaking):** `HarnessReaderSession` is just reading. Each chapter's
-paragraphs sit on the read-only Text Highlight Engine with their Sound Cues
+paragraphs sit on the read-only Highlight Engine with their Sound Cues
 (`InlineAudioText`); Previous, Next, Next at the newest chapter and the Fate
 page (its header's Fate button) stay. The `installedSkills` prop is removed, and
 with it the packaged Reader Chamber, Codex sheet, Mind Palace, reading

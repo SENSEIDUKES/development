@@ -2,12 +2,12 @@ import { useMemo, useRef, useState, type CSSProperties } from 'react';
 import { createMediaCatalog, type SoundCuePayload } from '@seihouse/sen/audio';
 import { InlineAudioText } from '@seihouse/sen/inline-audio';
 import {
-  MANUSCRIPT_PROTOTYPE_WORD_LIMIT, ManuscriptOverlaySwitch, OVERLAY_KINDS, TextHighlightEngine,
+  MANUSCRIPT_PROTOTYPE_WORD_LIMIT, ManuscriptOverlaySwitch, OVERLAY_KINDS, HighlightEngine,
   applyPassageEdit, attachmentMarks, countManuscriptWords, flaggedAttachments, keepAttachment, passageRange,
   placedSoundCues, removeAttachment, sealManuscript, soundCueActions, structurePins,
   type ManuscriptOverlayMode, type ManuscriptParagraph, type ManuscriptSentence, type ManuscriptState,
   type PassageAction, type PassageEdit, type PassageSelection,
-} from '@seihouse/sen/text-highlight-engine';
+} from '@seihouse/sen/highlight-engine';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import { LIBRARY_BASE_MEDIA } from '../../../host/media/libraryCatalog';
@@ -21,7 +21,7 @@ const catalog = createMediaCatalog(LIBRARY_BASE_MEDIA);
 type LabState = ManuscriptState<SoundCuePayload>;
 const createLabState = (): LabState => ({ manuscript: createPreviewManuscript(), attachments: [] });
 
-export function TextHighlightEnginePreview() {
+export function HighlightEnginePreview() {
   const [state, setState] = useState<LabState>(createLabState);
   const [selection, setSelection] = useState<PassageSelection | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -101,7 +101,7 @@ export function TextHighlightEnginePreview() {
     {notice && <p role="status" className="mb-4 rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-sm text-slate-200">{notice}</p>}
     {/* A quiet gutter on phones gives the overlay's ¶ numbers room, so turning an overlay on never moves a word. */}
     <div ref={proseRef} className="pl-3 text-lg text-slate-200 sm:pl-0" style={{ fontFamily: 'Georgia, serif' }}>
-      <TextHighlightEngine blocks={state.manuscript.paragraphs} onBlocksChange={edit} onSelectionChange={setSelection}
+      <HighlightEngine blocks={state.manuscript.paragraphs} onBlocksChange={edit} onSelectionChange={setSelection}
         actions={actions} removeActions={removeActions} editable={draft} overlay={overlay} locale={state.manuscript.locale}
         style={{ '--sen-passage-highlight': `${highlightColor}59` } as CSSProperties}
         renderBlockText={block => {
@@ -121,8 +121,8 @@ export function TextHighlightEnginePreview() {
   </section>;
 }
 
-export function TextHighlightEngineWorkspace() {
-  return <FeatureWorkspace entry={workshopEntries.find(entry => entry.id === 'text-highlight-engine')!}
-    allowCompare={false} renderDevelopment={() => <TextHighlightEnginePreview />}
+export function HighlightEngineWorkspace() {
+  return <FeatureWorkspace entry={workshopEntries.find(entry => entry.id === 'highlight-engine')!}
+    allowCompare={false} renderDevelopment={() => <HighlightEnginePreview />}
     renderReference={() => <p className="p-8 text-sm text-slate-400">New SEN primitive developed here. No production reference exists.</p>} />;
 }

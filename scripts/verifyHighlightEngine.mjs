@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { chromium, webkit } from 'playwright';
 
-const output = 'output/playwright/text-highlight-engine';
+const output = 'output/playwright/highlight-engine';
 await mkdir(output, { recursive: true });
 const results = [];
 const writeResults = () => writeFile(`${output}/verification.json`, JSON.stringify(results, null, 2) + '\n');
@@ -15,7 +15,7 @@ for (const [name, browserType, width, height, touch] of [
   ['webkit-phone', webkit, 390, 844, true],
   ['webkit-tablet', webkit, 768, 1024, true],
 ]) {
-  if (process.env.TEXT_HIGHLIGHT_CASE && process.env.TEXT_HIGHLIGHT_CASE !== name) continue;
+  if (process.env.HIGHLIGHT_ENGINE_CASE && process.env.HIGHLIGHT_ENGINE_CASE !== name) continue;
   console.log(`Checking ${name}`);
   const browser = await browserType.launch();
   let page;
@@ -24,7 +24,7 @@ for (const [name, browserType, width, height, touch] of [
     page = await context.newPage();
     page.setDefaultTimeout(15000);
     const errors = []; page.on('pageerror', error => errors.push(error.message));
-    await page.goto(`${process.env.TEXT_HIGHLIGHT_URL ?? 'http://localhost:5173'}/?preview=text-highlight-engine`);
+    await page.goto(`${process.env.HIGHLIGHT_ENGINE_URL ?? 'http://localhost:5173'}/?preview=highlight-engine`);
     // Manuscript paragraph IDs are generated, so the three sample paragraphs are located by reading order.
     const paragraph = page.locator('[data-sen-text-block]').nth(0);
     await paragraph.waitFor();

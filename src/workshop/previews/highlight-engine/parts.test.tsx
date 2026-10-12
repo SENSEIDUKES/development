@@ -9,7 +9,7 @@ import { PartsBoard } from './PartsBoard';
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 afterEach(() => { document.body.innerHTML = ''; vi.unstubAllGlobals(); });
 
-describe('Text Highlight Engine parts', () => {
+describe('Highlight Engine parts', () => {
   it('names every part once and points only at files that exist', () => {
     expect(new Set(ENGINE_PARTS.map(part => part.name)).size).toBe(ENGINE_PARTS.length);
     for (const part of ENGINE_PARTS) for (const file of part.files) expect(existsSync(file), `${part.name}: ${file}`).toBe(true);
@@ -25,7 +25,7 @@ describe('Text Highlight Engine parts', () => {
     const copy = host.querySelector<HTMLButtonElement>('[aria-label="Copy Action Bar brief"]')!;
     await act(async () => { copy.click(); });
     expect(writeText).toHaveBeenCalledWith(partBrief(actionBar));
-    expect(partBrief(actionBar)).toMatch(/^Text Highlight Engine › Action Bar — owns .+ Files: src\/components\/text-highlight-engine\/development\/ActionBar\.tsx/);
+    expect(partBrief(actionBar)).toMatch(/^Highlight Engine › Action Bar — owns .+ Files: src\/components\/highlight-engine\/development\/ActionBar\.tsx/);
     expect(copy.textContent).toBe('Copied');
     act(() => root.unmount());
   });

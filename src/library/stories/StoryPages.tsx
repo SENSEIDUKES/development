@@ -178,7 +178,7 @@ function LoadAlert({ message, onRetry }: { message: string; onRetry: () => void 
   return <div role="alert" className="flex flex-wrap items-center gap-3 text-sm text-amber-200">
     <span>{message}</span>
     <button type="button" onClick={onRetry}
-      className="rounded-full border border-amber-200/40 px-3 py-1 text-xs font-semibold text-amber-100 hover:border-amber-200/70">Retry</button>
+      className="rounded-full border border-white/15 bg-[rgb(9_11_22/0.78)] px-3 py-1 text-xs font-semibold text-neutral-100 hover:border-white/30">Retry</button>
   </div>;
 }
 

@@ -57,6 +57,8 @@ const parseRequest = (body: unknown): { story: StoryCoverRequest; model?: string
     const text = clip(source[field], LIMITS[field]);
     if (text) story[field] = text;
   }
+  if (source.titled !== undefined && typeof source.titled !== 'boolean') throw new Error('Whether the cover carries its title must be true or false.');
+  if (source.titled) story.titled = true;
   if (source.tags !== undefined) {
     if (!Array.isArray(source.tags)) throw new Error('Story tags must be a list.');
     const tags = source.tags.slice(0, LIMITS.tags).flatMap(tag => clip(tag, LIMITS.tag) ?? []);

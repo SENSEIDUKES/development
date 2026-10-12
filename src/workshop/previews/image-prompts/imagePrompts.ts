@@ -132,14 +132,14 @@ export const IMAGE_KINDS: ImageKind[] = [
         id: 'cover-title-on',
         title: 'Title instruction: title enabled',
         source: 'src/server/story-cover/prompt.ts (COVER_TITLE_ON)',
-        when: 'Fills {title instruction}: the app draws the title on every cover today.',
+        when: 'Fills {title instruction} once the story has reached its ending, destined or failed: the title is what a finished story earns, so World Info offers to regenerate its cover with the title.',
         text: COVER_TITLE_ON,
       },
       {
         id: 'cover-title-off',
         title: 'Title instruction: title disabled',
         source: 'src/server/story-cover/prompt.ts (COVER_TITLE_OFF)',
-        when: 'Fills {title instruction} when the title is shown beneath the artwork instead (not offered yet).',
+        when: 'Fills {title instruction} for every cover made before the story reaches its ending: no lettering, with the title shown beneath the artwork.',
         text: COVER_TITLE_OFF,
       },
       {

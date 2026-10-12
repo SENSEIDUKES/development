@@ -312,7 +312,7 @@ export const BlueprintReview = ({
                 iconRight={!isGenerating ? <ArrowRight size={16} /> : undefined}
               >
                 {isGenerating && !regenerating
-                  ? (activeAgentId === 'versa' ? 'VERSA is writing...' : 'Manifesting...')
+                  ? 'Manifesting...'
                   : 'Manifest Story'}
               </ManifestButton>
 

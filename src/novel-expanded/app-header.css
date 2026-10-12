@@ -79,6 +79,15 @@
   height: auto;
 }
 
+/* The wordmark leaves less rail height than the compact Library header. Keep
+   its landscape in the space left by the app's three pathways, even below the
+   drawer's generic short-screen cutoff. It can shrink to zero when needed;
+   the profile, navigation and Settings retain their space and compact mode
+   still hides the artwork through the drawer's own visibility rule. */
+.novel-expanded-shell [data-slot="navigation-artwork"] {
+  display: block;
+}
+
 @media (min-width: 480px) {
   .novel-expanded-header-identity { gap: 8px; }
   .novel-expanded-emblem-art { width: 32px; height: 32px; }

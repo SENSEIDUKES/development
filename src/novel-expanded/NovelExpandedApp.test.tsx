@@ -520,6 +520,37 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     expect(floatingNote()).toBeNull();
   });
 
+  it('shows the saved reader and landscape on Home and World Info, and opens the Cave from the reader', async () => {
+    const story = scriptedWriter();
+    const services = appServices(story.writer);
+    const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
+    services.profile.save({ displayName: 'Saved Reader', avatarUrl: '/saved-portrait.png' });
+    await render(services);
+    const reader = () => shell()!.querySelector<HTMLButtonElement>('[data-slot="navigation-account-top"]')!;
+    expect(reader().getAttribute('aria-label')).toContain('Saved Reader');
+    expect(reader().querySelector('img')?.getAttribute('src')).toBe('/saved-portrait.png');
+    expect(shell()!.querySelector('[data-slot="navigation-artwork"] img')?.getAttribute('src')).toBe('/manifest-backdrops/immortal-land-4.jpg');
+
+    // Profile changes are read from the same subscribed record, without a reload.
+    await act(async () => { services.profile.save({ displayName: 'Renamed Reader', avatarUrl: '/new-portrait.png' }); });
+    expect(reader().getAttribute('aria-label')).toContain('Renamed Reader');
+    expect(reader().querySelector('img')?.getAttribute('src')).toBe('/new-portrait.png');
+    await click(container.querySelector(`#home-world-${created.id} button[aria-label^="Open ${created.title}"]`), 'the Home card');
+    expect(worldInfo()).toBeTruthy();
+    expect(reader().getAttribute('aria-label')).toContain('Renamed Reader');
+    expect(shell()!.querySelector('[data-slot="navigation-artwork"] img')).toBeTruthy();
+    await click(reader(), 'the sidebar reader', 20);
+    expect(address()).toBe('/app/?page=profile');
+    expect(document.querySelector('[data-testid="novel-expanded-profile"]')).toBeTruthy();
+  });
+
+  it('gives a new reader the shared profile emblem and cultivation rank', async () => {
+    await render(appServices(scriptedWriter().writer));
+    const reader = shell()!.querySelector('[data-slot="navigation-account-top"]')!;
+    expect(reader.getAttribute('aria-label')).toBe('Cultivator, Reader');
+    expect(reader.querySelector('[data-slot="navigation-account-avatar"]')).toBeTruthy();
+  });
+
   it('opens the laptop sidebar the way the reader left it on this device', async () => {
     const services = appServices(scriptedWriter().writer);
     services.readerPreferences.write(LIBRARY_SIDEBAR_MODE_KEY, 'compact');

@@ -13,6 +13,7 @@ import { useSyncExternalStore } from 'react';
 import { DEFAULT_SEN_LANGUAGE_CODE, normalizeSenLanguageCode } from '@seihouse/sen/contracts';
 import type { ReaderPreferenceStorage } from '@seihouse/sen/reader-runtime';
 import type { UserProfile } from '@seihouse/library/profile';
+import { getDaoRankData, useDaoXpAccount } from '@seihouse/library/cultivation';
 import { defaultFamiliar } from '../familiar/catalogue';
 
 /** Where the record is kept among the host's device preferences. */
@@ -126,4 +127,10 @@ export function createDeviceProfileStore({ storage, uid, now = () => new Date() 
 /** The device reader's profile record, kept current as it is saved. */
 export function useDeviceProfile(store: DeviceProfileStore): UserProfile {
   return useSyncExternalStore(store.subscribe, store.read, store.read);
+}
+
+/** The device reader's rank from the host's shared economy, never saved in the profile record. */
+export function useDeviceProfileRank(): string | undefined {
+  const daoXp = useDaoXpAccount();
+  return daoXp.snapshot ? getDaoRankData(daoXp.snapshot.balance).rank : undefined;
 }

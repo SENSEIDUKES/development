@@ -131,7 +131,7 @@ describe('Story Settings in World Info\'s Settings card', () => {
     // No other packs: the Library's own sounds play, and count as equipped.
     expect(container.querySelector('[data-testid="story-media-soundCues-default"]')!.textContent).toBe('The Library’s own Sound Cues');
     expect(container.querySelector('[data-testid="story-media-soundscapes-default"]')!.textContent).toBe('The Library’s own Soundscapes');
-    expect(container.querySelector('[data-testid="media-loadout-count"]')!.textContent).toBe('2/2 equipped');
+    expect(container.querySelector('[data-testid="media-loadout-count"]')!.textContent).toBe('3/3 equipped');
     expect(settings()!.textContent).not.toContain('Not used by new chapters yet');
 
     await select(container.querySelector<HTMLSelectElement>('[data-testid="story-settings"] select')!, 'Easy Read');
@@ -244,7 +244,7 @@ describe('Installing skills and media from Story Settings', () => {
     await upload(container.querySelector('[data-testid="media-pack-import-file"]'), await soundCuePackage(), 'Temple Sounds v1.0.0.spp');
     const cues = findStory(latest!.state!, story.id)!.mediaLoadout?.soundCues;
     expect(cues?.id).toMatch(/^spp\./);
-    expect(container.querySelector('[data-testid="media-loadout-count"]')!.textContent).toBe('2/2 equipped');
+    expect(container.querySelector('[data-testid="media-loadout-count"]')!.textContent).toBe('3/3 equipped');
     expect(container.querySelector<HTMLSelectElement>('#harness-media-soundCues')!.value).toBe(`${cues!.id}@1.0.0`);
     expect([...container.querySelectorAll('[aria-label="Sounds Temple Sounds plays"] li')].map(item => item.textContent)).toEqual(['temple bell']);
     // The pack's recording answers a word the story can now use.
@@ -252,7 +252,7 @@ describe('Installing skills and media from Story Settings', () => {
 
     // Not a media package: refused with a reason, nothing changed.
     await upload(container.querySelector('[data-testid="media-pack-import-file"]'), await stylePackage(), 'Grand Style v1.0.0.spp');
-    expect(container.querySelector('[data-testid="story-view-settings"] [role="alert"]')?.textContent).toContain('is not a Soundscape or Sound Cue package');
+    expect(container.querySelector('[data-testid="story-view-settings"] [role="alert"]')?.textContent).toContain('is not a Soundscape, Sound Cue or Atmosphere package');
     expect(findStory(latest!.state!, story.id)!.mediaLoadout?.soundCues).toEqual(cues);
   });
 });

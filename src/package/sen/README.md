@@ -1,5 +1,12 @@
 # `@seihouse/sen`
 
+**0.33.0 (2026-10-12):** A story's atmospheres come from its Media Loadout's Atmospheres
+slot. `./audio`: `MediaSelectionSlot` gains `atmospheres`; `SceneAtmosphere` gains `url` (where
+the bed plays) and `loudness`. `./harness-generation`: while the Reader is open, the reader
+mixer's atmospheres are the chapter's frozen beds (`useReaderSoundtrack`'s `atmospheres`,
+`atmosphereOption`), and the host's come back when it closes; beds frozen without a file
+leave the host's in place.
+
 **0.32.0 (2026-10-12, breaking):** The music, the atmosphere and Sound Cues are three
 separate sounds. The writer's tags: SEN Soundtrack 2.0.0 teaches `[[soundscape: Music Mood]]`
 and `[[atmosphere: Atmosphere]]`, each once at the chapter's start, in place of the combined

@@ -2,8 +2,9 @@ import { isPlayableMediaUrl, createMediaCatalog, type MediaCatalog, type MediaRe
 import { parseAudioCues, type AudioCue } from '@seihouse/sen/audio';
 import { validateSceneAudioCatalog, type SceneAudioTrack } from '@seihouse/sen/audio';
 import { validateSoundWords, type SoundWord } from '@seihouse/sen/audio';
+import type { SceneAtmosphere } from '@seihouse/sen/audio';
 
-export const MEDIA_PACK_TYPES = ['soundscape', 'sound-cue'] as const;
+export const MEDIA_PACK_TYPES = ['soundscape', 'sound-cue', 'atmosphere'] as const;
 export type MediaPackType = (typeof MEDIA_PACK_TYPES)[number];
 
 export interface MediaPackReference {
@@ -43,13 +44,30 @@ export interface SoundCuePack extends MediaPackBase {
   entries: AudioCue[];
 }
 
-export type MediaPack = SoundscapePack | SoundCuePack;
+/**
+ * The looping beds a chapter's atmosphere is chosen from, made in the Library's
+ * studios like music and Sound Cues. An equipped pack is the story's whole set
+ * of atmospheres: its beds replace the Library's own.
+ */
+export interface AtmospherePack extends MediaPackBase {
+  type: 'atmosphere';
+  entries: Array<SceneAtmosphere & { url: string; label: string }>;
+}
 
-export type StoryMediaLoadoutSlot = 'soundscapes' | 'soundCues';
+export type MediaPack = SoundscapePack | SoundCuePack | AtmospherePack;
+
+export type StoryMediaLoadoutSlot = 'soundscapes' | 'soundCues' | 'atmospheres';
+
+/** The pack type each Media Loadout slot takes. */
+export const MEDIA_SLOT_PACK_TYPES: Readonly<Record<StoryMediaLoadoutSlot, MediaPackType>> = {
+  soundscapes: 'soundscape', soundCues: 'sound-cue', atmospheres: 'atmosphere',
+};
+export const MEDIA_LOADOUT_SLOTS = Object.keys(MEDIA_SLOT_PACK_TYPES) as StoryMediaLoadoutSlot[];
 
 export interface StoryMediaLoadout {
   soundscapes?: MediaPackReference;
   soundCues?: MediaPackReference;
+  atmospheres?: MediaPackReference;
 }
 
 export interface MediaPackEntitlement {
@@ -64,6 +82,7 @@ export interface FrozenMediaLoadout {
   capturedAt: string;
   soundscapes?: SoundscapePack;
   soundCues?: SoundCuePack;
+  atmospheres?: AtmospherePack;
 }
 
 export interface FrozenMediaPackRecord extends MediaPackReference {
@@ -75,6 +94,7 @@ export interface FrozenMediaLoadoutRecord {
   capturedAt: string;
   soundscapes?: FrozenMediaPackRecord & { type: 'soundscape' };
   soundCues?: FrozenMediaPackRecord & { type: 'sound-cue' };
+  atmospheres?: FrozenMediaPackRecord & { type: 'atmosphere' };
 }
 
 const PACK_FIELDS = new Set(['id', 'version', 'type', 'displayName', 'description', 'source', 'entries']);
@@ -193,6 +213,38 @@ const validateSoundCueEntries = (value: unknown, sounds: readonly SoundWord[]): 
   return loaded.cues as SoundCuePack['entries'];
 };
 
+const ATMOSPHERE_FIELDS = new Set(['id', 'word', 'label', 'group', 'url', 'loudness']);
+const ATMOSPHERE_WORD = /^[a-z]+(?: [a-z]+){0,2}$/;
+
+const validateAtmosphereEntries = (value: unknown): AtmospherePack['entries'] => {
+  if (!Array.isArray(value) || value.length === 0) throw new Error('An Atmosphere pack needs at least one bed.');
+  const ids = new Set<string>();
+  const urls = new Set<string>();
+  return value.map((entry, index) => {
+    if (!isPlainObject(entry)) throw new Error(`Atmosphere ${index + 1} must be a plain object.`);
+    assertExactFields(entry, ATMOSPHERE_FIELDS, `Atmosphere ${index + 1}`);
+    const { id, word, label, group, url, loudness } = entry;
+    if (typeof id !== 'string' || !id.trim()) throw new Error(`Atmosphere ${index + 1} needs an id.`);
+    if (typeof word !== 'string' || !ATMOSPHERE_WORD.test(word)) throw new Error(`Atmosphere ${id} needs a word: one to three plain lowercase words.`);
+    if (typeof label !== 'string' || !label.trim()) throw new Error(`Atmosphere ${id} needs a name.`);
+    if (group !== undefined && (typeof group !== 'string' || !group.trim())) throw new Error(`Atmosphere ${id} has an empty group.`);
+    if (typeof url !== 'string' || !isPlayableMediaUrl(url)) throw new Error(`Atmosphere ${id} needs a public HTTPS playback URL or a file in an installed package.`);
+    if (!SUPPORTED_AUDIO_FILE.test(url)) throw new Error(`Atmosphere ${id} uses an unsupported file type.`);
+    if (loudness !== undefined && !(isPlainObject(loudness) && typeof loudness.lufs === 'number' && Number.isFinite(loudness.lufs)
+      && (loudness.peakDb === undefined || (typeof loudness.peakDb === 'number' && Number.isFinite(loudness.peakDb))))) {
+      throw new Error(`Atmosphere ${id} has unreadable loudness.`);
+    }
+    if (ids.has(id) || urls.has(url)) throw new Error(`Atmosphere ${id} is listed twice.`);
+    ids.add(id);
+    urls.add(url);
+    return {
+      id, word, label: label.trim(), url,
+      ...(group ? { group: group.trim() } : {}),
+      ...(isPlainObject(loudness) ? { loudness: { lufs: loudness.lufs as number, ...(typeof loudness.peakDb === 'number' ? { peakDb: loudness.peakDb } : {}) } } : {}),
+    };
+  });
+};
+
 export function validateMediaPack(value: unknown): MediaPack {
   if (!isPlainObject(value)) throw new Error('Media Pack must be a plain data object.');
   assertNoForbiddenContent(value);
@@ -208,7 +260,8 @@ export function validateMediaPack(value: unknown): MediaPack {
     const sounds = validateSoundWords(value.sounds);
     return { ...base, type: 'sound-cue', sounds, entries: validateSoundCueEntries(value.entries, sounds) };
   }
-  throw new Error('Media Pack type must be soundscape or sound-cue.');
+  if (value.type === 'atmosphere') return { ...base, type: 'atmosphere', entries: validateAtmosphereEntries(value.entries) };
+  throw new Error('Media Pack type must be soundscape, sound-cue or atmosphere.');
 }
 
 export const mediaPackKey = (value: MediaPackReference) => `${value.id}@${value.version}`;
@@ -239,6 +292,8 @@ export function createRegisteredMediaPackCatalog(values: readonly unknown[], bas
   const baseCues = base.soundCues;
   const baseCuePaths = new Set(baseCues.cues.map(cue => cue.file_path));
   const baseCueUrls = new Set(baseCues.cues.map(cue => cue.public_url));
+  const baseAtmosphereIds = new Set(base.atmospheres.map(atmosphere => atmosphere.id));
+  const atmosphereIdentities = new Map<string, string>();
 
   for (const pack of packs) {
     const key = mediaPackKey(pack);
@@ -254,6 +309,13 @@ export function createRegisteredMediaPackCatalog(values: readonly unknown[], bas
           if (owner && !owner.startsWith(`${pack.id}@`)) throw new Error(`Media Pack ${key} duplicates soundscape identity ${identity}.`);
           soundscapeIdentities.set(identity, key);
         }
+      }
+    } else if (pack.type === 'atmosphere') {
+      for (const bed of pack.entries) {
+        if (baseAtmosphereIds.has(bed.id)) throw new Error(`Media Pack ${key} duplicates a built-in atmosphere identity.`);
+        const owner = atmosphereIdentities.get(bed.id);
+        if (owner && !owner.startsWith(`${pack.id}@`)) throw new Error(`Media Pack ${key} duplicates atmosphere identity ${bed.id}.`);
+        atmosphereIdentities.set(bed.id, key);
       }
     } else {
       for (const cue of pack.entries) {
@@ -296,6 +358,10 @@ export function freezeMediaLoadout(input: {
   if (soundCues?.type === 'sound-cue' && entitled.has(mediaPackKey(soundCues))) {
     snapshot.soundCues = validateMediaPack(soundCues) as SoundCuePack;
   }
+  const atmospheres = input.loadout?.atmospheres && resolveRegisteredMediaPack(input.registered, input.loadout.atmospheres);
+  if (atmospheres?.type === 'atmosphere' && entitled.has(mediaPackKey(atmospheres))) {
+    snapshot.atmospheres = validateMediaPack(atmospheres) as AtmospherePack;
+  }
   return snapshot;
 }
 
@@ -311,6 +377,7 @@ export function recordFrozenMediaLoadout(snapshot: FrozenMediaLoadout): FrozenMe
     capturedAt: snapshot.capturedAt,
     ...(snapshot.soundscapes ? { soundscapes: packRecord(snapshot.soundscapes) as FrozenMediaLoadoutRecord['soundscapes'] } : {}),
     ...(snapshot.soundCues ? { soundCues: packRecord(snapshot.soundCues) as FrozenMediaLoadoutRecord['soundCues'] } : {}),
+    ...(snapshot.atmospheres ? { atmospheres: packRecord(snapshot.atmospheres) as FrozenMediaLoadoutRecord['atmospheres'] } : {}),
   };
 }
 
@@ -324,7 +391,8 @@ const packProvenance = (pack: MediaPack): MediaResourceProvenance => ({
  * The authorized catalog for one attempt. A Soundscape Pack adds tracks to the
  * base soundscapes. A Sound Cue Pack is the story's whole Sound Cue set: its
  * words and recordings replace the default library's, while base recordings
- * that answer no sound word (atmosphere, system) stay.
+ * that answer no sound word (atmosphere, system) stay. An Atmosphere Pack is
+ * the story's whole set of atmospheres: its beds replace the base's.
  */
 export function createAuthorizedMediaCatalog(snapshot?: FrozenMediaLoadout, base: MediaCatalog = createMediaCatalog()): MediaCatalog {
   const soundscapes = structuredClone(base.soundscapes);
@@ -332,6 +400,7 @@ export function createAuthorizedMediaCatalog(snapshot?: FrozenMediaLoadout, base
   const baseCues = base.soundCues;
   let cueEntries: AudioCue[] = [...baseCues.cues];
   let sounds = structuredClone(base.sounds);
+  let atmospheres = structuredClone(base.atmospheres);
 
   if (snapshot?.soundscapes) {
     try {
@@ -362,13 +431,20 @@ export function createAuthorizedMediaCatalog(snapshot?: FrozenMediaLoadout, base
       // A malformed frozen pack contributes nothing; the base experience remains intact.
     }
   }
+  if (snapshot?.atmospheres) {
+    try {
+      const pack = validateMediaPack(snapshot.atmospheres);
+      if (pack.type === 'atmosphere') atmospheres = structuredClone(pack.entries);
+    } catch {
+      // A malformed frozen pack contributes nothing; the base experience remains intact.
+    }
+  }
   return {
     soundscapes,
     soundCues: parseAudioCues(cueEntries),
     soundCueProvenanceByUrl,
     sounds,
-    // A pack holds music and recordings; the atmospheres a chapter may choose are the host's.
-    atmospheres: structuredClone(base.atmospheres),
+    atmospheres,
   };
 }
 
@@ -384,12 +460,12 @@ export function createLibraryMediaPort(input: {
   const entitlements = structuredClone([...input.entitlements]);
   return {
     validateSelection(selection: StoryMediaSelection, at: string) {
-      for (const slot of ['soundscapes', 'soundCues'] as const) {
+      for (const slot of MEDIA_LOADOUT_SLOTS) {
         const reference = selection[slot];
         if (!reference) continue;
         const pack = resolveRegisteredMediaPack(registered, reference);
         if (!pack) throw new Error('Only a registered Media Pack can be equipped.');
-        if (pack.type !== (slot === 'soundscapes' ? 'soundscape' : 'sound-cue')) throw new Error(`This slot requires ${slot === 'soundscapes' ? 'Soundscapes' : 'Sound Cues'}.`);
+        if (pack.type !== MEDIA_SLOT_PACK_TYPES[slot]) throw new Error(`This slot requires ${{ soundscapes: 'Soundscapes', soundCues: 'Sound Cues', atmospheres: 'Atmospheres' }[slot]}.`);
         if (!entitlements.some(item => mediaPackKey(item.pack) === mediaPackKey(reference) && isMediaPackEntitlementActive(item, at))) throw new Error('Unlock this Media Pack before equipping it.');
       }
     },

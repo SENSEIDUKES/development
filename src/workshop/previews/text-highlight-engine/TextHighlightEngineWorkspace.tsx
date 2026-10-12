@@ -1,11 +1,11 @@
 import { useMemo, useRef, useState, type CSSProperties } from 'react';
-import { SOUND_CUE_KIND, SOUND_CUE_RULES, createMediaCatalog, type SoundCueAttachment, type SoundCuePayload } from '@seihouse/sen/audio';
+import { createMediaCatalog, type SoundCuePayload } from '@seihouse/sen/audio';
 import { InlineAudioText } from '@seihouse/sen/inline-audio';
 import {
-  MANUSCRIPT_PROTOTYPE_WORD_LIMIT, ManualCuePicker, TextHighlightEngine,
-  anchorAtLevel, applyPassageEdit, countManuscriptWords, flaggedAttachments, keepAttachment, passageRange,
-  placeAttachment, removeAttachment, resolveAnchor, sameAnchorTarget, sealManuscript, snapSoundCueSelection,
-  type ManuscriptAttachment, type ManuscriptParagraph, type ManuscriptSentence, type ManuscriptState,
+  MANUSCRIPT_PROTOTYPE_WORD_LIMIT, ManuscriptOverlaySwitch, OVERLAY_KINDS, TextHighlightEngine,
+  applyPassageEdit, attachmentMarks, countManuscriptWords, flaggedAttachments, keepAttachment, passageRange,
+  placedSoundCues, removeAttachment, sealManuscript, soundCueActions, structurePins,
+  type ManuscriptOverlayMode, type ManuscriptParagraph, type ManuscriptSentence, type ManuscriptState,
   type PassageAction, type PassageEdit, type PassageSelection,
 } from '@seihouse/sen/text-highlight-engine';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
@@ -13,72 +13,13 @@ import { workshopEntries } from '../../manifest';
 import { LIBRARY_BASE_MEDIA } from '../../../host/media/libraryCatalog';
 import { ManuscriptInspector } from './ManuscriptInspector';
 import { PartsBoard } from './PartsBoard';
-import { ATTACHMENT_COLORS, OVERLAY_KINDS, attachmentMarks, structurePins, type LabOverlay } from './overlays';
 import { createPreviewManuscript } from './previewData';
 
 const catalog = createMediaCatalog(LIBRARY_BASE_MEDIA);
 
 /** The lab stores Sound Cues exactly as SEN does: span attachments whose payload the manuscript never reads. */
 type LabState = ManuscriptState<SoundCuePayload>;
-type LabAttachment = ManuscriptAttachment<SoundCuePayload>;
 const createLabState = (): LabState => ({ manuscript: createPreviewManuscript(), attachments: [] });
-
-/** A Sound Cue the Reader can show: still on its words. An edited or detached one waits in the inspector. */
-function placedCue(state: LabState, attachment: LabAttachment): SoundCueAttachment | undefined {
-  if (attachment.kind !== SOUND_CUE_KIND || attachment.anchor.level !== 'span') return undefined;
-  return resolveAnchor(state.manuscript, attachment.anchor).status === 'placed' ? attachment as SoundCueAttachment : undefined;
-}
-
-const soundCues = (state: LabState) => state.attachments.filter(attachment => attachment.kind === SOUND_CUE_KIND);
-
-/**
- * The Sound Cue a selection would hold — its whole words, and the cue already
- * on them — or why it cannot hold one. A person meets the finished-cue rules
- * as they select: 1–8 whole words, at most ten in the chapter.
- */
-function soundCueTarget(state: LabState, selection: PassageSelection): { selection: PassageSelection; existing?: LabAttachment } | { reason: string } {
-  const paragraph = state.manuscript.paragraphs.find(candidate => candidate.id === selection.blockId);
-  const snapped = paragraph && snapSoundCueSelection(paragraph, selection, state.manuscript.locale);
-  if (!snapped || !snapped.ok) return { reason: snapped?.reason === 'too-many-words' ? `Sound Cues fit 1–${SOUND_CUE_RULES.maxWords} words` : 'Select a word' };
-  const anchor = anchorAtLevel(state.manuscript, snapped.selection, 'span');
-  const cues = soundCues(state);
-  const existing = anchor && cues.find(attachment => sameAnchorTarget(attachment.anchor, anchor));
-  // A cue already on these words can still take another sound, even with the chapter full.
-  if (!existing && cues.length >= SOUND_CUE_RULES.maxPerChapter) return { reason: `${cues.length} of ${SOUND_CUE_RULES.maxPerChapter} Sound Cues placed` };
-  return { selection: snapped.selection, existing };
-}
-
-/** The placed Sound Cues whose words a selection touches. */
-const cuesUnder = (state: LabState, selection: PassageSelection) => soundCues(state).filter(attachment => {
-  const resolution = resolveAnchor(state.manuscript, attachment.anchor);
-  return resolution.status === 'placed' && resolution.selection.blockId === selection.blockId
-    && resolution.selection.startOffset < selection.endOffset && resolution.selection.endOffset > selection.startOffset;
-});
-
-function CueAttachPanel({ state, selection, onPlace, onRemove, onClose }: {
-  state: LabState;
-  selection: PassageSelection;
-  onPlace: (attachment: LabAttachment) => void;
-  onRemove: (id: string) => void;
-  onClose: () => void;
-}) {
-  const target = soundCueTarget(state, selection);
-  const paragraph = state.manuscript.paragraphs.find(candidate => candidate.id === selection.blockId);
-  const anchor = 'selection' in target ? anchorAtLevel(state.manuscript, target.selection, 'span') : undefined;
-  if (!('selection' in target) || !paragraph || !anchor) {
-    return <p role="status" className="px-2 py-3 text-sm text-slate-300">{'reason' in target ? `${target.reason}.` : 'Select the words again.'}</p>;
-  }
-  const occupied = soundCues(state).filter(attachment => attachment !== target.existing).flatMap(attachment => {
-    const resolution = resolveAnchor(state.manuscript, attachment.anchor);
-    return resolution.status === 'placed' ? [resolution.selection] : [];
-  });
-  return <div className="sen-manuscript-cue-panel">
-    <ManualCuePicker block={paragraph} selection={target.selection} catalog={catalog}
-      existing={target.existing ? placedCue(state, target.existing) : undefined} occupiedSelections={occupied}
-      onPlace={cue => onPlace({ ...cue, id: target.existing?.id ?? cue.id, anchor })}
-      onRemove={() => target.existing && onRemove(target.existing.id)} onClose={onClose} />
-  </div>;
-}
 
 export function TextHighlightEnginePreview() {
   const [state, setState] = useState<LabState>(createLabState);
@@ -86,17 +27,14 @@ export function TextHighlightEnginePreview() {
   const [notice, setNotice] = useState<string | null>(null);
   const [confirmSeal, setConfirmSeal] = useState(false);
   const [highlightColor, setHighlightColor] = useState('#8c6ee1');
-  const [overlayMode, setOverlayMode] = useState<LabOverlay>('off');
+  const [overlayMode, setOverlayMode] = useState<ManuscriptOverlayMode>('off');
   const proseRef = useRef<HTMLDivElement>(null);
   const draft = state.manuscript.status === 'draft';
   const overlay = useMemo(() => overlayMode === 'off' ? undefined
     : { marks: attachmentMarks(state, OVERLAY_KINDS[overlayMode]), pins: structurePins(state.manuscript) }, [overlayMode, state]);
   const words = countManuscriptWords(state.manuscript);
   const flagged = flaggedAttachments(state).length;
-  const placedCues = useMemo(() => state.attachments.flatMap(attachment => {
-    const cue = placedCue(state, attachment);
-    return cue ? [cue] : [];
-  }), [state]);
+  const placedCues = useMemo(() => placedSoundCues(state), [state]);
 
   const edit = (_blocks: unknown, change: PassageEdit) => {
     const result = applyPassageEdit(state, change);
@@ -129,29 +67,9 @@ export function TextHighlightEnginePreview() {
     if (bounds && (bounds.top < 0 || bounds.bottom > window.innerHeight)) window.scrollBy({ top: bounds.top - window.innerHeight / 3 });
   };
 
-  const actions: PassageAction[] = draft ? [{ id: 'media', label: 'Media', children: [{ id: 'audio', label: 'Audio', children: [{
-    id: 'cue', label: 'Cue',
-    unavailable: selected => { const target = soundCueTarget(state, selected); return 'reason' in target ? target.reason : undefined; },
-    onActivate: (selected, close) => <CueAttachPanel state={state} selection={selected}
-      onPlace={attachment => {
-        // The chapter's cap holds even if the page changed while the picker was open.
-        if (!state.attachments.some(placed => placed.id === attachment.id) && soundCues(state).length >= SOUND_CUE_RULES.maxPerChapter) {
-          setNotice(`A chapter holds at most ${SOUND_CUE_RULES.maxPerChapter} Sound Cues.`);
-          return;
-        }
-        setState(current => placeAttachment(current, attachment));
-      }}
-      onRemove={id => setState(current => removeAttachment(current, id))} onClose={close} />,
-  }] }] }] : [];
-  const removeActions: PassageAction[] = draft ? [{
-    id: 'remove-cue', label: 'Remove cue here',
-    unavailable: selected => cuesUnder(state, selected).length ? undefined : 'No Sound Cue here',
-    onActivate: selected => {
-      const ids = cuesUnder(state, selected).map(attachment => attachment.id);
-      setState(current => ids.reduce((next, id) => removeAttachment(next, id), current));
-      return null;
-    },
-  }] : [];
+  const authoring = soundCueActions({ state, update: setState, catalog, onNotice: setNotice });
+  const actions: PassageAction[] = draft ? authoring.actions : [];
+  const removeActions: PassageAction[] = draft ? authoring.removeActions : [];
 
   return <section className="mx-auto max-w-2xl px-5 py-8 sm:px-8 sm:py-12">
     <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-400">
@@ -178,27 +96,7 @@ export function TextHighlightEnginePreview() {
     </div>
     <PartsBoard />
     <div className="mb-6 space-y-3">
-      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400" role="group" aria-label="Overlays" data-testid="overlay-switch">
-        <span className="mr-1 uppercase tracking-[0.14em] text-slate-500">Overlays</span>
-        {([['off', 'Off'], ['cues', 'Cues']] as const).map(([mode, label]) => <button key={mode} type="button" aria-pressed={overlayMode === mode}
-          className={`min-h-9 rounded-lg border px-3 ${overlayMode === mode ? 'border-teal-300/60 bg-teal-400/10 text-teal-100' : 'border-slate-600 text-slate-300 hover:bg-slate-800'}`}
-          onClick={() => setOverlayMode(mode)}>{label}</button>)}
-      </div>
-      {overlayMode !== 'off' && <div className="space-y-2 text-xs leading-relaxed text-slate-400" data-testid="overlay-legend">
-        <p>
-          <span className="font-semibold text-slate-200">¶2</span> in the margin with a small raised <span className="font-semibold text-slate-200">6</span> is
-          paragraph 2, sentence 6. The model writes it <span className="font-semibold text-slate-200">P2 S6</span>.
-        </p>
-        <ul className="flex flex-wrap gap-x-4 gap-y-1" aria-label="Overlay colors">
-          {OVERLAY_KINDS[overlayMode].map(kind => <li key={kind} className="flex items-center gap-1.5">
-            <span aria-hidden="true" className="h-3 w-3 rounded-[3px] ring-1 ring-inset ring-white/10" style={{ background: ATTACHMENT_COLORS[kind].tone }} />{ATTACHMENT_COLORS[kind].label}
-          </li>)}
-          {/* Only effects that stay on the page after an edit (passage-level ones) show the underline. */}
-          {overlay?.marks?.some(mark => mark.attention) && <li className="flex items-center gap-1.5">
-            <span aria-hidden="true" className="h-2.5 w-4 border-b-2 border-dashed border-amber-400" />Words changed
-          </li>}
-        </ul>
-      </div>}
+      <ManuscriptOverlaySwitch mode={overlayMode} onChange={setOverlayMode} overlay={overlay} />
     </div>
     {notice && <p role="status" className="mb-4 rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-sm text-slate-200">{notice}</p>}
     {/* A quiet gutter on phones gives the overlay's ¶ numbers room, so turning an overlay on never moves a word. */}

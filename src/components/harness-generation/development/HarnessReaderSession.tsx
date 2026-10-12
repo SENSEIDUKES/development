@@ -32,6 +32,7 @@ import { pendingChapterDirection } from '../shared/chapterDirection';
 import { chapterRewriteGap, latestStoryChapter } from '../shared/chapterRewrite';
 import { protagonistNames } from '../shared/speakers';
 import { BlueprintArcPage } from './BlueprintArcPage';
+import { ChapterAuthoring } from './ChapterAuthoring';
 import { ChapterRewrite } from './ChapterRewrite';
 import { FatePage } from './FatePage';
 import { HoldingsPage } from './HoldingsPage';
@@ -240,6 +241,7 @@ export function HarnessReaderSession({
 
   const openChapter = useCallback((chapterNumber: number) => {
     setSelectedChapter(chapterNumber);
+    setCreating(false);
     topRef.current?.scrollIntoView?.({ block: 'start' });
     const current = readerStateRef.current;
     if (!current) return;
@@ -271,6 +273,8 @@ export function HarnessReaderSession({
     setPassageTarget(blockId);
   };
   const pageOpen = layer?.kind === 'page';
+  // Create mode: the reader authors the chapter on screen in place. It closes when another chapter opens.
+  const [creating, setCreating] = useState(false);
   useLayoutEffect(() => {
     if (!pageOpen) return undefined;
     window.scrollTo?.({ top: 0 });
@@ -393,6 +397,9 @@ export function HarnessReaderSession({
   // stays in place while its own rewrite is written, so a failed one keeps the reader's note.
   const rewritable = Boolean(onRewriteChapter && chapter && !later && latestStoryChapter(state, storyId)?.id === chapter.id
     && (writer.writing || !chapterRewriteGap(state, storyId)));
+  // Only the newest chapter, before anything is built on it, can be changed: moving on seals it.
+  const authorable = Boolean(chapter && !later && latestStoryChapter(state, storyId)?.id === chapter.id && !writer.writing && !chapterRewriteGap(state, storyId));
+  const authoring = creating && authorable && chapter;
   const rewriteChapter = async (note?: string) => {
     const rewritten = await writer.rewrite(note);
     if (rewritten) openChapter(rewritten);
@@ -412,7 +419,9 @@ export function HarnessReaderSession({
       <div className="reader-column">
       {storageError && <p role="alert" className="mt-3 text-sm text-amber-300">{storageError}</p>}
 
-      {chapter
+      {authoring
+        ? <ChapterAuthoring key={chapter.id} chapter={chapter} controller={controller} locale={story.originalLanguage} text={text} articleRef={articleRef} />
+        : chapter
         ? <ChapterBody chapter={chapter} blocks={blocks} locale={story.originalLanguage} articleRef={articleRef}
             highlight={highlight} reading={reading} text={text} />
         : <section className="py-16 text-center" aria-label="Story start">
@@ -431,12 +440,16 @@ export function HarnessReaderSession({
             className={`${navButton} border-cyan-300/50 bg-cyan-400/15 font-semibold text-cyan-50 hover:bg-cyan-400/25`}>{continueAfterLatest.label}</button>
         </span>}
       </div>
-      {rewritable && chapter && <ChapterRewrite key={chapter.id} chapterNumber={chapter.chapterNumber} disabled={writer.writing} onRewrite={rewriteChapter} />}
+      {rewritable && chapter && !authoring && <ChapterRewrite key={chapter.id} chapterNumber={chapter.chapterNumber} disabled={writer.writing} onRewrite={rewriteChapter} />}
       </div>
       <ReaderBottomBar readAloud={readAloud} onListen={chapter ? listen : undefined} offscreen={follow.offscreen}
         onBackToNarration={follow.backToNarration} barRef={playerRef}
         note={mixer && <ReaderAudioNote mixer={mixer} />}
         onOpenCodex={openCodex} fate={{ run: () => openFate(fateCalls), disabled: fateLocked, attention: fateCalls }}
+        create={chapter ? {
+          active: Boolean(authoring), onToggle: () => setCreating(!authoring),
+          unavailable: authorable ? undefined : later ? 'Only the newest chapter can be changed' : 'This chapter is sealed: the story has moved on from it',
+        } : undefined}
         previous={previous ? { label: 'Previous Chapter', run: () => openChapter(previous.chapterNumber) } : undefined}
         next={later ? { label: 'Next Chapter', run: () => openChapter(later.chapterNumber) }
           : continueAfterLatest ? {

@@ -465,7 +465,7 @@ describe('Read Aloud in the HARNESS Reader', { timeout: 20_000 }, () => {
     const controls = container.querySelector('[data-testid="reader-controls-row"]')!;
     expect(container.querySelector('[data-testid="read-aloud-strip"]')).toBeNull();
     expect([...controls.querySelectorAll('button')].map(button => button.getAttribute('aria-label')))
-      .toEqual(['Pause', 'Previous sentence', 'Narration playback speed', 'Next sentence', 'Open Codex', 'Previous Chapter', 'Open Fate', 'Next Chapter']);
+      .toEqual(['Pause', 'Previous sentence', 'Narration playback speed', 'Next sentence', 'Open Codex', 'Previous Chapter', 'Open Fate', 'Next Chapter', 'Create mode']);
 
     await next();
     expect(lastSpoken().text).toBe('The tide pulled back from the drowned gate.');
@@ -890,7 +890,7 @@ describe('The Reader frame and its chapter body', { timeout: 20_000 }, () => {
       .toEqual(['Back', 'Select chapter: Chapter 1', 'Reader Settings']);
     const bottom = container.querySelector<HTMLElement>('[data-testid="reader-bottom-bar"]')!;
     expect([...bottom.querySelectorAll('button')].map(button => button.getAttribute('aria-label')))
-      .toEqual(['Previous sentence', 'Narration playback speed', 'Next sentence', 'Open Codex', 'Previous Chapter', 'Open Fate', 'Next Chapter: Write Chapter 2']);
+      .toEqual(['Previous sentence', 'Narration playback speed', 'Next sentence', 'Open Codex', 'Previous Chapter', 'Open Fate', 'Next Chapter: Write Chapter 2', 'Create mode']);
     // The far right keeps the coming Create mode's place.
     expect(bottom.querySelector('[data-testid="reader-create-slot"]')).toBeTruthy();
 
@@ -944,5 +944,45 @@ describe('The Reader frame and its chapter body', { timeout: 20_000 }, () => {
     expect(chapterOnScreen(2)!.getAttribute('data-testid')).toBe('panel-body');
     await click(byLabel('Reader Settings'), 'Reader Settings');
     expect(dialog().querySelector('h2')!.textContent).toBe('Reader Settings');
+  });
+});
+
+describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
+  // The overlay measures the page as it changes size.
+  const rects = Range.prototype.getClientRects;
+  beforeEach(() => {
+    vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
+    Range.prototype.getClientRects = () => [{ left: 100, top: 200, right: 170, bottom: 222, width: 70, height: 22 }] as unknown as DOMRectList;
+  });
+  afterEach(() => { vi.unstubAllGlobals(); Range.prototype.getClientRects = rects; });
+  it('opens the newest chapter on the Text Highlight Engine with its overlays; an earlier chapter is sealed', async () => {
+    const { controller, storyId } = await story({ written: 2 });
+    await mount(<Host controller={controller} storyId={storyId} />);
+    const create = () => buttonBy(byLabel('Create mode'))!;
+    // Chapter 1: the story has moved on from it, so it is sealed.
+    expect(chapterOnScreen(1)).toBeTruthy();
+    expect(create().disabled).toBe(true);
+    expect(create().title).toBe('Only the newest chapter can be changed');
+    await click(byLabel('Next Chapter'), 'Next Chapter');
+    expect(create().disabled).toBe(false);
+    await click(byLabel('Create mode'), 'Create mode');
+    expect(create().getAttribute('aria-pressed')).toBe('true');
+    const authoring = container.querySelector<HTMLElement>('[data-testid="chapter-authoring"]')!;
+    expect(authoring.getAttribute('data-chapter-number')).toBe('2');
+    expect(authoring.querySelector('[data-testid="create-mode-saving"]')!.textContent).toBe('Saved');
+    // The Cues overlay is on: its legend explains the page's numbering, and Off hides it.
+    expect(authoring.querySelector('[data-testid="overlay-legend"]')!.textContent).toContain('P2 S6');
+    await click(button => button.textContent === 'Off' && button.closest('[data-testid="overlay-switch"]') !== null, 'Overlays off');
+    expect(authoring.querySelector('[data-testid="overlay-legend"]')).toBeNull();
+    expect(authoring.textContent).toContain('Mara');
+    // Back to reading: the chapter is prose again.
+    await click(byLabel('Create mode'), 'Back to reading');
+    expect(container.querySelector('[data-testid="chapter-authoring"]')).toBeNull();
+    expect(chapterOnScreen(2)).toBeTruthy();
+    // Another chapter closes Create mode.
+    await click(byLabel('Create mode'), 'Create mode');
+    await click(byLabel('Previous Chapter'), 'Previous Chapter');
+    expect(container.querySelector('[data-testid="chapter-authoring"]')).toBeNull();
+    expect(create().getAttribute('aria-pressed')).toBe('false');
   });
 });

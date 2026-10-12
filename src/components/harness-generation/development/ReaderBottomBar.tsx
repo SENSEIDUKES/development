@@ -1,6 +1,6 @@
 import { useRef, useState, type ComponentType, type ReactNode, type Ref } from 'react';
 import { SEIOverlayScrollbar, SEIPopover, SEIPopoverContent, SEIPopoverTitle, SEIPopoverTrigger } from '@seihouse/ui';
-import { BookOpen, Check, ChevronLeft, ChevronRight, Compass, LocateFixed, Pause, Play, RotateCcw, SkipBack, SkipForward } from 'lucide-react';
+import { BookOpen, Check, ChevronLeft, ChevronRight, Compass, LocateFixed, Pause, Play, RotateCcw, SkipBack, SkipForward, Zap } from 'lucide-react';
 import { READ_ALOUD_RATES, type ReadAloud, type ReadAloudRole } from '@seihouse/sen/reader-runtime';
 import { controlFeedback, pickerHeading, pickerList, pickerRow, pickerSelected, pickerSurface } from './readerPicker';
 
@@ -11,6 +11,14 @@ export interface ReaderChapterStep {
   busy?: boolean;
   /** Shown but not yet available (Fate Survival: the chapter waits on Fate first). */
   disabled?: boolean;
+}
+
+/** Create mode, at the far right: the reader authors the newest chapter in place. */
+export interface ReaderCreateStep {
+  active: boolean;
+  onToggle: () => void;
+  /** Why it is closed: only the newest chapter, before the next is written, can be changed. */
+  unavailable?: string;
 }
 
 /** Fate, between the chapter arrows. */
@@ -49,15 +57,14 @@ function IconButton({ label, icon: Icon, onClick, disabled, className = round }:
 /**
  * The Reader frame's bottom bar, across the bottom of the screen, holds what
  * the reader acts with: Listen and sentence navigation on the left, Codex in
- * the middle, and the chapter arrows with Fate between them on the right. The
- * far right keeps the place of the coming Create mode, so nothing moves when it
- * arrives. Sentence navigation and its speed selector are always visible
+ * the middle, the chapter arrows with Fate (a compass) between them, and Create
+ * mode (a lightning bolt) at the far right. Sentence navigation and its speed selector are always visible
  * beside the play/pause button. Back to narration floats above the left end
  * only when needed; the story audio note floats above the right. Where the
  * browser can't read aloud, Codex stays available and the skip controls are
  * disabled. The chapter list opens from the story and chapter in the top bar.
  */
-export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarration, barRef, note, onOpenCodex, fate, previous, next }: {
+export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarration, barRef, note, onOpenCodex, fate, create, previous, next }: {
   readAloud: ReadAloud;
   /** Starts reading where the reader is on the page. Absent before the story has a chapter. */
   onListen?: () => void;
@@ -68,6 +75,8 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
   note?: ReactNode;
   onOpenCodex: () => void;
   fate: ReaderFateStep;
+  /** Absent before the story has a chapter, or where the host cannot save one. */
+  create?: ReaderCreateStep;
   previous?: ReaderChapterStep;
   next?: ReaderChapterStep;
 }) {
@@ -152,9 +161,15 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
             <ChevronRight className="h-4 w-4" aria-hidden />
           </button>
         </nav>
-          {/* The coming Create mode's place, so Codex stays centered and nothing moves when it arrives. */}
+          {/* Create mode at the far right, balancing Listen; the story audio note floats above it. */}
           <div className="relative h-12 w-12 shrink-0 max-[380px]:h-11 max-[380px]:w-11" data-testid="reader-create-slot">
           {note && <div className="pointer-events-none absolute bottom-full left-1/2 mb-4 -translate-x-1/2 [&>*]:pointer-events-auto" data-testid="story-audio-note">{note}</div>}
+          {create && <button type="button" aria-label="Create mode" aria-pressed={create.active} data-testid="reader-create-button"
+            title={create.unavailable ?? (create.active ? 'Back to reading' : 'Create mode: change this chapter\'s words and Sound Cues')}
+            disabled={Boolean(create.unavailable) && !create.active} onClick={create.onToggle}
+            className={`${secondary} disabled:cursor-not-allowed disabled:opacity-35 ${create.active ? 'border-cyan-200/50 bg-cyan-400/20 text-cyan-50' : ''}`}>
+            <Zap className="h-6 w-6" aria-hidden />
+          </button>}
           </div>
         </div>
       </div>

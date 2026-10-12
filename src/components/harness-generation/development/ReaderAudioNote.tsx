@@ -1,9 +1,13 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { ReaderMixerNote, useReaderMixerState, type ReaderMixer } from '@seihouse/audio-player';
+import { ReaderMixerNote, useReaderMixerState, type ReaderMixer, type ReaderMixerNoteLabels } from '@seihouse/audio-player';
 import './reader-audio-note.css';
 
-/** Tap mutes; hold opens volume. Only Settings owns the Master enable switch. */
-export function ReaderAudioNote({ mixer }: { mixer: ReaderMixer }) {
+/**
+ * Tap mutes; hold opens volume. Only Settings owns the Master enable switch.
+ * The one sound note: the Reader's, and the Library shell's (`HeaderSoundControl`),
+ * which gives it its own words.
+ */
+export function ReaderAudioNote({ mixer, labels }: { mixer: ReaderMixer; labels?: Partial<ReaderMixerNoteLabels> }) {
   const state = useReaderMixerState(mixer);
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
@@ -34,7 +38,7 @@ export function ReaderAudioNote({ mixer }: { mixer: ReaderMixer }) {
         setOpen(true);
       }
     }}>
-    <ReaderMixerNote mixer={mixer} muteMode="soundtrack-mute" className="reader-story-audio-note" onOpenSettings={() => setOpen(true)} />
+    <ReaderMixerNote mixer={mixer} muteMode="soundtrack-mute" labels={labels} className="reader-story-audio-note" onOpenSettings={() => setOpen(true)} />
     {open && <div className="reader-audio-volume reader-glass reader-glass-menu" role="group" aria-label="Quick master volume">
       <input ref={slider} type="range" min="0" max="100" step="1"
         aria-label="Quick master volume" aria-orientation="vertical" aria-valuetext={`${percent}%`} value={percent}

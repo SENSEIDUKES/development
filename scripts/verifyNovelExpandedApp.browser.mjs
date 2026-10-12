@@ -21,7 +21,7 @@
  * holdings, nothing of it on screen) → reload (no new request, nothing reads by itself) →
  * Back → Continue → World Info's Settings card (closed until opened: language, Reading Mode, CAPA skills, media) →
  * Manifest on the cover (one or three; three unseal, then the picker; the kept cover on World Info and on Home's card) → Export story (the whole story as one file) → Back
- * → Home card, its music note (tap mutes; hover or hold opens the Music volume) → browser Back and Forward →
+ * → Home card, its music note, the Reader's own (tap mutes; hold or ArrowUp opens the quick Master volume) → browser Back and Forward →
  * Create from the navigation (on laptops, a minimized sidebar stays minimized after a reload) → a missing story goes Home.
  * World Info sits in the shell; the Reader never does. The music note floats just above the bottom bar's right end
  * on phones, as the Reader's note does above its Listen bar, and sits in the header on laptops.
@@ -815,8 +815,8 @@ async function walk(browser, viewport, sample) {
   check((await page.locator('[id^="home-world-"] img').first().getAttribute('src'))?.startsWith('blob:'), 'Home\'s card should wear the story\'s cover.');
   await shot('7-home-with-story');
 
-  // Home's music note (Menu music is on for a new reader): a tap mutes all sound, and hovering it (a mouse) or holding
-  // it (a finger) opens the Music volume, which sets the music's level in the saved mix.
+  // Home's music note (Menu music is on for a new reader) is the Reader's own: a tap mutes all sound, and holding it
+  // (a finger) or ArrowUp (the keyboard) opens the quick Master volume, which sets Master's level in the saved mix.
   const savedMix = async () => JSON.parse(await page.evaluate(() => localStorage.getItem('novelexpanded-reader-audio-mixer')) ?? '{}');
   await noteInPlace('Home with a story');
   const headerNote = musicNote().first();
@@ -832,8 +832,10 @@ async function walk(browser, viewport, sample) {
   check(await headerNote.getAttribute('aria-label') === 'Unmute sound', `Muted, the music note should offer to unmute, got ${await headerNote.getAttribute('aria-label')}.`);
   await headerNote.click();
   await savedSoon(() => { const mix = JSON.parse(localStorage.getItem('novelexpanded-reader-audio-mixer') ?? '{}'); return mix.masterEnabled === true && mix.masterMuted === false; }, 'A second tap should unmute.');
+  check(await page.locator('.header-sound-control .reader-audio-control .reader-story-audio-note').count() >= 1, 'Home\'s music note should be the Reader\'s note.');
   if (viewport.width >= 1024) {
-    await headerNote.hover();
+    await headerNote.focus();
+    await page.keyboard.press('ArrowUp');
   } else {
     await headerNote.dispatchEvent('pointerdown', { pointerType: 'touch', button: 0, isPrimary: true });
     await page.waitForTimeout(650);
@@ -843,17 +845,18 @@ async function walk(browser, viewport, sample) {
   await volume.waitFor();
   check((await savedMix()).masterEnabled === true, 'Opening the volume should never mute.');
   await volume.fill('60');
-  await savedSoon(() => Math.abs((JSON.parse(localStorage.getItem('novelexpanded-reader-audio-mixer') ?? '{}').layers?.soundscapes?.level ?? 0) - 0.6) < 0.01,
-    'The slider should set the music\'s level in the saved mix.');
-  const volumeBox = await page.locator('.header-sound-control-popover').boundingBox();
+  await savedSoon(() => Math.abs((JSON.parse(localStorage.getItem('novelexpanded-reader-audio-mixer') ?? '{}').masterLevel ?? 0) - 0.6) < 0.01,
+    'The slider should set Master\'s level in the saved mix.');
+  const volumeBox = await page.locator('.header-sound-control .reader-audio-volume').boundingBox();
   check(volumeBox && volumeBox.x >= 0 && volumeBox.x + volumeBox.width <= viewport.width, `The volume should fit the screen, got ${JSON.stringify(volumeBox)}.`);
-  // Floating above the bar on phones, the volume opens upward, above the note.
-  if (!laptop) check(volumeBox && volumeBox.y >= 0 && volumeBox.y + volumeBox.height <= headerNoteBox.y + 1,
+  // Floating above the bar on phones, the volume grows upward from the note, as in the Reader; in a laptop's header, downward.
+  if (!laptop) check(volumeBox && volumeBox.y >= 0 && volumeBox.y < headerNoteBox.y && volumeBox.y + volumeBox.height <= headerNoteBox.y + headerNoteBox.height + 6,
     `On a phone the volume should open above the note, got ${JSON.stringify({ volumeBox, note: headerNoteBox })}.`);
+  else check(volumeBox && volumeBox.y >= headerNoteBox.y - 6 && volumeBox.y + volumeBox.height > headerNoteBox.y + headerNoteBox.height && volumeBox.y + volumeBox.height <= viewport.height,
+    `In the laptop header the volume should open below the note, got ${JSON.stringify({ volumeBox, note: headerNoteBox })}.`);
   await shot('7c-sound-slider');
   await page.keyboard.press('Escape');
-  if (viewport.width >= 1024) await page.mouse.move(viewport.width / 2, viewport.height / 2);
-  else await page.locator('body').dispatchEvent('pointerdown', { pointerType: 'touch', button: 0 });
+  if (viewport.width < 1024) await page.locator('body').dispatchEvent('pointerdown', { pointerType: 'touch', button: 0 });
   await page.locator('.header-sound-control input[type="range"]').waitFor({ state: 'detached' });
 
   // 6. The browser's Back and Forward walk the same pages.

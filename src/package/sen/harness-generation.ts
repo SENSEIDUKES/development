@@ -149,6 +149,7 @@ export { createHarnessSenStory } from '../../components/harness-generation/share
 export * from '../../narrative/generation';
 export { HarnessReaderSession, type HarnessReaderWriting } from '../../components/harness-generation/development/HarnessReaderSession';
 export { ProseChapterBody } from '../../components/harness-generation/development/ProseChapterBody';
+export { ReaderAudioNote } from '../../components/harness-generation/development/ReaderAudioNote';
 export { ReaderPanel, useWideReader } from '../../components/harness-generation/development/ReaderPanel';
 export type { ReaderLayer } from '../../components/harness-generation/development/HarnessReaderSession';
 export type { ReaderChapter, ReaderChapterBody, ReaderChapterBodyProps } from '../../components/harness-generation/development/readerChapterBody';

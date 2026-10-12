@@ -55,15 +55,15 @@
   filter: blur(10px);
 }
 
+/* The wordmark sets the header's height: at 90px wide it is 56px tall, the
+   header's own row, so the header stays compact (about 72px with its padding). */
 .novel-expanded-wordmark {
   display: flex;
   align-items: center;
-  width: 172px;
-  flex: 0 1 172px;
+  width: 90px;
+  flex: 0 1 90px;
   min-width: 0;
-  height: 90px;
   max-width: 100%;
-  overflow: hidden;
   border-radius: 4px;
 }
 
@@ -91,5 +91,5 @@
 @media (min-width: 480px) {
   .novel-expanded-header-identity { gap: 8px; }
   .novel-expanded-emblem-art { width: 32px; height: 32px; }
-  .novel-expanded-wordmark { width: 192px; flex-basis: 192px; height: 100px; }
+  .novel-expanded-wordmark { width: 104px; flex-basis: 104px; }
 }

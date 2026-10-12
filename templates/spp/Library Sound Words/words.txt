@@ -1,0 +1,32 @@
+# The Library's sound words: one per line, at most 30.
+# One to three plain lowercase words each. Lines starting with # are notes.
+beast roar
+growl
+beast howl
+serpent hiss
+dragon call
+screech
+animal cry
+wings beat
+unsheathe
+gun reload
+mech moves
+spell cast
+fire spell
+wind spell
+healing magic
+artifact activates
+artifact resonates
+power up
+bell rings
+gong strikes
+alarm horn
+bugle call
+fanfare
+chime
+metal scrape
+rattle
+war chant
+war cry
+dark chant
+holy chant

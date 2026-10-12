@@ -7,8 +7,8 @@ import type { HarnessSkillManifest } from '../../../narrative/generation';
  * the words where a sound happens and names it. It never chooses a recording,
  * file or placement rule; the HARNESS does that from the story's sound words.
  * The instruction names no sounds itself: the story's sound words, appended
- * below it at assembly with an example made from the first, are the whole
- * vocabulary. Its numbers are SOUND_CUE_RULES. Where tags may go, and that the
+ * below it at assembly one per line, are the whole vocabulary. Its numbers
+ * are SOUND_CUE_RULES. Where tags may go, and that the
  * prose reads complete without them, is said once for every tag kind by the
  * HARNESS tag rules.
  */
@@ -24,7 +24,7 @@ CHECK BEFORE YOU RETURN: Every sound tag sits inside a sentence around words of 
 /** SEN's bundled Sound Cues skill. It occupies the Sound Cues slot, which the story's Media Loadout manages. */
 export const SEN_SOUND_CUES_SKILL: HarnessSkillManifest = {
   id: 'seihouse.sen-sound-cues',
-  version: '2.2.0',
+  version: '2.3.0',
   name: 'SEN Sound Cues',
   description: 'Tags the words where a sound happens and names it from the story\'s sound words; the HARNESS places the cue and picks the recording.',
   slot: 'soundCues',
@@ -34,16 +34,15 @@ export const SEN_SOUND_CUES_SKILL: HarnessSkillManifest = {
 };
 
 /**
- * The story's sound words as the writer sees them: one example tag made from
- * the first word, then every word, with its meaning when it needs telling
- * apart. The list is the whole vocabulary. It carries no example phrases:
- * given phrases ("iron scraped stone"), the writer copied them into the
- * chapter instead of tagging what its prose already said.
+ * The story's sound words as the writer sees them: the words alone, one per
+ * line, and nothing else. The list is the whole vocabulary. It carries no
+ * example tag, phrases or meanings: given phrases ("iron scraped stone"), the
+ * writer copied them into the chapter instead of tagging what its prose
+ * already said.
  */
 export const presentSoundVocabulary = (words: readonly SoundWord[]) => words.length
   ? [
-      `EXAMPLE: [[sound: ${words[0].word} | ${words[0].example} | medium]]`,
       'SOUND WORDS (the sounds that can play; tag your own words, never words written to fit one):',
-      ...words.map(sound => `${sound.word}${sound.meaning ? ` (${sound.meaning})` : ''}`),
+      ...words.map(sound => sound.word),
     ].join('\n')
   : '';

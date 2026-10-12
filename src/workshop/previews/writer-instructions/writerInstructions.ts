@@ -55,7 +55,7 @@ export interface WriterInstruction {
 const skillSource = (skill: HarnessSkillManifest) => `${skill.name} v${skill.version}`;
 const skillText = (skill: HarnessSkillManifest) => skill.instructions!.trim();
 
-/** The story's sound list as the writer sees it, here with the default library a story starts with. */
+/** The story's sound list as the writer sees it, here with the Library's preset a new story starts with. */
 const DEFAULT_SOUND_LIST = presentSoundVocabulary(LIBRARY_SOUND_WORDS);
 
 /** The story's music moods and atmospheres as the writer sees them, from the default soundscapes and atmospheres. */
@@ -75,7 +75,7 @@ export const EVERY_CHAPTER: readonly WriterInstruction[] = [
   },
   {
     id: 'sound-cues', title: 'Sound Cues', source: skillSource(SEN_SOUND_CUES_SKILL),
-    when: 'Every chapter of a story with sound words. The list is the story\'s Sound Cue Pack; shown here with the default library.',
+    when: 'Every chapter of a story with sound words. The list is the story\'s own Sound Words that a recording plays; shown here with the Library\'s preset a new story starts with.',
     text: `${skillText(SEN_SOUND_CUES_SKILL)}\n${DEFAULT_SOUND_LIST}`,
   },
   {

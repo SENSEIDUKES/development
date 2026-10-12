@@ -5,12 +5,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { InMemoryHarnessGenerationRepository } from '../../test-utils/InMemoryHarnessGenerationRepository';
 import { writtenChapter } from '../../test-utils/writtenChapter';
 import { installAudioMediaStubs, renderWithDevAudio } from '../../test-utils/renderWithDevAudio';
-import { findStory, HarnessGenerationController, type HarnessGenerationModelAdapter } from '@seihouse/sen/harness-generation';
+import { findStory, HarnessGenerationController, type HarnessGenerationModelAdapter, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import type { ReaderPreferenceStorage } from '@seihouse/sen/reader-runtime';
 import {
   applyStorySettingsDraft, readStorySettingsDraft, StoryPages, storyCoverRequest, storyHomeWorlds, useLibraryStories, writeStorySettingsDraft,
-  STORY_SETTINGS_DRAFT_KEY, type LibraryStories, type StoryCoverService,
+  STORY_SETTINGS_DRAFT_KEY, type LibraryStories, type LibraryStoriesOptions, type StoryCoverService,
 } from '@seihouse/library/stories';
+import { LIBRARY_BASE_MEDIA } from '../../host/media/libraryCatalog';
+import { createMemoryDeviceMediaPackStore, DeviceMediaUrls } from '../../host/media/deviceMediaPacks';
+import { useDeviceMediaPacks } from '../../host/media/useDeviceMediaPacks';
+import { inspectHarnessSkillPackage } from '../../host/generation/capa/sppSkills';
+import { createPack } from 'seihouse-productions-package';
 import { COVER_REVEAL_HOLD_MS } from './StoryCoverManifest';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -52,12 +57,14 @@ let latest: LibraryStories | undefined;
 let latestCovers: StoryCoverService | undefined;
 const keep = vi.fn();
 const letGo = vi.fn();
-function Host({ repository, adapter, storyId, makeCover }: {
+function Host({ repository, adapter, storyId, makeCover, options = {} }: {
   repository: InMemoryHarnessGenerationRepository; adapter: HarnessGenerationModelAdapter; storyId: string;
   /** The host's cover maker; the host keeps the one chosen, as the app does. */
   makeCover?: StoryCoverService['make'];
+  /** The host's media and installers. */
+  options?: Partial<LibraryStoriesOptions>;
 }) {
-  const stories = useLibraryStories({ repository, modelAdapter: adapter });
+  const stories = useLibraryStories({ repository, modelAdapter: adapter, ...options });
   latest = stories;
   const [urls, setUrls] = useState<Record<string, string>>({});
   const covers = useMemo<StoryCoverService | undefined>(() => makeCover && {
@@ -105,7 +112,7 @@ describe('Story Settings in World Info\'s Settings card', () => {
     const writer = gatedWriter();
     const repository = new InMemoryHarnessGenerationRepository();
     const story = await createStory(repository, writer.adapter);
-    await act(async () => root.render(renderWithDevAudio(<Host repository={repository} adapter={writer.adapter} storyId={story.id} />)));
+    await act(async () => root.render(renderWithDevAudio(<Host repository={repository} adapter={writer.adapter} storyId={story.id} options={{ baseMedia: LIBRARY_BASE_MEDIA }} />)));
     await flush();
 
     // Closed until the reader opens it, so World Info stays about the story.
@@ -121,8 +128,11 @@ describe('Story Settings in World Info\'s Settings card', () => {
     // The developer page's inspection stays there.
     expect(container.querySelector('[data-testid="harness-official-requirements"]')).toBeNull();
     expect(settings()!.textContent).not.toContain('View skill instructions');
-    // No other packs: the Library's own sounds play.
-    expect(container.querySelector('[data-testid="story-media-soundCues-default"]')!.textContent).toContain('The Library\'s own Sound Cues');
+    // No other packs: the Library's own sounds play, and count as equipped.
+    expect(container.querySelector('[data-testid="story-media-soundCues-default"]')!.textContent).toBe('The Library’s own Sound Cues');
+    expect(container.querySelector('[data-testid="story-media-soundscapes-default"]')!.textContent).toBe('The Library’s own Soundscapes');
+    expect(container.querySelector('[data-testid="media-loadout-count"]')!.textContent).toBe('2/2 equipped');
+    expect(settings()!.textContent).not.toContain('Not used by new chapters yet');
 
     await select(container.querySelector<HTMLSelectElement>('[data-testid="story-settings"] select')!, 'Easy Read');
     expect(findStory(latest!.state!, story.id)!.chapterWritingStyle).toBe('Easy Read');
@@ -169,6 +179,81 @@ describe('Story Settings in World Info\'s Settings card', () => {
     await flush();
     expect(container.querySelector('[data-testid="story-settings-writing"]')).toBeNull();
     expect(container.querySelector<HTMLSelectElement>('[data-testid="story-settings"] select')!.disabled).toBe(false);
+  });
+});
+
+const encode = (value: unknown) => new Uint8Array(new TextEncoder().encode(typeof value === 'string' ? value : JSON.stringify(value)));
+/** A style skill package, as `npm run spp` makes one. */
+const stylePackage = async () => new Uint8Array(await createPack({
+  name: 'Grand Style', description: 'Test-only style.', version: '1.0.0',
+  files: [{ path: 'assets/style.md', mediaType: 'text/markdown', data: encode('Write with grandeur.') }],
+  extensions: { 'seihouse.capa': { slot: 'style' } } as never,
+}));
+/** A Sound Cue package: one recording that answers "temple bell". */
+const soundCuePackage = async () => new Uint8Array(await createPack({
+  name: 'Temple Sounds', description: 'Test-only recordings.', version: '1.0.0',
+  files: [
+    { path: 'assets/temple bell/bell.mp3', mediaType: 'audio/mpeg', data: new Uint8Array([73, 68, 51, 4]) },
+    { path: 'assets/media-pack.json', mediaType: 'application/json', data: encode({ recordings: [{ path: 'assets/temple bell/bell.mp3', sound: 'temple bell' }] }) },
+  ],
+  extensions: { 'seihouse.media-pack': { type: 'sound-cue', catalog: 'assets/media-pack.json' } } as never,
+}));
+const upload = async (input: HTMLInputElement | null, bytes: Uint8Array, name: string) => {
+  expect(input, `Expected the file field for ${name}`).toBeTruthy();
+  Object.defineProperty(input, 'files', { value: [new File([new Uint8Array(bytes)], name)], configurable: true });
+  await act(async () => { input!.dispatchEvent(new Event('change', { bubbles: true })); });
+  await flush(50);
+  await flush(50);
+};
+
+/** A host that installs skills and media packs the way the app does: kept by the host, offered back. */
+function InstallingHost({ repository, adapter, storyId }: { repository: InMemoryHarnessGenerationRepository; adapter: HarnessGenerationModelAdapter; storyId: string }) {
+  const [skills, setSkills] = useState<HarnessSkillManifest[]>([]);
+  const [store] = useState(() => createMemoryDeviceMediaPackStore());
+  const [urls] = useState(() => new DeviceMediaUrls());
+  const media = useDeviceMediaPacks(store, urls);
+  return <Host repository={repository} adapter={adapter} storyId={storyId} options={{
+    baseMedia: LIBRARY_BASE_MEDIA, installedSkills: skills,
+    skillIntake: inspectHarnessSkillPackage, installSkill: skill => setSkills(current => [...current, skill]),
+    registeredMediaPacks: media.packs, mediaPackEntitlements: media.entitlements, importMediaPack: media.importPack,
+  }} />;
+}
+
+describe('Installing skills and media from Story Settings', () => {
+  it('installs a skill package into its slot and a Sound Cue package into the Media Loadout, each equipped at once', async () => {
+    const writer = gatedWriter();
+    const repository = new InMemoryHarnessGenerationRepository();
+    const story = await createStory(repository, writer.adapter);
+    await act(async () => root.render(renderWithDevAudio(<InstallingHost repository={repository} adapter={writer.adapter} storyId={story.id} />)));
+    await flush();
+    await click(settingsCard(), 'Settings');
+
+    // Each hand-equipped slot takes a package.
+    const styleImport = [...container.querySelectorAll('details')].find(details => details.querySelector('summary')?.textContent === 'Upload SPP to Style')!;
+    expect(styleImport).toBeTruthy();
+    await upload(styleImport.querySelector('input[type="file"]'), await stylePackage(), 'Grand Style v1.0.0.spp');
+    expect(styleImport.textContent).toContain('Write with grandeur.');
+    await click([...styleImport.querySelectorAll('button')].find(button => button.textContent === 'Install and equip in Style'), 'Install and equip');
+    await flush(50);
+    const equipped = findStory(latest!.state!, story.id)!.skillLoadout?.style;
+    expect(equipped?.id).toMatch(/^spp:/);
+    expect(latest!.skills.some(skill => skill.id === equipped!.id)).toBe(true);
+    expect(container.querySelector<HTMLSelectElement>('#harness-skill-style')!.value).toContain(equipped!.id);
+
+    // A Sound Cue package is installed, unlocked and equipped in its slot; the Soundscapes stay the Library's.
+    await upload(container.querySelector('[data-testid="media-pack-import-file"]'), await soundCuePackage(), 'Temple Sounds v1.0.0.spp');
+    const cues = findStory(latest!.state!, story.id)!.mediaLoadout?.soundCues;
+    expect(cues?.id).toMatch(/^spp\./);
+    expect(container.querySelector('[data-testid="media-loadout-count"]')!.textContent).toBe('2/2 equipped');
+    expect(container.querySelector<HTMLSelectElement>('#harness-media-soundCues')!.value).toBe(`${cues!.id}@1.0.0`);
+    expect([...container.querySelectorAll('[aria-label="Sounds Temple Sounds plays"] li')].map(item => item.textContent)).toEqual(['temple bell']);
+    // The pack's recording answers a word the story can now use.
+    expect(latest!.controller.describeSoundWords(story.id).answered).toEqual(['temple bell']);
+
+    // Not a media package: refused with a reason, nothing changed.
+    await upload(container.querySelector('[data-testid="media-pack-import-file"]'), await stylePackage(), 'Grand Style v1.0.0.spp');
+    expect(container.querySelector('[data-testid="story-view-settings"] [role="alert"]')?.textContent).toContain('is not a Soundscape or Sound Cue package');
+    expect(findStory(latest!.state!, story.id)!.mediaLoadout?.soundCues).toEqual(cues);
   });
 });
 

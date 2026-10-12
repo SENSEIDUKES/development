@@ -32,7 +32,7 @@ const LOCAL_CREATURE_PORTRAIT = '/card-workshop/test-images/lyra_meadowlight_por
 const CONTEXT_CARD_BLOCK_ID = 'card-workshop-context-card';
 const CONTEXT_OPENING_BLOCK_ID = 'card-workshop-context-opening';
 /** The opening paragraph as a writer returns it, with a sound tag on the words where each sound happens. */
-const CONTEXT_OPENING = readMarks('Rain threaded down the bronze eaves. The [[sound: bell rings | Rain Court bell tolled once | high]] as [[sound: beast growl | a Vermilion Debt Fox growled | medium]] beneath the empty tribunal.');
+const CONTEXT_OPENING = readMarks('Rain threaded down the bronze eaves. The [[sound: bell rings | Rain Court bell tolled once | high]] as [[sound: growl | a Vermilion Debt Fox growled | medium]] beneath the empty tribunal.');
 const CONTEXT_OPENING_TEXT = CONTEXT_OPENING.text;
 const CONTEXT_CHAPTER_NUMBER = 1;
 

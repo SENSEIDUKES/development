@@ -1,5 +1,5 @@
 import { parseAudioCues, type AudioCue, type AudioCuesLoadResult } from './cues';
-import { isPublicHttpsMediaUrl } from './mediaUrl';
+import { isPlayableMediaUrl } from './mediaUrl';
 import { resolveSoundscapeTrack, type SceneAudioTrack, type SoundscapeIntent } from './soundscapes';
 import type { SoundWord } from './soundWords';
 
@@ -34,7 +34,11 @@ export interface FrozenNarrativeMedia {
   capturedAt: string;
   soundscapes: Array<{ track: SceneAudioTrack; provenance: MediaResourceProvenance }>;
   soundCues: Array<{ cue: AudioCue; provenance: MediaResourceProvenance }>;
-  /** The sound words these Sound Cue recordings answer, each with its example. */
+  /**
+   * The sound words the writer may name. Frozen for an attempt, they are the
+   * story's own list (`withStorySoundWords`); from a host, the words its
+   * recordings answer.
+   */
   sounds?: SoundWord[];
   /** The atmospheres a chapter may choose. Absent from media frozen before chapters chose them. */
   atmospheres?: SceneAtmosphere[];
@@ -73,15 +77,31 @@ export function createMediaCatalog(snapshot?: FrozenNarrativeMedia): MediaCatalo
   };
 }
 
+/** Every sound word at least one playable recording answers (public HTTPS, with provenance). */
+export function answeredSoundWords(media?: Pick<FrozenNarrativeMedia, 'soundCues'>): Set<string> {
+  return new Set((media?.soundCues ?? [])
+    .filter(({ cue, provenance }) => cue.metadata.sound && isPlayableMediaUrl(cue.public_url) && isMediaResourceProvenance(provenance))
+    .map(({ cue }) => cue.metadata.sound!));
+}
+
 /**
  * The sound words a story may name: every declared word that at least one
- * playable recording answers (public HTTPS, with provenance), in declared order.
+ * playable recording answers, in declared order. A word no recording answers
+ * stays in the story's list but never reaches the writer.
  */
 export function soundVocabulary(media?: Pick<FrozenNarrativeMedia, 'sounds' | 'soundCues'>): SoundWord[] {
-  const playable = new Set((media?.soundCues ?? [])
-    .filter(({ cue, provenance }) => cue.metadata.sound && isPublicHttpsMediaUrl(cue.public_url) && isMediaResourceProvenance(provenance))
-    .map(({ cue }) => cue.metadata.sound));
+  const playable = answeredSoundWords(media);
   return structuredClone((media?.sounds ?? []).filter(sound => playable.has(sound.word)));
+}
+
+/**
+ * Media frozen for a story: its sound words, each the word alone. The
+ * story's own list replaces whatever words the recordings brought; a story
+ * that has never kept a list (`undefined`) keeps its recordings' words.
+ * Examples and meanings stay with the catalog and never reach the writer.
+ */
+export function withStorySoundWords<T extends Pick<FrozenNarrativeMedia, 'sounds'>>(media: T, words?: readonly string[]): T {
+  return { ...media, sounds: (words ?? (media.sounds ?? []).map(sound => sound.word)).map(word => ({ word })) };
 }
 
 export function resolveAuthorizedSoundscape(intent: SoundscapeIntent, catalog: MediaCatalog): ResolvedSoundscape | null {

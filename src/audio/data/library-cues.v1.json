@@ -204,7 +204,7 @@
             ],
             "description": "The distinct, sharp sound of a dagger being unsheathed. This sound captures the metallic friction of the blade leaving its sheath.",
             "confidence_score": 1.0,
-            "sound": "blade drawn"
+            "sound": "unsheathe"
         }
     },
     {
@@ -223,7 +223,7 @@
             ],
             "description": "A grand and powerful sound of a sword being dramatically unsheathed. This metallic scrape captures the epic drawing of a blade.",
             "confidence_score": 1.0,
-            "sound": "blade drawn",
+            "sound": "unsheathe",
             "studio_tags": {
                 "energy": "high"
             }
@@ -245,7 +245,7 @@
             ],
             "description": "The distinct sound of a heavy sword being unsheathed from its scabbard, characterized by a substantial metallic scrape.",
             "confidence_score": 1.0,
-            "sound": "blade drawn",
+            "sound": "unsheathe",
             "studio_tags": {
                 "energy": "high"
             }
@@ -267,7 +267,7 @@
             ],
             "description": "The distinct sound of a sword being unsheathed. It captures the metallic scrape and movement of drawing a blade from its scabbard.",
             "confidence_score": 1.0,
-            "sound": "blade drawn"
+            "sound": "unsheathe"
         }
     },
     {
@@ -286,7 +286,7 @@
             ],
             "description": "The rapid sound of a metallic blade being drawn from its sheath, ready for action. It's a quick and sharp unsheathing.",
             "confidence_score": 0.98,
-            "sound": "blade drawn"
+            "sound": "unsheathe"
         }
     },
     {
@@ -305,7 +305,7 @@
             ],
             "description": "A sharp, metallic sound of a sword being unsheathed. This sound distinctly captures the action of a blade being drawn from its scabbard.",
             "confidence_score": 1.0,
-            "sound": "blade drawn"
+            "sound": "unsheathe"
         }
     },
     {
@@ -647,7 +647,7 @@
             ],
             "description": "A very loud, high-pitched creature scream or screech, possibly indicating distress or a warning.",
             "confidence_score": 0.9,
-            "sound": "creature screech",
+            "sound": "screech",
             "studio_tags": {
                 "energy": "medium"
             }
@@ -734,7 +734,7 @@
             ],
             "description": "A powerful and guttural roar from a large, aggressive animal, accompanied by deep growls and an exhale.",
             "confidence_score": 0.98,
-            "sound": "beast growl",
+            "sound": "growl",
             "studio_tags": {
                 "energy": "medium"
             }
@@ -1029,7 +1029,7 @@
             ],
             "description": "A terrifying and guttural screech produced by a zombie, ideal for horror settings or creature sound effects.",
             "confidence_score": 1.0,
-            "sound": "creature screech"
+            "sound": "screech"
         }
     },
     {
@@ -2046,7 +2046,7 @@
             ],
             "description": "A powerful, resonant metallic scrape and whoosh, characteristic of a large, epic sword being drawn from its scabbard. It perfectly fits the intended role of a weapon unsheathe sound.",
             "confidence_score": 0.95,
-            "sound": "blade drawn",
+            "sound": "unsheathe",
             "studio_tags": {
                 "energy": "high"
             }
@@ -2068,7 +2068,7 @@
             ],
             "description": "A distinct metallic scrape followed by a resonant ring, characteristic of a heavy sword being drawn from its scabbard, fitting its intended role as a weapon unsheathe sound.",
             "confidence_score": 0.98,
-            "sound": "blade drawn",
+            "sound": "unsheathe",
             "studio_tags": {
                 "energy": "high"
             }
@@ -2090,7 +2090,7 @@
             ],
             "description": "A heavy metallic unsheathe sound, characteristic of a large sword being drawn from its scabbard, featuring a distinct ringing resonance.",
             "confidence_score": 0.95,
-            "sound": "blade drawn",
+            "sound": "unsheathe",
             "studio_tags": {
                 "energy": "high"
             }
@@ -2224,7 +2224,7 @@
             ],
             "description": "A deep, guttural growl from a large animal, consistent with a tiger. This sound perfectly fits the 'Beasts > Growl' category as it is a clear and characteristic animal growl.",
             "confidence_score": 0.98,
-            "sound": "beast growl"
+            "sound": "growl"
         }
     },
     {
@@ -2568,7 +2568,7 @@
             ],
             "description": "A high-pitched, sustained, and piercing creature vocalization, strongly resembling a monstrous or animalistic screech. It perfectly fits the 'Beasts > Screech' category as it's clearly a vocalization from a creature with a distinct screeching quality.",
             "confidence_score": 0.98,
-            "sound": "creature screech"
+            "sound": "screech"
         }
     },
     {

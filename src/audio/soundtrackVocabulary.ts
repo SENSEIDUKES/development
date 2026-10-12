@@ -1,4 +1,4 @@
-import { isPublicHttpsMediaUrl } from './mediaUrl';
+import { isPlayableMediaUrl } from './mediaUrl';
 import type { FrozenNarrativeMedia } from './media';
 
 /**
@@ -28,7 +28,7 @@ const compareCodePoints = (left: string, right: string) => (left < right ? -1 : 
 export function soundtrackVocabulary(media?: Pick<FrozenNarrativeMedia, 'soundscapes' | 'atmospheres'>): SoundtrackVocabulary {
   const counts = new Map<string, number>();
   for (const { track } of media?.soundscapes ?? []) {
-    if (!isPublicHttpsMediaUrl(track.url)) continue;
+    if (!isPlayableMediaUrl(track.url)) continue;
     for (const mood of new Set([track.mood, ...track.moods].map(soundtrackWord).filter(Boolean))) counts.set(mood, (counts.get(mood) ?? 0) + 1);
   }
   const enough = Math.max(0, ...counts.values()) >= SOUNDTRACK_MOOD_PIECES ? SOUNDTRACK_MOOD_PIECES : 1;

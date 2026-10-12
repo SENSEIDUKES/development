@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AGENTS } from '../../../lib/agents';
 import { LIBRARY_BASE_MEDIA } from '../../../host/media/libraryCatalog';
+import { useSoundWordsPresets } from '../../../host/media/useSoundWordsPresets';
+import { useDeviceMediaPacks } from '../../../host/media/useDeviceMediaPacks';
+import { WORKSHOP_DEVICE_MEDIA, WORKSHOP_MEDIA_PACK_STORE } from '../../deviceMedia';
 import { HarnessGenerationWorkspace as HarnessGenerationSurface } from '@seihouse/library/generation';
 import { HarnessGenerationHttpClient } from '../../../host/generation/httpClient';
 import { createSavedAccessToken } from '../../../host/generation/accessToken';
@@ -64,6 +67,10 @@ export function HarnessGenerationWorkspace() {
     return new HarnessGenerationHttpClient(undefined, () => accessToken.current);
   });
   const [chapterModel, setChapterModel] = useModelPreference('chapters');
+  // The Workshop's own Sound Words presets, apart from the app's.
+  const soundWords = useSoundWordsPresets('seihouse.harness.sound-words.v1');
+  // Packs installed in the Workshop from .spp files, beside its test packs, always unlocked.
+  const devicePacks = useDeviceMediaPacks(WORKSHOP_MEDIA_PACK_STORE, WORKSHOP_DEVICE_MEDIA);
   const [saved] = useState(() => {
     try { return { skills: loadHarnessSppSkills(localStorage), error: '' }; }
     catch { return { skills: [] as HarnessSkillManifest[], error: 'Saved SPP skills could not be loaded. Reimport the packages to restore their skills.' }; }
@@ -74,6 +81,8 @@ export function HarnessGenerationWorkspace() {
   const [mediaPackEntitlements, setMediaPackEntitlements] = useState<MediaPackEntitlement[]>([]);
   const [storageError, setStorageError] = useState(saved.error);
   const installedSkills = useMemo(() => [...WORKSHOP_HARNESS_SKILLS, ...importedSkills], [importedSkills]);
+  const registeredMediaPacks = useMemo(() => [...WORKSHOP_MEDIA_PACKS, ...devicePacks.packs], [devicePacks.packs]);
+  const allEntitlements = useMemo(() => [...mediaPackEntitlements, ...devicePacks.entitlements], [mediaPackEntitlements, devicePacks.entitlements]);
   const entry = workshopEntries.find(item => item.id === 'harness-generation')!;
   useEffect(() => {
     let active = true;
@@ -119,8 +128,10 @@ export function HarnessGenerationWorkspace() {
         initialStoryId={arrival.storyId} initialFocus={arrival.focus}
         modelAdapter={modelAdapter} storySeedSource={storySeedSource} installedSkills={installedSkills}
         showHarnessInternals
-        registeredMediaPacks={WORKSHOP_MEDIA_PACKS} mediaPackEntitlements={mediaPackEntitlements}
+        registeredMediaPacks={registeredMediaPacks} mediaPackEntitlements={allEntitlements}
+        importMediaPack={devicePacks.importPack}
         baseMedia={LIBRARY_BASE_MEDIA}
+        soundWordPresets={soundWords.presets} importSoundWords={soundWords.importPack}
         preferredModel={chapterModel} onModelChange={setChapterModel}
         onGrantDevelopmentMediaReward={(reference: MediaPackReference) => {
           const unlockedAt = new Date();

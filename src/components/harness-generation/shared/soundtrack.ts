@@ -1,4 +1,4 @@
-import { isPublicHttpsMediaUrl } from '../../../audio/mediaUrl';
+import { isPlayableMediaUrl } from '../../../audio/mediaUrl';
 import { soundtrackWord } from '../../../audio/soundtrackVocabulary';
 import type { FrozenNarrativeMedia } from '../../../audio/media';
 import type { HarnessChapterScene } from '../../../narrative/generation';
@@ -30,7 +30,7 @@ export function chapterSoundtrack(
   const [first, ...rest] = tags;
   if (!first) return { unknown: [], extra: 0 };
   const moods = new Set((media?.soundscapes ?? [])
-    .filter(({ track }) => isPublicHttpsMediaUrl(track.url))
+    .filter(({ track }) => isPlayableMediaUrl(track.url))
     .flatMap(({ track }) => [track.mood, ...track.moods].map(soundtrackWord)));
   const atmospheres = media?.atmospheres ?? [];
   let soundscape: string | undefined;

@@ -150,19 +150,33 @@ export type SoundTagIssue =
 export const SOUND_TAG_WORDS = ['sound', 'sounds', 'sfx', 'sound cue', 'sound effect'] as const;
 
 /**
- * A soundtrack tag: the chapter's music and atmosphere, chosen once at its
- * start (`[[soundtrack: mystical | forest]]`). Which parts are words of the
- * story's soundtrack is decided where the chapter is accepted.
+ * Which sound a soundtrack tag chooses. The chapter's music (its soundscape)
+ * and its atmosphere are two separate sounds, each with its own tag
+ * (`[[soundscape: mystical]]`, `[[atmosphere: forest]]`), as Sound Cues have
+ * theirs. `soundtrack` is the earlier tag that named both at once
+ * (`[[soundtrack: mystical | forest]]`), still read so no chapter loses it.
+ */
+export type SoundtrackTagKind = 'soundscape' | 'atmosphere' | 'soundtrack';
+
+/**
+ * A soundtrack tag: the chapter's opening music or atmosphere, chosen once at
+ * its start. Which parts are words of the story's soundtrack is decided where
+ * the chapter is accepted.
  */
 export interface SoundtrackTag {
-  /** The parts between the pipes, trimmed, in order: the music's mood, then the atmosphere. */
+  kind: SoundtrackTagKind;
+  /** The parts between the pipes, trimmed, in order (a `soundtrack` tag: the music's mood, then the atmosphere). */
   parts: string[];
   /** UTF-16 offset in the clean text. */
   offset: number;
 }
 
-/** The words a soundtrack tag may open with, letter case and hyphens aside: `[[scene: …]]` is `[[soundtrack: …]]`. */
-export const SOUNDTRACK_TAG_WORDS = ['soundtrack', 'sound track', 'scene', 'music'] as const;
+/** The words each soundtrack tag may open with, letter case and hyphens aside: `[[music: …]]` is `[[soundscape: …]]`. */
+export const SOUNDTRACK_TAG_WORDS: Readonly<Record<SoundtrackTagKind, readonly string[]>> = {
+  soundscape: ['soundscape', 'sound scape', 'music'],
+  atmosphere: ['atmosphere', 'ambience', 'ambiance'],
+  soundtrack: ['soundtrack', 'sound track', 'scene'],
+};
 
 export interface MarkReadingOptions {
   /**
@@ -241,9 +255,16 @@ const SOUND_POINT = new RegExp(String.raw`${OPEN}${GAP}${SOUND_TAG_WORD}${GAP}${
 const SOUND_UNCLOSED = new RegExp(String.raw`${OPEN}${GAP}${SOUND_TAG_WORD}${GAP}${COLON}[^\[\]［］|｜\n.!?。！？“"「]{0,120}[.!?。！？]?`, 'iy');
 /** `| high]]`: the Energy written after a sound tag's words, closing it. */
 const SOUND_CLOSE_WITH_PART = new RegExp(String.raw`[|｜]${GAP}([^\[\]［］|｜\n]{0,24}?)${GAP}${CLOSE}`, 'y');
-const SOUNDTRACK_TAG_WORD = String.raw`(?:sound[ \t-]?track|scene|music)`;
-/** `[[soundtrack: mystical | forest]]` `［［soundtrack：mystical｜forest］］` `[[Scene: mystical]]` */
+const SOUNDTRACK_TAG_WORD = String.raw`(sound[ \t-]?track|scene|music|sound[ \t-]?scape|atmosphere|ambi[ae]nce)`;
+/** `[[soundscape: mystical]]` `[[atmosphere: forest]]` `［［soundtrack：mystical｜forest］］` `[[Scene: mystical]]` */
 const SOUNDTRACK_TAG = new RegExp(String.raw`${OPEN}${GAP}${SOUNDTRACK_TAG_WORD}${GAP}${COLON}([^\[\]［］\n]{0,120})${CLOSE}`, 'iy');
+/** The kind a tag's opening word names. */
+const soundtrackKind = (word: string): SoundtrackTagKind => {
+  const spelled = word.toLowerCase().replace(/[ \t-]/g, '');
+  if (spelled === 'soundscape' || spelled === 'music') return 'soundscape';
+  if (spelled === 'atmosphere' || spelled.startsWith('ambi')) return 'atmosphere';
+  return 'soundtrack';
+};
 /** A soundtrack tag that never closes: removed through the end of the sentence it ran into. */
 const SOUNDTRACK_UNCLOSED = new RegExp(String.raw`${OPEN}${GAP}${SOUNDTRACK_TAG_WORD}${GAP}${COLON}[^\[\]［］\n.!?。！？“"「]{0,120}[.!?。！？]?`, 'iy');
 
@@ -401,7 +422,7 @@ export function readMarks(source: string, { soundWords }: MarkReadingOptions = {
       }
       const soundtrack = matchAt(SOUNDTRACK_TAG, source, index);
       if (soundtrack) {
-        soundtracks.push({ parts: soundtrack[1].split(PIPE).map(part => part.trim()).filter(Boolean), offset: text.length });
+        soundtracks.push({ kind: soundtrackKind(soundtrack[1]), parts: soundtrack[2].split(PIPE).map(part => part.trim()).filter(Boolean), offset: text.length });
         index = skipDoubledSpace(index + soundtrack[0].length);
         continue;
       }

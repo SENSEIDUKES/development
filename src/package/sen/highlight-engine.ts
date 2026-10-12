@@ -25,5 +25,9 @@ export {
   ATTACHMENT_COLORS, OVERLAY_KINDS, attachmentMarks, structurePins, type ManuscriptOverlayMode,
 } from '../../components/highlight-engine/shared/overlayModes';
 export {
-  ManuscriptOverlaySwitch, placedSoundCue, placedSoundCues, soundCueActions,
+  ManuscriptOverlaySwitch, placedSoundCue, placedSoundCues, audioActions,
 } from '../../components/highlight-engine/development/ManuscriptAuthoring';
+export {
+  SoundtrackChangePanel, SoundtrackOptionList, SOUNDTRACK_KIND_WORDS, soundtrackChangeAnchor, soundtrackChangeOf, soundtrackOptionLabel, soundtrackOptions,
+  type SoundtrackChoices, type SoundtrackOption,
+} from '../../components/highlight-engine/development/SoundtrackChangePicker';

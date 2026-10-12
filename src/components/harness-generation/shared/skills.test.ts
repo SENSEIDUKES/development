@@ -158,7 +158,7 @@ describe('Harness installed skills', () => {
     ]);
     // The story's moods and atmospheres close the Soundtrack section, after one example tag.
     const soundtrackSection = capa.text.slice(capa.text.indexOf('CAPA SKILL [Soundtrack]'), capa.text.indexOf('CAPA SKILL [Speakers]'));
-    expect(soundtrackSection.trim().endsWith('EXAMPLE (choose your own for each chapter): [[soundtrack: mystical | forest]]\nMUSIC MOODS: mystical, war\nATMOSPHERES: forest, cave')).toBe(true);
+    expect(soundtrackSection.trim().endsWith('EXAMPLE (choose your own for each chapter): [[soundscape: mystical]] [[atmosphere: forest]]\nMUSIC MOODS: mystical, war\nATMOSPHERES: forest, cave')).toBe(true);
     expect(capa.soundtrackVocabulary).toEqual({ moods: ['mystical', 'war'], atmospheres: ['forest', 'cave'] });
     // The story's sound words close the Sound Cues section, the words alone, and nothing else carries them.
     const soundSection = capa.text.slice(capa.text.indexOf('CAPA SKILL [Sound Cues]'), capa.text.indexOf('CAPA SKILL [Soundtrack]'));

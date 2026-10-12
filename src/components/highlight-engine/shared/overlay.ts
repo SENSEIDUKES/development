@@ -1,6 +1,6 @@
 import type { PassageSelection } from './selection';
 
-/** One tinted range drawn behind the prose, e.g. every placed Sound Cue in a Cues overlay. */
+/** One tinted range drawn behind the prose, e.g. every placed Sound Cue in an Audio overlay. */
 export interface OverlayMark {
   id: string;
   selection: PassageSelection;

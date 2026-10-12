@@ -1,4 +1,5 @@
 import type { SoundCueAttachment } from '../audio/inlineAudio';
+import type { ChapterOpeningSound, SoundtrackChangeAttachment } from '../audio/soundtrackChanges';
 import type { SpeakerAttachment } from './speech';
 import type { CodexEntry, HoldingChangeAttachment, HoldingsSection } from './holdings';
 import type { SoundWord } from '../audio/soundWords';
@@ -600,7 +601,7 @@ export interface HarnessAcceptedChapterDraft {
   holdingChanges?: HoldingChangeAttachment[];
   /** The writer's closing list: the main character's things and abilities by name, after this chapter. */
   closingHoldings?: string[];
-  /** The chapter's music and atmosphere, from the writer's soundtrack tag. */
+  /** The chapter's music and atmosphere, from the writer's soundscape and atmosphere tags. */
   scene?: HarnessChapterScene;
   title: string;
   titleSource: 'model' | 'harness-fallback';
@@ -934,6 +935,13 @@ export interface HarnessChapter {
   authoring?: HarnessChapterAuthoring;
   /** The chapter's music and atmosphere, as its writer chose them. Absent before scenes were chosen. */
   scene?: HarnessChapterScene;
+  /** The reader's own opening music or atmosphere (Create mode), in place of the writer's; locked at the start. */
+  openingSound?: ChapterOpeningSound;
+  /**
+   * The reader's changes of music and of atmosphere partway through (Create
+   * mode): at most one of each, on the word where it begins.
+   */
+  soundtrackChanges?: SoundtrackChangeAttachment[];
   /** Pack/version provenance of the frozen catalog that produced this media. */
   mediaLoadout: FrozenNarrativeMedia;
   plan?: HarnessModelPlan;

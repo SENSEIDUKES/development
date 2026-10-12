@@ -96,7 +96,14 @@ cases, never the chapter, and only corrects what the checks flagged.
   a sound plays and names it; the words stay in the prose. (The numbered mark
   `[[n|words]]` it replaced is retired: still removed, placing nothing.)
 - **Speaker tag** — `[[@MC]]`, `[[@Name]]`: names who speaks the speech after it.
-- **Soundtrack tag** — `[[soundtrack: Music Mood | Atmosphere]]`, once, at the
+- **Soundscape tag and atmosphere tag** — `[[soundscape: Music Mood]]` and
+  `[[atmosphere: Atmosphere]]` (SEN Soundtrack 2.0.0, 2026-10-12), each once,
+  together at the very start of the chapter: the music and the place's sound
+  are separate sounds, apart from Sound Cues, so each has its own tag. The
+  earlier combined tag, `[[soundtrack: Music Mood | Atmosphere]]`, is still
+  read (`SoundtrackTag.kind` says which). A change partway through a chapter is
+  the reader's, in Create mode (`HarnessChapter.openingSound`,
+  `soundtrackChanges`). Before 2026-10-12: one tag, once, at the
   very start of the chapter: the mood of the chapter's music and its
   atmosphere, from the story's own lists (`soundtrackVocabulary`: the moods at
   least three playable pieces share, and the atmosphere words). Only the first

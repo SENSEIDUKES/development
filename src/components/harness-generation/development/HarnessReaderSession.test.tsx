@@ -970,7 +970,7 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
     const authoring = container.querySelector<HTMLElement>('[data-testid="chapter-authoring"]')!;
     expect(authoring.getAttribute('data-chapter-number')).toBe('2');
     expect(authoring.querySelector('[data-testid="create-mode-saving"]')!.textContent).toBe('Saved');
-    // The Cues overlay is on: its legend explains the page's numbering, and Off hides it.
+    // The Audio overlay is on: its legend explains the page's numbering, and Off hides it.
     expect(authoring.querySelector('[data-testid="overlay-legend"]')!.textContent).toContain('P2 S6');
     await click(button => button.textContent === 'Off' && button.closest('[data-testid="overlay-switch"]') !== null, 'Overlays off');
     expect(authoring.querySelector('[data-testid="overlay-legend"]')).toBeNull();

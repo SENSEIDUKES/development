@@ -423,8 +423,10 @@ Update it whenever it changes.
     Help and Search. Off, the menus are silent and the note goes; the Reader
     keeps its own music. The switch is in the app's own Profile Settings too.
   - **A chapter's soundtrack, in the tiny SEN language:** at the very start of
-    every chapter the writer writes one soundtrack tag, the mood of its music
-    and its atmosphere (`[[soundtrack: mystical | forest]]`), from the story's
+    every chapter the writer writes a soundscape tag and an atmosphere tag,
+    separate sounds with separate tags since 2026-10-12
+    (`[[soundscape: mystical]] [[atmosphere: forest]]`; before, one
+    `[[soundtrack: mystical | forest]]`), from the story's
     own lists (the 15 moods at least three pieces share; 20 atmosphere words).
     Only the first counts, so a passing fight never brings on war music. Beds
     that share a word take turns from chapter to chapter, and a chapter that
@@ -650,9 +652,9 @@ Update it whenever it changes.
 - **Not connected yet:**
   - Covers live on the device, not in R2: the database (and an account) will
     keep them. No real model has made a cover yet; the first owner test will.
-  - The Highlight Engine's tools are in the Reader as Create mode (wording and
-    Sound Cues on the newest chapter), but it cannot yet change the chapter's
-    soundscapes or atmosphere.
+  - The Highlight Engine's tools are in the Reader as Create mode: wording,
+    Sound Cues, and the chapter's soundscape and atmosphere (each its opening,
+    and one change partway through) on the newest chapter.
   - The app's Profile runs on the device and a practice economy: there are no
     accounts, database or server-side storage yet, so nothing the economy holds
     survives a reload, and the account and server pieces wait.

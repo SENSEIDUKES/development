@@ -3,6 +3,7 @@ import { useOptionalReaderMixer, type ReaderMixer } from '@seihouse/audio-player
 import { resolvePlayableSoundCue, type SceneAudioTrack, type SoundCueAttachment } from '@seihouse/sen/audio';
 import { piecesForMood, storySoundtrack, type SoundtrackChoice, type SoundtrackRequest } from '@seihouse/sen/reader-runtime';
 import type { HarnessChapter, HarnessChapterScene } from '../../../narrative/generation';
+import type { ReaderScene } from './useSoundtrackChanges';
 
 /** How far the soundtrack drops while Listen reads aloud: the player's own narration duck. */
 export const LISTEN_DUCK = 0.6;
@@ -75,8 +76,8 @@ export function useReaderSoundtrack({ active, chapterId, soundCues, scene, piece
   /** The chapter on screen. */
   chapterId?: string;
   soundCues?: readonly SoundCueAttachment[];
-  /** The chapter's own music and atmosphere, as its writer chose them. */
-  scene?: HarnessChapterScene;
+  /** The chapter's music and atmosphere at the reader's place: the writer's, or the reader's own from Create mode. */
+  scene?: ReaderScene;
   /** The soundscapes the chapter was written with: its music comes from these. */
   pieces?: readonly SceneAudioTrack[];
   /** Who chooses the music and the atmosphere: each chapter (Automatic) or the reader. */
@@ -113,8 +114,8 @@ export function useReaderSoundtrack({ active, chapterId, soundCues, scene, piece
     if (mixer.getPreferences().atmosphereId !== atmosphereId) mixer.setAtmosphere(atmosphereId);
   }, [mixer, active, atmosphereId]);
 
-  // The music: the reader's own piece, or the chapter's mood, or the Reader's own. Never the host's.
-  const chosenId = choice.soundscape === 'automatic' ? undefined : choice.soundscape.pieceId;
+  // The music: the reader's own piece (Settings), the chapter's exact piece (Create mode), its mood, or the Reader's own. Never the host's.
+  const chosenId = choice.soundscape === 'automatic' ? scene?.piece : choice.soundscape.pieceId;
   const mood = scene?.soundscape;
   useEffect(() => {
     if (!mixer || !active || !pieces?.length) return undefined;

@@ -22,7 +22,8 @@ const ACTION = previewParagraphs[0];
 const ROAR = 'the beast roared again';
 const ROAR_AT = ACTION.indexOf(ROAR);
 const ROAR_SENTENCE = 'Somewhere behind the smoke, the beast roared again, closer now, its claws scraping across the stone.';
-const button = (name: string) => Array.from(document.querySelectorAll('button')).find(item => item.textContent === name)!;
+/** The action bar's own buttons first: the overlay switch has an Audio button too. */
+const button = (name: string) => [...document.querySelectorAll('.sen-text-highlight-actions button'), ...document.querySelectorAll('button')].find(item => item.textContent === name) as HTMLButtonElement;
 const click = (name: string) => act(() => button(name).click());
 const block = (index = 0) => host.querySelectorAll<HTMLElement>('[data-sen-text-block]')[index];
 const prose = (index = 0) => block(index).textContent?.replaceAll('⁠', '');
@@ -97,8 +98,8 @@ describe('Workshop manuscript page', () => {
   });
 });
 
-describe('Workshop Cues overlay', () => {
-  const overlayButton = (name: 'Off' | 'Cues') =>
+describe('Workshop Audio overlay', () => {
+  const overlayButton = (name: 'Off' | 'Audio') =>
     Array.from(document.querySelectorAll<HTMLButtonElement>('[data-testid="overlay-switch"] button')).find(item => item.textContent === name)!;
   const chips = (selector: string) => Array.from(host.querySelectorAll(selector), chip => chip.textContent);
 
@@ -107,14 +108,14 @@ describe('Workshop Cues overlay', () => {
   it('numbers the page and tints every cue while on, and does nothing while off', async () => {
     expect(host.querySelector('.sen-text-highlight-overlay')).toBeNull();
     expect(legend()).toBeNull();
-    act(() => overlayButton('Cues').click());
-    expect(overlayButton('Cues').getAttribute('aria-pressed')).toBe('true');
+    act(() => overlayButton('Audio').click());
+    expect(overlayButton('Audio').getAttribute('aria-pressed')).toBe('true');
     // ¶ numbers in the margin, raised sentence numbers counted through the page — the model's P2 S6.
     expect(chips('.sen-overlay-pin')).toEqual(['¶1', '1', '2', '3', '4', '5', '¶2', '6', '7', '8', '9', '¶3', '10', '11', '12', '13', '14', '15']);
     expect(chips('.sen-overlay-pin[data-placement="margin"]')).toEqual(['¶1', '¶2', '¶3']);
     expect(legend()?.textContent).toContain('The model writes it P2 S6.');
     // The changed-words key appears only when something on the page carries it.
-    expect(Array.from(legend()!.querySelectorAll('li'), item => item.textContent)).toEqual(['Sound Cue']);
+    expect(Array.from(legend()!.querySelectorAll('li'), item => item.textContent)).toEqual(['Sound Cue', 'Soundscape change', 'Atmosphere change']);
     expect(host.querySelectorAll('.sen-overlay-mark')).toHaveLength(0);
 
     await selectRoar(); openCue(); placeFirstCue();

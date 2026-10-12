@@ -8,6 +8,7 @@ import {
 import type { ArcPlan } from '@seihouse/sen/arc-goals';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { writtenChapter } from '../../../test-utils/writtenChapter';
+import { harnessParagraphBlockId } from './chapterBody';
 
 /**
  * Create mode saves the reader's own changes to the newest chapter: its words
@@ -97,6 +98,35 @@ describe('Create mode: authoring the newest chapter', () => {
     await run.write(reply('The Bridge', ['Lin crossed the rope bridge.']));
     expect(run.chapters()[0].authoring).toEqual({ editedAt: '2026-10-12T12:00:00.000Z' });
     expect(run.chapters()[1].authoring).toBeUndefined();
+  });
+
+  it('keeps the reader\'s opening soundscape and atmosphere, and one change of each partway through, on its word', async () => {
+    const run = await setup();
+    await run.write(reply('The Flood', ['Lin tied the rope to the rail.', 'The water rose over the stair.']));
+    const [chapter] = run.chapters();
+    const index = chapter.paragraphs.findIndex(paragraph => paragraph.includes('water rose'));
+    const blockId = harnessParagraphBlockId(chapter.chapterNumber, index);
+    const word = (text: string) => {
+      const at = chapter.paragraphs[index].indexOf(text);
+      return { level: 'span' as const, blockId, startOffset: at, endOffset: at + text.length, selectedText: text };
+    };
+    const music = { id: 'music', kind: 'soundscape-change' as const, anchor: word('water'), payload: { pieceId: 'war-1' } };
+    const air = { id: 'air', kind: 'atmosphere-change' as const, anchor: word('stair'), payload: { atmosphereId: 'storm' } };
+    const base = { paragraphs: chapter.paragraphs, soundCues: chapter.soundCues, speakers: chapter.speakers, holdingChanges: chapter.holdingChanges };
+    await run.controller.authorChapter(chapter.id, { ...base, openingSound: { soundscape: { pieceId: 'calm-1' } }, soundtrackChanges: [music, air] });
+    const [saved] = run.chapters();
+    expect(saved.openingSound).toEqual({ soundscape: { pieceId: 'calm-1' } });
+    expect(saved.soundtrackChanges).toEqual([music, air]);
+    // Two of each kind, the opening included: a second change of music is refused.
+    await expect(run.controller.authorChapter(chapter.id, { ...base, soundtrackChanges: [music, { ...music, id: 'again', anchor: word('stair') }] }))
+      .rejects.toThrow('changes its music at most once after its opening');
+    // A change keeps to its word like every other effect.
+    await expect(run.controller.authorChapter(chapter.id, { ...base, soundtrackChanges: [{ ...music, anchor: { ...music.anchor, selectedText: 'fire' } }] }))
+      .rejects.toThrow('must sit on its words');
+    // Choosing the writer's opening again clears the reader's.
+    await run.controller.authorChapter(chapter.id, base);
+    expect(run.chapters()[0].openingSound).toBeUndefined();
+    expect(run.chapters()[0].soundtrackChanges).toBeUndefined();
   });
 
   it('seals a chapter once the story moves on from it', async () => {

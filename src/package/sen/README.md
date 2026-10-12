@@ -1,5 +1,20 @@
 # `@seihouse/sen`
 
+**0.32.0 (2026-10-12, breaking):** The music, the atmosphere and Sound Cues are three
+separate sounds. The writer's tags: SEN Soundtrack 2.0.0 teaches `[[soundscape: Music Mood]]`
+and `[[atmosphere: Atmosphere]]`, each once at the chapter's start, in place of the combined
+`[[soundtrack: Music Mood | Atmosphere]]` (still read). `SoundtrackTag` gains `kind`
+(`SoundtrackTagKind`); `SOUNDTRACK_TAG_WORDS` is now a record by kind; `chapterSoundtrack`
+reads the first tag of each kind. Create mode: `HarnessChapter.openingSound`
+(`ChapterOpeningSound`, the reader's own opening piece or atmosphere, locked at the start)
+and `HarnessChapter.soundtrackChanges` (one `SoundscapeChangeAttachment` and one
+`AtmosphereChangeAttachment` at most, each on the word where it begins;
+`SOUNDTRACK_CHANGE_RULES`), saved by `authorChapter`; the Reader plays them as the reader
+reaches each word (`readerSceneAt`). `./highlight-engine`: `soundCueActions` is now
+`audioActions` (with the host's `soundtrack` choices: Media → Audio → Soundscape and
+Atmosphere); `SoundtrackChangePanel`, `SoundtrackOptionList`; the overlay mode `cues` is now
+`audio` and tints all three kinds.
+
 **0.31.0 (2026-10-12, breaking):** The Text Highlight Engine is the **Highlight Engine**: it
 highlights prose today and will highlight images for sequential art. The entry
 `./text-highlight-engine` is now `./highlight-engine`; `TextHighlightEngine` and

@@ -20,7 +20,7 @@ const INLINE_AUDIO_BLOCK_ID = 'ch1-b1-inline-audio';
  * HARNESS rules a generated chapter does, so these fixtures never choose
  * catalog files or URLs.
  */
-const INLINE_AUDIO_MARKED_TEXT = '[[sound: beast growl | A Vermilion Debt Fox growled | medium]] beneath the lintel as Mei Lin [[sound: blade drawn | drew the Ashen Sword | medium]]. [[sound: artifact resonates | The Azure Ring chimed awake]] in Li Wei’s hand; the Collapsed Gate of the Ninth Meridian [[sound: gong strikes | tolled once | high]], and the Ninth Meridian Sect [[sound: war chant | chanted in answer]].';
+const INLINE_AUDIO_MARKED_TEXT = '[[sound: growl | A Vermilion Debt Fox growled | medium]] beneath the lintel as Mei Lin [[sound: unsheathe | drew the Ashen Sword | medium]]. [[sound: artifact resonates | The Azure Ring chimed awake]] in Li Wei’s hand; the Collapsed Gate of the Ninth Meridian [[sound: gong strikes | tolled once | high]], and the Ninth Meridian Sect [[sound: war chant | chanted in answer]].';
 
 const INLINE_AUDIO_PARAGRAPH = readMarks(INLINE_AUDIO_MARKED_TEXT);
 const INLINE_AUDIO_BLOCK_TEXT = INLINE_AUDIO_PARAGRAPH.text;

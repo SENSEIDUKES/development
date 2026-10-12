@@ -51,17 +51,17 @@ const adapter = (...raws: string[]) => {
 
 /** A tagged reply: two good cues, one unknown sound, one tag that covers too many words, and tags leaking into every other field. */
 const taggedChapter = () => ({
-  title: 'The [[sound: beast growl | Debt Fox]]',
+  title: 'The [[sound: growl | Debt Fox]]',
   paragraphs: [
     'Mara held her ground as [[sound: beast roar | the beast roared | high]] across the courtyard.',
-    'She [[sound: Blade Drawn | drew her sword]] and waited for the rain to stop.',
+    'She [[sound: Unsheathe | drew her sword]] and waited for the rain to stop.',
     '[[sound: thunder | Thunder rolled | high]] over the tiled roofs.',
     'The [[sound: war cry | debt collectors of the eastern ward all arrived together]] at once.',
   ],
   arcCompletion: { goalId: 'arc-1-opening', completed: false, evidence: '' },
   recap: 'Mara faced [[sound: beast roar | the beast]] in the courtyard.',
   chapterFunction: 'conflict',
-  nextProgression: 'Mara [[sound: blade drawn | trains | low]] with her sword.',
+  nextProgression: 'Mara [[sound: unsheathe | trains | low]] with her sword.',
   nextWorldBuilding: 'The eastern ward keeps its ledgers.',
   nextConflict: 'The fox returns.',
 });
@@ -83,10 +83,11 @@ describe('HARNESS Sound Cues through sound tags', () => {
     await controller.generateNextChapter(story.id, 'fixture');
 
     const request = provider.generate.mock.calls[0][0];
-    expect(request.capaPrompt.soundVocabulary).toEqual(LIBRARY_SOUND_WORDS);
+    // A story from before it kept its own list: its recordings' words, each the word alone.
+    expect(request.capaPrompt.soundVocabulary).toEqual(LIBRARY_SOUND_WORDS.map(({ word }) => ({ word })));
     expect(request.capaPrompt.text).toContain('FORMAT: [[sound: Sound Word | Words | Energy]]');
-    expect(request.capaPrompt.text).toContain('EXAMPLE: [[sound: beast roar | the beast roared | medium]]');
-    expect(request.capaPrompt.text).toContain('\nblade drawn\n');
+    expect(request.capaPrompt.text).not.toContain('EXAMPLE: [[sound');
+    expect(request.capaPrompt.text).toContain('\nunsheathe\n');
     // The list names sounds; it hands the writer no phrases to copy into the chapter.
     expect(request.capaPrompt.text).not.toContain('drew his sword');
     const { responseJsonSchema, systemInstruction } = buildHarnessGenerationPrompt(request);
@@ -122,7 +123,7 @@ describe('HARNESS Sound Cues through sound tags', () => {
     expect(JSON.stringify(state.stories)).not.toContain('[[');
     expect(chapter.soundCues?.map(cue => [cue.id, cue.anchor.selectedText, cue.payload.sound, cue.payload.energy])).toEqual([
       ['sound-cue:c1-p1:24-40', 'the beast roared', 'beast roar', 'high'],
-      ['sound-cue:c1-p2:4-18', 'drew her sword', 'blade drawn', undefined],
+      ['sound-cue:c1-p2:4-18', 'drew her sword', 'unsheathe', undefined],
     ]);
     expect(chapter.soundCues?.every(cue => cue.payload.cue.provenance.catalogId === 'library-default-cues')).toBe(true);
     const warnings = state.attempts[0].warnings.filter(warning => warning.code === 'sound_cue_set_aside').map(warning => warning.message);
@@ -177,7 +178,7 @@ describe('HARNESS Sound Cues through sound tags', () => {
 
   it('places a cue in a Japanese story, keeping the tagged words in the story language', async () => {
     const raw = JSON.stringify({
-      paragraphs: ['雨の中、林は［［sound：blade drawn｜剣を抜いた｜medium］］。', '獣が[[sound: beast roar | 吠えた]]。'],
+      paragraphs: ['雨の中、林は［［sound：unsheathe｜剣を抜いた｜medium］］。', '獣が[[sound: beast roar | 吠えた]]。'],
       arcCompletion: { goalId: 'arc-1-opening', completed: false, evidence: '' },
     });
     const controller = new HarnessGenerationController({ repository: new InMemoryHarnessGenerationRepository(), media, modelAdapter: adapter(raw).value });
@@ -187,9 +188,49 @@ describe('HARNESS Sound Cues through sound tags', () => {
     const chapter = controller.snapshot().chapters[0];
     expect(chapter.paragraphs).toEqual(['雨の中、林は剣を抜いた。', '獣が吠えた。', REST_OF_CHAPTER]);
     expect(chapter.soundCues?.map(cue => [cue.anchor.blockId, cue.anchor.selectedText, cue.payload.sound])).toEqual([
-      ['c1-p1', '剣を抜いた', 'blade drawn'],
+      ['c1-p1', '剣を抜いた', 'unsheathe'],
       ['c1-p2', '吠えた', 'beast roar'],
     ]);
+  });
+
+  it('gives the writer the story\'s own words that a recording plays, and keeps saved cues when the words change', async () => {
+    const repository = new InMemoryHarnessGenerationRepository();
+    const provider = adapter(JSON.stringify(taggedChapter()), JSON.stringify(taggedChapter()));
+    const controller = new HarnessGenerationController({ repository, media, modelAdapter: provider.value });
+    const story = await createStory(controller);
+    // "door slam" has no recording in the Library: it stays the story's, and never reaches the writer.
+    await controller.setSoundWords(story.id, ['unsheathe', 'door slam']);
+    expect(controller.describeSoundWords(story.id).words).toEqual(['unsheathe', 'door slam']);
+    expect(controller.describeSoundVocabulary(story.id)).toEqual([{ word: 'unsheathe' }]);
+    await controller.generateNextChapter(story.id, 'fixture');
+
+    const request = provider.generate.mock.calls[0][0];
+    expect(request.capaPrompt.soundVocabulary).toEqual([{ word: 'unsheathe' }]);
+    const soundSection = request.capaPrompt.text.slice(request.capaPrompt.text.indexOf('CAPA SKILL [Sound Cues]'));
+    expect(soundSection).toContain('SOUND WORDS (the sounds that can play; tag your own words, never words written to fit one):\nunsheathe\n');
+    expect(soundSection).not.toMatch(/\nbeast roar\n|\ndoor slam\n/);
+    const attempt = controller.snapshot().attempts[0];
+    expect(attempt.mediaLoadout.sounds).toEqual([{ word: 'unsheathe' }, { word: 'door slam' }]);
+    const chapter = controller.snapshot().chapters[0];
+    // The roar is not one of this story's words: set aside, its prose kept.
+    expect(chapter.paragraphs[0]).toBe('Mara held her ground as the beast roared across the courtyard.');
+    expect(chapter.soundCues?.map(cue => [cue.anchor.selectedText, cue.payload.sound])).toEqual([['drew her sword', 'unsheathe']]);
+    const saved = structuredClone(chapter.soundCues);
+
+    // An empty list plays no Sound Cues from now on; the saved chapter keeps its cue and recording.
+    await controller.setSoundWords(story.id, []);
+    await controller.generateNextChapter(story.id, 'fixture');
+    const second = provider.generate.mock.calls[1][0];
+    expect(second.capaPrompt.soundVocabulary ?? []).toEqual([]);
+    expect(second.capaPrompt.text).not.toContain('CAPA SKILL [Sound Cues]');
+    const state = controller.snapshot();
+    expect(state.chapters[0].soundCues).toEqual(saved);
+    expect(state.chapters[1].soundCues).toBeUndefined();
+
+    const reloaded = new HarnessGenerationController({ repository, media, modelAdapter: adapter('{}').value });
+    await reloaded.hydrate();
+    expect(reloaded.snapshot().stories[0].soundWords).toEqual([]);
+    expect(createHarnessSenStory(reloaded.snapshot(), story.id).arcs[0].chapters[0].soundCues).toEqual(saved);
   });
 
   it('asks for no Sound Cues when the story has no sound words, and places none', async () => {
@@ -212,15 +253,15 @@ describe('HARNESS Sound Cues through sound tags', () => {
   it('reads a sound tag written the other way round, and places nothing from the retired numbered marks and list', () => {
     const options = { media: LIBRARY_BASE_MEDIA, soundVocabulary: LIBRARY_SOUND_WORDS };
     const reversed = acceptHarnessModelResponse(JSON.stringify({
-      paragraphs: ['She [[sound: drew her sword | blade drawn]] at dawn.'],
+      paragraphs: ['She [[sound: drew her sword | unsheathe]] at dawn.'],
       arcCompletion: { goalId: 'arc-1-opening', completed: false, evidence: '' },
     }), 1, options);
     expect(reversed.accepted && reversed.draft.paragraphs[0]).toBe('She drew her sword at dawn.');
-    expect(reversed.accepted && reversed.draft.soundCues?.map(cue => [cue.anchor.selectedText, cue.payload.sound])).toEqual([['drew her sword', 'blade drawn']]);
+    expect(reversed.accepted && reversed.draft.soundCues?.map(cue => [cue.anchor.selectedText, cue.payload.sound])).toEqual([['drew her sword', 'unsheathe']]);
 
     const retired = acceptHarnessModelResponse(JSON.stringify({
       paragraphs: ['She [[1|drew her sword]] at dawn.', 'The [[2|beast roared]] and [[3]] fell silent.'],
-      soundCues: [{ mark: 1, sound: 'blade drawn' }, { mark: 2, sound: 'beast roar' }],
+      soundCues: [{ mark: 1, sound: 'unsheathe' }, { mark: 2, sound: 'beast roar' }],
       arcCompletion: { goalId: 'arc-1-opening', completed: false, evidence: '' },
     }), 1, options);
     expect(retired.accepted).toBe(true);

@@ -174,8 +174,8 @@ describe('Workshop manual Sound Cue flow', () => {
     expect(document.querySelector('.sen-manual-cue-picker__number')?.textContent).toBe('#012');
     expect(document.querySelector('.sen-manual-cue-picker__count')?.textContent).toBe('Showing 7 of 92 cues');
     // Each recording shows its sound word, its category (the parent tag) and its child tags.
-    expect(Array.from(document.querySelectorAll('.sen-manual-cue-picker__item small'), item => item.textContent)).toContain('blade drawn · weapons · high');
-    setSearch('blade drawn');
+    expect(Array.from(document.querySelectorAll('.sen-manual-cue-picker__item small'), item => item.textContent)).toContain('unsheathe · weapons · high');
+    setSearch('unsheathe');
     expect(document.querySelectorAll('.sen-manual-cue-picker__item')).toHaveLength(9);
     setSearch('  SWorD  ');
     expect(document.querySelector('.sen-text-highlight-marks span')).not.toBeNull();

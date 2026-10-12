@@ -3,7 +3,7 @@ import type { SoundCueAttachment } from '../../../audio/inlineAudio';
 import { SOUND_CUE_RULES } from '../../../audio/soundCueRules';
 import { useNarrativeAudio } from '../../../audio/playback';
 import { isMediaResourceProvenance, type MediaCatalog } from '../../../audio/media';
-import { isPublicHttpsMediaUrl } from '../../../audio/mediaUrl';
+import { isPlayableMediaUrl } from '../../../audio/mediaUrl';
 import { AUDIO_CUE_CATEGORIES, type AudioCue } from '../../../audio/cues';
 import { createManualSoundCue } from '../shared/manualCue';
 import type { PassageSelection, TextHighlightBlock } from '../shared/selection';
@@ -41,7 +41,7 @@ export function ManualCuePicker({ block, selection, catalog, existing, occupiedS
   // Only recordings with a sound word can be a Sound Cue; any cue category (the Studio parent tag) may hold one.
   const cues = useMemo(() => catalog.soundCues.cues.filter(cue =>
     Boolean(cue.metadata.sound)
-    && isPublicHttpsMediaUrl(cue.public_url)
+    && isPlayableMediaUrl(cue.public_url)
     && isMediaResourceProvenance(catalog.soundCueProvenanceByUrl.get(cue.public_url))), [catalog]);
   const categories = useMemo(() => AUDIO_CUE_CATEGORIES.filter(value =>
     cues.some(cue => cue.category === value)), [cues]);

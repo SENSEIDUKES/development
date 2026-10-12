@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { FrozenNarrativeMedia } from '@seihouse/sen/audio';
+import type { FrozenNarrativeMedia, SoundWordsPreset } from '@seihouse/sen/audio';
 import {
   HarnessGenerationController,
   includeBundledHarnessSkills,
@@ -10,7 +10,8 @@ import {
   type HarnessSkillManifest,
   type HarnessWorkspaceState,
 } from '@seihouse/sen/harness-generation';
-import { createLibraryMediaPort, type MediaPack, type MediaPackEntitlement } from '../media/mediaPacks';
+import { createLibraryMediaPort, type MediaPack, type MediaPackEntitlement, type StoryMediaLoadoutSlot } from '../media/mediaPacks';
+import type { SkillPackageIntake } from './settings/SkillPackageImport';
 
 export interface LibraryStoriesOptions {
   /** Host-owned story storage. */
@@ -25,6 +26,23 @@ export interface LibraryStoriesOptions {
   mediaPackEntitlements?: MediaPackEntitlement[];
   /** Host-selected first-party records (the base sound words and recordings). */
   baseMedia?: FrozenNarrativeMedia;
+  /**
+   * Ready lists of sound words a story can start from, for Story Settings'
+   * Sound Words. The first is the one a new story starts with.
+   */
+  soundWordPresets?: readonly SoundWordsPreset[];
+  /** Installs a Sound Words `.spp` package as a preset, where the host allows it. */
+  importSoundWords?: (file: Blob) => Promise<SoundWordsPreset>;
+  /** Checks a skill `.spp` package, where the host lets readers install skills. */
+  skillIntake?: SkillPackageIntake;
+  /** Keeps an installed skill in the host's inventory, which then returns in `installedSkills`. */
+  installSkill?: (skill: HarnessSkillManifest) => void;
+  /**
+   * Installs a Soundscape or Sound Cue `.spp` package and returns it with the
+   * reader's unlock for it; both then return in `registeredMediaPacks` and
+   * `mediaPackEntitlements`.
+   */
+  importMediaPack?: (file: Blob) => Promise<{ pack: MediaPack; entitlement: MediaPackEntitlement }>;
   /** Host-remembered model choice (the Model Router); used whenever the server offers it. */
   preferredModel?: string;
   /**
@@ -64,11 +82,24 @@ export interface LibraryStories {
   /** The host's registered Media Packs, and the reader's unlocks, for Story Settings' Media Loadout. */
   mediaPacks: readonly MediaPack[];
   mediaPackEntitlements: readonly MediaPackEntitlement[];
+  /** The host's Sound Words presets; the first is a new story's. */
+  soundWordPresets: readonly SoundWordsPreset[];
+  /** Installs a Sound Words package, when the host offers it. */
+  importSoundWords?: (file: Blob) => Promise<SoundWordsPreset>;
+  /** What each Media Loadout slot plays with no pack: the Library's own, where the host has it. */
+  mediaDefaults: Partial<Record<StoryMediaLoadoutSlot, string>>;
+  /** Installs a media package, when the host offers it. */
+  importMediaPack?: (file: Blob) => Promise<MediaPack>;
+  /** Checks a skill package, when the host lets readers install skills. */
+  skillIntake?: SkillPackageIntake;
+  /** Installs a skill: it can be equipped at once. */
+  installSkill?: (skill: HarnessSkillManifest) => void;
 }
 
 const EMPTY_SKILLS: HarnessSkillManifest[] = [];
 const EMPTY_MEDIA_PACKS: MediaPack[] = [];
 const EMPTY_ENTITLEMENTS: MediaPackEntitlement[] = [];
+const EMPTY_PRESETS: SoundWordsPreset[] = [];
 
 /**
  * The Library's HARNESS stories for one host: one controller with the
@@ -83,6 +114,11 @@ export function useLibraryStories({
   registeredMediaPacks = EMPTY_MEDIA_PACKS,
   mediaPackEntitlements = EMPTY_ENTITLEMENTS,
   baseMedia,
+  soundWordPresets = EMPTY_PRESETS,
+  importSoundWords,
+  skillIntake,
+  installSkill: keepSkill,
+  importMediaPack: installMediaPack,
   preferredModel,
   holdingsFixer = 'records-and-sentences',
 }: LibraryStoriesOptions): LibraryStories {
@@ -156,6 +192,25 @@ export function useLibraryStories({
   }, [controller, model]);
   const state = opened ? snapshot : undefined;
   const skills = useMemo(() => includeBundledHarnessSkills(installedSkills), [installedSkills]);
+  // An installed skill joins the controller's catalog at once, so it can be equipped before the host's list returns.
+  const installSkill = useMemo(() => keepSkill && ((skill: HarnessSkillManifest) => {
+    controller.setInstalledSkills([...installedSkills.filter(item => item.id !== skill.id || item.version !== skill.version), skill]);
+    keepSkill(skill);
+  }), [controller, installedSkills, keepSkill]);
+  // An installed pack joins the controller's media at once, so it can be equipped before the host's lists return.
+  const importMediaPack = useMemo(() => installMediaPack && (async (file: Blob) => {
+    const { pack, entitlement } = await installMediaPack(file);
+    controller.setMediaPort(createLibraryMediaPort({
+      registered: [...registeredMediaPacks.filter(item => item.id !== pack.id || item.version !== pack.version), pack],
+      entitlements: [...mediaPackEntitlements, entitlement],
+      base: baseMedia,
+    }));
+    return pack;
+  }), [controller, installMediaPack, registeredMediaPacks, mediaPackEntitlements, baseMedia]);
+  const mediaDefaults = useMemo(() => ({
+    ...(baseMedia?.soundscapes.length ? { soundscapes: 'The Library’s own Soundscapes' } : {}),
+    ...(baseMedia?.soundCues.length ? { soundCues: 'The Library’s own Sound Cues' } : {}),
+  }), [baseMedia]);
 
   return {
     controller, state, serverInfo, model, setModel, loadError: storageError ?? writerError, retry,
@@ -166,5 +221,11 @@ export function useLibraryStories({
     skills,
     mediaPacks: registeredMediaPacks,
     mediaPackEntitlements,
+    soundWordPresets,
+    ...(importSoundWords ? { importSoundWords } : {}),
+    mediaDefaults,
+    ...(importMediaPack ? { importMediaPack } : {}),
+    ...(skillIntake ? { skillIntake } : {}),
+    ...(installSkill ? { installSkill } : {}),
   };
 }

@@ -29,6 +29,7 @@
 
 import { readAudioTags, type AudioTags } from './audioTags';
 import { isSoundWord, normalizeSoundWord } from './soundWords';
+import { isPackageMediaUrl } from './mediaUrl';
 
 export const AUDIO_CUE_CATEGORIES = [
   'beasts',
@@ -121,6 +122,8 @@ const isFiniteNumberInUnitInterval = (v: unknown): v is number =>
 
 const isValidUrl = (url: string): boolean => {
   if (!url.trim()) return false;
+  // A recording inside a package installed on the device (`spp://…`).
+  if (isPackageMediaUrl(url)) return true;
   let parsed: URL;
   try {
     parsed = new URL(url);
@@ -179,7 +182,7 @@ export const parseAudioCues = (raw: unknown): AudioCuesLoadResult => {
       issues.push({
         kind: 'invalid_url',
         filePath: e.file_path,
-        reason: 'public_url must be a parseable http(s) URL with a hostname',
+        reason: 'public_url must be a parseable http(s) URL with a hostname, or a file in an installed package',
       });
       continue;
     }

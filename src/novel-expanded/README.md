@@ -13,7 +13,7 @@ The Workshop is where systems are built and inspected one at a time. The app is
 where they are used together, the way a reader meets them.
 
 - Created: 2026-10-01 (piece 1)
-- Last updated: 2026-10-10
+- Last updated: 2026-10-11
 - Owner: `host` (`scripts/ownershipInventory.mjs`). The app is a host of the
   Library and SEN packages, like any outside app would be.
 
@@ -195,8 +195,8 @@ card wear it.
 
 The app writes chapters exactly as the Workshop's HARNESS page does:
 
-- the official CAPA skills (`src/host/generation/capa/`), installed in memory, so the app never writes the Workshop's imported-skill inventory;
-- the Library's sound words and Sound Cues (`LIBRARY_BASE_MEDIA`), played through the reader mixer below;
+- the official CAPA skills (`src/host/generation/capa/`), installed in memory, and the skills the reader installs from packages, kept under the app's own key (`novelexpanded-imported-skills-v1`), so the app never writes the Workshop's imported-skill inventory;
+- the Library's Sound Cues (`LIBRARY_BASE_MEDIA`), played through the reader mixer below, and each story's own Sound Words: a new story starts from the Library's preset, and presets installed from Sound Words `.spp` packages stay on this device (`novelexpanded-sound-words-v1`), apart from the Workshop's;
 - chapter tags and recaps recorded in the chapter write, with no separate memory call;
 - the Model Router's chapter model (`useModelPreference('chapters')`), the one choice shared with the Workshop;
 - the equipped Familiar on the Generation Overlay, with its animation and elemental accents: the reader's profile's (Quill, the catalogue default, for a new reader).
@@ -334,7 +334,8 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 ## History
 
 - **2026-10-12** — Local LM Studio can manifest a Blueprint in Create without the cloud Development access token. The server enforces same-origin local development, and local generation gets a 15-minute deadline for slower on-device models. Cloud-provider access rules and deadlines are unchanged.
-
+- **2026-10-11** — Your own skills and media, from SENSEI: every hand-equipped CAPA slot in Story Settings (Create and World Info) has an SPP upload that installs the skill on this device and equips it; the Media Loadout imports Soundscape and Sound Cue packages (your own recordings, up to 1 GB a package), keeps them on this device (`novelexpanded-media-packs-v1`) and equips them, and its recordings play from the device in the Reader. With no pack, the Library's own Soundscapes and Sound Cues show as equipped (2/2), and the Soundscapes slot no longer claims new chapters ignore it.
+- **2026-10-11** — Sound Words, from SENSEI's plan (its first part): Story Settings in Create and on World Info has a Sound Words card: a preset fills the story's own list (the Library's 30, or one installed from a Sound Words `.spp`), and the reader adds, changes and removes words, at most 30. Changing the Sound Cue pack never changes them; a word no recording plays is marked and never reaches the writer; an empty list plays no Sound Cues. The writer sees the words alone. The Library's "beast growl", "creature screech" and "blade drawn" are now "growl", "screech" and "unsheathe".
 - **2026-10-11** — Cover picker refined, from SENSEI: both cover dialogs wear the Reader's blue-gray glass with the navigation seam; each cover in the picker carries its own download again (only World Info's kept cover has none); Use this cover is the night-glass button World Info's Continue wears, never gold.
 - **2026-10-11** — Cover picker polished, from SENSEI: the chosen cover shows large (as World Info will wear it) with "Cover 2 of 3" and one download, over a row of all three; Not now and Use this cover share one even row. A kept cover on World Info carries no download (covers will be recovered from the Codex) and its Manifest is a top-left ghost-glass corner control matching MP.
 - **2026-10-11** — Sound on by default, from SENSEI: a new device starts on the owner's mix (Master and Sound Cues 100%, Soundscapes 25%, Atmosphere 60%, all on). A mix saved while an earlier player defaulted Master off is switched back on once (Master, its level and the music layers); later choices are kept as saved.

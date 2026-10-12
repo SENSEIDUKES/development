@@ -4,11 +4,14 @@ import type { ReaderPreferenceStorage } from '@seihouse/sen/reader-runtime';
 import { StoryPages, useLibraryStories } from '@seihouse/library/stories';
 import { AGENTS } from '../../../lib/agents';
 import { LIBRARY_BASE_MEDIA } from '../../../host/media/libraryCatalog';
+import { LIBRARY_SOUND_WORDS_PRESET } from '../../../host/media/soundWordPacks';
 import { createDeviceProfileStore } from '../../../host/profile/deviceProfile';
 import { AppFamiliar } from '../../../novel-expanded/AppFamiliar';
 import type { ReaderMixer } from '@seihouse/audio-player';
 import type { ReaderSceneRun } from './sampleStory';
 import { READER_PAGES, type ReaderPage } from './readerScenes';
+
+const READER_SOUND_WORD_PRESETS = [LIBRARY_SOUND_WORDS_PRESET];
 
 /** The app's soundscapes (NovelExpanded's APP_SOUNDSCAPES): the Reader's music before a story has a chapter. */
 const SOUNDSCAPES = LIBRARY_BASE_MEDIA.soundscapes.map(entry => entry.track);
@@ -44,7 +47,8 @@ export interface AppReaderProps {
  * opens the story's World Info, as in the app; its Continue returns here.
  */
 export function AppReader({ run, skills, readerPreferences, page, audio }: AppReaderProps) {
-  const stories = useLibraryStories({ repository: run.stories, modelAdapter: run.writer, installedSkills: skills, baseMedia: LIBRARY_BASE_MEDIA });
+  // The app's Story Settings, with the Library's own Sound Words preset; installing packages stays in the app.
+  const stories = useLibraryStories({ repository: run.stories, modelAdapter: run.writer, installedSkills: skills, baseMedia: LIBRARY_BASE_MEDIA, soundWordPresets: READER_SOUND_WORD_PRESETS });
   const [view, setView] = useState<'read' | 'info'>('read');
   const containerRef = useRef<HTMLDivElement>(null);
   // An isolated preview profile, using the app's default equipped Familiar.

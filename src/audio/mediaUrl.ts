@@ -67,3 +67,39 @@ export const isPublicHttpsMediaUrl = (value: string): boolean => {
   const parsed = new URL(value);
   return !parsed.search && !parsed.hash && SUPPORTED_AUDIO_FILE.test(parsed.pathname);
 };
+
+const PACKAGE_MEDIA_PREFIX = 'spp://';
+const PACKAGE_PART = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
+const PACKAGE_VERSION = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
+const PACKAGE_ASSET_SEGMENT = /^[A-Za-z0-9_() .-]+$/;
+
+/**
+ * The stable address of an audio file inside an installed `.spp` package:
+ * `spp://<package id>/<version>/assets/<path>`. It never changes, so a saved
+ * chapter keeps it; the host that installed the package turns it into a
+ * playable address on its own device. A package version never changes, so
+ * neither does what the address plays.
+ */
+export const packageMediaUrl = (packageId: string, version: string, assetPath: string): string =>
+  `${PACKAGE_MEDIA_PREFIX}${packageId}/${version}/${assetPath.split('/').map(encodeURIComponent).join('/')}`;
+
+/** Reads a package address back into its parts, or undefined. */
+export const readPackageMediaUrl = (value: string): { packageId: string; version: string; assetPath: string } | undefined => {
+  if (typeof value !== 'string' || !value.startsWith(PACKAGE_MEDIA_PREFIX) || /[?#\\]/.test(value)) return undefined;
+  const [packageId, version, ...encoded] = value.slice(PACKAGE_MEDIA_PREFIX.length).split('/');
+  if (!PACKAGE_PART.test(packageId ?? '') || !PACKAGE_VERSION.test(version ?? '') || encoded[0] !== 'assets' || encoded.length < 2) return undefined;
+  let segments: string[];
+  try { segments = encoded.map(segment => decodeURIComponent(segment)); } catch { return undefined; }
+  if (segments.some(segment => !PACKAGE_ASSET_SEGMENT.test(segment) || segment === '.' || segment === '..')) return undefined;
+  const assetPath = segments.join('/');
+  return SUPPORTED_AUDIO_FILE.test(assetPath) ? { packageId, version, assetPath } : undefined;
+};
+
+/** An audio file inside an installed `.spp` package (`packageMediaUrl`). */
+export const isPackageMediaUrl = (value: string): boolean => readPackageMediaUrl(value) !== undefined;
+
+/**
+ * A recording SEN may place or play: a public HTTPS file, or one inside a
+ * package the host installed on the device.
+ */
+export const isPlayableMediaUrl = (value: string): boolean => isPublicHttpsMediaUrl(value) || isPackageMediaUrl(value);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { soundVocabulary, type FrozenNarrativeMedia } from './media';
-import { SOUND_WORD_LIMITS, isSoundWord, normalizeSoundWord, validateSoundWords } from './soundWords';
+import { answeredSoundWords, soundVocabulary, withStorySoundWords, type FrozenNarrativeMedia } from './media';
+import { SOUND_WORD_LIMITS, isSoundWord, normalizeSoundWord, validateSoundWordList, validateSoundWords } from './soundWords';
 import type { AudioCue } from './cues';
 
 const recording = (sound: string | undefined, url = `https://media.example.org/${sound ?? 'none'}.mp3`): FrozenNarrativeMedia['soundCues'][number] => ({
@@ -53,6 +53,39 @@ describe('sound words', () => {
     const many = Array.from({ length: SOUND_WORD_LIMITS.maxWords + 1 }, (_, index) => ({ word: `sound ${'abcdefghijklmnopqrstuvwxyzabcdefgh'[index]}`, example: 'a sound' }));
     expect(() => validateSoundWords(many)).toThrow(`at most ${SOUND_WORD_LIMITS.maxWords} words`);
     expect(() => validateSoundWords({ word: 'chime' })).toThrow('list');
+  });
+});
+
+describe('a story\'s own sound words', () => {
+  it('holds at most 30 plain words, each in one spelling and listed once; an empty list is a choice', () => {
+    expect(SOUND_WORD_LIMITS.maxWords).toBe(30);
+    expect(validateSoundWordList([' Unsheathe ', 'door_slam', 'growl'])).toEqual(['unsheathe', 'door slam', 'growl']);
+    expect(validateSoundWordList([])).toEqual([]);
+    expect(() => validateSoundWordList(['growl', 'Growl'])).toThrow('"growl" is listed twice');
+    expect(() => validateSoundWordList(['roar!'])).toThrow('Sound word 1 must be one to three lowercase English words');
+    expect(() => validateSoundWordList([{ word: 'growl' }])).toThrow('Sound word 1');
+    expect(() => validateSoundWordList('growl')).toThrow('list of words');
+    const words = Array.from({ length: 31 }, (_, index) => `sound ${String.fromCharCode(97 + (index % 26))}${index >= 26 ? 'x' : ''}`);
+    expect(validateSoundWordList(words.slice(0, 30))).toHaveLength(30);
+    expect(() => validateSoundWordList(words)).toThrow('at most 30 words');
+  });
+
+  it('reads a catalog word with no example: the writer never sees one', () => {
+    expect(validateSoundWords([{ word: 'unsheathe' }, { word: 'chime', meaning: 'a small bright chime' }]))
+      .toEqual([{ word: 'unsheathe' }, { word: 'chime', meaning: 'a small bright chime' }]);
+  });
+
+  it('freezes the story\'s own words, each the word alone; a story without a list keeps its recordings\' words', () => {
+    const media: Pick<FrozenNarrativeMedia, 'sounds' | 'soundCues'> = {
+      sounds: [{ word: 'chime', example: 'a soft chime', meaning: 'a small bright chime' }, { word: 'unsheathe', example: 'drew his sword' }],
+      soundCues: [recording('chime'), recording('unsheathe')],
+    };
+    expect(withStorySoundWords(media, ['unsheathe', 'door slam']).sounds).toEqual([{ word: 'unsheathe' }, { word: 'door slam' }]);
+    expect(withStorySoundWords(media, []).sounds).toEqual([]);
+    expect(withStorySoundWords(media, undefined).sounds).toEqual([{ word: 'chime' }, { word: 'unsheathe' }]);
+    // A word no recording answers stays the story's, and never reaches the writer.
+    expect(soundVocabulary(withStorySoundWords(media, ['unsheathe', 'door slam']))).toEqual([{ word: 'unsheathe' }]);
+    expect([...answeredSoundWords(media)]).toEqual(['chime', 'unsheathe']);
   });
 });
 

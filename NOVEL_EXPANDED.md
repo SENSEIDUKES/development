@@ -490,11 +490,16 @@ Update it whenever it changes.
       story began), the Reading Mode, the **CAPA skill slots** (choose the Author,
       Pacing, Continuity and Style skills; Fate, Accessibility, Translation, Sound
       Cues, Soundtrack, Speakers and Holdings follow the story's own choices and
-      say so) and the **Media Loadout** (with no other packs yet, the Library's own
-      sounds, and the sound words the writer may use). A change applies to the
+      say so; each hand-equipped slot also takes a skill package, installed on
+      the device), the **Media Loadout** (the Library's own sounds, shown
+      equipped, or your own Soundscape and Sound Cue packages, imported as
+      `.spp` and kept on the device) and the story's own **Sound Words**, the only sounds the writer may
+      name (at most 30, from a preset, the Library's or one installed from a
+      Sound Words `.spp`, then edited; changing the Sound Cue pack never changes
+      them, and an empty list plays none). A change applies to the
       chapters written from then on, and waits while one is being written.
     - **In Create**, Story Seed's Settings holds the language and Reading Mode, then
-      the CAPA skills and media the story will start with. What the reader changes
+      the CAPA skills, media and Sound Words the story will start with. What the reader changes
       waits on the device until Manifest Story makes it the new story's.
     - The Harness Generation developer page shows the same panels, with its own
       inspection added (each skill's instructions, the Official Requirements, slot

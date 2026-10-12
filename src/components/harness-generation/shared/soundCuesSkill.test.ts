@@ -14,7 +14,6 @@ import {
   assembleCapaPrompt,
   presentSoundVocabulary,
 } from '@seihouse/sen/harness-generation';
-import { readMarks } from '../../../narrative/marks';
 
 /** The largest sound list a Sound Cue Pack may declare: every limit at its maximum. */
 const largestVocabulary = (): SoundWord[] => validateSoundWords(Array.from({ length: SOUND_WORD_LIMITS.maxWords }, (_, index) => {
@@ -28,7 +27,7 @@ const largestVocabulary = (): SoundWord[] => validateSoundWords(Array.from({ len
 
 describe('SEN Sound Cues skill', () => {
   it('teaches the sound tag with the same numbers placement enforces, in its five parts', () => {
-    expect(SEN_SOUND_CUES_SKILL).toMatchObject({ id: 'seihouse.sen-sound-cues', version: '2.2.0', slot: 'soundCues', applications: ['generation'] });
+    expect(SEN_SOUND_CUES_SKILL).toMatchObject({ id: 'seihouse.sen-sound-cues', version: '2.3.0', slot: 'soundCues', applications: ['generation'] });
     const lines = SEN_SOUND_CUES_INSTRUCTIONS.split('\n');
     expect(lines[0]).toMatch(/^JOB: /);
     expect(lines).toContain('FORMAT: [[sound: Sound Word | Words | Energy]], in place of those words inside your sentence.');
@@ -48,23 +47,32 @@ describe('SEN Sound Cues skill', () => {
     expect(SEN_SOUND_CUES_INSTRUCTIONS).not.toMatch(/\[\[n\||\[\[\d|soundCues|"mark"/);
   });
 
-  it('names no sounds of its own: the story\'s example list teaches the pattern and is the whole vocabulary', () => {
-    for (const { word, example } of LIBRARY_SOUND_WORDS) {
-      expect(SEN_SOUND_CUES_INSTRUCTIONS).not.toContain(word);
-      expect(SEN_SOUND_CUES_INSTRUCTIONS).not.toContain(example);
-    }
+  it('names no sounds of its own: the story\'s list is the whole vocabulary', () => {
+    for (const { word } of LIBRARY_SOUND_WORDS) expect(SEN_SOUND_CUES_INSTRUCTIONS).not.toContain(word);
   });
 
-  it('shows one example tag made from the first word, then every word with its meaning and no phrase to copy', () => {
-    const list = presentSoundVocabulary([{ word: 'blade drawn', example: 'drew his sword' }, { word: 'chime', example: 'a soft chime', meaning: 'a small bright chime' }]);
-    const [example, header, ...lines] = list.split('\n');
-    expect(example).toBe('EXAMPLE: [[sound: blade drawn | drew his sword | medium]]');
-    // The example is a real tag: the reader keeps its words and reads its sound and Energy.
-    const reading = readMarks(example.slice('EXAMPLE: '.length));
-    expect(reading).toMatchObject({ text: 'drew his sword', sounds: [{ sound: 'blade drawn', energy: 'medium', start: 0, end: 14 }], soundIssues: [] });
-    expect(header).toBe('SOUND WORDS (the sounds that can play; tag your own words, never words written to fit one):');
+  it('gives the writer exactly these instructions, so nothing changes what the model receives unnoticed', () => {
+    expect(SEN_SOUND_CUES_INSTRUCTIONS).toBe([
+      'JOB: Mark the words where a listed sound happens, so the sound plays there.',
+      'FORMAT: [[sound: Sound Word | Words | Energy]], in place of those words inside your sentence.',
+      '- Sound Word: from the list below.',
+      '- Words: the few words of your own sentence where it happens, at most 8. The tag wraps them where they stand; they stay in the sentence.',
+      '- Energy: how strong the sound is: low, medium or high.',
+      'REQUIRED: Write the chapter\'s prose as the story needs it, then tag a sound only where your own sentence already describes it happening. A cue is earned by the prose: a chapter may have none, and at most 10.',
+      'FORBIDDEN: Any sound word not on the list. A tag on its own line or between sentences. Words written only for the tag, or repeating the sentence. Adding or bending a sentence to fit a sound.',
+      'CHECK BEFORE YOU RETURN: Every sound tag sits inside a sentence around words of that sentence, with a listed sound word, at most 8 words and an energy.',
+    ].join('\n'));
+  });
+
+  it('shows the words alone, one per line: no example tag, phrase or meaning to copy', () => {
     // The owner's Sundered Heavens test: given phrases ("iron scraped stone"), the writer copied them into the chapter.
-    expect(lines).toEqual(['blade drawn', 'chime (a small bright chime)']);
+    const list = presentSoundVocabulary([{ word: 'unsheathe', example: 'drew his sword' }, { word: 'chime', example: 'a soft chime', meaning: 'a small bright chime' }]);
+    expect(list).toBe([
+      'SOUND WORDS (the sounds that can play; tag your own words, never words written to fit one):',
+      'unsheathe',
+      'chime',
+    ].join('\n'));
+    expect(list).not.toMatch(/EXAMPLE|drew his sword|a soft chime|small bright/);
     expect(presentSoundVocabulary([])).toBe('');
   });
 

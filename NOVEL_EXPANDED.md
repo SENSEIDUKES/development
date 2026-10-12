@@ -766,6 +766,39 @@ made it, Holdings becoming one section of a character's entry. Done when the
 record passes the two tests in the principles: **the artist test** and **the
 save-game test**.
 
+**After E2: keeping the record true when a reader edits a chapter.** Create
+mode lets a reader change the newest chapter before it is sealed: its words,
+its Sound Cues, its speakers and holdings. A first version
+([#368](https://github.com/SENSEIDUKES/development/pull/368), closed and kept
+on its branch `claude/chapter-reread`) reread any changed chapter with a model
+when it was sealed: the whole chapter in, the whole chapter back word for word
+with its tags, and a new recap. It was closed because it reread far too much:
+a moved Sound Cue or a fixed comma cost about as much as writing the chapter
+again. It comes back once the Codex is designed, on this principle (SENSEI):
+
+- **The trigger is the record, never the words.** Most edits change nothing
+  the story knows: a comma, a reworded sentence, a Sound Cue added, swapped
+  or removed (the reader places cues by hand on exact words, so there is
+  nothing for a model to read). Only an edit that leaves a **conflict with
+  what the Codex holds** from that chapter matters.
+- **Conflicts are found without a model.** Each fact a chapter gives the
+  record is pinned to its words (today a speaker and a holdings change; later
+  every information tag from Stage E1). An edit that breaks a pin is known at
+  once: the fact shows under Create mode's *Needs a new spot*.
+- **The reader settles a conflict for free.** Placing the fact on its new
+  words, or removing it, costs nothing.
+- **A model only for what is left at the seal, and only for it.** For each
+  conflict still open: the fact, the words it was on, and the paragraph as it
+  is now: does the fact still hold, and where? A few hundred tokens, and a
+  recap update only when a fact changed. Never the whole chapter.
+- **One list of the facts a chapter holds.** The check runs over that list,
+  so every kind of fact the Codex gains joins it without a redesign.
+- **The known gap.** A rewrite that changes the story without touching any
+  pinned fact (“he lost the duel” made “he won the duel” in plain prose) is
+  invisible to the check. When this comes back, the owner chooses: a
+  **This changes the story** choice at the seal that runs a fuller reread, or
+  accept the gap.
+
 **Stage E3: recall for long stories.** The Codex says which entities matter to
 the next chapter; a recall step picks the earlier passages about them, so the
 Story Information Packet stays small at any length. Start with a Workshop

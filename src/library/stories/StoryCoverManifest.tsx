@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Check, Download } from 'lucide-react';
 import { SEIDialog, SEIDialogContent, SEIDialogDescription, SEIDialogTitle } from '@seihouse/ui';
-import { LibraryButton, LibraryManifestingIcon } from '@seihouse/library-ui';
+import { LibraryButton, LibraryManifestingIcon, ManifestButton } from '@seihouse/library-ui';
 import type { RevealedMediaAsset } from '@seihouse/sen/manifestations';
 import GenerationOverlay from '../../components/chapter-manifestation/development/GenerationOverlay';
 import type { LoadingAgentPresentation } from '../manifestations/taskCard';
@@ -30,11 +30,14 @@ const coverFileName = (title: string, index?: number) =>
 
 /**
  * World Info's cover art, made on the cover itself. A story without a cover
- * shows Manifest across it; one with a cover keeps a small Manifest and a
- * download in its corner. Manifest asks for one cover or three to choose from
- * (each at an image's Energy price), then the media reveal unseals while they
- * are made. One cover is worn as soon as it is revealed; three open a picker
- * where the covers come alive and the reader keeps the one they want.
+ * shows Manifest across it; one with a cover keeps only a small Manifest on its
+ * top-left corner, in the same ghost glass as the hero's MP control (kept covers
+ * will be recovered from the Codex, so the cover carries no download). Manifest
+ * asks for one cover or three to choose from (each at an image's Energy price),
+ * then the media reveal unseals while they are made. One cover is worn as soon
+ * as it is revealed; three open a picker, in the Reader's glass, that shows the
+ * chosen cover large over a row of all three (each with its download), and
+ * the reader keeps the one they want.
  *
  * Returns what sits on the cover (for World Info's cover slot) and what opens
  * above the page (the choice, the veil and the picker).
@@ -130,16 +133,10 @@ export function useStoryCoverManifest({ covers, storyId, request, agent }: {
           <LibraryManifestingIcon size={34} aria-hidden="true" />
           <span>{making && !agent ? 'Manifesting…' : 'Manifest'}</span>
         </button>
-      : <div className="story-cover-corner">
-          <button type="button" className="story-cover-ghost" onClick={() => setPhase('choosing')} disabled={phase !== 'idle'}
-            aria-label="Manifest a new cover" title="Manifest a new cover">
-            <LibraryManifestingIcon size={17} aria-hidden="true" />
-          </button>
-          <a className="story-cover-ghost" href={coverUrl} download={coverFileName(request.title)}
-            aria-label="Download cover" title="Download cover" data-testid="story-cover-download">
-            <Download size={16} aria-hidden="true" />
-          </a>
-        </div>}
+      : <button type="button" className="world-card-base-format story-cover-recast" onClick={() => setPhase('choosing')}
+          disabled={phase !== 'idle'} aria-label="Manifest a new cover" title="Manifest a new cover">
+          <LibraryManifestingIcon size={17} aria-hidden="true" />
+        </button>}
     {making && !agent && coverUrl && <span className="story-cover-busy" role="status">Manifesting…</span>}
     {problem && phase === 'idle' && <p className="story-cover-problem" role="alert">{problem}</p>}
     <EnergySpendFloater burst={spent} note="practice: nothing is taken yet" />
@@ -148,7 +145,8 @@ export function useStoryCoverManifest({ covers, storyId, request, agent }: {
   const overPage = <>
     {/* One cover, or three to choose from: each at an image's price. */}
     <SEIDialog open={phase === 'choosing'} onOpenChange={open => { if (!open) setPhase('idle'); }}>
-      <SEIDialogContent variant="dark" className="story-cover-dialog" bodyClassName="story-cover-dialog-body">
+      <SEIDialogContent variant="dark" className="story-cover-dialog reader-glass" bodyClassName="story-cover-dialog-body">
+        <span className="story-cover-dialog-seam" aria-hidden="true" />
         <SEIDialogTitle className="story-cover-dialog-title">Manifest cover</SEIDialogTitle>
         <SEIDialogDescription className="story-cover-dialog-intro">Cover art made from your story's own words.</SEIDialogDescription>
         <div className="story-cover-options" role="group" aria-label="How many covers">
@@ -169,27 +167,33 @@ export function useStoryCoverManifest({ covers, storyId, request, agent }: {
 
     {/* Three made: they come alive one after another, and the reader keeps one. */}
     <SEIDialog open={phase === 'picking'} onOpenChange={open => { if (!open && !saving) closePicker(); }}>
-      <SEIDialogContent variant="dark" className="story-cover-dialog story-cover-picker" bodyClassName="story-cover-dialog-body">
+      <SEIDialogContent variant="dark" className="story-cover-dialog story-cover-picker reader-glass" bodyClassName="story-cover-dialog-body">
+        <span className="story-cover-dialog-seam" aria-hidden="true" />
         <SEIDialogTitle className="story-cover-dialog-title">Choose your cover</SEIDialogTitle>
-        <SEIDialogDescription className="story-cover-dialog-intro">Tap the one you want. The others are let go.</SEIDialogDescription>
+        <SEIDialogDescription className="story-cover-dialog-intro">Tap a cover to see it up close, then keep the one you love.</SEIDialogDescription>
         {problem && <p className="story-cover-dialog-note" role="status">{problem}</p>}
+        {/* The chosen cover, large, as World Info will wear it. */}
+        {made[chosen] && <figure className="story-cover-stage" data-testid="story-cover-stage">
+          <img key={made[chosen]} src={made[chosen]} alt={`Cover ${chosen + 1} of ${made.length} for ${request.title}`} />
+          <figcaption className="story-cover-stage-count">Cover {chosen + 1} of {made.length}</figcaption>
+        </figure>}
         <div className="story-cover-choices" role="group" aria-label="Covers to choose from">
-          {made.map((url, index) => <div key={url} className="story-cover-choice-wrap" style={{ animationDelay: `${index * 180}ms` }}>
+          {made.map((url, index) => <div key={url} className="story-cover-choice-wrap" style={{ animationDelay: `${index * 160}ms` }}>
             <button type="button" className="story-cover-choice" aria-pressed={index === chosen}
               aria-label={`Cover ${index + 1}`} onClick={() => setChosen(index)} disabled={saving}>
               <img src={url} alt="" />
-              {index === chosen && <Check size={18} aria-hidden="true" />}
+              {index === chosen && <span className="story-cover-choice-mark" aria-hidden="true"><Check size={13} strokeWidth={3} /></span>}
             </button>
-            {/* Every cover made can be kept, chosen or not. */}
-            <a className="story-cover-ghost story-cover-choice-download" href={url} download={coverFileName(request.title, index)}
+            {/* Every cover made can be saved here, chosen or not; the ones not kept are let go. */}
+            <a className="world-card-base-format story-cover-choice-download" href={url} download={coverFileName(request.title, index)}
               aria-label={`Download cover ${index + 1}`} title="Download">
-              <Download size={15} aria-hidden="true" />
+              <Download size={14} aria-hidden="true" />
             </a>
           </div>)}
         </div>
         <div className="story-cover-dialog-actions">
           <LibraryButton variant="secondary" onClick={closePicker} disabled={saving}>Not now</LibraryButton>
-          <LibraryButton onClick={() => void keepChosen()} disabled={saving}>{saving ? 'Keeping…' : 'Use this cover'}</LibraryButton>
+          <ManifestButton size="md" icon={Check} className="story-cover-keep" onClick={() => void keepChosen()} disabled={saving}>{saving ? 'Keeping…' : 'Use this cover'}</ManifestButton>
         </div>
       </SEIDialogContent>
     </SEIDialog>

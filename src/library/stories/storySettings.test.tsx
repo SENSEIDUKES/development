@@ -213,9 +213,9 @@ describe('Cover art on Story View', () => {
     vi.useRealTimers();
 
     expect(container.querySelector<HTMLImageElement>('[data-world-card="info"] img')?.getAttribute('src')).toBe('blob:cover-1');
-    // A kept cover keeps a small Manifest and its download in its corner.
-    expect(container.querySelector('[aria-label="Manifest a new cover"]')).toBeTruthy();
-    expect(container.querySelector('[data-testid="story-cover-download"]')?.getAttribute('href')).toBe('blob:cover-1');
+    // A kept cover keeps only a small Manifest in the hero's ghost glass; no download sits on the cover.
+    expect(container.querySelector('.world-card-base-format[aria-label="Manifest a new cover"]')).toBeTruthy();
+    expect(container.querySelector('[data-testid="story-cover"] a[download]')).toBeNull();
     expect(storyHomeWorlds(latest!.state!, latestCovers)[0].imageUrl).toBe('blob:cover-1');
   });
 
@@ -235,10 +235,14 @@ describe('Cover art on Story View', () => {
     const choices = () => [...document.querySelectorAll<HTMLButtonElement>('.story-cover-choice')];
     expect(choices().map(choice => choice.querySelector('img')!.getAttribute('src'))).toEqual(['blob:a', 'blob:b', 'blob:c']);
     expect(choices()[0].getAttribute('aria-pressed')).toBe('true');
-    // Every cover made can be downloaded, chosen or not.
-    expect(document.querySelectorAll('.story-cover-choice-download')).toHaveLength(3);
+    // The chosen cover is shown large; every cover made can be downloaded, chosen or not.
+    const stage = () => document.querySelector('[data-testid="story-cover-stage"]')!;
+    expect(stage().querySelector('img')!.getAttribute('src')).toBe('blob:a');
+    expect([...document.querySelectorAll('.story-cover-choice-download')].map(link => link.getAttribute('href'))).toEqual(['blob:a', 'blob:b', 'blob:c']);
     await click(choices()[1], 'Cover 2');
     expect(choices()[1].getAttribute('aria-pressed')).toBe('true');
+    expect(stage().querySelector('img')!.getAttribute('src')).toBe('blob:b');
+    expect(stage().textContent).toContain('Cover 2 of 3');
     await click([...document.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent === 'Use this cover'), 'Use this cover');
 
     expect(keep).toHaveBeenCalledWith(story.id, 'blob:b');

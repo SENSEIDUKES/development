@@ -122,7 +122,7 @@ afterEach(() => {
 });
 
 describe('The HARNESS Reader', { timeout: 20_000 }, () => {
-  it('shows each chapter on the Text Highlight Engine with its Sound Cues, keeps the place, and never touches HARNESS canon', async () => {
+  it('shows each chapter on the Highlight Engine with its Sound Cues, keeps the place, and never touches HARNESS canon', async () => {
     const { harness, controller, storyId } = await story({ written: 2 });
     const canonBefore = harness.snapshot();
     const readerState = new MemoryReaderStateRepository();
@@ -955,7 +955,7 @@ describe('Create mode in the HARNESS Reader', { timeout: 20_000 }, () => {
     Range.prototype.getClientRects = () => [{ left: 100, top: 200, right: 170, bottom: 222, width: 70, height: 22 }] as unknown as DOMRectList;
   });
   afterEach(() => { vi.unstubAllGlobals(); Range.prototype.getClientRects = rects; });
-  it('opens the newest chapter on the Text Highlight Engine with its overlays; an earlier chapter is sealed', async () => {
+  it('opens the newest chapter on the Highlight Engine with its overlays; an earlier chapter is sealed', async () => {
     const { controller, storyId } = await story({ written: 2 });
     await mount(<Host controller={controller} storyId={storyId} />);
     const create = () => buttonBy(byLabel('Create mode'))!;

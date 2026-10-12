@@ -143,7 +143,7 @@ have no `reference/` folder.
   `src/package/sen/` for `@seihouse/sen` (the portable engine: surface
   primitives, Color Codes, cards, Reader Chamber, Reader Codex,
   Manifestations, motion picture, audio, Story Seed, HARNESS, Reader Runtime,
-  Text Highlight Engine, arc goals, translation, presentation and contracts) and
+  Highlight Engine, arc goals, translation, presentation and contracts) and
   `src/package/library/` for `@seihouse/library` (SEIHouse's own surfaces:
   cultivation and the relic economy). Neither contains components of its own:
   entries re-export `development/` and `shared/` code so the Workshop and the

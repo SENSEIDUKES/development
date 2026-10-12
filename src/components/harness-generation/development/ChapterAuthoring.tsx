@@ -2,11 +2,11 @@ import { useMemo, useRef, useState, type CSSProperties, type Ref } from 'react';
 import { createMediaCatalog, SOUND_CUE_KIND, type SoundCueAttachment } from '@seihouse/sen/audio';
 import { InlineAudioText } from '@seihouse/sen/inline-audio';
 import {
-  ManuscriptOverlaySwitch, OVERLAY_KINDS, TextHighlightEngine,
+  ManuscriptOverlaySwitch, OVERLAY_KINDS, HighlightEngine,
   applyPassageEdit, attachmentMarks, createManuscript, createManuscriptId, flaggedAttachments, placedSoundCues, removeAttachment, resolveAnchor,
   soundCueActions, structurePins,
   type ManuscriptAttachment, type ManuscriptOverlayMode, type ManuscriptState, type PassageEdit,
-} from '@seihouse/sen/text-highlight-engine';
+} from '@seihouse/sen/highlight-engine';
 import type { ResolvedReaderText } from '@seihouse/sen/reader-runtime';
 import { chapterTitleText } from '../../../narrative/chapterTitle';
 import { SPEAKER_KIND, type SpeakerAttachment } from '../../../narrative/speech';
@@ -52,7 +52,7 @@ const KIND_NAMES: Record<string, [string, string]> = {
 };
 
 /**
- * Create mode: the reader authors the chapter in place, on the Text Highlight
+ * Create mode: the reader authors the chapter in place, on the Highlight
  * Engine with its overlays. Highlight words to change them (Edit) or to place a
  * Sound Cue (Media → Audio → Cue); the Overlays switch shows the cues and the
  * page's numbering (P2 S6). Every change is saved as it is made, so there is no
@@ -154,7 +154,7 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
       className="mt-1 text-[length:calc(1.5rem*var(--reader-scale,1))] font-normal text-white sm:text-[length:calc(1.875rem*var(--reader-scale,1))]">{chapterTitleText(chapter.title) || chapter.title}</h1>
     {/* A quiet gutter on phones gives the overlay's ¶ numbers room, so turning an overlay on never moves a word. */}
     <div className="pl-3 sm:pl-0">
-      <TextHighlightEngine blocks={state.manuscript.paragraphs} onBlocksChange={edit} actions={actions} removeActions={removeActions}
+      <HighlightEngine blocks={state.manuscript.paragraphs} onBlocksChange={edit} actions={actions} removeActions={removeActions}
         editable overlay={overlay} locale={locale} className="mt-6 text-neutral-200"
         renderBlockText={block => {
           const blockCues = cues.filter(cue => cue.anchor.blockId === block.id);

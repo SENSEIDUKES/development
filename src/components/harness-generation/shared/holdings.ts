@@ -1,4 +1,4 @@
-import { splitSentences } from '../../text-highlight-engine/shared/manuscript';
+import { splitSentences } from '../../highlight-engine/shared/manuscript';
 import {
   HOLDING_CHANGE_KIND,
   holdingChangeId,

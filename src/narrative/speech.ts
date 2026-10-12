@@ -1,4 +1,4 @@
-import type { ManuscriptAnchor, ManuscriptAttachment } from '../components/text-highlight-engine/shared/manuscript';
+import type { ManuscriptAnchor, ManuscriptAttachment } from '../components/highlight-engine/shared/manuscript';
 
 /**
  * Speech in prose: where a paragraph's spoken lines sit, and who speaks them.

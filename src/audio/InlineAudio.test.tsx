@@ -9,7 +9,7 @@ import { DevAudioPlaybackProvider } from './DevAudioPlayback';
 import { soundCueTrackId, type SoundCueAttachment } from '@seihouse/sen/audio';
 import { installAudioMediaStubs } from '../test-utils/renderWithDevAudio';
 import { InlineAudio, InlineAudioControl, InlineAudioText } from '@seihouse/sen/inline-audio';
-import { passageRange } from '@seihouse/sen/text-highlight-engine';
+import { passageRange } from '@seihouse/sen/highlight-engine';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 

@@ -1,0 +1,42 @@
+[
+  {
+    "name": "chromium-desktop",
+    "width": 1440,
+    "height": 900,
+    "touchActivation": false,
+    "nativeTouchSelectionHandles": "not tested",
+    "passed": true
+  },
+  {
+    "name": "chromium-phone",
+    "width": 390,
+    "height": 844,
+    "touchActivation": true,
+    "nativeTouchSelectionHandles": "not tested",
+    "passed": true
+  },
+  {
+    "name": "chromium-tablet",
+    "width": 768,
+    "height": 1024,
+    "touchActivation": true,
+    "nativeTouchSelectionHandles": "not tested",
+    "passed": true
+  },
+  {
+    "name": "webkit-phone",
+    "width": 390,
+    "height": 844,
+    "touchActivation": true,
+    "nativeTouchSelectionHandles": "not tested",
+    "passed": true
+  },
+  {
+    "name": "webkit-tablet",
+    "width": 768,
+    "height": 1024,
+    "touchActivation": true,
+    "nativeTouchSelectionHandles": "not tested",
+    "passed": true
+  }
+]

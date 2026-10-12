@@ -1,4 +1,4 @@
-import { rebaseSpan, splitSentences } from '../../text-highlight-engine/shared/manuscript';
+import { rebaseSpan, splitSentences } from '../../highlight-engine/shared/manuscript';
 import { readMarks } from '../../../narrative/marks';
 import { HOLDING_CHANGE_KIND, holdingChangeId, type CodexEntry, type HoldingChangeAnchor, type HoldingChangeAttachment, type HoldingChangePayload } from '../../../narrative/holdings';
 import type {

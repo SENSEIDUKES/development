@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
-import { passageRange, type PassageSelection } from '@seihouse/sen/text-highlight-engine';
+import { passageRange, type PassageSelection } from '@seihouse/sen/highlight-engine';
 
 /** What the voice is reading: one sentence of a paragraph, or the chapter title. */
 export type NarrationHighlight = PassageSelection | 'title';

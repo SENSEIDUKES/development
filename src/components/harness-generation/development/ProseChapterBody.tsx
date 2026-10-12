@@ -1,5 +1,5 @@
 import { memo, useMemo, type CSSProperties } from 'react';
-import { TextHighlightEngine, type TextHighlightOverlay } from '@seihouse/sen/text-highlight-engine';
+import { HighlightEngine, type TextHighlightOverlay } from '@seihouse/sen/highlight-engine';
 import { InlineAudioText } from '@seihouse/sen/inline-audio';
 import type { SoundCueAttachment } from '@seihouse/sen/audio';
 import { chapterTitleText } from '../../../narrative/chapterTitle';
@@ -12,7 +12,7 @@ const keepProse = () => undefined;
 const READ_ALOUD_TONE = 'var(--sen-read-aloud-highlight, rgba(103, 232, 249, 0.16))';
 
 /**
- * The chapter as prose: its title and its paragraphs on the Text Highlight
+ * The chapter as prose: its title and its paragraphs on the Highlight
  * Engine, with the Sound Cues placed on their words and the sentence being
  * read aloud lit, in the reader's font, size, spacing and weight. The column
  * is 34em wide, about 60 characters a line in any font. On a wide screen the
@@ -46,7 +46,7 @@ export const ProseChapterBody = memo(function ProseChapterBody({ chapter, blocks
     <h1 id={`harness-reader-chapter-${chapter.chapterNumber}`} data-read-aloud-title="" data-speaking={highlight === 'title' ? '' : undefined}
       style={{ fontFamily: text.titleFont.family }}
       className={`mt-1 rounded text-[length:calc(1.5rem*var(--reader-scale,1))] font-normal text-white transition-colors sm:text-[length:calc(1.875rem*var(--reader-scale,1))] ${highlight === 'title' ? 'bg-cyan-300/15' : ''}`}>{chapterTitleText(chapter.title) || chapter.title}</h1>
-    <TextHighlightEngine blocks={blocks} onBlocksChange={keepProse} editable={false} locale={locale} overlay={overlay}
+    <HighlightEngine blocks={blocks} onBlocksChange={keepProse} editable={false} locale={locale} overlay={overlay}
       className="mt-6 text-neutral-200"
       renderBlockText={block => {
         const cues = cuesByBlock.get(block.id);

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ReaderAudioNote } from './ReaderAudioNote';
 import { useReaderDocumentScrollbar } from './useReaderDocumentScrollbar';
-import type { TextHighlightBlock } from '@seihouse/sen/text-highlight-engine';
+import type { TextHighlightBlock } from '@seihouse/sen/highlight-engine';
 import type { SceneAudioTrack } from '@seihouse/sen/audio';
 import {
   DEFAULT_READER_FONTS,
@@ -111,7 +111,7 @@ function lineWhereTheReaderIs(script: ReadAloudScript, article: HTMLElement | nu
  * the Codex holding Holdings among its pages). The chapter
  * never leaves the page for them, so the reader keeps their place; the body shows the
  * chapter on screen (`chapterBody`, prose by default: the paragraphs on the
- * Text Highlight Engine, read-only, with Sound Cues as the only active layer).
+ * Highlight Engine, read-only, with Sound Cues as the only active layer).
  * Listen reads the chapter aloud in three voices with the spoken sentence lit,
  * and Reader Settings sets its text: font, title font, size, line spacing and
  * weight, from the host's fonts. At the newest chapter, Next writes the next

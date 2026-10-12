@@ -91,7 +91,7 @@ of them; the product is all of them.
   Destined Ending, arcs and goals, and branching.
 - **Living world:** the Codex, with characters, locations, factions, the Bestiary,
   artifacts, the timeline, terminology, relationships and world memory.
-- **Creator production:** the Text Highlight Engine, targeted regeneration, manual
+- **Creator production:** the Highlight Engine, targeted regeneration, manual
   media placement, custom sounds and music, custom genres and story tags, CAPA, and
   deeper author controls.
 - **Library metagame:** profiles, Familiars, Relics, Achievements, Mystery Scrolls,
@@ -148,7 +148,7 @@ they come because their fantasy is being fulfilled in front of them, they direct
 create it and are entertained by it, and it never feels like work. Their loop is
 create or direct → generate → manifest → read → continue.
 
-Advanced tools, such as the Text Highlight Engine, manual media placement, custom
+Advanced tools, such as the Highlight Engine, manual media placement, custom
 sound design and the Studios, are deliberate creator actions, not permanent Reader
 UI. A user reaches for them; they never stand between a reader and the chapter.
 
@@ -269,9 +269,12 @@ a product page. For HARNESS terms, use
 
 ## The author half
 
-The Text Highlight Engine gives SEN an author half beside the reader half. Every
-paragraph, sentence and span has a permanent address, and every attachment knows
-when its words change. That means:
+The Highlight Engine gives SEN an author half beside the reader half. It is one
+engine for highlighting part of a story and attaching something to it: prose
+today, the images of sequential art later (Stage E5), never a separate "text"
+and "image" engine. Every paragraph, sentence and span has a permanent address,
+and every attachment knows when its words change. In the Reader it is **Create
+mode**. That means:
 
 - a regular author can leave AI out entirely, bring their own book into SEN, and add
   Sound Cues, soundscapes and manifestations;
@@ -647,7 +650,9 @@ Update it whenever it changes.
 - **Not connected yet:**
   - Covers live on the device, not in R2: the database (and an account) will
     keep them. No real model has made a cover yet; the first owner test will.
-  - The Text Highlight Engine's tools (fixes, cue placement) are not in the Reader.
+  - The Highlight Engine's tools are in the Reader as Create mode (wording and
+    Sound Cues on the newest chapter), but it cannot yet change the chapter's
+    soundscapes or atmosphere.
   - The app's Profile runs on the device and a practice economy: there are no
     accounts, database or server-side storage yet, so nothing the economy holds
     survives a reload, and the account and server pieces wait.
@@ -854,12 +859,12 @@ same record; none of them adds anything medium-specific to the story itself.
 | NovelExpanded app | Expanded Novels' app at NovelExpanded.com. Built at `/app/` (piece 1: the core application spine of Home, Create, Story View and Reader; piece 2: the Library Shell around it; piece 3: Profile, with the Familiar and a practice economy; piece 4: Story Settings in Create and Story View; piece 5: cover art on Story View), in `src/novel-expanded/`. |
 | Story Seed / World Blueprint | Where a story is created (`?preview=story-seed`, and Create in the app). The Blueprint is the novel's transferable core: what a reader takes to make their own version ([The World Blueprint](#the-world-blueprint)). |
 | Story View | The story's own page: cover art, the story, Enter. Built today as the World Info page (`WorldCardInfo`), where Begin Story or Continue leads into the Reader Chamber, with Manifest on its cover and the story's Story Settings below it. |
-| Reader Chamber | Where chapters are read: a HARNESS story's chapters on the Text Highlight Engine with Sound Cues, Listen and the soundtrack (`HarnessReaderSession`). Its Workshop card (`?preview=reader-chamber`) shows this Reader as Development, beside production's Reader as the Original Reference; the older development Reader is no longer on it. |
+| Reader Chamber | Where chapters are read: a HARNESS story's chapters on the Highlight Engine with Sound Cues, Listen and the soundtrack (`HarnessReaderSession`). Its Workshop card (`?preview=reader-chamber`) shows this Reader as Development, beside production's Reader as the Original Reference; the older development Reader is no longer on it. |
 | Listen / Read Aloud | The Reader reading a chapter aloud in three voices with the spoken sentence lit (`useReadAloud`, SEN's `reader-runtime`). Its voices and speed live in Reader Settings → Narration. |
 | Reader Settings | The Reader's settings sheet: Text, Audio, then Narration. |
 | Chapter body | What shows the chapter inside the Reader's frame: prose today (`ProseChapterBody`), sequential art later (`ReaderChapterBody`). |
 | Rewrite this chapter | The reader's request to write the newest chapter again, with an optional note (`rewriteLatestChapter`, `chapterRewriteGap`). |
 | Holdings fixer | SEN's unseen check after each chapter, which settles small holdings problems and keeps a record on the chapter (`planHoldingsFix`, `applyHoldingsFixes`, the `fix-holdings` call). The Library, later the Familiar, sets how far it goes. |
-| Text Highlight Engine (manuscript lab) | The manuscript editor at `?preview=text-highlight-engine`. |
+| Highlight Engine | SEN's engine for highlighting part of a story and attaching to it: prose today, sequential-art images later. Its lab is at `?preview=highlight-engine`; in the Reader it is Create mode. Never "Text Highlight Engine". |
 | Story Settings | The only place a user meets the HARNESS: language, reading mode, CAPA skills and media. On Story View (`StorySettings`) and in Create's Settings (`CreateStorySettings`), from `@seihouse/library/stories`. |
 | Harness Generation | The developer instrument for the HARNESS (`?preview=harness-generation`). Never a product page. |

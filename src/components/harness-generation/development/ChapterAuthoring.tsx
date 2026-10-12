@@ -40,9 +40,9 @@ type Waiting = NonNullable<NonNullable<ReaderChapter['authoring']>['waiting']>[n
 function describeWaiting(attachment: ManuscriptAttachment<unknown>): { title: string; detail: string } {
   const was = 'selectedText' in attachment.anchor ? `was on “${attachment.anchor.selectedText}”` : '';
   if (attachment.kind === SOUND_CUE_KIND) return { title: `Sound Cue · ${(attachment as SoundCueAttachment).payload.sound}`, detail: `${was}. Highlight its new words and place it with Media → Audio → Cue.` };
-  if (attachment.kind === SPEAKER_KIND) return { title: `Speaker · ${(attachment as SpeakerAttachment).payload.speaker}`, detail: `${was}. It waits here until the chapter is sealed.` };
+  if (attachment.kind === SPEAKER_KIND) return { title: `Speaker · ${(attachment as SpeakerAttachment).payload.speaker}`, detail: `${was}. When you move on, the chapter is read again and it goes back on the right words.` };
   const holding = (attachment as HoldingChangeAttachment).payload;
-  return { title: `Holding change · ${holding.holder.name} ${holding.verb}${holding.target ? ` ${holding.target.name}` : ''}`, detail: `${was}. It waits here until the chapter is sealed.` };
+  return { title: `Holding change · ${holding.holder.name} ${holding.verb}${holding.target ? ` ${holding.target.name}` : ''}`, detail: `${was}. When you move on, the chapter is read again and it goes back on the right words.` };
 }
 
 const placed = (state: ChapterState) => (attachment: ManuscriptAttachment<unknown>) => resolveAnchor(state.manuscript, attachment.anchor).status === 'placed';

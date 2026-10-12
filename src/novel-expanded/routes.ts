@@ -6,7 +6,8 @@ import { useCallback, useEffect, useState } from 'react';
  * deployment needs no rewrites and every page survives a reload.
  *
  * - Home: `/app/`
- * - Create (Story Seed and World Blueprint): `/app/?page=create`
+ * - Create (Story Seed and World Blueprint): `/app/?page=create`, opening a
+ *   saved Story Seed with `&seed=<id>` (a Dao Insights spark begun from Home)
  * - Story View (World Info): `/app/?story=<id>`
  * - Reader: `/app/?story=<id>&read=1`
  * - A story's Blueprint: `/app/?story=<id>&blueprint=1`
@@ -16,7 +17,7 @@ import { useCallback, useEffect, useState } from 'react';
  */
 export type NovelExpandedRoute =
   | { page: 'home' }
-  | { page: 'create' }
+  | { page: 'create'; seedId?: string }
   | { page: 'story'; storyId: string }
   | { page: 'read'; storyId: string }
   | { page: 'blueprint'; storyId: string }
@@ -29,7 +30,10 @@ export function parseRoute(search: string): NovelExpandedRoute {
   const storyId = query.get('story')?.trim();
   if (storyId) return query.get('read') === '1' ? { page: 'read', storyId }
     : query.get('blueprint') === '1' ? { page: 'blueprint', storyId } : { page: 'story', storyId };
-  if (query.get('page') === 'create') return { page: 'create' };
+  if (query.get('page') === 'create') {
+    const seedId = query.get('seed')?.trim();
+    return seedId ? { page: 'create', seedId } : { page: 'create' };
+  }
   if (query.get('page') === 'profile') {
     const cave = query.get('cave')?.trim();
     return cave ? { page: 'profile', cave } : { page: 'profile' };
@@ -40,7 +44,7 @@ export function parseRoute(search: string): NovelExpandedRoute {
 export function routeSearch(route: NovelExpandedRoute): string {
   switch (route.page) {
     case 'home': return '';
-    case 'create': return '?page=create';
+    case 'create': return route.seedId ? `?${new URLSearchParams({ page: 'create', seed: route.seedId })}` : '?page=create';
     case 'story': return `?story=${encodeURIComponent(route.storyId)}`;
     case 'read': return `?story=${encodeURIComponent(route.storyId)}&read=1`;
     case 'blueprint': return `?story=${encodeURIComponent(route.storyId)}&blueprint=1`;

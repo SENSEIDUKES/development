@@ -1,8 +1,8 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { GlobalHeader } from '../../../components/library-shell/reference/main-library/GlobalHeader';
 import { LibraryCollectionStrip } from '../../../components/library-shell/reference/main-library/LibraryCollectionStrip';
-import { MainLibraryAdapterContext, type MainLibraryAdapter } from '@seihouse/library/shell';
+import { MainLibraryAdapterContext, type DaoSparkHost, type MainLibraryAdapter } from '@seihouse/library/shell';
 import { MainLibraryNavigation } from '@seihouse/library/shell';
 import { MainLibraryFooter } from '@seihouse/library/shell';
 import { WorkspaceShell, LibrarySectionSidebar, useLibraryDesktopNavigation } from '@seihouse/library/shell';
@@ -93,6 +93,26 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
       json: async () => ({ hasServerGemini: state !== 'dao-local', ...quotes[category], category }),
     };
   }, [state]);
+  // Dao Insights' Story Sparks, local to the Workshop: no server, no Story Bank.
+  const daoSparks = useMemo<DaoSparkHost>(() => ({
+    checkSparks: async () => state !== 'dao-local',
+    requestSpark: async request => {
+      if (state === 'dao-error') throw new Error('The Workshop oracle is silent in this state.');
+      const genre = request.inventGenre ? 'Echo Cultivation' : request.genre;
+      return {
+        genre,
+        inventedGenre: Boolean(request.inventGenre),
+        ...(request.inventGenre ? { genreNote: 'Every technique is a sound that must be answered.' } : {}),
+        premise: request.idea
+          ? `${request.idea.replace(/[.\s]+$/, '')}, until the ${genre} world decides that is the one thing it cannot allow.`
+          : `A Workshop disciple discovers the ${genre} sect's oldest rule was written to keep one student from ever graduating: her.`,
+        aside: 'The Workshop oracle mutters this spark from local fixtures. Nothing leaves the preview.',
+        voice: 'Workshop Oracle of the Local Fixtures',
+      };
+    },
+    keepSpark: async spark => setDestination(`Story Bank (kept: ${spark.genre})`),
+    beginSpark: async spark => setDestination(`Story Seed (begun: ${spark.genre})`),
+  }), [state]);
   const adapter: MainLibraryAdapter = {
     currentScreen, setCurrentScreen: screen => {
       if (developmentNavigation) navigate({ screen, ...(screen === 'home' ? { collection: 'featured' } : {}) });
@@ -103,7 +123,7 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
     currentUser: state === 'guest' ? null : { email: 'sensei@example.test', displayName: 'Sensei' },
     userProfile: state === 'missing-profile' ? null : { displayName: state === 'long-name' ? 'Keeper of the Nine Celestial Libraries and the Unfinished Scrolls' : 'Sensei', premiumTier: 'immortal', interfaceLanguage: 'en' },
     stories: [{ id: 'mock-story', mcName: 'Ye Chen', genre: 'Xianxia' }, ...(developmentNavigation ? [featuredNovel] : [])],
-    setIsSettingsOpen: () => setDestination('Settings'), setIsCodexSheetOpen: () => setDestination('Living Codex'), setIsShortcutsOpen: () => setDestination('Shortcut Spells'), requestDao,
+    setIsSettingsOpen: () => setDestination('Settings'), setIsCodexSheetOpen: () => setDestination('Living Codex'), setIsShortcutsOpen: () => setDestination('Shortcut Spells'), requestDao, daoSparks,
   };
   const Home = homeReference ? ReferenceHome : LightNovelsHome;
   const Detail = homeReference ? ReferenceStoryDetail : StoryDetailScreen;

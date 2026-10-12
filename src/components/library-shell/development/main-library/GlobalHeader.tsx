@@ -11,7 +11,7 @@ import './main-library-header.css';
 /**
  * Home supplies its commands to the same header as every workspace.
  *
- * Dao Insights sits in the header's center on laptops and wider, where the
+ * Dao Insights (the Story Spark oracle) sits in the header's center on laptops and wider, where the
  * Pathways sidebar carries the Library identity. On phones and tablets it lives
  * in Home's own content, between the featured area and the collection tabs —
  * see `MainLibraryHomeInsights` — so the phone header keeps the full title,
@@ -47,7 +47,7 @@ export function GlobalHeader({ landmark = 'banner' }: {
   ];
   // On laptops the Pathways sidebar carries the identity, so Dao Insights takes
   // the header's center — its original home. Phones keep it in Home content.
-  return <WorkspaceHeader title="Celestial Library" landmark={landmark} center={<DaoInsights />}
+  return <WorkspaceHeader title="Celestial Library" landmark={landmark} center={<DaoInsights host={adapter.daoSparks} />}
     emblem={LIBRARY_EMBLEM}
     home={{ href: '/', label: 'Return to Home', onNavigate: home }}
     searchItems={items} />;

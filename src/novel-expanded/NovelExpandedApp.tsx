@@ -29,6 +29,7 @@ import { useStoryCovers } from '../host/media/storyCovers';
 import { APP_SOUNDSCAPES, useAppMusic } from './appMusic';
 import { CreatePage } from './CreatePage';
 import { HomePage } from './HomePage';
+import { useDaoSparks } from './daoSparks';
 import { ProfilePage } from './ProfilePage';
 import { HOME_ROUTE, useAppRoute } from './routes';
 import { NOVEL_EXPANDED_STORAGE, type NovelExpandedServices } from './services';
@@ -154,6 +155,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   const { state } = stories;
   // Story Settings chosen in Create, kept on this device until Manifest applies them.
   const [settingsDraft, setSettingsDraft] = useStorySettingsDraft(services.readerPreferences);
+  const sparks = useDaoSparks(services, profile, navigate);
   const worlds = useMemo(() => state ? storyHomeWorlds(state, covers) : [], [state, covers]);
   const seedIds = useMemo(() => state ? startedSeedIds(state) : [], [state]);
   // The Cave's Stories page: each story, and the Story Seed it started from.
@@ -184,7 +186,8 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
 
   if (route.page === 'profile') return withFamiliar(<ProfilePage services={services} stories={caveStories} navigate={navigate} portraits={portraits} />);
 
-  if (route.page === 'create') return withFamiliar(<CreatePage services={services} askForToken={askForToken} startedSeedIds={seedIds} chapterModel={stories.model || undefined}
+  if (route.page === 'create') return withFamiliar(<CreatePage key={route.seedId ?? 'new'} services={services} askForToken={askForToken} startedSeedIds={seedIds} chapterModel={stories.model || undefined}
+    seedId={route.seedId}
     // A new Story Seed starts from the profile's languages and Reading Mode.
     accountDefaultLanguage={profile.defaultReadingLanguage} accountDefaultChapterWritingStyle={profile.defaultChapterWritingStyle}
     renderStorySettings={({ seed, originalLanguage }) => <CreateStorySettings stories={stories}
@@ -220,5 +223,5 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     onCloseReader={() => navigate({ page: 'story', storyId })}
     onBack={() => navigate(HOME_ROUTE)} />);
 
-  return withFamiliar(<HomePage worlds={worlds} navigate={navigate} readerProfile={profile} />);
+  return withFamiliar(<HomePage worlds={worlds} navigate={navigate} readerProfile={profile} sparks={sparks} />);
 }

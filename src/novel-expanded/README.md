@@ -56,6 +56,13 @@ rewrites and every page survives a reload.
 
 ## The Library Shell
 
+- **2026-10-12** — Home carries Dao Insights under the featured area at every
+  width. Its sparks come from `/api/story-spark` (the server's default text
+  model, registered in the Model Router as Story Spark; free, twenty a day per
+  visitor, lifted by the owner's saved token). Keep plants the spark's premise
+  and genre in a new Story Seed in the app's Story Bank, in the profile's
+  reading language and Reading Mode; Begin does the same and opens it at
+  `?page=create&seed=<id>`.
 - **2026-10-12** — Home and World Info pass the device reader's saved name and
   portrait into the Pathways profile header, with rank from the shared DAO XP
   account; selecting it opens Profile. The sidebar keeps its landscape in the

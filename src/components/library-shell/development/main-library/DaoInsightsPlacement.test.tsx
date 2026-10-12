@@ -71,29 +71,24 @@ it('regression: renders Dao Insights in Home content, between the featured area 
   expect(tabs.compareDocumentPosition(insights) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
 });
 
-it('regression: preserves the quote, rotation, filtering, modal and clipboard behavior it had in the header', async () => {
+it('regression: keeps the trigger, its rotation, the panel and the clipboard writer after the move', async () => {
   vi.useFakeTimers();
   try {
     await render(<MainLibraryHomeInsights adapter={adapter()} />);
-    const trigger = container.querySelector('[aria-label="Insights from the Dao"]')!;
+    const trigger = container.querySelector('.dao-insights-trigger')!;
     expect(trigger.textContent).toContain('Insights from the Dao');
-    const first = container.querySelector('.dao-insights-trigger p')?.textContent;
-    expect(first).toBeTruthy();
-    // The same 14-second rotation loop, unchanged by the move.
+    expect(container.querySelector('.dao-insights-trigger p')?.textContent).toBeTruthy();
+    // The same 14-second rotation loop, now turning over the Dao's own sparks.
     await act(async () => { await vi.advanceTimersByTimeAsync(14_000); });
     expect(container.querySelector('.dao-insights-trigger p')?.textContent).toBeTruthy();
 
     await click(trigger);
-    const dialog = document.querySelector('[role="dialog"][aria-label="The Dao Insights Oracle"]')!;
+    const dialog = document.querySelector('[role="dialog"][aria-label="Dao Insights"]')!;
     expect(dialog).not.toBeNull();
     // The same clipboard writer the host supplied to the header.
-    // Category filtering is still offered by the same pills.
-    expect(Array.from(dialog.querySelectorAll('button')).map(element => element.textContent))
-      .toEqual(expect.arrayContaining(['All Energies', 'Comedic Dao', 'Inspirational Qi', 'Good Feeling']));
-    const copy = dialog.querySelector('[title="Click to copy quote"]')!;
-    await click(copy);
+    await click(dialog.querySelector('[aria-label="Copy spark"]')!);
     expect(copyText).toHaveBeenCalledTimes(1);
-    expect(copyText.mock.calls[0][0]).toContain('—');
+    expect(copyText.mock.calls[0][0]).toContain('Genre:');
   } finally {
     vi.useRealTimers();
   }

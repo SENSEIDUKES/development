@@ -215,32 +215,34 @@ it('keeps Home\'s on-page sections out of the Pathways sidebar so the four pathw
   expect(byText('Immortal Hub', pathways)).toBeUndefined();
 });
 
-it('keeps a divined Dao quote after the carousel settles', async () => {
-  // jsdom never finishes exit animations, which would hold the previous quote.
+it('keeps a model-written spark after it settles', async () => {
+  // jsdom never finishes exit animations, which would hold the previous spark.
   MotionGlobalConfig.skipAnimations = true;
   try {
-  const requestDao = (async (kind: string) => ({ ok: true, json: async () => kind === 'status'
-    ? { hasServerGemini: true }
-    : { quote: 'A divined line from the oracle.', author: 'Test Oracle', category: 'inspirational' } })) as unknown as MainLibraryHeaderAdapter['requestDao'];
-  await render(<MainLibraryHomeInsights adapter={adapter(requestDao)} />);
-  await settle();
-  await click(document.getElementById('dao-insights-header-center'));
-  await settle();
-  await click(byText('Seek Dao Insights') ?? Array.from(document.querySelectorAll('button')).find(button => /Seek Dao Insights/.test(button.textContent ?? '')));
-  await settle(1700);
-  const dialog = document.querySelector('[role="dialog"]')!;
-  expect(dialog.textContent).toContain('A divined line from the oracle.');
-  expect(dialog.textContent).toContain('Test Oracle');
+    const requestSpark = vi.fn(async () => ({ premise: 'A divined premise from the oracle.', genre: 'Xianxia', inventedGenre: false, voice: 'Test Oracle' }));
+    await render(<MainLibraryHomeInsights adapter={{ ...adapter(), daoSparks: { checkSparks: async () => true, requestSpark } }} />);
+    await settle();
+    await click(document.getElementById('dao-insights-header-center'));
+    await settle();
+    await click(Array.from(document.querySelectorAll('button')).find(button => /Seek a spark/.test(button.textContent ?? '')));
+    await settle(1300);
+    const dialog = document.querySelector('[role="dialog"]')!;
+    expect(dialog.textContent).toContain('A divined premise from the oracle.');
+    expect(dialog.textContent).toContain('Test Oracle');
   } finally { MotionGlobalConfig.skipAnimations = false; }
 });
 
-it('stops every Dao timer when the oracle unmounts mid-spin', async () => {
+it('stops every Dao timer and request when the panel unmounts mid-seek', async () => {
   const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
-  await render(<MainLibraryHomeInsights adapter={adapter()} />);
+  let signal: AbortSignal | undefined;
+  const requestSpark = vi.fn((_request: unknown, abort?: AbortSignal) => { signal = abort; return new Promise<never>(() => {}); });
+  await render(<MainLibraryHomeInsights adapter={{ ...adapter(), daoSparks: { checkSparks: async () => true, requestSpark } }} />);
+  await settle();
   await click(document.getElementById('dao-insights-header-center'));
   await settle();
-  await click(Array.from(document.querySelectorAll('button')).find(button => /Seek Dao Insights/.test(button.textContent ?? '')));
+  await click(Array.from(document.querySelectorAll('button')).find(button => /Seek a spark/.test(button.textContent ?? '')));
   await act(async () => root.render(<LibraryPresentationProvider>{null}</LibraryPresentationProvider>));
+  expect(signal?.aborted).toBe(true);
   const setInterval_ = vi.spyOn(window, 'setInterval');
   await settle(1500);
   expect(setInterval_).not.toHaveBeenCalled();

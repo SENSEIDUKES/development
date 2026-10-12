@@ -91,7 +91,7 @@ Send To runs `scripts/Make SPP.cmd` in your main checkout. In PowerShell:
 
 ```powershell
 $link = (New-Object -ComObject WScript.Shell).CreateShortcut("$env:APPDATA\Microsoft\Windows\SendTo\SEIHouse Package (.spp).lnk")
-$link.TargetPath = "C:\Users\amaur\OneDrive\Documents\GitHub\development\scripts\Make SPP.cmd"
+$link.TargetPath = "<path to your checkout>\scripts\Make SPP.cmd"
 $link.Save()
 ```
 

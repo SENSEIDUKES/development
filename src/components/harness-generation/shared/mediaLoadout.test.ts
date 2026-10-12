@@ -78,6 +78,14 @@ const adapter = (...outputs: Array<HarnessGenerationResponse | Error>) => {
 };
 
 describe('HARNESS Media Loadout runtime integration', () => {
+  it('leaves a story\'s sound words untouched when a slot is cleared on a host with no media', async () => {
+    const controller = new HarnessGenerationController({ repository: new InMemoryHarnessGenerationRepository(), modelAdapter: adapter().value, runtime: runtime() });
+    await controller.hydrate();
+    const story = await controller.createStory({ premise: 'A courier crosses a pass.' });
+    await controller.setMediaSelection(story.id, 'soundCues');
+    expect(controller.snapshot().stories[0].soundWords).toBeUndefined();
+  });
+
   it('keeps registration, rewards and two story slots separate, then persists placed Sound Cues through reload and Reader adaptation', async () => {
     const repository = new InMemoryHarnessGenerationRepository();
     const provider = adapter(chapterReply());

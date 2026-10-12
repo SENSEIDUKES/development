@@ -45,6 +45,19 @@ describe('making a .spp from a folder', () => {
     expect(JSON.parse(readFileSync(join(folder, 'spp.json'), 'utf8')).version).toBe('1.0.1');
   });
 
+  it('never reuses a version after its package is moved or deleted', async () => {
+    const root = workspace();
+    const folder = join(root, 'Pack');
+    mkdirSync(folder);
+    writeFileSync(join(folder, 'words.txt'), 'growl\n');
+    const first = await makeSpp(folder);
+    rmSync(first.path);
+    writeFileSync(join(folder, 'words.txt'), 'roar\n');
+    const second = await makeSpp(folder);
+    expect([first.version, second.version]).toEqual(['1.0.0', '1.0.1']);
+    expect(JSON.parse(readFileSync(join(folder, 'spp.json'), 'utf8')).made).toEqual(['1.0.0', '1.0.1']);
+  });
+
   it('lists every word problem with its line, and makes nothing', async () => {
     expect(readSoundWords('growl\nRoar!\ngrowl\na very long four words\n').problems).toEqual([
       'line 2: "Roar!" must be one to three plain English words, at most 24 letters',

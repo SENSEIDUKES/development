@@ -616,8 +616,9 @@ export class HarnessGenerationController {
     }
     // The story's sound words are its own: a story that has never kept a list
     // keeps the words its recordings answer now, whatever the new pack answers.
-    if (!story.soundWords) {
-      story.soundWords = (this.media?.freeze(story.mediaLoadout, this.runtime.now()).sounds ?? []).map(sound => sound.word);
+    // With no media port there are no recordings' words to keep: the story stays as it is.
+    if (!story.soundWords && this.media) {
+      story.soundWords = (this.media.freeze(story.mediaLoadout, this.runtime.now()).sounds ?? []).map(sound => sound.word);
     }
     const loadout = { ...(story.mediaLoadout ?? {}) };
     if (!reference) {

@@ -12,6 +12,7 @@
  *              kind: "sound-words" (a story's Sound Words), "capa" (a CAPA
  *              skill; "slot" names it: author, pacing, continuity, style, …),
  *              "sound-cues" or "soundscapes" (audio), or absent for plain files.
+ *              "made" lists every version built; the build keeps it.
  *   words.txt  A Sound Words package's words, one per line (# starts a note).
  *
  * Audio packages hold one folder per sound word ("sound-cues": `growl/`,
@@ -155,7 +156,9 @@ export async function makeSpp(folderPath, { now = new Date() } = {}) {
   const id = typeof config.id === 'string' && config.id ? config.id : randomUUID();
   const output = v => join(dirname(folder), `${name} v${v}.spp`);
   const previous = version;
-  while (existsSync(output(version))) version = nextPatch(version);
+  // `spp.json` remembers every version made, so moving or deleting a package never frees its version.
+  const made = Array.isArray(config.made) ? config.made.filter(v => typeof v === 'string') : [];
+  while (made.includes(version) || existsSync(output(version))) version = nextPatch(version);
   const bytes = await createPack({
     id, name, version,
     description: typeof config.description === 'string' ? config.description : '',
@@ -165,7 +168,7 @@ export async function makeSpp(folderPath, { now = new Date() } = {}) {
     ...(Object.keys(extensions).length ? { extensions } : {}),
   }, MEDIA_KINDS[kind] ? MAX_LIMITS : undefined);
   writeFileSync(output(version), bytes);
-  const saved = { ...config, name, version, id, ...(kind ? { kind } : {}) };
+  const saved = { ...config, name, version, id, ...(kind ? { kind } : {}), made: [...made, version] };
   writeFileSync(configPath, `${JSON.stringify(saved, null, 2)}\n`);
   return { path: output(version), version, previousVersion: previous, newId: !config.id, files: files.length };
 }

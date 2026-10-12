@@ -351,7 +351,7 @@ async function walk(browser, viewport, sample) {
   const createSettings = page.getByTestId('create-story-settings').filter({ visible: true }).first();
   await createSettings.waitFor();
   check(await createSettings.locator('#harness-skill-author').count() === 1, 'Create\'s Story Settings should offer the Author skill slot.');
-  check((await createSettings.innerText()).includes('The Library\'s own Sound Cues'), 'Create\'s Story Settings should show the Library\'s own sounds.');
+  check((await createSettings.innerText()).includes('The Library’s own Sound Cues'), 'Create\'s Story Settings should show the Library\'s own sounds.');
   check(await page.evaluate(() => document.documentElement.scrollWidth) <= viewport.width, 'Create\'s Settings must never scroll sideways.');
   await page.waitForTimeout(400);
   await shot('2a-create-story-settings');

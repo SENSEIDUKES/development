@@ -81,6 +81,24 @@ describe('Create mode: authoring the newest chapter', () => {
     expect(run.chapters()[0].paragraphs).toEqual(chapter.paragraphs);
   });
 
+  it('marks a changed chapter for its reread, keeps effects off their words waiting until the seal, then lets them go', async () => {
+    const run = await setup();
+    await run.write(reply('The Flood', ['Lin tied the rope to the rail.', 'The water rose.']));
+    const [chapter] = run.chapters();
+    expect(chapter.authoring).toBeUndefined();
+    const waiting = { id: 'cue-w', kind: 'sound-cue', anchor: { level: 'span', blockId: 'c1-p1', startOffset: 4, endOffset: 8, selectedText: 'tied', detached: true },
+      payload: { origin: 'manual', sound: 'rope', cue: { publicUrl: 'https://example.test/rope.ogg', provenance: { packageId: 'p', version: '1.0.0' }, category: 'foley' } } };
+    await run.controller.authorChapter(chapter.id, {
+      paragraphs: chapter.paragraphs.map((paragraph, index) => index === 0 ? 'Lin knotted the rope to the rail.' : paragraph),
+      soundCues: chapter.soundCues, speakers: chapter.speakers, holdingChanges: chapter.holdingChanges, waiting: [waiting as never],
+    });
+    expect(run.chapters()[0].authoring).toEqual({ editedAt: '2026-10-12T12:00:00.000Z', waiting: [waiting] });
+    // Writing the next chapter seals this one: what still waits is let go, and the mark stays for the reread.
+    await run.write(reply('The Bridge', ['Lin crossed the rope bridge.']));
+    expect(run.chapters()[0].authoring).toEqual({ editedAt: '2026-10-12T12:00:00.000Z' });
+    expect(run.chapters()[1].authoring).toBeUndefined();
+  });
+
   it('seals a chapter once the story moves on from it', async () => {
     const run = await setup();
     await run.write(reply('The Flood', ['Lin tied the rope to the rail.']));

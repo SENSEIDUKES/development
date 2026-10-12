@@ -562,6 +562,18 @@ export type HarnessModelPlan = string | {
 };
 
 /** Derived chapter measurements. Persisted with every frozen attempt and committed chapter. */
+/**
+ * A chapter the reader changed in Create mode. `editedAt` marks it as changed,
+ * so it is read again when it is sealed; an untouched chapter never is.
+ * `waiting` holds the effects (Sound Cues, speakers, holding changes) whose
+ * words a change replaced: they keep their place in the list, off the page,
+ * until the reader removes them or the chapter is sealed.
+ */
+export interface HarnessChapterAuthoring {
+  editedAt: string;
+  waiting?: Array<SoundCueAttachment | SpeakerAttachment | HoldingChangeAttachment>;
+}
+
 export interface HarnessChapterMetrics {
   wordCount: number;
   paragraphCount: number;
@@ -915,6 +927,11 @@ export interface HarnessChapter {
   holdingChanges?: HoldingChangeAttachment[];
   /** The writer's closing list for this chapter, checked against the holdings it leaves. */
   closingHoldings?: string[];
+  /**
+   * The reader's own changes in the Reader's Create mode, until the chapter is
+   * sealed (the next chapter is written). Absent from a chapter nobody changed.
+   */
+  authoring?: HarnessChapterAuthoring;
   /** The chapter's music and atmosphere, as its writer chose them. Absent before scenes were chosen. */
   scene?: HarnessChapterScene;
   /** Pack/version provenance of the frozen catalog that produced this media. */

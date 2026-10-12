@@ -167,7 +167,7 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
           {create && <button type="button" aria-label="Create mode" aria-pressed={create.active} data-testid="reader-create-button"
             title={create.unavailable ?? (create.active ? 'Back to reading' : 'Create mode: change this chapter\'s words and Sound Cues')}
             disabled={Boolean(create.unavailable) && !create.active} onClick={create.onToggle}
-            className={`${secondary} disabled:cursor-not-allowed disabled:opacity-35 ${create.active ? 'border-cyan-200/50 bg-cyan-400/20 text-cyan-50' : ''}`}>
+            className={`${create.active ? primary : secondary} disabled:cursor-not-allowed disabled:opacity-35`}>
             <Zap className="h-6 w-6" aria-hidden />
           </button>}
           </div>

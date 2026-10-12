@@ -3,7 +3,7 @@ import { createMediaCatalog, SOUND_CUE_KIND, type SoundCueAttachment } from '@se
 import { InlineAudioText } from '@seihouse/sen/inline-audio';
 import {
   ManuscriptOverlaySwitch, OVERLAY_KINDS, TextHighlightEngine,
-  applyPassageEdit, attachmentMarks, createManuscript, createManuscriptId, flaggedAttachments, placedSoundCues, resolveAnchor,
+  applyPassageEdit, attachmentMarks, createManuscript, createManuscriptId, flaggedAttachments, placedSoundCues, removeAttachment, resolveAnchor,
   soundCueActions, structurePins,
   type ManuscriptAttachment, type ManuscriptOverlayMode, type ManuscriptState, type PassageEdit,
 } from '@seihouse/sen/text-highlight-engine';
@@ -27,7 +27,22 @@ function chapterState(chapter: ReaderChapter, locale: string): ChapterState {
     locale, wordLimit: NO_WORD_LIMIT,
     createId: kind => kind === 'paragraph' ? harnessParagraphBlockId(chapter.chapterNumber, paragraph++) : createManuscriptId(kind),
   });
-  return { manuscript, attachments: [...chapter.soundCues ?? [], ...chapter.speakers ?? [], ...chapter.holdingChanges ?? []] };
+  return { manuscript, attachments: [
+    ...chapter.soundCues ?? [], ...chapter.speakers ?? [], ...chapter.holdingChanges ?? [],
+    // Effects still waiting for a new spot from an earlier visit: off the page, so flagged.
+    ...chapter.authoring?.waiting ?? [],
+  ] };
+}
+
+type Waiting = NonNullable<NonNullable<ReaderChapter['authoring']>['waiting']>[number];
+
+/** What a waiting effect was: its kind, what it does, and the words it sat on. */
+function describeWaiting(attachment: ManuscriptAttachment<unknown>): { title: string; detail: string } {
+  const was = 'selectedText' in attachment.anchor ? `was on “${attachment.anchor.selectedText}”` : '';
+  if (attachment.kind === SOUND_CUE_KIND) return { title: `Sound Cue · ${(attachment as SoundCueAttachment).payload.sound}`, detail: `${was}. Highlight its new words and place it with Media → Audio → Cue.` };
+  if (attachment.kind === SPEAKER_KIND) return { title: `Speaker · ${(attachment as SpeakerAttachment).payload.speaker}`, detail: `${was}. It waits here until the chapter is sealed.` };
+  const holding = (attachment as HoldingChangeAttachment).payload;
+  return { title: `Holding change · ${holding.holder.name} ${holding.verb}${holding.target ? ` ${holding.target.name}` : ''}`, detail: `${was}. It waits here until the chapter is sealed.` };
 }
 
 const placed = (state: ChapterState) => (attachment: ManuscriptAttachment<unknown>) => resolveAnchor(state.manuscript, attachment.anchor).status === 'placed';
@@ -43,7 +58,9 @@ const KIND_NAMES: Record<string, [string, string]> = {
  * page's numbering (P2 S6). Every change is saved as it is made, so there is no
  * seal step: moving on to the next chapter seals this one. An effect whose
  * words a change replaced (a cue, a speaker or a holding change) has nothing
- * left to sit on, so it is let go, and the reader is told.
+ * left to sit on, so it waits in "Needs a new spot" until the reader places it
+ * again or removes it, or the chapter is sealed. A changed chapter is marked
+ * as changed, so it is read again at its seal.
  */
 export function ChapterAuthoring({ chapter, controller, locale, text, articleRef }: {
   chapter: ReaderChapter;
@@ -61,15 +78,16 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
   const catalog = useMemo(() => createMediaCatalog(chapter.mediaLoadout.soundCues.length
     ? chapter.mediaLoadout : controller.describeStoryMedia(chapter.storyId) ?? chapter.mediaLoadout), [chapter.mediaLoadout, chapter.storyId, controller]);
 
-  /** Saves the page as it stands now; effects whose words are gone are let go, and the reader is told which. */
+  /** Saves the page as it stands now; effects whose words are gone wait for a new spot, and the reader is told which. */
   const save = (next: ChapterState) => {
     const kept = next.attachments.filter(placed(next));
-    const lost = flaggedAttachments(next);
-    if (lost.length) {
+    const waiting = flaggedAttachments(next);
+    const newlyWaiting = waiting.filter(attachment => !flaggedAttachments(state).some(earlier => earlier.id === attachment.id));
+    if (newlyWaiting.length) {
       const counts = new Map<string, number>();
-      for (const attachment of lost) counts.set(attachment.kind, (counts.get(attachment.kind) ?? 0) + 1);
+      for (const attachment of newlyWaiting) counts.set(attachment.kind, (counts.get(attachment.kind) ?? 0) + 1);
       const list = [...counts].map(([kind, count]) => `${count} ${KIND_NAMES[kind]?.[count === 1 ? 0 : 1] ?? 'effect'}`).join(', ');
-      setNotice(`Your change replaced the words ${lost.length === 1 ? 'an effect sat' : 'some effects sat'} on, so ${list} ${lost.length === 1 ? 'was' : 'were'} let go.`);
+      setNotice(`Your change replaced the words ${list} sat on. ${newlyWaiting.length === 1 ? 'It waits' : 'They wait'} under Needs a new spot.`);
     }
     setSaving('saving');
     saves.current = saves.current.then(() => controller.authorChapter(chapter.id, {
@@ -77,6 +95,7 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
       soundCues: kept.filter(attachment => attachment.kind === SOUND_CUE_KIND) as SoundCueAttachment[],
       speakers: kept.filter(attachment => attachment.kind === SPEAKER_KIND) as SpeakerAttachment[],
       holdingChanges: kept.filter(attachment => attachment.kind === HOLDING_CHANGE_KIND) as HoldingChangeAttachment[],
+      waiting: waiting as Waiting[],
     })).then(() => setSaving('saved'), error => {
       setSaving('failed');
       setNotice(error instanceof Error ? error.message : 'Your change could not be saved.');
@@ -116,6 +135,19 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
       <p className="text-xs leading-relaxed text-neutral-400">Highlight words to change them, or choose Media to place a Sound Cue. Changes save as you make them; moving on to the next chapter seals this one.</p>
       <ManuscriptOverlaySwitch mode={overlayMode} onChange={setOverlayMode} overlay={overlay} />
       {notice && <p role="alert" className="rounded-lg border border-white/10 bg-neutral-900/70 px-3 py-2 text-xs text-amber-100">{notice}</p>}
+      {flaggedAttachments(state).length > 0 && <section aria-labelledby="create-mode-waiting" className="space-y-2" data-testid="create-mode-waiting">
+        <h2 id="create-mode-waiting" className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-300">Needs a new spot</h2>
+        <ul className="space-y-2">
+          {flaggedAttachments(state).map(attachment => {
+            const { title, detail } = describeWaiting(attachment);
+            return <li key={attachment.id} className="flex items-start justify-between gap-3 rounded-lg border border-white/10 bg-neutral-900/50 px-3 py-2">
+              <span className="min-w-0 text-xs leading-relaxed"><span className="block font-medium text-neutral-100">{title}</span><span className="text-neutral-400">{detail}</span></span>
+              <button type="button" onClick={() => update(current => removeAttachment(current, attachment.id))}
+                className="min-h-9 shrink-0 rounded-lg border border-white/15 px-3 text-xs text-neutral-200 hover:bg-white/10">Remove</button>
+            </li>;
+          })}
+        </ul>
+      </section>}
     </div>
     <p className="font-mono text-[10px] font-normal uppercase tracking-[0.2em] text-neutral-500">Chapter {chapter.chapterNumber}</p>
     <h1 id={`harness-reader-chapter-${chapter.chapterNumber}`} data-read-aloud-title="" style={{ fontFamily: text.titleFont.family }}

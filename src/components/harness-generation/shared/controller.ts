@@ -464,9 +464,12 @@ export class HarnessGenerationController {
    * Only the newest chapter, and only while nothing is built on it (the same
    * rule as rewriting it): moving on to the next chapter seals it. The
    * paragraphs keep their number, every paragraph keeps some words, and every
-   * attachment must sit exactly on its words.
+   * placed attachment must sit exactly on its words. Effects whose words a
+   * change replaced wait in `waiting`, off the page, until the chapter is
+   * sealed. The chapter is marked as changed, so it is read again at its seal.
    */
-  async authorChapter(chapterId: string, changes: Pick<HarnessChapter, 'paragraphs' | 'soundCues' | 'speakers' | 'holdingChanges'>): Promise<void> {
+  async authorChapter(chapterId: string, changes: Pick<HarnessChapter, 'paragraphs' | 'soundCues' | 'speakers' | 'holdingChanges'>
+    & { waiting?: NonNullable<HarnessChapter['authoring']>['waiting'] }): Promise<void> {
     this.assertHydrated();
     if (this.generating) throw new Error('Wait for the active Harness operation before changing a chapter.');
     const candidate = cloneHarnessValue(this.state);
@@ -494,8 +497,10 @@ export class HarnessGenerationController {
       if (list?.length) (chapter as Record<typeof key, unknown>)[key] = cloneHarnessValue(list);
       else delete chapter[key];
     }
+    const now = this.runtime.now();
+    chapter.authoring = { editedAt: now, ...(changes.waiting?.length ? { waiting: cloneHarnessValue(changes.waiting) } : {}) };
     const story = findStory(candidate, chapter.storyId);
-    if (story) story.updatedAt = this.runtime.now();
+    if (story) story.updatedAt = now;
     await this.persist(candidate);
   }
 
@@ -1387,6 +1392,8 @@ export class HarnessGenerationController {
     const candidate = rewrite ? withoutLatestChapter(base, attempt.storyId) : cloneHarnessValue(base);
     const commitAttempt = attemptById(candidate, attemptId);
     const commitStory = findStory(candidate, attempt.storyId)!;
+    // A new chapter seals the one before it: effects still waiting for a new spot there are let go.
+    for (const sealed of candidate.chapters) if (sealed.storyId === attempt.storyId && sealed.authoring?.waiting) delete sealed.authoring.waiting;
     if (!commitAttempt.acceptedDraft || !commitAttempt.pendingChapterId) {
       throw new Error('The accepted chapter checkpoint changed before it could commit.');
     }

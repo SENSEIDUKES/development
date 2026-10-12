@@ -176,7 +176,10 @@ for (const [name, browserType, width, height, touch] of [
     assert.equal(await page.locator('.sen-manual-cue-picker__item').count(), 92);
     const press = async locator => touch ? locator.tap() : locator.click();
     await press(page.locator('.sen-manual-cue-picker__item').first().getByRole('button', { name: 'Preview' }));
-    await page.waitForFunction(() => Array.from(document.querySelectorAll('audio')).some(audio => audio.currentSrc.includes('celestialaudio.seihouse.org')));
+    // The preview plays through the reader mixer, the route the placed cue plays through (its players are
+    // not page elements); the picker says so when the mixer will not or cannot play it.
+    await page.waitForTimeout(500);
+    assert.equal(await page.locator('.sen-manual-cue-picker [role="alert"]').count(), 0, 'The preview should play through the reader mixer.');
     await page.screenshot({ path: `${output}/${name}-cue-picker.png` });
     await press(page.locator('.sen-manual-cue-picker__item').first().getByRole('button', { name: 'Select' }));
     assert.equal(await cueParagraph.locator('[data-cue-annotation]').count(), 1);

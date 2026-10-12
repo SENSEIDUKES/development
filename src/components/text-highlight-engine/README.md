@@ -279,6 +279,7 @@ browser evidence out of the consuming surface. No integration was performed.
 
 ## Workshop history
 
+- **2026-10-12 (cue previews through the Reader's mixer):** SENSEI reported a placed cue that would not play although its preview had. The preview played through the host's single-channel player and the placed cue through the reader mixer, two different routes; the app has no single-channel player at all, so its Create mode picker could not open. With a reader mixer the Cue Picker now previews through it, exactly as the placed cue will play, and says "Audio preview is unavailable" when the mixer will not or cannot play it; without one it keeps the single-channel player. A cue that failed now shows why when hovered.
 - **2026-10-12:** The lab's authoring tools are now SEN's, shared with the HARNESS Reader's Create mode:
   `ManuscriptAuthoring.tsx` (the Overlays switch and its key, and `soundCueActions`: Media → Audio →
   Cue and Remove cue here) and `shared/overlayModes.ts` (`structurePins`, `attachmentMarks`, one color

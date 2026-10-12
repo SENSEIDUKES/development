@@ -772,7 +772,7 @@ describe('NovelExpanded: Story Settings and cover art', { timeout: 30_000 }, () 
     await click(buttonByText('Settings', bar), 'Settings on the task bar', 50);
     const settings = document.querySelector<HTMLElement>('[data-testid="create-story-settings"]')!;
     // The Library's own media counts as equipped.
-    expect(settings.querySelector('[data-testid="media-loadout-count"]')?.textContent).toBe('2/2 equipped');
+    expect(settings.querySelector('[data-testid="media-loadout-count"]')?.textContent).toBe('3/3 equipped');
     const styleImport = [...settings.querySelectorAll('details')].find(details => details.querySelector('summary')?.textContent === 'Upload SPP to Style')!;
     expect(styleImport, 'Expected an upload on the Style slot').toBeTruthy();
     const bytes = new Uint8Array(await createPack({

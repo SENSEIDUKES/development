@@ -20,8 +20,8 @@ function SoundWordChip({ sound }: { sound: SoundWord }) {
 }
 
 /**
- * The story's Media Loadout in Story Settings: the Soundscapes and Sound Cues
- * slots, each taking a registered pack the reader has unlocked or installed
+ * The story's Media Loadout in Story Settings: the Soundscapes, Sound Cues
+ * and Atmospheres slots, each taking a registered pack the reader has unlocked or installed
  * (`onImport`). A slot with no pack plays the host's own media (`defaults`),
  * and shows it equipped. The words the writer may name are the story's
  * own Sound Words (`SoundWordsPanel`), never the pack's. With `inspect` (the
@@ -46,7 +46,7 @@ export function MediaLoadoutPanel({
   busy: boolean;
   onGrant?: (reference: MediaPackReference) => void;
   onChange: (slot: StoryMediaLoadoutSlot, reference?: MediaPackReference) => void;
-  /** Installs a Soundscape or Sound Cue `.spp` package, when the host offers it; the panel then equips it. */
+  /** Installs a Soundscape, Sound Cue or Atmosphere `.spp` package, when the host offers it; the panel then equips it. */
   onImport?: (file: Blob) => Promise<MediaPack>;
   /** What each slot plays with no pack: the host's own media, by name. Such a slot counts as equipped. */
   defaults?: Partial<Record<StoryMediaLoadoutSlot, string>>;
@@ -85,6 +85,7 @@ export function MediaLoadoutPanel({
   const slots: Array<{ id: StoryMediaLoadoutSlot; type: MediaPack['type']; label: string }> = [
     { id: 'soundscapes', type: 'soundscape', label: 'Soundscapes' },
     { id: 'soundCues', type: 'sound-cue', label: 'Sound Cues' },
+    { id: 'atmospheres', type: 'atmosphere', label: 'Atmospheres' },
   ];
   const validEquipped = new Set(slots.flatMap(slot => {
     const reference = story.mediaLoadout?.[slot.id];
@@ -130,7 +131,7 @@ export function MediaLoadoutPanel({
           </p>
         </div>
         <span className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-emerald-100" data-testid="media-loadout-count">
-          {equippedCount}/2 equipped
+          {equippedCount}/{slots.length} equipped
         </span>
       </div>
 
@@ -145,11 +146,11 @@ export function MediaLoadoutPanel({
           className="min-h-11 rounded-full border border-emerald-300/40 px-4 text-sm text-emerald-50 hover:border-emerald-300/70 disabled:opacity-40">
           {importing ? 'Installing…' : 'Import .spp'}
         </button>
-        <p className="min-w-0 flex-1 text-[11px] leading-relaxed text-neutral-500">A Soundscape or Sound Cue package is kept on this device and equipped in its slot.</p>
+        <p className="min-w-0 flex-1 text-[11px] leading-relaxed text-neutral-500">A Soundscape, Sound Cue or Atmosphere package is kept on this device and equipped in its slot.</p>
       </div>}
       {problem && <p role="alert" className="mt-2 whitespace-pre-wrap text-xs text-human">{problem}</p>}
 
-      <div className={`mt-5 grid gap-3 ${stacked ? '' : 'sm:grid-cols-2'}`}>
+      <div className={`mt-5 grid gap-3 ${stacked ? '' : 'sm:grid-cols-2 xl:grid-cols-3'}`}>
         {slots.map(slot => {
           const slotPacks = packs.filter(pack => pack.type === slot.type);
           const reference = story.mediaLoadout?.[slot.id];
@@ -164,7 +165,9 @@ export function MediaLoadoutPanel({
               </div>
               <p className="mt-1 text-[11px] text-neutral-500">{slot.id === 'soundscapes'
                 ? 'The music each chapter chooses its mood from.'
-                : 'The recordings that play the story\'s Sound Words.'}</p>
+                : slot.id === 'atmospheres'
+                  ? 'The place sounds each chapter chooses its atmosphere from.'
+                  : 'The recordings that play the story\'s Sound Words.'}</p>
               {!inspect && slotPacks.length === 0 && !reference ? (
                 <p className="mt-3 min-h-11 rounded-lg border border-white/10 bg-black/20 px-3 py-2.5 text-sm text-neutral-200" data-testid={`story-media-${slot.id}-default`}>
                   {defaults[slot.id] ?? 'Nothing plays here yet'}
@@ -206,7 +209,7 @@ export function MediaLoadoutPanel({
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h3 className="text-sm font-semibold text-white">{pack.displayName}</h3>
-                  <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.12em] text-neutral-500">{pack.type === 'soundscape' ? 'Soundscape Pack' : 'Sound Cue Pack'} · v{pack.version}</p>
+                  <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.12em] text-neutral-500">{pack.type === 'soundscape' ? 'Soundscape Pack' : pack.type === 'atmosphere' ? 'Atmosphere Pack' : 'Sound Cue Pack'} · v{pack.version}</p>
                 </div>
                 <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-neutral-300">{state}</span>
               </div>

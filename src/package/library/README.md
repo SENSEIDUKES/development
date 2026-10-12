@@ -1,5 +1,16 @@
 # `@seihouse/library`
 
+**0.33.0 (2026-10-12):** Atmospheres are a Media Loadout slot, beside Soundscapes and Sound
+Cues (SENSEI: they are made in the Library's studios like the others). `./media`: a third pack
+type, `AtmospherePack` (`type: 'atmosphere'`, looping beds each with a word, a name, an
+optional group, a playable file and an optional measured loudness); `StoryMediaLoadoutSlot`
+and `StoryMediaLoadout` gain `atmospheres`; `MEDIA_SLOT_PACK_TYPES` and `MEDIA_LOADOUT_SLOTS`
+name each slot's pack type. An equipped Atmosphere pack is the story's whole set of
+atmospheres: `createAuthorizedMediaCatalog` and `createLibraryMediaPort` freeze its beds in
+place of the base's. `./stories`: the Media Loadout shows three slots (`3/3 equipped`), and
+`useLibraryStories`'s `mediaDefaults` names "The Library's own Atmospheres". Requires
+`@seihouse/sen` 0.33.0.
+
 **0.32.0 (2026-10-11):** Sound Words in Story Settings. `./stories`: `SoundWordsPanel`
 (exported) is the story's own sound words in `StorySettings`, `CreateStorySettings` and the
 HARNESS developer page: a preset fills the list, the reader adds, changes and removes words

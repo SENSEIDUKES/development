@@ -10,7 +10,7 @@
  *   spp.json   { "name", "description", "version", "publisher", "kind", "slot", "categories", "id" }
  *              kind: "sound-words" (a story's Sound Words), "capa" (a CAPA
  *              skill; "slot" names it: author, pacing, continuity, style, …),
- *              "sound-cues" or "soundscapes" (audio), or absent for plain files.
+ *              "sound-cues", "soundscapes" or "atmospheres" (audio), or absent for plain files.
  *              "made" lists every version built; the build keeps it.
  *   words.txt  A Sound Words package's words, one per line (# starts a note).
  *
@@ -43,7 +43,9 @@ const DEFAULT_PUBLISHER = 'SEIHouse Productions LLC';
 export const MEDIA_CATALOG_ASSET = 'assets/media-pack.json';
 const AUDIO_FILE = /\.(?:aac|flac|m4a|mp3|oga|ogg|opus|wav)$/i;
 const CUE_CATEGORIES = ['artifacts', 'atmosphere', 'beasts', 'factions', 'locations', 'system', 'weapons'];
-const MEDIA_KINDS = { 'sound-cues': 'sound-cue', soundscapes: 'soundscape' };
+const MEDIA_KINDS = { 'sound-cues': 'sound-cue', soundscapes: 'soundscape', atmospheres: 'atmosphere' };
+/** What each audio kind's folders are named by. */
+const FOLDER_OF = { 'sound-cues': 'sound word', soundscapes: 'mood', atmospheres: 'atmosphere word' };
 const AUDIO_TYPES = { aac: 'audio/aac', flac: 'audio/flac', m4a: 'audio/mp4', mp3: 'audio/mpeg', oga: 'audio/ogg', ogg: 'audio/ogg', opus: 'audio/ogg', wav: 'audio/wav' };
 
 /** The words of a `words.txt`, spelled as SEN spells them, or every problem with its line. */
@@ -84,7 +86,7 @@ function readMediaFolder(folder, kind, categories = {}) {
   for (const name of readdirSync(folder).sort()) {
     const path = join(folder, name);
     if (name.startsWith('.') || name === SPP_CONFIG_FILE || name === 'Thumbs.db' || name === 'desktop.ini') continue;
-    if (!statSync(path).isDirectory()) { problems.push(`${name}: put each recording in the folder of its ${kind === 'sound-cues' ? 'sound word' : 'mood'}`); continue; }
+    if (!statSync(path).isDirectory()) { problems.push(`${name}: put each recording in the folder of its ${FOLDER_OF[kind]}`); continue; }
     const word = name.toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
     if (word.length > 24 || !SOUND_WORD.test(word)) { problems.push(`${name}/: a folder name must be one to three plain English words`); continue; }
     const category = kind === 'sound-cues' ? categories[word] ?? categories[name] : undefined;
@@ -97,12 +99,15 @@ function readMediaFolder(folder, kind, categories = {}) {
       files.push({ path: asset, mediaType: AUDIO_TYPES[file.split('.').pop().toLowerCase()], data: new Uint8Array(readFileSync(join(path, file))) });
       entries.push(kind === 'sound-cues'
         ? { path: asset, sound: word, ...(category ? { category } : {}) }
-        : { path: asset, mood: word });
+        : kind === 'atmospheres'
+          // A bed's name is its file's name ("Forest 2"); beds that share a word take turns by chapter.
+          ? { path: asset, word, label: file.replace(/\.[^.]+$/, '') }
+          : { path: asset, mood: word });
     }
   }
   if (problems.length) throw new Error(`The audio folder has problems:\n  ${problems.join('\n  ')}`);
-  if (!entries.length) throw new Error(`Add a folder for each ${kind === 'sound-cues' ? 'sound word' : 'mood'} with its recordings.`);
-  return { files, catalog: kind === 'sound-cues' ? { recordings: entries } : { pieces: entries } };
+  if (!entries.length) throw new Error(`Add a folder for each ${FOLDER_OF[kind]} with its recordings.`);
+  return { files, catalog: kind === 'sound-cues' ? { recordings: entries } : kind === 'atmospheres' ? { beds: entries } : { pieces: entries } };
 }
 
 const nextPatch = version => {
@@ -122,7 +127,7 @@ export async function makeSpp(folderPath, { now = new Date() } = {}) {
   }
   const kind = config.kind ?? (hasWords ? 'sound-words' : undefined);
   if (kind !== undefined && !['sound-words', 'capa', ...Object.keys(MEDIA_KINDS)].includes(kind)) {
-    throw new Error(`"kind" must be "sound-words", "capa", "sound-cues" or "soundscapes", not "${kind}".`);
+    throw new Error(`"kind" must be "sound-words", "capa", "sound-cues", "soundscapes" or "atmospheres", not "${kind}".`);
   }
   if (kind === 'capa' && (typeof config.slot !== 'string' || !config.slot)) throw new Error('A CAPA package needs a "slot" in spp.json (author, pacing, continuity, style, …).');
   const name = typeof config.name === 'string' && config.name.trim() ? config.name.trim() : basename(folder);

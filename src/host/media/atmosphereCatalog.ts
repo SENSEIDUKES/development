@@ -26,9 +26,11 @@ export const DEFAULT_ATMOSPHERE_ID = 'sen-atmosphere-rain-gentle-rain-1';
  * without its number ("Gentle Rain 2" is "gentle rain"), so the beds that
  * share a name take turns among the chapters that choose it.
  */
-export const SEN_SCENE_ATMOSPHERES: readonly SceneAtmosphere[] = Object.freeze(SEN_ATMOSPHERES.map(option => ({
-  id: option.id,
-  word: option.label.replace(/\s+\d+$/, '').trim().toLowerCase(),
-  label: option.label,
-  ...(option.group ? { group: option.group } : {}),
+export const SEN_SCENE_ATMOSPHERES: readonly SceneAtmosphere[] = Object.freeze(atmospheres.entries.map(entry => ({
+  id: entry.id,
+  word: entry.label.replace(/\s+\d+$/, '').trim().toLowerCase(),
+  label: entry.label,
+  ...(entry.group ? { group: entry.group } : {}),
+  url: entry.url,
+  loudness: { lufs: entry.loudness.lufs, peakDb: entry.loudness.peakDb },
 })));

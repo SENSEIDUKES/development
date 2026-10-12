@@ -210,6 +210,7 @@ export function useLibraryStories({
   const mediaDefaults = useMemo(() => ({
     ...(baseMedia?.soundscapes.length ? { soundscapes: 'The Library’s own Soundscapes' } : {}),
     ...(baseMedia?.soundCues.length ? { soundCues: 'The Library’s own Sound Cues' } : {}),
+    ...(baseMedia?.atmospheres?.length ? { atmospheres: 'The Library’s own Atmospheres' } : {}),
   }), [baseMedia]);
 
   return {

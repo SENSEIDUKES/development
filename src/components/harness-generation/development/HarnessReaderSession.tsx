@@ -369,7 +369,7 @@ export function HarnessReaderSession({
   const pieces = useMemo(() => loadout?.soundscapes.map(entry => entry.track) ?? soundscapes, [loadout, soundscapes]);
   const mixer = useReaderSoundtrack({
     active: Boolean(story && readerState),
-    chapterId: chapter?.id, soundCues: chapter?.soundCues, scene, pieces, choice: soundtrackChoice,
+    chapterId: chapter?.id, soundCues: chapter?.soundCues, scene, pieces, atmospheres: loadout?.atmospheres, choice: soundtrackChoice,
     speaking: readAloud.status === 'playing', listenEnded: readAloud.status === 'ended',
     onSleep: readAloud.stop, chapterEnd,
   });

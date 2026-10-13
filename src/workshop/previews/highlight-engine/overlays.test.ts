@@ -4,7 +4,7 @@ import {
   type ManuscriptAttachment, type ManuscriptIdFactory, type ManuscriptState, type PassageSelection,
 } from '@seihouse/sen/highlight-engine';
 import { createPreviewManuscript, previewParagraphs } from './previewData';
-import { ATTACHMENT_COLORS, OVERLAY_KINDS, attachmentMarks, openingSoundMark, structurePins } from '@seihouse/sen/highlight-engine';
+import { ATTACHMENT_COLORS, MANUSCRIPT_OVERLAYS, OVERLAY_KINDS, attachmentMarks, isChapterOpening, openingSoundMark, structurePins } from '@seihouse/sen/highlight-engine';
 
 const ids = (): ManuscriptIdFactory => { let count = 0; return kind => `${kind[0]}${++count}`; };
 const words = (state: ManuscriptState<string>, index: number, phrase: string): PassageSelection => {
@@ -28,23 +28,34 @@ describe('Lab overlays', () => {
     expect(pins.find(pin => pin.label === '¶2')).toMatchObject({ blockId: second.id, offset: second.sentences[0].start });
   });
 
-  it('gives each overlay its kinds, one color per kind', () => {
-    expect(OVERLAY_KINDS.audio).toEqual(['sound-cue', 'soundscape-change', 'atmosphere-change']);
+  it('gives each sound its own overlay and its own color: Sound Cues blue, soundscapes red, atmospheres yellow', () => {
+    // SENSEI: never one Audio overlay bundling them; each is found on its own.
+    expect(MANUSCRIPT_OVERLAYS.map(overlay => overlay.label)).toEqual(['Sound Cues', 'Soundscapes', 'Atmospheres']);
+    expect(OVERLAY_KINDS).toEqual({ cues: ['sound-cue'], soundscapes: ['soundscape-change'], atmospheres: ['atmosphere-change'] });
+    expect(ATTACHMENT_COLORS['soundscape-change'].tone).toBe('rgba(239, 68, 68, .4)');
+    expect(ATTACHMENT_COLORS['atmosphere-change'].tone).toBe('rgba(234, 179, 8, .42)');
     expect(ATTACHMENT_COLORS['soundscape-change'].label).toBe('Soundscape');
     expect(ATTACHMENT_COLORS['atmosphere-change'].label).toBe('Atmosphere');
     expect(ATTACHMENT_COLORS['sound-cue'].label).toBe('Sound Cue');
   });
 
-  it('marks where the opening soundscape and atmosphere begin: the first word, in their colors', () => {
+  it('marks where the opening soundscape or atmosphere begins: the first word, in its own color', () => {
     const manuscript = createPreviewManuscript(ids());
     const first = manuscript.paragraphs[0];
     const firstWord = first.text.match(/[\p{L}\p{N}]+/u)![0];
-    const both = openingSoundMark(manuscript, { soundscape: true, atmosphere: true })!;
-    expect(both.selection).toMatchObject({ blockId: first.id, selectedText: firstWord });
-    expect(both.tone).toBe(`linear-gradient(90deg, ${ATTACHMENT_COLORS['soundscape-change'].tone} 50%, ${ATTACHMENT_COLORS['atmosphere-change'].tone} 50%)`);
-    expect(openingSoundMark(manuscript, { atmosphere: true })!.tone).toBe(ATTACHMENT_COLORS['atmosphere-change'].tone);
-    // A chapter with neither opening keeps the one before playing: nothing begins here.
-    expect(openingSoundMark(manuscript, {})).toBeUndefined();
+    expect(openingSoundMark(manuscript, 'soundscape-change')).toMatchObject({
+      selection: { blockId: first.id, selectedText: firstWord }, tone: ATTACHMENT_COLORS['soundscape-change'].tone,
+    });
+    expect(openingSoundMark(manuscript, 'atmosphere-change')!.tone).toBe(ATTACHMENT_COLORS['atmosphere-change'].tone);
+  });
+
+  it('treats a highlight in the first sentence as the chapter’s opening, and anywhere after as a change', () => {
+    const manuscript = createPreviewManuscript(ids());
+    const [first, second] = manuscript.paragraphs;
+    const at = (blockId: string, offset: number) => ({ blockId, startOffset: offset, endOffset: offset + 1, selectedText: '' });
+    expect(isChapterOpening(manuscript, at(first.id, first.sentences[0].start))).toBe(true);
+    expect(isChapterOpening(manuscript, at(first.id, first.sentences[1].start))).toBe(false);
+    expect(isChapterOpening(manuscript, at(second.id, 0))).toBe(false);
   });
 
   it('tints every Sound Cue blue, whether it holds words, a sentence or a paragraph, and nothing of another kind', () => {
@@ -55,7 +66,7 @@ describe('Lab overlays', () => {
       cue(state, 'cave', words(state, 2, 'cold fire'), 'paragraph'),
       { ...cue(state, 'rain', words(state, 1, 'paper lanterns'), 'sentence'), kind: 'soundscape' },
     ];
-    const marks = attachmentMarks(state, OVERLAY_KINDS.audio);
+    const marks = attachmentMarks(state, OVERLAY_KINDS.cues);
     expect(marks.map(mark => mark.id)).toEqual(['mark:roar', 'mark:bells', 'mark:cave']);
     expect(new Set(marks.map(mark => mark.tone))).toEqual(new Set([ATTACHMENT_COLORS['sound-cue'].tone]));
     expect(marks.some(mark => mark.attention)).toBe(false);
@@ -80,7 +91,7 @@ describe('Lab overlays', () => {
     };
     const refilled = edit(start, words(start, 0, 'swallowed'), 'filled');
     const changed = edit(refilled, words(refilled, 0, 'beast roared'), 'wind howled');
-    const marks = attachmentMarks(changed, OVERLAY_KINDS.audio);
+    const marks = attachmentMarks(changed, OVERLAY_KINDS.cues);
     expect(marks).toHaveLength(1);
     expect(marks[0]).toMatchObject({ tone: ATTACHMENT_COLORS['sound-cue'].tone, attention: true, selection: { selectedText: 'Dust filled the courtyard.' } });
   });

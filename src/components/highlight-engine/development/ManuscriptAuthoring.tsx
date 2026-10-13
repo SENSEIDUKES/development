@@ -10,7 +10,7 @@ import {
 import type { PassageAction } from '../shared/actions';
 import type { PassageSelection } from '../shared/selection';
 import type { TextHighlightOverlay } from '../shared/overlay';
-import { ATTACHMENT_COLORS, OVERLAY_KINDS, type ManuscriptOverlayMode } from '../shared/overlayModes';
+import { ATTACHMENT_COLORS, MANUSCRIPT_OVERLAYS, OVERLAY_KINDS, type ManuscriptOverlayMode } from '../shared/overlayModes';
 import { ManualCuePicker } from './ManualCuePicker';
 import { SOUNDTRACK_KIND_WORDS, SoundtrackChangePanel, type SoundtrackChoices } from './SoundtrackChangePicker';
 import { ATMOSPHERE_CHANGE_KIND, SOUNDSCAPE_CHANGE_KIND, type SoundtrackChangeKind } from '../../../audio/soundtrackChanges';
@@ -151,7 +151,8 @@ export function audioActions<State extends AuthoringState>({ state, update, cata
 }
 
 /**
- * The Overlays switch (Off / Audio) and, while one is on, its legend: the
+ * The Overlays switch (Off, Sound Cues, Soundscapes, Atmospheres: one kind
+ * each) and, while one is on, its legend: the
  * page's numbering as the model addresses it, and each kind's color.
  */
 export function ManuscriptOverlaySwitch({ mode, onChange, overlay }: {
@@ -163,7 +164,7 @@ export function ManuscriptOverlaySwitch({ mode, onChange, overlay }: {
   return <div className="space-y-3">
     <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400" role="group" aria-label="Overlays" data-testid="overlay-switch">
       <span className="mr-1 uppercase tracking-[0.14em] text-slate-500">Overlays</span>
-      {([['off', 'Off'], ['audio', 'Audio']] as const).map(([value, label]) => <button key={value} type="button" aria-pressed={mode === value}
+      {[{ mode: 'off' as const, label: 'Off' }, ...MANUSCRIPT_OVERLAYS].map(({ mode: value, label }) => <button key={value} type="button" aria-pressed={mode === value}
         className={`min-h-9 rounded-lg border px-3 ${mode === value ? 'border-teal-300/60 bg-teal-400/10 text-teal-100' : 'border-slate-600 text-slate-300 hover:bg-slate-800'}`}
         onClick={() => onChange(value)}>{label}</button>)}
     </div>

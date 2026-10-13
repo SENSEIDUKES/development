@@ -6,7 +6,7 @@ import {
 } from '@seihouse/sen/audio';
 import { InlineAudioText } from '@seihouse/sen/inline-audio';
 import {
-  ManuscriptOverlaySwitch, OVERLAY_KINDS, HighlightEngine, SOUNDTRACK_KIND_WORDS, SoundtrackOptionList,
+  ManuscriptOverlaySwitch, OVERLAY_KINDS, OVERLAY_SOUNDTRACK_KIND, HighlightEngine, SOUNDTRACK_KIND_WORDS, WRITER_OPENING,
   applyPassageEdit, attachmentMarks, createManuscript, openingSoundMark, createManuscriptId, flaggedAttachments, placedSoundCues, removeAttachment, resolveAnchor,
   audioActions, soundtrackOptionLabel, structurePins,
   type ManuscriptAttachment, type ManuscriptOverlayMode, type ManuscriptState, type PassageEdit, type SoundtrackChoices,
@@ -60,14 +60,13 @@ const KIND_NAMES: Record<string, [string, string]> = {
   [SOUNDSCAPE_CHANGE_KIND]: ['soundscape change', 'soundscape changes'], [ATMOSPHERE_CHANGE_KIND]: ['atmosphere change', 'atmosphere changes'],
 };
 
-/** The writer's own opening choice, as the first entry of the opening's list. */
-const WRITER = 'writer';
-
 /**
  * Create mode: the reader authors the chapter in place, on the Highlight
- * Engine with its overlays. Highlight words to change them (Edit) or to place a
- * Sound Cue (Media → Audio → Cue); the Overlays switch shows the cues and the
- * page's numbering (P2 S6). Every change is saved as it is made, so there is no
+ * Engine with its overlays. Highlight words to change them (Edit), to place a
+ * Sound Cue, or to change the soundscape or atmosphere there (Media → Audio);
+ * in the chapter's first sentence the soundscape or atmosphere is its opening,
+ * locked at the start. The Overlays switch shows one kind at a time (Sound
+ * Cues, Soundscapes or Atmospheres) and the page's numbering (P2 S6). Every change is saved as it is made, so there is no
  * seal step: moving on to the next chapter seals this one. An effect whose
  * words a change replaced (a cue, a speaker or a holding change) has nothing
  * left to sit on, so it waits in "Needs a new spot" until the reader places it
@@ -83,13 +82,27 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
 }) {
   const [state, setState] = useState<ChapterState>(() => chapterState(chapter, locale));
   const [opening, setOpening] = useState<ChapterOpeningSound | undefined>(chapter.openingSound);
-  const [overlayMode, setOverlayMode] = useState<ManuscriptOverlayMode>('audio');
+  const [overlayMode, setOverlayMode] = useState<ManuscriptOverlayMode>('cues');
   const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState<'saved' | 'saving' | 'failed'>('saved');
   const saves = useRef<Promise<void>>(Promise.resolve());
   // The recordings the chapter was written with; where its frozen catalog holds none, the story's media now.
   const catalog = useMemo(() => createMediaCatalog(chapter.mediaLoadout.soundCues.length
     ? chapter.mediaLoadout : controller.describeStoryMedia(chapter.storyId) ?? chapter.mediaLoadout), [chapter.mediaLoadout, chapter.storyId, controller]);
+  /** The chapter's opening music or atmosphere: the writer's (cleared) or one the reader chose. */
+  const chooseOpening = (kind: SoundtrackChangeKind, id: string) => {
+    const next: ChapterOpeningSound = { ...opening };
+    if (kind === SOUNDSCAPE_CHANGE_KIND) { if (id === WRITER_OPENING) delete next.soundscape; else next.soundscape = { pieceId: id }; }
+    else if (id === WRITER_OPENING) delete next.atmosphere; else next.atmosphere = { atmosphereId: id };
+    const kept = next.soundscape || next.atmosphere ? next : undefined;
+    setOpening(kept);
+    save(state, kept);
+  };
+  const writerLabel = (kind: SoundtrackChangeKind, choices: SoundtrackChoices) => {
+    const chosen = kind === SOUNDSCAPE_CHANGE_KIND ? chapter.scene?.soundscape
+      : chapter.scene?.atmosphere && soundtrackOptionLabel(kind, chapter.scene.atmosphere, choices);
+    return chosen ? `The writer's choice: ${chosen}` : 'The writer\'s choice (none: the one before goes on)';
+  };
   // The music and atmospheres the chapter was written with, each heard through the reader mixer before it is chosen.
   const mixer = useOptionalReaderMixer();
   const soundtrack = useMemo((): SoundtrackChoices => ({
@@ -106,6 +119,15 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
       return () => { if (before) mixer.setAtmosphere(before); };
     } } : {}),
   }), [chapter.mediaLoadout, mixer]);
+  const choices = useMemo((): SoundtrackChoices => ({
+    ...soundtrack,
+    opening: {
+      chosen: kind => kind === SOUNDSCAPE_CHANGE_KIND ? opening?.soundscape?.pieceId : opening?.atmosphere?.atmosphereId,
+      writer: kind => writerLabel(kind, soundtrack),
+      choose: chooseOpening,
+    },
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- chooseOpening saves the page as it stands
+  }), [soundtrack, opening, state]);
 
   /** Saves the page as it stands now; effects whose words are gone wait for a new spot, and the reader is told which. */
   const save = (next: ChapterState, nextOpening = opening) => {
@@ -145,30 +167,16 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
     setNotice(null);
     update(() => result.state);
   };
-  const { actions, removeActions } = audioActions({ state, update, catalog, onNotice: setNotice, soundtrack });
-  /** The chapter's opening music or atmosphere: the writer's (cleared) or one the reader chose. */
-  const chooseOpening = (kind: SoundtrackChangeKind, id: string) => {
-    const next: ChapterOpeningSound = { ...opening };
-    if (kind === SOUNDSCAPE_CHANGE_KIND) { if (id === WRITER) delete next.soundscape; else next.soundscape = { pieceId: id }; }
-    else if (id === WRITER) delete next.atmosphere; else next.atmosphere = { atmosphereId: id };
-    const kept = next.soundscape || next.atmosphere ? next : undefined;
-    setOpening(kept);
-    save(state, kept);
-  };
-  const writerLabel = (kind: SoundtrackChangeKind) => {
-    const chosen = kind === SOUNDSCAPE_CHANGE_KIND ? chapter.scene?.soundscape
-      : chapter.scene?.atmosphere && soundtrackOptionLabel(kind, chapter.scene.atmosphere, soundtrack);
-    return chosen ? `The writer's choice: ${chosen}` : 'The writer\'s choice (none: the one before goes on)';
-  };
-  const changes = state.attachments.filter(isSoundtrackChange).filter(placed(state)) as SoundtrackChangeAttachment[];
-  // The opening soundscape and atmosphere: the reader's own, or the writer's.
-  const opens = { soundscape: Boolean(opening?.soundscape ?? chapter.scene?.soundscape), atmosphere: Boolean(opening?.atmosphere ?? chapter.scene?.atmosphere) };
+  const { actions, removeActions } = audioActions({ state, update, catalog, onNotice: setNotice, soundtrack: choices });
+  // The Soundscapes and Atmospheres overlays mark where the opening begins: the reader's own, or the writer's.
+  const opens = { [SOUNDSCAPE_CHANGE_KIND]: Boolean(opening?.soundscape ?? chapter.scene?.soundscape), [ATMOSPHERE_CHANGE_KIND]: Boolean(opening?.atmosphere ?? chapter.scene?.atmosphere) };
+  const opensWith = OVERLAY_SOUNDTRACK_KIND[overlayMode];
+  const showsOpening = Boolean(opensWith && opens[opensWith]);
   const overlay = useMemo(() => {
     if (overlayMode === 'off') return undefined;
-    const start = openingSoundMark(state.manuscript, opens);
+    const start = showsOpening && opensWith ? openingSoundMark(state.manuscript, opensWith) : undefined;
     return { marks: [...start ? [start] : [], ...attachmentMarks(state, OVERLAY_KINDS[overlayMode])], pins: structurePins(state.manuscript) };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- the opening is two flags
-  }, [overlayMode, state, opens.soundscape, opens.atmosphere]);
+  }, [overlayMode, state, opensWith, showsOpening]);
   const cues = useMemo(() => placedSoundCues(state), [state]);
   const prose = useMemo((): CSSProperties => ({
     fontFamily: text.font.family, fontSize: `calc(${text.fontSize} * var(--reader-scale, 1))`, fontWeight: text.fontWeight,
@@ -184,31 +192,12 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
           {saving === 'saving' ? 'Saving…' : saving === 'failed' ? 'Not saved' : 'Saved'}
         </p>
       </div>
-      <p className="text-xs leading-relaxed text-neutral-400">Highlight words to change them, or choose Media to place a Sound Cue or change the soundscape or atmosphere there. Changes save as you make them; moving on to the next chapter seals this one.</p>
+      <p className="text-xs leading-relaxed text-neutral-400">Highlight words to change them, or choose Media to place a Sound Cue or change the soundscape or atmosphere there; in the first sentence, Media chooses how the chapter opens. Changes save as you make them; moving on to the next chapter seals this one.</p>
       <ManuscriptOverlaySwitch mode={overlayMode} onChange={setOverlayMode} overlay={overlay} />
       {/* A chapter may have no Sound Cues, but where there should be some their absence is loud: say so here, never in the Reader. */}
       {cues.length === 0 && <p role="status" className="rounded-lg border border-amber-300/25 bg-amber-400/[0.06] px-3 py-2 text-xs leading-relaxed text-amber-100" data-testid="create-mode-no-cues">
         This chapter has no Sound Cues. Where a sound happens, highlight its words and choose Media → Audio → Cue.
       </p>}
-      <details className="rounded-lg border border-white/10 bg-neutral-900/40 px-3 py-2" data-testid="create-mode-soundtrack">
-        <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.14em] text-neutral-300">Soundscape and atmosphere</summary>
-        <p className="mt-2 text-xs leading-relaxed text-neutral-400">Each opens the chapter, locked at its start, and may change once more: highlight the word where it begins and choose Media → Audio.</p>
-        {([SOUNDSCAPE_CHANGE_KIND, ATMOSPHERE_CHANGE_KIND] as const).map(kind => {
-          const chosen = kind === SOUNDSCAPE_CHANGE_KIND ? opening?.soundscape?.pieceId : opening?.atmosphere?.atmosphereId;
-          const change = changes.find(entry => entry.kind === kind);
-          return <section key={kind} className="mt-3 space-y-2" aria-label={`${SOUNDTRACK_KIND_WORDS[kind].name}: opening and change`}>
-            <h2 className="text-xs font-semibold text-neutral-100">{SOUNDTRACK_KIND_WORDS[kind].name} · opening <span className="font-normal text-neutral-400">(locked at the start)</span></h2>
-            <SoundtrackOptionList kind={kind} choices={soundtrack} chosen={chosen ?? WRITER} onChoose={id => chooseOpening(kind, id)}
-              extra={{ id: WRITER, label: writerLabel(kind) }} />
-            {change && <div className="flex items-start justify-between gap-3 rounded-lg border border-white/10 px-3 py-2 text-xs">
-              <span className="text-neutral-300">Changes at “{change.anchor.selectedText}” to {soundtrackOptionLabel(kind,
-                change.kind === SOUNDSCAPE_CHANGE_KIND ? change.payload.pieceId : change.payload.atmosphereId, soundtrack)}</span>
-              <button type="button" onClick={() => update(current => removeAttachment(current, change.id))}
-                className="min-h-9 shrink-0 rounded-lg border border-white/15 px-3 text-xs text-neutral-200 hover:bg-white/10">Remove</button>
-            </div>}
-          </section>;
-        })}
-      </details>
       {notice && <p role="alert" className="rounded-lg border border-white/10 bg-neutral-900/70 px-3 py-2 text-xs text-amber-100">{notice}</p>}
       {flaggedAttachments(state).length > 0 && <section aria-labelledby="create-mode-waiting" className="space-y-2" data-testid="create-mode-waiting">
         <h2 id="create-mode-waiting" className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-300">Needs a new spot</h2>

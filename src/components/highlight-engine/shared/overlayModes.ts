@@ -1,12 +1,21 @@
-import { soundtrackChangeWord } from '../../../audio/soundtrackChanges';
+import { soundtrackChangeWord, type SoundtrackChangeKind } from '../../../audio/soundtrackChanges';
 import { resolveAnchor, type Manuscript, type ManuscriptState } from './manuscript';
 import type { OverlayMark, OverlayPin } from './overlay';
+import type { PassageSelection } from './selection';
 
 /**
  * The page's overlays, like a strategy game's map modes: each shows one kind of
- * added effect. The Workshop lab and the Reader's Create mode share them.
+ * added effect and nothing else, so Sound Cues, soundscapes and atmospheres are
+ * each found on their own. The Workshop lab and the Reader's Create mode share them.
  */
-export type ManuscriptOverlayMode = 'off' | 'audio';
+export type ManuscriptOverlayMode = 'off' | 'cues' | 'soundscapes' | 'atmospheres';
+
+/** Each overlay in the switch's order, with its name. */
+export const MANUSCRIPT_OVERLAYS: ReadonlyArray<{ mode: Exclude<ManuscriptOverlayMode, 'off'>; label: string }> = [
+  { mode: 'cues', label: 'Sound Cues' },
+  { mode: 'soundscapes', label: 'Soundscapes' },
+  { mode: 'atmospheres', label: 'Atmospheres' },
+];
 
 /**
  * One color per kind of added effect, so every effect of a kind is found at a
@@ -16,14 +25,31 @@ export type ManuscriptOverlayMode = 'off' | 'audio';
  */
 export const ATTACHMENT_COLORS: Readonly<Record<string, { label: string; tone: string }>> = {
   'sound-cue': { label: 'Sound Cue', tone: 'rgba(59, 130, 246, .38)' },
-  'soundscape-change': { label: 'Soundscape', tone: 'rgba(168, 85, 247, .4)' },
-  'atmosphere-change': { label: 'Atmosphere', tone: 'rgba(34, 197, 94, .36)' },
+  'soundscape-change': { label: 'Soundscape', tone: 'rgba(239, 68, 68, .4)' },
+  'atmosphere-change': { label: 'Atmosphere', tone: 'rgba(234, 179, 8, .42)' },
 };
 
-/** The attachment kinds each overlay shows. */
+/** The attachment kind each overlay shows. */
 export const OVERLAY_KINDS: Readonly<Record<Exclude<ManuscriptOverlayMode, 'off'>, readonly string[]>> = {
-  audio: ['sound-cue', 'soundscape-change', 'atmosphere-change'],
+  cues: ['sound-cue'],
+  soundscapes: ['soundscape-change'],
+  atmospheres: ['atmosphere-change'],
 };
+
+/** The soundtrack kind an overlay shows, for the opening it marks. */
+export const OVERLAY_SOUNDTRACK_KIND: Partial<Record<ManuscriptOverlayMode, SoundtrackChangeKind>> = {
+  soundscapes: 'soundscape-change',
+  atmospheres: 'atmosphere-change',
+};
+
+/**
+ * Whether a selection is in the chapter's first sentence: there a soundscape
+ * or atmosphere is the chapter's opening, locked at its start, never a change.
+ */
+export function isChapterOpening(manuscript: Manuscript, selection: PassageSelection): boolean {
+  const first = manuscript.paragraphs[0];
+  return Boolean(first) && selection.blockId === first.id && selection.startOffset < (first.sentences[0]?.end ?? first.text.length);
+}
 
 /**
  * The page's numbering as the model addresses it (P2 S6), drawn the way a
@@ -43,21 +69,18 @@ export function structurePins(manuscript: Manuscript): OverlayPin[] {
 }
 
 /**
- * The chapter's opening soundscape and atmosphere, on its first word: they
- * begin there, before any change. Each keeps its kind's color; when both
- * open the chapter the word is split between the two.
+ * The chapter's opening soundscape or atmosphere, on its first word, in its
+ * kind's color: it begins there, before any change.
  */
-export function openingSoundMark(manuscript: Manuscript, opening: { soundscape?: boolean; atmosphere?: boolean }): OverlayMark | undefined {
+export function openingSoundMark(manuscript: Manuscript, kind: SoundtrackChangeKind): OverlayMark | undefined {
   const first = manuscript.paragraphs[0];
   const letter = first?.text.search(/[\p{L}\p{N}]/u) ?? -1;
-  if (!first || letter < 0 || !(opening.soundscape || opening.atmosphere)) return undefined;
+  if (!first || letter < 0) return undefined;
   const word = soundtrackChangeWord(first.text, letter, letter + 1, manuscript.locale) ?? { start: letter, end: letter + 1 };
-  const soundscape = ATTACHMENT_COLORS['soundscape-change'].tone;
-  const atmosphere = ATTACHMENT_COLORS['atmosphere-change'].tone;
   return {
-    id: 'mark:opening-sound',
+    id: `mark:opening:${kind}`,
     selection: { blockId: first.id, startOffset: word.start, endOffset: word.end, selectedText: first.text.slice(word.start, word.end) },
-    tone: opening.soundscape && opening.atmosphere ? `linear-gradient(90deg, ${soundscape} 50%, ${atmosphere} 50%)` : opening.soundscape ? soundscape : atmosphere,
+    tone: ATTACHMENT_COLORS[kind].tone,
   };
 }
 

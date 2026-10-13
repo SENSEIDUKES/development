@@ -1,5 +1,13 @@
 # `@seihouse/sen`
 
+**0.34.0 (2026-10-13, breaking):** One Highlight Engine overlay per sound. `./highlight-engine`:
+`ManuscriptOverlayMode` is `'off' | 'cues' | 'soundscapes' | 'atmospheres'` (no `'audio'`), listed
+with their names in `MANUSCRIPT_OVERLAYS`; `OVERLAY_KINDS` gives each one kind and
+`OVERLAY_SOUNDTRACK_KIND` the soundtrack kind it shows. `openingSoundMark(manuscript, kind)` now
+takes one kind. Soundscapes are red and atmospheres yellow. `SoundtrackChoices.opening` lets a
+word in the chapter's first sentence choose the opening (`isChapterOpening`, `WRITER_OPENING`);
+`./harness-generation`'s Create mode uses it in place of its Soundscape and atmosphere picker.
+
 **0.33.1 (2026-10-13):** Create mode shows where a chapter's sound begins and says when it
 has none. `./highlight-engine`: `openingSoundMark(manuscript, { soundscape?, atmosphere? })`
 marks the chapter's first word in the Soundscape and Atmosphere colors (split when both open

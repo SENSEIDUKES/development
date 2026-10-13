@@ -1,10 +1,26 @@
 import { createContext, useContext } from 'react';
+import type { StorySpark, StorySparkRequest } from '@seihouse/sen/story-seed';
 
 export type DaoQuoteCategory = 'comedic' | 'inspirational' | 'comforting';
 export type DaoRequestKind = 'status' | DaoQuoteCategory;
 export type DaoStatusPayload = { hasServerGemini?: boolean };
 export type DaoQuotePayload = { quote: string; author: string; category: DaoQuoteCategory };
 export type DaoResponse<T> = { ok: boolean; json: () => Promise<T> };
+
+/**
+ * Dao Insights' host: where its Story Sparks come from and where a planted one
+ * goes. Every part is optional; without a writer, Dao Insights offers its own
+ * hand-written sparks, and without a Story Bank it offers only to copy.
+ */
+export interface DaoSparkHost {
+  /** Whether `requestSpark` can be used now (a model is configured). */
+  checkSparks?: () => Promise<boolean>;
+  requestSpark?: (request: StorySparkRequest, signal?: AbortSignal) => Promise<StorySpark>;
+  /** Keeps the spark in the Story Bank as a new Story Seed. */
+  keepSpark?: (spark: StorySpark) => Promise<void>;
+  /** Plants the spark in a new Story Seed and opens it. */
+  beginSpark?: (spark: StorySpark) => Promise<void>;
+}
 
 /** Host-only contracts for the frozen header. No production store or credentials. */
 export interface MainLibraryAdapter {
@@ -22,6 +38,8 @@ export interface MainLibraryAdapter {
   setIsSettingsOpen: (open: boolean) => void;
   setIsCodexSheetOpen: (open: boolean) => void;
   setIsShortcutsOpen: (open: boolean) => void;
+  /** Dao Insights' Story Sparks. The `requestDao` quote oracle serves only the historical reference. */
+  daoSparks?: DaoSparkHost;
   requestDao: {
     (kind: 'status'): Promise<DaoResponse<DaoStatusPayload>>;
     (kind: DaoQuoteCategory): Promise<DaoResponse<DaoQuotePayload>>;

@@ -52,7 +52,7 @@ export const OriginWorkspace = ({ seed, updateSeed }: OriginWorkspaceProps) => {
       id="origin-story-title-input"
       label="Title"
       icon={SENStoryIcon}
-      helpText="Optional — the Library will generate a title if you leave this blank."
+      helpText="Optional. Left blank, the Library names your story."
       value={identity.title || ''}
       onChange={updateTitle}
       placeholder="e.g., Ashes of the Ninth Meridian"

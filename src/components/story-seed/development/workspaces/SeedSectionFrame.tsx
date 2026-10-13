@@ -1,5 +1,6 @@
-import React from 'react';
-import { Check, Sparkle, Sparkles } from 'lucide-react';
+import React, { useId, useState } from 'react';
+import { Check, Info, Sparkle, Sparkles } from 'lucide-react';
+import { handleRadioGroupKeyDown, radioGroupTabIndex } from '../radioGroupKeyboard';
 import { SEED_FAMILIES, type SeedSection } from '../seedSections';
 import { SENStorySeedIcon } from '../SENStorySeedIcon';
 
@@ -49,21 +50,21 @@ export const SeedSectionFrame = ({
     })();
   return (
     <section aria-labelledby={`seed-workspace-${section.id}-title`} className="seed-field-scope max-w-3xl">
-      <p className="font-sc text-[11px] font-bold uppercase tracking-[0.34em] text-neutral-400">
+      <p className="font-sc text-[10px] font-bold uppercase tracking-[0.3em] text-neutral-400">
         <span className={section.family === 'story' ? 'text-[#CDB271]/90' : 'text-gold-accent/80'}>
           {family.label}
         </span>
-        <span className="mx-2.5 text-neutral-700">/</span>
+        <span className="mx-2 text-neutral-700">/</span>
         <span className="text-neutral-400">{section.label}</span>
       </p>
-      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-3">
+      <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-2">
         <h2
           id={`seed-workspace-${section.id}-title`}
-          className="flex items-center gap-3.5 font-display font-bold text-2xl sm:text-3xl uppercase tracking-[0.14em] text-[#F3EDE0]"
+          className="flex items-center gap-3 font-display font-bold text-xl sm:text-3xl uppercase tracking-[0.14em] text-[#F3EDE0]"
         >
           <span
             aria-hidden="true"
-            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[rgba(205,178,113,0.38)] bg-[radial-gradient(circle_at_32%_28%,rgba(205,178,113,0.14),rgba(11,14,30,0.55)_68%)] shadow-[0_0_16px_rgba(205,178,113,0.12),inset_0_0_10px_rgba(205,178,113,0.08)] ${familyAccentText(section)}`}
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[rgba(205,178,113,0.38)] bg-[radial-gradient(circle_at_32%_28%,rgba(205,178,113,0.14),rgba(11,14,30,0.55)_68%)] shadow-[0_0_16px_rgba(205,178,113,0.12),inset_0_0_10px_rgba(205,178,113,0.08)] sm:h-11 sm:w-11 ${familyAccentText(section)}`}
           >
             {sectionIcon}
           </span>
@@ -71,12 +72,12 @@ export const SeedSectionFrame = ({
         </h2>
         {section.required && (
           complete ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(168,192,230,0.32)] bg-[rgba(168,192,230,0.06)] px-3 py-1 font-sc text-[10px] font-bold uppercase tracking-[0.22em] text-[#AFC4E4]">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(168,192,230,0.32)] bg-[rgba(168,192,230,0.06)] px-2.5 py-0.5 font-sc text-[10px] font-bold uppercase tracking-[0.22em] text-[#AFC4E4]">
               <Check size={11} aria-hidden="true" />
               Complete
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(205,178,113,0.45)] bg-[rgba(205,178,113,0.07)] px-3 py-1 font-sc text-[10px] font-bold uppercase tracking-[0.22em] text-[#DDC58A] shadow-[0_0_14px_rgba(205,178,113,0.12),inset_0_0_8px_rgba(205,178,113,0.05)]">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(205,178,113,0.45)] bg-[rgba(205,178,113,0.07)] px-2.5 py-0.5 font-sc text-[10px] font-bold uppercase tracking-[0.22em] text-[#DDC58A] shadow-[0_0_14px_rgba(205,178,113,0.12),inset_0_0_8px_rgba(205,178,113,0.05)]">
               <Sparkle size={10} aria-hidden="true" />
               Required
             </span>
@@ -93,15 +94,10 @@ export const SeedSectionFrame = ({
           </span>
         )}
       </div>
-      <p className="mt-3 max-w-xl font-serif text-[15px] leading-relaxed text-[#B0A99B]">
+      <p className="mt-2 max-w-xl font-serif text-sm leading-relaxed text-[#B0A99B] sm:text-[15px]">
         {section.tagline}
       </p>
-      <div aria-hidden="true" className="mt-6 flex items-center gap-3">
-        <span className="h-px flex-1 bg-gradient-to-r from-transparent via-[rgba(205,178,113,0.16)] to-[rgba(205,178,113,0.34)]" />
-        <Sparkle size={10} className="shrink-0 text-[#CDB271]/70" />
-        <span className="h-px flex-1 bg-gradient-to-l from-transparent via-[rgba(205,178,113,0.16)] to-[rgba(205,178,113,0.34)]" />
-      </div>
-      <div className="mt-6 space-y-7">{children}</div>
+      <div className="mt-5 space-y-5 sm:space-y-6">{children}</div>
     </section>
   );
 };
@@ -147,3 +143,71 @@ export const GuidanceNote = ({
     </div>
   </div>
 );
+
+/**
+ * A field's explanation in two layers: one short line always shown, and the
+ * full explanation behind a small info toggle. Nothing is removed; the long
+ * copy simply waits until the author asks for it.
+ */
+export const SeedNote = ({ children, more, moreLabel = 'More about this' }: {
+  children?: React.ReactNode;
+  more: React.ReactNode;
+  moreLabel?: string;
+}) => {
+  const [open, setOpen] = useState(false);
+  const id = useId();
+  return (
+    <span className="block">
+      {children}
+      <button type="button" aria-expanded={open} aria-controls={id} aria-label={moreLabel} title={moreLabel}
+        onClick={() => setOpen(value => !value)}
+        className="story-seed-compact-hit-target ml-1 inline-flex translate-y-[2px] items-center text-neutral-400 transition-colors hover:text-[#DDC58A] aria-expanded:text-[#DDC58A]">
+        <Info size={13} aria-hidden="true" />
+      </button>
+      {open && <span id={id} className="mt-1.5 block border-l border-[rgba(205,178,113,0.3)] pl-2.5 text-neutral-300">{more}</span>}
+    </span>
+  );
+};
+
+/**
+ * A compact one-line choice: the options sit side by side and only the
+ * selected option's description shows beneath them. Keyboard behavior is the
+ * shared radio-group pattern; option ids are `${idPrefix}-${value}`.
+ */
+export function SeedSegmented<T extends string>({ label, idPrefix, value, options, onSelect, describedBy }: {
+  label: string;
+  idPrefix: string;
+  value: T | undefined;
+  options: ReadonlyArray<{ value: T; label: string; description?: string }>;
+  onSelect: (value: T) => void;
+  describedBy?: string;
+}) {
+  const selected = options.find(option => option.value === value);
+  return (
+    <div>
+      <div role="radiogroup" aria-label={label} aria-describedby={[describedBy, selected?.description ? `${idPrefix}-description` : ''].filter(Boolean).join(' ') || undefined}
+        className="grid gap-1 rounded-xl border border-neutral-800/90 bg-black/30 p-1"
+        style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
+        {options.map((option, index) => {
+          const isSelected = option.value === value;
+          return (
+            <button key={option.value} id={`${idPrefix}-${option.value}`} type="button" role="radio" aria-checked={isSelected}
+              tabIndex={radioGroupTabIndex(isSelected, Boolean(selected), index)}
+              title={option.description}
+              onClick={() => onSelect(option.value)} onKeyDown={handleRadioGroupKeyDown}
+              className={`min-h-10 min-w-0 truncate rounded-lg px-1.5 font-sc text-[10px] font-bold uppercase tracking-[0.08em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CDB271]/70 motion-reduce:transition-none ${isSelected
+                ? 'bg-[#CDB271]/10 text-[#F3EDE0] shadow-[inset_0_0_0_1px_rgba(205,178,113,0.5)]'
+                : 'text-neutral-400 hover:text-neutral-200'}`}>
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
+      {selected?.description && (
+        <p id={`${idPrefix}-description`} aria-live="polite" className="mt-1.5 font-sans text-[11px] leading-relaxed text-neutral-300">
+          {selected.description}
+        </p>
+      )}
+    </div>
+  );
+}

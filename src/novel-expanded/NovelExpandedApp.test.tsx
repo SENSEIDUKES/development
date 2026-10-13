@@ -3,7 +3,8 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MotionGlobalConfig } from 'motion/react';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { HarnessGenerationController, type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import type { ReaderStateRepository, ReaderStoryState } from '@seihouse/sen/reader-runtime';
 import { buildInitialStoryGenerationPayload, createStoryAdministrativeMetadata, type StorySeedRecord } from '@seihouse/sen/story-seed';
@@ -89,6 +90,8 @@ const appServices = (writer: HarnessGenerationModelAdapter, overrides: Partial<N
     mediaPacks: createMemoryDeviceMediaPackStore(),
     deviceMedia: new DeviceMediaUrls(),
     requestWorldBlueprint: vi.fn(),
+    requestStorySpark: vi.fn(),
+    storySparksConfigured: vi.fn(async () => false),
     accessToken: { current: undefined },
     profile: createDeviceProfileStore({ storage: readerPreferences, uid: NOVEL_EXPANDED_READER_ID }),
     economy: createPracticeEconomy({ uid: NOVEL_EXPANDED_READER_ID }).clients,
@@ -968,6 +971,30 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     await click(document.querySelector('[aria-label="Back to World Info"]'), 'Back to World Info', 20);
     expect(address()).toBe(`/app/?story=${created.id}`);
     expect(worldInfo()).toBeTruthy();
+  });
+
+  it('Dao Insights on Home: a spark kept goes to the Story Bank, and one begun opens in Create with its premise and genre', async () => {
+    const requestStorySpark = vi.fn(async () => ({ premise: 'A sword writes letters to its first owner.', genre: 'Xianxia', inventedGenre: false, aside: 'Hm.', voice: 'Elder' }));
+    const services = appServices(scriptedWriter().writer, { requestStorySpark, storySparksConfigured: vi.fn(async () => true) });
+    services.profile.save({ defaultReadingLanguage: 'ja', defaultChapterWritingStyle: 'Easy Read' });
+    // jsdom never finishes exit animations, which would hold the previous spark.
+    MotionGlobalConfig.skipAnimations = true;
+    onTestFinished(() => { MotionGlobalConfig.skipAnimations = false; });
+    await render(services);
+    await click(document.getElementById('dao-insights-header-center'), 'Dao Insights', 20);
+    const panel = () => document.querySelector<HTMLElement>('[role="dialog"][aria-label="Dao Insights"]')!;
+    await click([...panel().querySelectorAll('button')].find(button => /Seek a spark/.test(button.textContent ?? '')), 'Seek a spark', 1100);
+    expect(requestStorySpark).toHaveBeenCalledTimes(1);
+    expect(panel().textContent).toContain('A sword writes letters to its first owner.');
+    await click(panel().querySelector('[aria-label="Keep in Story Bank"]'), 'Keep', 20);
+    expect((await services.storySeeds.list(NOVEL_EXPANDED_READER_ID)).map(record => [record.seed.story.required.premise, record.seed.story.required.genre, record.originalLanguage]))
+      .toEqual([['A sword writes letters to its first owner.', 'Xianxia', 'ja']]);
+    await click(buttonByText('Begin this story', panel()), 'Begin this story', 200);
+    const saved = await services.storySeeds.list(NOVEL_EXPANDED_READER_ID);
+    expect(saved).toHaveLength(2);
+    expect(address()).toBe(`/app/?page=create&seed=${saved[0].id}`);
+    expect(document.querySelector('[data-testid="novel-expanded-create"]')).not.toBeNull();
+    expect(document.querySelector<HTMLTextAreaElement>('#core-premise-input')?.value).toBe('A sword writes letters to its first owner.');
   });
 
   it('a new Story Seed in Create starts from the profile\'s reading language and Reading Mode', async () => {

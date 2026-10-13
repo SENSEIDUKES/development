@@ -232,6 +232,7 @@ const OriginTagEditor = memo(({
   const [activeTagFamily, setActiveTagFamily] = useState<string | null>(null);
   const [customTagInput, setCustomTagInput] = useState('');
   const [tagSearch, setTagSearch] = useState('');
+  const [browseOpen, setBrowseOpen] = useState(false);
   const tagSuggestions = useMemo(
     () => recommendStoryTags({ premise, genre, style: selectedStyle }, storyTags),
     [premise, genre, selectedStyle, storyTags],
@@ -264,14 +265,62 @@ const OriginTagEditor = memo(({
         .filter((entry): entry is StoryTagMetadata => Boolean(entry))
     : [], [activeTagFamily]);
 
+  const yourTags = storyTags.length > 0 && (
+    <div className="flex flex-wrap gap-1.5" aria-label="Your tags">
+      {storyTags.map(tag => {
+        const metadata = getTagMetadata(tag);
+        return (
+          <span key={tag} className="glass-chip animate-fadeIn px-2.5 py-1 font-sans text-xs">
+            {metadata && <CategoryColorDot color={metadata.color} />}
+            <span className="font-semibold">{tag}</span>
+            <button type="button" onClick={() => toggleTag(tag)} aria-label={`Remove tag ${tag}`} className="story-seed-compact-hit-target text-neutral-400 transition-colors hover:text-signal"><X size={12} /></button>
+          </span>
+        );
+      })}
+    </div>
+  );
+
   return (
-      <section className="glass-panel space-y-4 p-4 sm:p-5" aria-labelledby="origin-tags-title">
-        <div>
-          <p id="origin-tags-title" className="flex items-center gap-2 font-sc text-[11px] font-bold uppercase tracking-widest text-signal"><Tag size={13} className="text-[#CDB271]" aria-hidden="true" />Tags</p>
-          <p className="mt-1 font-sans text-xs text-neutral-400">Optional — inferred from your origin if left empty.</p>
+      <section className="glass-panel space-y-3 p-4 sm:p-5" aria-labelledby="origin-tags-title">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p id="origin-tags-title" className="flex items-center gap-2 font-sc text-[11px] font-bold uppercase tracking-widest text-signal"><Tag size={13} className="text-[#CDB271]" aria-hidden="true" />Tags</p>
+            <p className="mt-1 font-sans text-xs text-neutral-400">Optional — inferred from your origin if left empty.</p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2 font-sans text-[11px] text-neutral-400">
+            <span title={TAG_RECOMMENDED_COPY}>{storyTags.length} / {TAG_LIMIT}</span>
+            {storyTags.length > 0 && <button type="button" onClick={() => updateSeed(updateStoryTags(() => []))} className="story-seed-compact-hit-target font-sc text-[10px] uppercase tracking-widest text-neutral-400 transition-colors hover:text-red-300">Clear all</button>}
+          </div>
         </div>
 
-        <div className="flex flex-col gap-2 sm:flex-row">
+        {yourTags}
+
+        <div>
+          <p className="mb-1.5 flex items-center gap-1.5 font-sc text-[10px] font-bold uppercase tracking-widest text-neutral-300"><Wand2 size={12} className="text-[#CDB271]" aria-hidden="true" />Suggested
+            <span className="font-sans text-[11px] font-normal normal-case tracking-normal text-neutral-400">· {premise.trim() ? 'from your premise and genre' : 'describe your premise to tune these'}</span>
+          </p>
+          <div className="scrollbar-thin flex gap-1.5 overflow-x-auto pb-1" id="style-suggested-tags">
+            {tagSuggestions.length === 0 && <p className="font-sans text-xs text-neutral-400">Add more premise detail, or browse all tags.</p>}
+            {tagSuggestions.map(entry => (
+              <CatalogTagChip key={entry.label} entry={entry} selected={isSelected(entry.label)} onToggle={toggleTag} className="shrink-0 whitespace-nowrap" />
+            ))}
+          </div>
+        </div>
+
+        <AnimatePresence>
+          {tagLimitError && <motion.p id="tag-limit-error" role="alert" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} className="rounded border border-[#8B0000]/30 bg-[#8B0000]/10 px-3 py-2 font-sans text-xs text-red-400">{tagLimitError}</motion.p>}
+        </AnimatePresence>
+
+        <button type="button" aria-expanded={browseOpen} aria-controls="origin-tag-browser" onClick={() => setBrowseOpen(open => !open)}
+          className="story-seed-touch-target flex w-full items-center justify-between gap-2 border-t border-neutral-800/80 pt-3 font-sc text-[10px] font-bold uppercase tracking-widest text-[#CDB271] transition-colors hover:text-[#E3C878]">
+          <span>{browseOpen ? 'Close tag browser' : 'Browse all tags'}<span className="ml-2 font-sans text-[11px] font-normal normal-case tracking-normal text-neutral-400">{browseOpen ? '' : 'search, families, or your own'}</span></span>
+          <ChevronDown size={13} aria-hidden="true" className={browseOpen ? 'rotate-180 transition-transform' : 'transition-transform'} />
+        </button>
+
+        <AnimatePresence initial={false}>
+        {browseOpen && (
+        <motion.div id="origin-tag-browser" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-4 overflow-hidden">
+        <div className="flex flex-col gap-2 pt-1 sm:flex-row">
           <div className="flex-1">
             <LibraryTextBox id="custom-tag-input" size="compact" icon={Tag} value={customTagInput} onChange={setCustomTagInput}
               onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); addCustomTag(); } }} placeholder="Add a specific tag..." aria-label="Add a custom tag" />
@@ -279,24 +328,7 @@ const OriginTagEditor = memo(({
           <button type="button" onClick={addCustomTag} className="min-h-[2.75rem] rounded border border-portal/50 bg-portal/10 px-4 py-2 font-sc text-[10px] font-bold uppercase tracking-widest text-portal transition-colors hover:border-portal hover:bg-portal/20">Add tag</button>
         </div>
 
-        <AnimatePresence>
-          {tagLimitError && <motion.p id="tag-limit-error" role="alert" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} className="rounded border border-[#8B0000]/30 bg-[#8B0000]/10 px-3 py-2 font-sans text-xs text-red-400">{tagLimitError}</motion.p>}
-        </AnimatePresence>
-
         <div>
-          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <p className="flex items-center gap-1.5 font-sc text-[10px] font-bold uppercase tracking-widest text-neutral-300"><Wand2 size={12} className="text-[#CDB271]" aria-hidden="true" />Suggested Tags</p>
-            <span className="font-sans text-[11px] text-neutral-400">{premise.trim() ? 'Based on your premise and genre' : 'Describe your premise to tune these'}</span>
-          </div>
-          <div className="scrollbar-thin flex gap-1.5 overflow-x-auto pb-1" id="style-suggested-tags">
-            {tagSuggestions.length === 0 && <p className="font-sans text-xs text-neutral-400">Add more premise detail, or explore the tag families below.</p>}
-            {tagSuggestions.map(entry => (
-              <CatalogTagChip key={entry.label} entry={entry} selected={isSelected(entry.label)} onToggle={toggleTag} className="shrink-0 whitespace-nowrap" />
-            ))}
-          </div>
-        </div>
-
-        <div className="border-t border-neutral-800/80 pt-4">
           <div className="mb-3 w-full sm:max-w-xs">
             <LibraryTextBox id="celestial-tag-search-input" size="compact" icon={SENSearchIcon} value={tagSearch} onChange={setTagSearch} placeholder="Search tags, aliases, families..." aria-label="Search story tags" />
           </div>
@@ -347,27 +379,10 @@ const OriginTagEditor = memo(({
           )}
         </div>
 
-        <div className="border-t border-neutral-800/80 pt-3">
-          <div className="mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-            <p className={workspaceCompactLabelClass}>Your tags ({storyTags.length} / {TAG_LIMIT})</p>
-            <span className="font-sans text-[11px] text-neutral-400">{TAG_RECOMMENDED_COPY}</span>
-            {storyTags.length > 0 && <button type="button" onClick={() => updateSeed(updateStoryTags(() => []))} className="story-seed-compact-hit-target font-sc text-[10px] uppercase tracking-widest text-neutral-400 transition-colors hover:text-red-300">Clear all</button>}
-          </div>
-          {storyTags.length > 0 ? (
-            <div className="flex flex-wrap gap-1.5">
-              {storyTags.map(tag => {
-                const metadata = getTagMetadata(tag);
-                return (
-                  <span key={tag} className="glass-chip animate-fadeIn px-2.5 py-1 font-sans text-xs">
-                    {metadata && <CategoryColorDot color={metadata.color} />}
-                    <span className="font-semibold">{tag}</span>
-                    <button type="button" onClick={() => toggleTag(tag)} aria-label={`Remove tag ${tag}`} className="story-seed-compact-hit-target text-neutral-400 transition-colors hover:text-signal"><X size={12} /></button>
-                  </span>
-                );
-              })}
-            </div>
-          ) : <p className="font-sans text-xs italic leading-relaxed text-neutral-400">No manual tags yet. Your origin will provide them when you manifest the blueprint.</p>}
-        </div>
+        <p className="font-sans text-[11px] text-neutral-400">{TAG_RECOMMENDED_COPY}</p>
+        </motion.div>
+        )}
+        </AnimatePresence>
       </section>
   );
 });

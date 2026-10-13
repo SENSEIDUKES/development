@@ -1,4 +1,5 @@
 import { LightNovelsHome, type HomeWorld } from '@seihouse/library/home';
+import { MainLibraryHomeInsights, type DaoSparkHost } from '@seihouse/library/shell';
 import type { UserProfile } from '@seihouse/library/profile';
 import { AppShell } from './AppShell';
 import type { Navigate } from './routes';
@@ -11,21 +12,27 @@ const EMPTY_LIST = {
 /** How many of the reader's stories the Featured hero cycles through after Featured Ascension. */
 const FEATURED_STORIES = 5;
 
+const copyText = (text: string) => navigator.clipboard.writeText(text);
+
 /**
  * Home: the reader's stories, newest first, and the way to start a new one, inside the Library Shell.
- * Featured cycles through the newest stories that have a cover.
+ * Featured cycles through the newest stories that have a cover. Dao Insights sits
+ * under the featured area at every width: its sparks start a Story Seed.
  */
-export function HomePage({ worlds, navigate, readerProfile }: {
+export function HomePage({ worlds, navigate, readerProfile, sparks }: {
   worlds: readonly HomeWorld[];
   navigate: Navigate;
   readerProfile: UserProfile;
+  sparks?: DaoSparkHost;
 }) {
   return <AppShell route={{ page: 'home' }} navigate={navigate} stories={worlds} readerProfile={readerProfile} mainLabel="Your stories">
     <div className="mx-auto w-full max-w-7xl px-4 py-8" data-testid="novel-expanded-home">
       <LightNovelsHome worlds={worlds} emptyState={EMPTY_LIST}
         featuredWorlds={worlds.filter(world => world.imageUrl.trim()).slice(0, FEATURED_STORIES)}
         onCreateStory={() => navigate({ page: 'create' })}
-        onOpenWorld={storyId => navigate({ page: 'story', storyId })} />
+        onOpenWorld={storyId => navigate({ page: 'story', storyId })}>
+        <MainLibraryHomeInsights everyWidth adapter={{ copyText, daoSparks: sparks }} />
+      </LightNovelsHome>
     </div>
   </AppShell>;
 }

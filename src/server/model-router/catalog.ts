@@ -52,6 +52,7 @@ export const GENERATION_CONSUMERS: readonly GenerationConsumer[] = [
   { name: 'Harness Generation', capability: 'chapters', entry: 'src/server/harness-generation/execute.ts', modelChoice: 'router' },
   { name: 'Holdings Fixer', capability: 'chapters', entry: 'src/server/harness-generation/holdingsFixer.ts', modelChoice: 'router' },
   { name: 'Story Seed Blueprint', capability: 'chapters', entry: 'src/server/story-seed-blueprint/http.ts', modelChoice: 'router' },
+  { name: 'Story Spark', capability: 'chapters', entry: 'src/server/story-spark/http.ts', modelChoice: 'server-default' },
   { name: 'Reader Translation', capability: 'chapters', entry: 'src/server/reader-translation/http.ts', modelChoice: 'server-default' },
   { name: 'Codex Voice Quote', capability: 'tts', entry: 'src/server/audio/codexVoiceQuote.ts', modelChoice: 'server-default' },
   { name: 'Story Cover', capability: 'images', entry: 'src/server/story-cover/http.ts', modelChoice: 'router' },

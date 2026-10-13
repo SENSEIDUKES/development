@@ -13,6 +13,7 @@ import { createLocalReaderPreferenceStorage } from '../host/reader/readerPrefere
 import { IndexedDbReaderStateRepository } from '../host/reader/readerStateStorage';
 import { createLocalStorySeedRepository } from '../host/story-seed/localStorySeedRepository';
 import { requestWorldBlueprint } from '../host/story-seed/blueprintGenerationClient';
+import { requestStorySpark, storySparksConfigured } from '../host/story-seed/storySparkClient';
 import { createDeviceProfileStore, type DeviceProfileStore } from '../host/profile/deviceProfile';
 import { requestStoryCover } from '../host/media/storyCoverClient';
 import { requestProfilePicture } from '../host/media/profilePictureClient';
@@ -58,6 +59,10 @@ export interface NovelExpandedServices {
   deviceMedia: DeviceMediaUrls;
   /** The World Blueprint server, behind the development access token. */
   requestWorldBlueprint: typeof requestWorldBlueprint;
+  /** Dao Insights' Story Spark server: free, twenty a day for a visitor; the owner's token lifts that. */
+  requestStorySpark: typeof requestStorySpark;
+  /** Whether the Story Spark server has a model; without one Dao Insights uses its own sparks. */
+  storySparksConfigured: typeof storySparksConfigured;
   /** The owner's development access token, saved on this device: it unlocks Blueprints and lifts the chapter limit. */
   accessToken: AccessTokenStore;
   /** The reader's profile on this device: the Cave's name and aura, languages, Reading Mode and Familiar. */
@@ -101,6 +106,8 @@ export function createNovelExpandedServices(): NovelExpandedServices {
     mediaPacks: new IndexedDbDeviceMediaPackStore(NOVEL_EXPANDED_STORAGE.mediaPacks),
     deviceMedia: new DeviceMediaUrls(),
     requestWorldBlueprint,
+    requestStorySpark,
+    storySparksConfigured,
     accessToken,
     profile: createDeviceProfileStore({ storage: readerPreferences, uid: NOVEL_EXPANDED_READER_ID }),
     // The practice account opens with the most QI a tester could want and every Familiar.

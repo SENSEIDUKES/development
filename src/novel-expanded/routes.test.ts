@@ -22,6 +22,13 @@ describe('NovelExpanded addresses', () => {
     expect(parseRoute('?page=profile&cave=/rewards')).toEqual({ page: 'profile', cave: '/rewards' });
   });
 
+  it('opens a saved Story Seed in Create by its id', () => {
+    const route: NovelExpandedRoute = { page: 'create', seedId: 'seed-1' };
+    expect(routeSearch(route)).toBe('?page=create&seed=seed-1');
+    expect(parseRoute(routeSearch(route))).toEqual(route);
+    expect(parseRoute('?page=create&seed=')).toEqual({ page: 'create' });
+  });
+
   it('keeps an id that needs escaping intact', () => {
     const route: NovelExpandedRoute = { page: 'read', storyId: 'hst a&b' };
     expect(parseRoute(routeSearch(route))).toEqual(route);

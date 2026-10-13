@@ -17,7 +17,7 @@ export function WorkspaceSheet({ open, onOpenChange, onOpenChangeComplete, title
 }) {
   return <SEIDialog open={open} onOpenChange={onOpenChange} onOpenChangeComplete={onOpenChangeComplete}>
     <SEIDialogContent aria-modal="true" hideClose variant="dark"
-      className={`workspace-sheet max-lg:translate-x-0 max-lg:translate-y-0${aboveVeil ? ' workspace-sheet--above-veil' : ''}`}
+      className={`workspace-sheet max-lg:translate-x-0 max-lg:translate-y-0 ${aboveVeil ? 'workspace-sheet--above-veil' : ''}`}
       backdropClassName={aboveVeil ? '!z-[10000]' : '!z-[240]'}
       bodyClassName="flex min-h-0 flex-col !overflow-hidden" finalFocus={returnFocusRef}>
       <div className="flex shrink-0 items-center justify-between gap-4 pb-3">

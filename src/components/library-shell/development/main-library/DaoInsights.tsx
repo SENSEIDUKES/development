@@ -1,315 +1,223 @@
 import FocusLock from 'react-focus-lock';
 import { useHeaderClipboard } from '../mainLibraryClipboard';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, RefreshCw, Layers, Compass, HelpCircle, X, ChevronRight, Copy, Check } from 'lucide-react';
-import {
-  useMainLibraryAdapter as useAppStore,
-  type DaoQuoteCategory,
-} from '../../shared/MainLibraryAdapter';
+import { BookmarkPlus, Check, Compass, Copy, Feather, Shuffle, Sparkles, Wand2, X } from 'lucide-react';
+import { STORY_SPARK_IDEA_MAX_LENGTH, type StorySpark, type StorySparkRequest } from '@seihouse/sen/story-seed';
+import type { DaoSparkHost } from '../../shared/MainLibraryAdapter';
+import { DAO_GENRES, handSpark } from './daoSparks';
 
-export interface DaoQuote {
-  quote: string;
-  author: string;
-  category: 'comedic' | 'inspirational' | 'comforting';
-}
+/**
+ * Dao Insights: a wandering elder's lost ramblings that are really story
+ * sparks — a premise and a genre, enough direction to start a Story Seed and
+ * nothing more. The genre comes first. Random lets the Dao ramble a spark in
+ * it; Custom shapes the writer's own rough beginning into a real premise in
+ * it. A spark is begun as a new Story Seed or kept in the Story Bank.
+ *
+ * The writing comes from the host (`DaoSparkHost`, a model behind the Story
+ * Spark route). Without one the Dao offers its own hand-written sparks, and a
+ * Custom beginning is kept exactly as written.
+ */
 
-const STATIC_DAO_QUOTES: DaoQuote[] = [
-  // --- COMEDIC (Wuxia Self-Aware / Healing Academic Sadness) ---
-  {
-    quote: "If your Qi is blocked, perhaps you are simply holding your breath to avoid the smell of your roommate's low-grade medicinal stew.",
-    author: "Sleepless Master of the Nine Tea Cups",
-    category: 'comedic',
-  },
-  {
-    quote: "Failing the imperial examinations is the first step toward becoming a legendary rogue cultivator. After all, nobody ever forged a peerless flying sword out of exam papers.",
-    author: "Arch-Elder of the Rejected Inkstone",
-    category: 'comedic',
-  },
-  {
-    quote: "Do not vex yourself over high-tier scriptures. Even the Heaven-Trampling Sect Leader started by accidentally lighting his own robes on fire while trying to kindle an inner flame.",
-    author: "Drunken Quill Immortal",
-    category: 'comedic',
-  },
-  {
-    quote: "They say money cannot buy the Great Dao, yet a single low-grade spiritual stone can buy three bowls of warm scallion noodles. To a hungry scholar, noodles ARE the Dao.",
-    author: "Gluttonous Hermit of Blue-Wave Pier",
-    category: 'comedic',
-  },
-  {
-    quote: "If you cannot master the celestial flying sword, try walking with a really long, polished bamboo pole. The mortals will still think you are incredibly profound.",
-    author: "Fairy Chef of the Red Lotus Valley",
-    category: 'comedic',
-  },
-  {
-    quote: "Ten years of hard study under a dim oil lamp, only to realize thy calligraphy was actually a recipe for pan-fried pork buns. Do not weep; pork buns are sacred.",
-    author: "Grand Scholar of the Burnt Wok",
-    category: 'comedic',
-  },
+type SparkMode = 'random' | 'custom';
+/** `any` rolls one of the genres; `invent` conjures one no list holds. */
+type GenreChoice = 'any' | 'invent' | string;
 
-  // --- INSPIRATIONAL (Rivers, Swords, Meridians, Sky) ---
-  {
-    quote: "The ink of a weary scholar's pen flows along the same currents as the sword-intent of a celestial king. Both trace the eternal brushstrokes of fate.",
-    author: "Jade Scholar of the Northern Star",
-    category: 'inspirational',
-  },
-  {
-    quote: "Though thy spirit-root is ranked mortal, the sky has no ceiling for those who dare paint magnificent wings upon their own hearts.",
-    author: "Ancestor of the Unfaded Ink",
-    category: 'inspirational',
-  },
-  {
-    quote: "The highest, cloud-shrouded peaks are climbed not by the fastest feet, but by the quietest hearts that refuse to look back.",
-    author: "Hermit of the Whispering Pines",
-    category: 'inspirational',
-  },
-  {
-    quote: "Your current tribulation is but a rough whetstone. It does not exist to shatter you, but to polish the blade of your resolve until it reflects the stars.",
-    author: "Wandering Sword-Saint of Crimson River",
-    category: 'inspirational',
-  },
-  {
-    quote: "A single, focused drop of starlight ink can change the entire course of an empire’s scroll. Never believe your quiet efforts are lost to the wind.",
-    author: "Sentinel of the Quiet Valley",
-    category: 'inspirational',
-  },
-  {
-    quote: "The river does not cut through the ancient granite by sheer strength alone, but by committing its entire spirit to the inevitable flows of time.",
-    author: "Sage of the Gushing Torrent",
-    category: 'inspirational',
-  },
+const RECENT_LIMIT = 6;
+const TICKER_MS = 14_000;
+/** The muttering beat before a spark lands, so even a hand-written one arrives. */
+const SETTLE_MS = 900;
 
-  // --- COMFORTING / GOOD FEELING (Rest, Tea, Sunset, Acceptance) ---
-  {
-    quote: "Draw comfort, young scholar, for even the eternal constellations hide behind the gray rain clouds when they are tired of shining.",
-    author: "Mother of the Gentle Breeze",
-    category: 'comforting',
-  },
-  {
-    quote: "Close your dusty scrolls. Light a single stick of cedar incense. The Great Dao is not found in old papers, but in the warmth of the tea steam rising to meet your face.",
-    author: "Old Auntie of the Peach Blossom Orchard",
-    category: 'comforting',
-  },
-  {
-    quote: "It is okay to rest a while beneath the weeping willow tree. Even the legendary wind-riders must touch the grass occasionally to remember the scent of the earth.",
-    author: "Free-Spirited Wanderer of Southern Reach",
-    category: 'comforting',
-  },
-  {
-    quote: "If thou hast no gold in thy purse and no qi in thy dantian today, come sit. The moon shines just as brightly upon a beggar's copper cup as it does upon the Jade Emperor's throne.",
-    author: "Old Taoist of the Drunken Clay Pot",
-    category: 'comforting',
-  },
-  {
-    quote: "A warm, slow-simmered bowl of sweet congee on a snowy night is worth more than ten thousand high-grade pills. May your belly be full, and your heart untangled.",
-    author: "Guardian of the Red Hearth",
-    category: 'comforting',
-  },
-  {
-    quote: "Success and failure are but alternating tides of the silver river. Tonight, let the brush rest; you are here, you are breathing, and that is a masterpiece in itself.",
-    author: "Sleepless Master of the Nine Tea Cups",
-    category: 'comforting',
-  }
-];
+const genreIcon = (genre: string, invented: boolean) =>
+  invented ? '✨' : DAO_GENRES.find(preset => preset.id === genre)?.icon ?? '📜';
+const genreName = (genre: string) => DAO_GENRES.find(preset => preset.id === genre)?.name ?? genre;
 
-export const DaoInsights: React.FC = () => {
+const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
   const copyText = useHeaderClipboard();
-  const [copyError, setCopyError] = useState(false);
+  const ideaId = useId();
   const [mounted, setMounted] = useState(false);
-  const [currentQuote, setCurrentQuote] = useState<DaoQuote>(STATIC_DAO_QUOTES[0]);
-  const [categoryFilter, setCategoryFilter] = useState<'all' | 'comedic' | 'inspirational' | 'comforting'>('all');
   const [isOpen, setIsOpen] = useState(false);
-  const [isRolling, setIsRolling] = useState(false);
-  const [isAiGenerating, setIsAiGenerating] = useState(false);
+  const [mode, setMode] = useState<SparkMode>('random');
+  const [genreChoice, setGenreChoice] = useState<GenreChoice>('any');
+  const [idea, setIdea] = useState('');
+  const [spark, setSpark] = useState<StorySpark>(() => handSpark({}));
+  /** The writer has sought a spark: the header stops turning over its own. */
+  const [sought, setSought] = useState(false);
+  const [seeking, setSeeking] = useState(false);
+  const [connected, setConnected] = useState(false);
+  const [message, setMessage] = useState<{ tone: 'error' | 'note'; text: string } | null>(null);
+  const [kept, setKept] = useState<StorySpark | null>(null);
+  const [acting, setActing] = useState<'keep' | 'begin' | null>(null);
   const [copied, setCopied] = useState(false);
-  const [daoStatus, setDaoStatus] = useState<'connected' | 'checking' | 'disconnected'>('checking');
 
-  const requestDao = useAppStore(state => state.requestDao);
-  // Every timer the oracle starts, so none can write state after it is gone
-  // and the carousel can never land on top of a divined quote.
-  const tickRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
-  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const recentRef = useRef<string[]>([]);
   const mountedRef = useRef(true);
+  const requestRef = useRef<AbortController | null>(null);
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
   useEffect(() => {
     mountedRef.current = true;
+    setMounted(true);
     return () => {
       mountedRef.current = false;
-      clearInterval(tickRef.current);
+      requestRef.current?.abort();
       clearTimeout(copiedTimerRef.current);
     };
   }, []);
 
-  // Pick a random quote initially and set mounted state
-  useEffect(() => {
-    setMounted(true);
-    const rIdx = Math.floor(Math.random() * STATIC_DAO_QUOTES.length);
-    setCurrentQuote(STATIC_DAO_QUOTES[rIdx]);
-  }, []);
-
-  // Fetch Dao Connection State
+  // Whether a model writes the sparks. Until it answers, the Dao's own are used.
   useEffect(() => {
     let cancelled = false;
-    const settle = (status: 'connected' | 'disconnected') => { if (!cancelled) setDaoStatus(status); };
-    const checkState = async () => {
-      try {
-        const res = await requestDao('status');
-        if (res.ok) {
-          const stats = await res.json();
-          settle(stats.hasServerGemini ? 'connected' : 'disconnected');
-        } else {
-          settle('disconnected');
-        }
-      } catch {
-        settle('disconnected');
-      }
-    };
-    checkState();
+    const check = host?.requestSpark ? host.checkSparks?.() ?? Promise.resolve(true) : Promise.resolve(false);
+    check.then(value => { if (!cancelled) setConnected(value); }, () => { if (!cancelled) setConnected(false); });
     return () => { cancelled = true; };
-  }, [requestDao]);
+  }, [host]);
 
-  // Handle Escape key
+  // While closed and before the writer seeks, the header turns over the Dao's own sparks.
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        setIsOpen(false);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen]);
-
-  // Soft Auto-rotation loop inside Header (every 14 seconds)
-  useEffect(() => {
-    if (isOpen) return; // Freeze auto-rotation if details overlay is open
-
-    const interval = setInterval(() => {
-      const filtered = STATIC_DAO_QUOTES.filter(q =>
-        categoryFilter === 'all' ? true : q.category === categoryFilter
-      );
-      if (filtered.length === 0) return;
-
-      // Ensure we pick a different one if possible
-      let nextQuote = filtered[Math.floor(Math.random() * filtered.length)];
-      if (filtered.length > 1 && nextQuote.quote === currentQuote.quote) {
-        const filteredWithoutCurrent = filtered.filter(q => q.quote !== currentQuote.quote);
-        nextQuote = filteredWithoutCurrent[Math.floor(Math.random() * filteredWithoutCurrent.length)];
-      }
-      setCurrentQuote(nextQuote);
-    }, 14000);
-
+    if (isOpen || sought) return;
+    const interval = setInterval(() => setSpark(current => handSpark({}, current)), TICKER_MS);
     return () => clearInterval(interval);
-  }, [categoryFilter, currentQuote, isOpen]);
-
-  const seekDaoInsights = async () => {
-    if (isRolling || isAiGenerating) return;
-    setIsRolling(true);
-    setCopied(false);
-
-    // Filter static quotes for animation cycling
-    const filtered = STATIC_DAO_QUOTES.filter(q => {
-      if (categoryFilter === 'all') return true;
-      return q.category === categoryFilter;
-    });
-
-    const currentCategory: DaoQuoteCategory = categoryFilter === 'all'
-      ? (['comedic', 'inspirational', 'comforting'][Math.floor(Math.random() * 3)] as DaoQuoteCategory)
-      : categoryFilter;
-
-    // Start cycling local quotes for a beautiful scrolling slots effect
-    let counter = 0;
-    const maxTicks = 12; // 1.2 seconds of glorious spinning carousel
-    clearInterval(tickRef.current);
-    tickRef.current = setInterval(() => {
-      const tempQuote = filtered[Math.floor(Math.random() * filtered.length)];
-      setCurrentQuote(tempQuote);
-      counter++;
-      if (counter >= maxTicks) {
-        clearInterval(tickRef.current);
-      }
-    }, 100);
-    // The carousel and the delay both end near 1.2s; stop the carousel
-    // explicitly so a late final tick cannot replace the settled quote.
-    const stopCarousel = () => clearInterval(tickRef.current);
-
-    // Combine timeout and API fetch using Promise.all to guarantee the spin completes beautifully first
-    const delayPromise = new Promise(resolve => setTimeout(resolve, maxTicks * 100));
-
-    if (daoStatus === 'connected') {
-      setIsAiGenerating(true);
-      try {
-        const [response] = await Promise.all([
-          requestDao(currentCategory),
-          delayPromise
-        ]);
-
-        if (!response.ok) {
-          throw new Error("Divination flow interrupted");
-        }
-
-        const outcome = await response.json();
-        if (typeof outcome?.quote !== 'string' || !outcome.quote.trim()) {
-          throw new Error("Divination returned an empty jade slip");
-        }
-        stopCarousel();
-        if (!mountedRef.current) return;
-        setCurrentQuote({
-          quote: outcome.quote,
-          author: typeof outcome.author === 'string' && outcome.author.trim() ? outcome.author : 'Unknown Sage',
-          category: outcome.category || currentCategory
-        });
-      } catch (err) {
-        console.warn("AI generation failed, holding fallback jade slip close:", err);
-        // Ensure delay is satisfied first if there is a quick error
-        await delayPromise;
-        stopCarousel();
-      } finally {
-        if (mountedRef.current) {
-          setIsAiGenerating(false);
-          setIsRolling(false);
-        }
-      }
-    } else {
-      // Offline/Local mode: Wait for the delay & finish rolling
-      await delayPromise;
-      stopCarousel();
-      if (mountedRef.current) setIsRolling(false);
-    }
-  };
-
-  // The carousel changes the quote every 100ms. Keying each of those frames
-  // queued overlapping exit animations that could strand an intermediate quote
-  // on screen after the real one settled, so while rolling one element simply
-  // updates in place and the settled quote — text and author — animates once.
-  const quoteKey = isRolling ? 'rolling' : `${currentQuote.quote}\u0000${currentQuote.author}`;
-
-  const copyToClipboard = async () => {
-    try {
-      await copyText(`"${currentQuote.quote}" — ${currentQuote.author} (${currentQuote.category.toUpperCase()})`);
-      if (!mountedRef.current) return;
-      setCopyError(false);
-      setCopied(true);
-      clearTimeout(copiedTimerRef.current);
-      copiedTimerRef.current = setTimeout(() => setCopied(false), 2000);
-    } catch { if (mountedRef.current) setCopyError(true); }
-  };
+  }, [isOpen, sought]);
 
   useEffect(() => {
     if (!isOpen) return;
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setIsOpen(false); };
     const previous = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = previous; };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener('keydown', onKey);
+    };
   }, [isOpen]);
+
+  const remember = (next: StorySpark) => {
+    recentRef.current = [next.premise, ...recentRef.current.filter(item => item !== next.premise)].slice(0, RECENT_LIMIT);
+  };
+
+  const seek = async () => {
+    if (seeking) return;
+    const beginning = idea.trim();
+    if (mode === 'custom' && !beginning) {
+      setMessage({ tone: 'error', text: 'Write the beginning of your idea first. A few words is enough.' });
+      return;
+    }
+    const invent = genreChoice === 'invent';
+    const genre = invent ? undefined
+      : genreChoice === 'any' ? DAO_GENRES[Math.floor(Math.random() * DAO_GENRES.length)].id : genreChoice;
+    const custom = mode === 'custom' ? { idea: beginning } : {};
+    const avoid = recentRef.current.length ? { avoid: recentRef.current } : {};
+    const request: StorySparkRequest = invent ? { inventGenre: true, ...custom, ...avoid } : { genre: genre!, ...custom, ...avoid };
+
+    setSeeking(true);
+    setMessage(null);
+    setCopied(false);
+    requestRef.current?.abort();
+    const controller = new AbortController();
+    requestRef.current = controller;
+    let next: StorySpark | null = null;
+    let note: string | null = null;
+    try {
+      if (connected && host?.requestSpark) {
+        try {
+          [next] = await Promise.all([host.requestSpark(request, controller.signal), wait(SETTLE_MS)]);
+        } catch (error) {
+          if (controller.signal.aborted) return;
+          const reason = error instanceof Error && error.message ? error.message : 'The Dao was silent. Seek again.';
+          if (mode === 'custom') {
+            if (mountedRef.current) setMessage({ tone: 'error', text: reason });
+            return;
+          }
+          // A rambling never fails outright: an older spark surfaces instead.
+          note = `${reason} An older spark surfaced instead.`;
+        }
+      } else {
+        await wait(SETTLE_MS);
+      }
+      if (!mountedRef.current || controller.signal.aborted) return;
+      if (!next) {
+        const fallback = handSpark(invent ? { inventGenre: true } : { genre }, spark);
+        next = mode === 'custom'
+          ? { ...fallback, premise: beginning.slice(0, 600), aside: 'The Dao is resting tonight. Your words stand as you wrote them.' }
+          : fallback;
+        if (mode === 'custom' && !note) note = 'No model is connected, so your beginning is kept as written.';
+      }
+      remember(next);
+      setSpark(next);
+      setSought(true);
+      if (note) setMessage({ tone: 'note', text: note });
+    } finally {
+      if (mountedRef.current && requestRef.current === controller) {
+        requestRef.current = null;
+        setSeeking(false);
+      }
+    }
+  };
+
+  const act = async (action: 'keep' | 'begin') => {
+    const run = action === 'keep' ? host?.keepSpark : host?.beginSpark;
+    if (!run || acting) return;
+    setActing(action);
+    setMessage(null);
+    try {
+      await run(spark);
+      if (!mountedRef.current) return;
+      if (action === 'keep') {
+        setKept(spark);
+        setMessage({ tone: 'note', text: 'Kept in your Story Bank. Open it from Create whenever the spark calls.' });
+      } else {
+        setIsOpen(false);
+      }
+    } catch (error) {
+      if (mountedRef.current) setMessage({ tone: 'error', text: error instanceof Error && error.message ? error.message : 'The spark could not be planted. Please try again.' });
+    } finally {
+      if (mountedRef.current) setActing(null);
+    }
+  };
+
+  const copySpark = useCallback(async () => {
+    try {
+      await copyText(`${spark.premise}\nGenre: ${spark.genre}`);
+      if (!mountedRef.current) return;
+      setCopied(true);
+      clearTimeout(copiedTimerRef.current);
+      copiedTimerRef.current = setTimeout(() => setCopied(false), 2000);
+    } catch {
+      if (mountedRef.current) setMessage({ tone: 'error', text: 'Could not copy the spark. Please try again.' });
+    }
+  }, [copyText, spark]);
+
+  const chooseMode = (next: SparkMode) => { setMode(next); setMessage(null); };
+  const chooseGenre = (next: GenreChoice) => { setGenreChoice(next); setMessage(null); };
+
+  const sparkKey = `${spark.genre}\u0000${spark.premise}`;
+  const isKept = kept === spark;
+  const seekLabel = seeking ? 'The Dao is muttering…' : mode === 'custom' ? 'Shape my premise' : 'Seek a spark';
+
+  const genreChip = (choice: GenreChoice, icon: string, label: string) => {
+    const selected = genreChoice === choice;
+    return <button key={choice} type="button" aria-pressed={selected} onClick={() => chooseGenre(choice)}
+      className={`dao-genre-chip shrink-0 snap-start inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-sans transition-colors ${selected
+        ? 'border-portal bg-portal/10 text-signal shadow-[0_0_10px_rgba(4,172,255,0.15)]'
+        : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'}`}>
+      <span aria-hidden="true">{icon}</span>{label}
+    </button>;
+  };
 
   return (
     <>
-      {/* 1. COMPACT CENTER DISPLAY BLOCK inside GlobalHeader */}
+      {/* 1. The compact trigger: a spark turning over in the header or Home. */}
       <div
         id="dao-insights-header-center"
         onClick={() => setIsOpen(true)}
-        className="dao-insights-trigger flex flex-col flex-1 min-w-0 items-center justify-center max-w-[200px] sm:max-w-[340px] xl:max-w-md mx-2 sm:mx-4 px-2 py-1 bg-neutral-950/40 border border-neutral-900 hover:border-portal/30 hover:bg-neutral-950/70 rounded-xl transition-all duration-300 cursor-pointer select-none group text-center overflow-hidden h-10 sm:h-12"
-        role="button" aria-haspopup="dialog" aria-expanded={isOpen} aria-label="Insights from the Dao"
-        title="Insights From The Dao — Click to Seek Divine Fortune" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsOpen(true); } }}
+        className="dao-insights-trigger flex flex-col flex-1 min-w-0 items-center justify-center max-w-[220px] sm:max-w-[360px] xl:max-w-md mx-2 sm:mx-4 px-3 py-1 bg-neutral-950/40 border border-neutral-900 hover:border-portal/30 hover:bg-neutral-950/70 rounded-xl transition-all duration-300 cursor-pointer select-none group text-center overflow-hidden h-10 sm:h-12"
+        role="button" aria-haspopup="dialog" aria-expanded={isOpen} aria-label="Insights from the Dao: story sparks"
+        title="Insights from the Dao — seek a spark for your next story" tabIndex={0}
+        onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setIsOpen(true); } }}
       >
         <div className="flex items-center space-x-1 mb-0.5 shrink-0">
           <Sparkles size={11} className="text-portal shrink-0 group-hover:rotate-12 transition-transform" />
@@ -317,223 +225,146 @@ export const DaoInsights: React.FC = () => {
             Insights from the Dao
           </span>
         </div>
-
-        {/* Animated Fading quote container */}
         <div className="w-full relative h-[18px] overflow-hidden flex items-center justify-center">
           <AnimatePresence mode="wait">
-            <motion.p
-              key={quoteKey}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
+            <motion.p key={sparkKey} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.35, ease: 'easeOut' }}
-              className="text-[11px] font-sans font-medium text-signal truncate w-full italic px-1"
-            >
-              "{currentQuote.quote}"
+              className="text-[11px] font-sans font-medium text-signal truncate w-full italic px-1">
+              {genreIcon(spark.genre, spark.inventedGenre)} {spark.premise}
             </motion.p>
           </AnimatePresence>
         </div>
       </div>
 
-      {/* 2. THE CELESTIAL ORACLE MODAL/DETAILS PANEL */}
+      {/* 2. The spark panel: a bottom sheet on phones, a centered card above. */}
       {mounted && createPortal(
         <AnimatePresence>
           {isOpen && (
-            <motion.div
-              key="dao-overlay-backdrop"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] flex items-center justify-center p-4 selection:bg-portal/20"
-            >
-              {/* Backdrop Blur */}
-              <div
-                className="absolute inset-0 bg-black/85 backdrop-blur-md"
-                onClick={() => setIsOpen(false)} aria-hidden="true"
-              />
-
-              {/* Modal Body */}
+            <motion.div key="dao-overlay-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4 selection:bg-portal/20">
+              <div className="absolute inset-0 bg-black/85 backdrop-blur-md" onClick={() => setIsOpen(false)} aria-hidden="true" />
               <FocusLock returnFocus className="contents">
-              <motion.div role="dialog" aria-modal="true" aria-label="The Dao Insights Oracle"
-                initial={{ scale: 0.95, y: 15 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.95, y: 15 }}
-                transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-                className="library-header-dialog relative bg-[#000000] border border-neutral-900 rounded-2xl shadow-[0_0_60px_rgba(4,172,255,0.18)] max-w-lg w-full p-4 sm:p-6 text-left z-10 font-sans max-h-[90vh] sm:max-h-[85vh] overflow-y-auto flex flex-col"
-              >
-                {/* Grand Energy Meridian Line */}
-                <div className="absolute top-0 inset-x-0 h-[4px] bg-gradient-to-r from-human via-portal to-gold-accent rounded-t-2xl animate-pulse" />
+                <motion.div role="dialog" aria-modal="true" aria-label="Dao Insights"
+                  initial={{ y: 24, opacity: 0.6 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 24, opacity: 0 }}
+                  transition={{ type: 'spring', damping: 26, stiffness: 320 }}
+                  className="library-header-dialog dao-spark-panel relative z-10 flex w-full max-w-xl flex-col overflow-hidden rounded-t-2xl sm:rounded-2xl border border-neutral-900 bg-[#000000] text-left font-sans shadow-[0_0_60px_rgba(4,172,255,0.18)] max-h-[92dvh] sm:max-h-[88vh]">
+                  <div className="absolute top-0 inset-x-0 h-[3px] bg-gradient-to-r from-human via-portal to-gold-accent" aria-hidden="true" />
 
-                {/* Close Button */}
-                <button
-                   tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => setIsOpen(false)}
-                  className="absolute top-4 right-4 p-1.5 bg-neutral-950 border border-neutral-800 hover:bg-neutral-900 rounded-md text-neutral-400 hover:text-signal transition-all"
-                  aria-label="Close divination overlay"
-                >
-                  <X size={15} />
-                </button>
-
-                {/* Header Title */}
-                <div className="flex items-center space-x-3 border-b border-neutral-900 pb-4 mb-5">
-                  <div className="p-2.5 bg-neutral-950 border border-neutral-800 rounded-xl text-portal shadow-[0_0_15px_rgba(4,172,255,0.1)] overflow-hidden">
-                    <motion.div
-                      animate={{ rotate: isRolling ? [0, 360, 1080] : [0, 360] }}
-                      transition={{
-                        duration: isRolling ? 1.2 : 12,
-                        repeat: isRolling ? 0 : Infinity,
-                        ease: isRolling ? "easeInOut" : "linear"
-                      }}
-                      className="flex items-center justify-center"
-                    >
-                      <Compass size={22} className="text-portal" />
-                    </motion.div>
-                  </div>
-                  <div>
-                    <h2 className="font-display font-bold text-xl text-signal tracking-wide uppercase flex items-center space-x-2">
-                      <span>The Dao Insights Oracle</span>
-                      <span className="text-[10px] py-0.5 px-2 bg-portal/10 text-portal rounded-full border border-portal/20 font-sans tracking-widest uppercase font-semibold">
-                        Divined
-                      </span>
-                    </h2>
-                    <p className="text-[9px] text-neutral-500 font-mono uppercase tracking-widest leading-none mt-1">
-                      Healing the Spirits of Weary Scholars & Wandering Immortals
-                    </p>
-                  </div>
-                </div>
-
-                {/* Category Filter Pills (Rubik/System) */}
-                <div className="flex flex-wrap gap-1.5 mb-5 shrink-0">
-                  {(['all', 'comedic', 'inspirational', 'comforting'] as const).map(cat => (
-                    <button
-                      key={cat} aria-pressed={categoryFilter === cat}
-                       tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => {
-                        setCategoryFilter(cat);
-                        setCopied(false);
-                      }}
-                      className={`px-3 py-1 text-[10px] uppercase tracking-widest font-bold font-sans rounded-md border transition-all duration-300 ${
-                        categoryFilter === cat
-                          ? cat === 'comedic'
-                            ? 'bg-amber-950/20 border-amber-600/50 text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.15)]'
-                            : cat === 'inspirational'
-                            ? 'bg-portal/10 border-portal/50 text-portal shadow-[0_0_10px_rgba(4,172,255,0.15)]'
-                            : cat === 'comforting'
-                            ? 'bg-human/10 border-human/50 text-red-400 shadow-[0_0_10px_rgba(139,0,0,0.15)]'
-                            : 'bg-neutral-800 border-neutral-700 text-signal'
-                          : 'bg-neutral-950 border-neutral-900 hover:border-neutral-800 text-neutral-400 hover:text-neutral-200'
-                      }`}
-                    >
-                      {cat === 'all' && 'All Energies'}
-                      {cat === 'comedic' && 'Comedic Dao'}
-                      {cat === 'inspirational' && 'Inspirational Qi'}
-                      {cat === 'comforting' && 'Good Feeling'}
+                  {/* Header: icon, one-line title and the close control in one row, so nothing overlaps. */}
+                  <div className="flex items-center gap-3 border-b border-neutral-900 px-4 pt-5 pb-4 sm:px-6">
+                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-neutral-800 bg-neutral-950 text-portal">
+                      <motion.div animate={{ rotate: seeking ? 720 : 0 }} transition={{ duration: seeking ? 1.2 : 0.4, ease: 'easeInOut', repeat: seeking ? Infinity : 0 }}>
+                        <Compass size={20} />
+                      </motion.div>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h2 className="font-display text-lg font-bold uppercase tracking-wide text-signal leading-tight">Dao Insights</h2>
+                      <p className="mt-0.5 text-[11px] text-neutral-500 leading-snug">Lost ramblings of the Dao. Listen closely: each one is a story waiting to be told.</p>
+                    </div>
+                    <button type="button" onClick={() => setIsOpen(false)} aria-label="Close Dao Insights"
+                      className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-neutral-800 bg-neutral-950 text-neutral-400 hover:bg-neutral-900 hover:text-signal transition-colors">
+                      <X size={16} />
                     </button>
-                  ))}
-                </div>
-
-                {copyError && <p role="alert">Could not copy wisdom. Please try again.</p>}
-                {/* Quote Reading Screen Card */}
-                <div
-                  onClick={copyToClipboard}
-                  className="relative bg-neutral-950 hover:bg-neutral-950/80 border border-neutral-900 hover:border-portal/40 cursor-pointer rounded-xl p-6 mb-6 overflow-hidden min-h-[140px] flex flex-col justify-between group transition-all"
-                  title="Click to copy quote" role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); copyToClipboard(); } }}
-                >
-                  {/* Visual Accent behind quote */}
-                  <div className="absolute -top-12 -right-12 w-24 h-24 bg-portal/2 rounded-full blur-2xl group-hover:bg-portal/4 transition-colors" />
-
-                  {/* Copy Status Badge */}
-                  <div className="absolute top-3 right-3 flex items-center space-x-1 text-[9px] font-mono select-none">
-                    <AnimatePresence mode="wait">
-                      {copied ? (
-                        <motion.span
-                          key="copied"
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.9 }}
-                          className="text-emerald-400 flex items-center gap-1 font-semibold"
-                        >
-                          <Check size={11} /> COPIED WISDOM
-                        </motion.span>
-                      ) : (
-                        <motion.span
-                          key="copy"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 0.4 }}
-                          className="text-neutral-400 group-hover:opacity-100 flex items-center gap-1 transition-opacity"
-                        >
-                          <Copy size={11} /> CLICK TO COPY
-                        </motion.span>
-                      )}
-                    </AnimatePresence>
                   </div>
 
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={quoteKey}
-                      initial={{ opacity: 0, scale: 0.98, y: 5 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.98, y: -5 }}
-                      transition={{ duration: 0.25 }}
-                      className="flex flex-col h-full justify-between"
-                    >
-                      <div>
-                        {/* Category Label badge inside reader display */}
-                        <span className={`text-[8px] font-mono tracking-widest uppercase font-extrabold block mb-3 leading-none ${
-                          currentQuote.category === 'comedic'
-                            ? 'text-amber-400'
-                            : currentQuote.category === 'inspirational'
-                            ? 'text-portal'
-                            : 'text-rose-500'
-                        }`}>
-                          ◆ {currentQuote.category} insight
-                        </span>
+                  <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5 space-y-5">
+                    {/* Mode */}
+                    <div role="group" aria-label="Spark mode" className="grid grid-cols-2 gap-1 rounded-xl border border-neutral-900 bg-neutral-950 p-1">
+                      {([
+                        ['random', Shuffle, 'Random', 'The Dao rambles'],
+                        ['custom', Feather, 'Custom', 'Shape your idea'],
+                      ] as const).map(([value, Icon, label, hint]) => (
+                        <button key={value} type="button" aria-pressed={mode === value} onClick={() => chooseMode(value)}
+                          className={`flex flex-col items-center justify-center rounded-lg px-2 py-1.5 transition-colors ${mode === value ? 'bg-neutral-800 text-signal' : 'text-neutral-500 hover:text-neutral-200'}`}>
+                          <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest"><Icon size={13} aria-hidden="true" />{label}</span>
+                          <span className="text-[10px] text-neutral-500">{hint}</span>
+                        </button>
+                      ))}
+                    </div>
 
-                        {/* Profound Quote Body (Friendly Sans format) */}
-                        <p
-                          className="text-base sm:text-lg font-sans font-medium text-signal leading-relaxed italic pr-4 selection:bg-portal/20 select-text transition-all duration-150"
-                          style={{ filter: isRolling ? 'blur(1.5px)' : 'none' }}
-                        >
-                          "{currentQuote.quote}"
-                        </p>
+                    {/* Genre first */}
+                    <fieldset>
+                      <legend className="mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-neutral-500">Choose a genre</legend>
+                      <div className="dao-genre-row -mx-4 flex snap-x gap-1.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
+                        {genreChip('any', '🎲', 'Any genre')}
+                        {DAO_GENRES.map(preset => genreChip(preset.id, preset.icon, preset.name))}
+                        {genreChip('invent', '✨', 'Conjure a genre')}
                       </div>
+                      {genreChoice === 'invent' && <p className="mt-2 text-[11px] text-neutral-500">The Dao invents a genre no list holds, and a story only it could tell.</p>}
+                    </fieldset>
 
-                      {/* Author (Noto Serif Format) */}
-                      <p className="text-xs font-serif text-neutral-400 mt-5 self-end text-right">
-                        — <span className="text-neutral-300 font-semibold">{currentQuote.author}</span>
-                      </p>
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
+                    {/* Custom: the writer's own beginning */}
+                    {mode === 'custom' && (
+                      <div>
+                        <label htmlFor={ideaId} className="mb-2 block text-[10px] font-bold uppercase tracking-[0.18em] text-neutral-500">Your beginning</label>
+                        <textarea id={ideaId} value={idea} maxLength={STORY_SPARK_IDEA_MAX_LENGTH} rows={3}
+                          onChange={event => { setIdea(event.target.value); if (message?.tone === 'error') setMessage(null); }}
+                          placeholder="A girl who can hear swords… a sect that runs a noodle shop… whatever you have so far."
+                          className="w-full resize-y rounded-xl border border-neutral-800 bg-neutral-950 px-3 py-2.5 text-sm text-signal placeholder:text-neutral-600 focus:border-portal focus:outline-none" />
+                        <p className="mt-1 text-[11px] text-neutral-500">The Dao shapes it into a real premise in your genre, and keeps your idea.</p>
+                      </div>
+                    )}
 
-                {/* Divination Action Controls */}
-                <div className="flex flex-col gap-3">
-                  {/* UNIFIED DESIGNER DAO INSIGHTS BUTTON */}
-                  <button
-                    type="button"
-                     tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={seekDaoInsights}
-                    disabled={isRolling || isAiGenerating}
-                    className="w-full px-5 py-3 bg-portal/5 border border-portal/40 hover:border-portal text-portal shadow-[0_0_20px_rgba(4,172,255,0.15)] hover:bg-portal/10 disabled:opacity-50 hover:text-signal rounded-xl font-sans text-sm flex items-center justify-center space-x-2.5 font-bold tracking-wider uppercase transition-all duration-300 transform active:scale-[0.98]"
-                    title="Channel cosmic energy from the Dao to seek divine insights and fortune!"
-                  >
-                    <motion.div
-                      animate={{ rotate: isRolling ? 1080 : 0 }}
-                      transition={{ duration: 1.2, ease: "easeInOut" }}
-                      className="flex items-center justify-center shrink-0"
-                    >
-                      <Sparkles size={16} className={isRolling ? "text-portal text-portal" : "text-portal group-hover:text-signal"} />
-                    </motion.div>
-                    <span>
-                      {isAiGenerating ? 'Invoking the Dao...' : isRolling ? 'Divine Tuning...' : 'Seek Dao Insights'}
-                    </span>
-                  </button>
-                </div>
+                    <button type="button" onClick={seek} disabled={seeking}
+                      className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-portal/40 bg-portal/5 px-5 py-3 text-sm font-bold uppercase tracking-wider text-portal shadow-[0_0_20px_rgba(4,172,255,0.15)] transition-all hover:border-portal hover:bg-portal/10 hover:text-signal active:scale-[0.98] disabled:opacity-60">
+                      <motion.span animate={{ rotate: seeking ? 360 : 0 }} transition={{ duration: 1.2, ease: 'linear', repeat: seeking ? Infinity : 0 }} className="flex">
+                        {mode === 'custom' ? <Wand2 size={16} aria-hidden="true" /> : <Sparkles size={16} aria-hidden="true" />}
+                      </motion.span>
+                      <span>{seekLabel}</span>
+                    </button>
 
+                    {message && <p role={message.tone === 'error' ? 'alert' : 'status'}
+                      className={`text-xs ${message.tone === 'error' ? 'text-red-400' : 'text-portal'}`}>{message.text}</p>}
 
-              </motion.div>
+                    {/* The spark */}
+                    <section aria-label="Story spark" aria-live="polite" aria-busy={seeking}
+                      className="relative overflow-hidden rounded-xl border border-neutral-900 bg-neutral-950 p-4 sm:p-5">
+                      <AnimatePresence mode="wait">
+                        <motion.div key={sparkKey} initial={{ opacity: 0, y: 6 }} animate={{ opacity: seeking ? 0.35 : 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }}>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-portal/30 bg-portal/10 px-2.5 py-1 text-[11px] font-semibold text-portal">
+                              <span aria-hidden="true">{genreIcon(spark.genre, spark.inventedGenre)}</span>{genreName(spark.genre)}
+                            </span>
+                            {spark.inventedGenre && <span className="text-[10px] font-bold uppercase tracking-widest text-gold-accent">Conjured genre</span>}
+                          </div>
+                          {spark.genreNote && <p className="mt-2 text-xs text-neutral-400">{spark.genreNote}</p>}
+                          {spark.aside && <p className="mt-3 text-sm italic text-neutral-400 leading-relaxed">“{spark.aside}”</p>}
+                          <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.18em] text-neutral-500">Premise</p>
+                          <p className="mt-1 select-text font-serif text-base sm:text-lg text-signal leading-relaxed">{spark.premise}</p>
+                          {spark.voice && <p className="mt-4 text-right text-xs font-serif text-neutral-500">— <span className="font-semibold text-neutral-300">{spark.voice}</span></p>}
+                        </motion.div>
+                      </AnimatePresence>
+                    </section>
+                  </div>
+
+                  {/* What to do with the spark */}
+                  <div className="flex items-center gap-2 border-t border-neutral-900 bg-black px-4 py-3 sm:px-6 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+                    {host?.beginSpark && (
+                      <button type="button" onClick={() => act('begin')} disabled={seeking || acting !== null}
+                        className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-portal px-4 py-2.5 text-sm font-bold text-black transition-opacity hover:opacity-90 disabled:opacity-50">
+                        <Feather size={15} aria-hidden="true" /><span className="truncate">{acting === 'begin' ? 'Planting…' : 'Begin this story'}</span>
+                      </button>
+                    )}
+                    {host?.keepSpark && (
+                      <button type="button" onClick={() => act('keep')} disabled={seeking || acting !== null || isKept}
+                        aria-label={isKept ? 'Kept in your Story Bank' : 'Keep in Story Bank'} title={isKept ? 'Kept in your Story Bank' : 'Keep in Story Bank'}
+                        className={`flex items-center justify-center gap-2 rounded-xl border border-neutral-800 bg-neutral-950 px-3 py-2.5 text-sm text-neutral-300 transition-colors hover:border-neutral-700 hover:text-signal disabled:opacity-60 ${host.beginSpark ? '' : 'flex-1'}`}>
+                        {isKept ? <Check size={15} className="text-emerald-400" aria-hidden="true" /> : <BookmarkPlus size={15} aria-hidden="true" />}
+                        <span className={host.beginSpark ? 'hidden sm:inline' : ''}>{isKept ? 'Kept' : 'Keep'}</span>
+                      </button>
+                    )}
+                    <button type="button" onClick={copySpark} aria-label={copied ? 'Spark copied' : 'Copy spark'} title="Copy the premise and genre"
+                      className={`flex items-center justify-center gap-2 rounded-xl border border-neutral-800 bg-neutral-950 px-3 py-2.5 text-sm text-neutral-300 transition-colors hover:border-neutral-700 hover:text-signal ${host?.beginSpark || host?.keepSpark ? '' : 'flex-1'}`}>
+                      {copied ? <Check size={15} className="text-emerald-400" aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
+                      <span className={host?.beginSpark || host?.keepSpark ? 'hidden sm:inline' : ''}>{copied ? 'Copied' : 'Copy'}</span>
+                    </button>
+                  </div>
+                </motion.div>
               </FocusLock>
             </motion.div>
           )}
         </AnimatePresence>,
-        document.body
+        document.body,
       )}
     </>
   );

@@ -4,7 +4,7 @@ import { type StorySeedInput } from '@seihouse/sen/story-seed';
 import type { ChapterWritingStyle, SenLanguageCode } from '@seihouse/sen/contracts';
 import type { SeedUpdate } from './seedState';
 import type { SeedSectionId } from './seedSections';
-import { buildStorySeedDrawerSections, storySeedDrawerProfile } from './StorySeedSelector';
+import { buildStorySeedDrawerSections } from './StorySeedSelector';
 import { StorySeedSettings } from './StorySeedSettings';
 import { WorkspaceHeader } from '../../library-shell/development/WorkspaceHeader';
 import { WorkspaceShell } from '../../library-shell/development/WorkspaceShell';
@@ -28,7 +28,7 @@ interface StorySeedWorkspaceChromeProps {
   /** The host's Story Settings (skills and media), shown in Settings after the Reading Mode. */
   storySettings?: ReactNode;
   activeSection: SeedSectionId;
-  /** Who the drawer says is creating; omitted or null reads as a guest author. */
+  /** Host author metadata; the section navigation does not display a profile. */
   authorName?: string | null;
   onSelectSection: (id: SeedSectionId) => void;
   showStoryBank: boolean;
@@ -71,7 +71,6 @@ export function StorySeedWorkspaceChrome(props: StorySeedWorkspaceChromeProps) {
   const { onToggleStoryBank, showStoryBank, onNavigateHome } = props;
   const workspace = useMemo<LibraryWorkspaceDefinition>(() => ({
     label: 'Story Seed sections', closeLabel: 'Close sections', barLabel: 'Story Seed navigation',
-    profile: storySeedDrawerProfile(props.authorName),
     sections: [
       ...buildStorySeedDrawerSections(props.seed, props.activeSection, props.onSelectSection),
       {
@@ -92,7 +91,7 @@ export function StorySeedWorkspaceChrome(props: StorySeedWorkspaceChromeProps) {
       { id: 'settings', label: 'Settings', icon: <SENSettingsIcon size={20} />, active: settingsOpen, onSelect: openSettings },
     ],
     back: { onBack: () => { setSettingsOpen(false); onNavigateHome(); } },
-  }), [props.seed, props.activeSection, props.authorName, props.onSelectSection, showStoryBank, onToggleStoryBank, openSettings, settingsOpen, onNavigateHome]);
+  }), [props.seed, props.activeSection, props.onSelectSection, showStoryBank, onToggleStoryBank, openSettings, settingsOpen, onNavigateHome]);
   const content = <StorySeedChromeContent {...props} workspace={workspace} settingsOpen={settingsOpen} setSettingsOpen={setSettingsOpen}
     settingsReturnFocusRef={settingsReturnFocusRef} />;
   // A host mounting only the standalone header gets no task bar or drawer.

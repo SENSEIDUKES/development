@@ -16,10 +16,8 @@ const familyAccent = (family: SeedFamily): LibraryNavigationDrawerAccent =>
   family === 'story' ? 'portal' : 'gold';
 
 /**
- * The drawer's profile block names who is creating. It showed an equipped
- * Relic title until standalone reward titles were retired; the cultivator's
- * own name is the only title now, so a signed-in author sees theirs and a
- * guest workspace says so.
+ * Profile presentation helper retained for hosts that supply their own author
+ * block. Story Seed's section navigation no longer renders a profile itself.
  */
 export const storySeedDrawerProfile = (authorName?: string | null): LibraryNavigationDrawerProfile => ({
   name: authorName?.trim() || 'Guest author',
@@ -96,25 +94,17 @@ export function buildStorySeedDrawerSections(
     return {
       id: family,
       label: SEED_FAMILIES[family].label,
-      tagline: SEED_FAMILIES[family].tagline,
       icon: familyIcon,
       items,
-      footer: (
-        <p className="font-serif text-[11px] leading-relaxed text-neutral-400">
-          {family === 'story'
-            ? 'Origin defines the story. ARC optionally shapes its journey and ending.'
-            : 'Optional — the Library can generate the complete world automatically.'}
-        </p>
-      ),
     };
   });
 }
 
 
 /** Compatibility entry for consumers rendering only the feature section panel. */
-export function StorySeedSelector({ seed, activeSection, onSelect, authorName }: {
+export function StorySeedSelector({ seed, activeSection, onSelect }: {
   seed: StorySeedInput; activeSection: SeedSectionId; onSelect: (id: SeedSectionId) => void; authorName?: string | null;
 }) {
-  return <NarrativeNavigationDrawerPanel aria-label="Story Seed sections" profile={storySeedDrawerProfile(authorName)}
+  return <NarrativeNavigationDrawerPanel aria-label="Story Seed sections"
     sections={buildStorySeedDrawerSections(seed, activeSection, onSelect)} />;
 }

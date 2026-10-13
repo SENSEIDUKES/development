@@ -4,7 +4,7 @@ import { type StorySeedInput } from '@seihouse/sen/story-seed';
 import type { ChapterWritingStyle, SenLanguageCode } from '@seihouse/sen/contracts';
 import type { SeedUpdate } from './seedState';
 import type { SeedSectionId } from './seedSections';
-import { buildStorySeedDrawerSections, storySeedDrawerProfile } from './StorySeedSelector';
+import { buildStorySeedDrawerSections } from './StorySeedSelector';
 import { StorySeedSettings } from './StorySeedSettings';
 import { WorkspaceHeader } from '../../library-shell/development/WorkspaceHeader';
 import { WorkspaceShell } from '../../library-shell/development/WorkspaceShell';
@@ -28,7 +28,7 @@ interface StorySeedWorkspaceChromeProps {
   /** The host's Story Settings (skills and media), shown in Settings after the Reading Mode. */
   storySettings?: ReactNode;
   activeSection: SeedSectionId;
-  /** Who the drawer says is creating; omitted or null reads as a guest author. */
+  /** Host author metadata; the section navigation does not display a profile. */
   authorName?: string | null;
   onSelectSection: (id: SeedSectionId) => void;
   showStoryBank: boolean;
@@ -71,28 +71,23 @@ export function StorySeedWorkspaceChrome(props: StorySeedWorkspaceChromeProps) {
   const { onToggleStoryBank, showStoryBank, onNavigateHome } = props;
   const workspace = useMemo<LibraryWorkspaceDefinition>(() => ({
     label: 'Story Seed sections', closeLabel: 'Close sections', barLabel: 'Story Seed navigation',
-    profile: storySeedDrawerProfile(props.authorName),
-    sections: [
-      ...buildStorySeedDrawerSections(props.seed, props.activeSection, props.onSelectSection),
-      {
-        id: 'workspace',
-        label: 'Workspace',
-        icon: <SENSettingsIcon size={14} aria-hidden="true" className="text-neutral-400" />,
-        items: [
-          { id: 'story-bank', label: 'Story Bank', icon: <SENStorySeedIcon name="bank" size={16} aria-hidden="true" className="text-neutral-400" />,
-            active: showStoryBank, onSelect: onToggleStoryBank },
-          { id: 'settings', label: 'Settings', icon: <SENSettingsIcon size={16} aria-hidden="true" className="text-neutral-400" />,
-            onSelect: openSettings },
-        ],
-      },
-    ],
+    sections: buildStorySeedDrawerSections(props.seed, props.activeSection, props.onSelectSection),
+    footer: {
+      divider: true,
+      items: [
+        { id: 'story-bank', label: 'Story Bank', icon: <SENStorySeedIcon name="bank" size={16} aria-hidden="true" className="text-neutral-400" />,
+          active: showStoryBank, onSelect: onToggleStoryBank },
+        { id: 'settings', label: 'Settings', icon: <SENSettingsIcon size={16} aria-hidden="true" className="text-neutral-400" />,
+          onSelect: openSettings },
+      ],
+    },
     tools: [
       { id: 'story-bank', label: 'Story Bank', icon: <SENStorySeedIcon name="bank" size={20} aria-hidden="true" />,
         active: showStoryBank, onSelect: () => { setSettingsOpen(false); onToggleStoryBank(); } },
       { id: 'settings', label: 'Settings', icon: <SENSettingsIcon size={20} />, active: settingsOpen, onSelect: openSettings },
     ],
     back: { onBack: () => { setSettingsOpen(false); onNavigateHome(); } },
-  }), [props.seed, props.activeSection, props.authorName, props.onSelectSection, showStoryBank, onToggleStoryBank, openSettings, settingsOpen, onNavigateHome]);
+  }), [props.seed, props.activeSection, props.onSelectSection, showStoryBank, onToggleStoryBank, openSettings, settingsOpen, onNavigateHome]);
   const content = <StorySeedChromeContent {...props} workspace={workspace} settingsOpen={settingsOpen} setSettingsOpen={setSettingsOpen}
     settingsReturnFocusRef={settingsReturnFocusRef} />;
   // A host mounting only the standalone header gets no task bar or drawer.
@@ -129,10 +124,10 @@ function StorySeedChromeContent(props: StorySeedChromeContentProps) {
     help={help}
     // Settings and Story Bank are navigation items, so Search reaches them
     // through the same definition that drives the rail and the drawer.
-    searchItems={props.workspace.sections.flatMap(section => section.items.map(item => ({
+    searchItems={[...props.workspace.sections.flatMap(section => section.items), ...(props.workspace.footer?.items ?? [])].map(item => ({
       id: item.id, label: item.label, pressed: item.active,
       onAction: () => item.onSelect?.(item.id),
-    })))} />;
+    }))} />;
   const manifestAvailable = !props.showStoryBank && !props.headerSaveOnly;
   /**
    * The page's own action row: Save Draft, Manifest and the small save and

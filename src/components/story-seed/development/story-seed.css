@@ -1,3 +1,46 @@
+/* Story Seed's task rail and phone Sections drawer share the canonical panel.
+   The feature's landmark scopes this skin even when the drawer is portalled. */
+[data-slot="navigation-panel"]:has(> nav[aria-label="Story Seed sections"]) {
+  --sh-nav-row-height: 3rem;
+  --sh-nav-icon-size: 1.875rem;
+  --sh-nav-radius: .75rem;
+  --sh-nav-gap: .25rem;
+}
+
+[data-slot="navigation-panel"]:has(> nav[aria-label="Story Seed sections"]) [data-slot="navigation-items"] {
+  padding: 1rem .75rem;
+}
+
+[data-slot="navigation-panel"]:has(> nav[aria-label="Story Seed sections"]) [data-slot="navigation-sections"] {
+  gap: 1.5rem;
+}
+
+[data-slot="navigation-panel"]:has(> nav[aria-label="Story Seed sections"]) [data-slot="navigation-section-header"] {
+  padding: 0 .625rem .625rem;
+  gap: .5rem;
+}
+
+[data-slot="navigation-panel"]:has(> nav[aria-label="Story Seed sections"]) [data-slot="navigation-section-label"] {
+  font-size: .625rem;
+  letter-spacing: .2em;
+}
+
+[data-slot="navigation-panel"]:has(> nav[aria-label="Story Seed sections"]) [data-slot="navigation-item"] {
+  gap: .625rem;
+  padding: .5rem .625rem;
+  font-size: .8125rem;
+}
+
+[data-slot="navigation-panel"]:has(> nav[aria-label="Story Seed sections"]) [data-slot="navigation-label"] {
+  letter-spacing: .045em;
+}
+
+/* Match Home's landscape and star-separated utilities. The scenery takes only
+   the space left by the section list, so short drawers keep navigation usable. */
+[data-slot="navigation-panel"]:has(> nav[aria-label="Story Seed sections"]) [data-slot="navigation-artwork"] {
+  display: block;
+}
+
 /* Ambient depth behind the active Story Seed workspace. Gradients only, so
    the layer remains inexpensive while the form scrolls. */
 .seed-workspace-ambience {

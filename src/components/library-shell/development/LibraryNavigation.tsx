@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, u
 import { List } from 'lucide-react';
 import {
   LibraryBottomNavigation, LibraryNavigationDrawer, LibraryNavigationDrawerPanel,
-  type LibraryNavigationDrawerProfile, type LibraryNavigationDrawerSection,
+  type LibraryNavigationDrawerProfile, type LibraryNavigationDrawerSection, type LibraryNavigationDrawerPanelProps,
 } from '@seihouse/library-ui';
 import { activeLibraryDestination, LIBRARY_DESTINATIONS, libraryLocationKey, libraryNavigationMode, type LibraryDestination, type LibraryLocation, type LibraryNavigationMode } from './libraryRoutes';
 import { DESKTOP_NAVIGATION_QUERY, useDesktopNavigation } from './workspaceMedia';
@@ -45,6 +45,8 @@ export interface LibraryWorkspaceDefinition {
   profile?: LibraryNavigationDrawerProfile;
   /** Grouped destinations for the drawer and the rail. */
   sections: Section[];
+  /** Workspace utilities beneath the shared landscape and ornamental divider. */
+  footer?: LibraryNavigationDrawerPanelProps['footer'];
   /** The task's own controls on the bar. */
   tools?: readonly LibraryWorkspaceTool[];
   /** Leaves the workspace through the host, never browser history. */
@@ -88,6 +90,8 @@ interface WorkspaceState {
   label: string;
   profile?: LibraryNavigationDrawerProfile;
   sections: Section[];
+  footer?: LibraryNavigationDrawerPanelProps['footer'];
+  artwork?: LibraryNavigationDrawerPanelProps['artwork'];
   drawerOpen: boolean;
   openDrawer: () => void;
   closeDrawer: () => void;
@@ -234,7 +238,8 @@ const icons = { home: 'home', create: 'book', discover: 'discovery' } as const s
 export function LibrarySectionSidebar() {
   const { menu, workspace, main } = useContext(Context);
   const desktopNavigation = useLibraryDesktopNavigation();
-  if (workspace) return <LibraryNavigationDrawerPanel variant="pathways" aria-label={workspace.label} profile={workspace.profile} sections={workspace.sections} />;
+  if (workspace) return <LibraryNavigationDrawerPanel variant="pathways" aria-label={workspace.label} profile={workspace.profile}
+    sections={workspace.sections} footer={workspace.footer} artwork={workspace.artwork} />;
   if (main && desktopNavigation === 'sidebar') return <PathwaysSidebar main={main} menu={menu} />;
   return menu ? <LibraryNavigationDrawerPanel aria-label={menu.label} sections={menu.sections} /> : null;
 }
@@ -353,6 +358,7 @@ function MainNavigation({ location, onNavigate, places, onSoundSlot, children }:
 }
 
 function WorkspaceNavigation({ workspace, children }: { workspace: LibraryWorkspaceDefinition; children: ReactNode }) {
+  const { navigationArtwork } = useLibraryAssets();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [soundSlot, setSoundSlot] = useState<HTMLElement | null>(null);
   // The rail replaces the drawer from the desktop breakpoint; never leave one open behind it.
@@ -368,9 +374,13 @@ function WorkspaceNavigation({ workspace, children }: { workspace: LibraryWorksp
   const sections = useMemo(() => workspace.sections.map(section => ({ ...section,
     items: section.items.map(item => ({ ...item, onSelect: (id: string) => { setDrawerOpen(false); item.onSelect?.(id); } })),
   })), [workspace.sections]);
+  const footer = useMemo(() => workspace.footer ? { ...workspace.footer,
+    items: workspace.footer.items?.map(item => ({ ...item, onSelect: (id: string) => { setDrawerOpen(false); item.onSelect?.(id); } })),
+  } : undefined, [workspace.footer]);
+  const artwork = useMemo(() => navigationArtwork ? { type: 'image' as const, src: navigationArtwork } : undefined, [navigationArtwork]);
   const state = useMemo<WorkspaceState>(() => ({
-    label: workspace.label, profile: workspace.profile, sections, drawerOpen, openDrawer, closeDrawer,
-  }), [workspace.label, workspace.profile, sections, drawerOpen, openDrawer, closeDrawer]);
+    label: workspace.label, profile: workspace.profile, sections, footer, artwork, drawerOpen, openDrawer, closeDrawer,
+  }), [workspace.label, workspace.profile, sections, footer, artwork, drawerOpen, openDrawer, closeDrawer]);
   const { back, tools = [] } = workspace;
   const items = [
     ...(sections.length ? [{ id: 'sections', label: 'Sections', icon: <List size={20} />, active: drawerOpen, onSelect: openDrawer }] : []),
@@ -388,6 +398,6 @@ function WorkspaceNavigation({ workspace, children }: { workspace: LibraryWorksp
         showLabels items={items} />
     </div>
     <LibraryNavigationDrawer variant="pathways" open={drawerOpen} onClose={closeDrawer} aria-label={workspace.label}
-      closeLabel={workspace.closeLabel} profile={workspace.profile} sections={sections} />
+      closeLabel={workspace.closeLabel} profile={workspace.profile} sections={sections} footer={footer} artwork={artwork} />
   </Context.Provider>;
 }

@@ -206,6 +206,19 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-10-13 (Navigation landscape):** Story Seed's rail and Sections drawer use
+  the same host-supplied landscape as Home. Story Bank and Settings sit below it
+  in the canonical Library footer, separated by its gold star divider. Search
+  and the phone task bar keep both tools available; the compact section rows
+  and profile-free layout are shared by the app and Workshop preview.
+
+- **2026-10-13 (Section navigation):** Removed the author profile, group subtitles
+  and tip cards from Story Seed's desktop rail and phone Sections drawer. Compact
+  icon-and-label rows keep the Story/World hierarchy, required/completion markers
+  and Library active treatment. Section guidance stays in the editor and Help;
+  Story Bank, Settings and Back retain their existing actions. The app and Workshop
+  use the same canonical Story Seed surface; historical references are unchanged.
+
 - **2026-10-13 (Compact Origin and ARC):** By the owner's direction ("what would Apple do"), Origin and ARC show each choice as a compact row and keep long explanations one tap away. Pressure and every Fun Setting are one-line Low/Medium/High-style choices that show only the selected option's description (`SeedSegmented`); Survival is one switch row whose short line describes its current state; long field explanations sit behind an info toggle (`SeedNote`, both in `workspaces/SeedSectionFrame.tsx`), so no copy was removed. Tags keep your tags and suggestions visible and fold custom tags, search and families behind Browse all tags. Hard Pins appear one at a time (each written pin plus one empty slot, up to three). The section header is tighter. On a 390px phone Origin went from about 2,850px to 1,740px of content and ARC from about 2,330px to 1,780px. Order, ids, data and generation contracts are unchanged.
 - **2026-10-12 (Story Sparks):** SEN gains Story Sparks (`shared/storySpark.ts`, `@seihouse/sen/story-seed`): a starting point for a blank Story Seed that is exactly a premise and a genre. `parseStorySparkRequest` reads a request for a chosen or invented genre, with the writer's own rough beginning (`idea`) and recent premises to avoid; `parseStorySpark` checks a writer's answer (a chosen genre always comes back as chosen); `storySeedInputFromSpark` plants only the premise and genre in an empty seed, which the host saves in its Story Bank like any draft. The Library dresses sparks as Dao Insights. `CreationModal` takes `initialSeedId` to open a saved seed for editing when Create opens (the app's `?page=create&seed=<id>`).
 - **2026-10-12 (Manifesting):** While a Blueprint or story is made, Manifest says "Manifesting..." in Create and the Blueprint review, never "VERSA is drafting" or "VERSA is writing"; VERSA's mark still shows beside it. Manifest World Blueprint, Manifest Story and Save Draft wear the Library's night glass instead of gold.

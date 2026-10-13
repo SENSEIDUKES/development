@@ -205,6 +205,11 @@ The existing local files named by this inventory are:
 
 ## Workshop history
 
+- **2026-10-13 (Workspace navigation):** Workspace rails and Sections drawers
+  reuse the host's navigation landscape. An optional footer in the workspace
+  definition supplies the existing Library star divider and utility rows;
+  selecting a footer utility dismisses the drawer before opening its destination.
+
 - **2026-10-07 (Profile):** `LibraryDestinationsProvider` gives every Library navigation beneath it the host's places, including the Cave's own (a navigation's `destinations` still wins), and `useLibraryBottomClearance()` says how much of the screen's bottom the bar and the floating music note cover, so a host's own floating pieces (the Familiar) stay above them. NovelExpanded's places are now Home, Create and Profile, with Settings beside Profile. The Workshop's Familiar surfaces keep above the bar and the note the same way (see "The app's places and the Familiar above the bar" below).
 - **2026-10-07 (later):** While a bottom bar is on screen (phones and tablets), a header's music note now floats just above the bar's right end, as the Reader's note floats above its Listen bar, instead of sitting in the header; on laptops it stays in the header (`useLibraryBottomBar`, `useLibrarySoundSlot`; see "The music note floats above the bar" below). The Workshop's Profile note follows the same rule.
 

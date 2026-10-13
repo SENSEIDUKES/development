@@ -217,7 +217,7 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
     <h1 id={`harness-reader-chapter-${chapter.chapterNumber}`} data-read-aloud-title="" style={{ fontFamily: text.titleFont.family }}
       className="mt-1 text-[length:calc(1.5rem*var(--reader-scale,1))] font-normal text-white sm:text-[length:calc(1.875rem*var(--reader-scale,1))]">{chapterTitleText(chapter.title) || chapter.title}</h1>
     {/* A quiet gutter on phones gives the overlay's ¶ numbers room, so turning an overlay on never moves a word. */}
-    <div className="pl-3 sm:pl-0">
+    <div className="ps-3 sm:ps-0">
       <HighlightEngine blocks={state.manuscript.paragraphs} onBlocksChange={edit} actions={actions} removeActions={removeActions}
         editable overlay={overlay} locale={locale} className="mt-6 text-neutral-200"
         renderBlockText={block => {

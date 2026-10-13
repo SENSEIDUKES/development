@@ -17,6 +17,7 @@ import { SEN_ATMOSPHERES } from '../../../host/media/atmosphereCatalog';
 import { SEN_SOUNDSCAPES } from '../../../host/media/soundscapeCatalog';
 import { piecesForMood, storySoundtrack } from '@seihouse/sen/reader-runtime';
 import { READER_MUSIC_MOOD } from './useReaderSoundtrack';
+import type { SenLanguageCode } from '@seihouse/sen/contracts';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -61,13 +62,13 @@ class MemoryReaderStateRepository implements ReaderStateRepository {
   async save(state: ReaderStoryState) { this.records.set(state.storyId, structuredClone(state)); }
 }
 
-const story = async ({ written = 0, replies }: { written?: number; replies?: string[] } = {}) => {
+const story = async ({ written = 0, replies, language }: { written?: number; replies?: string[]; language?: SenLanguageCode } = {}) => {
   const harness = new InMemoryHarnessGenerationRepository();
   const model = scriptedProvider(replies);
   const controller = new HarnessGenerationController({ repository: harness, modelAdapter: model.adapter, media });
   await controller.hydrate();
   const created = await controller.createStory({ premise: 'A courier returns to the drowned city that erased her name.',
-    destinedEnding: 'Mara reclaims her name.', initialArcPlan: GOAL });
+    destinedEnding: 'Mara reclaims her name.', initialArcPlan: GOAL }, language);
   for (let index = 0; index < written; index++) await controller.generateNextChapter(created.id, 'test-model');
   return { harness, controller, storyId: created.id, ...model };
 };
@@ -893,6 +894,8 @@ describe('The Reader frame and its chapter body', { timeout: 20_000 }, () => {
       .toEqual(['Previous sentence', 'Narration playback speed', 'Next sentence', 'Open Codex', 'Previous Chapter', 'Open Fate', 'Next Chapter: Write Chapter 2', 'Create mode']);
     // The far right keeps the coming Create mode's place.
     expect(bottom.querySelector('[data-testid="reader-create-slot"]')).toBeTruthy();
+    // An English story reads left to right.
+    expect(container.querySelector('.reader-frame')!.getAttribute('dir')).toBe('ltr');
 
     await click(byLabel('Reader Settings'), 'Reader Settings');
     expect([...dialog().querySelectorAll('[data-testid="reader-settings-text"] legend')].map(legend => legend.textContent))
@@ -918,6 +921,37 @@ describe('The Reader frame and its chapter body', { timeout: 20_000 }, () => {
     await act(async () => { [...dialog().querySelectorAll('button')].find(button => button.textContent?.trim() === 'Reset text')!.click(); });
     expect(chapterOnScreen(1)!.style.fontFamily).toBe('"House Sans", sans-serif');
     expect(chapterOnScreen(1)!.style.fontSize).toBe('calc(1.075rem * var(--reader-scale, 1))');
+  });
+
+  it('reads a right-to-left story right to left: the frame, its chapter arrows and its chapter list mirror; the sentence controls do not', async () => {
+    const { controller, storyId } = await story({ written: 2, language: 'ar', replies: [
+      reply('المد المنحسر', ['انحسر المد عن البوابة الغارقة.', 'تجمّدت مارا حين [[sound: beast roar | زأر الوحش | high]] خلف السور البحري، عند البوابة رقم 7.']),
+      reply('حارس الجرس', ['كان حارسٌ ينتظر على الممرّ بفانوسه.']),
+    ] });
+    await mount(<Host controller={controller} storyId={storyId} />);
+
+    const frame = container.querySelector<HTMLElement>('.reader-frame')!;
+    expect(frame.getAttribute('dir')).toBe('rtl');
+    // The chapter is set in its own language, inside the mirrored frame, its Sound Cue on its Arabic words.
+    const article = chapterOnScreen(1)!;
+    expect(article.getAttribute('lang')).toBe('ar');
+    expect(frame.contains(article)).toBe(true);
+    expect(article.querySelector('h1')!.textContent).toBe('المد المنحسر');
+    expect(article.textContent).toContain('زأر الوحش');
+    // Back and the chapter arrows point the way a right-to-left reader turns pages, at the mirrored ends of their pill.
+    const bottom = container.querySelector<HTMLElement>('[data-testid="reader-bottom-bar"]')!;
+    const previous = buttonBy(byLabel('Previous Chapter'))!;
+    const next = bottom.querySelector<HTMLButtonElement>('nav[aria-label="Chapters"] button:last-child')!;
+    expect(previous.className).toContain('rounded-s-full');
+    expect(next.className).toContain('rounded-e-full');
+    for (const button of [previous, next, buttonBy(byLabel('Back'))!]) expect(button.querySelector('svg')!.getAttribute('class')).toContain('rtl:-scale-x-100');
+    // Sentence controls are media controls: they keep their order in every language.
+    expect(bottom.querySelector('[aria-label="Playback controls"]')!.getAttribute('dir')).toBe('ltr');
+    // The chapter list opens outside the frame, so it is given the story's direction.
+    await click(byLabel('Select chapter: Chapter 1'), 'Select chapter');
+    const picker = document.querySelector<HTMLElement>('[data-testid="reader-chapter-picker"]')!;
+    expect(picker.getAttribute('dir')).toBe('rtl');
+    expect([...picker.querySelectorAll('button')].map(button => button.getAttribute('aria-label'))).toEqual(['Chapter 1: المد المنحسر', 'Chapter 2: حارس الجرس']);
   });
 
   it('shows another chapter body inside the same frame, with the passages it marks', async () => {

@@ -21,7 +21,7 @@ export interface ReaderChapterSelection {
  * It clears the page on downward scroll and returns on upward scroll. Listen,
  * Codex, Fate and the chapter arrows stay in the bottom bar.
  */
-export function ReaderTopBar({ storyTitle, place, chapterSelection, onBack, onOpenSettings, companion, barRef, pinned = false }: {
+export function ReaderTopBar({ storyTitle, place, chapterSelection, onBack, onOpenSettings, companion, barRef, pinned = false, direction }: {
   storyTitle: string;
   /** Where the reader is: "Chapter 3 · The Bell Keeper", or the story start. */
   place: string;
@@ -34,6 +34,8 @@ export function ReaderTopBar({ storyTitle, place, chapterSelection, onBack, onOp
   barRef?: Ref<HTMLElement>;
   /** Keep controls available while a Reader panel is open. */
   pinned?: boolean;
+  /** The story's direction, for the chapter list, which opens outside the frame. */
+  direction?: 'ltr' | 'rtl';
 }) {
   const element = useRef<HTMLElement>(null);
   const [hidden, setHidden] = useState(false);
@@ -86,16 +88,16 @@ export function ReaderTopBar({ storyTitle, place, chapterSelection, onBack, onOp
     <div className="reader-bar-row flex w-full items-center gap-3 max-[380px]:gap-2">
       <button type="button" aria-label="Back" title="Back" onClick={onBack}
         className={action}>
-        <ChevronLeft className="h-5 w-5" aria-hidden /><span className="sr-only">Back</span>
+        <ChevronLeft className="h-5 w-5 rtl:-scale-x-100" aria-hidden /><span className="sr-only">Back</span>
       </button>
       {chapterSelection
         ? <SEIPopover open={picking} onOpenChange={setPicking}>
             <SEIPopoverTrigger aria-label={`Select chapter: Chapter ${chapterSelection.current}`} title="Chapters" data-testid="reader-chapter-menu"
-              className={`min-w-0 flex-1 rounded-xl px-2 py-1 text-left hover:bg-white/[0.06] active:bg-white/10 ${controlFeedback}`}>
+              className={`min-w-0 flex-1 rounded-xl px-2 py-1 text-start hover:bg-white/[0.06] active:bg-white/10 ${controlFeedback}`}>
               {heading}
             </SEIPopoverTrigger>
-            <SEIPopoverContent side="bottom" align="start" collisionPadding={8} variant="dark" initialFocus={currentChapterButton}
-              className={pickerSurface} data-testid="reader-chapter-picker">
+            <SEIPopoverContent side="bottom" align={direction === 'rtl' ? 'end' : 'start'} collisionPadding={8} variant="dark" initialFocus={currentChapterButton}
+              className={pickerSurface} data-testid="reader-chapter-picker" dir={direction}>
               <SEIPopoverTitle className={pickerHeading}>Chapters</SEIPopoverTitle>
               <SEIOverlayScrollbar fades={false} className={`reader-scroll-region ${pickerList}`}>
                 {chapterSelection.entries.map(entry => <button key={entry.number} type="button" ref={entry.number === chapterSelection.current ? currentChapterButton : undefined}

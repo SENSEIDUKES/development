@@ -388,10 +388,24 @@ Update it whenever it changes.
     world, so it can be designed in the Reader. Holdings is one of its pages.
     The Codex and an arc's goals take the screen, and the reader comes back to
     their exact place.
+  - **Right-to-left reading (2026-10-13):** Arabic, Hebrew, Persian and Urdu
+    are SEN languages, so a story can be written in them, and the Reader reads
+    such a story right to left. The direction comes from the story's language,
+    never a reader's toggle. The text and its title run right to left, and the
+    lit sentence and Sound Cue highlights follow the words. Back, the chapter
+    arrows and the bars' ends mirror, and the chapter list opens in the story's
+    direction. The sentence controls keep their order, as media controls do in
+    every language. An English name, a number or a System line inside Arabic
+    keeps its own order. Each script is set in a font chosen for it: Noto
+    Naskh Arabic and Noto Serif Hebrew beside a serif, Noto Sans Arabic and Noto
+    Sans Hebrew beside a sans. Urdu is set in Naskh for now, not the Nastaliq
+    its readers often expect. Speech finds Arabic «…» and Hebrew „…“ quotes, and
+    an Arabic ؟ or Urdu ۔ ends a sentence.
   - **A place to work on the Reader:** the Workshop's Reader Chamber card
     (`?preview=reader-chamber`) shows the app's Reader as its Development view.
     It is the same component the app renders, so the two cannot drift apart. It
-    reads SENSEI's Sundered Heavens test or any story saved with Export story.
+    reads SENSEI's Sundered Heavens test, the same story begun again in Arabic
+    for right-to-left reading (Advanced), or any story saved with Export story.
     Its scenes put the reader on Chapter 1, in the middle, before the newest
     chapter, on the newest one, or at the story start. Writing replays the
     chapters the story already has, behind the writing screen, so no model is
@@ -623,6 +637,9 @@ Update it whenever it changes.
     The Library sets how far it may go (records only, or off), which is where
     the Familiar will control it.
 - **Not tested yet:**
+  - a right-to-left story with a real model, and Listen in Arabic and Hebrew
+    on real phones, whose voices for those languages differ from device to
+    device;
   - real generation with a real model on the Vercel preview: a real Blueprint
     (Arc 1 only, filled slots), a real arc planned at a new arc, and real
     speaker tags;
@@ -687,7 +704,9 @@ When a session asks "what now?", start here:
    any code: the tag, its teaching, its rules, its home, and what the Codex
    shows. The [principles](./src/components/harness-generation/HARNESS_PRINCIPLES.md#translation-across-media-the-world-record)
    say what it must capture.
-3. **Agent:** right-to-left reading in the Reader (product track, item 1).
+3. **Agent:** the next step of reading in every script (product track, item
+   1): a reading font chosen on purpose for each remaining script. Right-to-left
+   reading is built.
 4. **Either track's next piece** below, when the owner asks for it.
 
 ### The product track
@@ -704,6 +723,11 @@ When a session asks "what now?", start here:
    SEIHouse fonts do not, a fallback chosen on purpose). Vertical Japanese and Chinese text is a later,
    separate step. Verified with a real right-to-left chapter in the Reader
    Chamber workspace, on a phone and a laptop.
+   **Right-to-left is built (2026-10-13)**, for Arabic, Hebrew, Persian and
+   Urdu (see [Where we are](#where-we-are-2026-10-10)). What remains: a font
+   chosen on purpose for each other script the SEIHouse fonts do not cover
+   (Chinese, Japanese, Korean, Thai), the owner's choice of Nastaliq for Urdu,
+   and vertical Japanese and Chinese text.
 2. **Branching and Blueprint change warnings** ([its direction](#the-world-blueprint)):
    a reader takes a published creator's Blueprint, keeps the Story Seed, and makes
    their own version; every Blueprint change carries a hard warning about what it

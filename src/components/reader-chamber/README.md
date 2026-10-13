@@ -12,12 +12,13 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - **Workshop preview:** `?preview=reader-chamber`. Original Reference is production's Reader; Development is the NovelExpanded app's own Reader (since 2026-10-09)
 - **Development view:** the app's Reader, `HarnessReaderSession` (SEN, `src/components/harness-generation/development/`), hosted exactly as the app hosts it by Library's `StoryPages` on its read page. The older development Reader in `development/` is no longer on this card; its code stays for the Card Workshop, Reader Codex and Character Voice previews that use parts of it
 - **First Workshop record:** 2026-07-31
-- **Last recorded Workshop update:** 2026-10-10
+- **Last recorded Workshop update:** 2026-10-13
 - **Historical source inspection:** 2026-08-22 (the older copy), 2026-10-07 (the current Original Reference)
 - **Implementation status:** under refinement
 
 ## Workshop history
 
+- **2026-10-13 (right-to-left story):** Advanced has **Right to left (Arabic)**: Sundered Heavens begun again in Arabic (`rightToLeftSample.ts`), two chapters written for the workspace in the tiny SEN language and committed through the HARNESS at open, so their Sound Cues, speakers and Holdings sit on Arabic words. They mix in numbers and System lines with Latin text. The Reader reads it right to left (see the Harness Generation README). Its scenes work as they do for Sundered Heavens, and writing replays its own two chapters. Back to Sundered Heavens returns.
 - **2026-10-10 (audio workspace):** Workshop Controls has an Audio section inside the existing Reader workspace. Sound on, Muted and Audio settings shortcuts operate the canonical soundtrack note in context; tap, hold/right-click, levels, presets and sleep timer can be inspected there. Browser gesture and timer states remain real runtime states. No separate note simulation or preview route is added.
 - **2026-10-10 (Familiar in the current preview):** Development uses the app's `AppFamiliar` host with an isolated default Quill profile. Its recall sits beside Reader Settings; expanding summons the existing draggable companion, constrained to the preview canvas. The app continues to use the reader's equipped Familiar.
 - **2026-10-10 (center the pills between anchored actions):** Play and Alter Fate stay at the outer edges, Codex stays centered, and each compact pill centers within the gap between neighboring main actions. Gray outer actions and cyan Codex are retained.

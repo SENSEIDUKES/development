@@ -420,7 +420,7 @@ function SystemExpandedOverlay({
                 aria-labelledby={headingId}
                 data-system-expanded-section={section.heading.toLowerCase().replace(/[^a-z0-9]+/g, '-')}
                 data-color-code={toneColorCode}
-                className={`mt-3 border-t border-white/10 pt-3${index >= MOBILE_SECTION_LIMIT ? ' hidden md:block' : ''}`}
+                className={`mt-3 border-t border-white/10 pt-3 ${index >= MOBILE_SECTION_LIMIT ? 'hidden md:block' : ''}`}
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h3

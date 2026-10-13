@@ -132,7 +132,7 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
       {/* The first slide stays mounted while another shows, so its video resumes where it was. */}
       <LibraryPanel
         padding="none"
-        className={`relative overflow-hidden h-60 sm:h-80 items-end${currentSlide === 0 ? ' flex' : ' hidden'}`}
+        className={`relative overflow-hidden h-60 sm:h-80 items-end ${currentSlide === 0 ? 'flex' : 'hidden'}`}
         aria-hidden={currentSlide === 0 ? undefined : true}
       >
         <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">

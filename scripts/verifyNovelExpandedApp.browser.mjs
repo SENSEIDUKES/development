@@ -38,8 +38,8 @@
  *
  * It fails on any page error, any memory request, and any module request into
  * the Workshop, the older Reader (its narration included) or the old
- * production Codex, or the HARNESS developer page. The development Codex is
- * the Reader's Codex page.
+ * production Codex, or the HARNESS developer page. The Reader's Codex is
+ * its own panel, on the story's record.
  *
  * Usage: start `npm run dev -- --host 127.0.0.1`, then
  *   node scripts/verifyNovelExpandedApp.browser.mjs [base URL]
@@ -88,7 +88,7 @@ const chapter = {
     // The rest of the chapter: a reply under a quarter of the 1,800-word minimum is a failed write and is never saved.
     Array.from({ length: 35 }, () => 'The night went on, and the town kept its quiet watch until dawn.').join(' '),
   ],
-  // The writer's closing list: one name no tag recorded, so the Holdings page has one check.
+  // The writer's closing list: one name no tag recorded, so the Codex has one record check.
   mainCharacterHoldings: ['Bell Key', 'Silver Bell'],
   arcCompletion: { goalId: 'none', completed: false, evidence: '' },
   recap: 'Mara returns to the drowned city.',
@@ -677,28 +677,34 @@ async function walk(browser, viewport, sample) {
   }
   await page.getByTestId('reader-panel-fate').getByRole('button', { name: 'Back to reading' }).click();
 
-  // 3d. The Codex is its own page; Holdings is one of its pages: what the main character has now,
-  // each change linked to its passage, and the checks.
+  // 3d. The Codex is a panel over the chapter: the main character's sheet (what they have now,
+  // each change linked to its passage) and the record checks. A fact's link moves the chapter
+  // behind the Codex to its passage and lights it, with the Codex still open.
   await visibleButton('Open Codex').click();
-  const codexPage = page.getByTestId('reader-codex-page');
-  await codexPage.locator('[data-codex-page="holdings"]').waitFor();
-  check(await page.evaluate(() => document.querySelector('[data-testid="harness-reader"]').hidden), 'The Codex page takes the screen while the chapter waits underneath.');
+  const codex = page.getByTestId('reader-panel-codex');
+  await codex.getByTestId('codex-character').first().waitFor();
+  check(!(await page.evaluate(() => document.querySelector('[data-testid="harness-reader"]').hidden)), 'The chapter must stay on the page under the Codex.');
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), 'The Codex must not scroll sideways.');
+  check((await codex.locator('[data-testid="codex-checks"] summary').textContent()).trim() === 'Record checks (1)', 'The closing list should leave one check.');
   await shot('6d-codex');
-  await codexPage.locator('[data-codex-page="holdings"]').click();
-  const holdingsPage = page.getByTestId('holdings-page');
-  await holdingsPage.waitFor();
-  const inHand = await holdingsPage.locator('[aria-label$=": In hand"]').first().textContent();
-  check(inHand.includes('Bell Key'), `The Bell Key should be in hand, got ${inHand}.`);
-  check(JSON.stringify(await holdingsPage.locator('[data-testid="holdings-character"]').first().locator('button').allTextContents()) === '["Ch. 1 · gained","Ch. 1 · took up"]',
+  await codex.getByTestId('codex-character').first().click();
+  const codexSheet = codex.getByTestId('codex-sheet');
+  await codexSheet.waitFor();
+  const equipped = await codexSheet.locator('[aria-label$=": Equipped"]').textContent();
+  check(equipped.includes('Bell Key'), `The Bell Key should be equipped, got ${equipped}.`);
+  const slot = codexSheet.getByTestId('codex-slot').first();
+  check(JSON.stringify(await slot.locator('button').allTextContents()) === '["Ch. 1 · gained","Ch. 1 · took up"]',
     'Each change should link to its chapter.');
-  check((await holdingsPage.locator('[data-testid="holdings-checks"] summary').textContent()) === 'Checks (1)', 'The closing list should leave one check.');
-  check(!(await page.textContent('body')).includes('[['), 'No tag may reach the Holdings page.');
-  check(!(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), 'The Holdings page must not scroll sideways.');
-  await shot('6d-holdings');
-  await holdingsPage.getByRole('button', { name: /^Ch\. 1 · took up/ }).click();
-  await page.locator('[data-chapter-number="1"]').waitFor();
-  check(await page.getByTestId('holdings-page').count() === 0 && await page.getByTestId('reader-codex-page').count() === 0, 'A change\'s link should open its chapter.');
+  check(!(await page.textContent('body')).includes('[['), 'No tag may reach the Codex.');
+  check(!(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), 'The character sheet must not scroll sideways.');
+  await shot('6d-codex-sheet');
+  await slot.getByRole('button', { name: /^Ch\. 1 · took up/ }).click();
+  await page.locator('[data-chapter-number="1"] [data-codex-lit]').waitFor();
+  check(await codex.count() === 1, 'A change\'s link should keep the Codex open.');
+  if (!laptop) check(await codex.getAttribute('data-stop') === 'half', 'A change\'s link should lower the Codex so the chapter shows.');
+  await shot('6d-codex-passage');
+  await codex.getByRole('button', { name: 'Back to reading' }).click();
+  check(await page.getByTestId('reader-panel-codex').count() === 0, 'Back to reading should close the Codex.');
   check(counts.fixes.length === 0, `A chapter whose only problem is a closing-list name it never mentions asks no fixer, saw ${counts.fixes.length}.`);
 
   // 3d. Rewrite this chapter: at the newest chapter's end, with a note; the new version under the veil.

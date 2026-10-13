@@ -1,0 +1,23 @@
+/* The Codex's own motion: a character sheet rises into place. Reduced motion skips it (motion-safe). */
+@keyframes codex-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* A paragraph the Codex pointed at lights up briefly behind the open Codex. */
+@keyframes codex-lit {
+  0%, 30% { background-color: color-mix(in srgb, var(--color-entity-mc) 22%, transparent); box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-entity-mc) 22%, transparent); }
+  100% { background-color: transparent; box-shadow: 0 0 0 6px transparent; }
+}
+
+[data-codex-lit] {
+  border-radius: 6px;
+  animation: codex-lit 2.6s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-codex-lit] {
+    animation: none;
+    background-color: color-mix(in srgb, var(--color-entity-mc) 18%, transparent);
+  }
+}

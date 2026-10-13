@@ -401,29 +401,28 @@ describe('The HARNESS Reader', { timeout: 20_000 }, () => {
     expect(document.activeElement?.getAttribute('aria-label')).toBe('Open Fate');
   });
 
-  it('opens the Codex as its own page while the chapter waits underneath, with Holdings among its pages', async () => {
+  it('opens the Codex as a panel over the chapter, which stays on the page', async () => {
     const { controller, storyId } = await story({ written: 2 });
     await mount(<Host controller={controller} storyId={storyId} />);
     const chapter = chapterOnScreen(1)!;
+    buttonBy(byLabel('Open Codex'))!.focus();
 
     await click(byLabel('Open Codex'), 'Open Codex');
-    for (let tries = 0; tries < 50 && !document.querySelector('[data-codex-page="holdings"]'); tries++) await flush(20);
-    const codex = document.querySelector<HTMLElement>('[data-testid="reader-codex-page"]')!;
-    expect(codex.querySelector('h1')!.textContent).toBe('Codex');
-    expect(codex.textContent).toContain('The Living Codex');
-    // The chapter is kept, out of sight, at the reader's place.
-    expect(container.querySelector<HTMLElement>('[data-testid="harness-reader"]')!.hidden).toBe(true);
-    expect(chapterOnScreen(1)).toBe(chapter);
-
-    await click(button => button.getAttribute('data-codex-page') === 'holdings', 'the Codex\'s Holdings page');
-    expect(codex.querySelector('[data-testid="holdings-page"]')).toBeTruthy();
-    // Inside the Codex, Holdings has no way back of its own: the Codex page has it.
-    expect([...codex.querySelectorAll('button')].filter(button => button.textContent === 'Back to reading')).toHaveLength(1);
-
-    await click(button => button.textContent === 'Back to reading', 'Back to reading');
-    expect(document.querySelector('[data-testid="reader-codex-page"]')).toBeNull();
+    const panel = document.querySelector<HTMLElement>('[data-testid="reader-panel-codex"]')!;
+    expect(panel.getAttribute('role')).toBe('dialog');
+    expect(panel.querySelector('h2')!.textContent).toBe('Codex');
+    expect(document.activeElement?.id).toBe('codex-panel-title');
+    expect(panel.querySelector('[role="tablist"]')!.textContent).toContain('Characters');
+    expect(panel.querySelector('[role="tablist"]')!.textContent).toContain('Items');
+    // The chapter stays on the page, readable, at the reader's place.
     expect(container.querySelector<HTMLElement>('[data-testid="harness-reader"]')!.hidden).toBe(false);
     expect(chapterOnScreen(1)).toBe(chapter);
+
+    await click(button => button.textContent === 'Back to reading', 'Back to reading');
+    await flush(20);
+    expect(document.querySelector('[data-testid="reader-panel-codex"]')).toBeNull();
+    expect(chapterOnScreen(1)).toBe(chapter);
+    expect(document.activeElement?.getAttribute('aria-label')).toBe('Open Codex');
   });
 });
 

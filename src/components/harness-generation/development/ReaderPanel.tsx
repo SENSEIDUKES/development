@@ -28,7 +28,7 @@ const FLICK_MS = 180;
 const GLIDE = 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1)';
 
 /**
- * One of the Reader's panels (Fate, Reader Settings): a tool that opens over
+ * One of the Reader's panels (Fate, the Codex, Reader Settings): a tool that opens over
  * the reading without taking the chapter away. It is a non-modal dialog:
  * nothing behind it is locked, hidden or shut away, so the chapter stays
  * readable and scrollable. (The SEIHouse UI drawers are modal even when asked
@@ -43,7 +43,7 @@ const GLIDE = 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1)';
  * over beside it. Escape and the page's own Back to reading close it. Opening
  * moves focus to its heading; closing gives focus back to what opened it.
  */
-export function ReaderPanel({ open, onClose, labelledBy, testId, header, scrollKey, children }: {
+export function ReaderPanel({ open, onClose, labelledBy, testId, header, scrollKey, peek, children }: {
   open: boolean;
   onClose: () => void;
   /** The id of the panel's heading, which names it. */
@@ -53,6 +53,12 @@ export function ReaderPanel({ open, onClose, labelledBy, testId, header, scrollK
   header?: ReactNode;
   /** Changing a content section starts its scroll position at the top. */
   scrollKey?: string;
+  /**
+   * Changing it lowers the sheet to half height, so the chapter behind it shows
+   * (the Codex uses it when it points the chapter at a passage). Beside the
+   * chapter on a wide screen, the chapter already shows.
+   */
+  peek?: number;
   children: ReactNode;
 }) {
   const wide = useWideReader();
@@ -102,6 +108,13 @@ export function ReaderPanel({ open, onClose, labelledBy, testId, header, scrollK
       if (lost && returnTo?.isConnected) returnTo.focus({ preventScroll: true });
     };
   }, [open, labelledBy]);
+
+  // Only a new peek lowers it: opening again starts at the whole screen, as always.
+  const peeked = useRef(peek);
+  useEffect(() => {
+    if (open && peek !== peeked.current) setStop('half');
+    peeked.current = peek;
+  }, [open, peek]);
 
   useEffect(() => {
     if (!open) return undefined;

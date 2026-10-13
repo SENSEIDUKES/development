@@ -391,11 +391,17 @@ Update it whenever it changes.
     knows today, shown like a game's character screen. **Characters:** everyone
     the story has met (they spoke, or held, used or learned something), the
     main character first; characters the Story Seed declares but the chapters
-    have not reached stay out. Each opens a character sheet: their emblem,
-    rank, first appearance, **first words** and how much they have spoken,
+    have not reached stay out. Named beasts are characters too. Each opens a
+    character sheet: their emblem, rank, first appearance, **first words**,
     **Equipped** and **Carried** things, **Abilities** (learning, known or
-    sealed, with their stage) and a **Chronicle** of every change. **Items:**
-    every thing, who holds it now and everything that happened to it.
+    sealed, with their stage) and a **Chronicle** of every change.
+    **Factions:** sects, clans and other bodies of people, never characters,
+    even when the writer tags one as speaking (those the Story Seed declares,
+    or a name ending in a word like Sect, Clan or Tribe), each with its crest
+    and first words. **Items:** every thing, who holds it now and everything
+    that happened to it. A **Bestiary** comes later (SENSEI, 2026-10-13): it
+    holds species and unique beast groups (the dragon kin), while a named beast
+    (the Dragon King, an emperor and the main villain) is a character.
     **Record checks** close each list, for testing. Every fact links to its
     passage: the chapter behind the Codex moves to it and lights it while the
     Codex stays open, lowered to half height on a phone. It is worked out
@@ -945,7 +951,7 @@ same record; none of them adds anything medium-specific to the story itself.
 | Chapter body | What shows the chapter inside the Reader's frame: prose today (`ProseChapterBody`), sequential art later (`ReaderChapterBody`). |
 | Rewrite this chapter | The reader's request to write the newest chapter again, with an optional note (`rewriteLatestChapter`, `chapterRewriteGap`). |
 | Holdings fixer | SEN's unseen check after each chapter, which settles small holdings problems and keeps a record on the chapter (`planHoldingsFix`, `applyHoldingsFixes`, the `fix-holdings` call). The Library, later the Familiar, sets how far it goes. |
-| Codex | The story's world as its record knows it, opened in the Reader as a panel: characters and items today, every fact linked to its passage (`StoryCodex`, worked out by `deriveStoryCodex`). It grows as each information tag is built. |
+| Codex | The story's world as its record knows it, opened in the Reader as a panel: characters, factions and items today (a Bestiary of species later), every fact linked to its passage (`StoryCodex`, worked out by `deriveStoryCodex`). It grows as each information tag is built. |
 | Highlight Engine | SEN's engine for highlighting part of a story and attaching to it: prose today, sequential-art images later. Its lab is at `?preview=highlight-engine`; in the Reader it is Create mode. Never "Text Highlight Engine". |
 | Story Settings | The only place a user meets the HARNESS: language, reading mode, CAPA skills and media. On Story View (`StorySettings`) and in Create's Settings (`CreateStorySettings`), from `@seihouse/library/stories`. |
 | Harness Generation | The developer instrument for the HARNESS (`?preview=harness-generation`). Never a product page. |

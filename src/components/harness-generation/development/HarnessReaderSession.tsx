@@ -529,6 +529,7 @@ function ReaderCodex({ state, storyId, chapters, storyTitle, onBack, onReadPassa
     chapters,
     mainCharacterName: foundation?.cast?.find(member => member.isMainCharacter)?.name,
     declared: foundation ? declaredCharacters(foundation) : [],
+    declaredFactions: foundation?.identities?.filter(identity => identity.kind === 'faction') ?? [],
   }), [state.codexEntries, storyId, chapters, foundation]);
   return <StoryCodex codex={codex} storyTitle={storyTitle} onBack={onBack} onReadPassage={onReadPassage} onReadChapter={onReadChapter} />;
 }

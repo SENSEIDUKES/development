@@ -104,6 +104,10 @@ describe('the Reader Chamber workspace: the app\'s Reader', { timeout: 30_000 },
     expect(document.querySelector('[data-testid="reader-panel-codex"] h2')!.textContent).toBe('Codex');
     // Sundered Heavens' record: its main character leads the Codex's characters.
     expect(document.querySelectorAll('[data-testid="codex-character"]').length).toBeGreaterThan(1);
+    // Its declared sect speaks, and stays out of the characters.
+    expect([...document.querySelectorAll('[data-testid="codex-character"]')].map(tile => tile.textContent)).not.toContainEqual(expect.stringContaining('Iron Crane Sect'));
+    await act(async () => { [...document.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(tab => tab.textContent?.startsWith('Factions'))!.click(); });
+    expect(document.querySelector('[data-testid="codex-faction"]')!.textContent).toContain('Iron Crane Sect');
   });
 
   it('inspects the real audio note in on, muted and settings states', async () => {

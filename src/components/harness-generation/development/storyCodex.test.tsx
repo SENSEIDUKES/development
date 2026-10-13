@@ -100,7 +100,6 @@ describe('The Codex in the HARNESS Reader', { timeout: 20_000 }, () => {
     // A stage reached while still learning is shown, and is a change, not a check.
     expect(sheet.querySelector('[aria-label="Ye Chen: Abilities"]')!.textContent).toContain('Learning · First Stage');
     expect(sheet.querySelector('[data-testid="codex-voice"] blockquote')!.textContent).toBe('"Again,"');
-    expect(sheet.querySelector('[data-testid="codex-voice"]')!.textContent).toContain('1 line in Chapter 2');
     // The jade sword was never held, so losing it is a check, not a change.
     expect(sheet.textContent).not.toContain('Jade Sword');
     expect(sheet.querySelector('[data-testid="codex-chronicle"] summary')!.textContent).toBe('Chronicle (4)');

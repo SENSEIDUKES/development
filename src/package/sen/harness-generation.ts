@@ -148,6 +148,8 @@ export {
   deriveStoryCodex,
   type CodexCharacter,
   type CodexCheck,
+  type CodexFaction,
+  type DeclaredFaction as CodexDeclaredFaction,
   type CodexItem,
   type CodexItemEvent,
   type CodexPassage,

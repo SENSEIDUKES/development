@@ -1,10 +1,10 @@
 import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { Backpack, ChevronLeft, ChevronRight, Crown, Hand, Lock, MessageCircle, Package, Quote, Sparkles, TriangleAlert, Users } from 'lucide-react';
+import { Backpack, ChevronLeft, ChevronRight, Crown, Flag, Hand, Lock, Package, Quote, Sparkles, TriangleAlert, Users } from 'lucide-react';
 import './story-codex.css';
 import { getColorCodeValue, type ColorCodeId } from '../../../narrative/colorCodes';
 import type { HoldingVerb } from '../../../narrative/holdings';
 import type { HeldThing, HoldingEvent, KnownAbility } from '../shared/holdings';
-import type { CodexCharacter, CodexCheck, CodexItem, CodexPassage, StoryCodexRecord } from '../shared/storyCodex';
+import type { CodexCharacter, CodexCheck, CodexFaction, CodexItem, CodexPassage, StoryCodexRecord } from '../shared/storyCodex';
 
 /** How each change reads in the Codex. */
 const VERB_LABELS: Record<HoldingVerb, string> = {
@@ -96,7 +96,6 @@ function RosterTile({ character, onOpen }: { character: CodexCharacter; onOpen: 
   const stats = [
     { icon: <Backpack size={12} aria-hidden />, value: character.things.length, label: 'items' },
     { icon: <Sparkles size={12} aria-hidden />, value: character.abilities.length, label: 'abilities' },
-    { icon: <MessageCircle size={12} aria-hidden />, value: character.voice?.lines ?? 0, label: 'lines spoken' },
   ].filter(stat => stat.value > 0);
   return <li>
     <button type="button" onClick={onOpen} data-testid="codex-character" data-character={character.key}
@@ -152,7 +151,6 @@ function CharacterSheet({ character, onBack, onReadPassage }: { character: Codex
       <figcaption className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-neutral-400">
         <span>First words</span>
         <PassageChip passage={character.voice.first} label={`Ch. ${character.voice.first.chapterNumber}`} onReadPassage={onReadPassage} />
-        <span>· {character.voice.lines} {character.voice.lines === 1 ? 'line' : 'lines'} in {character.voice.chapters.length === 1 ? `Chapter ${character.voice.chapters[0]}` : `${character.voice.chapters.length} chapters`}</span>
       </figcaption>
     </figure>}
 
@@ -207,6 +205,32 @@ function ItemCard({ item, onReadPassage }: { item: CodexItem; onReadPassage?: Re
   </li>;
 }
 
+/** A sect, clan or other faction: its crest, when the story first heard from it, and its words. */
+function FactionCard({ faction, onReadPassage }: { faction: CodexFaction; onReadPassage?: ReadPassage }) {
+  return <li data-testid="codex-faction">
+    <details className="group rounded-2xl border p-3" style={{ borderColor: mix('location', 25), background: `linear-gradient(150deg, ${mix('location', 9)}, transparent 70%)` }}>
+      <summary className="flex cursor-pointer list-none items-center gap-3 [&::-webkit-details-marker]:hidden">
+        <span aria-hidden className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 font-display text-base text-white"
+          style={{ borderColor: mix('location', 70), background: `radial-gradient(circle at 35% 30%, ${mix('location', 30)}, #0b1220 75%)`, boxShadow: `0 0 16px ${mix('location', 25)}` }}>
+          {initials(faction.name)}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block break-words font-semibold text-white">{faction.name}</span>
+          <span className="mt-0.5 block text-xs text-neutral-500">Met in Chapter {faction.firstSeen.chapterNumber}</span>
+        </span>
+        <ChevronRight size={16} aria-hidden className="shrink-0 text-neutral-500 transition-transform motion-reduce:transition-none group-open:rotate-90" />
+      </summary>
+      <figure className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3">
+        <blockquote className="text-sm italic leading-relaxed text-neutral-100">{faction.voice.first.text}</blockquote>
+        <figcaption className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-neutral-400">
+          <span>First heard</span>
+          <PassageChip passage={faction.voice.first} label={`Ch. ${faction.voice.first.chapterNumber}`} onReadPassage={onReadPassage} />
+        </figcaption>
+      </figure>
+    </details>
+  </li>;
+}
+
 /** The record's own checks, for testing a story against its chapters. */
 function Checks({ checks, onReadPassage, onReadChapter }: { checks: readonly CodexCheck[]; onReadPassage?: ReadPassage; onReadChapter?: (chapterNumber: number) => void }) {
   const chip = 'inline-flex min-h-8 items-center rounded-full border border-white/15 px-2.5 text-[11px] text-neutral-300 hover:border-cyan-300/50 hover:text-cyan-50';
@@ -225,7 +249,7 @@ function Checks({ checks, onReadPassage, onReadChapter }: { checks: readonly Cod
   </details>;
 }
 
-type CodexTab = 'characters' | 'items';
+type CodexTab = 'characters' | 'factions' | 'items';
 
 /**
  * The Codex, as the reader meets it: the story's world as far as its record
@@ -257,6 +281,7 @@ export function StoryCodex({ codex, storyTitle, onBack, onReadPassage, onReadCha
 
   const tabs: { id: CodexTab; label: string; count: number; icon: ReactNode }[] = [
     { id: 'characters', label: 'Characters', count: codex.characters.length, icon: <Users size={15} aria-hidden /> },
+    { id: 'factions', label: 'Factions', count: codex.factions.length, icon: <Flag size={15} aria-hidden /> },
     { id: 'items', label: 'Items', count: codex.items.length, icon: <Package size={15} aria-hidden /> },
   ];
   const tabStyle = (active: boolean): CSSProperties | undefined => (active ? { borderColor: mix('mainCharacter', 55), background: mix('mainCharacter', 14) } : undefined);
@@ -270,11 +295,11 @@ export function StoryCodex({ codex, storyTitle, onBack, onReadPassage, onReadCha
       {onBack && <button type="button" onClick={onBack} className="min-h-11 rounded-full border border-white/15 px-4 text-sm text-neutral-200 hover:border-white/30">Back to reading</button>}
     </div>
 
-    <div role="tablist" aria-label="Codex" className="grid grid-cols-2 gap-1 rounded-full border border-white/10 bg-black/30 p-1">
+    <div role="tablist" aria-label="Codex" className="grid grid-cols-3 gap-1 rounded-full border border-white/10 bg-black/30 p-1">
       {tabs.map(entry => <button key={entry.id} type="button" role="tab" id={`codex-tab-${entry.id}`} aria-selected={tab === entry.id} aria-controls="codex-tab-panel"
         onClick={() => { setTab(entry.id); setOpen(undefined); }} style={tabStyle(tab === entry.id)}
-        className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-transparent text-sm transition-colors motion-reduce:transition-none ${tab === entry.id ? 'text-white' : 'text-neutral-400 hover:text-neutral-100'}`}>
-        {entry.icon}{entry.label}<span className="font-mono text-[11px] text-neutral-400">{entry.count}</span>
+        className={`inline-flex min-h-10 min-w-0 items-center justify-center gap-1.5 rounded-full px-1 border border-transparent text-sm transition-colors motion-reduce:transition-none ${tab === entry.id ? 'text-white' : 'text-neutral-400 hover:text-neutral-100'}`}>
+        {entry.icon}<span className="truncate">{entry.label}</span><span className="font-mono text-[11px] text-neutral-400">{entry.count}</span>
       </button>)}
     </div>
 
@@ -284,6 +309,9 @@ export function StoryCodex({ codex, storyTitle, onBack, onReadPassage, onReadCha
         : codex.characters.length
           ? <ul className="space-y-2">{codex.characters.map(entry => <RosterTile key={entry.key} character={entry} onOpen={() => setOpen(entry.key)} />)}</ul>
           : <p className="py-6 text-center text-sm text-neutral-400">No one has stepped onto the page yet. Characters join the Codex as the story meets them.</p>)}
+      {tab === 'factions' && (codex.factions.length
+        ? <ul className="space-y-2">{codex.factions.map(faction => <FactionCard key={faction.key} faction={faction} onReadPassage={onReadPassage} />)}</ul>
+        : <p className="py-6 text-center text-sm text-neutral-400">No sect, clan or faction has stepped forward yet.</p>)}
       {tab === 'items' && (codex.items.length
         ? <ul className="space-y-2">{codex.items.map(item => <ItemCard key={item.key} item={item} onReadPassage={onReadPassage} />)}</ul>
         : <p className="py-6 text-center text-sm text-neutral-400">Nothing has changed hands yet. Items join the Codex as the story gives, takes or uses them.</p>)}

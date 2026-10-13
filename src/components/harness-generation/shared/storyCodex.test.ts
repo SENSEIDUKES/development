@@ -41,6 +41,22 @@ describe('the Codex record', () => {
     expect(spirit.voice).toMatchObject({ lines: 2, chapters: [1, 2], first: { text: '"Who dares?"' } });
   });
 
+  it('keeps sects and other factions out of the characters, declared or named as a body of people', () => {
+    const text = 'Then the crowd roared. "Kneel!" the sect cried. "Run," the tribe said.';
+    const codex = deriveStoryCodex({
+      entries: [MC], declaredFactions: [{ name: 'Iron Crane Sect', aliases: ['the Crane'] }],
+      chapters: [{ id: 'c1', chapterNumber: 1, paragraphs: [text], speakers: [
+        speaker(1, 1, text, '"Kneel!"', 'the Crane'),
+        speaker(1, 1, text, '"Run,"', 'Black Wolf Tribe'),
+      ] }],
+    });
+    expect(codex.characters).toEqual([]);
+    expect(codex.factions.map(faction => [faction.name, faction.voice.first.text])).toEqual([
+      ['Iron Crane Sect', '"Kneel!"'],
+      ['Black Wolf Tribe', '"Run,"'],
+    ]);
+  });
+
   it('follows each thing to whoever holds it now, keeping what happened to it after it was lost', () => {
     const codex = deriveStoryCodex({ entries: [MC, SWORD], chapters });
     expect(codex.items).toHaveLength(1);

@@ -242,7 +242,7 @@ export const workshopEntries: WorkshopEntry[] = [
     owner: 'sen',
     status: 'active',
     title: 'Codex',
-    description: 'The Codex the Reader opens, remade on the story\'s record: Characters (a roster and each character\'s sheet: rank, first words, equipped and carried things, abilities and a chronicle) and Items, every fact linked to its passage, reading Sundered Heavens. The Original Reference is production\'s Living Codex sheet.',
+    description: 'The Codex the Reader opens, remade on the story\'s record: Characters (a roster and each character\'s sheet: rank, first words, equipped and carried things, abilities and a chronicle), Factions and Items, every fact linked to its passage, reading Sundered Heavens. The Original Reference is production\'s Living Codex sheet.',
     category: 'codex-ui',
     version: 'v1.2',
     source: {

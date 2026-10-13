@@ -83,9 +83,35 @@ export interface CodexCheck extends HoldingFlag {
   blockId?: string;
 }
 
+/** A sect, clan, faction or other body the story has met: by its voice today (a group the writer tagged as speaking). */
+export interface CodexFaction {
+  key: string;
+  name: string;
+  firstSeen: CodexPassage;
+  voice: CodexVoice;
+}
+
+/** A group the story declares or names: a faction, never a character, whatever it does in the record. */
+export interface DeclaredFaction {
+  name: string;
+  aliases?: readonly string[];
+}
+
+/**
+ * The last word of a name that makes it a body of people rather than a person
+ * ("Iron Crane Sect", "Black Wolf Tribe"), for a group the Story Seed did not
+ * declare. Named beasts are characters; a species belongs to the Bestiary.
+ */
+const FACTION_WORDS = new Set([
+  'sect', 'sects', 'clan', 'clans', 'faction', 'factions', 'guild', 'order', 'cult', 'legion', 'army', 'empire', 'kingdom',
+  'dynasty', 'alliance', 'league', 'society', 'brotherhood', 'sisterhood', 'academy', 'tribe', 'horde', 'family',
+]);
+
 export interface StoryCodexRecord {
-  /** The main character first, then everyone else in the order the story met them. */
+  /** The main character first, then everyone else in the order the story met them. Named beasts are characters too. */
   characters: CodexCharacter[];
+  /** Sects, clans and other factions, in the order the story met them. */
+  factions: CodexFaction[];
   /** Things, in the order the story met them. */
   items: CodexItem[];
   /** What the record's plain rules flagged, for checking a story against its chapters. */
@@ -102,13 +128,15 @@ const passageOf = (event: HoldingEvent): CodexPassage => ({
   chapterNumber: event.passage.chapterNumber, blockId: event.passage.blockId, text: event.passage.text,
 });
 
-export function deriveStoryCodex({ entries, chapters, mainCharacterName, declared = [] }: {
+export function deriveStoryCodex({ entries, chapters, mainCharacterName, declared = [], declaredFactions = [] }: {
   entries: readonly CodexEntry[];
   chapters: readonly StoryCodexChapter[];
   /** The story's main character, for speech the record gives them before any entry names them. */
   mainCharacterName?: string;
   /** The characters the story declares, whose aliases let a speaker's other names find them. */
   declared?: readonly DeclaredCharacter[];
+  /** The factions the story declares, so a group that speaks is never taken for a character. */
+  declaredFactions?: readonly DeclaredFaction[];
 }): StoryCodexRecord {
   const ordered = [...chapters].sort((left, right) => left.chapterNumber - right.chapterNumber);
   const holdings = deriveHoldings({ entries, chapters: ordered, mainCharacterName });
@@ -152,6 +180,19 @@ export function deriveStoryCodex({ entries, chapters, mainCharacterName, declare
     return add({ key: entry?.id ?? `character:${keys[0]}`, name: entry?.name ?? name.trim(), mainCharacter: Boolean(entry?.mainCharacter), things: [], abilities: [], chronicle: [], names: new Set(keys) });
   };
 
+  // A faction: one the story declares (by name or alias), or a name whose last word names a body of people.
+  const factions = new Map<string, Omit<CodexFaction, 'firstSeen' | 'voice'> & Partial<Pick<CodexFaction, 'firstSeen' | 'voice'>>>();
+  const factionOf = (name: string) => {
+    const key = normalizeIdentityLabel(name);
+    const known = declaredFactions.find(faction => [faction.name, ...(faction.aliases ?? [])].some(other => normalizeIdentityLabel(other) === key));
+    if (!known && !FACTION_WORDS.has(key.split(' ').at(-1) ?? '')) return undefined;
+    const named = known?.name ?? name.trim();
+    const id = `faction:${normalizeIdentityLabel(named)}`;
+    const faction = factions.get(id) ?? { key: id, name: named };
+    factions.set(id, faction);
+    return faction;
+  };
+
   for (const chapter of ordered) {
     const lines = (chapter.speakers ?? [])
       .filter(record => record.kind === SPEAKER_KIND)
@@ -161,7 +202,7 @@ export function deriveStoryCodex({ entries, chapters, mainCharacterName, declare
         && isSpeakerOnText(record, record.anchor.blockId, chapter.paragraphs[index] ?? ''))
       .sort((left, right) => left.index - right.index || left.record.anchor.startOffset - right.record.anchor.startOffset);
     for (const { record } of lines) {
-      const character = speakerOf(record.payload.speaker, record.payload.protagonist);
+      const character = (!record.payload.protagonist && factionOf(record.payload.speaker)) || speakerOf(record.payload.speaker, record.payload.protagonist);
       const passage: CodexPassage = { chapterNumber: chapter.chapterNumber, blockId: record.anchor.blockId, text: record.anchor.selectedText };
       if (!character.voice) character.voice = { lines: 0, chapters: [], first: passage };
       character.voice.lines += 1;
@@ -169,6 +210,10 @@ export function deriveStoryCodex({ entries, chapters, mainCharacterName, declare
       if (!character.firstSeen || comesBefore(passage, character.firstSeen) < 0) character.firstSeen = passage;
     }
   }
+
+  const factionList = [...factions.values()]
+    .filter((faction): faction is CodexFaction => Boolean(faction.firstSeen && faction.voice))
+    .sort((left, right) => comesBefore(left.firstSeen, right.firstSeen));
 
   const met = [...characters.values()].filter((character): character is Working & { firstSeen: CodexPassage } => Boolean(character.firstSeen));
   const roster: CodexCharacter[] = met
@@ -204,5 +249,5 @@ export function deriveStoryCodex({ entries, chapters, mainCharacterName, declare
     return blockId ? { ...flag, blockId } : flag;
   });
 
-  return { characters: roster, items: itemList, checks };
+  return { characters: roster, factions: factionList, items: itemList, checks };
 }

@@ -104,6 +104,7 @@ function StoryCodexPreviewPane() {
         chapters: state.chapters.filter(chapter => chapter.storyId === story.id),
         mainCharacterName: foundation?.cast?.find(member => member.isMainCharacter)?.name,
         declared: foundation ? declaredCharacters(foundation) : [],
+        declaredFactions: foundation?.identities?.filter(identity => identity.kind === 'faction') ?? [],
       }),
     };
   }, [state]);

@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ReaderCodex as DevelopmentReaderCodex } from '@seihouse/sen/reader-codex';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { StoryCodex, declaredCharacters, deriveStoryCodex, type HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
 import ReferenceReaderCodex from '../../../components/reader-codex/reference/ReaderCodex';
 import type {
   ReaderCodexStoryPatchUpdater,
@@ -11,6 +11,7 @@ import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import { createReaderCodexPreviewStory } from './previewData';
 import { readerCodexPages, type ReaderCodexPage } from './previewStates';
+import { loadSampleStory, SAMPLE_STORY_TITLE } from '../reader-chamber/sampleStory';
 
 type ReaderCodexComponent = typeof ReferenceReaderCodex;
 
@@ -79,6 +80,43 @@ function ReaderCodexPreviewPane({
   );
 }
 
+/**
+ * Development: the Codex the Reader opens, reading SENSEI's Sundered Heavens
+ * test as the app saved it. Its facts link to passages in the Reader Chamber
+ * card, where the chapter sits behind the Codex.
+ */
+function StoryCodexPreviewPane() {
+  const [state, setState] = useState<HarnessWorkspaceState>();
+  const [error, setError] = useState('');
+  useEffect(() => {
+    let active = true;
+    loadSampleStory().then(loaded => { if (active) setState(loaded); }, () => { if (active) setError(`${SAMPLE_STORY_TITLE} could not be opened.`); });
+    return () => { active = false; };
+  }, []);
+  const codex = useMemo(() => {
+    const story = state?.stories[0];
+    if (!state || !story) return undefined;
+    const foundation = state.foundations.find(entry => entry.id === story.activeFoundationRevisionId)?.input;
+    return {
+      title: story.title,
+      record: deriveStoryCodex({
+        entries: state.codexEntries.filter(entry => entry.storyId === story.id),
+        chapters: state.chapters.filter(chapter => chapter.storyId === story.id),
+        mainCharacterName: foundation?.cast?.find(member => member.isMainCharacter)?.name,
+        declared: foundation ? declaredCharacters(foundation) : [],
+        declaredFactions: foundation?.identities?.filter(identity => identity.kind === 'faction') ?? [],
+      }),
+    };
+  }, [state]);
+  return (
+    <div className="mx-auto min-w-0 max-w-md overflow-hidden rounded-2xl border border-white/10 bg-neutral-950">
+      {codex
+        ? <StoryCodex codex={codex.record} storyTitle={codex.title} />
+        : <p role={error ? 'alert' : 'status'} className="p-4 text-sm text-neutral-400">{error || `Opening ${SAMPLE_STORY_TITLE}…`}</p>}
+    </div>
+  );
+}
+
 export function ReaderCodexWorkspace() {
   const entry = workshopEntries.find(item => item.id === 'reader-codex')!;
   const [activePage, setActivePage] = useState<ReaderCodexPage>('portraits');
@@ -88,7 +126,7 @@ export function ReaderCodexWorkspace() {
       entry={entry}
       workshopControls={{
         defaultSection: 'pages',
-        description: 'Local story state only. These page shortcuts drive the real Codex tabs without replacing them.',
+        description: 'Original Reference pages: these shortcuts drive the production Codex\'s real tabs. Development is the Codex the Reader opens, reading Sundered Heavens; it has its own Characters and Items tabs.',
         sections: [
           {
             id: 'pages',
@@ -119,7 +157,7 @@ export function ReaderCodexWorkspace() {
           <ReaderCodexPreviewPane Component={ReferenceReaderCodex} activePage={activePage} supportsBestiary={false} />
       )}
       renderDevelopment={() => (
-          <ReaderCodexPreviewPane Component={DevelopmentReaderCodex} activePage={activePage} supportsBestiary />
+          <StoryCodexPreviewPane />
       )}
     />
   );

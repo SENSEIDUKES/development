@@ -33,25 +33,26 @@ import { harnessStoryMode, nextArcStep } from '../shared/arcState';
 import { pendingChapterDirection } from '../shared/chapterDirection';
 import { chapterRewriteGap, latestStoryChapter } from '../shared/chapterRewrite';
 import { protagonistNames } from '../shared/speakers';
+import { declaredCharacters } from '../shared/holdings';
+import { deriveStoryCodex } from '../shared/storyCodex';
 import { BlueprintArcPage } from './BlueprintArcPage';
 import { ChapterAuthoring } from './ChapterAuthoring';
 import { ChapterRewrite } from './ChapterRewrite';
 import { FatePage } from './FatePage';
-import { HoldingsPage } from './HoldingsPage';
 import { ProseChapterBody } from './ProseChapterBody';
 import { ReaderBottomBar } from './ReaderBottomBar';
 import type { ReaderChapter, ReaderChapterBody } from './readerChapterBody';
-import { ReaderCodexPage } from './ReaderCodexPage';
 import { ReaderPanel } from './ReaderPanel';
 import { ReaderSettingsSheet } from './ReaderSettingsSheet';
 import { ReaderTopBar } from './ReaderTopBar';
+import { StoryCodex } from './StoryCodex';
 import { useFollowNarration, type NarrationHighlight } from './useFollowNarration';
 import { useNextChapterWriter } from './useNextChapterWriter';
 import { readingScene, useReaderSoundtrack } from './useReaderSoundtrack';
 import { useChapterFinished } from './useChapterFinished';
 import './reader-frame.css';
 import type { HarnessGenerationController } from '../shared/controller';
-import type { HarnessWorkspaceState } from '../../../narrative/generation';
+import type { HarnessChapter, HarnessWorkspaceState } from '../../../narrative/generation';
 
 /** What the host's writing screen shows. */
 export interface HarnessReaderWriting {
@@ -64,16 +65,17 @@ export interface HarnessReaderWriting {
 /**
  * What is open over the chapter. One at a time, so opening one closes the
  * others, and the chapter itself never leaves:
- * - a **panel** (Fate, Reader Settings) leaves it visible and scrollable
- *   beside or under it, so the reader can look back at what they just read
- *   (or watch their text settings change it);
- * - a **page** (the Codex, an arc's goals) takes the screen; the chapter waits
+ * - a **panel** (Fate, the Codex, Reader Settings) leaves it visible and
+ *   scrollable beside or under it, so the reader can look back at what they
+ *   just read (or watch their text settings change it, or check the Codex
+ *   against the passage it points at);
+ * - a **page** (an arc's goals) takes the screen; the chapter waits
  *   underneath, and the reader comes back to their place.
  */
 export type ReaderLayer =
   | { kind: 'panel'; id: 'fate'; focusDirection?: boolean }
+  | { kind: 'panel'; id: 'codex' }
   | { kind: 'panel'; id: 'settings'; section?: 'audio' | 'narration' }
-  | { kind: 'page'; id: 'codex' }
   | { kind: 'page'; id: 'arc' };
 
 const navButton = 'min-h-11 rounded-full border px-4 text-sm disabled:cursor-not-allowed disabled:opacity-40';
@@ -109,8 +111,7 @@ function lineWhereTheReaderIs(script: ReadAloudScript, article: HTMLElement | nu
  * Codex, the chapter arrows with Fate between them) run edge to edge, and on a
  * wide screen the chapter grows with it, so it never sits small in the middle.
  * A panel shrinks the frame beside it. What opens over the chapter (`ReaderLayer`:
- * the Fate and Reader Settings panels; the Codex and an arc's goals as pages,
- * the Codex holding Holdings among its pages). The chapter
+ * the Fate, Codex and Reader Settings panels; an arc's goals as a page). The chapter
  * never leaves the page for them, so the reader keeps their place; the body shows the
  * chapter on screen (`chapterBody`, prose by default: the paragraphs on the
  * Highlight Engine, read-only, with Sound Cues as the only active layer).
@@ -124,7 +125,9 @@ function lineWhereTheReaderIs(script: ReadAloudScript, article: HTMLElement | nu
  * atmosphere and the chapter's Sound Cues) plays through the SEIHouse audio
  * player: a story audio note mutes it, and Reader Settings holds Audio and
  * Narration. At the end of the newest chapter, until the next one is written,
- * the reader may have it written again. Codex and Mind Palace are not part of it.
+ * the reader may have it written again. The Codex shows what the story's record
+ * knows, and each fact in it moves the chapter to its passage. Mind Palace is
+ * not part of it.
  */
 export function HarnessReaderSession({
   state, storyId, onClose, controller, readerStateRepository, onGenerateNextChapter, onRewriteChapter, onPlanArc, renderWriting, renderWriteAside, startOnOpen = false,
@@ -198,8 +201,10 @@ export function HarnessReaderSession({
   useReaderDocumentScrollbar();
   const [layer, setLayer] = useState<ReaderLayer>();
   const closeLayer = useCallback(() => setLayer(undefined), []);
-  /** A paragraph to bring into view once its chapter is on screen: where a holding change happened. */
+  /** A paragraph to bring into view once its chapter is on screen: the passage a Codex fact came from. */
   const [passageTarget, setPassageTarget] = useState<string>();
+  /** Counts the Codex's trips to a passage; each one lowers its sheet so the chapter shows. */
+  const [codexPeek, setCodexPeek] = useState(0);
   const writer = useNextChapterWriter(controller, storyId, onGenerateNextChapter, onRewriteChapter);
   const [storageError, setStorageError] = useState('');
   const readerStateRef = useRef<ReaderStoryState | undefined>(undefined);
@@ -261,17 +266,22 @@ export function HarnessReaderSession({
   const upcoming = story?.head.nextChapterNumber ?? 1;
   // A page takes the screen, so the reader's place is kept and given back when it closes.
   const placeBeforePage = useRef(0);
-  const openPage = (id: 'codex' | 'arc') => {
+  const openPage = (id: 'arc') => {
     if (layer?.kind !== 'page') placeBeforePage.current = window.scrollY;
     setLayer({ kind: 'page', id });
   };
   const openFate = (focusDirection = false) => { writer.reset(); setLayer({ kind: 'panel', id: 'fate', focusDirection }); };
   const openArc = () => { writer.reset(); openPage('arc'); };
-  const openCodex = () => openPage('codex');
+  const openCodex = () => setLayer({ kind: 'panel', id: 'codex' });
   // Reading another chapter from a page or panel opens it at its top, not at the old place.
   const readChapter = (chapterNumber: number) => { placeBeforePage.current = 0; setLayer(undefined); openChapter(chapterNumber); };
-  const openPassage = (chapterNumber: number, blockId: string) => {
-    readChapter(chapterNumber);
+  // The Codex stays open while the chapter behind it moves to a fact's passage, so the two can be read together.
+  const revealChapter = (chapterNumber: number) => {
+    if (chapterNumber !== chapter?.chapterNumber) openChapter(chapterNumber);
+    setCodexPeek(count => count + 1);
+  };
+  const revealPassage = (chapterNumber: number, blockId: string) => {
+    revealChapter(chapterNumber);
     setPassageTarget(blockId);
   };
   const pageOpen = layer?.kind === 'page';
@@ -384,15 +394,22 @@ export function HarnessReaderSession({
   const fateLocked = survivalAtNewest && !finished;
   const fateCalls = survivalAtNewest && finished && Boolean(continueAfterLatest?.direct);
   const listen = () => readAloud.play(lineWhereTheReaderIs(readAloud.script(), articleRef.current, barRef.current?.getBoundingClientRect?.().bottom ?? 0));
-  // After a Holdings link opens a chapter, the paragraph where the change happened comes into view.
+  // After a Codex fact points at a passage, its paragraph comes into view just under the top bar
+  // (above the half-height Codex on a phone) and lights up for a moment.
   useEffect(() => {
-    if (!passageTarget || layer) return;
+    if (!passageTarget || pageOpen) return undefined;
     // Paragraph ids are `c{n}-p{i}`; anything else is never put into a selector.
     const block = /^[\w-]+$/.test(passageTarget) ? articleRef.current?.querySelector<HTMLElement>(`[data-sen-text-block="${passageTarget}"]`) : undefined;
-    if (!block) return;
-    block.scrollIntoView?.({ block: 'center' });
+    if (!block) return undefined;
+    block.style.scrollMarginTop = `${Math.round((barRef.current?.getBoundingClientRect?.().bottom ?? 0) + 16)}px`;
+    block.scrollIntoView?.({ block: 'start' });
+    block.removeAttribute('data-codex-lit');
+    void block.offsetWidth;
+    block.setAttribute('data-codex-lit', '');
     setPassageTarget(undefined);
-  }, [passageTarget, layer, chapter?.id]);
+    const dim = window.setTimeout(() => block.removeAttribute('data-codex-lit'), 2_600);
+    return () => window.clearTimeout(dim);
+  }, [passageTarget, pageOpen, chapter?.id]);
 
   if (!story) return <p role="alert" className="p-4 text-sm text-amber-200">This story is no longer available.</p>;
   if (!readerState) return <main className="mx-auto w-full max-w-3xl px-4 py-6"><p role="status" className="text-sm text-neutral-400">Opening your place in the story…</p></main>;
@@ -468,11 +485,6 @@ export function HarnessReaderSession({
             } : undefined} />
     </main>
     </div>
-    {layer?.id === 'codex' && <main className="w-full min-w-0">
-      <ReaderCodexPage storyId={storyId} storyTitle={story.title} onBack={closeLayer}
-        mainCharacter={state.foundations.find(item => item.id === story.activeFoundationRevisionId)?.input.cast?.find(member => member.isMainCharacter)?.name}
-        pages={[{ id: 'holdings', label: 'Holdings', content: <HoldingsPage state={state} storyId={storyId} onReadPassage={openPassage} onReadChapter={readChapter} /> }]} />
-    </main>}
     {layer?.id === 'arc' && <main className="mx-auto w-full min-w-0 max-w-6xl">
       <BlueprintArcPage state={state} storyId={storyId} controller={controller} onBack={closeLayer} onPlanArc={onPlanArc}
         onContinue={() => {
@@ -486,9 +498,38 @@ export function HarnessReaderSession({
         onGenerateNextChapter={onGenerateNextChapter} writer={writer} focusDirection={layer?.id === 'fate' && layer.focusDirection}
         onReadChapter={readChapter} />
     </ReaderPanel>
+    <ReaderPanel open={panel === 'codex'} onClose={closeLayer} labelledBy="codex-panel-title" testId="reader-panel-codex" peek={codexPeek}>
+      <ReaderCodex state={state} storyId={storyId} chapters={chapters} storyTitle={story.title} onBack={closeLayer}
+        onReadPassage={revealPassage} onReadChapter={revealChapter} />
+    </ReaderPanel>
     <ReaderSettingsSheet open={layer?.id === 'settings'} onClose={closeLayer} readAloud={readAloud} language={language}
       mixer={mixer} section={layer?.id === 'settings' ? layer.section : undefined} soundtrack={{ choice: soundtrackChoice, onChoice: chooseSoundtrack, pieces: pieces ?? [] }}
       text={{ settings: textSettings, onChange: changeText, fonts: readerFonts }} />
     {writing}
   </>;
+}
+
+/**
+ * The Codex inside the Reader: the story's record worked out from its
+ * chapters as they are now. It is worked out only while the Codex is open.
+ */
+function ReaderCodex({ state, storyId, chapters, storyTitle, onBack, onReadPassage, onReadChapter }: {
+  state: HarnessWorkspaceState;
+  storyId: string;
+  chapters: readonly HarnessChapter[];
+  storyTitle: string;
+  onBack: () => void;
+  onReadPassage: (chapterNumber: number, blockId: string) => void;
+  onReadChapter: (chapterNumber: number) => void;
+}) {
+  const story = state.stories.find(entry => entry.id === storyId);
+  const foundation = state.foundations.find(entry => entry.id === story?.activeFoundationRevisionId)?.input;
+  const codex = useMemo(() => deriveStoryCodex({
+    entries: state.codexEntries.filter(entry => entry.storyId === storyId),
+    chapters,
+    mainCharacterName: foundation?.cast?.find(member => member.isMainCharacter)?.name,
+    declared: foundation ? declaredCharacters(foundation) : [],
+    declaredFactions: foundation?.identities?.filter(identity => identity.kind === 'faction') ?? [],
+  }), [state.codexEntries, storyId, chapters, foundation]);
+  return <StoryCodex codex={codex} storyTitle={storyTitle} onBack={onBack} onReadPassage={onReadPassage} onReadChapter={onReadChapter} />;
 }

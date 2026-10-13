@@ -303,6 +303,8 @@ export interface HoldingPassage {
 export interface HoldingEvent {
   verb: HoldingVerb;
   target?: string;
+  /** The thing or ability it names, by the key the record holds it under (its Codex entry's ID once resolved). */
+  targetId?: string;
   count?: number;
   level?: string;
   reason?: string;
@@ -446,9 +448,11 @@ export function deriveHoldings({ entries, chapters, mainCharacterName }: {
         blockId: change.anchor.blockId, text: change.anchor.selectedText,
       };
       const targetName = payload.target ? nameOf(payload.target) : undefined;
+      const targetKind = holdingTargetKind(payload.verb);
       const event: HoldingEvent = {
         verb: payload.verb, passage,
         ...(targetName ? { target: targetName } : {}),
+        ...(payload.target && targetKind ? { targetId: keyOf(payload.target, targetKind) } : {}),
         ...(payload.count ? { count: payload.count } : {}),
         ...(payload.level ? { level: payload.level } : {}),
         ...(payload.reason ? { reason: payload.reason } : {}),

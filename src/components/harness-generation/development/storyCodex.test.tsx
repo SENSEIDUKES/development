@@ -15,14 +15,14 @@ const receipt = { provider: 'gemini' as const, model: 'test-model', generatedAt:
 const replies = [
   {
     paragraphs: [
-      'The armory was cold.',
+      'The armory was cold. [[@Old Wu]] "Take what you can carry," the smith said.',
       '[[gained: MC | Rusted Iron Sword]] Ye Chen lifted the old blade from the rack. [[equipped: MC | Rusted Iron Sword]] He tested its weight.',
       '[[learning: MC | Cloud Step]] Ye Chen began to practise the footwork. [[improved: MC | Cloud Step | First Stage]] By dusk his feet found the first stage.',
     ],
     mainCharacterHoldings: ['Rusted Iron Sword', 'Cloud Step', 'Silver Bell'],
   },
   {
-    paragraphs: ['Morning came.', '[[lost: MC | Jade Sword]] He dropped a jade sword he had never owned.'],
+    paragraphs: ['Morning came. [[@MC]] "Again," Ye Chen said.', '[[lost: MC | Jade Sword]] He dropped a jade sword he had never owned.'],
     mainCharacterHoldings: ['Rusted Iron Sword', 'Cloud Step'],
   },
 ];
@@ -43,13 +43,10 @@ const click = async (predicate: (button: HTMLButtonElement) => boolean, label: s
   await flush();
 };
 const byLabel = (label: string) => (button: HTMLButtonElement) => button.getAttribute('aria-label') === label;
-const page = () => document.querySelector<HTMLElement>('[data-testid="holdings-page"]');
-/** Holdings is a page of the Codex: open the Codex from the top bar, then its Holdings page. */
-const openHoldings = async () => {
-  await click(byLabel('Open Codex'), 'Open Codex');
-  for (let tries = 0; tries < 50 && !document.querySelector('[data-codex-page="holdings"]'); tries++) await flush(20);
-  await click(button => button.getAttribute('data-codex-page') === 'holdings', 'the Codex\'s Holdings page');
-};
+const codex = () => document.querySelector<HTMLElement>('[data-testid="story-codex"]');
+const panel = () => document.querySelector<HTMLElement>('[data-testid="reader-panel-codex"]');
+const openCodex = () => click(byLabel('Open Codex'), 'Open Codex');
+const tab = (label: string) => click(button => button.getAttribute('role') === 'tab' && Boolean(button.textContent?.startsWith(label)), `the ${label} tab`);
 
 function Host({ controller, storyId }: { controller: HarnessGenerationController; storyId: string }) {
   const [state, setState] = useState(controller.snapshot());
@@ -83,45 +80,59 @@ beforeEach(() => {
 });
 afterEach(() => { act(() => root.unmount()); container.remove(); });
 
-describe('Holdings, in the HARNESS Reader\'s Codex', { timeout: 20_000 }, () => {
-  it('lists what each character has now, with the chapter behind each change and the checks worth testing', async () => {
+describe('The Codex in the HARNESS Reader', { timeout: 20_000 }, () => {
+  it('shows who the story has met, what they carry and can do, and their first words', async () => {
     await start();
-    await openHoldings();
-    const holdings = page()!;
-    expect(document.querySelector('[data-testid="reader-codex-page"]')!.contains(holdings)).toBe(true);
-    expect(holdings).toBeTruthy();
-    const card = holdings.querySelector('[data-testid="holdings-character"]')!;
-    expect(card.textContent).toContain('Ye Chen');
-    expect(card.textContent).toContain('Main character');
-    expect(card.querySelector('[aria-label="Ye Chen: In hand"]')!.textContent).toContain('Rusted Iron Sword');
+    await openCodex();
+    const roster = [...codex()!.querySelectorAll<HTMLElement>('[data-testid="codex-character"]')];
+    // The main character leads; a character who only spoke is met too.
+    expect(roster.map(tile => tile.textContent)).toEqual([
+      expect.stringContaining('Ye Chen'),
+      expect.stringContaining('Old Wu'),
+    ]);
+    expect(roster[1].textContent).toContain('Met in Chapter 1');
+
+    await act(async () => { roster[0].click(); });
+    const sheet = codex()!.querySelector<HTMLElement>('[data-testid="codex-sheet"]')!;
+    expect(sheet.querySelector('h3')!.textContent).toBe('Ye Chen');
+    expect(sheet.textContent).toContain('Main character');
+    expect(sheet.querySelector('[aria-label="Ye Chen: Equipped"]')!.textContent).toContain('Rusted Iron Sword');
     // A stage reached while still learning is shown, and is a change, not a check.
-    expect(card.querySelector('[aria-label="Ye Chen: Learning"]')!.textContent).toContain('Cloud Step · First Stage');
-    expect([...card.querySelectorAll('button')].map(button => button.textContent)).toEqual(['Ch. 1 · gained', 'Ch. 1 · took up', 'Ch. 1 · began learning', 'Ch. 1 · improved → First Stage']);
+    expect(sheet.querySelector('[aria-label="Ye Chen: Abilities"]')!.textContent).toContain('Learning · First Stage');
+    expect(sheet.querySelector('[data-testid="codex-voice"] blockquote')!.textContent).toBe('"Again,"');
     // The jade sword was never held, so losing it is a check, not a change.
-    expect(card.textContent).not.toContain('Jade Sword');
-    const checks = holdings.querySelector('[data-testid="holdings-checks"]')!;
-    expect(checks.querySelector('summary')!.textContent).toBe('Checks (2)');
+    expect(sheet.textContent).not.toContain('Jade Sword');
+    expect(sheet.querySelector('[data-testid="codex-chronicle"] summary')!.textContent).toBe('Chronicle (4)');
+
+    await click(button => button.textContent?.trim() === 'All characters', 'All characters');
+    expect(codex()!.querySelector('[data-testid="codex-sheet"]')).toBeNull();
+
+    await tab('Items');
+    const item = codex()!.querySelector<HTMLElement>('[data-testid="codex-item"]')!;
+    expect(item.textContent).toContain('Rusted Iron Sword');
+    expect(item.textContent).toContain('Ye Chen · in hand');
+    const checks = codex()!.querySelector<HTMLElement>('[data-testid="codex-checks"]')!;
+    expect(checks.querySelector('summary')!.textContent).toBe('Record checks (2)');
     expect(checks.textContent).toContain('Chapter 1: the writer\'s closing list for Ye Chen includes ‘Silver Bell’, which no tag recorded.');
     expect(checks.textContent).toContain('Chapter 2: Ye Chen loses ‘Jade Sword’, which the record does not show them holding.');
   });
 
-  it('opens the passage behind a change in the Reader, and the Codex returns to reading', async () => {
+  it('moves the chapter behind it to a fact\'s passage and lights it, with the Codex still open', async () => {
     await start();
-    await openHoldings();
+    await openCodex();
+    await act(async () => { codex()!.querySelector<HTMLElement>('[data-testid="codex-character"]')!.click(); });
+    expect(panel()!.getAttribute('data-stop')).toBe('full');
     const scrolled = vi.mocked(Element.prototype.scrollIntoView);
     scrolled.mockClear();
     await click(button => button.getAttribute('aria-label')?.startsWith('Ch. 1 · took up') ?? false, 'the took-up link');
-    expect(page()).toBeNull();
+    // The Codex stays, lowered so the chapter shows above it.
+    expect(codex()).toBeTruthy();
+    expect(panel()!.getAttribute('data-stop')).toBe('half');
     expect(document.querySelector('[data-chapter-number="1"]')).toBeTruthy();
-    // The paragraph where the sword was taken up is brought into view.
-    const paragraph = document.querySelector('[data-sen-text-block="c1-p2"]')!;
+    // The paragraph where the sword was taken up is brought into view, and lit.
+    const paragraph = document.querySelector<HTMLElement>('[data-sen-text-block="c1-p2"]')!;
     expect(paragraph.textContent).toContain('He tested its weight.');
     expect(scrolled.mock.contexts).toContain(paragraph);
-
-    await openHoldings();
-    await click(button => button.textContent === 'Back to reading', 'Back to reading');
-    expect(page()).toBeNull();
-    expect(document.querySelector('[data-testid="reader-codex-page"]')).toBeNull();
-    expect(document.querySelector('[data-testid="harness-reader"]')).toBeTruthy();
+    expect(paragraph.hasAttribute('data-codex-lit')).toBe(true);
   });
 });

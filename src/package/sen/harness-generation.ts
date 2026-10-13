@@ -144,6 +144,19 @@ export {
   type HoldingsFixPlanCase,
   type HoldingsFixResult,
 } from '../../components/harness-generation/shared/holdingsFixer';
+export {
+  deriveStoryCodex,
+  type CodexCharacter,
+  type CodexCheck,
+  type CodexFaction,
+  type DeclaredFaction as CodexDeclaredFaction,
+  type CodexItem,
+  type CodexItemEvent,
+  type CodexPassage,
+  type CodexVoice,
+  type StoryCodexChapter,
+  type StoryCodexRecord,
+} from '../../components/harness-generation/shared/storyCodex';
 export * from '../../narrative/holdings';
 export { createHarnessSenStory } from '../../components/harness-generation/shared/senAdapter';
 export * from '../../narrative/generation';
@@ -155,7 +168,7 @@ export type { ReaderLayer } from '../../components/harness-generation/developmen
 export type { ReaderChapter, ReaderChapterBody, ReaderChapterBodyProps } from '../../components/harness-generation/development/readerChapterBody';
 export type { NarrationHighlight } from '../../components/harness-generation/development/useFollowNarration';
 export { FatePage } from '../../components/harness-generation/development/FatePage';
-export { HoldingsPage } from '../../components/harness-generation/development/HoldingsPage';
+export { StoryCodex } from '../../components/harness-generation/development/StoryCodex';
 export { BlueprintArcPage } from '../../components/harness-generation/development/BlueprintArcPage';
 export { useNextChapterWriter, type NextChapterWriter } from '../../components/harness-generation/development/useNextChapterWriter';
 export {

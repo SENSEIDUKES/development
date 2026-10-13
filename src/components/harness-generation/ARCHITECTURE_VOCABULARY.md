@@ -176,7 +176,7 @@ learned, keeping that stage. After an edit, every later chapter is checked again
 main character's things and abilities by name after the chapter. Each list is
 checked against the record after its chapter; what it leaves out, and what no
 tag recorded, are flagged. The 10-chapter test compares the chapters' prose
-against the Holdings page.
+against the Codex.
 
 **Holdings fixer** (`shared/holdingsFixer.ts`, run after commit by the
 controller): the chapter's own flags (`chapterHoldingFlags`) become small

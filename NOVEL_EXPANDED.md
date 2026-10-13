@@ -11,7 +11,7 @@
 > context.
 
 - **Created:** 2026-09-29
-- **Last updated:** 2026-10-11
+- **Last updated:** 2026-10-13
 - **Owner:** SENSEI, SEIHouse Productions
 
 ## Vision and build state
@@ -299,11 +299,14 @@ mode**. That means:
 - **Everything writes the same records.** A Sound Cue placed by the HARNESS, by a
   person, or later by a local model is the same manuscript attachment. No tool gets
   a side channel.
-- **The Codex waits.** It is designed after the expanded-novel reading experience is
-  right, so its categories, and what the model is told to document, can be designed
-  on purpose. Its page is in the Reader Chamber (2026-10-10), as it is and not yet
-  filled with the story's world, so that design can happen there. What it must
-  hold so a story can be translated into other media is in
+- **The Codex grows with the record** (SENSEI, 2026-10-13). The information tags
+  exist to fill the Codex, and the Codex is where the owner checks them, so it is
+  remade alongside them: it shows only what the record holds today, and each new
+  information tag adds its own part as it is built. What is stored and how it is
+  shown are not one for one: the record stays exact and medium-neutral, while the
+  Codex presents it to immerse the reader, closer to a game's character screen
+  than a table. What it must finally hold so a story can be translated into other
+  media is in
   [the HARNESS principles](./src/components/harness-generation/HARNESS_PRINCIPLES.md#translation-across-media-the-world-record).
 
 ## Where we are (2026-10-10)
@@ -349,9 +352,8 @@ Update it whenever it changes.
     chooses stays, whatever the chapters choose. Then **Narration** (the three
     voices and the speed, remembered on the device for each story language). The
     mix and the Scene choice are remembered on the device, never in the story.
-    **Holdings**, one of the Codex's pages, lists what each character has now,
-    for checking the chapters (below). The Codex itself is not yet filled with
-    the story's world. No Mind Palace, reader translation or read marks.
+    **The Codex** shows what the story's record knows (below). No Mind Palace,
+    reader translation or read marks.
   - **The Reader reads in the SEIHouse fonts:** chapters in **SEIHouse Sans**,
     the reading font from the font repo (SEIHouse/FONT-LAB), titles in a
     **SEIHouse Display** cut (Ink by default; Soft, Edge and Wide are there to
@@ -378,16 +380,35 @@ Update it whenever it changes.
     Reader is a **frame** around a **chapter body**: prose today, so a
     sequential-art view can take the body's place later. The frame is built
     to serve reading, never interrupt it: **the chapter never leaves the
-    page.** Fate and Reader Settings open as **panels** over it, with the
-    chapter still readable and scrollable, so the reader can look back at what
-    they just read while they decide: on phones a sheet that drops to half
-    height ("Show the chapter"), on laptops a panel at the right with the
-    chapter moved beside it. Listen reads on under a panel. **The Codex** is its
-    own page inside the Reader Chamber, opened from the bottom bar: the
-    development Codex, shown as it is and not yet filled with the story's
-    world, so it can be designed in the Reader. Holdings is one of its pages.
-    The Codex and an arc's goals take the screen, and the reader comes back to
-    their exact place.
+    page.** Fate, the Codex and Reader Settings open as **panels** over it,
+    with the chapter still readable and scrollable, so the reader can look
+    back at what they just read while they decide: on phones a sheet that
+    drops to half height ("Show the chapter"), on laptops a panel at the right
+    with the chapter moved beside it. Listen reads on under a panel. An arc's
+    goals take the screen, and the reader comes back to their exact place.
+  - **The Codex, remade on the record (2026-10-13):** a panel like Fate,
+    opened from the bottom bar's Codex button, holding only what the record
+    knows today, shown like a game's character screen. **Characters:** everyone
+    the story has met (they spoke, or held, used or learned something), the
+    main character first; characters the Story Seed declares but the chapters
+    have not reached stay out. Named beasts are characters too. Each opens a
+    character sheet: their emblem, rank, first appearance, **first words**,
+    **Equipped** and **Carried** things, **Abilities** (learning, known or
+    sealed, with their stage) and a **Chronicle** of every change.
+    **Factions:** sects, clans and other bodies of people, never characters,
+    even when the writer tags one as speaking (those the Story Seed declares,
+    or a name ending in a word like Sect, Clan or Tribe), each with its crest
+    and first words. **Items:** every thing, who holds it now and everything
+    that happened to it. A **Bestiary** comes later (SENSEI, 2026-10-13): it
+    holds species and unique beast groups (the dragon kin), while a named beast
+    (the Dragon King, an emperor and the main villain) is a character.
+    **Record checks** close each list, for testing. Every fact links to its
+    passage: the chapter behind the Codex moves to it and lights it while the
+    Codex stays open, lowered to half height on a phone. It is worked out
+    again from the chapters each time, so it always matches them. The older
+    seven-tab Codex is out of the Reader; it stays in the code. The Workshop's
+    Codex card (`?preview=reader-codex`) shows the new Codex reading
+    Sundered Heavens as its Development view.
   - **Right-to-left reading (2026-10-13):** Arabic, Hebrew, Persian and Urdu
     are SEN languages, so a story can be written in them, and the Reader reads
     such a story right to left. The direction comes from the story's language,
@@ -644,7 +665,7 @@ Update it whenever it changes.
     (Arc 1 only, filled slots), a real arc planned at a new arc, and real
     speaker tags;
   - holdings with a real model: the 10-chapter test, comparing what the
-    chapters show against the Holdings page. The first run (six chapters)
+    chapters show against the Codex. The first run (six chapters)
     stayed on one scene: its export showed a 25-chapter first goal and the
     writer told to fill it, so nothing happened that Holdings could record.
     Arcs are now 30 chapters, goals hand over when reached, and every chapter
@@ -699,11 +720,11 @@ When a session asks "what now?", start here:
 
 1. **Owner:** run the next real-model test (Stage E0) on a new story and export
    it. Everything after it depends on knowing the strict tags hold.
-2. **Agent:** design the first information tag, **first appearance with
-   appearance** (Stage E1, step 1), as a written proposal for the owner before
-   any code: the tag, its teaching, its rules, its home, and what the Codex
-   shows. The [principles](./src/components/harness-generation/HARNESS_PRINCIPLES.md#translation-across-media-the-world-record)
-   say what it must capture.
+2. **Agent:** build the first information tag, **first appearance with
+   appearance** (Stage E1, step 1), as proposed and decided on 2026-10-13
+   (below), with its Look on the Codex's character sheets. The owner's Test
+   Story - Blade (two chapters so far) carries on to ten chapters as Stage E0's
+   test.
 3. **Agent:** the next step of reading in every script (product track, item
    1): a reading font chosen on purpose for each remaining script. Right-to-left
    reading is built.
@@ -790,7 +811,7 @@ tags that have not been measured with a real model. The tests are the ones
 under [Not tested yet](#where-we-are-2026-10-10): the 10-chapter holdings test
 with the strict tag shape, speaker tags, the soundtrack tag, Rewrite and the
 Holdings fixer. Done when an exported story shows the tags landing reliably
-(the Holdings page agrees with the prose, speakers are tagged from Chapter 1,
+(the Codex agrees with the prose, speakers are tagged from Chapter 1,
 few sounds lost). A cost check can ride along: the same test on a second, cheaper
 model added to the Model Router, comparing tag accuracy and each chapter's
 receipt.
@@ -798,8 +819,8 @@ receipt.
 **Stage E1: the information tags, one at a time.** Each is a new kind in the
 tiny SEN language, built with the five parts the
 [vocabulary](./src/components/harness-generation/ARCHITECTURE_VOCABULARY.md#the-tag-system-the-tiny-sen-language)
-defines, proven with a real model before the next begins, and shown on the
-Codex page as a plain list for checking (as Holdings is today). Together they
+defines, proven with a real model before the next begins, and shown in the
+Codex as it is built (as holdings and speakers are today). Together they
 complete the [world record](./src/components/harness-generation/HARNESS_PRINCIPLES.md#translation-across-media-the-world-record).
 
 1. **First appearance, with appearance:** when a character, thing or place first
@@ -807,6 +828,18 @@ complete the [world record](./src/components/harness-generation/HARNESS_PRINCIPL
    breakthrough). The writer tags the moment; the full description can be
    gathered by a small separate step after the chapter is saved, registered in
    the Model Router, so the writer's job stays small.
+   **Decided (2026-10-13, the owner left these to the agent):** the writer
+   types `[[appears: Name | character]]` or `[[appears: Name | thing]]` where
+   someone or something is first on the page, and `[[look: Name | what
+   changed]]` when a look changes; the description is gathered by the separate
+   step, not written into the tag. A being that is both a thing and a
+   character (a sword with a spirit, like Chi Lian in Test Story - Blade) is
+   **two entries**, the thing and the character, since an artist draws them
+   apart; the bound tie (step 5) joins them. Places wait for step 2, which
+   reuses the same tag. Every later chapter is told each appeared character's
+   and thing's one-line look, so looks stay consistent, and a declared
+   character's Story Seed look is the starting look the prose is checked
+   against.
 2. **Place:** places become Codex entries, and the record knows where each
    character is.
 3. **Scene:** where a story scene starts, where it is, when (time of day,
@@ -815,13 +848,14 @@ complete the [world record](./src/components/harness-generation/HARNESS_PRINCIPL
 4. **Status:** alive, wounded, transformed, sealed away, and so on.
 5. **Ties:** allied, hostile, related, bound.
 
-**Stage E2: design the Codex on the record.** Only now, with real entries to
-show, is the Codex designed for readers ("the Codex waits", [How we
-build](#how-we-build)): its categories (characters, places, things and
-abilities, factions, the timeline), each entry linked to the passages that
-made it, Holdings becoming one section of a character's entry. Done when the
-record passes the two tests in the principles: **the artist test** and **the
-save-game test**.
+**Stage E2: complete the Codex on the record.** The Codex is remade alongside
+the tags ("the Codex grows with the record", [How we build](#how-we-build)):
+since 2026-10-13 it has characters (with their holdings as one section of each
+character's sheet) and items, each fact linked to the passage that made it.
+Each tag of Stage E1 adds its part (looks, places, scenes, status, ties); what
+remains here is the rest of its categories (factions, the timeline) and its
+finish. Done when the record passes the two tests in the principles: **the
+artist test** and **the save-game test**.
 
 **After E2: keeping the record true when a reader edits a chapter.** Create
 mode lets a reader change the newest chapter before it is sealed: its words,
@@ -917,6 +951,7 @@ same record; none of them adds anything medium-specific to the story itself.
 | Chapter body | What shows the chapter inside the Reader's frame: prose today (`ProseChapterBody`), sequential art later (`ReaderChapterBody`). |
 | Rewrite this chapter | The reader's request to write the newest chapter again, with an optional note (`rewriteLatestChapter`, `chapterRewriteGap`). |
 | Holdings fixer | SEN's unseen check after each chapter, which settles small holdings problems and keeps a record on the chapter (`planHoldingsFix`, `applyHoldingsFixes`, the `fix-holdings` call). The Library, later the Familiar, sets how far it goes. |
+| Codex | The story's world as its record knows it, opened in the Reader as a panel: characters, factions and items today (a Bestiary of species later), every fact linked to its passage (`StoryCodex`, worked out by `deriveStoryCodex`). It grows as each information tag is built. |
 | Highlight Engine | SEN's engine for highlighting part of a story and attaching to it: prose today, sequential-art images later. Its lab is at `?preview=highlight-engine`; in the Reader it is Create mode. Never "Text Highlight Engine". |
 | Story Settings | The only place a user meets the HARNESS: language, reading mode, CAPA skills and media. On Story View (`StorySettings`) and in Create's Settings (`CreateStorySettings`), from `@seihouse/library/stories`. |
 | Harness Generation | The developer instrument for the HARNESS (`?preview=harness-generation`). Never a product page. |

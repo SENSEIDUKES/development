@@ -1,5 +1,18 @@
 # `@seihouse/sen`
 
+**0.36.0 (2026-10-13, breaking):** The Codex, remade on the record. `./harness-generation`:
+`deriveStoryCodex` works out the Codex from a story's Codex entries and chapters (its characters,
+met by what they hold or say, the main character first, with their holdings, rank, first words and
+chronicle; its factions, declared by the story (`declaredFactions`) or named as a body of people,
+never characters even when they speak; its items, each with its holder now and its history; and the record's checks, each with
+its paragraph), and `StoryCodex` shows it: Characters (a roster and each character's sheet), Factions and
+Items, every fact a link to its passage. In `HarnessReaderSession` the Codex is a panel
+(`ReaderLayer` `{ kind: 'panel'; id: 'codex' }`): a fact moves the chapter behind it to its passage
+and lights it, and `ReaderPanel`'s new `peek` lowers the sheet to half height so the chapter shows.
+`HoldingEvent` gains `targetId`. Breaking: `HoldingsPage` is removed (the Codex holds holdings), and
+`ReaderLayer` no longer has a Codex page. The development Reader Codex in `./reader-codex` is
+unchanged; the Reader no longer opens it.
+
 **0.35.0 (2026-10-13):** Right-to-left reading. `./contracts`: `SenLanguageCode` and
 `SEN_LANGUAGES` gain Arabic (`ar`), Hebrew (`he`), Persian (`fa`) and Urdu (`ur`), each with
 direction `rtl` (`getSenTextDirection`) and speech tags (`senSpeechLanguageTags`; Hebrew also

@@ -98,8 +98,8 @@ describe('Workshop manuscript page', () => {
   });
 });
 
-describe('Workshop Audio overlay', () => {
-  const overlayButton = (name: 'Off' | 'Audio') =>
+describe('Workshop Sound Cues overlay', () => {
+  const overlayButton = (name: 'Off' | 'Audio' | 'Sound Cues' | 'Soundscapes' | 'Atmospheres') =>
     Array.from(document.querySelectorAll<HTMLButtonElement>('[data-testid="overlay-switch"] button')).find(item => item.textContent === name)!;
   const chips = (selector: string) => Array.from(host.querySelectorAll(selector), chip => chip.textContent);
 
@@ -108,14 +108,26 @@ describe('Workshop Audio overlay', () => {
   it('numbers the page and tints every cue while on, and does nothing while off', async () => {
     expect(host.querySelector('.sen-text-highlight-overlay')).toBeNull();
     expect(legend()).toBeNull();
+    // The Audio category holds one overlay per sound, never one overlay bundling them.
+    const switchLabels = () => Array.from(document.querySelectorAll('[data-testid="overlay-switch"] button'), item => item.textContent);
+    expect(switchLabels()).toEqual(['Off', 'Audio']);
     act(() => overlayButton('Audio').click());
+    expect(switchLabels()).toEqual(['Off', 'Audio', 'Sound Cues', 'Soundscapes', 'Atmospheres']);
     expect(overlayButton('Audio').getAttribute('aria-pressed')).toBe('true');
+    expect(overlayButton('Sound Cues').getAttribute('aria-pressed')).toBe('true');
+    act(() => overlayButton('Atmospheres').click());
+    expect(overlayButton('Sound Cues').getAttribute('aria-pressed')).toBe('false');
+    expect(Array.from(legend()!.querySelectorAll('li'), item => item.textContent)).toEqual(['Atmosphere']);
+    // Choosing the category again keeps the overlay already on.
+    act(() => overlayButton('Audio').click());
+    expect(overlayButton('Atmospheres').getAttribute('aria-pressed')).toBe('true');
+    act(() => overlayButton('Sound Cues').click());
     // ¶ numbers in the margin, raised sentence numbers counted through the page — the model's P2 S6.
     expect(chips('.sen-overlay-pin')).toEqual(['¶1', '1', '2', '3', '4', '5', '¶2', '6', '7', '8', '9', '¶3', '10', '11', '12', '13', '14', '15']);
     expect(chips('.sen-overlay-pin[data-placement="margin"]')).toEqual(['¶1', '¶2', '¶3']);
     expect(legend()?.textContent).toContain('The model writes it P2 S6.');
     // The changed-words key appears only when something on the page carries it.
-    expect(Array.from(legend()!.querySelectorAll('li'), item => item.textContent)).toEqual(['Sound Cue', 'Soundscape', 'Atmosphere']);
+    expect(Array.from(legend()!.querySelectorAll('li'), item => item.textContent)).toEqual(['Sound Cue']);
     expect(host.querySelectorAll('.sen-overlay-mark')).toHaveLength(0);
 
     await selectRoar(); openCue(); placeFirstCue();

@@ -22,12 +22,12 @@ export {
 } from '../../components/highlight-engine/shared/manuscript';
 export type { OverlayMark, OverlayPin, TextHighlightOverlay } from '../../components/highlight-engine/shared/overlay';
 export {
-  ATTACHMENT_COLORS, OVERLAY_KINDS, attachmentMarks, openingSoundMark, structurePins, type ManuscriptOverlayMode,
+  ATTACHMENT_COLORS, MANUSCRIPT_OVERLAY_GROUPS, MANUSCRIPT_OVERLAYS, OVERLAY_KINDS, overlayGroupOf, type ManuscriptOverlayGroup, OVERLAY_SOUNDTRACK_KIND, attachmentMarks, isChapterOpening, openingSoundMark, structurePins, type ManuscriptOverlayMode,
 } from '../../components/highlight-engine/shared/overlayModes';
 export {
   ManuscriptOverlaySwitch, placedSoundCue, placedSoundCues, audioActions,
 } from '../../components/highlight-engine/development/ManuscriptAuthoring';
 export {
-  SoundtrackChangePanel, SoundtrackOptionList, SOUNDTRACK_KIND_WORDS, soundtrackChangeAnchor, soundtrackChangeOf, soundtrackOptionLabel, soundtrackOptions,
+  SoundtrackChangePanel, SoundtrackOptionList, SOUNDTRACK_KIND_WORDS, WRITER_OPENING, soundtrackChangeAnchor, soundtrackChangeOf, soundtrackOptionLabel, soundtrackOptions,
   type SoundtrackChoices, type SoundtrackOption,
 } from '../../components/highlight-engine/development/SoundtrackChangePicker';

@@ -6,6 +6,7 @@ import {
   type SoundtrackChangeAttachment, type SoundtrackChangeKind,
 } from '../../../audio/soundtrackChanges';
 import { anchorAtLevel, resolveAnchor, type ManuscriptAttachment, type ManuscriptState } from '../shared/manuscript';
+import { isChapterOpening } from '../shared/overlayModes';
 import type { PassageSelection } from '../shared/selection';
 
 /** A soundscape piece or an atmosphere a reader may choose. */
@@ -21,7 +22,23 @@ export interface SoundtrackChoices {
   atmospheres: readonly SceneAtmosphere[];
   /** Plays a choice while the reader listens to it; returns how to stop. Without it there is no preview. */
   preview?: (option: SoundtrackOption) => (() => void) | undefined;
+  /**
+   * The chapter's opening, where the host has one: a word highlighted in the
+   * chapter's first sentence chooses it, locked at the start, instead of
+   * placing a change.
+   */
+  opening?: {
+    /** The reader's chosen piece or atmosphere; none means the writer's. */
+    chosen: (kind: SoundtrackChangeKind) => string | undefined;
+    /** How the writer's own choice reads in the list. */
+    writer: (kind: SoundtrackChangeKind) => string;
+    /** Keeps a choice; `WRITER_OPENING` goes back to the writer's. */
+    choose: (kind: SoundtrackChangeKind, id: string) => void;
+  };
 }
+
+/** The opening list's first entry: the writer's own choice. */
+export const WRITER_OPENING = 'writer';
 
 export const SOUNDTRACK_KIND_WORDS: Record<SoundtrackChangeKind, { name: string; noun: string }> = {
   [SOUNDSCAPE_CHANGE_KIND]: { name: 'Soundscape', noun: 'music' },
@@ -96,7 +113,8 @@ export function SoundtrackOptionList({ kind, choices, chosen, onChoose, extra }:
 /**
  * Places the chapter's one change of music, or of atmosphere, on the word a
  * selection begins with. A chapter holds one of each after its opening, so
- * placing it where one already is moves it here.
+ * placing it where one already is moves it here. In the chapter's first
+ * sentence it chooses the opening instead, locked at the start.
  */
 export function SoundtrackChangePanel({ kind, state, selection, choices, onPlace, onClose }: {
   kind: SoundtrackChangeKind;
@@ -108,9 +126,20 @@ export function SoundtrackChangePanel({ kind, state, selection, choices, onPlace
 }) {
   const anchor = soundtrackChangeAnchor(state, selection);
   const existing = soundtrackChangeOf(state, kind);
-  const [chosen, setChosen] = useState<string | undefined>(existing && (existing.kind === SOUNDSCAPE_CHANGE_KIND ? existing.payload.pieceId : existing.payload.atmosphereId));
+  const opening = choices.opening && isChapterOpening(state.manuscript, selection) ? choices.opening : undefined;
+  const [chosen, setChosen] = useState<string | undefined>(opening ? opening.chosen(kind) ?? WRITER_OPENING
+    : existing && (existing.kind === SOUNDSCAPE_CHANGE_KIND ? existing.payload.pieceId : existing.payload.atmosphereId));
   const words = SOUNDTRACK_KIND_WORDS[kind];
   if (!anchor || anchor.level !== 'span') return <p role="status" className="px-2 py-3 text-sm text-slate-300">Select a word.</p>;
+  if (opening) return <div className="space-y-3 p-2 font-sans" data-testid={`${kind}-panel`}>
+    <p className="text-sm text-slate-200">The chapter opens with this {words.noun}, locked at its start.</p>
+    <SoundtrackOptionList kind={kind} choices={choices} chosen={chosen} onChoose={setChosen} extra={{ id: WRITER_OPENING, label: opening.writer(kind) }} />
+    <div className="flex justify-end gap-2">
+      <button type="button" onClick={onClose} className="min-h-9 rounded-lg border border-white/15 px-3 text-sm text-slate-200 hover:bg-white/10">Cancel</button>
+      <button type="button" onClick={() => { if (chosen) opening.choose(kind, chosen); onClose(); }} disabled={!chosen}
+        className="min-h-9 rounded-lg border border-teal-300/60 bg-teal-400/15 px-3 text-sm text-teal-50 hover:bg-teal-400/25 disabled:opacity-40">Set opening {words.noun}</button>
+    </div>
+  </div>;
   const from = existing && resolveAnchor(state.manuscript, existing.anchor).status === 'placed' ? existing.anchor : undefined;
   const moving = from && from.level === 'span' && !(from.blockId === anchor.blockId && from.startOffset === anchor.startOffset);
   const place = () => {

@@ -10,7 +10,7 @@ import {
 import type { PassageAction } from '../shared/actions';
 import type { PassageSelection } from '../shared/selection';
 import type { TextHighlightOverlay } from '../shared/overlay';
-import { ATTACHMENT_COLORS, OVERLAY_KINDS, type ManuscriptOverlayMode } from '../shared/overlayModes';
+import { ATTACHMENT_COLORS, MANUSCRIPT_OVERLAY_GROUPS, OVERLAY_KINDS, overlayGroupOf, type ManuscriptOverlayMode } from '../shared/overlayModes';
 import { ManualCuePicker } from './ManualCuePicker';
 import { SOUNDTRACK_KIND_WORDS, SoundtrackChangePanel, type SoundtrackChoices } from './SoundtrackChangePicker';
 import { ATMOSPHERE_CHANGE_KIND, SOUNDSCAPE_CHANGE_KIND, type SoundtrackChangeKind } from '../../../audio/soundtrackChanges';
@@ -151,8 +151,10 @@ export function audioActions<State extends AuthoringState>({ state, update, cata
 }
 
 /**
- * The Overlays switch (Off / Audio) and, while one is on, its legend: the
- * page's numbering as the model addresses it, and each kind's color.
+ * The Overlays switch: Off or a category (Audio), then one overlay inside
+ * the category (Sound Cues, Soundscapes or Atmospheres: one kind each). While
+ * one is on, its legend: the page's numbering as the model addresses it, and
+ * its kind's color.
  */
 export function ManuscriptOverlaySwitch({ mode, onChange, overlay }: {
   mode: ManuscriptOverlayMode;
@@ -160,12 +162,21 @@ export function ManuscriptOverlaySwitch({ mode, onChange, overlay }: {
   /** The overlay on the page, so the legend shows "Words changed" only when a mark needs it. */
   overlay?: TextHighlightOverlay;
 }) {
+  const group = overlayGroupOf(mode);
+  const tone = (on: boolean) => `min-h-9 rounded-lg border px-3 ${on ? 'border-teal-300/60 bg-teal-400/10 text-teal-100' : 'border-slate-600 text-slate-300 hover:bg-slate-800'}`;
   return <div className="space-y-3">
-    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400" role="group" aria-label="Overlays" data-testid="overlay-switch">
-      <span className="mr-1 uppercase tracking-[0.14em] text-slate-500">Overlays</span>
-      {([['off', 'Off'], ['audio', 'Audio']] as const).map(([value, label]) => <button key={value} type="button" aria-pressed={mode === value}
-        className={`min-h-9 rounded-lg border px-3 ${mode === value ? 'border-teal-300/60 bg-teal-400/10 text-teal-100' : 'border-slate-600 text-slate-300 hover:bg-slate-800'}`}
-        onClick={() => onChange(value)}>{label}</button>)}
+    <div className="space-y-2" data-testid="overlay-switch">
+      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400" role="group" aria-label="Overlays">
+        <span className="mr-1 uppercase tracking-[0.14em] text-slate-500">Overlays</span>
+        <button type="button" aria-pressed={mode === 'off'} className={tone(mode === 'off')} onClick={() => onChange('off')}>Off</button>
+        {/* A category opens on its first overlay; choosing it again keeps the one already on. */}
+        {MANUSCRIPT_OVERLAY_GROUPS.map(entry => <button key={entry.id} type="button" aria-pressed={group?.id === entry.id} aria-expanded={group?.id === entry.id}
+          className={tone(group?.id === entry.id)} onClick={() => { if (group?.id !== entry.id) onChange(entry.overlays[0].mode); }}>{entry.label}</button>)}
+      </div>
+      {group && <div className="flex flex-wrap items-center gap-2 border-l border-white/10 pl-3 text-xs" role="group" aria-label={`${group.label} overlays`} data-testid="overlay-subswitch">
+        {group.overlays.map(entry => <button key={entry.mode} type="button" aria-pressed={mode === entry.mode} className={tone(mode === entry.mode)}
+          onClick={() => onChange(entry.mode)}>{entry.label}</button>)}
+      </div>}
     </div>
     {mode !== 'off' && <div className="space-y-2 text-xs leading-relaxed text-slate-400" data-testid="overlay-legend">
       <p>

@@ -20,6 +20,11 @@ export interface WriterInstructionsChange {
  */
 export const WRITER_INSTRUCTIONS_HISTORY: readonly WriterInstructionsChange[] = [
   {
+    date: '2026-10-13',
+    summary: 'From SENSEI’s Not A Wave test (chapters 1 and 2): the writer tagged no Sound Cues at all, though its own prose rang a bell five times and "bell rings" was a sound word. The instruction told it that a chapter may have none, beside four warnings against tagging, and a careful writer took the safe reading. SEN Sound Cues 2.4.0 drops "a chapter may have none": a chapter without a cue is still fine, the writer just no longer needs telling. A cue is still earned by the prose, at most 10 a chapter, and never added or bent to fit.',
+    changed: { 'sound-cues': '18208ac228e769' },
+  },
+  {
     date: '2026-10-12',
     summary: 'From SENSEI: the music (the soundscape), the atmosphere and Sound Cues are three separate sounds, so each gets its own tag. SEN Soundtrack 2.0.0 replaces the one tag that named both ([[soundtrack: Music Mood | Atmosphere]]) with two, each once, together at the very start of the chapter: [[soundscape: Music Mood]] and [[atmosphere: Atmosphere]]. The example line shows both. Still no second of either: a change partway through a chapter is now the reader\'s to make in Create mode (at most one of each, after the opening). The HARNESS still reads the combined tag, so no chapter written with it loses its sound.',
     changed: { soundtrack: '01d10abf7679e8' },

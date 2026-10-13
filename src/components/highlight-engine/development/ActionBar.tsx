@@ -85,6 +85,8 @@ export function ActionBar({
   }, removing ? removeActions : actions);
   const vertical = stacked || removing;
   const reasons = menuActions.some(action => action.unavailable?.(selection));
+  // A submenu in one row is as wide as its labels (Back, then each action), so no two buttons overlap.
+  const submenuWidth = Math.max(120, 64 + menuActions.reduce((total, action) => total + 28 + action.label.length * 8, 0));
 
   useLayoutEffect(() => {
     const viewport = window.visualViewport;
@@ -96,7 +98,7 @@ export function ActionBar({
       : vertical && !editing ? Math.min(removing || reasons ? 216 : 168, width - 16)
       : stacked ? Math.min(168, width - 16)
       : editing && replacement === '' ? Math.min(220, width - 16)
-      : editing ? 64 : Math.min(reasons ? 264 : menuPath.length ? 120 : actions.length ? 144 : 64, width - 16);
+      : editing ? 64 : Math.min(reasons ? 264 : menuPath.length ? submenuWidth : actions.length ? 144 : 64, width - 16);
     const controlHeight = controlsRef.current?.offsetHeight ?? 48;
     const anchor = rectangles.find(rect => rect.top + rect.height > topEdge && rect.top < topEdge + height) ?? rectangles[0];
     let top: number;
@@ -119,7 +121,7 @@ export function ActionBar({
       top: Math.max(topEdge + 8, Math.min(top, topEdge + height - controlHeight - 8)),
       width: controlWidth, maxHeight: Math.max(44, height - 16),
     });
-  }, [rectangles, editing, replacement, controlsRef, actions.length, menuPath.length, panel, stacked, vertical, removing, reasons]);
+  }, [rectangles, editing, replacement, controlsRef, actions.length, menuPath.length, panel, stacked, vertical, removing, reasons, submenuWidth]);
 
   // Opened from the keyboard, focus lands on the first thing to do, as in a native menu.
   useEffect(() => {

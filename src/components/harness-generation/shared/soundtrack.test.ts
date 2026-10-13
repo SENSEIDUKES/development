@@ -28,16 +28,32 @@ describe('The chapter\'s soundtrack', () => {
     expect(chapterSoundtrack([], LIBRARY_BASE_MEDIA, 1)).toEqual({ unknown: [], extra: 0 });
   });
 
-  it('is saved with the chapter from the writer\'s tag, which leaves no trace in the prose', () => {
+  it('reads the soundscape and the atmosphere from their own tags, each kind\'s first, and words of the wrong kind not at all', () => {
+    expect(chapterSoundtrack([{ kind: 'soundscape', parts: ['mystical'] }, { kind: 'atmosphere', parts: ['forest'] }], LIBRARY_BASE_MEDIA, 1))
+      .toEqual({ scene: { soundscape: 'mystical', atmosphere: forest(1) }, unknown: [], extra: 0 });
+    // A second of a kind is removed; the other kind is still read.
+    expect(chapterSoundtrack([{ kind: 'soundscape', parts: ['war'] }, { kind: 'soundscape', parts: ['sad'] }, { kind: 'atmosphere', parts: ['cave'] }], LIBRARY_BASE_MEDIA, 1).extra).toBe(1);
+    // An atmosphere word in the soundscape tag is not music, and a mood in the atmosphere tag is not a place.
+    expect(chapterSoundtrack([{ kind: 'soundscape', parts: ['forest'] }, { kind: 'atmosphere', parts: ['sad'] }], LIBRARY_BASE_MEDIA, 1))
+      .toEqual({ unknown: ['forest', 'sad'], extra: 0 });
+  });
+
+  it('is saved with the chapter from the writer\'s tags, which leave no trace in the prose', () => {
     const accepted = acceptHarnessModelResponse(reply([
-      '[[soundtrack: mystical | forest]] The mist lay low over the pines.',
-      'Mara walked on. [[soundtrack: war | ancient battlefield]] The drums began.',
+      '[[soundscape: mystical]] [[atmosphere: forest]] The mist lay low over the pines.',
+      'Mara walked on. [[soundscape: war]] The drums began.',
     ]), 1, { media: LIBRARY_BASE_MEDIA, soundtrackExpected: true });
     expect(accepted.accepted).toBe(true);
     if (!accepted.accepted) return;
     expect(accepted.draft.scene).toEqual({ soundscape: 'mystical', atmosphere: forest(1) });
     expect(accepted.draft.paragraphs.slice(0, 2)).toEqual(['The mist lay low over the pines.', 'Mara walked on. The drums began.']);
-    expect(accepted.warnings.find(warning => warning.code === 'soundtrack_incomplete')?.message).toBe('1 more soundtrack tag was removed: only the first counts.');
+    expect(accepted.warnings.find(warning => warning.code === 'soundtrack_incomplete')?.message).toBe('1 more soundtrack tag was removed: only the first soundscape and the first atmosphere count.');
+    // The earlier combined tag still reads, for chapters written with it.
+    const combined = acceptHarnessModelResponse(reply(['[[soundtrack: sad | forest]] Rain fell.']), 2, { media: LIBRARY_BASE_MEDIA, soundtrackExpected: true });
+    expect(combined.accepted && combined.draft.scene).toEqual({ soundscape: 'sad', atmosphere: forest(2) });
+    // A chapter that chose only its music says so.
+    const musicOnly = acceptHarnessModelResponse(reply(['[[soundscape: sad]] Rain fell.']), 2, { media: LIBRARY_BASE_MEDIA, soundtrackExpected: true });
+    expect(musicOnly.warnings.find(warning => warning.code === 'soundtrack_incomplete')?.message).toBe('The writer chose no atmosphere, so the one before goes on.');
   });
 
   it('reads a tag the writer gave a paragraph of its own, and flags a chapter that chose none', () => {

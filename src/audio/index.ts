@@ -14,4 +14,5 @@ export * from './soundCueRules';
 export * from './soundCuePlacement';
 export * from './soundWords';
 export * from './soundtrackVocabulary';
+export * from './soundtrackChanges';
 export * from './playback';

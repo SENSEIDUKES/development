@@ -7,7 +7,7 @@ import { SPP_CAPA_EXTENSION, SPP_SOUND_WORDS_EXTENSION } from '../generation/cap
 /**
  * Namespaced manifest extension a media package uses to say what it is and
  * which file lists its recordings:
- * `{ "type": "sound-cue" | "soundscape", "catalog": "assets/media-pack.json" }`.
+ * `{ "type": "sound-cue" | "soundscape" | "atmosphere", "catalog": "assets/media-pack.json" }`.
  */
 export const SPP_MEDIA_PACK_EXTENSION = 'seihouse.media-pack';
 
@@ -18,9 +18,12 @@ export const SPP_MEDIA_PACK_EXTENSION = 'seihouse.media-pack';
  *   recording's Energy, Tone and Tension, when it has them, are the package
  *   file's own tags.
  * - Soundscapes: `{ "pieces": [{ "path", "mood", "label"? }] }`.
+ * - Atmospheres: `{ "beds": [{ "path", "word", "label"?, "group"? }] }`: looping
+ *   beds, each chosen by its word ("forest"); beds that share a word take turns.
  */
 interface SoundCueCatalog { recordings: Array<{ path: string; sound: string; category?: string }> }
 interface SoundscapeCatalog { pieces: Array<{ path: string; mood: string; label?: string }> }
+interface AtmosphereCatalog { beds: Array<{ path: string; word: string; label?: string; group?: string }> }
 
 /** Packs of audio are large: the SPP safety ceiling (1 GiB, 512 MiB a file). */
 export const MEDIA_PACK_LIMITS = MAX_LIMITS;
@@ -55,14 +58,14 @@ export function readMediaSpp(content: PackContent): PackagedMediaPack {
   const { manifest } = content;
   const name = manifest.name.trim();
   const declared = manifest.extensions?.[SPP_MEDIA_PACK_EXTENSION];
-  if (declared === undefined) fail(`${name} is not a Soundscape or Sound Cue package.`);
+  if (declared === undefined) fail(`${name} is not a Soundscape, Sound Cue or Atmosphere package.`);
   if (manifest.extensions?.[SPP_CAPA_EXTENSION] !== undefined || manifest.extensions?.[SPP_SOUND_WORDS_EXTENSION] !== undefined) {
     fail(`${name} is a media package and something else too; a media package carries recordings only.`);
   }
-  if (!isRecord(declared) || (declared.type !== 'sound-cue' && declared.type !== 'soundscape') || typeof declared.catalog !== 'string') {
-    fail('This media package does not say what it is (sound-cue or soundscape) and which file lists its recordings.');
+  if (!isRecord(declared) || !['sound-cue', 'soundscape', 'atmosphere'].includes(declared.type as string) || typeof declared.catalog !== 'string') {
+    fail('This media package does not say what it is (sound-cue, soundscape or atmosphere) and which file lists its recordings.');
   }
-  const { type, catalog: catalogPath } = declared as { type: 'sound-cue' | 'soundscape'; catalog: string };
+  const { type, catalog: catalogPath } = declared as { type: 'sound-cue' | 'soundscape' | 'atmosphere'; catalog: string };
   const catalogRecord = manifest.files.find(file => file.path === catalogPath);
   const catalogBytes = content.assets.get(catalogPath);
   if (!catalogRecord || !catalogBytes || catalogRecord.mediaType !== 'application/json') fail('This media package names a recording list it does not contain.');
@@ -120,6 +123,22 @@ export function readMediaSpp(content: PackContent): PackagedMediaPack {
       };
     });
     pack = { ...base, type: 'sound-cue', sounds, entries };
+  } else if (type === 'atmosphere') {
+    const beds = isRecord(catalog) && Array.isArray(catalog.beds) ? (catalog as unknown as AtmosphereCatalog).beds : fail('An Atmosphere package lists its beds.');
+    if (!beds.length) fail('An Atmosphere package needs at least one bed.');
+    pack = {
+      ...base, type: 'atmosphere',
+      entries: beds.map((entry, index) => {
+        const label = `Bed ${index + 1}`;
+        if (!isRecord(entry)) return fail(`${label} must be an object.`);
+        const word = typeof entry.word === 'string' ? entry.word.trim().toLowerCase() : '';
+        if (!/^[a-z]+(?: [a-z]+){0,2}$/.test(word)) return fail(`${label} needs a word: one to three plain lowercase words.`);
+        const { url, record } = audio(entry.path, label);
+        const title = typeof entry.label === 'string' && entry.label.trim() ? entry.label.trim() : record.path.split('/').pop()!.replace(/\.[^.]+$/, '');
+        const group = typeof entry.group === 'string' && entry.group.trim() ? entry.group.trim() : word.replace(/\b\w/g, letter => letter.toUpperCase());
+        return { id: `${base.id}:${record.path}`, word, label: title, group, url };
+      }),
+    };
   } else {
     const pieces = isRecord(catalog) && Array.isArray(catalog.pieces) ? (catalog as unknown as SoundscapeCatalog).pieces : fail('A Soundscape package lists its pieces.');
     if (!pieces.length) fail('A Soundscape package needs at least one piece.');
@@ -239,14 +258,16 @@ export class DeviceMediaUrls {
 }
 
 /**
- * Lets a reader mixer play recordings from installed packages: the three
- * places a mixer receives an address (a Sound Cue, cues to load ahead, a
- * piece of music) are given the device's address for a package file.
+ * Lets a reader mixer play recordings from installed packages: the places a
+ * mixer receives an address (a Sound Cue, cues to load ahead, a piece of
+ * music, the atmospheres it may play) are given the device's address for a
+ * package file.
  */
 export function playDeviceMediaThrough(mixer: ReaderMixer, urls: DeviceMediaUrls): ReaderMixer {
   const playCue = mixer.playCue.bind(mixer);
   const preloadCues = mixer.preloadCues.bind(mixer);
   const playSoundscape = mixer.playSoundscape.bind(mixer);
+  const setAtmosphereOptions = mixer.setAtmosphereOptions?.bind(mixer);
   mixer.playCue = (url, options) => playCue(urls.resolve(url), options);
   mixer.preloadCues = addresses => preloadCues(addresses.map(url => urls.resolve(url)));
   mixer.playSoundscape = (track, options) => playSoundscape({
@@ -255,6 +276,10 @@ export function playDeviceMediaThrough(mixer: ReaderMixer, urls: DeviceMediaUrls
     ...(track.fallbackSources ? { fallbackSources: track.fallbackSources.map(url => urls.resolve(url)) } : {}),
     ...(track.sources ? { sources: track.sources.map(source => ({ ...source, url: urls.resolve(source.url) })) } : {}),
   }, options);
+  if (setAtmosphereOptions) mixer.setAtmosphereOptions = atmospheres => setAtmosphereOptions(atmospheres.map(option => ({
+    ...option,
+    ...(option.sources ? { sources: option.sources.map(source => ({ ...source, url: urls.resolve(source.url) })) } : {}),
+  })));
   return mixer;
 }
 

@@ -3,6 +3,7 @@ import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '../../../lib/la
 import { answeredSoundWords, emptyNarrativeMedia, soundVocabulary, withStorySoundWords, type FrozenNarrativeMedia, type NarrativeMediaPort, type MediaResourceReference, type MediaSelectionSlot, type StoryMediaSelection } from '../../../audio/media';
 import { soundtrackVocabulary, type SoundtrackVocabulary } from '../../../audio/soundtrackVocabulary';
 import { validateSoundWordList, type SoundWord } from '../../../audio/soundWords';
+import { ATMOSPHERE_CHANGE_KIND, SOUNDSCAPE_CHANGE_KIND, SOUNDTRACK_CHANGE_RULES } from '../../../audio/soundtrackChanges';
 import { arcGoalEditState, arcPlanGap, arcPlanningContext, arcReviewGap, commitHarnessArc, harnessArcContext, harnessArcPlan, harnessStoryMode, missingRequiredEnding, needsArcPlan, readArcReply, routeCompleteGap, storyConclusionGap, withArcGoalReview, arcGoalReview } from './arcState';
 import {
   createHarnessStory,
@@ -468,7 +469,7 @@ export class HarnessGenerationController {
    * change replaced wait in `waiting`, off the page, until the chapter is
    * sealed. The chapter is marked as changed, so it is read again at its seal.
    */
-  async authorChapter(chapterId: string, changes: Pick<HarnessChapter, 'paragraphs' | 'soundCues' | 'speakers' | 'holdingChanges'>
+  async authorChapter(chapterId: string, changes: Pick<HarnessChapter, 'paragraphs' | 'soundCues' | 'speakers' | 'holdingChanges' | 'openingSound' | 'soundtrackChanges'>
     & { waiting?: NonNullable<HarnessChapter['authoring']>['waiting'] }): Promise<void> {
     this.assertHydrated();
     if (this.generating) throw new Error('Wait for the active Harness operation before changing a chapter.');
@@ -486,17 +487,26 @@ export class HarnessGenerationController {
       const text = blocks.get(attachment.anchor.blockId);
       return !attachment.anchor.detached && text?.slice(attachment.anchor.startOffset, attachment.anchor.endOffset) === attachment.anchor.selectedText;
     };
-    for (const attachment of [...changes.soundCues ?? [], ...changes.speakers ?? [], ...changes.holdingChanges ?? []]) {
-      if (!onItsWords(attachment)) throw new Error('Every Sound Cue, speaker and holding change must sit on its words before the chapter is saved.');
+    for (const attachment of [...changes.soundCues ?? [], ...changes.speakers ?? [], ...changes.holdingChanges ?? [], ...changes.soundtrackChanges ?? []]) {
+      if (!onItsWords(attachment)) throw new Error('Every Sound Cue, speaker, holding change and soundtrack change must sit on its words before the chapter is saved.');
+    }
+    // The opening is one of each kind's two: a chapter changes its music once, and its atmosphere once, after it.
+    for (const kind of [SOUNDSCAPE_CHANGE_KIND, ATMOSPHERE_CHANGE_KIND]) {
+      if ((changes.soundtrackChanges ?? []).filter(change => change.kind === kind).length > SOUNDTRACK_CHANGE_RULES.perChapter - 1) {
+        throw new Error(`A chapter changes its ${kind === SOUNDSCAPE_CHANGE_KIND ? 'music' : 'atmosphere'} at most once after its opening.`);
+      }
     }
     chapter.paragraphs = paragraphs;
     chapter.prose = paragraphs.join('\n\n');
     chapter.metrics = { ...chapter.metrics, wordCount: paragraphs.reduce((total, paragraph) => total + paragraph.split(/\s+/u).length, 0), paragraphCount: paragraphs.length };
-    for (const key of ['soundCues', 'speakers', 'holdingChanges'] as const) {
+    for (const key of ['soundCues', 'speakers', 'holdingChanges', 'soundtrackChanges'] as const) {
       const list = changes[key];
       if (list?.length) (chapter as Record<typeof key, unknown>)[key] = cloneHarnessValue(list);
       else delete chapter[key];
     }
+    const opening = changes.openingSound;
+    if (opening?.soundscape || opening?.atmosphere) chapter.openingSound = cloneHarnessValue(opening);
+    else delete chapter.openingSound;
     const now = this.runtime.now();
     chapter.authoring = { editedAt: now, ...(changes.waiting?.length ? { waiting: cloneHarnessValue(changes.waiting) } : {}) };
     const story = findStory(candidate, chapter.storyId);

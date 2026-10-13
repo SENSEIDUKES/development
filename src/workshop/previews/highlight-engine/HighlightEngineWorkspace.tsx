@@ -1,12 +1,13 @@
 import { useMemo, useRef, useState, type CSSProperties } from 'react';
-import { createMediaCatalog, type SoundCuePayload } from '@seihouse/sen/audio';
+import { SOUNDSCAPE_CHANGE_KIND, createMediaCatalog, isSoundtrackChange, type SoundCuePayload, type SoundtrackChangeAttachment } from '@seihouse/sen/audio';
 import { InlineAudioText } from '@seihouse/sen/inline-audio';
 import {
   MANUSCRIPT_PROTOTYPE_WORD_LIMIT, ManuscriptOverlaySwitch, OVERLAY_KINDS, HighlightEngine,
   applyPassageEdit, attachmentMarks, countManuscriptWords, flaggedAttachments, keepAttachment, passageRange,
-  placedSoundCues, removeAttachment, sealManuscript, soundCueActions, structurePins,
+  placedSoundCues, removeAttachment, sealManuscript, audioActions, structurePins,
   type ManuscriptOverlayMode, type ManuscriptParagraph, type ManuscriptSentence, type ManuscriptState,
-  type PassageAction, type PassageEdit, type PassageSelection,
+  SOUNDTRACK_KIND_WORDS, soundtrackOptionLabel,
+  type PassageAction, type PassageEdit, type PassageSelection, type SoundtrackChoices,
 } from '@seihouse/sen/highlight-engine';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
@@ -16,6 +17,8 @@ import { PartsBoard } from './PartsBoard';
 import { createPreviewManuscript } from './previewData';
 
 const catalog = createMediaCatalog(LIBRARY_BASE_MEDIA);
+/** The Library's own pieces and atmospheres, as a story's Create mode offers them (the lab plays no preview). */
+const soundtrack: SoundtrackChoices = { pieces: catalog.soundscapes.map(entry => entry.track), atmospheres: catalog.atmospheres };
 
 /** The lab stores Sound Cues exactly as SEN does: span attachments whose payload the manuscript never reads. */
 type LabState = ManuscriptState<SoundCuePayload>;
@@ -67,7 +70,7 @@ export function HighlightEnginePreview() {
     if (bounds && (bounds.top < 0 || bounds.bottom > window.innerHeight)) window.scrollBy({ top: bounds.top - window.innerHeight / 3 });
   };
 
-  const authoring = soundCueActions({ state, update: setState, catalog, onNotice: setNotice });
+  const authoring = audioActions({ state, update: setState, catalog, onNotice: setNotice, soundtrack });
   const actions: PassageAction[] = draft ? authoring.actions : [];
   const removeActions: PassageAction[] = draft ? authoring.removeActions : [];
 
@@ -113,6 +116,10 @@ export function HighlightEnginePreview() {
     </div>
     <ManuscriptInspector state={state} selection={selection} onSelectSentence={selectSentence}
       describe={attachment => {
+        if (isSoundtrackChange(attachment)) {
+          const change = attachment as unknown as SoundtrackChangeAttachment;
+          return `${SOUNDTRACK_KIND_WORDS[change.kind].name} change · ${soundtrackOptionLabel(change.kind, change.kind === SOUNDSCAPE_CHANGE_KIND ? change.payload.pieceId : change.payload.atmosphereId, soundtrack)}`;
+        }
         const cue = catalog.soundCues.byUrl.get(attachment.payload.cue.publicUrl);
         return `Sound Cue · ${attachment.payload.sound}${cue ? ` · ${cue.metadata.description}` : ''}`;
       }}

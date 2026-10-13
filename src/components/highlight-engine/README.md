@@ -35,6 +35,7 @@ accessibility, viewport fit, power use, and look and feel. The Workshop's
 | Inline Editor | `development/InlineEditor.tsx` | The plain-text draft replacing only the selected words, including line breaks and IME typing |
 | Undo Notice | `development/UndoNotice.tsx` | "Passage deleted · Undo" after an explicit deletion |
 | Cue Picker | `development/ManualCuePicker.tsx`, `shared/manualCue.ts` | Choosing, previewing and placing a Sound Cue from the host catalog |
+| Soundtrack Change Picker | `development/SoundtrackChangePicker.tsx`, `src/audio/soundtrackChanges.ts` | Choosing a piece of music or an atmosphere (with the host's preview) for the chapter's one change of each, on the word where it begins; its option list also serves the host's opening choice |
 | Manuscript | `shared/manuscript.ts` | Permanent paragraph and sentence IDs, saved sentences, anchors, the one edit rule, draft / sealed |
 | Placement Rules | `src/audio/soundCueRules.ts`, `src/narrative/words.ts` | What a finished attachment may be, per kind of effect (see Placement rules), and word edges in any language |
 
@@ -192,7 +193,17 @@ finished attachment — kept in one place so they can be tuned later.
 | Effect | Sits on | Size | Per chapter |
 | --- | --- | --- | --- |
 | Sound Cue | Words: where a sound happens ("drew his sword", "a horn blared across the terrace") | 1–8 whole words, never mid-word | 10 |
-| Soundscape (not built yet) | A passage, never words: atmosphere and tone, e.g. a chapter's opening or the moment before a major battle | — | 2 |
+| Soundscape change | The chapter's opening (locked at its start), then the one word where the music changes, e.g. the moment before a major battle | One word: where it begins | 2 (the opening and one more) |
+| Atmosphere change | The chapter's opening (locked at its start), then the one word where the place's sound changes | One word: where it begins | 2 (the opening and one more) |
+
+The music (soundscape), the atmosphere and Sound Cues are three separate kinds
+of sound, each placed and counted on its own. `SOUNDTRACK_CHANGE_RULES`
+(`src/audio/soundtrackChanges.ts`) holds the two-per-chapter limit (SENSEI:
+sequencing sound takes taste and restraint, and two is hard to get wrong).
+The opening is the host's to show (the Reader's Create mode lists the
+writer's choice and every piece or atmosphere); the change partway through is
+an attachment on its word, so an edit that replaces the word flags it like any
+other.
 
 `SOUND_CUE_RULES` and `soundCueWordIssue` (`src/audio/soundCueRules.ts`) hold
 the Sound Cue rules. Word edges come from `src/narrative/words.ts`, which
@@ -287,6 +298,7 @@ browser evidence out of the consuming surface. No integration was performed.
 
 ## Workshop history
 
+- **2026-10-12 (soundscapes and atmospheres):** From SENSEI: the music (soundscape), the atmosphere and Sound Cues are three separate sounds. Media → Audio now offers **Cue**, **Soundscape** and **Atmosphere**: the last two place the chapter's one change of music or of atmosphere on the first word of the selection, from a list of the exact pieces or atmospheres (with the host's preview); placing one where one already is moves it. Remove mode removes them. The Overlays switch's second mode is now **Audio** (it was Cues) and tints all three kinds, each in its own color (Sound Cues blue, soundscape changes violet, atmosphere changes green). `soundCueActions` is now `audioActions`, which takes the host's `soundtrack` choices. A submenu in one row is now as wide as its labels: at 120px the three Audio actions overlapped, and a click could land on the wrong one. The lab offers the Library's own pieces and atmospheres.
 - **2026-10-12 (renamed):** From SENSEI: the Text Highlight Engine is now the **Highlight Engine**, because the same engine will highlight images for sequential art, not only text. Its folder (`src/components/highlight-engine/`), component (`HighlightEngine`, `HighlightEngineProps`), package entry (`@seihouse/sen/highlight-engine`), Workshop route (`?preview=highlight-engine`) and browser check (`scripts/verifyHighlightEngine.mjs`) are renamed. The prose surface keeps its text names (see above). Earlier entries keep the old name.
 - **2026-10-12 (cue previews through the Reader's mixer):** SENSEI reported a placed cue that would not play although its preview had. The preview played through the host's single-channel player and the placed cue through the reader mixer, two different routes; the app has no single-channel player at all, so its Create mode picker could not open. With a reader mixer the Cue Picker now previews through it, exactly as the placed cue will play, and says "Audio preview is unavailable" when the mixer will not or cannot play it; without one it keeps the single-channel player. A cue that failed now shows why when hovered.
 - **2026-10-12:** The lab's authoring tools are now SEN's, shared with the HARNESS Reader's Create mode:

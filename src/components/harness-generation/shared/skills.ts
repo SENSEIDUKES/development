@@ -70,7 +70,7 @@ export const CAPA_SCHEMA: readonly CapaSlotDefinition[] = [
   { id: 'accessibility', label: 'Accessibility', description: 'Writes chapters in the story\'s Reading Mode.', managedBy: 'reading-mode', installable: false },
   { id: 'translation', label: 'Translation', description: 'Writes chapters in the story\'s Story Language when it is not English.', managedBy: 'story-language', installable: true },
   { id: 'soundCues', label: 'Sound Cues', description: 'Tags the words where a sound happens and names it from the story\'s sound words.', managedBy: 'media-loadout', installable: false, writesTags: true },
-  { id: 'soundtrack', label: 'Soundtrack', description: 'Chooses the music mood and atmosphere a chapter is read with, once, at its start.', managedBy: 'media-loadout', installable: false, writesTags: true },
+  { id: 'soundtrack', label: 'Soundtrack', description: 'Chooses the music mood and the atmosphere a chapter opens with, each with its own tag, once, at its start.', managedBy: 'media-loadout', installable: false, writesTags: true },
   { id: 'speakers', label: 'Speakers', description: 'Tags who speaks each spoken line, so the Reader can give each its voice.', managedBy: 'always', installable: false, writesTags: true },
   { id: 'holdings', label: 'Holdings', description: 'Keeps what every character has, uses, knows and is: tags each change where it happens and lists what the main character holds after the chapter.', managedBy: 'always', installable: false, writesTags: true },
 ] as const;

@@ -41,7 +41,7 @@ export function readStorySettingsDraft(storage: ReaderPreferenceStorage): StoryS
   }
   if (isRecord(parsed.media)) {
     const media: NonNullable<StorySettingsDraft['media']> = {};
-    for (const slot of ['soundscapes', 'soundCues'] as const) {
+    for (const slot of ['soundscapes', 'soundCues', 'atmospheres'] as const) {
       const value = reference(parsed.media[slot]);
       if (value) media[slot] = value;
     }

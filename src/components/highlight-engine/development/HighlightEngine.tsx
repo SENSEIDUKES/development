@@ -19,7 +19,7 @@ export interface HighlightEngineProps {
   renderBlockText?: (block: TextHighlightBlock) => ReactNode;
   /** False once a host's text is fixed (for example a sealed chapter): no Edit, Delete, or Undo. Defaults to true. */
   editable?: boolean;
-  /** Tints behind the prose and quiet numbers beside it (for example a Cues overlay). Absent means no overlay work at all. */
+  /** Tints behind the prose and quiet numbers beside it (for example an Audio overlay). Absent means no overlay work at all. */
   overlay?: TextHighlightOverlay;
   /** The prose's language, used to find word edges (the word under a right-click). */
   locale?: string;

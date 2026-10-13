@@ -1,8 +1,18 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { useOptionalReaderMixer, type ReaderMixer } from '@seihouse/audio-player';
-import { resolvePlayableSoundCue, type SceneAudioTrack, type SoundCueAttachment } from '@seihouse/sen/audio';
+import { useOptionalReaderMixer, type ReaderAtmosphereOption, type ReaderMixer } from '@seihouse/audio-player';
+import { resolvePlayableSoundCue, type SceneAtmosphere, type SceneAudioTrack, type SoundCueAttachment } from '@seihouse/sen/audio';
 import { piecesForMood, storySoundtrack, type SoundtrackChoice, type SoundtrackRequest } from '@seihouse/sen/reader-runtime';
 import type { HarnessChapter, HarnessChapterScene } from '../../../narrative/generation';
+import type { ReaderScene } from './useSoundtrackChanges';
+
+/** A story's atmosphere as the mixer plays it: its looping bed, at its measured level. */
+export const atmosphereOption = (atmosphere: SceneAtmosphere & { url: string }): ReaderAtmosphereOption => ({
+  id: atmosphere.id,
+  label: atmosphere.label ?? atmosphere.word,
+  ...(atmosphere.group ? { group: atmosphere.group } : {}),
+  sources: [{ url: atmosphere.url }],
+  ...(atmosphere.loudness ? { loudness: { kind: 'integrated', lufs: atmosphere.loudness.lufs, peakDb: atmosphere.loudness.peakDb ?? null } } : {}),
+});
 
 /** How far the soundtrack drops while Listen reads aloud: the player's own narration duck. */
 export const LISTEN_DUCK = 0.6;
@@ -69,16 +79,23 @@ export function readerMood(mood: string | undefined, pieces: readonly SceneAudio
  *
  * Without a mixer (a host that supplies none) it does nothing.
  */
-export function useReaderSoundtrack({ active, chapterId, soundCues, scene, pieces, choice, speaking, listenEnded, onSleep, chapterEnd }: {
+export function useReaderSoundtrack({ active, chapterId, soundCues, scene, pieces, atmospheres, choice, speaking, listenEnded, onSleep, chapterEnd }: {
   /** True while the Reader is open (its pages and the writing screen included), where the story audio note can silence it. */
   active: boolean;
   /** The chapter on screen. */
   chapterId?: string;
   soundCues?: readonly SoundCueAttachment[];
-  /** The chapter's own music and atmosphere, as its writer chose them. */
-  scene?: HarnessChapterScene;
+  /** The chapter's music and atmosphere at the reader's place: the writer's, or the reader's own from Create mode. */
+  scene?: ReaderScene;
   /** The soundscapes the chapter was written with: its music comes from these. */
   pieces?: readonly SceneAudioTrack[];
+  /**
+   * The atmospheres the chapter was written with (the story's Atmospheres
+   * slot): while the Reader is open they are the mixer's whole choice, and
+   * the host's own come back when it closes. Beds frozen without a file (before
+   * atmospheres came from packs) leave the host's in place.
+   */
+  atmospheres?: readonly SceneAtmosphere[];
   /** Who chooses the music and the atmosphere: each chapter (Automatic) or the reader. */
   choice: SoundtrackChoice;
   /** True while Listen is reading a line aloud (not while paused). */
@@ -105,16 +122,30 @@ export function useReaderSoundtrack({ active, chapterId, soundCues, scene, piece
     return () => mixer.stopAtmosphere();
   }, [mixer, active]);
 
+  // The story's own atmospheres replace the host's while the Reader is open (before a bed is chosen from them).
+  const beds = useMemo(() => (atmospheres ?? []).filter((atmosphere): atmosphere is SceneAtmosphere & { url: string } => Boolean(atmosphere.url)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the same beds, whatever array holds them
+    [atmospheres?.map(atmosphere => `${atmosphere.id}@${atmosphere.url ?? ''}`).join('|')]);
+  useEffect(() => {
+    if (!mixer || !active || !beds.length) return undefined;
+    const hosts = mixer.getAtmosphereOptions();
+    // The same beds already (a story on the host's own atmospheres): nothing to swap, nothing restarts.
+    const same = hosts.length === beds.length && beds.every((bed, index) => hosts[index]?.id === bed.id && hosts[index]?.sources?.[0]?.url === bed.url);
+    if (same) return undefined;
+    mixer.setAtmosphereOptions(beds.map(atmosphereOption));
+    return () => mixer.setAtmosphereOptions(hosts);
+  }, [mixer, active, beds]);
+
   // The atmosphere: the reader's own, or the chapter's. Without either, the one playing stays.
   const atmosphereId = choice.atmosphere === 'automatic' ? scene?.atmosphere : choice.atmosphere.atmosphereId;
   useEffect(() => {
     if (!mixer || !active || !atmosphereId) return;
     if (!mixer.getAtmosphereOptions().some(option => option.id === atmosphereId)) return;
     if (mixer.getPreferences().atmosphereId !== atmosphereId) mixer.setAtmosphere(atmosphereId);
-  }, [mixer, active, atmosphereId]);
+  }, [mixer, active, atmosphereId, beds]);
 
-  // The music: the reader's own piece, or the chapter's mood, or the Reader's own. Never the host's.
-  const chosenId = choice.soundscape === 'automatic' ? undefined : choice.soundscape.pieceId;
+  // The music: the reader's own piece (Settings), the chapter's exact piece (Create mode), its mood, or the Reader's own. Never the host's.
+  const chosenId = choice.soundscape === 'automatic' ? scene?.piece : choice.soundscape.pieceId;
   const mood = scene?.soundscape;
   useEffect(() => {
     if (!mixer || !active || !pieces?.length) return undefined;

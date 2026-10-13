@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ReaderAudioNote } from './ReaderAudioNote';
+import { useSoundtrackChanges } from './useSoundtrackChanges';
 import { useReaderDocumentScrollbar } from './useReaderDocumentScrollbar';
 import type { TextHighlightBlock } from '@seihouse/sen/highlight-engine';
 import type { SceneAudioTrack } from '@seihouse/sen/audio';
@@ -357,13 +358,18 @@ export function HarnessReaderSession({
     setSoundtrackChoice(choice);
     writeSoundtrackChoice(readerPreferences, choice);
   }, [readerPreferences]);
-  const scene = useMemo(() => (chapter ? readingScene(chapters, chapter.chapterNumber) : undefined), [chapters, chapter]);
+  const writerScene = useMemo(() => (chapter ? readingScene(chapters, chapter.chapterNumber) : undefined), [chapters, chapter]);
+  const blockOrder = useMemo(() => blocks.map(block => block.id), [blocks]);
+  const listening = useMemo(() => (spokenBlock && spokenBlock !== 'title' && sentenceStart !== undefined
+    ? { blockId: spokenBlock, offset: sentenceStart, order: blockOrder } : undefined), [blockOrder, sentenceStart, spokenBlock]);
+  // The reader's own opening and changes (Create mode) over the writer's scene, as the reader reaches them.
+  const scene = useSoundtrackChanges({ chapter, scene: writerScene, article: articleRef, listening });
   // The chapter's soundscapes; before the story has a chapter, the newest one's or the host's.
   const loadout = chapter?.mediaLoadout ?? chapters.at(-1)?.mediaLoadout;
   const pieces = useMemo(() => loadout?.soundscapes.map(entry => entry.track) ?? soundscapes, [loadout, soundscapes]);
   const mixer = useReaderSoundtrack({
     active: Boolean(story && readerState),
-    chapterId: chapter?.id, soundCues: chapter?.soundCues, scene, pieces, choice: soundtrackChoice,
+    chapterId: chapter?.id, soundCues: chapter?.soundCues, scene, pieces, atmospheres: loadout?.atmospheres, choice: soundtrackChoice,
     speaking: readAloud.status === 'playing', listenEnded: readAloud.status === 'ended',
     onSleep: readAloud.stop, chapterEnd,
   });

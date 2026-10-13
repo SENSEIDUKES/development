@@ -73,6 +73,16 @@ Audio packages can be up to 1 GB, with each file up to 512 MB (the SPP safety
 ceiling; skills and word lists keep the small 64 MB default). The whole package
 is read into memory while it is installed, so on a phone keep packs smaller.
 
+### Atmospheres (your own place sounds)
+
+The same, with `"kind": "atmospheres"` and one folder per atmosphere word
+(`forest/`, `temple hall/`), each holding its looping beds. A file's name,
+without its ending, is the bed's name (`Forest 2`); beds that share a word take
+turns from chapter to chapter. In the app: Story Settings › Media Loadout ›
+**Import .spp**. The pack is equipped in the story's Atmospheres slot, in place
+of the Library's own: the writer chooses each chapter's atmosphere from its
+words, and Create mode and Reader Settings offer its beds.
+
 ### Anything else
 
 Any other folder is packaged as plain files, for a host that knows what to do
@@ -82,7 +92,7 @@ with them.
 
 All optional: `name` (the folder's name), `description`, `version` (`1.0.0`),
 `publisher` (SEIHouse Productions LLC), `kind` (`sound-words`, `capa`,
-`sound-cues` or `soundscapes`), `slot` (for `capa`), `categories` (for
+`sound-cues`, `soundscapes` or `atmospheres`), `slot` (for `capa`), `categories` (for
 `sound-cues`), and `id`, written by the first build.
 
 ## Set up Send To (once, per computer)
@@ -100,5 +110,6 @@ Delete that shortcut to remove it. It needs Node and the repository's
 
 ## History
 
+- **2026-10-12:** Audio: `atmospheres` packages from a folder per atmosphere word, for the Media Loadout's new Atmospheres slot (SENSEI: atmospheres are made in the Library's studios like music and Sound Cues).
 - **2026-10-11:** Audio: `sound-cues` and `soundscapes` packages from a folder per sound word or mood, up to the SPP safety ceiling (1 GB, 512 MB a file), installed from Story Settings and kept on the device. Skill packages install from each Story Settings slot in the app.
 - **2026-10-11:** Created with `scripts/makeSpp.mjs`, `Make SPP.cmd` and the Library Sound Words template (v1.0.0, its 30 words).

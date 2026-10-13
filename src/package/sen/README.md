@@ -1,5 +1,35 @@
 # `@seihouse/sen`
 
+**0.33.1 (2026-10-13):** Create mode shows where a chapter's sound begins and says when it
+has none. `./highlight-engine`: `openingSoundMark(manuscript, { soundscape?, atmosphere? })`
+marks the chapter's first word in the Soundscape and Atmosphere colors (split when both open
+it), and the Audio overlay's legend names the kinds **Soundscape** and **Atmosphere**, covering
+both the opening and a change. `./harness-generation`: Create mode draws that mark on the
+Audio overlay and, when the chapter has no Sound Cues, says so above the page (never in the
+Reader); a chapter without one is still accepted.
+
+**0.33.0 (2026-10-12):** A story's atmospheres come from its Media Loadout's Atmospheres
+slot. `./audio`: `MediaSelectionSlot` gains `atmospheres`; `SceneAtmosphere` gains `url` (where
+the bed plays) and `loudness`. `./harness-generation`: while the Reader is open, the reader
+mixer's atmospheres are the chapter's frozen beds (`useReaderSoundtrack`'s `atmospheres`,
+`atmosphereOption`), and the host's come back when it closes; beds frozen without a file
+leave the host's in place.
+
+**0.32.0 (2026-10-12, breaking):** The music, the atmosphere and Sound Cues are three
+separate sounds. The writer's tags: SEN Soundtrack 2.0.0 teaches `[[soundscape: Music Mood]]`
+and `[[atmosphere: Atmosphere]]`, each once at the chapter's start, in place of the combined
+`[[soundtrack: Music Mood | Atmosphere]]` (still read). `SoundtrackTag` gains `kind`
+(`SoundtrackTagKind`); `SOUNDTRACK_TAG_WORDS` is now a record by kind; `chapterSoundtrack`
+reads the first tag of each kind. Create mode: `HarnessChapter.openingSound`
+(`ChapterOpeningSound`, the reader's own opening piece or atmosphere, locked at the start)
+and `HarnessChapter.soundtrackChanges` (one `SoundscapeChangeAttachment` and one
+`AtmosphereChangeAttachment` at most, each on the word where it begins;
+`SOUNDTRACK_CHANGE_RULES`), saved by `authorChapter`; the Reader plays them as the reader
+reaches each word (`readerSceneAt`). `./highlight-engine`: `soundCueActions` is now
+`audioActions` (with the host's `soundtrack` choices: Media → Audio → Soundscape and
+Atmosphere); `SoundtrackChangePanel`, `SoundtrackOptionList`; the overlay mode `cues` is now
+`audio` and tints all three kinds.
+
 **0.31.1 (2026-10-13):** SEN Sound Cues 2.4.0 no longer tells the writer that a chapter
 may have no Sound Cues. Told so, the writer tagged none in two chapters whose prose rang a
 bell five times. A cue is still earned by the prose, at most 10 a chapter, and never added

@@ -5,7 +5,7 @@ import type { SoundWord } from './soundWords';
 
 /** Opaque host resource identity; contains no account, price, or entitlement. */
 export interface MediaResourceReference { id: string; version: string }
-export type MediaSelectionSlot = 'soundscapes' | 'soundCues';
+export type MediaSelectionSlot = 'soundscapes' | 'soundCues' | 'atmospheres';
 export type StoryMediaSelection = Partial<Record<MediaSelectionSlot, MediaResourceReference>>;
 
 export interface MediaResourceProvenance {
@@ -16,17 +16,28 @@ export interface MediaResourceProvenance {
 
 /**
  * One atmosphere a writer may choose for a chapter: the word it is chosen by
- * and the host's bed it plays. Several beds may share a word ("forest" for
+ * and the looping bed it plays. Several beds may share a word ("forest" for
  * Forest 1, 2 and 3); the chapters that choose it take turns among them.
+ * A story's atmospheres come from its Media Loadout's Atmospheres slot (the
+ * host's own beds when no pack is equipped), as its music and Sound Cues
+ * come from theirs.
  */
 export interface SceneAtmosphere {
-  /** The host's atmosphere id, as its reader mixer knows it. */
+  /** The bed's id, as the reader mixer knows it. */
   id: string;
   /** What the writer writes, lower case ("gentle rain"). */
   word: string;
   /** The bed's own name, where a reader sees it. */
   label?: string;
   group?: string;
+  /**
+   * Where the bed plays: a public HTTPS file or a file in an installed package.
+   * Absent from media frozen before atmospheres came from packs: the host's
+   * mixer knows the bed by its id.
+   */
+  url?: string;
+  /** The bed's measured loudness, so every bed plays at one level. */
+  loudness?: { lufs: number; peakDb?: number };
 }
 
 /** Serializable, authorized resources frozen before a generation attempt. */

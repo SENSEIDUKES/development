@@ -74,6 +74,21 @@ describe('media packages', () => {
     expect(pack.entries.map(track => [track.mood, track.label])).toEqual([['battle', 'Clash'], ['mystical', 'Moonlit Shrine']]);
   });
 
+  it('makes and reads an Atmosphere pack from a folder per word, whose beds replace the Library’s for a story that equips it', async () => {
+    const folder = audioFolder({ forest: ['Forest 1.mp3', 'Forest 2.mp3'], 'temple hall': ['Hall.ogg'] }, { name: 'Shrine Air', kind: 'atmospheres' });
+    const { pack } = await inspectMediaPackSpp(readFileSync((await makeSpp(folder)).path));
+    if (pack.type !== 'atmosphere') throw new Error('Expected an Atmosphere pack.');
+    expect(pack.entries.map(bed => [bed.word, bed.label, bed.group])).toEqual([['forest', 'Forest 1', 'Forest'], ['forest', 'Forest 2', 'Forest'], ['temple hall', 'Hall', 'Temple Hall']]);
+    expect(pack.entries.every(bed => readPackageMediaUrl(bed.url))).toBe(true);
+    // Equipped in the Atmospheres slot, the pack is the story's whole set of atmospheres.
+    const at = '2026-10-12T00:00:00.000Z';
+    const port = createLibraryMediaPort({ registered: [pack], entitlements: [deviceMediaPackEntitlement(pack, at)], base: LIBRARY_BASE_MEDIA });
+    expect(port.freeze(undefined, at).atmospheres?.length).toBe(LIBRARY_BASE_MEDIA.atmospheres!.length);
+    expect(port.freeze({ atmospheres: { id: pack.id, version: pack.version } }, at).atmospheres?.map(bed => bed.word)).toEqual(['forest', 'forest', 'temple hall']);
+    // Only an Atmosphere pack goes in the Atmospheres slot.
+    expect(() => port.validateSelection({ soundCues: { id: pack.id, version: pack.version } }, at)).toThrow('This slot requires Sound Cues.');
+  });
+
   it('says what is wrong with an audio folder, and makes nothing', async () => {
     await expect(makeSpp(audioFolder({ 'temple bell': ['notes.txt'] }, { name: 'A', kind: 'sound-cues' }))).rejects.toThrow('not an audio file');
     await expect(makeSpp(audioFolder({ 'Roar!': ['a.mp3'] }, { name: 'B', kind: 'sound-cues' }))).rejects.toThrow('folder name must be one to three plain English words');
@@ -86,7 +101,7 @@ describe('media packages', () => {
       name: 'Broken', description: '', files, ...(extensions ? { extensions: extensions as never } : {}),
     });
     const media = { 'seihouse.media-pack': { type: 'sound-cue', catalog: 'assets/media-pack.json' } };
-    await expect(inspectMediaPackSpp(await pack([{ path: 'assets/a.mp3', mediaType: 'audio/mpeg', data: AUDIO }]))).rejects.toThrow('is not a Soundscape or Sound Cue package');
+    await expect(inspectMediaPackSpp(await pack([{ path: 'assets/a.mp3', mediaType: 'audio/mpeg', data: AUDIO }]))).rejects.toThrow('is not a Soundscape, Sound Cue or Atmosphere package');
     await expect(inspectMediaPackSpp(await pack([
       { path: 'assets/media-pack.json', mediaType: 'application/json', data: encode({ recordings: [{ path: 'assets/missing.mp3', sound: 'growl' }] }) },
     ], media))).rejects.toThrow('does not contain');

@@ -12,6 +12,8 @@ import type { PassageSelection } from '../shared/selection';
 import type { TextHighlightOverlay } from '../shared/overlay';
 import { ATTACHMENT_COLORS, OVERLAY_KINDS, type ManuscriptOverlayMode } from '../shared/overlayModes';
 import { ManualCuePicker } from './ManualCuePicker';
+import { SOUNDTRACK_KIND_WORDS, SoundtrackChangePanel, type SoundtrackChoices } from './SoundtrackChangePicker';
+import { ATMOSPHERE_CHANGE_KIND, SOUNDSCAPE_CHANGE_KIND, type SoundtrackChangeKind } from '../../../audio/soundtrackChanges';
 
 /** Any page's state: Sound Cues sit among attachments of other kinds (speakers, holdings), which they leave alone. */
 type AuthoringState = ManuscriptState<unknown>;
@@ -79,17 +81,41 @@ function CueAttachPanel({ state, selection, catalog, onPlace, onRemove, onClose 
   </div>;
 }
 
+/** The soundtrack changes of one kind whose word a selection touches. */
+const changesUnder = (state: AuthoringState, selection: PassageSelection, kind: SoundtrackChangeKind) => state.attachments.filter(attachment => {
+  if (attachment.kind !== kind) return false;
+  const resolution = resolveAnchor(state.manuscript, attachment.anchor);
+  return resolution.status === 'placed' && resolution.selection.blockId === selection.blockId
+    && resolution.selection.startOffset < selection.endOffset && resolution.selection.endOffset > selection.startOffset;
+});
+
 /**
- * The page's Sound Cue actions for the engine: Media → Audio → Cue places or
- * replaces one on the selected words (from the host's catalog), and "Remove cue
- * here" takes them off. Shared by the Workshop lab and the Reader's Create mode.
+ * The page's audio actions for the engine. The three kinds of sound are
+ * separate: Media → Audio → Cue places or replaces a Sound Cue on the
+ * selected words (from the host's catalog); with the host's `soundtrack`
+ * choices, Soundscape and Atmosphere place the chapter's one change of music
+ * or of atmosphere on the word the selection begins with (the chapter's
+ * opening, the other of each kind's two, is the host's to show). Remove mode
+ * takes any of them off. Shared by the Workshop lab and the Reader's Create mode.
  */
-export function soundCueActions<State extends AuthoringState>({ state, update, catalog, onNotice }: {
+export function audioActions<State extends AuthoringState>({ state, update, catalog, onNotice, soundtrack }: {
   state: State;
   update: (change: (current: State) => State) => void;
   catalog: MediaCatalog;
   onNotice: (notice: string) => void;
+  /** The chapter's pieces and atmospheres; without them only Sound Cues are offered. */
+  soundtrack?: SoundtrackChoices;
 }): { actions: PassageAction[]; removeActions: PassageAction[] } {
+  const soundtrackAction = (kind: SoundtrackChangeKind): PassageAction => ({
+    id: kind === SOUNDSCAPE_CHANGE_KIND ? 'soundscape' : 'atmosphere', label: SOUNDTRACK_KIND_WORDS[kind].name,
+    unavailable: selected => {
+      const paragraph = state.manuscript.paragraphs.find(candidate => candidate.id === selected.blockId);
+      return paragraph && paragraph.text.slice(selected.startOffset, selected.endOffset).trim() ? undefined : 'Select a word';
+    },
+    onActivate: (selected, close) => <SoundtrackChangePanel kind={kind} state={state} selection={selected} choices={soundtrack!}
+      onPlace={(attachment, replaces) => update(current => placeAttachment(replaces ? removeAttachment(current, replaces) : current, attachment) as State)}
+      onClose={close} />,
+  });
   const actions: PassageAction[] = [{ id: 'media', label: 'Media', children: [{ id: 'audio', label: 'Audio', children: [{
     id: 'cue', label: 'Cue',
     unavailable: selected => { const target = soundCueTarget(state, selected); return 'reason' in target ? target.reason : undefined; },
@@ -103,7 +129,7 @@ export function soundCueActions<State extends AuthoringState>({ state, update, c
         update(current => placeAttachment(current, attachment) as State);
       }}
       onRemove={id => update(current => removeAttachment(current, id) as State)} onClose={close} />,
-  }] }] }];
+  }, ...(soundtrack ? [soundtrackAction(SOUNDSCAPE_CHANGE_KIND), soundtrackAction(ATMOSPHERE_CHANGE_KIND)] : [])] }] }];
   const removeActions: PassageAction[] = [{
     id: 'remove-cue', label: 'Remove cue here',
     unavailable: selected => cuesUnder(state, selected).length ? undefined : 'No Sound Cue here',
@@ -112,12 +138,20 @@ export function soundCueActions<State extends AuthoringState>({ state, update, c
       update(current => ids.reduce((next, id) => removeAttachment(next, id) as State, current));
       return null;
     },
-  }];
+  }, ...(soundtrack ? ([SOUNDSCAPE_CHANGE_KIND, ATMOSPHERE_CHANGE_KIND] as const).map((kind): PassageAction => ({
+    id: `remove-${kind}`, label: `Remove ${SOUNDTRACK_KIND_WORDS[kind].noun} change here`,
+    unavailable: selected => changesUnder(state, selected, kind).length ? undefined : `No ${SOUNDTRACK_KIND_WORDS[kind].noun} change here`,
+    onActivate: selected => {
+      const ids = changesUnder(state, selected, kind).map(attachment => attachment.id);
+      update(current => ids.reduce((next, id) => removeAttachment(next, id) as State, current));
+      return null;
+    },
+  })) : [])];
   return { actions, removeActions };
 }
 
 /**
- * The Overlays switch (Off / Cues) and, while one is on, its legend: the
+ * The Overlays switch (Off / Audio) and, while one is on, its legend: the
  * page's numbering as the model addresses it, and each kind's color.
  */
 export function ManuscriptOverlaySwitch({ mode, onChange, overlay }: {
@@ -129,7 +163,7 @@ export function ManuscriptOverlaySwitch({ mode, onChange, overlay }: {
   return <div className="space-y-3">
     <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400" role="group" aria-label="Overlays" data-testid="overlay-switch">
       <span className="mr-1 uppercase tracking-[0.14em] text-slate-500">Overlays</span>
-      {([['off', 'Off'], ['cues', 'Cues']] as const).map(([value, label]) => <button key={value} type="button" aria-pressed={mode === value}
+      {([['off', 'Off'], ['audio', 'Audio']] as const).map(([value, label]) => <button key={value} type="button" aria-pressed={mode === value}
         className={`min-h-9 rounded-lg border px-3 ${mode === value ? 'border-teal-300/60 bg-teal-400/10 text-teal-100' : 'border-slate-600 text-slate-300 hover:bg-slate-800'}`}
         onClick={() => onChange(value)}>{label}</button>)}
     </div>

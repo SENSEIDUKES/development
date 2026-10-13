@@ -130,7 +130,12 @@ describe('speaker tags', () => {
   it('reads the chapter\'s soundtrack tag, in any of its spellings, and leaves nothing of it in the prose', () => {
     const reading = readMarks('[[soundtrack: mystical | forest]] The mist lay low over the pines.');
     expect(reading.text).toBe('The mist lay low over the pines.');
-    expect(reading.soundtracks).toEqual([{ parts: ['mystical', 'forest'], offset: 0 }]);
+    expect(reading.soundtracks).toEqual([{ kind: 'soundtrack', parts: ['mystical', 'forest'], offset: 0 }]);
+    // The music and the atmosphere each have their own tag now, read as separate kinds.
+    const split = readMarks('[[soundscape: mystical]] [[atmosphere: forest]] The mist lay low over the pines.');
+    expect(split.text).toBe('The mist lay low over the pines.');
+    expect(split.soundtracks).toEqual([{ kind: 'soundscape', parts: ['mystical'], offset: 0 }, { kind: 'atmosphere', parts: ['forest'], offset: 0 }]);
+    expect(readMarks('[[Ambience: gentle rain]] [[Sound-scape: sad]] Rain.').soundtracks.map(tag => tag.kind)).toEqual(['atmosphere', 'soundscape']);
     const spellings: Array<[string, string[]]> = [
       ['［［Soundtrack：sad｜gentle rain］］雨が降った。', ['sad', 'gentle rain']],
       ['[[Scene: tension]] He waited.', ['tension']],
@@ -220,7 +225,12 @@ describe('word tags', () => {
   it('reads the chapter\'s soundtrack tag, in any of its spellings, and leaves nothing of it in the prose', () => {
     const reading = readMarks('[[soundtrack: mystical | forest]] The mist lay low over the pines.');
     expect(reading.text).toBe('The mist lay low over the pines.');
-    expect(reading.soundtracks).toEqual([{ parts: ['mystical', 'forest'], offset: 0 }]);
+    expect(reading.soundtracks).toEqual([{ kind: 'soundtrack', parts: ['mystical', 'forest'], offset: 0 }]);
+    // The music and the atmosphere each have their own tag now, read as separate kinds.
+    const split = readMarks('[[soundscape: mystical]] [[atmosphere: forest]] The mist lay low over the pines.');
+    expect(split.text).toBe('The mist lay low over the pines.');
+    expect(split.soundtracks).toEqual([{ kind: 'soundscape', parts: ['mystical'], offset: 0 }, { kind: 'atmosphere', parts: ['forest'], offset: 0 }]);
+    expect(readMarks('[[Ambience: gentle rain]] [[Sound-scape: sad]] Rain.').soundtracks.map(tag => tag.kind)).toEqual(['atmosphere', 'soundscape']);
     const spellings: Array<[string, string[]]> = [
       ['［［Soundtrack：sad｜gentle rain］］雨が降った。', ['sad', 'gentle rain']],
       ['[[Scene: tension]] He waited.', ['tension']],

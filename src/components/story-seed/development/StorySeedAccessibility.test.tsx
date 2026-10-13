@@ -238,6 +238,9 @@ describe('Story Seed keyboard and mobile navigation', () => {
       Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value);
       input.dispatchEvent(new Event('input', { bubbles: true }));
     });
+    // Custom tags, search and families wait behind Browse all tags.
+    expect(container.querySelector('#custom-tag-input')).toBeNull();
+    act(() => container.querySelector<HTMLButtonElement>('[aria-controls="origin-tag-browser"]')!.click());
     const addCustom = (value: string) => {
       fill('#custom-tag-input', value);
       act(() => container.querySelector('#custom-tag-input')!.dispatchEvent(

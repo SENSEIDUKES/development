@@ -5,8 +5,7 @@ import { HARD_PIN_LIMIT, HARD_PIN_TEXT_LIMIT, type StorySeedInput, type FunSetti
 import { getSeedSection } from '../seedSections';
 import { patchFunSettings, patchWorldFoundations, funSettings, worldFoundations, type UpdateSeed } from '../seedState';
 import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
-import { SeedSectionFrame } from './SeedSectionFrame';
-import { handleRadioGroupKeyDown } from '../radioGroupKeyboard';
+import { SeedNote, SeedSectionFrame, SeedSegmented } from './SeedSectionFrame';
 
 interface ArcWorkspaceProps {
   seed: StorySeedInput;
@@ -42,6 +41,8 @@ const FUN_SETTINGS: ReadonlyArray<{
   key: FunSettingKey;
   id: string;
   label: string;
+  /** The one line always shown; `help` is the full explanation behind the info toggle. */
+  short: string;
   help: string;
   levelCopy: Record<FunSettingLevel, string>;
 }> = [
@@ -49,6 +50,7 @@ const FUN_SETTINGS: ReadonlyArray<{
     key: 'faceSlap',
     id: 'face-slap',
     label: 'Face Slap',
+    short: 'How often arrogant rivals get humbled.',
     help: 'Controls how often arrogant rivals, elites, young masters, nobles, rankers, or social superiors underestimate the protagonist and get humbled.',
     levelCopy: {
       low: 'Rare and meaningful. Face-slaps happen only when the story earns them.',
@@ -60,6 +62,7 @@ const FUN_SETTINGS: ReadonlyArray<{
     key: 'plotArmor',
     id: 'plot-armor',
     label: 'Plot Armor',
+    short: 'How often fortune bends around the protagonist.',
     help: 'Controls how often fortune bends around the protagonist.',
     levelCopy: {
       low: 'The protagonist survives through cost, sacrifice, and hard consequences.',
@@ -71,6 +74,7 @@ const FUN_SETTINGS: ReadonlyArray<{
     key: 'recognition',
     id: 'recognition',
     label: 'Recognition',
+    short: 'How much the world notices the protagonist.',
     help: 'Controls how much the world notices, remembers, and reacts to the protagonist\'s achievements.',
     levelCopy: {
       low: 'Achievements stay hidden, misunderstood, suppressed, or known only by a few.',
@@ -113,16 +117,19 @@ export const ArcWorkspace = ({ seed, updateSeed, showActiveArcGoal = true, showS
       ...current.story.optional, hardPins: next.map(text => text.trim()).filter(Boolean).map(text => ({ text })),
     } } }));
   };
+  // Pins appear one at a time: every written pin plus one empty slot, up to the limit.
+  const lastWrittenPin = pinDrafts.reduce((last, text, index) => text.trim() ? index : last, -1);
+  const visiblePins = Math.min(HARD_PIN_LIMIT, lastWrittenPin + 2);
   return (
     <SeedSectionFrame section={section} complete={section.isFilled(seed)}>
       <LibraryTextArea id="destined-ending-input" label="Destined Ending" icon={Hourglass} maxLength={1500}
-        helpText="The true long-term destination of this novel. If left blank, the Library recommends a fitting ending from your Origin. You can alter this outcome later."
+        helpText={<SeedNote moreLabel="More about the Destined Ending" more="The true long-term destination of this novel. If left blank, the Library recommends a fitting ending from your Origin. You can alter this outcome later.">Where the novel ultimately ends. Blank? The Library suggests one.</SeedNote>}
         value={worldFoundations(seed).destinedEnding || ''}
         onChange={value => updateSeed(patchWorldFoundations({ destinedEnding: value }))} rows={3} />
       {showStoryLength && <div>
         <LibraryTextBox id="story-length-input" label="Story Length (arcs)" icon={Milestone}
           type="number" min={STORY_LENGTH_ARCS.min} max={STORY_LENGTH_ARCS.max} step={1} inputMode="numeric"
-          helpText={`How many arcs of ${ARC_LENGTH} chapters the story takes to reach its Destined Ending. Leave it blank and the World Blueprint suggests a length you can change.`}
+          helpText={<SeedNote moreLabel="More about Story Length" more={`How many arcs of ${ARC_LENGTH} chapters the story takes to reach its Destined Ending. Leave it blank and the World Blueprint suggests a length you can change.`}>{`Arcs of ${ARC_LENGTH} chapters. Blank? The Blueprint suggests one.`}</SeedNote>}
           value={lengthText} invalid={typedLength === null}
           error={typedLength === null ? `Choose a whole number of arcs from ${STORY_LENGTH_ARCS.min} to ${STORY_LENGTH_ARCS.max}.` : undefined}
           onChange={changeLength} />
@@ -134,9 +141,9 @@ export const ArcWorkspace = ({ seed, updateSeed, showActiveArcGoal = true, showS
       </div>}
       <section aria-labelledby="arc-hard-pins-title" className="glass-panel p-4 sm:p-5">
         <h3 id="arc-hard-pins-title" className="font-display text-lg text-[#DDC58A]">Hard Pins</h3>
-        <p className="mb-4 text-xs text-neutral-400">Long-term promises the story must keep on the way to its Destined Ending. Up to three, all optional.</p>
+        <p className="mb-3 text-xs text-neutral-400">Promises the story must keep on the way to its ending. Up to {HARD_PIN_LIMIT}, all optional.</p>
         <div className="space-y-3">
-          {Array.from({ length: HARD_PIN_LIMIT }, (_, index) => (
+          {Array.from({ length: visiblePins }, (_, index) => (
             <LibraryTextBox key={index} id={`hard-pin-${index + 1}`} label={`Hard Pin ${index + 1}`} icon={Pin}
               maxLength={HARD_PIN_TEXT_LIMIT} value={pinDrafts[index] ?? ''} onChange={value => updatePin(index, value)} />
           ))}
@@ -144,86 +151,37 @@ export const ArcWorkspace = ({ seed, updateSeed, showActiveArcGoal = true, showS
       </section>
       {showActiveArcGoal && <>
         <LibraryTextBox id="active-arc-goal-input" label="Active Arc Goal" icon={Target}
-          helpText="The first goal of Arc 1: what the story works toward right now. The Blueprint plans Arc 1 around it; each later arc is planned when it begins, and you review its goals then."
+          helpText={<SeedNote moreLabel="More about the Active Arc Goal" more="The Blueprint plans Arc 1 around it; each later arc is planned when it begins, and you review its goals then.">What Arc 1 works toward first. Blank? The Blueprint suggests one you can review.</SeedNote>}
           value={seed.story.optional.activeArcGoal?.text ?? ''}
           onChange={text => updateSeed(current => ({ ...current, story: { ...current.story, optional: {
             ...current.story.optional, activeArcGoal: text.trim() ? { id: current.story.optional.activeArcGoal?.id ?? 'arc-1-initial', text, chapters: ARC_LENGTH } : undefined,
           } } }))} />
-        <p className="text-xs text-neutral-400">Leave the goal blank for a Blueprint suggestion you can review.</p>
       </>}
       <section className="glass-panel p-4 sm:p-5" aria-labelledby="arc-fun-settings-title">
-        <div className="mb-4">
-          <h3
-            id="arc-fun-settings-title"
-            className="font-sc text-xs font-bold uppercase tracking-[0.18em] text-[#DDC58A]"
-          >
-            Fun Settings
-          </h3>
-          <p className="mt-1 font-sans text-xs leading-relaxed text-neutral-400">
-            Optional ingredients you want the story to make room for because they make it more enjoyable.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          {FUN_SETTINGS.map(setting => {
-            const selected = settings[setting.key] || 'medium';
-            return (
-              <fieldset
-                key={setting.key}
-                className="min-w-0 rounded-xl border border-neutral-800/90 bg-neutral-950/45 p-3"
-              >
-                <legend className="px-1 font-display text-base font-bold tracking-wide text-[#F3EDE0]">
-                  {setting.label}
-                </legend>
-                <p
-                  id={`arc-${setting.id}-summary`}
-                  className="mt-1 min-h-12 font-sans text-[11px] leading-relaxed text-neutral-400 md:min-h-16"
-                >
-                  {setting.help}
-                </p>
-                <div
-                  role="radiogroup"
-                  aria-label={`${setting.label} level`}
-                  aria-describedby={`arc-${setting.id}-summary arc-${setting.id}-description`}
-                  className="mt-3 grid grid-cols-3 gap-1.5"
-                >
-                  {FUN_LEVELS.map(option => {
-                    const isSelected = selected === option.value;
-                    return (
-                      <button
-                        key={option.value}
-                        id={`arc-${setting.id}-${option.value}`}
-                        type="button"
-                        role="radio"
-                        aria-checked={isSelected}
-                        tabIndex={isSelected ? 0 : -1}
-                        title={setting.levelCopy[option.value]}
-                        onClick={() => updateSeed(patchFunSettings({ [setting.key]: option.value }))}
-                        onKeyDown={handleRadioGroupKeyDown}
-                        className={`min-h-11 cursor-pointer rounded-lg border px-1.5 font-sc text-[10px] font-bold uppercase tracking-[0.08em] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CDB271]/70 ${
-                          isSelected
-                            ? 'border-[#CDB271]/55 bg-[#CDB271]/10 text-[#F3EDE0] shadow-[0_0_12px_rgba(205,178,113,0.1)]'
-                            : 'border-neutral-800 bg-neutral-950/70 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    );
-                  })}
-                </div>
-                <p
-                  id={`arc-${setting.id}-description`}
-                  aria-live="polite"
-                  className="mt-3 font-sans text-[11px] leading-relaxed text-neutral-300"
-                >
-                  {setting.levelCopy[selected]}
-                </p>
-              </fieldset>
-            );
-          })}
+        <h3 id="arc-fun-settings-title" className="font-sc text-xs font-bold uppercase tracking-[0.18em] text-[#DDC58A]">
+          Fun Settings
+        </h3>
+        <p className="mt-1 font-sans text-xs leading-relaxed text-neutral-400">
+          Ingredients the story makes room for because they make it more enjoyable.
+        </p>
+        <div className="mt-3 grid grid-cols-1 divide-y divide-neutral-800/70 md:grid-cols-3 md:gap-4 md:divide-y-0">
+          {FUN_SETTINGS.map(setting => (
+            <fieldset key={setting.key} className="min-w-0 py-3 first:pt-0 last:pb-0 md:py-0">
+              <legend className="mb-1.5 flex items-center font-display text-base font-bold tracking-wide text-[#F3EDE0]">
+                {setting.label}
+              </legend>
+              <p id={`arc-${setting.id}-summary`} className="mb-2 font-sans text-[11px] leading-relaxed text-neutral-400">
+                {setting.short === setting.help ? setting.help : <SeedNote moreLabel={`More about ${setting.label}`} more={setting.help}>{setting.short}</SeedNote>}
+              </p>
+              <SeedSegmented label={`${setting.label} level`} idPrefix={`arc-${setting.id}`}
+                describedBy={`arc-${setting.id}-summary`}
+                value={settings[setting.key] || 'medium'}
+                options={FUN_LEVELS.map(level => ({ ...level, description: setting.levelCopy[level.value] }))}
+                onSelect={level => updateSeed(patchFunSettings({ [setting.key]: level }))} />
+            </fieldset>
+          ))}
         </div>
       </section>
-
     </SeedSectionFrame>
   );
 };

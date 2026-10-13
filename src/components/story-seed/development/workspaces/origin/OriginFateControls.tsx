@@ -1,5 +1,5 @@
 import { type StorySeedInput, type StorySeedSurvivalPressure } from '@seihouse/sen/story-seed';
-import { handleRadioGroupKeyDown, radioGroupTabIndex } from '../../radioGroupKeyboard';
+import { SeedNote, SeedSegmented } from '../SeedSectionFrame';
 
 const SURVIVAL_PRESSURE_OPTIONS: Array<{
   value: StorySeedSurvivalPressure;
@@ -28,77 +28,48 @@ interface FateSurvivalSettingProps {
   onChange: (patch: Partial<StorySeedInput['story']['optional']['fateSurvival']>) => void;
 }
 
-export const OriginFateControls = ({ settings, onChange }: FateSurvivalSettingProps) => {
-  const optionGroup = <T extends StorySeedSurvivalPressure>(
-    title: string,
-    subtitle: string,
-    value: T,
-    options: Array<{ value: T; label: string; description: string }>,
-    onSelect: (value: T) => void,
-  ) => (
-    <div className="space-y-2">
-      <div>
-        <p className="font-sc text-[11px] font-bold uppercase tracking-[0.16em] text-signal">{title}</p>
-        <p className="mt-1 font-sans text-[11px] leading-relaxed text-neutral-400">{subtitle}</p>
-      </div>
-      <div className="grid gap-2" role="radiogroup" aria-label={title}>
-        {options.map((option, index) => {
-          const selected = option.value === value;
-          return (
-            <button
-              key={option.value}
-              type="button"
-              role="radio"
-              aria-checked={selected}
-              tabIndex={radioGroupTabIndex(selected, options.some(candidate => candidate.value === value), index)}
-              onClick={() => onSelect(option.value)}
-              onKeyDown={handleRadioGroupKeyDown}
-              className={`rounded-xl border p-3 text-left transition-colors ${selected
-                ? 'border-portal/60 bg-portal/10 text-signal shadow-[0_0_24px_rgba(34,211,238,0.08)]'
-                : 'border-neutral-800/80 bg-black/20 text-neutral-400 hover:border-neutral-700 hover:text-signal'
-              }`}
-            >
-              <span className="block font-sc text-[11px] font-bold uppercase tracking-[0.12em]">{option.label}</span>
-              <span className="mt-1 block font-sans text-[11px] leading-relaxed text-neutral-400">{option.description}</span>
-            </button>
-          );
-        })}
-      </div>
+const PRESSURE_EXPLANATION = 'Sets how strongly fate shapes the automatic rhythm of chapters: which kind of chapter comes next when you leave the path to fate.';
+
+/**
+ * Pressure and Survival share one compact panel: Pressure is a one-line
+ * choice with only the selected description shown, and Survival is a single
+ * switch row. Each full explanation stays one tap away behind its info toggle.
+ */
+export const OriginFateControls = ({ settings, onChange }: FateSurvivalSettingProps) => (
+  <section aria-label="Pressure and Survival" className="glass-panel divide-y divide-neutral-800/70 p-0">
+    <div className="p-4">
+      <p className="font-sc text-[11px] font-bold uppercase tracking-[0.16em] text-signal">Pressure</p>
+      <p className="mb-2 mt-1 font-sans text-[11px] leading-relaxed text-neutral-400">
+        <SeedNote moreLabel="More about Pressure" more={PRESSURE_EXPLANATION}>How fate paces the chapters.</SeedNote>
+      </p>
+      <SeedSegmented label="Pressure" idPrefix="origin-pressure" value={settings.pressure}
+        options={SURVIVAL_PRESSURE_OPTIONS} onSelect={pressure => onChange({ pressure })} />
     </div>
-  );
-
-  return (
-    <>
-      <section aria-label="Pressure" className="rounded-xl border border-neutral-800/80 bg-[#080b17]/80 p-3">
-        {optionGroup('Pressure', 'Sets how strongly fate shapes the automatic rhythm of chapters: which kind of chapter comes next when you leave the path to fate.', settings.pressure, SURVIVAL_PRESSURE_OPTIONS, pressure => onChange({ pressure }))}
-      </section>
-      <section aria-label="Survival" className="space-y-4 rounded-xl border border-neutral-800/80 bg-[#080b17]/80 p-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <span className="min-w-0">
-            <span className="block font-sc text-xs font-semibold tracking-wide text-signal">Survival</span>
-            <span className="mt-1 block font-sans text-[11px] leading-relaxed text-neutral-400">
-              You direct every chapter yourself, and the Destined Ending is not guaranteed: your choices can fail it, even by death. Off, fate chooses each chapter's path unless you step in, and the Destined Ending stays the story's guaranteed direction. This is fixed once the novel begins.
-            </span>
-          </span>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={settings.enabled}
-            aria-label="Survival"
-            onClick={() => onChange({ enabled: !settings.enabled })}
-            className={`story-seed-touch-target flex shrink-0 items-center gap-2 self-start rounded-full border px-3 py-2 transition-colors motion-reduce:transition-none sm:px-2.5 sm:py-1.5 ${settings.enabled
-              ? 'border-portal/60 bg-portal/10 text-portal'
-              : 'border-neutral-700 bg-black/30 text-neutral-400 hover:border-neutral-600 hover:text-signal'
-            }`}
-          >
-            <span className="font-sc text-[10px] font-bold uppercase tracking-[0.12em]">Survival</span>
-            <span aria-hidden="true" className={`relative h-4 w-7 rounded-full transition-colors motion-reduce:transition-none ${settings.enabled ? 'bg-portal/70' : 'bg-neutral-700'}`}>
-              <span className={`absolute left-0.5 top-0.5 size-3 rounded-full bg-white shadow-sm transition-transform motion-reduce:transition-none ${settings.enabled ? 'translate-x-3' : 'translate-x-0'}`} />
-            </span>
-          </button>
-        </div>
-
-      </section>
-    </>
-  );
-};
+    <div className="flex items-start justify-between gap-3 p-4">
+      <span className="min-w-0">
+        <span className="block font-sc text-[11px] font-bold uppercase tracking-[0.16em] text-signal">Survival</span>
+        <span className="mt-1 block font-sans text-[11px] leading-relaxed text-neutral-400">
+          <SeedNote moreLabel="More about Survival" more={settings.enabled
+            ? "Off, fate chooses each chapter's path unless you step in, and the Destined Ending stays the story's guaranteed direction."
+            : 'On, you direct every chapter yourself, and the Destined Ending is not guaranteed: your choices can fail it, even by death.'}>
+            {settings.enabled
+              ? 'You direct every chapter yourself. The Destined Ending can fail, even by death.'
+              : 'Fate guides each chapter. The Destined Ending is guaranteed.'}
+            {' '}Fixed once the novel begins.
+          </SeedNote>
+        </span>
+      </span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={settings.enabled}
+        aria-label="Survival"
+        onClick={() => onChange({ enabled: !settings.enabled })}
+        className="story-seed-touch-target relative mt-0.5 inline-flex h-7 w-12 shrink-0 items-center rounded-full"
+      >
+        <span aria-hidden="true" className={`absolute inset-0 rounded-full border transition-colors motion-reduce:transition-none ${settings.enabled ? 'border-portal/60 bg-portal/60' : 'border-neutral-700 bg-neutral-800'}`} />
+        <span aria-hidden="true" className={`relative ml-0.5 size-6 rounded-full bg-white shadow-sm transition-transform motion-reduce:transition-none ${settings.enabled ? 'translate-x-5' : 'translate-x-0'}`} />
+      </button>
+    </div>
+  </section>
+);

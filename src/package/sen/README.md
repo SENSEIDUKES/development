@@ -2,7 +2,8 @@
 
 **0.34.0 (2026-10-13, breaking):** One Highlight Engine overlay per sound. `./highlight-engine`:
 `ManuscriptOverlayMode` is `'off' | 'cues' | 'soundscapes' | 'atmospheres'` (no `'audio'`), listed
-with their names in `MANUSCRIPT_OVERLAYS`; `OVERLAY_KINDS` gives each one kind and
+by category in `MANUSCRIPT_OVERLAY_GROUPS` (Audio holds all three; `overlayGroupOf`) and in order in
+`MANUSCRIPT_OVERLAYS`; the switch shows Off and the categories, then the chosen category's overlays; `OVERLAY_KINDS` gives each one kind and
 `OVERLAY_SOUNDTRACK_KIND` the soundtrack kind it shows. `openingSoundMark(manuscript, kind)` now
 takes one kind. Soundscapes are red and atmospheres yellow. `SoundtrackChoices.opening` lets a
 word in the chapter's first sentence choose the opening (`isChapterOpening`, `WRITER_OPENING`);

@@ -10,12 +10,31 @@ import type { PassageSelection } from './selection';
  */
 export type ManuscriptOverlayMode = 'off' | 'cues' | 'soundscapes' | 'atmospheres';
 
-/** Each overlay in the switch's order, with its name. */
-export const MANUSCRIPT_OVERLAYS: ReadonlyArray<{ mode: Exclude<ManuscriptOverlayMode, 'off'>; label: string }> = [
-  { mode: 'cues', label: 'Sound Cues' },
-  { mode: 'soundscapes', label: 'Soundscapes' },
-  { mode: 'atmospheres', label: 'Atmospheres' },
+export interface ManuscriptOverlayGroup {
+  id: string;
+  label: string;
+  overlays: ReadonlyArray<{ mode: Exclude<ManuscriptOverlayMode, 'off'>; label: string }>;
+}
+
+/**
+ * The overlays by category, in the switch's order: a category is chosen
+ * first, then one overlay inside it. Audio holds the three sounds; later
+ * kinds of tagging join as categories of their own.
+ */
+export const MANUSCRIPT_OVERLAY_GROUPS: readonly ManuscriptOverlayGroup[] = [
+  { id: 'audio', label: 'Audio', overlays: [
+    { mode: 'cues', label: 'Sound Cues' },
+    { mode: 'soundscapes', label: 'Soundscapes' },
+    { mode: 'atmospheres', label: 'Atmospheres' },
+  ] },
 ];
+
+/** Every overlay, in the switch's order. */
+export const MANUSCRIPT_OVERLAYS = MANUSCRIPT_OVERLAY_GROUPS.flatMap(group => group.overlays);
+
+/** The category an overlay belongs to. */
+export const overlayGroupOf = (mode: ManuscriptOverlayMode) =>
+  MANUSCRIPT_OVERLAY_GROUPS.find(group => group.overlays.some(overlay => overlay.mode === mode));
 
 /**
  * One color per kind of added effect, so every effect of a kind is found at a

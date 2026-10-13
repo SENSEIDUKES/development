@@ -50,7 +50,10 @@ for (const [name, browserType, width, height, touch] of [
       await page.getByRole('button', { name: 'Edit', exact: true }).waitFor();
     };
     const activate = async name => {
-      const button = page.getByRole('button', { name, exact: true });
+      // The menu's Audio is the action bar's (the overlay switch has an Audio category too).
+      const button = name === 'Audio'
+        ? page.locator('.sen-text-highlight-actions').getByRole('button', { name, exact: true })
+        : page.getByRole('button', { name, exact: true });
       if (touch) await button.tap(); else await button.click();
     };
     if (!touch) {
@@ -297,7 +300,7 @@ for (const [name, browserType, width, height, touch] of [
 
     // The Sound Cues overlay tints every placed cue and numbers the page as the model addresses it: ¶ numbers in the
     // margin, small raised sentence numbers in the line spacing, counted through the page.
-    { const overlayCues = page.getByTestId('overlay-switch').getByRole('button', { name: 'Sound Cues', exact: true }); if (touch) await overlayCues.tap(); else await overlayCues.click(); }
+    for (const name of ['Audio', 'Sound Cues']) { const button = page.getByTestId('overlay-switch').getByRole('button', { name, exact: true }); if (touch) await button.tap(); else await button.click(); }
     // The layer is placed on the page, not the screen, so every number exists at once, on screen or not.
     await page.waitForFunction(() => document.querySelectorAll('.sen-overlay-pin').length === 18);
     const expectedPins = ['¶1', '1', '2', '3', '4', '5', '¶2', '6', '7', '8', '9', '¶3', '10', '11', '12', '13', '14', '15'];

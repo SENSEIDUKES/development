@@ -4,7 +4,7 @@ import {
   type ManuscriptAttachment, type ManuscriptIdFactory, type ManuscriptState, type PassageSelection,
 } from '@seihouse/sen/highlight-engine';
 import { createPreviewManuscript, previewParagraphs } from './previewData';
-import { ATTACHMENT_COLORS, MANUSCRIPT_OVERLAYS, OVERLAY_KINDS, attachmentMarks, isChapterOpening, openingSoundMark, structurePins } from '@seihouse/sen/highlight-engine';
+import { ATTACHMENT_COLORS, MANUSCRIPT_OVERLAY_GROUPS, MANUSCRIPT_OVERLAYS, OVERLAY_KINDS, overlayGroupOf, attachmentMarks, isChapterOpening, openingSoundMark, structurePins } from '@seihouse/sen/highlight-engine';
 
 const ids = (): ManuscriptIdFactory => { let count = 0; return kind => `${kind[0]}${++count}`; };
 const words = (state: ManuscriptState<string>, index: number, phrase: string): PassageSelection => {
@@ -31,6 +31,10 @@ describe('Lab overlays', () => {
   it('gives each sound its own overlay and its own color: Sound Cues blue, soundscapes red, atmospheres yellow', () => {
     // SENSEI: never one Audio overlay bundling them; each is found on its own.
     expect(MANUSCRIPT_OVERLAYS.map(overlay => overlay.label)).toEqual(['Sound Cues', 'Soundscapes', 'Atmospheres']);
+    // All three sit under one Audio category; later tagging joins as categories of its own.
+    expect(MANUSCRIPT_OVERLAY_GROUPS.map(group => group.label)).toEqual(['Audio']);
+    expect(['cues', 'soundscapes', 'atmospheres'].map(mode => overlayGroupOf(mode as 'cues')?.id)).toEqual(['audio', 'audio', 'audio']);
+    expect(overlayGroupOf('off')).toBeUndefined();
     expect(OVERLAY_KINDS).toEqual({ cues: ['sound-cue'], soundscapes: ['soundscape-change'], atmospheres: ['atmosphere-change'] });
     expect(ATTACHMENT_COLORS['soundscape-change'].tone).toBe('rgba(239, 68, 68, .4)');
     expect(ATTACHMENT_COLORS['atmosphere-change'].tone).toBe('rgba(234, 179, 8, .42)');

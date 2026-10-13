@@ -1,5 +1,9 @@
 # `@seihouse/sen`
 
+**0.36.1 (2026-10-13):** `StoryCodex` is a gallery of cards: one tab per category, the same
+card for every category (its art, its name, one line) opening into the same profile (its art large,
+then everything the record knows about it). No API change.
+
 **0.36.0 (2026-10-13, breaking):** The Codex, remade on the record. `./harness-generation`:
 `deriveStoryCodex` works out the Codex from a story's Codex entries and chapters (its characters,
 met by what they hold or say, the main character first, with their holdings, rank, first words and

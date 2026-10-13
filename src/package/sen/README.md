@@ -1,5 +1,10 @@
 # `@seihouse/sen`
 
+**0.31.1 (2026-10-13):** SEN Sound Cues 2.4.0 no longer tells the writer that a chapter
+may have no Sound Cues. Told so, the writer tagged none in two chapters whose prose rang a
+bell five times. A cue is still earned by the prose, at most 10 a chapter, and never added
+or bent to fit; a chapter without one is still accepted.
+
 **0.31.0 (2026-10-12, breaking):** The Text Highlight Engine is the **Highlight Engine**: it
 highlights prose today and will highlight images for sequential art. The entry
 `./text-highlight-engine` is now `./highlight-engine`; `TextHighlightEngine` and

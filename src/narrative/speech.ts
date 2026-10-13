@@ -26,6 +26,7 @@ const CLOSERS: Readonly<Record<string, readonly string[]>> = {
   '「': ['」'],
   '『': ['』'],
   '«': ['»'],
+  '„': ['“', '”'],
 };
 
 /** Every quoted spoken line in one paragraph, in reading order. */
@@ -65,7 +66,8 @@ const SENTENCE_OPENERS = new Set([
   'nobody', 'something', 'nothing', 'all', 'both', 'each', 'every', 'some', 'another', 'behind', 'beside', 'around',
 ]);
 const WORD = /[\p{L}\p{M}][\p{L}\p{M}\p{N}'’-]*/gu;
-const SENTENCE = /[^.!?。！？]*(?:[.!?。！？]+|$)/gu;
+/** Sentence ends, with the Arabic question mark (؟) and the Urdu full stop (۔). */
+const SENTENCE = /[^.!?。！？؟۔]*(?:[.!?。！？؟۔]+|$)/gu;
 
 /** Where a name first appears in a sentence: as a whole word, or anywhere in a script without spaces. */
 function firstMention(sentence: string, name: string, matchCase: boolean): number {

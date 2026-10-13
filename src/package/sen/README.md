@@ -1,5 +1,14 @@
 # `@seihouse/sen`
 
+**0.35.0 (2026-10-13):** Right-to-left reading. `./contracts`: `SenLanguageCode` and
+`SEN_LANGUAGES` gain Arabic (`ar`), Hebrew (`he`), Persian (`fa`) and Urdu (`ur`), each with
+direction `rtl` (`getSenTextDirection`) and speech tags (`senSpeechLanguageTags`; Hebrew also
+`iw`). `./harness-generation`: the Reader sets its frame's `dir` from the story's language, so a
+right-to-left story reads right to left, with Back and the chapter arrows mirrored and the
+sentence controls kept in left-to-right order; the chapter list opens in the story's direction.
+Speech finds Hebrew „…“ quotes, and an Arabic ؟ or Urdu ۔ ends a sentence. A host offering its
+own Reader fonts should name a face for these scripts in each stack.
+
 **0.34.0 (2026-10-13, breaking):** One Highlight Engine overlay per sound. `./highlight-engine`:
 `ManuscriptOverlayMode` is `'off' | 'cues' | 'soundscapes' | 'atmospheres'` (no `'audio'`), listed
 by category in `MANUSCRIPT_OVERLAY_GROUPS` (Audio holds all three; `overlayGroupOf`) and in order in

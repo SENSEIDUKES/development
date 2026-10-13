@@ -37,6 +37,12 @@ describe('SEN language registry', () => {
     expect(getSenTextDirection('en')).toBe('ltr');
     expect(getSenTextDirection('unsupported')).toBe('ltr');
   });
+
+  it('reads Arabic, Hebrew, Persian and Urdu right to left, and nothing else', () => {
+    const rtl = SEN_LANGUAGES.filter(language => language.direction === 'rtl').map(language => language.code);
+    expect(rtl).toEqual(['ar', 'he', 'fa', 'ur']);
+    for (const code of rtl) expect(getSenTextDirection(code)).toBe('rtl');
+  });
 });
 
 describe('account reading language resolution', () => {

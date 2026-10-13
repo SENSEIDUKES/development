@@ -20,7 +20,11 @@ export type SenLanguageCode =
   | 'id'
   | 'th'
   | 'tl'
-  | 'ms';
+  | 'ms'
+  | 'ar'
+  | 'he'
+  | 'fa'
+  | 'ur';
 
 export type SenTextDirection = 'ltr' | 'rtl';
 
@@ -45,6 +49,10 @@ export const SEN_LANGUAGES: readonly SenLanguage[] = [
   { code: 'th', label: 'Thai (ภาษาไทย)', direction: 'ltr' },
   { code: 'tl', label: 'Tagalog (Filipino)', direction: 'ltr' },
   { code: 'ms', label: 'Malay (Bahasa Melayu)', direction: 'ltr' },
+  { code: 'ar', label: 'Arabic (العربية)', direction: 'rtl' },
+  { code: 'he', label: 'Hebrew (עברית)', direction: 'rtl' },
+  { code: 'fa', label: 'Persian (فارسی)', direction: 'rtl' },
+  { code: 'ur', label: 'Urdu (اردو)', direction: 'rtl' },
 ] as const;
 
 const LANGUAGES_BY_CODE = new Map<string, SenLanguage>(
@@ -78,6 +86,7 @@ export const getSenTextDirection = (code: string): SenTextDirection =>
  * Indonesian or `fil` for Tagalog, and Chinese voices may carry a script
  * (`zh-Hant`) or a Mandarin tag (`cmn-…`) instead of a region. Traditional
  * Chinese ends with Hong Kong's voice, which still reads the same characters.
+ * Older Android voices name Hebrew `iw`.
  */
 const SPEECH_LANGUAGE_TAGS: Readonly<Record<SenLanguageCode, readonly string[]>> = {
   en: ['en'],
@@ -91,6 +100,10 @@ const SPEECH_LANGUAGE_TAGS: Readonly<Record<SenLanguageCode, readonly string[]>>
   th: ['th'],
   tl: ['fil', 'tl'],
   ms: ['ms'],
+  ar: ['ar'],
+  he: ['he', 'iw'],
+  fa: ['fa'],
+  ur: ['ur'],
 };
 
 export const senSpeechLanguageTags = (code: SenLanguageCode): readonly string[] =>

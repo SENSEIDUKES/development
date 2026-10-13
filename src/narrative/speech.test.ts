@@ -10,6 +10,11 @@ describe('findSpokenLines', () => {
     expect(lines('—No —dijo él. «Ven aquí», susurró.')).toEqual(['«Ven aquí»']);
   });
 
+  it('finds the quotes right-to-left writing uses: guillemets in Arabic, low-high marks in Hebrew', () => {
+    expect(lines('قال غو تشن: «انزل الآن». ثم صمت.')).toEqual(['«انزل الآن»']);
+    expect(lines('„רוץ!“ צעק לין פנג.')).toEqual(['„רוץ!“']);
+  });
+
   it('reads only the outermost quote', () => {
     expect(lines('「彼は『待て』と言った」')).toEqual(['「彼は『待て』と言った」']);
     expect(lines('“He told me ‘wait’, then left,” she said.')).toEqual(['“He told me ‘wait’, then left,”']);
@@ -77,5 +82,12 @@ describe('narratedSpeaker', () => {
     const text = '“走！”沈九言说。“快！”林晓喊道。';
     expect(narratedSpeaker(text, findSpokenLines(text), 0, chinese)).toBe('main');
     expect(narratedSpeaker(text, findSpokenLines(text), 1, chinese)).toBe('other');
+  });
+
+  it('ends a sentence at the Arabic question mark', () => {
+    const arabic = { names: ['غو تشن'], others: ['سونغ'] };
+    // Without ؟ as a sentence end, the question and the line after it are one sentence, and سونغ is found first.
+    const text = 'سأل سونغ: لماذا؟ غو تشن تقدّم. «لن نهرب»';
+    expect(narratedSpeaker(text, findSpokenLines(text), 0, arabic)).toBe('main');
   });
 });

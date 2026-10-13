@@ -60,7 +60,10 @@ function IconButton({ label, icon: Icon, onClick, disabled, className = round }:
  * the middle, the chapter arrows with Fate (a compass) between them, and Create
  * mode (a lightning bolt) at the far right. Sentence navigation and its speed selector are always visible
  * beside the play/pause button. Back to narration floats above the left end
- * only when needed; the story audio note floats above the right. Where the
+ * only when needed; the story audio note floats above the right. A
+ * right-to-left story mirrors the bar: Listen at the right, the chapter arrows
+ * pointing the way its pages turn. The sentence controls keep their
+ * left-to-right order, as media controls do in every language. Where the
  * browser can't read aloud, Codex stays available and the skip controls are
  * disabled. The chapter list opens from the story and chapter in the top bar.
  */
@@ -94,7 +97,7 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
   const PlaybackIcon = playback?.icon;
   return <div ref={barRef} data-testid="reader-bottom-bar" role="region" aria-label="Reader controls"
     className="reader-glass reader-glass-bar sticky bottom-0 z-20 -mx-4 mt-8 border-t border-white/10 bg-neutral-950/90 px-[max(0.5rem,env(safe-area-inset-left))] pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:px-[max(1rem,env(safe-area-inset-left))]">
-    {listening && offscreen && <div className="absolute bottom-full left-4 mb-2" data-testid="back-to-narration-float">
+    {listening && offscreen && <div className="absolute bottom-full start-4 mb-2" data-testid="back-to-narration-float">
       {/* A round glass button, like the story audio note floating on the other side. */}
       <button type="button" aria-label="Back to narration" title="Back to narration" onClick={onBackToNarration}
         className="reader-glass-float inline-flex h-11 w-11 items-center justify-center rounded-full text-neutral-100">
@@ -112,7 +115,7 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
                 <PlaybackIcon className="h-6 w-6" aria-hidden /><span className="sr-only">{playback.label}</span>
               </button>
             : <span className="h-12 w-12 max-[380px]:h-11 max-[380px]:w-11 shrink-0" aria-hidden />}
-          <div role="group" aria-label="Playback controls" className={controlPill}>
+          <div role="group" aria-label="Playback controls" className={controlPill} dir="ltr">
             <IconButton label="Previous sentence" icon={SkipBack} onClick={() => readAloud.skip(-1)} disabled={!player} className={`${pillStep} rounded-l-full`} />
             <SEIPopover open={picker === 'speed'} onOpenChange={open => setPicker(open ? 'speed' : undefined)}>
               <SEIPopoverTrigger aria-label="Narration playback speed" title={`Narration playback speed: ${readAloud.rate}×`} disabled={!supported} className={pickerTrigger}>
@@ -147,8 +150,8 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
         <div className="contents">
         <nav aria-label="Chapters" className={controlPill}>
           <button type="button" aria-label={previous?.label ?? 'Previous Chapter'} title={previous?.label ?? 'Previous Chapter'} disabled={!previous}
-            onClick={previous?.run} className={`${pillStep} rounded-l-full`}>
-            <ChevronLeft className="h-4 w-4" aria-hidden />
+            onClick={previous?.run} className={`${pillStep} rounded-s-full`}>
+            <ChevronLeft className="h-4 w-4 rtl:-scale-x-100" aria-hidden />
           </button>
           <button type="button" aria-label="Open Fate" data-testid="reader-fate-button" data-attention={fate.attention || undefined}
             title={fate.disabled ? 'Fate opens when you reach the end of the chapter' : fate.attention ? 'Fate: direct the next chapter' : 'Fate: decide what happens next'}
@@ -157,8 +160,8 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
           </button>
           <button type="button" aria-label={next?.label ?? 'Next Chapter'} title={next?.label ?? 'Next Chapter'} disabled={!next || next.busy || next.disabled}
             aria-busy={next?.busy || undefined} onClick={next?.run}
-            className={`${pillStep} rounded-r-full`}>
-            <ChevronRight className="h-4 w-4" aria-hidden />
+            className={`${pillStep} rounded-e-full`}>
+            <ChevronRight className="h-4 w-4 rtl:-scale-x-100" aria-hidden />
           </button>
         </nav>
           {/* Create mode at the far right, balancing Listen; the story audio note floats above it. */}

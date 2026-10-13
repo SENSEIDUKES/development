@@ -8,6 +8,7 @@ import { AppReader, applyReaderAudioState } from './AppReader';
 import { useOptionalReaderMixer } from '@seihouse/audio-player';
 import { READER_PAGES, readerScenes, type ReaderPage, type ReaderSceneId } from './readerScenes';
 import { REPLAY_WRITING_MS, SAMPLE_STORY_TITLE, loadSampleStory, startSceneRun, storyExportToWorkspace } from './sampleStory';
+import { buildRightToLeftStory } from './rightToLeftSample';
 import {
   DEFAULT_PRODUCTION_SCENE,
   PRODUCTION_SCENE_GROUPS,
@@ -29,11 +30,21 @@ const productionReaderModules = import.meta.glob<{ default: ProductionReaderHost
 const loadProductionReader = () => Object.values(productionReaderModules)[0]();
 const ProductionReaderHost = React.lazy(loadProductionReader);
 
-/** The story Development reads: SENSEI's Sundered Heavens test, or a story opened from an export. */
+/**
+ * The story Development reads: SENSEI's Sundered Heavens test, the same story
+ * begun again in Arabic to check right-to-left reading, or a story opened from
+ * an export.
+ */
 interface OpenStory {
   state: HarnessWorkspaceState;
-  sample: boolean;
+  source: 'sample' | 'right-to-left' | 'file';
 }
+
+const STORY_SOURCE_NOTES: Record<OpenStory['source'], string> = {
+  sample: ' (SENSEI’s test story)',
+  'right-to-left': ' (Sundered Heavens in Arabic, read right to left)',
+  file: ' (opened from a file)',
+};
 
 const loadingNote = (text: string) => (
   <div className="flex min-h-[50vh] items-center justify-center px-4 text-center text-sm text-white/40" role="status">{text}</div>
@@ -78,7 +89,7 @@ export function ReaderChamberWorkspace() {
     return () => { active = false; };
   }, [loadAttempt]);
 
-  const story = useMemo<OpenStory | undefined>(() => opened ?? (sample ? { state: sample, sample: true } : undefined), [opened, sample]);
+  const story = useMemo<OpenStory | undefined>(() => opened ?? (sample ? { state: sample, source: 'sample' } : undefined), [opened, sample]);
   const chapterCount = story ? story.state.chapters.length : 0;
   const scenes = useMemo(() => readerScenes(chapterCount), [chapterCount]);
   const scene = scenes.find((candidate) => candidate.id === sceneId) ?? scenes[0];
@@ -103,7 +114,7 @@ export function ReaderChamberWorkspace() {
   const openExport = useCallback(async (file: File) => {
     try {
       const state = storyExportToWorkspace(JSON.parse(await file.text()));
-      setOpened({ state, sample: false });
+      setOpened({ state, source: 'file' });
       setOpenProblem(undefined);
       chooseScene('first-chapter');
     } catch (error) {
@@ -112,6 +123,16 @@ export function ReaderChamberWorkspace() {
         : error instanceof Error ? error.message : 'This story could not be opened.');
     }
   }, [chooseScene]);
+  const openRightToLeft = useCallback(async () => {
+    if (!sample || !skills) return;
+    try {
+      setOpened({ state: await buildRightToLeftStory(sample, skills), source: 'right-to-left' });
+      setOpenProblem(undefined);
+      chooseScene('first-chapter');
+    } catch (error) {
+      setOpenProblem(error instanceof Error ? error.message : 'The right-to-left story could not be written.');
+    }
+  }, [sample, skills, chooseScene]);
   const backToSample = useCallback(() => {
     setOpened(undefined);
     setOpenProblem(undefined);
@@ -251,15 +272,21 @@ export function ReaderChamberWorkspace() {
     },
     {
       id: 'advanced' as const,
-      description: 'Read another story: open a file saved with Export story in the app. It stays in this browser tab.',
+      description: 'Read another story: Sundered Heavens begun again in Arabic, to check right-to-left reading, or a file saved with Export story in the app. It stays in this browser tab.',
       content: (
         <div className="space-y-4">
           <section>
             {sectionHeading('Story')}
             <p className="mb-3 text-xs text-white/60">
-              Reading <span className="text-white/85">{storyTitle}</span>{story?.sample ? ' (SENSEI’s test story)' : ' (opened from a file)'} · {chapterCount} {chapterCount === 1 ? 'chapter' : 'chapters'}
+              Reading <span className="text-white/85" dir="auto">{storyTitle}</span>{story ? STORY_SOURCE_NOTES[story.source] : ''} · {chapterCount} {chapterCount === 1 ? 'chapter' : 'chapters'}
             </p>
             <div className="flex flex-wrap gap-2">
+              {opened?.source !== 'right-to-left' && (
+                <button type="button" disabled={!sample || !skills} onClick={() => void openRightToLeft()}
+                  className={`${buttonBase} ${buttonTone(false)} px-3 py-2`}>
+                  Right to left (Arabic)
+                </button>
+              )}
               <label className={`${buttonBase} ${buttonTone(false)} inline-flex cursor-pointer items-center px-3 py-2 focus-within:ring-2 focus-within:ring-cyan-300/60`}>
                 Open an exported story…
                 <input

@@ -4,6 +4,7 @@ import { useSoundtrackChanges } from './useSoundtrackChanges';
 import { useReaderDocumentScrollbar } from './useReaderDocumentScrollbar';
 import type { TextHighlightBlock } from '@seihouse/sen/highlight-engine';
 import type { SceneAudioTrack } from '@seihouse/sen/audio';
+import { getSenTextDirection } from '@seihouse/sen/contracts';
 import {
   DEFAULT_READER_FONTS,
   READ_ALOUD_SCRIPT_VERSION,
@@ -326,6 +327,8 @@ export function HarnessReaderSession({
   const chapter = chapters.find(entry => entry.chapterNumber === selectedChapter) ?? chapters.at(-1);
   const covered = pageOpen || writer.writing;
   const language = story?.originalLanguage ?? 'en';
+  // The story's language sets the frame's direction: a right-to-left story reads, and is steered, right to left.
+  const direction = getSenTextDirection(language);
   const blocks = useMemo(() => (chapter ? chapterBlocks(chapter) : []), [chapter]);
   // The main character as this chapter's writer was told: speech it left untagged is voiced from its narration.
   const attempt = chapter && state.attempts.find(item => item.id === chapter.attemptId);
@@ -414,14 +417,15 @@ export function HarnessReaderSession({
 
   const panel = layer?.kind === 'panel' ? layer.id : undefined;
   return <>
-    {/* The frame fills the screen; on laptops a panel sits at the right and the frame shrinks beside it. */}
-    <div className={`reader-frame transition-[padding] duration-200 motion-reduce:transition-none ${panel ? 'lg:pr-[28rem]' : ''}`} data-panel={panel}>
+    {/* The frame fills the screen; on laptops a panel sits at the right and the frame shrinks beside it.
+        A right-to-left story mirrors the frame: its text, the chapter arrows and the bars' ends. */}
+    <div dir={direction} className={`reader-frame transition-[padding] duration-200 motion-reduce:transition-none ${panel ? 'lg:pr-[28rem]' : ''}`} data-panel={panel}>
     <main hidden={pageOpen} className="w-full min-w-0 px-4 pb-12" data-testid="harness-reader">
       {/* A new chapter returns here and reveals its top bar. */}
       <div ref={topRef} aria-hidden />
       <ReaderTopBar barRef={barRef} storyTitle={story.title} place={chapter ? `Chapter ${chapter.chapterNumber} · ${chapterTitleText(chapter.title) || chapter.title}` : 'Story start'}
         chapterSelection={chapter ? { current: chapter.chapterNumber, entries: chapters.map(entry => ({ number: entry.chapterNumber, title: entry.title })), onSelect: openChapter } : undefined}
-        onBack={onClose} onOpenSettings={() => openSettings()} companion={companion} pinned={Boolean(panel) || pageOpen} />
+        onBack={onClose} onOpenSettings={() => openSettings()} companion={companion} pinned={Boolean(panel) || pageOpen} direction={direction} />
       <div className="reader-column">
       {storageError && <p role="alert" className="mt-3 text-sm text-amber-300">{storageError}</p>}
 

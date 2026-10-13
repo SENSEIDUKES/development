@@ -1,5 +1,11 @@
 # `@seihouse/library`
 
+**0.34.0 (2026-10-13):** Right-to-left scripts in the Reader's fonts. `./stories`:
+`LIBRARY_READER_FONTS` names Noto Naskh Arabic and Noto Serif Hebrew beside each serif and title
+font, and Noto Sans Arabic and Noto Sans Hebrew beside each sans (Rubik keeps its own). The host
+loads those faces; SEIHouse's theme does, from Google Fonts, each downloading only for text in
+its script.
+
 **0.33.0 (2026-10-12):** Atmospheres are a Media Loadout slot, beside Soundscapes and Sound
 Cues (SENSEI: they are made in the Library's studios like the others). `./media`: a third pack
 type, `AtmospherePack` (`type: 'atmosphere'`, looping beds each with a word, a name, an

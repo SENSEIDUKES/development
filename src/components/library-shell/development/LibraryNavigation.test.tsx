@@ -11,6 +11,7 @@ import { MainLibraryNavigation } from './MainLibraryNavigation';
 import { activeLibraryDestination, librarySectionItems, type LibraryDestination, type LibraryLocation } from '@seihouse/library/shell';
 import { StorySeedWorkspaceChrome } from '../../story-seed/development/StorySeedWorkspaceChrome';
 import { createEmptyStorySeedInput } from '@seihouse/sen/story-seed';
+import { LibraryAssetsProvider } from '../../../library/assets';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let container: HTMLDivElement;
@@ -120,11 +121,12 @@ it.each(['reader', 'codex'])('excludes immersive %s even when standard mode is r
 
 it('runs Story Seed in the Library Shell workspace mode instead of a navigation system of its own', async () => {
   const bank = vi.fn(); const help = vi.fn(); const select = vi.fn(); const home = vi.fn();
-  await render(<LibraryNavigation location={{ screen: 'creator' }} onNavigate={vi.fn()}>
+  const landscape = '/host-navigation-landscape.jpg';
+  await render(<LibraryAssetsProvider value={{ navigationArtwork: landscape }}><LibraryNavigation location={{ screen: 'creator' }} onNavigate={vi.fn()}>
     <StorySeedWorkspaceChrome onNavigateHome={home} seed={createEmptyStorySeedInput()} updateSeed={vi.fn()} activeSection="origin" showStoryBank={false} helpOpen={false}
       isGenerating={false} savedFeedback={false} canManifest={false} manifestLabel="Manifest" status="Ready" onSaveDraft={vi.fn()} onManifest={vi.fn()}
       onToggleStoryBank={bank} onOpenHelp={help} onSelectSection={select}><p>Existing editor</p></StorySeedWorkspaceChrome>
-  </LibraryNavigation>);
+  </LibraryNavigation></LibraryAssetsProvider>);
   // The workspace route never shows the global strip; the shell draws Story Seed's task bar instead.
   expect(globalNav()).toBeNull();
   expect(container.querySelector('[data-library-mode="workspace"]')).not.toBeNull();
@@ -134,12 +136,18 @@ it('runs Story Seed in the Library Shell workspace mode instead of a navigation 
   expect(Array.from(nav.querySelectorAll('button')).map(button => button.textContent)).toEqual(['Sections', 'Story Bank', 'Settings', 'Back']);
   // The desktop rail is the same LibrarySectionSidebar every Library page uses.
   const rail = container.querySelector('[data-slot="app-shell-sidebar"]')!;
-  expect(rail.querySelector('nav[aria-label="Story Seed sections"]')?.textContent).toContain('Story Bank');
+  expect(rail.querySelector('nav[aria-label="Story Seed sections"]')?.textContent).toContain('Power System');
+  expect(rail.querySelector('[data-slot="navigation-footer"]')?.textContent).toContain('Story Bank');
+  expect(rail.querySelector('[data-slot="navigation-divider"] svg')).not.toBeNull();
+  expect(rail.querySelector('[data-slot="navigation-artwork"] img')?.getAttribute('src')).toBe(landscape);
   await click(button('Sections', nav));
-  expect(document.querySelector('[role="dialog"]')).not.toBeNull();
-  await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
-  await settle();
-  await click(button('Story Bank', nav)); expect(bank).toHaveBeenCalledTimes(1);
+  const drawer = document.querySelector('[role="dialog"]')!;
+  expect(drawer.querySelector('[data-slot="navigation-artwork"] img')?.getAttribute('src')).toBe(landscape);
+  expect(drawer.querySelector('[data-slot="navigation-divider"] svg')).not.toBeNull();
+  await click(button('Story Bank', drawer));
+  expect(document.querySelector('[role="dialog"]')).toBeNull();
+  expect(bank).toHaveBeenCalledTimes(1);
+  await click(button('Story Bank', nav)); expect(bank).toHaveBeenCalledTimes(2);
   expect(button('Help', nav)).toBeUndefined();
   await click(button('Settings', nav));
   expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Story Seed settings');

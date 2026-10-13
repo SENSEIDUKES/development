@@ -206,6 +206,12 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-10-13 (Navigation landscape):** Story Seed's rail and Sections drawer use
+  the same host-supplied landscape as Home. Story Bank and Settings sit below it
+  in the canonical Library footer, separated by its gold star divider. Search
+  and the phone task bar keep both tools available; the compact section rows
+  and profile-free layout are shared by the app and Workshop preview.
+
 - **2026-10-13 (Section navigation):** Removed the author profile, group subtitles
   and tip cards from Story Seed's desktop rail and phone Sections drawer. Compact
   icon-and-label rows keep the Story/World hierarchy, required/completion markers

@@ -71,20 +71,16 @@ export function StorySeedWorkspaceChrome(props: StorySeedWorkspaceChromeProps) {
   const { onToggleStoryBank, showStoryBank, onNavigateHome } = props;
   const workspace = useMemo<LibraryWorkspaceDefinition>(() => ({
     label: 'Story Seed sections', closeLabel: 'Close sections', barLabel: 'Story Seed navigation',
-    sections: [
-      ...buildStorySeedDrawerSections(props.seed, props.activeSection, props.onSelectSection),
-      {
-        id: 'workspace',
-        label: 'Workspace',
-        icon: <SENSettingsIcon size={14} aria-hidden="true" className="text-neutral-400" />,
-        items: [
-          { id: 'story-bank', label: 'Story Bank', icon: <SENStorySeedIcon name="bank" size={16} aria-hidden="true" className="text-neutral-400" />,
-            active: showStoryBank, onSelect: onToggleStoryBank },
-          { id: 'settings', label: 'Settings', icon: <SENSettingsIcon size={16} aria-hidden="true" className="text-neutral-400" />,
-            onSelect: openSettings },
-        ],
-      },
-    ],
+    sections: buildStorySeedDrawerSections(props.seed, props.activeSection, props.onSelectSection),
+    footer: {
+      divider: true,
+      items: [
+        { id: 'story-bank', label: 'Story Bank', icon: <SENStorySeedIcon name="bank" size={16} aria-hidden="true" className="text-neutral-400" />,
+          active: showStoryBank, onSelect: onToggleStoryBank },
+        { id: 'settings', label: 'Settings', icon: <SENSettingsIcon size={16} aria-hidden="true" className="text-neutral-400" />,
+          onSelect: openSettings },
+      ],
+    },
     tools: [
       { id: 'story-bank', label: 'Story Bank', icon: <SENStorySeedIcon name="bank" size={20} aria-hidden="true" />,
         active: showStoryBank, onSelect: () => { setSettingsOpen(false); onToggleStoryBank(); } },
@@ -128,10 +124,10 @@ function StorySeedChromeContent(props: StorySeedChromeContentProps) {
     help={help}
     // Settings and Story Bank are navigation items, so Search reaches them
     // through the same definition that drives the rail and the drawer.
-    searchItems={props.workspace.sections.flatMap(section => section.items.map(item => ({
+    searchItems={[...props.workspace.sections.flatMap(section => section.items), ...(props.workspace.footer?.items ?? [])].map(item => ({
       id: item.id, label: item.label, pressed: item.active,
       onAction: () => item.onSelect?.(item.id),
-    })))} />;
+    }))} />;
   const manifestAvailable = !props.showStoryBank && !props.headerSaveOnly;
   /**
    * The page's own action row: Save Draft, Manifest and the small save and

@@ -115,7 +115,7 @@ describe('Workshop Audio overlay', () => {
     expect(chips('.sen-overlay-pin[data-placement="margin"]')).toEqual(['¶1', '¶2', '¶3']);
     expect(legend()?.textContent).toContain('The model writes it P2 S6.');
     // The changed-words key appears only when something on the page carries it.
-    expect(Array.from(legend()!.querySelectorAll('li'), item => item.textContent)).toEqual(['Sound Cue', 'Soundscape change', 'Atmosphere change']);
+    expect(Array.from(legend()!.querySelectorAll('li'), item => item.textContent)).toEqual(['Sound Cue', 'Soundscape', 'Atmosphere']);
     expect(host.querySelectorAll('.sen-overlay-mark')).toHaveLength(0);
 
     await selectRoar(); openCue(); placeFirstCue();

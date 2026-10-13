@@ -22,7 +22,7 @@ export {
 } from '../../components/highlight-engine/shared/manuscript';
 export type { OverlayMark, OverlayPin, TextHighlightOverlay } from '../../components/highlight-engine/shared/overlay';
 export {
-  ATTACHMENT_COLORS, OVERLAY_KINDS, attachmentMarks, structurePins, type ManuscriptOverlayMode,
+  ATTACHMENT_COLORS, OVERLAY_KINDS, attachmentMarks, openingSoundMark, structurePins, type ManuscriptOverlayMode,
 } from '../../components/highlight-engine/shared/overlayModes';
 export {
   ManuscriptOverlaySwitch, placedSoundCue, placedSoundCues, audioActions,

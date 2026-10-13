@@ -1,3 +1,4 @@
+import { soundtrackChangeWord } from '../../../audio/soundtrackChanges';
 import { resolveAnchor, type Manuscript, type ManuscriptState } from './manuscript';
 import type { OverlayMark, OverlayPin } from './overlay';
 
@@ -15,8 +16,8 @@ export type ManuscriptOverlayMode = 'off' | 'audio';
  */
 export const ATTACHMENT_COLORS: Readonly<Record<string, { label: string; tone: string }>> = {
   'sound-cue': { label: 'Sound Cue', tone: 'rgba(59, 130, 246, .38)' },
-  'soundscape-change': { label: 'Soundscape change', tone: 'rgba(168, 85, 247, .4)' },
-  'atmosphere-change': { label: 'Atmosphere change', tone: 'rgba(34, 197, 94, .36)' },
+  'soundscape-change': { label: 'Soundscape', tone: 'rgba(168, 85, 247, .4)' },
+  'atmosphere-change': { label: 'Atmosphere', tone: 'rgba(34, 197, 94, .36)' },
 };
 
 /** The attachment kinds each overlay shows. */
@@ -39,6 +40,25 @@ export function structurePins(manuscript: Manuscript): OverlayPin[] {
     }
     return pins;
   });
+}
+
+/**
+ * The chapter's opening soundscape and atmosphere, on its first word: they
+ * begin there, before any change. Each keeps its kind's color; when both
+ * open the chapter the word is split between the two.
+ */
+export function openingSoundMark(manuscript: Manuscript, opening: { soundscape?: boolean; atmosphere?: boolean }): OverlayMark | undefined {
+  const first = manuscript.paragraphs[0];
+  const letter = first?.text.search(/[\p{L}\p{N}]/u) ?? -1;
+  if (!first || letter < 0 || !(opening.soundscape || opening.atmosphere)) return undefined;
+  const word = soundtrackChangeWord(first.text, letter, letter + 1, manuscript.locale) ?? { start: letter, end: letter + 1 };
+  const soundscape = ATTACHMENT_COLORS['soundscape-change'].tone;
+  const atmosphere = ATTACHMENT_COLORS['atmosphere-change'].tone;
+  return {
+    id: 'mark:opening-sound',
+    selection: { blockId: first.id, startOffset: word.start, endOffset: word.end, selectedText: first.text.slice(word.start, word.end) },
+    tone: opening.soundscape && opening.atmosphere ? `linear-gradient(90deg, ${soundscape} 50%, ${atmosphere} 50%)` : opening.soundscape ? soundscape : atmosphere,
+  };
 }
 
 /**

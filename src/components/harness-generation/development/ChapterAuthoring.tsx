@@ -7,7 +7,7 @@ import {
 import { InlineAudioText } from '@seihouse/sen/inline-audio';
 import {
   ManuscriptOverlaySwitch, OVERLAY_KINDS, HighlightEngine, SOUNDTRACK_KIND_WORDS, SoundtrackOptionList,
-  applyPassageEdit, attachmentMarks, createManuscript, createManuscriptId, flaggedAttachments, placedSoundCues, removeAttachment, resolveAnchor,
+  applyPassageEdit, attachmentMarks, createManuscript, openingSoundMark, createManuscriptId, flaggedAttachments, placedSoundCues, removeAttachment, resolveAnchor,
   audioActions, soundtrackOptionLabel, structurePins,
   type ManuscriptAttachment, type ManuscriptOverlayMode, type ManuscriptState, type PassageEdit, type SoundtrackChoices,
 } from '@seihouse/sen/highlight-engine';
@@ -161,8 +161,14 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
     return chosen ? `The writer's choice: ${chosen}` : 'The writer\'s choice (none: the one before goes on)';
   };
   const changes = state.attachments.filter(isSoundtrackChange).filter(placed(state)) as SoundtrackChangeAttachment[];
-  const overlay = useMemo(() => overlayMode === 'off' ? undefined
-    : { marks: attachmentMarks(state, OVERLAY_KINDS[overlayMode]), pins: structurePins(state.manuscript) }, [overlayMode, state]);
+  // The opening soundscape and atmosphere: the reader's own, or the writer's.
+  const opens = { soundscape: Boolean(opening?.soundscape ?? chapter.scene?.soundscape), atmosphere: Boolean(opening?.atmosphere ?? chapter.scene?.atmosphere) };
+  const overlay = useMemo(() => {
+    if (overlayMode === 'off') return undefined;
+    const start = openingSoundMark(state.manuscript, opens);
+    return { marks: [...start ? [start] : [], ...attachmentMarks(state, OVERLAY_KINDS[overlayMode])], pins: structurePins(state.manuscript) };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the opening is two flags
+  }, [overlayMode, state, opens.soundscape, opens.atmosphere]);
   const cues = useMemo(() => placedSoundCues(state), [state]);
   const prose = useMemo((): CSSProperties => ({
     fontFamily: text.font.family, fontSize: `calc(${text.fontSize} * var(--reader-scale, 1))`, fontWeight: text.fontWeight,
@@ -180,6 +186,10 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
       </div>
       <p className="text-xs leading-relaxed text-neutral-400">Highlight words to change them, or choose Media to place a Sound Cue or change the soundscape or atmosphere there. Changes save as you make them; moving on to the next chapter seals this one.</p>
       <ManuscriptOverlaySwitch mode={overlayMode} onChange={setOverlayMode} overlay={overlay} />
+      {/* A chapter may have no Sound Cues, but where there should be some their absence is loud: say so here, never in the Reader. */}
+      {cues.length === 0 && <p role="status" className="rounded-lg border border-amber-300/25 bg-amber-400/[0.06] px-3 py-2 text-xs leading-relaxed text-amber-100" data-testid="create-mode-no-cues">
+        This chapter has no Sound Cues. Where a sound happens, highlight its words and choose Media → Audio → Cue.
+      </p>}
       <details className="rounded-lg border border-white/10 bg-neutral-900/40 px-3 py-2" data-testid="create-mode-soundtrack">
         <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.14em] text-neutral-300">Soundscape and atmosphere</summary>
         <p className="mt-2 text-xs leading-relaxed text-neutral-400">Each opens the chapter, locked at its start, and may change once more: highlight the word where it begins and choose Media → Audio.</p>

@@ -4,7 +4,7 @@ import {
   type ManuscriptAttachment, type ManuscriptIdFactory, type ManuscriptState, type PassageSelection,
 } from '@seihouse/sen/highlight-engine';
 import { createPreviewManuscript, previewParagraphs } from './previewData';
-import { ATTACHMENT_COLORS, OVERLAY_KINDS, attachmentMarks, structurePins } from '@seihouse/sen/highlight-engine';
+import { ATTACHMENT_COLORS, OVERLAY_KINDS, attachmentMarks, openingSoundMark, structurePins } from '@seihouse/sen/highlight-engine';
 
 const ids = (): ManuscriptIdFactory => { let count = 0; return kind => `${kind[0]}${++count}`; };
 const words = (state: ManuscriptState<string>, index: number, phrase: string): PassageSelection => {
@@ -30,9 +30,21 @@ describe('Lab overlays', () => {
 
   it('gives each overlay its kinds, one color per kind', () => {
     expect(OVERLAY_KINDS.audio).toEqual(['sound-cue', 'soundscape-change', 'atmosphere-change']);
-    expect(ATTACHMENT_COLORS['soundscape-change'].label).toBe('Soundscape change');
-    expect(ATTACHMENT_COLORS['atmosphere-change'].label).toBe('Atmosphere change');
+    expect(ATTACHMENT_COLORS['soundscape-change'].label).toBe('Soundscape');
+    expect(ATTACHMENT_COLORS['atmosphere-change'].label).toBe('Atmosphere');
     expect(ATTACHMENT_COLORS['sound-cue'].label).toBe('Sound Cue');
+  });
+
+  it('marks where the opening soundscape and atmosphere begin: the first word, in their colors', () => {
+    const manuscript = createPreviewManuscript(ids());
+    const first = manuscript.paragraphs[0];
+    const firstWord = first.text.match(/[\p{L}\p{N}]+/u)![0];
+    const both = openingSoundMark(manuscript, { soundscape: true, atmosphere: true })!;
+    expect(both.selection).toMatchObject({ blockId: first.id, selectedText: firstWord });
+    expect(both.tone).toBe(`linear-gradient(90deg, ${ATTACHMENT_COLORS['soundscape-change'].tone} 50%, ${ATTACHMENT_COLORS['atmosphere-change'].tone} 50%)`);
+    expect(openingSoundMark(manuscript, { atmosphere: true })!.tone).toBe(ATTACHMENT_COLORS['atmosphere-change'].tone);
+    // A chapter with neither opening keeps the one before playing: nothing begins here.
+    expect(openingSoundMark(manuscript, {})).toBeUndefined();
   });
 
   it('tints every Sound Cue blue, whether it holds words, a sentence or a paragraph, and nothing of another kind', () => {

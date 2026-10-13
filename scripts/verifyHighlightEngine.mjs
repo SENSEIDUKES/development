@@ -310,7 +310,7 @@ for (const [name, browserType, width, height, touch] of [
     // Colors mean the kind of effect: every Sound Cue is the same blue.
     assert.equal(await page.locator('.sen-overlay-mark').evaluateAll(marks => new Set(marks.map(mark => getComputedStyle(mark).backgroundColor)).size), 1);
     assert.equal(await page.locator('.sen-overlay-mark[data-attention]').count(), 0);
-    assert.deepEqual(await page.getByTestId('overlay-legend').locator('li').allTextContents(), ['Sound Cue', 'Soundscape change', 'Atmosphere change']);
+    assert.deepEqual(await page.getByTestId('overlay-legend').locator('li').allTextContents(), ['Sound Cue', 'Soundscape', 'Atmosphere']);
     // Never over a word: no number touches a letter, another number, or the screen edge, and ¶ numbers sit left of the text.
     const numbers = await page.evaluate(() => {
       const letters = [];

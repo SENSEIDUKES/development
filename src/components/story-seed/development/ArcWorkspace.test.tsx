@@ -48,18 +48,39 @@ beforeEach(() => {
 afterEach(() => { act(() => root.unmount()); container.remove(); resetWorkshopStorySeedStorage(); });
 
 describe('Story Seed Arc and World ownership', () => {
-  it('renders the approved order, three optional pins, and one goal without a full plan editor', () => {
+  it('renders the approved order, reveals up to three optional pins one at a time, and one goal without a full plan editor', () => {
     render(initial());
     const nodes = ['label[for="destined-ending-input"]', 'label[for="story-length-input"]', '#arc-hard-pins-title', 'label[for="active-arc-goal-input"]', '#arc-fun-settings-title'].map(selector => container.querySelector(selector)!);
     nodes.forEach(node => expect(node).not.toBeNull());
     nodes.slice(1).forEach((node, i) => expect(nodes[i].compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy());
-    expect(container.querySelectorAll('input[id^="hard-pin-"]')).toHaveLength(3);
+    const pinCount = () => container.querySelectorAll('input[id^="hard-pin-"]').length;
+    expect(pinCount()).toBe(1);
     expect(container.querySelectorAll('#active-arc-goal-input')).toHaveLength(1);
     expect(container.textContent).not.toMatch(/Story Sauce|Story Direction|First Major Conflict|Main Opposition|Make It Work|Edit Arc Plan|Add Goal/);
-    fill('hard-pin-3', 'Keep the master alive.');
-    expect(current.story.optional.hardPins).toEqual([{ text: 'Keep the master alive.' }]);
+    fill('hard-pin-1', 'Protect the master.');
+    expect(pinCount()).toBe(2);
+    fill('hard-pin-2', 'Keep the master alive.');
+    expect(pinCount()).toBe(3);
+    fill('hard-pin-3', 'Keep the vow.');
+    expect(pinCount()).toBe(3);
+    fill('hard-pin-1', '');
+    expect(current.story.optional.hardPins).toEqual([{ text: 'Keep the master alive.' }, { text: 'Keep the vow.' }]);
+    fill('hard-pin-2', '');
     fill('hard-pin-3', '');
     expect(current.story.optional.hardPins).toEqual([]);
+    expect(pinCount()).toBe(1);
+  });
+
+  it('keeps each full explanation one tap away behind its info toggle', () => {
+    render(initial());
+    const more = container.querySelector<HTMLButtonElement>('[aria-label="More about the Destined Ending"]')!;
+    expect(container.textContent).not.toContain('You can alter this outcome later.');
+    act(() => more.click());
+    expect(more.getAttribute('aria-expanded')).toBe('true');
+    expect(container.textContent).toContain('You can alter this outcome later.');
+    // Only the selected Fun Setting level's description shows.
+    expect(container.textContent).toContain('Classic webnovel rhythm.');
+    expect(container.textContent).not.toContain('Rare and meaningful.');
   });
 
   it('preserves edits through World, Blueprint review, persistence, export/import, and story creation', async () => {

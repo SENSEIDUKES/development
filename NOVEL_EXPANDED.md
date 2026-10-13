@@ -728,10 +728,36 @@ When a session asks "what now?", start here:
    (accounts, server-side storage, a kept economy), which completes it. The
    app's host pieces (`src/host/`) are where the device and practice stand-ins
    live, so that is where the database's real ones replace them.
-5. **Cinematic scrolling**, the Reader's default way to read: the page moves
-   with Listen's voice (its playhead is ready for it), and later Sound Cues and
-   manifestations fire as the voice reaches them. AI narration (generated once
-   per language, stored and shared) comes after, on the same script.
+5. **Cinematic scrolling**, the Reader's default way to read: the reader looks
+   at the screen, never scrolls, and the world activates in front of them.
+   Built after right-to-left reading, on a Reader Chamber that is properly
+   built. Agreed with the owner (2026-10-13):
+   - **The big Play button starts it.** Nothing else to turn on.
+   - **The voice is the clock.** The page moves with Listen's voice (its
+     playhead is ready for it): a faster voice scrolls faster, a slower one
+     slower, and the two never drift apart.
+   - **A constant slow glide**, never a jump or a stop-and-start; the sentence
+     being read stays at one place on the screen. It replaces today's
+     follow-the-voice jumps (`useFollowNarration`).
+   - **One timeline.** Sound Cues fire as the voice reaches their words, over
+     the chapter's atmosphere. Manifestations join the same timeline later
+     without a redesign; how they appear (a Codex entry or character taking
+     the full screen, for example) is decided with their redesign.
+   - **A touch hands the page back to the reader** at once. **Resume** glides
+     back to the voice; nothing pulls the reader back on a timer.
+   - **At a chapter's end**, regular mode writes the next chapter and goes
+     on; Fate Survival stops at Fate.
+
+   Later, on the same timeline: a **silent version** that moves at a reading
+   pace with only the atmosphere and Sound Cues; **writing one chapter ahead**,
+   an option so regular mode never waits on the writing screen (the reader
+   gives up some authoring for it); **streamer mode**, where nobody touches the
+   screen, with Alter Fate on stream after it. Production's cinematic scroll
+   (`reader-chamber/reference/`, described in `PRODUCTION_READER.md`) shows its
+   spring glide, its hand-back and its Resume pill, but it guessed each
+   paragraph's length; this one follows the manuscript's spoken sentences.
+   AI narration (generated once per language, stored and shared) comes after,
+   on the same script.
 
 ### The engine track: the world record and the Codex
 

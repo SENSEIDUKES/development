@@ -308,6 +308,19 @@ mode**. That means:
   than a table. What it must finally hold so a story can be translated into other
   media is in
   [the HARNESS principles](./src/components/harness-generation/HARNESS_PRINCIPLES.md#translation-across-media-the-world-record).
+- **One record, many views** (SENSEI, 2026-10-13). Each main category (characters,
+  factions, items, and later places, the Bestiary's species and the rest) is one
+  record, built the same way. Power Rankings, Karma and the other Codex mechanics
+  are not separate stores fed separately, as the old Codex had them: they are
+  different ways of displaying that same record. Everything about one character
+  shows together when their card is opened; nothing about them is scattered
+  across pages.
+- **Manifesting happens while reading** (SENSEI, 2026-10-13). A name the story
+  has met glows in the chapter; the reader taps it, a small card opens over the
+  text, and Manifest makes its picture right there. Nothing the story has not
+  yet shown can be manifested. The Codex is where the reader looks at what they
+  have collected, so by the time they open it most of its cards already wear
+  their pictures; it is a gallery of cards, not a place to manifest from.
 
 ## Where we are (2026-10-10)
 
@@ -720,15 +733,19 @@ When a session asks "what now?", start here:
 
 1. **Owner:** run the next real-model test (Stage E0) on a new story and export
    it. Everything after it depends on knowing the strict tags hold.
-2. **Agent:** build the first information tag, **first appearance with
+2. **Agent:** the Codex as a card gallery, and manifesting while reading
+   ([its direction](#how-we-build)): names the record has met glow in the
+   chapter and open a card with Manifest; the Codex shows each category as
+   cards wearing their pictures, and a card opens to everything about it.
+3. **Agent:** build the first information tag, **first appearance with
    appearance** (Stage E1, step 1), as proposed and decided on 2026-10-13
    (below), with its Look on the Codex's character sheets. The owner's Test
    Story - Blade (two chapters so far) carries on to ten chapters as Stage E0's
    test.
-3. **Agent:** the next step of reading in every script (product track, item
+4. **Agent:** the next step of reading in every script (product track, item
    1): a reading font chosen on purpose for each remaining script. Right-to-left
    reading is built.
-4. **Either track's next piece** below, when the owner asks for it.
+5. **Either track's next piece** below, when the owner asks for it.
 
 ### The product track
 

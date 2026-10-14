@@ -316,7 +316,7 @@ describe('Story Seed to Harness handoff', () => {
     expect(JSON.stringify(requests[1].storyInformation)).not.toContain('sourceSnapshot');
     expect(requests[1].storyInformation.previouslyOn).toEqual([]);
     expect(JSON.stringify(requests[1].storyInformation)).not.toContain('Mara waits at the sealed harbor gate.');
-    expect(requests[1].immediateChapterRequest).toEqual({ chapterNumber: 2, continuation: true, chapterScale: { minWords: 1_800, maxWords: 2_500, paragraphs: expect.any(Number) } });
+    expect(requests[1].immediateChapterRequest).toEqual({ chapterNumber: 2, continuation: true, chapterScale: { minWords: 1_200, maxWords: 1_700, paragraphs: expect.any(Number) } });
     const { userPrompt, systemInstruction } = provider.mock.calls[1][0];
     expect(userPrompt).toContain('Remain at the gate; do not finish the tournament arc yet.');
     // The revision replaced the permanent instructions, and the frozen seed no

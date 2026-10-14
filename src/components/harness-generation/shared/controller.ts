@@ -50,7 +50,7 @@ import { chapterRewriteGap, latestStoryChapter, readRewriteNote, withoutLatestCh
 import { harnessParagraphBlockId } from './chapterBody';
 import { protagonistNames } from './speakers';
 import { createCodexEntryResolver, declaredCharacters, resolveHoldingChanges } from './holdings';
-import { resolveAppearances } from './appearances';
+import { resolveAppearances, thingAppearancesFromHoldings } from './appearances';
 import { applyHoldingsFixes, planHoldingsFix } from './holdingsFixer';
 import { chapterLooks, planLookSubjects } from './lookDescriber';
 import {
@@ -1437,6 +1437,14 @@ export class HarnessGenerationController {
     const holdings = acceptedDraft.holdingChanges?.length
       ? resolveHoldingChanges({ ...resolving, changes: acceptedDraft.holdingChanges, resolver })
       : undefined;
+    // A thing the chapter's holding tags show for the first time steps onto the page there.
+    if (appearances && holdings?.changes.length) {
+      appearances.push(...thingAppearancesFromHoldings({
+        chapter: { id: chapterId, chapterNumber: commitAttempt.chapterNumber, appearances, holdingChanges: holdings.changes },
+        chapters: candidate.chapters.filter(entry => entry.storyId === commitAttempt.storyId),
+        entries: [...candidate.codexEntries.filter(entry => entry.storyId === commitAttempt.storyId), ...resolver.created],
+      }));
+    }
     const chapter = {
       id: chapterId,
       storyId: commitAttempt.storyId,

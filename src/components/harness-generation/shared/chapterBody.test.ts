@@ -147,10 +147,10 @@ describe('HARNESS chapter body', () => {
   it('refuses a failed write far below the chapter\'s size, and keeps a chapter that is only short', () => {
     // The reply that ended the owner's Chapter 3: four paragraphs, two of them the writer's own notes.
     const stopped = acceptHarnessModelResponse(STOPPED_WRITE_REPLY, 3, { minWords: HARNESS_CHAPTER_TARGET_MIN_WORDS });
-    expect(stopped).toEqual({ accepted: false, reason: 'The writer stopped after 104 words, far short of the 1,800 a chapter needs.', warnings: [] });
+    expect(stopped).toEqual({ accepted: false, reason: 'The writer stopped after 104 words, far short of the 1,200 a chapter needs.', warnings: [] });
     // The same in plain prose.
     const plain = acceptHarnessModelResponse('The gate opened.\n\nShe stepped through.', 3, { minWords: HARNESS_CHAPTER_TARGET_MIN_WORDS });
-    expect(plain).toMatchObject({ accepted: false, reason: 'The writer stopped after 6 words, far short of the 1,800 a chapter needs.' });
+    expect(plain).toMatchObject({ accepted: false, reason: 'The writer stopped after 6 words, far short of the 1,200 a chapter needs.' });
     // A quarter of the minimum is the line: 449 words is a failed write, 450 a short chapter, kept and flagged.
     const words = (count: number) => Array.from({ length: count }, () => 'tide').join(' ');
     expect(harnessFailedWrite({ wordCount: 449 }, 1_800)).toBe('The writer stopped after 449 words, far short of the 1,800 a chapter needs.');
@@ -194,10 +194,10 @@ describe('HARNESS chapter body', () => {
     expect(harnessChapterParagraphTarget('hst_story', 7, range)).toBe(targets[6]);
   });
 
-  it('asks every chapter for the same 50 paragraphs while the owner measures how exactly the writer reaches a count', () => {
-    expect(HARNESS_CHAPTER_PARAGRAPH_RANGE).toEqual({ min: 50, max: 50 });
+  it('asks every chapter for the same 35 paragraphs while the owner measures how exactly the writer reaches a count', () => {
+    expect(HARNESS_CHAPTER_PARAGRAPH_RANGE).toEqual({ min: 35, max: 35 });
     const targets = Array.from({ length: 50 }, (_, index) => harnessChapterParagraphTarget(`hst_${index % 7}`, index + 1));
-    expect(new Set(targets)).toEqual(new Set([50]));
+    expect(new Set(targets)).toEqual(new Set([35]));
   });
 
   it('keeps a chapter that misses its paragraph count and flags the miss, and says nothing when it hits', () => {
@@ -296,7 +296,7 @@ describe('HARNESS chapter body persistence', () => {
 
     const failed = controller.snapshot().attempts[0];
     expect(failed).toMatchObject({ stage: 'generation_failed', rawProviderResponse: STOPPED_WRITE_REPLY,
-      failure: { stage: 'response', message: 'The writer stopped after 104 words, far short of the 1,800 a chapter needs.' } });
+      failure: { stage: 'response', message: 'The writer stopped after 104 words, far short of the 1,200 a chapter needs.' } });
     expect(failed.acceptedDraft).toBeUndefined();
     expect(controller.snapshot().chapters).toHaveLength(0);
     expect(controller.snapshot().stories[0].head.nextChapterNumber).toBe(1);

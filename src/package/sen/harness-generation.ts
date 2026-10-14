@@ -169,6 +169,7 @@ export {
   placeAppearances,
   readAppearanceTag,
   resolveAppearances,
+  thingAppearancesFromHoldings,
   type AppearanceFlag,
   type AppearancePassage,
   type AppearancePlacement,

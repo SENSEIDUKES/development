@@ -315,6 +315,8 @@ export function deriveAppearances({ entries, chapters, declaredFactions = [] }: 
         flag('look-unseen', `the look of ‘${subject.name}’ changes, but no tag shows them appearing. The change is left out.`, record, subject.name);
         continue;
       }
+      // A look tag in the paragraph that first shows them describes that first look; it is not a change.
+      if (changed.first.chapterId === chapter.id && changed.first.blockId === record.anchor.blockId) continue;
       changed.changes.push({ change: change ?? '', passage: passageOf(record) });
       accepted.set(record.id, changed);
       seen(changed.key);
@@ -337,6 +339,41 @@ export function deriveAppearances({ entries, chapters, declaredFactions = [] }: 
   }
 
   return { subjects: [...subjects.values()], flags, recency };
+}
+
+/** Holding tags that show a thing on the page: held, taken, in use or put away. */
+const SHOWN_BY: ReadonlySet<string> = new Set(['has', 'gained', 'equipped', 'unequipped']);
+
+/**
+ * The things a committed chapter shows through its holding tags that have not
+ * stepped onto the page yet: each gets its appearance on the sentence of its
+ * first such tag, so every held thing has a look without the writer tagging
+ * it twice. `chapters` are the story's other chapters; `chapter` carries its
+ * resolved appearances and holding changes.
+ */
+export function thingAppearancesFromHoldings({ chapter, chapters, entries }: {
+  chapter: AppearancesChapter;
+  chapters: readonly AppearancesChapter[];
+  entries: readonly CodexEntry[];
+}): AppearanceAttachment[] {
+  const state = deriveAppearances({ entries, chapters: [...chapters.filter(other => other.id !== chapter.id), chapter] });
+  const appeared = new Set(state.subjects.filter(subject => subject.entity === 'thing').map(subject => subject.entryId ?? subject.key));
+  const found: AppearanceAttachment[] = [];
+  let index = chapter.appearances?.length ?? 0;
+  for (const change of chapter.holdingChanges ?? []) {
+    const target = change.payload.target;
+    const entry = target?.entryId ? entries.find(candidate => candidate.id === target.entryId) : undefined;
+    if (!entry || entry.kind !== 'thing' || !SHOWN_BY.has(change.payload.verb) || appeared.has(entry.id)) continue;
+    appeared.add(entry.id);
+    const { blockId, startOffset, endOffset } = change.anchor;
+    found.push({
+      id: appearanceId(blockId, startOffset, endOffset, index++),
+      kind: APPEARANCE_KIND,
+      anchor: { ...change.anchor },
+      payload: { origin: 'harness', event: 'appears', subject: { name: entry.name, entryId: entry.id }, entity: 'thing' },
+    });
+  }
+  return found;
 }
 
 /** The appearances a chapter's look step describes: each appears or look tag the rules accept, in reading order. */

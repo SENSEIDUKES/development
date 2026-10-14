@@ -139,6 +139,14 @@ describe('The Codex in the HARNESS Reader', { timeout: 20_000 }, () => {
     const scrolled = vi.mocked(Element.prototype.scrollIntoView);
     scrolled.mockClear();
     await click(button => button.getAttribute('aria-label')?.startsWith('Ch. 1 · took up') ?? false, 'the took-up link');
+    // It asks first: Stay keeps the reader's place, Go moves the chapter.
+    expect(codex()!.querySelector('[data-testid="codex-go-confirm"]')!.textContent).toContain('Go to Chapter 1?');
+    expect(scrolled).not.toHaveBeenCalled();
+    await click(button => button.textContent?.trim() === 'Stay', 'Stay');
+    expect(codex()!.querySelector('[data-testid="codex-go-confirm"]')).toBeNull();
+    expect(scrolled).not.toHaveBeenCalled();
+    await click(button => button.getAttribute('aria-label')?.startsWith('Ch. 1 · took up') ?? false, 'the took-up link');
+    await click(button => button.textContent?.trim() === 'Go', 'Go');
     // The Codex stays, lowered so the chapter shows above it.
     expect(codex()).toBeTruthy();
     expect(panel()!.getAttribute('data-stop')).toBe('half');

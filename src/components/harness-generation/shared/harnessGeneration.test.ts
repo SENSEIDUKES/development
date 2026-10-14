@@ -396,7 +396,7 @@ describe('Harness Generation Phase 2 novel core', () => {
     await reloaded.generateNextChapter(story.id, 'google/gemini-3.1-flash-lite');
 
     const chapterTwoRequest = provider.generate.mock.calls[1][0] as HarnessGenerationRequest;
-    expect(chapterTwoRequest.immediateChapterRequest).toEqual({ chapterNumber: 2, continuation: true, chapterScale: { minWords: 1_800, maxWords: 2_500, paragraphs: harnessChapterParagraphTarget(story.id, 2) } });
+    expect(chapterTwoRequest.immediateChapterRequest).toEqual({ chapterNumber: 2, continuation: true, chapterScale: { minWords: 1_200, maxWords: 1_700, paragraphs: harnessChapterParagraphTarget(story.id, 2) } });
     expect(chapterTwoRequest.storyInformation.previouslyOn).toEqual([{ chapterNumber: 1, title: 'A Door in the Floodwall', recap: 'Nera found a sealed door behind the floodwall.' }]);
     expect(chapterTwoRequest.storyInformation.canonicalState.characters).toEqual([expect.objectContaining({ name: 'Nera', asOfChapter: 1, facts: expect.objectContaining({ role: 'Keeper' }) })]);
     expect(JSON.stringify(chapterTwoRequest.storyInformation)).not.toContain('at first light');

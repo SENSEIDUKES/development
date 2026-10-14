@@ -257,7 +257,7 @@ describe('The HARNESS Reader', { timeout: 20_000 }, () => {
     await click(byLabel('Next Chapter: Write Chapter 1'), 'Write Chapter 1');
     expect(chapterOnScreen(1)).toBeNull();
     expect(container.querySelector('[role="alert"]')!.textContent)
-      .toBe('Chapter 1 was not saved. The writer stopped after 104 words, far short of the 1,800 a chapter needs. You can try again.');
+      .toBe('Chapter 1 was not saved. The writer stopped after 104 words, far short of the 1,200 a chapter needs. You can try again.');
     expect(container.textContent).not.toContain('Need fix tag syntax');
 
     await click(byLabel('Next Chapter: Write Chapter 1'), 'Write Chapter 1');

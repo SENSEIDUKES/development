@@ -1,5 +1,5 @@
 import { Fragment, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { Backpack, ChevronLeft, Eye, Flag, Hand, Lock, Package, ScrollText, Sparkles, Sword, TriangleAlert, User, Users } from 'lucide-react';
+import { Archive, Backpack, ChevronLeft, Eye, Flag, Hand, Lock, Package, ScrollText, Sparkles, Sword, TriangleAlert, User, Users } from 'lucide-react';
 import './story-codex.css';
 import type { HoldingVerb } from '../../../narrative/holdings';
 import { CHARACTER_LOOK_TRAITS, THING_LOOK_TRAITS, type LookTrait } from '../../../narrative/appearances';
@@ -244,10 +244,12 @@ function FactionProfile({ faction, onBack, onReadPassage }: { faction: CodexFact
   </Profile>;
 }
 
+/** A thing that changed hands and is no longer held: lost, used up, broken or given away. */
+const isArchived = (item: CodexItem) => !item.holder && item.events.length > 0;
 const holderLine = (item: CodexItem) => (item.holder ? `${item.holder.name} · ${item.equipped ? 'in hand' : 'carried'}` : item.events.length ? 'No longer held' : 'Held by no one');
 
 function ItemProfile({ item, onBack, onReadPassage }: { item: CodexItem; onBack: () => void; onReadPassage?: ReadPassage }) {
-  return <Profile category="items" name={item.name} line={holderLine(item)} badges={item.count > 1 ? [`×${item.count}`] : []} backLabel="All items" onBack={onBack}>
+  return <Profile category="items" name={item.name} line={holderLine(item)} badges={isArchived(item) ? ['Archived'] : item.count > 1 ? [`×${item.count}`] : []} backLabel="All items" onBack={onBack}>
     <div className="flex flex-wrap gap-1.5">
       <PassageChip passage={item.firstSeen} label={`First seen · Ch. ${item.firstSeen.chapterNumber}`} onReadPassage={onReadPassage} />
     </div>
@@ -301,7 +303,17 @@ export function StoryCodex({ codex, storyTitle, onBack, onReadPassage, onReadCha
 }) {
   const [tab, setTab] = useState<CodexTab>('characters');
   const [open, setOpen] = useState<string>();
+  // A fact's link moves the chapter behind the Codex, so it asks first (SENSEI: an instant jump lost the reader's place).
+  const [goTo, setGoTo] = useState<{ chapterNumber: number; blockId?: string }>();
   const root = useRef<HTMLElement>(null);
+  const askToRead: ReadPassage | undefined = onReadPassage && ((chapterNumber, blockId) => setGoTo({ chapterNumber, blockId }));
+  const askToReadChapter = onReadChapter && ((chapterNumber: number) => setGoTo({ chapterNumber }));
+  const go = () => {
+    if (!goTo) return;
+    if (goTo.blockId) onReadPassage?.(goTo.chapterNumber, goTo.blockId);
+    else onReadChapter?.(goTo.chapterNumber);
+    setGoTo(undefined);
+  };
   const close = () => setOpen(undefined);
   const character = tab === 'characters' ? codex.characters.find(entry => entry.key === open) : undefined;
   const faction = tab === 'factions' ? codex.factions.find(entry => entry.key === open) : undefined;
@@ -313,6 +325,8 @@ export function StoryCodex({ codex, storyTitle, onBack, onReadPassage, onReadCha
     if (box) box.scrollTop = 0;
   }, [tab, open]);
 
+  const itemCard = (entry: CodexItem) => <CodexCard key={entry.key} category="items" testId="codex-item" cardKey={entry.key} name={entry.name}
+    badge={entry.count > 1 ? `×${entry.count}` : undefined} line={holderLine(entry)} onOpen={() => setOpen(entry.key)} />;
   const tabs: { id: CodexTab; label: string; count: number; icon: ReactNode }[] = [
     { id: 'characters', label: 'Characters', count: codex.characters.length, icon: <Users size={15} aria-hidden /> },
     { id: 'factions', label: 'Factions', count: codex.factions.length, icon: <Flag size={15} aria-hidden /> },
@@ -325,8 +339,9 @@ export function StoryCodex({ codex, storyTitle, onBack, onReadPassage, onReadCha
     : tab === 'factions'
       ? codex.factions.map(entry => <CodexCard key={entry.key} category="factions" testId="codex-faction" cardKey={entry.key} name={entry.name}
           line={`Met in Chapter ${entry.firstSeen.chapterNumber}`} onOpen={() => setOpen(entry.key)} />)
-      : codex.items.map(entry => <CodexCard key={entry.key} category="items" testId="codex-item" cardKey={entry.key} name={entry.name}
-          badge={entry.count > 1 ? `×${entry.count}` : undefined} line={holderLine(entry)} onOpen={() => setOpen(entry.key)} />);
+      : codex.items.filter(entry => !isArchived(entry)).map(itemCard);
+  // Things lost, used up or given away: kept, below what is held now.
+  const archived = tab === 'items' ? codex.items.filter(isArchived).map(itemCard) : [];
 
   return <section ref={root} className="mx-auto w-full min-w-0 max-w-3xl space-y-4 px-3 py-4 sm:px-4" aria-labelledby="codex-panel-title" data-testid="story-codex">
     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -346,13 +361,28 @@ export function StoryCodex({ codex, storyTitle, onBack, onReadPassage, onReadCha
     </div>
 
     <div id="codex-tab-panel" role="tabpanel" aria-labelledby={`codex-tab-${tab}`} className="space-y-4">
-      {character && <CharacterProfile key={character.key} character={character} onBack={close} onReadPassage={onReadPassage} />}
-      {faction && <FactionProfile key={faction.key} faction={faction} onBack={close} onReadPassage={onReadPassage} />}
-      {item && <ItemProfile key={item.key} item={item} onBack={close} onReadPassage={onReadPassage} />}
-      {!profileOpen && (cards.length
+      {character && <CharacterProfile key={character.key} character={character} onBack={close} onReadPassage={askToRead} />}
+      {faction && <FactionProfile key={faction.key} faction={faction} onBack={close} onReadPassage={askToRead} />}
+      {item && <ItemProfile key={item.key} item={item} onBack={close} onReadPassage={askToRead} />}
+      {!profileOpen && (cards.length || archived.length
         ? <ul className="grid grid-cols-2 gap-3">{cards}</ul>
         : <p className="py-8 text-center text-sm text-neutral-400">{EMPTY[tab]}</p>)}
-      {!profileOpen && <Checks checks={codex.checks} onReadPassage={onReadPassage} onReadChapter={onReadChapter} />}
+      {!profileOpen && archived.length > 0 && <section aria-labelledby="codex-archived-title" className="space-y-3" data-testid="codex-archived">
+        <h3 id="codex-archived-title" className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+          <Archive size={12} aria-hidden />Archived ({archived.length})
+        </h3>
+        <ul className="grid grid-cols-2 gap-3 opacity-60">{archived}</ul>
+      </section>}
+      {!profileOpen && <Checks checks={codex.checks} onReadPassage={askToRead} onReadChapter={askToReadChapter} />}
     </div>
+    {goTo && <div role="alertdialog" aria-labelledby="codex-go-title" data-testid="codex-go-confirm"
+      className="sticky bottom-3 z-10 rounded-2xl border border-white/15 bg-neutral-950/95 p-4 shadow-[0_12px_32px_#000c] backdrop-blur">
+      <p id="codex-go-title" className="text-sm text-neutral-100">Go to Chapter {goTo.chapterNumber}?</p>
+      <p className="mt-1 text-xs text-neutral-400">The chapter behind the Codex moves {goTo.blockId ? 'to this passage' : 'there'}, so you leave your place.</p>
+      <div className="mt-3 flex gap-2">
+        <button type="button" onClick={go} className="min-h-11 flex-1 rounded-full bg-white/90 px-4 text-sm font-medium text-black hover:bg-white">Go</button>
+        <button type="button" onClick={() => setGoTo(undefined)} className="min-h-11 flex-1 rounded-full border border-white/15 px-4 text-sm text-neutral-200 hover:border-white/30">Stay</button>
+      </div>
+    </div>}
   </section>;
 }

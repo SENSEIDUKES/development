@@ -9,6 +9,7 @@ import {
   readAppearanceTag,
   resolveAppearances,
   resolveHoldingChanges,
+  thingAppearancesFromHoldings,
   type AppearanceAttachment,
   type AppearancesChapter,
   type CodexEntry,
@@ -208,6 +209,38 @@ describe('Who is on the page', () => {
       ],
     }] });
     expect(describableAppearances(state, 'ch1').map(found => found.appearanceId)).toEqual(['a1', 'a2', 'a3']);
+  });
+
+  it('reads a look tag in the paragraph that first shows someone as that first look, not a change', () => {
+    const state = deriveAppearances({ entries, chapters: [{
+      id: 'ch1', chapterNumber: 1,
+      appearances: [appears('a1', 'c1-p2', 0, 'wu', 'Old Wu'), looks('a2', 'c1-p2', 80, 'wu', 'Old Wu', 'an oily grin'), looks('a3', 'c1-p9', 0, 'wu', 'Old Wu', 'a fresh burn')],
+    }] });
+    expect(state.subjects[0].changes.map(change => change.change)).toEqual(['a fresh burn']);
+    expect(state.flags).toEqual([]);
+    expect(describableAppearances(state, 'ch1').map(found => found.appearanceId)).toEqual(['a1', 'a3']);
+  });
+
+  it('gives a thing its first appearance on the holding tag that first shows it, once', () => {
+    const tongs = entry('tongs', 'Iron Tongs', { kind: 'thing' });
+    const change = (id: string, blockId: string, verb: 'gained' | 'equipped' | 'lost', target: CodexEntry): HoldingChangeAttachment => ({
+      id, kind: 'holding-change', anchor: { level: 'span', blockId, startOffset: 0, endOffset: 11, selectedText: 'A sentence.' },
+      payload: { origin: 'harness', verb, holder: { name: 'MC', entryId: 'mc' }, target: { name: target.name, entryId: target.id } },
+    });
+    const earlier: AppearancesChapter = { id: 'ch1', chapterNumber: 1, holdingChanges: [change('h0', 'c1-p1', 'gained', tongs)] };
+    const chapter: AppearancesChapter = {
+      id: 'ch2', chapterNumber: 2,
+      appearances: [appears('a1', 'c2-p1', 0, 'mc', 'MC')],
+      holdingChanges: [change('h1', 'c2-p2', 'lost', entries[2]), change('h2', 'c2-p3', 'equipped', tongs), change('h3', 'c2-p4', 'equipped', tongs), change('h4', 'c2-p5', 'gained', entries[2])],
+    };
+    const found = thingAppearancesFromHoldings({ chapter, chapters: [earlier, chapter], entries: [...entries, tongs] });
+    // Tongs held before the tag existed appear now, once; the sword appears where it is gained, not where it is lost.
+    expect(found.map(appearance => [appearance.payload.subject.name, appearance.anchor.blockId, appearance.payload.entity, appearance.id])).toEqual([
+      ['Iron Tongs', 'c2-p3', 'thing', 'appearance:c2-p3:0-11:1'],
+      ['Rusted Iron Sword', 'c2-p5', 'thing', 'appearance:c2-p5:0-11:2'],
+    ]);
+    // A thing already on the page never appears again.
+    expect(thingAppearancesFromHoldings({ chapter: { ...chapter, appearances: [...chapter.appearances!, ...found] }, chapters: [earlier], entries: [...entries, tongs] })).toEqual([]);
   });
 
   it('flags an appearance that cannot be true and leaves it out, and someone who speaks before appearing once a chapter', () => {

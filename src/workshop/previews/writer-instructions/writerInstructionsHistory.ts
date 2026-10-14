@@ -21,6 +21,11 @@ export interface WriterInstructionsChange {
 export const WRITER_INSTRUCTIONS_HISTORY: readonly WriterInstructionsChange[] = [
   {
     date: '2026-10-14',
+    summary: 'From SENSEI\'s Test Story - Blade run (chapters 3 to 10): the writer tagged every new character but no thing at all, and in Chapter 9 used a look tag right after an appears tag to describe a first look, so two people got two looks each. SEN Appearance 1.1.0: a look tag is only a later change, never a first description, and an appears tag for a thing is only for a named object no one holds; held things are now recorded from their Holdings tags by the HARNESS, which also ignores a look tag in the paragraph that first shows someone. The chapter request (not a recorded block) now asks for about 1,500 words, 1,200 to 1,700 in 35 paragraphs, down from 1,800 to 2,500 in 50: chapters read too long.',
+    changed: { appearance: '175e49662b3faa' },
+  },
+  {
+    date: '2026-10-14',
     summary: 'The information tagging phase begins with the first appearance, with its look (asked for by SENSEI). SEN Appearance 1.0.0 loads on every chapter: the writer reads who and what is already on the page in Story Information\'s new Appeared section, tags each character or named thing the moment it first steps onto the page ([[appears: Name | character]], [[appears: Thing | thing]]) and each change to a look ([[look: Name | what changed]]), and keeps every look Appeared gives until a look tag changes it. Places, factions and sects wait for their own tags. The response contract names the Appeared section among the packet\'s sections. A new step after a chapter is saved, the look step, reads each tagged passage (with the author\'s notes on a character, and the look before a change) and writes the look down: one line and the traits the passage states, in words any medium can use, never how to show it.',
     changed: { appearance: '1d610f13868e09', 'response-contract': '09b181a22b6f51', 'look-step': '143cedc91d6960' },
   },

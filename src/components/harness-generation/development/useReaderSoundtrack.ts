@@ -14,8 +14,13 @@ export const atmosphereOption = (atmosphere: SceneAtmosphere & { url: string }):
   ...(atmosphere.loudness ? { loudness: { kind: 'integrated', lufs: atmosphere.loudness.lufs, peakDb: atmosphere.loudness.peakDb ?? null } } : {}),
 });
 
-/** How far the soundtrack drops while Listen reads aloud: the player's own narration duck. */
-export const LISTEN_DUCK = 0.6;
+/**
+ * How far the soundtrack drops while Listen reads aloud: a light dip (to 75%)
+ * so music and atmosphere stay present under the voice. Phones already lower
+ * a page's sound while their own speech voice talks, so a deeper dip here
+ * left the soundtrack inaudible on mobile.
+ */
+export const LISTEN_DUCK = 0.25;
 
 /**
  * The scene a chapter is read with: the music and atmosphere its writer

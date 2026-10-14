@@ -305,7 +305,7 @@ reader mixer. `@seihouse/audio-player` ^4.0.0 is a new peer.
 - `./inline-audio`: with a mixer, a Sound Cue plays over the soundtrack
   (`MixerCueControl`), cues may overlap, and its loudness is the reader's
   Sound Cues level times the moment's Energy (`SOUND_CUE_ENERGY_VOLUME`: low
-  0.6, medium 0.8, high 1). A tap that makes no sound says why (story audio
+  0.8, medium 0.9, high 1). A tap that makes no sound says why (story audio
   muted, Sound Cues off). `InlineAudio` needs a `ReaderMixerProvider` or a
   `NarrativeAudioProvider`.
 - Host setup: create one mixer for the page (`createReaderMixer`, with your

@@ -16,7 +16,7 @@ import { createHostReaderMixer } from '../../../host/reader/readerMixer';
 import { SEN_ATMOSPHERES } from '../../../host/media/atmosphereCatalog';
 import { SEN_SOUNDSCAPES } from '../../../host/media/soundscapeCatalog';
 import { piecesForMood, storySoundtrack } from '@seihouse/sen/reader-runtime';
-import { READER_MUSIC_MOOD } from './useReaderSoundtrack';
+import { LISTEN_DUCK, READER_MUSIC_MOOD } from './useReaderSoundtrack';
 import type { SenLanguageCode } from '@seihouse/sen/contracts';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -835,7 +835,7 @@ describe('The soundtrack in the HARNESS Reader', { timeout: 20_000 }, () => {
       await act(async () => { speech.start(); });
       await flush();
       expect(leases).toHaveLength(1);
-      expect(leases[0].setDuck).toHaveBeenCalledWith(0.6);
+      expect(leases[0].setDuck).toHaveBeenCalledWith(LISTEN_DUCK);
       expect(mixer.retainActivity).toHaveBeenCalledTimes(1);
 
       await click(byLabel('Pause'), 'Pause');

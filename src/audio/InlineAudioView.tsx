@@ -139,7 +139,7 @@ export function InlineAudioControl({ cue, playback }: InlineAudioControlProps) {
  * How loud a cue plays within the reader's Sound Cues level: the Energy the
  * writer gave the moment. A cue with no Energy plays as medium.
  */
-export const SOUND_CUE_ENERGY_VOLUME: Readonly<Record<AudioEnergy, number>> = Object.freeze({ low: 0.6, medium: 0.8, high: 1 });
+export const SOUND_CUE_ENERGY_VOLUME: Readonly<Record<AudioEnergy, number>> = Object.freeze({ low: 0.8, medium: 0.9, high: 1 });
 
 /** A saved cue's Energy as a volume; anything other than low, medium or high plays as medium. */
 function soundCueVolume(energy: unknown): number {

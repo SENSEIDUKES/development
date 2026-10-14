@@ -6,7 +6,7 @@ and on every preview (`src/workshop/ModelRouterSettings.tsx`); the old
 `?preview=model-router` page is archived but still reachable.
 
 - **Created:** 2026-09-23
-- **Last Workshop update:** 2026-10-04
+- **Last Workshop update:** 2026-10-14
 - **Last source comparison:** 2026-09-23 (DEV-native; no production counterpart)
 - **Status:** active (gear); Systems card archived; owner `deferred` (server/host infrastructure, in no package)
 
@@ -14,11 +14,11 @@ and on every preview (`src/workshop/ModelRouterSettings.tsx`); the old
 
 | Capability | Providers | Consumers |
 | --- | --- | --- |
-| Chapters | Gemini, OpenRouter | Harness Generation, Chapter Generation, Story Seed Blueprint, Reader Translation |
-| Images | Gemini, OpenRouter | none yet (catalog only) |
+| Chapters | Gemini, OpenRouter, MiniMax, local LM Studio | Harness Generation, Holdings Fixer, Story Seed Blueprint, Story Spark, Reader Translation |
+| Images | Gemini, OpenRouter, MiniMax | Story Cover, Image Lab, Profile Picture |
 | TTS | ElevenLabs | Codex Voice Quote |
 | Audio | Gemini | none yet (catalog only) |
-| Video | Gemini | none yet (catalog only) |
+| Video | Gemini, MiniMax | No feature yet; MiniMax task adapter implemented, Veo catalog only |
 | 3D | Tripo AI | none yet (catalog only) |
 
 Model ids carry their route: `google/<model>` → Gemini, `openrouter/<vendor>/<model>`
@@ -26,8 +26,8 @@ Model ids carry their route: `google/<model>` → Gemini, `openrouter/<vendor>/<
 
 The audio catalog lists Lyria 3.5 and Lyria 3 Clip Preview. The video catalog lists
 Veo 3.1, Veo 3.1 Fast, and Veo 3.1 Lite Preview. The 3D catalog lists Tripo V3.1
-and Tripo P1. These entries only describe available provider models; no audio,
-video, or 3D generation consumer is connected yet.
+and Tripo P1. Lyria, Veo and Tripo are catalog only. MiniMax video has an
+executable task adapter, but no audio, video or 3D feature is connected yet.
 
 ## Adding a generation feature
 
@@ -41,6 +41,7 @@ any model call that is not registered. See AGENTS.md.
 | Variable | Purpose |
 | --- | --- |
 | `GEMINI_API_KEY` | Gemini models |
+| `Minimax` (or `MINIMAX_API_KEY`) | Direct MiniMax writing, image and video requests; the existing Vercel key is `Minimax` |
 | `OpenRouter-Dev` (or `OPENROUTER_API_KEY`) | OpenRouter chapter models appear once set |
 | `OPENROUTER_MODELS` | Extra OpenRouter models, comma-separated (`openai/gpt-5.6-luna`) |
 | `OPENROUTER_REASONING_EFFORT` | Optional server fallback reasoning effort for OpenRouter models (the Router's Advanced setting wins; models that send their own default, below, never use it) |
@@ -69,7 +70,9 @@ and a call example. This folder holds Development's registry, environment
 aliases, status endpoint and Workshop-specific OpenRouter attribution. Other
 apps supply their own configuration and keep their prompts, auth, UI and saved
 work in their own code. Status reports key presence and `implemented`
-separately; catalog-only media models are not executable.
+separately; catalog-only media models are not executable. MiniMax video models
+are executable through the package server contract even though no video
+feature currently consumes them.
 
 ## Local (LM Studio)
 
@@ -126,6 +129,26 @@ are unchanged.
 
 ## Workshop history
 
+- 2026-10-14 — Connected MiniMax directly: nine documented writer models
+  (M3.1 Flash Preview, M3, M2.7/M2.5/M2.1 and their highspeed variants, M2),
+  Image 01 and Image 01 Live, and eleven H3/Hailuo/T2V/I2V/S2V video models.
+  Chapters, arc planning, the Holdings fixer and Blueprints follow the existing
+  Router choice; covers, Image Lab and profile portraits accept MiniMax images.
+  Images return base64 through the existing host storage flow. Image prompts
+  must fit MiniMax's 1,500-character limit; Live needs a portrait reference.
+  Long cover prompts report the limit without cutting the owner's template or
+  story details. MiniMax has no documented native JSON-schema parameter: the
+  Router includes the schema in the instructions and host validation remains
+  authoritative. Reasoning stays separate from the answer; M3.1 sends low by
+  default. Video submission returns a task ID; `queryVideoTask` checks that
+  same job and returns its state and temporary download URL. No video UI,
+  automatic resubmission, provider fallback or durable video store was added.
+  Model access and quota depend on the account's plan. Existing Token Plan
+  subscribers retain their benefits; H3 requires eligible M Plan access or
+  standard API access. See [MiniMax's plan notice](https://platform.minimax.io/docs/m-plan/token-plan-notice),
+  [writer API](https://platform.minimax.io/docs/api-reference/text-openai-api),
+  [image API](https://platform.minimax.io/docs/api-reference/image-generation-t2i),
+  and [video API](https://platform.minimax.io/docs/api-reference/video-generation-v2-create).
 - 2026-10-12 — Added Local (LM Studio) for local development text generation,
   following the loaded model through the existing chapter and Blueprint paths.
   Other providers, their settings and the default model are unchanged.

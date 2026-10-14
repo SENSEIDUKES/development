@@ -58,7 +58,7 @@ export async function handleProfilePictureHttp(
 
   const model = (parsed.model as string | undefined) || DEFAULT_IMAGE_MODEL;
   const option = IMAGE_MODELS.find(item => item.id === model);
-  if (!option || (option.provider !== 'gemini' && option.provider !== 'openrouter')) return errorResponse(400, `Model '${model}' cannot make portraits.`);
+  if (!option) return errorResponse(400, `Model '${model}' cannot make portraits.`);
   const key = providerKey(dependencies.environment, option.provider);
   if (!key) return errorResponse(503, `${MODEL_PROVIDERS[option.provider].keyVariable} is not configured on the Development server.`);
 
@@ -74,6 +74,7 @@ export async function handleProfilePictureHttp(
     return { status: 200, body: { image: result.data, mimeType: result.mimeType, model }, headers: { 'Cache-Control': 'no-store' } };
   } catch (error) {
     dependencies.onError?.(error);
+    if (error instanceof ModelRouterError && error.code === 'invalid-model') return errorResponse(400, error.message);
     if (error instanceof ModelRouterError && error.code === 'timeout') {
       return errorResponse(502, `The portrait was still being made after ${Math.ceil(PROFILE_PICTURE_TIMEOUT_MS / 1000)} seconds, so it was stopped. Try again.`);
     }

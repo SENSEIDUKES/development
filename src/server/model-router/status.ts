@@ -107,7 +107,7 @@ export function modelRouterStatus(environment: ModelEnvironment): ModelRouterSta
         description: 'Text models that write chapters, Story Seed Blueprints, and reader translations.',
         consumers: consumersFor('chapters'),
         defaultModel: chapters.defaultModel,
-        providers: providerStatus(environment, ['gemini', 'openrouter', ...(isLocalModelDevelopment(environment) ? ['lmstudio' as const] : [])]),
+        providers: providerStatus(environment, ['gemini', 'openrouter', 'minimax', ...(isLocalModelDevelopment(environment) ? ['lmstudio' as const] : [])]),
         models: modelStatus(environment, chapterModels, chapters.defaultModel, true),
       },
       {
@@ -116,7 +116,7 @@ export function modelRouterStatus(environment: ModelEnvironment): ModelRouterSta
         description: 'Image models for covers, portraits, and scene art.',
         consumers: consumersFor('images'),
         defaultModel: imageDefault,
-        providers: providerStatus(environment, ['gemini', 'openrouter']),
+        providers: providerStatus(environment, ['gemini', 'openrouter', 'minimax']),
         models: modelStatus(environment, IMAGE_MODELS, imageDefault, true),
       },
       {
@@ -139,10 +139,10 @@ export function modelRouterStatus(environment: ModelEnvironment): ModelRouterSta
       {
         id: 'video',
         label: 'Video',
-        description: 'Video generation models with natively generated audio.',
+        description: 'Video generation models for text and image inputs; H3 and Veo also generate audio.',
         consumers: consumersFor('video'),
-        providers: providerStatus(environment, ['gemini']),
-        models: modelStatus(environment, VIDEO_MODELS),
+        providers: providerStatus(environment, ['gemini', 'minimax']),
+        models: modelStatus(environment, VIDEO_MODELS).map(model => ({ ...model, implemented: model.provider === 'minimax' })),
       },
       {
         id: '3d',

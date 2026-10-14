@@ -35,6 +35,25 @@ it('opens from the gear with tabs for each model capability', async () => {
   expect(row('eleven_v3')).toBeNull();
 });
 
+it('selects and remembers direct MiniMax writing and image models, and shows executable video models', async () => {
+  await openRouter({ Minimax: 'secret' });
+  await click(provider('minimax'));
+  expect(listedModels()).toHaveLength(9);
+  await click(row('minimax/MiniMax-M2.7')!);
+  expect(readModelPreference('chapters')).toBe('minimax/MiniMax-M2.7');
+  const tabs = [...document.querySelectorAll<HTMLButtonElement>('[aria-label="Router capabilities"] [role="tab"]')];
+  await click(tabs[1]);
+  await click(provider('minimax'));
+  await click(row('minimax/image-01')!);
+  expect(readModelPreference('images')).toBe('minimax/image-01');
+  await click(tabs[4]);
+  await click(provider('minimax'));
+  expect(listedModels()).toHaveLength(11);
+  expect(document.querySelector('[data-model="minimax/MiniMax-H3"]')!.textContent).not.toContain('Catalog only');
+  expect(document.body.textContent).toContain('No Workshop feature generates video yet');
+  expect(document.body.textContent).not.toContain('secret');
+});
+
 it('shows one provider at a time, starting with the provider of the selected model', async () => {
   await openRouter({ GEMINI_API_KEY: 'g', 'OpenRouter-Dev': 'o' });
   expect(provider('gemini').getAttribute('aria-selected')).toBe('true');

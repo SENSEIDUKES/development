@@ -148,15 +148,16 @@ export class GeminiWorldBlueprintProvider implements WorldBlueprintModelProvider
   }
 }
 
-export class OpenRouterWorldBlueprintProvider implements WorldBlueprintModelProvider {
+class RoutedWorldBlueprintProvider implements WorldBlueprintModelProvider {
   constructor(
     private readonly apiKey: string,
     private readonly model: string,
+    private readonly provider: 'openrouter' | 'minimax',
   ) {}
 
   async generate(request: BlueprintModelRequest<object>): Promise<unknown> {
     return parseBlueprintResponse(createModelRouter({
-      credentials: { openrouter: this.apiKey },
+      credentials: { [this.provider]: this.apiKey },
       openRouterAttribution: DEVELOPMENT_OPENROUTER_ATTRIBUTION,
     }).generate({
       capability: 'text', model: this.model, systemInstruction: request.systemInstruction,
@@ -165,6 +166,10 @@ export class OpenRouterWorldBlueprintProvider implements WorldBlueprintModelProv
       reasoningLevel: request.reasoningLevel,
     }), request.maxOutputTokens);
   }
+}
+
+export class OpenRouterWorldBlueprintProvider extends RoutedWorldBlueprintProvider {
+  constructor(apiKey: string, model: string) { super(apiKey, model, 'openrouter'); }
 }
 
 class LocalWorldBlueprintProvider implements WorldBlueprintModelProvider {
@@ -206,6 +211,8 @@ export const createWorldBlueprintProvider = (
   config: Pick<ResolvedStorySeedBlueprintConfig, "provider" | "model"> & { apiKey: string },
 ): WorldBlueprintModelProvider => config.provider === "lmstudio"
   ? new LocalWorldBlueprintProvider(config.model, config.apiKey)
+  : config.provider === "minimax"
+  ? new RoutedWorldBlueprintProvider(config.apiKey, config.model, 'minimax')
   : config.provider === "openrouter"
   ? new OpenRouterWorldBlueprintProvider(config.apiKey, config.model)
   : new GeminiWorldBlueprintProvider(config.apiKey, config.model);

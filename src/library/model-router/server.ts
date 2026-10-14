@@ -1,13 +1,15 @@
 import { GoogleGenAI } from '@google/genai';
 import { geminiThinkingConfig } from './geminiThinking';
 import { generateOpenRouterImage, generateOpenRouterText } from './openRouter';
+import { createMiniMaxVideoTask, generateMiniMaxImage, generateMiniMaxText, queryMiniMaxVideoTask } from './minimax';
+import { ModelRouterError } from './error';
+export { ModelRouterError } from './error';
 import {
   isLocalModelDevelopment,
   imageModelProvider,
   providerModelName,
   resolveReasoningLevel,
   textModelProvider,
-  type ReasoningLevel,
 } from './catalog';
 
 export type { ModelCapability, ReasoningLevel } from './catalog';
@@ -19,65 +21,8 @@ export { generateOpenRouterImage, generateOpenRouterText } from './openRouter';
 export type { OpenRouterImageRequest, OpenRouterTextRequest, OpenRouterTextResult } from './openRouter';
 export { geminiThinkingConfig } from './geminiThinking';
 
-export interface ModelRouterConfig {
-  /** Explicit host opt-in; also requires a development runtime, never a deployment. */
-  localDevelopment?: boolean;
-  credentials: { gemini?: string; openrouter?: string; elevenlabs?: string };
-  openRouterAttribution?: { referer?: string; title?: string };
-  fetch?: typeof fetch;
-  createGeminiClient?: (apiKey: string) => Pick<GoogleGenAI, 'models'>;
-}
-
-export interface TextGenerationRequest {
-  capability: 'text';
-  model: string;
-  systemInstruction: string;
-  userPrompt: string;
-  /** Custom sampling for non-Gemini models only; Gemini uses provider defaults. */
-  temperature: number;
-  maxOutputTokens: number;
-  timeoutMs: number;
-  responseFormat?: 'json' | 'text';
-  responseJsonSchema?: unknown;
-  reasoningLevel?: ReasoningLevel;
-}
-
-export interface SpeechGenerationRequest {
-  capability: 'tts';
-  model: string;
-  text: string;
-  voiceId: string;
-  timeoutMs: number;
-}
-
-export interface ImageGenerationRequest {
-  capability: 'image';
-  /** An id from the Router's image list (`IMAGE_MODELS`). */
-  model: string;
-  prompt: string;
-  /** The image's shape, such as `2:3` for a cover. */
-  aspectRatio?: string;
-  /** Images the model works from, such as a reader's photo (base64, as `data`). */
-  referenceImages?: ImageInput[];
-  timeoutMs: number;
-}
-
-export interface ImageInput { data: string; mimeType: string }
-
-export type GenerationRequest = TextGenerationRequest | SpeechGenerationRequest | ImageGenerationRequest;
-export interface TokenUsage { inputTokens: number; outputTokens: number; totalTokens: number }
-export type GenerationResult =
-  | { capability: 'text'; provider: 'gemini' | 'openrouter' | 'lmstudio'; model: string; text: string; usage?: TokenUsage }
-  | { capability: 'tts'; provider: 'elevenlabs'; model: string; bytes: Uint8Array; mimeType: 'audio/mpeg' }
-  /** `data` is the image's bytes in base64, as the providers return them. */
-  | { capability: 'image'; provider: 'gemini' | 'openrouter'; model: string; data: string; mimeType: string };
-
-export class ModelRouterError extends Error {
-  constructor(readonly code: 'unsupported-capability' | 'invalid-model' | 'missing-credential' | 'timeout' | 'output-limit' | 'provider-error', message: string) {
-    super(message);
-    this.name = 'ModelRouterError';
-  }
-}
+export type { ModelRouterConfig, TextGenerationRequest, SpeechGenerationRequest, ImageGenerationRequest, ImageInput, VideoGenerationRequest, VideoTaskRequest, VideoTaskResult, GenerationRequest, TokenUsage, GenerationResult } from './types';
+import type { ModelRouterConfig, GenerationRequest, GenerationResult, VideoTaskRequest, VideoTaskResult } from './types';
 
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 /** About 7.5 MB of image: well past a 2K cover, and inside a Vercel reply. */
@@ -105,6 +50,11 @@ export function createModelRouter(config: ModelRouterConfig) {
     if (request.capability === 'text') {
       const provider = textModelProvider(request.model);
       if (!provider) throw new ModelRouterError('invalid-model', `Model '${request.model}' cannot generate text.`);
+      if (provider === 'minimax') {
+        const key = requireCredential(config.credentials.minimax, 'MINIMAX_API_KEY');
+        const result = await withTimeout(request.timeoutMs, signal => generateMiniMaxText(request, key, signal, fetchImpl));
+        return { capability: 'text', provider, model: request.model, ...result };
+      }
       if (provider === 'lmstudio') {
         if (!config.localDevelopment || !isLocalModelDevelopment(process.env)) {
           throw new ModelRouterError('invalid-model', 'Local (LM Studio) is only available in local development.');
@@ -232,6 +182,11 @@ export function createModelRouter(config: ModelRouterConfig) {
     }
     if (request.capability === 'image') {
       const provider = imageModelProvider(request.model);
+      if (provider === 'minimax') {
+        const key = requireCredential(config.credentials.minimax, 'MINIMAX_API_KEY');
+        const result = await withTimeout(request.timeoutMs, signal => generateMiniMaxImage(request, key, signal, fetchImpl));
+        return { capability: 'image', provider, model: request.model, ...result };
+      }
       if (provider !== 'gemini' && provider !== 'openrouter') throw new ModelRouterError('invalid-model', `Model '${request.model}' cannot make images.`);
       const key = requireCredential(config.credentials[provider], provider === 'gemini' ? 'GEMINI_API_KEY' : 'OPENROUTER_API_KEY');
       const accept = (image: { data?: string; mimeType?: string } | undefined) => {
@@ -269,7 +224,15 @@ export function createModelRouter(config: ModelRouterConfig) {
         throw new ModelRouterError('provider-error', detail(error));
       }
     }
+    if (request.capability === 'video') {
+      const key = requireCredential(config.credentials.minimax, 'MINIMAX_API_KEY');
+      return withTimeout(request.timeoutMs, signal => createMiniMaxVideoTask(request, key, signal, fetchImpl));
+    }
     throw new ModelRouterError('unsupported-capability', `Capability '${(request as { capability: string }).capability}' has no provider implementation.`);
   };
-  return { generate };
+  const queryVideoTask = async (request: VideoTaskRequest): Promise<VideoTaskResult> => {
+    const key = requireCredential(config.credentials.minimax, 'MINIMAX_API_KEY');
+    return withTimeout(request.timeoutMs, signal => queryMiniMaxVideoTask(request, key, signal, fetchImpl));
+  };
+  return { generate, queryVideoTask };
 }

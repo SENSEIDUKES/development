@@ -88,7 +88,7 @@ export async function handleStoryCoverHttp(
   }
   const model = parsed.model ?? (dependencies.environment.STORY_COVER_DEFAULT_MODEL?.trim() || DEFAULT_IMAGE_MODEL);
   const option = IMAGE_MODELS.find(item => item.id === model);
-  if (!option || (option.provider !== 'gemini' && option.provider !== 'openrouter')) return errorResponse(400, `Model '${model}' cannot make covers.`);
+  if (!option) return errorResponse(400, `Model '${model}' cannot make covers.`);
   const key = providerKey(dependencies.environment, option.provider);
   if (!key) return errorResponse(503, `${MODEL_PROVIDERS[option.provider].keyVariable} is not configured on the Development server.`);
 
@@ -103,6 +103,7 @@ export async function handleStoryCoverHttp(
     return { status: 200, body: { image: result.data, mimeType: result.mimeType, model }, headers: { 'Cache-Control': 'no-store' } };
   } catch (error) {
     dependencies.onError?.(error);
+    if (error instanceof ModelRouterError && error.code === 'invalid-model') return errorResponse(400, error.message);
     if (error instanceof ModelRouterError && error.code === 'timeout') {
       return errorResponse(502, `The cover was still being made after ${Math.ceil(STORY_COVER_TIMEOUT_MS / 1000)} seconds, so it was stopped. Try again, or choose another image model in the Model Router.`);
     }

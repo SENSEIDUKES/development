@@ -16,7 +16,7 @@ const finiteNumber = (value: string | undefined, fallback: number): number => {
 export interface ResolvedStorySeedBlueprintConfig {
   /** Provider credential, or the local-development permission marker for LM Studio. */
   apiKey?: string;
-  provider: "gemini" | "openrouter" | "lmstudio";
+  provider: "gemini" | "openrouter" | "lmstudio" | "minimax";
   accessToken?: string;
   model: string;
   temperature: number;

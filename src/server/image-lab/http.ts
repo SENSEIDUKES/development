@@ -70,7 +70,7 @@ export async function handleImageLabHttp(request: ImageLabHttpRequest, dependenc
 
   const model = (parsed.model as string | undefined) || DEFAULT_IMAGE_MODEL;
   const option = IMAGE_MODELS.find(item => item.id === model);
-  if (!option || (option.provider !== 'gemini' && option.provider !== 'openrouter')) return errorResponse(400, `Model '${model}' cannot make images.`);
+  if (!option) return errorResponse(400, `Model '${model}' cannot make images.`);
   const key = providerKey(dependencies.environment, option.provider);
   if (!key) return errorResponse(503, `${MODEL_PROVIDERS[option.provider].keyVariable} is not configured on the Development server.`);
 

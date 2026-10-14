@@ -299,7 +299,7 @@ removed; a real Mini face can be designed later. The Info cover uses
 | `./story-seed` | Authenticated Story Bank, Help and branded creation journey; Story Seed Settings own the Story Language and Reading Mode a new story starts with |
 | `./generation` | First-party HARNESS workspace composition: the novel page with the same Story Settings panels as `./stories`, plus the developer inspection (CAPA skill instructions, the Official Requirements, slot uploads) when a development host sets `showHarnessInternals` |
 | `./stories` | A reader's HARNESS stories over host-supplied storage and writer: `useLibraryStories` (one controller with the Library's defaults), `StoryPages` (a story's World Info page, with Manifest on its cover and its Story Settings, and its Reader, with the Aura Veil while a chapter is written), `harnessStoryDisplay` and `storyHomeWorlds` (Home cards, newest first, with the host's covers), `StorySettings` and `CreateStorySettings` (language, Reading Mode, CAPA skill slots, Media Loadout; Create's as a draft the host keeps), `storyCoverRequest`, `STORY_COVER_CHOICES` and the `StoryCoverService` port (make one or three, keep one, let go of the rest) |
-| `./model-router-server` | Server-only Gemini/OpenRouter text and ElevenLabs speech routing; apps supply credentials, prompts, HTTP policy, and storage |
+| `./model-router-server` | Server-only Gemini/OpenRouter/MiniMax text and image routing, ElevenLabs speech, and MiniMax video tasks; apps supply credentials, prompts, HTTP policy, and storage |
 | `./media` | First-party catalog selection and entitlement contracts |
 | `./manifestations` | Celestial manifestation orchestration around Library UI visuals |
 | `./styles.css` | Library feature styles |
@@ -322,6 +322,18 @@ Library UI renderer and named adapters keep their contracts.
 
 ## Server Model Router
 
+**2026-10-14:** MiniMax is a direct provider for text, images and video tasks.
+Pass `credentials.minimax` from the host's server environment. Writer models
+include M3.1 Flash Preview (low reasoning by default), M3 and the M2 series.
+MiniMax receives JSON schemas in the instructions; hosts keep validating the
+answer. Image prompts are limited to 1,500 characters; Image 01 Live requires
+a portrait reference. `generate({ capability: 'video', ... })` submits one
+job and returns `VideoTaskResult` with its task ID. `queryVideoTask({ model,
+taskId, timeoutMs })` checks the same job until succeeded, failed or cancelled.
+Download URLs expire, so hosts must store completed videos through their own
+media system. No automatic retries or credential fallback occur. A configured
+key does not establish model entitlement; Token Plan and M Plan tiers differ.
+
 **2026-10-12:** Local development text inference can use `LOCAL_LM_STUDIO_MODEL`
 (`lmstudio/loaded`) with `createModelRouter({ credentials: {}, localDevelopment:
 true })`. Execution additionally requires `NODE_ENV=development` and neither
@@ -343,6 +355,7 @@ const router = createModelRouter({
     gemini: process.env.GEMINI_API_KEY,
     openrouter: process.env.OPENROUTER_API_KEY,
     elevenlabs: process.env.ELEVENLABS_API_KEY,
+    minimax: process.env.MINIMAX_API_KEY,
   },
   openRouterAttribution: { referer: 'https://your-app.example', title: 'Your App' },
 });
@@ -355,15 +368,16 @@ const result = await router.generate({
 });
 ```
 
-`text` handles Gemini and OpenRouter text and returns text plus optional
+`text` handles Gemini, OpenRouter and MiniMax text and returns text plus optional
 provider token usage. `temperature` applies to non-Gemini models; Gemini uses
 provider-default sampling and supported `reasoningLevel` values are sent as
 thinking levels (OpenRouter uses `reasoning.effort`). An unsupported or unknown
 Gemini level is omitted to use the model default. `tts` takes a server-chosen
 voice ID and returns MPEG bytes from ElevenLabs. Provider errors use the stable `ModelRouterError.code`;
 apps should branch on that code rather than parsing message text. Apps decide
-their own HTTP message and retry policy. Image, music, video and 3D entries are
-catalog information only and have no generation adapter. A configured key
+their own HTTP message and retry policy. Images use Gemini, OpenRouter or
+MiniMax and return base64 plus the image MIME type. MiniMax video has an
+asynchronous task adapter; Veo, music and 3D remain catalog only. A configured key
 does not prove that a provider call will succeed.
 
 ## Dependencies and verification

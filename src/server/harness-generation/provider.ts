@@ -18,7 +18,7 @@ export interface HarnessTextGenerationResult {
   providerReceipt: HarnessProviderReceipt;
 }
 export interface HarnessTextModelProvider {
-  readonly provider: 'gemini' | 'openrouter' | 'lmstudio';
+  readonly provider: 'gemini' | 'openrouter' | 'lmstudio' | 'minimax';
   readonly model: string;
   generate(request: HarnessTextGenerationRequest): Promise<HarnessTextGenerationResult>;
 }
@@ -26,7 +26,7 @@ export interface HarnessTextModelProvider {
 const estimateTokens = (value: string) => Math.max(1, Math.ceil(value.trim().length / 4));
 
 class RoutedHarnessTextProvider implements HarnessTextModelProvider {
-  readonly provider: 'gemini' | 'openrouter' | 'lmstudio';
+  readonly provider: 'gemini' | 'openrouter' | 'lmstudio' | 'minimax';
   constructor(
     private readonly apiKey: string,
     readonly model: string,
@@ -72,7 +72,7 @@ class RoutedHarnessTextProvider implements HarnessTextModelProvider {
       if (error instanceof ModelRouterError && error.code === 'timeout') {
         throw new Error(`The provider exceeded the Harness Generation ${Math.ceil(timeoutMs / 1000)} second deadline.`);
       }
-      throw new Error(`${this.provider === 'lmstudio' ? 'LM Studio' : this.provider === 'gemini' ? 'Gemini' : 'OpenRouter'} Harness Generation failed: ${message}`);
+      throw new Error(`${this.provider === 'lmstudio' ? 'LM Studio' : this.provider === 'gemini' ? 'Gemini' : this.provider === 'minimax' ? 'MiniMax' : 'OpenRouter'} Harness Generation failed: ${message}`);
     }
   }
 }
@@ -89,7 +89,7 @@ export const createHarnessTextProvider = (
   config: Pick<ResolvedHarnessGenerationConfig, 'keys' | 'reasoningEffort'>,
 ): HarnessTextModelProvider => {
   const apiKey = requireTextModelKey(model, config.keys);
-  if (textModelProvider(model) === 'lmstudio') return new RoutedHarnessTextProvider(apiKey, model);
+  if (['lmstudio', 'minimax'].includes(textModelProvider(model)!)) return new RoutedHarnessTextProvider(apiKey, model);
   return textModelProvider(model) === 'openrouter'
     ? new OpenRouterHarnessTextProvider(apiKey, model, config.reasoningEffort)
     : new GeminiHarnessTextProvider(apiKey, model);

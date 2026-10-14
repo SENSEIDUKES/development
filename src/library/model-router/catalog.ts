@@ -9,13 +9,14 @@
  * Model ids carry their route:
  * - `google/<model>` (or bare `gemini-…`) → Google Gemini API (`GEMINI_API_KEY`)
  * - `openrouter/<vendor>/<model>` → OpenRouter (`OPENROUTER_API_KEY`)
+ * - `minimax/<model>` → MiniMax directly (`MINIMAX_API_KEY`)
  * - `eleven_…` → ElevenLabs (`ELEVENLABS_API_KEY`)
  * - `tripo-…` → Tripo API (`TRIPO_API_KEY`)
  */
 
 export type ModelEnvironment = Record<string, string | undefined>;
 export type ModelCapability = 'chapters' | 'images' | 'tts' | 'audio' | 'video' | '3d';
-export type ModelProviderId = 'gemini' | 'openrouter' | 'elevenlabs' | 'tripo' | 'lmstudio';
+export type ModelProviderId = 'gemini' | 'openrouter' | 'elevenlabs' | 'tripo' | 'lmstudio' | 'minimax';
 export type ModelStage = 'current' | 'preview' | 'legacy';
 
 /** Reasoning (thinking) levels across providers, lowest to highest. */
@@ -69,6 +70,7 @@ const ALWAYS_REASONING_LEVELS: readonly ReasoningLevel[] = ['low', 'medium', 'hi
  * lists every environment name accepted, in priority order.
  */
 export const MODEL_PROVIDERS: Record<ModelProviderId, { label: string; keyVariable: string; keyVariables: readonly string[] }> = {
+  minimax: { label: 'MiniMax', keyVariable: 'MINIMAX_API_KEY', keyVariables: ['MINIMAX_API_KEY'] },
   lmstudio: { label: 'Local (LM Studio)', keyVariable: '', keyVariables: [] },
   gemini: { label: 'Google Gemini', keyVariable: 'GEMINI_API_KEY', keyVariables: ['GEMINI_API_KEY'] },
   openrouter: { label: 'OpenRouter', keyVariable: 'OPENROUTER_API_KEY', keyVariables: ['OPENROUTER_API_KEY'] },
@@ -82,6 +84,11 @@ const OPENROUTER_PATTERN = /^openrouter\/[a-z0-9][a-z0-9._-]*\/[a-z0-9~][a-z0-9.
 
 /** Text models for chapter generation, newest first within each provider. */
 export const CHAPTER_MODELS: readonly RoutedModel[] = [
+  { id: 'minimax/MiniMax-M3.1-Flash-Preview', label: 'MiniMax M3.1 Flash Preview', provider: 'minimax', stage: 'preview', reasoning: { levels: ['low', 'medium', 'high', 'xhigh', 'max'], defaultLevel: 'low', sendDefault: true } },
+  ...['MiniMax-M3', 'MiniMax-M2.7', 'MiniMax-M2.7-highspeed', 'MiniMax-M2.5', 'MiniMax-M2.5-highspeed', 'MiniMax-M2.1', 'MiniMax-M2.1-highspeed', 'MiniMax-M2'].map(name => ({
+    id: `minimax/${name}`, label: name.replace('MiniMax-', 'MiniMax '), provider: 'minimax' as const,
+    stage: name.startsWith('MiniMax-M3') || name.startsWith('MiniMax-M2.7') ? 'current' as const : 'legacy' as const,
+  })),
   { id: 'google/gemini-3.8-flash', label: 'Gemini 3.8 Flash', provider: 'gemini', stage: 'current', reasoning: { levels: GEMINI_THREE_LEVELS, defaultLevel: 'low', sendDefault: true } },
   { id: 'google/gemini-3.7-flash', label: 'Gemini 3.7 Flash', provider: 'gemini', stage: 'current', reasoning: { levels: GEMINI_THREE_LEVELS, defaultLevel: 'low', sendDefault: true } },
   { id: 'google/gemini-3.5-flash', label: 'Gemini 3.5 Flash', provider: 'gemini', stage: 'current', reasoning: { levels: GEMINI_FOUR_LEVELS, defaultLevel: 'low', sendDefault: true } },
@@ -120,6 +127,8 @@ export const IMAGE_MODELS: readonly RoutedModel[] = [
   { id: 'google/gemini-3-pro-image', label: 'Nano Banana Pro (Gemini 3 Pro Image)', provider: 'gemini', stage: 'current' },
   { id: 'google/gemini-3.1-flash-lite-image', label: 'Nano Banana 2 Lite (Gemini 3.1 Flash Lite Image)', provider: 'gemini', stage: 'current' },
   { id: 'openrouter/openai/gpt-5.4-image-2', label: 'GPT-5.4 Image 2 · OpenRouter', provider: 'openrouter', stage: 'current' },
+  { id: 'minimax/image-01', label: 'MiniMax Image 01', provider: 'minimax', stage: 'current' },
+  { id: 'minimax/image-01-live', label: 'MiniMax Image 01 Live (portrait reference)', provider: 'minimax', stage: 'current' },
 ];
 
 /** The image model used when the reader chooses none: Nano Banana 2 Lite (the owner's choice, 2026-10-08, for now). */
@@ -142,8 +151,12 @@ export const AUDIO_MODELS: readonly RoutedModel[] = [
   { id: 'google/lyria-3-clip-preview', label: 'Lyria 3 Clip', provider: 'gemini', stage: 'preview' },
 ];
 
-/** Gemini video-generation models. Catalogued for the Router; no DEV surface calls them yet. */
+/** Video models. MiniMax has a task adapter; Veo remains catalog only. No DEV surface calls video yet. */
 export const VIDEO_MODELS: readonly RoutedModel[] = [
+  ...['MiniMax-H3', 'MiniMax-H3-Max', 'MiniMax-Hailuo-2.3', 'MiniMax-Hailuo-2.3-Fast', 'MiniMax-Hailuo-02', 'T2V-01-Director', 'T2V-01', 'I2V-01-Director', 'I2V-01-live', 'I2V-01', 'S2V-01'].map(name => ({
+    id: `minimax/${name}`, label: name, provider: 'minimax' as const,
+    stage: name.startsWith('MiniMax-H3') || name.startsWith('MiniMax-Hailuo-2.3') ? 'current' as const : 'legacy' as const,
+  })),
   { id: 'google/veo-3.1-generate-preview', label: 'Veo 3.1', provider: 'gemini', stage: 'preview' },
   { id: 'google/veo-3.1-fast-generate-preview', label: 'Veo 3.1 Fast', provider: 'gemini', stage: 'preview' },
   { id: 'google/veo-3.1-lite-generate-preview', label: 'Veo 3.1 Lite', provider: 'gemini', stage: 'preview' },
@@ -173,7 +186,8 @@ export const providerKey = (environment: ModelEnvironment, provider: ModelProvid
 };
 
 /** Which provider serves a chapter-capable text model id, or undefined when the id is not routable. */
-export const textModelProvider = (model: string): 'gemini' | 'openrouter' | 'lmstudio' | undefined => {
+export const textModelProvider = (model: string): 'gemini' | 'openrouter' | 'lmstudio' | 'minimax' | undefined => {
+  if (CHAPTER_MODELS.some(option => option.provider === 'minimax' && option.id === model)) return 'minimax';
   if (model === LOCAL_LM_STUDIO_MODEL) return 'lmstudio';
   if (GEMINI_TEXT_PATTERN.test(model)) return 'gemini';
   if (OPENROUTER_PATTERN.test(model)) return 'openrouter';
@@ -182,7 +196,7 @@ export const textModelProvider = (model: string): 'gemini' | 'openrouter' | 'lms
 
 /** The provider-facing model name: `google/gemini-3.8-flash` → `gemini-3.8-flash`, `openrouter/openai/gpt-6-luna` → `openai/gpt-6-luna`. */
 export const providerModelName = (model: string): string =>
-  model.startsWith(OPENROUTER_PREFIX) ? model.slice(OPENROUTER_PREFIX.length) : model.replace(/^google\//, '');
+  model.startsWith(OPENROUTER_PREFIX) ? model.slice(OPENROUTER_PREFIX.length) : model.replace(/^(?:google|minimax)\//, '');
 
 const titleCase = (value: string) => value
   .split('-')
@@ -210,7 +224,7 @@ const asOpenRouterId = (model: string) => model.startsWith(OPENROUTER_PREFIX) ? 
 export interface ChapterModelRoute {
   models: Array<{ id: string; label: string }>;
   defaultModel: string;
-  keys: Partial<Record<'gemini' | 'openrouter' | 'lmstudio', string>>;
+  keys: Partial<Record<'gemini' | 'openrouter' | 'lmstudio' | 'minimax', string>>;
 }
 
 /**
@@ -227,6 +241,7 @@ export const resolveChapterModelRoute = (
   defaultVariable: string,
 ): ChapterModelRoute => {
   const keys = {
+    minimax: providerKey(environment, 'minimax'),
     gemini: providerKey(environment, 'gemini'),
     openrouter: providerKey(environment, 'openrouter'),
     ...(isLocalModelDevelopment(environment) ? { lmstudio: 'local-dev' } : {}),
@@ -234,7 +249,7 @@ export const resolveChapterModelRoute = (
   const pinned = csv(environment[listVariable]);
   const extras = csv(environment.OPENROUTER_MODELS).map(asOpenRouterId);
   const catalog = CHAPTER_MODELS
-    .filter(model => model.provider !== 'openrouter' || keys.openrouter)
+    .filter(model => (model.provider !== 'openrouter' || keys.openrouter) && (model.provider !== 'minimax' || keys.minimax))
     .map(model => model.id);
   const ids = [...new Set([...pinned, ...extras, ...catalog, ...(keys.lmstudio ? [LOCAL_LM_STUDIO_MODEL] : [])])]
     .filter(model => textModelProvider(model) && (textModelProvider(model) !== 'lmstudio' || keys.lmstudio));
@@ -284,4 +299,4 @@ export const lowestReasoningLevel = (model: string): ReasoningLevel | undefined 
   CHAPTER_MODELS.find(option => option.id === model)?.reasoning?.levels[0];
 
 export const isMissingKeyMessage = (message: string): boolean =>
-  /(?:GEMINI_API_KEY|OPENROUTER_API_KEY) is not configured/.test(message);
+  /(?:GEMINI_API_KEY|OPENROUTER_API_KEY|MINIMAX_API_KEY) is not configured/.test(message);

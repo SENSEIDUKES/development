@@ -7,17 +7,18 @@ import {
 } from '@seihouse/library/model-router-server';
 
 export { LOCAL_LM_STUDIO_MODEL, isLocalModelDevelopment, CHAPTER_MODELS, IMAGE_MODELS, TTS_MODELS, AUDIO_MODELS, VIDEO_MODELS, THREE_D_MODELS, DEFAULT_CHAPTER_MODEL, DEFAULT_IMAGE_MODEL, DEFAULT_TTS_MODEL, lowestReasoningLevel, providerModelName, resolveReasoningLevel, textModelProvider, textModelLabel } from '@seihouse/library/model-router-server';
-export const isMissingKeyMessage = (message: string) => /(?:GEMINI_API_KEY|OPENROUTER_API_KEY|OpenRouter-Dev) is not configured/.test(message);
+export const isMissingKeyMessage = (message: string) => /(?:GEMINI_API_KEY|OPENROUTER_API_KEY|OpenRouter-Dev|MINIMAX_API_KEY|Minimax) is not configured/.test(message);
 import { MODEL_PROVIDERS as sharedProviders } from '@seihouse/library/model-router-server';
 export const MODEL_PROVIDERS = {
   ...sharedProviders,
+  minimax: { ...sharedProviders.minimax, keyVariable: 'Minimax', keyVariables: ['Minimax', 'MINIMAX_API_KEY'] },
   openrouter: { ...sharedProviders.openrouter, keyVariable: 'OpenRouter-Dev', keyVariables: ['OpenRouter-Dev', 'OPENROUTER_API_KEY'] },
 };
 import { requireTextModelKey as sharedRequireTextModelKey, textModelProvider } from '@seihouse/library/model-router-server';
 import type { ChapterModelRoute } from '@seihouse/library/model-router-server';
 export const missingKeyMessage = (model: string) => textModelProvider(model) === 'lmstudio'
   ? 'Local (LM Studio) is only available in local development.'
-  : `${textModelProvider(model) === 'openrouter' ? 'OpenRouter-Dev' : 'GEMINI_API_KEY'} is not configured on the Development server.`;
+  : `${MODEL_PROVIDERS[textModelProvider(model) ?? 'gemini'].keyVariable} is not configured on the Development server.`;
 export const requireTextModelKey = (model: string, keys: ChapterModelRoute['keys']) => {
   try { return sharedRequireTextModelKey(model, keys); }
   catch { throw new Error(missingKeyMessage(model)); }
@@ -27,6 +28,7 @@ export { REASONING_LEVELS } from '@seihouse/library/model-router-server';
 
 const environmentForRouter = (environment: ModelEnvironment): ModelEnvironment => ({
   ...environment,
+  MINIMAX_API_KEY: environment.Minimax?.trim() || environment.MINIMAX_API_KEY,
   OPENROUTER_API_KEY: environment['OpenRouter-Dev']?.trim() || environment.OPENROUTER_API_KEY,
 });
 
@@ -64,6 +66,8 @@ export const PROVIDER_ADAPTERS: readonly string[] = [
   'src/library/model-router/geminiThinking.ts',
   'src/library/model-router/openRouter.ts',
   'src/library/model-router/server.ts',
+  'src/library/model-router/minimax.ts',
+  'src/library/model-router/types.ts',
   'src/server/harness-generation/provider.ts',
   'src/server/story-seed-blueprint/generate.ts',
   'src/server/audio/codexVoiceQuote.ts',

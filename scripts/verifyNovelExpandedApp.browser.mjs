@@ -688,7 +688,7 @@ async function walk(browser, viewport, sample) {
   check((await codex.locator('[data-testid="codex-checks"] summary').textContent()).trim() === 'Record checks (1)', 'The closing list should leave one check.');
   await shot('6d-codex');
   await codex.getByTestId('codex-character').first().click();
-  const codexSheet = codex.getByTestId('codex-sheet');
+  const codexSheet = codex.getByTestId('codex-profile');
   await codexSheet.waitFor();
   const equipped = await codexSheet.locator('[aria-label$=": Equipped"]').textContent();
   check(equipped.includes('Bell Key'), `The Bell Key should be equipped, got ${equipped}.`);
@@ -697,7 +697,7 @@ async function walk(browser, viewport, sample) {
     'Each change should link to its chapter.');
   check(!(await page.textContent('body')).includes('[['), 'No tag may reach the Codex.');
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), 'The character sheet must not scroll sideways.');
-  await shot('6d-codex-sheet');
+  await shot('6d-codex-profile');
   await slot.getByRole('button', { name: /^Ch\. 1 · took up/ }).click();
   await page.locator('[data-chapter-number="1"] [data-codex-lit]').waitFor();
   check(await codex.count() === 1, 'A change\'s link should keep the Codex open.');

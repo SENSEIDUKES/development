@@ -308,6 +308,19 @@ mode**. That means:
   than a table. What it must finally hold so a story can be translated into other
   media is in
   [the HARNESS principles](./src/components/harness-generation/HARNESS_PRINCIPLES.md#translation-across-media-the-world-record).
+- **One record, many views** (SENSEI, 2026-10-13). Each main category (characters,
+  factions, items, and later places, the Bestiary's species and the rest) is one
+  record, built the same way. Power Rankings, Karma and the other Codex mechanics
+  are not separate stores fed separately, as the old Codex had them: they are
+  different ways of displaying that same record. Everything about one character
+  shows together when their card is opened; nothing about them is scattered
+  across pages.
+- **Manifesting happens while reading** (SENSEI, 2026-10-13). A name the story
+  has met glows in the chapter; the reader taps it, a small card opens over the
+  text, and Manifest makes its picture right there. Nothing the story has not
+  yet shown can be manifested. The Codex is where the reader looks at what they
+  have collected, so by the time they open it most of its cards already wear
+  their pictures; it is a gallery of cards, not a place to manifest from.
 
 ## Where we are (2026-10-10)
 
@@ -388,21 +401,26 @@ Update it whenever it changes.
     goals take the screen, and the reader comes back to their exact place.
   - **The Codex, remade on the record (2026-10-13):** a panel like Fate,
     opened from the bottom bar's Codex button, holding only what the record
-    knows today, shown like a game's character screen. **Characters:** everyone
+    knows today. It is a **gallery of cards** (since the same day, from
+    SENSEI): every category is the same card, its art filling it and its name
+    at its foot, and opening a card shows everything the record knows about
+    it together, its art large at the top. A card shows its unmanifested aura
+    until its picture is manifested, which comes with manifesting while
+    reading. **Characters:** everyone
     the story has met (they spoke, or held, used or learned something), the
     main character first; characters the Story Seed declares but the chapters
-    have not reached stay out. Named beasts are characters too. Each opens a
-    character sheet: their emblem, rank, first appearance, **first words**,
+    have not reached stay out. Named beasts are characters too. Each opens to
+    their rank, first appearance, **first words**,
     **Equipped** and **Carried** things, **Abilities** (learning, known or
     sealed, with their stage) and a **Chronicle** of every change.
     **Factions:** sects, clans and other bodies of people, never characters,
     even when the writer tags one as speaking (those the Story Seed declares,
-    or a name ending in a word like Sect, Clan or Tribe), each with its crest
-    and first words. **Items:** every thing, who holds it now and everything
+    or a name ending in a word like Sect, Clan or Tribe), each opening to its
+    first words. **Items:** every thing, who holds it now and everything
     that happened to it. A **Bestiary** comes later (SENSEI, 2026-10-13): it
     holds species and unique beast groups (the dragon kin), while a named beast
     (the Dragon King, an emperor and the main villain) is a character.
-    **Record checks** close each list, for testing. Every fact links to its
+    **Record checks** close each gallery, for testing. Every fact links to its
     passage: the chapter behind the Codex moves to it and lights it while the
     Codex stays open, lowered to half height on a phone. It is worked out
     again from the chapters each time, so it always matches them. The older
@@ -720,15 +738,20 @@ When a session asks "what now?", start here:
 
 1. **Owner:** run the next real-model test (Stage E0) on a new story and export
    it. Everything after it depends on knowing the strict tags hold.
-2. **Agent:** build the first information tag, **first appearance with
+2. **Agent:** manifesting while reading ([its direction](#how-we-build)):
+   names the record has met glow in the chapter and open a card with
+   Manifest, whose picture the Codex's card then wears. It waits on the
+   owner's refinement of the Color Codes, which the glowing names use (SENSEI,
+   2026-10-13). The Codex as a card gallery is built.
+3. **Agent:** build the first information tag, **first appearance with
    appearance** (Stage E1, step 1), as proposed and decided on 2026-10-13
    (below), with its Look on the Codex's character sheets. The owner's Test
    Story - Blade (two chapters so far) carries on to ten chapters as Stage E0's
    test.
-3. **Agent:** the next step of reading in every script (product track, item
+4. **Agent:** the next step of reading in every script (product track, item
    1): a reading font chosen on purpose for each remaining script. Right-to-left
    reading is built.
-4. **Either track's next piece** below, when the owner asks for it.
+5. **Either track's next piece** below, when the owner asks for it.
 
 ### The product track
 

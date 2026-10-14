@@ -93,8 +93,9 @@ describe('The Codex in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(roster[1].textContent).toContain('Met in Chapter 1');
 
     await act(async () => { roster[0].click(); });
-    const sheet = codex()!.querySelector<HTMLElement>('[data-testid="codex-sheet"]')!;
+    const sheet = codex()!.querySelector<HTMLElement>('[data-testid="codex-profile"]')!;
     expect(sheet.querySelector('h3')!.textContent).toBe('Ye Chen');
+    expect(sheet.querySelector('header')!.textContent).toContain('Unmanifested');
     expect(sheet.textContent).toContain('Main character');
     expect(sheet.querySelector('[aria-label="Ye Chen: Equipped"]')!.textContent).toContain('Rusted Iron Sword');
     // A stage reached while still learning is shown, and is a change, not a check.
@@ -105,7 +106,7 @@ describe('The Codex in the HARNESS Reader', { timeout: 20_000 }, () => {
     expect(sheet.querySelector('[data-testid="codex-chronicle"] summary')!.textContent).toBe('Chronicle (4)');
 
     await click(button => button.textContent?.trim() === 'All characters', 'All characters');
-    expect(codex()!.querySelector('[data-testid="codex-sheet"]')).toBeNull();
+    expect(codex()!.querySelector('[data-testid="codex-profile"]')).toBeNull();
 
     await tab('Items');
     const item = codex()!.querySelector<HTMLElement>('[data-testid="codex-item"]')!;

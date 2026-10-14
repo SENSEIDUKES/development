@@ -16,6 +16,7 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 
 ## Workshop history
 
+- **2026-10-13 (card gallery):** Development now shows the Codex as a gallery of cards, each opening into one profile; see the Harness Generation README.
 - **2026-10-13:** The Codex is remade on the HARNESS record (`StoryCodex` and `deriveStoryCodex` in `harness-generation/`; see that README). This card's Development view now shows it, reading SENSEI's Sundered Heavens test; its Original Reference stays the production Codex, so Compare shows old and new side by side. The Workshop Controls' page shortcuts drive the Original Reference's tabs. The development `ReaderCodex` in this folder is unchanged and stays, but the Reader no longer opens it.
 - **2026-10-07:** The Reader Chamber's Original Reference is now production's own Reader, copied unchanged from Light-Novels `main` @ `647165a`, and its Codex buttons open production's own `CodexSheetOverlay` and `ReaderCodex` from that copy (`reader-chamber/reference/light-novels/src/components/`). This feature's Original Reference and Development are unchanged; its reference remains the older adapted copy.
 - **2026-09-13:** Added the quiet arc-goal inspector and host-owned editing callback beside chapter recaps.

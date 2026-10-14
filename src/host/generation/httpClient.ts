@@ -1,4 +1,4 @@
-import { type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessGenerationServerInfo, type HarnessArcRequest, type HarnessHoldingsFixRequest } from '@seihouse/sen/harness-generation';
+import { type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessGenerationServerInfo, type HarnessArcRequest, type HarnessHoldingsFixRequest, type HarnessLookRequest } from '@seihouse/sen/harness-generation';
 import { readReasoningPreference } from './modelPreference';
 
 const withReasoningLevel = <T extends { model: string }>(request: T): T & { reasoningLevel?: string } => {
@@ -77,7 +77,9 @@ export class HarnessGenerationHttpClient implements HarnessGenerationModelAdapte
 
   async fixHoldings(request: HarnessHoldingsFixRequest): Promise<HarnessGenerationResponse> { return this.post(request); }
 
-  private async post(request: HarnessGenerationRequest | HarnessArcRequest | HarnessHoldingsFixRequest): Promise<HarnessGenerationResponse> {
+  async describeLooks(request: HarnessLookRequest): Promise<HarnessGenerationResponse> { return this.post(request); }
+
+  private async post(request: HarnessGenerationRequest | HarnessArcRequest | HarnessHoldingsFixRequest | HarnessLookRequest): Promise<HarnessGenerationResponse> {
     const token = this.accessToken?.()?.trim();
     const response = await fetch(this.endpoint, {
       method: 'POST',

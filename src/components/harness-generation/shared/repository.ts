@@ -69,6 +69,9 @@ const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => 
   // saved story reads as it is and keeps its recordings' words until edited;
   // every chapter keeps the cues it saved and every attempt what it froze.
   30: stored => ({ ...stored, schemaVersion: 31 }),
+  // 32 adds only optional chapter fields (its appearances and the looks
+  // written down from them): every saved story reads as it is.
+  31: stored => ({ ...stored, schemaVersion: 32 }),
 };
 
 /**

@@ -1,14 +1,21 @@
-import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { Backpack, ChevronLeft, Flag, Hand, Lock, Package, ScrollText, Sparkles, Sword, TriangleAlert, User, Users } from 'lucide-react';
+import { Fragment, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { Backpack, ChevronLeft, Eye, Flag, Hand, Lock, Package, ScrollText, Sparkles, Sword, TriangleAlert, User, Users } from 'lucide-react';
 import './story-codex.css';
 import type { HoldingVerb } from '../../../narrative/holdings';
+import { CHARACTER_LOOK_TRAITS, THING_LOOK_TRAITS, type LookTrait } from '../../../narrative/appearances';
 import type { HeldThing, HoldingEvent, KnownAbility } from '../shared/holdings';
-import type { CodexCharacter, CodexCheck, CodexFaction, CodexItem, CodexPassage, StoryCodexRecord } from '../shared/storyCodex';
+import type { CodexAppearance, CodexCharacter, CodexCheck, CodexFaction, CodexItem, CodexPassage, StoryCodexRecord } from '../shared/storyCodex';
 
 /** How each change reads in the Codex. */
 const VERB_LABELS: Record<HoldingVerb, string> = {
   has: 'already had', gained: 'gained', lost: 'lost', equipped: 'took up', unequipped: 'put away', knows: 'already knew',
   learning: 'began learning', learned: 'learned', improved: 'improved', sealed: 'sealed', unsealed: 'unsealed', rank: 'reached',
+};
+
+/** How each trait of a look is named, in the order a look is read. */
+const TRAIT_LABELS: Record<LookTrait, string> = {
+  build: 'Build', face: 'Face', eyes: 'Eyes', hair: 'Hair', skin: 'Skin', clothing: 'Clothing', marks: 'Marks', gear: 'Gear',
+  form: 'Form', size: 'Size', material: 'Material', colour: 'Colour', condition: 'Condition',
 };
 
 /** Opens the chapter behind a fact, at its paragraph, with the Codex still open. */
@@ -145,6 +152,37 @@ function Chronicle({ events, describe, onReadPassage }: { events: readonly Holdi
 }
 
 /**
+ * How someone or something looks, as the record wrote it down from the
+ * chapters: its one line, then each trait the passages state, with links to
+ * the passage it was read from and to every change since.
+ */
+function LookSection({ name, appearance, traits, onReadPassage }: {
+  name: string; appearance: CodexAppearance; traits: readonly LookTrait[]; onReadPassage?: ReadPassage;
+}) {
+  const { look } = appearance;
+  const stated = look ? traits.flatMap(trait => (look.traits[trait] ? [[trait, look.traits[trait]!] as const] : [])) : [];
+  return <Section title="Look" icon={<Eye size={12} aria-hidden />} label={`${name}: Look`} testId="codex-look">
+    {look
+      ? <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+          <p className="text-[15px] leading-relaxed text-neutral-100">{look.summary}</p>
+          {stated.length > 0 && <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
+            {stated.map(([trait, value]) => <Fragment key={trait}>
+              <dt className="pt-0.5 text-[11px] uppercase tracking-[0.14em] text-neutral-500">{TRAIT_LABELS[trait]}</dt>
+              <dd className="min-w-0 break-words text-neutral-200">{value}</dd>
+            </Fragment>)}
+          </dl>}
+          {look.conflict && <p className="mt-3 text-xs leading-relaxed text-amber-100/80">Differs from the author&rsquo;s notes: {look.conflict}</p>}
+        </div>
+      : <p className="text-sm text-neutral-400">No look written down yet.</p>}
+    {(look || appearance.changes.length > 0) && <div className="flex flex-wrap gap-1.5">
+      {look && <PassageChip passage={look.passage} label={`Look · Ch. ${look.passage.chapterNumber}`} onReadPassage={onReadPassage} />}
+      {appearance.changes.map(change => <PassageChip key={`${change.passage.chapterNumber}:${change.passage.blockId}:${change.change}`} passage={change.passage}
+        label={`Ch. ${change.passage.chapterNumber} · ${change.change}`} onReadPassage={onReadPassage} />)}
+    </div>}
+  </Section>;
+}
+
+/**
  * An opened card: its art large at the top with its name, then everything the
  * record knows about it together, never scattered across pages. Every
  * category opens into this same profile.
@@ -183,6 +221,7 @@ function CharacterProfile({ character, onBack, onReadPassage }: { character: Cod
       {character.rank && <span data-testid="codex-rank" className="contents">{character.rank.events.map(event =>
         <PassageChip key={event.passage.recordId} passage={eventPassage(event)} label={`Rank · Ch. ${event.passage.chapterNumber}`} onReadPassage={onReadPassage} />)}</span>}
     </div>
+    {character.appearance && <LookSection name={character.name} appearance={character.appearance} traits={CHARACTER_LOOK_TRAITS} onReadPassage={onReadPassage} />}
     {character.voice && <div data-testid="codex-voice"><Words passage={character.voice.first} caption="First words" onReadPassage={onReadPassage} /></div>}
     {equipped.length > 0 && <Section title="Equipped" icon={<Hand size={12} aria-hidden />} label={`${character.name}: Equipped`}>
       <ul className="grid gap-2">{equipped.map(thing => <ItemSlot key={thing.entryId} thing={thing} onReadPassage={onReadPassage} />)}</ul>
@@ -205,12 +244,16 @@ function FactionProfile({ faction, onBack, onReadPassage }: { faction: CodexFact
   </Profile>;
 }
 
-const holderLine = (item: CodexItem) => (item.holder ? `${item.holder.name} · ${item.equipped ? 'in hand' : 'carried'}` : 'No longer held');
+const holderLine = (item: CodexItem) => (item.holder ? `${item.holder.name} · ${item.equipped ? 'in hand' : 'carried'}` : item.events.length ? 'No longer held' : 'Held by no one');
 
 function ItemProfile({ item, onBack, onReadPassage }: { item: CodexItem; onBack: () => void; onReadPassage?: ReadPassage }) {
   return <Profile category="items" name={item.name} line={holderLine(item)} badges={item.count > 1 ? [`×${item.count}`] : []} backLabel="All items" onBack={onBack}>
-    <Chronicle events={item.events} onReadPassage={onReadPassage}
-      describe={event => `${eventLabel(event)} · ${(event as CodexItem['events'][number]).holder}`} />
+    <div className="flex flex-wrap gap-1.5">
+      <PassageChip passage={item.firstSeen} label={`First seen · Ch. ${item.firstSeen.chapterNumber}`} onReadPassage={onReadPassage} />
+    </div>
+    {item.appearance && <LookSection name={item.name} appearance={item.appearance} traits={THING_LOOK_TRAITS} onReadPassage={onReadPassage} />}
+    {item.events.length > 0 && <Chronicle events={item.events} onReadPassage={onReadPassage}
+      describe={event => `${eventLabel(event)} · ${(event as CodexItem['events'][number]).holder}`} />}
   </Profile>;
 }
 
@@ -228,14 +271,14 @@ function Checks({ checks, onReadPassage, onReadChapter }: { checks: readonly Cod
             ? <button type="button" className={chip} onClick={() => onReadPassage(check.chapterNumber!, check.blockId!)}>Read the passage</button>
             : onReadChapter && <button type="button" className={chip} onClick={() => onReadChapter(check.chapterNumber!)}>Read Chapter {check.chapterNumber}</button>)}
         </li>)}</ul>
-      : <p className="mt-3 text-sm text-neutral-400">Nothing to check: every change fits what came before it, and every closing list matches.</p>}
+      : <p className="mt-3 text-sm text-neutral-400">Nothing to check: every change and appearance fits what came before it, and every closing list matches.</p>}
   </details>;
 }
 
 const EMPTY: Record<CodexTab, string> = {
   characters: 'No one has stepped onto the page yet. Characters join the Codex as the story meets them.',
   factions: 'No sect, clan or faction has stepped forward yet.',
-  items: 'Nothing has changed hands yet. Items join the Codex as the story gives, takes or uses them.',
+  items: 'No item has stepped onto the page yet. Items join the Codex as the story shows, gives, takes or uses them.',
 };
 
 /**

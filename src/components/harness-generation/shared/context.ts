@@ -2,6 +2,7 @@ import { validateHardPinInputs } from '../../../narrative/storyDirection';
 import { harnessArcContext, harnessStoryMode } from './arcState';
 import { projectCanonicalState } from './canonicalProjection';
 import { deriveHoldings, holdingsSection } from './holdings';
+import { appearancesSection, deriveAppearances } from './appearances';
 import { storyPointOfView } from './pointOfView';
 import { protagonistNames } from './speakers';
 import { semanticReaderChanges } from './readerEdits';
@@ -164,6 +165,13 @@ export const compileStoryInformationPacket = (
     chapters,
     mainCharacterName,
   }), mainCharacterName);
+  // Beside it, who and what is already on the page, with each look, worked out
+  // again from the committed chapters' appearances: the most recently seen
+  // first, as many as its own counts allow.
+  const appearances = appearancesSection(deriveAppearances({
+    entries: state.codexEntries.filter(entry => entry.storyId === story.id),
+    chapters,
+  }));
 
   const sections: PacketSectionMeasurement[] = [
     measure('currentStory', currentStory),
@@ -173,6 +181,7 @@ export const compileStoryInformationPacket = (
     measure('previouslyOn', previouslyOn),
     measure('canonicalState', canonical.projection),
     measure('holdings', holdings),
+    measure('appearances', appearances),
   ];
 
   return {
@@ -191,6 +200,7 @@ export const compileStoryInformationPacket = (
     previouslyOn,
     canonicalState: canonical.projection,
     holdings,
+    appearances,
     diagnostics: {
       budgetSource: GENERATION_PACKET_BUDGET.source,
       sections,

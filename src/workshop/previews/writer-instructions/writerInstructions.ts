@@ -1,5 +1,6 @@
 import {
   HARNESS_TAG_RULES,
+  SEN_APPEARANCE_SKILL,
   SEN_FATE_SURVIVAL_SKILL,
   SEN_HOLDINGS_SKILL,
   SEN_NOVEL_AUTHOR_SKILL,
@@ -17,6 +18,7 @@ import { soundtrackVocabulary } from '@seihouse/sen/audio';
 import { LIBRARY_BASE_MEDIA, LIBRARY_SOUND_WORDS } from '../../../host/media/libraryCatalog';
 import { HARNESS_RESPONSE_CONTRACT } from '../../../server/harness-generation/prompt';
 import { HOLDINGS_FIXER_INSTRUCTIONS } from '../../../server/harness-generation/holdingsFixer';
+import { LOOK_DESCRIBER_INSTRUCTIONS } from '../../../server/harness-generation/lookDescriber';
 
 /**
  * The writer's instructions, read from the live code: every block of text the
@@ -33,13 +35,15 @@ export type WriterInstructionId =
   | 'soundtrack'
   | 'speakers'
   | 'holdings'
+  | 'appearance'
   | 'response-contract'
   | 'fate-survival'
   | 'clear-reading'
   | 'easy-read'
   | 'literal-reading'
   | 'official-requirements'
-  | 'holdings-fixer';
+  | 'holdings-fixer'
+  | 'look-step';
 
 export interface WriterInstruction {
   id: WriterInstructionId;
@@ -94,6 +98,11 @@ export const EVERY_CHAPTER: readonly WriterInstruction[] = [
     text: skillText(SEN_HOLDINGS_SKILL),
   },
   {
+    id: 'appearance', title: 'Appearance', source: skillSource(SEN_APPEARANCE_SKILL),
+    when: 'Every chapter.',
+    text: skillText(SEN_APPEARANCE_SKILL),
+  },
+  {
     id: 'response-contract', title: 'Response and evidence contract', source: 'HARNESS',
     when: 'Every chapter, last, after every skill. No skill can change it.',
     text: HARNESS_RESPONSE_CONTRACT,
@@ -126,6 +135,11 @@ export const AFTER_A_CHAPTER: readonly WriterInstruction[] = [
     when: 'After a chapter is saved, only when its holdings checks found problems that need a model: one short call with the chapter\'s model, which reads these instructions and the small cases (a sentence, its tags, what the record shows), never the whole chapter.',
     text: HOLDINGS_FIXER_INSTRUCTIONS,
   },
+  {
+    id: 'look-step', title: 'Look step', source: 'HARNESS',
+    when: 'After a chapter is saved, when it tagged someone or something stepping onto the page or a change of look: one short call with the chapter\'s model, which reads these instructions and each tagged passage (with the author\'s notes on a character, and the look before a change), never the whole chapter.',
+    text: LOOK_DESCRIBER_INSTRUCTIONS,
+  },
 ];
 
 export const WRITER_INSTRUCTIONS: readonly WriterInstruction[] = [...EVERY_CHAPTER, ...SOME_STORIES, ...AFTER_A_CHAPTER];
@@ -139,7 +153,7 @@ export const defaultSystemInstruction = () => [
   assembleCapaPrompt({
     capturedAt: 'now',
     originalLanguage: 'en',
-    skills: [SEN_NOVEL_AUTHOR_SKILL, SEN_SOUND_CUES_SKILL, SEN_SOUNDTRACK_SKILL, SEN_SPEAKERS_SKILL, SEN_HOLDINGS_SKILL],
+    skills: [SEN_NOVEL_AUTHOR_SKILL, SEN_SOUND_CUES_SKILL, SEN_SOUNDTRACK_SKILL, SEN_SPEAKERS_SKILL, SEN_HOLDINGS_SKILL, SEN_APPEARANCE_SKILL],
     soundVocabulary: LIBRARY_SOUND_WORDS,
     soundtrackVocabulary: DEFAULT_SOUNDTRACK_WORDS,
   }).text,

@@ -772,7 +772,7 @@ When a session asks "what now?", start here:
    appearance** (Stage E1, step 1, built 2026-10-14), by writing the next
    chapters of Test Story - Blade on to ten and exporting it: does the writer
    tag everyone new, do the looks written down match the prose, and do later
-   chapters keep them? Then Stage E1 step 2, Place.
+   chapters keep them? Then Stage E1 step 2, Status.
 4. **Agent:** the next step of reading in every script (product track, item
    1): a reading font chosen on purpose for each remaining script. Right-to-left
    reading is built.
@@ -883,7 +883,7 @@ complete the [world record](./src/components/harness-generation/HARNESS_PRINCIPL
    step, not written into the tag. A being that is both a thing and a
    character (a sword with a spirit, like Chi Lian in Test Story - Blade) is
    **two entries**, the thing and the character, since an artist draws them
-   apart; the bound tie (step 5) joins them. Places wait for step 2, which
+   apart; the bound tie (step 5) joins them. Places wait for step 3, which
    reuses the same tag. Every later chapter is told each appeared character's
    and thing's one-line look, so looks stay consistent, and a declared
    character's Story Seed look is the starting look the prose is checked
@@ -892,12 +892,16 @@ complete the [world record](./src/components/harness-generation/HARNESS_PRINCIPL
    look step (registered as Look Describer) and each Look in the Codex, as
    [Where we are](#where-we-are-2026-10-10) says. Not yet proven with a real
    model.
-2. **Place:** places become Codex entries, and the record knows where each
+2. **Status:** alive, wounded, transformed, sealed away, and so on. Moved
+   before Place on 2026-10-14 (SENSEI): "the world remembers what you did"
+   mostly comes from Status and Ties, so a dead sect leader stays dead because
+   his card says so, and a pin naming him can close (Stage E3).
+3. **Place:** places become Codex entries, and the record knows where each
    character is.
-3. **Scene:** where a story scene starts, where it is, when (time of day,
+4. **Scene:** where a story scene starts, where it is, when (time of day,
    conditions) and who is present. With appearance, this is what an artist
-   needs to draw a panel.
-4. **Status:** alive, wounded, transformed, sealed away, and so on.
+   needs to draw a panel. Its first piece is the cast plan before writing
+   (Stage E3).
 5. **Ties:** allied, hostile, related, bound.
 
 **Stage E2: complete the Codex on the record.** The Codex is remade alongside
@@ -947,6 +951,64 @@ the next chapter; a recall step picks the earlier passages about them, so the
 Story Information Packet stays small at any length. Start with a Workshop
 experiment on an exported story (can it find the right passages?) before
 wiring it into the writer. This is where an embedding model fits.
+
+**Long-story memory: decided (2026-10-14, SENSEI).** Storage is not the
+problem; showing the writer the right things at the right time is. Show every
+past choice every chapter and the story keeps bringing them up, forced and
+creepy; show too little and the world forgets what the reader did. One rule
+answers both: **the writer sees what the next chapter touches.** Nothing is
+ever deleted; everything else waits in the full record.
+
+- **Alter Fate is "what happens next."** Each choice is kept exactly as the
+  reader wrote it, with its chapter number (Ch. 67: "Kill the sect leader."),
+  never summarized or interpreted (already true: `HarnessChapter.path`). It is
+  used up by the next chapter, then becomes history, hidden from the writer.
+- **A past choice comes back only when relevant:** when the next chapter
+  touches what it was about (the arc goal, the reader's new direction, the pins,
+  or who is on the page). What a choice was about needs no model: the chapter
+  that carried it out already tagged everyone involved. It returns as history,
+  the reader's words with that chapter's saved recap, at most about three.
+- **Consequence, never recap.** The narration never recaps a past choice or
+  reminds the reader of it. A character it affected may react to it in their
+  own words when the story reaches them: "You killed my master" is a
+  consequence; "Three months ago, you chose to kill the sect leader" is a
+  recap. The writer is told the difference, so it never avoids the event.
+- **Choices about a direction, not a person** ("Leave the sect forever",
+  "Give up cultivation") are not left to recall. What changed in the world
+  becomes state (a tie that ends; a status, or abilities sealed); what the
+  reader keeps holding to becomes a pin ("Never return to the sect").
+- **A Hard Pin is "what I'm working toward."** It stays in front of the
+  writer every chapter until it ends (already true, at most 3,
+  `HARD_PIN_LIMIT`). Two kinds share the 3 slots: **rules** ("Lin never
+  betrays his sect") never resolve; **goals** ("Find my mother's killer")
+  close. A pin ends three ways: the reader drops it; Status closes it when it
+  names someone with a card ("Kill Zhao Wuchen" closes when his card says
+  dead); or, when it names no one yet, the writer reports it resolved with a
+  verbatim passage, as it reports an arc goal reached, and the HARNESS checks
+  the passage is in the chapter. The reader sees "Pin resolved" and can reopen
+  it. Open threads live in pins; finished actions live in history.
+- **The reader decides which is which, never a model.** Readers will type a
+  goal into Alter Fate ("Find my mother's killer"). After they submit, the Fate
+  page offers one tap: **Pin this as a goal?** Any past Alter Fate can be made
+  a pin from the story's history.
+- **How much the writer sees.** Already capped by recency: the main character
+  and up to 20 characters and 10 things in Appeared, holdings for the main
+  character and 6 others, the last 5 recaps. Added: the arc goal, the reader's
+  direction and the pins pull an older card back from the full record by name.
+  Later, recall by meaning (above) finds vaguer references ("the old smith
+  from the mountain"). The reader's own Codex keeps every card, this arc's
+  first.
+- **The known hole: who is in a chapter before it is written.** Today the
+  writer decides inside its one call, so a long-gone character who returns
+  mid-chapter gets no card. First fix, no model: pull the card of every name
+  in the reader's direction, the arc goal, the pins and the last recap. Full
+  fix: a small "who is in this chapter" call before writing, the first piece
+  of Scene (Stage E1, step 4).
+- **Snapshots.** At 1,000 chapters, working everything out from every chapter
+  each time is too slow: a snapshot of the record is saved at each arc's end,
+  and at each branch point once Alter Fate branches exist (every branch is its
+  own world; Rewrite this chapter is already a tiny branch). Each world
+  rebuilds from its own latest snapshot.
 
 **Stage E4: the remaining kinds.** System Panels (including the Fate Survival
 result card), manifestations and creature events, one at a time, in the same

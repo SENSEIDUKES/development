@@ -198,6 +198,18 @@ describe('Who is on the page', () => {
     expect(describableAppearances(state, 'ch2').map(found => found.appearanceId)).toEqual(['a4', 'a3']);
   });
 
+  it('describes a chapter\'s appearances in reading order, within a paragraph too', () => {
+    const state = deriveAppearances({ entries, chapters: [{
+      id: 'ch1', chapterNumber: 1,
+      appearances: [
+        appears('a1', 'c1-p1', 0, 'mc', 'MC'),
+        appears('a2', 'c1-p3', 0, 'wu', 'Old Wu'),
+        looks('a3', 'c1-p3', 50, 'mc', 'MC', 'a burn on his palm'),
+      ],
+    }] });
+    expect(describableAppearances(state, 'ch1').map(found => found.appearanceId)).toEqual(['a1', 'a2', 'a3']);
+  });
+
   it('flags an appearance that cannot be true and leaves it out, and someone who speaks before appearing once a chapter', () => {
     const chapters: AppearancesChapter[] = [
       // Written before the Appearance skill: speech there is never flagged.

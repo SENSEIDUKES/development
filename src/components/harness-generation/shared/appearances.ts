@@ -148,8 +148,8 @@ export function resolveAppearances({ storyId, chapter, appearances, entries, dec
 
 // ─── Working out who is on the page ───────────────────────────────────────
 
-/** Where an appearance happened: its chapter and the sentence it points at. */
-export type AppearancePassage = HoldingPassage;
+/** Where an appearance happened: its chapter and the sentence it points at, with where that sentence starts in its paragraph. */
+export type AppearancePassage = HoldingPassage & { startOffset: number };
 
 /** A look written down, with the passage it was read from. */
 export interface RecordedLook extends Look {
@@ -265,7 +265,7 @@ export function deriveAppearances({ entries, chapters, declaredFactions = [] }: 
     const accepted = new Map<string, AppearanceSubject>();
     const passageOf = (record: AppearanceAttachment | SpeakerAttachment): AppearancePassage => ({
       chapterId: chapter.id, chapterNumber: chapter.chapterNumber, recordId: record.id,
-      blockId: record.anchor.blockId, text: record.anchor.selectedText,
+      blockId: record.anchor.blockId, text: record.anchor.selectedText, startOffset: record.anchor.startOffset,
     });
     const flag = (kind: AppearanceFlagKind, message: string, record: AppearanceAttachment | SpeakerAttachment, name?: string) => flags.push({
       kind, message: `Chapter ${chapter.chapterNumber}: ${message}`, chapterId: chapter.id, chapterNumber: chapter.chapterNumber,
@@ -346,10 +346,11 @@ export function describableAppearances(state: AppearancesState, chapterId: strin
     if (subject.first.chapterId === chapterId) found.push({ appearanceId: subject.first.recordId, subject });
     for (const change of subject.changes) if (change.passage.chapterId === chapterId) found.push({ appearanceId: change.passage.recordId, subject });
   }
+  const passageOf = ({ appearanceId, subject }: { appearanceId: string; subject: AppearanceSubject }) => (subject.first.recordId === appearanceId
+    ? subject.first : subject.changes.find(change => change.passage.recordId === appearanceId)!.passage);
   return found.sort((left, right) => {
-    const a = left.subject.first.recordId === left.appearanceId ? left.subject.first : left.subject.changes.find(change => change.passage.recordId === left.appearanceId)!.passage;
-    const b = right.subject.first.recordId === right.appearanceId ? right.subject.first : right.subject.changes.find(change => change.passage.recordId === right.appearanceId)!.passage;
-    return paragraphIndex(a.blockId) - paragraphIndex(b.blockId);
+    const [a, b] = [passageOf(left), passageOf(right)];
+    return paragraphIndex(a.blockId) - paragraphIndex(b.blockId) || a.startOffset - b.startOffset;
   });
 }
 

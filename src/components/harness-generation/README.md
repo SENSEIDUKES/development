@@ -804,3 +804,7 @@ The top bar slides away after intentional downward scrolling and returns on upwa
 ### 2026-10-11 — Quieter speed control and a glass Back to narration
 
 From SENSEI: between the sentence skips, normal speed shows a dim divider (∶) instead of "1"; a changed speed still shows its value (½, 1½…), and the picker and its spoken label are unchanged. Back to narration floats in the same resting glass as the story audio note (Library's `reader-glass-float` skin) instead of a ghost outline.
+
+### 2026-10-14 — A lighter dip under Listen, louder Sound Cues
+
+From SENSEI on mobile: with Listen reading aloud, Soundscapes and Atmosphere were inaudible even at full level, and Sound Cues were barely audible. Phones already lower a page's sound while their built-in speech voice talks, and the Reader's own dip (`LISTEN_DUCK`, music and atmosphere to 40%) stacked on top. The Reader's dip is now light (`LISTEN_DUCK` 0.25, to 75%), and a cue's Energy scales its level less (`SOUND_CUE_ENERGY_VOLUME`: low 0.8, medium 0.9, high 1; was 0.6, 0.8, 1).

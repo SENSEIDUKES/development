@@ -95,16 +95,16 @@ describe('MixerCueControl', () => {
     const { mixer } = createFakeMixer();
     render(<><MixerCueControl cue={cueWith()} mixer={mixer} /></>);
     act(() => button().click());
-    expect(mixer.playCue).toHaveBeenLastCalledWith(BEAST_URL, { volume: 0.8 });
+    expect(mixer.playCue).toHaveBeenLastCalledWith(BEAST_URL, { volume: 0.9 });
     render(<MixerCueControl cue={cueWith('low')} mixer={mixer} />);
     act(() => button().click());
-    expect(mixer.playCue).toHaveBeenLastCalledWith(BEAST_URL, { volume: 0.6 });
+    expect(mixer.playCue).toHaveBeenLastCalledWith(BEAST_URL, { volume: 0.8 });
     // A saved cue can carry anything; it never plays at an undefined level.
     for (const energy of ['extreme', 'constructor']) {
       const saved = cueWith();
       render(<MixerCueControl cue={{ ...saved, payload: { ...saved.payload, energy: energy as 'low' } }} mixer={mixer} />);
       act(() => button().click());
-      expect(mixer.playCue).toHaveBeenLastCalledWith(BEAST_URL, { volume: 0.8 });
+      expect(mixer.playCue).toHaveBeenLastCalledWith(BEAST_URL, { volume: 0.9 });
     }
   });
 

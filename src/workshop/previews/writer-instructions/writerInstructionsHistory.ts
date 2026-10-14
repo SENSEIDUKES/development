@@ -20,6 +20,11 @@ export interface WriterInstructionsChange {
  */
 export const WRITER_INSTRUCTIONS_HISTORY: readonly WriterInstructionsChange[] = [
   {
+    date: '2026-10-14',
+    summary: 'The information tagging phase begins with the first appearance, with its look (asked for by SENSEI). SEN Appearance 1.0.0 loads on every chapter: the writer reads who and what is already on the page in Story Information\'s new Appeared section, tags each character or named thing the moment it first steps onto the page ([[appears: Name | character]], [[appears: Thing | thing]]) and each change to a look ([[look: Name | what changed]]), and keeps every look Appeared gives until a look tag changes it. Places, factions and sects wait for their own tags. The response contract names the Appeared section among the packet\'s sections. A new step after a chapter is saved, the look step, reads each tagged passage (with the author\'s notes on a character, and the look before a change) and writes the look down: one line and the traits the passage states, in words any medium can use, never how to show it.',
+    changed: { appearance: '1d610f13868e09', 'response-contract': '09b181a22b6f51', 'look-step': '143cedc91d6960' },
+  },
+  {
     date: '2026-10-13',
     summary: 'From SENSEI’s Not A Wave test (chapters 1 and 2): the writer tagged no Sound Cues at all, though its own prose rang a bell five times and "bell rings" was a sound word. The instruction told it that a chapter may have none, beside four warnings against tagging, and a careful writer took the safe reading. SEN Sound Cues 2.4.0 drops "a chapter may have none": a chapter without a cue is still fine, the writer just no longer needs telling. A cue is still earned by the prose, at most 10 a chapter, and never added or bent to fit.',
     changed: { 'sound-cues': '18208ac228e769' },

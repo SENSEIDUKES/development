@@ -1,5 +1,22 @@
 # `@seihouse/sen`
 
+**0.37.0 (2026-10-14):** The first information tag after holdings: first appearance, with its
+look. `./harness-generation`: SEN Appearance (`SEN_APPEARANCE_SKILL`, in the new Appearance slot,
+loaded on every chapter like Speakers and Holdings) teaches `[[appears: Name | character]]`,
+`[[appears: Thing | thing]]` and `[[look: Name | what changed]]`; `TAG_WORDS` is now
+`HOLDING_TAG_WORDS` and `APPEARANCE_TAG_WORDS` together (`isHoldingTagWord`,
+`isAppearanceTagWord`). Each tag is saved on its sentence (`AppearanceAttachment`,
+`HarnessChapter.appearances`; `placeAppearances`, `readAppearanceTag`) and resolves, at commit,
+through one resolver shared with holdings (`createCodexEntryResolver`, `resolveAppearances`).
+`deriveAppearances` works out who and what is on the page and flags what cannot be true;
+`appearancesSection` is Story Information's new Appeared section (`StoryInformationPacket.appearances`,
+packet section `appearances`). An adapter that offers `describeLooks` (`HarnessLookRequest`, the
+`describe-looks` operation) runs the look step after each chapter with appearances
+(`planLookSubjects`, `chapterLooks`), kept as `HarnessChapter.looks`. The Codex meets characters and
+items that stepped onto the page and shows each Look (`CodexCharacter.appearance`,
+`CodexItem.appearance`); `CodexCheck` is now a holdings or an appearance check. Schema 32: optional
+chapter fields only, with a no-op upgrade from 31.
+
 **0.36.1 (2026-10-13):** `StoryCodex` is a gallery of cards: one tab per category, the same
 card for every category (its art, its name, one line) opening into the same profile (its art large,
 then everything the record knows about it). No API change.

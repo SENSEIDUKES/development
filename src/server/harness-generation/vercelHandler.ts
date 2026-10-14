@@ -20,6 +20,13 @@ const guardHoldingsFixer = createPublicGenerationGuard({
   limit: 6,
   windowMs: 30 * 60 * 1_000,
 });
+/** So does the look step's, which writes down the looks a chapter shows. */
+const guardLookStep = createPublicGenerationGuard({
+  key: 'harness-generation-looks',
+  limit: 6,
+  windowMs: 30 * 60 * 1_000,
+});
+const OPERATION_GUARDS = new Map<unknown, typeof guardHarnessGeneration>([['fix-holdings', guardHoldingsFixer], ['describe-looks', guardLookStep]]);
 
 /** The operation a request body names, read without trusting it. */
 const requestOperation = (body: unknown): unknown => {
@@ -45,7 +52,7 @@ interface ResponseLike {
 
 export default async function harnessGenerationHandler(request: RequestLike, response: ResponseLike) {
   // The owner's access token lifts the visitor limit.
-  const guard = requestOperation(request.body) === 'fix-holdings' ? guardHoldingsFixer : guardHarnessGeneration;
+  const guard = OPERATION_GUARDS.get(requestOperation(request.body)) ?? guardHarnessGeneration;
   const admission: PublicGenerationGuardResult = request.method?.toUpperCase() === 'POST'
     ? ownerTokenAdmission(request, developmentAccessToken(process.env)) ?? guard(request)
     : { allowed: true };

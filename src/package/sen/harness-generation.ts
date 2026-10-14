@@ -103,6 +103,7 @@ export { SEN_SOUNDTRACK_INSTRUCTIONS, SEN_SOUNDTRACK_SKILL, presentSoundtrackVoc
 export { chapterSoundtrack, type ChapterSoundtrackReading } from '../../components/harness-generation/shared/soundtrack';
 export { SEN_SPEAKERS_INSTRUCTIONS, SEN_SPEAKERS_SKILL } from '../../components/harness-generation/shared/speakersSkill';
 export { SEN_HOLDINGS_INSTRUCTIONS, SEN_HOLDINGS_SKILL } from '../../components/harness-generation/shared/holdingsSkill';
+export { SEN_APPEARANCE_INSTRUCTIONS, SEN_APPEARANCE_SKILL } from '../../components/harness-generation/shared/appearanceSkill';
 export { HARNESS_TAG_RULES } from '../../components/harness-generation/shared/tagRules';
 export { isStraySoundTag, settleStraySoundTags, trimLeadingStrayPunctuation } from '../../components/harness-generation/shared/soundTagRepair';
 export {
@@ -116,7 +117,9 @@ export {
   placeHoldingChanges,
   readHoldingTag,
   resolveHoldingChanges,
+  createCodexEntryResolver,
   type CharacterHoldings,
+  type CodexEntryResolver,
   type DeclaredCharacter,
   type HeldThing,
   type HoldingEvent,
@@ -149,7 +152,6 @@ export {
   type CodexCharacter,
   type CodexCheck,
   type CodexFaction,
-  type DeclaredFaction as CodexDeclaredFaction,
   type CodexItem,
   type CodexItemEvent,
   type CodexPassage,
@@ -157,7 +159,41 @@ export {
   type StoryCodexChapter,
   type StoryCodexRecord,
 } from '../../components/harness-generation/shared/storyCodex';
+export { factionNamed, type DeclaredFaction as CodexDeclaredFaction } from '../../components/harness-generation/shared/factions';
+export {
+  APPEARED_SECTION_CHARACTERS,
+  APPEARED_SECTION_THINGS,
+  appearancesSection,
+  deriveAppearances,
+  describableAppearances,
+  placeAppearances,
+  readAppearanceTag,
+  resolveAppearances,
+  type AppearanceFlag,
+  type AppearancePassage,
+  type AppearancePlacement,
+  type AppearanceSubject,
+  type AppearancesChapter,
+  type AppearancesState,
+  type LookChange,
+  type ReadAppearanceTag,
+  type RecordedLook,
+  type ResolvedAppearances,
+} from '../../components/harness-generation/shared/appearances';
+export {
+  LOOK_DECLARED_CHARACTERS,
+  LOOK_PASSAGE_CHARACTERS,
+  LOOK_SUBJECT_LIMIT,
+  LOOK_SUMMARY_WORDS,
+  LOOK_TRAITS,
+  LOOK_TRAIT_WORDS,
+  chapterLooks,
+  lookPassage,
+  planLookSubjects,
+  readDescribedLooks,
+} from '../../components/harness-generation/shared/lookDescriber';
 export * from '../../narrative/holdings';
+export * from '../../narrative/appearances';
 export { createHarnessSenStory } from '../../components/harness-generation/shared/senAdapter';
 export * from '../../narrative/generation';
 export { HarnessReaderSession, type HarnessReaderWriting } from '../../components/harness-generation/development/HarnessReaderSession';

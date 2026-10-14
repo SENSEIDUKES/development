@@ -80,9 +80,10 @@ const providerText = (request: HarnessGenerationRequest) => {
   return `${prompt.systemInstruction}\n${prompt.userPrompt}`;
 };
 const AUTHOR = 'seihouse.sen-novel-author';
-/** SEN's Speakers and Holdings skills load on every chapter, whatever the settings. */
+/** SEN's Speakers, Holdings and Appearance skills load on every chapter, whatever the settings. */
 const SPEAKERS = 'seihouse.sen-speakers';
 const HOLDINGS = 'seihouse.sen-holdings';
+const APPEARANCE = 'seihouse.sen-appearance';
 const FATE = 'seihouse.sen-fate-survival';
 
 describe('1. English + Standard', () => {
@@ -91,7 +92,7 @@ describe('1. English + Standard', () => {
     await run.controller.generateNextChapter(run.story.id, 'fixture');
 
     const [request] = run.requests;
-    expect(slotsOf(request)).toEqual({ author: AUTHOR, speakers: SPEAKERS, holdings: HOLDINGS });
+    expect(slotsOf(request)).toEqual({ author: AUTHOR, speakers: SPEAKERS, holdings: HOLDINGS, appearance: APPEARANCE });
     const text = providerText(request);
     expect(text).not.toContain('HARNESS OFFICIAL OUTPUT REQUIREMENTS');
     expect(text).not.toMatch(/Accessibility|Translation|Original Language \(/);
@@ -105,7 +106,7 @@ describe('2. Japanese + Standard', () => {
     await run.controller.generateNextChapter(run.story.id, 'fixture');
 
     const [request] = run.requests;
-    expect(slotsOf(request)).toEqual({ author: AUTHOR, translation: 'test.writing.ja', speakers: SPEAKERS, holdings: HOLDINGS });
+    expect(slotsOf(request)).toEqual({ author: AUTHOR, translation: 'test.writing.ja', speakers: SPEAKERS, holdings: HOLDINGS, appearance: APPEARANCE });
     expect(request.capaPrompt.skills.find(skill => skill.slot === 'translation')?.targetLanguage).toBe('ja');
     const text = providerText(request);
     expect(text).toContain('CAPA SKILL [Translation] — Test Japanese Writing v1.0.0');
@@ -121,7 +122,7 @@ describe('3. English + Clear Reading', () => {
     await run.controller.generateNextChapter(run.story.id, 'fixture');
 
     const [request] = run.requests;
-    expect(slotsOf(request)).toEqual({ author: AUTHOR, accessibility: SEN_READING_MODE_SKILLS['Clear Reading'].id, speakers: SPEAKERS, holdings: HOLDINGS });
+    expect(slotsOf(request)).toEqual({ author: AUTHOR, accessibility: SEN_READING_MODE_SKILLS['Clear Reading'].id, speakers: SPEAKERS, holdings: HOLDINGS, appearance: APPEARANCE });
     const text = providerText(request);
     expect(text).toContain('CAPA SKILL [Accessibility] — SEN Clear Reading v1.0.0');
     expect(text).toContain(SEN_READING_MODE_SKILLS['Clear Reading'].instructions);
@@ -145,6 +146,7 @@ describe('4. Japanese + Easy Read + Fate Survival', () => {
       ['translation', 'test.writing.ja'],
       ['speakers', SPEAKERS],
       ['holdings', HOLDINGS],
+      ['appearance', APPEARANCE],
     ]);
     const [attempt] = run.repository.snapshot().attempts;
     expect(attempt.capaPrompt).toEqual(request.capaPrompt);
@@ -155,7 +157,7 @@ describe('4. Japanese + Easy Read + Fate Survival', () => {
     await run.controller.chooseChapterDirection(run.story.id, { kind: 'reader', text: 'Mei climbs the wall instead.' });
     await run.controller.generateNextChapter(run.story.id, 'fixture');
     expect(slotsOf(run.requests[1])).toEqual({
-      author: AUTHOR, fate: FATE, accessibility: SEN_READING_MODE_SKILLS['Literal Reading'].id, translation: 'test.writing.ja', speakers: SPEAKERS, holdings: HOLDINGS,
+      author: AUTHOR, fate: FATE, accessibility: SEN_READING_MODE_SKILLS['Literal Reading'].id, translation: 'test.writing.ja', speakers: SPEAKERS, holdings: HOLDINGS, appearance: APPEARANCE,
     });
     // The committed chapter keeps what it was written with.
     expect(run.repository.snapshot().attempts[0].capaPrompt.skills.find(skill => skill.slot === 'accessibility')?.id)
@@ -172,7 +174,7 @@ describe('5. No matching Translation package', () => {
     expect(snapshot.chapters).toHaveLength(1);
     expect(snapshot.stories[0].originalLanguage).toBe('ja');
     const [request] = run.requests;
-    expect(slotsOf(request)).toEqual({ author: AUTHOR, speakers: SPEAKERS, holdings: HOLDINGS });
+    expect(slotsOf(request)).toEqual({ author: AUTHOR, speakers: SPEAKERS, holdings: HOLDINGS, appearance: APPEARANCE });
     expect(request.storyInformation.currentStory.originalLanguage).toBe('ja');
     const text = providerText(request);
     // Only the minimum HARNESS-owned language requirement travels.
@@ -205,12 +207,12 @@ describe('6. Retry after a setting or package change', () => {
     run.outputs.push(new Error('Simulated provider failure.'));
     await run.controller.generateNextChapter(run.story.id, 'fixture');
     const failed = run.repository.snapshot().attempts[0];
-    expect(slotsOf(run.requests[0])).toEqual({ author: AUTHOR, speakers: SPEAKERS, holdings: HOLDINGS });
+    expect(slotsOf(run.requests[0])).toEqual({ author: AUTHOR, speakers: SPEAKERS, holdings: HOLDINGS, appearance: APPEARANCE });
 
     await run.controller.setChapterWritingStyle(run.story.id, 'Easy Read');
     await run.controller.retryModelRequest(failed.id);
 
-    expect(slotsOf(run.requests[1])).toEqual({ author: AUTHOR, accessibility: SEN_READING_MODE_SKILLS['Easy Read'].id, speakers: SPEAKERS, holdings: HOLDINGS });
+    expect(slotsOf(run.requests[1])).toEqual({ author: AUTHOR, accessibility: SEN_READING_MODE_SKILLS['Easy Read'].id, speakers: SPEAKERS, holdings: HOLDINGS, appearance: APPEARANCE });
     expect(run.repository.snapshot().chapters).toHaveLength(1);
     // The abandoned attempt keeps its own frozen copy.
     expect(run.repository.snapshot().attempts.find(attempt => attempt.id === failed.id)?.capaPrompt).toEqual(failed.capaPrompt);
@@ -225,7 +227,7 @@ describe('6. Retry after a setting or package change', () => {
     run.controller.setInstalledSkills([japaneseWriting()]);
     await run.controller.retryModelRequest(failed.id);
 
-    expect(slotsOf(run.requests[1])).toEqual({ author: AUTHOR, translation: 'test.writing.ja', speakers: SPEAKERS, holdings: HOLDINGS });
+    expect(slotsOf(run.requests[1])).toEqual({ author: AUTHOR, translation: 'test.writing.ja', speakers: SPEAKERS, holdings: HOLDINGS, appearance: APPEARANCE });
   });
 });
 

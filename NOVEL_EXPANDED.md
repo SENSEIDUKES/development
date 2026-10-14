@@ -407,17 +407,19 @@ Update it whenever it changes.
     it together, its art large at the top. A card shows its unmanifested aura
     until its picture is manifested, which comes with manifesting while
     reading. **Characters:** everyone
-    the story has met (they spoke, or held, used or learned something), the
-    main character first; characters the Story Seed declares but the chapters
-    have not reached stay out. Named beasts are characters too. Each opens to
-    their rank, first appearance, **first words**,
+    the story has met (they stepped onto the page, spoke, or held, used or
+    learned something), the main character first; characters the Story Seed
+    declares but the chapters have not reached stay out. Named beasts are
+    characters too. Each opens to their rank, first appearance, their **Look**
+    (since 2026-10-14: its one line and each trait the chapters state, with a
+    link to every change), **first words**,
     **Equipped** and **Carried** things, **Abilities** (learning, known or
     sealed, with their stage) and a **Chronicle** of every change.
     **Factions:** sects, clans and other bodies of people, never characters,
     even when the writer tags one as speaking (those the Story Seed declares,
     or a name ending in a word like Sect, Clan or Tribe), each opening to its
-    first words. **Items:** every thing, who holds it now and everything
-    that happened to it. A **Bestiary** comes later (SENSEI, 2026-10-13): it
+    first words. **Items:** every thing that stepped onto the page or changed
+    hands, who holds it now, its Look and everything that happened to it. A **Bestiary** comes later (SENSEI, 2026-10-13): it
     holds species and unique beast groups (the dragon kin), while a named beast
     (the Dragon King, an emperor and the main villain) is a character.
     **Record checks** close each gallery, for testing. Every fact links to its
@@ -675,6 +677,25 @@ Update it whenever it changes.
     export, and the fixer's instructions are on the Writer Instructions page.
     The Library sets how far it may go (records only, or off), which is where
     the Familiar will control it.
+  - **First appearance, with its look (2026-10-14, Stage E1 step 1):** the
+    writer tags each character or named thing the moment it first steps onto
+    the page (`[[appears: Name | character]]`, `[[appears: Thing | thing]]`)
+    and each change to a look (`[[look: Name | what changed]]`), taught by SEN
+    Appearance on every chapter. Each is saved on its sentence and names the
+    same Codex entry holdings use. Then a second small step after the chapter
+    is saved, the **look step**, reads each tagged passage (with the Story
+    Seed's notes on a declared character, and the look before a change) and
+    writes the look down: one line and the traits the passage states, in
+    words any medium can use, never how to show it, and where the passage
+    differs from the Story Seed. One short call with the chapter's own model,
+    only when the chapter tagged an appearance. Every later chapter's writer
+    reads who and what has appeared, with each latest look, in Story
+    Information's new **Appeared** section, and keeps those looks; the Codex
+    shows each look on its card. Checks flag an appearance tagged twice, a
+    look for someone who never appeared, and someone who speaks before any
+    tag shows them. A story begun before the tag (Test Story - Blade) tags
+    everyone on the page again in its next chapter, since nobody has appeared
+    on its record yet. Places wait for the Place tag.
 - **Not tested yet:**
   - a right-to-left story with a real model, and Listen in Arabic and Hebrew
     on real phones, whose voices for those languages differ from device to
@@ -696,6 +717,10 @@ Update it whenever it changes.
   - Rewrite this chapter and the Holdings fixer with a real model: how often the
     fixer is called, what it costs next to a chapter, and whether its fixes
     hold (each chapter's record in the export shows it);
+  - the appearance tags and the look step with a real model: whether the
+    writer tags everyone new on the page and keeps the looks Appeared gives,
+    and whether the looks written down match the prose (each chapter's
+    `looks` in the export shows them);
   - Listen on real phones (iPhone Safari, Android Chrome), whose voices differ
     from device to device;
   - the soundtrack tag with a real model: whether the writer chooses one mood
@@ -743,11 +768,11 @@ When a session asks "what now?", start here:
    Manifest, whose picture the Codex's card then wears. It waits on the
    owner's refinement of the Color Codes, which the glowing names use (SENSEI,
    2026-10-13). The Codex as a card gallery is built.
-3. **Agent:** build the first information tag, **first appearance with
-   appearance** (Stage E1, step 1), as proposed and decided on 2026-10-13
-   (below), with its Look on the Codex's character sheets. The owner's Test
-   Story - Blade (two chapters so far) carries on to ten chapters as Stage E0's
-   test.
+3. **Owner:** test the first information tag, **first appearance with
+   appearance** (Stage E1, step 1, built 2026-10-14), by writing the next
+   chapters of Test Story - Blade on to ten and exporting it: does the writer
+   tag everyone new, do the looks written down match the prose, and do later
+   chapters keep them? Then Stage E1 step 2, Place.
 4. **Agent:** the next step of reading in every script (product track, item
    1): a reading font chosen on purpose for each remaining script. Right-to-left
    reading is built.
@@ -863,6 +888,10 @@ complete the [world record](./src/components/harness-generation/HARNESS_PRINCIPL
    and thing's one-line look, so looks stay consistent, and a declared
    character's Story Seed look is the starting look the prose is checked
    against.
+   **Built (2026-10-14):** the tags, SEN Appearance, the Appeared section, the
+   look step (registered as Look Describer) and each Look in the Codex, as
+   [Where we are](#where-we-are-2026-10-10) says. Not yet proven with a real
+   model.
 2. **Place:** places become Codex entries, and the record knows where each
    character is.
 3. **Scene:** where a story scene starts, where it is, when (time of day,
@@ -974,6 +1003,8 @@ same record; none of them adds anything medium-specific to the story itself.
 | Chapter body | What shows the chapter inside the Reader's frame: prose today (`ProseChapterBody`), sequential art later (`ReaderChapterBody`). |
 | Rewrite this chapter | The reader's request to write the newest chapter again, with an optional note (`rewriteLatestChapter`, `chapterRewriteGap`). |
 | Holdings fixer | SEN's unseen check after each chapter, which settles small holdings problems and keeps a record on the chapter (`planHoldingsFix`, `applyHoldingsFixes`, the `fix-holdings` call). The Library, later the Familiar, sets how far it goes. |
+| Look step | SEN's unseen step after each chapter that tagged an appearance: it writes down how each character and thing looks from the passage that shows it, and keeps the looks on the chapter (`planLookSubjects`, `chapterLooks`, the `describe-looks` call; Look Describer in the Model Router). |
+| Appeared | The Story Information section listing every character and thing already on the page, with its latest look, so the writer keeps every look (`appearancesSection`). |
 | Codex | The story's world as its record knows it, opened in the Reader as a panel: characters, factions and items today (a Bestiary of species later), every fact linked to its passage (`StoryCodex`, worked out by `deriveStoryCodex`). It grows as each information tag is built. |
 | Highlight Engine | SEN's engine for highlighting part of a story and attaching to it: prose today, sequential-art images later. Its lab is at `?preview=highlight-engine`; in the Reader it is Create mode. Never "Text Highlight Engine". |
 | Story Settings | The only place a user meets the HARNESS: language, reading mode, CAPA skills and media. On Story View (`StorySettings`) and in Create's Settings (`CreateStorySettings`), from `@seihouse/library/stories`. |

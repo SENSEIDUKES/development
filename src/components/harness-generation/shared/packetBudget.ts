@@ -29,6 +29,8 @@ export const GENERATION_PACKET_BUDGET = {
     canonicalState: { tokens: 3_000, protected: false },
     // What each character has now: never trimmed, so the writer never forgets a sword or invents a second one.
     holdings: { protected: true },
+    // Who and what is already on the page, with each look: bounded by its own counts, never trimmed further.
+    appearances: { protected: true },
     missionReminder: { protected: true },
     immediateChapterRequest: { protected: true },
   } satisfies Record<PacketSectionId, PacketSectionBudget>,
@@ -53,6 +55,7 @@ export const PACKET_SECTION_ORDER: readonly PacketSectionId[] = [
   'previouslyOn',
   'canonicalState',
   'holdings',
+  'appearances',
   'missionReminder',
   'immediateChapterRequest',
 ];

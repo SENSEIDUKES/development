@@ -12,7 +12,7 @@ import {
   type HoldingsSection,
   type HoldingsSectionCharacter,
 } from '../../../narrative/holdings';
-import type { WordTag } from '../../../narrative/marks';
+import { isHoldingTagWord, type WordTag } from '../../../narrative/marks';
 import type { CurrentStoryProjection } from '../../../narrative/generation';
 import { normalizeIdentityLabel } from './canonicalProjection';
 import { isMainCharacterTag } from './speakers';
@@ -104,6 +104,7 @@ export type ReadHoldingTag =
  * "sold") keeps that word as its reason.
  */
 export function readHoldingTag(tag: WordTag): ReadHoldingTag {
+  if (!isHoldingTagWord(tag.word)) return { ok: false, problem: `a ${tag.word} tag is not a holding change` };
   const [holderName, second, ...rest] = tag.parts;
   const holder: HoldingRef = { name: holderName };
   if (tag.word === 'rank') return { ok: true, change: { verb: 'rank', holder, level: [second, ...rest].join(' ') } };
@@ -140,7 +141,7 @@ export function readHoldingTag(tag: WordTag): ReadHoldingTag {
 }
 
 /** The sentence a tag points at: the one it sits in or starts; at a paragraph's end, the last one. */
-const pointedSentence = (sentences: ReadonlyArray<{ start: number; end: number }>, offset: number) =>
+export const pointedSentence = (sentences: ReadonlyArray<{ start: number; end: number }>, offset: number) =>
   sentences.find(sentence => sentence.start <= offset && (offset < sentence.end || (offset === sentence.end && offset === sentences.at(-1)!.end)))
   // Written right after a sentence's last character, with no space: that sentence.
   ?? sentences.find(sentence => sentence.end === offset)
@@ -164,7 +165,8 @@ export function placeHoldingChanges({ paragraphs, locale }: {
   for (const { blockId, text, wordTags } of paragraphs) {
     if (!wordTags.length) continue;
     const sentences = splitSentences(text, locale);
-    for (const tag of wordTags) {
+    // Other word-tag kinds (appearances) are read by their own owners.
+    for (const tag of wordTags.filter(candidate => isHoldingTagWord(candidate.word))) {
       const read = readHoldingTag(tag);
       if (!read.ok) { problems.push(read.problem); continue; }
       const sentence = pointedSentence(sentences, tag.offset);
@@ -220,28 +222,34 @@ const answersTo = (names: readonly string[], name: string) => {
   return Boolean(key) && names.some(candidate => normalizeIdentityLabel(candidate) === key);
 };
 
-export interface ResolvedHoldingChanges {
-  changes: HoldingChangeAttachment[];
-  /** New Codex entries, in the order the chapter first named them. */
-  created: CodexEntry[];
+/**
+ * Finds or makes the Codex entry a tag names, for one chapter's commit: an
+ * existing entry by its exact name or an alias, a character the Story
+ * Information declares, or a new entry with an app-made ID. `MC`, or any name
+ * the main character answers to, is the main character. Every kind of tag a
+ * chapter carries resolves through one resolver, so a new name named twice
+ * in one chapter becomes one entry.
+ */
+export interface CodexEntryResolver {
+  /** The character a name names, made when it is new. */
+  character(name: string): CodexEntry;
+  /** The thing or ability a name names, made when it is new. */
+  entry(kind: Exclude<CodexEntryKind, 'character'>, name: string): CodexEntry;
+  /** The entry a name already names, a character before a thing; never made. */
+  existing(name: string): CodexEntry | undefined;
+  /** New entries, in the order the chapter first named them. */
+  readonly created: CodexEntry[];
 }
 
-/**
- * Resolves every name in a chapter's holding changes to a Codex entry when it
- * commits: an existing entry by its exact name or an alias, a character the
- * Story Information declares, or a new entry with an app-made ID. `MC`, or any
- * name the main character answers to, is the main character.
- */
-export function resolveHoldingChanges({ storyId, chapter, changes, entries, declared, createdAt, createId }: {
+export function createCodexEntryResolver({ storyId, chapter, entries, declared, createdAt, createId }: {
   storyId: string;
   chapter: { id: string; chapterNumber: number };
-  changes: readonly HoldingChangeAttachment[];
   /** This story's existing entries. */
   entries: readonly CodexEntry[];
   declared: readonly DeclaredCharacter[];
   createdAt: string;
   createId: () => string;
-}): ResolvedHoldingChanges {
+}): CodexEntryResolver {
   const known = entries.filter(entry => entry.storyId === storyId);
   const created: CodexEntry[] = [];
   const all = () => [...known, ...created];
@@ -258,24 +266,54 @@ export function resolveHoldingChanges({ storyId, chapter, changes, entries, decl
   };
   const main = declared.find(character => character.mainCharacter);
   const mainNames = main ? [main.name, ...(main.aliases ?? [])] : [];
-  const mainCharacter = () => all().find(entry => entry.kind === 'character' && entry.mainCharacter)
+  const namesMain = (name: string) => isMainCharacterTag(name) || answersTo(mainNames, name);
+  const existingMain = () => all().find(entry => entry.kind === 'character' && entry.mainCharacter);
+  const mainCharacter = () => existingMain()
     ?? make('character', main?.name ?? UNNAMED_MAIN_CHARACTER, { aliases: main?.aliases ? [...main.aliases] : undefined, mainCharacter: true, origin: { source: 'foundation' } });
-  const character = (name: string): CodexEntry => {
-    if (isMainCharacterTag(name) || answersTo(mainNames, name)) return mainCharacter();
-    const existing = all().find(entry => entry.kind === 'character' && answersTo(namesOf(entry), name));
-    if (existing) return existing;
-    const declaredOne = declared.find(candidate => !candidate.mainCharacter && answersTo([candidate.name, ...(candidate.aliases ?? [])], name));
-    return declaredOne
-      ? make('character', declaredOne.name, { aliases: declaredOne.aliases ? [...declaredOne.aliases] : undefined, origin: { source: 'foundation' } })
-      : make('character', name);
+  const existingOfKind = (kind: CodexEntryKind, name: string) => all().find(entry => entry.kind === kind && answersTo(namesOf(entry), name));
+  return {
+    character(name) {
+      if (namesMain(name)) return mainCharacter();
+      const existing = existingOfKind('character', name);
+      if (existing) return existing;
+      const declaredOne = declared.find(candidate => !candidate.mainCharacter && answersTo([candidate.name, ...(candidate.aliases ?? [])], name));
+      return declaredOne
+        ? make('character', declaredOne.name, { aliases: declaredOne.aliases ? [...declaredOne.aliases] : undefined, origin: { source: 'foundation' } })
+        : make('character', name);
+    },
+    entry: (kind, name) => existingOfKind(kind, name) ?? make(kind, name),
+    existing: name => (namesMain(name) ? existingMain() : undefined) ?? existingOfKind('character', name) ?? existingOfKind('thing', name),
+    created,
   };
-  const target = (kind: Exclude<CodexEntryKind, 'character'>, name: string) =>
-    all().find(entry => entry.kind === kind && answersTo(namesOf(entry), name)) ?? make(kind, name);
+}
 
+export interface ResolvedHoldingChanges {
+  changes: HoldingChangeAttachment[];
+  /** New Codex entries, in the order the chapter first named them. */
+  created: CodexEntry[];
+}
+
+/**
+ * Resolves every name in a chapter's holding changes to a Codex entry when it
+ * commits (`createCodexEntryResolver`). With a `resolver`, the chapter's other
+ * tags share it.
+ */
+export function resolveHoldingChanges({ storyId, chapter, changes, entries, declared, createdAt, createId, resolver: shared }: {
+  storyId: string;
+  chapter: { id: string; chapterNumber: number };
+  changes: readonly HoldingChangeAttachment[];
+  /** This story's existing entries. */
+  entries: readonly CodexEntry[];
+  declared: readonly DeclaredCharacter[];
+  createdAt: string;
+  createId: () => string;
+  resolver?: CodexEntryResolver;
+}): ResolvedHoldingChanges {
+  const resolver = shared ?? createCodexEntryResolver({ storyId, chapter, entries, declared, createdAt, createId });
   const resolved = changes.map(change => {
-    const holder = character(change.payload.holder.name);
+    const holder = resolver.character(change.payload.holder.name);
     const kind = holdingTargetKind(change.payload.verb);
-    const thing = kind && change.payload.target ? target(kind, change.payload.target.name) : undefined;
+    const thing = kind && change.payload.target ? resolver.entry(kind, change.payload.target.name) : undefined;
     return {
       ...change,
       payload: {
@@ -285,7 +323,7 @@ export function resolveHoldingChanges({ storyId, chapter, changes, entries, decl
       },
     };
   });
-  return { changes: resolved, created };
+  return { changes: resolved, created: resolver.created };
 }
 
 // ─── Working out what everyone holds ───────────────────────────────────────

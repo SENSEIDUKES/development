@@ -43,8 +43,9 @@ export const writerWithAccessToken = (
     getServerInfo: () => writer.getServerInfo(),
     generate: request => withToken(() => writer.generate(request)),
     ...(writer.arcOperation ? { arcOperation: request => withToken(() => writer.arcOperation!(request)) } : {}),
-    // The Holdings fixer runs unseen: it sends the token the reader already gave and never asks for one.
+    // The Holdings fixer and the look step run unseen: they send the token the reader already gave and never ask for one.
     ...(writer.fixHoldings ? { fixHoldings: request => writer.fixHoldings!(request) } : {}),
+    ...(writer.describeLooks ? { describeLooks: request => writer.describeLooks!(request) } : {}),
   };
 };
 

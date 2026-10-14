@@ -1,8 +1,11 @@
 import type { CodexEntry } from '../../../narrative/holdings';
+import type { Look } from '../../../narrative/appearances';
 import type { HarnessChapter } from '../../../narrative/generation';
 import { isSpeakerOnText, SPEAKER_KIND } from '../../../narrative/speech';
 import { harnessParagraphBlockId } from './chapterBody';
 import { normalizeIdentityLabel } from './canonicalProjection';
+import { factionNamed, type DeclaredFaction } from './factions';
+import { deriveAppearances, type AppearanceFlag, type AppearancePassage, type AppearanceSubject } from './appearances';
 import {
   deriveHoldings,
   holdingTargetKind,
@@ -16,14 +19,16 @@ import {
 /**
  * The Codex: what the story's record knows, gathered for the reader. Nothing
  * here is stored; it is worked out again from each chapter's current records
- * (holding changes and speakers today), so it always matches the chapters and
- * holds only what they recorded. Each kind of information tag adds its own
- * facts here as it is built; the Codex never shows more than the record holds.
+ * (appearances and their looks, holding changes and speakers today), so it
+ * always matches the chapters and holds only what they recorded. Each kind of
+ * information tag adds its own facts here as it is built; the Codex never
+ * shows more than the record holds.
  *
- * A character is in the Codex once the record has met them: they spoke, or
- * held, used or learned something. Characters the Story Seed declares but the
- * chapters have not reached yet stay out, so the Codex never runs ahead of
- * the story.
+ * A character is in the Codex once the record has met them: they stepped onto
+ * the page, spoke, or held, used or learned something. Characters the Story
+ * Seed declares but the chapters have not reached yet stay out, so the Codex
+ * never runs ahead of the story. A thing joins it the same way: it stepped
+ * onto the page, or changed hands.
  */
 
 /** A place in the story a fact came from: the paragraph, and the words the record sits on. */
@@ -43,6 +48,22 @@ export interface CodexVoice {
   first: CodexPassage;
 }
 
+/** A look as the record wrote it down, with the passage it was read from. */
+export interface CodexLook extends Look {
+  passage: CodexPassage;
+  /** Where the passage differs from the look the story's author declared. */
+  conflict?: string;
+}
+
+/** Where someone or something stepped onto the page, how it looks now, and each change to its look. */
+export interface CodexAppearance {
+  first: CodexPassage;
+  /** The latest look written down; absent until one is. */
+  look?: CodexLook;
+  /** Each change to its look the writer tagged, in story order. */
+  changes: Array<{ change: string; passage: CodexPassage }>;
+}
+
 export interface CodexCharacter {
   /** Stable for this story: the Codex entry's ID, or the name the record knows them by until one exists. */
   key: string;
@@ -50,6 +71,8 @@ export interface CodexCharacter {
   mainCharacter: boolean;
   /** Where the record first meets them. */
   firstSeen: CodexPassage;
+  /** Their appearance on the page, and their look. Absent for someone met only by their words or holdings. */
+  appearance?: CodexAppearance;
   rank?: { text: string; events: HoldingEvent[] };
   /** Things they hold now, in the order they came to hold them. */
   things: HeldThing[];
@@ -76,12 +99,12 @@ export interface CodexItem {
   /** Everything the record saw happen to it, in story order. */
   events: CodexItemEvent[];
   firstSeen: CodexPassage;
+  /** Its appearance on the page, and its look. */
+  appearance?: CodexAppearance;
 }
 
-/** A check the record's plain rules flagged, with the paragraph it is about when it has one. */
-export interface CodexCheck extends HoldingFlag {
-  blockId?: string;
-}
+/** A check the record's plain rules flagged (holdings or appearances), with the paragraph it is about when it has one. */
+export type CodexCheck = (HoldingFlag | AppearanceFlag) & { blockId?: string };
 
 /** A sect, clan, faction or other body the story has met: by its voice today (a group the writer tagged as speaking). */
 export interface CodexFaction {
@@ -90,22 +113,6 @@ export interface CodexFaction {
   firstSeen: CodexPassage;
   voice: CodexVoice;
 }
-
-/** A group the story declares or names: a faction, never a character, whatever it does in the record. */
-export interface DeclaredFaction {
-  name: string;
-  aliases?: readonly string[];
-}
-
-/**
- * The last word of a name that makes it a body of people rather than a person
- * ("Iron Crane Sect", "Black Wolf Tribe"), for a group the Story Seed did not
- * declare. Named beasts are characters; a species belongs to the Bestiary.
- */
-const FACTION_WORDS = new Set([
-  'sect', 'sects', 'clan', 'clans', 'faction', 'factions', 'guild', 'order', 'cult', 'legion', 'army', 'empire', 'kingdom',
-  'dynasty', 'alliance', 'league', 'society', 'brotherhood', 'sisterhood', 'academy', 'tribe', 'horde', 'family',
-]);
 
 export interface StoryCodexRecord {
   /** The main character first, then everyone else in the order the story met them. Named beasts are characters too. */
@@ -119,13 +126,24 @@ export interface StoryCodexRecord {
 }
 
 /** What the Codex reads from a chapter. */
-export type StoryCodexChapter = Pick<HarnessChapter, 'id' | 'chapterNumber' | 'paragraphs' | 'speakers' | 'holdingChanges' | 'closingHoldings'>;
+export type StoryCodexChapter = Pick<HarnessChapter, 'id' | 'chapterNumber' | 'paragraphs' | 'speakers' | 'holdingChanges' | 'closingHoldings' | 'appearances' | 'looks'>;
 
 const paragraphOrder = (blockId: string) => Number(blockId.match(/-p(\d+)$/)?.[1] ?? 0);
 const comesBefore = (left: CodexPassage, right: CodexPassage) =>
   left.chapterNumber - right.chapterNumber || paragraphOrder(left.blockId) - paragraphOrder(right.blockId);
 const passageOf = (event: HoldingEvent): CodexPassage => ({
   chapterNumber: event.passage.chapterNumber, blockId: event.passage.blockId, text: event.passage.text,
+});
+const appearancePassage = (passage: AppearancePassage): CodexPassage => ({
+  chapterNumber: passage.chapterNumber, blockId: passage.blockId, text: passage.text,
+});
+const appearanceOf = (subject: AppearanceSubject): CodexAppearance => ({
+  first: appearancePassage(subject.first),
+  ...(subject.look ? { look: {
+    summary: subject.look.summary, traits: { ...subject.look.traits }, passage: appearancePassage(subject.look.passage),
+    ...(subject.look.conflict ? { conflict: subject.look.conflict } : {}),
+  } } : {}),
+  changes: subject.changes.map(change => ({ change: change.change, passage: appearancePassage(change.passage) })),
 });
 
 export function deriveStoryCodex({ entries, chapters, mainCharacterName, declared = [], declaredFactions = [] }: {
@@ -140,6 +158,7 @@ export function deriveStoryCodex({ entries, chapters, mainCharacterName, declare
 }): StoryCodexRecord {
   const ordered = [...chapters].sort((left, right) => left.chapterNumber - right.chapterNumber);
   const holdings = deriveHoldings({ entries, chapters: ordered, mainCharacterName });
+  const appeared = deriveAppearances({ entries, chapters: ordered, declaredFactions });
 
   type Working = Omit<CodexCharacter, 'firstSeen'> & { firstSeen?: CodexPassage; names: Set<string> };
   const characters = new Map<string, Working>();
@@ -180,13 +199,25 @@ export function deriveStoryCodex({ entries, chapters, mainCharacterName, declare
     return add({ key: entry?.id ?? `character:${keys[0]}`, name: entry?.name ?? name.trim(), mainCharacter: Boolean(entry?.mainCharacter), things: [], abilities: [], chronicle: [], names: new Set(keys) });
   };
 
+  // Who stepped onto the page: met there, with their look. A group is never a character.
+  for (const subject of appeared.subjects) {
+    if (subject.entity !== 'character' || factionNamed(subject.name, declaredFactions)) continue;
+    const entry = subject.entryId ? entries.find(candidate => candidate.id === subject.entryId) : undefined;
+    const names = [subject.name, ...(entry?.aliases ?? [])].map(normalizeIdentityLabel);
+    const character = (subject.entryId ? characters.get(subject.entryId) : undefined)
+      ?? (subject.mainCharacter ? main() : undefined)
+      ?? [...characters.values()].find(candidate => names.some(name => candidate.names.has(name)))
+      ?? add({ key: subject.key, name: subject.name, mainCharacter: subject.mainCharacter, things: [], abilities: [], chronicle: [], names: new Set(names) });
+    character.appearance = appearanceOf(subject);
+    const first = appearancePassage(subject.first);
+    if (!character.firstSeen || comesBefore(first, character.firstSeen) < 0) character.firstSeen = first;
+  }
+
   // A faction: one the story declares (by name or alias), or a name whose last word names a body of people.
   const factions = new Map<string, Omit<CodexFaction, 'firstSeen' | 'voice'> & Partial<Pick<CodexFaction, 'firstSeen' | 'voice'>>>();
   const factionOf = (name: string) => {
-    const key = normalizeIdentityLabel(name);
-    const known = declaredFactions.find(faction => [faction.name, ...(faction.aliases ?? [])].some(other => normalizeIdentityLabel(other) === key));
-    if (!known && !FACTION_WORDS.has(key.split(' ').at(-1) ?? '')) return undefined;
-    const named = known?.name ?? name.trim();
+    const named = factionNamed(name, declaredFactions);
+    if (!named) return undefined;
     const id = `faction:${normalizeIdentityLabel(named)}`;
     const faction = factions.get(id) ?? { key: id, name: named };
     factions.set(id, faction);
@@ -238,16 +269,27 @@ export function deriveStoryCodex({ entries, chapters, mainCharacterName, declare
       item.equipped = thing.equipped;
     }
   }
+  // Things that stepped onto the page, held or not, with their looks.
+  for (const subject of appeared.subjects) {
+    if (subject.entity !== 'thing') continue;
+    const first = appearancePassage(subject.first);
+    const item = items.get(subject.key) ?? { key: subject.key, name: subject.name, count: 0, equipped: false, events: [], firstSeen: first };
+    item.appearance = appearanceOf(subject);
+    if (comesBefore(first, item.firstSeen) < 0) item.firstSeen = first;
+    items.set(subject.key, item);
+  }
   const itemList = [...items.values()]
     .map(item => ({ ...item, events: [...item.events].sort((left, right) => comesBefore(passageOf(left), passageOf(right))) }))
     .sort((left, right) => comesBefore(left.firstSeen, right.firstSeen));
 
-  const checks = holdings.flags.map((flag): CodexCheck => {
+  const holdingChecks = holdings.flags.map((flag): CodexCheck => {
     const blockId = flag.recordId
       ? ordered.find(chapter => chapter.id === flag.chapterId)?.holdingChanges?.find(change => change.id === flag.recordId)?.anchor.blockId
       : undefined;
     return blockId ? { ...flag, blockId } : flag;
   });
+  // In story order; a check about no one chapter (two names that may be one) comes first.
+  const checks = [...holdingChecks, ...appeared.flags].sort((left, right) => (left.chapterNumber ?? 0) - (right.chapterNumber ?? 0));
 
   return { characters: roster, factions: factionList, items: itemList, checks };
 }

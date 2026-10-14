@@ -49,8 +49,10 @@ import { activeAttemptForStory } from './attempts';
 import { chapterRewriteGap, latestStoryChapter, readRewriteNote, withoutLatestChapter } from './chapterRewrite';
 import { harnessParagraphBlockId } from './chapterBody';
 import { protagonistNames } from './speakers';
-import { declaredCharacters, resolveHoldingChanges } from './holdings';
+import { createCodexEntryResolver, declaredCharacters, resolveHoldingChanges } from './holdings';
+import { resolveAppearances } from './appearances';
 import { applyHoldingsFixes, planHoldingsFix } from './holdingsFixer';
+import { chapterLooks, planLookSubjects } from './lookDescriber';
 import {
   createEmptyHarnessWorkspaceState,
   type HarnessGenerationRepository,
@@ -469,7 +471,7 @@ export class HarnessGenerationController {
    * change replaced wait in `waiting`, off the page, until the chapter is
    * sealed. The chapter is marked as changed, so it is read again at its seal.
    */
-  async authorChapter(chapterId: string, changes: Pick<HarnessChapter, 'paragraphs' | 'soundCues' | 'speakers' | 'holdingChanges' | 'openingSound' | 'soundtrackChanges'>
+  async authorChapter(chapterId: string, changes: Pick<HarnessChapter, 'paragraphs' | 'soundCues' | 'speakers' | 'holdingChanges' | 'appearances' | 'openingSound' | 'soundtrackChanges'>
     & { waiting?: NonNullable<HarnessChapter['authoring']>['waiting'] }): Promise<void> {
     this.assertHydrated();
     if (this.generating) throw new Error('Wait for the active Harness operation before changing a chapter.');
@@ -487,8 +489,8 @@ export class HarnessGenerationController {
       const text = blocks.get(attachment.anchor.blockId);
       return !attachment.anchor.detached && text?.slice(attachment.anchor.startOffset, attachment.anchor.endOffset) === attachment.anchor.selectedText;
     };
-    for (const attachment of [...changes.soundCues ?? [], ...changes.speakers ?? [], ...changes.holdingChanges ?? [], ...changes.soundtrackChanges ?? []]) {
-      if (!onItsWords(attachment)) throw new Error('Every Sound Cue, speaker, holding change and soundtrack change must sit on its words before the chapter is saved.');
+    for (const attachment of [...changes.soundCues ?? [], ...changes.speakers ?? [], ...changes.holdingChanges ?? [], ...changes.appearances ?? [], ...changes.soundtrackChanges ?? []]) {
+      if (!onItsWords(attachment)) throw new Error('Every Sound Cue, speaker, holding change, appearance and soundtrack change must sit on its words before the chapter is saved.');
     }
     // The opening is one of each kind's two: a chapter changes its music once, and its atmosphere once, after it.
     for (const kind of [SOUNDSCAPE_CHANGE_KIND, ATMOSPHERE_CHANGE_KIND]) {
@@ -499,9 +501,11 @@ export class HarnessGenerationController {
     chapter.paragraphs = paragraphs;
     chapter.prose = paragraphs.join('\n\n');
     chapter.metrics = { ...chapter.metrics, wordCount: paragraphs.reduce((total, paragraph) => total + paragraph.split(/\s+/u).length, 0), paragraphCount: paragraphs.length };
-    for (const key of ['soundCues', 'speakers', 'holdingChanges', 'soundtrackChanges'] as const) {
+    for (const key of ['soundCues', 'speakers', 'holdingChanges', 'appearances', 'soundtrackChanges'] as const) {
       const list = changes[key];
       if (list?.length) (chapter as Record<typeof key, unknown>)[key] = cloneHarnessValue(list);
+      // A chapter written with the Appearance skill keeps its list, even empty, so it is still known to have been asked.
+      else if (key === 'appearances' && chapter.appearances) chapter.appearances = [];
       else delete chapter[key];
     }
     const opening = changes.openingSound;
@@ -1276,6 +1280,7 @@ export class HarnessGenerationController {
       protagonistNames: protagonistNames(attempt.storyInformation.currentStory, attempt.storyInformation.canonicalState.characters),
       speakersExpected: attempt.capaPrompt.skills.some(skill => skill.slot === 'speakers' && skill.authoring),
       holdingsExpected: attempt.capaPrompt.skills.some(skill => skill.slot === 'holdings' && skill.authoring),
+      appearancesExpected: attempt.capaPrompt.skills.some(skill => skill.slot === 'appearance' && skill.authoring),
       soundtrackExpected: attempt.capaPrompt.skills.some(skill => skill.slot === 'soundtrack' && skill.authoring),
     });
     if (!acceptance.accepted) {
@@ -1413,18 +1418,24 @@ export class HarnessGenerationController {
       ...event,
       chapterId,
     }));
-    // Every name a holding change uses becomes a Codex entry now, in the same
-    // write that commits its chapter: the app assigns the IDs, never the writer.
+    // Every name an appearance or a holding change uses becomes a Codex entry
+    // now, in the same write that commits its chapter: the app assigns the IDs,
+    // never the writer. One resolver serves both, so a new name tagged by both
+    // is one entry.
+    const resolving = {
+      storyId: commitAttempt.storyId,
+      chapter: { id: chapterId, chapterNumber: commitAttempt.chapterNumber },
+      entries: candidate.codexEntries,
+      declared: declaredCharacters(commitAttempt.storyInformation.currentStory),
+      createdAt: committedAt,
+      createId: () => this.runtime.createId('hcx'),
+    };
+    const resolver = createCodexEntryResolver(resolving);
+    const appearances = acceptedDraft.appearances
+      ? resolveAppearances({ ...resolving, appearances: acceptedDraft.appearances, resolver }).appearances
+      : undefined;
     const holdings = acceptedDraft.holdingChanges?.length
-      ? resolveHoldingChanges({
-        storyId: commitAttempt.storyId,
-        chapter: { id: chapterId, chapterNumber: commitAttempt.chapterNumber },
-        changes: acceptedDraft.holdingChanges,
-        entries: candidate.codexEntries,
-        declared: declaredCharacters(commitAttempt.storyInformation.currentStory),
-        createdAt: committedAt,
-        createId: () => this.runtime.createId('hcx'),
-      })
+      ? resolveHoldingChanges({ ...resolving, changes: acceptedDraft.holdingChanges, resolver })
       : undefined;
     const chapter = {
       id: chapterId,
@@ -1442,6 +1453,7 @@ export class HarnessGenerationController {
       ...(acceptedDraft.speakers ? { speakers: cloneHarnessValue(acceptedDraft.speakers) } : {}),
       ...(holdings?.changes.length ? { holdingChanges: holdings.changes } : {}),
       ...(acceptedDraft.closingHoldings ? { closingHoldings: [...acceptedDraft.closingHoldings] } : {}),
+      ...(appearances ? { appearances } : {}),
       ...(acceptedDraft.scene ? { scene: cloneHarnessValue(acceptedDraft.scene) } : {}),
       mediaLoadout: cloneHarnessValue(commitAttempt.mediaLoadout),
       ...(acceptedDraft.plan ? { plan: acceptedDraft.plan } : {}),
@@ -1457,7 +1469,7 @@ export class HarnessGenerationController {
     };
     candidate.chapters.push(chapter);
     candidate.events.push(...committedEvents);
-    if (holdings?.created.length) candidate.codexEntries.push(...holdings.created);
+    if (resolver.created.length) candidate.codexEntries.push(...resolver.created);
     if (rewrite) {
       // The replaced version's attempt keeps its reply, so an export still shows it.
       const replacedAttemptId = base.chapters.find(entry => entry.id === rewrite.replacesChapterId)?.attemptId;
@@ -1494,8 +1506,11 @@ export class HarnessGenerationController {
     }
     await this.replayStory(commitAttempt.storyId, chapterId);
     // The Holdings fixer settles the chapter's small holdings problems before
-    // anything is planned or written from it.
+    // anything is planned or written from it; then the look step writes down
+    // the looks its appearances show.
     await this.fixCommittedHoldings(attemptId, chapterId);
+    const looks = this.planLookStep(attemptId, chapterId);
+    if (looks) await this.describeCommittedLooks(looks);
     // A story without a planned length plans its next arc as soon as the
     // last chapter of one commits; a story with one waits for the reader.
     const committedStory = findStory(this.state, commitAttempt.storyId);
@@ -1583,6 +1598,61 @@ export class HarnessGenerationController {
         ...candidate.codexEntries.filter(entry => entry.storyId !== story.id || updated.has(entry.id)).map(entry => updated.get(entry.id) ?? entry),
         ...fixed.entries.filter(entry => !known.has(entry.id)),
       ];
+      try { await this.persist(candidate); } catch { /* The chapter stays as it was committed. */ }
+    } finally {
+      this.generating = wasGenerating;
+    }
+  }
+
+  /**
+   * What the look step would describe for a committed chapter, worked out
+   * before anything waits: nothing without a look step or appearances.
+   */
+  private planLookStep(attemptId: string, chapterId: string) {
+    const attempt = this.state.attempts.find(entry => entry.id === attemptId);
+    const chapter = this.state.chapters.find(entry => entry.id === chapterId);
+    const story = chapter ? findStory(this.state, chapter.storyId) : undefined;
+    if (!this.modelAdapter.describeLooks || !attempt || !chapter?.appearances?.length || !story) return undefined;
+    const subjects = planLookSubjects({
+      chapter,
+      chapters: this.state.chapters.filter(entry => entry.storyId === story.id),
+      entries: this.state.codexEntries.filter(entry => entry.storyId === story.id),
+      identities: attempt.storyInformation.currentStory.identities,
+      locale: story.originalLanguage,
+    });
+    return subjects.length ? { attempt, chapter, story, subjects } : undefined;
+  }
+
+  /**
+   * The look step, after a chapter commits and its holdings are settled: each
+   * appearance the rules accept is described from its passage in one short
+   * call with the chapter's own model, and the looks are kept on the chapter.
+   * A chapter with no appearances is never asked about. Nothing here can undo
+   * the commit: a failed call is recorded, and a failed write leaves the
+   * chapter as it was.
+   */
+  private async describeCommittedLooks({ attempt, chapter, story, subjects }: NonNullable<ReturnType<HarnessGenerationController['planLookStep']>>) {
+    const chapterId = chapter.id;
+    const wasGenerating = this.generating;
+    this.generating = true;
+    try {
+      let raw: string | undefined;
+      let error: string | undefined;
+      try {
+        raw = (await this.modelAdapter.describeLooks!({
+          operation: 'describe-looks', storyId: story.id, chapterId, chapterNumber: chapter.chapterNumber, model: attempt.model,
+          language: story.originalLanguage, subjects,
+        })).rawProviderResponse;
+      } catch (cause) {
+        error = errorMessage(cause, 'The look step could not be reached.');
+      }
+      // The chapter must still be the one described: the story's latest, with the same appearances.
+      const current = this.state.chapters.find(entry => entry.id === chapterId);
+      if (latestStoryChapter(this.state, story.id)?.id !== chapterId || !current?.appearances
+        || subjects.some(subject => !current.appearances!.some(appearance => appearance.id === subject.id))) return;
+      const candidate = cloneHarnessValue(this.state);
+      const saved = candidate.chapters.find(entry => entry.id === chapterId)!;
+      saved.looks = chapterLooks({ subjects, raw, error, model: attempt.model, at: this.runtime.now() });
       try { await this.persist(candidate); } catch { /* The chapter stays as it was committed. */ }
     } finally {
       this.generating = wasGenerating;

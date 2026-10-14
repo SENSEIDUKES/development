@@ -1,5 +1,5 @@
 import type { ManuscriptAnchor, ManuscriptAttachment } from '../components/highlight-engine/shared/manuscript';
-import type { TagWord } from './marks';
+import type { HoldingTagWord } from './marks';
 
 /**
  * Holdings: what each character has, uses, knows and is.
@@ -46,7 +46,7 @@ export interface CodexEntry {
 export const HOLDING_CHANGE_KIND = 'holding-change';
 
 /** A holding change's verb is its tag word. */
-export type HoldingVerb = TagWord;
+export type HoldingVerb = HoldingTagWord;
 
 /** Who or what a change names: as the writer wrote it, and the Codex entry it resolved to when its chapter committed. */
 export interface HoldingRef {

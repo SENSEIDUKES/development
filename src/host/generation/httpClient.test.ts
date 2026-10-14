@@ -61,3 +61,20 @@ it('sends the Holdings fixer to the same route with the token, and a refusal com
   expect((init.headers as Record<string, string>).Authorization).toBe('Bearer owner-token');
   token.current = undefined;
 });
+
+it('sends the look step to the same route with the token', async () => {
+  const token = createSavedAccessToken();
+  token.current = 'owner-token';
+  const fetchMock = vi.fn(async () => new Response(JSON.stringify(receipt), { status: 200 }));
+  vi.stubGlobal('fetch', fetchMock);
+  const client = new HarnessGenerationHttpClient(undefined, () => token.current);
+  await client.describeLooks({
+    operation: 'describe-looks', storyId: 's', chapterId: 'c', chapterNumber: 3, model: 'google/gemini-3.8-flash', language: 'en',
+    subjects: [{ id: 'a1', name: 'Old Wu', entity: 'character', event: 'appears', passage: 'A stooped smith waited.' }],
+  });
+  const [endpoint, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+  expect(endpoint).toBe('/api/harness-generation');
+  expect(JSON.parse(init.body as string)).toMatchObject({ operation: 'describe-looks', chapterNumber: 3 });
+  expect((init.headers as Record<string, string>).Authorization).toBe('Bearer owner-token');
+  token.current = undefined;
+});

@@ -88,9 +88,12 @@ export function withoutLatestChapter(state: HarnessWorkspaceState, storyId: stri
 
   // The Codex entries the chapter brought in: those its tags created, and a
   // declared character it named first. Entries an earlier chapter uses stay.
-  const usedEarlier = new Set(next.chapters.filter(chapter => chapter.storyId === storyId)
-    .flatMap(chapter => (chapter.holdingChanges ?? []).flatMap(change => [change.payload.holder.entryId, change.payload.target?.entryId])));
-  const usedHere = new Set((latest.holdingChanges ?? []).flatMap(change => [change.payload.holder.entryId, change.payload.target?.entryId]));
+  const entriesNamed = (chapter: HarnessChapter) => [
+    ...(chapter.holdingChanges ?? []).flatMap(change => [change.payload.holder.entryId, change.payload.target?.entryId]),
+    ...(chapter.appearances ?? []).map(appearance => appearance.payload.subject.entryId),
+  ];
+  const usedEarlier = new Set(next.chapters.filter(chapter => chapter.storyId === storyId).flatMap(entriesNamed));
+  const usedHere = new Set(entriesNamed(latest));
   next.codexEntries = next.codexEntries.filter(entry => entry.storyId !== storyId || !(
     (entry.origin.source === 'tag' && entry.origin.chapterId === id) || (usedHere.has(entry.id) && !usedEarlier.has(entry.id))
   ));

@@ -80,11 +80,11 @@ const chapter = {
     // The writer chooses the chapter's music and atmosphere once, at its start; the writer puts a
     // sound tag on the words where a sound happens, naming one of the Library's sound words.
     '[[soundtrack: fighting | ancient battlefield]] The tide pulled back from the drowned gate, and [[sound: beast roar | the beast roared | high]] across the causeway.',
-    // The writer tags what changes in what a character has, where it happens.
-    '[[gained: MC | Bell Key]] Mara counted the bells that no longer rang. [[equipped: MC | Bell Key]] She turned the old key in her palm.',
+    // The writer tags who and what first steps onto the page, and what changes in what a character has, where it happens.
+    '[[appears: MC | character]] [[gained: MC | Bell Key]] Mara counted the bells that no longer rang. [[appears: Bell Key | thing]] [[equipped: MC | Bell Key]] She turned the old key in her palm.',
     // The writer tags who speaks: the main character with their own tag, then someone else by name.
     '[[@MC]] “Ring the bells,” Ye Chen said.',
-    '[[@Junior Sister Han]] “They are drowned,” she whispered.',
+    '[[appears: Junior Sister Han | character]] [[@Junior Sister Han]] “They are drowned,” she whispered.',
     // The rest of the chapter: a reply under a quarter of the 1,800-word minimum is a failed write and is never saved.
     Array.from({ length: 35 }, () => 'The night went on, and the town kept its quiet watch until dawn.').join(' '),
   ],
@@ -204,7 +204,7 @@ async function walk(browser, viewport, sample) {
   await context.addInitScript(installSpeechStandIn);
   const page = await context.newPage();
   const problems = [];
-  const counts = { chapters: 0, memory: 0, blueprints: 0, chaptersWithToken: 0, rewrites: [], fixes: [], covers: [] };
+  const counts = { chapters: 0, memory: 0, blueprints: 0, chaptersWithToken: 0, rewrites: [], fixes: [], looks: [], covers: [] };
   let releaseFirstChapter;
   const firstChapterReady = new Promise(resolve => { releaseFirstChapter = resolve; });
   page.on('pageerror', error => problems.push(`page error: ${error.message}`));
@@ -272,6 +272,13 @@ async function walk(browser, viewport, sample) {
         ? { case: entry.id, outcome: 'record', tags: '[[has: MC | Bell Key]]', reason: 'She already had it.' }
         : { case: entry.id, outcome: 'fine', reason: 'Nothing to change.' }));
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rawProviderResponse: JSON.stringify({ fixes }), providerReceipt: receipt }) });
+      return;
+    }
+    // The look step's one small call after a chapter: it writes each tagged look down from its passage.
+    if (body.operation === 'describe-looks') {
+      counts.looks.push({ subjects: body.subjects, token: request.headers().authorization === `Bearer ${TOKEN}` });
+      const looks = body.subjects.map(subject => ({ id: subject.id, summary: `${subject.name}, as the drowned city first saw them.`, traits: subject.entity === 'thing' ? { material: 'old bronze' } : { hair: 'salt-white' } }));
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rawProviderResponse: JSON.stringify({ looks }), providerReceipt: receipt }) });
       return;
     }
     if (!body.immediateChapterRequest) {
@@ -696,6 +703,11 @@ async function walk(browser, viewport, sample) {
   check(JSON.stringify(await slot.locator('button').allTextContents()) === '["Ch. 1 · gained","Ch. 1 · took up"]',
     'Each change should link to its chapter.');
   check(!(await page.textContent('body')).includes('[['), 'No tag may reach the Codex.');
+  // Their look, as the look step wrote it down after the chapter was saved, with the reader's token and never a question.
+  const look = await codexSheet.getByTestId('codex-look').innerText();
+  check(look.includes(', as the drowned city first saw them.') && /hair/i.test(look) && look.includes('salt-white'), `The sheet should show the look written down, got ${look}.`);
+  check(counts.looks.length === 1 && counts.looks[0].token && counts.looks[0].subjects.length === 3,
+    `The look step should make one quiet call with the token for three appearances, got ${JSON.stringify(counts.looks)}.`);
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), 'The character sheet must not scroll sideways.');
   await shot('6d-codex-profile');
   await slot.getByRole('button', { name: /^Ch\. 1 · took up/ }).click();

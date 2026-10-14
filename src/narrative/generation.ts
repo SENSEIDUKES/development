@@ -2,6 +2,7 @@ import type { SoundCueAttachment } from '../audio/inlineAudio';
 import type { ChapterOpeningSound, SoundtrackChangeAttachment } from '../audio/soundtrackChanges';
 import type { SpeakerAttachment } from './speech';
 import type { CodexEntry, HoldingChangeAttachment, HoldingsSection } from './holdings';
+import type { AppearanceAttachment, AppearanceEntity, AppearanceEvent, AppearancesSection, ChapterLooks, Look } from './appearances';
 import type { SoundWord } from '../audio/soundWords';
 import type { SoundtrackVocabulary } from '../audio/soundtrackVocabulary';
 import type { FrozenNarrativeMedia, ResolvedSoundscape, StoryMediaSelection } from '../audio/media';
@@ -23,8 +24,9 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * workspace's Codex entries; 27 counts arcs of 30 chapters (nothing before it
  * upgrades); 28 adds the optional rewrite request and replaced-by record, and
  * each chapter's optional Holdings fixer record; 31 adds the story's optional
- * own sound words. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 31 as const;
+ * own sound words; 32 adds each chapter's optional appearances and the looks
+ * written down from them. */
+export const HARNESS_GENERATION_SCHEMA_VERSION = 32 as const;
 
 /** The most an Author's notes may hold, in characters. */
 export const AUTHOR_NOTES_LIMIT = 2000;
@@ -260,7 +262,8 @@ export type HarnessSkillSlotId =
   | 'soundCues'
   | 'soundtrack'
   | 'speakers'
-  | 'holdings';
+  | 'holdings'
+  | 'appearance';
 
 export type HarnessSkillApplication =
   | 'generation'
@@ -566,13 +569,13 @@ export type HarnessModelPlan = string | {
 /**
  * A chapter the reader changed in Create mode. `editedAt` marks it as changed,
  * so it is read again when it is sealed; an untouched chapter never is.
- * `waiting` holds the effects (Sound Cues, speakers, holding changes) whose
+ * `waiting` holds the effects (Sound Cues, speakers, holding changes, appearances) whose
  * words a change replaced: they keep their place in the list, off the page,
  * until the reader removes them or the chapter is sealed.
  */
 export interface HarnessChapterAuthoring {
   editedAt: string;
-  waiting?: Array<SoundCueAttachment | SpeakerAttachment | HoldingChangeAttachment>;
+  waiting?: Array<SoundCueAttachment | SpeakerAttachment | HoldingChangeAttachment | AppearanceAttachment>;
 }
 
 export interface HarnessChapterMetrics {
@@ -601,6 +604,13 @@ export interface HarnessAcceptedChapterDraft {
   holdingChanges?: HoldingChangeAttachment[];
   /** The writer's closing list: the main character's things and abilities by name, after this chapter. */
   closingHoldings?: string[];
+  /**
+   * Every appearance the writer tagged (who or what stepped onto the page, and
+   * each change to a look), on the sentence its tag points at. Present, even
+   * empty, when the chapter was written with the Appearance skill. Names are
+   * as written; they resolve to Codex entries when the chapter commits.
+   */
+  appearances?: AppearanceAttachment[];
   /** The chapter's music and atmosphere, from the writer's soundscape and atmosphere tags. */
   scene?: HarnessChapterScene;
   title: string;
@@ -679,7 +689,8 @@ export interface HarnessWarning {
     | 'prose_marks_removed'
     | 'speaker_tags_incomplete'
     | 'soundtrack_incomplete'
-    | 'holding_tags_incomplete';
+    | 'holding_tags_incomplete'
+    | 'appearance_tags_incomplete';
   message: string;
 }
 
@@ -806,6 +817,7 @@ export type PacketSectionId =
   | 'previouslyOn'
   | 'canonicalState'
   | 'holdings'
+  | 'appearances'
   | 'missionReminder'
   | 'immediateChapterRequest';
 
@@ -879,6 +891,12 @@ export interface StoryInformationPacket {
    * from packets frozen before holdings existed.
    */
   holdings?: HoldingsSection;
+  /**
+   * Section 8, beside Holdings: every character and thing already on the
+   * page, with its look, worked out from the committed chapters' appearances.
+   * Absent from packets frozen before appearances existed.
+   */
+  appearances?: AppearancesSection;
   /** HARNESS-only; the provider boundary never presents it. */
   diagnostics: StoryInformationDiagnostics;
 }
@@ -928,6 +946,18 @@ export interface HarnessChapter {
   holdingChanges?: HoldingChangeAttachment[];
   /** The writer's closing list for this chapter, checked against the holdings it leaves. */
   closingHoldings?: string[];
+  /**
+   * Who and what stepped onto the page, and each change to a look: one
+   * appearance per tag, on the sentence it points at, with its name resolved
+   * to a Codex entry. Present, even empty, when the chapter was written with
+   * the Appearance skill. Who has appeared is worked out from these, never stored.
+   */
+  appearances?: AppearanceAttachment[];
+  /**
+   * The looks the look step wrote down after the chapter committed, one per
+   * appearance it read. Absent when it found nothing to describe, or did not run.
+   */
+  looks?: ChapterLooks;
   /**
    * The reader's own changes in the Reader's Create mode, until the chapter is
    * sealed (the next chapter is written). Absent from a chapter nobody changed.
@@ -1302,6 +1332,42 @@ export interface HarnessGenerationModelAdapter {
   arcOperation?(request: HarnessArcRequest): Promise<HarnessGenerationResponse>;
   /** The Holdings fixer's one small call after a chapter commits. Without it, the fixer does not run. */
   fixHoldings?(request: HarnessHoldingsFixRequest): Promise<HarnessGenerationResponse>;
+  /** The look step's one small call after a chapter commits. Without it, no look is written down. */
+  describeLooks?(request: HarnessLookRequest): Promise<HarnessGenerationResponse>;
+}
+
+/**
+ * One appearance the look step is asked to write down: who or what, the
+ * passage that shows it (the tagged sentence and the few after it), and what
+ * is already known of its look. Never the whole chapter.
+ */
+export interface HarnessLookSubject {
+  /** The appearance's id (`AppearanceAttachment.id`): the answer names it. */
+  id: string;
+  name: string;
+  entity: AppearanceEntity;
+  /** On the page for the first time (`appears`), or a change to a look (`look`). */
+  event: AppearanceEvent;
+  /** A look tag's change, in the writer's words. */
+  change?: string;
+  /** The tagged sentence and the sentences after it in its paragraph. */
+  passage: string;
+  /** The look the story's author declared for them, in the author's words, when they declared one. */
+  declared?: string;
+  /** The look the record held before this appearance, for a change. */
+  previous?: Look;
+}
+
+/** The look step's call: each appearance of one committed chapter, with the chapter's own model. */
+export interface HarnessLookRequest {
+  operation: 'describe-looks';
+  storyId: string;
+  chapterId: string;
+  chapterNumber: number;
+  model: string;
+  /** The story's language: every look is written in it. */
+  language: string;
+  subjects: HarnessLookSubject[];
 }
 
 /**

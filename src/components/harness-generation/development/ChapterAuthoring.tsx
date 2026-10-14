@@ -15,6 +15,7 @@ import { storySoundtrack, type ResolvedReaderText } from '@seihouse/sen/reader-r
 import { chapterTitleText } from '../../../narrative/chapterTitle';
 import { SPEAKER_KIND, type SpeakerAttachment } from '../../../narrative/speech';
 import { HOLDING_CHANGE_KIND, type HoldingChangeAttachment } from '../../../narrative/holdings';
+import { APPEARANCE_KIND, type AppearanceAttachment } from '../../../narrative/appearances';
 import { harnessParagraphBlockId } from '../shared/chapterBody';
 import type { HarnessGenerationController } from '../shared/controller';
 import type { ReaderChapter } from './readerChapterBody';
@@ -32,7 +33,7 @@ function chapterState(chapter: ReaderChapter, locale: string): ChapterState {
     createId: kind => kind === 'paragraph' ? harnessParagraphBlockId(chapter.chapterNumber, paragraph++) : createManuscriptId(kind),
   });
   return { manuscript, attachments: [
-    ...chapter.soundCues ?? [], ...chapter.speakers ?? [], ...chapter.holdingChanges ?? [], ...chapter.soundtrackChanges ?? [],
+    ...chapter.soundCues ?? [], ...chapter.speakers ?? [], ...chapter.holdingChanges ?? [], ...chapter.appearances ?? [], ...chapter.soundtrackChanges ?? [],
     // Effects still waiting for a new spot from an earlier visit: off the page, so flagged.
     ...chapter.authoring?.waiting ?? [],
   ] };
@@ -49,6 +50,10 @@ function describeWaiting(attachment: ManuscriptAttachment<unknown>): { title: st
     return { title: `${words.name} change`, detail: `${was}. Highlight the word where it should begin and place it again with Media → Audio → ${words.name}.` };
   }
   if (attachment.kind === SPEAKER_KIND) return { title: `Speaker · ${(attachment as SpeakerAttachment).payload.speaker}`, detail: `${was}. It waits here until the chapter is sealed.` };
+  if (attachment.kind === APPEARANCE_KIND) {
+    const appearance = (attachment as AppearanceAttachment).payload;
+    return { title: `${appearance.event === 'appears' ? 'Appearance' : 'Change of look'} · ${appearance.subject.name}`, detail: `${was}. It waits here until the chapter is sealed.` };
+  }
   const holding = (attachment as HoldingChangeAttachment).payload;
   return { title: `Holding change · ${holding.holder.name} ${holding.verb}${holding.target ? ` ${holding.target.name}` : ''}`, detail: `${was}. It waits here until the chapter is sealed.` };
 }
@@ -57,6 +62,7 @@ const placed = (state: ChapterState) => (attachment: ManuscriptAttachment<unknow
 
 const KIND_NAMES: Record<string, [string, string]> = {
   [SOUND_CUE_KIND]: ['Sound Cue', 'Sound Cues'], [SPEAKER_KIND]: ['speaker', 'speakers'], [HOLDING_CHANGE_KIND]: ['holding change', 'holding changes'],
+  [APPEARANCE_KIND]: ['appearance', 'appearances'],
   [SOUNDSCAPE_CHANGE_KIND]: ['soundscape change', 'soundscape changes'], [ATMOSPHERE_CHANGE_KIND]: ['atmosphere change', 'atmosphere changes'],
 };
 
@@ -68,7 +74,7 @@ const KIND_NAMES: Record<string, [string, string]> = {
  * locked at the start. The Overlays switch shows one kind at a time (Sound
  * Cues, Soundscapes or Atmospheres) and the page's numbering (P2 S6). Every change is saved as it is made, so there is no
  * seal step: moving on to the next chapter seals this one. An effect whose
- * words a change replaced (a cue, a speaker or a holding change) has nothing
+ * words a change replaced (a cue, a speaker, a holding change or an appearance) has nothing
  * left to sit on, so it waits in "Needs a new spot" until the reader places it
  * again or removes it, or the chapter is sealed. A changed chapter is marked
  * as changed, so it is read again at its seal.
@@ -146,6 +152,7 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
       soundCues: kept.filter(attachment => attachment.kind === SOUND_CUE_KIND) as SoundCueAttachment[],
       speakers: kept.filter(attachment => attachment.kind === SPEAKER_KIND) as SpeakerAttachment[],
       holdingChanges: kept.filter(attachment => attachment.kind === HOLDING_CHANGE_KIND) as HoldingChangeAttachment[],
+      appearances: kept.filter(attachment => attachment.kind === APPEARANCE_KIND) as AppearanceAttachment[],
       soundtrackChanges: kept.filter(isSoundtrackChange) as SoundtrackChangeAttachment[],
       openingSound: nextOpening,
       waiting: waiting as Waiting[],

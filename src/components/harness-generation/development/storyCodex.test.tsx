@@ -15,8 +15,8 @@ const receipt = { provider: 'gemini' as const, model: 'test-model', generatedAt:
 const replies = [
   {
     paragraphs: [
-      'The armory was cold. [[@Old Wu]] "Take what you can carry," the smith said.',
-      '[[gained: MC | Rusted Iron Sword]] Ye Chen lifted the old blade from the rack. [[equipped: MC | Rusted Iron Sword]] He tested its weight.',
+      'The armory was cold. [[appears: Old Wu | character]] A stooped smith stood by the forge. [[@Old Wu]] "Take what you can carry," the smith said.',
+      '[[appears: MC | character]] Ye Chen, lean and dark-haired, came to the racks. [[appears: Rusted Iron Sword | thing]] [[gained: MC | Rusted Iron Sword]] Ye Chen lifted the old blade from the rack. [[equipped: MC | Rusted Iron Sword]] He tested its weight.',
       '[[learning: MC | Cloud Step]] Ye Chen began to practise the footwork. [[improved: MC | Cloud Step | First Stage]] By dusk his feet found the first stage.',
     ],
     mainCharacterHoldings: ['Rusted Iron Sword', 'Cloud Step', 'Silver Bell'],
@@ -59,6 +59,11 @@ const start = async () => {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [{ id: 'test-model', label: 'Test' }], defaultModel: 'test-model' }),
     generate: async request => ({ rawProviderResponse: writtenChapterReply(chapterReply(request.immediateChapterRequest.chapterNumber)), providerReceipt: receipt }),
     arcOperation: vi.fn(),
+    // The look step writes each look down from its passage.
+    describeLooks: async request => ({ providerReceipt: receipt, rawProviderResponse: JSON.stringify({ looks: request.subjects.map(subject => (
+      subject.name === 'Ye Chen' ? { id: subject.id, summary: 'A lean young man with dark hair.', traits: { build: 'lean', hair: 'dark' } }
+        : subject.entity === 'thing' ? { id: subject.id, summary: 'An old iron blade, rusted along its edge.', traits: { material: 'iron', condition: 'rusted' } }
+          : { id: subject.id, summary: 'A stooped old smith.', traits: { build: 'stooped' } })) }) }),
   };
   const controller = new HarnessGenerationController({ repository: new InMemoryHarnessGenerationRepository(), modelAdapter });
   await controller.hydrate();
@@ -85,7 +90,7 @@ describe('The Codex in the HARNESS Reader', { timeout: 20_000 }, () => {
     await start();
     await openCodex();
     const roster = [...codex()!.querySelectorAll<HTMLElement>('[data-testid="codex-character"]')];
-    // The main character leads; a character who only spoke is met too.
+    // The main character leads; everyone who stepped onto the page is met.
     expect(roster.map(tile => tile.textContent)).toEqual([
       expect.stringContaining('Ye Chen'),
       expect.stringContaining('Old Wu'),
@@ -101,6 +106,11 @@ describe('The Codex in the HARNESS Reader', { timeout: 20_000 }, () => {
     // A stage reached while still learning is shown, and is a change, not a check.
     expect(sheet.querySelector('[aria-label="Ye Chen: Abilities"]')!.textContent).toContain('Learning · First Stage');
     expect(sheet.querySelector('[data-testid="codex-voice"] blockquote')!.textContent).toBe('"Again,"');
+    // Their look, as the look step wrote it down from the chapter that shows it.
+    const look = sheet.querySelector<HTMLElement>('[data-testid="codex-look"]')!;
+    expect(look.textContent).toContain('A lean young man with dark hair.');
+    expect(look.textContent).toContain('Buildlean');
+    expect(look.querySelector('button')!.textContent).toBe('Look · Ch. 1');
     // The jade sword was never held, so losing it is a check, not a change.
     expect(sheet.textContent).not.toContain('Jade Sword');
     expect(sheet.querySelector('[data-testid="codex-chronicle"] summary')!.textContent).toBe('Chronicle (4)');
@@ -112,6 +122,9 @@ describe('The Codex in the HARNESS Reader', { timeout: 20_000 }, () => {
     const item = codex()!.querySelector<HTMLElement>('[data-testid="codex-item"]')!;
     expect(item.textContent).toContain('Rusted Iron Sword');
     expect(item.textContent).toContain('Ye Chen · in hand');
+    await act(async () => { item.click(); });
+    expect(codex()!.querySelector('[data-testid="codex-look"]')!.textContent).toContain('An old iron blade, rusted along its edge.');
+    await click(button => button.textContent?.trim() === 'All items', 'All items');
     const checks = codex()!.querySelector<HTMLElement>('[data-testid="codex-checks"]')!;
     expect(checks.querySelector('summary')!.textContent).toBe('Record checks (2)');
     expect(checks.textContent).toContain('Chapter 1: the writer\'s closing list for Ye Chen includes ‘Silver Bell’, which no tag recorded.');

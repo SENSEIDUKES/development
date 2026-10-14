@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { HOLDING_CHANGE_KIND, type CodexEntry, type HoldingChangeAttachment, type HoldingVerb } from '../../../narrative/holdings';
 import { SPEAKER_KIND, type SpeakerAttachment } from '../../../narrative/speech';
+import { APPEARANCE_KIND, type AppearanceAttachment, type AppearancePayload } from '../../../narrative/appearances';
 import { deriveStoryCodex, type StoryCodexChapter } from './storyCodex';
 
 const MC: CodexEntry = { id: 'hcx_mc', storyId: 's', kind: 'character', name: 'Han Shuo', mainCharacter: true, origin: { source: 'foundation' }, createdAt: '' };
@@ -69,5 +70,59 @@ describe('the Codex record', () => {
   it('points each check at its paragraph', () => {
     const codex = deriveStoryCodex({ entries: [MC, SWORD], chapters: [{ ...chapters[1], holdingChanges: [change(1, 2, 'lost', SWORD)] }] });
     expect(codex.checks).toEqual([expect.objectContaining({ kind: 'not-held', chapterNumber: 1, blockId: 'c1-p2' })]);
+  });
+
+  it('meets whoever and whatever stepped onto the page, with the latest look and every change to it', () => {
+    const ELDER: CodexEntry = { id: 'hcx_mo', storyId: 's', kind: 'character', name: 'Elder Mo Tieshan', aliases: ['Elder Mo'], origin: { source: 'foundation' }, createdAt: '' };
+    const FURNACE: CodexEntry = { id: 'hcx_furnace', storyId: 's', kind: 'thing', name: 'Heavenly Furnace', origin: { source: 'tag', chapterId: 'c1', chapterNumber: 1 }, createdAt: '' };
+    const shown = (chapter: number, paragraph: number, payload: Omit<AppearancePayload, 'origin'>): AppearanceAttachment => ({
+      id: `appearance:c${chapter}-p${paragraph}`, kind: APPEARANCE_KIND,
+      anchor: { level: 'span', blockId: `c${chapter}-p${paragraph}`, startOffset: 0, endOffset: 4, selectedText: 'Then' },
+      payload: { origin: 'harness', ...payload },
+    });
+    const text = 'Then "Work," Elder Mo said.';
+    const codex = deriveStoryCodex({
+      entries: [MC, ELDER, FURNACE],
+      chapters: [
+        { id: 'c1', chapterNumber: 1, paragraphs: ['Then the forge.', 'Then the elder.', 'Then the furnace.'],
+          appearances: [
+            shown(1, 2, { event: 'appears', subject: { name: 'Elder Mo Tieshan', entryId: ELDER.id }, entity: 'character' }),
+            shown(1, 3, { event: 'appears', subject: { name: 'Heavenly Furnace', entryId: FURNACE.id }, entity: 'thing' }),
+            // A sect tagged as a character is never one.
+            shown(1, 1, { event: 'appears', subject: { name: 'Iron Bastion Sect' }, entity: 'character' }),
+          ],
+          looks: { status: 'described', at: '', looks: [
+            { appearanceId: 'appearance:c1-p2', summary: 'A broad old smith.', traits: { build: 'broad' } },
+            { appearanceId: 'appearance:c1-p3', summary: 'A bronze furnace taller than a man.', traits: { material: 'bronze' } },
+          ] } },
+        { id: 'c2', chapterNumber: 2, paragraphs: [text, 'Then sparks flew.'], speakers: [speaker(2, 1, text, '"Work,"', 'Elder Mo')],
+          appearances: [shown(2, 2, { event: 'look', subject: { name: 'Elder Mo Tieshan', entryId: ELDER.id }, change: 'a burnt sleeve' })],
+          looks: { status: 'described', at: '', looks: [{ appearanceId: 'appearance:c2-p2', summary: 'A broad old smith, one sleeve burnt.', traits: { build: 'broad', clothing: 'one sleeve burnt' } }] } },
+      ],
+    });
+    expect(codex.characters.map(character => character.name)).toEqual(['Elder Mo Tieshan']);
+    const [elder] = codex.characters;
+    // Met where he stepped onto the page; his words under his alias are his.
+    expect(elder.firstSeen).toMatchObject({ chapterNumber: 1, blockId: 'c1-p2' });
+    expect(elder.voice).toMatchObject({ lines: 1, first: { text: '"Work,"' } });
+    expect(elder.appearance).toEqual({
+      first: { chapterNumber: 1, blockId: 'c1-p2', text: 'Then' },
+      look: { summary: 'A broad old smith, one sleeve burnt.', traits: { build: 'broad', clothing: 'one sleeve burnt' }, passage: { chapterNumber: 2, blockId: 'c2-p2', text: 'Then' } },
+      changes: [{ change: 'a burnt sleeve', passage: { chapterNumber: 2, blockId: 'c2-p2', text: 'Then' } }],
+    });
+    // A thing that stepped onto the page joins the items, held by no one.
+    expect(codex.items).toEqual([expect.objectContaining({ key: FURNACE.id, name: 'Heavenly Furnace', count: 0, events: [],
+      appearance: expect.objectContaining({ look: expect.objectContaining({ summary: 'A bronze furnace taller than a man.' }) }) })]);
+    expect(codex.items[0].holder).toBeUndefined();
+    expect(codex.checks).toEqual([]);
+  });
+
+  it('adds the appearance checks to the record\'s checks, in story order', () => {
+    const text = 'Then "Kneel," Old Wu said.';
+    const codex = deriveStoryCodex({
+      entries: [MC],
+      chapters: [{ id: 'c1', chapterNumber: 1, paragraphs: [text], appearances: [], speakers: [speaker(1, 1, text, '"Kneel,"', 'Old Wu')] }],
+    });
+    expect(codex.checks).toEqual([expect.objectContaining({ kind: 'speaks-unseen', chapterNumber: 1, blockId: 'c1-p1', message: 'Chapter 1: ‘Old Wu’ speaks before any tag shows them appearing.' })]);
   });
 });

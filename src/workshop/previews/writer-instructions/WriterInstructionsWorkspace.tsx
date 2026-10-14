@@ -3,7 +3,7 @@ import { WRITER_INSTRUCTIONS_HISTORY, lastChange } from './writerInstructionsHis
 import './writer-instructions.css';
 
 /** The tag instructions are open on arrival; the long ones wait for a tap. */
-const OPEN_ON_ARRIVAL: ReadonlySet<WriterInstructionId> = new Set(['tag-rules', 'sound-cues', 'soundtrack', 'speakers', 'holdings']);
+const OPEN_ON_ARRIVAL: ReadonlySet<WriterInstructionId> = new Set(['tag-rules', 'sound-cues', 'soundtrack', 'speakers', 'holdings', 'appearance']);
 const TITLES = new Map(WRITER_INSTRUCTIONS.map(block => [block.id, block.title]));
 
 function InstructionBlock({ block }: { block: WriterInstruction }) {
@@ -56,7 +56,7 @@ export function WriterInstructionsWorkspace() {
       <section aria-labelledby="writer-instructions-after">
         <h2 id="writer-instructions-after">After a chapter</h2>
         <p className="writer-instructions__note">
-          Not the chapter writer: a separate small check that settles a saved chapter&rsquo;s holdings problems quietly and keeps a record on the chapter.
+          Not the chapter writer: separate small calls on a saved chapter, each keeping a record on it. The Holdings fixer settles its holdings problems quietly; the look step writes down how everyone and everything it tagged looks.
         </p>
         {AFTER_A_CHAPTER.map(block => <InstructionBlock key={block.id} block={block} />)}
       </section>

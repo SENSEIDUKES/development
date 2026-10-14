@@ -1,4 +1,4 @@
-import { CHAPTER_REWRITE_NOTE_LIMIT, HARNESS_MAX_CHAPTER_PARAGRAPHS, HOLDINGS_FIXER_CASE_LIMIT, type HarnessArcRequest, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessHoldingsFixRequest } from '@seihouse/sen/harness-generation';
+import { CHAPTER_REWRITE_NOTE_LIMIT, HARNESS_MAX_CHAPTER_PARAGRAPHS, HOLDINGS_FIXER_CASE_LIMIT, LOOK_DECLARED_CHARACTERS, LOOK_PASSAGE_CHARACTERS, LOOK_SUBJECT_LIMIT, type HarnessArcRequest, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessHoldingsFixRequest, type HarnessLookRequest } from '@seihouse/sen/harness-generation';
 import { validateSoundWords } from '@seihouse/sen/audio';
 import {
   harnessGenerationServerInfo,
@@ -12,6 +12,7 @@ import {
   type HarnessProviderFactory,
 } from './execute';
 import { executeHoldingsFix } from './holdingsFixer';
+import { executeLookDescription } from './lookDescriber';
 
 export interface HarnessGenerationHttpRequest {
   method?: string;
@@ -86,10 +87,36 @@ const parseHoldingsFix = (parsed: Record<string, unknown>): HarnessHoldingsFixRe
   return parsed as unknown as HarnessHoldingsFixRequest;
 };
 
-const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessArcRequest | HarnessHoldingsFixRequest => {
+/** The longest name, change of look or earlier look one look subject may carry. */
+const LOOK_TEXT_LIMIT = 400;
+const LOOK_ENTITIES = new Set(['character', 'thing']);
+const LOOK_EVENTS = new Set(['appears', 'look']);
+
+/** A look step request: a few subjects, each a passage within its limits. */
+const parseLookRequest = (parsed: Record<string, unknown>): HarnessLookRequest => {
+  const within = (value: unknown, limit: number) => typeof value === 'string' && value.length <= limit;
+  const optional = (value: unknown, limit: number) => value === undefined || within(value, limit);
+  const subjects = parsed.subjects;
+  const valid = [parsed.storyId, parsed.chapterId, parsed.model, parsed.language].every(value => typeof value === 'string' && value.trim())
+    && Number.isInteger(parsed.chapterNumber) && Number(parsed.chapterNumber) >= 1
+    && Array.isArray(subjects) && subjects.length >= 1 && subjects.length <= LOOK_SUBJECT_LIMIT
+    && subjects.every(entry => isRecord(entry) && typeof entry.id === 'string' && within(entry.name, LOOK_TEXT_LIMIT) && Boolean((entry.name as string).trim())
+      && LOOK_ENTITIES.has(entry.entity as string) && LOOK_EVENTS.has(entry.event as string)
+      && optional(entry.change, LOOK_TEXT_LIMIT)
+      // A passage cut to its limit ends with an ellipsis.
+      && within(entry.passage, LOOK_PASSAGE_CHARACTERS + 1) && Boolean((entry.passage as string).trim())
+      && optional(entry.declared, LOOK_DECLARED_CHARACTERS + 1)
+      && (entry.previous === undefined || (isRecord(entry.previous) && within(entry.previous.summary, LOOK_TEXT_LIMIT) && isRecord(entry.previous.traits)
+        && Object.values(entry.previous.traits).every(value => within(value, LOOK_TEXT_LIMIT)))));
+  if (!valid) throw new Error(`A look request needs its chapter, model and language, and 1 to ${LOOK_SUBJECT_LIMIT} subjects, each with its passage.`);
+  return parsed as unknown as HarnessLookRequest;
+};
+
+const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessArcRequest | HarnessHoldingsFixRequest | HarnessLookRequest => {
   const parsed = typeof body === 'string' ? JSON.parse(body) : body;
   if (!isRecord(parsed)) throw new Error('The Harness Generation request must be a JSON object.');
   if (parsed.operation === 'fix-holdings') return parseHoldingsFix(parsed);
+  if (parsed.operation === 'describe-looks') return parseLookRequest(parsed);
   if (parsed.operation === 'plan-arc') {
     if (!isRecord(parsed.storyInformation) || !isRecord(parsed.storyInformation.storyHead) || typeof parsed.model !== 'string'
       || typeof parsed.storyId !== 'string') throw new Error('Arc operations require a frozen Story Information Packet.');
@@ -178,7 +205,7 @@ export const handleHarnessGenerationHttp = async (
     };
   }
 
-  let parsed: HarnessGenerationRequest | HarnessArcRequest | HarnessHoldingsFixRequest;
+  let parsed: HarnessGenerationRequest | HarnessArcRequest | HarnessHoldingsFixRequest | HarnessLookRequest;
   try {
     parsed = parseRequest(request.body);
   } catch (error) {
@@ -189,10 +216,13 @@ export const handleHarnessGenerationHttp = async (
   try {
     const config = resolveHarnessGenerationConfig(dependencies.environment);
     const reasoningLevel = (parsed as { reasoningLevel?: unknown }).reasoningLevel;
-    // The Holdings fixer thinks as little as the model allows, whatever the reader chose for chapters.
-    const result = 'operation' in parsed && parsed.operation === 'fix-holdings'
-      ? await executeHoldingsFix(parsed, config, dependencies.providerFactory)
-      : await executeHarnessGeneration(parsed as HarnessGenerationRequest | HarnessArcRequest, config, dependencies.providerFactory, reasoningLevel);
+    // The Holdings fixer and the look step think as little as the model allows, whatever the reader chose for chapters.
+    const operation = 'operation' in parsed ? parsed.operation : undefined;
+    const result = operation === 'fix-holdings'
+      ? await executeHoldingsFix(parsed as HarnessHoldingsFixRequest, config, dependencies.providerFactory)
+      : operation === 'describe-looks'
+        ? await executeLookDescription(parsed as HarnessLookRequest, config, dependencies.providerFactory)
+        : await executeHarnessGeneration(parsed as HarnessGenerationRequest | HarnessArcRequest, config, dependencies.providerFactory, reasoningLevel);
     return {
       status: 200,
       body: result satisfies HarnessGenerationResponse,

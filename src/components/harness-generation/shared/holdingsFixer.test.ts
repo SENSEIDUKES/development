@@ -239,6 +239,34 @@ describe('Holdings fixer: the answers', () => {
     expect(apart.entries).toEqual(state.codexEntries);
   });
 
+  it('never rewrites a sentence that shows an appearance, and moves the appearances after a corrected sentence with the text', async () => {
+    const { state, latest } = await written(reply([SWORD, '[[gained: MC | Spirit Pill]] He pocketed a spirit pill.']),
+      reply(['[[lost: MC | Spirit Pill | 2]] Ye Chen swallowed two pills at once. [[appears: Elder Qin | character]] Elder Qin watched from the door.']));
+    expect(latest.appearances!.map(found => found.anchor.selectedText)).toEqual(['Elder Qin watched from the door.']);
+    const answer = { case: 'c1', outcome: 'prose', replacement: 'Ye Chen swallowed his last pill.', tags: '[[lost: MC | Spirit Pill]]', reason: 'One pill.' };
+    // The look of a character is read from the sentence that shows them, so that sentence is never rewritten.
+    const shown = latest.appearances![0];
+    const onIt = { ...latest, appearances: [{ ...shown, anchor: { ...shown.anchor, startOffset: 0, endOffset: 40, selectedText: latest.paragraphs[0].slice(0, 40) } }] };
+    expect(apply(state, onIt, [answer]).plan.cases[0].case.answers).toEqual(['record', 'fine', 'major']);
+    // A sentence before it is corrected, and the appearance moves with its words.
+    const { result } = apply(state, latest, [answer]);
+    expect(result.fixes[0].outcome).toBe('fixed-sentence');
+    const moved = result.chapter.appearances![0].anchor;
+    expect(result.chapter.paragraphs[0].slice(moved.startOffset, moved.endOffset)).toBe('Elder Qin watched from the door.');
+  });
+
+  it('points a merged name\'s appearances at the entry it joins', async () => {
+    const { state, latest } = await written(reply([SWORD]),
+      reply(['[[appears: Rusted Sword | thing]] [[gained: MC | Rusted Sword]] Ye Chen found a second rusted sword.']));
+    const plan = planHoldingsFix(inputFor(state, latest));
+    // The name was first named by its appearance, on the same sentence.
+    expect(plan.cases[0].case.record).toContain('‘Rusted Sword’ first named in Chapter 2: “Ye Chen found a second rusted sword.”');
+    const { result } = apply(state, latest, [{ case: 'c1', outcome: 'record', reason: 'The same blade.' }]);
+    const kept = state.codexEntries.find(entry => entry.name === 'Rusted Iron Sword')!;
+    expect(result.fixes[0]).toMatchObject({ outcome: 'merged', merged: { keptEntryId: kept.id } });
+    expect(result.chapter.appearances![0].payload.subject).toEqual({ name: 'Rusted Sword', entryId: kept.id });
+  });
+
   it('keeps the chapter as it was when an answer would not settle the problem, is missing, or is a major contradiction', async () => {
     const { state, latest } = await written(reply([SWORD]), reply(['[[gained: MC | Rusted Iron Sword]] He picked up the rusted sword again.']));
     const unsettled = apply(state, latest, [{ case: 'c1', outcome: 'record', tags: '[[gained: MC | Rusted Iron Sword]]', reason: 'Same.' }]).result;

@@ -8,7 +8,8 @@ import { normalizeSoundWord } from '../audio/soundWords';
  * optional Energy: `[[sound: blade drawn | drew his sword | high]]`. The words
  * stay in the text; the rest of the tag is removed. A speaker tag names who
  * speaks the speech that follows it: `[[@Lin Feng]] “Run!”`. A word tag names
- * a change to what a character has: `[[gained: MC | Rusted Iron Sword]]`.
+ * a change to what a character has (`[[gained: MC | Rusted Iron Sword]]`) or
+ * who steps onto the page (`[[appears: Lin Feng | character]]`).
  * Tags are transport only: `readMarks` removes every one and reports where
  * each sat in the clean text, so no bracket ever reaches a reader.
  *
@@ -84,11 +85,11 @@ export interface SpeakerTag {
 export interface SpeakerTagIssue { kind: 'unnamed' }
 
 /**
- * The tag words of the tiny SEN language, each with the other spellings a
- * writer may slip into. Holdings are the first kind written this way: what a
- * character has, uses, knows and is, tagged where the story changes it.
+ * The Holdings tag words: what a character has, uses, knows and is, tagged
+ * where the story changes it. Holdings were the first kind written as word
+ * tags. Each word lists the other spellings a writer may slip into.
  */
-export const TAG_WORDS = {
+export const HOLDING_TAG_WORDS = {
   has: ['has', 'had', 'have', 'holds', 'owns', 'carries'],
   gained: ['gained', 'gain', 'gains', 'obtained', 'obtain', 'acquired', 'acquire', 'received', 'receive', 'got'],
   lost: ['lost', 'lose', 'loses', 'used up', 'consumed', 'spent', 'broke', 'broken', 'destroyed', 'gave', 'gave away', 'given', 'sold', 'stolen', 'dropped'],
@@ -103,7 +104,28 @@ export const TAG_WORDS = {
   rank: ['rank', 'ranked'],
 } as const satisfies Record<string, readonly string[]>;
 
+/**
+ * The Appearance tag words: someone or something steps onto the page
+ * (`appears`), or their look changes (`look`). The name comes first, then
+ * what kind of entry it is, or what changed.
+ */
+export const APPEARANCE_TAG_WORDS = {
+  appears: ['appears', 'appear', 'appeared', 'first appears', 'first appearance', 'introduced', 'introduces'],
+  look: ['look', 'looks', 'new look', 'look change', 'changed look', 'now looks', 'appearance change'],
+} as const satisfies Record<string, readonly string[]>;
+
+/**
+ * The tag words of the tiny SEN language: every word-tag kind's words, each
+ * with the other spellings a writer may slip into.
+ */
+export const TAG_WORDS = { ...HOLDING_TAG_WORDS, ...APPEARANCE_TAG_WORDS } as const;
+
 export type TagWord = keyof typeof TAG_WORDS;
+export type HoldingTagWord = keyof typeof HOLDING_TAG_WORDS;
+export type AppearanceTagWord = keyof typeof APPEARANCE_TAG_WORDS;
+
+export const isHoldingTagWord = (word: TagWord): word is HoldingTagWord => word in HOLDING_TAG_WORDS;
+export const isAppearanceTagWord = (word: TagWord): word is AppearanceTagWord => word in APPEARANCE_TAG_WORDS;
 
 /** A word tag, and where it sat in the clean text: it points at what follows it. */
 export interface WordTag {
@@ -453,7 +475,10 @@ export function readMarks(source: string, { soundWords }: MarkReadingOptions = {
         else if (parts.length < 2) wordTagIssues.push({ kind: 'incomplete', word });
         else {
           wordTags.push({ word, ...(spelling !== word ? { spelling } : {}), parts, offset: text.length });
-          const name = word === 'rank' ? undefined : namedInPlace(text, source.slice(index + wordTag[0].length), parts[1]);
+          // The name a tag names: a holding's thing (its second part), an appearance's subject (its first),
+          // never the main character's own tag, never a rank.
+          const named = isAppearanceTagWord(word) ? (/^mc$/i.test(parts[0]) ? undefined : parts[0]) : word === 'rank' ? undefined : parts[1];
+          const name = namedInPlace(text, source.slice(index + wordTag[0].length), named);
           if (name) {
             // The tag stood where its name belongs: the name stays, with the text's own spacing around it.
             text += isSpace(text.at(-1)) ? name : ` ${name}`;

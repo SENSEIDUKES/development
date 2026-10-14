@@ -73,4 +73,3 @@ export type GenerationResult =
   /** `data` is the image's bytes in base64, as the providers return them. */
   | { capability: 'image'; provider: 'gemini' | 'openrouter' | 'minimax'; model: string; data: string; mimeType: string }
   | VideoTaskResult;
-

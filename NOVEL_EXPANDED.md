@@ -329,8 +329,9 @@ Update it whenever it changes.
 
 - **Built:**
   - Chapters are narration plus Sound Cues in the tiny SEN language (#295).
-  - Each chapter asks for exactly 50 paragraphs for now, so the writer's accuracy
-    can be measured; the range to return to is 40 to 80 (#296).
+  - Each chapter asks for about 1,500 words (1,200 to 1,700; SENSEI,
+    2026-10-14, after 2,500 read too long) in exactly 35 paragraphs for now, so
+    the writer's accuracy can be measured; the range to return to is 30 to 55.
   - **The way in works end to end in the Workshop:** Story Seed → World
     Blueprint → **Start Story** → the story's **World Info** page → **Begin
     Story** → the **Reader Chamber**, where Chapter 1 is written under the Aura
@@ -419,12 +420,16 @@ Update it whenever it changes.
     even when the writer tags one as speaking (those the Story Seed declares,
     or a name ending in a word like Sect, Clan or Tribe), each opening to its
     first words. **Items:** every thing that stepped onto the page or changed
-    hands, who holds it now, its Look and everything that happened to it. A **Bestiary** comes later (SENSEI, 2026-10-13): it
+    hands, who holds it now, its Look and everything that happened to it;
+    things lost, used up or given away sit below, under **Archived**
+    (2026-10-14). A **Bestiary** comes later (SENSEI, 2026-10-13): it
     holds species and unique beast groups (the dragon kin), while a named beast
     (the Dragon King, an emperor and the main villain) is a character.
     **Record checks** close each gallery, for testing. Every fact links to its
-    passage: the chapter behind the Codex moves to it and lights it while the
-    Codex stays open, lowered to half height on a phone. It is worked out
+    passage, after a confirm (2026-10-14, SENSEI: an instant jump lost the
+    reader's place): "Go to Chapter 4?" with Go or Stay. On Go the chapter
+    behind the Codex moves to it and lights it while the Codex stays open,
+    lowered to half height on a phone. It is worked out
     again from the chapters each time, so it always matches them. The older
     seven-tab Codex is out of the Reader; it stays in the code. The Workshop's
     Codex card (`?preview=reader-codex`) shows the new Codex reading
@@ -620,7 +625,7 @@ Update it whenever it changes.
     the Style skill chooses the point of view when the story opens (first person
     suits a Japanese story), and the HARNESS reads it from the opening chapter
     and tells every later chapter to keep it. A reply far short of a chapter
-    (under a quarter of its 1,800-word minimum) is a failed write: nothing is
+    (under a quarter of its 1,200-word minimum) is a failed write: nothing is
     saved, and the Reader says so with Next ready to try again. A chapter's
     title is its name alone; the Reader numbers it. The writer is told roughly how
     many words each paragraph needs to reach the minimum, never to carry a
@@ -696,6 +701,13 @@ Update it whenever it changes.
     tag shows them. A story begun before the tag (Test Story - Blade) tags
     everyone on the page again in its next chapter, since nobody has appeared
     on its record yet. Places wait for the Place tag.
+    After the first test (Test Story - Blade, chapters 3 to 10): every new
+    character was tagged and the looks held from chapter to chapter, but no
+    thing was tagged. So a thing now steps onto the page with the first
+    Holdings tag that shows it (held, gained, taken up or put away) and gets
+    its look, with nothing more for the writer to do; and a look tag in the
+    paragraph that first shows someone is read as that first look, never a
+    change (SEN Appearance 1.1.0).
 - **Not tested yet:**
   - a right-to-left story with a real model, and Listen in Arabic and Hebrew
     on real phones, whose voices for those languages differ from device to

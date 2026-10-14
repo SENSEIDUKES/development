@@ -12,17 +12,19 @@ import { wordRanges } from '../../../narrative/words';
  */
 
 /** The HARNESS chapter-scale target. It is not a CAPA skill and not canonical Story Information. */
-export const HARNESS_CHAPTER_TARGET_MIN_WORDS = 1_800;
-export const HARNESS_CHAPTER_TARGET_MAX_WORDS = 2_500;
+/** About 1,500 words a chapter (SENSEI, 2026-10-14: 2,500 read too long). */
+export const HARNESS_CHAPTER_TARGET_MIN_WORDS = 1_200;
+export const HARNESS_CHAPTER_TARGET_MAX_WORDS = 1_700;
 /**
  * The range the HARNESS rolls each chapter's exact paragraph count from. One
  * range for every story for now; story styles come later.
  *
- * Fixed at 50 for now: while the owner tests, every chapter asks for the same
- * count, so how exactly the writer reaches it can be compared chapter to
- * chapter. The range to return to afterwards is 40 to 80.
+ * Fixed at 35 for now (50 until chapters were shortened, 2026-10-14): while the
+ * owner tests, every chapter asks for the same count, so how exactly the
+ * writer reaches it can be compared chapter to chapter. The range to return
+ * to afterwards is 30 to 55.
  */
-export const HARNESS_CHAPTER_PARAGRAPH_RANGE: { readonly min: number; readonly max: number } = { min: 50, max: 50 };
+export const HARNESS_CHAPTER_PARAGRAPH_RANGE: { readonly min: number; readonly max: number } = { min: 35, max: 35 };
 /**
  * Below this share of the chapter's minimum words a reply is a failed write,
  * not a short chapter: the writer stopped, or wrote about the task instead of

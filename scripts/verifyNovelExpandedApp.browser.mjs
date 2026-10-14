@@ -711,6 +711,8 @@ async function walk(browser, viewport, sample) {
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), 'The character sheet must not scroll sideways.');
   await shot('6d-codex-profile');
   await slot.getByRole('button', { name: /^Ch\. 1 · took up/ }).click();
+  // A fact's link asks before it moves the chapter.
+  await codex.getByTestId('codex-go-confirm').getByRole('button', { name: 'Go' }).click();
   await page.locator('[data-chapter-number="1"] [data-codex-lit]').waitFor();
   check(await codex.count() === 1, 'A change\'s link should keep the Codex open.');
   if (!laptop) check(await codex.getAttribute('data-stop') === 'half', 'A change\'s link should lower the Codex so the chapter shows.');

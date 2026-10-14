@@ -1,5 +1,11 @@
 # `@seihouse/sen`
 
+**0.38.0 (2026-10-14):** `thingAppearancesFromHoldings` gives a thing its first appearance on the
+first holding tag that shows it; `deriveAppearances` reads a look tag in the paragraph that first shows
+its subject as that first look; SEN Appearance 1.1.0; `AppearancePassage` carries `startOffset`.
+Chapters ask for 1,200 to 1,700 words in 35 paragraphs. `StoryCodex` shows things no longer held under
+Archived and asks before a fact's link moves the chapter.
+
 **0.37.0 (2026-10-14):** The first information tag after holdings: first appearance, with its
 look. `./harness-generation`: SEN Appearance (`SEN_APPEARANCE_SKILL`, in the new Appearance slot,
 loaded on every chapter like Speakers and Holdings) teaches `[[appears: Name | character]]`,

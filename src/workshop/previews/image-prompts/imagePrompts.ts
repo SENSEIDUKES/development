@@ -7,10 +7,11 @@ import {
   STORY_COVER_FIELD_LIMITS,
 } from '../../../server/story-cover/prompt';
 import { STORY_COVER_VISITOR_LIMIT } from '../../../server/story-cover/limits';
+import { CODEX_CHARACTER_PROMPT_TEMPLATE, CODEX_PICTURE_ASPECT_RATIO, CODEX_PICTURE_FIELD_LIMITS, CODEX_THING_PROMPT_TEMPLATE } from '../../../server/story-cover/codexPicture';
 import { PROFILE_PICTURE_ASPECT_RATIO, PROFILE_PICTURE_PROMPT, PROFILE_PICTURE_VARIATIONS } from '../../../server/profile-picture/prompt';
 import { PROFILE_PICTURE_VISITOR_LIMIT } from '../../../server/profile-picture/limits';
 
-export { COVER_PROMPT_TEMPLATE, COVER_TITLE_OFF, COVER_TITLE_ON, PROFILE_PICTURE_PROMPT };
+export { CODEX_CHARACTER_PROMPT_TEMPLATE, CODEX_THING_PROMPT_TEMPLATE, COVER_PROMPT_TEMPLATE, COVER_TITLE_OFF, COVER_TITLE_ON, PROFILE_PICTURE_PROMPT };
 
 /**
  * Every image prompt SEIHouse has written, by kind of image, with its rules.
@@ -29,6 +30,8 @@ export type ImagePromptId =
   | 'cover-title-off'
   | 'cover-current'
   | 'profile-picture'
+  | 'codex-character'
+  | 'codex-thing'
   | 'old-cover'
   | 'old-cover-sage'
   | 'old-portrait-writer'
@@ -195,11 +198,25 @@ export const IMAGE_KINDS: ImageKind[] = [
   },
   {
     id: 'codex-portraits',
-    title: 'Codex portraits (characters and beasts)',
-    status: 'old-app',
+    title: 'Codex pictures (characters and items)',
+    status: 'in-the-app',
     variations: 1,
-    summary: 'A character\'s or beast\'s image in the Codex. The new Codex waits (NOVEL_EXPANDED.md), so nothing makes these now; the Workshop\'s Codex shows stand-in art.',
+    summary: 'A character\'s or item\'s picture on its Codex card. Opening a card that has a look written down offers Manifest, which makes one picture from that look and the story\'s own words; the card wears it at once. The old app\'s portraits are kept below for comparison.',
     prompts: [
+      {
+        id: 'codex-character',
+        title: 'Character picture prompt',
+        source: 'src/server/story-cover/codexPicture.ts (CODEX_CHARACTER_PROMPT_TEMPLATE)',
+        when: 'Manifest on a character\'s Codex card. {look} is the line of the latest look the record wrote down, and {look traits} its traits, one to a line (build, face, eyes, hair, skin, clothing, marks, gear: only those the chapters state). {tradition}, {genre}, {tone} and {world facts} are the story\'s own, as on its cover. A line whose field is missing is left out.',
+        text: CODEX_CHARACTER_PROMPT_TEMPLATE,
+      },
+      {
+        id: 'codex-thing',
+        title: 'Item picture prompt',
+        source: 'src/server/story-cover/codexPicture.ts (CODEX_THING_PROMPT_TEMPLATE)',
+        when: 'Manifest on an item\'s Codex card, filled as for a character; an item\'s traits are its form, size, material, colour, condition and marks.',
+        text: CODEX_THING_PROMPT_TEMPLATE,
+      },
       {
         id: 'old-codex-character',
         title: 'Character portrait',
@@ -214,9 +231,21 @@ export const IMAGE_KINDS: ImageKind[] = [
         when: 'As for a character, from the beast\'s Codex entry.',
         text: `Beast image. Name: {name}. Species/Type: {body type, else Unknown Beast}. Visual description: {description}. Evolution state/Threat Tier: {threat tier, else Unknown}. Aura / element style: {element, else Unknown}.{ Recent arc events affecting their aura: {the arc's summary}.} Shared visual style: {styleBible, else "${OLD_STYLE_BIBLE_DEFAULT}"}.`,
       },
+      {
+        id: 'old-codex-artifact',
+        title: 'Artifact image',
+        source: old('src/hooks/useCodexImageEvolution.ts:211'),
+        when: 'As for a character; artifacts used the portrait style.',
+        text: `Artifact image. Name: {name}. Visual description: {description}. Tier/Rarity: {tier, else Unknown}. Aura/Energy style: visually striking.{ Recent arc events affecting their aura: {the arc's summary}.} Shared visual style: {styleBible, else "${OLD_STYLE_BIBLE_DEFAULT}"}.`,
+      },
     ],
     rules: [
-      { title: 'One image, no choosing', text: 'One image is made and it is what the reader gets, like fate: no variations to choose from.' },
+      { title: 'Made from the look', text: 'A picture is made only from the look the story\'s record wrote down from the chapters (and the story\'s tradition, genre, tone and world), never from a description the writer made up for the picture. A card with no look written down yet says Manifest waits for one. So the picture shows how well the story\'s words bring it to life.' },
+      { title: 'One picture, kept at once', text: 'Manifest makes one picture and the card wears it at once; Manifest again makes a new one in its place. Today it is a testing tool on the Codex card; manifesting while reading, from a name glowing in the chapter, comes next and will use the same prompts.' },
+      { title: 'Shape', text: `Portrait, ${CODEX_PICTURE_ASPECT_RATIO}, the Codex card's own shape.` },
+      { title: 'Field limits', text: `Each field is clipped on the server: name ${CODEX_PICTURE_FIELD_LIMITS.name}, look ${CODEX_PICTURE_FIELD_LIMITS.look}, each trait ${CODEX_PICTURE_FIELD_LIMITS.trait}; the story's fields keep the cover's limits.` },
+      { title: 'Model and who may make one', text: `The Model Router's Images choice; ${COVER_DEFAULT_MODEL_LABEL} when none is chosen. Pictures are made on the cover route and share its visitor limit (${STORY_COVER_VISITOR_LIMIT.limit} every ${STORY_COVER_VISITOR_LIMIT.windowMs / 60_000} minutes, covers and pictures together); the owner's access token lifts it. A picture is kept on the device until the database keeps it.` },
+      { title: 'The old app: one image, no choosing', text: 'One image is made and it is what the reader gets, like fate: no variations to choose from.' },
       { title: 'Evolution at milestones', text: 'A character\'s power level or status changing (a breakthrough, a major status change), or a beast\'s, marked it "pending evolution". When the arc ended, it became ready: the reader could make one new image, with the arc\'s summary added as "recent arc events affecting their aura". One image per entry, and a new one only after a milestone.' },
       { title: 'Every version kept', text: 'Each image was kept in the entry\'s history with the chapter it was made at and its prompt, and the reader could go back to any of them.' },
       { title: 'No likeness carried over', text: 'Each new image was made from words alone, with no earlier image given to the model, so a character\'s face and look could change from one version to the next. This is the consistency problem to solve before portraits evolve again.' },
@@ -226,10 +255,10 @@ export const IMAGE_KINDS: ImageKind[] = [
   },
   {
     id: 'codex-places',
-    title: 'Codex places, artifacts and factions',
+    title: 'Codex places and factions',
     status: 'old-app',
     variations: 1,
-    summary: 'Images for the Codex\'s locations and artifacts, and a first image from a reveal card for any entry, factions included.',
+    summary: 'Images for the Codex\'s locations, and a first image from a reveal card for any entry, factions included. (Artifacts are made on the new path now: see Codex pictures.)',
     prompts: [
       {
         id: 'old-codex-location',
@@ -237,13 +266,6 @@ export const IMAGE_KINDS: ImageKind[] = [
         source: old('src/hooks/useCodexImageEvolution.ts:209'),
         when: 'As for a character. Locations had their own landscape style.',
         text: `Location image. Name: {name}. Visual description: {description}. Realm/Zone type: {realm, else Unknown}. Atmosphere/Safety: {safety level, else Unknown}.{ Recent arc events affecting their aura: {the arc's summary}.} Shared visual style: {styleBible, else "${OLD_STYLE_BIBLE_DEFAULT}"}.`,
-      },
-      {
-        id: 'old-codex-artifact',
-        title: 'Artifact image',
-        source: old('src/hooks/useCodexImageEvolution.ts:211'),
-        when: 'As for a character; artifacts used the portrait style.',
-        text: `Artifact image. Name: {name}. Visual description: {description}. Tier/Rarity: {tier, else Unknown}. Aura/Energy style: visually striking.{ Recent arc events affecting their aura: {the arc's summary}.} Shared visual style: {styleBible, else "${OLD_STYLE_BIBLE_DEFAULT}"}.`,
       },
       {
         id: 'old-codex-first-manifest',

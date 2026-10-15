@@ -15,6 +15,14 @@ export interface ImagePromptsChange {
  */
 export const IMAGE_PROMPTS_HISTORY: ImagePromptsChange[] = [
   {
+    date: '2026-10-15',
+    summary: 'Codex pictures are on the new path, at the owner\'s request, so the owner can test how well the story\'s looks bring its characters and items to life before manifesting while reading is built. Two new prompts, one for a character and one for an item, follow the cover\'s shape: Eastern fantasy art in the story\'s own tradition, genre, tone and world, made only from the look the record wrote down (its line and each trait the chapters state), adding nothing the look does not name, at 3:4 with no lettering. The old app\'s portraits stay below them for comparison, and its artifact image moves beside them.',
+    changed: {
+      'codex-character': '1b0859b61afc58',
+      'codex-thing': '14491c4c0a09e1',
+    },
+  },
+  {
     date: '2026-10-09',
     summary: 'The approved cover template is connected: every cover the app makes now uses it, filled from the story\'s own words, with the title drawn on (title enabled is the default). A line whose field the story lacks is left out. "What the app sends today" is retired, since the app now sends the approved template.',
     changed: {

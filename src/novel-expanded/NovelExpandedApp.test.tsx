@@ -97,6 +97,8 @@ const appServices = (writer: HarnessGenerationModelAdapter, overrides: Partial<N
     economy: createPracticeEconomy({ uid: NOVEL_EXPANDED_READER_ID }).clients,
     storyCovers: createMemoryStoryCoverStore(),
     requestStoryCover: vi.fn(async () => new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' })),
+    codexPictures: createMemoryStoryCoverStore(),
+    requestCodexPicture: vi.fn(async () => new Blob([new Uint8Array([7, 8, 9])], { type: 'image/png' })),
     requestProfilePicture: vi.fn(async () => new Blob([new Uint8Array([4, 5, 6])], { type: 'image/png' })),
     ...overrides,
   };

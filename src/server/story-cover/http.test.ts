@@ -25,7 +25,7 @@ describe('The story cover route', () => {
     await handleStoryCoverHttp({ method: 'POST', body: { story, model: 'google/gemini-3-pro-image' } }, { environment, generate });
     expect(generate).toHaveBeenCalledWith(expect.objectContaining({ model: 'google/gemini-3-pro-image' }));
     expect(await handleStoryCoverHttp({ method: 'POST', body: { story, model: 'google/gemini-3.8-flash' } }, { environment, generate }))
-      .toMatchObject({ status: 400, body: { error: "Model 'google/gemini-3.8-flash' cannot make covers." } });
+      .toMatchObject({ status: 400, body: { error: "Model 'google/gemini-3.8-flash' cannot make images." } });
   });
 
   it('says which key is missing, and refuses a request without a title or of the wrong shape', async () => {

@@ -24,8 +24,9 @@ import { AccessTokenSheet, type AccessTokenRequest } from './AccessTokenSheet';
 import { AppFamiliar } from './AppFamiliar';
 import { APP_DESTINATIONS } from './appPlaces';
 import { AppShell } from './AppShell';
-import { coverMakerWithAccessToken, portraitMakerWithAccessToken, writerWithAccessToken, type AskForAccessToken } from './accessToken';
+import { codexPictureMakerWithAccessToken, coverMakerWithAccessToken, portraitMakerWithAccessToken, writerWithAccessToken, type AskForAccessToken } from './accessToken';
 import { useStoryCovers } from '../host/media/storyCovers';
+import { useCodexPictures } from '../host/media/codexPictures';
 import { APP_SOUNDSCAPES, useAppMusic } from './appMusic';
 import { CreatePage } from './CreatePage';
 import { HomePage } from './HomePage';
@@ -121,6 +122,9 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   const [imageModel] = useModelPreference('images');
   const makeCovers = useMemo(() => coverMakerWithAccessToken(services.requestStoryCover, services.accessToken, askForToken, () => imageModel), [services, askForToken, imageModel]);
   const covers = useStoryCovers(services.storyCovers, makeCovers);
+  // Codex pictures: the same image choice, token and server as covers.
+  const makeCodexPicture = useMemo(() => codexPictureMakerWithAccessToken(services.requestCodexPicture, services.accessToken, askForToken, () => imageModel), [services, askForToken, imageModel]);
+  const codexPictures = useCodexPictures(services.codexPictures, makeCodexPicture);
   // The profile picture uses the same image choice and token.
   const portraits = useMemo(() => portraitMakerWithAccessToken(services.requestProfilePicture, services.accessToken, askForToken, () => imageModel), [services, askForToken, imageModel]);
   const [skills, setSkills] = useState<HarnessSkillManifest[]>();
@@ -212,7 +216,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   if (storyId) return withFamiliar(missing ? null : <StoryPages key={storyId} stories={stories} storyId={storyId}
     page={route.page === 'read' ? 'read' : route.page === 'blueprint' ? 'blueprint' : 'info'} readerStateRepository={services.readerState}
     readerPreferences={services.readerPreferences} soundscapes={APP_SOUNDSCAPES}
-    writingAgent={AGENTS.VERSA} backLabel="Back to your stories" covers={covers}
+    writingAgent={AGENTS.VERSA} backLabel="Back to your stories" covers={covers} codexPictures={codexPictures}
     // World Info sits in the Library Shell; the Reader never does.
     frame={info => <AppShell route={{ page: 'story', storyId }} navigate={navigate} stories={worlds}
       readerProfile={profile} mainLabel={route.page === 'blueprint' ? 'Blueprint' : 'World Info'}>{info}</AppShell>}

@@ -321,6 +321,10 @@ mode**. That means:
   yet shown can be manifested. The Codex is where the reader looks at what they
   have collected, so by the time they open it most of its cards already wear
   their pictures; it is a gallery of cards, not a place to manifest from.
+  **For testing first** (SENSEI, 2026-10-15): before manifesting while reading
+  is built, an opened Codex card offers Manifest, so the owner can see how well
+  the looks the story wrote down bring its characters and items to life. It
+  uses the prompts manifesting while reading will use.
 
 ## Where we are (2026-10-10)
 
@@ -434,6 +438,17 @@ Update it whenever it changes.
     seven-tab Codex is out of the Reader; it stays in the code. The Workshop's
     Codex card (`?preview=reader-codex`) shows the new Codex reading
     Sundered Heavens as its Development view.
+  - **Codex pictures, for testing looks (2026-10-15, SENSEI):** an opened
+    character or item card whose look the record wrote down offers
+    **Manifest**. One picture is made from that look (its line and each trait
+    the chapters state) and the story's own tradition, genre, tone and world,
+    and the card wears it at once; **Manifest again** makes a new one in its
+    place. A card with no look yet says Manifest waits for one, since nothing
+    the story has not shown can be manifested. Pictures use the Model Router's
+    image choice (**Codex Picture**), share the cover's visitor limit, and are
+    kept on the device until the database. The two prompts, character and item,
+    are on the Image Prompts page to refine. No Energy is taken yet. The
+    Workshop's Codex makes a stand-in picture, with no image model.
   - **Right-to-left reading (2026-10-13):** Arabic, Hebrew, Persian and Urdu
     are SEN languages, so a story can be written in them, and the Reader reads
     such a story right to left. The direction comes from the story's language,

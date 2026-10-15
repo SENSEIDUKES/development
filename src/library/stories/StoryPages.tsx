@@ -9,7 +9,7 @@ import { LIBRARY_READ_ALOUD_VOICES } from './readAloudVoices';
 import { LIBRARY_READER_FONTS } from './readerFonts';
 import { StorySettings } from './settings/StorySettings';
 import { useStoryCoverManifest } from './StoryCoverManifest';
-import { storyCoverRequest, type StoryCoverService } from './storyCover';
+import { codexPictureRequest, storyCoverRequest, type CodexPictureService, type StoryCoverService } from './storyCover';
 import { downloadHarnessStory } from './storyExport';
 import { harnessStoryDisplay } from './storyView';
 import { StoryBlueprintPage, type StoryBlueprintAccess, type StoryBlueprintViewProps } from './StoryBlueprint';
@@ -63,6 +63,8 @@ export interface StoryPagesProps {
    * Manifest cover, behind the media reveal. Without it, World Info has no cover.
    */
   covers?: StoryCoverService;
+  /** The host's Codex pictures: the Reader's Codex shows them and offers Manifest. Without it, cards show their aura. */
+  codexPictures?: CodexPictureService;
 }
 
 /** The veil stays open while a chapter is written; there is no minimized state here. */
@@ -75,7 +77,7 @@ const keepVeilOpen = () => undefined;
  * as the reader moves between them, so Start Story still begins Chapter 1 once
  * the Reader opens.
  */
-export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader, onBack, backLabel, readerStateRepository, readerPreferences, soundscapes, writingAgent, frame, covers, onOpenBlueprint, blueprintAccess = { view: 'creator' }, onCopyBlueprint, onCloseBlueprint }: StoryPagesProps) {
+export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader, onBack, backLabel, readerStateRepository, readerPreferences, soundscapes, writingAgent, frame, covers, codexPictures, onOpenBlueprint, blueprintAccess = { view: 'creator' }, onCopyBlueprint, onCloseBlueprint }: StoryPagesProps) {
   const { state, controller, loadError } = stories;
   /** Set by Start Story, so the Reader begins Chapter 1 as it opens. */
   const [startOnOpen, setStartOnOpen] = useState(false);
@@ -111,6 +113,10 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
     {writerAlert}
     <HarnessReaderSession state={state} storyId={storyId} controller={controller}
       readerStateRepository={readerStateRepository} startOnOpen={startOnOpen}
+      codexPictures={codexPictures && {
+        pictureOf: key => codexPictures.pictureOf(storyId, key),
+        manifest: card => codexPictures.manifest(storyId, card.key, codexPictureRequest(state, storyId, card)),
+      }}
       readerPreferences={readerPreferences} readAloudVoices={LIBRARY_READ_ALOUD_VOICES} readerFonts={LIBRARY_READER_FONTS} soundscapes={soundscapes}
       onGenerateNextChapter={stories.canGenerate ? () => stories.generateNextChapter(storyId) : undefined}
       onRewriteChapter={stories.canGenerate ? note => stories.rewriteLatestChapter(storyId, note) : undefined}

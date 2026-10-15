@@ -60,7 +60,10 @@ flagged, since they are filled in for each image in the app.
 Cover art and the profile picture give the reader **three to choose from**;
 every other image (Codex, chapter scenes) is one image, and that is what the
 reader gets.
-- **Codex portraits** (characters and beasts) and **Codex places, artifacts and
+- **Codex pictures** (characters and items, in the app since 2026-10-15): the
+  character and item prompts read from the server (`codexPicture.ts`), made from
+  the look the story's record wrote down; their rules; and the old app's
+  character, beast and artifact prompts to compare. **Codex places and
   factions**: the old app's prompts and its milestone evolution rules.
 - **Chapter scene art (Visual Memory)**: the old app's automatic image for
   momentous chapters.
@@ -94,6 +97,9 @@ the server's reason it failed.
 
 ## History
 
+- **2026-10-15** — Codex pictures are in the app: the Codex tab shows the new
+  character and item prompts, read from the live code, above the old app's
+  portraits (the old artifact prompt moves beside them).
 - **2026-10-08** — Created at the owner's request: every image prompt in one
   tab, with the image rules from the old app and the ideas for images that
   evolve over time.

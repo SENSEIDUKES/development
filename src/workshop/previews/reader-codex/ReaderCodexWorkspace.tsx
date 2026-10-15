@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { StoryCodex, declaredCharacters, deriveStoryCodex, type HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
+import { StoryCodex, declaredCharacters, deriveStoryCodex, type CodexPictureCard, type CodexPictures, type HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
 import ReferenceReaderCodex from '../../../components/reader-codex/reference/ReaderCodex';
 import type {
   ReaderCodexStoryPatchUpdater,
@@ -80,12 +80,34 @@ function ReaderCodexPreviewPane({
   );
 }
 
+const escapeXml = (text: string) => text.replace(/[<>&"]/g, character => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[character]!);
+
+/**
+ * A stand-in picture: the card's name and look on a plain card, so Manifest
+ * can be tried here without an image model. The app makes the real picture.
+ */
+const standInPicture = (card: CodexPictureCard) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400"><rect width="300" height="400" fill="#1b2130"/><text x="150" y="150" fill="#fafafa" font-family="serif" font-size="22" text-anchor="middle">${escapeXml(card.name)}</text><foreignObject x="24" y="176" width="252" height="180"><p xmlns="http://www.w3.org/1999/xhtml" style="margin:0;color:#c9ced8;font:13px sans-serif;text-align:center">${escapeXml(card.look.summary)}</p></foreignObject><text x="150" y="380" fill="#8892a6" font-family="monospace" font-size="10" text-anchor="middle">STAND-IN PICTURE</text></svg>`)}`;
+
+/** The preview's pictures: stand-ins made after a moment, held for the visit. */
+function useStandInPictures(): CodexPictures {
+  const [pictures, setPictures] = useState<Record<string, string>>({});
+  return useMemo(() => ({
+    pictureOf: key => pictures[key],
+    manifest: card => new Promise(resolve => window.setTimeout(() => {
+      setPictures(current => ({ ...current, [card.key]: standInPicture(card) }));
+      resolve();
+    }, 900)),
+  }), [pictures]);
+}
+
 /**
  * Development: the Codex the Reader opens, reading SENSEI's Sundered Heavens
  * test as the app saved it. Its facts link to passages in the Reader Chamber
- * card, where the chapter sits behind the Codex.
+ * card, where the chapter sits behind the Codex. Manifest here makes a
+ * stand-in picture (no image model is called); the app makes real ones.
  */
 function StoryCodexPreviewPane() {
+  const pictures = useStandInPictures();
   const [state, setState] = useState<HarnessWorkspaceState>();
   const [error, setError] = useState('');
   useEffect(() => {
@@ -111,7 +133,7 @@ function StoryCodexPreviewPane() {
   return (
     <div className="mx-auto min-w-0 max-w-md overflow-hidden rounded-2xl border border-white/10 bg-neutral-950">
       {codex
-        ? <StoryCodex codex={codex.record} storyTitle={codex.title} />
+        ? <StoryCodex codex={codex.record} storyTitle={codex.title} pictures={pictures} />
         : <p role={error ? 'alert' : 'status'} className="p-4 text-sm text-neutral-400">{error || `Opening ${SAMPLE_STORY_TITLE}…`}</p>}
     </div>
   );
@@ -126,7 +148,7 @@ export function ReaderCodexWorkspace() {
       entry={entry}
       workshopControls={{
         defaultSection: 'pages',
-        description: 'Original Reference pages: these shortcuts drive the production Codex\'s real tabs. Development is the Codex the Reader opens, reading Sundered Heavens; it has its own Characters and Items tabs.',
+        description: 'Original Reference pages: these shortcuts drive the production Codex\'s real tabs. Development is the Codex the Reader opens, reading Sundered Heavens; it has its own Characters and Items tabs. Manifest on a card with a look makes a stand-in picture here, with no image model; the app makes the real one.',
         sections: [
           {
             id: 'pages',

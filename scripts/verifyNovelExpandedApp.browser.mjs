@@ -204,7 +204,7 @@ async function walk(browser, viewport, sample) {
   await context.addInitScript(installSpeechStandIn);
   const page = await context.newPage();
   const problems = [];
-  const counts = { chapters: 0, memory: 0, blueprints: 0, chaptersWithToken: 0, rewrites: [], fixes: [], looks: [], covers: [] };
+  const counts = { chapters: 0, memory: 0, blueprints: 0, chaptersWithToken: 0, rewrites: [], fixes: [], looks: [], covers: [], pictures: [] };
   let releaseFirstChapter;
   const firstChapterReady = new Promise(resolve => { releaseFirstChapter = resolve; });
   page.on('pageerror', error => problems.push(`page error: ${error.message}`));
@@ -250,7 +250,9 @@ async function walk(browser, viewport, sample) {
   // The cover server: one portrait from the story's own words, a moment later, as Nano Banana 2 answers.
   await context.route('**/api/story-cover', async route => {
     const request = route.request();
-    counts.covers.push({ body: request.postDataJSON(), token: request.headers().authorization === `Bearer ${TOKEN}` });
+    // A Codex card's picture rides the cover route; it carries the card.
+    const body = request.postDataJSON();
+    (body.card ? counts.pictures : counts.covers).push({ body, token: request.headers().authorization === `Bearer ${TOKEN}` });
     await new Promise(resolve => setTimeout(resolve, 1500));
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ image: COVER.toString('base64'), mimeType: 'image/jpeg', model: 'google/gemini-3.1-flash-image' }) });
   });
@@ -710,6 +712,14 @@ async function walk(browser, viewport, sample) {
     `The look step should make one quiet call with the token for three appearances, got ${JSON.stringify(counts.looks)}.`);
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), 'The character sheet must not scroll sideways.');
   await shot('6d-codex-profile');
+  // Manifest makes the card's picture from that look, on the cover route with the token, and the card wears it.
+  await codexSheet.getByTestId('codex-manifest').getByRole('button', { name: 'Manifest' }).click();
+  await codexSheet.locator('header img').waitFor();
+  const picture = counts.pictures.at(-1);
+  check(picture?.token && picture.body.card.subject === 'character' && picture.body.card.look.summary.includes(', as the drowned city first saw them.'),
+    `Manifest should ask for one picture from the card's look, with the token, got ${JSON.stringify(picture)}.`);
+  check(await codexSheet.getByTestId('codex-manifest').getByRole('button').textContent() === 'Manifest again', 'A manifested card should offer Manifest again.');
+  await shot('6d-codex-manifested');
   await slot.getByRole('button', { name: /^Ch\. 1 · took up/ }).click();
   // A fact's link asks before it moves the chapter.
   await codex.getByTestId('codex-go-confirm').getByRole('button', { name: 'Go' }).click();

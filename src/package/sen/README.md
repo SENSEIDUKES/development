@@ -1,5 +1,11 @@
 # `@seihouse/sen`
 
+**0.39.0 (2026-10-15):** `StoryCodex` takes the host's `pictures` (`CodexPictures`): each card wears its
+picture, and an opened character or item whose look the record wrote down offers **Manifest**
+(`CodexPictureCard`: its key, character or thing, name and latest look), with Manifesting, Manifest again
+and the host's reason a picture failed. A card without a look says Manifest waits for one.
+`HarnessReaderSession` passes `codexPictures` to its Codex.
+
 **0.38.0 (2026-10-14):** `thingAppearancesFromHoldings` gives a thing its first appearance on the
 first holding tag that shows it; `deriveAppearances` reads a look tag in the paragraph that first shows
 its subject as that first look; SEN Appearance 1.1.0; `AppearancePassage` carries `startOffset`.

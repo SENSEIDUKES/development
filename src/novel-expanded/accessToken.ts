@@ -1,7 +1,8 @@
 import type { HarnessGenerationModelAdapter } from '@seihouse/sen/harness-generation';
 import type { AccessTokenStore } from '../host/generation/accessToken';
 import { HarnessGenerationRequestError } from '../host/generation/httpClient';
-import { StoryCoverRequestError, type requestStoryCover } from '../host/media/storyCoverClient';
+import { StoryCoverRequestError, type requestCodexPicture, type requestStoryCover } from '../host/media/storyCoverClient';
+import type { CodexPictureMaker } from '../host/media/codexPictures';
 import type { StoryCoverMaker } from '../host/media/storyCovers';
 import { PROFILE_PICTURE_CHOICES, ProfilePictureRequestError, keptPortrait, readProfilePhoto, type requestProfilePicture } from '../host/media/profilePictureClient';
 import { blobToDataUrl } from '../host/media/imageFiles';
@@ -59,7 +60,7 @@ export const writerWithAccessToken = (
 async function makeSeveralWithAccessToken(count: number, send: () => Promise<Blob>, options: {
   token: AccessTokenStore;
   ask: AskForAccessToken;
-  reason: 'covers' | 'portraits';
+  reason: 'covers' | 'pictures' | 'portraits';
   /** The HTTP status of a refused request, when it was refused by the server. */
   status: (error: unknown) => number | undefined;
   /** What the images are called, for the problem line ("covers", "portraits"). */
@@ -105,6 +106,23 @@ export const coverMakerWithAccessToken = (
 ): StoryCoverMaker => (story, count) => makeSeveralWithAccessToken(count,
   () => request(story, { model: model(), accessToken: token.current }),
   { token, ask, reason: 'covers', noun: 'covers', status: error => error instanceof StoryCoverRequestError ? error.status : undefined });
+
+/**
+ * The Codex picture maker with the owner's access token: one picture, asked
+ * for like a cover (see `makeSeveralWithAccessToken`).
+ */
+export const codexPictureMakerWithAccessToken = (
+  request: typeof requestCodexPicture,
+  token: AccessTokenStore,
+  ask: AskForAccessToken,
+  model: () => string | undefined,
+): CodexPictureMaker => async picture => {
+  const { images, problem } = await makeSeveralWithAccessToken(1,
+    () => request(picture, { model: model(), accessToken: token.current }),
+    { token, ask, reason: 'pictures', noun: 'pictures', status: error => error instanceof StoryCoverRequestError ? error.status : undefined });
+  if (!images[0]) throw new Error(problem ?? 'The picture could not be made. Please try again.');
+  return images[0];
+};
 
 /**
  * The profile picture maker with the owner's access token: the reader's photo

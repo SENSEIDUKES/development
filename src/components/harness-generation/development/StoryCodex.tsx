@@ -1,10 +1,10 @@
 import { Fragment, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { Archive, Backpack, ChevronLeft, Eye, Flag, Hand, Lock, Package, ScrollText, Sparkles, Sword, TriangleAlert, User, Users } from 'lucide-react';
+import { Archive, Backpack, ChevronLeft, Eye, Flag, Hand, LoaderCircle, Lock, Package, ScrollText, Sparkles, Sword, TriangleAlert, User, Users, WandSparkles } from 'lucide-react';
 import './story-codex.css';
 import type { HoldingVerb } from '../../../narrative/holdings';
 import { CHARACTER_LOOK_TRAITS, THING_LOOK_TRAITS, type LookTrait } from '../../../narrative/appearances';
 import type { HeldThing, HoldingEvent, KnownAbility } from '../shared/holdings';
-import type { CodexAppearance, CodexCharacter, CodexCheck, CodexFaction, CodexItem, CodexPassage, StoryCodexRecord } from '../shared/storyCodex';
+import type { CodexAppearance, CodexCharacter, CodexCheck, CodexFaction, CodexItem, CodexPassage, CodexPictureCard, CodexPictures, StoryCodexRecord } from '../shared/storyCodex';
 
 /** How each change reads in the Codex. */
 const VERB_LABELS: Record<HoldingVerb, string> = {
@@ -40,19 +40,19 @@ function scrollBoxOf(element: HTMLElement | null): HTMLElement | undefined {
 }
 
 /**
- * A card's art. A picture is manifested while reading, from a name in the
- * chapter; until then the card shows the aura where its picture will stand.
+ * A card's art: its manifested picture, else the aura where its picture will
+ * stand, which stirs while the picture is being made.
  */
-function CardArt({ category, picture, name, large = false }: { category: CodexTab; picture?: string; name: string; large?: boolean }) {
-  if (picture) return <img src={picture} alt={name} className="absolute inset-0 h-full w-full object-cover" />;
+function CardArt({ category, picture, name, large = false, making = false }: { category: CodexTab; picture?: string; name: string; large?: boolean; making?: boolean }) {
+  if (picture && !making) return <img src={picture} alt={name} className="absolute inset-0 h-full w-full object-cover" />;
   return <div aria-hidden className="absolute inset-0 overflow-hidden bg-[#07090d]">
     <div className="absolute inset-0 bg-[radial-gradient(#ffffff14_1px,transparent_1px)] [background-size:14px_14px]" />
     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_38%,#ffffff12,transparent_62%)]" />
     <div className={`absolute left-1/2 top-[38%] flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-black/60 text-white/30 ${large ? 'h-24 w-24' : 'h-14 w-14'}`}>
-      <span className="absolute inset-1.5 rounded-full border border-dashed border-white/15 motion-safe:animate-[spin_40s_linear_infinite]" />
+      <span className={`absolute inset-1.5 rounded-full border border-dashed ${making ? 'border-white/40 motion-safe:animate-[spin_4s_linear_infinite]' : 'border-white/15 motion-safe:animate-[spin_40s_linear_infinite]'}`} />
       {CATEGORY_MARK[category](large ? 34 : 20)}
     </div>
-    <span className={`absolute inset-x-0 text-center font-mono uppercase tracking-[0.28em] text-white/30 ${large ? 'top-[58%] text-[10px]' : 'top-[60%] text-[8px]'}`}>Unmanifested</span>
+    <span className={`absolute inset-x-0 text-center font-mono uppercase tracking-[0.28em] ${making ? 'text-white/60 motion-safe:animate-pulse' : 'text-white/30'} ${large ? 'top-[58%] text-[10px]' : 'top-[60%] text-[8px]'}`}>{making ? 'Manifesting' : 'Unmanifested'}</span>
   </div>;
 }
 
@@ -60,13 +60,13 @@ function CardArt({ category, picture, name, large = false }: { category: CodexTa
  * One card in the gallery: its art fills it, its name and one line about it
  * sit at its foot. Every category's cards are the same card.
  */
-function CodexCard({ category, name, line, badge, featured = false, testId, cardKey, onOpen }: {
-  category: CodexTab; name: string; line: string; badge?: string; featured?: boolean; testId: string; cardKey: string; onOpen: () => void;
+function CodexCard({ category, name, line, badge, featured = false, testId, cardKey, picture, making, onOpen }: {
+  category: CodexTab; name: string; line: string; badge?: string; featured?: boolean; testId: string; cardKey: string; picture?: string; making?: boolean; onOpen: () => void;
 }) {
   return <li>
     <button type="button" onClick={onOpen} data-testid={testId} data-card={cardKey} aria-label={`${name}. ${line}`}
       className={`group relative block aspect-[3/4] w-full overflow-hidden rounded-xl border text-left shadow-[0_8px_24px_#0008] transition-transform duration-200 motion-reduce:transition-none hover:-translate-y-0.5 ${featured ? 'border-white/30' : 'border-white/10'}`}>
-      <CardArt category={category} name={name} />
+      <CardArt category={category} name={name} picture={picture} making={making} />
       {/* The card's frame: an inner rim and a foot dark enough to read its name on any picture. */}
       <span aria-hidden className="pointer-events-none absolute inset-1 rounded-[10px] border border-white/[0.07]" />
       <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/80 to-transparent" />
@@ -187,15 +187,17 @@ function LookSection({ name, appearance, traits, onReadPassage }: {
  * record knows about it together, never scattered across pages. Every
  * category opens into this same profile.
  */
-function Profile({ category, name, line, badges, backLabel, onBack, children }: {
-  category: CodexTab; name: string; line: string; badges: readonly string[]; backLabel: string; onBack: () => void; children: ReactNode;
+function Profile({ category, name, line, badges, backLabel, onBack, art, children }: {
+  category: CodexTab; name: string; line: string; badges: readonly string[]; backLabel: string; onBack: () => void;
+  /** The card's picture and Manifest, when the host makes pictures. */
+  art?: ProfileArt; children: ReactNode;
 }) {
   return <article className="space-y-5 motion-safe:animate-[codex-rise_260ms_ease-out]" aria-labelledby="codex-profile-name" data-testid="codex-profile">
     <button type="button" onClick={onBack} className="inline-flex min-h-11 items-center gap-1 rounded-full pr-3 text-sm text-neutral-300 hover:text-white">
       <ChevronLeft size={18} aria-hidden /> {backLabel}
     </button>
     <header className="relative mx-auto aspect-[4/5] max-h-[26rem] w-full max-w-sm overflow-hidden rounded-2xl border border-white/15 shadow-[0_16px_40px_#000a]">
-      <CardArt category={category} name={name} large />
+      <CardArt category={category} name={name} large picture={art?.picture} making={art?.making} />
       <span aria-hidden className="pointer-events-none absolute inset-1.5 rounded-[14px] border border-white/[0.07]" />
       <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/80 to-transparent" />
       {badges.length > 0 && <span className="absolute left-3 top-3 flex flex-wrap gap-1.5">
@@ -206,16 +208,45 @@ function Profile({ category, name, line, badges, backLabel, onBack, children }: 
         <p className="mt-1 text-sm text-white/65">{line}</p>
       </div>
     </header>
+    {art && <ManifestControl art={art} name={name} />}
     {children}
   </article>;
 }
 
-function CharacterProfile({ character, onBack, onReadPassage }: { character: CodexCharacter; onBack: () => void; onReadPassage?: ReadPassage }) {
+/** A profile's picture, and how to make it, from the host's pictures. */
+interface ProfileArt {
+  picture?: string;
+  making: boolean;
+  problem?: string;
+  /** Absent until the record has written down a look to make the picture from. */
+  onManifest?: () => void;
+}
+
+/**
+ * Manifest: makes the card's picture from the look the record wrote down, so
+ * the reader can see how well the story's words bring it to life. A card the
+ * record has no look for waits for one.
+ */
+function ManifestControl({ art, name }: { art: ProfileArt; name: string }) {
+  if (!art.onManifest) return <p className="text-center text-xs text-neutral-500" data-testid="codex-manifest-waits">
+    Manifest waits until the story writes down how {name} looks.
+  </p>;
+  return <div className="flex flex-col items-center gap-2" data-testid="codex-manifest">
+    <button type="button" onClick={art.onManifest} disabled={art.making}
+      className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/20 bg-white/[0.06] px-5 text-sm font-medium text-white hover:border-white/40 disabled:opacity-60">
+      {art.making ? <LoaderCircle size={16} aria-hidden className="motion-safe:animate-spin" /> : <WandSparkles size={16} aria-hidden />}
+      {art.making ? 'Manifesting…' : art.picture ? 'Manifest again' : 'Manifest'}
+    </button>
+    {art.problem && <p role="alert" className="max-w-sm text-center text-xs text-amber-200">{art.problem}</p>}
+  </div>;
+}
+
+function CharacterProfile({ character, art, onBack, onReadPassage }: { character: CodexCharacter; art?: ProfileArt; onBack: () => void; onReadPassage?: ReadPassage }) {
   const equipped = character.things.filter(thing => thing.equipped);
   const carried = character.things.filter(thing => !thing.equipped);
   return <Profile category="characters" name={character.name} backLabel="All characters" onBack={onBack}
     line={character.rank?.text ?? `Met in Chapter ${character.firstSeen.chapterNumber}`}
-    badges={character.mainCharacter ? ['Main character'] : []}>
+    badges={character.mainCharacter ? ['Main character'] : []} art={art}>
     <div className="flex flex-wrap gap-1.5">
       <PassageChip passage={character.firstSeen} label={`First seen · Ch. ${character.firstSeen.chapterNumber}`} onReadPassage={onReadPassage} />
       {character.rank && <span data-testid="codex-rank" className="contents">{character.rank.events.map(event =>
@@ -248,8 +279,8 @@ function FactionProfile({ faction, onBack, onReadPassage }: { faction: CodexFact
 const isArchived = (item: CodexItem) => !item.holder && item.events.length > 0;
 const holderLine = (item: CodexItem) => (item.holder ? `${item.holder.name} · ${item.equipped ? 'in hand' : 'carried'}` : item.events.length ? 'No longer held' : 'Held by no one');
 
-function ItemProfile({ item, onBack, onReadPassage }: { item: CodexItem; onBack: () => void; onReadPassage?: ReadPassage }) {
-  return <Profile category="items" name={item.name} line={holderLine(item)} badges={isArchived(item) ? ['Archived'] : item.count > 1 ? [`×${item.count}`] : []} backLabel="All items" onBack={onBack}>
+function ItemProfile({ item, art, onBack, onReadPassage }: { item: CodexItem; art?: ProfileArt; onBack: () => void; onReadPassage?: ReadPassage }) {
+  return <Profile category="items" name={item.name} line={holderLine(item)} badges={isArchived(item) ? ['Archived'] : item.count > 1 ? [`×${item.count}`] : []} backLabel="All items" onBack={onBack} art={art}>
     <div className="flex flex-wrap gap-1.5">
       <PassageChip passage={item.firstSeen} label={`First seen · Ch. ${item.firstSeen.chapterNumber}`} onReadPassage={onReadPassage} />
     </div>
@@ -287,13 +318,16 @@ const EMPTY: Record<CodexTab, string> = {
  * The Codex: a gallery of the cards the reader has collected, one tab per
  * category (characters, factions, items), every category built the same way.
  * Each card is its picture first; opening it shows everything the story's
- * record knows about it together. Pictures are manifested while reading, so
- * a card shows its unmanifested aura until then. Every fact links to the
+ * record knows about it together. A card shows its unmanifested aura until
+ * its picture is made; with the host's pictures, an opened character or item
+ * offers Manifest, which makes its picture from the look the record wrote down. Every fact links to the
  * passage that made it, and the chapter behind the Codex moves to it while
  * the Codex stays open. The record's checks close the gallery, for testing.
  */
-export function StoryCodex({ codex, storyTitle, onBack, onReadPassage, onReadChapter }: {
+export function StoryCodex({ codex, storyTitle, pictures, onBack, onReadPassage, onReadChapter }: {
   codex: StoryCodexRecord;
+  /** The host's pictures for this story's cards. Without them, cards show their aura and offer no Manifest. */
+  pictures?: CodexPictures;
   storyTitle: string;
   /** Back to the chapter. */
   onBack?: () => void;
@@ -306,6 +340,25 @@ export function StoryCodex({ codex, storyTitle, onBack, onReadPassage, onReadCha
   // A fact's link moves the chapter behind the Codex, so it asks first (SENSEI: an instant jump lost the reader's place).
   const [goTo, setGoTo] = useState<{ chapterNumber: number; blockId?: string }>();
   const root = useRef<HTMLElement>(null);
+  // Pictures being made, and why one could not be, by card.
+  const [making, setMaking] = useState<Record<string, true>>({});
+  const [problems, setProblems] = useState<Record<string, string>>({});
+  const manifest = (card: CodexPictureCard) => {
+    if (!pictures || making[card.key]) return;
+    setMaking(current => ({ ...current, [card.key]: true }));
+    setProblems(({ [card.key]: _, ...rest }) => rest);
+    pictures.manifest(card).catch((error: unknown) => {
+      setProblems(current => ({ ...current, [card.key]: error instanceof Error && error.message ? error.message : 'The picture could not be made. Please try again.' }));
+    }).finally(() => setMaking(({ [card.key]: _, ...rest }) => rest));
+  };
+  const artOf = (key: string, subject: CodexPictureCard['subject'], name: string, appearance?: CodexAppearance): ProfileArt | undefined => {
+    if (!pictures) return undefined;
+    const look = appearance?.look;
+    return {
+      picture: pictures.pictureOf(key), making: Boolean(making[key]), problem: problems[key],
+      ...(look ? { onManifest: () => manifest({ key, subject, name, look: { summary: look.summary, traits: look.traits } }) } : {}),
+    };
+  };
   const askToRead: ReadPassage | undefined = onReadPassage && ((chapterNumber, blockId) => setGoTo({ chapterNumber, blockId }));
   const askToReadChapter = onReadChapter && ((chapterNumber: number) => setGoTo({ chapterNumber }));
   const go = () => {
@@ -325,7 +378,8 @@ export function StoryCodex({ codex, storyTitle, onBack, onReadPassage, onReadCha
     if (box) box.scrollTop = 0;
   }, [tab, open]);
 
-  const itemCard = (entry: CodexItem) => <CodexCard key={entry.key} category="items" testId="codex-item" cardKey={entry.key} name={entry.name}
+  const art = (key: string) => ({ picture: pictures?.pictureOf(key), making: Boolean(making[key]) });
+  const itemCard = (entry: CodexItem) => <CodexCard key={entry.key} category="items" testId="codex-item" cardKey={entry.key} name={entry.name} {...art(entry.key)}
     badge={entry.count > 1 ? `×${entry.count}` : undefined} line={holderLine(entry)} onOpen={() => setOpen(entry.key)} />;
   const tabs: { id: CodexTab; label: string; count: number; icon: ReactNode }[] = [
     { id: 'characters', label: 'Characters', count: codex.characters.length, icon: <Users size={15} aria-hidden /> },
@@ -333,11 +387,11 @@ export function StoryCodex({ codex, storyTitle, onBack, onReadPassage, onReadCha
     { id: 'items', label: 'Items', count: codex.items.length, icon: <Package size={15} aria-hidden /> },
   ];
   const cards = tab === 'characters'
-    ? codex.characters.map(entry => <CodexCard key={entry.key} category="characters" testId="codex-character" cardKey={entry.key} name={entry.name}
+    ? codex.characters.map(entry => <CodexCard key={entry.key} category="characters" testId="codex-character" cardKey={entry.key} name={entry.name} {...art(entry.key)}
         featured={entry.mainCharacter} badge={entry.mainCharacter ? 'Main character' : undefined}
         line={entry.rank?.text ?? `Met in Chapter ${entry.firstSeen.chapterNumber}`} onOpen={() => setOpen(entry.key)} />)
     : tab === 'factions'
-      ? codex.factions.map(entry => <CodexCard key={entry.key} category="factions" testId="codex-faction" cardKey={entry.key} name={entry.name}
+      ? codex.factions.map(entry => <CodexCard key={entry.key} category="factions" testId="codex-faction" cardKey={entry.key} name={entry.name} {...art(entry.key)}
           line={`Met in Chapter ${entry.firstSeen.chapterNumber}`} onOpen={() => setOpen(entry.key)} />)
       : codex.items.filter(entry => !isArchived(entry)).map(itemCard);
   // Things lost, used up or given away: kept, below what is held now.
@@ -361,9 +415,11 @@ export function StoryCodex({ codex, storyTitle, onBack, onReadPassage, onReadCha
     </div>
 
     <div id="codex-tab-panel" role="tabpanel" aria-labelledby={`codex-tab-${tab}`} className="space-y-4">
-      {character && <CharacterProfile key={character.key} character={character} onBack={close} onReadPassage={askToRead} />}
+      {character && <CharacterProfile key={character.key} character={character} onBack={close} onReadPassage={askToRead}
+        art={artOf(character.key, 'character', character.name, character.appearance)} />}
       {faction && <FactionProfile key={faction.key} faction={faction} onBack={close} onReadPassage={askToRead} />}
-      {item && <ItemProfile key={item.key} item={item} onBack={close} onReadPassage={askToRead} />}
+      {item && <ItemProfile key={item.key} item={item} onBack={close} onReadPassage={askToRead}
+        art={artOf(item.key, 'thing', item.name, item.appearance)} />}
       {!profileOpen && (cards.length || archived.length
         ? <ul className="grid grid-cols-2 gap-3">{cards}</ul>
         : <p className="py-8 text-center text-sm text-neutral-400">{EMPTY[tab]}</p>)}

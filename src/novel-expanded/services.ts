@@ -15,7 +15,7 @@ import { createLocalStorySeedRepository } from '../host/story-seed/localStorySee
 import { requestWorldBlueprint } from '../host/story-seed/blueprintGenerationClient';
 import { requestStorySpark, storySparksConfigured } from '../host/story-seed/storySparkClient';
 import { createDeviceProfileStore, type DeviceProfileStore } from '../host/profile/deviceProfile';
-import { requestStoryCover } from '../host/media/storyCoverClient';
+import { requestCodexPicture, requestStoryCover } from '../host/media/storyCoverClient';
 import { requestProfilePicture } from '../host/media/profilePictureClient';
 import { IndexedDbStoryCoverStore, type StoryCoverStore } from '../host/media/storyCovers';
 import { NOVEL_EXPANDED_READER_ID } from './storyCreationRuntime';
@@ -30,6 +30,8 @@ export const NOVEL_EXPANDED_STORAGE = {
   readerState: 'novelexpanded-reader-state-v1',
   storySeeds: 'novelexpanded-story-seeds-v1',
   storyCovers: 'novelexpanded-story-covers-v1',
+  /** The Codex cards' pictures, by story and card. */
+  codexPictures: 'novelexpanded-codex-pictures-v1',
   /** The Sound Words presets installed from `.spp` packages. */
   soundWords: 'novelexpanded-sound-words-v1',
   /** The skills installed from `.spp` packages, beside the official ones. */
@@ -76,6 +78,10 @@ export interface NovelExpandedServices {
   storyCovers: StoryCoverStore;
   /** The cover server: one cover from a story's own words, with the Router's image model. */
   requestStoryCover: typeof requestStoryCover;
+  /** Each Codex card's picture, kept on this device until the database keeps it. */
+  codexPictures: StoryCoverStore;
+  /** A Codex card's picture from its look, on the cover server with the same image model and limit. */
+  requestCodexPicture: typeof requestCodexPicture;
   /** The profile picture server: one portrait from the reader's photo, with the Router's image model. */
   requestProfilePicture: typeof requestProfilePicture;
 }
@@ -114,6 +120,8 @@ export function createNovelExpandedServices(): NovelExpandedServices {
     economy: createPracticeEconomy({ uid: NOVEL_EXPANDED_READER_ID }).clients,
     storyCovers: new IndexedDbStoryCoverStore(NOVEL_EXPANDED_STORAGE.storyCovers),
     requestStoryCover,
+    codexPictures: new IndexedDbStoryCoverStore(NOVEL_EXPANDED_STORAGE.codexPictures),
+    requestCodexPicture,
     requestProfilePicture,
   };
 }

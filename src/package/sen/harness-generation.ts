@@ -155,6 +155,8 @@ export {
   type CodexItem,
   type CodexItemEvent,
   type CodexPassage,
+  type CodexPictureCard,
+  type CodexPictures,
   type CodexVoice,
   type StoryCodexChapter,
   type StoryCodexRecord,

@@ -1,4 +1,4 @@
-import { findFoundationRevision, findStory, type HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
+import { findFoundationRevision, findStory, type CodexPictureCard, type HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
 import type { StorySeedInput, WorldBlueprint } from '@seihouse/sen/story-seed';
 
 /**
@@ -89,4 +89,34 @@ export interface StoryCoverService {
   keep: (storyId: string, madeUrl: string) => Promise<void>;
   /** Lets go of made covers the reader did not keep. */
   letGo: (madeUrls: readonly string[]) => void;
+}
+
+/**
+ * What a Codex card's picture is made from: the card's look, as the record
+ * wrote it down, and the story's own tradition, genre, tone and world, so the
+ * picture belongs to the same story as its cover. The server writes the prompt.
+ */
+export interface CodexPictureRequest {
+  card: Omit<CodexPictureCard, 'key'>;
+  story: Pick<StoryCoverRequest, 'style' | 'genre' | 'tone' | 'world'>;
+}
+
+/** A card's picture request, with the story's words its cover uses. */
+export function codexPictureRequest(state: HarnessWorkspaceState, storyId: string, card: CodexPictureCard): CodexPictureRequest {
+  const cover = storyCoverRequest(state, storyId);
+  const story: CodexPictureRequest['story'] = {};
+  for (const field of ['style', 'genre', 'tone', 'world'] as const) if (cover?.[field]) story[field] = cover[field];
+  return { card: { subject: card.subject, name: card.name, look: card.look }, story };
+}
+
+/**
+ * The host's Codex pictures, for every story: SEN's Codex shows each card's
+ * picture and offers Manifest, and the host makes and keeps them (on the
+ * device until the database). One picture is made and kept at once.
+ */
+export interface CodexPictureService {
+  /** A card's kept picture, as an address an `<img>` can show, or undefined. */
+  pictureOf: (storyId: string, cardKey: string) => string | undefined;
+  /** Makes a card's picture and keeps it, replacing any before it. Rejects with a reason the reader can read. */
+  manifest: (storyId: string, cardKey: string, request: CodexPictureRequest) => Promise<void>;
 }

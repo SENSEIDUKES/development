@@ -34,7 +34,7 @@ import { pendingChapterDirection } from '../shared/chapterDirection';
 import { chapterRewriteGap, latestStoryChapter } from '../shared/chapterRewrite';
 import { protagonistNames } from '../shared/speakers';
 import { declaredCharacters } from '../shared/holdings';
-import { deriveStoryCodex } from '../shared/storyCodex';
+import { deriveStoryCodex, type CodexPictures } from '../shared/storyCodex';
 import { BlueprintArcPage } from './BlueprintArcPage';
 import { ChapterAuthoring } from './ChapterAuthoring';
 import { ChapterRewrite } from './ChapterRewrite';
@@ -131,7 +131,7 @@ function lineWhereTheReaderIs(script: ReadAloudScript, article: HTMLElement | nu
  */
 export function HarnessReaderSession({
   state, storyId, onClose, controller, readerStateRepository, onGenerateNextChapter, onRewriteChapter, onPlanArc, renderWriting, renderWriteAside, startOnOpen = false,
-  readerPreferences, readAloudVoices, soundscapes, readerFonts = DEFAULT_READER_FONTS, chapterBody: ChapterBody = ProseChapterBody, companion,
+  readerPreferences, readAloudVoices, soundscapes, readerFonts = DEFAULT_READER_FONTS, chapterBody: ChapterBody = ProseChapterBody, companion, codexPictures,
 }: {
   state: HarnessWorkspaceState; storyId: string; onClose: () => void; controller: HarnessGenerationController;
   /**
@@ -191,6 +191,8 @@ export function HarnessReaderSession({
   chapterBody?: ReaderChapterBody;
   /** The host's companion in the top bar, beside Reader Settings (the Library puts its Familiar there). */
   companion?: ReactNode;
+  /** The host's pictures for this story's Codex cards, with Manifest. Without them, cards show their aura. */
+  codexPictures?: CodexPictures;
 }) {
   const story = state.stories.find(entry => entry.id === storyId);
   const chapters = useMemo(() => state.chapters
@@ -499,7 +501,7 @@ export function HarnessReaderSession({
         onReadChapter={readChapter} />
     </ReaderPanel>
     <ReaderPanel open={panel === 'codex'} onClose={closeLayer} labelledBy="codex-panel-title" testId="reader-panel-codex" peek={codexPeek}>
-      <ReaderCodex state={state} storyId={storyId} chapters={chapters} storyTitle={story.title} onBack={closeLayer}
+      <ReaderCodex state={state} storyId={storyId} chapters={chapters} storyTitle={story.title} onBack={closeLayer} pictures={codexPictures}
         onReadPassage={revealPassage} onReadChapter={revealChapter} />
     </ReaderPanel>
     <ReaderSettingsSheet open={layer?.id === 'settings'} onClose={closeLayer} readAloud={readAloud} language={language}
@@ -513,8 +515,9 @@ export function HarnessReaderSession({
  * The Codex inside the Reader: the story's record worked out from its
  * chapters as they are now. It is worked out only while the Codex is open.
  */
-function ReaderCodex({ state, storyId, chapters, storyTitle, onBack, onReadPassage, onReadChapter }: {
+function ReaderCodex({ state, storyId, chapters, storyTitle, pictures, onBack, onReadPassage, onReadChapter }: {
   state: HarnessWorkspaceState;
+  pictures?: CodexPictures;
   storyId: string;
   chapters: readonly HarnessChapter[];
   storyTitle: string;
@@ -531,5 +534,5 @@ function ReaderCodex({ state, storyId, chapters, storyTitle, onBack, onReadPassa
     declared: foundation ? declaredCharacters(foundation) : [],
     declaredFactions: foundation?.identities?.filter(identity => identity.kind === 'faction') ?? [],
   }), [state.codexEntries, storyId, chapters, foundation]);
-  return <StoryCodex codex={codex} storyTitle={storyTitle} onBack={onBack} onReadPassage={onReadPassage} onReadChapter={onReadChapter} />;
+  return <StoryCodex codex={codex} storyTitle={storyTitle} pictures={pictures} onBack={onBack} onReadPassage={onReadPassage} onReadChapter={onReadChapter} />;
 }

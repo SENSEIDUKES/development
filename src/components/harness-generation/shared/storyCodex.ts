@@ -293,3 +293,25 @@ export function deriveStoryCodex({ entries, chapters, mainCharacterName, declare
 
   return { characters: roster, factions: factionList, items: itemList, checks };
 }
+
+/** What a Codex card's picture is made from: who or what it shows, and the look the record wrote down. */
+export interface CodexPictureCard {
+  /** The card's key: stable for this story. */
+  key: string;
+  subject: 'character' | 'thing';
+  name: string;
+  /** The latest look the record wrote down; a card without one cannot be manifested. */
+  look: Look;
+}
+
+/**
+ * The host's pictures for one story's Codex cards. SEN shows them and offers
+ * Manifest; the host makes each picture and keeps it. Without it, cards show
+ * their aura and offer nothing.
+ */
+export interface CodexPictures {
+  /** The card's picture, as an address an `<img>` can show, or undefined. */
+  pictureOf: (key: string) => string | undefined;
+  /** Makes the card's picture from its look and keeps it, replacing any before it. Rejects with a reason the reader can read. */
+  manifest: (card: CodexPictureCard) => Promise<void>;
+}

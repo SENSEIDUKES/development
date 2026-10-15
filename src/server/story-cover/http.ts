@@ -2,6 +2,7 @@ import type { StoryCoverRequest } from '@seihouse/library/stories';
 import { createModelRouter, DEFAULT_IMAGE_MODEL, IMAGE_MODELS, ModelRouterError } from '@seihouse/library/model-router-server';
 import { MODEL_PROVIDERS, providerKey, type ModelEnvironment } from '../model-router/catalog';
 import { buildStoryCoverPrompt, STORY_COVER_ASPECT_RATIO, STORY_COVER_FIELD_LIMITS } from './prompt';
+import { buildCodexPicturePrompt, CODEX_PICTURE_ASPECT_RATIO, parseCodexPictureRequest } from './codexPicture';
 
 export interface StoryCoverHttpRequest {
   method?: string;
@@ -45,9 +46,23 @@ const clip = (value: unknown, limit: number): string | undefined => {
   return text ? text.slice(0, limit) : undefined;
 };
 
-/** Reads a cover request: the story's own words, each clipped to its limit, and an optional model. */
-const parseRequest = (body: unknown): { story: StoryCoverRequest; model?: string } => {
+/** What the route makes: a cover, or a Codex card's picture (the request carries a card). */
+interface ImageJob { prompt: string; aspectRatio: string; noun: 'cover' | 'picture'; model?: string }
+
+/** Reads a request: a Codex card's picture when it carries a card, else a cover. */
+const parseRequest = (body: unknown): ImageJob => {
   const parsed = typeof body === 'string' ? JSON.parse(body) : body;
+  if (isRecord(parsed) && parsed.card !== undefined) {
+    if (parsed.model !== undefined && typeof parsed.model !== 'string') throw new Error('Choose an image model from the Model Router.');
+    const picture = parseCodexPictureRequest(parsed);
+    return { prompt: buildCodexPicturePrompt(picture), aspectRatio: CODEX_PICTURE_ASPECT_RATIO, noun: 'picture', ...(parsed.model ? { model: parsed.model as string } : {}) };
+  }
+  const cover = parseCoverRequest(parsed);
+  return { prompt: buildStoryCoverPrompt(cover.story), aspectRatio: STORY_COVER_ASPECT_RATIO, noun: 'cover', ...(cover.model ? { model: cover.model } : {}) };
+};
+
+/** Reads a cover request: the story's own words, each clipped to its limit, and an optional model. */
+const parseCoverRequest = (parsed: unknown): { story: StoryCoverRequest; model?: string } => {
   if (!isRecord(parsed) || !isRecord(parsed.story)) throw new Error('The cover request must contain the story.');
   const source = parsed.story;
   const title = clip(source.title, LIMITS.title);
@@ -71,7 +86,9 @@ const parseRequest = (body: unknown): { story: StoryCoverRequest; model?: string
 /**
  * The story cover route: one image made from the story's own words, with the
  * image model chosen in the Model Router (Nano Banana 2 Lite when none is). The
- * reply is the image itself, in base64; the host keeps it.
+ * reply is the image itself, in base64; the host keeps it. A request carrying
+ * a Codex card makes that card's picture instead (see `codexPicture.ts`), with
+ * the same model, limit and reply.
  */
 export async function handleStoryCoverHttp(
   request: StoryCoverHttpRequest,
@@ -84,11 +101,11 @@ export async function handleStoryCoverHttp(
     parsed = parseRequest(request.body);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Invalid JSON request.';
-    return errorResponse(400, message === 'Unexpected end of JSON input' ? 'The cover request body is empty.' : message);
+    return errorResponse(400, message === 'Unexpected end of JSON input' ? 'The request body is empty.' : message);
   }
   const model = parsed.model ?? (dependencies.environment.STORY_COVER_DEFAULT_MODEL?.trim() || DEFAULT_IMAGE_MODEL);
   const option = IMAGE_MODELS.find(item => item.id === model);
-  if (!option) return errorResponse(400, `Model '${model}' cannot make covers.`);
+  if (!option) return errorResponse(400, `Model '${model}' cannot make images.`);
   const key = providerKey(dependencies.environment, option.provider);
   if (!key) return errorResponse(503, `${MODEL_PROVIDERS[option.provider].keyVariable} is not configured on the Development server.`);
 
@@ -96,7 +113,7 @@ export async function handleStoryCoverHttp(
   const started = Date.now();
   try {
     const result = await generate({
-      capability: 'image', model, prompt: buildStoryCoverPrompt(parsed.story), aspectRatio: STORY_COVER_ASPECT_RATIO, timeoutMs: STORY_COVER_TIMEOUT_MS,
+      capability: 'image', model, prompt: parsed.prompt, aspectRatio: parsed.aspectRatio, timeoutMs: STORY_COVER_TIMEOUT_MS,
     });
     if (result.capability !== 'image') throw new ModelRouterError('provider-error', 'The configured model returned no image.');
     dependencies.onAnswer?.({ model, durationMs: Date.now() - started });
@@ -105,8 +122,8 @@ export async function handleStoryCoverHttp(
     dependencies.onError?.(error);
     if (error instanceof ModelRouterError && error.code === 'invalid-model') return errorResponse(400, error.message);
     if (error instanceof ModelRouterError && error.code === 'timeout') {
-      return errorResponse(502, `The cover was still being made after ${Math.ceil(STORY_COVER_TIMEOUT_MS / 1000)} seconds, so it was stopped. Try again, or choose another image model in the Model Router.`);
+      return errorResponse(502, `The ${parsed.noun} was still being made after ${Math.ceil(STORY_COVER_TIMEOUT_MS / 1000)} seconds, so it was stopped. Try again, or choose another image model in the Model Router.`);
     }
-    return errorResponse(502, 'The cover could not be made. Nothing was changed; please try again.');
+    return errorResponse(502, `The ${parsed.noun} could not be made. Nothing was changed; please try again.`);
   }
 }

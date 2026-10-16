@@ -6,6 +6,8 @@ import { harnessParagraphBlockId } from './chapterBody';
 import { normalizeIdentityLabel } from './canonicalProjection';
 import { factionNamed, type DeclaredFaction } from './factions';
 import { deriveAppearances, type AppearanceFlag, type AppearancePassage, type AppearanceSubject } from './appearances';
+import { deriveStatus, type StatusFlag, type StatusPassage, type StatusSubject } from './status';
+import type { LastingState, StatusState } from '../../../narrative/status';
 import {
   deriveHoldings,
   holdingTargetKind,
@@ -19,13 +21,14 @@ import {
 /**
  * The Codex: what the story's record knows, gathered for the reader. Nothing
  * here is stored; it is worked out again from each chapter's current records
- * (appearances and their looks, holding changes and speakers today), so it
+ * (appearances and their looks, status changes, holding changes and speakers), so it
  * always matches the chapters and holds only what they recorded. Each kind of
  * information tag adds its own facts here as it is built; the Codex never
  * shows more than the record holds.
  *
  * A character is in the Codex once the record has met them: they stepped onto
- * the page, spoke, or held, used or learned something. Characters the Story
+ * the page, spoke, held, used or learned something, or their status changed
+ * (a death the story only reports still meets them). Characters the Story
  * Seed declares but the chapters have not reached yet stay out, so the Codex
  * never runs ahead of the story. A thing joins it the same way: it stepped
  * onto the page, or changed hands.
@@ -79,8 +82,18 @@ export interface CodexCharacter {
   /** Abilities they are learning or know. */
   abilities: KnownAbility[];
   voice?: CodexVoice;
+  /** How they are now (dead, wounded, sealed away), once their status has changed. */
+  status?: CodexStatus;
   /** Every holding change that took effect for them, in story order. */
   chronicle: HoldingEvent[];
+}
+
+/** How someone or something now is: every lasting state, and every change of state, each with its passage. */
+export interface CodexStatus {
+  /** The lasting states it is in now (dead, wounded, sealed away, destroyed), in the order each began. Empty when well and whole again. */
+  conditions: Array<{ state: LastingState; detail?: string; passage: CodexPassage }>;
+  /** Every change of state the record accepted, in story order. */
+  history: Array<{ state: StatusState; detail?: string; passage: CodexPassage }>;
 }
 
 /** One change to a thing, with who it happened to. */
@@ -101,10 +114,12 @@ export interface CodexItem {
   firstSeen: CodexPassage;
   /** Its appearance on the page, and its look. */
   appearance?: CodexAppearance;
+  /** How it is now (damaged, destroyed, sealed), once its status has changed. */
+  status?: CodexStatus;
 }
 
-/** A check the record's plain rules flagged (holdings or appearances), with the paragraph it is about when it has one. */
-export type CodexCheck = (HoldingFlag | AppearanceFlag) & { blockId?: string };
+/** A check the record's plain rules flagged (holdings, appearances or status), with the paragraph it is about when it has one. */
+export type CodexCheck = (HoldingFlag | AppearanceFlag | StatusFlag) & { blockId?: string };
 
 /** A sect, clan, faction or other body the story has met: by its voice today (a group the writer tagged as speaking). */
 export interface CodexFaction {
@@ -126,7 +141,7 @@ export interface StoryCodexRecord {
 }
 
 /** What the Codex reads from a chapter. */
-export type StoryCodexChapter = Pick<HarnessChapter, 'id' | 'chapterNumber' | 'paragraphs' | 'speakers' | 'holdingChanges' | 'closingHoldings' | 'appearances' | 'looks'>;
+export type StoryCodexChapter = Pick<HarnessChapter, 'id' | 'chapterNumber' | 'paragraphs' | 'speakers' | 'holdingChanges' | 'closingHoldings' | 'appearances' | 'looks' | 'statusChanges'>;
 
 const paragraphOrder = (blockId: string) => Number(blockId.match(/-p(\d+)$/)?.[1] ?? 0);
 const comesBefore = (left: CodexPassage, right: CodexPassage) =>
@@ -145,6 +160,11 @@ const appearanceOf = (subject: AppearanceSubject): CodexAppearance => ({
   } } : {}),
   changes: subject.changes.map(change => ({ change: change.change, passage: appearancePassage(change.passage) })),
 });
+const statusPassage = (passage: StatusPassage): CodexPassage => ({ chapterNumber: passage.chapterNumber, blockId: passage.blockId, text: passage.text });
+const statusOf = (subject: StatusSubject): CodexStatus => ({
+  conditions: subject.conditions.map(condition => ({ state: condition.state, ...(condition.detail ? { detail: condition.detail } : {}), passage: statusPassage(condition.passage) })),
+  history: subject.history.map(event => ({ state: event.state, ...(event.detail ? { detail: event.detail } : {}), passage: statusPassage(event.passage) })),
+});
 
 export function deriveStoryCodex({ entries, chapters, mainCharacterName, declared = [], declaredFactions = [] }: {
   entries: readonly CodexEntry[];
@@ -159,6 +179,7 @@ export function deriveStoryCodex({ entries, chapters, mainCharacterName, declare
   const ordered = [...chapters].sort((left, right) => left.chapterNumber - right.chapterNumber);
   const holdings = deriveHoldings({ entries, chapters: ordered, mainCharacterName });
   const appeared = deriveAppearances({ entries, chapters: ordered, declaredFactions });
+  const status = deriveStatus({ entries, chapters: ordered });
 
   type Working = Omit<CodexCharacter, 'firstSeen'> & { firstSeen?: CodexPassage; names: Set<string> };
   const characters = new Map<string, Working>();
@@ -210,6 +231,20 @@ export function deriveStoryCodex({ entries, chapters, mainCharacterName, declare
       ?? add({ key: subject.key, name: subject.name, mainCharacter: subject.mainCharacter, things: [], abilities: [], chronicle: [], names: new Set(names) });
     character.appearance = appearanceOf(subject);
     const first = appearancePassage(subject.first);
+    if (!character.firstSeen || comesBefore(first, character.firstSeen) < 0) character.firstSeen = first;
+  }
+
+  // How each character is now: met there too, since a death the story reports still meets them.
+  for (const subject of status.subjects) {
+    if (subject.entity !== 'character') continue;
+    const entry = entries.find(candidate => candidate.id === subject.key);
+    const names = [subject.name, ...(entry?.aliases ?? [])].map(normalizeIdentityLabel);
+    const character = characters.get(subject.key)
+      ?? (subject.mainCharacter ? main() : undefined)
+      ?? [...characters.values()].find(candidate => names.some(name => candidate.names.has(name)))
+      ?? add({ key: subject.key, name: subject.name, mainCharacter: subject.mainCharacter, things: [], abilities: [], chronicle: [], names: new Set(names) });
+    character.status = statusOf(subject);
+    const first = statusPassage(subject.history[0].passage);
     if (!character.firstSeen || comesBefore(first, character.firstSeen) < 0) character.firstSeen = first;
   }
 
@@ -278,6 +313,15 @@ export function deriveStoryCodex({ entries, chapters, mainCharacterName, declare
     if (comesBefore(first, item.firstSeen) < 0) item.firstSeen = first;
     items.set(subject.key, item);
   }
+  // How each thing is now: damaged, destroyed or sealed.
+  for (const subject of status.subjects) {
+    if (subject.entity !== 'thing') continue;
+    const first = statusPassage(subject.history[0].passage);
+    const item = items.get(subject.key) ?? { key: subject.key, name: subject.name, count: 0, equipped: false, events: [], firstSeen: first };
+    item.status = statusOf(subject);
+    if (comesBefore(first, item.firstSeen) < 0) item.firstSeen = first;
+    items.set(subject.key, item);
+  }
   const itemList = [...items.values()]
     .map(item => ({ ...item, events: [...item.events].sort((left, right) => comesBefore(passageOf(left), passageOf(right))) }))
     .sort((left, right) => comesBefore(left.firstSeen, right.firstSeen));
@@ -289,7 +333,7 @@ export function deriveStoryCodex({ entries, chapters, mainCharacterName, declare
     return blockId ? { ...flag, blockId } : flag;
   });
   // In story order; a check about no one chapter (two names that may be one) comes first.
-  const checks = [...holdingChecks, ...appeared.flags].sort((left, right) => (left.chapterNumber ?? 0) - (right.chapterNumber ?? 0));
+  const checks = [...holdingChecks, ...appeared.flags, ...status.flags].sort((left, right) => (left.chapterNumber ?? 0) - (right.chapterNumber ?? 0));
 
   return { characters: roster, factions: factionList, items: itemList, checks };
 }

@@ -20,6 +20,11 @@ export interface WriterInstructionsChange {
  */
 export const WRITER_INSTRUCTIONS_HISTORY: readonly WriterInstructionsChange[] = [
   {
+    date: '2026-10-16',
+    summary: 'The second information tag, Status (asked for by SENSEI, moved before Place on 2026-10-14 because "the world remembers what you did" comes mostly from Status). SEN Status 1.0.0 loads on every chapter: the writer reads everyone and everything not as they were in Story Information\'s new Status section (dead, wounded, sealed away, captured, transformed, damaged, destroyed, each since its chapter), keeps each so, and tags every change of state where the prose shows it ([[status: Name | state | how]]), from one short list of states so plain rules can check them. The dead stay dead and the destroyed stay gone unless a revived tag brings them back. Threats, rumors, passing scratches, places and factions are never tagged; an ability sealed stays a Holdings tag. The response contract names the Status section among the packet\'s sections.',
+    changed: { status: '10af05400c8eec', 'response-contract': '109d45354941f1' },
+  },
+  {
     date: '2026-10-14',
     summary: 'From SENSEI\'s Test Story - Blade run (chapters 3 to 10): the writer tagged every new character but no thing at all, and in Chapter 9 used a look tag right after an appears tag to describe a first look, so two people got two looks each. SEN Appearance 1.1.0: a look tag is only a later change, never a first description, and an appears tag for a thing is only for a named object no one holds; held things are now recorded from their Holdings tags by the HARNESS, which also ignores a look tag in the paragraph that first shows someone. The chapter request (not a recorded block) now asks for about 1,500 words, 1,200 to 1,700 in 35 paragraphs, down from 1,800 to 2,500 in 50: chapters read too long.',
     changed: { appearance: '175e49662b3faa' },

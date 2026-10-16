@@ -51,6 +51,7 @@ import { harnessParagraphBlockId } from './chapterBody';
 import { protagonistNames } from './speakers';
 import { createCodexEntryResolver, declaredCharacters, resolveHoldingChanges } from './holdings';
 import { resolveAppearances, thingAppearancesFromHoldings } from './appearances';
+import { resolveStatusChanges } from './status';
 import { applyHoldingsFixes, planHoldingsFix } from './holdingsFixer';
 import { chapterLooks, planLookSubjects } from './lookDescriber';
 import {
@@ -471,7 +472,7 @@ export class HarnessGenerationController {
    * change replaced wait in `waiting`, off the page, until the chapter is
    * sealed. The chapter is marked as changed, so it is read again at its seal.
    */
-  async authorChapter(chapterId: string, changes: Pick<HarnessChapter, 'paragraphs' | 'soundCues' | 'speakers' | 'holdingChanges' | 'appearances' | 'openingSound' | 'soundtrackChanges'>
+  async authorChapter(chapterId: string, changes: Pick<HarnessChapter, 'paragraphs' | 'soundCues' | 'speakers' | 'holdingChanges' | 'appearances' | 'statusChanges' | 'openingSound' | 'soundtrackChanges'>
     & { waiting?: NonNullable<HarnessChapter['authoring']>['waiting'] }): Promise<void> {
     this.assertHydrated();
     if (this.generating) throw new Error('Wait for the active Harness operation before changing a chapter.');
@@ -489,8 +490,8 @@ export class HarnessGenerationController {
       const text = blocks.get(attachment.anchor.blockId);
       return !attachment.anchor.detached && text?.slice(attachment.anchor.startOffset, attachment.anchor.endOffset) === attachment.anchor.selectedText;
     };
-    for (const attachment of [...changes.soundCues ?? [], ...changes.speakers ?? [], ...changes.holdingChanges ?? [], ...changes.appearances ?? [], ...changes.soundtrackChanges ?? []]) {
-      if (!onItsWords(attachment)) throw new Error('Every Sound Cue, speaker, holding change, appearance and soundtrack change must sit on its words before the chapter is saved.');
+    for (const attachment of [...changes.soundCues ?? [], ...changes.speakers ?? [], ...changes.holdingChanges ?? [], ...changes.appearances ?? [], ...changes.statusChanges ?? [], ...changes.soundtrackChanges ?? []]) {
+      if (!onItsWords(attachment)) throw new Error('Every Sound Cue, speaker, holding change, appearance, status change and soundtrack change must sit on its words before the chapter is saved.');
     }
     // The opening is one of each kind's two: a chapter changes its music once, and its atmosphere once, after it.
     for (const kind of [SOUNDSCAPE_CHANGE_KIND, ATMOSPHERE_CHANGE_KIND]) {
@@ -501,11 +502,12 @@ export class HarnessGenerationController {
     chapter.paragraphs = paragraphs;
     chapter.prose = paragraphs.join('\n\n');
     chapter.metrics = { ...chapter.metrics, wordCount: paragraphs.reduce((total, paragraph) => total + paragraph.split(/\s+/u).length, 0), paragraphCount: paragraphs.length };
-    for (const key of ['soundCues', 'speakers', 'holdingChanges', 'appearances', 'soundtrackChanges'] as const) {
+    for (const key of ['soundCues', 'speakers', 'holdingChanges', 'appearances', 'statusChanges', 'soundtrackChanges'] as const) {
       const list = changes[key];
       if (list?.length) (chapter as Record<typeof key, unknown>)[key] = cloneHarnessValue(list);
-      // A chapter written with the Appearance skill keeps its list, even empty, so it is still known to have been asked.
+      // A chapter written with the Appearance or Status skill keeps its list, even empty, so it is still known to have been asked.
       else if (key === 'appearances' && chapter.appearances) chapter.appearances = [];
+      else if (key === 'statusChanges' && chapter.statusChanges) chapter.statusChanges = [];
       else delete chapter[key];
     }
     const opening = changes.openingSound;
@@ -1281,6 +1283,7 @@ export class HarnessGenerationController {
       speakersExpected: attempt.capaPrompt.skills.some(skill => skill.slot === 'speakers' && skill.authoring),
       holdingsExpected: attempt.capaPrompt.skills.some(skill => skill.slot === 'holdings' && skill.authoring),
       appearancesExpected: attempt.capaPrompt.skills.some(skill => skill.slot === 'appearance' && skill.authoring),
+      statusExpected: attempt.capaPrompt.skills.some(skill => skill.slot === 'status' && skill.authoring),
       soundtrackExpected: attempt.capaPrompt.skills.some(skill => skill.slot === 'soundtrack' && skill.authoring),
     });
     if (!acceptance.accepted) {
@@ -1418,10 +1421,10 @@ export class HarnessGenerationController {
       ...event,
       chapterId,
     }));
-    // Every name an appearance or a holding change uses becomes a Codex entry
-    // now, in the same write that commits its chapter: the app assigns the IDs,
-    // never the writer. One resolver serves both, so a new name tagged by both
-    // is one entry.
+    // Every name an appearance, a status change or a holding change uses
+    // becomes a Codex entry now, in the same write that commits its chapter:
+    // the app assigns the IDs, never the writer. One resolver serves them all,
+    // so a new name tagged by more than one is one entry.
     const resolving = {
       storyId: commitAttempt.storyId,
       chapter: { id: chapterId, chapterNumber: commitAttempt.chapterNumber },
@@ -1433,6 +1436,13 @@ export class HarnessGenerationController {
     const resolver = createCodexEntryResolver(resolving);
     const appearances = acceptedDraft.appearances
       ? resolveAppearances({ ...resolving, appearances: acceptedDraft.appearances, resolver }).appearances
+      : undefined;
+    // Status changes name only who or what the chapter can find or make; a faction waits for its own tag.
+    const statusChanges = acceptedDraft.statusChanges
+      ? resolveStatusChanges({
+        changes: acceptedDraft.statusChanges, resolver,
+        declaredFactions: commitAttempt.storyInformation.currentStory.identities?.filter(identity => identity.kind === 'faction') ?? [],
+      })
       : undefined;
     const holdings = acceptedDraft.holdingChanges?.length
       ? resolveHoldingChanges({ ...resolving, changes: acceptedDraft.holdingChanges, resolver })
@@ -1462,6 +1472,7 @@ export class HarnessGenerationController {
       ...(holdings?.changes.length ? { holdingChanges: holdings.changes } : {}),
       ...(acceptedDraft.closingHoldings ? { closingHoldings: [...acceptedDraft.closingHoldings] } : {}),
       ...(appearances ? { appearances } : {}),
+      ...(statusChanges ? { statusChanges } : {}),
       ...(acceptedDraft.scene ? { scene: cloneHarnessValue(acceptedDraft.scene) } : {}),
       mediaLoadout: cloneHarnessValue(commitAttempt.mediaLoadout),
       ...(acceptedDraft.plan ? { plan: acceptedDraft.plan } : {}),

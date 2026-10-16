@@ -1,6 +1,7 @@
 import {
   HARNESS_TAG_RULES,
   SEN_APPEARANCE_SKILL,
+  SEN_STATUS_SKILL,
   SEN_FATE_SURVIVAL_SKILL,
   SEN_HOLDINGS_SKILL,
   SEN_NOVEL_AUTHOR_SKILL,
@@ -36,6 +37,7 @@ export type WriterInstructionId =
   | 'speakers'
   | 'holdings'
   | 'appearance'
+  | 'status'
   | 'response-contract'
   | 'fate-survival'
   | 'clear-reading'
@@ -103,6 +105,11 @@ export const EVERY_CHAPTER: readonly WriterInstruction[] = [
     text: skillText(SEN_APPEARANCE_SKILL),
   },
   {
+    id: 'status', title: 'Status', source: skillSource(SEN_STATUS_SKILL),
+    when: 'Every chapter.',
+    text: skillText(SEN_STATUS_SKILL),
+  },
+  {
     id: 'response-contract', title: 'Response and evidence contract', source: 'HARNESS',
     when: 'Every chapter, last, after every skill. No skill can change it.',
     text: HARNESS_RESPONSE_CONTRACT,
@@ -153,7 +160,7 @@ export const defaultSystemInstruction = () => [
   assembleCapaPrompt({
     capturedAt: 'now',
     originalLanguage: 'en',
-    skills: [SEN_NOVEL_AUTHOR_SKILL, SEN_SOUND_CUES_SKILL, SEN_SOUNDTRACK_SKILL, SEN_SPEAKERS_SKILL, SEN_HOLDINGS_SKILL, SEN_APPEARANCE_SKILL],
+    skills: [SEN_NOVEL_AUTHOR_SKILL, SEN_SOUND_CUES_SKILL, SEN_SOUNDTRACK_SKILL, SEN_SPEAKERS_SKILL, SEN_HOLDINGS_SKILL, SEN_APPEARANCE_SKILL, SEN_STATUS_SKILL],
     soundVocabulary: LIBRARY_SOUND_WORDS,
     soundtrackVocabulary: DEFAULT_SOUNDTRACK_WORDS,
   }).text,

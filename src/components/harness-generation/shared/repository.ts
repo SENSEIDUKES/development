@@ -72,6 +72,9 @@ const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => 
   // 32 adds only optional chapter fields (its appearances and the looks
   // written down from them): every saved story reads as it is.
   31: stored => ({ ...stored, schemaVersion: 32 }),
+  // 33 adds only an optional chapter field (its status changes): every saved
+  // story reads as it is.
+  32: stored => ({ ...stored, schemaVersion: 33 }),
 };
 
 /**

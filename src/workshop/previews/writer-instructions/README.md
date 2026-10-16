@@ -5,7 +5,7 @@ chapter writer reads before the story, and every dated change to them.
 Open it at `?preview=writer-instructions` (Systems section).
 
 - **Created:** 2026-10-04
-- **Last Workshop update:** 2026-10-14
+- **Last Workshop update:** 2026-10-16
 - **Last source comparison:** not applicable; the page reads the live code
 - **Status:** active, Workshop-owned reference surface
 
@@ -13,7 +13,7 @@ Open it at `?preview=writer-instructions` (Systems section).
 
 - **Every chapter, in order:** the Author skill (SEN's default), the HARNESS
   tag rules, Sound Cues with the default library's sound list, Soundtrack,
-  Speakers, Holdings, Appearance, and the HARNESS response and evidence
+  Speakers, Holdings, Appearance, Status, and the HARNESS response and evidence
   contract. Each block shows
   whose words they are (a SEN skill and its version, or the HARNESS), when the
   writer reads them, their size in words, and the date they last changed.
@@ -51,6 +51,8 @@ and the fingerprint to record. To change the writer's instructions:
 
 ## Workshop history
 
+- **2026-10-16:** SEN Status joins the blocks read on every chapter, open on
+  arrival like the other tag blocks.
 - **2026-10-14:** SEN Appearance joins the blocks read on every chapter (open
   on arrival, like the other tag blocks), and the look step joins After a
   chapter, beside the Holdings fixer.

@@ -93,7 +93,7 @@ the prose:
 |---|---|---|
 | **Entities** | Who and what exists: characters, things, abilities, places, factions, each with one permanent ID | Characters, things and abilities **have** (Codex entries). Places and factions missing |
 | **Appearance** | What each entity looks like, and when that changes (a scar, new robes, a breakthrough) | Characters and things **have** (appears and look tags; the look step writes each look down). Places wait for the Place tag |
-| **State over time** | What everything is like at any chapter: holdings and rank; status (alive, wounded, transformed); where each character is | Holdings and rank **have**. Status and location missing |
+| **State over time** | What everything is like at any chapter: holdings and rank; status (alive, wounded, transformed); where each character is | Holdings and rank **have**. Status **has** (status tags, for characters and things). Location missing |
 | **Ties** | Who is allied, hostile, related or bound to whom | **Missing** |
 | **Scenes** | Where a scene starts, where it is, when (time of day, conditions), and who is present | **Missing**. Each chapter has one musical scene today, not story scenes |
 | **Moments** | The beats inside a scene that matter most, with their intensity | **Roughly have**: Sound Cues carry Energy |
@@ -139,6 +139,9 @@ the record, which must stay exact.
 
 ## History
 
+- **2026-10-16:** Status has its first pieces: the status tag, one short list
+  of states the plain rules check (the dead stay dead), and the Status section
+  every chapter's writer reads.
 - **2026-10-14:** Appearance has its first pieces: the appears and look tags,
   and the look step that writes each look down after a chapter is saved,
   medium-neutral, from the passage that shows it.

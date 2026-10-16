@@ -267,6 +267,27 @@ describe('Holdings fixer: the answers', () => {
     expect(result.chapter.appearances![0].payload.subject).toEqual({ name: 'Rusted Sword', entryId: kept.id });
   });
 
+  it('never rewrites a sentence that carries a status change, moves the changes after a corrected sentence, and points a merged name\'s changes at the entry kept', async () => {
+    const { state, latest } = await written(reply([SWORD, '[[gained: MC | Spirit Pill]] He pocketed a spirit pill.']),
+      reply(['[[lost: MC | Spirit Pill | 2]] Ye Chen swallowed two pills at once. [[status: MC | wounded | a burnt throat]] The fire scorched his throat.']));
+    expect(latest.statusChanges!.map(found => found.anchor.selectedText)).toEqual(['The fire scorched his throat.']);
+    const answer = { case: 'c1', outcome: 'prose', replacement: 'Ye Chen swallowed his last pill.', tags: '[[lost: MC | Spirit Pill]]', reason: 'One pill.' };
+    const shown = latest.statusChanges![0];
+    const onIt = { ...latest, statusChanges: [{ ...shown, anchor: { ...shown.anchor, startOffset: 0, endOffset: 40, selectedText: latest.paragraphs[0].slice(0, 40) } }] };
+    expect(apply(state, onIt, [answer]).plan.cases[0].case.answers).toEqual(['record', 'fine', 'major']);
+    const { result } = apply(state, latest, [answer]);
+    expect(result.fixes[0].outcome).toBe('fixed-sentence');
+    const moved = result.chapter.statusChanges![0].anchor;
+    expect(result.chapter.paragraphs[0].slice(moved.startOffset, moved.endOffset)).toBe('The fire scorched his throat.');
+
+    const named = await written(reply([SWORD]),
+      reply(['[[gained: MC | Rusted Sword]] Ye Chen found a second rusted sword. [[status: Rusted Sword | damaged | a chipped edge]] Its edge was chipped.']));
+    const merged = apply(named.state, named.latest, [{ case: 'c1', outcome: 'record', reason: 'The same blade.' }]).result;
+    const kept = named.state.codexEntries.find(entry => entry.name === 'Rusted Iron Sword')!;
+    expect(merged.fixes[0]).toMatchObject({ outcome: 'merged', merged: { keptEntryId: kept.id } });
+    expect(merged.chapter.statusChanges![0].payload.subject).toEqual({ name: 'Rusted Sword', entryId: kept.id });
+  });
+
   it('keeps the chapter as it was when an answer would not settle the problem, is missing, or is a major contradiction', async () => {
     const { state, latest } = await written(reply([SWORD]), reply(['[[gained: MC | Rusted Iron Sword]] He picked up the rusted sword again.']));
     const unsettled = apply(state, latest, [{ case: 'c1', outcome: 'record', tags: '[[gained: MC | Rusted Iron Sword]]', reason: 'Same.' }]).result;

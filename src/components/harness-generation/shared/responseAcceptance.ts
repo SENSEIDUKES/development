@@ -3,15 +3,17 @@ import type { FrozenNarrativeMedia } from '../../../audio/media';
 import { describeSetAsideSoundCue, placeSoundCues } from '../../../audio/soundCuePlacement';
 import type { SoundWord } from '../../../audio/soundWords';
 import type { SoundCueAttachment } from '../../../audio/inlineAudio';
-import { isAppearanceTagWord, isHoldingTagWord, readMarks, type MarkReading, type WordTag } from '../../../narrative/marks';
+import { isAppearanceTagWord, isHoldingTagWord, isStatusTagWord, readMarks, type MarkReading, type WordTag } from '../../../narrative/marks';
 import { settleStraySoundTags } from './soundTagRepair';
 import type { SpeakerAttachment } from '../../../narrative/speech';
 import { chapterTitleText } from '../../../narrative/chapterTitle';
 import type { HoldingChangeAttachment } from '../../../narrative/holdings';
 import type { AppearanceAttachment } from '../../../narrative/appearances';
+import type { StatusChangeAttachment } from '../../../narrative/status';
 import { isMainCharacterTag, isProtagonist, placeSpeakers, type ProtagonistNames } from './speakers';
 import { holdingName, placeHoldingChanges } from './holdings';
 import { placeAppearances } from './appearances';
+import { placeStatusChanges } from './status';
 import { chapterSoundtrack } from './soundtrack';
 import { normalizeIdentityLabel } from './canonicalProjection';
 import { ignoredSoundCueListWarning, stripReplyMarks } from './chapterSignals';
@@ -261,6 +263,11 @@ export interface HarnessResponseAcceptanceOptions {
    * appearances even when it has none: the rules then know it was asked.
    */
   appearancesExpected?: boolean;
+  /**
+   * The writer was asked for status tags, so the chapter keeps its status
+   * changes even when it has none: the rules then know it was asked.
+   */
+  statusExpected?: boolean;
   /** The writer was asked to choose the chapter's soundtrack, so a chapter without one is worth flagging. */
   soundtrackExpected?: boolean;
 }
@@ -315,6 +322,7 @@ const readParagraphMarks = (paragraphs: readonly string[], warnings: HarnessWarn
   // Unreadable word tags, counted where each kind is reported: appearance tags apart from the rest.
   let wordTagIssues = 0;
   let appearanceTagIssues = 0;
+  let statusTagIssues = 0;
   let soundTagIssues = 0;
   const options = soundWords?.length ? { soundWords: soundWords.map(sound => sound.word) } : {};
   // A sound tag written beside its sentence instead of around its words leaves no stray words behind.
@@ -328,6 +336,7 @@ const readParagraphMarks = (paragraphs: readonly string[], warnings: HarnessWarn
   for (const reading of settled.readings) {
     for (const issue of reading.wordTagIssues) {
       if (issue.kind !== 'unknown' && isAppearanceTagWord(issue.word)) appearanceTagIssues += 1;
+      else if (issue.kind !== 'unknown' && isStatusTagWord(issue.word)) statusTagIssues += 1;
       else wordTagIssues += 1;
     }
     soundTagIssues += reading.soundIssues.length;
@@ -359,7 +368,7 @@ const readParagraphMarks = (paragraphs: readonly string[], warnings: HarnessWarn
       message: `Removed ${soundTagIssues} unusable sound tag${soundTagIssues === 1 ? '' : 's'} (unclosed, nested, empty, or naming no sound or no words) and kept the prose.`,
     });
   }
-  return { read, strandedTags, wordTagIssues, appearanceTagIssues, soundtracks };
+  return { read, strandedTags, wordTagIssues, appearanceTagIssues, statusTagIssues, soundtracks };
 };
 
 /**
@@ -521,6 +530,29 @@ const acceptedAppearances = (
   return placement.appearances.length || options.appearancesExpected ? placement.appearances : undefined;
 };
 
+/**
+ * Reads the writer's status tags into status changes on the sentences they
+ * point at. Tags it cannot read are flagged; the chapter is never rejected
+ * for its status changes. A chapter written with the Status skill keeps its
+ * status changes even when it has none.
+ */
+const acceptedStatusChanges = (
+  marked: { read: ReadonlyArray<Pick<MarkReading, 'text' | 'wordTags'>>; statusTagIssues: number },
+  chapterNumber: number,
+  warnings: HarnessWarning[],
+  options: HarnessResponseAcceptanceOptions,
+): StatusChangeAttachment[] | undefined => {
+  const paragraphs = marked.read.map((paragraph, index) => ({ blockId: harnessParagraphBlockId(chapterNumber, index), text: paragraph.text, wordTags: paragraph.wordTags }));
+  const placement = placeStatusChanges({ paragraphs, locale: options.locale });
+  const unreadable = marked.statusTagIssues;
+  const problems = [
+    ...(unreadable ? [`${unreadable} status tag${unreadable === 1 ? ' was' : 's were'} unreadable and removed`] : []),
+    ...placement.problems,
+  ];
+  if (problems.length) warnings.push({ code: 'status_tags_incomplete', message: `${problems.join('; ')}.`.replace(/^./, letter => letter.toUpperCase()) });
+  return placement.changes.length || options.statusExpected ? placement.changes : undefined;
+};
+
 export const verifyHarnessEventEvidence = (event: HarnessSemanticEvent, prose: string): HarnessSemanticEvent => {
   const normalize = (value: string) => value.replace(/\s+/g, ' ').trim();
   const quote = event.evidence ? normalize(event.evidence) : '';
@@ -552,7 +584,7 @@ export const acceptHarnessModelResponse = (
     // writer's tags out of them, keeps the clean text exactly as written,
     // derives the readable prose from it, and places the Sound Cues its sound tags name.
     const source = acceptedChapterBody(parsed, warnings);
-    const marked = source ? readParagraphMarks(source, warnings, options.soundVocabulary, options.locale) : { read: [], strandedTags: 0, wordTagIssues: 0, appearanceTagIssues: 0, soundtracks: [] };
+    const marked = source ? readParagraphMarks(source, warnings, options.soundVocabulary, options.locale) : { read: [], strandedTags: 0, wordTagIssues: 0, appearanceTagIssues: 0, statusTagIssues: 0, soundtracks: [] };
     const body = marked.read.length ? harnessChapterBody(marked.read.map(reading => reading.text), options.paragraphTarget) : undefined;
     if (!body || looksLikeRefusal(body.prose)) {
       return {
@@ -575,6 +607,7 @@ export const acceptHarnessModelResponse = (
     // The closing list is read as written, so a tag put there instead of the prose is not lost.
     const holdings = acceptedHoldings(reply, marked, chapterNumber, warnings, options);
     const appearances = acceptedAppearances(marked, chapterNumber, warnings, options);
+    const statusChanges = acceptedStatusChanges(marked, chapterNumber, warnings, options);
     const scene = acceptedScene(marked.soundtracks, chapterNumber, warnings, options);
     // The chapter's number is the HARNESS's: a "Chapter 3:" the writer put before its title is dropped.
     const writtenTitle = nonEmptyString(parsed.title);
@@ -601,6 +634,7 @@ export const acceptHarnessModelResponse = (
         ...(holdings.changes.length ? { holdingChanges: holdings.changes } : {}),
         ...(holdings.closing ? { closingHoldings: holdings.closing } : {}),
         ...(appearances ? { appearances } : {}),
+        ...(statusChanges ? { statusChanges } : {}),
         ...(scene ? { scene } : {}),
         title: title ?? chapterTitleFallback(chapterNumber),
         titleSource: title ? 'model' : 'harness-fallback',
@@ -632,7 +666,7 @@ export const acceptHarnessModelResponse = (
   warnings.push(
     {
       code: 'plain_prose_recovery',
-      message: 'The response was not valid JSON, so the harness preserved its readable prose without marks and placed no Sound Cues, speakers, holding changes or appearances.',
+      message: 'The response was not valid JSON, so the harness preserved its readable prose without marks and placed no Sound Cues, speakers, holding changes, appearances or status changes.',
     },
     {
       code: 'missing_title',

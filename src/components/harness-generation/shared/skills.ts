@@ -10,6 +10,7 @@ import { SEN_SOUNDTRACK_SKILL, presentSoundtrackVocabulary } from './soundtrackS
 import { SEN_SPEAKERS_SKILL } from './speakersSkill';
 import { SEN_HOLDINGS_SKILL } from './holdingsSkill';
 import { SEN_APPEARANCE_SKILL } from './appearanceSkill';
+import { SEN_STATUS_SKILL } from './statusSkill';
 import { HARNESS_TAG_RULES } from './tagRules';
 import type { SoundWord } from '../../../audio/soundWords';
 import type { SoundtrackVocabulary } from '../../../audio/soundtrackVocabulary';
@@ -37,7 +38,7 @@ export interface CapaSlotDefinition {
    *   or atmospheres loads SEN's Soundtrack skill with them. Without them the
    *   slot is empty. A host without the Soundtrack skill leaves its slot empty
    *   and never fails a chapter.
-   * - `always`: every chapter. SEN's skill for the slot (Speakers, Holdings, Appearance)
+   * - `always`: every chapter. SEN's skill for the slot (Speakers, Holdings, Appearance, Status)
    *   loads whenever the host has it; a host without it leaves the slot empty
    *   and never fails a chapter.
    */
@@ -75,6 +76,7 @@ export const CAPA_SCHEMA: readonly CapaSlotDefinition[] = [
   { id: 'speakers', label: 'Speakers', description: 'Tags who speaks each spoken line, so the Reader can give each its voice.', managedBy: 'always', installable: false, writesTags: true },
   { id: 'holdings', label: 'Holdings', description: 'Keeps what every character has, uses, knows and is: tags each change where it happens and lists what the main character holds after the chapter.', managedBy: 'always', installable: false, writesTags: true },
   { id: 'appearance', label: 'Appearance', description: 'Keeps every look: tags each character and thing when it steps onto the page and each change to a look.', managedBy: 'always', installable: false, writesTags: true },
+  { id: 'status', label: 'Status', description: 'Keeps how everyone and everything now is: tags each death, wound, recovery, sealing, capture, release, transformation, and thing damaged, repaired or destroyed.', managedBy: 'always', installable: false, writesTags: true },
 ] as const;
 
 /** SEN's own skill for each slot that loads on every chapter. */
@@ -82,6 +84,7 @@ export const ALWAYS_LOADED_SKILLS: Readonly<Partial<Record<HarnessSkillSlotId, H
   speakers: SEN_SPEAKERS_SKILL,
   holdings: SEN_HOLDINGS_SKILL,
   appearance: SEN_APPEARANCE_SKILL,
+  status: SEN_STATUS_SKILL,
 };
 
 const HARNESS_SKILL_APPLICATIONS: readonly HarnessSkillApplication[] = [
@@ -109,6 +112,7 @@ const ALWAYS_SLOT_REASONS: Readonly<Partial<Record<HarnessSkillSlotId, string>>>
   speakers: 'The Speakers slot loads SEN\'s Speakers skill on every chapter, so the Reader knows who speaks each line.',
   holdings: 'The Holdings slot loads SEN\'s Holdings skill on every chapter, so what every character has is read, used and recorded.',
   appearance: 'The Appearance slot loads SEN\'s Appearance skill on every chapter, so everyone and everything on the page keeps the look the story gave it.',
+  status: 'The Status slot loads SEN\'s Status skill on every chapter, so the dead stay dead and every wound, seal and ruin is remembered.',
 };
 
 /** Why a slot cannot be equipped by hand, when it cannot. */

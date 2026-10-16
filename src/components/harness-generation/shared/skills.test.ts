@@ -128,13 +128,13 @@ describe('Harness installed skills', () => {
       soundtrackVocabulary: { moods: ['mystical', 'war'], atmospheres: ['forest', 'cave'] },
     });
     expect(CAPA_SCHEMA.map(slot => slot.id)).toEqual([
-      'author', 'pacing', 'fate', 'continuity', 'style', 'accessibility', 'translation', 'soundCues', 'soundtrack', 'speakers', 'holdings', 'appearance',
+      'author', 'pacing', 'fate', 'continuity', 'style', 'accessibility', 'translation', 'soundCues', 'soundtrack', 'speakers', 'holdings', 'appearance', 'status',
     ]);
-    // Fate, Accessibility, Translation, Sound Cues and Soundtrack follow story state, Speakers, Holdings and Appearance load on every chapter; the rest are equipped by hand.
+    // Fate, Accessibility, Translation, Sound Cues and Soundtrack follow story state, Speakers, Holdings, Appearance and Status load on every chapter; the rest are equipped by hand.
     expect(CAPA_SCHEMA.filter(slot => slot.managedBy).map(slot => [slot.id, slot.managedBy])).toEqual([
-      ['fate', 'fate-mode'], ['accessibility', 'reading-mode'], ['translation', 'story-language'], ['soundCues', 'media-loadout'], ['soundtrack', 'media-loadout'], ['speakers', 'always'], ['holdings', 'always'], ['appearance', 'always'],
+      ['fate', 'fate-mode'], ['accessibility', 'reading-mode'], ['translation', 'story-language'], ['soundCues', 'media-loadout'], ['soundtrack', 'media-loadout'], ['speakers', 'always'], ['holdings', 'always'], ['appearance', 'always'], ['status', 'always'],
     ]);
-    // Installable is separate from equippable: Translation packages install; SEN fills Fate, Accessibility, Sound Cues, Soundtrack, Speakers, Holdings and Appearance.
+    // Installable is separate from equippable: Translation packages install; SEN fills Fate, Accessibility, Sound Cues, Soundtrack, Speakers, Holdings, Appearance and Status.
     expect(CAPA_SCHEMA.filter(slot => slot.installable).map(slot => slot.id)).toEqual([
       'author', 'pacing', 'continuity', 'style', 'translation',
     ]);
@@ -187,14 +187,14 @@ describe('Harness installed skills', () => {
     const { story } = createHarnessStory(createEmptyHarnessWorkspaceState(), { premise: 'A patient rebellion begins.' }, 'en', defaultHarnessRuntime);
     story.skillLoadout = { author: { id: SEN_NOVEL_AUTHOR_SKILL.id, version: SEN_NOVEL_AUTHOR_SKILL.version } };
     const slots = (mode?: 'regular' | 'survival') => freezeHarnessSkillLoadout(story, catalog, 'now', mode).skills.map(skill => skill.id);
-    // Speakers, Holdings and Appearance load on every chapter, in both modes.
-    expect(slots()).toEqual(['seihouse.sen-novel-author', 'seihouse.sen-speakers', 'seihouse.sen-holdings', 'seihouse.sen-appearance']);
-    expect(slots('regular')).toEqual(['seihouse.sen-novel-author', 'seihouse.sen-speakers', 'seihouse.sen-holdings', 'seihouse.sen-appearance']);
-    expect(slots('survival')).toEqual(['seihouse.sen-novel-author', 'seihouse.sen-fate-survival', 'seihouse.sen-speakers', 'seihouse.sen-holdings', 'seihouse.sen-appearance']);
+    // Speakers, Holdings, Appearance and Status load on every chapter, in both modes.
+    expect(slots()).toEqual(['seihouse.sen-novel-author', 'seihouse.sen-speakers', 'seihouse.sen-holdings', 'seihouse.sen-appearance', 'seihouse.sen-status']);
+    expect(slots('regular')).toEqual(['seihouse.sen-novel-author', 'seihouse.sen-speakers', 'seihouse.sen-holdings', 'seihouse.sen-appearance', 'seihouse.sen-status']);
+    expect(slots('survival')).toEqual(['seihouse.sen-novel-author', 'seihouse.sen-fate-survival', 'seihouse.sen-speakers', 'seihouse.sen-holdings', 'seihouse.sen-appearance', 'seihouse.sen-status']);
     // The slot follows the mode, whatever the story's loadout says.
     story.skillLoadout = { ...story.skillLoadout, fate: { id: 'someone.else', version: '1.0.0' } };
-    expect(slots('regular')).toEqual(['seihouse.sen-novel-author', 'seihouse.sen-speakers', 'seihouse.sen-holdings', 'seihouse.sen-appearance']);
-    expect(slots('survival')).toEqual(['seihouse.sen-novel-author', 'seihouse.sen-fate-survival', 'seihouse.sen-speakers', 'seihouse.sen-holdings', 'seihouse.sen-appearance']);
+    expect(slots('regular')).toEqual(['seihouse.sen-novel-author', 'seihouse.sen-speakers', 'seihouse.sen-holdings', 'seihouse.sen-appearance', 'seihouse.sen-status']);
+    expect(slots('survival')).toEqual(['seihouse.sen-novel-author', 'seihouse.sen-fate-survival', 'seihouse.sen-speakers', 'seihouse.sen-holdings', 'seihouse.sen-appearance', 'seihouse.sen-status']);
     const capa = assembleCapaPrompt(freezeHarnessSkillLoadout(story, catalog, 'now', 'survival'));
     expect(capa.text).toContain(`CAPA SKILL [Fate] — SEN Fate Survival v${SEN_FATE_SURVIVAL_SKILL.version}`);
     expect(capa.text).toContain('bring the story to a believable, final ending in this chapter');

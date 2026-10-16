@@ -85,6 +85,8 @@ const chapter = {
     // The writer tags who speaks: the main character with their own tag, then someone else by name.
     '[[@MC]] “Ring the bells,” Ye Chen said.',
     '[[appears: Junior Sister Han | character]] [[@Junior Sister Han]] “They are drowned,” she whispered.',
+    // The writer tags a change of state where it happens.
+    '[[status: MC | wounded | a cut palm]] The broken bell cut Mara\'s palm.',
     // The rest of the chapter: a reply under a quarter of the 1,800-word minimum is a failed write and is never saved.
     Array.from({ length: 35 }, () => 'The night went on, and the town kept its quiet watch until dawn.').join(' '),
   ],
@@ -711,6 +713,10 @@ async function walk(browser, viewport, sample) {
   check(counts.looks.length === 1 && counts.looks[0].token && counts.looks[0].subjects.length === 3,
     `The look step should make one quiet call with the token for three appearances, got ${JSON.stringify(counts.looks)}.`);
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), 'The character sheet must not scroll sideways.');
+  // Her state, from the status tag: on the card's header and in its Status, linked to its passage.
+  const state = await codexSheet.getByTestId('codex-status').innerText();
+  check(state.includes('Wounded · a cut palm') && state.includes('Ch. 1 · wounded'), `The sheet should show her wound, got ${state}.`);
+  check((await codexSheet.locator('header').innerText()).includes('Wounded'), 'The card should say she is wounded.');
   await shot('6d-codex-profile');
   // Manifest makes the card's picture from that look, on the cover route with the token, and the card wears it.
   await codexSheet.getByTestId('codex-manifest').getByRole('button', { name: 'Manifest' }).click();

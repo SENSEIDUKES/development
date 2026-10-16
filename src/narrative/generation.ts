@@ -3,6 +3,7 @@ import type { ChapterOpeningSound, SoundtrackChangeAttachment } from '../audio/s
 import type { SpeakerAttachment } from './speech';
 import type { CodexEntry, HoldingChangeAttachment, HoldingsSection } from './holdings';
 import type { AppearanceAttachment, AppearanceEntity, AppearanceEvent, AppearancesSection, ChapterLooks, Look } from './appearances';
+import type { StatusChangeAttachment, StatusSection } from './status';
 import type { SoundWord } from '../audio/soundWords';
 import type { SoundtrackVocabulary } from '../audio/soundtrackVocabulary';
 import type { FrozenNarrativeMedia, ResolvedSoundscape, StoryMediaSelection } from '../audio/media';
@@ -25,8 +26,8 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * upgrades); 28 adds the optional rewrite request and replaced-by record, and
  * each chapter's optional Holdings fixer record; 31 adds the story's optional
  * own sound words; 32 adds each chapter's optional appearances and the looks
- * written down from them. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 32 as const;
+ * written down from them; 33 adds each chapter's optional status changes. */
+export const HARNESS_GENERATION_SCHEMA_VERSION = 33 as const;
 
 /** The most an Author's notes may hold, in characters. */
 export const AUTHOR_NOTES_LIMIT = 2000;
@@ -263,7 +264,8 @@ export type HarnessSkillSlotId =
   | 'soundtrack'
   | 'speakers'
   | 'holdings'
-  | 'appearance';
+  | 'appearance'
+  | 'status';
 
 export type HarnessSkillApplication =
   | 'generation'
@@ -575,7 +577,7 @@ export type HarnessModelPlan = string | {
  */
 export interface HarnessChapterAuthoring {
   editedAt: string;
-  waiting?: Array<SoundCueAttachment | SpeakerAttachment | HoldingChangeAttachment | AppearanceAttachment>;
+  waiting?: Array<SoundCueAttachment | SpeakerAttachment | HoldingChangeAttachment | AppearanceAttachment | StatusChangeAttachment>;
 }
 
 export interface HarnessChapterMetrics {
@@ -611,6 +613,13 @@ export interface HarnessAcceptedChapterDraft {
    * as written; they resolve to Codex entries when the chapter commits.
    */
   appearances?: AppearanceAttachment[];
+  /**
+   * Every change of state the writer tagged (a death, a wound, a sealing, a
+   * thing destroyed), on the sentence its tag points at. Present, even empty,
+   * when the chapter was written with the Status skill. Names are as written;
+   * they resolve to Codex entries when the chapter commits.
+   */
+  statusChanges?: StatusChangeAttachment[];
   /** The chapter's music and atmosphere, from the writer's soundscape and atmosphere tags. */
   scene?: HarnessChapterScene;
   title: string;
@@ -690,7 +699,8 @@ export interface HarnessWarning {
     | 'speaker_tags_incomplete'
     | 'soundtrack_incomplete'
     | 'holding_tags_incomplete'
-    | 'appearance_tags_incomplete';
+    | 'appearance_tags_incomplete'
+    | 'status_tags_incomplete';
   message: string;
 }
 
@@ -818,6 +828,7 @@ export type PacketSectionId =
   | 'canonicalState'
   | 'holdings'
   | 'appearances'
+  | 'status'
   | 'missionReminder'
   | 'immediateChapterRequest';
 
@@ -897,6 +908,12 @@ export interface StoryInformationPacket {
    * Absent from packets frozen before appearances existed.
    */
   appearances?: AppearancesSection;
+  /**
+   * Section 9, after Appeared: every character and thing not as they were
+   * (dead, wounded, sealed away, destroyed), worked out from the committed
+   * chapters' status changes. Absent from packets frozen before status existed.
+   */
+  status?: StatusSection;
   /** HARNESS-only; the provider boundary never presents it. */
   diagnostics: StoryInformationDiagnostics;
 }
@@ -958,6 +975,13 @@ export interface HarnessChapter {
    * appearance it read. Absent when it found nothing to describe, or did not run.
    */
   looks?: ChapterLooks;
+  /**
+   * Each change of state: one status change per tag, on the sentence it
+   * points at, with its name resolved to a Codex entry. Present, even empty,
+   * when the chapter was written with the Status skill. How everyone is now is
+   * worked out from these, never stored.
+   */
+  statusChanges?: StatusChangeAttachment[];
   /**
    * The reader's own changes in the Reader's Create mode, until the chapter is
    * sealed (the next chapter is written). Absent from a chapter nobody changed.

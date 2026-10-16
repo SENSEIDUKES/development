@@ -79,6 +79,9 @@ describe('Color Codes', () => {
       [{ realm: 'Divine Realm', safetyLevel: 'Unsafe' }, 'warning'],
       [{ description: 'A hidden valley' }, 'mystery'],
       [{ description: 'A forbidden road' }, 'warning'],
+      [{ description: 'A sacred forbidden road' }, 'warning'],
+      [{ description: 'A forbidden road', realm: 'Divine Realm', safetyLevel: 'Unknown' }, 'warning'],
+      [{ description: 'A sacred forbidden road', safetyLevel: 'Lethal' }, 'enemy'],
       [{ description: 'A village', safetyLevel: 'Safe' }, 'location'],
     ] as const) {
       expect(resolveLocationColorCode(entry)).toBe(expected);

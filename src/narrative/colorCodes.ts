@@ -200,11 +200,11 @@ function resolveLocationBand(entry: CodexEntityAccentInput): CodexEntityBand {
   // Known danger takes precedence over a place's prestige or hidden nature.
   if (safetyCode === 'enemy') return 'hostile';
   if (safetyCode === 'warning') return 'warning';
+  if (/\bforbidden\b/.test(description)) return 'warning';
   const realm = (entry.realm || '').toLowerCase();
   const isSpecial = /\b(special|sacred|divine)\b/.test(description)
     || /\b(divine|heaven|heavenly)\b/.test(realm);
   if (isSpecial) return 'gold';
-  if (/\bforbidden\b/.test(description)) return 'warning';
   if (/\b(secret|hidden|mysterious)\b/.test(description)) return 'extraordinary';
   return 'location';
 }

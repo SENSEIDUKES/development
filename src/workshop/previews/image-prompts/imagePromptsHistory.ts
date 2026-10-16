@@ -15,6 +15,14 @@ export interface ImagePromptsChange {
  */
 export const IMAGE_PROMPTS_HISTORY: ImagePromptsChange[] = [
   {
+    date: '2026-10-16',
+    summary: 'From SENSEI\'s first Codex pictures: they came out in a flatter, plainer style than the covers and profile pictures, and characters looked bland (an arrogant antagonist stood like a neutral character sheet). Both prompts now ask outright for professional, high-quality art like a premium webnovel cover illustration, highly detailed, richly painted and sharp, with cinematic lighting in a setting from their world. "Where the look is silent, keep it plain" is gone: the model now chooses what suits the character, their part in the story and the world, while still keeping every stated detail and adding no scars or marks the look does not name.',
+    changed: {
+      'codex-character': '1b68fdccb71ca3',
+      'codex-thing': '1dad52e9735b1e',
+    },
+  },
+  {
     date: '2026-10-15',
     summary: 'Codex pictures are on the new path, at the owner\'s request, so the owner can test how well the story\'s looks bring its characters and items to life before manifesting while reading is built. Two new prompts, one for a character and one for an item, follow the cover\'s shape: Eastern fantasy art in the story\'s own tradition, genre, tone and world, made only from the look the record wrote down (its line and each trait the chapters state), adding nothing the look does not name, at 3:4 with no lettering. The old app\'s portraits stay below them for comparison, and its artifact image moves beside them.',
     changed: {

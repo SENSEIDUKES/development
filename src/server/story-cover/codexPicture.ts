@@ -8,7 +8,7 @@ import { COVER_TRADITIONS, STORY_COVER_FIELD_LIMITS } from './prompt';
  * chapters state), set in the story's own tradition, genre, tone and world.
  * Made with the Model Router's image choice, on the cover route.
  */
-export const CODEX_CHARACTER_PROMPT_TEMPLATE = `Create Eastern fantasy character art, drawing on Chinese webnovel, Japanese light novel, or Korean webnovel illustration appropriate to this story.
+export const CODEX_CHARACTER_PROMPT_TEMPLATE = `Create professional, high-quality Eastern fantasy character art, like a premium webnovel cover illustration, drawing on Chinese webnovel, Japanese light novel, or Korean webnovel illustration appropriate to this story.
 Tradition: {tradition}
 Genre: {genre}
 Tone: {tone}
@@ -16,13 +16,13 @@ World: {world facts}
 Character: {name}
 Look: {look}
 {look traits}
-Draw only what the look states and keep every stated detail exact. Where the look is silent, keep it plain and true to the world; never add scars, marks, colours or gear it does not name.
-One character, full figure, centered, in a simple setting that suits the world. Never sexualize anyone.
-Vertical 3:4 composition, detailed illustration, readable at thumbnail size.
+Keep every detail the look states exact and never contradict it; never add scars or marks it does not name. Where the look is silent, choose what suits the character, their part in the story and the world.
+One character as the clear focus, in a setting from their world, with cinematic lighting. Never sexualize anyone.
+Vertical 3:4 composition. High quality, highly detailed, richly painted, sharp focus, readable at thumbnail size.
 No lettering, logos, signatures, or watermarks.`;
 
 /** The same for a thing: the object alone, so its look can be judged. */
-export const CODEX_THING_PROMPT_TEMPLATE = `Create Eastern fantasy item art, drawing on Chinese webnovel, Japanese light novel, or Korean webnovel illustration appropriate to this story.
+export const CODEX_THING_PROMPT_TEMPLATE = `Create professional, high-quality Eastern fantasy item art, like a premium webnovel cover illustration, drawing on Chinese webnovel, Japanese light novel, or Korean webnovel illustration appropriate to this story.
 Tradition: {tradition}
 Genre: {genre}
 Tone: {tone}
@@ -30,9 +30,9 @@ World: {world facts}
 Item: {name}
 Look: {look}
 {look traits}
-Draw only what the look states and keep every stated detail exact. Where the look is silent, keep it plain and true to the world; never add engravings, gems, glow or colours it does not name.
-The object alone, whole and centered, against a simple background that suits the world. No hands or people.
-Vertical 3:4 composition, detailed illustration, readable at thumbnail size.
+Keep every detail the look states exact and never contradict it; never add engravings or gems it does not name. Where the look is silent, choose what suits the object and the world.
+The object alone as the clear focus, whole, against a background from its world, with cinematic lighting. No hands or people.
+Vertical 3:4 composition. High quality, highly detailed, richly painted, sharp focus, readable at thumbnail size.
 No lettering, logos, signatures, or watermarks.`;
 
 /** A card's shape: the Codex card's own 3:4. */

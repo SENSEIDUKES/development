@@ -49,7 +49,7 @@ describe('ReaderCodexPower Color Codes', () => {
     renderPower('Nascent Soul');
     activeTier = [...container.querySelectorAll<HTMLElement>('[data-color-code]')]
       .find(element => element.textContent === 'Active Tier: Nascent Soul');
-    expect(activeTier?.dataset.colorCode).toBe('location');
-    expect(activeTier?.style.color).toBe('var(--color-location-regular)');
+    expect(activeTier?.dataset.colorCode).toBe('mystery');
+    expect(activeTier?.style.color).toBe('var(--color-system-mystery)');
   });
 });

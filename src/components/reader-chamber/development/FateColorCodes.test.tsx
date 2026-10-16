@@ -18,8 +18,8 @@ const baseResult: Omit<FateResultData, 'outcome'> = {
 };
 
 const fateTypeColorCodes = [
-  'corruption', 'bond', 'mentor', 'location', 'itemGreat',
-  'mentor', 'enemy', 'mainCharacter', 'unknown', 'itemGood',
+  'corruption', 'bond', 'mentor', 'mystery', 'warning',
+  'warning', 'enemy', 'mainCharacter', 'unknown', 'itemGood',
 ];
 
 describe('Reader fate Color Codes', () => {
@@ -40,7 +40,7 @@ describe('Reader fate Color Codes', () => {
   it('routes every Fate result and flag through the shared outcome mapping', () => {
     const outcomes: Array<[FateResultData['outcome'], string]> = [
       ['FATE AVERTED', 'mentor'],
-      ['FATE SCARRED', 'itemGreat'],
+      ['FATE SCARRED', 'corruption'],
       ['DOOM MANIFESTED', 'corruption'],
     ];
 

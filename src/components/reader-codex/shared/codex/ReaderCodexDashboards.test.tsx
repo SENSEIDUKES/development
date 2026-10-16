@@ -82,7 +82,7 @@ describe('ReaderCodexDashboards Color Codes', () => {
       .find(element => element.textContent === text)
       ?.dataset.colorCode;
 
-    expect(codeForText('Nascent (85)')).toBe('location');
+    expect(codeForText('Nascent (85)')).toBe('mystery');
     expect(codeForText('Core (70)')).toBe('mentor');
     expect(codeForText('Found. (55)')).toBe('mainCharacter');
     expect(codeForText('Qi (35)')).toBe('ally');

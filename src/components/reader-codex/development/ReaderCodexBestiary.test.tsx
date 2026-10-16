@@ -64,8 +64,8 @@ describe('ReaderCodexBestiary Color Codes', () => {
       .find(element => element.textContent === 'High');
     const ally = [...container.querySelectorAll<HTMLElement>('span[data-color-code]')]
       .find(element => element.textContent === 'Aster');
-    expect(threat?.dataset.colorCode).toBe('itemGreat');
-    expect(threat?.style.color).toBe('var(--color-item-great)');
+    expect(threat?.dataset.colorCode).toBe('enemy');
+    expect(threat?.style.color).toBe('var(--color-entity-enemy)');
     expect(ally?.dataset.colorCode).toBe('ally');
     expect(ally?.style.color).toBe('var(--color-entity-friend)');
 

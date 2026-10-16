@@ -256,7 +256,7 @@ describe('CardWorkshopView', () => {
     const badgeLabel = scanSpans.find(element => element.textContent === 'Threat Assessment');
     expect(badgeLabel?.className).toContain('text-neutral-300');
     const badgeSeverity = scanSpans.find(element => element.textContent === 'Moderate');
-    expect(badgeSeverity?.getAttribute('data-color-code')).toBe('itemGreat');
+    expect(badgeSeverity?.getAttribute('data-color-code')).toBe('warning');
     const elderCodexAction = [...(scanBlock?.querySelectorAll<HTMLElement>('[role="button"]') ?? [])]
       .find(element => element.textContent === 'Elder Kaelen');
     expect(elderCodexAction).toBeTruthy();

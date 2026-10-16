@@ -6,6 +6,9 @@ picture, and an opened character or item whose look the record wrote down offers
 and the host's reason a picture failed. A card without a look says Manifest waits for one.
 `HarnessReaderSession` passes `codexPictures` to its Codex.
 
+**2026-10-15:** Refined shared Color Codes, safety/threat classification, and dark-surface
+palettes. The rebuilt Reader, Codex, and Highlight Engine integration remains deferred.
+
 **0.38.0 (2026-10-14):** `thingAppearancesFromHoldings` gives a thing its first appearance on the
 first holding tag that shows it; `deriveAppearances` reads a look tag in the paragraph that first shows
 its subject as that first look; SEN Appearance 1.1.0; `AppearancePassage` carries `startOffset`.
@@ -246,6 +249,37 @@ SEN is the portable expanded-narrative engine. A publisher supplies content,
 branding, accounts, storage, media, and—if desired—a generation method. AI is
 optional. SEN has no dependency on Celestial Library, Library UI, Library
 accounts, Energy, QI, first-party catalogs, Workshop state, or concrete APIs.
+
+## Color Codes
+
+`./color-codes` owns the meanings; the shared CSS owns palette values. The default vocabulary:
+
+| Color | Meaning |
+| --- | --- |
+| Blue | Main character, information, Codex updates |
+| Green | Allies, safety, support, growth; uncommon items |
+| Red | Hostility, serious danger, harmful outcomes |
+| Orange | Caution, risk, pressure, consequences |
+| Gold | Mentorship, attainment, sacred significance; legendary items |
+| Pink | Affection and bonds |
+| Purple | Mystery, fate, hidden significance; great/epic items |
+| Light blue | Good/rare items |
+| Muted rose | Lasting harm, curses, scars |
+| Gray / white | Unknown or ordinary context / ordinary items |
+
+Resolve the fact being shown: relationship for a character, tier for an item,
+known safety before a location's distinction. Unknown labels stay neutral;
+species never decides a character's relationship. `warning` and `mystery` are
+independent codes; `itemGreat` and `location` keep their IDs with refined meanings.
+Existing alternate palettes retain their IDs and use hue and lightness changes.
+
+These are product conventions informed by [semantic discriminability research](https://arxiv.org/abs/2108.03685),
+not universal psychological rules. Palette tests enforce at least 4.5:1 text contrast
+on #111111, 10% token tints, and the Fate card gradient (7:1 for High Contrast Dark), plus distinct critical
+signals. Future integrations must retain meaning in the content's text or shape
+([WCAG color use](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html),
+[contrast](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html));
+palette checks alone do not establish accessibility for a finished surface.
 
 ## Public entries
 

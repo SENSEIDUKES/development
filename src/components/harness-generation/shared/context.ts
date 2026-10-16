@@ -3,6 +3,7 @@ import { harnessArcContext, harnessStoryMode } from './arcState';
 import { projectCanonicalState } from './canonicalProjection';
 import { deriveHoldings, holdingsSection } from './holdings';
 import { appearancesSection, deriveAppearances } from './appearances';
+import { deriveStatus, statusSection } from './status';
 import { storyPointOfView } from './pointOfView';
 import { protagonistNames } from './speakers';
 import { semanticReaderChanges } from './readerEdits';
@@ -172,6 +173,13 @@ export const compileStoryInformationPacket = (
     entries: state.codexEntries.filter(entry => entry.storyId === story.id),
     chapters,
   }));
+  // Then everyone and everything not as they were (the dead, the wounded, the
+  // sealed away, the destroyed), worked out again from the committed chapters'
+  // status changes: the most recently changed first.
+  const status = statusSection(deriveStatus({
+    entries: state.codexEntries.filter(entry => entry.storyId === story.id),
+    chapters,
+  }));
 
   const sections: PacketSectionMeasurement[] = [
     measure('currentStory', currentStory),
@@ -182,6 +190,7 @@ export const compileStoryInformationPacket = (
     measure('canonicalState', canonical.projection),
     measure('holdings', holdings),
     measure('appearances', appearances),
+    measure('status', status),
   ];
 
   return {
@@ -201,6 +210,7 @@ export const compileStoryInformationPacket = (
     canonicalState: canonical.projection,
     holdings,
     appearances,
+    status,
     diagnostics: {
       budgetSource: GENERATION_PACKET_BUDGET.source,
       sections,

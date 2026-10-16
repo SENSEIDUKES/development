@@ -31,6 +31,8 @@ export const GENERATION_PACKET_BUDGET = {
     holdings: { protected: true },
     // Who and what is already on the page, with each look: bounded by its own counts, never trimmed further.
     appearances: { protected: true },
+    // Who and what is not as they were: bounded by its own count, never trimmed further.
+    status: { protected: true },
     missionReminder: { protected: true },
     immediateChapterRequest: { protected: true },
   } satisfies Record<PacketSectionId, PacketSectionBudget>,
@@ -56,6 +58,7 @@ export const PACKET_SECTION_ORDER: readonly PacketSectionId[] = [
   'canonicalState',
   'holdings',
   'appearances',
+  'status',
   'missionReminder',
   'immediateChapterRequest',
 ];

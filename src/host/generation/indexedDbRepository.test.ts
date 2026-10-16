@@ -29,17 +29,17 @@ describe('planHarnessWorkspaceLoad', () => {
     }
   });
 
-  it('upgrades a schema 27, 28, 29, 30 or 31 workspace with every story and chapter kept, keeping a copy of the original', () => {
+  it('upgrades a schema 27, 28, 29, 30, 31 or 32 workspace with every story and chapter kept, keeping a copy of the original', () => {
     // 28 adds only optional fields: the rewrite request and its replaced-by record, and the Holdings fixer record.
     // 29 adds only optional fields too: a chapter's scene, the atmospheres in frozen media, a frozen soundtrack vocabulary.
     // 30 adds only an optional story field: Author's notes.
     // 31 adds only an optional story field: the story's own sound words. Saved cues and frozen attempts are untouched.
-    // 32 adds only optional chapter fields: its appearances and the looks written down from them.
-    expect(HARNESS_GENERATION_SCHEMA_VERSION).toBe(32);
-    for (const schemaVersion of [27, 28, 29, 30, 31]) {
+    // 32 adds only optional chapter fields: its appearances and the looks written down from them; 33 its status changes.
+    expect(HARNESS_GENERATION_SCHEMA_VERSION).toBe(33);
+    for (const schemaVersion of [27, 28, 29, 30, 31, 32]) {
       const stored = { ...createEmptyHarnessWorkspaceState(), schemaVersion, stories: [{ id: 'a' }], attempts: [{ id: 'a1', capaPrompt: { soundVocabulary: [{ word: 'blade drawn', example: 'drew his sword' }] } }], chapters: [{ id: 'c1', soundCues: [{ id: 'sc1' }] }] };
       const plan = planHarnessWorkspaceLoad(stored, now);
-      expect(plan.state).toEqual({ ...stored, schemaVersion: 32 });
+      expect(plan.state).toEqual({ ...stored, schemaVersion: 33 });
       expect(plan.preserve).toEqual({
         key: `${PRESERVED_WORKSPACE_PREFIX}v${schemaVersion}:2026-09-24T12:00:00.000Z`,
         record: { preservedAt: now(), reason: 'migrated', schemaVersion, workspace: stored },

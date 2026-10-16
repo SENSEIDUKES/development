@@ -104,6 +104,7 @@ export { chapterSoundtrack, type ChapterSoundtrackReading } from '../../componen
 export { SEN_SPEAKERS_INSTRUCTIONS, SEN_SPEAKERS_SKILL } from '../../components/harness-generation/shared/speakersSkill';
 export { SEN_HOLDINGS_INSTRUCTIONS, SEN_HOLDINGS_SKILL } from '../../components/harness-generation/shared/holdingsSkill';
 export { SEN_APPEARANCE_INSTRUCTIONS, SEN_APPEARANCE_SKILL } from '../../components/harness-generation/shared/appearanceSkill';
+export { SEN_STATUS_INSTRUCTIONS, SEN_STATUS_SKILL } from '../../components/harness-generation/shared/statusSkill';
 export { HARNESS_TAG_RULES } from '../../components/harness-generation/shared/tagRules';
 export { isStraySoundTag, settleStraySoundTags, trimLeadingStrayPunctuation } from '../../components/harness-generation/shared/soundTagRepair';
 export {
@@ -184,6 +185,23 @@ export {
   type ResolvedAppearances,
 } from '../../components/harness-generation/shared/appearances';
 export {
+  STATUS_SECTION_LIMIT,
+  deriveStatus,
+  placeStatusChanges,
+  readStatusTag,
+  resolveStatusChanges,
+  statusSection,
+  type ReadStatusTag,
+  type StatusChapter,
+  type StatusCondition,
+  type StatusEvent,
+  type StatusFlag,
+  type StatusPassage,
+  type StatusPlacement,
+  type StatusRecord,
+  type StatusSubject,
+} from '../../components/harness-generation/shared/status';
+export {
   LOOK_DECLARED_CHARACTERS,
   LOOK_PASSAGE_CHARACTERS,
   LOOK_SUBJECT_LIMIT,
@@ -197,6 +215,7 @@ export {
 } from '../../components/harness-generation/shared/lookDescriber';
 export * from '../../narrative/holdings';
 export * from '../../narrative/appearances';
+export * from '../../narrative/status';
 export { createHarnessSenStory } from '../../components/harness-generation/shared/senAdapter';
 export * from '../../narrative/generation';
 export { HarnessReaderSession, type HarnessReaderWriting } from '../../components/harness-generation/development/HarnessReaderSession';

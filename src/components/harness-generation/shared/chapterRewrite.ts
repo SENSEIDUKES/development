@@ -91,6 +91,7 @@ export function withoutLatestChapter(state: HarnessWorkspaceState, storyId: stri
   const entriesNamed = (chapter: HarnessChapter) => [
     ...(chapter.holdingChanges ?? []).flatMap(change => [change.payload.holder.entryId, change.payload.target?.entryId]),
     ...(chapter.appearances ?? []).map(appearance => appearance.payload.subject.entryId),
+    ...(chapter.statusChanges ?? []).map(status => status.payload.subject.entryId),
   ];
   const usedEarlier = new Set(next.chapters.filter(chapter => chapter.storyId === storyId).flatMap(entriesNamed));
   const usedHere = new Set(entriesNamed(latest));

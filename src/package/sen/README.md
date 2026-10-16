@@ -1,5 +1,12 @@
 # `@seihouse/sen`
 
+**0.40.0 (2026-10-16):** Status, the second information tag: `[[status: Name | state | how]]`
+(`STATUS_TAG_WORDS`, `src/narrative/status.ts`), taught by SEN Status 1.0.0 in the new managed Status
+slot. `readStatusTag`, `placeStatusChanges` and `resolveStatusChanges` save each change on its sentence
+(`StatusChangeAttachment`, `HarnessChapter.statusChanges`); `deriveStatus` works out how everyone and
+everything now is and flags what cannot be true; `statusSection` is Story Information's new Status
+section. `StoryCodex` shows each card's state and a Status section. Schema 33 (an optional chapter field).
+
 **0.39.0 (2026-10-15):** `StoryCodex` takes the host's `pictures` (`CodexPictures`): each card wears its
 picture, and an opened character or item whose look the record wrote down offers **Manifest**
 (`CodexPictureCard`: its key, character or thing, name and latest look), with Manifesting, Manifest again

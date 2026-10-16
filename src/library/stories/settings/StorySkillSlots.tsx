@@ -38,6 +38,11 @@ const managedSlotInspection = (
           ? { status: 'Loaded', skill, summary: `${skill.name} v${skill.version} loads on every chapter: the writer reads who and what is already on the page, keeps each look, and tags each first appearance and each change to a look.` }
           : { status: 'No package', summary: 'This host has no Appearance skill, so chapters are written without appearance tags and no look is recorded.' };
       }
+      if (slot.id === 'status') {
+        return loaded && skill
+          ? { status: 'Loaded', skill, summary: `${skill.name} v${skill.version} loads on every chapter: the writer reads who and what is not as they were, keeps the dead dead and every wound and ruin, and tags each change of state.` }
+          : { status: 'No package', summary: 'This host has no Status skill, so chapters are written without status tags and no death, wound or ruin is recorded.' };
+      }
       return loaded && skill
         ? { status: 'Loaded', skill, summary: `${skill.name} v${skill.version} loads on every chapter, so the Reader knows who speaks each line.` }
         : { status: 'No package', summary: 'This host has no Speakers skill, so chapters are written without speaker tags and Read Aloud takes every speaker from the narration.' };
@@ -147,7 +152,7 @@ export function StorySkillSlots({
           </div>
           <p className="mt-2 max-w-3xl text-sm leading-relaxed text-neutral-400">
             {inspect
-              ? 'The Author skill tells the model how to write. Equipped generation skills are assembled once, in schema order, into the CAPA Prompt frozen with each chapter attempt. Fate, Accessibility, Translation, Sound Cues and Soundtrack follow the story\'s Fate mode, Reading Mode, Story Language and Media Loadout; Speakers, Holdings and Appearance load on every chapter.'
+              ? 'The Author skill tells the model how to write. Equipped generation skills are assembled once, in schema order, into the CAPA Prompt frozen with each chapter attempt. Fate, Accessibility, Translation, Sound Cues and Soundtrack follow the story\'s Fate mode, Reading Mode, Story Language and Media Loadout; Speakers, Holdings, Appearance and Status load on every chapter.'
               : 'The skills every chapter is written with. Choose the Author, Pacing, Continuity and Style skills; the rest follow your story\'s Fate mode, Reading Mode, Story Language and media, or load on every chapter. A change applies to chapters written from then on.'}
           </p>
         </div>

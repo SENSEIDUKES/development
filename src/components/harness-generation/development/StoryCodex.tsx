@@ -1,10 +1,11 @@
 import { Fragment, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { Archive, Backpack, ChevronLeft, Eye, Flag, Hand, LoaderCircle, Lock, Package, ScrollText, Sparkles, Sword, TriangleAlert, User, Users, WandSparkles } from 'lucide-react';
+import { Archive, Backpack, ChevronLeft, Eye, Flag, Hand, HeartPulse, LoaderCircle, Lock, Package, ScrollText, Sparkles, Sword, TriangleAlert, User, Users, WandSparkles } from 'lucide-react';
 import './story-codex.css';
 import type { HoldingVerb } from '../../../narrative/holdings';
 import { CHARACTER_LOOK_TRAITS, THING_LOOK_TRAITS, type LookTrait } from '../../../narrative/appearances';
 import type { HeldThing, HoldingEvent, KnownAbility } from '../shared/holdings';
-import type { CodexAppearance, CodexCharacter, CodexCheck, CodexFaction, CodexItem, CodexPassage, CodexPictureCard, CodexPictures, StoryCodexRecord } from '../shared/storyCodex';
+import type { CodexAppearance, CodexCharacter, CodexCheck, CodexFaction, CodexItem, CodexPassage, CodexPictureCard, CodexPictures, CodexStatus, StoryCodexRecord } from '../shared/storyCodex';
+import type { LastingState, StatusState } from '../../../narrative/status';
 
 /** How each change reads in the Codex. */
 const VERB_LABELS: Record<HoldingVerb, string> = {
@@ -17,6 +18,21 @@ const TRAIT_LABELS: Record<LookTrait, string> = {
   build: 'Build', face: 'Face', eyes: 'Eyes', hair: 'Hair', skin: 'Skin', clothing: 'Clothing', marks: 'Marks', gear: 'Gear',
   form: 'Form', size: 'Size', material: 'Material', colour: 'Colour', condition: 'Condition',
 };
+
+/** How each lasting state reads on a card and in a profile. */
+const CONDITION_LABELS: Record<LastingState, string> = {
+  dead: 'Dead', wounded: 'Wounded', sealed: 'Sealed away', captured: 'Captured', transformed: 'Transformed', damaged: 'Damaged', destroyed: 'Destroyed',
+};
+
+/** How each change of state reads in a profile's Status. */
+const STATE_LABELS: Record<StatusState, string> = {
+  wounded: 'wounded', recovered: 'recovered', dead: 'died', revived: 'revived', sealed: 'sealed away', captured: 'captured',
+  freed: 'freed', transformed: 'transformed', damaged: 'damaged', repaired: 'repaired', destroyed: 'destroyed',
+};
+
+const conditionLabels = (status: CodexStatus | undefined) => (status?.conditions ?? []).map(condition => CONDITION_LABELS[condition.state]);
+const isDead = (status: CodexStatus | undefined) => Boolean(status?.conditions.some(condition => condition.state === 'dead'));
+const isDestroyed = (status: CodexStatus | undefined) => Boolean(status?.conditions.some(condition => condition.state === 'destroyed'));
 
 /** Opens the chapter behind a fact, at its paragraph, with the Codex still open. */
 type ReadPassage = (chapterNumber: number, blockId: string) => void;
@@ -183,6 +199,29 @@ function LookSection({ name, appearance, traits, onReadPassage }: {
 }
 
 /**
+ * How someone or something is now, as the record keeps it: each lasting state
+ * with how and since when, then every change of state, each linked to its passage.
+ */
+function StatusSection({ name, status, onReadPassage }: { name: string; status: CodexStatus; onReadPassage?: ReadPassage }) {
+  return <Section title="Status" icon={<HeartPulse size={12} aria-hidden />} label={`${name}: Status`} testId="codex-status">
+    {status.conditions.length
+      ? <ul className="grid gap-2">{status.conditions.map(condition => <li key={`${condition.state}:${condition.passage.chapterNumber}:${condition.passage.blockId}`}
+          className="flex items-start justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+          <span className="min-w-0 text-sm text-neutral-100">
+            <span className="font-medium">{CONDITION_LABELS[condition.state]}</span>
+            {condition.detail && <span className="text-neutral-300"> · {condition.detail}</span>}
+          </span>
+          <PassageChip passage={condition.passage} label={`Since Ch. ${condition.passage.chapterNumber}`} onReadPassage={onReadPassage} />
+        </li>)}</ul>
+      : <p className="text-sm text-neutral-400">Well and whole again.</p>}
+    {status.history.length > 0 && <div className="flex flex-wrap gap-1.5">
+      {status.history.map(event => <PassageChip key={`${event.state}:${event.passage.chapterNumber}:${event.passage.blockId}`} passage={event.passage}
+        label={`Ch. ${event.passage.chapterNumber} · ${STATE_LABELS[event.state]}`} onReadPassage={onReadPassage} />)}
+    </div>}
+  </Section>;
+}
+
+/**
  * An opened card: its art large at the top with its name, then everything the
  * record knows about it together, never scattered across pages. Every
  * category opens into this same profile.
@@ -245,14 +284,15 @@ function CharacterProfile({ character, art, onBack, onReadPassage }: { character
   const equipped = character.things.filter(thing => thing.equipped);
   const carried = character.things.filter(thing => !thing.equipped);
   return <Profile category="characters" name={character.name} backLabel="All characters" onBack={onBack}
-    line={character.rank?.text ?? `Met in Chapter ${character.firstSeen.chapterNumber}`}
-    badges={character.mainCharacter ? ['Main character'] : []} art={art}>
+    line={characterLine(character)}
+    badges={[...(character.mainCharacter ? ['Main character'] : []), ...conditionLabels(character.status)]} art={art}>
     <div className="flex flex-wrap gap-1.5">
       <PassageChip passage={character.firstSeen} label={`First seen · Ch. ${character.firstSeen.chapterNumber}`} onReadPassage={onReadPassage} />
       {character.rank && <span data-testid="codex-rank" className="contents">{character.rank.events.map(event =>
         <PassageChip key={event.passage.recordId} passage={eventPassage(event)} label={`Rank · Ch. ${event.passage.chapterNumber}`} onReadPassage={onReadPassage} />)}</span>}
     </div>
     {character.appearance && <LookSection name={character.name} appearance={character.appearance} traits={CHARACTER_LOOK_TRAITS} onReadPassage={onReadPassage} />}
+    {character.status && <StatusSection name={character.name} status={character.status} onReadPassage={onReadPassage} />}
     {character.voice && <div data-testid="codex-voice"><Words passage={character.voice.first} caption="First words" onReadPassage={onReadPassage} /></div>}
     {equipped.length > 0 && <Section title="Equipped" icon={<Hand size={12} aria-hidden />} label={`${character.name}: Equipped`}>
       <ul className="grid gap-2">{equipped.map(thing => <ItemSlot key={thing.entryId} thing={thing} onReadPassage={onReadPassage} />)}</ul>
@@ -263,7 +303,7 @@ function CharacterProfile({ character, art, onBack, onReadPassage }: { character
     {character.abilities.length > 0 && <Section title="Abilities" icon={<Sparkles size={12} aria-hidden />} label={`${character.name}: Abilities`}>
       <ul className="space-y-2">{character.abilities.map(ability => <AbilityRow key={ability.entryId} ability={ability} onReadPassage={onReadPassage} />)}</ul>
     </Section>}
-    {!character.things.length && !character.abilities.length && !character.rank && <p className="text-sm text-neutral-400">The story has not shown them holding or learning anything yet.</p>}
+    {!character.things.length && !character.abilities.length && !character.rank && !isDead(character.status) && <p className="text-sm text-neutral-400">The story has not shown them holding or learning anything yet.</p>}
     {character.chronicle.length > 0 && <Chronicle events={character.chronicle} onReadPassage={onReadPassage}
       describe={event => `${eventLabel(event)}${event.target && event.verb !== 'rank' ? ` ${event.target}` : event.level ? ` ${event.level}` : ''}`} />}
   </Profile>;
@@ -275,16 +315,26 @@ function FactionProfile({ faction, onBack, onReadPassage }: { faction: CodexFact
   </Profile>;
 }
 
-/** A thing that changed hands and is no longer held: lost, used up, broken or given away. */
-const isArchived = (item: CodexItem) => !item.holder && item.events.length > 0;
-const holderLine = (item: CodexItem) => (item.holder ? `${item.holder.name} · ${item.equipped ? 'in hand' : 'carried'}` : item.events.length ? 'No longer held' : 'Held by no one');
+/** A thing destroyed, or one that changed hands and is no longer held: lost, used up, broken or given away. */
+const isArchived = (item: CodexItem) => isDestroyed(item.status) || (!item.holder && item.events.length > 0);
+const holderLine = (item: CodexItem) => (isDestroyed(item.status) ? 'Destroyed'
+  : item.holder ? `${item.holder.name} · ${item.equipped ? 'in hand' : 'carried'}` : item.events.length ? 'No longer held' : 'Held by no one');
+/** A character's line: when they died, else their rank, else when the story met them. */
+const characterLine = (character: CodexCharacter) => {
+  const death = character.status?.conditions.find(condition => condition.state === 'dead');
+  return death ? `Died in Chapter ${death.passage.chapterNumber}` : character.rank?.text ?? `Met in Chapter ${character.firstSeen.chapterNumber}`;
+};
+/** A card's one badge: a lasting state first, since it changes how the card is read, else its count or role. */
+const cardBadge = (status: CodexStatus | undefined, otherwise?: string) => conditionLabels(status)[0] ?? otherwise;
 
 function ItemProfile({ item, art, onBack, onReadPassage }: { item: CodexItem; art?: ProfileArt; onBack: () => void; onReadPassage?: ReadPassage }) {
-  return <Profile category="items" name={item.name} line={holderLine(item)} badges={isArchived(item) ? ['Archived'] : item.count > 1 ? [`×${item.count}`] : []} backLabel="All items" onBack={onBack} art={art}>
+  return <Profile category="items" name={item.name} line={holderLine(item)} backLabel="All items" onBack={onBack} art={art}
+    badges={[...(isArchived(item) ? ['Archived'] : item.count > 1 ? [`×${item.count}`] : []), ...conditionLabels(item.status)]}>
     <div className="flex flex-wrap gap-1.5">
       <PassageChip passage={item.firstSeen} label={`First seen · Ch. ${item.firstSeen.chapterNumber}`} onReadPassage={onReadPassage} />
     </div>
     {item.appearance && <LookSection name={item.name} appearance={item.appearance} traits={THING_LOOK_TRAITS} onReadPassage={onReadPassage} />}
+    {item.status && <StatusSection name={item.name} status={item.status} onReadPassage={onReadPassage} />}
     {item.events.length > 0 && <Chronicle events={item.events} onReadPassage={onReadPassage}
       describe={event => `${eventLabel(event)} · ${(event as CodexItem['events'][number]).holder}`} />}
   </Profile>;
@@ -304,7 +354,7 @@ function Checks({ checks, onReadPassage, onReadChapter }: { checks: readonly Cod
             ? <button type="button" className={chip} onClick={() => onReadPassage(check.chapterNumber!, check.blockId!)}>Read the passage</button>
             : onReadChapter && <button type="button" className={chip} onClick={() => onReadChapter(check.chapterNumber!)}>Read Chapter {check.chapterNumber}</button>)}
         </li>)}</ul>
-      : <p className="mt-3 text-sm text-neutral-400">Nothing to check: every change and appearance fits what came before it, and every closing list matches.</p>}
+      : <p className="mt-3 text-sm text-neutral-400">Nothing to check: every change, appearance and status fits what came before it, and every closing list matches.</p>}
   </details>;
 }
 
@@ -380,7 +430,7 @@ export function StoryCodex({ codex, storyTitle, pictures, onBack, onReadPassage,
 
   const art = (key: string) => ({ picture: pictures?.pictureOf(key), making: Boolean(making[key]) });
   const itemCard = (entry: CodexItem) => <CodexCard key={entry.key} category="items" testId="codex-item" cardKey={entry.key} name={entry.name} {...art(entry.key)}
-    badge={entry.count > 1 ? `×${entry.count}` : undefined} line={holderLine(entry)} onOpen={() => setOpen(entry.key)} />;
+    badge={cardBadge(entry.status, entry.count > 1 ? `×${entry.count}` : undefined)} line={holderLine(entry)} onOpen={() => setOpen(entry.key)} />;
   const tabs: { id: CodexTab; label: string; count: number; icon: ReactNode }[] = [
     { id: 'characters', label: 'Characters', count: codex.characters.length, icon: <Users size={15} aria-hidden /> },
     { id: 'factions', label: 'Factions', count: codex.factions.length, icon: <Flag size={15} aria-hidden /> },
@@ -388,8 +438,8 @@ export function StoryCodex({ codex, storyTitle, pictures, onBack, onReadPassage,
   ];
   const cards = tab === 'characters'
     ? codex.characters.map(entry => <CodexCard key={entry.key} category="characters" testId="codex-character" cardKey={entry.key} name={entry.name} {...art(entry.key)}
-        featured={entry.mainCharacter} badge={entry.mainCharacter ? 'Main character' : undefined}
-        line={entry.rank?.text ?? `Met in Chapter ${entry.firstSeen.chapterNumber}`} onOpen={() => setOpen(entry.key)} />)
+        featured={entry.mainCharacter} badge={cardBadge(entry.status, entry.mainCharacter ? 'Main character' : undefined)}
+        line={characterLine(entry)} onOpen={() => setOpen(entry.key)} />)
     : tab === 'factions'
       ? codex.factions.map(entry => <CodexCard key={entry.key} category="factions" testId="codex-faction" cardKey={entry.key} name={entry.name} {...art(entry.key)}
           line={`Met in Chapter ${entry.firstSeen.chapterNumber}`} onOpen={() => setOpen(entry.key)} />)

@@ -723,6 +723,25 @@ Update it whenever it changes.
     its look, with nothing more for the writer to do; and a look tag in the
     paragraph that first shows someone is read as that first look, never a
     change (SEN Appearance 1.1.0).
+  - **Status (2026-10-16, Stage E1 step 2):** the writer tags each change of
+    state where the prose shows it (`[[status: Name | state | how]]`), taught
+    by SEN Status on every chapter. The states come from one short list, so
+    plain rules can check them: a character is wounded or recovered, dead or
+    revived, sealed away, captured or freed, or transformed; a thing is
+    damaged or repaired, destroyed, sealed or freed, or transformed. Each
+    change is saved on its sentence and names the same Codex entry the other
+    tags use; a death the story only reports (word comes that an elder died)
+    still gives him a card. Every later chapter's writer reads everyone and
+    everything not as they were, and since which chapter, in Story
+    Information's new **Status** section, and is told the dead stay dead and
+    the destroyed stay gone unless a revived tag brings them back. Checks flag
+    a dead character who speaks or acts, a destroyed thing used again, a
+    recovery with no wound, a revival with no death, and a state given to the
+    wrong kind. The Codex shows each state on the card (Dead, and when they
+    died; a destroyed thing goes under Archived) and every change, linked to
+    its passage, in a Status section. Places and factions wait for their own
+    tags. This is what lets a Hard Pin naming someone close when their card
+    says dead (Stage E3, not built yet).
 - **Not tested yet:**
   - a right-to-left story with a real model, and Listen in Arabic and Hebrew
     on real phones, whose voices for those languages differ from device to
@@ -788,18 +807,22 @@ engine track is shaped this way is in
 
 When a session asks "what now?", start here:
 
-1. **Owner:** run the next real-model test (Stage E0) on a new story and export
-   it. Everything after it depends on knowing the strict tags hold.
+1. **Owner:** test **Status** (Stage E1, step 2, built 2026-10-16) and the
+   fixes from the first appearance test with a real model: write the next
+   chapters of Test Story - Blade (or a new story where someone is wounded,
+   dies or is sealed away) and export it. Do deaths and wounds get tagged, does
+   the dead stay dead, and do chapters come out about 1,500 words with held
+   things in the Codex? Manifest in the Codex (2026-10-15) tests how well
+   each look brings its card to life.
 2. **Agent:** manifesting while reading ([its direction](#how-we-build)):
    names the record has met glow in the chapter and open a card with
-   Manifest, whose picture the Codex's card then wears. It waits on the
+   Manifest, whose picture the Codex's card then wears. It waited on the
    owner's refinement of the Color Codes, which the glowing names use (SENSEI,
-   2026-10-13). The Codex as a card gallery is built.
-3. **Owner:** test the first information tag, **first appearance with
-   appearance** (Stage E1, step 1, built 2026-10-14), by writing the next
-   chapters of Test Story - Blade on to ten and exporting it: does the writer
-   tag everyone new, do the looks written down match the prose, and do later
-   chapters keep them? Then Stage E1 step 2, Status.
+   2026-10-13); the meanings and palettes were refined on 2026-10-15, and the
+   owner says when they are ready for it. The Codex as a card gallery is built.
+3. **Agent:** Stage E1 step 3, Place, once Status holds with a real model;
+   or the long-story memory pieces Status opens (Hard Pins that close when a
+   card says dead, Stage E3).
 4. **Agent:** the next step of reading in every script (product track, item
    1): a reading font chosen on purpose for each remaining script. Right-to-left
    reading is built.
@@ -923,6 +946,9 @@ complete the [world record](./src/components/harness-generation/HARNESS_PRINCIPL
    before Place on 2026-10-14 (SENSEI): "the world remembers what you did"
    mostly comes from Status and Ties, so a dead sect leader stays dead because
    his card says so, and a pin naming him can close (Stage E3).
+   **Built (2026-10-16):** the status tag, SEN Status, the Status section and
+   each card's Status in the Codex, as [Where we are](#where-we-are-2026-10-10)
+   says. Not yet proven with a real model.
 3. **Place:** places become Codex entries, and the record knows where each
    character is.
 4. **Scene:** where a story scene starts, where it is, when (time of day,

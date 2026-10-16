@@ -668,7 +668,21 @@ async function walk(browser, viewport, sample) {
       return { name: button.getAttribute('aria-label'), width: rect.width, height: rect.height };
     }));
     check(targets.every(target => target.width >= 43.5 && target.height >= 43.5), `Compact Reader controls need comfortable targets: ${JSON.stringify(targets)}.`);
+    const readingPosition = await page.evaluate(() => window.scrollY);
+    const playbackTarget = await visibleButton('Playback controls').boundingBox();
+    check(playbackTarget, 'The playback trigger should be on screen.');
+    // A direct pointer click avoids the test driver's automatic scroll-into-view.
+    await page.mouse.click(playbackTarget.x + playbackTarget.width / 2, playbackTarget.y + playbackTarget.height / 2);
+    const playbackStrip = page.getByRole('dialog', { name: 'Playback', exact: true });
+    await playbackStrip.waitFor();
+    check(Math.abs(await page.evaluate(() => window.scrollY) - readingPosition) <= 1, 'Opening playback must keep the reading position.');
+    check((await playbackStrip.boundingBox()).height <= 60, 'Playback should occupy only one compact row.');
+    check(await visibleButton('Narration speed: 1.5').count() === 0, 'Speed choices should stay hidden until requested.');
+    await shot('6c-reader-playback-strip');
+    await visibleButton('Playback controls').press('Escape');
+    await playbackStrip.waitFor({ state: 'hidden' });
     await visibleButton('Chapter controls').click();
+    check((await page.getByRole('dialog', { name: 'Chapters', exact: true }).boundingBox()).height <= 60, 'Chapter controls should occupy only one compact row.');
   }
   await visibleButton('Open Fate').click();
   await page.getByTestId('reader-panel-fate').waitFor();

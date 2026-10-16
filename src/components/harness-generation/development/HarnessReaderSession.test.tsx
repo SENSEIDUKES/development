@@ -460,6 +460,8 @@ describe('Read Aloud in the HARNESS Reader', { timeout: 20_000 }, () => {
       .toEqual(['Listen', 'Playback controls', 'Open Codex', 'Chapter controls', 'Create mode']);
     await click(byLabel('Listen'), 'Listen');
     await click(byLabel('Playback controls'), 'Playback controls');
+    expect(buttonBy(byLabel('Narration speed: 1.5'))).toBeUndefined();
+    await click(byLabel('Narration playback speed'), 'speed options');
     await click(byLabel('Narration speed: 1.5'), 'speed in compact playback');
     expect(JSON.parse(values.get('read-aloud')!)).toMatchObject({ rate: 1.5 });
     await click(byLabel('Next sentence'), 'Next sentence');

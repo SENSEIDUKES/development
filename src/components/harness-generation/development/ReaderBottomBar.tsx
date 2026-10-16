@@ -34,12 +34,17 @@ const ROLE_LABELS: Record<ReadAloudRole, string> = { narrator: 'Narrator', prota
 const RATE_LABELS: Readonly<Record<number, string>> = { 0.5: '½', 0.75: '¾', 1: '1', 1.25: '1¼', 1.5: '1½', 1.75: '1¾', 2: '2' };
 
 const round = 'reader-glass-control inline-flex min-h-11 min-w-9 max-[380px]:min-w-7 shrink-0 items-center justify-center rounded-full border border-white/15 text-neutral-100 hover:border-white/35 disabled:cursor-not-allowed disabled:opacity-40 sm:min-w-11';
-const mainAction = `inline-flex h-12 w-12 max-sm:w-14 max-sm:flex-col max-sm:gap-1 shrink-0 items-center justify-center rounded-full max-sm:rounded-2xl border ${controlFeedback}`;
+const mainAction = `inline-flex h-12 w-12 max-sm:flex-col max-sm:gap-1 shrink-0 items-center justify-center rounded-full border ${controlFeedback}`;
 const primary = `reader-glass-primary ${mainAction} border-cyan-200/25 bg-cyan-400 text-neutral-950 hover:bg-cyan-300 active:bg-cyan-500`;
 const secondary = `reader-glass-control ${mainAction} border-white/15 bg-white/10 text-neutral-100 hover:bg-white/15 active:bg-white/20`;
 const controlPill = 'reader-glass-control inline-flex shrink-0 items-center justify-self-center rounded-full border border-white/10 bg-white/[0.025]';
 const pillStep = `inline-flex h-11 min-w-11 items-center justify-center text-neutral-100 enabled:hover:bg-white/10 enabled:active:bg-white/15 disabled:opacity-35 ${controlFeedback}`;
 const pickerTrigger = `inline-flex h-11 w-11 items-center justify-center rounded-md font-mono tabular-nums hover:bg-white/10 active:bg-white/15 disabled:opacity-35 ${controlFeedback}`;
+const quietAction = `inline-flex h-12 w-12 flex-col items-center justify-center gap-1 justify-self-center rounded-xl text-neutral-300 hover:bg-white/5 hover:text-white aria-expanded:bg-white/5 ${controlFeedback}`;
+const compactSurface = 'reader-glass reader-glass-menu reader-glass-picker w-auto max-w-[calc(100vw-1rem)] rounded-full border border-white/10 bg-neutral-950/95 p-1 font-sans text-neutral-100 shadow-lg';
+// Touch/mouse opens a small tool without moving focus (or the reading position).
+// Keyboard users still enter its controls and retain normal Escape/Tab behavior.
+const focusFromKeyboard = (interaction: string) => interaction === 'keyboard';
 // Fate (a compass) sits inside the chapter pill between its arrows, a plain step like them, so both pills match.
 // When the next chapter waits on it, only its icon takes the portal's cyan.
 const fateCalling = 'text-cyan-200';
@@ -114,9 +119,9 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
   const rateChoices = READ_ALOUD_RATES.map(rate => <button key={rate} type="button" ref={rate === readAloud.rate ? currentSpeedButton : undefined}
     aria-label={`Narration speed: ${rate}`} aria-pressed={rate === readAloud.rate}
     onClick={() => { setPicker(undefined); readAloud.setRate(rate); }}
-    className={`${pickerRow} ${rate === readAloud.rate ? pickerSelected : 'text-neutral-300'}`}>
-    <span className="flex-1 font-mono tabular-nums">{RATE_LABELS[rate]}</span>
-    {rate === readAloud.rate && <Check className="h-4 w-4 shrink-0 text-cyan-200" aria-hidden />}
+    className={`${compact ? `${pillStep} rounded-lg text-sm` : pickerRow} ${rate === readAloud.rate ? pickerSelected : 'text-neutral-300'}`}>
+    <span className={`${compact ? '' : 'flex-1'} font-mono tabular-nums`}>{RATE_LABELS[rate]}</span>
+    {!compact && rate === readAloud.rate && <Check className="h-4 w-4 shrink-0 text-cyan-200" aria-hidden />}
   </button>);
   return <div ref={barRef} data-testid="reader-bottom-bar" role="region" aria-label="Reader controls"
     className="reader-glass reader-glass-bar sticky bottom-0 z-20 -mx-4 mt-8 border-t border-white/10 bg-neutral-950/90 px-[max(0.5rem,env(safe-area-inset-left))] pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:px-[max(1rem,env(safe-area-inset-left))]">
@@ -137,25 +142,27 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
             ? <button type="button" aria-label={playback.label} title={playback.label} onClick={playback.run} data-testid="read-aloud-play" className={secondary}>
                 <PlaybackIcon className="h-6 w-6" aria-hidden /><span className={actionLabel}>{status === 'ended' ? 'Replay' : playback.label}</span>
               </button>
-            : <span className="h-12 w-12 max-sm:w-14 shrink-0" aria-hidden />}
-          {compact ? <SEIPopover open={group === 'playback'} onOpenChange={open => setGroup(open ? 'playback' : undefined)}>
-            <SEIPopoverTrigger aria-label="Playback controls" className={`${secondary} justify-self-center`}>
-              <SlidersHorizontal className="h-5 w-5" aria-hidden /><span className={actionLabel}>Playback</span>
+            : <span className="h-12 w-12 shrink-0" aria-hidden />}
+          {compact ? <SEIPopover modal={false} open={group === 'playback'} onOpenChange={open => { setGroup(open ? 'playback' : undefined); if (!open) setPicker(undefined); }}>
+            <SEIPopoverTrigger aria-label="Playback controls" className={`${quietAction} w-14`}>
+              <SlidersHorizontal className="h-[18px] w-[18px]" aria-hidden /><span className={actionLabel}>Playback</span>
             </SEIPopoverTrigger>
-            <SEIPopoverContent side="top" align="start" collisionPadding={8} variant="dark" className={pickerSurface}>
-              <SEIPopoverTitle className={pickerHeading}>Playback</SEIPopoverTitle>
-              <div className="flex gap-2 p-1" dir="ltr">
-                <button type="button" aria-label="Previous sentence" disabled={!player} onClick={() => readAloud.skip(-1)} className={`${pickerRow} disabled:opacity-35`}>
-                  <SkipBack className="h-4 w-4 shrink-0" aria-hidden />Previous sentence
-                </button>
-                <button type="button" aria-label="Next sentence" disabled={!player || status === 'ended'} onClick={() => readAloud.skip(1)} className={`${pickerRow} disabled:opacity-35`}>
-                  Next sentence<SkipForward className="h-4 w-4 shrink-0" aria-hidden />
-                </button>
+            <SEIPopoverContent side="top" align="center" collisionPadding={8} variant="dark" initialFocus={focusFromKeyboard} className={compactSurface}>
+              <SEIPopoverTitle className="sr-only">Playback</SEIPopoverTitle>
+              <div className="flex items-center" dir="ltr">
+                <IconButton label="Previous sentence" icon={SkipBack} onClick={() => readAloud.skip(-1)} disabled={!player} className={`${pillStep} rounded-full`} />
+                <SEIPopover modal={false} open={picker === 'speed'} onOpenChange={open => setPicker(open ? 'speed' : undefined)}>
+                  <SEIPopoverTrigger aria-label="Narration playback speed" title={`Narration playback speed: ${readAloud.rate}×`} disabled={!supported} className={`${pickerTrigger} w-16 rounded-full`}>
+                    {readAloud.rate}×
+                  </SEIPopoverTrigger>
+                  <SEIPopoverContent side="top" align="center" collisionPadding={8} variant="dark" initialFocus={focusFromKeyboard}
+                    className={`${compactSurface} w-64 rounded-2xl`} data-testid="reader-speed-picker">
+                    <SEIPopoverTitle className="sr-only">Narration speed</SEIPopoverTitle>
+                    <div className="grid grid-cols-4 gap-1">{rateChoices}</div>
+                  </SEIPopoverContent>
+                </SEIPopover>
+                <IconButton label="Next sentence" icon={SkipForward} onClick={() => readAloud.skip(1)} disabled={!player || status === 'ended'} className={`${pillStep} rounded-full`} />
               </div>
-              <p className={pickerHeading}>Narration speed</p>
-              <SEIOverlayScrollbar fades={false} className={`reader-scroll-region ${pickerList}`}>
-                <fieldset disabled={!supported} className="m-0 grid grid-cols-3 gap-1 border-0 p-0 disabled:opacity-35" aria-label="Narration speed">{rateChoices}</fieldset>
-              </SEIOverlayScrollbar>
             </SEIPopoverContent>
           </SEIPopover> : <div role="group" aria-label="Playback controls" className={controlPill} dir="ltr">
             <IconButton label="Previous sentence" icon={SkipBack} onClick={() => readAloud.skip(-1)} disabled={!player} className={`${pillStep} rounded-l-full`} />
@@ -184,24 +191,24 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
           </button>
         </div>
         <div className="contents">
-        {compact ? <SEIPopover open={group === 'chapters'} onOpenChange={open => setGroup(open ? 'chapters' : undefined)}>
-          <SEIPopoverTrigger render={<button type="button" ref={chapterTrigger} />} aria-label="Chapter controls" className={`${secondary} justify-self-center ${fate.attention ? fateCalling : ''}`}>
-            <ListOrdered className="h-5 w-5" aria-hidden /><span className={actionLabel}>Chapters</span>
+        {compact ? <SEIPopover modal={false} open={group === 'chapters'} onOpenChange={open => setGroup(open ? 'chapters' : undefined)}>
+          <SEIPopoverTrigger render={<button type="button" ref={chapterTrigger} />} aria-label="Chapter controls" className={`${quietAction} w-14 ${fate.attention ? fateCalling : ''}`}>
+            <ListOrdered className="h-[18px] w-[18px]" aria-hidden /><span className={actionLabel}>Chapters</span>
           </SEIPopoverTrigger>
-          <SEIPopoverContent side="top" align="end" collisionPadding={8} variant="dark" dir={direction} className={pickerSurface}>
-            <SEIPopoverTitle className={pickerHeading}>Chapters</SEIPopoverTitle>
-            <nav aria-label="Chapters" className="space-y-1">
-              <button type="button" aria-label={previous?.label ?? 'Previous Chapter'} disabled={!previous}
-                onClick={() => { setGroup(undefined); previous?.run(); }} className={`${pickerRow} disabled:opacity-35`}>
-                <ChevronLeft className="h-4 w-4 shrink-0 rtl:-scale-x-100" aria-hidden />Previous chapter
+          <SEIPopoverContent side="top" align="center" collisionPadding={8} variant="dark" dir={direction} initialFocus={focusFromKeyboard} className={compactSurface}>
+            <SEIPopoverTitle className="sr-only">Chapters</SEIPopoverTitle>
+            <nav aria-label="Chapters" className="flex items-center">
+              <button type="button" aria-label={previous?.label ?? 'Previous Chapter'} title={previous?.label ?? 'Previous Chapter'} disabled={!previous}
+                onClick={() => { setGroup(undefined); previous?.run(); }} className={`${pillStep} rounded-full`}>
+                <ChevronLeft className="h-4 w-4 shrink-0 rtl:-scale-x-100" aria-hidden />
               </button>
               <button type="button" aria-label="Open Fate" data-testid="reader-fate-button" data-attention={fate.attention || undefined}
-                disabled={fate.disabled} onClick={() => { setGroup(undefined); chapterTrigger.current?.focus(); fate.run(); }} className={`${pickerRow} disabled:opacity-35 ${fate.attention ? fateCalling : ''}`}>
+                disabled={fate.disabled} onClick={() => { setGroup(undefined); chapterTrigger.current?.focus({ preventScroll: true }); fate.run(); }} className={`${pillStep} gap-1.5 rounded-full px-3 text-xs ${fate.attention ? fateCalling : ''}`}>
                 <Compass className="h-4 w-4 shrink-0" aria-hidden />Fate
               </button>
-              <button type="button" aria-label={next?.label ?? 'Next Chapter'} disabled={!next || next.busy || next.disabled} aria-busy={next?.busy || undefined}
-                onClick={() => { setGroup(undefined); next?.run(); }} className={`${pickerRow} disabled:opacity-35`}>
-                <ChevronRight className="h-4 w-4 shrink-0 rtl:-scale-x-100" aria-hidden />{next?.label ?? 'Next chapter'}
+              <button type="button" aria-label={next?.label ?? 'Next Chapter'} title={next?.label ?? 'Next Chapter'} disabled={!next || next.busy || next.disabled} aria-busy={next?.busy || undefined}
+                onClick={() => { setGroup(undefined); next?.run(); }} className={`${pillStep} rounded-full`}>
+                <ChevronRight className="h-4 w-4 shrink-0 rtl:-scale-x-100" aria-hidden />
               </button>
             </nav>
           </SEIPopoverContent>
@@ -222,13 +229,13 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
           </button>
         </nav>}
           {/* Create mode at the far right, balancing Listen; the story audio note floats above it. */}
-          <div className="relative h-12 w-12 shrink-0 max-sm:w-14" data-testid="reader-create-slot">
+          <div className="relative h-12 w-12 shrink-0" data-testid="reader-create-slot">
           {note && <div className="pointer-events-none absolute bottom-full left-1/2 mb-4 -translate-x-1/2 [&>*]:pointer-events-auto" data-testid="story-audio-note">{note}</div>}
           {create && <button type="button" aria-label="Create mode" aria-pressed={create.active} data-testid="reader-create-button"
             title={create.unavailable ?? (create.active ? 'Back to reading' : 'Create mode: change this chapter\'s words and Sound Cues')}
             disabled={Boolean(create.unavailable) && !create.active} onClick={create.onToggle}
-            className={`${create.active ? primary : secondary} disabled:cursor-not-allowed disabled:opacity-35`}>
-            <Zap className="h-6 w-6" aria-hidden /><span className={actionLabel}>Create</span>
+            className={`${create.active ? primary : compact ? quietAction : secondary} disabled:cursor-not-allowed disabled:opacity-35`}>
+            <Zap className="h-6 w-6 max-sm:h-5 max-sm:w-5" aria-hidden /><span className={actionLabel}>Create</span>
           </button>}
           </div>
         </div>

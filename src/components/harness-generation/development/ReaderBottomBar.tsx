@@ -34,7 +34,7 @@ const ROLE_LABELS: Record<ReadAloudRole, string> = { narrator: 'Narrator', prota
 const RATE_LABELS: Readonly<Record<number, string>> = { 0.5: '½', 0.75: '¾', 1: '1', 1.25: '1¼', 1.5: '1½', 1.75: '1¾', 2: '2' };
 
 const round = 'reader-glass-control inline-flex min-h-11 min-w-9 max-[380px]:min-w-7 shrink-0 items-center justify-center rounded-full border border-white/15 text-neutral-100 hover:border-white/35 disabled:cursor-not-allowed disabled:opacity-40 sm:min-w-11';
-const mainAction = `inline-flex h-12 w-12 max-sm:h-14 max-sm:w-14 max-sm:flex-col max-sm:gap-1 shrink-0 items-center justify-center rounded-full max-sm:rounded-2xl border ${controlFeedback}`;
+const mainAction = `inline-flex h-12 w-12 max-sm:w-14 max-sm:flex-col max-sm:gap-1 shrink-0 items-center justify-center rounded-full max-sm:rounded-2xl border ${controlFeedback}`;
 const primary = `reader-glass-primary ${mainAction} border-cyan-200/25 bg-cyan-400 text-neutral-950 hover:bg-cyan-300 active:bg-cyan-500`;
 const secondary = `reader-glass-control ${mainAction} border-white/15 bg-white/10 text-neutral-100 hover:bg-white/15 active:bg-white/20`;
 const controlPill = 'reader-glass-control inline-flex shrink-0 items-center justify-self-center rounded-full border border-white/10 bg-white/[0.025]';
@@ -137,7 +137,7 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
             ? <button type="button" aria-label={playback.label} title={playback.label} onClick={playback.run} data-testid="read-aloud-play" className={secondary}>
                 <PlaybackIcon className="h-6 w-6" aria-hidden /><span className={actionLabel}>{status === 'ended' ? 'Replay' : playback.label}</span>
               </button>
-            : <span className="h-12 w-12 max-sm:h-14 max-sm:w-14 shrink-0" aria-hidden />}
+            : <span className="h-12 w-12 max-sm:w-14 shrink-0" aria-hidden />}
           {compact ? <SEIPopover open={group === 'playback'} onOpenChange={open => setGroup(open ? 'playback' : undefined)}>
             <SEIPopoverTrigger aria-label="Playback controls" className={`${secondary} justify-self-center`}>
               <SlidersHorizontal className="h-5 w-5" aria-hidden /><span className={actionLabel}>Playback</span>
@@ -222,7 +222,7 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
           </button>
         </nav>}
           {/* Create mode at the far right, balancing Listen; the story audio note floats above it. */}
-          <div className="relative h-12 w-12 shrink-0 max-sm:h-14 max-sm:w-14" data-testid="reader-create-slot">
+          <div className="relative h-12 w-12 shrink-0 max-sm:w-14" data-testid="reader-create-slot">
           {note && <div className="pointer-events-none absolute bottom-full left-1/2 mb-4 -translate-x-1/2 [&>*]:pointer-events-auto" data-testid="story-audio-note">{note}</div>}
           {create && <button type="button" aria-label="Create mode" aria-pressed={create.active} data-testid="reader-create-button"
             title={create.unavailable ?? (create.active ? 'Back to reading' : 'Create mode: change this chapter\'s words and Sound Cues')}

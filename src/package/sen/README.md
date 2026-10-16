@@ -1,5 +1,7 @@
 # `@seihouse/sen`
 
+**2026-10-16:** `StoryCodex` shows each held thing and ability as one line (how it is now, since which chapter) with its changes behind History, the newest first, ten at a time; a look's changes and the Chronicle likewise.
+
 **0.39.0 (2026-10-15):** `StoryCodex` takes the host's `pictures` (`CodexPictures`): each card wears its
 picture, and an opened character or item whose look the record wrote down offers **Manifest**
 (`CodexPictureCard`: its key, character or thing, name and latest look), with Manifesting, Manifest again

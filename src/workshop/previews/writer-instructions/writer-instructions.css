@@ -83,3 +83,12 @@
 @media (min-width: 640px) {
   .writer-instructions { padding: 1.5rem 1.5rem 5rem; }
 }
+.writer-instructions__part { margin-top: 1.5rem; }
+.writer-instructions__heading {
+  margin: 0 0 0.25rem;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--wi-accent);
+}

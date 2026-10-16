@@ -75,7 +75,7 @@ describe('Compact long-story generation packet', () => {
     await run.write();
     const prompt = buildHarnessGenerationPrompt(run.requests[1]);
     expect(prompt.measurement.sections.map(section => section.section)).toEqual(PACKET_SECTION_ORDER);
-    const markers = ['CAPA SKILL [Author]', 'CURRENT STORY INFORMATION', 'DESTINED ENDING AND HARD PINS', 'ACTIVE ARC GOAL', 'FATE PRESSURE RHYTHM DIRECTION', 'PREVIOUSLY ON', 'CURRENT CANONICAL STATE', 'HOLDINGS (what each character has now', 'MISSION REMINDER:', 'IMMEDIATE CHAPTER REQUEST'];
+    const markers = ['CAPA SKILL [Author]', 'CURRENT STORY INFORMATION', 'DESTINED ENDING AND HARD PINS', 'ACTIVE ARC GOAL', 'FATE PRESSURE RHYTHM DIRECTION', 'PREVIOUSLY ON', 'CURRENT CANONICAL STATE', 'HOLDINGS (what each character has now', 'IMMEDIATE CHAPTER REQUEST', '# MISSION REMINDER'];
     const serialized = `${prompt.systemInstruction}\n\n${prompt.userPrompt}`;
     const positions = markers.map(marker => ({ marker, index: serialized.indexOf(marker), count: serialized.split(marker).length - 1 }));
     for (const position of positions) expect(position, position.marker).toMatchObject({ count: 1 });

@@ -378,11 +378,25 @@ const isAuthoringSkill = (skill: HarnessSkillManifest) =>
   skill.applications.includes('generation') && Boolean(skill.instructions?.trim());
 
 /**
- * Assembles the CAPA Prompt: every equipped generation skill, Author first,
- * once each, in CAPA Schema order, then the official requirements when the
- * chapter needs them. When any loaded skill teaches a tag, the HARNESS tag
- * rules come once, just before the first of them. Non-generation skills are
- * recorded for their host runtime but contribute no authoring text.
+ * The CAPA Prompt's two halves: its writing skills, and its tag rules with
+ * the skills that teach a tag. A prompt frozen before the halves were marked
+ * is all writing.
+ */
+export const capaPromptParts = (capaPrompt: Pick<CapaPrompt, 'text' | 'taggingStart'>) => {
+  const start = capaPrompt.taggingStart;
+  if (start === undefined || start <= 0 || start > capaPrompt.text.length) return { writing: capaPrompt.text.trim(), tagging: '' };
+  return { writing: capaPrompt.text.slice(0, start).trim(), tagging: capaPrompt.text.slice(start).trim() };
+};
+
+/**
+ * Assembles the CAPA Prompt in two halves (SENSEI, 2026-10-16): every
+ * equipped generation skill that writes, Author first, once each, in CAPA
+ * Schema order, then the official requirements when the chapter needs them;
+ * then, when any loaded skill teaches a tag (`writesTags`), the HARNESS tag
+ * rules once and those skills in schema order. `taggingStart` marks where the
+ * second half begins, so the system instruction can put each under its own
+ * heading. Non-generation skills are recorded for their host runtime but
+ * contribute no authoring text.
  */
 export const assembleCapaPrompt = (
   loadout: HarnessSkillLoadoutSnapshot,
@@ -439,10 +453,13 @@ export const assembleCapaPrompt = (
     accessibility: ordered.some(skill => skill.slot === 'accessibility' && isAuthoringSkill(skill)),
     translation: Boolean(translationSkill),
   });
-  // The rules every tag shares come once, before the first skill that teaches a tag.
-  const firstTagSection = authoring.findIndex(skill => slotDefinition(skill.slot).writesTags);
-  if (firstTagSection >= 0) sections.splice(firstTagSection, 0, HARNESS_TAG_RULES);
-  const text = [...sections, ...(officialRequirements ? [officialRequirements] : [])].join('\n\n');
+  // Two halves, by the schema's own mark: the writing skills with the official
+  // requirements, then the rules every tag shares, once, and the skills that
+  // teach a tag. The system instruction puts each half under its own heading.
+  const tagSections = sections.filter((_, index) => slotDefinition(authoring[index].slot).writesTags);
+  const writing = [...sections.filter((_, index) => !slotDefinition(authoring[index].slot).writesTags), ...(officialRequirements ? [officialRequirements] : [])].join('\n\n');
+  const tagging = tagSections.length ? [HARNESS_TAG_RULES, ...tagSections].join('\n\n') : '';
+  const text = tagging ? `${writing}\n\n${tagging}` : writing;
   const estimatedTokens = Math.max(1, Math.ceil(text.length / 4));
   if (estimatedTokens > CAPA_PROMPT_TOKEN_LIMIT) {
     throw new Error('Equipped skills exceed the CAPA Prompt budget. Empty a skill slot, install shorter instructions, narrow the Translation glossary, or equip a Sound Cue Pack with fewer sound words.');
@@ -460,6 +477,7 @@ export const assembleCapaPrompt = (
       ...(skill.source ? { source: cloneHarnessValue(skill.source) } : {}),
     })),
     text,
+    ...(tagging ? { taggingStart: writing.length + 2 } : {}),
     estimatedTokens,
     ...(translationGlossary ? { translationGlossary: cloneHarnessValue(translationGlossary) } : {}),
     ...(soundVocabulary ? { soundVocabulary: cloneHarnessValue(soundVocabulary) } : {}),

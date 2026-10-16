@@ -41,6 +41,7 @@ export {
   CAPA_PROMPT_TOKEN_LIMIT,
   HARNESS_SKILL_INSTRUCTION_LIMIT,
   assembleCapaPrompt,
+  capaPromptParts,
   buildHarnessOfficialOutputRequirements,
   createHarnessSkillCatalog,
   freezeHarnessSkillLoadout,

@@ -56,8 +56,9 @@ export const PACKET_SECTION_ORDER: readonly PacketSectionId[] = [
   'canonicalState',
   'holdings',
   'appearances',
-  'missionReminder',
+  // The chapter's request, then the Mission Reminder last, closing the call (SENSEI, 2026-10-16).
   'immediateChapterRequest',
+  'missionReminder',
 ];
 
 export const estimatePacketTokens = (value: unknown): number =>

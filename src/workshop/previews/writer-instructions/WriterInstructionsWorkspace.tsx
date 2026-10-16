@@ -1,10 +1,14 @@
-import { AFTER_A_CHAPTER, EVERY_CHAPTER, SOME_STORIES, WRITER_INSTRUCTIONS, countWords, type WriterInstruction, type WriterInstructionId } from './writerInstructions';
+import { HARNESS_PROMPT_HEADINGS, HARNESS_PROMPT_PARTS } from '../../../server/harness-generation/prompt';
+import { AFTER_A_CHAPTER, EVERY_CHAPTER, RETIRED_WRITER_INSTRUCTIONS, SOME_STORIES, WRITER_INSTRUCTIONS, countWords, type WriterInstruction, type WriterInstructionId } from './writerInstructions';
 import { WRITER_INSTRUCTIONS_HISTORY, lastChange } from './writerInstructionsHistory';
 import './writer-instructions.css';
 
 /** The tag instructions are open on arrival; the long ones wait for a tap. */
 const OPEN_ON_ARRIVAL: ReadonlySet<WriterInstructionId> = new Set(['tag-rules', 'sound-cues', 'soundtrack', 'speakers', 'holdings', 'appearance']);
-const TITLES = new Map(WRITER_INSTRUCTIONS.map(block => [block.id, block.title]));
+const TITLES = new Map([...WRITER_INSTRUCTIONS.map(block => [block.id, block.title] as const), ...RETIRED_WRITER_INSTRUCTIONS]);
+/** The skeleton's parts the system instruction holds; the next message's parts change every chapter. */
+const INSTRUCTION_PARTS = HARNESS_PROMPT_PARTS.filter(part => EVERY_CHAPTER.some(block => block.part === part));
+const NEXT_MESSAGE_PARTS = HARNESS_PROMPT_PARTS.filter(part => !INSTRUCTION_PARTS.includes(part));
 
 function InstructionBlock({ block }: { block: WriterInstruction }) {
   const change = lastChange(block.id);
@@ -38,14 +42,25 @@ export function WriterInstructionsWorkspace() {
           The exact instructions the writing model reads before it writes a chapter, taken from the live code. When the code changes, this page changes with it, and every change must be written into the history at the bottom, with its date, or the build fails.
         </p>
         <p className="writer-instructions__note">
-          After these comes the story itself (Story Information and the chapter request), which changes every chapter, so it is not shown. Skills a story equips by hand (Pacing, Continuity, Style) and Translation packages are the host&rsquo;s own and are not shown either.
+          After these comes the story itself (Story Information, the chapter request and the Mission Reminder), which changes every chapter, so it is not shown. Skills a story equips by hand (Pacing, Continuity, Style) and Translation packages are the host&rsquo;s own and are not shown either.
         </p>
       </header>
 
       <section aria-labelledby="writer-instructions-every">
         <h2 id="writer-instructions-every">Every chapter, in order</h2>
         <p className="writer-instructions__total">{everyChapterWords.toLocaleString('en')} words in all, for a story with sound words.</p>
-        {EVERY_CHAPTER.map(block => <InstructionBlock key={block.id} block={block} />)}
+        <p className="writer-instructions__note">
+          Every block sits in one part of the writer&rsquo;s prompt, under that part&rsquo;s heading, always in this order. Nothing can be placed outside a part.
+        </p>
+        {INSTRUCTION_PARTS.map(part => (
+          <div key={part} className="writer-instructions__part" data-part={part}>
+            <h3 className="writer-instructions__heading">{HARNESS_PROMPT_HEADINGS[part]}</h3>
+            {EVERY_CHAPTER.filter(block => block.part === part).map(block => <InstructionBlock key={block.id} block={block} />)}
+          </div>
+        ))}
+        <p className="writer-instructions__note" data-part="next-message">
+          Then, in the next message, changing every chapter: {NEXT_MESSAGE_PARTS.map(part => HARNESS_PROMPT_HEADINGS[part].replace(/^# /, '').replace(/ \(.*$/, '')).join(', then ')}.
+        </p>
       </section>
 
       <section aria-labelledby="writer-instructions-some">

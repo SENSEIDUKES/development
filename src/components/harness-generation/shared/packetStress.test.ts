@@ -125,7 +125,7 @@ describe('50-chapter packet stress', () => {
       expect(prompt.userPrompt).toContain('Make Yi Chen take the Azure Sect to glory throughout the entire story.');
       expect(prompt.userPrompt).toContain('ACTIVE ARC GOAL');
       expect(prompt.userPrompt).toContain('"recommendedFunction"');
-      expect(prompt.userPrompt).toContain('MISSION REMINDER:');
+      expect(prompt.userPrompt).toContain('# MISSION REMINDER');
       expect(prompt.userPrompt).toContain(`Write Chapter ${chapter}`);
       const sections = packet(chapter).diagnostics.sections;
       for (const protectedSection of ['storyDirection', 'arc', 'rhythm']) expect(sections.find(section => section.section === protectedSection)?.estimatedTokens).toBeGreaterThan(0);

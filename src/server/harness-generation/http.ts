@@ -173,6 +173,13 @@ const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessArcReque
   return parsed as unknown as HarnessGenerationRequest;
 };
 
+/** A provider's answer that it refused the key: wrong, out of plan, or out of credit. */
+const rejectedKey = (message: string) => /\b(?:HTTP |status:? ?)?40[13]\b|api key not valid|invalid api key|unauthori[sz]ed|insufficient (?:credit|quota|balance)/i.test(message);
+const rejectedStatus = (message: string) => {
+  const code = message.match(/\b(40[13])\b/)?.[1];
+  return code ? ` (HTTP ${code})` : '';
+};
+
 const configurationMessage = (message: string) =>
   isMissingKeyMessage(message) || message.includes('HARNESS_GENERATION_MODELS');
 
@@ -253,6 +260,15 @@ export const handleHarnessGenerationHttp = async (
       return {
         status: 502,
         body: { error: `The model was still writing after ${deadline} seconds, so it was stopped. Choose a lower reasoning level or a faster model in the Model Router. The prior committed story is unchanged.` },
+        headers: { 'Cache-Control': 'no-store' },
+      };
+    }
+    // A provider that refuses its key will refuse every retry: say so, so the reader fixes the key instead of retrying.
+    if (error instanceof HarnessGenerationExecutionError && rejectedKey(message)) {
+      const model = typeof (parsed as { model?: unknown }).model === 'string' ? (parsed as { model: string }).model : 'the chosen model';
+      return {
+        status: 502,
+        body: { error: `The provider for ${model} rejected its key${rejectedStatus(message)}. Check that provider's key, plan and remaining credit in the server settings, or choose another model in the Model Router. The prior committed story is unchanged.` },
         headers: { 'Cache-Control': 'no-store' },
       };
     }

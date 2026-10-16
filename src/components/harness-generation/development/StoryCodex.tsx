@@ -109,6 +109,33 @@ function Words({ passage, caption, onReadPassage }: { passage: CodexPassage; cap
 }
 
 /** One thing in a character's hands or pack. */
+/** How many changes a history shows at a time, newest first. */
+const HISTORY_PAGE = 10;
+
+/**
+ * A thing's or an ability's changes, folded away until the reader asks: the
+ * newest first, ten at a time, so a long story never fills the card with them.
+ */
+function History({ events, onReadPassage }: { events: readonly HoldingEvent[]; onReadPassage?: ReadPassage }) {
+  const [shown, setShown] = useState(HISTORY_PAGE);
+  if (!events.length) return null;
+  const newest = [...events].reverse();
+  const older = newest.length - shown;
+  return <details className="mt-2" data-testid="codex-history">
+    <summary className="inline-flex min-h-8 cursor-pointer items-center rounded-full px-1 text-[11px] text-neutral-400 hover:text-neutral-200">History ({events.length})</summary>
+    <div className="mt-2 flex flex-wrap gap-1.5">
+      {newest.slice(0, shown).map(event => <PassageChip key={event.passage.recordId} passage={eventPassage(event)} label={eventLabel(event)} onReadPassage={onReadPassage} />)}
+    </div>
+    {older > 0 && <button type="button" onClick={() => setShown(count => count + HISTORY_PAGE)}
+      className="mt-2 min-h-8 rounded-full border border-white/12 px-3 text-[11px] text-neutral-300 hover:border-white/30 hover:text-white">
+      Show {Math.min(HISTORY_PAGE, older)} older
+    </button>}
+  </details>;
+}
+
+/** Since which chapter: the chapter of the latest change. */
+const sinceLine = (events: readonly HoldingEvent[]) => (events.length ? ` since Ch. ${events.at(-1)!.passage.chapterNumber}` : '');
+
 function ItemSlot({ thing, onReadPassage }: { thing: HeldThing; onReadPassage?: ReadPassage }) {
   return <li className="rounded-xl border border-white/10 bg-white/[0.03] p-3" data-testid="codex-slot">
     <p className="flex items-start gap-2.5 text-sm text-white">
@@ -116,7 +143,8 @@ function ItemSlot({ thing, onReadPassage }: { thing: HeldThing; onReadPassage?: 
       <span className="min-w-0 flex-1 break-words">{thing.name}</span>
       {thing.count > 1 && <span className="shrink-0 font-mono text-xs text-neutral-300">×{thing.count}</span>}
     </p>
-    <div className="mt-2 flex flex-wrap gap-1.5">{thing.events.map(event => <PassageChip key={event.passage.recordId} passage={eventPassage(event)} label={eventLabel(event)} onReadPassage={onReadPassage} />)}</div>
+    <p className="mt-1 text-xs text-neutral-400" data-testid="codex-slot-state">{thing.equipped ? 'In hand' : 'Carried'}{sinceLine(thing.events)}</p>
+    <History events={thing.events} onReadPassage={onReadPassage} />
   </li>;
 }
 
@@ -134,20 +162,29 @@ function AbilityRow({ ability, onReadPassage }: { ability: KnownAbility; onReadP
         {stage}{ability.level ? ` · ${ability.level}` : ''}
       </span>
     </div>
-    <div className="mt-2 flex flex-wrap gap-1.5">{ability.events.map(event => <PassageChip key={event.passage.recordId} passage={eventPassage(event)} label={eventLabel(event)} onReadPassage={onReadPassage} />)}</div>
+    {ability.events.length > 0 && <p className="mt-1 text-xs text-neutral-400">{stage}{sinceLine(ability.events)}</p>}
+    <History events={ability.events} onReadPassage={onReadPassage} />
   </li>;
 }
 
 /** Every change, in story order, each a link to its passage. */
 function Chronicle({ events, describe, onReadPassage }: { events: readonly HoldingEvent[]; describe: (event: HoldingEvent) => string; onReadPassage?: ReadPassage }) {
+  const [shown, setShown] = useState(HISTORY_PAGE);
+  // The newest first, ten at a time.
+  const newest = [...events].reverse();
+  const older = newest.length - shown;
   return <details className="rounded-xl border border-white/10 bg-white/[0.02] p-4" data-testid="codex-chronicle">
     <summary className="flex cursor-pointer items-center gap-2 text-sm font-medium text-neutral-200"><ScrollText size={14} aria-hidden />Chronicle ({events.length})</summary>
     <ol className="mt-3 space-y-2 border-s border-white/10 ps-4">
-      {events.map(event => <li key={event.passage.recordId} className="relative">
+      {newest.slice(0, shown).map(event => <li key={event.passage.recordId} className="relative">
         <span aria-hidden className="absolute -start-[21px] top-3 h-2 w-2 rounded-full bg-white/50" />
         <PassageChip passage={eventPassage(event)} label={describe(event)} onReadPassage={onReadPassage} />
       </li>)}
     </ol>
+    {older > 0 && <button type="button" onClick={() => setShown(count => count + HISTORY_PAGE)}
+      className="mt-3 min-h-8 rounded-full border border-white/12 px-3 text-[11px] text-neutral-300 hover:border-white/30 hover:text-white">
+      Show {Math.min(HISTORY_PAGE, older)} older
+    </button>}
   </details>;
 }
 
@@ -174,11 +211,16 @@ function LookSection({ name, appearance, traits, onReadPassage }: {
           {look.conflict && <p className="mt-3 text-xs leading-relaxed text-amber-100/80">Differs from the author&rsquo;s notes: {look.conflict}</p>}
         </div>
       : <p className="text-sm text-neutral-400">No look written down yet.</p>}
-    {(look || appearance.changes.length > 0) && <div className="flex flex-wrap gap-1.5">
-      {look && <PassageChip passage={look.passage} label={`Look · Ch. ${look.passage.chapterNumber}`} onReadPassage={onReadPassage} />}
-      {appearance.changes.map(change => <PassageChip key={`${change.passage.chapterNumber}:${change.passage.blockId}:${change.change}`} passage={change.passage}
-        label={`Ch. ${change.passage.chapterNumber} · ${change.change}`} onReadPassage={onReadPassage} />)}
+    {look && <div className="flex flex-wrap gap-1.5">
+      <PassageChip passage={look.passage} label={`Look · Ch. ${look.passage.chapterNumber}`} onReadPassage={onReadPassage} />
     </div>}
+    {appearance.changes.length > 0 && <details data-testid="codex-look-changes">
+      <summary className="inline-flex min-h-8 cursor-pointer items-center rounded-full px-1 text-[11px] text-neutral-400 hover:text-neutral-200">Changes ({appearance.changes.length})</summary>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {[...appearance.changes].reverse().map(change => <PassageChip key={`${change.passage.chapterNumber}:${change.passage.blockId}:${change.change}`} passage={change.passage}
+          label={`Ch. ${change.passage.chapterNumber} · ${change.change}`} onReadPassage={onReadPassage} />)}
+      </div>
+    </details>}
   </Section>;
 }
 

@@ -11,6 +11,25 @@ const reply = (paragraphs: string[]) => JSON.stringify(writtenChapter({
 }));
 
 describe('The chapter\'s soundtrack', () => {
+  it('reads a category and its tags, and the HARNESS chooses the recordings: a rain bed of the asked energy, the music by category', () => {
+    const reading = chapterSoundtrack([
+      { kind: 'soundscape', parts: ['Fighting', 'dark', 'urgent', 'high'] },
+      { kind: 'atmosphere', parts: ['rain', 'high'] },
+    ], LIBRARY_BASE_MEDIA, 1);
+    expect(reading.unknown).toEqual([]);
+    expect(reading.scene?.music).toEqual({ category: 'Fighting', tone: 'dark', tension: 'urgent', energy: 'high' });
+    const bed = LIBRARY_BASE_MEDIA.atmospheres!.find(entry => entry.id === reading.scene?.atmosphere);
+    expect(bed).toMatchObject({ group: 'Rain', studioTags: { energy: 'high' } });
+    // The tags may come in any order; a word that is no tag is named and left out.
+    expect(chapterSoundtrack([{ kind: 'soundscape', parts: ['war', 'high', 'loud', 'dark'] }], LIBRARY_BASE_MEDIA, 1))
+      .toEqual({ scene: { music: { category: 'War', energy: 'high', tone: 'dark' } }, unknown: ['loud'], extra: 0 });
+    // Beds of a category that tie take turns by chapter.
+    const beds = new Set([1, 2, 3, 4].map(chapter => chapterSoundtrack([{ kind: 'atmosphere', parts: ['Wind', 'low'] }], LIBRARY_BASE_MEDIA, chapter).scene?.atmosphere));
+    expect(beds.size).toBeGreaterThan(1);
+    // A category the story does not have is named, never guessed.
+    expect(chapterSoundtrack([{ kind: 'atmosphere', parts: ['Desert', 'high'] }], LIBRARY_BASE_MEDIA, 1)).toEqual({ unknown: ['Desert'], extra: 0 });
+  });
+
   it('is the first tag\'s mood and atmosphere, read in either order, the beds of one word taking turns by chapter', () => {
     expect(chapterSoundtrack([{ parts: ['Mystical', 'forest'] }], LIBRARY_BASE_MEDIA, 1)).toEqual({ scene: { soundscape: 'mystical', atmosphere: forest(1) }, unknown: [], extra: 0 });
     expect(chapterSoundtrack([{ parts: ['forest', 'sad'] }], LIBRARY_BASE_MEDIA, 2).scene).toEqual({ soundscape: 'sad', atmosphere: forest(2) });

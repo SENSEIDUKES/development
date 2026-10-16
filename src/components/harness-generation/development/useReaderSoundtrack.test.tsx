@@ -175,6 +175,9 @@ describe('The Reader soundtrack', () => {
     expect(readingScene(chapters, 3)).toEqual({ soundscape: 'fighting', atmosphere: 'rain' });
     expect(readingScene(chapters, 4)).toEqual({ soundscape: 'fighting', atmosphere: 'wind' });
     expect(readingScene([{ chapterNumber: 1 }], 1)).toBeUndefined();
+    // Music chosen by category replaces an earlier mood, and carries on as one choice.
+    const later = [...chapters, { chapterNumber: 5, scene: { music: { category: 'War', energy: 'high' as const } } }, { chapterNumber: 6 }];
+    expect(readingScene(later, 6)).toEqual({ music: { category: 'War', energy: 'high' }, atmosphere: 'wind' });
   });
 
   it('counts Listen finishing the chapter as its end, wherever the page is, so an End of chapter timer stops it', () => {

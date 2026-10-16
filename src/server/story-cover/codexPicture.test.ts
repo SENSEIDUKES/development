@@ -11,7 +11,7 @@ const sword = { subject: 'thing' as const, name: 'Crimson Broadsword', look: { s
 describe('A Codex card\'s picture', () => {
   it('is written from the card\'s look and the story\'s own words, traits in the order a look is read', () => {
     expect(buildCodexPicturePrompt({ card: sword, story })).toBe([
-      'Create Eastern fantasy item art, drawing on Chinese webnovel, Japanese light novel, or Korean webnovel illustration appropriate to this story.',
+      'Create professional, high-quality Eastern fantasy item art, drawing on Chinese webnovel, Japanese light novel, or Korean webnovel illustration appropriate to this story.',
       'Tradition: Chinese webnovel',
       'Genre: Xianxia',
       'Tone: Grim and hungry.',
@@ -20,9 +20,9 @@ describe('A Codex card\'s picture', () => {
       'Look: A heavy black-iron broadsword veined with red.',
       '- Material: black iron',
       '- Colour: red veins',
-      'Draw only what the look states and keep every stated detail exact. Where the look is silent, keep it plain and true to the world; never add engravings, gems, glow or colours it does not name.',
-      'The object alone, whole and centered, against a simple background that suits the world. No hands or people.',
-      'Vertical 3:4 composition, detailed illustration, readable at thumbnail size.',
+      'Keep every detail the look states exact and never contradict it; never add engravings or gems it does not name. Where the look is silent, choose what suits the object and the world.',
+      'The object alone as the clear focus, whole, against a background from its world, with cinematic lighting. No hands or people.',
+      'Vertical 3:4 composition. High quality, highly detailed, richly painted, sharp focus, readable at thumbnail size.',
       'No lettering, logos, signatures, or watermarks.',
     ].join('\n'));
   });
@@ -31,7 +31,7 @@ describe('A Codex card\'s picture', () => {
     const prompt = buildCodexPicturePrompt({ card: { subject: 'character', name: 'Han Shuo', look: { summary: 'A lean youth with ash-streaked black hair.', traits: { hair: 'black, ash-streaked' } } }, story: {} });
     expect(prompt).not.toMatch(/Tradition:|Genre:|Tone:|World:/);
     expect(prompt).toContain('Character: Han Shuo\nLook: A lean youth with ash-streaked black hair.\n- Hair: black, ash-streaked\n');
-    expect(prompt).toContain('One character, full figure, centered');
+    expect(prompt).toContain('One character as the clear focus, in a setting from their world');
     expect(prompt).toContain('Never sexualize anyone.');
   });
 

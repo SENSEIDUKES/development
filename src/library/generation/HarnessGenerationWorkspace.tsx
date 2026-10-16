@@ -965,9 +965,9 @@ export function HarnessGenerationWorkspace({
     catch { return { words: [], answered: [] }; }
   }, [controller, state, selectedStory]);
   const soundtrackWords = useMemo<SoundtrackVocabulary>(() => {
-    if (!state || !selectedStory) return { moods: [], atmospheres: [] };
+    if (!state || !selectedStory) return { music: [], atmospheres: [] };
     try { return controller.describeSoundtrackVocabulary(selectedStory.id); }
-    catch { return { moods: [], atmospheres: [] }; }
+    catch { return { music: [], atmospheres: [] }; }
   }, [controller, state, selectedStory]);
   const missionReminder = useMemo<HarnessMissionReminder | { error: string } | undefined>(() => {
     if (!state || !selectedStory) return undefined;

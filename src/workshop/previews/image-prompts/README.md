@@ -97,6 +97,9 @@ the server's reason it failed.
 
 ## History
 
+- **2026-10-16** — The Codex picture prompts ask for professional, high-quality,
+  richly painted Eastern fantasy art (not a cover), and no longer tell the
+  model to keep a silent look plain.
 - **2026-10-15** — Codex pictures are in the app: the Codex tab shows the new
   character and item prompts, read from the live code, above the old app's
   portraits (the old artifact prompt moves beside them).

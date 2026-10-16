@@ -710,8 +710,11 @@ async function walk(browser, viewport, sample) {
   const equipped = await codexSheet.locator('[aria-label$=": Equipped"]').textContent();
   check(equipped.includes('Bell Key'), `The Bell Key should be equipped, got ${equipped}.`);
   const slot = codexSheet.getByTestId('codex-slot').first();
-  check(JSON.stringify(await slot.locator('button').allTextContents()) === '["Ch. 1 · gained","Ch. 1 · took up"]',
-    'Each change should link to its chapter.');
+  // How it is now in one line; its changes one tap away, the newest first.
+  check((await slot.getByTestId('codex-slot-state').textContent()) === 'In hand since Ch. 1', 'A held thing should say how it is held, and since when.');
+  await slot.getByTestId('codex-history').locator('summary').click();
+  check(JSON.stringify(await slot.getByTestId('codex-history').locator('button').allTextContents()) === '["Ch. 1 · took up","Ch. 1 · gained"]',
+    'Each change should link to its chapter, the newest first.');
   check(!(await page.textContent('body')).includes('[['), 'No tag may reach the Codex.');
   // Their look, as the look step wrote it down after the chapter was saved, with the reader's token and never a question.
   const look = await codexSheet.getByTestId('codex-look').innerText();

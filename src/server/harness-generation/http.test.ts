@@ -306,6 +306,19 @@ describe('Harness Generation HTTP boundary', () => {
     expect(result).toMatchObject({ status: 502, body: { error: 'The model was still writing after 170 seconds, so it was stopped. Choose a lower reasoning level or a faster model in the Model Router. The prior committed story is unchanged.' } });
   });
 
+  it('tells the reader when a provider rejected its key, so a retry is not wasted, without its private details', async () => {
+    const result = await handleHarnessGenerationHttp(
+      { method: 'POST', body: request() },
+      { environment, providerFactory: () => ({
+        provider: 'gemini', model: 'google/gemini-3.1-flash-lite',
+        generate: async () => { throw new Error('MiniMax returned HTTP 401. Check the key, plan access and remaining quota. trace=private'); },
+      }) },
+    );
+    expect(result.status).toBe(502);
+    expect((result.body as { error: string }).error).toMatch(/^The provider for .+ rejected its key \(HTTP 401\)\. Check that provider's key, plan and remaining credit in the server settings, or choose another model in the Model Router\. The prior committed story is unchanged\.$/);
+    expect(JSON.stringify(result.body)).not.toContain('trace=private');
+  });
+
   it('does not expose protected provider failure details', async () => {
     const result = await handleHarnessGenerationHttp(
       { method: 'POST', body: request() },

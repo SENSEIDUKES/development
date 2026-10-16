@@ -29,7 +29,7 @@ The current split is:
 | Sound words (the event a recording answers, with an example) | SEN | `soundWords.ts`, `soundVocabulary` in `media.ts` |
 | Studio tags (parent + Tone, Energy, Tension) | SEN | `audioTags.ts` |
 | Portable soundscape intent and resolved track shape (a piece may carry its name and measured loudness) | SEN | `soundscapes.ts` |
-| The words a chapter's soundtrack is chosen with: music moods and atmosphere words | SEN | `soundtrackVocabulary.ts`, `SceneAtmosphere` in `media.ts` |
+| The words a chapter's soundtrack is chosen with (music and atmosphere categories) and how the HARNESS chooses recordings from a category and its SEN audio tags | SEN | `soundtrackVocabulary.ts`, `SceneAtmosphere` in `media.ts` |
 | Media URL safety and generic media records | SEN | `mediaUrl.ts`, `media.ts` |
 | Host-supplied playback port | SEN contract | `playback.tsx` |
 | Celestial Library packs and entitlement policy | Library | `src/library/media/mediaPacks.ts` |

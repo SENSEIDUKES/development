@@ -1,6 +1,7 @@
 import { parseAudioCues, type AudioCue, type AudioCuesLoadResult } from './cues';
 import { isPlayableMediaUrl } from './mediaUrl';
 import { resolveSoundscapeTrack, type SceneAudioTrack, type SoundscapeIntent } from './soundscapes';
+import type { AudioTags } from './audioTags';
 import type { SoundWord } from './soundWords';
 
 /** Opaque host resource identity; contains no account, price, or entitlement. */
@@ -30,6 +31,14 @@ export interface SceneAtmosphere {
   /** The bed's own name, where a reader sees it. */
   label?: string;
   group?: string;
+  /**
+   * What the writer chooses the bed by ("Rain"), with its energy. A bed
+   * without one is chosen by its group: the SEN audio tags, when its pack
+   * carries them, choose closer.
+   */
+  category?: string;
+  /** The bed's SEN audio tags (tone, tension, energy). */
+  studioTags?: AudioTags;
   /**
    * Where the bed plays: a public HTTPS file or a file in an installed package.
    * Absent from media frozen before atmospheres came from packs: the host's

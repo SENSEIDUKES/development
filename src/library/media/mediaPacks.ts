@@ -2,7 +2,7 @@ import { isPlayableMediaUrl, createMediaCatalog, type MediaCatalog, type MediaRe
 import { parseAudioCues, type AudioCue } from '@seihouse/sen/audio';
 import { validateSceneAudioCatalog, type SceneAudioTrack } from '@seihouse/sen/audio';
 import { validateSoundWords, type SoundWord } from '@seihouse/sen/audio';
-import type { SceneAtmosphere } from '@seihouse/sen/audio';
+import { readAudioTags, type SceneAtmosphere } from '@seihouse/sen/audio';
 
 export const MEDIA_PACK_TYPES = ['soundscape', 'sound-cue', 'atmosphere'] as const;
 export type MediaPackType = (typeof MEDIA_PACK_TYPES)[number];
@@ -213,7 +213,7 @@ const validateSoundCueEntries = (value: unknown, sounds: readonly SoundWord[]): 
   return loaded.cues as SoundCuePack['entries'];
 };
 
-const ATMOSPHERE_FIELDS = new Set(['id', 'word', 'label', 'group', 'url', 'loudness']);
+const ATMOSPHERE_FIELDS = new Set(['id', 'word', 'label', 'group', 'category', 'studioTags', 'url', 'loudness']);
 const ATMOSPHERE_WORD = /^[a-z]+(?: [a-z]+){0,2}$/;
 
 const validateAtmosphereEntries = (value: unknown): AtmospherePack['entries'] => {
@@ -223,11 +223,14 @@ const validateAtmosphereEntries = (value: unknown): AtmospherePack['entries'] =>
   return value.map((entry, index) => {
     if (!isPlainObject(entry)) throw new Error(`Atmosphere ${index + 1} must be a plain object.`);
     assertExactFields(entry, ATMOSPHERE_FIELDS, `Atmosphere ${index + 1}`);
-    const { id, word, label, group, url, loudness } = entry;
+    const { id, word, label, group, category, url, loudness } = entry;
     if (typeof id !== 'string' || !id.trim()) throw new Error(`Atmosphere ${index + 1} needs an id.`);
     if (typeof word !== 'string' || !ATMOSPHERE_WORD.test(word)) throw new Error(`Atmosphere ${id} needs a word: one to three plain lowercase words.`);
     if (typeof label !== 'string' || !label.trim()) throw new Error(`Atmosphere ${id} needs a name.`);
     if (group !== undefined && (typeof group !== 'string' || !group.trim())) throw new Error(`Atmosphere ${id} has an empty group.`);
+    if (category !== undefined && (typeof category !== 'string' || !category.trim())) throw new Error(`Atmosphere ${id} has an empty category.`);
+    const studioTags = entry.studioTags === undefined ? undefined : readAudioTags(entry.studioTags);
+    if (studioTags && !studioTags.ok) throw new Error(`Atmosphere ${id}: ${studioTags.reason}`);
     if (typeof url !== 'string' || !isPlayableMediaUrl(url)) throw new Error(`Atmosphere ${id} needs a public HTTPS playback URL or a file in an installed package.`);
     if (!SUPPORTED_AUDIO_FILE.test(url)) throw new Error(`Atmosphere ${id} uses an unsupported file type.`);
     if (loudness !== undefined && !(isPlainObject(loudness) && typeof loudness.lufs === 'number' && Number.isFinite(loudness.lufs)
@@ -240,6 +243,8 @@ const validateAtmosphereEntries = (value: unknown): AtmospherePack['entries'] =>
     return {
       id, word, label: label.trim(), url,
       ...(group ? { group: group.trim() } : {}),
+      ...(category ? { category: category.trim() } : {}),
+      ...(studioTags?.ok && Object.keys(studioTags.tags).length ? { studioTags: studioTags.tags } : {}),
       ...(isPlainObject(loudness) ? { loudness: { lufs: loudness.lufs as number, ...(typeof loudness.peakDb === 'number' ? { peakDb: loudness.peakDb } : {}) } } : {}),
     };
   });

@@ -199,6 +199,7 @@ async function sampleSeed(browser) {
   return sample;
 }
 
+/** Verify the app's complete reading and creation journey at one viewport, saving visual evidence along the way. */
 async function walk(browser, viewport, sample) {
   const context = await browser.newContext({ viewport: { width: viewport.width, height: viewport.height } });
   await context.addInitScript(installSpeechStandIn);
@@ -655,13 +656,35 @@ async function walk(browser, viewport, sample) {
   check(frame.title >= 80, `The story title should keep room in the top bar (${JSON.stringify(frame)}).`);
   // About 60 characters a line, up to about 66 on a wide screen.
   check(frame.measure <= 39, `The prose should keep a reading measure of 60 to 66 characters (${JSON.stringify(frame)}).`);
-  check(await visibleButton('Open Fate').isVisible() && await visibleButton('Reader Settings').isVisible() && await visibleButton('Open Codex').isVisible(),
+  check(await visibleButton(viewport.width < 640 ? 'Chapter controls' : 'Open Fate').isVisible() && await visibleButton('Reader Settings').isVisible() && await visibleButton('Open Codex').isVisible(),
     'Fate, the Codex and Reader Settings should be reachable at the chapter\'s end.');
   check(await page.getByTestId('reader-top-bar').getByTestId('reader-companion').getByRole('button', { name: /actions$/ }).isVisible(),
     'The Familiar\'s recall should sit in the Reader\'s top bar beside Reader Settings.');
   await shot('6c-reader-end');
 
   // 3c. Fate is a panel: the chapter stays on the page, readable beside (laptop) or above (phone) it.
+  if (viewport.width < 640) {
+    const targets = await page.getByTestId('reader-controls-row').getByRole('button').evaluateAll(buttons => buttons.map(button => {
+      const rect = button.getBoundingClientRect();
+      return { name: button.getAttribute('aria-label'), width: rect.width, height: rect.height };
+    }));
+    check(targets.every(target => target.width >= 43.5 && target.height >= 43.5), `Compact Reader controls need comfortable targets: ${JSON.stringify(targets)}.`);
+    const readingPosition = await page.evaluate(() => window.scrollY);
+    const playbackTarget = await visibleButton('Playback controls').boundingBox();
+    check(playbackTarget, 'The playback trigger should be on screen.');
+    // A direct pointer click avoids the test driver's automatic scroll-into-view.
+    await page.mouse.click(playbackTarget.x + playbackTarget.width / 2, playbackTarget.y + playbackTarget.height / 2);
+    const playbackStrip = page.getByRole('dialog', { name: 'Playback', exact: true });
+    await playbackStrip.waitFor();
+    check(Math.abs(await page.evaluate(() => window.scrollY) - readingPosition) <= 1, 'Opening playback must keep the reading position.');
+    check((await playbackStrip.boundingBox()).height <= 60, 'Playback should occupy only one compact row.');
+    check(await visibleButton('Narration speed: 1.5').count() === 0, 'Speed choices should stay hidden until requested.');
+    await shot('6c-reader-playback-strip');
+    await visibleButton('Playback controls').press('Escape');
+    await playbackStrip.waitFor({ state: 'hidden' });
+    await visibleButton('Chapter controls').click();
+    check((await page.getByRole('dialog', { name: 'Chapters', exact: true }).boundingBox()).height <= 60, 'Chapter controls should occupy only one compact row.');
+  }
   await visibleButton('Open Fate').click();
   await page.getByTestId('reader-panel-fate').waitFor();
   await page.waitForTimeout(400);

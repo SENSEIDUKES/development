@@ -33,8 +33,8 @@ export interface CapaSlotDefinition {
    * - `reading-mode`: the story's Reading Mode. Standard leaves the slot empty;
    *   each other mode loads SEN's matching bundled skill.
    * - `media-loadout`: the attempt's frozen Media Loadout. A story with sound
-   *   words loads SEN's Sound Cues skill with those words; one with music moods
-   *   or atmospheres loads SEN's Soundtrack skill with them. Without them the
+   *   words loads SEN's Sound Cues skill with those words; one with music or
+   *   atmospheres loads SEN's Soundtrack skill with their categories. Without them the
    *   slot is empty. A host without the Soundtrack skill leaves its slot empty
    *   and never fails a chapter.
    * - `always`: every chapter. SEN's skill for the slot (Speakers, Holdings, Appearance)
@@ -71,7 +71,7 @@ export const CAPA_SCHEMA: readonly CapaSlotDefinition[] = [
   { id: 'accessibility', label: 'Accessibility', description: 'Writes chapters in the story\'s Reading Mode.', managedBy: 'reading-mode', installable: false },
   { id: 'translation', label: 'Translation', description: 'Writes chapters in the story\'s Story Language when it is not English.', managedBy: 'story-language', installable: true },
   { id: 'soundCues', label: 'Sound Cues', description: 'Tags the words where a sound happens and names it from the story\'s sound words.', managedBy: 'media-loadout', installable: false, writesTags: true },
-  { id: 'soundtrack', label: 'Soundtrack', description: 'Chooses the music mood and the atmosphere a chapter opens with, each with its own tag, once, at its start.', managedBy: 'media-loadout', installable: false, writesTags: true },
+  { id: 'soundtrack', label: 'Soundtrack', description: 'Chooses the music and the atmosphere a chapter opens with, by category and SEN audio tags, once each, at its start.', managedBy: 'media-loadout', installable: false, writesTags: true },
   { id: 'speakers', label: 'Speakers', description: 'Tags who speaks each spoken line, so the Reader can give each its voice.', managedBy: 'always', installable: false, writesTags: true },
   { id: 'holdings', label: 'Holdings', description: 'Keeps what every character has, uses, knows and is: tags each change where it happens and lists what the main character holds after the chapter.', managedBy: 'always', installable: false, writesTags: true },
   { id: 'appearance', label: 'Appearance', description: 'Keeps every look: tags each character and thing when it steps onto the page and each change to a look.', managedBy: 'always', installable: false, writesTags: true },
@@ -101,7 +101,7 @@ const MANAGED_SLOT_REASONS: Record<Exclude<CapaSlotManager, 'always' | 'media-lo
 /** Why each slot the story's Media Loadout fills does. */
 const MEDIA_SLOT_REASONS: Readonly<Partial<Record<HarnessSkillSlotId, string>>> = {
   soundCues: 'The Sound Cues slot follows the story\'s Media Loadout: a story with sound words loads SEN\'s Sound Cues skill with them on every chapter, and one without leaves it empty.',
-  soundtrack: 'The Soundtrack slot follows the story\'s Media Loadout: a story with music moods or atmospheres loads SEN\'s Soundtrack skill with them on every chapter, and one without leaves it empty.',
+  soundtrack: 'The Soundtrack slot follows the story\'s Media Loadout: a story with music or atmospheres loads SEN\'s Soundtrack skill with their categories on every chapter, and one without leaves it empty.',
 };
 
 /** Why each slot that loads on every chapter does. */
@@ -225,7 +225,7 @@ const resolveManagedSkill = (
     case 'media-loadout': {
       // Never required either: without it the Reader goes on with the soundtrack before.
       if (slot === 'soundtrack') {
-        return soundtrack?.moods.length || soundtrack?.atmospheres.length ? resolveHarnessSkill(catalog, SEN_SOUNDTRACK_SKILL) : undefined;
+        return soundtrack?.music?.length || soundtrack?.atmospheres?.length ? resolveHarnessSkill(catalog, SEN_SOUNDTRACK_SKILL) : undefined;
       }
       if (!soundVocabulary.length) return undefined;
       const manifest = resolveHarnessSkill(catalog, SEN_SOUND_CUES_SKILL);
@@ -264,7 +264,7 @@ export const resolveManagedCapaSkills = (
   fateMode: HarnessStoryMode = 'regular',
   /** The story's sound words from the attempt's frozen Media Loadout. */
   soundVocabulary: readonly SoundWord[] = [],
-  /** The music moods and atmosphere words of the attempt's frozen Media Loadout. */
+  /** The music and atmosphere categories of the attempt's frozen Media Loadout. */
   soundtrack?: SoundtrackVocabulary,
 ): Partial<Record<HarnessSkillSlotId, HarnessSkillManifest>> => Object.fromEntries(
   CAPA_SCHEMA.flatMap(slot => {
@@ -293,7 +293,7 @@ export const freezeHarnessSkillLoadout = (
   fateMode: HarnessStoryMode = 'regular',
   /** The story's sound words from the attempt's frozen Media Loadout. Any fill the Sound Cues slot. */
   soundVocabulary: readonly SoundWord[] = [],
-  /** The music moods and atmosphere words of the attempt's frozen Media Loadout. Any fill the Soundtrack slot. */
+  /** The music and atmosphere categories of the attempt's frozen Media Loadout. Any fill the Soundtrack slot. */
   soundtrack?: SoundtrackVocabulary,
 ): HarnessSkillLoadoutSnapshot => {
   const unsupportedSlot = Object.keys(story.skillLoadout ?? {})
@@ -414,9 +414,9 @@ export const assembleCapaPrompt = (
   const soundVocabulary = ordered.some(skill => skill.slot === 'soundCues' && isAuthoringSkill(skill)) && loadout.soundVocabulary?.length
     ? loadout.soundVocabulary
     : undefined;
-  // The Soundtrack skill carries the story's frozen music moods and atmospheres.
+  // The Soundtrack skill carries the story's frozen music and atmosphere categories.
   const soundtrackVocabulary = ordered.some(skill => skill.slot === 'soundtrack' && isAuthoringSkill(skill))
-    && (loadout.soundtrackVocabulary?.moods.length || loadout.soundtrackVocabulary?.atmospheres.length)
+    && (loadout.soundtrackVocabulary?.music?.length || loadout.soundtrackVocabulary?.atmospheres?.length)
     ? loadout.soundtrackVocabulary
     : undefined;
   const authoring = ordered.filter(isAuthoringSkill);
@@ -429,7 +429,7 @@ export const assembleCapaPrompt = (
       : []),
     // The story's sound words close the Sound Cues section as its example list.
     ...(skill.slot === 'soundCues' && soundVocabulary ? [presentSoundVocabulary(soundVocabulary)] : []),
-    // The story's moods and atmospheres close the Soundtrack section as its lists.
+    // The story's music and atmosphere categories close the Soundtrack section as its lists.
     ...(skill.slot === 'soundtrack' && soundtrackVocabulary ? [presentSoundtrackVocabulary(soundtrackVocabulary)] : []),
   ].join('\n'));
   // The official requirements travel only when a reader-facing adapter is

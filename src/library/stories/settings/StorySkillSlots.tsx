@@ -45,11 +45,11 @@ const managedSlotInspection = (
     case 'media-loadout':
       if (slot.id === 'soundtrack') {
         const loaded = installedSkills.some(installed => installed.id === SEN_SOUNDTRACK_SKILL.id && installed.version === SEN_SOUNDTRACK_SKILL.version);
-        if (!soundtrackWords.moods.length && !soundtrackWords.atmospheres.length) {
-          return { status: 'Not used', summary: 'This story has no music moods or atmospheres, so this slot stays empty. It follows the story\'s Media Loadout and is never equipped by hand.' };
+        if (!soundtrackWords.music.length && !soundtrackWords.atmospheres.length) {
+          return { status: 'Not used', summary: 'This story has no music or atmospheres, so this slot stays empty. It follows the story\'s Media Loadout and is never equipped by hand.' };
         }
         return loaded
-          ? { status: 'Loaded', skill: SEN_SOUNDTRACK_SKILL, summary: `${SEN_SOUNDTRACK_SKILL.name} v${SEN_SOUNDTRACK_SKILL.version} loads with this story's ${soundtrackWords.moods.length} music moods and ${soundtrackWords.atmospheres.length} atmospheres: the writer chooses one of each at every chapter's start.` }
+          ? { status: 'Loaded', skill: SEN_SOUNDTRACK_SKILL, summary: `${SEN_SOUNDTRACK_SKILL.name} v${SEN_SOUNDTRACK_SKILL.version} loads with this story's ${soundtrackWords.music.length} music and ${soundtrackWords.atmospheres.length} atmosphere categories: the writer chooses one of each at every chapter's start, and the HARNESS chooses the recordings.` }
           : { status: 'No package', summary: 'This host has no Soundtrack skill, so chapters choose no music or atmosphere and the Reader goes on with what plays.' };
       }
       return soundWords.length

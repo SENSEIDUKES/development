@@ -20,6 +20,11 @@ export interface WriterInstructionsChange {
  */
 export const WRITER_INSTRUCTIONS_HISTORY: readonly WriterInstructionsChange[] = [
   {
+    date: '2026-10-16',
+    summary: 'SENSEI\'s design for the soundtrack: the writer names a category and its SEN audio tags, never a recording, and the HARNESS chooses the recording ("wind, high energy"). SEN Soundtrack 3.0.0, in the words SENSEI approved: [[soundscape: Category | Tone | Tension | Energy]] [[atmosphere: Category | Energy]], once each at the chapter\'s start, under the music and atmosphere categories and the tag words (Tone bright/neutral/dark, Tension calm/suspenseful/urgent, Energy low/medium/high). The 15 music moods and 20 atmosphere names are gone, and the list no longer grows with the library. The FORMAT / REQUIRED / FORBIDDEN / CHECK template is gone from this skill. Until the packs carry SEN audio tags, each piece\'s and bed\'s group stands in for its category and each bed\'s proposed intensity for its energy, so the choice is looser, never silent. Older mood and atmosphere words still read. Sound Cues are unchanged.',
+    changed: { soundtrack: '098118001876bd' },
+  },
+  {
     date: '2026-10-14',
     summary: 'From SENSEI\'s Test Story - Blade run (chapters 3 to 10): the writer tagged every new character but no thing at all, and in Chapter 9 used a look tag right after an appears tag to describe a first look, so two people got two looks each. SEN Appearance 1.1.0: a look tag is only a later change, never a first description, and an appears tag for a thing is only for a named object no one holds; held things are now recorded from their Holdings tags by the HARNESS, which also ignores a look tag in the paragraph that first shows someone. The chapter request (not a recorded block) now asks for about 1,500 words, 1,200 to 1,700 in 35 paragraphs, down from 1,800 to 2,500 in 50: chapters read too long.',
     changed: { appearance: '175e49662b3faa' },

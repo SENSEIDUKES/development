@@ -1,12 +1,16 @@
 import type { ReaderMixer, ReaderMixerLayerStatus, Track } from '@seihouse/audio-player';
+import type { AudioTags } from '../audio/audioTags';
 import type { SceneAudioTrack } from '../audio/soundscapes';
+import { piecesForMusic } from '../audio/soundtrackVocabulary';
 import type { ReaderPreferenceStorage } from './readerRuntime';
 
 /**
- * What the music plays: pieces of one mood, one after another, or one piece
- * the reader chose, again and again.
+ * What the music plays: pieces of one category closest to the writer's tags,
+ * or of one mood, one after another, or one piece the reader chose, again
+ * and again.
  */
 export type SoundtrackRequest =
+  | { music: { category: string } & AudioTags; pieces: readonly SceneAudioTrack[] }
   | { mood: string; pieces: readonly SceneAudioTrack[] }
   | { piece: SceneAudioTrack };
 
@@ -122,7 +126,8 @@ export class StorySoundtrack {
   }
 
   private choices(request: SoundtrackRequest): SceneAudioTrack[] {
-    return 'piece' in request ? [request.piece] : piecesForMood(request.mood, request.pieces);
+    if ('piece' in request) return [request.piece];
+    return 'music' in request ? piecesForMusic(request.music, request.pieces) : piecesForMood(request.mood, request.pieces);
   }
 
   /** The newest hold that has music, or else the host's music. */

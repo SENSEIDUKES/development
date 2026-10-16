@@ -105,7 +105,9 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
     save(state, kept);
   };
   const writerLabel = (kind: SoundtrackChangeKind, choices: SoundtrackChoices) => {
-    const chosen = kind === SOUNDSCAPE_CHANGE_KIND ? chapter.scene?.soundscape
+    const music = chapter.scene?.music;
+    const chosen = kind === SOUNDSCAPE_CHANGE_KIND
+      ? (music ? [music.category, music.tone, music.tension, music.energy].filter(Boolean).join(' · ') : chapter.scene?.soundscape)
       : chapter.scene?.atmosphere && soundtrackOptionLabel(kind, chapter.scene.atmosphere, choices);
     return chosen ? `The writer's choice: ${chosen}` : 'The writer\'s choice (none: the one before goes on)';
   };
@@ -176,7 +178,7 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
   };
   const { actions, removeActions } = audioActions({ state, update, catalog, onNotice: setNotice, soundtrack: choices });
   // The Soundscapes and Atmospheres overlays mark where the opening begins: the reader's own, or the writer's.
-  const opens = { [SOUNDSCAPE_CHANGE_KIND]: Boolean(opening?.soundscape ?? chapter.scene?.soundscape), [ATMOSPHERE_CHANGE_KIND]: Boolean(opening?.atmosphere ?? chapter.scene?.atmosphere) };
+  const opens = { [SOUNDSCAPE_CHANGE_KIND]: Boolean(opening?.soundscape ?? chapter.scene?.music ?? chapter.scene?.soundscape), [ATMOSPHERE_CHANGE_KIND]: Boolean(opening?.atmosphere ?? chapter.scene?.atmosphere) };
   const opensWith = OVERLAY_SOUNDTRACK_KIND[overlayMode];
   const showsOpening = Boolean(opensWith && opens[opensWith]);
   const overlay = useMemo(() => {

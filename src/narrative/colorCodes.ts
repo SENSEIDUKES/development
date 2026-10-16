@@ -19,6 +19,8 @@ export type ColorCodeId =
   | 'itemGood'
   | 'itemGreat'
   | 'itemLegendary'
+  | 'warning'
+  | 'mystery'
   | 'corruption';
 
 export interface ColorCodeDefinition {
@@ -35,16 +37,18 @@ export const COLOR_CODES: Record<ColorCodeId, ColorCodeDefinition> = {
   enemy: { id: 'enemy', cssVar: '--color-entity-enemy', name: 'Enemy & Threat', colorName: 'Red', playerMeaning: 'Hostility, danger, loss, and direct threat' },
   unknown: { id: 'unknown', cssVar: '--color-entity-unknown', name: 'Unknown & Neutral', colorName: 'Gray', playerMeaning: 'Unknown characters, neutral alignment, and ordinary system context' },
   bond: { id: 'bond', cssVar: '--color-entity-lover', name: 'Karmic Bond', colorName: 'Pink', playerMeaning: 'Lovers, partners, and meaningful emotional bonds' },
-  mentor: { id: 'mentor', cssVar: '--color-entity-mentor', name: 'Mentor & Awakening', colorName: 'Gold', playerMeaning: 'Mentors, awakening, special locations, and legendary value' },
-  nonHuman: { id: 'nonHuman', cssVar: '--color-entity-non-human', name: 'Non-Human Individual', colorName: 'Violet', playerMeaning: 'Named non-human individuals without a stronger relationship signal' },
-  location: { id: 'location', cssVar: '--color-location-regular', name: 'Regular Location', colorName: 'Purple', playerMeaning: 'Ordinary places, mysteries, fate threads, and prophecy' },
-  specialLocation: { id: 'specialLocation', cssVar: '--color-location-special', name: 'Special Location', colorName: 'Gold', playerMeaning: 'Sacred, divine, hidden, forbidden, or lethal places' },
+  mentor: { id: 'mentor', cssVar: '--color-entity-mentor', name: 'Mentor & Awakening', colorName: 'Gold', playerMeaning: 'Mentorship, attainment, awakening, and distinction' },
+  nonHuman: { id: 'nonHuman', cssVar: '--color-entity-non-human', name: 'Non-Human Individual', colorName: 'Violet', playerMeaning: 'Reserved species accent; character colors follow relationship, never species' },
+  location: { id: 'location', cssVar: '--color-location-regular', name: 'Regular Location', colorName: 'Gray', playerMeaning: 'Ordinary places without a known danger or special significance' },
+  specialLocation: { id: 'specialLocation', cssVar: '--color-location-special', name: 'Special Location', colorName: 'Gold', playerMeaning: 'Sacred, divine, and distinguished places' },
   itemBasic: { id: 'itemBasic', cssVar: '--color-item-basic', name: 'Basic Item', colorName: 'White', playerMeaning: 'Common, untiered, and ordinary items' },
   itemDecent: { id: 'itemDecent', cssVar: '--color-item-decent', name: 'Decent Item', colorName: 'Green', playerMeaning: 'Decent, uncommon, mortal, and profane items' },
   itemGood: { id: 'itemGood', cssVar: '--color-item-good', name: 'Good Item', colorName: 'Light Blue', playerMeaning: 'Good, rare, earth, and spirit items' },
-  itemGreat: { id: 'itemGreat', cssVar: '--color-item-great', name: 'Great Item', colorName: 'Orange', playerMeaning: 'Great items, warnings, risk, and meaningful consequences' },
+  itemGreat: { id: 'itemGreat', cssVar: '--color-item-great', name: 'Great Item', colorName: 'Purple', playerMeaning: 'Great, epic, heaven, and saint items' },
   itemLegendary: { id: 'itemLegendary', cssVar: '--color-item-legendary', name: 'Legendary Item', colorName: 'Gold', playerMeaning: 'Legendary rewards, achievements, and supreme artifacts' },
-  corruption: { id: 'corruption', cssVar: '--color-system-corruption', name: 'Permanent Curse', colorName: 'Dark Rose', playerMeaning: 'Permanent damage, curse, tragedy, and death scars' },
+  warning: { id: 'warning', cssVar: '--color-system-warning', name: 'Warning & Risk', colorName: 'Orange', playerMeaning: 'Caution, instability, pressure, and risky consequences' },
+  mystery: { id: 'mystery', cssVar: '--color-system-mystery', name: 'Mystery & Fate', colorName: 'Purple', playerMeaning: 'Hidden significance, fate, prophecy, and the extraordinary' },
+  corruption: { id: 'corruption', cssVar: '--color-system-corruption', name: 'Permanent Curse', colorName: 'Muted Rose', playerMeaning: 'Permanent damage, curse, tragedy, and death scars' },
 };
 
 export const COLOR_CODE_PALETTE_IDS = [
@@ -132,6 +136,8 @@ export type CodexEntityBand =
   | 'gold'
   | 'ally'
   | 'hostile'
+  | 'warning'
+  | 'extraordinary'
   | 'mystery'
   | 'nonHuman'
   | 'artifactGreat'
@@ -144,6 +150,7 @@ export type CodexEntityBand =
 
 const CODEX_BAND_COLOR_CODES: Record<CodexEntityBand, ColorCodeId> = {
   protagonist: 'mainCharacter', bond: 'bond', gold: 'mentor', ally: 'ally', hostile: 'enemy', mystery: 'unknown', nonHuman: 'nonHuman',
+  warning: 'warning', extraordinary: 'mystery',
   artifactGreat: 'itemGreat', artifactGood: 'itemGood', artifactModest: 'itemDecent', artifactPlain: 'itemBasic', location: 'location', faction: 'unknown', fallback: 'unknown',
 };
 
@@ -189,12 +196,17 @@ function resolveCharacterBand(entry: CodexEntityAccentInput, mcName?: string): C
 
 function resolveLocationBand(entry: CodexEntityAccentInput): CodexEntityBand {
   const description = (entry.description || '').toLowerCase();
-  const safety = (entry.safetyLevel || '').toLowerCase();
+  const safetyCode = resolveLocationSafetyColorCode(entry.safetyLevel);
+  // Known danger takes precedence over a place's prestige or hidden nature.
+  if (safetyCode === 'enemy') return 'hostile';
+  if (safetyCode === 'warning') return 'warning';
   const realm = (entry.realm || '').toLowerCase();
-  const isSpecial = /(special|sacred|divine|secret|hidden|forbidden)/.test(description)
-    || /(divine|heaven)/.test(realm)
-    || safety.includes('lethal');
-  return isSpecial ? 'gold' : 'location';
+  const isSpecial = /\b(special|sacred|divine)\b/.test(description)
+    || /\b(divine|heaven|heavenly)\b/.test(realm);
+  if (isSpecial) return 'gold';
+  if (/\bforbidden\b/.test(description)) return 'warning';
+  if (/\b(secret|hidden|mysterious)\b/.test(description)) return 'extraordinary';
+  return 'location';
 }
 
 function resolveArtifactBand(entry: CodexEntityAccentInput): CodexEntityBand {
@@ -245,29 +257,36 @@ export function resolveArtifactColorCode(entry?: Pick<CodexEntityAccentInput, 't
 }
 
 export function resolveLocationColorCode(entry?: Pick<CodexEntityAccentInput, 'description' | 'safetyLevel' | 'realm'> | null): ColorCodeId {
-  return resolveLocationBand(entry ?? {}) === 'gold' ? 'specialLocation' : 'location';
+  const band = resolveLocationBand(entry ?? {});
+  return band === 'gold' ? 'specialLocation' : getCodexEntityBandColorCode(band);
 }
 
 export function resolveLocationSafetyColorCode(safetyLevel?: string): ColorCodeId {
-  const safety = (safetyLevel || '').toLowerCase();
-  if (safety.includes('safe')) return 'ally';
-  if (safety.includes('danger')) return 'mentor';
-  return safety ? 'enemy' : 'unknown';
+  switch (safetyLevel?.trim().toLowerCase()) {
+    case 'safe': return 'ally';
+    case 'unsafe':
+    case 'dangerous':
+    case 'risky': return 'warning';
+    case 'lethal':
+    case 'deadly':
+    case 'hostile': return 'enemy';
+    default: return 'unknown';
+  }
 }
 
 export function resolveFactionAlignmentColorCode(alignment?: string): ColorCodeId {
   const value = (alignment || '').toLowerCase();
   if (value.includes('righteous')) return 'ally';
   if (value.includes('demonic')) return 'enemy';
-  if (value.includes('mysterious')) return 'mainCharacter';
+  if (value.includes('mysterious')) return 'mystery';
   return 'unknown';
 }
 
 export function resolveFactionStatusColorCode(status?: string): ColorCodeId {
-  const value = (status || '').toLowerCase();
-  if (value.includes('active')) return 'ally';
-  if (value.includes('destroyed')) return 'enemy';
-  if (value.includes('fractured')) return 'mentor';
+  const value = (status || '').trim().toLowerCase();
+  if (value === 'active') return 'ally';
+  if (value === 'destroyed') return 'enemy';
+  if (value === 'fractured') return 'warning';
   return 'unknown';
 }
 
@@ -286,31 +305,39 @@ export function resolveKarmaMetricColorCode(metric: 'debt' | 'boon' | 'destiny')
   return 'mentor';
 }
 
-/**
- * Bestiary threat labels have always used the warning-orange treatment. Keep
- * that established meaning in the registry even when the source vocabulary
- * for a threat level varies between stories.
- */
-export function resolveCreatureThreatColorCode(_threatLevel?: string): ColorCodeId {
-  return 'itemGreat';
+/** Unrecognized threat labels stay neutral instead of inventing a danger level. */
+export function resolveCreatureThreatColorCode(threatLevel?: string): ColorCodeId {
+  switch (threatLevel?.trim().toLowerCase()) {
+    case 'none':
+    case 'harmless': return 'ally';
+    case 'low': return 'unknown';
+    case 'medium':
+    case 'moderate': return 'warning';
+    case 'high':
+    case 'severe':
+    case 'extreme':
+    case 'deadly':
+    case 'lethal': return 'enemy';
+    default: return 'unknown';
+  }
 }
 
-/** Open threads retain danger red; completed threads retain boon green. */
+/** An open question is not itself a threat. */
 export function resolvePlotThreadStatusColorCode(status: 'unresolved' | 'resolved'): ColorCodeId {
-  return status === 'resolved' ? 'ally' : 'enemy';
+  return status === 'resolved' ? 'ally' : 'mystery';
 }
 
 /** Fate-consequence details keep their prior story-state and genre meanings. */
 export function resolveFateConsequenceDetailColorCode(
   detail: 'newStoryState' | 'genreShift',
 ): ColorCodeId {
-  return detail === 'newStoryState' ? 'mainCharacter' : 'location';
+  return detail === 'newStoryState' ? 'mainCharacter' : 'mystery';
 }
 
 /** Progression stages retain the existing Reader power-chart semantic colors. */
 export function resolvePowerStageColorCode(stageName?: string): ColorCodeId {
   const stage = (stageName || '').toLowerCase();
-  if (stage.includes('nascent')) return 'location';
+  if (stage.includes('nascent')) return 'mystery';
   if (stage.includes('core')) return 'mentor';
   if (stage.includes('foundation')) return 'mainCharacter';
   if (stage.includes('mortal')) return 'unknown';
@@ -333,19 +360,19 @@ export type SystemOutcomeTone = 'positive' | 'uncertain' | 'warning' | 'negative
 
 export function resolveSystemOutcomeColorCode(tone: SystemOutcomeTone | undefined, direction?: string): ColorCodeId {
   const resolvedTone = tone ?? (direction === 'loss' ? 'negative' : 'positive');
-  if (resolvedTone === 'uncertain') return 'mentor';
-  if (resolvedTone === 'warning') return 'itemGreat';
+  if (resolvedTone === 'uncertain') return 'unknown';
+  if (resolvedTone === 'warning') return 'warning';
   if (resolvedTone === 'negative') return 'enemy';
   return 'ally';
 }
 
-/** Fate-result meanings intentionally retain their established gold/orange/rose hierarchy. */
+/** Averting fate is attainment; a lasting scar or manifested doom is harm. */
 export function resolveFateResultColorCode(outcome?: string): ColorCodeId {
   switch ((outcome || '').trim().toUpperCase()) {
     case 'FATE AVERTED': return 'mentor';
-    case 'FATE SCARRED': return 'itemGreat';
+    case 'FATE SCARRED': return 'corruption';
     case 'DOOM MANIFESTED': return 'corruption';
-    default: return 'corruption';
+    default: return 'unknown';
   }
 }
 
@@ -355,9 +382,9 @@ export function resolveFateTypeColorCode(type?: string): ColorCodeId {
     case 'death fate': return 'corruption';
     case 'love fate': return 'bond';
     case 'kingdom fate': return 'mentor';
-    case 'villain fate': return 'location';
-    case 'betrayal fate': return 'itemGreat';
-    case 'poverty fate': return 'mentor';
+    case 'villain fate': return 'mystery';
+    case 'betrayal fate': return 'warning';
+    case 'poverty fate': return 'warning';
     case 'war fate': return 'enemy';
     case 'regression fate': return 'mainCharacter';
     case 'reputation fate': return 'unknown';
@@ -378,8 +405,8 @@ export interface SystemBadgeColorCode {
 
 export function resolveSystemBadgeColorCode(value?: string): SystemBadgeColorCode {
   switch ((value || '').trim().toLowerCase()) {
-    case 'light': return { colorCode: 'mentor' };
-    case 'moderate': return { colorCode: 'itemGreat' };
+    case 'light': return { colorCode: 'unknown' };
+    case 'moderate': return { colorCode: 'warning' };
     case 'severe': return { colorCode: 'enemy' };
     case 'deadly': return { colorCode: 'itemBasic', inverted: true };
     case 'unknown': return { colorCode: 'unknown' };
@@ -439,19 +466,19 @@ function systemMeaning(
 export const SYSTEM_COLORS_LEGEND: SystemColorMeaning[] = [
   systemMeaning('neutral', 'Basic System Info | Unknown (Gray)', 'Gray', 'Basic system info, Unknown characters', 'unknown'),
   systemMeaning('other', 'Other System Context | Miscellaneous (Gray)', 'Gray', 'Miscellaneous system information', 'unknown'),
-  systemMeaning('codex_update', 'New Info | Main Character (Blue)', 'Blue', 'New info, ally scan, codex record, Good items', 'mainCharacter'),
+  systemMeaning('codex_update', 'New Info | Main Character (Blue)', 'Blue', 'New information and Codex records', 'mainCharacter'),
   systemMeaning('progression', 'Stable Growth | Friend (Green)', 'Emerald', 'Training progress, stable growth, Decent items', 'ally'),
   systemMeaning('breakthrough', 'Awakening | Mentor & Special Location (Gold)', 'Gold', 'Level-up, evolution, awakening, Special locations, Legendary items', 'mentor'),
   systemMeaning('reward', 'Loot & Achievements | Legendary (Gold)', 'Gold', 'Loot, Qi gain, achievement, Legendary items', 'itemLegendary'),
-  systemMeaning('warning', 'Risk & Pressure | Great Item (Orange)', 'Orange', 'Risk, instability, choice pressure, Great items', 'itemGreat'),
+  systemMeaning('warning', 'Risk & Pressure (Orange)', 'Orange', 'Risk, instability, and choice pressure', 'warning'),
   systemMeaning('critical_danger', 'Combat Threat | Enemy (Red)', 'Red', 'Enemy, death risk, combat threat', 'enemy'),
   systemMeaning('combat_artifact', 'Combat Artifact | Special Encounter (Red-Gold)', 'Red-Gold', 'Powerful artifact found or used during combat', 'enemy', { borderColorCode: 'itemLegendary', textPresentationClass: 'font-semibold' }),
   systemMeaning('combat_breakthrough', 'Combat Breakthrough | Mid-fight Evolution (Gold-Red)', 'Gold-Red', 'Breakthrough achieved under combat pressure', 'mentor', { borderColorCode: 'enemy', textPresentationClass: 'font-bold' }),
-  systemMeaning('heavenly_tribulation', 'Heavenly Tribulation | Divine Trial (Purple-Gold)', 'Purple-Gold', 'A moment of supreme destiny or danger', 'location', { borderColorCode: 'mentor', textPresentationClass: 'font-bold italic' }),
-  systemMeaning('corruption', 'Permanent Curse | Tragedy (Dark Rose)', 'Dark Rose', 'Permanent damage, curse, tragedy', 'corruption'),
-  systemMeaning('mystery', 'Fate & Prophecy | Regular Location (Purple)', 'Violet', 'Hidden truth, fate thread, prophecy, Regular locations', 'location'),
+  systemMeaning('heavenly_tribulation', 'Heavenly Tribulation | Divine Trial (Purple-Gold)', 'Purple-Gold', 'A moment of supreme destiny or danger', 'mystery', { borderColorCode: 'mentor', textPresentationClass: 'font-bold italic' }),
+  systemMeaning('corruption', 'Permanent Curse | Tragedy (Muted Rose)', 'Muted Rose', 'Permanent damage, curse, tragedy', 'corruption'),
+  systemMeaning('mystery', 'Mystery, Fate & Prophecy (Purple)', 'Purple', 'Hidden truth, fate threads, and prophecy', 'mystery'),
   systemMeaning('romance', 'Karmic Affinity | Lover (Pink)', 'Pink', 'Bonds, affection, emotional lock-in', 'bond'),
-  systemMeaning('choice_consequence', 'Karmic Consequence | Great Item (Orange)', 'Orange', 'The world remembers your decision, Great items', 'itemGreat'),
+  systemMeaning('choice_consequence', 'Karmic Consequence (Orange)', 'Orange', 'Risk and consequences of a decision', 'warning'),
   systemMeaning('system_error', 'System Instability | System Error (Red Glitch)', 'Red glitch', 'The “system” itself is unstable', 'enemy', { textPresentationClass: 'font-bold', borderPresentationClass: 'border-double' }),
 ];
 

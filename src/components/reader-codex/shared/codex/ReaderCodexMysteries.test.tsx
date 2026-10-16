@@ -22,7 +22,7 @@ describe('ReaderCodexMysteries Color Codes', () => {
     container.remove();
   });
 
-  it('uses the shared danger and boon codes for unresolved and resolved thread surfaces', () => {
+  it('uses the shared mystery and boon codes for unresolved and resolved thread surfaces', () => {
     act(() => {
       root.render(
         <ReaderCodexMysteries
@@ -38,11 +38,11 @@ describe('ReaderCodexMysteries Color Codes', () => {
       .find(element => element.textContent?.startsWith('Unresolved mysteries'));
     const resolvedHeading = [...container.querySelectorAll<HTMLElement>('span[data-color-code]')]
       .find(element => element.textContent?.startsWith('Severed karma'));
-    expect(unresolvedHeading?.dataset.colorCode).toBe('enemy');
-    expect(unresolvedHeading?.style.color).toBe('var(--color-entity-enemy)');
+    expect(unresolvedHeading?.dataset.colorCode).toBe('mystery');
+    expect(unresolvedHeading?.style.color).toBe('var(--color-system-mystery)');
     expect(resolvedHeading?.dataset.colorCode).toBe('ally');
     expect(resolvedHeading?.style.color).toBe('var(--color-entity-friend)');
-    expect(container.querySelectorAll('[data-color-code="enemy"]').length).toBeGreaterThanOrEqual(2);
+    expect(container.querySelectorAll('[data-color-code="mystery"]').length).toBeGreaterThanOrEqual(2);
     expect(container.querySelectorAll('[data-color-code="ally"]').length).toBeGreaterThanOrEqual(3);
   });
 });

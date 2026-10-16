@@ -199,6 +199,7 @@ async function sampleSeed(browser) {
   return sample;
 }
 
+/** Verify the app's complete reading and creation journey at one viewport, saving visual evidence along the way. */
 async function walk(browser, viewport, sample) {
   const context = await browser.newContext({ viewport: { width: viewport.width, height: viewport.height } });
   await context.addInitScript(installSpeechStandIn);

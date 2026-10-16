@@ -125,7 +125,7 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
   </button>);
   return <div ref={barRef} data-testid="reader-bottom-bar" role="region" aria-label="Reader controls"
     className="reader-glass reader-glass-bar sticky bottom-0 z-20 -mx-4 mt-8 border-t border-white/10 bg-neutral-950/90 px-[max(0.5rem,env(safe-area-inset-left))] pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:px-[max(1rem,env(safe-area-inset-left))]">
-    {listening && offscreen && <div className="absolute bottom-full start-4 mb-2" data-testid="back-to-narration-float">
+    {listening && offscreen && <div hidden={compact && Boolean(group)} className="absolute bottom-full start-4 mb-2" data-testid="back-to-narration-float">
       {/* A round glass button, like the story audio note floating on the other side. */}
       <button type="button" aria-label="Back to narration" title="Back to narration" onClick={onBackToNarration}
         className="reader-glass-float inline-flex h-11 w-11 items-center justify-center rounded-full text-neutral-100">
@@ -230,7 +230,7 @@ export function ReaderBottomBar({ readAloud, onListen, offscreen, onBackToNarrat
         </nav>}
           {/* Create mode at the far right, balancing Listen; the story audio note floats above it. */}
           <div className="relative h-12 w-12 shrink-0" data-testid="reader-create-slot">
-          {note && <div className="pointer-events-none absolute bottom-full left-1/2 mb-4 -translate-x-1/2 [&>*]:pointer-events-auto" data-testid="story-audio-note">{note}</div>}
+          {note && <div hidden={compact && Boolean(group)} className="pointer-events-none absolute bottom-full left-1/2 mb-4 -translate-x-1/2 [&>*]:pointer-events-auto" data-testid="story-audio-note">{note}</div>}
           {create && <button type="button" aria-label="Create mode" aria-pressed={create.active} data-testid="reader-create-button"
             title={create.unavailable ?? (create.active ? 'Back to reading' : 'Create mode: change this chapter\'s words and Sound Cues')}
             disabled={Boolean(create.unavailable) && !create.active} onClick={create.onToggle}

@@ -8,7 +8,7 @@ import { COVER_TRADITIONS, STORY_COVER_FIELD_LIMITS } from './prompt';
  * chapters state), set in the story's own tradition, genre, tone and world.
  * Made with the Model Router's image choice, on the cover route.
  */
-export const CODEX_CHARACTER_PROMPT_TEMPLATE = `Create professional, high-quality Eastern fantasy character art, like a premium webnovel cover illustration, drawing on Chinese webnovel, Japanese light novel, or Korean webnovel illustration appropriate to this story.
+export const CODEX_CHARACTER_PROMPT_TEMPLATE = `Create professional, high-quality Eastern fantasy character art, drawing on Chinese webnovel, Japanese light novel, or Korean webnovel illustration appropriate to this story.
 Tradition: {tradition}
 Genre: {genre}
 Tone: {tone}
@@ -22,7 +22,7 @@ Vertical 3:4 composition. High quality, highly detailed, richly painted, sharp f
 No lettering, logos, signatures, or watermarks.`;
 
 /** The same for a thing: the object alone, so its look can be judged. */
-export const CODEX_THING_PROMPT_TEMPLATE = `Create professional, high-quality Eastern fantasy item art, like a premium webnovel cover illustration, drawing on Chinese webnovel, Japanese light novel, or Korean webnovel illustration appropriate to this story.
+export const CODEX_THING_PROMPT_TEMPLATE = `Create professional, high-quality Eastern fantasy item art, drawing on Chinese webnovel, Japanese light novel, or Korean webnovel illustration appropriate to this story.
 Tradition: {tradition}
 Genre: {genre}
 Tone: {tone}

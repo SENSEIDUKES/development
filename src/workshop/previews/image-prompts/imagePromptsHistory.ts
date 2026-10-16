@@ -16,6 +16,14 @@ export interface ImagePromptsChange {
 export const IMAGE_PROMPTS_HISTORY: ImagePromptsChange[] = [
   {
     date: '2026-10-16',
+    summary: 'SENSEI: a Codex picture is not a cover, so the prompts no longer say "like a premium webnovel cover illustration". They open like the cover prompt\'s own style line: professional, high-quality Eastern fantasy art drawing on Chinese webnovel, Japanese light novel, or Korean webnovel illustration.',
+    changed: {
+      'codex-character': '080f826eefd99c',
+      'codex-thing': '1db51496c83149',
+    },
+  },
+  {
+    date: '2026-10-16',
     summary: 'From SENSEI\'s first Codex pictures: they came out in a flatter, plainer style than the covers and profile pictures, and characters looked bland (an arrogant antagonist stood like a neutral character sheet). Both prompts now ask outright for professional, high-quality art like a premium webnovel cover illustration, highly detailed, richly painted and sharp, with cinematic lighting in a setting from their world. "Where the look is silent, keep it plain" is gone: the model now chooses what suits the character, their part in the story and the world, while still keeping every stated detail and adding no scars or marks the look does not name.',
     changed: {
       'codex-character': '1b68fdccb71ca3',

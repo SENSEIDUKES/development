@@ -655,13 +655,21 @@ async function walk(browser, viewport, sample) {
   check(frame.title >= 80, `The story title should keep room in the top bar (${JSON.stringify(frame)}).`);
   // About 60 characters a line, up to about 66 on a wide screen.
   check(frame.measure <= 39, `The prose should keep a reading measure of 60 to 66 characters (${JSON.stringify(frame)}).`);
-  check(await visibleButton('Open Fate').isVisible() && await visibleButton('Reader Settings').isVisible() && await visibleButton('Open Codex').isVisible(),
+  check(await visibleButton(viewport.width < 640 ? 'Chapter controls' : 'Open Fate').isVisible() && await visibleButton('Reader Settings').isVisible() && await visibleButton('Open Codex').isVisible(),
     'Fate, the Codex and Reader Settings should be reachable at the chapter\'s end.');
   check(await page.getByTestId('reader-top-bar').getByTestId('reader-companion').getByRole('button', { name: /actions$/ }).isVisible(),
     'The Familiar\'s recall should sit in the Reader\'s top bar beside Reader Settings.');
   await shot('6c-reader-end');
 
   // 3c. Fate is a panel: the chapter stays on the page, readable beside (laptop) or above (phone) it.
+  if (viewport.width < 640) {
+    const targets = await page.getByTestId('reader-controls-row').getByRole('button').evaluateAll(buttons => buttons.map(button => {
+      const rect = button.getBoundingClientRect();
+      return { name: button.getAttribute('aria-label'), width: rect.width, height: rect.height };
+    }));
+    check(targets.every(target => target.width >= 43.5 && target.height >= 43.5), `Compact Reader controls need comfortable targets: ${JSON.stringify(targets)}.`);
+    await visibleButton('Chapter controls').click();
+  }
   await visibleButton('Open Fate').click();
   await page.getByTestId('reader-panel-fate').waitFor();
   await page.waitForTimeout(400);

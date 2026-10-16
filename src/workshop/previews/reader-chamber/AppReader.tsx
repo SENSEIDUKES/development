@@ -65,9 +65,15 @@ export function AppReader({ run, skills, readerPreferences, page, audio }: AppRe
     let tries = 0;
     const timer = window.setInterval(() => {
       tries += 1;
-      const button = containerRef.current?.querySelector<HTMLButtonElement>(`[data-testid="harness-reader"] button[aria-label="${label}"]`);
+      const chapterControls = containerRef.current?.querySelector<HTMLButtonElement>('button[aria-label="Chapter controls"]');
+      const popupId = chapterControls?.getAttribute('aria-controls');
+      const popup = popupId ? document.getElementById(popupId) : null;
+      const button = containerRef.current?.querySelector<HTMLButtonElement>(`[data-testid="harness-reader"] button[aria-label="${label}"]`)
+        ?? popup?.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`);
       const onScreen = button && (button.checkVisibility?.() ?? true);
       if (onScreen) button.click();
+      else if (page.id === 'fate' && chapterControls?.getAttribute('aria-expanded') === 'false'
+        && (chapterControls.checkVisibility?.() ?? true)) chapterControls.click();
       if (onScreen || tries > 80) window.clearInterval(timer);
     }, 100);
     return () => window.clearInterval(timer);

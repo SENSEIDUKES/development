@@ -11,7 +11,7 @@ const sword = { subject: 'thing' as const, name: 'Crimson Broadsword', look: { s
 describe('A Codex card\'s picture', () => {
   it('is written from the card\'s look and the story\'s own words, traits in the order a look is read', () => {
     expect(buildCodexPicturePrompt({ card: sword, story })).toBe([
-      'Create professional, high-quality Eastern fantasy item art, like a premium webnovel cover illustration, drawing on Chinese webnovel, Japanese light novel, or Korean webnovel illustration appropriate to this story.',
+      'Create professional, high-quality Eastern fantasy item art, drawing on Chinese webnovel, Japanese light novel, or Korean webnovel illustration appropriate to this story.',
       'Tradition: Chinese webnovel',
       'Genre: Xianxia',
       'Tone: Grim and hungry.',

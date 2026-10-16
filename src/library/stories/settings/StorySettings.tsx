@@ -14,7 +14,7 @@ import { SkillPackageImport } from './SkillPackageImport';
 import { StorySettingsPanel } from './StorySettingsPanel';
 import { StorySkillSlots } from './StorySkillSlots';
 
-const NO_SOUNDTRACK: SoundtrackVocabulary = { moods: [], atmospheres: [] };
+const NO_SOUNDTRACK: SoundtrackVocabulary = { music: [], atmospheres: [] };
 const NO_SOUND_WORDS = { words: [], answered: [] };
 
 /**

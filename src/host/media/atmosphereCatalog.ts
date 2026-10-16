@@ -1,5 +1,5 @@
 import type { LoudnessMeasurement, ReaderAtmosphereOption } from '@seihouse/audio-player';
-import type { SceneAtmosphere } from '@seihouse/sen/audio';
+import { AUDIO_ENERGIES, type AudioEnergy, type SceneAtmosphere } from '@seihouse/sen/audio';
 import atmospheres from './data/sen-atmospheres-v1.json';
 
 /**
@@ -18,6 +18,8 @@ export const SEN_ATMOSPHERES: readonly ReaderAtmosphereOption[] = Object.freeze(
   loudness: { kind: 'integrated', lufs: entry.loudness.lufs, peakDb: entry.loudness.peakDb } satisfies LoudnessMeasurement,
 })));
 
+const isAudioEnergy = (value: string): value is AudioEnergy => (AUDIO_ENERGIES as readonly string[]).includes(value);
+
 /** A new reader starts on gentle rain, as the mixer's own default mix does. */
 export const DEFAULT_ATMOSPHERE_ID = 'sen-atmosphere-rain-gentle-rain-1';
 
@@ -31,6 +33,8 @@ export const SEN_SCENE_ATMOSPHERES: readonly SceneAtmosphere[] = Object.freeze(a
   word: entry.label.replace(/\s+\d+$/, '').trim().toLowerCase(),
   label: entry.label,
   ...(entry.group ? { group: entry.group } : {}),
+  // The pack's proposed intensity stands in for the bed's energy until it carries SEN audio tags.
+  ...(isAudioEnergy(entry.intensity) ? { studioTags: { energy: entry.intensity } } : {}),
   url: entry.url,
   loudness: { lufs: entry.loudness.lufs, peakDb: entry.loudness.peakDb },
 })));

@@ -4,7 +4,7 @@ import type { HarnessChapter, HarnessChapterScene } from '../../../narrative/gen
 
 /** What the chapter plays at the reader's place: a mood's pieces, or one exact piece, and an atmosphere. */
 export interface ReaderScene extends HarnessChapterScene {
-  /** One exact piece the reader chose in Create mode, in place of the mood. */
+  /** One exact piece the reader chose in Create mode, in place of the writer's music. */
   piece?: string;
 }
 
@@ -112,6 +112,7 @@ export function readerSceneAt({ chapter, scene, reached }: {
     else if (change.kind === ATMOSPHERE_CHANGE_KIND) atmosphere = change.payload.atmosphereId;
   }
   const soundscape = scene?.soundscape;
-  if (!piece && !soundscape && !atmosphere) return undefined;
-  return { ...(soundscape ? { soundscape } : {}), ...(piece ? { piece } : {}), ...(atmosphere ? { atmosphere } : {}) };
+  const music = scene?.music;
+  if (!piece && !music && !soundscape && !atmosphere) return undefined;
+  return { ...(music ? { music } : {}), ...(soundscape ? { soundscape } : {}), ...(piece ? { piece } : {}), ...(atmosphere ? { atmosphere } : {}) };
 }

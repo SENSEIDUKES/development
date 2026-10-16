@@ -33,6 +33,23 @@ function fakeMixer() {
 const settled = () => Promise.resolve();
 
 describe('The music under the story', () => {
+  it('plays the pieces of the writer\'s category closest to its tags, one after another', async () => {
+    const { mixer, played, set } = fakeMixer();
+    const soundtrack = new StorySoundtrack(mixer, () => 0);
+    const tagged = [
+      { ...piece('war-dark', 'epic'), category: 'War', studioTags: { tone: 'dark' as const, energy: 'high' as const } },
+      { ...piece('war-dark-2', 'epic'), category: 'War', studioTags: { tone: 'dark' as const, energy: 'high' as const } },
+      { ...piece('war-bright', 'epic'), category: 'War', studioTags: { tone: 'bright' as const, energy: 'low' as const } },
+      ...PIECES,
+    ];
+    soundtrack.hold({ music: { category: 'war', tone: 'dark', energy: 'high' }, pieces: tagged });
+    await settled();
+    expect(played.map(entry => entry.id)).toEqual(['war-dark']);
+    set('playing');
+    set('resting');
+    expect(played.map(entry => entry.id)).toEqual(['war-dark', 'war-dark-2']);
+  });
+
   it('plays a mood\'s own pieces first, then one piece of the mood after another, never the same twice in a row', async () => {
     const { mixer, played, set } = fakeMixer();
     const soundtrack = new StorySoundtrack(mixer, () => 0);

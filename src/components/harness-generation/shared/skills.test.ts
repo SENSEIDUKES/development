@@ -125,7 +125,7 @@ describe('Harness installed skills', () => {
         SEN_NOVEL_AUTHOR_SKILL,
       ],
       soundVocabulary: [{ word: 'blade drawn', example: 'drew his sword' }, { word: 'chime', example: 'a soft chime', meaning: 'a small bright chime' }],
-      soundtrackVocabulary: { moods: ['mystical', 'war'], atmospheres: ['forest', 'cave'] },
+      soundtrackVocabulary: { music: ['Ambient', 'War'], atmospheres: ['Rain', 'Places'] },
     });
     expect(CAPA_SCHEMA.map(slot => slot.id)).toEqual([
       'author', 'pacing', 'fate', 'continuity', 'style', 'accessibility', 'translation', 'soundCues', 'soundtrack', 'speakers', 'holdings', 'appearance',
@@ -156,10 +156,10 @@ describe('Harness installed skills', () => {
       'CAPA SKILL [Speakers]',
       'CAPA SKILL [Holdings]',
     ]);
-    // The story's moods and atmospheres close the Soundtrack section, after one example tag.
+    // The story's music and atmosphere categories close the Soundtrack section, then the tag words.
     const soundtrackSection = capa.text.slice(capa.text.indexOf('CAPA SKILL [Soundtrack]'), capa.text.indexOf('CAPA SKILL [Speakers]'));
-    expect(soundtrackSection.trim().endsWith('EXAMPLE (choose your own for each chapter): [[soundscape: mystical]] [[atmosphere: forest]]\nMUSIC MOODS: mystical, war\nATMOSPHERES: forest, cave')).toBe(true);
-    expect(capa.soundtrackVocabulary).toEqual({ moods: ['mystical', 'war'], atmospheres: ['forest', 'cave'] });
+    expect(soundtrackSection.trim().endsWith('MUSIC: Ambient, War\nATMOSPHERE: Rain, Places\nTone: bright, neutral, dark. Tension: calm, suspenseful, urgent. Energy: low, medium, high.')).toBe(true);
+    expect(capa.soundtrackVocabulary).toEqual({ music: ['Ambient', 'War'], atmospheres: ['Rain', 'Places'] });
     // The story's sound words close the Sound Cues section, the words alone, and nothing else carries them.
     const soundSection = capa.text.slice(capa.text.indexOf('CAPA SKILL [Sound Cues]'), capa.text.indexOf('CAPA SKILL [Soundtrack]'));
     expect(soundSection.trim().endsWith('SOUND WORDS (the sounds that can play; tag your own words, never words written to fit one):\nblade drawn\nchime')).toBe(true);

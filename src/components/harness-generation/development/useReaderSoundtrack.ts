@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useOptionalReaderMixer, type ReaderAtmosphereOption, type ReaderMixer } from '@seihouse/audio-player';
-import { resolvePlayableSoundCue, type SceneAtmosphere, type SceneAudioTrack, type SoundCueAttachment } from '@seihouse/sen/audio';
+import { piecesForMusic, resolvePlayableSoundCue, type SceneAtmosphere, type SceneAudioTrack, type SoundCueAttachment } from '@seihouse/sen/audio';
 import { piecesForMood, storySoundtrack, type SoundtrackChoice, type SoundtrackRequest } from '@seihouse/sen/reader-runtime';
 import type { HarnessChapter, HarnessChapterScene } from '../../../narrative/generation';
 import type { ReaderScene } from './useSoundtrackChanges';
@@ -28,15 +28,18 @@ export const LISTEN_DUCK = 0.25;
  * none, so a chapter that leaves one out goes on with the one before.
  */
 export function readingScene(chapters: readonly Pick<HarnessChapter, 'chapterNumber' | 'scene'>[], chapterNumber: number): HarnessChapterScene | undefined {
-  let soundscape: string | undefined;
+  // The music is one choice, a category or an earlier chapter's mood: the latest chapter that made either decides it.
+  let music: Pick<HarnessChapterScene, 'music' | 'soundscape'> | undefined;
   let atmosphere: string | undefined;
   for (const chapter of [...chapters].sort((left, right) => right.chapterNumber - left.chapterNumber)) {
     if (chapter.chapterNumber > chapterNumber) continue;
-    soundscape ??= chapter.scene?.soundscape;
+    if (!music && (chapter.scene?.music || chapter.scene?.soundscape)) {
+      music = chapter.scene.music ? { music: chapter.scene.music } : { soundscape: chapter.scene.soundscape };
+    }
     atmosphere ??= chapter.scene?.atmosphere;
-    if (soundscape && atmosphere) break;
+    if (music && atmosphere) break;
   }
-  return soundscape || atmosphere ? { ...(soundscape ? { soundscape } : {}), ...(atmosphere ? { atmosphere } : {}) } : undefined;
+  return music || atmosphere ? { ...music, ...(atmosphere ? { atmosphere } : {}) } : undefined;
 }
 
 /**
@@ -149,15 +152,20 @@ export function useReaderSoundtrack({ active, chapterId, soundCues, scene, piece
     if (mixer.getPreferences().atmosphereId !== atmosphereId) mixer.setAtmosphere(atmosphereId);
   }, [mixer, active, atmosphereId, beds]);
 
-  // The music: the reader's own piece (Settings), the chapter's exact piece (Create mode), its mood, or the Reader's own. Never the host's.
+  // The music: the reader's own piece (Settings), the chapter's exact piece (Create mode), its category, its mood, or the Reader's own. Never the host's.
   const chosenId = choice.soundscape === 'automatic' ? scene?.piece : choice.soundscape.pieceId;
   const mood = scene?.soundscape;
+  // The music as one value, so a new object with the same choice never restarts it.
+  const music = scene?.music ? JSON.stringify(scene.music) : undefined;
   useEffect(() => {
     if (!mixer || !active || !pieces?.length) return undefined;
     const chosen = chosenId ? pieces.find(piece => piece.id === chosenId) : undefined;
-    const request: SoundtrackRequest = chosen ? { piece: chosen } : { mood: readerMood(mood, pieces), pieces };
+    const asked = music ? JSON.parse(music) as NonNullable<HarnessChapterScene['music']> : undefined;
+    const request: SoundtrackRequest = chosen ? { piece: chosen }
+      : asked && piecesForMusic(asked, pieces).length ? { music: asked, pieces }
+        : { mood: readerMood(mood, pieces), pieces };
     return storySoundtrack(mixer).hold(request);
-  }, [mixer, active, chosenId, mood, pieces]);
+  }, [mixer, active, chosenId, music, mood, pieces]);
 
   const cueUrls = useMemo(() => [...new Set((soundCues ?? []).flatMap(cue => {
     const playable = resolvePlayableSoundCue(cue);

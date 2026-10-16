@@ -1,4 +1,5 @@
 import type { LoudnessMeasurement } from '@seihouse/audio-player';
+import { readAudioTags, type AudioTags } from './audioTags';
 import { isPackageMediaUrl } from './mediaUrl';
 
 /**
@@ -26,6 +27,13 @@ export interface SceneAudioTrack {
   url: string;
   /** Optional host-supplied display grouping, independent of URL layout. */
   group?: string;
+  /**
+   * What the writer chooses music by ("Fighting"), with its tone, tension and
+   * energy. A piece without one is chosen by its group.
+   */
+  category?: string;
+  /** The piece's SEN audio tags (tone, tension, energy). */
+  studioTags?: AudioTags;
   /** Measured loudness of the exact file, so the reader mixer plays every piece at one level. */
   loudness?: LoudnessMeasurement;
 }
@@ -67,7 +75,7 @@ const validateLoudness = (value: unknown, id: string): LoudnessMeasurement => {
 /** Validate the existing soundscape track contract without inventing a second audio shape. */
 export function validateSceneAudioTrack(value: unknown): SceneAudioTrack {
   if (!isPlainObject(value)) throw new Error('Soundscape catalog entries must be plain objects.');
-  const allowed = new Set(['id', 'label', 'mood', 'moods', 'tags', 'region', 'url', 'group', 'loudness']);
+  const allowed = new Set(['id', 'label', 'mood', 'moods', 'tags', 'region', 'url', 'group', 'category', 'studioTags', 'loudness']);
   const unexpected = Object.keys(value).find(key => !allowed.has(key));
   if (unexpected) throw new Error(`Soundscape catalog entry contains unsupported field ${unexpected}.`);
   if (typeof value.id !== 'string' || !value.id.trim()) throw new Error('Soundscape track id is required.');
@@ -84,7 +92,9 @@ export function validateSceneAudioTrack(value: unknown): SceneAudioTrack {
   if (typeof value.url !== 'string' || !(isPublicHttpsUrl(value.url) || isPackageMediaUrl(value.url))) {
     throw new Error(`Soundscape track ${value.id} needs a public HTTPS playback URL or a file in an installed package.`);
   }
-  for (const field of ['label', 'group'] as const) {
+  const studioTags = value.studioTags === undefined ? undefined : readAudioTags(value.studioTags);
+  if (studioTags && !studioTags.ok) throw new Error(`Soundscape track ${value.id}: ${studioTags.reason}`);
+  for (const field of ['label', 'group', 'category'] as const) {
     const text = value[field];
     if (text !== undefined && (typeof text !== 'string' || !text.trim())) {
       throw new Error(`Soundscape track ${value.id} ${field} must be readable text.`);
@@ -99,6 +109,8 @@ export function validateSceneAudioTrack(value: unknown): SceneAudioTrack {
     ...(value.region ? { region: value.region } : {}),
     url: value.url,
     ...(typeof value.group === 'string' ? { group: value.group.trim() } : {}),
+    ...(typeof value.category === 'string' ? { category: value.category.trim() } : {}),
+    ...(studioTags?.ok && Object.keys(studioTags.tags).length ? { studioTags: studioTags.tags } : {}),
     ...(value.loudness !== undefined ? { loudness: validateLoudness(value.loudness, value.id) } : {}),
   };
 }

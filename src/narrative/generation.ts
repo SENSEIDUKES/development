@@ -4,6 +4,7 @@ import type { SpeakerAttachment } from './speech';
 import type { CodexEntry, HoldingChangeAttachment, HoldingsSection } from './holdings';
 import type { AppearanceAttachment, AppearanceEntity, AppearanceEvent, AppearancesSection, ChapterLooks, Look } from './appearances';
 import type { SoundWord } from '../audio/soundWords';
+import type { AudioTags } from '../audio/audioTags';
 import type { SoundtrackVocabulary } from '../audio/soundtrackVocabulary';
 import type { FrozenNarrativeMedia, ResolvedSoundscape, StoryMediaSelection } from '../audio/media';
 import type { SenLanguageCode } from '../lib/language';
@@ -346,7 +347,7 @@ export interface HarnessSkillLoadoutSnapshot {
   originalLanguage?: SenLanguageCode;
   /** The story's sound words from the attempt's frozen Media Loadout; they fill the Sound Cues slot. */
   soundVocabulary?: SoundWord[];
-  /** The music moods and atmosphere words of the attempt's frozen Media Loadout; they fill the Soundtrack slot. */
+  /** The music and atmosphere categories of the attempt's frozen Media Loadout; they fill the Soundtrack slot. */
   soundtrackVocabulary?: SoundtrackVocabulary;
 }
 
@@ -385,7 +386,7 @@ export interface CapaPrompt {
    * cues only for them, on every retry and replay.
    */
   soundVocabulary?: SoundWord[];
-  /** The music moods and atmosphere words the Soundtrack section gave the writer, frozen with it. */
+  /** The music and atmosphere categories the Soundtrack section gave the writer, frozen with it. */
   soundtrackVocabulary?: SoundtrackVocabulary;
 }
 
@@ -907,7 +908,13 @@ export interface StoryInformationPacket {
  * never changes them).
  */
 export interface HarnessChapterScene {
-  /** A mood of the chapter's soundscapes: its pieces of that mood play one after another. */
+  /**
+   * The chapter's music: a category of its soundscapes and the SEN audio tags
+   * the writer gave it. The pieces of that category closest to the tags play
+   * one after another.
+   */
+  music?: { category: string } & AudioTags;
+  /** A mood of the chapter's soundscapes, from chapters written before music had categories. */
   soundscape?: string;
   /** The id of one atmosphere from the host's atmosphere catalog. */
   atmosphere?: string;

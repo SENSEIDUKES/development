@@ -85,9 +85,9 @@ describe('HARNESS Sound Cues through sound tags', () => {
     const request = provider.generate.mock.calls[0][0];
     // A story from before it kept its own list: its recordings' words, each the word alone.
     expect(request.capaPrompt.soundVocabulary).toEqual(LIBRARY_SOUND_WORDS.map(({ word }) => ({ word })));
-    expect(request.capaPrompt.text).toContain('FORMAT: [[sound: Sound Word | Words | Energy]]');
-    expect(request.capaPrompt.text).not.toContain('EXAMPLE: [[sound');
-    expect(request.capaPrompt.text).toContain('\nunsheathe\n');
+    expect(request.capaPrompt.text).toContain('[[sound: Sound Word | the words | Energy]]');
+    expect(request.capaPrompt.text).toContain(`Example: [[sound: ${LIBRARY_SOUND_WORDS[0].word} | the words where it happens | high]]`);
+    expect(request.capaPrompt.text).toMatch(/SOUND WORDS: .*\bunsheathe\b/);
     // The list names sounds; it hands the writer no phrases to copy into the chapter.
     expect(request.capaPrompt.text).not.toContain('drew his sword');
     const { responseJsonSchema, systemInstruction } = buildHarnessGenerationPrompt(request);
@@ -207,8 +207,8 @@ describe('HARNESS Sound Cues through sound tags', () => {
     const request = provider.generate.mock.calls[0][0];
     expect(request.capaPrompt.soundVocabulary).toEqual([{ word: 'unsheathe' }]);
     const soundSection = request.capaPrompt.text.slice(request.capaPrompt.text.indexOf('CAPA SKILL [Sound Cues]'));
-    expect(soundSection).toContain('SOUND WORDS (the sounds that can play; tag your own words, never words written to fit one):\nunsheathe\n');
-    expect(soundSection).not.toMatch(/\nbeast roar\n|\ndoor slam\n/);
+    expect(soundSection).toContain('SOUND WORDS: unsheathe\n');
+    expect(soundSection).not.toMatch(/beast roar|door slam/);
     const attempt = controller.snapshot().attempts[0];
     expect(attempt.mediaLoadout.sounds).toEqual([{ word: 'unsheathe' }, { word: 'door slam' }]);
     const chapter = controller.snapshot().chapters[0];

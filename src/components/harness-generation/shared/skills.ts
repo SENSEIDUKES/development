@@ -377,6 +377,9 @@ const slotLabel = (slot: HarnessSkillSlotId) => slotDefinition(slot).label;
 const isAuthoringSkill = (skill: HarnessSkillManifest) =>
   skill.applications.includes('generation') && Boolean(skill.instructions?.trim());
 
+/** What joins the CAPA Prompt's two halves; `taggingStart` counts past it. */
+const CAPA_HALF_SEPARATOR = '\n\n';
+
 /**
  * The CAPA Prompt's two halves: its writing skills, and its tag rules with
  * the skills that teach a tag. A prompt frozen before the halves were marked
@@ -459,7 +462,7 @@ export const assembleCapaPrompt = (
   const tagSections = sections.filter((_, index) => slotDefinition(authoring[index].slot).writesTags);
   const writing = [...sections.filter((_, index) => !slotDefinition(authoring[index].slot).writesTags), ...(officialRequirements ? [officialRequirements] : [])].join('\n\n');
   const tagging = tagSections.length ? [HARNESS_TAG_RULES, ...tagSections].join('\n\n') : '';
-  const text = tagging ? `${writing}\n\n${tagging}` : writing;
+  const text = tagging ? `${writing}${CAPA_HALF_SEPARATOR}${tagging}` : writing;
   const estimatedTokens = Math.max(1, Math.ceil(text.length / 4));
   if (estimatedTokens > CAPA_PROMPT_TOKEN_LIMIT) {
     throw new Error('Equipped skills exceed the CAPA Prompt budget. Empty a skill slot, install shorter instructions, narrow the Translation glossary, or equip a Sound Cue Pack with fewer sound words.');
@@ -477,7 +480,7 @@ export const assembleCapaPrompt = (
       ...(skill.source ? { source: cloneHarnessValue(skill.source) } : {}),
     })),
     text,
-    ...(tagging ? { taggingStart: writing.length + 2 } : {}),
+    ...(tagging ? { taggingStart: writing.length + CAPA_HALF_SEPARATOR.length } : {}),
     estimatedTokens,
     ...(translationGlossary ? { translationGlossary: cloneHarnessValue(translationGlossary) } : {}),
     ...(soundVocabulary ? { soundVocabulary: cloneHarnessValue(soundVocabulary) } : {}),

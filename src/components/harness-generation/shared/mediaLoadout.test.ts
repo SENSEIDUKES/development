@@ -138,7 +138,7 @@ describe('HARNESS Media Loadout runtime integration', () => {
     // The story's own word reaches the writer, alone: the pack's example stays with its recordings.
     expect(request.capaPrompt.soundVocabulary).toEqual([{ word: 'clockwork roar' }]);
     expect(request.capaPrompt.text).not.toContain('the clockwork beast roared');
-    expect(request.capaPrompt.text).toContain('\nclockwork roar\n');
+    expect(request.capaPrompt.text).toContain('SOUND WORDS: clockwork roar\n');
 
     const committed = controller.snapshot().chapters[0];
     expect(committed.paragraphs[0]).toBe('Rain crossed the mountain pass as the clockwork beast roared across the stones.');

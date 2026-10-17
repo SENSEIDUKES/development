@@ -63,8 +63,8 @@ describe('Writer Instructions', () => {
     for (const id of ['tag-rules', 'sound-cues', 'soundtrack', 'speakers', 'holdings', 'appearance']) expect(markup).toMatch(new RegExp(`<details[^>]*open=""[^>]*data-instruction="${id}"`));
     expect(markup).not.toMatch(/<details[^>]*open=""[^>]*data-instruction="reading-guide"/);
     for (const heading of ['# ROLE AND MISSION', '# HOW TO WRITE', '# HOW TO TAG', '# HOW TO READ THE STORY INFORMATION', '# HOW TO RETURN THE CHAPTER', '# HARD RULES']) expect(markup).toContain(heading);
-    expect(markup).toContain('Every paragraph with a quotation mark starts with a speaker tag naming a real character.');
-    expect(markup.replace(/<[^>]+>/g, '')).toContain('SEN Speakers v2.1.0 · 128 words · changed 2026-10-06');
+    expect(markup).toContain('One speaker per paragraph. Speech goes in quotation marks.');
+    expect(markup.replace(/<[^>]+>/g, '')).toMatch(/SEN Speakers v2\.2\.0 · \d+ words · changed 2026-10-17/);
     expect(markup).toMatch(/<time datetime="2026-10-04">2026-10-04<\/time>/i);
   });
 });

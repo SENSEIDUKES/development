@@ -26,22 +26,13 @@ const largestVocabulary = (): SoundWord[] => validateSoundWords(Array.from({ len
 }));
 
 describe('SEN Sound Cues skill', () => {
-  it('teaches the sound tag with the same numbers placement enforces, in its five parts', () => {
-    expect(SEN_SOUND_CUES_SKILL).toMatchObject({ id: 'seihouse.sen-sound-cues', version: '2.4.0', slot: 'soundCues', applications: ['generation'] });
-    const lines = SEN_SOUND_CUES_INSTRUCTIONS.split('\n');
-    expect(lines[0]).toMatch(/^JOB: /);
-    expect(lines).toContain('FORMAT: [[sound: Sound Word | Words | Energy]], in place of those words inside your sentence.');
-    // The owner's test: tags written on their own line, with words of their own, left broken lines behind.
-    expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain('FORBIDDEN: Any sound word not on the list. A tag on its own line or between sentences. Words written only for the tag, or repeating the sentence. Adding or bending a sentence to fit a sound.');
-    // The owner's rule: a cue is earned by the prose. That a chapter may have none is
-    // true but never said: told so, the writer tagged nothing, not even a bell it wrote ringing.
-    expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain('A cue is earned by the prose: at most 10 a chapter.');
+  it('teaches the sound tag with the same numbers placement enforces', () => {
+    expect(SEN_SOUND_CUES_SKILL).toMatchObject({ id: 'seihouse.sen-sound-cues', version: '2.5.0', slot: 'soundCues', applications: ['generation'] });
+    // The owner's rules: a cue is earned by the prose, and a sentence is never bent to fit one.
+    expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain('Never add or change a sentence to fit a sound.');
     expect(SEN_SOUND_CUES_INSTRUCTIONS).not.toContain('may have none');
-    expect(lines.filter(line => /^(?:REQUIRED|FORBIDDEN|CHECK BEFORE YOU RETURN):/.test(line)).map(line => line.split(':')[0])).toEqual(['REQUIRED', 'FORBIDDEN', 'CHECK BEFORE YOU RETURN']);
-    expect(lines.at(-1)).toMatch(/^CHECK BEFORE YOU RETURN: /);
-    expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain(`the few words of your own sentence where it happens, at most ${SOUND_CUE_RULES.maxWords}.`);
-    expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain(`at most ${SOUND_CUE_RULES.maxWords} words and an energy`);
-    expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain(`at most ${SOUND_CUE_RULES.maxPerChapter} a chapter.`);
+    expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain(`wrap up to ${SOUND_CUE_RULES.maxWords} of its words`);
+    expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain(`At most ${SOUND_CUE_RULES.maxPerChapter} a chapter.`);
     expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain(`${AUDIO_ENERGIES.slice(0, -1).join(', ')} or ${AUDIO_ENERGIES.at(-1)}`);
   });
 
@@ -55,26 +46,20 @@ describe('SEN Sound Cues skill', () => {
 
   it('gives the writer exactly these instructions, so nothing changes what the model receives unnoticed', () => {
     expect(SEN_SOUND_CUES_INSTRUCTIONS).toBe([
-      'JOB: Mark the words where a listed sound happens, so the sound plays there.',
-      'FORMAT: [[sound: Sound Word | Words | Energy]], in place of those words inside your sentence.',
-      '- Sound Word: from the list below.',
-      '- Words: the few words of your own sentence where it happens, at most 8. The tag wraps them where they stand; they stay in the sentence.',
-      '- Energy: how strong the sound is: low, medium or high.',
-      'REQUIRED: Write the chapter\'s prose as the story needs it, then tag a sound only where your own sentence already describes it happening. A cue is earned by the prose: at most 10 a chapter.',
-      'FORBIDDEN: Any sound word not on the list. A tag on its own line or between sentences. Words written only for the tag, or repeating the sentence. Adding or bending a sentence to fit a sound.',
-      'CHECK BEFORE YOU RETURN: Every sound tag sits inside a sentence around words of that sentence, with a listed sound word, at most 8 words and an energy.',
+      'When your sentence describes a sound below happening, wrap up to 8 of its words:',
+      '[[sound: Sound Word | the words | Energy]]  Energy: low, medium or high.',
+      'At most 10 a chapter. Never add or change a sentence to fit a sound.',
     ].join('\n'));
   });
 
-  it('shows the words alone, one per line: no example tag, phrase or meaning to copy', () => {
+  it('shows one example made from the first word, with no phrase to copy, then the words', () => {
     // The owner's Sundered Heavens test: given phrases ("iron scraped stone"), the writer copied them into the chapter.
     const list = presentSoundVocabulary([{ word: 'unsheathe', example: 'drew his sword' }, { word: 'chime', example: 'a soft chime', meaning: 'a small bright chime' }]);
     expect(list).toBe([
-      'SOUND WORDS (the sounds that can play; tag your own words, never words written to fit one):',
-      'unsheathe',
-      'chime',
+      'Example: [[sound: unsheathe | the words where it happens | high]]',
+      'SOUND WORDS: unsheathe, chime',
     ].join('\n'));
-    expect(list).not.toMatch(/EXAMPLE|drew his sword|a soft chime|small bright/);
+    expect(list).not.toMatch(/drew his sword|a soft chime|small bright/);
     expect(presentSoundVocabulary([])).toBe('');
   });
 

@@ -160,10 +160,10 @@ describe('Harness installed skills', () => {
     const soundtrackSection = capa.text.slice(capa.text.indexOf('CAPA SKILL [Soundtrack]'), capa.text.indexOf('CAPA SKILL [Speakers]'));
     expect(soundtrackSection.trim().endsWith('MUSIC: Ambient, War\nATMOSPHERE: Rain, Places\nTone: bright, neutral, dark. Tension: calm, suspenseful, urgent. Energy: low, medium, high.')).toBe(true);
     expect(capa.soundtrackVocabulary).toEqual({ music: ['Ambient', 'War'], atmospheres: ['Rain', 'Places'] });
-    // The story's sound words close the Sound Cues section, the words alone, and nothing else carries them.
+    // The story's sound words close the Sound Cues section, after one example made from the first, and nothing else carries them.
     const soundSection = capa.text.slice(capa.text.indexOf('CAPA SKILL [Sound Cues]'), capa.text.indexOf('CAPA SKILL [Soundtrack]'));
-    expect(soundSection.trim().endsWith('SOUND WORDS (the sounds that can play; tag your own words, never words written to fit one):\nblade drawn\nchime')).toBe(true);
-    // No example tag, phrase or meaning reaches the writer to copy.
+    expect(soundSection.trim().endsWith('Example: [[sound: blade drawn | the words where it happens | high]]\nSOUND WORDS: blade drawn, chime')).toBe(true);
+    // No phrase or meaning reaches the writer to copy: the example's words are a placeholder.
     expect(soundSection).not.toContain('EXAMPLE: [[sound');
     expect(capa.text).not.toMatch(/drew his sword|a soft chime|a small bright chime/);
     expect(capa.soundVocabulary).toEqual([{ word: 'blade drawn', example: 'drew his sword' }, { word: 'chime', example: 'a soft chime', meaning: 'a small bright chime' }]);

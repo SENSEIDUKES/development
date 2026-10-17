@@ -12,19 +12,14 @@ import type { HarnessSkillManifest } from '../../../narrative/generation';
  * prose reads complete without them, is said once for every tag kind by the
  * HARNESS tag rules.
  */
-export const SEN_SOUND_CUES_INSTRUCTIONS = `JOB: Mark the words where a listed sound happens, so the sound plays there.
-FORMAT: [[sound: Sound Word | Words | Energy]], in place of those words inside your sentence.
-- Sound Word: from the list below.
-- Words: the few words of your own sentence where it happens, at most ${SOUND_CUE_RULES.maxWords}. The tag wraps them where they stand; they stay in the sentence.
-- Energy: how strong the sound is: low, medium or high.
-REQUIRED: Write the chapter's prose as the story needs it, then tag a sound only where your own sentence already describes it happening. A cue is earned by the prose: at most ${SOUND_CUE_RULES.maxPerChapter} a chapter.
-FORBIDDEN: Any sound word not on the list. A tag on its own line or between sentences. Words written only for the tag, or repeating the sentence. Adding or bending a sentence to fit a sound.
-CHECK BEFORE YOU RETURN: Every sound tag sits inside a sentence around words of that sentence, with a listed sound word, at most ${SOUND_CUE_RULES.maxWords} words and an energy.`;
+export const SEN_SOUND_CUES_INSTRUCTIONS = `When your sentence describes a sound below happening, wrap up to ${SOUND_CUE_RULES.maxWords} of its words:
+[[sound: Sound Word | the words | Energy]]  Energy: low, medium or high.
+At most ${SOUND_CUE_RULES.maxPerChapter} a chapter. Never add or change a sentence to fit a sound.`;
 
 /** SEN's bundled Sound Cues skill. It occupies the Sound Cues slot, which the story's Media Loadout manages. */
 export const SEN_SOUND_CUES_SKILL: HarnessSkillManifest = {
   id: 'seihouse.sen-sound-cues',
-  version: '2.4.0',
+  version: '2.5.0',
   name: 'SEN Sound Cues',
   description: 'Tags the words where a sound happens and names it from the story\'s sound words; the HARNESS places the cue and picks the recording.',
   slot: 'soundCues',
@@ -34,15 +29,15 @@ export const SEN_SOUND_CUES_SKILL: HarnessSkillManifest = {
 };
 
 /**
- * The story's sound words as the writer sees them: the words alone, one per
- * line, and nothing else. The list is the whole vocabulary. It carries no
- * example tag, phrases or meanings: given phrases ("iron scraped stone"), the
- * writer copied them into the chapter instead of tagging what its prose
- * already said.
+ * The story's sound words as the writer sees them: one example tag made from
+ * the first word, with a placeholder where the words go so no phrase can be
+ * copied into the prose (given phrases, the writer once copied them instead
+ * of tagging what its prose already said), then every word on one line. The
+ * list is the whole vocabulary.
  */
 export const presentSoundVocabulary = (words: readonly SoundWord[]) => words.length
   ? [
-      'SOUND WORDS (the sounds that can play; tag your own words, never words written to fit one):',
-      ...words.map(sound => sound.word),
+      `Example: [[sound: ${words[0].word} | the words where it happens | high]]`,
+      `SOUND WORDS: ${words.map(sound => sound.word).join(', ')}`,
     ].join('\n')
   : '';

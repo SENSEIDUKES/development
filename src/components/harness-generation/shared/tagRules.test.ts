@@ -26,19 +26,16 @@ describe('HARNESS tag rules', () => {
     expect(assemble()).not.toContain('HARNESS TAG RULES');
   });
 
-  it('hold only what every tag shares, so no kind repeats them', () => {
+  it('hold only what every tag shares, said once, so no kind repeats them', () => {
     expect(HARNESS_TAG_RULES.split('\n')).toEqual([
-      'HARNESS TAG RULES (every tag below)',
-      'Tags are machine notes in the prose, removed before anyone reads it.',
-      'REQUIRED: Write each tag exactly as its FORMAT shows. Each paragraph reads complete without its tags.',
-      'FORBIDDEN: Tags outside paragraphs. Writing about tags in the prose.',
+      'HARNESS TAG RULES',
+      'Tags are notes the app removes before anyone reads, so each paragraph must read complete without them. Tag only what your prose shows, where it happens.',
+      'In every tag, Name is MC for the main character; anyone else goes by the name Story Information uses.',
     ]);
     for (const instructions of [SEN_SOUND_CUES_INSTRUCTIONS, SEN_SPEAKERS_INSTRUCTIONS, SEN_HOLDINGS_INSTRUCTIONS]) {
-      expect(instructions).not.toMatch(/only inside paragraphs|never in the title|removed before anyone reads|double brackets/i);
-      // Every kind has the same parts, in the same order, and ends with its check.
-      expect(instructions.startsWith('JOB: ')).toBe(true);
-      expect(instructions.split('\n').at(-1)).toMatch(/^CHECK BEFORE YOU RETURN: /);
-      for (const part of ['FORMAT', 'REQUIRED:', 'FORBIDDEN:']) expect(instructions).toContain(part);
+      expect(instructions).not.toMatch(/removes before anyone reads|Name is MC for the main character/i);
+      // SENSEI, 2026-10-17: short, with no FORMAT / REQUIRED / FORBIDDEN / CHECK wall.
+      expect(instructions).not.toMatch(/^(JOB|FORMAT|REQUIRED|FORBIDDEN|CHECK BEFORE YOU RETURN)\b/m);
     }
   });
 });

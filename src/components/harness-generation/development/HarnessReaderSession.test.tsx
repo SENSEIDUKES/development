@@ -449,6 +449,38 @@ describe('Read Aloud in the HARNESS Reader', { timeout: 20_000 }, () => {
     vi.unstubAllGlobals();
   });
 
+  it('opens compact playback and chapter groups without changing their actions', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: query === '(max-width: 639px)', media: query,
+      addEventListener: vi.fn(), removeEventListener: vi.fn(), addListener: vi.fn(), removeListener: vi.fn() }));
+    const { controller, storyId } = await story({ written: 2 });
+    const { storage, values } = memory();
+    await mount(<Host controller={controller} storyId={storyId} readerPreferences={storage} readAloudVoices={PICKS} />);
+    const controls = container.querySelector('[data-testid="reader-controls-row"]')!;
+    expect([...controls.querySelectorAll('button')].map(button => button.getAttribute('aria-label')))
+      .toEqual(['Listen', 'Playback controls', 'Open Codex', 'Chapter controls', 'Create mode']);
+    await click(byLabel('Listen'), 'Listen');
+    await click(byLabel('Playback controls'), 'Playback controls');
+    expect(buttonBy(byLabel('Narration speed: 1.5'))).toBeUndefined();
+    await click(byLabel('Narration playback speed'), 'speed options');
+    await click(byLabel('Narration speed: 1.5'), 'speed in compact playback');
+    expect(JSON.parse(values.get('read-aloud')!)).toMatchObject({ rate: 1.5 });
+    await click(byLabel('Next sentence'), 'Next sentence');
+    expect(lastSpoken().text).toBe('The tide pulled back from the drowned gate.');
+    await click(byLabel('Playback controls'), 'close playback');
+    await flush(400);
+    await click(byLabel('Chapter controls'), 'Chapter controls');
+    expect(buttonBy(byLabel('Previous Chapter'))!.disabled).toBe(true);
+    await click(byLabel('Next Chapter'), 'Next Chapter');
+    await flush(400);
+    expect(chapterOnScreen(2)).toBeTruthy();
+    expect(buttonBy(byLabel('Chapter controls'))!.getAttribute('aria-expanded')).toBe('false');
+    await click(byLabel('Chapter controls'), 'Chapter controls');
+    await click(byLabel('Open Fate'), 'Fate inside chapter controls');
+    await flush(400);
+    expect(document.querySelector('[data-testid="reader-panel-fate"]')).toBeTruthy();
+    expect(buttonBy(byLabel('Chapter controls'))!.getAttribute('aria-expanded')).toBe('false');
+  });
+
   it('reads the chapter from its title in the host\'s voices, lighting the sentence being spoken', async () => {
     const { controller, storyId } = await story({ written: 2 });
     const { storage } = memory();

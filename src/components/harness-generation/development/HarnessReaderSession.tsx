@@ -471,7 +471,7 @@ export function HarnessReaderSession({
       </div>
       {rewritable && chapter && !authoring && <ChapterRewrite key={chapter.id} chapterNumber={chapter.chapterNumber} disabled={writer.writing} onRewrite={rewriteChapter} />}
       </div>
-      <ReaderBottomBar readAloud={readAloud} onListen={chapter ? listen : undefined} offscreen={follow.offscreen}
+      <ReaderBottomBar readAloud={readAloud} onListen={chapter ? listen : undefined} offscreen={follow.offscreen} direction={direction}
         onBackToNarration={follow.backToNarration} barRef={playerRef}
         note={mixer && <ReaderAudioNote mixer={mixer} />}
         onOpenCodex={openCodex} fate={{ run: () => openFate(fateCalls), disabled: fateLocked, attention: fateCalls }}

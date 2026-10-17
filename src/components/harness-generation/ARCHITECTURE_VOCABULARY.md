@@ -28,8 +28,10 @@ history.
 - **CAPA Skill** — A versioned, replaceable instruction module occupying one
   CAPA slot.
 - **CAPA Prompt** — The complete authoring prompt produced by assembling the
-  active CAPA skills in schema order, followed by the permanent HARNESS
-  Official Output Requirements.
+  active CAPA skills in schema order, in two halves: the writing skills,
+  followed by the permanent HARNESS Official Output Requirements when the
+  chapter needs them; then the HARNESS tag rules and the skills that teach a
+  tag.
 - **Story Information** — The complete story and world information owned by
   the HARNESS.
 - **Story Information Packet** — The story information selected, weighted,
@@ -139,9 +141,11 @@ prose.
   every tag it cannot read.
 
 Every kind is built from the same five parts: the **tag** the writer types;
-the **teaching**, a CAPA skill in a managed slot, always in one shape (JOB,
-FORMAT, REQUIRED, FORBIDDEN, CHECK BEFORE YOU RETURN), with what every kind
-shares said once by the HARNESS tag rules; the **reading**, where the
+the **teaching**, a CAPA skill in a managed slot under How to tag, always
+short: what the tag marks, its format, one example and its few rules (SENSEI,
+2026-10-17; before, every skill wore one FORMAT / REQUIRED / FORBIDDEN / CHECK
+shape), with what every kind shares, how a tag names someone included, said
+once by the HARNESS tag rules; the **reading**, where the
 HARNESS removes the tag and keeps where it sat; the **rules**, plain checks
 with no model; the **home**, where the result lands. A wrong tag is dropped
 and flagged, never a reason to refuse a chapter. Each kind is taught only to

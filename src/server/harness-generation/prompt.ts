@@ -337,10 +337,12 @@ export const buildHarnessGenerationPrompt = (request: HarnessGenerationRequest) 
   ];
   const packetSections = sections.filter(section => !['capaPrompt', 'missionReminder', 'immediateChapterRequest'].includes(section.section));
   const systemInstruction = composeHarnessSystemInstruction(request.capaPrompt);
+  // The message is made from the measured sections themselves, so the measurement is of exactly what is sent.
+  const sectionText = (id: PacketSectionId) => sections.find(section => section.section === id)!.text;
   const userPrompt = composeHarnessUserPrompt({
     story: packetSections.map(section => section.text),
-    request: presentImmediateChapterRequest(request.immediateChapterRequest),
-    reminder: presentMissionReminder(request.missionReminder),
+    request: sectionText('immediateChapterRequest'),
+    reminder: sectionText('missionReminder'),
   });
   const responseJsonSchema = buildHarnessChapterResponseSchema(request.immediateChapterRequest.chapterScale.paragraphs, {
     holdings: request.capaPrompt.skills.some(skill => skill.slot === 'holdings' && skill.authoring),

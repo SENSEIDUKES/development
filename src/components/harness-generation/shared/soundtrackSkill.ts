@@ -12,14 +12,15 @@ import type { HarnessSkillManifest } from '../../../narrative/generation';
  * assembly. Where tags may go is said once for every tag kind by the HARNESS
  * tag rules.
  */
-export const SEN_SOUNDTRACK_INSTRUCTIONS = `Start the chapter's first paragraph with its music and its atmosphere, once each:
+export const SEN_SOUNDTRACK_INSTRUCTIONS = `Open the first paragraph with its music and atmosphere, once each:
 [[soundscape: Category | Tone | Tension | Energy]] [[atmosphere: Category | Energy]]
-Music fits the whole chapter, not a passing moment. Atmosphere is the sound of the place where most of it happens.`;
+Music fits the whole chapter; atmosphere is where most of it happens.
+Use only the categories below.`;
 
 /** SEN's bundled Soundtrack skill. It occupies the Soundtrack slot, which the story's Media Loadout manages. */
 export const SEN_SOUNDTRACK_SKILL: HarnessSkillManifest = {
   id: 'seihouse.sen-soundtrack',
-  version: '3.0.0',
+  version: '3.1.0',
   name: 'SEN Soundtrack',
   description: 'Chooses the music and the atmosphere a chapter opens with, once each, at its start, by category and SEN audio tags; the HARNESS chooses the recordings.',
   slot: 'soundtrack',
@@ -28,8 +29,11 @@ export const SEN_SOUNDTRACK_SKILL: HarnessSkillManifest = {
   author: 'SEIHouse',
 };
 
-/** The story's soundtrack categories as the writer sees them, then the tag words. */
+/** The story's soundtrack categories as the writer sees them: one example made from the first of each, the categories, then the tag words. */
 export const presentSoundtrackVocabulary = (vocabulary: SoundtrackVocabulary) => [
+  ...(vocabulary.music?.length && vocabulary.atmospheres?.length
+    ? [`Example: [[soundscape: ${vocabulary.music[0]} | bright | calm | medium]] [[atmosphere: ${vocabulary.atmospheres[0]} | low]]`]
+    : []),
   ...(vocabulary.music?.length ? [`MUSIC: ${vocabulary.music.join(', ')}`] : []),
   ...(vocabulary.atmospheres?.length ? [`ATMOSPHERE: ${vocabulary.atmospheres.join(', ')}`] : []),
   `Tone: ${AUDIO_TONES.join(', ')}. Tension: ${AUDIO_TENSIONS.join(', ')}. Energy: ${AUDIO_ENERGIES.join(', ')}.`,

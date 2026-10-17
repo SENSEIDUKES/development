@@ -14,24 +14,17 @@ import { MAIN_CHARACTER_SPEAKER_TAG } from '../../../narrative/speech';
  * response contract's (its CHARACTER DESCRIPTIONS); where tags may go is said
  * once for every tag kind by the HARNESS tag rules.
  */
-export const SEN_APPEARANCE_INSTRUCTIONS = `JOB: Story Information's Appeared section is every character and thing already on the page, with their look. Tag each one the moment it first steps onto the page, and each change to a look, so every look stays true.
-FORMAT:
-[[appears: Name | character]] a person or named creature, first on the page
-[[appears: Thing | thing]] a named object no one holds, first on the page; held things are recorded from their Holdings tags
-[[look: Name | what changed]] a later change: a scar, new clothes, a breakthrough, an injury, a transformation
-REQUIRED:
-- Each tag at the start of the sentence that first shows them, or shows the change; that sentence and the ones after it describe the look.
-- Name: ${MAIN_CHARACTER_SPEAKER_TAG} for the main character; anyone else exactly as Story Information writes them; someone new by the full name the story will keep using.
-- Thing: one short name, the same its Holdings tags use.
-- what changed: a few words naming only what can be seen.
-- Everyone in Appeared keeps the look written there until a look tag changes it.
-FORBIDDEN: appears for anyone already in Appeared. look before someone has appeared, or to describe them as they first appear. Tags for someone only mentioned, remembered, imagined or offstage. Nameless crowds and extras. Places, factions and sects.
-CHECK BEFORE YOU RETURN: Everyone and everything on the page that is not in Appeared has its appears tag, and every change to a look its look tag.`;
+export const SEN_APPEARANCE_INSTRUCTIONS = `When someone or a named thing not in Appeared first steps onto the page, tag it in that sentence and describe them there:
+[[appears: Name | character]]  [[appears: Thing | thing]] (a thing no one holds)
+Example: [[appears: Old Wen | character]] A gaunt figure in ash-grey robes stepped out.
+When a look changes (a scar, new clothes, a breakthrough): [[look: Name | what changed]]
+Example: [[look: ${MAIN_CHARACTER_SPEAKER_TAG} | a fresh scar across the left cheek]]
+Use the full name the story will keep using. Keep every look in Appeared until a look tag changes it. Only who is on the page, not mentioned or remembered.`;
 
 /** SEN's bundled Appearance skill. It occupies the Appearance slot, which the HARNESS fills on every chapter. */
 export const SEN_APPEARANCE_SKILL: HarnessSkillManifest = {
   id: 'seihouse.sen-appearance',
-  version: '1.1.0',
+  version: '1.2.0',
   name: 'SEN Appearance',
   description: 'Tags each character and thing when it steps onto the page and each change to a look, so every look stays true.',
   slot: 'appearance',

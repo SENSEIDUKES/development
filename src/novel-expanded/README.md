@@ -13,7 +13,7 @@ The Workshop is where systems are built and inspected one at a time. The app is
 where they are used together, the way a reader meets them.
 
 - Created: 2026-10-01 (piece 1)
-- Last updated: 2026-10-12
+- Last updated: 2026-10-16
 - Owner: `host` (`scripts/ownershipInventory.mjs`). The app is a host of the
   Library and SEN packages, like any outside app would be.
 
@@ -196,6 +196,14 @@ card wear it.
 
 ## The Familiar
 
+`AppFamiliar` also mounts one `FamiliarHelperProvider` for the app. The first
+context is the Reader's four existing Fate choices: tap Talk to Familiar, say a
+choice or `Custom: <direction>`, review, then Confirm or Cancel. Touch and typing
+are equivalent paths. This saves the next chapter's direction through the same
+controller as Fate; the ordinary Fate panel remains available. Other screens
+can register their own context later. They currently show no helper actions.
+See the [Familiar helper contract and device checks](../components/familiar/README.md#contextual-helper--2026-10-16).
+
 `AppFamiliar.tsx` gives the app one Familiar, the profile's equipped one:
 
 - It starts minimized: its recall sits in every Library header (Home, World Info,
@@ -349,6 +357,11 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 - `scripts/verifyNovelExpandedApp.browser.mjs`: the walk in Chromium at 390px and 1440px against the dev server, with stubbed APIs (a stand-in cover among them) and a stand-in for the browser's speech (headless Chromium has no voices): Create's Story Settings, Story View's Story Settings, and Manifest on the cover (three to choose from, the picker) to World Info and Home.
 
 ## History
+
+- **2026-10-16** — Added the app-wide Familiar helper foundation and a small Fate
+  voice experiment, shared with the Workshop Reader. Explicit confirmation,
+  touch/typing fallback and guarded playback recovery; English commands only,
+  no conversational model or wake word.
 
 - **2026-10-13** — The Codex is a gallery of cards, from SENSEI: Characters, Factions and Items each show cards whose art fills them (an unmanifested aura until a picture is manifested), and opening one shows everything about it together, its art large at the top. Manifesting a picture will happen while reading, from a name glowing in the chapter.
 - **2026-10-13** — The Codex, remade, from SENSEI: the bottom bar's Codex button opens a panel like Fate, holding only what the story's record knows, shown like a game's character screen. Characters lists everyone the story has met (main character first), each opening a sheet with their rank, first words, what they have equipped and carry, their abilities and a chronicle; Items shows each thing and who holds it now. Every fact moves the chapter behind the Codex to its passage and lights it, the Codex staying open (half height on a phone). The older seven-tab Codex is no longer in the Reader.

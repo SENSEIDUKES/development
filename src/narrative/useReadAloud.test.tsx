@@ -56,6 +56,37 @@ const mount = (props: HarnessProps = { chapter: 1 }) => {
 const texts = () => fake.spoken.map(utterance => utterance.text);
 const lastSpoken = () => fake.spoken.at(-1)!;
 
+describe('host playback interruption', () => {
+  it('resumes its line once, but does not start a reader who was already paused', () => {
+    mount();
+    act(() => player.play());
+    let release!: (resume: boolean) => void;
+    act(() => { release = player.interrupt(); });
+    expect(player.status).toBe('paused');
+    const before = texts().length;
+    act(() => { release(true); release(true); });
+    expect(player.status).toBe('playing');
+    expect(texts().length).toBe(before + 1);
+    act(() => player.pause());
+    act(() => { release = player.interrupt(); release(true); });
+    expect(player.status).toBe('paused');
+  });
+  it.each(['pause', 'stop', 'skip', 'chapter', 'leave'] as const)('does not resume after a later %s action', action => {
+    mount();
+    act(() => player.play());
+    let release!: (resume: boolean) => void;
+    act(() => { release = player.interrupt(); });
+    if (action === 'pause') act(() => player.pause());
+    if (action === 'stop') act(() => player.stop());
+    if (action === 'skip') act(() => player.skip(1));
+    if (action === 'chapter') act(() => setProps({ chapter: 2 }));
+    const before = texts().length;
+    act(() => release(action !== 'leave'));
+    expect(texts().length).toBe(before);
+    expect(player.status).not.toBe('playing');
+  });
+});
+
 beforeEach(() => {
   vi.useFakeTimers();
   fake = createFakeSpeechSynthesis();

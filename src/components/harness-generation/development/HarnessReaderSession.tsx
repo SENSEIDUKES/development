@@ -62,6 +62,13 @@ export interface HarnessReaderWriting {
   chapterNumber: number;
 }
 
+/** Optional host tools can coordinate playback without importing a host's helper into SEN. */
+export interface ReaderHostTools {
+  chapterId: string;
+  busy: boolean;
+  interruptPlayback(): (resume: boolean) => void;
+}
+
 /**
  * What is open over the chapter. One at a time, so opening one closes the
  * others, and the chapter itself never leaves:
@@ -131,7 +138,7 @@ function lineWhereTheReaderIs(script: ReadAloudScript, article: HTMLElement | nu
  */
 export function HarnessReaderSession({
   state, storyId, onClose, controller, readerStateRepository, onGenerateNextChapter, onRewriteChapter, onPlanArc, renderWriting, renderWriteAside, startOnOpen = false,
-  readerPreferences, readAloudVoices, soundscapes, readerFonts = DEFAULT_READER_FONTS, chapterBody: ChapterBody = ProseChapterBody, companion, codexPictures,
+  readerPreferences, readAloudVoices, soundscapes, readerFonts = DEFAULT_READER_FONTS, chapterBody: ChapterBody = ProseChapterBody, companion, codexPictures, renderHostTools,
 }: {
   state: HarnessWorkspaceState; storyId: string; onClose: () => void; controller: HarnessGenerationController;
   /**
@@ -191,6 +198,8 @@ export function HarnessReaderSession({
   chapterBody?: ReaderChapterBody;
   /** The host's companion in the top bar, beside Reader Settings (the Library puts its Familiar there). */
   companion?: ReactNode;
+  /** Mount host-owned contextual tools alongside the Reader, using its actual playback lifecycle. */
+  renderHostTools?: (tools: ReaderHostTools) => ReactNode;
   /** The host's pictures for this story's Codex cards, with Manifest. Without them, cards show their aura. */
   codexPictures?: CodexPictures;
 }) {
@@ -436,6 +445,7 @@ export function HarnessReaderSession({
 
   const panel = layer?.kind === 'panel' ? layer.id : undefined;
   return <>
+    {renderHostTools?.({ chapterId: chapter?.id ?? 'no-chapter', busy: covered, interruptPlayback: readAloud.interrupt })}
     {/* The frame fills the screen; on laptops a panel sits at the right and the frame shrinks beside it.
         A right-to-left story mirrors the frame: its text, the chapter arrows and the bars' ends. */}
     <div dir={direction} className={`reader-frame transition-[padding] duration-200 motion-reduce:transition-none ${panel ? 'lg:pr-[28rem]' : ''}`} data-panel={panel}>

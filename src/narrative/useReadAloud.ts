@@ -158,6 +158,8 @@ export interface ReadAloud {
   play(fromLine?: number): void;
   pause(): void;
   resume(): void;
+  /** Temporarily yield narration; release resumes only if no later reader action superseded it. */
+  interrupt(): (resume: boolean) => void;
   stop(): void;
   /** Moves to the start of the next (1) or previous (-1) sentence. */
   skip(direction: 1 | -1): void;
@@ -351,7 +353,7 @@ export function useReadAloud({
 
   const pause = useCallback(() => {
     const state = live.current;
-    if (state.status !== 'playing') return;
+    if (state.status !== 'playing' && state.status !== 'paused') return;
     halt();
     state.status = 'paused';
     state.listening = false;
@@ -368,6 +370,21 @@ export function useReadAloud({
     speakAt(state.index, busy ? 0 : undefined);
   }, [engine, halt, speakAt]);
 
+  const interrupt = useCallback(() => {
+    const state = live.current;
+    const playing = state.status === 'playing';
+    if (playing) pause();
+    const { token, scriptKey: key, index } = state;
+    let released = false;
+    return (shouldResume: boolean) => {
+      if (released) return;
+      released = true;
+      const current = live.current;
+      if (shouldResume && playing && current.token === token && current.scriptKey === key
+        && current.index === index && current.status === 'paused' && !current.suspended) resume();
+    };
+  }, [pause, resume]);
+
   const stop = useCallback(() => {
     const state = live.current;
     halt();
@@ -381,6 +398,7 @@ export function useReadAloud({
   const skip = useCallback((direction: 1 | -1) => {
     const state = live.current;
     if (!engine.supported) return;
+    state.token += 1;
     const lines = scriptFor().lines;
     if (!lines.length) return;
     let target = Math.min(state.index, lines.length);
@@ -550,6 +568,6 @@ export function useReadAloud({
     choice,
     rate: prefs.rate,
     script: scriptFor,
-    play, pause, resume, stop, skip, setVoice, resetVoices, setRate, preview,
+    play, pause, resume, interrupt, stop, skip, setVoice, resetVoices, setRate, preview,
   };
 }

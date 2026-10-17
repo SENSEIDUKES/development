@@ -121,6 +121,9 @@ const check = (condition, message) => { if (!condition) throw new Error(message)
  * voices, lines that start and end on their own, and a log of what was spoken.
  */
 function installSpeechStandIn() {
+  // Exercise the Familiar's touch/typing fallback without opening a real microphone in CI.
+  Object.defineProperty(window, 'SpeechRecognition', { value: undefined, configurable: true });
+  Object.defineProperty(window, 'webkitSpeechRecognition', { value: undefined, configurable: true });
   const voices = [['Samantha', 'en-US', true], ['Bubbles', 'en-US', false], ['Daniel', 'en-GB', false], ['Rishi', 'en-IN', false], ['Kyoko', 'ja-JP', false]]
     .map(([name, lang, isDefault]) => ({ voiceURI: `fake:${name}`, name, lang, localService: true, default: isDefault }));
   const spoken = [];
@@ -662,6 +665,27 @@ async function walk(browser, viewport, sample) {
     'The Familiar\'s recall should sit in the Reader\'s top bar beside Reader Settings.');
   await shot('6c-reader-end');
 
+  // The app-wide Familiar uses the same Fate command and confirmation on phones and laptops.
+  const recallHelper = page.getByTestId('reader-top-bar').getByRole('button', { name: /actions$/ });
+  await recallHelper.click();
+  await page.getByRole('button', { name: 'Talk to Familiar', exact: true }).click();
+  const helper = page.getByRole('dialog', { name: 'Familiar helper', exact: true });
+  check(await helper.getAttribute('aria-modal') === 'false', 'The helper should leave the reading surface available.');
+  const helperBox = await helper.boundingBox();
+  const controlsBox = await page.getByTestId('reader-controls-row').boundingBox();
+  check(helperBox.y >= 0 && helperBox.y + helperBox.height <= controlsBox.y, 'The helper must fit above the Reader controls.');
+  await helper.getByRole('button', { name: 'Conflict', exact: true }).click();
+  check((await helper.textContent()).includes(chapter.nextConflict), 'The Familiar should review the same writer suggestion as Fate.');
+  await helper.getByRole('button', { name: 'Confirm', exact: true }).click();
+  await helper.getByRole('status').filter({ hasText: 'Path saved for Chapter 2.' }).waitFor();
+  await shot('6c-familiar-saved');
+  await helper.getByRole('button', { name: 'Custom', exact: true }).click();
+  await helper.getByRole('textbox', { name: 'Type a command' }).fill('Custom: This cancelled direction must not replace Conflict.');
+  await helper.getByRole('button', { name: 'Review', exact: true }).click();
+  await helper.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await helper.waitFor({ state: 'hidden' });
+  check(await recallHelper.evaluate(element => document.activeElement === element), 'Closing the helper should return focus to the Familiar.');
+
   // 3c. Fate is a panel: the chapter stays on the page, readable beside (laptop) or above (phone) it.
   if (viewport.width < 640) {
     const targets = await page.getByTestId('reader-controls-row').getByRole('button').evaluateAll(buttons => buttons.map(button => {
@@ -687,6 +711,7 @@ async function walk(browser, viewport, sample) {
   }
   await visibleButton('Open Fate').click();
   await page.getByTestId('reader-panel-fate').waitFor();
+  check((await page.getByTestId('fate-path-current').textContent()).includes(chapter.nextConflict), 'Fate must retain the confirmed Familiar choice after cancelling a later custom proposal.');
   await page.waitForTimeout(400);
   const beside = () => page.evaluate(() => {
     const panel = document.querySelector('[data-testid="reader-panel-fate"]').getBoundingClientRect();

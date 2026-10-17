@@ -1,5 +1,12 @@
 # `@seihouse/sen`
 
+**Unreleased (2026-10-16):** `./harness-generation` adds the optional
+`HarnessReaderSession.renderHostTools` slot and `ReaderHostTools` contract. A host
+receives the active chapter ID, busy state and `interruptPlayback()`, whose
+release callback resumes only the narration it paused if no later reader action
+superseded it. `CHAPTER_DIRECTION_TEXT_LIMIT` exposes the existing direction
+limit. The Reader has no dependency on a host's helper or speech-input service.
+
 **2026-10-16:** `StoryCodex` shows each held thing and ability as one line (how it is now, since which chapter) with its changes behind History, the newest first, ten at a time; a look's changes and the Chronicle likewise.
 
 **0.39.0 (2026-10-15):** `StoryCodex` takes the host's `pictures` (`CodexPictures`): each card wears its

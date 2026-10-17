@@ -84,7 +84,7 @@ describe('HARNESS story-direction sources', () => {
     expect(container.querySelector('[data-testid="harness-recap-1"]')!.textContent).toContain('Yi Chen reached the gate at dusk.');
     expect(container.textContent).toContain('Chapter function: World Building');
     expect(container.textContent).toContain('Path: Fate chose');
-    expect(container.querySelector('[data-testid="harness-mission-reminder"]')!.textContent).toContain('MISSION REMINDER: You are the author of this novel');
+    expect(container.querySelector('[data-testid="harness-mission-reminder"]')!.textContent).toContain('You are the author of this novel, writing the chapter requested above.');
     expect(container.textContent).toContain('Frozen Mission Reminder · not in the provider request');
   });
 

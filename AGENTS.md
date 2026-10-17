@@ -75,6 +75,20 @@ other media). The staged plan for what comes next is in `NOVEL_EXPANDED.md`. Use
 parallel terminology, schemas, assemblers, or context systems for a
 concept it already defines.
 
+### The writer's prompt skeleton
+
+The chapter writer's prompt is laid out in fixed parts (SENSEI, 2026-10-16),
+defined in `HARNESS_PROMPT_PARTS` (`src/server/harness-generation/prompt.ts`):
+Role and mission, How to write, How to tag, How to read the story
+information, How to return the chapter, Hard rules; then Story information,
+This chapter, and the Mission Reminder last. It is how the HARNESS joins its
+inputs, not a system beside it. Every change that adds or moves text the writer
+reads must name the one part it belongs to and go through that part's owner (a
+CAPA skill in its schema slot, or the HARNESS part), never text placed between
+parts. Writing guidance belongs in How to write, tag teaching in How to tag,
+story data in Story information. `promptSkeleton.test.ts` fails on anything out
+of place.
+
 ### Generation features and the Model Router
 
 Every feature that calls a generation model (text, image, or speech) must be

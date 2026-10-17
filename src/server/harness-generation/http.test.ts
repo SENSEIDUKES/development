@@ -4,7 +4,7 @@ import { handleHarnessGenerationHttp } from './http';
 import type { HarnessTextGenerationRequest } from './provider';
 import { SEN_NOVEL_AUTHOR_SKILL } from '@seihouse/sen/harness-generation';
 import { assembleCapaPrompt } from '@seihouse/sen/harness-generation';
-import { HARNESS_RESPONSE_CONTRACT } from './prompt';
+import { composeHarnessSystemInstruction } from './prompt';
 import { arcGenerationContext } from '@seihouse/sen/arc-goals';
 import { buildMissionReminder } from '@seihouse/sen/harness-generation';
 
@@ -193,9 +193,10 @@ describe('Harness Generation HTTP boundary', () => {
     );
     expect(result.status).toBe(200);
     const input = generate.mock.calls[0][0] as HarnessTextGenerationRequest;
-    // Authoring instruction: CAPA Prompt first, in schema order (Author before Pacing), then the Harness contract.
-    expect(input.systemInstruction).toBe(`${skilled.capaPrompt.text}\n\n${HARNESS_RESPONSE_CONTRACT}`);
-    expect(input.systemInstruction).toMatch(/^CAPA SKILL \[Author\] — SEN Novel Author v1\.0\.0\n/);
+    // Authoring instruction: the role first, then the CAPA Prompt under How to write, in schema order (Author before Pacing), then the HARNESS parts.
+    expect(input.systemInstruction).toBe(composeHarnessSystemInstruction(skilled.capaPrompt));
+    expect(input.systemInstruction).toMatch(/^# ROLE AND MISSION\n\nYou are the author of this novel\./);
+    expect(input.systemInstruction).toContain('# HOW TO WRITE\n\nCAPA SKILL [Author] — SEN Novel Author v1.0.0\n');
     expect(input.systemInstruction.indexOf('CAPA SKILL [Author]')).toBeLessThan(input.systemInstruction.indexOf('CAPA SKILL [Pacing]'));
     expect(input.systemInstruction).toContain('elite Eastern fantasy web-novel author specializing in Asian light novels');
     expect(input.systemInstruction.split('Do not resolve the siege in this chapter.')).toHaveLength(2);
@@ -205,8 +206,8 @@ describe('Harness Generation HTTP boundary', () => {
     expect(input.systemInstruction).toContain('Do not invent block IDs');
     expect(input.systemInstruction).not.toContain('memory object');
     expect(input.systemInstruction).not.toContain('blocks array');
-    expect(input.systemInstruction.split('HARNESS RESPONSE AND EVIDENCE CONTRACT')).toHaveLength(2);
-    expect(skilled.capaPrompt.text).not.toContain('HARNESS RESPONSE AND EVIDENCE CONTRACT');
+    expect(input.systemInstruction.split('# HOW TO RETURN THE CHAPTER')).toHaveLength(2);
+    expect(skilled.capaPrompt.text).not.toContain('# HOW TO RETURN THE CHAPTER');
     expect(skilled.capaPrompt.text).not.toMatch(/R2|track list|Library Cue catalog/i);
     // The provider schema is the compact semantic contract, never the SEN block, memory, or presentation contracts.
     const chapterSchema = input.responseJsonSchema as { properties: Record<string, unknown>; required: string[] };
@@ -218,17 +219,16 @@ describe('Harness Generation HTTP boundary', () => {
     expect(JSON.stringify(chapterSchema)).not.toContain('anyOf');
     expect(JSON.stringify(chapterSchema)).not.toContain('fateResult');
     // Generation content: story information plus the immediate request, with no skill instructions.
-    expect(input.userPrompt).toMatch(/^STORY INFORMATION PACKET/);
+    expect(input.userPrompt).toMatch(/^# STORY INFORMATION \(story data/);
     expect(input.userPrompt).toContain('CURRENT STORY INFORMATION');
     // The reader's direction is stated once, in the request that acts on it.
     expect(input.userPrompt.split('Bring the envoy to the gate.')).toHaveLength(2);
     expect(input.userPrompt.indexOf('CURRENT STORY INFORMATION')).toBeLessThan(input.userPrompt.indexOf('IMMEDIATE CHAPTER REQUEST'));
     expect(input.userPrompt).toContain('READER DIRECTION FOR THIS CHAPTER: Bring the envoy to the gate.');
     expect(input.userPrompt.indexOf('READER DIRECTION FOR THIS CHAPTER')).toBeGreaterThan(input.userPrompt.indexOf('IMMEDIATE CHAPTER REQUEST'));
-    // The Mission Reminder is its own section now, after the packet and before the request.
-    expect(input.userPrompt).toContain('MISSION REMINDER: You are the author of this novel');
-    expect(input.userPrompt.indexOf('MISSION REMINDER')).toBeGreaterThan(input.userPrompt.indexOf('CURRENT CANONICAL STATE'));
-    expect(input.userPrompt.indexOf('MISSION REMINDER')).toBeLessThan(input.userPrompt.indexOf('IMMEDIATE CHAPTER REQUEST'));
+    // The Mission Reminder is its own section, last, after the request: it closes the call.
+    expect(input.userPrompt).toContain('# MISSION REMINDER\n\nYou are the author of this novel, writing the chapter requested above.');
+    expect(input.userPrompt.indexOf('# MISSION REMINDER')).toBeGreaterThan(input.userPrompt.indexOf('IMMEDIATE CHAPTER REQUEST'));
     expect(input.systemInstruction).not.toContain('MISSION REMINDER');
     expect(input.userPrompt).not.toContain('Do not resolve the siege in this chapter.');
     expect(input.userPrompt).not.toContain(SEN_NOVEL_AUTHOR_SKILL.instructions);

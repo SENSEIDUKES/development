@@ -4,7 +4,8 @@ import type { CapaPrompt, HarnessMissionReminder } from '../../../narrative/gene
 export const MISSION_REMINDER_EXCERPT_LIMIT = 400 as const;
 export const MISSION_REMINDER_TEXT_LIMIT = 600 as const;
 
-export const MISSION_REMINDER_OPENING = 'MISSION REMINDER: You are the author of this novel, writing the chapter requested below.';
+// It closes the call, under its own heading, after the chapter's request (SENSEI, 2026-10-16).
+export const MISSION_REMINDER_OPENING = 'You are the author of this novel, writing the chapter requested above.';
 
 const AUTHOR_HEADER = /^CAPA SKILL \[Author\] — (.+?) v(\S+)$/m;
 const SECTION_BOUNDARY = /^(?:CAPA SKILL \[|HARNESS OFFICIAL OUTPUT REQUIREMENTS$)/m;

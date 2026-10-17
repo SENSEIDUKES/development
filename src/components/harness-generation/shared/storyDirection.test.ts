@@ -386,7 +386,10 @@ describe('Mission Reminder', () => {
     expect(JSON.stringify(run.requests[0].storyInformation)).not.toContain('MISSION REMINDER');
     const prompt = buildHarnessGenerationPrompt(run.requests[0]);
     expect(prompt.systemInstruction).not.toContain('MISSION REMINDER');
-    expect(prompt.userPrompt.split('MISSION REMINDER:')).toHaveLength(2);
+    expect(prompt.userPrompt.split('# MISSION REMINDER')).toHaveLength(2);
+    // The Mission Reminder closes the call, after the chapter's request.
+    expect(prompt.userPrompt.endsWith(preview.text)).toBe(true);
+    expect(prompt.userPrompt.indexOf('IMMEDIATE CHAPTER REQUEST')).toBeLessThan(prompt.userPrompt.indexOf('# MISSION REMINDER'));
   });
 });
 

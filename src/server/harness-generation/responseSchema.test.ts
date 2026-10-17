@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { HARNESS_RESPONSE_CONTRACT, buildHarnessChapterResponseSchema, presentHoldings, presentImmediateChapterRequest } from './prompt';
+import { HARNESS_HARD_RULES, HARNESS_READING_GUIDE, HARNESS_RETURN_FORMAT, HARNESS_ROLE, HARNESS_WRITING_RULES, buildHarnessChapterResponseSchema, presentHoldings, presentImmediateChapterRequest } from './prompt';
+
+/** Every HARNESS part of the system instruction, together. */
+const HARNESS_RESPONSE_CONTRACT = [HARNESS_ROLE, HARNESS_WRITING_RULES, HARNESS_READING_GUIDE, HARNESS_RETURN_FORMAT, HARNESS_HARD_RULES].join('\n\n');
 
 /** The schema every story receives: sound words travel in the CAPA Prompt, never here. */
 const HARNESS_CHAPTER_RESPONSE_SCHEMA = buildHarnessChapterResponseSchema();

@@ -374,6 +374,12 @@ export interface CapaPrompt {
   capturedAt: string;
   skills: CapaPromptSkill[];
   text: string;
+  /**
+   * Where the tag half of `text` begins: the HARNESS tag rules and the skills
+   * that teach a tag, after the writing skills. Absent when no tag skill is
+   * loaded, and from prompts frozen before the halves were marked.
+   */
+  taggingStart?: number;
   estimatedTokens: number;
   /**
    * The exact glossary entries selected for this attempt. Frozen so a retry or

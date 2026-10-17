@@ -77,6 +77,7 @@ export { buildImmediateChapterRequest } from '../../components/harness-generatio
 export { activeAttemptForStory, isBlockingAttempt } from '../../components/harness-generation/shared/attempts';
 export { chapterRewriteGap, latestStoryChapter, readRewriteNote, withoutLatestChapter } from '../../components/harness-generation/shared/chapterRewrite';
 export { attemptChapterPath, chapterDirectionGap, nextChapterWaitsOnReader, pendingChapterDirection, validateChapterDirectionChoice } from '../../components/harness-generation/shared/chapterDirection';
+export { CHAPTER_DIRECTION_TEXT_LIMIT } from '../../narrative/generation';
 export {
   FATE_PRESSURE_RHYTHM_CONFIG,
   buildRhythmRecommendation,
@@ -200,7 +201,7 @@ export * from '../../narrative/holdings';
 export * from '../../narrative/appearances';
 export { createHarnessSenStory } from '../../components/harness-generation/shared/senAdapter';
 export * from '../../narrative/generation';
-export { HarnessReaderSession, type HarnessReaderWriting } from '../../components/harness-generation/development/HarnessReaderSession';
+export { HarnessReaderSession, type HarnessReaderWriting, type ReaderHostTools } from '../../components/harness-generation/development/HarnessReaderSession';
 export { ProseChapterBody } from '../../components/harness-generation/development/ProseChapterBody';
 export { ReaderAudioNote } from '../../components/harness-generation/development/ReaderAudioNote';
 export { ReaderPanel, useWideReader } from '../../components/harness-generation/development/ReaderPanel';

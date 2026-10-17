@@ -9,7 +9,7 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - Source: supplied `Familiars/Packages/` collection (not a Git repository), containing twelve validated Familiar packages.
 - Preview: Workshop **Customization → Familiar** and `?preview=familiar`.
 - First Workshop record: 2026-09-20.
-- Last recorded Workshop update: 2026-10-12.
+- Last recorded Workshop update: 2026-10-16.
 - Historical source inspection: 2026-10-06.
 - Lifecycle: supplied source packages retained; the reusable renderer, host catalogue, and Energy interaction remain in Development.
 - Owner: Library. This first-party companion is not a SEN narrative capability.
@@ -177,6 +177,57 @@ sign-out or no selection. Omit `boundaryRef` to use the app viewport. Do not
 transfer `ProductFamiliarPreview`, Development identity tokens, or fixture defaults.
 The Library companion remains outside the portable SEN Reader implementation.
 
+### Contextual helper — 2026-10-16
+
+The Familiar is the Library's future app-wide guide for explanation, control,
+accessibility and translation. This first pass supplies a small shared foundation,
+with only Fate implemented. It does not introduce conversation history, generated
+replies, a second story store or a new generation endpoint.
+
+- `FamiliarHelperProvider` owns one short interaction across the app. The header
+  and floating trays gain the same **Talk to Familiar** action when this provider
+  is present; existing consumers without it keep their original tray.
+- A mounted screen registers `FamiliarHelperContext` through
+  `useFamiliarHelperContext`. It supplies action labels, exact command phrases,
+  review text, execution callbacks and an optional playback interruption. The
+  screen changes its context key when the target or choices change. Unmounting
+  or changing that key cancels capture and invalidates pending confirmation.
+- `ReaderFamiliar` is the first adapter. It saves World Building, Progression,
+  Conflict or `Custom: <direction>` through `chooseChapterDirection`, preserving
+  the writer's suggestion and custom text. A separate Confirm is required. This
+  selects the next chapter's path; it neither generates nor rewrites a chapter.
+- SEN exposes only `HarnessReaderSession.renderHostTools` and `ReaderHostTools`
+  (chapter, busy state and a temporary narration interruption). SEN has no
+  Familiar import. The app and existing Workshop Reader share `AppFamiliar` and
+  `StoryPages`, so both use the same helper and Reader adapter.
+- The host supplies `FamiliarVoice`; the shipped browser adapter is under
+  `src/host/familiar/voice.ts`. A later speech service or conversational input
+  can replace this adapter while keeping screen actions and their validation.
+  The current parser recognizes explicit English commands only. It does not
+  interpret general questions or translate text. Speech language is an explicit
+  provider setting; localized phrases and UI remain future work.
+
+Tap the microphone once to begin. Recognition stops before the fixed readback,
+then listens once for Confirm or Cancel. Touch and typing follow the same review
+step without speaking. Unsupported speech, denied permission, silence and lost
+speech events leave those alternatives available. Browser recognition may use
+the browser vendor's network service; this app adds no recording storage or
+provider keys. It works only while the page is active, with no wake word or
+locked-phone activation.
+
+Narration and the scene yield while interacting. Cancel or success restores only
+playback this interaction paused, at the existing sentence boundary. Manual
+pause/stop/skip, a different chapter, leaving the Reader or backgrounding the page
+prevents automatic resumption. The panel is nonmodal, has no backdrop, supports
+Escape and focus return, and appears only on request.
+
+Physical iPhone listening checks are still required: permit/deny microphone;
+say each preset and a custom direction; verify readback, spoken Confirm/Cancel
+and the Fate panel's saved value; repeat during narration with headphones;
+switch apps or lock the phone mid-capture; confirm capture stops and a later
+return does not restart an old command. Automated checks use speech stand-ins
+and do not establish Safari microphone or Bluetooth behavior.
+
 ### Size, minimize, and callback — 2026-09-20
 
 Familiar is now one card inside Workshop **Shared**, preserving `?preview=familiar`
@@ -282,6 +333,10 @@ desktop hover, 320/390px viewport centering, desktop centering, tray alignment a
 Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
+
+- 2026-10-16: Added the optional global helper foundation and its first Reader
+  action: review and save one of the four existing Fate choices using voice,
+  touch or typing. App and Workshop Reader share the same composition.
 
 - 2026-10-12: Removed the header recall's blue focus box. Keyboard focus uses
   a gold glow around the sprite; forced colors keeps the system focus outline.

@@ -1,0 +1,38 @@
+import { describe, expect, it } from 'vitest';
+import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
+import { InMemoryHarnessGenerationRepository } from '../../test-utils/InMemoryHarnessGenerationRepository';
+import { readerFamiliarContext } from './ReaderFamiliar';
+
+const tools = { chapterId: 'no-chapter', busy: false, interruptPlayback: () => () => {} };
+async function setup() {
+  const repository = new InMemoryHarnessGenerationRepository();
+  const controller = new HarnessGenerationController({ repository, modelAdapter: {
+    getServerInfo: async () => ({ configured: false, provider: 'fixture', models: [], defaultModel: '' }),
+    generate: async () => { throw new Error('Voice must not call generation.'); },
+  } });
+  await controller.hydrate();
+  const story = await controller.createStory({ premise: 'A courier returns.' });
+  return { controller, story, repository };
+}
+describe('Reader actions for the Familiar', () => {
+  it('saves every preset and exact custom text through the real Fate controller and survives reload', async () => {
+    const { controller, story, repository } = await setup();
+    const context = readerFamiliarContext(controller.snapshot(), story.id, controller, tools);
+    for (const id of ['worldBuilding', 'progression', 'conflict']) {
+      await context.actions.find(action => action.id === id)!.run('');
+      expect(controller.snapshot().stories[0].nextChapterDirection?.choice).toEqual({ kind: 'chapter-function', chapterFunction: id });
+    }
+    await context.actions.find(action => action.id === 'custom')!.run('赵 leaves the sect. Keep this exact.');
+    const restored = await repository.load();
+    expect(restored?.stories[0].nextChapterDirection?.choice).toEqual({ kind: 'reader', text: '赵 leaves the sect. Keep this exact.' });
+    expect(controller.snapshot().chapters).toHaveLength(0);
+  });
+  it('rejects a request prepared for a different chapter and offers no actions while writing', async () => {
+    const { controller, story } = await setup();
+    const snapshot = controller.snapshot();
+    snapshot.stories[0].head.nextChapterNumber = 2;
+    const stale = readerFamiliarContext(snapshot, story.id, controller, tools);
+    await expect(stale.actions[0].run('')).rejects.toThrow('next chapter changed');
+    expect(readerFamiliarContext(controller.snapshot(), story.id, controller, { ...tools, busy: true }).actions).toHaveLength(0);
+  });
+});

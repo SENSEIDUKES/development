@@ -3,6 +3,7 @@ import { createPortal, flushSync } from 'react-dom';
 import { Familiar, type FamiliarProps } from './Familiar';
 import { familiarDisplaySize, type FamiliarActivity } from '../shared/familiar';
 import { useFamiliarMobile } from './useFamiliarMobile';
+import { useFamiliarHelperAvailable } from './FamiliarHelper';
 
 type Point = { x: number; y: number };
 type Bounds = { left: number; top: number; right: number; bottom: number };
@@ -19,7 +20,6 @@ export interface FamiliarCompanionProps extends Pick<FamiliarProps, 'familiar' |
 const WIDTH = 104;
 const MARGIN = 12;
 const DOCK_HEIGHT = 48;
-const DOCK_WIDTH = 104;
 const clamp = (point: Point, bounds: Bounds): Point => ({
   x: Math.max(bounds.left, Math.min(bounds.right, point.x)),
   y: Math.max(bounds.top, Math.min(bounds.bottom, point.y)),
@@ -35,6 +35,7 @@ function dragAnimation(familiar: FamiliarProps['familiar'], delta: Point): strin
 /** One instance belongs in the host app shell, beneath its account/Energy providers. */
 export function FamiliarCompanion({ boundaryRef, size, minimized = false, onMinimize, bottomInset = 0, children, ...props }: FamiliarCompanionProps) {
   const mobile = useFamiliarMobile();
+  const dockWidth = useFamiliarHelperAvailable() ? 148 : 104;
   const scale = familiarDisplaySize(size, mobile);
   const ratio = props.familiar.cellHeight / props.familiar.cellWidth;
   const [width, setWidth] = useState(WIDTH * scale);
@@ -96,14 +97,14 @@ export function FamiliarCompanion({ boundaryRef, size, minimized = false, onMini
       const visible = { left: Math.max(left, rect?.left ?? left), top: Math.max(top, rect?.top ?? top),
         right: Math.min(right, rect?.right ?? right), bottom: Math.min(bottom - bottomInset, rect?.bottom ?? bottom) };
       const nextWidth = Math.min(WIDTH * scale, visible.right - visible.left - MARGIN * 2, (visible.bottom - visible.top - MARGIN * 2 - DOCK_HEIGHT) / ratio);
-      if ((boundaryRef && !rect) || nextWidth < 44 || visible.right - visible.left < DOCK_WIDTH + MARGIN * 2) {
+      if ((boundaryRef && !rect) || nextWidth < 44 || visible.right - visible.left < dockWidth + MARGIN * 2) {
         liveBounds.current = null;
         setBounds(null);
         setOpen(false);
         return;
       }
       setWidth(nextWidth);
-      const extraWidth = Math.max(0, DOCK_WIDTH - nextWidth) / 2;
+      const extraWidth = Math.max(0, dockWidth - nextWidth) / 2;
       const next = { left: visible.left + MARGIN + extraWidth, top: visible.top + MARGIN,
         right: visible.right - nextWidth - MARGIN - extraWidth, bottom: visible.bottom - nextWidth * ratio - DOCK_HEIGHT - MARGIN };
       liveBounds.current = next;
@@ -129,7 +130,7 @@ export function FamiliarCompanion({ boundaryRef, size, minimized = false, onMini
       window.visualViewport?.removeEventListener('resize', schedule);
       window.visualViewport?.removeEventListener('scroll', schedule);
     };
-  }, [boundaryRef, scale, ratio, bottomInset, minimized]);
+  }, [boundaryRef, scale, ratio, bottomInset, minimized, dockWidth]);
 
   /** Release the active pointer and prevent a drag from opening the Energy panel. */
   function finish(event: PointerEvent<HTMLButtonElement>, cancelled = false) {

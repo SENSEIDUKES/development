@@ -1,5 +1,12 @@
 # `@seihouse/library`
 
+**Unreleased (2026-10-16):** `./familiar` exports `FamiliarHelperProvider`,
+`FamiliarHelperAction`, `useFamiliarHelperContext`, the screen action/context and
+replaceable voice contracts, and `FamiliarHelperController`. Hosts opt in once
+at the app root; mounted screens supply actions. `./stories` registers the Reader's
+existing Fate choices when that provider is present. Saving stays with SEN's
+existing controller. No speech provider is bundled into Library.
+
 **0.34.0 (2026-10-13):** Right-to-left scripts in the Reader's fonts. `./stories`:
 `LIBRARY_READER_FONTS` names Noto Naskh Arabic and Noto Serif Hebrew beside each serif and title
 font, and Noto Sans Arabic and Noto Sans Hebrew beside each sans (Rubik keeps its own). The host

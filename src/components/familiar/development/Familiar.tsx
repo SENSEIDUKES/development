@@ -4,6 +4,7 @@ import { useEnergyAccount } from '../../energy/shared/useEnergyAccount';
 import { FamiliarSprite, type FamiliarSpriteProps } from './FamiliarSprite';
 import { familiarActivityAnimation } from '../shared/familiar';
 import { useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { FamiliarHelperAction } from './FamiliarHelper';
 
 /** Read the active host account whenever the Energy panel mounts. */
 function FamiliarEnergy() {
@@ -86,6 +87,7 @@ export function Familiar({ open: controlledOpen, onOpenChange, triggerProps, onM
       <button type="button" className="familiar-shadow" hidden={expanded} aria-label="Show Familiar actions" aria-expanded={expanded} aria-controls={actionsId} onClick={() => setPinned(true)}><span /></button>
       <div id={actionsId} className="familiar-actions" role="group" aria-label="Familiar actions" hidden={!expanded}>
         <FamiliarEnergyAction open={open} onOpenChange={setOpen}>{children}</FamiliarEnergyAction>
+        <FamiliarHelperAction />
         {onMinimize && <button type="button" className="familiar-action" aria-label="Minimize Familiar" title="Minimize Familiar" onClick={onMinimize}><ChevronDown aria-hidden="true" size={21} /></button>}
       </div>
     </div>

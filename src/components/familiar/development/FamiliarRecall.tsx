@@ -4,6 +4,7 @@ import { FamiliarEnergyAction } from './Familiar';
 import { SEIPopover, SEIPopoverTrigger, SEIPopoverContent, SEIPopoverTitle } from '@seihouse/ui';
 import { Maximize2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { FamiliarHelperAction } from './FamiliarHelper';
 
 /** Place in the host header while its companion is minimized. */
 export function FamiliarRecall({ familiar, onRecall }: { familiar: FamiliarDefinition; onRecall: () => void }) {
@@ -23,6 +24,7 @@ export function FamiliarRecall({ familiar, onRecall }: { familiar: FamiliarDefin
       <SEIPopoverContent className="familiar-actions familiar-header-actions" side="bottom" collisionPadding={12}>
         <SEIPopoverTitle className="familiar-sr-only">Familiar actions</SEIPopoverTitle>
         <FamiliarEnergyAction />
+        <FamiliarHelperAction onOpen={() => setOpen(false)} focusTarget={() => container.current?.querySelector('button') ?? null} />
         <button type="button" className="familiar-action" aria-label="Expand Familiar" title="Expand Familiar" onClick={onRecall}><Maximize2 aria-hidden="true" size={19} /></button>
       </SEIPopoverContent>
     </SEIPopover>

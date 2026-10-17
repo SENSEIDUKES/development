@@ -16,6 +16,7 @@ import { StoryBlueprintPage, type StoryBlueprintAccess, type StoryBlueprintViewP
 import type { LibraryStories } from './useLibraryStories';
 import { EnergyCostMeter } from '../../components/energy/development/EnergyCostMeter';
 import { useWorkspaceHeaderAccessory } from '../../components/library-shell/development/WorkspaceHeader';
+import { ReaderFamiliar } from './ReaderFamiliar';
 
 /** A HARNESS story's Portal: the novel alone, until adaptations of it exist. */
 const NO_ADAPTATIONS_YET = { expansions: [] } as const;
@@ -128,6 +129,7 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
         streamingBlocksCount={0} isVeilMinimized={false} setIsVeilMinimized={keepVeilOpen} /> : undefined}
       // A chapter's Energy price beside Write, and "−1" as each arrives (practice: nothing is taken yet).
       companion={familiar}
+      renderHostTools={tools => <ReaderFamiliar state={state} storyId={storyId} controller={controller} tools={tools} />}
       renderWriteAside={written => <EnergyCostMeter actionId="chapter.generate" made={written} note="practice: nothing is taken yet" />}
       onClose={() => { setStartOnOpen(false); onCloseReader(); }} />
   </>;

@@ -562,8 +562,15 @@ Update it whenever it changes.
     - **One Familiar for the app:** minimized to its recall in every Library
       header (beside the music note on laptops); summoned, it floats over the
       pages and keeps its place, starting on phones just above the bottom bar
-      and the music note, never on them. It stays out of the immersive Reader,
-      and the writing veil wears the same Familiar.
+      and the music note, never on them. In the Reader its recall lives in the
+      top bar; the writing veil wears the same Familiar.
+      **Direction (2026-10-16):** the Familiar becomes a contextual guide across
+      the whole app, explaining and controlling features, with accessibility
+      and translation central to that role. **First experiment:** its microphone
+      reviews and saves the Reader's existing four Fate choices, with touch and
+      typing equivalents and a separate confirmation. One global interaction
+      owner accepts screen-supplied actions and a replaceable voice adapter.
+      General conversation, translation and hands-free activation come later.
   - **Story Settings are in the app, off the developer page** (piece 4). The
     story's own settings, the only place a reader meets the HARNESS:
     - **On Story View**, closed until opened: the Story Language (fixed when the

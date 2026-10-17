@@ -20,7 +20,8 @@ Open it at `?preview=writer-instructions` (Systems section).
 - **Only in some stories:** Fate Survival, the three Reading Mode skills, and
   the official output requirements (shown at their fullest).
 - **After a chapter:** the separate small calls on a saved chapter, never the
-  chapter writer: the Holdings fixer and the look step.
+  chapter writer: the Holdings fixer, and the look writer (on demand, never
+  after a chapter, though it is listed here).
 - **History:** every change, newest first, in plain words.
 
 Not shown: the story itself (Story Information and the chapter request,

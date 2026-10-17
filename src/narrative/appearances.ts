@@ -56,19 +56,8 @@ export interface AppearanceAttachment extends ManuscriptAttachment<AppearancePay
 /** An appearance's id: its sentence, and its place among the chapter's appearances. */
 export const appearanceId = (blockId: string, start: number, end: number, index: number) => `appearance:${blockId}:${start}-${end}:${index}`;
 
-/** The traits a character's look is told by. Each is a few words in the story's own language; any may be unknown. */
-export const CHARACTER_LOOK_TRAITS = ['build', 'face', 'eyes', 'hair', 'skin', 'clothing', 'marks', 'gear'] as const;
-/** The traits a thing's look is told by. */
-export const THING_LOOK_TRAITS = ['form', 'size', 'material', 'colour', 'condition', 'marks'] as const;
-export type LookTrait = (typeof CHARACTER_LOOK_TRAITS)[number] | (typeof THING_LOOK_TRAITS)[number];
-
-/** One look, as written down from the passages that show it: what an artist needs to draw it. */
-export interface Look {
-  /** One line, the first thing an artist needs. */
-  summary: string;
-  /** Only the traits the passages (or the author's declared look) state, by trait. */
-  traits: Partial<Record<LookTrait, string>>;
-}
+export { CHARACTER_LOOK_TRAITS, THING_LOOK_TRAITS, type CodexEntryLook, type CodexEntryLookFailure, type Look, type LookTrait } from './looks';
+import type { Look } from './looks';
 
 /** The look written down for one appearance of a chapter. */
 export interface DescribedLook extends Look {

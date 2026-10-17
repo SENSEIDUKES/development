@@ -34,7 +34,7 @@ import { pendingChapterDirection } from '../shared/chapterDirection';
 import { chapterRewriteGap, latestStoryChapter } from '../shared/chapterRewrite';
 import { protagonistNames } from '../shared/speakers';
 import { declaredCharacters } from '../shared/holdings';
-import { deriveStoryCodex, type CodexPictures } from '../shared/storyCodex';
+import { deriveStoryCodex, type CodexPictureMaker, type CodexPictures } from '../shared/storyCodex';
 import { BlueprintArcPage } from './BlueprintArcPage';
 import { ChapterAuthoring } from './ChapterAuthoring';
 import { ChapterRewrite } from './ChapterRewrite';
@@ -201,7 +201,8 @@ export function HarnessReaderSession({
   /** Mount host-owned contextual tools alongside the Reader, using its actual playback lifecycle. */
   renderHostTools?: (tools: ReaderHostTools) => ReactNode;
   /** The host's pictures for this story's Codex cards, with Manifest. Without them, cards show their aura. */
-  codexPictures?: CodexPictures;
+  /** The host's picture maker. The Reader writes a card's look first when it has none, so the host only pictures a written look. */
+  codexPictures?: CodexPictureMaker;
 }) {
   const story = state.stories.find(entry => entry.id === storyId);
   const chapters = useMemo(() => state.chapters
@@ -511,7 +512,11 @@ export function HarnessReaderSession({
         onReadChapter={readChapter} />
     </ReaderPanel>
     <ReaderPanel open={panel === 'codex'} onClose={closeLayer} labelledBy="codex-panel-title" testId="reader-panel-codex" peek={codexPeek}>
-      <ReaderCodex state={state} storyId={storyId} chapters={chapters} storyTitle={story.title} onBack={closeLayer} pictures={codexPictures}
+      <ReaderCodex state={state} storyId={storyId} chapters={chapters} storyTitle={story.title} onBack={closeLayer} pictures={codexPictures && {
+        pictureOf: codexPictures.pictureOf,
+        // A card without a current look has it written first, from the story's own words, then pictured.
+        manifest: async card => codexPictures.manifest({ ...card, look: card.look ?? await controller.describeCodexLook(storyId, card.key) }),
+      }}
         onReadPassage={revealPassage} onReadChapter={revealChapter} />
     </ReaderPanel>
     <ReaderSettingsSheet open={layer?.id === 'settings'} onClose={closeLayer} readAloud={readAloud} language={language}

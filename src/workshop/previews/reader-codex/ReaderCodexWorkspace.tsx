@@ -86,7 +86,7 @@ const escapeXml = (text: string) => text.replace(/[<>&"]/g, character => ({ '<':
  * A stand-in picture: the card's name and look on a plain card, so Manifest
  * can be tried here without an image model. The app makes the real picture.
  */
-const standInPicture = (card: CodexPictureCard) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400"><rect width="300" height="400" fill="#1b2130"/><text x="150" y="150" fill="#fafafa" font-family="serif" font-size="22" text-anchor="middle">${escapeXml(card.name)}</text><foreignObject x="24" y="176" width="252" height="180"><p xmlns="http://www.w3.org/1999/xhtml" style="margin:0;color:#c9ced8;font:13px sans-serif;text-align:center">${escapeXml(card.look.summary)}</p></foreignObject><text x="150" y="380" fill="#8892a6" font-family="monospace" font-size="10" text-anchor="middle">STAND-IN PICTURE</text></svg>`)}`;
+const standInPicture = (card: CodexPictureCard) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400"><rect width="300" height="400" fill="#1b2130"/><text x="150" y="150" fill="#fafafa" font-family="serif" font-size="22" text-anchor="middle">${escapeXml(card.name)}</text><foreignObject x="24" y="176" width="252" height="180"><p xmlns="http://www.w3.org/1999/xhtml" style="margin:0;color:#c9ced8;font:13px sans-serif;text-align:center">${escapeXml(card.look?.summary ?? card.name)}</p></foreignObject><text x="150" y="380" fill="#8892a6" font-family="monospace" font-size="10" text-anchor="middle">STAND-IN PICTURE</text></svg>`)}`;
 
 /** The preview's pictures: stand-ins made after a moment, held for the visit. */
 function useStandInPictures(): CodexPictures {

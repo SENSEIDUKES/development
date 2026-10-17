@@ -96,7 +96,7 @@ the owner listed here, never a parallel structure.
 | *(Arc planning call, separate operation)* | `planNextArc` / `prepareArcPlan` in `shared/controller.ts`, with `arcPlanningContext`, `nextArcStep`, `arcPlanGap` and `arcReviewGap` in `shared/arcState.ts`; `buildHarnessArcPrompt` in `src/server/harness-generation/prompt.ts` | Not a Generation Model Call. It plans the goals of the arc the next chapter begins. A story with a planned length (`plannedArcCount`, every story made from a World Blueprint) starts with Arc 1 only and plans each later arc when the reader begins it, never inside a chapter write; the reader then reviews the plan (accepts it or edits it) before the arc's first chapter, in both Fate modes. Beside the compact Story Information Packet, only this call receives the planning context (`HarnessArcRequest.planning`): the arc's place in the story's length and whether it is the final arc, the earlier arcs' goals with their outcomes, and the hidden look-ahead (`HarnessStory.arcLookahead`, at most two one-line directions for the next arcs, first written by the Blueprint and replaced by each planning). The reply is a goal draft, a fresh look-ahead and the Destined Ending; the HARNESS assigns the arc number and every goal identity. The look-ahead never enters the Story Information Packet or the Generation Model Call, and no reader surface shows it. Every arc is 30 chapters (`ARC_LENGTH`). A goal's chapters are a budget, not a quota: a goal reached early hands over to the next in the following chapter, which keeps its own deadline (`activeArcGoal`), and the response contract tells the writer that `completionDeadline` is the latest chapter, never a length to fill, and that every chapter changes the story's situation. |
 | *(Rewrite this chapter, a second request for the latest chapter)* | `rewriteLatestChapter` in `shared/controller.ts`, with `chapterRewriteGap`, `latestStoryChapter` and `withoutLatestChapter` in `shared/chapterRewrite.ts`; `ImmediateChapterRequest.rewrite` (`HarnessChapterRewrite`), presented by `presentImmediateChapterRequest` | A Generation Model Call like any other, for the story's latest chapter while nothing is built on it. Its inputs are prepared from the story as it stood before that chapter (`withoutLatestChapter`: the chapter, the Codex entries it brought in, its goal outcomes, broken route and ending, and a direction chosen after it, all gone) with the chapter's own direction back in place; the request adds the reader's optional note and the replaced version's title and recap, never its prose. The new version replaces the old one only when it commits, in the same write; the replaced attempt keeps its reply and gains `replacedByChapterId`. A failed rewrite changes nothing, and never holds the story. |
 | *(Holdings fixer, separate operation after commit)* | `planHoldingsFix` / `applyHoldingsFixes` in `shared/holdingsFixer.ts`, run by the controller after each commit; `HarnessHoldingsFixRequest` → `executeHoldingsFix` / `buildHoldingsFixerPrompt` (`src/server/harness-generation/holdingsFixer.ts`); the record is `HarnessChapter.fixer` | Not a Generation Model Call: one small call with the chapter's model at its lowest reasoning level, only when the chapter's own holdings checks flag problems the plain rules cannot settle, reading small cases rather than the chapter (see The tag system below). Registered in the Model Router as Holdings Fixer. Its instructions are on the Writer Instructions page. |
-| *(Look step, separate operation after commit)* | `planLookSubjects` / `chapterLooks` in `shared/lookDescriber.ts`, run by the controller after the Holdings fixer; `HarnessLookRequest` → `executeLookDescription` / `buildLookDescriberPrompt` (`src/server/harness-generation/lookDescriber.ts`); the record is `HarnessChapter.looks` | Not a Generation Model Call: one small call with the chapter's model at its lowest reasoning level, only when the chapter has appearances, reading each tagged passage rather than the chapter, and writing each look down (see The tag system below). Registered in the Model Router as Look Describer. Its instructions are on the Writer Instructions page. |
+| *(Look writer, separate operation on demand)* | `controller.describeCodexLook` with `planCodexLook` in `shared/lookDescriber.ts`; `HarnessLookRequest` → `executeLookDescription` / `buildLookDescriberPrompt` (`src/server/harness-generation/lookDescriber.ts`); the record is `CodexEntry.look` | Not a Generation Model Call, and never after a chapter: one small call with the latest chapter's model at its lowest reasoning level, only when something made from the story needs one entry's full look and none is kept, reading every passage of that entry rather than any chapter (see The tag system below). Registered in the Model Router as Look Describer. Its instructions are on the Writer Instructions page. |
 | *(capability handlers, separate concept)* | `HarnessCapabilityRegistry` in `shared/capabilities.ts` | Not a CAPA concern: permanent, deterministic post-commit handlers that interpret already-committed semantic events. |
 | *(Story-direction sources, separate durable concept)* | Shared domain contract in `src/narrative/storyDirection.ts` (Hard Pins, Fate Pressure tiers, chapter functions, recaps); Hard Pins and the rhythm recommendation on `HarnessStory`, recaps and rhythm metadata on `HarnessChapter`, `fatePressure` on `StoryFoundationInput`; tuning in `FATE_PRESSURE_RHYTHM_CONFIG` (`shared/rhythm.ts`); `buildMissionReminder` (`shared/missionReminder.ts`) frozen on `HarnessGenerationAttempt.missionReminder`; written only through `shared/controller.ts` | Durable Story Information the HARNESS displays, persists, and now projects into the compact Story Information Packet (sections 3 through 6) and, for the Mission Reminder, section 8 of the Generation Model Call. The writer returns the recap, chapter function, and three one-line suggestions as shallow fields of its existing chapter reply; it never writes Hard Pins, Fate Pressure, or the Destined Ending, and the rhythm recommendation is computed deterministically from saved chapter functions and the one configuration. The Mission Reminder is a bounded excerpt of the Author skill's CAPA text and performs no story analysis. |
 | *(Media Loadout, separate runtime concept)* | SEN contracts in `src/audio/media.ts`, `src/audio/soundWords.ts`, `src/audio/soundtrackVocabulary.ts` and `src/audio/soundCuePlacement.ts`; Library selection/entitlement policy in `src/library/media/mediaPacks.ts`; host records in `src/host/media/`; frozen through `shared/controller.ts` | SEN owns portable intent, references and deterministic resolution. Library owns first-party selection/entitlement policy; the host owns catalog records and truth (SEN Soundscapes and SEN Atmospheres, Volume 1, and the words a writer chooses an atmosphere by, `FrozenNarrativeMedia.atmospheres`). HARNESS freezes only opaque provenance and never grants entitlements, and freezes the media before CAPA so the Sound Cues and Soundtrack slots and acceptance read the same words. Only those words (sound words with their examples and meanings; music moods and atmosphere words) reach the Generation Model Call, through the CAPA Sound Cues and Soundtrack slots; recordings, URLs, catalogs and entitlements never enter CAPA, Story Information, the Immediate Chapter Request, or the call. |
@@ -246,22 +246,30 @@ kind; in a chapter written with the skill, someone who speaks before any tag
 shows them appearing is flagged once a chapter (a group is never). The flags
 join the Codex's record checks.
 
-**Look step** (`shared/lookDescriber.ts`, run after commit by the controller,
-after the Holdings fixer): each appearance the rules accept becomes one
-subject (`HarnessLookSubject`): who or what, the passage from its sentence to
-the end of the next paragraph, the author's notes on a declared character
-(its identity's words), and for a change the look the record held before.
-One `describe-looks` call with the chapter's own model writes each look down:
-one line (`summary`) and only the traits the passage states (a character's
-build, face, eyes, hair, skin, clothing, marks, gear; a thing's form, size,
-material, colour, condition, marks), plus a `conflict` where the passage
-contradicts the author's notes. A look says what someone or something looks
-like, never how to show it, so a portrait, a comic panel or a film can use the
-same record. The answer is read leniently and kept within limits
-(`readDescribedLooks`); a failed call is recorded and the chapter stands as
-committed. The record is `HarnessChapter.looks` (`ChapterLooks`, in the
-export). The next chapter's writer reads the latest look of everyone on the
-page in Appeared; the Codex shows it on each card with every change.
+**Looks, on demand** (since 2026-10-17; before, a look step ran after every
+chapter). After a chapter, no model is called: each appearance keeps, by code,
+the writer's own description (`AppearancePassage.description`: the paragraph
+from the tag's sentence, up to 480 characters by whole sentences). The next
+writer reads it in Appeared (`appearedLookLine`), with every change since
+("· since then: …"); the Codex shows it under Look, "In the story's words".
+A full look is written only when something made from the story needs it (a
+picture, a manga, a game): `controller.describeCodexLook(storyId, key)` is the
+single entry point. It plans one subject from every passage of that one entry
+(`planCodexLook`: the first look and the latest changes, within 2,400
+characters, with a declared character's notes) and makes one `describe-looks`
+call with the latest chapter's model, which writes the whole look as it stands
+after the last passage: one line (`summary`) and only the traits stated (a
+character's build, face, eyes, hair, skin, clothing, marks, gear; a thing's
+form, size, material, colour, condition, marks), plus a `conflict` where a
+passage contradicts the author's notes. A look says what someone or something
+looks like, never how to show it, so a portrait, a manga page or a game model
+can use the same record. The answer is read leniently (`readDescribedLooks`:
+a long line is cut, the sole look of a single subject is taken whatever its
+id). The look is kept on the Codex entry (`CodexEntry.look`, with `from`: the
+appearance records it was written from) and reused until a new tag adds a
+passage (`lookStale`); a failure is kept as `CodexEntry.lookFailure`, with the
+model's own answer. Looks recorded on chapters before (`HarnessChapter.looks`)
+still read.
 
 ## Former structure (corrected record)
 

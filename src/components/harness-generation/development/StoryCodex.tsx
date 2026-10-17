@@ -210,7 +210,14 @@ function LookSection({ name, appearance, traits, onReadPassage }: {
           </dl>}
           {look.conflict && <p className="mt-3 text-xs leading-relaxed text-amber-100/80">Differs from the author&rsquo;s notes: {look.conflict}</p>}
         </div>
-      : <p className="text-sm text-neutral-400">No look written down yet.</p>}
+      : appearance.description
+        // The writer's own words until a look is written: Manifest writes it from them.
+        ? <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4" data-testid="codex-look-description">
+            <p className="text-[15px] leading-relaxed text-neutral-200">{appearance.description}</p>
+            <p className="mt-3 text-xs text-neutral-500">In the story&rsquo;s words. Manifest writes the full look from them.</p>
+          </div>
+        : <p className="text-sm text-neutral-400">No look written down yet.</p>}
+    {look && appearance.lookStale && <p className="text-xs text-neutral-500" data-testid="codex-look-stale">The story has changed this look since. Manifest writes it again.</p>}
     {look && <div className="flex flex-wrap gap-1.5">
       <PassageChip passage={look.passage} label={`Look · Ch. ${look.passage.chapterNumber}`} onReadPassage={onReadPassage} />
     </div>}
@@ -398,7 +405,8 @@ export function StoryCodex({ codex, storyTitle, pictures, onBack, onReadPassage,
     const look = appearance?.look;
     return {
       picture: pictures.pictureOf(key), making: Boolean(making[key]), problem: problems[key],
-      ...(look ? { onManifest: () => manifest({ key, subject, name, look: { summary: look.summary, traits: look.traits } }) } : {}),
+      // A current look makes the picture at once; otherwise the host writes the look first, from the story's words.
+      ...(appearance ? { onManifest: () => manifest({ key, subject, name, ...(look && !appearance.lookStale ? { look: { summary: look.summary, traits: look.traits } } : {}) }) } : {}),
     };
   };
   const askToRead: ReadPassage | undefined = onReadPassage && ((chapterNumber, blockId) => setGoTo({ chapterNumber, blockId }));

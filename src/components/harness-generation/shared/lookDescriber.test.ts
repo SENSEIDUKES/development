@@ -45,14 +45,19 @@ describe('Reading the look step\'s answer', () => {
       { id: 'a2', summary: '' },
     ] }), subjects);
     expect(looks).toEqual([
-      { appearanceId: 'a1', summary: 'A stooped old smith.', traits: { build: 'stooped' }, conflict: 'The author gave him no scars.' },
+      { appearanceId: 'a1', summary: 'A stooped old smith.', traits: { build: 'stooped', marks: `${'x '.repeat(13)}x…` }, conflict: 'The author gave him no scars.' },
       { appearanceId: 'a2', summary: 'An old iron blade.', traits: { material: 'iron', colour: 'rust red' } },
     ]);
   });
 
-  it('sets aside a summary that is too long or carries a tag, and an answer that is not a list of looks', () => {
+  it('cuts a summary that is too long, takes the sole look of a single subject, and sets aside a tag and an answer that is not a list of looks', () => {
     const subjects = [subject('a1')];
-    expect(readDescribedLooks(JSON.stringify({ looks: [{ id: 'a1', summary: 'word '.repeat(31) }] }), subjects)).toEqual([]);
+    expect(readDescribedLooks(JSON.stringify({ looks: [{ id: 'a1', summary: 'word '.repeat(31) }] }), subjects)).toEqual([
+      { appearanceId: 'a1', summary: `${'word '.repeat(29)}word…`, traits: {} },
+    ]);
+    expect(readDescribedLooks(JSON.stringify({ looks: [{ id: 'Old Wu', summary: 'A stooped smith.' }] }), subjects)).toEqual([
+      { appearanceId: 'a1', summary: 'A stooped smith.', traits: {} },
+    ]);
     expect(readDescribedLooks(JSON.stringify({ looks: [{ id: 'a1', summary: '[[look: MC | x]] A smith.' }] }), subjects)).toEqual([]);
     expect(readDescribedLooks('{"fixes":[]}', subjects)).toEqual([]);
     expect(readDescribedLooks('not json', subjects)).toEqual([]);

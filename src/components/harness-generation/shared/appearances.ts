@@ -148,8 +148,27 @@ export function resolveAppearances({ storyId, chapter, appearances, entries, dec
 
 // ─── Working out who is on the page ───────────────────────────────────────
 
-/** Where an appearance happened: its chapter and the sentence it points at, with where that sentence starts in its paragraph. */
-export type AppearancePassage = HoldingPassage & { startOffset: number };
+/**
+ * Where an appearance happened: its chapter and the sentence it points at,
+ * with where that sentence starts in its paragraph, and, for an appears or
+ * look tag, the writer's own description: from its sentence to the end of its
+ * paragraph, a few sentences at most. It is copied by code, never read by a
+ * model: the record a look is written from when something asks for one.
+ */
+export type AppearancePassage = HoldingPassage & { startOffset: number; description?: string };
+
+/** The most characters of the writer's description an appearance keeps: whole sentences from its tag. */
+export const APPEARANCE_DESCRIPTION_CHARACTERS = 480;
+/** The most characters of a description the writer reads back in Appeared. */
+const APPEARED_LINE_CHARACTERS = 220;
+
+/** Whole sentences of `text` from its start, within `limit` characters. */
+const sentencesWithin = (text: string, limit: number, locale?: string) => {
+  const trimmed = text.trim();
+  if (trimmed.length <= limit) return trimmed;
+  const fits = splitSentences(trimmed, locale).filter(sentence => sentence.end <= limit).at(-1);
+  return fits ? trimmed.slice(0, fits.end).trim() : `${trimmed.slice(0, limit).trimEnd()}…`;
+};
 
 /** A look written down, with the passage it was read from. */
 export interface RecordedLook extends Look {
@@ -178,6 +197,8 @@ export interface AppearanceSubject {
   changes: LookChange[];
   /** How it looks now: the latest look written down. */
   look?: RecordedLook;
+  /** A tag changed it after that look was written: the look is older than the story, and is written again when next asked for. */
+  lookStale?: true;
   /** Every look written down, in story order. */
   looks: RecordedLook[];
 }
@@ -209,6 +230,8 @@ export interface AppearancesChapter {
   /** Written with the Appearance skill when present, even empty. */
   appearances?: readonly AppearanceAttachment[];
   looks?: ChapterLooks;
+  /** The chapter's paragraphs, so an appearance keeps the writer's own description. */
+  paragraphs?: readonly string[];
   speakers?: readonly SpeakerAttachment[];
   holdingChanges?: readonly HoldingChangeAttachment[];
 }
@@ -263,10 +286,15 @@ export function deriveAppearances({ entries, chapters, declaredFactions = [] }: 
     const writtenWithAppearances = chapter.appearances !== undefined;
     const flaggedUnseen = new Set<string>();
     const accepted = new Map<string, AppearanceSubject>();
-    const passageOf = (record: AppearanceAttachment | SpeakerAttachment): AppearancePassage => ({
-      chapterId: chapter.id, chapterNumber: chapter.chapterNumber, recordId: record.id,
-      blockId: record.anchor.blockId, text: record.anchor.selectedText, startOffset: record.anchor.startOffset,
-    });
+    const passageOf = (record: AppearanceAttachment | SpeakerAttachment): AppearancePassage => {
+      const paragraph = record.kind === APPEARANCE_KIND ? chapter.paragraphs?.[paragraphIndex(record.anchor.blockId) - 1] : undefined;
+      const description = paragraph?.slice(record.anchor.startOffset) && sentencesWithin(paragraph.slice(record.anchor.startOffset), APPEARANCE_DESCRIPTION_CHARACTERS);
+      return {
+        chapterId: chapter.id, chapterNumber: chapter.chapterNumber, recordId: record.id,
+        blockId: record.anchor.blockId, text: record.anchor.selectedText, startOffset: record.anchor.startOffset,
+        ...(description ? { description } : {}),
+      };
+    };
     const flag = (kind: AppearanceFlagKind, message: string, record: AppearanceAttachment | SpeakerAttachment, name?: string) => flags.push({
       kind, message: `Chapter ${chapter.chapterNumber}: ${message}`, chapterId: chapter.id, chapterNumber: chapter.chapterNumber,
       recordId: record.id, blockId: record.anchor.blockId, ...(name ? { name } : {}),
@@ -338,7 +366,44 @@ export function deriveAppearances({ entries, chapters, declaredFactions = [] }: 
     }
   }
 
+  // A look written on demand is kept on the Codex entry: it stands for the passages it was written from, and is stale once a tag adds another.
+  for (const subject of subjects.values()) {
+    const sources = appearanceSources(subject);
+    const kept = subject.entryId ? byId.get(subject.entryId)?.look : undefined;
+    if (kept?.summary.trim()) {
+      // The look stands at the last passage it was written from; a change after it is shown as "since then".
+      const passages = [subject.first, ...subject.changes.map(change => change.passage)];
+      const latest = passages.filter(passage => kept.from.includes(passage.recordId)).at(-1) ?? subject.first;
+      const recorded: RecordedLook = { summary: kept.summary, traits: { ...kept.traits }, passage: latest, ...(kept.conflict ? { conflict: kept.conflict } : {}) };
+      subject.looks.push(recorded);
+      subject.look = recorded;
+      if (kept.from.join('|') !== sources.join('|')) subject.lookStale = true;
+    } else if (subject.look && subject.changes.some(change => comesAfter(change.passage, subject.look!.passage))) subject.lookStale = true;
+  }
+
   return { subjects: [...subjects.values()], flags, recency };
+}
+
+const comesAfter = (left: AppearancePassage, right: AppearancePassage) =>
+  (left.chapterNumber - right.chapterNumber || paragraphIndex(left.blockId) - paragraphIndex(right.blockId) || left.startOffset - right.startOffset) > 0;
+
+/** The appearances a subject's look is written from, in story order: its first, then each change. */
+export const appearanceSources = (subject: Pick<AppearanceSubject, 'first' | 'changes'>) =>
+  [subject.first.recordId, ...subject.changes.map(change => change.passage.recordId)];
+
+/**
+ * The line the writer reads for a subject in Appeared: its look's one line
+ * while it is current; otherwise the writer's own description from when it
+ * first stepped onto the page, then every change since, so a look is kept
+ * from the story's own words with no model.
+ */
+export function appearedLookLine(subject: AppearanceSubject): string | undefined {
+  const since = (subject.look && !subject.lookStale
+    ? []
+    : subject.changes.filter(change => !subject.look || comesAfter(change.passage, subject.look.passage))).map(change => change.change).filter(Boolean);
+  const base = subject.look?.summary ?? sentencesWithin(subject.first.description ?? subject.first.text, APPEARED_LINE_CHARACTERS);
+  if (!base && !since.length) return undefined;
+  return [base, ...(since.length ? [`since then: ${since.join('; ')}`] : [])].filter(Boolean).join(' · ');
 }
 
 /** Holding tags that show a thing on the page: held, taken, in use or put away. */
@@ -408,7 +473,7 @@ export function appearancesSection(state: AppearancesState): AppearancesSection 
     name: subject.name,
     entity: subject.entity,
     ...(subject.mainCharacter ? { mainCharacter: true as const } : {}),
-    ...(subject.look ? { look: subject.look.summary } : {}),
+    ...(appearedLookLine(subject) ? { look: appearedLookLine(subject)! } : {}),
   });
   const recent = (left: AppearanceSubject, right: AppearanceSubject) => (state.recency.get(right.key) ?? 0) - (state.recency.get(left.key) ?? 0);
   const main = state.subjects.find(subject => subject.mainCharacter);

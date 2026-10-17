@@ -107,6 +107,7 @@ describe('the Codex record', () => {
     expect(elder.voice).toMatchObject({ lines: 1, first: { text: '"Work,"' } });
     expect(elder.appearance).toEqual({
       first: { chapterNumber: 1, blockId: 'c1-p2', text: 'Then' },
+      description: 'Then the elder.',
       look: { summary: 'A broad old smith, one sleeve burnt.', traits: { build: 'broad', clothing: 'one sleeve burnt' }, passage: { chapterNumber: 2, blockId: 'c2-p2', text: 'Then' } },
       changes: [{ change: 'a burnt sleeve', passage: { chapterNumber: 2, blockId: 'c2-p2', text: 'Then' } }],
     });

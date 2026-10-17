@@ -11,7 +11,7 @@ import {
 import type { CodexEntry } from '../../../narrative/holdings';
 import type { CurrentStoryProjection, HarnessChapter, HarnessLookSubject } from '../../../narrative/generation';
 import { normalizeIdentityLabel } from './canonicalProjection';
-import { deriveAppearances, describableAppearances } from './appearances';
+import { deriveAppearances, describableAppearances, type AppearanceSubject } from './appearances';
 
 /**
  * The look step, after a chapter commits: each appearance the rules accept
@@ -103,12 +103,17 @@ export function planLookSubjects({ chapter, chapters, entries, identities, local
 
 const isRecord = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
-/** A few words of the answer, trimmed, or nothing when they are empty or too long to be a look. */
+/**
+ * A few words of the answer, trimmed: one that runs long is cut to the limit,
+ * never thrown away (Blade Chapter 17 lost every look to one long line).
+ * Nothing when it is empty or holds a tag.
+ */
 const words = (value: unknown, limit: number): string | undefined => {
   if (typeof value !== 'string') return undefined;
   const text = value.replace(/\s+/g, ' ').trim();
   if (!text || /\[\[|\]\]/.test(text)) return undefined;
-  return text.split(' ').length <= limit ? text : undefined;
+  const all = text.split(' ');
+  return all.length <= limit ? text : `${all.slice(0, limit).join(' ').replace(/[,;:]$/, '')}…`;
 };
 
 /**
@@ -123,10 +128,12 @@ export function readDescribedLooks(raw: string | undefined, subjects: readonly H
   const asked = new Map(subjects.map(subject => [subject.id, subject]));
   const written = new Map<string, DescribedLook>();
   for (const look of looks) {
-    if (!isRecord(look) || typeof look.id !== 'string') continue;
-    const subject = asked.get(look.id);
+    if (!isRecord(look)) continue;
+    // One subject asked about, one look answered: it is that subject's, whatever id the model wrote.
+    const subject = typeof look.id === 'string' && asked.has(look.id) ? asked.get(look.id)
+      : subjects.length === 1 && looks.length === 1 ? subjects[0] : undefined;
     const summary = words(look.summary, LOOK_SUMMARY_WORDS);
-    if (!subject || !summary || written.has(look.id)) continue;
+    if (!subject || !summary || written.has(subject.id)) continue;
     const given = isRecord(look.traits) ? look.traits : {};
     const traits: DescribedLook['traits'] = {};
     for (const trait of LOOK_TRAITS[subject.entity]) {
@@ -134,7 +141,7 @@ export function readDescribedLooks(raw: string | undefined, subjects: readonly H
       if (value) traits[trait] = value;
     }
     const conflict = words(look.conflict, LOOK_SUMMARY_WORDS);
-    written.set(look.id, { appearanceId: look.id, summary, traits, ...(conflict ? { conflict } : {}) });
+    written.set(subject.id, { appearanceId: subject.id, summary, traits, ...(conflict ? { conflict } : {}) });
   }
   // In the order they were asked about, which is reading order.
   return subjects.flatMap(subject => written.get(subject.id) ?? []);
@@ -154,3 +161,46 @@ export function chapterLooks({ subjects, raw, error, model, at }: {
     ? { status: 'described', at, ...(model ? { model } : {}), looks }
     : { status: 'failed', at, ...(model ? { model } : {}), looks: [], problem: 'The answer held no look that could be read.' };
 }
+
+/** The most characters of passages one on-demand look reads: the first appearance and the latest changes. */
+export const CODEX_LOOK_PASSAGE_CHARACTERS = 2_400;
+
+/**
+ * The one subject an on-demand look is written from (SENSEI, 2026-10-17):
+ * one character or thing, every passage that shows it in story order (its
+ * first appearance, then each change of look), and, for a character, the
+ * author's notes. The passages are the writer's own words, kept by code when
+ * each chapter committed; this reads only them, never a chapter. The subject's
+ * id is its Codex entry's.
+ */
+export function planCodexLook({ subject, identities, names }: {
+  subject: Pick<AppearanceSubject, 'entryId' | 'key' | 'name' | 'entity' | 'first' | 'changes'>;
+  identities?: CurrentStoryProjection['identities'];
+  /** The entry's names, its aliases included, to find the author's notes. */
+  names?: readonly string[];
+}): HarnessLookSubject {
+  const lines = [
+    `Chapter ${subject.first.chapterNumber}, first on the page: ${subject.first.description ?? subject.first.text}`,
+    ...subject.changes.map(change => `Chapter ${change.passage.chapterNumber}, look changed (${change.change}): ${change.passage.description ?? change.passage.text}`),
+  ];
+  // The first appearance always; then the latest changes that fit, since the look is how it stands after the last.
+  const kept = [lines[0]];
+  let room = CODEX_LOOK_PASSAGE_CHARACTERS - lines[0].length;
+  const recent: string[] = [];
+  for (const line of lines.slice(1).reverse()) {
+    if (line.length > room) break;
+    recent.unshift(line);
+    room -= line.length;
+  }
+  const declared = subject.entity === 'character' ? declaredNotes(identities, names ?? [subject.name]) : undefined;
+  return {
+    id: subject.entryId ?? subject.key,
+    name: subject.name,
+    entity: subject.entity,
+    event: 'appears',
+    passage: [...kept, ...recent].join('\n'),
+    ...(declared ? { declared } : {}),
+  };
+}
+
+

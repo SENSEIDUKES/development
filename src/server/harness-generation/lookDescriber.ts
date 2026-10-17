@@ -5,18 +5,20 @@ import { HarnessGenerationExecutionError, type HarnessProviderFactory } from './
 import { lowestReasoningLevel, requireTextModelKey } from '../model-router/catalog';
 
 /**
- * The look step's call: after a chapter commits, one short request with the
- * chapter's own model, at the least reasoning it accepts, writes down the look
- * of each character and thing the chapter tagged, from the passages that show
- * them. It reads passages, not the chapter, so it costs a small fraction of
- * the chapter itself. A look says what someone or something looks like, never
- * how to show it, so every medium (a portrait, a comic panel, a film) can use it.
+ * Writing a look, on demand (SENSEI, 2026-10-17; after each chapter before
+ * then): when a picture, a comic or a game first asks for a character's or
+ * thing's look, one short request with the model of the story's latest
+ * chapter, at the least reasoning it accepts, writes it from every passage that
+ * shows it (the writer's own words, kept by code). It reads those passages
+ * only, never a chapter, and runs once until a new tag changes the look. A
+ * look says what someone or something looks like, never how to show it, so
+ * every medium (a portrait, a comic panel, a game) can use it.
  */
 
 /** What the look step reads before the subjects. */
 export const LOOK_DESCRIBER_INSTRUCTIONS = [
-  'You write down how the characters and things of a novel look, so every later chapter and every picture of them keeps the same look. Each subject below is one character or thing from one chapter: the passage that shows it, and what is already known. Answer every subject.',
-  'WHAT TO WRITE. Only what the passage, or the author\'s notes on a character, states can be seen: never invent a detail, and leave out a trait nothing states. For a first appearance, the passage and the author\'s notes together; where they differ, the passage wins, and conflict says how in one short sentence. For a change of look, start from the look before and change only what the passage changes; write the whole new look, not only the change.',
+  'You write down how a character or thing of a novel looks: the core record every picture, comic and game made from the story draws it from. The subject below is one character or thing: every passage that shows it, in story order, and the author\'s notes on a character. Answer it.',
+  'WHAT TO WRITE. Only what the passages, or the author\'s notes on a character, state can be seen: never invent a detail, and leave out a trait nothing states. The passages are the writer\'s own words and may also tell what others do: keep only how the subject looks. Where a passage and the author\'s notes differ, the passage wins, and conflict says how in one short sentence. Where a later passage changes the look, it wins: write the whole look as it stands after the last passage, not only the change.',
   `TRAITS. A character: ${CHARACTER_LOOK_TRAITS.join(', ')} (marks: scars, tattoos, wounds; gear: what they carry or wear that matters to their look). A thing: ${THING_LOOK_TRAITS.join(', ')}. Each trait in a few words.`,
   'summary: one line of at most 25 words, the first thing an artist needs to draw them.',
   'Write what they look like, never how to show them: no camera, framing, pose, lighting, mood or art style. Personality, history and power are not looks unless the passage shows them (glowing eyes, an aura that can be seen). Write in the story\'s language.',
@@ -46,7 +48,7 @@ export const LOOK_DESCRIBER_RESPONSE_SCHEMA = {
   required: ['looks'],
 } as const;
 
-/** How long the look step may take, at most: the reader is waiting for the chapter. */
+/** How long writing a look may take, at most: the reader is waiting for the picture. */
 export const LOOK_DESCRIBER_TIMEOUT_MS = 60_000;
 /** Room for every subject's short look and a little thinking. */
 export const LOOK_DESCRIBER_MAX_OUTPUT_TOKENS = 8_192;

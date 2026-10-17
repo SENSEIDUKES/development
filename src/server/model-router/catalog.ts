@@ -49,7 +49,7 @@ export interface GenerationConsumer {
 }
 
 // HARNESS registers chapter writing and arc planning through one shared entry; memory extraction is retired.
-// The Holdings fixer's small check after each chapter has its own entry, with the chapter's model; so does the look step.
+// The Holdings fixer's small check after each chapter has its own entry, with the chapter's model; so does writing a look on demand (Look Describer).
 export const GENERATION_CONSUMERS: readonly GenerationConsumer[] = [
   { name: 'Harness Generation', capability: 'chapters', entry: 'src/server/harness-generation/execute.ts', modelChoice: 'router' },
   { name: 'Holdings Fixer', capability: 'chapters', entry: 'src/server/harness-generation/holdingsFixer.ts', modelChoice: 'router' },

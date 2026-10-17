@@ -172,8 +172,8 @@ export const AFTER_A_CHAPTER: readonly WriterInstruction[] = [
     text: HOLDINGS_FIXER_INSTRUCTIONS,
   },
   {
-    id: 'look-step', title: 'Look step', source: 'HARNESS',
-    when: 'After a chapter is saved, when it tagged someone or something stepping onto the page or a change of look: one short call with the chapter\'s model, which reads these instructions and each tagged passage (with the author\'s notes on a character, and the look before a change), never the whole chapter.',
+    id: 'look-step', title: 'Look writer', source: 'HARNESS',
+    when: 'Never after a chapter: only when something made from the story needs one entry\'s full look (a picture, a manga, a game) and the look kept on its Codex entry is missing or a newer tag changed it. One short call with the latest chapter\'s model, which reads these instructions and every passage that shows that one entry (with the author\'s notes on a character), never a whole chapter.',
     text: LOOK_DESCRIBER_INSTRUCTIONS,
   },
 ];

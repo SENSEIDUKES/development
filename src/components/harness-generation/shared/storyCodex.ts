@@ -58,8 +58,12 @@ export interface CodexLook extends Look {
 /** Where someone or something stepped onto the page, how it looks now, and each change to its look. */
 export interface CodexAppearance {
   first: CodexPassage;
+  /** The writer's own description when it first stepped onto the page, kept by code: shown until a look is written. */
+  description?: string;
   /** The latest look written down; absent until one is. */
   look?: CodexLook;
+  /** A tag changed it after that look was written: Manifest writes it again first. */
+  lookStale?: true;
   /** Each change to its look the writer tagged, in story order. */
   changes: Array<{ change: string; passage: CodexPassage }>;
 }
@@ -139,6 +143,8 @@ const appearancePassage = (passage: AppearancePassage): CodexPassage => ({
 });
 const appearanceOf = (subject: AppearanceSubject): CodexAppearance => ({
   first: appearancePassage(subject.first),
+  ...(subject.first.description ? { description: subject.first.description } : {}),
+  ...(subject.lookStale ? { lookStale: true as const } : {}),
   ...(subject.look ? { look: {
     summary: subject.look.summary, traits: { ...subject.look.traits }, passage: appearancePassage(subject.look.passage),
     ...(subject.look.conflict ? { conflict: subject.look.conflict } : {}),
@@ -300,8 +306,26 @@ export interface CodexPictureCard {
   key: string;
   subject: 'character' | 'thing';
   name: string;
-  /** The latest look the record wrote down; a card without one cannot be manifested. */
-  look: Look;
+  /**
+   * The look the picture is made from. A card whose look is not written yet,
+   * or is older than its latest change, comes without one: its host writes it
+   * first (`describeCodexLook`), then makes the picture.
+   */
+  look?: Look;
+}
+
+/** A card ready to be pictured: with the look its picture is made from. */
+export type CodexPictureMade = CodexPictureCard & { look: Look };
+
+/**
+ * The host's picture maker for one story: it makes a card's picture from a
+ * written look. The Reader writes a card's look first when it has none
+ * (`describeCodexLook`), so a host only ever pictures a written look.
+ */
+export interface CodexPictureMaker {
+  pictureOf: (key: string) => string | undefined;
+  /** Makes the card's picture from its look and keeps it, replacing any before it. Rejects with a reason the reader can read. */
+  manifest: (card: CodexPictureMade) => Promise<void>;
 }
 
 /**

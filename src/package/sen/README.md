@@ -35,8 +35,9 @@ through one resolver shared with holdings (`createCodexEntryResolver`, `resolveA
 `deriveAppearances` works out who and what is on the page and flags what cannot be true;
 `appearancesSection` is Story Information's new Appeared section (`StoryInformationPacket.appearances`,
 packet section `appearances`). An adapter that offers `describeLooks` (`HarnessLookRequest`, the
-`describe-looks` operation) runs the look step after each chapter with appearances
-(`planLookSubjects`, `chapterLooks`), kept as `HarnessChapter.looks`. The Codex meets characters and
+`describe-looks` operation) writes one entry's full look on demand
+(`controller.describeCodexLook`, `planCodexLook`), kept as `CodexEntry.look`; since 2026-10-17 no
+call follows a chapter. The Codex meets characters and
 items that stepped onto the page and shows each Look (`CodexCharacter.appearance`,
 `CodexItem.appearance`); `CodexCheck` is now a holdings or an appearance check. Schema 32: optional
 chapter fields only, with a no-op upgrade from 31.

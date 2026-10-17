@@ -159,6 +159,8 @@ export {
   type CodexPassage,
   type CodexPictureCard,
   type CodexPictures,
+  type CodexPictureMade,
+  type CodexPictureMaker,
   type CodexVoice,
   type StoryCodexChapter,
   type StoryCodexRecord,
@@ -195,6 +197,7 @@ export {
   chapterLooks,
   lookPassage,
   planLookSubjects,
+  planCodexLook,
   readDescribedLooks,
 } from '../../components/harness-generation/shared/lookDescriber';
 export * from '../../narrative/holdings';

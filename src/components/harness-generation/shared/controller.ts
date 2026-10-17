@@ -50,9 +50,10 @@ import { chapterRewriteGap, latestStoryChapter, readRewriteNote, withoutLatestCh
 import { harnessParagraphBlockId } from './chapterBody';
 import { protagonistNames } from './speakers';
 import { createCodexEntryResolver, declaredCharacters, resolveHoldingChanges } from './holdings';
-import { resolveAppearances, thingAppearancesFromHoldings } from './appearances';
+import { appearanceSources, deriveAppearances, resolveAppearances, thingAppearancesFromHoldings } from './appearances';
+import type { Look } from '../../../narrative/appearances';
 import { applyHoldingsFixes, planHoldingsFix } from './holdingsFixer';
-import { chapterLooks, planLookSubjects } from './lookDescriber';
+import { planCodexLook, readDescribedLooks } from './lookDescriber';
 import {
   createEmptyHarnessWorkspaceState,
   type HarnessGenerationRepository,
@@ -1514,11 +1515,10 @@ export class HarnessGenerationController {
     }
     await this.replayStory(commitAttempt.storyId, chapterId);
     // The Holdings fixer settles the chapter's small holdings problems before
-    // anything is planned or written from it; then the look step writes down
-    // the looks its appearances show.
+    // anything is planned or written from it. Looks are not written here: the
+    // writer's own description is kept by code, and a look is written only when
+    // something asks for it (`describeCodexLook`).
     await this.fixCommittedHoldings(attemptId, chapterId);
-    const looks = this.planLookStep(attemptId, chapterId);
-    if (looks) await this.describeCommittedLooks(looks);
     // A story without a planned length plans its next arc as soon as the
     // last chapter of one commits; a story with one waits for the reader.
     const committedStory = findStory(this.state, commitAttempt.storyId);
@@ -1613,58 +1613,61 @@ export class HarnessGenerationController {
   }
 
   /**
-   * What the look step would describe for a committed chapter, worked out
-   * before anything waits: nothing without a look step or appearances.
+   * A Codex entry's core look, written on demand (SENSEI, 2026-10-17): the
+   * record a picture, a manga or a game is made from, and the one way any of
+   * them asks for it. While the look kept on the entry still stands for every
+   * passage that shows it, it is returned as it is, with no call. Otherwise one
+   * short call, with the model of the story's latest chapter, reads only that
+   * entry's passages (the writer's own words, kept by code at each commit) and
+   * writes the whole look as it stands after the last of them; it is kept on
+   * the entry. A failure is kept on the entry too, with the model's answer,
+   * and rejects with a reason a reader can read.
    */
-  private planLookStep(attemptId: string, chapterId: string) {
-    const attempt = this.state.attempts.find(entry => entry.id === attemptId);
-    const chapter = this.state.chapters.find(entry => entry.id === chapterId);
-    const story = chapter ? findStory(this.state, chapter.storyId) : undefined;
-    if (!this.modelAdapter.describeLooks || !attempt || !chapter?.appearances?.length || !story) return undefined;
-    const subjects = planLookSubjects({
-      chapter,
-      chapters: this.state.chapters.filter(entry => entry.storyId === story.id),
-      entries: this.state.codexEntries.filter(entry => entry.storyId === story.id),
-      identities: attempt.storyInformation.currentStory.identities,
-      locale: story.originalLanguage,
+  async describeCodexLook(storyId: string, key: string): Promise<Look> {
+    this.assertHydrated();
+    const story = findStory(this.state, storyId);
+    if (!story) throw new Error('This story is no longer available.');
+    const chapters = this.state.chapters.filter(chapter => chapter.storyId === storyId);
+    const entries = this.state.codexEntries.filter(entry => entry.storyId === storyId);
+    const subject = deriveAppearances({ entries, chapters }).subjects.find(candidate => (candidate.entryId ?? candidate.key) === key);
+    if (!subject) throw new Error('The story has not shown this one on the page yet, so it has no look to write.');
+    if (subject.look && !subject.lookStale) return { summary: subject.look.summary, traits: { ...subject.look.traits } };
+    const latest = latestStoryChapter(this.state, storyId);
+    const model = latest && this.state.attempts.find(attempt => attempt.id === latest.attemptId)?.model;
+    if (!this.modelAdapter.describeLooks || !latest || !model) throw new Error('This host cannot write a look yet.');
+    const entry = subject.entryId ? entries.find(candidate => candidate.id === subject.entryId) : undefined;
+    const attempt = this.state.attempts.find(candidate => candidate.id === latest.attemptId);
+    const request = planCodexLook({
+      subject, identities: attempt?.storyInformation.currentStory.identities,
+      names: entry ? [entry.name, ...(entry.aliases ?? [])] : [subject.name],
     });
-    return subjects.length ? { attempt, chapter, story, subjects } : undefined;
-  }
-
-  /**
-   * The look step, after a chapter commits and its holdings are settled: each
-   * appearance the rules accept is described from its passage in one short
-   * call with the chapter's own model, and the looks are kept on the chapter.
-   * A chapter with no appearances is never asked about. Nothing here can undo
-   * the commit: a failed call is recorded, and a failed write leaves the
-   * chapter as it was.
-   */
-  private async describeCommittedLooks({ attempt, chapter, story, subjects }: NonNullable<ReturnType<HarnessGenerationController['planLookStep']>>) {
-    const chapterId = chapter.id;
-    const wasGenerating = this.generating;
-    this.generating = true;
+    let raw: string | undefined;
+    let problem: string | undefined;
     try {
-      let raw: string | undefined;
-      let error: string | undefined;
-      try {
-        raw = (await this.modelAdapter.describeLooks!({
-          operation: 'describe-looks', storyId: story.id, chapterId, chapterNumber: chapter.chapterNumber, model: attempt.model,
-          language: story.originalLanguage, subjects,
-        })).rawProviderResponse;
-      } catch (cause) {
-        error = errorMessage(cause, 'The look step could not be reached.');
-      }
-      // The chapter must still be the one described: the story's latest, with the same appearances.
-      const current = this.state.chapters.find(entry => entry.id === chapterId);
-      if (latestStoryChapter(this.state, story.id)?.id !== chapterId || !current?.appearances
-        || subjects.some(subject => !current.appearances!.some(appearance => appearance.id === subject.id))) return;
-      const candidate = cloneHarnessValue(this.state);
-      const saved = candidate.chapters.find(entry => entry.id === chapterId)!;
-      saved.looks = chapterLooks({ subjects, raw, error, model: attempt.model, at: this.runtime.now() });
-      try { await this.persist(candidate); } catch { /* The chapter stays as it was committed. */ }
-    } finally {
-      this.generating = wasGenerating;
+      raw = (await this.modelAdapter.describeLooks({
+        operation: 'describe-looks', storyId, chapterId: latest.id, chapterNumber: latest.chapterNumber, model,
+        language: story.originalLanguage, subjects: [request],
+      })).rawProviderResponse;
+    } catch (cause) {
+      problem = errorMessage(cause, 'The look could not be written. Please try again.');
     }
+    const look = problem ? undefined : readDescribedLooks(raw, [request])[0];
+    if (!look) problem ??= 'The answer held no look that could be read. Please try again.';
+    // Kept on the entry, against the state as it is now: a chapter written meanwhile is kept.
+    if (entry) {
+      const candidate = cloneHarnessValue(this.state);
+      const saved = candidate.codexEntries.find(candidateEntry => candidateEntry.id === entry.id);
+      if (saved) {
+        const at = this.runtime.now();
+        if (look) {
+          saved.look = { summary: look.summary, traits: look.traits, from: appearanceSources(subject), at, model, ...(look.conflict ? { conflict: look.conflict } : {}) };
+          delete saved.lookFailure;
+        } else saved.lookFailure = { at, model, problem: problem!, ...(raw ? { raw } : {}) };
+        try { await this.persist(candidate); } catch { /* The look is still returned; it is written again when next asked for. */ }
+      }
+    }
+    if (!look) throw new Error(problem);
+    return { summary: look.summary, traits: { ...look.traits } };
   }
 
   /**

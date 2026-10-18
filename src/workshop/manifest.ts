@@ -252,6 +252,18 @@ export const workshopEntries: WorkshopEntry[] = [
     },
   },
   {
+    id: 'oauth',
+    section: 'pages', group: 'account', owner: 'library', status: 'active',
+    title: 'OAuth',
+    description: 'The cinematic Library sign-in screen, with Google, Apple and email actions simulated locally. Inspect successful sign-in, errors and retry without linking an account.',
+    category: 'other', version: 'v1.0',
+    source: {
+      repository: 'SENSEIDUKES/development',
+      path: 'src/components/story-seed/development/StoryAuthGate.tsx',
+      lastCompared: 'Not applicable — existing Library surface',
+    },
+  },
+  {
     id: 'user-profile',
     section: 'pages',
     group: 'account',

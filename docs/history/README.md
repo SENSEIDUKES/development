@@ -4,6 +4,7 @@ These records describe earlier repository states. Use the living documentation a
 
 | Date | Report | What it covered |
 | --- | --- | --- |
+| 2026-10-18 | [feature-audit-2026-10-18.md](feature-audit-2026-10-18.md) | SEN, Library and app feature audit against Light-Novels: built, Workshop only, not rebuilt yet. |
 | 2026-09-19 | [HARNESS_CHAPTER_GENERATION_AUDIT.md](HARNESS_CHAPTER_GENERATION_AUDIT.md) | HARNESS chapter-generation and prompt audit. |
 | 2026-09-09 | [app-shell-header-validation.md](app-shell-header-validation.md) | App-shell titles and responsive header verification. |
 | 2026-09-08 | [library-header-validation.md](library-header-validation.md) | Header family interaction and layout validation. |

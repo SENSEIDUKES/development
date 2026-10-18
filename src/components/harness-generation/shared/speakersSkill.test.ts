@@ -18,12 +18,13 @@ import { defaultHarnessRuntime } from './ids';
 
 describe('SEN Speakers skill', () => {
   it('teaches the speaker tag in a few short lines, with one example: the main character\'s', () => {
-    expect(SEN_SPEAKERS_SKILL).toMatchObject({ id: 'seihouse.sen-speakers', version: '2.2.0', slot: 'speakers', applications: ['generation'] });
+    expect(SEN_SPEAKERS_SKILL).toMatchObject({ id: 'seihouse.sen-speakers', version: '2.3.0', slot: 'speakers', applications: ['generation'] });
     const lines = SEN_SPEAKERS_INSTRUCTIONS.split('\n');
     expect(lines).toEqual([
-      'Start each paragraph with speech with its speaker: [[@Name]]',
+      'Every paragraph with speech starts with its speaker: [[@Name]]',
       'Example: [[@MC]] “Hold the gate,” he said.',
-      'One speaker per paragraph. Speech goes in quotation marks.',
+      'A new speaker starts a new paragraph. Speech goes in quotation marks.',
+      'A line without its speaker is read in the wrong voice.',
     ]);
     // A copied placeholder is read as no tag, never as a speaker named "Name".
     expect(readMarks(SEN_SPEAKERS_INSTRUCTIONS).speakers.map(tag => tag.name)).toEqual(['Name', 'MC']);
@@ -47,7 +48,7 @@ describe('SEN Speakers skill', () => {
     story.skillLoadout = { author: { id: SEN_NOVEL_AUTHOR_SKILL.id, version: SEN_NOVEL_AUTHOR_SKILL.version } };
     const bundled = freezeHarnessSkillLoadout(story, createHarnessSkillCatalog(includeBundledHarnessSkills([])), 'now');
     expect(bundled.skills.map(skill => skill.slot)).toEqual(['author', 'speakers', 'holdings', 'appearance']);
-    expect(assembleCapaPrompt(bundled).text).toContain('CAPA SKILL [Speakers] — SEN Speakers v2.2.0');
+    expect(assembleCapaPrompt(bundled).text).toContain('CAPA SKILL [Speakers] — SEN Speakers v2.3.0');
     // A host whose catalog lacks the skill writes the chapter without speaker tags.
     const minimal = freezeHarnessSkillLoadout(story, createHarnessSkillCatalog([SEN_NOVEL_AUTHOR_SKILL]), 'now');
     expect(minimal.skills.map(skill => skill.slot)).toEqual(['author']);

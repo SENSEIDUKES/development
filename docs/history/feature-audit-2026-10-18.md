@@ -56,7 +56,7 @@ coming on the new path, not lost. Never reconnect the old systems to fill them.
 
 - **Holdings fixer:** quiet repair of small record problems, calling a model only when a check flags one (`shared/holdingsFixer.ts`).
 - **First appearance and Looks:** looks kept consistent across chapters; Codex **Manifest** pictures from the recorded look, stored on the device, no Energy charged yet (`shared/appearances.ts`, `lookDescriber.ts`, `server/story-cover/codexPicture.ts`).
-- **Create mode (Highlight Engine):** edit the newest chapter's words, Sound Cues and soundscape/atmosphere, then seal it (`components/highlight-engine/`, `ChapterAuthoring.tsx`). *Where we are still lists it under "Not connected yet"; the code wires it into the app.*
+- **Create mode (Highlight Engine):** edit the newest chapter's words, Sound Cues and soundscape/atmosphere, then seal it (`components/highlight-engine/`, `ChapterAuthoring.tsx`).
 - **Rewrite this chapter**, with an optional note (`shared/chapterRewrite.ts`).
 - **Export story:** one file with every chapter, its exact writer inputs and raw reply.
 - **Accessibility Reading Modes:** Clear Reading, Easy Read and Literal Reading shape how each chapter is written (`narrative/readingMode.ts`).
@@ -115,8 +115,8 @@ coming on the new path, not lost. Never reconnect the old systems to fill them.
 
 ## Small inconsistencies found
 
-- `NOVEL_EXPANDED.md` lists Create mode under "Not connected yet", but the app's
-  Reader wires it in.
+- `NOVEL_EXPANDED.md` listed Create mode under "Not connected yet", though the
+  app's Reader wires it in. Moved to Built with this audit.
 - `src/package/sen/index.ts` says `SEN_PACKAGE_VERSION = '0.27.1'`; `src/package/sen/package.json`
   is 0.39.0.
 - `AGENTS.md` and `src/package/sen/index.ts` name "scoring" as a SEN system, but no

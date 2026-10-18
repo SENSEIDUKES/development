@@ -197,6 +197,7 @@ export {
   chapterLooks,
   lookPassage,
   planLookSubjects,
+  CODEX_LOOK_PASSAGE_CHARACTERS,
   planCodexLook,
   readDescribedLooks,
 } from '../../components/harness-generation/shared/lookDescriber';

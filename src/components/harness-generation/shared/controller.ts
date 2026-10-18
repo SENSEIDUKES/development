@@ -245,8 +245,13 @@ export class HarnessGenerationController {
     if (!this.hydrated) throw new Error('Harness Generation is still opening its local story storage.');
   }
 
+  /** The save under way, if any: an on-demand write waits for it before it reads the state it saves. */
+  private saving: Promise<unknown> = Promise.resolve();
+
   private async persist(candidate: HarnessWorkspaceState) {
-    await this.repository.save(candidate);
+    const save = this.repository.save(candidate);
+    this.saving = save.catch(() => undefined);
+    await save;
     this.state = candidate;
     this.notify();
   }
@@ -1653,7 +1658,12 @@ export class HarnessGenerationController {
     }
     const look = problem ? undefined : readDescribedLooks(raw, [request])[0];
     if (!look) problem ??= 'The answer held no look that could be read. Please try again.';
-    // Kept on the entry, against the state as it is now: a chapter written meanwhile is kept.
+    // Kept on the entry, against the state as it is once every save under way has landed:
+    // a chapter written meanwhile is kept, never overwritten by an older copy.
+    for (let pending = this.saving; ; pending = this.saving) {
+      await pending;
+      if (pending === this.saving) break;
+    }
     if (entry) {
       const candidate = cloneHarnessValue(this.state);
       const saved = candidate.codexEntries.find(candidateEntry => candidateEntry.id === entry.id);

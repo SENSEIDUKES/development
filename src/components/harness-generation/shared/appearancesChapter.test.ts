@@ -50,12 +50,24 @@ const lookReply = (request: HarnessLookRequest) => JSON.stringify({
 let ids = 0;
 const runtime = { now: () => '2026-10-14T12:00:00.000Z', createId: (prefix: string) => `${prefix}-${++ids}` };
 
-const setup = async ({ describeLooks }: { describeLooks?: HarnessGenerationModelAdapter['describeLooks'] | null } = {}) => {
+/** A repository whose saves wait while it is held, as a slow disk would. */
+class HeldRepository extends InMemoryHarnessGenerationRepository {
+  gate?: Promise<void>;
+  override async save(state: Parameters<InMemoryHarnessGenerationRepository['save']>[0]) {
+    if (this.gate) await this.gate;
+    return super.save(state);
+  }
+}
+
+const setup = async ({ describeLooks, repository = new InMemoryHarnessGenerationRepository() }: {
+  describeLooks?: HarnessGenerationModelAdapter['describeLooks'] | null;
+  repository?: InMemoryHarnessGenerationRepository;
+} = {}) => {
   const generate = vi.fn<HarnessGenerationModelAdapter['generate']>();
   for (const value of [chapterOne, chapterTwo]) generate.mockResolvedValueOnce(response(writtenChapterReply(value)));
   const looks = vi.fn(describeLooks ?? (async (request: HarnessLookRequest) => response(lookReply(request))));
   const controller = new HarnessGenerationController({
-    repository: new InMemoryHarnessGenerationRepository(), runtime,
+    repository, runtime,
     modelAdapter: {
       getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
       generate,
@@ -149,6 +161,25 @@ describe('HARNESS appearances through appears and look tags', () => {
     expect(appeared.subjects[0].lookStale).toBeUndefined();
     // The export carries every kept look.
     expect(JSON.stringify(exportHarnessStory(state, storyId))).toContain('How Ye Chen looks in Chapter 2.');
+  });
+
+  it('saves a look after any save under way, so a chapter committed meanwhile is never lost', async () => {
+    const repository = new HeldRepository();
+    const { controller, storyId } = await setup({ repository });
+    await controller.generateNextChapter(storyId, 'fixture');
+    const yeChen = controller.snapshot().codexEntries.find(entry => entry.name === 'Ye Chen')!;
+    let release!: () => void;
+    repository.gate = new Promise(resolve => { release = resolve; });
+    const ticks = async () => { for (let i = 0; i < 20; i += 1) await new Promise(resolve => setTimeout(resolve, 0)); };
+    const writing = controller.generateNextChapter(storyId, 'fixture');
+    await ticks();
+    const looking = controller.describeCodexLook(storyId, yeChen.id);
+    await ticks();
+    repository.gate = undefined;
+    release();
+    await Promise.all([writing, looking]);
+    expect(controller.snapshot().chapters).toHaveLength(2);
+    expect(repository.snapshot().chapters).toHaveLength(2);
   });
 
   it('keeps a failed look with the model\'s own answer, and rejects with a reason', async () => {

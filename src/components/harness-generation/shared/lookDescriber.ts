@@ -183,14 +183,19 @@ export function planCodexLook({ subject, identities, names }: {
     `Chapter ${subject.first.chapterNumber}, first on the page: ${subject.first.description ?? subject.first.text}`,
     ...subject.changes.map(change => `Chapter ${change.passage.chapterNumber}, look changed (${change.change}): ${change.passage.description ?? change.passage.text}`),
   ];
-  // The first appearance always; then the latest changes that fit, since the look is how it stands after the last.
-  const kept = [lines[0]];
-  let room = CODEX_LOOK_PASSAGE_CHARACTERS - lines[0].length;
-  const recent: string[] = [];
-  for (const line of lines.slice(1).reverse()) {
+  // The first appearance and the newest change always (each cut to fit), since the look is how it stands
+  // after the last; then the older changes that still fit, newest first.
+  const cut = (line: string, limit: number) => (line.length > limit ? `${line.slice(0, Math.max(0, limit - 1)).trimEnd()}…` : line);
+  const newest = lines.length > 1 ? lines.at(-1)! : undefined;
+  const kept = [cut(lines[0], newest ? CODEX_LOOK_PASSAGE_CHARACTERS / 2 : CODEX_LOOK_PASSAGE_CHARACTERS)];
+  // Each line after the first also takes its line break.
+  let room = CODEX_LOOK_PASSAGE_CHARACTERS - kept[0].length - 1;
+  const recent = newest ? [cut(newest, room)] : [];
+  room -= (recent[0]?.length ?? 0) + 1;
+  for (const line of lines.slice(1, -1).reverse()) {
     if (line.length > room) break;
     recent.unshift(line);
-    room -= line.length;
+    room -= line.length + 1;
   }
   const declared = subject.entity === 'character' ? declaredNotes(identities, names ?? [subject.name]) : undefined;
   return {

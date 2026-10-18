@@ -4,6 +4,8 @@ import {
   chapterLooks,
   lookPassage,
   readDescribedLooks,
+  planCodexLook,
+  CODEX_LOOK_PASSAGE_CHARACTERS,
   type AppearanceAttachment,
   type HarnessLookSubject,
 } from '@seihouse/sen/harness-generation';
@@ -69,5 +71,24 @@ describe('Reading the look step\'s answer', () => {
       .toEqual({ status: 'described', at: 'now', model: 'm', looks: [{ appearanceId: 'a1', summary: 'A smith.', traits: {} }] });
     expect(chapterLooks({ subjects, error: 'Busy.', at: 'now' })).toEqual({ status: 'failed', at: 'now', looks: [], problem: 'Busy.' });
     expect(chapterLooks({ subjects, raw: '{}', at: 'now' })).toEqual({ status: 'failed', at: 'now', looks: [], problem: 'The answer held no look that could be read.' });
+  });
+});
+
+describe('An on-demand look\'s passages', () => {
+  const passage = (chapterNumber: number, description: string) => ({ chapterId: `ch${chapterNumber}`, chapterNumber, blockId: `c${chapterNumber}`, text: 'x', recordId: `r${chapterNumber}`, startOffset: 0, description });
+  it('always reads the first appearance and the newest change, cut to fit, before any older change', () => {
+    const planned = planCodexLook({ subject: {
+      key: 'wu', name: 'Old Wu', entity: 'thing', first: passage(1, 'A stooped smith.'),
+      changes: [
+        { change: 'scarred', passage: passage(2, 'Older change. '.repeat(100)) },
+        { change: 'burnt', passage: passage(3, 'Newest change. '.repeat(300)) },
+      ],
+    } });
+    const lines = planned.passage.split('\n');
+    expect(lines[0]).toBe('Chapter 1, first on the page: A stooped smith.');
+    expect(lines).toHaveLength(2);
+    expect(lines[1].startsWith('Chapter 3, look changed (burnt): Newest change.')).toBe(true);
+    expect(lines[1].endsWith('…')).toBe(true);
+    expect(planned.passage.length).toBeLessThanOrEqual(CODEX_LOOK_PASSAGE_CHARACTERS);
   });
 });

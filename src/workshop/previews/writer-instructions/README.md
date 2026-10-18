@@ -5,7 +5,7 @@ chapter writer reads before the story, and every dated change to them.
 Open it at `?preview=writer-instructions` (Systems section).
 
 - **Created:** 2026-10-04
-- **Last Workshop update:** 2026-10-14
+- **Last Workshop update:** 2026-10-17
 - **Last source comparison:** not applicable; the page reads the live code
 - **Status:** active, Workshop-owned reference surface
 
@@ -20,7 +20,8 @@ Open it at `?preview=writer-instructions` (Systems section).
 - **Only in some stories:** Fate Survival, the three Reading Mode skills, and
   the official output requirements (shown at their fullest).
 - **After a chapter:** the separate small calls on a saved chapter, never the
-  chapter writer: the Holdings fixer and the look step.
+  chapter writer: the Holdings fixer, and the look writer (on demand, never
+  after a chapter, though it is listed here).
 - **History:** every change, newest first, in plain words.
 
 Not shown: the story itself (Story Information and the chapter request,
@@ -51,6 +52,8 @@ and the fingerprint to record. To change the writer's instructions:
 
 ## Workshop history
 
+- **2026-10-17:** The look step becomes the look writer: it runs on demand, for
+  one Codex entry, never after a chapter. It stays listed under After a chapter.
 - **2026-10-14:** SEN Appearance joins the blocks read on every chapter (open
   on arrival, like the other tag blocks), and the look step joins After a
   chapter, beside the Holdings fixer.

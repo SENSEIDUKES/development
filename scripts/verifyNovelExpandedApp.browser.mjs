@@ -280,7 +280,7 @@ async function walk(browser, viewport, sample) {
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rawProviderResponse: JSON.stringify({ fixes }), providerReceipt: receipt }) });
       return;
     }
-    // The look step's one small call after a chapter: it writes each tagged look down from its passage.
+    // The look writer's one small call, only when something needs one entry's full look: it writes it down from that entry's passages.
     if (body.operation === 'describe-looks') {
       counts.looks.push({ subjects: body.subjects, token: request.headers().authorization === `Bearer ${TOKEN}` });
       const looks = body.subjects.map(subject => ({ id: subject.id, summary: `${subject.name}, as the drowned city first saw them.`, traits: subject.entity === 'thing' ? { material: 'old bronze' } : { hair: 'salt-white' } }));
@@ -756,16 +756,19 @@ async function walk(browser, viewport, sample) {
   check(JSON.stringify(await slot.getByTestId('codex-history').locator('button').allTextContents()) === '["Ch. 1 · took up","Ch. 1 · gained"]',
     'Each change should link to its chapter, the newest first.');
   check(!(await page.textContent('body')).includes('[['), 'No tag may reach the Codex.');
-  // Their look, as the look step wrote it down after the chapter was saved, with the reader's token and never a question.
-  const look = await codexSheet.getByTestId('codex-look').innerText();
-  check(look.includes(', as the drowned city first saw them.') && /hair/i.test(look) && look.includes('salt-white'), `The sheet should show the look written down, got ${look}.`);
-  check(counts.looks.length === 1 && counts.looks[0].token && counts.looks[0].subjects.length === 3,
-    `The look step should make one quiet call with the token for three appearances, got ${JSON.stringify(counts.looks)}.`);
+  // No call after a chapter: until something needs a full look, the sheet shows the story's own words for it.
+  check(counts.looks.length === 0, `No look may be written after a chapter, saw ${JSON.stringify(counts.looks)}.`);
+  const words = await codexSheet.getByTestId('codex-look-description').innerText();
+  check(words.includes('Mara') && words.includes('In the story’s words.'), `The sheet should show the story's own words for the look, got ${words}.`);
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), 'The character sheet must not scroll sideways.');
   await shot('6d-codex-profile');
-  // Manifest makes the card's picture from that look, on the cover route with the token, and the card wears it.
+  // Manifest first writes that one look (one quiet call with the token), then makes the card's picture from it, and the card wears it.
   await codexSheet.getByTestId('codex-manifest').getByRole('button', { name: 'Manifest' }).click();
   await codexSheet.locator('header img').waitFor();
+  check(counts.looks.length === 1 && counts.looks[0].token && counts.looks[0].subjects.length === 1,
+    `Manifest should write one look, in one quiet call with the token, got ${JSON.stringify(counts.looks)}.`);
+  const look = await codexSheet.getByTestId('codex-look').innerText();
+  check(look.includes(', as the drowned city first saw them.') && /hair/i.test(look) && look.includes('salt-white'), `The sheet should show the look written down, got ${look}.`);
   const picture = counts.pictures.at(-1);
   check(picture?.token && picture.body.card.subject === 'character' && picture.body.card.look.summary.includes(', as the drowned city first saw them.'),
     `Manifest should ask for one picture from the card's look, with the token, got ${JSON.stringify(picture)}.`);

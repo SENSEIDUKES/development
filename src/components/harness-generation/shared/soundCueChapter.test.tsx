@@ -86,7 +86,7 @@ describe('HARNESS Sound Cues through sound tags', () => {
     // A story from before it kept its own list: its recordings' words, each the word alone.
     expect(request.capaPrompt.soundVocabulary).toEqual(LIBRARY_SOUND_WORDS.map(({ word }) => ({ word })));
     expect(request.capaPrompt.text).toContain('[[sound: Sound Word | the words | Energy]]');
-    expect(request.capaPrompt.text).toContain(`Example: [[sound: ${LIBRARY_SOUND_WORDS[0].word} | the words where it happens | high]]`);
+    expect(request.capaPrompt.text).toContain(`Example: Far off, [[sound: ${LIBRARY_SOUND_WORDS[0].word} | the words of your own sentence | high]] and the yard fell still.`);
     expect(request.capaPrompt.text).toMatch(/SOUND WORDS: .*\bunsheathe\b/);
     // The list names sounds; it hands the writer no phrases to copy into the chapter.
     expect(request.capaPrompt.text).not.toContain('drew his sword');

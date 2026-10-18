@@ -293,7 +293,8 @@ describe('Who is on the page', () => {
     // The characters seen most recently first, as many as the section holds; then the things.
     expect(section.entries.slice(1, 3).map(found => found.name)).toEqual([`Disciple ${many.length - 1}`, `Disciple ${many.length - 2}`]);
     expect(section.entries.filter(found => found.entity === 'character' && !found.mainCharacter)).toHaveLength(APPEARED_SECTION_CHARACTERS);
-    expect(section.entries.at(-1)).toEqual({ name: 'Rusted Iron Sword', entity: 'thing' });
+    // Without a written look, the writer's own description stands in.
+    expect(section.entries.at(-1)).toEqual({ name: 'Rusted Iron Sword', entity: 'thing', look: 'A sentence.' });
     expect(appearancesSection(deriveAppearances({ entries, chapters: [] }))).toEqual({ entries: [] });
   });
 });

@@ -48,7 +48,7 @@ first pieces exist) or **goal** (designed for, not built).
 | 1 | Long-form continuity | Can a story stay coherent across hundreds or 1,000+ chapters without putting the whole past into every request? | **Started.** The writer never sees earlier chapters, only the Story Information Packet: recaps, the arc's plan and the current record. The Packet still grows about 180 tokens a chapter, and there is no recall of older passages yet. 1,000+ chapters is the goal, not proven. |
 | 2 | Economic efficiency | Can that run on Flash-tier, sub-penny models instead of frontier reasoning every chapter? | **Proven at small scale.** About 9,000 tokens in and 3,500 out per chapter on Flash-tier models. |
 | 3 | Creator customizability | Can a creator swap style, pacing, accessibility, translation, media rules and sound vocabularies without rebuilding the engine? | **Built.** CAPA skill slots, managed slots and Story Settings. |
-| 4 | Deterministic stability | Do items, abilities, speakers, sounds and state transitions stay reliable when the model is imperfect? | **Built.** The tag reader and its plain rules, the Holdings fixer, the look step, the failed-write guard. Real-model accuracy of the strict tag shape is still being measured. |
+| 4 | Deterministic stability | Do items, abilities, speakers, sounds and state transitions stay reliable when the model is imperfect? | **Built.** The tag reader and its plain rules, the Holdings fixer, looks written on demand, the failed-write guard. Real-model accuracy of the strict tag shape is still being measured. |
 | 5 | Provider independence | Can the model be replaced because the system around it carries the intelligence? | **Built.** The Model Router, two providers, and the replay writer, which runs the HARNESS with no model at all. |
 | 6 | Translation across media | Can the same chapter carry the meaning that drives sound, narration, the Codex, sequential art, animation and games? | **Started.** Sound Cues, the soundtrack and speakers already drive the Reader and Listen. The rest needs the world record below. |
 | 7 | Human/AI interoperability | Can the same records come from the writer model, an imported manuscript, the Highlight Engine, a local model or the author's own hand? | **Started.** The rule exists (everything writes the same manuscript attachments) and manual placement works for Sound Cues. Manuscript import and local models are not built. |
@@ -70,9 +70,9 @@ first pieces exist) or **goal** (designed for, not built).
    the sentence they came from, so an edit carries them, and a reader, author
    or tool can always find where a fact was established.
 6. **Small separate steps over a bigger writer.** When something needs judgment
-   after a chapter is saved (the Holdings fixer, and the look step that writes
-   down each look), it is a small, separate, registered call that runs only
-   when needed, never more work for the chapter writer.
+   (the Holdings fixer after a chapter is saved, and the look writer when
+   something needs a full look), it is a small, separate, registered call that
+   runs only when needed, never more work for the chapter writer.
 7. **Keep receipts.** Every model call keeps what it was given and what it
    returned.
 
@@ -92,7 +92,7 @@ the prose:
 | Fact | What it answers | Today |
 |---|---|---|
 | **Entities** | Who and what exists: characters, things, abilities, places, factions, each with one permanent ID | Characters, things and abilities **have** (Codex entries). Places and factions missing |
-| **Appearance** | What each entity looks like, and when that changes (a scar, new robes, a breakthrough) | Characters and things **have** (appears and look tags; the look step writes each look down). Places wait for the Place tag |
+| **Appearance** | What each entity looks like, and when that changes (a scar, new robes, a breakthrough) | Characters and things **have** (appears and look tags keep the writer's own description; a full look is written on demand). Places wait for the Place tag |
 | **State over time** | What everything is like at any chapter: holdings and rank; status (alive, wounded, transformed); where each character is | Holdings and rank **have**. Status and location missing |
 | **Ties** | Who is allied, hostile, related or bound to whom | **Missing** |
 | **Scenes** | Where a scene starts, where it is, when (time of day, conditions), and who is present | **Missing**. Each chapter has one musical scene today, not story scenes |
@@ -115,9 +115,10 @@ story.
 The same way as Holdings: the writer tags only the moment something changes
 ("enters", "arrives at", "is wounded", "now wears"); the engine resolves names
 to entries and works out current state; every fact points at its passage. Full
-descriptions (a character's whole look) are gathered by a small separate step
-after the chapter is saved (the look step, since 2026-10-14), so the chapter
-writer's job stays small and cheap models keep working.
+descriptions (a character's whole look) are written by a small separate call
+only when something needs them (on demand, since 2026-10-17), from the
+passages the tags mark, so the chapter writer's job stays small, cheap models
+keep working, and no call is spent on a look nothing uses.
 
 ### Two tests for "enough"
 
@@ -139,6 +140,10 @@ the record, which must stay exact.
 
 ## History
 
+- **2026-10-17:** Looks on demand: no call after a chapter. The writer's own
+  description is kept by code; a full look, the core record a picture, manga
+  or game draws from, is written for one entry when something needs it and
+  kept on its Codex entry until a new tag changes it.
 - **2026-10-14:** Appearance has its first pieces: the appears and look tags,
   and the look step that writes each look down after a chapter is saved,
   medium-neutral, from the passage that shows it.

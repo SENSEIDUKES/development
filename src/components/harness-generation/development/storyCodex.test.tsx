@@ -87,7 +87,8 @@ afterEach(() => { act(() => root.unmount()); container.remove(); });
 
 describe('The Codex in the HARNESS Reader', { timeout: 20_000 }, () => {
   it('shows who the story has met, what they carry and can do, and their first words', async () => {
-    await start();
+    const { controller, storyId } = await start();
+    const entryOf = (name: string) => controller.snapshot().codexEntries.find(entry => entry.name === name)!.id;
     await openCodex();
     const roster = [...codex()!.querySelectorAll<HTMLElement>('[data-testid="codex-character"]')];
     // The main character leads; everyone who stepped onto the page is met.
@@ -106,18 +107,24 @@ describe('The Codex in the HARNESS Reader', { timeout: 20_000 }, () => {
     // A stage reached while still learning is shown, and is a change, not a check.
     expect(sheet.querySelector('[aria-label="Ye Chen: Abilities"]')!.textContent).toContain('Learning · First Stage');
     expect(sheet.querySelector('[data-testid="codex-voice"] blockquote')!.textContent).toBe('"Again,"');
-    // Their look, as the look step wrote it down from the chapter that shows it.
-    const look = sheet.querySelector<HTMLElement>('[data-testid="codex-look"]')!;
+    // Before anything asks for a look, the Codex shows the story's own words for it.
+    expect(sheet.querySelector('[data-testid="codex-look-description"]')!.textContent).toContain('Ye Chen');
+    // A look written on demand, kept on the entry.
+    await act(async () => { await controller.describeCodexLook(storyId, entryOf('Ye Chen')); });
+    await flush();
+    const look = codex()!.querySelector<HTMLElement>('[data-testid="codex-look"]')!;
     expect(look.textContent).toContain('A lean young man with dark hair.');
+    expect(codex()!.querySelector('[data-testid="codex-look-description"]')).toBeNull();
     expect(look.textContent).toContain('Buildlean');
     expect(look.querySelector('button')!.textContent).toBe('Look · Ch. 1');
     // The jade sword was never held, so losing it is a check, not a change.
-    expect(sheet.textContent).not.toContain('Jade Sword');
-    expect(sheet.querySelector('[data-testid="codex-chronicle"] summary')!.textContent).toBe('Chronicle (4)');
+    expect(codex()!.querySelector('[data-testid="codex-profile"]')!.textContent).not.toContain('Jade Sword');
+    expect(codex()!.querySelector('[data-testid="codex-chronicle"] summary')!.textContent).toBe('Chronicle (4)');
 
     await click(button => button.textContent?.trim() === 'All characters', 'All characters');
     expect(codex()!.querySelector('[data-testid="codex-profile"]')).toBeNull();
 
+    await act(async () => { await controller.describeCodexLook(storyId, entryOf('Rusted Iron Sword')); });
     await tab('Items');
     const item = codex()!.querySelector<HTMLElement>('[data-testid="codex-item"]')!;
     expect(item.textContent).toContain('Rusted Iron Sword');

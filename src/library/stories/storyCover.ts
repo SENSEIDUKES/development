@@ -1,4 +1,4 @@
-import { findFoundationRevision, findStory, type CodexPictureCard, type HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
+import { findFoundationRevision, findStory, type CodexPictureMade, type HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
 import type { StorySeedInput, WorldBlueprint } from '@seihouse/sen/story-seed';
 
 /**
@@ -97,12 +97,12 @@ export interface StoryCoverService {
  * picture belongs to the same story as its cover. The server writes the prompt.
  */
 export interface CodexPictureRequest {
-  card: Omit<CodexPictureCard, 'key'>;
+  card: Omit<CodexPictureMade, 'key'>;
   story: Pick<StoryCoverRequest, 'style' | 'genre' | 'tone' | 'world'>;
 }
 
 /** A card's picture request, with the story's words its cover uses. */
-export function codexPictureRequest(state: HarnessWorkspaceState, storyId: string, card: CodexPictureCard): CodexPictureRequest {
+export function codexPictureRequest(state: HarnessWorkspaceState, storyId: string, card: CodexPictureMade): CodexPictureRequest {
   const cover = storyCoverRequest(state, storyId);
   const story: CodexPictureRequest['story'] = {};
   for (const field of ['style', 'genre', 'tone', 'world'] as const) if (cover?.[field]) story[field] = cover[field];

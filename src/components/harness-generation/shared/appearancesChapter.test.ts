@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   HarnessGenerationController,
+  appearancesSection,
   deriveAppearances,
   exportHarnessStory,
   withoutLatestChapter,
@@ -49,12 +50,24 @@ const lookReply = (request: HarnessLookRequest) => JSON.stringify({
 let ids = 0;
 const runtime = { now: () => '2026-10-14T12:00:00.000Z', createId: (prefix: string) => `${prefix}-${++ids}` };
 
-const setup = async ({ describeLooks }: { describeLooks?: HarnessGenerationModelAdapter['describeLooks'] | null } = {}) => {
+/** A repository whose saves wait while it is held, as a slow disk would. */
+class HeldRepository extends InMemoryHarnessGenerationRepository {
+  gate?: Promise<void>;
+  override async save(state: Parameters<InMemoryHarnessGenerationRepository['save']>[0]) {
+    if (this.gate) await this.gate;
+    return super.save(state);
+  }
+}
+
+const setup = async ({ describeLooks, repository = new InMemoryHarnessGenerationRepository() }: {
+  describeLooks?: HarnessGenerationModelAdapter['describeLooks'] | null;
+  repository?: InMemoryHarnessGenerationRepository;
+} = {}) => {
   const generate = vi.fn<HarnessGenerationModelAdapter['generate']>();
   for (const value of [chapterOne, chapterTwo]) generate.mockResolvedValueOnce(response(writtenChapterReply(value)));
   const looks = vi.fn(describeLooks ?? (async (request: HarnessLookRequest) => response(lookReply(request))));
   const controller = new HarnessGenerationController({
-    repository: new InMemoryHarnessGenerationRepository(), runtime,
+    repository, runtime,
     modelAdapter: {
       getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
       generate,
@@ -94,65 +107,98 @@ describe('HARNESS appearances through appears and look tags', () => {
     expect(chapter.holdingChanges![0].payload.target!.entryId).toBe(entryOf('Rusted Iron Sword').id);
   });
 
-  it('writes each look down after the chapter is saved, from its passage, and shows the next writer every look', async () => {
+  it('asks no model after a chapter: it keeps the writer\'s own description by code and shows the next writer it, and every change since', async () => {
     const { controller, storyId, generate, looks } = await setup();
     await controller.generateNextChapter(storyId, 'fixture');
-    expect(looks).toHaveBeenCalledTimes(1);
-    const asked = looks.mock.calls[0][0];
-    expect(asked).toMatchObject({ operation: 'describe-looks', chapterNumber: 1, model: 'fixture', language: 'en' });
-    expect(asked.subjects.map(subject => [subject.name, subject.entity, subject.event])).toEqual([
-      ['Ye Chen', 'character', 'appears'], ['Old Wu', 'character', 'appears'], ['Rusted Iron Sword', 'thing', 'appears'],
-    ]);
-    // The passage runs from the tagged sentence on; a declared character carries the author's notes.
-    expect(asked.subjects[0].passage.startsWith('Ye Chen stepped into the cold armory. Ash streaked his black hair.')).toBe(true);
-    expect(asked.subjects[0].declared).toBe('Age: 18 Appearance: lean, black hair, hazel eyes.');
-    expect(asked.subjects[1].declared).toBeUndefined();
-    const [first] = controller.snapshot().chapters;
-    expect(first.looks).toMatchObject({ status: 'described', model: 'fixture' });
-    expect(first.looks!.looks.map(look => [look.summary, look.traits])).toEqual([
-      ['How Ye Chen looks in Chapter 1.', { build: 'lean' }], ['How Old Wu looks in Chapter 1.', { build: 'lean' }], ['How Rusted Iron Sword looks in Chapter 1.', { material: 'iron' }],
-    ]);
+    // SENSEI, 2026-10-17: no look step after a chapter.
+    expect(looks).not.toHaveBeenCalled();
+    expect(controller.snapshot().chapters[0].looks).toBeUndefined();
 
     await controller.generateNextChapter(storyId, 'fixture');
+    expect(looks).not.toHaveBeenCalled();
     const request = generate.mock.calls[1][0] as HarnessGenerationRequest;
     expect(request.storyInformation.appearances).toEqual({ entries: [
-      { name: 'Ye Chen', entity: 'character', mainCharacter: true, look: 'How Ye Chen looks in Chapter 1.' },
-      { name: 'Old Wu', entity: 'character', look: 'How Old Wu looks in Chapter 1.' },
-      { name: 'Rusted Iron Sword', entity: 'thing', look: 'How Rusted Iron Sword looks in Chapter 1.' },
+      { name: 'Ye Chen', entity: 'character', mainCharacter: true, look: 'Ye Chen stepped into the cold armory. Ash streaked his black hair.' },
+      { name: 'Old Wu', entity: 'character', look: 'A stooped smith waited by the forge, his forearms scarred by sparks. "Take one," the smith said.' },
+      { name: 'Rusted Iron Sword', entity: 'thing', look: 'Ye Chen lifted an old blade, rust along its edge.' },
     ] });
-    expect(buildHarnessGenerationPrompt(request).userPrompt).toContain([
-      'APPEARED (every character and thing already on the page, by exact name, with its look; the main character first)',
-      '- Ye Chen (main character): How Ye Chen looks in Chapter 1.',
-      '- Old Wu (character): How Old Wu looks in Chapter 1.',
-      '- Rusted Iron Sword (thing): How Rusted Iron Sword looks in Chapter 1.',
-    ].join('\n'));
-    // A change of look is described from the look before it.
-    const change = looks.mock.calls[1][0].subjects[0];
-    expect(change).toMatchObject({ name: 'Ye Chen', event: 'look', change: 'a burn across his palm', previous: { summary: 'How Ye Chen looks in Chapter 1.', traits: { build: 'lean' } } });
     const state = controller.snapshot();
     const appeared = deriveAppearances({ entries: state.codexEntries, chapters: state.chapters });
     expect(appeared.flags).toEqual([]);
-    expect(appeared.subjects[0].look!.summary).toBe('How Ye Chen looks in Chapter 2.');
-    // The export carries every appearance and look, so a test shows what was read and written.
-    const exported = JSON.stringify(exportHarnessStory(state, storyId));
-    expect(exported).toContain('"event":"look"');
-    expect(exported).toContain('How Ye Chen looks in Chapter 2.');
+    expect(appearancesSection(appeared).entries[0].look).toBe('Ye Chen stepped into the cold armory. Ash streaked his black hair. · since then: a burn across his palm');
+    expect(appeared.subjects[0].changes[0].passage.description).toBe('The hilt seared a red line across his palm.');
   });
 
-  it('records a look step that failed and keeps the chapter, and never asks without a look step or appearances', async () => {
+  it('writes a look only when something asks for it, from every passage of that one entry, keeps it, and writes it again only after a tag changes it', async () => {
+    const { controller, storyId, generate, looks } = await setup();
+    await controller.generateNextChapter(storyId, 'fixture');
+    const yeChen = controller.snapshot().codexEntries.find(entry => entry.name === 'Ye Chen')!;
+    expect(await controller.describeCodexLook(storyId, yeChen.id)).toEqual({ summary: 'How Ye Chen looks in Chapter 1.', traits: { build: 'lean' } });
+    expect(looks).toHaveBeenCalledTimes(1);
+    const [asked] = looks.mock.calls[0][0].subjects;
+    expect(looks.mock.calls[0][0]).toMatchObject({ operation: 'describe-looks', chapterNumber: 1, model: 'fixture', language: 'en' });
+    expect(asked).toMatchObject({ id: yeChen.id, name: 'Ye Chen', entity: 'character', declared: 'Age: 18 Appearance: lean, black hair, hazel eyes.' });
+    expect(asked.passage).toBe('Chapter 1, first on the page: Ye Chen stepped into the cold armory. Ash streaked his black hair.');
+    // Kept on the entry: asked again, it answers with no call.
+    expect(controller.snapshot().codexEntries.find(entry => entry.id === yeChen.id)!.look).toMatchObject({ summary: 'How Ye Chen looks in Chapter 1.', model: 'fixture' });
+    await controller.describeCodexLook(storyId, yeChen.id);
+    expect(looks).toHaveBeenCalledTimes(1);
+
+    // A look tag in the next chapter: the next writer reads the kept look and the change since; the look is stale.
+    await controller.generateNextChapter(storyId, 'fixture');
+    const stale = deriveAppearances({ entries: controller.snapshot().codexEntries, chapters: controller.snapshot().chapters });
+    expect(stale.subjects[0].lookStale).toBe(true);
+    expect(appearancesSection(stale).entries[0].look).toBe('How Ye Chen looks in Chapter 1. · since then: a burn across his palm');
+    expect(await controller.describeCodexLook(storyId, yeChen.id)).toEqual({ summary: 'How Ye Chen looks in Chapter 2.', traits: { build: 'lean' } });
+    expect(looks).toHaveBeenCalledTimes(2);
+    expect(looks.mock.calls[1][0].subjects[0].passage).toBe([
+      'Chapter 1, first on the page: Ye Chen stepped into the cold armory. Ash streaked his black hair.',
+      'Chapter 2, look changed (a burn across his palm): The hilt seared a red line across his palm.',
+    ].join('\n'));
+    const state = controller.snapshot();
+    const appeared = deriveAppearances({ entries: state.codexEntries, chapters: state.chapters });
+    expect(appeared.subjects[0]).toMatchObject({ look: { summary: 'How Ye Chen looks in Chapter 2.' } });
+    expect(appeared.subjects[0].lookStale).toBeUndefined();
+    // The export carries every kept look.
+    expect(JSON.stringify(exportHarnessStory(state, storyId))).toContain('How Ye Chen looks in Chapter 2.');
+  });
+
+  it('saves a look after any save under way, so a chapter committed meanwhile is never lost', async () => {
+    const repository = new HeldRepository();
+    const { controller, storyId } = await setup({ repository });
+    await controller.generateNextChapter(storyId, 'fixture');
+    const yeChen = controller.snapshot().codexEntries.find(entry => entry.name === 'Ye Chen')!;
+    let release!: () => void;
+    repository.gate = new Promise(resolve => { release = resolve; });
+    const ticks = async () => { for (let i = 0; i < 20; i += 1) await new Promise(resolve => setTimeout(resolve, 0)); };
+    const writing = controller.generateNextChapter(storyId, 'fixture');
+    await ticks();
+    const looking = controller.describeCodexLook(storyId, yeChen.id);
+    await ticks();
+    repository.gate = undefined;
+    release();
+    await Promise.all([writing, looking]);
+    expect(controller.snapshot().chapters).toHaveLength(2);
+    expect(repository.snapshot().chapters).toHaveLength(2);
+  });
+
+  it('keeps a failed look with the model\'s own answer, and rejects with a reason', async () => {
     const failing = await setup({ describeLooks: async () => { throw new Error('The model was busy.'); } });
     await failing.controller.generateNextChapter(failing.storyId, 'fixture');
-    const [chapter] = failing.controller.snapshot().chapters;
-    expect(chapter.looks).toEqual({ status: 'failed', at: runtime.now(), model: 'fixture', looks: [], problem: 'The model was busy.' });
-    expect(chapter.appearances).toHaveLength(3);
+    const wu = failing.controller.snapshot().codexEntries.find(entry => entry.name === 'Old Wu')!;
+    await expect(failing.controller.describeCodexLook(failing.storyId, wu.id)).rejects.toThrow('The model was busy.');
+    expect(failing.controller.snapshot().codexEntries.find(entry => entry.id === wu.id)!.lookFailure).toEqual({ at: runtime.now(), model: 'fixture', problem: 'The model was busy.' });
 
     const unreadable = await setup({ describeLooks: async () => response('not json') });
     await unreadable.controller.generateNextChapter(unreadable.storyId, 'fixture');
-    expect(unreadable.controller.snapshot().chapters[0].looks).toMatchObject({ status: 'failed', problem: 'The answer held no look that could be read.' });
+    const sword = unreadable.controller.snapshot().codexEntries.find(entry => entry.name === 'Rusted Iron Sword')!;
+    await expect(unreadable.controller.describeCodexLook(unreadable.storyId, sword.id)).rejects.toThrow('The answer held no look that could be read.');
+    expect(unreadable.controller.snapshot().codexEntries.find(entry => entry.id === sword.id)!.lookFailure).toMatchObject({ raw: 'not json' });
 
     const without = await setup({ describeLooks: null });
     await without.controller.generateNextChapter(without.storyId, 'fixture');
-    expect(without.controller.snapshot().chapters[0].looks).toBeUndefined();
+    const entry = without.controller.snapshot().codexEntries[0];
+    await expect(without.controller.describeCodexLook(without.storyId, entry.id)).rejects.toThrow('This host cannot write a look yet.');
   });
 
   it('takes back the entries a rewritten chapter\'s appearances made, and keeps a chapter written with the skill marked so in Create mode', async () => {

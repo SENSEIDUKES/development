@@ -1,3 +1,4 @@
+import type { CodexEntryLook, CodexEntryLookFailure } from './looks';
 import type { ManuscriptAnchor, ManuscriptAttachment } from '../components/highlight-engine/shared/manuscript';
 import type { HoldingTagWord } from './marks';
 
@@ -40,6 +41,15 @@ export interface CodexEntry {
   /** Where it came from: a character the Foundation declares, or the first tag that named it. */
   origin: { source: 'foundation' } | { source: 'tag'; chapterId: string; chapterNumber: number };
   createdAt: string;
+  /**
+   * Its core look, written on demand from every passage that shows it (SENSEI,
+   * 2026-10-17): the record a picture, a manga or a game is made from. Kept
+   * until a new appearance or look tag changes the passages it was written
+   * from (`from`), then written again when something next asks for it.
+   */
+  look?: CodexEntryLook;
+  /** Why the last try to write its look failed, with the model's own answer, so a failure can be read. */
+  lookFailure?: CodexEntryLookFailure;
 }
 
 /** The attachment kind of a holding change. */

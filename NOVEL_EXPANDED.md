@@ -678,6 +678,9 @@ Update it whenever it changes.
   - **Export story,** on World Info, saves a story as one file: every chapter
     with the exact instructions, Story Information and request the writer was
     given, and its raw reply. It is how a test is shared.
+  - **Create mode:** the Highlight Engine's tools are in the Reader as Create
+    mode: wording, Sound Cues, and the chapter's soundscape and atmosphere
+    (each its opening, and one change partway through) on the newest chapter.
   - **Rewrite this chapter:** at the end of the newest chapter, until the next
     one is written, a quiet link lets the reader have it written again, with an
     optional note on what to change. The new version is written from the story
@@ -767,9 +770,6 @@ Update it whenever it changes.
 - **Not connected yet:**
   - Covers live on the device, not in R2: the database (and an account) will
     keep them. No real model has made a cover yet; the first owner test will.
-  - The Highlight Engine's tools are in the Reader as Create mode: wording,
-    Sound Cues, and the chapter's soundscape and atmosphere (each its opening,
-    and one change partway through) on the newest chapter.
   - The app's Profile runs on the device and a practice economy: there are no
     accounts, database or server-side storage yet, so nothing the economy holds
     survives a reload, and the account and server pieces wait.

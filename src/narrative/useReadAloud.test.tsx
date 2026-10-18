@@ -4,7 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildReadAloudScript, type ReadAloudVoicePicks } from './readAloud';
 import { SPEAKER_KIND, type SpeakerAttachment } from './speech';
-import { createWebSpeechEngine, useReadAloud, type ReadAloud, type SpeechEngine } from './useReadAloud';
+import { createWebSpeechEngine, useReadAloud, webSpeechPitch, type ReadAloud, type SpeechEngine } from './useReadAloud';
 import { createFakeSpeechSynthesis, fakeVoice, type FakeSpeechSynthesis } from '../test-utils/fakeSpeechSynthesis';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -55,6 +55,20 @@ const mount = (props: HarnessProps = { chapter: 1 }) => {
 };
 const texts = () => fake.spoken.map(utterance => utterance.text);
 const lastSpoken = () => fake.spoken.at(-1)!;
+
+describe('the browser\'s voices for each character', () => {
+  it('reads a character\'s line in their role\'s voice, its pitch shaped by their cast voice', () => {
+    const young = webSpeechPitch('young-disciple-male');
+    const elder = webSpeechPitch('old-grandmaster-male');
+    expect(young).toBeGreaterThan(1);
+    expect(elder).toBeLessThan(1);
+    expect(webSpeechPitch(undefined)).toBe(1);
+    expect(webSpeechPitch('not-a-voice')).toBe(1);
+    engine.speak({ text: 'Again.', role: 'side', character: 'old-grandmaster-male', lang: 'en-US', rate: 1, pitch: 1, volume: 1 },
+      { onStart: () => undefined, onEnd: () => undefined, onError: () => undefined });
+    expect(lastSpoken().pitch).toBeCloseTo(elder);
+  });
+});
 
 describe('host playback interruption', () => {
   it('resumes its line once, but does not start a reader who was already paused', () => {

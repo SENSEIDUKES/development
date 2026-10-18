@@ -50,6 +50,20 @@ export interface CodexEntry {
   look?: CodexEntryLook;
   /** Why the last try to write its look failed, with the model's own answer, so a failure can be read. */
   lookFailure?: CodexEntryLookFailure;
+  /**
+   * The voice it speaks in (SENSEI, 2026-10-18): a key of the SEIHouse voice
+   * cast (`src/audio/voiceCast.ts`), never a provider's id, so any speech
+   * engine can voice it. Given by code when a character first speaks; the
+   * reader can change it on its Codex card.
+   */
+  voice?: CodexEntryVoice;
+}
+
+/** A character's voice: a SEIHouse cast key, and who chose it. */
+export interface CodexEntryVoice {
+  key: string;
+  chosen: 'auto' | 'reader';
+  at: string;
 }
 
 /** The attachment kind of a holding change. */

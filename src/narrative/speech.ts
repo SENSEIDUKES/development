@@ -163,6 +163,8 @@ export interface SpeakerPayload {
   speaker: string;
   /** Whether the speaker is the story's main character. */
   protagonist: boolean;
+  /** The speaker's Codex entry, resolved when the chapter commits; a group (a faction) has none. */
+  entryId?: string;
 }
 
 export interface SpeakerAttachment extends ManuscriptAttachment<SpeakerPayload> {

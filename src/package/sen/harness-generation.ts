@@ -201,6 +201,7 @@ export {
   planCodexLook,
   readDescribedLooks,
 } from '../../components/harness-generation/shared/lookDescriber';
+export { firstVoices, readAloudVoicesOf, resolveSpeakers, speakerGender } from '../../components/harness-generation/shared/voices';
 export * from '../../narrative/holdings';
 export * from '../../narrative/appearances';
 export { createHarnessSenStory } from '../../components/harness-generation/shared/senAdapter';

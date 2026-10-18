@@ -5,3 +5,4 @@ export * from '../../narrative/readAloud';
 export * from '../../narrative/useReadAloud';
 export * from '../../narrative/soundtrack';
 export * from '../../narrative/readerText';
+export * from '../../audio/voiceCast';

@@ -1,3 +1,4 @@
+import { castVoice } from '../../../audio/voiceCast';
 import type { CodexEntry } from '../../../narrative/holdings';
 import type { Look } from '../../../narrative/appearances';
 import type { HarnessChapter } from '../../../narrative/generation';
@@ -46,6 +47,8 @@ export interface CodexVoice {
   chapters: number[];
   /** Their first spoken words in the story. */
   first: CodexPassage;
+  /** The voice they speak in, a SEIHouse voice cast key from their Codex card; absent, their role's voice reads them. */
+  cast?: string;
 }
 
 /** A look as the record wrote it down, with the passage it was read from. */
@@ -246,6 +249,12 @@ export function deriveStoryCodex({ entries, chapters, mainCharacterName, declare
       if (character.voice.chapters.at(-1) !== chapter.chapterNumber) character.voice.chapters.push(chapter.chapterNumber);
       if (!character.firstSeen || comesBefore(passage, character.firstSeen) < 0) character.firstSeen = passage;
     }
+  }
+
+  // Each speaking character's own voice, from their card.
+  for (const character of characters.values()) {
+    const voice = character.voice && entries.find(entry => entry.id === character.key)?.voice;
+    if (voice && castVoice(voice.key)) character.voice!.cast = voice.key;
   }
 
   const factionList = [...factions.values()]

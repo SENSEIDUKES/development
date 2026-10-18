@@ -19,12 +19,22 @@ import {
   type ReadAloudVoiceChoice,
   type ReadAloudVoicePicks,
 } from './readAloud';
+import { castVoice } from '../audio/voiceCast';
 
 // ─── The speech a player drives ─────────────────────────────────────────────
 
 export interface SpeechRequest {
   text: string;
-  /** The voice to read with; without one, the device picks a voice for `lang`. */
+  /** Who reads it: the narrator, or a character's role, the fallback when no character voice answers. */
+  role: ReadAloudRole;
+  /**
+   * The speaking character's own voice: a SEIHouse voice cast key from their
+   * Codex card (`src/audio/voiceCast.ts`). Each engine voices it its own way:
+   * the browser's by shaping its role's voice, a text-to-speech provider by
+   * the voice it holds for that key.
+   */
+  character?: string;
+  /** The browser voice the reader chose for `role`; without one, the device picks a voice for `lang`. */
   voice?: ReadAloudVoice;
   lang: string;
   rate: number;
@@ -40,7 +50,12 @@ export interface SpeechEvents {
   onProgress?(): void;
 }
 
-/** Speech a Read Aloud player drives: the browser's by default, a stand-in in tests. */
+/**
+ * Speech a Read Aloud player drives (SENSEI, 2026-10-18: any engine, any
+ * provider): the browser's own voices by default; a full text-to-speech
+ * engine from any provider is a premium option a host passes in, voicing each
+ * line's `character` by its SEIHouse cast key. A stand-in in tests.
+ */
 export interface SpeechEngine {
   readonly supported: boolean;
   getVoices(): ReadAloudVoice[];
@@ -50,6 +65,23 @@ export interface SpeechEngine {
   cancel(): void;
   isSpeaking(): boolean;
 }
+
+/**
+ * How the browser's voices tell characters apart (they have only the voices a
+ * device holds): a character's line is read in its role's voice, its pitch
+ * shaped by their cast voice, higher for the young and lower for elders, with
+ * a small step of its own so two characters of one age differ.
+ */
+export function webSpeechPitch(character: string | undefined): number {
+  const member = castVoice(character);
+  if (!member) return 1;
+  const byAge = { young: 1.15, adult: 1, elder: 0.86, ageless: 0.9, unknown: 1 }[member.age];
+  let step = 0;
+  for (const letter of member.key) step = (step * 31 + letter.charCodeAt(0)) % 7;
+  return byAge + (step - 3) * 0.025;
+}
+
+const clampPitch = (pitch: number) => Math.min(2, Math.max(0, pitch));
 
 type SpeechScope = { speechSynthesis?: SpeechSynthesis; SpeechSynthesisUtterance?: typeof SpeechSynthesisUtterance };
 
@@ -91,7 +123,7 @@ export function createWebSpeechEngine(scope: SpeechScope = globalThis as SpeechS
       // Some Android voices honour only the language, so it always travels.
       utterance.lang = native?.lang ?? request.voice?.lang ?? request.lang;
       utterance.rate = request.rate;
-      utterance.pitch = request.pitch;
+      utterance.pitch = clampPitch(request.pitch * webSpeechPitch(request.character));
       utterance.volume = request.volume;
       utterance.onstart = () => events.onStart();
       utterance.onend = () => events.onEnd();
@@ -168,7 +200,11 @@ export interface ReadAloud {
   resetVoices(): void;
   setRate(rate: number): void;
   /** Speaks a sample line in a role's voice, pausing the chapter first. */
-  preview(role: ReadAloudRole): void;
+  /**
+   * Speaks a sample in a role's voice, or, given a character, in that
+   * character's own voice (their cast key) with their own words when given.
+   */
+  preview(role: ReadAloudRole, character?: { voice: string; text?: string }): void;
 }
 
 /** The prototype's narration volume. */
@@ -302,7 +338,10 @@ export function useReadAloud({
       if (token !== state.token) return;
       const { choice: voices, rate, language: storyLanguage } = latest.current;
       const voice = state.retried ? undefined : voices[line.role];
-      engine.speak({ text: line.text, voice, lang: voice?.lang ?? speechLanguageTag(storyLanguage), rate, pitch: 1, volume: READ_ALOUD_VOLUME }, {
+      engine.speak({
+        text: line.text, role: line.role, ...(line.voice ? { character: line.voice } : {}),
+        voice, lang: voice?.lang ?? speechLanguageTag(storyLanguage), rate, pitch: 1, volume: READ_ALOUD_VOLUME,
+      }, {
         onStart: () => {
           if (token !== state.token) return;
           state.started = true;
@@ -451,7 +490,7 @@ export function useReadAloud({
     setPrefs(current => ({ ...current, rate: Math.min(2, Math.max(0.5, rate)) }));
   }, []);
 
-  const preview = useCallback((role: ReadAloudRole) => {
+  const preview = useCallback((role: ReadAloudRole, character?: { voice: string; text?: string }) => {
     if (!engine.supported) return;
     const state = live.current;
     const busy = engine.isSpeaking();
@@ -464,12 +503,17 @@ export function useReadAloud({
     const lines = scriptFor().lines;
     const { choice: voices, rate, language: storyLanguage } = latest.current;
     const voice = voices[role];
-    const sample = (lines.find(line => line.role === role) ?? lines[0])?.text ?? voice?.name;
+    const sample = character?.text?.trim()
+      || (character ? lines.find(line => line.voice === character.voice)?.text : undefined)
+      || (lines.find(line => line.role === role) ?? lines[0])?.text || voice?.name;
     if (!sample) return;
     const token = ++state.token;
     const say = () => {
       if (token !== state.token) return;
-      engine.speak({ text: sample, voice, lang: voice?.lang ?? speechLanguageTag(storyLanguage), rate, pitch: 1, volume: READ_ALOUD_VOLUME },
+      engine.speak({
+        text: sample, role, ...(character ? { character: character.voice } : {}),
+        voice, lang: voice?.lang ?? speechLanguageTag(storyLanguage), rate, pitch: 1, volume: READ_ALOUD_VOLUME,
+      },
         { onStart: () => undefined, onEnd: () => undefined, onError: () => undefined });
     };
     if (busy) later(say, 0);

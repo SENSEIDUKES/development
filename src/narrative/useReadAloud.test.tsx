@@ -19,7 +19,7 @@ const speakerRecord: SpeakerAttachment = {
   payload: { origin: 'harness', speaker: 'Ye Chen', protagonist: true },
 };
 
-interface HarnessProps { chapter: number; suspended?: boolean; storage?: ReturnType<typeof memoryStorage>['storage'] }
+interface HarnessProps { chapter: number; suspended?: boolean; storage?: ReturnType<typeof memoryStorage>['storage']; mainVoice?: string }
 
 const memoryStorage = () => {
   const values = new Map<string, string>();
@@ -43,7 +43,9 @@ const Harness = forwardRef<ReadAloud, HarnessProps>(function Harness(initial, re
       chapterNumber: props.chapter, title: props.chapter === 1 ? 'Low Tide' : 'Dawn', language: 'en',
       paragraphs: paragraphs.map((text, index) => ({ id: `c${props.chapter}-p${index}`, text })),
       speakers: props.chapter === 1 ? [speakerRecord] : [],
+      ...(props.mainVoice ? { voices: { byEntry: {}, main: props.mainVoice } } : {}),
     }),
+    voicesKey: props.mainVoice,
     language: 'en', picks: PICKS, preferences: props.storage, suspended: props.suspended, engine,
   });
   useImperativeHandle(ref, () => readAloud, [readAloud]);
@@ -67,6 +69,20 @@ describe('the browser\'s voices for each character', () => {
     engine.speak({ text: 'Again.', role: 'side', character: 'old-grandmaster-male', lang: 'en-US', rate: 1, pitch: 1, volume: 1 },
       { onStart: () => undefined, onEnd: () => undefined, onError: () => undefined });
     expect(lastSpoken().pitch).toBeCloseTo(elder);
+  });
+});
+
+describe('a character\'s voice changed while listening', () => {
+  it('keeps the reader\'s place and reads their next line in the new voice', () => {
+    mount({ chapter: 1, mainVoice: 'young-disciple-male' });
+    act(() => player.play());
+    act(() => { fake.start(); fake.finish(); vi.advanceTimersByTime(50); });
+    expect(player.line?.text).toBe('The tide went out.');
+    act(() => setProps({ chapter: 1, mainVoice: 'old-grandmaster-male' }));
+    expect(player.status).toBe('playing');
+    act(() => { fake.start(); fake.finish(); vi.advanceTimersByTime(50); });
+    expect(player.line).toMatchObject({ text: '“Ring the bells,”', voice: 'old-grandmaster-male' });
+    expect(lastSpoken().pitch).toBeCloseTo(webSpeechPitch('old-grandmaster-male'));
   });
 });
 

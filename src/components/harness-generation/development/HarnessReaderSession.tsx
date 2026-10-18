@@ -368,7 +368,7 @@ export function HarnessReaderSession({
   const characterVoices = useMemo(() => readAloudVoicesOf(state.codexEntries.filter(entry => entry.storyId === storyId)), [state.codexEntries, storyId]);
   const voicesKey = Object.entries(characterVoices.byEntry).map(pair => pair.join('=')).join('|');
   const readAloud = useReadAloud({
-    scriptKey: `${chapter?.id ?? 'no-chapter'}:${voicesKey}`,
+    scriptKey: chapter?.id ?? 'no-chapter', voicesKey,
     buildScript: () => (chapter ? buildReadAloudScript({
       chapterNumber: chapter.chapterNumber, title: chapter.title, language, paragraphs: blocks, speakers: chapter.speakers, mainCharacter,
       voices: characterVoices,

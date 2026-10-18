@@ -153,6 +153,13 @@ export interface UseReadAloudOptions {
   scriptKey: string;
   /** Builds the script for `scriptKey`. Called at the first Listen, never on every render. */
   buildScript: () => ReadAloudScript;
+  /**
+   * Changes when the same lines would be voiced differently (a character's
+   * voice changed on their card): the script is built again with its lines in
+   * the same places, so the reader keeps their place and the next line speaks
+   * in the new voice.
+   */
+  voicesKey?: string;
   /** The story's language (a SEN language code). */
   language?: string;
   /** Host-owned storage for the reader's voices and speed. */
@@ -246,7 +253,7 @@ const sameVoices = (left: readonly ReadAloudVoice[], right: readonly ReadAloudVo
  * itself, which iOS requires.
  */
 export function useReadAloud({
-  scriptKey, buildScript, language = 'en', preferences, picks, suspended = false, engine: suppliedEngine,
+  scriptKey, buildScript, voicesKey, language = 'en', preferences, picks, suspended = false, engine: suppliedEngine,
 }: UseReadAloudOptions): ReadAloud {
   const engine = useMemo(() => suppliedEngine ?? createWebSpeechEngine(), [suppliedEngine]);
   const [voices, setVoices] = useState<readonly ReadAloudVoice[]>(() => engine.getVoices());
@@ -546,6 +553,9 @@ export function useReadAloud({
     if (skipSave.current) { skipSave.current = false; return; }
     writeReadAloudPreferences(storage.current, prefs);
   }, [prefs]);
+
+  // New voices for the same lines: built again on the next line, the place kept.
+  useEffect(() => { live.current.script = undefined; }, [voicesKey]);
 
   // Another chapter, or something covering this one: speech follows the reader.
   useEffect(() => {

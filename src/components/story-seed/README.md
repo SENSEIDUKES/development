@@ -206,6 +206,11 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-10-18 (OAuth workspace):** Added Pages → Account → OAuth at
+  `?preview=oauth`, rendering this feature's canonical `StoryAuthGate` through
+  the Library package with local success/error simulation and replay. Story Seed
+  and Profile authentication behavior is unchanged.
+
 - **2026-10-13 (Navigation landscape):** Story Seed's rail and Sections drawer use
   the same host-supplied landscape as Home. Story Bank and Settings sit below it
   in the canonical Library footer, separated by its gold star divider. Search

@@ -124,6 +124,7 @@ const WriterInstructionsWorkspace = lazy(() =>
  * inside its own workspace component (see FeatureWorkspace).
  */
 const previewRegistry: Record<string, ComponentType> = {
+  'oauth': lazy(() => import('./workshop/previews/oauth/OAuthWorkspace').then(module => ({ default: module.OAuthWorkspace }))),
   'highlight-engine': lazy(() => import('./workshop/previews/highlight-engine/HighlightEngineWorkspace').then(module => ({ default: module.HighlightEngineWorkspace }))),
   'achievements': AchievementsWorkspace,
   'audio-player-smoke': AudioPlayerSmokeWorkspace,

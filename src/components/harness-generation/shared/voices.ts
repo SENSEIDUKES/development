@@ -3,7 +3,8 @@ import type { CodexEntry, CodexEntryVoice } from '../../../narrative/holdings';
 import type { SpeakerAttachment } from '../../../narrative/speech';
 import type { ReadAloudCharacterVoices } from '../../../narrative/readAloud';
 import { factionNamed, type DeclaredFaction } from './factions';
-import type { CodexEntryResolver } from './holdings';
+import type { CodexEntryResolver, DeclaredCharacter } from './holdings';
+import { normalizeIdentityLabel } from './canonicalProjection';
 
 /**
  * Character voices (SENSEI, 2026-10-18): a speaker tag names a Codex
@@ -15,21 +16,30 @@ import type { CodexEntryResolver } from './holdings';
 
 /**
  * Each speaker record of a chapter, pointed at its Codex character when the
- * chapter commits: the main character for `MC`, else the character the name
- * names, made when it is new (by the resolver the chapter's other tags share,
- * so a name both tagged is one entry). A group (a faction) speaks as itself
- * and has no entry.
+ * chapter commits, only when they have one (SENSEI, 2026-10-18: not every
+ * speaker gets a card; a crowd or a passing guard speaks, and is read in the
+ * side voice). A speaker joins the main character for `MC`, a character the
+ * Story Seed declares (made now, if this is their first chapter), or a card
+ * the record already holds, made by an appearance or holding tag (the
+ * chapter's own included, through the resolver they share). A speaker tag
+ * never makes a card of its own, and a group (a faction) speaks as itself.
  */
-export function resolveSpeakers({ speakers, resolver, declaredFactions = [] }: {
+export function resolveSpeakers({ speakers, resolver, declared = [], declaredFactions = [] }: {
   speakers: readonly SpeakerAttachment[];
   resolver: CodexEntryResolver;
+  /** The characters the Story Seed declares, who have a card from the moment they speak. */
+  declared?: readonly DeclaredCharacter[];
   declaredFactions?: readonly DeclaredFaction[];
 }): SpeakerAttachment[] {
+  const isDeclared = (name: string) => declared.some(character => [character.name, ...(character.aliases ?? [])]
+    .some(other => normalizeIdentityLabel(other) === normalizeIdentityLabel(name)));
   return speakers.map(record => {
     const { speaker, protagonist } = record.payload;
     if (!protagonist && factionNamed(speaker, declaredFactions)) return record;
-    const entry = resolver.character(protagonist ? 'MC' : speaker);
-    return { ...record, payload: { ...record.payload, entryId: entry.id } };
+    const known = resolver.existing(speaker);
+    const entry = protagonist || isDeclared(speaker) ? resolver.character(protagonist ? 'MC' : speaker)
+      : known?.kind === 'character' ? known : undefined;
+    return entry ? { ...record, payload: { ...record.payload, entryId: entry.id } } : record;
   });
 }
 

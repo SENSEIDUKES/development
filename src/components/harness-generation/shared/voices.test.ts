@@ -15,19 +15,25 @@ const entry = (id: string, name: string, extra: Partial<CodexEntry> = {}): Codex
 });
 
 describe('Character voices', () => {
-  it('points each speaker at their Codex character, making one for a new name, the main character for MC, and leaves a group as itself', () => {
+  it('points a speaker at their card only when they have one, and never makes a card for a speaker alone', () => {
     let ids = 0;
+    const declared = [{ name: 'Ye Chen', mainCharacter: true as const }, { name: 'Lan Yue', aliases: ['Miss Lan'] }];
     const resolver = createCodexEntryResolver({
       storyId: 's', chapter: { id: 'ch1', chapterNumber: 1 }, entries: [entry('e-wu', 'Old Wu')],
-      declared: [{ name: 'Ye Chen', mainCharacter: true }], createdAt: 'now', createId: () => `new-${++ids}`,
+      declared, createdAt: 'now', createId: () => `new-${++ids}`,
     });
     const resolved = resolveSpeakers({
-      speakers: [record('c1-p1', 'Ye Chen', true), record('c1-p2', 'old wu'), record('c1-p3', 'Lan Yue'), record('c1-p4', 'Iron Crane Sect')],
-      resolver,
+      speakers: [
+        record('c1-p1', 'Ye Chen', true), record('c1-p2', 'old wu'), record('c1-p3', 'Miss Lan'),
+        record('c1-p4', 'The Crowd'), record('c1-p5', 'A guard'), record('c1-p6', 'Iron Crane Sect'),
+      ],
+      resolver, declared,
     });
     const main = resolver.created.find(created => created.mainCharacter)!;
     const lan = resolver.created.find(created => created.name === 'Lan Yue')!;
-    expect(resolved.map(speaker => speaker.payload.entryId)).toEqual([main.id, 'e-wu', lan.id, undefined]);
+    // The main character, a card the record holds, a character the Story Seed declares; a crowd, a guard and a sect have none.
+    expect(resolved.map(speaker => speaker.payload.entryId)).toEqual([main.id, 'e-wu', lan.id, undefined, undefined, undefined]);
+    expect(resolver.created.map(created => created.name)).toEqual(['Ye Chen', 'Lan Yue']);
   });
 
   it('tells a gender only when the author\'s notes or the pronouns clearly say', () => {

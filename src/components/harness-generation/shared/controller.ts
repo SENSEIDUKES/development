@@ -1454,10 +1454,10 @@ export class HarnessGenerationController {
     const holdings = acceptedDraft.holdingChanges?.length
       ? resolveHoldingChanges({ ...resolving, changes: acceptedDraft.holdingChanges, resolver })
       : undefined;
-    // Each speaker tag names its Codex character, made now when it is new (a group speaks as itself).
+    // Each speaker tag names its Codex character when they have one; a speaker tag never makes a card.
     const identities = commitAttempt.storyInformation.currentStory.identities ?? [];
     const speakers = acceptedDraft.speakers
-      ? resolveSpeakers({ speakers: acceptedDraft.speakers, resolver, declaredFactions: identities.filter(identity => identity.kind === 'faction') })
+      ? resolveSpeakers({ speakers: acceptedDraft.speakers, resolver, declared: resolving.declared, declaredFactions: identities.filter(identity => identity.kind === 'faction') })
       : undefined;
     // A thing the chapter's holding tags show for the first time steps onto the page there.
     if (appearances && holdings?.changes.length) {

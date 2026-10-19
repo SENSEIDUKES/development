@@ -1665,11 +1665,13 @@ export class HarnessGenerationController {
   /**
    * The reader's choice of a character's voice, from the SEIHouse cast, kept
    * on their Codex card: Read Aloud and every engine voice them in it from
-   * now on. Saved once every save under way has landed.
+   * now on. Refused while a chapter is being written, like every other edit,
+   * since that write's saves would carry the state from before the choice.
    */
   async setCodexVoice(storyId: string, entryId: string, voiceKey: string): Promise<void> {
     this.assertHydrated();
     if (!castVoice(voiceKey)) throw new Error('That voice is not in the SEIHouse cast.');
+    if (this.writing || this.generating) throw new Error('Wait for the chapter being written before changing a voice.');
     await this.settled();
     const candidate = cloneHarnessValue(this.state);
     const entry = candidate.codexEntries.find(candidateEntry => candidateEntry.id === entryId && candidateEntry.storyId === storyId);

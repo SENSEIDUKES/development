@@ -179,6 +179,23 @@ describe('HARNESS appearances through appears and look tags', () => {
     await expect(controller.setCodexVoice(storyId, wu.id, 'not-a-voice')).rejects.toThrow('That voice is not in the SEIHouse cast.');
   });
 
+  it('refuses a voice change while a chapter is being written, so the write never carries it away', async () => {
+    const repository = new HeldRepository();
+    const { controller, storyId } = await setup({ repository });
+    await controller.generateNextChapter(storyId, 'fixture');
+    const wu = controller.snapshot().codexEntries.find(entry => entry.name === 'Old Wu')!;
+    let release!: () => void;
+    repository.gate = new Promise(resolve => { release = resolve; });
+    const writing = controller.generateNextChapter(storyId, 'fixture');
+    await new Promise(resolve => setTimeout(resolve, 0));
+    await expect(controller.setCodexVoice(storyId, wu.id, 'old-grandmaster-male')).rejects.toThrow('Wait for the chapter being written before changing a voice.');
+    repository.gate = undefined;
+    release();
+    await writing;
+    await controller.setCodexVoice(storyId, wu.id, 'old-grandmaster-male');
+    expect(repository.snapshot().codexEntries.find(entry => entry.id === wu.id)!.voice?.key).toBe('old-grandmaster-male');
+  });
+
   it('saves a look after any save under way, so a chapter committed meanwhile is never lost', async () => {
     const repository = new HeldRepository();
     const { controller, storyId } = await setup({ repository });

@@ -8,9 +8,11 @@ const text = { type: 'string' };
 
 /**
  * The compact chapter contract requested from the provider. The paragraphs
- * array is the chapter, and every signal travels inside it as a tag: sounds,
- * speakers and holding changes alike, so the reply has no list to keep in
- * step with the prose. The closing list of the main character's holdings
+ * array is the chapter. Each paragraph carries its speaker in a field of its
+ * own (SENSEI, 2026-10-19: the original Light Novels app's design, which a
+ * writer fills reliably where it drops a tag in its prose); every other signal
+ * travels inside the text as a tag, so the reply has no list to keep in step
+ * with the prose. The closing list of the main character's holdings
  * follows it, only when the Holdings skill is loaded: a plain list of names,
  * so it adds no structure. How to tag is taught by the CAPA skills, never
  * here. Reader structures, media, IDs, and memory are HARNESS work and never
@@ -22,7 +24,15 @@ export const buildHarnessChapterResponseSchema = (paragraphCount?: number, { hol
     title: text,
     plan: { type: 'string', description: 'Optional one-paragraph continuation plan for the next chapter.' },
     paragraphs: {
-      type: 'array', items: text,
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          speaker: { type: 'string', description: 'Who speaks in this paragraph: MC for the main character, anyone else by the name Story Information uses. Empty when no one speaks.' },
+          text: { type: 'string', description: 'The paragraph\'s prose, with its tags.' },
+        },
+        required: ['speaker', 'text'],
+      },
       // The HARNESS rolled this chapter's exact paragraph count; the schema holds the writer to it.
       ...(paragraphCount ? { minItems: paragraphCount, maxItems: paragraphCount } : {}),
       description: 'The complete chapter, one entry per prose paragraph, in reading order. This is the only chapter body.',
@@ -116,7 +126,7 @@ export const HARNESS_READING_GUIDE = [
 
 /** What the writer hands back. */
 export const HARNESS_RETURN_FORMAT = [
-  'Return one JSON object only. paragraphs is the complete chapter and its sole body: an ordered array with one entry per prose paragraph, written as continuous readable prose. Never put the whole chapter in one entry and never add blank-line markers or numbering. title and plan are optional; title is the chapter\'s name alone, never its number, which the HARNESS assigns. arcCompletion is required. Do not return prose, chapter blocks, memory, or any other chapter body.',
+  'Return one JSON object only. paragraphs is the complete chapter and its sole body: an ordered array with one entry per prose paragraph, each its speaker and its text, written as continuous readable prose. Never put the whole chapter in one entry and never add blank-line markers or numbering. title and plan are optional; title is the chapter\'s name alone, never its number, which the HARNESS assigns. arcCompletion is required. Do not return prose, chapter blocks, memory, or any other chapter body.',
   'After the chapter, return recap: a short "Previously On" recap of this chapter in two to four sentences, written for a reader returning later. Later chapters read it again after time has passed, so never put a countdown in it ("nine days remain"): say what is coming, or when it is due by an event or a date in the story. Return chapterFunction: the one primary function this completed chapter served, progression, worldBuilding, or conflict. Return three one-line possibilities for the next chapter: nextProgression, nextWorldBuilding, and nextConflict, one per function. Each moves the story on from where this chapter ends, never restating its situation. They are creative possibilities only; the reader or the HARNESS decides which path actually comes next. Never return hardPins, fatePressure, or destinedEnding: story direction is author-owned and any such field is ignored.',
   'Return arcCompletion {goalId, completed, evidence}. Judge completion from the generated prose, never merely from reaching a chapter number. Evidence must be a continuous verbatim passage demonstrating the outcome. Set completed false and evidence empty when it is not achieved; at its deadline an unmet goal is simply recorded as missed. Never invent an extension, regeneration rule, or deadline-failure behavior.',
   'storyEnded applies in survival mode only. Return ended true only when this chapter\'s prose completes the story\'s ending: a fatal ending, such as the protagonist\'s death, at any point, or the ending a broken route requires. Its evidence is a continuous verbatim passage from this chapter showing that ending; the story ends only when that passage is in the prose, never because of a chapter count or a claim. Otherwise return ended false with empty evidence. In regular mode always return ended false: the story ends only by reaching the Destined Ending.',

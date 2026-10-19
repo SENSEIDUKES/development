@@ -1,4 +1,5 @@
 import { castVoice } from '../../../audio/voiceCast';
+import { fullNameOf } from './voices';
 import type { CodexEntry } from '../../../narrative/holdings';
 import type { Look } from '../../../narrative/appearances';
 import type { HarnessChapter } from '../../../narrative/generation';
@@ -196,7 +197,13 @@ export function deriveStoryCodex({ entries, chapters, mainCharacterName, declare
     return match ? [match.name, ...(match.aliases ?? [])].map(normalizeIdentityLabel) : [normalizeIdentityLabel(name)];
   };
   // Not every speaker has a card (SENSEI, 2026-10-18): a crowd or a passing guard speaks without one.
-  const speakerOf = (name: string, protagonist: boolean): Working | undefined => {
+  const knownNames = [
+    ...entries.filter(entry => entry.kind === 'character').flatMap(entry => [entry.name, ...(entry.aliases ?? [])]),
+    ...declared.flatMap(character => [character.name, ...(character.aliases ?? [])]),
+  ];
+  const speakerOf = (written: string, protagonist: boolean): Working | undefined => {
+    // A first name alone stands for the one character it belongs to ("Mina", Mina Kisaragi).
+    const name = protagonist ? written : fullNameOf(written, knownNames) ?? written;
     if (protagonist) {
       const existing = main();
       if (existing) return existing;

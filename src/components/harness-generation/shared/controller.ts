@@ -1457,7 +1457,11 @@ export class HarnessGenerationController {
     // Each speaker tag names its Codex character when they have one; a speaker tag never makes a card.
     const identities = commitAttempt.storyInformation.currentStory.identities ?? [];
     const speakers = acceptedDraft.speakers
-      ? resolveSpeakers({ speakers: acceptedDraft.speakers, resolver, declared: resolving.declared, declaredFactions: identities.filter(identity => identity.kind === 'faction') })
+      ? resolveSpeakers({
+        speakers: acceptedDraft.speakers, resolver, declared: resolving.declared,
+        entries: candidate.codexEntries.filter(entry => entry.storyId === commitAttempt.storyId),
+        declaredFactions: identities.filter(identity => identity.kind === 'faction'),
+      })
       : undefined;
     // A thing the chapter's holding tags show for the first time steps onto the page there.
     if (appearances && holdings?.changes.length) {
@@ -1505,11 +1509,6 @@ export class HarnessGenerationController {
       const storyEntries = candidate.codexEntries.filter(entry => entry.storyId === commitAttempt.storyId);
       const voices = firstVoices({
         speakers, entries: storyEntries, at: committedAt,
-        // The speaker's paragraph and the next: the narration after a line most often tells who spoke ("He turned away.").
-        paragraphOf: record => {
-          const index = Number(record.anchor.blockId.match(/-p(\d+)$/)?.[1] ?? 0) - 1;
-          return index < 0 ? undefined : acceptedDraft.paragraphs.slice(index, index + 2).join('\n');
-        },
         notesOf: entry => identities.find(identity => identity.kind === 'character'
           && [identity.name, ...(identity.aliases ?? [])].some(name => normalizeIdentityLabel(name) === normalizeIdentityLabel(entry.name)))?.evidence,
       });

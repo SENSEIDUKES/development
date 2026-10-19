@@ -104,8 +104,10 @@ const recoverPlainProse = (raw: string): string | undefined => {
     ? trimmed.replace(/^```(?:text|markdown)?\s*/i, '').replace(/\s*```$/, '').trim()
     : looseJsonString(embeddedProse).trim();
   if (!candidate || looksLikeRefusal(candidate)) return undefined;
-  // An invalid JSON envelope without a recoverable prose field is not prose.
-  if ((candidate.startsWith('{') || candidate.startsWith('[')) && embeddedProse === undefined) return undefined;
+  // An invalid JSON envelope without a recoverable prose field is not prose. A
+  // chapter that opens with a tag ("[[soundscape: …]]") is prose: a Diner test
+  // rewrite was lost when it was taken for a broken JSON array.
+  if ((candidate.startsWith('{') || (candidate.startsWith('[') && !candidate.startsWith('[['))) && embeddedProse === undefined) return undefined;
   return /[\p{L}\p{N}]/u.test(candidate) ? candidate : undefined;
 };
 

@@ -213,6 +213,12 @@ it('keeps the Info overview and shows cultivation rate only from data', () => {
   expect(container.textContent).toContain('Cover unavailable');
   expect(container.querySelector('[data-world-card="info"]')).not.toBeNull();
 
+  // When the host supplies a cover action for an empty cover (such as Manifest), "Cover unavailable" leaves the cover.
+  act(() => root.render(<WorldCardInfo story={{ ...story, imageUrl: '' }} coverAction={<button type="button">Manifest</button>} />));
+  expect(container.textContent).toContain('Manifest');
+  expect(container.textContent).not.toContain('Cover unavailable');
+  expect(container.querySelector('.world-card-cover-fallback')).toBeNull();
+
   // The public Info view shows no owner or acquisition states; only the viewer's own Recently read.
   for (const variant of [{ acquired: true }, { acquired: false }, { draft: true }]) {
     act(() => root.render(<WorldCardInfo story={{ ...story, ...variant }} />));
@@ -555,10 +561,14 @@ it('keeps an MP control on the Info cover that starts or stops the backdrop clip
   play.mockClear();
   await act(async () => mp.click());
   expect(play).toHaveBeenCalledTimes(1);
-  // Once the clip truly plays, MP stops it.
+  // Once the clip truly plays, MP stops it; switching to a new clip that has not played yet resets MP back to Play.
   await act(async () => container.querySelector('.world-card-info-backdrop video')!.dispatchEvent(new Event('playing')));
   expect(mp.getAttribute('aria-label')).toBe('Stop motion for The Last Lotus');
-  await act(async () => mp.click());
+  await act(async () => root.render(<WorldCardInfo story={{ ...infoStory, videoUrl: '/next-clip.mp4' }} />));
+  expect(container.querySelector<HTMLButtonElement>('.world-card-info-cover button.world-card-info-motion')!.getAttribute('aria-label'))
+    .toBe('Play motion for The Last Lotus');
+  await act(async () => container.querySelector('.world-card-info-backdrop video')!.dispatchEvent(new Event('playing')));
+  await act(async () => container.querySelector<HTMLButtonElement>('.world-card-info-cover button.world-card-info-motion')!.click());
   expect(HTMLMediaElement.prototype.pause).toHaveBeenCalledTimes(1);
 
   // No clip, no MP.

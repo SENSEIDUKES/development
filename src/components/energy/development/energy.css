@@ -2,6 +2,8 @@
    One glyph, one number, in one badge. These pieces sit inside other surfaces
    (a profile emblem, an action button, a notice) and must never compete with
    them, so they are text-sized and use one accent. */
+@layer theme, base, components, utilities;
+
 @layer components {
   /* The Energy badge: the Energy mark and its number in a gold-outlined pill.
      Every Energy number wears it, a balance (EnergyAmount) or a cost

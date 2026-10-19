@@ -46,12 +46,14 @@ export const WorldCardBackdropVideo = forwardRef<WorldCardBackdropVideoHandle, {
   };
   useImperativeHandle(ref, () => ({ play: start, pause: () => videoRef.current?.pause() }));
   useEffect(() => {
-    if (!prefersReducedMotion()) start();
+    setPlaying(false);
+    if (videoUrl && !prefersReducedMotion()) start();
   }, [videoUrl]);
 
   if (!videoUrl) return null;
   const autoPlay = !prefersReducedMotion();
   return <video ref={videoRef} className={`world-card-backdrop-video ${className}`} src={videoUrl}
     muted loop playsInline autoPlay={autoPlay} preload="metadata" aria-hidden="true" tabIndex={-1}
-    data-playing={playing ? 'true' : undefined} onPlaying={() => setPlaying(true)} onPause={() => setPlaying(false)} />;
+    data-playing={playing ? 'true' : undefined} onPlaying={() => setPlaying(true)} onPause={() => setPlaying(false)}
+    onError={() => setPlaying(false)} />;
 });

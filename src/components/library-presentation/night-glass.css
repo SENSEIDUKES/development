@@ -8,6 +8,8 @@
  * than its unavailable state, so a disabled button still reads as unavailable and a
  * class a host passes in still wins.
  */
+@layer theme, base, components, utilities;
+
 @layer components {
   :is(button, a).library-glass-button:is([data-variant='primary'], [data-variant='manifest']) {
     --glass-fill: rgba(9, 11, 22, 0.78);

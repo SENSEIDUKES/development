@@ -161,7 +161,7 @@ export function StoryPages({ stories, storyId, page, onOpenReader, onCloseReader
     {writerAlert}
     <Page className="px-4 pb-12 pt-4 sm:px-6 sm:pt-6" data-testid="harness-world-info">
       {covers
-        ? <CoveredStoryDetail covers={covers} storyId={storyId} request={storyCoverRequest(state, storyId)!} agent={writingAgent}
+        ? <CoveredStoryDetail key={storyId} covers={covers} storyId={storyId} request={storyCoverRequest(state, storyId)!} agent={writingAgent}
             story={display} backLabel={backLabel} readingPosition={readingPosition} onBack={onBack}
             onOpenBlueprint={onOpenBlueprint} portal={NO_ADAPTATIONS_YET} settings={settings}
             onRead={() => { setStartOnOpen(false); onOpenReader(); }}

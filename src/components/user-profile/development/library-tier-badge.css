@@ -7,6 +7,8 @@
    AAA contrast even over pure black. Reduced-motion users get the same lit
    surface with the sheen removed. Self-contained so it can move into
    @seihouse/library-ui unchanged. */
+@layer theme, base, components, utilities;
+
 @layer components {
   :where(.library-tier-badge) {
     /* Tinted glass, not a milky fill: cool, lightly saturated, translucent.

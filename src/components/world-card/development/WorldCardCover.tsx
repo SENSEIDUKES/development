@@ -2,15 +2,15 @@ import { useState } from 'react';
 import { BookOpen } from 'lucide-react';
 
 /** Cover art shared by both card faces and the overview; Compact keeps its wash if art fails. */
-export function WorldCardCover({ src, title, decorative = false, loading = 'lazy', compact = false, fallbackCover = false }: {
+export function WorldCardCover({ src, title, decorative = false, loading = 'lazy', compact = false, fallbackCover = false, hideFallback = false }: {
   src?: string; title: string; decorative?: boolean; loading?: 'eager' | 'lazy';
-  compact?: boolean; fallbackCover?: boolean;
+  compact?: boolean; fallbackCover?: boolean; hideFallback?: boolean;
 }) {
   const [failedSource, setFailedSource] = useState<string>();
   const imageUrl = src?.trim();
 
   if (!imageUrl || failedSource === imageUrl) {
-    if (compact) return null;
+    if (compact || hideFallback) return null;
     return <div className="world-card-cover-fallback" aria-hidden={decorative || undefined}
       role={decorative ? undefined : 'img'} aria-label={decorative ? undefined : `Cover art unavailable for ${title}`}>
       <BookOpen size={28} aria-hidden="true" />

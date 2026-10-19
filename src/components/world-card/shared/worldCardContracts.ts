@@ -57,6 +57,8 @@ export interface WorldCardInfoProps {
 export interface WorldCardInfoCoverProps {
   world: StoryDetailDisplay | CreatorWorld;
   face: 'info';
+  /** Omits "Cover unavailable" when the host's coverAction fills an empty cover itself. */
+  hideFallback?: boolean;
 }
 
 /** Full card: the discovery card on Home, the 2:3 cover with its caption beneath. */

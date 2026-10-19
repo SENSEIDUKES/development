@@ -270,8 +270,10 @@ describe('Cover art on Story View', () => {
     await act(async () => root.render(renderWithDevAudio(<Host repository={repository} adapter={writer.adapter} storyId={story.id} makeCover={make} />)));
     await flush();
 
-    // No cover yet: the cover itself says Manifest; there is no button beneath it.
+    // No cover yet: the cover itself says Manifest, replacing "Cover unavailable"; there is no button beneath it.
     expect(manifestOnCover()!.textContent).toContain('Manifest');
+    expect(container.textContent).not.toContain('Cover unavailable');
+    expect(container.querySelector('.world-card-cover-fallback')).toBeNull();
     expect(container.querySelector('[data-world-card="info"] [data-testid="story-cover"]')).toBeTruthy();
     expect(buttonByText('Manifest cover')).toBeUndefined();
     await click(manifestOnCover(), 'Manifest on the cover');

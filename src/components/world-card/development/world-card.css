@@ -15,7 +15,8 @@
     box-shadow 200ms cubic-bezier(0, 0, 0.2, 1),
     transform 200ms cubic-bezier(0, 0, 0.2, 1);
 }
-.world-card-base:hover {
+.world-card-base:hover,
+.world-card-info-cover:hover .world-card-base {
   border-color: var(--world-card-glow-lit);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--world-card-glow-lit) 80%, transparent),
     0 0 26px 2px color-mix(in srgb, var(--world-card-glow-lit) 52%, transparent),
@@ -23,7 +24,8 @@
 }
 .world-card-base:focus-within,
 .world-card-base:active,
-.world-card-base[data-selected='true'] {
+.world-card-base[data-selected='true'],
+.world-card-info-cover:focus-within .world-card-base {
   border-color: var(--world-card-glow-lit);
   box-shadow: 0 0 0 1px var(--world-card-glow-lit),
     0 0 32px 5px color-mix(in srgb, var(--world-card-glow-lit) 68%, transparent),
@@ -269,8 +271,9 @@
 /* On a phone the cover is the Compact card's square; beside the text it is the tall cover again. */
 .world-card-info-cover { --world-card-aspect: 1 / 1; position: relative; width: min(72vw, 17rem); filter: drop-shadow(0 18px 36px rgb(0 0 0 / 0.55)); }
 /* The host's controls over the cover (for example making cover art) share the cover's frame and corners. */
-.world-card-info-cover-action { position: absolute; inset: 0; z-index: 6; overflow: hidden; border-radius: 1.25rem; pointer-events: none; }
+.world-card-info-cover-action { position: absolute; inset: 1px; z-index: 6; overflow: hidden; border-radius: calc(var(--sh-radius-card, 1.35rem) - 1px); pointer-events: none; }
 .world-card-info-cover-action > * { pointer-events: auto; }
+.world-card-info-cover:has(.story-cover-manifest) .world-card-cover-fallback { display: none; }
 .world-card-info-identity { position: relative; isolation: isolate; display: flex; width: 100%; min-width: 0; flex-direction: column; align-items: center; gap: 0.6rem; text-align: center; }
 /* A soft dark shade just behind the lettering, so it reads over any motion picture. */
 .world-card-info-identity::before {
@@ -472,7 +475,6 @@
 }
 @media (min-width: 640px) {
   .world-card-banner { height: 20rem; padding: 2.5rem; gap: 2rem; }
-  .world-card-banner-cover { --world-card-banner-cover-height: calc(20rem - 5rem); }
 }
 .world-card-banner:hover, .world-card-banner:focus-within {
   border-color: color-mix(in srgb, var(--world-card-glow) 70%, white);
@@ -529,6 +531,9 @@
   width: calc(var(--world-card-banner-cover-height) * 2 / 3); height: var(--world-card-banner-cover-height);
   border: 1px solid rgba(235, 243, 255, 0.4); border-radius: 0.9rem; background: #07111d;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3), 0 0 26px color-mix(in srgb, var(--world-card-glow) 40%, transparent), 0 14px 32px rgba(0, 0, 0, 0.55);
+}
+@media (min-width: 640px) {
+  .world-card-banner-cover { --world-card-banner-cover-height: calc(20rem - 5rem); }
 }
 .world-card-banner-cover-frame { position: absolute; inset: 0; container-type: inline-size; }
 .world-card-banner-open { position: absolute; inset: 0; z-index: 2; width: 100%; cursor: pointer; border-radius: inherit; }

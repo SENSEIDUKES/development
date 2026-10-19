@@ -67,7 +67,7 @@ export function WorldCard(props: WorldCardFaceProps) {
             alt={`${world.title} cover`} glow={false} onPlayingChange={setMotionPlaying}
             stillFallback={<WorldCardCover src="" title={world.title} decorative />} />
         : <WorldCardCover src={imageUrl} title={world.title} decorative={!info} loading={info ? 'eager' : 'lazy'} compact={compact}
-            fallbackCover={compact && props.fallbackCover} />}
+            fallbackCover={compact && props.fallbackCover} hideFallback={info && props.hideFallback} />}
       {tileWorld && <>
         <button type="button" className="world-card-base-open" onClick={onOpen} aria-label={openLabel}
           aria-pressed={compact ? Boolean(props.selected) : undefined} />

@@ -56,7 +56,7 @@ export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, onOpenBluep
     <div className="world-card-info-body">
       <div className="world-card-info-hero">
         <div className="world-card-info-cover">
-          <WorldCard face="info" world={story} />
+          <WorldCard face="info" world={story} hideFallback={Boolean(coverAction && !coverUrl)} />
           {coverAction && <div className="world-card-info-cover-action">{coverAction}</div>}
           {/* MP: plays or stops the clip behind the page, so a reader whose phone would not start it (Low Power Mode) can. */}
           {videoUrl && <button type="button" className="world-card-base-format world-card-info-motion" aria-pressed={clipPlaying}
@@ -110,7 +110,7 @@ export function WorldCardInfo({ story, onRead, onStart, onOpenCodex, onOpenBluep
             {currentArc && <span className="world-card-info-arc">Current arc · {currentArc}</span>}
           </p>
           {tags.length > 0 && <ul className="world-card-info-pills world-card-info-tags" aria-label="Story tags">
-            {tags.map(tag => <li key={tag.key}><StoryTagChip {...tag} /></li>)}
+            {tags.map(tag => <li key={tag.key}><StoryTagChip label={tag.label} metadata={tag.metadata} /></li>)}
           </ul>}
         </div>
       </div>

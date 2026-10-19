@@ -1106,7 +1106,7 @@ describe('CardWorkshopView', () => {
       ?.replace(/\u2060/g, ''))
       .toBe('a Vermilion Debt Fox growled');
 
-    const cardTitle = [...(reader?.querySelectorAll('h4') ?? [])]
+    const cardTitle = [...(reader?.querySelectorAll('h2[data-slot="card-title"]') ?? [])]
       .find(element => element.textContent === 'Rin');
     const beforeCard = reader?.querySelector('#para-1');
     const afterCard = reader?.querySelector('#para-3');

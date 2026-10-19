@@ -140,7 +140,12 @@ describe('Development CodexHovercard spectral glass', () => {
 
     const ambience = card?.querySelector<HTMLElement>('[data-slot="codex-card-ambience"]');
     expect(ambience).toBeTruthy();
-    expect(ambience?.querySelectorAll('.animate-codex-mote').length).toBeGreaterThan(0);
+    expect(ambience?.querySelectorAll('.animate-codex-mote').length).toBe(1);
+    expect(ambience?.children.length).toBe(1);
+    const field = ambience?.querySelector<HTMLElement>('[data-slot="codex-mote-field"]');
+    expect(field?.style.backgroundImage.match(/radial-gradient/g)).toHaveLength(7);
+    expect(field?.style.mixBlendMode).toBe('');
+    expect(field?.style.boxShadow).toBe('');
   });
 
   it('uses the Reader-owned main-character identity instead of empty Workshop store state', () => {
@@ -266,6 +271,31 @@ describe('Development CodexHovercard spectral glass', () => {
 
     expect(document.activeElement).toBe(trigger);
     expect(trigger?.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('waits for a visible desktop portal before moving keyboard focus', () => {
+    vi.mocked(window.matchMedia).mockImplementation((query: string) => ({
+      matches: true, media: query, onchange: null,
+      addEventListener: vi.fn(), removeEventListener: vi.fn(),
+      addListener: vi.fn(), removeListener: vi.fn(), dispatchEvent: vi.fn(),
+    }));
+    const visibilityAtFocus: string[] = [];
+    const focus = HTMLElement.prototype.focus;
+    vi.spyOn(HTMLElement.prototype, 'focus').mockImplementation(function (this: HTMLElement) {
+      if (this.dataset.slot === 'codex-hovercard') {
+        visibilityAtFocus.push(this.parentElement?.style.visibility ?? '');
+      }
+      focus.call(this);
+    });
+    act(() => root.render(
+      <CodexHovercard term="Aster" type="character" entry={{ id: 'aster', name: 'Aster', role: 'Witness', description: 'A patient witness.' }}>
+        Read more in Codex
+      </CodexHovercard>,
+    ));
+    const trigger = container.querySelector<HTMLElement>('[role="button"]');
+    act(() => trigger!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })));
+    expect(visibilityAtFocus).toEqual(['visible']);
+    expect(document.activeElement).toBe(document.body.querySelector('[data-slot="codex-hovercard"]'));
   });
 
   it('keeps desktop cards contextual while clamping them to the visible viewport', () => {

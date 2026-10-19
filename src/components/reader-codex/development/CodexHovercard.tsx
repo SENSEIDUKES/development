@@ -232,9 +232,12 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, act
 
   useLayoutEffect(() => {
     if (!isOpen || !isPortalMounted || !openedWithKeyboardRef.current) return;
+    // Desktop portals stay hidden until their position is measured. Focusing
+    // that hidden element is ignored by browsers, so wait for placement.
+    if (isDesktopViewport && !desktopPosition) return;
     openedWithKeyboardRef.current = false;
     cardRef.current?.focus();
-  }, [isOpen, isPortalMounted]);
+  }, [desktopPosition, isDesktopViewport, isOpen, isPortalMounted]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
@@ -456,7 +459,7 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, act
                 </span>
               </div>
 
-              <p className="text-xs text-neutral-400 font-sans leading-relaxed line-clamp-4">
+              <p className="text-xs text-neutral-400 font-sans leading-relaxed whitespace-pre-line">
                 {entry.description}
               </p>
 

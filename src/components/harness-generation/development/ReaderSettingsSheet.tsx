@@ -18,8 +18,8 @@ const pillChoice = 'reader-settings-choice';
 const ROLE_TITLES: Record<ReadAloudRole, string> = { narrator: 'Narrator', protagonist: 'Protagonist', side: 'Side characters' };
 const ROLE_HELP: Record<ReadAloudRole, string> = {
   narrator: 'Reads the story itself.',
-  protagonist: 'Reads the main character\'s spoken lines.',
-  side: 'Reads everyone else\'s spoken lines.',
+  protagonist: 'The base for the main character\'s voice.',
+  side: 'The base for everyone else\'s voices.',
 };
 
 /** A language's own name, without the native script in brackets ("Korean (한국어)" → "Korean"). */
@@ -197,7 +197,7 @@ export function ReaderSettingsSheet({ open, onClose, readAloud, language, mixer,
                 <div className="reader-settings-group">
                   {READ_ALOUD_ROLES.map(role => <VoicePicker key={role} role={role} readAloud={readAloud} language={language} />)}
                 </div>
-                <p className="reader-settings-help">Online voices may take a moment to start.</p>
+                <p className="reader-settings-help">Each character speaks in a voice of their own, shaped from these. Online voices may take a moment to start.</p>
                 <button type="button" onClick={readAloud.resetVoices}
                   className="reader-settings-reset">
                   <RotateCcw className="h-4 w-4" aria-hidden /> Reset voices

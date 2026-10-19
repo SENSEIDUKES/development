@@ -51,6 +51,9 @@ import { harnessParagraphBlockId } from './chapterBody';
 import { protagonistNames } from './speakers';
 import { createCodexEntryResolver, declaredCharacters, resolveHoldingChanges } from './holdings';
 import { appearanceSources, deriveAppearances, resolveAppearances, thingAppearancesFromHoldings } from './appearances';
+import { firstVoices, resolveSpeakers } from './voices';
+import { castVoice } from '../../../audio/voiceCast';
+import { normalizeIdentityLabel } from './canonicalProjection';
 import type { Look } from '../../../narrative/appearances';
 import { applyHoldingsFixes, planHoldingsFix } from './holdingsFixer';
 import { planCodexLook, readDescribedLooks } from './lookDescriber';
@@ -247,6 +250,14 @@ export class HarnessGenerationController {
 
   /** The save under way, if any: an on-demand write waits for it before it reads the state it saves. */
   private saving: Promise<unknown> = Promise.resolve();
+
+  /** Resolves once no save is under way. */
+  private async settled() {
+    for (let pending = this.saving; ; pending = this.saving) {
+      await pending;
+      if (pending === this.saving) return;
+    }
+  }
 
   private async persist(candidate: HarnessWorkspaceState) {
     const save = this.repository.save(candidate);
@@ -1443,6 +1454,11 @@ export class HarnessGenerationController {
     const holdings = acceptedDraft.holdingChanges?.length
       ? resolveHoldingChanges({ ...resolving, changes: acceptedDraft.holdingChanges, resolver })
       : undefined;
+    // Each speaker tag names its Codex character when they have one; a speaker tag never makes a card.
+    const identities = commitAttempt.storyInformation.currentStory.identities ?? [];
+    const speakers = acceptedDraft.speakers
+      ? resolveSpeakers({ speakers: acceptedDraft.speakers, resolver, declared: resolving.declared, declaredFactions: identities.filter(identity => identity.kind === 'faction') })
+      : undefined;
     // A thing the chapter's holding tags show for the first time steps onto the page there.
     if (appearances && holdings?.changes.length) {
       appearances.push(...thingAppearancesFromHoldings({
@@ -1464,7 +1480,7 @@ export class HarnessGenerationController {
       paragraphs: cloneHarnessValue(acceptedDraft.paragraphs),
       metrics: cloneHarnessValue(acceptedDraft.metrics),
       ...(acceptedDraft.soundCues ? { soundCues: cloneHarnessValue(acceptedDraft.soundCues) } : {}),
-      ...(acceptedDraft.speakers ? { speakers: cloneHarnessValue(acceptedDraft.speakers) } : {}),
+      ...(speakers ? { speakers } : {}),
       ...(holdings?.changes.length ? { holdingChanges: holdings.changes } : {}),
       ...(acceptedDraft.closingHoldings ? { closingHoldings: [...acceptedDraft.closingHoldings] } : {}),
       ...(appearances ? { appearances } : {}),
@@ -1484,6 +1500,24 @@ export class HarnessGenerationController {
     candidate.chapters.push(chapter);
     candidate.events.push(...committedEvents);
     if (resolver.created.length) candidate.codexEntries.push(...resolver.created);
+    // Who speaks for the first time gets a voice from the SEIHouse cast, kept on their card.
+    if (speakers?.length) {
+      const storyEntries = candidate.codexEntries.filter(entry => entry.storyId === commitAttempt.storyId);
+      const voices = firstVoices({
+        speakers, entries: storyEntries, at: committedAt,
+        // The speaker's paragraph and the next: the narration after a line most often tells who spoke ("He turned away.").
+        paragraphOf: record => {
+          const index = Number(record.anchor.blockId.match(/-p(\d+)$/)?.[1] ?? 0) - 1;
+          return index < 0 ? undefined : acceptedDraft.paragraphs.slice(index, index + 2).join('\n');
+        },
+        notesOf: entry => identities.find(identity => identity.kind === 'character'
+          && [identity.name, ...(identity.aliases ?? [])].some(name => normalizeIdentityLabel(name) === normalizeIdentityLabel(entry.name)))?.evidence,
+      });
+      for (const entry of storyEntries) {
+        const voice = voices.get(entry.id);
+        if (voice) entry.voice = voice;
+      }
+    }
     if (rewrite) {
       // The replaced version's attempt keeps its reply, so an export still shows it.
       const replacedAttemptId = base.chapters.find(entry => entry.id === rewrite.replacesChapterId)?.attemptId;
@@ -1628,6 +1662,25 @@ export class HarnessGenerationController {
    * the entry. A failure is kept on the entry too, with the model's answer,
    * and rejects with a reason a reader can read.
    */
+  /**
+   * The reader's choice of a character's voice, from the SEIHouse cast, kept
+   * on their Codex card: Read Aloud and every engine voice them in it from
+   * now on. Refused while a chapter is being written, like every other edit,
+   * since that write's saves would carry the state from before the choice.
+   */
+  async setCodexVoice(storyId: string, entryId: string, voiceKey: string): Promise<void> {
+    this.assertHydrated();
+    if (!castVoice(voiceKey)) throw new Error('That voice is not in the SEIHouse cast.');
+    if (this.writing || this.generating) throw new Error('Wait for the chapter being written before changing a voice.');
+    await this.settled();
+    const candidate = cloneHarnessValue(this.state);
+    const entry = candidate.codexEntries.find(candidateEntry => candidateEntry.id === entryId && candidateEntry.storyId === storyId);
+    if (!entry || entry.kind !== 'character') throw new Error('This character is no longer in the Codex.');
+    if (entry.voice?.key === voiceKey) return;
+    entry.voice = { key: voiceKey, chosen: 'reader', at: this.runtime.now() };
+    await this.persist(candidate);
+  }
+
   async describeCodexLook(storyId: string, key: string): Promise<Look> {
     this.assertHydrated();
     const story = findStory(this.state, storyId);
@@ -1660,10 +1713,7 @@ export class HarnessGenerationController {
     if (!look) problem ??= 'The answer held no look that could be read. Please try again.';
     // Kept on the entry, against the state as it is once every save under way has landed:
     // a chapter written meanwhile is kept, never overwritten by an older copy.
-    for (let pending = this.saving; ; pending = this.saving) {
-      await pending;
-      if (pending === this.saving) break;
-    }
+    await this.settled();
     if (entry) {
       const candidate = cloneHarnessValue(this.state);
       const saved = candidate.codexEntries.find(candidateEntry => candidateEntry.id === entry.id);

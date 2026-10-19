@@ -21,6 +21,7 @@ import {
   type ReadAloudScript,
   type ReadAloudVoicePicks,
   type ReaderFonts,
+  type SpeechEngine,
   type ReaderPreferenceStorage,
   type ReaderStateRepository,
   type ReaderStoryState,
@@ -28,6 +29,7 @@ import {
   type SoundtrackChoice,
 } from '@seihouse/sen/reader-runtime';
 import { harnessParagraphBlockId } from '../shared/chapterBody';
+import { readAloudVoicesOf } from '../shared/voices';
 import { chapterTitleText } from '../../../narrative/chapterTitle';
 import { harnessStoryMode, nextArcStep } from '../shared/arcState';
 import { pendingChapterDirection } from '../shared/chapterDirection';
@@ -45,7 +47,7 @@ import type { ReaderChapter, ReaderChapterBody } from './readerChapterBody';
 import { ReaderPanel } from './ReaderPanel';
 import { ReaderSettingsSheet } from './ReaderSettingsSheet';
 import { ReaderTopBar } from './ReaderTopBar';
-import { StoryCodex } from './StoryCodex';
+import { StoryCodex, type CodexVoices } from './StoryCodex';
 import { useFollowNarration, type NarrationHighlight } from './useFollowNarration';
 import { useNextChapterWriter } from './useNextChapterWriter';
 import { readingScene, useReaderSoundtrack } from './useReaderSoundtrack';
@@ -138,7 +140,7 @@ function lineWhereTheReaderIs(script: ReadAloudScript, article: HTMLElement | nu
  */
 export function HarnessReaderSession({
   state, storyId, onClose, controller, readerStateRepository, onGenerateNextChapter, onRewriteChapter, onPlanArc, renderWriting, renderWriteAside, startOnOpen = false,
-  readerPreferences, readAloudVoices, soundscapes, readerFonts = DEFAULT_READER_FONTS, chapterBody: ChapterBody = ProseChapterBody, companion, codexPictures, renderHostTools,
+  readerPreferences, readAloudVoices, readAloudEngine, soundscapes, readerFonts = DEFAULT_READER_FONTS, chapterBody: ChapterBody = ProseChapterBody, companion, codexPictures, renderHostTools,
 }: {
   state: HarnessWorkspaceState; storyId: string; onClose: () => void; controller: HarnessGenerationController;
   /**
@@ -182,6 +184,12 @@ export function HarnessReaderSession({
   readerPreferences?: ReaderPreferenceStorage;
   /** The host's preferred narration voices, by story language and role. SEN prefers none. */
   readAloudVoices?: ReadAloudVoicePicks;
+  /**
+   * The speech Read Aloud uses: the browser's own voices by default. A host
+   * may pass any engine, such as full text-to-speech from any provider as a
+   * premium option; each spoken line names its character's SEIHouse cast voice.
+   */
+  readAloudEngine?: SpeechEngine;
   /**
    * The host's soundscapes: the Reader's own music before the story has a
    * chapter to take its pieces from (Chapter 1 being written). Without them,
@@ -356,14 +364,23 @@ export function HarnessReaderSession({
   const attempt = chapter && state.attempts.find(item => item.id === chapter.attemptId);
   const mainCharacter = useMemo(() => (attempt
     ? protagonistNames(attempt.storyInformation.currentStory, attempt.storyInformation.canonicalState.characters) : undefined), [attempt]);
+  // Each character speaks in the voice on their Codex card.
+  const characterVoices = useMemo(() => readAloudVoicesOf(state.codexEntries.filter(entry => entry.storyId === storyId)), [state.codexEntries, storyId]);
+  const voicesKey = Object.entries(characterVoices.byEntry).map(pair => pair.join('=')).join('|');
   const readAloud = useReadAloud({
-    scriptKey: chapter?.id ?? 'no-chapter',
+    scriptKey: chapter?.id ?? 'no-chapter', voicesKey,
     buildScript: () => (chapter ? buildReadAloudScript({
       chapterNumber: chapter.chapterNumber, title: chapter.title, language, paragraphs: blocks, speakers: chapter.speakers, mainCharacter,
+      voices: characterVoices,
     }) : NO_SCRIPT),
-    language, preferences: readerPreferences, picks: readAloudVoices,
+    language, preferences: readerPreferences, picks: readAloudVoices, ...(readAloudEngine ? { engine: readAloudEngine } : {}),
     suspended: covered,
   });
+  // The Codex keeps each character's voice, and lets the reader hear it in the engine Read Aloud uses.
+  const codexVoices = useMemo((): CodexVoices => ({
+    choose: (characterKey, voice) => controller.setCodexVoice(storyId, characterKey, voice),
+    hear: (character, voice) => readAloud.preview(character.mainCharacter ? 'protagonist' : 'side', { voice, text: character.voice?.first.text }),
+  }), [controller, storyId, readAloud.preview]);
   const reading = readAloud.status === 'playing' || readAloud.status === 'paused';
   const spoken = reading ? readAloud.line : undefined;
   // One highlight per sentence: a voice change mid-sentence keeps the same light.
@@ -512,7 +529,7 @@ export function HarnessReaderSession({
         onReadChapter={readChapter} />
     </ReaderPanel>
     <ReaderPanel open={panel === 'codex'} onClose={closeLayer} labelledBy="codex-panel-title" testId="reader-panel-codex" peek={codexPeek}>
-      <ReaderCodex state={state} storyId={storyId} chapters={chapters} storyTitle={story.title} onBack={closeLayer} pictures={codexPictures && {
+      <ReaderCodex state={state} storyId={storyId} chapters={chapters} storyTitle={story.title} onBack={closeLayer} voices={codexVoices} pictures={codexPictures && {
         pictureOf: codexPictures.pictureOf,
         // A card without a current look has it written first, from the story's own words, then pictured.
         manifest: async card => codexPictures.manifest({ ...card, look: card.look ?? await controller.describeCodexLook(storyId, card.key) }),
@@ -530,8 +547,9 @@ export function HarnessReaderSession({
  * The Codex inside the Reader: the story's record worked out from its
  * chapters as they are now. It is worked out only while the Codex is open.
  */
-function ReaderCodex({ state, storyId, chapters, storyTitle, pictures, onBack, onReadPassage, onReadChapter }: {
+function ReaderCodex({ state, storyId, chapters, storyTitle, pictures, voices, onBack, onReadPassage, onReadChapter }: {
   state: HarnessWorkspaceState;
+  voices?: CodexVoices;
   pictures?: CodexPictures;
   storyId: string;
   chapters: readonly HarnessChapter[];
@@ -549,5 +567,5 @@ function ReaderCodex({ state, storyId, chapters, storyTitle, pictures, onBack, o
     declared: foundation ? declaredCharacters(foundation) : [],
     declaredFactions: foundation?.identities?.filter(identity => identity.kind === 'faction') ?? [],
   }), [state.codexEntries, storyId, chapters, foundation]);
-  return <StoryCodex codex={codex} storyTitle={storyTitle} pictures={pictures} onBack={onBack} onReadPassage={onReadPassage} onReadChapter={onReadChapter} />;
+  return <StoryCodex codex={codex} storyTitle={storyTitle} pictures={pictures} voices={voices} onBack={onBack} onReadPassage={onReadPassage} onReadChapter={onReadChapter} />;
 }

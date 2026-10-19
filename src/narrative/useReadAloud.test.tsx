@@ -4,7 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildReadAloudScript, type ReadAloudVoicePicks } from './readAloud';
 import { SPEAKER_KIND, type SpeakerAttachment } from './speech';
-import { createWebSpeechEngine, useReadAloud, type ReadAloud, type SpeechEngine } from './useReadAloud';
+import { createWebSpeechEngine, useReadAloud, webSpeechPitch, type ReadAloud, type SpeechEngine } from './useReadAloud';
 import { createFakeSpeechSynthesis, fakeVoice, type FakeSpeechSynthesis } from '../test-utils/fakeSpeechSynthesis';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -19,7 +19,7 @@ const speakerRecord: SpeakerAttachment = {
   payload: { origin: 'harness', speaker: 'Ye Chen', protagonist: true },
 };
 
-interface HarnessProps { chapter: number; suspended?: boolean; storage?: ReturnType<typeof memoryStorage>['storage'] }
+interface HarnessProps { chapter: number; suspended?: boolean; storage?: ReturnType<typeof memoryStorage>['storage']; mainVoice?: string }
 
 const memoryStorage = () => {
   const values = new Map<string, string>();
@@ -43,7 +43,9 @@ const Harness = forwardRef<ReadAloud, HarnessProps>(function Harness(initial, re
       chapterNumber: props.chapter, title: props.chapter === 1 ? 'Low Tide' : 'Dawn', language: 'en',
       paragraphs: paragraphs.map((text, index) => ({ id: `c${props.chapter}-p${index}`, text })),
       speakers: props.chapter === 1 ? [speakerRecord] : [],
+      ...(props.mainVoice ? { voices: { byEntry: {}, main: props.mainVoice } } : {}),
     }),
+    voicesKey: props.mainVoice,
     language: 'en', picks: PICKS, preferences: props.storage, suspended: props.suspended, engine,
   });
   useImperativeHandle(ref, () => readAloud, [readAloud]);
@@ -55,6 +57,34 @@ const mount = (props: HarnessProps = { chapter: 1 }) => {
 };
 const texts = () => fake.spoken.map(utterance => utterance.text);
 const lastSpoken = () => fake.spoken.at(-1)!;
+
+describe('the browser\'s voices for each character', () => {
+  it('reads a character\'s line in their role\'s voice, its pitch shaped by their cast voice', () => {
+    const young = webSpeechPitch('young-disciple-male');
+    const elder = webSpeechPitch('old-grandmaster-male');
+    expect(young).toBeGreaterThan(1);
+    expect(elder).toBeLessThan(1);
+    expect(webSpeechPitch(undefined)).toBe(1);
+    expect(webSpeechPitch('not-a-voice')).toBe(1);
+    engine.speak({ text: 'Again.', role: 'side', character: 'old-grandmaster-male', lang: 'en-US', rate: 1, pitch: 1, volume: 1 },
+      { onStart: () => undefined, onEnd: () => undefined, onError: () => undefined });
+    expect(lastSpoken().pitch).toBeCloseTo(elder);
+  });
+});
+
+describe('a character\'s voice changed while listening', () => {
+  it('keeps the reader\'s place and reads their next line in the new voice', () => {
+    mount({ chapter: 1, mainVoice: 'young-disciple-male' });
+    act(() => player.play());
+    act(() => { fake.start(); fake.finish(); vi.advanceTimersByTime(50); });
+    expect(player.line?.text).toBe('The tide went out.');
+    act(() => setProps({ chapter: 1, mainVoice: 'old-grandmaster-male' }));
+    expect(player.status).toBe('playing');
+    act(() => { fake.start(); fake.finish(); vi.advanceTimersByTime(50); });
+    expect(player.line).toMatchObject({ text: '“Ring the bells,”', voice: 'old-grandmaster-male' });
+    expect(lastSpoken().pitch).toBeCloseTo(webSpeechPitch('old-grandmaster-male'));
+  });
+});
 
 describe('host playback interruption', () => {
   it('resumes its line once, but does not start a reader who was already paused', () => {

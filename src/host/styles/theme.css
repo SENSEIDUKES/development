@@ -48,9 +48,8 @@
   --color-zinc-900: #18181b;
   --color-zinc-950: #09090b;
 
-  /* Codex Card ambience — the slow drift of a single spectral mote inside a
-     reveal card. Per-mote duration/delay/drift are set inline so a small
-     deterministic field reads as organic without a canvas. */
+  /* Codex Card ambience — one slow transform/opacity animation for the
+     prepainted mote field, shared by reveal cards and hovercards. */
   --animate-codex-mote: codex-mote 10s ease-in-out infinite;
 
   @keyframes codex-mote {

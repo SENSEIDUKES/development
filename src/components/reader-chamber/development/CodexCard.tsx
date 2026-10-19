@@ -4,6 +4,7 @@ import { NarrativeCard as LibraryCard, NarrativeCardActions as LibraryCardAction
 import { NarrativeDragonCycleIcon as LibraryDragonCycleIcon } from '../../../presentation';
 import { isManifestationEligible } from '../shared/manifestationEligibility';
 import { CodexCardAmbience } from '../../reader-codex/development/CodexCardAmbience';
+import { CodexHovercard } from '../../reader-codex/development/CodexHovercard';
 import { resolveCodexEntityAccent, resolveCodexEntityColorCode } from '../../reader-codex/development/codexEntityAccent';
 import { selectNarrativeBackdrop, useNarrativeArt } from '../../../presentation';
 import './CodexCardInscription.css';
@@ -123,7 +124,7 @@ const SEAL_CORE_CLASS = [
  * The inline Reader reveal card for a Codex entity: spectral-glass surface,
  * entity ambient accent and mote field, manifested portrait (or the dragon-cycle
  * Manifest seal while none exists), the entity's name in the inscribed-name
- * treatment (settle-in reveal, frayed oath-thread underline, hover sheen —
+ * treatment (settle-in reveal and frayed oath-thread underline —
  * see `CodexCardInscription.css`), and the entity's description.
  */
 export const CodexCard: React.FC<CodexCardProps> = React.memo(({
@@ -139,6 +140,14 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
   const entry = revealTerm.entry;
   const revealImageUrl = entry && 'imageUrl' in entry ? entry.imageUrl : undefined;
   const revealImageAssetId = entry && 'imageAssetId' in entry ? entry.imageAssetId : undefined;
+  // Key failures to the entry and URL: a replacement asset gets a fresh attempt.
+  const [failedPortrait, setFailedPortrait] = React.useState<{ id: string; url: string } | null>(null);
+  const portraitFailed = failedPortrait?.id === entry.id && failedPortrait?.url === revealImageUrl;
+  const hasPortrait = Boolean(revealImageUrl) && !portraitFailed;
+  const codexType = revealTerm.type.trim().toLowerCase();
+  const category = codexType.charAt(0).toUpperCase() + codexType.slice(1);
+  const hasCodexDetails = codexType === 'character' || codexType === 'artifact'
+    || codexType === 'location' || codexType === 'faction';
   const entryId = entry?.id || 'reveal-entity';
   const assignedBackdrop = activeStory?.assignedRevealBackdrops?.[entryId] || selectNarrativeBackdrop(entryId, backdrops);
   const colorCode = resolveCodexEntityColorCode(revealTerm.type, entry, activeStory?.mcName);
@@ -165,12 +174,13 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
         data-color-code={colorCode}
         className={`${CODEX_CARD_SURFACE_CLASS} ${className}`}
       >
-        {!revealImageUrl && (
+        {!hasPortrait && (
           <LibraryCardMedia className="!absolute inset-0 h-full w-full !overflow-hidden pointer-events-none">
             <img
               src={assignedBackdrop}
-              alt="Backdrop"
-              className="absolute inset-0 w-full h-full object-cover opacity-[0.25] pointer-events-none transition-transform duration-1000 group-hover/reveal:scale-105 mix-blend-screen"
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 w-full h-full object-cover opacity-[0.25] pointer-events-none mix-blend-screen"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-void via-void/40 to-transparent pointer-events-none" />
           </LibraryCardMedia>
@@ -191,7 +201,7 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
                     className="pointer-events-none h-px w-8 min-w-3 sm:w-12 bg-[linear-gradient(to_right,transparent,color-mix(in_srgb,var(--library-card-accent)_50%,transparent))]"
                   />
                   <span className="whitespace-nowrap font-mono text-[10px] sm:text-[11px] text-[var(--library-card-accent)] uppercase tracking-widest font-bold [text-shadow:0_0_14px_color-mix(in_srgb,var(--library-card-accent)_45%,transparent)]">
-                    {revealTerm.type}
+                    <span className="sr-only">Category: </span>{category}
                   </span>
                   <span
                     aria-hidden="true"
@@ -201,19 +211,43 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
               )}
               className={REVEAL_HEADER_REGION_CLASS}
             />
-            {revealImageUrl ? (
+            {portraitFailed && (
+              <div className="mb-2 text-xs text-neutral-300">
+                <p role="status">Portrait unavailable.</p>
+                <button
+                  type="button"
+                  className="min-h-11 px-3 underline underline-offset-4"
+                  onClick={() => setFailedPortrait(null)}
+                >
+                  Retry portrait
+                </button>
+              </div>
+            )}
+            {hasPortrait ? (
               <LibraryCardMedia className="relative w-full shrink-0 rounded-lg overflow-hidden border bg-neutral-950 mb-3 border-[color-mix(in_srgb,var(--library-card-accent)_30%,#171717)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.6),0_0_28px_-8px_color-mix(in_srgb,var(--library-card-accent)_45%,transparent)]">
                 <img
+                  key={`${entry.id}:${revealImageUrl}`}
                   src={revealImageUrl}
                   alt={entry.name}
                   loading="lazy"
                   referrerPolicy="no-referrer"
-                  className="block w-full h-auto transition-transform duration-500 group-hover/reveal:scale-105"
+                  className="block w-full h-auto"
+                  onError={(event) => {
+                    if (!revealImageUrl) return;
+                    setFailedPortrait({ id: entry.id, url: revealImageUrl });
+                    // Hosts can subscribe at their Reader root without sending
+                    // signed/private asset URLs to a telemetry service.
+                    event.currentTarget.dispatchEvent(new CustomEvent('sen:codex-portrait-error', {
+                      bubbles: true,
+                      detail: { entryId: entry.id, type: codexType, imageAssetId: revealImageAssetId },
+                    }));
+                  }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
               </LibraryCardMedia>
             ) : (
-              !revealImageAssetId &&
+              (portraitFailed || !revealImageAssetId) &&
+              (!portraitFailed || onManifestReveal) &&
               isManifestationEligible(entry) && (
                 <LibraryCardActions className={TRANSPARENT_REGION_CLASS}>
                   <div className="mb-3 flex items-center justify-center">
@@ -234,7 +268,7 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
                         <LibraryDragonCycleIcon className={SEAL_DRAGON_VIOLET_CLASS} />
                         <LibraryDragonCycleIcon className={SEAL_DRAGON_CYAN_CLASS} />
                       </span>
-                      <span className={SEAL_CORE_CLASS}>
+                      <span aria-hidden="true" className={SEAL_CORE_CLASS}>
                         {generatingRevealId === entry.id ? (
                           <>
                             <LibraryDragonCycleIcon className="h-5 w-5 text-cyan-300 animate-spin motion-reduce:animate-none drop-shadow-[0_0_6px_rgba(4,172,255,0.6)]" />
@@ -260,7 +294,7 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
               )
             )}
             <LibraryCardTitle
-              as="h4"
+              as="h2"
               className={`codex-inscription${titleAwake ? ' codex-inscription--awake' : ''} font-display !font-medium !text-lg !leading-[normal] !tracking-wide !wrap-normal drop-shadow-md`}
             >
               <span className="codex-inscription__name">{entry.name}</span>
@@ -277,9 +311,23 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
               </svg>
             </LibraryCardTitle>
             {entry.description && (
-              <LibraryCardDescription className="font-serif italic !text-xs !leading-[normal] !text-neutral-300 !mt-1 !max-w-[280px] !line-clamp-2 !wrap-normal drop-shadow">
-                {entry.description}
-              </LibraryCardDescription>
+              <>
+                <LibraryCardDescription className={`font-serif italic !text-xs !leading-[normal] !text-neutral-300 !mt-1 !max-w-[280px] ${hasCodexDetails ? '!line-clamp-2' : ''} !wrap-normal drop-shadow`}>
+                  {entry.description}
+                </LibraryCardDescription>
+                {hasCodexDetails && (
+                  <div className="mt-2 text-xs [&_[role=button]]:inline-flex [&_[role=button]]:min-h-11 [&_[role=button]]:items-center [&_[role=button]]:px-3">
+                    <CodexHovercard
+                      term={entry.name}
+                      type={codexType}
+                      entry={(portraitFailed ? { ...entry, imageUrl: undefined } : entry) as React.ComponentProps<typeof CodexHovercard>['entry']}
+                      activeStory={activeStory ? { ...activeStory, mcName: activeStory.mcName ?? '' } : undefined}
+                    >
+                      Read more in Codex<span className="sr-only"> about {entry.name}</span>
+                    </CodexHovercard>
+                  </div>
+                )}
+              </>
             )}
           </LibraryCardBody>
         </LibraryCardContent>

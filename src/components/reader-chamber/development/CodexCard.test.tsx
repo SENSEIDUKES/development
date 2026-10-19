@@ -172,7 +172,7 @@ describe('Reader Codex and System routing', () => {
   ] as const)('routes %s reveal metadata to CodexCard', (_label, name, type, extra) => {
     renderReader(revealBlock(name, type), [codexTerm(name, type, extra)]);
 
-    expect(container.textContent).toContain(type);
+    expect(container.textContent).toContain(`Category: ${type.charAt(0).toUpperCase() + type.slice(1)}`);
     expect(container.textContent).toContain(name);
     expect(container.querySelector(`img[alt="${name}"]`)).toBeTruthy();
   });
@@ -180,8 +180,89 @@ describe('Reader Codex and System routing', () => {
   it('keeps a valid visual entry without artwork on CodexCard with Manifest available', () => {
     renderReader(revealBlock('Oath Seal', 'artifact'), [codexTerm('Oath Seal', 'artifact')]);
 
-    expect(container.textContent).toContain('artifact');
+    expect(container.textContent).toContain('Category: Artifact');
     expect(container.querySelector('button[aria-label="Manifest portrait for Oath Seal"]')).toBeTruthy();
+  });
+
+  it('places sibling entity reveals directly below the chapter heading without skipped levels', () => {
+    const blocks = [revealBlock('Rin', 'character'), revealBlock('Oath Seal', 'artifact')];
+    renderReader(blocks[0], [
+      codexTerm('Rin', 'character', { imageUrl: '/human.png' }),
+      codexTerm('Oath Seal', 'artifact'),
+    ], { blocks });
+
+    const headings = Array.from(container.querySelectorAll('h1, h2, h3, h4, h5, h6'));
+    expect(headings.map(heading => [heading.tagName, heading.textContent])).toEqual([
+      ['H1', baseChapter.title],
+      ['H2', 'Rin'],
+      ['H2', 'Oath Seal'],
+    ]);
+  });
+
+  it.each(['character', 'Character', ' CHARACTER '])('announces a normalized category for %s', (type) => {
+    act(() => root.render(<CodexCard revealTerm={{
+      ...codexTerm('Rin', 'character', { imageUrl: '/rin.png' }), type,
+    }} />));
+
+    expect(container.querySelector('[data-slot="card-header"]')?.textContent).toBe('Category: Character');
+  });
+
+  it('opens the complete description from the card with keyboard focus and Escape return', () => {
+    const description = `${'A long history of the Rain Court. '.repeat(25)}\n\nThe final oath remains unbroken.`;
+    act(() => root.render(<CodexCard revealTerm={codexTerm('Oath Seal', 'artifact', { description })} />));
+    const trigger = container.querySelector<HTMLElement>('[role="button"][aria-haspopup="dialog"]');
+    expect(trigger?.textContent).toBe('Read more in Codex about Oath Seal');
+    act(() => trigger!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })));
+    const dialog = document.body.querySelector<HTMLElement>('[role="dialog"]');
+    expect(dialog?.getAttribute('aria-label')).toBe('Oath Seal Codex details');
+    expect(document.activeElement).toBe(dialog);
+    const fullDescription = Array.from(dialog?.querySelectorAll('p') ?? []).find(p => p.textContent === description);
+    expect(fullDescription).toBeTruthy();
+    expect(fullDescription?.className).not.toContain('line-clamp');
+    act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+    expect(document.activeElement).toBe(trigger);
+    expect(trigger?.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('recovers a failed stored portrait through Manifest, reports its identity and accepts replacement media', () => {
+    const onManifestReveal = vi.fn();
+    const report = vi.fn();
+    container.addEventListener('sen:codex-portrait-error', report);
+    const term = codexTerm('Rin', 'character', { imageUrl: '/revoked.png?private=secret', imageAssetId: 'asset-rin' });
+    const render = () => act(() => root.render(<CodexCard revealTerm={term} onManifestReveal={onManifestReveal} />));
+    render();
+    act(() => container.querySelector('img[alt="Rin"]')!.dispatchEvent(new Event('error')));
+    expect(container.querySelector('img[alt="Rin"]')).toBeNull();
+    expect(container.querySelector('[role="status"]')?.textContent).toBe('Portrait unavailable.');
+    const seal = container.querySelector<HTMLButtonElement>('button[aria-label="Manifest portrait for Rin"]');
+    act(() => seal!.click());
+    expect(onManifestReveal).toHaveBeenCalledWith(term.entry, 'character');
+    expect(report).toHaveBeenCalledTimes(1);
+    expect((report.mock.calls[0][0] as CustomEvent).detail).toEqual({ entryId: term.entry.id, type: 'character', imageAssetId: 'asset-rin' });
+    expect(JSON.stringify((report.mock.calls[0][0] as CustomEvent).detail)).not.toContain('secret');
+
+    Object.assign(term.entry, { imageUrl: '/replacement.png' });
+    render();
+    expect(container.querySelector('img[alt="Rin"]')?.getAttribute('src')).toBe('/replacement.png');
+    expect(container.querySelector('[role="status"]')).toBeNull();
+    expect(container.querySelector('button[aria-label="Manifest portrait for Rin"]')).toBeNull();
+  });
+
+  it('offers an image retry without a manifestation host and keeps broken media out of details', () => {
+    const term = codexTerm('Rin', 'character', { imageUrl: '/unavailable.png', imageAssetId: 'asset-rin' });
+    act(() => root.render(<CodexCard revealTerm={term} />));
+    act(() => container.querySelector('img[alt="Rin"]')!.dispatchEvent(new Event('error')));
+    expect(container.querySelector('button[aria-label="Manifest portrait for Rin"]')).toBeNull();
+    const detailsTrigger = container.querySelector<HTMLElement>('[aria-haspopup="dialog"]');
+    act(() => detailsTrigger!.click());
+    expect(document.body.querySelector('[role="dialog"] img[src="/unavailable.png"]')).toBeNull();
+    act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+    const retry = Array.from(container.querySelectorAll('button')).find(button => button.textContent === 'Retry portrait');
+    expect(retry).toBeTruthy();
+    act(() => retry!.click());
+    expect(container.querySelector('img[alt="Rin"]')?.getAttribute('src')).toBe('/unavailable.png');
+    act(() => container.querySelector('img[alt="Rin"]')!.dispatchEvent(new Event('load')));
+    expect(container.querySelector('[role="status"]')).toBeNull();
   });
 
   it('does not render an informational Bestiary species as a CodexCard', () => {
@@ -208,7 +289,7 @@ describe('Reader Codex and System routing', () => {
       codexTerm('Lei', 'character', { portraitKind: 'non-human', imageUrl: '/lei.png' }),
     ]);
 
-    expect(container.textContent).toContain('character');
+    expect(container.textContent).toContain('Category: Character');
     expect(container.querySelector('img[alt="Lei"]')).toBeTruthy();
     expect(container.textContent).not.toContain('faction');
   });
@@ -316,6 +397,7 @@ describe('Reader Codex and System routing', () => {
 
     expect(container.querySelector('[data-slot="card-actions"]')?.className).toContain('!contents');
     expect(button).toBeTruthy();
+    expect(Array.from(button!.children).every(child => child.getAttribute('aria-hidden') === 'true')).toBe(true);
     // Native button activation: a real click (what Enter/Space produce).
     act(() => {
       button?.click();
@@ -335,9 +417,12 @@ describe('Reader Codex and System routing', () => {
     expect(container.textContent).toContain('Manifesting...');
     // The pending state is announced through the swapped aria-label.
     expect(container.querySelector('button[aria-label="Manifest portrait for Oath Seal"]')).toBeFalsy();
-    expect(container.querySelector<HTMLButtonElement>(
+    const manifestingButton = container.querySelector<HTMLButtonElement>(
       'button[aria-label="Manifesting portrait for Oath Seal"]',
-    )?.disabled).toBe(true);
+    );
+    expect(manifestingButton?.disabled).toBe(true);
+    expect(manifestingButton?.getAttribute('aria-busy')).toBe('true');
+    expect(Array.from(manifestingButton!.children).every(child => child.getAttribute('aria-hidden') === 'true')).toBe(true);
   });
 
   it('wears the spectral glass with the entity ambient accent, mote field, and circular seal', () => {

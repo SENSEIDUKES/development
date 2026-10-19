@@ -325,6 +325,16 @@ mode**. That means:
   is built, an opened Codex card offers Manifest, so the owner can see how well
   the looks the story wrote down bring its characters and items to life. It
   uses the prompts manifesting while reading will use.
+- **Media in the prose, information in the snapshot** (SENSEI, 2026-10-19).
+  Media tags (Sound Cues, soundscape, atmosphere) stay in the prose: the writer
+  recognizes a moment and picks from the story's own words, and no tag is a
+  correct answer. Information (who is in a chapter, looks, holdings, status,
+  and later place and ties) is never tagged in the prose. It lives in the
+  Codex snapshot, in one loop: the snapshot as the last chapter left it → one
+  plan step before the chapter reads it and decides → the writer writes the
+  chapter from that plan → the snapshot updates from the plan. Information
+  tags built before this decision (speakers, holdings, appearance and look)
+  are replaced one at a time; no new information tag is built.
 
 ## Where we are (2026-10-10)
 
@@ -897,6 +907,8 @@ Holdings fixer. Done when an exported story shows the tags landing reliably
 few sounds lost). A cost check can ride along: the same test on a second, cheaper
 model added to the Model Router, comparing tag accuracy and each chapter's
 receipt.
+
+**Replaced (SENSEI, 2026-10-19):** information is no longer tagged in the prose; see [Media in the prose, information in the snapshot](#how-we-build). Stage E1 below is kept as history until it is rewritten for the snapshot loop.
 
 **Stage E1: the information tags, one at a time.** Each is a new kind in the
 tiny SEN language, built with the five parts the

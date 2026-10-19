@@ -112,6 +112,8 @@ story.
 
 ### How it is built
 
+**Replaced (SENSEI, 2026-10-19):** information is no longer tagged in the prose. It lives in the Codex snapshot, decided by one plan step before each chapter; media tags stay in the prose. See [NOVEL_EXPANDED.md, How we build](../../../NOVEL_EXPANDED.md#how-we-build). The text below is kept as history until it is rewritten.
+
 The same way as Holdings: the writer tags only the moment something changes
 ("enters", "arrives at", "is wounded", "now wears"); the engine resolves names
 to entries and works out current state; every fact points at its passage. Full

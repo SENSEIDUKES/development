@@ -107,7 +107,7 @@ export function modelRouterStatus(environment: ModelEnvironment): ModelRouterSta
         description: 'Text models that write chapters, Story Seed Blueprints, and reader translations.',
         consumers: consumersFor('chapters'),
         defaultModel: chapters.defaultModel,
-        providers: providerStatus(environment, ['gemini', 'openrouter', 'minimax', ...(isLocalModelDevelopment(environment) ? ['lmstudio' as const] : [])]),
+        providers: providerStatus(environment, ['gemini', 'openrouter', 'minimax', 'anthropic', ...(isLocalModelDevelopment(environment) ? ['lmstudio' as const] : [])]),
         models: modelStatus(environment, chapterModels, chapters.defaultModel, true),
       },
       {

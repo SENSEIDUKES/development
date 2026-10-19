@@ -29,7 +29,12 @@ async function call(path: string, key: string, signal: AbortSignal, fetchImpl: t
     if (signal.aborted) throw error;
     throw new ModelRouterError('provider-error', 'Could not reach MiniMax.');
   }
-  if (!response.ok) throw new ModelRouterError('provider-error', `MiniMax returned HTTP ${response.status}. Check the key, plan access and remaining quota.`);
+  if (!response.ok) {
+    // Only MiniMax's numeric error code is kept from the body (2013 is invalid parameters).
+    const failed = await response.json().catch(() => undefined) as { base_resp?: { status_code?: unknown }; error?: { code?: unknown } } | undefined;
+    const code = [failed?.base_resp?.status_code, failed?.error?.code].find(value => /^\d{1,6}$/.test(String(value ?? '')));
+    throw new ModelRouterError('provider-error', `MiniMax returned HTTP ${response.status}${code !== undefined ? ` (code ${code})` : ''}. Check the key, model name, plan access and remaining quota.`);
+  }
   let result: Json;
   try { result = await response.json(); }
   catch (error) {

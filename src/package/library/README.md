@@ -329,9 +329,22 @@ Library UI renderer and named adapters keep their contracts.
 
 ## Server Model Router
 
+**2026-10-19:** Anthropic is a direct text provider through the official
+`@anthropic-ai/sdk`. Pass `credentials.anthropic` from the host's server
+environment (`ANTHROPIC_API_KEY`). Writer models are Claude Opus 5.5, Sonnet
+5.5, Haiku 5.5 and Fable 5.1 (`anthropic/<model>`). Requests stream, send low
+effort by default (`output_config.effort`; thinking is always on) and send no
+sampling parameters. Opus, Sonnet and Fable opt into Anthropic's server-side
+fallback (`fallbacks: "default"`), which reruns a policy decline on Anthropic's
+recommended model in the same call; Haiku 5.5 has none. A decline that remains
+is reported as an error, never returned as text. As with MiniMax, the JSON
+schema goes in the instructions and hosts keep validating the answer. MiniMax's
+M3.1 Flash id is now `minimax/MiniMax-M3.1-Flash`, MiniMax's own name; the
+earlier `-Preview` id is not in MiniMax's documented models.
+
 **2026-10-14:** MiniMax is a direct provider for text, images and video tasks.
 Pass `credentials.minimax` from the host's server environment. Writer models
-include M3.1 Flash Preview (low reasoning by default), M3 and the M2 series.
+include M3.1 Flash (low reasoning by default), M3 and the M2 series.
 MiniMax receives JSON schemas in the instructions; hosts keep validating the
 answer. Image prompts are limited to 1,500 characters; Image 01 Live requires
 a portrait reference. `generate({ capability: 'video', ... })` submits one

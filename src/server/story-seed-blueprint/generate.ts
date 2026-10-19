@@ -152,7 +152,7 @@ class RoutedWorldBlueprintProvider implements WorldBlueprintModelProvider {
   constructor(
     private readonly apiKey: string,
     private readonly model: string,
-    private readonly provider: 'openrouter' | 'minimax',
+    private readonly provider: 'openrouter' | 'minimax' | 'anthropic',
   ) {}
 
   async generate(request: BlueprintModelRequest<object>): Promise<unknown> {
@@ -211,8 +211,8 @@ export const createWorldBlueprintProvider = (
   config: Pick<ResolvedStorySeedBlueprintConfig, "provider" | "model"> & { apiKey: string },
 ): WorldBlueprintModelProvider => config.provider === "lmstudio"
   ? new LocalWorldBlueprintProvider(config.model, config.apiKey)
-  : config.provider === "minimax"
-  ? new RoutedWorldBlueprintProvider(config.apiKey, config.model, 'minimax')
+  : config.provider === "minimax" || config.provider === "anthropic"
+  ? new RoutedWorldBlueprintProvider(config.apiKey, config.model, config.provider)
   : config.provider === "openrouter"
   ? new OpenRouterWorldBlueprintProvider(config.apiKey, config.model)
   : new GeminiWorldBlueprintProvider(config.apiKey, config.model);

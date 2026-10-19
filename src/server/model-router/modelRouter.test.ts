@@ -143,7 +143,11 @@ describe('Model Router reasoning levels', () => {
 
   it('sends low by default wherever a model offers it, and keeps lower levels where they finish chapters', () => {
     expect(CHAPTER_MODELS.filter(model => model.reasoning?.sendDefault).map(model => [model.id, model.reasoning!.defaultLevel])).toEqual([
-      ['minimax/MiniMax-M3.1-Flash-Preview', 'low'],
+      ['anthropic/claude-opus-5-5', 'low'],
+      ['anthropic/claude-sonnet-5-5', 'low'],
+      ['anthropic/claude-haiku-5-5', 'low'],
+      ['anthropic/claude-fable-5-1', 'low'],
+      ['minimax/MiniMax-M3.1-Flash', 'low'],
       ['google/gemini-3.8-flash', 'low'],
       ['google/gemini-3.7-flash', 'low'],
       ['google/gemini-3.5-flash', 'low'],

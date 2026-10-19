@@ -1,6 +1,6 @@
 import type { HarnessProviderReceipt } from '@seihouse/sen/harness-generation';
 import { createModelRouter, ModelRouterError, type ReasoningLevel } from '@seihouse/library/model-router-server';
-import { requireTextModelKey, textModelProvider } from '../model-router/catalog';
+import { requireTextModelKey, textModelProvider, type TextProviderId } from '../model-router/catalog';
 import { DEVELOPMENT_OPENROUTER_ATTRIBUTION } from '../model-router/openRouter';
 import type { ResolvedHarnessGenerationConfig } from './config';
 
@@ -18,7 +18,7 @@ export interface HarnessTextGenerationResult {
   providerReceipt: HarnessProviderReceipt;
 }
 export interface HarnessTextModelProvider {
-  readonly provider: 'gemini' | 'openrouter' | 'lmstudio' | 'minimax';
+  readonly provider: TextProviderId;
   readonly model: string;
   generate(request: HarnessTextGenerationRequest): Promise<HarnessTextGenerationResult>;
 }
@@ -26,7 +26,7 @@ export interface HarnessTextModelProvider {
 const estimateTokens = (value: string) => Math.max(1, Math.ceil(value.trim().length / 4));
 
 class RoutedHarnessTextProvider implements HarnessTextModelProvider {
-  readonly provider: 'gemini' | 'openrouter' | 'lmstudio' | 'minimax';
+  readonly provider: TextProviderId;
   constructor(
     private readonly apiKey: string,
     readonly model: string,
@@ -72,7 +72,7 @@ class RoutedHarnessTextProvider implements HarnessTextModelProvider {
       if (error instanceof ModelRouterError && error.code === 'timeout') {
         throw new Error(`The provider exceeded the Harness Generation ${Math.ceil(timeoutMs / 1000)} second deadline.`);
       }
-      throw new Error(`${this.provider === 'lmstudio' ? 'LM Studio' : this.provider === 'gemini' ? 'Gemini' : this.provider === 'minimax' ? 'MiniMax' : 'OpenRouter'} Harness Generation failed: ${message}`);
+      throw new Error(`${this.provider === 'lmstudio' ? 'LM Studio' : this.provider === 'gemini' ? 'Gemini' : this.provider === 'minimax' ? 'MiniMax' : this.provider === 'anthropic' ? 'Anthropic' : 'OpenRouter'} Harness Generation failed: ${message}`);
     }
   }
 }
@@ -89,7 +89,7 @@ export const createHarnessTextProvider = (
   config: Pick<ResolvedHarnessGenerationConfig, 'keys' | 'reasoningEffort'>,
 ): HarnessTextModelProvider => {
   const apiKey = requireTextModelKey(model, config.keys);
-  if (['lmstudio', 'minimax'].includes(textModelProvider(model)!)) return new RoutedHarnessTextProvider(apiKey, model);
+  if (['lmstudio', 'minimax', 'anthropic'].includes(textModelProvider(model)!)) return new RoutedHarnessTextProvider(apiKey, model);
   return textModelProvider(model) === 'openrouter'
     ? new OpenRouterHarnessTextProvider(apiKey, model, config.reasoningEffort)
     : new GeminiHarnessTextProvider(apiKey, model);

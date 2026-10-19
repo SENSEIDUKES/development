@@ -106,6 +106,7 @@
     "@seihouse/audio-player": "^4.0.0"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.135.0",
     "@google/genai": "^2.16.0"
   },
   "devDependencies": {

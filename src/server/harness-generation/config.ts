@@ -4,6 +4,7 @@ import {
   resolveChapterModelRoute,
   textModelProvider,
   type ChapterModelRoute,
+  type TextProviderId,
 } from '../model-router/catalog';
 
 export type HarnessGenerationEnvironment = Record<string, string | undefined>;
@@ -18,7 +19,7 @@ export interface ResolvedHarnessGenerationConfig {
   apiKey?: string;
   /** Every provider credential the Model Router can route to. */
   keys: ChapterModelRoute['keys'];
-  provider: 'gemini' | 'openrouter' | 'lmstudio' | 'minimax';
+  provider: TextProviderId;
   reasoningEffort?: string;
   models: Array<{ id: string; label: string }>;
   defaultModel: string;

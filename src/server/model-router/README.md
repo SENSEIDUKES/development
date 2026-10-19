@@ -42,7 +42,7 @@ any model call that is not registered. See AGENTS.md.
 | --- | --- |
 | `GEMINI_API_KEY` | Gemini models |
 | `Minimax` (or `MINIMAX_API_KEY`) | Direct MiniMax writing, image and video requests; the existing Vercel key is `Minimax` |
-| `Claude-Sen` (or `ANTHROPIC_API_KEY`) | Direct Claude writer models; they appear once set |
+| `claude_sen` (or `ANTHROPIC_API_KEY`) | Direct Claude writer models; they appear once set |
 | `OpenRouter-Dev` (or `OPENROUTER_API_KEY`) | OpenRouter chapter models appear once set |
 | `OPENROUTER_MODELS` | Extra OpenRouter models, comma-separated (`openai/gpt-5.6-luna`) |
 | `OPENROUTER_REASONING_EFFORT` | Optional server fallback reasoning effort for OpenRouter models (the Router's Advanced setting wins; models that send their own default, below, never use it) |
@@ -133,7 +133,7 @@ are unchanged.
 
 - 2026-10-19 — Connected Claude directly through the official Anthropic SDK:
   Claude Opus 5.5, Sonnet 5.5, Haiku 5.5 and Fable 5.1 in Chapters →
-  Anthropic, once `Claude-Sen` (or `ANTHROPIC_API_KEY`) is set. Chapters, arc
+  Anthropic, once `claude_sen` (or `ANTHROPIC_API_KEY`) is set. Chapters, arc
   planning, the Holdings fixer, Look Describer and Blueprints follow the
   existing Router choice. Requests stream; low effort is sent by default
   (thinking is always on, effort sets how much), and the Router's

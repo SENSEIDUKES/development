@@ -37,12 +37,12 @@ describe('Anthropic direct provider', () => {
     expect(claude.map(model => model.id)).toEqual(['anthropic/claude-opus-5-5', 'anthropic/claude-sonnet-5-5', 'anthropic/claude-haiku-5-5', 'anthropic/claude-fable-5-1']);
     expect(resolveChapterModelRoute({}, 'MODELS', 'DEFAULT').models.some(model => model.id.startsWith('anthropic/'))).toBe(false);
     expect(resolveChapterModelRoute({ ANTHROPIC_API_KEY: 'secret' }, 'MODELS', 'DEFAULT').models.filter(model => model.id.startsWith('anthropic/'))).toHaveLength(4);
-    expect(resolveHarnessGenerationConfig({ 'Claude-Sen': 'secret' }).keys.anthropic).toBe('secret');
+    expect(resolveHarnessGenerationConfig({ claude_sen: 'secret' }).keys.anthropic).toBe('secret');
     expect(resolveHarnessGenerationConfig({ ANTHROPIC_API_KEY: 'secret' }).keys.anthropic).toBe('secret');
-    const status = modelRouterStatus({ 'Claude-Sen': 'secret' });
+    const status = modelRouterStatus({ claude_sen: 'secret' });
     expect(JSON.stringify(status)).not.toContain('secret');
     const chapters = status.capabilities.find(capability => capability.id === 'chapters')!;
-    expect(chapters.providers.find(provider => provider.id === 'anthropic')).toMatchObject({ label: 'Anthropic', keyVariable: 'Claude-Sen', configured: true });
+    expect(chapters.providers.find(provider => provider.id === 'anthropic')).toMatchObject({ label: 'Anthropic', keyVariable: 'claude_sen', configured: true });
     expect(chapters.models.filter(model => model.provider === 'anthropic').every(model => model.available && model.implemented)).toBe(true);
   });
 
@@ -87,7 +87,7 @@ describe('Anthropic direct provider', () => {
   it('connects the real HARNESS and Blueprint factories to the Claude key', async () => {
     const fetchMock = vi.fn(async () => streamed(['{"ok":true}']));
     vi.stubGlobal('fetch', fetchMock);
-    const harness = createHarnessTextProvider(text.model, resolveHarnessGenerationConfig({ 'Claude-Sen': 'secret' }));
+    const harness = createHarnessTextProvider(text.model, resolveHarnessGenerationConfig({ claude_sen: 'secret' }));
     expect(harness.provider).toBe('anthropic');
     expect((await harness.generate(text)).providerReceipt).toMatchObject({ provider: 'anthropic', model: text.model, usage: { source: 'reported' } });
     const blueprint = createWorldBlueprintProvider({ provider: 'anthropic', model: text.model, apiKey: 'secret' });

@@ -333,8 +333,9 @@ mode**. That means:
   Codex snapshot, in one loop: the snapshot as the last chapter left it → one
   plan step before the chapter reads it and decides → the writer writes the
   chapter from that plan → the snapshot updates from the plan. Information
-  tags built before this decision (speakers, holdings, appearance and look)
-  are replaced one at a time; no new information tag is built.
+  tags built before this decision (holdings, appearance and look) move to the
+  plan step together; no new information tag is built. Who speaks each line
+  stays on the line, in each paragraph's speaker field.
 
 ## Where we are (2026-10-10)
 

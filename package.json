@@ -48,6 +48,7 @@
     "verify": "npm run typecheck && npm test && npm run check:ownership && npm run check:package-boundaries && npm run check:app && npm run test:package"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.135.0",
     "@google/genai": "^2.16.0",
     "@seihouse/audio-player": "file:vendor/seihouse-audio-player-4.0.0-steady-pitch.tgz",
     "@seihouse/library-ui": "file:vendor/seihouse-library-ui-0.10.0.tgz",

@@ -1,13 +1,16 @@
+import type Anthropic from '@anthropic-ai/sdk';
 import type { GoogleGenAI } from '@google/genai';
-import type { ReasoningLevel } from './catalog';
+import type { ReasoningLevel, TextProviderId } from './catalog';
 
 export interface ModelRouterConfig {
   /** Explicit host opt-in; also requires a development runtime, never a deployment. */
   localDevelopment?: boolean;
-  credentials: { gemini?: string; openrouter?: string; elevenlabs?: string; minimax?: string };
+  credentials: { gemini?: string; openrouter?: string; elevenlabs?: string; minimax?: string; anthropic?: string };
   openRouterAttribution?: { referer?: string; title?: string };
   fetch?: typeof fetch;
   createGeminiClient?: (apiKey: string) => Pick<GoogleGenAI, 'models'>;
+  /** Tests inject a client; otherwise the official Anthropic SDK is used. */
+  createAnthropicClient?: (apiKey: string) => Pick<Anthropic, 'beta'>;
 }
 
 export interface TextGenerationRequest {
@@ -15,7 +18,7 @@ export interface TextGenerationRequest {
   model: string;
   systemInstruction: string;
   userPrompt: string;
-  /** Custom sampling for non-Gemini models only; Gemini uses provider defaults. */
+  /** Custom sampling for non-Gemini models only; Gemini and Claude use provider defaults. */
   temperature: number;
   maxOutputTokens: number;
   timeoutMs: number;
@@ -68,7 +71,7 @@ export interface VideoTaskResult {
 export type GenerationRequest = TextGenerationRequest | SpeechGenerationRequest | ImageGenerationRequest | VideoGenerationRequest;
 export interface TokenUsage { inputTokens: number; outputTokens: number; totalTokens: number }
 export type GenerationResult =
-  | { capability: 'text'; provider: 'gemini' | 'openrouter' | 'lmstudio' | 'minimax'; model: string; text: string; usage?: TokenUsage }
+  | { capability: 'text'; provider: TextProviderId; model: string; text: string; usage?: TokenUsage }
   | { capability: 'tts'; provider: 'elevenlabs'; model: string; bytes: Uint8Array; mimeType: 'audio/mpeg' }
   /** `data` is the image's bytes in base64, as the providers return them. */
   | { capability: 'image'; provider: 'gemini' | 'openrouter' | 'minimax'; model: string; data: string; mimeType: string }

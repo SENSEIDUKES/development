@@ -6,7 +6,7 @@ and on every preview (`src/workshop/ModelRouterSettings.tsx`); the old
 `?preview=model-router` page is archived but still reachable.
 
 - **Created:** 2026-09-23
-- **Last Workshop update:** 2026-10-14
+- **Last Workshop update:** 2026-10-19
 - **Last source comparison:** 2026-09-23 (DEV-native; no production counterpart)
 - **Status:** active (gear); Systems card archived; owner `deferred` (server/host infrastructure, in no package)
 
@@ -14,7 +14,7 @@ and on every preview (`src/workshop/ModelRouterSettings.tsx`); the old
 
 | Capability | Providers | Consumers |
 | --- | --- | --- |
-| Chapters | Gemini, OpenRouter, MiniMax, local LM Studio | Harness Generation, Holdings Fixer, Story Seed Blueprint, Story Spark, Reader Translation |
+| Chapters | Gemini, OpenRouter, MiniMax, Anthropic, local LM Studio | Harness Generation, Holdings Fixer, Story Seed Blueprint, Story Spark, Reader Translation |
 | Images | Gemini, OpenRouter, MiniMax | Story Cover, Image Lab, Profile Picture |
 | TTS | ElevenLabs | Codex Voice Quote |
 | Audio | Gemini | none yet (catalog only) |
@@ -22,7 +22,7 @@ and on every preview (`src/workshop/ModelRouterSettings.tsx`); the old
 | 3D | Tripo AI | none yet (catalog only) |
 
 Model ids carry their route: `google/<model>` → Gemini, `openrouter/<vendor>/<model>`
-→ OpenRouter, `eleven_*` → ElevenLabs, and `tripo-*` → Tripo AI.
+→ OpenRouter, `minimax/<model>` → MiniMax, `anthropic/<model>` → Anthropic, `eleven_*` → ElevenLabs, and `tripo-*` → Tripo AI.
 
 The audio catalog lists Lyria 3.5 and Lyria 3 Clip Preview. The video catalog lists
 Veo 3.1, Veo 3.1 Fast, and Veo 3.1 Lite Preview. The 3D catalog lists Tripo V3.1
@@ -42,6 +42,7 @@ any model call that is not registered. See AGENTS.md.
 | --- | --- |
 | `GEMINI_API_KEY` | Gemini models |
 | `Minimax` (or `MINIMAX_API_KEY`) | Direct MiniMax writing, image and video requests; the existing Vercel key is `Minimax` |
+| `Claude-Sen` (or `ANTHROPIC_API_KEY`) | Direct Claude writer models; they appear once set |
 | `OpenRouter-Dev` (or `OPENROUTER_API_KEY`) | OpenRouter chapter models appear once set |
 | `OPENROUTER_MODELS` | Extra OpenRouter models, comma-separated (`openai/gpt-5.6-luna`) |
 | `OPENROUTER_REASONING_EFFORT` | Optional server fallback reasoning effort for OpenRouter models (the Router's Advanced setting wins; models that send their own default, below, never use it) |
@@ -56,6 +57,7 @@ any model call that is not registered. See AGENTS.md.
 
 - `catalog.ts` — models, providers, routing and key resolution
 - `openRouter.ts` — OpenRouter chat-completions call
+- `src/library/model-router/anthropic.ts` — Claude through the official Anthropic SDK
 - `geminiThinking.ts` — maps Router reasoning levels to Gemini `thinkingLevel`
 - `status.ts` — capability status for the Workshop
 - `vercelHandler.ts` → `api/model-router.js` (built by `scripts/buildModelRouterApi.mjs`)
@@ -129,8 +131,29 @@ are unchanged.
 
 ## Workshop history
 
+- 2026-10-19 — Connected Claude directly through the official Anthropic SDK:
+  Claude Opus 5.5, Sonnet 5.5, Haiku 5.5 and Fable 5.1 in Chapters →
+  Anthropic, once `Claude-Sen` (or `ANTHROPIC_API_KEY`) is set. Chapters, arc
+  planning, the Holdings fixer, Look Describer and Blueprints follow the
+  existing Router choice. Requests stream; low effort is sent by default
+  (thinking is always on, effort sets how much), and the Router's
+  temperature is never sent: these models take no custom sampling. The JSON
+  schema goes in the instructions, as for MiniMax: the chapter schema's exact
+  paragraph count is a constraint Claude's strict JSON outputs refuse. Opus,
+  Sonnet and Fable opt into Anthropic's server-side fallback, which reruns a
+  policy decline on Anthropic's recommended model in the same call; Haiku has
+  none, and a remaining decline is reported as an error. Not yet timed against
+  the chapter deadline with the real key. Prices per million tokens in/out:
+  Haiku $0.10/$0.50, Sonnet $2/$10, Opus $4/$20, Fable $10/$50.
+- 2026-10-19 — MiniMax M3.1 Flash is called by MiniMax's own id,
+  `MiniMax-M3.1-Flash`. The catalog listed `MiniMax-M3.1-Flash-Preview`, which
+  MiniMax's writer API docs do not list, so M3.1 requests named a model MiniMax
+  does not serve. A browser that saved the
+  old id needs M3.1 Flash chosen again in the Router. A failed MiniMax reply now
+  keeps MiniMax's numeric error code in the server log (never its text).
+
 - 2026-10-14 — Connected MiniMax directly: nine documented writer models
-  (M3.1 Flash Preview, M3, M2.7/M2.5/M2.1 and their highspeed variants, M2),
+  (M3.1 Flash, M3, M2.7/M2.5/M2.1 and their highspeed variants, M2),
   Image 01 and Image 01 Live, and eleven H3/Hailuo/T2V/I2V/S2V video models.
   Chapters, arc planning, the Holdings fixer and Blueprints follow the existing
   Router choice; covers, Image Lab and profile portraits accept MiniMax images.

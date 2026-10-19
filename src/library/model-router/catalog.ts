@@ -10,13 +10,16 @@
  * - `google/<model>` (or bare `gemini-…`) → Google Gemini API (`GEMINI_API_KEY`)
  * - `openrouter/<vendor>/<model>` → OpenRouter (`OPENROUTER_API_KEY`)
  * - `minimax/<model>` → MiniMax directly (`MINIMAX_API_KEY`)
+ * - `anthropic/<model>` → Anthropic directly (`ANTHROPIC_API_KEY`)
  * - `eleven_…` → ElevenLabs (`ELEVENLABS_API_KEY`)
  * - `tripo-…` → Tripo API (`TRIPO_API_KEY`)
  */
 
 export type ModelEnvironment = Record<string, string | undefined>;
 export type ModelCapability = 'chapters' | 'images' | 'tts' | 'audio' | 'video' | '3d';
-export type ModelProviderId = 'gemini' | 'openrouter' | 'elevenlabs' | 'tripo' | 'lmstudio' | 'minimax';
+export type ModelProviderId = 'gemini' | 'openrouter' | 'elevenlabs' | 'tripo' | 'lmstudio' | 'minimax' | 'anthropic';
+/** Providers that serve chapter-capable text models. */
+export type TextProviderId = 'gemini' | 'openrouter' | 'lmstudio' | 'minimax' | 'anthropic';
 export type ModelStage = 'current' | 'preview' | 'legacy';
 
 /** Reasoning (thinking) levels across providers, lowest to highest. */
@@ -64,6 +67,8 @@ const OPENAI_LEVELS: readonly ReasoningLevel[] = ['none', 'low', 'medium', 'high
 // reasons: OpenRouter refuses 'none' ("Reasoning is mandatory for this endpoint").
 const OPEN_MODEL_LEVELS: readonly ReasoningLevel[] = ['none', 'low', 'medium', 'high'];
 const ALWAYS_REASONING_LEVELS: readonly ReasoningLevel[] = ['low', 'medium', 'high'];
+// Claude's effort levels (`output_config.effort`). Thinking is always on; effort sets how much.
+const CLAUDE_LEVELS: readonly ReasoningLevel[] = ['low', 'medium', 'high', 'xhigh', 'max'];
 
 /**
  * `keyVariable` is the name shown in messages and the Router; `keyVariables`
@@ -71,6 +76,7 @@ const ALWAYS_REASONING_LEVELS: readonly ReasoningLevel[] = ['low', 'medium', 'hi
  */
 export const MODEL_PROVIDERS: Record<ModelProviderId, { label: string; keyVariable: string; keyVariables: readonly string[] }> = {
   minimax: { label: 'MiniMax', keyVariable: 'MINIMAX_API_KEY', keyVariables: ['MINIMAX_API_KEY'] },
+  anthropic: { label: 'Anthropic', keyVariable: 'ANTHROPIC_API_KEY', keyVariables: ['ANTHROPIC_API_KEY'] },
   lmstudio: { label: 'Local (LM Studio)', keyVariable: '', keyVariables: [] },
   gemini: { label: 'Google Gemini', keyVariable: 'GEMINI_API_KEY', keyVariables: ['GEMINI_API_KEY'] },
   openrouter: { label: 'OpenRouter', keyVariable: 'OPENROUTER_API_KEY', keyVariables: ['OPENROUTER_API_KEY'] },
@@ -84,7 +90,15 @@ const OPENROUTER_PATTERN = /^openrouter\/[a-z0-9][a-z0-9._-]*\/[a-z0-9~][a-z0-9.
 
 /** Text models for chapter generation, newest first within each provider. */
 export const CHAPTER_MODELS: readonly RoutedModel[] = [
-  { id: 'minimax/MiniMax-M3.1-Flash-Preview', label: 'MiniMax M3.1 Flash Preview', provider: 'minimax', stage: 'preview', reasoning: { levels: ['low', 'medium', 'high', 'xhigh', 'max'], defaultLevel: 'low', sendDefault: true } },
+  // Claude through Anthropic directly. Every model sends low effort unless the
+  // reader chooses another; the API defaults (medium, or high on Sonnet) think longer.
+  { id: 'anthropic/claude-opus-5-5', label: 'Claude Opus 5.5', provider: 'anthropic', stage: 'current', reasoning: { levels: CLAUDE_LEVELS, defaultLevel: 'low', sendDefault: true } },
+  { id: 'anthropic/claude-sonnet-5-5', label: 'Claude Sonnet 5.5', provider: 'anthropic', stage: 'current', reasoning: { levels: CLAUDE_LEVELS, defaultLevel: 'low', sendDefault: true } },
+  { id: 'anthropic/claude-haiku-5-5', label: 'Claude Haiku 5.5', provider: 'anthropic', stage: 'current', reasoning: { levels: CLAUDE_LEVELS, defaultLevel: 'low', sendDefault: true } },
+  { id: 'anthropic/claude-fable-5-1', label: 'Claude Fable 5.1', provider: 'anthropic', stage: 'current', reasoning: { levels: CLAUDE_LEVELS, defaultLevel: 'low', sendDefault: true } },
+  // MiniMax's id is `MiniMax-M3.1-Flash` (writer API docs, 2026-10-19); the earlier
+  // `-Preview` id is not among MiniMax's documented models.
+  { id: 'minimax/MiniMax-M3.1-Flash', label: 'MiniMax M3.1 Flash', provider: 'minimax', stage: 'current', reasoning: { levels: ['low', 'medium', 'high', 'xhigh', 'max'], defaultLevel: 'low', sendDefault: true } },
   ...['MiniMax-M3', 'MiniMax-M2.7', 'MiniMax-M2.7-highspeed', 'MiniMax-M2.5', 'MiniMax-M2.5-highspeed', 'MiniMax-M2.1', 'MiniMax-M2.1-highspeed', 'MiniMax-M2'].map(name => ({
     id: `minimax/${name}`, label: name.replace('MiniMax-', 'MiniMax '), provider: 'minimax' as const,
     stage: name.startsWith('MiniMax-M3') || name.startsWith('MiniMax-M2.7') ? 'current' as const : 'legacy' as const,
@@ -186,8 +200,9 @@ export const providerKey = (environment: ModelEnvironment, provider: ModelProvid
 };
 
 /** Which provider serves a chapter-capable text model id, or undefined when the id is not routable. */
-export const textModelProvider = (model: string): 'gemini' | 'openrouter' | 'lmstudio' | 'minimax' | undefined => {
-  if (CHAPTER_MODELS.some(option => option.provider === 'minimax' && option.id === model)) return 'minimax';
+export const textModelProvider = (model: string): TextProviderId | undefined => {
+  const listed = CHAPTER_MODELS.find(option => option.id === model)?.provider;
+  if (listed === 'minimax' || listed === 'anthropic') return listed;
   if (model === LOCAL_LM_STUDIO_MODEL) return 'lmstudio';
   if (GEMINI_TEXT_PATTERN.test(model)) return 'gemini';
   if (OPENROUTER_PATTERN.test(model)) return 'openrouter';
@@ -196,7 +211,7 @@ export const textModelProvider = (model: string): 'gemini' | 'openrouter' | 'lms
 
 /** The provider-facing model name: `google/gemini-3.8-flash` → `gemini-3.8-flash`, `openrouter/openai/gpt-6-luna` → `openai/gpt-6-luna`. */
 export const providerModelName = (model: string): string =>
-  model.startsWith(OPENROUTER_PREFIX) ? model.slice(OPENROUTER_PREFIX.length) : model.replace(/^(?:google|minimax)\//, '');
+  model.startsWith(OPENROUTER_PREFIX) ? model.slice(OPENROUTER_PREFIX.length) : model.replace(/^(?:google|minimax|anthropic)\//, '');
 
 const titleCase = (value: string) => value
   .split('-')
@@ -224,7 +239,7 @@ const asOpenRouterId = (model: string) => model.startsWith(OPENROUTER_PREFIX) ? 
 export interface ChapterModelRoute {
   models: Array<{ id: string; label: string }>;
   defaultModel: string;
-  keys: Partial<Record<'gemini' | 'openrouter' | 'lmstudio' | 'minimax', string>>;
+  keys: Partial<Record<TextProviderId, string>>;
 }
 
 /**
@@ -242,6 +257,7 @@ export const resolveChapterModelRoute = (
 ): ChapterModelRoute => {
   const keys = {
     minimax: providerKey(environment, 'minimax'),
+    anthropic: providerKey(environment, 'anthropic'),
     gemini: providerKey(environment, 'gemini'),
     openrouter: providerKey(environment, 'openrouter'),
     ...(isLocalModelDevelopment(environment) ? { lmstudio: 'local-dev' } : {}),
@@ -249,7 +265,8 @@ export const resolveChapterModelRoute = (
   const pinned = csv(environment[listVariable]);
   const extras = csv(environment.OPENROUTER_MODELS).map(asOpenRouterId);
   const catalog = CHAPTER_MODELS
-    .filter(model => (model.provider !== 'openrouter' || keys.openrouter) && (model.provider !== 'minimax' || keys.minimax))
+    .filter(model => (model.provider !== 'openrouter' || keys.openrouter) && (model.provider !== 'minimax' || keys.minimax)
+      && (model.provider !== 'anthropic' || keys.anthropic))
     .map(model => model.id);
   const ids = [...new Set([...pinned, ...extras, ...catalog, ...(keys.lmstudio ? [LOCAL_LM_STUDIO_MODEL] : [])])]
     .filter(model => textModelProvider(model) && (textModelProvider(model) !== 'lmstudio' || keys.lmstudio));
@@ -299,4 +316,4 @@ export const lowestReasoningLevel = (model: string): ReasoningLevel | undefined 
   CHAPTER_MODELS.find(option => option.id === model)?.reasoning?.levels[0];
 
 export const isMissingKeyMessage = (message: string): boolean =>
-  /(?:GEMINI_API_KEY|OPENROUTER_API_KEY|MINIMAX_API_KEY) is not configured/.test(message);
+  /(?:GEMINI_API_KEY|OPENROUTER_API_KEY|MINIMAX_API_KEY|ANTHROPIC_API_KEY) is not configured/.test(message);

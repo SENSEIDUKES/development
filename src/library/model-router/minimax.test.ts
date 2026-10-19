@@ -134,6 +134,18 @@ describe('MiniMax direct provider', () => {
     await expect(promise).rejects.not.toMatchObject({ message: expect.stringContaining('secret') });
   });
 
+  it('keeps MiniMax\'s numeric error code from a failed reply, never its text', async () => {
+    const response = new Response(JSON.stringify({ base_resp: { status_code: 2013, status_msg: 'secret' } }), { status: 400 });
+    const promise = createModelRouter({ credentials: { minimax: 'secret' }, fetch: vi.fn(async () => response) }).generate(text);
+    await expect(promise).rejects.toMatchObject({ code: 'provider-error', message: expect.stringContaining('HTTP 400 (code 2013)') });
+    await expect(promise).rejects.not.toMatchObject({ message: expect.stringContaining('secret') });
+  });
+
+  it('calls M3.1 Flash by MiniMax\'s own model name', () => {
+    expect(CHAPTER_MODELS.some(model => model.id === 'minimax/MiniMax-M3.1-Flash')).toBe(true);
+    expect(CHAPTER_MODELS.some(model => model.id.endsWith('-Preview') && model.provider === 'minimax')).toBe(false);
+  });
+
   it('keeps the deadline active while the reply body is still being read', async () => {
     const fetchMock = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => ({ ok: true, json: () => new Promise((_resolve, reject) => init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))) }) as Response);
     await expect(createModelRouter({ credentials: { minimax: 'secret' }, fetch: fetchMock }).generate({ ...text, timeoutMs: 10 })).rejects.toMatchObject({ code: 'timeout' });

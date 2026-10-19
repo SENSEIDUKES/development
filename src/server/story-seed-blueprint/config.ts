@@ -3,6 +3,7 @@ import {
   providerKey,
   providerModelName,
   textModelProvider,
+  type TextProviderId,
 } from "../model-router/catalog";
 
 export type StorySeedBlueprintEnvironment = Record<string, string | undefined>;
@@ -16,7 +17,7 @@ const finiteNumber = (value: string | undefined, fallback: number): number => {
 export interface ResolvedStorySeedBlueprintConfig {
   /** Provider credential, or the local-development permission marker for LM Studio. */
   apiKey?: string;
-  provider: "gemini" | "openrouter" | "lmstudio" | "minimax";
+  provider: TextProviderId;
   accessToken?: string;
   model: string;
   temperature: number;

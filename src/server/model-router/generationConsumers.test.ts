@@ -14,7 +14,7 @@ const SOURCE = /\.(?:[cm]?[jt]sx?)$/;
 const IGNORED = /(?:\.test\.|\.spec\.|\/node_modules\/|^src\/server\/model-router\/|^scripts\/smokePackage\.mjs$)/;
 
 /** Markers of a model call: provider SDKs and endpoints, or the router's provider factories. */
-const GENERATION_CALL = /@google\/genai|generativelanguage\.googleapis\.com|openrouter\.ai|elevenlabs\.io|api\.openai\.com|api\.anthropic\.com|api\.minimax\.io|\bcreate(?:Harness|Chapter)TextProvider\(|\bcreateWorldBlueprintProvider\(|\bgenerateOpenRouterText\(/;
+const GENERATION_CALL = /@google\/genai|generativelanguage\.googleapis\.com|openrouter\.ai|elevenlabs\.io|api\.openai\.com|api\.anthropic\.com|@anthropic-ai\/sdk|api\.minimax\.io|\bcreate(?:Harness|Chapter)TextProvider\(|\bcreateWorldBlueprintProvider\(|\bgenerateOpenRouterText\(/;
 
 const sourceFiles = (directory: string): string[] => readdirSync(path.join(ROOT, directory)).flatMap(name => {
   const relative = `${directory}/${name}`;

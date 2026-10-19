@@ -1,7 +1,9 @@
+import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenAI } from '@google/genai';
 import { geminiThinkingConfig } from './geminiThinking';
 import { generateOpenRouterImage, generateOpenRouterText } from './openRouter';
 import { createMiniMaxVideoTask, generateMiniMaxImage, generateMiniMaxText, queryMiniMaxVideoTask } from './minimax';
+import { generateAnthropicText } from './anthropic';
 import { ModelRouterError } from './error';
 export { ModelRouterError } from './error';
 import {
@@ -15,7 +17,7 @@ import {
 export type { ModelCapability, ReasoningLevel } from './catalog';
 export { CHAPTER_MODELS, IMAGE_MODELS, TTS_MODELS, AUDIO_MODELS, VIDEO_MODELS, THREE_D_MODELS, REASONING_LEVELS } from './catalog';
 export { DEFAULT_CHAPTER_MODEL, DEFAULT_IMAGE_MODEL, DEFAULT_TTS_MODEL, imageModelProvider, MODEL_PROVIDERS, lowestReasoningLevel, providerKey, providerModelName, resolveChapterModelRoute, resolveReasoningLevel, textModelProvider, textModelLabel, requireTextModelKey, missingKeyMessage, isMissingKeyMessage } from './catalog';
-export type { ModelEnvironment, ModelProviderId, ModelStage, ModelReasoning, RoutedModel, ChapterModelRoute } from './catalog';
+export type { ModelEnvironment, ModelProviderId, TextProviderId, ModelStage, ModelReasoning, RoutedModel, ChapterModelRoute } from './catalog';
 export { LOCAL_LM_STUDIO_MODEL, isLocalModelDevelopment } from './catalog';
 export { generateOpenRouterImage, generateOpenRouterText } from './openRouter';
 export type { OpenRouterImageRequest, OpenRouterTextRequest, OpenRouterTextResult } from './openRouter';
@@ -53,6 +55,12 @@ export function createModelRouter(config: ModelRouterConfig) {
       if (provider === 'minimax') {
         const key = requireCredential(config.credentials.minimax, 'MINIMAX_API_KEY');
         const result = await withTimeout(request.timeoutMs, signal => generateMiniMaxText(request, key, signal, fetchImpl));
+        return { capability: 'text', provider, model: request.model, ...result };
+      }
+      if (provider === 'anthropic') {
+        const key = requireCredential(config.credentials.anthropic, 'ANTHROPIC_API_KEY');
+        const client = config.createAnthropicClient?.(key) ?? new Anthropic({ apiKey: key });
+        const result = await withTimeout(request.timeoutMs, signal => generateAnthropicText(request, client, signal));
         return { capability: 'text', provider, model: request.model, ...result };
       }
       if (provider === 'lmstudio') {

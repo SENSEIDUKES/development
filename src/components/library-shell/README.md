@@ -362,3 +362,11 @@ Workshop's Familiar surfaces both do.
 ### 2026-10-11 — Keep Master enabled when muting from the shell
 
 The shell music note now uses the same independent soundtrack mute as the Reader note. Tapping it saves Master mute without disabling the Master switch shared with Reader Settings. Explicit saved Master-off choices remain respected. Header and app regression coverage verifies the distinction.
+
+## Discover joins NovelExpanded — 2026-10-20
+
+NovelExpanded now lists all four places: Home, Create, Discover and Profile. Its
+Discover page (`/app/?page=discover`) uses the Library's own Discover location
+(`screen: home`, `collection: challenges`), so selecting Discover again on Discover
+is no move, and the app opens that location as Discover. The Workshop's Library
+preview still opens Fate Survival's collection there.

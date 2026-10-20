@@ -556,7 +556,9 @@ Update it whenever it changes.
     device. Search opens the reader's stories; the footer offers Help and the
     draft Terms, Privacy and Cookies. Create is Story Seed in the shell's
     workspace mode (Sections, Story Bank, Settings, Back). The Reader stays
-    full-screen. Discover joins the navigation when its page comes to the app.
+    full-screen. Discover is in the navigation too (2026-10-20), with sample
+    worlds: its structure is in and its look and feel is being refined
+    ([`docs/discover-page.md`](./docs/discover-page.md)).
   - **Profile is in the app, with what it connects to,** so the pieces can be
     seen working together and refined there. Profile is a third place in the
     navigation (Home, Create, Profile, with Settings beside it); it is the
@@ -776,8 +778,10 @@ Update it whenever it changes.
   - The app's Profile runs on the device and a practice economy: there are no
     accounts, database or server-side storage yet, so nothing the economy holds
     survives a reload, and the account and server pieces wait.
-  - Creator Space and Discover are Library package entries the Workshop
-    previews; the NovelExpanded app does not use them yet.
+  - Creator Space is a Library package entry the Workshop previews; the
+    NovelExpanded app does not use it yet.
+  - Discover is in the app with sample worlds only: no public worlds,
+    releases, Tracker, signals, Rankings or Events are real yet.
 - **Not rebuilt yet:**
   - manifestations;
   - System Panels, including the Fate Survival result card;
@@ -849,7 +853,8 @@ When a session asks "what now?", start here:
    View, and piece 5, cover art on Story View through the media reveal. Next
    pieces:
    - a Workshop switch to inspect the app's stories;
-   - Discover.
+   - Discover: its structure is in with sample worlds (2026-10-20); next, the
+     owner refines its look and feel, then real worlds replace the samples.
 
    **The owner's plan:** assemble the app here, a piece at a time, until it is
    right; then copy it into its own repository and build the database there

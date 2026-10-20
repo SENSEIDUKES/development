@@ -44,7 +44,7 @@ function archiveToggle() {
 }
 
 const ACTIVE_GROUPS = {
-  Pages: ['light-novels-home', 'library-shell', 'creator-space', 'story-seed', 'reader-chamber', 'reader-codex', 'oauth', 'user-profile', 'celestial-store', 'user-shop'],
+  Pages: ['light-novels-home', 'library-shell', 'creator-space', 'story-seed', 'discover', 'reader-chamber', 'reader-codex', 'oauth', 'user-profile', 'celestial-store', 'user-shop'],
   Rewards: ['reward-loop', 'achievements', 'relics-gallery', 'familiar-training', 'dao-pillar', 'idle-cultivation'],
   Customization: ['familiar'],
   Systems: ['novel-expanded-docs', 'library-help', 'harness-generation', 'writer-instructions', 'image-prompts', 'chapter-generation-manifestation', 'character-voice', 'provenance', 'energy'],
@@ -85,7 +85,7 @@ describe('WorkshopHome', () => {
     expect(new Set(visited).size).toBe(visited.length);
   });
 
-  it('splits Pages into Home, Create, Read, Account and Commerce subsections', () => {
+  it('splits Pages into Home, Create, Discover, Read, Account and Commerce subsections', () => {
     const groups = [...activePanel().querySelectorAll<HTMLElement>('section.workshop-group')].map((group) => ({
       label: group.querySelector('.workshop-group-title')?.textContent,
       ids: previewIds(group),
@@ -93,6 +93,7 @@ describe('WorkshopHome', () => {
     expect(groups).toEqual([
       { label: 'Home', ids: ['light-novels-home', 'library-shell'] },
       { label: 'Create', ids: ['creator-space', 'story-seed'] },
+      { label: 'Discover', ids: ['discover'] },
       { label: 'Read', ids: ['reader-chamber', 'reader-codex'] },
       { label: 'Account', ids: ['oauth', 'user-profile'] },
       { label: 'Commerce', ids: ['celestial-store', 'user-shop'] },
@@ -125,7 +126,7 @@ describe('WorkshopHome', () => {
       }
     }
     expect(Object.fromEntries(workshopEntries.map((entry) => [entry.id, entry.owner]))).toEqual({
-      'light-novels-home': 'library', 'library-shell': 'library', 'creator-space': 'library', 'story-seed': 'library',
+      'light-novels-home': 'library', 'library-shell': 'library', 'creator-space': 'library', 'discover': 'library', 'story-seed': 'library',
       'reader-chamber': 'sen', 'reader-codex': 'sen', 'oauth': 'library', 'user-profile': 'library', 'dao-pillar': 'library', 'celestial-store': 'library', 'user-shop': 'library',
       'reward-loop': 'workshop', achievements: 'library', 'familiar-training': 'library',
       familiar: 'library', 'relics-gallery': 'library', 'idle-cultivation': 'library',

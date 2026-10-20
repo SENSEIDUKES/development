@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
  * deployment needs no rewrites and every page survives a reload.
  *
  * - Home: `/app/`
+ * - Discover: `/app/?page=discover`
  * - Create (Story Seed and World Blueprint): `/app/?page=create`, opening a
  *   saved Story Seed with `&seed=<id>` (a Dao Insights spark begun from Home)
  * - Story View (World Info): `/app/?story=<id>`
@@ -17,6 +18,7 @@ import { useCallback, useEffect, useState } from 'react';
  */
 export type NovelExpandedRoute =
   | { page: 'home' }
+  | { page: 'discover' }
   | { page: 'create'; seedId?: string }
   | { page: 'story'; storyId: string }
   | { page: 'read'; storyId: string }
@@ -30,6 +32,7 @@ export function parseRoute(search: string): NovelExpandedRoute {
   const storyId = query.get('story')?.trim();
   if (storyId) return query.get('read') === '1' ? { page: 'read', storyId }
     : query.get('blueprint') === '1' ? { page: 'blueprint', storyId } : { page: 'story', storyId };
+  if (query.get('page') === 'discover') return { page: 'discover' };
   if (query.get('page') === 'create') {
     const seedId = query.get('seed')?.trim();
     return seedId ? { page: 'create', seedId } : { page: 'create' };
@@ -44,6 +47,7 @@ export function parseRoute(search: string): NovelExpandedRoute {
 export function routeSearch(route: NovelExpandedRoute): string {
   switch (route.page) {
     case 'home': return '';
+    case 'discover': return '?page=discover';
     case 'create': return route.seedId ? `?${new URLSearchParams({ page: 'create', seed: route.seedId })}` : '?page=create';
     case 'story': return `?story=${encodeURIComponent(route.storyId)}`;
     case 'read': return `?story=${encodeURIComponent(route.storyId)}&read=1`;

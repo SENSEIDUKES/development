@@ -1,0 +1,290 @@
+/*
+ * Discover (Library front door). Scoped to the page root.
+ * A store-front hierarchy: a large title, the featured worlds, then full-width
+ * shelves separated by hairlines, each with one heading and content that pages
+ * sideways rather than stacking into a long column.
+ */
+[data-discover] {
+  --discover-hairline: rgba(255, 255, 255, 0.1);
+  --discover-glass: linear-gradient(168deg, rgba(205, 225, 255, 0.06), rgba(255, 255, 255, 0.01) 45%), rgba(10, 13, 20, 0.86);
+  --discover-accent: #04acff;
+  --discover-gold: #e9d38b;
+  --discover-fate: #ff7a86;
+  --discover-ink: #f3eee7;
+  --discover-muted: rgba(223, 216, 207, 0.62);
+  --discover-gutter: 1rem;
+  display: grid;
+  /* One column that never grows past the page: shelves scroll inside it. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2.75rem;
+}
+
+/* Title: large, left-aligned, nothing boxed around it. */
+[data-discover] .discover-header {
+  display: grid;
+  gap: 0.875rem;
+  align-items: end;
+}
+[data-discover] .discover-eyebrow {
+  color: var(--discover-muted);
+  font: 600 11px/1.4 var(--font-sc, serif);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+[data-discover] .discover-title {
+  color: var(--discover-ink);
+  font-size: clamp(2.25rem, 9vw, 3.25rem);
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+[data-discover] .discover-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0 0.875rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--discover-muted);
+}
+[data-discover] .discover-search:focus-within { box-shadow: 0 0 0 2px rgba(4, 172, 255, 0.55); }
+[data-discover] .discover-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--discover-ink);
+  font-size: 0.9375rem;
+}
+[data-discover] .discover-search input::placeholder { color: rgba(223, 216, 207, 0.42); }
+[data-discover] .discover-notice { color: var(--discover-muted); font-size: 0.8125rem; line-height: 1.5; }
+@media (min-width: 768px) {
+  [data-discover] .discover-header { grid-template-columns: minmax(0, 1fr) 20rem; }
+  [data-discover] .discover-notice { grid-column: 1 / -1; }
+}
+
+/* Shelves: a hairline, a heading row, then the content. */
+[data-discover] .discover-shelf { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; min-width: 0; }
+[data-discover] .discover-shelf-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  padding-top: 1.125rem;
+  border-top: 1px solid var(--discover-hairline);
+}
+[data-discover] .discover-shelf-title {
+  color: var(--discover-ink);
+  font-size: clamp(1.375rem, 5vw, 1.75rem);
+  font-weight: 700;
+  line-height: 1.15;
+}
+[data-discover] .discover-shelf-subtitle { margin-top: 0.25rem; color: var(--discover-muted); font-size: 0.875rem; line-height: 1.45; }
+
+/* Segmented control, as a store switches a shelf's view. */
+[data-discover] .discover-segmented {
+  display: inline-flex;
+  max-width: 100%;
+  padding: 0.1875rem;
+  border-radius: 0.625rem;
+  background: rgba(255, 255, 255, 0.07);
+}
+[data-discover] .discover-segmented--scroll { overflow-x: auto; scrollbar-width: none; }
+[data-discover] .discover-segmented--scroll::-webkit-scrollbar { display: none; }
+[data-discover] .discover-segmented button {
+  flex: 0 0 auto;
+  min-height: 2.25rem;
+  padding: 0 0.875rem;
+  border-radius: 0.5rem;
+  color: var(--discover-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+[data-discover] .discover-segmented button[aria-selected='true'] { background: rgba(255, 255, 255, 0.14); color: var(--discover-ink); }
+
+/* Rails: one row that pages sideways and bleeds to the screen edge on phones. */
+[data-discover] .discover-rail {
+  display: grid;
+  grid-auto-flow: column;
+  gap: 0.875rem;
+  margin-inline: calc(var(--discover-gutter) * -1);
+  padding: 0.125rem var(--discover-gutter) 0.375rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--discover-gutter);
+  scrollbar-width: none;
+  list-style: none;
+}
+[data-discover] .discover-rail::-webkit-scrollbar { display: none; }
+[data-discover] .discover-rail > li { min-width: 0; scroll-snap-align: start; }
+[data-discover] .discover-rail--featured { grid-auto-columns: 88%; }
+[data-discover] .discover-rail--cards { grid-auto-columns: 10.5rem; }
+[data-discover] .discover-rail--events { grid-auto-columns: 84%; }
+
+/* Lists page sideways in columns of three rows, as a store's chart does. */
+[data-discover] .discover-list {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(3, auto);
+  grid-auto-columns: 88%;
+  column-gap: 1.25rem;
+  margin-inline: calc(var(--discover-gutter) * -1);
+  padding-inline: var(--discover-gutter);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--discover-gutter);
+  scrollbar-width: none;
+  list-style: none;
+}
+[data-discover] .discover-list::-webkit-scrollbar { display: none; }
+[data-discover] .discover-list > li { min-width: 0; scroll-snap-align: start; border-bottom: 1px solid var(--discover-hairline); }
+[data-discover] .discover-list > li:nth-child(3n) { border-bottom-color: transparent; }
+[data-discover] .discover-row {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  width: 100%;
+  min-height: 4.75rem;
+  padding: 0.625rem 0;
+  color: inherit;
+  text-align: left;
+}
+[data-discover] .discover-row:focus-visible,
+[data-discover] .discover-genre:focus-visible,
+[data-discover] .discover-segmented button:focus-visible { outline: 2px solid var(--discover-accent); outline-offset: 2px; border-radius: 0.5rem; }
+[data-discover] .discover-cover {
+  flex: 0 0 auto;
+  width: 2.875rem;
+  aspect-ratio: 3 / 4;
+  border-radius: 0.375rem;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+[data-discover] .discover-cover img { width: 100%; height: 100%; object-fit: cover; }
+[data-discover] .discover-rank {
+  flex: 0 0 1.5rem;
+  color: var(--discover-ink);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  text-align: center;
+}
+[data-discover] .discover-row-body { display: grid; flex: 1; gap: 0.125rem; min-width: 0; }
+[data-discover] .discover-row-title,
+[data-discover] .discover-row-chapter,
+[data-discover] .discover-row-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+[data-discover] .discover-row-title { color: var(--discover-ink); font-size: 0.9375rem; font-weight: 600; }
+[data-discover] .discover-row-chapter { color: #9fdcff; font-size: 0.8125rem; }
+[data-discover] .discover-row-meta { color: var(--discover-muted); font-size: 0.75rem; }
+[data-discover] .discover-row-age { flex: 0 0 auto; color: var(--discover-muted); font-size: 0.75rem; white-space: nowrap; }
+[data-discover] .discover-tracked {
+  margin-left: 0.5rem;
+  padding: 0.0625rem 0.4375rem;
+  border-radius: 9999px;
+  background: rgba(4, 172, 255, 0.16);
+  color: #9fdcff;
+  font-size: 0.625rem;
+  font-weight: 600;
+}
+
+/* Fate Survival: an editorial feature, copy first, then its worlds. */
+[data-discover] .discover-fate {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+  margin-inline: calc(var(--discover-gutter) * -1);
+  padding: 1.75rem var(--discover-gutter) 1.25rem;
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(255, 122, 134, 0.16), transparent 60%),
+    radial-gradient(90% 80% at 100% 100%, rgba(212, 175, 55, 0.1), transparent 60%),
+    rgba(16, 8, 11, 0.94);
+}
+[data-discover] .discover-eyebrow--fate { color: var(--discover-fate); }
+[data-discover] .discover-fate-copy { display: grid; gap: 0.5rem; max-width: 36rem; }
+[data-discover] .discover-fate-title { color: var(--discover-ink); font-size: clamp(1.625rem, 6.5vw, 2.25rem); font-weight: 700; line-height: 1.12; }
+[data-discover] .discover-fate-lede { color: rgba(243, 238, 231, 0.74); font-size: 0.9375rem; line-height: 1.6; }
+
+/* Events: wide editorial cards. */
+[data-discover] .discover-event {
+  position: relative;
+  display: flex;
+  min-height: 11rem;
+  border-radius: 1rem;
+  overflow: hidden;
+  background: var(--discover-glass);
+}
+[data-discover] .discover-event-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.55; }
+[data-discover] .discover-event-body {
+  position: relative;
+  display: grid;
+  align-content: end;
+  gap: 0.25rem;
+  width: 100%;
+  padding: 1rem 1.125rem;
+  background: linear-gradient(0deg, rgba(5, 5, 5, 0.92), rgba(5, 5, 5, 0.15) 75%);
+}
+[data-discover] .discover-event-title { color: var(--discover-ink); font-size: 1.25rem; font-weight: 700; }
+[data-discover] .discover-event-description { color: rgba(243, 238, 231, 0.74); font-size: 0.8125rem; line-height: 1.5; }
+
+/* Browse by Genre: picture tiles, then that genre's worlds. */
+[data-discover] .discover-genres {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.625rem;
+  list-style: none;
+}
+[data-discover] .discover-genre {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  min-height: 4.5rem;
+  padding: 0.75rem;
+  border-radius: 0.875rem;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--discover-ink);
+  font-weight: 700;
+  font-size: 0.9375rem;
+  text-align: left;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+[data-discover] .discover-genre img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.4; transition: opacity 160ms ease; }
+[data-discover] .discover-genre span { position: relative; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8); }
+[data-discover] .discover-genre:hover img { opacity: 0.55; }
+[data-discover] .discover-genre[aria-pressed='true'] { box-shadow: inset 0 0 0 2px var(--discover-gold); }
+[data-discover] .discover-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.875rem;
+  margin-top: 0.5rem;
+  list-style: none;
+}
+
+@media (min-width: 640px) {
+  [data-discover] { gap: 3.5rem; --discover-gutter: 0px; }
+  [data-discover] .discover-rail--featured { grid-auto-columns: min(36rem, 72%); }
+  [data-discover] .discover-rail--cards { grid-auto-columns: 12.5rem; }
+  [data-discover] .discover-rail--events { grid-auto-columns: 22rem; }
+  [data-discover] .discover-list { grid-auto-columns: calc((100% - 1.25rem) / 2); }
+  [data-discover] .discover-fate { margin-inline: 0; padding: 2.25rem 2rem 1.75rem; border-radius: 1.25rem; }
+  [data-discover] .discover-genres { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  [data-discover] .discover-grid { gap: 1.5rem; }
+}
+@media (min-width: 768px) {
+  [data-discover] .discover-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (min-width: 1024px) {
+  [data-discover] .discover-list { grid-auto-columns: calc((100% - 2.5rem) / 3); }
+  [data-discover] .discover-genres { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  [data-discover] .discover-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-discover] * { transition: none !important; }
+}

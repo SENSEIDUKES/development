@@ -17,7 +17,8 @@ export const LIBRARY_DESTINATIONS = [
   { id: 'home', label: 'Home', location: { screen: 'home', collection: 'featured' } },
   // Create is its own page. My Library stays a Home collection, reached from Search and the footer.
   { id: 'create', label: 'Create', location: { screen: 'creator-space' } },
-  // Fate Survival is the existing discovery destination. Do not invent a Discover page.
+  // The Workshop's Library Shell opens Fate Survival's collection here; NovelExpanded's
+  // Discover page uses this same location.
   { id: 'discover', label: 'Discover', location: { screen: 'home', collection: 'challenges' } },
   { id: 'profile', label: 'Profile', location: { screen: 'profile', cave: '/home' } },
 ] as const;

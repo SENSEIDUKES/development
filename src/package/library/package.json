@@ -68,6 +68,10 @@
       "types": "./dist/types/package/library/creator-space.d.ts",
       "import": "./dist/creator-space.js"
     },
+    "./discover": {
+      "types": "./dist/types/package/library/discover.d.ts",
+      "import": "./dist/discover.js"
+    },
     "./world-card": {
       "types": "./dist/types/package/library/world-card.d.ts",
       "import": "./dist/world-card.js"

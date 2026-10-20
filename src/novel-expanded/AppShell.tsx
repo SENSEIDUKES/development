@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { LibraryStoriesIcon, LibraryBookIcon, LibraryStoryIcon, LibrarySettingsIcon, LibraryProfileIcon } from '@seihouse/library-ui';
+import { LibraryStoriesIcon, LibraryBookIcon, LibraryDiscoveryIcon, LibraryStoryIcon, LibrarySettingsIcon, LibraryProfileIcon } from '@seihouse/library-ui';
 import {
   LIBRARY_EMBLEM, LibraryFooter, LibraryNavigation, LibrarySectionSidebar, WorkspaceHeader, WorkspaceShell,
   useLibraryDesktopNavigation, useLibraryLegalDocuments,
@@ -14,8 +14,8 @@ import { HOME_ROUTE, routeHref, type Navigate, type NovelExpandedRoute } from '.
 import './app-header.css';
 
 export interface AppShellProps {
-  /** The page inside the shell: Home or a story's World Info. */
-  route: Extract<NovelExpandedRoute, { page: 'home' | 'story' }>;
+  /** The page inside the shell: Home, Discover or a story's World Info. */
+  route: Extract<NovelExpandedRoute, { page: 'home' | 'discover' | 'story' }>;
   navigate: Navigate;
   /** The reader's stories, which Search can open. */
   stories: readonly { id: string; title: string }[];
@@ -27,8 +27,8 @@ export interface AppShellProps {
 }
 
 /**
- * The Library Shell around the app's browsing pages, Home and a story's World
- * Info: the Library header (the app's identity, the Familiar's recall, the
+ * The Library Shell around the app's browsing pages, Home, Discover and a
+ * story's World Info: the Library header (the app's identity, the Familiar's recall, the
  * music note while Menu music is on, Help and Search), the Library's
  * navigation (the bottom strip on phones and tablets, the Pathways sidebar on
  * laptops) with the app's places, and the platform footer. Create runs in the
@@ -48,11 +48,13 @@ export function AppShell({ route, navigate, stories, readerProfile, mainLabel, c
   }, []);
   const home = () => navigate(HOME_ROUTE);
   const create = () => navigate({ page: 'create' });
+  const discover = () => navigate({ page: 'discover' });
   const profile = () => navigate({ page: 'profile' });
   const settings = () => navigate({ page: 'profile', cave: '/settings' });
   const searchItems: HeaderSearchItem[] = [
     { id: 'home', label: 'Your stories', description: 'Home: every story you have started', icon: LibraryStoriesIcon, onAction: home },
     { id: 'create', label: 'Create a story', description: 'Plant a Story Seed and shape its World Blueprint', icon: LibraryBookIcon, onAction: create },
+    { id: 'discover', label: 'Discover', description: 'Latest releases, Fate Survival and worlds to browse', icon: LibraryDiscoveryIcon, onAction: discover },
     { id: 'profile', label: 'Profile', description: 'Your Cultivator Cave: rank, QI, Familiars and rewards', icon: LibraryProfileIcon, onAction: profile },
     { id: 'settings', label: 'Settings', description: 'Your name, languages, sound, Familiar and Reading Mode', icon: LibrarySettingsIcon, onAction: settings },
     ...stories.map(story => ({ id: `story-${story.id}`, label: story.title, description: 'Open its World Info', icon: LibraryStoryIcon,
@@ -63,6 +65,7 @@ export function AppShell({ route, navigate, stories, readerProfile, mainLabel, c
     { id: 'explore', label: 'Explore', items: [
       { id: 'home', label: 'Your stories', onSelect: home },
       { id: 'create', label: 'Create a story', onSelect: create },
+      { id: 'discover', label: 'Discover worlds', onSelect: discover },
       { id: 'profile', label: 'Your profile', onSelect: profile },
     ] },
     { id: 'support', label: 'Support', items: [

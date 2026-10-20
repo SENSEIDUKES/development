@@ -87,6 +87,7 @@ export const PACKAGE_TARGETS = {
       '@seihouse/library/rewards': ['AchievementsPanel', 'MysteryScrollReveal', 'RewardRevealCard', 'AchievementsClientProvider', 'createHttpAchievementsClient', 'describeRewardGrants'],
       '@seihouse/library/shell': ['LibraryNavigation', 'LibraryDestinationsProvider', 'useLibraryBottomClearance', 'WorkspaceShell', 'WorkspaceHeader', 'HeaderSoundControl', 'useMenuMusic', 'readMenuMusic'],
       '@seihouse/library/home': ['LightNovelsHome', 'StoryDetailScreen'],
+      '@seihouse/library/discover': ['Discover', 'releaseAge'],
       '@seihouse/library/world-card': ['WorldCard', 'WorldCardInfo'],
       '@seihouse/library/story-seed': ['CreationModal', 'StoryCreationProvider', 'harnessStoryStartFromSeed'],
       '@seihouse/library/generation': ['HarnessGenerationWorkspace'],

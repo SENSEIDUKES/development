@@ -29,6 +29,7 @@ import { useStoryCovers } from '../host/media/storyCovers';
 import { useCodexPictures } from '../host/media/codexPictures';
 import { APP_SOUNDSCAPES, useAppMusic } from './appMusic';
 import { CreatePage } from './CreatePage';
+import { DiscoverPage } from './DiscoverPage';
 import { HomePage } from './HomePage';
 import { useDaoSparks } from './daoSparks';
 import { ProfilePage } from './ProfilePage';
@@ -227,5 +228,6 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     onCloseReader={() => navigate({ page: 'story', storyId })}
     onBack={() => navigate(HOME_ROUTE)} />);
 
+  if (route.page === 'discover') return withFamiliar(<DiscoverPage navigate={navigate} stories={worlds} readerProfile={profile} />);
   return withFamiliar(<HomePage worlds={worlds} navigate={navigate} readerProfile={profile} sparks={sparks} />);
 }

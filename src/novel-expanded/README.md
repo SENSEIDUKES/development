@@ -91,11 +91,11 @@ built:
     just above the bottom bar's right end, as the Reader's note floats above its
     Listen bar, faint while the page scrolls; on laptops it sits in the header
     before Help and Search.
-  - **Navigation:** Home, Create and Profile (`appPlaces.ts`, given to every
+  - **Navigation:** Home, Create, Discover and Profile (`appPlaces.ts`, given to every
     Library navigation in the app by `LibraryDestinationsProvider`, the Cave's
     included); on phones and tablets the bottom strip, and from 1024px the
     Pathways sidebar, with Settings at its foot beside Profile. Story View keeps
-    Home selected. Discover joins when its page comes to the app.
+    Home selected.
   - **The sidebar's choice is kept:** a double tap or double click switches it
     between open and the icon rail, and it opens that way on the next visit.
   - **Search** finds Home, Create, Profile, Settings and each of the reader's
@@ -345,7 +345,7 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 ## Not in the app yet
 
 - Accounts and server-side storage: the database, and with it a kept economy, sync, backup, codes, the Inbox and sign-out.
-- Discover. It joins the shell's navigation when its page comes.
+- Real worlds on Discover. Its page (`?page=discover`, `DiscoverPage.tsx`) shows sample worlds (`discoverSamples.ts`) while its look and feel is refined; opening one says it is a sample.
 
 ## Verification
 
@@ -382,6 +382,7 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 - **2026-10-09** — World Info's four cards: **Codex**, **Portal**, **Information** and **Settings**. Information, marked with the story's format, holds everything about the world, Author's notes last. Settings opens the story's Story Settings (language and Reading Mode, skills, media and Author's notes) below the cards, in place of the separate Story Settings panel. Portal opens the world's other media; every story is a novel so far, so it says so until adaptations exist.
 - **2026-10-09** — Covers are made on the cover: World Info's empty cover says Manifest, and the reader chooses one cover (5 Energy) or three to choose from (15). Three come alive in a picker and the reader keeps one; the others are let go. Every cover uses the owner's approved template with the title drawn on. The Manifest cover button beneath World Info is gone.
 - **2026-10-09** — One Energy badge everywhere Energy shows: the Profile home's balance, the Store, the cost beside Make my portraits and New cover, beside Write Chapter in the Reader (1 Energy, with "−1" as each chapter arrives) and beside Manifest in Story Seed (a chapter's price for now). Practice only.
+- **2026-10-20** — Discover comes to the app, structure first: `/app/?page=discover` in the Library Shell, in the navigation, header Search and footer, with sample worlds. Latest Releases (newest first) and My updates, the Fate Survival spotlight, genre browsing, and Heavenly Rankings and Events tiles marked Soon. The page is `@seihouse/library/discover`; the Workshop previews it at `?preview=discover`.
 - **2026-10-08** — The profile picture comes to the app: the reader's photo goes straight to the image model with the approved prompt, three portraits to choose from, the chosen one kept on the device. Images default to Nano Banana 2 Lite for now. Every image made (portraits, covers) has a download button, and shows its Energy cost (5 per image) with "−5" floaters as it arrives; nothing is taken yet.
 - **2026-10-08** — Story Settings and cover art come to the app. Story View has the story's Story Settings (language, Reading Mode, CAPA skill slots, media), closed until opened, and Create's Settings holds the skills and media a new story starts with, kept on the device until Manifest. Manifest cover on Story View makes a cover from the story's own words behind the media reveal, with the Model Router's image choice (Nano Banana 2 by default); World Info and Home wear it, and it is kept on the device. Visitors may make 3 covers every 30 minutes; the access token lifts the limit.
 - **2026-10-07** — Profile comes to the app, with everything it connects to: the Library's Cultivator Cave in the navigation (Home, Create, Profile; Settings beside Profile on laptops, and in Search and the footer), on the reader's profile kept on this device and a practice economy in the page (1,000,000 QI and every Familiar unlocked, fresh each visit, until the database). The account and server pieces show "Not in the app yet." One Familiar for the app: its recall in every Library header, summoned it floats above the bottom bar and the music note on phones and keeps its place across pages, and it stays out of the Reader; the writing veil wears the same Familiar. Create starts new Story Seeds from the profile's reading language and Reading Mode.

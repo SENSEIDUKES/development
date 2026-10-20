@@ -18,10 +18,11 @@ const APP_SOURCE = 'src/novel-expanded/';
 /**
  * The package entries the app's own files may import. Profile and Familiar
  * joined on 2026-10-07, when the owner brought the Profile and everything it
- * connects to (the Cave, the floating Familiar) into the app.
+ * connects to (the Cave, the floating Familiar) into the app. Discover joined
+ * on 2026-10-20, when the owner asked for its page in the app.
  */
 export const APP_ENTRIES = new Set([
-  '@seihouse/library/stories', '@seihouse/library/story-seed', '@seihouse/library/home',
+  '@seihouse/library/stories', '@seihouse/library/story-seed', '@seihouse/library/home', '@seihouse/library/discover',
   '@seihouse/library/shell', '@seihouse/library/presentation',
   '@seihouse/library/profile', '@seihouse/library/familiar',
   '@seihouse/sen/story-seed', '@seihouse/sen/harness-generation', '@seihouse/sen/presentation',

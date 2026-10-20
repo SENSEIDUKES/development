@@ -24,7 +24,7 @@ export type WorkshopSection = 'pages' | 'rewards' | 'customization' | 'systems' 
 
 /** Optional subsection inside a Workshop section (Pages and Rewards use them). */
 export type WorkshopGroup =
-  | 'home' | 'create' | 'read' | 'account' | 'commerce'
+  | 'home' | 'create' | 'discover' | 'read' | 'account' | 'commerce'
   | 'reward-overview' | 'earning' | 'spending' | 'recurring';
 
 /**
@@ -89,6 +89,7 @@ export const WORKSHOP_SECTIONS: ReadonlyArray<{
     groups: [
       { id: 'home', label: 'Home' },
       { id: 'create', label: 'Create' },
+      { id: 'discover', label: 'Discover' },
       { id: 'read', label: 'Read' },
       { id: 'account', label: 'Account' },
       { id: 'commerce', label: 'Commerce' },
@@ -218,6 +219,12 @@ export const workshopEntries: WorkshopEntry[] = [
       path: 'src/components/CreationModal.tsx',
       lastCompared: '2026-08-10',
     },
+  },
+  {
+    id: 'discover', section: 'pages', group: 'discover', owner: 'library', status: 'active', title: 'Discover',
+    description: 'The Expanded Novels front door, in the live app with sample worlds: Latest Releases and My updates (newest first, no algorithm), the Fate Survival spotlight, genre browsing, and Heavenly Rankings and Events tiles. The structure is in; its look and feel is being refined.',
+    category: 'other', version: 'v1.0',
+    source: { repository: 'SENSEIDUKES/development', path: 'src/components/discover/; src/novel-expanded/DiscoverPage.tsx', lastCompared: 'Not applicable — live app route' },
   },
   {
     id: 'reader-chamber',

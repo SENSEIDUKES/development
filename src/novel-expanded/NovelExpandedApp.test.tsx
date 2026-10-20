@@ -426,13 +426,13 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     // On a phone the music note floats above the bar, not in the header.
     expect(floatingNote()).toBeTruthy();
     expect(headerNote()).toBeNull();
-    expect([...strip()!.querySelectorAll('button')].map(button => button.textContent)).toEqual(['Home', 'Create', 'Profile']);
+    expect([...strip()!.querySelectorAll('button')].map(button => button.textContent)).toEqual(['Home', 'Create', 'Discover', 'Profile']);
     expect(strip()!.querySelector('[aria-current="page"]')?.textContent).toBe('Home');
-    // Only places the app has built: no Discover. Settings sits beside Profile in the laptop sidebar.
+    // Only places the app has built. Settings sits beside Profile in the laptop sidebar.
     const sidebar = document.querySelector('[data-slot="app-shell-sidebar"]')!;
     expect(sidebar.textContent).toContain('Create');
+    expect(sidebar.textContent).toContain('Discover');
     expect(sidebar.textContent).toContain('Settings');
-    expect(document.body.textContent).not.toContain('Discover');
     expect(footer()!.querySelector('.novel-expanded-footer-wordmark')?.getAttribute('alt')).toBe('NovelExpanded');
     expect(footer()!.querySelector('.library-footer-statement')?.textContent).toBe('An Experience by SEIHouse');
     expect([...footer()!.querySelectorAll('.library-footer-legal-link')].map(link => link.textContent)).toEqual(['Terms', 'Privacy', 'Cookies']);
@@ -879,13 +879,23 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     await click(document.querySelector('[aria-label="Expand Familiar"]'), 'Expand Familiar');
   };
 
+  it('opens Discover from the navigation, with its sample worlds', async () => {
+    await render(appServices(scriptedWriter().writer));
+    await click(buttonByText('Discover', strip()!), 'Discover in the navigation', 20);
+    expect(address()).toBe('/app/?page=discover');
+    expect(document.querySelector('[data-testid="novel-expanded-discover"]')).toBeTruthy();
+    expect(strip()!.querySelector('[aria-current="page"]')?.textContent).toBe('Discover');
+    expect(document.body.textContent).toContain('Sample worlds');
+    expect(document.querySelector('.discover-fate')?.textContent).toContain('Fate Survival');
+  });
+
   it('opens the Cave from the navigation, on the practice account, inside the app\'s places', async () => {
     await render(appServices(scriptedWriter().writer));
     await click(buttonByText('Profile', strip()!), 'Profile in the navigation', 100);
     expect(address()).toBe('/app/?page=profile&cave=%2Fhome');
     expect(cave()).toBeTruthy();
     // The Cave draws the Library's navigation itself, with the app's places.
-    expect([...strip()!.querySelectorAll('button')].map(button => button.textContent)).toEqual(['Home', 'Create', 'Profile']);
+    expect([...strip()!.querySelectorAll('button')].map(button => button.textContent)).toEqual(['Home', 'Create', 'Discover', 'Profile']);
     expect(strip()!.querySelector('[aria-current="page"]')?.textContent).toBe('Profile');
     // The practice account opens with the most QI a tester could want.
     expect(cave()!.querySelector('[data-cave-qi]')?.textContent).toBe('1,000,000 to spend');

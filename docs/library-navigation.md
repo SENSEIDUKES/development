@@ -2,10 +2,9 @@
 
 Current behavior checked against `LibraryNavigation.tsx`, `MainLibraryNavigation.tsx`,
 `libraryRoutes.ts` and `WorkspaceShell.tsx` on 2026-10-07. This describes the Library
-Shell. NovelExpanded (`/app/`) uses it with its own places, Home, Create and Profile
-(`src/novel-expanded/appPlaces.ts`): its Home and World Info in `AppShell.tsx`, and the
-Library's Cave, which draws its own navigation, as its Profile. Discover is not connected
-to it yet.
+Shell. NovelExpanded (`/app/`) uses it with its own places, Home, Create, Discover and
+Profile (`src/novel-expanded/appPlaces.ts`): its Home, Discover and World Info in
+`AppShell.tsx`, and the Library's Cave, which draws its own navigation, as its Profile.
 
 ## Destinations
 
@@ -16,7 +15,7 @@ collection, not a global navigation entry. Re-selecting the current location is 
 | --- | --- | --- |
 | Home | `screen: home`, `collection: featured` | Immortal Hub, My Library, Sects, Tiers |
 | Create | `screen: creator-space` | Creator Space, Story Seed (`creator`), Seed Bank (Cave `/stories`) |
-| Discover | `screen: home`, `collection: challenges` | Existing Fate Survival collection; no separate Discover screen |
+| Discover | `screen: home`, `collection: challenges` | The Workshop's Library Shell still opens the old Fate Survival collection here; NovelExpanded's Discover page is `screen: discover`, and the app opens it for either location |
 | Profile | `screen: profile`, `cave: /home` | Cave pages, Seed Bank, Settings and public Exit |
 
 A host lists the places it has built (`destinations`, all four when omitted); a place it

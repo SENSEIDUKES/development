@@ -302,6 +302,7 @@ removed; a real Mini face can be designed later. The Info cover uses
 | `./shell` | Navigation, route models, header/footer and shell orchestration |
 | `./home` | Library Home, discovery and story-detail surfaces |
 | `./creator-space` | The Create page: Creator Space tiles, the Creator Toolkit preview and the Your worlds row over host-supplied worlds, Energy and destinations |
+| `./discover` | The Discover page: Latest Releases and My updates (newest first, no ranking), the Fate Survival spotlight, genre browsing, and Heavenly Rankings and Events tiles, over host-supplied worlds, releases and destinations |
 | `./world-card` | The shared `WorldCard` with Full, Compact, and Info cover faces, plus its Info page — over host-supplied world display data and destinations |
 | `./story-seed` | Authenticated Story Bank, Help and branded creation journey; Story Seed Settings own the Story Language and Reading Mode a new story starts with |
 | `./generation` | First-party HARNESS workspace composition: the novel page with the same Story Settings panels as `./stories`, plus the developer inspection (CAPA skill instructions, the Official Requirements, slot uploads) when a development host sets `showHarnessInternals` |

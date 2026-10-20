@@ -319,11 +319,9 @@ async function walk(browser, viewport, sample) {
     : page.locator('nav[aria-label="Library global navigation"]'));
   // Settings sits beside Profile, in the sidebar's footer on laptops.
   const places = (await navigation().getByRole('button').allTextContents()).map(text => text.trim()).filter(text => text !== 'Settings');
-  check(JSON.stringify(places) === JSON.stringify(['Home', 'Create', 'Profile']), `The navigation should offer Home, Create and Profile, got ${JSON.stringify(places)}.`);
+  check(JSON.stringify(places) === JSON.stringify(['Home', 'Create', 'Discover', 'Profile']), `The navigation should offer Home, Create, Discover and Profile, got ${JSON.stringify(places)}.`);
   check(await navigation().isVisible(), `The ${laptop ? 'Pathways sidebar' : 'bottom strip'} should show.`);
   if (laptop) check(await page.locator('[data-slot="app-shell-sidebar"]').getByRole('button', { name: 'Settings' }).isVisible(), 'Settings should sit beside Profile in the sidebar.');
-  const shellText = await page.getByTestId('novel-expanded-shell').innerText();
-  check(!/\bDiscover\b/.test(shellText), 'Discover, which the app has not built, may not show.');
   // The music note: floating just above the bottom bar's right end on phones (as the Reader's note floats above its
   // Listen bar), in the header on laptops, and only ever once.
   const musicNote = () => page.locator(laptop ? 'header .header-sound-control button' : '[data-library-sound-slot] .header-sound-control button')

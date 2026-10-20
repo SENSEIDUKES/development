@@ -2,7 +2,8 @@
 
 - **Created:** 2026-10-19
 - **Owner:** SENSEI
-- **Status:** direction, not built. The features below are a working list; the
+- **Status:** structure built, with sample worlds (2026-10-20); the look and
+  feel is being refined. The features below are a working list; the
   philosophy is what's locked in. [`NOVEL_EXPANDED.md`](../NOVEL_EXPANDED.md)
   stays the source of truth for what is built.
 
@@ -102,3 +103,22 @@ Together they make botting cost real money per account.
 - Archiving worlds, and world limits per tier.
 - Search, series status (ongoing, completed, hiatus) and content warnings: in or
   out?
+
+## What's built (2026-10-20)
+
+The page's structure, for refining how it looks and feels. It is the Library's
+`@seihouse/library/discover` (`src/components/discover/`), at `/app/?page=discover`
+in the app and `?preview=discover` in the Workshop. Every world on it is a sample
+(`src/novel-expanded/discoverSamples.ts`); opening one says so.
+
+- **Search** across the page: titles, creators, genres and tags.
+- **Latest Releases**, newest first, with **My updates** beside it (the sample
+  reader tracks two series).
+- **Fate Survival**, its own band right after the feed, to push those stories.
+- **Browse worlds** by genre, on World Cards.
+- **Heavenly Rankings** boards (Worlds, Characters, Items, Beasts & Pets,
+  Familiars) and **Events** (Mystery Week, Dark Fantasy Week), all marked Soon.
+
+On laptops Rankings and Events sit beside the feed; on phones and tablets they
+come last. Not built: real worlds and releases, the Tracker, signals, community
+lists, credits pages, branch lineage, curated reviews.

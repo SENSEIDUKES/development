@@ -323,8 +323,8 @@ navigation, header or footer:
 
 - **`destinations` on `LibraryNavigation`.** A host lists the places it has built, in the
   Library's order; the strip and the Pathways sidebar show only those, and Settings, a
-  Profile page, shows only beside Profile. NovelExpanded lists Home, Create, Discover and
-  Profile. Omitted, all four show, as in the Workshop.
+  Profile page, shows only beside Profile. NovelExpanded lists Home and Create, so Discover
+  and Profile join when their pages do. Omitted, all four show, as in the Workshop.
 - **`WorkspaceHeaderSoundProvider`.** The host's sound control for every Library header
   beneath it, including headers a Library page draws itself (Story Seed's). A header's
   own `sound` wins; `sound={null}` leaves it out. It floats above the bottom bar on
@@ -347,8 +347,8 @@ NovelExpanded brought the Profile in, and with it the Cave, which draws its own
 `LibraryNavigation`. So the host's places now reach every Library navigation in a host
 through `LibraryDestinationsProvider`, a page's own included; a navigation's
 `destinations` still wins, and with neither all four places show. NovelExpanded lists
-Home, Create, Discover and Profile, so Settings shows beside Profile (the Pathways
-sidebar's foot on laptops).
+Home, Create and Profile, so Settings shows beside Profile (the Pathways sidebar's
+foot on laptops); Discover joins when its page does.
 
 The floating Familiar and the floating music note share the bottom-right corner of a
 phone. `useLibraryBottomClearance()` is how far up from the screen's bottom the Library's
@@ -362,3 +362,11 @@ Workshop's Familiar surfaces both do.
 ### 2026-10-11 — Keep Master enabled when muting from the shell
 
 The shell music note now uses the same independent soundtrack mute as the Reader note. Tapping it saves Master mute without disabling the Master switch shared with Reader Settings. Explicit saved Master-off choices remain respected. Header and app regression coverage verifies the distinction.
+
+## Discover joins NovelExpanded — 2026-10-20
+
+NovelExpanded now lists all four places: Home, Create, Discover and Profile. Its
+Discover page (`/app/?page=discover`) uses the Library's own Discover location
+(`screen: home`, `collection: challenges`), so selecting Discover again on Discover
+is no move, and the app opens that location as Discover. The Workshop's Library
+preview still opens Fate Survival's collection there.

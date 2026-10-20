@@ -42,6 +42,7 @@ rewrites and every page survives a reload.
 | Page | Address | What it is |
 | --- | --- | --- |
 | Home | `/app/` | The reader's stories, newest first, and Carve New Destiny |
+| Discover | `/app/?page=discover` | The Library's Discover page with sample worlds: Featured, New Chapters and My updates, Fate Survival, Heavenly Rankings, Events, Browse by Genre |
 | Create | `/app/?page=create` | The Library's Story Seed journey: the seed, its World Blueprint, Manifest Story |
 | Story View | `/app/?story=<id>` | The story's World Info page: Begin Story or Continue, Manifest on the cover, Story Settings, and Export story (the whole story as one file, for sharing a test) |
 | Reader | `/app/?story=<id>&read=1` | The reading-only Reader, with the Generation Overlay while a chapter is written |
@@ -98,9 +99,9 @@ built:
     Home selected.
   - **The sidebar's choice is kept:** a double tap or double click switches it
     between open and the icon rail, and it opens that way on the next visit.
-  - **Search** finds Home, Create, Profile, Settings and each of the reader's
+  - **Search** finds Home, Create, Discover, Profile, Settings and each of the reader's
     stories, and opens its World Info.
-  - **The footer** has Explore (Your stories, Create a story, Your profile),
+  - **The footer** has Explore (Your stories, Create a story, Discover worlds, Your profile),
     Support (Help, Settings) and the legal row. Terms, Privacy and Cookies open the Library's draft documents,
     marked as drafts. Social channels wait for published addresses.
 - **Create** is Story Seed in the shell's workspace mode: its task bar (Sections,
@@ -302,7 +303,7 @@ there, when the app reaches:
 - an older system's entry: `@seihouse/sen/reader-chamber`, `reader-codex`, `cards`, `translation`, or `@seihouse/library/generation`;
 - the HARNESS developer page (`src/library/generation/`);
 - the older Reader's code in `src/components/reader-chamber/` or `reader-codex/`, apart from five contracts the current Reader shares (reading language, manifestation eligibility, reading anchors, the semantic reading position, the Codex types);
-- from its own files, a package entry outside its list: `@seihouse/library/{stories,story-seed,home,shell,presentation,profile,familiar}` and `@seihouse/sen/{story-seed,harness-generation,presentation,reader-runtime,styles.css}`. Profile and Familiar joined on 2026-10-07, when the owner brought the Profile into the app.
+- from its own files, a package entry outside its list: `@seihouse/library/{stories,story-seed,home,discover,shell,presentation,profile,familiar}` and `@seihouse/sen/{story-seed,harness-generation,presentation,reader-runtime,styles.css}`. Profile and Familiar joined on 2026-10-07, when the owner brought the Profile into the app; Discover joined on 2026-10-20.
 
 It runs in `check:app`, `verify`, `npm run build` (before `vite build`, so a
 deployment cannot ship an app that breaks it) and CI. When it fails, reconnect
@@ -316,14 +317,15 @@ task needs something the list does not allow.
 | `app/index.html` (repository root) | The app's page; loads `main.tsx` |
 | `main.tsx` | Stylesheets (`src/host/styles/theme.css`, which also loads the SEIHouse fonts, SEIHouse Sans and the four SEIHouse Display cuts; `@seihouse/sen/styles.css`), the Library scrollbar on the page, and the real services |
 | `NovelExpandedApp.tsx` | Providers (the mixer, the app's places, the music note for every Library header, the remembered sidebar, the economy), the opening gate, the Familiar and the pages; Chapter 1 begins at Manifest Story |
-| `AppShell.tsx` | The Library Shell around Home and Story View: header, navigation, footer |
-| `appPlaces.ts` | The app's places (Home, Create, Profile) and where each page sits in the Library's navigation |
+| `AppShell.tsx` | The Library Shell around Home, Discover and Story View: header, navigation, footer |
+| `appPlaces.ts` | The app's places (Home, Create, Discover, Profile) and where each page sits in the Library's navigation |
 | `ProfilePage.tsx` | Profile: the Library's Cave on the device profile and the practice economy |
 | `AppFamiliar.tsx` | The app's one Familiar: the header recall and the floating companion |
 | `appMusic.ts` | The app's own music, from SEN Soundscapes, on every page and while a chapter is written |
 | `routes.ts` | Addresses and history |
 | `services.ts` | Storage, the writer, the official skills, the Blueprint client, the reader's profile and the practice economy |
 | `HomePage.tsx` | Home: the reader's stories, in `AppShell` |
+| `DiscoverPage.tsx`, `discoverSamples.ts` | Discover (`@seihouse/library/discover`) in `AppShell`, with its sample worlds, releases, boards and events |
 | `CreatePage.tsx` | Create: `CreationModal` in a guest Story Seed runtime, starting new seeds from the profile's defaults; asks for the token before a Blueprint |
 | `AccessTokenSheet.tsx` | The access token sheet, one for the whole app |
 | `accessToken.ts` | The chapter writer with the owner's token: a chapter at the limit asks for it and is sent again |

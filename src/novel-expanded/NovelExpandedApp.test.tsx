@@ -887,6 +887,9 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(strip()!.querySelector('[aria-current="page"]')?.textContent).toBe('Discover');
     expect(document.body.textContent).toContain('Showing sample worlds');
     expect(document.querySelector('.discover-fate')?.textContent).toContain('Fate Survival');
+    // Opening a sample world says so just above the bottom bar.
+    await click(document.querySelector<HTMLButtonElement>('.discover-fate .world-card-base-open, .discover-fate button')!, 'a Fate Survival world', 20);
+    expect(document.querySelector('[data-testid="discover-sample-note"]')?.textContent).toContain('is a sample world');
     // Selecting Discover again on Discover adds no history entry.
     const entries = window.history.length;
     await click(buttonByText('Discover', strip()!), 'Discover again', 20);

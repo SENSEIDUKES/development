@@ -102,8 +102,7 @@ export function Discover({
             onClick={() => setFeed(value)}>{label}</button>)}
       </div>}>
       {feedReleases.length === 0
-        ? <Empty title={feed === 'mine' ? (trackedWorldIds ? 'No new chapters in your tracked series' : 'My updates arrives with the Tracker') : 'No new chapters match'}
-            description={feed === 'mine' ? 'Track a series and its new chapters gather here, newest first.' : 'Try another search, or check back when new chapters go out.'} />
+        ? <FeedEmpty feed={feed} tracker={Boolean(trackedWorldIds)} searching={Boolean(search)} />
         : <ol className="discover-list" aria-label={feed === 'mine' ? 'My updates' : 'New chapters'}>
             {feedReleases.map(({ release, world }) =>
               <ReleaseRow key={release.id} release={release} world={world} age={releaseAge(release.releasedAt, clock)}
@@ -201,6 +200,17 @@ function Shelf({ id, title, subtitle, accessory, children }: {
     </div>
     {children}
   </section>;
+}
+
+/** Why the feed is empty, in the reader's words: no Tracker yet, a search, or no new chapters. */
+function FeedEmpty({ feed, tracker, searching }: { feed: Feed; tracker: boolean; searching: boolean }) {
+  if (feed === 'mine' && !tracker) return <Empty title="My updates arrives with the Tracker"
+    description="When the Tracker opens, new chapters of the series you track gather here, newest first." />;
+  if (searching) return <Empty title={feed === 'mine' ? 'No tracked chapters match' : 'No new chapters match'}
+    description="Try another search." />;
+  return feed === 'mine'
+    ? <Empty title="No new chapters in your tracked series" description="Track a series and its new chapters gather here, newest first." />
+    : <Empty title="No new chapters yet" description="Check back when new chapters go out." />;
 }
 
 function Empty({ title, description }: { title: string; description: string }) {

@@ -55,6 +55,18 @@ it('says the Tracker is not here yet when the host supplies no tracked series', 
   renderPage({ trackedWorldIds: undefined });
   act(() => tab('My updates').click());
   expect(container.textContent).toContain('My updates arrives with the Tracker');
+  expect(container.textContent).not.toContain('Track a series');
+});
+
+it('names a search, not the tracked series, when a search empties My updates', () => {
+  renderPage();
+  act(() => tab('My updates').click());
+  const input = container.querySelector<HTMLInputElement>('input[type="search"]')!;
+  act(() => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'moon');
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  expect(container.textContent).toContain('No tracked chapters match');
 });
 
 it('gives Fate Survival its own spotlight and opens worlds through the host', () => {

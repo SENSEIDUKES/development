@@ -885,7 +885,7 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(address()).toBe('/app/?page=discover');
     expect(document.querySelector('[data-testid="novel-expanded-discover"]')).toBeTruthy();
     expect(strip()!.querySelector('[aria-current="page"]')?.textContent).toBe('Discover');
-    expect(document.body.textContent).toContain('Sample worlds');
+    expect(document.body.textContent).toContain('Showing sample worlds');
     expect(document.querySelector('.discover-fate')?.textContent).toContain('Fate Survival');
     // Selecting Discover again on Discover adds no history entry.
     const entries = window.history.length;

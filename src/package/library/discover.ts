@@ -1,8 +1,8 @@
 /**
  * `@seihouse/library/discover` — the Library's Discover page.
  *
- * Latest Releases and My updates, the Fate Survival spotlight, genre browsing,
- * and Heavenly Rankings and Events. The host supplies the worlds, releases,
+ * Featured worlds, New Chapters and My updates, the Fate Survival feature,
+ * Heavenly Rankings, Events and Browse by Genre, as store-front shelves. The host supplies the worlds, releases,
  * tracked series, boards and events, and opens every world.
  */
 export * from '../../components/discover/shared/discoverContracts';

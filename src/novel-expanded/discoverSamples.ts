@@ -21,7 +21,7 @@ export const DISCOVER_SAMPLE_WORLDS: readonly HomeWorld[] = [
     publicationStatus: 'ongoing', tags: ['bardic magic', 'found family'] }),
   sample({ id: 'sample-ninth-trial', title: 'The Ninth Trial', genre: 'Fate Survival', createdAt: '2026-10-01T10:00:00Z',
     imageUrl: '/manifest-backdrops/immortal-land-5.jpg', chapterCount: 9, creatorName: 'SEIHouse',
-    publicationStatus: 'ongoing', tags: ['trials', 'one life'] }),
+    publicationStatus: 'ongoing', tags: ['choices', 'consequences'] }),
   sample({ id: 'sample-elder-kaelen', title: 'Elder Kaelen’s Last Disciple', genre: 'Xianxia', createdAt: '2026-08-14T09:00:00Z',
     imageUrl: '/card-workshop/test-images/elder_kaelen_portrait.png', chapterCount: 120, creatorName: 'Mo Lan',
     publicationStatus: 'completed', tags: ['master and disciple', 'slow burn'] }),
@@ -33,13 +33,13 @@ export const DISCOVER_SAMPLE_WORLDS: readonly HomeWorld[] = [
     publicationStatus: 'ongoing', tags: ['detective', 'court intrigue'] }),
   sample({ id: 'sample-sky-ruins', title: 'Ruins Beyond the Ninth Sky', genre: 'Fate Survival', createdAt: '2026-10-08T11:00:00Z',
     imageUrl: '/manifest-backdrops/immortal-land-1.jpg', chapterCount: 6, creatorName: 'Ash Wren',
-    publicationStatus: 'ongoing', tags: ['dungeon', 'one life'] }),
+    publicationStatus: 'ongoing', tags: ['dungeon', 'consequences'] }),
   sample({ id: 'sample-ember-sect', title: 'Ember Sect Outcast', genre: 'Xianxia', createdAt: '2026-07-02T09:00:00Z',
     imageUrl: '/manifest-backdrops/immortal-land-2.jpg', chapterCount: 88, creatorName: 'Hollow Pine',
     publicationStatus: 'ongoing', tags: ['revenge', 'alchemy'] }),
   sample({ id: 'sample-grey-tide', title: 'The Grey Tide Wager', genre: 'Fate Survival', createdAt: '2026-09-18T19:00:00Z',
     imageUrl: '/manifest-backdrops/immortal-land-3.jpg', chapterCount: 14, creatorName: 'SEIHouse',
-    publicationStatus: 'ongoing', tags: ['gambling', 'trials'] }),
+    publicationStatus: 'ongoing', tags: ['gambling', 'choices'] }),
   sample({ id: 'sample-moon-archive', title: 'Archive of the Drowned Moon', genre: 'Dark Fantasy', createdAt: '2026-06-11T09:00:00Z',
     imageUrl: '/manifest-backdrops/immortal-land-4.jpg', chapterCount: 64, creatorName: 'Vesper',
     publicationStatus: 'completed', tags: ['eldritch', 'libraries'] }),
@@ -66,10 +66,14 @@ export const DISCOVER_SAMPLE_RELEASES: readonly DiscoverRelease[] = [
 /** The sample reader tracks two series, so My updates has something to show. */
 export const DISCOVER_SAMPLE_TRACKED: readonly string[] = ['sample-last-lotus', 'sample-ember-sect'];
 
+/** The worlds the page features at its top. */
+export const DISCOVER_SAMPLE_FEATURED: readonly string[] = ['sample-last-lotus', 'sample-ninth-trial', 'sample-moon-archive'];
+
 export const DISCOVER_SAMPLE_FATE_SURVIVAL: readonly string[] = ['sample-ninth-trial', 'sample-sky-ruins', 'sample-grey-tide'];
 
 export const DISCOVER_RANKING_BOARDS: readonly DiscoverRankingBoard[] = [
-  { id: 'worlds', label: 'Worlds', description: 'Ranked by what readers do and spend' },
+  { id: 'worlds', label: 'Worlds', description: 'Sample order. Real boards follow what readers do and spend.',
+    worldIds: ['sample-last-lotus', 'sample-elder-kaelen', 'sample-ember-sect', 'sample-ninth-trial', 'sample-moon-archive', 'sample-iron-front'] },
   { id: 'characters', label: 'Characters', description: 'The heroes and villains readers follow' },
   { id: 'beasts', label: 'Items, Beasts & Pets', description: 'Treasures and creatures across every world' },
   { id: 'familiars', label: 'Familiars', description: 'The companions cultivators raise' },

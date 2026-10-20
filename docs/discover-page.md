@@ -111,14 +111,19 @@ The page's structure, for refining how it looks and feels. It is the Library's
 in the app and `?preview=discover` in the Workshop. Every world on it is a sample
 (`src/novel-expanded/discoverSamples.ts`); opening one says so.
 
-- **Search** across the page: titles, creators, genres and tags.
-- **Latest Releases**, newest first, with **My updates** beside it (the sample
-  reader tracks two series).
-- **Fate Survival**, its own band right after the feed, to push those stories.
-- **Browse worlds** by genre, on World Cards.
-- **Heavenly Rankings** boards (Worlds, Characters, Items, Beasts & Pets,
-  Familiars) and **Events** (Mystery Week, Dark Fantasy Week), all marked Soon.
+The hierarchy follows Apple's store fronts: a large title, then full-width
+shelves, each with one heading, whose content pages sideways.
 
-On laptops Rankings and Events sit beside the feed; on phones and tablets they
-come last. Not built: real worlds and releases, the Tracker, signals, community
+- **Search** across the page: titles, creators, genres and tags.
+- **Featured** worlds at the top.
+- **New Chapters**, newest first, with **My updates** beside it (the sample
+  reader tracks two series).
+- **Fate Survival**, its own editorial feature. Its draw is a chapter-by-chapter
+  narrative experience with consequences: every choice carries forward.
+- **Heavenly Rankings**, one board at a time (Worlds shows a sample order;
+  Characters, Items, Beasts & Pets and Familiars open soon).
+- **Events** (Mystery Week, Dark Fantasy Week), marked Coming soon.
+- **Browse by Genre**: picture tiles over World Cards.
+
+Not built: real worlds and releases, the Tracker, signals, community
 lists, credits pages, branch lineage, curated reviews.

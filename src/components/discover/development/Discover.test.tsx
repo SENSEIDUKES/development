@@ -34,14 +34,14 @@ function renderPage(overrides: Partial<DiscoverProps> = {}) {
   act(() => root.render(<LibraryPresentationProvider><Discover {...props} /></LibraryPresentationProvider>));
   return props;
 }
-const releaseTitles = () => [...container.querySelectorAll('.discover-release-title')].map(node => node.textContent);
+const releaseTitles = () => [...container.querySelectorAll('ol[aria-label="New chapters"] .discover-row-title, ol[aria-label="My updates"] .discover-row-title')].map(node => node.textContent);
 const tab = (label: string) => [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(node => node.textContent === label)!;
 
 it('lists releases newest first, skipping releases of worlds it does not have', () => {
   renderPage();
   expect(container.querySelector('h1')?.textContent).toBe('Discover');
   expect(releaseTitles()).toEqual(['Ninth Trial', 'Last Lotus', 'Drowned Moon']);
-  expect(container.querySelector('.discover-release-chapter')?.textContent).toBe('Chapter 5 · The Door');
+  expect(container.querySelector('.discover-row-chapter')?.textContent).toBe('Chapter 5 · The Door');
 });
 
 it('narrows the feed to tracked series in My updates', () => {
@@ -61,8 +61,9 @@ it('gives Fate Survival its own spotlight and opens worlds through the host', ()
   const props = renderPage();
   const fate = container.querySelector('.discover-fate')!;
   expect(fate.textContent).toContain('Fate Survival');
+  expect(fate.textContent).toContain('chapter by chapter');
   expect(fate.textContent).toContain('Ninth Trial');
-  act(() => container.querySelector<HTMLButtonElement>('.discover-release')!.click());
+  act(() => container.querySelector<HTMLButtonElement>('.discover-row')!.click());
   expect(props.onOpenWorld).toHaveBeenCalledWith('trial');
 });
 
@@ -75,6 +76,27 @@ it('searches titles, creators, genres and tags across the page', () => {
   });
   expect(releaseTitles()).toEqual(['Last Lotus']);
   expect(container.querySelector('.discover-fate')).toBeNull();
+});
+
+it('shows a ranking board in the host\'s order, and a closed board as opening soon', () => {
+  renderPage({ rankingBoards: [
+    { id: 'worlds', label: 'Worlds', description: 'By activity', worldIds: ['moon', 'lotus'] },
+    { id: 'familiars', label: 'Familiars', description: 'Companions' },
+  ] });
+  const ranked = () => [...container.querySelectorAll('ol[aria-label="Worlds ranking"] .discover-row-title')].map(node => node.textContent);
+  expect(ranked()).toEqual(['Drowned Moon', 'Last Lotus']);
+  act(() => tab('Familiars').click());
+  expect(container.textContent).toContain('Familiars opens soon');
+});
+
+it('features the host\'s worlds first and filters Browse by genre', () => {
+  renderPage({ featuredWorldIds: ['moon'] });
+  expect(container.querySelector('ul[aria-label="Featured worlds"]')?.textContent).toContain('Drowned Moon');
+  const genre = [...container.querySelectorAll<HTMLButtonElement>('.discover-genre')].find(node => node.textContent === 'Xianxia')!;
+  act(() => genre.click());
+  expect(genre.getAttribute('aria-pressed')).toBe('true');
+  expect(container.querySelector('ul[aria-label="Xianxia worlds"]')?.textContent).toContain('Last Lotus');
+  expect(container.querySelector('ul[aria-label="Xianxia worlds"]')?.textContent).not.toContain('Drowned Moon');
 });
 
 it('words release ages plainly', () => {

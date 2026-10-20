@@ -16,6 +16,8 @@ export interface DiscoverRankingBoard {
   id: string;
   label: string;
   description: string;
+  /** The board's worlds, first place first, as the host ranked them. Omitted while the board is not open. */
+  worldIds?: readonly string[];
 }
 
 /** A themed Event, such as Mystery Week; dates are host display text. */
@@ -34,18 +36,20 @@ export interface DiscoverEvent {
 export interface DiscoverProps {
   /** Every world the page may show, public and SEIHouse-backed. */
   worlds: readonly HomeWorld[];
-  /** New chapters. Latest Releases shows them newest first, nothing else deciding the order. */
+  /** Worlds the host features at the top of the page, in its order. */
+  featuredWorldIds?: readonly string[];
+  /** New chapters. New Chapters shows them newest first, nothing else deciding the order. */
   releases: readonly DiscoverRelease[];
   /** Worlds the reader tracks, for My updates. Omitted means the Tracker is not available yet. */
   trackedWorldIds?: readonly string[];
-  /** Fate Survival worlds, in the host's order, for their own spotlight. */
+  /** Fate Survival worlds, in the host's order, for their own feature. */
   fateSurvivalWorldIds?: readonly string[];
-  /** Heavenly Rankings boards. Each shows as coming until the host opens it. */
+  /** Heavenly Rankings boards. A board without worlds shows as opening soon. */
   rankingBoards?: readonly DiscoverRankingBoard[];
   /** Themed Events. */
   events?: readonly DiscoverEvent[];
   onOpenWorld: (worldId: string) => void;
-  /** A host note above the page, such as a sample-catalog banner. */
+  /** A short host note under the title, such as a sample-catalog line. */
   notice?: ReactNode;
   /** The time relative release times are measured from. Defaults to now. */
   now?: Date;

@@ -12,7 +12,8 @@ export const APP_DESTINATIONS: readonly LibraryDestination[] = ['home', 'create'
 export function appLibraryLocation(route: NovelExpandedRoute): LibraryLocation {
   switch (route.page) {
     case 'home': return { screen: 'home', collection: 'featured' };
-    case 'discover': return { screen: 'discover' };
+    // The Library's own Discover location, so re-selecting Discover on Discover is no move.
+    case 'discover': return { screen: 'home', collection: 'challenges' };
     case 'create': return { screen: 'creator' };
     case 'story':
     case 'blueprint': return { screen: 'detail' };
@@ -23,8 +24,8 @@ export function appLibraryLocation(route: NovelExpandedRoute): LibraryLocation {
 
 /** The app's page for a Library destination, or none for a place the app has not built. */
 export function appRouteFor(location: LibraryLocation): NovelExpandedRoute | undefined {
-  // The Library's Discover destination still names Fate Survival's old collection; both open Discover.
-  if (location.screen === 'discover' || (location.screen === 'home' && location.collection === 'challenges')) return { page: 'discover' };
+  // The Library's Discover destination still names Fate Survival's old collection.
+  if (location.screen === 'home' && location.collection === 'challenges') return { page: 'discover' };
   if (location.screen === 'home') return HOME_ROUTE;
   if (location.screen === 'creator-space' || location.screen === 'creator') return { page: 'create' };
   if (location.screen === 'profile') return location.cave ? { page: 'profile', cave: location.cave } : { page: 'profile' };

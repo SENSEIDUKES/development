@@ -15,7 +15,7 @@ collection, not a global navigation entry. Re-selecting the current location is 
 | --- | --- | --- |
 | Home | `screen: home`, `collection: featured` | Immortal Hub, My Library, Sects, Tiers |
 | Create | `screen: creator-space` | Creator Space, Story Seed (`creator`), Seed Bank (Cave `/stories`) |
-| Discover | `screen: home`, `collection: challenges` | The Workshop's Library Shell still opens the old Fate Survival collection here; NovelExpanded's Discover page is `screen: discover`, and the app opens it for either location |
+| Discover | `screen: home`, `collection: challenges` | The Workshop's Library Shell still opens the old Fate Survival collection here; NovelExpanded's Discover page uses the same location |
 | Profile | `screen: profile`, `cave: /home` | Cave pages, Seed Bank, Settings and public Exit |
 
 A host lists the places it has built (`destinations`, all four when omitted); a place it

@@ -887,6 +887,10 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(strip()!.querySelector('[aria-current="page"]')?.textContent).toBe('Discover');
     expect(document.body.textContent).toContain('Sample worlds');
     expect(document.querySelector('.discover-fate')?.textContent).toContain('Fate Survival');
+    // Selecting Discover again on Discover adds no history entry.
+    const entries = window.history.length;
+    await click(buttonByText('Discover', strip()!), 'Discover again', 20);
+    expect(window.history.length).toBe(entries);
   });
 
   it('opens the Cave from the navigation, on the practice account, inside the app\'s places', async () => {

@@ -55,6 +55,33 @@ starting world, from the Seed and Blueprint alone. Today they fail mainly on
 appearance (only the main character, as one prose line), entities (no place
 or faction cards), location (nobody is anywhere) and world rules (prose only).
 
+## The whole pipeline, as SENSEI sees it (2026-10-21)
+
+> **Seed > Blueprint > Planner > Writer.**
+> "Chapter 1: the Planner gets the relevant Codex info / story direction + CTE
+> and informs the Writer how to proceed. No interpreting from the planner. Just
+> announcing the direction. CTE does the interpreting. The writer has enough
+> freedom to do what it wants in the scene but must follow the planner's plan.
+> Simplified example: CTE informs the planner that the next scene needs to
+> lower the Pressure load so the MC's reaction is realistic."
+
+How this lines up with what is built (see [the chapter loop](chapter-loop.md)):
+
+| SENSEI's role | Designed in the chapter loop | Built today |
+|---|---|---|
+| Seed and Blueprint make the world | (this plan) | Prose only; no Chapter 0 record |
+| CTE interprets: what the people can bear, what is realistic | Steps 2, 3 and 7: probes, readout, the CTE engine (code) | **Not built** |
+| Outcomes judged, not chosen | Step 6: the world judge (code) | **Not built**; the planner picks outcomes itself |
+| Planner announces direction from Codex, story direction and CTE | Step 4 | Built, but it reads no CTE, so it also does CTE's and the judge's work |
+| Writer follows the plan, free in the scene | Step 8 | Built as "decides nothing"; the line for its freedom is not drawn |
+
+The disconnect is build order: CTE and the world judge are not built, so the
+planner interprets and decides what they should. Open point for SENSEI: draw
+the writer's freedom precisely. Free in how a scene is told (staging,
+dialogue, small beats, pacing); bound to the plan's facts and outcomes; and
+anything new that would matter to the record (a new person, item or injury)
+is either forbidden or has to be planned.
+
 ## The principle
 
 RimWorld generates the whole world before play: factions and their relations,

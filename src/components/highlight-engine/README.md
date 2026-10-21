@@ -12,7 +12,7 @@ Its name is the Highlight Engine, never "Text Highlight Engine" (renamed
 `TextHighlightBlock`, `TextHighlightOverlay`, the `sen-text-highlight-*` classes
 and `--sen-text-line-height`. An image surface will get its own beside them.
 
-- Created: **2026-09-26**; last Workshop update: **2026-10-04**
+- Created: **2026-09-26**; last Workshop update: **2026-10-21**
 - Lifecycle: active standalone prototype; the Workshop tab is the manuscript lab
 - Source: this Development repository; no production replica or source comparison
 - Workshop: `?preview=highlight-engine`
@@ -28,9 +28,9 @@ accessibility, viewport fit, power use, and look and feel. The Workshop's
 | Part | File | Owns |
 | --- | --- | --- |
 | Highlight Engine | `development/HighlightEngine.tsx` | Puts the parts together over the host's paragraphs; owns the edit and undo records it reports |
-| Selection Tracker | `development/useSelectionTracker.ts`, `shared/selection.ts`, `development/measure.ts` | Reads the browser selection; keeps the canonical selection (paragraph + exact positions); measures it; clears it on Escape or an outside tap; moves the first Tab of each selection into the Action Bar; opens Remove mode on right-click (selecting the word under the pointer when nothing is selected), the ContextMenu key or Shift+F10 |
-| Selection Highlight | `development/SelectionHighlight.tsx` | The tinted marks over the selected words |
-| Action Bar | `development/ActionBar.tsx`, `shared/actions.ts` | The one floating bar, with two faces. **Add**: Edit, the host's nested actions, Back, an action's panel, and Save / Delete Passage while editing. **Remove**: Undo, the host's removals and Delete Passage, as a vertical list like a desktop context menu, removals in red. An action a host marks unavailable stays visible, dimmed, with its reason. It owns its position, touch sizing and labels. On touch screens (`pointer: coarse`) its buttons stack vertically, the Add bar ends with a Remove row, and while the phone's own selection menu can show it keeps a 72 px band above and below the selection clear |
+| Selection Tracker | `development/useSelectionTracker.ts`, `development/useSelectionInput.ts`, `shared/selection.ts`, `development/measure.ts` | Owns selection gestures while editable, capturing paragraph + exact positions without a native selection; measures them; clears on Escape or an outside tap; moves the first Tab into the Action Bar; opens Remove on right-click, the ContextMenu key or Shift+F10. Fixed prose continues to read native selections |
+| Selection Highlight | `development/SelectionHighlight.tsx`, `development/SelectionHandles.tsx` | The tinted marks and the engine's two 44px range handles, adjustable by touch, mouse or keyboard |
+| Action Bar | `development/ActionBar.tsx`, `shared/actions.ts` | The one floating bar, with two faces. **Add**: Edit, Copy, the host's nested actions, Back, an action's panel, and Save / Delete Passage while editing. **Remove**: Undo, the host's removals and Delete Passage, as a vertical list like a desktop context menu, removals in red. An action a host marks unavailable stays visible, dimmed, with its reason. It owns position, touch sizing and labels, stays clear of our range handles, and hides while a selection is dragged. Touch buttons stack vertically; Add ends with Remove |
 | Overlay Layer | `development/OverlayLayer.tsx`, `shared/overlay.ts` | Draws a host's `overlay` with the prose without covering a word: tints behind the text (`OverlayMark`) and quiet numbers (`OverlayPin`) in the start margin or the line spacing; hidden from assistive technology, never takes taps, never changes text, no work while absent |
 | Inline Editor | `development/InlineEditor.tsx` | The plain-text draft replacing only the selected words, including line breaks and IME typing |
 | Undo Notice | `development/UndoNotice.tsx` | "Passage deleted · Undo" after an explicit deletion |
@@ -70,8 +70,8 @@ description. `removeActions` fill the bar's Remove mode beside the built-in
 Undo and Delete Passage. Remove mode exists only while `editable`: right-click
 on the selection, or on a word (which it selects first), the ContextMenu key
 and Shift+F10 open it and suppress the browser's menu; a right-click away from
-the prose keeps the browser's menu. On touch screens a long press belongs to
-the phone, so the Add bar's Remove row opens it. `locale` names the prose's
+the prose keeps the browser's menu. On touch screens a hold selects a word with
+the engine; the Add bar's Remove row opens Remove mode. `locale` names the prose's
 language for word edges. `renderBlockText` lets
 a host render decorations around prose while keeping the block text canonical.
 
@@ -231,11 +231,15 @@ Who enforces them:
   The draft is an isolated plain-text span; surrounding prose stays read-only.
   Save changes only that range. HTML is literal text, and newlines remain inside
   the same paragraph. An empty block keeps its ID and visible line space.
-- The default highlight is soft violet `rgba(140, 110, 225, .35)` (#8c6ee1). Override
+- The default highlight is saturated violet `rgba(144, 85, 255, .6)` (#9055ff). Override
   `--sen-passage-highlight` through the component's `style` prop to affect both
   the live selection overlay and inline draft highlight. The Workshop preview
   has a color picker for trying alternatives; it preserves the current selection
   while the swatch is used and is not part of the SEN UI.
+  Attachment overlays use saturated blue (Sound Cues), red (Soundscapes), and
+  amber (Atmospheres). Blue and red use 60% opacity; amber uses 45% so light
+  prose stays readable. The shared palette also colors the overlay legend in
+  the Reader's Create mode and the Workshop.
 - Empty input disables Save and reveals Delete Passage. Deletion requires that
   explicit action. Undo restores the exact previous block; there is no timer.
   Only one deletion is retained. Another deletion replaces it; a committed edit
@@ -263,11 +267,23 @@ Who enforces them:
   placement; an Edit that changes a cue's words flags it into the inspector
   (it comes off the page) instead of moving it.
   Cue choices and edits last only for that preview session.
-- Native touch selection remains browser-owned. `-webkit-touch-callout: none`
-  requests callout suppression but cannot guarantee removal of every OS selection
-  menu. iOS may retain its native tint/handles alongside the gold overlay. Automated mobile tests cover
-  touch activation after a scripted range; they do not prove OS long-press menus,
-  physical selection handles, or virtual-keyboard behavior on real devices.
+- Editable prose uses `user-select: none` and engine-owned input. Mouse drag selects
+  exact characters, double-click selects a word, and triple-click selects a paragraph.
+  A 450ms touch/pen hold selects a word; movement before that cancels the hold so
+  ordinary swipes scroll. Drag our handles to adjust either end; edges stop at the
+  other edge and stay within one paragraph. A drag near the viewport edge scrolls.
+  Host-supplied native ranges (including the lab's sentence picker) are captured
+  and immediately cleared. The saved `PassageSelection` contract is unchanged.
+- Each editable paragraph is keyboard-focusable: Enter selects its first word,
+  Shift+arrows extends by whole characters, Ctrl/Command+Shift+arrows by word edges,
+  Shift+Home/End to the paragraph edges, and Ctrl/Command+A selects the paragraph.
+  Arrow keys and Home/End also adjust a focused range handle. Copy works through
+  the bar and Ctrl/Command+C. Selection changes are announced to assistive technology.
+  Fixed prose, inline audio controls, and the inline editor retain native behavior.
+- Automated gesture checks cover real Chromium touch streams and Chromium/WebKit
+  mouse/keyboard input. Physical iPhone Safari still needs a hold → handle drag →
+  Copy → Edit check, including scrolling, pinch zoom, and the virtual keyboard;
+  desktop WebKit emulation cannot prove the absence of OS selection UI.
 - No undo stack for replacements, persistence, sealing, networking, or AI.
   Future hosts own those policies and must not treat local
   callbacks as finalizing chapter content. Reload resets the Workshop prose.
@@ -289,6 +305,9 @@ taps. A blocked case is not a pass. Run those cases on a compatible runner for
 WebKit evidence; the Chromium cases remain independently verified.
 The Linux CI job runs all five browser cases and uploads their screenshots and
 results as `highlight-engine-browser-evidence`.
+`node scripts/verifyHighlightSelection.mjs` adds owned-selection gesture regressions
+to that evidence: ordinary swipe, hold, handle drag across lines, mouse drag,
+double-click, keyboard selection, Copy, native-range absence, and editing. CI runs both.
 
 Consumers import the package entry and SEN stylesheet. For a source transfer,
 carry `development/` and `shared/` (excluding tests), the public barrel and its
@@ -297,6 +316,14 @@ package peers. Keep Workshop hosting, dummy prose, reference documentation and
 browser evidence out of the consuming surface. No integration was performed.
 
 ## Workshop history
+
+- **2026-10-21:** Create mode now owns selection gestures and its range handles,
+  eliminating the simultaneous native selection in editable prose. Added Copy,
+  keyboard selection and screen-reader guidance; preserved native scrolling and
+  inline editing. The app and Workshop share the same engine and input adapter.
+- **2026-10-21:** Strengthened selection and attachment highlight saturation and
+  opacity to avoid muddy colors on dark pages, with lower amber opacity to
+  preserve text contrast. Updated the existing Workshop color picker to match.
 
 - **2026-10-13 (one overlay per sound):** From SENSEI: each sound gets its own overlay, never one Audio overlay bundling them. The Overlays switch is now **Off / Audio**, and Audio opens its own row of **Sound Cues / Soundscapes / Atmospheres** (`MANUSCRIPT_OVERLAY_GROUPS`; later kinds of tagging join as categories of their own), each tinting only its kind: Sound Cues blue, soundscapes red, atmospheres yellow. Soundscapes and Atmospheres also mark the chapter's first word, where its opening begins (`openingSoundMark(manuscript, kind)`). Media → Audio → Soundscape or Atmosphere on a word in the chapter's first sentence now chooses the chapter's opening, locked at the start, with the writer's choice first in the list (`SoundtrackChoices.opening`, `isChapterOpening`); anywhere after, it places the one change as before.
 - **2026-10-12 (soundscapes and atmospheres):** From SENSEI: the music (soundscape), the atmosphere and Sound Cues are three separate sounds. Media → Audio now offers **Cue**, **Soundscape** and **Atmosphere**: the last two place the chapter's one change of music or of atmosphere on the first word of the selection, from a list of the exact pieces or atmospheres (with the host's preview); placing one where one already is moves it. Remove mode removes them. The Overlays switch's second mode is now **Audio** (it was Cues) and tints all three kinds, each in its own color (Sound Cues blue, soundscape changes violet, atmosphere changes green). `soundCueActions` is now `audioActions`, which takes the host's `soundtrack` choices. A submenu in one row is now as wide as its labels: at 120px the three Audio actions overlapped, and a click could land on the wrong one. The lab offers the Library's own pieces and atmospheres.

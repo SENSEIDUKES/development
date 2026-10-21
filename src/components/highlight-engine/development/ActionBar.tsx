@@ -5,8 +5,8 @@ import type { PassageAction } from '../shared/actions';
 import type { PassageSelection } from '../shared/selection';
 import type { ActionBarMode, PassageRectangle } from './useSelectionTracker';
 
-/** Space left for the phone's own selection menu, which draws just above or below the selected words. */
-export const NATIVE_MENU_CLEARANCE = 72;
+/** Keep the menu beyond the engine's 44px selection handles. */
+const HANDLE_CLEARANCE = 48;
 
 const COARSE_POINTER = '(pointer: coarse)';
 const coarsePointer = () => typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia(COARSE_POINTER).matches;
@@ -61,9 +61,8 @@ export interface ActionBarProps {
  * labels; an action a host marks unavailable stays visible, dimmed, with its
  * reason.
  *
- * On touch screens its buttons stack vertically, and while the phone's own
- * selection menu can be showing it keeps a clearance band around the
- * selection, so the two never cover each other. Remove mode is always a
+ * On touch screens its buttons stack vertically. It leaves room for the
+ * engine's range handles. Remove mode is always a
  * vertical list, like a desktop context menu.
  */
 export function ActionBar({
@@ -72,6 +71,7 @@ export function ActionBar({
 }: ActionBarProps) {
   const [menuPath, setMenuPath] = useState<string[]>([]);
   const [panel, setPanel] = useState<ReactNode>(null);
+  const [copyStatus, setCopyStatus] = useState('');
   const [menuMode, setMenuMode] = useState(mode);
   const [position, setPosition] = useState({ left: 8, top: 8, maxHeight: 400, width: 320 });
   const stacked = useCoarsePointer();
@@ -98,16 +98,15 @@ export function ActionBar({
       : vertical && !editing ? Math.min(removing || reasons ? 216 : 168, width - 16)
       : stacked ? Math.min(168, width - 16)
       : editing && replacement === '' ? Math.min(220, width - 16)
-      : editing ? 64 : Math.min(reasons ? 264 : menuPath.length ? submenuWidth : actions.length ? 144 : 64, width - 16);
+      : editing ? 64 : Math.min(reasons ? 320 : menuPath.length ? submenuWidth : actions.length ? 216 : 136, width - 16);
     const controlHeight = controlsRef.current?.offsetHeight ?? 48;
     const anchor = rectangles.find(rect => rect.top + rect.height > topEdge && rect.top < topEdge + height) ?? rectangles[0];
     let top: number;
-    if (stacked && !editing && !panel && rectangles.length) {
-      // The live native selection brings the phone's own menu: leave its band clear.
+    if (!editing && !panel && rectangles.length) {
       const selectionTop = Math.min(...rectangles.map(rect => rect.top));
       const selectionBottom = Math.max(...rectangles.map(rect => rect.top + rect.height));
-      const below = selectionBottom + NATIVE_MENU_CLEARANCE;
-      const above = selectionTop - NATIVE_MENU_CLEARANCE - controlHeight;
+      const below = selectionBottom + HANDLE_CLEARANCE;
+      const above = selectionTop - 10 - controlHeight;
       const lowest = topEdge + height - 8;
       top = below + controlHeight <= lowest ? below
         : above >= topEdge + 8 ? above
@@ -121,7 +120,7 @@ export function ActionBar({
       top: Math.max(topEdge + 8, Math.min(top, topEdge + height - controlHeight - 8)),
       width: controlWidth, maxHeight: Math.max(44, height - 16),
     });
-  }, [rectangles, editing, replacement, controlsRef, actions.length, menuPath.length, panel, stacked, vertical, removing, reasons, submenuWidth]);
+  }, [rectangles, editing, replacement, controlsRef, actions.length, menuPath.length, panel, stacked, vertical, removing, reasons, submenuWidth, copyStatus]);
 
   // Opened from the keyboard, focus lands on the first thing to do, as in a native menu.
   useEffect(() => {
@@ -131,6 +130,13 @@ export function ActionBar({
   }, [focusControls, controlsRef]);
 
   const close = () => { setMenuPath([]); setPanel(null); onClose(); };
+  const copy = async () => {
+    try {
+      await container.ownerDocument.defaultView!.navigator.clipboard.writeText(selection.selectedText);
+      setCopyStatus('Copied');
+    } catch { setCopyStatus('Could not copy. Try again.'); }
+  };
+  useEffect(() => { setCopyStatus(''); }, [selection.selectedText]);
   const open = (action: PassageAction) => {
     if (action.unavailable?.(selection)) return;
     if ('children' in action && action.children) { setMenuPath(path => [...path, action.id]); return; }
@@ -171,12 +177,14 @@ export function ActionBar({
         {(!top || removing) && <SEIButton unstyled data-back="" onPointerDown={keepSelection}
           onClick={() => top ? onModeChange('add') : setMenuPath(path => path.slice(0, -1))}>Back</SEIButton>}
         {top && !removing && editable && <SEIButton unstyled onPointerDown={keepSelection} onClick={onEdit}>Edit</SEIButton>}
+        {top && !removing && editable && <SEIButton unstyled onPointerDown={keepSelection} onClick={() => { void copy(); }}>Copy</SEIButton>}
         {top && removing && canUndo && <SEIButton unstyled onPointerDown={keepSelection} onClick={onUndo}>Undo</SEIButton>}
         {menuActions.map(item)}
         {top && removing && <SEIButton unstyled data-destructive="" onPointerDown={keepSelection} onClick={() => onCommit('delete')}>Delete Passage</SEIButton>}
-        {/* Long-press belongs to the phone, so touch reaches Remove mode from the bar itself. */}
+        {/* A hold selects words; Remove stays an explicit action. */}
         {top && !removing && stacked && editable && <SEIButton unstyled onPointerDown={keepSelection} onClick={() => onModeChange('remove')}>Remove</SEIButton>}
       </div>}
+      {copyStatus && <p role="status" className="px-3 py-1 text-xs">{copyStatus}</p>}
     </div>
   </div>, container);
 }

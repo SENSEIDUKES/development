@@ -36,8 +36,8 @@ describe('Lab overlays', () => {
     expect(['cues', 'soundscapes', 'atmospheres'].map(mode => overlayGroupOf(mode as 'cues')?.id)).toEqual(['audio', 'audio', 'audio']);
     expect(overlayGroupOf('off')).toBeUndefined();
     expect(OVERLAY_KINDS).toEqual({ cues: ['sound-cue'], soundscapes: ['soundscape-change'], atmospheres: ['atmosphere-change'] });
-    expect(ATTACHMENT_COLORS['soundscape-change'].tone).toBe('rgba(239, 68, 68, .4)');
-    expect(ATTACHMENT_COLORS['atmosphere-change'].tone).toBe('rgba(234, 179, 8, .42)');
+    expect(ATTACHMENT_COLORS['soundscape-change'].tone).toBe('rgba(255, 65, 79, .6)');
+    expect(ATTACHMENT_COLORS['atmosphere-change'].tone).toBe('rgba(255, 196, 0, .45)');
     expect(ATTACHMENT_COLORS['soundscape-change'].label).toBe('Soundscape');
     expect(ATTACHMENT_COLORS['atmosphere-change'].label).toBe('Atmosphere');
     expect(ATTACHMENT_COLORS['sound-cue'].label).toBe('Sound Cue');

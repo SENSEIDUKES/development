@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { useId, useLayoutEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { replacePassage, type PassageEdit, type PassageSelection, type TextHighlightBlock } from '../shared/selection';
 import type { PassageAction } from '../shared/actions';
 import type { TextHighlightOverlay } from '../shared/overlay';
@@ -8,6 +8,7 @@ import { InlineEditor } from './InlineEditor';
 import { ActionBar } from './ActionBar';
 import { UndoNotice } from './UndoNotice';
 import { OverlayLayer } from './OverlayLayer';
+import { SelectionHandles } from './SelectionHandles';
 
 export interface HighlightEngineProps {
   blocks: readonly TextHighlightBlock[];
@@ -41,6 +42,7 @@ export function HighlightEngine({
   const { rootRef, controlsRef, editorRef, selection, sourceText, editing, actionOpen, rectangles, clear } = tracker;
   const [replacement, setReplacement] = useState('');
   const [undo, setUndo] = useState<PassageEdit | null>(null);
+  const instructionsId = useId();
   const validUndo = editable && undo && blocks.some(block => block.id === undo.after.id && block.text === undo.after.text) ? undo : null;
 
   useLayoutEffect(() => { if (undo && !validUndo) setUndo(null); }, [undo, validUndo]);
@@ -69,10 +71,13 @@ export function HighlightEngine({
   };
   const container = rootRef.current?.ownerDocument.body;
 
-  return <div ref={rootRef} className={`sen-text-highlight sen-text-highlight-root ${className}`} style={style} tabIndex={-1}>
+  return <div ref={rootRef} className={`sen-text-highlight sen-text-highlight-root ${className}`} style={style} tabIndex={-1}
+    data-selection-mode={editable ? 'owned' : 'native'}>
+    {editable && <span id={instructionsId} className="sen-selection-instructions">Hold a word or drag to select. With a keyboard, press Enter to select a word, Shift and arrow keys to extend, then Tab for actions. Escape clears the selection.</span>}
+    {editable && <span role="status" className="sen-selection-instructions">{selection && !tracker.dragging ? `Selected: ${selection.selectedText}` : ''}</span>}
     <OverlayLayer overlay={overlay} blocks={blocks} />
     {selection && !editing && <SelectionHighlight rectangles={rectangles} />}
-    {blocks.map(block => <p key={block.id} data-sen-text-block={block.id} tabIndex={-1}>
+    {blocks.map(block => <p key={block.id} data-sen-text-block={block.id} tabIndex={editable ? 0 : -1} aria-describedby={editable ? instructionsId : undefined}>
       {editing && selection?.blockId === block.id ? <>
         {block.text.slice(0, selection.startOffset)}
         <InlineEditor editorRef={editorRef} initialText={selection.selectedText} onInput={setReplacement} />
@@ -80,7 +85,9 @@ export function HighlightEngine({
       </> : renderBlockText?.(block) ?? block.text}
     </p>)}
     {validUndo && container && <UndoNotice container={container} style={style} onUndo={restore} />}
-    {selection && container && <ActionBar container={container} controlsRef={controlsRef} selection={selection} rectangles={rectangles}
+    {editable && selection && !editing && !actionOpen && tracker.handles && container && <SelectionHandles container={container}
+      handlesRef={tracker.handlesRef} points={tracker.handles} selection={selection} length={sourceText?.length ?? 0} style={style} />}
+    {selection && container && !tracker.dragging && <ActionBar container={container} controlsRef={controlsRef} selection={selection} rectangles={rectangles}
       actions={actions} mode={tracker.mode} removeActions={removeActions} canUndo={!!validUndo} focusControls={tracker.focusControls}
       editable={editable} editing={editing} actionOpen={actionOpen} replacement={replacement} style={style}
       onModeChange={tracker.setMode} onUndo={restore}

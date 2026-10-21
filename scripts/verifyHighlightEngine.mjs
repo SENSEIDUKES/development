@@ -64,34 +64,31 @@ for (const [name, browserType, width, height, touch] of [
       await page.mouse.move(box.x + 1, box.y + box.height / 2); await page.mouse.down();
       await page.mouse.move(box.x + box.width, box.y + box.height / 2, { steps: 12 }); await page.mouse.up();
       await page.getByRole('button', { name: 'Edit', exact: true }).waitFor();
-      // Pixel endpoints vary with platform font metrics. The browser's actual
-      // range is the input contract; the editor must preserve it exactly.
-      expectedSelection = await paragraph.evaluate(element => {
-        const range = document.getSelection().getRangeAt(0);
-        assertSameNode(range.startContainer, element.firstChild);
-        assertSameNode(range.endContainer, element.firstChild);
-        function assertSameNode(actual, expected) { if (actual !== expected) throw new Error('Drag left the intended paragraph'); }
-        return { start: range.startOffset, end: range.endOffset, text: range.toString() };
-      });
+      // Pixel endpoints vary with font metrics. Read the engine's canonical address
+      // from the lab inspector: an owned drag must never install a native range.
+      const address = await page.getByTestId('manuscript-selection').textContent();
+      const [, start, end] = address.match(/Characters (\d+)–(\d+)/);
+      expectedSelection = { start: Number(start), end: Number(end), text: original.slice(Number(start), Number(end)) };
       assert.ok(expectedSelection.start > 0 && expectedSelection.end < original.length && expectedSelection.text.length > 10);
       assert.equal(expectedSelection.text, original.slice(expectedSelection.start, expectedSelection.end));
     } else await select();
-    // Touch screens stack the Action Bar and keep the phone's own selection-menu band clear.
+    assert.equal(await page.evaluate(() => getSelection().rangeCount), 0, 'Create mode must retire the browser selection');
+    // The Action Bar stays clear of the engine's own 44px handles.
     const barLayout = await page.evaluate(() => {
-      const range = document.getSelection().getRangeAt(0).getBoundingClientRect();
+      const rects = [...document.querySelectorAll('.sen-text-highlight-marks span')].map(element => element.getBoundingClientRect());
       const bar = document.querySelector('.sen-text-highlight-controls');
       const box = bar.getBoundingClientRect();
-      return { layout: bar.getAttribute('data-layout'), selectionTop: range.top, selectionBottom: range.bottom, top: box.top, bottom: box.bottom };
+      return { layout: bar.getAttribute('data-layout'), selectionTop: Math.min(...rects.map(rect => rect.top)), selectionBottom: Math.max(...rects.map(rect => rect.bottom)), top: box.top, bottom: box.bottom };
     });
     assert.equal(barLayout.layout, touch ? 'stacked' : 'inline', JSON.stringify(barLayout));
-    if (touch) assert.ok(barLayout.top >= barLayout.selectionBottom + 60 || barLayout.bottom <= barLayout.selectionTop - 60, JSON.stringify(barLayout));
+    assert.ok(barLayout.top >= barLayout.selectionBottom + 44 || barLayout.bottom <= barLayout.selectionTop - 8, JSON.stringify(barLayout));
     if (touch) await page.screenshot({ path: `${output}/${name}-touch-action-bar.png` });
     assert.ok(await page.locator('.sen-text-highlight-marks span').count());
     const colorPicker = page.getByLabel('Highlight color');
     await colorPicker.dispatchEvent('pointerdown', { bubbles: true, pointerType: touch ? 'touch' : 'mouse' });
     await colorPicker.fill('#88ccff');
-    assert.equal(await page.locator('.sen-text-highlight-marks span').first().evaluate(element => getComputedStyle(element).backgroundColor), 'rgba(136, 204, 255, 0.35)');
-    await colorPicker.fill('#8c6ee1');
+    assert.equal(await page.locator('.sen-text-highlight-marks span').first().evaluate(element => getComputedStyle(element).backgroundColor), 'rgba(136, 204, 255, 0.6)');
+    await colorPicker.fill('#9055ff');
     if (!touch) {
       await page.keyboard.press('Tab');
       assert.equal(await page.evaluate(() => document.activeElement?.textContent), 'Edit');
@@ -361,7 +358,7 @@ for (const [name, browserType, width, height, touch] of [
       const letterBefore = (await letterParagraph.textContent()).replaceAll('\u2060', '');
       await selectIn(letterParagraph, 'cave walls');
       const selected = await letterParagraph.evaluate(() => {
-        const rect = document.getSelection().getRangeAt(0).getBoundingClientRect(); return { x: rect.x + 4, y: rect.y + rect.height / 2 };
+        const rect = document.querySelector('.sen-text-highlight-marks span').getBoundingClientRect(); return { x: rect.x + 4, y: rect.y + rect.height / 2 };
       });
       await page.mouse.click(selected.x, selected.y, { button: 'right' });
       await page.locator('.sen-text-highlight-controls[data-mode="remove"]').waitFor();

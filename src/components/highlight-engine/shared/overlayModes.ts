@@ -43,9 +43,10 @@ export const overlayGroupOf = (mode: ManuscriptOverlayMode) =>
  * a paragraph.
  */
 export const ATTACHMENT_COLORS: Readonly<Record<string, { label: string; tone: string }>> = {
-  'sound-cue': { label: 'Sound Cue', tone: 'rgba(59, 130, 246, .38)' },
-  'soundscape-change': { label: 'Soundscape', tone: 'rgba(239, 68, 68, .4)' },
-  'atmosphere-change': { label: 'Atmosphere', tone: 'rgba(234, 179, 8, .42)' },
+  'sound-cue': { label: 'Sound Cue', tone: 'rgba(22, 139, 255, .6)' },
+  'soundscape-change': { label: 'Soundscape', tone: 'rgba(255, 65, 79, .6)' },
+  // Yellow needs less opacity than blue/red to keep light prose readable on dark pages.
+  'atmosphere-change': { label: 'Atmosphere', tone: 'rgba(255, 196, 0, .45)' },
 };
 
 /** The attachment kind each overlay shows. */

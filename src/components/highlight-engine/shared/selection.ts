@@ -89,6 +89,23 @@ export function passageOffsetAt(root: HTMLElement, node: Node, offset: number): 
   return { blockId, offset: logicalOffset(block, node, offset, passageTextNodes(block)) };
 }
 
+/** Hit testing reads a caret position without creating a browser selection. */
+export function passagePoint(root: HTMLElement, x: number, y: number): { blockId: string; offset: number } | null {
+  const doc = root.ownerDocument as Document & {
+    caretPositionFromPoint?: (x: number, y: number) => { offsetNode: Node; offset: number } | null;
+    caretRangeFromPoint?: (x: number, y: number) => Range | null;
+  };
+  const caret = doc.caretPositionFromPoint?.(x, y);
+  const range = caret ? null : doc.caretRangeFromPoint?.(x, y);
+  return caret ? passageOffsetAt(root, caret.offsetNode, caret.offset)
+    : range ? passageOffsetAt(root, range.startContainer, range.startOffset) : null;
+}
+
+/** Selection edges never split a surrogate pair or a combining-character sequence. */
+export function passageEdges(text: string, locale?: string): number[] {
+  return [...Array.from(new Intl.Segmenter(locale, { granularity: 'grapheme' }).segment(text), part => part.index), text.length];
+}
+
 /** Reconstruct transient geometry from canonical offsets, including split inline text nodes. */
 export function passageRange(root: HTMLElement, selection: PassageSelection): Range | null {
   const block = findBlockElement(root, selection.blockId);

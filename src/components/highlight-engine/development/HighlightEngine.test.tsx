@@ -48,6 +48,129 @@ beforeEach(() => {
 });
 afterEach(() => { act(() => root.unmount()); container.remove(); document.getSelection()?.removeAllRanges(); vi.unstubAllGlobals(); vi.useRealTimers(); });
 
+describe('engine-owned selection input', () => {
+  let offset = 9;
+  const pointer = (type: string, pointerType = 'mouse', x = 110, y = 210, target: Element = block()) => {
+    const event = new MouseEvent(type, { bubbles: true, cancelable: true, clientX: x, clientY: y, button: 0 });
+    Object.defineProperties(event, { pointerType: { value: pointerType }, pointerId: { value: 1 }, isPrimary: { value: true } });
+    act(() => target.dispatchEvent(event));
+    return event;
+  };
+  beforeEach(() => {
+    offset = 9;
+    Object.defineProperty(document, 'caretRangeFromPoint', { configurable: true, value: () => {
+      const range = document.createRange(); range.setStart(block().firstChild!, offset); range.collapse(true); return range;
+    } });
+    vi.spyOn(block(), 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 190, 300, 100));
+  });
+  afterEach(() => { delete (document as { caretRangeFromPoint?: unknown }).caretRangeFromPoint; vi.restoreAllMocks(); });
+
+  it('captures host-supplied selections and immediately retires the native range', async () => {
+    await select();
+    expect(document.getSelection()!.rangeCount).toBe(0);
+    act(() => document.dispatchEvent(new Event('selectionchange')));
+    expect(selections).toHaveBeenLastCalledWith(expect.objectContaining({ selectedText: 'middle' }));
+    expect(container.querySelector('[data-selection-mode="owned"]')).not.toBeNull();
+  });
+  it('rejects a cross-paragraph host range without leaving actions on an old selection', async () => {
+    await select();
+    act(() => {
+      const range = document.createRange(); range.setStart(block().firstChild!, 7); range.setEnd(block('b').firstChild!, 5);
+      document.getSelection()!.addRange(range); document.dispatchEvent(new Event('selectionchange'));
+    });
+    expect(selections).toHaveBeenLastCalledWith(null);
+    expect(document.getSelection()!.rangeCount).toBe(0);
+    expect(button('Edit')).toBeUndefined();
+  });
+  it('selects with a mouse drag without ever installing a browser selection', () => {
+    offset = 7; expect(pointer('pointerdown').defaultPrevented).toBe(true);
+    offset = 13; pointer('pointermove', 'mouse', 150); pointer('pointerup');
+    expect(selections).toHaveBeenLastCalledWith(expect.objectContaining({ selectedText: 'middle' }));
+    expect(document.getSelection()!.rangeCount).toBe(0);
+    expect(button('Edit')).toBeDefined();
+  });
+  it('hides an off-screen endpoint when a browser cannot measure a collapsed range', async () => {
+    Range.prototype.getClientRects = function () {
+      return (this.collapsed ? [] : [new DOMRect(100, -30, 70, 22), new DOMRect(100, 200, 70, 22)]) as unknown as DOMRectList;
+    };
+    await select();
+    expect(document.querySelector('[data-sen-selection-handle="start"]')).toBeNull();
+    expect(document.querySelector('[data-sen-selection-handle="end"]')).not.toBeNull();
+  });
+  it('holds to select a word, suppresses its native menu, and exposes adjustable handles', async () => {
+    pointer('pointerdown', 'touch');
+    await act(() => vi.advanceTimersByTimeAsync(450));
+    pointer('pointerup', 'touch');
+    expect(selections).toHaveBeenLastCalledWith(expect.objectContaining({ selectedText: 'middle' }));
+    expect(document.querySelectorAll('[data-sen-selection-handle]').length).toBe(2);
+    const menu = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+    act(() => block().dispatchEvent(menu)); expect(menu.defaultPrevented).toBe(true);
+    expect(document.getSelection()!.rangeCount).toBe(0);
+  });
+  it('leaves swipes alone and cancels pending holds on movement, cancellation, or blur', async () => {
+    pointer('pointerdown', 'touch');
+    expect(pointer('pointermove', 'touch', 110, 235).defaultPrevented).toBe(false);
+    await act(() => vi.advanceTimersByTimeAsync(600));
+    expect(button('Edit')).toBeUndefined();
+    for (const cancel of ['pointercancel', 'blur']) {
+      pointer('pointerdown', 'touch');
+      act(() => (cancel === 'blur' ? window : document).dispatchEvent(new Event(cancel)));
+      await act(() => vi.advanceTimersByTimeAsync(600));
+      expect(button('Edit')).toBeUndefined();
+    }
+  });
+  it('adjusts an edge without collapsing or crossing the other edge', async () => {
+    await select();
+    const start = document.querySelector<HTMLElement>('[data-sen-selection-handle="start"]')!;
+    pointer('pointerdown', 'touch', 110, 235, start);
+    offset = 0; pointer('pointermove', 'touch', 120, 235, start);
+    expect(selections).toHaveBeenLastCalledWith(expect.objectContaining({ selectedText: 'Before middle' }));
+    offset = 18; pointer('pointermove', 'touch', 125, 235, start); pointer('pointerup', 'touch', 125, 235, start);
+    expect(selections).toHaveBeenLastCalledWith(expect.objectContaining({ startOffset: 12, endOffset: 13 }));
+  });
+  it('supports keyboard entry, extension, handles, and copying without a native range', async () => {
+    act(() => { block().focus(); block().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })); });
+    expect(selections).toHaveBeenLastCalledWith(expect.objectContaining({ selectedText: 'Before' }));
+    act(() => block().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', shiftKey: true, bubbles: true, cancelable: true })));
+    expect(selections).toHaveBeenLastCalledWith(expect.objectContaining({ selectedText: 'Before ' }));
+    const handle = document.querySelector<HTMLElement>('[data-sen-selection-handle="end"]')!;
+    act(() => { handle.focus(); handle.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true })); });
+    expect(selections).toHaveBeenLastCalledWith(expect.objectContaining({ selectedText: initial[0].text }));
+    const setData = vi.fn();
+    const copy = new Event('copy', { bubbles: true, cancelable: true });
+    Object.defineProperty(copy, 'clipboardData', { value: { setData } });
+    act(() => handle.dispatchEvent(copy));
+    expect(setData).toHaveBeenCalledWith('text/plain', initial[0].text);
+    expect(copy.defaultPrevented).toBe(true);
+  });
+  it('leaves editor input and read-only browser selections native', async () => {
+    await select(); click('Edit');
+    const editor = document.querySelector<HTMLElement>('[contenteditable]')!;
+    expect(pointer('pointerdown', 'touch', 110, 210, editor).defaultPrevented).toBe(false);
+    expect(editor.getAttribute('contenteditable')).toBe('plaintext-only');
+    act(() => setFixed(true)); await select();
+    expect(container.querySelector('[data-selection-mode="native"]')).not.toBeNull();
+    expect(document.getSelection()!.toString()).toBe('middle');
+    expect(document.querySelector('[data-sen-selection-handle]')).toBeNull();
+  });
+  it('extends by whole characters in emoji/combining text and follows RTL arrow direction', () => {
+    act(() => update([{ id: 'a', text: 'A👩🏽‍🚀éZ' }, initial[1]]));
+    const extend = (key: string) => act(() => { block().focus(); block().dispatchEvent(new KeyboardEvent('keydown', { key, shiftKey: true, bubbles: true, cancelable: true })); });
+    extend('ArrowRight'); extend('ArrowRight');
+    expect(selections).toHaveBeenLastCalledWith(expect.objectContaining({ selectedText: 'A👩🏽‍🚀' }));
+    extend('ArrowRight'); expect(selections).toHaveBeenLastCalledWith(expect.objectContaining({ selectedText: 'A👩🏽‍🚀é' }));
+    act(() => update([{ id: 'a', text: 'مَرْحَبًا بالعالم' }, initial[1]]));
+    block().style.direction = 'rtl'; extend('ArrowLeft');
+    expect(selections).toHaveBeenLastCalledWith(expect.objectContaining({ selectedText: 'مَ', startOffset: 0, endOffset: 2 }));
+  });
+  it('cancels a pending hold when its source changes or Create mode closes', async () => {
+    pointer('pointerdown', 'touch'); act(() => update([{ id: 'a', text: 'Replaced text.' }, initial[1]]));
+    await act(() => vi.advanceTimersByTimeAsync(600)); expect(button('Edit')).toBeUndefined();
+    pointer('pointerdown', 'touch'); act(() => setFixed(true));
+    await act(() => vi.advanceTimersByTimeAsync(600)); expect(document.querySelector('[data-sen-selection-handle]')).toBeNull();
+  });
+});
+
 describe('Highlight Engine', () => {
   it('captures the final drag range before keyboard focus enters Edit', async () => {
     await select(7, 11);
@@ -161,21 +284,21 @@ describe('Highlight Engine', () => {
     expect(button('Edit')).toBeUndefined();
     expect(document.querySelector('.sen-text-highlight-controls')).toBeNull();
   });
-  it('keeps the desktop bar inline, just under the selection', async () => {
+  it('keeps the desktop bar inline, clear of the selection handles', async () => {
     await select();
     const controls = document.querySelector<HTMLElement>('.sen-text-highlight-controls')!;
     expect(controls.dataset.layout).toBe('inline');
     expect(controls.querySelector('.sen-text-highlight-actions--stacked')).toBeNull();
-    expect(controls.style.top).toBe('232px');
+    expect(controls.style.top).toBe('270px');
   });
-  it('stacks the bar on touch screens and keeps the phone menu band clear until the menu is gone', async () => {
+  it('stacks the touch bar clear of our handles and moves close to the inline editor', async () => {
     vi.stubGlobal('matchMedia', (query: string) => ({ matches: query === '(pointer: coarse)', media: query, addEventListener() {}, removeEventListener() {} }));
     await select();
     const controls = document.querySelector<HTMLElement>('.sen-text-highlight-controls')!;
     expect(controls.dataset.layout).toBe('stacked');
     expect(controls.querySelector('.sen-text-highlight-menu.sen-text-highlight-actions--stacked')).not.toBeNull();
-    // The stubbed selection line ends at 222px; the phone's own menu owns the next 72px.
-    expect(parseFloat(controls.style.top)).toBeGreaterThanOrEqual(222 + 72);
+    // The stubbed selection line ends at 222px; our handles need 44px below it.
+    expect(parseFloat(controls.style.top)).toBeGreaterThanOrEqual(222 + 44);
     click('Edit');
     const editing = document.querySelector<HTMLElement>('.sen-text-highlight-controls')!;
     expect(editing.querySelector('.sen-text-highlight-actions--stacked')).not.toBeNull();
@@ -298,9 +421,9 @@ describe('Action Bar Remove mode', () => {
   it('is reached on touch screens from the bar itself, and Back returns to Add', async () => {
     vi.stubGlobal('matchMedia', (query: string) => ({ matches: query === '(pointer: coarse)', media: query, addEventListener() {}, removeEventListener() {} }));
     await select();
-    // A long press is the phone's own gesture, never a right-click.
+    // Long press is owned by the engine; no browser context menu accompanies it.
     act(() => { const down = new Event('pointerdown', { bubbles: true }); Object.defineProperty(down, 'pointerType', { value: 'touch' }); block().dispatchEvent(down); });
-    expect(rightClick().defaultPrevented).toBe(false);
+    expect(rightClick().defaultPrevented).toBe(true);
     expect(barButton('Remove')).toBeDefined();
     act(() => barButton('Remove')!.click());
     expect(controls()?.dataset.mode).toBe('remove');

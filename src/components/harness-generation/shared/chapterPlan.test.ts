@@ -204,6 +204,20 @@ describe('the plain checks', () => {
     expect(broken.plan.storyEnds).toEqual({ event: 2 });
     expect(broken.checks.map(found => found.message)).toContain('The plan says event 1 reaches the Active Arc Goal, but the route to the Destined Ending is broken, so no goal is left to reach; it was set aside.');
   });
+
+  it('ends a Fate Survival story at the event that leaves the main character dead, when the plan does not say so', () => {
+    const plan: ChapterPlan = {
+      cast: [{ name: 'MC', kind: 'character' }],
+      events: [event('Lin climbs the flooded stair.'), event('The river takes her.', [{ type: 'status', who: { name: 'MC' }, state: 'dead' }])],
+    };
+    const ended = check(plan, [], { mode: 'survival' });
+    expect(ended.plan.storyEnds).toEqual({ event: 2 });
+    expect(ended.checks).toEqual([{ event: 2, message: 'Event 2: the main character is dead, which ends a Fate Survival story, but the plan did not say so; the story ends there.' }]);
+    // Revived later in the chapter, or in a Regular Reader story, nothing ends.
+    const revived: ChapterPlan = { ...plan, events: [...plan.events, event('A spirit breathes life back into her.', [{ type: 'status', who: { name: 'MC' }, state: 'revived' }])] };
+    expect(check(revived, [], { mode: 'survival' }).plan.storyEnds).toBeUndefined();
+    expect(check(plan).plan.storyEnds).toBeUndefined();
+  });
 });
 
 describe('the plan as the writer reads it', () => {

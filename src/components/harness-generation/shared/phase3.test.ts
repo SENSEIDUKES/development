@@ -9,7 +9,7 @@ import { createEmptyHarnessWorkspaceState, readHarnessWorkspaceState } from '@se
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { asWrittenChapter, writtenChapter } from '../../../test-utils/writtenChapter';
 import { HARNESS_GENERATION_SCHEMA_VERSION, type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessSemanticEvent, type HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
-import { planEveryChapter } from '../../../test-utils/chapterPlan';
+import { planEveryChapter, plannedChapter } from '../../../test-utils/chapterPlan';
 
 const runtime = (): HarnessRuntime => {
   let id = 0;
@@ -278,9 +278,15 @@ describe('Harness Generation Phase 3 deterministic story harness', () => {
     expect(context.diagnostics.omitted.every(item => item.reason.length > 0)).toBe(true);
   });
 
-  it('reloads, retries, and resumes a failed sequential batch without duplicating committed chapters', async () => {
+  it('reloads, retries, and resumes a failed sequential batch without duplicating committed chapters, counting both of each chapter\'s calls', async () => {
     const repository = new InMemoryHarnessGenerationRepository();
+    // The planner reports what each of its calls used.
+    const planner = async () => {
+      const planned = plannedChapter();
+      return { ...planned, providerReceipt: { ...planned.providerReceipt, usage: { source: 'reported' as const, inputTokens: 100, outputTokens: 5, totalTokens: 105 } } };
+    };
     const firstProvider = adapter(response({ prose: 'Chapter one is durable.' }, 'reported'), new Error('provider pause'));
+    firstProvider.value.planChapter = planner;
     const first = new HarnessGenerationController({ repository, modelAdapter: firstProvider.value, runtime: runtime() });
     await first.hydrate();
     const story = await first.createStory({ premise: 'A cartographer maps a road that moves at night.' });
@@ -289,13 +295,17 @@ describe('Harness Generation Phase 3 deterministic story harness', () => {
     expect(first.snapshot().batches[0]).toMatchObject({ status: 'failed', completedChapterIds: [first.snapshot().chapters[0].id] });
 
     const secondProvider = adapter(response({ prose: 'Chapter two follows the moving road.' }, 'estimated'));
+    secondProvider.value.planChapter = vi.fn(planner);
     const reloaded = new HarnessGenerationController({ repository, modelAdapter: secondProvider.value, runtime: runtime() });
     await reloaded.hydrate();
     await reloaded.retryBatchChapter(reloaded.snapshot().batches[0].id);
     const final = reloaded.snapshot();
     expect(final.chapters.map(chapter => chapter.chapterNumber)).toEqual([1, 2]);
     expect(new Set(final.chapters.map(chapter => chapter.id)).size).toBe(2);
-    expect(final.batches[0]).toMatchObject({ status: 'completed', usage: { reportedCalls: 1, estimatedCalls: 1, unavailableCalls: 0, totalTokens: 60 } });
+    // Each chapter's planner and writer calls. Chapter 2 was planned before its writer failed; the retry reused that
+    // plan without planning again, and its one planner call is counted once.
+    expect(secondProvider.value.planChapter).not.toHaveBeenCalled();
+    expect(final.batches[0]).toMatchObject({ status: 'completed', usage: { reportedCalls: 3, estimatedCalls: 1, unavailableCalls: 0, inputTokens: 220, outputTokens: 50, totalTokens: 270 } });
   });
 
   it('honors a manual pause after the active provider call and resumes from the next uncommitted chapter', async () => {

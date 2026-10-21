@@ -361,7 +361,9 @@ export interface CheckedChapterPlan {
  * opened, an actor the record shows dead, a count or level the record
  * disagrees with. A look for someone who has one, an arc goal reached past a
  * broken route or already reached, and a story ended outside Fate Survival
- * are set aside. The plan is never refused.
+ * are set aside. In Fate Survival, a plan that leaves the main character dead
+ * ends the story at that event, as the planner's rules say it does. The plan
+ * is never refused.
  */
 export function checkChapterPlan({ plan: planned, storyId, entries, chapters, declared, mode, arc }: {
   plan: ChapterPlan;
@@ -496,6 +498,15 @@ export function checkChapterPlan({ plan: planned, storyId, entries, chapters, de
   if (draft.storyEnds && mode !== 'survival') {
     checks.push({ message: `The plan says event ${draft.storyEnds.event} ends the story, but only Fate Survival can end in failure; it was set aside.` });
     delete draft.storyEnds;
+  }
+  // In Fate Survival the main character's death ends the story (the planner's own rule): a plan that leaves
+  // them dead without saying so ends at the event that killed them, so no chapter is written after it.
+  if (mode === 'survival' && !draft.storyEnds) {
+    const end = builder.entity({ name: PLAN_MAIN_CHARACTER, entryId: mainKey })?.condition.end;
+    if (end?.passage.chapterId === chapter.id && end.passage.event) {
+      draft.storyEnds = { event: end.passage.event };
+      checks.push({ event: end.passage.event, message: `Event ${end.passage.event}: the main character is ${end.state}, which ends a Fate Survival story, but the plan did not say so; the story ends there.` });
+    }
   }
   return { plan: draft, checks };
 }

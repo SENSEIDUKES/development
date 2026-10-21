@@ -385,6 +385,17 @@ describe('Fate Survival', () => {
     await expect(run.controller.generateNextChapter(run.story.id, 'fixture')).rejects.toThrow('Fate failed in Chapter 1');
   });
 
+  it('ends at the event that leaves the main character dead when the plan forgets to end the story', async () => {
+    const run = await setup(SURVIVAL);
+    const { storyEnds: _forgotten, ...plan } = planOf('The river closes over Lin.', { ends: true });
+    run.plans.push(plan);
+    run.outputs.push(chapter('The river closes over Lin.'));
+    await directed(run.controller, run.story.id, 'Lin dives without a rope.');
+    expect(latestAttempt(run.controller).chapterPlan?.checks.map(found => found.message))
+      .toEqual(['Event 1: the main character is dead, which ends a Fate Survival story, but the plan did not say so; the story ends there.']);
+    expect(run.controller.snapshot().stories[0].conclusion).toMatchObject({ outcome: 'fate-failed', reason: 'story-ended', chapterNumber: 1 });
+  });
+
   it('breaks the route on a missed final goal; the ending chapter passes the planned end without another arc, and claiming the goal is no ending', async () => {
     const run = await setup(SURVIVAL);
     const story = await run.jumpTo(30, [{ goalId: 'arc-1-flood' }, { goalId: 'arc-1-bridge' }, { goalId: 'arc-1-tower' }]);

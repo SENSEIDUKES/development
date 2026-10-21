@@ -1937,13 +1937,17 @@ export class HarnessGenerationController {
       const isNew = !batch.completedChapterIds.includes(attempt.committedChapterId);
       if (isNew) {
         batch.completedChapterIds.push(attempt.committedChapterId);
-        const usage = attempt.providerReceipt?.usage;
-        if (usage?.source === 'reported') batch.usage.reportedCalls += 1;
-        else if (usage?.source === 'estimated') batch.usage.estimatedCalls += 1;
-        else batch.usage.unavailableCalls += 1;
-        batch.usage.inputTokens += usage?.inputTokens ?? 0;
-        batch.usage.outputTokens += usage?.outputTokens ?? 0;
-        batch.usage.totalTokens += usage?.totalTokens ?? 0;
+        // Each chapter's two calls: the planner's (made by this attempt, or by the failed one whose plan
+        // its retry reused) and the writer's.
+        const plannerCall = attempt.plannerCall ?? candidate.attempts.find(entry => entry.id === attempt.chapterPlan?.reusedFrom)?.plannerCall;
+        for (const usage of [plannerCall?.providerReceipt.usage, attempt.providerReceipt?.usage]) {
+          if (usage?.source === 'reported') batch.usage.reportedCalls += 1;
+          else if (usage?.source === 'estimated') batch.usage.estimatedCalls += 1;
+          else batch.usage.unavailableCalls += 1;
+          batch.usage.inputTokens += usage?.inputTokens ?? 0;
+          batch.usage.outputTokens += usage?.outputTokens ?? 0;
+          batch.usage.totalTokens += usage?.totalTokens ?? 0;
+        }
       }
       batch.failure = undefined;
       if (batch.completedChapterIds.length >= batch.requestedChapterCount) batch.status = 'completed';

@@ -98,13 +98,17 @@ describe('reading the planner\'s reply', () => {
 
   it('reads a cast member whose kind is off the menu, or missing, as a character, and says so', () => {
     const reading = readChapterPlan(JSON.stringify({
-      cast: [{ name: 'MC' }, { name: 'Kael Varn' }, { name: 'Bone Oar', kind: 'item' }, { name: 'Ferry Token', kind: 'Thing' }],
+      cast: [{ name: 'MC', alreadyHas: [{ kind: 'Ability', name: 'Water Reading' }, { kind: 'technique', name: 'River Step' }, { name: 'Bone Charm' }] }, { name: 'Kael Varn' }, { name: 'Bone Oar', kind: 'item' }, { name: 'Ferry Token', kind: 'Thing' }],
       events: [{ kind: 'journey', how: 'Lin crosses the river.', facts: [] }],
       arcGoalReached: { reached: false }, chapterFunction: 'progression',
     }));
     if (!reading.ok) throw new Error(reading.problem);
     expect(reading.plan.cast.map(member => [member.name, member.kind])).toEqual([['MC', 'character'], ['Kael Varn', 'character'], ['Bone Oar', 'character'], ['Ferry Token', 'thing']]);
+    // What someone already had is read the same way: a kind off its menu is read as a thing, and said so.
+    expect(reading.plan.cast[0].alreadyHas).toEqual([{ kind: 'ability', name: 'Water Reading' }, { kind: 'thing', name: 'River Step' }, { kind: 'thing', name: 'Bone Charm' }]);
     expect(reading.checks.map(found => found.message)).toEqual([
+      '‘MC’ already has ‘River Step’ as ‘technique’, which is not on the menu, so it is read as a thing.',
+      '‘MC’ already has ‘Bone Charm’ with no kind, so it is read as a thing.',
       '‘Kael Varn’ is cast with no kind, so it is read as a character.',
       '‘Bone Oar’ is cast as ‘item’, which is not on the menu, so it is read as a character.',
     ]);
@@ -217,6 +221,26 @@ describe('the plain checks', () => {
     const broken = check(plan, before, { mode: 'survival', arc: { route: { status: 'broken' } } as HarnessArcContext });
     expect(broken.plan.storyEnds).toEqual({ event: 2 });
     expect(broken.checks.map(found => found.message)).toContain('The plan says event 1 reaches the Active Arc Goal, but the route to the Destined Ending is broken, so no goal is left to reach; it was set aside.');
+  });
+
+  it('sets aside every event after the one that ends the story, so nothing undoes the ending', () => {
+    const plan: ChapterPlan = {
+      cast: [{ name: 'MC', kind: 'character' }],
+      events: [
+        event('Lin climbs the flooded stair.'),
+        event('The river takes her.', [{ type: 'status', who: { name: 'MC' }, state: 'dead' }]),
+        event('A spirit breathes life back into her, and the archive opens.', [{ type: 'status', who: { name: 'MC' }, state: 'revived' }]),
+      ],
+      storyEnds: { event: 2 }, arcGoalReached: { event: 3 },
+    };
+    const ended = check(plan, [], { mode: 'survival', arc: {} as HarnessArcContext });
+    expect(ended.plan.events.map(planned => planned.how)).toEqual(['Lin climbs the flooded stair.', 'The river takes her.']);
+    expect(ended.plan.storyEnds).toEqual({ event: 2 });
+    expect(ended.plan.arcGoalReached).toBeUndefined();
+    expect(ended.checks.map(found => found.message)).toEqual([
+      'The story ends in event 2, so the event after it was set aside.',
+      'The plan says event 3 reaches the Active Arc Goal, but the story ends before it; it was set aside.',
+    ]);
   });
 
   it('ends a Fate Survival story at the event that leaves the main character dead, when the plan does not say so', () => {

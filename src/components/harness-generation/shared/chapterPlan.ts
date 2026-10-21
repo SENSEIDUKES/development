@@ -92,11 +92,19 @@ const readLook = (value: unknown, kind: PlanCastMember['kind']): Look | undefine
   return { summary, traits: Object.fromEntries(traits.flatMap(trait => (text(source[trait]) ? [[trait, text(source[trait])!]] : []))) };
 };
 
-const readHeld = (value: unknown): PlanHeld | undefined => {
+/**
+ * Something a cast member already had. A bare name is a thing; a kind off its
+ * menu, or none, is read as a thing, and said so.
+ */
+const readHeld = (value: unknown, holder: string, checks: PlanCheck[]): PlanHeld | undefined => {
   if (typeof value === 'string') return text(value) ? { kind: 'thing', name: text(value)! } : undefined;
   if (!isRecord(value) || !text(value.name)) return undefined;
+  const kind = menu(['thing', 'ability'] as const, value.kind);
+  if (!kind) {
+    checks.push({ message: `‘${holder}’ already has ‘${text(value.name)}’ ${text(value.kind) ? `as ‘${text(value.kind)}’, which is not on the menu` : 'with no kind'}, so it is read as a thing.` });
+  }
   return {
-    kind: value.kind === 'ability' ? 'ability' : 'thing',
+    kind: kind ?? 'thing',
     name: text(value.name)!,
     ...(count(value.count) ? { count: count(value.count) } : {}),
     ...(text(value.level) ? { level: text(value.level) } : {}),
@@ -120,7 +128,7 @@ const readCastMember = (value: unknown, checks: PlanCheck[]): PlanCastMember | u
   const gender = menu(PLAN_GENDERS, value.gender);
   const age = menu(PLAN_AGES, value.age);
   const look = readLook(value.look, kind);
-  const alreadyHas = Array.isArray(value.alreadyHas) ? value.alreadyHas.map(readHeld).filter((held): held is PlanHeld => Boolean(held)) : [];
+  const alreadyHas = Array.isArray(value.alreadyHas) ? value.alreadyHas.map(held => readHeld(held, name.name, checks)).filter((held): held is PlanHeld => Boolean(held)) : [];
   return {
     name: name.name, kind,
     ...(text(value.who) ? { who: text(value.who) } : {}),
@@ -378,8 +386,9 @@ export interface CheckedChapterPlan {
  * disagrees with. A look for someone who has one, an arc goal reached past a
  * broken route or already reached, and a story ended outside Fate Survival
  * are set aside. In Fate Survival, a plan that leaves the main character dead
- * ends the story at that event, as the planner's rules say it does. The plan
- * is never refused.
+ * ends the story at that event, as the planner's rules say it does, and the
+ * events after the one that ends the story are set aside: nothing happens in
+ * a story after its end. The plan is never refused.
  */
 export function checkChapterPlan({ plan: planned, storyId, entries, chapters, declared, mode, arc }: {
   plan: ChapterPlan;
@@ -526,6 +535,17 @@ export function checkChapterPlan({ plan: planned, storyId, entries, chapters, de
     if (end?.passage.chapterId === chapter.id && end.passage.event) {
       draft.storyEnds = { event: end.passage.event };
       checks.push({ event: end.passage.event, message: `Event ${end.passage.event}: the main character is ${end.state}, which ends a Fate Survival story, but the plan did not say so; the story ends there.` });
+    }
+  }
+  // The story ends at that event: nothing after it happens (no revival undoes the ending), so later events are set aside.
+  const ending = draft.storyEnds?.event;
+  if (ending !== undefined && ending < draft.events.length) {
+    const after = draft.events.length - ending;
+    draft.events = draft.events.slice(0, ending);
+    checks.push({ message: `The story ends in event ${ending}, so the ${after === 1 ? 'event' : `${after} events`} after it ${after === 1 ? 'was' : 'were'} set aside.` });
+    if (draft.arcGoalReached && draft.arcGoalReached.event > ending) {
+      checks.push({ message: `The plan says event ${draft.arcGoalReached.event} reaches the Active Arc Goal, but the story ends before it; it was set aside.` });
+      delete draft.arcGoalReached;
     }
   }
   return { plan: draft, checks };

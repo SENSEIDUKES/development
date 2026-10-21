@@ -277,6 +277,8 @@ Who enforces them:
 - Each editable paragraph is keyboard-focusable: Enter selects its first word,
   Shift+arrows extends by whole characters, Ctrl/Command+Shift+arrows by word edges,
   Shift+Home/End to the paragraph edges, and Ctrl/Command+A selects the paragraph.
+  Older hosts without `Intl.Segmenter` retain selection with a Unicode code-point
+  fallback that keeps combining marks and common emoji sequences together.
   Arrow keys and Home/End also adjust a focused range handle. Copy works through
   the bar and Ctrl/Command+C. Selection changes are announced to assistive technology.
   Fixed prose, inline audio controls, and the inline editor retain native behavior.

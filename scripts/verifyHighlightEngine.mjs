@@ -123,7 +123,7 @@ for (const [name, browserType, width, height, touch] of [
     assert.equal(await paragraph.textContent(), beforeDelete); assert.equal(await dialog.count(), 0);
     await select(); await activate('Edit'); await input.fill('discard on outside click');
     // A mouse click would switch an emulated phone to a fine pointer for the rest of the run: touch taps instead.
-    const hint = page.getByText('Highlight words, then choose Edit or Media.', { exact: true });
+    const hint = page.getByText('Hold a word or drag to select, then choose Edit, Copy or Media.', { exact: true });
     if (touch) await hint.tap(); else await hint.click();
     assert.equal(await paragraph.textContent(), beforeDelete); assert.equal(await dialog.count(), 0);
     await select(); await activate('Edit');

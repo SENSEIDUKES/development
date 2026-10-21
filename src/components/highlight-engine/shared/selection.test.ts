@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest';
-import { normalizePassageSelection, passageRange, replacePassage } from './selection';
+import { normalizePassageSelection, passageEdges, passageRange, replacePassage } from './selection';
 
 afterEach(() => { document.getSelection()?.removeAllRanges(); document.body.innerHTML = ''; });
 function fixture() {
@@ -12,6 +12,17 @@ function select(start: Node, from: number, end = start, to = from) {
   const selection = document.getSelection()!; selection.removeAllRanges(); selection.addRange(range); return selection;
 }
 describe('PassageSelection', () => {
+  it('keeps usable character edges when an older host has no Intl.Segmenter', () => {
+    const intl = Intl as { Segmenter?: typeof Intl.Segmenter };
+    const segmenter = intl.Segmenter;
+    intl.Segmenter = undefined;
+    try {
+      const characters = ['A', '👩🏽‍🚀', 'é', '🇺🇸', '\r\n', 'Z'];
+      let offset = 0;
+      expect(passageEdges(characters.join(''))).toEqual([...characters.map(character => { const start = offset; offset += character.length; return start; }), offset]);
+      expect(passageEdges('')).toEqual([0]);
+    } finally { intl.Segmenter = segmenter; }
+  });
   it('counts only prose when a cue glyph and word joiner interrupt the DOM', () => {
     document.body.innerHTML = '<main><p data-sen-text-block="stable">A <span class="inline-world-cue-annotation"><span>quiet harbor</span><span aria-hidden="true">\u2060</span><button type="button">Play</button></span> greeted Mara.</p></main>';
     const root = document.querySelector('main')!;

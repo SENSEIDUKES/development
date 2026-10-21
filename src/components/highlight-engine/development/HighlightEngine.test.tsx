@@ -143,6 +143,16 @@ describe('engine-owned selection input', () => {
     expect(setData).toHaveBeenCalledWith('text/plain', initial[0].text);
     expect(copy.defaultPrevented).toBe(true);
   });
+  it('still selects and edits in a host without Intl.Segmenter', () => {
+    const intl = Intl as { Segmenter?: typeof Intl.Segmenter };
+    const segmenter = intl.Segmenter; intl.Segmenter = undefined;
+    try {
+      act(() => { block().focus(); block().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })); });
+      expect(selections).toHaveBeenLastCalledWith(expect.objectContaining({ selectedText: 'Before' }));
+      click('Edit'); fill('Changed'); click('Save');
+      expect(block().textContent).toBe('Changed middle after.');
+    } finally { intl.Segmenter = segmenter; }
+  });
   it('leaves editor input and read-only browser selections native', async () => {
     await select(); click('Edit');
     const editor = document.querySelector<HTMLElement>('[contenteditable]')!;

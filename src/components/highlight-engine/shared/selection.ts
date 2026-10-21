@@ -103,7 +103,24 @@ export function passagePoint(root: HTMLElement, x: number, y: number): { blockId
 
 /** Selection edges never split a surrogate pair or a combining-character sequence. */
 export function passageEdges(text: string, locale?: string): number[] {
-  return [...Array.from(new Intl.Segmenter(locale, { granularity: 'grapheme' }).segment(text), part => part.index), text.length];
+  if (typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function') {
+    return [...Array.from(new Intl.Segmenter(locale, { granularity: 'grapheme' }).segment(text), part => part.index), text.length];
+  }
+  // Older embedded browsers still need selection. Walk code points (UTF-16 offsets)
+  // and keep combining marks, emoji modifiers/joins, flag pairs and CRLF together.
+  const edges: number[] = [];
+  let offset = 0, regionalCount = 0;
+  let previous = '';
+  for (const character of text) {
+    const regional = /\p{Regional_Indicator}/u.test(character);
+    const continuation = /[\p{M}\u200d\u{1f3fb}-\u{1f3ff}\u{e0020}-\u{e007f}]/u.test(character)
+      || previous === '\u200d' || (regional && regionalCount % 2 === 1) || (character === '\n' && previous === '\r');
+    if (offset === 0 || !continuation) edges.push(offset);
+    regionalCount = regional ? regionalCount + 1 : 0;
+    previous = character;
+    offset += character.length;
+  }
+  return [...edges, text.length];
 }
 
 /** Reconstruct transient geometry from canonical offsets, including split inline text nodes. */

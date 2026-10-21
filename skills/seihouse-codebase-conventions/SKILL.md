@@ -74,14 +74,19 @@ reconnected, or kept compatible for its own sake.
 
 ## Deleting old code
 
-Remove what the task replaces. When a remake on the new path replaces an old system,
-component, preview, or file, delete the old one in the same change, along with its
-now-dead imports, previews, manifest entry and tests, unless the owner asks to keep it.
-In an owner-approved cleanup, delete what the owner lists.
+Remove what the task replaces. When a remake on the new path replaces an old
+implementation, component or file, delete the old one in the same change, along with
+the imports and tests only it used, unless the owner asks to keep it. In an
+owner-approved cleanup, delete what the owner lists.
 
-Do not delete a system only because the new path does not use it yet: it may still be
-waiting for its remake or for import from production. Never edit or refresh a
-`reference/` folder; it goes when its feature's remake is done or the owner says so.
+What stays:
+
+- **The feature's one workspace, preview route and manifest entry.** A remake updates
+  them in place; they are how the Workshop reaches it and its Compare view.
+- **`reference/` folders and the Original Reference.** They are never edited, refreshed
+  or deleted unless the owner explicitly asks.
+- **Systems the new path does not use yet.** They may still be waiting for their
+  remake or for import from production.
 
 ## Trace the existing owner
 

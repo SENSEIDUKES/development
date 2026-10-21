@@ -30,9 +30,9 @@ Before changing a function, type, schema, event, or component API:
 1. Find its callers and consumers.
 2. Identify stored data using the contract.
 3. Determine whether the change is additive, compatible, or breaking.
-4. Apply the [source authority and compatibility rules](../SKILL.md): preserve production
-   contracts through compatibility, migration, or deliberate replacement; avoid artificial
-   compatibility for development-only state unless its current contract requires it.
+4. Apply [Build only what we are building](../SKILL.md#build-only-what-we-are-building):
+   no backward compatibility by default; protect the working connections and anything
+   production or real user data depend on.
 5. Update consumers and tests together when a break is required.
 
 ## State Rules
@@ -51,7 +51,7 @@ Before changing a function, type, schema, event, or component API:
 - Keep writes intentional and bounded.
 - Avoid writes triggered by render loops, subscriptions, polling, or repeated hydration.
 - Make idempotent operations idempotent in practice.
-- Preserve existing data through defaults, migrations, or dual-read/dual-write only when deliberately required.
+- Add defaults, migrations, or dual reads only when the owner asks or a current contract requires them.
 - Validate complete user-visible persistence: record, relation, asset, retrieval, and rendering.
 
 ## Error and Offline Behavior

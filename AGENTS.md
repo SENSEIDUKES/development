@@ -113,8 +113,9 @@ Before beginning any implementation, download, install or otherwise make availab
 Current required skills:
 
 - **Sensei Skill** — [`skills/sensei-skill/SKILL.md`](./skills/sensei-skill/SKILL.md), the product-owner communication and consequence-reporting guidance.
-- **SEIHouse Codebase Conventions** — [`skills/seihouse-codebase-conventions/SKILL.md`](./skills/seihouse-codebase-conventions/SKILL.md), the required repository-orientation and architectural-consistency layer. Use it to identify the existing SEIHouse system that owns a change, preserve current state and data contracts, and avoid duplicate components, stores, services, schemas, persistence paths, or media paths.
-- **Workshop Replica Skill** — [`skills/workshop-replica/SKILL.md`](./skills/workshop-replica/SKILL.md), used for imported pages, screens, components, animations, flows, and approved system reconstruction.
+- **SEIHouse Codebase Conventions** — [`skills/seihouse-codebase-conventions/SKILL.md`](./skills/seihouse-codebase-conventions/SKILL.md), the required repository-orientation and architectural-consistency layer. Use it to identify the existing SEIHouse system that owns a change, apply the build, deletion and compatibility rules, and avoid duplicate components, stores, services, schemas, persistence paths, or media paths.
+- **Workshop Replica Skill** — [`skills/workshop-replica/SKILL.md`](./skills/workshop-replica/SKILL.md), used for pages, screens, components, animations, and flows brought over from the production app, and for approved system reconstruction.
+- **SEIHouse Verification Loop** — [`skills/seihouse-verification-loop/SKILL.md`](./skills/seihouse-verification-loop/SKILL.md), the checking passes run after implementing and before reporting: validate broadly, modify narrowly.
 
 These skills are part of the repository workflow and are not optional. Do not silently proceed without them.
 
@@ -123,8 +124,9 @@ At the beginning of every task:
 1. Confirm that all required skills were downloaded or are available in the agent environment.
 2. Read the Sensei Skill and SEIHouse Codebase Conventions before changing code.
 3. Read the Workshop Replica Skill for imported surfaces and approved system reconstruction.
-4. State clearly if any required skill cannot be accessed.
-5. Do not invent a replacement version of a missing skill.
+4. Run the Verification Loop after implementing and before reporting.
+5. State clearly if any required skill cannot be accessed.
+6. Do not invent a replacement version of a missing skill.
 
 The SEIHouse Codebase Conventions skill is mandatory for every implementation task. For both visual refinement and approved reconstruction, agents must locate and reuse the existing Workshop systems, component families, shared primitives, state patterns, and source-boundary conventions instead of creating parallel structures.
 
@@ -137,9 +139,11 @@ NovelExpanded at `/app/` (`src/novel-expanded/`). `NOVEL_EXPANDED.md` decides wh
 Keep portable components separate from the Workshop shell. Approved reconstruction
 follows `DEVELOPMENT_RECONSTRUCTION.md` and may include real system infrastructure.
 
-Old systems stay until each is remade on the new path. Never delete a system because
-the new path does not use it yet, never reconnect it as it is, and never re-sync with
-the old production app. Existing `reference/` folders hold the old production version
+Old systems stay until each is remade on the new path or the owner approves removing
+them; when a remake replaces one, delete the old one in the same change. Never delete a
+system only because the new path does not use it yet (it may still be waiting for its
+remake or for import from production), never reconnect it as it is, and never re-sync
+with the old production app. Existing `reference/` folders hold the old production version
 as historical material for its remake; they are not edited or refreshed. New features
 have no `reference/` folder.
 
@@ -174,7 +178,7 @@ have no `reference/` folder.
 - Static visual assets belong in `public/` under a clearly named folder.
 - Keep component-specific styles close to the component when practical.
 - Portable agent skills have exactly one authoritative editable entrypoint at `skills/<skill-name>/SKILL.md`. `.agents/skills.json` discovers `../skills` relative to `.agents/`; do not mirror skill files under `.agents/skills/`.
-- The canonical set is [Sensei](skills/sensei-skill/SKILL.md), [Creative UI Translator](skills/creative-ui-translator/SKILL.md), [Components Performance](skills/seihouse-components-performance/SKILL.md), [Layout Optimization](skills/seihouse-layout-optimization/SKILL.md), [Verification Loop](skills/seihouse-verification-loop/SKILL.md), [Codebase Conventions](skills/seihouse-codebase-conventions/SKILL.md), and [Workshop Replica](skills/workshop-replica/SKILL.md).
+- The canonical set is [Sensei](skills/sensei-skill/SKILL.md), [Codebase Conventions](skills/seihouse-codebase-conventions/SKILL.md), [Workshop Replica](skills/workshop-replica/SKILL.md), and [Verification Loop](skills/seihouse-verification-loop/SKILL.md).
 
 ### No "V2" folders, cards, or preview IDs
 

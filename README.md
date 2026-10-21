@@ -31,13 +31,15 @@ Before making any changes, every coding agent is required to:
 2. Read [NOVEL_EXPANDED.md](./NOVEL_EXPANDED.md), the owner's product direction, before any product work.
 3. Read [Sensei Skill](./skills/sensei-skill/SKILL.md) and [SEIHouse Codebase Conventions](./skills/seihouse-codebase-conventions/SKILL.md).
 4. For imported surfaces or reconstructed systems, read [Workshop Replica](./skills/workshop-replica/SKILL.md) and select its faithful-replica or reconstruction mode.
-5. State clearly if a required skill cannot be accessed; do not invent a replacement.
+5. After implementing, run the [Verification Loop](./skills/seihouse-verification-loop/SKILL.md) before reporting.
+6. State clearly if a required skill cannot be accessed; do not invent a replacement.
 
-The seven canonical skills are maintained directly in `skills/`, discovered through
+The four canonical skills are maintained directly in `skills/`, discovered through
 `.agents/skills.json`, and listed in [AGENTS.md](./AGENTS.md#required-skills).
 There are no mirrored installation copies. Sensei guides product-owner communication;
-Codebase Conventions governs ownership and compatibility; Workshop Replica defines the
-selected lifecycle, source authority, verification, and transfer boundaries.
+Codebase Conventions governs ownership, deletion and compatibility; Workshop Replica brings
+surfaces over from production and defines reconstruction boundaries; the Verification Loop
+checks the work before it is reported.
 
 ## What belongs here
 

@@ -1,6 +1,6 @@
 ---
 name: seihouse-codebase-conventions
-description: Locate existing SEIHouse owners before implementation or review, and apply package boundaries, reconstruction authority, and persistence compatibility rules.
+description: Locate existing SEIHouse owners before implementation or review, and apply package boundaries, build authority, deletion and compatibility rules.
 ---
 
 # SEIHouse Codebase Conventions
@@ -10,60 +10,78 @@ owner instead of creating parallel components, stores, adapters, persistence pat
 media paths, schemas, or packages. Read the [system map](references/system_map.md)
 for product responsibilities; it is a guide to inspection, not a fixed API catalog.
 
-## Establish authority before editing
+## Authority, in order
 
-Read [AGENTS.md](../../AGENTS.md), relevant feature guidance, and current
-[package documentation](../../src/package/README.md), including the
-[SEN](../../src/package/sen/README.md) and [Library](../../src/package/library/README.md)
-entries when those packages are involved.
+1. **The owner's request** for this task.
+2. **[NOVEL_EXPANDED.md](../../NOVEL_EXPANDED.md)** decides what gets built and how:
+   its [How we build](../../NOVEL_EXPANDED.md#how-we-build) rules and its
+   [Names](../../NOVEL_EXPANDED.md#names) table govern over this skill. Read
+   "Where we are" only for the part of the product the task touches.
+3. **Feature design documents** the task touches, such as
+   [the chapter loop](../../docs/chapter-loop.md) for anything about what a chapter
+   knows, plans or records, and the HARNESS
+   [architecture vocabulary](../../src/components/harness-generation/ARCHITECTURE_VOCABULARY.md)
+   before reading, changing, or discussing HARNESS code. Use their terms; do not
+   copy their volatile details into this skill or invent parallel definitions.
+4. **This skill** and its references.
 
-SEN is the portable expanded-narrative engine. Library is SEIHouse's first-party host
-application. Library may depend on SEN; SEN must never depend on Library.
+When these disagree, follow the higher one and report the conflict. Do not let the
+subsystem receiving the most work redefine the product.
 
-| Package | Owner and responsibility |
-| --- | --- |
-| `@seihouse/ui` | UI repository: universal primitives and experience tokens |
-| `@seihouse/library-ui` | UI repository: branded Library presentation |
-| `@seihouse/sen` | DEV: reusable narrative behavior and surfaces, independent of Library |
-| `@seihouse/library` | DEV: first-party Library surfaces and behavior built on SEN |
+## Packages and boundaries
 
-Package entry barrels re-export canonical feature implementations from `development/`
-and `shared/`; do not duplicate implementations inside package entries. Keep Workshop
-shells, mocks, historical references, and server code out of published entries. Trace imports
-to verify that SEN does not reach Library or Library UI.
+SEN is the portable expanded-narrative engine. The Library is SEIHouse's first-party
+host (Expanded Novels; the NovelExpanded app at `/app/`, in `src/novel-expanded/`).
+**The Library may depend on SEN. SEN must never depend on the Library.**
+[`src/package/README.md`](../../src/package/README.md) decides which lane code
+belongs to, and `npm run check:package-boundaries` enforces it.
 
-Before reading, changing, or discussing HARNESS implementation, read its authoritative
-[architecture vocabulary](../../src/components/harness-generation/ARCHITECTURE_VOCABULARY.md).
-Use that document's terms and current feature contracts instead of copying their
-volatile details into this skill or inventing parallel definitions.
+| Package | Where it lives | What it owns |
+| --- | --- | --- |
+| `@seihouse/sen` | this repository, `src/package/sen/` | Reusable narrative behavior and surfaces, independent of the Library |
+| `@seihouse/library` | this repository, `src/package/library/` | First-party Library surfaces and behavior built on SEN |
+| `@seihouse/ui`, `@seihouse/library-ui` | UI repository | Universal primitives and tokens; branded Library presentation |
+| `@seihouse/audio-player`, `@seihouse/seireader`, `@seihouse/living-titles`, SPP (`seihouse-productions-package`) | their own repositories | Shared SEIHouse infrastructure consumed here |
 
-## Select the lifecycle and compatibility boundary
+Consume external SEIHouse packages; do not copy or fork them into this repository.
+Shared SEIHouse infrastructure (SPP and CAPA, the Model Router, provenance, asset and
+version systems, media and provider boundaries) belongs to neither product. Do not put
+something in `@seihouse/sen` merely because SEN uses it first.
 
-DEV supports both visual refinement and real product reconstruction. For a major
-rebuild, read [DEVELOPMENT_RECONSTRUCTION.md](../../DEVELOPMENT_RECONSTRUCTION.md)
-and select the appropriate mode in [Workshop Replica](../workshop-replica/SKILL.md).
-Approved reconstruction may include real frontend, backend, APIs, persistence, schemas,
-generation, and integration. Preserve or correctly adapt working authentication,
-Postgres, R2, media retrieval, environment configuration, secrets, and service connections.
-Discover this wiring yourself; the product owner supplies behavior, not a backend file map.
+Package entry barrels re-export the canonical `development/` and `shared/`
+implementations; they hold no components of their own. Keep Workshop shells, mocks,
+historical `reference/` material, and server code out of client entries.
 
-Production remains authoritative for existing integrated production concepts, contracts,
-and persisted compatibility values. DEV is authoritative for an approved reconstructed
-system built here in SEN, Library and NovelExpanded. Do not force a reconstruction to mirror obsolete production
-architecture or naming merely because it was previously shipped.
+## Build only what we are building
 
-Development-only state does not require artificial backward compatibility unless a
-current feature-specific contract requires it. When an approved reconstruction replaces
-that state, update its schema/storage boundary and consumers coherently. Do not add
-aliases, dual reads, or migrations merely to preserve obsolete DEV shapes.
-Production-persisted identifiers and externally addressed contracts require compatibility,
-migration, or deliberate replacement within the authorized scope. A cosmetic rename
-never authorizes changing database values, routes, storage keys, object paths, environment
-bindings, or historical records.
+Follow NOVEL_EXPANDED.md's How we build: the old architecture is not preserved,
+reconnected, or kept compatible for its own sake.
 
-Inspect paths, branches, and exports independently in every relevant repository before
-writing source metadata or import guidance. A successful DEV build cannot prove
-a production path exists. Never change another repository unless the owner asks.
+- **No backward compatibility by default.** Do not add aliases, dual reads, shims,
+  fallbacks to old shapes, or migrations unless the owner asks or a current feature
+  contract requires them. When a rebuilt system replaces development state, change the
+  schema or storage boundary and its consumers together.
+- **Protect the working connections.** Preserve or correctly reuse authentication,
+  Postgres, R2 uploads, media retrieval after reload, persisted application content,
+  environment configuration, secrets, and service bindings
+  ([DEVELOPMENT_RECONSTRUCTION.md](../../DEVELOPMENT_RECONSTRUCTION.md)). Discover that
+  wiring yourself; the owner supplies behavior, not a backend file map.
+- **Production is off-limits.** Never modify production data, production
+  infrastructure, or another repository unless the owner explicitly asks. A cosmetic
+  rename never authorizes changing database values, routes, storage keys, object
+  paths, or environment bindings that production or real user data depend on.
+- **Do not reconnect an old system** as it is, or re-sync with the old production app.
+
+## Deleting old code
+
+Remove what the task replaces. When a remake on the new path replaces an old system,
+component, preview, or file, delete the old one in the same change, along with its
+now-dead imports, previews, manifest entry and tests, unless the owner asks to keep it.
+In an owner-approved cleanup, delete what the owner lists.
+
+Do not delete a system only because the new path does not use it yet: it may still be
+waiting for its remake or for import from production. Never edit or refresh a
+`reference/` folder; it goes when its feature's remake is done or the owner says so.
 
 ## Trace the existing owner
 
@@ -72,30 +90,20 @@ a production path exists. Never change another repository unless the owner asks.
    to persistence or media and back to rendering, including reload when relevant.
 3. Identify the owner, inputs, outputs, consumers, invariants, and focused validation.
 4. Read [engineering conventions](references/conventions.md) for implementation rules.
-   Prefer one authoritative state owner, established lifecycle/error/retry paths, and
-   shared primitives. Keep generated content traceable to its canonical source.
 5. For a visible data defect, find the first incorrect upstream contract instead of
    patching each downstream symptom independently.
 
 Stop discovery when ownership and affected contracts are clear. Avoid broad archaeology,
-new synonyms, speculative cross-media systems, or unrelated cleanup. Prefer ownership,
-correctness, reuse, simplicity, maintainability, and then performance and visual polish.
-
-## Resolve contradictions deliberately
-
-Compare the system map and guidance with inspected code and the approved task. Report
-contradictions with the affected rule, repository evidence, and chosen authority. Apply
-the current approved architecture; do not silently preserve stale guidance or let code
-drift redefine the product. If the intended contract remains unclear, explain the blocker
-instead of guessing. Update guidance only when the task includes that maintenance.
+new synonyms, speculative cross-media systems, or unrelated cleanup. Inspect paths and
+exports in every relevant repository yourself; a successful build here cannot prove a
+production path exists.
 
 ## Verify and report
 
 Use the relevant checks in [change protocol](references/change_protocol.md). Verify
 behavior and its nearest regression, not only types. For renames, search stale terms and
-update affected imports, exports, tests, docs and manifests;
-explain intentionally retained compatibility strings. Do not edit or refresh historical references; never re-sync them with the old production app.
+update affected imports, exports, tests, docs and manifests.
 
-Report the owner changed, requested outcome, preserved or deliberately replaced contracts,
-checks actually run, and remaining limitations or guidance conflicts. Do not claim source
+Report the owner changed, the outcome, what was deliberately replaced or deleted, checks
+actually run, and remaining limitations or guidance conflicts. Do not claim source
 linkage, persistence, runtime behavior, or architectural compliance without evidence.

@@ -19,7 +19,7 @@ For a visible data bug, trace upstream until the first incorrect contract or sta
 - Keep the diff centered on the verified owner.
 - Preserve current public behavior unless change is intentional.
 - Reuse helpers, tokens, types, and lifecycle patterns.
-- Add compatibility handling for existing persisted data when necessary.
+- Delete what the change replaces, with its dead imports, previews and tests.
 - Avoid unrelated formatting churn.
 - Document only non-obvious decisions that future maintainers need.
 
@@ -66,17 +66,17 @@ Choose checks based on the change.
 
 ### Migration or schema
 
-Apply the [compatibility boundary](../SKILL.md) first. For production-persisted contracts
-or feature-required compatibility, verify:
+Apply [Build only what we are building](../SKILL.md#build-only-what-we-are-building)
+first. For a development-only replacement, verify the new schema or storage boundary,
+the intentional reset of obsolete state, and updated consumers; do not invent
+migrations. Only when the owner asks for compatibility, or production or real user data
+depend on the contract, verify:
 
 - old records still load;
 - new records use the new shape;
 - defaults are safe;
 - migration/backfill is bounded and repeatable;
 - rollback or partial-deployment behavior is understood.
-
-For approved development-only replacement, verify the new schema/storage boundary,
-intentional reset of obsolete state, and updated consumers instead of inventing migrations.
 
 ### Performance
 
@@ -92,7 +92,7 @@ Keep the final implementation summary concise:
 
 - what existing system owned the change;
 - what was changed;
-- what contracts or behavior were preserved;
+- what contracts or behavior were preserved, and what was deliberately replaced or deleted;
 - what targeted validation ran;
 - any genuine remaining risk or follow-up;
 - any system-map statement found stale, incomplete, or contradicted by the current

@@ -100,6 +100,13 @@ describe('engine-owned selection input', () => {
     await act(() => vi.advanceTimersByTimeAsync(450)); pointer('pointerup', 'touch');
     expect(selections).toHaveBeenLastCalledWith(expect.objectContaining({ selectedText: 'middle' }));
   });
+  it('keeps word and paragraph clicks working through small mouse jitter', () => {
+    for (const detail of [2, 3]) {
+      pointer('pointerdown'); pointer('pointermove', 'mouse', 111); pointer('pointerup');
+      act(() => block().dispatchEvent(new MouseEvent('click', { detail, bubbles: true, cancelable: true, clientX: 111, clientY: 210 })));
+      expect(selections).toHaveBeenLastCalledWith(expect.objectContaining({ selectedText: detail === 2 ? 'middle' : initial[0].text }));
+    }
+  });
   it('hides an off-screen endpoint when a browser cannot measure a collapsed range', async () => {
     Range.prototype.getClientRects = function () {
       return (this.collapsed ? [] : [new DOMRect(100, -30, 70, 22), new DOMRect(100, 200, 70, 22)]) as unknown as DOMRectList;
@@ -163,6 +170,21 @@ describe('engine-owned selection input', () => {
       click('Edit'); fill('Changed'); click('Save');
       expect(block().textContent).toBe('Changed middle after.');
     } finally { intl.Segmenter = segmenter; }
+  });
+  it('announces copy feedback in an already-mounted live region', async () => {
+    const previous = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: vi.fn().mockResolvedValue(undefined) } });
+    try {
+      await select();
+      const status = document.querySelector('.sen-text-highlight-controls [role="status"]')!;
+      expect(status.textContent).toBe('');
+      await act(async () => { button('Copy')!.click(); });
+      expect(document.querySelector('.sen-text-highlight-controls [role="status"]')).toBe(status);
+      expect(status.textContent).toBe('Copied');
+    } finally {
+      if (previous) Object.defineProperty(navigator, 'clipboard', previous);
+      else Reflect.deleteProperty(navigator, 'clipboard');
+    }
   });
   it('copies a host-created selection from its originating control without taking over other copy targets', async () => {
     const origin = document.createElement('button'); document.body.append(origin); origin.focus();

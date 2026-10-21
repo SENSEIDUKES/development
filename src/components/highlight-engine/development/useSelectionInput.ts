@@ -149,7 +149,8 @@ export function useSelectionInput(options: InputOptions) {
         return;
       }
       event.preventDefault();
-      suppressClick = true; updateDrag();
+      if (Math.hypot(drag.x - drag.startX, drag.y - drag.startY) > MOVE_TOLERANCE) suppressClick = true;
+      updateDrag();
       if (!frame) frame = win.requestAnimationFrame(autoScroll);
     };
     const up = (event: PointerEvent) => {

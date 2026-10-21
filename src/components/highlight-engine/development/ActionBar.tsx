@@ -184,7 +184,7 @@ export function ActionBar({
         {/* A hold selects words; Remove stays an explicit action. */}
         {top && !removing && stacked && editable && <SEIButton unstyled onPointerDown={keepSelection} onClick={() => onModeChange('remove')}>Remove</SEIButton>}
       </div>}
-      {copyStatus && <p role="status" className="px-3 py-1 text-xs">{copyStatus}</p>}
+      <p role="status" className={copyStatus ? 'px-3 py-1 text-xs' : 'sen-selection-instructions'}>{copyStatus}</p>
     </div>
   </div>, container);
 }

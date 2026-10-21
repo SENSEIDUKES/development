@@ -1,8 +1,7 @@
 import {
   HARNESS_TAG_RULES,
-  SEN_APPEARANCE_SKILL,
+  SEN_FATE_SURVIVAL_PLANNING,
   SEN_FATE_SURVIVAL_SKILL,
-  SEN_HOLDINGS_SKILL,
   SEN_NOVEL_AUTHOR_SKILL,
   SEN_READING_MODE_SKILLS,
   SEN_SOUND_CUES_SKILL,
@@ -25,18 +24,30 @@ import {
   composeHarnessSystemInstruction,
   type HarnessPromptPart,
 } from '../../../server/harness-generation/prompt';
-import { HOLDINGS_FIXER_INSTRUCTIONS } from '../../../server/harness-generation/holdingsFixer';
-import { LOOK_DESCRIBER_INSTRUCTIONS } from '../../../server/harness-generation/lookDescriber';
+import {
+  CHAPTER_PLANNER_HARD_RULES,
+  CHAPTER_PLANNER_HEADINGS,
+  CHAPTER_PLANNER_READING_GUIDE,
+  CHAPTER_PLANNER_ROLE,
+  CHAPTER_PLANNER_RULES,
+  composeChapterPlannerInstruction,
+} from '../../../server/harness-generation/chapterPlanner';
 
 /**
- * The writer's instructions, read from the live code: every block of text the
- * chapter writer is given before the story itself, in the order it reads them.
- * Nothing here is a copy, so this page can never drift from what the writer
- * sees. A change to any block must be recorded in the dated history
- * (`writerInstructionsHistory.ts`); a test fails until it is.
+ * The instructions of a chapter's two calls, read from the live code (SENSEI,
+ * 2026-10-20: the chapter loop): every block of text the planner is given
+ * before the story, then every block the writer is, each in the order it
+ * reads them. Nothing here is a copy, so this page can never drift from what
+ * either call sees. A change to any block must be recorded in the dated
+ * history (`writerInstructionsHistory.ts`); a test fails until it is.
  */
 
 export type WriterInstructionId =
+  | 'planner-role'
+  | 'planner-reading-guide'
+  | 'planner-rules'
+  | 'planner-hard-rules'
+  | 'fate-survival-planning'
   | 'role'
   | 'author'
   | 'writing-rules'
@@ -44,7 +55,9 @@ export type WriterInstructionId =
   | 'sound-cues'
   | 'soundtrack'
   | 'speakers'
+  /** Retired 2026-10-20: the plan records what someone has; nothing is tagged for the record. */
   | 'holdings'
+  /** Retired 2026-10-20: the plan casts everyone, with their look. */
   | 'appearance'
   | 'reading-guide'
   | 'return-format'
@@ -56,14 +69,22 @@ export type WriterInstructionId =
   | 'easy-read'
   | 'literal-reading'
   | 'official-requirements'
+  /** Retired 2026-10-20 with the holdings tags. */
   | 'holdings-fixer'
+  /** Retired 2026-10-20: Manifest draws the look the plan gave. */
   | 'look-step';
+
+/** The parts of the planner's prompt, in the order it reads them. */
+export type PlannerPromptPart = 'role' | 'reading' | 'planning' | 'hardRules';
+export const PLANNER_PROMPT_PARTS: readonly PlannerPromptPart[] = ['role', 'reading', 'planning', 'hardRules'];
 
 export interface WriterInstruction {
   id: WriterInstructionId;
   title: string;
-  /** The part of the chapter writer's prompt the block sits in (`HARNESS_PROMPT_PARTS`); absent for the small calls after a chapter. */
+  /** The part of the chapter writer's prompt the block sits in (`HARNESS_PROMPT_PARTS`). */
   part?: HarnessPromptPart;
+  /** The part of the planner's prompt the block sits in. */
+  plannerPart?: PlannerPromptPart;
   /** Whose words these are: a SEN skill, with its version, or the HARNESS itself. */
   source: string;
   /** When, and where, the writer reads them. */
@@ -81,7 +102,31 @@ const DEFAULT_SOUND_LIST = presentSoundVocabulary(LIBRARY_SOUND_WORDS);
 /** The story's music and atmosphere categories as the writer sees them, from the default soundscapes and atmospheres. */
 const DEFAULT_SOUNDTRACK_WORDS = soundtrackVocabulary(LIBRARY_BASE_MEDIA);
 
-/** Read on every chapter, in this order. */
+/** The planner reads these before every chapter, in this order (SENSEI, 2026-10-20). */
+export const PLANNER: readonly WriterInstruction[] = [
+  {
+    id: 'planner-role', title: 'Role and mission', source: 'HARNESS', plannerPart: 'role',
+    when: 'Every chapter, first: the planner is Fate, and decides what happens before the chapter is written. No skill can change it.',
+    text: CHAPTER_PLANNER_ROLE,
+  },
+  {
+    id: 'planner-reading-guide', title: 'How to read the story information', source: 'HARNESS', plannerPart: 'reading',
+    when: 'Every chapter: what each section of the story information, the Codex and this chapter\'s request means. No skill can change it.',
+    text: CHAPTER_PLANNER_READING_GUIDE,
+  },
+  {
+    id: 'planner-rules', title: 'How to plan the chapter', source: 'HARNESS', plannerPart: 'planning',
+    when: 'Every chapter, closing How to plan the chapter, after the planner\'s skills (Pacing, Fate Survival\'s planning half and Continuity, when a story has them): the cast, the events, the facts, the arc goal and the end. No skill can change it.',
+    text: CHAPTER_PLANNER_RULES,
+  },
+  {
+    id: 'planner-hard-rules', title: 'Hard rules', source: 'HARNESS', plannerPart: 'hardRules',
+    when: 'Every chapter, last in the planner\'s instructions. No skill can change them.',
+    text: CHAPTER_PLANNER_HARD_RULES,
+  },
+];
+
+/** The writer reads these on every chapter, in this order. */
 export const EVERY_CHAPTER: readonly WriterInstruction[] = [
   {
     id: 'role', title: 'Role and mission', source: 'HARNESS', part: 'role',
@@ -119,16 +164,6 @@ export const EVERY_CHAPTER: readonly WriterInstruction[] = [
     text: skillText(SEN_SPEAKERS_SKILL),
   },
   {
-    id: 'holdings', title: 'Holdings', source: skillSource(SEN_HOLDINGS_SKILL), part: 'tagging',
-    when: 'Every chapter.',
-    text: skillText(SEN_HOLDINGS_SKILL),
-  },
-  {
-    id: 'appearance', title: 'Appearance', source: skillSource(SEN_APPEARANCE_SKILL), part: 'tagging',
-    when: 'Every chapter.',
-    text: skillText(SEN_APPEARANCE_SKILL),
-  },
-  {
     id: 'reading-guide', title: 'How to read the story information', source: 'HARNESS', part: 'reading',
     when: 'Every chapter: what each section of the story information and the chapter request means. No skill can change it.',
     text: HARNESS_READING_GUIDE,
@@ -148,8 +183,13 @@ export const EVERY_CHAPTER: readonly WriterInstruction[] = [
 /** Read only in some stories, each in its own place among the blocks above. */
 export const SOME_STORIES: readonly WriterInstruction[] = [
   {
-    id: 'fate-survival', title: 'Fate Survival', source: skillSource(SEN_FATE_SURVIVAL_SKILL), part: 'writing',
-    when: 'Fate Survival stories, under How to write, after the Author.',
+    id: 'fate-survival-planning', title: 'Fate Survival: planning', source: skillSource(SEN_FATE_SURVIVAL_SKILL), plannerPart: 'planning',
+    when: 'Fate Survival stories: the planner reads it under How to plan the chapter, before the HARNESS\'s own rules.',
+    text: SEN_FATE_SURVIVAL_PLANNING,
+  },
+  {
+    id: 'fate-survival', title: 'Fate Survival: writing', source: skillSource(SEN_FATE_SURVIVAL_SKILL), part: 'writing',
+    when: 'Fate Survival stories: the writer reads it under How to write, after the Author.',
     text: skillText(SEN_FATE_SURVIVAL_SKILL),
   },
   ...([['clear-reading', 'Clear Reading'], ['easy-read', 'Easy Read'], ['literal-reading', 'Literal Reading']] as const).map(([id, mode]) => ({
@@ -164,26 +204,27 @@ export const SOME_STORIES: readonly WriterInstruction[] = [
   },
 ];
 
-/** Read after a chapter, by a separate small call: never by the chapter writer. */
-export const AFTER_A_CHAPTER: readonly WriterInstruction[] = [
-  {
-    id: 'holdings-fixer', title: 'Holdings fixer', source: 'HARNESS',
-    when: 'After a chapter is saved, only when its holdings checks found problems that need a model: one short call with the chapter\'s model, which reads these instructions and the small cases (a sentence, its tags, what the record shows), never the whole chapter.',
-    text: HOLDINGS_FIXER_INSTRUCTIONS,
-  },
-  {
-    id: 'look-step', title: 'Look writer', source: 'HARNESS',
-    when: 'Never after a chapter: only when something made from the story needs one entry\'s full look (a picture, a manga, a game) and the look kept on its Codex entry is missing or a newer tag changed it. One short call with the latest chapter\'s model, which reads these instructions and every passage that shows that one entry (with the author\'s notes on a character), never a whole chapter.',
-    text: LOOK_DESCRIBER_INSTRUCTIONS,
-  },
-];
-
-export const WRITER_INSTRUCTIONS: readonly WriterInstruction[] = [...EVERY_CHAPTER, ...SOME_STORIES, ...AFTER_A_CHAPTER];
+export const WRITER_INSTRUCTIONS: readonly WriterInstruction[] = [...PLANNER, ...EVERY_CHAPTER, ...SOME_STORIES];
 
 /** Blocks no longer read, kept so the history can still name them. */
 export const RETIRED_WRITER_INSTRUCTIONS: ReadonlyMap<WriterInstructionId, string> = new Map([
   ['response-contract', 'Response and evidence contract (retired)'],
+  ['holdings', 'Holdings (retired)'],
+  ['appearance', 'Appearance (retired)'],
+  ['holdings-fixer', 'Holdings fixer (retired)'],
+  ['look-step', 'Look writer (retired)'],
 ]);
+
+/** The heading of each part of the planner's prompt. */
+export const PLANNER_PART_HEADINGS: Readonly<Record<PlannerPromptPart, string>> = {
+  role: CHAPTER_PLANNER_HEADINGS.role,
+  reading: CHAPTER_PLANNER_HEADINGS.reading,
+  planning: CHAPTER_PLANNER_HEADINGS.planning,
+  hardRules: CHAPTER_PLANNER_HEADINGS.hardRules,
+};
+
+/** Everything a Regular Reader story's planner reads before the story, exactly as the HARNESS assembles it. */
+export const defaultPlannerInstruction = () => composeChapterPlannerInstruction();
 
 /**
  * Everything a default English story's writer reads before the story, exactly
@@ -194,7 +235,7 @@ export const RETIRED_WRITER_INSTRUCTIONS: ReadonlyMap<WriterInstructionId, strin
 export const defaultSystemInstruction = () => composeHarnessSystemInstruction(assembleCapaPrompt({
   capturedAt: 'now',
   originalLanguage: 'en',
-  skills: [SEN_NOVEL_AUTHOR_SKILL, SEN_SOUND_CUES_SKILL, SEN_SOUNDTRACK_SKILL, SEN_SPEAKERS_SKILL, SEN_HOLDINGS_SKILL, SEN_APPEARANCE_SKILL],
+  skills: [SEN_NOVEL_AUTHOR_SKILL, SEN_SOUND_CUES_SKILL, SEN_SOUNDTRACK_SKILL, SEN_SPEAKERS_SKILL],
   soundVocabulary: LIBRARY_SOUND_WORDS,
   soundtrackVocabulary: DEFAULT_SOUNDTRACK_WORDS,
 }));

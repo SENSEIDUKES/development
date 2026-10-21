@@ -9,6 +9,7 @@ import { HarnessGenerationWorkspace } from '@seihouse/library/generation';
 import { createMockStorySeedRecord } from '../../../workshop/previews/story-seed/previewData';
 import { createHarnessFoundationFromStorySeed } from '@seihouse/library/story-seed';
 import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
+import { planEveryChapter } from '../../../test-utils/chapterPlan';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -18,6 +19,7 @@ const modelAdapter: HarnessGenerationModelAdapter = {
   getServerInfo: async () => ({ configured: true, provider: 'fixture', defaultModel: 'fixture', models: [{ id: 'fixture', label: 'Fixture' }] }),
   generate: vi.fn(async request => { requests.push(structuredClone(request)); return asWrittenChapter(reply({ title: 'The Quarry', paragraphs: ['Ye Chen hauled stone in the quarry.'] })); }),
   // The arc planner's draft for the arc being begun; the HARNESS assigns its identities.
+  planChapter: planEveryChapter(),
   arcOperation: vi.fn(async () => reply({ plan: { goals: [
     { text: 'Climb to the inner sect.', chapters: 18 }, { text: 'Win the sect trial.', chapters: 12 },
   ] }, lookahead: [{ arcNumber: 3, direction: 'LOOKAHEAD_A3 Ye Chen faces the sect master.' }], destinedEnding: 'unused' })),

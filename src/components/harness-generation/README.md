@@ -31,12 +31,13 @@ existing Chapter Generation feature.
 | Field | Value |
 | --- | --- |
 | First Workshop record | 2026-08-29 |
-| Last recorded Workshop update | 2026-10-16 |
+| Last recorded Workshop update | 2026-10-20 |
 | Historical source inspection | 2026-09-12 — verified the creative author direction in `Light-Novels/src/server/prompts.ts` on `main` before extracting the Author skill |
-| Lifecycle status | Reader-directed continuation (Fate page) in a Reader on the Highlight Engine that reads aloud with each character in their own voice from their Codex card over the SEIHouse audio player's soundtrack, each chapter with the music and atmosphere its writer chose, with holdings tagged by the writer, checked by plain rules and quietly fixed after each chapter by the Holdings fixer, the newest chapter rewritable with a note, a chapter's writing kept going when the reader leaves, the story's point of view kept from its opening, and failed writes never saved |
+| Lifecycle status | Reader-directed continuation (Fate page) in a Reader on the Highlight Engine that reads aloud with each character in their own voice from their Codex card over the SEIHouse audio player's soundtrack, each chapter with the music and atmosphere its writer chose, each chapter planned by Fate before it is written, its plan checked against the record by plain rules and narrated by the writer, the record made from the plans, the newest chapter rewritable with a note, a chapter's writing kept going when the reader leaves, the story's point of view kept from its opening, and failed writes never saved |
 
 ### History
 
+- **2026-10-20 (the chapter loop, step 2):** SENSEI's design ([the chapter loop](../../../docs/chapter-loop.md)), in the prompt words SENSEI approved. **Fate plans, the writer narrates:** before each chapter the controller makes the planner's call (`planAttempt`; `HarnessGenerationModelAdapter.planChapter`, the `plan-chapter` operation in `src/server/harness-generation/chapterPlanner.ts`, registered in the Model Router as Chapter Planner, on the chapter's model). It reads the planner's packet sections (`PLANNER_SECTION_ORDER`: the direction sections and the new Codex section, `buildCodexSection` in `shared/codexSection.ts`) and the planning half of the CAPA Prompt (`CapaPrompt.planning`: Pacing, Fate Survival 2.0.0's planning rules and Continuity, by each slot's `readBy`), and returns a plan of menus (`src/narrative/chapterPlan.ts`): the cast, the events with the facts they change, which event reaches the arc goal, which ends the story (Fate Survival only), and the chapter function. **The checks:** `readChapterPlan` reads it leniently, and `checkChapterPlan` (`shared/chapterPlan.ts`) runs it against the record in event order and drops each fact that cannot be true, keeping it in `checks` (warning `plan_checked`). A reply with no plan, or a plan that does not end the story when a broken route requires it, fails the attempt before the writer's call. The checked plan is the attempt's `planned` checkpoint (`chapterPlan`, `plannerCall`); a retry, a reload or a rewrite without a note reuses it (`reusedFrom`), and a rewrite with a note plans again. **The writer** reads the Chapter Plan (`WRITER_SECTION_ORDER`, `presentChapterPlan`) instead of the direction sections, Holdings and Appeared; its reply loses `plan`, `chapterFunction`, `arcCompletion`, `storyEnded` and `mainCharacterHoldings`, and its speaker field is a menu (`MC`, the cast, `someone else`, `none`). **The record** is made from the plans at commit (`resolveChapterPlan`; `HarnessChapter.plan`, `planChecks`; `derivePlanRecord` in `shared/planRecord.ts`, and `deriveHoldings` from plan facts): looks, gender, age, holdings, rank, status, goals, values, commitments and stances, every fact linked to its chapter and event. The planner decides the arc goal and the story's end. **Retired, with no compatibility:** SEN Holdings and SEN Appearance with their slots, the holdings and appearance tag words and readers, the Holdings and Appeared sections, the closing list, the Holdings fixer and the look writer with their Model Router entries, and facts pinned to sentences. **Pages:** the Codex reads the plans; the Writer Instructions page shows the planner's blocks first; this page shows both calls. **Hosted:** the planner's call keeps its own visitor count, so planning never uses up a visitor's chapters. Schema 33, with no upgrade step (SENSEI: "with no compatibility"): older workspaces start fresh, preserved untouched. The Reader Chamber's two sample stories were written again through the HARNESS from plans.
 - **2026-10-19 (speaker field):** SENSEI's design from the original Light Novels app, whose Read Aloud always chose the right voice. **Who speaks is a field the writer cannot leave out:** each item of the reply's `paragraphs` is now `{speaker, text}` (`buildHarnessChapterResponseSchema`, both required), the speaker `MC` for the main character, anyone else by the name Story Information uses, empty when no one speaks. The inline tag depended on the writer remembering it (the Blade and Diner tests: 1 of 27, 0 of 26, 5 of 26 spoken lines). `normalizeHarnessParagraphs` (`shared/chapterBody.ts`) turns a speaker into the same `[[@Name]]` tag before the paragraph's speech, so `placeSpeakers`, the Codex, voices and Read Aloud are unchanged; a speaker on a paragraph without a quotation, a `narrator`/`none`, or a speaker tag the writer still wrote wins. A plain-string item is still read, so older replies and fixtures pass. **SEN Speakers 3.0.0** says it in four lines with one example. **Fixes from the Diner test:** a paragraph that is only a broken tag (`[[\u0000]]`, GPT-6 Luna) is dropped; a plain-prose reply that opens with a tag (a rewrite answered by Claude Haiku) is recovered instead of refused as a broken JSON array; a first name finds the one full name it belongs to (`fullNameOf`: "Mina", Mina Kisaragi) for the card, the Codex and the voice; and a first voice takes its gender only from the author's Story Seed notes, never the chapter's pronouns (Nao, written as "they", was given a man's voice from the "He" of the next sentence).
 - **2026-10-18 (character voices):** SENSEI's voice architecture. **Speaker tags name characters, when they have a card:** at commit `resolveSpeakers` (`shared/voices.ts`) points each speaker record at its Codex character through the chapter's one `createCodexEntryResolver` (`SpeakerPayload.entryId`): the main character for `MC`, a character the Story Seed declares, or a card an appearance or holding tag made. SENSEI: not every speaker gets a card; a speaker tag never makes one, so a crowd or a passing guard is read in the side voice, and the Codex no longer shows a card for someone who only speaks (`deriveStoryCodex`). A faction speaks as itself. Who else gets a card before a chapter is the cast plan's job (NOVEL_EXPANDED, the known hole). The Holdings fixer's merge repoints them, and the entry kept keeps its voice. **The voice is on the card:** `CodexEntry.voice` is a key of the SEIHouse voice cast (`src/audio/voiceCast.ts`: SENSEI's 31 catalog voices by provider-neutral key, no provider id; a test keeps it in step with the server catalog). `firstVoices` gives a character who first speaks a voice by code (`chooseCastVoice`: of their gender, a protagonist's for the main character, one no one else has while any is left), only when the author's notes or the pronouns of their paragraph and the next clearly tell a gender; otherwise their role's voice reads them. The reader changes it on the card (`controller.setCodexVoice`, a select of the cast with Hear). **Any engine:** each Read Aloud line carries its speaker's cast key (`ReadAloudLine.voice`, from `readAloudVoicesOf`; script version 2); `SpeechRequest` carries it as `character` with its `role`. The browser's voices stay the default, shaping a character's pitch from their cast voice's age (`webSpeechPitch`); a host passes any other engine (`readAloudEngine`), such as full text-to-speech from any provider as a premium option, which voices the key itself. Narrator, Protagonist and Side are now the base voices and the fallback. **SEN Speakers 2.3.0**, in SENSEI's approved words (the Blade test tagged 1 of 27 spoken lines): "Every paragraph with speech starts with its speaker", "A new speaker starts a new paragraph", and "A line without its speaker is read in the wrong voice."
 - **2026-10-17 (looks on demand):** SENSEI's redesign after the Blade test, where Old Gu Feng got no look. **No call after a chapter:** the post-commit look step is gone (`planLookStep`, `describeCommittedLooks`). Each appearance keeps the writer's own description by code (`AppearancePassage.description`, the paragraph from the tag's sentence, up to 480 characters); Appeared shows it, with "· since then: …" for each change (`appearedLookLine`), and the Codex shows it under Look, "In the story's words" (`codex-look-description`). **A look when something needs it:** `controller.describeCodexLook(storyId, key)` is the one entry point for pictures, manga and games: one `describe-looks` call for that one entry, from every passage that shows it (`planCodexLook`), kept on the entry (`CodexEntry.look`, with `from`) and written again only once a new tag adds a passage (`lookStale`, `codex-look-stale`). Manifest asks for it first. A failure is kept with the model's own answer (`CodexEntry.lookFailure.raw`); the reader is lenient (a long line is cut; a single subject's sole look is taken whatever its id). The look writer's instruction now says it writes the core record every picture, comic and game draws from, keeps only how the subject looks, and writes the whole look as it stands after the last passage. **Sound Cues 2.6.0:** the tag wraps words of the writer's own sentence where they stand, never between sentences with words of its own (Blade Chapter 17 lost one that way); the example shows it inside a sentence. No schema change: the new fields are optional.
@@ -491,7 +492,7 @@ generation cycle, prompts, planning, processing, or persistence.
 `development/HarnessReaderSession.tsx` is the Reader's frame, filling the
 screen: the top bar (`ReaderTopBar.tsx`, whose story and chapter open the chapter
 list), the bottom bar (`ReaderBottomBar.tsx`: Listen, Codex, the chapter arrows
-with Fate between them), Reader Settings and the Fate, Holdings and arc pages. The chapter on screen is its body (`readerChapterBody.ts`),
+with Fate between them), Reader Settings and the Fate, Codex and arc panels. The chapter on screen is its body (`readerChapterBody.ts`),
 prose by default (`ProseChapterBody.tsx`: the read-only Highlight Engine with
 the Sound Cues, in the reader's text settings). It owns no second persistence
 path; the reading place is host Reader state and the text settings are a device
@@ -502,21 +503,25 @@ path uses, though the Reader no longer edits. SEN stays provider-neutral.
 ## Durable generation behavior
 
 1. Persist `request_started` before a provider request.
-2. Persist the raw provider response immediately after it returns.
-3. Accept the paragraphs as the authoritative chapter, strip every mark from
+2. Unless the attempt reuses a saved plan (a retry, a reload, a rewrite without
+   a note), make the planner's call, read its plan, check it against the
+   record, and persist the checked plan with the planner's reply (`planned`).
+   A reply with no plan, or a plan that does not end the story when a broken
+   route requires it, fails the attempt before the writer's call.
+3. Persist the writer's raw response immediately after it returns.
+4. Accept the paragraphs as the authoritative chapter, strip every mark from
    the reply, place each Sound Cue on the words its mark wraps with a
    recording from the frozen Media Loadout, and persist that accepted chapter
    draft. A malformed or unplaceable cue becomes a warning, never lost prose.
-4. Persist the (now always empty) writer-lane event checkpoint so the existing
+5. Persist the (now always empty) writer-lane event checkpoint so the existing
    retry and replay stages remain unchanged.
-5. Atomically append a chapter with its paragraphs and placed Sound Cues,
-   attempt receipt, and updated story head. A rewrite first takes the story
-   back to just before the chapter it replaces, in the same write.
-6. Replay existing committed events deterministically, with no memory model call.
-   New chapter state comes from tags; historical canonical-state readers remain.
-7. Run the Holdings fixer on the new chapter. Its outcome is saved as the
-   chapter's `fixer` record; a failed call or write leaves the committed
-   chapter exactly as it was.
+6. Atomically append a chapter with its paragraphs, placed Sound Cues and
+   speakers, its plan with every name resolved to a Codex entry, the attempt
+   receipt, and updated story head. A rewrite first takes the story back to
+   just before the chapter it replaces, in the same write.
+7. Replay existing committed events deterministically, with no memory model call.
+   New chapter state comes from the chapter's plan; historical canonical-state
+   readers remain. No call follows a chapter.
 
 Only a committed chapter enters the next context snapshot.
 
@@ -555,12 +560,14 @@ Development's complete SPP import flow and validation evidence are documented in
 
 CAPA Skills are not the deterministic capability handlers above. Capability handlers
 are permanent internal machinery that interprets committed evidence. CAPA Skills are
-versioned packages in one of the eight CAPA Schema slots (`CAPA_SCHEMA` in
+versioned packages in one of the ten CAPA Schema slots (`CAPA_SCHEMA` in
 `shared/skills.ts`): Author, Pacing, Fate, Continuity, Style, Accessibility,
-Translation, and Sound Cues. Author, Pacing, Continuity and Style are equipped per
-story. Fate, Accessibility, Translation and Sound Cues are managed: the HARNESS resolves
-them from the story's Fate mode, Reading Mode, Story Language and Media Loadout at every
-loadout freeze, and nobody equips them. Users configure those through Story Settings and
+Translation, Sound Cues, Soundtrack and Speakers. Author, Pacing, Continuity and Style
+are equipped per story. Fate, Accessibility, Translation, Sound Cues, Soundtrack and
+Speakers are managed: the HARNESS resolves them from the story's Fate mode, Reading
+Mode, Story Language and Media Loadout (Speakers always) at every loadout freeze, and
+nobody equips them. Pacing is the planner's, Fate and Continuity are read by both
+calls, and the rest are the writer's (`readBy`, 2026-10-20). Users configure those through Story Settings and
 the Media Loadout and never see a slot. The Media Loadout itself is not a CAPA slot:
 only its sound words reach the writer, as the Sound Cues skill's list. The bundled SEN Novel Author is a normal, replaceable generation skill, not
 hidden creative Harness behavior. It is equipped for new and previously saved local
@@ -579,14 +586,15 @@ Packet. Only manifests declaring the `generation` application contribute text.
 Reader and post-commit applications may be recorded in the frozen CAPA Prompt's
 skill inventory for their owning host runtime and send nothing to the writing model.
 
-When any loaded skill teaches a tag (Sound Cues, Soundtrack, Speakers, Holdings, Appearance), the
+When any loaded skill teaches a tag (Sound Cues, Soundtrack, Speakers), the
 HARNESS tag rules (`HARNESS_TAG_RULES`) come once, just before the first of
 them: what every tag kind shares, so no kind repeats it. Like the official
 requirements they are HARNESS text, never a skill.
 
-The separate permanent `HARNESS_RESPONSE_CONTRACT` describes the chapter reply:
-the paragraphs, the Arc Goal and ending evidence, the recap and the three
-suggestions, and the guard against invented IDs, URLs and assets. It carries no
+The HARNESS's own parts of the writer's prompt (`prompt.ts`) describe the chapter
+reply: the paragraphs with their speakers, the recap and the three suggestions,
+and the guard against invented IDs, URLs and assets. The Arc Goal and the
+story's ending are the planner's since 2026-10-20. It carries no
 tag wording: how to tag lives only in the CAPA skills, and every signal travels
 as a tag inside `paragraphs`, so the response schema
 (`buildHarnessChapterResponseSchema`) has no list of signals. It is fixed
@@ -628,24 +636,25 @@ error in both places and keeps the chosen direction for the retry.
 
 ### Fate modes
 
-Both modes record every Arc Goal honestly. A goal is achieved only when the writer
-reports it with a verbatim passage from the chapter; when its deadline chapter
-commits without that, it is recorded as missed. A chapter never waits for the
-writer to claim a goal. The one chapter that can be held back is the one a broken
-Fate Survival route requires to end the story: `missingRequiredEnding` keeps it
-uncommitted until its prose shows that ending. `commitHarnessArc` applies the
-rest, in the same write as the chapter:
+Both modes record every Arc Goal honestly. A goal is achieved only when the
+chapter's plan names the event that achieves it (`arcGoalReached`; before
+2026-10-20, the writer's claim with a verbatim passage); when its deadline chapter
+commits without that, it is recorded as missed. The one chapter that can be held
+back is the one a broken Fate Survival route requires to end the story:
+`missingRequiredEnding` fails its attempt before the writer's call unless its plan
+ends the story (`storyEnds`). `commitHarnessArc` applies the rest, in the same
+write as the chapter:
 
 | | Regular Reader | Fate Survival |
 | --- | --- | --- |
 | Who directs | Fate (Rhythm) by default; the reader may take any chapter | The reader, every chapter |
-| Fate CAPA skill | None: the mode-managed Fate slot stays empty | SEN Fate Survival, loaded on every chapter call |
+| Fate CAPA skill | None: the mode-managed Fate slot stays empty | SEN Fate Survival on every chapter: its planning rules for the planner, its writing rules for the writer |
 | Destined Ending | Guaranteed as the standing direction: every chapter pursues it; nothing forces the prose to reach it | Not guaranteed |
 | A missed goal | The story is off track; the next goal begins; no consequence | Counted within its arc; the next goal begins |
 | Route breaks | Never | When at least half of one arc's goals are missed (`goalsThatBreakRoute`: 1 of 1 or 2, 2 of 3 or 4, 3 of 5) or the final goal is missed (`HarnessStory.brokenRoute`) |
-| Missed final goal | No ending is recorded. The story continues past its roadmap with that goal still its destination and no deadline (`route.status: 'past-final-goal'`); no arc or goal is invented. When the prose reaches the Destined Ending the story concludes (`reached-after-final-goal-missed`) | The route breaks (`final-goal-missed`) |
-| After the route breaks | — | The next chapter must end the story (`route.status: 'broken'`, and the Fate Survival skill's ending rule). The reader still directs it. It commits only when its prose shows the ending (`storyEnded` with a verbatim passage); otherwise it is not saved, its direction stays in place, and the reader tries again. No recovery call is made. It may pass the arc's planned end but never begins, plans, reviews or locks another arc. A chapter that breaks the route and already shows a genuine ending ends the story at once |
-| The story ends | The final goal achieved (`final-goal-completed`) | Only when committed prose shows it: the final goal achieved, or the writer's verbatim passage showing the ending (`story-ended`: a fatal ending at any point, or the ending a broken route requires). A chapter count, a broken route alone, or an unsupported claim never ends it |
+| Missed final goal | No ending is recorded. The story continues past its roadmap with that goal still its destination and no deadline (`route.status: 'past-final-goal'`); no arc or goal is invented. When a chapter's plan reaches that goal the story concludes (`reached-after-final-goal-missed`) | The route breaks (`final-goal-missed`) |
+| After the route breaks | — | The next chapter must end the story (`route.status: 'broken'`, and the Fate Survival skill's ending rule). The reader still directs it. It is written only when its plan ends the story (`storyEnds`, naming the event); otherwise the attempt fails before the writer's call, its direction stays in place, and the reader tries again. No recovery call is made. It may pass the arc's planned end but never begins, plans, reviews or locks another arc. A chapter that breaks the route and whose plan already ends the story ends it at once |
+| The story ends | The final goal achieved (`final-goal-completed`) | Only when a committed chapter's plan ends it: the final goal achieved, or the event that ends the story (`story-ended`: a fatal ending at any point, or the ending a broken route requires; a plan that leaves the main character dead ends it at that event even when it forgets to say so; the plan's events after the one that ends the story are set aside). A chapter count or a broken route alone never ends it |
 
 After `HarnessStory.conclusion` is set no chapter is written or planned. How a
 Regular reader might later change the Destined Ending, and any "continue this
@@ -676,7 +685,11 @@ the **Frozen CAPA Prompt**, the **Frozen Story Information Packet** (with its
 **Included / Omitted** lists), and the **Immediate Chapter Request**. The packet
 shows the exact selected Foundation revision, source Seed and optional Blueprint,
 corrections (with target evidence), retained chapters, the reader's direction, and
-selection reasons; it contains no skill instructions.
+selection reasons; it contains no skill instructions. Since the chapter loop
+(2026-10-20) each attempt also keeps the planner's call (`plannerCall`: its raw
+reply, receipt and measured request) and the checked plan the writer narrated
+(`chapterPlan`, with what the checks dropped), and the page shows each call's
+measured request, the planner's beside the writer's.
 
 `buildHarnessGenerationPrompt` combines them into one provider call: the system
 instruction is the CAPA Prompt followed by the distinct Harness response and
@@ -707,8 +720,9 @@ established events. Existing saved snapshots remain readable without migration.
 The separate automatic/on-request memory model call, client method, server operation,
 and Workshop recovery control are removed. Chapters no longer receive the recurring
 “story memory incomplete” warning. Chapter writing, acceptance, saving, replay and the
-Reader retain their existing paths. Sound Cues, speakers and Holdings come from tags;
-recaps come from the chapter response.
+Reader retain their existing paths. Sound Cues come from tags, speakers from each
+paragraph's speaker field, and the record from each chapter's plan; recaps come
+from the chapter response.
 
 Current Canonical State and its deterministic readers remain. Existing committed events,
 canonical records, corrections and previously saved chapter checkpoints are still read;

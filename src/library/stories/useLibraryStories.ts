@@ -5,7 +5,6 @@ import {
   includeBundledHarnessSkills,
   type HarnessGenerationModelAdapter,
   type HarnessGenerationRepository,
-  type HarnessHoldingsFixerPolicy,
   type HarnessGenerationServerInfo,
   type HarnessSkillManifest,
   type HarnessWorkspaceState,
@@ -45,12 +44,6 @@ export interface LibraryStoriesOptions {
   importMediaPack?: (file: Blob) => Promise<{ pack: MediaPack; entitlement: MediaPackEntitlement }>;
   /** Host-remembered model choice (the Model Router); used whenever the server offers it. */
   preferredModel?: string;
-  /**
-   * How far SEN's Holdings fixer may go after each chapter: the Library's
-   * control over it, where the Familiar will take over. Absent: records and,
-   * one at a time, sentences.
-   */
-  holdingsFixer?: HarnessHoldingsFixerPolicy;
 }
 
 /** A reader's HARNESS stories, open and ready to read and continue. */
@@ -120,7 +113,6 @@ export function useLibraryStories({
   installSkill: keepSkill,
   importMediaPack: installMediaPack,
   preferredModel,
-  holdingsFixer = 'records-and-sentences',
 }: LibraryStoriesOptions): LibraryStories {
   const controller = useMemo(
     () => new HarnessGenerationController({ repository, modelAdapter, media: createLibraryMediaPort({ registered: registeredMediaPacks, entitlements: mediaPackEntitlements, base: baseMedia }) }),
@@ -128,7 +120,6 @@ export function useLibraryStories({
     [repository, modelAdapter],
   );
   useEffect(() => controller.setInstalledSkills(installedSkills), [controller, installedSkills]);
-  useEffect(() => controller.setHoldingsFixer(holdingsFixer), [controller, holdingsFixer]);
   useEffect(() => controller.setMediaPort(createLibraryMediaPort({ registered: registeredMediaPacks, entitlements: mediaPackEntitlements, base: baseMedia })), [controller, registeredMediaPacks, mediaPackEntitlements, baseMedia]);
   const [snapshot, setSnapshot] = useState<HarnessWorkspaceState>();
   // The controller's snapshot before storage opens is empty: it is held back,

@@ -8,8 +8,6 @@ import { SEN_READING_MODE_SKILLS } from './readingModeSkills';
 import { SEN_SOUND_CUES_SKILL, presentSoundVocabulary } from './soundCuesSkill';
 import { SEN_SOUNDTRACK_SKILL, presentSoundtrackVocabulary } from './soundtrackSkill';
 import { SEN_SPEAKERS_SKILL } from './speakersSkill';
-import { SEN_HOLDINGS_SKILL } from './holdingsSkill';
-import { SEN_APPEARANCE_SKILL } from './appearanceSkill';
 import { HARNESS_TAG_RULES } from './tagRules';
 import type { SoundWord } from '../../../audio/soundWords';
 import type { SoundtrackVocabulary } from '../../../audio/soundtrackVocabulary';
@@ -37,11 +35,19 @@ export interface CapaSlotDefinition {
    *   atmospheres loads SEN's Soundtrack skill with their categories. Without them the
    *   slot is empty. A host without the Soundtrack skill leaves its slot empty
    *   and never fails a chapter.
-   * - `always`: every chapter. SEN's skill for the slot (Speakers, Holdings, Appearance)
+   * - `always`: every chapter. SEN's skill for the slot (Speakers)
    *   loads whenever the host has it; a host without it leaves the slot empty
    *   and never fails a chapter.
    */
   managedBy?: CapaSlotManager;
+  /**
+   * Which of the chapter's two calls reads the slot's skill (SENSEI,
+   * 2026-10-20: the chapter loop). Absent: the writer alone. `planner`: the
+   * planner alone, for a skill that decides what happens rather than how it
+   * is told. `both`: the planner reads the skill's `planning` half when it has
+   * one, else its instructions, and the writer its instructions.
+   */
+  readBy?: 'planner' | 'both';
   /**
    * Whether a host may install packages for this slot. Separate from equipping:
    * Translation packages are installed but never equipped by hand, while the
@@ -64,24 +70,20 @@ export interface CapaSlotDefinition {
  */
 export const CAPA_SCHEMA: readonly CapaSlotDefinition[] = [
   { id: 'author', label: 'Author', description: 'Defines how the writing model approaches and writes the chapter.', installable: true },
-  { id: 'pacing', label: 'Pacing', description: 'Controls event spacing, arc pressure, and payoff timing.', installable: true },
-  { id: 'fate', label: 'Fate', description: 'Carries the Fate mode\'s writing rules: the reader\'s direction, honest pursuit, lasting consequences, and endings.', managedBy: 'fate-mode', installable: false },
-  { id: 'continuity', label: 'Continuity', description: 'Adds specialized canon and long-range consistency guidance.', installable: true },
+  { id: 'pacing', label: 'Pacing', description: 'Controls event spacing, arc pressure, and payoff timing, as the planner decides each chapter\'s events.', installable: true, readBy: 'planner' },
+  { id: 'fate', label: 'Fate', description: 'Carries the Fate mode\'s rules: how the planner pursues the reader\'s direction honestly and lets consequences and endings stand, and how the writer shows them.', managedBy: 'fate-mode', installable: false, readBy: 'both' },
+  { id: 'continuity', label: 'Continuity', description: 'Adds specialized canon and long-range consistency guidance, for the planner and the writer.', installable: true, readBy: 'both' },
   { id: 'style', label: 'Style', description: 'Shapes prose tradition, voice, rhythm, and presentation.', installable: true },
   { id: 'accessibility', label: 'Accessibility', description: 'Writes chapters in the story\'s Reading Mode.', managedBy: 'reading-mode', installable: false },
   { id: 'translation', label: 'Translation', description: 'Writes chapters in the story\'s Story Language when it is not English.', managedBy: 'story-language', installable: true },
   { id: 'soundCues', label: 'Sound Cues', description: 'Tags the words where a sound happens and names it from the story\'s sound words.', managedBy: 'media-loadout', installable: false, writesTags: true },
   { id: 'soundtrack', label: 'Soundtrack', description: 'Chooses the music and the atmosphere a chapter opens with, by category and SEN audio tags, once each, at its start.', managedBy: 'media-loadout', installable: false, writesTags: true },
-  { id: 'speakers', label: 'Speakers', description: 'Tags who speaks each spoken line, so the Reader can give each its voice.', managedBy: 'always', installable: false, writesTags: true },
-  { id: 'holdings', label: 'Holdings', description: 'Keeps what every character has, uses, knows and is: tags each change where it happens and lists what the main character holds after the chapter.', managedBy: 'always', installable: false, writesTags: true },
-  { id: 'appearance', label: 'Appearance', description: 'Keeps every look: tags each character and thing when it steps onto the page and each change to a look.', managedBy: 'always', installable: false, writesTags: true },
+  { id: 'speakers', label: 'Speakers', description: 'Names who speaks in each paragraph, so the Reader can give each line its voice.', managedBy: 'always', installable: false, writesTags: true },
 ] as const;
 
 /** SEN's own skill for each slot that loads on every chapter. */
 export const ALWAYS_LOADED_SKILLS: Readonly<Partial<Record<HarnessSkillSlotId, HarnessSkillManifest>>> = {
   speakers: SEN_SPEAKERS_SKILL,
-  holdings: SEN_HOLDINGS_SKILL,
-  appearance: SEN_APPEARANCE_SKILL,
 };
 
 const HARNESS_SKILL_APPLICATIONS: readonly HarnessSkillApplication[] = [
@@ -107,8 +109,6 @@ const MEDIA_SLOT_REASONS: Readonly<Partial<Record<HarnessSkillSlotId, string>>> 
 /** Why each slot that loads on every chapter does. */
 const ALWAYS_SLOT_REASONS: Readonly<Partial<Record<HarnessSkillSlotId, string>>> = {
   speakers: 'The Speakers slot loads SEN\'s Speakers skill on every chapter, so the Reader knows who speaks each line.',
-  holdings: 'The Holdings slot loads SEN\'s Holdings skill on every chapter, so what every character has is read, used and recorded.',
-  appearance: 'The Appearance slot loads SEN\'s Appearance skill on every chapter, so everyone and everything on the page keeps the look the story gave it.',
 };
 
 /** Why a slot cannot be equipped by hand, when it cannot. */
@@ -142,19 +142,22 @@ export const validateHarnessSkillManifest = (manifest: HarnessSkillManifest): Ha
   if (manifest.applications.includes('generation') && !manifest.instructions?.trim()) {
     throw new Error(`Generation skill ${manifest.name} must include model instructions.`);
   }
-  if ((manifest.instructions?.length ?? 0) > HARNESS_SKILL_INSTRUCTION_LIMIT) {
+  if ((manifest.instructions?.length ?? 0) > HARNESS_SKILL_INSTRUCTION_LIMIT || (manifest.planning?.length ?? 0) > HARNESS_SKILL_INSTRUCTION_LIMIT) {
     throw new Error(`Harness skill instructions exceed ${HARNESS_SKILL_INSTRUCTION_LIMIT} characters.`);
+  }
+  if (manifest.planning !== undefined && (!manifest.applications.includes('generation') || !manifest.planning.trim())) {
+    throw new Error(`Harness skill ${manifest.name} carries planning text, which only a generation skill can carry, and only with words in it.`);
   }
   // Translation metadata is structural and slot-exclusive: a Translation skill
   // must declare exactly one target language, and no other slot may declare one.
   if (manifest.slot === 'translation') {
     const translation = validateTranslationSkillMetadata(manifest.translation, manifest.name);
-    return cloneHarnessValue({ ...manifest, instructions: manifest.instructions?.trim(), translation });
+    return cloneHarnessValue({ ...manifest, instructions: manifest.instructions?.trim(), ...(manifest.planning ? { planning: manifest.planning.trim() } : {}), translation });
   }
   if (manifest.translation !== undefined) {
     throw new Error(`Harness skill ${manifest.name} occupies the ${manifest.slot} slot and cannot declare Translation metadata.`);
   }
-  return cloneHarnessValue({ ...manifest, instructions: manifest.instructions?.trim() });
+  return cloneHarnessValue({ ...manifest, instructions: manifest.instructions?.trim(), ...(manifest.planning ? { planning: manifest.planning.trim() } : {}) });
 };
 
 export const createHarnessSkillCatalog = (manifests: HarnessSkillManifest[]) => {
@@ -374,8 +377,16 @@ export const buildHarnessOfficialOutputRequirements = (input: {
 const slotDefinition = (slot: HarnessSkillSlotId) => CAPA_SCHEMA.find(definition => definition.id === slot)!;
 const slotLabel = (slot: HarnessSkillSlotId) => slotDefinition(slot).label;
 
-const isAuthoringSkill = (skill: HarnessSkillManifest) =>
+const isGenerationSkill = (skill: HarnessSkillManifest) =>
   skill.applications.includes('generation') && Boolean(skill.instructions?.trim());
+/** A skill whose instructions the writer reads: its slot is the writer's, or both calls'. */
+const isAuthoringSkill = (skill: HarnessSkillManifest) =>
+  isGenerationSkill(skill) && slotDefinition(skill.slot).readBy !== 'planner';
+/** A skill the planner reads: its slot is the planner's, or both calls'. */
+const isPlanningSkill = (skill: HarnessSkillManifest) =>
+  isGenerationSkill(skill) && slotDefinition(skill.slot).readBy !== undefined;
+/** What the planner reads of a skill: its planning half when it has one, else its instructions. */
+const planningText = (skill: HarnessSkillManifest) => (skill.planning ?? skill.instructions)!.trim();
 
 /** What joins the CAPA Prompt's two halves; `taggingStart` counts past it. */
 const CAPA_HALF_SEPARATOR = '\n\n';
@@ -398,8 +409,10 @@ export const capaPromptParts = (capaPrompt: Pick<CapaPrompt, 'text' | 'taggingSt
  * then, when any loaded skill teaches a tag (`writesTags`), the HARNESS tag
  * rules once and those skills in schema order. `taggingStart` marks where the
  * second half begins, so the system instruction can put each under its own
- * heading. Non-generation skills are recorded for their host runtime but
- * contribute no authoring text.
+ * heading. Beside it, `planning` holds what the planner reads (SENSEI,
+ * 2026-10-20): every skill whose slot the planner reads, in schema order.
+ * Non-generation skills are recorded for their host runtime but contribute
+ * no authoring text.
  */
 export const assembleCapaPrompt = (
   loadout: HarnessSkillLoadoutSnapshot,
@@ -437,6 +450,8 @@ export const assembleCapaPrompt = (
     ? loadout.soundtrackVocabulary
     : undefined;
   const authoring = ordered.filter(isAuthoringSkill);
+  const planners = ordered.filter(isPlanningSkill);
+  const planning = planners.map(skill => [`CAPA SKILL [${slotLabel(skill.slot)}] — ${skill.name} v${skill.version}`, planningText(skill)].join('\n')).join('\n\n');
   const sections = authoring.map(skill => [
     `CAPA SKILL [${slotLabel(skill.slot)}] — ${skill.name} v${skill.version}`,
     skill.instructions!.trim(),
@@ -464,7 +479,7 @@ export const assembleCapaPrompt = (
   const tagging = tagSections.length ? [HARNESS_TAG_RULES, ...tagSections].join('\n\n') : '';
   const text = tagging ? `${writing}${CAPA_HALF_SEPARATOR}${tagging}` : writing;
   const estimatedTokens = Math.max(1, Math.ceil(text.length / 4));
-  if (estimatedTokens > CAPA_PROMPT_TOKEN_LIMIT) {
+  if (estimatedTokens > CAPA_PROMPT_TOKEN_LIMIT || Math.ceil(planning.length / 4) > CAPA_PROMPT_TOKEN_LIMIT) {
     throw new Error('Equipped skills exceed the CAPA Prompt budget. Empty a skill slot, install shorter instructions, narrow the Translation glossary, or equip a Sound Cue Pack with fewer sound words.');
   }
   return {
@@ -476,10 +491,12 @@ export const assembleCapaPrompt = (
       slot: skill.slot,
       applications: [...skill.applications],
       authoring: isAuthoringSkill(skill),
+      ...(isPlanningSkill(skill) ? { planning: true as const } : {}),
       ...(translationTargetLanguage(skill) ? { targetLanguage: translationTargetLanguage(skill) } : {}),
       ...(skill.source ? { source: cloneHarnessValue(skill.source) } : {}),
     })),
     text,
+    ...(planning ? { planning } : {}),
     ...(tagging ? { taggingStart: writing.length + CAPA_HALF_SEPARATOR.length } : {}),
     estimatedTokens,
     ...(translationGlossary ? { translationGlossary: cloneHarnessValue(translationGlossary) } : {}),

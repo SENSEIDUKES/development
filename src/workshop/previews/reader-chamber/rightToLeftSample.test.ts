@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
+import { deriveHoldings, type HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
 import { installOfficialCapaSkillsInMemory } from '../../../host/generation/capa/officialCapaSkills';
 import { RIGHT_TO_LEFT_STORY_TITLE, buildRightToLeftStory } from './rightToLeftSample';
 import { loadSampleStory } from './sampleStory';
@@ -26,7 +26,7 @@ describe('the right-to-left story', () => {
     }
   });
 
-  it('places its Sound Cues, speakers and holdings on Arabic words', () => {
+  it('places its Sound Cues and speakers on Arabic words, and keeps the record its Arabic plans make', () => {
     const [first, second] = story.chapters.sort((left, right) => left.chapterNumber - right.chapterNumber);
     expect(first.soundCues?.map(cue => [cue.payload.sound, cue.anchor.selectedText])).toEqual([
       ['rattle', 'تدحرجت الحصى السائبة على الحافة'],
@@ -43,6 +43,12 @@ describe('the right-to-left story', () => {
     }
     // [[@MC]] is saved under the main character's name; other tags under the Arabic names the writer used.
     expect(new Set(first.speakers?.map(line => line.payload.speaker))).toEqual(new Set(['سونغ شياوتيان', 'Gu Chen', 'المشرف لو']));
-    expect(first.closingHoldings).toEqual(expect.arrayContaining(['سلك نحاسي', 'معول حديدي']));
+    // What the plans say changes, under the Arabic names they use.
+    const holdings = deriveHoldings({ entries: story.codexEntries, chapters: story.chapters });
+    const main = holdings.characters.find(character => character.mainCharacter)!;
+    expect(main.things.map(held => [held.name, held.equipped])).toEqual([['سلك نحاسي', true], ['معول حديدي', true]]);
+    expect(main.abilities.map(ability => [ability.name, ability.stage, ability.level])).toEqual([['سلالة الصدع السماوي', 'learned', 'Lv. 1']]);
+    expect(holdings.flags).toEqual([]);
+    expect(story.attempts.every(attempt => attempt.chapterPlan?.checks.length === 0)).toBe(true);
   });
 });

@@ -118,11 +118,14 @@ export function editArcPlan(previous: ArcPlan, proposed: ArcPlan): ArcPlan {
   if (next.arcNumber !== previous.arcNumber) throw new Error('Editing cannot move goals to another arc.');
   return next;
 }
-export function confirmArcGoal(context: ArcGenerationContext, chapterNumber: number, prose: string, value: unknown): ArcGoalCompletion | undefined {
-  const result = value as { goalId?: string; completed?: boolean; evidence?: string } | undefined;
-  if (!result || result.goalId !== context.activeGoal.id || result.completed !== true || (typeof result.evidence !== 'string' || !result.evidence.trim())
-    || !prose.includes(result.evidence) || chapterNumber < context.activeGoal.startChapter) return undefined;
-  return { arcNumber: context.plan.arcNumber, goalId: result.goalId, goalText: context.activeGoal.text, chapterNumber, evidence: result.evidence };
+/**
+ * The active goal reached in a chapter, by the planned event that reaches it
+ * (SENSEI, 2026-10-20: the chapter's plan decides it; its evidence is how
+ * that event happens). Never before the goal begins, and never twice.
+ */
+export function reachArcGoal(context: ArcGenerationContext, chapterNumber: number, evidence: string): ArcGoalCompletion | undefined {
+  if (!evidence.trim() || context.completionConfirmed || chapterNumber < context.activeGoal.startChapter) return undefined;
+  return { arcNumber: context.plan.arcNumber, goalId: context.activeGoal.id, goalText: context.activeGoal.text, chapterNumber, evidence: evidence.trim() };
 }
 
 /** Story Seed supplies one initial goal; the existing plan/deadline contract remains authoritative. */

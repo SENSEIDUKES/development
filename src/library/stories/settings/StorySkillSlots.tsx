@@ -28,19 +28,9 @@ const managedSlotInspection = (
     case 'always': {
       const skill = ALWAYS_LOADED_SKILLS[slot.id];
       const loaded = skill && installedSkills.some(installed => installed.id === skill.id && installed.version === skill.version);
-      if (slot.id === 'holdings') {
-        return loaded && skill
-          ? { status: 'Loaded', skill, summary: `${skill.name} v${skill.version} loads on every chapter: the writer reads what every character has, uses only that, and tags each change.` }
-          : { status: 'No package', summary: 'This host has no Holdings skill, so chapters are written without holding tags and nothing new is recorded.' };
-      }
-      if (slot.id === 'appearance') {
-        return loaded && skill
-          ? { status: 'Loaded', skill, summary: `${skill.name} v${skill.version} loads on every chapter: the writer reads who and what is already on the page, keeps each look, and tags each first appearance and each change to a look.` }
-          : { status: 'No package', summary: 'This host has no Appearance skill, so chapters are written without appearance tags and no look is recorded.' };
-      }
       return loaded && skill
         ? { status: 'Loaded', skill, summary: `${skill.name} v${skill.version} loads on every chapter, so the Reader knows who speaks each line.` }
-        : { status: 'No package', summary: 'This host has no Speakers skill, so chapters are written without speaker tags and Read Aloud takes every speaker from the narration.' };
+        : { status: 'No package', summary: 'This host has no Speakers skill, so chapters are written without each paragraph\'s speaker and Read Aloud takes every speaker from the narration.' };
     }
     case 'media-loadout':
       if (slot.id === 'soundtrack') {

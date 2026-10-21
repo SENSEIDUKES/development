@@ -9,6 +9,7 @@ import { createEmptyHarnessWorkspaceState, readHarnessWorkspaceState } from '@se
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { asWrittenChapter, writtenChapter } from '../../../test-utils/writtenChapter';
 import { HARNESS_GENERATION_SCHEMA_VERSION, type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessSemanticEvent, type HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
+import { planEveryChapter, plannedChapter } from '../../../test-utils/chapterPlan';
 
 const runtime = (): HarnessRuntime => {
   let id = 0;
@@ -50,6 +51,7 @@ const adapter = (...outputs: Array<HarnessGenerationResponse | Error>) => {
   const value: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [{ id: 'gemini-test', label: 'Gemini test' }], defaultModel: 'gemini-test' }),
     generate,
+    planChapter: planEveryChapter(),
     arcOperation: async request => response({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 30 }] }, destinedEnding: 'Bring the story to its true conclusion.' }),
   };
   return { value, generate, memoryByProse };
@@ -141,7 +143,7 @@ describe('Harness Generation Phase 3 deterministic story harness', () => {
   it('builds distinct relationship, thread, and mystery history without allowing uncommitted records into canonical state', () => {
     const state = createEmptyHarnessWorkspaceState();
     state.stories.push({ id: 'story_fixture', title: 'Story', originalLanguage: 'en', createdAt: 'a', updatedAt: 'a', activeFoundationRevisionId: 'f', foundationRevisionIds: ['f'], head: { nextChapterNumber: 2 } });
-    state.chapters.push({ id: 'chapter_fixture', storyId: 'story_fixture', attemptId: 'a', foundationRevisionId: 'f', storyInformationPacketId: 'c', chapterNumber: 1, title: 'One', titleSource: 'model', prose: 'Prose.', paragraphs: ['Prose.'], metrics: { wordCount: 1, paragraphCount: 1, meetsScaleTarget: false }, eventIds: [], responseMode: 'json', createdAt: 'a', committedAt: 'b', mediaLoadout: { capturedAt: 'a', soundscapes: [], soundCues: [] } });
+    state.chapters.push({ id: 'chapter_fixture', storyId: 'story_fixture', attemptId: 'a', foundationRevisionId: 'f', storyInformationPacketId: 'c', chapterNumber: 1, title: 'One', titleSource: 'model', prose: 'Prose.', paragraphs: ['Prose.'], metrics: { wordCount: 1, paragraphCount: 1, meetsScaleTarget: false }, eventIds: [], plan: { cast: [], events: [] }, responseMode: 'json', createdAt: 'a', committedAt: 'b', mediaLoadout: { capturedAt: 'a', soundscapes: [], soundCues: [] } });
     const registry = new HarnessCapabilityRegistry();
     const events = [
       semanticEvent({ id: 'rel1', category: 'relationship', subjects: ['Mara', 'Iven'], description: 'Mara distrusts Iven.' }),
@@ -276,9 +278,15 @@ describe('Harness Generation Phase 3 deterministic story harness', () => {
     expect(context.diagnostics.omitted.every(item => item.reason.length > 0)).toBe(true);
   });
 
-  it('reloads, retries, and resumes a failed sequential batch without duplicating committed chapters', async () => {
+  it('reloads, retries, and resumes a failed sequential batch without duplicating committed chapters, counting both of each chapter\'s calls', async () => {
     const repository = new InMemoryHarnessGenerationRepository();
+    // The planner reports what each of its calls used.
+    const planner = async () => {
+      const planned = plannedChapter();
+      return { ...planned, providerReceipt: { ...planned.providerReceipt, usage: { source: 'reported' as const, inputTokens: 100, outputTokens: 5, totalTokens: 105 } } };
+    };
     const firstProvider = adapter(response({ prose: 'Chapter one is durable.' }, 'reported'), new Error('provider pause'));
+    firstProvider.value.planChapter = planner;
     const first = new HarnessGenerationController({ repository, modelAdapter: firstProvider.value, runtime: runtime() });
     await first.hydrate();
     const story = await first.createStory({ premise: 'A cartographer maps a road that moves at night.' });
@@ -287,13 +295,33 @@ describe('Harness Generation Phase 3 deterministic story harness', () => {
     expect(first.snapshot().batches[0]).toMatchObject({ status: 'failed', completedChapterIds: [first.snapshot().chapters[0].id] });
 
     const secondProvider = adapter(response({ prose: 'Chapter two follows the moving road.' }, 'estimated'));
+    secondProvider.value.planChapter = vi.fn(planner);
     const reloaded = new HarnessGenerationController({ repository, modelAdapter: secondProvider.value, runtime: runtime() });
     await reloaded.hydrate();
     await reloaded.retryBatchChapter(reloaded.snapshot().batches[0].id);
     const final = reloaded.snapshot();
     expect(final.chapters.map(chapter => chapter.chapterNumber)).toEqual([1, 2]);
     expect(new Set(final.chapters.map(chapter => chapter.id)).size).toBe(2);
-    expect(final.batches[0]).toMatchObject({ status: 'completed', usage: { reportedCalls: 1, estimatedCalls: 1, unavailableCalls: 0, totalTokens: 60 } });
+    // Each chapter's planner and writer calls. Chapter 2 was planned before its writer failed; the retry reused that
+    // plan without planning again, and its one planner call is counted once.
+    expect(secondProvider.value.planChapter).not.toHaveBeenCalled();
+    expect(final.batches[0]).toMatchObject({ status: 'completed', usage: { reportedCalls: 3, estimatedCalls: 1, unavailableCalls: 0, inputTokens: 220, outputTokens: 50, totalTokens: 270 } });
+  });
+
+  it('counts a planner call whose reply could not be read, once its chapter commits on a retry', async () => {
+    const repository = new InMemoryHarnessGenerationRepository();
+    const usage = { source: 'reported' as const, inputTokens: 100, outputTokens: 5, totalTokens: 105 };
+    const replies = [{ rawProviderResponse: 'The chapter opens at dawn.', providerReceipt: { ...plannedChapter().providerReceipt, usage } }, { ...plannedChapter(), providerReceipt: { ...plannedChapter().providerReceipt, usage } }];
+    const provider = adapter(response({ prose: 'The road moves at night.' }, 'reported'));
+    provider.value.planChapter = vi.fn(async () => replies.shift()!);
+    const controller = new HarnessGenerationController({ repository, modelAdapter: provider.value, runtime: runtime() });
+    await controller.hydrate();
+    const story = await controller.createStory({ premise: 'A cartographer maps a road that moves at night.' });
+    await controller.startBatch(story.id, 'gemini-test', 1);
+    expect(controller.snapshot().batches[0]).toMatchObject({ status: 'failed' });
+    await controller.retryBatchChapter(controller.snapshot().batches[0].id);
+    // The unreadable plan was paid for too: two planner calls and the writer's.
+    expect(controller.snapshot().batches[0]).toMatchObject({ status: 'completed', usage: { reportedCalls: 3, estimatedCalls: 0, unavailableCalls: 0, totalTokens: 240 } });
   });
 
   it('honors a manual pause after the active provider call and resumes from the next uncommitted chapter', async () => {
@@ -308,6 +336,7 @@ describe('Harness Generation Phase 3 deterministic story harness', () => {
     });
     const modelAdapter: HarnessGenerationModelAdapter = {
       getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [{ id: 'gemini-test', label: 'Gemini' }], defaultModel: 'gemini-test' }),
+      planChapter: planEveryChapter(),
       arcOperation: async request => response({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 30 }] }, destinedEnding: 'Bring the story to its true conclusion.' }),
       generate,
     };
@@ -315,7 +344,8 @@ describe('Harness Generation Phase 3 deterministic story harness', () => {
     await controller.hydrate();
     const story = await controller.createStory({ premise: 'A convoy follows the last star.', destinedEnding: 'Bring the convoy safely home.', initialArcPlan: { arcNumber: 1, goals: [{ id: 'arc-1-convoy', text: 'Carry the convoy safely home.', chapters: 30 }] } });
     const running = controller.startBatch(story.id, 'gemini-test', 3);
-    for (let index = 0; index < 30 && generate.mock.calls.length < 2; index += 1) await Promise.resolve();
+    // The second chapter's writer call is out once its plan is made and saved.
+    await vi.waitFor(() => expect(generate).toHaveBeenCalledTimes(2));
     const batchId = controller.snapshot().batches[0].id;
     await controller.requestBatchPause(batchId);
     resolveSecond(asWrittenChapter(response({ prose: 'Second batch chapter finishes the active call.' })));

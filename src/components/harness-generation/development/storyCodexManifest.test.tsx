@@ -7,12 +7,12 @@ import type { CodexCharacter, CodexItem, CodexPictureCard, CodexPictures, StoryC
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
-/** Manifest on a Codex card: one picture from the look the record wrote down, worn by the card at once. */
+/** Manifest on a Codex card: one picture from the look the record has, worn by the card at once. */
 
 const passage = { chapterNumber: 1, blockId: 'c1-p1', text: 'Then.' };
 const look = { summary: 'A heavy black-iron broadsword veined with red.', traits: { material: 'black iron', colour: 'red veins' }, passage };
 const sword: CodexItem = { key: 'sword', name: 'Crimson Broadsword', count: 1, equipped: false, events: [], firstSeen: passage, appearance: { first: passage, look, changes: [] } };
-const voiceOnly: CodexCharacter = { key: 'wu', name: 'Old Wu', mainCharacter: false, firstSeen: passage, things: [], abilities: [], chronicle: [] };
+const voiceOnly: CodexCharacter = { key: 'wu', name: 'Old Wu', mainCharacter: false, firstSeen: passage, statusHistory: [], things: [], abilities: [], chronicle: [], goals: [], values: [], owes: [], owedBy: [], stances: [] };
 const codex: StoryCodexRecord = { characters: [voiceOnly], factions: [], checks: [], items: [sword] };
 
 const render = async (pictures?: CodexPictures) => {
@@ -67,7 +67,7 @@ it('waits for a look before it can manifest, and offers nothing without the host
   const view = await render({ pictureOf: () => undefined, manifest: vi.fn() });
   await view.click(view.container.querySelector('[data-testid="codex-character"]'));
   expect(view.container.querySelector('[data-testid="codex-manifest"]')).toBeNull();
-  expect(view.container.querySelector('[data-testid="codex-manifest-waits"]')!.textContent).toBe('Manifest waits until the story writes down how Old Wu looks.');
+  expect(view.container.querySelector('[data-testid="codex-manifest-waits"]')!.textContent).toBe('Manifest waits until the story gives Old Wu a look.');
   act(() => view.root.unmount());
 
   const without = await render();

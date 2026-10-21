@@ -1,5 +1,10 @@
 # `@seihouse/library`
 
+**Unreleased (2026-10-20):** follows SEN's chapter loop (breaking). `./stories`:
+`useLibraryStories` no longer takes `holdingsFixer`, since SEN's Holdings fixer is retired;
+Story Settings no longer lists the Holdings and Appearance slots. `HarnessGenerationWorkspace`
+shows each attempt's planner call beside the writer's.
+
 **Unreleased (2026-10-16):** `./familiar` exports `FamiliarHelperProvider`,
 `FamiliarHelperAction`, `useFamiliarHelperContext`, the screen action/context and
 replaceable voice contracts, and `FamiliarHelperController`. Hosts opt in once

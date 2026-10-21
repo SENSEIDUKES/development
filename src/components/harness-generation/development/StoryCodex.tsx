@@ -1,11 +1,11 @@
 import { Fragment, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { Archive, AudioLines, Backpack, ChevronLeft, Eye, Flag, Hand, LoaderCircle, Lock, Package, Play, ScrollText, Sparkles, Sword, TriangleAlert, User, Users, WandSparkles } from 'lucide-react';
+import { Archive, AudioLines, Backpack, ChevronLeft, Compass, Eye, Flag, Hand, Handshake, HeartPulse, LoaderCircle, Lock, Package, Play, Scale, ScrollText, Sparkles, Sword, Target, TriangleAlert, User, Users, WandSparkles } from 'lucide-react';
 import { SEIHOUSE_VOICE_CAST, castVoice, type VoiceCastMember } from '../../../audio/voiceCast';
 import './story-codex.css';
 import type { HoldingVerb } from '../../../narrative/holdings';
-import { CHARACTER_LOOK_TRAITS, THING_LOOK_TRAITS, type LookTrait } from '../../../narrative/appearances';
+import { CHARACTER_LOOK_TRAITS, THING_LOOK_TRAITS, type LookTrait } from '../../../narrative/looks';
 import type { HeldThing, HoldingEvent, KnownAbility } from '../shared/holdings';
-import type { CodexAppearance, CodexCharacter, CodexCheck, CodexFaction, CodexItem, CodexPassage, CodexPictureCard, CodexPictures, StoryCodexRecord } from '../shared/storyCodex';
+import { pictureLook, type CodexAppearance, type CodexCharacter, type CodexCheck, type CodexCommitment, type CodexFaction, type CodexItem, type CodexPassage, type CodexPictureCard, type CodexPictures, type CodexStatus, type StoryCodexRecord } from '../shared/storyCodex';
 
 /** How each change reads in the Codex. */
 const VERB_LABELS: Record<HoldingVerb, string> = {
@@ -19,8 +19,8 @@ const TRAIT_LABELS: Record<LookTrait, string> = {
   form: 'Form', size: 'Size', material: 'Material', colour: 'Colour', condition: 'Condition',
 };
 
-/** Opens the chapter behind a fact, at its paragraph, with the Codex still open. */
-type ReadPassage = (chapterNumber: number, blockId: string) => void;
+/** Opens the chapter behind a fact, at its paragraph when it has one, with the Codex still open. */
+type ReadPassage = (chapterNumber: number, blockId?: string) => void;
 
 type CodexTab = 'characters' | 'factions' | 'items';
 
@@ -88,8 +88,8 @@ function PassageChip({ passage, label, onReadPassage }: { passage: CodexPassage;
     aria-label={`${label}. Read the passage: ${passage.text}`} onClick={() => onReadPassage(passage.chapterNumber, passage.blockId)}>{label}</button>;
 }
 
-const eventPassage = (event: HoldingEvent): CodexPassage => ({ chapterNumber: event.passage.chapterNumber, blockId: event.passage.blockId, text: event.passage.text });
-const eventLabel = (event: HoldingEvent) => `Ch. ${event.passage.chapterNumber} · ${VERB_LABELS[event.verb]}${event.count ? ` ${event.count}` : ''}${event.level && event.verb !== 'rank' ? ` → ${event.level}` : ''}${event.reason ? ` (${event.reason})` : ''}`;
+const eventPassage = (event: HoldingEvent): CodexPassage => ({ chapterNumber: event.passage.chapterNumber, ...(event.passage.event ? { event: event.passage.event } : {}), text: event.passage.text });
+const eventLabel = (event: HoldingEvent) => `Ch. ${event.passage.chapterNumber} · ${VERB_LABELS[event.verb]}${event.count ? ` ${event.count}` : ''}${event.level && event.verb !== 'rank' ? ` → ${event.level}` : ''}`;
 
 /** One part of a profile, under its own small heading. */
 function Section({ title, icon, label, testId, children }: { title: string; icon: ReactNode; label?: string; testId?: string; children: ReactNode }) {
@@ -240,9 +240,9 @@ function Chronicle({ events, describe, onReadPassage }: { events: readonly Holdi
 }
 
 /**
- * How someone or something looks, as the record wrote it down from the
- * chapters: its one line, then each trait the passages state, with links to
- * the passage it was read from and to every change since.
+ * How someone or something looks, as the plan that first cast them gave it:
+ * its one line, then each trait, with a link to that chapter and to every
+ * change since.
  */
 function LookSection({ name, appearance, traits, onReadPassage }: {
   name: string; appearance: CodexAppearance; traits: readonly LookTrait[]; onReadPassage?: ReadPassage;
@@ -259,27 +259,86 @@ function LookSection({ name, appearance, traits, onReadPassage }: {
               <dd className="min-w-0 break-words text-neutral-200">{value}</dd>
             </Fragment>)}
           </dl>}
-          {look.conflict && <p className="mt-3 text-xs leading-relaxed text-amber-100/80">Differs from the author&rsquo;s notes: {look.conflict}</p>}
         </div>
-      : appearance.description
-        // The writer's own words until a look is written: Manifest writes it from them.
-        ? <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4" data-testid="codex-look-description">
-            <p className="text-[15px] leading-relaxed text-neutral-200">{appearance.description}</p>
-            <p className="mt-3 text-xs text-neutral-500">In the story&rsquo;s words. Manifest writes the full look from them.</p>
-          </div>
-        : <p className="text-sm text-neutral-400">No look written down yet.</p>}
-    {look && appearance.lookStale && <p className="text-xs text-neutral-500" data-testid="codex-look-stale">The story has changed this look since. Manifest writes it again.</p>}
+      : <p className="text-sm text-neutral-400">The story has not given a look yet.</p>}
     {look && <div className="flex flex-wrap gap-1.5">
       <PassageChip passage={look.passage} label={`Look · Ch. ${look.passage.chapterNumber}`} onReadPassage={onReadPassage} />
     </div>}
     {appearance.changes.length > 0 && <details data-testid="codex-look-changes">
       <summary className="inline-flex min-h-8 cursor-pointer items-center rounded-full px-1 text-[11px] text-neutral-400 hover:text-neutral-200">Changes ({appearance.changes.length})</summary>
       <div className="mt-2 flex flex-wrap gap-1.5">
-        {[...appearance.changes].reverse().map(change => <PassageChip key={`${change.passage.chapterNumber}:${change.passage.blockId}:${change.change}`} passage={change.passage}
+        {[...appearance.changes].reverse().map(change => <PassageChip key={`${change.passage.chapterNumber}:${change.passage.event ?? 0}:${change.change}`} passage={change.passage}
           label={`Ch. ${change.passage.chapterNumber} · ${change.change}`} onReadPassage={onReadPassage} />)}
       </div>
     </details>}
   </Section>;
+}
+
+/** Their state now, when it is not their usual one, with every change of state folded away. */
+function StatusSection({ name, status, history, onReadPassage }: { name: string; status?: CodexStatus; history: readonly CodexStatus[]; onReadPassage?: ReadPassage }) {
+  if (!status && !history.length) return null;
+  return <Section title="State" icon={<HeartPulse size={12} aria-hidden />} label={`${name}: State`} testId="codex-status">
+    <p className="text-sm text-neutral-100" data-testid="codex-status-now">{status ? capitalized(status.label) : 'As they were'}</p>
+    {history.length > 0 && <details>
+      <summary className="inline-flex min-h-8 cursor-pointer items-center rounded-full px-1 text-[11px] text-neutral-400 hover:text-neutral-200">History ({history.length})</summary>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {[...history].reverse().map(entry => <PassageChip key={`${entry.passage.chapterNumber}:${entry.passage.event ?? 0}:${entry.label}`} passage={entry.passage}
+          label={`Ch. ${entry.passage.chapterNumber} · ${entry.label}`} onReadPassage={onReadPassage} />)}
+      </div>
+    </details>}
+  </Section>;
+}
+
+const capitalized = (words: string) => words.charAt(0).toLocaleUpperCase() + words.slice(1);
+const OUTCOME_LABELS = { achieved: 'Achieved', abandoned: 'Abandoned', failed: 'Failed', kept: 'Kept', broken: 'Broken', released: 'Released' } as const;
+
+/** What they want, what they hold to, what they owe and are owed, and how they stand toward others: each with its chapter. */
+function InnerLife({ character, onReadPassage }: { character: CodexCharacter; onReadPassage?: ReadPassage }) {
+  const open = character.goals.filter(goal => !goal.outcome);
+  const settled = character.goals.filter(goal => goal.outcome);
+  const row = 'flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-neutral-100';
+  const commitment = (entry: CodexCommitment, owed: boolean) => {
+    const passage = entry.resolved ?? entry.entered;
+    return <li key={`${owed ? 'owed' : 'owes'}:${entry.party}:${entry.what}`} className={row}>
+      <span className="min-w-0 flex-1 break-words">{owed ? `${entry.party} owes them` : `Owes ${entry.party}`}: {entry.what}</span>
+      {entry.outcome && <span className="text-[11px] text-neutral-400">{OUTCOME_LABELS[entry.outcome]}</span>}
+      {passage && <PassageChip passage={passage} label={`Ch. ${passage.chapterNumber}`} onReadPassage={onReadPassage} />}
+    </li>;
+  };
+  return <>
+    {character.goals.length > 0 && <Section title="Goals" icon={<Target size={12} aria-hidden />} label={`${character.name}: Goals`} testId="codex-goals">
+      <ul className="space-y-2">
+        {open.map(goal => <li key={`open:${goal.what}`} className={row}>
+          <span className="min-w-0 flex-1 break-words">{goal.what}</span>
+          {goal.set && <PassageChip passage={goal.set} label={`Ch. ${goal.set.chapterNumber}`} onReadPassage={onReadPassage} />}
+        </li>)}
+      </ul>
+      {settled.length > 0 && <details>
+        <summary className="inline-flex min-h-8 cursor-pointer items-center rounded-full px-1 text-[11px] text-neutral-400 hover:text-neutral-200">Settled ({settled.length})</summary>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {settled.map(goal => goal.resolved && <PassageChip key={`settled:${goal.what}:${goal.resolved.chapterNumber}`} passage={goal.resolved}
+            label={`Ch. ${goal.resolved.chapterNumber} · ${OUTCOME_LABELS[goal.outcome!]}: ${goal.what}`} onReadPassage={onReadPassage} />)}
+        </div>
+      </details>}
+    </Section>}
+    {character.values.length > 0 && <Section title="Values" icon={<Scale size={12} aria-hidden />} label={`${character.name}: Values`} testId="codex-values">
+      <ul className="space-y-2">{character.values.map(value => <li key={value.what} className={row}>
+        <span className="min-w-0 flex-1 break-words">{value.what}</span>
+        <span className="text-[11px] text-neutral-400">{value.stance === 'held' ? 'Holds' : 'Rejects'}</span>
+        <PassageChip passage={value.passage} label={`Ch. ${value.passage.chapterNumber}`} onReadPassage={onReadPassage} />
+      </li>)}</ul>
+    </Section>}
+    {(character.owes.length > 0 || character.owedBy.length > 0) && <Section title="Commitments" icon={<Handshake size={12} aria-hidden />} label={`${character.name}: Commitments`} testId="codex-commitments">
+      <ul className="space-y-2">{character.owes.map(entry => commitment(entry, false))}{character.owedBy.map(entry => commitment(entry, true))}</ul>
+    </Section>}
+    {character.stances.length > 0 && <Section title="Stances" icon={<Compass size={12} aria-hidden />} label={`${character.name}: Stances`} testId="codex-stances">
+      <ul className="space-y-2">{character.stances.map(stance => <li key={stance.toward} className={row}>
+        <span className="min-w-0 flex-1 break-words">Toward {stance.toward}</span>
+        {stance.said && <PassageChip passage={stance.said.passage} label={`Said ${stance.said.polarity}`} onReadPassage={onReadPassage} />}
+        {stance.acted && <PassageChip passage={stance.acted.passage} label={`Acted ${stance.acted.polarity}`} onReadPassage={onReadPassage} />}
+      </li>)}</ul>
+    </Section>}
+  </>;
 }
 
 /**
@@ -318,18 +377,18 @@ interface ProfileArt {
   picture?: string;
   making: boolean;
   problem?: string;
-  /** Absent until the record has written down a look to make the picture from. */
+  /** Absent until the record holds a look to make the picture from. */
   onManifest?: () => void;
 }
 
 /**
- * Manifest: makes the card's picture from the look the record wrote down, so
- * the reader can see how well the story's words bring it to life. A card the
- * record has no look for waits for one.
+ * Manifest: makes the card's picture from the look the record holds (SENSEI,
+ * 2026-10-20: it draws the look on the card, never writes one), with every
+ * change since. A card with no look yet waits for one.
  */
 function ManifestControl({ art, name }: { art: ProfileArt; name: string }) {
   if (!art.onManifest) return <p className="text-center text-xs text-neutral-500" data-testid="codex-manifest-waits">
-    Manifest waits until the story writes down how {name} looks.
+    Manifest waits until the story gives {name} a look.
   </p>;
   return <div className="flex flex-col items-center gap-2" data-testid="codex-manifest">
     <button type="button" onClick={art.onManifest} disabled={art.making}
@@ -344,14 +403,19 @@ function ManifestControl({ art, name }: { art: ProfileArt; name: string }) {
 function CharacterProfile({ character, art, voices, onBack, onReadPassage }: { character: CodexCharacter; art?: ProfileArt; voices?: CodexVoices; onBack: () => void; onReadPassage?: ReadPassage }) {
   const equipped = character.things.filter(thing => thing.equipped);
   const carried = character.things.filter(thing => !thing.equipped);
+  const person = [character.gender, character.age].filter(Boolean).join(', ');
   return <Profile category="characters" name={character.name} backLabel="All characters" onBack={onBack}
     line={character.rank?.text ?? `Met in Chapter ${character.firstSeen.chapterNumber}`}
     badges={character.mainCharacter ? ['Main character'] : []} art={art}>
+    {(character.who || person) && <p className="text-sm leading-relaxed text-neutral-200" data-testid="codex-who">{[character.who, person && capitalized(person)].filter(Boolean).join(' · ')}</p>}
     <div className="flex flex-wrap gap-1.5">
       <PassageChip passage={character.firstSeen} label={`First seen · Ch. ${character.firstSeen.chapterNumber}`} onReadPassage={onReadPassage} />
+      {character.lastSeen !== undefined && character.lastSeen !== character.firstSeen.chapterNumber && <PassageChip passage={{ chapterNumber: character.lastSeen, text: `On the page in Chapter ${character.lastSeen}` }}
+        label={`Last on the page · Ch. ${character.lastSeen}`} onReadPassage={onReadPassage} />}
       {character.rank && <span data-testid="codex-rank" className="contents">{character.rank.events.map(event =>
         <PassageChip key={event.passage.recordId} passage={eventPassage(event)} label={`Rank · Ch. ${event.passage.chapterNumber}`} onReadPassage={onReadPassage} />)}</span>}
     </div>
+    <StatusSection name={character.name} status={character.status} history={character.statusHistory} onReadPassage={onReadPassage} />
     {character.appearance && <LookSection name={character.name} appearance={character.appearance} traits={CHARACTER_LOOK_TRAITS} onReadPassage={onReadPassage} />}
     {character.voice && <VoiceSection character={{ ...character, voice: character.voice }} voices={voices} onReadPassage={onReadPassage} />}
     {equipped.length > 0 && <Section title="Equipped" icon={<Hand size={12} aria-hidden />} label={`${character.name}: Equipped`}>
@@ -364,6 +428,7 @@ function CharacterProfile({ character, art, voices, onBack, onReadPassage }: { c
       <ul className="space-y-2">{character.abilities.map(ability => <AbilityRow key={ability.entryId} ability={ability} onReadPassage={onReadPassage} />)}</ul>
     </Section>}
     {!character.things.length && !character.abilities.length && !character.rank && <p className="text-sm text-neutral-400">The story has not shown them holding or learning anything yet.</p>}
+    <InnerLife character={character} onReadPassage={onReadPassage} />
     {character.chronicle.length > 0 && <Chronicle events={character.chronicle} onReadPassage={onReadPassage}
       describe={event => `${eventLabel(event)}${event.target && event.verb !== 'rank' ? ` ${event.target}` : event.level ? ` ${event.level}` : ''}`} />}
   </Profile>;
@@ -381,9 +446,11 @@ const holderLine = (item: CodexItem) => (item.holder ? `${item.holder.name} · $
 
 function ItemProfile({ item, art, onBack, onReadPassage }: { item: CodexItem; art?: ProfileArt; onBack: () => void; onReadPassage?: ReadPassage }) {
   return <Profile category="items" name={item.name} line={holderLine(item)} badges={isArchived(item) ? ['Archived'] : item.count > 1 ? [`×${item.count}`] : []} backLabel="All items" onBack={onBack} art={art}>
+    {item.who && <p className="text-sm leading-relaxed text-neutral-200" data-testid="codex-who">{item.who}</p>}
     <div className="flex flex-wrap gap-1.5">
       <PassageChip passage={item.firstSeen} label={`First seen · Ch. ${item.firstSeen.chapterNumber}`} onReadPassage={onReadPassage} />
     </div>
+    {item.status && <StatusSection name={item.name} status={item.status} history={[]} onReadPassage={onReadPassage} />}
     {item.appearance && <LookSection name={item.name} appearance={item.appearance} traits={THING_LOOK_TRAITS} onReadPassage={onReadPassage} />}
     {item.events.length > 0 && <Chronicle events={item.events} onReadPassage={onReadPassage}
       describe={event => `${eventLabel(event)} · ${(event as CodexItem['events'][number]).holder}`} />}
@@ -398,13 +465,13 @@ function Checks({ checks, onReadPassage, onReadChapter }: { checks: readonly Cod
       <TriangleAlert size={14} aria-hidden className={checks.length ? 'text-amber-300' : 'text-neutral-500'} />Record checks ({checks.length})
     </summary>
     {checks.length
-      ? <ul className="mt-3 space-y-3">{checks.map((check, index) => <li key={`${check.kind}-${check.recordId ?? index}`} className="space-y-2 text-sm text-amber-100/90">
+      ? <ul className="mt-3 space-y-3">{checks.map(check => <li key={check.key} className="space-y-2 text-sm text-amber-100/90">
           <p>{check.message}</p>
           {check.chapterNumber !== undefined && (check.blockId && onReadPassage
             ? <button type="button" className={chip} onClick={() => onReadPassage(check.chapterNumber!, check.blockId!)}>Read the passage</button>
             : onReadChapter && <button type="button" className={chip} onClick={() => onReadChapter(check.chapterNumber!)}>Read Chapter {check.chapterNumber}</button>)}
         </li>)}</ul>
-      : <p className="mt-3 text-sm text-neutral-400">Nothing to check: every change and appearance fits what came before it, and every closing list matches.</p>}
+      : <p className="mt-3 text-sm text-neutral-400">Nothing to check: every chapter's plan fits what came before it.</p>}
   </details>;
 }
 
@@ -420,9 +487,10 @@ const EMPTY: Record<CodexTab, string> = {
  * Each card is its picture first; opening it shows everything the story's
  * record knows about it together. A card shows its unmanifested aura until
  * its picture is made; with the host's pictures, an opened character or item
- * offers Manifest, which makes its picture from the look the record wrote down. Every fact links to the
- * passage that made it, and the chapter behind the Codex moves to it while
- * the Codex stays open. The record's checks close the gallery, for testing.
+ * offers Manifest, which makes its picture from the look the record holds.
+ * Every fact links to the chapter that made it (a voice, to the words it was
+ * heard in), and the chapter behind the Codex moves to it while the Codex
+ * stays open. The record's checks close the gallery, for testing.
  */
 export function StoryCodex({ codex, storyTitle, pictures, voices, onBack, onReadPassage, onReadChapter }: {
   codex: StoryCodexRecord;
@@ -433,8 +501,9 @@ export function StoryCodex({ codex, storyTitle, pictures, voices, onBack, onRead
   storyTitle: string;
   /** Back to the chapter. */
   onBack?: () => void;
-  onReadPassage?: ReadPassage;
-  /** Opens a chapter, for a check that points at a whole chapter. */
+  /** Opens a chapter at a paragraph, for a fact that sits on words. */
+  onReadPassage?: (chapterNumber: number, blockId: string) => void;
+  /** Opens a chapter, for a fact of its plan or a check about the whole chapter. */
   onReadChapter?: (chapterNumber: number) => void;
 }) {
   const [tab, setTab] = useState<CodexTab>('characters');
@@ -455,14 +524,14 @@ export function StoryCodex({ codex, storyTitle, pictures, voices, onBack, onRead
   };
   const artOf = (key: string, subject: CodexPictureCard['subject'], name: string, appearance?: CodexAppearance): ProfileArt | undefined => {
     if (!pictures) return undefined;
-    const look = appearance?.look;
+    // The picture is made from the look the record holds, with every change since; a card without one waits.
+    const look = pictureLook(appearance);
     return {
       picture: pictures.pictureOf(key), making: Boolean(making[key]), problem: problems[key],
-      // A current look makes the picture at once; otherwise the host writes the look first, from the story's words.
-      ...(appearance ? { onManifest: () => manifest({ key, subject, name, ...(look && !appearance.lookStale ? { look: { summary: look.summary, traits: look.traits } } : {}) }) } : {}),
+      ...(look ? { onManifest: () => manifest({ key, subject, name, look }) } : {}),
     };
   };
-  const askToRead: ReadPassage | undefined = onReadPassage && ((chapterNumber, blockId) => setGoTo({ chapterNumber, blockId }));
+  const askToRead: ReadPassage | undefined = (onReadPassage || onReadChapter) ? ((chapterNumber, blockId) => setGoTo({ chapterNumber, ...(blockId ? { blockId } : {}) })) : undefined;
   const askToReadChapter = onReadChapter && ((chapterNumber: number) => setGoTo({ chapterNumber }));
   const go = () => {
     if (!goTo) return;

@@ -4,29 +4,44 @@ import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemor
 import { writtenChapter } from '../../../test-utils/writtenChapter';
 import { createHarnessSenStory } from '@seihouse/sen/harness-generation';
 import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
-import { type HarnessArcRequest, type HarnessGenerationRequest, type HarnessGenerationModelAdapter } from '@seihouse/sen/harness-generation';
+import { type HarnessArcRequest, type HarnessChapterPlanRequest, type HarnessGenerationRequest, type HarnessGenerationModelAdapter } from '@seihouse/sen/harness-generation';
 import { type ArcPlan } from '@seihouse/sen/arc-goals';
+import { planEveryChapter, plannedChapter } from '../../../test-utils/chapterPlan';
+import { buildChapterPlannerPrompt } from '../../../server/harness-generation/chapterPlanner';
 
 const plan: ArcPlan = { arcNumber: 1, goals: [{ id: 'arc-1-first', text: 'Meet the invader.', chapters: 1 }, { id: 'arc-1-second', text: 'Defeat the invader.', chapters: 29 }] };
 const response = (body: unknown) => ({ rawProviderResponse: JSON.stringify(body), providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: 'now', usage: { source: 'unavailable' as const } } });
 
+/** A chapter: what happens in its plan's one event, told as its prose, and whether that event reaches the Active Arc Goal. */
+type Chapter = { prose: string; reachesGoal?: boolean };
+
 const setup = async () => {
   const requests: HarnessGenerationRequest[] = [];
-  let output: Record<string, unknown> = { prose: 'She met the invader at the gate.', arcCompletion: { goalId: plan.goals[0].id, completed: true, evidence: 'She met the invader at the gate.' } };
+  const planRequests: HarnessChapterPlanRequest[] = [];
+  let chapter: Chapter = { prose: 'She met the invader at the gate.', reachesGoal: true };
   const arcOperation = vi.fn(async (request: HarnessArcRequest) => response({
     plan: { ...plan, arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 30) + 1, goals: plan.goals.map(goal => ({ ...goal, id: `arc-${Math.floor((request.storyInformation.chapterNumber - 1) / 30) + 1}-${goal.id}` })) },
     destinedEnding: 'Unite the kingdoms.',
   }));
   const adapter: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ configured: true, provider: 'gemini', defaultModel: 'fixture', models: [] }),
-    generate: async request => { requests.push(request); return response(writtenChapter(output)); },
+    generate: async request => { requests.push(request); return response(writtenChapter({ prose: chapter.prose })); },
+    planChapter: async request => {
+      planRequests.push(request);
+      return plannedChapter({
+        cast: [{ name: 'MC', kind: 'character' }],
+        events: [{ kind: 'confrontation', actor: 'MC', targets: [], presses: [], how: chapter.prose, facts: [] }],
+        arcGoalReached: chapter.reachesGoal ? { reached: true, event: 1 } : { reached: false },
+        chapterFunction: 'conflict',
+      });
+    },
     arcOperation,
   };
   const repository = new InMemoryHarnessGenerationRepository();
   const controller = new HarnessGenerationController({ repository, modelAdapter: adapter });
   await controller.hydrate();
   const story = await controller.createStory({ premise: 'A courier confronts an invader.', destinedEnding: 'Unite the kingdoms.', initialArcPlan: plan });
-  return { controller, repository, story, requests, arcOperation, setOutput: (value: typeof output) => { output = value; } };
+  return { controller, repository, story, requests, planRequests, arcOperation, setChapter: (value: Chapter) => { chapter = value; } };
 };
 
 describe('HARNESS canonical arc integration', () => {
@@ -69,6 +84,7 @@ describe('HARNESS canonical arc integration', () => {
     const reloaded = new HarnessGenerationController({ repository: run.repository, modelAdapter: {
       getServerInfo: async () => ({ configured: true, provider: 'gemini', defaultModel: 'fixture', models: [] }),
       generate: async () => response(writtenChapter({ prose: 'unused' })),
+      planChapter: planEveryChapter(),
       arcOperation: run.arcOperation,
     } });
     await reloaded.hydrate();
@@ -88,28 +104,32 @@ describe('HARNESS canonical arc integration', () => {
       { id: 'arc-1-duel', text: 'Defeat the invader in the duel.', chapters: 20 },
     ] };
     const story = await run.controller.createStory({ premise: 'A courier confronts an invader.', destinedEnding: 'Unite the kingdoms.', initialArcPlan: budgeted });
-    run.setOutput({ prose: 'She shared bread with the invader at the gate.' });
+    run.setChapter({ prose: 'She shared bread with the invader at the gate.' });
     await run.controller.generateNextChapter(story.id, 'fixture');
-    // Chapter 2 reaches the first goal, eight chapters before its deadline.
-    run.setOutput({ prose: 'The invader swore to stand beside her.', arcCompletion: { goalId: 'arc-1-trust', completed: true, evidence: 'The invader swore to stand beside her.' } });
+    // Chapter 2's plan reaches the first goal, eight chapters before its deadline.
+    run.setChapter({ prose: 'The invader swore to stand beside her.', reachesGoal: true });
     await run.controller.generateNextChapter(story.id, 'fixture');
-    run.setOutput({ prose: 'The duel was called for dawn.' });
+    expect(run.controller.snapshot().stories.find(item => item.id === story.id)?.goalCompletions)
+      .toEqual([expect.objectContaining({ goalId: 'arc-1-trust', chapterNumber: 2, evidence: 'The invader swore to stand beside her.' })]);
+    run.setChapter({ prose: 'The duel was called for dawn.' });
     await run.controller.generateNextChapter(story.id, 'fixture');
     // Chapter 3 already works toward the duel, which keeps its own deadline.
-    expect(run.requests[2].storyInformation.arc).toMatchObject({
+    expect(run.planRequests[2].storyInformation.arc).toMatchObject({
       activeGoal: { id: 'arc-1-duel', startChapter: 3, endChapter: 30 }, completionDeadline: 30, positionInSegment: 1, completionConfirmed: false,
     });
-    const contract = buildHarnessGenerationPrompt(run.requests[2]).systemInstruction;
-    expect(contract).toContain('Its chapters are a budget, not a quota: completionDeadline is the latest chapter it may take, never a length to fill.');
-    expect(contract).toContain('once it is reached, the next goal begins in the following chapter');
-    expect(contract).toContain('Every chapter changes the story\'s situation (a setback, a discovery, a decision, a gain, a loss or a turn) and never ends where the previous chapter ended or repeats its beat.');
-    expect(contract).toContain('Each moves the story on from where this chapter ends, never restating its situation.');
-    expect(contract).not.toContain('Respect positionInSegment');
+    // The planner, which decides when a goal is reached, is told its chapters are a budget.
+    const planner = buildChapterPlannerPrompt(run.planRequests[2]).systemInstruction;
+    expect(planner).toContain('Its chapters are a budget, not a quota: completionDeadline is the latest chapter it may take, never a length to fill.');
+    expect(planner).toContain('once it is reached, the next goal begins in the following chapter');
+    expect(planner).toContain('Every chapter changes the story\'s situation (a setback, a discovery, a decision, a gain, a loss or a turn) and never ends where the previous chapter ended or repeats its beat.');
+    expect(planner).not.toContain('Respect positionInSegment');
+    // The writer's next-chapter ideas move the story on.
+    expect(buildHarnessGenerationPrompt(run.requests[2]).systemInstruction).toContain('Each moves the story on from where this chapter ends, never restating its situation.');
   });
 
   it('commits a deadline chapter that did not achieve its goal and records the goal as missed, never forcing success', async () => {
     const run = await setup();
-    run.setOutput({ prose: 'She saw the invader and fled.', arcCompletion: { goalId: plan.goals[0].id, completed: false, evidence: '' } });
+    run.setChapter({ prose: 'She saw the invader and fled.' });
     await run.controller.generateNextChapter(run.story.id, 'fixture');
     const saved = run.controller.snapshot();
     expect(saved.chapters).toHaveLength(1);
@@ -133,7 +153,7 @@ describe('HARNESS canonical arc integration', () => {
     const story = await run.controller.createStory({
       premise: 'A courier confronts an invader.', destinedEnding: 'Unite the kingdoms.', initialArcPlan: editablePlan,
     });
-    run.setOutput({ prose: 'She watched the invader from the gate.' });
+    run.setChapter({ prose: 'She watched the invader from the gate.' });
     await run.controller.generateNextChapter(story.id, 'fixture');
     await run.controller.generateNextChapter(story.id, 'fixture');
     const shortened = (chapters: number): ArcPlan => ({
@@ -154,16 +174,21 @@ describe('HARNESS canonical arc integration', () => {
       .toEqual([expect.objectContaining({ goalId: 'edited-first', outcome: 'missed', chapterNumber: 3 })]);
   });
 
-  it('freezes the authoritative goal context and persists evidenced completion', async () => {
+  it('freezes the authoritative goal context for the planner, and records the goal its plan reaches', async () => {
     const run = await setup();
     await run.controller.generateNextChapter(run.story.id, 'fixture');
-    const context = run.requests[0].storyInformation.arc!;
+    const context = run.planRequests[0].storyInformation.arc!;
     expect(context).toMatchObject({ destinedEnding: 'Unite the kingdoms.', arcNumber: 1, chapterInArc: 1, activeGoal: { id: 'arc-1-first', startChapter: 1, endChapter: 1 }, completionDeadline: 1, positionInSegment: 1 });
-    const prompt = buildHarnessGenerationPrompt(run.requests[0]);
-    expect(prompt.userPrompt).toContain('ACTIVE ARC GOAL');
-    expect(prompt.responseJsonSchema.required).toContain('arcCompletion');
-    expect(JSON.stringify(prompt.responseJsonSchema)).not.toContain('arcReconciliation');
-    expect(run.repository.snapshot().stories[0].goalCompletions).toHaveLength(1);
+    // The planner reads the goal and says which event reaches it; the writer is never asked.
+    const planner = buildChapterPlannerPrompt(run.planRequests[0]);
+    expect(planner.userPrompt).toContain('ACTIVE ARC GOAL');
+    expect(planner.responseJsonSchema.required).toContain('arcGoalReached');
+    const writer = buildHarnessGenerationPrompt(run.requests[0]);
+    expect(writer.userPrompt).not.toContain('ACTIVE ARC GOAL');
+    expect(JSON.stringify(writer.responseJsonSchema)).not.toMatch(/arcCompletion|arcGoalReached|arcReconciliation/);
+    expect(run.repository.snapshot().stories[0].goalCompletions).toEqual([
+      expect.objectContaining({ goalId: 'arc-1-first', chapterNumber: 1, evidence: 'She met the invader at the gate.' }),
+    ]);
   });
 
   it('stores edits as a future revision without mutating frozen history or completed goals', async () => {
@@ -182,7 +207,7 @@ describe('HARNESS canonical arc integration', () => {
       { id: 'arc-1-third', text: 'Defeat the invader.', chapters: 12 },
     ] };
     await run.controller.editArcGoals(run.story.id, edited);
-    run.setOutput({ prose: 'The invader’s hidden patron was exposed.' });
+    run.setChapter({ prose: 'The invader’s hidden patron was exposed.' });
     await run.controller.generateNextChapter(run.story.id, 'fixture');
     expect(run.requests[0].storyInformation.arc!.plan).toEqual(plan);
     expect(run.requests[1].storyInformation.arc!.plan).toEqual(edited);
@@ -196,8 +221,9 @@ describe('HARNESS canonical arc integration', () => {
     saved.stories[0].head.nextChapterNumber = 30;
     const reloaded = new HarnessGenerationController({ repository: new InMemoryHarnessGenerationRepository(saved), modelAdapter: {
       getServerInfo: async () => ({ configured: true, provider: 'gemini', defaultModel: 'fixture', models: [] }),
+      planChapter: planEveryChapter(),
       arcOperation: run.arcOperation,
-      generate: async () => response(writtenChapter({ prose: 'She defeated the invader.', arcCompletion: { goalId: 'arc-1-second', completed: true, evidence: 'She defeated the invader.' } })),
+      generate: async () => response(writtenChapter({ prose: 'She defeated the invader.' })),
     } });
     await reloaded.hydrate();
     await reloaded.generateNextChapter(run.story.id, 'fixture');

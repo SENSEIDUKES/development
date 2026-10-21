@@ -1,11 +1,11 @@
-import { stripReplyMarks } from './chapterSignals';
-import { arcFirstChapter, arcGoalResolution, arcGoalResolved, arcGoalSegments, arcGenerationContext, arcMissedGoals, confirmArcGoal, createArcChapterPosition, normalizeArcLookahead, type ArcGenerationContext, type ArcPlan } from '../../arc-goals/shared/arcGoals';
-import type { HarnessArcContext, HarnessArcGoalReview, HarnessArcPlanningContext, HarnessGenerationAttempt, HarnessStory, HarnessStoryConclusion, HarnessStoryMode, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput } from '../../../narrative/generation';
+import { arcFirstChapter, arcGoalResolution, arcGoalResolved, arcGoalSegments, arcGenerationContext, arcMissedGoals, createArcChapterPosition, normalizeArcLookahead, reachArcGoal, type ArcGenerationContext, type ArcPlan } from '../../arc-goals/shared/arcGoals';
+import type { ChapterPlan } from '../../../narrative/chapterPlan';
+import type { HarnessArcContext, HarnessArcGoalReview, HarnessArcPlanningContext, HarnessGenerationAttempt, HarnessStory, HarnessStoryConclusion, HarnessStoryMode, HarnessWorkspaceState, StoryFoundationInput } from '../../../narrative/generation';
 
 /**
- * Both modes record every Arc Goal honestly: achieved, with a verbatim
- * passage from the prose, or missed when its deadline chapter commits without
- * it. A chapter is never held back until the writer claims success.
+ * Both modes record every Arc Goal honestly: achieved, by the event of a
+ * chapter's plan that reaches it, or missed when its deadline chapter commits
+ * without it. The planner (Fate) decides; nothing is claimed for a deadline.
  *
  * Regular Reader mode: Rhythm directs by default and the reader may direct any
  * chapter. The Destined Ending is guaranteed as the story's standing
@@ -23,8 +23,8 @@ import type { HarnessArcContext, HarnessArcGoalReview, HarnessArcPlanningContext
  * once, immediately before that arc begins, and locked when its generation
  * begins. Missing at least half of one arc's goals, or the final goal, breaks
  * the route, and the next chapter must bring the story to its end. A story
- * ends only when committed prose shows the ending, and a fatal ending the
- * writer shows ends it at once.
+ * ends only when a committed chapter's plan ends it, and a fatal ending the
+ * planner plans ends it at once.
  */
 export type { HarnessStoryMode };
 
@@ -129,82 +129,49 @@ export function readArcReply(raw: string): Record<string, unknown> {
   catch { return {}; }
 }
 
-/**
- * A chapter reply as its evidence is read: marks belong only in paragraphs, so
- * an evidence passage the writer copied with marks still matches the saved,
- * mark-free prose.
- */
-export const readChapterReply = (raw: string): Record<string, unknown> => stripReplyMarks(readArcReply(raw));
-
-/** The mode an attempt was prepared under, from its frozen packet. Packets frozen before modes reached the writer read as Regular. */
+/** The mode an attempt was prepared under, from its frozen packet. Packets frozen before modes reached the planner read as Regular. */
 export const attemptStoryMode = (attempt: HarnessGenerationAttempt): HarnessStoryMode =>
   attempt.storyInformation.storyDirection.fateMode ?? 'regular';
 
-/**
- * The writer's report that this chapter's prose completes the story's ending,
- * accepted only in Fate Survival and only with a continuous verbatim passage
- * from the chapter. An unsupported claim is never an ending. Returns the
- * evidence, or a warning when a report is set aside.
- */
-export function readStoryEnding(attempt: HarnessGenerationAttempt): { evidence?: string; warning?: HarnessWarning } {
-  const report = readChapterReply(attempt.rawProviderResponse ?? '').storyEnded as { ended?: unknown; evidence?: unknown } | undefined;
-  if (!report || report.ended !== true || !attempt.acceptedDraft) return {};
-  const evidence = typeof report.evidence === 'string' ? report.evidence.trim() : '';
-  if (attemptStoryMode(attempt) !== 'survival') {
-    return { warning: { code: 'ignored_story_ending', message: 'The writer reported that the story ended, but Regular Reader mode never fails its fate: it ends only by reaching the Destined Ending. The report was set aside.' } };
-  }
-  if (!evidence || !attempt.acceptedDraft.prose.includes(evidence)) {
-    return { warning: { code: 'ignored_story_ending', message: 'The writer reported that the story ended without a verbatim passage from the chapter. The story continues.' } };
-  }
-  return { evidence };
-}
+/** How the planned event a plan names happens, as its plan tells it. */
+const plannedEventHow = (plan: ChapterPlan, event: number | undefined) => (event ? plan.events[event - 1]?.how.trim() || undefined : undefined);
 
 /**
  * Fate Survival: once the route is broken, the next chapter must end the
- * story, and it commits only when its prose shows that ending (the writer's
- * report with a verbatim passage). Without it the chapter stays uncommitted,
- * with its reader direction intact, so the reader can try again; the HARNESS
- * never makes a recovery call on its own. Returns why the chapter cannot
- * commit, or nothing when it can.
+ * story, and its plan must name the event that ends it. A plan that does not
+ * is never written: the chapter fails before the writer's call, with its
+ * reader direction intact, so the reader can try again. Returns why, or
+ * nothing when the plan may be written.
  */
-export function missingRequiredEnding(attempt: HarnessGenerationAttempt): { message: string; warnings: HarnessWarning[] } | undefined {
-  const route = attempt.storyInformation.arc?.route;
-  if (route?.status !== 'broken') return undefined;
-  const ending = readStoryEnding(attempt);
-  if (ending.evidence) return undefined;
-  return {
-    message: `The route to the Destined Ending broke in Chapter ${route.brokenInChapter}, so Chapter ${attempt.chapterNumber} must end the story, but its prose does not show that ending.`,
-    warnings: ending.warning ? [ending.warning] : [],
-  };
+export function missingRequiredEnding(arc: HarnessArcContext | undefined, plan: ChapterPlan, chapterNumber: number): string | undefined {
+  const route = arc?.route;
+  if (route?.status !== 'broken' || plannedEventHow(plan, plan.storyEnds?.event)) return undefined;
+  return `The route to the Destined Ending broke in Chapter ${route.brokenInChapter}, so Chapter ${chapterNumber} must end the story, but its plan does not end it.`;
 }
 
 /**
  * Runs inside the existing atomic chapter commit, including persistence
- * retries. In both modes it records the active goal honestly: achieved with
- * verbatim evidence, or missed once its deadline chapter commits without it.
- * Then it applies the mode's consequence: the Destined Ending reached through
- * the final goal ends the story; in Fate Survival a missed goal may break the
- * route, and the story ends when the committed prose shows it ending. A
- * chapter count or a broken route alone never ends it. Returns warnings about
- * reports it set aside.
+ * retries. In both modes it records the active goal honestly: achieved by
+ * the event of the chapter's plan that reaches it, or missed once its
+ * deadline chapter commits without it. Then it applies the mode's
+ * consequence: the Destined Ending reached through the final goal ends the
+ * story; in Fate Survival a missed goal may break the route, and the story
+ * ends when the chapter's plan ends it. A chapter count or a broken route
+ * alone never ends it.
  */
-export function commitHarnessArc(story: HarnessStory, attempt: HarnessGenerationAttempt, recordedAt: string): HarnessWarning[] {
+export function commitHarnessArc(story: HarnessStory, attempt: HarnessGenerationAttempt, recordedAt: string): void {
   const context = attempt.storyInformation.arc;
-  if (!context || !attempt.acceptedDraft) return [];
-  const warnings: HarnessWarning[] = [];
+  const plan = attempt.chapterPlan?.plan;
+  if (!context || !attempt.acceptedDraft || !plan) return;
   const survival = attemptStoryMode(attempt) === 'survival';
   const chapterNumber = attempt.chapterNumber;
-  const reply = readChapterReply(attempt.rawProviderResponse ?? '');
   const route = context.route;
   let outcome: 'completed' | 'missed' | undefined;
   let evidence = '';
   // A broken route has no goal left to reach: the chapter after it only brings the story to its end.
   if (route?.status !== 'broken') {
-    const completion = confirmArcGoal(context, chapterNumber, attempt.acceptedDraft.prose, reply.arcCompletion);
-    const claim = reply.arcCompletion as { completed?: unknown } | undefined;
-    if (!completion && claim?.completed === true) {
-      warnings.push({ code: 'unconfirmed_arc_completion', message: `The writer reported a goal achieved, but not the active goal “${context.activeGoal.text}” with a verbatim passage from this chapter, so nothing was recorded as achieved.` });
-    }
+    const reached = plannedEventHow(plan, plan.arcGoalReached?.event);
+    const completion = reached ? reachArcGoal(context, chapterNumber, reached) : undefined;
     const recorded = (goalId: string, goalText: string) => (story.goalCompletions ?? [])
       .some(done => (done.arcNumber ?? context.plan.arcNumber) === context.plan.arcNumber && done.goalId === goalId && (!done.goalText || done.goalText === goalText));
     if (completion) {
@@ -220,17 +187,17 @@ export function commitHarnessArc(story: HarnessStory, attempt: HarnessGeneration
       outcome = 'missed';
     }
   }
-  const ending = readStoryEnding(attempt);
-  if (ending.warning) warnings.push(ending.warning);
-  if (story.conclusion) return warnings;
+  // Only Fate Survival ends in failure: the checks set aside an ending a Regular Reader plan names.
+  const ending = survival ? plannedEventHow(plan, plan.storyEnds?.event) : undefined;
+  if (story.conclusion) return;
   const conclude = (conclusion: Omit<HarnessStoryConclusion, 'recordedAt'>) => { story.conclusion = { ...conclusion, recordedAt }; };
 
   if (context.finalGoal && outcome === 'completed') {
     conclude({ outcome: 'destined-ending-reached', reason: route?.status === 'past-final-goal' ? 'reached-after-final-goal-missed' : 'final-goal-completed', chapterNumber, evidence });
-    return warnings;
+    return;
   }
   // Regular Reader mode never fails its fate: a missed goal only puts the story off track.
-  if (!survival) return warnings;
+  if (!survival) return;
   if (outcome === 'missed' && !story.brokenRoute) {
     const missedGoals = arcMissedGoals(context.plan, story.goalCompletions);
     const reason = context.finalGoal ? 'final-goal-missed' as const
@@ -240,9 +207,8 @@ export function commitHarnessArc(story: HarnessStory, attempt: HarnessGeneration
         missedGoals, recordedAt };
     }
   }
-  // Only prose that shows the ending ends the story, including a genuine ending in the chapter that broke the route.
-  if (ending.evidence) conclude({ outcome: 'fate-failed', reason: 'story-ended', chapterNumber, evidence: ending.evidence });
-  return warnings;
+  // Only a plan that ends the story ends it, including a genuine ending in the chapter that broke the route.
+  if (ending) conclude({ outcome: 'fate-failed', reason: 'story-ended', chapterNumber, evidence: ending });
 }
 
 /** Why no further chapter can be written, once the story has ended. */

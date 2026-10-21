@@ -77,10 +77,11 @@ describe('the NovelExpanded app guard', () => {
     expect(violations).toEqual(['THE_OLDER_READER src/novel-expanded/main.tsx → src/host/reader/webSpeechNarration.ts']);
   });
 
+  // It reads the app's whole import graph from disk: about 4 seconds alone, more in a full parallel run.
   it('passes the real app', () => {
     const { entry, violations, reached } = checkNovelExpandedApp();
     expect(entry).toBe(MAIN);
     expect(violations).toEqual([]);
     expect(reached).toBeGreaterThan(50);
-  });
+  }, 30_000);
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { HARNESS_HARD_RULES, HARNESS_READING_GUIDE, HARNESS_RETURN_FORMAT, HARNESS_ROLE, HARNESS_WRITING_RULES, buildHarnessChapterResponseSchema, presentHoldings, presentImmediateChapterRequest } from './prompt';
+import { HARNESS_HARD_RULES, HARNESS_READING_GUIDE, HARNESS_RETURN_FORMAT, HARNESS_ROLE, HARNESS_WRITING_RULES, buildHarnessChapterResponseSchema, presentChapterPlan, presentImmediateChapterRequest, presentPlanFact } from './prompt';
 
 /** Every HARNESS part of the system instruction, together. */
 const HARNESS_RESPONSE_CONTRACT = [HARNESS_ROLE, HARNESS_WRITING_RULES, HARNESS_READING_GUIDE, HARNESS_RETURN_FORMAT, HARNESS_HARD_RULES].join('\n\n');
@@ -31,10 +31,10 @@ export const describeSchemaShape = (schema: unknown) => {
 };
 
 describe('HARNESS chapter response schema shape', () => {
-  it('asks for no separate list of signals: sounds and holding changes travel as tags inside the paragraphs, each paragraph\'s speaker beside its text', () => {
+  it('asks for no separate list of signals: sounds travel as tags inside the paragraphs, each paragraph\'s speaker beside its text', () => {
     expect(HARNESS_CHAPTER_RESPONSE_SCHEMA.properties).not.toHaveProperty('soundCues');
-    expect(buildHarnessChapterResponseSchema(50, { holdings: true }).properties).not.toHaveProperty('soundCues');
-    expect(JSON.stringify(HARNESS_CHAPTER_RESPONSE_SCHEMA)).not.toMatch(/sound|mark"/i);
+    expect(buildHarnessChapterResponseSchema(50, { speakers: ['Old Wu'] }).properties).not.toHaveProperty('soundCues');
+    expect(JSON.stringify(HARNESS_CHAPTER_RESPONSE_SCHEMA)).not.toMatch(/sound"|mark"/i);
     // How to tag lives in the CAPA skills, never in the permanent contract.
     expect(HARNESS_RESPONSE_CONTRACT).not.toMatch(/Sound Cue|soundCues|sound tag|\[\[/);
   });
@@ -45,7 +45,7 @@ describe('HARNESS chapter response schema shape', () => {
   });
 
   it('asks for the chapter\'s name alone as its title, since the HARNESS numbers chapters', () => {
-    expect(HARNESS_RESPONSE_CONTRACT).toContain('title is the chapter\'s name alone, never its number, which the HARNESS assigns.');
+    expect(HARNESS_RESPONSE_CONTRACT).toContain('title is optional; it is the chapter\'s name alone, never its number, which the HARNESS assigns.');
   });
 
   it('holds the paragraphs to the exact count the HARNESS rolled, and leaves them free without one', () => {
@@ -77,37 +77,24 @@ describe('HARNESS chapter response schema shape', () => {
     expect(HARNESS_RESPONSE_CONTRACT).not.toContain('not carried from chapter to chapter');
   });
 
-  it('asks for the closing list of the main character\'s holdings only when the Holdings skill is loaded, as a plain list of names', () => {
-    const withHoldings = buildHarnessChapterResponseSchema(50, { holdings: true });
-    expect(withHoldings.properties.mainCharacterHoldings).toEqual({
-      type: 'array', items: { type: 'string' },
-      description: 'After the chapter: every thing the main character has and every ability they know or are learning, each by its exact name.',
-    });
-    // Right after the chapter body, while it is fresh, and required.
-    expect(Object.keys(withHoldings.properties).slice(0, 4)).toEqual(['title', 'plan', 'paragraphs', 'mainCharacterHoldings']);
-    expect(withHoldings.required.slice(0, 2)).toEqual(['paragraphs', 'mainCharacterHoldings']);
-    // A list of strings adds no structure: the schema stays as shallow and as small as before.
-    const shape = describeSchemaShape(withHoldings);
-    expect(shape.objectSchemas).toBe(describeSchemaShape(buildHarnessChapterResponseSchema(50)).objectSchemas);
-    expect(shape.maxObjectDepth).toBeLessThanOrEqual(3);
-    expect(shape.serializedBytes).toBeLessThan(2_200);
-    expect(buildHarnessChapterResponseSchema().properties).not.toHaveProperty('mainCharacterHoldings');
+  it('gives each paragraph\'s speaker a menu: MC, each character of the Chapter Plan\'s cast, someone else, or none', () => {
+    const speaker = (speakers?: string[]) => buildHarnessChapterResponseSchema(50, speakers ? { speakers } : {}).properties.paragraphs.items.properties.speaker;
+    expect(speaker(['Old Wu', 'Lan Yue']).enum).toEqual(['MC', 'Old Wu', 'Lan Yue', 'someone else', 'none']);
+    expect(speaker().enum).toEqual(['MC', 'someone else', 'none']);
+    // A name given twice, or the main character's tag, is one choice.
+    expect(speaker(['MC', 'Old Wu', 'Old Wu']).enum).toEqual(['MC', 'Old Wu', 'someone else', 'none']);
   });
 
   it('is compact, shallow, and free of conditional or nested application contracts', () => {
     const shape = describeSchemaShape(HARNESS_CHAPTER_RESPONSE_SCHEMA);
     expect(shape.anyOfBranches).toBe(0);
-    // root → the paragraphs → a paragraph (or root → arc completion or story ending): nothing deeper.
+    // root → the paragraphs → a paragraph: nothing deeper.
     expect(shape.maxObjectDepth).toBeLessThanOrEqual(3);
-    expect(shape.objectSchemas).toBeLessThanOrEqual(4);
+    expect(shape.objectSchemas).toBeLessThanOrEqual(2);
     expect(shape.serializedBytes).toBeLessThan(2_400);
-    expect(HARNESS_CHAPTER_RESPONSE_SCHEMA.required).toEqual([
-      'paragraphs', 'arcCompletion', 'recap', 'chapterFunction', 'nextProgression', 'nextWorldBuilding', 'nextConflict',
-    ]);
-    expect(Object.keys(HARNESS_CHAPTER_RESPONSE_SCHEMA.properties)).toEqual([
-      'title', 'plan', 'paragraphs', 'arcCompletion', 'recap', 'chapterFunction', 'nextProgression', 'nextWorldBuilding', 'nextConflict',
-      'storyEnded',
-    ]);
+    // The writer narrates and never decides (SENSEI, 2026-10-20): no plan, arc goal, ending or chapter function of its own.
+    expect(HARNESS_CHAPTER_RESPONSE_SCHEMA.required).toEqual(['paragraphs', 'recap', 'nextProgression', 'nextWorldBuilding', 'nextConflict']);
+    expect(Object.keys(HARNESS_CHAPTER_RESPONSE_SCHEMA.properties)).toEqual(['title', 'paragraphs', 'recap', 'nextProgression', 'nextWorldBuilding', 'nextConflict']);
     const serialized = JSON.stringify(HARNESS_CHAPTER_RESPONSE_SCHEMA);
     for (const forbidden of ['prose', 'blocks', 'memory', 'metadata', 'status', 'worldNotice', 'fateResult', 'blockId', 'url', 'asset', 'catalog', 'trackId', 'id"',
       'dialogue', 'manifestations', 'systemPanels', 'soundscapes', 'creatureEvents', 'anchorText', 'occurrenceIndex', 'category', 'variation']) {
@@ -115,12 +102,11 @@ describe('HARNESS chapter response schema shape', () => {
     }
   });
 
-  it('keeps the recap, chapter function, and three suggestions as shallow root strings', () => {
-    const { recap, chapterFunction, nextProgression, nextWorldBuilding, nextConflict } = HARNESS_CHAPTER_RESPONSE_SCHEMA.properties;
+  it('keeps the recap and three suggestions as shallow root strings', () => {
+    const { recap, nextProgression, nextWorldBuilding, nextConflict } = HARNESS_CHAPTER_RESPONSE_SCHEMA.properties;
     for (const field of [recap, nextProgression, nextWorldBuilding, nextConflict]) expect(field.type).toBe('string');
-    expect(chapterFunction).toMatchObject({ type: 'string', enum: ['progression', 'worldBuilding', 'conflict'] });
-    // Story direction is author-owned: the provider is never asked for it.
-    for (const forbidden of ['hardPins', 'fatePressure', 'destinedEnding', 'rhythmRecommendation', 'missionReminder']) {
+    // Story direction is author-owned, and what happens is the planner's: the writer is never asked for either.
+    for (const forbidden of ['hardPins', 'fatePressure', 'destinedEnding', 'rhythmRecommendation', 'missionReminder', 'chapterFunction', 'arcCompletion', 'storyEnded', 'plan']) {
       expect(JSON.stringify(HARNESS_CHAPTER_RESPONSE_SCHEMA)).not.toContain(`"${forbidden}"`);
     }
   });
@@ -141,24 +127,46 @@ describe('HARNESS chapter response schema shape', () => {
 
 });
 
-describe('the Holdings section the writer reads', () => {
-  it('shows the main character even with nothing recorded', () => {
-    expect(presentHoldings({ characters: [{ name: 'Ye Chen', mainCharacter: true }] })).toBe('Ye Chen (main character): nothing recorded yet.');
+describe('the Chapter Plan the writer reads', () => {
+  it('shows its cast, each as the record had them and someone new in full, then its events with what each changes', () => {
+    expect(presentChapterPlan({
+      cast: [
+        { name: 'Ye Chen', kind: 'character', mainCharacter: true, look: { summary: 'A lean young man.', traits: { hair: 'dark' } }, status: 'wounded (a cut arm)', rank: 'Qi Condensation 3', inHand: ['Rusted Iron Sword'] },
+        { name: 'Old Wu', kind: 'character', new: true, who: 'The armory\'s smith.', gender: 'male', age: 'elder', look: { summary: 'A stooped old smith.', traits: {} } },
+        { name: 'Jade Gourd', kind: 'thing', heldBy: 'Old Wu' },
+      ],
+      events: [{
+        kind: 'gain', actor: { name: 'MC' }, targets: [{ name: 'Old Wu' }], attempt: 'to buy the gourd', outcome: 'success at a cost', presses: [{ who: { name: 'MC' }, level: 'light' }],
+        how: 'Ye Chen trades his sword for the gourd.',
+        facts: [
+          { type: 'holding', who: { name: 'MC' }, change: 'loses', what: { name: 'Rusted Iron Sword' } },
+          { type: 'holding', who: { name: 'MC' }, change: 'gains', what: { name: 'Jade Gourd' } },
+          { type: 'commitment', who: { name: 'Old Wu' }, toWhom: { name: 'MC' }, change: 'entered', what: 'a new blade by spring' },
+        ],
+      }],
+    })).toBe([
+      'THE CHAPTER PLAN (decided before this chapter; narrate it, never change it)',
+      'CAST',
+      '- MC: Ye Chen (main character) · look: A lean young man.; hair: dark · wounded (a cut arm) · rank: Qi Condensation 3 · in hand: Rusted Iron Sword',
+      '- Old Wu (new: The armory\'s smith.) · male, elder · look: A stooped old smith.',
+      '- Jade Gourd (thing) · held by Old Wu',
+      'EVENTS',
+      '1. Gain. MC tries to buy the gourd. Outcome: success at a cost.',
+      '   How: Ye Chen trades his sword for the gourd.',
+      '   Pressure: MC, light.',
+      '   Changes: MC loses Rusted Iron Sword. MC gains Jade Gourd. Old Wu commits to MC: a new blade by spring.',
+    ].join('\n'));
   });
 
-  it('puts rank beside the name and gives each list one line, by exact name', () => {
-    expect(presentHoldings({ characters: [
-      { name: 'Ye Chen', mainCharacter: true, rank: 'Qi Condensation 3', inHand: ['Rusted Iron Sword'], carries: ['Jade Pendant', 'Spirit Pill ×3'], knows: ['Iron Palm (Minor Success)', 'Cloud Step (sealed)'], learning: ['Wind Step'] },
-      { name: 'Elder Qin', carries: ['Jade Gourd'] },
-    ] })).toBe([
-      'Ye Chen (main character) · rank: Qi Condensation 3',
-      '- in hand: Rusted Iron Sword',
-      '- carries: Jade Pendant; Spirit Pill ×3',
-      '- knows: Iron Palm (Minor Success); Cloud Step (sealed)',
-      '- learning: Wind Step',
-      '',
-      'Elder Qin',
-      '- carries: Jade Gourd',
-    ].join('\n'));
+  it('says each fact in one plain sentence from a fixed table, never a model\'s words', () => {
+    const who = { name: 'MC' };
+    expect(presentPlanFact({ type: 'holding', who, change: 'improves', what: { name: 'Cloud Step' }, level: 'First Stage' })).toBe('MC improves Cloud Step to First Stage.');
+    expect(presentPlanFact({ type: 'holding', who, change: 'rank', what: { name: 'Qi Condensation 4' } })).toBe('MC reaches Qi Condensation 4.');
+    expect(presentPlanFact({ type: 'status', who: { name: 'a guard', unnamed: true }, state: 'dead', how: 'an arrow to the throat' })).toBe('A guard is dead (an arrow to the throat).');
+    expect(presentPlanFact({ type: 'look', who, change: 'a scar across the left cheek' })).toBe('MC\'s look changes: a scar across the left cheek.');
+    expect(presentPlanFact({ type: 'goal', who, change: 'set', what: 'avenge his master' })).toBe('MC sets a goal: avenge his master.');
+    expect(presentPlanFact({ type: 'value', who, stance: 'rejected', what: 'mercy for traitors' })).toBe('MC rejects a value: mercy for traitors.');
+    expect(presentPlanFact({ type: 'commitment', who, toWhom: { name: 'Lan Yue' }, change: 'broken', what: 'to wait at the gate' })).toBe('MC breaks a commitment to Lan Yue: to wait at the gate.');
+    expect(presentPlanFact({ type: 'stance', who, towardWhom: { name: 'Old Wu' }, mode: 'acted', polarity: 'hostile' })).toBe('MC\'s stance toward Old Wu, acted: hostile.');
   });
 });

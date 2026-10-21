@@ -19,6 +19,7 @@ import {
 } from './chapterBody';
 import { acceptHarnessModelResponse } from './responseAcceptance';
 import type { HarnessRuntime } from './ids';
+import { planEveryChapter } from '../../../test-utils/chapterPlan';
 
 /**
  * The chapter body, end to end.
@@ -60,6 +61,7 @@ const adapter = (...outputs: HarnessGenerationResponse[]) => {
       defaultModel: 'google/gemini-3.1-flash-lite',
     }),
     generate,
+    planChapter: planEveryChapter(),
     arcOperation: async () => response(JSON.stringify({
       plan: { arcNumber: 1, goals: [{ id: 'arc-1-goal', text: 'Open the sect gate.', chapters: 30 }] },
       destinedEnding: 'Bring the story to its true conclusion.',
@@ -228,7 +230,6 @@ describe('HARNESS chapter body persistence', () => {
       '“You are late,” Chen said from the gatehouse door.',
       'She counted the lanterns as she walked and found one short.',
     ],
-    arcCompletion: { goalId: 'arc-1-goal', completed: false, evidence: '' },
   });
 
   const generateChapter = async () => {

@@ -1,4 +1,4 @@
-import { type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessGenerationServerInfo, type HarnessArcRequest, type HarnessHoldingsFixRequest, type HarnessLookRequest } from '@seihouse/sen/harness-generation';
+import { type HarnessChapterPlanRequest, type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessGenerationServerInfo, type HarnessArcRequest } from '@seihouse/sen/harness-generation';
 import { readReasoningPreference } from './modelPreference';
 
 const withReasoningLevel = <T extends { model: string }>(request: T): T & { reasoningLevel?: string } => {
@@ -75,11 +75,9 @@ export class HarnessGenerationHttpClient implements HarnessGenerationModelAdapte
 
   async arcOperation(request: HarnessArcRequest): Promise<HarnessGenerationResponse> { return this.post(request); }
 
-  async fixHoldings(request: HarnessHoldingsFixRequest): Promise<HarnessGenerationResponse> { return this.post(request); }
+  async planChapter(request: HarnessChapterPlanRequest): Promise<HarnessGenerationResponse> { return this.post(request); }
 
-  async describeLooks(request: HarnessLookRequest): Promise<HarnessGenerationResponse> { return this.post(request); }
-
-  private async post(request: HarnessGenerationRequest | HarnessArcRequest | HarnessHoldingsFixRequest | HarnessLookRequest): Promise<HarnessGenerationResponse> {
+  private async post(request: HarnessGenerationRequest | HarnessArcRequest | HarnessChapterPlanRequest): Promise<HarnessGenerationResponse> {
     const token = this.accessToken?.()?.trim();
     const response = await fetch(this.endpoint, {
       method: 'POST',

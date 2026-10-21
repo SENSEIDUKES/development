@@ -222,7 +222,7 @@ export function ReaderChamberWorkspace() {
     },
     {
       id: 'states' as const,
-      description: `Where the reader is in ${storyTitle}. Each scene starts from a fresh copy of the story. Writing replays the reply each chapter was written with (about ${Math.round(REPLAY_WRITING_MS / 1000)} seconds); no model is called.`,
+      description: `Where the reader is in ${storyTitle}. Each scene starts from a fresh copy of the story. Writing replays the plan and the reply each chapter was written with (about ${Math.round(REPLAY_WRITING_MS / 1000)} seconds); no model is called.`,
       content: (
         <div className="space-y-5">
           <section>

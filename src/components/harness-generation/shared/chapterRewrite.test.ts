@@ -5,6 +5,7 @@ import {
   exportHarnessStory,
   withoutLatestChapter,
   type HarnessArcRequest,
+  type HarnessChapterPlanRequest,
   type HarnessGenerationModelAdapter,
   type HarnessGenerationRequest,
   type HarnessWorkspaceState,
@@ -14,12 +15,16 @@ import type { ArcPlan } from '@seihouse/sen/arc-goals';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { writtenChapter } from '../../../test-utils/writtenChapter';
 import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
+import { buildChapterPlannerPrompt } from '../../../server/harness-generation/chapterPlanner';
+import { planEveryChapter, plannedChapter, TEST_CHAPTER_PLAN } from '../../../test-utils/chapterPlan';
 
 /**
  * Rewrite this chapter: the reader may have the latest chapter written again,
  * with an optional note. The new version is written from the story as it
  * stood before that chapter, replaces it only when it commits, and leaves the
- * story exactly as it was whenever it fails.
+ * story exactly as it was whenever it fails. Without a note the chapter's
+ * plan is kept and only the telling changes; with one, it is planned again
+ * (SENSEI, 2026-10-20).
  */
 
 const plan: ArcPlan = { arcNumber: 1, goals: [
@@ -29,11 +34,16 @@ const plan: ArcPlan = { arcNumber: 1, goals: [
   { id: 'arc-1-ending', text: 'Reopen the drowned archive to the valley.', chapters: 21 },
 ] };
 const receipt = { provider: 'fixture', model: 'fixture', generatedAt: 'now', usage: { source: 'unavailable' as const } };
-const chapter = (title: string, paragraphs: string[], extra: Record<string, unknown> = {}) => ({
-  title, paragraphs, recap: `${title}: ${paragraphs[0]}`, chapterFunction: 'progression',
+const chapter = (title: string, paragraphs: string[]) => ({
+  title, paragraphs, recap: `${title}: ${paragraphs[0]}`,
   nextProgression: 'Lin climbs the archive tower.', nextWorldBuilding: 'The flood reveals the old canals.', nextConflict: 'A river cult blocks the stair.',
-  arcCompletion: { goalId: 'none', completed: false, evidence: '' }, ...extra,
 });
+/** A plan with one event: its facts, and anything else the plan says. */
+const planOf = (how: string, facts: object[] = [], extra: Record<string, unknown> = {}) => ({
+  cast: [{ name: 'MC', kind: 'character' }], events: [{ kind: 'decision', actor: 'MC', targets: [], presses: [], how, facts }],
+  chapterFunction: 'progression', ...extra,
+});
+const gains = (who: string, what: string) => ({ type: 'holding', who, change: 'gains', what });
 const SURVIVAL = { fateSurvival: { enabled: true } } as const;
 const direct = (text: string) => ({ kind: 'reader' as const, text });
 
@@ -43,6 +53,8 @@ const runtime = { now: () => '2026-10-06T12:00:00.000Z', createId: (prefix: stri
 const setup = async (overrides: Partial<StoryFoundationInput> = {}) => {
   const requests: HarnessGenerationRequest[] = [];
   const outputs: Array<Record<string, unknown> | Error> = [];
+  const planRequests: HarnessChapterPlanRequest[] = [];
+  const plans: object[] = [];
   const modelAdapter: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ configured: true, provider: 'fixture', defaultModel: 'fixture', models: [] }),
     generate: vi.fn(async (request: HarnessGenerationRequest) => {
@@ -51,6 +63,10 @@ const setup = async (overrides: Partial<StoryFoundationInput> = {}) => {
       if (next instanceof Error) throw next;
       return { rawProviderResponse: JSON.stringify(writtenChapter(next)), providerReceipt: receipt };
     }),
+    planChapter: async request => {
+      planRequests.push(structuredClone(request));
+      return plannedChapter(plans.shift() ?? TEST_CHAPTER_PLAN);
+    },
     arcOperation: async (_request: HarnessArcRequest) => ({ rawProviderResponse: '{}', providerReceipt: receipt }),
   };
   const repository = new InMemoryHarnessGenerationRepository();
@@ -62,28 +78,42 @@ const setup = async (overrides: Partial<StoryFoundationInput> = {}) => {
     cast: [{ name: 'Lin', role: 'Archivist', isMainCharacter: true, relationshipToMC: 'Self' }, { name: 'Elder Qin', role: 'Keeper' }],
     ...overrides,
   });
-  const write = async (...replies: Array<Record<string, unknown> | Error>) => {
-    outputs.push(...replies);
+  /** Writes the next chapter from this plan (the test plan when none is given), told as this reply. */
+  const write = async (reply: Record<string, unknown> | Error, plan?: object) => {
+    outputs.push(reply);
+    if (plan) plans.push(plan);
     await controller.generateNextChapter(story.id, 'fixture');
   };
-  return { controller, repository, storyId: story.id, requests, outputs, write };
+  return { controller, repository, storyId: story.id, requests, outputs, planRequests, plans, write };
 };
 
 const storyChapters = (state: HarnessWorkspaceState) => [...state.chapters].sort((left, right) => left.chapterNumber - right.chapterNumber);
 
 describe('Rewrite this chapter', () => {
-  it('writes the latest chapter again from the story before it, and the new version takes its place', async () => {
+  it('with a note, plans and writes the latest chapter again from the story before it, and the new version takes its place', async () => {
     const run = await setup();
-    await run.write(chapter('The Flood', ['[[gained: MC | Rope Coil]] Lin tied the rope to the rail.']));
-    await run.write(chapter('The Keeper', ['[[gained: Elder Qin | Jade Gourd]] Elder Qin lifted a jade gourd.', '[[gained: MC | Lantern]] Lin took the lantern.']));
+    await run.write(chapter('The Flood', ['Lin tied the rope to the rail.']), planOf('Lin ties a rope coil to the rail.', [gains('MC', 'Rope Coil')]));
+    await run.write(chapter('The Keeper', ['Elder Qin lifted a jade gourd.', 'Lin took the lantern.']), {
+      ...planOf('Elder Qin lifts a jade gourd, and Lin takes the lantern.', [gains('Elder Qin', 'Jade Gourd'), gains('MC', 'Lantern')]),
+      cast: [{ name: 'MC', kind: 'character' }, { name: 'Elder Qin', kind: 'character' }],
+    });
     const before = run.controller.snapshot();
     const [first, replaced] = storyChapters(before);
 
-    run.outputs.push(chapter('The Keeper Waits', ['[[gained: MC | Silver Bell]] Lin found a silver bell in the mud.']));
+    run.plans.push(planOf('Lin finds a silver bell in the mud.', [gains('MC', 'Silver Bell')]));
+    run.outputs.push(chapter('The Keeper Waits', ['Lin found a silver bell in the mud.']));
     await run.controller.rewriteLatestChapter(run.storyId, 'fixture', '  Let Elder Qin keep his secrets.  ');
 
-    // What the writer was given: the story as it stood after Chapter 1, and the reader's request.
+    // The planner planned it again, from the story as it stood after Chapter 1 and the reader's note.
+    expect(run.planRequests).toHaveLength(3);
+    const planned = run.planRequests.at(-1)!;
+    expect(planned.immediateChapterRequest.rewrite).toMatchObject({ note: 'Let Elder Qin keep his secrets.' });
+    expect(JSON.stringify(planned.storyInformation.codex)).not.toMatch(/Jade Gourd|Lantern/);
+    expect(JSON.stringify(planned.storyInformation.codex)).toContain('Rope Coil');
+    expect(buildChapterPlannerPrompt(planned).userPrompt).toContain('REWRITE: the reader asked for Chapter 2 again. The version they set aside: "The Keeper", The Keeper: Elder Qin lifted a jade gourd. Their note: Let Elder Qin keep his secrets.');
+    // What the writer was given: the story as it stood after Chapter 1, the new plan, and the reader's request.
     const sent = run.requests.at(-1)!;
+    expect(sent.chapterPlan.events.map(event => event.how)).toEqual(['Lin finds a silver bell in the mud.']);
     expect(sent.immediateChapterRequest).toMatchObject({
       chapterNumber: 2,
       continuation: true,
@@ -92,11 +122,9 @@ describe('Rewrite this chapter', () => {
     expect(sent.immediateChapterRequest.chapterScale.paragraphs).toBe(run.requests[1].immediateChapterRequest.chapterScale.paragraphs);
     expect(sent.storyInformation.storyHead).toMatchObject({ nextChapterNumber: 2, lastCommittedChapterId: first.id });
     expect(sent.storyInformation.previouslyOn.map(entry => entry.chapterNumber)).toEqual([1]);
-    expect(JSON.stringify(sent.storyInformation.holdings)).not.toMatch(/Jade Gourd|Lantern/);
     const prompt = buildHarnessGenerationPrompt(sent).userPrompt;
-    expect(prompt).toContain('REWRITE: the reader asked for Chapter 2 to be written again. The version they set aside:');
-    expect(prompt).toContain(`"The Keeper" — ${replaced.recap!.text}`);
-    expect(prompt).toContain('THE READER\'S NOTE: Let Elder Qin keep his secrets.');
+    expect(prompt).toContain(`REWRITE: the reader asked for Chapter 2 to be written again. The version they set aside: "The Keeper", ${replaced.recap!.text}`);
+    expect(prompt).toContain('The Chapter Plan was made again from their note: "Let Elder Qin keep his secrets.".');
     expect(prompt).toContain('Write Chapter 2 again now. Return only the requested JSON object.');
 
     const after = run.controller.snapshot();
@@ -114,7 +142,8 @@ describe('Rewrite this chapter', () => {
     expect(exportHarnessStory(after, run.storyId).attempts.map(attempt => attempt.id)).toContain(replaced.attemptId);
     // The entries the replaced version brought in are gone: its Jade Gourd and Lantern, and Elder Qin, first named there.
     expect(after.codexEntries.map(entry => entry.name).sort()).toEqual(['Lin', 'Rope Coil', 'Silver Bell']);
-    expect(after.codexEntries.find(entry => entry.name === 'Silver Bell')!.origin).toEqual({ source: 'tag', chapterId: rewritten.id, chapterNumber: 2 });
+    expect(after.codexEntries.find(entry => entry.name === 'Silver Bell')!.origin).toEqual({ source: 'plan', chapterId: rewritten.id, chapterNumber: 2 });
+    expect(rewritten.plan.events[0].facts).toEqual([expect.objectContaining({ type: 'holding', change: 'gains', what: expect.objectContaining({ name: 'Silver Bell' }) })]);
 
     // The story goes on from the new version.
     await run.write(chapter('The Tower', ['Lin climbed.']));
@@ -124,24 +153,57 @@ describe('Rewrite this chapter', () => {
     expect(third.storyInformation.previouslyOn.map(entry => entry.recap)).toEqual([first.recap!.text, rewritten.recap!.text]);
   });
 
-  it('without a note, asks for a fresh take on the same chapter', async () => {
+  it('without a note, keeps the chapter\'s plan and asks only the writer for a fresh telling', async () => {
     const run = await setup();
-    await run.write(chapter('The Flood', ['The river rose.']));
-    const replacedId = run.controller.snapshot().chapters[0].id;
+    await run.write(chapter('The Flood', ['The river rose.']), planOf('The river rises, and Lin ties a rope coil to the rail.', [gains('MC', 'Rope Coil')]));
+    const replaced = run.controller.snapshot().chapters[0];
     await run.controller.rewriteLatestChapter(run.storyId, 'fixture', '   ');
+    // No planner call: the events stay, the telling changes.
+    expect(run.planRequests).toHaveLength(1);
     const sent = run.requests.at(-1)!;
     // A blank note is no note.
-    expect(sent.immediateChapterRequest.rewrite).toEqual({ replacesChapterId: replacedId, previous: { title: 'The Flood', recap: 'The Flood: The river rose.' } });
+    expect(sent.immediateChapterRequest.rewrite).toEqual({ replacesChapterId: replaced.id, previous: { title: 'The Flood', recap: 'The Flood: The river rose.' } });
     expect(sent.immediateChapterRequest.continuation).toBe(false);
+    expect(sent.chapterPlan.events.map(event => event.how)).toEqual(['The river rises, and Lin ties a rope coil to the rail.']);
     const prompt = buildHarnessGenerationPrompt(sent).userPrompt;
-    expect(prompt).toContain('The reader left no note. Write a new version of Chapter 1 from the same point in the story with the same direction');
-    expect(prompt).not.toContain('THE READER\'S NOTE');
+    expect(prompt).toContain('The events stay as planned; tell them afresh, with a new approach to their telling.');
+    expect(prompt).not.toContain('their note');
+    // The attempt says whose plan it kept; the new version records the same facts, under the same entries.
+    const state = run.controller.snapshot();
+    expect(state.attempts.at(-1)!.chapterPlan).toMatchObject({ reusedFrom: replaced.attemptId });
+    expect(state.attempts.at(-1)!.plannerCall).toBeUndefined();
+    const [rewritten] = storyChapters(state);
+    expect(rewritten.id).not.toBe(replaced.id);
+    expect(rewritten.plan.events).toEqual([expect.objectContaining({ how: 'The river rises, and Lin ties a rope coil to the rail.' })]);
+    expect(state.codexEntries.find(entry => entry.name === 'Rope Coil')!.origin).toEqual({ source: 'plan', chapterId: rewritten.id, chapterNumber: 1 });
+  });
+
+  it('keeps the Codex entry of whoever the new version names again, with the voice the reader chose for them', async () => {
+    const run = await setup();
+    await run.write(chapter('The Ferry', ['Kael Varn rowed.']), {
+      ...planOf('Kael Varn rows Lin across, and she ties a rope coil to the rail.', [gains('MC', 'Rope Coil')]),
+      cast: [{ name: 'MC', kind: 'character' }, { name: 'Kael Varn', kind: 'character', who: 'A ferryman.' }],
+    });
+    const before = run.controller.snapshot();
+    const kael = before.codexEntries.find(entry => entry.name === 'Kael Varn')!;
+    const rope = before.codexEntries.find(entry => entry.name === 'Rope Coil')!;
+    await run.controller.setCodexVoice(run.storyId, kael.id, 'dark-sect-elder-male');
+    await run.controller.rewriteLatestChapter(run.storyId, 'fixture');
+    const after = run.controller.snapshot();
+    const [rewritten] = storyChapters(after);
+    // Same ID, so a picture kept under it still finds them; now brought in by the new version.
+    expect(after.codexEntries.filter(entry => entry.name === 'Kael Varn')).toEqual([expect.objectContaining({
+      id: kael.id, voice: expect.objectContaining({ key: 'dark-sect-elder-male', chosen: 'reader' }),
+      origin: { source: 'plan', chapterId: rewritten.id, chapterNumber: 1 },
+    })]);
+    expect(after.codexEntries.find(entry => entry.name === 'Rope Coil')!.id).toBe(rope.id);
+    expect(rewritten.plan.cast.find(member => member.name === 'Kael Varn')!.entryId).toBe(kael.id);
   });
 
   it('leaves the story exactly as it was when the rewrite fails, and the story can still go on or try again', async () => {
     const run = await setup();
     await run.write(chapter('The Flood', ['The river rose.']));
-    await run.write(chapter('The Keeper', ['[[gained: MC | Lantern]] Lin took the lantern.']));
+    await run.write(chapter('The Keeper', ['Lin took the lantern.']), planOf('Lin takes the lantern.', [gains('MC', 'Lantern')]));
     const before = run.controller.snapshot();
 
     run.outputs.push(new Error('Provider unavailable'));
@@ -155,31 +217,47 @@ describe('Rewrite this chapter', () => {
     expect(attempt.failure?.message).toBe('Provider unavailable');
     expect(chapterRewriteGap(failed, run.storyId)).toBeUndefined();
 
-    // Trying the failed request again writes Chapter 2 again, with the same note, never Chapter 3.
+    // Trying the failed request again writes Chapter 2 again, with the same note and the plan made for it, never Chapter 3.
+    const planCalls = run.planRequests.length;
     run.outputs.push(chapter('The Keeper, Darker', ['The lantern guttered.']));
     await run.controller.retryModelRequest(attempt.id);
+    expect(run.planRequests).toHaveLength(planCalls);
     expect(run.requests.at(-1)!.immediateChapterRequest).toMatchObject({ chapterNumber: 2, rewrite: { note: 'Make it darker.' } });
     const retried = run.controller.snapshot();
     expect(storyChapters(retried).map(entry => [entry.chapterNumber, entry.title])).toEqual([[1, 'The Flood'], [2, 'The Keeper, Darker']]);
     expect(retried.stories[0].head.nextChapterNumber).toBe(3);
   });
 
-  it('records the goals, the ending and the route again from the new version', async () => {
+  it('records the goals, the ending and the route again from the new version\'s plan', async () => {
     const run = await setup(SURVIVAL);
     await run.controller.chooseChapterDirection(run.storyId, direct('Lin fights the flood.'));
-    // Chapter 1 achieves the first goal and ends the story: fate failed.
-    await run.write(chapter('The Flood', ['Lin held the sluice until the water fell.', 'The river took Lin and the archive with her.'], {
-      arcCompletion: { goalId: 'arc-1-flood', completed: true, evidence: 'Lin held the sluice until the water fell.' },
-      storyEnded: { ended: true, evidence: 'The river took Lin and the archive with her.' },
-    }));
+    // Chapter 1's plan achieves the first goal and ends the story: fate failed.
+    const ending = {
+      cast: [{ name: 'MC', kind: 'character' }],
+      events: [
+        { kind: 'confrontation', actor: 'MC', targets: [], presses: [{ who: 'MC', level: 'crushing' }], how: 'Lin holds the sluice until the water falls.', facts: [] },
+        { kind: 'loss', targets: ['MC'], presses: [], how: 'The river takes Lin and the archive with her.', facts: [{ type: 'status', who: 'MC', state: 'dead' }] },
+      ],
+      arcGoalReached: { reached: true, event: 1 }, storyEnds: { ends: true, event: 2 }, chapterFunction: 'conflict',
+    };
+    await run.write(chapter('The Flood', ['Lin held the sluice until the water fell.', 'The river took Lin and the archive with her.']), ending);
     const ended = run.controller.snapshot().stories[0];
     expect(ended.goalCompletions?.map(done => done.goalId)).toEqual(['arc-1-flood']);
-    expect(ended.conclusion).toMatchObject({ outcome: 'fate-failed', chapterNumber: 1 });
+    expect(ended.conclusion).toMatchObject({ outcome: 'fate-failed', chapterNumber: 1, evidence: 'The river takes Lin and the archive with her.' });
 
-    // The story ended, but its latest chapter can still be written again, with the same direction.
+    // The story ended, but its latest chapter can still be written again. Without a note the plan stays, and so does its end.
     expect(chapterRewriteGap(run.controller.snapshot(), run.storyId)).toBeUndefined();
-    run.outputs.push(chapter('The Flood Recedes', ['Lin waited out the flood on the roof.']));
+    run.outputs.push(chapter('The Flood, Told Again', ['Lin braced the sluice.', 'The water closed over Lin and the archive.']));
     await run.controller.rewriteLatestChapter(run.storyId, 'fixture');
+    const retold = run.controller.snapshot().stories[0];
+    expect(retold.goalCompletions?.map(done => done.goalId)).toEqual(['arc-1-flood']);
+    expect(retold.conclusion).toMatchObject({ outcome: 'fate-failed', chapterNumber: 1 });
+
+    // With a note it is planned again, with the same direction: this plan reaches no goal and ends nothing.
+    run.plans.push(planOf('Lin waits out the flood on the roof.'));
+    run.outputs.push(chapter('The Flood Recedes', ['Lin waited out the flood on the roof.']));
+    await run.controller.rewriteLatestChapter(run.storyId, 'fixture', 'Let Lin live.');
+    expect(run.planRequests.at(-1)!.immediateChapterRequest.direction?.choice).toEqual(direct('Lin fights the flood.'));
     expect(run.requests.at(-1)!.immediateChapterRequest.direction?.choice).toEqual(direct('Lin fights the flood.'));
     const rewritten = run.controller.snapshot().stories[0];
     expect(rewritten.goalCompletions ?? []).toEqual([]);
@@ -242,6 +320,7 @@ describe('Rewrite this chapter', () => {
     const reopened = new HarnessGenerationController({ repository: new InMemoryHarnessGenerationRepository(interrupted), modelAdapter: {
       getServerInfo: async () => ({ configured: true, provider: 'fixture', defaultModel: 'fixture', models: [] }),
       generate: async () => ({ rawProviderResponse: JSON.stringify(writtenChapter(chapter('Again', ['Again.']))), providerReceipt: receipt }),
+      planChapter: planEveryChapter(),
       arcOperation: async () => ({ rawProviderResponse: '{}', providerReceipt: receipt }),
     }, runtime });
     const state = await reopened.hydrate();
@@ -254,13 +333,16 @@ describe('Rewrite this chapter', () => {
 
   it('takes the story back to just before its latest chapter without changing the saved state', async () => {
     const run = await setup();
-    await run.write(chapter('The Flood', ['[[gained: MC | Rope Coil]] Lin tied the rope to the rail.']));
+    await run.write(chapter('The Flood', ['Lin tied the rope to the rail.']), planOf('Lin ties a rope coil to the rail.', [gains('MC', 'Rope Coil')]));
     const afterOne = run.controller.snapshot();
-    await run.write(chapter('The Keeper', ['[[gained: Elder Qin | Jade Gourd]] Elder Qin lifted a jade gourd.'], {
-      arcCompletion: { goalId: 'arc-1-flood', completed: true, evidence: 'Elder Qin lifted a jade gourd.' },
-    }));
+    await run.write(chapter('The Keeper', ['Elder Qin lifted a jade gourd.']), {
+      ...planOf('Elder Qin lifts a jade gourd, and the flood is survived.', [gains('Elder Qin', 'Jade Gourd')], { arcGoalReached: { event: 1 } }),
+      cast: [{ name: 'MC', kind: 'character' }, { name: 'Elder Qin', kind: 'character' }],
+    });
     const afterTwo = run.controller.snapshot();
     const frozen = structuredClone(afterTwo);
+    expect(afterTwo.stories[0].goalCompletions?.map(done => done.goalId)).toEqual(['arc-1-flood']);
+    expect(afterTwo.codexEntries.map(entry => entry.name)).toEqual(expect.arrayContaining(['Elder Qin', 'Jade Gourd']));
     const back = withoutLatestChapter(afterTwo, run.storyId);
     expect(afterTwo).toEqual(frozen);
     expect(back.chapters).toEqual(afterOne.chapters);

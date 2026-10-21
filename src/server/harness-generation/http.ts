@@ -1,4 +1,4 @@
-import { CHAPTER_REWRITE_NOTE_LIMIT, HARNESS_MAX_CHAPTER_PARAGRAPHS, HOLDINGS_FIXER_CASE_LIMIT, LOOK_DECLARED_CHARACTERS, LOOK_PASSAGE_CHARACTERS, LOOK_SUBJECT_LIMIT, type HarnessArcRequest, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessHoldingsFixRequest, type HarnessLookRequest } from '@seihouse/sen/harness-generation';
+import { CHAPTER_REWRITE_NOTE_LIMIT, HARNESS_MAX_CHAPTER_PARAGRAPHS, type HarnessArcRequest, type HarnessChapterPlanRequest, type HarnessGenerationRequest, type HarnessGenerationResponse } from '@seihouse/sen/harness-generation';
 import { validateSoundWords } from '@seihouse/sen/audio';
 import {
   harnessGenerationServerInfo,
@@ -11,8 +11,7 @@ import {
   HarnessGenerationExecutionError,
   type HarnessProviderFactory,
 } from './execute';
-import { executeHoldingsFix } from './holdingsFixer';
-import { executeLookDescription } from './lookDescriber';
+import { executeChapterPlan } from './chapterPlanner';
 
 export interface HarnessGenerationHttpRequest {
   method?: string;
@@ -61,62 +60,46 @@ const requirePacket = (packet: unknown) => {
   }
 };
 
-/** The longest text one fixer case may carry anywhere: a sentence, a problem, a record line. */
-const FIX_CASE_TEXT_LIMIT = 2_000;
-const FIX_ANSWERS = new Set(['record', 'prose', 'fine', 'major']);
-
-/** A Holdings fixer request: a few small cases, each within its limits. */
-const parseHoldingsFix = (parsed: Record<string, unknown>): HarnessHoldingsFixRequest => {
-  const shortText = (value: unknown) => typeof value === 'string' && value.length <= FIX_CASE_TEXT_LIMIT;
-  const texts = (value: unknown, required = false) => value === undefined ? !required
-    : Array.isArray(value) && value.length <= 12 && value.every(shortText) && (!required || value.length > 0);
-  const cases = parsed.cases;
-  const valid = [parsed.storyId, parsed.chapterId, parsed.model, parsed.language].every(value => typeof value === 'string' && value.trim())
-    && Number.isInteger(parsed.chapterNumber) && Number(parsed.chapterNumber) >= 1
-    && (parsed.mainCharacter === undefined || shortText(parsed.mainCharacter))
-    && (parsed.direction === undefined || (typeof parsed.direction === 'string' && parsed.direction.length <= CHAPTER_REWRITE_NOTE_LIMIT))
-    && Array.isArray(cases) && cases.length >= 1 && cases.length <= HOLDINGS_FIXER_CASE_LIMIT
-    && cases.every(entry => isRecord(entry) && typeof entry.id === 'string' && texts(entry.problems, true)
-      && Array.isArray(entry.answers) && entry.answers.length > 0 && entry.answers.every(answer => FIX_ANSWERS.has(answer as string))
-      && (entry.passage === undefined || (isRecord(entry.passage) && shortText(entry.passage.sentence)
-        && (entry.passage.before === undefined || shortText(entry.passage.before)) && (entry.passage.after === undefined || shortText(entry.passage.after))))
-      && (entry.tags === undefined || shortText(entry.tags)) && texts(entry.record)
-      && (entry.mentions === undefined || (Array.isArray(entry.mentions) && entry.mentions.length <= 3
-        && entry.mentions.every(mention => isRecord(mention) && typeof mention.id === 'string' && shortText(mention.sentence)))));
-  if (!valid) throw new Error(`A Holdings fixer request needs its chapter, model and language, and 1 to ${HOLDINGS_FIXER_CASE_LIMIT} small cases.`);
-  return parsed as unknown as HarnessHoldingsFixRequest;
+/** The immediate request both of a chapter's calls carry: a valid chapter number, paragraph count and rewrite. */
+const requireImmediateRequest = (immediate: unknown) => {
+  if (!isRecord(immediate) || !Number.isInteger(immediate.chapterNumber) || Number(immediate.chapterNumber) < 1) {
+    throw new Error('Harness Generation needs an Immediate Chapter Request with a valid harness-owned chapter number.');
+  }
+  // The paragraph count becomes the schema's exact array length, so only a sane whole number passes.
+  const paragraphs = isRecord(immediate.chapterScale) ? immediate.chapterScale.paragraphs : undefined;
+  if (paragraphs !== undefined && (!Number.isInteger(paragraphs) || Number(paragraphs) < 1 || Number(paragraphs) > HARNESS_MAX_CHAPTER_PARAGRAPHS)) {
+    throw new Error(`The chapter paragraph count must be a whole number from 1 to ${HARNESS_MAX_CHAPTER_PARAGRAPHS}.`);
+  }
+  // A rewrite names the chapter it replaces and shows its title; the reader's note stays within its limit.
+  const rewrite = immediate.rewrite;
+  if (rewrite !== undefined) {
+    const previous = isRecord(rewrite) ? rewrite.previous : undefined;
+    if (!isRecord(rewrite) || typeof rewrite.replacesChapterId !== 'string' || !rewrite.replacesChapterId.trim()
+      || !isRecord(previous) || typeof previous.title !== 'string' || (previous.recap !== undefined && typeof previous.recap !== 'string')
+      || (rewrite.note !== undefined && (typeof rewrite.note !== 'string' || !rewrite.note.trim() || rewrite.note.length > CHAPTER_REWRITE_NOTE_LIMIT))) {
+      throw new Error(`A chapter rewrite needs the chapter it replaces with its title, and a note of at most ${CHAPTER_REWRITE_NOTE_LIMIT.toLocaleString()} characters.`);
+    }
+  }
 };
 
-/** The longest name, change of look or earlier look one look subject may carry. */
-const LOOK_TEXT_LIMIT = 400;
-const LOOK_ENTITIES = new Set(['character', 'thing']);
-const LOOK_EVENTS = new Set(['appears', 'look']);
-
-/** A look step request: a few subjects, each a passage within its limits. */
-const parseLookRequest = (parsed: Record<string, unknown>): HarnessLookRequest => {
-  const within = (value: unknown, limit: number) => typeof value === 'string' && value.length <= limit;
-  const optional = (value: unknown, limit: number) => value === undefined || within(value, limit);
-  const subjects = parsed.subjects;
-  const valid = [parsed.storyId, parsed.chapterId, parsed.model, parsed.language].every(value => typeof value === 'string' && value.trim())
-    && Number.isInteger(parsed.chapterNumber) && Number(parsed.chapterNumber) >= 1
-    && Array.isArray(subjects) && subjects.length >= 1 && subjects.length <= LOOK_SUBJECT_LIMIT
-    && subjects.every(entry => isRecord(entry) && typeof entry.id === 'string' && within(entry.name, LOOK_TEXT_LIMIT) && Boolean((entry.name as string).trim())
-      && LOOK_ENTITIES.has(entry.entity as string) && LOOK_EVENTS.has(entry.event as string)
-      && optional(entry.change, LOOK_TEXT_LIMIT)
-      // A passage cut to its limit ends with an ellipsis.
-      && within(entry.passage, LOOK_PASSAGE_CHARACTERS + 1) && Boolean((entry.passage as string).trim())
-      && optional(entry.declared, LOOK_DECLARED_CHARACTERS + 1)
-      && (entry.previous === undefined || (isRecord(entry.previous) && within(entry.previous.summary, LOOK_TEXT_LIMIT) && isRecord(entry.previous.traits)
-        && Object.values(entry.previous.traits).every(value => within(value, LOOK_TEXT_LIMIT)))));
-  if (!valid) throw new Error(`A look request needs its chapter, model and language, and 1 to ${LOOK_SUBJECT_LIMIT} subjects, each with its passage.`);
-  return parsed as unknown as HarnessLookRequest;
+/** The planner's request: the frozen packet with its Arc Plan and Codex, this chapter's request, and its skills. */
+const parseChapterPlan = (parsed: Record<string, unknown>): HarnessChapterPlanRequest => {
+  if (typeof parsed.storyId !== 'string' || typeof parsed.attemptId !== 'string') throw new Error('The planner needs story and attempt identities.');
+  if (!isRecord(parsed.storyInformation) || !isRecord(parsed.storyInformation.arc) || !isRecord(parsed.storyInformation.codex)
+    || !Array.isArray(parsed.storyInformation.codex.entries)) {
+    throw new Error('The planner needs a compact Story Information Packet with an authoritative Arc Plan and the Codex.');
+  }
+  requirePacket(parsed.storyInformation);
+  requireImmediateRequest(parsed.immediateChapterRequest);
+  if (parsed.planningSkills !== undefined && typeof parsed.planningSkills !== 'string') throw new Error('The planner\'s skills must be text.');
+  if (typeof parsed.model !== 'string') throw new Error('Choose a configured Harness Generation model.');
+  return parsed as unknown as HarnessChapterPlanRequest;
 };
 
-const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessArcRequest | HarnessHoldingsFixRequest | HarnessLookRequest => {
+const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessArcRequest | HarnessChapterPlanRequest => {
   const parsed = typeof body === 'string' ? JSON.parse(body) : body;
   if (!isRecord(parsed)) throw new Error('The Harness Generation request must be a JSON object.');
-  if (parsed.operation === 'fix-holdings') return parseHoldingsFix(parsed);
-  if (parsed.operation === 'describe-looks') return parseLookRequest(parsed);
+  if (parsed.operation === 'plan-chapter') return parseChapterPlan(parsed);
   if (parsed.operation === 'plan-arc') {
     if (!isRecord(parsed.storyInformation) || !isRecord(parsed.storyInformation.storyHead) || typeof parsed.model !== 'string'
       || typeof parsed.storyId !== 'string') throw new Error('Arc operations require a frozen Story Information Packet.');
@@ -150,24 +133,11 @@ const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessArcReque
   if (typeof parsed.storyId !== 'string' || typeof parsed.attemptId !== 'string') {
     throw new Error('Harness Generation needs story and attempt identities.');
   }
-  const immediate = parsed.immediateChapterRequest;
-  if (!isRecord(immediate) || !Number.isInteger(immediate.chapterNumber) || Number(immediate.chapterNumber) < 1) {
-    throw new Error('Harness Generation needs an Immediate Chapter Request with a valid harness-owned chapter number.');
-  }
-  // The paragraph count becomes the schema's exact array length, so only a sane whole number passes.
-  const paragraphs = isRecord(immediate.chapterScale) ? immediate.chapterScale.paragraphs : undefined;
-  if (paragraphs !== undefined && (!Number.isInteger(paragraphs) || Number(paragraphs) < 1 || Number(paragraphs) > HARNESS_MAX_CHAPTER_PARAGRAPHS)) {
-    throw new Error(`The chapter paragraph count must be a whole number from 1 to ${HARNESS_MAX_CHAPTER_PARAGRAPHS}.`);
-  }
-  // A rewrite names the chapter it replaces and shows its title; the reader's note stays within its limit.
-  const rewrite = immediate.rewrite;
-  if (rewrite !== undefined) {
-    const previous = isRecord(rewrite) ? rewrite.previous : undefined;
-    if (!isRecord(rewrite) || typeof rewrite.replacesChapterId !== 'string' || !rewrite.replacesChapterId.trim()
-      || !isRecord(previous) || typeof previous.title !== 'string' || (previous.recap !== undefined && typeof previous.recap !== 'string')
-      || (rewrite.note !== undefined && (typeof rewrite.note !== 'string' || !rewrite.note.trim() || rewrite.note.length > CHAPTER_REWRITE_NOTE_LIMIT))) {
-      throw new Error(`A chapter rewrite needs the chapter it replaces with its title, and a note of at most ${CHAPTER_REWRITE_NOTE_LIMIT.toLocaleString()} characters.`);
-    }
+  requireImmediateRequest(parsed.immediateChapterRequest);
+  // The writer narrates the chapter's plan: its cast and its events.
+  const plan = parsed.chapterPlan;
+  if (!isRecord(plan) || !Array.isArray(plan.cast) || !Array.isArray(plan.events) || !plan.events.length) {
+    throw new Error('Harness Generation requires the chapter\'s plan before a chapter model call.');
   }
   if (typeof parsed.model !== 'string') throw new Error('Choose a configured Harness Generation model.');
   return parsed as unknown as HarnessGenerationRequest;
@@ -212,7 +182,7 @@ export const handleHarnessGenerationHttp = async (
     };
   }
 
-  let parsed: HarnessGenerationRequest | HarnessArcRequest | HarnessHoldingsFixRequest | HarnessLookRequest;
+  let parsed: HarnessGenerationRequest | HarnessArcRequest | HarnessChapterPlanRequest;
   try {
     parsed = parseRequest(request.body);
   } catch (error) {
@@ -223,13 +193,11 @@ export const handleHarnessGenerationHttp = async (
   try {
     const config = resolveHarnessGenerationConfig(dependencies.environment);
     const reasoningLevel = (parsed as { reasoningLevel?: unknown }).reasoningLevel;
-    // The Holdings fixer and the look step think as little as the model allows, whatever the reader chose for chapters.
+    // The planner thinks at the level the reader chose for the chapter, on the chapter's own model.
     const operation = 'operation' in parsed ? parsed.operation : undefined;
-    const result = operation === 'fix-holdings'
-      ? await executeHoldingsFix(parsed as HarnessHoldingsFixRequest, config, dependencies.providerFactory)
-      : operation === 'describe-looks'
-        ? await executeLookDescription(parsed as HarnessLookRequest, config, dependencies.providerFactory)
-        : await executeHarnessGeneration(parsed as HarnessGenerationRequest | HarnessArcRequest, config, dependencies.providerFactory, reasoningLevel);
+    const result = operation === 'plan-chapter'
+      ? await executeChapterPlan(parsed as HarnessChapterPlanRequest, config, dependencies.providerFactory, reasoningLevel)
+      : await executeHarnessGeneration(parsed as HarnessGenerationRequest | HarnessArcRequest, config, dependencies.providerFactory, reasoningLevel);
     return {
       status: 200,
       body: result satisfies HarnessGenerationResponse,

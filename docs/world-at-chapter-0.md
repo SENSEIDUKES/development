@@ -82,6 +82,35 @@ dialogue, small beats, pacing); bound to the plan's facts and outcomes; and
 anything new that would matter to the record (a new person, item or injury)
 is either forbidden or has to be planned.
 
+### Fate Pressure sets the planner's target (SENSEI, 2026-10-21)
+
+> "Fate Pressure was supposed to essentially change how the planner perceives
+> what those scores should inform the writer. If it's a low Mortal Fate
+> Pressure, then keeping the main character inside that optimal pressure load
+> range is ideal. On the opposite end, if they chose the Heaven pressure, then
+> increasing the pressure on the seed is literally the point."
+
+So Fate Pressure is not only how hard the world pushes (the chapter loop's
+"sizes every pressure load" and "how strictly the world judge rules"). It is
+the **target the direction aims for**, read against CTE's scores:
+
+- **Mortal:** keep the main character inside the optimal pressure load range.
+  When CTE shows them over it, the direction eases off; under it, it adds.
+- **Heaven:** raising the pressure on the seed is the point. The direction
+  pushes past the comfortable range on purpose.
+- **Immortal:** between the two. (To decide: where exactly.)
+
+In SENSEI's pipeline this stays CTE's interpreting, not the planner's: code
+reads the scores against the tier's target and hands the planner a plain
+direction, for example "lower the pressure load this chapter". The planner
+announces it.
+
+**Built today:** Fate Pressure only tunes Rhythm (which chapter function is
+favored). It is not in the planner's input, and there is no CTE to score
+against. Open questions: Immortal's target; whether the target applies to the
+main character only or to every tracked character; and the exact plain words
+the planner receives (SENSEI approves them).
+
 ## The principle
 
 RimWorld generates the whole world before play: factions and their relations,

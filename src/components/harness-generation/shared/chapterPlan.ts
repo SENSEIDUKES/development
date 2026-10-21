@@ -242,7 +242,15 @@ export function readChapterPlan(raw: string): ChapterPlanReading {
   if (!reply) return { ok: false, problem: 'The planner\'s reply was not a plan the HARNESS could read.' };
   const checks: PlanCheck[] = [];
   const cast = (Array.isArray(reply.cast) ? reply.cast : []).map(value => readCastMember(value, checks)).filter((member): member is PlanCastMember => Boolean(member));
-  const events = (Array.isArray(reply.events) ? reply.events : []).filter(isRecord).map((source, index): PlanEvent => {
+  // An event that says nothing of what happens (no how, no attempt) is none the writer can narrate: it is set
+  // aside with its facts, and the events after it are numbered without it.
+  const sources = (Array.isArray(reply.events) ? reply.events : []).filter(isRecord);
+  const numbers = new Map<number, number>();
+  sources.forEach((source, index) => {
+    if (text(source.how) ?? text(source.attempt)) numbers.set(index + 1, numbers.size + 1);
+    else checks.push({ message: `The planner's event ${index + 1} says nothing of what happens, so it was set aside with its facts.` });
+  });
+  const events = sources.filter((_, index) => numbers.has(index + 1)).map((source, index): PlanEvent => {
     const number = index + 1;
     const kind = menu(PLAN_EVENT_KINDS, source.kind);
     if (!kind) checks.push({ event: number, message: `Event ${number}'s kind${text(source.kind) ? ` ‘${text(source.kind)}’` : ''} is not on the menu, so it has none.` });
@@ -270,14 +278,24 @@ export function readChapterPlan(raw: string): ChapterPlanReading {
       facts,
     };
   });
-  if (!events.some(event => event.how)) return { ok: false, problem: 'The planner\'s reply held no event to narrate.' };
+  if (!events.length) return { ok: false, problem: 'The planner\'s reply held no event to narrate.' };
   const plan: ChapterPlan = { cast, events };
-  const arcGoal = namedEvent(reply.arcGoalReached, 'reached', events.length);
-  if (arcGoal === 'none') checks.push({ message: 'The plan says the Active Arc Goal is reached but names no event of this chapter, so it is not recorded.' });
-  else if (arcGoal) plan.arcGoalReached = { event: arcGoal };
-  const ending = namedEvent(reply.storyEnds, 'ends', events.length);
-  if (ending === 'none') checks.push({ message: 'The plan says the story ends but names no event of this chapter, so it is not recorded.' });
-  else if (ending) plan.storyEnds = { event: ending };
+  // The planner numbers its events as it wrote them; an arc goal or ending in one set aside is not recorded.
+  const marked = (value: unknown, yes: 'reached' | 'ends', said: string) => {
+    const named = namedEvent(value, yes, sources.length);
+    if (named === undefined) return undefined;
+    const event = named === 'none' ? undefined : numbers.get(named);
+    if (!event) {
+      checks.push({ message: named === 'none'
+        ? `The plan says ${said} but names no event of this chapter, so it is not recorded.`
+        : `The plan says ${said} in its event ${named}, which was set aside, so it is not recorded.` });
+    }
+    return event;
+  };
+  const arcGoal = marked(reply.arcGoalReached, 'reached', 'the Active Arc Goal is reached');
+  if (arcGoal) plan.arcGoalReached = { event: arcGoal };
+  const ending = marked(reply.storyEnds, 'ends', 'the story ends');
+  if (ending) plan.storyEnds = { event: ending };
   if (isChapterFunction(reply.chapterFunction)) plan.chapterFunction = reply.chapterFunction;
   else checks.push({ message: 'The plan returned no chapter function from the menu, so the rhythm history skips this chapter.' });
   return { ok: true, plan, checks };
@@ -476,6 +494,20 @@ export function checkChapterPlan({ plan: planned, storyId, entries, chapters, de
       delete member.look;
       checks.push({ message: `${describeRef(member)} already has a look, so the plan's new one was set aside; a change to a look is a look fact.` });
     }
+  });
+
+  // What someone already had is only what the Codex does not list for them: anything it lists stays as the record has it.
+  const heldBefore = new Map(deriveHoldings({ entries: [...entries, ...resolver.created], chapters: before }).characters.map(holder => [holder.entryId, holder]));
+  draft.cast.forEach((member, index) => {
+    const holder = heldBefore.get(resolvedCast[index].entryId ?? '');
+    if (!holder || !member.alreadyHas) return;
+    member.alreadyHas = member.alreadyHas.filter((held, heldIndex) => {
+      const key = resolvedCast[index].alreadyHas?.[heldIndex]?.entryId;
+      const listed = held.kind === 'ability' ? holder.abilities.some(ability => ability.entryId === key) : holder.things.some(thing => thing.entryId === key);
+      if (listed) checks.push({ message: `${describeRef(member)} already ${held.kind === 'ability' ? 'knows' : 'has'} ‘${held.name}’, as the record shows, so it was not added again.` });
+      return !listed;
+    });
+    if (!member.alreadyHas.length) delete member.alreadyHas;
   });
 
   // Facts about someone neither the cast nor the record knows.

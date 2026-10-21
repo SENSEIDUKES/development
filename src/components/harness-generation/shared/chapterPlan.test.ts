@@ -96,6 +96,27 @@ describe('reading the planner\'s reply', () => {
     ]);
   });
 
+  it('sets aside an event that says nothing of what happens, with its facts, and an ending it held', () => {
+    const reading = readChapterPlan(JSON.stringify({
+      cast: [{ name: 'MC', kind: 'character' }],
+      events: [
+        { kind: 'journey', how: 'Lin crosses the river.', facts: [] },
+        { kind: 'loss', how: ' ', facts: [{ type: 'status', who: 'MC', state: 'dead' }] },
+        { kind: 'discovery', how: 'Lin finds the archive door.', facts: [] },
+      ],
+      arcGoalReached: { reached: true, event: 3 }, storyEnds: { ends: true, event: 2 }, chapterFunction: 'progression',
+    }));
+    if (!reading.ok) throw new Error(reading.problem);
+    expect(reading.plan.events.map(planned => planned.how)).toEqual(['Lin crosses the river.', 'Lin finds the archive door.']);
+    // The planner's event 3 is the plan's event 2.
+    expect(reading.plan.arcGoalReached).toEqual({ event: 2 });
+    expect(reading.plan.storyEnds).toBeUndefined();
+    expect(reading.checks.map(found => found.message)).toEqual([
+      'The planner\'s event 2 says nothing of what happens, so it was set aside with its facts.',
+      'The plan says the story ends in its event 2, which was set aside, so it is not recorded.',
+    ]);
+  });
+
   it('reads a cast member whose kind is off the menu, or missing, as a character, and says so', () => {
     const reading = readChapterPlan(JSON.stringify({
       cast: [{ name: 'MC', alreadyHas: [{ kind: 'Ability', name: 'Water Reading' }, { kind: 'technique', name: 'River Step' }, { name: 'Bone Charm' }] }, { name: 'Kael Varn' }, { name: 'Bone Oar', kind: 'item' }, { name: 'Ferry Token', kind: 'Thing' }],
@@ -180,6 +201,19 @@ describe('the plain checks', () => {
       'Event 2: Lin loses ‘Map’, which the record does not show them holding, so the fact was dropped.',
     ]);
     expect(checked.checks.every(found => found.fact)).toBe(true);
+  });
+
+  it('sets aside what someone already had when the record lists it, so the writer never sees it twice', () => {
+    const before: ChapterPlan[] = [{ cast: [{ name: 'MC', kind: 'character', alreadyHas: [{ kind: 'thing', name: 'Bone Oar' }, { kind: 'ability', name: 'Water Reading' }] }], events: [event('Lin rows out.')] }];
+    const checked = check({
+      cast: [{ name: 'MC', kind: 'character', alreadyHas: [{ kind: 'thing', name: 'Bone Oar' }, { kind: 'ability', name: 'Water Reading' }, { kind: 'thing', name: 'Ferry Token' }] }],
+      events: [event('Lin pays the ferryman.')],
+    }, before);
+    expect(checked.plan.cast[0].alreadyHas).toEqual([{ kind: 'thing', name: 'Ferry Token' }]);
+    expect(checked.checks.map(found => found.message)).toEqual([
+      'the main character already has ‘Bone Oar’, as the record shows, so it was not added again.',
+      'the main character already knows ‘Water Reading’, as the record shows, so it was not added again.',
+    ]);
   });
 
   it('keeps a thing named like the main character a thing, apart from them', () => {

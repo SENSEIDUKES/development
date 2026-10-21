@@ -128,9 +128,16 @@ it('opens the clicked Full and Compact worlds on their Info pages', async () => 
   expect(container.querySelector('[data-story-detail] [aria-label="World information"]')).toBeNull();
   const detailUrl = window.location.href;
   const detailState = window.history.state;
-  await act(async () => { window.history.back(); await new Promise(resolve => setTimeout(resolve, 50)); });
+  // jsdom moves through history in a later task, then fires popstate: wait for that, never a fixed time,
+  // which a busy runner can outlast.
+  const travel = (go: () => void) => act(async () => {
+    const moved = new Promise(resolve => window.addEventListener('popstate', resolve, { once: true }));
+    go();
+    await moved;
+  });
+  await travel(() => window.history.back());
   expect(createVisible()).toBe(true);
-  await act(async () => { window.history.forward(); await new Promise(resolve => setTimeout(resolve, 50)); });
+  await travel(() => window.history.forward());
   expect(window.location.href).toBe(detailUrl);
   expect(container.querySelector('[data-story-detail] h1')?.textContent).toBe('Ashes of the Nine Moons');
   await act(async () => root.unmount());

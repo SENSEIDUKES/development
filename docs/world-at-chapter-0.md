@@ -26,7 +26,7 @@ picks in the Seed, turned into numbers by code.
 
 | # | Phase | Agents build | SENSEI does | SENSEI sees |
 |---|---|---|---|---|
-| A | Finish this design | Draft card kinds and their slots from the record's line (artist and save-game tests) | Approve or cut the list | This doc |
+| A | Finish this design | Card kinds drafted (below); revise from SENSEI's cuts | Approve or cut the list | This doc |
 | B | World at Chapter 0 | Seed slots, Blueprint fill, Chapter 0 record | Approve any new model words or calls | Seed and Blueprint pages; the Codex full before Chapter 1 |
 | C | CTE engine + first probe | CGT section 13 as code, the Fragmentation probe, CGT section 14's examples as tests | Hand over CGT v1.5 (PDF); decide chapter-loop decisions 1, 2, 4 | A **CTE panel**: each character's variables, phase and evidence per chapter |
 | D | Planner reads CTE + Fate Pressure | The readout in plain words; the tier as the aim | Approve the planner's new words | The plan and the readout side by side on the Harness Generation page |
@@ -287,6 +287,91 @@ first chapter's plan.
    It still creates whoever and whatever arrives later.
 5. **Manifest pictures and voices can exist before Chapter 1**, since looks and
    genders exist from Chapter 0.
+
+## Draft: the card kinds (phase A, for SENSEI's approval, 2026-10-21)
+
+Built only from the record's line: a slot is here because the **artist test**
+(draw it) or the **save-game test** (load it as it stands) needs it. Nothing
+else. Every slot is optional in the Seed; blanks are filled before Chapter 1.
+"Have" means the card already holds it today.
+
+### 1. Character (have)
+
+| Slot | Test | Changes over the story | Today |
+|---|---|---|---|
+| Name, other names | both | rarely (a new title) | have |
+| Who they are, one line | artist | rarely | have |
+| Gender, age | artist | age with time | have |
+| Look: one line, then traits | artist | yes (look facts) | have |
+| Species (if not human) | artist | no | **new** |
+| Where they are (a place) | save-game | yes | **new** |
+| Holds and knows (things, abilities), rank | both | yes | have |
+| Status (wounded, captured, dead...) | both | yes | have |
+| Goals, values, debts | save-game | yes | have |
+| Ties to others (allies, enemies, family, bound) | save-game | yes | **started** (stances, debts) |
+| Belongs to (factions) | save-game | yes | **new** |
+| Voice | other media | no | have |
+| Starting CTE picks (chapter-loop decision 1) | CTE | via the engine | **new** |
+
+### 2. Thing (have)
+
+Name; look; count; who holds it or where it lies; status (damaged,
+destroyed). **New:** where it lies when no one holds it.
+
+### 3. Ability (have, thin)
+
+Name; who knows it and at what level (on the character); **new:** how it looks
+when used (the artist must draw the technique), and which rank ladder its
+levels follow (from World rules).
+
+### 4. Place (new)
+
+Name; look (to draw it: terrain, buildings, light, scale); inside which larger
+place (a hall in a sect in a mountain range); who holds it (a faction);
+condition (intact, burning, ruined). Changes: condition, holder.
+
+### 5. Faction (new)
+
+Name; kind (sect, clan, empire, guild, order, religion...); look (emblem,
+colors, dress, so members are drawn right); seat (a place); leader (a
+character); ties to other factions (allied, rival, at war, vassal); standing
+(rising, ruling, fallen). Members come from each character's "belongs to".
+Changes: leader, ties, standing, seat.
+
+### 6. Species, the Bestiary (new)
+
+Name; look; where it lives (places); how dangerous or how strong, on the
+world's rank ladder; whether it speaks or thinks. A named beast is a
+character with this species (NOVEL_EXPANDED, 2026-10-13). Changes: rarely
+(a species driven out, wiped out).
+
+### 7. World rules (new, one per story)
+
+Not a card per entity: the one sheet every other card refers to.
+
+- **The rank ladder(s):** the ordered ranks of the power system (Qi
+  Condensation 1 to 9, then ...). Character ranks, ability levels and species
+  strength are chosen from it, so code can compare them.
+- **Laws and customs** that change what can happen (no killing inside the
+  city, the sect bans outside techniques), each one line.
+- **Era and material conditions:** this is CGT's base field E0 (non-social
+  environment), which CTE reads.
+
+### Not cards (already part of the record, or later)
+
+Ties (between characters, and between factions) live on the cards above.
+Scenes, moments, mood and voice belong to chapters, not to Chapter 0. The
+starting scene (where Chapter 1 opens, when, conditions, who is present) is
+the one scene the Seed sets.
+
+### For SENSEI to decide
+
+1. **Religion:** a kind of faction (a body of people with a belief and a
+   look), as drafted, or its own card kind.
+2. **Cut or keep** anything above. The rule for adding back: name which test
+   fails without it.
+3. **Anything missing** that the artist or save-game test needs and this list
+   doesn't cover.
 
 ## Open questions for SENSEI
 

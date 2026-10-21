@@ -246,6 +246,30 @@ describe('the plan as the writer reads it', () => {
     });
   });
 
+  it('keeps a thing that shares a character\'s name apart from them, from the checks to the writer', () => {
+    // A sword and its spirit, both Azure Frost: the spirit is already in the Codex.
+    const before: ChapterPlan[] = [{ cast: [{ name: 'MC', kind: 'character' }, { name: 'Azure Frost', kind: 'character', who: 'The spirit of a sword.' }], events: [event('Lin meets the sword spirit.')] }];
+    const { entries } = recordOf(before);
+    const spirit = entries.find(entry => entry.name === 'Azure Frost')!;
+    const plan: ChapterPlan = {
+      cast: [{ name: 'MC', kind: 'character' }, { name: 'Azure Frost', kind: 'character' }, { name: 'Azure Frost', kind: 'thing', who: 'A frost-blue sword.' }],
+      events: [event('Lin draws Azure Frost, and its spirit wakes.')],
+    };
+    const checked = check(plan, before);
+    expect(checked.plan.cast.map(member => [member.name, member.kind])).toEqual([['MC', 'character'], ['Azure Frost', 'character'], ['Azure Frost', 'thing']]);
+    const resolver = createCodexEntryResolver({ storyId: 's', chapter: { id: 'c2', chapterNumber: 2 }, entries, declared: DECLARED, createdAt: '', createId: () => 'e-new' });
+    const [, character, thing] = resolveChapterPlan(checked.plan, resolver).cast;
+    expect(character.entryId).toBe(spirit.id);
+    expect(thing.entryId).toBe('e-new');
+    expect(resolver.created.map(entry => [entry.name, entry.kind])).toEqual([['Azure Frost', 'thing']]);
+    // The writer gets the spirit's Codex line for the spirit only; the sword is new.
+    const codex: CodexSection = { entries: [{ name: 'Lin', kind: 'character', mainCharacter: true }, { name: 'Azure Frost', kind: 'character', who: 'The spirit of a sword.', lastOnPage: 1 }] };
+    expect(writerChapterPlan(checked.plan, codex).cast.slice(1)).toEqual([
+      { name: 'Azure Frost', kind: 'character', who: 'The spirit of a sword.' },
+      { name: 'Azure Frost', kind: 'thing', new: true, who: 'A frost-blue sword.' },
+    ]);
+  });
+
   it('starts a kept plan from the names alone, so a rewrite resolves them again', () => {
     const resolved: ChapterPlan = {
       cast: [{ name: 'MC', entryId: 'e1', kind: 'character', alreadyHas: [{ kind: 'thing', name: 'Lantern', entryId: 'e3' }] }],

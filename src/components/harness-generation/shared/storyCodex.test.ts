@@ -164,4 +164,20 @@ describe('the Codex record', () => {
     // Said and acted are kept apart: she speaks coldly of him and shields him.
     expect(lin.stances).toEqual([{ toward: 'Han Shuo', said: { polarity: 'hostile', passage: expect.objectContaining({ chapterNumber: 1 }) }, acted: { polarity: 'warm', passage: expect.objectContaining({ chapterNumber: 1 }) } }]);
   });
+
+  it('links the state someone is still in to the event that began it, never to the change that ended another', () => {
+    const codex = deriveStoryCodex({
+      entries: [MC],
+      chapters: [
+        { id: 'c1', chapterNumber: 1, paragraphs: ['Then.'], plan: plan([cast(MC)], [
+          event('The tide wardens seize Han Shuo.', [{ type: 'status', who: ref(MC), state: 'captured' }]),
+          event('They beat him in the cell.', [{ type: 'status', who: ref(MC), state: 'wounded' }]),
+        ]) },
+        { id: 'c2', chapterNumber: 2, paragraphs: ['Then.'], plan: plan([cast(MC)], [
+          event('His wounds close in the dark.', [{ type: 'status', who: ref(MC), state: 'recovered' }]),
+        ]) },
+      ],
+    });
+    expect(codex.characters[0].status).toEqual({ label: 'captured', passage: { chapterNumber: 1, event: 1, text: 'The tide wardens seize Han Shuo.' } });
+  });
 });

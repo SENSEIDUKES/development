@@ -177,8 +177,10 @@ name or an alias, when a chapter commits (`createCodexEntryResolver`,
 `resolveChapterPlan`). `MC`, or any name the main character answers to, is
 the main character; a character the Story Information declares keeps its
 aliases; a new name gets one entry, reused by that exact name afterwards.
-Things and abilities stay separate entries even under one name. Two entries
-whose names are forms of one name are flagged as possible duplicates.
+Things and abilities stay separate entries even under one name, and a thing
+in a plan's cast resolves among things, so it never takes a character's entry
+(a sword and its spirit stay two). Two entries whose names are forms of one
+name are flagged as possible duplicates.
 
 **The record** (2026-10-20) is never stored: it is worked out again from the
 committed chapters' plans, in story order, every time, so a rewritten chapter

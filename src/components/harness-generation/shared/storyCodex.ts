@@ -205,11 +205,17 @@ const passageOf = (passage: RecordPassage | HoldingEvent['passage']): CodexPassa
   chapterNumber: passage.chapterNumber, ...(passage.event ? { event: passage.event } : {}), text: passage.text,
 });
 const statusOf = (status: RecordedStatus): CodexStatus => ({ label: `${status.state}${status.how ? ` (${status.how})` : ''}`, passage: passageOf(status.passage) });
-/** The state an entry is in now, with the passage that began its latest change. */
+/**
+ * The state an entry is in now, with the passage that began the latest of the
+ * conditions it is still in: never a change that ended another one (a
+ * recovery, when they are still captured).
+ */
 const currentStatus = (entity: RecordedEntity): CodexStatus | undefined => {
   const label = conditionLabel(entity.condition);
-  const latest = entity.statusHistory.at(-1);
-  return label && latest ? { label, passage: passageOf(latest.passage) } : undefined;
+  const { end, ...conditions } = entity.condition;
+  const active = end ? [end] : Object.values(conditions).filter((status): status is RecordedStatus => Boolean(status));
+  const latest = active.map(status => passageOf(status.passage)).sort(comesBefore).at(-1);
+  return label && latest ? { label, passage: latest } : undefined;
 };
 const appearanceOf = (entity: RecordedEntity, first: CodexPassage): CodexAppearance => ({
   first,

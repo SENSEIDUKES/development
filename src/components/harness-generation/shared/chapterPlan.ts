@@ -298,15 +298,16 @@ const mapFactRefs = (fact: PlanFact, map: (ref: PlanRef, role: 'who' | 'what' | 
 };
 
 /**
- * Resolves every name a plan uses to a Codex entry: each cast member (made
- * when new), each fact's subject and whom it points at when the record or
+ * Resolves every name a plan uses to a Codex entry: each cast member, within
+ * its kind (made when new), each fact's subject and whom it points at when the record or
  * the cast knows them, each holding's thing or ability (made when new), and
  * each actor, target and pressed person the record knows. `MC` is the main
  * character. Someone unnamed, and a name nobody knows, resolve to nothing.
  */
 export function resolveChapterPlan(plan: ChapterPlan, resolver: CodexEntryResolver): ChapterPlan {
   const cast = plan.cast.map(member => {
-    const entry = member.kind === 'thing' && !isMainCharacterTag(member.name) ? resolver.existing(member.name) ?? resolver.entry('thing', member.name) : resolver.character(member.name);
+    // A thing resolves among things, so one that shares a character's name (a sword and its spirit) keeps its own entry.
+    const entry = member.kind === 'thing' && !isMainCharacterTag(member.name) ? resolver.entry('thing', member.name) : resolver.character(member.name);
     return {
       ...structuredClone(member), entryId: entry.id,
       ...(member.alreadyHas ? { alreadyHas: member.alreadyHas.map(held => ({ ...held, entryId: resolver.entry(held.kind, held.name).id })) } : {}),
@@ -387,12 +388,16 @@ export function checkChapterPlan({ plan: planned, storyId, entries, chapters, de
   const mainKey = resolver.character(PLAN_MAIN_CHARACTER).id;
   const asMain = (ref: PlanRef): PlanRef => (!ref.unnamed && resolver.existing(ref.name)?.id === mainKey ? { ...ref, name: PLAN_MAIN_CHARACTER } : ref);
 
-  // The main character is MC everywhere, and always on the page.
+  // The main character is MC everywhere, a character whatever kind the plan gave, and always on the page.
+  // Anyone or anything else is one member per name and kind, so a sword and its spirit stay two.
   const cast: PlanCastMember[] = [];
-  for (const source of planned.cast.map(member => ({ ...member, name: asMain({ name: member.name }).name }))) {
-    const same = cast.find(member => normalizeIdentityLabel(member.name) === normalizeIdentityLabel(source.name));
+  for (const source of planned.cast.map((member): PlanCastMember => {
+    const name = asMain({ name: member.name }).name;
+    return { ...member, name, kind: name === PLAN_MAIN_CHARACTER ? 'character' : member.kind };
+  })) {
+    const same = cast.find(member => member.kind === source.kind && normalizeIdentityLabel(member.name) === normalizeIdentityLabel(source.name));
     if (!same) { cast.push(structuredClone(source)); continue; }
-    // Named twice: one member, the first word on each field kept.
+    // Named twice as the same kind: one member, the first word on each field kept.
     for (const [key, value] of Object.entries(source)) if (value !== undefined && same[key as keyof PlanCastMember] === undefined) Object.assign(same, { [key]: structuredClone(value) });
   }
   const mainIndex = cast.findIndex(member => member.name === PLAN_MAIN_CHARACTER);
@@ -522,7 +527,7 @@ export function checkChapterPlan({ plan: planned, storyId, entries, chapters, de
 export function writerChapterPlan(plan: ChapterPlan, codex: CodexSection): WriterChapterPlan {
   const lineOf = (member: PlanCastMember): CodexSectionEntry | undefined => member.name === PLAN_MAIN_CHARACTER
     ? codex.entries.find(entry => entry.mainCharacter)
-    : codex.entries.find(entry => !entry.mainCharacter && normalizeIdentityLabel(entry.name) === normalizeIdentityLabel(member.name));
+    : codex.entries.find(entry => !entry.mainCharacter && entry.kind === member.kind && normalizeIdentityLabel(entry.name) === normalizeIdentityLabel(member.name));
   const cast = plan.cast.map((member): ChapterPlanCastEntry => {
     const line = lineOf(member);
     const known = line && !line.fromStorySeed;

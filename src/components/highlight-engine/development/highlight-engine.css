@@ -1,5 +1,5 @@
 .sen-text-highlight {
-  --sen-passage-highlight: rgba(140, 110, 225, .35);
+  --sen-passage-highlight: rgba(144, 85, 255, .6);
   color: inherit;
 }
 .sen-text-highlight-root {
@@ -14,6 +14,16 @@
 .sen-text-highlight [data-sen-text-block]::selection,
 .sen-text-highlight [data-sen-text-block] *::selection { background: transparent; color: inherit; }
 .sen-text-highlight [data-sen-text-block] { -webkit-touch-callout: none; }
+.sen-text-highlight[data-selection-mode="owned"] [data-sen-text-block] { -webkit-user-select: none; user-select: none; }
+.sen-text-highlight[data-selection-mode="owned"] [data-sen-text-block]:focus-visible { outline: 2px solid #b895ff; outline-offset: 4px; }
+.sen-text-highlight[data-selection-mode="owned"] .sen-text-highlight-editor { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
+.sen-selection-instructions { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.sen-selection-handles { position: fixed; inset: 0; pointer-events: none; z-index: 9998; }
+.sen-selection-handle { position: absolute; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; pointer-events: auto;
+  touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; cursor: ew-resize; }
+.sen-selection-handle::before { content: ''; position: absolute; top: 0; left: 21px; width: 2px; height: 20px; background: #b895ff; }
+.sen-selection-handle::after { content: ''; position: absolute; top: 14px; left: 14px; width: 16px; height: 16px; border-radius: 50%; background: #b895ff; box-shadow: 0 0 0 2px #1c1034; }
+.sen-selection-handle:focus-visible { outline: 2px solid #b895ff; outline-offset: -2px; border-radius: 8px; }
 .sen-text-highlight-editor { background: var(--sen-passage-highlight); outline: none; min-width: .5em; padding: 0; }
 .sen-text-highlight-editor:empty { display: inline-block; }
 .sen-text-highlight .sen-text-highlight-editor::selection { background: var(--sen-passage-highlight); }

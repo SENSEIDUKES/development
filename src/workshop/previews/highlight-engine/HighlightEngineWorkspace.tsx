@@ -29,7 +29,7 @@ export function HighlightEnginePreview() {
   const [selection, setSelection] = useState<PassageSelection | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [confirmSeal, setConfirmSeal] = useState(false);
-  const [highlightColor, setHighlightColor] = useState('#8c6ee1');
+  const [highlightColor, setHighlightColor] = useState('#9055ff');
   const [overlayMode, setOverlayMode] = useState<ManuscriptOverlayMode>('off');
   const proseRef = useRef<HTMLDivElement>(null);
   const draft = state.manuscript.status === 'draft';
@@ -76,7 +76,7 @@ export function HighlightEnginePreview() {
 
   return <section className="mx-auto max-w-2xl px-5 py-8 sm:px-8 sm:py-12">
     <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-400">
-      <p>{draft ? 'Highlight words, then choose Edit or Media.' : 'Sealed: highlight words to read their address.'}</p>
+      <p>{draft ? 'Hold a word or drag to select, then choose Edit, Copy or Media.' : 'Sealed: highlight words to read their address.'}</p>
       <label data-sen-selection-preserve className="flex items-center gap-2">Highlight color
         <input type="color" value={highlightColor} onChange={event => setHighlightColor(event.target.value)}
           className="h-8 w-10 cursor-pointer rounded border border-slate-600 bg-transparent p-0.5" />
@@ -106,7 +106,7 @@ export function HighlightEnginePreview() {
     <div ref={proseRef} className="pl-3 text-lg text-slate-200 sm:pl-0" style={{ fontFamily: 'Georgia, serif' }}>
       <HighlightEngine blocks={state.manuscript.paragraphs} onBlocksChange={edit} onSelectionChange={setSelection}
         actions={actions} removeActions={removeActions} editable={draft} overlay={overlay} locale={state.manuscript.locale}
-        style={{ '--sen-passage-highlight': `${highlightColor}59` } as CSSProperties}
+        style={{ '--sen-passage-highlight': `${highlightColor}99` } as CSSProperties}
         renderBlockText={block => {
           const blockCues = placedCues.filter(cue => cue.anchor.blockId === block.id);
           return blockCues.length > 0

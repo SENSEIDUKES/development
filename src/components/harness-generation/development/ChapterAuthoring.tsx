@@ -191,7 +191,7 @@ export function ChapterAuthoring({ chapter, controller, locale, text, articleRef
           {saving === 'saving' ? 'Saving…' : saving === 'failed' ? 'Not saved' : 'Saved'}
         </p>
       </div>
-      <p className="text-xs leading-relaxed text-neutral-400">Highlight words to change them, or choose Media to place a Sound Cue or change the soundscape or atmosphere there; in the first sentence, Media chooses how the chapter opens. Changes save as you make them; moving on to the next chapter seals this one.</p>
+      <p className="text-xs leading-relaxed text-neutral-400">Hold a word or drag to select, then choose Edit, Copy or Media. Media places a Sound Cue or changes the soundscape or atmosphere there; in the first sentence, it chooses how the chapter opens. Changes save as you make them; moving on to the next chapter seals this one.</p>
       <ManuscriptOverlaySwitch mode={overlayMode} onChange={setOverlayMode} overlay={overlay} />
       {/* A chapter may have no Sound Cues, but where there should be some their absence is loud: say so here, never in the Reader. */}
       {cues.length === 0 && <p role="status" className="rounded-lg border border-amber-300/25 bg-amber-400/[0.06] px-3 py-2 text-xs leading-relaxed text-amber-100" data-testid="create-mode-no-cues">

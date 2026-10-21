@@ -42,6 +42,7 @@ jobs:
             sleep 1
           done
           node scripts/verifyHighlightEngine.mjs
+          node scripts/verifyHighlightSelection.mjs
           node scripts/verifyNovelExpandedApp.browser.mjs
 
       - name: Run test suite

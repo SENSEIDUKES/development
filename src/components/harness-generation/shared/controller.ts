@@ -1337,7 +1337,7 @@ export class HarnessGenerationController {
     }
     const chapterPlan: HarnessAttemptPlan = {
       plan: checked.plan,
-      writer: writerChapterPlan(checked.plan, attempt.storyInformation.codex),
+      writer: writerChapterPlan(checked.plan, attempt.storyInformation.codex, checked.checks),
       checks: [...reading.checks, ...checked.checks],
       plannedAt,
     };
@@ -1377,7 +1377,7 @@ export class HarnessGenerationController {
     const checked = this.checkPlan(source, { storyId: replaced.storyId, storyInformation }, unresolvedPlan(replaced.plan));
     return {
       plan: checked.plan,
-      writer: writerChapterPlan(checked.plan, storyInformation.codex),
+      writer: writerChapterPlan(checked.plan, storyInformation.codex, checked.checks),
       checks: checked.checks,
       plannedAt,
       reusedFrom: replaced.attemptId,

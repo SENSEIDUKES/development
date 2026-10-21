@@ -158,6 +158,17 @@ describe('the Chapter Plan the writer reads', () => {
     ].join('\n'));
   });
 
+  it('says under an event what the checks dropped from it, in the words SENSEI approved', () => {
+    expect(presentChapterPlan({
+      cast: [{ name: 'Lin', kind: 'character', mainCharacter: true }],
+      events: [{ targets: [], presses: [], how: 'Kael Varn lunges at Lin and is cut down.', facts: [],
+        cannotHappen: ['Kael Varn is dead in the record, so they cannot be wounded.'] }],
+    }).split('\n').slice(-2)).toEqual([
+      '   How: Kael Varn lunges at Lin and is cut down.',
+      '   Cannot happen, so leave it out even where How tells it: Kael Varn is dead in the record, so they cannot be wounded.',
+    ]);
+  });
+
   it('says each fact in one plain sentence from a fixed table, never a model\'s words', () => {
     const who = { name: 'MC' };
     expect(presentPlanFact({ type: 'holding', who, change: 'improves', what: { name: 'Cloud Step' }, level: 'First Stage' })).toBe('MC improves Cloud Step to First Stage.');

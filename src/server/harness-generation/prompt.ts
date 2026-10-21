@@ -1,6 +1,6 @@
 import { capaPromptParts, validateHardPinInputs } from '@seihouse/sen/harness-generation';
 import { ARC_LENGTH, ARC_LOOKAHEAD_SCHEMA, ARC_PLAN_DRAFT_SCHEMA, MAX_ARC_LOOKAHEAD, createArcChapterPosition } from '@seihouse/sen/arc-goals';
-import { type CapaPrompt, type ChapterPlanCastEntry, type HarnessArcRequest, type HarnessChapterDirection, type HarnessChapterRewrite, type HarnessGenerationRequest, type HarnessStoryMode, type HarnessMissionReminder, type HarnessRequestMeasurement, type ImmediateChapterRequest, type PacketSectionId, type PlanEvent, type PlanFact, type PlanRef, type RhythmDirectionSection, type StoryInformationPacket, type WriterChapterPlan } from '@seihouse/sen/harness-generation';
+import { type CapaPrompt, type ChapterPlanCastEntry, type HarnessArcRequest, type HarnessChapterDirection, type HarnessChapterRewrite, type HarnessGenerationRequest, type HarnessStoryMode, type HarnessMissionReminder, type HarnessRequestMeasurement, type ImmediateChapterRequest, type PacketSectionId, type PlanEvent, type PlanFact, type PlanRef, type RhythmDirectionSection, type StoryInformationPacket, type WriterChapterPlan, type WriterPlanEvent } from '@seihouse/sen/harness-generation';
 import { GENERATION_PACKET_BUDGET, MAIN_CHARACTER_SPEAKER_TAG, PLAN_MAIN_CHARACTER, UNNAMED_SPEAKER } from '@seihouse/sen/harness-generation';
 import { CHARACTER_LOOK_TRAITS, THING_LOOK_TRAITS, type LookTrait } from '@seihouse/sen/harness-generation';
 
@@ -304,13 +304,15 @@ export const presentPlanFact = (fact: PlanFact): string => {
 };
 
 /** One event: its kind, who tries what and how it turns out, how it happens, who it presses and what it changes. */
-export const presentPlanEvent = (event: PlanEvent, number: number): string => {
+export const presentPlanEvent = (event: WriterPlanEvent, number: number): string => {
   const attempt = event.attempt ? ` ${capitalized(event.actor ? named(event.actor) : 'someone')} tries to ${event.attempt.replace(/^to\s+/iu, '').replace(/[.!?。！？]+$/u, '')}.` : '';
   return [
     `${number}.${event.kind ? ` ${capitalized(event.kind)}.` : ''}${attempt}${event.outcome ? ` Outcome: ${event.outcome}.` : ''}`,
     `   How: ${event.how}`,
     ...(event.presses.length ? [`   Pressure: ${event.presses.map(pressure => `${named(pressure.who)}, ${pressure.level}`).join('; ')}.`] : []),
     ...(event.facts.length ? [`   Changes: ${event.facts.map(presentPlanFact).join(' ')}`] : []),
+    // The approved words (SENSEI, 2026-10-21): what the checks dropped, so the writer leaves it out.
+    ...(event.cannotHappen ?? []).map(reason => `   Cannot happen, so leave it out even where How tells it: ${reason}`),
   ].join('\n');
 };
 

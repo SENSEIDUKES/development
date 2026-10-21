@@ -23,6 +23,8 @@ export interface SelectionTrackerOptions {
 const selectionKey = ({ blockId, startOffset, endOffset }: PassageSelection) => `${blockId}:${startOffset}:${endOffset}`;
 /** The browser menu that follows a ContextMenu key or Shift+F10 arrives within this many milliseconds. */
 const MENU_KEY_WINDOW = 800;
+const hasSelectionEndpoint = (root: HTMLElement, native: Selection | null | undefined) =>
+  !!native && [native.anchorNode, native.focusNode].some(node => node && root.contains(node));
 
 /**
  * Selection Tracker: accepts owned gestures (or a host-supplied browser range),
@@ -64,7 +66,7 @@ export function useSelectionTracker(
     setRemoveFor(null);
     const root = rootRef.current;
     const native = root?.ownerDocument.getSelection();
-    if (root && native?.anchorNode && root.contains(native.anchorNode)) native.removeAllRanges();
+    if (root && hasSelectionEndpoint(root, native)) native?.removeAllRanges();
     setSnapshot(null);
     setEditing(false);
     setActionOpen(false);
@@ -74,7 +76,7 @@ export function useSelectionTracker(
     selectionOrigin.current = null;
     const root = rootRef.current;
     const native = root?.ownerDocument.getSelection();
-    if (native?.anchorNode && root?.contains(native.anchorNode)) native.removeAllRanges();
+    if (root && hasSelectionEndpoint(root, native)) native?.removeAllRanges();
     const block = next && blocks.find(block => block.id === next.blockId);
     setSnapshot(next && block && isValidPassage(block, next) ? { selection: next, text: block.text } : null);
     setRemoveFor(null);
@@ -101,7 +103,7 @@ export function useSelectionTracker(
       if (removable && !next) {
         // A rejected host range must not leave actions pointing at an older passage.
         // The empty selectionchange caused by retiring our own range is harmless.
-        if (native?.anchorNode && !native.isCollapsed && root.contains(native.anchorNode)) {
+        if (native && !native.isCollapsed && hasSelectionEndpoint(root, native)) {
           selectionOrigin.current = null;
           setSnapshot(null); native.removeAllRanges();
         }

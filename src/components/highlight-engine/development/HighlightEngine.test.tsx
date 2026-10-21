@@ -82,6 +82,19 @@ describe('engine-owned selection input', () => {
     expect(document.getSelection()!.rangeCount).toBe(0);
     expect(button('Edit')).toBeUndefined();
   });
+  it('retires a rejected host range that starts outside the engine and ends inside it', async () => {
+    await select();
+    const outside = document.createElement('p'); outside.textContent = 'Outside prose'; document.body.insertBefore(outside, container);
+    try {
+      act(() => {
+        document.getSelection()!.setBaseAndExtent(outside.firstChild!, 0, block().firstChild!, 5);
+        document.dispatchEvent(new Event('selectionchange'));
+      });
+      expect(selections).toHaveBeenLastCalledWith(null);
+      expect(document.getSelection()!.rangeCount).toBe(0);
+      expect(button('Edit')).toBeUndefined();
+    } finally { outside.remove(); }
+  });
   it('selects with a mouse drag without ever installing a browser selection', () => {
     offset = 7; expect(pointer('pointerdown').defaultPrevented).toBe(true);
     offset = 13; pointer('pointermove', 'mouse', 150); pointer('pointerup');

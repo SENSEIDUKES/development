@@ -179,6 +179,7 @@ describe('the plain checks', () => {
     ])] });
     expect(checked.plan.events[0].facts).toEqual([{ type: 'status', who: { name: 'a guard', unnamed: true }, state: 'wounded' }]);
     expect(checked.checks).toEqual([{ event: 1, fact: { type: 'status', who: { name: 'Mysterious Stranger' }, state: 'wounded' },
+      reason: '‘Mysterious Stranger’ is not in the cast or the Codex.',
       message: 'Event 1: ‘Mysterious Stranger’ is not in the cast or the Codex, so this fact was dropped.' }]);
   });
 
@@ -263,6 +264,38 @@ describe('the plain checks', () => {
     ]);
   });
 
+  it('outside Fate Survival, drops the main character\'s death unless the same chapter brings them back', () => {
+    const plan: ChapterPlan = {
+      cast: [{ name: 'MC', kind: 'character' }],
+      events: [
+        event('The river takes Lin.', [{ type: 'status', who: { name: 'MC' }, state: 'dead' }]),
+        event('The river spirit breathes life back into her.', [{ type: 'status', who: { name: 'MC' }, state: 'revived' }]),
+        event('Lin falls from the tower.', [{ type: 'status', who: { name: 'MC' }, state: 'dead' }]),
+      ],
+    };
+    const regular = check(plan);
+    // The first death is undone in the chapter, so it stands; the last is not, so it is dropped.
+    expect(regular.plan.events.map(planned => planned.facts.length)).toEqual([1, 1, 0]);
+    expect(regular.checks).toEqual([expect.objectContaining({
+      event: 3, reason: 'The main character cannot die outside Fate Survival unless this chapter brings them back.',
+    })]);
+    // In Fate Survival the death stands, and ends the story.
+    expect(check(plan, [], { mode: 'survival', arc: {} as HarnessArcContext }).plan.events[2].facts).toHaveLength(1);
+  });
+
+  it('tells the writer what cannot happen under each event that lost a fact, and why', () => {
+    const before: ChapterPlan[] = [{ cast: [{ name: 'MC', kind: 'character' }, { name: 'Elder Qin', kind: 'character' }], events: [
+      event('Elder Qin falls in the flood.', [{ type: 'status', who: { name: 'Elder Qin' }, state: 'dead' }]),
+    ] }];
+    const checked = check({ cast: [{ name: 'MC', kind: 'character' }, { name: 'Elder Qin', kind: 'character' }], events: [
+      event('Lin crosses the river.'),
+      event('Elder Qin lunges at Lin and is cut down.', [{ type: 'status', who: { name: 'Elder Qin' }, state: 'wounded' }]),
+    ] }, before);
+    const writer = writerChapterPlan(checked.plan, { entries: [] } as unknown as CodexSection, checked.checks);
+    expect(writer.events[0].cannotHappen).toBeUndefined();
+    expect(writer.events[1].cannotHappen).toEqual(['Elder Qin is dead in the record, so they cannot be wounded.']);
+  });
+
   it('sets aside a new look for someone who has one, an arc goal it cannot reach, and an ending outside Fate Survival', () => {
     const before: ChapterPlan[] = [{ cast: [{ name: 'MC', kind: 'character', look: { summary: 'A thin archivist.', traits: {} } }], events: [event('Lin wakes.')] }];
     const plan: ChapterPlan = {
@@ -276,6 +309,8 @@ describe('the plain checks', () => {
     expect(reached.plan.storyEnds).toBeUndefined();
     expect(reached.checks.map(found => found.message)).toEqual([
       'the main character already has a look, so the plan\'s new one was set aside; a change to a look is a look fact.',
+      // Outside Fate Survival the main character's death is dropped too: nothing in the chapter brings them back.
+      'Event 2: The main character cannot die outside Fate Survival unless this chapter brings them back. The fact was dropped.',
       'The plan says event 1 reaches the Active Arc Goal, but the Active Arc Goal was already reached; it was set aside.',
       'The plan says event 2 ends the story, but only Fate Survival can end in failure; it was set aside.',
     ]);

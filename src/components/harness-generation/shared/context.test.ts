@@ -18,7 +18,7 @@ const fixture = (chapterCount = 4) => {
       foundationRevisionId: foundation.id, storyInformationPacketId: `context-${chapterNumber}`,
       chapterNumber, title: `Chapter ${chapterNumber}`, titleSource: 'model',
       prose: `Scene ${chapterNumber}. ` + 'The tide rises. '.repeat(80), paragraphs: [`Scene ${chapterNumber}.`, 'The tide rises. '.repeat(80).trim()],
-      metrics: { wordCount: 241, paragraphCount: 2, meetsScaleTarget: false }, eventIds: [],
+      metrics: { wordCount: 241, paragraphCount: 2, meetsScaleTarget: false }, eventIds: [], plan: { cast: [], events: [] },
       ...(chapterNumber === 2 ? {} : { recap: { text: `Recap ${chapterNumber}.`, source: 'model', updatedAt: 'a' } }),
       rhythm: { chapterFunction: 'worldBuilding', nextChapterSuggestions: { progression: `Go ${chapterNumber}`, worldBuilding: `Explore ${chapterNumber}`, conflict: `Fight ${chapterNumber}` } },
       responseMode: 'json', createdAt: 'a', committedAt: 'b', mediaLoadout: { capturedAt: 'a', soundscapes: [], soundCues: [] },

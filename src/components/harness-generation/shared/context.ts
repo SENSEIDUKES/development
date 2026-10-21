@@ -1,8 +1,8 @@
 import { validateHardPinInputs } from '../../../narrative/storyDirection';
 import { harnessArcContext, harnessStoryMode } from './arcState';
 import { projectCanonicalState } from './canonicalProjection';
-import { deriveHoldings, holdingsSection } from './holdings';
-import { appearancesSection, deriveAppearances } from './appearances';
+import { declaredCharacters } from './holdings';
+import { buildCodexSection } from './codexSection';
 import { storyPointOfView } from './pointOfView';
 import { protagonistNames } from './speakers';
 import { semanticReaderChanges } from './readerEdits';
@@ -157,21 +157,14 @@ export const compileStoryInformationPacket = (
   });
   omitted.push(...canonical.omitted);
 
-  // Section 8: what each character has now, worked out again from the committed
-  // chapters' holding changes. Protected: the main character always travels.
-  const mainCharacterName = (foundationRevision.input.cast ?? []).find(member => member.isMainCharacter)?.name;
-  const holdings = holdingsSection(deriveHoldings({
+  // Section 8, the planner's: everyone and everything the story knows, as the
+  // last chapter left them, worked out again from the committed chapters'
+  // plans. Protected: the main character always travels.
+  const codex = buildCodexSection({
     entries: state.codexEntries.filter(entry => entry.storyId === story.id),
     chapters,
-    mainCharacterName,
-  }), mainCharacterName);
-  // Beside it, who and what is already on the page, with each look, worked out
-  // again from the committed chapters' appearances: the most recently seen
-  // first, as many as its own counts allow.
-  const appearances = appearancesSection(deriveAppearances({
-    entries: state.codexEntries.filter(entry => entry.storyId === story.id),
-    chapters,
-  }));
+    declared: declaredCharacters({ cast: foundationRevision.input.cast, identities: foundationRevision.input.identities }),
+  });
 
   const sections: PacketSectionMeasurement[] = [
     measure('currentStory', currentStory),
@@ -180,8 +173,7 @@ export const compileStoryInformationPacket = (
     measure('rhythm', rhythm),
     measure('previouslyOn', previouslyOn),
     measure('canonicalState', canonical.projection),
-    measure('holdings', holdings),
-    measure('appearances', appearances),
+    measure('codex', codex),
   ];
 
   return {
@@ -199,8 +191,7 @@ export const compileStoryInformationPacket = (
     ...(rhythm ? { rhythm } : {}),
     previouslyOn,
     canonicalState: canonical.projection,
-    holdings,
-    appearances,
+    codex,
     diagnostics: {
       budgetSource: GENERATION_PACKET_BUDGET.source,
       sections,

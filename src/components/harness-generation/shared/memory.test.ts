@@ -7,6 +7,7 @@ import { buildCanonicalStoryView } from '@seihouse/sen/harness-generation';
 import { createHarnessSenStory } from '@seihouse/sen/harness-generation';
 import { resolveHarnessEntity } from '@seihouse/sen/harness-generation';
 import { type HarnessGenerationModelAdapter, type HarnessGenerationResponse } from '@seihouse/sen/harness-generation';
+import { planEveryChapter } from '../../../test-utils/chapterPlan';
 
 // Synthetic regression prose, not the user's saved Start Now chapter.
 const prose = [
@@ -38,6 +39,7 @@ const setup = async () => {
   const modelAdapter: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
     generate,
+    planChapter: planEveryChapter(),
     arcOperation: async request => reply({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 30 }] }, destinedEnding: 'Bring the story to its true conclusion.' }),
   };
   const controller = new HarnessGenerationController({ repository, modelAdapter });
@@ -60,6 +62,7 @@ describe('Useful, evidenced chapter memory', () => {
     // A host object from an older version may still carry this method; the controller ignores it.
     const modelAdapter = { generate, recoverMemory: retiredCall,
       getServerInfo: async () => ({ provider: 'fixture', configured: true, models: [], defaultModel: 'fixture' }),
+      planChapter: planEveryChapter(),
       arcOperation: async () => reply({ plan: { arcNumber: 1, goals: [{ id: 'goal', text: 'Repair the dungeon', chapters: 30 }] }, destinedEnding: 'The dungeon is repaired.' }),
     };
     const controller = new HarnessGenerationController({ repository, modelAdapter });

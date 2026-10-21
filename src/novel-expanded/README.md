@@ -13,7 +13,7 @@ The Workshop is where systems are built and inspected one at a time. The app is
 where they are used together, the way a reader meets them.
 
 - Created: 2026-10-01 (piece 1)
-- Last updated: 2026-10-16
+- Last updated: 2026-10-20
 - Owner: `host` (`scripts/ownershipInventory.mjs`). The app is a host of the
   Library and SEN packages, like any outside app would be.
 
@@ -358,6 +358,16 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## History
 
+- **2026-10-20** — The chapter loop, step 2: each chapter is planned by Fate
+  before it is written (one more model call, the planner's, on the chapter's
+  model), its plan checked against the record, and narrated by the writer; the
+  Codex is made from the plans, and Manifest draws the look a plan gave. The
+  holdings and appearance tags, the Holdings fixer and the look writer are gone,
+  with their quiet calls. The planner's call asks for the access token the way
+  a chapter does (`writerWithAccessToken`). Stories saved before start fresh
+  (schema 33).
+  The browser walk answers the planner with a plan and checks the Codex it
+  makes, the rewrite with a note planned again, and both calls in the export.
 - **2026-10-16** — Added the app-wide Familiar helper foundation and a small Fate
   voice experiment, shared with the Workshop Reader. Explicit confirmation,
   touch/typing fallback and guarded playback recovery; English commands only,

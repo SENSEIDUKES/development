@@ -5,7 +5,9 @@ import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemor
 import { writtenChapter } from '../../../test-utils/writtenChapter';
 import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
 import { GENERATION_PACKET_BUDGET } from '@seihouse/sen/harness-generation';
-import type { HarnessGenerationModelAdapter, HarnessGenerationRequest, HarnessGenerationResponse } from '@seihouse/sen/harness-generation';
+import type { HarnessChapterPlanRequest, HarnessGenerationModelAdapter, HarnessGenerationRequest, HarnessGenerationResponse } from '@seihouse/sen/harness-generation';
+import { planEveryChapter } from '../../../test-utils/chapterPlan';
+import { buildChapterPlannerPrompt } from '../../../server/harness-generation/chapterPlanner';
 
 // FIXTURE-START
 const receipt = { provider: 'fixture', model: 'fixture', generatedAt: '2026-09-20T12:00:00.000Z', usage: { source: 'unavailable' as const } };
@@ -23,7 +25,6 @@ const stressChapter = (n: number) => {
   return {
     title: `Chapter ${n}: The ${n}th Step`,
     paragraphs,
-    arcCompletion: { goalId: 'arc-1-goal', completed: false, evidence: '' },
     recap: `Recap ${n}: Yi Chen reached Realm ${n}, explored Location ${n}, and the Azure Sect stood at Standing ${n} while Elder Mu warned of rivals.`,
     chapterFunction: FUNCTIONS[n % 3],
     nextProgression: `Progression option ${n}`, nextWorldBuilding: `World-building option ${n}`, nextConflict: `Conflict option ${n}`,
@@ -47,10 +48,12 @@ const stressMemory = (prose: string) => {
 
 export const runPacketStress = async (chapterCount: number) => {
   const requests: HarnessGenerationRequest[] = [];
+  const planRequests: HarnessChapterPlanRequest[] = [];
   let chapter = 0;
   const adapter: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ configured: true, provider: 'gemini', defaultModel: 'fixture', models: [] }),
     generate: async request => { requests.push(structuredClone(request)); chapter += 1; return response(writtenChapter(stressChapter(chapter))); },
+    planChapter: async request => { planRequests.push(structuredClone(request)); return planEveryChapter()(); },
     arcOperation: async () => response({ plan: { arcNumber: 1, goals: [{ id: 'arc-1-goal', text: 'Carry Yi Chen through the outer court.', chapters: 30 }] }, destinedEnding: 'Yi Chen leads the Azure Sect to glory.' }),
   };
   const repository = new InMemoryHarnessGenerationRepository();
@@ -65,12 +68,14 @@ export const runPacketStress = async (chapterCount: number) => {
     await controller.generateNextChapter(story.id, 'fixture');
     await seedLegacyChapterEvents(controller, repository, stressMemory(controller.snapshot().chapters.at(-1)!.prose));
   }
-  const size = (request: HarnessGenerationRequest) => {
-    const prompt = buildHarnessGenerationPrompt(request);
-    return { system: prompt.systemInstruction.length, user: prompt.userPrompt.length, schema: JSON.stringify(prompt.responseJsonSchema).length,
-      total: prompt.systemInstruction.length + prompt.userPrompt.length + JSON.stringify(prompt.responseJsonSchema).length };
-  };
-  return { controller, story, requests, size, state: controller.snapshot() };
+  const measure = (prompt: { systemInstruction: string; userPrompt: string; responseJsonSchema: unknown }) => ({
+    system: prompt.systemInstruction.length, user: prompt.userPrompt.length, schema: JSON.stringify(prompt.responseJsonSchema).length,
+    total: prompt.systemInstruction.length + prompt.userPrompt.length + JSON.stringify(prompt.responseJsonSchema).length,
+  });
+  /** Each of a chapter's two calls, as sent: the planner's, then the writer's. */
+  const size = (request: HarnessGenerationRequest) => measure(buildHarnessGenerationPrompt(request));
+  const plannerSize = (request: HarnessChapterPlanRequest) => measure(buildChapterPlannerPrompt(request));
+  return { controller, story, requests, planRequests, size, plannerSize, state: controller.snapshot() };
 };
 // FIXTURE-END
 
@@ -79,7 +84,9 @@ describe('50-chapter packet stress', () => {
     const run = await runPacketStress(50);
     const at = (chapter: number) => run.size(run.requests[chapter - 1]);
     const sizes = { chapter2: at(2), chapter10: at(10), chapter25: at(25), chapter50: at(50) };
-    console.log(`PACKET_SIZES ${JSON.stringify(sizes)}`);
+    const plannedAt = (chapter: number) => run.plannerSize(run.planRequests[chapter - 1]);
+    const plannerSizes = { chapter2: plannedAt(2), chapter10: plannedAt(10), chapter25: plannedAt(25), chapter50: plannedAt(50) };
+    console.log(`PACKET_SIZES ${JSON.stringify({ writer: sizes, planner: plannerSizes })}`);
 
     // Storage keeps growing.
     const packet = (chapter: number) => run.requests[chapter - 1].storyInformation;
@@ -96,6 +103,9 @@ describe('50-chapter packet stress', () => {
     expect(lateGrowth).toBeLessThan(earlyGrowth / 2);
     expect(sizes.chapter50.user).toBeLessThan(sizes.chapter25.user * 1.35);
     expect(sizes.chapter50.total / GENERATION_PACKET_BUDGET.charactersPerToken).toBeLessThan(GENERATION_PACKET_BUDGET.requestTokens);
+    // The planner reads the same compact sections, with the author's direction and the Codex beside them.
+    expect((plannerSizes.chapter50.user - plannerSizes.chapter25.user) / 25).toBeLessThan((plannerSizes.chapter25.user - plannerSizes.chapter2.user) / 23 / 2);
+    expect(plannerSizes.chapter50.total / GENERATION_PACKET_BUDGET.charactersPerToken).toBeLessThan(GENERATION_PACKET_BUDGET.requestTokens);
     const canonical50 = packet(50).diagnostics.sections.find(section => section.section === 'canonicalState')!;
     expect(canonical50.estimatedTokens).toBeLessThanOrEqual(GENERATION_PACKET_BUDGET.sections.canonicalState.tokens);
     expect(packet(50).diagnostics.omitted.filter(item => item.section === 'canonicalState' && /Compacted|Omitted/.test(item.reason)).length).toBeGreaterThan(0);
@@ -118,13 +128,15 @@ describe('50-chapter packet stress', () => {
     expect(prompt50.userPrompt).not.toContain('training terraces');
     expect(packet(50).diagnostics.identityAmbiguities).toEqual([]);
 
-    // Protected direction is always present.
+    // Protected direction always reaches the planner, which decides what happens; the writer always gets its request and reminder.
     for (const chapter of [2, 10, 25, 50]) {
+      const planner = buildChapterPlannerPrompt(run.planRequests[chapter - 1]);
+      expect(planner.userPrompt).toContain('Yi Chen leads the Azure Sect to glory.');
+      expect(planner.userPrompt).toContain('Make Yi Chen take the Azure Sect to glory throughout the entire story.');
+      expect(planner.userPrompt).toContain('ACTIVE ARC GOAL');
+      expect(planner.userPrompt).toContain('"recommendedFunction"');
+      expect(planner.userPrompt).toContain(`Chapter ${chapter}, chapter ${chapter > 30 ? chapter - 30 : chapter} of 30`);
       const prompt = buildHarnessGenerationPrompt(run.requests[chapter - 1]);
-      expect(prompt.userPrompt).toContain('Yi Chen leads the Azure Sect to glory.');
-      expect(prompt.userPrompt).toContain('Make Yi Chen take the Azure Sect to glory throughout the entire story.');
-      expect(prompt.userPrompt).toContain('ACTIVE ARC GOAL');
-      expect(prompt.userPrompt).toContain('"recommendedFunction"');
       expect(prompt.userPrompt).toContain('# MISSION REMINDER');
       expect(prompt.userPrompt).toContain(`Write Chapter ${chapter}`);
       const sections = packet(chapter).diagnostics.sections;

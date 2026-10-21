@@ -6,9 +6,11 @@ import { writtenChapter } from '../../../test-utils/writtenChapter';
 import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
 import { handleHarnessGenerationHttp } from '../../../server/harness-generation/http';
 import type { HarnessTextGenerationRequest } from '../../../server/harness-generation/provider';
-import { createEmptyHarnessWorkspaceState, PACKET_SECTION_ORDER, harnessArcContext } from '@seihouse/sen/harness-generation';
-import type { HarnessCanonicalRecord, HarnessGenerationModelAdapter, HarnessGenerationRequest, HarnessGenerationResponse, HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
+import { createEmptyHarnessWorkspaceState, PLANNER_SECTION_ORDER, WRITER_SECTION_ORDER, harnessArcContext } from '@seihouse/sen/harness-generation';
+import type { HarnessCanonicalRecord, HarnessChapterPlanRequest, HarnessGenerationModelAdapter, HarnessGenerationRequest, HarnessGenerationResponse, HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
 import type { ArcPlan } from '@seihouse/sen/arc-goals';
+import { plannedChapter } from '../../../test-utils/chapterPlan';
+import { buildChapterPlannerPrompt } from '../../../server/harness-generation/chapterPlanner';
 
 const receipt = { provider: 'fixture', model: 'fixture', generatedAt: '2026-09-20T12:00:00.000Z', usage: { source: 'unavailable' as const } };
 const response = (body: unknown): HarnessGenerationResponse => ({ rawProviderResponse: JSON.stringify(body), providerReceipt: receipt });
@@ -18,10 +20,15 @@ const plan: ArcPlan = { arcNumber: 1, goals: [{ id: 'arc-1-gate', text: 'Reach t
 const chapterReply = (n: number) => ({
   title: `The Gate, Day ${n}`,
   paragraphs: [`Yi Chen reached Stage ${n} and climbed toward the Azure Sect gate. He had ${100 + n} qi.`, `Elder Mu watched from the wall in chapter ${n}.`],
-  arcCompletion: { goalId: 'arc-1-gate', completed: false, evidence: '' },
   recap: `Recap ${n}: Yi Chen climbed higher.`,
-  chapterFunction: n % 2 ? 'progression' : 'worldBuilding',
   nextProgression: `Progression ${n}`, nextWorldBuilding: `World ${n}`, nextConflict: `Conflict ${n}`,
+});
+/** Each chapter's plan: Yi Chen climbs toward the gate, a chapter of progression or of the world in turn. */
+const chapterPlan = (n: number) => ({
+  cast: [{ name: 'MC', kind: 'character' }],
+  events: [{ kind: 'training', actor: 'MC', targets: [], presses: [], how: `Yi Chen reaches Stage ${n} on the climb to the gate.`, facts: [{ type: 'holding', who: 'MC', change: 'rank', what: `Stage ${n}` }] }],
+  arcGoalReached: { reached: false },
+  chapterFunction: n % 2 ? 'progression' : 'worldBuilding',
 });
 
 const memoryReply = (n: number, prose: string) => ({ events: [
@@ -32,6 +39,7 @@ const memoryReply = (n: number, prose: string) => ({ events: [
 
 const setup = async (options: { throughHttp?: boolean } = {}) => {
   const requests: HarnessGenerationRequest[] = [];
+  const planRequests: HarnessChapterPlanRequest[] = [];
   const providerInputs: HarnessTextGenerationRequest[] = [];
   const memories = new Map<string, unknown>();
   let chapter = 0;
@@ -43,6 +51,17 @@ const setup = async (options: { throughHttp?: boolean } = {}) => {
       const body = writtenChapter(chapterReply(chapter));
       memories.set(body.paragraphs.join('\n\n'), memoryReply(chapter, body.paragraphs.join('\n\n')));
       if (!options.throughHttp) return response(body);
+      const result = await handleHarnessGenerationHttp({ method: 'POST', body: JSON.stringify(request) }, {
+        environment: { GEMINI_API_KEY: 'fixture' },
+        providerFactory: () => ({ provider: 'gemini', model: request.model, generate: async input => { providerInputs.push(input); return response(body); } }),
+      });
+      if (result.status !== 200) throw new Error(`HTTP ${result.status}: ${JSON.stringify(result.body)}`);
+      return result.body as HarnessGenerationResponse;
+    }),
+    planChapter: vi.fn(async request => {
+      planRequests.push(structuredClone(request));
+      const body = chapterPlan(request.immediateChapterRequest.chapterNumber);
+      if (!options.throughHttp) return plannedChapter(body);
       const result = await handleHarnessGenerationHttp({ method: 'POST', body: JSON.stringify(request) }, {
         environment: { GEMINI_API_KEY: 'fixture' },
         providerFactory: () => ({ provider: 'gemini', model: request.model, generate: async input => { providerInputs.push(input); return response(body); } }),
@@ -65,32 +84,48 @@ const setup = async (options: { throughHttp?: boolean } = {}) => {
     await controller.generateNextChapter(story.id, model);
     await seedLegacyChapterEvents(controller, repository, memories.get(controller.snapshot().chapters.at(-1)!.prose));
   };
-  return { controller, repository, adapter, requests, providerInputs, story, write };
+  return { controller, repository, adapter, requests, planRequests, providerInputs, story, write };
 };
 
 describe('Compact long-story generation packet', () => {
-  it('delivers the ten sections to the provider once, in the approved order, with nothing else', async () => {
+  it('delivers each of a chapter\'s two calls its own sections once, in the approved order, with nothing else', async () => {
     const run = await setup();
     await run.write();
     await run.write();
+    const ordered = (serialized: string, markers: string[]) => {
+      const positions = markers.map(marker => ({ marker, index: serialized.indexOf(marker), count: serialized.split(marker).length - 1 }));
+      for (const position of positions) expect(position, position.marker).toMatchObject({ count: 1 });
+      expect(positions.map(position => position.index)).toEqual([...positions.map(position => position.index)].sort((a, b) => a - b));
+    };
+    const excluded = (serialized: string) => {
+      expect(serialized).not.toContain('COMPLETE SEED SNAPSHOT');
+      expect(serialized).not.toContain('sourceSnapshot');
+      expect(serialized).not.toMatch(/selectionAudit|diagnostics|budgetSource|identityAmbiguities/);
+      expect(serialized).not.toContain('Yi Chen reached Stage 1 and climbed toward the Azure Sect gate.');
+      expect(serialized).not.toContain('"evidence"');
+      expect(serialized).not.toContain('Elder Mu watched from the wall');
+    };
+
+    // The planner decides what happens: the author's direction, the arc, Rhythm and the Codex, each once.
+    const planner = buildChapterPlannerPrompt(run.planRequests[1]);
+    expect(planner.measurement.sections.map(section => section.section)).toEqual(PLANNER_SECTION_ORDER.filter(section => section !== 'capaPrompt'));
+    const planned = `${planner.systemInstruction}\n\n${planner.userPrompt}`;
+    ordered(planned, ['# HOW TO PLAN THE CHAPTER', 'CURRENT STORY INFORMATION', 'DESTINED ENDING AND HARD PINS', 'ACTIVE ARC GOAL', 'FATE PRESSURE RHYTHM DIRECTION', 'PREVIOUSLY ON', 'CURRENT CANONICAL STATE', 'THE CODEX', '# THIS CHAPTER']);
+    expect(planner.userPrompt.split('Yi Chen leads the Azure Sect to glory.')).toHaveLength(2);
+    expect(planner.userPrompt.split('Make Yi Chen take the Azure Sect to glory throughout the entire story.')).toHaveLength(2);
+    expect(planner.userPrompt.split('Never kill Elder Mu.')).toHaveLength(2);
+    excluded(planned);
+
+    // The writer narrates the plan: the story so far and the Chapter Plan; the author's direction is the planner's.
     const prompt = buildHarnessGenerationPrompt(run.requests[1]);
-    expect(prompt.measurement.sections.map(section => section.section)).toEqual(PACKET_SECTION_ORDER);
-    const markers = ['CAPA SKILL [Author]', 'CURRENT STORY INFORMATION', 'DESTINED ENDING AND HARD PINS', 'ACTIVE ARC GOAL', 'FATE PRESSURE RHYTHM DIRECTION', 'PREVIOUSLY ON', 'CURRENT CANONICAL STATE', 'HOLDINGS (what each character has now', 'IMMEDIATE CHAPTER REQUEST', '# MISSION REMINDER'];
+    expect(prompt.measurement.sections.map(section => section.section)).toEqual(WRITER_SECTION_ORDER);
     const serialized = `${prompt.systemInstruction}\n\n${prompt.userPrompt}`;
-    const positions = markers.map(marker => ({ marker, index: serialized.indexOf(marker), count: serialized.split(marker).length - 1 }));
-    for (const position of positions) expect(position, position.marker).toMatchObject({ count: 1 });
-    expect(positions.map(position => position.index)).toEqual([...positions.map(position => position.index)].sort((a, b) => a - b));
-    // Author-owned direction appears exactly once each.
-    expect(prompt.userPrompt.split('Yi Chen leads the Azure Sect to glory.')).toHaveLength(2);
-    expect(prompt.userPrompt.split('Make Yi Chen take the Azure Sect to glory throughout the entire story.')).toHaveLength(2);
-    expect(prompt.userPrompt.split('Never kill Elder Mu.')).toHaveLength(2);
-    // Excluded material never reaches the request.
-    expect(serialized).not.toContain('COMPLETE SEED SNAPSHOT');
-    expect(serialized).not.toContain('sourceSnapshot');
-    expect(serialized).not.toMatch(/selectionAudit|diagnostics|budgetSource|identityAmbiguities/);
-    expect(serialized).not.toContain('Yi Chen reached Stage 1 and climbed toward the Azure Sect gate.');
-    expect(prompt.userPrompt).not.toContain('"evidence"');
-    expect(prompt.userPrompt).not.toContain('Elder Mu watched from the wall');
+    ordered(serialized, ['CAPA SKILL [Author]', 'CURRENT STORY INFORMATION', 'PREVIOUSLY ON', 'CURRENT CANONICAL STATE', 'THE CHAPTER PLAN (decided before this chapter', 'IMMEDIATE CHAPTER REQUEST', '# MISSION REMINDER']);
+    expect(prompt.userPrompt).toContain('Yi Chen reaches Stage 2 on the climb to the gate.');
+    for (const planners of ['Yi Chen leads the Azure Sect to glory.', 'Never kill Elder Mu.', 'ACTIVE ARC GOAL', 'FATE PRESSURE RHYTHM DIRECTION', 'THE CODEX']) {
+      expect(prompt.userPrompt, planners).not.toContain(planners);
+    }
+    excluded(serialized);
   });
 
   it('sends Chapter 2 the saved Chapter 1 recap, resulting canonical state, and the persisted rhythm direction', async () => {
@@ -173,7 +208,8 @@ describe('Compact long-story generation packet', () => {
     await run.write('google/gemini-3.1-flash-lite');
     expect(run.controller.snapshot().attempts.map(attempt => attempt.failure?.message ?? attempt.stage)).toEqual(['committed', 'committed']);
     const attempt = run.controller.snapshot().attempts[1];
-    const sent = run.providerInputs[1];
+    // Each chapter is two calls, the planner's then the writer's: Chapter 2's writer is the fourth.
+    const sent = run.providerInputs[3];
     expect(attempt.requestMeasurement).toMatchObject({
       systemInstructionCharacters: sent.systemInstruction.length,
       userPromptCharacters: sent.userPrompt.length,
@@ -181,11 +217,20 @@ describe('Compact long-story generation packet', () => {
       totalCharacters: sent.systemInstruction.length + sent.userPrompt.length + JSON.stringify(sent.responseJsonSchema).length,
     });
     expect(attempt.requestMeasurement!.sections.reduce((sum, section) => sum + section.characters, 0)).toBeLessThanOrEqual(attempt.requestMeasurement!.totalCharacters);
-    expect(attempt.requestMeasurement!.sections.map(section => section.section)).toEqual(PACKET_SECTION_ORDER);
-    // The provider received the same ten sections the local builder produces.
+    expect(attempt.requestMeasurement!.sections.map(section => section.section)).toEqual(WRITER_SECTION_ORDER);
+    // The provider received the same sections the local builder produces.
     const local = buildHarnessGenerationPrompt(run.requests[1]);
     expect(local.userPrompt).toBe(sent.userPrompt);
     expect(local.systemInstruction).toBe(sent.systemInstruction);
+    // The planner's call is measured the same way, and kept with its attempt.
+    const plannerSent = run.providerInputs[2];
+    expect(attempt.plannerCall!.requestMeasurement).toMatchObject({
+      systemInstructionCharacters: plannerSent.systemInstruction.length,
+      userPromptCharacters: plannerSent.userPrompt.length,
+      responseSchemaCharacters: JSON.stringify(plannerSent.responseJsonSchema).length,
+    });
+    expect(attempt.plannerCall!.requestMeasurement!.sections.map(section => section.section)).toEqual(PLANNER_SECTION_ORDER.filter(section => section !== 'capaPrompt'));
+    expect(buildChapterPlannerPrompt(run.planRequests[1]).userPrompt).toBe(plannerSent.userPrompt);
   });
 });
 
@@ -197,7 +242,7 @@ describe('Current canonical state projection', () => {
   const stateWith = (records: HarnessCanonicalRecord[]): HarnessWorkspaceState => {
     const state = createEmptyHarnessWorkspaceState();
     state.stories.push({ id: 's', title: 'S', originalLanguage: 'en', createdAt: 'a', updatedAt: 'a', activeFoundationRevisionId: 'f', foundationRevisionIds: ['f'], head: { nextChapterNumber: 4 } });
-    for (const n of [1, 2, 3]) state.chapters.push({ id: `c${n}`, storyId: 's', attemptId: 'a', foundationRevisionId: 'f', storyInformationPacketId: 'p', chapterNumber: n, title: `C${n}`, titleSource: 'model', prose: '', paragraphs: [], metrics: { wordCount: 0, paragraphCount: 0, meetsScaleTarget: false }, eventIds: [], responseMode: 'json', createdAt: 'a', committedAt: 'a', mediaLoadout: { capturedAt: 'a', soundscapes: [], soundCues: [] } });
+    for (const n of [1, 2, 3]) state.chapters.push({ id: `c${n}`, storyId: 's', attemptId: 'a', foundationRevisionId: 'f', storyInformationPacketId: 'p', chapterNumber: n, title: `C${n}`, titleSource: 'model', prose: '', paragraphs: [], metrics: { wordCount: 0, paragraphCount: 0, meetsScaleTarget: false }, eventIds: [], plan: { cast: [], events: [] }, responseMode: 'json', createdAt: 'a', committedAt: 'a', mediaLoadout: { capturedAt: 'a', soundscapes: [], soundCues: [] } });
     state.canonicalRecords.push(...records);
     return state;
   };

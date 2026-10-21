@@ -18,14 +18,14 @@ import { SEN_SOUNDSCAPES } from '../../../host/media/soundscapeCatalog';
 import { piecesForMood, storySoundtrack } from '@seihouse/sen/reader-runtime';
 import { LISTEN_DUCK, READER_MUSIC_MOOD } from './useReaderSoundtrack';
 import type { SenLanguageCode } from '@seihouse/sen/contracts';
+import { planEveryChapter } from '../../../test-utils/chapterPlan';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const GOAL = { arcNumber: 1, goals: [{ id: 'arc-1-name', text: 'Reclaim her name.', chapters: 30 }] };
 const reply = (title: string, paragraphs: string[]) => JSON.stringify(writtenChapter({
   title, paragraphs,
-  arcCompletion: { goalId: 'arc-1-name', completed: false, evidence: '' },
-  recap: `${title}.`, chapterFunction: 'progression',
+  recap: `${title}.`,
   nextProgression: 'Mara climbs the bell tower.', nextWorldBuilding: 'The keeper explains the drowned law.', nextConflict: 'The tide wardens seize the causeway.',
 }));
 // The writer puts a sound tag on the words where a sound happens; the HARNESS places the cue there.
@@ -46,6 +46,7 @@ const scriptedProvider = (replies = [...CHAPTERS]) => {
   const adapter: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [{ id: 'test-model', label: 'Test' }], defaultModel: 'test-model' }),
     generate,
+    planChapter: planEveryChapter(),
     arcOperation: async () => ({ rawProviderResponse: JSON.stringify({ plan: GOAL, destinedEnding: 'Mara reclaims her name.' }), providerReceipt: receipt }),
   };
   const hold = () => {

@@ -9,16 +9,17 @@
  * Story Settings in Create's Settings (the CAPA skill slots and media the story starts with) →
  * token sheet → World Blueprint (Arc 1 only,
  * the hidden look-ahead nowhere on screen, every blank Seed slot filled) → Manifest
- * Story → Story View → Start Story under the veil → Chapter 1 with its Sound
+ * Story → Story View → Start Story under the veil (Fate plans Chapter 1, then the writer narrates the plan) → Chapter 1 with its Sound
  * Cue and its own soundtrack (the app's calm music on every page before it,
  * the chapter's fighting music and battlefield atmosphere in the Reader, the
- * app's music again after it, never carried into the Reader) → Listen (three voices from the writer's speaker tags, the spoken
+ * app's music again after it, never carried into the Reader) → Listen (three voices from the speakers the writer names, the spoken
  * sentence lit, Pause and Resume, the ghost note (mute, long-press to Audio),
  * Reader Settings → Audio (with Scene: the reader's own piece kept on the
  * device) and Narration with the speed
- * kept on the device) → Holdings → Rewrite this chapter with a note (the new
- * version under the veil, the Holdings fixer's one quiet call settling its
- * holdings, nothing of it on screen) → reload (no new request, nothing reads by itself) →
+ * kept on the device) → the Codex, made from Fate's plan (what the main
+ * character holds, the look the plan gave, Manifest drawing it, the record's
+ * one check) → Rewrite this chapter with a note (Fate plans it again from the
+ * note, the new version under the veil) → reload (no new request, nothing reads by itself) →
  * Back → Continue → World Info's Settings card (closed until opened: language, Reading Mode, CAPA skills, media) →
  * Manifest on the cover (one or three; three unseal, then the picker; the kept cover on World Info and on Home's card) → Export story (the whole story as one file) → Back
  * → Home card, its music note, the Reader's own (tap mutes; hold or ArrowUp opens the quick Master volume) → browser Back and Forward →
@@ -74,45 +75,71 @@ const SILENCE = (() => {
   wav.writeUInt32LE(8000, 28); wav.writeUInt16LE(1, 32); wav.writeUInt16LE(8, 34); wav.write('data', 36); wav.writeUInt32LE(samples, 40);
   return wav;
 })();
+/**
+ * Fate's plan for Chapter 1, as the planner returns it: who is on the page, with the looks the Codex does not
+ * have yet, and what happens. The record is made from it. Its last fact cannot be true (no one holds a Silver
+ * Bell), so the checks drop it before the writer sees the plan, and the Codex keeps one check.
+ */
+const LOOK = 'A lean young cultivator in a salt-stained quarry robe.';
+const plan = {
+  cast: [
+    { name: 'MC', kind: 'character', look: { summary: LOOK, build: 'lean', hair: 'salt-white' } },
+    { name: 'Junior Sister Han', kind: 'character', look: { summary: 'A slight girl with ink on her fingers.', eyes: 'amber' } },
+    { name: 'Bell Key', kind: 'thing', who: 'The key to the drowned bell tower.', look: { summary: 'A long key of old bronze.', material: 'old bronze' } },
+  ],
+  events: [
+    { kind: 'discovery', actor: 'MC', targets: ['Bell Key'], attempt: 'search the drowned gate', outcome: 'clean success', presses: [],
+      how: 'The tide pulls back from the drowned gate; Ye Chen finds the bell key in the silt and takes it in hand.',
+      facts: [{ type: 'holding', who: 'MC', change: 'gains', what: 'Bell Key' }, { type: 'holding', who: 'MC', change: 'equips', what: 'Bell Key' }] },
+    { kind: 'decision', actor: 'MC', targets: ['Junior Sister Han'], attempt: 'have the bells rung', outcome: 'failure', presses: [{ who: 'Junior Sister Han', level: 'light' }],
+      how: 'Ye Chen asks for the bells to be rung, and Junior Sister Han tells him they are drowned.',
+      facts: [{ type: 'holding', who: 'MC', change: 'loses', what: 'Silver Bell' }] },
+  ],
+  arcGoalReached: { reached: false },
+  chapterFunction: 'progression',
+};
+/** The writer narrates the plan: each paragraph is who speaks in it and its prose, with the media tags where they happen. */
 const chapter = {
   title: 'Low Tide',
   paragraphs: [
     // The writer chooses the chapter's music and atmosphere once, at its start; the writer puts a
     // sound tag on the words where a sound happens, naming one of the Library's sound words.
-    '[[soundtrack: fighting | ancient battlefield]] The tide pulled back from the drowned gate, and [[sound: beast roar | the beast roared | high]] across the causeway.',
-    // The writer tags who and what first steps onto the page, and what changes in what a character has, where it happens.
-    '[[appears: MC | character]] [[gained: MC | Bell Key]] Mara counted the bells that no longer rang. [[appears: Bell Key | thing]] [[equipped: MC | Bell Key]] She turned the old key in her palm.',
-    // The writer tags who speaks: the main character with their own tag, then someone else by name.
-    '[[@MC]] “Ring the bells,” Ye Chen said.',
-    '[[appears: Junior Sister Han | character]] [[@Junior Sister Han]] “They are drowned,” she whispered.',
+    { speaker: 'none', text: '[[soundtrack: fighting | ancient battlefield]] The tide pulled back from the drowned gate, and [[sound: beast roar | the beast roared | high]] across the causeway.' },
+    { speaker: 'none', text: 'Ye Chen counted the bells that no longer rang. He turned the old key in his palm.' },
+    // Each paragraph names who speaks in it: the main character as MC, anyone else by their name in the plan.
+    { speaker: 'MC', text: '“Ring the bells,” Ye Chen said.' },
+    { speaker: 'Junior Sister Han', text: '“They are drowned,” she whispered.' },
     // The rest of the chapter: a reply under a quarter of the 1,800-word minimum is a failed write and is never saved.
-    Array.from({ length: 35 }, () => 'The night went on, and the town kept its quiet watch until dawn.').join(' '),
+    { speaker: 'none', text: Array.from({ length: 35 }, () => 'The night went on, and the town kept its quiet watch until dawn.').join(' ') },
   ],
-  // The writer's closing list: one name no tag recorded, so the Codex has one record check.
-  mainCharacterHoldings: ['Bell Key', 'Silver Bell'],
-  arcCompletion: { goalId: 'none', completed: false, evidence: '' },
-  recap: 'Mara returns to the drowned city.',
-  chapterFunction: 'progression',
-  nextProgression: 'Mara climbs the bell tower.',
+  recap: 'Ye Chen returns to the drowned city.',
+  nextProgression: 'Ye Chen climbs the bell tower.',
   nextWorldBuilding: 'The keeper explains the drowned law.',
   nextConflict: 'The tide wardens seize the causeway.',
 };
 
-/** Chapter 1 written again at the reader's request: the key is gained twice, which the Holdings fixer settles. */
+/** Chapter 1 written again from the reader's note, so Fate plans it again: he hides the key instead of holding it. */
+const replanned = {
+  cast: [{ name: 'MC', kind: 'character' }, { name: 'Bell Key', kind: 'thing' }],
+  events: [
+    { kind: 'discovery', actor: 'MC', targets: ['Bell Key'], attempt: 'search the drowned gate', outcome: 'clean success', presses: [],
+      how: 'Ye Chen finds the bell key under the gate and hides it in his sleeve.', facts: [{ type: 'holding', who: 'MC', change: 'gains', what: 'Bell Key' }] },
+  ],
+  arcGoalReached: { reached: false },
+  chapterFunction: 'progression',
+};
 const rewritten = {
   ...chapter,
   title: 'The Hidden Key',
   paragraphs: [
-    'The tide pulled back from the drowned gate, and [[sound: beast roar | the beast roared | high]] across the causeway.',
-    '[[gained: MC | Bell Key]] Mara found the bell key under the gate. She hid it in her sleeve.',
-    '[[gained: MC | Bell Key]] Later she touched the bell key again to be sure.',
-    '[[@MC]] “Ring the bells,” Ye Chen said.',
+    chapter.paragraphs[0],
+    { speaker: 'none', text: 'Ye Chen found the bell key under the gate. He hid it in his sleeve.' },
+    chapter.paragraphs[2],
     chapter.paragraphs.at(-1),
   ],
-  mainCharacterHoldings: ['Bell Key'],
-  recap: 'Mara hides the bell key.',
+  recap: 'Ye Chen hides the bell key.',
 };
-const REWRITE_NOTE = 'Let Mara keep the key hidden.';
+const REWRITE_NOTE = 'Let him keep the key hidden.';
 
 const check = (condition, message) => { if (!condition) throw new Error(message); };
 
@@ -208,7 +235,7 @@ async function walk(browser, viewport, sample) {
   await context.addInitScript(installSpeechStandIn);
   const page = await context.newPage();
   const problems = [];
-  const counts = { chapters: 0, memory: 0, blueprints: 0, chaptersWithToken: 0, rewrites: [], fixes: [], looks: [], covers: [], pictures: [] };
+  const counts = { chapters: 0, memory: 0, blueprints: 0, chaptersWithToken: 0, plans: [], rewrites: [], covers: [], pictures: [] };
   let releaseFirstChapter;
   const firstChapterReady = new Promise(resolve => { releaseFirstChapter = resolve; });
   page.on('pageerror', error => problems.push(`page error: ${error.message}`));
@@ -268,23 +295,14 @@ async function walk(browser, viewport, sample) {
     }
     const body = request.postDataJSON();
     if (body.operation === 'plan-arc') {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rawProviderResponse: JSON.stringify({ plan: { goals: [{ text: 'Reach the gate.', chapters: 30 }] }, lookahead: [], destinedEnding: 'Mara reclaims her name.' }), providerReceipt: receipt }) });
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rawProviderResponse: JSON.stringify({ plan: { goals: [{ text: 'Reach the gate.', chapters: 30 }] }, lookahead: [], destinedEnding: 'Ye Chen reclaims his name.' }), providerReceipt: receipt }) });
       return;
     }
-    // The Holdings fixer's one small call after a chapter: it settles the key gained twice.
-    if (body.operation === 'fix-holdings') {
-      counts.fixes.push({ cases: body.cases, token: request.headers().authorization === `Bearer ${TOKEN}` });
-      const fixes = body.cases.map(entry => (entry.tags?.includes('gained: MC | Bell Key')
-        ? { case: entry.id, outcome: 'record', tags: '[[has: MC | Bell Key]]', reason: 'She already had it.' }
-        : { case: entry.id, outcome: 'fine', reason: 'Nothing to change.' }));
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rawProviderResponse: JSON.stringify({ fixes }), providerReceipt: receipt }) });
-      return;
-    }
-    // The look writer's one small call, only when something needs one entry's full look: it writes it down from that entry's passages.
-    if (body.operation === 'describe-looks') {
-      counts.looks.push({ subjects: body.subjects, token: request.headers().authorization === `Bearer ${TOKEN}` });
-      const looks = body.subjects.map(subject => ({ id: subject.id, summary: `${subject.name}, as the drowned city first saw them.`, traits: subject.entity === 'thing' ? { material: 'old bronze' } : { hair: 'salt-white' } }));
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rawProviderResponse: JSON.stringify({ looks }), providerReceipt: receipt }) });
+    // Fate, the planner: one call before each chapter is written, with the token. A rewrite with a note plans again.
+    if (body.operation === 'plan-chapter') {
+      const { chapterNumber, rewrite } = body.immediateChapterRequest;
+      counts.plans.push({ chapterNumber, rewrite, token: request.headers().authorization === `Bearer ${TOKEN}` });
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rawProviderResponse: JSON.stringify(rewrite ? replanned : plan), providerReceipt: receipt }) });
       return;
     }
     if (!body.immediateChapterRequest) {
@@ -457,6 +475,8 @@ async function walk(browser, viewport, sample) {
   await veil.waitFor({ state: 'hidden', timeout: 10_000 });
   await shot('6-chapter-1');
   check(counts.chapters === 1, `One chapter request expected, saw ${counts.chapters}.`);
+  check(counts.plans.length === 1 && counts.plans[0].chapterNumber === 1 && counts.plans[0].token,
+    `Fate should plan Chapter 1 once, with the token, before it is written, saw ${JSON.stringify(counts.plans)}.`);
   // The chapter's own scene, as its writer chose it: fighting music and the battlefield.
   await musicOf('fighting');
   for (let tries = 0; tries < 40 && !audioAsked.includes(BATTLEFIELD); tries += 1) await page.waitForTimeout(100);
@@ -734,15 +754,15 @@ async function walk(browser, viewport, sample) {
   }
   await page.getByTestId('reader-panel-fate').getByRole('button', { name: 'Back to reading' }).click();
 
-  // 3d. The Codex is a panel over the chapter: the main character's sheet (what they have now,
-  // each change linked to its passage) and the record checks. A fact's link moves the chapter
-  // behind the Codex to its passage and lights it, with the Codex still open.
+  // 3d. The Codex is a panel over the chapter, made from the plans: the main character's sheet (what they have
+  // now, each change linked to its chapter, the look the plan gave), their first words, and the record checks.
+  // A link asks before it moves the chapter behind the Codex; their first words' link lights the paragraph.
   await visibleButton('Open Codex').click();
   const codex = page.getByTestId('reader-panel-codex');
   await codex.getByTestId('codex-character').first().waitFor();
   check(!(await page.evaluate(() => document.querySelector('[data-testid="harness-reader"]').hidden)), 'The chapter must stay on the page under the Codex.');
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), 'The Codex must not scroll sideways.');
-  check((await codex.locator('[data-testid="codex-checks"] summary').textContent()).trim() === 'Record checks (1)', 'The closing list should leave one check.');
+  check((await codex.locator('[data-testid="codex-checks"] summary').textContent()).trim() === 'Record checks (1)', 'The plan\'s one fact that cannot be true should leave one check.');
   await shot('6d-codex');
   await codex.getByTestId('codex-character').first().click();
   const codexSheet = codex.getByTestId('codex-profile');
@@ -756,34 +776,33 @@ async function walk(browser, viewport, sample) {
   check(JSON.stringify(await slot.getByTestId('codex-history').locator('button').allTextContents()) === '["Ch. 1 · took up","Ch. 1 · gained"]',
     'Each change should link to its chapter, the newest first.');
   check(!(await page.textContent('body')).includes('[['), 'No tag may reach the Codex.');
-  // No call after a chapter: until something needs a full look, the sheet shows the story's own words for it.
-  check(counts.looks.length === 0, `No look may be written after a chapter, saw ${JSON.stringify(counts.looks)}.`);
-  const words = await codexSheet.getByTestId('codex-look-description').innerText();
-  check(words.includes('Mara') && words.includes('In the story’s words.'), `The sheet should show the story's own words for the look, got ${words}.`);
+  // The look the plan gave when it cast them: no call writes one.
+  const look = await codexSheet.getByTestId('codex-look').innerText();
+  check(look.includes(LOOK) && /hair/i.test(look) && look.includes('salt-white'), `The sheet should show the look the plan gave, got ${look}.`);
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), 'The character sheet must not scroll sideways.');
   await shot('6d-codex-profile');
-  // Manifest first writes that one look (one quiet call with the token), then makes the card's picture from it, and the card wears it.
+  // Manifest makes the card's picture from that look (one quiet call with the token), and the card wears it.
   await codexSheet.getByTestId('codex-manifest').getByRole('button', { name: 'Manifest' }).click();
   await codexSheet.locator('header img').waitFor();
-  check(counts.looks.length === 1 && counts.looks[0].token && counts.looks[0].subjects.length === 1,
-    `Manifest should write one look, in one quiet call with the token, got ${JSON.stringify(counts.looks)}.`);
-  const look = await codexSheet.getByTestId('codex-look').innerText();
-  check(look.includes(', as the drowned city first saw them.') && /hair/i.test(look) && look.includes('salt-white'), `The sheet should show the look written down, got ${look}.`);
   const picture = counts.pictures.at(-1);
-  check(picture?.token && picture.body.card.subject === 'character' && picture.body.card.look.summary.includes(', as the drowned city first saw them.'),
-    `Manifest should ask for one picture from the card's look, with the token, got ${JSON.stringify(picture)}.`);
+  check(counts.pictures.length === 1 && picture.token && picture.body.card.subject === 'character' && picture.body.card.look.summary === LOOK,
+    `Manifest should ask for one picture from the card's look, with the token, got ${JSON.stringify(counts.pictures)}.`);
   check(await codexSheet.getByTestId('codex-manifest').getByRole('button').textContent() === 'Manifest again', 'A manifested card should offer Manifest again.');
   await shot('6d-codex-manifested');
+  // A change's link moves the chapter behind the Codex there; their first words' link lights the paragraph.
   await slot.getByRole('button', { name: /^Ch\. 1 · took up/ }).click();
-  // A fact's link asks before it moves the chapter.
+  await codex.getByTestId('codex-go-confirm').getByRole('button', { name: 'Go' }).click();
+  await codex.getByTestId('codex-go-confirm').waitFor({ state: 'hidden' });
+  check(await codex.count() === 1, 'A change\'s link should keep the Codex open.');
+  await codexSheet.getByTestId('codex-voice').getByRole('button', { name: /^Ch\. 1\. Read the passage/ }).click();
+  // A link asks before it moves the chapter.
   await codex.getByTestId('codex-go-confirm').getByRole('button', { name: 'Go' }).click();
   await page.locator('[data-chapter-number="1"] [data-codex-lit]').waitFor();
-  check(await codex.count() === 1, 'A change\'s link should keep the Codex open.');
-  if (!laptop) check(await codex.getAttribute('data-stop') === 'half', 'A change\'s link should lower the Codex so the chapter shows.');
+  check(await codex.count() === 1, 'A passage\'s link should keep the Codex open.');
+  if (!laptop) check(await codex.getAttribute('data-stop') === 'half', 'A passage\'s link should lower the Codex so the chapter shows.');
   await shot('6d-codex-passage');
   await codex.getByRole('button', { name: 'Back to reading' }).click();
   check(await page.getByTestId('reader-panel-codex').count() === 0, 'Back to reading should close the Codex.');
-  check(counts.fixes.length === 0, `A chapter whose only problem is a closing-list name it never mentions asks no fixer, saw ${counts.fixes.length}.`);
 
   // 3d. Rewrite this chapter: at the newest chapter's end, with a note; the new version under the veil.
   const rewriteLink = visibleButton('Rewrite this chapter');
@@ -800,19 +819,19 @@ async function walk(browser, viewport, sample) {
   await veil.waitFor({ state: 'hidden', timeout: 10_000 });
   check(counts.rewrites.length === 1 && counts.rewrites[0].chapterNumber === 1 && counts.rewrites[0].rewrite.note === REWRITE_NOTE
     && counts.rewrites[0].rewrite.previous.title === 'Low Tide', `The rewrite should ask for Chapter 1 again with the note, got ${JSON.stringify(counts.rewrites)}.`);
-  check(counts.fixes.length === 1 && counts.fixes[0].token && counts.fixes[0].cases.length === 1,
-    `The Holdings fixer should make one quiet call with the token, got ${JSON.stringify(counts.fixes)}.`);
+  // With a note, Fate plans the chapter again from it.
+  check(counts.plans.length === 2 && counts.plans[1].chapterNumber === 1 && counts.plans[1].rewrite?.note === REWRITE_NOTE && counts.plans[1].token,
+    `The rewrite should plan Chapter 1 again from the note, with the token, got ${JSON.stringify(counts.plans)}.`);
   const rewrittenText = await page.locator('[data-chapter-number="1"]').textContent();
-  check(rewrittenText.includes('She hid it in her sleeve.') && !rewrittenText.includes('Mara counted the bells'), 'The new version should replace the old one.');
-  const body = await page.textContent('body');
-  check(!body.includes('[[') && !/fixer|Holdings fixer/i.test(body), 'Neither tags nor the fixer may reach the page.');
+  check(rewrittenText.includes('He hid it in his sleeve.') && !rewrittenText.includes('Ye Chen counted the bells'), 'The new version should replace the old one.');
+  check(!(await page.textContent('body')).includes('[['), 'No tag may reach the page.');
   check(await page.locator('[role="alert"]').count() === 0, 'A rewrite that worked shows no message.');
   await shot('6f-rewritten');
 
   // 4. A reload stays on Chapter 1, writes nothing, keeps the speed, and reads nothing by itself.
   await page.reload();
   await page.locator('[data-chapter-number="1"]').waitFor();
-  check(counts.chapters === 2, `A reload must not write a chapter, saw ${counts.chapters} requests.`);
+  check(counts.chapters === 2 && counts.plans.length === 2, `A reload must not plan or write a chapter, saw ${counts.plans.length} plans and ${counts.chapters} chapters.`);
   await page.waitForTimeout(300);
   check((await spoken()).length === 0, 'Nothing should be read aloud until the reader taps Listen.');
   await visibleButton('Reader Settings').click();
@@ -888,10 +907,12 @@ async function walk(browser, viewport, sample) {
   check(address().includes(archive.story?.id), 'Export story should save this story.');
   check(archive.chapters?.length === 1 && archive.attempts?.[0]?.storyInformation && archive.attempts[0].rawProviderResponse,
     'Export story should carry the chapter, its Story Information and the writer\'s reply.');
-  // The set-aside version stays with its attempt, and the chapter carries the fixer's record.
+  // The set-aside version stays with its attempt, and each attempt keeps the plan it was written from.
   check(archive.attempts.length === 2 && archive.attempts[0].replacedByChapterId === archive.chapters[0].id,
     'Export story should keep the replaced version on its attempt.');
-  check(archive.chapters[0].fixer?.fixes?.some(fix => fix.outcome === 'fixed-tags'), `Export story should carry the fixer's record, got ${JSON.stringify(archive.chapters[0].fixer)}.`);
+  check(archive.attempts.every(attempt => attempt.chapterPlan?.plan.events.length && attempt.plannerCall?.rawProviderResponse)
+    && archive.attempts[0].chapterPlan.checks.length === 1 && archive.chapters[0].plan?.events.length === 1,
+    `Export story should carry each attempt's plan and the planner's reply, got ${JSON.stringify(archive.attempts.map(attempt => attempt.chapterPlan))}.`);
   await visibleButton('Back to your stories').click();
   await page.getByTestId('novel-expanded-home').waitFor();
   check(address() === '/app/', `Back from Story View should go Home, got ${address()}`);
@@ -1047,6 +1068,7 @@ async function walk(browser, viewport, sample) {
 
   check(counts.memory === 0, `Story memory must wait until asked, saw ${counts.memory} memory requests.`);
   check(counts.chapters > 0 && counts.chaptersWithToken === counts.chapters, `Every chapter should carry the saved access token, saw ${counts.chaptersWithToken} of ${counts.chapters}.`);
+  check(counts.plans.every(entry => entry.token), 'Every plan should carry the saved access token.');
   await context.close();
   return problems;
 }

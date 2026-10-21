@@ -7,9 +7,9 @@ import { normalizeSoundWord } from '../audio/soundWords';
  * A sound tag wraps the words where a sound plays and names the sound, with an
  * optional Energy: `[[sound: blade drawn | drew his sword | high]]`. The words
  * stay in the text; the rest of the tag is removed. A speaker tag names who
- * speaks the speech that follows it: `[[@Lin Feng]] “Run!”`. A word tag names
- * a change to what a character has (`[[gained: MC | Rusted Iron Sword]]`) or
- * who steps onto the page (`[[appears: Lin Feng | character]]`).
+ * speaks the speech that follows it: `[[@Lin Feng]] “Run!”`. Only media is
+ * tagged (SENSEI, 2026-10-20: the chapter loop); what happens is the chapter's
+ * plan, never read out of the prose.
  * Tags are transport only: `readMarks` removes every one and reports where
  * each sat in the clean text, so no bracket ever reaches a reader.
  *
@@ -31,18 +31,9 @@ import { normalizeSoundWord } from '../audio/soundWords';
  * whose name is empty or too long to be a name, is still removed and reported,
  * so no part of it leaks. `[[Lin Feng]]` without the @ is ordinary text.
  *
- * A word tag begins with its tag word and says what changed, in parts split by
- * pipes: `[[gained: MC | Rusted Iron Sword]]`. It points at what follows it.
- * The tag words are the language's own (`TAG_WORDS`), each with the other
- * spellings a writer slips into ("obtained" for gained); letter case, spaces,
- * full-width colons, pipes and brackets, and a single closing bracket all
- * read. A tag word with fewer than two parts, or one that never closes, is
- * still removed and reported, so no part of it leaks. An unknown word with a
- * pipe after its colon (`[[obtainedd: MC | Sword]]`) is a slipped tag: removed
- * and reported too. Without a pipe, `[[Note: …]]` is ordinary text.
- * A word tag never takes words away: one written where its thing or ability's
- * name belongs (`a twist of [[equipped: MC | Copper Hair Wire]] that bit`)
- * leaves that name in the text in its place (see `namedInPlace`).
+ * A word with a pipe after its colon (`[[gained: MC | Sword]]`) is a slipped
+ * tag, a kind the language does not have: removed and reported, so no part of
+ * it leaks. Without a pipe, `[[Note: …]]` is ordinary text.
  *
  * A sound tag reads the same slips: letter case, spaces, full-width brackets,
  * colons and pipes, a single closing bracket, other words for "sound" ("sfx",
@@ -84,68 +75,8 @@ export interface SpeakerTag {
 /** A speaker tag that named nobody: empty, too long to be a name, or never closed. It was removed. */
 export interface SpeakerTagIssue { kind: 'unnamed' }
 
-/**
- * The Holdings tag words: what a character has, uses, knows and is, tagged
- * where the story changes it. Holdings were the first kind written as word
- * tags. Each word lists the other spellings a writer may slip into.
- */
-export const HOLDING_TAG_WORDS = {
-  has: ['has', 'had', 'have', 'holds', 'owns', 'carries'],
-  gained: ['gained', 'gain', 'gains', 'obtained', 'obtain', 'acquired', 'acquire', 'received', 'receive', 'got'],
-  lost: ['lost', 'lose', 'loses', 'used up', 'consumed', 'spent', 'broke', 'broken', 'destroyed', 'gave', 'gave away', 'given', 'sold', 'stolen', 'dropped'],
-  equipped: ['equipped', 'equip', 'equips', 'wields', 'wield', 'wielded', 'wears', 'wear', 'wore'],
-  unequipped: ['unequipped', 'unequip', 'unequips', 'put away', 'stowed', 'stow', 'sheathed'],
-  knows: ['knows', 'know', 'knew', 'known'],
-  learning: ['learning', 'studying', 'practicing', 'practising'],
-  learned: ['learned', 'learnt', 'learn', 'learns'],
-  improved: ['improved', 'improve', 'improves'],
-  sealed: ['sealed', 'seal', 'seals'],
-  unsealed: ['unsealed', 'unseal', 'unseals'],
-  rank: ['rank', 'ranked'],
-} as const satisfies Record<string, readonly string[]>;
-
-/**
- * The Appearance tag words: someone or something steps onto the page
- * (`appears`), or their look changes (`look`). The name comes first, then
- * what kind of entry it is, or what changed.
- */
-export const APPEARANCE_TAG_WORDS = {
-  appears: ['appears', 'appear', 'appeared', 'first appears', 'first appearance', 'introduced', 'introduces'],
-  look: ['look', 'looks', 'new look', 'look change', 'changed look', 'now looks', 'appearance change'],
-} as const satisfies Record<string, readonly string[]>;
-
-/**
- * The tag words of the tiny SEN language: every word-tag kind's words, each
- * with the other spellings a writer may slip into.
- */
-export const TAG_WORDS = { ...HOLDING_TAG_WORDS, ...APPEARANCE_TAG_WORDS } as const;
-
-export type TagWord = keyof typeof TAG_WORDS;
-export type HoldingTagWord = keyof typeof HOLDING_TAG_WORDS;
-export type AppearanceTagWord = keyof typeof APPEARANCE_TAG_WORDS;
-
-export const isHoldingTagWord = (word: TagWord): word is HoldingTagWord => word in HOLDING_TAG_WORDS;
-export const isAppearanceTagWord = (word: TagWord): word is AppearanceTagWord => word in APPEARANCE_TAG_WORDS;
-
-/** A word tag, and where it sat in the clean text: it points at what follows it. */
-export interface WordTag {
-  word: TagWord;
-  /** The writer's own spelling, when it was another accepted one ("obtained" for gained). */
-  spelling?: string;
-  /** The parts between the pipes, trimmed, in order: who, then what. */
-  parts: string[];
-  /** UTF-16 offset in the clean text. */
-  offset: number;
-}
-
-/** A word tag that could not be read. It was removed, so nothing of it leaks. */
-export type WordTagIssue =
-  /** A tag word with fewer than two parts. */
-  | { kind: 'incomplete'; word: TagWord }
-  /** A tag word that never closed. */
-  | { kind: 'unclosed'; word: TagWord }
-  /** A word that is not a tag word, written as a tag (a pipe after its colon). */
-  | { kind: 'unknown'; word: string };
+/** A slipped tag: a word written as a tag (a pipe after its colon) that the language does not have. It was removed, so nothing of it leaks. */
+export interface WordTagIssue { kind: 'unknown'; word: string }
 
 /** The words a sound tag wraps in the clean text, and the sound the writer named for them. */
 export interface SoundTag {
@@ -221,20 +152,11 @@ export interface MarkReading {
   /** Speaker tags in reading order. */
   speakers: SpeakerTag[];
   speakerIssues: SpeakerTagIssue[];
-  /** Word tags in reading order. */
-  wordTags: WordTag[];
+  /** Slipped tags, removed. */
   wordTagIssues: WordTagIssue[];
   /** Soundtrack tags in reading order; one that never closed is removed with nothing read from it. */
   soundtracks: SoundtrackTag[];
 }
-
-const TAG_WORD_SPELLINGS = new Map<string, TagWord>(
-  (Object.entries(TAG_WORDS) as Array<[TagWord, readonly string[]]>).flatMap(([word, spellings]) => spellings.map(spelling => [spelling, word] as const)),
-);
-
-/** A spelling's tag word: letter case, hyphens and repeated spaces aside ("Put-Away" is unequipped). */
-export const tagWordOf = (spelling: string): TagWord | undefined =>
-  TAG_WORD_SPELLINGS.get(spelling.trim().toLowerCase().replace(/[\s-]+/g, ' '));
 
 /** Longer than this, a speaker tag's "name" is prose written into the tag, not a name. */
 export const SPEAKER_TAG_NAME_LIMIT = 48;
@@ -263,10 +185,8 @@ const SPEAKER_UNCLOSED = new RegExp(String.raw`${OPEN}${GAP}${AT}[^\[\]［］|�
 const TAG_WORD = String.raw`([A-Za-z]+(?:[ \t-][A-Za-z]+)?)`;
 const COLON = String.raw`[:：]`;
 const PIPE = /[|｜]/;
-/** `[[gained: MC | Rusted Iron Sword]]` `［［gained：MC｜剣］］` `[[Gained:MC|Sword]` */
+/** A slipped tag: `[[gained: MC | Rusted Iron Sword]]` `［［gained：MC｜剣］］` `[[Gained:MC|Sword]` */
 const WORD_TAG = new RegExp(String.raw`${OPEN}${GAP}${TAG_WORD}${GAP}${COLON}([^\[\]［］\n]{0,240})${CLOSE}`, 'y');
-/** A word tag that never closes: removed through the end of the sentence it ran into. */
-const WORD_TAG_UNCLOSED = new RegExp(String.raw`${OPEN}${GAP}${TAG_WORD}${GAP}${COLON}[^\[\]［］\n.!?。！？“"「]{0,120}[.!?。！？]?`, 'y');
 const SOUND_TAG_WORD = String.raw`(?:sounds?|sfx|sound[ \t-]?(?:cue|effect))`;
 const ENERGY = String.raw`(${AUDIO_ENERGIES.join('|')})`;
 /** `[[sound: blade drawn |`, or `[[sound: blade drawn | high |` with the Energy first: the words follow it. */
@@ -292,46 +212,6 @@ const SOUNDTRACK_UNCLOSED = new RegExp(String.raw`${OPEN}${GAP}${SOUNDTRACK_TAG_
 
 const toNumber = (digits: string) => Number(digits.replace(/[０-９]/g, digit => String(digit.charCodeAt(0) - 0xff10)));
 const isSpace = (character: string | undefined) => character !== undefined && /[ \t　]/.test(character);
-
-/** Words after which a noun must come: articles, possessives and prepositions. */
-const NEEDS_A_NOUN = new Set(['a', 'an', 'the', 'his', 'her', 'its', 'their', 'my', 'your', 'our', 'of', 'with', 'from', 'into', 'onto', 'in', 'on', 'at', 'by', 'for', 'under', 'over', 'upon', 'within', 'without', 'behind', 'beside', 'against', 'toward', 'towards', 'through', 'across']);
-/** Words that open a noun phrase of their own: what follows the tag names its object. */
-const OPENS_A_NOUN = new Set(['a', 'an', 'the', 'his', 'her', 'its', 'their', 'my', 'your', 'our']);
-const SUBJECTS = new Set(['i', 'he', 'she', 'it', 'we', 'they', 'you']);
-const WORD_CHARACTERS = /[\p{L}\p{N}'’-]+/gu;
-
-/**
- * The name a word tag stood in for, when the sentence lacks the word it needed
- * (SENSEI's Sundered Heavens test: `a twist of [[equipped: Gu Chen | Copper
- * Hair Wire]] that bit`, `which held [[…]].`, `tucking [[…]] securely`). Only
- * then: the tag follows a word in the middle of a sentence, not its subject;
- * no new sentence, article or possessive follows it; the sentence does not
- * already name the thing (its name's last word); and the word before it needs
- * a noun, or the sentence ends straight after it, or an adverb in -ly follows.
- */
-const namedInPlace = (before: string, after: string, name: string | undefined): string | undefined => {
-  const thing = name?.trim();
-  if (!thing) return undefined;
-  const lead = before.trimEnd();
-  const previous = lead.match(/[\p{L}\p{N}'’-]+$/u)?.[0]?.toLowerCase();
-  if (!previous || SUBJECTS.has(previous)) return undefined;
-  const following = after.replace(/\[\[[^\]]*\]\]/g, '').trimStart();
-  if (/^\p{Lu}/u.test(following)) return undefined;
-  const sentenceBefore = lead.slice(Math.max(...['.', '!', '?', '。', '！', '？', '\n'].map(stop => lead.lastIndexOf(stop))) + 1);
-  const sentenceAfter = following.split(/[.!?。！？\n]/u)[0];
-  // The name's last word is the thing itself (the wire of Copper Hair Wire): written already, the tag only marks it.
-  const head = thing.toLowerCase().match(WORD_CHARACTERS)?.at(-1);
-  const sentenceWords: string[] = `${sentenceBefore} ${sentenceAfter}`.toLowerCase().match(WORD_CHARACTERS) ?? [];
-  if (head && sentenceWords.includes(head)) return undefined;
-  // The word straight after the tag, when a word (not punctuation) comes next.
-  const next = following.match(/^[\p{L}\p{N}'’-]+/u)?.[0]?.toLowerCase();
-  if (next && OPENS_A_NOUN.has(next)) return undefined;
-  const leadWords: string[] = sentenceBefore.toLowerCase().match(WORD_CHARACTERS) ?? [];
-  if (NEEDS_A_NOUN.has(previous)) return thing;
-  if (/^[.!?;:,。！？]/u.test(following) && !OPENS_A_NOUN.has(leadWords.at(-2) ?? '')) return thing;
-  if (next?.endsWith('ly')) return thing;
-  return undefined;
-};
 
 const energyOf = (value: string | undefined): AudioEnergy | undefined => {
   const energy = value?.trim().toLowerCase();
@@ -359,7 +239,6 @@ export function readMarks(source: string, { soundWords }: MarkReadingOptions = {
   const issues: ProseMarkIssue[] = [];
   const speakers: SpeakerTag[] = [];
   const speakerIssues: SpeakerTagIssue[] = [];
-  const wordTags: WordTag[] = [];
   const wordTagIssues: WordTagIssue[] = [];
   const soundtracks: SoundtrackTag[] = [];
   const used = new Set<number>();
@@ -412,7 +291,7 @@ export function readMarks(source: string, { soundWords }: MarkReadingOptions = {
     let sound = span.sound;
     // Written the other way round, `[[sound: drew his sword | blade drawn]]`: the words were written first.
     if (knownSounds && !knownSounds.has(normalizeSoundWord(sound)) && knownSounds.has(normalizeSoundWord(words))
-      && !speakers.some(tag => tag.offset > span.start) && !wordTags.some(tag => tag.offset > span.start)) {
+      && !speakers.some(tag => tag.offset > span.start)) {
       text = text.slice(0, span.start) + sound;
       sound = words;
     }
@@ -467,33 +346,9 @@ export function readMarks(source: string, { soundWords }: MarkReadingOptions = {
         continue;
       }
       const wordTag = matchAt(WORD_TAG, source, index);
-      const word = wordTag ? tagWordOf(wordTag[1]) : undefined;
-      if (wordTag && (word || PIPE.test(wordTag[2]))) {
-        const parts = wordTag[2].split(PIPE).map(part => part.trim()).filter(Boolean);
-        const spelling = wordTag[1].trim().toLowerCase().replace(/[\s-]+/g, ' ');
-        if (!word) wordTagIssues.push({ kind: 'unknown', word: wordTag[1].trim() });
-        else if (parts.length < 2) wordTagIssues.push({ kind: 'incomplete', word });
-        else {
-          wordTags.push({ word, ...(spelling !== word ? { spelling } : {}), parts, offset: text.length });
-          // The name a tag names: a holding's thing (its second part), an appearance's subject (its first),
-          // never the main character's own tag, never a rank.
-          const named = isAppearanceTagWord(word) ? (/^mc$/i.test(parts[0]) ? undefined : parts[0]) : word === 'rank' ? undefined : parts[1];
-          const name = namedInPlace(text, source.slice(index + wordTag[0].length), named);
-          if (name) {
-            // The tag stood where its name belongs: the name stays, with the text's own spacing around it.
-            text += isSpace(text.at(-1)) ? name : ` ${name}`;
-            index += wordTag[0].length;
-            continue;
-          }
-        }
+      if (wordTag && PIPE.test(wordTag[2])) {
+        wordTagIssues.push({ kind: 'unknown', word: wordTag[1].trim() });
         index = skipDoubledSpace(index + wordTag[0].length);
-        continue;
-      }
-      const unclosedWordTag = wordTag ? null : matchAt(WORD_TAG_UNCLOSED, source, index);
-      const unclosedWord = unclosedWordTag ? tagWordOf(unclosedWordTag[1]) : undefined;
-      if (unclosedWordTag && unclosedWord) {
-        wordTagIssues.push({ kind: 'unclosed', word: unclosedWord });
-        index = skipDoubledSpace(index + unclosedWordTag[0].length);
         continue;
       }
       const point = matchAt(POINT, source, index);
@@ -562,7 +417,6 @@ export function readMarks(source: string, { soundWords }: MarkReadingOptions = {
     issues,
     speakers: speakers.map(tag => ({ name: tag.name, offset: at(tag.offset) })),
     speakerIssues,
-    wordTags: wordTags.map(tag => ({ ...tag, offset: at(tag.offset) })),
     wordTagIssues,
     soundtracks: soundtracks.map(tag => ({ ...tag, offset: at(tag.offset) })),
   };

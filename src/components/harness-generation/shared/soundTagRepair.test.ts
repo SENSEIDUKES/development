@@ -79,7 +79,8 @@ describe('Stray sound tags', () => {
     )).readings;
     expect(settled.text).toBe('“Down,” Bo hissed. The roof gave way. “Run!”');
     expect(settled.speakers).toEqual([{ name: 'Bo', offset: 0 }]);
-    expect(settled.wordTags[0].offset).toBe(settled.text.indexOf('The roof'));
+    // A slipped holdings tag from before the chapter loop is removed whole, so nothing of it leaks.
+    expect(settled.wordTagIssues).toEqual([{ kind: 'unknown', word: 'gained' }]);
     // Only "roof" echoes "stones fell from the roof": too little to say it, so the sound is dropped.
     expect(settled.sounds).toEqual([]);
   });
@@ -87,7 +88,7 @@ describe('Stray sound tags', () => {
   it('removes the full stop a tag left at the start of a paragraph', () => {
     const [settled] = settleStraySoundTags(read('[[gained: MC | Broodmother Core]]. Below his feet, the hive stirred.')).readings;
     expect(settled.text).toBe('Below his feet, the hive stirred.');
-    expect(settled.wordTags[0].offset).toBe(0);
+    expect(settled.wordTagIssues).toEqual([{ kind: 'unknown', word: 'gained' }]);
   });
 
   it('never moves a sound onto words another sound already holds', () => {

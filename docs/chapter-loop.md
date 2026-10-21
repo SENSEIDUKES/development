@@ -2,10 +2,13 @@
 
 - **Created:** 2026-10-20
 - **Owner:** SENSEI
-- **Status:** design, not built. Every chapter of a SEN story runs this loop,
-  and every agent builds to it. [`NOVEL_EXPANDED.md`](../NOVEL_EXPANDED.md)
-  stays the source of truth for what is built; the order this design is built
-  in is [below](#build-order).
+- **Status:** step 2 is built (2026-10-20): the planner, the checks, the
+  writer's new handoff and the record made from plans, in the prompt words
+  SENSEI approved, which the Workshop's Writer Instructions page shows from
+  the live code. Steps 3 onward are design. Every chapter of a SEN story runs
+  this loop, and every agent builds to it.
+  [`NOVEL_EXPANDED.md`](../NOVEL_EXPANDED.md) stays the source of truth for
+  what is built; the order this design is built in is [below](#build-order).
 - **Replaces:** `docs/cte-consequences.md`, folded in here, and the plan to
   tag information in the prose (the old Stage E1 of `NOVEL_EXPANDED.md`).
 - **Sources outside this repository**, all by SENSEI: *The Consciousness Garden
@@ -262,17 +265,21 @@ Codex, one short line per card, the main character first; the readout; the
 latest recaps; this chapter's direction (the reader's direction or chosen
 path, or Rhythm's recommendation), the arc goal, the Hard Pins, whether the
 story is Fate Survival, and the reader's requests; and, on a rewrite, the
-reader's note. It does not see the Destined Ending (SENSEI, 2026-10-19). It
-returns the plan. It is registered in the Model Router and runs on the
-chapter's model.
+reader's note. It reads the Destined Ending and the route to it (SENSEI,
+2026-10-20: on 2026-10-19 it only cast the chapter; it now decides how the
+story moves toward its ending). It returns the plan, which also says which
+event reaches the arc goal and, in Fate Survival, which ends the story. It is
+registered in the Model Router and runs on the chapter's model.
 
 **The writer** sees what it sees today, except Holdings and Appeared, which a
 chapter plan section replaces: everyone on the page with their look, what they
 hold and how they are; someone new in full, in the chapter they first appear;
-and each event with its outcome, how it happens and each person's result. It
-returns today's reply, without the main character's holdings list. Its speaker
-field becomes a menu: `MC`, each character in the cast, someone else, or
-nobody.
+and each event with its outcome, how it happens and each person's result. The
+Destined Ending, the arc goal, Rhythm and the reader's direction as an order
+move to the planner, so the writer decides nothing (SENSEI, 2026-10-20). It
+returns today's reply without the main character's holdings list, `plan`,
+`chapterFunction`, `arcCompletion` or `storyEnded`. Its speaker field is a
+menu: `MC`, each character in the cast, someone else, or nobody.
 
 ## What retires
 
@@ -294,12 +301,13 @@ Each step is a complete loop a story can be read through and tested; nothing
 is tested half-built (SENSEI, 2026-10-19).
 
 1. **This design** (docs only).
-2. **The loop.** The planner, the checks, the writer's new handoff and the
-   record update, with events in their final shape from the start: cast,
-   looks, gender, age, holdings, status, goals, values, commitments and
-   stances. Everything under [What retires](#what-retires) goes in the same
-   change. Then the Fate page's Bring back and Add a character. The owner
-   approves the exact prompt words first.
+2. **The loop.** Built 2026-10-20. The planner, the checks, the writer's new
+   handoff and the record update, with events in their final shape from the
+   start: cast, looks, gender, age, holdings, status, goals, values,
+   commitments and stances. Everything under [What retires](#what-retires)
+   went in the same change, and the owner approved the exact prompt words
+   first. Still to come in this step: the Fate page's Bring back and Add a
+   character, whose words the owner approves first.
 3. **The CTE engine**, with the Fragmentation probe. Each tracked character's
    card carries its state; Fate Pressure sizes the loads; the writer is told
    who grows, holds or breaks.
@@ -334,7 +342,10 @@ an agent's, not a decision.
    randomness, and whether readers see the odds or only the outcome.
 4. **Which characters CTE tracks** (step 3): everyone with a card, or only
    those the story focuses on.
-5. **A rewrite without a note** (step 2): does it keep the plan, or plan again?
+5. **A rewrite without a note** (step 2). Decided (SENSEI, 2026-10-20): it
+   keeps the plan, since the reader disliked the telling, not the events, so
+   the same plan is written again in new words with no planner call. A rewrite
+   with a note plans again from the note.
 6. **Create mode**, when it returns: an edit to the prose no longer changes
    the record, so changing what happened means editing the chapter's events.
    Its reread design (`NOVEL_EXPANDED.md`, after Stage E2) is redone for this.

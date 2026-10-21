@@ -9,6 +9,7 @@ import { createEmptyHarnessWorkspaceState, readHarnessWorkspaceState } from '@se
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { asWrittenChapter, writtenChapter } from '../../../test-utils/writtenChapter';
 import { HARNESS_GENERATION_SCHEMA_VERSION, type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessSemanticEvent, type HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
+import { planEveryChapter } from '../../../test-utils/chapterPlan';
 
 const runtime = (): HarnessRuntime => {
   let id = 0;
@@ -50,6 +51,7 @@ const adapter = (...outputs: Array<HarnessGenerationResponse | Error>) => {
   const value: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [{ id: 'gemini-test', label: 'Gemini test' }], defaultModel: 'gemini-test' }),
     generate,
+    planChapter: planEveryChapter(),
     arcOperation: async request => response({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 30 }] }, destinedEnding: 'Bring the story to its true conclusion.' }),
   };
   return { value, generate, memoryByProse };
@@ -141,7 +143,7 @@ describe('Harness Generation Phase 3 deterministic story harness', () => {
   it('builds distinct relationship, thread, and mystery history without allowing uncommitted records into canonical state', () => {
     const state = createEmptyHarnessWorkspaceState();
     state.stories.push({ id: 'story_fixture', title: 'Story', originalLanguage: 'en', createdAt: 'a', updatedAt: 'a', activeFoundationRevisionId: 'f', foundationRevisionIds: ['f'], head: { nextChapterNumber: 2 } });
-    state.chapters.push({ id: 'chapter_fixture', storyId: 'story_fixture', attemptId: 'a', foundationRevisionId: 'f', storyInformationPacketId: 'c', chapterNumber: 1, title: 'One', titleSource: 'model', prose: 'Prose.', paragraphs: ['Prose.'], metrics: { wordCount: 1, paragraphCount: 1, meetsScaleTarget: false }, eventIds: [], responseMode: 'json', createdAt: 'a', committedAt: 'b', mediaLoadout: { capturedAt: 'a', soundscapes: [], soundCues: [] } });
+    state.chapters.push({ id: 'chapter_fixture', storyId: 'story_fixture', attemptId: 'a', foundationRevisionId: 'f', storyInformationPacketId: 'c', chapterNumber: 1, title: 'One', titleSource: 'model', prose: 'Prose.', paragraphs: ['Prose.'], metrics: { wordCount: 1, paragraphCount: 1, meetsScaleTarget: false }, eventIds: [], plan: { cast: [], events: [] }, responseMode: 'json', createdAt: 'a', committedAt: 'b', mediaLoadout: { capturedAt: 'a', soundscapes: [], soundCues: [] } });
     const registry = new HarnessCapabilityRegistry();
     const events = [
       semanticEvent({ id: 'rel1', category: 'relationship', subjects: ['Mara', 'Iven'], description: 'Mara distrusts Iven.' }),
@@ -308,6 +310,7 @@ describe('Harness Generation Phase 3 deterministic story harness', () => {
     });
     const modelAdapter: HarnessGenerationModelAdapter = {
       getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [{ id: 'gemini-test', label: 'Gemini' }], defaultModel: 'gemini-test' }),
+      planChapter: planEveryChapter(),
       arcOperation: async request => response({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 30 }] }, destinedEnding: 'Bring the story to its true conclusion.' }),
       generate,
     };
@@ -315,7 +318,8 @@ describe('Harness Generation Phase 3 deterministic story harness', () => {
     await controller.hydrate();
     const story = await controller.createStory({ premise: 'A convoy follows the last star.', destinedEnding: 'Bring the convoy safely home.', initialArcPlan: { arcNumber: 1, goals: [{ id: 'arc-1-convoy', text: 'Carry the convoy safely home.', chapters: 30 }] } });
     const running = controller.startBatch(story.id, 'gemini-test', 3);
-    for (let index = 0; index < 30 && generate.mock.calls.length < 2; index += 1) await Promise.resolve();
+    // The second chapter's writer call is out once its plan is made and saved.
+    await vi.waitFor(() => expect(generate).toHaveBeenCalledTimes(2));
     const batchId = controller.snapshot().batches[0].id;
     await controller.requestBatchPause(batchId);
     resolveSecond(asWrittenChapter(response({ prose: 'Second batch chapter finishes the active call.' })));

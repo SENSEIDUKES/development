@@ -4,6 +4,7 @@ import { harnessArcPlan } from './arcState';
 import { findStory } from './foundation';
 import { cloneHarnessValue } from './ids';
 import { CHAPTER_REWRITE_NOTE_LIMIT, type HarnessChapter, type HarnessWorkspaceState } from '../../../narrative/generation';
+import type { PlanRef } from '../../../narrative/chapterPlan';
 
 /**
  * Rewrite this chapter: the reader may have the story's latest chapter written
@@ -70,13 +71,25 @@ export function readRewriteNote(note: string | undefined): string | undefined {
   return text;
 }
 
+/** Every Codex entry a chapter's plan names: its cast, what they already had, and everyone and everything its events name. */
+export const entriesNamedBy = (chapter: Pick<HarnessChapter, 'plan'>): string[] => {
+  const refs: PlanRef[] = chapter.plan.events.flatMap(event => [
+    ...(event.actor ? [event.actor] : []), ...event.targets, ...event.presses.map(pressure => pressure.who),
+    ...event.facts.flatMap(fact => [fact.who, ...(fact.type === 'holding' ? [fact.what] : fact.type === 'commitment' ? [fact.toWhom] : fact.type === 'stance' ? [fact.towardWhom] : [])]),
+  ]);
+  return [
+    ...chapter.plan.cast.flatMap(member => [member.entryId, ...(member.alreadyHas ?? []).map(held => held.entryId)]),
+    ...refs.map(ref => ref.entryId),
+  ].filter((id): id is string => Boolean(id));
+};
+
 /**
  * The workspace as it stood before the story's latest chapter was saved. That
- * chapter is gone, with everything worked out from it: the Codex entries it
- * brought in (and a name its Holdings fixer added to an older one), the goals
- * it achieved or missed, the route it broke and the ending it reached. So is anything chosen after reading it (a direction for
+ * chapter is gone, with everything worked out from it: the Codex entries its
+ * plan brought in, the goals it achieved or missed, the route it broke and the
+ * ending it reached. So is anything chosen after reading it (a direction for
  * the chapter after it), and the story head points back at it. Its attempt
- * stays, with the replaced version's reply. The input is never changed.
+ * stays, with the replaced version's reply and plan. The input is never changed.
  */
 export function withoutLatestChapter(state: HarnessWorkspaceState, storyId: string): HarnessWorkspaceState {
   const latest = latestStoryChapter(state, storyId);
@@ -86,24 +99,13 @@ export function withoutLatestChapter(state: HarnessWorkspaceState, storyId: stri
   const { id, chapterNumber } = latest;
   next.chapters = next.chapters.filter(chapter => chapter.id !== id);
 
-  // The Codex entries the chapter brought in: those its tags created, and a
+  // The Codex entries the chapter brought in: those its plan created, and a
   // declared character it named first. Entries an earlier chapter uses stay.
-  const entriesNamed = (chapter: HarnessChapter) => [
-    ...(chapter.holdingChanges ?? []).flatMap(change => [change.payload.holder.entryId, change.payload.target?.entryId]),
-    ...(chapter.appearances ?? []).map(appearance => appearance.payload.subject.entryId),
-  ];
-  const usedEarlier = new Set(next.chapters.filter(chapter => chapter.storyId === storyId).flatMap(entriesNamed));
-  const usedHere = new Set(entriesNamed(latest));
+  const usedEarlier = new Set(next.chapters.filter(chapter => chapter.storyId === storyId).flatMap(entriesNamedBy));
+  const usedHere = new Set(entriesNamedBy(latest));
   next.codexEntries = next.codexEntries.filter(entry => entry.storyId !== storyId || !(
-    (entry.origin.source === 'tag' && entry.origin.chapterId === id) || (usedHere.has(entry.id) && !usedEarlier.has(entry.id))
+    (entry.origin.source === 'plan' && entry.origin.chapterId === id) || (usedHere.has(entry.id) && !usedEarlier.has(entry.id))
   ));
-  // A name the Holdings fixer taught an older entry, when it merged one of the chapter's own into it.
-  for (const { merged } of latest.fixer?.fixes ?? []) {
-    const kept = merged?.alias ? next.codexEntries.find(entry => entry.id === merged.keptEntryId) : undefined;
-    if (!kept?.aliases) continue;
-    kept.aliases = kept.aliases.filter(alias => alias !== merged!.alias);
-    if (!kept.aliases.length) delete kept.aliases;
-  }
 
   const previous = next.chapters.filter(chapter => chapter.storyId === storyId && chapter.chapterNumber < chapterNumber)
     .sort((left, right) => left.chapterNumber - right.chapterNumber).at(-1);

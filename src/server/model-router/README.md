@@ -6,7 +6,7 @@ and on every preview (`src/workshop/ModelRouterSettings.tsx`); the old
 `?preview=model-router` page is archived but still reachable.
 
 - **Created:** 2026-09-23
-- **Last Workshop update:** 2026-10-19
+- **Last Workshop update:** 2026-10-20
 - **Last source comparison:** 2026-09-23 (DEV-native; no production counterpart)
 - **Status:** active (gear); Systems card archived; owner `deferred` (server/host infrastructure, in no package)
 
@@ -14,7 +14,7 @@ and on every preview (`src/workshop/ModelRouterSettings.tsx`); the old
 
 | Capability | Providers | Consumers |
 | --- | --- | --- |
-| Chapters | Gemini, OpenRouter, MiniMax, Anthropic, local LM Studio | Harness Generation, Holdings Fixer, Story Seed Blueprint, Story Spark, Reader Translation |
+| Chapters | Gemini, OpenRouter, MiniMax, Anthropic, local LM Studio | Harness Generation, Chapter Planner, Story Seed Blueprint, Story Spark, Reader Translation |
 | Images | Gemini, OpenRouter, MiniMax | Story Cover, Image Lab, Profile Picture |
 | TTS | ElevenLabs | Codex Voice Quote |
 | Audio | Gemini | none yet (catalog only) |
@@ -82,7 +82,7 @@ During `npm run dev`, Chapters includes **Local (LM Studio)** → **Currently
 loaded model**. The saved `lmstudio/loaded` choice follows whichever text model
 is loaded when generation starts; no model name or API key is configured here.
 Start LM Studio's server on port 1234 and keep one text model loaded. Chapters,
-arc planning, the Holdings fixer and Story Seed Blueprints use the existing
+the chapter planner, arc planning and Story Seed Blueprints use the existing
 Router and validation paths.
 
 Requests use `http://localhost:1234/v1/chat/completions` without an Authorization
@@ -131,6 +131,12 @@ are unchanged.
 
 ## Workshop history
 
+- 2026-10-20 — The chapter loop: **Chapter Planner** (Fate) joins Chapters, one
+  call before each chapter on the chapter's own model
+  (`src/server/harness-generation/chapterPlanner.ts`, following the Router's
+  choice). The Holdings Fixer and Look Describer entries are gone with the
+  pieces they ran. Hosted, the planner keeps its own visitor count, so planning
+  never uses up a visitor's chapters.
 - 2026-10-19 — Connected Claude directly through the official Anthropic SDK:
   Claude Opus 5.5, Sonnet 5.5, Haiku 5.5 and Fable 5.1 in Chapters →
   Anthropic, once `claude_sen` (or `ANTHROPIC_API_KEY`) is set. Chapters, arc

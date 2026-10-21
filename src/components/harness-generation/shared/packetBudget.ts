@@ -27,10 +27,11 @@ export const GENERATION_PACKET_BUDGET = {
     rhythm: { protected: true },
     previouslyOn: { tokens: 2_000, protected: false },
     canonicalState: { tokens: 3_000, protected: false },
-    // What each character has now: never trimmed, so the writer never forgets a sword or invents a second one.
-    holdings: { protected: true },
-    // Who and what is already on the page, with each look: bounded by its own counts, never trimmed further.
-    appearances: { protected: true },
+    // The planner's Codex: everyone and everything the story knows. Never trimmed, so Fate never forgets a
+    // sword, a wound or a debt; measured, so its growth over a long story stays visible.
+    codex: { protected: true },
+    // The writer's: the Chapter Plan, its cast as the record had them and its events.
+    chapterPlan: { protected: true },
     missionReminder: { protected: true },
     immediateChapterRequest: { protected: true },
   } satisfies Record<PacketSectionId, PacketSectionBudget>,
@@ -46,6 +47,7 @@ export const GENERATION_PACKET_BUDGET = {
   requestTokens: 28_000,
 } as const;
 
+/** Every section of the packet, in order: what either of a chapter's two calls is sent. */
 export const PACKET_SECTION_ORDER: readonly PacketSectionId[] = [
   'capaPrompt',
   'currentStory',
@@ -54,11 +56,25 @@ export const PACKET_SECTION_ORDER: readonly PacketSectionId[] = [
   'rhythm',
   'previouslyOn',
   'canonicalState',
-  'holdings',
-  'appearances',
+  'codex',
+  'chapterPlan',
   // The chapter's request, then the Mission Reminder last, closing the call (SENSEI, 2026-10-16).
   'immediateChapterRequest',
   'missionReminder',
+];
+
+/**
+ * The sections each of a chapter's two calls is sent, in order (SENSEI,
+ * 2026-10-20: the chapter loop). The planner decides what happens, so it reads
+ * the author's direction, the arc, Rhythm and the Codex, with its own skills;
+ * the writer narrates the plan, so it reads the story so far and the Chapter
+ * Plan, and the Mission Reminder closes its call.
+ */
+export const PLANNER_SECTION_ORDER: readonly PacketSectionId[] = [
+  'capaPrompt', 'currentStory', 'storyDirection', 'arc', 'rhythm', 'previouslyOn', 'canonicalState', 'codex', 'immediateChapterRequest',
+];
+export const WRITER_SECTION_ORDER: readonly PacketSectionId[] = [
+  'capaPrompt', 'currentStory', 'previouslyOn', 'canonicalState', 'chapterPlan', 'immediateChapterRequest', 'missionReminder',
 ];
 
 export const estimatePacketTokens = (value: unknown): number =>

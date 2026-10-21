@@ -3,7 +3,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { HarnessGenerationWorkspace } from '@seihouse/library/generation';
-import { HARNESS_TAG_RULES, SEN_APPEARANCE_INSTRUCTIONS, SEN_APPEARANCE_SKILL, SEN_HOLDINGS_INSTRUCTIONS, SEN_HOLDINGS_SKILL, SEN_NOVEL_AUTHOR_SKILL, SEN_SPEAKERS_INSTRUCTIONS, SEN_SPEAKERS_SKILL } from '@seihouse/sen/harness-generation';
+import { HARNESS_TAG_RULES, SEN_NOVEL_AUTHOR_SKILL, SEN_SPEAKERS_INSTRUCTIONS, SEN_SPEAKERS_SKILL, type HarnessChapterPlanRequest } from '@seihouse/sen/harness-generation';
 import { compileStoryInformationPacket } from './context';
 import { harnessChapterParagraphTarget } from './chapterBody';
 import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
@@ -12,6 +12,7 @@ import type { HarnessRuntime } from './ids';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { REST_OF_CHAPTER, writtenChapter, writtenChapterReply } from '../../../test-utils/writtenChapter';
 import { type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
+import { planEveryChapter } from '../../../test-utils/chapterPlan';
 
 const runtime = (): HarnessRuntime => {
   let id = 0;
@@ -43,6 +44,7 @@ const response = (
  * with the rest of one). Historical events are seeded explicitly where needed.
  */
 const adapter = (...outputs: Array<HarnessGenerationResponse | Error>) => {
+  const plan = vi.fn((_request: HarnessChapterPlanRequest) => planEveryChapter()());
   const generate = vi.fn(async (_request: HarnessGenerationRequest) => {
     const output = outputs.shift();
     if (!output) throw new Error('No test provider response remains.');
@@ -64,9 +66,10 @@ const adapter = (...outputs: Array<HarnessGenerationResponse | Error>) => {
       defaultModel: 'google/gemini-3.1-flash-lite',
     }),
     generate,
+    planChapter: plan,
     arcOperation: async request => response(JSON.stringify({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 30 }] }, destinedEnding: 'Bring the story to its true conclusion.' })),
   };
-  return { value, generate };
+  return { value, generate, plan };
 };
 
 const createStory = async (
@@ -190,20 +193,19 @@ describe('Harness Generation Phase 2 novel core', () => {
     const request = provider.generate.mock.calls[0][0] as HarnessGenerationRequest;
     expect(repository.snapshot().stories[0].skillLoadout?.pacing).toEqual({ id: 'seihouse.long-range-pacing', version: '1.0.0' });
     expect(repository.snapshot().stories[0].skillLoadout?.author).toEqual({ id: 'community.cozy-author', version: '1.0.0' });
-    // SEN's Speakers, Holdings and Appearance skills load on every chapter, after the equipped skills.
-    expect(request.capaPrompt.skills.map(skill => [skill.slot, skill.name, skill.authoring])).toEqual([
-      ['author', 'Cozy Fantasy Author', true], ['pacing', 'Long-Range Pacing', true], ['speakers', 'SEN Speakers', true], ['holdings', 'SEN Holdings', true], ['appearance', 'SEN Appearance', true],
+    // SEN's Speakers skill loads on every chapter, after the equipped skills. Pacing decides what happens, so the planner reads it.
+    expect(request.capaPrompt.skills.map(skill => [skill.slot, skill.name, skill.authoring, skill.planning ?? false])).toEqual([
+      ['author', 'Cozy Fantasy Author', true, false], ['pacing', 'Long-Range Pacing', false, true], ['speakers', 'SEN Speakers', true, false],
     ]);
     // An English story with no Accessibility or Translation skill carries no official requirements.
     expect(request.capaPrompt.text).toBe([
       'CAPA SKILL [Author] — Cozy Fantasy Author v1.0.0\nWrite with warmth, restraint, and close attention to daily life.',
-      'CAPA SKILL [Pacing] — Long-Range Pacing v1.0.0\nDo not collapse the siege into one chapter.',
       // The rules every tag shares, once, before the first skill that teaches a tag.
       HARNESS_TAG_RULES,
       `CAPA SKILL [Speakers] — SEN Speakers v${SEN_SPEAKERS_SKILL.version}\n${SEN_SPEAKERS_INSTRUCTIONS}`,
-      `CAPA SKILL [Holdings] — SEN Holdings v${SEN_HOLDINGS_SKILL.version}\n${SEN_HOLDINGS_INSTRUCTIONS}`,
-      `CAPA SKILL [Appearance] — SEN Appearance v${SEN_APPEARANCE_SKILL.version}\n${SEN_APPEARANCE_INSTRUCTIONS}`,
     ].join('\n\n'));
+    expect(request.capaPrompt.planning).toBe('CAPA SKILL [Pacing] — Long-Range Pacing v1.0.0\nDo not collapse the siege into one chapter.');
+    expect(provider.plan.mock.calls[0][0].planningSkills).toBe(request.capaPrompt.planning);
     expect(JSON.stringify(request.storyInformation)).not.toContain('Write with warmth');
     expect(JSON.stringify(request.storyInformation)).not.toContain('skillLoadout');
     expect(repository.snapshot().attempts[0].capaPrompt).toEqual(request.capaPrompt);

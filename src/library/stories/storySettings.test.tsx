@@ -17,6 +17,7 @@ import { useDeviceMediaPacks } from '../../host/media/useDeviceMediaPacks';
 import { inspectHarnessSkillPackage } from '../../host/generation/capa/sppSkills';
 import { createPack } from 'seihouse-productions-package';
 import { COVER_REVEAL_HOLD_MS } from './StoryCoverManifest';
+import { planEveryChapter } from '../../test-utils/chapterPlan';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -34,10 +35,11 @@ const gatedWriter = () => {
       await gate;
       return { rawProviderResponse: JSON.stringify(writtenChapter({
         title: 'Low Tide', paragraphs: ['The tide pulled back from the drowned gate.'],
-        arcCompletion: { goalId: 'arc-1-name', completed: false, evidence: '' }, recap: 'Mara returns.', chapterFunction: 'progression',
+        recap: 'Mara returns.',
         nextProgression: 'Mara climbs.', nextWorldBuilding: 'The keeper speaks.', nextConflict: 'The wardens come.',
       })), providerReceipt: receipt };
     }) as unknown as HarnessGenerationModelAdapter['generate'],
+    planChapter: planEveryChapter(),
     arcOperation: async () => ({ rawProviderResponse: JSON.stringify({ plan: GOAL, destinedEnding: 'Mara reclaims her name.' }), providerReceipt: receipt }),
   };
   return { adapter, release: () => release() };

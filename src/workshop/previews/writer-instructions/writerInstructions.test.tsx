@@ -2,11 +2,13 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { HARNESS_PROMPT_HEADINGS } from '../../../server/harness-generation/prompt';
-import { EVERY_CHAPTER, RETIRED_WRITER_INSTRUCTIONS, WRITER_INSTRUCTIONS, defaultSystemInstruction, fingerprintText } from './writerInstructions';
+import { CHAPTER_PLANNER_HEADINGS } from '../../../server/harness-generation/chapterPlanner';
+import { EVERY_CHAPTER, PLANNER, RETIRED_WRITER_INSTRUCTIONS, WRITER_INSTRUCTIONS, defaultPlannerInstruction, defaultSystemInstruction, fingerprintText } from './writerInstructions';
 import { WRITER_INSTRUCTIONS_HISTORY, lastChange } from './writerInstructionsHistory';
 import { WriterInstructionsWorkspace } from './WriterInstructionsWorkspace';
 
 const block = (id: string) => EVERY_CHAPTER.find(item => item.id === id)!;
+const plannerBlock = (id: string) => PLANNER.find(item => item.id === id)!;
 
 describe('Writer Instructions', () => {
   it('never lets the words the writer reads change without a dated entry in the history', () => {
@@ -34,7 +36,13 @@ describe('Writer Instructions', () => {
     }
   });
 
-  it('shows exactly what a default story\'s writer reads, in the order it reads it, each block under its part\'s heading', () => {
+  it('shows exactly what a default story\'s planner and writer read, in the order each reads it, each block under its part\'s heading', () => {
+    expect(defaultPlannerInstruction()).toBe([
+      CHAPTER_PLANNER_HEADINGS.role, plannerBlock('planner-role').text,
+      CHAPTER_PLANNER_HEADINGS.reading, plannerBlock('planner-reading-guide').text,
+      CHAPTER_PLANNER_HEADINGS.planning, plannerBlock('planner-rules').text,
+      CHAPTER_PLANNER_HEADINGS.hardRules, plannerBlock('planner-hard-rules').text,
+    ].join('\n\n'));
     const skill = (id: string, label: string) => `CAPA SKILL [${label}] — ${block(id).source}\n${block(id).text}`;
     expect(defaultSystemInstruction()).toBe([
       HARNESS_PROMPT_HEADINGS.role, block('role').text,
@@ -43,28 +51,32 @@ describe('Writer Instructions', () => {
       skill('sound-cues', 'Sound Cues'),
       skill('soundtrack', 'Soundtrack'),
       skill('speakers', 'Speakers'),
-      skill('holdings', 'Holdings'),
-      skill('appearance', 'Appearance'),
       HARNESS_PROMPT_HEADINGS.reading, block('reading-guide').text,
       HARNESS_PROMPT_HEADINGS.returning, block('return-format').text,
       HARNESS_PROMPT_HEADINGS.hardRules, block('hard-rules').text,
     ].join('\n\n'));
-    // Every block of every chapter belongs to one part, and the page lists them part by part.
+    // Every block of every chapter belongs to one part of its call, and the page lists them part by part.
+    expect(PLANNER.every(item => item.plannerPart)).toBe(true);
     expect(EVERY_CHAPTER.every(item => item.part)).toBe(true);
   });
 
-  it('renders every block with its words, version and last change, the tag blocks open, then the history', () => {
+  it('renders every block with its words, version and last change, the planner\'s rules and the tag blocks open, then the history', () => {
     const markup = renderToStaticMarkup(createElement(WriterInstructionsWorkspace));
     expect(markup).toContain('<h1>Writer Instructions</h1>');
     for (const { id, source } of WRITER_INSTRUCTIONS) {
       expect(markup).toContain(`data-instruction="${id}"`);
       expect(markup).toContain(source);
     }
-    for (const id of ['tag-rules', 'sound-cues', 'soundtrack', 'speakers', 'holdings', 'appearance']) expect(markup).toMatch(new RegExp(`<details[^>]*open=""[^>]*data-instruction="${id}"`));
+    for (const id of ['planner-rules', 'tag-rules', 'sound-cues', 'soundtrack', 'speakers']) expect(markup).toMatch(new RegExp(`<details[^>]*open=""[^>]*data-instruction="${id}"`));
     expect(markup).not.toMatch(/<details[^>]*open=""[^>]*data-instruction="reading-guide"/);
-    for (const heading of ['# ROLE AND MISSION', '# HOW TO WRITE', '# HOW TO TAG', '# HOW TO READ THE STORY INFORMATION', '# HOW TO RETURN THE CHAPTER', '# HARD RULES']) expect(markup).toContain(heading);
+    for (const heading of ['# ROLE AND MISSION', '# HOW TO PLAN THE CHAPTER', '# HOW TO WRITE', '# HOW TO TAG', '# HOW TO READ THE STORY INFORMATION', '# HOW TO RETURN THE CHAPTER', '# HARD RULES']) expect(markup).toContain(heading);
+    // The planner comes first, then the writer.
+    expect(markup.indexOf('data-instruction="planner-role"')).toBeLessThan(markup.indexOf('data-instruction="role"'));
     expect(markup).toContain('A new speaker starts a new paragraph. Speech goes in quotation marks.');
-    expect(markup.replace(/<[^>]+>/g, '')).toMatch(/SEN Speakers v3\.0\.0 · \d+ words · changed 2026-10-19/);
+    expect(markup.replace(/<[^>]+>/g, '')).toMatch(/SEN Speakers v4\.0\.0 · \d+ words · changed 2026-10-20/);
+    // Retired blocks are named in the history only.
+    expect(markup).not.toContain('data-instruction="holdings"');
+    expect(markup).toContain('Holdings (retired)');
     expect(markup).toMatch(/<time datetime="2026-10-04">2026-10-04<\/time>/i);
   });
 });

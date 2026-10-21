@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  SEN_APPEARANCE_SKILL, SEN_HOLDINGS_SKILL, SEN_NOVEL_AUTHOR_SKILL, SEN_READING_MODE_SKILLS, SEN_SOUND_CUES_SKILL, SEN_SOUNDTRACK_SKILL, SEN_SPEAKERS_SKILL,
+  SEN_NOVEL_AUTHOR_SKILL, SEN_READING_MODE_SKILLS, SEN_SOUND_CUES_SKILL, SEN_SOUNDTRACK_SKILL, SEN_SPEAKERS_SKILL,
   CAPA_SCHEMA, assembleCapaPrompt,
 } from '@seihouse/sen/harness-generation';
 import { soundtrackVocabulary } from '@seihouse/sen/audio';
@@ -11,7 +11,7 @@ import { HARNESS_PROMPT_HEADINGS, HARNESS_PROMPT_PARTS, composeHarnessSystemInst
 const headings = (text: string) => text.split('\n').filter(line => line.startsWith('# '));
 const HEADINGS = HARNESS_PROMPT_PARTS.map(part => HARNESS_PROMPT_HEADINGS[part]);
 
-const capa = (skills = [SEN_NOVEL_AUTHOR_SKILL, SEN_READING_MODE_SKILLS['Clear Reading'], SEN_SOUND_CUES_SKILL, SEN_SOUNDTRACK_SKILL, SEN_SPEAKERS_SKILL, SEN_HOLDINGS_SKILL, SEN_APPEARANCE_SKILL]) => assembleCapaPrompt({
+const capa = (skills = [SEN_NOVEL_AUTHOR_SKILL, SEN_READING_MODE_SKILLS['Clear Reading'], SEN_SOUND_CUES_SKILL, SEN_SOUNDTRACK_SKILL, SEN_SPEAKERS_SKILL]) => assembleCapaPrompt({
   capturedAt: 'now', originalLanguage: 'ja', skills,
   soundVocabulary: LIBRARY_SOUND_WORDS, soundtrackVocabulary: soundtrackVocabulary(LIBRARY_BASE_MEDIA),
 });

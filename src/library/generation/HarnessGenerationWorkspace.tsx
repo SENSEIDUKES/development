@@ -108,7 +108,8 @@ const EMPTY_MEDIA_PACKS: MediaPack[] = [];
 const EMPTY_MEDIA_ENTITLEMENTS: MediaPackEntitlement[] = [];
 
 const stageLabel: Record<HarnessGenerationAttempt['stage'], string> = {
-  request_started: 'Request started',
+  request_started: 'Planning',
+  planned: 'Planned, writing',
   provider_outcome_unknown: 'Provider outcome unknown',
   raw_received: 'Raw response saved',
   prose_accepted: 'Prose accepted',
@@ -625,26 +626,30 @@ function HarnessInspection({
         {attempt ? (
           <>
             <table className="mt-3 w-full text-left text-xs text-neutral-300">
-              <thead><tr className="font-mono text-[10px] uppercase tracking-[0.12em] text-neutral-500"><th className="pr-2">Section</th><th className="pr-2">Estimated tokens</th><th className="pr-2">Budget</th><th className="pr-2">Sent characters</th></tr></thead>
+              <thead><tr className="font-mono text-[10px] uppercase tracking-[0.12em] text-neutral-500"><th className="pr-2">Section</th><th className="pr-2">Estimated tokens</th><th className="pr-2">Budget</th><th className="pr-2">Sent to the planner</th><th className="pr-2">Sent to the writer</th></tr></thead>
               <tbody>
                 {PACKET_SECTION_ORDER.map(section => {
                   const measured = attempt.storyInformation.diagnostics.sections.find(item => item.section === section);
                   const budget = GENERATION_PACKET_BUDGET.sections[section];
+                  const planned = attempt.plannerCall?.requestMeasurement?.sections.find(item => item.section === section)?.characters;
                   const sent = attempt.requestMeasurement?.sections.find(item => item.section === section)?.characters;
                   return <tr key={section} className={measured?.overBudget ? 'text-amber-200' : ''}>
                     <td className="pr-2 py-1">{section}{budget.protected ? ' · protected' : ''}</td>
                     <td className="pr-2 py-1">{measured ? measured.estimatedTokens.toLocaleString() : section === 'capaPrompt' ? attempt.capaPrompt.estimatedTokens.toLocaleString() : '—'}</td>
                     <td className="pr-2 py-1">{'tokens' in budget ? budget.tokens.toLocaleString() : 'none'}</td>
+                    <td className="pr-2 py-1">{planned !== undefined ? planned.toLocaleString() : '—'}</td>
                     <td className="pr-2 py-1">{sent !== undefined ? sent.toLocaleString() : '—'}</td>
                   </tr>;
                 })}
               </tbody>
             </table>
-            <p className="mt-3 text-xs text-neutral-300">
-              {attempt.requestMeasurement
-                ? `Serialized provider request: ${attempt.requestMeasurement.totalCharacters.toLocaleString()} characters (${attempt.requestMeasurement.systemInstructionCharacters.toLocaleString()} system · ${attempt.requestMeasurement.userPromptCharacters.toLocaleString()} user · ${attempt.requestMeasurement.responseSchemaCharacters.toLocaleString()} schema) ≈ ${attempt.requestMeasurement.estimatedTokens.toLocaleString()} tokens of a ${GENERATION_PACKET_BUDGET.requestTokens.toLocaleString()} soft ceiling.`
-                : 'The serialized request size arrives with the provider response.'}
-            </p>
+            {/* Each call's whole request, as the host measured it: the planner's first, then the writer's. */}
+            {([['Planner', attempt.plannerCall?.requestMeasurement], ['Writer', attempt.requestMeasurement]] as const).map(([label, measurement]) => <p key={label} className="mt-3 text-xs text-neutral-300">
+              {measurement
+                ? `${label} request: ${measurement.totalCharacters.toLocaleString()} characters (${measurement.systemInstructionCharacters.toLocaleString()} system · ${measurement.userPromptCharacters.toLocaleString()} user · ${measurement.responseSchemaCharacters.toLocaleString()} schema) ≈ ${measurement.estimatedTokens.toLocaleString()} tokens of a ${GENERATION_PACKET_BUDGET.requestTokens.toLocaleString()} soft ceiling.`
+                : label === 'Planner' && attempt.chapterPlan?.reusedFrom ? 'Planner request: none; this attempt kept an earlier plan.'
+                  : `${label} request: its size arrives with the provider response.`}
+            </p>)}
             <p className="mt-1 text-xs text-neutral-500">
               Storage: {attempt.storyInformation.diagnostics.storage.chapters} chapters · {attempt.storyInformation.diagnostics.storage.events} events · {attempt.storyInformation.diagnostics.storage.canonicalRecords} canonical records ({attempt.storyInformation.diagnostics.storage.activeRecords} active) · {attempt.storyInformation.diagnostics.storage.recaps} recaps.
             </p>

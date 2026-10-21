@@ -51,28 +51,12 @@ type StoredWorkspace = Record<string, unknown> & { schemaVersion: number };
 
 /**
  * Explicit upgrade steps, keyed by the version they upgrade from. Nothing
- * before schema 27 (arcs of 30 chapters) upgrades, by the product owner's
- * decision: every earlier story was a test story planned in 100-chapter arcs,
- * so that storage is kept untouched and the page starts fresh.
+ * before schema 33 (the chapter loop) upgrades, by the product owner's
+ * decision (SENSEI, 2026-10-20): every earlier story was a test story whose
+ * record came from tags in its prose, so that storage is kept untouched and
+ * the page starts fresh.
  */
-const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => StoredWorkspace> = {
-  // 28 adds only optional fields (a rewrite request and its replaced-by record,
-  // a chapter's Holdings fixer record): every saved story reads as it is.
-  27: stored => ({ ...stored, schemaVersion: 28 }),
-  // 29 adds only optional fields (a chapter's scene, the atmospheres in frozen
-  // media, a frozen soundtrack vocabulary): every saved story reads as it is.
-  28: stored => ({ ...stored, schemaVersion: 29 }),
-  // 30 adds only an optional story field (the creator's Author's notes):
-  // every saved story reads as it is.
-  29: stored => ({ ...stored, schemaVersion: 30 }),
-  // 31 adds only an optional story field (the story's own sound words): every
-  // saved story reads as it is and keeps its recordings' words until edited;
-  // every chapter keeps the cues it saved and every attempt what it froze.
-  30: stored => ({ ...stored, schemaVersion: 31 }),
-  // 32 adds only optional chapter fields (its appearances and the looks
-  // written down from them): every saved story reads as it is.
-  31: stored => ({ ...stored, schemaVersion: 32 }),
-};
+const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => StoredWorkspace> = {};
 
 /**
  * Upgrades saved storage from an earlier schema version through each explicit
@@ -93,8 +77,8 @@ export const migrateHarnessWorkspaceState = (value: unknown): HarnessWorkspaceSt
 /**
  * Reads saved Harness Generation storage. Current storage is read as is;
  * storage from an earlier version with an explicit migration is upgraded with
- * every story, chapter and plan kept (schema 27 upgrades; nothing before it
- * does). Anything else (an earlier or unknown version, or an
+ * every story, chapter and plan kept (none does today: nothing before schema
+ * 33 upgrades). Anything else (an earlier or unknown version, or an
  * unrecognized shape) cannot be read and yields an empty workspace; hosts keep
  * an untouched copy of it (see the IndexedDB repository) before replacing it.
  * Every structural change to a persisted field must bump

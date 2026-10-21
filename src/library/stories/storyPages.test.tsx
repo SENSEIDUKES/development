@@ -8,6 +8,7 @@ import { installAudioMediaStubs, renderWithDevAudio } from '../../test-utils/ren
 import { HarnessGenerationController, type HarnessGenerationModelAdapter, type HarnessGenerationRepository } from '@seihouse/sen/harness-generation';
 import type { ReaderStateRepository, ReaderStoryState } from '@seihouse/sen/reader-runtime';
 import { StoryPages, storyHomeWorlds, useLibraryStories, type LibraryStories } from '@seihouse/library/stories';
+import { planEveryChapter } from '../../test-utils/chapterPlan';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -24,7 +25,7 @@ const scriptedModel = ({ configured = true } = {}) => {
     await gate;
     return { rawProviderResponse: JSON.stringify(writtenChapter({
       title: 'Low Tide', paragraphs: ['The tide pulled back from the drowned gate.', 'Mara counted the bells that no longer rang.'],
-      arcCompletion: { goalId: 'arc-1-name', completed: false, evidence: '' }, recap: 'Mara returns.', chapterFunction: 'progression',
+      recap: 'Mara returns.',
       nextProgression: 'Mara climbs the bell tower.', nextWorldBuilding: 'The keeper explains the drowned law.', nextConflict: 'The tide wardens seize the causeway.',
     })), providerReceipt: receipt };
   });
@@ -32,6 +33,7 @@ const scriptedModel = ({ configured = true } = {}) => {
   const adapter: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured, models: [{ id: 'fixture', label: 'Fixture' }, { id: 'remembered', label: 'Remembered' }], defaultModel: 'fixture' }),
     generate: generate as unknown as HarnessGenerationModelAdapter['generate'],
+    planChapter: planEveryChapter(),
     arcOperation: async () => ({ rawProviderResponse: JSON.stringify({ plan: GOAL, destinedEnding: 'Mara reclaims her name.' }), providerReceipt: receipt }),
   };
   return { adapter, generate, recoverMemory, release: () => release() };

@@ -11,6 +11,7 @@ import { assembleCapaPrompt, SEN_NOVEL_AUTHOR_SKILL, harnessArcContext } from '@
 import { CHAPTER_FUNCTIONS, HARD_PIN_LIMIT, validateHardPinInputs, type ChapterFunction, type HarnessArcRequest, type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse } from '@seihouse/sen/harness-generation';
 import type { HarnessRuntime } from './ids';
 import { type ArcPlan } from '@seihouse/sen/arc-goals';
+import { plannedChapter, TEST_CHAPTER_PLAN } from '../../../test-utils/chapterPlan';
 
 const runtime = (): HarnessRuntime => {
   let id = 0;
@@ -34,9 +35,7 @@ const plan: ArcPlan = { arcNumber: 1, goals: [
 const chapterReply = (overrides: Record<string, unknown> = {}) => ({
   title: 'Ashes',
   paragraphs: ['Yi Chen climbed the mountain path toward the Azure Sect gate.', 'The gate opened at dusk.'],
-  arcCompletion: { goalId: 'arc-1-gate', completed: false, evidence: '' },
   recap: 'Yi Chen reached the gate at dusk.',
-  chapterFunction: 'progression',
   nextProgression: 'Yi Chen enters the outer court.',
   nextWorldBuilding: 'The sect archives reveal the founder’s oath.',
   nextConflict: 'A rival disciple challenges Yi Chen.',
@@ -45,12 +44,14 @@ const chapterReply = (overrides: Record<string, unknown> = {}) => ({
 
 const setup = async () => {
   const outputs: unknown[] = [];
+  const plans: object[] = [];
   const requests: HarnessGenerationRequest[] = [];
   const arcRequests: HarnessArcRequest[] = [];
   let arcReply: Record<string, unknown> = { plan, destinedEnding: 'Yi Chen leads the Azure Sect to glory.' };
   const adapter: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ configured: true, provider: 'gemini', defaultModel: 'fixture', models: [] }),
     generate: vi.fn(async request => { requests.push(request); return asWrittenChapter(response(outputs.shift() ?? chapterReply())); }),
+    planChapter: vi.fn(async () => plannedChapter(plans.shift() ?? TEST_CHAPTER_PLAN)),
     arcOperation: vi.fn(async request => { arcRequests.push(request); return response(arcReply); }),
   };
   const repository = new InMemoryHarnessGenerationRepository();
@@ -59,6 +60,7 @@ const setup = async () => {
   return {
     controller, repository, adapter, requests, arcRequests,
     queue: (...replies: unknown[]) => outputs.push(...replies),
+    queuePlan: (...replies: object[]) => plans.push(...replies),
     setArcReply: (reply: Record<string, unknown>) => { arcReply = reply; },
     reload: async () => {
       const reloaded = new HarnessGenerationController({ repository, modelAdapter: adapter, runtime: runtime() });
@@ -160,7 +162,7 @@ describe('Previously On recaps and rhythm metadata', () => {
   });
 
   it('warns about missing or malformed optional metadata without rejecting valid prose', () => {
-    const missing = acceptHarnessModelResponse(JSON.stringify({ paragraphs: ['Valid prose remains.'], arcCompletion: { goalId: 'g', completed: false, evidence: '' } }), 1);
+    const missing = acceptHarnessModelResponse(JSON.stringify({ paragraphs: ['Valid prose remains.'] }), 1);
     expect(missing.accepted).toBe(true);
     if (!missing.accepted) return;
     expect(missing.draft.prose).toBe('Valid prose remains.');
@@ -169,7 +171,7 @@ describe('Previously On recaps and rhythm metadata', () => {
     expect(missing.warnings.map(warning => warning.code)).toEqual(expect.arrayContaining(['optional_recap_omitted', 'optional_rhythm_metadata_omitted']));
 
     const malformed = acceptHarnessModelResponse(JSON.stringify({
-      paragraphs: ['Valid prose remains.'], recap: 42, chapterFunction: 'romance',
+      paragraphs: ['Valid prose remains.'], recap: 42,
       nextProgression: ['not', 'a', 'string'], nextWorldBuilding: 'Kept: the archives open.', nextConflict: 'two\nlines',
     }), 1);
     expect(malformed.accepted).toBe(true);
@@ -178,7 +180,7 @@ describe('Previously On recaps and rhythm metadata', () => {
     expect(malformed.draft.recap).toBeUndefined();
     // Each piece is validated on its own: the one readable suggestion survives.
     expect(malformed.draft.rhythm).toEqual({ nextChapterSuggestions: { worldBuilding: 'Kept: the archives open.' } });
-    expect(malformed.warnings.filter(warning => warning.code === 'optional_rhythm_metadata_omitted')).toHaveLength(3);
+    expect(malformed.warnings.filter(warning => warning.code === 'optional_rhythm_metadata_omitted')).toHaveLength(2);
     expect(malformed.warnings.filter(warning => warning.code === 'optional_recap_omitted')).toHaveLength(1);
 
     const plain = acceptHarnessModelResponse('Plain prose only.\n\nStill a chapter.', 1);
@@ -296,8 +298,10 @@ describe('Fate Pressure rhythm recommendation', () => {
     expect(run.controller.snapshot().stories.map(story => story.rhythmRecommendation?.fatePressure)).toEqual(['heaven', 'mortal', 'immortal']);
     expect(run.controller.snapshot().stories[2].rhythmRecommendation?.fatePressureSource).toBe('development-default');
 
-    for (const reply of ['worldBuilding', 'worldBuilding'] as const) {
-      run.queue(chapterReply({ chapterFunction: reply, fatePressure: 'mortal' }));
+    // The chapter's function is its plan's; neither call's reply can set the story's Fate Pressure.
+    for (const chapterFunction of ['worldBuilding', 'worldBuilding'] as const) {
+      run.queuePlan({ ...TEST_CHAPTER_PLAN, chapterFunction, fatePressure: 'mortal' });
+      run.queue(chapterReply({ fatePressure: 'mortal' }));
       await run.controller.generateNextChapter(heaven.id, 'fixture');
     }
     let state = run.controller.snapshot();

@@ -7,6 +7,7 @@ import { writtenChapter } from '../../../test-utils/writtenChapter';
 import { validateHarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import { validateTranslationGlossaryResource } from '@seihouse/sen/harness-generation';
 import { type HarnessGenerationResponse, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
+import { planEveryChapter } from '../../../test-utils/chapterPlan';
 
 /** Test-only Translation manifest; never an installed product skill. */
 const japaneseSkill = (): HarnessSkillManifest => validateHarnessSkillManifest({
@@ -54,6 +55,7 @@ const buildController = (options: {
     installedSkills: [SEN_NOVEL_AUTHOR_SKILL, ...(options.skills ?? [])],
     modelAdapter: {
       getServerInfo: async () => { throw new Error('Not used'); },
+      planChapter: planEveryChapter(),
       arcOperation: async request => arcReply(request.storyInformation.chapterNumber),
       generate: async request => {
         const response = await handleHarnessGenerationHttp({ method: 'POST', body: JSON.stringify(request) }, {

@@ -1937,10 +1937,14 @@ export class HarnessGenerationController {
       const isNew = !batch.completedChapterIds.includes(attempt.committedChapterId);
       if (isNew) {
         batch.completedChapterIds.push(attempt.committedChapterId);
-        // Each chapter's two calls: the planner's (made by this attempt, or by the failed one whose plan
-        // its retry reused) and the writer's.
-        const plannerCall = attempt.plannerCall ?? candidate.attempts.find(entry => entry.id === attempt.chapterPlan?.reusedFrom)?.plannerCall;
-        for (const usage of [plannerCall?.providerReceipt.usage, attempt.providerReceipt?.usage]) {
+        // Every call this batch made for the chapter, each counted once: the planner's and the writer's on
+        // every try, the failed ones included (a plan that could not be read, a plan a retry reused).
+        const tries = candidate.attempts.filter(entry => entry.batchId === batch.id && entry.chapterNumber === attempt.chapterNumber);
+        const usages = tries.flatMap(entry => [
+          ...(entry.plannerCall ? [entry.plannerCall.providerReceipt.usage] : []),
+          ...(entry.providerReceipt ? [entry.providerReceipt.usage] : []),
+        ]);
+        for (const usage of usages) {
           if (usage?.source === 'reported') batch.usage.reportedCalls += 1;
           else if (usage?.source === 'estimated') batch.usage.estimatedCalls += 1;
           else batch.usage.unavailableCalls += 1;

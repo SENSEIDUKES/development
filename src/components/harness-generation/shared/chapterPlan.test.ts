@@ -96,6 +96,20 @@ describe('reading the planner\'s reply', () => {
     ]);
   });
 
+  it('reads a cast member whose kind is off the menu, or missing, as a character, and says so', () => {
+    const reading = readChapterPlan(JSON.stringify({
+      cast: [{ name: 'MC' }, { name: 'Kael Varn' }, { name: 'Bone Oar', kind: 'item' }, { name: 'Ferry Token', kind: 'Thing' }],
+      events: [{ kind: 'journey', how: 'Lin crosses the river.', facts: [] }],
+      arcGoalReached: { reached: false }, chapterFunction: 'progression',
+    }));
+    if (!reading.ok) throw new Error(reading.problem);
+    expect(reading.plan.cast.map(member => [member.name, member.kind])).toEqual([['MC', 'character'], ['Kael Varn', 'character'], ['Bone Oar', 'character'], ['Ferry Token', 'thing']]);
+    expect(reading.checks.map(found => found.message)).toEqual([
+      '‘Kael Varn’ is cast with no kind, so it is read as a character.',
+      '‘Bone Oar’ is cast as ‘item’, which is not on the menu, so it is read as a character.',
+    ]);
+  });
+
   it('holds no plan only when the reply is not one, or has no event to narrate', () => {
     expect(readChapterPlan('The chapter opens at dawn.')).toEqual({ ok: false, problem: 'The planner\'s reply was not a plan the HARNESS could read.' });
     expect(readChapterPlan(JSON.stringify({ cast: [{ name: 'MC', kind: 'character' }], events: [] })))
@@ -262,6 +276,14 @@ describe('the plan as the writer reads it', () => {
     expect(character.entryId).toBe(spirit.id);
     expect(thing.entryId).toBe('e-new');
     expect(resolver.created.map(entry => [entry.name, entry.kind])).toEqual([['Azure Frost', 'thing']]);
+    // With only the sword on the page, a fact naming Azure Frost is about the sword, not its spirit.
+    const swordOnly: ChapterPlan = {
+      cast: [{ name: 'MC', kind: 'character' }, { name: 'Azure Frost', kind: 'thing' }],
+      events: [event('The blade cracks on the ice.', [{ type: 'status', who: { name: 'Azure Frost' }, state: 'damaged' }])],
+    };
+    const swordResolver = createCodexEntryResolver({ storyId: 's', chapter: { id: 'c2', chapterNumber: 2 }, entries, declared: DECLARED, createdAt: '', createId: () => 'e-sword' });
+    const swordPlan = resolveChapterPlan(check(swordOnly, before).plan, swordResolver);
+    expect(swordPlan.events[0].facts[0]).toMatchObject({ who: { name: 'Azure Frost', entryId: 'e-sword' } });
     // The writer gets the spirit's Codex line for the spirit only; the sword is new.
     const codex: CodexSection = { entries: [{ name: 'Lin', kind: 'character', mainCharacter: true }, { name: 'Azure Frost', kind: 'character', who: 'The spirit of a sword.', lastOnPage: 1 }] };
     expect(writerChapterPlan(checked.plan, codex).cast.slice(1)).toEqual([

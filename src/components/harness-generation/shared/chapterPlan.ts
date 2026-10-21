@@ -103,11 +103,20 @@ const readHeld = (value: unknown): PlanHeld | undefined => {
   };
 };
 
-const readCastMember = (value: unknown): PlanCastMember | undefined => {
+/**
+ * One person or thing on the page. A kind off its menu, or none, is read as a
+ * character, as most of a cast is, and said so: setting the member aside
+ * would lose a newcomer and every fact about them.
+ */
+const readCastMember = (value: unknown, checks: PlanCheck[]): PlanCastMember | undefined => {
   if (!isRecord(value)) return undefined;
   const name = readPlanRef(value.name);
   if (!name || name.unnamed) return undefined;
-  const kind = value.kind === 'thing' ? 'thing' : 'character';
+  const menuKind = menu(['character', 'thing'] as const, value.kind);
+  if (!menuKind && !isMainCharacterTag(name.name)) {
+    checks.push({ message: `‘${name.name}’ is cast ${text(value.kind) ? `as ‘${text(value.kind)}’, which is not on the menu` : 'with no kind'}, so it is read as a character.` });
+  }
+  const kind = menuKind ?? 'character';
   const gender = menu(PLAN_GENDERS, value.gender);
   const age = menu(PLAN_AGES, value.age);
   const look = readLook(value.look, kind);
@@ -224,7 +233,7 @@ export function readChapterPlan(raw: string): ChapterPlanReading {
   const reply = parseReply(raw);
   if (!reply) return { ok: false, problem: 'The planner\'s reply was not a plan the HARNESS could read.' };
   const checks: PlanCheck[] = [];
-  const cast = (Array.isArray(reply.cast) ? reply.cast : []).map(readCastMember).filter((member): member is PlanCastMember => Boolean(member));
+  const cast = (Array.isArray(reply.cast) ? reply.cast : []).map(value => readCastMember(value, checks)).filter((member): member is PlanCastMember => Boolean(member));
   const events = (Array.isArray(reply.events) ? reply.events : []).filter(isRecord).map((source, index): PlanEvent => {
     const number = index + 1;
     const kind = menu(PLAN_EVENT_KINDS, source.kind);
@@ -313,10 +322,16 @@ export function resolveChapterPlan(plan: ChapterPlan, resolver: CodexEntryResolv
       ...(member.alreadyHas ? { alreadyHas: member.alreadyHas.map(held => ({ ...held, entryId: resolver.entry(held.kind, held.name).id })) } : {}),
     };
   });
+  // A name the cast holds once is that member, of its own kind (a fact about the sword, not its spirit);
+  // a name it holds as both, or not at all, is what the record knows by it, a character first.
+  const castEntry = (name: string) => {
+    const named = cast.filter(member => normalizeIdentityLabel(member.name) === normalizeIdentityLabel(name));
+    return named.length === 1 ? named[0].entryId : undefined;
+  };
   const known = (ref: PlanRef): PlanRef => {
     if (ref.unnamed) return { name: ref.name, unnamed: true };
-    const entry = resolver.existing(ref.name) ?? (resolver.declared(ref.name) ? resolver.character(ref.name) : undefined);
-    return { name: ref.name, ...(entry ? { entryId: entry.id } : {}) };
+    const entryId = castEntry(ref.name) ?? (resolver.existing(ref.name) ?? (resolver.declared(ref.name) ? resolver.character(ref.name) : undefined))?.id;
+    return { name: ref.name, ...(entryId ? { entryId } : {}) };
   };
   return {
     ...structuredClone(plan),

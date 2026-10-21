@@ -308,6 +308,22 @@ describe('Harness Generation Phase 3 deterministic story harness', () => {
     expect(final.batches[0]).toMatchObject({ status: 'completed', usage: { reportedCalls: 3, estimatedCalls: 1, unavailableCalls: 0, inputTokens: 220, outputTokens: 50, totalTokens: 270 } });
   });
 
+  it('counts a planner call whose reply could not be read, once its chapter commits on a retry', async () => {
+    const repository = new InMemoryHarnessGenerationRepository();
+    const usage = { source: 'reported' as const, inputTokens: 100, outputTokens: 5, totalTokens: 105 };
+    const replies = [{ rawProviderResponse: 'The chapter opens at dawn.', providerReceipt: { ...plannedChapter().providerReceipt, usage } }, { ...plannedChapter(), providerReceipt: { ...plannedChapter().providerReceipt, usage } }];
+    const provider = adapter(response({ prose: 'The road moves at night.' }, 'reported'));
+    provider.value.planChapter = vi.fn(async () => replies.shift()!);
+    const controller = new HarnessGenerationController({ repository, modelAdapter: provider.value, runtime: runtime() });
+    await controller.hydrate();
+    const story = await controller.createStory({ premise: 'A cartographer maps a road that moves at night.' });
+    await controller.startBatch(story.id, 'gemini-test', 1);
+    expect(controller.snapshot().batches[0]).toMatchObject({ status: 'failed' });
+    await controller.retryBatchChapter(controller.snapshot().batches[0].id);
+    // The unreadable plan was paid for too: two planner calls and the writer's.
+    expect(controller.snapshot().batches[0]).toMatchObject({ status: 'completed', usage: { reportedCalls: 3, estimatedCalls: 0, unavailableCalls: 0, totalTokens: 240 } });
+  });
+
   it('honors a manual pause after the active provider call and resumes from the next uncommitted chapter', async () => {
     const repository = new InMemoryHarnessGenerationRepository();
     let resolveSecond!: (value: HarnessGenerationResponse) => void;

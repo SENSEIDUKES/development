@@ -179,7 +179,9 @@ the main character; a character the Story Information declares keeps its
 aliases; a new name gets one entry, reused by that exact name afterwards.
 Things and abilities stay separate entries even under one name, and a thing
 in a plan's cast resolves among things, so it never takes a character's entry
-(a sword and its spirit stay two). Two entries whose names are forms of one
+(a sword and its spirit stay two); a fact naming someone or something the cast
+holds once is about that member. A cast member whose kind is off the menu is
+read as a character, and the plan's checks say so. Two entries whose names are forms of one
 name are flagged as possible duplicates.
 
 **The record** (2026-10-20) is never stored: it is worked out again from the

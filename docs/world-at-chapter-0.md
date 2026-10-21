@@ -6,6 +6,43 @@ read it top to bottom, then [the chapter loop](chapter-loop.md),
 [HARNESS_PRINCIPLES](../src/components/harness-generation/HARNESS_PRINCIPLES.md)
 and the [vocabulary](../src/components/harness-generation/ARCHITECTURE_VOCABULARY.md).
 
+## Where this stands, and how to use it (read first)
+
+SENSEI is not a coder (2026-10-21: "I can't do anything but tell you guys my
+ideas and hope you guys choose the right shit"). Agents write all code.
+SENSEI decides, approves words, and judges results by **seeing** them in the
+Workshop and the app, never by reading code. So every phase below ends with
+something SENSEI can look at, and no phase starts on an undecided question.
+
+**Already designed in [the chapter loop](chapter-loop.md):** CTE as code
+(section "CTE: independent probes, one engine"): a probe per CGT variable
+measured from the record by code, an engine running CGT section 13, plain
+words for the models. The world judge. Build order steps 3 to 7. Its open
+decisions 1 to 4 belong to SENSEI at those steps. Decision 1, where a
+character's starting CTE state comes from, is part of the World at Chapter 0:
+picks in the Seed, turned into numbers by code.
+
+**Phases, in order:**
+
+| # | Phase | Agents build | SENSEI does | SENSEI sees |
+|---|---|---|---|---|
+| A | Finish this design | Draft card kinds and their slots from the record's line (artist and save-game tests) | Approve or cut the list | This doc |
+| B | World at Chapter 0 | Seed slots, Blueprint fill, Chapter 0 record | Approve any new model words or calls | Seed and Blueprint pages; the Codex full before Chapter 1 |
+| C | CTE engine + first probe | CGT section 13 as code, the Fragmentation probe, CGT section 14's examples as tests | Hand over CGT v1.5 (PDF); decide chapter-loop decisions 1, 2, 4 | A **CTE panel**: each character's variables, phase and evidence per chapter |
+| D | Planner reads CTE + Fate Pressure | The readout in plain words; the tier as the aim | Approve the planner's new words | The plan and the readout side by side on the Harness Generation page |
+| E | World judge | Outcomes by code | Decide chapter-loop decision 3 | Outcomes and their reasons |
+| F | Other probes, one variable at a time | Each probe with its doctrine file | Approve each doctrine file in plain words | The CTE panel filling in |
+| G | Cleanup | Remove what covered for the missing world | Approve removals | Fewer warnings, same results |
+
+**What is not ready yet:** the card-kind list (phase A); the CGT numbers are
+in SENSEI's PDF, not the repo; the pressures per Fate Pressure tier (later,
+not to be invented); the writer's freedom line.
+
+**To hand this to a new chat:** "Read docs/world-at-chapter-0.md and
+docs/chapter-loop.md. We are at phase A. Draft the card kinds for my
+approval; build nothing until I approve." Attach the CGT v1.5 PDF before
+phase C.
+
 ## The problem, in SENSEI's words (2026-10-21)
 
 > "We already had planned out what the codex slots were going to be. And yet I

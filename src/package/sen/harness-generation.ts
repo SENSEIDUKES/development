@@ -145,7 +145,7 @@ export {
   blockedFact,
   conditionLabel,
   derivePlanRecord,
-  openCommitments,
+  openCommitment,
   openGoal,
   type RecordChapter,
   type RecordPassage,

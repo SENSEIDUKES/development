@@ -178,9 +178,12 @@ name or an alias, when a chapter commits (`createCodexEntryResolver`,
 the main character; a character the Story Information declares keeps its
 aliases; a new name gets one entry, reused by that exact name afterwards.
 Things and abilities stay separate entries even under one name, and a thing
-in a plan's cast resolves among things, so it never takes a character's entry
-(a sword and its spirit stay two); a fact naming someone or something the cast
-holds once is about that member. A cast member whose kind is off the menu is
+in a plan's cast resolves among things, so it never takes a character's entry,
+the main character's included (a sword and its spirit stay two); a fact naming
+someone or something the cast holds once is about that member. Whoever an
+event names as acting, aimed at or pressed joins the cast when the plan left
+them out: as the record knows them, or as a character when nothing does and
+they act or are pressed; the checks say so. A cast member whose kind is off the menu is
 read as a character, and something it already has as a thing, and the plan's checks say so. Two entries whose names are forms of one
 name are flagged as possible duplicates.
 
@@ -192,7 +195,8 @@ then each look fact), gender and age, who they are, its state (`status`
 facts: wounded, recovered, dead, revived, sealed, captured, freed,
 transformed, damaged, repaired, destroyed; the dead stay dead and the
 destroyed stay gone unless revived), goals, values, commitments both ways and
-stances, said and acted. `deriveHoldings` (`shared/holdings.ts`) gives what
+stances, said and acted. A goal or commitment is settled only by a fact whose
+words name it; one the record never had is kept as its own, and the checks say so. `deriveHoldings` (`shared/holdings.ts`) gives what
 each character has, uses, knows and is, as four facts kept apart: a thing is
 *owned* (with a count) and may be *equipped* (in use); an ability is
 *learning* or *learned* (with a level), and a learned one may be *sealed*;

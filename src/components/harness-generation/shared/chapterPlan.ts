@@ -29,7 +29,7 @@ import type { CodexEntry } from '../../../narrative/holdings';
 import type { ChapterPlanCastEntry, CodexSection, CodexSectionEntry, HarnessArcContext, HarnessStoryMode, WriterChapterPlan } from '../../../narrative/generation';
 import { normalizeIdentityLabel } from './canonicalProjection';
 import { createCodexEntryResolver, deriveHoldings, holdingTargetKind, HOLDING_VERB_OF_CHANGE, type CodexEntryResolver, type DeclaredCharacter, type HoldingFlagKind } from './holdings';
-import { blockedFact, openCommitments, openGoal, PlanRecordBuilder, type RecordChapter } from './planRecord';
+import { blockedFact, openCommitment, openGoal, PlanRecordBuilder, type RecordChapter } from './planRecord';
 import { isMainCharacterTag } from './speakers';
 
 /**
@@ -375,7 +375,8 @@ export interface CheckedChapterPlan {
 /**
  * Checks a plan against the record, in event order, before the writer is
  * given it (SENSEI, 2026-10-20). The main character is `MC` everywhere and
- * always in the cast. A fact about someone neither the cast nor the record
+ * always in the cast, and whoever an event names as acting, aimed at or
+ * pressed joins it. A fact about someone neither the cast nor the record
  * knows is dropped; so is any fact that cannot be true where it stands: about
  * the dead or the destroyed (unless they are revived), a recovery, freeing
  * or repair of what is not wounded, held or damaged, and a holding change
@@ -412,11 +413,12 @@ export function checkChapterPlan({ plan: planned, storyId, entries, chapters, de
   const mainKey = resolver.character(PLAN_MAIN_CHARACTER).id;
   const asMain = (ref: PlanRef): PlanRef => (!ref.unnamed && resolver.existing(ref.name)?.id === mainKey ? { ...ref, name: PLAN_MAIN_CHARACTER } : ref);
 
-  // The main character is MC everywhere, a character whatever kind the plan gave, and always on the page.
-  // Anyone or anything else is one member per name and kind, so a sword and its spirit stay two.
+  // The main character is MC everywhere, a character, and always on the page. A thing keeps its own name,
+  // so one named like the main character stays a thing. Anyone or anything else is one member per name
+  // and kind, so a sword and its spirit stay two.
   const cast: PlanCastMember[] = [];
   for (const source of planned.cast.map((member): PlanCastMember => {
-    const name = asMain({ name: member.name }).name;
+    const name = member.kind === 'thing' && !isMainCharacterTag(member.name) ? member.name : asMain({ name: member.name }).name;
     return { ...member, name, kind: name === PLAN_MAIN_CHARACTER ? 'character' : member.kind };
   })) {
     const same = cast.find(member => member.kind === source.kind && normalizeIdentityLabel(member.name) === normalizeIdentityLabel(source.name));
@@ -441,6 +443,28 @@ export function checkChapterPlan({ plan: planned, storyId, entries, chapters, de
       facts: event.facts.map(fact => mapFactRefs(fact, (ref, role) => (role === 'what' ? ref : asMain(ref)))),
     })),
   };
+
+  // Whoever an event names as acting, aimed at or pressed is on the page, so in the cast: as the record
+  // knows them, or as a character when nothing does and they act or are pressed. A target nothing knows
+  // (a place, a skill) stays as the plan names it.
+  const participants = resolveChapterPlan(draft, resolver);
+  const onPage = new Set(participants.cast.flatMap(member => (member.entryId ? [member.entryId] : [])));
+  const newcomers = new Set<string>();
+  participants.events.forEach((event, eventIndex) => {
+    const named = [...(event.actor ? [event.actor] : []), ...event.presses.map(pressure => pressure.who)].map(ref => ({ ref, person: true }))
+      .concat(event.targets.map(ref => ({ ref, person: false })));
+    for (const { ref, person } of named) {
+      if (ref.unnamed || (ref.entryId && onPage.has(ref.entryId)) || newcomers.has(normalizeIdentityLabel(ref.name))) continue;
+      const entry = ref.entryId ? [...entries, ...resolver.created].find(known => known.id === ref.entryId) : undefined;
+      if (!entry && !person) continue;
+      const member: PlanCastMember = entry ? { name: entry.name, kind: entry.kind === 'thing' ? 'thing' : 'character' } : { name: ref.name, kind: 'character' };
+      draft.cast.push(member);
+      if (entry) onPage.add(entry.id); else newcomers.add(normalizeIdentityLabel(ref.name));
+      checks.push({ event: eventIndex + 1, message: entry
+        ? `Event ${eventIndex + 1}: ${describeRef(member)} takes part but is not in the cast, so ${member.kind === 'thing' ? 'it was' : 'they were'} added to it.`
+        : `Event ${eventIndex + 1}: ${describeRef(member)} takes part but is in neither the cast nor the Codex, so they were added to the cast as a character.` });
+    }
+  });
 
   // A look, only for someone the record has none for: a change to one is a look fact.
   const resolvedCast = resolveChapterPlan({ cast: draft.cast, events: [] }, resolver).cast;
@@ -491,8 +515,8 @@ export function checkChapterPlan({ plan: planned, storyId, entries, chapters, de
       if (subject && target.type === 'goal' && target.change !== 'set' && !openGoal(subject, target.what)) {
         checks.push({ event: number, message: `Event ${number}: ${subject.name}'s goal ‘${target.what}’ is ${target.change}, but the record does not show it as their goal.` });
       }
-      if (subject && target.type === 'commitment' && target.change !== 'entered' && !openCommitments(subject, target.toWhom.entryId ?? '').length) {
-        checks.push({ event: number, message: `Event ${number}: ${subject.name}'s commitment to ${target.toWhom.name} is ${target.change}, but the record shows none open.` });
+      if (subject && target.type === 'commitment' && target.change !== 'entered' && !openCommitment(subject, target.toWhom.entryId ?? '', target.what)) {
+        checks.push({ event: number, message: `Event ${number}: ${subject.name}'s commitment to ${target.toWhom.name}, ‘${target.what}’, is ${target.change}, but the record does not show it open.` });
       }
       builder.applyFact(chapter, number, event.how, target);
       kept.push(fact);

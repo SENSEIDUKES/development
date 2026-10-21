@@ -244,10 +244,9 @@ export class PlanRecordBuilder {
       case 'commitment': {
         const to = this.party(fact.toWhom);
         if (fact.change === 'entered') { subject.commitments.push({ to, what: fact.what, entered: passage }); return; }
-        const open = openCommitments(subject, to.key);
-        // One open commitment to them is that one; among several, the one its words name, else the latest.
-        const settled = open.length === 1 ? open[0] : open.find(commitment => sameWords(commitment.what, fact.what)) ?? open.at(-1);
-        if (settled) { settled.outcome = fact.change; settled.resolved = passage; }
+        // Only the open commitment its words name, as with a goal: one never made settles no other.
+        const open = openCommitment(subject, to.key, fact.what);
+        if (open) { open.outcome = fact.change; open.resolved = passage; }
         else subject.commitments.push({ to, what: fact.what, outcome: fact.change, resolved: passage });
         return;
       }
@@ -281,8 +280,9 @@ export class PlanRecordBuilder {
 /** The goal of an entry's that is still open and its words name. */
 export const openGoal = (entity: RecordedEntity, what: string) => entity.goals.find(goal => !goal.outcome && sameWords(goal.what, what));
 
-/** An entry's commitments to someone that are still open. */
-export const openCommitments = (entity: RecordedEntity, toKey: string) => entity.commitments.filter(commitment => !commitment.outcome && commitment.to.key === toKey);
+/** The commitment of an entry's to someone that is still open and its words name. */
+export const openCommitment = (entity: RecordedEntity, toKey: string, what: string) =>
+  entity.commitments.find(commitment => !commitment.outcome && commitment.to.key === toKey && sameWords(commitment.what, what));
 
 /** The record of a story's committed chapters, worked out in story order. */
 export function derivePlanRecord({ entries, chapters }: {

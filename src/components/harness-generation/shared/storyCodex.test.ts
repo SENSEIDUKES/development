@@ -165,6 +165,26 @@ describe('the Codex record', () => {
     expect(lin.stances).toEqual([{ toward: 'Han Shuo', said: { polarity: 'hostile', passage: expect.objectContaining({ chapterNumber: 1 }) }, acted: { polarity: 'warm', passage: expect.objectContaining({ chapterNumber: 1 }) } }]);
   });
 
+  it('settles only the commitment its words name: one never made leaves the others open', () => {
+    const LIN: CodexEntry = { id: 'hcx_lin', storyId: 's', kind: 'character', name: 'Lin Qinghan', origin: { source: 'plan', chapterId: 'c1', chapterNumber: 1 }, createdAt: '' };
+    const codex = deriveStoryCodex({
+      entries: [MC, LIN],
+      chapters: [
+        { id: 'c1', chapterNumber: 1, paragraphs: ['Then.'], plan: plan([cast(MC), cast(LIN)], [
+          event('Han Shuo swears to repay her gold.', [{ type: 'commitment', who: ref(MC), toWhom: ref(LIN), change: 'entered', what: 'repay the gold' }]),
+        ]) },
+        { id: 'c2', chapterNumber: 2, paragraphs: ['Then.'], plan: plan([cast(MC), cast(LIN)], [
+          event('Han Shuo burns a letter he was asked to carry.', [{ type: 'commitment', who: ref(MC), toWhom: ref(LIN), change: 'broken', what: 'deliver the letter' }]),
+        ]) },
+      ],
+    });
+    const [mc] = codex.characters;
+    expect(mc.owes).toEqual([
+      { party: 'Lin Qinghan', what: 'repay the gold', entered: expect.objectContaining({ chapterNumber: 1 }) },
+      { party: 'Lin Qinghan', what: 'deliver the letter', outcome: 'broken', resolved: expect.objectContaining({ chapterNumber: 2 }) },
+    ]);
+  });
+
   it('links the state someone is still in to the event that began it, never to the change that ended another', () => {
     const codex = deriveStoryCodex({
       entries: [MC],

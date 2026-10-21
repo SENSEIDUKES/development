@@ -142,7 +142,7 @@ const event = (how: string, facts: ChapterPlan['events'][number]['facts'] = [], 
 describe('the plain checks', () => {
   it('names the main character MC everywhere and puts them first in the cast, one member per name', () => {
     const checked = check({
-      cast: [{ name: 'Elder Qin', kind: 'character' }, { name: 'Lin', kind: 'thing' }, { name: 'elder qin', kind: 'character', who: 'The archive\'s keeper.' }],
+      cast: [{ name: 'Elder Qin', kind: 'character' }, { name: 'Lin', kind: 'character' }, { name: 'elder qin', kind: 'character', who: 'The archive\'s keeper.' }],
       events: [event('Lin bows to Elder Qin.', [{ type: 'stance', who: { name: 'Lin' }, towardWhom: { name: 'Elder Qin' }, mode: 'acted', polarity: 'warm' }], 'Lin')],
     }, [{ cast: [{ name: 'MC', kind: 'character' }], events: [event('Lin wakes.')] }]);
     expect(checked.plan.cast).toEqual([{ name: 'MC', kind: 'character' }, { name: 'Elder Qin', kind: 'character', who: 'The archive\'s keeper.' }]);
@@ -182,6 +182,34 @@ describe('the plain checks', () => {
     expect(checked.checks.every(found => found.fact)).toBe(true);
   });
 
+  it('keeps a thing named like the main character a thing, apart from them', () => {
+    const lantern = { name: 'Lin', kind: 'thing' as const, look: { summary: 'A paper lantern with her name on it.', traits: {} } };
+    const checked = check({ cast: [{ name: 'MC', kind: 'character' }, lantern], events: [event('Lin lights the lantern that bears her name.')] });
+    expect(checked.plan.cast).toEqual([{ name: 'MC', kind: 'character' }, lantern]);
+    expect(checked.checks).toEqual([]);
+  });
+
+  it('puts whoever an event names as acting, aimed at or pressed in the cast, and says so', () => {
+    const before: ChapterPlan[] = [{ cast: [{ name: 'MC', kind: 'character' }, { name: 'Kael Varn', kind: 'character' }, { name: 'Bone Oar', kind: 'thing' }], events: [event('Lin meets the ferryman.')] }];
+    const checked = check({
+      cast: [{ name: 'MC', kind: 'character' }],
+      events: [{
+        actor: { name: 'Kael Varn' }, targets: [{ name: 'Lin' }, { name: 'Bone Oar' }, { name: 'the Drowned Archive' }], presses: [{ who: { name: 'Ren Hal' }, level: 'heavy' }],
+        how: 'Kael Varn rows Lin toward the Drowned Archive with the Bone Oar, and Ren Hal is cut by the oar.',
+        facts: [{ type: 'status', who: { name: 'Ren Hal' }, state: 'wounded' }],
+      }],
+    }, before);
+    // Known to the record, they join as it knows them; someone new who acts or is pressed joins as a character;
+    // a target nothing knows (a place) stays as the plan names it.
+    expect(checked.plan.cast).toEqual([{ name: 'MC', kind: 'character' }, { name: 'Kael Varn', kind: 'character' }, { name: 'Ren Hal', kind: 'character' }, { name: 'Bone Oar', kind: 'thing' }]);
+    expect(checked.plan.events[0].facts).toHaveLength(1);
+    expect(checked.checks.map(found => found.message)).toEqual([
+      'Event 1: ‘Kael Varn’ takes part but is not in the cast, so they were added to it.',
+      'Event 1: ‘Ren Hal’ takes part but is in neither the cast nor the Codex, so they were added to the cast as a character.',
+      'Event 1: ‘Bone Oar’ takes part but is not in the cast, so it was added to it.',
+    ]);
+  });
+
   it('notes and keeps what is only worth a second look: a goal never set, a commitment never made, an actor the record shows dead', () => {
     const before: ChapterPlan[] = [{ cast: [{ name: 'MC', kind: 'character' }, { name: 'Elder Qin', kind: 'character' }], events: [
       event('Elder Qin falls in the flood.', [{ type: 'status', who: { name: 'Elder Qin' }, state: 'dead' }]),
@@ -196,7 +224,7 @@ describe('the plain checks', () => {
     expect(checked.plan.events[0].facts).toHaveLength(2);
     expect(checked.checks.map(found => [found.event, found.fact, found.message])).toEqual([
       [1, undefined, 'Event 1: Lin\'s goal ‘reach the tower’ is achieved, but the record does not show it as their goal.'],
-      [1, undefined, 'Event 1: Lin\'s commitment to Elder Qin is kept, but the record shows none open.'],
+      [1, undefined, 'Event 1: Lin\'s commitment to Elder Qin, ‘guard the archive’, is kept, but the record does not show it open.'],
       [2, undefined, 'Event 2: Elder Qin acts, but the record shows them dead.'],
     ]);
   });

@@ -168,7 +168,7 @@ describe('Rewrite this chapter', () => {
     const prompt = buildHarnessGenerationPrompt(sent).userPrompt;
     expect(prompt).toContain('The events stay as planned; tell them afresh, with a new approach to their telling.');
     expect(prompt).not.toContain('their note');
-    // The attempt says whose plan it kept; the new version records the same facts, under entries made again.
+    // The attempt says whose plan it kept; the new version records the same facts, under the same entries.
     const state = run.controller.snapshot();
     expect(state.attempts.at(-1)!.chapterPlan).toMatchObject({ reusedFrom: replaced.attemptId });
     expect(state.attempts.at(-1)!.plannerCall).toBeUndefined();
@@ -176,6 +176,28 @@ describe('Rewrite this chapter', () => {
     expect(rewritten.id).not.toBe(replaced.id);
     expect(rewritten.plan.events).toEqual([expect.objectContaining({ how: 'The river rises, and Lin ties a rope coil to the rail.' })]);
     expect(state.codexEntries.find(entry => entry.name === 'Rope Coil')!.origin).toEqual({ source: 'plan', chapterId: rewritten.id, chapterNumber: 1 });
+  });
+
+  it('keeps the Codex entry of whoever the new version names again, with the voice the reader chose for them', async () => {
+    const run = await setup();
+    await run.write(chapter('The Ferry', ['Kael Varn rowed.']), {
+      ...planOf('Kael Varn rows Lin across, and she ties a rope coil to the rail.', [gains('MC', 'Rope Coil')]),
+      cast: [{ name: 'MC', kind: 'character' }, { name: 'Kael Varn', kind: 'character', who: 'A ferryman.' }],
+    });
+    const before = run.controller.snapshot();
+    const kael = before.codexEntries.find(entry => entry.name === 'Kael Varn')!;
+    const rope = before.codexEntries.find(entry => entry.name === 'Rope Coil')!;
+    await run.controller.setCodexVoice(run.storyId, kael.id, 'dark-sect-elder-male');
+    await run.controller.rewriteLatestChapter(run.storyId, 'fixture');
+    const after = run.controller.snapshot();
+    const [rewritten] = storyChapters(after);
+    // Same ID, so a picture kept under it still finds them; now brought in by the new version.
+    expect(after.codexEntries.filter(entry => entry.name === 'Kael Varn')).toEqual([expect.objectContaining({
+      id: kael.id, voice: expect.objectContaining({ key: 'dark-sect-elder-male', chosen: 'reader' }),
+      origin: { source: 'plan', chapterId: rewritten.id, chapterNumber: 1 },
+    })]);
+    expect(after.codexEntries.find(entry => entry.name === 'Rope Coil')!.id).toBe(rope.id);
+    expect(rewritten.plan.cast.find(member => member.name === 'Kael Varn')!.entryId).toBe(kael.id);
   });
 
   it('leaves the story exactly as it was when the rewrite fails, and the story can still go on or try again', async () => {

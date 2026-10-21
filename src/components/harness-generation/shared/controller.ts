@@ -46,7 +46,7 @@ import {
   type SemanticEventPreservationResult,
 } from './responseAcceptance';
 import { activeAttemptForStory } from './attempts';
-import { chapterRewriteGap, latestStoryChapter, readRewriteNote, withoutLatestChapter } from './chapterRewrite';
+import { chapterRewriteGap, entriesNamedBy, latestStoryChapter, readRewriteNote, withoutLatestChapter } from './chapterRewrite';
 import { harnessParagraphBlockId } from './chapterBody';
 import { protagonistNames } from './speakers';
 import { createCodexEntryResolver, declaredCharacters } from './holdings';
@@ -1543,16 +1543,27 @@ export class HarnessGenerationController {
     // Every name the chapter's plan uses becomes a Codex entry now, in the same
     // write that commits its chapter: the app assigns the IDs, never a model.
     // One resolver serves the plan and the speakers, so a new name both use is one entry.
+    // A rewrite keeps the entries of the version it replaces for whoever the new version names again,
+    // so their IDs stay theirs, with a voice chosen or a picture manifested for them.
+    const replacedEntries = rewrite
+      ? base.codexEntries.filter(entry => entry.storyId === commitAttempt.storyId && !candidate.codexEntries.some(kept => kept.id === entry.id))
+      : [];
     const resolving = {
       storyId: commitAttempt.storyId,
       chapter: { id: chapterId, chapterNumber: commitAttempt.chapterNumber },
-      entries: candidate.codexEntries,
+      entries: [...candidate.codexEntries, ...replacedEntries],
       declared: declaredCharacters(commitAttempt.storyInformation.currentStory),
       createdAt: committedAt,
       createId: () => this.runtime.createId('hcx'),
     };
     const resolver = createCodexEntryResolver(resolving);
     const plan = resolveChapterPlan(commitAttempt.chapterPlan!.plan, resolver);
+    const namedAgain = new Set(entriesNamedBy({ plan }));
+    for (const entry of replacedEntries.filter(replacedEntry => namedAgain.has(replacedEntry.id))) {
+      const kept = cloneHarnessValue(entry);
+      if (kept.origin.source === 'plan') kept.origin = { ...kept.origin, chapterId, chapterNumber: commitAttempt.chapterNumber };
+      candidate.codexEntries.push(kept);
+    }
     const planChecks = commitAttempt.chapterPlan!.checks;
     // Each speaker names their Codex character when they have one; a speaker never makes a card.
     const identities = commitAttempt.storyInformation.currentStory.identities ?? [];

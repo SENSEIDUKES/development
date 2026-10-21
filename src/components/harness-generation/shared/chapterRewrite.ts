@@ -11,7 +11,8 @@ import type { PlanRef } from '../../../narrative/chapterPlan';
  * again, with an optional note on what to change, until the next chapter is
  * written. The new version is prepared from the story as it stood before that
  * chapter and replaces it only when it commits; until then, and whenever the
- * rewrite fails, the chapter stays as it was.
+ * rewrite fails, the chapter stays as it was. Whoever the new version names
+ * again keeps their Codex entry from the old one, with its ID.
  */
 
 /** The story's latest committed chapter: the one a rewrite replaces. */

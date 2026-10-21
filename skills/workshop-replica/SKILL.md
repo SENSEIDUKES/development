@@ -57,11 +57,15 @@ Its reconstruction policy governs over Mode A's mock-only restrictions.
 ## Build authority and repository boundary
 
 The new path is built here in SEN, Library and NovelExpanded at `/app/`;
-`NOVEL_EXPANDED.md` decides what gets built. Keep old systems until each is remade;
-never delete one for being unused by the new path, reconnect one as it is, or re-sync
-with the old production app. The packages and the app are the destination now.
+`NOVEL_EXPANDED.md` decides what gets built. The packages and the app are the
+destination. Some production surfaces have not been brought over yet; this skill is how
+they come over. Never reconnect an old system as it is or re-sync with the old
+production app. When a replica or reconstruction replaces an old system, delete the old
+one in the same change under Codebase Conventions'
+[Deleting old code](../seihouse-codebase-conventions/SKILL.md#deleting-old-code).
 
-Preserve existing persisted and external contracts under Codebase Conventions.
+Apply Codebase Conventions' compatibility rules: no backward compatibility by default,
+and protect the working connections and anything production depends on.
 When importing a surface, verify the source repository, path and symbol; do not infer
 cross-repository paths. Keep source facts and mock boundaries in the feature README,
 with a short dated history. Never edit or refresh historical reference folders.

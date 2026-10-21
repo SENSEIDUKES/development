@@ -5,19 +5,30 @@ change. Always verify the current implementation.
 
 ## Authority and package ownership
 
-Read the [skill entrypoint](../SKILL.md) for source authority, compatibility, and
+Read the [skill entrypoint](../SKILL.md) for authority, compatibility, deletion and
 package boundaries, and [current package documentation](../../../src/package/README.md)
-for the maintained implementation contract. Production governs existing integrated
-contracts; DEV governs approved reconstruction until transfer. Verify every path and
-export independently. Report conflicts with this map and resolve them deliberately.
+for the maintained implementation contract. [NOVEL_EXPANDED.md](../../../NOVEL_EXPANDED.md)
+governs over this map, and its [Names](../../../NOVEL_EXPANDED.md#names) table is the
+current vocabulary. Verify every path and export independently. Report conflicts with
+this map and resolve them deliberately.
 
 ## SEN and Library
 
-SEN is the portable expanded-narrative engine. Library is SEIHouse's first-party host
-application. Library may depend on SEN; SEN must never depend on Library.
-Reader Chamber is a reading surface within SEN, not the entire engine. AI generation
-is an optional content source. Library branding, cultivation, economy, hub behavior,
-services, and infrastructure belong to the host.
+SEN is the portable expanded-narrative engine. The Library is SEIHouse's first-party
+host: the product Expanded Novels, presented as the Celestial Library, whose app is the
+NovelExpanded app at `/app/` (`src/novel-expanded/`). The Library may depend on SEN;
+SEN must never depend on the Library. Reader Chamber is a reading surface within SEN,
+not the entire engine. AI generation is an optional content source. Library branding,
+cultivation, economy, hub behavior, services, and infrastructure belong to the host.
+
+## Shared SEIHouse infrastructure
+
+SPP and CAPA, the Model Router, provenance, asset and version systems, shared UI
+primitives, media infrastructure, and storage and provider boundaries belong to neither
+product. SEN pressure-tests them so SEA can inherit them. Some live inside SEN or the
+Library today because they were first needed there; do not move more into
+`@seihouse/sen` for that reason. Every model call is registered in the Model Router
+(see AGENTS.md, Generation features and the Model Router).
 
 ## SEIHouse
 
@@ -50,41 +61,48 @@ represent.
 
 ## Story Generation
 
-Before inspecting generation implementation, read the authoritative
-[HARNESS vocabulary](../../../src/components/harness-generation/ARCHITECTURE_VOCABULARY.md)
-when applicable. Generation produces chapters and supporting structured outputs. It is a source of
-chapter content, not the permanent owner of the entire reading experience.
+Before inspecting generation implementation, read the HARNESS
+[architecture vocabulary](../../../src/components/harness-generation/ARCHITECTURE_VOCABULARY.md)
+and [principles](../../../src/components/harness-generation/HARNESS_PRINCIPLES.md).
+The HARNESS is invisible to readers; its only user-facing place is Story Settings.
 
-Potential responsibilities include prompt/context assembly, model/provider
-orchestration, chapter generation, continuity inputs and outputs, structured entity
-registration, summaries, progression metadata, retries, failure handling, and cost
-observability.
+What a chapter knows, plans and records follows [the chapter loop](../../../docs/chapter-loop.md):
+the record (the Codex snapshot) as the last chapter left it, a plan step (Fate) that
+decides what happens, CTE deciding what events do to people, the writer narrating the
+plan, and the record updating from the plan. Media tags (Sound Cues, soundscape,
+atmosphere) stay in the prose; information is never tagged in the prose. The writer
+narrates consequences; it never decides them. Check that document's build order before
+treating any part of the loop as built.
 
-Generated data should flow into durable story systems through explicit contracts.
-Rendered chapter text alone does not prove generation completed successfully.
+Generated data flows into durable story systems through explicit contracts. Rendered
+chapter text alone does not prove generation completed successfully.
 
 ## Reader Chamber
 
-Reader Chamber is the user-facing reading experience within SEN. It composes story content with chapter rendering, navigation, name/system
-highlighting, immersive effects, manifestations, narration/TTS, music, sound cues,
-reading preferences, and progress/resume behavior.
+Reader Chamber is where chapters are read, within SEN: a HARNESS story's chapters on the
+Highlight Engine with Sound Cues, Listen (read aloud in each character's voice from the
+voice cast), the soundtrack, Reader Settings, and progress and resume. The NovelExpanded
+app's Reader and the Workshop's `?preview=reader-chamber` Development view use it; the
+older development Reader is retired.
 
-Reader Chamber should consume generation outputs and story/Reader Codex data through
-clear contracts. It should not be permanently fused to a particular model provider or
-chapter-generation process. Keep the current product name unless a task explicitly
-changes product naming.
+Reader Chamber consumes generation outputs and the Codex through clear contracts. It
+should not be fused to a particular model provider or generation process. Keep the
+current product names in NOVEL_EXPANDED.md's Names table.
 
 ## Reader Codex
 
-Reader Codex is the structured, evolving representation of the story world. It may
-include characters and portraits, factions, locations, artifacts, relics, beasts,
-weapons, relationships and Karma Web, power rankings, arc timelines, mysteries,
-summaries, entity colors, and visual identity.
+The Codex is the story's world as its record knows it: characters, factions and items
+today, places and a Bestiary later, every fact linked to its passage. **One record, many
+views:** each category is one record, built the same way. Power rankings, Karma and other
+Codex mechanics are ways of displaying that record, never separate stores fed
+separately. The Codex shows only what the record holds today and grows as each step of
+the chapter loop is built.
 
-Reader Codex entities must remain tied to the correct story and source context. Visual
-cards, portraits, highlights, and manifestations are downstream consumers of correct
-entity registration and metadata. When several visible symptoms fail together, inspect
-the shared registration or persistence contract before patching each UI separately.
+Manifesting happens while reading: a name the story has met glows in the chapter and
+its card offers Manifest. Nothing the story has not yet shown can be manifested. Entries
+stay tied to the correct story and source passage; cards, portraits, highlights and
+manifestations are downstream of correct records. When several visible symptoms fail
+together, inspect the shared record or persistence contract first.
 
 ## Media and R2
 
@@ -137,20 +155,19 @@ the result; they should not independently decide or persist rewards.
 
 ## Workshop and Themes
 
-The new path is built in this repository: SEN, Library and NovelExpanded at `/app/`.
-`NOVEL_EXPANDED.md` decides what gets built. Use [Workshop Replica](../../workshop-replica/SKILL.md)
-for importing a surface from another repository or approved reconstruction; reconstruction
-follows [DEVELOPMENT_RECONSTRUCTION.md](../../../DEVELOPMENT_RECONSTRUCTION.md).
+The new path is built in this repository: SEN, Library and the NovelExpanded app at
+`/app/`. NOVEL_EXPANDED.md decides what gets built. Use [Workshop Replica](../../workshop-replica/SKILL.md)
+to bring a surface over from the production app or for approved reconstruction;
+reconstruction follows [DEVELOPMENT_RECONSTRUCTION.md](../../../DEVELOPMENT_RECONSTRUCTION.md).
 
-Old systems, including Reader Chamber and Reader Codex, remain foundations for their
-future remakes. Do not delete or reconnect them as they are. Existing `reference/`
-folders are historical old production versions, never edited, refreshed or re-synced.
-New features use one `development/` folder, optional genuinely shared code, one
-FeatureWorkspace preview, one manifest entry and a README with a short dated history.
-Themes use shared tokens, primitives and package contracts rather than scattered values.
+Old systems wait for their remake or their import; follow the skill's
+[Deleting old code](../SKILL.md#deleting-old-code) rules for when they go. Existing
+`reference/` folders are historical old production versions, never edited, refreshed
+or re-synced. New features use one `development/` folder, optional genuinely shared
+code, one FeatureWorkspace preview, one manifest entry and a README with a short dated
+history. Themes use shared tokens, primitives and package contracts rather than
+scattered values.
 
-Verify source paths when importing a surface. New feature metadata points at this
-repository, and no source-comparison date or synchronization cycle is required.
 Never change another repository without the owner's explicit request.
 
 ## Audio ownership

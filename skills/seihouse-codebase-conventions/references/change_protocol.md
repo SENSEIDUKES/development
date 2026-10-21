@@ -19,7 +19,7 @@ For a visible data bug, trace upstream until the first incorrect contract or sta
 - Keep the diff centered on the verified owner.
 - Preserve current public behavior unless change is intentional.
 - Reuse helpers, tokens, types, and lifecycle patterns.
-- Delete what the change replaces, with its dead imports, previews and tests.
+- Delete the old implementation the change replaces, with the imports and tests only it used; keep the feature's workspace, preview route and manifest entry and update them in place.
 - Avoid unrelated formatting churn.
 - Document only non-obvious decisions that future maintainers need.
 

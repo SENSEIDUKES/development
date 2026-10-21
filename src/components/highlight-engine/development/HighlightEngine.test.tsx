@@ -89,6 +89,17 @@ describe('engine-owned selection input', () => {
     expect(document.getSelection()!.rangeCount).toBe(0);
     expect(button('Edit')).toBeDefined();
   });
+  it('keeps an active drag and pending hold through equivalent host block arrays', async () => {
+    offset = 7; pointer('pointerdown');
+    offset = 10; pointer('pointermove', 'mouse', 130);
+    act(() => update(initial.map(block => ({ ...block }))));
+    offset = 13; pointer('pointermove', 'mouse', 150); pointer('pointerup');
+    expect(selections).toHaveBeenLastCalledWith(expect.objectContaining({ selectedText: 'middle' }));
+    pointer('pointerdown', 'touch');
+    act(() => update(initial.map(block => ({ ...block }))));
+    await act(() => vi.advanceTimersByTimeAsync(450)); pointer('pointerup', 'touch');
+    expect(selections).toHaveBeenLastCalledWith(expect.objectContaining({ selectedText: 'middle' }));
+  });
   it('hides an off-screen endpoint when a browser cannot measure a collapsed range', async () => {
     Range.prototype.getClientRects = function () {
       return (this.collapsed ? [] : [new DOMRect(100, -30, 70, 22), new DOMRect(100, 200, 70, 22)]) as unknown as DOMRectList;
@@ -152,6 +163,22 @@ describe('engine-owned selection input', () => {
       click('Edit'); fill('Changed'); click('Save');
       expect(block().textContent).toBe('Changed middle after.');
     } finally { intl.Segmenter = segmenter; }
+  });
+  it('copies a host-created selection from its originating control without taking over other copy targets', async () => {
+    const origin = document.createElement('button'); document.body.append(origin); origin.focus();
+    await select();
+    const copy = () => {
+      const event = new Event('copy', { bubbles: true, cancelable: true }); const setData = vi.fn();
+      Object.defineProperty(event, 'clipboardData', { value: { setData } });
+      act(() => document.activeElement!.dispatchEvent(event)); return { event, setData };
+    };
+    expect(document.activeElement).toBe(origin);
+    expect(copy().setData).toHaveBeenCalledWith('text/plain', 'middle');
+    const unrelated = document.createElement('button'); document.body.append(unrelated); unrelated.focus();
+    expect(copy().event.defaultPrevented).toBe(false);
+    const input = document.createElement('input'); document.body.append(input); input.focus();
+    expect(copy().event.defaultPrevented).toBe(false);
+    origin.remove(); unrelated.remove(); input.remove();
   });
   it('leaves editor input and read-only browser selections native', async () => {
     await select(); click('Edit');

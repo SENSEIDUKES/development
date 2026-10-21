@@ -48,6 +48,8 @@ export function useSelectionTracker(
   /** Remove mode belongs to one selection: any new selection is back in Add mode. */
   const [removeFor, setRemoveFor] = useState<{ key: string; focus: boolean } | null>(null);
   const controlPointer = useRef(false);
+  /** A host may choose prose from a focused control outside the engine (e.g. a sentence inspector). */
+  const selectionOrigin = useRef<Element | null>(null);
   /** The first forward Tab moves into the Action Bar once per selection, never again until the selection changes. */
   const tabTransferred = useRef(false);
   /** Touch long press opens Add through the engine's input adapter, never Remove. */
@@ -57,6 +59,7 @@ export function useSelectionTracker(
   const selection = snapshot?.selection ?? null;
   const mode: ActionBarMode = removable && selection && removeFor?.key === selectionKey(selection) ? 'remove' : 'add';
   const clear = useCallback(() => {
+    selectionOrigin.current = null;
     tabTransferred.current = false;
     setRemoveFor(null);
     const root = rootRef.current;
@@ -68,6 +71,7 @@ export function useSelectionTracker(
     controlPointer.current = false;
   }, []);
   const choose = useCallback((next: PassageSelection | null) => {
+    selectionOrigin.current = null;
     const root = rootRef.current;
     const native = root?.ownerDocument.getSelection();
     if (native?.anchorNode && root?.contains(native.anchorNode)) native.removeAllRanges();
@@ -98,6 +102,7 @@ export function useSelectionTracker(
         // A rejected host range must not leave actions pointing at an older passage.
         // The empty selectionchange caused by retiring our own range is harmless.
         if (native?.anchorNode && !native.isCollapsed && root.contains(native.anchorNode)) {
+          selectionOrigin.current = null;
           setSnapshot(null); native.removeAllRanges();
         }
         return;
@@ -108,7 +113,10 @@ export function useSelectionTracker(
         if (previous?.text === block.text && JSON.stringify(previous.selection) === JSON.stringify(next)) return previous;
         return { selection: next, text: block.text };
       });
-      if (removable && next) doc.getSelection()?.removeAllRanges();
+      if (removable && next) {
+        selectionOrigin.current = doc.activeElement;
+        doc.getSelection()?.removeAllRanges();
+      }
     };
     const down = (event: PointerEvent) => {
       lastPointerType.current = event.pointerType;
@@ -168,7 +176,8 @@ export function useSelectionTracker(
       if (!removable || !snapshot || editing || actionOpen) return;
       const active = doc.activeElement;
       if (active?.matches('input, textarea, [contenteditable]')) return;
-      if (!active || !(root.contains(active) || controlsRef.current?.contains(active) || handlesRef.current?.contains(active))) return;
+      if (doc.getSelection()?.isCollapsed === false) return;
+      if (!active || !(root.contains(active) || controlsRef.current?.contains(active) || handlesRef.current?.contains(active) || active === selectionOrigin.current)) return;
       if (!event.clipboardData) return;
       event.preventDefault(); event.clipboardData.setData('text/plain', snapshot.selection.selectedText);
     };

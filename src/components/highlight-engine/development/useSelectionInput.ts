@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { wordAt, wordRanges } from '../../../narrative/words';
 import { BLOCK_ATTRIBUTE, findBlockElement, passageEdges, passagePoint, type PassageSelection, type TextHighlightBlock } from '../shared/selection';
 
@@ -22,6 +22,8 @@ export function useSelectionInput(options: InputOptions) {
   latest.current = options;
   const [dragging, setDragging] = useState(false);
   const { rootRef, handlesRef, enabled, blocks } = options;
+  const reconcileSource = useRef<(() => void) | null>(null);
+  useLayoutEffect(() => { reconcileSource.current?.(); }, [blocks]);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -34,7 +36,7 @@ export function useSelectionInput(options: InputOptions) {
     let hold: ReturnType<typeof setTimeout> | undefined;
     let frame = 0;
     let suppressClick = false;
-    let caret: { blockId: string; anchor: number; focus: number } | null = null;
+    let caret: { blockId: string; text: string; anchor: number; focus: number } | null = null;
     const stop = () => {
       clearTimeout(hold); hold = undefined;
       win.cancelAnimationFrame(frame); frame = 0;
@@ -42,12 +44,18 @@ export function useSelectionInput(options: InputOptions) {
       if (previous?.target.hasPointerCapture?.(previous.id)) previous.target.releasePointerCapture(previous.id);
       setDragging(false);
     };
+    reconcileSource.current = () => {
+      const dragged = drag?.block;
+      const keyed = caret;
+      if (dragged && !latest.current.blocks.some(block => block.id === dragged.id && block.text === dragged.text)) stop();
+      if (keyed && !latest.current.blocks.some(block => block.id === keyed.blockId && block.text === keyed.text)) caret = null;
+    };
     const choose = (block: TextHighlightBlock, anchor: number, focus: number) => {
       const edges = passageEdges(block.text, latest.current.locale);
       const snap = (offset: number) => edges.reduce((best, edge) => Math.abs(edge - offset) < Math.abs(best - offset) ? edge : best, 0);
       const startOffset = Math.min(snap(anchor), snap(focus));
       const endOffset = Math.max(snap(anchor), snap(focus));
-      caret = { blockId: block.id, anchor: snap(anchor), focus: snap(focus) };
+      caret = { blockId: block.id, text: block.text, anchor: snap(anchor), focus: snap(focus) };
       latest.current.choose(endOffset > startOffset && block.text.slice(startOffset, endOffset).trim()
         ? { blockId: block.id, startOffset, endOffset, selectedText: block.text.slice(startOffset, endOffset) } : null);
     };
@@ -97,7 +105,7 @@ export function useSelectionInput(options: InputOptions) {
       const selection = latest.current.selection;
       if (handle && handlesRef.current?.contains(handle) && selection) {
         event.preventDefault(); stop(); suppressClick = true;
-        const block = blocks.find(block => block.id === selection.blockId);
+        const block = latest.current.blocks.find(block => block.id === selection.blockId);
         if (!block) return;
         const side = handle.dataset.senSelectionHandle as 'start' | 'end';
         drag = { id: event.pointerId, block, anchor: side === 'start' ? selection.endOffset : selection.startOffset,
@@ -109,7 +117,7 @@ export function useSelectionInput(options: InputOptions) {
       if (!target || !root.contains(target) || target.closest(EXCLUDED)) return;
       const element = target.closest<HTMLElement>(`[${BLOCK_ATTRIBUTE}]`);
       const point = passagePoint(root, event.clientX, event.clientY);
-      const block = point && blocks.find(block => block.id === point.blockId);
+      const block = point && latest.current.blocks.find(block => block.id === point.blockId);
       if (!element || !block) return;
       stop(); suppressClick = false;
       drag = { id: event.pointerId, block, anchor: point.offset, end: point.offset, x: event.clientX, y: event.clientY,
@@ -162,7 +170,7 @@ export function useSelectionInput(options: InputOptions) {
       if (suppressClick) { event.preventDefault(); suppressClick = false; return; }
       if (event.detail < 2) return;
       const point = passagePoint(root, event.clientX, event.clientY);
-      const block = point && blocks.find(block => block.id === point.blockId);
+      const block = point && latest.current.blocks.find(block => block.id === point.blockId);
       if (!block) return;
       const found = event.detail >= 3 ? { start: 0, end: block.text.length } : word(block, point.offset);
       if (found) { event.preventDefault(); choose(block, found.start, found.end); }
@@ -176,7 +184,7 @@ export function useSelectionInput(options: InputOptions) {
       if (!ownedHandle && (!target || !root.contains(target) || target.closest(EXCLUDED))) return;
       const selection = latest.current.selection;
       const element = ownedHandle && selection ? findBlockElement(root, selection.blockId) : target?.closest<HTMLElement>(`[${BLOCK_ATTRIBUTE}]`);
-      const block = blocks.find(block => block.id === element?.getAttribute(BLOCK_ATTRIBUTE));
+      const block = latest.current.blocks.find(block => block.id === element?.getAttribute(BLOCK_ATTRIBUTE));
       if (!block) return;
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'a') { event.preventDefault(); choose(block, 0, block.text.length); return; }
       if (!ownedHandle && !event.shiftKey && ['Enter', ' '].includes(event.key)) {
@@ -217,10 +225,11 @@ export function useSelectionInput(options: InputOptions) {
     win.addEventListener('blur', cancel);
     return () => {
       stop();
+      reconcileSource.current = null;
       doc.removeEventListener('pointerdown', down); doc.removeEventListener('pointermove', move); doc.removeEventListener('pointerup', up);
       doc.removeEventListener('pointercancel', cancel); doc.removeEventListener('touchmove', touchMove); doc.removeEventListener('keydown', key);
       root.removeEventListener('click', click); root.removeEventListener('selectstart', selectStart); win.removeEventListener('blur', cancel);
     };
-  }, [rootRef, handlesRef, enabled, blocks]);
+  }, [rootRef, handlesRef, enabled]);
   return { dragging };
 }

@@ -8,10 +8,11 @@ await mkdir(output, { recursive: true });
 const results = [];
 for (const [name, browserType, touch] of [['chromium-mouse', chromium, false], ['chromium-touch', chromium, true], ['webkit-mouse', webkit, false]]) {
   const browser = await browserType.launch();
+  let page;
   try {
     const context = await browser.newContext({ viewport: touch ? { width: 390, height: 844 } : { width: 1440, height: 900 }, hasTouch: touch, isMobile: touch });
     if (browserType === chromium) await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-    const page = await context.newPage();
+    page = await context.newPage();
     const errors = []; page.on('pageerror', error => errors.push(error.message));
     await page.goto(`${process.env.HIGHLIGHT_ENGINE_URL ?? 'http://localhost:5173'}/?preview=highlight-engine`);
     const paragraph = page.locator('[data-sen-text-block]').first();
@@ -37,6 +38,20 @@ for (const [name, browserType, touch] of [['chromium-mouse', chromium, false], [
       await page.waitForFunction(y => Math.abs(scrollY - y) > 30, before);
       assert.equal(await bar.count(), 0); await nativeEmpty();
       await paragraph.evaluate(element => element.scrollIntoView({ block: 'center' }));
+      // A fling may continue on the browser's compositor after scrollIntoView.
+      // Target the next word only once its screen position has stopped moving.
+      await paragraph.evaluate(element => new Promise((resolve, reject) => {
+        let previous = element.getBoundingClientRect().top;
+        let stableSince = performance.now(); const deadline = stableSince + 5000;
+        const check = now => {
+          const current = element.getBoundingClientRect().top;
+          if (Math.abs(current - previous) > .25) { previous = current; stableSince = now; }
+          if (now - stableSince >= 200) resolve();
+          else if (now >= deadline) reject(new Error('The swipe did not settle before the next gesture'));
+          else requestAnimationFrame(check);
+        };
+        requestAnimationFrame(check);
+      }));
       // This is a real browser touch stream, not a range installed by the test.
       const held = await point(15);
       await send('touchStart', held);
@@ -98,9 +113,28 @@ for (const [name, browserType, touch] of [['chromium-mouse', chromium, false], [
     await bar.getByRole('button', { name: 'Save', exact: true }).click();
     assert.match(await paragraph.textContent(), /Edited with the engine/);
     assert.equal(await page.getByRole('slider').count(), 0);
+    if (browserType === chromium) {
+      // The inspector creates a native range from a focused external button.
+      // Once captured by the engine, keyboard Copy still belongs to that selection.
+      await page.getByTestId('manuscript-structure').locator('summary').click();
+      const sentence = page.locator('[data-sentence-id]').first();
+      await sentence.click(); await bar.waitFor(); await nativeEmpty();
+      assert.equal(await sentence.evaluate(element => document.activeElement === element), true);
+      const address = (await selected()).match(/Characters (\d+)–(\d+)/);
+      const expected = (await paragraph.textContent()).slice(Number(address[1]), Number(address[2]));
+      await page.keyboard.press('ControlOrMeta+C');
+      assert.equal(await page.evaluate(() => navigator.clipboard.readText()), expected, 'Copy must include inspector-created selections');
+    }
     assert.deepEqual(errors, []);
     results.push({ name, passed: true, input: touch ? 'Chromium CDP touch stream; physical iOS not tested' : 'browser mouse and keyboard' });
     console.log(`Passed ${name} owned selection`);
+  } catch (error) {
+    if (page) {
+      await page.screenshot({ path: `${output}/${name}-owned-failure.png` }).catch(() => {});
+      console.error(name, await page.evaluate(() => ({ scrollY, nativeSelection: getSelection()?.toString(),
+        selection: document.querySelector('[data-testid="manuscript-selection"]')?.textContent })).catch(() => null));
+    }
+    throw error;
   } finally { await browser.close(); }
 }
 await writeFile(`${output}/owned-selection.json`, JSON.stringify(results, null, 2) + '\n');

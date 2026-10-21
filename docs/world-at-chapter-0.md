@@ -191,6 +191,41 @@ first chapter's plan.
    like are not Codex facts. Which Blueprint prose becomes structured, and
    which stays as writing guidance.
 
+## After this: simplify what the gaps forced (SENSEI, 2026-10-21)
+
+> "After we fix the story seed and the blueprint, I guess the next step would
+> be to look at all this shit we just did, because a lot of it's probably not
+> needed. We probably added a lot of extra juice to cover these deficiencies,
+> when a lot of it could be much more straightforward."
+
+Once the world is complete at Chapter 0, review every piece built to cover for
+a world that didn't exist yet, and remove or shrink what is no longer needed.
+Candidates to review (not decided; each needs checking against the new shape):
+
+- **The planner inventing starting entities:** a whole look, gender, age and
+  "who they are" for anyone the Codex has no card for. For the starting cast
+  this moves to Chapter 0; it stays only for newcomers.
+- **"Already has" (`alreadyHas`)** and the checks around it: its kind menu
+  flag, and setting aside what the Codex already lists. Mostly there to give
+  starting characters their starting gear mid-story.
+- **The "already has a look" check**, which sets aside a second look for
+  someone who has one.
+- **Declared-character handling:** the resolver's "declared" path, Story Seed
+  cast lines marked `fromStorySeed`, and `identities` (characters,
+  location-world, factions) used only for name matching. These become Chapter 0
+  cards.
+- **The Codex guessing factions from names** ending in Sect, Clan or Tribe.
+  These become faction cards.
+- **Blueprint prose and its "detail" layers** (world overview, starting
+  location, society, power system, with their detail and basis fields), where
+  they now hold facts that belong in cards.
+- **Adding people an event names but the cast forgot**, and reading an
+  off-menu cast kind as a character: possibly less needed when the planner
+  plans from a complete world. Still needed for newcomers.
+
+Rule for the review: keep what still guards against a real planner mistake;
+remove what only existed because the world was missing.
+
 ## Standing rules any agent must keep
 
 - Never add a model call without SENSEI's approval.

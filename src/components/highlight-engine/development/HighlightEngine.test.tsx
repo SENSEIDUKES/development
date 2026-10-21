@@ -95,6 +95,29 @@ describe('engine-owned selection input', () => {
       expect(button('Edit')).toBeUndefined();
     } finally { outside.remove(); }
   });
+  it('clears stale actions for a host caret but preserves the engine selection after its own empty range event', async () => {
+    await select();
+    act(() => document.dispatchEvent(new Event('selectionchange')));
+    expect(button('Edit')).toBeDefined();
+    await select(9, 9);
+    expect(selections).toHaveBeenLastCalledWith(null);
+    expect(document.getSelection()!.rangeCount).toBe(0);
+    expect(button('Edit')).toBeUndefined();
+    expect(document.querySelector('[data-sen-selection-handle]')).toBeNull();
+  });
+  it('clears stale actions when a host selects outside prose without removing that native selection', async () => {
+    await select();
+    const outside = document.createElement('p'); outside.textContent = 'Outside prose'; document.body.append(outside);
+    try {
+      act(() => {
+        document.getSelection()!.setBaseAndExtent(outside.firstChild!, 0, outside.firstChild!, 7);
+        document.dispatchEvent(new Event('selectionchange'));
+      });
+      expect(selections).toHaveBeenLastCalledWith(null);
+      expect(button('Edit')).toBeUndefined();
+      expect(document.getSelection()!.toString()).toBe('Outside');
+    } finally { outside.remove(); }
+  });
   it('selects with a mouse drag without ever installing a browser selection', () => {
     offset = 7; expect(pointer('pointerdown').defaultPrevented).toBe(true);
     offset = 13; pointer('pointermove', 'mouse', 150); pointer('pointerup');

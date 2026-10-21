@@ -101,11 +101,12 @@ export function useSelectionTracker(
       // Host tools and assistive technology can still supply a range. Capture it once,
       // then retire the native selection so it cannot bring a second tint/menu/handles.
       if (removable && !next) {
-        // A rejected host range must not leave actions pointing at an older passage.
-        // The empty selectionchange caused by retiring our own range is harmless.
-        if (native && !native.isCollapsed && hasSelectionEndpoint(root, native)) {
+        // Any real host range, including a collapsed caret or an outside range,
+        // replaces the old selection. Only our own rangeCount === 0 is harmless.
+        if (native && native.rangeCount > 0) {
           selectionOrigin.current = null;
-          setSnapshot(null); native.removeAllRanges();
+          setSnapshot(null);
+          if (hasSelectionEndpoint(root, native)) native.removeAllRanges();
         }
         return;
       }

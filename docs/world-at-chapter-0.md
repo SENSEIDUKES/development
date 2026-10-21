@@ -98,7 +98,32 @@ the **target the direction aims for**, read against CTE's scores:
   When CTE shows them over it, the direction eases off; under it, it adds.
 - **Heaven:** raising the pressure on the seed is the point. The direction
   pushes past the comfortable range on purpose.
-- **Immortal:** between the two. (To decide: where exactly.)
+- **Immortal:** between the two.
+
+**Measured by the character's CGT phase** (SENSEI, 2026-10-21: "Mortal, Heaven
+and Immortal simply go based off the Syntrophic state of the character").
+From CGT v1.5 (section 13), each event's Transformation Result is
+`TR = AS − EP`, and its phase is:
+
+| Phase | Condition | Meaning |
+|---|---|---|
+| Syntrophic | TR > +15 | pressure metabolized into growth |
+| Threshold | −15 ≤ TR ≤ +15 | strained survival, holding under tension |
+| Dissipative | TR < −15 | fragmentation; pressure exceeds capacity |
+
+So the tier is a target phase band, not a new number: Mortal aims to keep the
+main character Syntrophic; Heaven drives them out of it on purpose; Immortal
+sits between. CTE reads where the character is now (and where the planned
+pressure would put them) and turns the gap into the plain direction the
+planner announces. **To confirm with SENSEI:** the exact band per tier (for
+example Mortal: Syntrophic; Immortal: Threshold allowed; Heaven: Dissipative
+allowed or sought), and whether it is judged per event or over the chapter.
+
+CGT v1.5's variables (node: C, F, R, M, A, G, I, P, W, PL 0–150, E0; edge:
+Recognition, Disposition, Coupling) and its memory cycle (13.2: each phase's
+updates, with PL multiplied by 0.75, 0.95 and more after a dissipative event)
+are the source CTE is built from. The PDF is SENSEI's; its numbers are not
+copied into the repo yet.
 
 In SENSEI's pipeline this stays CTE's interpreting, not the planner's: code
 reads the scores against the tier's target and hands the planner a plain
@@ -107,7 +132,7 @@ announces it.
 
 **Built today:** Fate Pressure only tunes Rhythm (which chapter function is
 favored). It is not in the planner's input, and there is no CTE to score
-against. Open questions: Immortal's target; whether the target applies to the
+against. Open questions: the band per tier (above); whether the target applies to the
 main character only or to every tracked character; and the exact plain words
 the planner receives (SENSEI approves them).
 

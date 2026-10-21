@@ -23,6 +23,38 @@ and the [vocabulary](../src/components/harness-generation/ARCHITECTURE_VOCABULAR
 
 > "If we got to break it more to fix it, it's what it is."
 
+## The line: what the Codex must hold (already decided, 2026-10-11)
+
+SENSEI (2026-10-21): "What exactly would make this not multimedia? How do we
+take it to a manga and recreate it one for one? That's the line." This was
+decided in [HARNESS_PRINCIPLES](../src/components/harness-generation/HARNESS_PRINCIPLES.md#translation-across-media-the-world-record)
+and is the only measure of the Codex. **No fields beyond it.**
+
+**Two tests for "enough":**
+
+- **The artist test:** can someone draw any scene from the record alone,
+  without reading the chapter?
+- **The save-game test:** can a game load the world exactly as it stands at
+  Chapter N: who is where, holding what, in what condition, allied with whom?
+
+When both pass, the record is enough. Anything more is the studio's job.
+
+**The minimal set:** entities (characters, things, abilities, places,
+factions, each with one permanent ID); appearance and its changes; state over
+time (holdings, rank, status, where each character is); ties; scenes (where,
+when, conditions, who is present); moments; voice; mood; world rules (power
+system, ranks, factions, laws).
+
+**Medium-neutral:** the record says "Gu Chen, scarred left cheek, grey robes,
+at the North Ridge Gate, at dusk, wounded", never a panel, camera, frame or
+art style.
+
+**What it means here:** the Story Seed and Blueprint must pass both tests **at
+Chapter 0**. An artist can draw the opening scene, and a game can load the
+starting world, from the Seed and Blueprint alone. Today they fail mainly on
+appearance (only the main character, as one prose line), entities (no place
+or faction cards), location (nobody is anywhere) and world rules (prose only).
+
 ## The principle
 
 RimWorld generates the whole world before play: factions and their relations,

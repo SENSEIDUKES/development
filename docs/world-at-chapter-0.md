@@ -228,6 +228,23 @@ remove what only existed because the world was missing.
 
 ## Standing rules any agent must keep
 
+**Protect the CAPA HARNESS above everything** (SENSEI, 2026-10-21: "As long
+as you guys don't fuck up my CAPA harness, I'll be able to fix it again. ...
+I don't need nobody fucking up my harness."). It is how SENSEI recovers from
+any other mistake. That means, for this plan and the cleanup after it:
+
+- The writer's prompt skeleton (`HARNESS_PROMPT_PARTS` in
+  `src/server/harness-generation/prompt.ts`) and its order stay as they are;
+  new text goes into the one part it belongs to (`promptSkeleton.test.ts`).
+- CAPA stays the home of the story's skills: the CAPA Schema, its slots
+  (including who reads each one: planner, writer or both), the CAPA Skills and
+  the CAPA Prompt. Story Seed and Blueprint work feeds Story Information; it
+  never moves into, replaces or works around CAPA.
+- The Writer Instructions page and its dated history stay complete; every
+  change to words a model reads is shown there and approved first.
+- The cleanup removes pieces that covered for missing world state. It never
+  removes or bypasses a HARNESS part, a CAPA slot or a skill.
+
 - Never add a model call without SENSEI's approval.
 - Show the exact prompt words and get approval before they change.
 - No compatibility layers; the dev repo changes its architecture freely.

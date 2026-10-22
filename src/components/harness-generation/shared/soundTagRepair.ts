@@ -14,7 +14,7 @@ import { wordRanges, type WordRange } from '../../../narrative/words';
  * inside a sentence are never touched, and nothing else in the prose changes.
  */
 
-type Reading = Pick<MarkReading, 'text' | 'sounds' | 'speakers' | 'marks'>;
+type Reading = Pick<MarkReading, 'text' | 'sounds' | 'speakers' | 'wordTags' | 'marks'>;
 
 /** Sentence-ending punctuation, with any closing quotes or brackets after it. */
 const SENTENCE_END = /[.!?。！？…‽][\s"'”’»」』)\]）]*$/u;
@@ -49,6 +49,7 @@ const removeRange = (reading: Reading, start: number, end: number): Reading => {
     text: reading.text.slice(0, start) + reading.text.slice(end),
     sounds: reading.sounds.map(tag => ({ ...tag, start: at(tag.start), end: at(tag.end) })),
     speakers: reading.speakers.map(tag => ({ ...tag, offset: at(tag.offset) })),
+    wordTags: reading.wordTags.map(tag => ({ ...tag, offset: at(tag.offset) })),
     marks: reading.marks.map(mark => ({ ...mark, start: at(mark.start), end: at(mark.end) })),
   };
 };

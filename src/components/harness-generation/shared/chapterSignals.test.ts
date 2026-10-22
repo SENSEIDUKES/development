@@ -7,15 +7,16 @@ describe('HARNESS chapter signals', () => {
       title: 'The [[sound: beast growl | Fox | low]]',
       paragraphs: ['The [[sound: beast growl | fox growled | low]].'],
       recap: '[[@MC]] The [[sound: beast growl | fox growled]] once. [[gained: MC | Fox Pelt]]',
-      // Any shape a writer returns, nested or listed, is cleaned the same way.
-      notes: { said: 'The [[sound: beast growl | fox growled]].' },
+      arcCompletion: { goalId: 'g', completed: true, evidence: 'The [[sound: beast growl | fox growled]].' },
+      storyEnded: { ended: false, evidence: '' },
       nextConflict: ['[[3|x]]'],
     });
     expect(reply).toEqual({
       title: 'The Fox',
       paragraphs: ['The [[sound: beast growl | fox growled | low]].'],
       recap: 'The fox growled once.',
-      notes: { said: 'The fox growled.' },
+      arcCompletion: { goalId: 'g', completed: true, evidence: 'The fox growled.' },
+      storyEnded: { ended: false, evidence: '' },
       nextConflict: ['x'],
     });
   });

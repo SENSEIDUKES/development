@@ -7,7 +7,6 @@ import { writtenChapter } from '../../../test-utils/writtenChapter';
 import { type HarnessGenerationResponse } from '@seihouse/sen/harness-generation';
 import { handleHarnessGenerationHttp } from '../../../server/harness-generation/http';
 import { createHarnessSppSkill, inspectHarnessSpp, loadHarnessSppSkills, readHarnessSppText, saveHarnessSppSkill, SPP_SKILL_STORAGE_KEY } from './sppSkills';
-import { planEveryChapter } from '../../../test-utils/chapterPlan';
 
 const authorBytes = () => new Uint8Array(readFileSync(new URL('../../../test-utils/fixtures/spp/SEN-AUTHOR.spp', import.meta.url)));
 const storage = () => {
@@ -47,7 +46,6 @@ describe('SPP intake through Harness skills', () => {
     let calls = 0;
     const controller = new HarnessGenerationController({ repository, installedSkills: loadHarnessSppSkills(saved), modelAdapter: {
       getServerInfo: async () => { throw new Error('Not used'); },
-      planChapter: planEveryChapter(),
       arcOperation: async request => ({ rawProviderResponse: JSON.stringify({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 30 }] }, destinedEnding: 'Bring the story to its true conclusion.' }), providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: new Date().toISOString(), usage: { source: 'unavailable' } } }),
       generate: async request => {
         const response = await handleHarnessGenerationHttp({ method: 'POST', body: JSON.stringify(request) }, {
@@ -120,7 +118,6 @@ describe('SPP intake through Harness skills', () => {
     const skill = createHarnessSppSkill(content, content.manifest.files[0].path, 'style');
     const controller = new HarnessGenerationController({ repository: new InMemoryHarnessGenerationRepository(), modelAdapter: {
       getServerInfo: async () => { throw new Error('Not used'); },
-      planChapter: planEveryChapter(),
       arcOperation: async request => ({ rawProviderResponse: JSON.stringify({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 30 }] }, destinedEnding: 'Bring the story to its true conclusion.' }), providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: new Date().toISOString(), usage: { source: 'unavailable' } } }),
       generate: async () => { throw new Error('Provider must not be called'); },
     } });
@@ -130,10 +127,9 @@ describe('SPP intake through Harness skills', () => {
     await controller.setSkillSlot(story.id, 'style', skill);
     expect(controller.snapshot().stories[0].id).toBe(story.id);
     const long = { ...skill, instructions: 'x'.repeat(16_000) };
-    // Continuity is read by both calls, so it counts against the writer's budget beside the style.
-    const second = { ...long, id: 'another', slot: 'continuity' as const };
+    const second = { ...long, id: 'another', slot: 'pacing' as const };
     controller.setInstalledSkills([long, second]);
-    await controller.setSkillSlot(story.id, 'continuity', second);
+    await controller.setSkillSlot(story.id, 'pacing', second);
     await expect(controller.generateNextChapter(story.id, 'fixture')).rejects.toThrow('CAPA Prompt budget');
     expect(controller.snapshot().attempts).toHaveLength(0);
   });

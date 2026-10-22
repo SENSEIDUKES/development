@@ -529,7 +529,11 @@ export function HarnessReaderSession({
         onReadChapter={readChapter} />
     </ReaderPanel>
     <ReaderPanel open={panel === 'codex'} onClose={closeLayer} labelledBy="codex-panel-title" testId="reader-panel-codex" peek={codexPeek}>
-      <ReaderCodex state={state} storyId={storyId} chapters={chapters} storyTitle={story.title} onBack={closeLayer} voices={codexVoices} pictures={codexPictures}
+      <ReaderCodex state={state} storyId={storyId} chapters={chapters} storyTitle={story.title} onBack={closeLayer} voices={codexVoices} pictures={codexPictures && {
+        pictureOf: codexPictures.pictureOf,
+        // A card without a current look has it written first, from the story's own words, then pictured.
+        manifest: async card => codexPictures.manifest({ ...card, look: card.look ?? await controller.describeCodexLook(storyId, card.key) }),
+      }}
         onReadPassage={revealPassage} onReadChapter={revealChapter} />
     </ReaderPanel>
     <ReaderSettingsSheet open={layer?.id === 'settings'} onClose={closeLayer} readAloud={readAloud} language={language}

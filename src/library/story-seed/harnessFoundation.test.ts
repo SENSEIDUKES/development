@@ -4,7 +4,6 @@ import { STORY_SEED_SCHEMA_VERSION, createEmptyStorySeedInput, finalizeGenerated
 import { createHarnessFoundationFromStorySeed } from '@seihouse/library/story-seed';
 import { InMemoryHarnessGenerationRepository } from '../../test-utils/InMemoryHarnessGenerationRepository';
 import { buildHarnessGenerationPrompt } from '../../server/harness-generation/prompt';
-import { planEveryChapter } from '../../test-utils/chapterPlan';
 
 const WORLD = 'Ancient sect world with a collapsing celestial court';
 const SOCIETY = 'Sect-led feudal hierarchy';
@@ -97,7 +96,6 @@ describe('Story Seed handoff of world detail and generated cast', () => {
     const controller = new HarnessGenerationController({ repository: new InMemoryHarnessGenerationRepository(), modelAdapter: {
       getServerInfo: async () => ({ configured: true, provider: 'fixture', defaultModel: 'fixture', models: [] }),
       generate: async request => { requests.push(structuredClone(request)); return reply({ paragraphs: ['Ye Chen woke in the quarry.'] }); },
-      planChapter: planEveryChapter(),
       arcOperation: async () => { throw new Error('A roadmap story never plans at a boundary.'); },
     } });
     await controller.hydrate();

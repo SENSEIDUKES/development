@@ -7,7 +7,6 @@ import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemor
 import { asWrittenChapter } from '../../../test-utils/writtenChapter';
 import { createHarnessSenStory } from '@seihouse/sen/harness-generation';
 import { type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse } from '@seihouse/sen/harness-generation';
-import { planEveryChapter } from '../../../test-utils/chapterPlan';
 
 const runtime = (): HarnessRuntime => {
   let id = 0;
@@ -29,6 +28,7 @@ const response = (value: unknown): HarnessGenerationResponse => ({
 /** Marked prose plus a tiny Sound Cue signal; the recording below is HARNESS work. */
 const chapterReply = () => response({
   paragraphs: ['Rain crossed the mountain pass as the [[sound: clockwork roar | clockwork beast roared | high]] across the stones.'],
+  arcCompletion: { goalId: 'arc-1', completed: false, evidence: '' },
 });
 
 const soundscapePack = (version = '1.0.0', url = 'https://fixtures.r2.dev/storm-v1.mp3'): MediaPack => validateMediaPack({
@@ -69,7 +69,6 @@ const adapter = (...outputs: Array<HarnessGenerationResponse | Error>) => {
   const value: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
     generate,
-    planChapter: planEveryChapter(),
     arcOperation: async () => response({
       plan: { arcNumber: 1, goals: [{ id: 'arc-1', text: 'Cross the pass.', chapters: 30 }] },
       destinedEnding: 'Reach the city beyond the pass.',
@@ -129,7 +128,7 @@ describe('HARNESS Media Loadout runtime integration', () => {
     await controller.generateNextChapter(story.id, 'fixture');
     const request = provider.generate.mock.calls[0][0] as HarnessGenerationRequest;
     expect(Object.keys(request)).toEqual([
-      'storyId', 'attemptId', 'model', 'capaPrompt', 'storyInformation', 'missionReminder', 'immediateChapterRequest', 'chapterPlan',
+      'storyId', 'attemptId', 'model', 'capaPrompt', 'storyInformation', 'missionReminder', 'immediateChapterRequest',
     ]);
     const serializedRequest = JSON.stringify(request);
     expect(serializedRequest).not.toContain(soundscapes.id);

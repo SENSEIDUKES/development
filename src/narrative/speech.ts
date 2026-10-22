@@ -153,12 +153,6 @@ export const SPEAKER_KIND = 'speaker';
  */
 export const MAIN_CHARACTER_SPEAKER_TAG = 'MC';
 
-/**
- * The speaker of a line said by someone the Chapter Plan leaves unnamed (a
- * guard, a voice in the crowd): read in the side voice, never given a card.
- */
-export const UNNAMED_SPEAKER = 'someone else';
-
 /** Where a speaker record sits: an exact span of one paragraph. */
 export type SpeakerAnchor = Extract<ManuscriptAnchor, { level: 'span' }>;
 

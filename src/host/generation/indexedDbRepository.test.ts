@@ -16,10 +16,8 @@ describe('planHarnessWorkspaceLoad', () => {
     expect(plan.state.stories).toEqual([{ id: 'story-1' }]);
   });
 
-  it('keeps an untouched copy of a workspace from before the chapter loop (nothing before schema 33 upgrades) before starting fresh', () => {
-    // SENSEI, 2026-10-20: every earlier story was a test story whose record came from tags in its prose.
-    expect(HARNESS_GENERATION_SCHEMA_VERSION).toBe(33);
-    for (const schemaVersion of [32, 31, 27, 26, 21]) {
+  it('keeps an untouched copy of a test-era workspace (nothing before schema 27, arcs of 30 chapters, upgrades) before starting fresh', () => {
+    for (const schemaVersion of [26, 21]) {
       const stored = { ...createEmptyHarnessWorkspaceState(), schemaVersion, stories: [{ id: 'a' }, { id: 'b' }], chapters: [{ id: 'c1' }] };
       const plan = planHarnessWorkspaceLoad(stored, now);
       expect(plan.state).toEqual(createEmptyHarnessWorkspaceState());
@@ -28,6 +26,24 @@ describe('planHarnessWorkspaceLoad', () => {
         record: { preservedAt: now(), reason: 'schema-version', schemaVersion, workspace: stored },
       });
       expect(plan.preserve!.record.workspace).toBe(stored);
+    }
+  });
+
+  it('upgrades a schema 27, 28, 29, 30 or 31 workspace with every story and chapter kept, keeping a copy of the original', () => {
+    // 28 adds only optional fields: the rewrite request and its replaced-by record, and the Holdings fixer record.
+    // 29 adds only optional fields too: a chapter's scene, the atmospheres in frozen media, a frozen soundtrack vocabulary.
+    // 30 adds only an optional story field: Author's notes.
+    // 31 adds only an optional story field: the story's own sound words. Saved cues and frozen attempts are untouched.
+    // 32 adds only optional chapter fields: its appearances and the looks written down from them.
+    expect(HARNESS_GENERATION_SCHEMA_VERSION).toBe(32);
+    for (const schemaVersion of [27, 28, 29, 30, 31]) {
+      const stored = { ...createEmptyHarnessWorkspaceState(), schemaVersion, stories: [{ id: 'a' }], attempts: [{ id: 'a1', capaPrompt: { soundVocabulary: [{ word: 'blade drawn', example: 'drew his sword' }] } }], chapters: [{ id: 'c1', soundCues: [{ id: 'sc1' }] }] };
+      const plan = planHarnessWorkspaceLoad(stored, now);
+      expect(plan.state).toEqual({ ...stored, schemaVersion: 32 });
+      expect(plan.preserve).toEqual({
+        key: `${PRESERVED_WORKSPACE_PREFIX}v${schemaVersion}:2026-09-24T12:00:00.000Z`,
+        record: { preservedAt: now(), reason: 'migrated', schemaVersion, workspace: stored },
+      });
     }
   });
 

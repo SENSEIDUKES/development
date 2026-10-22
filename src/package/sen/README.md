@@ -1,28 +1,5 @@
 # `@seihouse/sen`
 
-**Unreleased (2026-10-20): the chapter loop, step 2 (breaking).** `./harness-generation`:
-before each chapter the controller calls the planner (Fate) through the new adapter method
-`HarnessGenerationModelAdapter.planChapter` (`HarnessChapterPlanRequest`, operation
-`plan-chapter`); a host without it reads stories but cannot write a chapter. The plan
-(`ChapterPlan`, `PlanEvent`, `PlanFact`, `PlanCheck` and the menus, `PLAN_EVENT_KINDS` and
-the rest) is read and checked by `readChapterPlan`, `checkChapterPlan`, `readPlanRef`,
-`resolveChapterPlan`, `writerChapterPlan` and `unresolvedPlan`; the record is worked out
-from plans by `derivePlanRecord`, `PlanRecordBuilder`, `blockedFact` and `deriveHoldings`,
-and the planner's Codex section by `buildCodexSection`. New: `SEN_FATE_SURVIVAL_PLANNING`,
-`PLANNER_SECTION_ORDER`, `WRITER_SECTION_ORDER`, `MAIN_CHARACTER_SPEAKER_TAG`,
-`UNNAMED_SPEAKER`, `CapaSlotDefinition.readBy`, `CapaPrompt.planning`,
-`StoryInformationPacket.codex`, `HarnessGenerationRequest.chapterPlan`, an attempt's
-`plannerCall` and `chapterPlan`, and a chapter's `plan` and `planChecks`. Removed: SEN
-Holdings and SEN Appearance (`SEN_HOLDINGS_SKILL`, `SEN_APPEARANCE_SKILL` and their
-instructions) with their slots; the holdings and appearance tags and their readers
-(`placeHoldingChanges`, `readHoldingTag`, `resolveHoldingChanges`, `holdingsSection`,
-`deriveAppearances`, `appearancesSection` and the rest); the Holdings fixer (`fixHoldings`,
-`planHoldingsFix`, `applyHoldingsFixes`, the controller's `holdingsFixer` option and
-`setHoldingsFixer`); the look writer; a chapter's `holdingChanges`, `closingHoldings`,
-`appearances`, `looks` and `fixer`; and the writer reply's `plan`, `chapterFunction`,
-`arcCompletion`, `storyEnded` and `mainCharacterHoldings`. Saved stories move to schema 33
-with no upgrade: older workspaces start fresh, preserved untouched.
-
 **Unreleased (2026-10-16):** `./harness-generation` adds the optional
 `HarnessReaderSession.renderHostTools` slot and `ReaderHostTools` contract. A host
 receives the active chapter ID, busy state and `interruptPlayback()`, whose

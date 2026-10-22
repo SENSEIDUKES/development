@@ -34,7 +34,7 @@ export {
 } from '../../components/harness-generation/shared/canonicalState';
 export { compileStoryInformationPacket, projectCurrentStory } from '../../components/harness-generation/shared/context';
 export { projectCanonicalState, normalizeIdentityLabel, type CanonicalProjectionInput, type CanonicalProjectionResult } from '../../components/harness-generation/shared/canonicalProjection';
-export { GENERATION_PACKET_BUDGET, PACKET_SECTION_ORDER, PLANNER_SECTION_ORDER, WRITER_SECTION_ORDER, estimatePacketTokens, type PacketSectionBudget } from '../../components/harness-generation/shared/packetBudget';
+export { GENERATION_PACKET_BUDGET, PACKET_SECTION_ORDER, estimatePacketTokens, type PacketSectionBudget } from '../../components/harness-generation/shared/packetBudget';
 export {
   ALWAYS_LOADED_SKILLS,
   CAPA_SCHEMA,
@@ -98,26 +98,28 @@ export {
   includeBundledHarnessSkills,
   SEN_NOVEL_AUTHOR_SKILL,
 } from '../../components/harness-generation/shared/authorSkill';
-export { SEN_FATE_SURVIVAL_INSTRUCTIONS, SEN_FATE_SURVIVAL_PLANNING, SEN_FATE_SURVIVAL_SKILL } from '../../components/harness-generation/shared/fateSurvivalSkill';
+export { SEN_FATE_SURVIVAL_INSTRUCTIONS, SEN_FATE_SURVIVAL_SKILL } from '../../components/harness-generation/shared/fateSurvivalSkill';
 export { SEN_READING_MODE_SKILLS } from '../../components/harness-generation/shared/readingModeSkills';
 export { SEN_SOUND_CUES_INSTRUCTIONS, SEN_SOUND_CUES_SKILL, presentSoundVocabulary } from '../../components/harness-generation/shared/soundCuesSkill';
 export { SEN_SOUNDTRACK_INSTRUCTIONS, SEN_SOUNDTRACK_SKILL, presentSoundtrackVocabulary } from '../../components/harness-generation/shared/soundtrackSkill';
 export { chapterSoundtrack, type ChapterSoundtrackReading } from '../../components/harness-generation/shared/soundtrack';
 export { SEN_SPEAKERS_INSTRUCTIONS, SEN_SPEAKERS_SKILL } from '../../components/harness-generation/shared/speakersSkill';
-export { MAIN_CHARACTER_SPEAKER_TAG, UNNAMED_SPEAKER } from '../../narrative/speech';
+export { SEN_HOLDINGS_INSTRUCTIONS, SEN_HOLDINGS_SKILL } from '../../components/harness-generation/shared/holdingsSkill';
+export { SEN_APPEARANCE_INSTRUCTIONS, SEN_APPEARANCE_SKILL } from '../../components/harness-generation/shared/appearanceSkill';
 export { HARNESS_TAG_RULES } from '../../components/harness-generation/shared/tagRules';
 export { isStraySoundTag, settleStraySoundTags, trimLeadingStrayPunctuation } from '../../components/harness-generation/shared/soundTagRepair';
 export {
-  HOLDING_VERB_OF_CHANGE,
-  UNNAMED_MAIN_CHARACTER,
-  abilityLabel,
+  HOLDINGS_SECTION_OTHER_CHARACTERS,
   declaredCharacters,
   deriveHoldings,
-  holdingRecordId,
+  holdingName,
   holdingTargetKind,
+  holdingsSection,
   namesNearlyMatch,
+  placeHoldingChanges,
+  readHoldingTag,
+  resolveHoldingChanges,
   createCodexEntryResolver,
-  thingLabel,
   type CharacterHoldings,
   type CodexEntryResolver,
   type DeclaredCharacter,
@@ -126,39 +128,27 @@ export {
   type HoldingFlag,
   type HoldingFlagKind,
   type HoldingPassage,
+  type HoldingPlacement,
   type HoldingsChapter,
   type HoldingsState,
   type KnownAbility,
+  type ReadHoldingTag,
+  type ResolvedHoldingChanges,
 } from '../../components/harness-generation/shared/holdings';
 export {
-  checkChapterPlan,
-  readChapterPlan,
-  readPlanRef,
-  resolveChapterPlan,
-  unresolvedPlan,
-  writerChapterPlan,
-  type ChapterPlanReading,
-  type CheckedChapterPlan,
-} from '../../components/harness-generation/shared/chapterPlan';
-export {
-  PlanRecordBuilder,
-  blockedFact,
-  conditionLabel,
-  derivePlanRecord,
-  openCommitment,
-  openGoal,
-  type RecordChapter,
-  type RecordPassage,
-  type RecordedCommitment,
-  type RecordedCondition,
-  type RecordedEntity,
-  type RecordedGoal,
-  type RecordedParty,
-  type RecordedStance,
-  type RecordedStatus,
-  type RecordedValue,
-} from '../../components/harness-generation/shared/planRecord';
-export { buildCodexSection } from '../../components/harness-generation/shared/codexSection';
+  HOLDINGS_FIXER_CASE_LIMIT,
+  applyHoldingsFixes,
+  chapterHoldingFlags,
+  holdingTagText,
+  planHoldingsFix,
+  readFixTags,
+  readHoldingsFixReply,
+  type HoldingsFixApplyInput,
+  type HoldingsFixInput,
+  type HoldingsFixPlan,
+  type HoldingsFixPlanCase,
+  type HoldingsFixResult,
+} from '../../components/harness-generation/shared/holdingsFixer';
 export {
   deriveStoryCodex,
   type CodexCharacter,
@@ -176,10 +166,44 @@ export {
   type StoryCodexRecord,
 } from '../../components/harness-generation/shared/storyCodex';
 export { factionNamed, type DeclaredFaction as CodexDeclaredFaction } from '../../components/harness-generation/shared/factions';
-export { firstVoices, readAloudVoicesOf, resolveSpeakers } from '../../components/harness-generation/shared/voices';
+export {
+  APPEARED_SECTION_CHARACTERS,
+  APPEARED_SECTION_THINGS,
+  appearancesSection,
+  deriveAppearances,
+  describableAppearances,
+  placeAppearances,
+  readAppearanceTag,
+  resolveAppearances,
+  thingAppearancesFromHoldings,
+  type AppearanceFlag,
+  type AppearancePassage,
+  type AppearancePlacement,
+  type AppearanceSubject,
+  type AppearancesChapter,
+  type AppearancesState,
+  type LookChange,
+  type ReadAppearanceTag,
+  type RecordedLook,
+  type ResolvedAppearances,
+} from '../../components/harness-generation/shared/appearances';
+export {
+  LOOK_DECLARED_CHARACTERS,
+  LOOK_PASSAGE_CHARACTERS,
+  LOOK_SUBJECT_LIMIT,
+  LOOK_SUMMARY_WORDS,
+  LOOK_TRAITS,
+  LOOK_TRAIT_WORDS,
+  chapterLooks,
+  lookPassage,
+  planLookSubjects,
+  CODEX_LOOK_PASSAGE_CHARACTERS,
+  planCodexLook,
+  readDescribedLooks,
+} from '../../components/harness-generation/shared/lookDescriber';
+export { firstVoices, readAloudVoicesOf, resolveSpeakers, speakerGender } from '../../components/harness-generation/shared/voices';
 export * from '../../narrative/holdings';
-export * from '../../narrative/looks';
-export * from '../../narrative/chapterPlan';
+export * from '../../narrative/appearances';
 export { createHarnessSenStory } from '../../components/harness-generation/shared/senAdapter';
 export * from '../../narrative/generation';
 export { HarnessReaderSession, type HarnessReaderWriting, type ReaderHostTools } from '../../components/harness-generation/development/HarnessReaderSession';

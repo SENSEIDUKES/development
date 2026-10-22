@@ -9,7 +9,6 @@ import { HarnessGenerationController, type HarnessGenerationModelAdapter, type H
 import type { ReaderStateRepository, ReaderStoryState } from '@seihouse/sen/reader-runtime';
 import { HarnessGenerationWorkspace } from '@seihouse/library/generation';
 import { harnessStoryDisplay } from '../stories/storyView';
-import { planEveryChapter } from '../../test-utils/chapterPlan';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -29,11 +28,10 @@ const scriptedModel = () => {
       await gate;
       return { rawProviderResponse: JSON.stringify(writtenChapter({
         title: 'Low Tide', paragraphs: ['The tide pulled back from the drowned gate.', 'Mara counted the bells that no longer rang.'],
-        recap: 'Mara returns.',
+        arcCompletion: { goalId: 'arc-1-name', completed: false, evidence: '' }, recap: 'Mara returns.', chapterFunction: 'progression',
         nextProgression: 'Mara climbs the bell tower.', nextWorldBuilding: 'The keeper explains the drowned law.', nextConflict: 'The tide wardens seize the causeway.',
       })), providerReceipt: receipt };
     },
-    planChapter: planEveryChapter(),
     arcOperation: async () => ({ rawProviderResponse: JSON.stringify({ plan: GOAL, destinedEnding: 'Mara reclaims her name.' }), providerReceipt: receipt }),
   };
   return { adapter, recoverMemory, release: () => release() };

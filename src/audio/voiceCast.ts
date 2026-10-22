@@ -147,25 +147,21 @@ const hash = (seed: string) => {
 /**
  * A character's first voice, chosen by code when they first speak, so every
  * speaker sounds like someone before anyone picks: one of the given gender
- * when it is known, a protagonist's voice for the main character, of their age
- * when one is, and one no other character of the story has while any is
- * left. The same seed (the character's Codex entry id) always gives the same
- * voice. The reader can change it on the character's Codex card.
+ * when it is known, a protagonist's voice for the main character, and one no
+ * other character of the story has while any is left. The same seed (the
+ * character's Codex entry id) always gives the same voice. The reader can
+ * change it on the character's Codex card.
  */
-export function chooseCastVoice({ seed, gender, age, mainCharacter = false, taken = [] }: {
+export function chooseCastVoice({ seed, gender, mainCharacter = false, taken = [] }: {
   seed: string;
   gender?: Exclude<VoiceCastGender, 'unisex'>;
-  /** How old the character is, from the record. A voice of that age is chosen when one is. */
-  age?: Exclude<VoiceCastAge, 'unknown'>;
   mainCharacter?: boolean;
   /** Voices other characters of the story already have. */
   taken?: readonly string[];
 }): string {
   const ofGender = gender ? CHARACTER_VOICE_CAST.filter(member => member.gender === gender) : CHARACTER_VOICE_CAST.filter(member => member.gender !== 'unisex');
   const suited = mainCharacter ? ofGender.filter(member => member.key.includes('protagonist')) : ofGender;
-  const fitting = suited.length ? suited : ofGender;
-  const ofAge = age ? fitting.filter(member => member.age === age) : [];
-  const pool = ofAge.length ? ofAge : fitting;
+  const pool = suited.length ? suited : ofGender;
   const free = pool.filter(member => !taken.includes(member.key));
   const choices = free.length ? free : pool;
   return choices[hash(seed) % choices.length].key;

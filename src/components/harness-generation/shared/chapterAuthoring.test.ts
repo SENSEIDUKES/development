@@ -9,7 +9,6 @@ import type { ArcPlan } from '@seihouse/sen/arc-goals';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { writtenChapter } from '../../../test-utils/writtenChapter';
 import { harnessParagraphBlockId } from './chapterBody';
-import { planEveryChapter } from '../../../test-utils/chapterPlan';
 
 /**
  * Create mode saves the reader's own changes to the newest chapter: its words
@@ -22,8 +21,9 @@ const plan: ArcPlan = { arcNumber: 1, goals: [
 ] };
 const receipt = { provider: 'fixture', model: 'fixture', generatedAt: 'now', usage: { source: 'unavailable' as const } };
 const reply = (title: string, paragraphs: string[]) => ({
-  title, paragraphs, recap: `${title}: ${paragraphs[0]}`,
+  title, paragraphs, recap: `${title}: ${paragraphs[0]}`, chapterFunction: 'progression',
   nextProgression: 'Lin climbs the archive tower.', nextWorldBuilding: 'The flood reveals the old canals.', nextConflict: 'A river cult blocks the stair.',
+  arcCompletion: { goalId: 'none', completed: false, evidence: '' },
 });
 let ids = 0;
 const runtime = { now: () => '2026-10-12T12:00:00.000Z', createId: (prefix: string) => `${prefix}-${++ids}` };
@@ -35,7 +35,6 @@ const setup = async () => {
     generate: vi.fn(async (_request: HarnessGenerationRequest) => ({
       rawProviderResponse: JSON.stringify(writtenChapter(outputs.shift() ?? reply('Onward', ['Lin waded on.']))), providerReceipt: receipt,
     })),
-    planChapter: planEveryChapter(),
     arcOperation: async (_request: HarnessArcRequest) => ({ rawProviderResponse: '{}', providerReceipt: receipt }),
   };
   const repository = new InMemoryHarnessGenerationRepository();
@@ -55,15 +54,15 @@ describe('Create mode: authoring the newest chapter', () => {
     const run = await setup();
     await run.write(reply('The Flood', ['Lin tied the rope to the rail.', 'The water rose.']));
     const [chapter] = run.chapters();
+    const holdings = chapter.holdingChanges ?? [];
     // A change after every effect's words leaves them where they are.
     const paragraphs = chapter.paragraphs.map((paragraph, index) => index === 1 ? 'The black water rose to the stair.' : paragraph);
-    await run.controller.authorChapter(chapter.id, { paragraphs, soundCues: chapter.soundCues, speakers: chapter.speakers });
+    await run.controller.authorChapter(chapter.id, { paragraphs, soundCues: chapter.soundCues, speakers: chapter.speakers, holdingChanges: holdings });
     const [saved] = run.chapters();
     expect(saved.paragraphs).toEqual(paragraphs);
     expect(saved.prose).toBe(paragraphs.join('\n\n'));
     expect(saved.metrics.wordCount).toBe(chapter.metrics.wordCount + 4);
-    // What happens is the chapter's plan: the reader's words never change it.
-    expect(saved.plan).toEqual(chapter.plan);
+    expect(saved.holdingChanges ?? []).toEqual(holdings);
     // It is kept: the repository holds the change.
     expect(run.repository.snapshot().chapters.find(entry => entry.id === chapter.id)!.paragraphs[1]).toBe('The black water rose to the stair.');
   });
@@ -92,7 +91,7 @@ describe('Create mode: authoring the newest chapter', () => {
       payload: { origin: 'manual', sound: 'rope', cue: { publicUrl: 'https://example.test/rope.ogg', provenance: { packageId: 'p', version: '1.0.0' }, category: 'foley' } } };
     await run.controller.authorChapter(chapter.id, {
       paragraphs: chapter.paragraphs.map((paragraph, index) => index === 0 ? 'Lin knotted the rope to the rail.' : paragraph),
-      soundCues: chapter.soundCues, speakers: chapter.speakers, waiting: [waiting as never],
+      soundCues: chapter.soundCues, speakers: chapter.speakers, holdingChanges: chapter.holdingChanges, waiting: [waiting as never],
     });
     expect(run.chapters()[0].authoring).toEqual({ editedAt: '2026-10-12T12:00:00.000Z', waiting: [waiting] });
     // Writing the next chapter seals this one: what still waits is let go, and the mark stays for the reread.
@@ -113,7 +112,7 @@ describe('Create mode: authoring the newest chapter', () => {
     };
     const music = { id: 'music', kind: 'soundscape-change' as const, anchor: word('water'), payload: { pieceId: 'war-1' } };
     const air = { id: 'air', kind: 'atmosphere-change' as const, anchor: word('stair'), payload: { atmosphereId: 'storm' } };
-    const base = { paragraphs: chapter.paragraphs, soundCues: chapter.soundCues, speakers: chapter.speakers };
+    const base = { paragraphs: chapter.paragraphs, soundCues: chapter.soundCues, speakers: chapter.speakers, holdingChanges: chapter.holdingChanges };
     await run.controller.authorChapter(chapter.id, { ...base, openingSound: { soundscape: { pieceId: 'calm-1' } }, soundtrackChanges: [music, air] });
     const [saved] = run.chapters();
     expect(saved.openingSound).toEqual({ soundscape: { pieceId: 'calm-1' } });
@@ -137,7 +136,7 @@ describe('Create mode: authoring the newest chapter', () => {
     const [first, second] = run.chapters();
     await expect(run.controller.authorChapter(first.id, { paragraphs: first.paragraphs })).rejects.toThrow('Chapter 1 is sealed');
     const paragraphs = second.paragraphs.map((paragraph, index) => index === 0 ? 'Lin crossed the swaying bridge.' : paragraph);
-    await run.controller.authorChapter(second.id, { paragraphs, soundCues: second.soundCues, speakers: second.speakers });
+    await run.controller.authorChapter(second.id, { paragraphs, soundCues: second.soundCues, speakers: second.speakers, holdingChanges: second.holdingChanges });
     expect(run.chapters()[1].paragraphs[0]).toBe('Lin crossed the swaying bridge.');
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ARC_LENGTH, ARC_LOOKAHEAD_TEXT_LIMIT, MAX_ARC_LOOKAHEAD, MAX_ROADMAP_ARCS, activeArcGoal, arcGenerationContext, arcGoalSegments, arcLookaheadFromPlans, arcPlanFromDraft, createArcChapterPosition, reachArcGoal, editArcPlan, normalizeArcLookahead, validateArcPlan, type ArcPlan } from '@seihouse/sen/arc-goals';
+import { ARC_LENGTH, ARC_LOOKAHEAD_TEXT_LIMIT, MAX_ARC_LOOKAHEAD, MAX_ROADMAP_ARCS, activeArcGoal, arcGenerationContext, arcGoalSegments, arcLookaheadFromPlans, arcPlanFromDraft, confirmArcGoal, createArcChapterPosition, editArcPlan, normalizeArcLookahead, validateArcPlan, type ArcPlan } from '@seihouse/sen/arc-goals';
 
 const plan: ArcPlan = { arcNumber: 1, goals: [
   { id: 'rank', text: 'Reach Foundation rank.', chapters: 21 },
@@ -30,17 +30,14 @@ describe('Central SEN arc authority', () => {
     }
   });
 
-  it('records a goal reached by a planned event, never without one, and never twice', () => {
+  it('uses prose evidence for completion and never advances an unconfirmed goal', () => {
     const context = arcGenerationContext(plan, 21, 'Unite the heavens.');
-    expect(reachArcGoal(context, 21, '  ')).toBeUndefined();
-    const done = reachArcGoal(context, 21, 'She breaks through to Foundation rank in the trial.');
-    expect(done).toMatchObject({ arcNumber: 1, goalId: 'rank', goalText: 'Reach Foundation rank.', chapterNumber: 21, evidence: 'She breaks through to Foundation rank in the trial.' });
+    expect(confirmArcGoal(context, 21, 'She tried.', { goalId: 'rank', completed: true, evidence: 'She reached Foundation rank.' })).toBeUndefined();
+    expect(confirmArcGoal(context, 21, 'She tried.', { goalId: 'rank', completed: false, evidence: 'She tried.' })).toBeUndefined();
+    const done = confirmArcGoal(context, 21, 'She reached Foundation rank.', { goalId: 'rank', completed: true, evidence: 'She reached Foundation rank.' });
+    expect(done?.chapterNumber).toBe(21);
     expect(arcGenerationContext(plan, 22, 'Ending').activeGoal.id).toBe('rank');
     expect(arcGenerationContext(plan, 22, 'Ending', [done!]).activeGoal.id).toBe('enemy');
-    // Once the arc's last goal is reached it stays active, as reached: a later plan cannot reach it again.
-    const last = reachArcGoal(arcGenerationContext(plan, 25, 'Unite the heavens.', [done!]), 25, 'She unmasks the invader.');
-    expect(last).toMatchObject({ goalId: 'enemy', chapterNumber: 25 });
-    expect(reachArcGoal(arcGenerationContext(plan, 26, 'Unite the heavens.', [done!, last!]), 26, 'Again.')).toBeUndefined();
   });
 
   it('hands a goal reached early to the next at once; the next keeps its own deadline and gains the spare chapters', () => {

@@ -7,7 +7,6 @@ import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemor
 import { writtenChapterReply } from '../../../test-utils/writtenChapter';
 import { installAudioMediaStubs, renderWithDevAudio } from '../../../test-utils/renderWithDevAudio';
 import { FatePage, HarnessGenerationController, HarnessReaderSession, type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type StoryFoundationInput } from '@seihouse/sen/harness-generation';
-import { planEveryChapter } from '../../../test-utils/chapterPlan';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -19,7 +18,7 @@ const plan = { arcNumber: 1, goals: [
 const receipt = { provider: 'gemini' as const, model: 'test-model', generatedAt: '2026-09-25T12:00:00.000Z', usage: { source: 'unavailable' as const } };
 const chapterReply = (n: number) => JSON.stringify({
   title: `Chapter ${n}`, paragraphs: [`Mara walked the causeway on day ${n}.`, 'The bells stayed silent.'],
-  recap: `Day ${n} on the causeway.`,
+  arcCompletion: { goalId: 'arc-1-bells', completed: false, evidence: '' }, recap: `Day ${n} on the causeway.`, chapterFunction: 'progression',
   nextProgression: 'Mara climbs the bell tower.', nextWorldBuilding: 'The keeper explains the drowned law.', nextConflict: 'The tide wardens seize the causeway.',
 });
 
@@ -63,7 +62,6 @@ const createModel = () => {
       if (failures.shift()) throw new Error('The provider timed out.');
       return { rawProviderResponse: writtenChapterReply(chapterReply(request.immediateChapterRequest.chapterNumber)), providerReceipt: receipt };
     },
-    planChapter: planEveryChapter(),
     arcOperation: vi.fn(),
   };
   return { requests, failNext: () => failures.push(1), modelAdapter };

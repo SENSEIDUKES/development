@@ -7,7 +7,6 @@ import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemor
 import { writtenChapterReply } from '../../../test-utils/writtenChapter';
 import { installAudioMediaStubs, renderWithDevAudio } from '../../../test-utils/renderWithDevAudio';
 import { HarnessGenerationController, HarnessReaderSession, type HarnessArcRequest, type HarnessGenerationModelAdapter } from '@seihouse/sen/harness-generation';
-import { planEveryChapter } from '../../../test-utils/chapterPlan';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -16,7 +15,7 @@ const LOOKAHEAD = 'LOOKAHEAD_HIDDEN Mara walks the drowned law to its source.';
 const receipt = { provider: 'gemini' as const, model: 'test-model', generatedAt: '2026-10-01T12:00:00.000Z', usage: { source: 'unavailable' as const } };
 const chapter = (title: string) => JSON.stringify({
   title, paragraphs: [`${title} opens on the causeway.`],
-  recap: `${title}.`,
+  arcCompletion: { goalId: 'none', completed: false, evidence: '' }, recap: `${title}.`, chapterFunction: 'progression',
   nextProgression: 'Mara climbs.', nextWorldBuilding: 'The law is old.', nextConflict: 'The wardens close in.',
 });
 
@@ -29,7 +28,7 @@ const atArcTwo = async (survival = false) => {
   const generate = vi.fn(async () => ({ rawProviderResponse: writtenChapterReply(chapter(`Chapter ${generate.mock.calls.length}`)), providerReceipt: receipt }));
   const adapter: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [{ id: 'test-model', label: 'Test' }], defaultModel: 'test-model' }),
-    generate, arcOperation, planChapter: planEveryChapter(),
+    generate, arcOperation,
   };
   const first = new HarnessGenerationController({ repository: new InMemoryHarnessGenerationRepository(), modelAdapter: adapter });
   await first.hydrate();

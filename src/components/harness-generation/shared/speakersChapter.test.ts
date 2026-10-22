@@ -9,7 +9,6 @@ import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemor
 import { writtenChapterReply } from '../../../test-utils/writtenChapter';
 import { harnessParagraphBlockId } from './chapterBody';
 import { acceptHarnessModelResponse } from './responseAcceptance';
-import { planEveryChapter } from '../../../test-utils/chapterPlan';
 
 /**
  * Dialogue speakers, end to end, in the tiny SEN language: the writer tags who
@@ -29,7 +28,6 @@ const adapter = (raw: string) => {
   const value: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
     generate,
-    planChapter: planEveryChapter(),
     arcOperation: async () => response(JSON.stringify({ plan: GOAL, destinedEnding: 'Wei Lin keeps the river gate.' })),
   };
   return { value, generate };
@@ -45,7 +43,9 @@ const taggedChapter = () => JSON.stringify({
     '“Who goes there?” a voice called from the dark.',
     '[[@Nobody At All]]',
   ],
+  arcCompletion: { goalId: 'arc-1-gate', completed: false, evidence: '' },
   recap: '[[@Wei Lin]] Wei Lin held the gate.',
+  chapterFunction: 'conflict',
   nextProgression: 'Wei Lin trains.', nextWorldBuilding: 'The river law.', nextConflict: 'The flood returns.',
 });
 

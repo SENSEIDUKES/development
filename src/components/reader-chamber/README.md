@@ -12,13 +12,12 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - **Workshop preview:** `?preview=reader-chamber`. Original Reference is production's Reader; Development is the NovelExpanded app's own Reader (since 2026-10-09)
 - **Development view:** the app's Reader, `HarnessReaderSession` (SEN, `src/components/harness-generation/development/`), hosted exactly as the app hosts it by Library's `StoryPages` on its read page. The older development Reader in `development/` is no longer on this card; its code stays for the Card Workshop, Reader Codex and Character Voice previews that use parts of it
 - **First Workshop record:** 2026-07-31
-- **Last recorded Workshop update:** 2026-10-20
+- **Last recorded Workshop update:** 2026-10-13
 - **Historical source inspection:** 2026-08-22 (the older copy), 2026-10-07 (the current Original Reference)
 - **Implementation status:** under refinement
 
 ## Workshop history
 
-- **2026-10-20 (the chapter loop):** In the Development view. The replaying writer is now the planner and the writer: asked for a chapter, it returns the plan that chapter was planned with, then, after about five seconds, the reply it was written with, so the HARNESS checks the plan, narrates and commits as the app does; it still calls no model. Both sample stories were written again through the HARNESS from plans: Sundered Heavens' eight plans were written from each chapter, its recap and the record it kept, with the writer's replies cleaned of the retired holdings tags and fields (`sampleStory.json`, schema 33), and the Arabic story has two Arabic plans (`RIGHT_TO_LEFT_PLANS`). Their Codex is made from those plans. See the Harness Generation README.
 - **2026-10-18 (review follow-up):** Failed portraits offer a direct URL retry, including hosts without manifestation support. The recovery seal is only offered when a host supplies its action, and opening details does not reintroduce an already failed portrait URL.
 - **2026-10-18 (Codex reveal follow-up):** Categories announce a normalized "Category:" prefix. Each supported entity's description has a keyboard/touch "Read more in Codex" trigger using the existing hovercard, whose full copy now scrolls without a line clamp. A failed portrait URL shows "Portrait unavailable" and the Manifest seal even for an entry with a stored asset ID; a replacement URL is attempted normally. The card emits a bubbling `sen:codex-portrait-error` DOM event with `{ entryId, type, imageAssetId }` for host diagnostics, excluding asset URLs. Hosts must subscribe to collect these events; this retained preview has no analytics service. Shared ambience paints seven motes in one animated background plus a static gradient aura, with reduced motion preserved.
 - **2026-10-18 (shared Codex reveal accessibility):** The retained `CodexCard` uses an `h2` entity name beneath the older ReaderViewport's chapter `h1`. Portraits, backdrops and names no longer react to hover; only the Manifest seal keeps action feedback. The seal's visual contents, including its loading state, are decorative beneath its accessible button label. Card Workshop and other consumers receive the same source change; the app's rebuilt Reader remains separate.
@@ -327,9 +326,9 @@ app hands it differ (`src/workshop/previews/reader-chamber/`):
 - **Story storage:** an in-memory `HarnessGenerationRepository` holding the scene's copy
   of the story, where the app keeps stories in the browser's IndexedDB.
 - **Reading place:** an in-memory `ReaderStateRepository`, opened on the scene's chapter.
-- **Planner and writer:** `createReplayWriter` answers each chapter's planner call with
-  the plan that chapter was planned with, and its writer call with the reply it was
-  written with, after about five seconds, and calls no model. It plans no arcs.
+- **Writer:** `createReplayWriter` answers each chapter request with the reply that
+  chapter was written with, after about five seconds, and calls no model. It plans no
+  arcs and runs no Holdings fixer.
 - **Skills, media and preferences:** the official CAPA skills installed in memory as the
   app installs them, the Library's base media, the app's soundscapes, and the
   Workshop's own reader preferences (`workshop.reader.`), apart from the app's. Music
@@ -395,7 +394,7 @@ in it until another scene is chosen.
   Chapter 9 shows the Reader's message when the writer cannot help
 - **Story start** — no chapter yet; Write Chapter 1 writes it from its saved reply
 
-**Pages (Development)** — Fate, the Codex and Reader Settings, each opened by pressing the
+**Pages (Development)** — Fate, Holdings and Reader Settings, each opened by pressing the
 Reader's own button. The story stays as it is.
 
 **Advanced (Development)** — open a story saved with the app's Export story; the scenes

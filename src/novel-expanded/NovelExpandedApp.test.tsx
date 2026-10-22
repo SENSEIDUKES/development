@@ -37,7 +37,6 @@ import { readStorySettingsDraft, writeStorySettingsDraft } from '@seihouse/libra
 import { NOVEL_EXPANDED_READER_ID } from './storyCreationRuntime';
 import { createDeviceProfileStore } from '../host/profile/deviceProfile';
 import { createPracticeEconomy } from '../host/economy/practiceEconomy';
-import { planEveryChapter } from '../test-utils/chapterPlan';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -52,7 +51,7 @@ const scriptedWriter = () => {
     await gate;
     return { rawProviderResponse: JSON.stringify(writtenChapter({
       title: 'Low Tide', paragraphs: ['The tide pulled back from the drowned gate.', 'Mara counted the bells that no longer rang.'],
-      recap: 'Mara returns.',
+      arcCompletion: { goalId: 'none', completed: false, evidence: '' }, recap: 'Mara returns.', chapterFunction: 'progression',
       nextProgression: 'Mara climbs the bell tower.', nextWorldBuilding: 'The keeper explains the drowned law.', nextConflict: 'The tide wardens seize the causeway.',
     })), providerReceipt: receipt };
   });
@@ -60,7 +59,6 @@ const scriptedWriter = () => {
   const writer: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [{ id: 'fixture', label: 'Fixture' }, { id: 'remembered', label: 'Remembered' }], defaultModel: 'fixture' }),
     generate: generate as unknown as HarnessGenerationModelAdapter['generate'],
-    planChapter: planEveryChapter(),
     arcOperation: async () => ({ rawProviderResponse: JSON.stringify({ plan: { arcNumber: 1, goals: [{ id: 'arc-1', text: 'Reach the gate.', chapters: 30 }] }, destinedEnding: 'Mara reclaims her name.' }), providerReceipt: receipt }),
   };
   return { writer, generate, recoverMemory, release: () => release() };

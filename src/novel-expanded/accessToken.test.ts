@@ -9,11 +9,12 @@ const receipt = { rawProviderResponse: '{}', providerReceipt: { provider: 'gemin
 const refused = () => new HarnessGenerationRequestError('This Development action has reached its temporary request limit. Please try again shortly.', 429);
 
 describe('The writer with the owner\'s access token', () => {
-  it('asks for the token when a chapter\'s plan or its writing is refused for the visitor limit, then sends it again with it', async () => {
+  it('asks for the token when a chapter is refused for the visitor limit, but the Holdings fixer and the look step never ask', async () => {
     const writer: HarnessGenerationModelAdapter = {
       getServerInfo: vi.fn(),
       generate: vi.fn().mockRejectedValueOnce(refused()).mockResolvedValueOnce(receipt),
-      planChapter: vi.fn().mockRejectedValueOnce(refused()).mockResolvedValueOnce(receipt),
+      fixHoldings: vi.fn().mockRejectedValueOnce(refused()),
+      describeLooks: vi.fn().mockRejectedValueOnce(refused()),
     };
     const token: { current: string | undefined } = { current: undefined };
     const ask = vi.fn(async () => 'owner-token');
@@ -23,11 +24,11 @@ describe('The writer with the owner\'s access token', () => {
     expect(ask).toHaveBeenCalledTimes(1);
     expect(token.current).toBe('owner-token');
 
-    // The planner is the first of a chapter's two calls: it asks the same way.
     token.current = undefined;
-    await expect(wrapped.planChapter!({} as never)).resolves.toBe(receipt);
-    expect(ask).toHaveBeenCalledTimes(2);
-    expect(writer.planChapter).toHaveBeenCalledTimes(2);
+    // The fixer runs unseen: a refusal is its own failure, recorded on the chapter.
+    await expect(wrapped.fixHoldings!({} as never)).rejects.toMatchObject({ status: 429 });
+    await expect(wrapped.describeLooks!({} as never)).rejects.toMatchObject({ status: 429 });
+    expect(ask).toHaveBeenCalledTimes(1);
   });
 });
 

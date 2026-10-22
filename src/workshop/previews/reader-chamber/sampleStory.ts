@@ -13,16 +13,12 @@ import { createReaderStoryState, type ReaderStateRepository, type ReaderStorySta
 
 /**
  * The Reader Chamber workspace's story: SENSEI's Sundered Heavens test (eight
- * chapters written in the app on 2026-10-06), as the app's Export story saves
- * it. On 2026-10-20 it was moved to the chapter loop: each chapter's plan was
- * written from the chapter, its recap and the record it kept, and the HARNESS
- * wrote the story again from those plans and the replies the writer returned
- * then, cleaned of the retired holdings tags and fields. `sampleStory.json` is
- * trimmed for size: each attempt's accepted draft, foundation snapshot and
- * frozen media are left out (the chapter and the story's foundation hold the
- * same records, restored below), and so is the recordings catalog inside each
- * chapter's frozen media (placed Sound Cues carry their own recordings, and a
- * new write freezes its own media).
+ * chapters written in the app on 2026-10-06), as the app's Export story saved
+ * it. `sampleStory.json` is trimmed for size: each attempt's accepted draft,
+ * foundation snapshot and frozen media are left out (the chapter and the
+ * story's foundation hold the same records, restored below), and so is the
+ * recordings catalog inside each chapter's frozen media (placed Sound Cues
+ * carry their own recordings, and a new write freezes its own media).
  */
 export const SAMPLE_STORY_TITLE = 'Sundered Heavens';
 
@@ -114,23 +110,20 @@ export const REPLAY_MODEL = 'workshop/saved-chapters';
 export const REPLAY_WRITING_MS = 5_000;
 
 /**
- * The Workshop's planner and writer: they make no model call. Asked for a
- * chapter, the planner returns the plan its saved attempt was planned with,
- * and the writer waits a moment and returns the Generated Chapter the model
- * returned for it (the attempt's saved replies), so the HARNESS checks,
- * checkpoints and commits it exactly as the app does. A chapter the story
- * never had has neither, and the write fails with that reason, as it does when
- * the planner cannot be reached. It plans no arcs.
+ * The Workshop's writer: it makes no Generation Model Call. Asked for a
+ * chapter, it waits a moment and returns the Generated Chapter the model
+ * returned for it when the story was written (the attempt's saved raw
+ * response), so the HARNESS validates, checkpoints and commits it exactly as
+ * it did then. A chapter the story never had has none, and the write fails
+ * with that reason, as it does when the writer cannot be reached. It plans no
+ * arcs and runs no Holdings fixer.
  */
 export function createReplayWriter(saved: HarnessWorkspaceState, writingMs = REPLAY_WRITING_MS): HarnessGenerationModelAdapter {
   const replies = new Map<number, HarnessGenerationResponse>();
-  const plans = new Map<number, HarnessGenerationResponse>();
   for (const attempt of saved.attempts) {
     if (attempt.stage !== 'committed' || !attempt.rawProviderResponse || !attempt.providerReceipt) continue;
     replies.set(attempt.chapterNumber, { rawProviderResponse: attempt.rawProviderResponse, providerReceipt: attempt.providerReceipt });
-    if (attempt.plannerCall) plans.set(attempt.chapterNumber, { rawProviderResponse: attempt.plannerCall.rawProviderResponse, providerReceipt: attempt.plannerCall.providerReceipt });
   }
-  const missing = (chapterNumber: number) => new Error(`The Workshop has no saved Chapter ${chapterNumber} to replay. In the app, the planner and the writer write it here.`);
   return {
     getServerInfo: async () => ({
       provider: 'workshop-replay',
@@ -138,15 +131,10 @@ export function createReplayWriter(saved: HarnessWorkspaceState, writingMs = REP
       models: [{ id: REPLAY_MODEL, label: 'Saved chapters (no model call)' }],
       defaultModel: REPLAY_MODEL,
     }),
-    planChapter: async request => {
-      const plan = plans.get(request.immediateChapterRequest.chapterNumber);
-      if (!plan) throw missing(request.immediateChapterRequest.chapterNumber);
-      return { rawProviderResponse: plan.rawProviderResponse, providerReceipt: { ...plan.providerReceipt, provider: 'workshop-replay', generatedAt: new Date().toISOString() } };
-    },
     generate: async request => {
       const chapterNumber = request.immediateChapterRequest.chapterNumber;
       const reply = replies.get(chapterNumber);
-      if (!reply) throw missing(chapterNumber);
+      if (!reply) throw new Error(`The Workshop has no saved Chapter ${chapterNumber} to replay. In the app, the writer writes it here.`);
       const started = Date.now();
       await new Promise(resolve => setTimeout(resolve, writingMs));
       return {

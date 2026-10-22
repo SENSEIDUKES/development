@@ -37,12 +37,10 @@ const request = (): HarnessGenerationRequest => ({
     arc: arcGenerationContext({ arcNumber: 1, goals: [{ id: 'arc-1-opening', text: 'Reach the moved city.', chapters: 30 }] }, 1, 'Restore the city.'),
     previouslyOn: [],
     canonicalState: { characters: [], relationships: [], locations: [], factions: [], artifacts: [], abilities: [], resources: [] },
-    codex: { entries: [] },
     diagnostics: { budgetSource: 'test', sections: [], omitted: [], identityAmbiguities: [], storage: { chapters: 0, events: 0, canonicalRecords: 0, activeRecords: 0, recaps: 0 } },
   },
   missionReminder: buildMissionReminder(capaPrompt()),
   immediateChapterRequest: { chapterNumber: 1, continuation: false, chapterScale: { minWords: 1_800, maxWords: 2_500 } },
-  chapterPlan: { cast: [{ name: 'Mara', kind: 'character', mainCharacter: true }], events: [{ kind: 'journey', actor: { name: 'MC' }, targets: [], presses: [], how: 'Mara reaches the moved city.', facts: [] }] },
 });
 
 const environment = { GEMINI_API_KEY: 'test-key' };
@@ -143,31 +141,8 @@ describe('Harness Generation HTTP boundary', () => {
     expect((await rewriting({ replacesChapterId: 'chapter-2', note: 'Make it darker.', previous: { title: 'The Keeper', recap: 'Lin met the keeper.' } })).status).toBe(200);
     expect(generate).toHaveBeenCalledTimes(1);
     const sent = generate.mock.calls[0][0].userPrompt;
-    expect(sent).toContain('REWRITE: the reader asked for Chapter 1 to be written again. The version they set aside: "The Keeper", Lin met the keeper.');
-    expect(sent).toContain('The Chapter Plan was made again from their note: "Make it darker.".');
-  });
-
-  it('sends the planner\'s call with its own instruction, skills and schema, and refuses one without the Codex before contacting the provider', async () => {
-    const generate = vi.fn(async (_input: HarnessTextGenerationRequest) => ({ rawProviderResponse: '{}',
-      providerReceipt: { provider: 'gemini' as const, model: request().model, generatedAt: '2026-10-20', usage: { source: 'unavailable' as const } } }));
-    const providerFactory = () => ({ provider: 'gemini' as const, model: request().model, generate });
-    const { storyId, attemptId, model, storyInformation, immediateChapterRequest } = request();
-    const planning = { operation: 'plan-chapter', storyId, attemptId, model, storyInformation, immediateChapterRequest,
-      planningSkills: 'CAPA SKILL [Pacing] — Patient Siege v1.0.0\nDo not resolve the siege in this chapter.' };
-    const { codex: _codex, ...withoutCodex } = storyInformation;
-    expect((await handleHarnessGenerationHttp({ method: 'POST', body: { ...planning, storyInformation: withoutCodex } }, { environment, providerFactory })).status).toBe(400);
-    expect(generate).not.toHaveBeenCalled();
-
-    const result = await handleHarnessGenerationHttp({ method: 'POST', body: planning }, { environment, providerFactory });
-    expect(result.status).toBe(200);
-    expect(result.body).toMatchObject({ requestMeasurement: { sections: expect.arrayContaining([{ section: 'codex', characters: expect.any(Number) }]) } });
-    const input = generate.mock.calls[0][0];
-    expect(input.systemInstruction).toMatch(/^# ROLE AND MISSION\n\nYou are Fate for a serialized novel\./);
-    // Its skills open How to plan the chapter, before the HARNESS's own rules.
-    expect(input.systemInstruction).toContain('# HOW TO PLAN THE CHAPTER\n\nCAPA SKILL [Pacing] — Patient Siege v1.0.0\nDo not resolve the siege in this chapter.\n\nCAST:');
-    expect(input.userPrompt).toContain('THE CODEX (everyone and everything the story knows');
-    expect(input.userPrompt).toContain('Chapter 1, chapter 1 of 30 in Arc 1.');
-    expect(Object.keys((input.responseJsonSchema as { properties: object }).properties)).toEqual(['cast', 'events', 'arcGoalReached', 'chapterFunction']);
+    expect(sent).toContain('REWRITE: the reader asked for Chapter 1 to be written again. The version they set aside:\n"The Keeper" — Lin met the keeper.');
+    expect(sent).toContain('THE READER\'S NOTE: Make it darker.');
   });
 
   it('reports independent model configuration', async () => {
@@ -206,8 +181,7 @@ describe('Harness Generation HTTP boundary', () => {
     skilled.capaPrompt = assembleCapaPrompt({
       capturedAt: '2026-09-12T00:00:00.000Z',
       skills: [
-        { id: 'seihouse.pacing', version: '1.0.0', name: 'Long Siege', description: 'Pacing.', slot: 'pacing', applications: ['generation'], instructions: 'Keep the siege going for three arcs.' },
-        { id: 'seihouse.style', version: '1.0.0', name: 'Patient Siege', description: 'Style.', slot: 'style', applications: ['generation'], instructions: 'Do not resolve the siege in this chapter.' },
+        { id: 'seihouse.pacing', version: '1.0.0', name: 'Patient Siege', description: 'Pacing.', slot: 'pacing', applications: ['generation'], instructions: 'Do not resolve the siege in this chapter.' },
         SEN_NOVEL_AUTHOR_SKILL,
       ],
     });
@@ -219,14 +193,11 @@ describe('Harness Generation HTTP boundary', () => {
     );
     expect(result.status).toBe(200);
     const input = generate.mock.calls[0][0] as HarnessTextGenerationRequest;
-    // Authoring instruction: the role first, then the CAPA Prompt under How to write, in schema order (Author before Style), then the HARNESS parts.
+    // Authoring instruction: the role first, then the CAPA Prompt under How to write, in schema order (Author before Pacing), then the HARNESS parts.
     expect(input.systemInstruction).toBe(composeHarnessSystemInstruction(skilled.capaPrompt));
     expect(input.systemInstruction).toMatch(/^# ROLE AND MISSION\n\nYou are the author of this novel\./);
     expect(input.systemInstruction).toContain('# HOW TO WRITE\n\nCAPA SKILL [Author] — SEN Novel Author v1.0.0\n');
-    expect(input.systemInstruction.indexOf('CAPA SKILL [Author]')).toBeLessThan(input.systemInstruction.indexOf('CAPA SKILL [Style]'));
-    // Pacing decides what happens, so only the planner reads it.
-    expect(input.systemInstruction).not.toContain('CAPA SKILL [Pacing]');
-    expect(input.systemInstruction).not.toContain('Keep the siege going for three arcs.');
+    expect(input.systemInstruction.indexOf('CAPA SKILL [Author]')).toBeLessThan(input.systemInstruction.indexOf('CAPA SKILL [Pacing]'));
     expect(input.systemInstruction).toContain('elite Eastern fantasy web-novel author specializing in Asian light novels');
     expect(input.systemInstruction.split('Do not resolve the siege in this chapter.')).toHaveLength(2);
     expect(input.systemInstruction).toContain('paragraphs is the complete chapter and its sole body');
@@ -240,8 +211,7 @@ describe('Harness Generation HTTP boundary', () => {
     expect(skilled.capaPrompt.text).not.toMatch(/R2|track list|Library Cue catalog/i);
     // The provider schema is the compact semantic contract, never the SEN block, memory, or presentation contracts.
     const chapterSchema = input.responseJsonSchema as { properties: Record<string, unknown>; required: string[] };
-    // The writer narrates and never decides: no arc goal, ending or chapter function in its reply.
-    expect(chapterSchema.required).toEqual(['paragraphs', 'recap', 'nextProgression', 'nextWorldBuilding', 'nextConflict']);
+    expect(chapterSchema.required).toEqual(['paragraphs', 'arcCompletion', 'recap', 'chapterFunction', 'nextProgression', 'nextWorldBuilding', 'nextConflict']);
     // Diagnostics never leave the HARNESS.
     expect(input.userPrompt).not.toMatch(/selectionAudit|diagnostics|budgetSource/);
     expect(Object.keys(chapterSchema.properties)).not.toContain('blocks');
@@ -254,8 +224,8 @@ describe('Harness Generation HTTP boundary', () => {
     // The reader's direction is stated once, in the request that acts on it.
     expect(input.userPrompt.split('Bring the envoy to the gate.')).toHaveLength(2);
     expect(input.userPrompt.indexOf('CURRENT STORY INFORMATION')).toBeLessThan(input.userPrompt.indexOf('IMMEDIATE CHAPTER REQUEST'));
-    expect(input.userPrompt).toContain('The reader\'s direction for this chapter: Bring the envoy to the gate. The Chapter Plan carries it out.');
-    expect(input.userPrompt.indexOf('The reader\'s direction for this chapter')).toBeGreaterThan(input.userPrompt.indexOf('IMMEDIATE CHAPTER REQUEST'));
+    expect(input.userPrompt).toContain('READER DIRECTION FOR THIS CHAPTER: Bring the envoy to the gate.');
+    expect(input.userPrompt.indexOf('READER DIRECTION FOR THIS CHAPTER')).toBeGreaterThan(input.userPrompt.indexOf('IMMEDIATE CHAPTER REQUEST'));
     // The Mission Reminder is its own section, last, after the request: it closes the call.
     expect(input.userPrompt).toContain('# MISSION REMINDER\n\nYou are the author of this novel, writing the chapter requested above.');
     expect(input.userPrompt.indexOf('# MISSION REMINDER')).toBeGreaterThan(input.userPrompt.indexOf('IMMEDIATE CHAPTER REQUEST'));

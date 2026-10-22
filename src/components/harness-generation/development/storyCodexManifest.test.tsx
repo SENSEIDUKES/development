@@ -13,7 +13,7 @@ const passage = { chapterNumber: 1, blockId: 'c1-p1', text: 'Then.' };
 const look = { summary: 'A heavy black-iron broadsword veined with red.', traits: { material: 'black iron', colour: 'red veins' }, passage };
 const sword: CodexItem = { key: 'sword', name: 'Crimson Broadsword', count: 1, equipped: false, events: [], firstSeen: passage, appearance: { first: passage, look, changes: [] } };
 const voiceOnly: CodexCharacter = { key: 'wu', name: 'Old Wu', mainCharacter: false, firstSeen: passage, things: [], abilities: [], chronicle: [] };
-const codex: StoryCodexRecord = { characters: [voiceOnly], factions: [], checks: [], items: [sword] };
+const codex: StoryCodexRecord = { characters: [voiceOnly], factions: [], abilities: [], places: [], species: [], checks: [], items: [sword] };
 
 const render = async (pictures?: CodexPictures) => {
   const container = document.createElement('div');
@@ -61,6 +61,24 @@ it('says why a picture could not be made, and lets the reader try again', async 
   expect(manifest).toHaveBeenCalledTimes(2);
   expect(view.container.querySelector('[data-testid="codex-manifest"] [role="alert"]')).toBeNull();
   act(() => view.root.unmount());
+});
+
+it('manifests a card from the look the world opened with, before any chapter', async () => {
+  const manifest = vi.fn<CodexPictures['manifest']>().mockResolvedValue();
+  const container = document.createElement('div');
+  document.body.append(container);
+  const root = createRoot(container);
+  const appearance = 'Lean and wiry, with a burn scar across one palm.';
+  const chen: CodexCharacter = {
+    key: 'chen', name: 'Ye Chen', mainCharacter: true, things: [], abilities: [], chronicle: [],
+    atChapterZero: [{ slot: { id: 'appearance', label: 'Look', test: 'artist', changes: true, asks: 'how they look' }, value: appearance }],
+  };
+  const world: StoryCodexRecord = { ...codex, characters: [chen] };
+  await act(async () => root.render(<StoryCodex codex={world} storyTitle="Ashes" pictures={{ pictureOf: () => undefined, manifest }} />));
+  await act(async () => (container.querySelector('[data-testid="codex-character"]') as HTMLElement).click());
+  await act(async () => (container.querySelector('[data-testid="codex-manifest"] button') as HTMLElement).click());
+  expect(manifest).toHaveBeenCalledWith({ key: 'chen', subject: 'character', name: 'Ye Chen', look: { summary: appearance, traits: {} } });
+  act(() => root.unmount());
 });
 
 it('waits for a look before it can manifest, and offers nothing without the host\'s pictures', async () => {

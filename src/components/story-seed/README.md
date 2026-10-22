@@ -10,7 +10,7 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - **Source location:** `src/components/CreationModal.tsx` (default export `CreationModal`)
 - **Workshop preview:** `?preview=story-seed` (`&state=<scenario-id>` deep-links a state)
 - **First Workshop record:** 2026-08-01
-- **Last recorded Workshop update:** 2026-10-13
+- **Last recorded Workshop update:** 2026-10-22
 - **Historical source inspection:** 2026-08-10
 - **Lifecycle status:** finalized Workshop feature; refactored, optimized, and active implementation built here
 
@@ -24,7 +24,7 @@ Story Seed is one creation flow with these visible destinations:
 
 - **Origin** presents Style, Genre, Title, Synopsis, Pressure, Survival, and Tags, in that order on every viewport.
 - **ARC** presents Destined Ending, Story Length (arcs), up to three optional Hard Pins, one initial Active Arc Goal, and Fun Settings, in that order.
-- **World** owns World Identity (including Make It Work and Main Opposition), Characters, Factions, Abilities, and Power System.
+- **World** owns the world as it stands at Chapter 0, in the Codex's own card kinds: World Identity (including Make It Work and Main Opposition), Characters, Factions, Things, Places, Bestiary, Abilities, and World Rules. Every slot is optional; what the author leaves blank the World Blueprint fills before Chapter 1.
 - **Story Seed Settings** owns the story's reader-experience defaults: Story Language (the seed's saved Original Language), Reading Mode (Standard, Clear Reading, Easy Read, Literal Reading), and mature-audience metadata.
 - **Help** owns searchable written guidance and translated audio playback.
 - **Story Bank** is the only home for saved seeds, import/export, Blueprint
@@ -205,6 +205,26 @@ harness:
   render without loading-boundary, console, or page errors.
 
 ## Concise Workshop history
+
+- **2026-10-22 (the world at Chapter 0):** Phase B of
+  [the World at Chapter 0 plan](../../../docs/world-at-chapter-0.md), from
+  SENSEI: "everything that's going to be on the Codex needs to be fillable
+  inside the story seed first." The Seed now holds every slot of every Codex
+  card kind, from their one definition (`WORLD_CARD_KINDS`, `@seihouse/sen/contracts`).
+  The character and faction cards gained the slots they lacked (look, species,
+  where they are, status, what they hold and know, goals, ties, what they
+  belong to, voice; a faction's kind, emblem, seat, leader, standing and ties),
+  and three new World sections hold the kinds that had no home: **Things**,
+  **Places** and the **Bestiary**, with the world's own **Abilities** cards
+  under Abilities and the laws and era joining the rank ladder under **World
+  Rules** (the Power System section, renamed). One editor serves every card
+  kind, written from its definition (`WorldCardFields`, `WorldCardsWorkspace`),
+  so a new kind needs no new form, and the Blueprint review edits the same
+  cards. The Blueprint's one call now fills every blank slot of the world
+  (`GeneratedSeedSlots`, `fillBlankSeedSlots`), and its new words are on the
+  Workshop's Writer Instructions page under *Before the story*. Every slot
+  stays optional and no schema version changed: a seed saved before this reads
+  as a world with blanks.
 
 - **2026-10-18 (OAuth workspace):** Added Pages → Account → OAuth at
   `?preview=oauth`, rendering this feature's canonical `StoryAuthGate` through

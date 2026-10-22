@@ -34,6 +34,7 @@ import { CharactersWorkspace } from './workspaces/CharactersWorkspace';
 import { FactionsWorkspace } from './workspaces/FactionsWorkspace';
 import { AbilitiesWorkspace } from './workspaces/AbilitiesWorkspace';
 import { PowerSystemWorkspace } from './workspaces/PowerSystemWorkspace';
+import { PlacesWorkspace, SpeciesWorkspace, ThingsWorkspace } from './workspaces/WorldListWorkspaces';
 
 import { NarrativePanel as LibraryPanel, CreationButton as ManifestButton } from '@seihouse/sen/presentation';
 import { DeferredStorySeedView } from './DeferredStorySeedView';
@@ -127,6 +128,9 @@ const STORY_SEED_WORKSPACES: Record<SeedSectionId, ComponentType<StorySeedWorksp
   'world-identity': WorldIdentityWorkspace,
   characters: CharactersWorkspace,
   factions: FactionsWorkspace,
+  things: ThingsWorkspace,
+  places: PlacesWorkspace,
+  species: SpeciesWorkspace,
   abilities: AbilitiesWorkspace,
   'power-system': PowerSystemWorkspace,
 };

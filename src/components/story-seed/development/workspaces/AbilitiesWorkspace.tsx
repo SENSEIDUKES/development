@@ -1,10 +1,11 @@
 import { Route } from 'lucide-react';
 import { LibraryAbilityIcon as SENAbilityIcon } from '@seihouse/library-ui';
-import { type StorySeedInput } from '@seihouse/sen/story-seed';
+import { SEED_ABILITY_LIMIT, type StorySeedAbilityCard, type StorySeedInput } from '@seihouse/sen/story-seed';
 import { getSeedSection } from '../seedSections';
-import { patchAbilities, worldFoundations, type UpdateSeed } from '../seedState';
+import { patchAbilities, setStartingAbilities, worldFoundations, type UpdateSeed } from '../seedState';
 import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
 import { GuidanceNote, SeedSectionFrame } from './SeedSectionFrame';
+import { WorldCardsEditor } from './WorldCardsWorkspace';
 
 interface AbilitiesWorkspaceProps {
   seed: StorySeedInput;
@@ -46,9 +47,26 @@ export const AbilitiesWorkspace = ({ seed, updateSeed }: AbilitiesWorkspaceProps
     <SeedSectionFrame section={section} complete={section.isFilled(seed)}>
       <AbilitiesFields seed={seed} updateSeed={updateSeed} />
 
-      <GuidanceNote title="Abilities vs. Power System" tone="world">
-        Abilities belong to the main character — what they start with and what sets them apart.
-        The Power System section belongs to the world — the ladder everyone climbs.
+      <h4 className="pt-2 font-sc text-xs font-bold uppercase tracking-widest text-neutral-300">
+        Techniques the world already knows
+      </h4>
+      <p className="font-sans text-xs text-neutral-400">
+        Each one becomes its own Codex card. Name the ones your characters already know, and what
+        they look like when they are used, so an artist can draw them. Left empty, the Blueprint
+        writes the ones the story needs.
+      </p>
+      <WorldCardsEditor
+        seed={seed}
+        updateSeed={updateSeed}
+        kind="ability"
+        field="startingAbilities"
+        limit={SEED_ABILITY_LIMIT}
+        setCards={cards => setStartingAbilities(cards as StorySeedAbilityCard[])}
+      />
+
+      <GuidanceNote title="Abilities vs. World Rules" tone="world">
+        Abilities belong to the main character and the cast — what they start with and what sets
+        them apart. The World Rules section belongs to the world — the ladder everyone climbs.
       </GuidanceNote>
     </SeedSectionFrame>
   );

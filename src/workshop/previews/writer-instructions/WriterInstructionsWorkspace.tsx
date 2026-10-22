@@ -1,5 +1,5 @@
 import { HARNESS_PROMPT_HEADINGS, HARNESS_PROMPT_PARTS } from '../../../server/harness-generation/prompt';
-import { AFTER_A_CHAPTER, EVERY_CHAPTER, RETIRED_WRITER_INSTRUCTIONS, SOME_STORIES, WRITER_INSTRUCTIONS, countWords, type WriterInstruction, type WriterInstructionId } from './writerInstructions';
+import { AFTER_A_CHAPTER, BEFORE_THE_STORY, EVERY_CHAPTER, RETIRED_WRITER_INSTRUCTIONS, SOME_STORIES, WRITER_INSTRUCTIONS, countWords, type WriterInstruction, type WriterInstructionId } from './writerInstructions';
 import { WRITER_INSTRUCTIONS_HISTORY, lastChange } from './writerInstructionsHistory';
 import './writer-instructions.css';
 
@@ -66,6 +66,14 @@ export function WriterInstructionsWorkspace() {
       <section aria-labelledby="writer-instructions-some">
         <h2 id="writer-instructions-some">Only in some stories</h2>
         {SOME_STORIES.map(block => <InstructionBlock key={block.id} block={block} />)}
+      </section>
+
+      <section aria-labelledby="writer-instructions-before">
+        <h2 id="writer-instructions-before">Before the story</h2>
+        <p className="writer-instructions__note">
+          Not the chapter writer: the one call that builds a story&rsquo;s world from its Story Seed, before Chapter 1. Every Codex card the world opens with is filled here, so no chapter has to invent it.
+        </p>
+        {BEFORE_THE_STORY.map(block => <InstructionBlock key={block.id} block={block} />)}
       </section>
 
       <section aria-labelledby="writer-instructions-after">

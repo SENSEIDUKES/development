@@ -46,9 +46,12 @@ export function resolveStorySeedBlueprintConfig(
       environment.STORY_SEED_BLUEPRINT_TEMPERATURE ?? environment.AI_TEMPERATURE,
       1,
     ))),
+    // A Blueprint now also writes the world at Chapter 0: every card the
+    // Codex holds, with its slots. That is several times the old answer, so
+    // the default leaves room for it rather than stopping mid-world.
     maxOutputTokens: Math.min(32_768, Math.max(4_096, Math.floor(finiteNumber(
       environment.STORY_SEED_BLUEPRINT_MAX_OUTPUT_TOKENS ?? environment.AI_MAX_TOKENS,
-      8_192,
+      16_384,
     )))),
     // The Blueprint is written by the chapter model, so it has a chapter's
     // deadline: Vercel allows this route 180 seconds, as it does chapters.

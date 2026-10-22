@@ -618,7 +618,8 @@ describe("Cleaned-up Blueprint instructions", () => {
     for (const genreList of ["Wuxia", "Xuanhuan", "LitRPG", "tower climbing", "cultivation realms"]) expect(systemInstruction).not.toContain(genreList);
     expect(userPrompt).toContain("- Generate a strong logline.\n");
     expect(userPrompt).toContain("- Fill every Story Seed slot. Where the creator already wrote a slot, repeat their value exactly; only blank slots are yours to fill. Never write aliases or Hard Pins.");
-    expect(userPrompt).toContain("never the main character");
+    // The side-character rule now travels with the world at Chapter 0's own cards.
+    expect(userPrompt).toContain("Never the main character.");
     expect(userPrompt).toContain("Keep every slot to one short, concrete fact");
     expect(userPrompt).not.toMatch(/mcProfile|Name \(role\) — description/);
   });

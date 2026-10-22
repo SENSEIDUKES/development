@@ -10,7 +10,7 @@
  * ```
  */
 
-import { type StorySeedAbilities, type StorySeedCharacter, type StorySeedFaction, type StorySeedFateSurvivalSettings, type StorySeedInput, type StorySeedMainCharacter, type FunSettings, type StorySeedPowerSystem, type StorySeedStoryRequired, type StorySeedWorldFoundations, type StorySeedWorldIdentity } from '@seihouse/sen/story-seed';
+import { type StorySeedAbilities, type StorySeedAbilityCard, type StorySeedCharacter, type StorySeedFaction, type StorySeedFateSurvivalSettings, type StorySeedInput, type StorySeedMainCharacter, type FunSettings, type StorySeedPlace, type StorySeedPowerSystem, type StorySeedSpecies, type StorySeedStoryRequired, type StorySeedThing, type StorySeedWorldFoundations, type StorySeedWorldIdentity } from '@seihouse/sen/story-seed';
 
 import type { ChapterWritingStyle } from '@seihouse/sen/contracts';
 
@@ -120,6 +120,18 @@ export const setAdditionalCharacters = (characters: StorySeedCharacter[]): SeedU
 
 export const setFactions = (factions: StorySeedFaction[]): SeedUpdate =>
   patchWorldFoundations({ factions });
+
+export const setThings = (things: StorySeedThing[]): SeedUpdate =>
+  patchWorldFoundations({ things });
+
+export const setStartingAbilities = (startingAbilities: StorySeedAbilityCard[]): SeedUpdate =>
+  patchWorldFoundations({ startingAbilities });
+
+export const setPlaces = (places: StorySeedPlace[]): SeedUpdate =>
+  patchWorldFoundations({ places });
+
+export const setSpecies = (species: StorySeedSpecies[]): SeedUpdate =>
+  patchWorldFoundations({ species });
 
 // Convenience readers so workspaces never repeat the full path.
 export const storyRequired = (seed: StorySeedInput): StorySeedStoryRequired => seed.story.required;

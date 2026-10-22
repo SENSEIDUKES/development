@@ -20,6 +20,11 @@ export interface WriterInstructionsChange {
  */
 export const WRITER_INSTRUCTIONS_HISTORY: readonly WriterInstructionsChange[] = [
   {
+    date: '2026-10-22',
+    summary: 'The World at Chapter 0, step one (SENSEI, 2026-10-21: "everything that\'s going to be on the Codex needs to be fillable inside the story seed first"). A new block, the world builder, is the first words on this page that no chapter writer reads: the one call that builds a story\'s world from its Story Seed now fills every Codex card the world opens with, slot by slot — characters, things, abilities, places, factions, the Bestiary and the one World rules sheet. The words are written from the Codex\'s own definition of its card kinds, so this instruction can never ask for a slot the Story Seed cannot hold or the Codex cannot show, and the two tests that decide what belongs on a card (an artist can draw the opening scene; a game can load the world as it stands) are stated to the model. The chapter writer\'s own instructions are untouched: what it reads from this world is its own step, with its own approval.',
+    changed: { 'world-builder': '1e4680615fba0d' },
+  },
+  {
     date: '2026-10-17',
     summary: 'SENSEI\'s looks on demand. No model call follows a chapter any more: the per-chapter look step is gone. The HARNESS keeps, by code, the writer\'s own description from the paragraph a tag marks, and Story Information\'s Appeared section shows it, with every change since. A full look is written only when something made from the story needs it (a picture, a manga, a game): one call for that one entry, from every passage that shows it, kept on its Codex entry and written again only after a new tag changes it. That call is the look writer\'s new instruction: the core record every picture, comic and game draws from; keep only how the subject looks; a later passage wins, and the whole look is written as it stands after it. A long answer is now cut, not thrown away, and a failed one is kept with the model\'s own words. SEN Sound Cues 2.6.0: in Blade Chapter 17 a sound tag stood between sentences with words of its own and was dropped; the tag now wraps words of the writer\'s own sentence where they stand, and the example shows it inside one.',
     changed: { 'sound-cues': '1e60adbee817ef', 'look-step': '152184b2a3d5d4' },

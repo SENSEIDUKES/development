@@ -10,6 +10,7 @@ import {
   type StorySeedRecord,
 } from '@seihouse/sen/story-seed';
 import type { StoryFoundationInput } from '@seihouse/sen/harness-generation';
+import { worldAtChapterZeroFromStorySeed } from './worldAtChapterZero';
 
 const labeledLines = (entries: Array<[string, string | undefined]>): string | undefined => {
   const present = entries.filter((entry): entry is [string, string] => Boolean(entry[1]?.trim()));
@@ -77,6 +78,9 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
       ...canon.characters.map(entry => ({ name: entry.name, aliases: entry.aliases, kind: 'character' as const, evidence: entry.description })),
       ...canon.factions.map(entry => ({ name: entry.name, aliases: entry.aliases, kind: 'faction' as const, evidence: entry.description })),
     ],
+    // The world the story opens with, in the Codex's own card kinds. It is read
+    // from the reconciled Seed, so it already carries what the Blueprint filled.
+    worldAtChapterZero: worldAtChapterZeroFromStorySeed(seed),
     genre: required.genre,
     toneStyle: labeledLines([
       ['Story tradition', getStoryStyleLabel(required.style)],

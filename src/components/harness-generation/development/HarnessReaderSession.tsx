@@ -527,8 +527,9 @@ export function HarnessReaderSession({
 }
 
 /**
- * The Codex inside the Reader: the story's record worked out from its
- * chapters as they are now. It is worked out only while the Codex is open.
+ * The Codex inside the Reader: the story's record worked out from the world it
+ * opened with and its chapters as they are now. It is worked out only while
+ * the Codex is open.
  */
 function ReaderCodex({ state, storyId, chapters, storyTitle, pictures, onBack, onReadPassage, onReadChapter }: {
   state: HarnessWorkspaceState;
@@ -545,6 +546,7 @@ function ReaderCodex({ state, storyId, chapters, storyTitle, pictures, onBack, o
   const codex = useMemo(() => deriveStoryCodex({
     entries: state.codexEntries.filter(entry => entry.storyId === storyId),
     chapters,
+    world: foundation?.worldAtChapterZero,
     mainCharacterName: foundation?.cast?.find(member => member.isMainCharacter)?.name,
     declared: foundation ? declaredCharacters(foundation) : [],
     declaredFactions: foundation?.identities?.filter(identity => identity.kind === 'faction') ?? [],

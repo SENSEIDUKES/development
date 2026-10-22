@@ -27,9 +27,17 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const portableSeed = (seed: StorySeedInput): Record<string, unknown> => {
   const normalized = normalizeStorySeedInput(seed);
   const { worldIdentity, worldFoundations } = normalized.world.optional;
-  const additionalCharacters = worldFoundations.additionalCharacters
-    ?.map(({ id: _id, ...character }) => character);
-  const factions = worldFoundations.factions?.map(({ id: _id, ...faction }) => faction);
+  // Every Chapter 0 card list travels by name and slots, never by local id.
+  const withoutIds = <Card extends { id: string }>(cards: Card[] | undefined) =>
+    cards?.map(({ id: _id, ...card }) => card);
+  const cardLists = {
+    additionalCharacters: withoutIds(worldFoundations.additionalCharacters),
+    factions: withoutIds(worldFoundations.factions),
+    things: withoutIds(worldFoundations.things),
+    startingAbilities: withoutIds(worldFoundations.startingAbilities),
+    places: withoutIds(worldFoundations.places),
+    species: withoutIds(worldFoundations.species),
+  };
   return {
     ...normalized,
     world: {
@@ -38,8 +46,7 @@ const portableSeed = (seed: StorySeedInput): Record<string, unknown> => {
         worldIdentity,
         worldFoundations: {
           ...worldFoundations,
-          ...(additionalCharacters ? { additionalCharacters } : {}),
-          ...(factions ? { factions } : {}),
+          ...Object.fromEntries(Object.entries(cardLists).filter(([, cards]) => cards)),
         },
       },
     },

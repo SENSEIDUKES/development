@@ -107,6 +107,14 @@ export interface StoryFoundationInput {
   intendedDirection?: string;
   /** Host-declared identities; names and aliases are author data, not model IDs. */
   identities?: Array<{ name: string; aliases?: string[]; kind: 'character' | 'location-world' | 'faction'; evidence: string }>;
+  /**
+   * The world as it already stands when the story opens: the Codex's own card
+   * kinds, filled by the author in the Story Seed and completed by the World
+   * Blueprint before Chapter 1 (`WorldAtChapterZero`). The Codex shows it from
+   * the start, so the record knows the world rather than inventing it when
+   * something first appears. The chapters add to it; they never replace it.
+   */
+  worldAtChapterZero?: import('./worldRecord').WorldAtChapterZero;
   /** Immutable source evidence copied at the Story Seed -> Harness boundary. */
   sourceSnapshot?: HarnessStorySeedSnapshot;
 }

@@ -404,6 +404,20 @@ Update it whenever it changes.
     drops to half height ("Show the chapter"), on laptops a panel at the right
     with the chapter moved beside it. Listen reads on under a panel. An arc's
     goals take the screen, and the reader comes back to their exact place.
+  - **The world at Chapter 0 (2026-10-22):** a story's world is complete
+    before Chapter 1. Every kind of Codex card is defined once
+    (`WORLD_CARD_KINDS`): character, thing, ability, place, faction, species
+    and the one World rules sheet, each slot there because the artist test or
+    the save-game test needs it. The Story Seed holds every one of those slots
+    (its World family now has Things, Places and the Bestiary beside
+    Characters, Factions, Abilities and World Rules), the World Blueprint's one
+    call fills every slot the author left blank, and the story carries the
+    result as its world (`StoryFoundationInput.worldAtChapterZero`). The Codex
+    opens with it, so the record knows the world instead of inventing it when
+    something first appears; a card says it is the world as it began, and what
+    the chapters record lands on those same cards. The chapter writer's own
+    instructions are unchanged: what it reads from this world is the next step.
+    The plan is [the World at Chapter 0](./docs/world-at-chapter-0.md).
   - **The Codex, remade on the record (2026-10-13):** a panel like Fate,
     opened from the bottom bar's Codex button, holding only what the record
     knows today. It is a **gallery of cards** (since the same day, from
@@ -943,6 +957,14 @@ complete the [world record](./src/components/harness-generation/HARNESS_PRINCIPL
    (Stage E3).
 5. **Ties:** allied, hostile, related, bound.
 
+**The world at Chapter 0 (built 2026-10-22).** Before the tags below can
+complete the record, the world they add to has to exist: the Story Seed and the
+World Blueprint now write every Codex card kind before Chapter 1, and the Codex
+shows them ([the plan](./docs/world-at-chapter-0.md), phase B). The tags still
+record what changes; they no longer have to invent what was there at the start.
+What the chapter writer reads from that world, the CTE engine and the world
+judge are the phases after it.
+
 **Stage E2: complete the Codex on the record.** The Codex is remade alongside
 the tags ("the Codex grows with the record", [How we build](#how-we-build)):
 since 2026-10-13 it has characters (with their holdings as one section of each
@@ -1106,7 +1128,8 @@ same record; none of them adds anything medium-specific to the story itself.
 | Holdings fixer | SEN's unseen check after each chapter, which settles small holdings problems and keeps a record on the chapter (`planHoldingsFix`, `applyHoldingsFixes`, the `fix-holdings` call). The Library, later the Familiar, sets how far it goes. |
 | Look step | Retired 2026-10-17. Looks are now written on demand: the HARNESS keeps the writer's own description from each tagged passage by code, and writes one entry's full look (the core record a picture, manga or game draws from) only when something needs it, kept on its Codex entry until a new tag changes it (`describeCodexLook`, `planCodexLook`, the `describe-looks` call; Look Describer in the Model Router). |
 | Appeared | The Story Information section listing every character and thing already on the page, with its latest look, so the writer keeps every look (`appearancesSection`). |
-| Codex | The story's world as its record knows it, opened in the Reader as a panel: characters, factions and items today (a Bestiary of species later), every fact linked to its passage (`StoryCodex`, worked out by `deriveStoryCodex`). It grows as each information tag is built. |
+| Codex | The story's world as its record knows it, opened in the Reader as a panel: the world it opened with (below) and what its chapters recorded, in one card each — characters, items, abilities, places, factions, the Bestiary and the World rules sheet — every fact a chapter made linked to its passage (`StoryCodex`, worked out by `deriveStoryCodex`). It grows as each information tag is built. |
+| World at Chapter 0 | The world a story opens with, in the Codex's own card kinds: what the author filled in the Story Seed and the World Blueprint filled for the blanks, carried on the story as `worldAtChapterZero` and shown in the Codex before Chapter 1. Its one definition is `WORLD_CARD_KINDS` (`@seihouse/sen/contracts`); [the plan](./docs/world-at-chapter-0.md) is the owner's direction for it. |
 | Highlight Engine | SEN's engine for highlighting part of a story and attaching to it: prose today, sequential-art images later. Its lab is at `?preview=highlight-engine`; in the Reader it is Create mode. Never "Text Highlight Engine". |
 | Story Settings | The only place a user meets the HARNESS: language, reading mode, CAPA skills and media. On Story View (`StorySettings`) and in Create's Settings (`CreateStorySettings`), from `@seihouse/library/stories`. |
 | Harness Generation | The developer instrument for the HARNESS (`?preview=harness-generation`). Never a product page. |

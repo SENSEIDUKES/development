@@ -12,7 +12,7 @@ const event = (verb: 'gained' | 'lost') => ({ verb, holder: 'Han Shuo', passage:
 const item = (key: string, extra: Partial<CodexItem>): CodexItem => ({ key, name: key, count: 1, equipped: false, events: [], firstSeen: passage, ...extra });
 
 it('keeps lost and discarded things under Archived, below what is held now', async () => {
-  const codex: StoryCodexRecord = { characters: [], factions: [], checks: [], items: [
+  const codex: StoryCodexRecord = { characters: [], factions: [], abilities: [], places: [], species: [], checks: [], items: [
     item('Iron Tongs', { holder: { key: 'mc', name: 'Han Shuo', mainCharacter: true }, events: [event('gained')] }),
     item('Blood-Vein Cinder', { events: [event('gained'), event('lost')] }),
     item('Heavenly Furnace', {}),

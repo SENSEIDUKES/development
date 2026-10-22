@@ -5,11 +5,18 @@ import { setFactions, worldFoundations, type UpdateSeed } from '../seedState';
 import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
 import { SeedSectionFrame } from './SeedSectionFrame';
 import { SENStorySeedIcon } from '../SENStorySeedIcon';
+import { WorldCardSlotFields } from './WorldCardFields';
 
 interface FactionsWorkspaceProps {
   seed: StorySeedInput;
   updateSeed: UpdateSeed;
 }
+
+/**
+ * The faction card's own slots, beside the fields the Seed already asks for by
+ * hand. They come from the Codex's one definition of a faction card.
+ */
+const CHAPTER_ZERO_FACTION_SLOTS = ['factionKind', 'standing', 'seat', 'leader', 'appearance', 'ties'];
 
 /** The Seed's faction editor; the Seed workspace and Blueprint review share it. */
 export const FactionsEditor = ({ seed, updateSeed }: FactionsWorkspaceProps) => {
@@ -111,6 +118,14 @@ export const FactionsEditor = ({ seed, updateSeed }: FactionsWorkspaceProps) => 
                 placeholder="Organizational hierarchy, core beliefs, regional influence, elders, hidden rules..."
               />
             </div>
+            {/* The rest of its Codex card, as the world stands at Chapter 0. */}
+            <WorldCardSlotFields
+              kind="faction"
+              card={faction}
+              idPrefix={`faction-world-${faction.id}`}
+              only={CHAPTER_ZERO_FACTION_SLOTS}
+              onChange={patch => updateFaction(index, patch as Partial<StorySeedFaction>)}
+            />
           </div>
         </div>
       ))}

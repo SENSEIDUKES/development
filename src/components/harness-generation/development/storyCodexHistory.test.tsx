@@ -14,7 +14,7 @@ const event = (chapterNumber: number, verb: 'equipped' | 'unequipped') => ({
   passage: { chapterId: `c${chapterNumber}`, chapterNumber, recordId: `h${chapterNumber}`, blockId: `c${chapterNumber}-p1`, text: 'He took it up.' },
 }) as unknown as CodexCharacter['chronicle'][number];
 const events = Array.from({ length: 23 }, (_, index) => event(index + 1, index % 2 ? 'unequipped' : 'equipped'));
-const codex: StoryCodexRecord = { factions: [], items: [], checks: [], characters: [{
+const codex: StoryCodexRecord = { factions: [], items: [], abilities: [], places: [], species: [], checks: [], characters: [{
   key: 'mc', name: 'Han Shuo', mainCharacter: true, firstSeen: events[0].passage, abilities: [], chronicle: events,
   things: [{ entryId: 'blade', name: 'Vanguard Breaker Blade', count: 1, equipped: true, events }],
 } as unknown as CodexCharacter] };

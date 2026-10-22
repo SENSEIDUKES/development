@@ -5,6 +5,7 @@ import { getSeedSection } from '../seedSections';
 import { patchPowerSystem, worldFoundations, type UpdateSeed } from '../seedState';
 import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
 import { SeedSectionFrame } from './SeedSectionFrame';
+import { WorldCardSlotFields } from './WorldCardFields';
 
 interface PowerSystemWorkspaceProps {
   seed: StorySeedInput;
@@ -32,6 +33,14 @@ export const PowerSystemFields = ({ seed, updateSeed }: PowerSystemWorkspaceProp
         onChange={(val) => updateSeed(patchPowerSystem({ knownRanks: val }))}
         rows={3}
         placeholder="Optional. If partial, the Library extrapolates a full wuxia/xianxia ladder."
+      />
+      {/* The rest of the World rules sheet, from the Codex's own definition of it. */}
+      <WorldCardSlotFields
+        kind="world-rules"
+        card={powerSystem}
+        idPrefix="world-rules"
+        only={['laws', 'era']}
+        onChange={patch => updateSeed(patchPowerSystem(patch))}
       />
     </div>
   );

@@ -25,6 +25,7 @@
 
 import { ARC_LENGTH, MAX_ROADMAP_ARCS, STORY_LENGTH_ARCS, arcLookaheadFromPlans, createInitialArcPlan, normalizeArcLookahead, validateArcPlan, type ArcGoal, type ArcLookaheadEntry, type ArcPlan } from '../../arc-goals/shared/arcGoals';
 import { normalizeFunSettings, validateHardPinInputs, type FunSettings, type HardPinInput } from '../../../narrative/storyDirection';
+import { worldCardKind, type WorldCardKindId } from '../../../narrative/worldRecord';
 import { isChapterWritingStyle, type ChapterWritingStyle } from '../../../narrative/readingMode';
 export { normalizeFunSettings, HARD_PIN_LIMIT, HARD_PIN_TEXT_LIMIT, validateHardPinInputs, type FunSettings, type FunSettingLevel, type HardPinInput } from '../../../narrative/storyDirection';
 import type {
@@ -130,35 +131,115 @@ export interface StorySeedWorldIdentity {
   startingLocation?: string;
 }
 
+/**
+ * A Character card as the world stands at Chapter 0. Its slots are the Codex
+ * character card's slots (`WORLD_CARD_KINDS`), so what the Seed holds is what
+ * the Codex shows. Every one is optional; the World Blueprint fills the blanks
+ * before Chapter 1.
+ */
 export interface StorySeedCharacter {
   id: string;
   name: string;
   aliases?: string[];
+  bio?: string;
+  role?: string;
+  gender?: string;
   age?: string;
+  /** How they look, in one line: the look an artist draws them from. */
+  appearance?: string;
   skinTone?: string;
   eyeColor?: string;
+  species?: string;
+  /** The place they are in when the story opens. */
+  location?: string;
   powerType?: string;
   rankLevel?: string;
-  role?: string;
+  /** The things they already have, by name. */
+  holds?: string;
+  /** The abilities they already know, by name. */
+  knows?: string;
+  status?: string;
+  goals?: string;
   connectionToMC?: string;
-  bio?: string;
+  ties?: string;
+  belongsTo?: string;
+  voice?: string;
 }
 
 export interface StorySeedFaction {
   id: string;
   name: string;
   aliases?: string[];
+  factionKind?: string;
   role?: string;
+  appearance?: string;
+  seat?: string;
+  leader?: string;
   powerLevel?: string;
+  standing?: string;
   alignment?: string;
+  ties?: string;
   connectionToMC?: string;
   description?: string;
 }
 
+/** A Thing card: what already exists, who holds it, and where it lies. */
+export interface StorySeedThing {
+  id: string;
+  name: string;
+  appearance?: string;
+  count?: string;
+  holder?: string;
+  location?: string;
+  status?: string;
+}
+
+/** An Ability card: a technique the world already has, and how it looks when used. */
+export interface StorySeedAbilityCard {
+  id: string;
+  name: string;
+  appearance?: string;
+  ladder?: string;
+}
+
+/** A Place card: somewhere the world already has, so the record knows where everyone is. */
+export interface StorySeedPlace {
+  id: string;
+  name: string;
+  appearance?: string;
+  within?: string;
+  heldBy?: string;
+  condition?: string;
+}
+
+/** A Species card: the Bestiary's creatures, natural to the world. */
+export interface StorySeedSpecies {
+  id: string;
+  name: string;
+  appearance?: string;
+  habitat?: string;
+  strength?: string;
+  mind?: string;
+}
+
 export interface StorySeedMainCharacter {
   name?: string;
+  gender?: string;
   age?: string;
   appearance?: string;
+  skinTone?: string;
+  eyeColor?: string;
+  species?: string;
+  location?: string;
+  powerType?: string;
+  rankLevel?: string;
+  holds?: string;
+  knows?: string;
+  status?: string;
+  goals?: string;
+  ties?: string;
+  belongsTo?: string;
+  voice?: string;
   startingIdentity?: string;
   personality?: string;
   mainFlaw?: string;
@@ -173,16 +254,32 @@ export interface StorySeedAbilities {
   uniquePath?: string;
 }
 
+/**
+ * The World rules sheet: the one sheet every other card refers to. The ladder
+ * and how power works, with the laws that change what can happen and the age
+ * the story stands in.
+ */
 export interface StorySeedPowerSystem {
   flavor?: string;
   knownRanks?: string;
+  laws?: string;
+  era?: string;
 }
 
-/** The history already standing when the novel opens. */
+/**
+ * The world as it already stands when the novel opens: the Codex's card kinds,
+ * in the Story Seed. What the author leaves blank the World Blueprint fills,
+ * so the world is complete before Chapter 1 rather than invented when
+ * something first appears.
+ */
 export interface StorySeedWorldFoundations {
   mainCharacter?: StorySeedMainCharacter;
   additionalCharacters?: StorySeedCharacter[];
   factions?: StorySeedFaction[];
+  things?: StorySeedThing[];
+  startingAbilities?: StorySeedAbilityCard[];
+  places?: StorySeedPlace[];
+  species?: StorySeedSpecies[];
   abilities?: StorySeedAbilities;
   powerSystem?: StorySeedPowerSystem;
   destinedEnding?: string;
@@ -286,26 +383,57 @@ const arcOneScopeFor = (estimatedArcs: number): NonNullable<WorldBlueprint['arcO
   estimatedArcs === 1 ? 'whole-story' : 'opening';
 
 const WORLD_IDENTITY_FIELDS = ['title', 'worldType', 'societyStructure', 'startingLocation'] as const;
-const MAIN_CHARACTER_FIELDS = [
-  'name', 'age', 'appearance', 'startingIdentity', 'personality', 'mainFlaw',
-  'secretAdvantage', 'startingWeakness', 'moralAlignment', 'bio',
-] as const;
-const ABILITY_FIELDS = ['startingPowerConcept', 'uniquePath'] as const;
-const POWER_SYSTEM_FIELDS = ['flavor', 'knownRanks'] as const;
-const CHARACTER_FIELDS = [
-  'name', 'age', 'skinTone', 'eyeColor', 'powerType', 'rankLevel', 'role', 'connectionToMC', 'bio',
-] as const;
-const FACTION_FIELDS = ['name', 'role', 'powerLevel', 'alignment', 'connectionToMC', 'description'] as const;
 
-/** How many side characters and factions a Story Seed holds. The model only adds within them; a creator's own cards are never trimmed. */
+/**
+ * Every Story Seed card's fields come from the one definition of its Codex
+ * card kind (`WORLD_CARD_KINDS`), so a kind's slots are the same in the Seed,
+ * in the Blueprint's answer and on its Codex card. Aliases are kept out: only
+ * the author writes them, and they are a list, not a fact.
+ */
+const cardFields = (kind: WorldCardKindId): string[] =>
+  worldCardKind(kind).slots.filter(slot => !slot.aliases).map(slot => slot.id);
+
+/** The main character is a character card with the slots only they have. */
+const MAIN_CHARACTER_ONLY_FIELDS = [
+  'personality', 'startingIdentity', 'mainFlaw', 'secretAdvantage', 'startingWeakness', 'moralAlignment',
+] as const;
+const MAIN_CHARACTER_FIELDS = [
+  ...cardFields('character').filter(field => field !== 'role' && field !== 'connectionToMC'),
+  ...MAIN_CHARACTER_ONLY_FIELDS,
+];
+const ABILITY_FIELDS = ['startingPowerConcept', 'uniquePath'] as const;
+const CHARACTER_FIELDS = cardFields('character');
+const FACTION_FIELDS = cardFields('faction');
+const THING_FIELDS = cardFields('thing');
+const ABILITY_CARD_FIELDS = cardFields('ability');
+const PLACE_FIELDS = cardFields('place');
+const SPECIES_FIELDS = cardFields('species');
+/** The World rules sheet, which the Seed keeps in its power-system family. */
+const POWER_SYSTEM_FIELDS = cardFields('world-rules');
+
+/**
+ * How many cards of each kind a Story Seed holds. The model only adds within
+ * them; a creator's own cards are never trimmed.
+ */
 export const SEED_CHARACTER_LIMIT = 8 as const;
 export const SEED_FACTION_LIMIT = 5 as const;
+export const SEED_THING_LIMIT = 8 as const;
+export const SEED_ABILITY_LIMIT = 8 as const;
+export const SEED_PLACE_LIMIT = 6 as const;
+export const SEED_SPECIES_LIMIT = 6 as const;
 
 /** The main character's slots the Blueprint fills when blank, beside the name, age, appearance and personality it already carries. */
-export const SEED_MAIN_CHARACTER_SLOT_FIELDS = ['startingIdentity', 'secretAdvantage', 'startingWeakness', 'mainFlaw', 'moralAlignment', 'bio'] as const;
-/** A side character's or faction's slots, everything but its identity and its creator-only aliases. */
+export const SEED_MAIN_CHARACTER_SLOT_FIELDS = MAIN_CHARACTER_FIELDS
+  .filter(field => !['name', 'age', 'appearance', 'personality'].includes(field));
+/** A card's slots, everything but its identity and its creator-only aliases. */
 export const SEED_CHARACTER_SLOT_FIELDS = CHARACTER_FIELDS.filter(field => field !== 'name');
 export const SEED_FACTION_SLOT_FIELDS = FACTION_FIELDS.filter(field => field !== 'name');
+export const SEED_THING_SLOT_FIELDS = THING_FIELDS.filter(field => field !== 'name');
+export const SEED_ABILITY_SLOT_FIELDS = ABILITY_CARD_FIELDS.filter(field => field !== 'name');
+export const SEED_PLACE_SLOT_FIELDS = PLACE_FIELDS.filter(field => field !== 'name');
+export const SEED_SPECIES_SLOT_FIELDS = SPECIES_FIELDS.filter(field => field !== 'name');
+/** The World rules sheet's slots. It is one sheet for the whole story, so it has no name of its own. */
+export const SEED_WORLD_RULES_FIELDS = POWER_SYSTEM_FIELDS;
 
 /**
  * What the Blueprint model proposes for Story Seed slots: values for the main
@@ -315,9 +443,14 @@ export const SEED_FACTION_SLOT_FIELDS = FACTION_FIELDS.filter(field => field !==
  * and it is never stored. Aliases and Hard Pins are never among it.
  */
 export interface GeneratedSeedSlots {
-  mainCharacter?: Partial<Record<typeof SEED_MAIN_CHARACTER_SLOT_FIELDS[number], string>>;
-  characters?: Array<{ name: string } & Partial<Record<typeof SEED_CHARACTER_SLOT_FIELDS[number], string>>>;
-  factions?: Array<{ name: string } & Partial<Record<typeof SEED_FACTION_SLOT_FIELDS[number], string>>>;
+  mainCharacter?: Partial<Record<string, string>>;
+  characters?: Array<{ name: string } & Partial<Record<string, string>>>;
+  factions?: Array<{ name: string } & Partial<Record<string, string>>>;
+  /** The world's Chapter 0 cards for the kinds the Seed keeps as lists of their own. */
+  things?: Array<{ name: string } & Partial<Record<string, string>>>;
+  startingAbilities?: Array<{ name: string } & Partial<Record<string, string>>>;
+  places?: Array<{ name: string } & Partial<Record<string, string>>>;
+  species?: Array<{ name: string } & Partial<Record<string, string>>>;
   abilities?: Partial<StorySeedAbilities>;
   powerSystem?: Partial<StorySeedPowerSystem>;
   mainOpposition?: string;
@@ -325,6 +458,21 @@ export interface GeneratedSeedSlots {
 
 /** A World Blueprint as the server returns it: the Blueprint plus the slot values it proposes for the Seed. */
 export type GeneratedWorldBlueprint = WorldBlueprint & { generatedSeedSlots?: GeneratedSeedSlots };
+
+/** One card of a kind the Seed keeps as a plain list: its name, its slots, and an id of its own. */
+const normalizeCard = <Card extends { id: string; name: string }>(fields: readonly string[], prefix: string) =>
+  (value: unknown, index: number): Card | null => {
+    if (!isRecord(value) || !text(value.name)) return null;
+    return {
+      ...optionalTextFields<Partial<Card>>(value, fields),
+      id: text(value.id) || `${prefix}-${index + 1}`,
+    } as Card;
+  };
+
+const normalizeThing = normalizeCard<StorySeedThing>(THING_FIELDS, 'seed-thing');
+const normalizeAbilityCard = normalizeCard<StorySeedAbilityCard>(ABILITY_CARD_FIELDS, 'seed-ability');
+const normalizePlace = normalizeCard<StorySeedPlace>(PLACE_FIELDS, 'seed-place');
+const normalizeSpecies = normalizeCard<StorySeedSpecies>(SPECIES_FIELDS, 'seed-species');
 
 const normalizeCharacter = (value: unknown, index: number): StorySeedCharacter | null => {
   if (!isRecord(value) || !text(value.name)) return null;
@@ -389,6 +537,20 @@ const normalizeWorldFoundations = (value: unknown): StorySeedWorldFoundations =>
     .map(normalizeFaction)
     .filter((item): item is StorySeedFaction => item !== null);
   if (factions.length > 0) normalized.factions = factions;
+
+  const cards = <Card extends { id: string; name: string }>(
+    value: unknown,
+    normalize: (entry: unknown, index: number) => Card | null,
+  ): Card[] => (Array.isArray(value) ? value : []).map(normalize).filter((item): item is Card => item !== null);
+
+  const things = cards(source.things, normalizeThing);
+  if (things.length > 0) normalized.things = things;
+  const startingAbilities = cards(source.startingAbilities, normalizeAbilityCard);
+  if (startingAbilities.length > 0) normalized.startingAbilities = startingAbilities;
+  const places = cards(source.places, normalizePlace);
+  if (places.length > 0) normalized.places = places;
+  const species = cards(source.species, normalizeSpecies);
+  if (species.length > 0) normalized.species = species;
 
   const abilities = optionalTextFields<StorySeedAbilities>(
     isRecord(source.abilities) ? source.abilities : {},
@@ -1103,6 +1265,10 @@ export const readGeneratedSeedSlots = (value: unknown): GeneratedSeedSlots => {
   const mainCharacter = pick(source.mainCharacter, SEED_MAIN_CHARACTER_SLOT_FIELDS);
   const characters = named(source.characters, SEED_CHARACTER_SLOT_FIELDS);
   const factions = named(source.factions, SEED_FACTION_SLOT_FIELDS);
+  const things = named(source.things, SEED_THING_SLOT_FIELDS);
+  const startingAbilities = named(source.startingAbilities, SEED_ABILITY_SLOT_FIELDS);
+  const places = named(source.places, SEED_PLACE_SLOT_FIELDS);
+  const species = named(source.species, SEED_SPECIES_SLOT_FIELDS);
   const abilities = pick(source.abilities, ABILITY_FIELDS);
   const powerSystem = pick(source.powerSystem, POWER_SYSTEM_FIELDS);
   const mainOpposition = text(source.mainOpposition);
@@ -1110,6 +1276,10 @@ export const readGeneratedSeedSlots = (value: unknown): GeneratedSeedSlots => {
     ...(mainCharacter ? { mainCharacter } : {}),
     ...(characters.length ? { characters } : {}),
     ...(factions.length ? { factions } : {}),
+    ...(things.length ? { things } : {}),
+    ...(startingAbilities.length ? { startingAbilities } : {}),
+    ...(places.length ? { places } : {}),
+    ...(species.length ? { species } : {}),
     ...(abilities ? { abilities } : {}),
     ...(powerSystem ? { powerSystem } : {}),
     ...(mainOpposition ? { mainOpposition } : {}),
@@ -1154,6 +1324,10 @@ export const fillBlankSeedSlots = (seed: StorySeedInput, slots: GeneratedSeedSlo
       mainCharacter,
       additionalCharacters: fillCards(foundations.additionalCharacters ?? [], slots.characters ?? [], SEED_CHARACTER_SLOT_FIELDS, SEED_CHARACTER_LIMIT, 'blueprint-character', mainName ? [mainName] : []),
       factions: fillCards(foundations.factions ?? [], slots.factions ?? [], SEED_FACTION_SLOT_FIELDS, SEED_FACTION_LIMIT, 'blueprint-faction'),
+      things: fillCards(foundations.things ?? [], slots.things ?? [], SEED_THING_SLOT_FIELDS, SEED_THING_LIMIT, 'blueprint-thing'),
+      startingAbilities: fillCards(foundations.startingAbilities ?? [], slots.startingAbilities ?? [], SEED_ABILITY_SLOT_FIELDS, SEED_ABILITY_LIMIT, 'blueprint-ability'),
+      places: fillCards(foundations.places ?? [], slots.places ?? [], SEED_PLACE_SLOT_FIELDS, SEED_PLACE_LIMIT, 'blueprint-place'),
+      species: fillCards(foundations.species ?? [], slots.species ?? [], SEED_SPECIES_SLOT_FIELDS, SEED_SPECIES_LIMIT, 'blueprint-species'),
       abilities: fillFields(foundations.abilities ?? {}, slots.abilities, ABILITY_FIELDS),
       powerSystem: fillFields(foundations.powerSystem ?? {}, slots.powerSystem, POWER_SYSTEM_FIELDS),
       ...(text(foundations.mainOpposition) || !slots.mainOpposition ? {} : { mainOpposition: slots.mainOpposition }),

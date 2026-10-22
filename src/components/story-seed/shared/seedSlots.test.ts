@@ -24,21 +24,39 @@ describe('The Blueprint fills every Story Seed slot the creator left blank', () 
     const slots = readGeneratedSeedSlots({ ...answer, characters: [{ ...answer.characters[0], name: 'The Iron Brush', aliases: ['Model alias'] }, answer.characters[1]] });
     const filled = fillBlankSeedSlots(seed, slots).world.optional.worldFoundations;
     const [qin, han] = filled.additionalCharacters!;
-    expect(qin).toEqual({ ...seed.world.optional.worldFoundations.additionalCharacters![0], skinTone: 'Weathered bronze', eyeColor: 'Frost grey' });
+    // The creator's own values stay exactly theirs; every blank slot of the card is filled.
+    expect(qin).toMatchObject({ ...seed.world.optional.worldFoundations.additionalCharacters![0], skinTone: 'Weathered bronze', eyeColor: 'Frost grey' });
+    expect(qin).toMatchObject({ location: 'Azure Hall', status: 'Well, one arm lost', holds: 'Iron Brush', belongsTo: 'Heavenly Sword Sect' });
     expect(qin.aliases).toEqual(['The Iron Brush']);
     expect(han).toMatchObject({ name: 'Junior Sister Han', role: 'Ally', age: 'Seventeen', connectionToMC: 'Fellow quarry laborer' });
     expect(han).not.toHaveProperty('aliases');
     const [sect, alliance] = filled.factions!;
-    expect(sect).toEqual(seed.world.optional.worldFoundations.factions![0]);
+    expect(sect).toMatchObject({ ...seed.world.optional.worldFoundations.factions![0], factionKind: 'Sect', seat: 'Azure Hall', standing: 'Falling' });
     expect(alliance).toMatchObject({ name: 'Deep Sea Alliance', powerLevel: 'High Tier', alignment: 'Neutral' });
   });
 
-  it('fills abilities, the power system and the main opposition only where they were blank', () => {
+  it('fills the world\'s own card lists: things, abilities, places and the Bestiary', () => {
+    const seed = createFilledStorySeedInput();
+    const filled = fillBlankSeedSlots(seed, readGeneratedSeedSlots(answer)).world.optional.worldFoundations;
+    expect(filled.things?.map(thing => thing.name)).toEqual(['Iron Brush', "Ninth Prince's Jade Token"]);
+    expect(filled.things?.[0]).toMatchObject({ holder: 'Elder Qin', status: 'Whole' });
+    expect(filled.startingAbilities?.map(ability => ability.name)).toEqual(['Frostbrush Edict', 'Lesser Binding Script']);
+    expect(filled.places?.[0]).toMatchObject({ name: 'Rift Quarry', within: 'Heavenly Sword Sect', condition: 'Working' });
+    expect(filled.species?.[0]).toMatchObject({ name: 'Cinder Serpent', habitat: 'Rift Quarry' });
+  });
+
+  it('fills abilities, the World rules sheet and the main opposition only where they were blank', () => {
     const seed = createFilledStorySeedInput();
     delete seed.world.optional.worldFoundations.mainOpposition;
     const filled = fillBlankSeedSlots(seed, readGeneratedSeedSlots(answer)).world.optional.worldFoundations;
     expect(filled.abilities).toEqual({ startingPowerConcept: 'Qi Condensation Tier 1', uniquePath: 'Rebuilds his meridians from the scars of failed timelines' });
-    expect(filled.powerSystem).toEqual({ flavor: 'Martial arts, Daoist', knownRanks: 'Qi Condensation → Foundation Establishment → Core Formation → Nascent Soul' });
+    expect(filled.powerSystem).toMatchObject({
+      flavor: 'Martial arts, Daoist',
+      knownRanks: 'Qi Condensation → Foundation Establishment → Core Formation → Nascent Soul',
+    });
+    // The laws and the age the story stands in are part of the same sheet.
+    expect(filled.powerSystem?.laws).toContain('No killing inside the sect gates');
+    expect(filled.powerSystem?.era).toContain('celestial court');
     expect(filled.mainOpposition).toBe("The celestial court's fate auditors");
   });
 

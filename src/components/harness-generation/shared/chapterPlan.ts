@@ -26,7 +26,7 @@ import {
 import { CHARACTER_LOOK_TRAITS, THING_LOOK_TRAITS, type Look, type LookTrait } from '../../../narrative/looks';
 import { isChapterFunction } from '../../../narrative/storyDirection';
 import type { CodexEntry } from '../../../narrative/holdings';
-import type { ChapterPlanCastEntry, CodexSection, CodexSectionEntry, HarnessArcContext, HarnessStoryMode, WriterChapterPlan, WriterPlanEvent } from '../../../narrative/generation';
+import type { ChapterPlanCastEntry, CodexSection, CodexSectionEntry, HarnessArcContext, HarnessStoryMode, WriterChapterPlan } from '../../../narrative/generation';
 import { normalizeIdentityLabel } from './canonicalProjection';
 import { createCodexEntryResolver, deriveHoldings, holdingTargetKind, HOLDING_VERB_OF_CHANGE, type CodexEntryResolver, type DeclaredCharacter, type HoldingFlagKind } from './holdings';
 import { blockedFact, openCommitment, openGoal, PlanRecordBuilder, type RecordChapter } from './planRecord';
@@ -382,7 +382,6 @@ export function resolveChapterPlan(plan: ChapterPlan, resolver: CodexEntryResolv
 const DROPPED_HOLDINGS: ReadonlySet<HoldingFlagKind> = new Set(['not-held', 'already-held', 'not-learned', 'already-learned', 'sealed-state']);
 
 const subjectOf = (fact: PlanFact) => fact.who;
-const capitalized = (words: string) => words.charAt(0).toUpperCase() + words.slice(1);
 const describeRef = (ref: PlanRef) => (ref.unnamed ? ref.name : isMainCharacterTag(ref.name) ? 'the main character' : `‘${ref.name}’`);
 
 export interface CheckedChapterPlan {
@@ -521,7 +520,7 @@ export function checkChapterPlan({ plan: planned, storyId, entries, chapters, de
       const parties = [target.who, ...(target.type === 'commitment' ? [target.toWhom] : target.type === 'stance' ? [target.towardWhom] : [])];
       const unknown = parties.find(ref => !isKnown(ref));
       if (!unknown) return true;
-      checks.push({ event: eventIndex + 1, fact, reason: `${capitalized(describeRef(unknown))} is not in the cast or the Codex.`, message: `Event ${eventIndex + 1}: ${describeRef(unknown)} is not in the cast or the Codex, so this fact was dropped.` });
+      checks.push({ event: eventIndex + 1, fact, message: `Event ${eventIndex + 1}: ${describeRef(unknown)} is not in the cast or the Codex, so this fact was dropped.` });
       return false;
     });
   });
@@ -532,9 +531,6 @@ export function checkChapterPlan({ plan: planned, storyId, entries, chapters, de
   const builder = new PlanRecordBuilder([...entries, ...resolver.created]);
   for (const committed of before) builder.addChapter(committed);
   builder.addCast(chapter, resolved.cast);
-  const revivedLater = (eventIndex: number, factIndex: number) => resolved.events.some((later, laterIndex) => laterIndex >= eventIndex
-    && later.facts.some((fact, laterFact) => (laterIndex > eventIndex || laterFact > factIndex)
-      && fact.type === 'status' && fact.state === 'revived' && fact.who.entryId === mainKey));
   draft.events.forEach((event, eventIndex) => {
     const number = eventIndex + 1;
     const facts = resolved.events[eventIndex].facts;
@@ -547,13 +543,7 @@ export function checkChapterPlan({ plan: planned, storyId, entries, chapters, de
       const target = facts[factIndex];
       const subject = builder.entity(subjectOf(target));
       const blocked = blockedFact(target, subject);
-      if (blocked) { checks.push({ event: number, fact, reason: blocked, message: `Event ${number}: ${blocked} The fact was dropped.` }); return; }
-      // Outside Fate Survival the story never fails its fate: the main character dies only to come back in this chapter.
-      if (mode !== 'survival' && target.type === 'status' && (target.state === 'dead' || target.state === 'destroyed') && target.who.entryId === mainKey && !revivedLater(eventIndex, factIndex)) {
-        const reason = 'The main character cannot die outside Fate Survival unless this chapter brings them back.';
-        checks.push({ event: number, fact, reason, message: `Event ${number}: ${reason} The fact was dropped.` });
-        return;
-      }
+      if (blocked) { checks.push({ event: number, fact, message: `Event ${number}: ${blocked} The fact was dropped.` }); return; }
       if (subject && target.type === 'goal' && target.change !== 'set' && !openGoal(subject, target.what)) {
         checks.push({ event: number, message: `Event ${number}: ${subject.name}'s goal ‘${target.what}’ is ${target.change}, but the record does not show it as their goal.` });
       }
@@ -575,7 +565,7 @@ export function checkChapterPlan({ plan: planned, storyId, entries, chapters, de
     const message = flag.message.replace(/^Chapter \d+: /, '');
     if (flag.event !== undefined && flag.fact !== undefined && DROPPED_HOLDINGS.has(flag.kind)) {
       const fact = draft.events[flag.event - 1].facts[flag.fact];
-      checks.push({ event: flag.event, fact, reason: `${message.replace(/\.$/, '')}.`, message: `Event ${flag.event}: ${message.replace(/\.$/, '')}, so the fact was dropped.` });
+      checks.push({ event: flag.event, fact, message: `Event ${flag.event}: ${message.replace(/\.$/, '')}, so the fact was dropped.` });
       dropped.set(flag.event, (dropped.get(flag.event) ?? new Set()).add(flag.fact));
     } else checks.push({ ...(flag.event ? { event: flag.event } : {}), message: flag.event ? `Event ${flag.event}: ${message}` : message });
   }
@@ -625,7 +615,7 @@ export function checkChapterPlan({ plan: planned, storyId, entries, chapters, de
  * the page for the first time in full, with what the plan gives them and what
  * they already had, then the plan's events.
  */
-export function writerChapterPlan(plan: ChapterPlan, codex: CodexSection, checks: readonly PlanCheck[] = []): WriterChapterPlan {
+export function writerChapterPlan(plan: ChapterPlan, codex: CodexSection): WriterChapterPlan {
   const lineOf = (member: PlanCastMember): CodexSectionEntry | undefined => member.name === PLAN_MAIN_CHARACTER
     ? codex.entries.find(entry => entry.mainCharacter)
     : codex.entries.find(entry => !entry.mainCharacter && entry.kind === member.kind && normalizeIdentityLabel(entry.name) === normalizeIdentityLabel(member.name));
@@ -651,10 +641,5 @@ export function writerChapterPlan(plan: ChapterPlan, codex: CodexSection, checks
     if (abilities.length) entry.knows = [...entry.knows ?? [], ...abilities];
     return entry;
   });
-  // What the checks dropped from an event, with why, so the writer leaves it out even where How tells it.
-  const events = structuredClone(plan.events).map((event, index): WriterPlanEvent => {
-    const cannotHappen = checks.filter(found => found.event === index + 1 && found.fact && found.reason).map(found => found.reason!);
-    return cannotHappen.length ? { ...event, cannotHappen } : event;
-  });
-  return { cast, events };
+  return { cast, events: structuredClone(plan.events) };
 }

@@ -906,11 +906,8 @@ export interface ChapterPlanCastEntry extends CodexSectionEntry {
 /** The Chapter Plan as the writer reads it: its cast, each as the record had them when the chapter began, and its events. */
 export interface WriterChapterPlan {
   cast: ChapterPlanCastEntry[];
-  events: WriterPlanEvent[];
+  events: PlanEvent[];
 }
-
-/** An event as the writer gets it: with why each fact the checks dropped from it cannot happen (SENSEI, 2026-10-21). */
-export type WriterPlanEvent = PlanEvent & { cannotHappen?: string[] };
 
 /**
  * Story Information Packet: the story information selected, weighted,

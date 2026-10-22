@@ -150,8 +150,6 @@ export interface PlanCheck {
   event?: number;
   /** The fact the checks dropped from that event. */
   fact?: PlanFact;
-  /** Why that fact cannot happen, in a sentence the writer is shown under its event. */
-  reason?: string;
 }
 
 /** How a plan names someone unnamed who matters to one event: `unnamed: a guard`. */

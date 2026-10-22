@@ -13,15 +13,14 @@ import { MAIN_CHARACTER_SPEAKER_TAG } from '../../../narrative/speech';
  * the HARNESS keeps it (`CurrentStoryProjection.pointOfView`). Where tags may
  * go is said once for every tag kind by the HARNESS tag rules.
  */
-export const SEN_SPEAKERS_INSTRUCTIONS = `Every paragraph with speech starts with its speaker: [[@Name]]
+export const SEN_SPEAKERS_INSTRUCTIONS = `Start each paragraph with speech with its speaker: [[@Name]]
 Example: [[@${MAIN_CHARACTER_SPEAKER_TAG}]] “Hold the gate,” he said.
-A new speaker starts a new paragraph. Speech goes in quotation marks.
-A line without its speaker is read in the wrong voice.`;
+One speaker per paragraph. Speech goes in quotation marks.`;
 
 /** SEN's bundled Speakers skill. It occupies the Speakers slot, which the HARNESS fills on every chapter. */
 export const SEN_SPEAKERS_SKILL: HarnessSkillManifest = {
   id: 'seihouse.sen-speakers',
-  version: '2.3.0',
+  version: '2.2.0',
   name: 'SEN Speakers',
   description: 'Tags who speaks each spoken line, the main character with their own tag, so the Reader can voice it.',
   slot: 'speakers',

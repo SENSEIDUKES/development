@@ -107,16 +107,6 @@ describe('The Codex in the HARNESS Reader', { timeout: 20_000 }, () => {
     // A stage reached while still learning is shown, and is a change, not a check.
     expect(sheet.querySelector('[aria-label="Ye Chen: Abilities"]')!.textContent).toContain('Learning · First Stage');
     expect(sheet.querySelector('[data-testid="codex-voice"] blockquote')!.textContent).toBe('"Again,"');
-    // His voice, from the SEIHouse cast: given when he first spoke, and the reader's to change.
-    const pick = sheet.querySelector<HTMLSelectElement>('select[aria-label="Voice for Ye Chen"]')!;
-    expect(pick.value).toMatch(/protagonist-male$/);
-    await act(async () => {
-      pick.value = 'old-grandmaster-male';
-      pick.dispatchEvent(new Event('change', { bubbles: true }));
-    });
-    await flush();
-    expect(controller.snapshot().codexEntries.find(entry => entry.id === entryOf('Ye Chen'))!.voice).toMatchObject({ key: 'old-grandmaster-male', chosen: 'reader' });
-    expect(codex()!.querySelector('[data-testid="codex-voice-cast"]')!.textContent).toContain('Wise Old Grandmaster');
     // Before anything asks for a look, the Codex shows the story's own words for it.
     expect(sheet.querySelector('[data-testid="codex-look-description"]')!.textContent).toContain('Ye Chen');
     // A look written on demand, kept on the entry.

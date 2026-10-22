@@ -388,13 +388,10 @@ export function applyHoldingsFixes(input: HoldingsFixApplyInput): HoldingsFixRes
       }));
       // The chapter's appearances of the entry that goes now name the one kept.
       const appearances = chapter.appearances?.map(appearance => ({ ...appearance, payload: { ...appearance.payload, subject: repoint(appearance.payload.subject)! } }));
-      // So do its speaker records, and the entry kept keeps its own voice, else takes the one that goes.
-      const speakers = chapter.speakers?.map(record => (record.payload.entryId === removed.id ? { ...record, payload: { ...record.payload, entryId: kept.id } } : record));
-      const voice = kept.voice ?? removed.voice;
       return {
-        chapter: withChanges({ ...chapter, ...(appearances ? { appearances } : {}), ...(speakers ? { speakers } : {}) }, changes),
+        chapter: withChanges({ ...chapter, ...(appearances ? { appearances } : {}) }, changes),
         entries: entries.filter(entry => entry.id !== removed.id)
-          .map(entry => (entry.id === kept.id ? { ...entry, ...(answersTo ? {} : { aliases: [...(entry.aliases ?? []), removed.name] }), ...(voice ? { voice } : {}) } : entry)),
+          .map(entry => (entry.id === kept.id && !answersTo ? { ...entry, aliases: [...(entry.aliases ?? []), removed.name] } : entry)),
         fix: { outcome: 'merged', before: `‘${removed.name}’ and ‘${kept.name}’`, after: `‘${kept.name}’`,
           merged: { keptEntryId: kept.id, ...(answersTo ? {} : { alias: removed.name }) } },
       };

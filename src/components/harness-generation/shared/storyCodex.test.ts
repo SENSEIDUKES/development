@@ -42,17 +42,6 @@ describe('the Codex record', () => {
     expect(spirit.voice).toMatchObject({ lines: 2, chapters: [1, 2], first: { text: '"Who dares?"' } });
   });
 
-  it('gives no card to someone who only speaks: a crowd, a passing guard', () => {
-    const text = 'Then "Kneel!" the crowd roared. "Halt," a guard said. "Quiet," Han Shuo said.';
-    const codex = deriveStoryCodex({
-      entries: [MC],
-      chapters: [{ id: 'c1', chapterNumber: 1, paragraphs: [text], speakers: [
-        speaker(1, 1, text, '"Kneel!"', 'The Crowd'), speaker(1, 1, text, '"Halt,"', 'Guard'), speaker(1, 1, text, '"Quiet,"', 'MC', true),
-      ] }],
-    });
-    expect(codex.characters.map(character => character.name)).toEqual(['Han Shuo']);
-  });
-
   it('keeps sects and other factions out of the characters, declared or named as a body of people', () => {
     const text = 'Then the crowd roared. "Kneel!" the sect cried. "Run," the tribe said.';
     const codex = deriveStoryCodex({

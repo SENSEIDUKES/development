@@ -6,13 +6,10 @@ import { findSpokenLines, isSpeakerOnText, narratedSpeaker, type MainCharacterNa
 import { wordRanges } from './words';
 
 /**
- * Read Aloud: a chapter read sentence by sentence, each character in their own voice.
+ * Read Aloud: a chapter read by three voices, sentence by sentence.
  *
- * The Narrator reads the prose. Each spoken line carries its speaker's voice
- * from their Codex card (a SEIHouse voice cast key, `voice`), so any speech
- * engine can voice every character as themselves (SENSEI, 2026-10-18). The
- * Protagonist and Side voices remain only as fallbacks, for a line no
- * character's voice answers: the main character's, and everyone else's. A chapter becomes a script
+ * The Narrator reads the prose, the Protagonist voice the main character's
+ * spoken lines, and the Side voice everyone else's. A chapter becomes a script
  * of short lines, each inside one sentence of one paragraph, so a player can
  * light the sentence being spoken and a voice can change mid-sentence
  * (`“Run!” Lin Feng shouted.`). The script is built at read time from the
@@ -31,7 +28,7 @@ export const READ_ALOUD_ROLES: readonly ReadAloudRole[] = ['narrator', 'protagon
 export const UNTAGGED_SPEECH_ROLE: ReadAloudRole = 'protagonist';
 
 /** Bumped whenever the same chapter would produce different lines (stored audio keys on them later). */
-export const READ_ALOUD_SCRIPT_VERSION = 2;
+export const READ_ALOUD_SCRIPT_VERSION = 1;
 
 /**
  * One line's limits, so no browser voice cuts it off: Chrome's network voices
@@ -66,21 +63,7 @@ export interface ReadAloudLine {
   role: ReadAloudRole;
   /** Who speaks it, when a speaker record names them. */
   speaker?: string;
-  /** The speaker's own voice, a SEIHouse voice cast key from their Codex card; absent, `role` voices it. */
-  voice?: string;
 }
-
-/** The characters' voices a chapter is read with: SEIHouse voice cast keys from their Codex cards. */
-export interface ReadAloudCharacterVoices {
-  /** By Codex entry id, for a speaker record that names its entry. */
-  byEntry: Readonly<Record<string, string>>;
-  /** By name or alias, lower case, for a record made before speakers named entries. */
-  byName?: Readonly<Record<string, string>>;
-  /** The main character's voice, for their lines nobody tagged. */
-  main?: string;
-}
-
-const voiceName = (name: string) => name.trim().toLowerCase().replace(/\s+/g, ' ');
 
 export interface ReadAloudScript {
   version: number;
@@ -97,8 +80,6 @@ export interface ReadAloudChapter {
   language?: string;
   /** Who the main character is, for speech nobody tagged: its narration says who speaks it. */
   mainCharacter?: MainCharacterNames;
-  /** Each character's own voice; without one, a line is voiced by its role. */
-  voices?: ReadAloudCharacterVoices;
 }
 
 const SPEAKABLE = /[\p{L}\p{N}]/u;
@@ -182,7 +163,7 @@ export function boundSpeechRanges(text: string, start: number, end: number, loca
   return ranges;
 }
 
-interface SpokenPart extends ReadAloudRange { role: ReadAloudRole; speaker?: string; voice?: string }
+interface SpokenPart extends ReadAloudRange { role: ReadAloudRole; speaker?: string }
 
 /**
  * A paragraph's spoken parts: its speaker records first, then any quoted line
@@ -191,7 +172,7 @@ interface SpokenPart extends ReadAloudRange { role: ReadAloudRole; speaker?: str
  * line of the paragraph was given, one speaker to a paragraph as production
  * read it, and otherwise the main character's voice.
  */
-function spokenParts(blockId: string, text: string, speakers: readonly SpeakerAttachment[], cast: MainCharacterNames, voices?: ReadAloudCharacterVoices): SpokenPart[] {
+function spokenParts(blockId: string, text: string, speakers: readonly SpeakerAttachment[], cast: MainCharacterNames): SpokenPart[] {
   const named: SpokenPart[] = [];
   const records = speakers
     .filter(record => isSpeakerOnText(record, blockId, text))
@@ -199,11 +180,9 @@ function spokenParts(blockId: string, text: string, speakers: readonly SpeakerAt
   for (const record of records) {
     const previous = named.at(-1);
     if (previous && record.anchor.startOffset < previous.end) continue;
-    const voice = (record.payload.entryId ? voices?.byEntry[record.payload.entryId] : undefined)
-      ?? voices?.byName?.[voiceName(record.payload.speaker)] ?? (record.payload.protagonist ? voices?.main : undefined);
     named.push({
       start: record.anchor.startOffset, end: record.anchor.endOffset,
-      role: record.payload.protagonist ? 'protagonist' : 'side', speaker: record.payload.speaker.trim(), ...(voice ? { voice } : {}),
+      role: record.payload.protagonist ? 'protagonist' : 'side', speaker: record.payload.speaker.trim(),
     });
   }
   const lines = findSpokenLines(text);
@@ -213,13 +192,7 @@ function spokenParts(blockId: string, text: string, speakers: readonly SpeakerAt
   const untagged = open.map(({ line }, position): SpokenPart => {
     const who = told[position] ?? paragraphSpeaker;
     if (who === 'other') return { ...line, role: 'side' };
-    const role = who === 'main' ? 'protagonist' : UNTAGGED_SPEECH_ROLE;
-    return {
-      ...line, role,
-      ...(who === 'main' && cast.names[0] ? { speaker: cast.names[0] } : {}),
-      // A line the main character's voice reads is theirs, in their own voice when their card has one.
-      ...(role === 'protagonist' && voices?.main ? { voice: voices.main } : {}),
-    };
+    return { ...line, role: who === 'main' ? 'protagonist' : UNTAGGED_SPEECH_ROLE, ...(who === 'main' && cast.names[0] ? { speaker: cast.names[0] } : {}) };
   });
   return [...named, ...untagged].sort((left, right) => left.start - right.start);
 }
@@ -265,7 +238,7 @@ export function buildReadAloudScript(chapter: ReadAloudChapter): ReadAloudScript
   };
   for (const { id, text } of chapter.paragraphs) {
     if (!text.trim()) continue;
-    const spoken = spokenParts(id, text, chapter.speakers ?? [], cast, chapter.voices);
+    const spoken = spokenParts(id, text, chapter.speakers ?? [], cast);
     for (const sentence of splitSentences(text, language)) {
       for (const part of sentenceParts(sentence, spoken)) {
         for (const range of boundSpeechRanges(text, part.start, part.end, language)) {
@@ -273,7 +246,7 @@ export function buildReadAloudScript(chapter: ReadAloudChapter): ReadAloudScript
           if (!isSpeakable(words)) continue;
           lines.push({
             key: `${id}:${range.start}-${range.end}`, blockId: id, sentence: { start: sentence.start, end: sentence.end },
-            start: range.start, end: range.end, text: words, role: part.role, ...(part.speaker ? { speaker: part.speaker } : {}), ...(part.voice ? { voice: part.voice } : {}),
+            start: range.start, end: range.end, text: words, role: part.role, ...(part.speaker ? { speaker: part.speaker } : {}),
           });
         }
       }

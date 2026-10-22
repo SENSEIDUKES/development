@@ -1,4 +1,3 @@
-import { castVoice } from '../../../audio/voiceCast';
 import type { CodexEntry } from '../../../narrative/holdings';
 import type { Look } from '../../../narrative/appearances';
 import type { HarnessChapter } from '../../../narrative/generation';
@@ -47,8 +46,6 @@ export interface CodexVoice {
   chapters: number[];
   /** Their first spoken words in the story. */
   first: CodexPassage;
-  /** The voice they speak in, a SEIHouse voice cast key from their Codex card; absent, their role's voice reads them. */
-  cast?: string;
 }
 
 /** A look as the record wrote it down, with the passage it was read from. */
@@ -187,16 +184,12 @@ export function deriveStoryCodex({ entries, chapters, mainCharacterName, declare
   // Who a speaker is: the main character, an entry by any of its names, a declared character
   // by an alias, or someone the record knows only by the name they speak under.
   const main = () => [...characters.values()].find(character => character.mainCharacter);
-  const declaredOf = (name: string) => {
-    const key = normalizeIdentityLabel(name);
-    return declared.find(character => [character.name, ...(character.aliases ?? [])].some(other => normalizeIdentityLabel(other) === key));
-  };
   const declaredNames = (name: string) => {
-    const match = declaredOf(name);
-    return match ? [match.name, ...(match.aliases ?? [])].map(normalizeIdentityLabel) : [normalizeIdentityLabel(name)];
+    const key = normalizeIdentityLabel(name);
+    const match = declared.find(character => [character.name, ...(character.aliases ?? [])].some(other => normalizeIdentityLabel(other) === key));
+    return match ? [match.name, ...(match.aliases ?? [])].map(normalizeIdentityLabel) : [key];
   };
-  // Not every speaker has a card (SENSEI, 2026-10-18): a crowd or a passing guard speaks without one.
-  const speakerOf = (name: string, protagonist: boolean): Working | undefined => {
+  const speakerOf = (name: string, protagonist: boolean): Working => {
     if (protagonist) {
       const existing = main();
       if (existing) return existing;
@@ -209,8 +202,6 @@ export function deriveStoryCodex({ entries, chapters, mainCharacterName, declare
     if (existing) return existing;
     const entry = entries.find(candidate => candidate.kind === 'character'
       && [candidate.name, ...(candidate.aliases ?? [])].some(other => keys.includes(normalizeIdentityLabel(other))));
-    // A card for the main character, a character the record holds, or one the Story Seed declares; never for a speaker alone.
-    if (!entry && !declaredOf(name)) return undefined;
     return add({ key: entry?.id ?? `character:${keys[0]}`, name: entry?.name ?? name.trim(), mainCharacter: Boolean(entry?.mainCharacter), things: [], abilities: [], chronicle: [], names: new Set(keys) });
   };
 
@@ -249,19 +240,12 @@ export function deriveStoryCodex({ entries, chapters, mainCharacterName, declare
       .sort((left, right) => left.index - right.index || left.record.anchor.startOffset - right.record.anchor.startOffset);
     for (const { record } of lines) {
       const character = (!record.payload.protagonist && factionOf(record.payload.speaker)) || speakerOf(record.payload.speaker, record.payload.protagonist);
-      if (!character) continue;
       const passage: CodexPassage = { chapterNumber: chapter.chapterNumber, blockId: record.anchor.blockId, text: record.anchor.selectedText };
       if (!character.voice) character.voice = { lines: 0, chapters: [], first: passage };
       character.voice.lines += 1;
       if (character.voice.chapters.at(-1) !== chapter.chapterNumber) character.voice.chapters.push(chapter.chapterNumber);
       if (!character.firstSeen || comesBefore(passage, character.firstSeen) < 0) character.firstSeen = passage;
     }
-  }
-
-  // Each speaking character's own voice, from their card.
-  for (const character of characters.values()) {
-    const voice = character.voice && entries.find(entry => entry.id === character.key)?.voice;
-    if (voice && castVoice(voice.key)) character.voice!.cast = voice.key;
   }
 
   const factionList = [...factions.values()]

@@ -163,39 +163,6 @@ describe('HARNESS appearances through appears and look tags', () => {
     expect(JSON.stringify(exportHarnessStory(state, storyId))).toContain('How Ye Chen looks in Chapter 2.');
   });
 
-  it('points each speaker at their Codex character, gives a voice only when it can tell their gender, and lets the reader choose one', async () => {
-    const { controller, storyId } = await setup();
-    await controller.generateNextChapter(storyId, 'fixture');
-    const state = controller.snapshot();
-    const wu = state.codexEntries.find(entry => entry.name === 'Old Wu')!;
-    expect(state.chapters[0].speakers?.map(speaker => speaker.payload.entryId)).toEqual([wu.id]);
-    // One "his" is too little to tell a gender from: Old Wu is read in the side voice until the reader chooses.
-    expect(wu.voice).toBeUndefined();
-    await controller.setCodexVoice(storyId, wu.id, 'old-grandmaster-male');
-    expect(controller.snapshot().codexEntries.find(entry => entry.id === wu.id)!.voice).toEqual({ key: 'old-grandmaster-male', chosen: 'reader', at: runtime.now() });
-    // A voice the reader chose stays through the next chapter.
-    await controller.generateNextChapter(storyId, 'fixture');
-    expect(controller.snapshot().codexEntries.find(entry => entry.id === wu.id)!.voice?.key).toBe('old-grandmaster-male');
-    await expect(controller.setCodexVoice(storyId, wu.id, 'not-a-voice')).rejects.toThrow('That voice is not in the SEIHouse cast.');
-  });
-
-  it('refuses a voice change while a chapter is being written, so the write never carries it away', async () => {
-    const repository = new HeldRepository();
-    const { controller, storyId } = await setup({ repository });
-    await controller.generateNextChapter(storyId, 'fixture');
-    const wu = controller.snapshot().codexEntries.find(entry => entry.name === 'Old Wu')!;
-    let release!: () => void;
-    repository.gate = new Promise(resolve => { release = resolve; });
-    const writing = controller.generateNextChapter(storyId, 'fixture');
-    await new Promise(resolve => setTimeout(resolve, 0));
-    await expect(controller.setCodexVoice(storyId, wu.id, 'old-grandmaster-male')).rejects.toThrow('Wait for the chapter being written before changing a voice.');
-    repository.gate = undefined;
-    release();
-    await writing;
-    await controller.setCodexVoice(storyId, wu.id, 'old-grandmaster-male');
-    expect(repository.snapshot().codexEntries.find(entry => entry.id === wu.id)!.voice?.key).toBe('old-grandmaster-male');
-  });
-
   it('saves a look after any save under way, so a chapter committed meanwhile is never lost', async () => {
     const repository = new HeldRepository();
     const { controller, storyId } = await setup({ repository });

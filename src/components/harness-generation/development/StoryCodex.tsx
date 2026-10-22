@@ -1,6 +1,5 @@
 import { Fragment, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { Archive, AudioLines, Backpack, ChevronLeft, Eye, Flag, Hand, LoaderCircle, Lock, Package, Play, ScrollText, Sparkles, Sword, TriangleAlert, User, Users, WandSparkles } from 'lucide-react';
-import { SEIHOUSE_VOICE_CAST, castVoice, type VoiceCastMember } from '../../../audio/voiceCast';
+import { Archive, Backpack, ChevronLeft, Eye, Flag, Hand, LoaderCircle, Lock, Package, ScrollText, Sparkles, Sword, TriangleAlert, User, Users, WandSparkles } from 'lucide-react';
 import './story-codex.css';
 import type { HoldingVerb } from '../../../narrative/holdings';
 import { CHARACTER_LOOK_TRAITS, THING_LOOK_TRAITS, type LookTrait } from '../../../narrative/appearances';
@@ -107,56 +106,6 @@ function Words({ passage, caption, onReadPassage }: { passage: CodexPassage; cap
       <span>{caption}</span><PassageChip passage={passage} label={`Ch. ${passage.chapterNumber}`} onReadPassage={onReadPassage} />
     </figcaption>
   </figure>;
-}
-
-/** The reader's hold on characters' voices: change one, and hear it. */
-export interface CodexVoices {
-  /** Keeps a character's voice, a SEIHouse cast key, on their card. */
-  choose: (characterKey: string, voice: string) => Promise<void>;
-  /** Speaks a character's line in a voice, in the engine Read Aloud uses. */
-  hear: (character: CodexCharacter, voice: string) => void;
-}
-
-const CAST_GROUPS: Array<{ label: string; gender: VoiceCastMember['gender'] }> = [
-  { label: 'Women', gender: 'female' }, { label: 'Men', gender: 'male' }, { label: 'Others', gender: 'unisex' },
-];
-
-/** A character's voice: their first words, the SEIHouse cast voice they speak in, and, with the reader's hold on voices, a choice of another. */
-function VoiceSection({ character, voices, onReadPassage }: { character: CodexCharacter & { voice: NonNullable<CodexCharacter['voice']> }; voices?: CodexVoices; onReadPassage?: ReadPassage }) {
-  const [problem, setProblem] = useState<string>();
-  const member = castVoice(character.voice.cast);
-  // Only a character with a Codex entry keeps a voice; someone known only by the name they speak under has none yet.
-  const onCard = !character.key.startsWith('character:');
-  const choose = (voice: string) => {
-    if (!voices) return;
-    setProblem(undefined);
-    voices.choose(character.key, voice).catch((error: unknown) => setProblem(error instanceof Error && error.message ? error.message : 'The voice could not be kept. Please try again.'));
-  };
-  return <div className="space-y-2" data-testid="codex-voice">
-    <Words passage={character.voice.first} caption="First words" onReadPassage={onReadPassage} />
-    {onCard && <Section title="Voice" icon={<AudioLines size={12} aria-hidden />} label={`${character.name}: Voice`} testId="codex-voice-cast">
-      <p className="text-sm text-neutral-100">{member ? `${member.archetype} · ${member.ageRange}` : `Read in the ${character.mainCharacter ? 'main character' : 'side character'} voice`}</p>
-      {member && <p className="text-xs leading-relaxed text-neutral-400">{member.description}</p>}
-      {voices && <div className="flex flex-wrap items-center gap-2">
-        <label className="flex min-w-0 flex-1 items-center gap-2 text-xs text-neutral-400">
-          <span className="sr-only">{`Voice for ${character.name}`}</span>
-          <select value={member?.key ?? ''} onChange={event => event.target.value && choose(event.target.value)} aria-label={`Voice for ${character.name}`}
-            className="min-h-11 min-w-0 flex-1 rounded-lg border border-white/15 bg-black/40 px-3 text-sm text-neutral-100">
-            {!member && <option value="">Choose a voice</option>}
-            {CAST_GROUPS.map(group => <optgroup key={group.gender} label={group.label}>
-              {SEIHOUSE_VOICE_CAST.filter(entry => entry.gender === group.gender && entry.recorded !== false).map(entry =>
-                <option key={entry.key} value={entry.key}>{`${entry.archetype} · ${entry.ageRange}`}</option>)}
-            </optgroup>)}
-          </select>
-        </label>
-        {member && <button type="button" onClick={() => voices.hear(character, member.key)}
-          className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/20 px-4 text-sm text-white hover:border-white/40">
-          <Play size={14} aria-hidden />Hear
-        </button>}
-      </div>}
-      {problem && <p role="alert" className="text-xs text-amber-200">{problem}</p>}
-    </Section>}
-  </div>;
 }
 
 /** One thing in a character's hands or pack. */
@@ -341,7 +290,7 @@ function ManifestControl({ art, name }: { art: ProfileArt; name: string }) {
   </div>;
 }
 
-function CharacterProfile({ character, art, voices, onBack, onReadPassage }: { character: CodexCharacter; art?: ProfileArt; voices?: CodexVoices; onBack: () => void; onReadPassage?: ReadPassage }) {
+function CharacterProfile({ character, art, onBack, onReadPassage }: { character: CodexCharacter; art?: ProfileArt; onBack: () => void; onReadPassage?: ReadPassage }) {
   const equipped = character.things.filter(thing => thing.equipped);
   const carried = character.things.filter(thing => !thing.equipped);
   return <Profile category="characters" name={character.name} backLabel="All characters" onBack={onBack}
@@ -353,7 +302,7 @@ function CharacterProfile({ character, art, voices, onBack, onReadPassage }: { c
         <PassageChip key={event.passage.recordId} passage={eventPassage(event)} label={`Rank · Ch. ${event.passage.chapterNumber}`} onReadPassage={onReadPassage} />)}</span>}
     </div>
     {character.appearance && <LookSection name={character.name} appearance={character.appearance} traits={CHARACTER_LOOK_TRAITS} onReadPassage={onReadPassage} />}
-    {character.voice && <VoiceSection character={{ ...character, voice: character.voice }} voices={voices} onReadPassage={onReadPassage} />}
+    {character.voice && <div data-testid="codex-voice"><Words passage={character.voice.first} caption="First words" onReadPassage={onReadPassage} /></div>}
     {equipped.length > 0 && <Section title="Equipped" icon={<Hand size={12} aria-hidden />} label={`${character.name}: Equipped`}>
       <ul className="grid gap-2">{equipped.map(thing => <ItemSlot key={thing.entryId} thing={thing} onReadPassage={onReadPassage} />)}</ul>
     </Section>}
@@ -424,10 +373,8 @@ const EMPTY: Record<CodexTab, string> = {
  * passage that made it, and the chapter behind the Codex moves to it while
  * the Codex stays open. The record's checks close the gallery, for testing.
  */
-export function StoryCodex({ codex, storyTitle, pictures, voices, onBack, onReadPassage, onReadChapter }: {
+export function StoryCodex({ codex, storyTitle, pictures, onBack, onReadPassage, onReadChapter }: {
   codex: StoryCodexRecord;
-  /** The reader's hold on characters' voices. Without it, a card shows its voice and offers no choice. */
-  voices?: CodexVoices;
   /** The host's pictures for this story's cards. Without them, cards show their aura and offer no Manifest. */
   pictures?: CodexPictures;
   storyTitle: string;
@@ -518,7 +465,7 @@ export function StoryCodex({ codex, storyTitle, pictures, voices, onBack, onRead
     </div>
 
     <div id="codex-tab-panel" role="tabpanel" aria-labelledby={`codex-tab-${tab}`} className="space-y-4">
-      {character && <CharacterProfile key={character.key} character={character} voices={voices} onBack={close} onReadPassage={askToRead}
+      {character && <CharacterProfile key={character.key} character={character} onBack={close} onReadPassage={askToRead}
         art={artOf(character.key, 'character', character.name, character.appearance)} />}
       {faction && <FactionProfile key={faction.key} faction={faction} onBack={close} onReadPassage={askToRead} />}
       {item && <ItemProfile key={item.key} item={item} onBack={close} onReadPassage={askToRead}

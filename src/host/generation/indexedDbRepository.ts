@@ -2,13 +2,15 @@ import { createEmptyHarnessWorkspaceState, isCurrentHarnessWorkspaceState, migra
 const cloneHarnessValue = <T,>(value: T): T => structuredClone(value);
 export const HARNESS_GENERATION_INDEXED_DB_NAME = 'seihouse-harness-generation-v1';
 /**
- * The version the database opens at. A browser never opens a database at a
- * lower version than it holds, and the chapter loop, rolled back on
+ * The lowest version the database opens at. A browser never opens a database
+ * at a lower version than it holds, and the chapter loop, rolled back on
  * 2026-10-22, opened it at 33 while the saved workspace went back to schema
  * 32. Never below 33, the database stays openable; a workspace the loop saved
  * is kept untouched, like any this build cannot read, and the page starts fresh.
  */
-export const HARNESS_GENERATION_INDEXED_DB_VERSION = Math.max(HARNESS_GENERATION_SCHEMA_VERSION, 33);
+export const HARNESS_GENERATION_MIN_INDEXED_DB_VERSION = 33;
+/** The version the database opens at, worked out when it opens rather than when this file loads. */
+export const harnessGenerationIndexedDbVersion = () => Math.max(HARNESS_GENERATION_SCHEMA_VERSION, HARNESS_GENERATION_MIN_INDEXED_DB_VERSION);
 const STORE_NAME = 'workspace';
 const WORKSPACE_KEY = 'state';
 export const PRESERVED_WORKSPACE_PREFIX = 'preserved:';
@@ -98,7 +100,7 @@ export class IndexedDbHarnessGenerationRepository implements HarnessGenerationRe
       return Promise.reject(new Error('Harness Generation requires IndexedDB, which is unavailable in this browser.'));
     }
     this.databasePromise = new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.databaseName, HARNESS_GENERATION_INDEXED_DB_VERSION);
+      const request = indexedDB.open(this.databaseName, harnessGenerationIndexedDbVersion());
       request.onupgradeneeded = () => {
         const database = request.result;
         if (!database.objectStoreNames.contains(STORE_NAME)) database.createObjectStore(STORE_NAME);

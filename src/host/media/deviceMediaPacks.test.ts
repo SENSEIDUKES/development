@@ -18,7 +18,6 @@ import {
   MEDIA_PACK_LIMITS,
   playDeviceMediaThrough,
 } from './deviceMediaPacks';
-import { planEveryChapter } from '../../test-utils/chapterPlan';
 
 const roots: string[] = [];
 afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true }); });
@@ -133,8 +132,8 @@ describe('playing installed recordings', () => {
       getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
       generate: async () => ({ rawProviderResponse: writtenChapterReply(JSON.stringify({
         paragraphs: ['At dusk [[sound: temple bell | the temple bell rang | low]] over the valley.'],
+        arcCompletion: { goalId: 'arc-1', completed: false, evidence: '' },
       })), providerReceipt: receipt }),
-      planChapter: planEveryChapter(),
       arcOperation: async () => ({ rawProviderResponse: JSON.stringify({ plan: goal, destinedEnding: 'Reach the temple.' }), providerReceipt: receipt }),
     };
     const controller = new HarnessGenerationController({ repository: new InMemoryHarnessGenerationRepository(), media, modelAdapter: writer });

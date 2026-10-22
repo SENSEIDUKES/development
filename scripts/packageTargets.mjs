@@ -31,8 +31,8 @@ export const PACKAGE_TARGETS = {
       '@seihouse/sen/motion-picture': ['MotionPicture'],
       '@seihouse/sen/audio': ['parseAudioCues', 'createMediaCatalog', 'placeSoundCues', 'NarrativeAudioProvider', 'soundtrackVocabulary'],
       '@seihouse/sen/story-seed': ['StoryFoundationEditor', 'createEmptyStorySeedInput', 'parseStorySeedJson', 'describeStoryLengthProblem'],
-      '@seihouse/sen/generation': ['readMarks', 'SOUND_TAG_WORDS'],
-      '@seihouse/sen/harness-generation': ['HarnessGenerationController', 'createHarnessSenStory', 'HarnessReaderSession', 'SEN_SPEAKERS_SKILL', 'SEN_FATE_SURVIVAL_PLANNING', 'SEN_SOUND_CUES_SKILL', 'SEN_SOUNDTRACK_SKILL', 'chapterSoundtrack', 'HARNESS_TAG_RULES', 'readChapterPlan', 'checkChapterPlan', 'derivePlanRecord', 'buildCodexSection', 'PLAN_EVENT_KINDS', 'deriveHoldings', 'deriveStoryCodex', 'StoryCodex', 'harnessFailedWrite', 'chapterTitleText', 'chapterRewriteGap', 'withoutLatestChapter', 'CHAPTER_REWRITE_NOTE_LIMIT'],
+      '@seihouse/sen/generation': ['readMarks', 'TAG_WORDS'],
+      '@seihouse/sen/harness-generation': ['HarnessGenerationController', 'createHarnessSenStory', 'HarnessReaderSession', 'SEN_SPEAKERS_SKILL', 'SEN_HOLDINGS_SKILL', 'SEN_SOUND_CUES_SKILL', 'SEN_SOUNDTRACK_SKILL', 'chapterSoundtrack', 'HARNESS_TAG_RULES', 'deriveHoldings', 'holdingsSection', 'deriveStoryCodex', 'StoryCodex', 'harnessFailedWrite', 'chapterTitleText', 'chapterRewriteGap', 'withoutLatestChapter', 'planHoldingsFix', 'applyHoldingsFixes', 'CHAPTER_REWRITE_NOTE_LIMIT'],
       '@seihouse/sen/arc-goals': ['ARC_LENGTH', 'STORY_LENGTH_ARCS'],
     },
     smokeTypes: `
@@ -48,17 +48,15 @@ export const PACKAGE_TARGETS = {
       declare const speaker: SpeakerAttachment;
       void picks; void script; void speaker.payload.protagonist;
       import type { StorySeedInput, StorySeedRepository } from '@seihouse/sen/story-seed';
-      import type { HarnessStory, HarnessGenerationModelAdapter, HarnessChapterPlanRequest, CodexEntry, ChapterPlan, HarnessChapterRewrite } from '@seihouse/sen/harness-generation';
-      declare const planRequest: HarnessChapterPlanRequest;
+      import type { HarnessStory, HarnessGenerationModelAdapter, CodexEntry, HoldingChangeAttachment, HoldingsSection, HarnessHoldingsFixRecord, HarnessHoldingsFixerPolicy, HarnessChapterRewrite } from '@seihouse/sen/harness-generation';
+      declare const change: HoldingChangeAttachment;
+      const fixerPolicy: HarnessHoldingsFixerPolicy = 'records-only';
+      declare const fixRecord: HarnessHoldingsFixRecord;
       const rewriteRequest: HarnessChapterRewrite = { replacesChapterId: 'publisher-chapter', previous: { title: 'A Title' } };
-      void planRequest.immediateChapterRequest.chapterNumber; void rewriteRequest;
+      void fixerPolicy; void fixRecord.fixes; void rewriteRequest;
       const entry: Pick<CodexEntry, 'kind' | 'name'> = { kind: 'thing', name: 'Publisher Relic' };
-      const plan: ChapterPlan = {
-        cast: [{ name: 'MC', kind: 'character' }, { name: entry.name, kind: 'thing' }],
-        events: [{ kind: 'discovery', actor: { name: 'MC' }, targets: [{ name: entry.name }], presses: [], how: 'The hero finds the relic.', facts: [{ type: 'holding', who: { name: 'MC' }, change: 'gains', what: { name: entry.name } }] }],
-        chapterFunction: 'progression',
-      };
-      void plan;
+      const holdings: HoldingsSection = { characters: [{ name: 'Publisher Hero', mainCharacter: true, inHand: [entry.name] }] };
+      void change.payload.verb; void holdings;
       import type { ChapterContent } from '@seihouse/sen/generation';
       import type { FrozenNarrativeMedia, NarrativeAudioPlayback } from '@seihouse/sen/audio';
       interface PublisherAccount { publisherUserId: string; imprint: string }

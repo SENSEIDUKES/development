@@ -9,7 +9,6 @@ import { buildHarnessGenerationPrompt } from '../../../server/harness-generation
 import { appendHarnessCorrection } from './canonicalState';
 import { normalizeStoryFoundationInput } from './foundation';
 import { type HarnessGenerationModelAdapter } from '@seihouse/sen/harness-generation';
-import { planEveryChapter } from '../../../test-utils/chapterPlan';
 
 const setup = async () => {
   let tick = 0;
@@ -17,7 +16,6 @@ const setup = async () => {
   const prose = 'Mara has 16 sparks. Iven says, "Stay together."';
   const modelAdapter: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
-    planChapter: planEveryChapter(),
     arcOperation: async request => ({
       rawProviderResponse: JSON.stringify({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 30 }] }, destinedEnding: 'Bring the story to its true conclusion.' }),
       providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: runtime.now(), usage: { source: 'unavailable' } },
@@ -61,7 +59,7 @@ describe('Chapter direction review regressions', () => {
     expect(context.canonicalState.resources).toEqual([expect.objectContaining({ owner: 'Mara', name: 'Sparks', value: '16', unit: 'sparks', asOfChapter: 1 })]);
     const prompt = buildHarnessGenerationPrompt({ storyId: story.id, attemptId: 'next', model: 'fixture',
       capaPrompt: state.attempts[0].capaPrompt, storyInformation: context, missionReminder: state.attempts[0].missionReminder,
-      immediateChapterRequest: { chapterNumber: 2, continuation: true, chapterScale: { minWords: 1_800, maxWords: 2_500 } }, chapterPlan: { cast: [], events: [{ actor: { name: 'MC' }, targets: [], presses: [], how: 'Mara counts her sparks.', facts: [] }] } });
+      immediateChapterRequest: { chapterNumber: 2, continuation: true, chapterScale: { minWords: 1_800, maxWords: 2_500 } } });
     expect(prompt.userPrompt).toContain('CURRENT CANONICAL STATE');
     expect(prompt.userPrompt).toContain('Mara · Sparks: 16 sparks (as of Chapter 1)');
     // The speech quote is chapter evidence, not current state; it stays in storage.

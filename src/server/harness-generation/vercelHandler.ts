@@ -14,13 +14,19 @@ const guardHarnessGeneration = createPublicGenerationGuard({
   limit: 6,
   windowMs: 30 * 60 * 1_000,
 });
-/** The planner's call before each chapter keeps its own count, so planning a chapter never uses up a visitor's chapters. */
-const guardChapterPlanner = createPublicGenerationGuard({
-  key: 'harness-generation-planner',
+/** The Holdings fixer's small check after a chapter keeps its own count, so it never uses up a visitor's chapters. */
+const guardHoldingsFixer = createPublicGenerationGuard({
+  key: 'harness-generation-fixer',
   limit: 6,
   windowMs: 30 * 60 * 1_000,
 });
-const OPERATION_GUARDS = new Map<unknown, typeof guardHarnessGeneration>([['plan-chapter', guardChapterPlanner]]);
+/** So does the look step's, which writes down the looks a chapter shows. */
+const guardLookStep = createPublicGenerationGuard({
+  key: 'harness-generation-looks',
+  limit: 6,
+  windowMs: 30 * 60 * 1_000,
+});
+const OPERATION_GUARDS = new Map<unknown, typeof guardHarnessGeneration>([['fix-holdings', guardHoldingsFixer], ['describe-looks', guardLookStep]]);
 
 /** The operation a request body names, read without trusting it. */
 const requestOperation = (body: unknown): unknown => {

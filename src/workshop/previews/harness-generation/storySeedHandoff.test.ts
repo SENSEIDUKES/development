@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { writtenChapter } from '../../../test-utils/writtenChapter';
-import { type HarnessChapterPlanRequest, type HarnessGenerationRequest, type HarnessGenerationResponse } from '@seihouse/sen/harness-generation';
+import { type HarnessGenerationRequest, type HarnessGenerationResponse } from '@seihouse/sen/harness-generation';
 import { handleHarnessGenerationHttp } from '../../../server/harness-generation/http';
 import type { HarnessTextGenerationRequest } from '../../../server/harness-generation/provider';
 import { createMockStorySeedRecord } from '../story-seed/previewData';
@@ -10,8 +10,6 @@ import { normalizeWorldBlueprint } from '@seihouse/sen/story-seed';
 import { createHarnessFoundationFromStorySeed } from './storySeedHandoff';
 import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
 import { createOfficialCapaDefaultLoadout, OFFICIAL_STYLE_REFERENCES, updateOfficialCapaStyle } from '../../../host/generation/capa/officialCapaSkills';
-import { planEveryChapter } from '../../../test-utils/chapterPlan';
-import { buildChapterPlannerPrompt } from '../../../server/harness-generation/chapterPlanner';
 
 describe('Story Seed to Harness handoff', () => {
   it('hands over Arc 1, the story length and the hidden look-ahead, and only the Seed goal as Arc 1 without a generated Blueprint', () => {
@@ -50,10 +48,8 @@ describe('Story Seed to Harness handoff', () => {
     record.blueprint!.firstArcPromise = 'REMOVED_FIRST_CONFLICT';
     const foundation = createHarnessFoundationFromStorySeed(record);
     const requests: HarnessGenerationRequest[] = [];
-    const planRequests: HarnessChapterPlanRequest[] = [];
     const adapter = {
       getServerInfo: async () => ({ configured: true, provider: 'fixture', defaultModel: 'fixture', models: [] }),
-      planChapter: vi.fn(async (request: HarnessChapterPlanRequest) => { planRequests.push(structuredClone(request)); return planEveryChapter()(); }),
       arcOperation: vi.fn(),
       generate: vi.fn(async (request: HarnessGenerationRequest): Promise<HarnessGenerationResponse> => {
         requests.push(structuredClone(request));
@@ -68,42 +64,33 @@ describe('Story Seed to Harness handoff', () => {
     await controller.generateNextChapter(story.id, 'fixture');
     const failed = controller.snapshot().attempts[0];
     expect(failed.stage).toBe('generation_failed');
-    // The planner reads every author input once; the writer, only what tells the story so far.
-    const planner = buildChapterPlannerPrompt(planRequests[0]);
     const prompt = buildHarnessGenerationPrompt(requests[0]);
     for (const marker of ['PIN_KEEP_MASTER', 'PIN_KEEP_TEMPLE', 'PIN_KEEP_VOW', 'ENDING_FREE_VALLEY', 'GOAL_OPEN_GATE', 'WORLD_WALKING_MOUNTAIN', 'WORLD_GATE_KEEPER', '"funSettings"']) {
-      expect(planner.userPrompt.split(marker), marker).toHaveLength(2);
-      expect(planner.systemInstruction).not.toContain(marker);
+      expect(prompt.userPrompt.split(marker), marker).toHaveLength(2);
       expect(prompt.systemInstruction).not.toContain(marker);
     }
-    for (const marker of ['WORLD_WALKING_MOUNTAIN', 'WORLD_GATE_KEEPER', '"funSettings"']) expect(prompt.userPrompt.split(marker), marker).toHaveLength(2);
-    for (const marker of ['PIN_KEEP_MASTER', 'ENDING_FREE_VALLEY', 'GOAL_OPEN_GATE']) expect(prompt.userPrompt, marker).not.toContain(marker);
-    expect(planner.userPrompt).not.toMatch(/REMOVED_|arcGoals|"plan"/);
     expect(prompt.userPrompt).not.toMatch(/REMOVED_|arcGoals|"plan"/);
-    expect(planRequests[0].storyInformation.arc).toMatchObject({ activeGoal: { text: 'GOAL_OPEN_GATE' }, completionDeadline: 9, plannedArcCount: 10, finalArc: false });
+    expect(requests[0].storyInformation.arc).toMatchObject({ activeGoal: { text: 'GOAL_OPEN_GATE' }, completionDeadline: 9, plannedArcCount: 10, finalArc: false });
     expect(requests[0].storyInformation.currentStory.funSettings).toEqual(record.seed.story.optional.funSettings);
     expect(JSON.stringify(requests[0].storyInformation.canonicalState)).not.toMatch(/PIN_|GOAL_|funSettings/);
     expect(requests[0].storyInformation.currentStory.intendedDirection).toBeUndefined();
     expect(requests[0].immediateChapterRequest).not.toHaveProperty('funSettings');
-    const invalid = structuredClone(planRequests[0]);
+    const invalid = structuredClone(requests[0]);
     invalid.storyInformation.storyDirection.hardPins.push('FOURTH_PIN');
-    expect(() => buildChapterPlannerPrompt(invalid)).toThrow('at most 3');
+    expect(() => buildHarnessGenerationPrompt(invalid)).toThrow('at most 3');
     await controller.setHardPins(story.id, [{ text: 'LATER_PIN' }]);
     await controller.editArcGoals(story.id, { arcNumber: 1, goals: [{ id: 'arc-1-later', text: 'LATER_GOAL', chapters: 30 }] });
     const reloaded = new HarnessGenerationController({ repository, modelAdapter: adapter });
     await reloaded.hydrate();
     await reloaded.retryModelRequest(failed.id);
-    // The retry resends the frozen packet and the plan already made: the planner is not called again.
     expect(requests[1].storyInformation).toEqual({ ...requests[0].storyInformation, attemptId: requests[1].attemptId });
-    expect(requests[1].chapterPlan).toEqual(requests[0].chapterPlan);
-    expect(planRequests).toHaveLength(1);
     await reloaded.replayStory(story.id);
     expect(reloaded.snapshot().attempts[0].storyInformation.storyDirection).toEqual(requests[0].storyInformation.storyDirection);
     expect(reloaded.snapshot().attempts[0].storyInformation.arc).toEqual(requests[0].storyInformation.arc);
     expect(adapter.arcOperation).not.toHaveBeenCalled();
   });
 
-  it.each([false, true])('carries the Fate mode from the Story Seed to the planner when Survival=%s, through reload', async enabled => {
+  it.each([false, true])('carries the Fate mode from the Story Seed to the writer when Survival=%s, through reload', async enabled => {
     const record = createMockStorySeedRecord();
     record.seed.story.optional.fateSurvival = { enabled, pressure: 'heaven' };
     record.seed.world.optional.worldFoundations.destinedEnding = 'UNIQUE_DESTINED_ENDING';
@@ -113,8 +100,7 @@ describe('Story Seed to Harness handoff', () => {
     expect(foundation.fateSurvival).toEqual({ enabled });
     expect(foundation.intendedDirection).toBeUndefined();
     const requests: HarnessGenerationRequest[] = [];
-    const planRequests: HarnessChapterPlanRequest[] = [];
-    const modelAdapter = { getServerInfo: async () => ({ configured: true, provider: 'fixture', defaultModel: 'fixture', models: [] }), planChapter: async (request: HarnessChapterPlanRequest) => { planRequests.push(request); return planEveryChapter()(); }, arcOperation: vi.fn(), generate: vi.fn(async (request: HarnessGenerationRequest): Promise<HarnessGenerationResponse> => {
+    const modelAdapter = { getServerInfo: async () => ({ configured: true, provider: 'fixture', defaultModel: 'fixture', models: [] }), arcOperation: vi.fn(), generate: vi.fn(async (request: HarnessGenerationRequest): Promise<HarnessGenerationResponse> => {
       requests.push(request);
       return { rawProviderResponse: JSON.stringify(writtenChapter({ paragraphs: ['The traveler waits at the gate.'] })),
         providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: '2026-09-20T12:00:00Z', usage: { source: 'unavailable' } } };
@@ -133,19 +119,17 @@ describe('Story Seed to Harness handoff', () => {
       await reloaded.chooseChapterDirection(story.id, { kind: 'reader', text: 'The traveler bargains with the gate warden.' });
     }
     await reloaded.generateNextChapter(story.id, 'fixture');
-    const packet = planRequests[0].storyInformation;
-    const prompt = buildChapterPlannerPrompt(planRequests[0]);
+    const packet = requests[0].storyInformation;
+    const prompt = buildHarnessGenerationPrompt(requests[0]);
     expect(packet.storyDirection.fateMode).toBe(enabled ? 'survival' : 'regular');
     expect(prompt.userPrompt).toContain(enabled ? 'Fate Survival: the reader directs every chapter' : 'Regular Reader mode: the Destined Ending is guaranteed');
     expect(prompt.userPrompt.split('UNIQUE_DESTINED_ENDING')).toHaveLength(2);
     // Regular Reader: Fate Pressure picks the path. Fate Survival: the reader's direction does, and Rhythm is not sent.
     expect(packet.rhythm?.fatePressure).toBe(enabled ? undefined : 'heaven');
     expect(prompt.userPrompt.includes('FATE PRESSURE RHYTHM DIRECTION')).toBe(!enabled);
-    expect(prompt.userPrompt.includes('The reader\'s direction for this chapter: The traveler bargains with the gate warden.')).toBe(enabled);
+    expect(prompt.userPrompt.includes('READER DIRECTION FOR THIS CHAPTER: The traveler bargains with the gate warden.')).toBe(enabled);
     expect(JSON.stringify(packet.currentStory)).not.toMatch(/UNIQUE_|fateSurvival|fatePressure/);
     for (const marker of ['UNIQUE_SURVIVAL_MYSTERY', 'UNIQUE_SURVIVAL_THREAD', 'FATE SURVIVAL CONTEXT']) expect(prompt.userPrompt).not.toContain(marker);
-    // The writer narrates the plan: the ending and the mode are the planner's.
-    expect(buildHarnessGenerationPrompt(requests[0]).userPrompt).not.toContain('UNIQUE_DESTINED_ENDING');
     // The mode is fixed once the novel begins.
     await expect(reloaded.saveFoundationRevision(story.id, { ...foundation, fateSurvival: { enabled: !enabled } })).rejects.toThrow('fixed once it begins');
   });
@@ -209,7 +193,6 @@ describe('Story Seed to Harness handoff', () => {
     const requests: HarnessGenerationRequest[] = [];
     const controller = new HarnessGenerationController({ repository: new InMemoryHarnessGenerationRepository(), modelAdapter: {
       getServerInfo: async () => ({ configured: true, provider: 'fixture', defaultModel: 'fixture', models: [] }),
-      planChapter: planEveryChapter(),
       arcOperation: vi.fn(),
       generate: vi.fn(async (request: HarnessGenerationRequest): Promise<HarnessGenerationResponse> => {
         requests.push(structuredClone(request));
@@ -297,10 +280,8 @@ describe('Story Seed to Harness handoff', () => {
     };
     const provider = vi.fn(async (_prompt: HarnessTextGenerationRequest) => response);
     const requests: HarnessGenerationRequest[] = [];
-    const planRequests: HarnessChapterPlanRequest[] = [];
     const adapter = {
       getServerInfo: async () => ({ provider: 'gemini' as const, configured: true, models: [], defaultModel: 'google/gemini-3.1-flash-lite' }),
-      planChapter: async (request: HarnessChapterPlanRequest) => { planRequests.push(structuredClone(request)); return planEveryChapter()(); },
       arcOperation: async (request: { storyInformation: { chapterNumber: number } }) => ({ rawProviderResponse: JSON.stringify({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 30 }] }, destinedEnding: 'Bring the story to its true conclusion.' }), providerReceipt: { provider: 'gemini' as const, model: 'google/gemini-3.1-flash-lite', generatedAt: '2026-09-05T12:00:00.000Z', usage: { source: 'unavailable' as const } } }),
       recoverMemory: async () => ({ rawProviderResponse: JSON.stringify({ events: [{ description: 'Mara has blue eyes.', category: 'character', subjects: ['Mara'] }] }),
         providerReceipt: { provider: 'gemini' as const, model: 'google/gemini-3.1-flash-lite', generatedAt: '2026-09-05T12:00:00.000Z', usage: { source: 'unavailable' as const } } }),
@@ -350,9 +331,7 @@ describe('Story Seed to Harness handoff', () => {
     expect(userPrompt).not.toContain(record.blueprint!.firstArcPromise);
     expect(userPrompt).not.toContain('CONTEXT COVERAGE AND OMISSIONS');
     expect(userPrompt).not.toContain('selectionAudit');
-    // Future direction is the planner's to weigh; the writer narrates its plan.
-    expect(buildChapterPlannerPrompt(planRequests[1]).systemInstruction).toContain('An arc promise spans an arc, not one chapter.');
-    expect(buildChapterPlannerPrompt(planRequests[1]).userPrompt).toContain('Remain at the gate; do not finish the tournament arc yet.');
+    expect(systemInstruction).toContain('An arc promise spans an arc, not one chapter.');
     expect(systemInstruction).toContain('newest applicable change wins');
     expect(systemInstruction).toContain('Active Foundation edits take precedence');
     expect(reloaded.snapshot().attempts[1].storyInformation).toEqual(requests[1].storyInformation);

@@ -9,9 +9,7 @@ import { compileStoryInformationPacket } from './context';
 import { preserveSemanticEvents } from './responseAcceptance';
 import { buildHarnessMechanicalContinuity } from './mechanicalContinuity';
 import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
-import { type HarnessChapterPlanRequest, type HarnessGenerationModelAdapter, type HarnessGenerationRequest } from '@seihouse/sen/harness-generation';
-import { planEveryChapter } from '../../../test-utils/chapterPlan';
-import { buildChapterPlannerPrompt } from '../../../server/harness-generation/chapterPlanner';
+import { type HarnessGenerationModelAdapter, type HarnessGenerationRequest } from '@seihouse/sen/harness-generation';
 
 const arcOperation = async (request: { storyInformation: { chapterNumber: number } }) => ({
   rawProviderResponse: JSON.stringify({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 30 }] }, destinedEnding: 'Bring the story to its true conclusion.' }),
@@ -39,11 +37,10 @@ describe('Steered continuation and SEN boundaries', () => {
     const repository = new InMemoryHarnessGenerationRepository();
     const modelAdapter: HarnessGenerationModelAdapter = {
       getServerInfo: async () => ({ configured: true, provider: 'gemini', defaultModel: 'fixture', models: [] }),
-      planChapter: planEveryChapter(),
       arcOperation,
       generate: async input => {
         writes++; request = input;
-        return response(writtenChapter({ prose }));
+        return response(writtenChapter({ prose, arcCompletion: { goalId: 'arc-1-goal', completed: false, evidence: '' } }));
       },
 
     };
@@ -87,7 +84,6 @@ describe('Steered continuation and SEN boundaries', () => {
 
   it('continues through Chapter 50 with multiple directions, reload, and an older enhancement repair', async () => {
     const requests: HarnessGenerationRequest[] = [];
-    const planRequests: HarnessChapterPlanRequest[] = [];
     const repository = new InMemoryHarnessGenerationRepository();
     let fail = true;
     class Registry extends HarnessCapabilityRegistry {
@@ -98,7 +94,6 @@ describe('Steered continuation and SEN boundaries', () => {
     }
     const provider: HarnessGenerationModelAdapter = {
       getServerInfo: async () => ({ configured: true, provider: 'gemini', defaultModel: 'fixture', models: [] }),
-      planChapter: async request => { planRequests.push(request); return planEveryChapter()(); },
       arcOperation,
       generate: async request => {
         requests.push(request);
@@ -154,16 +149,13 @@ describe('Steered continuation and SEN boundaries', () => {
     expect(JSON.stringify(requests[49].storyInformation)).not.toContain('Mara meets Iven.');
     expect(requests[49].storyInformation.canonicalState.resources).toEqual([expect.objectContaining({ owner: 'Mara', name: 'Sparks', value: '49', asOfChapter: 49 })]);
     expect(requests[49].storyInformation.canonicalState.characters.find(character => character.name === 'Iven')?.facts.relationshipToMC).toBe('Ally');
-    // The planner carries each direction out, in place of Rhythm's; the writer is told it as context.
-    const directed = buildChapterPlannerPrompt(planRequests[1]);
+    const directed = buildHarnessGenerationPrompt(requests[1]);
     expect(directed.systemInstruction).toContain('READER DIRECTION');
-    expect(directed.userPrompt).toContain(`The reader's direction for this chapter: ${READER_DIRECTIONS[2]}`);
+    expect(directed.userPrompt).toContain(`READER DIRECTION FOR THIS CHAPTER: ${READER_DIRECTIONS[2]}`);
     expect(directed.userPrompt).not.toContain('FATE PRESSURE RHYTHM DIRECTION');
-    expect(buildHarnessGenerationPrompt(requests[1]).userPrompt).toContain(`The reader's direction for this chapter: ${READER_DIRECTIONS[2].replace(/[.!?]+$/u, '')}. The Chapter Plan carries it out.`);
-    const automatic = buildChapterPlannerPrompt(planRequests[49]);
+    const automatic = buildHarnessGenerationPrompt(requests[49]);
     expect(automatic.userPrompt).not.toContain('Make Iven an ally');
     expect(automatic.userPrompt).toContain('FATE PRESSURE RHYTHM DIRECTION');
-    expect(buildHarnessGenerationPrompt(requests[49]).userPrompt).not.toContain('FATE PRESSURE RHYTHM DIRECTION');
     const sen = createHarnessSenStory(state, story.id);
     expect(sen.id).toBe(story.id);
     expect(sen.mcName).toBe('Mara');
@@ -226,7 +218,6 @@ describe('Steered continuation and SEN boundaries', () => {
     let calls = 0;
     const modelAdapter: HarnessGenerationModelAdapter = {
       getServerInfo: async () => ({ configured: true, provider: 'gemini', defaultModel: 'fixture', models: [] }),
-      planChapter: planEveryChapter(),
       arcOperation,
       generate: async () => {
         calls++;

@@ -37,7 +37,6 @@ const packet = (premise: string): StoryInformationPacket => ({
   storyDirection: { hardPins: [] },
   previouslyOn: [],
   canonicalState: { characters: [], relationships: [], locations: [], factions: [], artifacts: [], abilities: [], resources: [] },
-  codex: { entries: [] },
   diagnostics: { budgetSource: 'test', sections: [], omitted: [], identityAmbiguities: [], storage: { chapters: 0, events: 0, canonicalRecords: 0, activeRecords: 0, recaps: 0 } },
 });
 

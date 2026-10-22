@@ -11,14 +11,13 @@ import type { CodexCharacter, StoryCodexRecord } from '../shared/storyCodex';
 
 const event = (chapterNumber: number, verb: 'equipped' | 'unequipped') => ({
   verb, target: 'Vanguard Breaker Blade', targetId: 'blade',
-  passage: { chapterId: `c${chapterNumber}`, chapterNumber, recordId: `holding:c${chapterNumber}-e1-f0`, event: 1, text: 'He takes it up.' },
-}) satisfies CodexCharacter['chronicle'][number];
+  passage: { chapterId: `c${chapterNumber}`, chapterNumber, recordId: `h${chapterNumber}`, blockId: `c${chapterNumber}-p1`, text: 'He took it up.' },
+}) as unknown as CodexCharacter['chronicle'][number];
 const events = Array.from({ length: 23 }, (_, index) => event(index + 1, index % 2 ? 'unequipped' : 'equipped'));
 const codex: StoryCodexRecord = { factions: [], items: [], checks: [], characters: [{
-  key: 'mc', name: 'Han Shuo', mainCharacter: true, firstSeen: { chapterNumber: 1, event: 1, text: 'He takes it up.' }, abilities: [], chronicle: events,
+  key: 'mc', name: 'Han Shuo', mainCharacter: true, firstSeen: events[0].passage, abilities: [], chronicle: events,
   things: [{ entryId: 'blade', name: 'Vanguard Breaker Blade', count: 1, equipped: true, events }],
-  statusHistory: [], goals: [], values: [], owes: [], owedBy: [], stances: [],
-}] };
+} as unknown as CodexCharacter] };
 
 it('shows how a thing is now in one line and keeps its changes behind a tap, the newest first, ten at a time', async () => {
   const container = document.createElement('div');

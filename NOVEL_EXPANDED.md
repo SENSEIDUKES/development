@@ -11,7 +11,7 @@
 > context.
 
 - **Created:** 2026-09-29
-- **Last updated:** 2026-10-20
+- **Last updated:** 2026-10-13
 - **Owner:** SENSEI, SEIHouse Productions
 
 ## Vision and build state
@@ -21,7 +21,7 @@ map, what SEN and Expanded Novels each cover, who they serve, and how SEIHouse m
 to sustain them. The capabilities it names are vision: they say where the product is
 going, not what exists.
 
-The second half is how we build it. [Where we are](#where-we-are-2026-10-10) is the
+The second half is how we build it. [Where we are](#where-we-are-2026-10-08) is the
 only section that says what is built today. A capability the first half names that
 Where we are does not list is not built. Knowing the whole product should shape every
 decision, but it is not a work order: build what the task asks for, and never
@@ -293,19 +293,16 @@ mode**. That means:
   advanced layer. For example, the chapter paragraph counter asks for one fixed count
   (50) while its accuracy is measured; a range (40–80), then story styles with their
   own ranges, come only after it works.
-- **Media one kind at a time, information in one loop.** Each kind of media is
-  built one at a time in the tiny SEN language: the model says where in its prose,
-  the manuscript gives it a place, and the HARNESS turns it into exact, repeatable
-  behavior. Information is never a prose tag: it goes through
-  [the chapter loop](./docs/chapter-loop.md), designed whole and built in complete
-  steps, never half-moved (SENSEI, 2026-10-20).
+- **One kind at a time, in the tiny SEN language.** The model says what happens and
+  where, the manuscript gives it a place, and the HARNESS turns it into exact,
+  repeatable behavior. Each kind of content is rebuilt this way from the ground up.
 - **Everything writes the same records.** A Sound Cue placed by the HARNESS, by a
   person, or later by a local model is the same manuscript attachment. No tool gets
   a side channel.
-- **The Codex grows with the record** (SENSEI, 2026-10-13). The chapter loop's
-  events exist to fill the Codex, and the Codex is where the owner checks them, so
-  it is remade alongside them: it shows only what the record holds today, and each
-  step of the loop adds its own part as it is built. What is stored and how it is
+- **The Codex grows with the record** (SENSEI, 2026-10-13). The information tags
+  exist to fill the Codex, and the Codex is where the owner checks them, so it is
+  remade alongside them: it shows only what the record holds today, and each new
+  information tag adds its own part as it is built. What is stored and how it is
   shown are not one for one: the record stays exact and medium-neutral, while the
   Codex presents it to immerse the reader, closer to a game's character screen
   than a table. What it must finally hold so a story can be translated into other
@@ -328,20 +325,6 @@ mode**. That means:
   is built, an opened Codex card offers Manifest, so the owner can see how well
   the looks the story wrote down bring its characters and items to life. It
   uses the prompts manifesting while reading will use.
-- **Media in the prose, information in the snapshot** (SENSEI, 2026-10-19).
-  Media tags (Sound Cues, soundscape, atmosphere) stay in the prose: the writer
-  recognizes a moment and picks from the story's own words, and no tag is a
-  correct answer. Information (who is in a chapter, looks, holdings, status,
-  and later place and ties) is never tagged in the prose. It lives in the
-  Codex snapshot, in one loop: the snapshot as the last chapter left it → one
-  plan step before the chapter reads it and decides → the writer writes the
-  chapter from that plan → the snapshot updates from the plan. Information
-  tags built before this decision (holdings, appearance and look) moved to the
-  plan step together (2026-10-20); no new information tag is built. Who speaks each line
-  stays on the line, in each paragraph's speaker field. The plan step is Fate,
-  and CTE decides what its events do to people: the whole design, and the
-  order it is built in, is [the chapter loop](./docs/chapter-loop.md)
-  (SENSEI, 2026-10-20).
 
 ## Where we are (2026-10-10)
 
@@ -421,49 +404,44 @@ Update it whenever it changes.
     drops to half height ("Show the chapter"), on laptops a panel at the right
     with the chapter moved beside it. Listen reads on under a panel. An arc's
     goals take the screen, and the reader comes back to their exact place.
-  - **The Codex, remade on the record (2026-10-13), made from the plans
-    since 2026-10-20:** a panel like Fate,
+  - **The Codex, remade on the record (2026-10-13):** a panel like Fate,
     opened from the bottom bar's Codex button, holding only what the record
     knows today. It is a **gallery of cards** (since the same day, from
     SENSEI): every category is the same card, its art filling it and its name
     at its foot, and opening a card shows everything the record knows about
     it together, its art large at the top. A card shows its unmanifested aura
     until its picture is manifested, which comes with manifesting while
-    reading. **Characters:** everyone a chapter's plan put on the page, and
-    anyone with a card who spoke, the main character first; characters the
-    Story Seed declares but the chapters have not reached stay out. Named
-    beasts are characters too. Each opens to who they are, their rank, first
-    appearance, their state, their **Look** (the look the plan gave when it
-    first cast them: its one line and each trait, with every change since),
-    **first words**, **Equipped** and **Carried** things, **Abilities**
-    (learning, known or sealed, with their stage), what they want, hold to,
-    owe and are owed, how they stand toward others, and a **Chronicle** of
-    every change.
+    reading. **Characters:** everyone
+    the story has met (they stepped onto the page, spoke, or held, used or
+    learned something), the main character first; characters the Story Seed
+    declares but the chapters have not reached stay out. Named beasts are
+    characters too. Each opens to their rank, first appearance, their **Look**
+    (since 2026-10-14: its one line and each trait the chapters state, with a
+    link to every change), **first words**,
+    **Equipped** and **Carried** things, **Abilities** (learning, known or
+    sealed, with their stage) and a **Chronicle** of every change.
     **Factions:** sects, clans and other bodies of people, never characters,
-    even when the writer names one as speaking (those the Story Seed declares,
+    even when the writer tags one as speaking (those the Story Seed declares,
     or a name ending in a word like Sect, Clan or Tribe), each opening to its
-    first words. **Items:** every thing a plan put on the page, who holds it
-    now, its state, its Look and everything that happened to it;
+    first words. **Items:** every thing that stepped onto the page or changed
+    hands, who holds it now, its Look and everything that happened to it;
     things lost, used up or given away sit below, under **Archived**
     (2026-10-14). A **Bestiary** comes later (SENSEI, 2026-10-13): it
     holds species and unique beast groups (the dragon kin), while a named beast
     (the Dragon King, an emperor and the main villain) is a character.
-    **Record checks** close each gallery, for testing: each fact the checks
-    dropped from a chapter's plan, and two names that may be one person. Every
-    fact links to its chapter, and a line of speech to its paragraph, after a
-    confirm (2026-10-14, SENSEI: an instant jump lost the reader's place): "Go
-    to Chapter 4?" with Go or Stay. On Go the chapter behind the Codex moves
-    there, lighting a line of speech, while the Codex stays open, lowered to
-    half height on a phone. It is worked out again from the chapters' plans
-    each time, so it always matches them. The older seven-tab Codex is out of
-    the Reader; it stays in the code. The Workshop's Codex card
-    (`?preview=reader-codex`) shows the new Codex reading Sundered Heavens as
-    its Development view.
+    **Record checks** close each gallery, for testing. Every fact links to its
+    passage, after a confirm (2026-10-14, SENSEI: an instant jump lost the
+    reader's place): "Go to Chapter 4?" with Go or Stay. On Go the chapter
+    behind the Codex moves to it and lights it while the Codex stays open,
+    lowered to half height on a phone. It is worked out
+    again from the chapters each time, so it always matches them. The older
+    seven-tab Codex is out of the Reader; it stays in the code. The Workshop's
+    Codex card (`?preview=reader-codex`) shows the new Codex reading
+    Sundered Heavens as its Development view.
   - **Codex pictures, for testing looks (2026-10-15, SENSEI):** an opened
-    character or item card with a look offers **Manifest**. One picture is
-    made from that look (since 2026-10-20 the look the plan gave, with every
-    change since folded into its line: Manifest draws it and never writes one)
-    and the story's own tradition, genre, tone and world,
+    character or item card whose look the record wrote down offers
+    **Manifest**. One picture is made from that look (its line and each trait
+    the chapters state) and the story's own tradition, genre, tone and world,
     and the card wears it at once; **Manifest again** makes a new one in its
     place. A card with no look yet says Manifest waits for one, since nothing
     the story has not shown can be manifested. Pictures use the Model Router's
@@ -531,8 +509,8 @@ Update it whenever it changes.
   - **Writing survives leaving the Reader:** the chapter being written belongs
     to the story, not to the screen. Back out mid-write and it keeps writing;
     come back and it is still writing, or there. A write a closed browser cut
-    off is finished by the reader's next Write (a saved plan or reply needs no
-    new model call). In the app, Chapter 1 begins the moment the story is made
+    off is finished by the reader's next Write (a saved reply needs no new
+    model call). In the app, Chapter 1 begins the moment the story is made
     (Manifest Story), so it is ready, or nearly, when the reader starts; a Fate
     Survival story's first chapter waits for the reader's direction.
   - **Low reasoning by default:** every model that offers a `low` reasoning
@@ -540,11 +518,10 @@ Update it whenever it changes.
     as good and far faster.
   - **The Aura Veil has two screens:** one narrative manifestation and one media
     reveal. The narrative one shows while a chapter is written.
-  - **The separate memory call is retired.** Each chapter's plan makes the
-    record, and the chapter write records its Sound Cues, its soundtrack and
-    who speaks. There is no follow-up or on-request memory
+  - **The separate memory call is retired.** Tags record Sound Cues, speakers and
+    Holdings in the chapter write. There is no follow-up or on-request memory
     extraction, and no “story memory incomplete” warning. Historical saved records
-    remain readable; the record never uses them.
+    remain readable; Holdings never use them.
   - **The NovelExpanded app has its own address, `/app/`**, linked from the
     Workshop home. It shows only the core application spine: Home → Create
     (Story Seed and World Blueprint) → Story View (World Info) → Reader. It
@@ -601,7 +578,7 @@ Update it whenever it changes.
     - **On Story View**, closed until opened: the Story Language (fixed when the
       story began), the Reading Mode, the **CAPA skill slots** (choose the Author,
       Pacing, Continuity and Style skills; Fate, Accessibility, Translation, Sound
-      Cues, Soundtrack and Speakers follow the story's own choices and
+      Cues, Soundtrack, Speakers and Holdings follow the story's own choices and
       say so; each hand-equipped slot also takes a skill package, installed on
       the device), the **Media Loadout** (the Library's own sounds, shown
       equipped, or your own Soundscape and Sound Cue packages, imported as
@@ -642,49 +619,32 @@ Update it whenever it changes.
     and the World Blueprint's goal section opens in the Reader for review before
     that arc's first chapter, in both modes. The model fills every Story Seed slot
     left blank and never changes what the creator wrote. Add arcs is gone.
-  - **Dialogue speakers:** each paragraph of the writer's reply names who
-    speaks in it, in a field the reply's own schema requires (SENSEI,
-    2026-10-19): `MC` for the main character, anyone else by their name in the
-    Chapter Plan (2026-10-20), someone else for anyone unnamed, and none when
-    no one speaks. The HARNESS records it on the paragraph, and whether it is
-    the main character. That is what gives Listen its voices. A spoken line
-    with no speaker is voiced from its narration, as a reader tells: the Side voice when the
+  - **Dialogue speakers, in the tiny SEN language:** the writer tags who speaks
+    each spoken line (`[[@MC]]` for the main character, `[[@Name]]` for anyone
+    else), and the HARNESS records whether it is the main character. That is what gives Listen its three voices. A line
+    the writer left untagged is voiced from its narration, as a reader tells: the Side voice when the
     narration names someone else ("Lin Xiao said"), otherwise the Protagonist voice, as production read it.
+    A placeholder copied from the instructions (`[[@Name]]`) counts as no tag.
   - **Sound tags never leave broken lines:** the writer wraps words already in its
     sentence. A tag written on its own line or between sentences has its words
     removed, and its sound moves onto the nearby words that say the same thing, or
     onto the nearest sentence.
-  - **The chapter loop (2026-10-20), step 2 of
-    [its design](./docs/chapter-loop.md):** every chapter is planned before it
-    is written, in the prompt words SENSEI approved. **Fate, the planner,** is
-    one call before each chapter, on the chapter's own model. It reads the
-    story information, the Destined Ending and the route to it, the arc goal,
-    Rhythm or the reader's direction, and **the Codex**: one line for everyone
-    and everything the story knows (their look, what they hold, their state,
-    goals, values, commitments and stances, and when they were last on the
-    page). It returns the chapter's plan, chosen from menus: its **cast**
-    (everyone who matters on the page; someone new with who they are, their
-    gender, age and whole look) and its **events** in order (who acts, what
-    they attempt, how it turns out, who it presses on, how it happens and each
-    fact it changes), with which event reaches the arc goal and, in Fate
-    Survival, which ends the story. **Plain checks** then run the plan against
-    the record, event by event: a fact that cannot be true (losing what no one
-    holds, gaining what is already held, a change to someone dead, a name in
-    neither the cast nor the Codex) is dropped and kept with the plan, and a
-    chapter is never refused for it. **The writer** narrates the plan and
-    decides nothing: it reads the Chapter Plan where Holdings and Appeared
-    were, and returns the chapter (each paragraph with its speaker), a recap
-    and three ideas for the next chapter. **The record** is made from the
-    plans when a chapter is saved, so nothing is tagged for it and nothing
-    counts twice; each name becomes a Codex entry with an app-made ID. Pacing
-    moves to the planner, Fate Survival splits into its planning and its
-    writing rules, and Continuity is read by both. A retry or a reload reuses
-    the saved plan. Each attempt keeps its plan, the planner's reply and what
-    the checks dropped, in the export too, and the Harness Generation page
-    shows both calls. The Holdings and Appearance tags and skills, the
-    Holdings fixer and the look writer retired with it; the exact words of
-    both calls are on the Writer Instructions page. Stories from before it
-    start fresh, with a preserved copy (workspace schema 33).
+  - **Holdings, the first information tags:** the things each character owns, the
+    abilities they can use, and their rank. Never plot facts: a name keeps no
+    count or description inside it, and a name that reads as a note about the
+    story (a sighting, a countdown) is set aside. Every chapter, the writer reads
+    the Holdings section (the main character first), uses only what is there, and tags each change where
+    it happens (`[[gained: MC | Thing]]`, `lost`, `equipped`, `unequipped`,
+    `learning`, `learned`, `improved`, `sealed`, `unsealed`, `rank`, and `has`
+    or `knows` the first time the story shows something already held). It ends
+    its reply with the main character's closing list; a tag written there instead
+    of the prose is still recorded, at the chapter's end. Each name becomes a Codex
+    entry with an app-made ID; plain rules flag what cannot be true (moving up a
+    stage while still learning is progress, kept as that stage, never a check); nothing is
+    stored that could count twice. The Reader's **Holdings** page shows it all,
+    each change linked to its passage, with the checks worth testing. Chapters
+    written before this have nothing recorded. The tag system is defined in
+    [the vocabulary](./src/components/harness-generation/ARCHITECTURE_VOCABULARY.md#the-tag-system-the-tiny-sen-language).
   - **Every chapter keeps the story's point of view, and is a whole chapter:**
     the Style skill chooses the point of view when the story opens (first person
     suits a Japanese story), and the HARNESS reads it from the opening chapter
@@ -706,18 +666,17 @@ Update it whenever it changes.
     touch between. The writer still gets the same Story Information on every
     chapter; nothing is withheld. Some repetition is the AI's mark and the
     author's to polish; this only makes it rarer.
-  - **The writer's tags, concise (2026-10-17):** each media tag skill says
-    what it marks, its format, one example and its few real rules, and what
-    every tag shares is said once, in the tag rules. Sounds are tagged where
-    they happen, wrapping the writer's own words and naming one of the story's
-    sound words; the numbered marks and separate list that lost sounds in the
-    tests are gone. Only media are tagged: since 2026-10-20 no tag records what
-    happens, which the plan holds, and who speaks is a field of the reply.
-  - **Writer Instructions, in the Workshop:** every block of text the planner
-    and the writer read before the story, the planner's first, from the live
-    code, with its version, size and the date it last changed, and a dated
-    history. A change to either call's instructions fails the build until it
-    is written in that history.
+  - **The writer's tags, in one strict shape:** every tag kind is taught the
+    same way (its job, its format, what is required, what is forbidden, and a
+    check before it returns), and what every tag shares is said once. Sounds
+    are tagged where they happen (`[[sound: blade drawn | drew his sword |
+    high]]`), naming one of the story's sound words, on up to 8 words; the
+    numbered marks and separate list that lost sounds in the tests are gone.
+    Speakers must be tagged from Chapter 1 on, one speaker per paragraph.
+  - **Writer Instructions, in the Workshop:** every block of text the writer
+    reads before the story, from the live code, with its version, size and
+    the date it last changed, and a dated history. A change to the writer's
+    instructions fails the build until it is written in that history.
   - **Export story,** on World Info, saves a story as one file: every chapter
     with the exact instructions, Story Information and request the writer was
     given, and its raw reply. It is how a test is shared.
@@ -729,23 +688,78 @@ Update it whenever it changes.
     optional note on what to change. The new version is written from the story
     as it stood before that chapter, with the same direction; the writer sees
     the set-aside version's title and recap and the note, never its prose.
-    Without a note the plan is kept and told afresh, with no planner call; with
-    a note Fate plans the chapter again from it (SENSEI, 2026-10-20).
-    Everything worked out from the old version (its record, the goals it
-    reached or missed, an ending it planned) goes with it. The reader keeps the old
+    Everything worked out from the old version (its holdings, the goals it
+    reached or missed, an ending it wrote) goes with it. The reader keeps the old
     version until the new one is saved; a failed rewrite changes nothing and
     keeps the note. The set-aside version stays in the export.
+  - **The Holdings fixer, unseen:** after each chapter is saved, SEN runs the
+    Holdings checks on it and fixes the small problems quietly: a corrected tag,
+    one corrected sentence, or two names merged into one entry. It never reads
+    the chapter: each problem becomes a small case (the sentence, its tags, what
+    the record shows, and what the chapter itself recorded about it earlier), and one short call with the chapter's own model, at its
+    lowest reasoning, answers them. That call is made only when a check flags
+    a problem in that chapter which the plain rules cannot settle: a chapter
+    with nothing flagged makes no call, and a problem left from an earlier
+    chapter never makes a later one call. A closing list that is off where no
+    sentence of the chapter could show a change (the chapter never names the
+    item, or names it only up to its own last tag for it) is settled without a
+    call. A fix stands only when it leaves fewer problems; a contradiction too
+    big for one sentence is recorded and left as it is. The reader sees none of
+    it; each chapter keeps a record of what was checked and changed, in the
+    export, and the fixer's instructions are on the Writer Instructions page.
+    The Library sets how far it may go (records only, or off), which is where
+    the Familiar will control it.
+  - **First appearance, with its look (2026-10-14, Stage E1 step 1):** the
+    writer tags each character or named thing the moment it first steps onto
+    the page (`[[appears: Name | character]]`, `[[appears: Thing | thing]]`)
+    and each change to a look (`[[look: Name | what changed]]`), taught by SEN
+    Appearance on every chapter. Each is saved on its sentence and names the
+    same Codex entry holdings use. Then a second small step after the chapter
+    is saved, the **look step**, reads each tagged passage (with the Story
+    Seed's notes on a declared character, and the look before a change) and
+    writes the look down: one line and the traits the passage states, in
+    words any medium can use, never how to show it, and where the passage
+    differs from the Story Seed. One short call with the chapter's own model,
+    only when the chapter tagged an appearance. Every later chapter's writer
+    reads who and what has appeared, with each latest look, in Story
+    Information's new **Appeared** section, and keeps those looks; the Codex
+    shows each look on its card. Checks flag an appearance tagged twice, a
+    look for someone who never appeared, and someone who speaks before any
+    tag shows them. A story begun before the tag (Test Story - Blade) tags
+    everyone on the page again in its next chapter, since nobody has appeared
+    on its record yet. Places wait for the Place tag.
+    After the first test (Test Story - Blade, chapters 3 to 10): every new
+    character was tagged and the looks held from chapter to chapter, but no
+    thing was tagged. So a thing now steps onto the page with the first
+    Holdings tag that shows it (held, gained, taken up or put away) and gets
+    its look, with nothing more for the writer to do; and a look tag in the
+    paragraph that first shows someone is read as that first look, never a
+    change (SEN Appearance 1.1.0).
 - **Not tested yet:**
   - a right-to-left story with a real model, and Listen in Arabic and Hebrew
     on real phones, whose voices for those languages differ from device to
     device;
   - real generation with a real model on the Vercel preview: a real Blueprint
-    (Arc 1 only, filled slots), a real arc planned at a new arc, and each
-    paragraph's speaker field;
-  - Rewrite this chapter with a real model;
-  - [the chapter loop](./docs/chapter-loop.md) with a real model: the
-    planner's plans and what the checks drop, whether the writer narrates
-    every event and changes nothing, and what the two calls cost;
+    (Arc 1 only, filled slots), a real arc planned at a new arc, and real
+    speaker tags;
+  - holdings with a real model: the 10-chapter test, comparing what the
+    chapters show against the Codex. The first run (six chapters)
+    stayed on one scene: its export showed a 25-chapter first goal and the
+    writer told to fill it, so nothing happened that Holdings could record.
+    Arcs are now 30 chapters, goals hand over when reached, and every chapter
+    must change something. The second run (five chapters) moved every chapter,
+    and showed a point-of-view switch, a failed write saved as Chapter 3,
+    numbered titles, and a slate lost from Holdings because it was only tagged
+    as equipped; all four are fixed. Both runs also showed loose tag wording:
+    no speaker tags in either Chapter 1, and 36% of sounds lost. The tags are
+    now taught in one strict shape, and the test runs again on a new story;
+  - Rewrite this chapter and the Holdings fixer with a real model: how often the
+    fixer is called, what it costs next to a chapter, and whether its fixes
+    hold (each chapter's record in the export shows it);
+  - the appearance tags and the look step with a real model: whether the
+    writer tags everyone new on the page and keeps the looks Appeared gives,
+    and whether the looks written down match the prose (each chapter's
+    `looks` in the export shows them);
   - Listen on real phones (iPhone Safari, Android Chrome), whose voices differ
     from device to device;
   - the soundtrack tag with a real model: whether the writer chooses one mood
@@ -785,20 +799,22 @@ engine track is shaped this way is in
 
 When a session asks "what now?", start here:
 
-1. **Owner:** test [the chapter loop](./docs/chapter-loop.md), built in its
-   step 2: a new story, a few chapters, a rewrite with a note and one without,
-   then Export story. **Agent, then owner:** the rest of step 2, the Fate
-   page's Bring back and Add a character, whose words the owner approves
-   first; then step 3, the CTE engine.
+1. **Owner:** run the next real-model test (Stage E0) on a new story and export
+   it. Everything after it depends on knowing the strict tags hold.
 2. **Agent:** manifesting while reading ([its direction](#how-we-build)):
    names the record has met glow in the chapter and open a card with
    Manifest, whose picture the Codex's card then wears. It waits on the
    owner's refinement of the Color Codes, which the glowing names use (SENSEI,
    2026-10-13). The Codex as a card gallery is built.
-3. **Agent:** the next step of reading in every script (product track, item
+3. **Owner:** test the first information tag, **first appearance with
+   appearance** (Stage E1, step 1, built 2026-10-14), by writing the next
+   chapters of Test Story - Blade on to ten and exporting it: does the writer
+   tag everyone new, do the looks written down match the prose, and do later
+   chapters keep them? Then Stage E1 step 2, Status.
+4. **Agent:** the next step of reading in every script (product track, item
    1): a reading font chosen on purpose for each remaining script. Right-to-left
    reading is built.
-4. **Either track's next piece** below, when the owner asks for it.
+5. **Either track's next piece** below, when the owner asks for it.
 
 ### The product track
 
@@ -875,47 +891,70 @@ When a session asks "what now?", start here:
    AI narration (generated once per language, stored and shared) comes after,
    on the same script.
 
-### The engine track: the chapter loop and the world record
+### The engine track: the world record and the Codex
 
-Every chapter runs one loop: the record, Fate (the planner) and CTE decide what
-happens and what it does to people, and the writer narrates it
-([the chapter loop](./docs/chapter-loop.md), SENSEI, 2026-10-20). That document
-holds the loop's design and the order it is built in; each step is a complete
-loop a story can be read through, and nothing is tested half-built. Why the
-HARNESS is shaped this way is in
-[HARNESS_PRINCIPLES.md](./src/components/harness-generation/HARNESS_PRINCIPLES.md).
+**Stage E0: prove what is built.** Basic first: nothing new is added on top of
+tags that have not been measured with a real model. The tests are the ones
+under [Not tested yet](#where-we-are-2026-10-10): the 10-chapter holdings test
+with the strict tag shape, speaker tags, the soundtrack tag, Rewrite and the
+Holdings fixer. Done when an exported story shows the tags landing reliably
+(the Codex agrees with the prose, speakers are tagged from Chapter 1,
+few sounds lost). A cost check can ride along: the same test on a second, cheaper
+model added to the Model Router, comparing tag accuracy and each chapter's
+receipt.
 
-1. **The design** (2026-10-20, docs only).
-2. **The loop** (built 2026-10-20): the planner, its checks, the writer's new
-   handoff and the record update, with events in their final shape. The
-   holdings and appearance tags, the Holdings fixer and the Look Describer
-   retired in the same change. Still to come in this step: the Fate page's
-   Bring back and Add a character ([Next up](#next-up)).
-3. **The CTE engine**, with the Fragmentation probe.
-4. **The world judge**, which is also Fate Survival's judge.
-5. **The other CTE probes**, one variable at a time.
-6. **Ties, places, factions and scenes:** the rest of the world record
-   (Stage E2 below).
-7. **Translation across media** (Stage E5 below).
+**Stage E1: the information tags, one at a time.** Each is a new kind in the
+tiny SEN language, built with the five parts the
+[vocabulary](./src/components/harness-generation/ARCHITECTURE_VOCABULARY.md#the-tag-system-the-tiny-sen-language)
+defines, proven with a real model before the next begins, and shown in the
+Codex as it is built (as holdings and speakers are today). Together they
+complete the [world record](./src/components/harness-generation/HARNESS_PRINCIPLES.md#translation-across-media-the-world-record).
 
-The stages below keep what was decided before the loop and still holds: the
-Codex's finish, keeping the record true when a reader edits a chapter, recall
-and long-story memory, the remaining kinds, and translation.
+1. **First appearance, with appearance:** when a character, thing or place first
+   appears, and later when its look changes (a scar, new robes, a
+   breakthrough). The writer tags the moment; the full description can be
+   gathered by a small separate step after the chapter is saved, registered in
+   the Model Router, so the writer's job stays small.
+   **Decided (2026-10-13, the owner left these to the agent):** the writer
+   types `[[appears: Name | character]]` or `[[appears: Name | thing]]` where
+   someone or something is first on the page, and `[[look: Name | what
+   changed]]` when a look changes; the description is gathered by the separate
+   step, not written into the tag. A being that is both a thing and a
+   character (a sword with a spirit, like Chi Lian in Test Story - Blade) is
+   **two entries**, the thing and the character, since an artist draws them
+   apart; the bound tie (step 5) joins them. Places wait for step 3, which
+   reuses the same tag. Every later chapter is told each appeared character's
+   and thing's one-line look, so looks stay consistent, and a declared
+   character's Story Seed look is the starting look the prose is checked
+   against.
+   **Built (2026-10-14):** the tags, SEN Appearance, the Appeared section, the
+   look step (registered as Look Describer) and each Look in the Codex, as
+   [Where we are](#where-we-are-2026-10-10) says. Not yet proven with a real
+   model.
+2. **Status:** alive, wounded, transformed, sealed away, and so on. Moved
+   before Place on 2026-10-14 (SENSEI): "the world remembers what you did"
+   mostly comes from Status and Ties, so a dead sect leader stays dead because
+   his card says so, and a pin naming him can close (Stage E3).
+3. **Place:** places become Codex entries, and the record knows where each
+   character is.
+4. **Scene:** where a story scene starts, where it is, when (time of day,
+   conditions) and who is present. With appearance, this is what an artist
+   needs to draw a panel. Its first piece is the cast plan before writing
+   (Stage E3).
+5. **Ties:** allied, hostile, related, bound.
 
 **Stage E2: complete the Codex on the record.** The Codex is remade alongside
-the loop ("the Codex grows with the record", [How we build](#how-we-build)):
+the tags ("the Codex grows with the record", [How we build](#how-we-build)):
 since 2026-10-13 it has characters (with their holdings as one section of each
-character's sheet) and items, each fact linked to its chapter since the loop
-(2026-10-20). Each step of the loop adds its part: step 2 added looks, status,
-goals, values, commitments and stances; CTE state, then ties, places and
-scenes come later. What remains here is
-the rest of its categories (factions, the timeline) and its finish. Done when
-the record passes the two tests in the principles: **the artist test** and
-**the save-game test**.
+character's sheet) and items, each fact linked to the passage that made it.
+Each tag of Stage E1 adds its part (looks, places, scenes, status, ties); what
+remains here is the rest of its categories (factions, the timeline) and its
+finish. Done when the record passes the two tests in the principles: **the
+artist test** and **the save-game test**.
 
 **After E2: keeping the record true when a reader edits a chapter.** Create
 mode lets a reader change the newest chapter before it is sealed: its words,
-its Sound Cues and its speakers. A first version
+its Sound Cues, its speakers and holdings. A first version
 ([#368](https://github.com/SENSEIDUKES/development/pull/368), closed and kept
 on its branch `claude/chapter-reread`) reread any changed chapter with a model
 when it was sealed: the whole chapter in, the whole chapter back word for word
@@ -923,21 +962,14 @@ with its tags, and a new recap. It was closed because it reread far too much:
 a moved Sound Cue or a fixed comma cost about as much as writing the chapter
 again. It comes back once the Codex is designed, on this principle (SENSEI):
 
-**Redone for the chapter loop (2026-10-20):** since the loop, a chapter's
-facts come from its events, not from pins on its words, so an edit to the
-prose changes nothing the record holds, and changing what happened means
-editing the chapter's events. The principle below still holds; the pins it
-names are redone when Create mode returns
-([the chapter loop, open decision 6](./docs/chapter-loop.md#open-decisions)).
-
 - **The trigger is the record, never the words.** Most edits change nothing
   the story knows: a comma, a reworded sentence, a Sound Cue added, swapped
   or removed (the reader places cues by hand on exact words, so there is
   nothing for a model to read). Only an edit that leaves a **conflict with
   what the Codex holds** from that chapter matters.
 - **Conflicts are found without a model.** Each fact a chapter gives the
-  record is pinned to its words (before the loop, a speaker and a holdings
-  change). An edit that breaks a pin is known at
+  record is pinned to its words (today a speaker and a holdings change; later
+  every information tag from Stage E1). An edit that breaks a pin is known at
   once: the fact shows under Create mode's *Needs a new spot*.
 - **The reader settles a conflict for free.** Placing the fact on its new
   words, or removing it, costs nothing.
@@ -972,8 +1004,8 @@ ever deleted; everything else waits in the full record.
   used up by the next chapter, then becomes history, hidden from the writer.
 - **A past choice comes back only when relevant:** when the next chapter
   touches what it was about (the arc goal, the reader's new direction, the pins,
-  or who is on the page). What a choice was about needs no model: the events
-  of the chapter that carried it out name everyone involved. It returns as history,
+  or who is on the page). What a choice was about needs no model: the chapter
+  that carried it out already tagged everyone involved. It returns as history,
   the reader's words with that chapter's saved recap, at most about three.
 - **Consequence, never recap.** The narration never recaps a past choice or
   reminds the reader of it. A character it affected may react to it in their
@@ -998,20 +1030,19 @@ ever deleted; everything else waits in the full record.
   goal into Alter Fate ("Find my mother's killer"). After they submit, the Fate
   page offers one tap: **Pin this as a goal?** Any past Alter Fate can be made
   a pin from the story's history.
-- **How much the planner sees.** Since the chapter loop (2026-10-20), the
-  whole Codex, one line a card with the main character first, and the last 5
-  recaps; the writer sees only the chapter's plan. The Codex section is never
-  trimmed, so Fate never forgets a sword, a wound or a debt, but it grows with
-  the story: it is measured on every call, and a long story will need a cap,
-  by recency, with the arc goal, the reader's direction and the pins pulling an
-  older card back from the full record by name. Later, recall by meaning
-  (above) finds vaguer references ("the old smith from the mountain"). The
-  reader's own Codex keeps every card, this arc's first.
-- **Who is in a chapter before it is written.** Today the writer decides
-  inside its one call, so a long-gone character who returns mid-chapter gets
-  no card. The chapter loop's planner closes this hole: it casts every chapter
-  before it is written, from the whole Codex, so a long-gone character comes
-  back with their card.
+- **How much the writer sees.** Already capped by recency: the main character
+  and up to 20 characters and 10 things in Appeared, holdings for the main
+  character and 6 others, the last 5 recaps. Added: the arc goal, the reader's
+  direction and the pins pull an older card back from the full record by name.
+  Later, recall by meaning (above) finds vaguer references ("the old smith
+  from the mountain"). The reader's own Codex keeps every card, this arc's
+  first.
+- **The known hole: who is in a chapter before it is written.** Today the
+  writer decides inside its one call, so a long-gone character who returns
+  mid-chapter gets no card. First fix, no model: pull the card of every name
+  in the reader's direction, the arc goal, the pins and the last recap. Full
+  fix: a small "who is in this chapter" call before writing, the first piece
+  of Scene (Stage E1, step 4).
 - **Snapshots.** At 1,000 chapters, working everything out from every chapter
   each time is too slow: a snapshot of the record is saved at each arc's end,
   and at each branch point once Alter Fate branches exist (every branch is its
@@ -1019,12 +1050,10 @@ ever deleted; everything else waits in the full record.
   rebuilds from its own latest snapshot.
 
 **Stage E4: the remaining kinds.** System Panels (including the Fate Survival
-result card), manifestations and creature events, one at a time, each placed
-in the chapter loop as media in the prose or as events in the plan
-([its open decision 8](./docs/chapter-loop.md#open-decisions)). Then **the
-Familiar over the loop's checks**: the Library's Familiar decides what to do
-with the facts the checks drop and flag. It was first planned over the Holdings
-fixer, which the loop retires.
+result card), manifestations and creature events, one at a time, in the same
+tiny SEN language. Then **the Familiar over the Holdings fixer**: the Library's
+Familiar decides how far the fixer goes, and what to do with the contradictions
+it records as too big to fix quietly.
 
 **Stage E5: translation across media.** The first other medium is a
 **sequential-art view** of the Reader. One Reader serves both prose and art,
@@ -1053,8 +1082,8 @@ straight on to the next chapter.
    strip) take the place of Text settings; Sound Cues fire when their panel
    comes on screen; Listen reads the panels' dialogue or stays off.
 3. **Art from the record:** panels drawn from the scene and appearance records
-   ([the chapter loop](./docs/chapter-loop.md), its step 6), with Sound Cues
-   and speakers pinned to panels the way they are pinned to sentences today.
+   (Stage E1), with Sound Cues and speakers pinned to panels the way they are
+   pinned to sentences today.
 
 Manga Studio, and later animation and game exports, are studio work on the
 same record; none of them adds anything medium-specific to the story itself.
@@ -1070,17 +1099,14 @@ same record; none of them adds anything medium-specific to the story itself.
 | Story Seed / World Blueprint | Where a story is created (`?preview=story-seed`, and Create in the app). The Blueprint is the novel's transferable core: what a reader takes to make their own version ([The World Blueprint](#the-world-blueprint)). |
 | Story View | The story's own page: cover art, the story, Enter. Built today as the World Info page (`WorldCardInfo`), where Begin Story or Continue leads into the Reader Chamber, with Manifest on its cover and the story's Story Settings below it. |
 | Reader Chamber | Where chapters are read: a HARNESS story's chapters on the Highlight Engine with Sound Cues, Listen and the soundtrack (`HarnessReaderSession`). Its Workshop card (`?preview=reader-chamber`) shows this Reader as Development, beside production's Reader as the Original Reference; the older development Reader is no longer on it. |
-| Listen / Read Aloud | The Reader reading a chapter aloud with the spoken sentence lit, each character in their own voice from their Codex card (`useReadAloud`, SEN's `reader-runtime`). Any speech engine reads it: the browser's own voices by default, full text-to-speech from any provider as a premium option a host passes in. The narrator, main-character and side voices in Reader Settings → Narration are the base the browser shapes each character from, and read anyone without a voice. |
+| Listen / Read Aloud | The Reader reading a chapter aloud in three voices with the spoken sentence lit (`useReadAloud`, SEN's `reader-runtime`). Its voices and speed live in Reader Settings → Narration. |
 | Reader Settings | The Reader's settings sheet: Text, Audio, then Narration. |
 | Chapter body | What shows the chapter inside the Reader's frame: prose today (`ProseChapterBody`), sequential art later (`ReaderChapterBody`). |
 | Rewrite this chapter | The reader's request to write the newest chapter again, with an optional note (`rewriteLatestChapter`, `chapterRewriteGap`). |
-| Fate (the planner) | The call before each chapter that decides what happens in it and returns its Chapter Plan (`src/server/harness-generation/chapterPlanner.ts`, the `plan-chapter` call; Chapter Planner in the Model Router). [The chapter loop](./docs/chapter-loop.md). |
-| Chapter Plan | A chapter's cast and events, decided by Fate before the chapter is written, checked against the record, narrated by the writer, and the source of the record (`ChapterPlan`, `readChapterPlan`, `checkChapterPlan`, `derivePlanRecord`). |
-| Holdings fixer | Retired 2026-10-20 with the holdings tags: the record is made from each chapter's plan, whose checks drop what cannot be true before the chapter is written. |
-| Look step | Retired 2026-10-17; the look writer that replaced it retired 2026-10-20. The plan gives a look when it first casts someone or something, and Manifest draws it. |
-| Appeared | Retired 2026-10-20. The planner reads the Codex section and the writer reads the Chapter Plan, which give every look. |
-| Codex | The story's world as its record knows it, opened in the Reader as a panel: characters, factions and items today (a Bestiary of species later), made from each chapter's plan, every fact linked to its chapter (`StoryCodex`, worked out by `deriveStoryCodex`). A character's card holds their voice from the SEIHouse voice cast, which the reader can change and hear. It grows with each step of the chapter loop. |
-| Voice cast | The character voices SENSEI made (`src/audio/voiceCast.ts`), known everywhere by provider-neutral keys; which provider voices a key stays on the server. Who speaks each paragraph is a field of the writer's reply (SENSEI, 2026-10-19), never left to a tag the writer may forget. Only a character with a card has a voice; a speaker never makes a card (a crowd or a passing guard is read in the side voice). A character's first voice is chosen by code when they first speak and the author's Story Seed notes tell their gender; the reader can change it on their Codex card. |
+| Holdings fixer | SEN's unseen check after each chapter, which settles small holdings problems and keeps a record on the chapter (`planHoldingsFix`, `applyHoldingsFixes`, the `fix-holdings` call). The Library, later the Familiar, sets how far it goes. |
+| Look step | Retired 2026-10-17. Looks are now written on demand: the HARNESS keeps the writer's own description from each tagged passage by code, and writes one entry's full look (the core record a picture, manga or game draws from) only when something needs it, kept on its Codex entry until a new tag changes it (`describeCodexLook`, `planCodexLook`, the `describe-looks` call; Look Describer in the Model Router). |
+| Appeared | The Story Information section listing every character and thing already on the page, with its latest look, so the writer keeps every look (`appearancesSection`). |
+| Codex | The story's world as its record knows it, opened in the Reader as a panel: characters, factions and items today (a Bestiary of species later), every fact linked to its passage (`StoryCodex`, worked out by `deriveStoryCodex`). It grows as each information tag is built. |
 | Highlight Engine | SEN's engine for highlighting part of a story and attaching to it: prose today, sequential-art images later. Its lab is at `?preview=highlight-engine`; in the Reader it is Create mode. Never "Text Highlight Engine". |
 | Story Settings | The only place a user meets the HARNESS: language, reading mode, CAPA skills and media. On Story View (`StorySettings`) and in Create's Settings (`CreateStorySettings`), from `@seihouse/library/stories`. |
 | Harness Generation | The developer instrument for the HARNESS (`?preview=harness-generation`). Never a product page. |

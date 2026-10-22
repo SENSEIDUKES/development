@@ -1,9 +1,8 @@
 import type { SoundCueAttachment } from '../audio/inlineAudio';
 import type { ChapterOpeningSound, SoundtrackChangeAttachment } from '../audio/soundtrackChanges';
 import type { SpeakerAttachment } from './speech';
-import type { CodexEntry, CodexEntryKind } from './holdings';
-import type { Look } from './looks';
-import type { ChapterPlan, PlanAge, PlanCheck, PlanEvent, PlanGender, PlanStancePolarity } from './chapterPlan';
+import type { CodexEntry, HoldingChangeAttachment, HoldingsSection } from './holdings';
+import type { AppearanceAttachment, AppearanceEntity, AppearanceEvent, AppearancesSection, ChapterLooks, Look } from './appearances';
 import type { SoundWord } from '../audio/soundWords';
 import type { AudioTags } from '../audio/audioTags';
 import type { SoundtrackVocabulary } from '../audio/soundtrackVocabulary';
@@ -17,12 +16,18 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * persisted shape (attempt, chapter, or workspace state fields) and add the
  * matching upgrade step to `HARNESS_WORKSPACE_MIGRATIONS` in `repository.ts`,
  * so saved stories carry over. Storage with no migration path is preserved
- * untouched by the host and replaced with an empty workspace. Schema 33 is
- * the chapter loop (SENSEI, 2026-10-20, `docs/chapter-loop.md`): every
- * chapter carries the plan it was written from, and the record is worked out
- * from the plans. By the owner's decision nothing before it upgrades: every
- * earlier story was a test story whose record came from tags in its prose. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 33 as const;
+ * untouched by the host and replaced with an empty workspace. Schema 22
+ * (chapters are paragraphs plus Sound Cues) deliberately has no upgrade step
+ * from earlier versions; 23 adds the optional paragraph counter; 24 plans
+ * each arc when it begins (the Foundation keeps Arc 1 and a hidden look-ahead
+ * instead of a whole roadmap); 25 adds the optional speaker records; 26 adds
+ * holdings: each chapter's holding changes and closing list, and the
+ * workspace's Codex entries; 27 counts arcs of 30 chapters (nothing before it
+ * upgrades); 28 adds the optional rewrite request and replaced-by record, and
+ * each chapter's optional Holdings fixer record; 31 adds the story's optional
+ * own sound words; 32 adds each chapter's optional appearances and the looks
+ * written down from them. */
+export const HARNESS_GENERATION_SCHEMA_VERSION = 32 as const;
 
 /** The most an Author's notes may hold, in characters. */
 export const AUTHOR_NOTES_LIMIT = 2000;
@@ -237,10 +242,10 @@ export interface HarnessArcGoalReview {
 }
 
 /**
- * Rhythm metadata saved with a chapter: the function it served, which its
- * plan chose, and the writer's one short possibility per function for the
- * next chapter. HARNESS validates each piece independently; a malformed piece
- * is omitted with a warning and never touches the prose.
+ * Rhythm metadata the writer returns beside the chapter: the function this
+ * chapter served and one short possibility per function for the next chapter.
+ * HARNESS validates each piece independently; a malformed piece is omitted
+ * with a warning and never touches the prose.
  */
 export interface HarnessChapterRhythm {
   chapterFunction?: ChapterFunction;
@@ -257,7 +262,9 @@ export type HarnessSkillSlotId =
   | 'translation'
   | 'soundCues'
   | 'soundtrack'
-  | 'speakers';
+  | 'speakers'
+  | 'holdings'
+  | 'appearance';
 
 export type HarnessSkillApplication =
   | 'generation'
@@ -310,12 +317,6 @@ export interface HarnessSkillManifest extends HarnessSkillReference {
   applications: HarnessSkillApplication[];
   /** Trusted, author-installed directions included only when generation is declared. */
   instructions?: string;
-  /**
-   * A skill that serves both calls of a chapter keeps the planner's half
-   * here (SENSEI, 2026-10-20: Fate Survival's planning rules). The planner
-   * reads it; the writer reads `instructions` alone.
-   */
-  planning?: string;
   /** Required by a `translation` slot skill; forbidden on every other slot. */
   translation?: HarnessTranslationSkillMetadata;
   author?: string;
@@ -357,10 +358,8 @@ export interface CapaPromptSkill {
   name: string;
   slot: HarnessSkillSlotId;
   applications: HarnessSkillApplication[];
-  /** Whether this skill's instructions are part of the assembled text the writer reads. */
+  /** Whether this skill's instructions are part of the assembled text. */
   authoring: boolean;
-  /** Whether this skill's planning text is part of `planning`, which the planner reads. */
-  planning?: true;
   /** Declared by a Translation skill; retained as frozen provenance. */
   targetLanguage?: SenLanguageCode;
   source?: HarnessSkillManifest['source'];
@@ -374,16 +373,7 @@ export interface CapaPromptSkill {
 export interface CapaPrompt {
   capturedAt: string;
   skills: CapaPromptSkill[];
-  /** What the writer reads: its skills, in CAPA Schema order. */
   text: string;
-  /**
-   * What the planner reads (SENSEI, 2026-10-20): the skills that decide what
-   * happens rather than how it is told, in CAPA Schema order. Pacing, the
-   * planning half of Fate Survival, and Continuity, which both calls read.
-   * Absent when none is loaded. Frozen with the writer's, so a retry plans
-   * with exactly what it froze.
-   */
-  planning?: string;
   /**
    * Where the tag half of `text` begins: the HARNESS tag rules and the skills
    * that teach a tag, after the writing skills. Absent when no tag skill is
@@ -447,8 +437,8 @@ export interface ImmediateChapterRequest {
   rewrite?: HarnessChapterRewrite;
   /**
    * The HARNESS-owned chapter-scale target for this attempt. It is mechanics,
-   * not a CAPA skill and not canonical Story Information: the writer spends
-   * the space this range allows on the plan's events.
+   * not a CAPA skill and not canonical Story Information: the Pacing skill
+   * decides how the chapter uses the space this range allows.
    */
   chapterScale: {
     minWords: number;
@@ -533,7 +523,7 @@ export interface HarnessBrokenRoute {
 
 /**
  * Where the story stands on its route to the Destined Ending as of one
- * chapter. Sent with the Active Arc Goal so the planner knows it.
+ * chapter. Sent with the Active Arc Goal so the writer knows it.
  */
 export type HarnessArcRoute =
   /** No goal of this arc has been missed. */
@@ -554,18 +544,18 @@ export type HarnessArcRoute =
 export type HarnessArcContext = import('../components/arc-goals/shared/arcGoals').ArcGenerationContext & { route?: HarnessArcRoute };
 
 /**
- * How the story ended, recorded only when a committed chapter's plan ends it.
- * Regular Reader mode never fails its fate: it ends by reaching the Destined
- * Ending, on its final goal or, after that goal was missed, by pursuing the
- * ending until a plan reaches it. Fate Survival may also end in failure, when
- * the planner ends the story with one of the chapter's events: a fatal ending
- * at any point, or the ending the chapter after a broken route must plan.
+ * How the story ended, recorded only when committed prose shows it. Regular
+ * Reader mode never fails its fate: it ends by reaching the Destined Ending,
+ * on its final goal or, after that goal was missed, by pursuing the ending
+ * until the prose reaches it. Fate Survival may also end in failure, when the
+ * writer shows the story ending with a verbatim passage: a fatal ending at any
+ * point, or the ending the chapter after a broken route must write.
  */
 export interface HarnessStoryConclusion {
   outcome: 'destined-ending-reached' | 'fate-failed';
   reason: 'final-goal-completed' | 'reached-after-final-goal-missed' | 'story-ended';
   chapterNumber: number;
-  /** The planned event that ends it, as its plan tells how it happens. */
+  /** The verbatim passage from the committed prose that shows it. */
   evidence: string;
   recordedAt: string;
 }
@@ -577,17 +567,22 @@ export interface HarnessEventDetails {
   mechanics?: { subject: string; name: string; value: string; unit?: string };
 }
 
+export type HarnessModelPlan = string | {
+  intent?: string;
+  beats?: string[];
+};
+
 /** Derived chapter measurements. Persisted with every frozen attempt and committed chapter. */
 /**
  * A chapter the reader changed in Create mode. `editedAt` marks it as changed,
  * so it is read again when it is sealed; an untouched chapter never is.
- * `waiting` holds the effects (Sound Cues and speakers) whose
+ * `waiting` holds the effects (Sound Cues, speakers, holding changes, appearances) whose
  * words a change replaced: they keep their place in the list, off the page,
  * until the reader removes them or the chapter is sealed.
  */
 export interface HarnessChapterAuthoring {
   editedAt: string;
-  waiting?: Array<SoundCueAttachment | SpeakerAttachment>;
+  waiting?: Array<SoundCueAttachment | SpeakerAttachment | HoldingChangeAttachment | AppearanceAttachment>;
 }
 
 export interface HarnessChapterMetrics {
@@ -607,15 +602,29 @@ export interface HarnessAcceptedChapterDraft {
   metrics: HarnessChapterMetrics;
   /** Sound Cues the HARNESS placed from the writer's marks, on paragraph spans. */
   soundCues?: SoundCueAttachment[];
-  /** Who speaks each spoken line, from each paragraph's speaker, on paragraph spans. */
+  /** Who speaks each spoken line the writer tagged, on paragraph spans. */
   speakers?: SpeakerAttachment[];
+  /**
+   * Every holding change the writer tagged, on the sentence its tag points at.
+   * Names are as written; they resolve to Codex entries when the chapter commits.
+   */
+  holdingChanges?: HoldingChangeAttachment[];
+  /** The writer's closing list: the main character's things and abilities by name, after this chapter. */
+  closingHoldings?: string[];
+  /**
+   * Every appearance the writer tagged (who or what stepped onto the page, and
+   * each change to a look), on the sentence its tag points at. Present, even
+   * empty, when the chapter was written with the Appearance skill. Names are
+   * as written; they resolve to Codex entries when the chapter commits.
+   */
+  appearances?: AppearanceAttachment[];
   /** The chapter's music and atmosphere, from the writer's soundscape and atmosphere tags. */
   scene?: HarnessChapterScene;
   title: string;
   titleSource: 'model' | 'harness-fallback';
+  plan?: HarnessModelPlan;
   /** The writer's short "Previously On" recap of this chapter, saved only when the chapter commits. */
   recap?: string;
-  /** The writer's three possibilities for the next chapter. The chapter's function is its plan's. */
   rhythm?: HarnessChapterRhythm;
   responseMode: 'json' | 'plain-prose-recovery';
 }
@@ -654,6 +663,7 @@ export interface HarnessWarning {
   code:
     | 'plain_prose_recovery'
     | 'missing_title'
+    | 'invalid_plan_omitted'
     | 'invalid_events_omitted'
     | 'ignored_model_identity'
     | 'optional_event_rejected'
@@ -679,12 +689,15 @@ export interface HarnessWarning {
     | 'optional_recap_omitted'
     | 'optional_rhythm_metadata_omitted'
     | 'ignored_model_story_direction'
-    | 'plan_checked'
+    | 'ignored_story_ending'
+    | 'unconfirmed_arc_completion'
     | 'sound_cue_set_aside'
     | 'sound_tag_moved'
     | 'prose_marks_removed'
     | 'speaker_tags_incomplete'
-    | 'soundtrack_incomplete';
+    | 'soundtrack_incomplete'
+    | 'holding_tags_incomplete'
+    | 'appearance_tags_incomplete';
   message: string;
 }
 
@@ -753,7 +766,7 @@ export interface CurrentStoryProjection {
 export interface StoryDirectionSection {
   destinedEnding?: string;
   hardPins: string[];
-  /** Absent in packets frozen before modes reached the planner; those read as `regular`. */
+  /** Absent in packets frozen before modes reached the writer; those read as `regular`. */
   fateMode?: HarnessStoryMode;
 }
 
@@ -810,8 +823,8 @@ export type PacketSectionId =
   | 'rhythm'
   | 'previouslyOn'
   | 'canonicalState'
-  | 'codex'
-  | 'chapterPlan'
+  | 'holdings'
+  | 'appearances'
   | 'missionReminder'
   | 'immediateChapterRequest';
 
@@ -851,67 +864,6 @@ export interface StoryInformationDiagnostics {
   storage: { chapters: number; events: number; canonicalRecords: number; activeRecords: number; recaps: number };
 }
 
-/** One person or thing of the Codex as the planner reads it: its current facts, as the last chapter left them. */
-export interface CodexSectionEntry {
-  name: string;
-  kind: Exclude<CodexEntryKind, 'ability'>;
-  mainCharacter?: true;
-  /** A character the Story Seed declares who has not been on the page yet. */
-  fromStorySeed?: true;
-  /** The author's notes on a Story Seed character not on the page yet. */
-  notes?: string;
-  /** Who they are in the story, in one line, as the plan that first cast them said. */
-  who?: string;
-  gender?: PlanGender;
-  age?: PlanAge;
-  look?: Look;
-  /** Each change to the look since, oldest first, with its chapter. */
-  lookChanges?: Array<{ change: string; chapterNumber: number }>;
-  /** Their state when it is not their usual one, in a few words (`wounded (a broken left arm)`). */
-  status?: string;
-  rank?: string;
-  inHand?: string[];
-  carries?: string[];
-  knows?: string[];
-  learning?: string[];
-  /** Goals they hold that are not yet achieved, abandoned or failed. */
-  goals?: string[];
-  values?: string[];
-  /** What they owe others, and what others owe them: open commitments. */
-  owes?: Array<{ to: string; what: string }>;
-  owedBy?: Array<{ by: string; what: string }>;
-  /** How they stand toward others, said and acted, as the latest of each left it. */
-  stances?: Array<{ toward: string; said?: PlanStancePolarity; acted?: PlanStancePolarity }>;
-  /** A thing: who holds it now. */
-  heldBy?: string;
-  /** The latest chapter whose cast they were in. */
-  lastOnPage?: number;
-}
-
-/**
- * The Codex section of the planner's Story Information: everyone and
- * everything the story knows, the main character first, then the rest as the
- * story last had them on the page, then the Story Seed's characters still to come.
- */
-export interface CodexSection {
-  entries: CodexSectionEntry[];
-}
-
-/** One cast member as the writer reads them: as the record had them when the chapter began, with what the plan gives someone new. */
-export interface ChapterPlanCastEntry extends CodexSectionEntry {
-  /** On the page for the first time: the writer describes them in full. */
-  new?: true;
-}
-
-/** The Chapter Plan as the writer reads it: its cast, each as the record had them when the chapter began, and its events. */
-export interface WriterChapterPlan {
-  cast: ChapterPlanCastEntry[];
-  events: WriterPlanEvent[];
-}
-
-/** An event as the writer gets it: with why each fact the checks dropped from it cannot happen (SENSEI, 2026-10-21). */
-export type WriterPlanEvent = PlanEvent & { cannotHappen?: string[] };
-
 /**
  * Story Information Packet: the story information selected, weighted,
  * organized, and frozen by the HARNESS for one generation attempt. Each
@@ -941,11 +893,17 @@ export interface StoryInformationPacket {
   /** Section 7. */
   canonicalState: CanonicalStateProjection;
   /**
-   * Section 8, the planner's: everyone and everything the story knows, as the
-   * last chapter left them, worked out from the committed chapters' plans. The
-   * main character first, always. The writer reads the Chapter Plan instead.
+   * Section 8: what each character has now, worked out from the committed
+   * chapters' holding changes. The main character first, always. Absent only
+   * from packets frozen before holdings existed.
    */
-  codex: CodexSection;
+  holdings?: HoldingsSection;
+  /**
+   * Section 8, beside Holdings: every character and thing already on the
+   * page, with its look, worked out from the committed chapters' appearances.
+   * Absent from packets frozen before appearances existed.
+   */
+  appearances?: AppearancesSection;
   /** HARNESS-only; the provider boundary never presents it. */
   diagnostics: StoryInformationDiagnostics;
 }
@@ -994,15 +952,25 @@ export interface HarnessChapter {
    */
   speakers?: SpeakerAttachment[];
   /**
-   * What happens in the chapter, as its writer was given it (SENSEI,
-   * 2026-10-20: the chapter loop): its cast and its events, each with the
-   * facts it changes, every name resolved to a Codex entry. The record (the
-   * Codex, holdings, status, goals, values, commitments and stances) is worked
-   * out from these, never stored.
+   * What changed in what characters have, use, know and are: one holding
+   * change per tag, on the sentence it points at, with every name resolved
+   * to a Codex entry. Holdings are worked out from these, never stored.
    */
-  plan: ChapterPlan;
-  /** What the plain checks dropped from the planner's plan or set aside, before the writer was given it. */
-  planChecks?: PlanCheck[];
+  holdingChanges?: HoldingChangeAttachment[];
+  /** The writer's closing list for this chapter, checked against the holdings it leaves. */
+  closingHoldings?: string[];
+  /**
+   * Who and what stepped onto the page, and each change to a look: one
+   * appearance per tag, on the sentence it points at, with its name resolved
+   * to a Codex entry. Present, even empty, when the chapter was written with
+   * the Appearance skill. Who has appeared is worked out from these, never stored.
+   */
+  appearances?: AppearanceAttachment[];
+  /**
+   * The looks the look step wrote down after the chapter committed, one per
+   * appearance it read. Absent when it found nothing to describe, or did not run.
+   */
+  looks?: ChapterLooks;
   /**
    * The reader's own changes in the Reader's Create mode, until the chapter is
    * sealed (the next chapter is written). Absent from a chapter nobody changed.
@@ -1019,27 +987,27 @@ export interface HarnessChapter {
   soundtrackChanges?: SoundtrackChangeAttachment[];
   /** Pack/version provenance of the frozen catalog that produced this media. */
   mediaLoadout: FrozenNarrativeMedia;
+  plan?: HarnessModelPlan;
   /** Saved once at commit; later chapters never regenerate it, and the author may edit it. */
   recap?: ChapterRecap;
-  /** The chapter's function, from its plan, and the writer's three next-chapter possibilities, saved at commit. */
+  /** The completed chapter's function and the three next-chapter possibilities, saved at commit. */
   rhythm?: HarnessChapterRhythm;
   /** How this chapter's path was decided. Absent for chapters committed before paths were recorded. */
   path?: HarnessChapterPath;
+  /**
+   * What the Holdings fixer checked after the chapter committed and what it
+   * changed: its holding records, or a sentence. Absent when it found nothing
+   * to look at, or did not run.
+   */
+  fixer?: HarnessHoldingsFixRecord;
   eventIds: string[];
   responseMode: 'json' | 'plain-prose-recovery';
   createdAt: string;
   committedAt: string;
 }
 
-/**
- * Where an attempt stands. `request_started`: the planner's call is out.
- * `planned`: the checked plan is saved and the writer's call is out. Either,
- * found on reload, becomes `provider_outcome_unknown`; a planned attempt keeps
- * its plan, so trying again calls only the writer.
- */
 export type HarnessAttemptStage =
   | 'request_started'
-  | 'planned'
   | 'provider_outcome_unknown'
   | 'raw_received'
   | 'prose_accepted'
@@ -1072,10 +1040,6 @@ export interface HarnessGenerationAttempt {
   chapterNumber: number;
   stage: HarnessAttemptStage;
   startedAt: string;
-  /** The planner's call for this attempt, kept for inspection like the writer's reply. Absent when the plan was reused. */
-  plannerCall?: HarnessPlannerCall;
-  /** The plan the writer narrates: the planner's, as the checks left it. */
-  chapterPlan?: HarnessAttemptPlan;
   rawReceivedAt?: string;
   proseAcceptedAt?: string;
   eventsPreservedAt?: string;
@@ -1102,30 +1066,6 @@ export interface HarnessGenerationAttempt {
   failure?: HarnessAttemptFailure;
   /** The exact checkpoint that must be durably retried. */
   recoveryStage?: 'raw_received' | 'prose_accepted' | 'events_preserved' | 'committed' | 'generation_failed';
-}
-
-/** The planner's call for one attempt: its reply as it came back, and its receipt. */
-export interface HarnessPlannerCall {
-  rawProviderResponse: string;
-  providerReceipt: HarnessProviderReceipt;
-  /** The measured size of the serialized request the planner was sent. */
-  requestMeasurement?: HarnessRequestMeasurement;
-  receivedAt: string;
-}
-
-/** The plan an attempt's writer narrates: as the checks left it, with what they found. */
-export interface HarnessAttemptPlan {
-  plan: ChapterPlan;
-  /** The plan as the writer is given it. */
-  writer: WriterChapterPlan;
-  checks: PlanCheck[];
-  plannedAt: string;
-  /**
-   * The attempt whose planner call made this plan, when this attempt reused it
-   * instead of planning: a retry after the writer's call failed, or a rewrite
-   * without a note (SENSEI, 2026-10-20: the events stay, the telling changes).
-   */
-  reusedFrom?: string;
 }
 
 export type HarnessCapabilityId =
@@ -1330,7 +1270,7 @@ export interface HarnessWorkspaceState {
   arcPlanOperations: HarnessArcPlanOperation[];
   /** Historical extraction receipts only: preserved in saved stories, never resumed or applied. */
   memoryRecoveries?: HarnessMemoryRecovery[];
-  /** Every story's Codex entries: the people, things and abilities its chapters' plans name, each with an app-made ID. */
+  /** Every story's Codex entries: the people, things and abilities its holdings name, each with an app-made ID. */
   codexEntries: CodexEntry[];
 }
 
@@ -1379,24 +1319,6 @@ export interface HarnessGenerationRequest {
   /** Section 9: the frozen Mission Reminder, kept distinct until the provider boundary. */
   missionReminder: HarnessMissionReminder;
   immediateChapterRequest: ImmediateChapterRequest;
-  /** What happens in this chapter, decided before it is written: the writer narrates it and never changes it. */
-  chapterPlan: WriterChapterPlan;
-}
-
-/**
- * The planner's call (SENSEI, 2026-10-20: Fate), one before each chapter, on
- * the chapter's own model: the frozen Story Information, this chapter's
- * request and the planner's skills. It returns the chapter's plan.
- */
-export interface HarnessChapterPlanRequest {
-  operation: 'plan-chapter';
-  storyId: string;
-  attemptId: string;
-  model: string;
-  storyInformation: StoryInformationPacket;
-  immediateChapterRequest: ImmediateChapterRequest;
-  /** The planner's skills, frozen with the attempt's CAPA Prompt (`CapaPrompt.planning`). */
-  planningSkills?: string;
 }
 
 /** The size of the serialized provider request the host actually sent, measured at the provider boundary. */
@@ -1421,8 +1343,129 @@ export interface HarnessGenerationModelAdapter {
   getServerInfo(): Promise<HarnessGenerationServerInfo>;
   generate(request: HarnessGenerationRequest): Promise<HarnessGenerationResponse>;
   arcOperation?(request: HarnessArcRequest): Promise<HarnessGenerationResponse>;
-  /** The planner's call before each chapter. A host without it reads stories but cannot write a chapter. */
-  planChapter?(request: HarnessChapterPlanRequest): Promise<HarnessGenerationResponse>;
+  /** The Holdings fixer's one small call after a chapter commits. Without it, the fixer does not run. */
+  fixHoldings?(request: HarnessHoldingsFixRequest): Promise<HarnessGenerationResponse>;
+  /** The look step's one small call after a chapter commits. Without it, no look is written down. */
+  describeLooks?(request: HarnessLookRequest): Promise<HarnessGenerationResponse>;
+}
+
+/**
+ * One appearance the look step is asked to write down: who or what, the
+ * passage that shows it (the tagged sentence and the few after it), and what
+ * is already known of its look. Never the whole chapter.
+ */
+export interface HarnessLookSubject {
+  /** The appearance's id (`AppearanceAttachment.id`): the answer names it. */
+  id: string;
+  name: string;
+  entity: AppearanceEntity;
+  /** On the page for the first time (`appears`), or a change to a look (`look`). */
+  event: AppearanceEvent;
+  /** A look tag's change, in the writer's words. */
+  change?: string;
+  /** The tagged sentence and the sentences after it in its paragraph. */
+  passage: string;
+  /** The look the story's author declared for them, in the author's words, when they declared one. */
+  declared?: string;
+  /** The look the record held before this appearance, for a change. */
+  previous?: Look;
+}
+
+/** The look step's call: each appearance of one committed chapter, with the chapter's own model. */
+export interface HarnessLookRequest {
+  operation: 'describe-looks';
+  storyId: string;
+  chapterId: string;
+  chapterNumber: number;
+  model: string;
+  /** The story's language: every look is written in it. */
+  language: string;
+  subjects: HarnessLookSubject[];
+}
+
+/**
+ * How far the Holdings fixer may go: not at all, a chapter's holding records
+ * only, or its records and, one at a time, a sentence of its prose. The host
+ * (in the Library, the Familiar) chooses.
+ */
+export type HarnessHoldingsFixerPolicy = 'off' | 'records-only' | 'records-and-sentences';
+
+/** What the fixer may answer a case with. */
+export type HarnessHoldingsFixAnswer = 'record' | 'prose' | 'fine' | 'major';
+
+/**
+ * One small problem the Holdings fixer is asked about: the sentence it is on
+ * (or the sentences that name the item, or two names that may be one), what
+ * the checks found there, and what the record shows. Never the whole chapter.
+ */
+export interface HarnessHoldingsFixCase {
+  id: string;
+  /** What the checks found, in plain words. */
+  problems: string[];
+  /** The sentence the problem is on, with the sentences around it. */
+  passage?: { before?: string; sentence: string; after?: string };
+  /** Every holding tag that sentence carries, as the record has it. */
+  tags?: string;
+  /** What the record shows: what the holder had, and the item's history. */
+  record?: string[];
+  /** Sentences of the chapter that name the item, each with the id an answer uses. */
+  mentions?: Array<{ id: string; sentence: string }>;
+  /** The answers this case allows. */
+  answers: HarnessHoldingsFixAnswer[];
+}
+
+/** The Holdings fixer's call: the chapter's small problems, with the chapter's own model. */
+export interface HarnessHoldingsFixRequest {
+  operation: 'fix-holdings';
+  storyId: string;
+  chapterId: string;
+  chapterNumber: number;
+  model: string;
+  /** The story's language: a corrected sentence is written in it. */
+  language: string;
+  /** The main character, whom tags name MC. */
+  mainCharacter?: string;
+  /** The reader's direction for the chapter, so a change they asked for stays. */
+  direction?: string;
+  cases: HarnessHoldingsFixCase[];
+}
+
+/** One problem the fixer looked at, and what became of it. */
+export interface HarnessHoldingsFix {
+  /** The checks that found it. */
+  checks: import('./holdings').HoldingFlagKind[];
+  /** What they found, in plain words. */
+  problems: string[];
+  /**
+   * `fixed-tags`: the record was corrected. `fixed-sentence`: one sentence was
+   * corrected. `merged`: two names became one entry. `fine`: nothing was
+   * wrong. `major`: a contradiction no small fix can settle, kept as it is.
+   * `skipped`: no fix was safe to make.
+   */
+  outcome: 'fixed-tags' | 'fixed-sentence' | 'merged' | 'fine' | 'major' | 'skipped';
+  /** The paragraph it was in. */
+  blockId?: string;
+  /** The tags or sentence before the fix. */
+  before?: string;
+  /** The tags or sentence after it. */
+  after?: string;
+  /** The fixer's reason, or why nothing was changed. */
+  reason?: string;
+  /** For a merge: the entry kept and the name it now also answers to, so a rewrite of the chapter can take it back. */
+  merged?: { keptEntryId: string; alias?: string };
+}
+
+/** The Holdings fixer's record on a chapter: what it checked and what it changed. */
+export interface HarnessHoldingsFixRecord {
+  checkedAt: string;
+  /** The model asked, when one was. Problems settled without a call ask none. */
+  model?: string;
+  providerReceipt?: HarnessProviderReceipt;
+  /** The fixer's reply as it came back, for inspection. */
+  rawProviderResponse?: string;
+  /** Why the call did not complete. The chapter stays as it was committed. */
+  error?: string;
+  fixes: HarnessHoldingsFix[];
 }
 
 export interface HarnessArcRequest {

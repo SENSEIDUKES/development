@@ -68,32 +68,40 @@ describe('the Reader Chamber workspace story', () => {
     expect(story.rhythmRecommendation).toMatchObject({
       forChapterNumber: 8, recommendedFunction: written.recommendedFunction, reason: written.reason, recentFunctions: written.recentFunctions,
     });
-    // What Chapter 8's plan brought into the Codex is not there before it.
-    expect(before.codexEntries.map(entry => entry.name)).toEqual(sample.codexEntries.map(entry => entry.name).filter(name => name !== 'Inner Storehouse Key'));
+    // The holdings Chapter 8 never brought are not there before it.
+    expect(before.codexEntries.map(entry => entry.name)).toEqual(sample.codexEntries.map(entry => entry.name));
     expect(sample).toEqual(storyExportToWorkspace(JSON.parse(JSON.stringify({ ...sample, story: sample.stories[0] }))));
   });
 
-  it('writes Chapter 8 again through the HARNESS from the plan and the reply it was written with, calling no model', async () => {
+  it('writes Chapter 8 again through the HARNESS from the reply it was written with, calling no model', async () => {
     const controller = await openStory(storyWithChapters(sample, storyId, 7));
     const written = await controller.writeNextChapter(storyId, REPLAY_MODEL);
     const original = chaptersOf(sample)[7];
     const chapter = chaptersOf(written).at(-1)!;
+    // Since 2026-10-10 a holdings tag written where its thing's name belongs leaves the name:
+    // two sentences that lost theirs when Chapter 8 was first saved now keep them.
+    const paragraphs = [...original.paragraphs];
+    paragraphs[0] = paragraphs[0].replace('a twist of that bit', 'a twist of Copper Hair Wire that bit');
+    paragraphs[2] = paragraphs[2].replace('which held .', 'which held Elder Yan\'s Spatial Pouch.');
+    expect(paragraphs).not.toEqual(original.paragraphs);
     expect(chapter).toMatchObject({
-      chapterNumber: 8, title: original.title, paragraphs: original.paragraphs, prose: original.prose, scene: original.scene, path: original.path,
+      chapterNumber: 8, title: original.title, paragraphs, prose: paragraphs.join('\n\n'),
+      scene: original.scene, closingHoldings: original.closingHoldings, path: original.path,
     });
-    // The same plan, its names resolved again: the key it brings is a new entry of the same name.
-    const named = (plan: typeof chapter.plan) => JSON.stringify(plan, (key, value) => (key === 'entryId' ? undefined : value));
-    expect(named(chapter.plan)).toBe(named(original.plan));
+    const attempt = written.attempts.find(entry => entry.id === chapter.attemptId)!;
     const placed = (attachments: ReadonlyArray<{ anchor: { blockId: string; selectedText: string } }> | undefined) =>
       attachments?.map(({ anchor }) => [anchor.blockId, anchor.selectedText]);
-    expect(placed(chapter.soundCues)).toEqual(placed(original.soundCues));
+    // Since 2026-10-11 the Library's "blade drawn" is "unsheathe": the reply Chapter 8 was written
+    // with still names "blade drawn", so written again today that one cue is set aside, the prose kept.
+    expect(original.soundCues?.map(cue => cue.payload.sound)).toContain('blade drawn');
+    expect(placed(chapter.soundCues)).toEqual(placed(original.soundCues?.filter(cue => cue.payload.sound !== 'blade drawn')));
+    expect(attempt.warnings.map(warning => warning.message)).toContain('The "blade drawn" sound on “She drew her slender steel sword” is not one of this story\'s sound words; it was set aside.');
     expect(chapter.speakers?.map(speaker => speaker.payload.speaker)).toEqual(original.speakers?.map(speaker => speaker.payload.speaker));
+    expect(chapter.holdingChanges?.map(change => change.anchor.blockId)).toEqual(original.holdingChanges?.map(change => change.anchor.blockId));
+    expect(chapter.holdingChanges?.[0].anchor.selectedText).toContain('a twist of Copper Hair Wire that bit');
     expect(written.stories[0].head.nextChapterNumber).toBe(9);
-    const attempt = written.attempts.find(entry => entry.id === chapter.attemptId)!;
     expect(attempt.model).toBe(REPLAY_MODEL);
     expect(attempt.providerReceipt?.provider).toBe('workshop-replay');
-    expect(attempt.plannerCall?.providerReceipt.provider).toBe('workshop-replay');
-    expect(attempt.chapterPlan?.checks).toEqual([]);
   });
 
   it('writes Chapter 1 from the story start', async () => {
@@ -110,10 +118,10 @@ describe('the Reader Chamber workspace story', () => {
     const after = await controller.writeNextChapter(storyId, REPLAY_MODEL);
     expect(chaptersOf(after)).toHaveLength(8);
     expect(after.attempts.at(-1)).toMatchObject({ chapterNumber: 9, stage: 'generation_failed' });
-    expect(after.attempts.at(-1)?.failure?.message).toBe('The planner could not plan Chapter 9: The Workshop has no saved Chapter 9 to replay. In the app, the planner and the writer write it here.');
+    expect(after.attempts.at(-1)?.failure?.message).toBe('The Workshop has no saved Chapter 9 to replay. In the app, the writer writes it here.');
   });
 
-  it('rewrites Chapter 8 from the same plan and reply', async () => {
+  it('rewrites Chapter 8 from the same reply', async () => {
     const controller = await openStory(sample);
     const rewritten = await controller.rewriteLatestChapter(storyId, REPLAY_MODEL, 'More wind.');
     const chapters = chaptersOf(rewritten);

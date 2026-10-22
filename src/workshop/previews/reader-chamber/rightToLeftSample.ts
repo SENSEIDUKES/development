@@ -12,75 +12,24 @@ import { REPLAY_MODEL, createMemoryStories, storyWithChapters } from './sampleSt
 /**
  * The workspace's right-to-left story: Sundered Heavens begun again in
  * Arabic, so right-to-left reading is checked on a real chapter. Its two
- * chapters were written for this workspace as the chapter loop writes one: a
- * plan in Arabic, then a Generated Chapter in the tiny SEN language (sound and
- * speaker tags), committed through the HARNESS exactly as the planner's and
- * the writer's replies are, so their Sound Cues and speakers are placed on
- * Arabic words, and their record kept, by the same code. They mix in what a
+ * chapters are Generated Chapters written for this workspace in the tiny SEN
+ * language (sound, speaker and holdings tags), committed through the HARNESS
+ * exactly as a writer's reply is, so their Sound Cues, speakers and Holdings
+ * are placed on Arabic words by the same code. They mix in what a
  * right-to-left reader meets in a real chapter: numbers (المنجم رقم 7, 40
  * جين) and System lines with Latin text ([… Lv. 1 / 9]).
  */
 export const RIGHT_TO_LEFT_STORY_TITLE = 'السماوات الممزقة';
 
-const MC_LOOK = { summary: 'شابٌّ نحيل بشعرٍ أسود يشدّه سلكٌ نحاسي وعينين رماديتين.', build: 'نحيل', hair: 'أسود يشدّه سلكٌ نحاسي', eyes: 'رماديتان', marks: 'ندوبٌ فضية باهتة على ساعديه' };
-
-/** Each chapter's plan, as the planner returns it: in the story's language, every choice from its menu. */
-export const RIGHT_TO_LEFT_PLANS: readonly Record<string, unknown>[] = [
-  {
-    cast: [
-      { name: 'MC', kind: 'character', gender: 'male', age: 'adult', look: MC_LOOK, alreadyHas: [{ kind: 'thing', name: 'سلك نحاسي' }, { kind: 'thing', name: 'معول حديدي' }] },
-      { name: 'سونغ شياوتيان', kind: 'character', who: 'رفيق غو تشن في المنجم، عاملٌ ضخم في المرحلة الثامنة من تكثيف التشي.', gender: 'male', age: 'adult',
-        look: { summary: 'عاملٌ ضخم لوّحته الشمس.', build: 'ضخم', skin: 'برونزيّ لوّحته الشمس' } },
-      { name: 'المشرف لو', kind: 'character', who: 'مشرفٌ فاسد من طائفة الكركي الحديدي.', gender: 'male', age: 'adult',
-        look: { summary: 'رجلٌ بوجه ابن عرس وشاربٍ رفيع، في رداءٍ رمادي ودرعٍ مطليّة.', face: 'وجه ابن عرس وشاربٌ رفيع', clothing: 'رداءٌ رمادي ودرعٌ مطليّة' } },
-    ],
-    events: [
-      { kind: 'confrontation', actor: 'المشرف لو', targets: ['MC', 'سونغ شياوتيان'], attempt: 'اتهامهما بسرقة حصّة الخام', outcome: 'partial', presses: [{ who: 'MC', level: 'light' }],
-        how: 'يجثو غو تشن عند المنجم رقم 7، السلك النحاسي في شعره والمعول بين حذاءيه، حين يحاصره المشرف لو وسونغ شياوتيان بسبب حصّةٍ ناقصة بمقدار 40 جين ويهدّدهما بالتعليق عند البوابة الشمالية.',
-        facts: [
-          { type: 'holding', who: 'MC', change: 'equips', what: 'سلك نحاسي' },
-          { type: 'holding', who: 'MC', change: 'equips', what: 'معول حديدي' },
-          { type: 'stance', who: 'المشرف لو', towardWhom: 'MC', mode: 'said', polarity: 'hostile' },
-        ] },
-      { kind: 'discovery', actor: 'MC', targets: [], presses: [{ who: 'المشرف لو', level: 'heavy' }],
-        how: 'يدقّ جرس الإنذار وينشقّ المنجم التاسع عن ضوء الفراغ؛ يفرّ الجميع، ويرى غو تشن سطور سلالة الصدع السماوي أمام عينيه.', facts: [] },
-      { kind: 'decision', actor: 'MC', targets: [], presses: [{ who: 'MC', level: 'heavy' }],
-        how: 'يخطو غو تشن نحو الضوء والمعول في يده بينما يفرّ الآخرون، حتى تلامس أصابعه حافة الشقّ.', facts: [] },
-    ],
-    arcGoalReached: { reached: false },
-    chapterFunction: 'conflict',
-  },
-  {
-    cast: [{ name: 'MC', kind: 'character' }, { name: 'سونغ شياوتيان', kind: 'character' }, { name: 'المشرف لو', kind: 'character' }, { name: 'معول حديدي', kind: 'thing' }],
-    events: [
-      { kind: 'training', actor: 'MC', targets: [], attempt: 'الإمساك بخيط الفراغ الفضي', outcome: 'success at a cost', presses: [{ who: 'MC', level: 'crushing' }],
-        how: 'داخل الشقّ يُمسك غو تشن خيطًا فضيًا رغم الألم، فيُفلت معوله ويطفو بعيدًا، وتتشقّق عظامه وتصلب حتى تستيقظ سلالة الصدع السماوي.',
-        facts: [
-          { type: 'holding', who: 'MC', change: 'unequips', what: 'معول حديدي' },
-          { type: 'holding', who: 'MC', change: 'learns', what: 'سلالة الصدع السماوي', level: 'Lv. 1' },
-        ] },
-      { kind: 'journey', actor: 'MC', targets: ['سونغ شياوتيان'], presses: [],
-        how: 'يستيقظ غو تشن على أرض المنجم التاسع بعد ساعتين، وقد ظلّ سونغ شياوتيان يحفر بيديه بحثًا عنه.', facts: [] },
-      { kind: 'confrontation', actor: 'المشرف لو', targets: ['MC', 'سونغ شياوتيان'], attempt: 'دفنهما في المنجم ليخفي الانهيار', presses: [{ who: 'سونغ شياوتيان', level: 'heavy' }],
-        how: 'يسدّ المشرف لو الطريق بسيفٍ مسلول؛ ويلتقط غو تشن معوله من بين الحجارة، وقد صار يرى كل ارتعاشةٍ في معصم الرجل.',
-        facts: [
-          { type: 'holding', who: 'MC', change: 'equips', what: 'معول حديدي' },
-          { type: 'goal', who: 'المشرف لو', change: 'set', what: 'دفن الشاهدين وإخفاء الانهيار' },
-        ] },
-    ],
-    arcGoalReached: { reached: false },
-    chapterFunction: 'progression',
-  },
-];
-
 /** The Generated Chapters, as the writer returns them. */
 export const RIGHT_TO_LEFT_REPLIES: readonly Record<string, unknown>[] = [
   {
     title: 'الصدأ والشقوق',
+    plan: 'غو تشن وسونغ شياوتيان في أنفاق وادي عِرق الصدأ حين يحاصرهما المشرف لو، قبل أن ينشقّ الصخر عن ضوء الفراغ.',
     paragraphs: [
       'مرّت تسعة آلاف سنة منذ أن تصدّعت قبة السماء القديمة كما يتصدّع الخزف، ومع ذلك لم يجد أحدٌ في وادي عِرق الصدأ وقتًا ليبكي على النجوم الساقطة. هنا، في البطن المسنّن للحافة الخارجية، لم يكن الرجال يصلّون للسماوات العليا؛ كانوا يلعنون الصخر الهشّ ويملؤون رئاتهم بغبار الكبريت.',
-      'جثا غو تشن عند الحافة الضيقة للمنجم رقم 7، يتنفّس ببطء وهدوء حتى لا يثير المسحوق الأحمر العالق بياقته. كان سلكٌ نحاسيٌّ قاسٍ يشدّ شعره الأسود بعيدًا عن عينيه الرماديتين، وكُمّاه مثبّتان فوق ساعدين خشنين تعبرهما ندوبٌ فضية باهتة.',
-      'استقرّ معوله الحديدي ذو الشعبتين بين حذاءيه، وقد أكلت منه ثلاثة مواسم من نحت الصخر المتحجّر. وتحته لم يكن الظلام مجرّد غياب للضوء؛ كان له ثِقل، ورائحةُ صقيعٍ قديم ونحاسٍ محترق كلما احتكّ ضباب الفراغ بالحواجز الخارجية للوادي.',
+      '[[has: MC | سلك نحاسي]][[equipped: MC | سلك نحاسي]]جثا غو تشن عند الحافة الضيقة للمنجم رقم 7، يتنفّس ببطء وهدوء حتى لا يثير المسحوق الأحمر العالق بياقته. كان سلكٌ نحاسيٌّ قاسٍ يشدّ شعره الأسود بعيدًا عن عينيه الرماديتين، وكُمّاه مثبّتان فوق ساعدين خشنين تعبرهما ندوبٌ فضية باهتة.',
+      '[[has: MC | معول حديدي]][[equipped: MC | معول حديدي]]استقرّ معوله الحديدي ذو الشعبتين بين حذاءيه، وقد أكلت منه ثلاثة مواسم من نحت الصخر المتحجّر. وتحته لم يكن الظلام مجرّد غياب للضوء؛ كان له ثِقل، ورائحةُ صقيعٍ قديم ونحاسٍ محترق كلما احتكّ ضباب الفراغ بالحواجز الخارجية للوادي.',
       '[[@سونغ شياوتيان]] «هذه سبعة أيام بلا رغيف دخنٍ كامل»، تنهّد سونغ شياوتيان وهو يُنزل سلّته بثقلٍ حتى [[sound: rattle | تدحرجت الحصى السائبة على الحافة | low]] في رذاذٍ جاف. «الدانتيان عندي كبركةٍ جفّت يا أخي غو. إن لم أدوّر طاقة الأرض الليلة، فقد أتراجع عن المرحلة الثامنة من تكثيف التشي.»',
       '[[@MC]] «اخفض صوتك»، قال غو تشن دون أن يرفع عينيه عن الشقّ. «الصخر هنا يسمع أكثر مما ينبغي. منذ الفجر وهو يئنّ كأن شيئًا تحته يتمدّد ويبحث عن مخرج.»',
       'مدّ يده ولمس الجدار. كانت العروق الحمراء في الحجر دافئة على غير عادتها، تنبض نبضًا خافتًا كقلبٍ نائم. لم يكن ذلك دفء خامٍ غنيّ ينتظر المعاول؛ كان دفء جرحٍ قديم لم يلتئم قطّ، جرحٍ يتذكّر اليوم الذي انشقّت فيه السماء.',
@@ -96,13 +45,18 @@ export const RIGHT_TO_LEFT_REPLIES: readonly Record<string, unknown>[] = [
       'نهض ببطء، والمعول في يده، وخطا نحو الضوء بينما كان الجميع يفرّون منه. خلفه، كان صوت سونغ شياوتيان يتلاشى في هدير الصخر المنهار، وأمامه كان العالم ينشقّ ليكشف ما خبّأته السماء طوال تسعة آلاف عام.',
       'وحين لامست أصابعه حافة الضوء، لم يشعر بالخوف. شعر، لأول مرة منذ دخل هذا الوادي طفلًا يتيمًا، أنه عاد إلى بيتٍ لم يره من قبل.',
     ],
+    mainCharacterHoldings: ['سلك نحاسي', 'معول حديدي'],
+    arcCompletion: { goalId: 'arc-1-1', completed: false, evidence: '' },
     recap: 'حاصر المشرف لو غو تشن وسونغ شياوتيان في المنجم السابع بسبب حصّة خام ناقصة، حتى دقّ جرس الإنذار وانشقّ المنجم التاسع عن ضوء الفراغ. فرّ الجميع، أما غو تشن فرأى سطور سلالة الصدع السماوي أمام عينيه وخطا نحو الضوء.',
+    chapterFunction: 'conflict',
     nextProgression: 'يدخل غو تشن الشقّ ويوقظ المرحلة الأولى من سلالة الصدع السماوي.',
     nextWorldBuilding: 'ما يكمن خلف الشقّ، ولماذا تخفي طائفة الكركي الحديدي انهيارات المناجم.',
     nextConflict: 'المشرف لو يحاول دفن غو تشن وسونغ شياوتيان في المنجم ليخفي جبنه.',
+    storyEnded: { ended: false, evidence: '' },
   },
   {
     title: 'تقسية عظم الصدع',
+    plan: 'يدخل غو تشن الشقّ ويوقظ سلالته، ثم يعود ليجد المشرف لو بانتظاره بسيفٍ مسلول.',
     paragraphs: [
       'لم يكن الضوء حارًّا كما ظنّ. حين دخل غو تشن الشقّ، شعر كأنه غاص في ماءٍ شتويّ، بارد إلى حدّ أن أفكاره تجمّدت للحظة، ثم بدأت تذوب ببطء، واحدةً تلو الأخرى، كجليدٍ يلامسه أول شعاع من الربيع.',
       'حوله، كان المنجم التاسع قد اختفى. لم تبقَ جدران ولا سقف، بل فضاءٌ بنفسجي تطفو فيه شظايا صخرٍ كجزرٍ صغيرة، وتتلألأ بينها خيوطٌ فضية كأنها أوتار قيثارة عملاقة لم يعزف عليها أحد منذ زمن بعيد.',
@@ -118,19 +72,22 @@ export const RIGHT_TO_LEFT_REPLIES: readonly Record<string, unknown>[] = [
       'لكن قبل أن يجيب سونغ، [[sound: metal scrape | احتكّ نصلٌ بغمده في الظلام | medium]] خلفهما. تقدّم المشرف لو من بين الأنقاض، وسيفه القصير يلمع في الضوء الخافت، ووجهه شاحب من الخوف والغضب معًا.',
       '[[@المشرف لو]] «لا أحد يخرج من هذا المنجم»، قال بصوتٍ مرتجف. «الطائفة ستسأل عن الانهيار، ولن أكون أنا من يدفع الثمن. حادثٌ مؤسف: عاملان دُفنا تحت الصخر. هذا كل ما سيُكتب في السجلّ.»',
       'نظر غو تشن إلى السيف، ثم إلى عيني لو. قبل ساعتين كان سيرى في ذلك النصل موته المحتوم. الآن، كان يرى كل ارتعاشةٍ في معصم الرجل، وكل خطأ في وقفته، وكل نفسٍ يأخذه قبل أن يهجم.',
-      '[[sound: bell rings | دقّ الجرس مرة أخرى في البعيد | low]]، خافتًا هذه المرة، كأنه يعدّ الثواني الباقية. ابتسم غو تشن ابتسامةً صغيرة، وانحنى ليلتقط معوله الحديدي من بين الحجارة، وكان المعول أخفّ في يده من أي وقت مضى.',
+      '[[has: MC | معول حديدي]][[sound: bell rings | دقّ الجرس مرة أخرى في البعيد | low]]، خافتًا هذه المرة، كأنه يعدّ الثواني الباقية. ابتسم غو تشن ابتسامةً صغيرة، وانحنى ليلتقط معوله الحديدي من بين الحجارة، وكان المعول أخفّ في يده من أي وقت مضى.',
       '[[@MC]] «أيها المشرف»، قال بهدوء، «أظنّ أن السجلّ سيحتاج إلى سطرٍ مختلف الليلة.»',
     ],
+    mainCharacterHoldings: ['سلك نحاسي', 'معول حديدي'],
+    arcCompletion: { goalId: 'arc-1-1', completed: false, evidence: '' },
     recap: 'دخل غو تشن الشقّ وأيقظ المرحلة الأولى من سلالة الصدع السماوي، فصارت عظامه أصلب من الحديد. عاد إلى المنجم بعد ساعتين ليجد سونغ شياوتيان يحفر بحثًا عنه، والمشرف لو يسدّ الطريق بسيفٍ مسلول ليدفنهما ويخفي الانهيار.',
+    chapterFunction: 'progression',
     nextProgression: 'يواجه غو تشن المشرف لو بجسده الجديد لأول مرة.',
     nextWorldBuilding: 'سجلّات طائفة الكركي الحديدي، ومن يقرؤها في القمة.',
     nextConflict: 'المشرف لو لا يستطيع أن يدع شاهدَين يخرجان من المنجم.',
+    storyEnded: { ended: false, evidence: '' },
   },
 ];
 
-/** The planner and writer for the right-to-left story: they return these plans and replies, calling no model. */
+/** The writer for the right-to-left story: it returns these replies, calling no model. */
 function rightToLeftWriter(): HarnessGenerationModelAdapter {
-  const receipt = () => ({ provider: 'workshop-replay', model: REPLAY_MODEL, generatedAt: new Date().toISOString(), durationMs: 0, usage: { source: 'unavailable' as const } });
   return {
     getServerInfo: async () => ({
       provider: 'workshop-replay',
@@ -138,15 +95,14 @@ function rightToLeftWriter(): HarnessGenerationModelAdapter {
       models: [{ id: REPLAY_MODEL, label: 'Saved chapters (no model call)' }],
       defaultModel: REPLAY_MODEL,
     }),
-    planChapter: async request => {
-      const plan = RIGHT_TO_LEFT_PLANS[request.immediateChapterRequest.chapterNumber - 1];
-      if (!plan) throw new Error('The right-to-left story has two chapters to replay.');
-      return { rawProviderResponse: JSON.stringify(plan), providerReceipt: receipt() };
-    },
     generate: async request => {
       const reply = RIGHT_TO_LEFT_REPLIES[request.immediateChapterRequest.chapterNumber - 1];
       if (!reply) throw new Error('The right-to-left story has two chapters to replay.');
-      return { rawProviderResponse: JSON.stringify(reply), providerReceipt: receipt() };
+      const now = new Date().toISOString();
+      return {
+        rawProviderResponse: JSON.stringify(reply),
+        providerReceipt: { provider: 'workshop-replay', model: REPLAY_MODEL, generatedAt: now, durationMs: 0, usage: { source: 'unavailable' } },
+      };
     },
     arcOperation: async () => {
       throw new Error('The Workshop replays saved chapters only; it plans no arcs.');

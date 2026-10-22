@@ -20,26 +20,6 @@ export interface WriterInstructionsChange {
  */
 export const WRITER_INSTRUCTIONS_HISTORY: readonly WriterInstructionsChange[] = [
   {
-    date: '2026-10-20',
-    summary: 'SENSEI\'s chapter loop, step 2, in the words SENSEI approved: Fate plans each chapter before it is written, and the writer narrates the plan, so the writer stops deciding anything. A new call, the planner, runs before the writer on every chapter and reads the Destined Ending: # ROLE AND MISSION (you are Fate: decide who is on the page, what they attempt, how it turns out and what it changes), # HOW TO READ THE STORY INFORMATION (the writer\'s guide to the Destined Ending, the arc goal, the route, Rhythm and the reader\'s direction, moved, with a new paragraph on the Codex), # HOW TO PLAN THE CHAPTER (the cast, the events, the facts, the arc goal and the end) and # HARD RULES. The planner now decides when the arc goal is reached and, in Fate Survival, when the story ends; the Codex is updated from its plan. SEN Fate Survival 2.0.0 splits in two: its planning half goes to the planner (never protect the main character; a broken route ends the story), its writing half stays with the writer (show every cost the plan sets, write the ending in full). Pacing moves to the planner; Continuity is read by both. The writer\'s role is to write the chapter from its Chapter Plan; its writing rules gain SCENES (scenes, dialogue and description, but no added events or changes) and lose the paragraph on future direction; its reading guide ends with the Chapter Plan instead of the Destined Ending, the arc goal and the reader\'s direction; its return format drops plan, chapterFunction, arcCompletion, storyEnded and the holdings list; a new first hard rule makes the plan final. The tag rules lose how a tag names someone, since no tag names anyone now, and SEN Speakers 4.0.0 names each speaker by the Chapter Plan, with someone else for anyone unnamed. SEN Holdings, SEN Appearance and the holdings fixer are retired: nothing is tagged for the record any more.',
-    changed: {
-      'planner-role': '1de63cd1a53b0b', 'planner-reading-guide': '00da3dbed426e9', 'planner-rules': '172d882fcd8b0a', 'planner-hard-rules': '1ab332857ce373',
-      'fate-survival-planning': '1183d6c151675f', 'fate-survival': '09fca72652981f',
-      role: '136d07e44c622d', 'writing-rules': '09ff24ba1b5972', 'tag-rules': '08a9529f75d28f', speakers: '13e72cf41dbb90',
-      'reading-guide': '0eed979505f734', 'return-format': '05844b2f6785bf', 'hard-rules': '0d911c82b48432',
-    },
-  },
-  {
-    date: '2026-10-19',
-    summary: 'SENSEI\'s speaker field, the design of the original Light Novels app, whose Read Aloud always chose the right voice: the writer names who speaks in each paragraph in a field of the reply\'s own schema, which it cannot leave out, instead of a tag it must remember to write (the Blade and Diner tests tagged 1 of 27, 0 of 26 and 5 of 26 spoken lines). Each paragraph of the reply is now its speaker and its text. SEN Speakers 3.0.0: the speaker is MC for the main character, anyone else by the name Story Information uses, empty when no one speaks, with one example; a new speaker starts a new paragraph; "A line without its speaker is read in the wrong voice." The HARNESS turns the field into the same speaker record as before, so voices, the Codex and Read Aloud are unchanged.',
-    changed: { speakers: '0d530f0d77312e', 'return-format': '0d58129c855296' },
-  },
-  {
-    date: '2026-10-18',
-    summary: 'SENSEI\'s character voices: each speaker tag now names a Codex character, and their voice from the SEIHouse cast lives on their card, so a missing speaker tag means a line read in the wrong voice. In the Blade test only 1 of 27 spoken lines was tagged. SEN Speakers 2.3.0, in the words SENSEI approved: every paragraph with speech starts with its speaker; a new speaker starts a new paragraph; and why it matters, "A line without its speaker is read in the wrong voice." The tag itself is unchanged.',
-    changed: { speakers: '0c4ad707e9bcd8' },
-  },
-  {
     date: '2026-10-17',
     summary: 'SENSEI\'s looks on demand. No model call follows a chapter any more: the per-chapter look step is gone. The HARNESS keeps, by code, the writer\'s own description from the paragraph a tag marks, and Story Information\'s Appeared section shows it, with every change since. A full look is written only when something made from the story needs it (a picture, a manga, a game): one call for that one entry, from every passage that shows it, kept on its Codex entry and written again only after a new tag changes it. That call is the look writer\'s new instruction: the core record every picture, comic and game draws from; keep only how the subject looks; a later passage wins, and the whole look is written as it stands after it. A long answer is now cut, not thrown away, and a failed one is kept with the model\'s own words. SEN Sound Cues 2.6.0: in Blade Chapter 17 a sound tag stood between sentences with words of its own and was dropped; the tag now wraps words of the writer\'s own sentence where they stand, and the example shows it inside one.',
     changed: { 'sound-cues': '1e60adbee817ef', 'look-step': '152184b2a3d5d4' },

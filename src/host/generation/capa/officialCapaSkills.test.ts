@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it, vi } from 'vitest';
-import { HarnessGenerationController, SEN_SPEAKERS_SKILL, harnessSkillKey } from '@seihouse/sen/harness-generation';
+import { HarnessGenerationController, SEN_APPEARANCE_SKILL, SEN_HOLDINGS_SKILL, SEN_SPEAKERS_SKILL, harnessSkillKey } from '@seihouse/sen/harness-generation';
 import type { HarnessGenerationRequest, HarnessGenerationResponse } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import {
@@ -11,7 +11,6 @@ import {
   type OfficialCapaArchiveLoader,
 } from './officialCapaSkills';
 import { inspectHarnessSpp } from './sppSkills';
-import { planEveryChapter } from '../../../test-utils/chapterPlan';
 
 class MemoryStorage implements Pick<Storage, 'getItem' | 'setItem'> {
   private readonly values = new Map<string, string>();
@@ -25,7 +24,6 @@ const loadFixture: OfficialCapaArchiveLoader = definition => readFile(
 
 const adapter = (requests: HarnessGenerationRequest[] = []) => ({
   getServerInfo: async () => ({ provider: 'fixture', configured: true, models: [], defaultModel: 'fixture-model' }),
-  planChapter: planEveryChapter(),
   arcOperation: async () => ({
     rawProviderResponse: JSON.stringify({
       plan: { arcNumber: 1, goals: [{ id: 'opening', text: 'Enter the mountain school.', chapters: 30 }] },
@@ -131,11 +129,13 @@ describe('official CAPA SPP defaults', () => {
       ['pacing', createOfficialCapaDefaultLoadout('chinese').pacing!.id, '1.0.1'],
       ['continuity', createOfficialCapaDefaultLoadout('chinese').continuity!.id, '1.0.1'],
       ['style', OFFICIAL_STYLE_REFERENCES.japanese.id, '1.0.0'],
-      // SEN's bundled Speakers skill loads on every chapter; it is not an official CAPA package.
+      // SEN's bundled Speakers, Holdings and Appearance skills load on every chapter; they are not official CAPA packages.
       ['speakers', SEN_SPEAKERS_SKILL.id, SEN_SPEAKERS_SKILL.version],
+      ['holdings', SEN_HOLDINGS_SKILL.id, SEN_HOLDINGS_SKILL.version],
+      ['appearance', SEN_APPEARANCE_SKILL.id, SEN_APPEARANCE_SKILL.version],
     ]);
     // Every official package skill keeps the archive it was installed from.
-    expect(requests[0].capaPrompt.skills.filter(skill => skill.slot !== 'speakers').every(skill => skill.source?.archiveSha256)).toBe(true);
+    expect(requests[0].capaPrompt.skills.filter(skill => !['speakers', 'holdings', 'appearance'].includes(skill.slot)).every(skill => skill.source?.archiveSha256)).toBe(true);
     expect(reloaded.snapshot().attempts[0].capaPrompt).toEqual(requests[0].capaPrompt);
   });
 });

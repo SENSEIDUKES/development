@@ -1,46 +1,40 @@
-import { castVoice } from '../../../audio/voiceCast';
-import { fullNameOf } from './voices';
 import type { CodexEntry } from '../../../narrative/holdings';
-import type { Look } from '../../../narrative/looks';
-import type { PlanAge, PlanCommitmentChange, PlanGender, PlanGoalChange, PlanStancePolarity, PlanValueStance } from '../../../narrative/chapterPlan';
+import type { Look } from '../../../narrative/appearances';
 import type { HarnessChapter } from '../../../narrative/generation';
 import { isSpeakerOnText, SPEAKER_KIND } from '../../../narrative/speech';
 import { harnessParagraphBlockId } from './chapterBody';
 import { normalizeIdentityLabel } from './canonicalProjection';
 import { factionNamed, type DeclaredFaction } from './factions';
+import { deriveAppearances, type AppearanceFlag, type AppearancePassage, type AppearanceSubject } from './appearances';
 import {
   deriveHoldings,
   holdingTargetKind,
   type DeclaredCharacter,
   type HeldThing,
   type HoldingEvent,
+  type HoldingFlag,
   type KnownAbility,
 } from './holdings';
-import { conditionLabel, derivePlanRecord, type RecordPassage, type RecordedEntity, type RecordedStatus } from './planRecord';
 
 /**
  * The Codex: what the story's record knows, gathered for the reader. Nothing
- * here is stored; it is worked out again from each chapter's plan (SENSEI,
- * 2026-10-20: the chapter loop) and its speakers, so it always matches the
- * chapters and holds only what they recorded: who someone is, their look and
- * each change to it, their state, what they hold, their goals, values,
- * commitments and stances, and their voice. Every fact links to the chapter
- * that made it; a voice links to the words it was heard in.
+ * here is stored; it is worked out again from each chapter's current records
+ * (appearances and their looks, holding changes and speakers today), so it
+ * always matches the chapters and holds only what they recorded. Each kind of
+ * information tag adds its own facts here as it is built; the Codex never
+ * shows more than the record holds.
  *
- * A character is in the Codex once the record has met them: on the page in a
- * chapter's cast, speaking, or holding, using or learning something.
- * Characters the Story Seed declares but the chapters have not reached yet
- * stay out, so the Codex never runs ahead of the story. A thing joins it the
- * same way: on the page, or changing hands.
+ * A character is in the Codex once the record has met them: they stepped onto
+ * the page, spoke, or held, used or learned something. Characters the Story
+ * Seed declares but the chapters have not reached yet stay out, so the Codex
+ * never runs ahead of the story. A thing joins it the same way: it stepped
+ * onto the page, or changed hands.
  */
 
-/** A place in the story a fact came from: its chapter, the event of its plan, and the words the record sits on. */
+/** A place in the story a fact came from: the paragraph, and the words the record sits on. */
 export interface CodexPassage {
   chapterNumber: number;
-  /** The paragraph, for what sits on the chapter's words (a voice). A fact of a plan has none: it opens its chapter. */
-  blockId?: string;
-  /** The event of the chapter's plan, from 1. */
-  event?: number;
+  blockId: string;
   text: string;
 }
 
@@ -52,57 +46,26 @@ export interface CodexVoice {
   chapters: number[];
   /** Their first spoken words in the story. */
   first: CodexPassage;
-  /** The voice they speak in, a SEIHouse voice cast key from their Codex card; absent, their role's voice reads them. */
-  cast?: string;
 }
 
-/** A look as the record holds it, with the chapter whose plan gave it. */
+/** A look as the record wrote it down, with the passage it was read from. */
 export interface CodexLook extends Look {
   passage: CodexPassage;
+  /** Where the passage differs from the look the story's author declared. */
+  conflict?: string;
 }
 
-/** Where someone or something first stepped onto the page, how it looks, and each change to its look. */
+/** Where someone or something stepped onto the page, how it looks now, and each change to its look. */
 export interface CodexAppearance {
   first: CodexPassage;
-  /** The whole look, once a plan gave one. */
+  /** The writer's own description when it first stepped onto the page, kept by code: shown until a look is written. */
+  description?: string;
+  /** The latest look written down; absent until one is. */
   look?: CodexLook;
-  /** Each change to the look since, in story order. */
+  /** A tag changed it after that look was written: Manifest writes it again first. */
+  lookStale?: true;
+  /** Each change to its look the writer tagged, in story order. */
   changes: Array<{ change: string; passage: CodexPassage }>;
-}
-
-/** A state an entry was in: `wounded (a broken left arm)`, with where it began. */
-export interface CodexStatus {
-  label: string;
-  passage: CodexPassage;
-}
-
-export interface CodexGoal {
-  what: string;
-  outcome?: Exclude<PlanGoalChange, 'set'>;
-  set?: CodexPassage;
-  resolved?: CodexPassage;
-}
-
-export interface CodexValue {
-  what: string;
-  stance: PlanValueStance;
-  passage: CodexPassage;
-}
-
-/** A commitment, from the side of the one who owes it or the one owed. */
-export interface CodexCommitment {
-  /** Who owes it, or who is owed it. */
-  party: string;
-  what: string;
-  outcome?: Exclude<PlanCommitmentChange, 'entered'>;
-  entered?: CodexPassage;
-  resolved?: CodexPassage;
-}
-
-export interface CodexStance {
-  toward: string;
-  said?: { polarity: PlanStancePolarity; passage: CodexPassage };
-  acted?: { polarity: PlanStancePolarity; passage: CodexPassage };
 }
 
 export interface CodexCharacter {
@@ -112,18 +75,8 @@ export interface CodexCharacter {
   mainCharacter: boolean;
   /** Where the record first meets them. */
   firstSeen: CodexPassage;
-  /** The latest chapter they were on the page. */
-  lastSeen?: number;
-  /** Who they are in the story, in one line. */
-  who?: string;
-  gender?: PlanGender;
-  age?: PlanAge;
-  /** Their look, from the plans that cast them. Absent for someone met only by their words. */
+  /** Their appearance on the page, and their look. Absent for someone met only by their words or holdings. */
   appearance?: CodexAppearance;
-  /** Their state now, when it is not their usual one. */
-  status?: CodexStatus;
-  /** Every change of state, in story order. */
-  statusHistory: CodexStatus[];
   rank?: { text: string; events: HoldingEvent[] };
   /** Things they hold now, in the order they came to hold them. */
   things: HeldThing[];
@@ -132,14 +85,6 @@ export interface CodexCharacter {
   voice?: CodexVoice;
   /** Every holding change that took effect for them, in story order. */
   chronicle: HoldingEvent[];
-  goals: CodexGoal[];
-  /** The latest stance they took on each value. */
-  values: CodexValue[];
-  /** What they owe others. */
-  owes: CodexCommitment[];
-  /** What others owe them. */
-  owedBy: CodexCommitment[];
-  stances: CodexStance[];
 }
 
 /** One change to a thing, with who it happened to. */
@@ -158,24 +103,14 @@ export interface CodexItem {
   /** Everything the record saw happen to it, in story order. */
   events: CodexItemEvent[];
   firstSeen: CodexPassage;
-  who?: string;
-  /** Its look, from the plans that cast it. */
+  /** Its appearance on the page, and its look. */
   appearance?: CodexAppearance;
-  /** Its state now, when it is not its usual one (damaged, destroyed). */
-  status?: CodexStatus;
 }
 
-/** Something the record's plain checks found: a fact dropped from a chapter's plan, or worth a second look. */
-export interface CodexCheck {
-  /** Stable within the Codex. */
-  key: string;
-  message: string;
-  chapterNumber?: number;
-  /** The paragraph it is about, when it has one. */
-  blockId?: string;
-}
+/** A check the record's plain rules flagged (holdings or appearances), with the paragraph it is about when it has one. */
+export type CodexCheck = (HoldingFlag | AppearanceFlag) & { blockId?: string };
 
-/** A sect, clan, faction or other body the story has met: by its voice today (a group the writer named as speaking). */
+/** A sect, clan, faction or other body the story has met: by its voice today (a group the writer tagged as speaking). */
 export interface CodexFaction {
   key: string;
   name: string;
@@ -190,45 +125,32 @@ export interface StoryCodexRecord {
   factions: CodexFaction[];
   /** Things, in the order the story met them. */
   items: CodexItem[];
-  /** What the record's plain checks found, for checking a story against its chapters. */
+  /** What the record's plain rules flagged, for checking a story against its chapters. */
   checks: CodexCheck[];
 }
 
 /** What the Codex reads from a chapter. */
-export type StoryCodexChapter = Pick<HarnessChapter, 'id' | 'chapterNumber' | 'paragraphs' | 'speakers' | 'plan' | 'planChecks'>;
+export type StoryCodexChapter = Pick<HarnessChapter, 'id' | 'chapterNumber' | 'paragraphs' | 'speakers' | 'holdingChanges' | 'closingHoldings' | 'appearances' | 'looks'>;
 
-const paragraphOrder = (blockId: string | undefined) => Number(blockId?.match(/-p(\d+)$/)?.[1] ?? 0);
-/** Story order: by chapter, then by event (a fact of the plan before the words that tell it), then by paragraph. */
+const paragraphOrder = (blockId: string) => Number(blockId.match(/-p(\d+)$/)?.[1] ?? 0);
 const comesBefore = (left: CodexPassage, right: CodexPassage) =>
-  left.chapterNumber - right.chapterNumber || (left.event ?? 0) - (right.event ?? 0) || paragraphOrder(left.blockId) - paragraphOrder(right.blockId);
-const passageOf = (passage: RecordPassage | HoldingEvent['passage']): CodexPassage => ({
-  chapterNumber: passage.chapterNumber, ...(passage.event ? { event: passage.event } : {}), text: passage.text,
+  left.chapterNumber - right.chapterNumber || paragraphOrder(left.blockId) - paragraphOrder(right.blockId);
+const passageOf = (event: HoldingEvent): CodexPassage => ({
+  chapterNumber: event.passage.chapterNumber, blockId: event.passage.blockId, text: event.passage.text,
 });
-const statusOf = (status: RecordedStatus): CodexStatus => ({ label: `${status.state}${status.how ? ` (${status.how})` : ''}`, passage: passageOf(status.passage) });
-/**
- * The state an entry is in now, with the passage that began the latest of the
- * conditions it is still in: never a change that ended another one (a
- * recovery, when they are still captured).
- */
-const currentStatus = (entity: RecordedEntity): CodexStatus | undefined => {
-  const label = conditionLabel(entity.condition);
-  const { end, ...conditions } = entity.condition;
-  const active = end ? [end] : Object.values(conditions).filter((status): status is RecordedStatus => Boolean(status));
-  const latest = active.map(status => passageOf(status.passage)).sort(comesBefore).at(-1);
-  return label && latest ? { label, passage: latest } : undefined;
-};
-const appearanceOf = (entity: RecordedEntity, first: CodexPassage): CodexAppearance => ({
-  first,
-  ...(entity.look ? { look: { summary: entity.look.look.summary, traits: { ...entity.look.look.traits }, passage: passageOf(entity.look.passage) } } : {}),
-  changes: entity.lookChanges.map(change => ({ change: change.change, passage: passageOf(change.passage) })),
+const appearancePassage = (passage: AppearancePassage): CodexPassage => ({
+  chapterNumber: passage.chapterNumber, blockId: passage.blockId, text: passage.text,
 });
-/** Where a cast member was first on the page: their chapter, told by who they are, or the chapter's first event. */
-const castPassage = (entity: RecordedEntity, chapters: readonly StoryCodexChapter[]): CodexPassage | undefined => {
-  const first = entity.castIn[0];
-  if (!first) return undefined;
-  const chapter = chapters.find(candidate => candidate.id === first.chapterId);
-  return { chapterNumber: first.chapterNumber, text: entity.who?.text ?? chapter?.plan.events[0]?.how ?? '' };
-};
+const appearanceOf = (subject: AppearanceSubject): CodexAppearance => ({
+  first: appearancePassage(subject.first),
+  ...(subject.first.description ? { description: subject.first.description } : {}),
+  ...(subject.lookStale ? { lookStale: true as const } : {}),
+  ...(subject.look ? { look: {
+    summary: subject.look.summary, traits: { ...subject.look.traits }, passage: appearancePassage(subject.look.passage),
+    ...(subject.look.conflict ? { conflict: subject.look.conflict } : {}),
+  } } : {}),
+  changes: subject.changes.map(change => ({ change: change.change, passage: appearancePassage(change.passage) })),
+});
 
 export function deriveStoryCodex({ entries, chapters, mainCharacterName, declared = [], declaredFactions = [] }: {
   entries: readonly CodexEntry[];
@@ -241,107 +163,61 @@ export function deriveStoryCodex({ entries, chapters, mainCharacterName, declare
   declaredFactions?: readonly DeclaredFaction[];
 }): StoryCodexRecord {
   const ordered = [...chapters].sort((left, right) => left.chapterNumber - right.chapterNumber);
-  const holdings = deriveHoldings({ entries, chapters: ordered });
-  const record = derivePlanRecord({ entries, chapters: ordered });
-  const recorded = new Map(record.map(entity => [entity.key, entity]));
+  const holdings = deriveHoldings({ entries, chapters: ordered, mainCharacterName });
+  const appeared = deriveAppearances({ entries, chapters: ordered, declaredFactions });
 
   type Working = Omit<CodexCharacter, 'firstSeen'> & { firstSeen?: CodexPassage; names: Set<string> };
   const characters = new Map<string, Working>();
   const add = (character: Working) => { characters.set(character.key, character); return character; };
-  const blank = (key: string, name: string, mainCharacter: boolean, names: readonly string[]): Working => ({
-    key, name, mainCharacter, statusHistory: [], things: [], abilities: [], chronicle: [], goals: [], values: [], owes: [], owedBy: [], stances: [],
-    names: new Set(names.map(normalizeIdentityLabel)),
-  });
-  const met = (character: Working, passage: CodexPassage | undefined) => {
-    if (passage && (!character.firstSeen || comesBefore(passage, character.firstSeen) < 0)) character.firstSeen = passage;
-  };
 
-  // Everyone the plans had on the page, or who held, used or learned something.
-  for (const entity of record.filter(candidate => candidate.kind === 'character')) {
-    const entry = entries.find(candidate => candidate.id === entity.key);
-    const held = holdings.characters.find(candidate => candidate.entryId === entity.key);
-    const first = castPassage(entity, ordered);
-    if (!first && !held?.history.length) continue;
-    const character = add(blank(entity.key, entity.name, entity.mainCharacter, [entity.name, ...(entry?.aliases ?? [])]));
-    met(character, first);
-    if (entity.castIn.length) character.lastSeen = entity.castIn.at(-1)!.chapterNumber;
-    if (entity.who) character.who = entity.who.text;
-    if (entity.gender) character.gender = entity.gender;
-    if (entity.age) character.age = entity.age;
-    if (first) character.appearance = appearanceOf(entity, first);
-    const status = currentStatus(entity);
-    if (status) character.status = status;
-    character.statusHistory = entity.statusHistory.map(statusOf);
-    character.goals = entity.goals.map(goal => ({
-      what: goal.what, ...(goal.outcome ? { outcome: goal.outcome } : {}),
-      ...(goal.set ? { set: passageOf(goal.set) } : {}), ...(goal.resolved ? { resolved: passageOf(goal.resolved) } : {}),
-    }));
-    character.values = entity.values.map(value => ({ what: value.what, stance: value.stance, passage: passageOf(value.passage) }));
-    character.owes = entity.commitments.map(commitment => ({
-      party: commitment.to.name, what: commitment.what, ...(commitment.outcome ? { outcome: commitment.outcome } : {}),
-      ...(commitment.entered ? { entered: passageOf(commitment.entered) } : {}), ...(commitment.resolved ? { resolved: passageOf(commitment.resolved) } : {}),
-    }));
-    character.stances = entity.stances.map(stance => ({
-      toward: stance.toward.name,
-      ...(stance.said ? { said: { polarity: stance.said.polarity, passage: passageOf(stance.said.passage) } } : {}),
-      ...(stance.acted ? { acted: { polarity: stance.acted.polarity, passage: passageOf(stance.acted.passage) } } : {}),
-    }));
-  }
-  // What each character is owed, from the side of the one who owes it.
-  for (const entity of record) {
-    for (const commitment of entity.commitments) {
-      const owed = characters.get(commitment.to.key);
-      if (owed) owed.owedBy.push({
-        party: entity.name, what: commitment.what, ...(commitment.outcome ? { outcome: commitment.outcome } : {}),
-        ...(commitment.entered ? { entered: passageOf(commitment.entered) } : {}), ...(commitment.resolved ? { resolved: passageOf(commitment.resolved) } : {}),
-      });
-    }
-  }
   for (const held of holdings.characters) {
-    const character = characters.get(held.entryId);
-    if (!character) continue;
-    if (held.rank) character.rank = held.rank;
-    character.things = held.things;
-    character.abilities = held.abilities;
-    character.chronicle = held.history;
-    met(character, held.history[0] && passageOf(held.history[0].passage));
+    const entry = entries.find(candidate => candidate.id === held.entryId);
+    add({
+      key: held.entryId, name: held.name, mainCharacter: held.mainCharacter,
+      ...(held.rank ? { rank: held.rank } : {}),
+      things: held.things, abilities: held.abilities, chronicle: held.history,
+      firstSeen: held.history[0] && passageOf(held.history[0]),
+      names: new Set([held.name, ...(entry?.aliases ?? [])].map(normalizeIdentityLabel)),
+    });
   }
 
   // Who a speaker is: the main character, an entry by any of its names, a declared character
   // by an alias, or someone the record knows only by the name they speak under.
   const main = () => [...characters.values()].find(character => character.mainCharacter);
-  const declaredOf = (name: string) => {
-    const key = normalizeIdentityLabel(name);
-    return declared.find(character => [character.name, ...(character.aliases ?? [])].some(other => normalizeIdentityLabel(other) === key));
-  };
   const declaredNames = (name: string) => {
-    const match = declaredOf(name);
-    return match ? [match.name, ...(match.aliases ?? [])].map(normalizeIdentityLabel) : [normalizeIdentityLabel(name)];
+    const key = normalizeIdentityLabel(name);
+    const match = declared.find(character => [character.name, ...(character.aliases ?? [])].some(other => normalizeIdentityLabel(other) === key));
+    return match ? [match.name, ...(match.aliases ?? [])].map(normalizeIdentityLabel) : [key];
   };
-  // Not every speaker has a card (SENSEI, 2026-10-18): a crowd or a passing guard speaks without one.
-  const knownNames = [
-    ...entries.filter(entry => entry.kind === 'character').flatMap(entry => [entry.name, ...(entry.aliases ?? [])]),
-    ...declared.flatMap(character => [character.name, ...(character.aliases ?? [])]),
-  ];
-  const speakerOf = (written: string, protagonist: boolean): Working | undefined => {
-    // A first name alone stands for the one character it belongs to ("Mina", Mina Kisaragi).
-    const name = protagonist ? written : fullNameOf(written, knownNames) ?? written;
+  const speakerOf = (name: string, protagonist: boolean): Working => {
     if (protagonist) {
       const existing = main();
       if (existing) return existing;
       const entry = entries.find(candidate => candidate.kind === 'character' && candidate.mainCharacter);
       const named = entry?.name ?? mainCharacterName ?? name;
-      return add(blank(entry?.id ?? `character:${normalizeIdentityLabel(named)}`, named, true, [named, name]));
+      return add({ key: entry?.id ?? `character:${normalizeIdentityLabel(named)}`, name: named, mainCharacter: true, things: [], abilities: [], chronicle: [], names: new Set([named, name].map(normalizeIdentityLabel)) });
     }
     const keys = declaredNames(name);
     const existing = [...characters.values()].find(character => keys.some(key => character.names.has(key)));
     if (existing) return existing;
     const entry = entries.find(candidate => candidate.kind === 'character'
       && [candidate.name, ...(candidate.aliases ?? [])].some(other => keys.includes(normalizeIdentityLabel(other))));
-    // A card for the main character, a character the record holds, or one the Story Seed declares; never for a speaker alone.
-    if (!entry && !declaredOf(name)) return undefined;
-    return add(blank(entry?.id ?? `character:${keys[0]}`, entry?.name ?? name.trim(), Boolean(entry?.mainCharacter), keys));
+    return add({ key: entry?.id ?? `character:${keys[0]}`, name: entry?.name ?? name.trim(), mainCharacter: Boolean(entry?.mainCharacter), things: [], abilities: [], chronicle: [], names: new Set(keys) });
   };
+
+  // Who stepped onto the page: met there, with their look. A group is never a character.
+  for (const subject of appeared.subjects) {
+    if (subject.entity !== 'character' || factionNamed(subject.name, declaredFactions)) continue;
+    const entry = subject.entryId ? entries.find(candidate => candidate.id === subject.entryId) : undefined;
+    const names = [subject.name, ...(entry?.aliases ?? [])].map(normalizeIdentityLabel);
+    const character = (subject.entryId ? characters.get(subject.entryId) : undefined)
+      ?? (subject.mainCharacter ? main() : undefined)
+      ?? [...characters.values()].find(candidate => names.some(name => candidate.names.has(name)))
+      ?? add({ key: subject.key, name: subject.name, mainCharacter: subject.mainCharacter, things: [], abilities: [], chronicle: [], names: new Set(names) });
+    character.appearance = appearanceOf(subject);
+    const first = appearancePassage(subject.first);
+    if (!character.firstSeen || comesBefore(first, character.firstSeen) < 0) character.firstSeen = first;
+  }
 
   // A faction: one the story declares (by name or alias), or a name whose last word names a body of people.
   const factions = new Map<string, Omit<CodexFaction, 'firstSeen' | 'voice'> & Partial<Pick<CodexFaction, 'firstSeen' | 'voice'>>>();
@@ -364,7 +240,6 @@ export function deriveStoryCodex({ entries, chapters, mainCharacterName, declare
       .sort((left, right) => left.index - right.index || left.record.anchor.startOffset - right.record.anchor.startOffset);
     for (const { record } of lines) {
       const character = (!record.payload.protagonist && factionOf(record.payload.speaker)) || speakerOf(record.payload.speaker, record.payload.protagonist);
-      if (!character) continue;
       const passage: CodexPassage = { chapterNumber: chapter.chapterNumber, blockId: record.anchor.blockId, text: record.anchor.selectedText };
       if (!character.voice) character.voice = { lines: 0, chapters: [], first: passage };
       character.voice.lines += 1;
@@ -373,18 +248,12 @@ export function deriveStoryCodex({ entries, chapters, mainCharacterName, declare
     }
   }
 
-  // Each speaking character's own voice, from their card.
-  for (const character of characters.values()) {
-    const voice = character.voice && entries.find(entry => entry.id === character.key)?.voice;
-    if (voice && castVoice(voice.key)) character.voice!.cast = voice.key;
-  }
-
   const factionList = [...factions.values()]
     .filter((faction): faction is CodexFaction => Boolean(faction.firstSeen && faction.voice))
     .sort((left, right) => comesBefore(left.firstSeen, right.firstSeen));
 
-  const metCharacters = [...characters.values()].filter((character): character is Working & { firstSeen: CodexPassage } => Boolean(character.firstSeen));
-  const roster: CodexCharacter[] = metCharacters
+  const met = [...characters.values()].filter((character): character is Working & { firstSeen: CodexPassage } => Boolean(character.firstSeen));
+  const roster: CodexCharacter[] = met
     .sort((left, right) => Number(right.mainCharacter) - Number(left.mainCharacter) || comesBefore(left.firstSeen, right.firstSeen))
     .map(({ names: _names, ...character }) => character);
 
@@ -393,9 +262,9 @@ export function deriveStoryCodex({ entries, chapters, mainCharacterName, declare
   for (const character of roster) {
     for (const event of character.chronicle) {
       if (!event.targetId || !event.target || holdingTargetKind(event.verb) !== 'thing') continue;
-      const item = items.get(event.targetId) ?? { key: event.targetId, name: event.target, count: 0, equipped: false, events: [], firstSeen: passageOf(event.passage) };
+      const item = items.get(event.targetId) ?? { key: event.targetId, name: event.target, count: 0, equipped: false, events: [], firstSeen: passageOf(event) };
       item.events.push({ ...event, holder: character.name });
-      if (comesBefore(passageOf(event.passage), item.firstSeen) < 0) item.firstSeen = passageOf(event.passage);
+      if (comesBefore(passageOf(event), item.firstSeen) < 0) item.firstSeen = passageOf(event);
       items.set(event.targetId, item);
     }
     for (const thing of character.things) {
@@ -406,52 +275,52 @@ export function deriveStoryCodex({ entries, chapters, mainCharacterName, declare
       item.equipped = thing.equipped;
     }
   }
-  // Things the plans had on the page, held or not, with their looks and state.
-  for (const entity of record.filter(candidate => candidate.kind === 'thing')) {
-    const first = castPassage(entity, ordered);
-    const item = items.get(entity.key) ?? (first ? { key: entity.key, name: entity.name, count: 0, equipped: false, events: [], firstSeen: first } : undefined);
-    if (!item) continue;
-    if (first) {
-      item.appearance = appearanceOf(entity, first);
-      if (comesBefore(first, item.firstSeen) < 0) item.firstSeen = first;
-    }
-    if (entity.who) item.who = entity.who.text;
-    const status = currentStatus(entity);
-    if (status) item.status = status;
-    items.set(entity.key, item);
+  // Things that stepped onto the page, held or not, with their looks.
+  for (const subject of appeared.subjects) {
+    if (subject.entity !== 'thing') continue;
+    const first = appearancePassage(subject.first);
+    const item = items.get(subject.key) ?? { key: subject.key, name: subject.name, count: 0, equipped: false, events: [], firstSeen: first };
+    item.appearance = appearanceOf(subject);
+    if (comesBefore(first, item.firstSeen) < 0) item.firstSeen = first;
+    items.set(subject.key, item);
   }
   const itemList = [...items.values()]
-    .map(item => ({ ...item, events: [...item.events].sort((left, right) => comesBefore(passageOf(left.passage), passageOf(right.passage))) }))
+    .map(item => ({ ...item, events: [...item.events].sort((left, right) => comesBefore(passageOf(left), passageOf(right))) }))
     .sort((left, right) => comesBefore(left.firstSeen, right.firstSeen));
 
-  // What the checks found in each chapter's plan, in story order; a check about no one chapter (two names that may be one) first.
-  const checks: CodexCheck[] = [
-    ...holdings.flags.map((flag, index): CodexCheck => ({ key: `holdings-${index}`, message: flag.message, ...(flag.chapterNumber !== undefined ? { chapterNumber: flag.chapterNumber } : {}) })),
-    ...ordered.flatMap(chapter => (chapter.planChecks ?? []).map((check, index): CodexCheck => ({
-      key: `plan-${chapter.id}-${index}`, message: `Chapter ${chapter.chapterNumber}: ${check.message}`, chapterNumber: chapter.chapterNumber,
-    }))),
-  ].sort((left, right) => (left.chapterNumber ?? 0) - (right.chapterNumber ?? 0));
+  const holdingChecks = holdings.flags.map((flag): CodexCheck => {
+    const blockId = flag.recordId
+      ? ordered.find(chapter => chapter.id === flag.chapterId)?.holdingChanges?.find(change => change.id === flag.recordId)?.anchor.blockId
+      : undefined;
+    return blockId ? { ...flag, blockId } : flag;
+  });
+  // In story order; a check about no one chapter (two names that may be one) comes first.
+  const checks = [...holdingChecks, ...appeared.flags].sort((left, right) => (left.chapterNumber ?? 0) - (right.chapterNumber ?? 0));
 
   return { characters: roster, factions: factionList, items: itemList, checks };
 }
 
-/** What a Codex card's picture is made from: who or what it shows, and the look the record holds. */
+/** What a Codex card's picture is made from: who or what it shows, and the look the record wrote down. */
 export interface CodexPictureCard {
   /** The card's key: stable for this story. */
   key: string;
   subject: 'character' | 'thing';
   name: string;
-  /** The look the picture is made from: the card's look, with every change since. */
-  look: Look;
+  /**
+   * The look the picture is made from. A card whose look is not written yet,
+   * or is older than its latest change, comes without one: its host writes it
+   * first (`describeCodexLook`), then makes the picture.
+   */
+  look?: Look;
 }
 
 /** A card ready to be pictured: with the look its picture is made from. */
-export type CodexPictureMade = CodexPictureCard;
+export type CodexPictureMade = CodexPictureCard & { look: Look };
 
 /**
- * The host's picture maker for one story: it makes a card's picture from the
- * look on the card (SENSEI, 2026-10-20: Manifest draws the look the record
- * already holds; it never writes one).
+ * The host's picture maker for one story: it makes a card's picture from a
+ * written look. The Reader writes a card's look first when it has none
+ * (`describeCodexLook`), so a host only ever pictures a written look.
  */
 export interface CodexPictureMaker {
   pictureOf: (key: string) => string | undefined;
@@ -461,7 +330,7 @@ export interface CodexPictureMaker {
 
 /**
  * The host's pictures for one story's Codex cards. SEN shows them and offers
- * Manifest; the host makes each picture and keeps it. Without them, cards show
+ * Manifest; the host makes each picture and keeps it. Without it, cards show
  * their aura and offer nothing.
  */
 export interface CodexPictures {
@@ -470,11 +339,3 @@ export interface CodexPictures {
   /** Makes the card's picture from its look and keeps it, replacing any before it. Rejects with a reason the reader can read. */
   manifest: (card: CodexPictureCard) => Promise<void>;
 }
-
-/** The look a card's picture is made from: its whole look, with each change since folded into its one line. */
-export const pictureLook = (appearance: CodexAppearance | undefined): Look | undefined => {
-  const look = appearance?.look;
-  if (!look) return undefined;
-  const changes = appearance.changes.filter(change => comesBefore(look.passage, change.passage) < 0).map(change => change.change);
-  return { summary: changes.length ? `${look.summary.replace(/[.。]+$/u, '')}; since then: ${changes.join('; ')}` : look.summary, traits: { ...look.traits } };
-};

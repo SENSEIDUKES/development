@@ -17,7 +17,6 @@ import { buildHarnessGenerationPrompt } from '../../../server/harness-generation
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { REST_OF_CHAPTER, writtenChapterReply } from '../../../test-utils/writtenChapter';
 import { acceptHarnessModelResponse } from './responseAcceptance';
-import { planEveryChapter } from '../../../test-utils/chapterPlan';
 
 /**
  * Narration plus Sound Cues, end to end, in the tiny SEN language: the writer
@@ -45,7 +44,6 @@ const adapter = (...raws: string[]) => {
   const value: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
     generate,
-    planChapter: planEveryChapter(),
     arcOperation: async () => response(JSON.stringify({ plan: GOAL, destinedEnding: 'Free the city from its debts.' })),
   };
   return { value, generate };
@@ -60,7 +58,9 @@ const taggedChapter = () => ({
     '[[sound: thunder | Thunder rolled | high]] over the tiled roofs.',
     'The [[sound: war cry | debt collectors of the eastern ward all arrived together]] at once.',
   ],
+  arcCompletion: { goalId: 'arc-1-opening', completed: false, evidence: '' },
   recap: 'Mara faced [[sound: beast roar | the beast]] in the courtyard.',
+  chapterFunction: 'conflict',
   nextProgression: 'Mara [[sound: unsheathe | trains | low]] with her sword.',
   nextWorldBuilding: 'The eastern ward keeps its ledgers.',
   nextConflict: 'The fox returns.',
@@ -92,10 +92,10 @@ describe('HARNESS Sound Cues through sound tags', () => {
     expect(request.capaPrompt.text).not.toContain('drew his sword');
     const { responseJsonSchema, systemInstruction } = buildHarnessGenerationPrompt(request);
     expect(responseJsonSchema.properties).not.toHaveProperty('soundCues');
-    expect(Object.keys(responseJsonSchema.properties).slice(0, 2)).toEqual(['title', 'paragraphs']);
+    expect(Object.keys(responseJsonSchema.properties).slice(0, 3)).toEqual(['title', 'plan', 'paragraphs']);
     // Recordings, URLs and catalogs never enter the call.
     expect(JSON.stringify(request)).not.toMatch(/https:|library-default-cues|\.mp3/);
-    expect(systemInstruction).not.toMatch(/dialogue:|manifestations|systemPanels|creatureEvents/);
+    expect(systemInstruction).not.toMatch(/dialogue|manifestations|systemPanels|creatureEvents/);
     // Speakers is its own kind, taught by its own skill: never the retired dialogue contract.
     expect(systemInstruction).toContain('CAPA SKILL [Speakers] — SEN Speakers');
   });
@@ -179,7 +179,8 @@ describe('HARNESS Sound Cues through sound tags', () => {
   it('places a cue in a Japanese story, keeping the tagged words in the story language', async () => {
     const raw = JSON.stringify({
       paragraphs: ['雨の中、林は［［sound：unsheathe｜剣を抜いた｜medium］］。', '獣が[[sound: beast roar | 吠えた]]。'],
-        });
+      arcCompletion: { goalId: 'arc-1-opening', completed: false, evidence: '' },
+    });
     const controller = new HarnessGenerationController({ repository: new InMemoryHarnessGenerationRepository(), media, modelAdapter: adapter(raw).value });
     const story = await createStory(controller, 'ja');
     await controller.generateNextChapter(story.id, 'fixture');
@@ -253,14 +254,16 @@ describe('HARNESS Sound Cues through sound tags', () => {
     const options = { media: LIBRARY_BASE_MEDIA, soundVocabulary: LIBRARY_SOUND_WORDS };
     const reversed = acceptHarnessModelResponse(JSON.stringify({
       paragraphs: ['She [[sound: drew her sword | unsheathe]] at dawn.'],
-        }), 1, options);
+      arcCompletion: { goalId: 'arc-1-opening', completed: false, evidence: '' },
+    }), 1, options);
     expect(reversed.accepted && reversed.draft.paragraphs[0]).toBe('She drew her sword at dawn.');
     expect(reversed.accepted && reversed.draft.soundCues?.map(cue => [cue.anchor.selectedText, cue.payload.sound])).toEqual([['drew her sword', 'unsheathe']]);
 
     const retired = acceptHarnessModelResponse(JSON.stringify({
       paragraphs: ['She [[1|drew her sword]] at dawn.', 'The [[2|beast roared]] and [[3]] fell silent.'],
       soundCues: [{ mark: 1, sound: 'unsheathe' }, { mark: 2, sound: 'beast roar' }],
-        }), 1, options);
+      arcCompletion: { goalId: 'arc-1-opening', completed: false, evidence: '' },
+    }), 1, options);
     expect(retired.accepted).toBe(true);
     if (!retired.accepted) return;
     expect(retired.draft.paragraphs).toEqual(['She drew her sword at dawn.', 'The beast roared and fell silent.']);

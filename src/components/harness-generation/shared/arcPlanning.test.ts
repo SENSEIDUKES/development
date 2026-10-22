@@ -1,11 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { HarnessGenerationController, arcGoalEditState, nextArcStep, type HarnessArcRequest, type HarnessChapterPlanRequest, type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type StoryFoundationInput } from '@seihouse/sen/harness-generation';
+import { HarnessGenerationController, arcGoalEditState, nextArcStep, type HarnessArcRequest, type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type StoryFoundationInput } from '@seihouse/sen/harness-generation';
 import { type ArcPlan } from '@seihouse/sen/arc-goals';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { writtenChapter } from '../../../test-utils/writtenChapter';
 import { buildHarnessArcPrompt, buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
-import { planEveryChapter } from '../../../test-utils/chapterPlan';
-import { buildChapterPlannerPrompt } from '../../../server/harness-generation/chapterPlanner';
 
 const ENDING = 'ENDING_Lin rebuilds the drowned archive and reopens it to the valley.';
 const arcOne: ArcPlan = { arcNumber: 1, goals: [
@@ -22,13 +20,11 @@ const reply = (body: unknown) => ({ rawProviderResponse: JSON.stringify(body), p
 
 const setup = async (overrides: Partial<StoryFoundationInput> = {}, visibility?: 'private' | 'public') => {
   const requests: HarnessGenerationRequest[] = [];
-  const planRequests: HarnessChapterPlanRequest[] = [];
   let output: Record<string, unknown> = { paragraphs: ['Lin waded through the first flood.'] };
   const arcOperation = vi.fn(async (_request: HarnessArcRequest) => reply({ plan: arcTwoDraft, lookahead: [], destinedEnding: ENDING }));
   const modelAdapter: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ configured: true, provider: 'fixture', defaultModel: 'fixture', models: [] }),
     generate: async request => { requests.push(structuredClone(request)); return reply(writtenChapter(output)); },
-    planChapter: async request => { planRequests.push(structuredClone(request)); return planEveryChapter()(); },
     arcOperation,
   };
   const repository = new InMemoryHarnessGenerationRepository();
@@ -47,7 +43,7 @@ const setup = async (overrides: Partial<StoryFoundationInput> = {}, visibility?:
     await reloaded.hydrate();
     return reloaded;
   };
-  return { controller, repository, story, requests, planRequests, arcOperation, jumpTo, setOutput: (value: Record<string, unknown>) => { output = value; } };
+  return { controller, repository, story, requests, arcOperation, jumpTo, setOutput: (value: Record<string, unknown>) => { output = value; } };
 };
 
 /** A reader's own direction for one chapter; Fate Survival writes nothing without one. */
@@ -59,7 +55,7 @@ const arcOneDone = [
 ];
 
 describe('HARNESS plans each arc when it begins', () => {
-  it('starts with only Arc 1 and the hidden look-ahead; the chapter planner sees only the ending and the active goal, and the writer neither', async () => {
+  it('starts with only Arc 1 and the hidden look-ahead, and the writer sees only the ending and the active goal', async () => {
     const run = await setup();
     const story = run.controller.snapshot().stories[0];
     expect(story.arcPlans).toEqual([{ plan: arcOne, effectiveChapter: 1, reason: 'initial' }]);
@@ -68,18 +64,16 @@ describe('HARNESS plans each arc when it begins', () => {
     expect(story.arcGoalReviews).toEqual([{ arcNumber: 1, reviewedAt: expect.any(String), edited: false, source: 'blueprint-creation' }]);
     await run.controller.generateNextChapter(run.story.id, 'fixture');
     expect(run.arcOperation).not.toHaveBeenCalled();
-    const request = run.planRequests[0];
+    const request = run.requests[0];
     expect(request.storyInformation.arc).toMatchObject({ arcNumber: 1, plannedArcCount: 2, finalArc: false, activeGoal: { id: 'arc-1-flood' }, completionDeadline: 12 });
-    const prompt = buildChapterPlannerPrompt(request);
+    const prompt = buildHarnessGenerationPrompt(request);
     expect(prompt.userPrompt.split(ENDING)).toHaveLength(2);
     expect(prompt.userPrompt).toContain('GOAL_A1G1');
     // Never a later goal, and never the look-ahead: only the arc planner reads it.
-    const writer = buildHarnessGenerationPrompt(run.requests[0]);
     for (const hidden of ['GOAL_A1G2', 'LOOKAHEAD_A2']) {
-      for (const text of [prompt.userPrompt, prompt.systemInstruction, writer.userPrompt, writer.systemInstruction]) expect(text).not.toContain(hidden);
+      expect(prompt.userPrompt).not.toContain(hidden);
+      expect(prompt.systemInstruction).not.toContain(hidden);
     }
-    // The writer narrates the plan: the ending and the goal are the planner's.
-    for (const planners of [ENDING, 'GOAL_A1G1']) expect(writer.userPrompt).not.toContain(planners);
   });
 
   it('Regular Reader: plans Arc 2 only when the reader begins it, from how Arc 1 went, then waits for its review', async () => {
@@ -117,9 +111,9 @@ describe('HARNESS plans each arc when it begins', () => {
     await atArc2.acceptArcGoals(run.story.id, 2);
     expect(nextArcStep(atArc2.snapshot(), run.story.id)).toBeUndefined();
     await atArc2.generateNextChapter(run.story.id, 'fixture');
-    const request = run.planRequests.at(-1)!;
+    const request = run.requests.at(-1)!;
     expect(request.storyInformation.arc).toMatchObject({ arcNumber: 2, chapterInArc: 1, finalArc: true, activeGoal: { id: 'arc-2-1', startChapter: 31, endChapter: 51 } });
-    expect(buildChapterPlannerPrompt(request).userPrompt).not.toContain('LOOKAHEAD_A2');
+    expect(buildHarnessGenerationPrompt(request).userPrompt).not.toContain('LOOKAHEAD_A2');
   });
 
   it('Regular Reader: an edit made while the review is pending is the review; a public novel can still accept', async () => {

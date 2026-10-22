@@ -17,7 +17,6 @@ import {
   serializeReadAloudPreferences,
   voicesForLanguage,
   writeReadAloudPreferences,
-  type ReadAloudCharacterVoices,
   type ReadAloudVoice,
   type ReadAloudVoicePicks,
 } from './readAloud';
@@ -32,32 +31,13 @@ const speaker = (blockId: string, text: string, words: string, name: string, pro
   };
 };
 
-const script = (paragraphs: string[], options: { title?: string; language?: string; speakers?: SpeakerAttachment[]; mainCharacter?: MainCharacterNames; voices?: ReadAloudCharacterVoices } = {}) =>
+const script = (paragraphs: string[], options: { title?: string; language?: string; speakers?: SpeakerAttachment[]; mainCharacter?: MainCharacterNames } = {}) =>
   buildReadAloudScript({
-    chapterNumber: 3, title: options.title ?? 'Low Tide', language: options.language ?? 'en', speakers: options.speakers, mainCharacter: options.mainCharacter, voices: options.voices,
+    chapterNumber: 3, title: options.title ?? 'Low Tide', language: options.language ?? 'en', speakers: options.speakers, mainCharacter: options.mainCharacter,
     paragraphs: paragraphs.map((text, index) => ({ id: `c3-p${index}`, text })),
   });
 
 describe('buildReadAloudScript', () => {
-  it('reads each character in the voice on their card: by entry, by name for older records, the main character\'s for their untagged lines, and by role without one', () => {
-    const text = '“Run!” “Stay.” “Why?” “Go.”';
-    const tagged = (words: string, name: string, protagonist: boolean, entryId?: string) => {
-      const made = speaker('c3-p0', text, words, name, protagonist);
-      return entryId ? { ...made, payload: { ...made.payload, entryId } } : made;
-    };
-    const voices: ReadAloudCharacterVoices = { byEntry: { 'e-wu': 'old-grandmaster-male' }, byName: { 'lan yue': 'bright-heroine-female' }, main: 'dark-protagonist-male' };
-    const lines = script([text], {
-      voices, mainCharacter: { names: ['Ye Chen'], others: [] },
-      speakers: [tagged('“Run!”', 'Smith', false, 'e-wu'), tagged('“Stay.”', 'Lan Yue', false), tagged('“Why?”', 'Stranger', false)],
-    }).lines.slice(1);
-    expect(lines.map(line => [line.text, line.role, line.voice])).toEqual([
-      ['“Run!”', 'side', 'old-grandmaster-male'],
-      ['“Stay.”', 'side', 'bright-heroine-female'],
-      ['“Why?”', 'side', undefined],
-      ['“Go.”', 'protagonist', 'dark-protagonist-male'],
-    ]);
-  });
-
   it('reads the title first: "Chapter N." in English, the title alone otherwise', () => {
     expect(script([]).lines).toEqual([{ key: 'title', sentence: { start: 0, end: 8 }, start: 0, end: 8, text: 'Chapter 3. Low Tide', role: 'narrator' }]);
     expect(script([], { title: '' }).lines[0].text).toBe('Chapter 3.');

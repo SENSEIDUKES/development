@@ -3,12 +3,17 @@ import type { FrozenNarrativeMedia } from '../../../audio/media';
 import { describeSetAsideSoundCue, placeSoundCues } from '../../../audio/soundCuePlacement';
 import type { SoundWord } from '../../../audio/soundWords';
 import type { SoundCueAttachment } from '../../../audio/inlineAudio';
-import { readMarks, type MarkReading } from '../../../narrative/marks';
+import { isAppearanceTagWord, isHoldingTagWord, readMarks, type MarkReading, type WordTag } from '../../../narrative/marks';
 import { settleStraySoundTags } from './soundTagRepair';
 import type { SpeakerAttachment } from '../../../narrative/speech';
 import { chapterTitleText } from '../../../narrative/chapterTitle';
-import { placeSpeakers, type ProtagonistNames } from './speakers';
+import type { HoldingChangeAttachment } from '../../../narrative/holdings';
+import type { AppearanceAttachment } from '../../../narrative/appearances';
+import { isMainCharacterTag, isProtagonist, placeSpeakers, type ProtagonistNames } from './speakers';
+import { holdingName, placeHoldingChanges } from './holdings';
+import { placeAppearances } from './appearances';
 import { chapterSoundtrack } from './soundtrack';
+import { normalizeIdentityLabel } from './canonicalProjection';
 import { ignoredSoundCueListWarning, stripReplyMarks } from './chapterSignals';
 import {
   harnessChapterBody,
@@ -19,8 +24,8 @@ import {
   splitHarnessProseParagraphs,
 } from './chapterBody';
 import { HARNESS_MEMORY_CATEGORIES } from '../../../narrative/generation';
-import { CHAPTER_FUNCTIONS, CHAPTER_RECAP_TEXT_LIMIT, type ChapterFunction, type NextChapterSuggestions } from '../../../narrative/storyDirection';
-import type { HarnessAcceptedChapterDraft, HarnessChapterRhythm, HarnessChapterScene, HarnessRejectedEventDiagnostic, HarnessSemanticEvent, HarnessWarning, HarnessEventDetails, HarnessCanonicalKind } from '../../../narrative/generation';
+import { CHAPTER_FUNCTIONS, CHAPTER_RECAP_TEXT_LIMIT, isChapterFunction, type ChapterFunction, type NextChapterSuggestions } from '../../../narrative/storyDirection';
+import type { HarnessAcceptedChapterDraft, HarnessChapterRhythm, HarnessChapterScene, HarnessModelPlan, HarnessRejectedEventDiagnostic, HarnessSemanticEvent, HarnessWarning, HarnessEventDetails, HarnessCanonicalKind } from '../../../narrative/generation';
 
 type ParsedResponse = {
   accepted: true;
@@ -99,10 +104,8 @@ const recoverPlainProse = (raw: string): string | undefined => {
     ? trimmed.replace(/^```(?:text|markdown)?\s*/i, '').replace(/\s*```$/, '').trim()
     : looseJsonString(embeddedProse).trim();
   if (!candidate || looksLikeRefusal(candidate)) return undefined;
-  // An invalid JSON envelope without a recoverable prose field is not prose. A
-  // chapter that opens with a tag ("[[soundscape: …]]") is prose: a Diner test
-  // rewrite was lost when it was taken for a broken JSON array.
-  if ((candidate.startsWith('{') || (candidate.startsWith('[') && !candidate.startsWith('[['))) && embeddedProse === undefined) return undefined;
+  // An invalid JSON envelope without a recoverable prose field is not prose.
+  if ((candidate.startsWith('{') || candidate.startsWith('[')) && embeddedProse === undefined) return undefined;
   return /[\p{L}\p{N}]/u.test(candidate) ? candidate : undefined;
 };
 
@@ -120,6 +123,23 @@ const appendIgnoredIdentityWarning = (
       message: `The harness ignored model-supplied ${ignored.join(', ')}; identity and ordering are application-owned.`,
     });
   }
+};
+
+const parsePlan = (value: unknown, warnings: HarnessWarning[]): HarnessModelPlan | undefined => {
+  const prosePlan = nonEmptyString(value);
+  if (prosePlan) return prosePlan;
+  if (isRecord(value)) {
+    const intent = nonEmptyString(value.intent);
+    const beats = stringList(value.beats);
+    if (intent || beats) return { ...(intent ? { intent } : {}), ...(beats ? { beats } : {}) };
+  }
+  if (value !== undefined && value !== null) {
+    warnings.push({
+      code: 'invalid_plan_omitted',
+      message: 'The optional creative plan could not be read and was omitted.',
+    });
+  }
+  return undefined;
 };
 
 /** Story direction is author-owned: a chapter reply can never write it. */
@@ -166,12 +186,16 @@ export const NEXT_CHAPTER_SUGGESTION_FIELDS: Record<ChapterFunction, string> = {
 const rhythmWarning = (message: string): HarnessWarning => ({ code: 'optional_rhythm_metadata_omitted', message });
 
 /**
- * Reads the writer's three next-chapter possibilities. Each is validated on
- * its own so one malformed value never discards the others, and none of them
- * can reject the prose. The chapter's function is its plan's, never the writer's.
+ * Reads the completed chapter's function and the three next-chapter
+ * possibilities. Each piece is validated on its own so one malformed value
+ * never discards the others, and none of them can reject the prose.
  */
 const parseRhythm = (parsed: Record<string, unknown>, warnings: HarnessWarning[]): HarnessChapterRhythm | undefined => {
   const rhythm: HarnessChapterRhythm = {};
+  if (isChapterFunction(parsed.chapterFunction)) rhythm.chapterFunction = parsed.chapterFunction;
+  else warnings.push(rhythmWarning(parsed.chapterFunction === undefined
+    ? 'The provider omitted the completed chapter function; the rhythm history skips this chapter.'
+    : `The provider chapter function was not one of ${CHAPTER_FUNCTIONS.join(', ')} and was omitted; the rhythm history skips this chapter.`));
   const suggestions: NextChapterSuggestions = {};
   for (const type of CHAPTER_FUNCTIONS) {
     const field = NEXT_CHAPTER_SUGGESTION_FIELDS[type];
@@ -182,7 +206,7 @@ const parseRhythm = (parsed: Record<string, unknown>, warnings: HarnessWarning[]
       : `The provider ${type} suggestion (${field}) was malformed and was omitted; the chapter is kept without it.`));
   }
   if (Object.keys(suggestions).length) rhythm.nextChapterSuggestions = suggestions;
-  return rhythm.nextChapterSuggestions ? rhythm : undefined;
+  return rhythm.chapterFunction || rhythm.nextChapterSuggestions ? rhythm : undefined;
 };
 
 /**
@@ -228,8 +252,15 @@ export interface HarnessResponseAcceptanceOptions {
   minWords?: number;
   /** The main character's names, from the attempt's frozen Story Information: whose lines are the protagonist's. */
   protagonistNames?: ProtagonistNames;
-  /** The writer was asked for each paragraph's speaker, so speech it left without one is worth flagging. */
+  /** The writer was asked for speaker tags, so speech it left untagged is worth flagging. */
   speakersExpected?: boolean;
+  /** The writer was asked for holdings tags and a closing list, so a missing list is worth flagging. */
+  holdingsExpected?: boolean;
+  /**
+   * The writer was asked for appears and look tags, so the chapter keeps its
+   * appearances even when it has none: the rules then know it was asked.
+   */
+  appearancesExpected?: boolean;
   /** The writer was asked to choose the chapter's soundtrack, so a chapter without one is worth flagging. */
   soundtrackExpected?: boolean;
 }
@@ -270,17 +301,20 @@ const acceptedChapterBody = (
  * than inside one are removed and its sound moved to the nearby sentence
  * (`settleStraySoundTags`). A paragraph that held nothing but a tag is dropped; a
  * tag written alone in its own paragraph moves to the start of the next one.
- * A speaker tag with no paragraph after it is counted as naming no speech. A
- * slipped tag (a kind the language does not have, such as the retired holdings
- * tags) is removed. Numbered marks (`[[1|words]]`) are a retired form: they are
+ * A speaker tag with no paragraph after it is counted as naming no speech; a
+ * word tag with none goes to the end of the last paragraph, where its change
+ * happened. Numbered marks (`[[1|words]]`) are a retired form: they are
  * removed with their words kept, and nothing is placed from them.
  */
 const readParagraphMarks = (paragraphs: readonly string[], warnings: HarnessWarning[], soundWords?: readonly SoundWord[], locale?: string) => {
   const read: MarkReading[] = [];
   let loose: MarkReading['speakers'] = [];
+  let looseWords: WordTag[] = [];
   // The chapter's soundtrack tags in reading order, a paragraph that held nothing else included.
   const soundtracks: MarkReading['soundtracks'] = [];
-  let slippedTags = 0;
+  // Unreadable word tags, counted where each kind is reported: appearance tags apart from the rest.
+  let wordTagIssues = 0;
+  let appearanceTagIssues = 0;
   let soundTagIssues = 0;
   const options = soundWords?.length ? { soundWords: soundWords.map(sound => sound.word) } : {};
   // A sound tag written beside its sentence instead of around its words leaves no stray words behind.
@@ -292,16 +326,25 @@ const readParagraphMarks = (paragraphs: readonly string[], warnings: HarnessWarn
     });
   }
   for (const reading of settled.readings) {
-    slippedTags += reading.wordTagIssues.length;
+    for (const issue of reading.wordTagIssues) {
+      if (issue.kind !== 'unknown' && isAppearanceTagWord(issue.word)) appearanceTagIssues += 1;
+      else wordTagIssues += 1;
+    }
     soundTagIssues += reading.soundIssues.length;
     soundtracks.push(...reading.soundtracks);
     if (!reading.text) {
       loose = [...loose, ...reading.speakers.map(tag => ({ ...tag, offset: 0 }))];
+      looseWords = [...looseWords, ...reading.wordTags.map(tag => ({ ...tag, offset: 0 }))];
       continue;
     }
-    read.push(loose.length ? { ...reading, speakers: [...loose, ...reading.speakers] } : reading);
+    read.push(loose.length || looseWords.length
+      ? { ...reading, speakers: [...loose, ...reading.speakers], wordTags: [...looseWords, ...reading.wordTags] }
+      : reading);
     loose = [];
+    looseWords = [];
   }
+  const last = read.at(-1);
+  if (last && looseWords.length) read[read.length - 1] = { ...last, wordTags: [...last.wordTags, ...looseWords.map(tag => ({ ...tag, offset: last.text.length }))] };
   const strandedTags = loose.length;
   const retired = read.reduce((count, reading) => count + reading.marks.length + reading.issues.length, 0);
   if (retired) {
@@ -310,19 +353,13 @@ const readParagraphMarks = (paragraphs: readonly string[], warnings: HarnessWarn
       message: `Removed ${retired} numbered mark${retired === 1 ? '' : 's'}, a retired form that places nothing, and kept ${retired === 1 ? 'its' : 'their'} words.`,
     });
   }
-  if (slippedTags) {
-    warnings.push({
-      code: 'prose_marks_removed',
-      message: `Removed ${slippedTags} tag${slippedTags === 1 ? '' : 's'} of a kind the SEN language does not have, and kept the prose.`,
-    });
-  }
   if (soundTagIssues) {
     warnings.push({
       code: 'sound_cue_set_aside',
       message: `Removed ${soundTagIssues} unusable sound tag${soundTagIssues === 1 ? '' : 's'} (unclosed, nested, empty, or naming no sound or no words) and kept the prose.`,
     });
   }
-  return { read, strandedTags, soundtracks };
+  return { read, strandedTags, wordTagIssues, appearanceTagIssues, soundtracks };
 };
 
 /**
@@ -410,6 +447,80 @@ const acceptedSpeakers = (
   return placement.speakers;
 };
 
+/** One holding tag's change in words: its verb, who (the main character however named), and the thing, ability or rank. */
+const holdingTagKey = (tag: WordTag, protagonist?: ProtagonistNames) => {
+  const [holder = '', ...rest] = tag.parts;
+  const who = isMainCharacterTag(holder) || (protagonist ? isProtagonist(holder, protagonist) : false) ? 'main character' : normalizeIdentityLabel(holder);
+  const named = tag.word === 'rank' ? undefined : holdingName(rest[0] ?? '');
+  const what = named && 'name' in named ? named.name : tag.word === 'rank' ? rest.join(' ') : rest[0] ?? '';
+  return `${tag.word}|${who}|${normalizeIdentityLabel(what)}`;
+};
+
+/**
+ * Reads the writer's holding tags into holding changes on the sentences they
+ * point at, and its closing list of the main character's holdings. Tags it
+ * cannot read, and a missing or malformed list, are flagged; the chapter is
+ * never rejected for its holdings.
+ */
+const acceptedHoldings = (
+  parsed: Record<string, unknown>,
+  marked: { read: ReadonlyArray<Pick<MarkReading, 'text' | 'wordTags'>>; wordTagIssues: number },
+  chapterNumber: number,
+  warnings: HarnessWarning[],
+  options: HarnessResponseAcceptanceOptions,
+): { changes: HoldingChangeAttachment[]; closing?: string[] } => {
+  const raw = parsed.mainCharacterHoldings;
+  // Tags written into the closing list instead of the prose still record their change, at the chapter's end,
+  // once: a tag the prose already holds, or the list repeats, is the same change and is not counted again.
+  const listed = Array.isArray(raw) ? raw.map(nonEmptyString).filter((entry): entry is string => Boolean(entry)).map(entry => readMarks(entry)) : undefined;
+  const recorded = new Set(marked.read.flatMap(paragraph => paragraph.wordTags).filter(tag => isHoldingTagWord(tag.word)).map(tag => holdingTagKey(tag, options.protagonistNames)));
+  const listedTags = (listed?.flatMap(entry => entry.wordTags) ?? []).filter(tag => isHoldingTagWord(tag.word)).filter(tag => {
+    const key = holdingTagKey(tag, options.protagonistNames);
+    if (recorded.has(key)) return false;
+    recorded.add(key);
+    return true;
+  });
+  const paragraphs = marked.read.map((paragraph, index) => ({ blockId: harnessParagraphBlockId(chapterNumber, index), text: paragraph.text, wordTags: [...paragraph.wordTags] }));
+  const last = paragraphs.at(-1);
+  if (last && listedTags.length) last.wordTags.push(...listedTags.map(tag => ({ ...tag, offset: last.text.length })));
+  const placement = placeHoldingChanges({ paragraphs, locale: options.locale });
+  const closing = listed
+    ? [...new Set(listed.flatMap(entry => entry.text || entry.wordTags.filter(tag => isHoldingTagWord(tag.word) && tag.word !== 'rank' && tag.parts[1]).map(tag => tag.parts[1])).filter(Boolean))]
+    : undefined;
+  const problems = [
+    ...(listedTags.length ? [`${listedTags.length} tag${listedTags.length === 1 ? ' was' : 's were'} written in the closing list instead of the prose and ${listedTags.length === 1 ? 'was' : 'were'} recorded at the chapter's end`] : []),
+    ...(marked.wordTagIssues ? [`${marked.wordTagIssues} tag${marked.wordTagIssues === 1 ? ' was' : 's were'} unreadable and removed`] : []),
+    ...placement.problems,
+    ...(raw !== undefined && !closing ? ['the closing list of the main character\'s holdings was not a list and was set aside'] : []),
+    ...(raw === undefined && options.holdingsExpected ? ['the writer returned no closing list of the main character\'s holdings, so this chapter is not checked against one'] : []),
+  ];
+  if (problems.length) warnings.push({ code: 'holding_tags_incomplete', message: `${problems.join('; ')}.`.replace(/^./, letter => letter.toUpperCase()) });
+  return { changes: placement.changes, ...(closing ? { closing } : {}) };
+};
+
+/**
+ * Reads the writer's appears and look tags into appearances on the sentences
+ * they point at. Tags it cannot read are flagged; the chapter is never
+ * rejected for its appearances. A chapter written with the Appearance skill
+ * keeps its appearances even when it has none.
+ */
+const acceptedAppearances = (
+  marked: { read: ReadonlyArray<Pick<MarkReading, 'text' | 'wordTags'>>; appearanceTagIssues: number },
+  chapterNumber: number,
+  warnings: HarnessWarning[],
+  options: HarnessResponseAcceptanceOptions,
+): AppearanceAttachment[] | undefined => {
+  const paragraphs = marked.read.map((paragraph, index) => ({ blockId: harnessParagraphBlockId(chapterNumber, index), text: paragraph.text, wordTags: paragraph.wordTags }));
+  const placement = placeAppearances({ paragraphs, locale: options.locale });
+  const unreadable = marked.appearanceTagIssues;
+  const problems = [
+    ...(unreadable ? [`${unreadable} appearance tag${unreadable === 1 ? ' was' : 's were'} unreadable and removed`] : []),
+    ...placement.problems,
+  ];
+  if (problems.length) warnings.push({ code: 'appearance_tags_incomplete', message: `${problems.join('; ')}.`.replace(/^./, letter => letter.toUpperCase()) });
+  return placement.appearances.length || options.appearancesExpected ? placement.appearances : undefined;
+};
+
 export const verifyHarnessEventEvidence = (event: HarnessSemanticEvent, prose: string): HarnessSemanticEvent => {
   const normalize = (value: string) => value.replace(/\s+/g, ' ').trim();
   const quote = event.evidence ? normalize(event.evidence) : '';
@@ -441,7 +552,7 @@ export const acceptHarnessModelResponse = (
     // writer's tags out of them, keeps the clean text exactly as written,
     // derives the readable prose from it, and places the Sound Cues its sound tags name.
     const source = acceptedChapterBody(parsed, warnings);
-    const marked = source ? readParagraphMarks(source, warnings, options.soundVocabulary, options.locale) : { read: [], strandedTags: 0, soundtracks: [] };
+    const marked = source ? readParagraphMarks(source, warnings, options.soundVocabulary, options.locale) : { read: [], strandedTags: 0, wordTagIssues: 0, appearanceTagIssues: 0, soundtracks: [] };
     const body = marked.read.length ? harnessChapterBody(marked.read.map(reading => reading.text), options.paragraphTarget) : undefined;
     if (!body || looksLikeRefusal(body.prose)) {
       return {
@@ -461,6 +572,9 @@ export const acceptHarnessModelResponse = (
     warnings.push(...harnessChapterBodyWarnings(body.metrics));
     const soundCues = acceptedSoundCues(marked.read, chapterNumber, warnings, options);
     const speakers = acceptedSpeakers(marked, chapterNumber, warnings, options);
+    // The closing list is read as written, so a tag put there instead of the prose is not lost.
+    const holdings = acceptedHoldings(reply, marked, chapterNumber, warnings, options);
+    const appearances = acceptedAppearances(marked, chapterNumber, warnings, options);
     const scene = acceptedScene(marked.soundtracks, chapterNumber, warnings, options);
     // The chapter's number is the HARNESS's: a "Chapter 3:" the writer put before its title is dropped.
     const writtenTitle = nonEmptyString(parsed.title);
@@ -473,6 +587,7 @@ export const acceptHarnessModelResponse = (
           : `The provider omitted a chapter title; the harness assigned ${chapterTitleFallback(chapterNumber)}.`,
       });
     }
+    const plan = parsePlan(parsed.plan, warnings);
     const recap = parseRecap(parsed.recap, warnings);
     const rhythm = parseRhythm(parsed, warnings);
     return {
@@ -483,9 +598,13 @@ export const acceptHarnessModelResponse = (
         metrics: body.metrics,
         ...(soundCues.length ? { soundCues } : {}),
         ...(speakers.length ? { speakers } : {}),
+        ...(holdings.changes.length ? { holdingChanges: holdings.changes } : {}),
+        ...(holdings.closing ? { closingHoldings: holdings.closing } : {}),
+        ...(appearances ? { appearances } : {}),
         ...(scene ? { scene } : {}),
         title: title ?? chapterTitleFallback(chapterNumber),
         titleSource: title ? 'model' : 'harness-fallback',
+        ...(plan ? { plan } : {}),
         ...(recap ? { recap } : {}),
         ...(rhythm ? { rhythm } : {}),
         responseMode: 'json',
@@ -513,7 +632,7 @@ export const acceptHarnessModelResponse = (
   warnings.push(
     {
       code: 'plain_prose_recovery',
-      message: 'The response was not valid JSON, so the harness preserved its readable prose without marks and placed no Sound Cues or speakers.',
+      message: 'The response was not valid JSON, so the harness preserved its readable prose without marks and placed no Sound Cues, speakers, holding changes or appearances.',
     },
     {
       code: 'missing_title',
@@ -521,7 +640,7 @@ export const acceptHarnessModelResponse = (
     },
     ...harnessChapterBodyWarnings(body.metrics),
     { code: 'optional_recap_omitted', message: 'Plain-prose recovery carries no recap; one can be written by hand.' },
-    rhythmWarning('Plain-prose recovery carries no next-chapter suggestions.'),
+    rhythmWarning('Plain-prose recovery carries no chapter function or next-chapter suggestions; the rhythm history skips this chapter.'),
   );
   return {
     accepted: true,

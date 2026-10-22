@@ -9,7 +9,6 @@ import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemor
 import { writtenChapterReply } from '../../../test-utils/writtenChapter';
 import { harnessParagraphBlockId } from './chapterBody';
 import { acceptHarnessModelResponse } from './responseAcceptance';
-import { planEveryChapter } from '../../../test-utils/chapterPlan';
 
 /**
  * Dialogue speakers, end to end, in the tiny SEN language: the writer tags who
@@ -29,7 +28,6 @@ const adapter = (raw: string) => {
   const value: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
     generate,
-    planChapter: planEveryChapter(),
     arcOperation: async () => response(JSON.stringify({ plan: GOAL, destinedEnding: 'Wei Lin keeps the river gate.' })),
   };
   return { value, generate };
@@ -45,7 +43,9 @@ const taggedChapter = () => JSON.stringify({
     '“Who goes there?” a voice called from the dark.',
     '[[@Nobody At All]]',
   ],
+  arcCompletion: { goalId: 'arc-1-gate', completed: false, evidence: '' },
   recap: '[[@Wei Lin]] Wei Lin held the gate.',
+  chapterFunction: 'conflict',
   nextProgression: 'Wei Lin trains.', nextWorldBuilding: 'The river law.', nextConflict: 'The flood returns.',
 });
 
@@ -110,42 +110,6 @@ describe('HARNESS dialogue speakers through speaker tags', () => {
     const recovered = acceptHarnessModelResponse('Rain fell.\n\n[[@Wei Lin]] “Hold the gate,” he said.', 1, options);
     expect(recovered.accepted && recovered.draft).toMatchObject({ responseMode: 'plain-prose-recovery', paragraphs: ['Rain fell.', '“Hold the gate,” he said.'] });
     expect(recovered.accepted && recovered.draft.speakers).toBeUndefined();
-  });
-
-  it('reads each paragraph\'s speaker field (SENSEI, 2026-10-19), and keeps a tag the writer still wrote', () => {
-    const raw = JSON.stringify({
-      ...JSON.parse(taggedChapter()),
-      paragraphs: [
-        { speaker: '', text: 'Rain hammered the river gate.' },
-        { speaker: 'MC', text: '“Hold the gate,” he said, and drew his sword.' },
-        { speaker: 'Elder Mo', text: '“It will not hold,” the old man said.' },
-        // A speaker on narration has no line to voice; "narrator" is no one.
-        { speaker: 'Elder Mo', text: 'The old man turned away.' },
-        { speaker: 'narrator', text: '“Who goes there?” a voice called.' },
-        { speaker: 'Wei Lin', text: '[[@Elder Mo]] “Again,” said Elder Mo.' },
-      ],
-    });
-    const accepted = acceptHarnessModelResponse(raw, 1, { protagonistNames: { names: ['Wei Lin'], others: ['Elder Mo'] }, speakersExpected: true });
-    expect(accepted.accepted && accepted.draft.paragraphs).toEqual([
-      'Rain hammered the river gate.', '“Hold the gate,” he said, and drew his sword.', '“It will not hold,” the old man said.',
-      'The old man turned away.', '“Who goes there?” a voice called.', '“Again,” said Elder Mo.',
-    ]);
-    expect(accepted.accepted && accepted.draft.speakers?.map(record => [record.anchor.blockId, record.payload.speaker, record.payload.protagonist])).toEqual([
-      ['c1-p2', 'Wei Lin', true],
-      ['c1-p3', 'Elder Mo', false],
-      ['c1-p6', 'Elder Mo', false],
-    ]);
-  });
-
-  it('drops a paragraph that is only a broken tag, and saves a plain-prose chapter that opens with a tag', () => {
-    // GPT-6 Luna wrote "[[\u0000]]" between paragraphs 28 times in the Diner test.
-    const raw = JSON.stringify({ ...JSON.parse(taggedChapter()), paragraphs: ['[[soundscape: Ambient | dark | calm | low]] Rain fell.', '[[\u0000]]', '[[]]', 'The gate held.'] });
-    const accepted = acceptHarnessModelResponse(raw, 1, {});
-    expect(accepted.accepted && accepted.draft.paragraphs).toEqual(['Rain fell.', 'The gate held.']);
-    // Claude Haiku answered a rewrite in plain prose opening with its music tag; it was lost as "a broken JSON array".
-    const prose = acceptHarnessModelResponse('[[soundscape: Ambient | dark | calm | low]] Rain fell on the gate.\n\nThe gate held.', 1, {});
-    expect(prose.accepted && prose.draft).toMatchObject({ responseMode: 'plain-prose-recovery', paragraphs: ['Rain fell on the gate.', 'The gate held.'] });
-    expect(acceptHarnessModelResponse('[1, 2, 3]', 1, {}).accepted).toBe(false);
   });
 
   it('stays quiet about untagged speech in a chapter that was never asked for tags', () => {

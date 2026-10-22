@@ -31,7 +31,7 @@ export const describeSchemaShape = (schema: unknown) => {
 };
 
 describe('HARNESS chapter response schema shape', () => {
-  it('asks for no separate list of signals: sounds and holding changes travel as tags inside the paragraphs, each paragraph\'s speaker beside its text', () => {
+  it('asks for no separate list of signals: sounds, speakers and holding changes travel as tags inside the paragraphs', () => {
     expect(HARNESS_CHAPTER_RESPONSE_SCHEMA.properties).not.toHaveProperty('soundCues');
     expect(buildHarnessChapterResponseSchema(50, { holdings: true }).properties).not.toHaveProperty('soundCues');
     expect(JSON.stringify(HARNESS_CHAPTER_RESPONSE_SCHEMA)).not.toMatch(/sound|mark"/i);
@@ -49,7 +49,7 @@ describe('HARNESS chapter response schema shape', () => {
   });
 
   it('holds the paragraphs to the exact count the HARNESS rolled, and leaves them free without one', () => {
-    expect(buildHarnessChapterResponseSchema(73).properties.paragraphs).toMatchObject({ type: 'array', items: { type: 'object', required: ['speaker', 'text'] }, minItems: 73, maxItems: 73 });
+    expect(buildHarnessChapterResponseSchema(73).properties.paragraphs).toMatchObject({ type: 'array', items: { type: 'string' }, minItems: 73, maxItems: 73 });
     expect(buildHarnessChapterResponseSchema().properties.paragraphs).not.toHaveProperty('minItems');
     expect(presentImmediateChapterRequest({ chapterNumber: 3, continuation: true, chapterScale: { minWords: 1_800, maxWords: 2_500, paragraphs: 73 } }))
       .toContain('CHAPTER SCALE: exactly 73 paragraph entries, 1,800 to 2,500 words in all: about 25 to 34 words a paragraph.');
@@ -97,10 +97,10 @@ describe('HARNESS chapter response schema shape', () => {
   it('is compact, shallow, and free of conditional or nested application contracts', () => {
     const shape = describeSchemaShape(HARNESS_CHAPTER_RESPONSE_SCHEMA);
     expect(shape.anyOfBranches).toBe(0);
-    // root → the paragraphs → a paragraph (or root → arc completion or story ending): nothing deeper.
-    expect(shape.maxObjectDepth).toBeLessThanOrEqual(3);
-    expect(shape.objectSchemas).toBeLessThanOrEqual(4);
-    expect(shape.serializedBytes).toBeLessThan(2_400);
+    // root → arc completion or story ending: nothing deeper.
+    expect(shape.maxObjectDepth).toBeLessThanOrEqual(2);
+    expect(shape.objectSchemas).toBeLessThanOrEqual(3);
+    expect(shape.serializedBytes).toBeLessThan(2_000);
     expect(HARNESS_CHAPTER_RESPONSE_SCHEMA.required).toEqual([
       'paragraphs', 'arcCompletion', 'recap', 'chapterFunction', 'nextProgression', 'nextWorldBuilding', 'nextConflict',
     ]);
@@ -125,14 +125,10 @@ describe('HARNESS chapter response schema shape', () => {
     }
   });
 
-  it('keeps the model-authored chapter body to one array of paragraphs, each its speaker and its text (SENSEI, 2026-10-19: as the original Light Novels app asked)', () => {
+  it('keeps the model-authored chapter body to one shallow array of paragraph strings', () => {
     const body = HARNESS_CHAPTER_RESPONSE_SCHEMA.properties.paragraphs;
     expect(body.type).toBe('array');
-    expect(body.items).toMatchObject({
-      type: 'object', required: ['speaker', 'text'],
-      properties: { speaker: { type: 'string' }, text: { type: 'string' } },
-    });
-    expect(Object.keys(body.items.properties)).toEqual(['speaker', 'text']);
+    expect(body.items).toEqual({ type: 'string' });
     // A one-string body cannot be requested, so a lost blank line cannot
     // collapse a chapter into a single block.
     expect(Object.keys(HARNESS_CHAPTER_RESPONSE_SCHEMA.properties)).not.toContain('prose');

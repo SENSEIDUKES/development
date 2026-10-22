@@ -20,11 +20,6 @@ export interface WriterInstructionsChange {
  */
 export const WRITER_INSTRUCTIONS_HISTORY: readonly WriterInstructionsChange[] = [
   {
-    date: '2026-10-19',
-    summary: 'SENSEI\'s speaker field, the design of the original Light Novels app, whose Read Aloud always chose the right voice: the writer names who speaks in each paragraph in a field of the reply\'s own schema, which it cannot leave out, instead of a tag it must remember to write (the Blade and Diner tests tagged 1 of 27, 0 of 26 and 5 of 26 spoken lines). Each paragraph of the reply is now its speaker and its text. SEN Speakers 3.0.0: the speaker is MC for the main character, anyone else by the name Story Information uses, empty when no one speaks, with one example; a new speaker starts a new paragraph; "A line without its speaker is read in the wrong voice." The HARNESS turns the field into the same speaker record as before, so voices, the Codex and Read Aloud are unchanged.',
-    changed: { speakers: '0d530f0d77312e', 'return-format': '0d58129c855296' },
-  },
-  {
     date: '2026-10-18',
     summary: 'SENSEI\'s character voices: each speaker tag now names a Codex character, and their voice from the SEIHouse cast lives on their card, so a missing speaker tag means a line read in the wrong voice. In the Blade test only 1 of 27 spoken lines was tagged. SEN Speakers 2.3.0, in the words SENSEI approved: every paragraph with speech starts with its speaker; a new speaker starts a new paragraph; and why it matters, "A line without its speaker is read in the wrong voice." The tag itself is unchanged.',
     changed: { speakers: '0c4ad707e9bcd8' },

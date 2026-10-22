@@ -97,7 +97,7 @@ the prose:
 | **Ties** | Who is allied, hostile, related or bound to whom | **Missing** |
 | **Scenes** | Where a scene starts, where it is, when (time of day, conditions), and who is present | **Missing**. Each chapter has one musical scene today, not story scenes |
 | **Moments** | The beats inside a scene that matter most, with their intensity | **Roughly have**: Sound Cues carry Energy |
-| **Voice** | Who says each line, and how they sound | **Have** (each paragraph's speaker field names a Codex character; their voice from the SEIHouse cast lives on their card) |
+| **Voice** | Who says each line, and how they sound | **Have** (speaker tags name a Codex character; their voice from the SEIHouse cast lives on their card) |
 | **Mood** | How it feels | **Have** (the chapter's soundtrack and atmosphere) |
 | **World rules** | The power system, ranks, factions and laws | **Partly**, in the World Blueprint and the story's foundation |
 

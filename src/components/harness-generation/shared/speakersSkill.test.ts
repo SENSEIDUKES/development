@@ -13,26 +13,24 @@ import {
 } from '@seihouse/sen/harness-generation';
 import { readMarks } from '../../../narrative/marks';
 import { isMainCharacterTag } from './speakers';
-import { normalizeHarnessParagraphs } from './chapterBody';
 import { createHarnessStory } from './foundation';
 import { defaultHarnessRuntime } from './ids';
 
 describe('SEN Speakers skill', () => {
-  it('teaches each paragraph\'s speaker field in a few short lines, with one example: the main character\'s', () => {
-    expect(SEN_SPEAKERS_SKILL).toMatchObject({ id: 'seihouse.sen-speakers', version: '3.0.0', slot: 'speakers', applications: ['generation'] });
+  it('teaches the speaker tag in a few short lines, with one example: the main character\'s', () => {
+    expect(SEN_SPEAKERS_SKILL).toMatchObject({ id: 'seihouse.sen-speakers', version: '2.3.0', slot: 'speakers', applications: ['generation'] });
     const lines = SEN_SPEAKERS_INSTRUCTIONS.split('\n');
     expect(lines).toEqual([
-      'Each paragraph\'s speaker is who speaks in it: MC for the main character, anyone else by the name Story Information uses. Empty when no one speaks.',
-      'Example: {"speaker": "MC", "text": "“Hold the gate,” he said."}',
+      'Every paragraph with speech starts with its speaker: [[@Name]]',
+      'Example: [[@MC]] “Hold the gate,” he said.',
       'A new speaker starts a new paragraph. Speech goes in quotation marks.',
       'A line without its speaker is read in the wrong voice.',
     ]);
-    // The example is a paragraph of the reply, as the HARNESS reads it: the main character speaks it.
-    const example = JSON.parse(lines[1].slice('Example: '.length)) as { speaker: string; text: string };
-    expect(isMainCharacterTag(example.speaker)).toBe(true);
-    expect(readMarks(normalizeHarnessParagraphs([example])![0])).toMatchObject({ text: '“Hold the gate,” he said.', speakers: [{ name: 'MC', offset: 0 }] });
-    // No tag is taught: nothing in it is a speaker tag to copy.
-    expect(readMarks(SEN_SPEAKERS_INSTRUCTIONS).speakers).toEqual([]);
+    // A copied placeholder is read as no tag, never as a speaker named "Name".
+    expect(readMarks(SEN_SPEAKERS_INSTRUCTIONS).speakers.map(tag => tag.name)).toEqual(['Name', 'MC']);
+    const example = readMarks(lines.find(line => line.startsWith('Example: '))!.slice('Example: '.length));
+    expect(example).toMatchObject({ text: '“Hold the gate,” he said.', speakers: [{ name: 'MC', offset: 0 }] });
+    expect(isMainCharacterTag(example.speakers[0].name)).toBe(true);
     // Point of view is the Style skill's choice, kept by the HARNESS: this skill never leans on it.
     expect(SEN_SPEAKERS_INSTRUCTIONS).not.toMatch(/first person|first-person|third person|third-person|point of view/i);
   });
@@ -50,8 +48,8 @@ describe('SEN Speakers skill', () => {
     story.skillLoadout = { author: { id: SEN_NOVEL_AUTHOR_SKILL.id, version: SEN_NOVEL_AUTHOR_SKILL.version } };
     const bundled = freezeHarnessSkillLoadout(story, createHarnessSkillCatalog(includeBundledHarnessSkills([])), 'now');
     expect(bundled.skills.map(skill => skill.slot)).toEqual(['author', 'speakers', 'holdings', 'appearance']);
-    expect(assembleCapaPrompt(bundled).text).toContain('CAPA SKILL [Speakers] — SEN Speakers v3.0.0');
-    // A host whose catalog lacks the skill writes the chapter without speakers.
+    expect(assembleCapaPrompt(bundled).text).toContain('CAPA SKILL [Speakers] — SEN Speakers v2.3.0');
+    // A host whose catalog lacks the skill writes the chapter without speaker tags.
     const minimal = freezeHarnessSkillLoadout(story, createHarnessSkillCatalog([SEN_NOVEL_AUTHOR_SKILL]), 'now');
     expect(minimal.skills.map(skill => skill.slot)).toEqual(['author']);
   });

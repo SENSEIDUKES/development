@@ -68,9 +68,7 @@ const start = async () => {
   const controller = new HarnessGenerationController({ repository: new InMemoryHarnessGenerationRepository(), modelAdapter });
   await controller.hydrate();
   const story = await controller.createStory({ premise: 'Ye Chen survives the armory trial.', destinedEnding: 'Ye Chen masters the armory.', initialArcPlan: plan,
-    cast: [{ name: 'Ye Chen', role: 'Main character', isMainCharacter: true, relationshipToMC: 'Self' }],
-    // His voice comes from the Story Seed, which says he is a man.
-    identities: [{ name: 'Ye Chen', kind: 'character', evidence: 'A lean young man.' }] });
+    cast: [{ name: 'Ye Chen', role: 'Main character', isMainCharacter: true, relationshipToMC: 'Self' }] });
   await controller.generateNextChapter(story.id, 'test-model');
   await controller.generateNextChapter(story.id, 'test-model');
   await act(async () => { root.render(renderWithDevAudio(<Host controller={controller} storyId={story.id} />)); });
@@ -109,7 +107,7 @@ describe('The Codex in the HARNESS Reader', { timeout: 20_000 }, () => {
     // A stage reached while still learning is shown, and is a change, not a check.
     expect(sheet.querySelector('[aria-label="Ye Chen: Abilities"]')!.textContent).toContain('Learning · First Stage');
     expect(sheet.querySelector('[data-testid="codex-voice"] blockquote')!.textContent).toBe('"Again,"');
-    // His voice, from the SEIHouse cast: given when he first spoke (the Story Seed says he is a man), and the reader's to change.
+    // His voice, from the SEIHouse cast: given when he first spoke, and the reader's to change.
     const pick = sheet.querySelector<HTMLSelectElement>('select[aria-label="Voice for Ye Chen"]')!;
     expect(pick.value).toMatch(/protagonist-male$/);
     await act(async () => {

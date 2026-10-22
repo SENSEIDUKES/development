@@ -3,7 +3,7 @@ import { castVoice } from '../../../audio/voiceCast';
 import type { CodexEntry } from '../../../narrative/holdings';
 import { SPEAKER_KIND, speakerAttachmentId, type SpeakerAttachment } from '../../../narrative/speech';
 import { createCodexEntryResolver } from './holdings';
-import { firstVoices, fullNameOf, readAloudVoicesOf, resolveSpeakers, speakerGender } from './voices';
+import { firstVoices, readAloudVoicesOf, resolveSpeakers, speakerGender } from './voices';
 
 const record = (blockId: string, name: string, protagonist = false, entryId?: string): SpeakerAttachment => ({
   id: speakerAttachmentId(blockId, 0, 6), kind: SPEAKER_KIND,
@@ -36,23 +36,15 @@ describe('Character voices', () => {
     expect(resolver.created.map(created => created.name)).toEqual(['Ye Chen', 'Lan Yue']);
   });
 
-  it('tells a gender only from the author\'s own notes, never from the chapter\'s prose', () => {
-    expect(speakerGender('A young woman of the Lan family.')).toBe('female');
-    expect(speakerGender('Age: Appears in his late thirties. A lean man.')).toBe('male');
-    expect(speakerGender('Age: 27; skin tone: warm beige; eyes: dark brown.')).toBeUndefined();
-    expect(speakerGender(undefined)).toBeUndefined();
+  it('tells a gender only when the author\'s notes or the pronouns clearly say', () => {
+    expect(speakerGender({ notes: 'A young woman of the Lan family.', paragraphs: [] })).toBe('female');
+    expect(speakerGender({ paragraphs: ['"Go," he said, and he turned.'] })).toBe('male');
+    expect(speakerGender({ paragraphs: ['"Go," she said. Her hand shook.'] })).toBe('female');
+    expect(speakerGender({ paragraphs: ['"Go," he told her. She went.'] })).toBeUndefined();
+    expect(speakerGender({ paragraphs: ['"Go."'] })).toBeUndefined();
   });
 
-  it('lets a first name alone stand for the one character it belongs to', () => {
-    const names = ['Mina Kisaragi', 'Toma Iori', 'Soren', 'Lan Yue', 'Lan Feng'];
-    expect(fullNameOf('Mina', names)).toBe('Mina Kisaragi');
-    expect(fullNameOf('toma', names)).toBe('Toma Iori');
-    expect(fullNameOf('Lan', names)).toBeUndefined();
-    expect(fullNameOf('Soren', names)).toBeUndefined();
-    expect(fullNameOf('Mina Kisaragi', names)).toBeUndefined();
-  });
-
-  it('gives each character who first speaks a voice of the cast, of the gender the Story Seed gives, different from the others\', and never changes one already on a card', () => {
+  it('gives each character who first speaks a voice of the cast, of their gender, different from the others\', and never changes one already on a card', () => {
     const entries = [
       entry('e-main', 'Ye Chen', { mainCharacter: true }),
       entry('e-wu', 'Old Wu', { voice: { key: 'old-grandmaster-male', chosen: 'reader', at: 'before' } }),
@@ -61,9 +53,9 @@ describe('Character voices', () => {
       { ...entry('e-sword', 'Rusted Sword'), kind: 'thing' as const },
     ];
     const speakers = [record('c1-p1', 'Ye Chen', true, 'e-main'), record('c1-p2', 'Old Wu', false, 'e-wu'), record('c1-p3', 'Lan Yue', false, 'e-lan'), record('c1-p4', 'Rusted Sword', false, 'e-sword'), record('c1-p5', 'Stranger', false, 'e-quiet')];
-    const notes: Record<string, string> = { 'Ye Chen': 'A lean young man.', 'Lan Yue': 'A swordswoman; her blade is old.' };
-    const voices = firstVoices({ speakers, entries, at: 'now', notesOf: entry => notes[entry.name] });
-    // Nothing in the Story Seed tells the stranger's gender: their role's voice reads them until the reader chooses.
+    const paragraphs: Record<string, string> = { 'c1-p1': '"Run!" he said. He ran.', 'c1-p3': '"Run!" she cried. Her robes flew.' };
+    const voices = firstVoices({ speakers, entries, at: 'now', paragraphOf: speaker => paragraphs[speaker.anchor.blockId] });
+    // Nothing tells the stranger's gender: their role's voice reads them until something does.
     expect([...voices.keys()]).toEqual(['e-main', 'e-lan']);
     expect(voices.get('e-main')).toMatchObject({ chosen: 'auto', at: 'now', key: expect.stringMatching(/protagonist-male$/) });
     expect(castVoice(voices.get('e-lan')!.key)?.gender).toBe('female');
@@ -76,13 +68,10 @@ describe('Character voices', () => {
       entry('e-wu', 'Old Wu', { aliases: ['The Smith'], voice: { key: 'old-grandmaster-male', chosen: 'auto', at: 'now' } }),
       entry('e-gone', 'Nobody', { voice: { key: 'retired-voice', chosen: 'auto', at: 'now' } }),
     ]);
-    expect(voices).toMatchObject({
+    expect(voices).toEqual({
       byEntry: { 'e-main': 'dark-protagonist-male', 'e-wu': 'old-grandmaster-male' },
       byName: { 'ye chen': 'dark-protagonist-male', 'old wu': 'old-grandmaster-male', 'the smith': 'old-grandmaster-male' },
       main: 'dark-protagonist-male',
     });
-    expect(Object.keys(voices.byEntry)).toEqual(['e-main', 'e-wu']);
-    // A first name alone reads in the voice of the one character it belongs to.
-    expect(voices.byName).toMatchObject({ ye: 'dark-protagonist-male', wu: 'old-grandmaster-male' });
   });
 });

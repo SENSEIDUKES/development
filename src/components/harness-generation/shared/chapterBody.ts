@@ -70,28 +70,6 @@ export const splitHarnessProseParagraphs = (prose: string): string[] => prose
   .map(paragraph => paragraph.trim())
   .filter(Boolean);
 
-/** Control characters a model can leak into text (a NUL), never part of prose. */
-const CONTROL = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/gu;
-
-/** Whether a paragraph holds any word at all, its tags' included: "[[]]" alone holds none. */
-const holdsWords = (text: string) => /[\p{L}\p{N}]/u.test(text);
-
-/** "No one" in a speaker field. */
-const NO_SPEAKER = /^(?:|none|no one|nobody|narrator|narration|n\/a|-)$/iu;
-
-/**
- * One entry of the writer's paragraphs: a paragraph's text, or (SENSEI,
- * 2026-10-19) its speaker and its text. Control characters are removed.
- */
-const paragraphEntry = (item: unknown): { text: string; speaker?: string } | undefined => {
-  if (typeof item === 'string') return { text: item.replace(CONTROL, '') };
-  if (!item || typeof item !== 'object') return undefined;
-  const { text, speaker } = item as { text?: unknown; speaker?: unknown };
-  if (typeof text !== 'string') return undefined;
-  const named = typeof speaker === 'string' ? speaker.replace(CONTROL, '').replace(/[[\]]/g, '').trim() : '';
-  return { text: text.replace(CONTROL, ''), ...(named && !NO_SPEAKER.test(named) ? { speaker: named } : {}) };
-};
-
 /**
  * Reads the authoritative model-authored body. Paragraph text is preserved
  * exactly; only surrounding whitespace is trimmed and empty entries dropped. A
@@ -102,13 +80,8 @@ export const normalizeHarnessParagraphs = (value: unknown): string[] | undefined
   if (!Array.isArray(value)) return undefined;
   const paragraphs: string[] = [];
   for (const item of value) {
-    const entry = paragraphEntry(item);
-    if (!entry) continue;
-    for (const piece of splitHarnessProseParagraphs(entry.text)) {
-      // A paragraph that is only a broken tag ("[[]]" around a stray control character, as GPT-6 Luna wrote 28 times in the Diner test) is dropped.
-      if (!holdsWords(piece)) continue;
-      // The speaker field becomes the paragraph's speaker tag, so the HARNESS reads it as every tag; a tag already there wins.
-      const paragraph = entry.speaker && /["“”«»「『]/u.test(piece) && !/^\s*\[\[\s*@/u.test(piece) ? `[[@${entry.speaker}]] ${piece}` : piece;
+    if (typeof item !== 'string') continue;
+    for (const paragraph of splitHarnessProseParagraphs(item)) {
       paragraphs.push(paragraph);
       if (paragraphs.length >= HARNESS_MAX_CHAPTER_PARAGRAPHS) return paragraphs;
     }

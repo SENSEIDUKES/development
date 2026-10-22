@@ -63,6 +63,25 @@ it('says why a picture could not be made, and lets the reader try again', async 
   act(() => view.root.unmount());
 });
 
+it('writes the look again when the story has changed it, rather than falling back to the world\'s older line', async () => {
+  const manifest = vi.fn<CodexPictures['manifest']>().mockResolvedValue();
+  const container = document.createElement('div');
+  document.body.append(container);
+  const root = createRoot(container);
+  const stale: CodexCharacter = {
+    key: 'chen', name: 'Ye Chen', mainCharacter: true, firstSeen: passage, things: [], abilities: [], chronicle: [],
+    atChapterZero: [{ slot: { id: 'appearance', label: 'Look', test: 'artist', changes: true, asks: 'how they look' }, value: 'Lean and wiry, unscarred.' }],
+    appearance: { first: passage, look: { ...look, summary: 'Lean and wiry, unscarred.' }, lookStale: true, changes: [] },
+  };
+  const world: StoryCodexRecord = { ...codex, characters: [stale] };
+  await act(async () => root.render(<StoryCodex codex={world} storyTitle="Ashes" pictures={{ pictureOf: () => undefined, manifest }} />));
+  await act(async () => (container.querySelector('[data-testid="codex-character"]') as HTMLElement).click());
+  await act(async () => (container.querySelector('[data-testid="codex-manifest"] button') as HTMLElement).click());
+  // No look travels, so the host writes a current one from the story's passages.
+  expect(manifest).toHaveBeenCalledWith({ key: 'chen', subject: 'character', name: 'Ye Chen' });
+  act(() => root.unmount());
+});
+
 it('manifests a card from the look the world opened with, before any chapter', async () => {
   const manifest = vi.fn<CodexPictures['manifest']>().mockResolvedValue();
   const container = document.createElement('div');

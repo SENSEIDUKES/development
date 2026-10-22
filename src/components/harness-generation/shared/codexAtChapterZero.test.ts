@@ -62,6 +62,21 @@ describe('A world open to its reader', () => {
     expect(codex.worldRules?.map(fact => fact.slot.id)).toEqual(['knownRanks', 'laws']);
   });
 
+  it('keeps a card whose name is all the world knows, whatever its kind', () => {
+    const bare: WorldAtChapterZero = {
+      openToTheReader: true,
+      cards: [
+        { key: 'chapter-0:character:mute-monk', kind: 'character', name: 'The Mute Monk', slots: {} },
+        { key: 'chapter-0:faction:silent-hall', kind: 'faction', name: 'Silent Hall', slots: {} },
+        { key: 'chapter-0:thing:grey-bell', kind: 'thing', name: 'Grey Bell', slots: {} },
+      ],
+    };
+    const codex = deriveStoryCodex({ entries: [], chapters: [], world: bare });
+    expect(codex.characters.map(character => character.name)).toEqual(['The Mute Monk']);
+    expect(codex.factions.map(faction => faction.name)).toEqual(['Silent Hall']);
+    expect(codex.items.map(item => item.name)).toEqual(['Grey Bell']);
+  });
+
   it('gives each card its facts under the labels its card kind reads by', () => {
     const codex = deriveStoryCodex({ entries: [], chapters: [], world: openWorld });
     expect(codex.characters[0].atChapterZero?.map(fact => [fact.slot.label, fact.value])).toEqual([

@@ -474,8 +474,10 @@ export function StoryCodex({ codex, storyTitle, pictures, onBack, onReadPassage,
   const artOf = (key: string, subject: CodexPictureCard['subject'], name: string, appearance?: CodexAppearance, atChapterZero?: readonly CodexWorldFact[]): ProfileArt | undefined => {
     if (!pictures) return undefined;
     const look = appearance?.look;
-    // The world's own look, when the story has not written one down yet.
-    const fromTheStart = worldFact(atChapterZero, 'appearance');
+    // The world's own look, only while the story has written none of its own.
+    // A look the story has since changed is written again from its passages,
+    // never replaced by the older line the world opened with.
+    const fromTheStart = look ? undefined : worldFact(atChapterZero, 'appearance');
     const current = look && !appearance?.lookStale
       ? { summary: look.summary, traits: look.traits }
       : fromTheStart ? { summary: fromTheStart, traits: {} } : undefined;

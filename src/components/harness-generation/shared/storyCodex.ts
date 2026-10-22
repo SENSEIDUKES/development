@@ -376,7 +376,9 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
 
   const factionOrder = [...factions.values()];
   const factionList = factionOrder
-    .filter(faction => ((faction.firstSeen && faction.voice) || faction.atChapterZero?.length) && reached(faction))
+    // A card the world opened with belongs to it even when its name is all the
+    // world knows, as it does for a character or a thing.
+    .filter(faction => ((faction.firstSeen && faction.voice) || faction.atChapterZero) && reached(faction))
     .sort((left, right) => inRecordOrder(left, right, faction => factionOrder.indexOf(faction)));
 
   const known = [...characters.values()].filter(character => (character.firstSeen || character.atChapterZero) && reached(character));

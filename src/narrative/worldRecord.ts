@@ -231,9 +231,14 @@ export interface WorldAtChapterZero {
   openToTheReader?: true;
 }
 
-/** A stable key for a Chapter 0 card: its kind and its name, however the name is written. */
+/**
+ * A stable key for a Chapter 0 card: its kind and its name, however the name
+ * is written. Every letter and number of every script is kept, the way the
+ * record compares names everywhere else, so two names a story tells apart keep
+ * two keys in Chinese, Japanese, Arabic or Hebrew as surely as in English.
+ */
 export const worldCardKey = (kind: WorldCardKindId, name: string): string =>
-  `chapter-0:${kind}:${name.trim().toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`;
+  `chapter-0:${kind}:${name.normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '')}`;
 
 export const worldCardsOfKind = (
   world: WorldAtChapterZero | undefined,

@@ -72,6 +72,11 @@ const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => 
   // 32 adds only optional chapter fields (its appearances and the looks
   // written down from them): every saved story reads as it is.
   31: stored => ({ ...stored, schemaVersion: 32 }),
+  // 34 adds only an optional Foundation field (the world at Chapter 0, which a
+  // story made before it simply has none of): every saved story reads as it is.
+  // It skips 33, the chapter loop's version, rolled back on 2026-10-22: a
+  // workspace that loop saved has no step and is kept untouched instead.
+  32: stored => ({ ...stored, schemaVersion: 34 }),
 };
 
 /**

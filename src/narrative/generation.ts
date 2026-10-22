@@ -27,9 +27,10 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * each chapter's optional Holdings fixer record; 31 adds the story's optional
  * own sound words; 32 adds each chapter's optional appearances and the looks
  * written down from them. 33 was the chapter loop's, rolled back on
- * 2026-10-22: the next bump goes to 34, so a workspace that loop saved is
- * never read as current. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 32 as const;
+ * 2026-10-22, so a workspace that loop saved is never read as current; 34 adds
+ * the Foundation's optional world at Chapter 0, and every saved story reads as
+ * it is (a story made before it simply has no world recorded). */
+export const HARNESS_GENERATION_SCHEMA_VERSION = 34 as const;
 
 /** The most an Author's notes may hold, in characters. */
 export const AUTHOR_NOTES_LIMIT = 2000;

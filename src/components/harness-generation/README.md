@@ -49,8 +49,9 @@ existing Chapter Generation feature.
   a slot another lacks. **The record:** `StoryFoundationInput.worldAtChapterZero`
   (`WorldAtChapterZero`), read from the reconciled Seed at the one Seed → HARNESS
   translation point (`worldAtChapterZeroFromStorySeed`); nothing is stored
-  twice, and no HARNESS schema bump was needed (the field is optional, and a
-  story made before it simply has no world recorded). **The Codex:**
+  twice. **Schema 34** (skipping 33, the rolled-back chapter loop's), with the
+  no-op migration every additive version has: a story saved before it keeps
+  every chapter and plan and simply has no world recorded. **The Codex:**
   `deriveStoryCodex` takes `world` and shows it before any chapter —
   `atChapterZero` facts on each character, item and faction card, and
   `abilities`, `places`, `species` and `worldRules` groups of their own — while

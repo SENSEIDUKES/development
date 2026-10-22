@@ -495,6 +495,11 @@ The world is now recorded before Chapter 1, in the Codex's own card kinds.
   arrived: Things, Abilities as cards, Places, the Bestiary, and the World
   rules sheet (the ladder, the laws, the age). Every slot is optional, as
   before.
+- **The story carries it.** `StoryFoundationInput.worldAtChapterZero`, read
+  from the reconciled Seed at the one Seed → HARNESS translation point. The
+  HARNESS workspace is schema 34 (skipping 33, the rolled-back chapter loop's),
+  with the no-op migration every additive version has: a story saved before it
+  keeps every chapter and plan, and simply has no world recorded.
 - **The Blueprint fills the blanks.** The one existing Blueprint call now also
   writes the world at Chapter 0; no new model call was added. Its words are on
   the Workshop's Writer Instructions page, under *Before the story*, with their

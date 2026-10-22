@@ -643,10 +643,12 @@ describe("Cleaned-up Blueprint instructions", () => {
   it("keeps the strict output form", async () => {
     const { schema } = await promptFor(canonicalSeed());
     expect(schema.additionalProperties).toBe(false);
+    // Every card kind of the world at Chapter 0 is asked for, so none can be
+    // left out of a schema-valid answer.
     expect([...schema.required].sort()).toEqual([
       "abilities", "arcLookahead", "arcOne", "characters", "destinedEnding", "estimatedArcs", "factions", "firstArcPromise", "logline",
-      "mainCharacter", "mainOpposition", "powerSystem", "powerSystemOutline", "societyStructure", "startingLocation",
-      "styleBible", "title", "tropeRules", "worldOverview",
+      "mainCharacter", "mainOpposition", "places", "powerSystem", "powerSystemOutline", "societyStructure", "species", "startingAbilities",
+      "startingLocation", "styleBible", "things", "title", "tropeRules", "worldOverview",
     ]);
     expect(Object.keys(schema.properties)).not.toContain("worldOverviewDetail");
   });

@@ -60,6 +60,12 @@ export const worldBlueprintResponseSchema = (exactArcs?: number) => ({
     "mainCharacter",
     "characters",
     "factions",
+    // The world at Chapter 0: a card kind left out of the answer would leave
+    // the world short of it, so every one is asked for.
+    "things",
+    "startingAbilities",
+    "places",
+    "species",
     "abilities",
     "powerSystem",
     "mainOpposition",

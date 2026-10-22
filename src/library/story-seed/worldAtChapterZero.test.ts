@@ -69,6 +69,19 @@ describe('The world at Chapter 0', () => {
     expect(worldCardsOfKind(world, 'thing').map(card => card.name)).toContain('Iron Brush');
   });
 
+  it('keeps two names of any script apart, so no two cards share a key', () => {
+    const seed = createEmptyStorySeedInput();
+    seed.world.optional.worldFoundations.additionalCharacters = [
+      { id: 'a', name: '林凡' }, { id: 'b', name: '葉辰' },
+      { id: 'c', name: 'مازن' }, { id: 'd', name: 'عمر' },
+      { id: 'e', name: 'Ye Chen' }, { id: 'f', name: 'Yé Chen' },
+    ];
+    const keys = worldAtChapterZeroFromStorySeed(seed).cards.map(card => card.key);
+    expect(keys).toHaveLength(6);
+    expect(new Set(keys).size).toBe(6);
+    expect(keys[0]).toBe('chapter-0:character:林凡');
+  });
+
   it('gives every card a key of its own, stable for the story', () => {
     const world = worldAtChapterZeroFromStorySeed(
       fillBlankSeedSlots(createFilledStorySeedInput(), readGeneratedSeedSlots(createMockSeedSlotAnswer())),

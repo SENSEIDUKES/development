@@ -25,19 +25,16 @@ It feels simple because one principle governs it:
 > **The model proposes; the engine decides and remembers.**
 >
 > Keep the model's responsibility small. Let it communicate meaning through
-> simple signals (choices from menus in each chapter's plan, and the media
-> tags of the tiny SEN language in its prose), and let the engine own the
-> durable structure: IDs, state, numbering, placement, checks, measurement,
-> history and storage.
+> simple signals (the tags of the tiny SEN language), and let the engine own
+> the durable structure: IDs, state, numbering, placement, checks, history and
+> storage.
 
-Every rule in the vocabulary follows from it. The planner chooses what happens
-from menus, and the writer writes the prose and marks where media plays; the
-engine resolves names to permanent entries, measures and works out state,
-places attachments, and drops or flags what cannot be true instead of refusing
-the chapter ([the chapter loop](../../../docs/chapter-loop.md)). Because the
-engine carries the structure, the model can be cheap, can be swapped, and can
-even be absent: the Reader Chamber workspace runs the whole HARNESS from saved
-replies with no model call.
+Every rule in the vocabulary follows from it. The model writes prose and marks
+where things happen; the engine reads the marks, resolves names to permanent
+entries, works out state, places attachments, and drops or flags what cannot be
+true instead of refusing the chapter. Because the engine carries the structure,
+the model can be cheap, can be swapped, and can even be absent: the Reader
+Chamber workspace runs the whole HARNESS from saved replies with no model call.
 
 ## The problems it solves
 
@@ -62,22 +59,20 @@ first pieces exist) or **goal** (designed for, not built).
 
 1. **The model never owns state.** No IDs, counts, chapter numbers, placement
    or storage from the model. It names things; the engine resolves them.
-2. **Choices, not structures.** Beyond prose, a model's whole job is choosing
-   from menus: the planner picks the chapter's events, and the writer picks
-   media moments in its prose, each media kind a tag in one strict shape with
-   its five parts (tag, teaching, reading, rules, home). A new need for
-   information is a new menu or a new field of the event, never a prose tag.
+2. **Signals, not structures.** The model's whole job beyond prose is a small
+   set of tags in one strict shape. A new need is a new tag kind, added one at
+   a time, each with its five parts (tag, teaching, reading, rules, home).
 3. **Never refuse a chapter for a bad signal.** A wrong tag is dropped and
    flagged; only a reply far below the chapter scale is a failed write.
 4. **Nothing is stored that could count twice.** State is derived from each
-   chapter's events, in story order, every time.
-5. **Every fact points at where it was established.** A fact links to the
-   chapter whose plan made it; a media attachment sits on its words, so an edit
-   carries it. A reader, author or tool can always find where either came from.
-6. **Judgment before the chapter, measurement in code.** What a model must
-   judge goes in the planner, one registered call before the writer; nothing a
-   model could get wrong is added to the writer's job. Measuring, checking and
-   consequences are code, and no model ever measures.
+   chapter's current tags, in story order, every time.
+5. **Every fact points at its passage.** Records are manuscript attachments on
+   the sentence they came from, so an edit carries them, and a reader, author
+   or tool can always find where a fact was established.
+6. **Small separate steps over a bigger writer.** When something needs judgment
+   (the Holdings fixer after a chapter is saved, and the look writer when
+   something needs a full look), it is a small, separate, registered call that
+   runs only when needed, never more work for the chapter writer.
 7. **Keep receipts.** Every model call keeps what it was given and what it
    returned.
 
@@ -86,9 +81,8 @@ first pieces exist) or **goal** (designed for, not built).
 SEIHouse is a translator of artistic expression. For SEN, that means the
 Codex holds what the story **means**, apart from any one way of showing it, so
 the same story can become a sequential-art chapter, an animation or a game
-and still be interpreted correctly. The HARNESS feeds that record through each
-chapter's plan ([the chapter loop](../../../docs/chapter-loop.md)); the Codex
-keeps it and shows it.
+and still be interpreted correctly. The HARNESS feeds that record through
+information tags; the Codex keeps it and shows it.
 
 ### The minimal set
 
@@ -118,16 +112,15 @@ story.
 
 ### How it is built
 
-Through [the chapter loop](../../../docs/chapter-loop.md) (SENSEI,
-2026-10-19 and 2026-10-20). Before each chapter, the planner chooses from
-menus who is on the page and what happens: the cast, with a whole look for
-anyone new, and the chapter's events with the facts they change (holdings,
-status, looks, goals, commitments, stances). Code checks them against the
-record, CTE works out what they do to the people involved, and the writer
-narrates all of it as fixed facts. The record updates from the plan, and every
-fact links to its chapter. Nothing is tagged in the prose for the record, and
-nothing is read back out of the prose: media tags (Sound Cues, soundscape,
-atmosphere) and each paragraph's speaker stay with the writer.
+**Replaced (SENSEI, 2026-10-19):** information is no longer tagged in the prose. It lives in the Codex snapshot, decided by one plan step before each chapter; media tags stay in the prose. See [NOVEL_EXPANDED.md, How we build](../../../NOVEL_EXPANDED.md#how-we-build). The text below is kept as history until it is rewritten.
+
+The same way as Holdings: the writer tags only the moment something changes
+("enters", "arrives at", "is wounded", "now wears"); the engine resolves names
+to entries and works out current state; every fact points at its passage. Full
+descriptions (a character's whole look) are written by a small separate call
+only when something needs them (on demand, since 2026-10-17), from the
+passages the tags mark, so the chapter writer's job stays small, cheap models
+keep working, and no call is spent on a look nothing uses.
 
 ### Two tests for "enough"
 
@@ -149,11 +142,6 @@ the record, which must stay exact.
 
 ## History
 
-- **2026-10-20:** The chapter loop. Information leaves the prose: before each
-  chapter the planner (Fate) chooses the cast and the events from menus, CTE
-  works out in code what they do to the people involved, and the writer
-  narrates it. The principle, rules 2, 4, 5 and 6, the world record's feed and
-  How it is built now follow [the chapter loop](../../../docs/chapter-loop.md).
 - **2026-10-17:** Looks on demand: no call after a chapter. The writer's own
   description is kept by code; a full look, the core record a picture, manga
   or game draws from, is written for one entry when something needs it and

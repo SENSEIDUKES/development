@@ -103,12 +103,6 @@ the owner listed here, never a parallel structure.
 
 ## The tag system (the tiny SEN language)
 
-**Media only from now on (SENSEI, 2026-10-20).** New tags are media (Sound
-Cues, soundscape, atmosphere). Information is never a prose tag:
-[the chapter loop](../../../docs/chapter-loop.md) replaces the holdings,
-appears and look tags below with the planner's events, and they are deleted
-when its step 2 is built. Until then this section describes the code as it is.
-
 The writer has two jobs in one Generation Model Call: write the chapter, and
 write its tags. Tags say what happened; the saved records tell the next
 chapter what remains true. No second call writes the chapter or its tags. The

@@ -374,7 +374,7 @@ function FactionProfile({ faction, onBack, onReadPassage }: { faction: CodexFact
 function WorldCardProfile({ category, card, backLabel, onBack }: {
   category: CodexTab; card: CodexWorldCard; backLabel: string; onBack: () => void;
 }) {
-  return <Profile category={category} name={card.name} line={worldFact(card.atChapterZero, 'within') ?? AT_THE_START}
+  return <Profile category={category} name={card.name} line={worldFact(card.atChapterZero, 'within') ?? metLine(card)}
     badges={[]} backLabel={backLabel} onBack={onBack}>
     <WorldAtTheStart name={card.name} facts={card.atChapterZero} />
     {!card.atChapterZero.length && <p className="text-sm text-neutral-400">The world records nothing about it yet but its name.</p>}
@@ -540,7 +540,7 @@ export function StoryCodex({ codex, storyTitle, pictures, onBack, onReadPassage,
           line={worldFact(entry.atChapterZero, 'factionKind') ?? metLine(entry)} onOpen={() => setOpen(entry.key)} />)
       : worldGroup
         ? worldGroup.cards.map(entry => <CodexCard key={entry.key} category={tab} testId={`codex-${tab}`} cardKey={entry.key} name={entry.name} {...art(entry.key)}
-            line={worldFact(entry.atChapterZero, 'appearance') ?? AT_THE_START} onOpen={() => setOpen(entry.key)} />)
+            line={worldFact(entry.atChapterZero, 'appearance') ?? metLine(entry)} onOpen={() => setOpen(entry.key)} />)
         : tab === 'items'
           ? codex.items.filter(entry => !isArchived(entry)).map(itemCard)
           : [];

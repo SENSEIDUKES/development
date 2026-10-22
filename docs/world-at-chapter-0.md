@@ -394,7 +394,10 @@ the one scene the Seed sets.
    whole from Chapter 0; the Codex holds each card back until a chapter reaches
    it, and a world marked open to its reader (`openToTheReader`, for an
    imported novel) shows every card from the start. The World rules sheet is
-   not a card the story reaches, so it shows either way.
+   not a card the story reaches, so it shows either way. An ability is reached
+   by a holdings tag (`knows`, `learning`, `learned`), so its card opens with
+   the chapter that taught it; places and the Bestiary have no tag that names
+   one yet, so until those tags exist only an open world shows them.
 
 ## Open questions for SENSEI
 
@@ -416,6 +419,19 @@ the one scene the Seed sets.
 4. **Prose fields that stay prose**: style bible, trope rules, logline and the
    like are not Codex facts. Which Blueprint prose becomes structured, and
    which stays as writing guidance.
+5. **What a picture is keyed to, when import lands.** A Codex card is keyed by
+   its Codex entry's permanent ID once a chapter names it, and by its name
+   before that — the same two-state key the appearance system and the look
+   writer (`describeCodexLook`) already match on, so the key cannot be frozen
+   at the Chapter 0 name without the look writer refusing the card. For a
+   generated story this is invisible: a card is held back until a chapter
+   reaches it, so no picture can be made before the entry exists. For an
+   imported novel (`openToTheReader`) a reader can manifest a card before any
+   chapter, and when the story later reaches it the picture the host stored
+   under the name key is no longer the card's key. Whoever builds import
+   decides where that is answered — the host carrying both keys when it looks
+   a picture up, or the entry being created with the world rather than by the
+   first chapter that names it. Do not freeze the card key to fix it.
 
 ## After this: simplify what the gaps forced (SENSEI, 2026-10-21)
 
@@ -520,6 +536,14 @@ The world is now recorded before Chapter 1, in the Codex's own card kinds.
 
 ## History
 
+- 2026-10-22 (review): an ability card now opens with the chapter that teaches
+  it, rather than waiting for a world open to its reader — a holdings tag does
+  reach an ability, so holding its card back was hiding something the story had
+  already shown. Places and the Bestiary still wait on tags of their own.
+  Recorded open question 5 — what a manifested picture is
+  keyed to once a chapter reaches a card an imported novel's reader could
+  already see. Nothing in the generated path can reach it, and the card key
+  stays as it is because the look writer matches on it.
 - 2026-10-22: phase B built (the card kinds, the Seed's slots, the Blueprint's
   fill, the Chapter 0 record and the Codex before Chapter 1). SENSEI approved
   the world builder's words the same day, and decided that a reader meets a

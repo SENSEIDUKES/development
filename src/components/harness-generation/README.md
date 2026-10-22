@@ -65,7 +65,11 @@ existing Chapter Generation feature.
   (`WorldAtChapterZero.openToTheReader`, for a novel its author brought in and
   is expanding) shows every card from the start; the World rules sheet, the
   world's frame rather than a card, shows either way, and a category appears
-  only once the record holds one of its kind. **The writer is untouched:** the CAPA
+  only once the record holds one of its kind. An ability is reached like any
+  other card: a `knows`, `learning` or `learned` tag puts it on a character,
+  so its own card opens with the chapter that taught it. Places and the
+  Bestiary have no tag that names them yet, so until one exists only a world
+  open to its reader shows them. **The writer is untouched:** the CAPA
   Prompt, the prompt skeleton and the Story Information Packet are unchanged;
   what the chapter writer reads from this world is its own step, with its own
   approval. See it at `?preview=reader-codex` → Development → Before Chapter 1.

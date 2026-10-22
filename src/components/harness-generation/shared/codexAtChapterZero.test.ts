@@ -119,6 +119,31 @@ describe('The reader meets a card when the story reaches it', () => {
     expect(codex.items.map(item => item.name)).toEqual(['Frost Blade']);
   });
 
+  it('opens an ability\'s own card once a chapter reaches it, and still waits on places and the Bestiary', () => {
+    const learned = (): StoryCodexChapter => ({
+      id: 'chapter-1', chapterNumber: 1,
+      paragraphs: ['Ye Chen set the frost strokes down.'],
+      holdingChanges: [{
+        kind: HOLDING_CHANGE_KIND,
+        id: 'holding:c1-p1:0-35:0',
+        anchor: { level: 'span', blockId: 'c1-p1', startOffset: 0, endOffset: 35, selectedText: 'Ye Chen set the frost strokes down.' },
+        payload: { origin: 'harness', verb: 'learned', holder: { name: 'Ye Chen', entryId: 'chen' }, target: { name: 'Frostbrush Edict', entryId: 'edict' } },
+      }],
+    });
+    const codex = deriveStoryCodex({
+      entries: [entry('chen', 'character', 'Ye Chen', { mainCharacter: true }), entry('edict', 'ability', 'Frostbrush Edict')],
+      chapters: [learned()],
+      world,
+    });
+    expect(codex.characters[0].abilities.map(ability => ability.name)).toEqual(['Frostbrush Edict']);
+    expect(codex.abilities.map(ability => ability.name)).toEqual(['Frostbrush Edict']);
+    expect(codex.abilities[0].firstSeen?.chapterNumber).toBe(1);
+    expect(codex.abilities[0].atChapterZero.map(fact => fact.slot.id)).toEqual(['appearance']);
+    // Nothing in a chapter can name a place or a species yet.
+    expect(codex.places).toEqual([]);
+    expect(codex.species).toEqual([]);
+  });
+
   it('shows nothing of its own when a story has no world recorded', () => {
     const codex = deriveStoryCodex({ entries: [], chapters: [] });
     expect(codex.characters).toEqual([]);

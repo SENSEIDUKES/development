@@ -102,14 +102,17 @@ export interface CodexWorldFact {
 }
 
 /**
- * A card the world opened with and the chapters have not added to yet: places,
+ * A card the world opened with that holds only the world's own facts: places,
  * the Bestiary's species, the abilities the world already had, and the World
- * rules sheet.
+ * rules sheet. A chapter can reach an ability without adding to its card, so
+ * it records where the story met it.
  */
 export interface CodexWorldCard {
   key: string;
   name: string;
   aliases?: string[];
+  /** Where a chapter reached it. Absent while it is only part of the world the story opened with. */
+  firstSeen?: CodexPassage;
   /** The facts the world opened with, in its card kind's own order. */
   atChapterZero: CodexWorldFact[];
 }
@@ -183,7 +186,7 @@ export interface StoryCodexRecord {
   factions: CodexFaction[];
   /** Things, in the order the story met them, then the rest of the world it opened with. */
   items: CodexItem[];
-  /** The abilities the world opened with. What each character knows is on their own card. */
+  /** The abilities the world opened with that the story has reached. What each character knows is on their own card. */
   abilities: CodexWorldCard[];
   /** The places the world opened with. */
   places: CodexWorldCard[];
@@ -438,18 +441,40 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
     .map(item => ({ ...item, events: [...item.events].sort((left, right) => comesBefore(passageOf(left), passageOf(right))) }))
     .sort((left, right) => inRecordOrder(left, right, item => itemOrder.findIndex(candidate => candidate.key === item.key)));
 
-  // The kinds the world opens with that no chapter tag reaches yet: the
-  // abilities it already had, its places, and its Bestiary. Until their own
-  // tags exist (the Place tag and the rest), nothing in a chapter can reach
-  // one, so a reader meets them only in a world open to them.
-  const worldCards = (kind: 'ability' | 'place' | 'species'): CodexWorldCard[] => (open
-    ? worldCardsOfKind(world, kind).map(card => ({
-      key: `${kind}:${normalizeIdentityLabel(card.name)}`,
-      name: card.name,
-      ...(card.aliases?.length ? { aliases: [...card.aliases] } : {}),
-      atChapterZero: worldCardFacts(card),
-    }))
-    : []);
+  // An ability the world opened with is reached by a holdings tag: `knows`,
+  // `learning` or `learned` puts it on a character's card, so the story has
+  // met the ability itself and its own card opens with it.
+  const abilityFirstSeen = new Map<string, CodexPassage>();
+  for (const character of roster) {
+    for (const ability of character.abilities) {
+      for (const event of ability.events) {
+        const label = normalizeIdentityLabel(ability.name);
+        const first = abilityFirstSeen.get(label);
+        if (!first || comesBefore(passageOf(event), first) < 0) abilityFirstSeen.set(label, passageOf(event));
+      }
+    }
+  }
+
+  // Places and the Bestiary wait for their own tags: until a chapter can name
+  // one, nothing in it reaches them, so a reader meets them only in a world
+  // open to them. An ability opens when a chapter reaches it, like every
+  // other card the story meets.
+  const worldCards = (kind: 'ability' | 'place' | 'species'): CodexWorldCard[] => {
+    const cards = worldCardsOfKind(world, kind).map((card): CodexWorldCard => {
+      const first = kind === 'ability'
+        ? labelsOf(card).map(label => abilityFirstSeen.get(label)).filter((passage): passage is CodexPassage => Boolean(passage))
+          .sort(comesBefore)[0]
+        : undefined;
+      return {
+        key: `${kind}:${normalizeIdentityLabel(card.name)}`,
+        name: card.name,
+        ...(card.aliases?.length ? { aliases: [...card.aliases] } : {}),
+        ...(first ? { firstSeen: first } : {}),
+        atChapterZero: worldCardFacts(card),
+      };
+    });
+    return cards.filter(reached).sort((left, right) => inRecordOrder(left, right, card => cards.indexOf(card)));
+  };
   // The World rules are the world's frame, not a card the story reaches: the
   // ladder every rank is read against, and the age the story stands in.
   const rules = worldRulesCard(world);

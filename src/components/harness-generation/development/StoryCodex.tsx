@@ -1,10 +1,10 @@
 import { Fragment, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { Archive, Backpack, ChevronLeft, Eye, Flag, Hand, LoaderCircle, Lock, Package, ScrollText, Sparkles, Sword, TriangleAlert, User, Users, WandSparkles } from 'lucide-react';
+import { Archive, Backpack, ChevronLeft, Eye, Flag, Hand, LoaderCircle, Lock, MapPin, Package, PawPrint, Scale, ScrollText, Sparkles, Sword, TriangleAlert, User, Users, WandSparkles } from 'lucide-react';
 import './story-codex.css';
 import type { HoldingVerb } from '../../../narrative/holdings';
 import { CHARACTER_LOOK_TRAITS, THING_LOOK_TRAITS, type LookTrait } from '../../../narrative/appearances';
 import type { HeldThing, HoldingEvent, KnownAbility } from '../shared/holdings';
-import type { CodexAppearance, CodexCharacter, CodexCheck, CodexFaction, CodexItem, CodexPassage, CodexPictureCard, CodexPictures, StoryCodexRecord } from '../shared/storyCodex';
+import type { CodexAppearance, CodexCharacter, CodexCheck, CodexFaction, CodexItem, CodexPassage, CodexPictureCard, CodexPictures, CodexWorldCard, CodexWorldFact, StoryCodexRecord } from '../shared/storyCodex';
 
 /** How each change reads in the Codex. */
 const VERB_LABELS: Record<HoldingVerb, string> = {
@@ -21,14 +21,31 @@ const TRAIT_LABELS: Record<LookTrait, string> = {
 /** Opens the chapter behind a fact, at its paragraph, with the Codex still open. */
 type ReadPassage = (chapterNumber: number, blockId: string) => void;
 
-type CodexTab = 'characters' | 'factions' | 'items';
+type CodexTab = 'characters' | 'items' | 'abilities' | 'places' | 'factions' | 'species' | 'world-rules';
 
 /** What each category's cards carry on their art until a picture is manifested. */
 const CATEGORY_MARK: Record<CodexTab, (size: number) => ReactNode> = {
   characters: size => <User size={size} />,
-  factions: size => <Flag size={size} />,
   items: size => <Sword size={size} />,
+  abilities: size => <Sparkles size={size} />,
+  places: size => <MapPin size={size} />,
+  factions: size => <Flag size={size} />,
+  species: size => <PawPrint size={size} />,
+  'world-rules': size => <Scale size={size} />,
 };
+
+/** The world a story opened with: its facts came from the Story Seed and the World Blueprint, before any chapter. */
+const AT_THE_START = 'In the world from the start';
+
+/** The categories the Codex always offers, even empty: the ones it has always had. */
+const ALWAYS_SHOWN: ReadonlySet<CodexTab> = new Set<CodexTab>(['characters', 'items', 'factions']);
+
+const worldFact = (facts: readonly CodexWorldFact[] | undefined, slot: string): string | undefined =>
+  facts?.find(fact => fact.slot.id === slot)?.value;
+
+/** How a card's one line reads: where the story met it, or that the world opened with it. */
+const metLine = (card: { firstSeen?: CodexPassage }): string =>
+  card.firstSeen ? `Met in Chapter ${card.firstSeen.chapterNumber}` : AT_THE_START;
 
 /** The nearest box that scrolls, so a new view can start at its top without moving the chapter behind it. */
 function scrollBoxOf(element: HTMLElement | null): HTMLElement | undefined {
@@ -77,6 +94,25 @@ function CodexCard({ category, name, line, badge, featured = false, testId, card
       </span>
     </button>
   </li>;
+}
+
+/**
+ * The world as it stood before Chapter 1: what the Story Seed held and the
+ * World Blueprint filled, slot by slot. These facts point at no passage, since
+ * no chapter had happened when the world was written.
+ */
+function WorldAtTheStart({ name, facts, title = 'The world at the start' }: {
+  name: string; facts: readonly CodexWorldFact[]; title?: string;
+}) {
+  if (!facts.length) return null;
+  return <Section title={title} icon={<ScrollText size={12} aria-hidden />} label={`${name}: ${title}`} testId="codex-chapter-zero">
+    <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm">
+      {facts.map(fact => <Fragment key={fact.slot.id}>
+        <dt className="pt-0.5 text-[11px] uppercase tracking-[0.14em] text-neutral-500">{fact.slot.label}</dt>
+        <dd className="min-w-0 break-words text-neutral-200">{fact.value}</dd>
+      </Fragment>)}
+    </dl>
+  </Section>;
 }
 
 /** A small link to the paragraph a fact came from. */
@@ -294,13 +330,16 @@ function CharacterProfile({ character, art, onBack, onReadPassage }: { character
   const equipped = character.things.filter(thing => thing.equipped);
   const carried = character.things.filter(thing => !thing.equipped);
   return <Profile category="characters" name={character.name} backLabel="All characters" onBack={onBack}
-    line={character.rank?.text ?? `Met in Chapter ${character.firstSeen.chapterNumber}`}
+    line={character.rank?.text ?? worldFact(character.atChapterZero, 'role') ?? metLine(character)}
     badges={character.mainCharacter ? ['Main character'] : []} art={art}>
     <div className="flex flex-wrap gap-1.5">
-      <PassageChip passage={character.firstSeen} label={`First seen · Ch. ${character.firstSeen.chapterNumber}`} onReadPassage={onReadPassage} />
+      {character.firstSeen
+        ? <PassageChip passage={character.firstSeen} label={`First seen · Ch. ${character.firstSeen.chapterNumber}`} onReadPassage={onReadPassage} />
+        : <span className="inline-flex min-h-8 items-center rounded-full border border-white/12 bg-white/[0.04] px-2.5 text-[11px] text-neutral-300">{AT_THE_START}</span>}
       {character.rank && <span data-testid="codex-rank" className="contents">{character.rank.events.map(event =>
         <PassageChip key={event.passage.recordId} passage={eventPassage(event)} label={`Rank · Ch. ${event.passage.chapterNumber}`} onReadPassage={onReadPassage} />)}</span>}
     </div>
+    {character.atChapterZero && <WorldAtTheStart name={character.name} facts={character.atChapterZero} />}
     {character.appearance && <LookSection name={character.name} appearance={character.appearance} traits={CHARACTER_LOOK_TRAITS} onReadPassage={onReadPassage} />}
     {character.voice && <div data-testid="codex-voice"><Words passage={character.voice.first} caption="First words" onReadPassage={onReadPassage} /></div>}
     {equipped.length > 0 && <Section title="Equipped" icon={<Hand size={12} aria-hidden />} label={`${character.name}: Equipped`}>
@@ -312,27 +351,51 @@ function CharacterProfile({ character, art, onBack, onReadPassage }: { character
     {character.abilities.length > 0 && <Section title="Abilities" icon={<Sparkles size={12} aria-hidden />} label={`${character.name}: Abilities`}>
       <ul className="space-y-2">{character.abilities.map(ability => <AbilityRow key={ability.entryId} ability={ability} onReadPassage={onReadPassage} />)}</ul>
     </Section>}
-    {!character.things.length && !character.abilities.length && !character.rank && <p className="text-sm text-neutral-400">The story has not shown them holding or learning anything yet.</p>}
+    {!character.things.length && !character.abilities.length && !character.rank && !character.atChapterZero?.length
+      && <p className="text-sm text-neutral-400">The story has not shown them holding or learning anything yet.</p>}
     {character.chronicle.length > 0 && <Chronicle events={character.chronicle} onReadPassage={onReadPassage}
       describe={event => `${eventLabel(event)}${event.target && event.verb !== 'rank' ? ` ${event.target}` : event.level ? ` ${event.level}` : ''}`} />}
   </Profile>;
 }
 
 function FactionProfile({ faction, onBack, onReadPassage }: { faction: CodexFaction; onBack: () => void; onReadPassage?: ReadPassage }) {
-  return <Profile category="factions" name={faction.name} line={`Met in Chapter ${faction.firstSeen.chapterNumber}`} badges={[]} backLabel="All factions" onBack={onBack}>
-    <Words passage={faction.voice.first} caption="First heard" onReadPassage={onReadPassage} />
+  return <Profile category="factions" name={faction.name}
+    line={worldFact(faction.atChapterZero, 'factionKind') ?? metLine(faction)}
+    badges={[]} backLabel="All factions" onBack={onBack}>
+    {faction.atChapterZero && <WorldAtTheStart name={faction.name} facts={faction.atChapterZero} />}
+    {faction.voice && <Words passage={faction.voice.first} caption="First heard" onReadPassage={onReadPassage} />}
+  </Profile>;
+}
+
+/**
+ * A card the world opened with and no chapter has reached yet: an ability, a
+ * place, or one of the Bestiary's species.
+ */
+function WorldCardProfile({ category, card, backLabel, onBack }: {
+  category: CodexTab; card: CodexWorldCard; backLabel: string; onBack: () => void;
+}) {
+  return <Profile category={category} name={card.name} line={worldFact(card.atChapterZero, 'within') ?? metLine(card)}
+    badges={[]} backLabel={backLabel} onBack={onBack}>
+    <WorldAtTheStart name={card.name} facts={card.atChapterZero} />
+    {!card.atChapterZero.length && <p className="text-sm text-neutral-400">The world records nothing about it yet but its name.</p>}
   </Profile>;
 }
 
 /** A thing that changed hands and is no longer held: lost, used up, broken or given away. */
 const isArchived = (item: CodexItem) => !item.holder && item.events.length > 0;
-const holderLine = (item: CodexItem) => (item.holder ? `${item.holder.name} · ${item.equipped ? 'in hand' : 'carried'}` : item.events.length ? 'No longer held' : 'Held by no one');
+const holderLine = (item: CodexItem) => (item.holder
+  ? `${item.holder.name} · ${item.equipped ? 'in hand' : 'carried'}`
+  : item.events.length ? 'No longer held'
+    : worldFact(item.atChapterZero, 'holder') ?? worldFact(item.atChapterZero, 'location') ?? 'Held by no one');
 
 function ItemProfile({ item, art, onBack, onReadPassage }: { item: CodexItem; art?: ProfileArt; onBack: () => void; onReadPassage?: ReadPassage }) {
   return <Profile category="items" name={item.name} line={holderLine(item)} badges={isArchived(item) ? ['Archived'] : item.count > 1 ? [`×${item.count}`] : []} backLabel="All items" onBack={onBack} art={art}>
     <div className="flex flex-wrap gap-1.5">
-      <PassageChip passage={item.firstSeen} label={`First seen · Ch. ${item.firstSeen.chapterNumber}`} onReadPassage={onReadPassage} />
+      {item.firstSeen
+        ? <PassageChip passage={item.firstSeen} label={`First seen · Ch. ${item.firstSeen.chapterNumber}`} onReadPassage={onReadPassage} />
+        : <span className="inline-flex min-h-8 items-center rounded-full border border-white/12 bg-white/[0.04] px-2.5 text-[11px] text-neutral-300">{AT_THE_START}</span>}
     </div>
+    {item.atChapterZero && <WorldAtTheStart name={item.name} facts={item.atChapterZero} />}
     {item.appearance && <LookSection name={item.name} appearance={item.appearance} traits={THING_LOOK_TRAITS} onReadPassage={onReadPassage} />}
     {item.events.length > 0 && <Chronicle events={item.events} onReadPassage={onReadPassage}
       describe={event => `${eventLabel(event)} · ${(event as CodexItem['events'][number]).holder}`} />}
@@ -359,19 +422,27 @@ function Checks({ checks, onReadPassage, onReadChapter }: { checks: readonly Cod
 
 const EMPTY: Record<CodexTab, string> = {
   characters: 'No one has stepped onto the page yet. Characters join the Codex as the story meets them.',
-  factions: 'No sect, clan or faction has stepped forward yet.',
   items: 'No item has stepped onto the page yet. Items join the Codex as the story shows, gives, takes or uses them.',
+  abilities: 'The world records no ability yet. Abilities join the Codex as the story teaches and uses them.',
+  places: 'The world records no place yet.',
+  factions: 'No sect, clan or faction has stepped forward yet.',
+  species: 'The world records no species yet.',
+  'world-rules': 'This world states no rules yet: no rank ladder, no laws, no age.',
 };
 
 /**
- * The Codex: a gallery of the cards the reader has collected, one tab per
- * category (characters, factions, items), every category built the same way.
- * Each card is its picture first; opening it shows everything the story's
- * record knows about it together. A card shows its unmanifested aura until
- * its picture is made; with the host's pictures, an opened character or item
- * offers Manifest, which makes its picture from the look the record wrote down. Every fact links to the
- * passage that made it, and the chapter behind the Codex moves to it while
- * the Codex stays open. The record's checks close the gallery, for testing.
+ * The Codex: a gallery of the cards the story's record holds, one tab per card
+ * kind (characters, items, abilities, places, factions, the Bestiary, and the
+ * World rules sheet), every kind built the same way. Each card is its picture
+ * first; opening it shows everything the record knows about it together,
+ * starting with the world the story opened with (its Story Seed and World
+ * Blueprint) and then what the chapters recorded. A card shows its
+ * unmanifested aura until its picture is made; with the host's pictures, an
+ * opened character or item offers Manifest, which makes its picture from the
+ * look the record wrote down. Every fact a chapter made links to its passage,
+ * and the chapter behind the Codex moves to it while the Codex stays open; a
+ * fact the world opened with has no passage to link. The record's checks close
+ * the gallery, for testing.
  */
 export function StoryCodex({ codex, storyTitle, pictures, onBack, onReadPassage, onReadChapter }: {
   codex: StoryCodexRecord;
@@ -384,7 +455,7 @@ export function StoryCodex({ codex, storyTitle, pictures, onBack, onReadPassage,
   /** Opens a chapter, for a check that points at a whole chapter. */
   onReadChapter?: (chapterNumber: number) => void;
 }) {
-  const [tab, setTab] = useState<CodexTab>('characters');
+  const [chosenTab, setTab] = useState<CodexTab>('characters');
   const [open, setOpen] = useState<string>();
   // A fact's link moves the chapter behind the Codex, so it asks first (SENSEI: an instant jump lost the reader's place).
   const [goTo, setGoTo] = useState<{ chapterNumber: number; blockId?: string }>();
@@ -400,13 +471,21 @@ export function StoryCodex({ codex, storyTitle, pictures, onBack, onReadPassage,
       setProblems(current => ({ ...current, [card.key]: error instanceof Error && error.message ? error.message : 'The picture could not be made. Please try again.' }));
     }).finally(() => setMaking(({ [card.key]: _, ...rest }) => rest));
   };
-  const artOf = (key: string, subject: CodexPictureCard['subject'], name: string, appearance?: CodexAppearance): ProfileArt | undefined => {
+  const artOf = (key: string, subject: CodexPictureCard['subject'], name: string, appearance?: CodexAppearance, atChapterZero?: readonly CodexWorldFact[]): ProfileArt | undefined => {
     if (!pictures) return undefined;
     const look = appearance?.look;
+    // The world's own look, only while no chapter has shown this one at all.
+    // Once the story has, its passages are the better evidence: the host
+    // writes the look from them rather than from the line the world opened
+    // with, whether that line's own look is missing or since changed.
+    const fromTheStart = appearance ? undefined : worldFact(atChapterZero, 'appearance');
+    const current = look && !appearance?.lookStale
+      ? { summary: look.summary, traits: look.traits }
+      : fromTheStart ? { summary: fromTheStart, traits: {} } : undefined;
     return {
       picture: pictures.pictureOf(key), making: Boolean(making[key]), problem: problems[key],
       // A current look makes the picture at once; otherwise the host writes the look first, from the story's words.
-      ...(appearance ? { onManifest: () => manifest({ key, subject, name, ...(look && !appearance.lookStale ? { look: { summary: look.summary, traits: look.traits } } : {}) }) } : {}),
+      ...(appearance || fromTheStart ? { onManifest: () => manifest({ key, subject, name, ...(current ? { look: current } : {}) }) } : {}),
     };
   };
   const askToRead: ReadPassage | undefined = onReadPassage && ((chapterNumber, blockId) => setGoTo({ chapterNumber, blockId }));
@@ -418,10 +497,32 @@ export function StoryCodex({ codex, storyTitle, pictures, onBack, onReadPassage,
     setGoTo(undefined);
   };
   const close = () => setOpen(undefined);
+  // The Codex grows with the record: the three it has always had stay, and a
+  // newer kind appears once the record holds one of it.
+  const tabs: { id: CodexTab; label: string; count: number; icon: ReactNode }[] = ([
+    { id: 'characters', label: 'Characters', count: codex.characters.length, icon: <Users size={15} aria-hidden /> },
+    { id: 'items', label: 'Items', count: codex.items.length, icon: <Package size={15} aria-hidden /> },
+    { id: 'abilities', label: 'Abilities', count: codex.abilities.length, icon: <Sparkles size={15} aria-hidden /> },
+    { id: 'places', label: 'Places', count: codex.places.length, icon: <MapPin size={15} aria-hidden /> },
+    { id: 'factions', label: 'Factions', count: codex.factions.length, icon: <Flag size={15} aria-hidden /> },
+    { id: 'species', label: 'Bestiary', count: codex.species.length, icon: <PawPrint size={15} aria-hidden /> },
+    { id: 'world-rules', label: 'World rules', count: codex.worldRules?.length ?? 0, icon: <Scale size={15} aria-hidden /> },
+  ] as const).filter(entry => entry.count > 0 || ALWAYS_SHOWN.has(entry.id)).map(entry => ({ ...entry }));
+  // A category that empties while it is open (a world that closes to its
+  // reader) hands the Codex back to Characters rather than showing nothing.
+  const tab = tabs.some(entry => entry.id === chosenTab) ? chosenTab : 'characters';
   const character = tab === 'characters' ? codex.characters.find(entry => entry.key === open) : undefined;
   const faction = tab === 'factions' ? codex.factions.find(entry => entry.key === open) : undefined;
   const item = tab === 'items' ? codex.items.find(entry => entry.key === open) : undefined;
-  const profileOpen = Boolean(character || faction || item);
+  // The kinds the world opens with share one profile: their cards hold only facts.
+  const worldGroups: Partial<Record<CodexTab, { cards: readonly CodexWorldCard[]; backLabel: string }>> = {
+    abilities: { cards: codex.abilities, backLabel: 'All abilities' },
+    places: { cards: codex.places, backLabel: 'All places' },
+    species: { cards: codex.species, backLabel: 'All species' },
+  };
+  const worldGroup = worldGroups[tab];
+  const worldCard = worldGroup?.cards.find(entry => entry.key === open);
+  const profileOpen = Boolean(character || faction || item || worldCard);
   // A new view starts at its top.
   useLayoutEffect(() => {
     const box = scrollBoxOf(root.current);
@@ -431,19 +532,19 @@ export function StoryCodex({ codex, storyTitle, pictures, onBack, onReadPassage,
   const art = (key: string) => ({ picture: pictures?.pictureOf(key), making: Boolean(making[key]) });
   const itemCard = (entry: CodexItem) => <CodexCard key={entry.key} category="items" testId="codex-item" cardKey={entry.key} name={entry.name} {...art(entry.key)}
     badge={entry.count > 1 ? `×${entry.count}` : undefined} line={holderLine(entry)} onOpen={() => setOpen(entry.key)} />;
-  const tabs: { id: CodexTab; label: string; count: number; icon: ReactNode }[] = [
-    { id: 'characters', label: 'Characters', count: codex.characters.length, icon: <Users size={15} aria-hidden /> },
-    { id: 'factions', label: 'Factions', count: codex.factions.length, icon: <Flag size={15} aria-hidden /> },
-    { id: 'items', label: 'Items', count: codex.items.length, icon: <Package size={15} aria-hidden /> },
-  ];
   const cards = tab === 'characters'
     ? codex.characters.map(entry => <CodexCard key={entry.key} category="characters" testId="codex-character" cardKey={entry.key} name={entry.name} {...art(entry.key)}
         featured={entry.mainCharacter} badge={entry.mainCharacter ? 'Main character' : undefined}
-        line={entry.rank?.text ?? `Met in Chapter ${entry.firstSeen.chapterNumber}`} onOpen={() => setOpen(entry.key)} />)
+        line={entry.rank?.text ?? worldFact(entry.atChapterZero, 'role') ?? metLine(entry)} onOpen={() => setOpen(entry.key)} />)
     : tab === 'factions'
       ? codex.factions.map(entry => <CodexCard key={entry.key} category="factions" testId="codex-faction" cardKey={entry.key} name={entry.name} {...art(entry.key)}
-          line={`Met in Chapter ${entry.firstSeen.chapterNumber}`} onOpen={() => setOpen(entry.key)} />)
-      : codex.items.filter(entry => !isArchived(entry)).map(itemCard);
+          line={worldFact(entry.atChapterZero, 'factionKind') ?? metLine(entry)} onOpen={() => setOpen(entry.key)} />)
+      : worldGroup
+        ? worldGroup.cards.map(entry => <CodexCard key={entry.key} category={tab} testId={`codex-${tab}`} cardKey={entry.key} name={entry.name} {...art(entry.key)}
+            line={worldFact(entry.atChapterZero, 'appearance') ?? metLine(entry)} onOpen={() => setOpen(entry.key)} />)
+        : tab === 'items'
+          ? codex.items.filter(entry => !isArchived(entry)).map(itemCard)
+          : [];
   // Things lost, used up or given away: kept, below what is held now.
   const archived = tab === 'items' ? codex.items.filter(isArchived).map(itemCard) : [];
 
@@ -456,23 +557,30 @@ export function StoryCodex({ codex, storyTitle, pictures, onBack, onReadPassage,
       {onBack && <button type="button" onClick={onBack} className="min-h-11 rounded-full border border-white/15 px-4 text-sm text-neutral-200 hover:border-white/30">Back to reading</button>}
     </div>
 
-    <div role="tablist" aria-label="Codex" className="grid grid-cols-3 gap-1 rounded-full border border-white/10 bg-black/30 p-1">
+    {/* Seven card kinds: the pills wrap rather than shrink, so each stays readable on a phone. */}
+    <div role="tablist" aria-label="Codex" className="flex flex-wrap gap-1 rounded-2xl border border-white/10 bg-black/30 p-1">
       {tabs.map(entry => <button key={entry.id} type="button" role="tab" id={`codex-tab-${entry.id}`} aria-selected={tab === entry.id} aria-controls="codex-tab-panel"
         onClick={() => { setTab(entry.id); setOpen(undefined); }}
-        className={`inline-flex min-h-10 min-w-0 items-center justify-center gap-1.5 rounded-full px-1 text-sm transition-colors motion-reduce:transition-none ${tab === entry.id ? 'bg-white/10 text-white' : 'text-neutral-400 hover:text-neutral-100'}`}>
+        className={`inline-flex min-h-10 min-w-0 flex-auto items-center justify-center gap-1.5 rounded-full px-2 text-sm transition-colors motion-reduce:transition-none ${tab === entry.id ? 'bg-white/10 text-white' : 'text-neutral-400 hover:text-neutral-100'}`}>
         {entry.icon}<span className="truncate">{entry.label}</span><span className="font-mono text-[11px] text-neutral-500">{entry.count}</span>
       </button>)}
     </div>
 
     <div id="codex-tab-panel" role="tabpanel" aria-labelledby={`codex-tab-${tab}`} className="space-y-4">
       {character && <CharacterProfile key={character.key} character={character} onBack={close} onReadPassage={askToRead}
-        art={artOf(character.key, 'character', character.name, character.appearance)} />}
+        art={artOf(character.key, 'character', character.name, character.appearance, character.atChapterZero)} />}
       {faction && <FactionProfile key={faction.key} faction={faction} onBack={close} onReadPassage={askToRead} />}
       {item && <ItemProfile key={item.key} item={item} onBack={close} onReadPassage={askToRead}
-        art={artOf(item.key, 'thing', item.name, item.appearance)} />}
-      {!profileOpen && (cards.length || archived.length
-        ? <ul className="grid grid-cols-2 gap-3">{cards}</ul>
-        : <p className="py-8 text-center text-sm text-neutral-400">{EMPTY[tab]}</p>)}
+        art={artOf(item.key, 'thing', item.name, item.appearance, item.atChapterZero)} />}
+      {worldCard && worldGroup && <WorldCardProfile key={worldCard.key} category={tab} card={worldCard} backLabel={worldGroup.backLabel} onBack={close} />}
+      {/* The World rules are one sheet, not a gallery: every other card refers to them. */}
+      {tab === 'world-rules'
+        ? codex.worldRules?.length
+          ? <div data-testid="codex-world-rules"><WorldAtTheStart name={storyTitle} facts={codex.worldRules} title="World rules" /></div>
+          : <p className="py-8 text-center text-sm text-neutral-400">{EMPTY[tab]}</p>
+        : !profileOpen && (cards.length || archived.length
+          ? <ul className="grid grid-cols-2 gap-3">{cards}</ul>
+          : <p className="py-8 text-center text-sm text-neutral-400">{EMPTY[tab]}</p>)}
       {!profileOpen && archived.length > 0 && <section aria-labelledby="codex-archived-title" className="space-y-3" data-testid="codex-archived">
         <h3 id="codex-archived-title" className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
           <Archive size={12} aria-hidden />Archived ({archived.length})

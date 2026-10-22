@@ -1,5 +1,15 @@
 import { ARC_LENGTH, MAX_ARC_GOALS, MAX_ARC_LOOKAHEAD, STORY_LENGTH_ARCS } from '@seihouse/sen/arc-goals';
-import { SEED_CHARACTER_LIMIT, SEED_FACTION_LIMIT, WORLD_FACT_DETAILS, type StorySeedInput } from '@seihouse/sen/story-seed';
+import {
+  SEED_ABILITY_LIMIT,
+  SEED_CHARACTER_LIMIT,
+  SEED_FACTION_LIMIT,
+  SEED_PLACE_LIMIT,
+  SEED_SPECIES_LIMIT,
+  SEED_THING_LIMIT,
+  WORLD_FACT_DETAILS,
+  type StorySeedInput,
+} from '@seihouse/sen/story-seed';
+import { WORLD_CARD_KINDS, type WorldCardKindId } from '@seihouse/sen/contracts';
 
 export const WORLD_BLUEPRINT_SYSTEM_PROMPT = `You are an elite Eastern fantasy author and world architect. Build a detailed World Blueprint that can serve as the canon bible for serialized chapter generation.
 
@@ -43,6 +53,53 @@ const worldFactRules = (storySeed: StorySeedInput): string[] => {
   ];
 };
 
+/** Where each card kind's cards go in the answer, and how many it may hold. */
+const CARD_ANSWERS: Array<{ kind: WorldCardKindId; field: string; limit?: number; lead: string }> = [
+  { kind: 'character', field: 'characters', limit: SEED_CHARACTER_LIMIT, lead: "List the creator's own characters first, by their exact name, then only the supporting ones the story needs. Never the main character." },
+  { kind: 'thing', field: 'things', limit: SEED_THING_LIMIT, lead: 'List what the cast already holds, and what waits somewhere to be found.' },
+  { kind: 'ability', field: 'startingAbilities', limit: SEED_ABILITY_LIMIT, lead: 'List the abilities anyone already knows, by the names the character cards use for them.' },
+  { kind: 'place', field: 'places', limit: SEED_PLACE_LIMIT, lead: 'List the place the story opens in first, then the others it opens among.' },
+  { kind: 'faction', field: 'factions', limit: SEED_FACTION_LIMIT, lead: "List the creator's own factions first, by their exact name, then only the supporting ones the story needs." },
+  { kind: 'species', field: 'species', limit: SEED_SPECIES_LIMIT, lead: 'List the creatures this world has, not individuals.' },
+  { kind: 'world-rules', field: 'powerSystem', lead: 'Write it once, for the whole story.' },
+];
+
+const cardSlotLines = (kind: WorldCardKindId): string => WORLD_CARD_KINDS
+  .find(candidate => candidate.id === kind)!.slots
+  .filter(slot => !slot.aliases)
+  .map(slot => `    ${slot.id}: ${slot.asks}`)
+  .join('\n');
+
+/**
+ * The world at Chapter 0, in the words the Blueprint model reads (SENSEI,
+ * 2026-10-21). Every card kind and every slot is written from the Codex's own
+ * definition (`WORLD_CARD_KINDS`), so this instruction can never ask for a
+ * slot the Story Seed cannot hold or the Codex cannot show.
+ */
+export const WORLD_AT_CHAPTER_ZERO_INSTRUCTIONS = `The world at Chapter 0
+
+The Story Seed and this Blueprint are the world as it already stands when Chapter 1 opens. Nothing is left for a later chapter to invent: everything that exists at the start exists here, and the chapters only change it afterwards.
+
+Two tests decide whether a card holds enough, and nothing beyond them belongs on one:
+- an artist must be able to draw the opening scene from these cards alone, without reading a chapter;
+- a game must be able to load the world exactly as it stands: who is where, holding what, in what condition, allied with whom.
+
+Write what the world is, never how it is shown: "at the North Ridge Gate, at dusk, wounded", never a panel, a camera, a frame count or an art style.
+
+Fill every slot of every card, each one short and concrete. Where the creator already wrote a slot, repeat their value exactly; only blank slots are yours to fill. Never write aliases.
+
+Use one name for one thing, everywhere: a character's holds names things on the thing cards, their knows names abilities on the ability cards, their belongsTo names factions on the faction cards, their location names a place on the place cards, a faction's seat names a place and its leader a character, and every rank or level comes from the rank ladder in the world rules.
+
+The cards, and what each slot holds:
+
+${CARD_ANSWERS.map(({ kind, field, limit, lead }) => {
+  const definition = WORLD_CARD_KINDS.find(candidate => candidate.id === kind)!;
+  const count = limit ? ` (at most ${limit})` : '';
+  return `- ${field}${count}: ${definition.purpose} ${lead}\n${cardSlotLines(kind)}`;
+}).join('\n')}
+
+mainCharacter is a character card too, with the slots only they have: startingIdentity, personality, mainFlaw, secretAdvantage, startingWeakness, moralAlignment, and backgroundProfile, their fuller backstory beyond the one-line bio.`;
+
 export const buildWorldBlueprintPrompt = (storySeed: StorySeedInput, arcCount = storySeed.story.optional.arcCount): string => `Create one complete World Blueprint from this finalized canonical Story Seed:
 
 ${JSON.stringify(storySeed, null, 2)}
@@ -52,10 +109,7 @@ Completion rules:
 - Generate a strong logline.
 ${worldFactRules(storySeed).map(rule => `- ${rule}`).join('\n')}
 - Fill every Story Seed slot. Where the creator already wrote a slot, repeat their value exactly; only blank slots are yours to fill. Never write aliases or Hard Pins.
-- mainCharacter: name, age, appearance, personality, startingIdentity, secretAdvantage, startingWeakness, mainFlaw, moralAlignment, a short bio (who they are now, in two or three sentences), and backgroundProfile (their fuller backstory beyond the bio).
-- characters: list every side character the creator wrote first, by their exact name, then add only useful supporting characters, at most ${SEED_CHARACTER_LIMIT} in all; never the main character. Give each its role, age, skinTone, eyeColor, powerType, rankLevel, connectionToMC, and a short bio.
-- factions: list every faction the creator wrote first, by its exact name, then add only useful supporting factions, at most ${SEED_FACTION_LIMIT} in all. Give each its role, powerLevel, alignment, connectionToMC, and a description of its hierarchy and beliefs.
-- abilities (startingPowerConcept, uniquePath), powerSystem (flavor, knownRanks: the rank ladder in order) and mainOpposition: fill each.
+- abilities (startingPowerConcept, uniquePath) and mainOpposition: fill each.
 - Keep every slot to one short, concrete fact; the longer prose fields (logline, worldOverview, powerSystemOutline, backgroundProfile, firstArcPromise) add what the slots do not already say, never restating them.
 - ${arcCount === undefined
   ? `Establish the Destined Ending first, then a realistic estimatedArcs between ${STORY_LENGTH_ARCS.min} and ${STORY_LENGTH_ARCS.max}: the story's length.`
@@ -68,5 +122,7 @@ ${worldFactRules(storySeed).map(rule => `- ${rule}`).join('\n')}
 - Establish the first-arc promise, trope rules, and a practical style bible.
 - The style bible must translate genre, style, tags, and maturity metadata into actionable prose, pacing, viewpoint, dialogue, and thematic guidance.
 - The trope rules must explicitly account for face-slap, plot-armor, recognition, and Make It Work settings. Keep Fate Survival settings out of trope rules; chapter generation receives them separately. Apply the other settings without exposing app-control language as ordinary narration.
+
+${WORLD_AT_CHAPTER_ZERO_INSTRUCTIONS}
 
 Return the JSON object only.`;

@@ -1,5 +1,8 @@
 import {
   Feather,
+  MapPin,
+  PawPrint,
+  Sword,
   type LucideIcon,
 } from 'lucide-react';
 import { type StorySeedInput } from '@seihouse/sen/story-seed';
@@ -21,6 +24,9 @@ export type SeedSectionId =
   | 'world-identity'
   | 'characters'
   | 'factions'
+  | 'things'
+  | 'places'
+  | 'species'
   | 'abilities'
   | 'power-system';
 
@@ -105,25 +111,53 @@ export const SEED_SECTIONS: SeedSection[] = [
     isFilled: seed => (worldFoundations(seed).factions || []).some(faction => hasText(faction.name)),
   },
   {
+    id: 'things',
+    family: 'world',
+    label: 'Things',
+    icon: Sword,
+    tagline: 'The weapons, heirlooms and treasures the world already has, and who holds them.',
+    isFilled: seed => (worldFoundations(seed).things || []).some(thing => hasText(thing.name)),
+  },
+  {
+    id: 'places',
+    family: 'world',
+    label: 'Places',
+    icon: MapPin,
+    tagline: 'The places the story opens among, so the record knows where everyone is.',
+    isFilled: seed => (worldFoundations(seed).places || []).some(place => hasText(place.name)),
+  },
+  {
+    id: 'species',
+    family: 'world',
+    label: 'Bestiary',
+    icon: PawPrint,
+    tagline: 'The creatures natural to this world. A named beast is a character of its species.',
+    isFilled: seed => (worldFoundations(seed).species || []).some(species => hasText(species.name)),
+  },
+  {
     id: 'abilities',
     family: 'world',
     label: 'Abilities',
     icon: 'ability',
-    tagline: "The main character's starting power and the path only they can walk.",
+    tagline: "The main character's starting power, the path only they can walk, and the techniques the world already knows.",
     isFilled: seed => {
-      const abilities = worldFoundations(seed).abilities || {};
-      return hasText(abilities.startingPowerConcept) || hasText(abilities.uniquePath);
+      const foundations = worldFoundations(seed);
+      const abilities = foundations.abilities || {};
+      return hasText(abilities.startingPowerConcept)
+        || hasText(abilities.uniquePath)
+        || (foundations.startingAbilities || []).some(ability => hasText(ability.name));
     },
   },
   {
     id: 'power-system',
     family: 'world',
-    label: 'Power System',
+    label: 'World Rules',
     icon: 'power-system',
-    tagline: "The style and rank ladder of the world's power system.",
+    tagline: "The rank ladder every card is measured by, the laws that change what can happen, and the age the story stands in.",
     isFilled: seed => {
       const powerSystem = worldFoundations(seed).powerSystem || {};
-      return hasText(powerSystem.flavor) || hasText(powerSystem.knownRanks);
+      return hasText(powerSystem.flavor) || hasText(powerSystem.knownRanks)
+        || hasText(powerSystem.laws) || hasText(powerSystem.era);
     },
   },
 ];

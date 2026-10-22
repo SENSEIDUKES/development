@@ -21,6 +21,7 @@ import {
 } from '../seedState';
 import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
 import { SeedSectionFrame, WorkspaceSubheading } from './SeedSectionFrame';
+import { WorldCardSlotFields } from './WorldCardFields';
 
 interface CharactersWorkspaceProps {
   seed: StorySeedInput;
@@ -117,9 +118,36 @@ export const MainCharacterFields = ({ seed, updateSeed }: CharactersWorkspacePro
         rows={3}
         placeholder="e.g., Born as the son of a fallen patriarch, carrying the blood of a Primordial dragon, extremely lazy but protective..."
       />
+      <WorkspaceSubheading>Where they stand when the story opens</WorkspaceSubheading>
+      <p className="font-sans text-xs text-neutral-400">
+        Their own Codex card, as the world begins: where they are, what they hold and know, and who
+        they stand with. Left blank, the World Blueprint fills it before Chapter 1.
+      </p>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+        <WorldCardSlotFields
+          kind="character"
+          card={mainCharacter}
+          idPrefix="mc-world"
+          only={CHAPTER_ZERO_MAIN_CHARACTER_SLOTS}
+          onChange={patch => updateSeed(patchMainCharacter(patch))}
+        />
+      </div>
     </>
   );
 };
+
+/**
+ * The character card's own slots, beside the fields the Seed already asks for
+ * by hand above. They come from the Codex's one definition of a character
+ * card, so the Seed holds every slot the Codex shows.
+ */
+const CHAPTER_ZERO_MAIN_CHARACTER_SLOTS = [
+  'gender', 'skinTone', 'eyeColor', 'species', 'location',
+  'powerType', 'rankLevel', 'status', 'holds', 'knows', 'goals', 'ties', 'belongsTo', 'voice',
+];
+const CHAPTER_ZERO_CHARACTER_SLOTS = [
+  'gender', 'species', 'location', 'status', 'appearance', 'holds', 'knows', 'goals', 'ties', 'belongsTo', 'voice',
+];
 
 /** The Seed's additional-character editor; the Seed workspace and Blueprint review share it. */
 export const AdditionalCharactersEditor = ({ seed, updateSeed }: CharactersWorkspaceProps) => {
@@ -241,6 +269,14 @@ export const AdditionalCharactersEditor = ({ seed, updateSeed }: CharactersWorks
                 placeholder="Vivid biography, personality quirks, hidden talents, major flaws, or specific fated actions..."
               />
             </div>
+            {/* The rest of their Codex card, as the world stands at Chapter 0. */}
+            <WorldCardSlotFields
+              kind="character"
+              card={char}
+              idPrefix={`char-world-${char.id}`}
+              only={CHAPTER_ZERO_CHARACTER_SLOTS}
+              onChange={patch => updateCharacter(index, patch as Partial<StorySeedCharacter>)}
+            />
           </div>
         </div>
       ))}

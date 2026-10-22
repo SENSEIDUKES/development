@@ -52,7 +52,7 @@ describe('the Codex record', () => {
       ] }],
     });
     expect(codex.characters).toEqual([]);
-    expect(codex.factions.map(faction => [faction.name, faction.voice.first.text])).toEqual([
+    expect(codex.factions.map(faction => [faction.name, faction.voice!.first.text])).toEqual([
       ['Iron Crane Sect', '"Kneel!"'],
       ['Black Wolf Tribe', '"Run,"'],
     ]);

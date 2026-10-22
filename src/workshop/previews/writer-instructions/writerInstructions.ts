@@ -26,6 +26,7 @@ import {
   type HarnessPromptPart,
 } from '../../../server/harness-generation/prompt';
 import { HOLDINGS_FIXER_INSTRUCTIONS } from '../../../server/harness-generation/holdingsFixer';
+import { WORLD_AT_CHAPTER_ZERO_INSTRUCTIONS } from '../../../server/story-seed-blueprint/prompt';
 import { LOOK_DESCRIBER_INSTRUCTIONS } from '../../../server/harness-generation/lookDescriber';
 
 /**
@@ -57,7 +58,8 @@ export type WriterInstructionId =
   | 'literal-reading'
   | 'official-requirements'
   | 'holdings-fixer'
-  | 'look-step';
+  | 'look-step'
+  | 'world-builder';
 
 export interface WriterInstruction {
   id: WriterInstructionId;
@@ -164,6 +166,15 @@ export const SOME_STORIES: readonly WriterInstruction[] = [
   },
 ];
 
+/** Read before the story exists, by the call that builds its world: never by the chapter writer. */
+export const BEFORE_THE_STORY: readonly WriterInstruction[] = [
+  {
+    id: 'world-builder', title: 'World builder: the world at Chapter 0', source: 'HARNESS',
+    when: 'Once, when a World Blueprint is generated from a Story Seed, before the story begins. These words tell the Blueprint model to fill every Codex card the world opens with, slot by slot, and are read beside the Seed itself and the Blueprint\'s other rules (the logline, Arc 1, the style bible).',
+    text: WORLD_AT_CHAPTER_ZERO_INSTRUCTIONS,
+  },
+];
+
 /** Read after a chapter, by a separate small call: never by the chapter writer. */
 export const AFTER_A_CHAPTER: readonly WriterInstruction[] = [
   {
@@ -178,7 +189,7 @@ export const AFTER_A_CHAPTER: readonly WriterInstruction[] = [
   },
 ];
 
-export const WRITER_INSTRUCTIONS: readonly WriterInstruction[] = [...EVERY_CHAPTER, ...SOME_STORIES, ...AFTER_A_CHAPTER];
+export const WRITER_INSTRUCTIONS: readonly WriterInstruction[] = [...EVERY_CHAPTER, ...SOME_STORIES, ...BEFORE_THE_STORY, ...AFTER_A_CHAPTER];
 
 /** Blocks no longer read, kept so the history can still name them. */
 export const RETIRED_WRITER_INSTRUCTIONS: ReadonlyMap<WriterInstructionId, string> = new Map([

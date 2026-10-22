@@ -31,11 +31,48 @@ existing Chapter Generation feature.
 | Field | Value |
 | --- | --- |
 | First Workshop record | 2026-08-29 |
-| Last recorded Workshop update | 2026-10-16 |
+| Last recorded Workshop update | 2026-10-22 |
 | Historical source inspection | 2026-09-12 — verified the creative author direction in `Light-Novels/src/server/prompts.ts` on `main` before extracting the Author skill |
 | Lifecycle status | Reader-directed continuation (Fate page) in a Reader on the Highlight Engine that reads aloud in three voices over the SEIHouse audio player's soundtrack, each chapter with the music and atmosphere its writer chose, with holdings tagged by the writer, checked by plain rules and quietly fixed after each chapter by the Holdings fixer, the newest chapter rewritable with a note, a chapter's writing kept going when the reader leaves, the story's point of view kept from its opening, and failed writes never saved |
 
 ### History
+
+- **2026-10-22 (the world at Chapter 0, the Codex before Chapter 1):** Phase B of
+  [the World at Chapter 0 plan](../../../docs/world-at-chapter-0.md). The record
+  gains its first layer: the world a Story Seed and its World Blueprint made,
+  complete before Chapter 1. **One definition:** `WORLD_CARD_KINDS`
+  (`src/narrative/worldRecord.ts`, the SEN contracts entry) defines every Codex
+  card kind and its slots — character, thing, ability, place, faction, species
+  and the one World rules sheet — each slot naming which of the record's two
+  tests needs it. The Story Seed's fields, the Blueprint's instruction, its
+  answer schema and the Codex's cards are all written from it, so none can hold
+  a slot another lacks. **The record:** `StoryFoundationInput.worldAtChapterZero`
+  (`WorldAtChapterZero`), read from the reconciled Seed at the one Seed → HARNESS
+  translation point (`worldAtChapterZeroFromStorySeed`); nothing is stored
+  twice. **Schema 34** (skipping 33, the rolled-back chapter loop's), with the
+  no-op migration every additive version has: a story saved before it keeps
+  every chapter and plan and simply has no world recorded. **The Codex:**
+  `deriveStoryCodex` takes `world` and shows it before any chapter —
+  `atChapterZero` facts on each character, item and faction card, and
+  `abilities`, `places`, `species` and `worldRules` groups of their own — while
+  a chapter's tags land on those same cards, matched by name, never a second
+  card. `firstSeen` is now absent until the story meets a card, and the card
+  says so ("In the world from the start"). **The reader meets a card when the
+  story reaches it** (SENSEI, 2026-10-22: a reader of a generated novel is its
+  creator, so its world would spoil it): the record is whole, and this reading
+  of it holds each card back until a chapter brings it in, exactly as the Codex
+  behaved before this world existed. A world open to its reader
+  (`WorldAtChapterZero.openToTheReader`, for a novel its author brought in and
+  is expanding) shows every card from the start; the World rules sheet, the
+  world's frame rather than a card, shows either way, and a category appears
+  only once the record holds one of its kind. An ability is reached like any
+  other card: a `knows`, `learning` or `learned` tag puts it on a character,
+  so its own card opens with the chapter that taught it. Places and the
+  Bestiary have no tag that names them yet, so until one exists only a world
+  open to its reader shows them. **The writer is untouched:** the CAPA
+  Prompt, the prompt skeleton and the Story Information Packet are unchanged;
+  what the chapter writer reads from this world is its own step, with its own
+  approval. See it at `?preview=reader-codex` → Development → Before Chapter 1.
 
 - **2026-10-22 (storage after the rollback):** The chapter loop, rolled back the same day, had opened the browser's story database at version 33, and a browser never opens a database at a lower version, so the restored build (schema 32) could not open or save any story in a browser that ran it. The database now opens at `harnessGenerationIndexedDbVersion()`, never below 33, worked out when it opens so a test that stands in for the HARNESS package can still load the file (`src/host/generation/indexedDbRepository.ts`). A workspace the loop saved (schema 33) is kept untouched, like any this build cannot read, and the page starts fresh; a browser that never ran the loop reads its stories as before. No shape changes and no upgrade step. Schema 33 is not reused: the next bump goes to 34.
 

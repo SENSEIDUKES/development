@@ -158,15 +158,60 @@ export const createMockSeedSlotAnswer = () => ({
     bio: 'A laborer in the outer quarry whom the sect has written off.',
   },
   characters: [
-    { name: 'Elder Qin', role: 'Sect Elder', age: 'Ancient', skinTone: 'Weathered bronze', eyeColor: 'Frost grey', powerType: 'Frost Dao', rankLevel: 'Nascent Soul', connectionToMC: 'Secret protector', bio: 'A retired enforcer.' },
-    { name: 'Junior Sister Han', role: 'Ally', age: 'Seventeen', skinTone: 'Pale', eyeColor: 'Amber', powerType: 'Talisman craft', rankLevel: 'Qi Condensation 6', connectionToMC: 'Fellow quarry laborer', bio: 'A talisman prodigy hiding her talent from the inner sect.' },
+    {
+      name: 'Elder Qin', role: 'Sect Elder', age: 'Ancient', gender: 'Man', skinTone: 'Weathered bronze', eyeColor: 'Frost grey',
+      appearance: 'A tall old man in frost-rimed grey robes, his left sleeve pinned empty, a brush case at his belt.',
+      powerType: 'Frost Dao', rankLevel: 'Nascent Soul', connectionToMC: 'Secret protector', bio: 'A retired enforcer.',
+      location: 'Azure Hall', status: 'Well, one arm lost', holds: 'Iron Brush', knows: 'Frostbrush Edict',
+      goals: "Repay a life debt to Ye Chen's father", ties: 'Sworn brother to the dead patriarch', belongsTo: 'Heavenly Sword Sect',
+      voice: 'Few words, each one final.',
+    },
+    {
+      name: 'Junior Sister Han', role: 'Ally', age: 'Seventeen', gender: 'Woman', skinTone: 'Pale', eyeColor: 'Amber',
+      appearance: 'A slight girl in a patched outer-sect robe, ink on her fingers, talisman paper tucked in her sash.',
+      powerType: 'Talisman craft', rankLevel: 'Qi Condensation 6', connectionToMC: 'Fellow quarry laborer',
+      bio: 'A talisman prodigy hiding her talent from the inner sect.',
+      location: 'Rift Quarry', status: 'Well', holds: 'Half-finished talisman roll', knows: 'Lesser Binding Script',
+      goals: 'Buy her brother out of the quarry', ties: 'Younger brother in the same quarry', belongsTo: 'Heavenly Sword Sect',
+      voice: 'Quick, wry, dropping her voice when elders pass.',
+    },
   ],
   factions: [
-    { name: 'Heavenly Sword Sect', role: 'Ruling Power', powerLevel: 'Mid Tier', alignment: 'Righteous (in name only)', connectionToMC: "MC's starting sect", description: 'A corrupted sect.' },
-    { name: 'Deep Sea Alliance', role: 'Rival power', powerLevel: 'High Tier', alignment: 'Neutral', connectionToMC: 'Hunts the prince for the court', description: 'Merchant clans bound by tide oaths, ruled by a council of three.' },
+    {
+      name: 'Heavenly Sword Sect', role: 'Ruling Power', powerLevel: 'Mid Tier', alignment: 'Righteous (in name only)',
+      connectionToMC: "MC's starting sect", description: 'A corrupted sect.', factionKind: 'Sect', standing: 'Falling',
+      appearance: 'Azure robes with a silver sword sigil at the collar; elders wear cloud-pattern sashes.',
+      seat: 'Azure Hall', leader: 'Sect Master Ye Ruhai', ties: 'At war with the Abyssal Cult; vassal to the celestial court',
+    },
+    {
+      name: 'Deep Sea Alliance', role: 'Rival power', powerLevel: 'High Tier', alignment: 'Neutral',
+      connectionToMC: 'Hunts the prince for the court', description: 'Merchant clans bound by tide oaths, ruled by a council of three.',
+      factionKind: 'Alliance of clans', standing: 'Rising', appearance: 'Salt-stained blue-green coats, tide-oath rings on every thumb.',
+      seat: 'Tidehold', leader: 'Councillor Mu Lan', ties: "Paid by the celestial court; rivals of the Heavenly Sword Sect",
+    },
+  ],
+  things: [
+    { name: 'Iron Brush', appearance: 'A black-iron calligraphy brush, its bristles frozen into a needle.', holder: 'Elder Qin', status: 'Whole' },
+    { name: "Ninth Prince's Jade Token", appearance: 'A palm-sized jade token carved with a nine-petal seal, cracked across one corner.', location: 'Rift Quarry', status: 'Cracked' },
+  ],
+  startingAbilities: [
+    { name: 'Frostbrush Edict', appearance: 'Strokes of white frost hang in the air where the brush passes, then fall as blades.', ladder: 'Qi Condensation → Nascent Soul' },
+    { name: 'Lesser Binding Script', appearance: 'A talisman flares amber and ropes of light close on the target.', ladder: 'Qi Condensation' },
+  ],
+  places: [
+    { name: 'Rift Quarry', appearance: 'A volcanic rift floored with black glass, lit red from below, lined with labor scaffolds.', within: 'Heavenly Sword Sect', heldBy: 'Heavenly Sword Sect', condition: 'Working' },
+    { name: 'Azure Hall', appearance: 'A cloud-terraced hall of blue stone above the rift, its pillars carved with sword sigils.', within: 'Heavenly Sword Sect', heldBy: 'Heavenly Sword Sect', condition: 'Whole' },
+  ],
+  species: [
+    { name: 'Cinder Serpent', appearance: 'A coal-scaled serpent the length of two men, embers showing between its scales.', habitat: 'Rift Quarry', strength: 'Qi Condensation 5 to 7', mind: 'Beast; no speech' },
   ],
   abilities: { startingPowerConcept: 'Qi Condensation Tier 1', uniquePath: 'Rebuilds his meridians from the scars of failed timelines' },
-  powerSystem: { flavor: 'Martial arts, Daoist', knownRanks: 'Qi Condensation → Foundation Establishment → Core Formation → Nascent Soul' },
+  powerSystem: {
+    flavor: 'Martial arts, Daoist',
+    knownRanks: 'Qi Condensation → Foundation Establishment → Core Formation → Nascent Soul',
+    laws: 'No killing inside the sect gates. Outer-sect laborers may not carry a sword. A fate auditor\'s decree cannot be refused aloud.',
+    era: "The ninth century of a collapsing celestial court; famine in the outer provinces and spirit-stone scarcity in the sects.",
+  },
   mainOpposition: "The celestial court's fate auditors",
 });
 
@@ -267,6 +312,11 @@ export const createFilledStorySeedInput = (): StorySeedInput => ({
           secretAdvantage: 'Foreknowledge of seven doomed timelines',
           startingWeakness: 'Destroyed meridians',
           bio: 'Born as the son of a fallen patriarch, carrying the blood of a Primordial dragon, extremely lazy but protective of the few he trusts.',
+          // The world at Chapter 0: what the author wrote about where he stands.
+          location: 'Rift Quarry',
+          status: 'Meridians destroyed; able to walk',
+          holds: "Ninth Prince's Jade Token",
+          belongsTo: 'Heavenly Sword Sect',
         },
         additionalCharacters: [
           {

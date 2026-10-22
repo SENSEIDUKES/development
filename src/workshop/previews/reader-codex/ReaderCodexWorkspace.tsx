@@ -7,8 +7,11 @@ import type {
   StoryWorld,
   UpdateStoryFields,
 } from '@seihouse/sen/reader-chamber';
+import { fillBlankSeedSlots, finalizeGeneratedWorldBlueprint, reconcileStorySeedBlueprint } from '@seihouse/sen/story-seed';
+import { createHarnessFoundationFromStorySeed } from '@seihouse/library/story-seed';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
+import { createMockBlueprint, createMockSeedSlotAnswer, createMockStorySeedRecord } from '../story-seed/previewData';
 import { createReaderCodexPreviewStory } from './previewData';
 import { readerCodexPages, type ReaderCodexPage } from './previewStates';
 import { loadSampleStory, SAMPLE_STORY_TITLE } from '../reader-chamber/sampleStory';
@@ -101,21 +104,62 @@ function useStandInPictures(): CodexPictures {
 }
 
 /**
- * Development: the Codex the Reader opens, reading SENSEI's Sundered Heavens
- * test as the app saved it. Its facts link to passages in the Reader Chamber
- * card, where the chapter sits behind the Codex. Manifest here makes a
- * stand-in picture (no image model is called); the app makes real ones.
+ * The world a Story Seed and its World Blueprint made, before Chapter 1, read
+ * through the real path the app uses: the Blueprint's answer fills the Seed's
+ * blank slots, the Seed hands the world to the Foundation, and the Codex shows
+ * it. No chapter has been written, so every card is the world as it began and
+ * nothing links to a passage.
+ *
+ * `shown` is the owner's instrument: **the whole world** opens the world to
+ * its reader, the way an imported novel's would be, so the record the Seed and
+ * Blueprint made can be inspected; **what the reader sees** leaves it as a
+ * generated story's world, where a card waits until the story reaches it.
  */
-function StoryCodexPreviewPane() {
+const beforeChapterOne = (shown: StoryCodexShown) => {
+  const record = createMockStorySeedRecord();
+  // The same steps Create runs on a Blueprint answer: the answer is finalized,
+  // its slot values fill the Seed's blanks, and the pair is reconciled.
+  const generated = finalizeGeneratedWorldBlueprint(
+    { ...createMockBlueprint(), ...createMockSeedSlotAnswer() },
+    record.seed,
+  );
+  const { seed } = reconcileStorySeedBlueprint(fillBlankSeedSlots(record.seed, generated.generatedSeedSlots), generated);
+  const foundation = createHarnessFoundationFromStorySeed({ ...record, seed });
+  const world = foundation.worldAtChapterZero;
+  return {
+    title: foundation.title ?? record.title,
+    record: deriveStoryCodex({
+      entries: [],
+      chapters: [],
+      world: world && shown === 'whole-world' ? { ...world, openToTheReader: true } : world,
+      mainCharacterName: foundation.cast?.find(member => member.isMainCharacter)?.name,
+      declared: declaredCharacters(foundation),
+      declaredFactions: foundation.identities?.filter(identity => identity.kind === 'faction') ?? [],
+    }),
+  };
+};
+
+/**
+ * Development: the Codex the Reader opens. **Before Chapter 1** shows the world
+ * a Story Seed and its Blueprint made, with no chapter written yet;
+ * **Sundered Heavens** reads SENSEI's test story as the app saved it, whose
+ * facts link to passages in the Reader Chamber card, where the chapter sits
+ * behind the Codex. Manifest here makes a stand-in picture (no image model is
+ * called); the app makes real ones.
+ */
+function StoryCodexPreviewPane({ scene, shown }: { scene: StoryCodexScene; shown: StoryCodexShown }) {
   const pictures = useStandInPictures();
   const [state, setState] = useState<HarnessWorkspaceState>();
   const [error, setError] = useState('');
+  const sample = scene === 'sundered-heavens';
   useEffect(() => {
+    if (!sample) return;
     let active = true;
     loadSampleStory().then(loaded => { if (active) setState(loaded); }, () => { if (active) setError(`${SAMPLE_STORY_TITLE} could not be opened.`); });
     return () => { active = false; };
-  }, []);
+  }, [sample]);
   const codex = useMemo(() => {
+    if (!sample) return beforeChapterOne(shown);
     const story = state?.stories[0];
     if (!state || !story) return undefined;
     const foundation = state.foundations.find(entry => entry.id === story.activeFoundationRevisionId)?.input;
@@ -124,12 +168,13 @@ function StoryCodexPreviewPane() {
       record: deriveStoryCodex({
         entries: state.codexEntries.filter(entry => entry.storyId === story.id),
         chapters: state.chapters.filter(chapter => chapter.storyId === story.id),
+        world: foundation?.worldAtChapterZero,
         mainCharacterName: foundation?.cast?.find(member => member.isMainCharacter)?.name,
         declared: foundation ? declaredCharacters(foundation) : [],
         declaredFactions: foundation?.identities?.filter(identity => identity.kind === 'faction') ?? [],
       }),
     };
-  }, [state]);
+  }, [sample, shown, state]);
   return (
     <div className="mx-auto min-w-0 max-w-md overflow-hidden rounded-2xl border border-white/10 bg-neutral-950">
       {codex
@@ -139,17 +184,61 @@ function StoryCodexPreviewPane() {
   );
 }
 
+/** Which story the Development Codex reads. */
+type StoryCodexScene = 'before-chapter-one' | 'sundered-heavens';
+
+/** How much of the world at Chapter 0 the Codex shows. */
+type StoryCodexShown = 'whole-world' | 'reader';
+
+const STORY_CODEX_SCENES: { id: StoryCodexScene; label: string }[] = [
+  { id: 'before-chapter-one', label: 'Before Chapter 1' },
+  { id: 'sundered-heavens', label: 'Sundered Heavens' },
+];
+
+const STORY_CODEX_SHOWN: { id: StoryCodexShown; label: string }[] = [
+  { id: 'whole-world', label: 'The whole world' },
+  { id: 'reader', label: 'What the reader sees' },
+];
+
 export function ReaderCodexWorkspace() {
   const entry = workshopEntries.find(item => item.id === 'reader-codex')!;
   const [activePage, setActivePage] = useState<ReaderCodexPage>('portraits');
+  const [scene, setScene] = useState<StoryCodexScene>('before-chapter-one');
+  const [shown, setShown] = useState<StoryCodexShown>('whole-world');
+  const pill = (active: boolean) => `workshop-touch-target rounded-lg border px-3 py-2 text-xs transition-colors ${
+    active ? 'border-cyan-400/45 bg-cyan-500/15 text-cyan-100' : 'border-white/10 bg-black/20 text-white/55 hover:bg-white/10 hover:text-white'
+  }`;
 
   return (
     <FeatureWorkspace
       entry={entry}
       workshopControls={{
-        defaultSection: 'pages',
-        description: 'Original Reference pages: these shortcuts drive the production Codex\'s real tabs. Development is the Codex the Reader opens, reading Sundered Heavens; it has its own Characters and Items tabs. Manifest on a card with a look makes a stand-in picture here, with no image model; the app makes the real one.',
+        defaultSection: 'scenes',
+        description: 'Development is the Codex the Reader opens. Before Chapter 1 shows the world a Story Seed and its World Blueprint made, with no chapter written. Sundered Heavens reads SENSEI\'s test story as the app saved it. The whole world opens the record for inspection, as an imported novel\'s world is open to the author who wrote it; what the reader sees is a generated story\'s own reader, who meets a card only once the story reaches it. Manifest on a card with a look makes a stand-in picture here, with no image model; the app makes the real one. The Original Reference pages drive the production Codex\'s real tabs.',
         sections: [
+          {
+            id: 'scenes',
+            content: (
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-2" role="group" aria-label="Development Codex story">
+                  {STORY_CODEX_SCENES.map(option => (
+                    <button key={option.id} type="button" aria-pressed={scene === option.id}
+                      onClick={() => setScene(option.id)} className={pill(scene === option.id)}>
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 gap-2" role="group" aria-label="How much of the world the Codex shows">
+                  {STORY_CODEX_SHOWN.map(option => (
+                    <button key={option.id} type="button" aria-pressed={shown === option.id}
+                      onClick={() => setShown(option.id)} className={pill(shown === option.id)}>
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ),
+          },
           {
             id: 'pages',
             content: (
@@ -160,11 +249,7 @@ export function ReaderCodexWorkspace() {
                     type="button"
                     aria-pressed={activePage === page.id}
                     onClick={() => setActivePage(page.id)}
-                    className={`workshop-touch-target rounded-lg border px-3 py-2 text-xs transition-colors ${
-                      activePage === page.id
-                        ? 'border-cyan-400/45 bg-cyan-500/15 text-cyan-100'
-                        : 'border-white/10 bg-black/20 text-white/55 hover:bg-white/10 hover:text-white'
-                    }`}
+                    className={pill(activePage === page.id)}
                   >
                     {page.label}
                   </button>
@@ -179,7 +264,7 @@ export function ReaderCodexWorkspace() {
           <ReaderCodexPreviewPane Component={ReferenceReaderCodex} activePage={activePage} supportsBestiary={false} />
       )}
       renderDevelopment={() => (
-          <StoryCodexPreviewPane />
+          <StoryCodexPreviewPane scene={scene} shown={shown} />
       )}
     />
   );

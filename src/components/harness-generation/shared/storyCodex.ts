@@ -4,6 +4,7 @@ import type { HarnessChapter } from '../../../narrative/generation';
 import {
   worldCardFacts,
   worldCardsOfKind,
+  worldIsOpenToTheReader,
   worldRulesCard,
   type WorldAtChapterZero,
   type WorldCardSlot,
@@ -34,14 +35,24 @@ import {
  * **The world at Chapter 0** (SENSEI, 2026-10-21) is the record's first layer:
  * what the author filled in the Story Seed and the World Blueprint filled for
  * the blanks, in the Codex's own card kinds. It is complete before Chapter 1,
- * so the Codex opens with the world rather than waiting for a chapter to
- * invent it. A card says plainly that it is the world as it began, and nothing
- * the chapters have not reached carries a passage yet.
+ * so the record knows the world rather than waiting for a chapter to invent
+ * it. A card says plainly that it is the world as it began, and nothing the
+ * chapters have not reached carries a passage yet.
  *
- * On top of that, a card gains what the chapters record: a character stepped
- * onto the page, spoke, or held, used or learned something; a thing stepped
- * onto the page or changed hands. Whoever and whatever arrives after Chapter 0
- * is still created by the chapter that brings it in.
+ * **The reader meets a card when the story reaches it** (SENSEI, 2026-10-22).
+ * A reader of a generated novel is its creator, so a world the model wrote
+ * would spoil the story it was written for: a card is held back until a
+ * chapter brings it in, exactly as before this world existed, and only then
+ * does it arrive with everything the world already knew about it. The record
+ * underneath stays whole — a picture, a manga or a game reads the world
+ * itself, not this. A world open to its reader (`openToTheReader`, for an
+ * author expanding a novel they already wrote) shows every card from the
+ * start.
+ *
+ * A card is reached the way it always was: a character stepped onto the page,
+ * spoke, or held, used or learned something; a thing stepped onto the page or
+ * changed hands. Whoever and whatever arrives after Chapter 0 is still created
+ * by the chapter that brings it in.
  */
 
 /** A place in the story a fact came from: the paragraph, and the words the record sits on. */
@@ -356,12 +367,19 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
     || (left.firstSeen && right.firstSeen ? comesBefore(left.firstSeen, right.firstSeen) : 0)
     || index(left) - index(right);
 
+  // A card the story has not reached is the reader's spoiler, so it waits
+  // (SENSEI, 2026-10-22). The world stays whole underneath: only this reading
+  // of it is held back, and a world open to its reader (an author expanding
+  // their own novel) shows every card from the start.
+  const open = worldIsOpenToTheReader(world);
+  const reached = (card: { firstSeen?: CodexPassage }) => open || Boolean(card.firstSeen);
+
   const factionOrder = [...factions.values()];
   const factionList = factionOrder
-    .filter(faction => (faction.firstSeen && faction.voice) || faction.atChapterZero?.length)
+    .filter(faction => ((faction.firstSeen && faction.voice) || faction.atChapterZero?.length) && reached(faction))
     .sort((left, right) => inRecordOrder(left, right, faction => factionOrder.indexOf(faction)));
 
-  const known = [...characters.values()].filter(character => character.firstSeen || character.atChapterZero);
+  const known = [...characters.values()].filter(character => (character.firstSeen || character.atChapterZero) && reached(character));
   const roster: CodexCharacter[] = known
     .sort((left, right) => Number(right.mainCharacter) - Number(left.mainCharacter)
       || inRecordOrder(left, right, character => known.indexOf(character)))
@@ -414,18 +432,24 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
   }
   const itemOrder = [...items.values()];
   const itemList = itemOrder
+    .filter(reached)
     .map(item => ({ ...item, events: [...item.events].sort((left, right) => comesBefore(passageOf(left), passageOf(right))) }))
     .sort((left, right) => inRecordOrder(left, right, item => itemOrder.findIndex(candidate => candidate.key === item.key)));
 
   // The kinds the world opens with that no chapter tag reaches yet: the
-  // abilities it already had, its places, and its Bestiary.
-  const worldCards = (kind: 'ability' | 'place' | 'species'): CodexWorldCard[] =>
-    worldCardsOfKind(world, kind).map(card => ({
+  // abilities it already had, its places, and its Bestiary. Until their own
+  // tags exist (the Place tag and the rest), nothing in a chapter can reach
+  // one, so a reader meets them only in a world open to them.
+  const worldCards = (kind: 'ability' | 'place' | 'species'): CodexWorldCard[] => (open
+    ? worldCardsOfKind(world, kind).map(card => ({
       key: `${kind}:${normalizeIdentityLabel(card.name)}`,
       name: card.name,
       ...(card.aliases?.length ? { aliases: [...card.aliases] } : {}),
       atChapterZero: worldCardFacts(card),
-    }));
+    }))
+    : []);
+  // The World rules are the world's frame, not a card the story reaches: the
+  // ladder every rank is read against, and the age the story stands in.
   const rules = worldRulesCard(world);
 
   const holdingChecks = holdings.flags.map((flag): CodexCheck => {

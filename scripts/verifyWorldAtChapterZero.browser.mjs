@@ -53,15 +53,35 @@ try {
     assert((await rules.textContent()).includes('The rank ladder'), `${width}: the World rules sheet shows the ladder`);
     await page.screenshot({ path: `output/playwright/codex-before-chapter-1-${width}.png`, fullPage: true });
 
-    // A story with chapters still reads as before: the scene switch is in the
-    // shared Workshop Controls panel, which a phone opens on demand.
+    // The switches live in the shared Workshop Controls panel, which a phone
+    // opens on demand.
     const controls = page.locator('section[aria-label="Workshop Controls"]');
     const open = controls.getByRole('button', { name: 'Open', exact: true });
     if (await open.isVisible()) await open.click();
+
+    // ── What the reader sees: a card waits until the story reaches it ─────
+    await controls.getByRole('button', { name: 'What the reader sees', exact: true }).click();
+    await codex.getByRole('tab', { name: /^Characters/ }).click();
+    assert.equal(await codex.locator('[data-card]').count(), 0,
+      `${width}: the reader meets no one before the story reaches them`);
+    for (const label of ['Abilities', 'Places', 'Bestiary']) {
+      assert.equal(await codex.getByRole('tab', { name: new RegExp(`^${label}`) }).count(), 0,
+        `${width}: the ${label} category waits until the record holds one`);
+    }
+    // The World rules are the world's frame, not a card the story reaches.
+    await codex.getByRole('tab', { name: /^World rules/ }).click();
+    assert.equal(await codex.locator('[data-testid="codex-world-rules"]').count(), 1,
+      `${width}: the reader still has the World rules sheet`);
+    await page.screenshot({ path: `output/playwright/codex-what-the-reader-sees-${width}.png`, fullPage: true });
+    await controls.getByRole('button', { name: 'The whole world', exact: true }).click();
+
+    // A story with chapters still reads as before.
     await controls.getByRole('button', { name: 'Sundered Heavens', exact: true }).click();
     await codex.getByRole('tab', { name: /^Characters/ }).click();
     assert.equal(await codex.locator('[data-testid="codex-checks"]').count(), 1,
       `${width}: the saved story's Codex still opens`);
+    assert((await codex.locator('[data-card]').count()) > 0,
+      `${width}: the saved story still shows everyone it met`);
 
     // ── The Story Seed's World sections ──────────────────────────────────
     await page.goto(`${origin}/?preview=story-seed`);

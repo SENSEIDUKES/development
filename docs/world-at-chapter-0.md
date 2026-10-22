@@ -386,9 +386,15 @@ the one scene the Seed sets.
    fails without it. A cut is one line in `WORLD_CARD_KINDS`.
 3. **Anything missing** that the artist or save-game test needs and this list
    doesn't cover.
-4. **Who reads it:** the Codex now shows the world before Chapter 1 to whoever
-   opens it. If a reader should meet the world only as the story reaches it,
-   that is one rule in the record, not a rebuild.
+4. **Who reads it: decided 2026-10-22.** SENSEI: "fix this, a reader can use a
+   card only when the story reaches it. This is important for the AI
+   generation side of this to avoid spoilers; the creators are the readers.
+   But when we eventually add novel imports, where an author can just expand
+   their novel, it would probably be better to let them see it." The record is
+   whole from Chapter 0; the Codex holds each card back until a chapter reaches
+   it, and a world marked open to its reader (`openToTheReader`, for an
+   imported novel) shows every card from the start. The World rules sheet is
+   not a card the story reaches, so it shows either way.
 
 ## Open questions for SENSEI
 
@@ -494,12 +500,15 @@ The world is now recorded before Chapter 1, in the Codex's own card kinds.
   the Workshop's Writer Instructions page, under *Before the story*, with their
   dated history. The default output budget rose to 16,384 tokens, since the
   answer now carries the world.
-- **The Codex is full before Chapter 1.** The record reads the world from the
-  story's Foundation, and the Codex opens with Characters, Items, Abilities,
+- **The Codex is full before Chapter 1 — for whoever may see it.** The record
+  reads the world from the story's Foundation: Characters, Items, Abilities,
   Places, Factions, the Bestiary and the World rules sheet. A card says it is
   the world as it began; what the chapters record lands on those same cards,
-  never a second one. See it at `?preview=reader-codex` → Development →
-  **Before Chapter 1**.
+  never a second one. **The reader meets a card when the story reaches it**
+  (decided 2026-10-22, above), so a generated novel is never spoiled by the
+  world written for it; an imported novel's world is open to its author. See
+  both at `?preview=reader-codex` → Development → **Before Chapter 1**, with
+  **The whole world** / **What the reader sees**.
 - **Deliberately not in it:** what the chapter writer reads from this world
   (its own step, its own approval), and the Ability card's place in the
   Codex beyond its own tab.
@@ -507,8 +516,10 @@ The world is now recorded before Chapter 1, in the Codex's own card kinds.
 ## History
 
 - 2026-10-22: phase B built (the card kinds, the Seed's slots, the Blueprint's
-  fill, the Chapter 0 record and the Codex before Chapter 1). The plan document
-  itself returns here after the rollback of 2026-10-22 (#421), which undid the
-  chapter loop and this file with it.
+  fill, the Chapter 0 record and the Codex before Chapter 1). SENSEI approved
+  the world builder's words the same day, and decided that a reader meets a
+  card only when the story reaches it, with an imported novel's world open to
+  its author. The plan document itself returns here after the rollback of
+  2026-10-22 (#421), which undid the chapter loop and this file with it.
 - 2026-10-21: started from SENSEI's conversation after the chapter loop's step
   2 merged (PRs #414, #418).

@@ -37,6 +37,9 @@ const CATEGORY_MARK: Record<CodexTab, (size: number) => ReactNode> = {
 /** The world a story opened with: its facts came from the Story Seed and the World Blueprint, before any chapter. */
 const AT_THE_START = 'In the world from the start';
 
+/** The categories the Codex always offers, even empty: the ones it has always had. */
+const ALWAYS_SHOWN: ReadonlySet<CodexTab> = new Set<CodexTab>(['characters', 'items', 'factions']);
+
 const worldFact = (facts: readonly CodexWorldFact[] | undefined, slot: string): string | undefined =>
   facts?.find(fact => fact.slot.id === slot)?.value;
 
@@ -452,7 +455,7 @@ export function StoryCodex({ codex, storyTitle, pictures, onBack, onReadPassage,
   /** Opens a chapter, for a check that points at a whole chapter. */
   onReadChapter?: (chapterNumber: number) => void;
 }) {
-  const [tab, setTab] = useState<CodexTab>('characters');
+  const [chosenTab, setTab] = useState<CodexTab>('characters');
   const [open, setOpen] = useState<string>();
   // A fact's link moves the chapter behind the Codex, so it asks first (SENSEI: an instant jump lost the reader's place).
   const [goTo, setGoTo] = useState<{ chapterNumber: number; blockId?: string }>();
@@ -491,6 +494,20 @@ export function StoryCodex({ codex, storyTitle, pictures, onBack, onReadPassage,
     setGoTo(undefined);
   };
   const close = () => setOpen(undefined);
+  // The Codex grows with the record: the three it has always had stay, and a
+  // newer kind appears once the record holds one of it.
+  const tabs: { id: CodexTab; label: string; count: number; icon: ReactNode }[] = ([
+    { id: 'characters', label: 'Characters', count: codex.characters.length, icon: <Users size={15} aria-hidden /> },
+    { id: 'items', label: 'Items', count: codex.items.length, icon: <Package size={15} aria-hidden /> },
+    { id: 'abilities', label: 'Abilities', count: codex.abilities.length, icon: <Sparkles size={15} aria-hidden /> },
+    { id: 'places', label: 'Places', count: codex.places.length, icon: <MapPin size={15} aria-hidden /> },
+    { id: 'factions', label: 'Factions', count: codex.factions.length, icon: <Flag size={15} aria-hidden /> },
+    { id: 'species', label: 'Bestiary', count: codex.species.length, icon: <PawPrint size={15} aria-hidden /> },
+    { id: 'world-rules', label: 'World rules', count: codex.worldRules?.length ?? 0, icon: <Scale size={15} aria-hidden /> },
+  ] as const).filter(entry => entry.count > 0 || ALWAYS_SHOWN.has(entry.id)).map(entry => ({ ...entry }));
+  // A category that empties while it is open (a world that closes to its
+  // reader) hands the Codex back to Characters rather than showing nothing.
+  const tab = tabs.some(entry => entry.id === chosenTab) ? chosenTab : 'characters';
   const character = tab === 'characters' ? codex.characters.find(entry => entry.key === open) : undefined;
   const faction = tab === 'factions' ? codex.factions.find(entry => entry.key === open) : undefined;
   const item = tab === 'items' ? codex.items.find(entry => entry.key === open) : undefined;
@@ -512,15 +529,6 @@ export function StoryCodex({ codex, storyTitle, pictures, onBack, onReadPassage,
   const art = (key: string) => ({ picture: pictures?.pictureOf(key), making: Boolean(making[key]) });
   const itemCard = (entry: CodexItem) => <CodexCard key={entry.key} category="items" testId="codex-item" cardKey={entry.key} name={entry.name} {...art(entry.key)}
     badge={entry.count > 1 ? `×${entry.count}` : undefined} line={holderLine(entry)} onOpen={() => setOpen(entry.key)} />;
-  const tabs: { id: CodexTab; label: string; count: number; icon: ReactNode }[] = [
-    { id: 'characters', label: 'Characters', count: codex.characters.length, icon: <Users size={15} aria-hidden /> },
-    { id: 'items', label: 'Items', count: codex.items.length, icon: <Package size={15} aria-hidden /> },
-    { id: 'abilities', label: 'Abilities', count: codex.abilities.length, icon: <Sparkles size={15} aria-hidden /> },
-    { id: 'places', label: 'Places', count: codex.places.length, icon: <MapPin size={15} aria-hidden /> },
-    { id: 'factions', label: 'Factions', count: codex.factions.length, icon: <Flag size={15} aria-hidden /> },
-    { id: 'species', label: 'Bestiary', count: codex.species.length, icon: <PawPrint size={15} aria-hidden /> },
-    { id: 'world-rules', label: 'World rules', count: codex.worldRules?.length ?? 0, icon: <Scale size={15} aria-hidden /> },
-  ];
   const cards = tab === 'characters'
     ? codex.characters.map(entry => <CodexCard key={entry.key} category="characters" testId="codex-character" cardKey={entry.key} name={entry.name} {...art(entry.key)}
         featured={entry.mainCharacter} badge={entry.mainCharacter ? 'Main character' : undefined}

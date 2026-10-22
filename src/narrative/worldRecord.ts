@@ -211,9 +211,24 @@ export interface WorldCardAtChapterZero {
  * this record; they never replace it. Characters, factions and anything else
  * that arrives after Chapter 0 are still created by the chapters that bring
  * them in.
+ *
+ * The record is complete; what the **reader** sees of it is not. A reader
+ * meets a card when the story reaches it (SENSEI, 2026-10-22: "this is
+ * important for the AI generation side of this to avoid spoilers, the
+ * creators are the readers"). The world is still whole underneath, for
+ * everything made from it.
  */
 export interface WorldAtChapterZero {
   cards: WorldCardAtChapterZero[];
+  /**
+   * The reader may see every card from the start. Absent, the default, a card
+   * waits until the story reaches it, so a world the model wrote never spoils
+   * the story it was written for.
+   *
+   * Set for a novel whose reader already knows its world: an author who brings
+   * their own novel in and expands it here (SENSEI, 2026-10-22).
+   */
+  openToTheReader?: true;
 }
 
 /** A stable key for a Chapter 0 card: its kind and its name, however the name is written. */
@@ -238,3 +253,10 @@ export const worldCardFacts = (card: WorldCardAtChapterZero): Array<{ slot: Worl
 
 /** Whether a world holds anything at all. */
 export const hasWorldAtChapterZero = (world: WorldAtChapterZero | undefined): boolean => Boolean(world?.cards.length);
+
+/**
+ * Whether the reader may see a card the story has not reached yet. False for
+ * every world a Story Seed makes: its reader is the story's own reader.
+ */
+export const worldIsOpenToTheReader = (world: WorldAtChapterZero | undefined): boolean =>
+  Boolean(world?.openToTheReader);

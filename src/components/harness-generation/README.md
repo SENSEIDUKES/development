@@ -56,7 +56,15 @@ existing Chapter Generation feature.
   `abilities`, `places`, `species` and `worldRules` groups of their own — while
   a chapter's tags land on those same cards, matched by name, never a second
   card. `firstSeen` is now absent until the story meets a card, and the card
-  says so ("In the world from the start"). **The writer is untouched:** the CAPA
+  says so ("In the world from the start"). **The reader meets a card when the
+  story reaches it** (SENSEI, 2026-10-22: a reader of a generated novel is its
+  creator, so its world would spoil it): the record is whole, and this reading
+  of it holds each card back until a chapter brings it in, exactly as the Codex
+  behaved before this world existed. A world open to its reader
+  (`WorldAtChapterZero.openToTheReader`, for a novel its author brought in and
+  is expanding) shows every card from the start; the World rules sheet, the
+  world's frame rather than a card, shows either way, and a category appears
+  only once the record holds one of its kind. **The writer is untouched:** the CAPA
   Prompt, the prompt skeleton and the Story Information Packet are unchanged;
   what the chapter writer reads from this world is its own step, with its own
   approval. See it at `?preview=reader-codex` → Development → Before Chapter 1.

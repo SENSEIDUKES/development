@@ -412,12 +412,17 @@ Update it whenever it changes.
     (its World family now has Things, Places and the Bestiary beside
     Characters, Factions, Abilities and World Rules), the World Blueprint's one
     call fills every slot the author left blank, and the story carries the
-    result as its world (`StoryFoundationInput.worldAtChapterZero`). The Codex
-    opens with it, so the record knows the world instead of inventing it when
-    something first appears; a card says it is the world as it began, and what
-    the chapters record lands on those same cards. The chapter writer's own
-    instructions are unchanged: what it reads from this world is the next step.
-    The plan is [the World at Chapter 0](./docs/world-at-chapter-0.md).
+    result as its world (`StoryFoundationInput.worldAtChapterZero`). The record
+    knows the world instead of inventing it when something first appears; a
+    card says it is the world as it began, and what the chapters record lands
+    on those same cards. **The reader meets a card when the story reaches it**
+    (SENSEI, 2026-10-22): a reader of a generated novel is its creator, so the
+    world written for the story never spoils it. A world open to its reader
+    (`openToTheReader`) shows every card from the start, for a novel its author
+    brought in and is expanding; the World rules sheet, the world's frame
+    rather than a card, shows either way. The chapter writer's own instructions
+    are unchanged: what it reads from this world is the next step. The plan is
+    [the World at Chapter 0](./docs/world-at-chapter-0.md).
   - **The Codex, remade on the record (2026-10-13):** a panel like Fate,
     opened from the bottom bar's Codex button, holding only what the record
     knows today. It is a **gallery of cards** (since the same day, from
@@ -1129,7 +1134,7 @@ same record; none of them adds anything medium-specific to the story itself.
 | Look step | Retired 2026-10-17. Looks are now written on demand: the HARNESS keeps the writer's own description from each tagged passage by code, and writes one entry's full look (the core record a picture, manga or game draws from) only when something needs it, kept on its Codex entry until a new tag changes it (`describeCodexLook`, `planCodexLook`, the `describe-looks` call; Look Describer in the Model Router). |
 | Appeared | The Story Information section listing every character and thing already on the page, with its latest look, so the writer keeps every look (`appearancesSection`). |
 | Codex | The story's world as its record knows it, opened in the Reader as a panel: the world it opened with (below) and what its chapters recorded, in one card each — characters, items, abilities, places, factions, the Bestiary and the World rules sheet — every fact a chapter made linked to its passage (`StoryCodex`, worked out by `deriveStoryCodex`). It grows as each information tag is built. |
-| World at Chapter 0 | The world a story opens with, in the Codex's own card kinds: what the author filled in the Story Seed and the World Blueprint filled for the blanks, carried on the story as `worldAtChapterZero` and shown in the Codex before Chapter 1. Its one definition is `WORLD_CARD_KINDS` (`@seihouse/sen/contracts`); [the plan](./docs/world-at-chapter-0.md) is the owner's direction for it. |
+| World at Chapter 0 | The world a story opens with, in the Codex's own card kinds: what the author filled in the Story Seed and the World Blueprint filled for the blanks, carried on the story as `worldAtChapterZero`. The record is complete before Chapter 1; the reader meets each card when the story reaches it, unless the world is open to its reader (`openToTheReader`, an imported novel). Its one definition is `WORLD_CARD_KINDS` (`@seihouse/sen/contracts`); [the plan](./docs/world-at-chapter-0.md) is the owner's direction for it. |
 | Highlight Engine | SEN's engine for highlighting part of a story and attaching to it: prose today, sequential-art images later. Its lab is at `?preview=highlight-engine`; in the Reader it is Create mode. Never "Text Highlight Engine". |
 | Story Settings | The only place a user meets the HARNESS: language, reading mode, CAPA skills and media. On Story View (`StorySettings`) and in Create's Settings (`CreateStorySettings`), from `@seihouse/library/stories`. |
 | Harness Generation | The developer instrument for the HARNESS (`?preview=harness-generation`). Never a product page. |

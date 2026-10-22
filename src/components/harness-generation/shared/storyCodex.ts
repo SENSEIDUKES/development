@@ -3,6 +3,7 @@ import type { Look } from '../../../narrative/appearances';
 import type { HarnessChapter } from '../../../narrative/generation';
 import {
   worldCardFacts,
+  worldCardKey,
   worldCardsOfKind,
   worldIsOpenToTheReader,
   worldRulesCard,
@@ -457,13 +458,17 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
   // An ability the world opened with is reached by a holdings tag: `knows`,
   // `learning` or `learned` puts it on a character's card, so the story has
   // met the ability itself and its own card opens with it.
+  // Matched on the world's own key rather than a normalized name, which drops
+  // a parenthetical: "Phoenix Cry (East)" and "Phoenix Cry (West)" are two
+  // abilities, and learning one must not open the other's card to a reader the
+  // story has not shown it to.
   const abilityFirstSeen = new Map<string, CodexPassage>();
   for (const character of roster) {
     for (const ability of character.abilities) {
       for (const event of ability.events) {
-        const label = normalizeIdentityLabel(ability.name);
-        const first = abilityFirstSeen.get(label);
-        if (!first || comesBefore(passageOf(event), first) < 0) abilityFirstSeen.set(label, passageOf(event));
+        const key = worldCardKey('ability', ability.name);
+        const first = abilityFirstSeen.get(key);
+        if (!first || comesBefore(passageOf(event), first) < 0) abilityFirstSeen.set(key, passageOf(event));
       }
     }
   }
@@ -475,7 +480,8 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
   const worldCards = (kind: 'ability' | 'place' | 'species'): CodexWorldCard[] => {
     const cards = worldCardsOfKind(world, kind).map((card): CodexWorldCard => {
       const first = kind === 'ability'
-        ? labelsOf(card).map(label => abilityFirstSeen.get(label)).filter((passage): passage is CodexPassage => Boolean(passage))
+        ? [card.name, ...(card.aliases ?? [])].map(name => abilityFirstSeen.get(worldCardKey('ability', name)))
+          .filter((passage): passage is CodexPassage => Boolean(passage))
           .sort(comesBefore)[0]
         : undefined;
       return {

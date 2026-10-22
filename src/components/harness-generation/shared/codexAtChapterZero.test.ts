@@ -173,6 +173,34 @@ describe('The reader meets a card when the story reaches it', () => {
     expect(codex.species).toEqual([]);
   });
 
+  it('opens only the ability the chapter taught, not its namesake', () => {
+    // Both read as "phoenix cry" once a parenthetical is dropped, so matching
+    // on a normalized name would show the reader a card the story never reached.
+    const twins: WorldAtChapterZero = {
+      cards: [
+        { key: 'chapter-0:ability:phoenix-cry-east', kind: 'ability', name: 'Phoenix Cry (East)', slots: { appearance: 'Dawn breaks where it lands.' } },
+        { key: 'chapter-0:ability:phoenix-cry-west', kind: 'ability', name: 'Phoenix Cry (West)', slots: { appearance: 'Dusk falls where it lands.' } },
+      ],
+    };
+    const learnedEast = (): StoryCodexChapter => ({
+      id: 'chapter-1', chapterNumber: 1,
+      paragraphs: ['Ye Chen took the sunrise cry.'],
+      holdingChanges: [{
+        kind: HOLDING_CHANGE_KIND,
+        id: 'holding:c1-p1:0-29:0',
+        anchor: { level: 'span', blockId: 'c1-p1', startOffset: 0, endOffset: 29, selectedText: 'Ye Chen took the sunrise cry.' },
+        payload: { origin: 'harness', verb: 'learned', holder: { name: 'Ye Chen', entryId: 'chen' }, target: { name: 'Phoenix Cry (East)', entryId: 'east' } },
+      }],
+    });
+    const codex = deriveStoryCodex({
+      entries: [entry('chen', 'character', 'Ye Chen', { mainCharacter: true }), entry('east', 'ability', 'Phoenix Cry (East)')],
+      chapters: [learnedEast()],
+      world: twins,
+    });
+    expect(codex.abilities.map(ability => ability.name)).toEqual(['Phoenix Cry (East)']);
+    expect(codex.abilities[0].firstSeen?.chapterNumber).toBe(1);
+  });
+
   it('shows nothing of its own when a story has no world recorded', () => {
     const codex = deriveStoryCodex({ entries: [], chapters: [] });
     expect(codex.characters).toEqual([]);

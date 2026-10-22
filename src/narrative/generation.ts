@@ -26,7 +26,9 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * upgrades); 28 adds the optional rewrite request and replaced-by record, and
  * each chapter's optional Holdings fixer record; 31 adds the story's optional
  * own sound words; 32 adds each chapter's optional appearances and the looks
- * written down from them. */
+ * written down from them. 33 was the chapter loop's, rolled back on
+ * 2026-10-22: the next bump goes to 34, so a workspace that loop saved is
+ * never read as current. */
 export const HARNESS_GENERATION_SCHEMA_VERSION = 32 as const;
 
 /** The most an Author's notes may hold, in characters. */

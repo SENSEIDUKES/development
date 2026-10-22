@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createEmptyHarnessWorkspaceState, HARNESS_GENERATION_SCHEMA_VERSION } from '@seihouse/sen/harness-generation';
-import { planHarnessWorkspaceLoad, PRESERVED_WORKSPACE_PREFIX } from './indexedDbRepository';
+import { HARNESS_GENERATION_INDEXED_DB_VERSION, planHarnessWorkspaceLoad, PRESERVED_WORKSPACE_PREFIX } from './indexedDbRepository';
 
 const now = () => '2026-09-24T12:00:00.000Z';
 
@@ -45,6 +45,21 @@ describe('planHarnessWorkspaceLoad', () => {
         record: { preservedAt: now(), reason: 'migrated', schemaVersion, workspace: stored },
       });
     }
+  });
+
+  it('keeps an untouched copy of a workspace the rolled-back chapter loop saved (schema 33) before starting fresh', () => {
+    const stored = { ...createEmptyHarnessWorkspaceState(), schemaVersion: 33, stories: [{ id: 'a' }], chapters: [{ id: 'c1' }] };
+    const plan = planHarnessWorkspaceLoad(stored, now);
+    expect(plan.state).toEqual(createEmptyHarnessWorkspaceState());
+    expect(plan.preserve).toEqual({
+      key: `${PRESERVED_WORKSPACE_PREFIX}v33:2026-09-24T12:00:00.000Z`,
+      record: { preservedAt: now(), reason: 'schema-version', schemaVersion: 33, workspace: stored },
+    });
+  });
+
+  it('opens the database at 33 or above: the rolled-back chapter loop raised it to 33, and a browser never opens a database at a lower version', () => {
+    expect(HARNESS_GENERATION_INDEXED_DB_VERSION).toBeGreaterThanOrEqual(33);
+    expect(HARNESS_GENERATION_INDEXED_DB_VERSION).toBeGreaterThanOrEqual(HARNESS_GENERATION_SCHEMA_VERSION);
   });
 
   it('preserves a current-version workspace whose shape cannot be read', () => {

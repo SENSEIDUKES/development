@@ -77,6 +77,35 @@ describe('A world open to its reader', () => {
     expect(codex.items.map(item => item.name)).toEqual(['Grey Bell']);
   });
 
+  it('keeps two cards whose names read alike once normalized, rather than one', () => {
+    // A parenthetical is stripped when names are compared, so both of these
+    // read as "phoenix": the world's own keys are what tells them apart.
+    const alike: WorldAtChapterZero = {
+      openToTheReader: true,
+      cards: [
+        { key: 'chapter-0:character:phoenix-east', kind: 'character', name: 'Phoenix (East)', slots: { role: 'Warden of the sunrise gate' } },
+        { key: 'chapter-0:character:phoenix-west', kind: 'character', name: 'Phoenix (West)', slots: { role: 'Warden of the sunset gate' } },
+        { key: 'chapter-0:thing:phoenix-east-feather', kind: 'thing', name: 'Phoenix Feather (East)', slots: { appearance: 'A feather of sunrise gold.' } },
+        { key: 'chapter-0:thing:phoenix-west-feather', kind: 'thing', name: 'Phoenix Feather (West)', slots: { appearance: 'A feather of sunset red.' } },
+        { key: 'chapter-0:faction:phoenix-east-court', kind: 'faction', name: 'Phoenix Court (East)', slots: { seat: 'Sunrise Gate' } },
+        { key: 'chapter-0:faction:phoenix-west-court', kind: 'faction', name: 'Phoenix Court (West)', slots: { seat: 'Sunset Gate' } },
+        { key: 'chapter-0:ability:phoenix-east-cry', kind: 'ability', name: 'Phoenix Cry (East)', slots: { appearance: 'Dawn breaks where it lands.' } },
+        { key: 'chapter-0:ability:phoenix-west-cry', kind: 'ability', name: 'Phoenix Cry (West)', slots: { appearance: 'Dusk falls where it lands.' } },
+      ],
+    };
+    const codex = deriveStoryCodex({ entries: [], chapters: [], world: alike });
+    expect(codex.characters.map(character => character.name)).toEqual(['Phoenix (East)', 'Phoenix (West)']);
+    expect(codex.items.map(item => item.name)).toEqual(['Phoenix Feather (East)', 'Phoenix Feather (West)']);
+    expect(codex.factions.map(faction => faction.name)).toEqual(['Phoenix Court (East)', 'Phoenix Court (West)']);
+    expect(codex.abilities.map(ability => ability.name)).toEqual(['Phoenix Cry (East)', 'Phoenix Cry (West)']);
+    // Each card is addressable on its own: a picture made of one is not the other's.
+    const keys = [...codex.characters, ...codex.items, ...codex.factions, ...codex.abilities].map(card => card.key);
+    expect(new Set(keys).size).toBe(keys.length);
+    // The second of a pair keeps its own facts rather than the first's.
+    expect(codex.characters[1].atChapterZero?.[0].value).toBe('Warden of the sunset gate');
+    expect(codex.items[1].atChapterZero?.[0].value).toBe('A feather of sunset red.');
+  });
+
   it('gives each card its facts under the labels its card kind reads by', () => {
     const codex = deriveStoryCodex({ entries: [], chapters: [], world: openWorld });
     expect(codex.characters[0].atChapterZero?.map(fact => [fact.slot.label, fact.value])).toEqual([

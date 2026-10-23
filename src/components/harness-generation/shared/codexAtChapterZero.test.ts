@@ -206,14 +206,25 @@ describe('The reader meets a card when the story reaches it', () => {
     expect(codex.characters[0].abilities.map(ability => ability.name)).toEqual(['Phoenix Cry']);
   });
 
-  it('opens neither when two cards reach the same key', () => {
-    // "Phoenix Cry (East)" and "Phoenix Cry East" both reach
-    // chapter-0:ability:phoenix-cry-east, so the words name both or neither.
+  it('opens a card the world qualifies when the chapter\'s looser words name only it', () => {
+    // The author's one card is "Phoenix Cry (East)"; the tag arrives as
+    // "Phoenix Cry". Nothing else answers to those words, so the card opens.
+    const codex = whoLearned('Phoenix Cry', [
+      { key: 'chapter-0:ability:phoenix-cry-east', kind: 'ability', name: 'Phoenix Cry (East)', slots: { appearance: 'Dawn breaks where it lands.' } },
+      { key: 'chapter-0:ability:frostbrush-edict', kind: 'ability', name: 'Frostbrush Edict', slots: { appearance: 'Frost strokes hang, then fall.' } },
+    ]);
+    expect(codex.abilities.map(ability => ability.name)).toEqual(['Phoenix Cry (East)']);
+    expect(codex.abilities[0].firstSeen?.chapterNumber).toBe(1);
+  });
+
+  it('opens the card the chapter\'s own words name when a looser name is shared', () => {
+    // "Phoenix Cry (East)" and "Phoenix Cry East" share a key, so neither is
+    // reached by it; the tag's own words name the second alone, so it opens.
     const codex = whoLearned('Phoenix Cry East', [
       { key: 'chapter-0:ability:phoenix-cry-east', kind: 'ability', name: 'Phoenix Cry (East)', slots: { appearance: 'Dawn breaks where it lands.' } },
       { key: 'chapter-0:ability:phoenix-cry-east-2', kind: 'ability', name: 'Phoenix Cry East', slots: { appearance: 'A plainer name for a plainer art.' } },
     ]);
-    expect(codex.abilities).toEqual([]);
+    expect(codex.abilities.map(ability => ability.name)).toEqual(['Phoenix Cry East']);
   });
 
   it('opens the one card a chapter\'s words do name', () => {

@@ -173,6 +173,58 @@ describe('The reader meets a card when the story reaches it', () => {
     expect(codex.species).toEqual([]);
   });
 
+  /**
+   * A chapter names an ability in words, and reading a tag drops a trailing
+   * parenthetical (`holdingName`), so what reaches the Codex for a tag written
+   * "Phoenix Cry (East)" is the name "Phoenix Cry". Two cards those words
+   * cannot tell apart must open neither, or the reader meets a card the story
+   * never reached.
+   */
+  const learned = (taught: string): StoryCodexChapter => ({
+    id: 'chapter-1', chapterNumber: 1,
+    paragraphs: ['Ye Chen took the sunrise cry.'],
+    holdingChanges: [{
+      kind: HOLDING_CHANGE_KIND,
+      id: 'holding:c1-p1:0-29:0',
+      anchor: { level: 'span', blockId: 'c1-p1', startOffset: 0, endOffset: 29, selectedText: 'Ye Chen took the sunrise cry.' },
+      payload: { origin: 'harness', verb: 'learned', holder: { name: 'Ye Chen', entryId: 'chen' }, target: { name: taught, entryId: 'taught' } },
+    }],
+  });
+  const whoLearned = (taught: string, cards: WorldAtChapterZero['cards']) => deriveStoryCodex({
+    entries: [entry('chen', 'character', 'Ye Chen', { mainCharacter: true }), entry('taught', 'ability', taught)],
+    chapters: [learned(taught)],
+    world: { cards },
+  });
+
+  it('opens neither of two abilities the chapter\'s words cannot tell apart', () => {
+    const codex = whoLearned('Phoenix Cry', [
+      { key: 'chapter-0:ability:phoenix-cry-east', kind: 'ability', name: 'Phoenix Cry (East)', slots: { appearance: 'Dawn breaks where it lands.' } },
+      { key: 'chapter-0:ability:phoenix-cry-west', kind: 'ability', name: 'Phoenix Cry (West)', slots: { appearance: 'Dusk falls where it lands.' } },
+    ]);
+    expect(codex.abilities).toEqual([]);
+    // The ability the chapter did teach still reads on the character's own card.
+    expect(codex.characters[0].abilities.map(ability => ability.name)).toEqual(['Phoenix Cry']);
+  });
+
+  it('opens neither when two cards reach the same key', () => {
+    // "Phoenix Cry (East)" and "Phoenix Cry East" both reach
+    // chapter-0:ability:phoenix-cry-east, so the words name both or neither.
+    const codex = whoLearned('Phoenix Cry East', [
+      { key: 'chapter-0:ability:phoenix-cry-east', kind: 'ability', name: 'Phoenix Cry (East)', slots: { appearance: 'Dawn breaks where it lands.' } },
+      { key: 'chapter-0:ability:phoenix-cry-east-2', kind: 'ability', name: 'Phoenix Cry East', slots: { appearance: 'A plainer name for a plainer art.' } },
+    ]);
+    expect(codex.abilities).toEqual([]);
+  });
+
+  it('opens the one card a chapter\'s words do name', () => {
+    const codex = whoLearned('Phoenix Cry', [
+      { key: 'chapter-0:ability:phoenix-cry', kind: 'ability', name: 'Phoenix Cry', slots: { appearance: 'Dawn breaks where it lands.' } },
+      { key: 'chapter-0:ability:frostbrush-edict', kind: 'ability', name: 'Frostbrush Edict', slots: { appearance: 'Frost strokes hang, then fall.' } },
+    ]);
+    expect(codex.abilities.map(ability => ability.name)).toEqual(['Phoenix Cry']);
+    expect(codex.abilities[0].firstSeen?.chapterNumber).toBe(1);
+  });
+
   it('shows nothing of its own when a story has no world recorded', () => {
     const codex = deriveStoryCodex({ entries: [], chapters: [] });
     expect(codex.characters).toEqual([]);

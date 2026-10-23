@@ -3,6 +3,7 @@ import type { Look } from '../../../narrative/appearances';
 import type { HarnessChapter } from '../../../narrative/generation';
 import {
   worldCardFacts,
+  worldCardKey,
   worldCardsOfKind,
   worldIsOpenToTheReader,
   worldRulesCard,
@@ -457,13 +458,19 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
   // An ability the world opened with is reached by a holdings tag: `knows`,
   // `learning` or `learned` puts it on a character's card, so the story has
   // met the ability itself and its own card opens with it.
+  // Matched on the world's own key rather than a normalized name, which drops
+  // a parenthetical: "Phoenix Cry (East)" and "Phoenix Cry (West)" are two
+  // abilities, and learning one must not open the other's card to a reader the
+  // story has not shown it to.
+  const abilityKeysOf = (card: { name: string; aliases?: string[] }) =>
+    [card.name, ...(card.aliases ?? [])].map(name => worldCardKey('ability', name));
   const abilityFirstSeen = new Map<string, CodexPassage>();
   for (const character of roster) {
     for (const ability of character.abilities) {
       for (const event of ability.events) {
-        const label = normalizeIdentityLabel(ability.name);
-        const first = abilityFirstSeen.get(label);
-        if (!first || comesBefore(passageOf(event), first) < 0) abilityFirstSeen.set(label, passageOf(event));
+        const key = worldCardKey('ability', ability.name);
+        const first = abilityFirstSeen.get(key);
+        if (!first || comesBefore(passageOf(event), first) < 0) abilityFirstSeen.set(key, passageOf(event));
       }
     }
   }
@@ -473,9 +480,23 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
   // open to them. An ability opens when a chapter reaches it, like every
   // other card the story meets.
   const worldCards = (kind: 'ability' | 'place' | 'species'): CodexWorldCard[] => {
-    const cards = worldCardsOfKind(world, kind).map((card): CodexWorldCard => {
+    const all = worldCardsOfKind(world, kind);
+    // A chapter names an ability in words, so two cards those words cannot tell
+    // apart ("Phoenix Cry (East)" and "Phoenix Cry East" read alike, and
+    // reading a tag drops a trailing parenthetical) are ambiguous. Neither
+    // opens: the reader would be shown a card the story may not have reached.
+    // Each still reads on the card of whoever knows it.
+    const claims = new Map<string, number>();
+    if (kind === 'ability') {
+      for (const card of all) {
+        for (const key of new Set(abilityKeysOf(card))) claims.set(key, (claims.get(key) ?? 0) + 1);
+      }
+    }
+    const cards = all.map((card): CodexWorldCard => {
       const first = kind === 'ability'
-        ? labelsOf(card).map(label => abilityFirstSeen.get(label)).filter((passage): passage is CodexPassage => Boolean(passage))
+        ? abilityKeysOf(card).filter(key => claims.get(key) === 1)
+          .map(key => abilityFirstSeen.get(key))
+          .filter((passage): passage is CodexPassage => Boolean(passage))
           .sort(comesBefore)[0]
         : undefined;
       return {

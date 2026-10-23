@@ -462,6 +462,8 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
   // a parenthetical: "Phoenix Cry (East)" and "Phoenix Cry (West)" are two
   // abilities, and learning one must not open the other's card to a reader the
   // story has not shown it to.
+  const abilityKeysOf = (card: { name: string; aliases?: string[] }) =>
+    [card.name, ...(card.aliases ?? [])].map(name => worldCardKey('ability', name));
   const abilityFirstSeen = new Map<string, CodexPassage>();
   for (const character of roster) {
     for (const ability of character.abilities) {
@@ -478,9 +480,22 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
   // open to them. An ability opens when a chapter reaches it, like every
   // other card the story meets.
   const worldCards = (kind: 'ability' | 'place' | 'species'): CodexWorldCard[] => {
-    const cards = worldCardsOfKind(world, kind).map((card): CodexWorldCard => {
+    const all = worldCardsOfKind(world, kind);
+    // A chapter names an ability in words, so two cards those words cannot tell
+    // apart ("Phoenix Cry (East)" and "Phoenix Cry East" read alike, and
+    // reading a tag drops a trailing parenthetical) are ambiguous. Neither
+    // opens: the reader would be shown a card the story may not have reached.
+    // Each still reads on the card of whoever knows it.
+    const claims = new Map<string, number>();
+    if (kind === 'ability') {
+      for (const card of all) {
+        for (const key of new Set(abilityKeysOf(card))) claims.set(key, (claims.get(key) ?? 0) + 1);
+      }
+    }
+    const cards = all.map((card): CodexWorldCard => {
       const first = kind === 'ability'
-        ? [card.name, ...(card.aliases ?? [])].map(name => abilityFirstSeen.get(worldCardKey('ability', name)))
+        ? abilityKeysOf(card).filter(key => claims.get(key) === 1)
+          .map(key => abilityFirstSeen.get(key))
           .filter((passage): passage is CodexPassage => Boolean(passage))
           .sort(comesBefore)[0]
         : undefined;

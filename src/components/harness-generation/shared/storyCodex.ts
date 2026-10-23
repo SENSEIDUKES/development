@@ -458,19 +458,23 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
   // An ability the world opened with is reached by a holdings tag: `knows`,
   // `learning` or `learned` puts it on a character's card, so the story has
   // met the ability itself and its own card opens with it.
-  // Matched on the world's own key rather than a normalized name, which drops
-  // a parenthetical: "Phoenix Cry (East)" and "Phoenix Cry (West)" are two
-  // abilities, and learning one must not open the other's card to a reader the
-  // story has not shown it to.
-  const abilityKeysOf = (card: { name: string; aliases?: string[] }) =>
-    [card.name, ...(card.aliases ?? [])].map(name => worldCardKey('ability', name));
+  // What a chapter's words can name: the world's own key for the name as the
+  // world writes it, and the looser label the record compares names by, since
+  // reading a tag drops a trailing parenthetical (`holdingName`) and a chapter
+  // teaching "Phoenix Cry (East)" arrives as "Phoenix Cry". A card is reached
+  // by either, so a card the world qualifies is still reachable, while an
+  // identity two cards share reaches neither of them (below).
+  const abilityNames = (card: { name: string; aliases?: string[] }) => [card.name, ...(card.aliases ?? [])];
+  const abilityIdentities = (card: { name: string; aliases?: string[] }) =>
+    new Set(abilityNames(card).flatMap(name => [worldCardKey('ability', name), normalizeIdentityLabel(name)]));
   const abilityFirstSeen = new Map<string, CodexPassage>();
   for (const character of roster) {
     for (const ability of character.abilities) {
       for (const event of ability.events) {
-        const key = worldCardKey('ability', ability.name);
-        const first = abilityFirstSeen.get(key);
-        if (!first || comesBefore(passageOf(event), first) < 0) abilityFirstSeen.set(key, passageOf(event));
+        for (const identity of [worldCardKey('ability', ability.name), normalizeIdentityLabel(ability.name)]) {
+          const first = abilityFirstSeen.get(identity);
+          if (!first || comesBefore(passageOf(event), first) < 0) abilityFirstSeen.set(identity, passageOf(event));
+        }
       }
     }
   }
@@ -481,21 +485,22 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
   // other card the story meets.
   const worldCards = (kind: 'ability' | 'place' | 'species'): CodexWorldCard[] => {
     const all = worldCardsOfKind(world, kind);
-    // A chapter names an ability in words, so two cards those words cannot tell
-    // apart ("Phoenix Cry (East)" and "Phoenix Cry East" read alike, and
-    // reading a tag drops a trailing parenthetical) are ambiguous. Neither
-    // opens: the reader would be shown a card the story may not have reached.
-    // Each still reads on the card of whoever knows it.
+    // An identity two cards share is a name those words cannot tell apart
+    // ("Phoenix Cry (East)" and "Phoenix Cry (West)" are both reached by
+    // "Phoenix Cry"), so it names both or neither and reaches neither: the
+    // reader is never shown a card the story may not have reached. Each still
+    // reads on the card of whoever knows it, and an identity that names one
+    // card alone reaches that card.
     const claims = new Map<string, number>();
     if (kind === 'ability') {
       for (const card of all) {
-        for (const key of new Set(abilityKeysOf(card))) claims.set(key, (claims.get(key) ?? 0) + 1);
+        for (const identity of abilityIdentities(card)) claims.set(identity, (claims.get(identity) ?? 0) + 1);
       }
     }
     const cards = all.map((card): CodexWorldCard => {
       const first = kind === 'ability'
-        ? abilityKeysOf(card).filter(key => claims.get(key) === 1)
-          .map(key => abilityFirstSeen.get(key))
+        ? [...abilityIdentities(card)].filter(identity => claims.get(identity) === 1)
+          .map(identity => abilityFirstSeen.get(identity))
           .filter((passage): passage is CodexPassage => Boolean(passage))
           .sort(comesBefore)[0]
         : undefined;

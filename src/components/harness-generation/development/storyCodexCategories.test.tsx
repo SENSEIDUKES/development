@@ -13,7 +13,7 @@ import type { CodexCharacter, CodexWorldCard, StoryCodexRecord } from '../shared
 const passage = { chapterNumber: 1, blockId: 'c1-p1', text: 'Then.' };
 const empty: StoryCodexRecord = { characters: [], factions: [], abilities: [], places: [], species: [], checks: [], items: [] };
 const chen: CodexCharacter = { key: 'chen', name: 'Ye Chen', mainCharacter: true, firstSeen: passage, things: [], abilities: [], chronicle: [] };
-const edict: CodexWorldCard = { key: 'chapter-0:ability:frostbrush-edict', name: 'Frostbrush Edict', firstSeen: passage, atChapterZero: [] };
+const edict: CodexWorldCard = { key: 'world:ability:frostbrush-edict', name: 'Frostbrush Edict', firstSeen: passage, atChapterZero: [] };
 
 const render = async (codex: StoryCodexRecord) => {
   const container = document.createElement('div');

@@ -1,8 +1,8 @@
 import {
   WORLD_CARD_KINDS,
   worldCardKey,
-  type WorldAtChapterZero,
-  type WorldCardAtChapterZero,
+  type WorldRecord,
+  type WorldCard,
   type WorldCardKindId,
 } from '@seihouse/sen/contracts';
 import type { StorySeedInput } from '@seihouse/sen/story-seed';
@@ -40,8 +40,8 @@ const slotsOf = (kind: WorldCardKindId, source: SeedCard): Record<string, string
 const cardFrom = (
   kind: WorldCardKindId,
   source: SeedCard,
-  extra: Partial<Pick<WorldCardAtChapterZero, 'mainCharacter'>> = {},
-): WorldCardAtChapterZero | undefined => {
+  extra: Partial<Pick<WorldCard, 'mainCharacter'>> = {},
+): WorldCard | undefined => {
   const name = source.name?.trim();
   if (!name) return undefined;
   const aliases = (source.aliases ?? []).map(alias => alias.trim()).filter(Boolean);
@@ -51,11 +51,14 @@ const cardFrom = (
     name,
     ...(aliases.length ? { aliases } : {}),
     ...extra,
+    // Everything a Story Seed and its Blueprint make is the world the story
+    // opens with, so every card here entered before Chapter 1.
+    enteredInChapter: 0,
     slots: slotsOf(kind, source),
   };
 };
 
-const cardsFrom = (kind: WorldCardKindId, list: readonly SeedCard[] | undefined): WorldCardAtChapterZero[] =>
+const cardsFrom = (kind: WorldCardKindId, list: readonly SeedCard[] | undefined): WorldCard[] =>
   (list ?? []).flatMap(entry => {
     const card = cardFrom(kind, entry);
     return card ? [card] : [];
@@ -66,7 +69,7 @@ const cardsFrom = (kind: WorldCardKindId, list: readonly SeedCard[] | undefined)
  * (the Blueprint's values promoted into it) so the world is the complete one
  * the story opens with.
  */
-export const worldAtChapterZeroFromStorySeed = (seed: StorySeedInput): WorldAtChapterZero => {
+export const worldAtChapterZeroFromStorySeed = (seed: StorySeedInput): WorldRecord => {
   const foundations = seed.world.optional.worldFoundations;
   const main = foundations.mainCharacter
     ? cardFrom('character', foundations.mainCharacter, { mainCharacter: true })

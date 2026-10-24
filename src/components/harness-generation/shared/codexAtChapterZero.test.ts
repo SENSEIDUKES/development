@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { WorldAtChapterZero } from '../../../narrative/worldRecord';
+import type { WorldRecord } from '../../../narrative/worldRecord';
 import type { CodexEntry } from '../../../narrative/holdings';
 import { deriveStoryCodex, type StoryCodexChapter } from './storyCodex';
 import { HOLDING_CHANGE_KIND } from '../../../narrative/holdings';
@@ -10,27 +10,27 @@ import { HOLDING_CHANGE_KIND } from '../../../narrative/holdings';
  * 2026-10-22), unless the world is open to its reader.
  */
 
-const cards: WorldAtChapterZero['cards'] = [
+const cards: WorldRecord['cards'] = [
   {
-    key: 'chapter-0:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true,
-    slots: { bio: 'A quarry laborer the sect wrote off.', location: 'Rift Quarry', holds: 'Jade Token', status: 'Meridians destroyed' },
+    key: 'world:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true,
+    enteredInChapter: 0, slots: { bio: 'A quarry laborer the sect wrote off.', location: 'Rift Quarry', holds: 'Jade Token', status: 'Meridians destroyed' },
   },
   {
-    key: 'chapter-0:character:elder-qin', kind: 'character', name: 'Elder Qin', aliases: ['The Iron Brush'],
-    slots: { role: 'Sect Elder', location: 'Azure Hall' },
+    key: 'world:character:elder-qin', kind: 'character', name: 'Elder Qin', aliases: ['The Iron Brush'],
+    enteredInChapter: 0, slots: { role: 'Sect Elder', location: 'Azure Hall' },
   },
-  { key: 'chapter-0:thing:jade-token', kind: 'thing', name: 'Jade Token', slots: { holder: 'Ye Chen', appearance: 'A cracked nine-petal jade token.' } },
-  { key: 'chapter-0:ability:frostbrush-edict', kind: 'ability', name: 'Frostbrush Edict', slots: { appearance: 'Frost strokes hang, then fall as blades.' } },
-  { key: 'chapter-0:place:rift-quarry', kind: 'place', name: 'Rift Quarry', slots: { appearance: 'A volcanic rift floored with black glass.', condition: 'Working' } },
-  { key: 'chapter-0:faction:heavenly-sword-sect', kind: 'faction', name: 'Heavenly Sword Sect', slots: { factionKind: 'Sect', seat: 'Azure Hall' } },
-  { key: 'chapter-0:species:cinder-serpent', kind: 'species', name: 'Cinder Serpent', slots: { habitat: 'Rift Quarry' } },
-  { key: 'chapter-0:world-rules:world-rules', kind: 'world-rules', name: 'World rules', slots: { knownRanks: 'Qi Condensation → Nascent Soul', laws: 'No killing inside the sect gates.' } },
+  { key: 'world:thing:jade-token', kind: 'thing', name: 'Jade Token', enteredInChapter: 0, slots: { holder: 'Ye Chen', appearance: 'A cracked nine-petal jade token.' } },
+  { key: 'world:ability:frostbrush-edict', kind: 'ability', name: 'Frostbrush Edict', enteredInChapter: 0, slots: { appearance: 'Frost strokes hang, then fall as blades.' } },
+  { key: 'world:place:rift-quarry', kind: 'place', name: 'Rift Quarry', enteredInChapter: 0, slots: { appearance: 'A volcanic rift floored with black glass.', condition: 'Working' } },
+  { key: 'world:faction:heavenly-sword-sect', kind: 'faction', name: 'Heavenly Sword Sect', enteredInChapter: 0, slots: { factionKind: 'Sect', seat: 'Azure Hall' } },
+  { key: 'world:species:cinder-serpent', kind: 'species', name: 'Cinder Serpent', enteredInChapter: 0, slots: { habitat: 'Rift Quarry' } },
+  { key: 'world:world-rules:world-rules', kind: 'world-rules', name: 'World rules', enteredInChapter: 0, slots: { knownRanks: 'Qi Condensation → Nascent Soul', laws: 'No killing inside the sect gates.' } },
 ];
 
 /** The world a Story Seed makes: its reader is the story's own reader. */
-const world: WorldAtChapterZero = { cards };
+const world: WorldRecord = { cards };
 /** A novel whose author already knows its world and brought it in to expand. */
-const openWorld: WorldAtChapterZero = { cards, openToTheReader: true };
+const openWorld: WorldRecord = { cards, openToTheReader: true };
 
 const entry = (id: string, kind: CodexEntry['kind'], name: string, extra: Partial<CodexEntry> = {}): CodexEntry => ({
   id, storyId: 'story-1', kind, name, origin: { source: 'foundation' }, createdAt: '2026-10-22T00:00:00.000Z', ...extra,
@@ -63,12 +63,12 @@ describe('A world open to its reader', () => {
   });
 
   it('keeps a card whose name is all the world knows, whatever its kind', () => {
-    const bare: WorldAtChapterZero = {
+    const bare: WorldRecord = {
       openToTheReader: true,
       cards: [
-        { key: 'chapter-0:character:mute-monk', kind: 'character', name: 'The Mute Monk', slots: {} },
-        { key: 'chapter-0:faction:silent-hall', kind: 'faction', name: 'Silent Hall', slots: {} },
-        { key: 'chapter-0:thing:grey-bell', kind: 'thing', name: 'Grey Bell', slots: {} },
+        { key: 'world:character:mute-monk', kind: 'character', name: 'The Mute Monk', enteredInChapter: 0, slots: {} },
+        { key: 'world:faction:silent-hall', kind: 'faction', name: 'Silent Hall', enteredInChapter: 0, slots: {} },
+        { key: 'world:thing:grey-bell', kind: 'thing', name: 'Grey Bell', enteredInChapter: 0, slots: {} },
       ],
     };
     const codex = deriveStoryCodex({ entries: [], chapters: [], world: bare });
@@ -80,17 +80,17 @@ describe('A world open to its reader', () => {
   it('keeps two cards whose names read alike once normalized, rather than one', () => {
     // A parenthetical is stripped when names are compared, so both of these
     // read as "phoenix": the world's own keys are what tells them apart.
-    const alike: WorldAtChapterZero = {
+    const alike: WorldRecord = {
       openToTheReader: true,
       cards: [
-        { key: 'chapter-0:character:phoenix-east', kind: 'character', name: 'Phoenix (East)', slots: { role: 'Warden of the sunrise gate' } },
-        { key: 'chapter-0:character:phoenix-west', kind: 'character', name: 'Phoenix (West)', slots: { role: 'Warden of the sunset gate' } },
-        { key: 'chapter-0:thing:phoenix-east-feather', kind: 'thing', name: 'Phoenix Feather (East)', slots: { appearance: 'A feather of sunrise gold.' } },
-        { key: 'chapter-0:thing:phoenix-west-feather', kind: 'thing', name: 'Phoenix Feather (West)', slots: { appearance: 'A feather of sunset red.' } },
-        { key: 'chapter-0:faction:phoenix-east-court', kind: 'faction', name: 'Phoenix Court (East)', slots: { seat: 'Sunrise Gate' } },
-        { key: 'chapter-0:faction:phoenix-west-court', kind: 'faction', name: 'Phoenix Court (West)', slots: { seat: 'Sunset Gate' } },
-        { key: 'chapter-0:ability:phoenix-east-cry', kind: 'ability', name: 'Phoenix Cry (East)', slots: { appearance: 'Dawn breaks where it lands.' } },
-        { key: 'chapter-0:ability:phoenix-west-cry', kind: 'ability', name: 'Phoenix Cry (West)', slots: { appearance: 'Dusk falls where it lands.' } },
+        { key: 'world:character:phoenix-east', kind: 'character', name: 'Phoenix (East)', enteredInChapter: 0, slots: { role: 'Warden of the sunrise gate' } },
+        { key: 'world:character:phoenix-west', kind: 'character', name: 'Phoenix (West)', enteredInChapter: 0, slots: { role: 'Warden of the sunset gate' } },
+        { key: 'world:thing:phoenix-east-feather', kind: 'thing', name: 'Phoenix Feather (East)', enteredInChapter: 0, slots: { appearance: 'A feather of sunrise gold.' } },
+        { key: 'world:thing:phoenix-west-feather', kind: 'thing', name: 'Phoenix Feather (West)', enteredInChapter: 0, slots: { appearance: 'A feather of sunset red.' } },
+        { key: 'world:faction:phoenix-east-court', kind: 'faction', name: 'Phoenix Court (East)', enteredInChapter: 0, slots: { seat: 'Sunrise Gate' } },
+        { key: 'world:faction:phoenix-west-court', kind: 'faction', name: 'Phoenix Court (West)', enteredInChapter: 0, slots: { seat: 'Sunset Gate' } },
+        { key: 'world:ability:phoenix-east-cry', kind: 'ability', name: 'Phoenix Cry (East)', enteredInChapter: 0, slots: { appearance: 'Dawn breaks where it lands.' } },
+        { key: 'world:ability:phoenix-west-cry', kind: 'ability', name: 'Phoenix Cry (West)', enteredInChapter: 0, slots: { appearance: 'Dusk falls where it lands.' } },
       ],
     };
     const codex = deriveStoryCodex({ entries: [], chapters: [], world: alike });
@@ -190,7 +190,7 @@ describe('The reader meets a card when the story reaches it', () => {
       payload: { origin: 'harness', verb: 'learned', holder: { name: 'Ye Chen', entryId: 'chen' }, target: { name: taught, entryId: 'taught' } },
     }],
   });
-  const whoLearned = (taught: string, cards: WorldAtChapterZero['cards']) => deriveStoryCodex({
+  const whoLearned = (taught: string, cards: WorldRecord['cards']) => deriveStoryCodex({
     entries: [entry('chen', 'character', 'Ye Chen', { mainCharacter: true }), entry('taught', 'ability', taught)],
     chapters: [learned(taught)],
     world: { cards },
@@ -198,8 +198,8 @@ describe('The reader meets a card when the story reaches it', () => {
 
   it('opens neither of two abilities the chapter\'s words cannot tell apart', () => {
     const codex = whoLearned('Phoenix Cry', [
-      { key: 'chapter-0:ability:phoenix-cry-east', kind: 'ability', name: 'Phoenix Cry (East)', slots: { appearance: 'Dawn breaks where it lands.' } },
-      { key: 'chapter-0:ability:phoenix-cry-west', kind: 'ability', name: 'Phoenix Cry (West)', slots: { appearance: 'Dusk falls where it lands.' } },
+      { key: 'world:ability:phoenix-cry-east', kind: 'ability', name: 'Phoenix Cry (East)', enteredInChapter: 0, slots: { appearance: 'Dawn breaks where it lands.' } },
+      { key: 'world:ability:phoenix-cry-west', kind: 'ability', name: 'Phoenix Cry (West)', enteredInChapter: 0, slots: { appearance: 'Dusk falls where it lands.' } },
     ]);
     expect(codex.abilities).toEqual([]);
     // The ability the chapter did teach still reads on the character's own card.
@@ -210,8 +210,8 @@ describe('The reader meets a card when the story reaches it', () => {
     // The author's one card is "Phoenix Cry (East)"; the tag arrives as
     // "Phoenix Cry". Nothing else answers to those words, so the card opens.
     const codex = whoLearned('Phoenix Cry', [
-      { key: 'chapter-0:ability:phoenix-cry-east', kind: 'ability', name: 'Phoenix Cry (East)', slots: { appearance: 'Dawn breaks where it lands.' } },
-      { key: 'chapter-0:ability:frostbrush-edict', kind: 'ability', name: 'Frostbrush Edict', slots: { appearance: 'Frost strokes hang, then fall.' } },
+      { key: 'world:ability:phoenix-cry-east', kind: 'ability', name: 'Phoenix Cry (East)', enteredInChapter: 0, slots: { appearance: 'Dawn breaks where it lands.' } },
+      { key: 'world:ability:frostbrush-edict', kind: 'ability', name: 'Frostbrush Edict', enteredInChapter: 0, slots: { appearance: 'Frost strokes hang, then fall.' } },
     ]);
     expect(codex.abilities.map(ability => ability.name)).toEqual(['Phoenix Cry (East)']);
     expect(codex.abilities[0].firstSeen?.chapterNumber).toBe(1);
@@ -221,16 +221,16 @@ describe('The reader meets a card when the story reaches it', () => {
     // "Phoenix Cry (East)" and "Phoenix Cry East" share a key, so neither is
     // reached by it; the tag's own words name the second alone, so it opens.
     const codex = whoLearned('Phoenix Cry East', [
-      { key: 'chapter-0:ability:phoenix-cry-east', kind: 'ability', name: 'Phoenix Cry (East)', slots: { appearance: 'Dawn breaks where it lands.' } },
-      { key: 'chapter-0:ability:phoenix-cry-east-2', kind: 'ability', name: 'Phoenix Cry East', slots: { appearance: 'A plainer name for a plainer art.' } },
+      { key: 'world:ability:phoenix-cry-east', kind: 'ability', name: 'Phoenix Cry (East)', enteredInChapter: 0, slots: { appearance: 'Dawn breaks where it lands.' } },
+      { key: 'world:ability:phoenix-cry-east-2', kind: 'ability', name: 'Phoenix Cry East', enteredInChapter: 0, slots: { appearance: 'A plainer name for a plainer art.' } },
     ]);
     expect(codex.abilities.map(ability => ability.name)).toEqual(['Phoenix Cry East']);
   });
 
   it('opens the one card a chapter\'s words do name', () => {
     const codex = whoLearned('Phoenix Cry', [
-      { key: 'chapter-0:ability:phoenix-cry', kind: 'ability', name: 'Phoenix Cry', slots: { appearance: 'Dawn breaks where it lands.' } },
-      { key: 'chapter-0:ability:frostbrush-edict', kind: 'ability', name: 'Frostbrush Edict', slots: { appearance: 'Frost strokes hang, then fall.' } },
+      { key: 'world:ability:phoenix-cry', kind: 'ability', name: 'Phoenix Cry', enteredInChapter: 0, slots: { appearance: 'Dawn breaks where it lands.' } },
+      { key: 'world:ability:frostbrush-edict', kind: 'ability', name: 'Frostbrush Edict', enteredInChapter: 0, slots: { appearance: 'Frost strokes hang, then fall.' } },
     ]);
     expect(codex.abilities.map(ability => ability.name)).toEqual(['Phoenix Cry']);
     expect(codex.abilities[0].firstSeen?.chapterNumber).toBe(1);

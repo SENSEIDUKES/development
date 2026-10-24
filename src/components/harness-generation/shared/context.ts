@@ -7,7 +7,7 @@ import { storyPointOfView } from './pointOfView';
 import { protagonistNames } from './speakers';
 import { semanticReaderChanges } from './readerEdits';
 import { GENERATION_PACKET_BUDGET, estimatePacketTokens } from './packetBudget';
-import { hasWorldAtChapterZero } from '../../../narrative/worldRecord';
+import { hasWorldRecord } from '../../../narrative/worldRecord';
 import { cloneHarnessValue, defaultHarnessRuntime, type HarnessRuntime } from './ids';
 import type { CurrentStoryProjection, HarnessStory, HarnessWorkspaceState, PacketSectionId, PacketSectionMeasurement, PreviouslyOnEntry, RhythmDirectionSection, StoryFoundationRevision, StoryInformationPacket } from '../../../narrative/generation';
 
@@ -164,7 +164,7 @@ export const compileStoryInformationPacket = (
   // Section 7: the world the story opens with, carried whole from the active
   // Foundation. It is the baseline Holdings starts from, so both are built
   // from the one record and never disagree about what a character began with.
-  const worldAtChapterZero = hasWorldAtChapterZero(foundationRevision.input.worldAtChapterZero)
+  const worldAtChapterZero = hasWorldRecord(foundationRevision.input.worldAtChapterZero)
     ? cloneHarnessValue(foundationRevision.input.worldAtChapterZero!)
     : undefined;
   const holdings = holdingsSection(deriveHoldings({

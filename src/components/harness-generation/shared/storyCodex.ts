@@ -7,7 +7,7 @@ import {
   worldCardsOfKind,
   worldIsOpenToTheReader,
   worldRulesCard,
-  type WorldAtChapterZero,
+  type WorldRecord,
   type WorldCardSlot,
 } from '../../../narrative/worldRecord';
 import { isSpeakerOnText, SPEAKER_KIND } from '../../../narrative/speech';
@@ -226,7 +226,7 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
   entries: readonly CodexEntry[];
   chapters: readonly StoryCodexChapter[];
   /** The world the story opened with, from its Story Seed and World Blueprint. */
-  world?: WorldAtChapterZero;
+  world?: WorldRecord;
   /** The story's main character, for speech the record gives them before any entry names them. */
   mainCharacterName?: string;
   /** The characters the story declares, whose aliases let a speaker's other names find them. */

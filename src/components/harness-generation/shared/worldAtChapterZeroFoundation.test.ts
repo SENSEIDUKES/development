@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeWorldAtChapterZero, type WorldAtChapterZero } from '../../../narrative/worldRecord';
+import { normalizeWorldRecord, type WorldRecord } from '../../../narrative/worldRecord';
 import { createEmptyHarnessWorkspaceState } from './repository';
 import { createHarnessStory, normalizeStoryFoundationInput } from './foundation';
 
@@ -14,13 +14,13 @@ import { createHarnessStory, normalizeStoryFoundationInput } from './foundation'
  * Foundation can be tested without this, so it is tested first.
  */
 
-const WORLD: WorldAtChapterZero = {
+const WORLD: WorldRecord = {
   cards: [
     {
-      key: 'chapter-0:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true,
-      slots: { bio: 'A quarry laborer the sect wrote off.', eyeColor: 'Pale grey', voice: 'an energetic young man' },
+      key: 'world:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true,
+      enteredInChapter: 0, slots: { bio: 'A quarry laborer the sect wrote off.', eyeColor: 'Pale grey', voice: 'an energetic young man' },
     },
-    { key: 'chapter-0:thing:jade-token', kind: 'thing', name: 'Jade Token', slots: { holder: 'Ye Chen' } },
+    { key: 'world:thing:jade-token', kind: 'thing', name: 'Jade Token', enteredInChapter: 0, slots: { holder: 'Ye Chen' } },
   ],
 };
 
@@ -46,54 +46,54 @@ describe('the Foundation keeps the world the story opens with', () => {
 
 describe('reading a world a host supplies', () => {
   it('computes every key from the card\'s own kind and name, whatever arrived', () => {
-    const world = normalizeWorldAtChapterZero({ cards: [
-      { key: 'whatever-the-host-sent', kind: 'place', name: 'The Rift Quarry', slots: {} },
+    const world = normalizeWorldRecord({ cards: [
+      { key: 'whatever-the-host-sent', kind: 'place', name: 'The Rift Quarry', enteredInChapter: 0, slots: {} },
     ] })!;
-    expect(world.cards[0].key).toBe('chapter-0:place:the-rift-quarry');
+    expect(world.cards[0].key).toBe('world:place:the-rift-quarry');
   });
 
   it('drops a card with no name or no known kind, and a world left with none', () => {
-    expect(normalizeWorldAtChapterZero({ cards: [
-      { key: 'a', kind: 'character', name: '   ', slots: {} },
-      { key: 'b', kind: 'sidekick' as never, name: 'Mu', slots: {} },
+    expect(normalizeWorldRecord({ cards: [
+      { key: 'a', kind: 'character', name: '   ', enteredInChapter: 0, slots: {} },
+      { key: 'b', kind: 'sidekick' as never, name: 'Mu', enteredInChapter: 0, slots: {} },
     ] })).toBeUndefined();
-    expect(normalizeWorldAtChapterZero(undefined)).toBeUndefined();
-    expect(normalizeWorldAtChapterZero({ cards: [] })).toBeUndefined();
+    expect(normalizeWorldRecord(undefined)).toBeUndefined();
+    expect(normalizeWorldRecord({ cards: [] })).toBeUndefined();
   });
 
   it('drops a slot the card\'s kind does not define, one that only names it, and an empty one', () => {
-    const world = normalizeWorldAtChapterZero({ cards: [{
+    const world = normalizeWorldRecord({ cards: [{
       key: 'x', kind: 'thing', name: 'Jade Token',
-      slots: { appearance: 'A green chip.', status: '   ', name: 'Jade Token', aliases: 'the Token', eyeColor: 'Pale grey' },
+      enteredInChapter: 0, slots: { appearance: 'A green chip.', status: '   ', name: 'Jade Token', aliases: 'the Token', eyeColor: 'Pale grey' },
     }] })!;
     expect(world.cards[0].slots).toEqual({ appearance: 'A green chip.' });
   });
 
   it('keeps one card for a kind the schema keeps single, and one card per name', () => {
-    const world = normalizeWorldAtChapterZero({ cards: [
-      { key: 'r1', kind: 'world-rules', name: 'World rules', slots: { flavor: 'Qi.' } },
-      { key: 'r2', kind: 'world-rules', name: 'Other rules', slots: { flavor: 'Mana.' } },
-      { key: 'p1', kind: 'place', name: 'Azure Hall', slots: { within: 'The sect' } },
-      { key: 'p2', kind: 'place', name: 'Azure Hall', slots: { within: 'Somewhere else' } },
+    const world = normalizeWorldRecord({ cards: [
+      { key: 'r1', kind: 'world-rules', name: 'World rules', enteredInChapter: 0, slots: { flavor: 'Qi.' } },
+      { key: 'r2', kind: 'world-rules', name: 'Other rules', enteredInChapter: 0, slots: { flavor: 'Mana.' } },
+      { key: 'p1', kind: 'place', name: 'Azure Hall', enteredInChapter: 0, slots: { within: 'The sect' } },
+      { key: 'p2', kind: 'place', name: 'Azure Hall', enteredInChapter: 0, slots: { within: 'Somewhere else' } },
     ] })!;
     expect(world.cards.map(card => [card.kind, card.name])).toEqual([['world-rules', 'World rules'], ['place', 'Azure Hall']]);
     expect(world.cards[1].slots).toEqual({ within: 'The sect' });
   });
 
   it('keeps the aliases that resolve to a card, and never the card\'s own name among them', () => {
-    const world = normalizeWorldAtChapterZero({ cards: [{
-      key: 'c', kind: 'character', name: 'Elder Qin', aliases: ['The Iron Brush', ' elder qin ', 'The Iron Brush', '  '], slots: {},
+    const world = normalizeWorldRecord({ cards: [{
+      key: 'c', kind: 'character', name: 'Elder Qin', aliases: ['The Iron Brush', ' elder qin ', 'The Iron Brush', '  '], enteredInChapter: 0, slots: {},
     }] })!;
     expect(world.cards[0].aliases).toEqual(['The Iron Brush']);
   });
 
   it('keeps the main character and a world open to its reader only when each is truly set', () => {
-    const marked = normalizeWorldAtChapterZero({ openToTheReader: true, cards: [
-      { key: 'c', kind: 'character', name: 'Ye Chen', mainCharacter: true, slots: {} },
+    const marked = normalizeWorldRecord({ openToTheReader: true, cards: [
+      { key: 'c', kind: 'character', name: 'Ye Chen', mainCharacter: true, enteredInChapter: 0, slots: {} },
     ] })!;
     expect(marked).toMatchObject({ openToTheReader: true, cards: [{ mainCharacter: true }] });
-    const plain = normalizeWorldAtChapterZero({ cards: [
-      { key: 'c', kind: 'character', name: 'Ye Chen', mainCharacter: false as never, slots: {} },
+    const plain = normalizeWorldRecord({ cards: [
+      { key: 'c', kind: 'character', name: 'Ye Chen', mainCharacter: false as never, enteredInChapter: 0, slots: {} },
     ] })!;
     expect(plain).not.toHaveProperty('openToTheReader');
     expect(plain.cards[0]).not.toHaveProperty('mainCharacter');

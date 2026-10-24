@@ -14,7 +14,7 @@ import {
 } from '../../../narrative/holdings';
 import { isHoldingTagWord, type WordTag } from '../../../narrative/marks';
 import type { CurrentStoryProjection } from '../../../narrative/generation';
-import { CHAPTER_ZERO_KEY_PREFIX, worldCardKey, type WorldAtChapterZero, type WorldCardAtChapterZero, type WorldCardKindId } from '../../../narrative/worldRecord';
+import { worldCardKey, type WorldCard, type WorldCardKindId, type WorldRecord } from '../../../narrative/worldRecord';
 import { normalizeIdentityLabel } from './canonicalProjection';
 import { isMainCharacterTag } from './speakers';
 
@@ -504,7 +504,7 @@ export function deriveHoldings({ entries, chapters, mainCharacterName, worldAtCh
    * every character starts with nothing, as a story written before the
    * Chapter 0 world existed does.
    */
-  worldAtChapterZero?: WorldAtChapterZero;
+  worldAtChapterZero?: WorldRecord;
 }): HoldingsState {
   const byId = new Map(entries.map(entry => [entry.id, entry]));
   type CharacterState = Omit<CharacterHoldings, 'things' | 'abilities'> & {
@@ -596,7 +596,7 @@ export function deriveHoldings({ entries, chapters, mainCharacterName, worldAtCh
     const characterCards = cardsOf('character');
     const thingCards = cardsOf('thing');
     const abilityCards = cardsOf('ability');
-    const slot = (card: WorldCardAtChapterZero, id: string) => card.slots[id]?.trim() || undefined;
+    const slot = (card: WorldCard, id: string) => card.slots[id]?.trim() || undefined;
     /**
      * The one card a written name means, by any name the world knows it by.
      * The same name wins over a name merely close to it, and two of either are
@@ -605,9 +605,9 @@ export function deriveHoldings({ entries, chapters, mainCharacterName, worldAtCh
      * "Elder Qin". It is the rule the chapter-to-baseline reconciliation above
      * follows, applied where the world is read in.
      */
-    const cardNamed = (cards: WorldCardAtChapterZero[], written: string) => {
-      const names = (card: WorldCardAtChapterZero) => [card.name, ...(card.aliases ?? [])];
-      const only = (matches: WorldCardAtChapterZero[]) => matches.length === 1 ? matches[0] : undefined;
+    const cardNamed = (cards: WorldCard[], written: string) => {
+      const names = (card: WorldCard) => [card.name, ...(card.aliases ?? [])];
+      const only = (matches: WorldCard[]) => matches.length === 1 ? matches[0] : undefined;
       return only(cards.filter(card => names(card).some(name => normalizeIdentityLabel(name) === normalizeIdentityLabel(written))))
         ?? only(cards.filter(card => names(card).some(name => namesNearlyMatch(name, written))));
     };
@@ -628,8 +628,8 @@ export function deriveHoldings({ entries, chapters, mainCharacterName, worldAtCh
       fromTheWorld.set(key, { kind, knownAs });
       return { key, knownAs };
     };
-    const cardNames = (card: WorldCardAtChapterZero) => [card.name, ...(card.aliases ?? [])];
-    const seeded = (card: WorldCardAtChapterZero): CharacterState => {
+    const cardNames = (card: WorldCard) => [card.name, ...(card.aliases ?? [])];
+    const seeded = (card: WorldCard): CharacterState => {
       const { key, knownAs } = worldKey('character', cardNames(card), card.key);
       const existing = characters.get(key);
       if (existing) { existing.knownAs = [...new Set([...(existing.knownAs ?? []), ...knownAs])]; return existing; }

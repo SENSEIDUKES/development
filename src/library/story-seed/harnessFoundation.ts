@@ -10,7 +10,7 @@ import {
   type StorySeedRecord,
 } from '@seihouse/sen/story-seed';
 import type { StoryFoundationInput } from '@seihouse/sen/harness-generation';
-import { hasWorldAtChapterZero } from '@seihouse/sen/contracts';
+import { hasWorldRecord } from '@seihouse/sen/contracts';
 import { worldAtChapterZeroFromStorySeed } from './worldAtChapterZero';
 
 const labeledLines = (entries: Array<[string, string | undefined]>): string | undefined => {
@@ -63,7 +63,7 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
   const canon = resolveStorySeedWorldCanon(seed, blueprint);
   const mainCharacter = canon.mainCharacter;
   const worldAtChapterZero = worldAtChapterZeroFromStorySeed(seed);
-  const carriesWorld = hasWorldAtChapterZero(worldAtChapterZero);
+  const carriesWorld = hasWorldRecord(worldAtChapterZero);
 
   return {
     title: identity.title || record.title,

@@ -1,5 +1,6 @@
 import { cloneHarnessValue } from './ids';
 import { HARNESS_GENERATION_SCHEMA_VERSION, type HarnessWorkspaceState } from '../../../narrative/generation';
+import { WORLD_CARD_KINDS, worldCardKey } from '../../../narrative/worldRecord';
 
 export const createEmptyHarnessWorkspaceState = (): HarnessWorkspaceState => ({
   schemaVersion: HARNESS_GENERATION_SCHEMA_VERSION,
@@ -81,6 +82,44 @@ const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => 
   // the writer): every attempt keeps the packet it froze, and a story with no
   // Chapter 0 world simply has no such section.
   34: stored => ({ ...stored, schemaVersion: 35 }),
+  // 36 gives every world card the chapter it entered in. Nothing could add a
+  // card after Chapter 0 before this version, so every saved card is the world
+  // the story opened with, and its key is rewritten with it.
+  35: stored => ({ ...upgradeSavedWorldCards(stored), schemaVersion: 36 }),
+};
+
+/**
+ * Brings every world card a saved workspace holds up to the world record,
+ * wherever that workspace keeps one: a Foundation revision's input and each
+ * attempt's frozen Story Information Packet both carry the record under the
+ * same field.
+ *
+ * Each card enters in Chapter 0, since nothing could add one later before this
+ * version, and each key is computed again from the card's own kind and name,
+ * because that is the record's standing rule and the key no longer names
+ * Chapter 0. A saved key left as it was would not match the one this build
+ * computes for the same card, so the Codex and Holdings would read one card as
+ * two.
+ */
+const upgradeSavedWorldCards = <T>(value: T): T => {
+  if (Array.isArray(value)) return value.map(entry => upgradeSavedWorldCards(entry)) as unknown as T;
+  if (!value || typeof value !== 'object') return value;
+  return Object.fromEntries(Object.entries(value as Record<string, unknown>).map(([field, entry]) => {
+    if (field !== 'worldAtChapterZero' || !entry || typeof entry !== 'object') return [field, upgradeSavedWorldCards(entry)];
+    const cards = (entry as { cards?: unknown }).cards;
+    if (!Array.isArray(cards)) return [field, entry];
+    return [field, { ...entry, cards: cards.map(card => {
+      if (!card || typeof card !== 'object' || Array.isArray(card)) return card;
+      const { kind, name } = card as { kind?: unknown; name?: unknown };
+      // A card whose kind the schema does not know is dropped when the record
+      // is read, so it keeps the key it was saved with.
+      const known = WORLD_CARD_KINDS.find(candidate => candidate.id === kind);
+      const keyed = known && typeof name === 'string' && name.trim()
+        ? { key: worldCardKey(known.id, name.trim()) }
+        : {};
+      return { ...card, ...keyed, enteredInChapter: 0 };
+    }) }];
+  })) as unknown as T;
 };
 
 /**

@@ -31,8 +31,9 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * the Foundation's optional world at Chapter 0, and every saved story reads as
  * it is (a story made before it simply has no world recorded); 35 carries that
  * world to the writer as its own packet section, so every attempt keeps the
- * packet it froze. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 35 as const;
+ * packet it froze; 36 gives every world card the chapter it entered in, and
+ * every card saved before it is the world the story opened with. */
+export const HARNESS_GENERATION_SCHEMA_VERSION = 36 as const;
 
 /** The most an Author's notes may hold, in characters. */
 export const AUTHOR_NOTES_LIMIT = 2000;
@@ -113,11 +114,11 @@ export interface StoryFoundationInput {
   /**
    * The world as it already stands when the story opens: the Codex's own card
    * kinds, filled by the author in the Story Seed and completed by the World
-   * Blueprint before Chapter 1 (`WorldAtChapterZero`). The Codex shows it from
+   * Blueprint before Chapter 1 (`WorldRecord`). The Codex shows it from
    * the start, so the record knows the world rather than inventing it when
    * something first appears. The chapters add to it; they never replace it.
    */
-  worldAtChapterZero?: import('./worldRecord').WorldAtChapterZero;
+  worldAtChapterZero?: import('./worldRecord').WorldRecord;
   /** Immutable source evidence copied at the Story Seed -> Harness boundary. */
   sourceSnapshot?: HarnessStorySeedSnapshot;
 }
@@ -912,7 +913,7 @@ export interface StoryInformationPacket {
    * by Current Canonical State and Holdings. Absent from packets frozen before
    * the Chapter 0 world existed, and from a story whose Foundation has none.
    */
-  worldAtChapterZero?: import('./worldRecord').WorldAtChapterZero;
+  worldAtChapterZero?: import('./worldRecord').WorldRecord;
   /** Section 8. */
   canonicalState: CanonicalStateProjection;
   /**

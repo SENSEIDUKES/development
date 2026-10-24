@@ -3,7 +3,7 @@ import { ARC_LENGTH, ARC_LOOKAHEAD_SCHEMA, ARC_PLAN_DRAFT_SCHEMA, MAX_ARC_LOOKAH
 import { type CapaPrompt, type HarnessArcRequest, type HarnessChapterDirection, type HarnessChapterRewrite, type HarnessGenerationRequest, type HarnessStoryMode, type HarnessMissionReminder, type HarnessRequestMeasurement, type ImmediateChapterRequest, type PacketSectionId, type StoryInformationPacket } from '@seihouse/sen/harness-generation';
 import { GENERATION_PACKET_BUDGET } from '@seihouse/sen/harness-generation';
 import { CHAPTER_FUNCTIONS } from '@seihouse/sen/harness-generation';
-import { WORLD_CARD_KINDS, worldCardFacts, worldCardsOfKind, type WorldAtChapterZero, type WorldCardAtChapterZero } from '@seihouse/sen/contracts';
+import { WORLD_CARD_KINDS, worldCardFacts, worldCardsOfKind, type WorldRecord, type WorldCard } from '@seihouse/sen/contracts';
 
 const text = { type: 'string' };
 
@@ -191,7 +191,7 @@ export const presentStoryInformationPacketSections = (packet: StoryInformationPa
   { section: 'previouslyOn', text: ['PREVIOUSLY ON (saved recaps of the latest committed chapters, oldest first)', packet.previouslyOn.length
     ? JSON.stringify(packet.previouslyOn, null, 2)
     : 'No chapter has been committed yet; this is the story opening.'].join('\n') },
-  ...(packet.worldAtChapterZero ? [{ section: 'worldAtChapterZero' as const, text: ['THE WORLD AT CHAPTER 0 (the world the story opens with, set down before any chapter was written)', presentWorldAtChapterZero(packet.worldAtChapterZero)].join('\n') }] : []),
+  ...(packet.worldAtChapterZero ? [{ section: 'worldAtChapterZero' as const, text: ['THE WORLD AT CHAPTER 0 (the world the story opens with, set down before any chapter was written)', presentWorldRecord(packet.worldAtChapterZero)].join('\n') }] : []),
   { section: 'canonicalState', text: ['CURRENT CANONICAL STATE (latest applicable state per resolved entity)', presentCanonicalState(packet.canonicalState)].join('\n') },
   ...(packet.holdings ? [{ section: 'holdings' as const, text: ['HOLDINGS (what each character has now, by exact name; the main character first)', presentHoldings(packet.holdings)].join('\n') }] : []),
   ...(packet.appearances ? [{ section: 'appearances' as const, text: ['APPEARED (every character and thing already on the page, by exact name, with its look; the main character first)', presentAppearances(packet.appearances)].join('\n') }] : []),
@@ -203,8 +203,8 @@ export const presentStoryInformationPacketSections = (packet: StoryInformationPa
  * text rather than pretty-printed JSON, which costs several times the tokens
  * for the same facts.
  */
-export const presentWorldAtChapterZero = (world: WorldAtChapterZero) => {
-  const facts = (card: WorldCardAtChapterZero) => worldCardFacts(card).map(({ slot, value }) => `${slot.label}: ${value}`);
+export const presentWorldRecord = (world: WorldRecord) => {
+  const facts = (card: WorldCard) => worldCardFacts(card).map(({ slot, value }) => `${slot.label}: ${value}`);
   return WORLD_CARD_KINDS.flatMap(kind => {
     const cards = worldCardsOfKind(world, kind.id);
     if (!cards.length) return [];

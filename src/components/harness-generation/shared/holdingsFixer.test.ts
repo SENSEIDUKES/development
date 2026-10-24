@@ -10,7 +10,7 @@ import {
   type HarnessWorkspaceState,
 } from '@seihouse/sen/harness-generation';
 import type { SoundCueAttachment } from '@seihouse/sen/audio';
-import type { WorldAtChapterZero } from '@seihouse/sen/contracts';
+import type { WorldRecord } from '@seihouse/sen/contracts';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { REST_OF_CHAPTER, writtenChapterReply } from '../../../test-utils/writtenChapter';
 import { declaredCharacters } from './holdings';
@@ -85,8 +85,8 @@ describe('Holdings fixer: the world the story opened with', () => {
    */
   const world = {
     cards: [{
-      key: 'chapter-0:character:ye-chen', kind: 'character' as const, name: 'Ye Chen', mainCharacter: true as const,
-      slots: { holds: 'Rusted Iron Sword' },
+      key: 'world:character:ye-chen', kind: 'character' as const, name: 'Ye Chen', mainCharacter: true as const,
+      enteredInChapter: 0, slots: { holds: 'Rusted Iron Sword' },
     }],
   };
 
@@ -105,10 +105,10 @@ describe('Holdings fixer: the world the story opened with', () => {
     // holds 'Elder Mu' under its card's key. The holdings are right, but the
     // fixer looked the holder up by the tag's entry ID alone and reported that
     // nothing was recorded.
-    const nearNamed: WorldAtChapterZero = {
+    const nearNamed: WorldRecord = {
       cards: [
-        { key: 'chapter-0:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true, slots: {} },
-        { key: 'chapter-0:character:elder-mu', kind: 'character', name: 'Elder Mu', slots: { holds: 'Jade Fan' } },
+        { key: 'world:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true, enteredInChapter: 0, slots: {} },
+        { key: 'world:character:elder-mu', kind: 'character', name: 'Elder Mu', enteredInChapter: 0, slots: { holds: 'Jade Fan' } },
       ],
     };
     const { state, latest } = await written(reply(['Mu took up the [[gained: Mu | Jade Fan]]jade fan again.']));
@@ -126,11 +126,11 @@ describe('Holdings fixer: the world the story opened with', () => {
     // chapter throwing away a starting thing under another of its names read as
     // never naming it. The missed loss was dismissed rather than repaired, and
     // the discarded thing stayed in every later Holdings packet.
-    const aliased: WorldAtChapterZero = {
+    const aliased: WorldRecord = {
       cards: [
-        { key: 'chapter-0:character:ye-chen', kind: 'character' as const, name: 'Ye Chen', mainCharacter: true as const, slots: {} },
-        { key: 'chapter-0:thing:vermilion-brush', kind: 'thing' as const, name: 'Vermilion Brush', aliases: ['Red Quill'],
-          slots: { holder: 'Ye Chen' } },
+        { key: 'world:character:ye-chen', kind: 'character' as const, name: 'Ye Chen', mainCharacter: true as const, enteredInChapter: 0, slots: {} },
+        { key: 'world:thing:vermilion-brush', kind: 'thing' as const, name: 'Vermilion Brush', aliases: ['Red Quill'],
+          enteredInChapter: 0, slots: { holder: 'Ye Chen' } },
       ],
     };
     const { state, latest } = await written(reply(['Ye Chen threw the Red Quill into the furnace.'], { mainCharacterHoldings: [] }));

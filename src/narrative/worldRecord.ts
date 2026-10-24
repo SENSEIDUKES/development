@@ -187,30 +187,37 @@ export const worldCardFactSlots = (id: WorldCardKindId): WorldCardSlot[] =>
 /** Every slot a kind holds, by its field name. */
 export const worldCardSlotFields = (id: WorldCardKindId): string[] => worldCardKind(id).slots.map(slot => slot.id);
 
-// ─── The world as it stands at Chapter 0 ─────────────────────────────────────
+// ─── The world record ────────────────────────────────────────────────────────
 
 /**
- * One card of the world the story opens with: what the author filled in the
- * Story Seed, and what the World Blueprint filled for the blanks. It is the
- * world before the first chapter, so no fact points at a passage yet.
+ * One card of the world record: what the author filled in the Story Seed, what
+ * the World Blueprint filled for the blanks, and, for anyone and anything a
+ * chapter brings in later, what that chapter's own arrival filled.
  */
-export interface WorldCardAtChapterZero {
+export interface WorldCard {
   /** Stable for this story: its kind and the name the world knows it by. */
   key: string;
   kind: WorldCardKindId;
   name: string;
   aliases?: string[];
   mainCharacter?: true;
+  /**
+   * The chapter this card entered the world in: 0 for the cast, items and
+   * places the story opens with, and the chapter's own number for anything
+   * that arrives later (SENSEI, 2026-10-24: "any new character should just be
+   * processed properly in the beginning", the same as the opening cast). A
+   * card is created once and then kept; this says when, never what it was.
+   */
+  enteredInChapter: number;
   /** The slots that are filled, by field name. */
   slots: Record<string, string>;
 }
 
 /**
- * The world at Chapter 0: every card the Story Seed and its World Blueprint
- * made, before a single chapter is written. The story's later chapters add to
- * this record; they never replace it. Characters, factions and anything else
- * that arrives after Chapter 0 are still created by the chapters that bring
- * them in.
+ * The world record: every card the story has, the Story Seed's and its World
+ * Blueprint's opening world first and each later arrival after it. Chapters
+ * add to this record and change the slots their own tags name; they never
+ * replace it.
  *
  * The record is complete; what the **reader** sees of it is not. A reader
  * meets a card when the story reaches it (SENSEI, 2026-10-22: "this is
@@ -218,8 +225,8 @@ export interface WorldCardAtChapterZero {
  * creators are the readers"). The world is still whole underneath, for
  * everything made from it.
  */
-export interface WorldAtChapterZero {
-  cards: WorldCardAtChapterZero[];
+export interface WorldRecord {
+  cards: WorldCard[];
   /**
    * The reader may see every card from the start. Absent, the default, a card
    * waits until the story reaches it, so a world the model wrote never spoils
@@ -232,31 +239,41 @@ export interface WorldAtChapterZero {
 }
 
 /**
- * A stable key for a Chapter 0 card: its kind and its name, however the name
- * is written. Every letter and number of every script is kept, the way the
- * record compares names everywhere else, so two names a story tells apart keep
- * two keys in Chinese, Japanese, Arabic or Hebrew as surely as in English.
+ * A stable key for a world card: its kind and its name, however the name is
+ * written, and never the chapter it entered in, so a card keeps one key for
+ * the whole story. Every letter and number of every script is kept, the way
+ * the record compares names everywhere else, so two names a story tells apart
+ * keep two keys in Chinese, Japanese, Arabic or Hebrew as surely as in English.
  */
-export const CHAPTER_ZERO_KEY_PREFIX = 'chapter-0:';
+export const WORLD_CARD_KEY_PREFIX = 'world:';
 
 export const worldCardKey = (kind: WorldCardKindId, name: string): string =>
-  `${CHAPTER_ZERO_KEY_PREFIX}${kind}:${name.normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '')}`;
+  `${WORLD_CARD_KEY_PREFIX}${kind}:${name.normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '')}`;
 
 export const worldCardsOfKind = (
-  world: WorldAtChapterZero | undefined,
+  world: WorldRecord | undefined,
   kind: WorldCardKindId,
-): WorldCardAtChapterZero[] => (world?.cards ?? []).filter(card => card.kind === kind);
+): WorldCard[] => (world?.cards ?? []).filter(card => card.kind === kind);
 
 /** The world's one World rules sheet, when it has one. */
-export const worldRulesCard = (world: WorldAtChapterZero | undefined): WorldCardAtChapterZero | undefined =>
+export const worldRulesCard = (world: WorldRecord | undefined): WorldCard | undefined =>
   worldCardsOfKind(world, 'world-rules')[0];
 
 /** A card's filled facts, in the order its kind reads, with the label each shows under. */
-export const worldCardFacts = (card: WorldCardAtChapterZero): Array<{ slot: WorldCardSlot; value: string }> =>
+export const worldCardFacts = (card: WorldCard): Array<{ slot: WorldCardSlot; value: string }> =>
   worldCardFactSlots(card.kind).flatMap(slot => {
     const value = card.slots[slot.id]?.trim();
     return value ? [{ slot, value }] : [];
   });
+
+/**
+ * The chapter a card entered in, read from what a host supplies: a whole
+ * chapter number, or the opening world. The record never invents a chapter, so
+ * an entry it cannot read is the world the story opened with, which is where
+ * every card came from until a chapter could add one.
+ */
+const enteredInChapter = (value: unknown): number =>
+  typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : 0;
 
 /**
  * Reads a world a host supplies into the record the Codex and the HARNESS
@@ -265,16 +282,26 @@ export const worldCardFacts = (card: WorldCardAtChapterZero): Array<{ slot: Worl
  * one. Every key is computed from the card's own kind and name, so two readings
  * of one world always agree about what a card is. A kind the schema keeps
  * single keeps its first card, and a world left with no card at all is none.
+ *
+ * One card is one entity for the whole story, so a key written twice is read
+ * once, and it entered in the earliest chapter either copy claims: a card is
+ * never made to arrive later than the story already had it.
  */
-export const normalizeWorldAtChapterZero = (world: WorldAtChapterZero | undefined): WorldAtChapterZero | undefined => {
-  const cards: WorldCardAtChapterZero[] = [];
-  const keys = new Set<string>();
+export const normalizeWorldRecord = (world: WorldRecord | undefined): WorldRecord | undefined => {
+  const cards: WorldCard[] = [];
+  const byKey = new Map<string, WorldCard>();
   for (const card of world?.cards ?? []) {
     const kind = WORLD_CARD_KINDS.find(candidate => candidate.id === card?.kind);
     const name = typeof card?.name === 'string' ? card.name.trim() : '';
     if (!kind || !name) continue;
     const key = worldCardKey(kind.id, name);
-    if (keys.has(key) || (kind.single && cards.some(existing => existing.kind === kind.id))) continue;
+    const entered = enteredInChapter(card.enteredInChapter);
+    const already = byKey.get(key);
+    if (already) {
+      if (entered < already.enteredInChapter) already.enteredInChapter = entered;
+      continue;
+    }
+    if (kind.single && cards.some(existing => existing.kind === kind.id)) continue;
     const slots: Record<string, string> = {};
     for (const slot of worldCardFactSlots(kind.id)) {
       const value = card.slots?.[slot.id];
@@ -284,24 +311,26 @@ export const normalizeWorldAtChapterZero = (world: WorldAtChapterZero | undefine
     const aliases = [...new Set((Array.isArray(card.aliases) ? card.aliases : [])
       .flatMap(alias => (typeof alias === 'string' && alias.trim() ? [alias.trim()] : []))
       .filter(alias => alias.toLowerCase() !== name.toLowerCase()))];
-    keys.add(key);
-    cards.push({
+    const read: WorldCard = {
       key, kind: kind.id, name,
       ...(aliases.length ? { aliases } : {}),
       ...(card.mainCharacter === true ? { mainCharacter: true as const } : {}),
+      enteredInChapter: entered,
       slots,
-    });
+    };
+    byKey.set(key, read);
+    cards.push(read);
   }
   if (!cards.length) return undefined;
   return { cards, ...(world?.openToTheReader === true ? { openToTheReader: true as const } : {}) };
 };
 
 /** Whether a world holds anything at all. */
-export const hasWorldAtChapterZero = (world: WorldAtChapterZero | undefined): boolean => Boolean(world?.cards.length);
+export const hasWorldRecord = (world: WorldRecord | undefined): boolean => Boolean(world?.cards.length);
 
 /**
  * Whether the reader may see a card the story has not reached yet. False for
  * every world a Story Seed makes: its reader is the story's own reader.
  */
-export const worldIsOpenToTheReader = (world: WorldAtChapterZero | undefined): boolean =>
+export const worldIsOpenToTheReader = (world: WorldRecord | undefined): boolean =>
   Boolean(world?.openToTheReader);

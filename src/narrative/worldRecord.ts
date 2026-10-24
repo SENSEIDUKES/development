@@ -84,7 +84,7 @@ export const WORLD_CARD_KINDS: readonly WorldCardKind[] = [
       { id: 'connectionToMC', label: 'Tie to the main character', test: 'save-game', changes: true, asks: 'how they stand with the main character' },
       { id: 'ties', label: 'Ties', test: 'save-game', changes: true, asks: 'who else they are allied, related, hostile or bound to' },
       { id: 'belongsTo', label: 'Belongs to', test: 'save-game', changes: true, asks: 'the factions they belong to, by name' },
-      { id: 'voice', label: 'Voice', test: 'other-media', changes: false, asks: 'how they speak' },
+      { id: 'voice', label: 'Voice', test: 'other-media', changes: false, asks: 'the voice to cast them with: its age, weight and energy in a few words, as "an energetic young man" or "an old voice full of wisdom"' },
     ],
   },
   {
@@ -237,8 +237,10 @@ export interface WorldAtChapterZero {
  * record compares names everywhere else, so two names a story tells apart keep
  * two keys in Chinese, Japanese, Arabic or Hebrew as surely as in English.
  */
+export const CHAPTER_ZERO_KEY_PREFIX = 'chapter-0:';
+
 export const worldCardKey = (kind: WorldCardKindId, name: string): string =>
-  `chapter-0:${kind}:${name.normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '')}`;
+  `${CHAPTER_ZERO_KEY_PREFIX}${kind}:${name.normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '')}`;
 
 export const worldCardsOfKind = (
   world: WorldAtChapterZero | undefined,
@@ -255,6 +257,44 @@ export const worldCardFacts = (card: WorldCardAtChapterZero): Array<{ slot: Worl
     const value = card.slots[slot.id]?.trim();
     return value ? [{ slot, value }] : [];
   });
+
+/**
+ * Reads a world a host supplies into the record the Codex and the HARNESS
+ * share. A card with no name or no known kind is dropped, and so is a slot the
+ * card's kind does not define, a slot that only names the card, and an empty
+ * one. Every key is computed from the card's own kind and name, so two readings
+ * of one world always agree about what a card is. A kind the schema keeps
+ * single keeps its first card, and a world left with no card at all is none.
+ */
+export const normalizeWorldAtChapterZero = (world: WorldAtChapterZero | undefined): WorldAtChapterZero | undefined => {
+  const cards: WorldCardAtChapterZero[] = [];
+  const keys = new Set<string>();
+  for (const card of world?.cards ?? []) {
+    const kind = WORLD_CARD_KINDS.find(candidate => candidate.id === card?.kind);
+    const name = typeof card?.name === 'string' ? card.name.trim() : '';
+    if (!kind || !name) continue;
+    const key = worldCardKey(kind.id, name);
+    if (keys.has(key) || (kind.single && cards.some(existing => existing.kind === kind.id))) continue;
+    const slots: Record<string, string> = {};
+    for (const slot of worldCardFactSlots(kind.id)) {
+      const value = card.slots?.[slot.id];
+      const text = typeof value === 'string' ? value.trim() : '';
+      if (text) slots[slot.id] = text;
+    }
+    const aliases = [...new Set((Array.isArray(card.aliases) ? card.aliases : [])
+      .flatMap(alias => (typeof alias === 'string' && alias.trim() ? [alias.trim()] : []))
+      .filter(alias => alias.toLowerCase() !== name.toLowerCase()))];
+    keys.add(key);
+    cards.push({
+      key, kind: kind.id, name,
+      ...(aliases.length ? { aliases } : {}),
+      ...(card.mainCharacter === true ? { mainCharacter: true as const } : {}),
+      slots,
+    });
+  }
+  if (!cards.length) return undefined;
+  return { cards, ...(world?.openToTheReader === true ? { openToTheReader: true as const } : {}) };
+};
 
 /** Whether a world holds anything at all. */
 export const hasWorldAtChapterZero = (world: WorldAtChapterZero | undefined): boolean => Boolean(world?.cards.length);

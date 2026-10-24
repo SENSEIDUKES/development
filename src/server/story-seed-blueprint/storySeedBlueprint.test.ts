@@ -435,8 +435,15 @@ describe("protected Story Seed World Blueprint generation", () => {
     expect(foundation.sourceSnapshot?.seed).toEqual(uploaded.seed);
     const minister = foundation.identities?.filter(identity => identity.name === "Minister Sui");
     expect(minister).toHaveLength(1);
-    expect(minister?.[0].evidence).toContain("former tutor");
-    expect(minister?.[0].evidence).toContain("The only minister whose testimony changed between timelines.");
+    // Who they are travels on their Chapter 0 card, slot by slot, so the
+    // identity that declares their name carries no second copy of it.
+    const ministerCard = foundation.worldAtChapterZero?.cards.find(card => card.name === "Minister Sui");
+    expect(ministerCard?.slots).toMatchObject({
+      connectionToMC: "former tutor",
+      bio: "The only minister whose testimony changed between timelines.",
+      eyeColor: "silver",
+      rankLevel: "Seal Heart",
+    });
     expect(JSON.stringify(foundation)).not.toContain("workshop-fixture");
   });
 });

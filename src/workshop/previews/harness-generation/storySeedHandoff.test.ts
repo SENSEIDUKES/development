@@ -208,7 +208,10 @@ describe('Story Seed to Harness handoff', () => {
     for (const marker of ['TITLE_ONCE', 'WORLD_ONCE', 'SOCIETY_ONCE', 'OPENING_ONCE', 'OPPOSITION_ONCE', 'HERO_TEMPER_ONCE',
       'HERO_BIO_ONCE', 'REVIEWED_PROSE_ONCE', 'HERO_LOOK_ONCE', 'ALLY_BIO_ONCE', 'ALLY_ALIAS_ONCE', 'GUILD_PROFILE_ONCE',
       'GUILD_ALIAS_ONCE', 'POWER_CONCEPT_ONCE', 'POWER_FLAVOR_ONCE', 'POWER_LADDER_ONCE', 'STYLE_BIBLE_ONCE', 'TAG_ONCE',
-      'role: Rival']) {
+      // A Blueprint-introduced character's role, now carried by their Chapter 0
+      // card under the label its Codex slot shows, not as prose in the
+      // identity that declares their name.
+      'Role: Rival']) {
       expect(userPrompt.split(marker), marker).toHaveLength(2);
     }
     expect(userPrompt).not.toMatch(/storage-id-|Blueprint (main character|character profile|initial characters|factions|society|power system)/);

@@ -3,6 +3,7 @@ import { ARC_LENGTH, ARC_LOOKAHEAD_SCHEMA, ARC_PLAN_DRAFT_SCHEMA, MAX_ARC_LOOKAH
 import { type CapaPrompt, type HarnessArcRequest, type HarnessChapterDirection, type HarnessChapterRewrite, type HarnessGenerationRequest, type HarnessStoryMode, type HarnessMissionReminder, type HarnessRequestMeasurement, type ImmediateChapterRequest, type PacketSectionId, type StoryInformationPacket } from '@seihouse/sen/harness-generation';
 import { GENERATION_PACKET_BUDGET } from '@seihouse/sen/harness-generation';
 import { CHAPTER_FUNCTIONS } from '@seihouse/sen/harness-generation';
+import { WORLD_CARD_KINDS, worldCardFacts, worldCardsOfKind, type WorldAtChapterZero, type WorldCardAtChapterZero } from '@seihouse/sen/contracts';
 
 const text = { type: 'string' };
 
@@ -104,12 +105,13 @@ export const HARNESS_WRITING_RULES = [
 
 /** How to read the story information and the chapter request that follow. */
 export const HARNESS_READING_GUIDE = [
-  'The packet arrives as ordered sections: Current Story Information, Destined Ending and Hard Pins, Active Arc Goal, Fate Pressure Rhythm Direction (only when the HARNESS chooses this chapter\'s path automatically), Previously On, Current Canonical State, Holdings, and Appeared. Each fact appears once, in its section. Hard Pins are the author\'s absolute story-wide intentions and hold for the entire story. The Destined Ending, the Hard Pins, the Fate Pressure, and the Arc Plan are author-owned: never rewrite, replace, weaken, or contradict them, and never return them as fields.',
+  'The packet arrives as ordered sections: Current Story Information, Destined Ending and Hard Pins, Active Arc Goal, Fate Pressure Rhythm Direction (only when the HARNESS chooses this chapter\'s path automatically), Previously On, The World at Chapter 0, Current Canonical State, Holdings, and Appeared. Each fact appears once, in its section. Hard Pins are the author\'s absolute story-wide intentions and hold for the entire story. The Destined Ending, the Hard Pins, the Fate Pressure, and the Arc Plan are author-owned: never rewrite, replace, weaken, or contradict them, and never return them as fields.',
   'Current Story Information supplies the active Foundation: title, premise, opening setup, tone and author instructions, declared canon, foundational identities and world facts, and explicit corrections. Active Foundation edits take precedence over anything the story once planned.',
   'The story travels toward the current Destined Ending, and its fateMode says what that promise means. regular: the Destined Ending is guaranteed as the story\'s standing direction. Every chapter keeps pursuing it and the story never fails its fate, but nothing forces the prose to reach it by a deadline: a missed Arc Goal only means the story is off track, so keep pursuing the ending from what actually happened. When the Active Arc Goal marks finalGoal, that goal is the story reaching the Destined Ending; write the ending into the prose when the story earns it. survival: the reader directs the protagonist and the Destined Ending is not guaranteed. Pursue it honestly through the reader\'s direction and the story\'s own logic; never rescue the protagonist, soften a consequence, or force success so a goal or the ending is reached. Failure, including the protagonist\'s death, is a legitimate outcome when the story earns it. In either mode, never plan or introduce a new destiny to replace the Destined Ending.',
   'When the Story Information Packet contains a structured arc goal, the Destined Ending is the novel-wide destination and the single active goal is this stretch\'s destination: in regular mode the target the story steers toward, in survival mode the checkpoint the reader is directing toward. Its chapters are a budget, not a quota: completionDeadline is the latest chapter it may take, never a length to fill. Reach it as soon as the story honestly earns it; once it is reached, the next goal begins in the following chapter. In either mode a goal can be missed. Never force it into the prose or claim it because its deadline has come: an unmet goal is recorded as missed and the story continues. When completionConfirmed is true, the active goal is already reached: write what follows from it, and never stage it again. Every chapter changes the story\'s situation (a setback, a discovery, a decision, a gain, a loss or a turn) and never ends where the previous chapter ended or repeats its beat. The goal is the destination, not the only subject: characters, relationships, rivals and progression keep moving while it is pursued. Never pursue a later goal in parallel. Only the active goal is supplied: later goals are planned but deliberately withheld, so move toward the Destined Ending through the active goal alone. arcNumber and plannedArcCount say where this arc sits on the route. Old loose Story Seed promises remain non-deadline direction.',
   'route says where the story stands on its route to the Destined Ending. on-track: no goal of this arc was missed. off-track: missedGoals lists this arc\'s goals whose deadlines passed unmet; carry those failures forward honestly and keep pursuing the Destined Ending from where the story really is. past-final-goal (regular only): the final goal was missed at its deadline and no further goal is planned. Keep pursuing the Destined Ending itself, with no deadline, and never invent a new goal, destination, or arc; the active goal is still that final goal, so report reaching the Destined Ending through arcCompletion. broken (survival only): the route broke in brokenInChapter (reason arc-goals-missed or final-goal-missed, with missedGoals), and the Destined Ending can no longer be reached. This chapter must bring the story to its end, as the Fate Survival skill directs; it is saved only when its prose shows that ending and storyEnded points to it. Never begin a new arc or plan a successor destiny. There is no goal left to report: return arcCompletion with completed false.',
   'Fate Pressure Rhythm Direction appears only when the reader left this chapter\'s path to the HARNESS. It names the chapter function recommended next (progression, worldBuilding, or conflict), the recent sequence it evaluated, its reason, and, when available, the previous chapter\'s own suggestion for that function. Favor that function while keeping the chapter natural; the Active Arc Goal remains this stretch\'s destination.',
+  'The World at Chapter 0 is the world the story opens with, set down by the author\'s Story Seed and its World Blueprint before the first chapter: the characters, items, abilities, places, factions and species that already exist, and the world\'s own rules. It is established fact, not a plan, and not a checklist of things to mention. The facts that never change, a character\'s eyes, skin, species, gender and voice, the rank ladder, how power works, hold for the whole story: use them and never invent past them. Where a later chapter changed something, Current Canonical State and Holdings carry what it is now and take precedence.',
   'Current Canonical State is the latest applicable state of each character, relationship, location, faction, artifact, ability, and resource, resolved by the HARNESS. It is the current truth to continue from; it is not a checklist of things to mention. Resources list absolute balances observed in the story: never restore an opening balance, silently refill a resource, or use an old owner after a transfer. State new balances in the prose when they change.',
   'READER DIRECTION: the Immediate Chapter Request may carry the reader\'s direction for this chapter: either one chapter function with the idea they chose, or their own direction in their words. It applies to this chapter only and changes what happens next, never what already happened; retain the consequences of prior events. Make it happen in this chapter, within the Active Arc Goal, or as the path to the story\'s ending when the route is broken. Author corrections override the targeted interpretations.',
 ].join('\n\n');
@@ -189,10 +191,37 @@ export const presentStoryInformationPacketSections = (packet: StoryInformationPa
   { section: 'previouslyOn', text: ['PREVIOUSLY ON (saved recaps of the latest committed chapters, oldest first)', packet.previouslyOn.length
     ? JSON.stringify(packet.previouslyOn, null, 2)
     : 'No chapter has been committed yet; this is the story opening.'].join('\n') },
+  ...(packet.worldAtChapterZero ? [{ section: 'worldAtChapterZero' as const, text: ['THE WORLD AT CHAPTER 0 (the world the story opens with, set down before any chapter was written)', presentWorldAtChapterZero(packet.worldAtChapterZero)].join('\n') }] : []),
   { section: 'canonicalState', text: ['CURRENT CANONICAL STATE (latest applicable state per resolved entity)', presentCanonicalState(packet.canonicalState)].join('\n') },
   ...(packet.holdings ? [{ section: 'holdings' as const, text: ['HOLDINGS (what each character has now, by exact name; the main character first)', presentHoldings(packet.holdings)].join('\n') }] : []),
   ...(packet.appearances ? [{ section: 'appearances' as const, text: ['APPEARED (every character and thing already on the page, by exact name, with its look; the main character first)', presentAppearances(packet.appearances)].join('\n') }] : []),
 ];
+
+/**
+ * The world the story opens with: the rules sheet first, then one line per
+ * card under its kind, each fact behind the label its slot shows under. Compact
+ * text rather than pretty-printed JSON, which costs several times the tokens
+ * for the same facts.
+ */
+export const presentWorldAtChapterZero = (world: WorldAtChapterZero) => {
+  const facts = (card: WorldCardAtChapterZero) => worldCardFacts(card).map(({ slot, value }) => `${slot.label}: ${value}`);
+  return WORLD_CARD_KINDS.flatMap(kind => {
+    const cards = worldCardsOfKind(world, kind.id);
+    if (!cards.length) return [];
+    // The rules sheet is the one card with no name of its own: its facts stand alone.
+    const lines = kind.single
+      ? cards.flatMap(card => facts(card)).map(fact => `- ${fact}`)
+      // Other names are not repeated here: a declared identity in Current
+      // Story Information already carries every alias, structurally, and each
+      // fact belongs to one section.
+      : cards.map(card => [
+        `- ${card.name}`,
+        card.mainCharacter ? ' (main character)' : '',
+        facts(card).length ? ` — ${facts(card).join('; ')}` : '',
+      ].join(''));
+    return lines.length ? [[`${kind.plural.toUpperCase()}:`, ...lines].join('\n')] : [];
+  }).join('\n\n');
+};
 
 /** One character or thing per line: its name, what it is, and its look once written down. */
 export const presentAppearances = (appearances: NonNullable<StoryInformationPacket['appearances']>) => appearances.entries.length

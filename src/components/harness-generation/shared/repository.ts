@@ -77,6 +77,10 @@ const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => 
   // It skips 33, the chapter loop's version, rolled back on 2026-10-22: a
   // workspace that loop saved has no step and is kept untouched instead.
   32: stored => ({ ...stored, schemaVersion: 34 }),
+  // 35 adds only an optional packet section (the world at Chapter 0, carried to
+  // the writer): every attempt keeps the packet it froze, and a story with no
+  // Chapter 0 world simply has no such section.
+  34: stored => ({ ...stored, schemaVersion: 35 }),
 };
 
 /**

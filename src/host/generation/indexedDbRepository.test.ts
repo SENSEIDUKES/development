@@ -36,11 +36,12 @@ describe('planHarnessWorkspaceLoad', () => {
     // 31 adds only an optional story field: the story's own sound words. Saved cues and frozen attempts are untouched.
     // 32 adds only optional chapter fields: its appearances and the looks written down from them.
     // 34 adds only an optional Foundation field: the world at Chapter 0. (33 was the rolled-back chapter loop's.)
-    expect(HARNESS_GENERATION_SCHEMA_VERSION).toBe(34);
-    for (const schemaVersion of [27, 28, 29, 30, 31, 32]) {
+    // 35 adds only an optional packet section: that world, carried to the writer. Frozen attempts keep their own packet.
+    expect(HARNESS_GENERATION_SCHEMA_VERSION).toBe(35);
+    for (const schemaVersion of [27, 28, 29, 30, 31, 32, 34]) {
       const stored = { ...createEmptyHarnessWorkspaceState(), schemaVersion, stories: [{ id: 'a' }], attempts: [{ id: 'a1', capaPrompt: { soundVocabulary: [{ word: 'blade drawn', example: 'drew his sword' }] } }], chapters: [{ id: 'c1', soundCues: [{ id: 'sc1' }] }] };
       const plan = planHarnessWorkspaceLoad(stored, now);
-      expect(plan.state).toEqual({ ...stored, schemaVersion: 34 });
+      expect(plan.state).toEqual({ ...stored, schemaVersion: 35 });
       expect(plan.preserve).toEqual({
         key: `${PRESERVED_WORKSPACE_PREFIX}v${schemaVersion}:2026-09-24T12:00:00.000Z`,
         record: { preservedAt: now(), reason: 'migrated', schemaVersion, workspace: stored },

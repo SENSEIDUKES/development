@@ -10,6 +10,7 @@ import {
   type HarnessWorkspaceState,
 } from '@seihouse/sen/harness-generation';
 import type { SoundCueAttachment } from '@seihouse/sen/audio';
+import type { WorldAtChapterZero } from '@seihouse/sen/contracts';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { REST_OF_CHAPTER, writtenChapterReply } from '../../../test-utils/writtenChapter';
 import { declaredCharacters } from './holdings';
@@ -74,6 +75,88 @@ const flagsOf = (state: HarnessWorkspaceState, chapter: HarnessChapter, entries 
 }).flags.filter(flag => flag.chapterId === chapter.id);
 
 const SWORD = '[[gained: MC | Rusted Iron Sword]] Ye Chen lifted the old blade from the rack.';
+
+describe('Holdings fixer: the world the story opened with', () => {
+  /**
+   * Review finding (Codex, 2026-10-24): the writer's packet derives holdings
+   * from the Chapter 0 world, so the fixer must too. Reading an empty starting
+   * record, it would see a valid first-chapter loss of a starting sword as a
+   * loss of something nobody held, and correct a tag that was right.
+   */
+  const world = {
+    cards: [{
+      key: 'chapter-0:character:ye-chen', kind: 'character' as const, name: 'Ye Chen', mainCharacter: true as const,
+      slots: { holds: 'Rusted Iron Sword' },
+    }],
+  };
+
+  it('finds no problem in a first chapter that loses what the world gave the main character', async () => {
+    const { state, latest } = await written(reply(['[[lost: MC | Rusted Iron Sword | ×1 | shattered]] The blade broke against the gate.']));
+    // Without the world, the loss reads as a loss of something nobody held.
+    expect(planHoldingsFix(inputFor(state, latest)).cases.flatMap(planned => planned.case.problems))
+      .toEqual(['Ye Chen loses ‘Rusted Iron Sword’, which the record does not show them holding.']);
+    // With it, the tag was right all along and there is nothing to fix.
+    expect(planHoldingsFix({ ...inputFor(state, latest), worldAtChapterZero: world })).toEqual({ cases: [], settled: [] });
+  });
+
+  it('says what a near-named starting holder had, rather than nothing', async () => {
+    // Review finding (CodeRabbit, 2026-10-24): a tag naming 'Mu' resolves to a
+    // new Codex entry, because the resolver matches exactly, while the world
+    // holds 'Elder Mu' under its card's key. The holdings are right, but the
+    // fixer looked the holder up by the tag's entry ID alone and reported that
+    // nothing was recorded.
+    const nearNamed: WorldAtChapterZero = {
+      cards: [
+        { key: 'chapter-0:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true, slots: {} },
+        { key: 'chapter-0:character:elder-mu', kind: 'character', name: 'Elder Mu', slots: { holds: 'Jade Fan' } },
+      ],
+    };
+    const { state, latest } = await written(reply(['Mu took up the [[gained: Mu | Jade Fan]]jade fan again.']));
+    const plan = planHoldingsFix({ ...inputFor(state, latest), worldAtChapterZero: nearNamed });
+    expect(plan.cases.flatMap(entry => entry.case.problems))
+      .toEqual(['Elder Mu gains ‘Jade Fan’ again, but already holds it. It is not counted twice.']);
+    const record = (plan.cases[0].case.record ?? []).join('\n');
+    expect(record).toContain('Jade Fan');
+    expect(record).not.toContain('nothing recorded');
+  });
+
+  it('asks about an untagged loss described by another of a starting thing\'s names', async () => {
+    // Review finding (Codex, 2026-10-24): the closing-case branch searched the
+    // chapter's sentences by the entry's names or the flag's one name, so a
+    // chapter throwing away a starting thing under another of its names read as
+    // never naming it. The missed loss was dismissed rather than repaired, and
+    // the discarded thing stayed in every later Holdings packet.
+    const aliased: WorldAtChapterZero = {
+      cards: [
+        { key: 'chapter-0:character:ye-chen', kind: 'character' as const, name: 'Ye Chen', mainCharacter: true as const, slots: {} },
+        { key: 'chapter-0:thing:vermilion-brush', kind: 'thing' as const, name: 'Vermilion Brush', aliases: ['Red Quill'],
+          slots: { holder: 'Ye Chen' } },
+      ],
+    };
+    const { state, latest } = await written(reply(['Ye Chen threw the Red Quill into the furnace.'], { mainCharacterHoldings: [] }));
+    const plan = planHoldingsFix({ ...inputFor(state, latest), worldAtChapterZero: aliased });
+    expect(plan.settled).toEqual([]);
+    expect(plan.cases).toHaveLength(1);
+    expect(plan.cases[0].case.problems)
+      .toEqual(['the writer\'s closing list for Ye Chen leaves out ‘Vermilion Brush’. It may have been lost without a tag.']);
+    // The sentence that names it under its other name is what the fixer is
+    // asked about, so the missed loss can actually be repaired.
+    expect(plan.cases[0].case.mentions?.map(mention => mention.sentence))
+      .toEqual(['Ye Chen threw the Red Quill into the furnace.']);
+  });
+
+  it('still finds the problem of gaining what the world already gave, and says what they held', async () => {
+    const { state, latest } = await written(reply([SWORD]));
+    const planned = planHoldingsFix({ ...inputFor(state, latest), worldAtChapterZero: world }).cases;
+    expect(planned.flatMap(entry => entry.case.problems))
+      .toEqual(['Ye Chen gains ‘Rusted Iron Sword’ again, but already holds it. It is not counted twice.']);
+    // Review finding (Codex, 2026-10-24): the record beside the problem is
+    // looked up by the holder's Codex entry ID, so a Chapter 0 holder held
+    // under their card's key read as "nothing recorded" and the fixer would
+    // have been asked to correct a tag with no idea what the character had.
+    expect(planned[0].case.record).toContain('Ye Chen before this chapter: has Rusted Iron Sword.');
+  });
+});
 
 describe('Holdings fixer: the cases', () => {
   it('turns a problem on a sentence into one small case: the sentence, its tags and what the record showed', async () => {

@@ -9,10 +9,12 @@ const voice = (internalKey: string, ttsAvailable = true): PublicVoiceMeta => ({
   internalKey,
   fileName: `voice_preview_${internalKey}.mp3`,
   archetype: internalKey,
+  gender: 'male',
   classification: 'flexible',
   compatibleRoles: [],
   description: `${internalKey} test voice`,
   ageRange: 'Adult',
+  ageYears: null,
   ttsAvailable,
 });
 

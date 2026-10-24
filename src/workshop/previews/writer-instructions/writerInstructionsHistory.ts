@@ -20,6 +20,16 @@ export interface WriterInstructionsChange {
  */
 export const WRITER_INSTRUCTIONS_HISTORY: readonly WriterInstructionsChange[] = [
   {
+    date: '2026-10-24',
+    summary: 'The World at Chapter 0, step two: the chapter writer finally reads it. Until now every section describing the world was built from chapters already written, so Chapter 1 was written by a model told "none recorded yet" about a world the Blueprint had just filled with eighteen cards — the eye colours, voices, places and factions went to the Codex and never to the prose. The world now travels as its own Story Information section, ahead of what the chapters changed, and How to read the story information says what it is: established fact, not a plan and not a checklist of things to mention; the facts its slots mark as unchanging hold for the whole story; where a later chapter changed something, Current Canonical State and Holdings carry what it is now and take precedence. Holdings starts from the same record, so the packet can no longer say a character holds a sword in one section and nothing in another. Appeared is deliberately left empty at Chapter 1: it means already described on the page, and nobody has been.',
+    changed: { 'reading-guide': '01d64139c7e2f5' },
+  },
+  {
+    date: '2026-10-24',
+    summary: 'Voice, as SENSEI asked for it after reading the Korean Test\'s cards: "Voice should be described like \'Energetic Middle age man\' or \'An old voice filled with wisdom\'... we\'re trying to match ElevenLabs voices to a character." The world builder asked for "how they speak", so it answered with manner — "low and controlled, with short sentences" — which tells a reader how a line sounds and tells a voice catalog nothing. It now asks for the voice to cast the character with: its age, weight and energy in a few words, with both of SENSEI\'s own examples. The slot is the Codex\'s, whose test is other-media, and the chapter writer never reads it, so no chapter changes; what reads it is the voice the character is cast in.',
+    changed: { 'world-builder': '13f60da4796967' },
+  },
+  {
     date: '2026-10-22',
     summary: 'The World at Chapter 0, step one (SENSEI, 2026-10-21: "everything that\'s going to be on the Codex needs to be fillable inside the story seed first"). A new block, the world builder, is the first words on this page that no chapter writer reads: the one call that builds a story\'s world from its Story Seed now fills every Codex card the world opens with, slot by slot — characters, things, abilities, places, factions, the Bestiary and the one World rules sheet. The words are written from the Codex\'s own definition of its card kinds, so this instruction can never ask for a slot the Story Seed cannot hold or the Codex cannot show, and the two tests that decide what belongs on a card (an artist can draw the opening scene; a game can load the world as it stands) are stated to the model. The chapter writer\'s own instructions are untouched: what it reads from this world is its own step, with its own approval.',
     changed: { 'world-builder': '1e4680615fba0d' },

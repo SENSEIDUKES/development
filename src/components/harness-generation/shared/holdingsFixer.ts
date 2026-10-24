@@ -8,6 +8,7 @@ import type {
   HarnessHoldingsFixCase,
   HarnessHoldingsFixerPolicy,
 } from '../../../narrative/generation';
+import type { WorldAtChapterZero } from '../../../narrative/worldRecord';
 import { readArcReply } from './arcState';
 import { normalizeIdentityLabel } from './canonicalProjection';
 import { harnessChapterBody, harnessParagraphBlockId } from './chapterBody';
@@ -70,6 +71,13 @@ export interface HoldingsFixInput {
   /** The story's Codex entries. */
   entries: readonly CodexEntry[];
   mainCharacterName?: string;
+  /**
+   * The world the story opens with, so the fixer reads the same holdings the
+   * writer did. Without it a valid first-chapter loss of a starting sword
+   * looks like a loss of something nobody held, and the fixer would correct a
+   * tag that was right.
+   */
+  worldAtChapterZero?: WorldAtChapterZero;
   locale?: string;
   policy: HarnessHoldingsFixerPolicy;
 }
@@ -141,14 +149,32 @@ function sentencesNaming(chapter: HarnessChapter, names: readonly string[], loca
  * Turns a committed chapter's holdings problems into small cases for the
  * fixer, and settles without asking the ones nothing in the chapter can fix.
  */
-export function planHoldingsFix({ chapter, chapters, entries, mainCharacterName, locale, policy }: HoldingsFixInput): HoldingsFixPlan {
+export function planHoldingsFix({ chapter, chapters, entries, mainCharacterName, worldAtChapterZero, locale, policy }: HoldingsFixInput): HoldingsFixPlan {
   const settled: HarnessHoldingsFix[] = [];
   if (policy === 'off') return { cases: [], settled };
   const storyChapters = chapters.filter(entry => entry.storyId === chapter.storyId);
-  const now = deriveHoldings({ entries, chapters: storyChapters, mainCharacterName });
-  const before = deriveHoldings({ entries, chapters: storyChapters.filter(entry => entry.chapterNumber < chapter.chapterNumber), mainCharacterName });
+  const now = deriveHoldings({ entries, chapters: storyChapters, mainCharacterName, worldAtChapterZero });
+  const before = deriveHoldings({ entries, chapters: storyChapters.filter(entry => entry.chapterNumber < chapter.chapterNumber), mainCharacterName, worldAtChapterZero });
   const flags = chapterHoldingFlags(now, chapter.id, createdIn(entries, chapter.id));
   const entryName = (id: string | undefined, fallback: string) => (id ? entries.find(entry => entry.id === id)?.name : undefined) ?? fallback;
+  /**
+   * The character a tag's holder is, in a derived record. A tag resolves its
+   * holder to a Codex entry by its exact name, while the Chapter 0 world may
+   * hold the same person under their card's own key, so the two keys differ for
+   * one person: the record reconciles them by name and so must this, or the
+   * holder's own holdings and history read as nothing recorded. The same name
+   * wins over a name merely close to it, and two of either are a tie left
+   * unresolved rather than guessed.
+   */
+  const holderIn = (state: HoldingsState, entryId: string | undefined, fallback: string) => {
+    const direct = entryId ? state.characters.find(character => character.entryId === entryId) : undefined;
+    if (direct) return direct;
+    const name = entryName(entryId, fallback);
+    const knownAs = (character: CharacterHoldings) => [character.name, ...(character.knownAs ?? [])];
+    const only = (matches: readonly CharacterHoldings[]) => matches.length === 1 ? matches[0] : undefined;
+    return only(state.characters.filter(character => knownAs(character).some(known => normalizeIdentityLabel(known) === normalizeIdentityLabel(name))))
+      ?? only(state.characters.filter(character => knownAs(character).some(known => namesNearlyMatch(known, name))));
+  };
   const cases: HoldingsFixPlanCase[] = [];
 
   // Problems on a sentence: one case per sentence, with every problem found there.
@@ -180,18 +206,18 @@ export function planHoldingsFix({ chapter, chapters, entries, mainCharacterName,
     const record: string[] = [];
     for (const holder of unique(onSentence.map(entry => entry.payload.holder.entryId ?? entry.payload.holder.name))) {
       const name = entryName(holder, holder);
-      record.push(holdingsLine(before.characters.find(character => character.entryId === holder), name, 'before this chapter'));
+      record.push(holdingsLine(holderIn(before, holder, holder), name, 'before this chapter'));
     }
     const eventLine = (target: string, when: string, event: CharacterHoldings['history'][number]) =>
       `${target}: ${when}, ${event.verb}${event.count ? ` ${event.count}` : ''}${event.level ? ` ${event.level}` : ''}: “${event.passage.text}”`;
     for (const entry of onSentence) {
       if (!entry.payload.target) continue;
       const target = entryName(entry.payload.target.entryId, entry.payload.target.name);
-      const history = before.characters.find(character => character.entryId === entry.payload.holder.entryId)?.history
+      const history = holderIn(before, entry.payload.holder.entryId, entry.payload.holder.name)?.history
         .filter(event => event.target === target).slice(-HISTORY_LIMIT) ?? [];
       for (const event of history) record.push(eventLine(target, `Chapter ${event.passage.chapterNumber}`, event));
       // What this chapter itself recorded about it before this sentence: the case is never judged without it.
-      const earlier = now.characters.find(character => character.entryId === entry.payload.holder.entryId)?.history
+      const earlier = holderIn(now, entry.payload.holder.entryId, entry.payload.holder.name)?.history
         .filter(event => event.target === target && event.passage.chapterId === chapter.id && isBefore(event.passage.recordId, blockId, start))
         .slice(-HISTORY_LIMIT) ?? [];
       for (const event of earlier) record.push(eventLine(target, 'earlier in this chapter', event));
@@ -220,7 +246,16 @@ export function planHoldingsFix({ chapter, chapters, entries, mainCharacterName,
   };
   for (const flag of flags.filter(item => item.kind === 'closing-unlisted' || item.kind === 'closing-untagged')) {
     const entry = flag.entryIds?.[0] ? entries.find(candidate => candidate.id === flag.entryIds![0]) : undefined;
-    const names = entry ? [entry.name, ...(entry.aliases ?? [])] : flag.name ? [flag.name] : [];
+    // Also every name the world knows a starting holding by. Without them a
+    // chapter that threw away a starting thing under another of its names reads
+    // as never naming it, so the missed loss is dismissed instead of repaired
+    // and the discarded thing stays in every later Holdings packet.
+    const held = now.characters.flatMap(character => [...character.things, ...character.abilities])
+      .find(item => item.entryId === flag.entryIds?.[0]);
+    const names = [...new Set([
+      ...(entry ? [entry.name, ...(entry.aliases ?? [])] : flag.name ? [flag.name] : []),
+      ...(held?.knownAs ?? []),
+    ])];
     const named = sentencesNaming(chapter, names, locale);
     const problem = withoutChapterLabel(flag.message);
     if (!named.length) {
@@ -345,12 +380,12 @@ const withChanges = (chapter: HarnessChapter, changes: HoldingChangeAttachment[]
  * entries and the record of every case.
  */
 export function applyHoldingsFixes(input: HoldingsFixApplyInput): HoldingsFixResult {
-  const { plan, policy, locale, declared, createdAt, createId, mainCharacterName } = input;
+  const { plan, policy, locale, declared, createdAt, createId, mainCharacterName, worldAtChapterZero } = input;
   let chapter: HarnessChapter = structuredClone(input.chapter);
   let entries: CodexEntry[] = structuredClone([...input.entries]);
   const others = input.chapters.filter(entry => entry.storyId === chapter.storyId && entry.id !== chapter.id);
   const problemsOf = (draft: HarnessChapter, draftEntries: readonly CodexEntry[]) => chapterHoldingFlags(
-    deriveHoldings({ entries: draftEntries, chapters: [...others, draft], mainCharacterName }), draft.id, createdIn(draftEntries, draft.id));
+    deriveHoldings({ entries: draftEntries, chapters: [...others, draft], mainCharacterName, worldAtChapterZero }), draft.id, createdIn(draftEntries, draft.id));
   const answers = readHoldingsFixReply(input.reply);
   const fixes: HarnessHoldingsFix[] = [...plan.settled];
 

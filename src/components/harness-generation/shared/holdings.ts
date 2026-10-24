@@ -14,6 +14,7 @@ import {
 } from '../../../narrative/holdings';
 import { isHoldingTagWord, type WordTag } from '../../../narrative/marks';
 import type { CurrentStoryProjection } from '../../../narrative/generation';
+import { CHAPTER_ZERO_KEY_PREFIX, worldCardKey, type WorldAtChapterZero, type WorldCardAtChapterZero, type WorldCardKindId } from '../../../narrative/worldRecord';
 import { normalizeIdentityLabel } from './canonicalProjection';
 import { isMainCharacterTag } from './speakers';
 
@@ -352,6 +353,14 @@ export interface HoldingEvent {
 export interface HeldThing {
   entryId: string;
   name: string;
+  /**
+   * Every other name the world knows it by, for a holding the Chapter 0 world
+   * gave. It travels on the holding rather than inside the derivation, because
+   * everything that reads a name off the record needs it: the closing-list
+   * check, the Holdings fixer's search of a chapter's own sentences, and the
+   * reconciliation of a chapter's tags.
+   */
+  knownAs?: string[];
   count: number;
   /** In use: in hand, worn, active. */
   equipped: boolean;
@@ -361,6 +370,8 @@ export interface HeldThing {
 export interface KnownAbility {
   entryId: string;
   name: string;
+  /** Every other name the world knows it by; see `HeldThing`. */
+  knownAs?: string[];
   stage: 'learning' | 'learned';
   level?: string;
   sealed: boolean;
@@ -372,6 +383,8 @@ export interface KnownAbility {
 export interface CharacterHoldings {
   entryId: string;
   name: string;
+  /** Every other name the world knows them by; see `HeldThing`. */
+  knownAs?: string[];
   mainCharacter: boolean;
   rank?: { text: string; events: HoldingEvent[] };
   /** In the order they were first held. */
@@ -433,6 +446,44 @@ const listedName = (value: string) => {
   return 'note' in named ? '' : named.name;
 };
 
+/**
+ * A quantity's grouping separators taken out, so "1,000" is read as a thousand
+ * rather than cut at the comma. Only a comma between two digits goes: the one
+ * that separates a list stays, and so does a name's own punctuation.
+ */
+const withoutGrouping = (value: string) => value.replace(/([0-9０-９])[,，]([0-9０-９])/g, '$1$2');
+
+/**
+ * The punctuation a list is written with, in any script the stories use: the
+ * comma and semicolon, their full-width forms, and the enumeration comma. A
+ * story written in Chinese, Japanese or Korean lists its holdings with those,
+ * and `NOTE_PUNCTUATION` reads them as a list too — so a list left unsplit here
+ * is not read as one holding, it is dropped as a note about the story.
+ */
+const LIST_SEPARATORS = /[,;，；、\n]+/u;
+
+/**
+ * A Chapter 0 slot that asks for things or abilities by name, read as the list
+ * it asks for: one per separator above. Never split on "and", which joins as
+ * often as it separates ("a bow and arrow set"), and never on a count or a
+ * note the name carries ("Spirit Pill ×3", "Core (cracked)").
+ *
+ * A written list says "a rusted sword" where a tag later writes "Rusted
+ * Sword", and the key a holding is held under keeps every word, so the article
+ * goes: with it, one sword would become two the first time a chapter named it.
+ */
+const listedSlotHoldings = (value: string | undefined): Array<{ name: string; count: number }> => withoutGrouping(value ?? '')
+  .split(LIST_SEPARATORS)
+  .flatMap(part => {
+    const named = holdingName(part.trim());
+    if ('note' in named) return [];
+    const name = named.name.replace(/^(?:the|a|an)\s+/i, '').trim();
+    // A count written into the name is the count held, the way a thing card's
+    // own count slot is: without it, three pills would be one, and the first
+    // chapter to spend one would spend them all.
+    return name ? [{ name, count: named.count ?? 1 }] : [];
+  });
+
 /** A paragraph's position in its chapter, from its `c{n}-p{i}` id. */
 const paragraphIndex = (blockId: string) => Number(blockId.match(/-p(\d+)$/)?.[1] ?? 0);
 
@@ -442,11 +493,18 @@ const paragraphIndex = (blockId: string) => Number(blockId.match(/-p(\d+)$/)?.[1
  * it. A change that cannot be true is flagged and left out. Nothing here is
  * stored, so it always reflects each chapter's current version.
  */
-export function deriveHoldings({ entries, chapters, mainCharacterName }: {
+export function deriveHoldings({ entries, chapters, mainCharacterName, worldAtChapterZero }: {
   entries: readonly CodexEntry[];
   chapters: readonly HoldingsChapter[];
   /** For the closing list before any tag named the main character. */
   mainCharacterName?: string;
+  /**
+   * The world the story opens with. What each character already holds, knows
+   * and ranks at before Chapter 1 is the baseline the chapters work on; absent,
+   * every character starts with nothing, as a story written before the
+   * Chapter 0 world existed does.
+   */
+  worldAtChapterZero?: WorldAtChapterZero;
 }): HoldingsState {
   const byId = new Map(entries.map(entry => [entry.id, entry]));
   type CharacterState = Omit<CharacterHoldings, 'things' | 'abilities'> & {
@@ -460,9 +518,48 @@ export function deriveHoldings({ entries, chapters, mainCharacterName }: {
 
   const keyOf = (ref: HoldingRef, kind: CodexEntryKind) => ref.entryId ?? `${kind}:${normalizeIdentityLabel(ref.name)}`;
   const nameOf = (ref: HoldingRef) => (ref.entryId ? byId.get(ref.entryId)?.name : undefined) ?? ref.name;
+
+  /**
+   * What the world gave, by the key it is held under: its kind, and every name
+   * the world knows it by. It outlives the holding itself, because a starting
+   * thing a chapter loses and a later chapter regains is the same thing of the
+   * world and comes back under the same key, with the same names. Each holding
+   * carries these as its own `knownAs`, for everything that reads a name off
+   * the record rather than deriving it.
+   */
+  const fromTheWorld = new Map<string, { kind: CodexEntryKind; knownAs: string[] }>();
+  const worldKnownAs = (key: string) => {
+    const known = fromTheWorld.get(key)?.knownAs;
+    return known?.length ? { knownAs: known } : {};
+  };
+
+  /**
+   * The one holding of the world that a chapter's word means. The same name
+   * wins over a name merely close to it, and two of either are a tie this
+   * refuses rather than guesses, so nothing is attributed to the wrong person
+   * or thing.
+   */
+  const onlyWorldMatch = (kind: CodexEntryKind, name: string) => {
+    const candidates = [...fromTheWorld].filter(([, held]) => held.kind === kind);
+    const only = (matches: typeof candidates) => matches.length === 1 ? matches[0][0] : undefined;
+    return only(candidates.filter(([, held]) => held.knownAs.some(known => normalizeIdentityLabel(known) === normalizeIdentityLabel(name))))
+      ?? only(candidates.filter(([, held]) => held.knownAs.some(known => namesNearlyMatch(known, name))));
+  };
+
+  /**
+   * A chapter's tag resolves its holder to a Codex entry, and the world holds
+   * the same character under whichever key their card resolved to. Where those
+   * differ the two meet by name, the way the closing list and the duplicate
+   * check already read names: without it the character is split in two and
+   * everything the world gave them is left behind in the other half.
+   */
+  const chapterZeroCharacter = (name: string) => {
+    const key = onlyWorldMatch('character', name);
+    return key ? characters.get(key) : undefined;
+  };
   const characterOf = (ref: HoldingRef): CharacterState => {
     const key = keyOf(ref, 'character');
-    let state = characters.get(key);
+    let state = characters.get(key) ?? chapterZeroCharacter(nameOf(ref));
     if (!state) {
       state = { entryId: key, name: nameOf(ref), mainCharacter: Boolean(ref.entryId && byId.get(ref.entryId)?.mainCharacter), things: new Map(), abilities: new Map(), history: [], lastChange: 0 };
       characters.set(key, state);
@@ -471,6 +568,121 @@ export function deriveHoldings({ entries, chapters, mainCharacterName }: {
   };
   const mainCharacter = () => [...characters.values()].find(state => state.mainCharacter)
     ?? (() => { const entry = entries.find(candidate => candidate.kind === 'character' && candidate.mainCharacter); return entry ? characterOf({ name: entry.name, entryId: entry.id }) : undefined; })();
+
+  /**
+   * The key a chapter's change belongs under. A chapter that names something
+   * the world already gave its holder may resolve it to a Codex entry the world
+   * did not reach, so where the keys differ the two meet by name — by any name
+   * the world knows it by. Without this a chapter would lose a sword the record
+   * still holds and hold a second one under its own key.
+   */
+  const chapterZeroKey = (holder: CharacterState, kind: CodexEntryKind, name: string | undefined, key: string) => {
+    const held = kind === 'thing' ? holder.things : holder.abilities;
+    if (!name || held.has(key)) return key;
+    // Read from what the world gave, not from what is held now: a starting
+    // thing already lost is not in the holder's hands, and the chapter that
+    // regains it must still find it rather than make a second one.
+    return onlyWorldMatch(kind, name) ?? key;
+  };
+
+  // ─── The world the story opens with ──────────────────────────────────────
+  // What a character already holds, knows and ranks at before a single chapter
+  // is written. A Chapter 0 holding was never written in a passage, so it
+  // carries no events; the chapters' own changes layer on top of it under the
+  // same keys, so a chapter that loses a Chapter 0 sword removes that sword
+  // and a chapter that gains it again is flagged.
+  if (worldAtChapterZero) {
+    const cardsOf = (kind: WorldCardKindId) => worldAtChapterZero.cards.filter(card => card.kind === kind);
+    const characterCards = cardsOf('character');
+    const thingCards = cardsOf('thing');
+    const abilityCards = cardsOf('ability');
+    const slot = (card: WorldCardAtChapterZero, id: string) => card.slots[id]?.trim() || undefined;
+    /**
+     * The one card a written name means, by any name the world knows it by.
+     * The same name wins over a name merely close to it, and two of either are
+     * a tie this refuses rather than guesses: with a first match, a slot naming
+     * "Sword" would take "Iron Sword", and a thing held by "Qin" would go to
+     * "Elder Qin". It is the rule the chapter-to-baseline reconciliation above
+     * follows, applied where the world is read in.
+     */
+    const cardNamed = (cards: WorldCardAtChapterZero[], written: string) => {
+      const names = (card: WorldCardAtChapterZero) => [card.name, ...(card.aliases ?? [])];
+      const only = (matches: WorldCardAtChapterZero[]) => matches.length === 1 ? matches[0] : undefined;
+      return only(cards.filter(card => names(card).some(name => normalizeIdentityLabel(name) === normalizeIdentityLabel(written))))
+        ?? only(cards.filter(card => names(card).some(name => namesNearlyMatch(name, written))));
+    };
+    /**
+     * The key a Chapter 0 holding is held under: its Codex entry's ID wherever
+     * the story already has one for it, so the record, the Codex and the
+     * Holdings fixer all name it the same way; its own card's key until then,
+     * which the record keeps stable for the whole story. Either way every name
+     * the world knows it by is kept, for the chapter reconciliation above.
+     */
+    const worldKey = (kind: CodexEntryKind, names: string[], fallback: string) => {
+      const matching = entries.filter(entry => entry.kind === kind && [entry.name, ...(entry.aliases ?? [])]
+        .some(known => names.some(name => normalizeIdentityLabel(name) === normalizeIdentityLabel(known))));
+      // Two entries a card could be is no entry: the card keeps its own key
+      // rather than being filed under the wrong one.
+      const key = matching.length === 1 ? matching[0].id : fallback;
+      const knownAs = [...new Set([...(fromTheWorld.get(key)?.knownAs ?? []), ...names])];
+      fromTheWorld.set(key, { kind, knownAs });
+      return { key, knownAs };
+    };
+    const cardNames = (card: WorldCardAtChapterZero) => [card.name, ...(card.aliases ?? [])];
+    const seeded = (card: WorldCardAtChapterZero): CharacterState => {
+      const { key, knownAs } = worldKey('character', cardNames(card), card.key);
+      const existing = characters.get(key);
+      if (existing) { existing.knownAs = [...new Set([...(existing.knownAs ?? []), ...knownAs])]; return existing; }
+      const state: CharacterState = { entryId: key, name: card.name, knownAs, mainCharacter: Boolean(card.mainCharacter),
+        things: new Map(), abilities: new Map(), history: [], lastChange: 0 };
+      characters.set(key, state);
+      return state;
+    };
+    // A thing named both on a character's slot and on its own card is one
+    // holding, under the name the story writes it by, counted once; a chapter's
+    // own tag meets it by name above.
+    const addThing = (state: CharacterState, written: string, count: number) => {
+      const card = cardNamed(thingCards, written);
+      const name = card?.name ?? written;
+      const { key, knownAs } = worldKey('thing', card ? cardNames(card) : [written], card?.key ?? worldCardKey('thing', name));
+      const held = state.things.get(key);
+      if (held) {
+        held.count = Math.max(held.count, count);
+        held.knownAs = [...new Set([...(held.knownAs ?? []), ...knownAs])];
+        return;
+      }
+      state.things.set(key, { entryId: key, name, knownAs, count, equipped: false, events: [] });
+    };
+    const addAbility = (state: CharacterState, written: string) => {
+      const card = cardNamed(abilityCards, written);
+      const name = card?.name ?? written;
+      const { key, knownAs } = worldKey('ability', card ? cardNames(card) : [written], card?.key ?? worldCardKey('ability', name));
+      const known = state.abilities.get(key);
+      if (known) { known.knownAs = [...new Set([...(known.knownAs ?? []), ...knownAs])]; return; }
+      state.abilities.set(key, { entryId: key, name, knownAs, stage: 'learned', sealed: false, usable: true, events: [] });
+    };
+
+    for (const card of characterCards) {
+      const state = seeded(card);
+      const rank = slot(card, 'rankLevel');
+      if (rank) state.rank = { text: rank, events: [] };
+      for (const held of listedSlotHoldings(slot(card, 'holds'))) addThing(state, held.name, held.count);
+      for (const known of listedSlotHoldings(slot(card, 'knows'))) addAbility(state, known.name);
+    }
+    // A thing's own card names who holds it, so that link is read from the
+    // record rather than guessed from the holder's written list.
+    for (const card of thingCards) {
+      const holder = slot(card, 'holder');
+      if (!holder) continue;
+      const owner = cardNamed(characterCards, holder);
+      if (!owner) continue;
+      // The whole value is the quantity, so "1,000" is a thousand: reading the
+      // first run of digits would make it one, and the first chapter to spend
+      // one would spend the lot. A value that is not a quantity is no count.
+      const counted = toNumber(withoutGrouping(slot(card, 'count') ?? '').replace(/\s+/g, ''));
+      addThing(seeded(owner), card.name, Number.isInteger(counted) && counted > 0 ? counted : 1);
+    }
+  }
 
   for (const chapter of [...chapters].sort((left, right) => left.chapterNumber - right.chapterNumber)) {
     const changes = [...(chapter.holdingChanges ?? [])].filter(change => change.kind === HOLDING_CHANGE_KIND)
@@ -510,17 +722,17 @@ export function deriveHoldings({ entries, chapters, mainCharacterName }: {
       }
       if (!payload.target) continue;
       const kind = holdingTargetKind(payload.verb)!;
-      const key = keyOf(payload.target, kind);
+      const key = chapterZeroKey(holder, kind, targetName, keyOf(payload.target, kind));
 
       if (kind === 'thing') {
         const thing = holder.things.get(key);
         switch (payload.verb) {
           case 'has':
-            if (!thing) { holder.things.set(key, { entryId: key, name: targetName!, count: payload.count ?? 1, equipped: false, events: [event] }); took(); }
+            if (!thing) { holder.things.set(key, { entryId: key, name: targetName!, ...worldKnownAs(key), count: payload.count ?? 1, equipped: false, events: [event] }); took(); }
             else if (payload.count && payload.count !== thing.count) flag('count-mismatch', `the story says ${holder.name} has ${payload.count} ${quoted}; the record says ${thing.count}. The record keeps ${thing.count}.`);
             break;
           case 'gained':
-            if (!thing) { holder.things.set(key, { entryId: key, name: targetName!, count: payload.count ?? 1, equipped: false, events: [event] }); took(); }
+            if (!thing) { holder.things.set(key, { entryId: key, name: targetName!, ...worldKnownAs(key), count: payload.count ?? 1, equipped: false, events: [event] }); took(); }
             else if (payload.count) { thing.count += payload.count; thing.events.push(event); took(); }
             else flag('already-held', `${holder.name} gains ${quoted} again, but already holds it. It is not counted twice.`);
             break;
@@ -534,7 +746,7 @@ export function deriveHoldings({ entries, chapters, mainCharacterName }: {
           case 'equipped':
           case 'unequipped':
             // Taking a thing in hand, or putting it away, shows the character has it: the first time the story shows it that way, it is recorded as held.
-            if (!thing) { holder.things.set(key, { entryId: key, name: targetName!, count: payload.count ?? 1, equipped: payload.verb === 'equipped', events: [event] }); took(); break; }
+            if (!thing) { holder.things.set(key, { entryId: key, name: targetName!, ...worldKnownAs(key), count: payload.count ?? 1, equipped: payload.verb === 'equipped', events: [event] }); took(); break; }
             if (thing.equipped !== (payload.verb === 'equipped')) { thing.equipped = payload.verb === 'equipped'; thing.events.push(event); took(); }
             break;
         }
@@ -545,7 +757,7 @@ export function deriveHoldings({ entries, chapters, mainCharacterName }: {
       switch (payload.verb) {
         case 'knows':
           if (!ability || ability.stage === 'learning') {
-            holder.abilities.set(key, { entryId: key, name: targetName!, stage: 'learned', ...(payload.level ? { level: payload.level } : ability?.level ? { level: ability.level } : {}), sealed: false, usable: true, events: [...(ability?.events ?? []), event] });
+            holder.abilities.set(key, { entryId: key, name: targetName!, ...worldKnownAs(key), stage: 'learned', ...(payload.level ? { level: payload.level } : ability?.level ? { level: ability.level } : {}), sealed: false, usable: true, events: [...(ability?.events ?? []), event] });
             took();
           } else if (payload.level && !ability.level) {
             ability.level = payload.level; ability.events.push(event); took();
@@ -554,12 +766,12 @@ export function deriveHoldings({ entries, chapters, mainCharacterName }: {
           }
           break;
         case 'learning':
-          if (!ability) { holder.abilities.set(key, { entryId: key, name: targetName!, stage: 'learning', sealed: false, usable: false, events: [event] }); took(); }
+          if (!ability) { holder.abilities.set(key, { entryId: key, name: targetName!, ...worldKnownAs(key), stage: 'learning', sealed: false, usable: false, events: [event] }); took(); }
           else if (ability.stage === 'learned') flag('already-learned', `${holder.name} starts learning ${quoted}, which they already know.`);
           break;
         case 'learned':
           if (!ability || ability.stage === 'learning') {
-            holder.abilities.set(key, { entryId: key, name: targetName!, stage: 'learned', ...(payload.level ? { level: payload.level } : ability?.level ? { level: ability.level } : {}), sealed: false, usable: true, events: [...(ability?.events ?? []), event] });
+            holder.abilities.set(key, { entryId: key, name: targetName!, ...worldKnownAs(key), stage: 'learned', ...(payload.level ? { level: payload.level } : ability?.level ? { level: ability.level } : {}), sealed: false, usable: true, events: [...(ability?.events ?? []), event] });
             took();
           } else flag('already-learned', `${holder.name} learns ${quoted}, which they already know.`);
           break;
@@ -586,9 +798,12 @@ export function deriveHoldings({ entries, chapters, mainCharacterName }: {
       const main = mainCharacter();
       const recorded = main ? [...main.things.values(), ...main.abilities.values()] : [];
       const listed = chapter.closingHoldings.map(listedName).filter(Boolean);
-      const recordedNames = (item: { entryId: string; name: string }) => {
+      const recordedNames = (item: { entryId: string; name: string; knownAs?: string[] }) => {
         const entry = byId.get(item.entryId);
-        return entry ? namesOf(entry) : [item.name];
+        // Every name the world knows a starting holding by counts here too: a
+        // closing list may name it by any of them, and without those a correct
+        // chapter reads as having lost one thing and gained another.
+        return [...new Set([...(entry ? namesOf(entry) : [item.name]), ...(item.knownAs ?? [])])];
       };
       const matches = (names: readonly string[], value: string) => answersTo(names, value) || names.some(name => namesNearlyMatch(name, value));
       const who = main?.name ?? mainCharacterName ?? 'the main character';
@@ -622,6 +837,7 @@ export function deriveHoldings({ entries, chapters, mainCharacterName }: {
     characters: ordered.map(character => ({
       entryId: character.entryId,
       name: character.name,
+      ...(character.knownAs?.length ? { knownAs: character.knownAs } : {}),
       mainCharacter: character.mainCharacter,
       ...(character.rank ? { rank: character.rank } : {}),
       things: [...character.things.values()],

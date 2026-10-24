@@ -59,6 +59,27 @@ const setup = async (options: { throughHttp?: boolean } = {}) => {
     title: 'Azure Ascent', premise: 'Yi Chen joins the Azure Sect.', destinedEnding: 'Yi Chen leads the Azure Sect to glory.', initialArcPlan: plan, fatePressure: 'heaven',
     openingSituation: 'Yi Chen waits at the outer gate.', toneStyle: 'Fierce and lyrical.', cast: [{ name: 'Yi Chen', role: 'Disciple', isMainCharacter: true }],
     sourceSnapshot: { kind: 'story-seed', sourceId: 'seed-77', sourceUpdatedAt: 'a', schemaVersion: 3, seed: { marker: 'COMPLETE SEED SNAPSHOT' } },
+    // The world this story opens with, as a Story Seed and its Blueprint leave
+    // it: one card of every kind, so the packet carries the whole record.
+    worldAtChapterZero: { cards: [
+      { key: 'chapter-0:character:yi-chen', kind: 'character', name: 'Yi Chen', mainCharacter: true,
+        slots: { bio: 'An outer-gate hopeful.', role: 'Disciple', eyeColor: 'Dark brown', rankLevel: 'Stage 1',
+          holds: 'a cracked practice sword', knows: 'Azure Breathing', voice: 'an eager young man' } },
+      { key: 'chapter-0:character:elder-mu', kind: 'character', name: 'Elder Mu', aliases: ['the Wall Keeper'],
+        slots: { bio: 'Keeper of the outer wall.', role: 'Elder', voice: 'an old voice full of wisdom' } },
+      { key: 'chapter-0:thing:cracked-practice-sword', kind: 'thing', name: 'Cracked Practice Sword',
+        slots: { appearance: 'A dull blade with a split hilt.', holder: 'Yi Chen' } },
+      { key: 'chapter-0:ability:azure-breathing', kind: 'ability', name: 'Azure Breathing',
+        slots: { appearance: 'Pale blue mist at the lips.' } },
+      { key: 'chapter-0:place:outer-gate', kind: 'place', name: 'The Outer Gate',
+        slots: { appearance: 'A green-tiled arch above the cloud line.' } },
+      { key: 'chapter-0:faction:azure-sect', kind: 'faction', name: 'The Azure Sect',
+        slots: { factionKind: 'sect', seat: 'The Outer Gate' } },
+      { key: 'chapter-0:species:cloud-crane', kind: 'species', name: 'Cloud Crane',
+        slots: { appearance: 'A white crane the size of a cart.', mind: 'It does not speak.' } },
+      { key: 'chapter-0:world-rules:azure', kind: 'world-rules', name: 'Azure Ascent',
+        slots: { knownRanks: 'Stage 1, Stage 2, Stage 3', flavor: 'Qi drawn from mountain air.' } },
+    ] },
   });
   await controller.setHardPins(story.id, [{ text: 'Make Yi Chen take the Azure Sect to glory throughout the entire story.' }, { text: 'Never kill Elder Mu.' }]);
   const write = async (model = 'fixture') => {
@@ -69,13 +90,13 @@ const setup = async (options: { throughHttp?: boolean } = {}) => {
 };
 
 describe('Compact long-story generation packet', () => {
-  it('delivers the ten sections to the provider once, in the approved order, with nothing else', async () => {
+  it('delivers every section to the provider once, in the approved order, with nothing else', async () => {
     const run = await setup();
     await run.write();
     await run.write();
     const prompt = buildHarnessGenerationPrompt(run.requests[1]);
     expect(prompt.measurement.sections.map(section => section.section)).toEqual(PACKET_SECTION_ORDER);
-    const markers = ['CAPA SKILL [Author]', 'CURRENT STORY INFORMATION', 'DESTINED ENDING AND HARD PINS', 'ACTIVE ARC GOAL', 'FATE PRESSURE RHYTHM DIRECTION', 'PREVIOUSLY ON', 'CURRENT CANONICAL STATE', 'HOLDINGS (what each character has now', 'IMMEDIATE CHAPTER REQUEST', '# MISSION REMINDER'];
+    const markers = ['CAPA SKILL [Author]', 'CURRENT STORY INFORMATION', 'DESTINED ENDING AND HARD PINS', 'ACTIVE ARC GOAL', 'FATE PRESSURE RHYTHM DIRECTION', 'PREVIOUSLY ON', 'THE WORLD AT CHAPTER 0 (the world the story opens with', 'CURRENT CANONICAL STATE', 'HOLDINGS (what each character has now', 'IMMEDIATE CHAPTER REQUEST', '# MISSION REMINDER'];
     const serialized = `${prompt.systemInstruction}\n\n${prompt.userPrompt}`;
     const positions = markers.map(marker => ({ marker, index: serialized.indexOf(marker), count: serialized.split(marker).length - 1 }));
     for (const position of positions) expect(position, position.marker).toMatchObject({ count: 1 });
@@ -91,6 +112,51 @@ describe('Compact long-story generation packet', () => {
     expect(serialized).not.toContain('Yi Chen reached Stage 1 and climbed toward the Azure Sect gate.');
     expect(prompt.userPrompt).not.toContain('"evidence"');
     expect(prompt.userPrompt).not.toContain('Elder Mu watched from the wall');
+  });
+
+  it('carries the world the Blueprint built to the writer, card by card', async () => {
+    // SENSEI, 2026-10-24: the Blueprint filled eye colours, voices and factions
+    // and the chapter writer was told "none recorded yet". These are the facts
+    // that never reached the prose; each one is read from the Foundation's own
+    // record, under the label its Codex slot shows it under.
+    const run = await setup();
+    await run.write();
+    const prompt = buildHarnessGenerationPrompt(run.requests[0]);
+    const world = prompt.userPrompt.slice(
+      prompt.userPrompt.indexOf('THE WORLD AT CHAPTER 0'),
+      prompt.userPrompt.indexOf('CURRENT CANONICAL STATE'),
+    );
+    expect(world).toContain('- Yi Chen (main character) — Who they are: An outer-gate hopeful.; Role: Disciple; Eyes: Dark brown');
+    expect(world).toContain('Voice: an eager young man');
+    // Other names are not repeated here: a declared identity already carries
+    // every alias, structurally, in Current Story Information.
+    expect(world).toContain('- Elder Mu — Who they are: Keeper of the outer wall.');
+    expect(world).not.toContain('the Wall Keeper');
+    expect(world).toContain('Voice: an old voice full of wisdom');
+    expect(world).toContain('- Cracked Practice Sword — Look: A dull blade with a split hilt.; Held by: Yi Chen');
+    expect(world).toContain('- Azure Breathing — How it looks: Pale blue mist at the lips.');
+    expect(world).toContain('- The Outer Gate — Look: A green-tiled arch above the cloud line.');
+    expect(world).toContain('- The Azure Sect — Kind: sect; Seat: The Outer Gate');
+    expect(world).toContain('- Cloud Crane — Look: A white crane the size of a cart.; Mind: It does not speak.');
+    // The one rules sheet has no name of its own: its facts stand alone.
+    expect(world).toContain('- The rank ladder: Stage 1, Stage 2, Stage 3');
+    expect(world).toContain('- How power works: Qi drawn from mountain air.');
+    // Every kind is named, in the order the card schema reads them.
+    expect(world.match(/^[A-Z][A-Z ]+:$/gm)).toEqual(['CHARACTERS:', 'ITEMS:', 'ABILITIES:', 'PLACES:', 'FACTIONS:', 'BESTIARY:', 'WORLD RULES:']);
+  });
+
+  it('starts Holdings from what the world gave each character, before any chapter', async () => {
+    const run = await setup();
+    await run.write();
+    // Chapter 1's own packet: no chapter has changed anything yet, so what the
+    // writer reads here is the Blueprint's, not an empty list beside a world
+    // that says he carries a sword.
+    expect(run.requests[0].storyInformation.holdings!.characters[0]).toEqual({
+      name: 'Yi Chen', mainCharacter: true, rank: 'Stage 1',
+      carries: ['Cracked Practice Sword'], knows: ['Azure Breathing'],
+    });
+    // Appeared stays empty: it means already described on the page.
+    expect(run.requests[0].storyInformation.appearances!.entries).toEqual([]);
   });
 
   it('sends Chapter 2 the saved Chapter 1 recap, resulting canonical state, and the persisted rhythm direction', async () => {
@@ -182,7 +248,7 @@ describe('Compact long-story generation packet', () => {
     });
     expect(attempt.requestMeasurement!.sections.reduce((sum, section) => sum + section.characters, 0)).toBeLessThanOrEqual(attempt.requestMeasurement!.totalCharacters);
     expect(attempt.requestMeasurement!.sections.map(section => section.section)).toEqual(PACKET_SECTION_ORDER);
-    // The provider received the same ten sections the local builder produces.
+    // The provider received the same sections the local builder produces.
     const local = buildHarnessGenerationPrompt(run.requests[1]);
     expect(local.userPrompt).toBe(sent.userPrompt);
     expect(local.systemInstruction).toBe(sent.systemInstruction);

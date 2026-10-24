@@ -1020,6 +1020,20 @@ const withAuthoritativeDetails = (
   return [authoritative, generated].filter(Boolean).join('\n\n');
 };
 
+/**
+ * The labels of a main character's description whose facts a Chapter 0
+ * character card carries in slots of its own (`age`, `appearance`, `bio`).
+ * Every other label names something no card slot holds.
+ */
+const MAIN_CHARACTER_CARD_LABELS = new Set(['Age', 'Appearance', 'Biography']);
+
+/**
+ * The labels of the power system whose facts the one Chapter 0 World rules
+ * sheet carries in slots of its own (`flavor`, `knownRanks`). The outline prose
+ * and the rest have no card to sit on.
+ */
+const WORLD_RULES_CARD_LABELS = new Set(['Power flavor', 'Known ranks']);
+
 const mainCharacterAuthoredDetails = (
   mainCharacter: StorySeedMainCharacter,
 ): Array<[label: string, value: string | undefined]> => [
@@ -1217,6 +1231,21 @@ export interface StorySeedWorldEntity {
 /** The reviewed world canon a Story Seed hands to generation, one value per concept. */
 export interface StorySeedWorldCanon {
   mainCharacter?: StorySeedWorldEntity;
+  /**
+   * The main character's description without the facts a Chapter 0 character
+   * card carries in slots of its own (their age, their look and their
+   * biography). What is left is what no card holds: their temper and the rest
+   * of who they are, and the reviewed background the Blueprint owns rather
+   * than the Seed (`mirrorSeedIntoBlueprint`). A consumer that sends the cards
+   * takes this instead of the whole description, so no fact is sent twice.
+   */
+  mainCharacterBeyondItsCard?: string;
+  /**
+   * The power system without what the one Chapter 0 World rules sheet carries
+   * in slots of its own: the outline prose and anything the sheet has no slot
+   * for. Taken instead of `powerSystem` by a consumer that sends the sheet.
+   */
+  powerSystemBeyondItsCard?: string;
   characters: StorySeedWorldEntity[];
   factions: StorySeedWorldEntity[];
   worldOverview?: string;
@@ -1487,6 +1516,16 @@ export const resolveStorySeedWorldCanon = (
   ]);
   const background = text(blueprint?.mainCharacter?.backgroundProfile) || text(blueprint?.mcProfile);
   const mainDescription = [structuredMain, background ? `Background: ${background}` : ''].filter(Boolean).join('\n');
+  // The same description without what a Chapter 0 character card holds in its
+  // own slots, for a consumer that sends those cards beside it.
+  const offCardEntries: Array<[label: string, value: string | undefined]> = [
+    ['Personality', authoredMain.personality],
+    ...mainCharacterAuthoredDetails(authoredMain),
+  ];
+  const beyondItsCard = [
+    labeledDetails(offCardEntries.filter(([label]) => !MAIN_CHARACTER_CARD_LABELS.has(label))),
+    background ? `Background: ${background}` : '',
+  ].filter(Boolean).join('\n');
   const authoredEntity = (entry: StorySeedCharacter | StorySeedFaction, description: string): StorySeedWorldEntity => ({
     name: entry.name.trim(),
     ...(entry.aliases?.length ? { aliases: [...entry.aliases] } : {}),
@@ -1507,9 +1546,15 @@ export const resolveStorySeedWorldCanon = (
     blueprint?.powerSystemOutline || '',
     powerSystemAuthoredDetails(worldFoundations),
   ));
+  // The same, without what the World rules sheet holds in its own slots.
+  const powerSystemBeyondItsCard = text(withAuthoritativeDetails(
+    blueprint?.powerSystemOutline || '',
+    powerSystemAuthoredDetails(worldFoundations).filter(([label]) => !WORLD_RULES_CARD_LABELS.has(label)),
+  ));
 
   return {
     ...(mainName ? { mainCharacter: { name: mainName, description: mainDescription || mainName } } : {}),
+    ...(mainName && beyondItsCard ? { mainCharacterBeyondItsCard: beyondItsCard } : {}),
     // Aliases travel structurally, so descriptions do not repeat them.
     characters: (worldFoundations.additionalCharacters || []).filter(entry => text(entry.name))
       .map(entry => authoredEntity(entry, characterBlueprintEntry({ ...entry, aliases: undefined }))),
@@ -1518,6 +1563,7 @@ export const resolveStorySeedWorldCanon = (
     ...(worldOverview ? { worldOverview } : {}),
     ...(societyStructure ? { societyStructure } : {}),
     ...(powerSystem ? { powerSystem } : {}),
+    ...(powerSystemBeyondItsCard ? { powerSystemBeyondItsCard } : {}),
     ...factDetails,
   };
 };

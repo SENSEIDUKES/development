@@ -8,6 +8,7 @@ import type {
   HarnessHoldingsFixCase,
   HarnessHoldingsFixerPolicy,
 } from '../../../narrative/generation';
+import type { WorldAtChapterZero } from '../../../narrative/worldRecord';
 import { readArcReply } from './arcState';
 import { normalizeIdentityLabel } from './canonicalProjection';
 import { harnessChapterBody, harnessParagraphBlockId } from './chapterBody';
@@ -70,6 +71,13 @@ export interface HoldingsFixInput {
   /** The story's Codex entries. */
   entries: readonly CodexEntry[];
   mainCharacterName?: string;
+  /**
+   * The world the story opens with, so the fixer reads the same holdings the
+   * writer did. Without it a valid first-chapter loss of a starting sword
+   * looks like a loss of something nobody held, and the fixer would correct a
+   * tag that was right.
+   */
+  worldAtChapterZero?: WorldAtChapterZero;
   locale?: string;
   policy: HarnessHoldingsFixerPolicy;
 }
@@ -141,12 +149,12 @@ function sentencesNaming(chapter: HarnessChapter, names: readonly string[], loca
  * Turns a committed chapter's holdings problems into small cases for the
  * fixer, and settles without asking the ones nothing in the chapter can fix.
  */
-export function planHoldingsFix({ chapter, chapters, entries, mainCharacterName, locale, policy }: HoldingsFixInput): HoldingsFixPlan {
+export function planHoldingsFix({ chapter, chapters, entries, mainCharacterName, worldAtChapterZero, locale, policy }: HoldingsFixInput): HoldingsFixPlan {
   const settled: HarnessHoldingsFix[] = [];
   if (policy === 'off') return { cases: [], settled };
   const storyChapters = chapters.filter(entry => entry.storyId === chapter.storyId);
-  const now = deriveHoldings({ entries, chapters: storyChapters, mainCharacterName });
-  const before = deriveHoldings({ entries, chapters: storyChapters.filter(entry => entry.chapterNumber < chapter.chapterNumber), mainCharacterName });
+  const now = deriveHoldings({ entries, chapters: storyChapters, mainCharacterName, worldAtChapterZero });
+  const before = deriveHoldings({ entries, chapters: storyChapters.filter(entry => entry.chapterNumber < chapter.chapterNumber), mainCharacterName, worldAtChapterZero });
   const flags = chapterHoldingFlags(now, chapter.id, createdIn(entries, chapter.id));
   const entryName = (id: string | undefined, fallback: string) => (id ? entries.find(entry => entry.id === id)?.name : undefined) ?? fallback;
   const cases: HoldingsFixPlanCase[] = [];
@@ -345,12 +353,12 @@ const withChanges = (chapter: HarnessChapter, changes: HoldingChangeAttachment[]
  * entries and the record of every case.
  */
 export function applyHoldingsFixes(input: HoldingsFixApplyInput): HoldingsFixResult {
-  const { plan, policy, locale, declared, createdAt, createId, mainCharacterName } = input;
+  const { plan, policy, locale, declared, createdAt, createId, mainCharacterName, worldAtChapterZero } = input;
   let chapter: HarnessChapter = structuredClone(input.chapter);
   let entries: CodexEntry[] = structuredClone([...input.entries]);
   const others = input.chapters.filter(entry => entry.storyId === chapter.storyId && entry.id !== chapter.id);
   const problemsOf = (draft: HarnessChapter, draftEntries: readonly CodexEntry[]) => chapterHoldingFlags(
-    deriveHoldings({ entries: draftEntries, chapters: [...others, draft], mainCharacterName }), draft.id, createdIn(draftEntries, draft.id));
+    deriveHoldings({ entries: draftEntries, chapters: [...others, draft], mainCharacterName, worldAtChapterZero }), draft.id, createdIn(draftEntries, draft.id));
   const answers = readHoldingsFixReply(input.reply);
   const fixes: HarnessHoldingsFix[] = [...plan.settled];
 

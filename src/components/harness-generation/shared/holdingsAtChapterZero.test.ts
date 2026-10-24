@@ -180,6 +180,53 @@ describe('what a chapter may still do with it', () => {
   });
 });
 
+describe('the one card a written name means', () => {
+  // Review finding (Codex, 2026-10-24): a first fuzzy match would read 'Sword'
+  // as 'Iron Sword' and give a thing held by 'Qin' to 'Elder Qin'.
+  const world: WorldAtChapterZero = { cards: [
+    { key: 'chapter-0:character:qin', kind: 'character', name: 'Qin', slots: {} },
+    { key: 'chapter-0:character:elder-qin', kind: 'character', name: 'Elder Qin', slots: {} },
+    { key: 'chapter-0:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true,
+      slots: { holds: 'Sword', knows: 'Palm' } },
+    { key: 'chapter-0:thing:iron-sword', kind: 'thing', name: 'Iron Sword', slots: {} },
+    { key: 'chapter-0:thing:sword', kind: 'thing', name: 'Sword', slots: {} },
+    { key: 'chapter-0:thing:jade-token', kind: 'thing', name: 'Jade Token', slots: { holder: 'Qin' } },
+    { key: 'chapter-0:ability:iron-palm', kind: 'ability', name: 'Iron Palm', slots: {} },
+    { key: 'chapter-0:ability:palm', kind: 'ability', name: 'Palm', slots: {} },
+  ] };
+  const state = story(world).derive();
+  const held = (name: string) => state.characters.find(character => character.name === name);
+
+  it('takes the thing and ability whose name is the one written, not the one merely close', () => {
+    expect(held('Ye Chen')!.things.map(thing => thing.name)).toEqual(['Sword']);
+    expect(held('Ye Chen')!.abilities.map(ability => ability.name)).toEqual(['Palm']);
+  });
+
+  it('gives a thing to the holder its card names, not to a longer name containing it', () => {
+    expect(held('Qin')!.things.map(thing => thing.name)).toEqual(['Jade Token']);
+    expect(held('Elder Qin')!.things).toEqual([]);
+  });
+
+  it('refuses a holder no single card can be matched to', () => {
+    const ambiguous = story({ cards: [
+      { key: 'chapter-0:character:qin-a', kind: 'character', name: 'Qin Shi', slots: {} },
+      { key: 'chapter-0:character:qin-b', kind: 'character', name: 'Shi Qin', slots: {} },
+      { key: 'chapter-0:thing:token', kind: 'thing', name: 'Token', slots: { holder: 'Qin' } },
+    ] }).derive();
+    // 'Qin' names neither one more than the other, so the token is left unheld
+    // rather than handed to whichever card came first.
+    expect(ambiguous.characters.flatMap(character => character.things)).toEqual([]);
+  });
+
+  it('finds a card by any name the world knows it by', () => {
+    const byAlias = story({ cards: [
+      { key: 'chapter-0:character:qin', kind: 'character', name: 'Elder Qin', aliases: ['The Iron Brush'], slots: {} },
+      { key: 'chapter-0:thing:brush', kind: 'thing', name: 'Vermilion Brush', slots: { holder: 'The Iron Brush' } },
+    ] }).derive();
+    expect(byAlias.characters[0].things.map(thing => thing.name)).toEqual(['Vermilion Brush']);
+  });
+});
+
 describe('the Holdings section the writer reads', () => {
   it('shows what the world gave the main character, before any chapter is written', () => {
     const section = holdingsSection(story(WORLD).derive(), 'Ye Chen');

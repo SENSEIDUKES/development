@@ -549,6 +549,20 @@ export function deriveHoldings({ entries, chapters, mainCharacterName, worldAtCh
     const thingCards = cardsOf('thing');
     const abilityCards = cardsOf('ability');
     const slot = (card: WorldCardAtChapterZero, id: string) => card.slots[id]?.trim() || undefined;
+    /**
+     * The one card a written name means, by any name the world knows it by.
+     * The same name wins over a name merely close to it, and two of either are
+     * a tie this refuses rather than guesses: with a first match, a slot naming
+     * "Sword" would take "Iron Sword", and a thing held by "Qin" would go to
+     * "Elder Qin". It is the rule the chapter-to-baseline reconciliation above
+     * follows, applied where the world is read in.
+     */
+    const cardNamed = (cards: WorldCardAtChapterZero[], written: string) => {
+      const names = (card: WorldCardAtChapterZero) => [card.name, ...(card.aliases ?? [])];
+      const only = (matches: WorldCardAtChapterZero[]) => matches.length === 1 ? matches[0] : undefined;
+      return only(cards.filter(card => names(card).some(name => normalizeIdentityLabel(name) === normalizeIdentityLabel(written))))
+        ?? only(cards.filter(card => names(card).some(name => namesNearlyMatch(name, written))));
+    };
     const seeded = (card: WorldCardAtChapterZero): CharacterState => {
       const key = card.key;
       const existing = characters.get(key);
@@ -564,7 +578,7 @@ export function deriveHoldings({ entries, chapters, mainCharacterName, worldAtCh
     // and on its own card is one holding, under the name the story writes it
     // by, counted once; a chapter's own tag meets it by name below.
     const addThing = (state: CharacterState, written: string, count: number) => {
-      const card = thingCards.find(candidate => namesNearlyMatch(candidate.name, written));
+      const card = cardNamed(thingCards, written);
       const name = card?.name ?? written;
       const key = card?.key ?? worldCardKey('thing', name);
       const held = state.things.get(key);
@@ -572,7 +586,7 @@ export function deriveHoldings({ entries, chapters, mainCharacterName, worldAtCh
       state.things.set(key, { entryId: key, name, count, equipped: false, events: [] });
     };
     const addAbility = (state: CharacterState, written: string) => {
-      const card = abilityCards.find(candidate => namesNearlyMatch(candidate.name, written));
+      const card = cardNamed(abilityCards, written);
       const name = card?.name ?? written;
       const key = card?.key ?? worldCardKey('ability', name);
       if (state.abilities.has(key)) return;
@@ -591,7 +605,7 @@ export function deriveHoldings({ entries, chapters, mainCharacterName, worldAtCh
     for (const card of thingCards) {
       const holder = slot(card, 'holder');
       if (!holder) continue;
-      const owner = characterCards.find(candidate => namesNearlyMatch(candidate.name, holder));
+      const owner = cardNamed(characterCards, holder);
       if (!owner) continue;
       const counted = Number(slot(card, 'count')?.match(/\d+/)?.[0]);
       addThing(seeded(owner), card.name, Number.isFinite(counted) && counted > 0 ? counted : 1);

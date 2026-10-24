@@ -75,6 +75,36 @@ const flagsOf = (state: HarnessWorkspaceState, chapter: HarnessChapter, entries 
 
 const SWORD = '[[gained: MC | Rusted Iron Sword]] Ye Chen lifted the old blade from the rack.';
 
+describe('Holdings fixer: the world the story opened with', () => {
+  /**
+   * Review finding (Codex, 2026-10-24): the writer's packet derives holdings
+   * from the Chapter 0 world, so the fixer must too. Reading an empty starting
+   * record, it would see a valid first-chapter loss of a starting sword as a
+   * loss of something nobody held, and correct a tag that was right.
+   */
+  const world = {
+    cards: [{
+      key: 'chapter-0:character:ye-chen', kind: 'character' as const, name: 'Ye Chen', mainCharacter: true as const,
+      slots: { holds: 'Rusted Iron Sword' },
+    }],
+  };
+
+  it('finds no problem in a first chapter that loses what the world gave the main character', async () => {
+    const { state, latest } = await written(reply(['[[lost: MC | Rusted Iron Sword | ×1 | shattered]] The blade broke against the gate.']));
+    // Without the world, the loss reads as a loss of something nobody held.
+    expect(planHoldingsFix(inputFor(state, latest)).cases.flatMap(planned => planned.case.problems))
+      .toEqual(['Ye Chen loses ‘Rusted Iron Sword’, which the record does not show them holding.']);
+    // With it, the tag was right all along and there is nothing to fix.
+    expect(planHoldingsFix({ ...inputFor(state, latest), worldAtChapterZero: world })).toEqual({ cases: [], settled: [] });
+  });
+
+  it('still finds the problem of gaining what the world already gave', async () => {
+    const { state, latest } = await written(reply([SWORD]));
+    expect(planHoldingsFix({ ...inputFor(state, latest), worldAtChapterZero: world }).cases.flatMap(planned => planned.case.problems))
+      .toEqual(['Ye Chen gains ‘Rusted Iron Sword’ again, but already holds it. It is not counted twice.']);
+  });
+});
+
 describe('Holdings fixer: the cases', () => {
   it('turns a problem on a sentence into one small case: the sentence, its tags and what the record showed', async () => {
     const { state, latest } = await written(reply([SWORD]), reply(['Ye Chen stepped into the yard. [[gained: MC | Rusted Iron Sword]] He picked up the rusted sword again. The yard was empty.']));

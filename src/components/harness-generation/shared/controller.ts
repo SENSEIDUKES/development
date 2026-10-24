@@ -1562,6 +1562,12 @@ export class HarnessGenerationController {
       chapters: this.state.chapters.filter(entry => entry.storyId === story.id),
       entries: this.state.codexEntries.filter(entry => entry.storyId === story.id),
       mainCharacterName, locale: story.originalLanguage, policy,
+      // The world the writer was given, from the attempt's own frozen packet
+      // rather than today's Foundation, so the fixer reads the holdings the
+      // chapter was written against. A packet frozen before the Chapter 0
+      // world existed carries none, and the fixer reads as it always did.
+      ...(attempt.storyInformation.worldAtChapterZero
+        ? { worldAtChapterZero: attempt.storyInformation.worldAtChapterZero } : {}),
     };
     const plan = planHoldingsFix(input);
     if (!plan.cases.length && !plan.settled.length) return;

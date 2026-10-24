@@ -235,6 +235,11 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
   declaredFactions?: readonly DeclaredFaction[];
 }): StoryCodexRecord {
   const ordered = [...chapters].sort((left, right) => left.chapterNumber - right.chapterNumber);
+  // Chapter-derived holdings only: the Chapter 0 world reaches a Codex card
+  // through its own layer below (`atChapterZero`), card by card, and a card is
+  // matched to its Codex entry by that entry's ID. Seeding these from the world
+  // would key a holding to a Chapter 0 card instead, and the entry the card
+  // belongs to would lose it.
   const holdings = deriveHoldings({ entries, chapters: ordered, mainCharacterName });
   const appeared = deriveAppearances({ entries, chapters: ordered, declaredFactions });
 

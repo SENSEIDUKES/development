@@ -228,7 +228,16 @@ export function planHoldingsFix({ chapter, chapters, entries, mainCharacterName,
   };
   for (const flag of flags.filter(item => item.kind === 'closing-unlisted' || item.kind === 'closing-untagged')) {
     const entry = flag.entryIds?.[0] ? entries.find(candidate => candidate.id === flag.entryIds![0]) : undefined;
-    const names = entry ? [entry.name, ...(entry.aliases ?? [])] : flag.name ? [flag.name] : [];
+    // Also every name the world knows a starting holding by. Without them a
+    // chapter that threw away a starting thing under another of its names reads
+    // as never naming it, so the missed loss is dismissed instead of repaired
+    // and the discarded thing stays in every later Holdings packet.
+    const held = now.characters.flatMap(character => [...character.things, ...character.abilities])
+      .find(item => item.entryId === flag.entryIds?.[0]);
+    const names = [...new Set([
+      ...(entry ? [entry.name, ...(entry.aliases ?? [])] : flag.name ? [flag.name] : []),
+      ...(held?.knownAs ?? []),
+    ])];
     const named = sentencesNaming(chapter, names, locale);
     const problem = withoutChapterLabel(flag.message);
     if (!named.length) {

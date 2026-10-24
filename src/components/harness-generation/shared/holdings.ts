@@ -353,6 +353,14 @@ export interface HoldingEvent {
 export interface HeldThing {
   entryId: string;
   name: string;
+  /**
+   * Every other name the world knows it by, for a holding the Chapter 0 world
+   * gave. It travels on the holding rather than inside the derivation, because
+   * everything that reads a name off the record needs it: the closing-list
+   * check, the Holdings fixer's search of a chapter's own sentences, and the
+   * reconciliation of a chapter's tags.
+   */
+  knownAs?: string[];
   count: number;
   /** In use: in hand, worn, active. */
   equipped: boolean;
@@ -362,6 +370,8 @@ export interface HeldThing {
 export interface KnownAbility {
   entryId: string;
   name: string;
+  /** Every other name the world knows it by; see `HeldThing`. */
+  knownAs?: string[];
   stage: 'learning' | 'learned';
   level?: string;
   sealed: boolean;
@@ -373,6 +383,8 @@ export interface KnownAbility {
 export interface CharacterHoldings {
   entryId: string;
   name: string;
+  /** Every other name the world knows them by; see `HeldThing`. */
+  knownAs?: string[];
   mainCharacter: boolean;
   rank?: { text: string; events: HoldingEvent[] };
   /** In the order they were first held. */
@@ -498,23 +510,17 @@ export function deriveHoldings({ entries, chapters, mainCharacterName, worldAtCh
   const keyOf = (ref: HoldingRef, kind: CodexEntryKind) => ref.entryId ?? `${kind}:${normalizeIdentityLabel(ref.name)}`;
   const nameOf = (ref: HoldingRef) => (ref.entryId ? byId.get(ref.entryId)?.name : undefined) ?? ref.name;
   /**
-   * Everything the world gave, by the key it is held under, with every name the
-   * world knows it by. Being in here says a holding came from the world, and
-   * the names are what a chapter's own words are matched against — so a chapter
-   * naming a starting thing by one of its other names reaches the one it means.
+   * The one holding among these that a chapter's word means, read off each
+   * one's own `knownAs` — so a chapter naming a starting thing by any name the
+   * world knows it by reaches the one it means. The same name wins over a name
+   * merely close to it, and two of either are a tie this refuses rather than
+   * guesses, so nothing is attributed to the wrong person or thing.
    */
-  const fromTheWorld = new Map<string, string[]>();
-
-  /**
-   * The one thing among these keys that a chapter's word means. The same name
-   * wins over a name merely close to it, and two of either are a tie this
-   * refuses rather than guesses, so nothing is attributed to the wrong person.
-   */
-  const onlyWorldMatch = (keys: readonly string[], name: string) => {
-    const knownAs = (key: string) => fromTheWorld.get(key) ?? [];
-    const exact = keys.filter(key => knownAs(key).some(known => normalizeIdentityLabel(known) === normalizeIdentityLabel(name)));
-    const matches = exact.length ? exact : keys.filter(key => knownAs(key).some(known => namesNearlyMatch(known, name)));
-    return matches.length === 1 ? matches[0] : undefined;
+  const onlyWorldMatch = <T extends { knownAs?: string[] }>(candidates: readonly T[], name: string) => {
+    const fromTheWorld = candidates.filter(candidate => candidate.knownAs?.length);
+    const only = (matches: readonly T[]) => matches.length === 1 ? matches[0] : undefined;
+    return only(fromTheWorld.filter(candidate => candidate.knownAs!.some(known => normalizeIdentityLabel(known) === normalizeIdentityLabel(name))))
+      ?? only(fromTheWorld.filter(candidate => candidate.knownAs!.some(known => namesNearlyMatch(known, name))));
   };
 
   /**
@@ -524,10 +530,7 @@ export function deriveHoldings({ entries, chapters, mainCharacterName, worldAtCh
    * check already read names: without it the character is split in two and
    * everything the world gave them is left behind in the other half.
    */
-  const chapterZeroCharacter = (name: string) => {
-    const key = onlyWorldMatch([...characters.keys()].filter(candidate => fromTheWorld.has(candidate)), name);
-    return key ? characters.get(key) : undefined;
-  };
+  const chapterZeroCharacter = (name: string) => onlyWorldMatch([...characters.values()], name);
   const characterOf = (ref: HoldingRef): CharacterState => {
     const key = keyOf(ref, 'character');
     let state = characters.get(key) ?? chapterZeroCharacter(nameOf(ref));
@@ -548,9 +551,9 @@ export function deriveHoldings({ entries, chapters, mainCharacterName, worldAtCh
    * still holds and hold a second one under its own key.
    */
   const chapterZeroKey = (holder: CharacterState, kind: CodexEntryKind, name: string | undefined, key: string) => {
-    const held = kind === 'thing' ? holder.things : holder.abilities;
+    const held: Map<string, { entryId: string; knownAs?: string[] }> = kind === 'thing' ? holder.things : holder.abilities;
     if (!name || held.has(key)) return key;
-    return onlyWorldMatch([...held.keys()].filter(candidate => fromTheWorld.has(candidate)), name) ?? key;
+    return onlyWorldMatch([...held.values()], name)?.entryId ?? key;
   };
 
   // ─── The world the story opens with ──────────────────────────────────────
@@ -591,16 +594,14 @@ export function deriveHoldings({ entries, chapters, mainCharacterName, worldAtCh
         .some(known => names.some(name => normalizeIdentityLabel(name) === normalizeIdentityLabel(known))));
       // Two entries a card could be is no entry: the card keeps its own key
       // rather than being filed under the wrong one.
-      const key = matching.length === 1 ? matching[0].id : fallback;
-      fromTheWorld.set(key, [...new Set([...(fromTheWorld.get(key) ?? []), ...names])]);
-      return key;
+      return { key: matching.length === 1 ? matching[0].id : fallback, knownAs: [...new Set(names)] };
     };
     const cardNames = (card: WorldCardAtChapterZero) => [card.name, ...(card.aliases ?? [])];
     const seeded = (card: WorldCardAtChapterZero): CharacterState => {
-      const key = worldKey('character', cardNames(card), card.key);
+      const { key, knownAs } = worldKey('character', cardNames(card), card.key);
       const existing = characters.get(key);
-      if (existing) return existing;
-      const state: CharacterState = { entryId: key, name: card.name, mainCharacter: Boolean(card.mainCharacter),
+      if (existing) { existing.knownAs = [...new Set([...(existing.knownAs ?? []), ...knownAs])]; return existing; }
+      const state: CharacterState = { entryId: key, name: card.name, knownAs, mainCharacter: Boolean(card.mainCharacter),
         things: new Map(), abilities: new Map(), history: [], lastChange: 0 };
       characters.set(key, state);
       return state;
@@ -611,17 +612,22 @@ export function deriveHoldings({ entries, chapters, mainCharacterName, worldAtCh
     const addThing = (state: CharacterState, written: string, count: number) => {
       const card = cardNamed(thingCards, written);
       const name = card?.name ?? written;
-      const key = worldKey('thing', card ? cardNames(card) : [written], card?.key ?? worldCardKey('thing', name));
+      const { key, knownAs } = worldKey('thing', card ? cardNames(card) : [written], card?.key ?? worldCardKey('thing', name));
       const held = state.things.get(key);
-      if (held) { held.count = Math.max(held.count, count); return; }
-      state.things.set(key, { entryId: key, name, count, equipped: false, events: [] });
+      if (held) {
+        held.count = Math.max(held.count, count);
+        held.knownAs = [...new Set([...(held.knownAs ?? []), ...knownAs])];
+        return;
+      }
+      state.things.set(key, { entryId: key, name, knownAs, count, equipped: false, events: [] });
     };
     const addAbility = (state: CharacterState, written: string) => {
       const card = cardNamed(abilityCards, written);
       const name = card?.name ?? written;
-      const key = worldKey('ability', card ? cardNames(card) : [written], card?.key ?? worldCardKey('ability', name));
-      if (state.abilities.has(key)) return;
-      state.abilities.set(key, { entryId: key, name, stage: 'learned', sealed: false, usable: true, events: [] });
+      const { key, knownAs } = worldKey('ability', card ? cardNames(card) : [written], card?.key ?? worldCardKey('ability', name));
+      const known = state.abilities.get(key);
+      if (known) { known.knownAs = [...new Set([...(known.knownAs ?? []), ...knownAs])]; return; }
+      state.abilities.set(key, { entryId: key, name, knownAs, stage: 'learned', sealed: false, usable: true, events: [] });
     };
 
     for (const card of characterCards) {
@@ -760,12 +766,12 @@ export function deriveHoldings({ entries, chapters, mainCharacterName, worldAtCh
       const main = mainCharacter();
       const recorded = main ? [...main.things.values(), ...main.abilities.values()] : [];
       const listed = chapter.closingHoldings.map(listedName).filter(Boolean);
-      const recordedNames = (item: { entryId: string; name: string }) => {
+      const recordedNames = (item: { entryId: string; name: string; knownAs?: string[] }) => {
         const entry = byId.get(item.entryId);
         // Every name the world knows a starting holding by counts here too: a
         // closing list may name it by any of them, and without those a correct
         // chapter reads as having lost one thing and gained another.
-        return [...new Set([...(entry ? namesOf(entry) : [item.name]), ...(fromTheWorld.get(item.entryId) ?? [])])];
+        return [...new Set([...(entry ? namesOf(entry) : [item.name]), ...(item.knownAs ?? [])])];
       };
       const matches = (names: readonly string[], value: string) => answersTo(names, value) || names.some(name => namesNearlyMatch(name, value));
       const who = main?.name ?? mainCharacterName ?? 'the main character';
@@ -799,6 +805,7 @@ export function deriveHoldings({ entries, chapters, mainCharacterName, worldAtCh
     characters: ordered.map(character => ({
       entryId: character.entryId,
       name: character.name,
+      ...(character.knownAs?.length ? { knownAs: character.knownAs } : {}),
       mainCharacter: character.mainCharacter,
       ...(character.rank ? { rank: character.rank } : {}),
       things: [...character.things.values()],

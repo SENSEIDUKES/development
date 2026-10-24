@@ -10,6 +10,7 @@ import {
   type HarnessWorkspaceState,
 } from '@seihouse/sen/harness-generation';
 import type { SoundCueAttachment } from '@seihouse/sen/audio';
+import type { WorldAtChapterZero } from '@seihouse/sen/contracts';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { REST_OF_CHAPTER, writtenChapterReply } from '../../../test-utils/writtenChapter';
 import { declaredCharacters } from './holdings';
@@ -96,6 +97,31 @@ describe('Holdings fixer: the world the story opened with', () => {
       .toEqual(['Ye Chen loses ‘Rusted Iron Sword’, which the record does not show them holding.']);
     // With it, the tag was right all along and there is nothing to fix.
     expect(planHoldingsFix({ ...inputFor(state, latest), worldAtChapterZero: world })).toEqual({ cases: [], settled: [] });
+  });
+
+  it('asks about an untagged loss described by another of a starting thing\'s names', async () => {
+    // Review finding (Codex, 2026-10-24): the closing-case branch searched the
+    // chapter's sentences by the entry's names or the flag's one name, so a
+    // chapter throwing away a starting thing under another of its names read as
+    // never naming it. The missed loss was dismissed rather than repaired, and
+    // the discarded thing stayed in every later Holdings packet.
+    const aliased: WorldAtChapterZero = {
+      cards: [
+        { key: 'chapter-0:character:ye-chen', kind: 'character' as const, name: 'Ye Chen', mainCharacter: true as const, slots: {} },
+        { key: 'chapter-0:thing:vermilion-brush', kind: 'thing' as const, name: 'Vermilion Brush', aliases: ['Red Quill'],
+          slots: { holder: 'Ye Chen' } },
+      ],
+    };
+    const { state, latest } = await written(reply(['Ye Chen threw the Red Quill into the furnace.'], { mainCharacterHoldings: [] }));
+    const plan = planHoldingsFix({ ...inputFor(state, latest), worldAtChapterZero: aliased });
+    expect(plan.settled).toEqual([]);
+    expect(plan.cases).toHaveLength(1);
+    expect(plan.cases[0].case.problems)
+      .toEqual(['the writer\'s closing list for Ye Chen leaves out ‘Vermilion Brush’. It may have been lost without a tag.']);
+    // The sentence that names it under its other name is what the fixer is
+    // asked about, so the missed loss can actually be repaired.
+    expect(plan.cases[0].case.mentions?.map(mention => mention.sentence))
+      .toEqual(['Ye Chen threw the Red Quill into the furnace.']);
   });
 
   it('still finds the problem of gaining what the world already gave, and says what they held', async () => {

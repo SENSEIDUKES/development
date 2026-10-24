@@ -12,7 +12,7 @@ Its name is the Highlight Engine, never "Text Highlight Engine" (renamed
 `TextHighlightBlock`, `TextHighlightOverlay`, the `sen-text-highlight-*` classes
 and `--sen-text-line-height`. An image surface will get its own beside them.
 
-- Created: **2026-09-26**; last Workshop update: **2026-10-21**
+- Created: **2026-09-26**; last Workshop update: **2026-10-24**
 - Lifecycle: active standalone prototype; the Workshop tab is the manuscript lab
 - Source: this Development repository; no production replica or source comparison
 - Workshop: `?preview=highlight-engine`
@@ -319,6 +319,10 @@ browser evidence out of the consuming surface. No integration was performed.
 
 ## Workshop history
 
+- **2026-10-24:** Fixed highlights disappearing on release after a click outside
+  the prose. Starting an engine selection now retires any previous browser caret,
+  including one outside the engine. Added repeated mouse, touch and keyboard
+  regressions plus real desktop browser coverage of the outside-click sequence.
 - **2026-10-21:** Create mode now owns selection gestures and its range handles,
   eliminating the simultaneous native selection in editable prose. Added Copy,
   keyboard selection and screen-reader guidance; preserved native scrolling and

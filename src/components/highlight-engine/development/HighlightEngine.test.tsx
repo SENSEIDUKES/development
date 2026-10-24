@@ -125,6 +125,33 @@ describe('engine-owned selection input', () => {
     expect(document.getSelection()!.rangeCount).toBe(0);
     expect(button('Edit')).toBeDefined();
   });
+  it.each(['mouse', 'touch', 'keyboard'])('reclaims an outside browser caret for repeated %s selections', async input => {
+    const outside = document.createElement('p'); outside.textContent = 'Outside prose'; document.body.append(outside);
+    try {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        act(() => {
+          document.getSelection()!.setBaseAndExtent(outside.firstChild!, 2, outside.firstChild!, 2);
+          document.dispatchEvent(new Event('selectionchange'));
+        });
+        if (input === 'keyboard') {
+          act(() => {
+            block().focus();
+            block().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+          });
+        } else {
+          offset = 7; pointer('pointerdown', input);
+          if (input === 'touch') await act(() => vi.advanceTimersByTimeAsync(450));
+          else { offset = 13; pointer('pointermove', input, 150); }
+        }
+        expect(selections).toHaveBeenLastCalledWith(expect.objectContaining({ selectedText: input === 'keyboard' ? 'Before' : 'middle' }));
+        if (input === 'keyboard') act(() => block().dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true })));
+        else pointer('pointerup', input);
+        act(() => document.dispatchEvent(new Event('selectionchange')));
+        expect(button('Edit')).toBeDefined();
+        expect(document.getSelection()!.rangeCount).toBe(0);
+      }
+    } finally { outside.remove(); }
+  });
   it('keeps an active drag and pending hold through equivalent host block arrays', async () => {
     offset = 7; pointer('pointerdown');
     offset = 10; pointer('pointermove', 'mouse', 130);

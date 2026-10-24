@@ -135,6 +135,22 @@ describe('what a chapter may still do with it', () => {
     expect(state.flags.map(flag => flag.kind)).toEqual(['already-held']);
   });
 
+  it('reaches a starting thing a chapter names by another of its names', () => {
+    // Review finding (Codex, 2026-10-24): matching only the canonical name left
+    // a valid loss under an alias flagged as a loss of something unheld, and a
+    // gain under one making a second holding.
+    const world: WorldAtChapterZero = { cards: [
+      { key: 'chapter-0:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true, slots: {} },
+      { key: 'chapter-0:thing:vermilion-brush', kind: 'thing', name: 'Vermilion Brush', aliases: ['Red Quill'],
+        slots: { holder: 'Ye Chen' } },
+    ] };
+    expect(things(story(world).derive())).toEqual([['Vermilion Brush', 1]]);
+    const run = story(world);
+    run.write(1, ['He snapped the [[lost: MC | Red Quill | ×1 | snapped]]quill in two.']);
+    expect(things(run.derive())).toEqual([]);
+    expect(run.derive().flags).toEqual([]);
+  });
+
   it('spends a Chapter 0 count down rather than starting from nothing', () => {
     const run = story(WORLD);
     run.write(1, ['He swallowed a [[lost: MC | Spirit Pill | ×1 | eaten]]pill.']);
@@ -153,10 +169,11 @@ describe('what a chapter may still do with it', () => {
     const run = story(world);
     run.write(1, ['He handed [[gained: Mu | Jade Fan]]the fan over.']);
     const state = run.derive();
-    const holder = state.characters.find(character => character.things.some(thing => thing.name === 'Jade Fan'))!;
-    expect(holder.entryId).not.toMatch(/^chapter-0:/);
-    // Neither card was given it.
-    expect(state.characters.filter(character => character.entryId.startsWith('chapter-0:') && character.things.length)).toEqual([]);
+    // Neither of the world's two near names was given the fan; it stayed with
+    // the character the chapter's own words made.
+    expect(state.characters.filter(character => character.things.length).map(character => character.name)).toEqual(['Mu']);
+    expect(state.characters.find(character => character.name === 'Elder Mu')?.things).toEqual([]);
+    expect(state.characters.find(character => character.name === 'Old Mu')?.things).toEqual([]);
   });
 
   it('still reaches the one world character a chapter names exactly', () => {
@@ -167,8 +184,11 @@ describe('what a chapter may still do with it', () => {
     ] };
     const run = story(world);
     run.write(1, ['He handed [[gained: Elder Mu | Jade Fan]]the fan over.']);
-    const holder = run.derive().characters.find(character => character.things.some(thing => thing.name === 'Jade Fan'))!;
-    expect(holder.entryId).toBe('chapter-0:character:elder-mu');
+    const state = run.derive();
+    // One Elder Mu, holding the fan: the world's card and the chapter's tag are
+    // the same character, not two.
+    expect(state.characters.filter(character => character.name === 'Elder Mu')).toHaveLength(1);
+    expect(state.characters.find(character => character.name === 'Elder Mu')!.things.map(thing => thing.name)).toEqual(['Jade Fan']);
   });
 
   it('spends the holding the story names, not the one whose name is merely close', () => {

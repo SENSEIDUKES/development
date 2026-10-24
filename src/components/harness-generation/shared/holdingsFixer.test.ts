@@ -98,10 +98,16 @@ describe('Holdings fixer: the world the story opened with', () => {
     expect(planHoldingsFix({ ...inputFor(state, latest), worldAtChapterZero: world })).toEqual({ cases: [], settled: [] });
   });
 
-  it('still finds the problem of gaining what the world already gave', async () => {
+  it('still finds the problem of gaining what the world already gave, and says what they held', async () => {
     const { state, latest } = await written(reply([SWORD]));
-    expect(planHoldingsFix({ ...inputFor(state, latest), worldAtChapterZero: world }).cases.flatMap(planned => planned.case.problems))
+    const planned = planHoldingsFix({ ...inputFor(state, latest), worldAtChapterZero: world }).cases;
+    expect(planned.flatMap(entry => entry.case.problems))
       .toEqual(['Ye Chen gains ‘Rusted Iron Sword’ again, but already holds it. It is not counted twice.']);
+    // Review finding (Codex, 2026-10-24): the record beside the problem is
+    // looked up by the holder's Codex entry ID, so a Chapter 0 holder held
+    // under their card's key read as "nothing recorded" and the fixer would
+    // have been asked to correct a tag with no idea what the character had.
+    expect(planned[0].case.record).toContain('Ye Chen before this chapter: has Rusted Iron Sword.');
   });
 });
 

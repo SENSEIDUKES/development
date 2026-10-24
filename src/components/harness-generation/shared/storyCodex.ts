@@ -235,11 +235,16 @@ export function deriveStoryCodex({ entries, chapters, world, mainCharacterName, 
   declaredFactions?: readonly DeclaredFaction[];
 }): StoryCodexRecord {
   const ordered = [...chapters].sort((left, right) => left.chapterNumber - right.chapterNumber);
-  // Chapter-derived holdings only: the Chapter 0 world reaches a Codex card
-  // through its own layer below (`atChapterZero`), card by card, and a card is
-  // matched to its Codex entry by that entry's ID. Seeding these from the world
-  // would key a holding to a Chapter 0 card instead, and the entry the card
-  // belongs to would lose it.
+  // Chapter-derived holdings only, deliberately. The Chapter 0 world reaches a
+  // card through its own layer below (`atChapterZero`), and a reader meets a
+  // card when the story reaches it — which is read from the events a chapter's
+  // tags record. Seeding these from the world makes a tag that only confirms
+  // what the world already said record nothing, so the card it named would
+  // never open to the reader. A chapter changing what a character started with
+  // (improving or sealing a starting ability) is therefore still read as a
+  // change to something unlearned here; mending that means teaching this
+  // record's visibility that a tag naming a card reaches it whether or not the
+  // holding moved, which is its own change to the no-spoiler rule.
   const holdings = deriveHoldings({ entries, chapters: ordered, mainCharacterName });
   const appeared = deriveAppearances({ entries, chapters: ordered, declaredFactions });
 

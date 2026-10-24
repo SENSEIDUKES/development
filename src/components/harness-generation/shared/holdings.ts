@@ -491,23 +491,35 @@ export function deriveHoldings({ entries, chapters, mainCharacterName, worldAtCh
   const keyOf = (ref: HoldingRef, kind: CodexEntryKind) => ref.entryId ?? `${kind}:${normalizeIdentityLabel(ref.name)}`;
   const nameOf = (ref: HoldingRef) => (ref.entryId ? byId.get(ref.entryId)?.name : undefined) ?? ref.name;
   /**
-   * A chapter's tag resolves its holder to a Codex entry of its own, while the
-   * world holds the same character under their Chapter 0 card's key. The two
-   * meet by name, the way the closing list and the duplicate check already read
-   * names: without it the character is split in two and everything the world
-   * gave them is left behind in the other half.
-   *
-   * Two of the world's own characters whose names nearly match are not guessed
-   * between: the change stays under its own key, so nothing is attributed to
-   * the wrong person.
+   * Everything the world gave, by the key it is held under, with every name the
+   * world knows it by. Being in here says a holding came from the world, and
+   * the names are what a chapter's own words are matched against — so a chapter
+   * naming a starting thing by one of its other names reaches the one it means.
+   */
+  const fromTheWorld = new Map<string, string[]>();
+
+  /**
+   * The one thing among these keys that a chapter's word means. The same name
+   * wins over a name merely close to it, and two of either are a tie this
+   * refuses rather than guesses, so nothing is attributed to the wrong person.
+   */
+  const onlyWorldMatch = (keys: readonly string[], name: string) => {
+    const knownAs = (key: string) => fromTheWorld.get(key) ?? [];
+    const exact = keys.filter(key => knownAs(key).some(known => normalizeIdentityLabel(known) === normalizeIdentityLabel(name)));
+    const matches = exact.length ? exact : keys.filter(key => knownAs(key).some(known => namesNearlyMatch(known, name)));
+    return matches.length === 1 ? matches[0] : undefined;
+  };
+
+  /**
+   * A chapter's tag resolves its holder to a Codex entry, and the world holds
+   * the same character under whichever key their card resolved to. Where those
+   * differ the two meet by name, the way the closing list and the duplicate
+   * check already read names: without it the character is split in two and
+   * everything the world gave them is left behind in the other half.
    */
   const chapterZeroCharacter = (name: string) => {
-    const fromTheWorld = [...characters.values()].filter(candidate => candidate.entryId.startsWith(CHAPTER_ZERO_KEY_PREFIX));
-    const only = (matches: CharacterState[]) => matches.length === 1 ? matches[0] : undefined;
-    // The same name wins over a name merely close to it; two of either are a
-    // tie this refuses rather than guesses.
-    return only(fromTheWorld.filter(candidate => normalizeIdentityLabel(candidate.name) === normalizeIdentityLabel(name)))
-      ?? only(fromTheWorld.filter(candidate => namesNearlyMatch(candidate.name, name)));
+    const key = onlyWorldMatch([...characters.keys()].filter(candidate => fromTheWorld.has(candidate)), name);
+    return key ? characters.get(key) : undefined;
   };
   const characterOf = (ref: HoldingRef): CharacterState => {
     const key = keyOf(ref, 'character');
@@ -523,25 +535,15 @@ export function deriveHoldings({ entries, chapters, mainCharacterName, worldAtCh
 
   /**
    * The key a chapter's change belongs under. A chapter that names something
-   * the world already gave its holder resolves to a Codex entry of its own, so
-   * the tag's key and the Chapter 0 card's key differ for one thing: they meet
-   * by name, the way the closing list and the duplicate check already read
-   * names. Without this a chapter would lose a sword the record still holds and
-   * hold a second one under its own key.
-   *
-   * Two Chapter 0 holdings whose names nearly match are not guessed between:
-   * the change stays under its own key rather than landing on the wrong one.
+   * the world already gave its holder may resolve it to a Codex entry the world
+   * did not reach, so where the keys differ the two meet by name — by any name
+   * the world knows it by. Without this a chapter would lose a sword the record
+   * still holds and hold a second one under its own key.
    */
   const chapterZeroKey = (holder: CharacterState, kind: CodexEntryKind, name: string | undefined, key: string) => {
-    const held: Map<string, { name: string }> = kind === 'thing' ? holder.things : holder.abilities;
+    const held = kind === 'thing' ? holder.things : holder.abilities;
     if (!name || held.has(key)) return key;
-    const fromTheWorld = [...held].filter(([candidate]) => candidate.startsWith(CHAPTER_ZERO_KEY_PREFIX));
-    const only = (matches: typeof fromTheWorld) => matches.length === 1 ? matches[0][0] : undefined;
-    // The same name wins over a name merely close to it; two of either are a
-    // tie this refuses rather than guesses.
-    return only(fromTheWorld.filter(([, item]) => normalizeIdentityLabel(item.name) === normalizeIdentityLabel(name)))
-      ?? only(fromTheWorld.filter(([, item]) => namesNearlyMatch(item.name, name)))
-      ?? key;
+    return onlyWorldMatch([...held.keys()].filter(candidate => fromTheWorld.has(candidate)), name) ?? key;
   };
 
   // ─── The world the story opens with ──────────────────────────────────────
@@ -570,8 +572,25 @@ export function deriveHoldings({ entries, chapters, mainCharacterName, worldAtCh
       return only(cards.filter(card => names(card).some(name => normalizeIdentityLabel(name) === normalizeIdentityLabel(written))))
         ?? only(cards.filter(card => names(card).some(name => namesNearlyMatch(name, written))));
     };
+    /**
+     * The key a Chapter 0 holding is held under: its Codex entry's ID wherever
+     * the story already has one for it, so the record, the Codex and the
+     * Holdings fixer all name it the same way; its own card's key until then,
+     * which the record keeps stable for the whole story. Either way every name
+     * the world knows it by is kept, for the chapter reconciliation above.
+     */
+    const worldKey = (kind: CodexEntryKind, names: string[], fallback: string) => {
+      const matching = entries.filter(entry => entry.kind === kind && [entry.name, ...(entry.aliases ?? [])]
+        .some(known => names.some(name => normalizeIdentityLabel(name) === normalizeIdentityLabel(known))));
+      // Two entries a card could be is no entry: the card keeps its own key
+      // rather than being filed under the wrong one.
+      const key = matching.length === 1 ? matching[0].id : fallback;
+      fromTheWorld.set(key, [...new Set([...(fromTheWorld.get(key) ?? []), ...names])]);
+      return key;
+    };
+    const cardNames = (card: WorldCardAtChapterZero) => [card.name, ...(card.aliases ?? [])];
     const seeded = (card: WorldCardAtChapterZero): CharacterState => {
-      const key = card.key;
+      const key = worldKey('character', cardNames(card), card.key);
       const existing = characters.get(key);
       if (existing) return existing;
       const state: CharacterState = { entryId: key, name: card.name, mainCharacter: Boolean(card.mainCharacter),
@@ -579,15 +598,13 @@ export function deriveHoldings({ entries, chapters, mainCharacterName, worldAtCh
       characters.set(key, state);
       return state;
     };
-    // A Chapter 0 holding is held under its own card's key, which the record
-    // already keeps stable for the whole story, and which says it came from the
-    // world rather than a chapter. So a thing named both on a character's slot
-    // and on its own card is one holding, under the name the story writes it
-    // by, counted once; a chapter's own tag meets it by name below.
+    // A thing named both on a character's slot and on its own card is one
+    // holding, under the name the story writes it by, counted once; a chapter's
+    // own tag meets it by name above.
     const addThing = (state: CharacterState, written: string, count: number) => {
       const card = cardNamed(thingCards, written);
       const name = card?.name ?? written;
-      const key = card?.key ?? worldCardKey('thing', name);
+      const key = worldKey('thing', card ? cardNames(card) : [written], card?.key ?? worldCardKey('thing', name));
       const held = state.things.get(key);
       if (held) { held.count = Math.max(held.count, count); return; }
       state.things.set(key, { entryId: key, name, count, equipped: false, events: [] });
@@ -595,7 +612,7 @@ export function deriveHoldings({ entries, chapters, mainCharacterName, worldAtCh
     const addAbility = (state: CharacterState, written: string) => {
       const card = cardNamed(abilityCards, written);
       const name = card?.name ?? written;
-      const key = card?.key ?? worldCardKey('ability', name);
+      const key = worldKey('ability', card ? cardNames(card) : [written], card?.key ?? worldCardKey('ability', name));
       if (state.abilities.has(key)) return;
       state.abilities.set(key, { entryId: key, name, stage: 'learned', sealed: false, usable: true, events: [] });
     };

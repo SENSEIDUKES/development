@@ -444,10 +444,17 @@ const listedName = (value: string) => {
  * Sword", and the key a holding is held under keeps every word, so the article
  * goes: with it, one sword would become two the first time a chapter named it.
  */
-const listedSlotNames = (value: string | undefined): string[] => (value ?? '')
+const listedSlotHoldings = (value: string | undefined): Array<{ name: string; count: number }> => (value ?? '')
   .split(/[,;\n]+/)
-  .map(part => listedName(part.trim()).replace(/^(?:the|a|an)\s+/i, '').trim())
-  .filter(Boolean);
+  .flatMap(part => {
+    const named = holdingName(part.trim());
+    if ('note' in named) return [];
+    const name = named.name.replace(/^(?:the|a|an)\s+/i, '').trim();
+    // A count written into the name is the count held, the way a thing card's
+    // own count slot is: without it, three pills would be one, and the first
+    // chapter to spend one would spend them all.
+    return name ? [{ name, count: named.count ?? 1 }] : [];
+  });
 
 /** A paragraph's position in its chapter, from its `c{n}-p{i}` id. */
 const paragraphIndex = (blockId: string) => Number(blockId.match(/-p(\d+)$/)?.[1] ?? 0);
@@ -597,8 +604,8 @@ export function deriveHoldings({ entries, chapters, mainCharacterName, worldAtCh
       const state = seeded(card);
       const rank = slot(card, 'rankLevel');
       if (rank) state.rank = { text: rank, events: [] };
-      for (const written of listedSlotNames(slot(card, 'holds'))) addThing(state, written, 1);
-      for (const written of listedSlotNames(slot(card, 'knows'))) addAbility(state, written);
+      for (const held of listedSlotHoldings(slot(card, 'holds'))) addThing(state, held.name, held.count);
+      for (const known of listedSlotHoldings(slot(card, 'knows'))) addAbility(state, known.name);
     }
     // A thing's own card names who holds it, so that link is read from the
     // record rather than guessed from the holder's written list.

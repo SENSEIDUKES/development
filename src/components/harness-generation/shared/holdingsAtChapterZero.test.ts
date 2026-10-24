@@ -78,6 +78,18 @@ describe('what the world gives a character before Chapter 1', () => {
     expect(state.flags).toEqual([]);
   });
 
+  it('keeps a count written into a listed name, so the first chapter to spend one does not spend them all', () => {
+    const world: WorldAtChapterZero = { cards: [{
+      key: 'chapter-0:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true,
+      slots: { holds: 'Spirit Pill ×3, 2 Jade Tokens, Rusted Sword' },
+    }] };
+    expect(things(story(world).derive())).toEqual([['Spirit Pill', 3], ['Jade Tokens', 2], ['Rusted Sword', 1]]);
+    const run = story(world);
+    run.write(1, ['He swallowed a [[lost: MC | Spirit Pill | ×1 | eaten]]pill.']);
+    expect(things(run.derive())).toEqual([['Spirit Pill', 2], ['Jade Tokens', 2], ['Rusted Sword', 1]]);
+    expect(holdingsSection(run.derive(), 'Ye Chen').characters[0].carries).toEqual(['Spirit Pill ×2', 'Jade Tokens ×2', 'Rusted Sword']);
+  });
+
   it('gives a Chapter 0 holding no passage, because no chapter wrote it', () => {
     const state = story(WORLD).derive();
     expect(main(state).things.flatMap(thing => thing.events)).toEqual([]);
@@ -130,21 +142,33 @@ describe('what a chapter may still do with it', () => {
   });
 
   it('refuses to guess between two of the world\'s characters whose names nearly match', () => {
-    // 'Qin' and 'Elder Qin' read as one name to the matcher. Rather than
-    // attribute the pill to whichever came first, the change stays its own.
+    // 'Mu' reads as one name with both 'Elder Mu' and 'Old Mu' and is neither
+    // of them, so rather than hand the fan to whichever card came first, the
+    // change stays under its own key.
     const world: WorldAtChapterZero = { cards: [
       { key: 'chapter-0:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true, slots: {} },
-      { key: 'chapter-0:character:qin', kind: 'character', name: 'Qin', slots: { holds: 'Spirit Pill' } },
-      { key: 'chapter-0:character:elder-qin', kind: 'character', name: 'Elder Qin', slots: { holds: 'Spirit Pill' } },
+      { key: 'chapter-0:character:elder-mu', kind: 'character', name: 'Elder Mu', slots: {} },
+      { key: 'chapter-0:character:old-mu', kind: 'character', name: 'Old Mu', slots: {} },
     ] };
     const run = story(world);
-    run.write(1, ['He handed [[gained: Elder Qin | Jade Fan]]the fan over.']);
+    run.write(1, ['He handed [[gained: Mu | Jade Fan]]the fan over.']);
     const state = run.derive();
-    const named = state.characters.filter(character => character.name === 'Elder Qin');
-    // Both the world's card and the chapter's own entry stand, rather than one
-    // of two near names silently swallowing the other.
-    expect(named.length).toBeGreaterThan(0);
-    expect(state.characters.filter(character => character.things.some(thing => thing.name === 'Jade Fan'))).toHaveLength(1);
+    const holder = state.characters.find(character => character.things.some(thing => thing.name === 'Jade Fan'))!;
+    expect(holder.entryId).not.toMatch(/^chapter-0:/);
+    // Neither card was given it.
+    expect(state.characters.filter(character => character.entryId.startsWith('chapter-0:') && character.things.length)).toEqual([]);
+  });
+
+  it('still reaches the one world character a chapter names exactly', () => {
+    const world: WorldAtChapterZero = { cards: [
+      { key: 'chapter-0:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true, slots: {} },
+      { key: 'chapter-0:character:elder-mu', kind: 'character', name: 'Elder Mu', slots: {} },
+      { key: 'chapter-0:character:old-mu', kind: 'character', name: 'Old Mu', slots: {} },
+    ] };
+    const run = story(world);
+    run.write(1, ['He handed [[gained: Elder Mu | Jade Fan]]the fan over.']);
+    const holder = run.derive().characters.find(character => character.things.some(thing => thing.name === 'Jade Fan'))!;
+    expect(holder.entryId).toBe('chapter-0:character:elder-mu');
   });
 
   it('spends the holding the story names, not the one whose name is merely close', () => {

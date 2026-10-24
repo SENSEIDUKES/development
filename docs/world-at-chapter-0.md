@@ -530,11 +530,56 @@ The world is now recorded before Chapter 1, in the Codex's own card kinds.
   world written for it; an imported novel's world is open to its author. See
   both at `?preview=reader-codex` → Development → **Before Chapter 1**, with
   **The whole world** / **What the reader sees**.
-- **Deliberately not in it:** what the chapter writer reads from this world
-  (its own step, its own approval), and the Ability card's place in the
-  Codex beyond its own tab.
+- **Deliberately not in it:** the Ability card's place in the Codex beyond its
+  own tab. What the chapter writer reads from this world was its own step, with
+  its own approval, and is built (2026-10-24, below).
+
+## What phase C built (2026-10-24): the writer reads it
+
+- **The Foundation keeps the world.** It did not. `normalizeStoryFoundationInput`
+  rebuilds the Foundation from the fields it knows, and this one was never added
+  to that list, so the Blueprint filled every card and the Foundation dropped the
+  lot at story creation — for every story, not just an old one. That is why the
+  Codex had only a scraped look summary to show (SENSEI, 2026-10-24: "The
+  Blueprint work we just did is not even in the codex"). The world is now read
+  into the record (`normalizeWorldAtChapterZero`): an unknown kind, a nameless
+  card, a slot the kind does not define and an empty one are dropped, and every
+  key is computed from the card's own kind and name so two readings agree.
+- **The writer reads it**, as its own Story Information section (schema 35),
+  ahead of what the chapters changed, presented as compact labeled text rather
+  than pretty-printed JSON. SENSEI approved the words in How to read the story
+  information the same day: established fact, not a plan and not a checklist of
+  things to mention; the facts its slots mark as unchanging hold for the whole
+  story; where a later chapter changed something, Current Canonical State and
+  Holdings carry what it is now and take precedence.
+- **Holdings starts from it**, so the packet can no longer say a character
+  carries a sword in one section and nothing in another. A chapter's own tag
+  resolves to a Codex entry of its own, so a Chapter 0 holding and a chapter's
+  change meet by name, the way the closing list and the duplicate check already
+  read names. A chapter still takes a Chapter 0 thing away, spends its count
+  down, raises its rank, and is flagged for gaining what the world already gave.
+  This answers the review question of 2026-10-23 (seeding holdings from the
+  Chapter 0 world): yes, from the same record, in the derivation both share.
+- **Appeared is deliberately left empty at Chapter 1.** It means already
+  described on the page, and nobody has been.
+- **Each fact still appears once**, as the writer's own instructions require.
+  Where the Seed used to send a fact as prose and now has a card slot for it, the
+  prose gives way: a declared identity keeps only what no card holds (the main
+  character's temper and the Blueprint's reviewed background), aliases travel
+  structurally in Current Story Information as they always did, and the World
+  rules sheet carries the ladder and how power works instead of the world facts
+  line. `storySeedHandoff.test.ts` is the guard.
+- **Deliberately not in it:** making Chapter 0 cards into Codex entries up
+  front. Nothing needs it yet — the two meet by name — and the lazy
+  foundation-origin entry the resolver already creates is the existing pattern.
 
 ## History
+
+- 2026-10-24: phase C built. The Foundation stopped dropping the world (the
+  cause of SENSEI's Codex report), the chapter writer reads it as its own
+  packet section, and Holdings starts from it. SENSEI approved the reading
+  guide's new words the same day. The Seed's prose gave way to the cards
+  wherever both carried one fact, so the writer still reads each fact once.
 
 - 2026-10-22 (review): an ability card now opens with the chapter that teaches
   it, rather than waiting for a world open to its reader — a holdings tag does

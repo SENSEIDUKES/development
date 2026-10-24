@@ -10,6 +10,7 @@ import {
   type StorySeedRecord,
 } from '@seihouse/sen/story-seed';
 import type { StoryFoundationInput } from '@seihouse/sen/harness-generation';
+import { hasWorldAtChapterZero } from '@seihouse/sen/contracts';
 import { worldAtChapterZeroFromStorySeed } from './worldAtChapterZero';
 
 const labeledLines = (entries: Array<[string, string | undefined]>): string | undefined => {
@@ -61,6 +62,8 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
   }
   const canon = resolveStorySeedWorldCanon(seed, blueprint);
   const mainCharacter = canon.mainCharacter;
+  const worldAtChapterZero = worldAtChapterZeroFromStorySeed(seed);
+  const carriesWorld = hasWorldAtChapterZero(worldAtChapterZero);
 
   return {
     title: identity.title || record.title,
@@ -73,14 +76,24 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
     ...(initialArcPlan ? { initialArcPlan } : {}),
     initialHardPins: validateHardPinInputs(optional.hardPins ?? []),
     funSettings: normalizeFunSettings(optional.funSettings),
+    // A declared identity gives the names that resolve to someone. Its evidence
+    // is their description, and every fact in that description is now a slot on
+    // their Chapter 0 card: sending both would put the same fact in two
+    // sections of the writer's packet, which its own instructions forbid. So
+    // where the world carries the card, the identity keeps only what no card
+    // slot holds — the main character's reviewed background, the one part of a
+    // description the Blueprint owns rather than the Seed.
     identities: [
-      ...(mainCharacter ? [{ name: mainCharacter.name, kind: 'character' as const, evidence: mainCharacter.description }] : []),
-      ...canon.characters.map(entry => ({ name: entry.name, aliases: entry.aliases, kind: 'character' as const, evidence: entry.description })),
-      ...canon.factions.map(entry => ({ name: entry.name, aliases: entry.aliases, kind: 'faction' as const, evidence: entry.description })),
+      ...(mainCharacter ? [{ name: mainCharacter.name, kind: 'character' as const,
+        evidence: carriesWorld ? canon.mainCharacterBeyondItsCard ?? mainCharacter.name : mainCharacter.description }] : []),
+      ...canon.characters.map(entry => ({ name: entry.name, aliases: entry.aliases, kind: 'character' as const,
+        evidence: carriesWorld ? entry.name : entry.description })),
+      ...canon.factions.map(entry => ({ name: entry.name, aliases: entry.aliases, kind: 'faction' as const,
+        evidence: carriesWorld ? entry.name : entry.description })),
     ],
     // The world the story opens with, in the Codex's own card kinds. It is read
     // from the reconciled Seed, so it already carries what the Blueprint filled.
-    worldAtChapterZero: worldAtChapterZeroFromStorySeed(seed),
+    worldAtChapterZero,
     genre: required.genre,
     toneStyle: labeledLines([
       ['Story tradition', getStoryStyleLabel(required.style)],
@@ -97,7 +110,9 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
       ['World detail', canon.worldOverviewDetail],
       ['Society', canon.societyStructure],
       ['Society detail', canon.societyStructureDetail],
-      ['Power system', canon.powerSystem],
+      // The World rules sheet carries the ladder and how power works; what is
+      // left is the outline prose no card slot holds.
+      ['Power system', carriesWorld ? canon.powerSystemBeyondItsCard : canon.powerSystem],
       ['Main Opposition', world.mainOpposition],
     ]),
     sourceSnapshot: {

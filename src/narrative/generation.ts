@@ -29,8 +29,10 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * written down from them. 33 was the chapter loop's, rolled back on
  * 2026-10-22, so a workspace that loop saved is never read as current; 34 adds
  * the Foundation's optional world at Chapter 0, and every saved story reads as
- * it is (a story made before it simply has no world recorded). */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 34 as const;
+ * it is (a story made before it simply has no world recorded); 35 carries that
+ * world to the writer as its own packet section, so every attempt keeps the
+ * packet it froze. */
+export const HARNESS_GENERATION_SCHEMA_VERSION = 35 as const;
 
 /** The most an Author's notes may hold, in characters. */
 export const AUTHOR_NOTES_LIMIT = 2000;
@@ -833,6 +835,7 @@ export type PacketSectionId =
   | 'arc'
   | 'rhythm'
   | 'previouslyOn'
+  | 'worldAtChapterZero'
   | 'canonicalState'
   | 'holdings'
   | 'appearances'
@@ -901,17 +904,29 @@ export interface StoryInformationPacket {
   rhythm?: RhythmDirectionSection;
   /** Section 6: the latest saved recaps, oldest first. */
   previouslyOn: PreviouslyOnEntry[];
-  /** Section 7. */
+  /**
+   * Section 7, ahead of what the chapters changed: the world the story opens
+   * with, as the Story Seed and its World Blueprint set it down. The record is
+   * the Foundation's, carried whole; the facts its slots mark as unchanging
+   * hold for the whole story, and a fact a chapter later changed is superseded
+   * by Current Canonical State and Holdings. Absent from packets frozen before
+   * the Chapter 0 world existed, and from a story whose Foundation has none.
+   */
+  worldAtChapterZero?: import('./worldRecord').WorldAtChapterZero;
+  /** Section 8. */
   canonicalState: CanonicalStateProjection;
   /**
-   * Section 8: what each character has now, worked out from the committed
+   * Section 9: what each character has now, starting from what the Chapter 0
+   * world gives each character and worked on from there by the committed
    * chapters' holding changes. The main character first, always. Absent only
    * from packets frozen before holdings existed.
    */
   holdings?: HoldingsSection;
   /**
-   * Section 8, beside Holdings: every character and thing already on the
+   * Section 9, beside Holdings: every character and thing already on the
    * page, with its look, worked out from the committed chapters' appearances.
+   * The Chapter 0 world never seeds it: a card nobody has described yet is
+   * not yet on the page.
    * Absent from packets frozen before appearances existed.
    */
   appearances?: AppearancesSection;

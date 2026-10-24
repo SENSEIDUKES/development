@@ -7,6 +7,7 @@ import { storyPointOfView } from './pointOfView';
 import { protagonistNames } from './speakers';
 import { semanticReaderChanges } from './readerEdits';
 import { GENERATION_PACKET_BUDGET, estimatePacketTokens } from './packetBudget';
+import { hasWorldAtChapterZero } from '../../../narrative/worldRecord';
 import { cloneHarnessValue, defaultHarnessRuntime, type HarnessRuntime } from './ids';
 import type { CurrentStoryProjection, HarnessStory, HarnessWorkspaceState, PacketSectionId, PacketSectionMeasurement, PreviouslyOnEntry, RhythmDirectionSection, StoryFoundationRevision, StoryInformationPacket } from '../../../narrative/generation';
 
@@ -160,10 +161,17 @@ export const compileStoryInformationPacket = (
   // Section 8: what each character has now, worked out again from the committed
   // chapters' holding changes. Protected: the main character always travels.
   const mainCharacterName = (foundationRevision.input.cast ?? []).find(member => member.isMainCharacter)?.name;
+  // Section 7: the world the story opens with, carried whole from the active
+  // Foundation. It is the baseline Holdings starts from, so both are built
+  // from the one record and never disagree about what a character began with.
+  const worldAtChapterZero = hasWorldAtChapterZero(foundationRevision.input.worldAtChapterZero)
+    ? cloneHarnessValue(foundationRevision.input.worldAtChapterZero!)
+    : undefined;
   const holdings = holdingsSection(deriveHoldings({
     entries: state.codexEntries.filter(entry => entry.storyId === story.id),
     chapters,
     mainCharacterName,
+    worldAtChapterZero,
   }), mainCharacterName);
   // Beside it, who and what is already on the page, with each look, worked out
   // again from the committed chapters' appearances: the most recently seen
@@ -179,6 +187,7 @@ export const compileStoryInformationPacket = (
     measure('arc', arc),
     measure('rhythm', rhythm),
     measure('previouslyOn', previouslyOn),
+    measure('worldAtChapterZero', worldAtChapterZero),
     measure('canonicalState', canonical.projection),
     measure('holdings', holdings),
     measure('appearances', appearances),
@@ -198,6 +207,7 @@ export const compileStoryInformationPacket = (
     ...(arc ? { arc } : {}),
     ...(rhythm ? { rhythm } : {}),
     previouslyOn,
+    ...(worldAtChapterZero ? { worldAtChapterZero } : {}),
     canonicalState: canonical.projection,
     holdings,
     appearances,

@@ -37,6 +37,26 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-10-24 (the chapter writer reads the world at Chapter 0):** Phase C of
+  [the World at Chapter 0 plan](../../../docs/world-at-chapter-0.md). Three
+  things, and the first is why the other two were invisible. **The Foundation
+  keeps the world:** `normalizeStoryFoundationInput` rebuilds the Foundation
+  from the fields it knows and this one was never on that list, so every story
+  dropped its world at creation and the Codex had nothing to show (SENSEI,
+  2026-10-24). It is now read in through `normalizeWorldAtChapterZero`, which
+  drops an unknown kind, a nameless card and a slot the kind does not define,
+  and computes every key from the card's own kind and name. **The writer reads
+  it:** its own Story Information section (schema 35), ahead of Current
+  Canonical State, as compact labeled text rather than pretty-printed JSON;
+  SENSEI approved the words in How to read the story information the same day.
+  **Holdings starts from it:** what each character already holds, knows and
+  ranks at before Chapter 1, with the chapters' changes layering on top — a
+  chapter's tag resolves to a Codex entry of its own, so the two meet by name,
+  the way this derivation's closing list and duplicate check already read
+  names. Appeared is deliberately left empty at Chapter 1, because it means
+  already described on the page. Where the Seed used to send a fact as prose
+  and now has a card slot for it, the prose gives way, so the writer still
+  reads each fact once.
 - **2026-10-22 (the world at Chapter 0, the Codex before Chapter 1):** Phase B of
   [the World at Chapter 0 plan](../../../docs/world-at-chapter-0.md). The record
   gains its first layer: the world a Story Seed and its World Blueprint made,

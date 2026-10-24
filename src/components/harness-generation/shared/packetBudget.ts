@@ -26,6 +26,9 @@ export const GENERATION_PACKET_BUDGET = {
     arc: { protected: true },
     rhythm: { protected: true },
     previouslyOn: { tokens: 2_000, protected: false },
+    // The world the story opens with: never trimmed, because a world the
+    // writer is shown half of is a world it invents the other half of.
+    worldAtChapterZero: { tokens: 4_000, protected: true },
     canonicalState: { tokens: 3_000, protected: false },
     // What each character has now: never trimmed, so the writer never forgets a sword or invents a second one.
     holdings: { protected: true },
@@ -53,6 +56,7 @@ export const PACKET_SECTION_ORDER: readonly PacketSectionId[] = [
   'arc',
   'rhythm',
   'previouslyOn',
+  'worldAtChapterZero',
   'canonicalState',
   'holdings',
   'appearances',

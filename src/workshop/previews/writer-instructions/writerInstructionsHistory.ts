@@ -21,6 +21,11 @@ export interface WriterInstructionsChange {
 export const WRITER_INSTRUCTIONS_HISTORY: readonly WriterInstructionsChange[] = [
   {
     date: '2026-10-24',
+    summary: 'The World at Chapter 0, step two: the chapter writer finally reads it. Until now every section describing the world was built from chapters already written, so Chapter 1 was written by a model told "none recorded yet" about a world the Blueprint had just filled with eighteen cards — the eye colours, voices, places and factions went to the Codex and never to the prose. The world now travels as its own Story Information section, ahead of what the chapters changed, and How to read the story information says what it is: established fact, not a plan and not a checklist of things to mention; the facts its slots mark as unchanging hold for the whole story; where a later chapter changed something, Current Canonical State and Holdings carry what it is now and take precedence. Holdings starts from the same record, so the packet can no longer say a character holds a sword in one section and nothing in another. Appeared is deliberately left empty at Chapter 1: it means already described on the page, and nobody has been.',
+    changed: { 'reading-guide': '01d64139c7e2f5' },
+  },
+  {
+    date: '2026-10-24',
     summary: 'Voice, as SENSEI asked for it after reading the Korean Test\'s cards: "Voice should be described like \'Energetic Middle age man\' or \'An old voice filled with wisdom\'... we\'re trying to match ElevenLabs voices to a character." The world builder asked for "how they speak", so it answered with manner — "low and controlled, with short sentences" — which tells a reader how a line sounds and tells a voice catalog nothing. It now asks for the voice to cast the character with: its age, weight and energy in a few words, with both of SENSEI\'s own examples. The slot is the Codex\'s, whose test is other-media, and the chapter writer never reads it, so no chapter changes; what reads it is the voice the character is cast in.',
     changed: { 'world-builder': '13f60da4796967' },
   },

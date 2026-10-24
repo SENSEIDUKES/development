@@ -86,8 +86,24 @@ for (const [name, browserType, touch] of [['chromium-mouse', chromium, false], [
       await page.mouse.move(start.x, start.y); await page.mouse.down();
       await page.mouse.move(end.x, end.y, { steps: 8 }); await page.mouse.up();
       await bar.waitFor(); assert.match(await selected(), /Characters 14–35/); await nativeEmpty();
+      // A normal outside click leaves a native caret. Repeated selections must
+      // replace it, rather than disappearing when the mouse is released.
+      for (let attempt = 0; attempt < 3; attempt++) {
+        await page.getByText('Hold a word or drag to select, then choose Edit, Copy or Media.', { exact: true }).click();
+        assert.equal(await bar.count(), 0);
+        assert.equal(await page.evaluate(() => getSelection().type), 'Caret');
+        await paragraph.evaluate(element => element.scrollIntoView({ block: 'center' }));
+        const from = await point(14); const to = await point(35);
+        await page.mouse.move(from.x, from.y); await page.mouse.down();
+        await page.mouse.move(to.x, to.y, { steps: 8 });
+        await page.waitForFunction(() => document.querySelector('[data-testid="manuscript-selection"]')?.textContent.includes('Characters 14–35'));
+        await page.mouse.up(); await page.mouse.move(to.x + 20, to.y + 50);
+        await bar.waitFor({ timeout: 3000 });
+        assert.match(await selected(), /Characters 14–35/); await nativeEmpty();
+      }
+      const wordPoint = await point(14);
       await page.keyboard.press('Escape');
-      await page.mouse.dblclick(start.x, start.y); await bar.waitFor();
+      await page.mouse.dblclick(wordPoint.x, wordPoint.y); await bar.waitFor();
       assert.match(await selected(), /“split”/); await nativeEmpty();
       await page.keyboard.press('Escape'); await paragraph.focus(); await page.keyboard.press('Enter');
       assert.match(await selected(), /“The”/); await page.keyboard.press('Shift+ArrowRight');

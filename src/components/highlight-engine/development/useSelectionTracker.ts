@@ -76,7 +76,10 @@ export function useSelectionTracker(
     selectionOrigin.current = null;
     const root = rootRef.current;
     const native = root?.ownerDocument.getSelection();
-    if (root && hasSelectionEndpoint(root, native)) native?.removeAllRanges();
+    // An owned gesture takes over from any previous browser selection, including
+    // a caret left outside the engine. Otherwise pointerup/keyup reads that stale
+    // range as a new host selection and immediately discards the chosen passage.
+    native?.removeAllRanges();
     const block = next && blocks.find(block => block.id === next.blockId);
     setSnapshot(next && block && isValidPassage(block, next) ? { selection: next, text: block.text } : null);
     setRemoveFor(null);

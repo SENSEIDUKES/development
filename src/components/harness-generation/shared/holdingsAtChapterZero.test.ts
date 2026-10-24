@@ -189,6 +189,46 @@ describe('what a chapter may still do with it', () => {
     expect(wrong.derive().flags.map(flag => flag.kind)).toEqual(['closing-unlisted', 'closing-untagged']);
   });
 
+  it('knows a starting thing lost and regained is the same thing', () => {
+    // Review finding (Codex, 2026-10-24): reading the names off what is held
+    // now cannot work for a thing already lost, so the chapter that regained it
+    // made a second one and the loss after that read as a loss of something
+    // unheld. What the world gave outlives the holding.
+    const world: WorldAtChapterZero = { cards: [
+      { key: 'chapter-0:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true, slots: {} },
+      { key: 'chapter-0:thing:vermilion-brush', kind: 'thing', name: 'Vermilion Brush', aliases: ['Red Quill'],
+        slots: { holder: 'Ye Chen' } },
+    ] };
+    const run = story(world);
+    run.write(1, ['He dropped the [[lost: MC | Vermilion Brush | ×1 | dropped]]brush down the well.']);
+    expect(things(run.derive())).toEqual([]);
+    run.write(2, ['A hand returned the [[gained: MC | Red Quill]]quill to him.']);
+    expect(things(run.derive())).toEqual([['Red Quill', 1]]);
+    run.write(3, ['He snapped the [[lost: MC | Vermilion Brush | ×1 | snapped]]brush at last.']);
+    expect(things(run.derive())).toEqual([]);
+    expect(run.derive().flags).toEqual([]);
+  });
+
+  it('reads a list written with the punctuation its own language lists with', () => {
+    // Review finding (Codex, 2026-10-24): splitting on the ASCII comma alone
+    // left a Chinese or Japanese list whole, and the full-width comma then read
+    // as a note about the story — so every holding in it was dropped in
+    // silence. SENSEI's own tests are not written in English.
+    const world: WorldAtChapterZero = { cards: [
+      { key: 'chapter-0:character:ye-chen', kind: 'character', name: '葉塵', mainCharacter: true,
+        slots: { holds: '玉牌，鉄剣', knows: '铁掌，云步' } },
+    ] };
+    const state = story(world).derive();
+    expect(things(state)).toEqual([['玉牌', 1], ['鉄剣', 1]]);
+    expect(main(state).abilities.map(ability => ability.name)).toEqual(['铁掌', '云步']);
+    // The enumeration comma lists them too.
+    const enumerated = story({ cards: [
+      { key: 'chapter-0:character:ye-chen', kind: 'character', name: '葉塵', mainCharacter: true,
+        slots: { knows: '铁掌、云步' } },
+    ] }).derive();
+    expect(main(enumerated).abilities.map(ability => ability.name)).toEqual(['铁掌', '云步']);
+  });
+
   it('spends a Chapter 0 count down rather than starting from nothing', () => {
     const run = story(WORLD);
     run.write(1, ['He swallowed a [[lost: MC | Spirit Pill | ×1 | eaten]]pill.']);

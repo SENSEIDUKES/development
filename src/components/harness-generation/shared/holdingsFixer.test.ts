@@ -99,6 +99,27 @@ describe('Holdings fixer: the world the story opened with', () => {
     expect(planHoldingsFix({ ...inputFor(state, latest), worldAtChapterZero: world })).toEqual({ cases: [], settled: [] });
   });
 
+  it('says what a near-named starting holder had, rather than nothing', async () => {
+    // Review finding (CodeRabbit, 2026-10-24): a tag naming 'Mu' resolves to a
+    // new Codex entry, because the resolver matches exactly, while the world
+    // holds 'Elder Mu' under its card's key. The holdings are right, but the
+    // fixer looked the holder up by the tag's entry ID alone and reported that
+    // nothing was recorded.
+    const nearNamed: WorldAtChapterZero = {
+      cards: [
+        { key: 'chapter-0:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true, slots: {} },
+        { key: 'chapter-0:character:elder-mu', kind: 'character', name: 'Elder Mu', slots: { holds: 'Jade Fan' } },
+      ],
+    };
+    const { state, latest } = await written(reply(['Mu took up the [[gained: Mu | Jade Fan]]jade fan again.']));
+    const plan = planHoldingsFix({ ...inputFor(state, latest), worldAtChapterZero: nearNamed });
+    expect(plan.cases.flatMap(entry => entry.case.problems))
+      .toEqual(['Elder Mu gains ‘Jade Fan’ again, but already holds it. It is not counted twice.']);
+    const record = (plan.cases[0].case.record ?? []).join('\n');
+    expect(record).toContain('Jade Fan');
+    expect(record).not.toContain('nothing recorded');
+  });
+
   it('asks about an untagged loss described by another of a starting thing\'s names', async () => {
     // Review finding (Codex, 2026-10-24): the closing-case branch searched the
     // chapter's sentences by the entry's names or the flag's one name, so a

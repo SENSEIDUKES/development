@@ -157,6 +157,24 @@ export function planHoldingsFix({ chapter, chapters, entries, mainCharacterName,
   const before = deriveHoldings({ entries, chapters: storyChapters.filter(entry => entry.chapterNumber < chapter.chapterNumber), mainCharacterName, worldAtChapterZero });
   const flags = chapterHoldingFlags(now, chapter.id, createdIn(entries, chapter.id));
   const entryName = (id: string | undefined, fallback: string) => (id ? entries.find(entry => entry.id === id)?.name : undefined) ?? fallback;
+  /**
+   * The character a tag's holder is, in a derived record. A tag resolves its
+   * holder to a Codex entry by its exact name, while the Chapter 0 world may
+   * hold the same person under their card's own key, so the two keys differ for
+   * one person: the record reconciles them by name and so must this, or the
+   * holder's own holdings and history read as nothing recorded. The same name
+   * wins over a name merely close to it, and two of either are a tie left
+   * unresolved rather than guessed.
+   */
+  const holderIn = (state: HoldingsState, entryId: string | undefined, fallback: string) => {
+    const direct = entryId ? state.characters.find(character => character.entryId === entryId) : undefined;
+    if (direct) return direct;
+    const name = entryName(entryId, fallback);
+    const knownAs = (character: CharacterHoldings) => [character.name, ...(character.knownAs ?? [])];
+    const only = (matches: readonly CharacterHoldings[]) => matches.length === 1 ? matches[0] : undefined;
+    return only(state.characters.filter(character => knownAs(character).some(known => normalizeIdentityLabel(known) === normalizeIdentityLabel(name))))
+      ?? only(state.characters.filter(character => knownAs(character).some(known => namesNearlyMatch(known, name))));
+  };
   const cases: HoldingsFixPlanCase[] = [];
 
   // Problems on a sentence: one case per sentence, with every problem found there.
@@ -188,18 +206,18 @@ export function planHoldingsFix({ chapter, chapters, entries, mainCharacterName,
     const record: string[] = [];
     for (const holder of unique(onSentence.map(entry => entry.payload.holder.entryId ?? entry.payload.holder.name))) {
       const name = entryName(holder, holder);
-      record.push(holdingsLine(before.characters.find(character => character.entryId === holder), name, 'before this chapter'));
+      record.push(holdingsLine(holderIn(before, holder, holder), name, 'before this chapter'));
     }
     const eventLine = (target: string, when: string, event: CharacterHoldings['history'][number]) =>
       `${target}: ${when}, ${event.verb}${event.count ? ` ${event.count}` : ''}${event.level ? ` ${event.level}` : ''}: “${event.passage.text}”`;
     for (const entry of onSentence) {
       if (!entry.payload.target) continue;
       const target = entryName(entry.payload.target.entryId, entry.payload.target.name);
-      const history = before.characters.find(character => character.entryId === entry.payload.holder.entryId)?.history
+      const history = holderIn(before, entry.payload.holder.entryId, entry.payload.holder.name)?.history
         .filter(event => event.target === target).slice(-HISTORY_LIMIT) ?? [];
       for (const event of history) record.push(eventLine(target, `Chapter ${event.passage.chapterNumber}`, event));
       // What this chapter itself recorded about it before this sentence: the case is never judged without it.
-      const earlier = now.characters.find(character => character.entryId === entry.payload.holder.entryId)?.history
+      const earlier = holderIn(now, entry.payload.holder.entryId, entry.payload.holder.name)?.history
         .filter(event => event.target === target && event.passage.chapterId === chapter.id && isBefore(event.passage.recordId, blockId, start))
         .slice(-HISTORY_LIMIT) ?? [];
       for (const event of earlier) record.push(eventLine(target, 'earlier in this chapter', event));

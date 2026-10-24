@@ -84,7 +84,7 @@ export const WORLD_CARD_KINDS: readonly WorldCardKind[] = [
       { id: 'connectionToMC', label: 'Tie to the main character', test: 'save-game', changes: true, asks: 'how they stand with the main character' },
       { id: 'ties', label: 'Ties', test: 'save-game', changes: true, asks: 'who else they are allied, related, hostile or bound to' },
       { id: 'belongsTo', label: 'Belongs to', test: 'save-game', changes: true, asks: 'the factions they belong to, by name' },
-      { id: 'voice', label: 'Voice', test: 'other-media', changes: false, asks: 'how they speak' },
+      { id: 'voice', label: 'Voice', test: 'other-media', changes: false, asks: 'the voice to cast them with: its age, weight and energy in a few words, as "an energetic young man" or "an old voice full of wisdom"' },
     ],
   },
   {

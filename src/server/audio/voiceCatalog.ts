@@ -12,7 +12,10 @@
  *
  * The catalog is a static JSON list. Free-form fields (archetype, role, age
  * range, description) are kept as plain strings so future catalog additions
- * do not require a code change. Only `fixed_or_flexible` is a closed enum.
+ * do not require a code change. `fixed_or_flexible` and `gender` are closed
+ * enums, and `age_years` is the age band as numbers: those three are what a
+ * character is matched against, so they are fields of the catalog rather than
+ * something read out of a file name or a free-form label.
  *
  * Raw data is preserved through the loader. Validation reports issues without
  * silently dropping entries; the voice without a provider ID is a valid but
@@ -25,6 +28,23 @@ export type VoiceClassification = 'fixed' | 'flexible';
 
 export const VOICE_CLASSIFICATIONS: readonly VoiceClassification[] = ['fixed', 'flexible'] as const;
 
+/**
+ * The voice's own sex, as a listener hears it. It is a field of its own rather
+ * than a reading of the file name (SENSEI, 2026-10-24: matching cannot rest on
+ * a naming convention — five of the catalog's own names use an en dash or a
+ * double space, so a reading of them already failed).
+ */
+export type VoiceGender = 'female' | 'male' | 'unisex';
+
+export const VOICE_GENDERS: readonly VoiceGender[] = ['female', 'male', 'unisex'] as const;
+
+/**
+ * The years a voice can carry, when its age is years at all. `null` for a
+ * voice whose age is not a human span — ageless, ancient, or unknown — which
+ * is matched by what it is rather than by a character's age.
+ */
+export type VoiceAgeYears = readonly [number, number] | null;
+
 export interface VoiceCatalogEntry {
   /** Source file name, e.g. "voice_preview_ancient master - female.mp3". */
   file_name: string;
@@ -35,12 +55,16 @@ export interface VoiceCatalogEntry {
   voice_id: string | null;
   /** Free-form archetype label, e.g. "Ancient Master". */
   main_voice_type: string;
+  /** The voice's own sex, as a listener hears it. */
+  gender: VoiceGender;
   fixed_or_flexible: VoiceClassification;
   /** Free-form compatible character roles; may be empty. */
   compatible_character_roles: string[];
   description: string;
   /** Free-form age band, e.g. "18-28", "Ageless", "Ancient (non-human)". */
   age_range: string;
+  /** The same band as years a character's age can be matched against, or null. */
+  age_years: VoiceAgeYears;
 }
 
 /**
@@ -56,10 +80,13 @@ export interface PublicVoiceMeta {
   internalKey: string;
   fileName: string;
   archetype: string;
+  gender: VoiceGender;
   classification: VoiceClassification;
   compatibleRoles: string[];
   description: string;
   ageRange: string;
+  /** The age band as years, or null when the voice's age is not a human span. */
+  ageYears: VoiceAgeYears;
   /** False when the entry has no provider ID and cannot be TTS-synthesized. */
   ttsAvailable: boolean;
 }
@@ -105,6 +132,12 @@ export class VoiceCatalogValidationError extends Error {
 const isString = (v: unknown): v is string => typeof v === 'string';
 const isStringOrNull = (v: unknown): v is string | null => v === null || typeof v === 'string';
 const isStringArray = (v: unknown): v is string[] => Array.isArray(v) && v.every(isString);
+const isVoiceGender = (v: unknown): v is VoiceGender =>
+  VOICE_GENDERS.includes(v as VoiceGender);
+const isWholeYear = (v: unknown): v is number =>
+  typeof v === 'number' && Number.isInteger(v) && v >= 0 && v <= 200;
+const isAgeYears = (v: unknown): v is VoiceAgeYears =>
+  v === null || (Array.isArray(v) && v.length === 2 && v.every(isWholeYear) && v[0] <= v[1]);
 
 /**
  * Derive the internal catalog key from a file name. Stable for the current
@@ -130,10 +163,12 @@ export const toPublicVoiceMeta = (entry: VoiceCatalogEntry): PublicVoiceMeta => 
   internalKey: deriveInternalKey(entry.file_name),
   fileName: entry.file_name,
   archetype: entry.main_voice_type,
+  gender: entry.gender,
   classification: entry.fixed_or_flexible,
   compatibleRoles: [...entry.compatible_character_roles],
   description: entry.description,
   ageRange: entry.age_range,
+  ageYears: entry.age_years === null ? null : [entry.age_years[0], entry.age_years[1]],
   ttsAvailable: entry.voice_id !== null && entry.voice_id !== '',
 });
 
@@ -196,6 +231,24 @@ export const parseVoiceCatalog = (raw: unknown): VoiceCatalogLoadResult => {
       });
       continue;
     }
+    // A voice with no sex, or an age band that is neither years nor plainly
+    // not years, cannot be matched to a character: it is reported, not guessed.
+    if (!isVoiceGender(e.gender)) {
+      issues.push({
+        kind: 'malformed_entry',
+        fileName: e.file_name,
+        reason: `gender is required and must be one of ${VOICE_GENDERS.join(', ')}`,
+      });
+      continue;
+    }
+    if (!isAgeYears(e.age_years)) {
+      issues.push({
+        kind: 'malformed_entry',
+        fileName: e.file_name,
+        reason: 'age_years must be null, or two whole years from youngest to oldest',
+      });
+      continue;
+    }
     if (e.fixed_or_flexible !== 'fixed' && e.fixed_or_flexible !== 'flexible') {
       issues.push({
         kind: 'malformed_entry',
@@ -233,10 +286,12 @@ export const parseVoiceCatalog = (raw: unknown): VoiceCatalogLoadResult => {
       file_name: e.file_name,
       voice_id: normalizedVoiceId,
       main_voice_type: e.main_voice_type,
+      gender: e.gender,
       fixed_or_flexible: e.fixed_or_flexible,
       compatible_character_roles: e.compatible_character_roles,
       description: e.description,
       age_range: e.age_range,
+      age_years: e.age_years,
     };
     entries.push(entry);
 

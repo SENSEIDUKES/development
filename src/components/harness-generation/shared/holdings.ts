@@ -435,6 +435,13 @@ const listedName = (value: string) => {
 };
 
 /**
+ * A quantity's grouping separators taken out, so "1,000" is read as a thousand
+ * rather than cut at the comma. Only a comma between two digits goes: the one
+ * that separates a list stays, and so does a name's own punctuation.
+ */
+const withoutGrouping = (value: string) => value.replace(/([0-9０-９])[,，]([0-9０-９])/g, '$1$2');
+
+/**
  * A Chapter 0 slot that asks for things or abilities by name, read as the list
  * it asks for: one per comma, semicolon or line. Never split on "and", which
  * joins as often as it separates ("a bow and arrow set"), and never on a
@@ -444,7 +451,7 @@ const listedName = (value: string) => {
  * Sword", and the key a holding is held under keeps every word, so the article
  * goes: with it, one sword would become two the first time a chapter named it.
  */
-const listedSlotHoldings = (value: string | undefined): Array<{ name: string; count: number }> => (value ?? '')
+const listedSlotHoldings = (value: string | undefined): Array<{ name: string; count: number }> => withoutGrouping(value ?? '')
   .split(/[,;\n]+/)
   .flatMap(part => {
     const named = holdingName(part.trim());
@@ -631,8 +638,11 @@ export function deriveHoldings({ entries, chapters, mainCharacterName, worldAtCh
       if (!holder) continue;
       const owner = cardNamed(characterCards, holder);
       if (!owner) continue;
-      const counted = Number(slot(card, 'count')?.match(/\d+/)?.[0]);
-      addThing(seeded(owner), card.name, Number.isFinite(counted) && counted > 0 ? counted : 1);
+      // The whole value is the quantity, so "1,000" is a thousand: reading the
+      // first run of digits would make it one, and the first chapter to spend
+      // one would spend the lot. A value that is not a quantity is no count.
+      const counted = toNumber(withoutGrouping(slot(card, 'count') ?? '').replace(/\s+/g, ''));
+      addThing(seeded(owner), card.name, Number.isInteger(counted) && counted > 0 ? counted : 1);
     }
   }
 

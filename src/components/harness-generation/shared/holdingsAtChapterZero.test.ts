@@ -90,6 +90,22 @@ describe('what the world gives a character before Chapter 1', () => {
     expect(holdingsSection(run.derive(), 'Ye Chen').characters[0].carries).toEqual(['Spirit Pill ×2', 'Jade Tokens ×2', 'Rusted Sword']);
   });
 
+  it('reads a whole quantity, so a thousand is not one', () => {
+    // Review finding (Codex, 2026-10-24): the first run of digits made '1,000'
+    // one stone, and spending one removed the entire supply.
+    const world: WorldAtChapterZero = { cards: [
+      { key: 'chapter-0:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true,
+        slots: { holds: 'Jade Token ×2,500' } },
+      { key: 'chapter-0:thing:spirit-stone', kind: 'thing', name: 'Spirit Stone', slots: { holder: 'Ye Chen', count: '1,000' } },
+      // A count that is not a quantity is no count, rather than a guess at one.
+      { key: 'chapter-0:thing:ember-coin', kind: 'thing', name: 'Ember Coin', slots: { holder: 'Ye Chen', count: 'a good few' } },
+    ] };
+    expect(things(story(world).derive())).toEqual([['Jade Token', 2500], ['Spirit Stone', 1000], ['Ember Coin', 1]]);
+    const run = story(world);
+    run.write(1, ['He spent one [[lost: MC | Spirit Stone | ×1 | spent]]stone.']);
+    expect(things(run.derive())).toEqual([['Jade Token', 2500], ['Spirit Stone', 999], ['Ember Coin', 1]]);
+  });
+
   it('gives a Chapter 0 holding no passage, because no chapter wrote it', () => {
     const state = story(WORLD).derive();
     expect(main(state).things.flatMap(thing => thing.events)).toEqual([]);

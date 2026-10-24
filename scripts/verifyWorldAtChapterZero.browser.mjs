@@ -61,10 +61,11 @@ try {
 
     // ── What the reader sees: a card waits until the story reaches it ─────
     await controls.getByRole('button', { name: 'What the reader sees', exact: true }).click();
-    await codex.getByRole('tab', { name: /^Characters/ }).click();
     assert.equal(await codex.locator('[data-card]').count(), 0,
       `${width}: the reader meets no one before the story reaches them`);
-    for (const label of ['Abilities', 'Places', 'Bestiary']) {
+    // A category waits until the record holds one of its kind, so before the
+    // first chapter the reader is offered none but the world's own frame.
+    for (const label of ['Characters', 'Items', 'Factions', 'Abilities', 'Places', 'Bestiary']) {
       assert.equal(await codex.getByRole('tab', { name: new RegExp(`^${label}`) }).count(), 0,
         `${width}: the ${label} category waits until the record holds one`);
     }

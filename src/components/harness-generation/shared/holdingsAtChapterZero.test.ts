@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readMarks } from '../../../narrative/marks';
 import type { CodexEntry } from '../../../narrative/holdings';
-import type { WorldAtChapterZero } from '../../../narrative/worldRecord';
+import type { WorldRecord } from '../../../narrative/worldRecord';
 import { harnessParagraphBlockId } from './chapterBody';
 import {
   deriveHoldings,
@@ -25,22 +25,22 @@ const DECLARED: DeclaredCharacter[] = [
   { name: 'Elder Qin' },
 ];
 
-const WORLD: WorldAtChapterZero = {
+const WORLD: WorldRecord = {
   cards: [
     {
-      key: 'chapter-0:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true,
+      key: 'world:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true,
       // The sword is on his own list and has a card of its own; the fan has
       // only a card, and the manual only his list.
-      slots: { rankLevel: 'Qi Condensation 1', holds: 'a rusted sword; the Jade Fan', knows: 'Iron Palm, Cloud Step' },
+      enteredInChapter: 0, slots: { rankLevel: 'Qi Condensation 1', holds: 'a rusted sword; the Jade Fan', knows: 'Iron Palm, Cloud Step' },
     },
-    { key: 'chapter-0:character:elder-qin', kind: 'character', name: 'Elder Qin', slots: { rankLevel: 'Core Formation 4' } },
-    { key: 'chapter-0:thing:rusted-sword', kind: 'thing', name: 'Rusted Sword', slots: { holder: 'Ye Chen' } },
-    { key: 'chapter-0:thing:spirit-pill', kind: 'thing', name: 'Spirit Pill', slots: { holder: 'Ye Chen', count: '3' } },
-    { key: 'chapter-0:ability:iron-palm', kind: 'ability', name: 'Iron Palm', slots: { ladder: 'Minor, Major' } },
+    { key: 'world:character:elder-qin', kind: 'character', name: 'Elder Qin', enteredInChapter: 0, slots: { rankLevel: 'Core Formation 4' } },
+    { key: 'world:thing:rusted-sword', kind: 'thing', name: 'Rusted Sword', enteredInChapter: 0, slots: { holder: 'Ye Chen' } },
+    { key: 'world:thing:spirit-pill', kind: 'thing', name: 'Spirit Pill', enteredInChapter: 0, slots: { holder: 'Ye Chen', count: '3' } },
+    { key: 'world:ability:iron-palm', kind: 'ability', name: 'Iron Palm', enteredInChapter: 0, slots: { ladder: 'Minor, Major' } },
   ],
 };
 
-const story = (worldAtChapterZero?: WorldAtChapterZero) => {
+const story = (worldAtChapterZero?: WorldRecord) => {
   let entries: CodexEntry[] = [];
   let next = 0;
   const chapters: HoldingsChapter[] = [];
@@ -80,9 +80,9 @@ describe('what the world gives a character before Chapter 1', () => {
   });
 
   it('keeps a count written into a listed name, so the first chapter to spend one does not spend them all', () => {
-    const world: WorldAtChapterZero = { cards: [{
-      key: 'chapter-0:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true,
-      slots: { holds: 'Spirit Pill ×3, 2 Jade Tokens, Rusted Sword' },
+    const world: WorldRecord = { cards: [{
+      key: 'world:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true,
+      enteredInChapter: 0, slots: { holds: 'Spirit Pill ×3, 2 Jade Tokens, Rusted Sword' },
     }] };
     expect(things(story(world).derive())).toEqual([['Spirit Pill', 3], ['Jade Tokens', 2], ['Rusted Sword', 1]]);
     const run = story(world);
@@ -94,12 +94,12 @@ describe('what the world gives a character before Chapter 1', () => {
   it('reads a whole quantity, so a thousand is not one', () => {
     // Review finding (Codex, 2026-10-24): the first run of digits made '1,000'
     // one stone, and spending one removed the entire supply.
-    const world: WorldAtChapterZero = { cards: [
-      { key: 'chapter-0:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true,
-        slots: { holds: 'Jade Token ×2,500' } },
-      { key: 'chapter-0:thing:spirit-stone', kind: 'thing', name: 'Spirit Stone', slots: { holder: 'Ye Chen', count: '1,000' } },
+    const world: WorldRecord = { cards: [
+      { key: 'world:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true,
+        enteredInChapter: 0, slots: { holds: 'Jade Token ×2,500' } },
+      { key: 'world:thing:spirit-stone', kind: 'thing', name: 'Spirit Stone', enteredInChapter: 0, slots: { holder: 'Ye Chen', count: '1,000' } },
       // A count that is not a quantity is no count, rather than a guess at one.
-      { key: 'chapter-0:thing:ember-coin', kind: 'thing', name: 'Ember Coin', slots: { holder: 'Ye Chen', count: 'a good few' } },
+      { key: 'world:thing:ember-coin', kind: 'thing', name: 'Ember Coin', enteredInChapter: 0, slots: { holder: 'Ye Chen', count: 'a good few' } },
     ] };
     expect(things(story(world).derive())).toEqual([['Jade Token', 2500], ['Spirit Stone', 1000], ['Ember Coin', 1]]);
     const run = story(world);
@@ -131,7 +131,7 @@ describe('what the world gives a character before Chapter 1', () => {
     // "the Jade Fan" and a later tag's "Jade Fan" are one fan, not two.
     const state = story(WORLD).derive();
     expect(main(state).things.map(thing => thing.name)).toContain('Jade Fan');
-    expect(main(state).things.map(thing => thing.entryId)).toContain('chapter-0:thing:jade-fan');
+    expect(main(state).things.map(thing => thing.entryId)).toContain('world:thing:jade-fan');
   });
 });
 
@@ -156,10 +156,10 @@ describe('what a chapter may still do with it', () => {
     // Review finding (Codex, 2026-10-24): matching only the canonical name left
     // a valid loss under an alias flagged as a loss of something unheld, and a
     // gain under one making a second holding.
-    const world: WorldAtChapterZero = { cards: [
-      { key: 'chapter-0:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true, slots: {} },
-      { key: 'chapter-0:thing:vermilion-brush', kind: 'thing', name: 'Vermilion Brush', aliases: ['Red Quill'],
-        slots: { holder: 'Ye Chen' } },
+    const world: WorldRecord = { cards: [
+      { key: 'world:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true, enteredInChapter: 0, slots: {} },
+      { key: 'world:thing:vermilion-brush', kind: 'thing', name: 'Vermilion Brush', aliases: ['Red Quill'],
+        enteredInChapter: 0, slots: { holder: 'Ye Chen' } },
     ] };
     expect(things(story(world).derive())).toEqual([['Vermilion Brush', 1]]);
     const run = story(world);
@@ -172,10 +172,10 @@ describe('what a chapter may still do with it', () => {
     // Review finding (Codex, 2026-10-24): the closing-list check read only the
     // canonical name, so a correct chapter read as having lost one thing and
     // gained another — with no holding tag at all, straight to the fixer.
-    const world: WorldAtChapterZero = { cards: [
-      { key: 'chapter-0:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true, slots: {} },
-      { key: 'chapter-0:thing:vermilion-brush', kind: 'thing', name: 'Vermilion Brush', aliases: ['Red Quill'],
-        slots: { holder: 'Ye Chen' } },
+    const world: WorldRecord = { cards: [
+      { key: 'world:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true, enteredInChapter: 0, slots: {} },
+      { key: 'world:thing:vermilion-brush', kind: 'thing', name: 'Vermilion Brush', aliases: ['Red Quill'],
+        enteredInChapter: 0, slots: { holder: 'Ye Chen' } },
     ] };
     const run = story(world);
     run.write(1, ['He carried it east.'], ['Red Quill']);
@@ -194,10 +194,10 @@ describe('what a chapter may still do with it', () => {
     // now cannot work for a thing already lost, so the chapter that regained it
     // made a second one and the loss after that read as a loss of something
     // unheld. What the world gave outlives the holding.
-    const world: WorldAtChapterZero = { cards: [
-      { key: 'chapter-0:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true, slots: {} },
-      { key: 'chapter-0:thing:vermilion-brush', kind: 'thing', name: 'Vermilion Brush', aliases: ['Red Quill'],
-        slots: { holder: 'Ye Chen' } },
+    const world: WorldRecord = { cards: [
+      { key: 'world:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true, enteredInChapter: 0, slots: {} },
+      { key: 'world:thing:vermilion-brush', kind: 'thing', name: 'Vermilion Brush', aliases: ['Red Quill'],
+        enteredInChapter: 0, slots: { holder: 'Ye Chen' } },
     ] };
     const run = story(world);
     run.write(1, ['He dropped the [[lost: MC | Vermilion Brush | ×1 | dropped]]brush down the well.']);
@@ -214,17 +214,17 @@ describe('what a chapter may still do with it', () => {
     // left a Chinese or Japanese list whole, and the full-width comma then read
     // as a note about the story — so every holding in it was dropped in
     // silence. SENSEI's own tests are not written in English.
-    const world: WorldAtChapterZero = { cards: [
-      { key: 'chapter-0:character:ye-chen', kind: 'character', name: '葉塵', mainCharacter: true,
-        slots: { holds: '玉牌，鉄剣', knows: '铁掌，云步' } },
+    const world: WorldRecord = { cards: [
+      { key: 'world:character:ye-chen', kind: 'character', name: '葉塵', mainCharacter: true,
+        enteredInChapter: 0, slots: { holds: '玉牌，鉄剣', knows: '铁掌，云步' } },
     ] };
     const state = story(world).derive();
     expect(things(state)).toEqual([['玉牌', 1], ['鉄剣', 1]]);
     expect(main(state).abilities.map(ability => ability.name)).toEqual(['铁掌', '云步']);
     // The enumeration comma lists them too.
     const enumerated = story({ cards: [
-      { key: 'chapter-0:character:ye-chen', kind: 'character', name: '葉塵', mainCharacter: true,
-        slots: { knows: '铁掌、云步' } },
+      { key: 'world:character:ye-chen', kind: 'character', name: '葉塵', mainCharacter: true,
+        enteredInChapter: 0, slots: { knows: '铁掌、云步' } },
     ] }).derive();
     expect(main(enumerated).abilities.map(ability => ability.name)).toEqual(['铁掌', '云步']);
   });
@@ -239,10 +239,10 @@ describe('what a chapter may still do with it', () => {
     // 'Mu' reads as one name with both 'Elder Mu' and 'Old Mu' and is neither
     // of them, so rather than hand the fan to whichever card came first, the
     // change stays under its own key.
-    const world: WorldAtChapterZero = { cards: [
-      { key: 'chapter-0:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true, slots: {} },
-      { key: 'chapter-0:character:elder-mu', kind: 'character', name: 'Elder Mu', slots: {} },
-      { key: 'chapter-0:character:old-mu', kind: 'character', name: 'Old Mu', slots: {} },
+    const world: WorldRecord = { cards: [
+      { key: 'world:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true, enteredInChapter: 0, slots: {} },
+      { key: 'world:character:elder-mu', kind: 'character', name: 'Elder Mu', enteredInChapter: 0, slots: {} },
+      { key: 'world:character:old-mu', kind: 'character', name: 'Old Mu', enteredInChapter: 0, slots: {} },
     ] };
     const run = story(world);
     run.write(1, ['He handed [[gained: Mu | Jade Fan]]the fan over.']);
@@ -255,10 +255,10 @@ describe('what a chapter may still do with it', () => {
   });
 
   it('still reaches the one world character a chapter names exactly', () => {
-    const world: WorldAtChapterZero = { cards: [
-      { key: 'chapter-0:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true, slots: {} },
-      { key: 'chapter-0:character:elder-mu', kind: 'character', name: 'Elder Mu', slots: {} },
-      { key: 'chapter-0:character:old-mu', kind: 'character', name: 'Old Mu', slots: {} },
+    const world: WorldRecord = { cards: [
+      { key: 'world:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true, enteredInChapter: 0, slots: {} },
+      { key: 'world:character:elder-mu', kind: 'character', name: 'Elder Mu', enteredInChapter: 0, slots: {} },
+      { key: 'world:character:old-mu', kind: 'character', name: 'Old Mu', enteredInChapter: 0, slots: {} },
     ] };
     const run = story(world);
     run.write(1, ['He handed [[gained: Elder Mu | Jade Fan]]the fan over.']);
@@ -270,9 +270,9 @@ describe('what a chapter may still do with it', () => {
   });
 
   it('spends the holding the story names, not the one whose name is merely close', () => {
-    const world: WorldAtChapterZero = { cards: [
-      { key: 'chapter-0:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true,
-        slots: { holds: 'Spirit Pill; Spirit Pills' } },
+    const world: WorldRecord = { cards: [
+      { key: 'world:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true,
+        enteredInChapter: 0, slots: { holds: 'Spirit Pill; Spirit Pills' } },
     ] };
     const run = story(world);
     run.write(1, ['He swallowed a [[lost: MC | Spirit Pill | ×1]]pill.']);
@@ -283,9 +283,9 @@ describe('what a chapter may still do with it', () => {
   });
 
   it('refuses to guess when two Chapter 0 holdings are equally close', () => {
-    const world: WorldAtChapterZero = { cards: [
-      { key: 'chapter-0:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true,
-        slots: { holds: 'Spirit Pills; Spirit Pilled' } },
+    const world: WorldRecord = { cards: [
+      { key: 'world:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true,
+        enteredInChapter: 0, slots: { holds: 'Spirit Pills; Spirit Pilled' } },
     ] };
     const run = story(world);
     run.write(1, ['He swallowed a [[lost: MC | Spirit Pill | ×1]]pill.']);
@@ -305,16 +305,16 @@ describe('what a chapter may still do with it', () => {
 describe('the one card a written name means', () => {
   // Review finding (Codex, 2026-10-24): a first fuzzy match would read 'Sword'
   // as 'Iron Sword' and give a thing held by 'Qin' to 'Elder Qin'.
-  const world: WorldAtChapterZero = { cards: [
-    { key: 'chapter-0:character:qin', kind: 'character', name: 'Qin', slots: {} },
-    { key: 'chapter-0:character:elder-qin', kind: 'character', name: 'Elder Qin', slots: {} },
-    { key: 'chapter-0:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true,
-      slots: { holds: 'Sword', knows: 'Palm' } },
-    { key: 'chapter-0:thing:iron-sword', kind: 'thing', name: 'Iron Sword', slots: {} },
-    { key: 'chapter-0:thing:sword', kind: 'thing', name: 'Sword', slots: {} },
-    { key: 'chapter-0:thing:jade-token', kind: 'thing', name: 'Jade Token', slots: { holder: 'Qin' } },
-    { key: 'chapter-0:ability:iron-palm', kind: 'ability', name: 'Iron Palm', slots: {} },
-    { key: 'chapter-0:ability:palm', kind: 'ability', name: 'Palm', slots: {} },
+  const world: WorldRecord = { cards: [
+    { key: 'world:character:qin', kind: 'character', name: 'Qin', enteredInChapter: 0, slots: {} },
+    { key: 'world:character:elder-qin', kind: 'character', name: 'Elder Qin', enteredInChapter: 0, slots: {} },
+    { key: 'world:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true,
+      enteredInChapter: 0, slots: { holds: 'Sword', knows: 'Palm' } },
+    { key: 'world:thing:iron-sword', kind: 'thing', name: 'Iron Sword', enteredInChapter: 0, slots: {} },
+    { key: 'world:thing:sword', kind: 'thing', name: 'Sword', enteredInChapter: 0, slots: {} },
+    { key: 'world:thing:jade-token', kind: 'thing', name: 'Jade Token', enteredInChapter: 0, slots: { holder: 'Qin' } },
+    { key: 'world:ability:iron-palm', kind: 'ability', name: 'Iron Palm', enteredInChapter: 0, slots: {} },
+    { key: 'world:ability:palm', kind: 'ability', name: 'Palm', enteredInChapter: 0, slots: {} },
   ] };
   const state = story(world).derive();
   const held = (name: string) => state.characters.find(character => character.name === name);
@@ -331,9 +331,9 @@ describe('the one card a written name means', () => {
 
   it('refuses a holder no single card can be matched to', () => {
     const ambiguous = story({ cards: [
-      { key: 'chapter-0:character:qin-a', kind: 'character', name: 'Qin Shi', slots: {} },
-      { key: 'chapter-0:character:qin-b', kind: 'character', name: 'Shi Qin', slots: {} },
-      { key: 'chapter-0:thing:token', kind: 'thing', name: 'Token', slots: { holder: 'Qin' } },
+      { key: 'world:character:qin-a', kind: 'character', name: 'Qin Shi', enteredInChapter: 0, slots: {} },
+      { key: 'world:character:qin-b', kind: 'character', name: 'Shi Qin', enteredInChapter: 0, slots: {} },
+      { key: 'world:thing:token', kind: 'thing', name: 'Token', enteredInChapter: 0, slots: { holder: 'Qin' } },
     ] }).derive();
     // 'Qin' names neither one more than the other, so the token is left unheld
     // rather than handed to whichever card came first.
@@ -342,8 +342,8 @@ describe('the one card a written name means', () => {
 
   it('finds a card by any name the world knows it by', () => {
     const byAlias = story({ cards: [
-      { key: 'chapter-0:character:qin', kind: 'character', name: 'Elder Qin', aliases: ['The Iron Brush'], slots: {} },
-      { key: 'chapter-0:thing:brush', kind: 'thing', name: 'Vermilion Brush', slots: { holder: 'The Iron Brush' } },
+      { key: 'world:character:qin', kind: 'character', name: 'Elder Qin', aliases: ['The Iron Brush'], enteredInChapter: 0, slots: {} },
+      { key: 'world:thing:brush', kind: 'thing', name: 'Vermilion Brush', enteredInChapter: 0, slots: { holder: 'The Iron Brush' } },
     ] }).derive();
     expect(byAlias.characters[0].things.map(thing => thing.name)).toEqual(['Vermilion Brush']);
   });

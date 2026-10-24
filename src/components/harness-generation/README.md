@@ -37,13 +37,30 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-10-24 (the world at Chapter 0 becomes the world record):** The record
+  held only the world a story opens with, and its name said so. SENSEI's
+  architecture for everything the Codex holds is that a card is made properly
+  once, whenever it arrives, the same way the opening cast is made, and that the
+  chapters' own tags then move the slots their kind marks as changing ("any new
+  character should just be processed properly in the beginning", and on a
+  character losing limbs later, "I thought that was the point of the tags").
+  A record named after Chapter 0 cannot hold a rival who arrives in Chapter 14,
+  so `WorldRecord` and `WorldCard` replace the Chapter 0 names, every card
+  carries the `enteredInChapter` it entered the world in, and a card's key is
+  its kind and its name alone, never its chapter, so one card keeps one identity
+  for the whole story. A key written twice is read once, entered in the earliest
+  chapter either copy claims. Everything a Story Seed and its Blueprint make
+  enters in Chapter 0, and so does every card saved before this version, since
+  nothing could add one later (schema 36). Plumbing only: no prompt words
+  changed, and the writer still reads the world under the heading SENSEI
+  approved, which is still the truth until something creates a later card.
 - **2026-10-24 (the chapter writer reads the world at Chapter 0):** Phase C of
   [the World at Chapter 0 plan](../../../docs/world-at-chapter-0.md). Three
   things, and the first is why the other two were invisible. **The Foundation
   keeps the world:** `normalizeStoryFoundationInput` rebuilds the Foundation
   from the fields it knows and this one was never on that list, so every story
   dropped its world at creation and the Codex had nothing to show (SENSEI,
-  2026-10-24). It is now read in through `normalizeWorldAtChapterZero`, which
+  2026-10-24). It is now read in through `normalizeWorldRecord`, which
   drops an unknown kind, a nameless card and a slot the kind does not define,
   and computes every key from the card's own kind and name. **The writer reads
   it:** its own Story Information section (schema 35), ahead of Current
@@ -67,7 +84,7 @@ existing Chapter Generation feature.
   tests needs it. The Story Seed's fields, the Blueprint's instruction, its
   answer schema and the Codex's cards are all written from it, so none can hold
   a slot another lacks. **The record:** `StoryFoundationInput.worldAtChapterZero`
-  (`WorldAtChapterZero`), read from the reconciled Seed at the one Seed → HARNESS
+  (`WorldRecord`), read from the reconciled Seed at the one Seed → HARNESS
   translation point (`worldAtChapterZeroFromStorySeed`); nothing is stored
   twice. **Schema 34** (skipping 33, the rolled-back chapter loop's), with the
   no-op migration every additive version has: a story saved before it keeps
@@ -82,7 +99,7 @@ existing Chapter Generation feature.
   creator, so its world would spoil it): the record is whole, and this reading
   of it holds each card back until a chapter brings it in, exactly as the Codex
   behaved before this world existed. A world open to its reader
-  (`WorldAtChapterZero.openToTheReader`, for a novel its author brought in and
+  (`WorldRecord.openToTheReader`, for a novel its author brought in and
   is expanding) shows every card from the start; the World rules sheet, the
   world's frame rather than a card, shows either way, and a category appears
   only once the record holds one of its kind. An ability is reached like any

@@ -37,16 +37,41 @@ describe('planHarnessWorkspaceLoad', () => {
     // 32 adds only optional chapter fields: its appearances and the looks written down from them.
     // 34 adds only an optional Foundation field: the world at Chapter 0. (33 was the rolled-back chapter loop's.)
     // 35 adds only an optional packet section: that world, carried to the writer. Frozen attempts keep their own packet.
-    expect(HARNESS_GENERATION_SCHEMA_VERSION).toBe(35);
-    for (const schemaVersion of [27, 28, 29, 30, 31, 32, 34]) {
+    // 36 gives every world card the chapter it entered in; a workspace holding no world is untouched.
+    expect(HARNESS_GENERATION_SCHEMA_VERSION).toBe(36);
+    for (const schemaVersion of [27, 28, 29, 30, 31, 32, 34, 35]) {
       const stored = { ...createEmptyHarnessWorkspaceState(), schemaVersion, stories: [{ id: 'a' }], attempts: [{ id: 'a1', capaPrompt: { soundVocabulary: [{ word: 'blade drawn', example: 'drew his sword' }] } }], chapters: [{ id: 'c1', soundCues: [{ id: 'sc1' }] }] };
       const plan = planHarnessWorkspaceLoad(stored, now);
-      expect(plan.state).toEqual({ ...stored, schemaVersion: 35 });
+      expect(plan.state).toEqual({ ...stored, schemaVersion: 36 });
       expect(plan.preserve).toEqual({
         key: `${PRESERVED_WORKSPACE_PREFIX}v${schemaVersion}:2026-09-24T12:00:00.000Z`,
         record: { preservedAt: now(), reason: 'migrated', schemaVersion, workspace: stored },
       });
     }
+  });
+
+  it('brings every world card a saved workspace holds up to the world record (schema 36)', () => {
+    // Nothing could add a card after Chapter 0 before this version, so every
+    // saved card is the opening world, wherever the workspace keeps it: a
+    // Foundation revision's input and each attempt's frozen packet alike. Its
+    // key is computed again too, because a key left naming Chapter 0 would not
+    // match the one this build computes for the same card, and the Codex and
+    // Holdings would read one card as two.
+    const world = { cards: [{ key: 'chapter-0:character:ye-chen', kind: 'character', name: 'Ye Chen', slots: { eyeColor: 'Pale grey' } }] };
+    const stored = {
+      ...createEmptyHarnessWorkspaceState(),
+      schemaVersion: 35,
+      foundations: [{ id: 'f1', input: { premise: 'A quarry laborer rises.', worldAtChapterZero: world } }],
+      attempts: [{ id: 'a1', storyInformation: { worldAtChapterZero: world } }],
+    };
+    const plan = planHarnessWorkspaceLoad(stored, now);
+    const upgraded = { cards: [{ ...world.cards[0], key: 'world:character:ye-chen', enteredInChapter: 0 }] };
+    expect(plan.state).toEqual({
+      ...stored,
+      schemaVersion: 36,
+      foundations: [{ id: 'f1', input: { premise: 'A quarry laborer rises.', worldAtChapterZero: upgraded } }],
+      attempts: [{ id: 'a1', storyInformation: { worldAtChapterZero: upgraded } }],
+    });
   });
 
   it('keeps an untouched copy of a workspace the rolled-back chapter loop saved (schema 33) before starting fresh', () => {

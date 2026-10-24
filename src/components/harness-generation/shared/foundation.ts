@@ -1,7 +1,7 @@
 import { MAX_ROADMAP_ARCS, normalizeArcLookahead, validateArcPlan } from '../../arc-goals/shared/arcGoals';
 import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '../../../lib/language';
 import { FATE_PRESSURE_TIERS, isFatePressure, normalizeFunSettings, validateHardPinInputs } from '../../../narrative/storyDirection';
-import { normalizeWorldAtChapterZero } from '../../../narrative/worldRecord';
+import { normalizeWorldRecord } from '../../../narrative/worldRecord';
 import { cloneHarnessValue, defaultHarnessRuntime, emptyStoryHead, stableHarnessId, type HarnessRuntime } from './ids';
 import type { HarnessStory, HarnessWorkspaceState, StoryFoundationInput, StoryFoundationRevision, HarnessCanonicalRecord } from '../../../narrative/generation';
 
@@ -80,7 +80,7 @@ export const normalizeStoryFoundationInput = (input: StoryFoundationInput): Stor
   // codex"). It is structured data, so it is read into the record rather than
   // trusted as it arrives.
   if (input.worldAtChapterZero) {
-    const world = normalizeWorldAtChapterZero(input.worldAtChapterZero);
+    const world = normalizeWorldRecord(input.worldAtChapterZero);
     if (world) normalized.worldAtChapterZero = world;
   }
   if (input.identities) {

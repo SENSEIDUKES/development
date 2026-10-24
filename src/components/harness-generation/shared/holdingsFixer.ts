@@ -8,7 +8,7 @@ import type {
   HarnessHoldingsFixCase,
   HarnessHoldingsFixerPolicy,
 } from '../../../narrative/generation';
-import type { WorldAtChapterZero } from '../../../narrative/worldRecord';
+import type { WorldRecord } from '../../../narrative/worldRecord';
 import { readArcReply } from './arcState';
 import { normalizeIdentityLabel } from './canonicalProjection';
 import { harnessChapterBody, harnessParagraphBlockId } from './chapterBody';
@@ -77,7 +77,7 @@ export interface HoldingsFixInput {
    * looks like a loss of something nobody held, and the fixer would correct a
    * tag that was right.
    */
-  worldAtChapterZero?: WorldAtChapterZero;
+  worldAtChapterZero?: WorldRecord;
   locale?: string;
   policy: HarnessHoldingsFixerPolicy;
 }

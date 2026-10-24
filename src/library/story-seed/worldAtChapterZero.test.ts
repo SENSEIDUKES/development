@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { WORLD_CARD_KINDS, worldCardsOfKind, worldRulesCard } from '@seihouse/sen/contracts';
+import { WORLD_CARD_KEY_PREFIX, WORLD_CARD_KINDS, worldCardsOfKind, worldRulesCard } from '@seihouse/sen/contracts';
 import {
   createEmptyStorySeedInput,
   fillBlankSeedSlots,
@@ -79,7 +79,7 @@ describe('The world at Chapter 0', () => {
     const keys = worldAtChapterZeroFromStorySeed(seed).cards.map(card => card.key);
     expect(keys).toHaveLength(6);
     expect(new Set(keys).size).toBe(6);
-    expect(keys[0]).toBe('chapter-0:character:林凡');
+    expect(keys[0]).toBe('world:character:林凡');
   });
 
   it('gives every card a key of its own, stable for the story', () => {
@@ -88,6 +88,14 @@ describe('The world at Chapter 0', () => {
     );
     const keys = world.cards.map(card => card.key);
     expect(new Set(keys).size).toBe(keys.length);
-    expect(keys.every(key => key.startsWith('chapter-0:'))).toBe(true);
+    expect(keys.every(key => key.startsWith(WORLD_CARD_KEY_PREFIX))).toBe(true);
+  });
+
+  it('enters every card in Chapter 0: a Seed and its Blueprint are the world the story opens with', () => {
+    const world = worldAtChapterZeroFromStorySeed(
+      fillBlankSeedSlots(createFilledStorySeedInput(), readGeneratedSeedSlots(createMockSeedSlotAnswer())),
+    );
+    expect(world.cards.length).toBeGreaterThan(0);
+    expect(world.cards.every(card => card.enteredInChapter === 0)).toBe(true);
   });
 });

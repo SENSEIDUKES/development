@@ -542,7 +542,7 @@ The world is now recorded before Chapter 1, in the Codex's own card kinds.
   lot at story creation — for every story, not just an old one. That is why the
   Codex had only a scraped look summary to show (SENSEI, 2026-10-24: "The
   Blueprint work we just did is not even in the codex"). The world is now read
-  into the record (`normalizeWorldAtChapterZero`): an unknown kind, a nameless
+  into the record (`normalizeWorldRecord`): an unknown kind, a nameless
   card, a slot the kind does not define and an empty one are dropped, and every
   key is computed from the card's own kind and name so two readings agree.
 - **The writer reads it**, as its own Story Information section (schema 35),
@@ -575,6 +575,18 @@ The world is now recorded before Chapter 1, in the Codex's own card kinds.
 
 ## History
 
+- 2026-10-24: the record became the **world record**. SENSEI settled the
+  architecture for everything the Codex holds, characters, items, places,
+  abilities, factions and species alike: a card is made properly once, whenever
+  it arrives, the same way the opening cast is made, and the chapters' tags then
+  move the slots each kind marks as changing. So the record can no longer be
+  named after Chapter 0 — `WorldRecord` and `WorldCard` replace the Chapter 0
+  names, every card carries the chapter it entered in (0 for the opening world),
+  and a card's key is its kind and name alone, so one card keeps one identity
+  whenever it arrives. Schema 36. Structure only: nothing creates a later card
+  yet, and no prompt words changed. The look writer is on its way out with it
+  (SENSEI: it "sounds like a patch for a literal architectural hole"), which
+  settles open question 5's note about the card key the look writer matches on.
 - 2026-10-24: phase C built. The Foundation stopped dropping the world (the
   cause of SENSEI's Codex report), the chapter writer reads it as its own
   packet section, and Holdings starts from it. SENSEI approved the reading

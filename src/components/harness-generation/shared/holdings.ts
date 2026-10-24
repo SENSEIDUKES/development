@@ -762,7 +762,10 @@ export function deriveHoldings({ entries, chapters, mainCharacterName, worldAtCh
       const listed = chapter.closingHoldings.map(listedName).filter(Boolean);
       const recordedNames = (item: { entryId: string; name: string }) => {
         const entry = byId.get(item.entryId);
-        return entry ? namesOf(entry) : [item.name];
+        // Every name the world knows a starting holding by counts here too: a
+        // closing list may name it by any of them, and without those a correct
+        // chapter reads as having lost one thing and gained another.
+        return [...new Set([...(entry ? namesOf(entry) : [item.name]), ...(fromTheWorld.get(item.entryId) ?? [])])];
       };
       const matches = (names: readonly string[], value: string) => answersTo(names, value) || names.some(name => namesNearlyMatch(name, value));
       const who = main?.name ?? mainCharacterName ?? 'the main character';

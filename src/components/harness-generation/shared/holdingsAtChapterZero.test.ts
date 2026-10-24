@@ -44,7 +44,7 @@ const story = (worldAtChapterZero?: WorldAtChapterZero) => {
   let entries: CodexEntry[] = [];
   let next = 0;
   const chapters: HoldingsChapter[] = [];
-  const write = (chapterNumber: number, paragraphs: string[]) => {
+  const write = (chapterNumber: number, paragraphs: string[], closingHoldings?: string[]) => {
     const placement = placeHoldingChanges({
       paragraphs: paragraphs.map((paragraph, index) => ({ blockId: harnessParagraphBlockId(chapterNumber, index), ...readMarks(paragraph) })),
     });
@@ -53,7 +53,8 @@ const story = (worldAtChapterZero?: WorldAtChapterZero) => {
       entries, declared: DECLARED, createdAt: '2026-10-24T00:00:00.000Z', createId: () => `entry-${++next}`,
     });
     entries = [...entries, ...resolved.created];
-    chapters.push({ id: `chapter-${chapterNumber}`, chapterNumber, holdingChanges: resolved.changes });
+    chapters.push({ id: `chapter-${chapterNumber}`, chapterNumber, holdingChanges: resolved.changes,
+      ...(closingHoldings ? { closingHoldings } : {}) });
   };
   return { write, derive: () => deriveHoldings({ entries, chapters, mainCharacterName: 'Ye Chen', worldAtChapterZero }) };
 };
@@ -165,6 +166,27 @@ describe('what a chapter may still do with it', () => {
     run.write(1, ['He snapped the [[lost: MC | Red Quill | ×1 | snapped]]quill in two.']);
     expect(things(run.derive())).toEqual([]);
     expect(run.derive().flags).toEqual([]);
+  });
+
+  it('accepts a closing list that names a starting thing by another of its names', () => {
+    // Review finding (Codex, 2026-10-24): the closing-list check read only the
+    // canonical name, so a correct chapter read as having lost one thing and
+    // gained another — with no holding tag at all, straight to the fixer.
+    const world: WorldAtChapterZero = { cards: [
+      { key: 'chapter-0:character:ye-chen', kind: 'character', name: 'Ye Chen', mainCharacter: true, slots: {} },
+      { key: 'chapter-0:thing:vermilion-brush', kind: 'thing', name: 'Vermilion Brush', aliases: ['Red Quill'],
+        slots: { holder: 'Ye Chen' } },
+    ] };
+    const run = story(world);
+    run.write(1, ['He carried it east.'], ['Red Quill']);
+    expect(run.derive().flags).toEqual([]);
+    // The canonical name still answers, and a thing the world never gave does not.
+    const byName = story(world);
+    byName.write(1, ['He carried it east.'], ['Vermilion Brush']);
+    expect(byName.derive().flags).toEqual([]);
+    const wrong = story(world);
+    wrong.write(1, ['He carried it east.'], ['Azure Fan']);
+    expect(wrong.derive().flags.map(flag => flag.kind)).toEqual(['closing-unlisted', 'closing-untagged']);
   });
 
   it('spends a Chapter 0 count down rather than starting from nothing', () => {

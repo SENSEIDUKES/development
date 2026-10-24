@@ -412,8 +412,10 @@ describe('The HARNESS Reader', { timeout: 20_000 }, () => {
     expect(panel.getAttribute('role')).toBe('dialog');
     expect(panel.querySelector('h2')!.textContent).toBe('Codex');
     expect(document.activeElement?.id).toBe('codex-panel-title');
-    expect(panel.querySelector('[role="tablist"]')!.textContent).toContain('Characters');
-    expect(panel.querySelector('[role="tablist"]')!.textContent).toContain('Items');
+    // These chapters record nothing, so no category is offered at all.
+    expect(panel.querySelector('[role="tablist"]')).toBeNull();
+    expect(panel.querySelector('[data-testid="codex-empty"]')!.textContent)
+      .toBe('The Codex fills as the story reaches each person, thing and place.');
     // The chapter stays on the page, readable, at the reader's place.
     expect(container.querySelector<HTMLElement>('[data-testid="harness-reader"]')!.hidden).toBe(false);
     expect(chapterOnScreen(1)).toBe(chapter);

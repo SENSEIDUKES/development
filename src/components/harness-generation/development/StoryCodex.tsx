@@ -38,8 +38,6 @@ const CATEGORY_MARK: Record<CodexTab, (size: number) => ReactNode> = {
 const AT_THE_START = 'In the world from the start';
 
 /** The categories the Codex always offers, even empty: the ones it has always had. */
-const ALWAYS_SHOWN: ReadonlySet<CodexTab> = new Set<CodexTab>(['characters', 'items', 'factions']);
-
 const worldFact = (facts: readonly CodexWorldFact[] | undefined, slot: string): string | undefined =>
   facts?.find(fact => fact.slot.id === slot)?.value;
 
@@ -497,8 +495,9 @@ export function StoryCodex({ codex, storyTitle, pictures, onBack, onReadPassage,
     setGoTo(undefined);
   };
   const close = () => setOpen(undefined);
-  // The Codex grows with the record: the three it has always had stay, and a
-  // newer kind appears once the record holds one of it.
+  // The Codex grows with the record: a category appears once the record holds
+  // one of its kind, and never before (SENSEI, 2026-10-24: an empty category
+  // is a promise the story has not made yet).
   const tabs: { id: CodexTab; label: string; count: number; icon: ReactNode }[] = ([
     { id: 'characters', label: 'Characters', count: codex.characters.length, icon: <Users size={15} aria-hidden /> },
     { id: 'items', label: 'Items', count: codex.items.length, icon: <Package size={15} aria-hidden /> },
@@ -507,10 +506,10 @@ export function StoryCodex({ codex, storyTitle, pictures, onBack, onReadPassage,
     { id: 'factions', label: 'Factions', count: codex.factions.length, icon: <Flag size={15} aria-hidden /> },
     { id: 'species', label: 'Bestiary', count: codex.species.length, icon: <PawPrint size={15} aria-hidden /> },
     { id: 'world-rules', label: 'World rules', count: codex.worldRules?.length ?? 0, icon: <Scale size={15} aria-hidden /> },
-  ] as const).filter(entry => entry.count > 0 || ALWAYS_SHOWN.has(entry.id)).map(entry => ({ ...entry }));
+  ] as const).filter(entry => entry.count > 0).map(entry => ({ ...entry }));
   // A category that empties while it is open (a world that closes to its
-  // reader) hands the Codex back to Characters rather than showing nothing.
-  const tab = tabs.some(entry => entry.id === chosenTab) ? chosenTab : 'characters';
+  // reader) hands the Codex to the first one that still holds something.
+  const tab = tabs.some(entry => entry.id === chosenTab) ? chosenTab : tabs[0]?.id ?? 'characters';
   const character = tab === 'characters' ? codex.characters.find(entry => entry.key === open) : undefined;
   const faction = tab === 'factions' ? codex.factions.find(entry => entry.key === open) : undefined;
   const item = tab === 'items' ? codex.items.find(entry => entry.key === open) : undefined;
@@ -557,16 +556,20 @@ export function StoryCodex({ codex, storyTitle, pictures, onBack, onReadPassage,
       {onBack && <button type="button" onClick={onBack} className="min-h-11 rounded-full border border-white/15 px-4 text-sm text-neutral-200 hover:border-white/30">Back to reading</button>}
     </div>
 
-    {/* Seven card kinds: the pills wrap rather than shrink, so each stays readable on a phone. */}
-    <div role="tablist" aria-label="Codex" className="flex flex-wrap gap-1 rounded-2xl border border-white/10 bg-black/30 p-1">
+    {/* Seven card kinds, each shown once the record holds one: the pills wrap rather than shrink, so each stays readable on a phone. */}
+    {tabs.length > 0 && <div role="tablist" aria-label="Codex" className="flex flex-wrap gap-1 rounded-2xl border border-white/10 bg-black/30 p-1">
       {tabs.map(entry => <button key={entry.id} type="button" role="tab" id={`codex-tab-${entry.id}`} aria-selected={tab === entry.id} aria-controls="codex-tab-panel"
         onClick={() => { setTab(entry.id); setOpen(undefined); }}
         className={`inline-flex min-h-10 min-w-0 flex-auto items-center justify-center gap-1.5 rounded-full px-2 text-sm transition-colors motion-reduce:transition-none ${tab === entry.id ? 'bg-white/10 text-white' : 'text-neutral-400 hover:text-neutral-100'}`}>
         {entry.icon}<span className="truncate">{entry.label}</span><span className="font-mono text-[11px] text-neutral-500">{entry.count}</span>
       </button>)}
-    </div>
+    </div>}
 
-    <div id="codex-tab-panel" role="tabpanel" aria-labelledby={`codex-tab-${tab}`} className="space-y-4">
+    <div id="codex-tab-panel" {...(tabs.length > 0 ? { role: 'tabpanel', 'aria-labelledby': `codex-tab-${tab}` } : {})} className="space-y-4">
+      {/* Nothing recorded at all: one line rather than a row of empty categories. */}
+      {tabs.length === 0 && <p data-testid="codex-empty" className="py-8 text-center text-sm text-neutral-400">
+        The Codex fills as the story reaches each person, thing and place.
+      </p>}
       {character && <CharacterProfile key={character.key} character={character} onBack={close} onReadPassage={askToRead}
         art={artOf(character.key, 'character', character.name, character.appearance, character.atChapterZero)} />}
       {faction && <FactionProfile key={faction.key} faction={faction} onBack={close} onReadPassage={askToRead} />}
@@ -578,7 +581,7 @@ export function StoryCodex({ codex, storyTitle, pictures, onBack, onReadPassage,
         ? codex.worldRules?.length
           ? <div data-testid="codex-world-rules"><WorldAtTheStart name={storyTitle} facts={codex.worldRules} title="World rules" /></div>
           : <p className="py-8 text-center text-sm text-neutral-400">{EMPTY[tab]}</p>
-        : !profileOpen && (cards.length || archived.length
+        : !profileOpen && tabs.length > 0 && (cards.length || archived.length
           ? <ul className="grid grid-cols-2 gap-3">{cards}</ul>
           : <p className="py-8 text-center text-sm text-neutral-400">{EMPTY[tab]}</p>)}
       {!profileOpen && archived.length > 0 && <section aria-labelledby="codex-archived-title" className="space-y-3" data-testid="codex-archived">

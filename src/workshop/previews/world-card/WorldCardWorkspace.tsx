@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { useLibraryAssets } from '@seihouse/library/presentation';
-import { WorldCard, WorldCardFeature, languageName } from '@seihouse/library/world-card';
+import { WorldCard, WorldCardFeature, WorldCardMenu, languageName } from '@seihouse/library/world-card';
 import type { WorldCardDisplayStatus } from '@seihouse/library/world-card';
 import type { CreatorWorld } from '@seihouse/library/creator-space';
 import { WorldCardFullReference } from '../../../components/world-card/reference/WorldCardFull';
@@ -21,11 +21,12 @@ import { createFilledStorySeedInput, createMockBlueprint } from '../story-seed/p
 const entry = workshopEntries.find(candidate => candidate.id === 'world-card')!;
 
 const VIEWS = {
-  all: { label: 'All views', description: 'The Info page, Feature card, Full card, Home grid and Compact card together.' },
+  all: { label: 'All views', description: 'The Info page, Feature card, Full card, Home grid, Compact and Menu cards together.' },
   feature: { label: 'Feature card', description: 'The wide banner for a spotlighted world, at the stage’s full width.' },
   info: { label: 'Info page', description: 'The full world overview a reader lands on when they open a world.' },
   full: { label: 'World Card', description: 'The 2:3 discovery card at its Home grid width, with the title and details beneath.' },
   grid: { label: 'Home grid', description: 'Several World Cards side by side, as Home lays them out.' },
+  menu: { label: 'Menu card', description: 'Discover chapter and ranking rows, rendered by the shared World Card menu.' },
   compact: { label: 'Compact', description: 'Create’s square “Your worlds” tile. Tap a tile to open that world’s Info page.' },
 } as const;
 type View = keyof typeof VIEWS;
@@ -147,6 +148,13 @@ export function WorldCardStage({ view, state, reference, onAction }: {
           displayStatus={CARD_STATUS_PREVIEW[state.cardStatus]} onOpen={() => world.id === story.id ? setOpenedWorld(story) : onAction(`Open ${world.title}`)} />)}
       </div>
     </Stage>}
+    {!openedWorld && !reference && show('menu') && <Stage title="Menu card" note="Discover's New Chapters and Heavenly Rankings. Tap a row to open World Info.">
+      <div className="max-w-md divide-y divide-white/10">
+        <WorldCardMenu world={story} chapter={{ number: story.chapterCount, title: 'The Silent Lotus' }}
+          age={{ label: '4m ago', dateTime: '2026-10-25T12:00:00Z' }} tracked onOpen={() => setOpenedWorld(story)} />
+        <WorldCardMenu world={story} rank={1} onOpen={() => setOpenedWorld(story)} />
+      </div>
+    </Stage>}
     {!openedWorld && show('compact') && <Stage title="Compact" note="Create · Your worlds.">
       <CompactRow key={`${reference}-${state.titleLength}-${state.cover}`} worlds={worlds} reference={reference} senSash={state.sash === 'shown'} onOpen={setOpenedWorld} />
     </Stage>}
@@ -221,7 +229,7 @@ function WorldCardWorkspaceShell() {
   return <FeatureWorkspace entry={entry}
     renderReference={() => render(true)} renderDevelopment={() => render(false)}
     workshopControls={{
-      description: 'The same world at every size. Home, the world detail and Create render these cards directly, so Development changes here show up on those pages.',
+      description: 'The same world at every size. Home, Discover, the world detail and Create render these cards directly, so Development changes here show up on those pages.',
       defaultSection: 'pages',
       sections: [{
         id: 'pages',

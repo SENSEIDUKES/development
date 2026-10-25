@@ -4,6 +4,16 @@ import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
 import type { StoryDetailDisplay } from '../../light-novels-home/shared/storyDetailContracts';
 import type { CreatorWorld, CreatorWorldStatus } from '../../creator-space/shared/creatorSpaceContracts';
 
+/** Menu row: a world with optional host-supplied chapter, release age, tracking and rank. */
+export interface WorldCardMenuProps {
+  world: HomeWorld;
+  onOpen: () => void;
+  chapter?: { number: number; title?: string };
+  age?: { label: string; dateTime: string };
+  tracked?: boolean;
+  rank?: number;
+}
+
 /**
  * One world, three views. Each face reads the display data its host page
  * already supplies — no new world model is introduced here.

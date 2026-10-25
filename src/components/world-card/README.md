@@ -15,6 +15,8 @@ folder; the Info page composes its cover face.
 | Info page | `WorldCardInfo` with `WorldCard face="info"` | The world detail (`light-novels-home` `StoryDetailScreen`) |
 | Full card | `WorldCard` | Home's discovery grid (`light-novels-home` `LightNovelsHome`) |
 | Compact | `WorldCard face="compact"` | Create's "Your worlds" row (`creator-space` `CreatorSpace`) |
+| Feature | `WorldCardFeature` | Home spotlight and Discover featured shelf |
+| Menu | `WorldCardMenu` | Discover chapter updates and ranking rows |
 
 - **Workshop preview:** `?preview=world-card` (Components → World Card)
 - **Package:** `@seihouse/library/world-card` (owner `library`)
@@ -614,3 +616,5 @@ Workshop sample data and reference material remain outside the host adapter.
 
 - **2026-09-29** — Made the full discovery card the canonical `WorldCard`. It is now a single 2:3 image with a chapter badge at the top and the title, creator and format overlaid at the bottom. The preview world supplies SENSEI and Novel; these are host-supplied display fields, not component defaults. Removed the Full card's separate footer, genre, writing style and expansion seals. Moved the preview's view count and all Library states (Draft, Sealed, Unacquired, Recently read) to the Info page. Added shared empty/broken-cover handling for Full and Info, removed the fixed cultivation-rate value, and made the Workshop missing-cover control apply to every size. Compact and Mini remain as separate surfaces for later refinement.
 - **2026-09-27** — Created. The Full, Info and Compact cards were extracted unchanged from Home, the world detail and Create, and those pages now render them. Added the new Mini size, sized like an audio track. Added the Workshop tab with views for All sizes, Info page, Full card, Compact and Mini, plus Library status, long title and missing cover states.
+
+- **2026-10-25:** Feature cards now reserve text room relative to their own width, and Discover gives each phone feature its full shelf width. Added the reusable WorldCardMenu for chapter and ranking rows, exported through the Library package and shown in the existing workspace.

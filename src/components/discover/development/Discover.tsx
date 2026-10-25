@@ -5,6 +5,7 @@ import { SEIEmptyState } from '@seihouse/ui';
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
 import { WorldCard } from '../../world-card/development/WorldCard';
 import { WorldCardFeature } from '../../world-card/development/WorldCardFeature';
+import { WorldCardMenu } from '../../world-card/development/WorldCardMenu';
 import type { DiscoverProps, DiscoverRelease } from '../shared/discoverContracts';
 import './discover.css';
 
@@ -136,15 +137,7 @@ export function Discover({
         ? <Empty title={`${board?.label ?? 'This board'} opens soon`} description="Rankings follow what readers do and spend, not star ratings." />
         : <ol className="discover-list" aria-label={`${board?.label} ranking`}>
             {ranked.map((world, index) => <li key={world.id}>
-              <button type="button" className="discover-row" onClick={() => onOpenWorld(world.id)}
-                aria-label={`${index + 1}. ${world.title}`}>
-                <span className="discover-rank" aria-hidden="true">{index + 1}</span>
-                <Cover world={world} />
-                <span className="discover-row-body">
-                  <span className="discover-row-title">{world.title}</span>
-                  <span className="discover-row-meta">{[world.creatorName, world.genre].filter(Boolean).join(' · ')}</span>
-                </span>
-              </button>
+              <WorldCardMenu world={world} rank={index + 1} onOpen={() => onOpenWorld(world.id)} />
             </li>)}
           </ol>}
     </Shelf>}
@@ -219,28 +212,12 @@ function Empty({ title, description }: { title: string; description: string }) {
   </LibraryPanel>;
 }
 
-function Cover({ world }: { world: HomeWorld }) {
-  return <span className="discover-cover" aria-hidden="true">
-    {world.imageUrl ? <img src={world.imageUrl} alt="" loading="lazy" referrerPolicy="no-referrer" /> : null}
-  </span>;
-}
-
 function ReleaseRow({ release, world, age, tracked, onOpen }: {
   release: DiscoverRelease; world: HomeWorld; age: string; tracked: boolean; onOpen: () => void;
 }) {
-  const chapter = `Chapter ${release.chapterNumber}${release.chapterTitle ? ` · ${release.chapterTitle}` : ''}`;
   return <li>
-    <button type="button" className="discover-row" onClick={onOpen} aria-label={`${world.title}, ${chapter}, ${age}`}>
-      <Cover world={world} />
-      <span className="discover-row-body">
-        <span className="discover-row-title">{world.title}</span>
-        <span className="discover-row-chapter">{chapter}</span>
-        <span className="discover-row-meta">
-          {[world.creatorName, world.genre].filter(Boolean).join(' · ')}
-          {tracked && <span className="discover-tracked">Tracking</span>}
-        </span>
-      </span>
-      <time className="discover-row-age" dateTime={release.releasedAt}>{age}</time>
-    </button>
+    <WorldCardMenu world={world} onOpen={onOpen} tracked={tracked}
+      chapter={{ number: release.chapterNumber, title: release.chapterTitle }}
+      age={{ label: age, dateTime: release.releasedAt }} />
   </li>;
 }

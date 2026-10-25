@@ -122,7 +122,7 @@
 }
 [data-discover] .discover-rail::-webkit-scrollbar { display: none; }
 [data-discover] .discover-rail > li { min-width: 0; scroll-snap-align: start; }
-[data-discover] .discover-rail--featured { grid-auto-columns: 88%; }
+[data-discover] .discover-rail--featured { grid-auto-columns: 100%; }
 [data-discover] .discover-rail--cards { grid-auto-columns: 10.5rem; }
 [data-discover] .discover-rail--events { grid-auto-columns: 84%; }
 
@@ -145,53 +145,8 @@
 [data-discover] .discover-list::-webkit-scrollbar { display: none; }
 [data-discover] .discover-list > li { min-width: 0; scroll-snap-align: start; border-bottom: 1px solid var(--discover-hairline); }
 [data-discover] .discover-list > li:nth-child(3n) { border-bottom-color: transparent; }
-[data-discover] .discover-row {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  width: 100%;
-  min-height: 4.75rem;
-  padding: 0.625rem 0;
-  color: inherit;
-  text-align: left;
-}
-[data-discover] .discover-row:focus-visible,
 [data-discover] .discover-genre:focus-visible,
 [data-discover] .discover-segmented button:focus-visible { outline: 2px solid var(--discover-accent); outline-offset: 2px; border-radius: 0.5rem; }
-[data-discover] .discover-cover {
-  flex: 0 0 auto;
-  width: 2.875rem;
-  aspect-ratio: 3 / 4;
-  border-radius: 0.375rem;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.06);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
-}
-[data-discover] .discover-cover img { width: 100%; height: 100%; object-fit: cover; }
-[data-discover] .discover-rank {
-  flex: 0 0 1.5rem;
-  color: var(--discover-ink);
-  font-size: 1.0625rem;
-  font-weight: 700;
-  text-align: center;
-}
-[data-discover] .discover-row-body { display: grid; flex: 1; gap: 0.125rem; min-width: 0; }
-[data-discover] .discover-row-title,
-[data-discover] .discover-row-chapter,
-[data-discover] .discover-row-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-[data-discover] .discover-row-title { color: var(--discover-ink); font-size: 0.9375rem; font-weight: 600; }
-[data-discover] .discover-row-chapter { color: #9fdcff; font-size: 0.8125rem; }
-[data-discover] .discover-row-meta { color: var(--discover-muted); font-size: 0.75rem; }
-[data-discover] .discover-row-age { flex: 0 0 auto; color: var(--discover-muted); font-size: 0.75rem; white-space: nowrap; }
-[data-discover] .discover-tracked {
-  margin-left: 0.5rem;
-  padding: 0.0625rem 0.4375rem;
-  border-radius: 9999px;
-  background: rgba(4, 172, 255, 0.16);
-  color: #9fdcff;
-  font-size: 0.625rem;
-  font-weight: 600;
-}
 
 /* Fate Survival: an editorial feature, copy first, then its worlds. */
 [data-discover] .discover-fate {

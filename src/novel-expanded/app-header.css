@@ -44,10 +44,10 @@
 .novel-expanded-shell .workspace-header-center .dao-insights-trigger { width: 100%; min-height: 44px; padding-inline: 0; }
 @media (max-width: 479px) {
   .novel-expanded-shell .workspace-header-center .dao-insights-trigger > div:first-child { gap: 2px; }
-  .novel-expanded-shell .workspace-header-center .dao-insights-trigger > div:first-child span { font-size: 7px; letter-spacing: 0.04em; line-height: 1.2; }
+  .novel-expanded-shell .workspace-header-center .dao-insights-trigger > div:first-child span { font-size: 0.75rem; letter-spacing: 0.04em; line-height: 1.2; }
 }
 
-@media (max-width: 639px) {
+@media (width < 641px) {
   /* On phones use the space between unequal side groups instead of a fixed midpoint. */
   .novel-expanded-shell .workspace-header [data-slot="app-header-center"] {
     position: static; transform: none; translate: none; flex: 1 1 0;

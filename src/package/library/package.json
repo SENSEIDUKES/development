@@ -107,7 +107,8 @@
     "react-focus-lock": "^2.13.7",
     "@seihouse/library-ui": "0.10.0",
     "@seihouse/ui": "0.11.0",
-    "@seihouse/audio-player": "^4.0.0"
+    "@seihouse/audio-player": "^4.0.0",
+    "@library-studios/brand": "0.1.0"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.135.0",

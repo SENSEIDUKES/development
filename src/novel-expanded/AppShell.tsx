@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { NovelExpandedLogo } from '@library-studios/brand';
+import '@library-studios/brand/styles.css';
 import { LibraryStoriesIcon, LibraryBookIcon, LibraryDiscoveryIcon, LibraryStoryIcon, LibrarySettingsIcon, LibraryProfileIcon } from '@seihouse/library-ui';
 import {
-  LIBRARY_EMBLEM, LibraryFooter, LibraryNavigation, LibrarySectionSidebar, WorkspaceHeader, WorkspaceShell,
+  LibraryFooter, LibraryNavigation, LibrarySectionSidebar, WorkspaceHeader, WorkspaceShell,
   useLibraryDesktopNavigation, useLibraryLegalDocuments,
   type HeaderSearchItem, type LibraryFooterGroup,
 } from '@seihouse/library/shell';
@@ -24,6 +26,7 @@ export interface AppShellProps {
   /** Names the page's main region for assistive technology. */
   mainLabel: string;
   children: ReactNode;
+  headerCenter?: ReactNode;
 }
 
 /**
@@ -35,7 +38,7 @@ export interface AppShellProps {
  * shell's workspace mode through Story Seed itself, and Profile is the Cave,
  * which draws the same shell itself; the Reader stays outside, immersive.
  */
-export function AppShell({ route, navigate, stories, readerProfile, mainLabel, children }: AppShellProps) {
+export function AppShell({ route, navigate, stories, readerProfile, mainLabel, children, headerCenter }: AppShellProps) {
   const pathwaysSidebar = useLibraryDesktopNavigation() === 'sidebar';
   const rank = useDeviceProfileRank();
   const { legal, sheet: legalSheet } = useLibraryLegalDocuments();
@@ -82,7 +85,7 @@ export function AppShell({ route, navigate, stories, readerProfile, mainLabel, c
       onNavigate={location => { const next = appRouteFor(location); if (next) navigate(next); }}>
       <WorkspaceShell mainRef={mainRef} mainId="novel-expanded-main" mainAriaLabel={mainLabel} mainClassName="relative z-10 outline-none"
         sidebar={pathwaysSidebar ? <LibrarySectionSidebar /> : undefined} sidebarLabel="Library pathways"
-        header={<WorkspaceHeader landmark="none" title="NovelExpanded"
+        header={<WorkspaceHeader landmark="none" title="NovelExpanded" center={headerCenter} centerBreakpoint="always"
           identity={<div className="novel-expanded-header-identity">
             <a className="novel-expanded-emblem group/emblem" href={routeHref(HOME_ROUTE)}
               aria-label="Return to your stories" onClick={event => {
@@ -91,26 +94,7 @@ export function AppShell({ route, navigate, stories, readerProfile, mainLabel, c
                   home();
                 }
               }}>
-              <span className="novel-expanded-emblem-art">
-                <span aria-hidden="true" className="library-spectrum-glow novel-expanded-emblem-aura" />
-                <span aria-hidden="true" className="library-spectrum-glow novel-expanded-emblem-ring" />
-                <img src={LIBRARY_EMBLEM.src} alt="" width={32} height={32}
-                  decoding="async" referrerPolicy="no-referrer" onError={event => {
-                    const image = event.currentTarget;
-                    if (image.getAttribute('src') !== '/library-shell/celestial-library.jpg') {
-                      image.src = '/library-shell/celestial-library.jpg';
-                    }
-                  }} />
-              </span>
-            </a>
-            <a className="novel-expanded-wordmark" href={routeHref(HOME_ROUTE)}
-              aria-label="NovelExpanded — return to your stories" onClick={event => {
-                if (!event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
-                  event.preventDefault();
-                  home();
-                }
-              }}>
-              <img src="/novel-expanded/wordmark.png" alt="NovelExpanded" width={1586} height={992} />
+              <NovelExpandedLogo className="novel-expanded-emblem-art" alt="" />
             </a>
           </div>}
           home={{ href: routeHref(HOME_ROUTE), label: 'Return to your stories', onNavigate: home }}

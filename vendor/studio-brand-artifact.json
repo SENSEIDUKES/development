@@ -1,0 +1,10 @@
+{
+  "repository": "https://github.com/SENSEIDUKES/LIBRARY-STUDIOS",
+  "sourceCommit": "acaa66a4a33944c8a0cedaa290cc08e7b265e525",
+  "sourcePath": "packages/brand",
+  "export": "NovelExpandedLogo",
+  "version": "0.1.0",
+  "file": "vendor/library-studios-brand-0.1.0.tgz",
+  "integrity": "sha512-L1lhzaNWhLjV6Jz26ULtFCNtVQKxoBXUeRUUf2Zkn8GSkx2Qh83LOCP+Lx02McnClonXuv1DMjuFbZK5CoA3gw==",
+  "consumption": "Public component and stylesheet; Library declares brand 0.1.0 as a host-provided peer. Packed-consumer verification installs this exact tarball."
+}

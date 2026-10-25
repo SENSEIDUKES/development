@@ -419,7 +419,8 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
 
     // Home: the Library header, the navigation and the footer around the reader's stories.
     const header = shell()!.querySelector('header')!;
-    expect(header.querySelector('.novel-expanded-wordmark img')?.getAttribute('alt')).toBe('NovelExpanded');
+    expect(header.querySelector('.novel-expanded-emblem [data-slot="novel-expanded-logo"]')).not.toBeNull();
+    expect(header.querySelector('.novel-expanded-wordmark')).toBeNull();
     expect(header.querySelector('[data-slot="library-header-badge-title"]')).toBeNull();
     expect(header.querySelector('button[aria-label="Help"]')).toBeTruthy();
     expect(header.querySelector('button[aria-label="Search"]')).toBeTruthy();
@@ -1000,6 +1001,8 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     MotionGlobalConfig.skipAnimations = true;
     onTestFinished(() => { MotionGlobalConfig.skipAnimations = false; });
     await render(services);
+    expect(document.getElementById('dao-insights-header-center')?.closest('header')).not.toBeNull();
+    expect(document.querySelectorAll('#dao-insights-header-center')).toHaveLength(1);
     await click(document.getElementById('dao-insights-header-center'), 'Dao Insights', 20);
     const panel = () => document.querySelector<HTMLElement>('[role="dialog"][aria-label="Dao Insights"]')!;
     await click([...panel().querySelectorAll('button')].find(button => /Seek a spark/.test(button.textContent ?? '')), 'Seek a spark', 1100);

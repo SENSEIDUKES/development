@@ -1,4 +1,4 @@
-import { DEFAULT_SEN_LANGUAGE_CODE, normalizeSenLanguageCode, type SenLanguageCode } from '@seihouse/sen/contracts';
+import { normalizeSenLanguageCode, type SenLanguageCode } from '@seihouse/sen/contracts';
 import type { LanguageFormatters, LanguagePack, NonEnglishSenLanguageCode } from './types';
 
 export interface CompiledLanguagePack {
@@ -23,6 +23,21 @@ const LOCALE_LOADERS: Readonly<Record<NonEnglishSenLanguageCode, () => Promise<{
   he: () => import('./locales/he'),
   fa: () => import('./locales/fa'),
   ur: () => import('./locales/ur'),
+  'pt-BR': () => import('./locales/pt-BR'),
+  'es-ES': () => import('./locales/es-ES'),
+  'pt-PT': () => import('./locales/pt-PT'),
+  de: () => import('./locales/de'),
+  fr: () => import('./locales/fr'),
+  ru: () => import('./locales/ru'),
+  hi: () => import('./locales/hi'),
+  sw: () => import('./locales/sw'),
+  pl: () => import('./locales/pl'),
+  tr: () => import('./locales/tr'),
+  ig: () => import('./locales/ig'),
+  yo: () => import('./locales/yo'),
+  am: () => import('./locales/am'),
+  ha: () => import('./locales/ha'),
+  so: () => import('./locales/so'),
 };
 
 const loadedPacks = new Map<NonEnglishSenLanguageCode, CompiledLanguagePack>();

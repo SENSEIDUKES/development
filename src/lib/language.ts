@@ -24,7 +24,22 @@ export type SenLanguageCode =
   | 'ar'
   | 'he'
   | 'fa'
-  | 'ur';
+  | 'ur'
+  | 'pt-BR'
+  | 'es-ES'
+  | 'pt-PT'
+  | 'de'
+  | 'fr'
+  | 'ru'
+  | 'hi'
+  | 'sw'
+  | 'pl'
+  | 'tr'
+  | 'ig'
+  | 'yo'
+  | 'am'
+  | 'ha'
+  | 'so';
 
 export type SenTextDirection = 'ltr' | 'rtl';
 
@@ -53,6 +68,21 @@ export const SEN_LANGUAGES: readonly SenLanguage[] = [
   { code: 'he', label: 'Hebrew (עברית)', direction: 'rtl' },
   { code: 'fa', label: 'Persian (فارسی)', direction: 'rtl' },
   { code: 'ur', label: 'Urdu (اردو)', direction: 'rtl' },
+  { code: 'pt-BR', label: 'Portuguese (Brazil) (Português do Brasil)', direction: 'ltr' },
+  { code: 'es-ES', label: 'Spanish (Spain) (Español de España)', direction: 'ltr' },
+  { code: 'pt-PT', label: 'Portuguese (Portugal) (Português Europeu)', direction: 'ltr' },
+  { code: 'de', label: 'German (Deutsch)', direction: 'ltr' },
+  { code: 'fr', label: 'French (Français)', direction: 'ltr' },
+  { code: 'ru', label: 'Russian (Русский)', direction: 'ltr' },
+  { code: 'hi', label: 'Hindi (हिन्दी)', direction: 'ltr' },
+  { code: 'sw', label: 'Swahili (Kiswahili)', direction: 'ltr' },
+  { code: 'pl', label: 'Polish (Polski)', direction: 'ltr' },
+  { code: 'tr', label: 'Turkish (Türkçe)', direction: 'ltr' },
+  { code: 'ig', label: 'Igbo (Ásụ̀sụ́ Ìgbò)', direction: 'ltr' },
+  { code: 'yo', label: 'Yoruba (Èdè Yorùbá)', direction: 'ltr' },
+  { code: 'am', label: 'Amharic (አማርኛ)', direction: 'ltr' },
+  { code: 'ha', label: 'Hausa (Harshen Hausa)', direction: 'ltr' },
+  { code: 'so', label: 'Somali (Af-Soomaali)', direction: 'ltr' },
 ] as const;
 
 const LANGUAGES_BY_CODE = new Map<string, SenLanguage>(
@@ -104,6 +134,21 @@ const SPEECH_LANGUAGE_TAGS: Readonly<Record<SenLanguageCode, readonly string[]>>
   he: ['he', 'iw'],
   fa: ['fa'],
   ur: ['ur'],
+  'pt-BR': ['pt-BR', 'pt'],
+  'es-ES': ['es-ES', 'es'],
+  'pt-PT': ['pt-PT', 'pt'],
+  de: ['de'],
+  fr: ['fr'],
+  ru: ['ru'],
+  hi: ['hi'],
+  sw: ['sw'],
+  pl: ['pl'],
+  tr: ['tr'],
+  ig: ['ig'],
+  yo: ['yo'],
+  am: ['am'],
+  ha: ['ha'],
+  so: ['so'],
 };
 
 export const senSpeechLanguageTags = (code: SenLanguageCode): readonly string[] =>

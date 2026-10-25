@@ -175,9 +175,9 @@ describe('The Cave on the device\'s profile', () => {
     await expect(withSeeds.downloadStorySeed({ ...seeds[0], id: 'gone' })).rejects.toThrow('no longer on this device');
   });
 
-  it('loads each of the 14 non-English language packs on demand and translates interface labels across all 15 SEN languages', async () => {
+  it('loads each of the 29 non-English language packs on demand and translates interface labels across all 30 SEN languages', async () => {
     const nonEnglishCodes = SEN_LANGUAGES.map(language => language.code).filter(code => code !== 'en');
-    expect(nonEnglishCodes).toHaveLength(14);
+    expect(nonEnglishCodes).toHaveLength(29);
     for (const code of nonEnglishCodes) {
       const pack = await loadLanguagePack(code);
       expect(pack?.code).toBe(code);

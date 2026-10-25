@@ -57,6 +57,9 @@ describe('premise-led tag recommendations', () => {
     expect(labels('Something happens.')).toEqual([]);
     expect(recommendStoryTags({ style: 'chinese' })).toEqual([]);
     expect(inferStoryTags({})).toEqual(['adventure', 'action']);
+    expect(inferStoryTags({ premise: 'No action or adventure here.' })).toEqual([]);
+    expect(inferStoryTags({ premise: 'Without action, please.' })).toEqual(['adventure']);
+    expect(labels('He is reborn as a farmer.')).not.toContain('regression');
     for (const tag of labels('A detective investigates a cozy bakery where lovers mourn old promises.')) {
       expect(STORY_TAG_CATALOG.some(entry => entry.label === tag)).toBe(true);
     }

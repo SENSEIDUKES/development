@@ -382,7 +382,7 @@ export const STORY_TAG_CATALOG: StoryTagMetadata[] = [
   { label: 'sworn brotherhood', category: 'Destiny & Karma', styles: ['chinese'], aliases: ['sworn brothers', 'oath of the peach garden'], color: 'gold' },
   { label: 'second chances', category: 'Destiny & Karma', styles: ['all'], aliases: ['do-over', 'fresh start'], color: 'gold' },
   { label: 'fate correction', category: 'Destiny & Karma', styles: ['all'], aliases: ['defying prophecy', 'altering destiny'], color: 'gold' },
-  { label: 'regression', category: 'Destiny & Karma', styles: ['korean'], aliases: ['regressor', 'turner', 'regression/reincarnation', 'second chance', 'reborn', 'regression rules', 'time loop', 'returner rules'], color: 'gold' },
+  { label: 'regression', category: 'Destiny & Karma', styles: ['korean'], aliases: ['regressor', 'turner', 'regression/reincarnation', 'second chance', 'regression rules', 'time loop', 'returner rules'], color: 'gold' },
   { label: 'returner', category: 'Destiny & Karma', styles: ['korean'], aliases: ['returned hero', 'max level returner'], color: 'gold' },
   { label: 'revenge returner', category: 'Destiny & Karma', styles: ['korean'], aliases: ['regressed for revenge', 'avenger returner', 'revenge through preparation', 'calculated revenge', 'long game'], color: 'gold' },
   { label: 'karmic debt', category: 'Destiny & Karma', styles: ['chinese', 'korean'], aliases: ['karmic retribution', 'moral debt'], color: 'gold' },

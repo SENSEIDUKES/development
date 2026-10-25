@@ -102,7 +102,7 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
     permanentInstructions: labeledLines([['Make It Work', optional.makeItWorkInstruction]]),
     openingSituation: withAddedDetail(identity.startingLocation, canon.startingLocationDetail),
     // Tags are the experience the creator asked for, not canon facts (SENSEI, 2026-10-25).
-    storyTags: required.storyTags,
+    storyTags: [...required.storyTags],
     cast: mainCharacter ? [{
       name: mainCharacter.name, role: 'Main character', isMainCharacter: true, relationshipToMC: 'Self',
     }] : undefined,

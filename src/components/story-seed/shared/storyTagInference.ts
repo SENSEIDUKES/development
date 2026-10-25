@@ -20,6 +20,8 @@ const GENRE_TAGS: Record<string, string[]> = {
 };
 
 export const INFERRED_TAG_LIMIT = 8;
+/** What an untagged seed with no evidence at all starts from. */
+const FALLBACK_TAGS = ['adventure', 'action'];
 export interface StoryTagInferenceInput {
   premise?: string;
   genre?: string;
@@ -66,6 +68,12 @@ const catalog = [...new Map(STORY_TAG_CATALOG.map(entry => [normalizeStoryTagIde
 const settingTags = new Set(['ancient ruins', 'secret realms', 'port economy', 'lost history', 'map expansion']);
 const dimension = (entry: StoryTagMetadata) => settingTags.has(entry.label) ? 'Setting' : entry.category;
 
+// Handle explicit exclusions conservatively within a clause. This is lexical
+// matching, not a model: complex negation and implied intent remain limited.
+const premiseExclusions = (raw: string) =>
+  [...raw.matchAll(/\b(?:no|without|not|never)\s+([^,.!?;]+?)(?=\b(?:but|instead|yet)\b|[,.;!?]|$)/gi)]
+    .map(match => normalize(match[1]));
+
 /**
  * Rank the entire catalog, then spread relevant candidates across dimensions.
  * Style breaks ties, never excludes tags or supplies evidence on its own.
@@ -77,10 +85,7 @@ export const recommendStoryTags = (
   limit = 10,
 ): StoryTagMetadata[] => {
   const raw = input.premise || '';
-  // Handle explicit exclusions conservatively within a clause. This is lexical
-  // matching, not a model: complex negation and implied intent remain limited.
-  const exclusions = [...raw.matchAll(/\b(?:no|without|not|never)\s+([^,.!?;]+?)(?=\b(?:but|instead|yet)\b|[,.;!?]|$)/gi)]
-    .map(match => normalize(match[1]));
+  const exclusions = premiseExclusions(raw);
   const premise = normalize(raw.replace(/\b(?:no|without|not|never)\s+[^,.!?;]+?(?=\b(?:but|instead|yet)\b|[,.;!?]|$)/gi, ' '));
   const selected = new Set(selectedTags.map(normalizeStoryTagIdentity));
   const genreKey = Object.keys(GENRE_TAGS).find(key => normalize(key) === normalize(input.genre || ''));
@@ -116,5 +121,9 @@ export const recommendStoryTags = (
 /** Same ranked recommendations at generation; creator-selected tags stay untouched. */
 export const inferStoryTags = (input: StoryTagInferenceInput): string[] => {
   const tags = recommendStoryTags(input, [], INFERRED_TAG_LIMIT).map(entry => entry.label);
-  return tags.length ? tags : ['adventure', 'action'];
+  if (tags.length) return tags;
+  // The fallback honours the premise's exclusions too: "no action" never gets action.
+  const exclusions = premiseExclusions(input.premise || '');
+  return FALLBACK_TAGS.filter(label => !catalog.some(({ entry, phrases }) => entry.label === label
+    && exclusions.some(text => phrases.some(phrase => containsPhrase(text, phrase)))));
 };

@@ -211,11 +211,7 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
   }, [copyText, spark]);
 
   const chooseMode = (next: SparkMode) => { setMode(next); setMessage(null); };
-  // A Story Seed path closes the paths; the writer's own genre is typed with them open.
-  const chooseGenre = (next: string) => {
-    setGenre(next); setConjuring(false); setMessage(null);
-    if (DAO_GENRES.some(preset => preset.id === next)) setPathsOpen(false);
-  };
+  const chooseGenre = (next: string) => { setGenre(next); setConjuring(false); setMessage(null); };
   const toggleConjure = () => { setConjuring(current => !current); setMessage(null); };
 
   const sparkKey = `${spark.genre}\u0000${spark.premise}`;
@@ -300,7 +296,7 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
                           <ChevronLeft size={15} aria-hidden="true" />Back to the spark
                         </button>
                         <OriginGenrePicker idPrefix="dao" genre={genre} onChange={chooseGenre} required={false} compact
-                          open onOpenChange={setPathsOpen}
+                          open onOpenChange={setPathsOpen} onSelectPath={() => setPathsOpen(false)}
                           emptyTitle="Any path" emptyHint="The Dao wanders wherever it likes"
                           conjure={{ active: conjuring, onSelect: toggleConjure, title: 'Let the Dao conjure one', hint: 'A genre no list holds, and a story only it could tell.' }} />
                       </div>

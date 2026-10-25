@@ -77,6 +77,8 @@ interface OriginGenrePickerProps {
   compact?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /** A path was chosen from the grid — never called while the writer types their own genre. */
+  onSelectPath?: (genre: string) => void;
 }
 
 export const OriginGenrePicker = ({
@@ -90,6 +92,7 @@ export const OriginGenrePicker = ({
   compact = false,
   open,
   onOpenChange,
+  onSelectPath,
 }: OriginGenrePickerProps) => {
   const titleId = `${idPrefix}-genre-title`;
   const presetsId = `${idPrefix}-genre-presets`;
@@ -189,7 +192,7 @@ export const OriginGenrePicker = ({
                 return (
                   <button key={preset.id} type="button" role="radio" aria-checked={selected}
                     tabIndex={radioGroupTabIndex(selected, GENRE_PRESETS.some(candidate => candidate.id === trimmedGenre), index)}
-                    onClick={() => { setIsCustomPathOpen(false); leaveConjure(); onChange(preset.id); }} onKeyDown={handleRadioGroupKeyDown}
+                    onClick={() => { setIsCustomPathOpen(false); leaveConjure(); onChange(preset.id); onSelectPath?.(preset.id); }} onKeyDown={handleRadioGroupKeyDown}
                     data-selected={selected} style={{ '--choice-accent': GENRE_PATH_ACCENT } as CSSProperties}
                     className="glass-choice flex min-h-[5.5rem] flex-col items-center justify-center gap-2 px-1.5 py-3">
                     <span aria-hidden="true" className={`flex h-9 w-9 items-center justify-center rounded-full border transition-all ${selected ? 'border-[rgba(167,139,250,0.55)] bg-[rgba(167,139,250,0.12)] shadow-[0_0_12px_rgba(167,139,250,0.3)]' : 'border-[rgba(150,166,220,0.2)] bg-[rgba(11,14,30,0.6)]'}`}>
@@ -222,7 +225,7 @@ export const OriginGenrePicker = ({
                     <p className="mb-2 flex items-center gap-1.5 font-sc text-[10px] font-bold uppercase tracking-widest text-[#D4AF37]">
                       <Sparkles size={11} aria-hidden="true" />Define your genre
                     </p>
-                    <LibraryTextBox id={`${idPrefix}-genre-custom-input`} size="compact" value={isCustomGenre ? genre : ''} onChange={onChange} placeholder="Example: urban xianxia mystery" aria-label="Custom genre" />
+                    <LibraryTextBox id={`${idPrefix}-genre-custom-input`} size="compact" value={isCustomPathActive ? genre : ''} onChange={onChange} placeholder="Example: urban xianxia mystery" aria-label="Custom genre" />
                   </div>
                 </motion.div>
               )}

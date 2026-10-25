@@ -154,6 +154,25 @@ it('opens the Story Paths in the spark\'s place, and a path brings the spark bac
   expect(dialog().querySelector('[aria-label="Story spark"]')).toBeTruthy();
 });
 
+it('keeps the Story Paths open while the writer types their own genre, even one starting with a path\'s name', async () => {
+  const requestSpark = vi.fn(async (request: StorySparkRequest) => modelSpark(request));
+  await open({ checkSparks: async () => true, requestSpark });
+  await choosePath(/Define My Own Path/);
+  const typeGenre = async (value: string) => {
+    const input = dialog().querySelector<HTMLInputElement>('#dao-genre-custom-input')!;
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
+    await act(async () => { setter.call(input, value); input.dispatchEvent(new Event('input', { bubbles: true })); });
+  };
+  await typeGenre('Xianxia');
+  expect(dialog().querySelector('[role="radiogroup"][aria-label="Story paths"]')).toBeTruthy();
+  expect(dialog().querySelector<HTMLInputElement>('#dao-genre-custom-input')?.value).toBe('Xianxia');
+  await typeGenre('Xianxia mystery');
+  await click(button(/Back to the spark/));
+  await click(button(/Seek a spark/));
+  await settle(1100);
+  expect(requestSpark).toHaveBeenCalledWith(expect.objectContaining({ genre: 'Xianxia mystery' }), expect.any(AbortSignal));
+});
+
 it('without a model, Random offers the Dao\'s own sparks and Custom keeps the writer\'s words as written', async () => {
   await open();
   await choosePath(/Regression/);

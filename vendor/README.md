@@ -1,9 +1,9 @@
 # Private UI artifacts
 
-Both UI tarballs are built from UI PR [#90](https://github.com/SENSEIDUKES/UI/pull/90), source commit `099a460566eb236b4b1c067015431508129d13c8`:
+Both UI tarballs are built from UI main through PR [#92](https://github.com/SENSEIDUKES/UI/pull/92), source commit `6f95f042f86806a9335832cfd4cc1b51c1726b74`:
 
-- `@seihouse/ui@0.11.0`: universal SEIHouse primitives and experience tokens, including the application shell, shared overlay scrollbar and Pathways panel. The opt-in `double-tap` sidebar behavior toggles both widths and offers a keyboard-focus-only control; `automatic` and `click` remain available.
-- `@seihouse/library-ui@0.10.0`: stateless Celestial Library presentation. Its `@seihouse/ui` peer is `^0.11.0`; its navigation skin supplies scroll-only gold thumbs and a stationary gold-and-cyan edge bevel. Domain behavior and persistence remain in `@seihouse/library` and its host.
+- `@seihouse/ui@0.12.0`: universal SEIHouse primitives and experience tokens, including the application shell, shared overlay scrollbar and Pathways panel. The opt-in `double-tap` sidebar behavior toggles both widths and offers a keyboard-focus-only control; `automatic` and `click` remain available.
+- `@seihouse/library-ui@0.10.1`: stateless Celestial Library presentation. Its `@seihouse/ui` peer is `^0.11.0 || ^0.12.0`; its navigation skin supplies scroll-only gold thumbs and a stationary gold-and-cyan edge bevel. Domain behavior and persistence remain in `@seihouse/library` and its host.
 
 The locked `@seihouse/audio-player@4.0.0` build declares an exact optional UI
 0.10.1 peer. Development scopes an npm override to that package's UI peer, using
@@ -67,6 +67,8 @@ Display under its own notices for authorized SEIHouse products. To refresh, pack
 release from FONT-LAB the same way, update `font-artifacts.json`, and run `npm ci`.
 
 ## History
+
+- **2026-10-25:** Refreshed UI 0.12.0 and Library UI 0.10.1 from current UI main, including the studio primitives and measured virtual lists from UI #91. Library Components now displays all 16 Library UI families from the canonical UI workbench catalog.
 
 - **2026-10-11:** Updated the Display package to FONT-LAB's Living Titles 0.1.1 release, with its original archive and release hashes. This release updates the tooling/runtime; its four shipped Regular font files have the same hashes as 0.1.0. Kept SEIHouse Sans 0.39 and its original source provenance unchanged.
 - **2026-10-10:** Added the SEIHouse fonts from FONT-LAB: SEIHouse Sans 0.39 and the Living Titles

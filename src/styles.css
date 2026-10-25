@@ -132,7 +132,7 @@
   background: #efe9de;
   border-bottom: 1px solid #ddd4c4;
 }
-.workshop-card-visual svg {
+.workshop-card-visual:not(.library-preview-stage) svg {
   display: block;
   width: 100%;
   height: 100%;
@@ -315,9 +315,7 @@
     radial-gradient(ellipse at 85% 120%, rgba(212, 175, 55, 0.07), transparent 55%),
     #07080d;
 }
-/* Live previews render real components with inline SVG icons; undo the
-   placeholder-SVG sizing that feature card visuals rely on. */
-.library-preview-stage svg { width: auto; height: auto; }
+/* Live preview SVGs keep their package-owned dimensions and utility classes. */
 .library-preview-stage-end { justify-content: flex-end; padding-bottom: 0.5rem; }
 
 .workshop-status-library .workshop-status-dot { background: #04acff; }

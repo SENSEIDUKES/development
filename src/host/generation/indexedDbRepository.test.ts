@@ -78,6 +78,27 @@ describe('planHarnessWorkspaceLoad', () => {
     });
   });
 
+  it('gives a chapter waiting at the prose checkpoint the id it will commit under (schema 38)', () => {
+    // The id used to be settled at the stage this version removes, so an attempt
+    // saved at the prose checkpoint carries none. Without one it would be read
+    // by the tagger and then refused at the commit, with no way to finish.
+    const stored = {
+      ...createEmptyHarnessWorkspaceState(),
+      schemaVersion: 37,
+      attempts: [
+        { id: 'a1', stage: 'prose_accepted', acceptedDraft: { prose: 'The gate held.' } },
+        { id: 'a2', stage: 'events_preserved', acceptedDraft: { prose: 'It did not.' }, pendingChapterId: 'hch_kept' },
+        { id: 'a3', stage: 'request_started' },
+      ],
+    } as unknown as Parameters<typeof planHarnessWorkspaceLoad>[0];
+    const attempts = planHarnessWorkspaceLoad(stored, now).state.attempts as unknown as Array<Record<string, unknown>>;
+    expect(attempts[0].pendingChapterId).toEqual(expect.stringMatching(/^hch_/));
+    // One already settled keeps it, and the retired stage carries on from the prose.
+    expect(attempts[1]).toMatchObject({ stage: 'prose_accepted', pendingChapterId: 'hch_kept' });
+    // An attempt with no accepted prose has no chapter to name yet.
+    expect(attempts[2].pendingChapterId).toBeUndefined();
+  });
+
   it('opens each saved story\'s world record from its active Foundation (schema 37)', () => {
     // The world lived only on the Foundation until this version, so every saved
     // card is one its author wrote and the record opens with exactly those.

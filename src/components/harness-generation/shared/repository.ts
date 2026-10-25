@@ -1,4 +1,4 @@
-import { cloneHarnessValue } from './ids';
+import { cloneHarnessValue, stableHarnessId } from './ids';
 import { HARNESS_GENERATION_SCHEMA_VERSION, type HarnessWorkspaceState } from '../../../narrative/generation';
 import { WORLD_CARD_KINDS, worldCardKey } from '../../../narrative/worldRecord';
 
@@ -99,6 +99,13 @@ const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => 
       // An attempt saved at the stage that no longer exists carries on from the prose.
       ...(attempt.stage === 'events_preserved' ? { stage: 'prose_accepted' } : {}),
       ...(attempt.recoveryStage === 'events_preserved' ? { recoveryStage: 'prose_accepted' } : {}),
+      // The chapter's id was settled at the retired stage and is settled when
+      // the prose is accepted now. An attempt saved at the prose checkpoint
+      // never reached the old stage, so it is carrying none: without one it
+      // would tag and then be refused at the commit, with no way to finish.
+      ...(attempt.acceptedDraft && !attempt.pendingChapterId
+        ? { pendingChapterId: stableHarnessId('hch', String(attempt.id), 'schema-38') }
+        : {}),
     })),
     schemaVersion: 38,
   }),

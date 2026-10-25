@@ -73,6 +73,7 @@ import { AchievementsPanel } from '../../rewards/development/AchievementsPanel';
 import { FateSurvivalRelicsPanel } from '../../relics/development/FateSurvivalRelicsPanel';
 import { FamiliarTrainingPanel } from '../../familiar-training/development/FamiliarTrainingPanel';
 import { ElementalEffectPanel } from '../../familiar-training/development/ElementalEffectPanel';
+import { useInterfaceLanguageTranslation } from '../../../library/language/interfaceTranslation';
 
 interface UserProfileProps {
   currentUser: AppUser | null;
@@ -111,6 +112,10 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   // The header's music note shows while the reader's Menu music is on, where the host has sound.
   const [menuMusic] = useMenuMusic(soundPreferences);
   const hostController = useUserProfile({ currentUser, stories, onLogout, onNavigateHome });
+  const activeInterfaceLanguage = hostController.pendingLanguageChange?.interfaceLanguage
+    ?? hostController.formData.interfaceLanguage
+    ?? hostController.profile?.interfaceLanguage;
+  useInterfaceLanguageTranslation(activeInterfaceLanguage, Boolean(hostController.pendingLanguageChange));
   // Familiar ownership and purchases are host account state behind the same
   // services port as everything else; without a Store service the page still
   // renders, with purchases plainly disconnected. The chosen hook is pinned for

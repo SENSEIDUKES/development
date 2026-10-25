@@ -391,6 +391,13 @@ export function createMockUserProfileServices({
             previousReadingLanguage: profile.defaultReadingLanguage || DEFAULT_SEN_LANGUAGE_CODE,
           });
           setCountdown(30);
+        } else {
+          setPendingLanguageChange(previous => previous ? {
+            ...previous,
+            interfaceLanguage: name === 'interfaceLanguage' ? value : previous.interfaceLanguage,
+            readingLanguage: name === 'defaultReadingLanguage' ? value : previous.readingLanguage,
+          } : null);
+          setCountdown(30);
         }
       },
       [formData, pendingLanguageChange, profile],

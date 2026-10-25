@@ -261,7 +261,7 @@ export function UserProfileSettingsPanel({
                 <div className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-center">
                   <p className="font-sc text-[9px] uppercase tracking-widest text-neutral-400">Preview</p>
                   <p className="mt-1 font-serif text-lg italic">
-                    <span data-cave-aura-preview className={previewStyle.className || 'text-neutral-100'} style={previewStyle.style}>
+                    <span data-cave-aura-preview data-no-interface-translate={(formData.displayName || profile?.displayName) ? '' : undefined} className={previewStyle.className || 'text-neutral-100'} style={previewStyle.style}>
                       {formData.displayName || profile?.displayName || 'Unknown Ascendant'}
                     </span>
                   </p>

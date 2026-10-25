@@ -3,7 +3,8 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReaderPreferenceStorage } from '@seihouse/sen/reader-runtime';
-import type { UserProfileController, UserProfileServices } from '@seihouse/library/profile';
+import { SEN_LANGUAGES } from '@seihouse/sen/contracts';
+import { loadLanguagePack, translateInterfaceText, type UserProfileController, type UserProfileServices } from '@seihouse/library/profile';
 import { createMockStorySeedRecord } from '../../workshop/previews/story-seed/previewData';
 import { allFamiliarOptions } from '../familiar/catalogue';
 import { createLocalStorySeedRepository } from '../story-seed/localStorySeedRepository';
@@ -172,5 +173,19 @@ describe('The Cave on the device\'s profile', () => {
     expect(seeds).toHaveLength(1);
     expect(seeds[0]).toEqual({ id: seeds[0].id, userId: 'reader', title: seeds[0].title, createdAt: seeds[0].createdAt, updatedAt: seeds[0].updatedAt });
     await expect(withSeeds.downloadStorySeed({ ...seeds[0], id: 'gone' })).rejects.toThrow('no longer on this device');
+  });
+
+  it('loads each of the 14 non-English language packs on demand and translates interface labels across all 15 SEN languages', async () => {
+    const nonEnglishCodes = SEN_LANGUAGES.map(language => language.code).filter(code => code !== 'en');
+    expect(nonEnglishCodes).toHaveLength(14);
+    for (const code of nonEnglishCodes) {
+      const pack = await loadLanguagePack(code);
+      expect(pack?.code).toBe(code);
+      expect(translateInterfaceText('Interface Language', code)).not.toBe('Interface Language');
+      expect(translateInterfaceText('Confirm Language Change', code)).not.toBe('Confirm Language Change');
+      expect(translateInterfaceText('Yes, Keep Changes', code)).not.toBe('Yes, Keep Changes');
+      expect(translateInterfaceText('No, Revert Back', code)).not.toBe('No, Revert Back');
+    }
+    expect(translateInterfaceText('Interface Language', 'en')).toBe('Interface Language');
   });
 });

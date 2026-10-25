@@ -480,7 +480,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
     built.blueprint = createBlueprintDraftFromSeed(built.seed);
     const spark = { ...sampleRecord('spark'), title: 'The Very Rude Dragon', seed: storySeedInputFromSpark({
       premise: 'He bonded with a stray cat that may be the last dragon.', genre: 'Beast Taming', title: 'The Very Rude Dragon',
-      style: 'japanese', pressure: 'mortal', inventedGenre: false,
+      style: 'japanese', survival: false, inventedGenre: false,
     }) };
     // A spark grown into a Blueprint is a Blueprint.
     const grown = { ...spark, id: 'grown', title: 'Grown Spark' };

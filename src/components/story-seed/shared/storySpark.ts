@@ -1,21 +1,19 @@
 /**
  * Story Sparks: a starting point for someone facing a blank Story Seed.
  *
- * A spark is a whole Origin: a premise, a genre, a novel tradition (Style), a
- * title and a Pressure. Planting it fills every Origin input of a new seed —
- * the Story Tags are recommended from the premise by Story Seed's own tag
- * inference — and marks the seed as `startedFrom: 'story-spark'` so a Story
- * Bank can keep sparks apart from seeds the writer built. Survival, the world
- * and every later choice stay with the writer.
+ * A spark is a whole Origin: a premise, a genre, a novel tradition (Style) and
+ * a title, written for Fate Survival when the writer asks for it. Planting it
+ * fills every Origin input of a new seed — the Story Tags are recommended from
+ * the premise by Story Seed's own tag inference, Pressure stays Story Seed's
+ * default (Immortal) and Survival is on only for a Survival spark — and marks
+ * the seed as `startedFrom: 'story-spark'` so a Story Bank can keep sparks
+ * apart from seeds the writer built. The world and every later choice stay
+ * with the writer.
  *
  * How a spark is written (a model, a hand-written list) and how it is dressed
  * (the Library's Dao Insights) belong to the host.
  */
-import {
-  createEmptyStorySeedInput,
-  type StorySeedInput,
-  type StorySeedSurvivalPressure,
-} from './storySeedSchema';
+import { createEmptyStorySeedInput, type StorySeedInput } from './storySeedSchema';
 import { normalizeStoryStyle, type StoryStyle } from './storyStyle';
 import { inferStoryTags } from './storyTagInference';
 
@@ -42,6 +40,12 @@ interface StorySparkRequestBase {
   idea?: string;
   /** Recent premises, so a new spark does not repeat them. */
   avoid?: string[];
+  /**
+   * A spark for Fate Survival: the protagonist's life is at stake from the
+   * first chapter and the reader directs every choice. Planting it turns
+   * Survival on.
+   */
+  fateSurvival?: true;
 }
 
 /** What the writer asked for: a spark inside one genre, or inside a genre invented on the spot. */
@@ -56,8 +60,8 @@ export interface StorySpark {
   title: string;
   /** The novel tradition the premise reads in. */
   style: StoryStyle;
-  /** How hard fate presses the story. */
-  pressure: StorySeedSurvivalPressure;
+  /** Written for Fate Survival; planting it turns Survival on. */
+  survival: boolean;
   /** True when the genre was invented for this spark rather than chosen from a list. */
   inventedGenre: boolean;
   /** One line on how an invented genre feels. Shown with the spark; never planted. */
@@ -77,12 +81,6 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const clean = (value: unknown, maximum: number): string =>
   typeof value === 'string' ? value.replace(/\s+/g, ' ').trim().slice(0, maximum).trim() : '';
 
-const PRESSURES: readonly StorySeedSurvivalPressure[] = ['heaven', 'immortal', 'mortal'];
-const pressureOf = (value: unknown): StorySeedSurvivalPressure | undefined => {
-  const normalized = clean(value, 20).toLowerCase();
-  return PRESSURES.find(pressure => pressure === normalized);
-};
-
 /** The tradition a genre most often reads in, when a writer gave none. */
 export const storyStyleForGenre = (genre: string): StoryStyle => {
   const name = genre.toLowerCase();
@@ -98,7 +96,11 @@ export const parseStorySparkRequest = (value: unknown): StorySparkRequest => {
     ? value.avoid.map(item => clean(item, STORY_SPARK_PREMISE_MAX_LENGTH)).filter(Boolean).slice(0, STORY_SPARK_AVOID_LIMIT)
     : [];
   const idea = clean(value.idea, STORY_SPARK_IDEA_MAX_LENGTH);
-  const extra = { ...(idea ? { idea } : {}), ...(avoid.length ? { avoid } : {}) };
+  const extra = {
+    ...(idea ? { idea } : {}),
+    ...(avoid.length ? { avoid } : {}),
+    ...(value.fateSurvival === true ? { fateSurvival: true as const } : {}),
+  };
   if (value.inventGenre === true) return { inventGenre: true, ...extra };
   const genre = clean(value.genre, STORY_SPARK_GENRE_MAX_LENGTH);
   if (!genre) throw new Error('Choose a genre, or ask for one to be invented.');
@@ -124,7 +126,7 @@ export const parseStorySpark = (value: unknown, request: StorySparkRequest): Sto
     genre,
     title: clean(value.title, STORY_SPARK_TITLE_MAX_LENGTH).replace(/^["“]|["”]$/g, ''),
     style: normalizeStoryStyle(value.style) ?? storyStyleForGenre(genre),
-    pressure: pressureOf(value.pressure) ?? 'immortal',
+    survival: request.fateSurvival === true,
     inventedGenre: Boolean(request.inventGenre),
     ...(genreNote ? { genreNote } : {}),
     ...(aside ? { aside } : {}),
@@ -152,7 +154,7 @@ export const storySeedInputFromSpark = (spark: StorySpark): StorySeedInput => {
       },
       optional: {
         ...seed.story.optional,
-        fateSurvival: { ...seed.story.optional.fateSurvival, pressure: spark.pressure },
+        fateSurvival: { ...seed.story.optional.fateSurvival, enabled: spark.survival },
         startedFrom: 'story-spark',
       },
     },

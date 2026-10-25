@@ -994,7 +994,7 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
   });
 
   it('Dao Insights on Home: a spark kept goes to the Story Bank, and one begun opens in Create with its whole Origin', async () => {
-    const requestStorySpark = vi.fn(async () => ({ premise: 'A sword writes letters to its first owner.', genre: 'Xianxia', title: 'Letters From the Blade', style: 'chinese' as const, pressure: 'heaven' as const, inventedGenre: false, aside: 'Hm.', voice: 'Elder' }));
+    const requestStorySpark = vi.fn(async () => ({ premise: 'A sword writes letters to its first owner.', genre: 'Xianxia', title: 'Letters From the Blade', style: 'chinese' as const, survival: false, inventedGenre: false, aside: 'Hm.', voice: 'Elder' }));
     const services = appServices(scriptedWriter().writer, { requestStorySpark, storySparksConfigured: vi.fn(async () => true) });
     services.profile.save({ defaultReadingLanguage: 'ja', defaultChapterWritingStyle: 'Easy Read' });
     // jsdom never finishes exit animations, which would hold the previous spark.
@@ -1005,8 +1005,10 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(document.querySelectorAll('#dao-insights-header-center')).toHaveLength(1);
     await click(document.getElementById('dao-insights-header-center'), 'Dao Insights', 20);
     const panel = () => document.querySelector<HTMLElement>('[role="dialog"][aria-label="Dao Insights"]')!;
+    await click(panel().querySelector('[role="switch"][aria-label="Fate Survival"]'), 'Fate Survival', 20);
     await click([...panel().querySelectorAll('button')].find(button => /Seek a spark/.test(button.textContent ?? '')), 'Seek a spark', 1100);
     expect(requestStorySpark).toHaveBeenCalledTimes(1);
+    expect(requestStorySpark).toHaveBeenCalledWith(expect.objectContaining({ fateSurvival: true }), undefined, expect.any(AbortSignal));
     expect(panel().textContent).toContain('A sword writes letters to its first owner.');
     await click(panel().querySelector('[aria-label="Keep in Story Bank"]'), 'Keep', 20);
     expect((await services.storySeeds.list(NOVEL_EXPANDED_READER_ID)).map(record => [record.seed.story.required.premise, record.seed.story.required.genre, record.originalLanguage]))
@@ -1020,7 +1022,7 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(document.querySelector<HTMLInputElement>('#origin-story-title-input')?.value).toBe('Letters From the Blade');
     expect(saved[0].seed.story.required.style).toBe('chinese');
     expect(saved[0].seed.story.required.storyTags.length).toBeGreaterThan(0);
-    expect(saved[0].seed.story.optional).toMatchObject({ fateSurvival: { pressure: 'heaven' }, startedFrom: 'story-spark' });
+    expect(saved[0].seed.story.optional).toMatchObject({ fateSurvival: { enabled: true, pressure: 'immortal' }, startedFrom: 'story-spark' });
   });
 
   it('a new Story Seed in Create starts from the profile\'s reading language and Reading Mode', async () => {

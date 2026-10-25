@@ -208,6 +208,15 @@ The existing local files named by this inventory are:
 
 ## Workshop history
 
+- **2026-10-25 (Dao Insights fits one screen; Fate Survival sparks):** From
+  SENSEI. The spark panel no longer scrolls on phones: a compact spark card
+  (genre, title, premise, one line of tradition and tags, the aside in two
+  lines), Random/Custom and a Fate Survival switch in one row, the genre as
+  Story Seed's picker in its one-line compact form, and Seek, Begin, Keep and
+  Copy in one footer row. Opening the genre shows the Story Paths in the
+  spark's place, with Back to the spark. Fate Survival asks for a spark whose
+  protagonist's life is at stake and plants it with Survival on. Sparks no
+  longer choose a Pressure: a planted seed keeps Story Seed's Immortal default.
 - **2026-10-25 (Dao sparks fill the Origin):** A spark shows and plants a whole
   Origin: title, premise, genre, novel tradition, Pressure and the Story Tags
   its premise calls for. The Story Spark route asks the model for the title,

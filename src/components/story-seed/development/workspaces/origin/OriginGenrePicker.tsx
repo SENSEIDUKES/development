@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react';
+import { useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
 import {
   Building2,
   Castle,
@@ -69,6 +69,16 @@ interface OriginGenrePickerProps {
   emptyTitle?: string;
   emptyHint?: string;
   conjure?: ConjurePath;
+  /**
+   * A host with little room (Dao Insights) shows only the one-line chosen
+   * path, without the Genre row, and opens the paths where it likes through
+   * `open` / `onOpenChange`.
+   */
+  compact?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  /** A path was chosen from the grid — never called while the writer types their own genre. */
+  onSelectPath?: (genre: string) => void;
 }
 
 export const OriginGenrePicker = ({
@@ -79,12 +89,28 @@ export const OriginGenrePicker = ({
   emptyTitle = 'Choose Story Path',
   emptyHint = 'Xianxia, System, Mystery, or your own',
   conjure,
+  compact = false,
+  open,
+  onOpenChange,
+  onSelectPath,
 }: OriginGenrePickerProps) => {
   const titleId = `${idPrefix}-genre-title`;
   const presetsId = `${idPrefix}-genre-presets`;
   const customFieldsId = `${idPrefix}-genre-custom-path-fields`;
-  const [isGenrePickerOpen, setIsGenrePickerOpen] = useState(false);
+  const [ownOpen, setOwnOpen] = useState(false);
+  const isGenrePickerOpen = open ?? ownOpen;
+  const setIsGenrePickerOpen = (next: boolean | ((current: boolean) => boolean)) => {
+    const value = typeof next === 'function' ? next(isGenrePickerOpen) : next;
+    if (open === undefined) setOwnOpen(value);
+    onOpenChange?.(value);
+  };
   const [isCustomPathOpen, setIsCustomPathOpen] = useState(false);
+  /** Arrow keys move the choice through the paths; only a tap, Enter or Space picks one. */
+  const arrowingRef = useRef(false);
+  const arrowThroughPaths = (event: KeyboardEvent<HTMLButtonElement>) => {
+    arrowingRef.current = true;
+    try { handleRadioGroupKeyDown(event); } finally { arrowingRef.current = false; }
+  };
   const conjuring = Boolean(conjure?.active);
   const trimmedGenre = conjuring ? '' : genre.trim();
   const isCustomGenre = Boolean(trimmedGenre) && !GENRE_PRESETS.some(preset => preset.id === trimmedGenre);
@@ -104,19 +130,20 @@ export const OriginGenrePicker = ({
   };
 
   return (
-    <section className="glass-panel p-4 sm:p-5" aria-labelledby={titleId}>
-      <div className="mb-3 flex items-center justify-between gap-3">
+    <section className={compact ? '' : 'glass-panel p-4 sm:p-5'} aria-labelledby={compact ? undefined : titleId} aria-label={compact ? 'Genre' : undefined}>
+      {!compact && <div className="mb-3 flex items-center justify-between gap-3">
         <p id={titleId} className={workspaceCompactLabelClass}>Genre{required && <> <span className="text-[#D9B36C]">*</span></>}</p>
         <button type="button" aria-expanded={isGenrePickerOpen} aria-controls={presetsId} onClick={() => setIsGenrePickerOpen(open => !open)}
           className="story-seed-touch-target inline-flex items-center gap-1 font-sc text-[10px] font-bold uppercase tracking-widest text-[#CDB271] transition-colors hover:text-[#E3C878]">
           {isGenrePickerOpen ? 'Close paths' : 'Pick a path'}<ChevronDown size={13} className={isGenrePickerOpen ? 'rotate-180 transition-transform' : 'transition-transform'} />
         </button>
-      </div>
+      </div>}
 
       {!isGenrePickerOpen && (
         <button type="button" onClick={() => setIsGenrePickerOpen(true)}
+          aria-expanded={compact ? false : undefined} aria-label={compact ? `Genre: ${conjuring ? conjure!.title : trimmedGenre || emptyTitle}. Pick a path` : undefined}
           style={{ '--choice-accent': GENRE_PATH_ACCENT } as CSSProperties}
-          className="glass-choice flex w-full items-center gap-3 px-4 py-3 text-left">
+          className={`glass-choice flex w-full items-center gap-3 text-left ${compact ? 'px-3 py-2' : 'px-4 py-3'}`}>
           <span aria-hidden="true" className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-all ${
             conjuring
               ? 'border-[rgba(212,175,55,0.55)] bg-[rgba(212,175,55,0.1)] shadow-[0_0_12px_rgba(212,175,55,0.28)]'
@@ -138,7 +165,7 @@ export const OriginGenrePicker = ({
             <span className={`block truncate font-sc text-[11px] font-bold uppercase tracking-[0.12em] ${trimmedGenre || conjuring ? 'text-signal' : 'text-neutral-200'}`}>
               {conjuring ? conjure!.title : trimmedGenre || emptyTitle}
             </span>
-            <span className="mt-0.5 block font-sans text-[11px] text-neutral-400">
+            <span className={`mt-0.5 block font-sans text-[11px] text-neutral-400 ${compact ? 'truncate' : ''}`}>
               {conjuring ? conjure!.hint : trimmedGenre ? 'Your story path — tap to change' : emptyHint}
             </span>
           </span>
@@ -171,7 +198,10 @@ export const OriginGenrePicker = ({
                 return (
                   <button key={preset.id} type="button" role="radio" aria-checked={selected}
                     tabIndex={radioGroupTabIndex(selected, GENRE_PRESETS.some(candidate => candidate.id === trimmedGenre), index)}
-                    onClick={() => { setIsCustomPathOpen(false); leaveConjure(); onChange(preset.id); }} onKeyDown={handleRadioGroupKeyDown}
+                    onClick={() => {
+                      setIsCustomPathOpen(false); leaveConjure(); onChange(preset.id);
+                      if (!arrowingRef.current) onSelectPath?.(preset.id);
+                    }} onKeyDown={arrowThroughPaths}
                     data-selected={selected} style={{ '--choice-accent': GENRE_PATH_ACCENT } as CSSProperties}
                     className="glass-choice flex min-h-[5.5rem] flex-col items-center justify-center gap-2 px-1.5 py-3">
                     <span aria-hidden="true" className={`flex h-9 w-9 items-center justify-center rounded-full border transition-all ${selected ? 'border-[rgba(167,139,250,0.55)] bg-[rgba(167,139,250,0.12)] shadow-[0_0_12px_rgba(167,139,250,0.3)]' : 'border-[rgba(150,166,220,0.2)] bg-[rgba(11,14,30,0.6)]'}`}>
@@ -204,7 +234,7 @@ export const OriginGenrePicker = ({
                     <p className="mb-2 flex items-center gap-1.5 font-sc text-[10px] font-bold uppercase tracking-widest text-[#D4AF37]">
                       <Sparkles size={11} aria-hidden="true" />Define your genre
                     </p>
-                    <LibraryTextBox id={`${idPrefix}-genre-custom-input`} size="compact" value={isCustomGenre ? genre : ''} onChange={onChange} placeholder="Example: urban xianxia mystery" aria-label="Custom genre" />
+                    <LibraryTextBox id={`${idPrefix}-genre-custom-input`} size="compact" value={isCustomPathActive ? genre : ''} onChange={onChange} placeholder="Example: urban xianxia mystery" aria-label="Custom genre" />
                   </div>
                 </motion.div>
               )}

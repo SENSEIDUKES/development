@@ -105,7 +105,7 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
         inventedGenre: Boolean(request.inventGenre),
         title: `The ${genre} Graduate`,
         style: storyStyleForGenre(genre),
-        pressure: 'immortal',
+        survival: Boolean(request.fateSurvival),
         ...(request.inventGenre ? { genreNote: 'Every technique is a sound that must be answered.' } : {}),
         premise: request.idea
           ? `${request.idea.replace(/[.\s]+$/, '')}, until the ${genre} world decides that is the one thing it cannot allow.`

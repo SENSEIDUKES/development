@@ -364,6 +364,10 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## History
 
+- **2026-10-25** — Dao Insights in the header, on phones: the header logo
+  never shrinks; Dao Insights in the center takes only the space left and
+  truncates instead of wrapping onto the logo. Phones read the short "Dao
+  Insights" label on one line with one line of the premise.
 - **2026-10-16** — Added the app-wide Familiar helper foundation and a small Fate
   voice experiment, shared with the Workshop Reader. Explicit confirmation,
   touch/typing fallback and guarded playback recovery; English commands only,

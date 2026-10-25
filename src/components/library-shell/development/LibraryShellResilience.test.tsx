@@ -219,7 +219,7 @@ it('keeps a model-written spark after it settles', async () => {
   // jsdom never finishes exit animations, which would hold the previous spark.
   MotionGlobalConfig.skipAnimations = true;
   try {
-    const requestSpark = vi.fn(async () => ({ premise: 'A divined premise from the oracle.', genre: 'Xianxia', title: 'The Oracle', style: 'chinese' as const, pressure: 'immortal' as const, inventedGenre: false, voice: 'Test Oracle' }));
+    const requestSpark = vi.fn(async () => ({ premise: 'A divined premise from the oracle.', genre: 'Xianxia', title: 'The Oracle', style: 'chinese' as const, survival: false, inventedGenre: false, voice: 'Test Oracle' }));
     await render(<MainLibraryHomeInsights adapter={{ ...adapter(), daoSparks: { checkSparks: async () => true, requestSpark } }} />);
     await settle();
     await click(document.getElementById('dao-insights-header-center'));

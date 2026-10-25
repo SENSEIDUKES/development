@@ -9,6 +9,7 @@ import {
   Play,
   ScrollText,
   Sparkle,
+  Skull,
   Sparkles,
   SquarePen,
   type LucideIcon,
@@ -132,6 +133,7 @@ const StoryBankCard = ({
           <>
             {genre.trim() && <BankChip icon={Sparkle}>{genre}</BankChip>}
             {getStoryStyleLabel(style) && <BankChip>{getStoryStyleLabel(style)}</BankChip>}
+            {record.seed.story.optional.fateSurvival.enabled && <BankChip icon={Skull}>Fate Survival</BankChip>}
           </>
         ) : manifested ? (
           <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(205,178,113,0.45)] bg-[rgba(205,178,113,0.07)] px-2.5 py-1 font-sc text-[9px] font-bold uppercase tracking-[0.18em] text-[#DDC58A] shadow-[0_0_14px_rgba(205,178,113,0.12)]">

@@ -37,7 +37,7 @@ const packet = (premise: string): StoryInformationPacket => ({
   storyDirection: { hardPins: [] },
   previouslyOn: [],
   canonicalState: { characters: [], relationships: [], locations: [], factions: [], artifacts: [], abilities: [], resources: [] },
-  diagnostics: { budgetSource: 'test', sections: [], omitted: [], identityAmbiguities: [], storage: { chapters: 0, events: 0, canonicalRecords: 0, activeRecords: 0, recaps: 0 } },
+  diagnostics: { budgetSource: 'test', sections: [], omitted: [], identityAmbiguities: [], storage: { chapters: 0, canonicalRecords: 0, activeRecords: 0, recaps: 0 } },
 });
 
 const request = (readerDirection?: string): ImmediateChapterRequest =>

@@ -311,7 +311,7 @@ describe('HARNESS chapter body persistence', () => {
     const { controller, storyId } = await generateChapter();
     const before = controller.snapshot().chapters[0];
 
-    const replayed = await controller.replayStory(storyId);
+    const replayed = controller.snapshot();
     const after = replayed.chapters[0];
     expect(after.paragraphs).toEqual(before.paragraphs);
     expect(after.prose).toBe(before.prose);

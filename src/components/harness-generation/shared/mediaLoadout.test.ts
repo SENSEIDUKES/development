@@ -156,7 +156,6 @@ describe('HARNESS Media Loadout runtime integration', () => {
     controller.setMediaPort(createLibraryMediaPort({ registered: [soundscapes, soundCues], entitlements: [] }));
     await controller.setMediaSelection(story.id, 'soundscapes');
     await controller.setMediaSelection(story.id, 'soundCues');
-    await controller.replayStory(story.id, committed.id);
     expect(JSON.stringify(controller.snapshot().chapters[0])).toBe(committedBeforeChanges);
 
     const reloaded = new HarnessGenerationController({ repository, modelAdapter: adapter().value, runtime: runtime() });

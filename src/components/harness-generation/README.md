@@ -37,6 +37,33 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-10-25 (the semantic-event memory system comes out):** The chapter
+  writer used to return `memory.events` beside its prose: structured records of
+  what happened, each carrying a quote the HARNESS checked back against the
+  chapter. A capability engine turned those into canonical records across ten
+  kinds, and the next chapter's packet read them. That was the story's memory.
+
+  When chapter state moved to the writer's tags, the feeder was removed and the
+  machinery was left standing: acceptance has returned an empty event list for
+  every chapter since, so the event preserver preserved nothing, the capability
+  engine ran zero times per chapter, and `capabilityReceipts` and `projections`
+  were never written. `memoryRecoveries` had no writer anywhere in the
+  repository and was still exported with every story. `replayStory` existed to
+  drive all of it, so a committed chapter's "replay" and the workspace's
+  "Repair chapter enhancements" button did nothing at all.
+
+  All of it is gone: the four stores, the `events_preserved` stage (tagging now
+  follows prose acceptance directly), the capability engine and its registry,
+  the mechanical-continuity reading, `replayStory`, the chapter's `eventIds`,
+  the attempt's preserved and rejected events, `postCommitProcessing`, and the
+  developer panels that displayed them. Schema 38 drops them from saved stories
+  and moves an attempt saved at the retired stage back to prose acceptance.
+  **Nothing about writing a chapter changes**, because none of it ran.
+
+  What the tags do not cover, the deletion makes visible rather than fixes:
+  relationships, plot threads, mysteries and timeline had no replacement, and
+  places and factions exist only as the author wrote them at Chapter 0.
+
 - **2026-10-25 (the tagging stage on the paths that recover a chapter):** Adding
   the stage to the chapter pipeline left it out of the two paths that pick a
   chapter back up after a failed local write, and out of the one button that

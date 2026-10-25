@@ -8,7 +8,6 @@ export {
   HarnessGenerationController,
   exportHarnessStory,
   type HarnessChapterWrite,
-  type HarnessEventPreserver,
   type HarnessGenerationControllerOptions,
 } from '../../components/harness-generation/shared/controller';
 export {
@@ -18,16 +17,6 @@ export {
   readHarnessWorkspaceState,
   type HarnessGenerationRepository,
 } from '../../components/harness-generation/shared/repository';
-export {
-  HarnessCapabilityRegistry,
-  buildHarnessProjectionIntents,
-  defaultHarnessCapabilityHandlers,
-  resolveHarnessEntity,
-  type HarnessCapabilityContext,
-  type HarnessCapabilityHandler,
-  type HarnessCapabilityResult,
-  type HarnessProjectionBuilder,
-} from '../../components/harness-generation/shared/capabilities';
 export {
   buildCanonicalStoryView,
   type AppendHarnessCorrectionInput,

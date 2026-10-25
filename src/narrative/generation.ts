@@ -36,7 +36,7 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * every card saved before it is the world the story opened with; 37 gives the
  * world record a home of its own on the workspace, so a chapter can add a card
  * to it, seeded from each story's active Foundation. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 37 as const;
+export const HARNESS_GENERATION_SCHEMA_VERSION = 38 as const;
 
 /** The most an Author's notes may hold, in characters. */
 export const AUTHOR_NOTES_LIMIT = 2000;
@@ -111,7 +111,7 @@ export interface StoryFoundationInput {
   storyTags?: string[];
   characters?: string;
   /** Known identities supplied by the host; never inferred from paragraph order. */
-  cast?: NonNullable<HarnessEventDetails['character']>[];
+  cast?: HarnessCastMember[];
   worldFacts?: string;
   intendedDirection?: string;
   /** Host-declared identities; names and aliases are author data, not model IDs. */
@@ -579,13 +579,6 @@ export interface HarnessStoryConclusion {
   recordedAt: string;
 }
 
-/** Provider-neutral semantic details. All identities are assigned by the host. */
-export interface HarnessEventDetails {
-  character?: { name: string; role?: string; relationshipToMC?: string; isMainCharacter?: boolean };
-  speech?: { speaker: string; quote: string };
-  mechanics?: { subject: string; name: string; value: string; unit?: string };
-}
-
 export type HarnessModelPlan = string | {
   intent?: string;
   beats?: string[];
@@ -648,34 +641,12 @@ export interface HarnessAcceptedChapterDraft {
   responseMode: 'json' | 'plain-prose-recovery';
 }
 
-export interface HarnessSemanticEvent {
-  id: string;
-  storyId: string;
-  attemptId: string;
-  /** Added only as part of the final chapter commit. */
-  chapterId?: string;
-  chapterNumber: number;
-  createdAt: string;
-  description: string;
-  category?: string;
-  subjects?: string[];
-  subjectKinds?: Record<string, HarnessCanonicalKind>;
-  significance?: 'minor' | 'major';
-  evidence?: string;
-  requestedEffects?: string[];
-  details?: HarnessEventDetails;
-  facts?: Record<string, string>;
-  /** Checked against immutable chapter prose during interpretation. */
-  evidenceVerified?: boolean;
-  recoveryId?: string;
-  /** Lossless source lane. Derived capabilities never replace this evidence. */
-  capability: 'general-narrative-event';
-}
-
-export interface HarnessRejectedEventDiagnostic {
-  index: number;
-  reason: string;
-  rawKind: 'null' | 'array' | 'boolean' | 'number' | 'object' | 'string' | 'unknown';
+/** A character the Foundation declares, as its author wrote them. */
+export interface HarnessCastMember {
+  name: string;
+  role?: string;
+  relationshipToMC?: string;
+  isMainCharacter?: boolean;
 }
 
 export interface HarnessWarning {
@@ -759,7 +730,7 @@ export interface CurrentStoryProjection {
   storyTags?: string[];
   characters?: string;
   worldFacts?: string;
-  cast?: NonNullable<HarnessEventDetails['character']>[];
+  cast?: HarnessCastMember[];
   identities?: Array<{ name: string; aliases?: string[]; kind: 'character' | 'location-world' | 'faction'; evidence: string }>;
   /**
    * The point of view the story opened in, read from its earliest committed
@@ -882,7 +853,7 @@ export interface StoryInformationDiagnostics {
   omitted: PacketOmission[];
   identityAmbiguities: CanonicalIdentityAmbiguity[];
   /** Storage totals at assembly time, so growth stays visible while the packet stays compact. */
-  storage: { chapters: number; events: number; canonicalRecords: number; activeRecords: number; recaps: number };
+  storage: { chapters: number; canonicalRecords: number; activeRecords: number; recaps: number };
 }
 
 /**
@@ -1035,7 +1006,6 @@ export interface HarnessChapter {
   fixer?: HarnessHoldingsFixRecord;
   /** What tagging this chapter came to, and why it placed no tag when it placed none. */
   tagging?: HarnessChapterTagging;
-  eventIds: string[];
   responseMode: 'json' | 'plain-prose-recovery';
   createdAt: string;
   committedAt: string;
@@ -1046,7 +1016,6 @@ export type HarnessAttemptStage =
   | 'provider_outcome_unknown'
   | 'raw_received'
   | 'prose_accepted'
-  | 'events_preserved'
   /** The chapter has been read by the tagger, and its tags sit on the accepted draft. */
   | 'tagged'
   | 'accepted_not_durable'
@@ -1055,7 +1024,7 @@ export type HarnessAttemptStage =
   | 'abandoned';
 
 export interface HarnessAttemptFailure {
-  stage: 'provider' | 'response' | 'events' | 'persistence';
+  stage: 'provider' | 'response' | 'persistence';
   message: string;
 }
 
@@ -1079,7 +1048,6 @@ export interface HarnessGenerationAttempt {
   startedAt: string;
   rawReceivedAt?: string;
   proseAcceptedAt?: string;
-  eventsPreservedAt?: string;
   taggedAt?: string;
   /** What tagging this chapter came to, carried to the commit that writes it onto the chapter. */
   tagging?: HarnessChapterTagging;
@@ -1089,9 +1057,6 @@ export interface HarnessGenerationAttempt {
   /** The measured size of the serialized request this attempt actually sent. */
   requestMeasurement?: HarnessRequestMeasurement;
   acceptedDraft?: HarnessAcceptedChapterDraft;
-  /** Stable event IDs are assigned before the chapter commits. */
-  preservedEvents?: HarnessSemanticEvent[];
-  rejectedEvents?: HarnessRejectedEventDiagnostic[];
   pendingChapterId?: string;
   committedChapterId?: string;
   /**
@@ -1101,11 +1066,10 @@ export interface HarnessGenerationAttempt {
    */
   replacedByChapterId?: string;
   batchId?: string;
-  postCommitProcessing?: 'not_started' | 'complete' | 'warnings' | 'failed';
   warnings: HarnessWarning[];
   failure?: HarnessAttemptFailure;
   /** The exact checkpoint that must be durably retried. */
-  recoveryStage?: 'raw_received' | 'prose_accepted' | 'events_preserved' | 'tagged' | 'committed' | 'generation_failed';
+  recoveryStage?: 'raw_received' | 'prose_accepted' | 'tagged' | 'committed' | 'generation_failed';
 }
 
 export type HarnessCapabilityId =
@@ -1167,30 +1131,6 @@ export interface HarnessCanonicalRecord {
   warnings: string[];
 }
 
-export interface HarnessUnresolvedReference {
-  label: string;
-  reason: string;
-  candidateRecordIds?: string[];
-}
-
-export interface HarnessCapabilityReceipt {
-  id: string;
-  storyId: string;
-  chapterId?: string;
-  sourceEventId: string;
-  capabilityId: HarnessCapabilityId;
-  capabilityVersion: string;
-  status: 'succeeded' | 'unresolved' | 'failed' | 'superseded';
-  canonicalRecordIds: string[];
-  projectionIntentIds: string[];
-  warnings: string[];
-  unresolvedReferences: HarnessUnresolvedReference[];
-  processedAt: string;
-  replayCount: number;
-  failure?: string;
-  supersededByReceiptId?: string;
-}
-
 export type HarnessProjectionKind =
   | 'codex-candidate'
   | 'narrative-notification'
@@ -1199,22 +1139,6 @@ export type HarnessProjectionKind =
   | 'fate'
   | 'consequence-badge'
   | 'color-code';
-
-export interface HarnessProjectionRecord {
-  id: string;
-  storyId: string;
-  chapterId?: string;
-  sourceEventId?: string;
-  sourceCanonicalRecordIds: string[];
-  kind: HarnessProjectionKind;
-  status: 'ready' | 'unresolved' | 'failed' | 'superseded';
-  label?: string;
-  description: string;
-  explanation: string;
-  createdAt: string;
-  projectorVersion: string;
-  warnings: string[];
-}
 
 export type HarnessCorrectionKind =
   | 'reader-edit'
@@ -1266,7 +1190,6 @@ export interface HarnessCanonicalStoryView {
   artifacts: HarnessCanonicalRecord[];
   progression: HarnessCanonicalRecord[];
   narrativeEvents: HarnessCanonicalRecord[];
-  unresolvedReferences: HarnessUnresolvedReference[];
   conflicts: HarnessCanonicalRecord[];
   corrections: HarnessAuthorCorrection[];
 }
@@ -1325,15 +1248,10 @@ export interface HarnessWorkspaceState {
   foundations: StoryFoundationRevision[];
   attempts: HarnessGenerationAttempt[];
   chapters: HarnessChapter[];
-  events: HarnessSemanticEvent[];
-  capabilityReceipts: HarnessCapabilityReceipt[];
   canonicalRecords: HarnessCanonicalRecord[];
-  projections: HarnessProjectionRecord[];
   corrections: HarnessAuthorCorrection[];
   batches: HarnessBatchRun[];
   arcPlanOperations: HarnessArcPlanOperation[];
-  /** Historical extraction receipts only: preserved in saved stories, never resumed or applied. */
-  memoryRecoveries?: HarnessMemoryRecovery[];
   /** Every story's Codex entries: the people, things and abilities its holdings name, each with an app-made ID. */
   codexEntries: CodexEntry[];
   /**
@@ -1357,30 +1275,6 @@ export interface HarnessWorkspaceState {
  */
 export interface StoryWorldCard extends WorldCard {
   storyId: string;
-}
-
-/** Historical stored request shape, not a supported provider operation. */
-export interface HarnessMemoryRecoveryRequest {
-  operation: 'recover-memory';
-  storyId: string;
-  chapterId: string;
-  model: string;
-  prose: string;
-  foundation: StoryFoundationRevision;
-}
-
-export interface HarnessMemoryRecovery {
-  id: string;
-  storyId: string;
-  chapterId: string;
-  request: HarnessMemoryRecoveryRequest;
-  startedAt: string;
-  status: 'request_started' | 'provider_outcome_unknown' | 'raw_received' | 'applied' | 'failed';
-  rawProviderResponse?: string;
-  providerReceipt?: HarnessProviderReceipt;
-  eventIds?: string[];
-  failure?: string;
-  warnings?: string[];
 }
 
 export interface HarnessGenerationServerInfo {

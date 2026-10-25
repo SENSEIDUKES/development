@@ -39,11 +39,12 @@ describe('planHarnessWorkspaceLoad', () => {
     // 35 adds only an optional packet section: that world, carried to the writer. Frozen attempts keep their own packet.
     // 36 gives every world card the chapter it entered in; a workspace holding no world is untouched.
     // 37 gives the world record its own home, opened from each story's active Foundation.
-    expect(HARNESS_GENERATION_SCHEMA_VERSION).toBe(37);
-    for (const schemaVersion of [27, 28, 29, 30, 31, 32, 34, 35, 36]) {
+    // 38 drops the semantic-event memory system nothing had written to since the tags took over.
+    expect(HARNESS_GENERATION_SCHEMA_VERSION).toBe(38);
+    for (const schemaVersion of [27, 28, 29, 30, 31, 32, 34, 35, 36, 37]) {
       const stored = { ...createEmptyHarnessWorkspaceState(), schemaVersion, stories: [{ id: 'a' }], attempts: [{ id: 'a1', capaPrompt: { soundVocabulary: [{ word: 'blade drawn', example: 'drew his sword' }] } }], chapters: [{ id: 'c1', soundCues: [{ id: 'sc1' }] }] };
       const plan = planHarnessWorkspaceLoad(stored, now);
-      expect(plan.state).toEqual({ ...stored, schemaVersion: 37, worldCards: [] });
+      expect(plan.state).toEqual({ ...stored, schemaVersion: 38, worldCards: [] });
       expect(plan.preserve).toEqual({
         key: `${PRESERVED_WORKSPACE_PREFIX}v${schemaVersion}:2026-09-24T12:00:00.000Z`,
         record: { preservedAt: now(), reason: 'migrated', schemaVersion, workspace: stored },
@@ -69,7 +70,7 @@ describe('planHarnessWorkspaceLoad', () => {
     const upgraded = { cards: [{ ...world.cards[0], key: 'world:character:ye-chen', enteredInChapter: 0 }] };
     expect(plan.state).toEqual({
       ...stored,
-      schemaVersion: 37,
+      schemaVersion: 38,
       foundations: [{ id: 'f1', input: { premise: 'A quarry laborer rises.', worldAtChapterZero: upgraded } }],
       attempts: [{ id: 'a1', storyInformation: { worldAtChapterZero: upgraded } }],
       // No story names that Foundation as its active one, so the living record opens empty.

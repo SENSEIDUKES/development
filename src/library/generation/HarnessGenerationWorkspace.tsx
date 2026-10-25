@@ -24,7 +24,7 @@ import { useLibraryStories, type LibraryStoriesOptions } from '../stories/useLib
 import { StoryPages } from '../stories/StoryPages';
 import { downloadHarnessStory } from '../stories/storyExport';
 import type { LoadingAgentPresentation } from '../manifestations/taskCard';
-import { type HarnessGenerationAttempt, type HarnessGenerationModelAdapter, type HarnessCorrectionKind, type HarnessSemanticEvent, type HarnessStory, type HarnessStoryMode, type HarnessSkillManifest, type HarnessSkillReference, type HarnessSkillSlotId, type HarnessStorySeedOption, type HarnessStorySeedSource, type HarnessWorkspaceState, type StoryFoundationInput } from '@seihouse/sen/harness-generation';
+import { type HarnessGenerationAttempt, type HarnessGenerationModelAdapter, type HarnessCorrectionKind, type HarnessStory, type HarnessStoryMode, type HarnessSkillManifest, type HarnessSkillReference, type HarnessSkillSlotId, type HarnessStorySeedOption, type HarnessStorySeedSource, type HarnessWorkspaceState, type StoryFoundationInput } from '@seihouse/sen/harness-generation';
 
 export interface HarnessGenerationWorkspaceProps {
   /** Host-selected first-party records; never a built-in SEN catalog. */
@@ -112,7 +112,6 @@ const stageLabel: Record<HarnessGenerationAttempt['stage'], string> = {
   provider_outcome_unknown: 'Provider outcome unknown',
   raw_received: 'Raw response saved',
   prose_accepted: 'Prose accepted',
-  events_preserved: 'Events preserved',
   tagged: 'Tagged',
   accepted_not_durable: 'Needs local persistence retry',
   committed: 'Committed',
@@ -130,10 +129,6 @@ const latestAttemptForStory = (state: HarnessWorkspaceState, storyId: string) =>
 
 const storyChapters = (state: HarnessWorkspaceState, storyId: string) => state.chapters
   .filter(chapter => chapter.storyId === storyId)
-  .sort((left, right) => left.chapterNumber - right.chapterNumber);
-
-const storyEvents = (state: HarnessWorkspaceState, storyId: string) => state.events
-  .filter(event => event.storyId === storyId)
   .sort((left, right) => left.chapterNumber - right.chapterNumber);
 
 function StorySeedStart({
@@ -231,7 +226,7 @@ function AttemptStatus({
       </LibraryPanel>
     );
   }
-  const canResume = ['raw_received', 'prose_accepted', 'events_preserved', 'tagged'].includes(attempt.stage)
+  const canResume = ['raw_received', 'prose_accepted', 'tagged'].includes(attempt.stage)
     || (attempt.stage === 'accepted_not_durable' && Boolean(attempt.recoveryStage));
   const canRetryModel = ['generation_failed', 'provider_outcome_unknown'].includes(attempt.stage);
   return (
@@ -433,24 +428,6 @@ function ChapterRecapEditor({ chapter, busy, onSave }: { chapter: HarnessChapter
   );
 }
 
-function SemanticEventList({ events }: { events: HarnessSemanticEvent[] }) {
-  if (!events.length) return <p className="text-sm text-neutral-400">No semantic events were supplied for committed chapters.</p>;
-  return (
-    <ol className="space-y-3">
-      {events.map(event => (
-        <li key={event.id} className="rounded-xl border border-white/10 bg-black/20 p-3">
-          <p className="text-sm leading-relaxed text-neutral-100">{event.description}</p>
-          <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-cyan-200/55">
-            Chapter {event.chapterNumber} · {event.category ?? 'general narrative event'}
-          </p>
-          {event.subjects?.length ? <p className="mt-1 text-xs text-neutral-400">Subjects: {event.subjects.join(', ')}</p> : null}
-          {event.evidence && <blockquote className="mt-2 border-l border-cyan-200/25 pl-3 text-xs text-neutral-400">{event.evidence}</blockquote>}
-        </li>
-      ))}
-    </ol>
-  );
-}
-
 function Diagnostics({ attempt }: { attempt?: HarnessGenerationAttempt }) {
   if (!attempt) return null;
   const usage = attempt.providerReceipt?.usage;
@@ -484,14 +461,6 @@ function Diagnostics({ attempt }: { attempt?: HarnessGenerationAttempt }) {
           </ul>
         </div>
       )}
-      {attempt.rejectedEvents?.length ? (
-        <div className="mt-4 rounded-xl border border-human/25 bg-human-brand/10 p-3 text-xs text-neutral-300">
-          <p className="font-medium text-human">Rejected optional events</p>
-          <ul className="mt-2 space-y-1">
-            {attempt.rejectedEvents.map(event => <li key={`${event.index}-${event.reason}`}>Event {event.index + 1}: {event.reason}</li>)}
-          </ul>
-        </div>
-      ) : null}
       <details className="mt-4 rounded-xl border border-white/10 bg-black/20 p-3">
         <summary className="cursor-pointer text-xs font-medium text-neutral-200">Frozen CAPA Prompt</summary>
         <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words text-[11px] leading-relaxed text-neutral-400">{attempt.capaPrompt.text}</pre>
@@ -529,14 +498,12 @@ function HarnessInspection({
   story,
   attempt,
   busy,
-  onReplay,
   onCorrection,
 }: {
   state: HarnessWorkspaceState;
   story: HarnessStory;
   attempt?: HarnessGenerationAttempt;
   busy: boolean;
-  onReplay: () => void;
   onCorrection: (input: {
     kind: HarnessCorrectionKind;
     reason: string;
@@ -547,8 +514,6 @@ function HarnessInspection({
   }) => void;
 }) {
   const view = buildCanonicalStoryView(state, story.id);
-  const receipts = state.capabilityReceipts.filter(receipt => receipt.storyId === story.id && receipt.status !== 'superseded');
-  const projections = state.projections.filter(projection => projection.storyId === story.id);
   const [correctionKind, setCorrectionKind] = useState<HarnessCorrectionKind>('resolve-entity');
   const [correctionReason, setCorrectionReason] = useState('');
   const [targetRecordId, setTargetRecordId] = useState('');
@@ -577,7 +542,6 @@ function HarnessInspection({
           <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-cyan-200/55">Deterministic story harness</p>
           <h2 id="harness-state-title" className="mt-1 font-display text-xl text-white">Canonical state and projections</h2>
         </div>
-        <LibraryButton type="button" size="sm" variant="secondary" icon={RefreshCcw} onClick={onReplay} loading={busy}>Replay committed events</LibraryButton>
       </div>
       <p className="mt-2 text-sm leading-relaxed text-neutral-400">These records are replayable views over committed evidence. They never replace chapter prose or original events.</p>
       <div className="mt-5 grid gap-3 lg:grid-cols-2">
@@ -598,25 +562,10 @@ function HarnessInspection({
       </div>
 
       <details className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3">
-        <summary className="cursor-pointer text-sm font-medium text-neutral-200">Capability receipts and replay status ({receipts.length})</summary>
-        <ul className="mt-3 space-y-2 text-xs text-neutral-300">{receipts.map(receipt => (
-          <li key={receipt.id}>{receipt.capabilityId} {receipt.capabilityVersion} · {receipt.status} · replay {receipt.replayCount}
-            {receipt.warnings.map(warning => <p key={warning} className="mt-1 text-gold-accent">{warning}</p>)}
-          </li>
-        ))}</ul>
-      </details>
-      <details className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3">
-        <summary className="cursor-pointer text-sm font-medium text-neutral-200">Unresolved references and conflicts ({view.unresolvedReferences.length + view.conflicts.length})</summary>
+        <summary className="cursor-pointer text-sm font-medium text-neutral-200">Conflicts ({view.conflicts.length})</summary>
         <ul className="mt-3 space-y-2 text-xs text-neutral-300">
-          {view.unresolvedReferences.map((reference, index) => <li key={`${reference.label}-${index}`}>{reference.label}: {reference.reason}</li>)}
           {view.conflicts.map(record => <li key={record.id}>{record.label ?? record.id}: conflicting canonical evidence</li>)}
         </ul>
-      </details>
-      <details className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3">
-        <summary className="cursor-pointer text-sm font-medium text-neutral-200">Codex candidates and System intents ({projections.length})</summary>
-        <ul className="mt-3 space-y-2 text-xs text-neutral-300">{projections.map(item => (
-          <li key={item.id}><span className="text-white">{item.kind}</span> · {item.status} — {item.explanation}</li>
-        ))}</ul>
       </details>
       <details className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3" data-testid="harness-packet-diagnostics">
         <summary className="cursor-pointer text-sm font-medium text-neutral-200">Generation packet budget and diagnostics</summary>
@@ -647,7 +596,7 @@ function HarnessInspection({
                 : 'The serialized request size arrives with the provider response.'}
             </p>
             <p className="mt-1 text-xs text-neutral-500">
-              Storage: {attempt.storyInformation.diagnostics.storage.chapters} chapters · {attempt.storyInformation.diagnostics.storage.events} events · {attempt.storyInformation.diagnostics.storage.canonicalRecords} canonical records ({attempt.storyInformation.diagnostics.storage.activeRecords} active) · {attempt.storyInformation.diagnostics.storage.recaps} recaps.
+              Storage: {attempt.storyInformation.diagnostics.storage.chapters} chapters · {attempt.storyInformation.diagnostics.storage.canonicalRecords} canonical records ({attempt.storyInformation.diagnostics.storage.activeRecords} active) · {attempt.storyInformation.diagnostics.storage.recaps} recaps.
             </p>
             {attempt.storyInformation.diagnostics.identityAmbiguities.length > 0 && <div className="mt-3">
               <p className="font-mono text-[10px] uppercase text-gold-accent">Probable near-duplicate identities (kept apart)</p>
@@ -774,18 +723,12 @@ export function HarnessGenerationWorkspace({
   const chapters = state && selectedStory ? storyChapters(state, selectedStory.id) : [];
   // Why the newest chapter cannot be read again for its tags, when it cannot.
   const retagGap = selectedStory ? controller.retagChapterGap(selectedStory.id) : undefined;
-  const events = state && selectedStory ? storyEvents(state, selectedStory.id) : [];
   const attempt = state && selectedStory ? latestAttemptForStory(state, selectedStory.id) : undefined;
   const arcPlanOperation = state && selectedStory ? state.arcPlanOperations
     .filter(operation => operation.storyId === selectedStory.id && ['provider_outcome_unknown', 'failed'].includes(operation.status)).at(-1) : undefined;
   const batch = state && selectedStory ? state.batches
     .filter(entry => entry.storyId === selectedStory.id)
     .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0] : undefined;
-  const visibleEvents = [
-    ...events,
-    ...(attempt && attempt.stage !== 'committed' ? attempt.preservedEvents ?? [] : []),
-  ];
-
   useEffect(() => {
     if (!state) return;
     const requested = requestedStoryId.current;
@@ -978,7 +921,6 @@ export function HarnessGenerationWorkspace({
     catch (error) { return { error: error instanceof Error ? error.message : 'The Mission Reminder is unavailable.' }; }
   }, [controller, state, selectedStory]);
 
-  const replay = () => selectedStory && void run(() => controller.replayStory(selectedStory.id));
   const addCorrection = (input: Parameters<typeof controller.addCorrection>[1]) => {
     if (!selectedStory) return;
     void run(() => controller.addCorrection(selectedStory.id, input));
@@ -1325,7 +1267,6 @@ export function HarnessGenerationWorkspace({
                         {chapter.metrics.meetsScaleTarget ? '' : ' · below chapter-scale target'}
                         {chapter.metrics.paragraphTarget && chapter.metrics.paragraphTarget !== chapter.metrics.paragraphCount ? ' · paragraph count missed' : ''}
                       </p>
-                      <LibraryButton type="button" size="sm" variant="ghost" disabled={busy} onClick={() => void run(() => controller.replayStory(selectedStory.id, chapter.id))}>Repair chapter enhancements</LibraryButton>
                       {/* Reading the chapter again for its tags: only the newest, before anything is built on it. */}
                       {chapter.id === chapters.at(-1)?.id && (retagGap
                         ? <p className="mt-2 text-xs text-neutral-400">{retagGap}</p>
@@ -1361,25 +1302,11 @@ export function HarnessGenerationWorkspace({
               </LibraryPanel>
             )}
 
-            {selectedStory && novelTab === 'novel' && (
-              <LibraryPanel as="section" padding="md" aria-labelledby="harness-events-title">
-                <div className="flex items-center gap-2">
-                  <FileText size={17} className="text-cyan-200" aria-hidden="true" />
-                  <h2 id="harness-events-title" className="font-display text-lg text-white">Semantic event ledger</h2>
-                </div>
-                <p className="mt-2 text-sm leading-relaxed text-neutral-400">
-                  Every accepted description remains append-only evidence. Specific deterministic capabilities may interpret it, while unfamiliar or insufficient events remain available through the general narrative fallback.
-                </p>
-                <div className="mt-4"><SemanticEventList events={visibleEvents} /></div>
-              </LibraryPanel>
-            )}
-
             {selectedStory && novelTab === 'novel' && <HarnessInspection
               state={state}
               story={selectedStory}
               attempt={attempt}
               busy={busy}
-              onReplay={replay}
               onCorrection={addCorrection}
             />}
 

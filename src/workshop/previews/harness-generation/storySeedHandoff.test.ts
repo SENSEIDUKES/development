@@ -84,7 +84,6 @@ describe('Story Seed to Harness handoff', () => {
     await reloaded.hydrate();
     await reloaded.retryModelRequest(failed.id);
     expect(requests[1].storyInformation).toEqual({ ...requests[0].storyInformation, attemptId: requests[1].attemptId });
-    await reloaded.replayStory(story.id);
     expect(reloaded.snapshot().attempts[0].storyInformation.storyDirection).toEqual(requests[0].storyInformation.storyDirection);
     expect(reloaded.snapshot().attempts[0].storyInformation.arc).toEqual(requests[0].storyInformation.arc);
     expect(adapter.arcOperation).not.toHaveBeenCalled();

@@ -4,8 +4,6 @@ import type { Character, StoryBlock, StoryMemory, StoryWorld } from '../../../na
 import { buildCanonicalStoryView } from './canonicalState';
 import { cloneHarnessValue, stableHarnessId } from './ids';
 import { harnessParagraphBlockId } from './chapterBody';
-import { buildHarnessMechanicalContinuity } from './mechanicalContinuity';
-import { verifyHarnessEventEvidence } from './responseAcceptance';
 import type { HarnessCanonicalRecord, HarnessWorkspaceState } from '../../../narrative/generation';
 
 const stringFact = (record: HarnessCanonicalRecord, key: string) =>
@@ -93,23 +91,12 @@ const buildHarnessSenStory = (state: HarnessWorkspaceState, storyId: string, thr
     target.push(...byName.values());
   }
   const mechanics = new Map<string, string>();
-  const chaptersById = new Map(chapters.map(chapter => [chapter.id, chapter]));
-  const quantitativeHistory = buildHarnessMechanicalContinuity(state.events
-    .filter(event => event.storyId === storyId && event.chapterId && chaptersById.has(event.chapterId))
-    .map(event => verifyHarnessEventEvidence(event, chaptersById.get(event.chapterId!)!.prose)));
   for (const record of records.filter(record => ['progression', 'artifact', 'location-world'].includes(record.kind) && record.confidence === 'resolved')) {
     const subject = stringFact(record, 'subject');
     const name = stringFact(record, 'name');
     const value = stringFact(record, 'value');
     if (!subject || !name || value === undefined) continue;
-    const observation = quantitativeHistory.find(item => item.sourceId === record.sourceEventId);
-    const latestObservation = quantitativeHistory.find(item => item.subject.toLowerCase() === subject.toLowerCase() && item.name.toLowerCase() === name.toLowerCase());
-    const exactDisplay = [value, stringFact(record, 'unit')].filter(Boolean).join(' ');
-    const display = latestObservation && latestObservation.sourceId !== record.sourceEventId
-      ? `${exactDisplay} (historical; a later quantity awaits enhancement repair)`
-      : observation?.subsequentDevelopments.length
-      ? `${exactDisplay} (last quantified in Chapter ${observation.chapterNumber}; later: ${observation.subsequentDevelopments.map(event => event.description).join(' ')})`
-      : exactDisplay;
+    const display = [value, stringFact(record, 'unit')].filter(Boolean).join(' ');
     mechanics.set(`${subject}: ${name}`, display);
     const character = resolve(subject);
     if (character) {

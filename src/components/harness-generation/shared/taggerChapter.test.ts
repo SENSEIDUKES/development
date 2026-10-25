@@ -252,11 +252,11 @@ describe('tagging a chapter as it is written', () => {
     const tagChapter = tagging(paragraph => paragraph === PROSE
       ? `[[gained: MC | Rusted Iron Sword]] ${paragraph}`
       : paragraph);
-    const { write, chapter, controller } = await setup({ tagChapter, repository: new LosesOneWrite('events_preserved') });
+    const { write, chapter, controller } = await setup({ tagChapter, repository: new LosesOneWrite('prose_accepted') });
     await write();
     const attempt = () => controller.snapshot().attempts.at(-1)!;
     expect(attempt().stage).toBe('accepted_not_durable');
-    expect(attempt().recoveryStage).toBe('events_preserved');
+    expect(attempt().recoveryStage).toBe('prose_accepted');
     // Tagging comes after this checkpoint, so it has not happened yet.
     expect(tagChapter).not.toHaveBeenCalled();
     expect(controller.snapshot().chapters).toHaveLength(0);

@@ -221,7 +221,6 @@ export const compileStoryInformationPacket = (
       identityAmbiguities: canonical.identityAmbiguities,
       storage: {
         chapters: chapters.length,
-        events: state.events.filter(event => event.storyId === story.id).length,
         canonicalRecords: state.canonicalRecords.filter(record => record.storyId === story.id).length,
         activeRecords: canonical.activeRecordCount,
         recaps: withRecap.length,

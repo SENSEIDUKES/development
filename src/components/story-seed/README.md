@@ -206,6 +206,23 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-10-25 (Story Tag audit, first pass):** From SENSEI. The catalog gains
+  a base layer: a **Genre** family (action, adventure, comedy, drama, fantasy,
+  horror, martial arts, mystery, psychological, romance, sci-fi, slice of life,
+  supernatural, survival, thriller, tragedy) and a **Tone** family (bittersweet,
+  cozy, dark, epic, grimdark, gritty, hopeful, lighthearted, slow life), plus
+  missing staples (overpowered, weak-to-strong, hiding-strength, villain and
+  clever protagonists, transmigration, gods & deities, reverse harem,
+  formations & arrays, magic, modern knowledge uplift). True duplicates merge
+  into one tag whose aliases keep the old wording. Tags that asked for the
+  HARNESS's own jobs (continuity, memory, tracking, codex, colors, tone/pacing
+  "control") are cut; Meta & Continuity becomes Mystery & Lore. Niche tags,
+  such as the LitRPG point tags, stay for the tagging engine upgrade, which
+  gives each genre its own parent. Premise suggestions now find action,
+  adventure and horror, and an empty premise falls back to adventure and
+  action. The proposal is `docs/story-tag-audit-2026-10-25.md`. Tags now reach
+  the chapter writer as their own `storyTags` field, read as direction, never
+  as declared canon.
 - **2026-10-25 (Survival sparks; Pressure stays Immortal):** A Story Spark
   request may ask for `fateSurvival`; the spark carries `survival` and planting
   it turns Survival on. Sparks no longer carry a Pressure, so a planted seed

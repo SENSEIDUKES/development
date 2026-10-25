@@ -206,16 +206,16 @@ describe('Story Seed keyboard and mobile navigation', () => {
     });
     setPremise('Two lovers run a cozy bakery in a port city.');
     const suggestions = () => container.querySelector('#style-suggested-tags')!;
-    expect(suggestions().textContent).toContain('cozy fantasy');
+    expect(suggestions().textContent).toContain('cozy');
     expect(suggestions().textContent).toContain('port economy');
-    const cozy = Array.from(suggestions().querySelectorAll('button')).find(button => button.textContent?.includes('cozy fantasy'))!;
-    act(() => cozy.click());
-    expect(currentSeed.story.required.storyTags).toContain('cozy fantasy');
-    expect(suggestions().textContent).not.toContain('cozy fantasy');
+    const port = Array.from(suggestions().querySelectorAll('button')).find(button => button.textContent?.includes('port economy'))!;
+    act(() => port.click());
+    expect(currentSeed.story.required.storyTags).toContain('port economy');
+    expect(suggestions().textContent).not.toContain('port economy');
     setPremise('A detective investigates ancient ruins and clues.');
     expect(suggestions().textContent).toContain('ancient ruins');
     expect(suggestions().textContent).not.toContain('romantic tension');
-    expect(currentSeed.story.required.storyTags).toContain('cozy fantasy');
+    expect(currentSeed.story.required.storyTags).toContain('port economy');
   });
 
   it('uses custom tag identity for catalog selection, duplicate prevention, and removal', () => {
@@ -247,20 +247,20 @@ describe('Story Seed keyboard and mobile navigation', () => {
         new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
       ));
     };
-    addCustom('Cozy Fantasy');
-    addCustom('cozy fantasy');
-    expect(currentSeed.story.required.storyTags).toEqual(['Cozy Fantasy']);
-    expect(container.querySelector('#style-suggested-tags')!.textContent).not.toContain('cozy fantasy');
-    fill('#celestial-tag-search-input', 'cozy fantasy');
+    addCustom('Slow Life');
+    addCustom('slow life');
+    expect(currentSeed.story.required.storyTags).toEqual(['Slow Life']);
+    expect(container.querySelector('#style-suggested-tags')!.textContent).not.toContain('slow life');
+    fill('#celestial-tag-search-input', 'slow life');
     const chip = () => Array.from(container.querySelectorAll<HTMLButtonElement>('#filtered-tags-list button'))
-      .find(button => button.textContent?.includes('cozy fantasy'))!;
+      .find(button => button.textContent?.includes('slow life'))!;
     expect(chip().textContent).toContain('✓');
     act(() => chip().click());
     expect(currentSeed.story.required.storyTags).toEqual([]);
     expect(chip().textContent).toContain('+');
     act(() => chip().click());
-    expect(currentSeed.story.required.storyTags).toEqual(['cozy fantasy']);
-    act(() => container.querySelector<HTMLButtonElement>('[aria-label="Remove tag cozy fantasy"]')!.click());
+    expect(currentSeed.story.required.storyTags).toEqual(['slow life']);
+    act(() => container.querySelector<HTMLButtonElement>('[aria-label="Remove tag slow life"]')!.click());
     expect(currentSeed.story.required.storyTags).toEqual([]);
   });
 

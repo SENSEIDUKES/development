@@ -1,6 +1,20 @@
 # Story Tag Audit — 2026-10-25
 
-Prepared for SENSEI. Nothing in the catalog has been changed yet; this is the proposal to approve, edit, or reject.
+Prepared for SENSEI.
+
+## Decision (SENSEI, 2026-10-25)
+
+Agreed: fix the prompt wording, add the staples, merge true duplicates, and cut the tags that ask for the HARNESS's own jobs. **Not agreed: cutting niche tags or reorganizing the display.** Niche tags (for example the LitRPG point tags, the detailed economy and war tags) stay. The next project, the tagging engine upgrade, gives them proper homes: multiple filters, tagging by genre and niche, and a parent per genre (a LitRPG parent holding its game-element tags, and so on).
+
+First pass, shipped with this document:
+
+- Tags reach the writer as their own `storyTags` field, with a reading instruction in *How to read the story information*, no longer inside declared canon.
+- New **Genre** and **Tone** families; staples added (sections 2–4 below).
+- True duplicates merged; old wording kept as aliases.
+- HARNESS-job tags cut (continuity, memory, tracking, codex, colors, tone/pacing "control"); Meta & Continuity is now **Mystery & Lore**.
+- 452 → 406 tags. Everything in sections 5–6 that cuts niche tags or reshapes categories is **deferred to the engine upgrade** and kept here only as input to it.
+
+The rest of this document is the original proposal.
 
 Source: `src/components/story-seed/shared/storyTagCatalog.ts` (452 tags, 10 categories, 12-tag limit per story).
 

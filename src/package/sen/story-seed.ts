@@ -10,5 +10,6 @@ export * from '../../components/story-seed/shared/storyTagInference';
 export * from '../../components/story-seed/shared/types';
 export { generateUUID, generateId } from '../../narrative/id';
 export * from '../../components/story-seed/shared/storyTagCatalog';
+export * from '../../components/story-seed/shared/storyTagNiches';
 export * from '../../components/story-seed/shared/storySpark';
 export { StoryFoundationEditor } from '../../narrative/StoryFoundationEditor';

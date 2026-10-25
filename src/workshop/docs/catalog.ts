@@ -96,7 +96,7 @@ export const docsCategories: readonly DocsCategory[] = [
       {
         ...topic('story-tags', 'Story Tags'),
         definition: 'Focused signals about the experience a story should deliver.',
-        howItFits: 'Tags sit with premise, Genre, and Style in Origin. The creator can choose them, and the Story Seed can infer suggestions from the other story inputs when tags are empty. They guide Blueprint and chapter generation without becoming mandatory plot events or replacing the creator’s own direction.',
+        howItFits: 'Tags sit with premise, Genre, and Style in Origin. The creator can choose them, and the Story Seed can infer suggestions from the other story inputs when tags are empty. They guide Blueprint and chapter generation without becoming mandatory plot events or replacing the creator’s own direction. Tags sit in families (what kind of tag) and niches (which genre path reaches for them); the creator browses them by niche, family and search.',
       },
       {
         ...topic('world-identity', 'World Identity', ['Make It Work', 'Main Opposition']),

@@ -264,6 +264,68 @@ describe('Story Seed keyboard and mobile navigation', () => {
     expect(currentSeed.story.required.storyTags).toEqual([]);
   });
 
+  it('opens the story genre niche and filters it by family and search', () => {
+    let currentSeed = createEmptyStorySeedInput();
+    const Harness = ({ genre }: { genre: string }) => {
+      const [seed, setSeed] = useState(currentSeed);
+      currentSeed = seed;
+      return <OriginPremiseAndTags
+        premise=""
+        genre={genre}
+        storyTags={seed.story.required.storyTags}
+        onPremiseChange={() => {}}
+        updateSeed={setSeed}
+        beforeTags={null}
+      />;
+    };
+    const render = (genre: string) => act(() => root.render(<LibraryPresentationProvider>{<Harness genre={genre} />}</LibraryPresentationProvider>));
+    render('LitRPG / System');
+    act(() => container.querySelector<HTMLButtonElement>('[aria-controls="origin-tag-browser"]')!.click());
+    const niche = (name: string) => Array.from(container.querySelectorAll<HTMLButtonElement>('#tag-niches [role="radio"]'))
+      .find(button => button.textContent?.startsWith(name))!;
+    const listed = () => Array.from(container.querySelectorAll('#filtered-tags-list button')).map(button => button.textContent!.replace(/^[✓+] /, ''));
+    const fill = (value: string) => act(() => {
+      const input = container.querySelector<HTMLInputElement>('#celestial-tag-search-input')!;
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+
+    // The System genre opens the System niche, holding its game elements and no Genre tags.
+    expect(niche('System').getAttribute('aria-checked')).toBe('true');
+    expect(listed()).toEqual(expect.arrayContaining(['status window', 'admin points', 'skill trees']));
+    expect(listed()).not.toContain('comedy');
+
+    // A family chip narrows the niche to that family.
+    const family = (name: string) => Array.from(container.querySelectorAll<HTMLButtonElement>('#tag-categories button'))
+      .find(button => button.textContent?.startsWith(name))!;
+    act(() => family('Adventure').click());
+    expect(family('Adventure').getAttribute('aria-pressed')).toBe('true');
+    expect(listed()).toContain('loot systems');
+    expect(listed()).not.toContain('admin points');
+
+    // Search stays inside the niche until the creator widens it.
+    act(() => family('Adventure').click());
+    fill('romance');
+    expect(listed()).toEqual([]);
+    const widen = Array.from(container.querySelectorAll<HTMLButtonElement>('button')).find(button => button.textContent === 'Search all tags')!;
+    act(() => widen.click());
+    expect(niche('All tags').getAttribute('aria-checked')).toBe('true');
+    expect(listed()).toContain('romance');
+
+    // A tag chosen from a niche is a Story Tag like any other.
+    fill('');
+    act(() => niche('Tower Climb').click());
+    const floorBosses = Array.from(container.querySelectorAll<HTMLButtonElement>('#filtered-tags-list button')).find(button => button.textContent?.includes('floor bosses'))!;
+    expect(floorBosses.title).toContain('In: Tower Climb');
+    act(() => floorBosses.click());
+    expect(currentSeed.story.required.storyTags).toEqual(['floor bosses']);
+
+    // A custom genre opens every tag.
+    render('urban xianxia mystery');
+    expect(niche('All tags').getAttribute('aria-checked')).toBe('true');
+    expect(listed()).toEqual(expect.arrayContaining(['comedy', 'admin points']));
+  });
+
   it('keeps four navigation entries regardless of Manifest eligibility', () => {
     const onManifest = vi.fn();
     const renderNavigation = (canManifest: boolean) => act(() => root.render(

@@ -50,8 +50,8 @@ import { activeAttemptForStory } from './attempts';
 import { chapterRewriteGap, latestStoryChapter, readRewriteNote, withoutLatestChapter } from './chapterRewrite';
 import { harnessParagraphBlockId } from './chapterBody';
 import { protagonistNames } from './speakers';
-import { createCodexEntryResolver, declaredCharacters, deriveHoldings, holdingsSection, resolveHoldingChanges } from './holdings';
-import { planChapterTagging, readChapterTagging } from './tagger';
+import { codexEntriesWithoutChapter, createCodexEntryResolver, declaredCharacters, deriveHoldings, holdingsSection, resolveHoldingChanges } from './holdings';
+import { planChapterTagging, readChapterTagging, retagChapterGap } from './tagger';
 import { appearanceSources, deriveAppearances, resolveAppearances, thingAppearancesFromHoldings } from './appearances';
 import type { Look } from '../../../narrative/appearances';
 import { applyHoldingsFixes, planHoldingsFix } from './holdingsFixer';
@@ -1367,6 +1367,126 @@ export class HarnessGenerationController {
     return this.tagAttempt(attemptId);
   }
 
+  /** Why this story's newest chapter cannot be tagged again, when it cannot. */
+  retagChapterGap(storyId: string): string | undefined {
+    return retagChapterGap(this.state, storyId);
+  }
+
+  /**
+   * Tags the story's newest chapter again, replacing the tags it has. The path
+   * that recovers a chapter whose tagging failed, and the one a changed chapter
+   * needs: the reader edits the prose in Create mode, then has it read again.
+   *
+   * It replaces, so the Codex entries the old tags brought in come out before
+   * the new ones go in, through the same helper the rewrite uses. Everything it
+   * sends is read from the chapter itself (its own paragraphs and its frozen
+   * media), except what only an attempt can give: who the main character is, and
+   * the sound words the chapter was written with. Without that attempt it
+   * refuses rather than guess, as the Holdings fixer and the look writer do.
+   */
+  async retagLatestChapter(storyId: string): Promise<void> {
+    this.assertHydrated();
+    if (this.generating) throw new Error('Wait for the active Harness operation before tagging a chapter again.');
+    const gap = retagChapterGap(this.state, storyId);
+    if (gap) throw new Error(gap);
+    if (!this.modelAdapter.tagChapter) throw new Error('This host cannot tag a chapter yet.');
+    const story = findStory(this.state, storyId)!;
+    const chapter = latestStoryChapter(this.state, storyId)!;
+    const attempt = this.state.attempts.find(entry => entry.id === chapter.attemptId);
+    if (!attempt) throw new Error(`Chapter ${chapter.chapterNumber} no longer has the record of how it was written, so it cannot be tagged again.`);
+    const mainCharacterName = attempt.storyInformation.currentStory.cast?.find(member => member.isMainCharacter)?.name;
+    const world = storyWorldRecord(this.state, storyId);
+    const others = this.state.chapters.filter(entry => entry.storyId === storyId && entry.id !== chapter.id);
+    // What each character had going into this chapter: every chapter before it.
+    const before = holdingsSection(deriveHoldings({
+      entries: this.state.codexEntries.filter(entry => entry.storyId === storyId),
+      chapters: others.filter(entry => entry.chapterNumber < chapter.chapterNumber),
+      mainCharacterName,
+      worldAtChapterZero: world,
+    }), mainCharacterName);
+    const request = planChapterTagging({
+      chapter, entries: this.state.codexEntries.filter(entry => entry.storyId === storyId), world,
+      holdings: before,
+      soundWords: soundVocabulary(chapter.mediaLoadout),
+      soundtrack: soundtrackVocabulary(chapter.mediaLoadout),
+      language: story.originalLanguage,
+      model: attempt.model,
+    });
+    let response: HarnessGenerationResponse | undefined;
+    let error: string | undefined;
+    const previous = this.generating;
+    this.generating = true;
+    try {
+      response = await this.modelAdapter.tagChapter(request);
+    } catch (caught) {
+      error = errorMessage(caught, 'The tagger could not be reached.');
+    } finally {
+      this.generating = previous;
+    }
+    const at = this.runtime.now();
+    const tagging = error
+      ? { record: { status: 'failed' as const, at, model: attempt.model, problem: error } }
+      : readChapterTagging({
+        raw: response?.rawProviderResponse,
+        sent: chapter.paragraphs,
+        chapterNumber: chapter.chapterNumber,
+        at,
+        model: attempt.model,
+        options: {
+          soundVocabulary: attempt.capaPrompt.soundVocabulary,
+          locale: story.originalLanguage,
+          media: chapter.mediaLoadout,
+          protagonistNames: protagonistNames(attempt.storyInformation.currentStory, attempt.storyInformation.canonicalState.characters),
+          speakersExpected: true,
+          appearancesExpected: true,
+          soundtrackExpected: Boolean(request.soundtrack?.music?.length || request.soundtrack?.atmospheres?.length),
+        },
+      });
+    // A chapter the reader may have changed since: nothing is replaced unless
+    // the answer is good, so a failed read leaves the chapter exactly as it is.
+    const candidate = cloneHarnessValue(this.state);
+    const index = candidate.chapters.findIndex(entry => entry.id === chapter.id);
+    if (index < 0) return;
+    const saved = candidate.chapters[index];
+    saved.tagging = {
+      ...tagging.record,
+      ...(response ? { providerReceipt: response.providerReceipt, rawProviderResponse: response.rawProviderResponse } : {}),
+    };
+    if (tagging.tags) {
+      candidate.codexEntries = codexEntriesWithoutChapter({
+        entries: candidate.codexEntries, otherChapters: others, chapter: saved, storyId,
+      });
+      const resolving = {
+        storyId,
+        chapter: { id: chapter.id, chapterNumber: chapter.chapterNumber },
+        entries: candidate.codexEntries,
+        declared: declaredCharacters(attempt.storyInformation.currentStory),
+        createdAt: at,
+        createId: () => this.runtime.createId('hcx'),
+      };
+      const resolver = createCodexEntryResolver(resolving);
+      const appearances = resolveAppearances({ ...resolving, appearances: tagging.tags.appearances ?? [], resolver }).appearances;
+      const holdings = tagging.tags.holdingChanges.length
+        ? resolveHoldingChanges({ ...resolving, changes: tagging.tags.holdingChanges, resolver })
+        : undefined;
+      if (holdings?.changes.length) {
+        appearances.push(...thingAppearancesFromHoldings({
+          chapter: { ...saved, holdingChanges: holdings.changes, appearances },
+          chapters: others, entries: candidate.codexEntries,
+        }));
+      }
+      saved.soundCues = tagging.tags.soundCues;
+      saved.speakers = tagging.tags.speakers;
+      saved.appearances = appearances;
+      if (holdings?.changes.length) saved.holdingChanges = holdings.changes;
+      else delete saved.holdingChanges;
+      if (tagging.tags.scene) saved.scene = tagging.tags.scene;
+      else delete saved.scene;
+      if (resolver.created.length) candidate.codexEntries.push(...resolver.created);
+    }
+    await this.persist(candidate);
+  }
+
   /**
    * The tagging stage (SENSEI, 2026-10-24): the chapter is written first, and
    * one call afterwards reads it and writes the app's tags into it. It runs
@@ -1427,7 +1547,27 @@ export class HarnessGenerationController {
         chapterNumber: attempt.chapterNumber,
         at,
         model: attempt.model,
-        options: { soundVocabulary: attempt.capaPrompt.soundVocabulary, locale: story.originalLanguage, media: attempt.mediaLoadout },
+        options: {
+          soundVocabulary: attempt.capaPrompt.soundVocabulary,
+          locale: story.originalLanguage,
+          media: attempt.mediaLoadout,
+          // Who the main character is, so `[[@MC]]` is saved under their own
+          // name and marked as theirs. Without it every tagged line reads as
+          // somebody else's and Read Aloud gives it the Side voice.
+          protagonistNames: protagonistNames(attempt.storyInformation.currentStory, attempt.storyInformation.canonicalState.characters),
+          // The tagger is always taught the speaker and appearance tags, so a
+          // chapter it read was asked for both: speech it left untagged is
+          // worth a warning, and the appearances list is kept even when empty,
+          // which is what says this chapter was asked at all.
+          speakersExpected: true,
+          appearancesExpected: true,
+          // Soundtrack only when the story has categories to choose from, which
+          // is exactly when the tagger was taught that tag.
+          soundtrackExpected: Boolean(request.soundtrack?.music?.length || request.soundtrack?.atmospheres?.length),
+          // `holdingsExpected` is deliberately absent: it means the writer
+          // returned no closing list of the main character's holdings, and the
+          // tagger never returns one.
+        },
       });
     const candidate = cloneHarnessValue(this.state);
     const tagged = attemptById(candidate, attemptId);

@@ -204,8 +204,10 @@ export {
 export {
   planChapterTagging,
   readChapterTagging,
+  retagChapterGap,
   tagSubjectsOfStory,
   type ChapterTagging,
+  type ChapterTags,
 } from '../../components/harness-generation/shared/tagger';
 export * from '../../narrative/holdings';
 export * from '../../narrative/appearances';

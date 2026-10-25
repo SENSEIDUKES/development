@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   HarnessGenerationController,
   type HarnessGenerationModelAdapter,
+  retagChapterGap,
   type HarnessTagRequest,
 } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
@@ -99,6 +100,30 @@ describe('tagging a chapter as it is written', () => {
     expect(JSON.stringify(second)).not.toContain('Destined Ending');
   });
 
+  it('saves a tagged line under the main character\'s own name, as theirs', async () => {
+    // The tagger writes [[@MC]] for the main character, as every tag does. Read
+    // Aloud picks the Protagonist voice from `protagonist`, so a tagged line
+    // that is not marked theirs is read in the wrong voice.
+    const spoken = `\u201cHold the gate,\u201d ${PROSE}`;
+    const tagChapter = tagging(paragraph => paragraph === spoken ? `[[@MC]] ${paragraph}` : paragraph);
+    const { write, chapter } = await setup({ tagChapter });
+    await write([spoken]);
+    const speaker = chapter().speakers?.[0];
+    expect(speaker?.payload.speaker).toBe('Ye Chen');
+    expect(speaker?.payload.protagonist).toBe(true);
+  });
+
+  it('keeps the appearances list of a tagged chapter even when it is empty', async () => {
+    // An empty list and no list mean different things: no list means the
+    // chapter was never asked, which is what turns off the check for someone
+    // speaking before they have appeared.
+    const tagChapter = tagging(paragraph => paragraph);
+    const { write, chapter } = await setup({ tagChapter });
+    await write();
+    expect(chapter().tagging?.status).toBe('tagged');
+    expect(chapter().appearances).toEqual([]);
+  });
+
   it('commits the chapter with no record at all when the host has no tagger', async () => {
     const { write, chapter } = await setup();
     await write();
@@ -127,6 +152,72 @@ describe('tagging a chapter as it is written', () => {
     // The chapter keeps every word the writer wrote.
     expect(chapter().paragraphs[0]).toBe(PROSE);
     expect(chapter().speakers).toBeUndefined();
+  });
+
+  it('reads the newest chapter again and replaces the tags it had', async () => {
+    let gained = 'Rusted Iron Sword';
+    const tagChapter = tagging(paragraph => paragraph === PROSE ? `[[gained: MC | ${gained}]] ${paragraph}` : paragraph);
+    const { write, chapter, controller, storyId } = await setup({ tagChapter });
+    await write();
+    const first = chapter().holdingChanges![0].payload.target?.entryId;
+    expect(controller.snapshot().codexEntries.map(entry => entry.name)).toContain('Rusted Iron Sword');
+    // Read again, this time the tagger names it differently.
+    gained = 'Old Iron Blade';
+    await controller.retagLatestChapter(storyId);
+    expect(tagChapter).toHaveBeenCalledTimes(2);
+    const after = chapter();
+    expect(after.holdingChanges).toHaveLength(1);
+    expect(after.holdingChanges![0].payload.target?.entryId).not.toBe(first);
+    const names = controller.snapshot().codexEntries.filter(entry => entry.storyId === storyId).map(entry => entry.name);
+    // The entry the old tags brought in is gone, not left behind as a stranger.
+    expect(names).toContain('Old Iron Blade');
+    expect(names).not.toContain('Rusted Iron Sword');
+    expect(after.paragraphs[0]).toBe(PROSE);
+  });
+
+  it('recovers a chapter whose tagging failed', async () => {
+    let fail = true;
+    const tagChapter = vi.fn(async (request: HarnessTagRequest) => {
+      if (fail) throw new Error('the tagger is unreachable');
+      return { rawProviderResponse: JSON.stringify({ paragraphs: request.paragraphs.map(paragraph => paragraph === PROSE ? `[[@MC]] ${paragraph}` : paragraph) }), providerReceipt: receipt };
+    });
+    const { write, chapter, controller, storyId } = await setup({ tagChapter });
+    await write([`\u201cHold.\u201d ${PROSE}`]);
+    expect(chapter().tagging?.status).toBe('failed');
+    fail = false;
+    await controller.retagLatestChapter(storyId);
+    expect(chapter().tagging?.status).toBe('tagged');
+  });
+
+  it('refuses a chapter carrying work only a person could have placed', async () => {
+    // The guard is read straight, so the test is about what it refuses rather
+    // than about Create mode's own checks on where an attachment sits.
+    const tagChapter = tagging(paragraph => paragraph);
+    const { write, controller, storyId } = await setup({ tagChapter });
+    await write();
+    const state = controller.snapshot();
+    expect(retagChapterGap(state, storyId)).toBeUndefined();
+
+    // A Sound Cue the reader placed by hand: tagging again would take it away.
+    const withManualCue = {
+      ...state,
+      chapters: state.chapters.map(chapter => ({
+        ...chapter,
+        soundCues: [{ ...chapter.soundCues?.[0], payload: { origin: 'manual' } }] as never,
+      })),
+    };
+    expect(retagChapterGap(withManualCue, storyId)).toContain('placed yourself');
+
+    // A name the Holdings fixer joined into an older entry: only a rewrite of
+    // this chapter can take that alias back.
+    const withMerge = {
+      ...state,
+      chapters: state.chapters.map(chapter => ({
+        ...chapter,
+        fixer: { checkedAt: 'now', fixes: [{ checks: [], problems: [], outcome: 'merged' as const, merged: { keptEntryId: 'e1', alias: 'the blade' } }] },
+      })),
+    };
+    expect(retagChapterGap(withMerge, storyId)).toContain('joined into one');
   });
 
   it('keeps the attempt\'s own record of the call, receipt included', async () => {

@@ -772,6 +772,8 @@ export function HarnessGenerationWorkspace({
     ? findFoundationRevision(state, selectedStory.activeFoundationRevisionId)
     : undefined;
   const chapters = state && selectedStory ? storyChapters(state, selectedStory.id) : [];
+  // Why the newest chapter cannot be read again for its tags, when it cannot.
+  const retagGap = selectedStory ? controller.retagChapterGap(selectedStory.id) : undefined;
   const events = state && selectedStory ? storyEvents(state, selectedStory.id) : [];
   const attempt = state && selectedStory ? latestAttemptForStory(state, selectedStory.id) : undefined;
   const arcPlanOperation = state && selectedStory ? state.arcPlanOperations
@@ -1324,6 +1326,16 @@ export function HarnessGenerationWorkspace({
                         {chapter.metrics.paragraphTarget && chapter.metrics.paragraphTarget !== chapter.metrics.paragraphCount ? ' · paragraph count missed' : ''}
                       </p>
                       <LibraryButton type="button" size="sm" variant="ghost" disabled={busy} onClick={() => void run(() => controller.replayStory(selectedStory.id, chapter.id))}>Repair chapter enhancements</LibraryButton>
+                      {/* Reading the chapter again for its tags: only the newest, before anything is built on it. */}
+                      {chapter.id === chapters.at(-1)?.id && (retagGap
+                        ? <p className="mt-2 text-xs text-neutral-400">{retagGap}</p>
+                        : <LibraryButton type="button" size="sm" variant="ghost" disabled={busy} onClick={() => void run(() => controller.retagLatestChapter(selectedStory.id))}>Tag this chapter again</LibraryButton>)}
+                      {chapter.tagging && (
+                        <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-500">
+                          Tagging: {chapter.tagging.status === 'tagged' ? 'read' : 'not read'}
+                          {chapter.tagging.problem ? ` · ${chapter.tagging.problem}` : ''}
+                        </p>
+                      )}
                       <ChapterRecapEditor chapter={chapter} busy={busy} onSave={text => saveRecap(chapter.id, text)} />
                       <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-500">
                         Chapter function: {chapter.rhythm?.chapterFunction ? CHAPTER_FUNCTION_LABELS[chapter.rhythm.chapterFunction] : 'not saved'}

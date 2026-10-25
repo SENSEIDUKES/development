@@ -12,6 +12,7 @@ import {
   type HoldingsSection,
   type HoldingsSectionCharacter,
 } from '../../../narrative/holdings';
+import type { AppearanceAttachment } from '../../../narrative/appearances';
 import { isHoldingTagWord, type WordTag } from '../../../narrative/marks';
 import type { CurrentStoryProjection } from '../../../narrative/generation';
 import { worldCardKey, type WorldCard, type WorldCardKindId, type WorldRecord } from '../../../narrative/worldRecord';
@@ -240,6 +241,36 @@ export interface CodexEntryResolver {
   existing(name: string): CodexEntry | undefined;
   /** New entries, in the order the chapter first named them. */
   readonly created: CodexEntry[];
+}
+
+/**
+ * A story's Codex entries with the ones a chapter brought in taken out: the
+ * entries its tags created, and a declared character it was the first to name.
+ * An entry any other chapter still names stays.
+ *
+ * The second case is why an origin test alone is not enough: a character the
+ * Foundation declares is created with `origin: { source: 'foundation' }` even
+ * when a chapter's tag is what first made a row for it, so it carries no
+ * chapter id. Shared by the rewrite that removes a chapter and the re-tag that
+ * replaces its tags, so one chapter's leavings are found one way.
+ */
+export function codexEntriesWithoutChapter({ entries, otherChapters, chapter, storyId }: {
+  entries: readonly CodexEntry[];
+  /** Every other chapter of the story; this one is deliberately not among them. */
+  otherChapters: ReadonlyArray<{ storyId: string; holdingChanges?: HoldingChangeAttachment[]; appearances?: AppearanceAttachment[] }>;
+  chapter: { id: string; holdingChanges?: HoldingChangeAttachment[]; appearances?: AppearanceAttachment[] };
+  storyId: string;
+}): CodexEntry[] {
+  const named = (entry: { holdingChanges?: HoldingChangeAttachment[]; appearances?: AppearanceAttachment[] }) => [
+    ...(entry.holdingChanges ?? []).flatMap(change => [change.payload.holder.entryId, change.payload.target?.entryId]),
+    ...(entry.appearances ?? []).map(appearance => appearance.payload.subject.entryId),
+  ];
+  const usedElsewhere = new Set(otherChapters.filter(other => other.storyId === storyId).flatMap(named));
+  const usedHere = new Set(named(chapter));
+  return entries.filter(entry => entry.storyId !== storyId || !(
+    (entry.origin.source === 'tag' && entry.origin.chapterId === chapter.id)
+    || (usedHere.has(entry.id) && !usedElsewhere.has(entry.id))
+  ));
 }
 
 export function createCodexEntryResolver({ storyId, chapter, entries, declared, createdAt, createId }: {

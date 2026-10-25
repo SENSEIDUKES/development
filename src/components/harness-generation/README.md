@@ -37,6 +37,20 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-10-25 (the tagging stage on the paths that recover a chapter):** Adding
+  the stage to the chapter pipeline left it out of the two paths that pick a
+  chapter back up after a failed local write, and out of the one button that
+  reaches them. A chapter recovered from the checkpoint *before* tagging went
+  straight to the commit, so it was saved with no tags and no tagging record; a
+  chapter recovered from the tagging checkpoint was sent to the tagger a second
+  time, although the failed write had kept its first answer in memory, which
+  spent another model call and could have answered differently. The path that
+  restores a checkpoint now carries on exactly as the stages do, and a saved
+  tagging falls through to the commit. The workspace also offers Resume for an
+  attempt saved at `tagged`, which the controller could already finish. Found by
+  CodeRabbit on [senseidukes/development#440](https://github.com/senseidukes/development/pull/440),
+  after it merged.
+
 - **2026-10-25 (the tagger reaches a story):** The tagger existed but could not
   touch a story, and the world record could describe a card a later chapter
   brought in that nothing could create. Three things close that. **The world

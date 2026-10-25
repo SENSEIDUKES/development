@@ -30,6 +30,19 @@ const reply = (paragraphs: string[]) => JSON.stringify({
 let ids = 0;
 const runtime = { now: () => '2026-10-25T12:00:00.000Z', createId: (prefix: string) => `${prefix}-${++ids}` };
 
+/** A device whose disk loses exactly one write: the first to save this stage. */
+class LosesOneWrite extends InMemoryHarnessGenerationRepository {
+  private lost = false;
+  constructor(private readonly stage: string) { super(); }
+  override async save(state: Parameters<InMemoryHarnessGenerationRepository['save']>[0]) {
+    if (!this.lost && state.attempts.some(attempt => attempt.stage === this.stage)) {
+      this.lost = true;
+      throw new Error(`Simulated local write failure at the ${this.stage} checkpoint.`);
+    }
+    await super.save(state);
+  }
+}
+
 /**
  * A tagger that answers from the chapter it was given, so its paragraph count
  * always matches however long the test chapter is. `tag` rewrites the one
@@ -41,10 +54,13 @@ const tagging = (tag: (paragraph: string) => string) =>
     providerReceipt: receipt,
   }));
 
-const setup = async ({ tagChapter }: { tagChapter?: NonNullable<HarnessGenerationModelAdapter['tagChapter']> } = {}) => {
+const setup = async ({ tagChapter, repository = new InMemoryHarnessGenerationRepository() }: {
+  tagChapter?: NonNullable<HarnessGenerationModelAdapter['tagChapter']>;
+  repository?: InMemoryHarnessGenerationRepository;
+} = {}) => {
   const generate = vi.fn<HarnessGenerationModelAdapter['generate']>();
   const controller = new HarnessGenerationController({
-    repository: new InMemoryHarnessGenerationRepository(), runtime,
+    repository, runtime,
     modelAdapter: {
       getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
       generate,
@@ -228,5 +244,45 @@ describe('tagging a chapter as it is written', () => {
     expect(attempt.stage).toBe('committed');
     expect(attempt.taggedAt).toBe('2026-10-25T12:00:00.000Z');
     expect(attempt.tagging?.providerReceipt).toMatchObject({ provider: 'fixture' });
+  });
+
+  // The two checkpoints either side of tagging, when the device fails to save
+  // one and the reader asks the chapter to carry on.
+  it('tags the chapter when the write before tagging is the one that failed', async () => {
+    const tagChapter = tagging(paragraph => paragraph === PROSE
+      ? `[[gained: MC | Rusted Iron Sword]] ${paragraph}`
+      : paragraph);
+    const { write, chapter, controller } = await setup({ tagChapter, repository: new LosesOneWrite('events_preserved') });
+    await write();
+    const attempt = () => controller.snapshot().attempts.at(-1)!;
+    expect(attempt().stage).toBe('accepted_not_durable');
+    expect(attempt().recoveryStage).toBe('events_preserved');
+    // Tagging comes after this checkpoint, so it has not happened yet.
+    expect(tagChapter).not.toHaveBeenCalled();
+    expect(controller.snapshot().chapters).toHaveLength(0);
+
+    await controller.retryAppropriateStage(attempt().id);
+    expect(tagChapter).toHaveBeenCalledTimes(1);
+    expect(chapter().tagging?.status).toBe('tagged');
+    expect(chapter().holdingChanges).toHaveLength(1);
+  });
+
+  it('commits a chapter already read without asking the tagger twice', async () => {
+    const tagChapter = tagging(paragraph => paragraph === PROSE
+      ? `[[gained: MC | Rusted Iron Sword]] ${paragraph}`
+      : paragraph);
+    const { write, chapter, controller } = await setup({ tagChapter, repository: new LosesOneWrite('tagged') });
+    await write();
+    const attempt = () => controller.snapshot().attempts.at(-1)!;
+    expect(attempt().stage).toBe('accepted_not_durable');
+    expect(attempt().recoveryStage).toBe('tagged');
+    expect(tagChapter).toHaveBeenCalledTimes(1);
+
+    await controller.retryAppropriateStage(attempt().id);
+    // The tagger's own answer was still in memory, so the retry saves it and
+    // commits rather than spending a second call on a chapter already read.
+    expect(tagChapter).toHaveBeenCalledTimes(1);
+    expect(chapter().tagging?.status).toBe('tagged');
+    expect(chapter().holdingChanges).toHaveLength(1);
   });
 });

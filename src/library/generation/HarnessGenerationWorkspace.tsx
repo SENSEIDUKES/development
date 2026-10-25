@@ -231,7 +231,7 @@ function AttemptStatus({
       </LibraryPanel>
     );
   }
-  const canResume = ['raw_received', 'prose_accepted', 'events_preserved'].includes(attempt.stage)
+  const canResume = ['raw_received', 'prose_accepted', 'events_preserved', 'tagged'].includes(attempt.stage)
     || (attempt.stage === 'accepted_not_durable' && Boolean(attempt.recoveryStage));
   const canRetryModel = ['generation_failed', 'provider_outcome_unknown'].includes(attempt.stage);
   return (

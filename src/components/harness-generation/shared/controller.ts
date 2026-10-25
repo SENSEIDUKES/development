@@ -2081,16 +2081,24 @@ export class HarnessGenerationController {
     }
 
     if (attempt.recoveryStage === 'committed') return this.commitAttempt(attemptId);
-    if (attempt.recoveryStage === 'tagged') return this.tagAttempt(attemptId);
     const restored = cloneHarnessValue(this.state);
     const restoredAttempt = attemptById(restored, attemptId);
     restoredAttempt.stage = attempt.recoveryStage;
     restoredAttempt.recoveryStage = undefined;
     restoredAttempt.failure = undefined;
     if (!await this.persistCheckpoint(restored, attemptId, attempt.recoveryStage)) return this.snapshot();
+    // Carries on from the saved checkpoint exactly as the stages above do, so a
+    // chapter recovered from a failed write goes through tagging rather than
+    // around it.
     if (attempt.recoveryStage === 'raw_received') return this.acceptRawResponse(attemptId);
     if (attempt.recoveryStage === 'prose_accepted') return this.preserveAttemptEvents(attemptId);
+    if (attempt.recoveryStage === 'events_preserved') return this.tagAttempt(attemptId);
     if (attempt.recoveryStage === 'generation_failed') return this.snapshot();
+    // A `tagged` checkpoint falls through to the commit rather than tagging
+    // again: the failed write kept the tagger's own answer in memory, so saving
+    // it and committing is the whole retry. Asking the tagger again would spend
+    // a second model call on a chapter already read, and could answer
+    // differently.
     return this.commitAttempt(attemptId);
   }
 

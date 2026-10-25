@@ -1,7 +1,7 @@
 import type { SoundCueAttachment } from '../audio/inlineAudio';
 import type { ChapterOpeningSound, SoundtrackChangeAttachment } from '../audio/soundtrackChanges';
 import type { SpeakerAttachment } from './speech';
-import type { CodexEntry, HoldingChangeAttachment, HoldingsSection } from './holdings';
+import type { CodexEntry, CodexEntryKind, HoldingChangeAttachment, HoldingsSection } from './holdings';
 import type { AppearanceAttachment, AppearanceEntity, AppearanceEvent, AppearancesSection, ChapterLooks, Look } from './appearances';
 import type { SoundWord } from '../audio/soundWords';
 import type { AudioTags } from '../audio/audioTags';
@@ -1374,6 +1374,8 @@ export interface HarnessGenerationModelAdapter {
   fixHoldings?(request: HarnessHoldingsFixRequest): Promise<HarnessGenerationResponse>;
   /** The look step's one small call after a chapter commits. Without it, no look is written down. */
   describeLooks?(request: HarnessLookRequest): Promise<HarnessGenerationResponse>;
+  /** The tagger's one call on a chapter that is already written. Without it, a chapter is simply not tagged. */
+  tagChapter?(request: HarnessTagRequest): Promise<HarnessGenerationResponse>;
 }
 
 /**
@@ -1408,6 +1410,59 @@ export interface HarnessLookRequest {
   /** The story's language: every look is written in it. */
   language: string;
   subjects: HarnessLookSubject[];
+}
+
+/**
+ * One person, thing or ability the story already has, as the tagger is told
+ * it: the name the story writes it by, and every other name it answers to.
+ *
+ * Without this list a tagger invents a second identity every time the prose
+ * calls someone "the old man" or a sword "his blade", and the record fills
+ * with strangers. With it, a tag lands on the card the story already holds.
+ */
+export interface HarnessTagSubject {
+  name: string;
+  kind: CodexEntryKind;
+  /** The other names the story calls them by. */
+  aliases?: string[];
+  /** The one subject whose tags use the main character's own tag instead of a name. */
+  mainCharacter?: true;
+}
+
+/**
+ * The tagger's one call, on a chapter that is already written (SENSEI,
+ * 2026-10-24). It reads the finished prose and writes the app's tags into it:
+ * the sounds, who speaks, what changed hands, and who stepped onto the page.
+ *
+ * It is deliberately told nothing about how the story got here. No Foundation,
+ * no arc, no Destined Ending, no Story Information Packet: a chapter an author
+ * wrote themselves and brought in here has none of those, and the tagger has
+ * to work on that chapter exactly as well as on a generated one. What it gets
+ * is the chapter, who and what already exists, what the main character was
+ * carrying, and the words it is allowed to name.
+ */
+export interface HarnessTagRequest {
+  operation: 'tag-chapter';
+  storyId: string;
+  chapterId: string;
+  chapterNumber: number;
+  model: string;
+  /** The story's language: the tagger reads the chapter in it and writes no prose at all. */
+  language: string;
+  /** The chapter as it stands, one entry per paragraph, carrying no tag. */
+  paragraphs: string[];
+  /** Who and what the story already has, so no tag invents a second identity. */
+  subjects: HarnessTagSubject[];
+  /**
+   * What each character had going into this chapter. Without it a thing
+   * already theirs reads as one they just got, and "drew his sword" is tagged
+   * as gaining a sword.
+   */
+  holdings?: HoldingsSection;
+  /** The story's sound words. Without them nothing is tagged with a sound. */
+  soundWords?: SoundWord[];
+  /** The story's music and atmosphere categories. Without them no soundtrack is chosen. */
+  soundtrack?: SoundtrackVocabulary;
 }
 
 /**

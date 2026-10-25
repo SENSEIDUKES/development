@@ -306,7 +306,20 @@ const acceptedChapterBody = (
  * happened. Numbered marks (`[[1|words]]`) are a retired form: they are
  * removed with their words kept, and nothing is placed from them.
  */
-const readParagraphMarks = (paragraphs: readonly string[], warnings: HarnessWarning[], soundWords?: readonly SoundWord[], locale?: string) => {
+const readParagraphMarks = (
+  paragraphs: readonly string[],
+  warnings: HarnessWarning[],
+  soundWords?: readonly SoundWord[],
+  locale?: string,
+  /**
+   * Whether to settle a sound tag written beside its sentence instead of around
+   * its words. It is a recovery for the chapter writer, which invents the words
+   * it wraps and sometimes writes them outside the prose. The tagger wraps
+   * words that are already in the chapter, so there is nothing stray to settle
+   * and the repair would delete a paragraph that is only its sound ("BOOM").
+   */
+  { repairStraySounds = true }: { repairStraySounds?: boolean } = {},
+) => {
   const read: MarkReading[] = [];
   let loose: MarkReading['speakers'] = [];
   let looseWords: WordTag[] = [];
@@ -318,7 +331,10 @@ const readParagraphMarks = (paragraphs: readonly string[], warnings: HarnessWarn
   let soundTagIssues = 0;
   const options = soundWords?.length ? { soundWords: soundWords.map(sound => sound.word) } : {};
   // A sound tag written beside its sentence instead of around its words leaves no stray words behind.
-  const settled = settleStraySoundTags(paragraphs.map(paragraph => readMarks(paragraph, options)), locale);
+  const read_ = paragraphs.map(paragraph => readMarks(paragraph, options));
+  const settled = repairStraySounds
+    ? settleStraySoundTags(read_, locale)
+    : { readings: read_, moved: 0, removed: 0 };
   if (settled.removed) {
     warnings.push({
       code: 'sound_tag_moved',
@@ -531,6 +547,40 @@ export const verifyHarnessEventEvidence = (event: HarnessSemanticEvent, prose: s
       && !/\d|\b(?:tier|hours?|days?|weeks?)\b/i.test(value))
     || quote.toLowerCase().includes(normalize(value).toLowerCase()));
   return { ...event, evidenceVerified: Boolean(quote && normalize(prose).includes(quote) && factsSupported) };
+};
+
+/**
+ * Reads the tags out of paragraphs that are already written, and places every
+ * one of them: the tagger's path (`shared/tagger.ts`).
+ *
+ * It runs the same tag reading and the same placement the writer's reply goes
+ * through, so a tag means exactly one thing however it got into the prose
+ * (HARNESS_PRINCIPLES: everything writes the same manuscript attachments).
+ * What it does not do is anything only a writer's reply carries: no title, no
+ * recap, no closing holdings list, and so no check against one.
+ *
+ * The clean text it returns is what the prose reads as once every tag is
+ * removed. The tagger's caller compares it to the paragraphs it sent, which is
+ * how the HARNESS proves a tagger changed no word of the chapter.
+ */
+export const acceptChapterTags = (
+  paragraphs: readonly string[],
+  chapterNumber: number,
+  warnings: HarnessWarning[],
+  options: HarnessResponseAcceptanceOptions = {},
+) => {
+  const marked = readParagraphMarks(paragraphs, warnings, options.soundVocabulary, options.locale, { repairStraySounds: false });
+  // No reply field to read a closing list from: the tagger never returns one.
+  const holdings = acceptedHoldings({}, marked, chapterNumber, warnings, options);
+  return {
+    /** The paragraphs as they read with every tag removed. */
+    paragraphs: marked.read.map(reading => reading.text),
+    soundCues: acceptedSoundCues(marked.read, chapterNumber, warnings, options),
+    speakers: acceptedSpeakers(marked, chapterNumber, warnings, options),
+    holdingChanges: holdings.changes,
+    appearances: acceptedAppearances(marked, chapterNumber, warnings, options),
+    scene: acceptedScene(marked.soundtracks, chapterNumber, warnings, options),
+  };
 };
 
 export const acceptHarnessModelResponse = (

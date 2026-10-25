@@ -39,7 +39,7 @@ const hostFor = (state: SparkState, report: (message: string) => void): DaoSpark
       inventedGenre: Boolean(request.inventGenre),
       title: `The ${genre} Graduate`,
       style: storyStyleForGenre(genre),
-      pressure: 'immortal',
+      survival: Boolean(request.fateSurvival),
       ...(request.inventGenre ? { genreNote: 'Every technique is a sound, and every sound must be answered.' } : {}),
       premise: request.idea
         ? `${request.idea.replace(/[.\s]+$/, '')}, until the ${genre} world decides that is the one thing it cannot allow.`

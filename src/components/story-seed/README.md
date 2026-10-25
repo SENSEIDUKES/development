@@ -206,6 +206,12 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-10-25 (Survival sparks; Pressure stays Immortal):** A Story Spark
+  request may ask for `fateSurvival`; the spark carries `survival` and planting
+  it turns Survival on. Sparks no longer carry a Pressure, so a planted seed
+  keeps the Immortal default. `OriginGenrePicker` gains a `compact` form and a
+  controlled `open` / `onOpenChange` for hosts with little room; Story Seed's
+  Origin page is unchanged. Story Bank spark cards show Fate Survival.
 - **2026-10-25 (a spark is a whole Origin; Story Bank shelves):** From SENSEI.
   A Story Spark now carries a title, novel tradition (Style) and Pressure
   beside its premise and genre, and `storySeedInputFromSpark` fills the whole

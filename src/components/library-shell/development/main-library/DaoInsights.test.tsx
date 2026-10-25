@@ -48,7 +48,7 @@ const open = async (host?: DaoSparkHost) => {
 
 /** Choose a genre path the way a writer does: open Story Seed's path picker, then the path. */
 const choosePath = async (name: RegExp) => {
-  await click(button(/^Pick a path/));
+  await click(button(/Pick a path$/));
   await click(Array.from(dialog().querySelectorAll('[role="radio"], button[aria-pressed], button[aria-expanded]'))
     .find(item => name.test(item.textContent ?? '')));
 };
@@ -56,7 +56,7 @@ const choosePath = async (name: RegExp) => {
 const modelSpark = (request: StorySparkRequest): StorySpark => ({
   premise: request.idea ? `Shaped: ${request.idea}` : 'A model premise.',
   genre: request.inventGenre ? 'Echo Cultivation' : request.genre,
-  title: 'The Tested Path', style: 'korean', pressure: 'heaven',
+  title: 'The Tested Path', style: 'korean', survival: Boolean(request.fateSurvival),
   inventedGenre: Boolean(request.inventGenre),
   ...(request.inventGenre ? { genreNote: 'Techniques are sounds.' } : {}),
   aside: 'Hm. Hm.', voice: 'Elder of Tests',
@@ -76,7 +76,7 @@ it('offers two modes and the genre first, then asks the host for a spark in the 
   expect(button(/^Random/)?.getAttribute('aria-pressed')).toBe('true');
   expect(button(/^Custom/)).toBeTruthy();
   expect(dialog().textContent).toContain('Any path');
-  await click(button(/^Pick a path/));
+  await click(button(/Pick a path$/));
   expect(dialog().querySelector('[role="radiogroup"][aria-label="Story paths"]')).toBeTruthy();
   expect(dialog().textContent).toContain('Let the Dao conjure one');
   await click(Array.from(dialog().querySelectorAll('[role="radio"]')).find(item => item.textContent?.includes('Tower Climb')));
@@ -124,6 +124,34 @@ it('a writer\'s own genre steers the spark, with or without a model', async () =
   await settle(1100);
   expect(requestSpark).toHaveBeenCalledWith(expect.objectContaining({ genre: 'Noodle Cultivation' }), expect.any(AbortSignal));
   expect(dialog().textContent).toContain('Noodle Cultivation');
+});
+
+it('asks for a Fate Survival spark when Survival is on, and marks the spark', async () => {
+  const requestSpark = vi.fn(async (request: StorySparkRequest) => modelSpark(request));
+  await open({ checkSparks: async () => true, requestSpark });
+  const fate = dialog().querySelector<HTMLElement>('[role="switch"][aria-label="Fate Survival"]')!;
+  expect(fate.getAttribute('aria-checked')).toBe('false');
+  await click(fate);
+  expect(fate.getAttribute('aria-checked')).toBe('true');
+  await click(button(/Seek a spark/));
+  await settle(1100);
+  expect(requestSpark).toHaveBeenCalledWith(expect.objectContaining({ fateSurvival: true }), expect.any(AbortSignal));
+  expect(dialog().querySelector('[aria-label="Story spark"]')?.textContent).toContain('Fate Survival');
+});
+
+it('opens the Story Paths in the spark\'s place, and a path brings the spark back', async () => {
+  await open();
+  expect(dialog().querySelector('[aria-label="Story spark"]')).toBeTruthy();
+  await click(button(/Pick a path$/));
+  expect(dialog().querySelector('[aria-label="Story spark"]')).toBeNull();
+  expect(dialog().querySelector('[role="radiogroup"][aria-label="Story paths"]')).toBeTruthy();
+  await click(Array.from(dialog().querySelectorAll('[role="radio"]')).find(item => item.textContent?.includes('Regression')));
+  expect(dialog().querySelector('[role="radiogroup"]')).toBeNull();
+  expect(dialog().querySelector('[aria-label="Story spark"]')).toBeTruthy();
+  expect(button(/Pick a path$/)?.textContent).toContain('Regression');
+  await click(button(/Pick a path$/));
+  await click(button(/Back to the spark/));
+  expect(dialog().querySelector('[aria-label="Story spark"]')).toBeTruthy();
 });
 
 it('without a model, Random offers the Dao\'s own sparks and Custom keeps the writer\'s words as written', async () => {

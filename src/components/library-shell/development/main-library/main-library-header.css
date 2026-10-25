@@ -47,22 +47,5 @@
   background: linear-gradient(180deg, rgba(205, 178, 113, 0.16), rgba(205, 178, 113, 0.05));
   box-shadow: 0 0 22px rgba(205, 178, 113, 0.14), inset 0 1px 0 rgba(255, 240, 200, 0.12);
 }
-/* Short phones keep the subtitle off so the spark stays in view. */
-@media (max-height: 640px) { .dao-spark-subtitle { display: none; } }
-/* The rest of the Origin a spark plants: tradition, Pressure and Story Tags. */
-.dao-origin-chip {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 9999px;
-  border: 1px solid rgba(205, 178, 113, 0.3);
-  background: rgba(205, 178, 113, 0.06);
-  padding: 0.25rem 0.625rem;
-  font-size: 0.75rem;
-  line-height: 1rem;
-  color: #e3c878;
-}
-.dao-origin-chip-tag {
-  border-color: rgba(172, 166, 214, 0.25);
-  background: rgba(11, 14, 30, 0.5);
-  color: #cfcae6;
-}
+/* Short screens keep the whole panel in view: the elder's aside steps aside. */
+@media (max-height: 600px) { .dao-spark-aside { display: none; } }

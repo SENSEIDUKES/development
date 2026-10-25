@@ -144,7 +144,7 @@ pieces rather than page-local cards or buttons:
 - **Story tags in their catalog colors.** Each tag resolves against the Story
   Seed tag catalog. It shows its catalog label with its category's color dot
   and a matching tinted border (for example Politics & War in purple, Destiny &
-  Karma in gold, Meta & Continuity in black with a light ring). Hovering shows
+  Karma in gold, Mystery & Lore in black with a light ring). Hovering shows
   the category. A tag outside the catalog stays a neutral chip. Tags are shown
   once each, compared the catalog's way (trimmed, case-insensitive), with no
   `#`. The color values now live beside the catalog as `STORY_TAG_COLOR_ACCENTS`,

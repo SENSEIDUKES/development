@@ -2,24 +2,26 @@ import { normalizeStoryTagIdentity, STORY_TAG_CATALOG, type StoryTagMetadata } f
 
 /** Genre supplies a small prior; premise evidence always ranks ahead of it. */
 const GENRE_TAGS: Record<string, string[]> = {
-  Xianxia: ['cultivation realms', 'sect politics', 'dao comprehension', 'tribulation events'],
-  Xuanhuan: ['bloodline awakening', 'martial techniques', 'tribulation events'],
+  Xianxia: ['cultivation realms', 'sect politics', 'dao comprehension', 'heavenly tribulation'],
+  Xuanhuan: ['bloodline awakening', 'martial techniques', 'heavenly tribulation'],
   'LitRPG / System': ['game systems', 'level progression', 'system missions', 'skill trees'],
-  'Academy Cultivation': ['academy cultivation', 'exam arcs', 'class rankings', 'rival schools'],
+  'Academy Cultivation': ['academy cultivation', 'exams', 'class rankings', 'rival schools'],
   'Kingdom Building': ['kingdom building', 'territory control', 'resource management', 'laws'],
-  'Crafting / Alchemy': ['crafting/alchemy', 'pill refinement', 'artifact economy'],
-  'Beast Taming': ['beast-taming / monster evolution', 'bonded beasts', 'bloodline awakenings'],
-  'Tower Climb': ['dungeon/tower climb', 'floor bosses', 'trial rooms'],
-  Regression: ['regression/reincarnation', 'future knowledge', 'second chances'],
-  'Urban Cultivation': ['urban/modern cultivation', 'hidden sects in modern cities', 'social status growth'],
+  'Crafting / Alchemy': ['crafting systems', 'alchemy', 'artifact economy'],
+  'Beast Taming': ['beast taming', 'bonded beasts', 'bloodline awakening'],
+  'Tower Climb': ['tower climbing', 'floor bosses', 'trial rooms'],
+  Regression: ['regression', 'foreknowledge', 'second chances'],
+  'Urban Cultivation': ['urban cultivation', 'hidden society', 'social status growth'],
   'Apocalypse Cultivation': ['apocalypse cultivation', 'survival camps', 'mutated beasts'],
   'Cosmic Cultivation': ['cosmic cultivation', 'star realms', 'galactic inheritances'],
-  'Political Intrigue': ['court intrigue', 'political pressure', 'faction memory'],
+  'Political Intrigue': ['court intrigue', 'political pressure', 'spy networks'],
   'Cozy Slice-of-Life': ['cozy / slice-of-life cultivation', 'village bonds', 'low-stakes daily progress'],
   'Mystery Cultivation': ['mystery cultivation', 'forbidden cases', 'hidden murders'],
 };
 
 export const INFERRED_TAG_LIMIT = 8;
+/** What an untagged seed with no evidence at all starts from. */
+const FALLBACK_TAGS = ['adventure', 'action'];
 export interface StoryTagInferenceInput {
   premise?: string;
   genre?: string;
@@ -35,18 +37,19 @@ const PREMISE_CUES: { match: RegExp; tags: string[] }[] = [
   { match: /\b(?:level up|levels up|experience points)\b/i, tags: ['level progression'] },
   { match: /\b(?:sect|sects|disciple|disciples)\b/i, tags: ['sect politics'] },
   { match: /\b(?:reborn|reincarnat(?:ion|ed|es)|past lives)\b/i, tags: ['reincarnation rules'] },
-  { match: /\b(?:back in time|time loops?|timelines?|regress(?:ion|or|ed))\b/i, tags: ['regression/reincarnation'] },
+  { match: /\b(?:back in time|time loops?|timelines?|regress(?:ion|or|ed))\b/i, tags: ['regression'] },
   { match: /\b(?:doomed|dies|destined to die|death sentence)\b/i, tags: ['destined death'] },
   { match: /\b(?:fall(?:s|ing)? in love|romance|romantic|lovers?|beloved|wife|husband)\b/i, tags: ['romantic tension'] },
   { match: /\b(?:forced to marry|marriage of convenience|arranged marriage)\b/i, tags: ['arranged marriage'] },
   { match: /\b(?:slow burn|gradually fall(?:s|ing)? in love)\b/i, tags: ['slow-burn romance'] },
-  { match: /\b(?:grief|grieving|mourn(?:s|ing)?|trauma|haunted by the past)\b/i, tags: ['emotional continuity', 'tragedy'] },
-  { match: /\b(?:old promises?|unresolved promises?|remember(?:s|ing)?|memories|years later)\b/i, tags: ['chapter memory', 'delayed payoffs'] },
-  { match: /\b(?:consequences|lasting scars?|past decisions|past mistakes)\b/i, tags: ['long-term consequences'] },
-  { match: /\b(?:clues?|investigat(?:e|es|ion|ing)|detective|disappearance)\b/i, tags: ['mystery clues', 'mystery'] },
-  { match: /\b(?:cozy|gentle|wholesome|peaceful)\b/i, tags: ['cozy fantasy', 'slow life'] },
+  { match: /\b(?:grief|grieving|mourn(?:s|ing)?|trauma|haunted by the past)\b/i, tags: ['tragedy', 'drama'] },
+  { match: /\b(?:clues?|investigat(?:e|es|ion|ing)|detective|disappearance)\b/i, tags: ['mystery'] },
+  { match: /\b(?:cozy|gentle|wholesome|peaceful)\b/i, tags: ['cozy', 'slow life'] },
   { match: /\b(?:daily life|everyday life|slice of life)\b/i, tags: ['slice of life'] },
   { match: /\b(?:funny|comedy|humou?r|banter)\b/i, tags: ['comedy'] },
+  { match: /\b(?:horror|terrif(?:y|ying|ied)|nightmares?|haunted (?:house|mansion|school))\b/i, tags: ['horror'] },
+  { match: /\b(?:battles?|duels?|fights?|fighting|wars?)\b/i, tags: ['action'] },
+  { match: /\b(?:journey|quests?|expeditions?|explor(?:e|es|ing|ation))\b/i, tags: ['adventure'] },
   { match: /\b(?:cook(?:s|ing)?|bakery|restaurant|chef)\b/i, tags: ['food'] },
   { match: /\b(?:farm(?:s|ing)?|crops?|harvest)\b/i, tags: ['farming'] },
   { match: /\b(?:harbou?r|port city|seaside|maritime)\b/i, tags: ['port economy'] },
@@ -62,10 +65,14 @@ const catalog = [...new Map(STORY_TAG_CATALOG.map(entry => [normalizeStoryTagIde
   entry,
   phrases: [entry.label, ...entry.aliases].map(normalize).filter(Boolean),
 }));
-const moodTags = new Set(['comedy', 'tragedy', 'mystery', 'slow life', 'slice of life', 'cozy fantasy', 'tone control']);
 const settingTags = new Set(['ancient ruins', 'secret realms', 'port economy', 'lost history', 'map expansion']);
-const dimension = (entry: StoryTagMetadata) => moodTags.has(entry.label)
-  ? 'Mood' : settingTags.has(entry.label) ? 'Setting' : entry.category;
+const dimension = (entry: StoryTagMetadata) => settingTags.has(entry.label) ? 'Setting' : entry.category;
+
+// Handle explicit exclusions conservatively within a clause. This is lexical
+// matching, not a model: complex negation and implied intent remain limited.
+const premiseExclusions = (raw: string) =>
+  [...raw.matchAll(/\b(?:no|without|not|never)\s+([^,.!?;]+?)(?=\b(?:but|instead|yet)\b|[,.;!?]|$)/gi)]
+    .map(match => normalize(match[1]));
 
 /**
  * Rank the entire catalog, then spread relevant candidates across dimensions.
@@ -78,10 +85,7 @@ export const recommendStoryTags = (
   limit = 10,
 ): StoryTagMetadata[] => {
   const raw = input.premise || '';
-  // Handle explicit exclusions conservatively within a clause. This is lexical
-  // matching, not a model: complex negation and implied intent remain limited.
-  const exclusions = [...raw.matchAll(/\b(?:no|without|not|never)\s+([^,.!?;]+?)(?=\b(?:but|instead|yet)\b|[,.;!?]|$)/gi)]
-    .map(match => normalize(match[1]));
+  const exclusions = premiseExclusions(raw);
   const premise = normalize(raw.replace(/\b(?:no|without|not|never)\s+[^,.!?;]+?(?=\b(?:but|instead|yet)\b|[,.;!?]|$)/gi, ' '));
   const selected = new Set(selectedTags.map(normalizeStoryTagIdentity));
   const genreKey = Object.keys(GENRE_TAGS).find(key => normalize(key) === normalize(input.genre || ''));
@@ -117,5 +121,9 @@ export const recommendStoryTags = (
 /** Same ranked recommendations at generation; creator-selected tags stay untouched. */
 export const inferStoryTags = (input: StoryTagInferenceInput): string[] => {
   const tags = recommendStoryTags(input, [], INFERRED_TAG_LIMIT).map(entry => entry.label);
-  return tags.length ? tags : ['long-term consequences', 'emotional continuity', 'character status'];
+  if (tags.length) return tags;
+  // The fallback honours the premise's exclusions too: "no action" never gets action.
+  const exclusions = premiseExclusions(input.premise || '');
+  return FALLBACK_TAGS.filter(label => !catalog.some(({ entry, phrases }) => entry.label === label
+    && exclusions.some(text => phrases.some(phrase => containsPhrase(text, phrase)))));
 };

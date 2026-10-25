@@ -213,9 +213,9 @@ export async function getApiHeaders(): Promise<Record<string, string>> {
 
 const GENRE_TAG_HINTS: Record<string, string[]> = {
   Xianxia: ['cultivation realms', 'sect politics', 'dao comprehension'],
-  Xuanhuan: ['bloodline awakening', 'martial techniques', 'tribulation events'],
+  Xuanhuan: ['bloodline awakening', 'martial techniques', 'heavenly tribulation'],
   'LitRPG / System': ['game systems', 'level progression', 'system rewards'],
-  'Academy Cultivation': ['academy cultivation', 'exam arcs', 'rival schools'],
+  'Academy Cultivation': ['academy cultivation', 'exams', 'rival schools'],
   'Kingdom Building': ['kingdom building', 'territory control', 'resource management'],
 };
 

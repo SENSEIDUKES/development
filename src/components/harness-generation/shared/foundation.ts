@@ -63,6 +63,10 @@ export const normalizeStoryFoundationInput = (input: StoryFoundationInput): Stor
     if (typeof input.fateSurvival?.enabled !== 'boolean') throw new Error('Fate Survival needs an enabled flag.');
     normalized.fateSurvival = { enabled: input.fateSurvival.enabled };
   }
+  if (Array.isArray(input.storyTags)) {
+    const storyTags = input.storyTags.filter((tag): tag is string => typeof tag === 'string' && Boolean(tag.trim())).map(tag => tag.trim());
+    if (storyTags.length) normalized.storyTags = storyTags;
+  }
   if (input.sourceSnapshot?.kind === 'story-seed') {
     normalized.sourceSnapshot = cloneHarnessValue(input.sourceSnapshot);
   }

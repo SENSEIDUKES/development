@@ -269,6 +269,7 @@ export const translationMatchSource = (
     story.genre,
     story.openingSetup,
     story.declaredCanon,
+    ...(story.storyTags ?? []),
     story.characters,
     story.worldFacts,
     story.intendedDirection,

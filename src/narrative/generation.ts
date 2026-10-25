@@ -104,6 +104,8 @@ export interface StoryFoundationInput {
   genre?: string;
   openingSituation?: string;
   declaredCanon?: string;
+  /** The experience the creator asked for (Story Seed Story Tags): direction, never facts. */
+  storyTags?: string[];
   characters?: string;
   /** Known identities supplied by the host; never inferred from paragraph order. */
   cast?: NonNullable<HarnessEventDetails['character']>[];
@@ -751,6 +753,7 @@ export interface CurrentStoryProjection {
   openingSetup?: string;
   intendedDirection?: string;
   declaredCanon?: string;
+  storyTags?: string[];
   characters?: string;
   worldFacts?: string;
   cast?: NonNullable<HarnessEventDetails['character']>[];

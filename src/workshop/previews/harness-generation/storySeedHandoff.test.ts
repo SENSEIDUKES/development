@@ -237,7 +237,9 @@ describe('Story Seed to Harness handoff', () => {
     expect(foundation.openingSituation).toBe('Author opening');
     expect(foundation.destinedEnding).toBe('Author ending');
     expect(foundation.intendedDirection).toBeUndefined();
-    expect(foundation.declaredCanon).not.toContain(record.blueprint!.logline);
+    // Story Tags travel as their own field, never as declared canon.
+    expect(foundation.declaredCanon).toBeUndefined();
+    expect(foundation.storyTags).toEqual(record.seed.story.required.storyTags);
     expect(foundation.identities?.find(identity => identity.name === 'Ye Chen')?.evidence).toContain('Additional profile detail');
   });
 

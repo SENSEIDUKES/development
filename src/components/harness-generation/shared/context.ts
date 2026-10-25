@@ -72,6 +72,7 @@ export const projectCurrentStory = (
     ...(input.funSettings ? { funSettings: cloneHarnessValue(input.funSettings) } : {}),
     ...(text(input.intendedDirection) ? { intendedDirection: input.intendedDirection!.trim() } : {}),
     ...(text(input.declaredCanon) ? { declaredCanon: input.declaredCanon!.trim() } : {}),
+    ...(input.storyTags?.length ? { storyTags: [...input.storyTags] } : {}),
     ...(text(input.characters) ? { characters: input.characters!.trim() } : {}),
     ...(text(input.worldFacts) ? { worldFacts: input.worldFacts!.trim() } : {}),
     ...(input.cast?.length ? { cast: cloneHarnessValue(input.cast) } : {}),

@@ -3,6 +3,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type CSSProperties,
   type Dispatch,
@@ -15,13 +16,17 @@ import { AnimatePresence, motion } from 'motion/react';
 import { STORY_PREMISE_MAX_LENGTH, STORY_TAG_LIMIT } from '@seihouse/sen/story-seed';
 import { type StoryStyle } from '@seihouse/sen/story-seed';
 import {
-  CATEGORIZED_TAGS,
   CATEGORY_COLORS,
   CURATED_PREMISE_EXAMPLES,
+  findStoryTagNiche,
+  GENRE_PRESETS,
+  getStoryTagNiches,
   getTagMetadata,
   STORY_TAG_COLOR_ACCENTS,
   normalizeStoryTagIdentity,
   STORY_TAG_CATALOG,
+  STORY_TAG_NICHES,
+  storyTagNicheEntries,
   type StoryTagCategory,
   type StoryTagCategoryColor,
   type StoryTagMetadata,
@@ -30,6 +35,8 @@ import { recommendStoryTags } from '@seihouse/sen/story-seed';
 import { updateStoryTags, type UpdateSeed } from '../../seedState';
 import { NarrativeDragonCycleIcon as LibraryDragonCycleIcon, NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
 import { workspaceCompactLabelClass } from '../SeedSectionFrame';
+import { handleRadioGroupKeyDown, radioGroupTabIndex } from '../../radioGroupKeyboard';
+import { GENRE_PATH_SIGILS } from './OriginGenrePicker';
 
 const TAG_LIMIT = STORY_TAG_LIMIT;
 const TAG_LIMIT_MESSAGE = `Fated limit reached. Only up to ${TAG_LIMIT} celestial tags can be woven into the universe.`;
@@ -56,6 +63,12 @@ const tagChipClass = (selected: boolean) => selected
   ? 'border-portal bg-neutral-900 font-semibold text-portal shadow-[0_0_8px_rgba(4,172,255,0.15)]'
   : 'border-neutral-800/70 bg-[#0b0e1e]/50 text-neutral-400 hover:border-neutral-700 hover:text-signal';
 
+/** A chip's hover title: its family, then the niches it belongs to. */
+const tagChipTitle = (entry: StoryTagMetadata) => {
+  const niches = getStoryTagNiches(entry.label).map(niche => niche.label);
+  return niches.length ? `${entry.category} · In: ${niches.join(', ')}` : entry.category;
+};
+
 const CatalogTagChip = ({ entry, selected, onToggle, className = '' }: {
   entry: StoryTagMetadata;
   selected: boolean;
@@ -65,7 +78,7 @@ const CatalogTagChip = ({ entry, selected, onToggle, className = '' }: {
   <button
     type="button"
     onClick={() => onToggle(entry.label)}
-    title={entry.category}
+    title={tagChipTitle(entry)}
     style={selected ? undefined : categoryBorderStyle(entry.color)}
     className={`story-seed-touch-target flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs transition-all ${tagChipClass(selected)} ${className}`}
   >
@@ -74,14 +87,20 @@ const CatalogTagChip = ({ entry, selected, onToggle, className = '' }: {
   </button>
 );
 
-const searchStoryTagCatalog = (query: string): StoryTagMetadata[] => {
-  const normalized = query.trim().toLowerCase();
-  if (!normalized) return [];
-  return STORY_TAG_CATALOG.filter(entry =>
-    entry.label.toLowerCase().includes(normalized)
-    || entry.category.toLowerCase().includes(normalized)
-    || entry.aliases.some(alias => alias.toLowerCase().includes(normalized)));
-};
+const matchesTagSearch = (entry: StoryTagMetadata, query: string) =>
+  entry.label.toLowerCase().includes(query)
+  || entry.category.toLowerCase().includes(query)
+  || entry.aliases.some(alias => alias.toLowerCase().includes(query));
+
+/** The browser's niche choice: one genre path's niche, or every tag. */
+const ALL_TAGS = 'all';
+const FAMILY_ORDER = Object.keys(CATEGORY_COLORS) as StoryTagCategory[];
+const NICHE_OPTIONS = [
+  { id: ALL_TAGS, label: 'All tags', count: STORY_TAG_CATALOG.length },
+  ...STORY_TAG_NICHES.map(niche => ({ id: niche.id, label: niche.label, count: niche.tags.length })),
+];
+const PRESET_NAMES = new Map(GENRE_PRESETS.map(preset => [preset.id, preset.name]));
+const nicheIdForGenre = (genre: string | undefined) => findStoryTagNiche(genre)?.id ?? ALL_TAGS;
 
 interface OriginPremiseAndTagsProps {
   premise: string;
@@ -229,7 +248,8 @@ const OriginTagEditor = memo(({
   tagLimitError,
   setTagLimitError,
 }: OriginTagEditorProps) => {
-  const [activeTagFamily, setActiveTagFamily] = useState<string | null>(null);
+  const [activeNicheId, setActiveNicheId] = useState(() => nicheIdForGenre(genre));
+  const [activeFamilies, setActiveFamilies] = useState<StoryTagCategory[]>([]);
   const [customTagInput, setCustomTagInput] = useState('');
   const [tagSearch, setTagSearch] = useState('');
   const [browseOpen, setBrowseOpen] = useState(false);
@@ -237,8 +257,49 @@ const OriginTagEditor = memo(({
     () => recommendStoryTags({ premise, genre, style: selectedStyle }, storyTags),
     [premise, genre, selectedStyle, storyTags],
   );
-  const tagSearchResults = useMemo(() => searchStoryTagCatalog(tagSearch), [tagSearch]);
-  const isTagSearchActive = tagSearch.trim().length > 0;
+
+  // Choosing a genre path opens its niche; a custom genre opens every tag.
+  useEffect(() => {
+    setActiveNicheId(nicheIdForGenre(genre));
+    setActiveFamilies([]);
+  }, [genre]);
+
+  const activeNiche = STORY_TAG_NICHES.find(niche => niche.id === activeNicheId);
+  const scopeLabel = activeNiche ? activeNiche.label : 'all tags';
+  const nicheEntries = useMemo(
+    () => activeNiche ? storyTagNicheEntries(activeNiche) : STORY_TAG_CATALOG,
+    [activeNiche],
+  );
+  // A niche lists its own families first, in the order its core tags lead them.
+  const familyOrder = useMemo(() => activeNiche
+    ? [...new Set(nicheEntries.map(entry => entry.category))]
+    : FAMILY_ORDER, [activeNiche, nicheEntries]);
+  const familyCounts = useMemo(() => familyOrder
+    .map(family => ({ family, count: nicheEntries.filter(entry => entry.category === family).length }))
+    .filter(({ count }) => count > 0), [familyOrder, nicheEntries]);
+  const normalizedSearch = tagSearch.trim().toLowerCase();
+  const isTagSearchActive = normalizedSearch.length > 0;
+  const browserEntries = useMemo(() => nicheEntries.filter(entry =>
+    (activeFamilies.length === 0 || activeFamilies.includes(entry.category))
+    && (!normalizedSearch || matchesTagSearch(entry, normalizedSearch))), [nicheEntries, activeFamilies, normalizedSearch]);
+  const browserGroups = useMemo(() => familyOrder
+    .map(family => ({ family, entries: browserEntries.filter(entry => entry.category === family) }))
+    .filter(group => group.entries.length > 0), [familyOrder, browserEntries]);
+
+  // Keep the chosen niche visible in its scrolling row, even one far along it.
+  const nicheRowRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!browseOpen) return;
+    nicheRowRef.current?.querySelector<HTMLElement>('[aria-checked="true"]')
+      ?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+  }, [browseOpen, activeNicheId]);
+
+  const chooseNiche = (id: string) => {
+    setActiveNicheId(id);
+    setActiveFamilies([]);
+  };
+  const toggleFamily = (family: StoryTagCategory) => setActiveFamilies(current =>
+    current.includes(family) ? current.filter(existing => existing !== family) : [...current, family]);
 
   const selectedTagIdentities = useMemo(
     () => new Set(storyTags.map(normalizeStoryTagIdentity)),
@@ -258,12 +319,6 @@ const OriginTagEditor = memo(({
     if (!tag) return;
     if (addTag(tag)) setCustomTagInput('');
   };
-
-  const familyEntries = useMemo(() => activeTagFamily
-    ? Array.from(new Set(CATEGORIZED_TAGS[activeTagFamily] || []))
-        .map(tag => getTagMetadata(tag))
-        .filter((entry): entry is StoryTagMetadata => Boolean(entry))
-    : [], [activeTagFamily]);
 
   const yourTags = storyTags.length > 0 && (
     <div className="flex flex-wrap gap-1.5" aria-label="Your tags">
@@ -313,7 +368,7 @@ const OriginTagEditor = memo(({
 
         <button type="button" aria-expanded={browseOpen} aria-controls="origin-tag-browser" onClick={() => setBrowseOpen(open => !open)}
           className="story-seed-touch-target flex w-full items-center justify-between gap-2 border-t border-neutral-800/80 pt-3 font-sc text-[10px] font-bold uppercase tracking-widest text-[#CDB271] transition-colors hover:text-[#E3C878]">
-          <span>{browseOpen ? 'Close tag browser' : 'Browse all tags'}<span className="ml-2 font-sans text-[11px] font-normal normal-case tracking-normal text-neutral-400">{browseOpen ? '' : 'search, families, or your own'}</span></span>
+          <span>{browseOpen ? 'Close tag browser' : 'Browse all tags'}<span className="ml-2 font-sans text-[11px] font-normal normal-case tracking-normal text-neutral-400">{browseOpen ? '' : 'by niche, family, search, or your own'}</span></span>
           <ChevronDown size={13} aria-hidden="true" className={browseOpen ? 'rotate-180 transition-transform' : 'transition-transform'} />
         </button>
 
@@ -329,54 +384,81 @@ const OriginTagEditor = memo(({
         </div>
 
         <div>
-          <div className="mb-3 w-full sm:max-w-xs">
-            <LibraryTextBox id="celestial-tag-search-input" size="compact" icon={SENSearchIcon} value={tagSearch} onChange={setTagSearch} placeholder="Search tags, aliases, families..." aria-label="Search story tags" />
+          <p className={workspaceCompactLabelClass}>Niches</p>
+          <div ref={nicheRowRef} role="radiogroup" aria-label="Tag niches" id="tag-niches" className="scrollbar-thin mt-2 flex gap-1.5 overflow-x-auto pb-1">
+            {NICHE_OPTIONS.map((option, index) => {
+              const selected = option.id === activeNicheId;
+              const Sigil = GENRE_PATH_SIGILS[option.id];
+              return (
+                <button key={option.id} type="button" role="radio" aria-checked={selected} tabIndex={radioGroupTabIndex(selected, true, index)}
+                  onKeyDown={handleRadioGroupKeyDown} onClick={() => chooseNiche(option.id)} title={option.id === ALL_TAGS ? 'Every tag in every family' : `Tags for ${PRESET_NAMES.get(option.id) ?? option.label} stories`}
+                  className={`story-seed-touch-target inline-flex min-h-[2.25rem] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1 font-sc text-[10px] font-bold uppercase tracking-[0.14em] transition-all ${selected ? 'border-portal/60 bg-portal/10 text-portal shadow-[0_0_10px_rgba(4,172,255,0.18)]' : 'border-[rgba(150,166,220,0.22)] bg-[#0d1126]/60 text-neutral-300 hover:border-[rgba(150,166,220,0.45)] hover:text-signal'}`}>
+                  {Sigil && <Sigil size={12} aria-hidden="true" />}{option.label}
+                  <span className="font-sans text-[10px] font-normal tracking-normal text-neutral-400">{option.count}</span>
+                </button>
+              );
+            })}
           </div>
-          {isTagSearchActive ? (
-            <>
-              <p className="mb-2 font-sans text-[11px] text-neutral-400">
-                {tagSearchResults.length} {tagSearchResults.length === 1 ? 'match' : 'matches'} across all families
+        </div>
+
+        <div>
+          <p className={workspaceCompactLabelClass}>Families<span className="ml-2 font-sans text-[11px] font-normal normal-case tracking-normal text-neutral-400">{activeFamilies.length ? `${activeFamilies.length} chosen` : 'all shown'}</span></p>
+          <div className="mt-2 flex flex-wrap gap-1.5" id="tag-categories">
+            {familyCounts.map(({ family, count }) => {
+              const chosen = activeFamilies.includes(family);
+              return (
+                <button key={family} type="button" aria-pressed={chosen} onClick={() => toggleFamily(family)}
+                  className={`story-seed-touch-target inline-flex min-h-[2.25rem] items-center gap-1.5 rounded-full border px-3 py-1 font-sc text-[10px] font-bold uppercase tracking-[0.14em] transition-all ${chosen ? 'border-portal/60 bg-portal/10 text-portal shadow-[0_0_10px_rgba(4,172,255,0.18)]' : 'border-[rgba(150,166,220,0.22)] bg-[#0d1126]/60 text-neutral-300 hover:border-[rgba(150,166,220,0.45)] hover:text-signal'}`}>
+                  <CategoryColorDot color={CATEGORY_COLORS[family]} />{family}
+                  <span className="font-sans text-[10px] font-normal tracking-normal text-neutral-400">{count}</span>
+                </button>
+              );
+            })}
+            {activeFamilies.length > 0 && (
+              <button type="button" onClick={() => setActiveFamilies([])} className="story-seed-compact-hit-target px-2 font-sc text-[10px] uppercase tracking-widest text-neutral-400 transition-colors hover:text-signal">Show all families</button>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <div className="mb-2 w-full sm:max-w-xs">
+            <LibraryTextBox id="celestial-tag-search-input" size="compact" icon={SENSearchIcon} value={tagSearch} onChange={setTagSearch} placeholder={activeNiche ? `Search ${activeNiche.label} tags...` : 'Search tags, aliases, families...'} aria-label="Search story tags" />
+          </div>
+          <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 font-sans text-[11px] text-neutral-400">
+            <p aria-live="polite">
+              {browserEntries.length} {isTagSearchActive ? (browserEntries.length === 1 ? 'match' : 'matches') : (browserEntries.length === 1 ? 'tag' : 'tags')} in {scopeLabel}
+            </p>
+            {activeNiche && isTagSearchActive && (
+              <button type="button" onClick={() => chooseNiche(ALL_TAGS)} className="story-seed-compact-hit-target font-sc text-[10px] font-bold uppercase tracking-widest text-portal transition-colors hover:text-signal">Search all tags</button>
+            )}
+          </div>
+          <div className="glass-panel scrollbar-thin max-h-72 space-y-3 overflow-y-auto p-3" id="filtered-tags-list">
+            {browserEntries.length === 0 ? (
+              <p className="w-full py-3 text-center font-sans text-xs italic text-neutral-400">
+                {isTagSearchActive ? 'No tags, aliases, or families match this search here.' : 'No tags in these families here.'}
               </p>
-              <div className="glass-panel scrollbar-thin flex max-h-52 flex-wrap content-start gap-1.5 overflow-y-auto p-3" id="filtered-tags-list">
-                {tagSearchResults.length === 0 ? (
-                  <p className="w-full py-3 text-center font-sans text-xs italic text-neutral-400">No tags, aliases, or families match this search.</p>
-                ) : tagSearchResults.slice(0, SEARCH_RESULT_LIMIT).map(entry => (
+            ) : isTagSearchActive ? (
+              <div className="flex flex-wrap content-start gap-1.5">
+                {browserEntries.slice(0, SEARCH_RESULT_LIMIT).map(entry => (
                   <CatalogTagChip key={entry.label} entry={entry} selected={isSelected(entry.label)} onToggle={toggleTag} />
                 ))}
-                {tagSearchResults.length > SEARCH_RESULT_LIMIT && (
+                {browserEntries.length > SEARCH_RESULT_LIMIT && (
                   <p className="w-full pt-1 text-center font-sans text-[11px] italic text-neutral-400">
-                    +{tagSearchResults.length - SEARCH_RESULT_LIMIT} more — keep typing to narrow the search.
+                    +{browserEntries.length - SEARCH_RESULT_LIMIT} more — keep typing to narrow the search.
                   </p>
                 )}
               </div>
-            </>
-          ) : (
-            <>
-              <p className={workspaceCompactLabelClass}>Tag families</p>
-              <div className="mt-2 flex flex-wrap gap-1.5" id="tag-categories">
-                {Object.keys(CATEGORIZED_TAGS).map(family => {
-                  const isOpen = activeTagFamily === family;
-                  return (
-                    <button key={family} type="button" aria-expanded={isOpen} aria-controls="origin-family-tags" onClick={() => { setActiveTagFamily(current => current === family ? null : family); setTagSearch(''); }}
-                      className={`story-seed-touch-target inline-flex min-h-[2.25rem] items-center gap-1.5 rounded-full border px-3 py-1 font-sc text-[10px] font-bold uppercase tracking-[0.14em] transition-all ${isOpen ? 'border-portal/60 bg-portal/10 text-portal shadow-[0_0_10px_rgba(4,172,255,0.18)]' : 'border-[rgba(150,166,220,0.22)] bg-[#0d1126]/60 text-neutral-300 hover:border-[rgba(150,166,220,0.45)] hover:text-signal'}`}>
-                      <CategoryColorDot color={CATEGORY_COLORS[family as StoryTagCategory]} />{family}<ChevronDown size={12} className={isOpen ? 'rotate-180 transition-transform' : 'transition-transform'} />
-                    </button>
-                  );
-                })}
+            ) : browserGroups.map(({ family, entries }) => (
+              <div key={family} role="group" aria-label={family}>
+                <p className="mb-1.5 flex items-center gap-1.5 font-sc text-[10px] font-bold uppercase tracking-widest text-neutral-300"><CategoryColorDot color={CATEGORY_COLORS[family]} />{family}</p>
+                <div className="flex flex-wrap content-start gap-1.5">
+                  {entries.map(entry => (
+                    <CatalogTagChip key={entry.label} entry={entry} selected={isSelected(entry.label)} onToggle={toggleTag} />
+                  ))}
+                </div>
               </div>
-              <AnimatePresence initial={false}>
-                {activeTagFamily ? (
-                  <motion.div id="origin-family-tags" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mt-3 overflow-hidden">
-                    <div className="glass-panel scrollbar-thin flex max-h-52 flex-wrap content-start gap-1.5 overflow-y-auto p-3" id="filtered-tags-list">
-                      {familyEntries.map(entry => (
-                        <CatalogTagChip key={entry.label} entry={entry} selected={isSelected(entry.label)} onToggle={toggleTag} />
-                      ))}
-                    </div>
-                  </motion.div>
-                ) : <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3 font-sans text-xs italic text-neutral-400">Choose a family to reveal its tags.</motion.p>}
-              </AnimatePresence>
-            </>
-          )}
+            ))}
+          </div>
         </div>
 
         <p className="font-sans text-[11px] text-neutral-400">{TAG_RECOMMENDED_COPY}</p>

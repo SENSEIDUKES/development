@@ -1,23 +1,5 @@
 import { normalizeStoryTagIdentity, STORY_TAG_CATALOG, type StoryTagMetadata } from './storyTagCatalog';
-
-/** Genre supplies a small prior; premise evidence always ranks ahead of it. */
-const GENRE_TAGS: Record<string, string[]> = {
-  Xianxia: ['cultivation realms', 'sect politics', 'dao comprehension', 'heavenly tribulation'],
-  Xuanhuan: ['bloodline awakening', 'martial techniques', 'heavenly tribulation'],
-  'LitRPG / System': ['game systems', 'level progression', 'system missions', 'skill trees'],
-  'Academy Cultivation': ['academy cultivation', 'exams', 'class rankings', 'rival schools'],
-  'Kingdom Building': ['kingdom building', 'territory control', 'resource management', 'laws'],
-  'Crafting / Alchemy': ['crafting systems', 'alchemy', 'artifact economy'],
-  'Beast Taming': ['beast taming', 'bonded beasts', 'bloodline awakening'],
-  'Tower Climb': ['tower climbing', 'floor bosses', 'trial rooms'],
-  Regression: ['regression', 'foreknowledge', 'second chances'],
-  'Urban Cultivation': ['urban cultivation', 'hidden society', 'social status growth'],
-  'Apocalypse Cultivation': ['apocalypse cultivation', 'survival camps', 'mutated beasts'],
-  'Cosmic Cultivation': ['cosmic cultivation', 'star realms', 'galactic inheritances'],
-  'Political Intrigue': ['court intrigue', 'political pressure', 'spy networks'],
-  'Cozy Slice-of-Life': ['cozy / slice-of-life cultivation', 'village bonds', 'low-stakes daily progress'],
-  'Mystery Cultivation': ['mystery cultivation', 'forbidden cases', 'hidden murders'],
-};
+import { findStoryTagNiche } from './storyTagNiches';
 
 export const INFERRED_TAG_LIMIT = 8;
 /** What an untagged seed with no evidence at all starts from. */
@@ -88,8 +70,8 @@ export const recommendStoryTags = (
   const exclusions = premiseExclusions(raw);
   const premise = normalize(raw.replace(/\b(?:no|without|not|never)\s+[^,.!?;]+?(?=\b(?:but|instead|yet)\b|[,.;!?]|$)/gi, ' '));
   const selected = new Set(selectedTags.map(normalizeStoryTagIdentity));
-  const genreKey = Object.keys(GENRE_TAGS).find(key => normalize(key) === normalize(input.genre || ''));
-  const genreTags = genreKey ? GENRE_TAGS[genreKey].slice(0, 2) : [];
+  // Genre supplies a small prior through its niche's core tags; premise evidence always ranks ahead of it.
+  const genreTags = findStoryTagNiche(input.genre)?.core.slice(0, 2) ?? [];
   const genreTagSet = new Set(genreTags);
   const cueScores = new Set(PREMISE_CUES.filter(rule => rule.match.test(premise)).flatMap(rule => rule.tags));
   const excludedCues = new Set(PREMISE_CUES.filter(rule => exclusions.some(text => rule.match.test(text))).flatMap(rule => rule.tags));

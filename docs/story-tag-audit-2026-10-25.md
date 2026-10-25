@@ -190,3 +190,118 @@ farming · cooking · healing · crafting · village life
 2. **Add Genre, Tone, Protagonist & Tropes, and the missing staples.**
 3. **Cut and merge** per this document.
 4. *(Later)* Give each kept tag a one-line meaning the writer reads ("death flags — the main character knows events that would kill them and works to avoid them"). That turns tags from keywords into real instructions.
+
+---
+
+## 9. Tagging engine upgrade, first build (SENSEI, 2026-10-25)
+
+SENSEI's choices:
+- **Niches are the 15 genre paths** creators already pick in Origin. A tag can sit under several of them.
+- **The creator's tag picker comes first.** Discover and Home filtering by niche and tag follow on the same engine.
+- **Tradition (Chinese, Korean, Japanese) stays as it was:** it nudges suggestions and never hides a tag.
+
+What the creator sees in **Browse all tags**:
+- **Niches:** a row holding *All tags* and the 15 genre paths. It opens on the story's own genre, or on All tags for a custom genre.
+- **Families:** filter chips with counts. Pick one or several, or none to show every family.
+- **Search:** searches inside the chosen niche and families. *Search all tags* widens it.
+- **Grouping:** tags are grouped under their family, and hovering a tag shows the niches it belongs to.
+
+No tag was renamed or cut in this build. Niches are a second way to reach the same catalog. The writer, saved stories and World Cards are unchanged.
+
+The engine is `src/components/story-seed/shared/storyTagNiches.ts`. Each niche's **core** tags are the ones its genre already nudged suggestions toward; the rest are everything the niche holds.
+
+### Which tags each niche holds
+
+### Xianxia (44)
+
+**Core:** cultivation realms, sect politics, dao comprehension, heavenly tribulation
+
+**Also:** breakthrough pressure, bottleneck arcs, power scaling, martial techniques, bloodline awakening, inheritance trials, artifact growth, weapon spirits, artifact refining, alchemy, formations & arrays, talisman design, forbidden manual, immortal ascension, heaven defiance, heaven's punishment, sect diplomacy, sect rankings, righteous sect, demonic path, ancient clan, clan politics, young master rivalry, face slapping, master-disciple bond, dual cultivation, adult-only double cultivation politics, karmic bonds, karmic debt, secret realms, ancient ruins, spirit beast, auction politics, rare materials, ancient grudges, mythic history, sworn brotherhood, hidden instructors, borrowed lifespan, stolen fate
+
+### Xuanhuan (25)
+
+**Core:** bloodline awakening, martial techniques, heavenly tribulation
+
+**Also:** cultivation realms, power scaling, breakthrough pressure, inheritance trials, artifact growth, weapon spirits, heaven defiance, immortal ascension, magic, secret bloodlines, ancient clan, clan politics, young master rivalry, face slapping, demonic path, secret realms, ancient ruins, spirit beast, gods & deities, mythic history, forbidden manual, auction politics
+
+### System (54)
+
+**Core:** game systems, level progression, system missions, skill trees
+
+**Also:** status window, player system, stat growth, job classes, class evolution, quest systems, achievement systems, system awakening, system rewards, system penalties, system shop, system diagnostics, system corruption, hidden stats, karma points, influence points, admin points, military points, diplomacy points, logistics points, rank system, scenario system, awakening, cheat skill, cooking skill, save points, death penalties, respawn logic, dungeon systems, loot systems, raid mechanics, boss mechanics, party roles, quest chains, hidden quests, tutorial systems, safe zones, player factions, NPC agendas, world events, constellation sponsors, streamed trials, crafting systems, enchantment systems, summoning systems, isekai, summoned hero, demon king, adventurer guild, guild ranks
+
+### Academy Cultivation (26)
+
+**Core:** academy cultivation, exams, class rankings, rival schools
+
+**Also:** academy, school life, school hierarchy, academy rankings, student factions, teacher politics, discipline systems, training schedules, mission boards, campus secrets, forbidden libraries, trial grounds, rival dorms, hidden instructors, dungeon academy, training arc, tournament, arena rankings, master-disciple bond, senpai-kouhai, rivalry, young master rivalry
+
+### Kingdom Building (65)
+
+**Core:** kingdom building, territory control, resource management, laws
+
+**Also:** kingdom economy, city building, village growth, settlement upgrades, territory upgrades, infrastructure growth, trade routes, supply chains, port economy, mining economy, tax reform, law reform, public order, land rights, tribute systems, famine pressure, scarcity economy, refugee crisis, labor shortage, grain pricing, currency pressure, debt crisis, trade embargo, war economy, economic recovery, modern knowledge uplift, diplomacy, vassal management, noble resistance, rebellion risk, military strategy, border defense, troop morale, unit progression, officer loyalty, elite units, special corps, siege warfare, fortress defense, campaign planning, battlefield tactics, military doctrine, weapon upgrades, mercenary contracts, occupied territory, conquered loyalty, war, war exhaustion, guerrilla warfare, border raids, supply raids, strategic retreat, city evacuation, enemy generals, battlefield reputation, veteran trauma, smuggling routes, contract enforcement, logistics points, military points, diplomacy points
+
+### Crafting/Alchemy (22)
+
+**Core:** crafting systems, alchemy, artifact economy
+
+**Also:** artifact refining, artifact growth, weapon forging, weapon spirits, enchantment systems, talisman design, formations & arrays, cooking skill, food, rare materials, magical resources, master workshops, artisan production, guild economy, guild systems, auction politics, market control, monopoly strategy, black market
+
+### Beast Taming (13)
+
+**Core:** beast taming, bonded beasts, bloodline awakening
+
+**Also:** monster evolution, pet evolution, monster companions, spirit beast, summoning systems, beast sect politics, spirit contracts, mutated beasts, void beasts, reincarnated monster
+
+### Tower Climb (26)
+
+**Core:** tower climbing, floor bosses, trial rooms
+
+**Also:** ancient tower rankings, dungeon systems, dungeon gates, boss mechanics, raid mechanics, raid team, hero party, party roles, party chemistry, party conflict, party banishment, loot systems, hidden quests, safe zones, tutorial systems, level progression, status window, death penalties, respawn logic, constellation sponsors, streamed trials, ranker, survival games
+
+### Regression (28)
+
+**Core:** regression, foreknowledge, second chances
+
+**Also:** returner, revenge returner, reincarnation rules, time loops, save points, changing timelines, saving the doomed, destined death, death flags, doom timers, fate correction, fate repair, transmigration, villainess, otome game, revenge, revenge spiral, betrayal, hiding true strength, stolen fate, fate exchange, borrowed lifespan, reincarnation debt, blood debt, broken prophecy
+
+### Urban Cultivation (33)
+
+**Core:** urban cultivation, hidden society, social status growth
+
+**Also:** corporate clans, chaebol clans, district control, urban territory, underworld sects, spiritual black markets, apartment spirits, subway realms, convenience spirits, celebrity vessels, idol factions, media pressure, viral reputation, public scandal, modern artifacts, phone talismans, contract rewriting, spiritual real estate, debt curses, revenge climb, family pressure, hunter rankings, hunter society, awakened citizens, association politics, gate outbreaks, dungeon gates, ranker, face slapping, hiding true strength
+
+### Apocalypse (16)
+
+**Core:** apocalypse cultivation, survival camps, mutated beasts
+
+**Also:** apocalypse survival, ruined worlds, broken heavenly laws, gate outbreaks, system awakening, awakening, survival games, doom timers, monster evolution, scarcity economy, famine pressure, refugee crisis, resource management
+
+### Cosmic (11)
+
+**Core:** cosmic cultivation, star realms, galactic inheritances
+
+**Also:** planetary sects, void beasts, immortal ascension, gods & deities, power scaling, mythic history, map expansion, world events
+
+### Political Intrigue (42)
+
+**Core:** court intrigue, political pressure, spy networks
+
+**Also:** imperial oversight, noble resistance, succession crisis, legitimacy crisis, intelligence war, diplomatic leverage, treaty instability, alliance building, alliance decay, betrayal, betrayal fallout, rival factions, proxy war, hostage diplomacy, merchant politics, council politics, propaganda war, public scandal, hidden patrons, puppet ruler, marriage alliances, political romance, arranged marriage, assassination plots, warlord politics, regional politics, cultural tension, religious pressure, rebellion risk, rebel recruitment, clan politics, sect politics, guild politics, banking influence, foreign investment, prisoner politics, war, villainess, clever protagonist
+
+### Cozy/Slice-of-Life (16)
+
+**Core:** cozy / slice-of-life cultivation, village bonds, low-stakes daily progress
+
+**Also:** farming, food, healing, cooking skill, village growth, found family, childhood friend, affection growth, artisan production, master workshops, crafting systems, spirit beast, monster companions
+
+### Mystery (18)
+
+**Core:** mystery cultivation, forbidden cases, hidden murders
+
+**Also:** secret bloodlines, sealed memories, lost history, mythic history, cursed relics, ancient sealed truths, forbidden libraries, hidden identity, hidden patrons, spy networks, assassination plots, curses, debt curses, campus secrets, ancient ruins
+
+### In every story, no niche (72)
+
+Reached from **All tags**: every Genre and Tone tag, the protagonist archetypes, most romance and bonds, and a few general tags.

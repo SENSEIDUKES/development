@@ -206,6 +206,20 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-10-25 (Story Tag niches):** From SENSEI: "literally have a lit RPG
+  parent tab that has those type game element tags. And we need to do that for
+  a lot of different genres." The 15 genre paths are now tag **niches**
+  (`shared/storyTagNiches.ts`, exported from `@seihouse/sen/story-seed`).
+  Each niche holds every catalog tag that kind of story reaches for, and a
+  tag can sit in several niches. Its core tags are the genre prior that
+  `recommendStoryTags` used to read from `GENRE_TAGS`, so suggestions are
+  unchanged. Browse all tags now offers three filters that stack:
+  - a niche row that opens on the story's genre, or All tags for a custom genre;
+  - multi-select family chips with counts;
+  - search scoped to the niche and families, with *Search all tags* to widen it.
+  Tags are grouped by family, and a tag's hover title names its niches. No
+  tag was renamed or cut. The mapping is listed in
+  `docs/story-tag-audit-2026-10-25.md`, section 9.
 - **2026-10-25 (Story Tag audit, first pass):** From SENSEI. The catalog gains
   a base layer: a **Genre** family (action, adventure, comedy, drama, fantasy,
   horror, martial arts, mystery, psychological, romance, sci-fi, slice of life,

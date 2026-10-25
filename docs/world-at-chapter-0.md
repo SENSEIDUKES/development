@@ -575,6 +575,15 @@ The world is now recorded before Chapter 1, in the Codex's own card kinds.
 
 ## History
 
+- 2026-10-25: the record got a **home a chapter can write to**. It had lived
+  only on the Foundation (the author's record, which they revise) and as a
+  frozen copy on each attempt, so the shape added on 2026-10-24 could describe a
+  card a later chapter brought in while nothing could put one there. The
+  workspace now holds the record; the Foundation keeps the author's opening
+  world, and revising it replaces the opening cards while every card a chapter
+  added stays. Nothing adds a card from a chapter yet — that is the step after,
+  and it needs prompt words of its own, because the world builder's are written
+  for Chapter 0 and would be wrong for a later arrival.
 - 2026-10-24: the record became the **world record**. SENSEI settled the
   architecture for everything the Codex holds, characters, items, places,
   abilities, factions and species alike: a card is made properly once, whenever

@@ -315,7 +315,9 @@ describe('Harness Generation Phase 3 deterministic story harness', () => {
     await controller.hydrate();
     const story = await controller.createStory({ premise: 'A convoy follows the last star.', destinedEnding: 'Bring the convoy safely home.', initialArcPlan: { arcNumber: 1, goals: [{ id: 'arc-1-convoy', text: 'Carry the convoy safely home.', chapters: 30 }] } });
     const running = controller.startBatch(story.id, 'gemini-test', 3);
-    for (let index = 0; index < 30 && generate.mock.calls.length < 2; index += 1) await Promise.resolve();
+    // Waits for the second provider call to start before pausing. The budget is
+    // microtask turns, so every stage the write pipeline gains costs a few.
+    for (let index = 0; index < 120 && generate.mock.calls.length < 2; index += 1) await Promise.resolve();
     const batchId = controller.snapshot().batches[0].id;
     await controller.requestBatchPause(batchId);
     resolveSecond(asWrittenChapter(response({ prose: 'Second batch chapter finishes the active call.' })));

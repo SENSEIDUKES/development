@@ -1,6 +1,7 @@
 import { createArcChapterPosition } from '../../arc-goals/shared/arcGoals';
 import { activeAttemptForStory } from './attempts';
 import { harnessArcPlan } from './arcState';
+import { codexEntriesWithoutChapter } from './holdings';
 import { findStory } from './foundation';
 import { cloneHarnessValue } from './ids';
 import { CHAPTER_REWRITE_NOTE_LIMIT, type HarnessChapter, type HarnessWorkspaceState } from '../../../narrative/generation';
@@ -87,16 +88,11 @@ export function withoutLatestChapter(state: HarnessWorkspaceState, storyId: stri
   next.chapters = next.chapters.filter(chapter => chapter.id !== id);
 
   // The Codex entries the chapter brought in: those its tags created, and a
-  // declared character it named first. Entries an earlier chapter uses stay.
-  const entriesNamed = (chapter: HarnessChapter) => [
-    ...(chapter.holdingChanges ?? []).flatMap(change => [change.payload.holder.entryId, change.payload.target?.entryId]),
-    ...(chapter.appearances ?? []).map(appearance => appearance.payload.subject.entryId),
-  ];
-  const usedEarlier = new Set(next.chapters.filter(chapter => chapter.storyId === storyId).flatMap(entriesNamed));
-  const usedHere = new Set(entriesNamed(latest));
-  next.codexEntries = next.codexEntries.filter(entry => entry.storyId !== storyId || !(
-    (entry.origin.source === 'tag' && entry.origin.chapterId === id) || (usedHere.has(entry.id) && !usedEarlier.has(entry.id))
-  ));
+  // declared character it named first. Entries another chapter uses stay. The
+  // chapter is already out of `next.chapters`, so every chapter left is another.
+  next.codexEntries = codexEntriesWithoutChapter({
+    entries: next.codexEntries, otherChapters: next.chapters, chapter: latest, storyId,
+  });
   // A name the Holdings fixer taught an older entry, when it merged one of the chapter's own into it.
   for (const { merged } of latest.fixer?.fixes ?? []) {
     const kept = merged?.alias ? next.codexEntries.find(entry => entry.id === merged.keptEntryId) : undefined;

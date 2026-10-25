@@ -55,6 +55,9 @@ export function storyExportToWorkspace(value: unknown): HarnessWorkspaceState {
     arcPlanOperations: [],
     memoryRecoveries: records(exported.memoryRecoveries),
     codexEntries: records(exported.codexEntries),
+    // An export saved before the world record had a home of its own has none;
+    // its schema version is older, so the upgrade opens one from its Foundation.
+    worldCards: records(exported.worldCards),
   });
   if (state.stories.length !== 1) throw new Error('This file is not a story saved with Export story, or it was saved by a version this Workshop cannot open.');
   return state;

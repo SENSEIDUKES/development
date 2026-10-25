@@ -10,6 +10,7 @@ import {
   findFoundationRevision,
   findStory,
   reviseStoryFoundation,
+  storyWorldRecord,
 } from './foundation';
 import { compileStoryInformationPacket } from './context';
 import { createHarnessSenStory } from './senAdapter';
@@ -49,7 +50,8 @@ import { activeAttemptForStory } from './attempts';
 import { chapterRewriteGap, latestStoryChapter, readRewriteNote, withoutLatestChapter } from './chapterRewrite';
 import { harnessParagraphBlockId } from './chapterBody';
 import { protagonistNames } from './speakers';
-import { createCodexEntryResolver, declaredCharacters, resolveHoldingChanges } from './holdings';
+import { codexEntriesWithoutChapter, createCodexEntryResolver, declaredCharacters, deriveHoldings, holdingsSection, resolveHoldingChanges } from './holdings';
+import { planChapterTagging, readChapterTagging, retagChapterGap } from './tagger';
 import { appearanceSources, deriveAppearances, resolveAppearances, thingAppearancesFromHoldings } from './appearances';
 import type { Look } from '../../../narrative/appearances';
 import { applyHoldingsFixes, planHoldingsFix } from './holdingsFixer';
@@ -59,7 +61,7 @@ import {
   type HarnessGenerationRepository,
 } from './repository';
 import { AUTHOR_NOTES_LIMIT } from '../../../narrative/generation';
-import type { ChapterDirectionChoice, HarnessChapter, HarnessChapterRewrite, HarnessHoldingsFixerPolicy, HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessCapabilityReceipt, HarnessStory, HarnessStoryVisibility, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
+import type { ChapterDirectionChoice, HarnessChapter, HarnessChapterRewrite, HarnessHoldingsFixerPolicy, HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessGenerationResponse, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessCapabilityReceipt, HarnessStory, HarnessStoryVisibility, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
 
 export type HarnessEventPreserver = (
   rawEvents: unknown[],
@@ -102,7 +104,7 @@ export interface HarnessChapterWrite {
 }
 
 type WorkspaceListener = (state: HarnessWorkspaceState) => void;
-type PersistedCheckpoint = 'raw_received' | 'prose_accepted' | 'events_preserved' | 'committed' | 'generation_failed';
+type PersistedCheckpoint = 'raw_received' | 'prose_accepted' | 'events_preserved' | 'tagged' | 'committed' | 'generation_failed';
 
 const duplicateWarning = (warnings: HarnessWarning[], next: HarnessWarning) =>
   warnings.some(existing => existing.code === next.code && existing.message === next.message);
@@ -1347,7 +1349,7 @@ export class HarnessGenerationController {
         message: `Optional semantic-event preservation failed (${errorMessage(error, 'unknown error')}). The prose will still commit; replay can recover events from the raw response without another model call.`,
       }]);
       if (!await this.persistCheckpoint(candidate, attemptId, 'events_preserved')) return this.snapshot();
-      return this.commitAttempt(attemptId);
+      return this.tagAttempt(attemptId);
     }
 
     const eventsPreserved = cloneHarnessValue(this.state);
@@ -1362,6 +1364,234 @@ export class HarnessGenerationController {
     addWarnings(eventAttempt, preserved.warnings);
     if (!await this.persistCheckpoint(eventsPreserved, attemptId, 'events_preserved')) return this.snapshot();
 
+    return this.tagAttempt(attemptId);
+  }
+
+  /** Why this story's newest chapter cannot be tagged again, when it cannot. */
+  retagChapterGap(storyId: string): string | undefined {
+    return retagChapterGap(this.state, storyId);
+  }
+
+  /**
+   * Tags the story's newest chapter again, replacing the tags it has. The path
+   * that recovers a chapter whose tagging failed, and the one a changed chapter
+   * needs: the reader edits the prose in Create mode, then has it read again.
+   *
+   * It replaces, so the Codex entries the old tags brought in come out before
+   * the new ones go in, through the same helper the rewrite uses. Everything it
+   * sends is read from the chapter itself (its own paragraphs and its frozen
+   * media), except what only an attempt can give: who the main character is, and
+   * the sound words the chapter was written with. Without that attempt it
+   * refuses rather than guess, as the Holdings fixer and the look writer do.
+   */
+  async retagLatestChapter(storyId: string): Promise<void> {
+    this.assertHydrated();
+    if (this.generating) throw new Error('Wait for the active Harness operation before tagging a chapter again.');
+    const gap = retagChapterGap(this.state, storyId);
+    if (gap) throw new Error(gap);
+    if (!this.modelAdapter.tagChapter) throw new Error('This host cannot tag a chapter yet.');
+    const story = findStory(this.state, storyId)!;
+    const chapter = latestStoryChapter(this.state, storyId)!;
+    const attempt = this.state.attempts.find(entry => entry.id === chapter.attemptId);
+    if (!attempt) throw new Error(`Chapter ${chapter.chapterNumber} no longer has the record of how it was written, so it cannot be tagged again.`);
+    const mainCharacterName = attempt.storyInformation.currentStory.cast?.find(member => member.isMainCharacter)?.name;
+    const world = storyWorldRecord(this.state, storyId);
+    const others = this.state.chapters.filter(entry => entry.storyId === storyId && entry.id !== chapter.id);
+    // What each character had going into this chapter: every chapter before it.
+    const before = holdingsSection(deriveHoldings({
+      entries: this.state.codexEntries.filter(entry => entry.storyId === storyId),
+      chapters: others.filter(entry => entry.chapterNumber < chapter.chapterNumber),
+      mainCharacterName,
+      worldAtChapterZero: world,
+    }), mainCharacterName);
+    const request = planChapterTagging({
+      chapter, entries: this.state.codexEntries.filter(entry => entry.storyId === storyId), world,
+      holdings: before,
+      soundWords: soundVocabulary(chapter.mediaLoadout),
+      soundtrack: soundtrackVocabulary(chapter.mediaLoadout),
+      language: story.originalLanguage,
+      model: attempt.model,
+    });
+    let response: HarnessGenerationResponse | undefined;
+    let error: string | undefined;
+    const previous = this.generating;
+    this.generating = true;
+    try {
+      response = await this.modelAdapter.tagChapter(request);
+    } catch (caught) {
+      error = errorMessage(caught, 'The tagger could not be reached.');
+    } finally {
+      this.generating = previous;
+    }
+    const at = this.runtime.now();
+    const tagging = error
+      ? { record: { status: 'failed' as const, at, model: attempt.model, problem: error } }
+      : readChapterTagging({
+        raw: response?.rawProviderResponse,
+        sent: chapter.paragraphs,
+        chapterNumber: chapter.chapterNumber,
+        at,
+        model: attempt.model,
+        options: {
+          soundVocabulary: attempt.capaPrompt.soundVocabulary,
+          locale: story.originalLanguage,
+          media: chapter.mediaLoadout,
+          protagonistNames: protagonistNames(attempt.storyInformation.currentStory, attempt.storyInformation.canonicalState.characters),
+          speakersExpected: true,
+          appearancesExpected: true,
+          soundtrackExpected: Boolean(request.soundtrack?.music?.length || request.soundtrack?.atmospheres?.length),
+        },
+      });
+    // A chapter the reader may have changed since: nothing is replaced unless
+    // the answer is good, so a failed read leaves the chapter exactly as it is.
+    const candidate = cloneHarnessValue(this.state);
+    const index = candidate.chapters.findIndex(entry => entry.id === chapter.id);
+    if (index < 0) return;
+    const saved = candidate.chapters[index];
+    saved.tagging = {
+      ...tagging.record,
+      ...(response ? { providerReceipt: response.providerReceipt, rawProviderResponse: response.rawProviderResponse } : {}),
+    };
+    if (tagging.tags) {
+      candidate.codexEntries = codexEntriesWithoutChapter({
+        entries: candidate.codexEntries, otherChapters: others, chapter: saved, storyId,
+      });
+      const resolving = {
+        storyId,
+        chapter: { id: chapter.id, chapterNumber: chapter.chapterNumber },
+        entries: candidate.codexEntries,
+        declared: declaredCharacters(attempt.storyInformation.currentStory),
+        createdAt: at,
+        createId: () => this.runtime.createId('hcx'),
+      };
+      const resolver = createCodexEntryResolver(resolving);
+      const appearances = resolveAppearances({ ...resolving, appearances: tagging.tags.appearances ?? [], resolver }).appearances;
+      const holdings = tagging.tags.holdingChanges.length
+        ? resolveHoldingChanges({ ...resolving, changes: tagging.tags.holdingChanges, resolver })
+        : undefined;
+      if (holdings?.changes.length) {
+        appearances.push(...thingAppearancesFromHoldings({
+          chapter: { ...saved, holdingChanges: holdings.changes, appearances },
+          chapters: others, entries: candidate.codexEntries,
+        }));
+      }
+      saved.soundCues = tagging.tags.soundCues;
+      saved.speakers = tagging.tags.speakers;
+      saved.appearances = appearances;
+      if (holdings?.changes.length) saved.holdingChanges = holdings.changes;
+      else delete saved.holdingChanges;
+      if (tagging.tags.scene) saved.scene = tagging.tags.scene;
+      else delete saved.scene;
+      if (resolver.created.length) candidate.codexEntries.push(...resolver.created);
+    }
+    await this.persist(candidate);
+  }
+
+  /**
+   * The tagging stage (SENSEI, 2026-10-24): the chapter is written first, and
+   * one call afterwards reads it and writes the app's tags into it. It runs
+   * here, before the commit, so the tags travel into the one write that already
+   * saves the chapter, its events and the Codex entries its names resolve to.
+   * Tagging after the commit would mean a second write, a second resolution,
+   * and moving the Holdings fixer, which reads those very tags.
+   *
+   * A chapter is never refused for its tagging. A host with no tagger, a
+   * provider that throws, an answer that cannot be read, or one that changed a
+   * word of the prose all end the same way: the chapter commits with its prose
+   * intact, carrying a record that says what happened, and it can be tagged
+   * again (`retagChapter`).
+   */
+  private async tagAttempt(attemptId: string): Promise<HarnessWorkspaceState> {
+    const attempt = attemptById(this.state, attemptId);
+    const story = findStory(this.state, attempt.storyId);
+    if (!attempt.acceptedDraft || !story || !this.modelAdapter.tagChapter) return this.commitAttempt(attemptId);
+    const paragraphs = attempt.acceptedDraft.paragraphs;
+    const mainCharacterName = attempt.storyInformation.currentStory.cast?.find(member => member.isMainCharacter)?.name;
+    const world = storyWorldRecord(this.state, story.id);
+    // What each character had going into this chapter, so a thing already
+    // theirs is not read as one they just got. The chapter is not committed
+    // yet, so every committed chapter of this story is already "before".
+    const before = holdingsSection(deriveHoldings({
+      entries: this.state.codexEntries.filter(entry => entry.storyId === story.id),
+      chapters: this.state.chapters.filter(chapter => chapter.storyId === story.id),
+      mainCharacterName,
+      worldAtChapterZero: world,
+    }), mainCharacterName);
+    const request = planChapterTagging({
+      chapter: { id: attempt.pendingChapterId ?? attempt.id, storyId: story.id, chapterNumber: attempt.chapterNumber, paragraphs },
+      entries: this.state.codexEntries.filter(entry => entry.storyId === story.id),
+      world,
+      holdings: before,
+      soundWords: soundVocabulary(attempt.mediaLoadout),
+      soundtrack: soundtrackVocabulary(attempt.mediaLoadout),
+      language: story.originalLanguage,
+      model: attempt.model,
+    });
+    let response: HarnessGenerationResponse | undefined;
+    let error: string | undefined;
+    const previous = this.generating;
+    this.generating = true;
+    try {
+      response = await this.modelAdapter.tagChapter(request);
+    } catch (caught) {
+      error = errorMessage(caught, 'The tagger could not be reached.');
+    } finally {
+      this.generating = previous;
+    }
+    const at = this.runtime.now();
+    const tagging = error
+      ? { record: { status: 'failed' as const, at, model: attempt.model, problem: error } }
+      : readChapterTagging({
+        raw: response?.rawProviderResponse,
+        sent: paragraphs,
+        chapterNumber: attempt.chapterNumber,
+        at,
+        model: attempt.model,
+        options: {
+          soundVocabulary: attempt.capaPrompt.soundVocabulary,
+          locale: story.originalLanguage,
+          media: attempt.mediaLoadout,
+          // Who the main character is, so `[[@MC]]` is saved under their own
+          // name and marked as theirs. Without it every tagged line reads as
+          // somebody else's and Read Aloud gives it the Side voice.
+          protagonistNames: protagonistNames(attempt.storyInformation.currentStory, attempt.storyInformation.canonicalState.characters),
+          // The tagger is always taught the speaker and appearance tags, so a
+          // chapter it read was asked for both: speech it left untagged is
+          // worth a warning, and the appearances list is kept even when empty,
+          // which is what says this chapter was asked at all.
+          speakersExpected: true,
+          appearancesExpected: true,
+          // Soundtrack only when the story has categories to choose from, which
+          // is exactly when the tagger was taught that tag.
+          soundtrackExpected: Boolean(request.soundtrack?.music?.length || request.soundtrack?.atmospheres?.length),
+          // `holdingsExpected` is deliberately absent: it means the writer
+          // returned no closing list of the main character's holdings, and the
+          // tagger never returns one.
+        },
+      });
+    const candidate = cloneHarnessValue(this.state);
+    const tagged = attemptById(candidate, attemptId);
+    tagged.stage = 'tagged';
+    tagged.taggedAt = at;
+    tagged.tagging = {
+      ...tagging.record,
+      ...(response ? { providerReceipt: response.providerReceipt, rawProviderResponse: response.rawProviderResponse } : {}),
+    };
+    if (tagged.acceptedDraft && tagging.tags) {
+      // The tags replace whatever the draft carried: with the tagger reading the
+      // chapter, these are the chapter's tags, and there is no second source.
+      const { soundCues, speakers, holdingChanges, appearances, scene } = tagging.tags;
+      tagged.acceptedDraft = {
+        ...tagged.acceptedDraft,
+        ...(soundCues.length ? { soundCues } : { soundCues: undefined }),
+        ...(speakers.length ? { speakers } : { speakers: undefined }),
+        ...(holdingChanges.length ? { holdingChanges } : { holdingChanges: undefined }),
+        appearances,
+        ...(scene ? { scene } : { scene: undefined }),
+      };
+    }
+    if (tagging.record.warnings?.length) addWarnings(tagged, tagging.record.warnings);
+    if (!await this.persistCheckpoint(candidate, attemptId, 'tagged')) return this.snapshot();
     return this.commitAttempt(attemptId);
   }
 
@@ -1480,6 +1710,9 @@ export class HarnessGenerationController {
       responseMode: acceptedDraft.responseMode,
       createdAt: commitAttempt.proseAcceptedAt ?? commitAttempt.startedAt,
       committedAt,
+      // What tagging this chapter came to, carried from the tagging stage. A
+      // chapter whose tagging failed says so here and keeps every word.
+      ...(commitAttempt.tagging ? { tagging: cloneHarnessValue(commitAttempt.tagging) } : {}),
     };
     candidate.chapters.push(chapter);
     candidate.events.push(...committedEvents);
@@ -1841,12 +2074,14 @@ export class HarnessGenerationController {
     const attempt = attemptById(this.state, attemptId);
     if (attempt.stage === 'raw_received') return this.acceptRawResponse(attemptId);
     if (attempt.stage === 'prose_accepted') return this.preserveAttemptEvents(attemptId);
-    if (attempt.stage === 'events_preserved') return this.commitAttempt(attemptId);
+    if (attempt.stage === 'events_preserved') return this.tagAttempt(attemptId);
+    if (attempt.stage === 'tagged') return this.commitAttempt(attemptId);
     if (attempt.stage !== 'accepted_not_durable' || !attempt.recoveryStage) {
       throw new Error('This attempt does not have a local parsing or persistence checkpoint to retry.');
     }
 
     if (attempt.recoveryStage === 'committed') return this.commitAttempt(attemptId);
+    if (attempt.recoveryStage === 'tagged') return this.tagAttempt(attemptId);
     const restored = cloneHarnessValue(this.state);
     const restoredAttempt = attemptById(restored, attemptId);
     restoredAttempt.stage = attempt.recoveryStage;
@@ -2068,7 +2303,7 @@ export class HarnessGenerationController {
     await this.persist(running);
     const failedAttempt = attemptById(this.state, failedAttemptId);
     if (
-      ['raw_received', 'prose_accepted', 'events_preserved', 'accepted_not_durable'].includes(failedAttempt.stage)
+      ['raw_received', 'prose_accepted', 'events_preserved', 'tagged', 'accepted_not_durable'].includes(failedAttempt.stage)
     ) await this.retryAppropriateStage(failedAttemptId);
     else await this.retryModelRequest(failedAttemptId);
     const attemptId = this.state.batches.find(entry => entry.id === batchId)?.currentAttemptId;
@@ -2098,5 +2333,9 @@ export const exportHarnessStory = (state: HarnessWorkspaceState, storyId: string
     batches: state.batches.filter(batch => batch.storyId === storyId),
     memoryRecoveries: state.memoryRecoveries?.filter(recovery => recovery.storyId === storyId) ?? [],
     codexEntries: state.codexEntries.filter(entry => entry.storyId === storyId),
+    // The story's world record: the cards it opened with and every one a
+    // chapter brought in. Export story carries the whole story, so a story
+    // taken out and opened again keeps the world it was written in.
+    worldCards: state.worldCards.filter(card => card.storyId === storyId),
   };
 };

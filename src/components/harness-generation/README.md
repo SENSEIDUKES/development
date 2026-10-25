@@ -37,6 +37,34 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-10-25 (the tagger reaches a story):** The tagger existed but could not
+  touch a story, and the world record could describe a card a later chapter
+  brought in that nothing could create. Three things close that. **The world
+  record has a home:** it lived only on the Foundation, which is the author's
+  record and is revised by them, so a chapter had nowhere to put a card. It is
+  now `HarnessWorkspaceState.worldCards`, beside the Codex entries it works with;
+  a story's record opens from the world its author wrote, and when the author
+  revises their opening world their cards replace the ones the story opened with
+  while every card a chapter brought in stays — the author owns Chapter 0, the
+  chapters own what they added. Everything that needs the world reads the living
+  record (the writer's packet, Holdings, the Codex). **Tagging runs as a stage of
+  the write,** `tagged`, between `events_preserved` and `committed`, so its tags
+  travel in the one write that already saves the chapter and the Codex entries
+  its names resolve to, through the same shared resolver. A chapter is never
+  refused for its tagging: no tagger, a provider that throws, an unreadable
+  answer and one that changed a word all commit the chapter with its prose intact
+  and a record saying what happened. **The newest chapter can be read again,**
+  which recovers a failed tagging and is what a chapter changed in Create mode
+  needs; it refuses a chapter carrying a Sound Cue the reader placed by hand, or
+  one whose Holdings fixer joined a name into an older entry, since only a
+  rewrite takes that alias back. Schema 37. Two defects found while building the
+  re-tag path are fixed with it: the tagger's answer was read without being told
+  who the main character is, so every tagged line was marked as somebody else's
+  and Read Aloud would have voiced it with the Side voice; and a tagged chapter
+  with no appearance tag saved no appearances list at all, erasing the difference
+  between an empty list and never having been asked. Tagging has not left the
+  chapter writer yet, so for now the writer still tags and a failed tagging falls
+  back to its tags.
 - **2026-10-25 (the chapter tagger):** SENSEI's architecture for tagging, built
   beside the writer rather than inside it: "we simply take out whatever we're
   currently having the writer model tag and put it inside a second model call

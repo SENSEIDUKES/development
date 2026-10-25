@@ -204,8 +204,10 @@ export {
 export {
   planChapterTagging,
   readChapterTagging,
+  retagChapterGap,
   tagSubjectsOfStory,
   type ChapterTagging,
+  type ChapterTags,
 } from '../../components/harness-generation/shared/tagger';
 export * from '../../narrative/holdings';
 export * from '../../narrative/appearances';
@@ -231,7 +233,7 @@ export {
   FatePathChooser,
   describeChapterPath,
 } from '../../components/harness-generation/development/FatePanel';
-export { findStory, findFoundationRevision } from '../../components/harness-generation/shared/foundation';
+export { findStory, findFoundationRevision, findActiveFoundationRevision, storyWorldRecord } from '../../components/harness-generation/shared/foundation';
 export * from '../../components/harness-generation/shared/chapterSignals';
 export * from '../../components/harness-generation/shared/chapterBody';
 export { chapterTitleText } from '../../narrative/chapterTitle';

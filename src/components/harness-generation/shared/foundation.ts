@@ -1,9 +1,9 @@
 import { MAX_ROADMAP_ARCS, normalizeArcLookahead, validateArcPlan } from '../../arc-goals/shared/arcGoals';
 import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '../../../lib/language';
 import { FATE_PRESSURE_TIERS, isFatePressure, normalizeFunSettings, validateHardPinInputs } from '../../../narrative/storyDirection';
-import { normalizeWorldRecord } from '../../../narrative/worldRecord';
+import { normalizeWorldRecord, type WorldRecord } from '../../../narrative/worldRecord';
 import { cloneHarnessValue, defaultHarnessRuntime, emptyStoryHead, stableHarnessId, type HarnessRuntime } from './ids';
-import type { HarnessStory, HarnessWorkspaceState, StoryFoundationInput, StoryFoundationRevision, HarnessCanonicalRecord } from '../../../narrative/generation';
+import type { HarnessStory, HarnessWorkspaceState, StoryFoundationInput, StoryFoundationRevision, StoryWorldCard, HarnessCanonicalRecord } from '../../../narrative/generation';
 
 export const foundationIdentityRecords = (foundation: StoryFoundationRevision): HarnessCanonicalRecord[] =>
   (foundation.input.identities ?? []).map((identity, index) => ({
@@ -115,6 +115,50 @@ export const findFoundationRevision = (
 export const findStory = (state: HarnessWorkspaceState, storyId: string): HarnessStory | undefined =>
   state.stories.find(story => story.id === storyId);
 
+/**
+ * A story's world record as it stands: the cards it opened with and every one a
+ * chapter brought in since, in the order they were added.
+ *
+ * This is what everything reads when it needs the world — the writer's packet,
+ * Holdings, the Codex, the tagger. The Foundation's own `worldAtChapterZero` is
+ * the author's opening world and is read only to seed and re-seed this one.
+ */
+export const storyWorldRecord = (state: HarnessWorkspaceState, storyId: string): WorldRecord | undefined => {
+  const cards = state.worldCards.filter(card => card.storyId === storyId);
+  if (!cards.length) return undefined;
+  // `openToTheReader` belongs to the world, not to a card, so it is read from
+  // the author's record, which is the only place that can set it.
+  const opening = findActiveFoundationRevision(state, storyId)?.input.worldAtChapterZero;
+  return { cards, ...(opening?.openToTheReader ? { openToTheReader: true as const } : {}) };
+};
+
+/** The author's opening world for a story: the active Foundation's own record. */
+export const findActiveFoundationRevision = (
+  state: HarnessWorkspaceState,
+  storyId: string,
+): StoryFoundationRevision | undefined => {
+  const story = findStory(state, storyId);
+  return story && findFoundationRevision(state, story.activeFoundationRevisionId);
+};
+
+/** The author's opening cards as rows of the living record. */
+const openingWorldCards = (storyId: string, input: StoryFoundationInput): StoryWorldCard[] =>
+  (input.worldAtChapterZero?.cards ?? []).map(card => ({ ...cloneHarnessValue(card), storyId }));
+
+/**
+ * The living record after the author revises their opening world: their cards
+ * replace the ones the story opened with, and every card a chapter brought in
+ * stays. The author owns Chapter 0; the chapters own what they added.
+ */
+export const reseededWorldCards = (
+  cards: readonly StoryWorldCard[],
+  storyId: string,
+  input: StoryFoundationInput,
+): StoryWorldCard[] => [
+  ...cards.filter(card => card.storyId !== storyId || card.enteredInChapter > 0),
+  ...openingWorldCards(storyId, input),
+];
+
 export const createHarnessStory = (
   state: HarnessWorkspaceState,
   input: StoryFoundationInput,
@@ -156,6 +200,8 @@ export const createHarnessStory = (
       stories: [...state.stories, story],
       foundations: [...state.foundations, foundation],
       canonicalRecords: [...state.canonicalRecords, ...foundationIdentityRecords(foundation)],
+      // The world the author wrote opens this story's record; the chapters add to it from here.
+      worldCards: [...state.worldCards, ...openingWorldCards(storyId, normalizedInput)],
     },
     story,
     foundation,
@@ -193,6 +239,7 @@ export const reviseStoryFoundation = (
       ...state,
       stories: state.stories.map(candidate => candidate.id === storyId ? revisedStory : candidate),
       foundations: [...state.foundations, foundation],
+      worldCards: reseededWorldCards(state.worldCards, storyId, normalizedInput),
       canonicalRecords: [
         ...state.canonicalRecords.map(record => record.storyId === storyId && record.sourceFoundationRevisionId && !record.supersededAt
           ? { ...record, supersededAt: createdAt } : record),

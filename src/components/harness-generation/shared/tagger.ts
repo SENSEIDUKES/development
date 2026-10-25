@@ -1,6 +1,9 @@
 import { worldCardsOfKind, type WorldRecord } from '../../../narrative/worldRecord';
 import type { CodexEntry, CodexEntryKind, HoldingsSection } from '../../../narrative/holdings';
-import type { HarnessChapter, HarnessTagRequest, HarnessTagSubject } from '../../../narrative/generation';
+import type { HarnessChapter, HarnessChapterTagging, HarnessTagRequest, HarnessTagSubject, HarnessWorkspaceState } from '../../../narrative/generation';
+import { activeAttemptForStory } from './attempts';
+import { latestStoryChapter } from './chapterRewrite';
+import { findStory } from './foundation';
 import type { SoundWord } from '../../../audio/soundWords';
 import type { SoundtrackVocabulary } from '../../../audio/soundtrackVocabulary';
 import type { HarnessWarning } from '../../../narrative/generation';
@@ -100,20 +103,62 @@ export function planChapterTagging({ chapter, entries, world, holdings, soundWor
   };
 }
 
-/** What one tagging call produced, or why it produced nothing. */
-export type ChapterTagging =
-  | {
-      status: 'tagged';
-      at: string;
-      model?: string;
-      soundCues: ReturnType<typeof acceptChapterTags>['soundCues'];
-      speakers: ReturnType<typeof acceptChapterTags>['speakers'];
-      holdingChanges: ReturnType<typeof acceptChapterTags>['holdingChanges'];
-      appearances: ReturnType<typeof acceptChapterTags>['appearances'];
-      scene: ReturnType<typeof acceptChapterTags>['scene'];
-      warnings: HarnessWarning[];
-    }
-  | { status: 'failed'; at: string; model?: string; problem: string; warnings: HarnessWarning[] };
+/**
+ * Why this story's newest chapter cannot be tagged again, when it cannot, in
+ * words a reader can act on. `undefined` means it can.
+ *
+ * Only the newest chapter, before anything is built on it, is tagged again
+ * (SENSEI, 2026-10-25: "Match create mode and rewrite for now"). An imported
+ * novel needs every chapter taggable and gets its own reworking for that.
+ *
+ * A prose edit is no obstacle: a reader who changed the words wants the chapter
+ * read again. What is refused is work a machine cannot give back.
+ */
+export function retagChapterGap(state: HarnessWorkspaceState, storyId: string): string | undefined {
+  const story = findStory(state, storyId);
+  if (!story) return 'Open a story before tagging a chapter again.';
+  const latest = latestStoryChapter(state, storyId);
+  if (!latest) return 'This story has no saved chapter to tag yet.';
+  const chapter = `Chapter ${latest.chapterNumber}`;
+  if (activeAttemptForStory(state, storyId)) return `Wait for the chapter being written before tagging ${chapter} again.`;
+  if (state.batches.some(batch => batch.storyId === storyId && ['running', 'pause_requested'].includes(batch.status))) {
+    return `Pause the batch writing this story before tagging ${chapter} again.`;
+  }
+  // A Sound Cue the reader placed on exact words by hand. It is the one kind a
+  // person can place (`createManualSoundCue`), and tagging again would replace
+  // the chapter's cues with the tagger's, taking theirs with them.
+  if ((latest.soundCues ?? []).some(cue => cue.payload.origin === 'manual')) {
+    return `${chapter} has a Sound Cue you placed yourself, so tagging it again would remove it.`;
+  }
+  // The Holdings fixer taught an older entry one of this chapter's names. That
+  // alias lives on the other entry, and only a rewrite of this chapter takes it
+  // back, so replacing these tags would leave it with nothing behind it.
+  if ((latest.fixer?.fixes ?? []).some(fix => fix.merged?.alias)) {
+    return `${chapter} had two names joined into one by the Holdings fixer, so it cannot be tagged again.`;
+  }
+  return undefined;
+}
+
+/** The tags one accepted answer placed: what goes on the chapter's own fields. */
+export interface ChapterTags {
+  soundCues: ReturnType<typeof acceptChapterTags>['soundCues'];
+  speakers: ReturnType<typeof acceptChapterTags>['speakers'];
+  holdingChanges: ReturnType<typeof acceptChapterTags>['holdingChanges'];
+  appearances: ReturnType<typeof acceptChapterTags>['appearances'];
+  scene: ReturnType<typeof acceptChapterTags>['scene'];
+}
+
+/**
+ * What one tagging call came to: the record the chapter keeps either way, and
+ * the tags when the answer was accepted. The two are separate because the tags
+ * belong on the chapter's own fields, where a writer's tags went before, and
+ * only the record is new storage.
+ */
+export interface ChapterTagging {
+  record: HarnessChapterTagging;
+  /** Absent when the answer placed no tag; the record then says why. */
+  tags?: ChapterTags;
+}
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -181,7 +226,7 @@ export function readChapterTagging({ raw, sent, chapterNumber, at, model, option
   options?: HarnessResponseAcceptanceOptions;
 }): ChapterTagging {
   const failed = (problem: string, warnings: HarnessWarning[] = []): ChapterTagging =>
-    ({ status: 'failed', at, ...(model ? { model } : {}), problem, warnings });
+    ({ record: { status: 'failed', at, ...(model ? { model } : {}), problem, ...(warnings.length ? { warnings } : {}) } });
   let parsed: unknown;
   try { parsed = JSON.parse(raw ?? ''); } catch { return failed('The answer was not readable JSON.'); }
   if (!isRecord(parsed) || !Array.isArray(parsed.paragraphs)) return failed('The answer held no paragraphs.');
@@ -194,14 +239,13 @@ export function readChapterTagging({ raw, sent, chapterNumber, at, model, option
   const changed = changedParagraph(sent, read.paragraphs);
   if (changed) return failed(`The chapter is not the tagger's to change: ${changed}, so every tag it wrote was dropped.`, warnings);
   return {
-    status: 'tagged',
-    at,
-    ...(model ? { model } : {}),
-    soundCues: read.soundCues,
-    speakers: read.speakers,
-    holdingChanges: read.holdingChanges,
-    appearances: read.appearances,
-    scene: read.scene,
-    warnings,
+    record: { status: 'tagged', at, ...(model ? { model } : {}), ...(warnings.length ? { warnings } : {}) },
+    tags: {
+      soundCues: read.soundCues,
+      speakers: read.speakers,
+      holdingChanges: read.holdingChanges,
+      appearances: read.appearances,
+      scene: read.scene,
+    },
   };
 }

@@ -138,7 +138,7 @@ const pack: LanguagePack = {
       "No name effect": "Tanpa efek nama",
       "Featured": "Unggulan",
       "Defying the Heavens": "Menentang Langit",
-      "A mortal rises. The sects tremble. Write your own destiny and shatter the limitations of the mortal coil in your customized light novel universe.": "Seorang fana bangkit. Sekte-sekteสั่นสะเทือน. Tuliskan takdirmu sendiri dan hancurkan batasan dunia fana di semesta novel ringan kustommu.",
+      "A mortal rises. The sects tremble. Write your own destiny and shatter the limitations of the mortal coil in your customized light novel universe.": "Seorang fana bangkit. Sekte-sekte berguncang. Tuliskan takdirmu sendiri dan hancurkan batasan dunia fana di semesta novel ringan kustommu.",
       "Carve New Destiny": "Ukir Takdir Baru",
       "Realm Filter (Genre)": "Filter Alam (Genre)",
       "All": "Semua",

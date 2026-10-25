@@ -123,7 +123,7 @@ export function UserProfileStoriesPanel({ profile, currentUser, stories }: UserP
                   className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-[#04ACFF] motion-reduce:animate-none"
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-sans text-[13px] text-neutral-200">{story.title}</p>
+                  <p className="truncate font-sans text-[13px] text-neutral-200" data-no-interface-translate="">{story.title}</p>
                   {story.sourceSeedId ? (
                     <p className="truncate font-mono text-[9px] uppercase tracking-wider text-neutral-400">
                       Seed: {seedTitleById.get(story.sourceSeedId) ?? story.sourceSeedId}
@@ -185,7 +185,7 @@ export function UserProfileStoriesPanel({ profile, currentUser, stories }: UserP
                 className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/30 px-3 py-2"
               >
                 <div className="min-w-0">
-                  <p className="truncate font-sans text-[12px] text-neutral-200">{seed.title}</p>
+                  <p className="truncate font-sans text-[12px] text-neutral-200" data-no-interface-translate="">{seed.title}</p>
                   <p className="mt-0.5 font-mono text-[9px] uppercase tracking-wider text-neutral-400">
                     Updated {formatSeedDate(seed)}
                   </p>

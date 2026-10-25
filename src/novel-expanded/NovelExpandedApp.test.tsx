@@ -938,6 +938,7 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
 
   it('translates the interface across all 15 languages in Settings, previews during confirmation, reverts on cancel, and persists when kept', async () => {
     const services = appServices(scriptedWriter().writer);
+    services.profile.save({ displayName: 'Home' });
     await render(services, '/app/?page=profile&cave=/settings', undefined);
     await flush(100);
     const select = () => cave()!.querySelector<HTMLSelectElement>('#cave-interface-language')!;
@@ -958,6 +959,7 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
       await chooseInterfaceLanguage(code);
       expect(confirmDialog(), `Expected confirmation dialog for ${code}`).toBeTruthy();
       expect(document.documentElement.dataset.interfaceLanguage).toBe(code);
+      expect(document.documentElement.dir).toBe(['ar', 'he', 'fa', 'ur'].includes(code) ? 'rtl' : 'ltr');
       expect(confirmDialog()!.textContent).not.toContain('Confirm Language Change');
       expect(cave()!.textContent).not.toContain('Interface Language');
     }
@@ -967,16 +969,21 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(confirmDialog()).toBeNull();
     expect(document.documentElement.dataset.interfaceLanguage).toBe('en');
     expect(cave()!.textContent).toContain('Interface Language');
+    expect(document.querySelector('.workspace-header button[title="Search"]')?.getAttribute('aria-label')).toBe('Search');
 
     await chooseInterfaceLanguage('zh-CN');
     expect(confirmDialog()!.textContent).toContain('确认更改语言');
     expect(cave()!.textContent).toContain('界面语言');
+    expect(cave()!.querySelector('[data-cave-aura-preview]')?.textContent).toBe('Home');
+    expect(document.querySelector('.workspace-header button[title="搜索"]')?.getAttribute('aria-label')).toBe('搜索');
     const keepButton = confirmDialog()!.querySelectorAll<HTMLButtonElement>('button')[0]!;
     await click(keepButton, 'Yes, Keep Changes (zh-CN)', 20);
     expect(confirmDialog()).toBeNull();
     expect(services.profile.read().interfaceLanguage).toBe('zh-CN');
     expect(document.documentElement.lang).toBe('zh-CN');
     expect(cave()!.textContent).toContain('界面语言');
+    expect(cave()!.querySelector('[data-cave-aura-preview]')?.textContent).toBe('Home');
+    expect(document.querySelector('.workspace-header button[title="搜索"]')?.getAttribute('aria-label')).toBe('搜索');
 
     await click(strip()!.querySelectorAll<HTMLButtonElement>('button')[0], 'Home in the navigation', 20);
     expect(address()).toBe('/app/');

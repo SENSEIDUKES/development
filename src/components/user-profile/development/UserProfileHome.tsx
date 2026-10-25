@@ -348,6 +348,7 @@ export function UserProfileHome({
                 plainClassName={nameStyle.className || "text-neutral-100"}
                 plainStyle={nameStyle.style}
                 data-cave-name
+                data-no-interface-translate={profile?.displayName?.trim() ? '' : undefined}
                 data-cave-name-effect={titleEffect?.id}
               >
                 {profile?.displayName?.trim() || "Cultivator"}
@@ -619,7 +620,7 @@ export function UserProfileHome({
               {daoXpKnown ? `${formatQi(daoData.currentDaoXp)}${daoData.maxDaoXp !== null ? ` / ${formatQi(daoData.maxDaoXp)} DAO XP` : ' DAO XP · Maximum rank'}` : 'DAO XP is not available on this profile.'}
             </p>
           ) : panel === "bio" ? (
-            <p className="mt-4 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{bio}</p>
+            <p className="mt-4 whitespace-pre-wrap break-words [overflow-wrap:anywhere]" data-cave-full-bio>{bio}</p>
           ) : panel === "stats" ? (
             stats?.length ? (
               <dl className="mt-4 space-y-3">

@@ -111,7 +111,7 @@ const pack: LanguagePack = {
       "Stats": "סטטיסטיקה",
       "Date started, reading activity, and reading time.": "תאריך התחלה, פעילות קריאה וזמן קריאה.",
       "Highlights": "רגעים נבחרים",
-      "The media and moments you chose to feature.": "המדיה והרגעים שבחרת להبליט.",
+      "The media and moments you chose to feature.": "המדיה והרגעים שבחרת להבליט.",
       "Which of your stories appear on your public Stories page.": "אילו מהסיפורים שלך מופיעים בדף הסיפורים הציבורי שלך.",
       "Relic names": "שמות שרידים",
       "The names of your Fate Survival Relics — never their descriptions or rewards.": "שמות שרידי הישרדות הגורל שלך — לעולם לא התיאורים או הפרסים שלהם.",

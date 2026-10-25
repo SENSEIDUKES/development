@@ -96,13 +96,13 @@ export function WorkspaceHeaderUtilities({ items, help }: {
       <p role="status" className="workspace-search-count">{results.length ? `${results.length} ${results.length === 1 ? 'result' : 'results'}` : 'No results'}</p>
       <ul className="workspace-search-results">{results.map(item => <li key={item.id}>
         <NarrativeButton variant="ghost" icon={item.icon} disabled={item.disabled || item.loading}
-          aria-label={item.ariaLabel ?? item.label} aria-pressed={item.pressed} title={item.title}
+          aria-label={item.ariaLabel ?? item.label} aria-pressed={item.pressed} title={item.title} data-no-interface-translate-attrs={item.id.startsWith('story-') ? '' : undefined}
           onPointerEnter={item.onIntent} onFocus={item.onIntent} onClick={() => {
             // Let the modal release focus before a host opens its own dialog or navigates.
             pendingAction.current = item.onAction;
             setExperience(null);
           }}>
-          <span><span>{item.label}</span>{item.description && <small>{item.description}</small>}</span>
+          <span><span data-no-interface-translate={item.id.startsWith('story-') ? '' : undefined}>{item.label}</span>{item.description && <small>{item.description}</small>}</span>
         </NarrativeButton>
       </li>)}</ul>
     </WorkspaceSheet>

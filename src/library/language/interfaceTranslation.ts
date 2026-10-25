@@ -1,5 +1,5 @@
 import { useLayoutEffect, useEffect, useRef } from 'react';
-import { DEFAULT_SEN_LANGUAGE_CODE, normalizeSenLanguageCode, type SenLanguageCode } from '@seihouse/sen/contracts';
+import { DEFAULT_SEN_LANGUAGE_CODE, getSenTextDirection, normalizeSenLanguageCode, type SenLanguageCode } from '@seihouse/sen/contracts';
 import type { LanguageFormatters } from './types';
 import { getLoadedLanguagePack, loadAllLanguagePacks, loadLanguagePack } from './localeLoader';
 
@@ -86,6 +86,27 @@ const LANGUAGE_SELECT_IDS = new Set([
   'world-settings-reading-language',
 ]);
 const LANGUAGE_SELECT_NAMES = new Set(['interfaceLanguage', 'defaultReadingLanguage']);
+const EXCLUDED_CONTENT_CLASSES = [
+  'world-card-caption-title',
+  'world-card-caption-creator',
+  'world-card-cover-title',
+  'world-card-info-title',
+  'world-card-info-creator',
+  'world-card-info-synopsis',
+  'cave-home-bio',
+] as const;
+
+const TRANSLATABLE_ATTRIBUTES = ['placeholder', 'aria-label', 'title'] as const;
+type TranslatableAttribute = (typeof TRANSLATABLE_ATTRIBUTES)[number];
+
+function hasExcludedContentClass(element: Element): boolean {
+  const classList = element.classList;
+  if (!classList || classList.length === 0) return false;
+  for (const className of EXCLUDED_CONTENT_CLASSES) {
+    if (classList.contains(className)) return true;
+  }
+  return false;
+}
 
 function isExcludedElement(element: Element): boolean {
   const tag = element.tagName;
@@ -95,7 +116,12 @@ function isExcludedElement(element: Element): boolean {
     element.hasAttribute('data-sen-text-block') ||
     element.hasAttribute('data-read-aloud-title') ||
     element.hasAttribute('data-no-interface-translate') ||
-    element.getAttribute('data-testid') === 'prose-chapter-body'
+    element.hasAttribute('data-cave-bio') ||
+    element.hasAttribute('data-cave-full-bio') ||
+    element.hasAttribute('data-cave-username') ||
+    element.hasAttribute('data-story-blueprint') ||
+    element.getAttribute('data-testid') === 'prose-chapter-body' ||
+    hasExcludedContentClass(element)
   ) {
     return true;
   }
@@ -119,7 +145,10 @@ function isInsideExcludedSubtree(node: Node): boolean {
 }
 
 const trackedTextNodes = new WeakMap<Text, { raw: string; translated: string }>();
-const trackedPlaceholders = new WeakMap<Element, { raw: string; translated: string }>();
+const trackedAttributes = new WeakMap<
+  Element,
+  Partial<Record<TranslatableAttribute, { raw: string; translated: string }>>
+>();
 
 let activeLanguage: SenLanguageCode = DEFAULT_SEN_LANGUAGE_CODE;
 let observer: MutationObserver | null = null;
@@ -149,27 +178,43 @@ function applyTextNode(node: Text, lang: SenLanguageCode) {
   }
 }
 
-function applyElementPlaceholder(element: Element, lang: SenLanguageCode) {
-  const tag = element.tagName;
-  if (tag !== 'INPUT' && tag !== 'TEXTAREA') return;
-  const current = element.getAttribute('placeholder');
-  if (!current) return;
-  const tracked = trackedPlaceholders.get(element);
+function applyElementAttribute(element: Element, attr: TranslatableAttribute, lang: SenLanguageCode) {
+  const current = element.getAttribute(attr);
+  if (!current || !current.trim()) return;
+  const record = trackedAttributes.get(element);
+  const tracked = record?.[attr];
   const raw = tracked && current === tracked.translated ? tracked.raw : current;
+
   if (lang === DEFAULT_SEN_LANGUAGE_CODE) {
     if (tracked && current === tracked.translated && current !== tracked.raw) {
-      element.setAttribute('placeholder', tracked.raw);
+      element.setAttribute(attr, tracked.raw);
     }
-    trackedPlaceholders.delete(element);
+    if (record) {
+      delete record[attr];
+    }
     return;
   }
+
   const next = translateInterfaceText(raw, lang);
   if (next !== raw) {
-    trackedPlaceholders.set(element, { raw, translated: next });
-    if (current !== next) element.setAttribute('placeholder', next);
+    const updated = record ?? {};
+    updated[attr] = { raw, translated: next };
+    trackedAttributes.set(element, updated);
+    if (current !== next) element.setAttribute(attr, next);
   } else if (tracked && current === tracked.translated && current !== raw) {
-    element.setAttribute('placeholder', raw);
-    trackedPlaceholders.delete(element);
+    element.setAttribute(attr, raw);
+    if (record) {
+      delete record[attr];
+    }
+  }
+}
+
+function applyElementAttributes(element: Element, lang: SenLanguageCode) {
+  if (element.hasAttribute('data-no-interface-translate-attrs')) return;
+  for (const attr of TRANSLATABLE_ATTRIBUTES) {
+    if (element.hasAttribute(attr)) {
+      applyElementAttribute(element, attr, lang);
+    }
   }
 }
 
@@ -182,7 +227,7 @@ function walkNode(node: Node, lang: SenLanguageCode) {
   if (type === Node.ELEMENT_NODE) {
     const element = node as Element;
     if (isExcludedElement(element)) return;
-    applyElementPlaceholder(element, lang);
+    applyElementAttributes(element, lang);
   }
   let child = node.firstChild;
   while (child) {
@@ -222,6 +267,7 @@ function syncActiveLanguage() {
   const changed = nextLanguage !== activeLanguage;
   activeLanguage = nextLanguage;
   document.documentElement.lang = activeLanguage;
+  document.documentElement.dir = getSenTextDirection(activeLanguage);
   document.documentElement.dataset.interfaceLanguage = activeLanguage;
 
   if (activeLanguage === DEFAULT_SEN_LANGUAGE_CODE) {
@@ -258,6 +304,19 @@ function syncActiveLanguage() {
           translateSubtree(mutation.target, activeLanguage);
         } else if (mutation.type === 'childList') {
           mutation.addedNodes.forEach(node => translateSubtree(node, activeLanguage));
+        } else if (
+          mutation.type === 'attributes' &&
+          mutation.target.nodeType === Node.ELEMENT_NODE &&
+          mutation.attributeName
+        ) {
+          const element = mutation.target as Element;
+          if (!element.hasAttribute('data-no-interface-translate-attrs') && !isInsideExcludedSubtree(element)) {
+            try {
+              applyElementAttribute(element, mutation.attributeName as TranslatableAttribute, activeLanguage);
+            } finally {
+              observer?.takeRecords();
+            }
+          }
         }
       }
     });
@@ -265,6 +324,8 @@ function syncActiveLanguage() {
       childList: true,
       subtree: true,
       characterData: true,
+      attributes: true,
+      attributeFilter: [...TRANSLATABLE_ATTRIBUTES],
     });
   }
 }

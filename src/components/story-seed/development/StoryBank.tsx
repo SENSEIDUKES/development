@@ -9,10 +9,11 @@ import {
   Play,
   ScrollText,
   Sparkle,
+  Sparkles,
   SquarePen,
   type LucideIcon,
 } from 'lucide-react';
-import { type StorySeedRecord } from '@seihouse/sen/story-seed';
+import { getStoryStyleLabel, type StorySeedRecord } from '@seihouse/sen/story-seed';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, CreationButton as ManifestButton } from '@seihouse/sen/presentation';
 import { SENStorySeedIcon } from './SENStorySeedIcon';
 import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
@@ -31,10 +32,40 @@ import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-
  * in the Story Seed workspace, view/edit its Blueprint, load it back into
  * Story Seed, export it, or manifest the novel. Story Seed import/export
  * lives here too instead of being scattered across the creation page.
+ *
+ * The bank keeps three kinds of things on separate shelves, each card wearing
+ * its kind: World Blueprints (a seed whose world was manifested), Seeds in
+ * Progress (a seed the writer is building), and Dao Sparks (a seed a Story
+ * Spark planted that has no Blueprint yet). A spark moves to the Blueprints
+ * shelf once its world is manifested.
  */
+
+type BankShelf = 'blueprint' | 'draft' | 'spark';
+
+const shelfOf = (record: StorySeedRecord): BankShelf => record.blueprint
+  ? 'blueprint'
+  : record.seed.story.optional.startedFrom === 'story-spark' ? 'spark' : 'draft';
+
+const SHELVES: ReadonlyArray<{
+  id: BankShelf;
+  title: string;
+  badge: string;
+  hint: string;
+  icon: LucideIcon;
+  /** The card's kind colour: edge, badge and shelf sigil. */
+  accent: string;
+}> = [
+  { id: 'blueprint', title: 'World Blueprints', badge: 'World Blueprint', icon: ScrollText, accent: '#5CC8FF',
+    hint: 'Seeds whose world is manifested, ready to become novels.' },
+  { id: 'draft', title: 'Seeds in Progress', badge: 'Seed in Progress', icon: SquarePen, accent: '#A78BFA',
+    hint: 'Story Seeds you are building. Manifest a World Blueprint when the Origin is ready.' },
+  { id: 'spark', title: 'Dao Sparks', badge: 'Dao Spark', icon: Sparkles, accent: '#CDB271',
+    hint: 'Sparks kept from Dao Insights. Grow one in Story Seed to make it yours.' },
+];
 
 interface StoryBankCardProps {
   record: StorySeedRecord;
+  shelf: (typeof SHELVES)[number];
   /** A novel was already manifested from this seed. */
   manifested: boolean;
   isGenerating: boolean;
@@ -61,6 +92,7 @@ const BankChip = ({
 
 const StoryBankCard = ({
   record,
+  shelf,
   manifested,
   isGenerating,
   onEditSeed,
@@ -70,6 +102,9 @@ const StoryBankCard = ({
   onManifest,
 }: StoryBankCardProps) => {
   const premise = record.seed.story.required.premise.trim();
+  const { genre, style } = record.seed.story.required;
+  const isSpark = shelf.id === 'spark';
+  const KindIcon = shelf.icon;
   const blueprint = record.blueprint;
   const updatedAt = new Date(record.updatedAt);
   const updatedLabel = Number.isNaN(updatedAt.getTime())
@@ -77,7 +112,13 @@ const StoryBankCard = ({
     : updatedAt.toLocaleDateString();
 
   return (
-    <article className="story-bank-card flex flex-col rounded-xl border border-[rgba(172,166,214,0.16)] bg-[rgba(11,14,30,0.55)] p-4 shadow-[inset_0_1px_0_rgba(226,220,200,0.05),0_14px_32px_-18px_rgba(1,3,10,0.95)] sm:p-5">
+    <article data-bank-kind={shelf.id}
+      style={{ borderLeftColor: shelf.accent }}
+      className="story-bank-card flex flex-col rounded-xl border border-l-[3px] border-[rgba(172,166,214,0.16)] bg-[rgba(11,14,30,0.55)] p-4 shadow-[inset_0_1px_0_rgba(226,220,200,0.05),0_14px_32px_-18px_rgba(1,3,10,0.95)] sm:p-5">
+      <span className="mb-2 inline-flex items-center gap-1.5 self-start font-sc text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: shelf.accent }}>
+        <KindIcon size={11} aria-hidden="true" />
+        {shelf.badge}
+      </span>
       <h3 className="break-words font-display text-sm font-bold uppercase tracking-[0.12em] text-[#F3EDE0]">
         {record.title}
       </h3>
@@ -87,7 +128,12 @@ const StoryBankCard = ({
       </p>
 
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
-        {manifested ? (
+        {isSpark ? (
+          <>
+            {genre.trim() && <BankChip icon={Sparkle}>{genre}</BankChip>}
+            {getStoryStyleLabel(style) && <BankChip>{getStoryStyleLabel(style)}</BankChip>}
+          </>
+        ) : manifested ? (
           <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(205,178,113,0.45)] bg-[rgba(205,178,113,0.07)] px-2.5 py-1 font-sc text-[9px] font-bold uppercase tracking-[0.18em] text-[#DDC58A] shadow-[0_0_14px_rgba(205,178,113,0.12)]">
             <Sparkle size={9} aria-hidden="true" />
             Novel Manifested
@@ -97,7 +143,7 @@ const StoryBankCard = ({
             No Novel Yet
           </span>
         )}
-        {blueprint ? (
+        {isSpark ? null : blueprint ? (
           <>
             <BankChip icon={GitBranch}>Blueprint {blueprint.blueprintVersion || 'v1.0'}</BankChip>
             {blueprint.status && <BankChip icon={Info}>Status: {blueprint.status}</BankChip>}
@@ -115,60 +161,74 @@ const StoryBankCard = ({
           Manifest Novel starts the story directly. Manifest stays disabled
           until the seed holds a Blueprint. */}
       <div className="mt-auto pt-4">
-        <div className="flex flex-col gap-3 border-t border-neutral-900/70 pt-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <LibraryButton
-              size="sm"
-              variant="secondary"
-              icon={SquarePen}
-              onClick={() => onEditSeed(record)}
-              title="Open this seed in the Story Seed workspace to edit it"
-            >
-              Edit Seed
+        {isSpark ? (
+          /* A spark is not yet a seed the writer built: grow it, or take it along. */
+          <div className="flex flex-wrap items-center gap-1.5 border-t border-neutral-900/70 pt-4">
+            <LibraryButton size="sm" variant="secondary" icon={SquarePen} onClick={() => onEditSeed(record)}
+              title="Open this spark's Origin in Story Seed and grow it">
+              Grow this Spark
             </LibraryButton>
-            <LibraryButton
-              size="sm"
-              variant="ghost"
-              icon={ScrollText}
-              onClick={() => onOpenBlueprint(record)}
-              title="View or edit this seed's World Blueprint"
-            >
-              Blueprint
-            </LibraryButton>
-            <LibraryButton
-              size="sm"
-              variant="ghost"
-              icon={Play}
-              onClick={() => onUseSeed(record)}
-              title="Load this seed back into Story Seed"
-            >
-              Use Seed
-            </LibraryButton>
-            <LibraryButton
-              size="sm"
-              variant="ghost"
-              icon={Download}
-              onClick={() => onExportSeed(record)}
-              title={`Export ${record.title}`}
-              aria-label={`Export ${record.title}`}
-            >
+            <LibraryButton size="sm" variant="ghost" icon={Download} onClick={() => onExportSeed(record)}
+              title={`Export ${record.title}`} aria-label={`Export ${record.title}`}>
               Export
             </LibraryButton>
           </div>
-          <ManifestButton
-            size="sm"
-            fullWidth
-            icon={SENManifestingIcon}
-            className="shrink-0 sm:w-auto"
-            onClick={() => onManifest(record)}
-            disabled={!blueprint || isGenerating}
-            title={blueprint
-              ? 'Manifest the novel from this seed and its World Blueprint'
-              : 'Manifest a World Blueprint before the novel'}
-          >
-            Manifest Novel
-          </ManifestButton>
-        </div>
+        ) : (
+          <div className="flex flex-col gap-3 border-t border-neutral-900/70 pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <LibraryButton
+                size="sm"
+                variant="secondary"
+                icon={SquarePen}
+                onClick={() => onEditSeed(record)}
+                title="Open this seed in the Story Seed workspace to edit it"
+              >
+                Edit Seed
+              </LibraryButton>
+              <LibraryButton
+                size="sm"
+                variant="ghost"
+                icon={ScrollText}
+                onClick={() => onOpenBlueprint(record)}
+                title="View or edit this seed's World Blueprint"
+              >
+                Blueprint
+              </LibraryButton>
+              <LibraryButton
+                size="sm"
+                variant="ghost"
+                icon={Play}
+                onClick={() => onUseSeed(record)}
+                title="Load this seed back into Story Seed"
+              >
+                Use Seed
+              </LibraryButton>
+              <LibraryButton
+                size="sm"
+                variant="ghost"
+                icon={Download}
+                onClick={() => onExportSeed(record)}
+                title={`Export ${record.title}`}
+                aria-label={`Export ${record.title}`}
+              >
+                Export
+              </LibraryButton>
+            </div>
+            <ManifestButton
+              size="sm"
+              fullWidth
+              icon={SENManifestingIcon}
+              className="shrink-0 sm:w-auto"
+              onClick={() => onManifest(record)}
+              disabled={!blueprint || isGenerating}
+              title={blueprint
+                ? 'Manifest the novel from this seed and its World Blueprint'
+                : 'Manifest a World Blueprint before the novel'}
+            >
+              Manifest Novel
+            </ManifestButton>
+          </div>
+        )}
       </div>
     </article>
   );
@@ -263,7 +323,7 @@ export const StoryBank = ({
       </div>
 
       <p className="mt-3 max-w-xl font-serif text-[15px] leading-relaxed text-[#B0A99B]">
-        Your saved Story Seeds and their World Blueprints, kept together and ready to reopen, refine, or manifest into novels.
+        Your World Blueprints, the seeds you are building, and the sparks you kept, each on its own shelf and ready to reopen, refine, or manifest into novels.
       </p>
 
       <div aria-hidden="true" className="mt-6 flex items-center gap-3">
@@ -315,20 +375,45 @@ export const StoryBank = ({
             </LibraryButton>
           </div>
         ) : seeds.length > 0 ? (
-          <div className="grid grid-cols-1 gap-3 sm:gap-4 xl:grid-cols-2">
-            {seeds.map(record => (
-              <StoryBankCard
-                key={record.id}
-                record={record}
-                manifested={manifestedSeedIds.has(record.id)}
-                isGenerating={isGenerating}
-                onEditSeed={onEditSeed}
-                onOpenBlueprint={onOpenBlueprint}
-                onUseSeed={onUseSeed}
-                onExportSeed={onExportSeed}
-                onManifest={onManifest}
-              />
-            ))}
+          <div className="space-y-8">
+            {SHELVES.map(shelf => {
+              const records = seeds.filter(record => shelfOf(record) === shelf.id);
+              if (!records.length) return null;
+              const ShelfIcon = shelf.icon;
+              return (
+                <section key={shelf.id} aria-labelledby={`story-bank-shelf-${shelf.id}`} data-bank-shelf={shelf.id}>
+                  <div className="mb-3 flex items-start gap-3">
+                    <span aria-hidden="true" className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border bg-[rgba(11,14,30,0.6)]"
+                      style={{ color: shelf.accent, borderColor: `${shelf.accent}66` }}>
+                      <ShelfIcon size={15} />
+                    </span>
+                    <div className="min-w-0">
+                      <h3 id={`story-bank-shelf-${shelf.id}`} className="flex flex-wrap items-baseline gap-x-2 font-sc text-xs font-bold uppercase tracking-[0.2em] text-[#F3EDE0]">
+                        {shelf.title}
+                        <span className="font-mono text-[10px] tracking-wider text-neutral-400">{records.length}</span>
+                      </h3>
+                      <p className="mt-1 font-serif text-[13px] leading-relaxed text-[#B0A99B]">{shelf.hint}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 gap-3 sm:gap-4 xl:grid-cols-2">
+                    {records.map(record => (
+                      <StoryBankCard
+                        key={record.id}
+                        record={record}
+                        shelf={shelf}
+                        manifested={manifestedSeedIds.has(record.id)}
+                        isGenerating={isGenerating}
+                        onEditSeed={onEditSeed}
+                        onOpenBlueprint={onOpenBlueprint}
+                        onUseSeed={onUseSeed}
+                        onExportSeed={onExportSeed}
+                        onManifest={onManifest}
+                      />
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
           </div>
         ) : null}
       </div>

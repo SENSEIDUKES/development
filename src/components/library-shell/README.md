@@ -208,6 +208,20 @@ The existing local files named by this inventory are:
 
 ## Workshop history
 
+- **2026-10-25 (Dao sparks fill the Origin):** A spark shows and plants a whole
+  Origin: title, premise, genre, novel tradition, Pressure and the Story Tags
+  its premise calls for. The Story Spark route asks the model for the title,
+  tradition and Pressure, and every hand-written spark carries them. A Custom
+  beginning kept as written stays untitled, for the Library to name.
+- **2026-10-25 (Dao Insights redesign):** The spark panel moved onto Story
+  Seed's celestial glass and leads with the spark itself, a centered scroll
+  with the genre's path sigil, premise, aside and voice. Below it, "Seek the
+  next spark" holds Random/Custom, the genre and the writer's beginning; Seek,
+  Begin, Keep and Copy sit in a thumb-reach footer. The invented emoji genre
+  chips are gone: the genre is Story Seed's own path picker
+  (`OriginGenrePicker`), with no path meaning the Dao wanders, the writer's own
+  genre now steering a spark, and "Let the Dao conjure one" keeping invented
+  genres.
 - **2026-10-13 (Workspace navigation):** Workspace rails and Sections drawers
   reuse the host's navigation landscape. An optional footer in the workspace
   definition supplies the existing Library star divider and utility rows;

@@ -993,8 +993,8 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(worldInfo()).toBeTruthy();
   });
 
-  it('Dao Insights on Home: a spark kept goes to the Story Bank, and one begun opens in Create with its premise and genre', async () => {
-    const requestStorySpark = vi.fn(async () => ({ premise: 'A sword writes letters to its first owner.', genre: 'Xianxia', inventedGenre: false, aside: 'Hm.', voice: 'Elder' }));
+  it('Dao Insights on Home: a spark kept goes to the Story Bank, and one begun opens in Create with its whole Origin', async () => {
+    const requestStorySpark = vi.fn(async () => ({ premise: 'A sword writes letters to its first owner.', genre: 'Xianxia', title: 'Letters From the Blade', style: 'chinese' as const, pressure: 'heaven' as const, inventedGenre: false, aside: 'Hm.', voice: 'Elder' }));
     const services = appServices(scriptedWriter().writer, { requestStorySpark, storySparksConfigured: vi.fn(async () => true) });
     services.profile.save({ defaultReadingLanguage: 'ja', defaultChapterWritingStyle: 'Easy Read' });
     // jsdom never finishes exit animations, which would hold the previous spark.
@@ -1017,6 +1017,10 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(address()).toBe(`/app/?page=create&seed=${saved[0].id}`);
     expect(document.querySelector('[data-testid="novel-expanded-create"]')).not.toBeNull();
     expect(document.querySelector<HTMLTextAreaElement>('#core-premise-input')?.value).toBe('A sword writes letters to its first owner.');
+    expect(document.querySelector<HTMLInputElement>('#origin-story-title-input')?.value).toBe('Letters From the Blade');
+    expect(saved[0].seed.story.required.style).toBe('chinese');
+    expect(saved[0].seed.story.required.storyTags.length).toBeGreaterThan(0);
+    expect(saved[0].seed.story.optional).toMatchObject({ fateSurvival: { pressure: 'heaven' }, startedFrom: 'story-spark' });
   });
 
   it('a new Story Seed in Create starts from the profile\'s reading language and Reading Mode', async () => {

@@ -1,21 +1,30 @@
 /**
  * Story Sparks: a starting point for someone facing a blank Story Seed.
  *
- * A spark is exactly two things, a premise and a genre — enough direction to
- * begin, and nothing more. Style, tags, the world and every other choice stay
- * with the writer. A spark is never a Story Seed of its own: planting it fills
- * those two Story inputs of an otherwise empty seed, which the host saves in
- * its Story Bank like any other draft.
+ * A spark is a whole Origin: a premise, a genre, a novel tradition (Style), a
+ * title and a Pressure. Planting it fills every Origin input of a new seed —
+ * the Story Tags are recommended from the premise by Story Seed's own tag
+ * inference — and marks the seed as `startedFrom: 'story-spark'` so a Story
+ * Bank can keep sparks apart from seeds the writer built. Survival, the world
+ * and every later choice stay with the writer.
  *
  * How a spark is written (a model, a hand-written list) and how it is dressed
  * (the Library's Dao Insights) belong to the host.
  */
-import { createEmptyStorySeedInput, type StorySeedInput } from './storySeedSchema';
+import {
+  createEmptyStorySeedInput,
+  type StorySeedInput,
+  type StorySeedSurvivalPressure,
+} from './storySeedSchema';
+import { normalizeStoryStyle, type StoryStyle } from './storyStyle';
+import { inferStoryTags } from './storyTagInference';
 
 /** A spark's premise is a hook, never a synopsis. */
 export const STORY_SPARK_PREMISE_MAX_LENGTH = 600;
 /** A genre is a name, invented or not. */
 export const STORY_SPARK_GENRE_MAX_LENGTH = 60;
+/** A title is a name on a spine, never a sentence. */
+export const STORY_SPARK_TITLE_MAX_LENGTH = 80;
 const GENRE_NOTE_MAX_LENGTH = 200;
 const VOICE_MAX_LENGTH = 80;
 const ASIDE_MAX_LENGTH = 400;
@@ -43,6 +52,12 @@ export type StorySparkRequest =
 export interface StorySpark {
   premise: string;
   genre: string;
+  /** The novel's name. Empty when the writer's own words stand untitled. */
+  title: string;
+  /** The novel tradition the premise reads in. */
+  style: StoryStyle;
+  /** How hard fate presses the story. */
+  pressure: StorySeedSurvivalPressure;
   /** True when the genre was invented for this spark rather than chosen from a list. */
   inventedGenre: boolean;
   /** One line on how an invented genre feels. Shown with the spark; never planted. */
@@ -61,6 +76,20 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const clean = (value: unknown, maximum: number): string =>
   typeof value === 'string' ? value.replace(/\s+/g, ' ').trim().slice(0, maximum).trim() : '';
+
+const PRESSURES: readonly StorySeedSurvivalPressure[] = ['heaven', 'immortal', 'mortal'];
+const pressureOf = (value: unknown): StorySeedSurvivalPressure | undefined => {
+  const normalized = clean(value, 20).toLowerCase();
+  return PRESSURES.find(pressure => pressure === normalized);
+};
+
+/** The tradition a genre most often reads in, when a writer gave none. */
+export const storyStyleForGenre = (genre: string): StoryStyle => {
+  const name = genre.toLowerCase();
+  if (/system|litrpg|tower|regression|dungeon|hunter|academy/.test(name)) return 'korean';
+  if (/cozy|slice|isekai|villainess/.test(name)) return 'japanese';
+  return 'chinese';
+};
 
 /** A request from outside (a client, a server body), checked and trimmed. Throws on an unusable one. */
 export const parseStorySparkRequest = (value: unknown): StorySparkRequest => {
@@ -93,6 +122,9 @@ export const parseStorySpark = (value: unknown, request: StorySparkRequest): Sto
   return {
     premise,
     genre,
+    title: clean(value.title, STORY_SPARK_TITLE_MAX_LENGTH).replace(/^["“]|["”]$/g, ''),
+    style: normalizeStoryStyle(value.style) ?? storyStyleForGenre(genre),
+    pressure: pressureOf(value.pressure) ?? 'immortal',
     inventedGenre: Boolean(request.inventGenre),
     ...(genreNote ? { genreNote } : {}),
     ...(aside ? { aside } : {}),
@@ -100,14 +132,32 @@ export const parseStorySpark = (value: unknown, request: StorySparkRequest): Sto
   };
 };
 
-/** A new Story Seed holding the spark's premise and genre, and nothing else the writer did not choose. */
+/** The Story Tags a spark plants: Story Seed's own recommendations for its premise. */
+export const storySparkTags = (spark: Pick<StorySpark, 'premise' | 'genre' | 'style'>): string[] =>
+  inferStoryTags({ premise: spark.premise, genre: spark.genre, style: spark.style });
+
+/** A new Story Seed whose whole Origin is the spark, marked as started from one. */
 export const storySeedInputFromSpark = (spark: StorySpark): StorySeedInput => {
   const seed = createEmptyStorySeedInput();
+  const title = spark.title.trim();
   return {
     ...seed,
     story: {
-      ...seed.story,
-      required: { ...seed.story.required, premise: spark.premise, genre: spark.genre },
+      required: {
+        ...seed.story.required,
+        premise: spark.premise,
+        genre: spark.genre,
+        style: spark.style,
+        storyTags: storySparkTags(spark),
+      },
+      optional: {
+        ...seed.story.optional,
+        fateSurvival: { ...seed.story.optional.fateSurvival, pressure: spark.pressure },
+        startedFrom: 'story-spark',
+      },
     },
+    world: title
+      ? { ...seed.world, optional: { ...seed.world.optional, worldIdentity: { ...seed.world.optional.worldIdentity, title } } }
+      : seed.world,
   };
 };

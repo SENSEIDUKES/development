@@ -1,5 +1,6 @@
 /**
- * The Story Spark route: one premise and genre for a writer facing a blank
+ * The Story Spark route: one whole Origin (premise, genre, title, tradition and
+ * Pressure) for a writer facing a blank
  * Story Seed, from the server's default text model. GET reports whether a
  * model is configured, so the page can fall back to its own sparks.
  */

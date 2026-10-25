@@ -18,13 +18,13 @@ describe('Story Spark route', () => {
   });
 
   it('writes a spark in the chosen genre, shaping the writer\'s idea', async () => {
-    const { generate, providerFactory } = provider({ premise: 'A sword writes letters to its first owner.', genre: 'Ignored', aside: 'Hm.', voice: 'Elder' });
+    const { generate, providerFactory } = provider({ premise: 'A sword writes letters to its first owner.', genre: 'Ignored', title: 'Letters From the Blade', style: 'chinese', pressure: 'mortal', aside: 'Hm.', voice: 'Elder' });
     const response = await handleStorySparkHttp(
       { method: 'POST', body: JSON.stringify({ genre: 'Xianxia', idea: 'a sword that writes letters', avoid: ['An old premise.'] }) },
       { environment, providerFactory },
     );
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ premise: 'A sword writes letters to its first owner.', genre: 'Xianxia', inventedGenre: false, aside: 'Hm.', voice: 'Elder' });
+    expect(response.body).toEqual({ premise: 'A sword writes letters to its first owner.', genre: 'Xianxia', title: 'Letters From the Blade', style: 'chinese', pressure: 'mortal', inventedGenre: false, aside: 'Hm.', voice: 'Elder' });
     const prompt = generate.mock.calls[0][0].userPrompt;
     expect(prompt).toContain('<genre>Xianxia</genre>');
     expect(prompt).toContain('<writer_idea>a sword that writes letters</writer_idea>');

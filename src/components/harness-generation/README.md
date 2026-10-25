@@ -671,14 +671,13 @@ path uses, though the Reader no longer edits. SEN stays provider-neutral.
    the reply, place each Sound Cue on the words its mark wraps with a
    recording from the frozen Media Loadout, and persist that accepted chapter
    draft. A malformed or unplaceable cue becomes a warning, never lost prose.
-4. Persist the (now always empty) writer-lane event checkpoint so the existing
-   retry and replay stages remain unchanged.
+4. Read the accepted chapter for its tags (one tagger call) and persist the
+   `tagged` checkpoint. A retry from the prose checkpoint tags; a retry from
+   the tagging checkpoint commits, without asking the tagger again.
 5. Atomically append a chapter with its paragraphs and placed Sound Cues,
    attempt receipt, and updated story head. A rewrite first takes the story
    back to just before the chapter it replaces, in the same write.
-6. Replay existing committed events deterministically, with no memory model call.
-   New chapter state comes from tags; historical canonical-state readers remain.
-7. Run the Holdings fixer on the new chapter. Its outcome is saved as the
+6. Run the Holdings fixer on the new chapter. Its outcome is saved as the
    chapter's `fixer` record; a failed call or write leaves the committed
    chapter exactly as it was.
 
@@ -696,13 +695,7 @@ and retries persistence without another model call.
 
 ## Phase 3 extension boundary
 
-`HarnessEventPreserver` remains the lossless transport boundary. The injected
-`HarnessCapabilityRegistry` consumes only committed semantic events and emits
-versioned receipts, canonical records, and internal projection intents with
-stable replay identities. A handler upgrade changes its version and can
-supersede its prior output without regenerating or rewriting prose.
-
-Internal projections remain semantic intents. The SEN adapter translates supported
+The SEN adapter translates supported
 canonical character, location, faction, artifact and mechanical facts to existing
 Reader contracts as story memory, world rules and character abilities. It never
 turns extracted memory into a reader-visible System Panel: a panel exists only
@@ -815,20 +808,14 @@ After `HarnessStory.conclusion` is set no chapter is written or planned. How a
 Regular reader might later change the Destined Ending, and any "continue this
 series" flow after an ending, are deliberately not decided here.
 
-The ordinary cycle remains prepare context → one writing call → commit prose →
-preserve/process developments → continue. There is no routine literary review
-loop or full-novel planning requirement. Context retains three recent chapters,
-compact semantic developments, author corrections and quantified observations.
-Later transfers/spending accompany older quantities. Up to three original-prose
-excerpts may be looked up using the latest direction or missing event coverage.
-The audit records omissions. Author authority and mechanical observations may
-exceed an artificially small budget rather than disappearing silently.
+The ordinary cycle is prepare context → one writing call → read the chapter for
+its tags → commit → settle the chapter's holdings → continue. There is no
+routine literary review loop or full-novel planning requirement. The packet
+carries the latest five recaps, the world record, what each character has now,
+who is already on the page, and the author's corrections; chapter prose never
+enters it, and the audit records every omission with its reason.
 
-`replayStory(id, chapterId)` reprocesses a selected chapter's committed events
-through the deterministic capabilities without a model call. Stable event
-identities make repeated repair idempotent; older repairs do not become the latest
-story state merely because they ran later. Historical extraction fields are retained as stored evidence and are ignored;
-there is no extraction or recovery operation. The Reader preview derives chapter-scoped memory. Its reading settings
+The Reader preview derives chapter-scoped memory. Its reading settings
 and edits are session-local; durable story changes belong to the reader's chapter
 directions and corrections. Fully malformed optional output still requires usable source evidence;
 replay does not invent missing facts or call the model again.

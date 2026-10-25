@@ -87,6 +87,55 @@ describe('the chapter is not the tagger\'s to change', () => {
   });
 });
 
+describe('a tag on a chapter the writer never touched', () => {
+  it('keeps a paragraph that is nothing but its own sound', () => {
+    // The stray-sound repair exists for the chapter writer, which invents the
+    // words it wraps and sometimes writes them outside the prose. Run on the
+    // tagger it emptied a paragraph whose whole text is the sound ("BOOM"),
+    // the paragraph was then dropped, the count no longer matched, and every
+    // tag of the chapter was refused (Codex review on #437).
+    const sent = ['The wall groaned.', 'BOOM', 'Dust filled the yard.'];
+    const tagging = readChapterTagging({
+      raw: JSON.stringify({ paragraphs: ['The wall groaned.', '[[sound: boom | BOOM]]', 'Dust filled the yard.'] }),
+      sent,
+      chapterNumber: 4,
+      at: '2026-10-25T00:00:00.000Z',
+      options: { soundVocabulary: [{ word: 'boom', example: 'a boom' }] },
+    });
+    expect(tagging.status).toBe('tagged');
+  });
+
+  it('refuses a chapter whose paragraphs are not the prose the reader has', () => {
+    // Trimming both sides of the comparison accepted this, and the speaker then
+    // anchored two characters before the speech it names (Codex review on #437).
+    const sent = ['  \u201cRun!\u201d'];
+    const tagging = readChapterTagging({
+      raw: JSON.stringify({ paragraphs: ['  [[@MC]] \u201cRun!\u201d'] }),
+      sent,
+      chapterNumber: 4,
+      at: '2026-10-25T00:00:00.000Z',
+    });
+    expect(tagging.status).toBe('failed');
+    if (tagging.status !== 'failed') return;
+    expect(tagging.problem).toContain('paragraph 1');
+    expect(tagging.problem).toContain('wrong words');
+  });
+
+  it('places every tag against the paragraph exactly as the chapter holds it', () => {
+    const sent = ['\u201cHold the gate,\u201d he said.'];
+    const tagging = readChapterTagging({
+      raw: JSON.stringify({ paragraphs: ['[[@MC]] \u201cHold the gate,\u201d he said.'] }),
+      sent,
+      chapterNumber: 4,
+      at: '2026-10-25T00:00:00.000Z',
+    });
+    expect(tagging.status).toBe('tagged');
+    if (tagging.status !== 'tagged') return;
+    const anchor = tagging.speakers[0].anchor;
+    expect(sent[0].slice(anchor.startOffset, anchor.endOffset)).toBe(anchor.selectedText);
+  });
+});
+
 describe('what the tagger is told about the story', () => {
   it('lists the Codex entries and the world cards a tag can name, once each', () => {
     const subjects = tagSubjectsOfStory({

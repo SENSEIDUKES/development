@@ -306,7 +306,20 @@ const acceptedChapterBody = (
  * happened. Numbered marks (`[[1|words]]`) are a retired form: they are
  * removed with their words kept, and nothing is placed from them.
  */
-const readParagraphMarks = (paragraphs: readonly string[], warnings: HarnessWarning[], soundWords?: readonly SoundWord[], locale?: string) => {
+const readParagraphMarks = (
+  paragraphs: readonly string[],
+  warnings: HarnessWarning[],
+  soundWords?: readonly SoundWord[],
+  locale?: string,
+  /**
+   * Whether to settle a sound tag written beside its sentence instead of around
+   * its words. It is a recovery for the chapter writer, which invents the words
+   * it wraps and sometimes writes them outside the prose. The tagger wraps
+   * words that are already in the chapter, so there is nothing stray to settle
+   * and the repair would delete a paragraph that is only its sound ("BOOM").
+   */
+  { repairStraySounds = true }: { repairStraySounds?: boolean } = {},
+) => {
   const read: MarkReading[] = [];
   let loose: MarkReading['speakers'] = [];
   let looseWords: WordTag[] = [];
@@ -318,7 +331,10 @@ const readParagraphMarks = (paragraphs: readonly string[], warnings: HarnessWarn
   let soundTagIssues = 0;
   const options = soundWords?.length ? { soundWords: soundWords.map(sound => sound.word) } : {};
   // A sound tag written beside its sentence instead of around its words leaves no stray words behind.
-  const settled = settleStraySoundTags(paragraphs.map(paragraph => readMarks(paragraph, options)), locale);
+  const read_ = paragraphs.map(paragraph => readMarks(paragraph, options));
+  const settled = repairStraySounds
+    ? settleStraySoundTags(read_, locale)
+    : { readings: read_, moved: 0, removed: 0 };
   if (settled.removed) {
     warnings.push({
       code: 'sound_tag_moved',
@@ -553,7 +569,7 @@ export const acceptChapterTags = (
   warnings: HarnessWarning[],
   options: HarnessResponseAcceptanceOptions = {},
 ) => {
-  const marked = readParagraphMarks(paragraphs, warnings, options.soundVocabulary, options.locale);
+  const marked = readParagraphMarks(paragraphs, warnings, options.soundVocabulary, options.locale, { repairStraySounds: false });
   // No reply field to read a closing list from: the tagger never returns one.
   const holdings = acceptedHoldings({}, marked, chapterNumber, warnings, options);
   return {

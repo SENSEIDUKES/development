@@ -4,6 +4,7 @@ import type { HarnessChapter, HarnessTagRequest, HarnessTagSubject } from '../..
 import type { SoundWord } from '../../../audio/soundWords';
 import type { SoundtrackVocabulary } from '../../../audio/soundtrackVocabulary';
 import type { HarnessWarning } from '../../../narrative/generation';
+import { readMarks } from '../../../narrative/marks';
 import { normalizeIdentityLabel } from './canonicalProjection';
 import { acceptChapterTags, type HarnessResponseAcceptanceOptions } from './responseAcceptance';
 
@@ -118,16 +119,44 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
 /**
- * The paragraph the tagger changed, when it changed one. Whitespace at either
- * end is not a change: a tag written at a paragraph's start or end can leave a
- * space behind, and the prose reads the same either way.
+ * A paragraph as the tag reader leaves it with no tag in it: what the clean
+ * text of a tagged answer is compared against, and the text every attachment's
+ * offsets are measured from.
+ */
+const cleanForm = (paragraph: string) => readMarks(paragraph).text;
+
+/**
+ * The paragraph the tagger changed, when it changed one.
+ *
+ * The comparison is exact, not trimmed. Trimming either side would accept an
+ * answer whose attachments no longer line up with the chapter: a paragraph sent
+ * as `  "Run!"` comes back from the tag reader as `"Run!"`, so a speaker
+ * anchored at offset 0 would point two characters before the speech it names,
+ * and the Reader would voice or highlight the wrong span. A tag that leaves a
+ * space behind is still no change, because the tag reader trims what it returns
+ * and the paragraph it is compared to is read the same way.
  */
 const changedParagraph = (sent: readonly string[], back: readonly string[]) => {
   if (sent.length !== back.length) {
     return `the chapter has ${sent.length} paragraph${sent.length === 1 ? '' : 's'} and ${back.length} came back`;
   }
-  const at = sent.findIndex((paragraph, index) => paragraph.trim() !== back[index]?.trim());
+  const at = sent.findIndex((paragraph, index) => cleanForm(paragraph) !== back[index]);
   return at === -1 ? undefined : `paragraph ${at + 1} came back with different words`;
+};
+
+/**
+ * A paragraph the chapter cannot be tagged from: one the tag reader would not
+ * leave as it is, such as a paragraph with space around it or nothing but
+ * space. Every attachment's offsets are measured from the text the tag reader
+ * returns, so tagging such a paragraph would place its tags at the wrong
+ * character of the chapter the reader actually has. A committed chapter never
+ * holds one (`harnessChapterBody` trims every paragraph and drops the empty
+ * ones); a chapter brought in from somewhere else can, so it is refused and
+ * named rather than quietly misplaced.
+ */
+const untaggableParagraph = (sent: readonly string[]) => {
+  const at = sent.findIndex(paragraph => paragraph !== cleanForm(paragraph));
+  return at === -1 ? undefined : `paragraph ${at + 1} is not the prose the reader has (space around it, or nothing but space), and a tag on it would land on the wrong words`;
 };
 
 /**
@@ -158,6 +187,8 @@ export function readChapterTagging({ raw, sent, chapterNumber, at, model, option
   if (!isRecord(parsed) || !Array.isArray(parsed.paragraphs)) return failed('The answer held no paragraphs.');
   const tagged = parsed.paragraphs.filter((paragraph): paragraph is string => typeof paragraph === 'string');
   if (tagged.length !== parsed.paragraphs.length) return failed('The answer held a paragraph that was not text.');
+  const untaggable = untaggableParagraph(sent);
+  if (untaggable) return failed(`This chapter cannot be tagged as it stands: ${untaggable}.`);
   const warnings: HarnessWarning[] = [];
   const read = acceptChapterTags(tagged, chapterNumber, warnings, options);
   const changed = changedParagraph(sent, read.paragraphs);

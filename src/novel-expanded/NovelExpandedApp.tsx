@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ReaderMixerProvider, type ReaderMixer } from '@seihouse/audio-player';
 import { LibraryPresentationProvider, loadingFamiliarPresentation } from '@seihouse/library/presentation';
+import { useInterfaceLanguageTranslation } from '@seihouse/library/profile';
 import {
   HeaderSoundControl, LibraryDesktopNavigationProvider, LibraryDestinationsProvider, WorkspaceHeaderSoundProvider, useMenuMusic, useStoredLibrarySidebarMode,
 } from '@seihouse/library/shell';
@@ -62,6 +63,7 @@ export function NovelExpandedApp({ services, readerMixer }: {
   readerMixer: ReaderMixer;
 }) {
   const profile = useDeviceProfile(services.profile);
+  useInterfaceLanguageTranslation(profile.interfaceLanguage);
   const loadingFamiliar = useMemo(() => loadingFamiliarPresentation(
     (familiarCatalogueEntry(profile.familiarId) ?? defaultFamiliar).definition,
   ), [profile.familiarId]);

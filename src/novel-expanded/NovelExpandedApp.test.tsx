@@ -936,6 +936,54 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(recall('Quill')).toBeNull();
   });
 
+  it('translates the interface across all 15 languages in Settings, previews during confirmation, reverts on cancel, and persists when kept', async () => {
+    const services = appServices(scriptedWriter().writer);
+    await render(services, '/app/?page=profile&cave=/settings', undefined);
+    await flush(100);
+    const select = () => cave()!.querySelector<HTMLSelectElement>('#cave-interface-language')!;
+    const confirmDialog = () => document.body.querySelector<HTMLElement>('[data-cave-language-confirm]');
+    expect(select()).toBeTruthy();
+    const optionCodes = [...select().querySelectorAll('option')].map(option => option.value);
+    expect(optionCodes).toHaveLength(15);
+
+    const chooseInterfaceLanguage = async (code: string) => {
+      await act(async () => {
+        Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')!.set!.call(select(), code);
+        select().dispatchEvent(new Event('change', { bubbles: true }));
+      });
+      await flush(15);
+    };
+
+    for (const code of optionCodes.filter(code => code !== 'en')) {
+      await chooseInterfaceLanguage(code);
+      expect(confirmDialog(), `Expected confirmation dialog for ${code}`).toBeTruthy();
+      expect(document.documentElement.dataset.interfaceLanguage).toBe(code);
+      expect(confirmDialog()!.textContent).not.toContain('Confirm Language Change');
+      expect(cave()!.textContent).not.toContain('Interface Language');
+    }
+
+    const revertButton = confirmDialog()!.querySelectorAll<HTMLButtonElement>('button')[1]!;
+    await click(revertButton, 'No, Revert Back', 20);
+    expect(confirmDialog()).toBeNull();
+    expect(document.documentElement.dataset.interfaceLanguage).toBe('en');
+    expect(cave()!.textContent).toContain('Interface Language');
+
+    await chooseInterfaceLanguage('zh-CN');
+    expect(confirmDialog()!.textContent).toContain('确认更改语言');
+    expect(cave()!.textContent).toContain('界面语言');
+    const keepButton = confirmDialog()!.querySelectorAll<HTMLButtonElement>('button')[0]!;
+    await click(keepButton, 'Yes, Keep Changes (zh-CN)', 20);
+    expect(confirmDialog()).toBeNull();
+    expect(services.profile.read().interfaceLanguage).toBe('zh-CN');
+    expect(document.documentElement.lang).toBe('zh-CN');
+    expect(cave()!.textContent).toContain('界面语言');
+
+    await click(strip()!.querySelectorAll<HTMLButtonElement>('button')[0], 'Home in the navigation', 20);
+    expect(address()).toBe('/app/');
+    expect(container.textContent).toContain('您的故事将显示在这里');
+    expect(footer()!.querySelector('.library-footer-language')?.textContent).toContain('中文');
+  });
+
   it('makes the profile picture from the reader\'s photo: three to choose from, the chosen one kept on the device', async () => {
     let n = 0;
     const requestProfilePicture = vi.fn(async () => new Blob([new Uint8Array([++n])], { type: 'image/png' }));

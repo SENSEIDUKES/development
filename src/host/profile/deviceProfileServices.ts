@@ -185,7 +185,15 @@ export function useDeviceProfileController(
   const handleLanguageChangeDirect = useCallback((name: 'interfaceLanguage' | 'defaultReadingLanguage', value: SenLanguageCode) => {
     if (!profile) return;
     setFormData(previous => ({ ...previous, [name]: value }));
-    if (pendingLanguageChange) return;
+    if (pendingLanguageChange) {
+      setPendingLanguageChange(previous => previous ? {
+        ...previous,
+        interfaceLanguage: name === 'interfaceLanguage' ? value : previous.interfaceLanguage,
+        readingLanguage: name === 'defaultReadingLanguage' ? value : previous.readingLanguage,
+      } : null);
+      setCountdown(LANGUAGE_CONFIRM_SECONDS);
+      return;
+    }
     openLanguageConfirmation(
       name === 'interfaceLanguage' ? value : formData.interfaceLanguage || profile.interfaceLanguage || DEFAULT_SEN_LANGUAGE_CODE,
       name === 'defaultReadingLanguage' ? value : formData.defaultReadingLanguage || profile.defaultReadingLanguage || DEFAULT_SEN_LANGUAGE_CODE,

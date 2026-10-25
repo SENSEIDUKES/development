@@ -101,6 +101,7 @@ export function AppShell({ route, navigate, stories, readerProfile, mainLabel, c
           searchItems={searchItems} />}>
         {children}
         <LibraryFooter groups={footerGroups} social={[]} legal={legal}
+          language={{ code: readerProfile.interfaceLanguage, onOpenSettings: settings }}
           identity={<img className="novel-expanded-footer-wordmark" src="/novel-expanded/wordmark.png"
             alt="NovelExpanded" width={1586} height={992} />} />
       </WorkspaceShell>

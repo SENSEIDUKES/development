@@ -148,7 +148,12 @@ it('opens the Story Paths in the spark\'s place, and a path brings the spark bac
   await click(button(/Pick a path$/));
   expect(dialog().querySelector('[aria-label="Story spark"]')).toBeNull();
   expect(dialog().querySelector('[role="radiogroup"][aria-label="Story paths"]')).toBeTruthy();
-  await click(Array.from(dialog().querySelectorAll('[role="radio"]')).find(item => item.textContent?.includes('Regression')));
+  // Arrow keys move through the paths without closing them.
+  const regression = Array.from(dialog().querySelectorAll<HTMLElement>('[role="radio"]')).find(item => item.textContent?.includes('Regression'))!;
+  await act(async () => { regression.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })); });
+  expect(dialog().querySelector('[role="radiogroup"]')).toBeTruthy();
+  expect(dialog().querySelector('[role="radio"][aria-checked="true"]')?.textContent).toContain('Urban');
+  await click(regression);
   expect(dialog().querySelector('[role="radiogroup"]')).toBeNull();
   expect(dialog().querySelector('[aria-label="Story spark"]')).toBeTruthy();
   expect(button(/Pick a path$/)?.textContent).toContain('Regression');

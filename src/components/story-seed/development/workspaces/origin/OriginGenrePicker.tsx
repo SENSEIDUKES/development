@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react';
+import { useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
 import {
   Building2,
   Castle,
@@ -105,6 +105,12 @@ export const OriginGenrePicker = ({
     onOpenChange?.(value);
   };
   const [isCustomPathOpen, setIsCustomPathOpen] = useState(false);
+  /** Arrow keys move the choice through the paths; only a tap, Enter or Space picks one. */
+  const arrowingRef = useRef(false);
+  const arrowThroughPaths = (event: KeyboardEvent<HTMLButtonElement>) => {
+    arrowingRef.current = true;
+    try { handleRadioGroupKeyDown(event); } finally { arrowingRef.current = false; }
+  };
   const conjuring = Boolean(conjure?.active);
   const trimmedGenre = conjuring ? '' : genre.trim();
   const isCustomGenre = Boolean(trimmedGenre) && !GENRE_PRESETS.some(preset => preset.id === trimmedGenre);
@@ -192,7 +198,10 @@ export const OriginGenrePicker = ({
                 return (
                   <button key={preset.id} type="button" role="radio" aria-checked={selected}
                     tabIndex={radioGroupTabIndex(selected, GENRE_PRESETS.some(candidate => candidate.id === trimmedGenre), index)}
-                    onClick={() => { setIsCustomPathOpen(false); leaveConjure(); onChange(preset.id); onSelectPath?.(preset.id); }} onKeyDown={handleRadioGroupKeyDown}
+                    onClick={() => {
+                      setIsCustomPathOpen(false); leaveConjure(); onChange(preset.id);
+                      if (!arrowingRef.current) onSelectPath?.(preset.id);
+                    }} onKeyDown={arrowThroughPaths}
                     data-selected={selected} style={{ '--choice-accent': GENRE_PATH_ACCENT } as CSSProperties}
                     className="glass-choice flex min-h-[5.5rem] flex-col items-center justify-center gap-2 px-1.5 py-3">
                     <span aria-hidden="true" className={`flex h-9 w-9 items-center justify-center rounded-full border transition-all ${selected ? 'border-[rgba(167,139,250,0.55)] bg-[rgba(167,139,250,0.12)] shadow-[0_0_12px_rgba(167,139,250,0.3)]' : 'border-[rgba(150,166,220,0.2)] bg-[rgba(11,14,30,0.6)]'}`}>

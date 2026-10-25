@@ -13,6 +13,26 @@ const state: WorldCardPreviewState = {
   activity: 'active-this-week', cardStatus: 'public-ongoing', destinations: 'all', reading: 'start', blueprint: 'creator',
 };
 
+it('shows chapter and ranking menu cards in the existing workspace and opens World Info', () => {
+  const container = document.createElement('div');
+  document.body.append(container);
+  const root = createRoot(container);
+  act(() => root.render(<LibraryPresentationProvider>
+    <WorldCardStage view="menu" state={{ ...state, cover: 'missing', titleLength: 'long' }} reference={false} onAction={vi.fn()} />
+  </LibraryPresentationProvider>));
+  const cards = container.querySelectorAll<HTMLButtonElement>('[data-world-card="menu"]');
+  expect(cards).toHaveLength(2);
+  expect(cards[0].textContent).toContain('Tracking');
+  expect(cards[0].querySelector('time')?.dateTime).toBe('2026-10-25T12:00:00Z');
+  expect(cards[1].querySelector('.world-card-menu-rank')?.textContent).toBe('1');
+  act(() => cards[0].click());
+  expect(container.querySelector('[data-world-card="info"]')).not.toBeNull();
+  act(() => container.querySelector<HTMLButtonElement>('[aria-label="Back to cards"]')!.click());
+  expect(container.querySelectorAll('[data-world-card="menu"]')).toHaveLength(2);
+  act(() => root.unmount());
+  container.remove();
+});
+
 it('opens either Compact world in the existing Info stage and returns to the cards', () => {
   const container = document.createElement('div');
   document.body.append(container);

@@ -34,3 +34,5 @@ while its look and feel is refined. The Workshop previews that page at
 - **2026-10-20 (later)** — Store-front hierarchy: Featured at the top, then one
   full-width shelf after another. Fate Survival is introduced by what draws readers
   to it, a chapter-by-chapter narrative whose choices carry consequences.
+
+- **2026-10-25:** Chapter and ranking rows now use WorldCardMenu from the World Card family; featured cards use a full phone shelf slot and the shared responsive cover sizing.

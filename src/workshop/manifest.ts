@@ -509,7 +509,7 @@ export const workshopEntries: WorkshopEntry[] = [
   },
   {
     id: 'world-card', section: 'components', owner: 'library', status: 'active', title: 'World Card',
-    description: 'The full World Card on Home, the Info page a reader opens (Begin Story for a story with no chapters yet), and the Compact “Your worlds” tile on Create. Home, the world detail, Create and the HARNESS story path render these components directly.',
+    description: 'The full World Card, featured banner, Info page (Begin Story for a story with no chapters yet), Compact “Your worlds” tile, and Menu card for chapter updates and rankings. Home, Discover, the world detail, Create and the HARNESS story path render these components directly.',
     category: 'other', version: 'v1.1',
     source: { repository: 'SENSEIDUKES/development', path: 'src/components/world-card/', lastCompared: '2026-09-27' },
   },

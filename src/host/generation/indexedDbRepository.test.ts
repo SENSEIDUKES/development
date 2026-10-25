@@ -78,6 +78,34 @@ describe('planHarnessWorkspaceLoad', () => {
     });
   });
 
+  it('drops the event stores and carries the retired stage back to the prose (schema 38)', () => {
+    // The only upgrade in the chain that rewrites what a story saved, rather
+    // than adding to it: a regression here would quietly break a saved recovery
+    // checkpoint, so it is checked field by field.
+    const stored = {
+      ...createEmptyHarnessWorkspaceState(),
+      schemaVersion: 37,
+      events: [{ id: 'e1' }],
+      capabilityReceipts: [{ id: 'cr1' }],
+      projections: [{ id: 'pr1' }],
+      memoryRecoveries: [{ id: 'mr1' }],
+      chapters: [{ id: 'c1', eventIds: ['e1'] }],
+      attempts: [
+        { id: 'a1', stage: 'events_preserved', eventsPreservedAt: 'x', preservedEvents: [], rejectedEvents: [], postCommitProcessing: 'complete' },
+        { id: 'a2', stage: 'accepted_not_durable', recoveryStage: 'events_preserved' },
+        { id: 'a3', stage: 'accepted_not_durable', recoveryStage: 'raw_received' },
+      ],
+    } as unknown as Parameters<typeof planHarnessWorkspaceLoad>[0];
+    const state = planHarnessWorkspaceLoad(stored, now).state as unknown as Record<string, unknown>;
+    for (const store of ['events', 'capabilityReceipts', 'projections', 'memoryRecoveries']) expect(state).not.toHaveProperty(store);
+    expect(state.chapters).toEqual([{ id: 'c1' }]);
+    const attempts = state.attempts as Array<Record<string, unknown>>;
+    expect(attempts[0]).toEqual({ id: 'a1', stage: 'prose_accepted' });
+    expect(attempts[1]).toEqual({ id: 'a2', stage: 'accepted_not_durable', recoveryStage: 'prose_accepted' });
+    // Another checkpoint's recovery stage is left exactly as it was.
+    expect(attempts[2]).toEqual({ id: 'a3', stage: 'accepted_not_durable', recoveryStage: 'raw_received' });
+  });
+
   it('gives a chapter waiting at the prose checkpoint the id it will commit under (schema 38)', () => {
     // The id used to be settled at the stage this version removes, so an attempt
     // saved at the prose checkpoint carries none. Without one it would be read

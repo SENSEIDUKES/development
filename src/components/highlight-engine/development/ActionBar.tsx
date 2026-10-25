@@ -109,11 +109,10 @@ export function ActionBar({
         : stacked ? 168 : editing ? replacement === '' ? 280 : 94
         : reasons ? 320 : menuPath.length ? submenuWidth : (actions.length ? 216 : 136) + rootIconWidth;
       const controlWidth = Math.min(desiredWidth, Math.max(1, width - 24));
-      // Measure at the new width, without the previous submenu's height cap.
-      // Layout effects run before paint, so the first visible frame is in place.
+      // Read the content height at the new width without expanding the scroll
+      // container: removing its height cap would reset a scrolled menu to the top.
       controls.style.width = `${controlWidth}px`;
-      controls.style.maxHeight = 'none';
-      const controlHeight = controls.offsetHeight || 48;
+      const controlHeight = controls.scrollHeight + controls.offsetHeight - controls.clientHeight || 48;
       const next = popupPosition({ rectangles, width: controlWidth, height: controlHeight,
         viewport: { left: viewport?.offsetLeft ?? 0, top: viewport?.offsetTop ?? 0, width, height },
         clearance: selecting || editing || panel ? 12 : HANDLE_CLEARANCE,
@@ -121,7 +120,7 @@ export function ActionBar({
       });
       placement.current = next.side;
       controls.dataset.placement = next.side;
-      // Restore the cap immediately even if React can reuse the previous position.
+      // Apply the cap before paint even if React can reuse the previous position.
       controls.style.maxHeight = `${next.maxHeight}px`;
       const { side: _side, ...geometry } = next;
       setPosition(previous => {

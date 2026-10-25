@@ -99,6 +99,31 @@ for (const [name, browserType, touch] of [['chromium-mouse', chromium, false], [
       });
       await send('touchEnd'); await bar.waitFor();
       assert.match(await selected(), /Characters 0–65/); await nativeEmpty();
+      // A screen-filling selection uses a scrollable tray. Measuring it must not
+      // expand the container and silently reset its scroll position.
+      await page.setViewportSize({ width: 390, height: 220 });
+      await paragraph.evaluate(element => {
+        element.scrollIntoView({ block: 'start' });
+        const range = document.createRange(); range.selectNodeContents(element);
+        getSelection().addRange(range); document.dispatchEvent(new Event('selectionchange'));
+      });
+      await bar.waitFor();
+      await bar.evaluate(element => { element.scrollTop = element.scrollHeight; });
+      await page.waitForFunction(() => document.querySelector('.sen-text-highlight-controls')?.scrollTop > 0);
+      const scrollOffset = await bar.evaluate(element => element.scrollTop);
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(resolve)))));
+      assert.equal(await bar.evaluate(element => element.scrollTop), scrollOffset, 'Constrained menu must retain its scroll position');
+      await bar.getByRole('button', { name: 'Remove', exact: true }).tap();
+      await bar.getByRole('button', { name: 'Delete Passage', exact: true }).waitFor();
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.keyboard.press('Escape');
+      await paragraph.evaluate(element => {
+        element.scrollIntoView({ block: 'center' });
+        const range = document.createRange(); range.setStart(element.firstChild, 0); range.setEnd(element.firstChild, 65);
+        getSelection().addRange(range); document.dispatchEvent(new Event('selectionchange'));
+      });
+      await bar.waitFor();
+
     } else {
       const start = await point(14); const end = await point(35);
       await page.mouse.move(start.x, start.y); await page.mouse.down();

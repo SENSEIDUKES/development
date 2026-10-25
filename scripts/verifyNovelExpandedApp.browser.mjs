@@ -208,7 +208,7 @@ async function walk(browser, viewport, sample) {
   await context.addInitScript(installSpeechStandIn);
   const page = await context.newPage();
   const problems = [];
-  const counts = { chapters: 0, memory: 0, blueprints: 0, chaptersWithToken: 0, rewrites: [], fixes: [], looks: [], covers: [], pictures: [] };
+  const counts = { chapters: 0, memory: 0, blueprints: 0, chaptersWithToken: 0, rewrites: [], fixes: [], looks: [], tags: [], covers: [], pictures: [] };
   let releaseFirstChapter;
   const firstChapterReady = new Promise(resolve => { releaseFirstChapter = resolve; });
   page.on('pageerror', error => problems.push(`page error: ${error.message}`));
@@ -285,6 +285,16 @@ async function walk(browser, viewport, sample) {
       counts.looks.push({ subjects: body.subjects, token: request.headers().authorization === `Bearer ${TOKEN}` });
       const looks = body.subjects.map(subject => ({ id: subject.id, summary: `${subject.name}, as the drowned city first saw them.`, traits: subject.entity === 'thing' ? { material: 'old bronze' } : { hair: 'salt-white' } }));
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rawProviderResponse: JSON.stringify({ looks }), providerReceipt: receipt }) });
+      return;
+    }
+    // The tagger's one call per chapter, after the chapter is written: it reads the finished prose
+    // and writes the app's tags into it. This stand-in tags it the way a good tagger would, with the
+    // same tags the writer's reply carried and every word where it was, so the Reader, the Codex and
+    // the Holdings fixer downstream are reading the tagger's work.
+    if (body.operation === 'tag-chapter') {
+      counts.tags.push({ chapterNumber: body.chapterNumber, subjects: body.subjects, token: request.headers().authorization === `Bearer ${TOKEN}` });
+      const written = body.paragraphs.some(paragraph => paragraph.startsWith('Mara found the bell key')) ? rewritten : chapter;
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rawProviderResponse: JSON.stringify({ paragraphs: written.paragraphs }), providerReceipt: receipt }) });
       return;
     }
     if (!body.immediateChapterRequest) {
@@ -781,6 +791,12 @@ async function walk(browser, viewport, sample) {
   await shot('6d-codex-passage');
   await codex.getByRole('button', { name: 'Back to reading' }).click();
   check(await page.getByTestId('reader-panel-codex').count() === 0, 'Back to reading should close the Codex.');
+  // The tagger read this chapter as it was written: one quiet call with the token, told who and what
+  // the story already holds so a tag cannot invent a second identity for one of them.
+  check(counts.tags.length === 1 && counts.tags[0].chapterNumber === 1 && counts.tags[0].token,
+    `The tagger should read Chapter 1 once, with the token, got ${JSON.stringify(counts.tags.map(tag => ({ ...tag, subjects: tag.subjects.length })))}.`);
+  check(counts.tags[0].subjects.some(subject => subject.mainCharacter) && counts.tags[0].subjects.some(subject => subject.name === 'Elder Qin'),
+    `The tagger should be told who the story already holds, got ${JSON.stringify(counts.tags[0].subjects)}.`);
   check(counts.fixes.length === 0, `A chapter whose only problem is a closing-list name it never mentions asks no fixer, saw ${counts.fixes.length}.`);
 
   // 3d. Rewrite this chapter: at the newest chapter's end, with a note; the new version under the veil.
@@ -800,6 +816,8 @@ async function walk(browser, viewport, sample) {
     && counts.rewrites[0].rewrite.previous.title === 'Low Tide', `The rewrite should ask for Chapter 1 again with the note, got ${JSON.stringify(counts.rewrites)}.`);
   check(counts.fixes.length === 1 && counts.fixes[0].token && counts.fixes[0].cases.length === 1,
     `The Holdings fixer should make one quiet call with the token, got ${JSON.stringify(counts.fixes)}.`);
+  check(counts.tags.length === 2 && counts.tags[1].chapterNumber === 1 && counts.tags[1].token,
+    `A chapter written again should be read again by the tagger, got ${counts.tags.length} taggings.`);
   const rewrittenText = await page.locator('[data-chapter-number="1"]').textContent();
   check(rewrittenText.includes('She hid it in her sleeve.') && !rewrittenText.includes('Mara counted the bells'), 'The new version should replace the old one.');
   const body = await page.textContent('body');

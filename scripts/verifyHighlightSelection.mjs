@@ -55,8 +55,13 @@ for (const [name, browserType, touch] of [['chromium-mouse', chromium, false], [
       // This is a real browser touch stream, not a range installed by the test.
       const held = await point(15);
       await send('touchStart', held);
-      await page.waitForFunction(() => document.querySelector('[data-testid="manuscript-selection"]')?.textContent.includes('“split”'));
+      await page.getByRole('button', { name: 'Select text', exact: true }).waitFor();
       await send('touchEnd');
+      assert.equal(await page.getByRole('slider').count(), 0);
+      assert.equal(await page.locator('.sen-text-highlight-marks').count(), 0);
+      assert.equal(await page.getByRole('button', { name: 'Edit', exact: true }).count(), 0);
+      await page.screenshot({ path: `${output}/chromium-touch-select-text-gate.png` });
+      await page.getByRole('button', { name: 'Select text', exact: true }).tap();
       await bar.waitFor(); await nativeEmpty();
       assert.match(await selected(), /“split”/);
       const handle = page.getByRole('slider', { name: 'Selection end' });
@@ -81,6 +86,19 @@ for (const [name, browserType, touch] of [['chromium-mouse', chromium, false], [
       });
       await send('touchEnd'); await bar.waitFor();
       assert.match(await selected(), /Characters 14–65/); await nativeEmpty();
+      // The upward-facing start cap still drags into the text rather than the previous line.
+      const startHandle = page.getByRole('slider', { name: 'Selection start' });
+      const startBounds = await startHandle.boundingBox();
+      const startOrigin = { x: startBounds.x + 22, y: startBounds.y + 33 };
+      const startAdjustment = await startHandle.evaluate(element => ({ x: Number(element.dataset.senSelectionX), y: Number(element.dataset.senSelectionY) }));
+      const firstWord = await point(0);
+      await send('touchStart', startOrigin);
+      for (let n = 1; n <= 5; n++) await send('touchMove', {
+        x: startOrigin.x + (firstWord.x - startAdjustment.x) * n / 5,
+        y: startOrigin.y + (firstWord.y - startAdjustment.y) * n / 5,
+      });
+      await send('touchEnd'); await bar.waitFor();
+      assert.match(await selected(), /Characters 0–65/); await nativeEmpty();
     } else {
       const start = await point(14); const end = await point(35);
       await page.mouse.move(start.x, start.y); await page.mouse.down();
@@ -89,7 +107,7 @@ for (const [name, browserType, touch] of [['chromium-mouse', chromium, false], [
       // A normal outside click leaves a native caret. Repeated selections must
       // replace it, rather than disappearing when the mouse is released.
       for (let attempt = 0; attempt < 3; attempt++) {
-        await page.getByText('Hold a word or drag to select, then choose Edit, Copy or Media.', { exact: true }).click();
+        await page.getByText('Hold a word, tap Select text, then choose Edit, Copy or Media. With a mouse, drag to select.', { exact: true }).click();
         assert.equal(await bar.count(), 0);
         assert.equal(await page.evaluate(() => getSelection().type), 'Caret');
         await paragraph.evaluate(element => element.scrollIntoView({ block: 'center' }));

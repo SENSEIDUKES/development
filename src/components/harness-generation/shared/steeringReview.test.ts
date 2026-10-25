@@ -1,4 +1,3 @@
-import { seedLegacyChapterEvents } from '../../../test-utils/seedLegacyChapterEvents';
 import { describe, expect, it, vi } from 'vitest';
 import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
@@ -46,54 +45,6 @@ describe('Chapter direction review regressions', () => {
     await reloaded.hydrate();
     await expect(reloaded.chooseChapterDirection(story.id, { kind: 'reader', text: 'Make Iven an ally' })).rejects.toThrow('checkpoint');
     expect(reloaded.snapshot().stories[0].nextChapterDirection).toBeUndefined();
-  });
-
-  it('carries cast identity and the latest resource balance as current canonical state, without the prose', async () => {
-    const { controller, repository, story, prose } = await setup();
-    await controller.generateNextChapter(story.id, 'fixture');
-    await seedLegacyChapterEvents(controller, repository, { events: [{ description: 'Iven speaks while Mara checks her sparks.', category: 'character', subjects: ['Iven'], evidence: prose, details: { character: { name: 'Iven', role: 'Captain' }, speech: { speaker: 'Iven', quote: '"Stay together."' }, mechanics: { subject: 'Mara', name: 'Sparks', value: '16', unit: 'sparks' } } }] });
-    const state = controller.snapshot();
-    expect(state.canonicalRecords.filter(record => record.kind === 'character').map(record => record.label)).toContain('Mara');
-    const context = compileStoryInformationPacket(state, state.stories[0], state.foundations[0], 'next');
-    expect(context.canonicalState.characters.find(character => character.name === 'Iven')?.facts).toMatchObject({ role: 'Captain' });
-    expect(context.canonicalState.resources).toEqual([expect.objectContaining({ owner: 'Mara', name: 'Sparks', value: '16', unit: 'sparks', asOfChapter: 1 })]);
-    const prompt = buildHarnessGenerationPrompt({ storyId: story.id, attemptId: 'next', model: 'fixture',
-      capaPrompt: state.attempts[0].capaPrompt, storyInformation: context, missionReminder: state.attempts[0].missionReminder,
-      immediateChapterRequest: { chapterNumber: 2, continuation: true, chapterScale: { minWords: 1_800, maxWords: 2_500 } } });
-    expect(prompt.userPrompt).toContain('CURRENT CANONICAL STATE');
-    expect(prompt.userPrompt).toContain('Mara · Sparks: 16 sparks (as of Chapter 1)');
-    // The speech quote is chapter evidence, not current state; it stays in storage.
-    expect(prompt.userPrompt).not.toContain('"Stay together."');
-  });
-
-  it('does not let unchecked later quantities or spending alter SEN memory', async () => {
-    const { controller, repository, story, prose } = await setup();
-    await controller.generateNextChapter(story.id, 'fixture');
-    await seedLegacyChapterEvents(controller, repository, { events: [{ description: 'Iven speaks while Mara checks her sparks.', category: 'character', subjects: ['Iven'], evidence: prose, details: { character: { name: 'Iven', role: 'Captain' }, speech: { speaker: 'Iven', quote: '"Stay together."' }, mechanics: { subject: 'Mara', name: 'Sparks', value: '16', unit: 'sparks' } } }] });
-    const state = controller.snapshot();
-    state.events.push({ ...state.events[0], id: 'unsupported-quantity', description: 'Mara has 99 sparks.',
-      evidence: 'Mara has 99 sparks.', evidenceVerified: undefined,
-      details: { mechanics: { subject: 'Mara', name: 'Sparks', value: '99', unit: 'sparks' } } },
-      { ...state.events[0], id: 'unsupported-spending', description: 'Mara spends all her sparks.',
-        evidence: 'Mara spends all her sparks.', details: undefined, evidenceVerified: undefined });
-    expect(createHarnessSenStory(state, story.id).memory?.worldRules).toEqual(['Mara: Sparks: 16 sparks']);
-  });
-
-  it('keeps an earlier character through later ambiguity and correction of its identity', async () => {
-    const { controller, repository, story, runtime, prose } = await setup();
-    await controller.generateNextChapter(story.id, 'fixture');
-    await seedLegacyChapterEvents(controller, repository, { events: [{ description: 'Iven speaks while Mara checks her sparks.', category: 'character', subjects: ['Iven'], evidence: prose, details: { character: { name: 'Iven', role: 'Captain' }, speech: { speaker: 'Iven', quote: '"Stay together."' }, mechanics: { subject: 'Mara', name: 'Sparks', value: '16', unit: 'sparks' } } }] });
-    await controller.generateNextChapter(story.id, 'fixture');
-    const state = controller.snapshot();
-    const original = state.canonicalRecords.find(record => record.label === 'Iven')!;
-    const changed = appendHarnessCorrection(state, story.id, { kind: 'correct-fact', reason: 'Iven now commands the fleet.',
-      targetRecordIds: [original.id], replacement: { kind: 'character', label: 'Iven', evidence: 'Iven is an Admiral.', facts: { role: 'Admiral' } } }, runtime).state;
-    changed.canonicalRecords.push({ ...original, id: 'different-iven', entityId: 'other-person',
-      chapterId: changed.chapters[1].id, facts: { role: 'Spy' } });
-    const sen = createHarnessSenStory(changed, story.id);
-    expect(sen.memory?.memoryWarnings).toContain('Ambiguous character identity: iven. Speech attribution is withheld.');
-    expect(createHarnessSenStory(changed, story.id, 1).memory?.characters?.find(character => character.name === 'Iven')?.role).toBe('Captain');
-    expect(sen.arcs[0].chapters[0].blocks?.map(block => block.text).join('\n\n')).toBe(state.chapters[0].prose);
   });
 
   it('omits blank cast fields and does not depend on locale-sensitive case folding', async () => {

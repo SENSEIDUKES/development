@@ -18,7 +18,6 @@ const currentThreadRecords = (state: HarnessWorkspaceState, records: HarnessCano
     return [
       record.sourceCorrectionId ? 1 : 0,
       record.sourceCorrectionId ? corrections.get(record.sourceCorrectionId) ?? -1 : chapter?.chapterNumber ?? -1,
-      chapter?.eventIds.indexOf(record.sourceEventId ?? '') ?? -1,
     ];
   };
   const latest = new Map<string, HarnessCanonicalRecord>();
@@ -55,8 +54,6 @@ export const buildCanonicalStoryView = (
   storyId: string,
 ): HarnessCanonicalStoryView => {
   const records = activeRecordsForStory(state, storyId);
-  const receipts = state.capabilityReceipts.filter(receipt => receipt.storyId === storyId && receipt.status !== 'superseded');
-  const unresolvedReferences = receipts.flatMap(receipt => receipt.unresolvedReferences);
   const byKind = (kind: HarnessCanonicalRecord['kind']) => records.filter(record => record.kind === kind);
   return {
     storyId,
@@ -72,7 +69,6 @@ export const buildCanonicalStoryView = (
     artifacts: byKind('artifact'),
     progression: byKind('progression'),
     narrativeEvents: byKind('narrative-event'),
-    unresolvedReferences,
     conflicts: records.filter(record => record.confidence === 'conflicted'),
     corrections: state.corrections.filter(correction => correction.storyId === storyId),
   };

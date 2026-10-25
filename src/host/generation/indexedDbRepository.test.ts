@@ -39,11 +39,12 @@ describe('planHarnessWorkspaceLoad', () => {
     // 35 adds only an optional packet section: that world, carried to the writer. Frozen attempts keep their own packet.
     // 36 gives every world card the chapter it entered in; a workspace holding no world is untouched.
     // 37 gives the world record its own home, opened from each story's active Foundation.
-    expect(HARNESS_GENERATION_SCHEMA_VERSION).toBe(37);
-    for (const schemaVersion of [27, 28, 29, 30, 31, 32, 34, 35, 36]) {
+    // 38 drops the semantic-event memory system nothing had written to since the tags took over.
+    expect(HARNESS_GENERATION_SCHEMA_VERSION).toBe(38);
+    for (const schemaVersion of [27, 28, 29, 30, 31, 32, 34, 35, 36, 37]) {
       const stored = { ...createEmptyHarnessWorkspaceState(), schemaVersion, stories: [{ id: 'a' }], attempts: [{ id: 'a1', capaPrompt: { soundVocabulary: [{ word: 'blade drawn', example: 'drew his sword' }] } }], chapters: [{ id: 'c1', soundCues: [{ id: 'sc1' }] }] };
       const plan = planHarnessWorkspaceLoad(stored, now);
-      expect(plan.state).toEqual({ ...stored, schemaVersion: 37, worldCards: [] });
+      expect(plan.state).toEqual({ ...stored, schemaVersion: 38, worldCards: [] });
       expect(plan.preserve).toEqual({
         key: `${PRESERVED_WORKSPACE_PREFIX}v${schemaVersion}:2026-09-24T12:00:00.000Z`,
         record: { preservedAt: now(), reason: 'migrated', schemaVersion, workspace: stored },
@@ -69,12 +70,61 @@ describe('planHarnessWorkspaceLoad', () => {
     const upgraded = { cards: [{ ...world.cards[0], key: 'world:character:ye-chen', enteredInChapter: 0 }] };
     expect(plan.state).toEqual({
       ...stored,
-      schemaVersion: 37,
+      schemaVersion: 38,
       foundations: [{ id: 'f1', input: { premise: 'A quarry laborer rises.', worldAtChapterZero: upgraded } }],
       attempts: [{ id: 'a1', storyInformation: { worldAtChapterZero: upgraded } }],
       // No story names that Foundation as its active one, so the living record opens empty.
       worldCards: [],
     });
+  });
+
+  it('drops the event stores and carries the retired stage back to the prose (schema 38)', () => {
+    // The only upgrade in the chain that rewrites what a story saved, rather
+    // than adding to it: a regression here would quietly break a saved recovery
+    // checkpoint, so it is checked field by field.
+    const stored = {
+      ...createEmptyHarnessWorkspaceState(),
+      schemaVersion: 37,
+      events: [{ id: 'e1' }],
+      capabilityReceipts: [{ id: 'cr1' }],
+      projections: [{ id: 'pr1' }],
+      memoryRecoveries: [{ id: 'mr1' }],
+      chapters: [{ id: 'c1', eventIds: ['e1'] }],
+      attempts: [
+        { id: 'a1', stage: 'events_preserved', eventsPreservedAt: 'x', preservedEvents: [], rejectedEvents: [], postCommitProcessing: 'complete' },
+        { id: 'a2', stage: 'accepted_not_durable', recoveryStage: 'events_preserved' },
+        { id: 'a3', stage: 'accepted_not_durable', recoveryStage: 'raw_received' },
+      ],
+    } as unknown as Parameters<typeof planHarnessWorkspaceLoad>[0];
+    const state = planHarnessWorkspaceLoad(stored, now).state as unknown as Record<string, unknown>;
+    for (const store of ['events', 'capabilityReceipts', 'projections', 'memoryRecoveries']) expect(state).not.toHaveProperty(store);
+    expect(state.chapters).toEqual([{ id: 'c1' }]);
+    const attempts = state.attempts as Array<Record<string, unknown>>;
+    expect(attempts[0]).toEqual({ id: 'a1', stage: 'prose_accepted' });
+    expect(attempts[1]).toEqual({ id: 'a2', stage: 'accepted_not_durable', recoveryStage: 'prose_accepted' });
+    // Another checkpoint's recovery stage is left exactly as it was.
+    expect(attempts[2]).toEqual({ id: 'a3', stage: 'accepted_not_durable', recoveryStage: 'raw_received' });
+  });
+
+  it('gives a chapter waiting at the prose checkpoint the id it will commit under (schema 38)', () => {
+    // The id used to be settled at the stage this version removes, so an attempt
+    // saved at the prose checkpoint carries none. Without one it would be read
+    // by the tagger and then refused at the commit, with no way to finish.
+    const stored = {
+      ...createEmptyHarnessWorkspaceState(),
+      schemaVersion: 37,
+      attempts: [
+        { id: 'a1', stage: 'prose_accepted', acceptedDraft: { prose: 'The gate held.' } },
+        { id: 'a2', stage: 'events_preserved', acceptedDraft: { prose: 'It did not.' }, pendingChapterId: 'hch_kept' },
+        { id: 'a3', stage: 'request_started' },
+      ],
+    } as unknown as Parameters<typeof planHarnessWorkspaceLoad>[0];
+    const attempts = planHarnessWorkspaceLoad(stored, now).state.attempts as unknown as Array<Record<string, unknown>>;
+    expect(attempts[0].pendingChapterId).toEqual(expect.stringMatching(/^hch_/));
+    // One already settled keeps it, and the retired stage carries on from the prose.
+    expect(attempts[1]).toMatchObject({ stage: 'prose_accepted', pendingChapterId: 'hch_kept' });
+    // An attempt with no accepted prose has no chapter to name yet.
+    expect(attempts[2].pendingChapterId).toBeUndefined();
   });
 
   it('opens each saved story\'s world record from its active Foundation (schema 37)', () => {

@@ -50,11 +50,9 @@ export function chapterRewriteGap(state: HarnessWorkspaceState, storyId: string)
     return `Arc ${next.arcNumber} is already planned from ${chapter}, so ${chapter} can no longer be rewritten.`;
   }
   // Story memory and the reader's corrections built on the chapter would be left pointing at nothing.
-  const recordsFromIt = latest.eventIds.length
-    || state.canonicalRecords.some(record => record.chapterId === latest.id)
-    || state.capabilityReceipts.some(receipt => receipt.chapterId === latest.id)
-    || state.projections.some(projection => projection.chapterId === latest.id);
-  if (recordsFromIt) return `${chapter} carries story memory, so it cannot be rewritten.`;
+  if (state.canonicalRecords.some(record => record.chapterId === latest.id)) {
+    return `${chapter} carries story memory, so it cannot be rewritten.`;
+  }
   if (state.corrections.some(correction => correction.storyId === storyId && correction.readerEdit?.chapterNumber === latest.chapterNumber)) {
     return `${chapter} has your corrections, so it cannot be rewritten.`;
   }

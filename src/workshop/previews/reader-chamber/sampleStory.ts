@@ -46,14 +46,10 @@ export function storyExportToWorkspace(value: unknown): HarnessWorkspaceState {
     foundations,
     attempts,
     chapters,
-    events: records(exported.events),
-    capabilityReceipts: records(exported.capabilityReceipts),
     canonicalRecords: records(exported.canonicalRecords),
-    projections: records(exported.projections),
     corrections: records(exported.corrections),
     batches: records(exported.batches),
     arcPlanOperations: [],
-    memoryRecoveries: records(exported.memoryRecoveries),
     codexEntries: records(exported.codexEntries),
     // An export saved before the world record had a home of its own has none;
     // its schema version is older, so the upgrade opens one from its Foundation.

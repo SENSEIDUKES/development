@@ -1,4 +1,4 @@
-import { cloneHarnessValue } from './ids';
+import { cloneHarnessValue, stableHarnessId } from './ids';
 import { HARNESS_GENERATION_SCHEMA_VERSION, type HarnessWorkspaceState } from '../../../narrative/generation';
 import { WORLD_CARD_KINDS, worldCardKey } from '../../../narrative/worldRecord';
 
@@ -8,10 +8,7 @@ export const createEmptyHarnessWorkspaceState = (): HarnessWorkspaceState => ({
   foundations: [],
   attempts: [],
   chapters: [],
-  events: [],
-  capabilityReceipts: [],
   canonicalRecords: [],
-  projections: [],
   corrections: [],
   batches: [],
   arcPlanOperations: [],
@@ -32,10 +29,7 @@ export const isCurrentHarnessWorkspaceState = (value: unknown): value is Harness
     && Array.isArray(candidate.foundations)
     && Array.isArray(candidate.attempts)
     && Array.isArray(candidate.chapters)
-    && Array.isArray(candidate.events)
-    && Array.isArray(candidate.capabilityReceipts)
     && Array.isArray(candidate.canonicalRecords)
-    && Array.isArray(candidate.projections)
     && Array.isArray(candidate.corrections)
     && Array.isArray(candidate.batches)
     && Array.isArray(candidate.arcPlanOperations)
@@ -46,8 +40,8 @@ export const isCurrentHarnessWorkspaceState = (value: unknown): value is Harness
 const hasWorkspaceShape = (value: unknown): value is Record<string, unknown> & { schemaVersion?: unknown } => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const candidate = value as Record<string, unknown>;
-  return ['stories', 'foundations', 'attempts', 'chapters', 'events', 'capabilityReceipts', 'canonicalRecords',
-    'projections', 'corrections', 'batches', 'arcPlanOperations'].every(field => Array.isArray(candidate[field]));
+  return ['stories', 'foundations', 'attempts', 'chapters', 'canonicalRecords',
+    'corrections', 'batches', 'arcPlanOperations'].every(field => Array.isArray(candidate[field]));
 };
 
 type StoredWorkspace = Record<string, unknown> & { schemaVersion: number };
@@ -92,6 +86,29 @@ const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => 
   // can add a card to it. Every saved story's cards are the ones its author
   // wrote, so the record opens from each story's active Foundation.
   36: stored => ({ ...stored, worldCards: openingWorldCardsOf(stored), schemaVersion: 37 }),
+  // 38 drops the semantic-event memory system: the events a writer used to
+  // return, the capability receipts and projections made from them, and the
+  // saved extraction receipts. Nothing had written to them since chapter state
+  // moved to the tags, so a saved story loses nothing it was using. A chapter's
+  // `eventIds` and an attempt's preserved events go with them.
+  37: ({ events, capabilityReceipts, projections, memoryRecoveries, ...stored }) => ({
+    ...stored,
+    chapters: (stored.chapters as Array<Record<string, unknown>>).map(({ eventIds, ...chapter }) => chapter),
+    attempts: (stored.attempts as Array<Record<string, unknown>>).map(({ preservedEvents, rejectedEvents, eventsPreservedAt, postCommitProcessing, ...attempt }) => ({
+      ...attempt,
+      // An attempt saved at the stage that no longer exists carries on from the prose.
+      ...(attempt.stage === 'events_preserved' ? { stage: 'prose_accepted' } : {}),
+      ...(attempt.recoveryStage === 'events_preserved' ? { recoveryStage: 'prose_accepted' } : {}),
+      // The chapter's id was settled at the retired stage and is settled when
+      // the prose is accepted now. An attempt saved at the prose checkpoint
+      // never reached the old stage, so it is carrying none: without one it
+      // would tag and then be refused at the commit, with no way to finish.
+      ...(attempt.acceptedDraft && !attempt.pendingChapterId
+        ? { pendingChapterId: stableHarnessId('hch', String(attempt.id), 'schema-38') }
+        : {}),
+    })),
+    schemaVersion: 38,
+  }),
 };
 
 /**

@@ -1,4 +1,3 @@
-import { seedLegacyChapterEvents } from '../../../test-utils/seedLegacyChapterEvents';
 import { describe, expect, it, vi } from 'vitest';
 import { HarnessGenerationController, projectCanonicalState, exportHarnessStory } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
@@ -84,7 +83,6 @@ const setup = async (options: { throughHttp?: boolean } = {}) => {
   await controller.setHardPins(story.id, [{ text: 'Make Yi Chen take the Azure Sect to glory throughout the entire story.' }, { text: 'Never kill Elder Mu.' }]);
   const write = async (model = 'fixture') => {
     await controller.generateNextChapter(story.id, model);
-    await seedLegacyChapterEvents(controller, repository, memories.get(controller.snapshot().chapters.at(-1)!.prose));
   };
   return { controller, repository, adapter, requests, providerInputs, story, write };
 };
@@ -159,18 +157,13 @@ describe('Compact long-story generation packet', () => {
     expect(run.requests[0].storyInformation.appearances!.entries).toEqual([]);
   });
 
-  it('sends Chapter 2 the saved Chapter 1 recap, resulting canonical state, and the persisted rhythm direction', async () => {
+  it('sends Chapter 2 the saved Chapter 1 recap and the persisted rhythm direction', async () => {
     const run = await setup();
     await run.write();
     await run.write();
     const state = run.controller.snapshot();
     const packet = run.requests[1].storyInformation;
     expect(packet.previouslyOn).toEqual([{ chapterNumber: 1, title: 'The Gate, Day 1', recap: 'Recap 1: Yi Chen climbed higher.' }]);
-    expect(packet.canonicalState.characters).toEqual(expect.arrayContaining([
-      expect.objectContaining({ name: 'Yi Chen', asOfChapter: 1, facts: expect.objectContaining({ role: 'Disciple', stage: 'Stage 1', isMainCharacter: 'true' }) }),
-      expect.objectContaining({ name: 'Elder Mu', facts: expect.objectContaining({ role: 'Elder' }) }),
-    ]));
-    expect(packet.canonicalState.resources).toEqual([expect.objectContaining({ owner: 'Yi Chen', name: 'Qi', value: '101', unit: 'qi', asOfChapter: 1 })]);
     const recommendation = state.attempts[1].storyInformation.rhythm!;
     expect(recommendation).toEqual({ fatePressure: 'heaven', recentFunctions: [{ chapterNumber: 1, chapterFunction: 'progression' }], recommendedFunction: 'conflict', reason: expect.stringContaining('Heaven pressure'), suggestion: 'Conflict 1' });
     expect(recommendation.recommendedFunction).toBe(state.stories[0].rhythmRecommendation?.recommendedFunction);
@@ -200,7 +193,6 @@ describe('Compact long-story generation packet', () => {
     expect(retriedRequest.storyInformation.storyDirection.hardPins).toEqual(['Make Yi Chen take the Azure Sect to glory throughout the entire story.', 'Never kill Elder Mu.']);
     // Replay reads committed chapters only; every frozen attempt packet is untouched.
     const before = run.controller.snapshot().attempts.map(attempt => attempt.storyInformation);
-    await run.controller.replayStory(run.story.id);
     expect(run.controller.snapshot().attempts.map(attempt => attempt.storyInformation)).toEqual(before);
     const reloaded = new HarnessGenerationController({ repository: run.repository, modelAdapter: run.adapter });
     const state = await reloaded.hydrate();
@@ -263,7 +255,7 @@ describe('Current canonical state projection', () => {
   const stateWith = (records: HarnessCanonicalRecord[]): HarnessWorkspaceState => {
     const state = createEmptyHarnessWorkspaceState();
     state.stories.push({ id: 's', title: 'S', originalLanguage: 'en', createdAt: 'a', updatedAt: 'a', activeFoundationRevisionId: 'f', foundationRevisionIds: ['f'], head: { nextChapterNumber: 4 } });
-    for (const n of [1, 2, 3]) state.chapters.push({ id: `c${n}`, storyId: 's', attemptId: 'a', foundationRevisionId: 'f', storyInformationPacketId: 'p', chapterNumber: n, title: `C${n}`, titleSource: 'model', prose: '', paragraphs: [], metrics: { wordCount: 0, paragraphCount: 0, meetsScaleTarget: false }, eventIds: [], responseMode: 'json', createdAt: 'a', committedAt: 'a', mediaLoadout: { capturedAt: 'a', soundscapes: [], soundCues: [] } });
+    for (const n of [1, 2, 3]) state.chapters.push({ id: `c${n}`, storyId: 's', attemptId: 'a', foundationRevisionId: 'f', storyInformationPacketId: 'p', chapterNumber: n, title: `C${n}`, titleSource: 'model', prose: '', paragraphs: [], metrics: { wordCount: 0, paragraphCount: 0, meetsScaleTarget: false }, responseMode: 'json', createdAt: 'a', committedAt: 'a', mediaLoadout: { capturedAt: 'a', soundscapes: [], soundCues: [] } });
     state.canonicalRecords.push(...records);
     return state;
   };

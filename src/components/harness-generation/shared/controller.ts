@@ -20,7 +20,6 @@ import { normalizeChapterWritingStyle, type ChapterWritingStyle } from '../../..
 import { buildImmediateChapterRequest } from './immediateChapterRequest';
 import { attemptChapterPath, chapterDirectionGap, pendingChapterDirection, validateChapterDirectionChoice } from './chapterDirection';
 import { appendHarnessCorrection, type AppendHarnessCorrectionInput } from './canonicalState';
-import { HarnessCapabilityRegistry } from './capabilities';
 import {
   CAPA_SCHEMA,
   managedCapaSkillSignature,
@@ -39,13 +38,7 @@ import { cloneHarnessValue, defaultHarnessRuntime, stableHarnessId, type Harness
 import { buildRhythmRecommendation, type ChapterFunctionRecord } from './rhythm';
 import { buildMissionReminder } from './missionReminder';
 import { CHAPTER_RECAP_TEXT_LIMIT, validateHardPinInputs, type HardPin, type HardPinInput } from '../../../narrative/storyDirection';
-import {
-  acceptHarnessModelResponse,
-  preserveSemanticEvents,
-  verifyHarnessEventEvidence,
-  type SemanticEventPreservationInput,
-  type SemanticEventPreservationResult,
-} from './responseAcceptance';
+import { acceptHarnessModelResponse } from './responseAcceptance';
 import { activeAttemptForStory } from './attempts';
 import { chapterRewriteGap, latestStoryChapter, readRewriteNote, withoutLatestChapter } from './chapterRewrite';
 import { harnessParagraphBlockId } from './chapterBody';
@@ -61,20 +54,12 @@ import {
   type HarnessGenerationRepository,
 } from './repository';
 import { AUTHOR_NOTES_LIMIT } from '../../../narrative/generation';
-import type { ChapterDirectionChoice, HarnessChapter, HarnessChapterRewrite, HarnessHoldingsFixerPolicy, HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessGenerationResponse, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessCapabilityReceipt, HarnessStory, HarnessStoryVisibility, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
-
-export type HarnessEventPreserver = (
-  rawEvents: unknown[],
-  input: SemanticEventPreservationInput,
-  runtime: HarnessRuntime,
-) => SemanticEventPreservationResult;
+import type { ChapterDirectionChoice, HarnessChapter, HarnessChapterRewrite, HarnessHoldingsFixerPolicy, HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessGenerationResponse, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessStory, HarnessStoryVisibility, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
 
 export interface HarnessGenerationControllerOptions {
   repository: HarnessGenerationRepository;
   modelAdapter: HarnessGenerationModelAdapter;
   runtime?: HarnessRuntime;
-  preserveEvents?: HarnessEventPreserver;
-  capabilityRegistry?: HarnessCapabilityRegistry;
   /** Host-owned installed skills. The Harness stores only per-story references and frozen request copies. */
   installedSkills?: HarnessSkillManifest[];
   /** Host-authorized media selection and freezing. Never enters CAPA or provider requests. */
@@ -104,7 +89,7 @@ export interface HarnessChapterWrite {
 }
 
 type WorkspaceListener = (state: HarnessWorkspaceState) => void;
-type PersistedCheckpoint = 'raw_received' | 'prose_accepted' | 'events_preserved' | 'tagged' | 'committed' | 'generation_failed';
+type PersistedCheckpoint = 'raw_received' | 'prose_accepted' | 'tagged' | 'committed' | 'generation_failed';
 
 const duplicateWarning = (warnings: HarnessWarning[], next: HarnessWarning) =>
   warnings.some(existing => existing.code === next.code && existing.message === next.message);
@@ -158,8 +143,6 @@ export class HarnessGenerationController {
   private readonly repository: HarnessGenerationRepository;
   private readonly modelAdapter: HarnessGenerationModelAdapter;
   private readonly runtime: HarnessRuntime;
-  private readonly eventPreserver: HarnessEventPreserver;
-  private readonly capabilityRegistry: HarnessCapabilityRegistry;
   private skillCatalog: ReadonlyMap<string, HarnessSkillManifest>;
   private media?: NarrativeMediaPort;
   private holdingsFixer: HarnessHoldingsFixerPolicy;
@@ -173,8 +156,6 @@ export class HarnessGenerationController {
     this.repository = options.repository;
     this.modelAdapter = options.modelAdapter;
     this.runtime = options.runtime ?? defaultHarnessRuntime;
-    this.eventPreserver = options.preserveEvents ?? preserveSemanticEvents;
-    this.capabilityRegistry = options.capabilityRegistry ?? new HarnessCapabilityRegistry();
     this.skillCatalog = createHarnessSkillCatalog(includeBundledHarnessSkills(options.installedSkills ?? []));
     this.media = options.media;
     this.holdingsFixer = options.holdingsFixer ?? 'records-and-sentences';
@@ -1303,66 +1284,13 @@ export class HarnessGenerationController {
     proseAttempt.stage = 'prose_accepted';
     proseAttempt.proseAcceptedAt = this.runtime.now();
     proseAttempt.acceptedDraft = acceptance.draft;
+    // The committed chapter's id is settled here, before anything is written
+    // against it: tagging and the commit both address the chapter by it.
+    proseAttempt.pendingChapterId ??= this.runtime.createId('hch');
     proseAttempt.failure = undefined;
     proseAttempt.recoveryStage = undefined;
     addWarnings(proseAttempt, acceptance.warnings);
     if (!await this.persistCheckpoint(proseAccepted, attemptId, 'prose_accepted')) return this.snapshot();
-
-    return this.preserveAttemptEvents(attemptId, acceptance.rawEvents);
-  }
-
-  private async preserveAttemptEvents(
-    attemptId: string,
-    providedRawEvents?: unknown[],
-  ): Promise<HarnessWorkspaceState> {
-    const attempt = attemptById(this.state, attemptId);
-    if (!attempt.acceptedDraft) {
-      return this.appendFailure(attemptId, {
-        stage: 'events',
-        message: 'The prose checkpoint is missing, so semantic events cannot be preserved safely.',
-      });
-    }
-    // The chapter reply carries no memory; legacy event checkpoints remain readable.
-    // New chapter state comes from the writer's tags, not another model call.
-    const rawEvents = providedRawEvents ?? [];
-    let preserved: SemanticEventPreservationResult;
-    try {
-      preserved = this.eventPreserver(rawEvents, {
-        storyId: attempt.storyId,
-        attemptId: attempt.id,
-        chapterNumber: attempt.chapterNumber,
-        createdAt: this.runtime.now(),
-        prose: attempt.acceptedDraft.prose,
-      }, this.runtime);
-    } catch (error) {
-      const candidate = cloneHarnessValue(this.state);
-      const retryAttempt = attemptById(candidate, attemptId);
-      retryAttempt.stage = 'events_preserved';
-      retryAttempt.eventsPreservedAt = this.runtime.now();
-      retryAttempt.preservedEvents = [];
-      retryAttempt.rejectedEvents = [];
-      retryAttempt.pendingChapterId ??= this.runtime.createId('hch');
-      retryAttempt.postCommitProcessing = 'failed';
-      retryAttempt.failure = undefined;
-      addWarnings(retryAttempt, [{
-        code: 'event_preservation_retry_required',
-        message: `Optional semantic-event preservation failed (${errorMessage(error, 'unknown error')}). The prose will still commit; replay can recover events from the raw response without another model call.`,
-      }]);
-      if (!await this.persistCheckpoint(candidate, attemptId, 'events_preserved')) return this.snapshot();
-      return this.tagAttempt(attemptId);
-    }
-
-    const eventsPreserved = cloneHarnessValue(this.state);
-    const eventAttempt = attemptById(eventsPreserved, attemptId);
-    eventAttempt.stage = 'events_preserved';
-    eventAttempt.eventsPreservedAt = this.runtime.now();
-    eventAttempt.preservedEvents = preserved.events;
-    eventAttempt.rejectedEvents = preserved.rejected;
-    eventAttempt.pendingChapterId ??= this.runtime.createId('hch');
-    eventAttempt.failure = undefined;
-    eventAttempt.recoveryStage = undefined;
-    addWarnings(eventAttempt, preserved.warnings);
-    if (!await this.persistCheckpoint(eventsPreserved, attemptId, 'events_preserved')) return this.snapshot();
 
     return this.tagAttempt(attemptId);
   }
@@ -1650,10 +1578,6 @@ export class HarnessGenerationController {
     }
     const chapterId = commitAttempt.pendingChapterId;
     const acceptedDraft = commitAttempt.acceptedDraft;
-    const committedEvents = (commitAttempt.preservedEvents ?? []).map(event => ({
-      ...event,
-      chapterId,
-    }));
     // Every name an appearance or a holding change uses becomes a Codex entry
     // now, in the same write that commits its chapter: the app assigns the IDs,
     // never the writer. One resolver serves both, so a new name tagged by both
@@ -1706,7 +1630,6 @@ export class HarnessGenerationController {
       ...(acceptedDraft.recap ? { recap: { text: acceptedDraft.recap, source: 'model' as const, updatedAt: committedAt } } : {}),
       ...(acceptedDraft.rhythm ? { rhythm: cloneHarnessValue(acceptedDraft.rhythm) } : {}),
       ...(attemptChapterPath(commitAttempt) ? { path: attemptChapterPath(commitAttempt)! } : {}),
-      eventIds: committedEvents.map(event => event.id),
       responseMode: acceptedDraft.responseMode,
       createdAt: commitAttempt.proseAcceptedAt ?? commitAttempt.startedAt,
       committedAt,
@@ -1715,7 +1638,6 @@ export class HarnessGenerationController {
       ...(commitAttempt.tagging ? { tagging: cloneHarnessValue(commitAttempt.tagging) } : {}),
     };
     candidate.chapters.push(chapter);
-    candidate.events.push(...committedEvents);
     if (resolver.created.length) candidate.codexEntries.push(...resolver.created);
     if (rewrite) {
       // The replaced version's attempt keeps its reply, so an export still shows it.
@@ -1746,12 +1668,11 @@ export class HarnessGenerationController {
     try {
       await this.persist(candidate);
     } catch (error) {
-      // Keep the pre-commit head. The previous events_preserved checkpoint is
-      // already durable, so retrying this cannot cause a new provider call.
+      // Keep the pre-commit head. The previous tagging checkpoint is already
+      // durable, so retrying this cannot cause a new provider call.
       this.persistenceFailure(base, attemptId, 'committed', error);
       return this.snapshot();
     }
-    await this.replayStory(commitAttempt.storyId, chapterId);
     // The Holdings fixer settles the chapter's small holdings problems before
     // anything is planned or written from it. Looks are not written here: the
     // writer's own description is kept by code, and a look is written only when
@@ -1919,139 +1840,6 @@ export class HarnessGenerationController {
     return { summary: look.summary, traits: { ...look.traits } };
   }
 
-  /**
-   * Deterministic replay never calls the provider and only reads committed chapters.
-   * Stable derived IDs make the operation idempotent across reloads and upgrades.
-   */
-  async replayStory(storyId: string, onlyChapterId?: string): Promise<HarnessWorkspaceState> {
-    this.assertHydrated();
-    const candidate = cloneHarnessValue(this.state);
-    const committedChapters = candidate.chapters.filter(chapter =>
-      chapter.storyId === storyId && (!onlyChapterId || chapter.id === onlyChapterId),
-    );
-    const committedChapterIds = new Set(committedChapters.map(chapter => chapter.id));
-
-    const upsert = <T extends { id: string }>(items: T[], next: T) => {
-      const index = items.findIndex(item => item.id === next.id);
-      if (index >= 0) items[index] = next;
-      else items.push(next);
-    };
-    const upsertCanonical = (next: HarnessWorkspaceState['canonicalRecords'][number]) => {
-      const existing = candidate.canonicalRecords.find(record => record.id === next.id)
-        ?? candidate.canonicalRecords.find(record => record.storyId === next.storyId && record.sourceEventId === next.sourceEventId
-          && !!next.sourceEventId && record.capabilityId === next.capabilityId && record.kind === next.kind
-          && record.label === next.label && !!record.supersededByCorrectionId);
-      const resolved = existing ? {
-        ...next,
-        id: existing.id,
-        ...(existing.supersededByCorrectionId ? {
-          supersededAt: existing.supersededAt,
-          supersededByCorrectionId: existing.supersededByCorrectionId,
-          supersededByRecordId: existing.supersededByRecordId,
-        } : {}),
-      } : next;
-      upsert(candidate.canonicalRecords, resolved);
-      return resolved.id;
-    };
-    const events = candidate.events.filter(event => event.chapterId && committedChapterIds.has(event.chapterId));
-    for (const sourceEvent of events) {
-      const chapter = candidate.chapters.find(chapter => chapter.id === sourceEvent.chapterId)!;
-      const event = verifyHarnessEventEvidence(sourceEvent, chapter.prose);
-      try {
-        const results = this.capabilityRegistry.processEvent({ state: candidate, event, now: this.runtime.now() });
-        for (const previous of candidate.capabilityReceipts) {
-          if (previous.sourceEventId !== event.id || previous.status === 'superseded'
-            || results.some(result => result.receipt.id === previous.id)) continue;
-          const result = results.find(result => result.receipt.capabilityId === previous.capabilityId) ?? results[0];
-          if (!result) continue;
-          previous.status = 'superseded';
-          previous.supersededByReceiptId = result.receipt.id;
-          for (const recordId of previous.canonicalRecordIds) {
-            const oldRecord = candidate.canonicalRecords.find(record => record.id === recordId);
-            if (oldRecord && !oldRecord.supersededAt) {
-              oldRecord.supersededAt = result.receipt.processedAt;
-              oldRecord.supersededByRecordId = result.records[0]?.id;
-            }
-          }
-          for (const projectionId of previous.projectionIntentIds) {
-            const oldProjection = candidate.projections.find(projection => projection.id === projectionId);
-            if (oldProjection) oldProjection.status = 'superseded';
-          }
-        }
-        for (const result of results) {
-          upsert(candidate.capabilityReceipts, result.receipt);
-          const canonicalRecordIds = new Map<string, string>();
-          for (const record of result.records) canonicalRecordIds.set(record.id, upsertCanonical(record));
-          result.receipt.canonicalRecordIds = result.receipt.canonicalRecordIds.map(id => canonicalRecordIds.get(id) ?? id);
-          for (const projection of result.projections) upsert(candidate.projections, projection);
-          for (const legacy of candidate.capabilityReceipts) {
-            if (legacy.sourceEventId === event.id && legacy.capabilityVersion === 'phase-2-unprocessed') {
-              legacy.status = 'superseded';
-              legacy.supersededByReceiptId = result.receipt.id;
-            }
-          }
-        }
-      } catch (error) {
-        const receipt: HarnessCapabilityReceipt = {
-          id: stableHarnessId('hcr', event.id, 'registry-failure', '1.0.0'),
-          storyId,
-          chapterId: event.chapterId,
-          sourceEventId: event.id,
-          capabilityId: 'general-narrative-event',
-          capabilityVersion: '1.0.0',
-          status: 'failed',
-          canonicalRecordIds: [],
-          projectionIntentIds: [],
-          warnings: ['The registry failed in isolation; replay remains available.'],
-          unresolvedReferences: [],
-          processedAt: this.runtime.now(),
-          replayCount: 0,
-          failure: errorMessage(error, 'Capability registry failed.'),
-        };
-        upsert(candidate.capabilityReceipts, receipt);
-      }
-    }
-
-    for (const chapter of committedChapters) {
-      const attempt = candidate.attempts.find(entry => entry.id === chapter.attemptId);
-      if (!attempt) continue;
-      const receipts = candidate.capabilityReceipts.filter(receipt =>
-        chapter.eventIds.includes(receipt.sourceEventId) && receipt.status !== 'superseded',
-      );
-      attempt.postCommitProcessing = receipts.some(receipt => receipt.status === 'failed')
-        ? 'failed'
-        : receipts.some(receipt => receipt.status === 'unresolved')
-          || Boolean(attempt.rejectedEvents?.length)
-          || attempt.warnings.some(warning => ['optional_event_field_omitted', 'invalid_events_omitted'].includes(warning.code))
-          ? 'warnings' : 'complete';
-      if (attempt.postCommitProcessing === 'complete') {
-        attempt.warnings = attempt.warnings.filter(warning => warning.code !== 'capability_failed');
-      }
-      if (attempt.postCommitProcessing === 'failed') addWarnings(attempt, [{
-        code: 'capability_failed',
-        message: 'One or more deterministic capabilities failed. The chapter remains committed and can be replayed.',
-      }]);
-    }
-
-    try {
-      await this.persist(candidate);
-    } catch (error) {
-      const preserved = cloneHarnessValue(this.state);
-      for (const chapter of committedChapters) {
-        const attempt = preserved.attempts.find(entry => entry.id === chapter.attemptId);
-        if (!attempt) continue;
-        attempt.postCommitProcessing = 'failed';
-        addWarnings(attempt, [{
-          code: 'post_commit_processing_pending',
-          message: `Canonical processing was not saved (${errorMessage(error, 'local write failed')}). The committed chapter and prose were not changed; replay can retry this write.`,
-        }]);
-      }
-      this.state = preserved;
-      this.notify();
-    }
-    return this.snapshot();
-  }
-
   async retryAppropriateStage(attemptId: string): Promise<HarnessWorkspaceState> {
     return this.trackChapterWrite(this.attemptWrite(attemptId), async () => {
       await this.retryAppropriateStageInternal(attemptId);
@@ -2073,24 +1861,30 @@ export class HarnessGenerationController {
     this.assertHydrated();
     const attempt = attemptById(this.state, attemptId);
     if (attempt.stage === 'raw_received') return this.acceptRawResponse(attemptId);
-    if (attempt.stage === 'prose_accepted') return this.preserveAttemptEvents(attemptId);
-    if (attempt.stage === 'events_preserved') return this.tagAttempt(attemptId);
+    if (attempt.stage === 'prose_accepted') return this.tagAttempt(attemptId);
     if (attempt.stage === 'tagged') return this.commitAttempt(attemptId);
     if (attempt.stage !== 'accepted_not_durable' || !attempt.recoveryStage) {
       throw new Error('This attempt does not have a local parsing or persistence checkpoint to retry.');
     }
 
     if (attempt.recoveryStage === 'committed') return this.commitAttempt(attemptId);
-    if (attempt.recoveryStage === 'tagged') return this.tagAttempt(attemptId);
     const restored = cloneHarnessValue(this.state);
     const restoredAttempt = attemptById(restored, attemptId);
     restoredAttempt.stage = attempt.recoveryStage;
     restoredAttempt.recoveryStage = undefined;
     restoredAttempt.failure = undefined;
     if (!await this.persistCheckpoint(restored, attemptId, attempt.recoveryStage)) return this.snapshot();
+    // Carries on from the saved checkpoint exactly as the stages above do, so a
+    // chapter recovered from a failed write goes through tagging rather than
+    // around it.
     if (attempt.recoveryStage === 'raw_received') return this.acceptRawResponse(attemptId);
-    if (attempt.recoveryStage === 'prose_accepted') return this.preserveAttemptEvents(attemptId);
+    if (attempt.recoveryStage === 'prose_accepted') return this.tagAttempt(attemptId);
     if (attempt.recoveryStage === 'generation_failed') return this.snapshot();
+    // A `tagged` checkpoint falls through to the commit rather than tagging
+    // again: the failed write kept the tagger's own answer in memory, so saving
+    // it and committing is the whole retry. Asking the tagger again would spend
+    // a second model call on a chapter already read, and could answer
+    // differently.
     return this.commitAttempt(attemptId);
   }
 
@@ -2303,7 +2097,7 @@ export class HarnessGenerationController {
     await this.persist(running);
     const failedAttempt = attemptById(this.state, failedAttemptId);
     if (
-      ['raw_received', 'prose_accepted', 'events_preserved', 'tagged', 'accepted_not_durable'].includes(failedAttempt.stage)
+      ['raw_received', 'prose_accepted', 'tagged', 'accepted_not_durable'].includes(failedAttempt.stage)
     ) await this.retryAppropriateStage(failedAttemptId);
     else await this.retryModelRequest(failedAttemptId);
     const attemptId = this.state.batches.find(entry => entry.id === batchId)?.currentAttemptId;
@@ -2325,13 +2119,9 @@ export const exportHarnessStory = (state: HarnessWorkspaceState, storyId: string
     foundations: state.foundations.filter(foundation => foundationIds.has(foundation.id)),
     attempts: state.attempts.filter(attempt => attempt.storyId === storyId),
     chapters: state.chapters.filter(chapter => chapterIds.has(chapter.id)),
-    events: state.events.filter(event => event.storyId === storyId),
-    capabilityReceipts: state.capabilityReceipts.filter(receipt => receipt.storyId === storyId),
     canonicalRecords: state.canonicalRecords.filter(record => record.storyId === storyId),
     corrections: state.corrections.filter(correction => correction.storyId === storyId),
-    projections: state.projections.filter(projection => projection.storyId === storyId),
     batches: state.batches.filter(batch => batch.storyId === storyId),
-    memoryRecoveries: state.memoryRecoveries?.filter(recovery => recovery.storyId === storyId) ?? [],
     codexEntries: state.codexEntries.filter(entry => entry.storyId === storyId),
     // The story's world record: the cards it opened with and every one a
     // chapter brought in. Export story carries the whole story, so a story

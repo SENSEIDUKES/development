@@ -172,7 +172,7 @@ describe('HARNESS Sound Cues through sound tags', () => {
     await reloaded.retryAppropriateStage(reloaded.snapshot().attempts[0].id);
     expect(provider.generate).toHaveBeenCalledTimes(1);
     expect(reloaded.snapshot().chapters[0].soundCues).toEqual(placed);
-    const replayed = await reloaded.replayStory(story.id);
+    const replayed = reloaded.snapshot();
     expect(replayed.chapters[0].soundCues).toEqual(placed);
   });
 

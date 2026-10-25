@@ -1,4 +1,3 @@
-import { seedLegacyChapterEvents } from '../../../test-utils/seedLegacyChapterEvents';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
@@ -259,9 +258,7 @@ describe('Harness Generation Phase 2 novel core', () => {
     // A chapter may legitimately establish no new memory; that is a complete
     // answer, not an incomplete interpretation to retry.
     expect(state.chapters).toHaveLength(1);
-    expect(state.events).toHaveLength(0);
-    expect(state.memoryRecoveries).toBeUndefined();
-    expect(state.attempts[0]).toMatchObject({ stage: 'committed', postCommitProcessing: 'complete' });
+    expect(state.attempts[0]).toMatchObject({ stage: 'committed' });
     expect(state.attempts[0].warnings.some(warning => warning.code === 'capability_unresolved')).toBe(false);
 
   });
@@ -277,8 +274,7 @@ describe('Harness Generation Phase 2 novel core', () => {
 
     const state = controller.snapshot();
     expect(state.chapters[0].prose).toBe(`The ferry left without its lantern.\n\n${REST_OF_CHAPTER}`);
-    expect(state.attempts[0]).toMatchObject({ stage: 'committed', postCommitProcessing: 'complete' });
-    expect(state.memoryRecoveries ?? []).toHaveLength(0);
+    expect(state.attempts[0]).toMatchObject({ stage: 'committed' });
     expect(provider.generate).toHaveBeenCalledTimes(1);
   });
 
@@ -311,39 +307,6 @@ describe('Harness Generation Phase 2 novel core', () => {
     });
   });
 
-  it('commits prose through an optional event-preservation failure without another chapter call', async () => {
-    const repository = new InMemoryHarnessGenerationRepository();
-    const provider = adapter(response(JSON.stringify({
-      prose: 'Mae left the lantern burning for the person who had not returned.',
-      memory: { events: [{ description: 'Mae leaves a lantern burning.' }] },
-    })));
-    const controller = new HarnessGenerationController({
-      repository,
-      modelAdapter: provider.value,
-      runtime: runtime(),
-      preserveEvents: () => { throw new Error('Simulated optional event stage failure.'); },
-    });
-    await controller.hydrate();
-    const story = await createStory(controller);
-    await controller.generateNextChapter(story.id, 'google/gemini-3.1-flash-lite');
-
-    expect(controller.snapshot().attempts[0]).toMatchObject({
-      stage: 'committed',
-      rawProviderResponse: expect.stringContaining('lantern'),
-      acceptedDraft: { prose: expect.stringContaining('lantern') },
-    });
-    expect(controller.snapshot().chapters).toHaveLength(1);
-    expect(controller.snapshot().events).toHaveLength(0);
-
-    const reloaded = new HarnessGenerationController({ repository, modelAdapter: provider.value, runtime: runtime() });
-    await reloaded.hydrate();
-    expect(reloaded.snapshot().attempts[0].warnings.some(warning => warning.code === 'event_preservation_retry_required')).toBe(true);
-    await reloaded.replayStory(story.id);
-    expect(reloaded.snapshot().chapters).toHaveLength(1);
-    expect(reloaded.snapshot().events).toHaveLength(0);
-    expect(provider.generate).toHaveBeenCalledTimes(1);
-  });
-
   it('retries an interrupted commit without another model call and never advances the head before persistence succeeds', async () => {
     class FailCommitRepository extends InMemoryHarnessGenerationRepository {
       failed = false;
@@ -372,7 +335,7 @@ describe('Harness Generation Phase 2 novel core', () => {
     expect(provider.generate).toHaveBeenCalledTimes(1);
   });
 
-  it('hydrates committed work and sends committed Chapter 1 recap and canonical state, never its prose, into Chapter 2 context', async () => {
+  it('hydrates committed work and sends committed Chapter 1 recap, never its prose, into Chapter 2 context', async () => {
     const repository = new InMemoryHarnessGenerationRepository();
     const provider = adapter(
       response(JSON.stringify({
@@ -389,7 +352,6 @@ describe('Harness Generation Phase 2 novel core', () => {
     await firstController.hydrate();
     const story = await createStory(firstController);
     await firstController.generateNextChapter(story.id, 'google/gemini-3.1-flash-lite');
-    await seedLegacyChapterEvents(firstController, repository, { events: [{ description: 'Nera discovers a sealed door behind the floodwall.', category: 'character', subjects: ['Nera'], evidence: 'Nera found the door behind the floodwall at first light.', details: { character: { name: 'Nera', role: 'Keeper' } } }] });
 
     const reloaded = new HarnessGenerationController({ repository, modelAdapter: provider.value, runtime: runtime() });
     await reloaded.hydrate();
@@ -398,7 +360,6 @@ describe('Harness Generation Phase 2 novel core', () => {
     const chapterTwoRequest = provider.generate.mock.calls[1][0] as HarnessGenerationRequest;
     expect(chapterTwoRequest.immediateChapterRequest).toEqual({ chapterNumber: 2, continuation: true, chapterScale: { minWords: 1_200, maxWords: 1_700, paragraphs: harnessChapterParagraphTarget(story.id, 2) } });
     expect(chapterTwoRequest.storyInformation.previouslyOn).toEqual([{ chapterNumber: 1, title: 'A Door in the Floodwall', recap: 'Nera found a sealed door behind the floodwall.' }]);
-    expect(chapterTwoRequest.storyInformation.canonicalState.characters).toEqual([expect.objectContaining({ name: 'Nera', asOfChapter: 1, facts: expect.objectContaining({ role: 'Keeper' }) })]);
     expect(JSON.stringify(chapterTwoRequest.storyInformation)).not.toContain('at first light');
     expect(reloaded.snapshot().chapters.map(chapter => chapter.chapterNumber)).toEqual([1, 2]);
   });

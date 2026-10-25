@@ -218,7 +218,8 @@ describe('Rewrite this chapter', () => {
     expect(gap(draft => { draft.attempts[0].stage = 'raw_received'; })).toBe('Wait for the chapter being written before rewriting Chapter 1.');
     expect(gap(draft => { draft.batches.push({ id: 'b', storyId: run.storyId, model: 'fixture', requestedChapterCount: 3, startChapterNumber: 1, completedChapterIds: [], status: 'running', createdAt: 'now', updatedAt: 'now', usage: { reportedCalls: 0, estimatedCalls: 0, unavailableCalls: 0, inputTokens: 0, outputTokens: 0, totalTokens: 0 } }); }))
       .toBe('Pause the batch writing this story before rewriting Chapter 1.');
-    expect(gap(draft => { draft.chapters[0].eventIds = ['legacy-event']; })).toBe('Chapter 1 carries story memory, so it cannot be rewritten.');
+    expect(gap(draft => { draft.canonicalRecords.push({ id: 'rec-1', storyId: draft.stories[0].id, chapterId: draft.chapters[0].id, capabilityId: 'characters', capabilityVersion: 'foundation-1', kind: 'character', evidence: 'A name the chapter brought in.', confidence: 'resolved', facts: {}, createdAt: 'now', warnings: [] }); }))
+      .toBe('Chapter 1 carries story memory, so it cannot be rewritten.');
     expect(gap(draft => { draft.corrections.push({ id: 'c', storyId: run.storyId, kind: 'reader-edit', reason: 'edit', createdAt: 'now', targetRecordIds: [], readerEdit: { chapterNumber: 1, changes: [] } }); }))
       .toBe('Chapter 1 has your corrections, so it cannot be rewritten.');
     // The last chapter of an arc, once the next arc is planned from it.

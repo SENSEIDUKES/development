@@ -51,7 +51,7 @@ describe('the chapter is not the tagger\'s to change', () => {
       '[[appears: Old Wen | character]] A gaunt figure in ash-grey robes stepped out of the dust.',
     ]);
     expect(tagging.record.status).toBe('tagged');
-    if (!tagging.tags) return;
+    expect(tagging.tags).toBeDefined();
     expect(tagging.tags?.speakers).toHaveLength(1);
     expect(tagging.tags?.holdingChanges).toHaveLength(1);
     expect(tagging.tags?.appearances?.map(appearance => appearance.payload.subject.name)).toEqual(['Old Wen']);
@@ -130,7 +130,7 @@ describe('a tag on a chapter the writer never touched', () => {
       at: '2026-10-25T00:00:00.000Z',
     });
     expect(tagging.record.status).toBe('tagged');
-    if (!tagging.tags) return;
+    expect(tagging.tags).toBeDefined();
     const anchor = tagging.tags!.speakers[0].anchor;
     expect(sent[0].slice(anchor.startOffset, anchor.endOffset)).toBe(anchor.selectedText);
   });

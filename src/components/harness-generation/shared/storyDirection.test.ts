@@ -206,7 +206,7 @@ describe('Previously On recaps and rhythm metadata', () => {
     expect(state.chapters[0].recap).toEqual(edited.recap);
     expect(state.chapters[1].recap?.text).toBe('Chapter two recap.');
 
-    state = await run.controller.replayStory(story.id);
+    state = run.controller.snapshot();
     expect(state.chapters[0].recap).toEqual(edited.recap);
     expect(state.chapters[0].rhythm).toEqual(first.rhythm);
 

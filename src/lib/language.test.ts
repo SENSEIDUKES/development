@@ -1,15 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_SEN_LANGUAGE_CODE, SEN_LANGUAGES, getSenLanguageLabel, getSenTextDirection, isSenLanguageCode, normalizeSenLanguageCode, resolveReadingLanguageCode } from '@seihouse/sen/contracts';
+import { DEFAULT_SEN_LANGUAGE_CODE, SEN_LANGUAGES, getSenLanguageLabel, getSenTextDirection, isSenLanguageCode, normalizeSenLanguageCode, resolveReadingLanguageCode, senSpeechLanguageTags } from '@seihouse/sen/contracts';
 
 describe('SEN language registry', () => {
   it('exposes one entry per supported language with a stable code, label, and direction', () => {
-    expect(SEN_LANGUAGES.length).toBeGreaterThan(0);
+    expect(SEN_LANGUAGES).toHaveLength(30);
     const codes = SEN_LANGUAGES.map(language => language.code);
     expect(new Set(codes).size).toBe(codes.length);
     for (const language of SEN_LANGUAGES) {
       expect(language.code.trim()).toBe(language.code);
       expect(language.label.trim()).not.toBe('');
       expect(['ltr', 'rtl']).toContain(language.direction);
+      expect(senSpeechLanguageTags(language.code)).toContain(language.code);
     }
     expect(codes).toContain(DEFAULT_SEN_LANGUAGE_CODE);
   });

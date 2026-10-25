@@ -936,7 +936,7 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(recall('Quill')).toBeNull();
   });
 
-  it('translates the interface across all 15 languages in Settings, previews during confirmation, reverts on cancel, and persists when kept', async () => {
+  it('translates the interface across all 30 languages in Settings, previews during confirmation, reverts on cancel, and persists when kept', async () => {
     const services = appServices(scriptedWriter().writer);
     services.profile.save({ displayName: 'Home' });
     await render(services, '/app/?page=profile&cave=/settings', undefined);
@@ -945,7 +945,7 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     const confirmDialog = () => document.body.querySelector<HTMLElement>('[data-cave-language-confirm]');
     expect(select()).toBeTruthy();
     const optionCodes = [...select().querySelectorAll('option')].map(option => option.value);
-    expect(optionCodes).toHaveLength(15);
+    expect(optionCodes).toHaveLength(30);
 
     const chooseInterfaceLanguage = async (code: string) => {
       await act(async () => {

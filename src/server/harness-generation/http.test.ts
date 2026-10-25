@@ -78,6 +78,38 @@ describe('Harness Generation HTTP boundary', () => {
     expect(missing.status).toBe(400);
     expect(generate).toHaveBeenCalledOnce();
   });
+  it('sends a tagging request with the chapter and the names, and rejects a malformed one before contacting the provider', async () => {
+    const generate = vi.fn(async (_input: HarnessTextGenerationRequest) => ({ rawProviderResponse: '{"paragraphs":[]}',
+      providerReceipt: { provider: 'gemini' as const, model: request().model, generatedAt: '2026-10-25', usage: { source: 'unavailable' as const } } }));
+    const tagRequest = {
+      operation: 'tag-chapter',
+      storyId: 'hst_test',
+      chapterId: 'c1',
+      chapterNumber: 4,
+      model: request().model,
+      language: 'English',
+      paragraphs: ['Ye Chen drew his sword.'],
+      subjects: [{ name: 'Ye Chen', kind: 'character', mainCharacter: true }],
+    };
+    const sent = await handleHarnessGenerationHttp({ method: 'POST', body: tagRequest },
+      { environment, providerFactory: () => ({ provider: 'gemini', model: request().model, generate }) });
+    expect(sent.status).toBe(200);
+    expect(generate).toHaveBeenCalledTimes(1);
+    const input = generate.mock.calls[0][0];
+    expect(input.userPrompt).toContain('Ye Chen drew his sword.');
+    // Nothing of the packet travels: a chapter an author wrote has none of it.
+    expect(input.userPrompt).not.toContain('Destined Ending');
+    for (const broken of [
+      { ...tagRequest, paragraphs: [] },
+      { ...tagRequest, paragraphs: ['A paragraph.', 7] },
+      { ...tagRequest, subjects: [{ name: 'Ye Chen', kind: 'place' }] },
+      { ...tagRequest, chapterNumber: 0 },
+      { ...tagRequest, language: '' },
+    ]) {
+      expect((await handleHarnessGenerationHttp({ method: 'POST', body: broken }, { environment })).status).toBe(400);
+    }
+    expect(generate).toHaveBeenCalledTimes(1);
+  });
   it('rejects unknown operations and the retired memory operation before contacting the provider', async () => {
     for (const body of [{ ...request(), operation: 'unknown' }, {
       ...request(), operation: 'recover-memory', chapterId: 'saved', prose: 'Saved prose.',

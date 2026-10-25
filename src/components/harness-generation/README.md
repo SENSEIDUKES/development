@@ -37,6 +37,27 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-10-25 (the chapter tagger):** SENSEI's architecture for tagging, built
+  beside the writer rather than inside it: "we simply take out whatever we're
+  currently having the writer model tag and put it inside a second model call
+  where his job is just to read the chapter and add the tags for us." The reason
+  it is shaped the way it is comes from the same conversation: "if you take the
+  AI generation of the novel out, this tagger needs to be able to still tag the
+  story with sound cues, etc." So the tagger receives the chapter, who and what
+  the story already has, what each character was carrying, and the words it may
+  name — and nothing about how the story got here. No Foundation, no arc, no
+  Destined Ending, no Story Information Packet: a chapter an author wrote
+  themselves has none of those and has to tag exactly as well, and a test fails
+  if any of them reaches the prompt. It teaches the tags from the same five
+  skills the writer reads, so the tag language keeps one owner and the writer's
+  words do not change. The answer is the same paragraphs with tags written in,
+  and that is what lets the HARNESS check the tagger instead of trusting it: the
+  tags are read and removed through the same path a writer's reply goes through
+  (`acceptChapterTags`), and the prose that falls out is compared to the prose
+  that was sent. An answer that changed a word of the chapter is refused whole;
+  the chapter is already committed and keeps every word, and tagging can be run
+  again. Nothing calls it from the chapter loop yet, and tagging has not left
+  the writer: both are the next change.
 - **2026-10-24 (the world at Chapter 0 becomes the world record):** The record
   held only the world a story opens with, and its name said so. SENSEI's
   architecture for everything the Codex holds is that a card is made properly

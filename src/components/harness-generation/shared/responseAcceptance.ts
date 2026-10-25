@@ -533,6 +533,40 @@ export const verifyHarnessEventEvidence = (event: HarnessSemanticEvent, prose: s
   return { ...event, evidenceVerified: Boolean(quote && normalize(prose).includes(quote) && factsSupported) };
 };
 
+/**
+ * Reads the tags out of paragraphs that are already written, and places every
+ * one of them: the tagger's path (`shared/tagger.ts`).
+ *
+ * It runs the same tag reading and the same placement the writer's reply goes
+ * through, so a tag means exactly one thing however it got into the prose
+ * (HARNESS_PRINCIPLES: everything writes the same manuscript attachments).
+ * What it does not do is anything only a writer's reply carries: no title, no
+ * recap, no closing holdings list, and so no check against one.
+ *
+ * The clean text it returns is what the prose reads as once every tag is
+ * removed. The tagger's caller compares it to the paragraphs it sent, which is
+ * how the HARNESS proves a tagger changed no word of the chapter.
+ */
+export const acceptChapterTags = (
+  paragraphs: readonly string[],
+  chapterNumber: number,
+  warnings: HarnessWarning[],
+  options: HarnessResponseAcceptanceOptions = {},
+) => {
+  const marked = readParagraphMarks(paragraphs, warnings, options.soundVocabulary, options.locale);
+  // No reply field to read a closing list from: the tagger never returns one.
+  const holdings = acceptedHoldings({}, marked, chapterNumber, warnings, options);
+  return {
+    /** The paragraphs as they read with every tag removed. */
+    paragraphs: marked.read.map(reading => reading.text),
+    soundCues: acceptedSoundCues(marked.read, chapterNumber, warnings, options),
+    speakers: acceptedSpeakers(marked, chapterNumber, warnings, options),
+    holdingChanges: holdings.changes,
+    appearances: acceptedAppearances(marked, chapterNumber, warnings, options),
+    scene: acceptedScene(marked.soundtracks, chapterNumber, warnings, options),
+  };
+};
+
 export const acceptHarnessModelResponse = (
   raw: string,
   chapterNumber: number,

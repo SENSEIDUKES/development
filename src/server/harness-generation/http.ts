@@ -1,4 +1,4 @@
-import { CHAPTER_REWRITE_NOTE_LIMIT, HARNESS_MAX_CHAPTER_PARAGRAPHS, HOLDINGS_FIXER_CASE_LIMIT, LOOK_DECLARED_CHARACTERS, LOOK_PASSAGE_CHARACTERS, LOOK_SUBJECT_LIMIT, type HarnessArcRequest, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessHoldingsFixRequest, type HarnessLookRequest } from '@seihouse/sen/harness-generation';
+import { CHAPTER_REWRITE_NOTE_LIMIT, HARNESS_MAX_CHAPTER_PARAGRAPHS, HOLDINGS_FIXER_CASE_LIMIT, LOOK_DECLARED_CHARACTERS, LOOK_PASSAGE_CHARACTERS, LOOK_SUBJECT_LIMIT, type HarnessArcRequest, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessHoldingsFixRequest, type HarnessLookRequest, type HarnessTagRequest } from '@seihouse/sen/harness-generation';
 import { validateSoundWords } from '@seihouse/sen/audio';
 import {
   harnessGenerationServerInfo,
@@ -13,6 +13,7 @@ import {
 } from './execute';
 import { executeHoldingsFix } from './holdingsFixer';
 import { executeLookDescription } from './lookDescriber';
+import { TAG_NAME_CHARACTERS, TAG_PARAGRAPH_CHARACTERS, TAG_PARAGRAPH_LIMIT, TAG_SUBJECT_LIMIT, executeHarnessTagging } from './tagger';
 
 export interface HarnessGenerationHttpRequest {
   method?: string;
@@ -112,11 +113,35 @@ const parseLookRequest = (parsed: Record<string, unknown>): HarnessLookRequest =
   return parsed as unknown as HarnessLookRequest;
 };
 
-const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessArcRequest | HarnessHoldingsFixRequest | HarnessLookRequest => {
+/**
+ * A tagging request: the chapter's own paragraphs and the names the tagger may
+ * use. Nothing here describes how the story got here, so there is nothing of
+ * the packet to validate.
+ */
+const TAG_SUBJECT_KINDS = new Set(['character', 'thing', 'ability']);
+
+const parseTagRequest = (parsed: Record<string, unknown>): HarnessTagRequest => {
+  const within = (value: unknown, limit: number) => typeof value === 'string' && value.length <= limit;
+  const paragraphs = parsed.paragraphs;
+  const subjects = parsed.subjects;
+  const valid = [parsed.storyId, parsed.chapterId, parsed.model, parsed.language].every(value => typeof value === 'string' && value.trim())
+    && Number.isInteger(parsed.chapterNumber) && Number(parsed.chapterNumber) >= 1
+    && Array.isArray(paragraphs) && paragraphs.length >= 1 && paragraphs.length <= TAG_PARAGRAPH_LIMIT
+    && paragraphs.every(paragraph => within(paragraph, TAG_PARAGRAPH_CHARACTERS))
+    && Array.isArray(subjects) && subjects.length <= TAG_SUBJECT_LIMIT
+    && subjects.every(subject => isRecord(subject) && within(subject.name, TAG_NAME_CHARACTERS) && Boolean((subject.name as string).trim())
+      && TAG_SUBJECT_KINDS.has(subject.kind as string)
+      && (subject.aliases === undefined || (Array.isArray(subject.aliases) && subject.aliases.every(alias => within(alias, TAG_NAME_CHARACTERS)))));
+  if (!valid) throw new Error(`A tagging request needs its chapter, model and language, 1 to ${TAG_PARAGRAPH_LIMIT} paragraphs, and at most ${TAG_SUBJECT_LIMIT} named subjects.`);
+  return parsed as unknown as HarnessTagRequest;
+};
+
+const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessArcRequest | HarnessHoldingsFixRequest | HarnessLookRequest | HarnessTagRequest => {
   const parsed = typeof body === 'string' ? JSON.parse(body) : body;
   if (!isRecord(parsed)) throw new Error('The Harness Generation request must be a JSON object.');
   if (parsed.operation === 'fix-holdings') return parseHoldingsFix(parsed);
   if (parsed.operation === 'describe-looks') return parseLookRequest(parsed);
+  if (parsed.operation === 'tag-chapter') return parseTagRequest(parsed);
   if (parsed.operation === 'plan-arc') {
     if (!isRecord(parsed.storyInformation) || !isRecord(parsed.storyInformation.storyHead) || typeof parsed.model !== 'string'
       || typeof parsed.storyId !== 'string') throw new Error('Arc operations require a frozen Story Information Packet.');
@@ -212,7 +237,7 @@ export const handleHarnessGenerationHttp = async (
     };
   }
 
-  let parsed: HarnessGenerationRequest | HarnessArcRequest | HarnessHoldingsFixRequest | HarnessLookRequest;
+  let parsed: HarnessGenerationRequest | HarnessArcRequest | HarnessHoldingsFixRequest | HarnessLookRequest | HarnessTagRequest;
   try {
     parsed = parseRequest(request.body);
   } catch (error) {
@@ -229,7 +254,9 @@ export const handleHarnessGenerationHttp = async (
       ? await executeHoldingsFix(parsed as HarnessHoldingsFixRequest, config, dependencies.providerFactory)
       : operation === 'describe-looks'
         ? await executeLookDescription(parsed as HarnessLookRequest, config, dependencies.providerFactory)
-        : await executeHarnessGeneration(parsed as HarnessGenerationRequest | HarnessArcRequest, config, dependencies.providerFactory, reasoningLevel);
+        : operation === 'tag-chapter'
+          ? await executeHarnessTagging(parsed as HarnessTagRequest, config, dependencies.providerFactory)
+          : await executeHarnessGeneration(parsed as HarnessGenerationRequest | HarnessArcRequest, config, dependencies.providerFactory, reasoningLevel);
     return {
       status: 200,
       body: result satisfies HarnessGenerationResponse,

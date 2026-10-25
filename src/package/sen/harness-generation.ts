@@ -201,6 +201,12 @@ export {
   planCodexLook,
   readDescribedLooks,
 } from '../../components/harness-generation/shared/lookDescriber';
+export {
+  planChapterTagging,
+  readChapterTagging,
+  tagSubjectsOfStory,
+  type ChapterTagging,
+} from '../../components/harness-generation/shared/tagger';
 export * from '../../narrative/holdings';
 export * from '../../narrative/appearances';
 export { createHarnessSenStory } from '../../components/harness-generation/shared/senAdapter';

@@ -4,7 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import {
-  LIBRARY_EMBLEM, LibraryDesktopNavigationProvider, LibraryDestinationsProvider, LibraryNavigation, LibrarySectionSidebar, WorkspaceHeader,
+  LibraryDesktopNavigationProvider, LibraryDestinationsProvider, LibraryNavigation, LibrarySectionSidebar, WorkspaceHeader,
   WorkspaceHeaderSoundProvider, useLibraryBottomClearance, useLibraryWorkspace, type LibraryWorkspaceDefinition,
 } from '@seihouse/library/shell';
 import { MainLibraryNavigation } from './MainLibraryNavigation';
@@ -153,9 +153,10 @@ it('runs Story Seed in the Library Shell workspace mode instead of a navigation 
   expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Story Seed settings');
   await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
   await settle();
-  // Story Seed's header matches every Library page: the Celestial Library emblem, home through the host.
+  // Story Seed's header matches every Library page: the Novel Expanded logo, home through the host.
   const emblem = container.querySelector<HTMLImageElement>('header a img')!;
-  expect(emblem.getAttribute('src')).toBe(LIBRARY_EMBLEM.src);
+  expect(emblem.closest('[data-slot="novel-expanded-logo"]')).not.toBeNull();
+  expect(emblem.getAttribute('src')).toContain('novel-expanded-320.webp');
   expect(emblem.closest('a')!.getAttribute('aria-label')).toBe('Return to Library');
   await click(emblem.closest('a')!);
   expect(home).toHaveBeenCalledTimes(1);

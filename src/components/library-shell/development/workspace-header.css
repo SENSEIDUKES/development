@@ -25,7 +25,13 @@
   font: inherit;
   letter-spacing: normal;
 }
-.workspace-header-badge { display: block; min-width: 0; }
+.workspace-header-badge { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.workspace-header-logo { display: inline-flex; align-items: center; justify-content: center; flex: none; border-radius: 12px; }
+.workspace-header-logo-art { --ne-logo-height: 40px; }
+@media (max-width: 479px) {
+  .workspace-header-badge { gap: 4px; }
+  .workspace-header-logo-art { --ne-logo-height: 32px; }
+}
 .workspace-header [data-slot="library-header-badge-title"] {
   overflow: visible;
   text-overflow: clip;

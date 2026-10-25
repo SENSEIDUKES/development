@@ -50,6 +50,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.135.0",
     "@google/genai": "^2.16.0",
+    "@library-studios/brand": "file:vendor/library-studios-brand-0.1.0.tgz",
     "@seihouse/audio-player": "file:vendor/seihouse-audio-player-4.0.0-steady-pitch.tgz",
     "@seihouse/library-ui": "file:vendor/seihouse-library-ui-0.10.0.tgz",
     "@seihouse/living-titles": "file:vendor/seihouse-living-titles-0.1.1.tgz",

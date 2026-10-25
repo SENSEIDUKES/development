@@ -9,69 +9,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 44px;
-  height: 44px;
-  border-radius: 50%;
+  flex: none;
+  min-height: 44px;
+  border-radius: 12px;
 }
 
-.novel-expanded-emblem-art {
-  position: relative;
-  isolation: isolate;
-  display: inline-flex;
-  width: 28px;
-  height: 28px;
-}
-
-.novel-expanded-emblem-aura {
-  position: absolute;
-  inset: -6px;
-  border-radius: 50%;
-  opacity: 0.6;
-  filter: blur(8px);
-}
-
-.novel-expanded-emblem-ring {
-  position: absolute;
-  inset: -2px;
-  border-radius: 50%;
-  opacity: 0.9;
-  box-shadow: 0 0 12px rgba(124, 92, 255, 0.35);
-}
-
-.novel-expanded-emblem img {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-  background: var(--color-sen-void);
-  outline: 1px solid color-mix(in srgb, var(--color-sen-gold-accent) 60%, transparent);
-  box-shadow: 0 0 12px rgba(212, 175, 55, 0.45), 0 0 28px rgba(4, 172, 255, 0.18);
-}
-
-.novel-expanded-emblem:hover .novel-expanded-emblem-aura {
-  opacity: 0.9;
-  filter: blur(10px);
-}
-
-/* The wordmark sets the header's height: at 90px wide it is 56px tall, the
-   header's own row, so the header stays compact (about 72px with its padding). */
-.novel-expanded-wordmark {
-  display: flex;
-  align-items: center;
-  width: 90px;
-  flex: 0 1 90px;
-  min-width: 0;
-  max-width: 100%;
-  border-radius: 4px;
-}
-
-.novel-expanded-wordmark img {
-  display: block;
-  width: 100%;
-  height: auto;
-}
+.novel-expanded-emblem-art { --ne-logo-height: 32px; }
 
 .novel-expanded-footer-wordmark {
   display: block;
@@ -79,8 +22,7 @@
   height: auto;
 }
 
-/* The wordmark leaves less rail height than the compact Library header. Keep
-   its landscape in the space left by the app's three pathways, even below the
+/* Keep the landscape in the space left by the app pathways, even below the
    drawer's generic short-screen cutoff. It can shrink to zero when needed;
    the profile, navigation and Settings retain their space and compact mode
    still hides the artwork through the drawer's own visibility rule. */
@@ -90,6 +32,26 @@
 
 @media (min-width: 480px) {
   .novel-expanded-header-identity { gap: 8px; }
-  .novel-expanded-emblem-art { width: 32px; height: 32px; }
-  .novel-expanded-wordmark { width: 104px; flex-basis: 104px; }
+  .novel-expanded-emblem-art { --ne-logo-height: 40px; }
+}
+
+/* Dao Insights occupies the center between the logo and the existing actions. */
+.novel-expanded-shell .workspace-header:has([data-header-center]) .workspace-header-identity { flex: 0 1 auto; min-width: 0; }
+.novel-expanded-shell .workspace-header-center { gap: 0; }
+.novel-expanded-shell .workspace-header-center::before,
+.novel-expanded-shell .workspace-header-center::after { display: none; }
+.novel-expanded-shell .workspace-header-center .main-library-home-insights { width: 100%; min-width: 0; margin: 0; }
+.novel-expanded-shell .workspace-header-center .dao-insights-trigger { width: 100%; min-height: 44px; padding-inline: 0; }
+@media (max-width: 479px) {
+  .novel-expanded-shell .workspace-header-center .dao-insights-trigger > div:first-child { gap: 2px; }
+  .novel-expanded-shell .workspace-header-center .dao-insights-trigger > div:first-child span { font-size: 7px; letter-spacing: 0.04em; line-height: 1.2; }
+}
+
+@media (max-width: 639px) {
+  /* On phones use the space between unequal side groups instead of a fixed midpoint. */
+  .novel-expanded-shell .workspace-header [data-slot="app-header-center"] {
+    position: static; transform: none; translate: none; flex: 1 1 0;
+    width: auto !important; max-width: none !important; white-space: normal;
+  }
+  .novel-expanded-shell .workspace-header-center .dao-insights-trigger > div:first-child { white-space: normal; }
 }

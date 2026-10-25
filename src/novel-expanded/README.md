@@ -1,5 +1,9 @@
 # NovelExpanded app
 
+- **2026-10-24** — Home places Insights from the Dao in the header on phones and desktops. Its existing spark host, Copy, Story Bank and Begin actions are retained; the duplicate content placement is removed.
+
+- **2026-10-24** — Header branding uses the exact Novel Expanded logo from Library Studios, replacing the circular S emblem. The pinned brand package supplies artwork, spectrum border and reduced-motion behavior. Home navigation, title badges and utilities remain in their hosts. The app header shows only the new logo; its duplicate large wordmark is removed, while the footer wordmark remains. Library Shell and Home Workshop Development previews share these implementations; historical references are unchanged. See `vendor/studio-brand-artifact.json` for provenance.
+
 The NovelExpanded app as its own place, at **`/app/`** on every preview and
 deployment. It holds the core application spine from [`NOVEL_EXPANDED.md`](../../NOVEL_EXPANDED.md),
 the minimum path through the product:

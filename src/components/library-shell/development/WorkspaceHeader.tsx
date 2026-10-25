@@ -2,6 +2,9 @@ import { createContext, useContext, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { SEIAppHeader, SEIToolbar } from '@seihouse/ui';
 import { NarrativeButton as LibraryButton, NarrativeHeaderBadge as LibraryHeaderBadge } from '@seihouse/sen/presentation';
+import { NovelExpandedLogo } from '@library-studios/brand';
+import '@library-studios/brand/styles.css';
+import { LIBRARY_EMBLEM } from './libraryBrand';
 import { ArrowLeft } from 'lucide-react';
 import { HeaderActionButton, HeaderOverflow, type HeaderAction } from './WorkspaceHeaderActions';
 import { useCompactHeader } from './workspaceMedia';
@@ -59,6 +62,8 @@ export interface WorkspaceHeaderProps {
    * right. Home puts Dao Insights here.
    */
   center?: ReactNode;
+  /** Show host center content on phones too, independently of the Pathways sidebar. */
+  centerBreakpoint?: "lg" | "always";
   /**
    * The host's sound control (Library: `HeaderSoundControl`), so the reader
    * can always mute. Where there is room (laptops) it sits just before Help
@@ -83,10 +88,10 @@ export interface WorkspaceHeaderProps {
  */
 export function WorkspaceHeader({ title, subtitle, emblem, home, back, primaryAction,
   secondaryActions = [], overflowActions = [], contextualItem, help, searchItems = [],
-  status, landmark = 'banner', center, sound, identity }: WorkspaceHeaderProps) {
+  status, landmark = 'banner', center, centerBreakpoint = 'lg', sound, identity }: WorkspaceHeaderProps) {
   const compact = useCompactHeader();
   const pathways = useLibraryPathways();
-  const showCenter = pathways && center != null && center !== false;
+  const showCenter = (centerBreakpoint === 'always' || pathways) && center != null && center !== false;
   const accessory = useContext(HeaderAccessoryContext);
   const hostSound = useContext(HeaderSoundContext);
   const soundControl = sound === undefined ? hostSound : sound;
@@ -94,6 +99,7 @@ export function WorkspaceHeader({ title, subtitle, emblem, home, back, primaryAc
   const soundPlace = useLibrarySoundSlot();
   const commands = [...secondaryActions, ...(primaryAction ? [primaryAction] : []), ...overflowActions];
   const searchCommands = [...searchItems, ...commands.filter(action => !searchItems.some(item => item.id === action.id))];
+  const novelExpandedEmblem = emblem?.src === LIBRARY_EMBLEM.src;
   return <>
   <SEIAppHeader
     landmark={landmark}
@@ -107,7 +113,7 @@ export function WorkspaceHeader({ title, subtitle, emblem, home, back, primaryAc
     branding={back && <LibraryButton variant="ghost" size="icon" icon={ArrowLeft}
       aria-label={back.label} onClick={back.onNavigate} />}
     center={showCenter ? <div className="workspace-header-center" data-header-center>{center}</div> : undefined}
-    centerBreakpoint="lg"
+    centerBreakpoint={centerBreakpoint}
     appName={identity ?? <span className="workspace-header-badge" onClick={event => {
       // Canonical badge owns the link markup; the host may intercept ordinary navigation.
       if (home?.onNavigate && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey
@@ -116,8 +122,11 @@ export function WorkspaceHeader({ title, subtitle, emblem, home, back, primaryAc
         home.onNavigate();
       }
     }}>
+      {novelExpandedEmblem && (home ? <a className="workspace-header-logo" href={home.href} aria-label={home.label}>
+        <NovelExpandedLogo className="workspace-header-logo-art" alt="" />
+      </a> : <NovelExpandedLogo className="workspace-header-logo-art" />)}
       <LibraryHeaderBadge mode="app-header" title={title} subtitle={subtitle}
-        emblemSrc={emblem?.src} emblemAlt={emblem?.alt}
+        emblemSrc={novelExpandedEmblem ? undefined : emblem?.src} emblemAlt={emblem?.alt}
         emblemHref={home?.href} emblemLinkLabel={home?.label} />
     </span>}
     actions={<>

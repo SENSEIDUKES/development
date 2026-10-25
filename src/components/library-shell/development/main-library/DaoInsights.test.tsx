@@ -134,7 +134,10 @@ it('asks for a Fate Survival spark when Survival is on, and marks the spark', as
   await click(fate);
   expect(fate.getAttribute('aria-checked')).toBe('true');
   await click(button(/Seek a spark/));
+  // While the Dao mutters, the switch cannot change what is being sought.
+  expect(fate.hasAttribute('disabled')).toBe(true);
   await settle(1100);
+  expect(fate.hasAttribute('disabled')).toBe(false);
   expect(requestSpark).toHaveBeenCalledWith(expect.objectContaining({ fateSurvival: true }), expect.any(AbortSignal));
   expect(dialog().querySelector('[aria-label="Story spark"]')?.textContent).toContain('Fate Survival');
 });

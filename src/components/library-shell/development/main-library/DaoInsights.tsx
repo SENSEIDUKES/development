@@ -357,12 +357,13 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
                             );
                           })}
                         </div>
-                        <button type="button" role="switch" aria-checked={survival} aria-label="Fate Survival"
+                        {/* Locked while the Dao mutters, so the spark always matches the switch. */}
+                        <button type="button" role="switch" aria-checked={survival} aria-label="Fate Survival" disabled={seeking}
                           title={survival
                             ? 'Fate Survival on: you direct every chapter, and death is possible.'
                             : 'Fate Survival off: fate guides each chapter. Turn on for a spark where survival is at stake.'}
                           onClick={() => { setSurvival(current => !current); setMessage(null); }}
-                          className={`flex shrink-0 items-center gap-2 rounded-xl border px-2.5 transition-colors ${survival ? 'border-[rgba(248,113,113,0.45)] bg-[rgba(248,113,113,0.08)] text-[#FCA5A5]' : 'border-[rgba(196,182,148,0.15)] bg-[rgba(11,14,30,0.6)] text-neutral-400'}`}>
+                          className={`flex shrink-0 items-center gap-2 rounded-xl border px-2.5 transition-colors disabled:opacity-60 ${survival ? 'border-[rgba(248,113,113,0.45)] bg-[rgba(248,113,113,0.08)] text-[#FCA5A5]' : 'border-[rgba(196,182,148,0.15)] bg-[rgba(11,14,30,0.6)] text-neutral-400'}`}>
                           <span className="flex flex-col items-start leading-none">
                             <span className="font-sc text-[9px] font-bold uppercase tracking-[0.14em]">Fate</span>
                             <span className="font-sc text-[11px] font-bold uppercase tracking-[0.1em]">Survival</span>

@@ -50,11 +50,11 @@ describe('the chapter is not the tagger\'s to change', () => {
       '[[@MC]] “Hold the gate,” he said, and the Jade Token burned cold in his palm.',
       '[[appears: Old Wen | character]] A gaunt figure in ash-grey robes stepped out of the dust.',
     ]);
-    expect(tagging.status).toBe('tagged');
-    if (tagging.status !== 'tagged') return;
-    expect(tagging.speakers).toHaveLength(1);
-    expect(tagging.holdingChanges).toHaveLength(1);
-    expect(tagging.appearances?.map(appearance => appearance.payload.subject.name)).toEqual(['Old Wen']);
+    expect(tagging.record.status).toBe('tagged');
+    if (!tagging.tags) return;
+    expect(tagging.tags?.speakers).toHaveLength(1);
+    expect(tagging.tags?.holdingChanges).toHaveLength(1);
+    expect(tagging.tags?.appearances?.map(appearance => appearance.payload.subject.name)).toEqual(['Old Wen']);
   });
 
   it('refuses the whole answer when one paragraph came back reworded', () => {
@@ -63,27 +63,27 @@ describe('the chapter is not the tagger\'s to change', () => {
       '[[@MC]] “Hold the gate!” he shouted, and the Jade Token burned cold in his palm.',
       PARAGRAPHS[2],
     ]);
-    expect(tagging.status).toBe('failed');
-    if (tagging.status !== 'failed') return;
-    expect(tagging.problem).toContain('paragraph 2');
+    expect(tagging.record.status).toBe('failed');
+    
+    expect(tagging.record.problem).toContain('paragraph 2');
   });
 
   it('refuses an answer that lost or added a paragraph', () => {
-    expect(read(PARAGRAPHS.slice(0, 2)).status).toBe('failed');
-    expect(read([...PARAGRAPHS, 'And the gate held.']).status).toBe('failed');
+    expect(read(PARAGRAPHS.slice(0, 2)).record.status).toBe('failed');
+    expect(read([...PARAGRAPHS, 'And the gate held.']).record.status).toBe('failed');
   });
 
   it('refuses an answer that is not readable, holds no paragraphs, or holds a paragraph that is not text', () => {
-    expect(readChapterTagging({ raw: 'not json', sent: PARAGRAPHS, chapterNumber: 4, at: 'now' }).status).toBe('failed');
-    expect(read(undefined).status).toBe('failed');
-    expect(read([PARAGRAPHS[0], 7, PARAGRAPHS[2]]).status).toBe('failed');
+    expect(readChapterTagging({ raw: 'not json', sent: PARAGRAPHS, chapterNumber: 4, at: 'now' }).record.status).toBe('failed');
+    expect(read(undefined).record.status).toBe('failed');
+    expect(read([PARAGRAPHS[0], 7, PARAGRAPHS[2]]).record.status).toBe('failed');
   });
 
   it('counts a space left behind by a tag as no change', () => {
     // A tag at a paragraph's edge leaves whitespace when it is removed, and the
     // prose reads the same, so it is never called a change.
     const tagging = read([`[[@MC]] ${PARAGRAPHS[0]} `, PARAGRAPHS[1], PARAGRAPHS[2]]);
-    expect(tagging.status).toBe('tagged');
+    expect(tagging.record.status).toBe('tagged');
   });
 });
 
@@ -102,7 +102,7 @@ describe('a tag on a chapter the writer never touched', () => {
       at: '2026-10-25T00:00:00.000Z',
       options: { soundVocabulary: [{ word: 'boom', example: 'a boom' }] },
     });
-    expect(tagging.status).toBe('tagged');
+    expect(tagging.record.status).toBe('tagged');
   });
 
   it('refuses a chapter whose paragraphs are not the prose the reader has', () => {
@@ -115,10 +115,10 @@ describe('a tag on a chapter the writer never touched', () => {
       chapterNumber: 4,
       at: '2026-10-25T00:00:00.000Z',
     });
-    expect(tagging.status).toBe('failed');
-    if (tagging.status !== 'failed') return;
-    expect(tagging.problem).toContain('paragraph 1');
-    expect(tagging.problem).toContain('wrong words');
+    expect(tagging.record.status).toBe('failed');
+    
+    expect(tagging.record.problem).toContain('paragraph 1');
+    expect(tagging.record.problem).toContain('wrong words');
   });
 
   it('places every tag against the paragraph exactly as the chapter holds it', () => {
@@ -129,9 +129,9 @@ describe('a tag on a chapter the writer never touched', () => {
       chapterNumber: 4,
       at: '2026-10-25T00:00:00.000Z',
     });
-    expect(tagging.status).toBe('tagged');
-    if (tagging.status !== 'tagged') return;
-    const anchor = tagging.speakers[0].anchor;
+    expect(tagging.record.status).toBe('tagged');
+    if (!tagging.tags) return;
+    const anchor = tagging.tags!.speakers[0].anchor;
     expect(sent[0].slice(anchor.startOffset, anchor.endOffset)).toBe(anchor.selectedText);
   });
 });

@@ -16,6 +16,7 @@ export const createEmptyHarnessWorkspaceState = (): HarnessWorkspaceState => ({
   batches: [],
   arcPlanOperations: [],
   codexEntries: [],
+  worldCards: [],
 });
 
 export interface HarnessGenerationRepository {
@@ -38,7 +39,8 @@ export const isCurrentHarnessWorkspaceState = (value: unknown): value is Harness
     && Array.isArray(candidate.corrections)
     && Array.isArray(candidate.batches)
     && Array.isArray(candidate.arcPlanOperations)
-    && Array.isArray(candidate.codexEntries);
+    && Array.isArray(candidate.codexEntries)
+    && Array.isArray(candidate.worldCards);
 };
 
 const hasWorkspaceShape = (value: unknown): value is Record<string, unknown> & { schemaVersion?: unknown } => {
@@ -86,6 +88,30 @@ const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => 
   // card after Chapter 0 before this version, so every saved card is the world
   // the story opened with, and its key is rewritten with it.
   35: stored => ({ ...upgradeSavedWorldCards(stored), schemaVersion: 36 }),
+  // 37 gives the world record a home of its own on the workspace, so a chapter
+  // can add a card to it. Every saved story's cards are the ones its author
+  // wrote, so the record opens from each story's active Foundation.
+  36: stored => ({ ...stored, worldCards: openingWorldCardsOf(stored), schemaVersion: 37 }),
+};
+
+/**
+ * Every saved story's opening cards, as rows of the living record: read from
+ * the story's active Foundation revision, which is where the world lived until
+ * this version. A story with no world, or whose revision cannot be found, adds
+ * nothing; its record simply opens empty, exactly as it reads today.
+ */
+const openingWorldCardsOf = (stored: StoredWorkspace): unknown[] => {
+  const stories = Array.isArray(stored.stories) ? stored.stories : [];
+  const foundations = Array.isArray(stored.foundations) ? stored.foundations : [];
+  return stories.flatMap(story => {
+    if (!story || typeof story !== 'object') return [];
+    const { id, activeFoundationRevisionId } = story as { id?: unknown; activeFoundationRevisionId?: unknown };
+    if (typeof id !== 'string' || typeof activeFoundationRevisionId !== 'string') return [];
+    const revision = foundations.find(candidate => (candidate as { id?: unknown })?.id === activeFoundationRevisionId);
+    const cards = ((revision as { input?: { worldAtChapterZero?: { cards?: unknown } } })?.input?.worldAtChapterZero ?? {}).cards;
+    if (!Array.isArray(cards)) return [];
+    return cards.flatMap(card => (card && typeof card === 'object' && !Array.isArray(card) ? [{ ...card, storyId: id }] : []));
+  });
 };
 
 /**

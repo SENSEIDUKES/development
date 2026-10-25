@@ -34,6 +34,7 @@ import { pendingChapterDirection } from '../shared/chapterDirection';
 import { chapterRewriteGap, latestStoryChapter } from '../shared/chapterRewrite';
 import { protagonistNames } from '../shared/speakers';
 import { declaredCharacters } from '../shared/holdings';
+import { storyWorldRecord } from '../shared/foundation';
 import { deriveStoryCodex, type CodexPictureMaker, type CodexPictures } from '../shared/storyCodex';
 import { BlueprintArcPage } from './BlueprintArcPage';
 import { ChapterAuthoring } from './ChapterAuthoring';
@@ -543,13 +544,16 @@ function ReaderCodex({ state, storyId, chapters, storyTitle, pictures, onBack, o
 }) {
   const story = state.stories.find(entry => entry.id === storyId);
   const foundation = state.foundations.find(entry => entry.id === story?.activeFoundationRevisionId)?.input;
+  // The world as it stands, not the author's opening world: a card a chapter
+  // brought in belongs in the Codex as surely as one the Blueprint wrote.
+  const world = useMemo(() => storyWorldRecord(state, storyId), [state, storyId]);
   const codex = useMemo(() => deriveStoryCodex({
     entries: state.codexEntries.filter(entry => entry.storyId === storyId),
     chapters,
-    world: foundation?.worldAtChapterZero,
+    world,
     mainCharacterName: foundation?.cast?.find(member => member.isMainCharacter)?.name,
     declared: foundation ? declaredCharacters(foundation) : [],
     declaredFactions: foundation?.identities?.filter(identity => identity.kind === 'faction') ?? [],
-  }), [state.codexEntries, storyId, chapters, foundation]);
+  }), [state.codexEntries, storyId, chapters, foundation, world]);
   return <StoryCodex codex={codex} storyTitle={storyTitle} pictures={pictures} onBack={onBack} onReadPassage={onReadPassage} onReadChapter={onReadChapter} />;
 }

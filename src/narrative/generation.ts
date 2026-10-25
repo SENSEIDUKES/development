@@ -2,6 +2,7 @@ import type { SoundCueAttachment } from '../audio/inlineAudio';
 import type { ChapterOpeningSound, SoundtrackChangeAttachment } from '../audio/soundtrackChanges';
 import type { SpeakerAttachment } from './speech';
 import type { CodexEntry, CodexEntryKind, HoldingChangeAttachment, HoldingsSection } from './holdings';
+import type { WorldCard, WorldRecord } from './worldRecord';
 import type { AppearanceAttachment, AppearanceEntity, AppearanceEvent, AppearancesSection, ChapterLooks, Look } from './appearances';
 import type { SoundWord } from '../audio/soundWords';
 import type { AudioTags } from '../audio/audioTags';
@@ -32,8 +33,10 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * it is (a story made before it simply has no world recorded); 35 carries that
  * world to the writer as its own packet section, so every attempt keeps the
  * packet it froze; 36 gives every world card the chapter it entered in, and
- * every card saved before it is the world the story opened with. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 36 as const;
+ * every card saved before it is the world the story opened with; 37 gives the
+ * world record a home of its own on the workspace, so a chapter can add a card
+ * to it, seeded from each story's active Foundation. */
+export const HARNESS_GENERATION_SCHEMA_VERSION = 37 as const;
 
 /** The most an Author's notes may hold, in characters. */
 export const AUTHOR_NOTES_LIMIT = 2000;
@@ -1030,6 +1033,8 @@ export interface HarnessChapter {
    * to look at, or did not run.
    */
   fixer?: HarnessHoldingsFixRecord;
+  /** What tagging this chapter came to, and why it placed no tag when it placed none. */
+  tagging?: HarnessChapterTagging;
   eventIds: string[];
   responseMode: 'json' | 'plain-prose-recovery';
   createdAt: string;
@@ -1042,6 +1047,8 @@ export type HarnessAttemptStage =
   | 'raw_received'
   | 'prose_accepted'
   | 'events_preserved'
+  /** The chapter has been read by the tagger, and its tags sit on the accepted draft. */
+  | 'tagged'
   | 'accepted_not_durable'
   | 'committed'
   | 'generation_failed'
@@ -1073,6 +1080,9 @@ export interface HarnessGenerationAttempt {
   rawReceivedAt?: string;
   proseAcceptedAt?: string;
   eventsPreservedAt?: string;
+  taggedAt?: string;
+  /** What tagging this chapter came to, carried to the commit that writes it onto the chapter. */
+  tagging?: HarnessChapterTagging;
   committedAt?: string;
   rawProviderResponse?: string;
   providerReceipt?: HarnessProviderReceipt;
@@ -1095,7 +1105,7 @@ export interface HarnessGenerationAttempt {
   warnings: HarnessWarning[];
   failure?: HarnessAttemptFailure;
   /** The exact checkpoint that must be durably retried. */
-  recoveryStage?: 'raw_received' | 'prose_accepted' | 'events_preserved' | 'committed' | 'generation_failed';
+  recoveryStage?: 'raw_received' | 'prose_accepted' | 'events_preserved' | 'tagged' | 'committed' | 'generation_failed';
 }
 
 export type HarnessCapabilityId =
@@ -1285,6 +1295,30 @@ export interface HarnessBatchRun {
   usage: HarnessBatchUsageAggregate;
 }
 
+/**
+ * What tagging one chapter came to: the record the chapter keeps. The tags
+ * themselves are not here — they go on the chapter's own `soundCues`,
+ * `speakers`, `holdingChanges`, `appearances` and `scene`, exactly where a
+ * writer's tags went before, so nothing downstream can tell who wrote them.
+ *
+ * A chapter is never refused for its tagging (SENSEI, 2026-10-24). One that
+ * failed keeps every word of its prose, carries this record saying why, and can
+ * be tagged again.
+ */
+export interface HarnessChapterTagging {
+  status: 'tagged' | 'failed';
+  at: string;
+  /** The model that read the chapter. */
+  model?: string;
+  providerReceipt?: HarnessProviderReceipt;
+  /** The tagger's reply as it came back, for inspection. */
+  rawProviderResponse?: string;
+  /** Why the answer placed no tag. */
+  problem?: string;
+  /** What the tag reader set aside or could not use, as plain warnings. */
+  warnings?: HarnessWarning[];
+}
+
 export interface HarnessWorkspaceState {
   schemaVersion: typeof HARNESS_GENERATION_SCHEMA_VERSION;
   stories: HarnessStory[];
@@ -1302,6 +1336,27 @@ export interface HarnessWorkspaceState {
   memoryRecoveries?: HarnessMemoryRecovery[];
   /** Every story's Codex entries: the people, things and abilities its holdings name, each with an app-made ID. */
   codexEntries: CodexEntry[];
+  /**
+   * Every story's world record as it stands: the cards the Story Seed and its
+   * World Blueprint wrote before Chapter 1, and each one a chapter brought in
+   * after them.
+   *
+   * It lives here, beside the Codex entries, because a chapter has to be able
+   * to add to it. The Foundation keeps its own `worldAtChapterZero`: that is
+   * the **author's** opening world, which they revise, and those cards are
+   * copied in here as the opening of this record. A chapter never writes to
+   * the Foundation.
+   */
+  worldCards: StoryWorldCard[];
+}
+
+/**
+ * One card of a story's world record, as the workspace stores it: the portable
+ * card with the story it belongs to, the way a Codex entry carries its own
+ * `storyId`.
+ */
+export interface StoryWorldCard extends WorldCard {
+  storyId: string;
 }
 
 /** Historical stored request shape, not a supported provider operation. */

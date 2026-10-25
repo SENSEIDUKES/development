@@ -38,11 +38,12 @@ describe('planHarnessWorkspaceLoad', () => {
     // 34 adds only an optional Foundation field: the world at Chapter 0. (33 was the rolled-back chapter loop's.)
     // 35 adds only an optional packet section: that world, carried to the writer. Frozen attempts keep their own packet.
     // 36 gives every world card the chapter it entered in; a workspace holding no world is untouched.
-    expect(HARNESS_GENERATION_SCHEMA_VERSION).toBe(36);
-    for (const schemaVersion of [27, 28, 29, 30, 31, 32, 34, 35]) {
+    // 37 gives the world record its own home, opened from each story's active Foundation.
+    expect(HARNESS_GENERATION_SCHEMA_VERSION).toBe(37);
+    for (const schemaVersion of [27, 28, 29, 30, 31, 32, 34, 35, 36]) {
       const stored = { ...createEmptyHarnessWorkspaceState(), schemaVersion, stories: [{ id: 'a' }], attempts: [{ id: 'a1', capaPrompt: { soundVocabulary: [{ word: 'blade drawn', example: 'drew his sword' }] } }], chapters: [{ id: 'c1', soundCues: [{ id: 'sc1' }] }] };
       const plan = planHarnessWorkspaceLoad(stored, now);
-      expect(plan.state).toEqual({ ...stored, schemaVersion: 36 });
+      expect(plan.state).toEqual({ ...stored, schemaVersion: 37, worldCards: [] });
       expect(plan.preserve).toEqual({
         key: `${PRESERVED_WORKSPACE_PREFIX}v${schemaVersion}:2026-09-24T12:00:00.000Z`,
         record: { preservedAt: now(), reason: 'migrated', schemaVersion, workspace: stored },
@@ -68,10 +69,35 @@ describe('planHarnessWorkspaceLoad', () => {
     const upgraded = { cards: [{ ...world.cards[0], key: 'world:character:ye-chen', enteredInChapter: 0 }] };
     expect(plan.state).toEqual({
       ...stored,
-      schemaVersion: 36,
+      schemaVersion: 37,
       foundations: [{ id: 'f1', input: { premise: 'A quarry laborer rises.', worldAtChapterZero: upgraded } }],
       attempts: [{ id: 'a1', storyInformation: { worldAtChapterZero: upgraded } }],
+      // No story names that Foundation as its active one, so the living record opens empty.
+      worldCards: [],
     });
+  });
+
+  it('opens each saved story\'s world record from its active Foundation (schema 37)', () => {
+    // The world lived only on the Foundation until this version, so every saved
+    // card is one its author wrote and the record opens with exactly those.
+    const card = { key: 'world:character:ye-chen', kind: 'character', name: 'Ye Chen', enteredInChapter: 0, slots: {} };
+    const stored = {
+      ...createEmptyHarnessWorkspaceState(),
+      schemaVersion: 36,
+      stories: [
+        { id: 's1', activeFoundationRevisionId: 'f2' },
+        // A story whose author wrote no world adds nothing.
+        { id: 's2', activeFoundationRevisionId: 'f3' },
+      ],
+      foundations: [
+        // An older revision is not the active one, so its cards are not the record's.
+        { id: 'f1', storyId: 's1', input: { worldAtChapterZero: { cards: [{ ...card, name: 'Someone Replaced' }] } } },
+        { id: 'f2', storyId: 's1', input: { worldAtChapterZero: { cards: [card] } } },
+        { id: 'f3', storyId: 's2', input: { premise: 'No world.' } },
+      ],
+    };
+    const plan = planHarnessWorkspaceLoad(stored, now);
+    expect(plan.state?.worldCards).toEqual([{ ...card, storyId: 's1' }]);
   });
 
   it('keeps an untouched copy of a workspace the rolled-back chapter loop saved (schema 33) before starting fresh', () => {

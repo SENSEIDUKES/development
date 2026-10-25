@@ -1,6 +1,6 @@
 import { worldCardsOfKind, type WorldRecord } from '../../../narrative/worldRecord';
 import type { CodexEntry, CodexEntryKind, HoldingsSection } from '../../../narrative/holdings';
-import type { HarnessChapter, HarnessTagRequest, HarnessTagSubject } from '../../../narrative/generation';
+import type { HarnessChapter, HarnessChapterTagging, HarnessTagRequest, HarnessTagSubject } from '../../../narrative/generation';
 import type { SoundWord } from '../../../audio/soundWords';
 import type { SoundtrackVocabulary } from '../../../audio/soundtrackVocabulary';
 import type { HarnessWarning } from '../../../narrative/generation';
@@ -100,20 +100,26 @@ export function planChapterTagging({ chapter, entries, world, holdings, soundWor
   };
 }
 
-/** What one tagging call produced, or why it produced nothing. */
-export type ChapterTagging =
-  | {
-      status: 'tagged';
-      at: string;
-      model?: string;
-      soundCues: ReturnType<typeof acceptChapterTags>['soundCues'];
-      speakers: ReturnType<typeof acceptChapterTags>['speakers'];
-      holdingChanges: ReturnType<typeof acceptChapterTags>['holdingChanges'];
-      appearances: ReturnType<typeof acceptChapterTags>['appearances'];
-      scene: ReturnType<typeof acceptChapterTags>['scene'];
-      warnings: HarnessWarning[];
-    }
-  | { status: 'failed'; at: string; model?: string; problem: string; warnings: HarnessWarning[] };
+/** The tags one accepted answer placed: what goes on the chapter's own fields. */
+export interface ChapterTags {
+  soundCues: ReturnType<typeof acceptChapterTags>['soundCues'];
+  speakers: ReturnType<typeof acceptChapterTags>['speakers'];
+  holdingChanges: ReturnType<typeof acceptChapterTags>['holdingChanges'];
+  appearances: ReturnType<typeof acceptChapterTags>['appearances'];
+  scene: ReturnType<typeof acceptChapterTags>['scene'];
+}
+
+/**
+ * What one tagging call came to: the record the chapter keeps either way, and
+ * the tags when the answer was accepted. The two are separate because the tags
+ * belong on the chapter's own fields, where a writer's tags went before, and
+ * only the record is new storage.
+ */
+export interface ChapterTagging {
+  record: HarnessChapterTagging;
+  /** Absent when the answer placed no tag; the record then says why. */
+  tags?: ChapterTags;
+}
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -181,7 +187,7 @@ export function readChapterTagging({ raw, sent, chapterNumber, at, model, option
   options?: HarnessResponseAcceptanceOptions;
 }): ChapterTagging {
   const failed = (problem: string, warnings: HarnessWarning[] = []): ChapterTagging =>
-    ({ status: 'failed', at, ...(model ? { model } : {}), problem, warnings });
+    ({ record: { status: 'failed', at, ...(model ? { model } : {}), problem, ...(warnings.length ? { warnings } : {}) } });
   let parsed: unknown;
   try { parsed = JSON.parse(raw ?? ''); } catch { return failed('The answer was not readable JSON.'); }
   if (!isRecord(parsed) || !Array.isArray(parsed.paragraphs)) return failed('The answer held no paragraphs.');
@@ -194,14 +200,13 @@ export function readChapterTagging({ raw, sent, chapterNumber, at, model, option
   const changed = changedParagraph(sent, read.paragraphs);
   if (changed) return failed(`The chapter is not the tagger's to change: ${changed}, so every tag it wrote was dropped.`, warnings);
   return {
-    status: 'tagged',
-    at,
-    ...(model ? { model } : {}),
-    soundCues: read.soundCues,
-    speakers: read.speakers,
-    holdingChanges: read.holdingChanges,
-    appearances: read.appearances,
-    scene: read.scene,
-    warnings,
+    record: { status: 'tagged', at, ...(model ? { model } : {}), ...(warnings.length ? { warnings } : {}) },
+    tags: {
+      soundCues: read.soundCues,
+      speakers: read.speakers,
+      holdingChanges: read.holdingChanges,
+      appearances: read.appearances,
+      scene: read.scene,
+    },
   };
 }

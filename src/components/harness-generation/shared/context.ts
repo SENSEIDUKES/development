@@ -8,6 +8,7 @@ import { protagonistNames } from './speakers';
 import { semanticReaderChanges } from './readerEdits';
 import { GENERATION_PACKET_BUDGET, estimatePacketTokens } from './packetBudget';
 import { hasWorldRecord } from '../../../narrative/worldRecord';
+import { storyWorldRecord } from './foundation';
 import { cloneHarnessValue, defaultHarnessRuntime, type HarnessRuntime } from './ids';
 import type { CurrentStoryProjection, HarnessStory, HarnessWorkspaceState, PacketSectionId, PacketSectionMeasurement, PreviouslyOnEntry, RhythmDirectionSection, StoryFoundationRevision, StoryInformationPacket } from '../../../narrative/generation';
 
@@ -162,12 +163,13 @@ export const compileStoryInformationPacket = (
   // Section 8: what each character has now, worked out again from the committed
   // chapters' holding changes. Protected: the main character always travels.
   const mainCharacterName = (foundationRevision.input.cast ?? []).find(member => member.isMainCharacter)?.name;
-  // Section 7: the world the story opens with, carried whole from the active
-  // Foundation. It is the baseline Holdings starts from, so both are built
-  // from the one record and never disagree about what a character began with.
-  const worldAtChapterZero = hasWorldRecord(foundationRevision.input.worldAtChapterZero)
-    ? cloneHarnessValue(foundationRevision.input.worldAtChapterZero!)
-    : undefined;
+  // Section 7: the world record as it stands — the cards the story opened with
+  // and every one a chapter has brought in since. It is the baseline Holdings
+  // starts from, so both are built from the one record and never disagree about
+  // what a character began with. Read from the living record rather than the
+  // Foundation, which holds only the author's opening world.
+  const world = storyWorldRecord(state, story.id);
+  const worldAtChapterZero = hasWorldRecord(world) ? cloneHarnessValue(world!) : undefined;
   const holdings = holdingsSection(deriveHoldings({
     entries: state.codexEntries.filter(entry => entry.storyId === story.id),
     chapters,

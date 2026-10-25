@@ -113,6 +113,7 @@ const stageLabel: Record<HarnessGenerationAttempt['stage'], string> = {
   raw_received: 'Raw response saved',
   prose_accepted: 'Prose accepted',
   events_preserved: 'Events preserved',
+  tagged: 'Tagged',
   accepted_not_durable: 'Needs local persistence retry',
   committed: 'Committed',
   generation_failed: 'Generation failed',

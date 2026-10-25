@@ -231,7 +231,7 @@ export {
   FatePathChooser,
   describeChapterPath,
 } from '../../components/harness-generation/development/FatePanel';
-export { findStory, findFoundationRevision } from '../../components/harness-generation/shared/foundation';
+export { findStory, findFoundationRevision, findActiveFoundationRevision, storyWorldRecord } from '../../components/harness-generation/shared/foundation';
 export * from '../../components/harness-generation/shared/chapterSignals';
 export * from '../../components/harness-generation/shared/chapterBody';
 export { chapterTitleText } from '../../narrative/chapterTitle';

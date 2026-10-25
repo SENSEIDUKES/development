@@ -69,11 +69,12 @@ export function HighlightEngine({
     clear();
     rootRef.current?.focus({ preventScroll: true });
   };
+  const menuSelection = selection ?? tracker.pendingSelection;
   const container = rootRef.current?.ownerDocument.body;
 
   return <div ref={rootRef} className={`sen-text-highlight sen-text-highlight-root ${className}`} style={style} tabIndex={-1}
     data-selection-mode={editable ? 'owned' : 'native'}>
-    {editable && <span id={instructionsId} className="sen-selection-instructions">Hold a word or drag to select. With a keyboard, press Enter to select a word, Shift and arrow keys to extend, then Tab for actions. Escape clears the selection.</span>}
+    {editable && <span id={instructionsId} className="sen-selection-instructions">Hold a word, then tap Select text. With a mouse, drag to select. With a keyboard, press Enter to select a word, Shift and arrow keys to extend, then Tab for actions. Escape clears the selection.</span>}
     {editable && <span role="status" className="sen-selection-instructions">{selection && !tracker.dragging ? `Selected: ${selection.selectedText}` : ''}</span>}
     <OverlayLayer overlay={overlay} blocks={blocks} />
     {selection && !editing && <SelectionHighlight rectangles={rectangles} />}
@@ -87,11 +88,12 @@ export function HighlightEngine({
     {validUndo && container && <UndoNotice container={container} style={style} onUndo={restore} />}
     {editable && selection && !editing && !actionOpen && tracker.handles && container && <SelectionHandles container={container}
       handlesRef={tracker.handlesRef} points={tracker.handles} selection={selection} length={sourceText?.length ?? 0} style={style} />}
-    {selection && container && !tracker.dragging && <ActionBar container={container} controlsRef={controlsRef} selection={selection} rectangles={rectangles}
+    {menuSelection && container && !tracker.dragging && <ActionBar key={tracker.pendingSelection ? 'gate' : 'actions'} container={container} controlsRef={controlsRef} selection={menuSelection} rectangles={rectangles}
       actions={actions} mode={tracker.mode} removeActions={removeActions} canUndo={!!validUndo} focusControls={tracker.focusControls}
       editable={editable} editing={editing} actionOpen={actionOpen} replacement={replacement} style={style}
+      onSelectText={tracker.pendingSelection ? tracker.confirmSelection : undefined}
       onModeChange={tracker.setMode} onUndo={restore}
-      onEdit={() => { setReplacement(selection.selectedText); tracker.beginEdit(); }}
+      onEdit={() => { setReplacement(menuSelection.selectedText); tracker.beginEdit(); }}
       onCommit={commit} onPanelOpen={tracker.beginAction} onClose={clear} />}
   </div>;
 }

@@ -76,7 +76,7 @@ export function HighlightEnginePreview() {
 
   return <section className="mx-auto max-w-2xl px-5 py-8 sm:px-8 sm:py-12">
     <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-400">
-      <p>{draft ? 'Hold a word or drag to select, then choose Edit, Copy or Media.' : 'Sealed: highlight words to read their address.'}</p>
+      <p>{draft ? 'Hold a word, tap Select text, then choose Edit, Copy or Media. With a mouse, drag to select.' : 'Sealed: highlight words to read their address.'}</p>
       <label data-sen-selection-preserve className="flex items-center gap-2">Highlight color
         <input type="color" value={highlightColor} onChange={event => setHighlightColor(event.target.value)}
           className="h-8 w-10 cursor-pointer rounded border border-slate-600 bg-transparent p-0.5" />

@@ -43,10 +43,11 @@ export function useSelectionTracker(
   const editorRef = useRef<HTMLSpanElement>(null);
   const handlesRef = useRef<HTMLDivElement>(null);
   const [snapshot, setSnapshot] = useState<{ selection: PassageSelection; text: string } | null>(null);
+  const [pending, setPending] = useState<{ selection: PassageSelection; text: string } | null>(null);
   const [editing, setEditing] = useState(false);
   const [actionOpen, setActionOpen] = useState(false);
   const [rectangles, setRectangles] = useState<PassageRectangle[]>([]);
-  const [handles, setHandles] = useState<{ start: { left: number; top: number } | null; end: { left: number; top: number } | null } | null>(null);
+  const [handles, setHandles] = useState<{ start: { left: number; top: number; height: number } | null; end: { left: number; top: number; height: number } | null } | null>(null);
   /** Remove mode belongs to one selection: any new selection is back in Add mode. */
   const [removeFor, setRemoveFor] = useState<{ key: string; focus: boolean } | null>(null);
   const controlPointer = useRef(false);
@@ -68,12 +69,14 @@ export function useSelectionTracker(
     const native = root?.ownerDocument.getSelection();
     if (root && hasSelectionEndpoint(root, native)) native?.removeAllRanges();
     setSnapshot(null);
+    setPending(null);
     setEditing(false);
     setActionOpen(false);
     controlPointer.current = false;
   }, []);
   const choose = useCallback((next: PassageSelection | null) => {
     selectionOrigin.current = null;
+    setPending(null);
     const root = rootRef.current;
     const native = root?.ownerDocument.getSelection();
     // An owned gesture takes over from any previous browser selection, including
@@ -84,7 +87,29 @@ export function useSelectionTracker(
     setSnapshot(next && block && isValidPassage(block, next) ? { selection: next, text: block.text } : null);
     setRemoveFor(null);
   }, [blocks]);
-  const { dragging } = useSelectionInput({ rootRef, handlesRef, blocks, selection, enabled: removable && !editing && !actionOpen, locale, choose });
+  const requestSelection = useCallback((next: PassageSelection) => {
+    clear();
+    const block = blocks.find(block => block.id === next.blockId);
+    if (block && isValidPassage(block, next)) setPending({ selection: next, text: block.text });
+  }, [blocks, clear]);
+  const confirmSelection = () => {
+    if (!pending || !removable) return;
+    const block = blocks.find(block => block.id === pending.selection.blockId && block.text === pending.text);
+    if (!block) { clear(); return; }
+    if (rootRef.current) findBlockElement(rootRef.current, block.id)?.focus({ preventScroll: true });
+    choose(pending.selection);
+  };
+  const { dragging } = useSelectionInput({ rootRef, handlesRef, blocks, selection, enabled: removable && !editing && !actionOpen, locale, choose, requestSelection });
+
+  useEffect(() => {
+    if (!pending) return;
+    const doc = rootRef.current?.ownerDocument;
+    doc?.addEventListener('scroll', clear, true);
+    return () => doc?.removeEventListener('scroll', clear, true);
+  }, [pending, clear]);
+  useLayoutEffect(() => {
+    if (pending && (!removable || !blocks.some(block => block.id === pending.selection.blockId && block.text === pending.text))) clear();
+  }, [pending, removable, blocks, clear]);
 
   useEffect(() => { onSelectionChange?.(selection); }, [selection, onSelectionChange]);
   useEffect(() => { tabTransferred.current = false; }, [selection]);
@@ -98,7 +123,7 @@ export function useSelectionTracker(
     if (!root) return;
     const doc = root.ownerDocument;
     const read = () => {
-      if (editing || actionOpen || controlPointer.current || controlsRef.current?.contains(doc.activeElement)) return;
+      if (pending || editing || actionOpen || controlPointer.current || controlsRef.current?.contains(doc.activeElement)) return;
       const native = doc.getSelection();
       const next = normalizePassageSelection(root, native);
       // Host tools and assistive technology can still supply a range. Capture it once,
@@ -134,7 +159,7 @@ export function useSelectionTracker(
       if (!controlPointer.current && !editorRef.current?.contains(target) && (editing || actionOpen || !root.contains(target))) clear();
     };
     const key = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && snapshot) { clear(); root.focus({ preventScroll: true }); return; }
+      if (event.key === 'Escape' && (snapshot || pending)) { clear(); root.focus({ preventScroll: true }); return; }
       if ((event.key === 'ContextMenu' || (event.key === 'F10' && event.shiftKey)) && snapshot && removable && !editing && !actionOpen) {
         event.preventDefault();
         menuKeyAt.current = performance.now();
@@ -143,7 +168,7 @@ export function useSelectionTracker(
       }
       // The floating controls sit at the end of the document. Whatever a host
       // renders after its prose, the first Tab after a selection enters them.
-      if (event.key !== 'Tab' || event.shiftKey || !snapshot || actionOpen || tabTransferred.current) return;
+      if (event.key !== 'Tab' || event.shiftKey || (!snapshot && !pending) || actionOpen || tabTransferred.current) return;
       const controls = controlsRef.current;
       const first = controls?.querySelector<HTMLElement>('button:not(:disabled)');
       if (!controls || !first || controls.contains(doc.activeElement)) return;
@@ -175,6 +200,7 @@ export function useSelectionTracker(
         && event.clientY >= rect.top && event.clientY <= rect.top + rect.height);
       const chosen = onSelection ? snapshot : wordUnder(event.clientX, event.clientY);
       if (!chosen) return;
+      setPending(null);
       if (!onSelection) setSnapshot(chosen);
       setRemoveFor({ key: selectionKey(chosen.selection), focus: false });
     };
@@ -203,9 +229,11 @@ export function useSelectionTracker(
       doc.removeEventListener('contextmenu', menu);
       doc.removeEventListener('copy', copy);
     };
-  }, [blocks, editing, actionOpen, clear, snapshot, removable, locale]);
+  }, [blocks, editing, actionOpen, clear, snapshot, pending, removable, locale]);
 
+  const measuredSelection = selection ?? pending?.selection;
   useLayoutEffect(() => {
+    const selection = measuredSelection;
     const root = rootRef.current;
     if (!root || !selection) { setRectangles([]); setHandles(null); return; }
     const measure = () => {
@@ -226,7 +254,7 @@ export function useSelectionTracker(
           const height = rect?.height ?? fallback!.height;
           // Use the actual endpoint, never the edge of a clipped highlight rectangle.
           const visible = clipRectangles(root, [new DOMRect(left, top, 1, height)]);
-          return visible.length ? { left, top: top + height } : null;
+          return visible.length ? { left, top: start ? top : top + height, height } : null;
         };
         const start = edge(true); const end = edge(false);
         setHandles(start || end ? { start, end } : null);
@@ -234,7 +262,7 @@ export function useSelectionTracker(
     };
     measure();
     return watchLayout(root, measure, [controlsRef.current]);
-  }, [selection, editing, blocks, removable]);
+  }, [measuredSelection, editing, blocks, removable]);
 
   const beginEdit = () => {
     if (!snapshot) return;
@@ -254,6 +282,7 @@ export function useSelectionTracker(
   const setMode = (next: ActionBarMode) => setRemoveFor(next === 'remove' && snapshot && removable ? { key: selectionKey(snapshot.selection), focus: false } : null);
   return {
     rootRef, controlsRef, editorRef, handlesRef, handles, dragging, selection, sourceText: snapshot?.text, editing, actionOpen, rectangles,
+    pendingSelection: pending?.selection ?? null, confirmSelection,
     mode, focusControls: mode === 'remove' && !!removeFor?.focus, setMode, beginEdit, beginAction, clear, focusBlock,
   };
 }

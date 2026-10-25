@@ -13,6 +13,7 @@ interface InputOptions {
   selection: PassageSelection | null;
   enabled: boolean;
   locale?: string;
+  requestSelection: (selection: PassageSelection) => void;
   choose: (selection: PassageSelection | null) => void;
 }
 
@@ -127,10 +128,10 @@ export function useSelectionInput(options: InputOptions) {
           if (!drag) return;
           const found = word(block, point.offset);
           if (!found) { stop(); return; }
-          drag.active = true; drag.words = true; drag.anchor = found.start; drag.end = found.end;
-          suppressClick = true; element.focus({ preventScroll: true });
-          choose(block, found.start, found.end);
-          setDragging(true);
+          stop();
+          suppressClick = true;
+          latest.current.requestSelection({ blockId: block.id, startOffset: found.start, endOffset: found.end,
+            selectedText: block.text.slice(found.start, found.end) });
         }, HOLD_MS);
       } else {
         event.preventDefault(); element.focus({ preventScroll: true });

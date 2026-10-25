@@ -12,7 +12,7 @@ Its name is the Highlight Engine, never "Text Highlight Engine" (renamed
 `TextHighlightBlock`, `TextHighlightOverlay`, the `sen-text-highlight-*` classes
 and `--sen-text-line-height`. An image surface will get its own beside them.
 
-- Created: **2026-09-26**; last Workshop update: **2026-10-24**
+- Created: **2026-09-26**; last Workshop update: **2026-10-25**
 - Lifecycle: active standalone prototype; the Workshop tab is the manuscript lab
 - Source: this Development repository; no production replica or source comparison
 - Workshop: `?preview=highlight-engine`
@@ -227,6 +227,14 @@ Who enforces them:
 
 ## Behavior and limitations
 
+- The popup measures its current contents before painting, centers below the visible
+  selection on touch devices (above on desktop), and uses the other side when space requires it. Submenus keep
+  their side while they fit. Selection handles retain their touch clearance; editing
+  controls sit closer to the draft. Large menus scroll within available space. If
+  the selection fills the screen, a compact bottom tray keeps actions reachable
+  (some selected text may then sit behind it). Layout follows scrolling, resizing,
+  and the visual viewport; the opening fade respects reduced motion.
+
 - Select within one paragraph; Edit makes only the selected text editable in place.
   The draft is an isolated plain-text span; surrounding prose stays read-only.
   Save changes only that range. HTML is literal text, and newlines remain inside
@@ -269,8 +277,10 @@ Who enforces them:
   Cue choices and edits last only for that preview session.
 - Editable prose uses `user-select: none` and engine-owned input. Mouse drag selects
   exact characters, double-click selects a word, and triple-click selects a paragraph.
-  A 450ms touch/pen hold selects a word; movement before that cancels the hold so
-  ordinary swipes scroll. Drag our handles to adjust either end; edges stop at the
+  A 450ms touch/pen hold opens a compact Select text gate without highlighting.
+  Tapping Select text selects the held word and opens the normal actions and handles.
+  Outside taps, scrolling, Escape, source changes, or sealing dismiss the gate.
+  Movement before the hold cancels it so ordinary swipes scroll. Drag our handles to adjust either end; edges stop at the
   other edge and stay within one paragraph. A drag near the viewport edge scrolls.
   Host-supplied native ranges (including the lab's sentence picker) are captured
   and immediately cleared. The saved `PassageSelection` contract is unchanged.
@@ -318,6 +328,24 @@ package peers. Keep Workshop hosting, dummy prose, reference documentation and
 browser evidence out of the consuming surface. No integration was performed.
 
 ## Workshop history
+
+- **2026-10-25:** Extended both endpoint stems through the measured height of their selected line, keeping the dots, outside touch targets, and drag anchors unchanged.
+
+- **2026-10-25:** Touch popups now prefer below the highlight for easier reach, retaining above as the space-constrained fallback and keeping submenu anchoring stable.
+
+- **2026-10-25:** Reworked popup positioning for the single owned selection menu: measured size, centered above-first placement, stable submenu anchoring, viewport-aware scrolling limits, a compact fallback for screen-filling selections, and a reduced-motion-aware opening fade.
+
+- **2026-10-25:** Changed popup surfaces to rich black with quieter charcoal borders and dividers, shared by the Select text gate and action menus.
+
+- **2026-10-25:** Completed popup menu icons for Back, Audio, Cue, Soundscape, Atmosphere, Save, Undo, and Delete Passage, including removal entries. Continued the same custom icon family; widened desktop controls for the added icons and allowed long removal labels to wrap on phones.
+
+- **2026-10-25:** Added custom Edit, Copy, Media, and Remove glyphs after inspecting the existing 33-icon catalog and Library adapters (no exact matches). The local SVGs follow its monochrome silhouettes and cutout details without importing Library artwork into SEN. Host actions can supply decorative icons; labels and behavior stay intact.
+
+- **2026-10-25:** Pointed the start cap upward above the first line and the end cap downward below the last line; updated drag anchors, viewport checks, and menu clearance for both directions.
+
+- **2026-10-25:** Added the touch/pen Select text gate before selection and the regular action menu; mouse dragging and keyboard selection stay direct.
+
+- **2026-10-25:** Refined selection end caps to 10px dots with short 8px stems and no outer ring, retaining the 44px touch targets and keyboard adjustment.
 
 - **2026-10-24:** Fixed highlights disappearing on release after a click outside
   the prose. Starting an engine selection now retires any previous browser caret,

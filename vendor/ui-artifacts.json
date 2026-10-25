@@ -1,21 +1,21 @@
 {
   "repository": "https://github.com/SENSEIDUKES/UI",
-  "sourceCommit": "099a460566eb236b4b1c067015431508129d13c8",
-  "pullRequest": "https://github.com/SENSEIDUKES/UI/pull/90",
+  "sourceCommit": "6f95f042f86806a9335832cfd4cc1b51c1726b74",
+  "pullRequest": "https://github.com/SENSEIDUKES/UI/pull/92",
   "artifacts": {
     "@seihouse/ui": {
-      "version": "0.11.0",
-      "file": "vendor/seihouse-ui-0.11.0.tgz",
-      "integrity": "sha512-9Rzq5V9WWt2mMTByy/SeahsJVWw9DDK62txnEeMyr+zInFnMpQxPX+dZqoV+QYTFJCmreoDU2sLqZpLPWxZrgQ==",
-      "sourceCommit": "099a460566eb236b4b1c067015431508129d13c8",
-      "pullRequest": "https://github.com/SENSEIDUKES/UI/pull/90"
+      "version": "0.12.0",
+      "file": "vendor/seihouse-ui-0.12.0.tgz",
+      "integrity": "sha512-af1B6VYsPGTioP3xca+6Y+3nfNXR1OS0ye21dDYKowVzGOo7k6XgfnDgJ3TQfL18tQJ3nIwbm20TDzBpSarZZw==",
+      "sourceCommit": "6f95f042f86806a9335832cfd4cc1b51c1726b74",
+      "pullRequest": "https://github.com/SENSEIDUKES/UI/pull/92"
     },
     "@seihouse/library-ui": {
-      "version": "0.10.0",
-      "file": "vendor/seihouse-library-ui-0.10.0.tgz",
-      "integrity": "sha512-I+ZmxvcFv7hnYNiorn/mSoqfnTbvJK1TMGNBGi57+fNYqKJ/jbe46xsXkRoA6lUhnweSWZEuSOQq0JMkUmcjww==",
-      "sourceCommit": "099a460566eb236b4b1c067015431508129d13c8",
-      "pullRequest": "https://github.com/SENSEIDUKES/UI/pull/90"
+      "version": "0.10.1",
+      "file": "vendor/seihouse-library-ui-0.10.1.tgz",
+      "integrity": "sha512-J9osHCNL0nbH1SnQdLDXFlY/D0Di6ELQADLcNqoUDcP9XDVB5YMvIWTan04C5cr1/mKPpTTquo7J7EfncDfdrQ==",
+      "sourceCommit": "6f95f042f86806a9335832cfd4cc1b51c1726b74",
+      "pullRequest": "https://github.com/SENSEIDUKES/UI/pull/92"
     }
   }
 }

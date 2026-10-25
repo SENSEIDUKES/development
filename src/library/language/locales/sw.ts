@@ -158,7 +158,7 @@ const pack: LanguagePack = {
       "Dao Insights": "Maarifa ya Dao",
       "World Info": "Maelezo ya Ulimwengu",
       "Begin Story": "Anza Hadithi",
-      "Continue": "Endehea",
+      "Continue": "Endelea",
       "Blueprint": "Ramani",
       "Codex": "Kodeksi",
       "Reader Settings": "Mipangilio ya Msomaji",

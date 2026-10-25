@@ -83,7 +83,7 @@ const pack: LanguagePack = {
       "Jade and ember currents over a scarred altar.": "Durdurro dhagax cagaaran iyo dhimbiilo dul maraya meel allabari oo nabaro leh.",
       "Blood Moon": "Dayaxa Dhiigga",
       "A crimson moon and a coiled shadow.": "Dayax guduudan iyo hoos isku duuban.",
-      "Ambient spirit motes": "Saxarada ruuxa ee deegaanka",
+      "Ambient spirit motes": "Dhibcaha ruuxa ee deegaanka",
       "Sound": "Codka",
       "Music on the menus.": "Muusigga liisaska.",
       "Menu music": "Muusigga liiska",

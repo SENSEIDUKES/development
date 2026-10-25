@@ -1,10 +1,10 @@
 import FocusLock from 'react-focus-lock';
 import { useHeaderClipboard } from '../mainLibraryClipboard';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { BookmarkPlus, Check, Compass, Copy, Feather, Shuffle, Sparkle, Sparkles, Wand2, X } from 'lucide-react';
-import { STORY_SPARK_IDEA_MAX_LENGTH, type StorySpark, type StorySparkRequest } from '@seihouse/sen/story-seed';
+import { getStoryStyleLabel, STORY_SPARK_IDEA_MAX_LENGTH, storySparkTags, type StorySpark, type StorySparkRequest } from '@seihouse/sen/story-seed';
 import { NarrativeTextArea as LibraryTextArea } from '@seihouse/sen/presentation';
 import { GENRE_PATH_SIGILS, OriginGenrePicker } from '../../../story-seed/development/workspaces/origin/OriginGenrePicker';
 import type { DaoSparkHost } from '../../shared/MainLibraryAdapter';
@@ -12,8 +12,8 @@ import { DAO_GENRES, handSpark } from './daoSparks';
 
 /**
  * Dao Insights: a wandering elder's lost ramblings that are really story
- * sparks — a premise and a genre, enough direction to start a Story Seed and
- * nothing more. The spark leads the panel; below it the writer shapes the
+ * sparks — a whole Origin for a Story Seed: premise, genre, title, novel
+ * tradition, Pressure and the Story Tags its premise calls for. The spark leads the panel; below it the writer shapes the
  * next one. Random lets the Dao ramble a spark; Custom shapes the writer's own
  * rough beginning into a real premise. The genre is chosen with Story Seed's
  * own path picker: no path lets the Dao wander, a path or the writer's own
@@ -33,6 +33,7 @@ const TICKER_MS = 14_000;
 const SETTLE_MS = 900;
 
 const genreSigil = (genre: string, invented: boolean) => (invented ? Sparkles : GENRE_PATH_SIGILS[genre] ?? Sparkle);
+const PRESSURE_LABELS: Record<StorySpark['pressure'], string> = { heaven: 'Heaven', immortal: 'Immortal', mortal: 'Mortal' };
 const genreName = (genre: string) => DAO_GENRES.find(preset => preset.id === genre)?.name ?? genre;
 
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -164,7 +165,7 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
         // The writer's own genre has no hand-written sparks: the premise is borrowed, the genre kept.
         const fallback = !invent && handWritten.genre !== sparkGenre ? { ...handWritten, genre: sparkGenre! } : handWritten;
         next = mode === 'custom'
-          ? { ...fallback, premise: beginning.slice(0, 600), aside: 'The Dao is resting tonight. Your words stand as you wrote them.' }
+          ? { ...fallback, premise: beginning.slice(0, 600), title: '', aside: 'The Dao is resting tonight. Your words stand as you wrote them.' }
           : fallback;
         if (mode === 'custom' && !note) note = 'No model is connected, so your beginning is kept as written.';
       }
@@ -204,7 +205,7 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
 
   const copySpark = useCallback(async () => {
     try {
-      await copyText(`${spark.premise}\nGenre: ${spark.genre}`);
+      await copyText([spark.title, spark.premise, `Genre: ${spark.genre}`, `Style: ${getStoryStyleLabel(spark.style)}`, `Pressure: ${PRESSURE_LABELS[spark.pressure]}`].filter(Boolean).join('\n'));
       if (!mountedRef.current) return;
       setCopied(true);
       clearTimeout(copiedTimerRef.current);
@@ -222,6 +223,7 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
   const isKept = kept === spark;
   const seekLabel = seeking ? 'The Dao is muttering…' : mode === 'custom' ? 'Shape my premise' : 'Seek a spark';
   const SparkSigil = genreSigil(spark.genre, spark.inventedGenre);
+  const sparkTags = useMemo(() => storySparkTags(spark).slice(0, 5), [spark]);
   const sideAction = 'flex h-12 min-w-12 items-center justify-center gap-2 rounded-xl border border-[rgba(196,182,148,0.18)] bg-[rgba(11,14,30,0.6)] px-3 text-sm text-neutral-300 transition-colors hover:border-[rgba(205,178,113,0.45)] hover:text-signal disabled:opacity-60';
 
   return (
@@ -305,7 +307,15 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
                           </div>
                           {spark.genreNote && <p className="mt-2 text-center text-sm text-neutral-400">{spark.genreNote}</p>}
 
-                          <p className="mt-5 select-text text-center font-serif text-[1.15rem] leading-[1.7] text-[#F3EDE0] sm:text-[1.3rem]">{spark.premise}</p>
+                          {spark.title && <h3 className="mt-5 text-center font-display text-lg font-bold uppercase tracking-[0.1em] text-[#E3C878] sm:text-xl">{spark.title}</h3>}
+                          <p className={`${spark.title ? 'mt-3' : 'mt-5'} select-text text-center font-serif text-[1.15rem] leading-[1.7] text-[#F3EDE0] sm:text-[1.3rem]`}>{spark.premise}</p>
+
+                          {/* The rest of the Origin this spark plants. */}
+                          <div className="mt-4 flex flex-wrap items-center justify-center gap-1.5" aria-label="Origin this spark plants">
+                            <span className="dao-origin-chip">{getStoryStyleLabel(spark.style)} tradition</span>
+                            <span className="dao-origin-chip">{PRESSURE_LABELS[spark.pressure]} pressure</span>
+                            {sparkTags.map(tag => <span key={tag} className="dao-origin-chip dao-origin-chip-tag">{tag}</span>)}
+                          </div>
 
                           {spark.aside && <>
                             <div aria-hidden="true" className="mx-auto my-5 h-px w-24 bg-gradient-to-r from-transparent via-[rgba(205,178,113,0.5)] to-transparent" />
@@ -383,7 +393,7 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
                           <span className={host.beginSpark ? 'hidden min-[400px]:inline' : ''}>{isKept ? 'Kept' : 'Keep'}</span>
                         </button>
                       )}
-                      <button type="button" onClick={copySpark} aria-label={copied ? 'Spark copied' : 'Copy spark'} title="Copy the premise and genre"
+                      <button type="button" onClick={copySpark} aria-label={copied ? 'Spark copied' : 'Copy spark'} title="Copy the spark's Origin"
                         className={`${sideAction} ${host?.beginSpark || host?.keepSpark ? '' : 'flex-1'}`}>
                         {copied ? <Check size={16} className="text-emerald-400" aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
                         <span className={host?.beginSpark || host?.keepSpark ? 'hidden min-[400px]:inline' : ''}>{copied ? 'Copied' : 'Copy'}</span>

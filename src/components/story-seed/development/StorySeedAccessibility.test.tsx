@@ -4,7 +4,7 @@ import { act, useState } from 'react';
 import { type Root } from 'react-dom/client';
 import { createRoot } from '../../../test-utils/createStoryCreationRoot';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createBlueprintDraftFromSeed, createEmptyStorySeedInput, STORY_SEED_SCHEMA_VERSION } from '@seihouse/sen/story-seed';
+import { createBlueprintDraftFromSeed, createEmptyStorySeedInput, STORY_SEED_SCHEMA_VERSION, storySeedInputFromSpark } from '@seihouse/sen/story-seed';
 import {
   resetMockState,
   setMockState,
@@ -472,6 +472,41 @@ describe('Story Seed keyboard and mobile navigation', () => {
     expect(versaBadge?.getAttribute('aria-hidden')).toBe('true');
     await act(async () => buttonNamed('Copy Blueprint')!.click());
     expect(container.querySelector('[role="status"]')?.textContent).toContain('Blueprint copied.');
+  });
+
+  it('keeps World Blueprints, Seeds in Progress and Dao Sparks on separate shelves, each card wearing its kind', () => {
+    const draft = sampleRecord('draft');
+    const built = { ...sampleRecord('built'), title: 'Built World' };
+    built.blueprint = createBlueprintDraftFromSeed(built.seed);
+    const spark = { ...sampleRecord('spark'), title: 'The Very Rude Dragon', seed: storySeedInputFromSpark({
+      premise: 'He bonded with a stray cat that may be the last dragon.', genre: 'Beast Taming', title: 'The Very Rude Dragon',
+      style: 'japanese', pressure: 'mortal', inventedGenre: false,
+    }) };
+    // A spark grown into a Blueprint is a Blueprint.
+    const grown = { ...spark, id: 'grown', title: 'Grown Spark' };
+    grown.blueprint = createBlueprintDraftFromSeed(grown.seed);
+    const onEditSeed = vi.fn();
+    act(() => root.render(
+      <LibraryPresentationProvider>{<StoryBank
+        seeds={[spark, draft, built, grown]} isLoading={false} manifestedSeedIds={new Set()} isGenerating={false}
+        onToggleImport={vi.fn()} importPanel={null} onExportAll={vi.fn()} onEditSeed={onEditSeed}
+        onOpenBlueprint={vi.fn()} onUseSeed={vi.fn()} onExportSeed={vi.fn()} onManifest={vi.fn()}
+      />}</LibraryPresentationProvider>,
+    ));
+    const shelf = (id: string) => container.querySelector<HTMLElement>(`[data-bank-shelf="${id}"]`)!;
+    expect(Array.from(container.querySelectorAll<HTMLElement>('[data-bank-shelf]')).map(item => item.dataset.bankShelf))
+      .toEqual(['blueprint', 'draft', 'spark']);
+    expect(shelf('blueprint').textContent).toContain('Built World');
+    expect(shelf('blueprint').textContent).toContain('Grown Spark');
+    expect(shelf('draft').textContent).toContain('Fallen Sect');
+    expect(shelf('spark').textContent).toContain('The Very Rude Dragon');
+    expect(shelf('spark').textContent).toContain('Dao Spark');
+    expect(shelf('spark').textContent).toContain('Beast Taming');
+    // A spark offers growing it, never Blueprint or Manifest actions.
+    const sparkButtons = Array.from(shelf('spark').querySelectorAll('button')).map(item => item.textContent);
+    expect(sparkButtons.some(text => /Manifest|Blueprint|Use Seed/.test(text ?? ''))).toBe(false);
+    act(() => Array.from(shelf('spark').querySelectorAll('button')).find(item => item.textContent?.includes('Grow this Spark'))!.click());
+    expect(onEditSeed).toHaveBeenCalledWith(spark);
   });
 
   it('keeps loaded Story Bank records visible while a new owner is loading', () => {

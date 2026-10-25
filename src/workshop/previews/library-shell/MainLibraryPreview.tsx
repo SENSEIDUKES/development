@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { GlobalHeader } from '../../../components/library-shell/reference/main-library/GlobalHeader';
 import { LibraryCollectionStrip } from '../../../components/library-shell/reference/main-library/LibraryCollectionStrip';
 import { MainLibraryAdapterContext, type DaoSparkHost, type MainLibraryAdapter } from '@seihouse/library/shell';
+import { storyStyleForGenre } from '@seihouse/sen/story-seed';
 import { MainLibraryNavigation } from '@seihouse/library/shell';
 import { MainLibraryFooter } from '@seihouse/library/shell';
 import { WorkspaceShell, LibrarySectionSidebar, useLibraryDesktopNavigation } from '@seihouse/library/shell';
@@ -102,6 +103,9 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
       return {
         genre,
         inventedGenre: Boolean(request.inventGenre),
+        title: `The ${genre} Graduate`,
+        style: storyStyleForGenre(genre),
+        pressure: 'immortal',
         ...(request.inventGenre ? { genreNote: 'Every technique is a sound that must be answered.' } : {}),
         premise: request.idea
           ? `${request.idea.replace(/[.\s]+$/, '')}, until the ${genre} world decides that is the one thing it cannot allow.`

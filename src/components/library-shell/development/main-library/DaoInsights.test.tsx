@@ -56,6 +56,7 @@ const choosePath = async (name: RegExp) => {
 const modelSpark = (request: StorySparkRequest): StorySpark => ({
   premise: request.idea ? `Shaped: ${request.idea}` : 'A model premise.',
   genre: request.inventGenre ? 'Echo Cultivation' : request.genre,
+  title: 'The Tested Path', style: 'korean', pressure: 'heaven',
   inventedGenre: Boolean(request.inventGenre),
   ...(request.inventGenre ? { genreNote: 'Techniques are sounds.' } : {}),
   aside: 'Hm. Hm.', voice: 'Elder of Tests',

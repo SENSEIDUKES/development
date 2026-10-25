@@ -206,6 +206,17 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-10-25 (a spark is a whole Origin; Story Bank shelves):** From SENSEI.
+  A Story Spark now carries a title, novel tradition (Style) and Pressure
+  beside its premise and genre, and `storySeedInputFromSpark` fills the whole
+  Origin: Style, genre, title, premise, Pressure, and Story Tags from Story
+  Seed's own `inferStoryTags`. Survival stays the writer's. The planted seed
+  is marked `story.optional.startedFrom: 'story-spark'`, which survives saving
+  and export. The Story Bank keeps three shelves, each card wearing its kind:
+  World Blueprints (a seed with a Blueprint), Seeds in Progress, and Dao
+  Sparks (a spark-planted seed with no Blueprint yet). A spark card offers only
+  Grow this Spark and Export, and moves to World Blueprints once its world is
+  manifested.
 - **2026-10-25 (shared genre picker):** `OriginGenrePicker` is also Dao
   Insights' genre picker. Optional `idPrefix`, `required`, `emptyTitle`,
   `emptyHint` and `conjure` props serve that host; their defaults keep Story

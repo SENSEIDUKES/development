@@ -11,6 +11,7 @@ import { MotionConfig } from 'motion/react';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import { MainLibraryAdapterContext, MainLibraryHomeInsights, type DaoSparkHost, type MainLibraryAdapter } from '@seihouse/library/shell';
+import { storyStyleForGenre } from '@seihouse/sen/story-seed';
 import { DaoInsights as ReferenceDaoInsights } from '../../../components/library-shell/reference/main-library/DaoInsights';
 
 const entry = workshopEntries.find(candidate => candidate.id === 'dao-insights')!;
@@ -36,6 +37,9 @@ const hostFor = (state: SparkState, report: (message: string) => void): DaoSpark
     return {
       genre,
       inventedGenre: Boolean(request.inventGenre),
+      title: `The ${genre} Graduate`,
+      style: storyStyleForGenre(genre),
+      pressure: 'immortal',
       ...(request.inventGenre ? { genreNote: 'Every technique is a sound, and every sound must be answered.' } : {}),
       premise: request.idea
         ? `${request.idea.replace(/[.\s]+$/, '')}, until the ${genre} world decides that is the one thing it cannot allow.`

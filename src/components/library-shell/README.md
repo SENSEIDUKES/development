@@ -205,6 +205,11 @@ The existing local files named by this inventory are:
 
 ## Workshop history
 
+- **2026-10-25 (Dao sparks fill the Origin):** A spark shows and plants a whole
+  Origin: title, premise, genre, novel tradition, Pressure and the Story Tags
+  its premise calls for. The Story Spark route asks the model for the title,
+  tradition and Pressure, and every hand-written spark carries them. A Custom
+  beginning kept as written stays untitled, for the Library to name.
 - **2026-10-25 (Dao Insights redesign):** The spark panel moved onto Story
   Seed's celestial glass and leads with the spark itself, a centered scroll
   with the genre's path sigil, premise, aside and voice. Below it, "Seek the

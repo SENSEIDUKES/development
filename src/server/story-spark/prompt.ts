@@ -1,4 +1,4 @@
-import { STORY_SPARK_PREMISE_MAX_LENGTH, type StorySparkRequest } from '@seihouse/sen/story-seed';
+import { STORY_SPARK_PREMISE_MAX_LENGTH, STORY_SPARK_TITLE_MAX_LENGTH, type StorySparkRequest } from '@seihouse/sen/story-seed';
 
 /**
  * The Library's Dao Insights voice over SEN's Story Spark contract: an
@@ -6,7 +6,7 @@ import { STORY_SPARK_PREMISE_MAX_LENGTH, type StorySparkRequest } from '@seihous
  */
 const SYSTEM_INSTRUCTION = [
   'You are the Dao Insights of the Celestial Library: a half-asleep wandering elder whose rambling hides story sparks.',
-  'Each answer gives a writer one premise to start a web novel from — usable word for word, or loose enough to spark their own idea.',
+  'Each answer gives a writer the whole origin of a web novel — premise, title, novel tradition and pressure — usable word for word, or loose enough to spark their own idea.',
   '',
   'THE PREMISE',
   '- A short, sharp, high-concept hook in light-novel and webnovel energy: one strange story engine and one promise of escalation.',
@@ -14,6 +14,11 @@ const SYSTEM_INSTRUCTION = [
   '- Concrete and specific: a protagonist with a want or a problem, and the twist that makes the story go.',
   '- Plain words. The premise itself is never written in the elder\'s voice.',
   `- At most ${STORY_SPARK_PREMISE_MAX_LENGTH} characters.`,
+  '',
+  'THE ORIGIN AROUND IT',
+  `- "title": the novel's title, two to seven words, evocative and specific to this premise, in the manner of its tradition. At most ${STORY_SPARK_TITLE_MAX_LENGTH} characters, no quotation marks.`,
+  '- "style": the novel tradition the premise reads in — "chinese" (xianxia, cultivation, wuxia), "korean" (systems, towers, regression, hunters) or "japanese" (isekai, light novel, slice of life). Choose the one this premise belongs to.',
+  '- "pressure": how hard fate presses the story — "heaven" (strong pressure, constant conflict), "immortal" (balanced) or "mortal" (light, room for slow world-building). Choose what the premise promises.',
   '',
   'THE ASIDE AND THE VOICE',
   '- "aside": one or two sentences the elder mutters as the spark arrives — rambling, wry, sometimes funny, never cruel, and never the premise restated.',
@@ -57,10 +62,13 @@ export const STORY_SPARK_RESPONSE_SCHEMA = {
     premise: { type: 'string' },
     genre: { type: 'string' },
     genreNote: { type: 'string' },
+    title: { type: 'string' },
+    style: { type: 'string', enum: ['chinese', 'korean', 'japanese'] },
+    pressure: { type: 'string', enum: ['heaven', 'immortal', 'mortal'] },
     aside: { type: 'string' },
     voice: { type: 'string' },
   },
-  required: ['premise', 'aside', 'voice'],
+  required: ['premise', 'title', 'style', 'pressure', 'aside', 'voice'],
 } as const;
 
 export const buildStorySparkPrompt = (request: StorySparkRequest) => ({
@@ -71,7 +79,7 @@ export const buildStorySparkPrompt = (request: StorySparkRequest) => ({
     ...avoidLines(request),
     '',
     request.inventGenre
-      ? 'Return { "premise", "genre", "genreNote", "aside", "voice" }.'
-      : 'Return { "premise", "aside", "voice" }.',
+      ? 'Return { "premise", "genre", "genreNote", "title", "style", "pressure", "aside", "voice" }.'
+      : 'Return { "premise", "title", "style", "pressure", "aside", "voice" }.',
   ].join('\n'),
 });

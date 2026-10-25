@@ -94,6 +94,12 @@ export interface StorySeedStoryOptional {
    */
   arcCount?: number;
   hardPins?: HardPinInput[];
+  /**
+   * Where this seed began, when it did not begin blank: a Story Spark planted
+   * it. Provenance only — a host's Story Bank uses it to keep sparks apart
+   * from seeds the writer built; nothing in a chapter or Blueprint reads it.
+   */
+  startedFrom?: 'story-spark';
   /** Story metadata only; this does not request explicit generated content. */
   intendedForMatureAudiences: boolean;
   fateSurvival: StorySeedFateSurvivalSettings;
@@ -515,6 +521,7 @@ const normalizeStoryOptional = (value: unknown): StorySeedStoryOptional => {
   if (source.activeArcGoal !== undefined) normalized.activeArcGoal = createInitialArcPlan(source.activeArcGoal as ArcGoal).goals[0];
   const makeItWorkInstruction = text(source.makeItWorkInstruction);
   if (makeItWorkInstruction) normalized.makeItWorkInstruction = makeItWorkInstruction;
+  if (source.startedFrom === 'story-spark') normalized.startedFrom = 'story-spark';
   return normalized;
 };
 

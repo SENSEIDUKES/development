@@ -181,6 +181,22 @@ it('keeps the Story Paths open while the writer types their own genre, even one 
   expect(requestSpark).toHaveBeenCalledWith(expect.objectContaining({ genre: 'Xianxia mystery' }), expect.any(AbortSignal));
 });
 
+it('shows what an action did while the Story Paths are open, and an empty beginning returns to the spark', async () => {
+  const keepSpark = vi.fn(async () => { throw new Error('The Story Bank is full.'); });
+  await open({ checkSparks: async () => true, requestSpark: async request => modelSpark(request), keepSpark });
+  await click(button(/Pick a path$/));
+  await click(button(/Keep in Story Bank/));
+  expect(dialog().querySelector('[role="radiogroup"]')).toBeTruthy();
+  expect(dialog().querySelector('[role="alert"]')?.textContent).toContain('The Story Bank is full.');
+  await click(button(/Back to the spark/));
+  await click(button(/^Custom/));
+  await click(button(/Pick a path$/));
+  await click(button(/Shape my premise/));
+  expect(dialog().querySelector('[role="radiogroup"]')).toBeNull();
+  expect(dialog().querySelector('textarea')).toBeTruthy();
+  expect(dialog().querySelector('[role="alert"]')?.textContent).toMatch(/beginning of your idea/);
+});
+
 it('without a model, Random offers the Dao\'s own sparks and Custom keeps the writer\'s words as written', async () => {
   await open();
   await choosePath(/Regression/);

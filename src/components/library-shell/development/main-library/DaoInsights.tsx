@@ -112,6 +112,8 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
     if (seeking) return;
     const beginning = idea.trim();
     if (mode === 'custom' && !beginning) {
+      // The beginning is written beside the spark: go back there to write it.
+      setPathsOpen(false);
       setMessage({ tone: 'error', text: 'Write the beginning of your idea first. A few words is enough.' });
       return;
     }
@@ -217,6 +219,9 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
   const sparkKey = `${spark.genre}\u0000${spark.premise}`;
   const isKept = kept === spark;
   const SparkSigil = genreSigil(spark.genre, spark.inventedGenre);
+  /** What became of the last action. Shown in the spark and the Story Paths alike: the footer acts in both. */
+  const feedback = message && <p role={message.tone === 'error' ? 'alert' : 'status'}
+    className={`rounded-lg border px-3 py-2 text-xs ${message.tone === 'error' ? 'border-red-500/30 bg-red-500/5 text-red-300' : 'border-[rgba(205,178,113,0.25)] bg-[rgba(205,178,113,0.05)] text-[#E3C878]'}`}>{message.text}</p>;
   const sparkTags = useMemo(() => storySparkTags(spark).slice(0, 3), [spark]);
   const sideAction = 'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[rgba(196,182,148,0.18)] bg-[rgba(11,14,30,0.6)] text-neutral-300 transition-colors hover:border-[rgba(205,178,113,0.45)] hover:text-signal disabled:opacity-60';
 
@@ -295,6 +300,7 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
                           className="inline-flex h-11 items-center gap-1.5 font-sc text-[11px] font-bold uppercase tracking-[0.16em] text-[#CDB271] hover:text-[#E3C878]">
                           <ChevronLeft size={15} aria-hidden="true" />Back to the spark
                         </button>
+                        {feedback}
                         <OriginGenrePicker idPrefix="dao" genre={genre} onChange={chooseGenre} required={false} compact
                           open onOpenChange={setPathsOpen} onSelectPath={() => setPathsOpen(false)}
                           emptyTitle="Any path" emptyHint="The Dao wanders wherever it likes"
@@ -336,8 +342,7 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
                         </AnimatePresence>
                       </section>
 
-                      {message && <p role={message.tone === 'error' ? 'alert' : 'status'}
-                        className={`rounded-lg border px-3 py-2 text-xs ${message.tone === 'error' ? 'border-red-500/30 bg-red-500/5 text-red-300' : 'border-[rgba(205,178,113,0.25)] bg-[rgba(205,178,113,0.05)] text-[#E3C878]'}`}>{message.text}</p>}
+                      {feedback}
 
                       {/* Shape the next spark: mode and Survival in one row, then the path. */}
                       <div className="flex items-stretch gap-2">

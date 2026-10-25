@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { WORLD_CARD_KINDS, type WorldRecord } from '../../../narrative/worldRecord';
 import { createEmptyHarnessWorkspaceState } from './repository';
 import { createHarnessStory, reviseStoryFoundation, storyWorldRecord } from './foundation';
+import { exportHarnessStory } from './controller';
 import { compileStoryInformationPacket } from './context';
 
 /**
@@ -77,6 +78,28 @@ describe('the world record lives on the workspace', () => {
     };
     const packet = compileStoryInformationPacket(withArrival, created.story, created.foundation, 'hga_test');
     expect(packet.worldAtChapterZero?.cards.map(card => card.name)).toEqual(['Ye Chen', 'Jade Token', 'Elder Qin']);
+  });
+
+  it('carries the record out with the story when it is exported', () => {
+    // Export story carries the whole story (HARNESS_PRINCIPLES, inspectability).
+    // Adding the record to the workspace without adding it here lost the world
+    // on the way out, and an export re-opened came back with no world at all.
+    const created = start();
+    const withArrival = {
+      ...created.state,
+      worldCards: [...created.state.worldCards, {
+        storyId: created.story.id, key: 'world:character:elder-qin', kind: 'character' as const,
+        name: 'Elder Qin', enteredInChapter: 9, slots: {},
+      }],
+    };
+    const exported = exportHarnessStory(withArrival, created.story.id);
+    expect(exported.worldCards.map(card => [card.name, card.enteredInChapter]))
+      .toEqual([['Ye Chen', 0], ['Jade Token', 0], ['Elder Qin', 9]]);
+    // And only this story's.
+    const second = createHarnessStory(withArrival, { premise: 'Another story.', worldAtChapterZero: world([
+      { key: 'world:character:lin-feng', kind: 'character', name: 'Lin Feng', enteredInChapter: 0, slots: {} },
+    ]) });
+    expect(exportHarnessStory(second.state, created.story.id).worldCards.every(card => card.storyId === created.story.id)).toBe(true);
   });
 
   it('keeps every card kind the schema defines readable from the record', () => {

@@ -2333,5 +2333,9 @@ export const exportHarnessStory = (state: HarnessWorkspaceState, storyId: string
     batches: state.batches.filter(batch => batch.storyId === storyId),
     memoryRecoveries: state.memoryRecoveries?.filter(recovery => recovery.storyId === storyId) ?? [],
     codexEntries: state.codexEntries.filter(entry => entry.storyId === storyId),
+    // The story's world record: the cards it opened with and every one a
+    // chapter brought in. Export story carries the whole story, so a story
+    // taken out and opened again keeps the world it was written in.
+    worldCards: state.worldCards.filter(card => card.storyId === storyId),
   };
 };

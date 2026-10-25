@@ -206,6 +206,11 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-10-25 (shared genre picker):** `OriginGenrePicker` is also Dao
+  Insights' genre picker. Optional `idPrefix`, `required`, `emptyTitle`,
+  `emptyHint` and `conjure` props serve that host; their defaults keep Story
+  Seed's Origin page exactly as it was. `GENRE_PATH_SIGILS` is exported for
+  surfaces that name a path.
 - **2026-10-22 (the world at Chapter 0):** Phase B of
   [the World at Chapter 0 plan](../../../docs/world-at-chapter-0.md), from
   SENSEI: "everything that's going to be on the Codex needs to be fillable

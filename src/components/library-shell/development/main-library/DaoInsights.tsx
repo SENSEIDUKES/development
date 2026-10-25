@@ -1,19 +1,24 @@
 import FocusLock from 'react-focus-lock';
 import { useHeaderClipboard } from '../mainLibraryClipboard';
-import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { BookmarkPlus, Check, Compass, Copy, Feather, Shuffle, Sparkles, Wand2, X } from 'lucide-react';
+import { BookmarkPlus, Check, Compass, Copy, Feather, Shuffle, Sparkle, Sparkles, Wand2, X } from 'lucide-react';
 import { STORY_SPARK_IDEA_MAX_LENGTH, type StorySpark, type StorySparkRequest } from '@seihouse/sen/story-seed';
+import { NarrativeTextArea as LibraryTextArea } from '@seihouse/sen/presentation';
+import { GENRE_PATH_SIGILS, OriginGenrePicker } from '../../../story-seed/development/workspaces/origin/OriginGenrePicker';
 import type { DaoSparkHost } from '../../shared/MainLibraryAdapter';
 import { DAO_GENRES, handSpark } from './daoSparks';
 
 /**
  * Dao Insights: a wandering elder's lost ramblings that are really story
  * sparks — a premise and a genre, enough direction to start a Story Seed and
- * nothing more. The genre comes first. Random lets the Dao ramble a spark in
- * it; Custom shapes the writer's own rough beginning into a real premise in
- * it. A spark is begun as a new Story Seed or kept in the Story Bank.
+ * nothing more. The spark leads the panel; below it the writer shapes the
+ * next one. Random lets the Dao ramble a spark; Custom shapes the writer's own
+ * rough beginning into a real premise. The genre is chosen with Story Seed's
+ * own path picker: no path lets the Dao wander, a path or the writer's own
+ * genre steers it, and Conjure asks it for a genre no list holds. A spark is
+ * begun as a new Story Seed or kept in the Story Bank.
  *
  * The writing comes from the host (`DaoSparkHost`, a model behind the Story
  * Spark route). Without one the Dao offers its own hand-written sparks, and a
@@ -21,27 +26,40 @@ import { DAO_GENRES, handSpark } from './daoSparks';
  */
 
 type SparkMode = 'random' | 'custom';
-/** `any` rolls one of the genres; `invent` conjures one no list holds. */
-type GenreChoice = 'any' | 'invent' | string;
 
 const RECENT_LIMIT = 6;
 const TICKER_MS = 14_000;
 /** The muttering beat before a spark lands, so even a hand-written one arrives. */
 const SETTLE_MS = 900;
 
-const genreIcon = (genre: string, invented: boolean) =>
-  invented ? '✨' : DAO_GENRES.find(preset => preset.id === genre)?.icon ?? '📜';
+const genreSigil = (genre: string, invented: boolean) => (invented ? Sparkles : GENRE_PATH_SIGILS[genre] ?? Sparkle);
 const genreName = (genre: string) => DAO_GENRES.find(preset => preset.id === genre)?.name ?? genre;
 
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+/** The ornamental "✦ — title — ✦" heading Story Seed's path picker uses. */
+const Ornament = ({ children }: { children: React.ReactNode }) => (
+  <div className="flex items-center justify-center gap-2.5">
+    <span aria-hidden="true" className="flex items-center gap-1.5">
+      <span className="h-px w-6 bg-gradient-to-r from-transparent to-[rgba(205,178,113,0.55)] sm:w-10" />
+      <Sparkle size={9} className="text-[#CDB271]" />
+    </span>
+    <span className="whitespace-nowrap font-sc text-[11px] font-bold uppercase tracking-[0.22em] text-[#CDB271]">{children}</span>
+    <span aria-hidden="true" className="flex items-center gap-1.5">
+      <Sparkle size={9} className="text-[#CDB271]" />
+      <span className="h-px w-6 bg-gradient-to-l from-transparent to-[rgba(205,178,113,0.55)] sm:w-10" />
+    </span>
+  </div>
+);
+
 export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
   const copyText = useHeaderClipboard();
-  const ideaId = useId();
   const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<SparkMode>('random');
-  const [genreChoice, setGenreChoice] = useState<GenreChoice>('any');
+  /** Empty: the Dao wanders any path. Otherwise a Story Seed path or the writer's own genre. */
+  const [genre, setGenre] = useState('');
+  const [conjuring, setConjuring] = useState(false);
   const [idea, setIdea] = useState('');
   const [spark, setSpark] = useState<StorySpark>(() => handSpark({}));
   /** The writer has sought a spark: the header stops turning over its own. */
@@ -57,6 +75,7 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
   const mountedRef = useRef(true);
   const requestRef = useRef<AbortController | null>(null);
   const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -106,12 +125,13 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
       setMessage({ tone: 'error', text: 'Write the beginning of your idea first. A few words is enough.' });
       return;
     }
-    const invent = genreChoice === 'invent';
-    const genre = invent ? undefined
-      : genreChoice === 'any' ? DAO_GENRES[Math.floor(Math.random() * DAO_GENRES.length)].id : genreChoice;
+    const invent = conjuring;
+    const chosen = genre.trim();
+    const sparkGenre = invent ? undefined
+      : chosen || DAO_GENRES[Math.floor(Math.random() * DAO_GENRES.length)].id;
     const custom = mode === 'custom' ? { idea: beginning } : {};
     const avoid = recentRef.current.length ? { avoid: recentRef.current } : {};
-    const request: StorySparkRequest = invent ? { inventGenre: true, ...custom, ...avoid } : { genre: genre!, ...custom, ...avoid };
+    const request: StorySparkRequest = invent ? { inventGenre: true, ...custom, ...avoid } : { genre: sparkGenre!, ...custom, ...avoid };
 
     setSeeking(true);
     setMessage(null);
@@ -140,7 +160,9 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
       }
       if (!mountedRef.current || controller.signal.aborted) return;
       if (!next) {
-        const fallback = handSpark(invent ? { inventGenre: true } : { genre }, spark);
+        const handWritten = handSpark(invent ? { inventGenre: true } : { genre: sparkGenre }, spark);
+        // The writer's own genre has no hand-written sparks: the premise is borrowed, the genre kept.
+        const fallback = !invent && handWritten.genre !== sparkGenre ? { ...handWritten, genre: sparkGenre! } : handWritten;
         next = mode === 'custom'
           ? { ...fallback, premise: beginning.slice(0, 600), aside: 'The Dao is resting tonight. Your words stand as you wrote them.' }
           : fallback;
@@ -149,6 +171,7 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
       remember(next);
       setSpark(next);
       setSought(true);
+      scrollRef.current?.scrollTo?.({ top: 0, behavior: 'smooth' });
       if (note) setMessage({ tone: 'note', text: note });
     } finally {
       if (mountedRef.current && requestRef.current === controller) {
@@ -192,21 +215,14 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
   }, [copyText, spark]);
 
   const chooseMode = (next: SparkMode) => { setMode(next); setMessage(null); };
-  const chooseGenre = (next: GenreChoice) => { setGenreChoice(next); setMessage(null); };
+  const chooseGenre = (next: string) => { setGenre(next); setConjuring(false); setMessage(null); };
+  const toggleConjure = () => { setConjuring(current => !current); setMessage(null); };
 
   const sparkKey = `${spark.genre}\u0000${spark.premise}`;
   const isKept = kept === spark;
   const seekLabel = seeking ? 'The Dao is muttering…' : mode === 'custom' ? 'Shape my premise' : 'Seek a spark';
-
-  const genreChip = (choice: GenreChoice, icon: string, label: string) => {
-    const selected = genreChoice === choice;
-    return <button key={choice} type="button" aria-pressed={selected} onClick={() => chooseGenre(choice)}
-      className={`dao-genre-chip shrink-0 snap-start inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-sans transition-colors ${selected
-        ? 'border-portal bg-portal/10 text-signal shadow-[0_0_10px_rgba(4,172,255,0.15)]'
-        : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'}`}>
-      <span aria-hidden="true">{icon}</span>{label}
-    </button>;
-  };
+  const SparkSigil = genreSigil(spark.genre, spark.inventedGenre);
+  const sideAction = 'flex h-12 min-w-12 items-center justify-center gap-2 rounded-xl border border-[rgba(196,182,148,0.18)] bg-[rgba(11,14,30,0.6)] px-3 text-sm text-neutral-300 transition-colors hover:border-[rgba(205,178,113,0.45)] hover:text-signal disabled:opacity-60';
 
   return (
     <>
@@ -214,14 +230,14 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
       <div
         id="dao-insights-header-center"
         onClick={() => setIsOpen(true)}
-        className="dao-insights-trigger flex flex-col flex-1 min-w-0 items-center justify-center max-w-[220px] sm:max-w-[360px] xl:max-w-md mx-2 sm:mx-4 px-3 py-1 bg-neutral-950/40 border border-neutral-900 hover:border-portal/30 hover:bg-neutral-950/70 rounded-xl transition-all duration-300 cursor-pointer select-none group text-center overflow-hidden h-10 sm:h-12"
+        className="dao-insights-trigger flex flex-col flex-1 min-w-0 items-center justify-center max-w-[220px] sm:max-w-[360px] xl:max-w-md mx-2 sm:mx-4 px-3 py-1 bg-[rgba(11,14,30,0.55)] border border-[rgba(196,182,148,0.14)] hover:border-[rgba(205,178,113,0.4)] hover:bg-[rgba(11,14,30,0.8)] rounded-xl transition-all duration-300 cursor-pointer select-none group text-center overflow-hidden h-10 sm:h-12"
         role="button" aria-haspopup="dialog" aria-expanded={isOpen} aria-label="Insights from the Dao: story sparks"
         title="Insights from the Dao — seek a spark for your next story" tabIndex={0}
         onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setIsOpen(true); } }}
       >
         <div className="flex items-center space-x-1 mb-0.5 shrink-0">
-          <Sparkles size={11} className="text-portal shrink-0 group-hover:rotate-12 transition-transform" />
-          <span className="font-sc font-bold text-[8px] tracking-[0.18em] text-neutral-500 uppercase leading-none group-hover:text-portal transition-colors">
+          <Sparkles size={11} className="text-[#CDB271] shrink-0 group-hover:rotate-12 transition-transform" />
+          <span className="font-sc font-bold text-[8px] tracking-[0.18em] text-[#CDB271]/80 uppercase leading-none group-hover:text-[#E3C878] transition-colors">
             Insights from the Dao
           </span>
         </div>
@@ -229,8 +245,9 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
           <AnimatePresence mode="wait">
             <motion.p key={sparkKey} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.35, ease: 'easeOut' }}
-              className="text-[11px] font-sans font-medium text-signal truncate w-full italic px-1">
-              {genreIcon(spark.genre, spark.inventedGenre)} {spark.premise}
+              className="flex w-full items-center justify-center gap-1 text-[11px] font-serif font-medium text-signal italic px-1">
+              <SparkSigil size={11} aria-hidden="true" className="shrink-0 text-[#A78BFA]" />
+              <span className="truncate">{spark.premise}</span>
             </motion.p>
           </AnimatePresence>
         </div>
@@ -242,122 +259,136 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
           {isOpen && (
             <motion.div key="dao-overlay-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4 selection:bg-portal/20">
-              <div className="absolute inset-0 bg-black/85 backdrop-blur-md" onClick={() => setIsOpen(false)} aria-hidden="true" />
+              <div className="absolute inset-0 bg-[rgba(2,3,10,0.86)] backdrop-blur-md" onClick={() => setIsOpen(false)} aria-hidden="true" />
               <FocusLock returnFocus className="contents">
                 <motion.div role="dialog" aria-modal="true" aria-label="Dao Insights"
-                  initial={{ y: 24, opacity: 0.6 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 24, opacity: 0 }}
+                  initial={{ y: 32, opacity: 0.6 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 32, opacity: 0 }}
                   transition={{ type: 'spring', damping: 26, stiffness: 320 }}
-                  className="library-header-dialog dao-spark-panel relative z-10 flex w-full max-w-xl flex-col overflow-hidden rounded-t-2xl sm:rounded-2xl border border-neutral-900 bg-[#000000] text-left font-sans shadow-[0_0_60px_rgba(4,172,255,0.18)] max-h-[92dvh] sm:max-h-[88vh]">
+                  className="library-header-dialog dao-spark-panel seed-field-scope relative z-10 flex w-full max-w-2xl flex-col overflow-hidden rounded-t-[1.75rem] sm:rounded-3xl border border-[rgba(196,182,148,0.16)] text-left font-sans max-h-[94dvh] sm:max-h-[90vh]">
                   <div className="absolute top-0 inset-x-0 h-[3px] bg-gradient-to-r from-human via-portal to-gold-accent" aria-hidden="true" />
 
-                  {/* Header: icon, one-line title and the close control in one row, so nothing overlaps. */}
-                  <div className="flex items-center gap-3 border-b border-neutral-900 px-4 pt-5 pb-4 sm:px-6">
-                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-neutral-800 bg-neutral-950 text-portal">
-                      <motion.div animate={{ rotate: seeking ? 720 : 0 }} transition={{ duration: seeking ? 1.2 : 0.4, ease: 'easeInOut', repeat: seeking ? Infinity : 0 }}>
-                        <Compass size={20} />
-                      </motion.div>
+                  {/* Header: a grab bar on phones, then sigil, title and close in one row. */}
+                  <div className="relative shrink-0 px-4 pt-2.5 pb-3 sm:px-6 sm:pt-5 sm:pb-4">
+                    <div aria-hidden="true" className="mx-auto mb-2.5 h-1 w-10 rounded-full bg-white/15 sm:hidden" />
+                    <div className="flex items-center gap-3">
+                      <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-[rgba(205,178,113,0.4)] bg-[rgba(205,178,113,0.08)] text-[#CDB271] shadow-[0_0_18px_rgba(205,178,113,0.18)]">
+                        <motion.div animate={{ rotate: seeking ? 720 : 0 }} transition={{ duration: seeking ? 1.2 : 0.4, ease: 'easeInOut', repeat: seeking ? Infinity : 0 }}>
+                          <Compass size={20} />
+                        </motion.div>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h2 className="font-display text-xl font-bold uppercase tracking-[0.12em] text-signal leading-tight sm:text-2xl">Dao Insights</h2>
+                        <p className="dao-spark-subtitle mt-0.5 text-xs leading-snug text-neutral-400">Lost ramblings of the Dao, each a story waiting to be told.</p>
+                      </div>
+                      <button type="button" onClick={() => setIsOpen(false)} aria-label="Close Dao Insights"
+                        className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-[rgba(196,182,148,0.18)] bg-[rgba(11,14,30,0.6)] text-neutral-300 hover:border-[rgba(205,178,113,0.45)] hover:text-signal transition-colors">
+                        <X size={18} />
+                      </button>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <h2 className="font-display text-lg font-bold uppercase tracking-wide text-signal leading-tight">Dao Insights</h2>
-                      <p className="mt-0.5 text-[11px] text-neutral-500 leading-snug">Lost ramblings of the Dao. Listen closely: each one is a story waiting to be told.</p>
-                    </div>
-                    <button type="button" onClick={() => setIsOpen(false)} aria-label="Close Dao Insights"
-                      className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-neutral-800 bg-neutral-950 text-neutral-400 hover:bg-neutral-900 hover:text-signal transition-colors">
-                      <X size={16} />
-                    </button>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5 space-y-5">
-                    {/* Mode */}
-                    <div role="group" aria-label="Spark mode" className="grid grid-cols-2 gap-1 rounded-xl border border-neutral-900 bg-neutral-950 p-1">
-                      {([
-                        ['random', Shuffle, 'Random', 'The Dao rambles'],
-                        ['custom', Feather, 'Custom', 'Shape your idea'],
-                      ] as const).map(([value, Icon, label, hint]) => (
-                        <button key={value} type="button" aria-pressed={mode === value} onClick={() => chooseMode(value)}
-                          className={`flex flex-col items-center justify-center rounded-lg px-2 py-1.5 transition-colors ${mode === value ? 'bg-neutral-800 text-signal' : 'text-neutral-500 hover:text-neutral-200'}`}>
-                          <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest"><Icon size={13} aria-hidden="true" />{label}</span>
-                          <span className="text-[10px] text-neutral-500">{hint}</span>
-                        </button>
-                      ))}
+                  <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-contain px-4 pb-5 sm:px-6 space-y-5">
+                    {/* The spark leads: it is what the writer came for. */}
+                    <section aria-label="Story spark" aria-live="polite" aria-busy={seeking}
+                      data-seeking={seeking || undefined}
+                      className="dao-spark-scroll relative overflow-hidden rounded-2xl border border-[rgba(205,178,113,0.22)] px-5 py-6 sm:px-8 sm:py-8">
+                      <AnimatePresence mode="wait">
+                        <motion.div key={sparkKey} initial={{ opacity: 0, y: 8 }} animate={{ opacity: seeking ? 0.35 : 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3 }}>
+                          <div className="flex flex-wrap items-center justify-center gap-2">
+                            <span className="inline-flex items-center gap-2 rounded-full border border-[rgba(167,139,250,0.45)] bg-[rgba(167,139,250,0.1)] py-1 pl-1 pr-3 shadow-[0_0_12px_rgba(167,139,250,0.2)]">
+                              <span aria-hidden="true" className="grid h-6 w-6 place-items-center rounded-full bg-[rgba(167,139,250,0.18)]">
+                                <SparkSigil size={13} className="text-[#C4B5FD]" />
+                              </span>
+                              <span className="font-sc text-[11px] font-bold uppercase tracking-[0.12em] text-signal">{genreName(spark.genre)}</span>
+                            </span>
+                            {spark.inventedGenre && <span className="font-sc text-[10px] font-bold uppercase tracking-[0.18em] text-[#D4AF37]">Conjured genre</span>}
+                          </div>
+                          {spark.genreNote && <p className="mt-2 text-center text-sm text-neutral-400">{spark.genreNote}</p>}
+
+                          <p className="mt-5 select-text text-center font-serif text-[1.15rem] leading-[1.7] text-[#F3EDE0] sm:text-[1.3rem]">{spark.premise}</p>
+
+                          {spark.aside && <>
+                            <div aria-hidden="true" className="mx-auto my-5 h-px w-24 bg-gradient-to-r from-transparent via-[rgba(205,178,113,0.5)] to-transparent" />
+                            <p className="text-center text-sm italic leading-relaxed text-neutral-400">“{spark.aside}”</p>
+                          </>}
+                          {spark.voice && <p className="mt-3 text-center font-sc text-[11px] font-bold uppercase tracking-[0.14em] text-[#CDB271]">— {spark.voice}</p>}
+                        </motion.div>
+                      </AnimatePresence>
+                    </section>
+
+                    {message && <p role={message.tone === 'error' ? 'alert' : 'status'}
+                      className={`rounded-xl border px-3 py-2.5 text-sm ${message.tone === 'error' ? 'border-red-500/30 bg-red-500/5 text-red-300' : 'border-[rgba(205,178,113,0.25)] bg-[rgba(205,178,113,0.05)] text-[#E3C878]'}`}>{message.text}</p>}
+
+                    {/* Shape the next spark */}
+                    <div className="space-y-3">
+                      <Ornament>Seek the next spark</Ornament>
+
+                      <div role="group" aria-label="Spark mode" className="grid grid-cols-2 gap-1 rounded-2xl border border-[rgba(196,182,148,0.15)] bg-[rgba(11,14,30,0.6)] p-1">
+                        {([
+                          ['random', Shuffle, 'Random', 'The Dao rambles'],
+                          ['custom', Feather, 'Custom', 'Shape your idea'],
+                        ] as const).map(([value, Icon, label, hint]) => {
+                          const selected = mode === value;
+                          return (
+                            <button key={value} type="button" aria-pressed={selected} onClick={() => chooseMode(value)}
+                              className={`flex min-h-[3.5rem] flex-col items-center justify-center rounded-xl px-2 py-2 transition-all ${selected
+                                ? 'border border-[rgba(167,139,250,0.45)] bg-[rgba(167,139,250,0.12)] text-signal shadow-[0_0_14px_rgba(167,139,250,0.2)]'
+                                : 'border border-transparent text-neutral-400 hover:text-neutral-200'}`}>
+                              <span className="flex items-center gap-1.5 font-sc text-xs font-bold uppercase tracking-[0.16em]"><Icon size={14} aria-hidden="true" />{label}</span>
+                              <span className="mt-0.5 text-xs text-neutral-400">{hint}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* The genre: Story Seed's own path picker. */}
+                      <OriginGenrePicker idPrefix="dao" genre={genre} onChange={chooseGenre} required={false}
+                        emptyTitle="Any path" emptyHint="The Dao wanders wherever it likes — or pick a path"
+                        conjure={{ active: conjuring, onSelect: toggleConjure, title: 'Let the Dao conjure one', hint: 'A genre no list holds, and a story only it could tell.' }} />
+
+                      {/* Custom: the writer's own beginning */}
+                      {mode === 'custom' && (
+                        <section className="glass-panel p-4 sm:p-5">
+                          <LibraryTextArea id="dao-spark-beginning" label="Your beginning" icon={Feather} size="compact"
+                            value={idea} maxLength={STORY_SPARK_IDEA_MAX_LENGTH} rows={3}
+                            onChange={value => { setIdea(value); if (message?.tone === 'error') setMessage(null); }}
+                            placeholder="A girl who can hear swords… a sect that runs a noodle shop… whatever you have so far."
+                            helpText="The Dao shapes it into a real premise in your genre, and keeps your idea." />
+                        </section>
+                      )}
                     </div>
+                  </div>
 
-                    {/* Genre first */}
-                    <fieldset>
-                      <legend className="mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-neutral-500">Choose a genre</legend>
-                      <div className="dao-genre-row -mx-4 flex snap-x gap-1.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
-                        {genreChip('any', '🎲', 'Any genre')}
-                        {DAO_GENRES.map(preset => genreChip(preset.id, preset.icon, preset.name))}
-                        {genreChip('invent', '✨', 'Conjure a genre')}
-                      </div>
-                      {genreChoice === 'invent' && <p className="mt-2 text-[11px] text-neutral-500">The Dao invents a genre no list holds, and a story only it could tell.</p>}
-                    </fieldset>
-
-                    {/* Custom: the writer's own beginning */}
-                    {mode === 'custom' && (
-                      <div>
-                        <label htmlFor={ideaId} className="mb-2 block text-[10px] font-bold uppercase tracking-[0.18em] text-neutral-500">Your beginning</label>
-                        <textarea id={ideaId} value={idea} maxLength={STORY_SPARK_IDEA_MAX_LENGTH} rows={3}
-                          onChange={event => { setIdea(event.target.value); if (message?.tone === 'error') setMessage(null); }}
-                          placeholder="A girl who can hear swords… a sect that runs a noodle shop… whatever you have so far."
-                          className="w-full resize-y rounded-xl border border-neutral-800 bg-neutral-950 px-3 py-2.5 text-sm text-signal placeholder:text-neutral-600 focus:border-portal focus:outline-none" />
-                        <p className="mt-1 text-[11px] text-neutral-500">The Dao shapes it into a real premise in your genre, and keeps your idea.</p>
-                      </div>
-                    )}
-
+                  {/* Seek, then what to do with the spark: always in reach of the thumb. */}
+                  <div className="shrink-0 space-y-2 border-t border-[rgba(196,182,148,0.12)] bg-[rgba(5,7,16,0.92)] px-4 pt-3 sm:px-6 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md">
                     <button type="button" onClick={seek} disabled={seeking}
-                      className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-portal/40 bg-portal/5 px-5 py-3 text-sm font-bold uppercase tracking-wider text-portal shadow-[0_0_20px_rgba(4,172,255,0.15)] transition-all hover:border-portal hover:bg-portal/10 hover:text-signal active:scale-[0.98] disabled:opacity-60">
+                      className="dao-seek-button flex h-12 w-full items-center justify-center gap-2.5 rounded-xl border border-[rgba(205,178,113,0.5)] px-5 font-sc text-sm font-bold uppercase tracking-[0.16em] text-[#F3E3B5] transition-all hover:border-[#E3C878] hover:text-white active:scale-[0.98] disabled:opacity-60">
                       <motion.span animate={{ rotate: seeking ? 360 : 0 }} transition={{ duration: 1.2, ease: 'linear', repeat: seeking ? Infinity : 0 }} className="flex">
                         {mode === 'custom' ? <Wand2 size={16} aria-hidden="true" /> : <Sparkles size={16} aria-hidden="true" />}
                       </motion.span>
                       <span>{seekLabel}</span>
                     </button>
-
-                    {message && <p role={message.tone === 'error' ? 'alert' : 'status'}
-                      className={`text-xs ${message.tone === 'error' ? 'text-red-400' : 'text-portal'}`}>{message.text}</p>}
-
-                    {/* The spark */}
-                    <section aria-label="Story spark" aria-live="polite" aria-busy={seeking}
-                      className="relative overflow-hidden rounded-xl border border-neutral-900 bg-neutral-950 p-4 sm:p-5">
-                      <AnimatePresence mode="wait">
-                        <motion.div key={sparkKey} initial={{ opacity: 0, y: 6 }} animate={{ opacity: seeking ? 0.35 : 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }}>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="inline-flex items-center gap-1.5 rounded-full border border-portal/30 bg-portal/10 px-2.5 py-1 text-[11px] font-semibold text-portal">
-                              <span aria-hidden="true">{genreIcon(spark.genre, spark.inventedGenre)}</span>{genreName(spark.genre)}
-                            </span>
-                            {spark.inventedGenre && <span className="text-[10px] font-bold uppercase tracking-widest text-gold-accent">Conjured genre</span>}
-                          </div>
-                          {spark.genreNote && <p className="mt-2 text-xs text-neutral-400">{spark.genreNote}</p>}
-                          {spark.aside && <p className="mt-3 text-sm italic text-neutral-400 leading-relaxed">“{spark.aside}”</p>}
-                          <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.18em] text-neutral-500">Premise</p>
-                          <p className="mt-1 select-text font-serif text-base sm:text-lg text-signal leading-relaxed">{spark.premise}</p>
-                          {spark.voice && <p className="mt-4 text-right text-xs font-serif text-neutral-500">— <span className="font-semibold text-neutral-300">{spark.voice}</span></p>}
-                        </motion.div>
-                      </AnimatePresence>
-                    </section>
-                  </div>
-
-                  {/* What to do with the spark */}
-                  <div className="flex items-center gap-2 border-t border-neutral-900 bg-black px-4 py-3 sm:px-6 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-                    {host?.beginSpark && (
-                      <button type="button" onClick={() => act('begin')} disabled={seeking || acting !== null}
-                        className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-portal px-4 py-2.5 text-sm font-bold text-black transition-opacity hover:opacity-90 disabled:opacity-50">
-                        <Feather size={15} aria-hidden="true" /><span className="truncate">{acting === 'begin' ? 'Planting…' : 'Begin this story'}</span>
+                    <div className="flex items-center gap-2">
+                      {host?.beginSpark && (
+                        <button type="button" onClick={() => act('begin')} disabled={seeking || acting !== null}
+                          className="flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-portal px-4 text-sm font-bold text-black shadow-[0_0_18px_rgba(4,172,255,0.25)] transition-opacity hover:opacity-90 disabled:opacity-50">
+                          <Feather size={16} aria-hidden="true" /><span className="truncate">{acting === 'begin' ? 'Planting…' : 'Begin this story'}</span>
+                        </button>
+                      )}
+                      {host?.keepSpark && (
+                        <button type="button" onClick={() => act('keep')} disabled={seeking || acting !== null || isKept}
+                          aria-label={isKept ? 'Kept in your Story Bank' : 'Keep in Story Bank'} title={isKept ? 'Kept in your Story Bank' : 'Keep in Story Bank'}
+                          className={`${sideAction} ${host.beginSpark ? '' : 'flex-1'}`}>
+                          {isKept ? <Check size={16} className="text-emerald-400" aria-hidden="true" /> : <BookmarkPlus size={16} aria-hidden="true" />}
+                          <span className={host.beginSpark ? 'hidden min-[400px]:inline' : ''}>{isKept ? 'Kept' : 'Keep'}</span>
+                        </button>
+                      )}
+                      <button type="button" onClick={copySpark} aria-label={copied ? 'Spark copied' : 'Copy spark'} title="Copy the premise and genre"
+                        className={`${sideAction} ${host?.beginSpark || host?.keepSpark ? '' : 'flex-1'}`}>
+                        {copied ? <Check size={16} className="text-emerald-400" aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
+                        <span className={host?.beginSpark || host?.keepSpark ? 'hidden min-[400px]:inline' : ''}>{copied ? 'Copied' : 'Copy'}</span>
                       </button>
-                    )}
-                    {host?.keepSpark && (
-                      <button type="button" onClick={() => act('keep')} disabled={seeking || acting !== null || isKept}
-                        aria-label={isKept ? 'Kept in your Story Bank' : 'Keep in Story Bank'} title={isKept ? 'Kept in your Story Bank' : 'Keep in Story Bank'}
-                        className={`flex items-center justify-center gap-2 rounded-xl border border-neutral-800 bg-neutral-950 px-3 py-2.5 text-sm text-neutral-300 transition-colors hover:border-neutral-700 hover:text-signal disabled:opacity-60 ${host.beginSpark ? '' : 'flex-1'}`}>
-                        {isKept ? <Check size={15} className="text-emerald-400" aria-hidden="true" /> : <BookmarkPlus size={15} aria-hidden="true" />}
-                        <span className={host.beginSpark ? 'hidden sm:inline' : ''}>{isKept ? 'Kept' : 'Keep'}</span>
-                      </button>
-                    )}
-                    <button type="button" onClick={copySpark} aria-label={copied ? 'Spark copied' : 'Copy spark'} title="Copy the premise and genre"
-                      className={`flex items-center justify-center gap-2 rounded-xl border border-neutral-800 bg-neutral-950 px-3 py-2.5 text-sm text-neutral-300 transition-colors hover:border-neutral-700 hover:text-signal ${host?.beginSpark || host?.keepSpark ? '' : 'flex-1'}`}>
-                      {copied ? <Check size={15} className="text-emerald-400" aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
-                      <span className={host?.beginSpark || host?.keepSpark ? 'hidden sm:inline' : ''}>{copied ? 'Copied' : 'Copy'}</span>
-                    </button>
+                    </div>
                   </div>
                 </motion.div>
               </FocusLock>

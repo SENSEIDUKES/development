@@ -46,6 +46,13 @@ const open = async (host?: DaoSparkHost) => {
   await settle();
 };
 
+/** Choose a genre path the way a writer does: open Story Seed's path picker, then the path. */
+const choosePath = async (name: RegExp) => {
+  await click(button(/^Pick a path/));
+  await click(Array.from(dialog().querySelectorAll('[role="radio"], button[aria-pressed], button[aria-expanded]'))
+    .find(item => name.test(item.textContent ?? '')));
+};
+
 const modelSpark = (request: StorySparkRequest): StorySpark => ({
   premise: request.idea ? `Shaped: ${request.idea}` : 'A model premise.',
   genre: request.inventGenre ? 'Echo Cultivation' : request.genre,
@@ -67,10 +74,11 @@ it('offers two modes and the genre first, then asks the host for a spark in the 
   await open({ checkSparks: async () => true, requestSpark });
   expect(button(/^Random/)?.getAttribute('aria-pressed')).toBe('true');
   expect(button(/^Custom/)).toBeTruthy();
-  const genres = dialog().querySelector('fieldset')!;
-  expect(genres.textContent).toContain('Any genre');
-  expect(genres.textContent).toContain('Conjure a genre');
-  await click(Array.from(genres.querySelectorAll('button')).find(item => item.textContent?.includes('Tower Climb')));
+  expect(dialog().textContent).toContain('Any path');
+  await click(button(/^Pick a path/));
+  expect(dialog().querySelector('[role="radiogroup"][aria-label="Story paths"]')).toBeTruthy();
+  expect(dialog().textContent).toContain('Let the Dao conjure one');
+  await click(Array.from(dialog().querySelectorAll('[role="radio"]')).find(item => item.textContent?.includes('Tower Climb')));
   await click(button(/Seek a spark/));
   await settle(1100);
   expect(requestSpark).toHaveBeenCalledWith(expect.objectContaining({ genre: 'Tower Climb' }), expect.any(AbortSignal));
@@ -95,7 +103,7 @@ it('Custom shapes the writer\'s own beginning in the genre, and needs one first'
 it('conjures a genre: the spark names it and says how it reads', async () => {
   const requestSpark = vi.fn(async (request: StorySparkRequest) => modelSpark(request));
   await open({ checkSparks: async () => true, requestSpark });
-  await click(Array.from(dialog().querySelectorAll('fieldset button')).find(item => item.textContent?.includes('Conjure a genre')));
+  await choosePath(/Let the Dao conjure one/);
   await click(button(/Seek a spark/));
   await settle(1100);
   expect(requestSpark).toHaveBeenCalledWith(expect.objectContaining({ inventGenre: true }), expect.any(AbortSignal));
@@ -104,9 +112,22 @@ it('conjures a genre: the spark names it and says how it reads', async () => {
   expect(dialog().textContent).toContain('Techniques are sounds.');
 });
 
+it('a writer\'s own genre steers the spark, with or without a model', async () => {
+  const requestSpark = vi.fn(async (request: StorySparkRequest) => modelSpark(request));
+  await open({ checkSparks: async () => true, requestSpark });
+  await choosePath(/Define My Own Path/);
+  const input = dialog().querySelector<HTMLInputElement>('#dao-genre-custom-input')!;
+  const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
+  await act(async () => { setter.call(input, 'Noodle Cultivation'); input.dispatchEvent(new Event('input', { bubbles: true })); });
+  await click(button(/Seek a spark/));
+  await settle(1100);
+  expect(requestSpark).toHaveBeenCalledWith(expect.objectContaining({ genre: 'Noodle Cultivation' }), expect.any(AbortSignal));
+  expect(dialog().textContent).toContain('Noodle Cultivation');
+});
+
 it('without a model, Random offers the Dao\'s own sparks and Custom keeps the writer\'s words as written', async () => {
   await open();
-  await click(Array.from(dialog().querySelectorAll('fieldset button')).find(item => item.textContent?.includes('Regression')));
+  await choosePath(/Regression/);
   await click(button(/Seek a spark/));
   await settle(1100);
   const premise = HAND_SPARKS.find(item => dialog().textContent?.includes(item.premise));

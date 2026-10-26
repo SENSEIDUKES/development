@@ -395,3 +395,6 @@
 /* A view-only Blueprint (NovelBlueprintEditor readOnly): fields read as text, and edit controls step aside. */
 .novel-blueprint-fields:disabled :is(input, textarea, select) { opacity: 1; cursor: default; color: inherit; -webkit-text-fill-color: currentColor; }
 .novel-blueprint-fields:disabled :is(button, [data-editable-chip]) { display: none; }
+
+/* A blank slot, in the live card and the World Blueprint alike (FateDecides). */
+.seed-fate-decides { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: #aca6d6; }

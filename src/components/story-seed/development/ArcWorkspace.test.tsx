@@ -30,12 +30,16 @@ const Editor = ({ seed: input, view, initialBlueprint }: { seed: StorySeedInput;
 };
 const render = (seed: StorySeedInput, view: 'arc' | 'world' | 'blueprint' = 'arc', initialBlueprint?: WorldBlueprint) => act(() => root.render(<Editor key={initialBlueprint ? `${view}-generated` : view} seed={seed} view={view} initialBlueprint={initialBlueprint} />));
 const button = (text: string) => [...container.querySelectorAll<HTMLButtonElement>('button')].find(item => item.textContent?.trim() === text);
+const press = (selector: string) => act(() => document.querySelector<HTMLButtonElement>(selector)!.click());
+/** Closes the open Blueprint card sheet. */
+const done = () => act(() => [...document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')].find(item => item.textContent?.trim() === 'Done')!.click());
 const roadmap = [
   { arcNumber: 1, goals: [{ id: 'arc-1-gate', text: 'Reach the mountain gate.', chapters: 18 }, { id: 'arc-1-trial', text: 'Pass the trial.', chapters: 12 }] },
   { arcNumber: 2, goals: [{ id: 'arc-2-valley', text: 'Free the valley.', chapters: 30 }] },
 ];
+// A Blueprint card's fields open in a sheet outside the container, so fields are found in the document.
 const fill = (id: string, value: string) => act(() => {
-  const input = container.querySelector<HTMLInputElement | HTMLTextAreaElement>(`#${id}`)!;
+  const input = document.querySelector<HTMLInputElement | HTMLTextAreaElement>(`#${id}`)!;
   const prototype = input instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
   Object.getOwnPropertyDescriptor(prototype, 'value')!.set!.call(input, value);
   input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -94,7 +98,7 @@ describe('Story Seed Arc and World ownership', () => {
     fill('main-opposition-input', 'The gate keeper.');
     // A draft without a generated Arc 1 cannot begin a story.
     render(current, 'blueprint');
-    expect(button('Manifest Story')?.disabled).toBe(true);
+    expect(button('Create Story')?.disabled).toBe(true);
     expect(container.textContent).toContain('Generate the Blueprint to plan Arc 1');
     expect(container.querySelector('#active-arc-goal-input')).toBeNull();
     // A generated Blueprint for a twelve-arc story plans Arc 1: review and edit it before the story begins.
@@ -113,7 +117,7 @@ describe('Story Seed Arc and World ownership', () => {
     expect(current.story.optional.activeArcGoal).toEqual({ id: 'arc-1-gate', text: 'Open the mountain gate.', chapters: 30 });
     expect(blueprint.arcPlans).toEqual([{ arcNumber: 1, goals: [{ id: 'arc-1-gate', text: 'Open the mountain gate.', chapters: 18 }, roadmap[0].goals[1]] }]);
     expect(blueprint.funSettings?.faceSlap).toBe('high');
-    expect(button('Manifest Story')?.disabled).toBe(false);
+    expect(button('Create Story')?.disabled).toBe(false);
     const saved = await workshopStorySeedStorage.create('arc-test', current, blueprint, 'ja');
     const loaded = (await workshopStorySeedStorage.list('arc-test'))[0];
     expect(loaded.seed).toEqual(normalizeStorySeedInput(current));
@@ -150,14 +154,23 @@ describe('Story Seed Arc and World ownership', () => {
     fill('blueprint-world-order', 'Reviewed order');
     fill('blueprint-power-outline', 'Reviewed ladder');
     fill('a11y-control-kytc0oh', 'Reviewed power style');
+    // The main character's fields open from Cast's Edit, in a sheet.
+    press('[data-testid="blueprint-cast-edit"]');
     fill('a11y-control-7b2mqtu', 'Reviewed Name');
     fill('mc-age-input', '19');
     fill('mc-appearance-input', 'Ash-grey eyes');
     fill('mc-personality-input', 'Reviewed temper');
     fill('mc-starting-weakness-input', 'Reviewed weakness');
+    done();
     fill('blueprint-mc-profile', 'Reviewed background prose');
+    press('[data-testid="blueprint-cast"] button[aria-label="Elder Qin"]');
+    press('[data-testid="blueprint-cast-edit"]');
     fill('char-role-char-1', 'Betrayer');
+    done();
+    // A faction is a tile on World; its fields open in a sheet.
+    press('[data-testid="blueprint-factions"] button[aria-label="Faction: Azure Sect"]');
     fill('faction-description-faction-1', 'Reviewed faction profile');
+    done();
     // Typing keeps inner spaces: the review edits the Seed's raw value.
     fill('blueprint-opening-location', 'Reviewed gate ');
     expect(container.querySelector<HTMLTextAreaElement>('#blueprint-opening-location')!.value).toBe('Reviewed gate ');
@@ -186,7 +199,9 @@ describe('Story Seed Arc and World ownership', () => {
     const seed = initial();
     seed.world.optional.worldFoundations.additionalCharacters = [{ id: 'char-1', name: 'Elder Qin' }, { id: 'char-2', name: 'Han Li' }];
     render(seed, 'blueprint');
-    act(() => [...container.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.trim() === 'Remove')!.click());
+    press('[data-testid="blueprint-cast"] button[aria-label="Elder Qin"]');
+    press('[data-testid="blueprint-cast-edit"]');
+    act(() => [...document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')].find(item => item.textContent?.trim() === 'Remove character')!.click());
     expect(current.world.optional.worldFoundations.additionalCharacters?.map(entry => entry.name)).toEqual(['Han Li']);
     expect(blueprint.initialCharacters).toEqual(['Han Li']);
     expect(reconcileStorySeedBlueprint(current, blueprint).seed.world.optional.worldFoundations.additionalCharacters?.map(entry => entry.name))

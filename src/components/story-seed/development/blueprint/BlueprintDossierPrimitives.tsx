@@ -8,37 +8,32 @@ export const EditableChip = () => (
   </span>
 );
 
+/**
+ * A Star Rail-style section strip: a gold-edged bar with the section's mark
+ * and name, its quiet tagline beneath, and an optional action at its end
+ * (Edit on a character).
+ */
 export const BlueprintSectionHeading = ({
   id,
   icon: Icon,
   title,
   tagline,
+  action,
 }: {
   id: string;
   icon: LucideIcon;
   title: string;
   tagline?: string;
+  action?: ReactNode;
 }) => (
-  <div>
-    <div className="flex items-center gap-3">
-      <span
-        aria-hidden="true"
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[rgba(205,178,113,0.38)] bg-[radial-gradient(circle_at_32%_28%,rgba(205,178,113,0.14),rgba(11,14,30,0.55)_68%)] text-[#CDB271] shadow-[0_0_16px_rgba(205,178,113,0.12),inset_0_0_10px_rgba(205,178,113,0.08)]"
-      >
-        <Icon size={15} className="drop-shadow-[0_0_6px_rgba(205,178,113,0.35)]" />
-      </span>
-      <h2 id={id} className="font-display text-lg font-bold uppercase tracking-[0.12em] text-[#F3EDE0] sm:text-xl">
-        {title}
-      </h2>
+  <div className="bp-heading">
+    <div className="bp-heading-bar">
+      <Icon size={15} aria-hidden="true" className="bp-heading-icon" />
+      <h2 id={id} className="bp-heading-title">{title}</h2>
+      <span aria-hidden="true" className="bp-heading-flourish"><Sparkle size={8} /><Sparkle size={8} /></span>
+      {action && <span className="bp-heading-action">{action}</span>}
     </div>
-    {tagline && (
-      <p className="mt-2 max-w-xl font-serif text-[13px] leading-relaxed text-[#B0A99B]">{tagline}</p>
-    )}
-    <div aria-hidden="true" className="mt-4 flex items-center gap-3">
-      <span className="h-px flex-1 bg-gradient-to-r from-transparent via-[rgba(205,178,113,0.16)] to-[rgba(205,178,113,0.3)]" />
-      <Sparkle size={9} className="shrink-0 text-[#CDB271]/60" />
-      <span className="h-px flex-1 bg-gradient-to-l from-transparent via-[rgba(205,178,113,0.16)] to-[rgba(205,178,113,0.3)]" />
-    </div>
+    {tagline && <p className="bp-heading-tagline">{tagline}</p>}
   </div>
 );
 

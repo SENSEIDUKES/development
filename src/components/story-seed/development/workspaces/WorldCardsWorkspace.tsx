@@ -17,12 +17,43 @@ import { WorldCardSlotFields } from './WorldCardFields';
  */
 
 /** A card in one of the Seed's world lists. */
-type WorldListCard = { id: string; name: string } & Record<string, unknown>;
+export type WorldListCard = { id: string; name: string } & Record<string, unknown>;
 
 export interface WorldCardsWorkspaceProps {
   seed: StorySeedInput;
   updateSeed: UpdateSeed;
 }
+
+/**
+ * One world card's fields (its name, then every slot its kind defines): the
+ * Seed's list editor and the Blueprint's card sheet share them.
+ */
+export const WorldCardFields = ({ kind, card, onChange }: {
+  kind: WorldCardKindId;
+  card: WorldListCard;
+  onChange: (patch: Record<string, string>) => void;
+}) => {
+  const definition = WORLD_CARD_KINDS.find(candidate => candidate.id === kind)!;
+  return (
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+      <LibraryTextBox
+        size="compact"
+        label="Name"
+        id={`${kind}-name-${card.id}`}
+        value={card.name || ''}
+        onChange={value => onChange({ name: value })}
+        placeholder={definition.slots[0].asks.charAt(0).toUpperCase() + definition.slots[0].asks.slice(1)}
+      />
+      <WorldCardSlotFields
+        kind={kind}
+        card={card}
+        idPrefix={`${kind}-${card.id}`}
+        only={definition.slots.filter(slot => slot.id !== 'name').map(slot => slot.id)}
+        onChange={patch => onChange(patch as Record<string, string>)}
+      />
+    </div>
+  );
+};
 
 export const WorldCardsEditor = ({ seed, updateSeed, kind, field, limit, setCards }: WorldCardsWorkspaceProps & {
   kind: WorldCardKindId;
@@ -51,23 +82,7 @@ export const WorldCardsEditor = ({ seed, updateSeed, kind, field, limit, setCard
             Remove
           </button>
         </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
-          <LibraryTextBox
-            size="compact"
-            label="Name"
-            id={`${kind}-name-${card.id}`}
-            value={card.name || ''}
-            onChange={value => update(index, { name: value })}
-            placeholder={definition.slots[0].asks.charAt(0).toUpperCase() + definition.slots[0].asks.slice(1)}
-          />
-          <WorldCardSlotFields
-            kind={kind}
-            card={card}
-            idPrefix={`${kind}-${card.id}`}
-            only={definition.slots.filter(slot => slot.id !== 'name').map(slot => slot.id)}
-            onChange={patch => update(index, patch as Record<string, string>)}
-          />
-        </div>
+        <WorldCardFields kind={kind} card={card} onChange={patch => update(index, patch)} />
       </div>
     ))}
     {cards.length < limit && (

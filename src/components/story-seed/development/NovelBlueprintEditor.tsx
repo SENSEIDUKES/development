@@ -11,10 +11,11 @@ import {
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel } from '@seihouse/sen/presentation';
 import { patchWorldIdentity, type SeedUpdate } from './seedState';
 import { BlueprintSectionHeading } from './blueprint/BlueprintDossierPrimitives';
-import { BlueprintCollectionSections } from './blueprint/BlueprintCollectionSections';
+import { CastScreen } from './blueprint/CastScreen';
+import { WorldCardGrid } from './blueprint/WorldCardGrid';
+import './blueprint/blueprint.css';
 import {
   BlueprintHeaderSection,
-  BlueprintMainCharacterSection,
   BlueprintNotesSection,
   BlueprintWorldSettingSection,
 } from './blueprint/BlueprintReviewSections';
@@ -118,9 +119,10 @@ export function NovelBlueprintEditor({ snapshot, destinedEnding, busy = false, r
           </p>
         ) : null}
       </LibraryPanel>
-      <BlueprintMainCharacterSection
+      <CastScreen
         seed={seed}
         updateSeed={updateSeed}
+        readOnly={readOnly}
         backgroundProfile={mainCharacterBackground}
         onBackgroundProfileChange={backgroundProfile => setBlueprint(current => ({
           ...current,
@@ -148,10 +150,7 @@ export function NovelBlueprintEditor({ snapshot, destinedEnding, busy = false, r
         onWorldFactDetailChange={(field, value, fact) => setBlueprint(current => reviewWorldFactDetail(current, field, value, fact))}
       />
       <BlueprintNotesSection styleBible={blueprint.styleBible} setBlueprint={setBlueprint} />
-      <BlueprintCollectionSections
-        seed={seed}
-        updateSeed={updateSeed}
-      />
+      <WorldCardGrid seed={seed} updateSeed={updateSeed} readOnly={readOnly} />
       </fieldset>
       {!readOnly && <LibraryPanel padding="sm" className="sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">

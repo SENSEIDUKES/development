@@ -555,7 +555,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   };
 
   /**
-   * The shared start-story path: the Blueprint review's Manifest Story button
+   * The shared start-story path: the Blueprint review's Create Story button
    * and each Story Bank card's Manifest Novel action both run through it, so a
    * novel always starts from a validated seed, a cleaned Blueprint, and a
    * persisted source seed record.

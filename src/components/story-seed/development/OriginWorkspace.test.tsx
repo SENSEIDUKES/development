@@ -7,7 +7,8 @@ import { createBlueprintDraftFromSeed, createEmptyStorySeedInput, createStorySee
 import { workshopStorySeedStorage, resetWorkshopStorySeedStorage } from '../shared/workshopStorySeedStorage';
 import { OriginWorkspace } from './workspaces/OriginWorkspace';
 import { StorySeedSettings } from './StorySeedSettings';
-import { BlueprintCollectionSections } from './blueprint/BlueprintCollectionSections';
+import { CastScreen } from './blueprint/CastScreen';
+import { WorldCardGrid } from './blueprint/WorldCardGrid';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let root: Root;
@@ -77,8 +78,11 @@ describe('Origin hierarchy and canonical Fate controls', () => {
   });
 
   it('shows side characters and factions without the retired Fate Survival mystery panel', () => {
-    act(() => root.render(<LibraryPresentationProvider><BlueprintCollectionSections seed={createEmptyStorySeedInput()} updateSeed={vi.fn()} /></LibraryPresentationProvider>));
-    expect(container.textContent).toContain('Side Characters');
+    act(() => root.render(<LibraryPresentationProvider>
+      <CastScreen seed={createEmptyStorySeedInput()} updateSeed={vi.fn()} backgroundProfile="" onBackgroundProfileChange={vi.fn()} />
+      <WorldCardGrid seed={createEmptyStorySeedInput()} updateSeed={vi.fn()} />
+    </LibraryPresentationProvider>));
+    expect(container.textContent).toContain('Character Stats');
     expect(container.textContent).toContain('Factions');
     expect(container.textContent).not.toContain('Fate Survival');
     expect(container.querySelector('#blueprint-major-mysteries')).toBeNull();

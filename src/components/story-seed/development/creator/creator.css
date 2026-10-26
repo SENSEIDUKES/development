@@ -260,7 +260,6 @@
   border-radius: 999px;
   font-size: 11px;
 }
-.seed-live-card-fate { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: #aca6d6; }
 .seed-live-card-missing { font-size: 12px; color: rgba(255, 120, 120, 0.9); }
 
 /* Opened on a tablet, or shown whole, the rows pair up. */

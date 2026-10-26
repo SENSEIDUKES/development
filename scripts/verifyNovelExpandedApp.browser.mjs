@@ -394,16 +394,26 @@ async function walk(browser, viewport, sample) {
   await sheet.locator('input[type="password"]').fill(TOKEN);
   await sheet.getByRole('button', { name: 'Continue' }).click();
 
-  // 3. The Blueprint, then Manifest Story, then Story View and Start Story under the veil.
-  await visibleButton(/^Manifest Story/).waitFor();
+  // 3. The Blueprint, then Create Story, then Story View and Start Story under the veil.
+  await visibleButton(/^Create Story/).waitFor();
   check(counts.blueprints === 1, `One Blueprint request expected, saw ${counts.blueprints}.`);
+  // The Blueprint's pages: Story, Cast, World and Arcs. Arc 1 and the story's length are on Arcs.
+  await page.getByRole('tab', { name: 'Arcs' }).click();
   // Arc 1 and the story's length, nothing about later arcs; the look-ahead stays the planner's.
   const arcGoals = page.getByTestId('blueprint-arc-goals').filter({ visible: true }).first();
   await arcGoals.waitFor();
   const arcText = await arcGoals.textContent();
   check(arcText.includes('Arc 1') && !/Arc [2-9]/.test(arcText), `The Blueprint should show Arc 1 only, got: ${arcText}`);
   check(await page.getByTestId('blueprint-story-length').filter({ visible: true }).count() === 1, 'The Blueprint should show the story length.');
-  const screenText = await page.evaluate(() => [document.body.innerText, ...[...document.querySelectorAll('input, textarea')].map(field => field.value)].join('\n'));
+  // Every page's text, as each one shows it, plus the cast's names on their portraits.
+  const pageTexts = [];
+  for (const tab of ['Story', 'Cast', 'World', 'Arcs']) {
+    await page.getByRole('tab', { name: tab }).click();
+    pageTexts.push(await page.evaluate(() => document.body.innerText));
+  }
+  const screenText = await page.evaluate(texts => [...texts,
+    ...[...document.querySelectorAll('[data-testid="blueprint-cast"] [role="group"] button')].map(button => button.getAttribute('aria-label') ?? ''),
+    ...[...document.querySelectorAll('input, textarea')].map(field => field.value)].join('\n'), pageTexts);
   check(!screenText.includes('LOOKAHEAD_HIDDEN'), 'The look-ahead must never appear on screen.');
   // Blank slots are filled; what the creator wrote is unchanged.
   for (const filled of ['Cannot trust anyone who has not died beside him', 'Junior Sister Han', 'Deep Sea Alliance', 'Rebuilds his meridians from the scars of failed timelines']) {
@@ -412,10 +422,10 @@ async function walk(browser, viewport, sample) {
   check(screenText.includes('Born as the son of a fallen patriarch'), "The creator's own Biography must stay.");
   check(!screenText.includes('A laborer in the outer quarry'), "The model's Biography must not replace the creator's.");
   await shot('3-blueprint');
-  await visibleButton(/^Manifest Story/).click();
+  await visibleButton(/^Create Story/).click();
   await page.getByTestId('harness-world-info').waitFor();
   const storyAddress = address();
-  check(/^\/app\/\?story=[^&]+$/.test(storyAddress), `Manifest Story should open Story View, got ${storyAddress}`);
+  check(/^\/app\/\?story=[^&]+$/.test(storyAddress), `Create Story should open Story View, got ${storyAddress}`);
   check(await page.locator('[data-testid="novel-expanded-shell"] [data-testid="harness-world-info"]').count() === 1, 'World Info should sit in the Library Shell.');
   await shot('4-story-view');
   await page.locator('[data-world-info-chapters="action"]').click();

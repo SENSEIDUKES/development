@@ -101,7 +101,7 @@ describe('Blueprint review: Arc 1 and the story length', () => {
     expect(buttonNamed('Edit Arc 1 goals')).toBeTruthy();
     expect(container.textContent).not.toMatch(/Edit Arc 2 goals|Arc 2 ·/);
     for (const entry of createMockArcLookahead(12)) expect(container.textContent).not.toContain(entry.direction);
-    expect(buttonNamed('Manifest Story')!.disabled).toBe(false);
+    expect(buttonNamed('Create Story')!.disabled).toBe(false);
   });
 
   it('saves a new length as it is typed, with no save step and no model call, and drops the look-ahead written for the old length', () => {
@@ -157,14 +157,14 @@ describe('Blueprint review: Arc 1 and the story length', () => {
     act(() => root.render(<Review initial={reviewed(3)} onRegenerateBlueprint={onRegenerateBlueprint} />));
     expect(arcCountInput().value).toBe('3');
     expect(container.querySelector('[data-testid="blueprint-arc-problem"]')!.textContent).toBe('Story Length must be a whole number of arcs from 10 to 40.');
-    expect(buttonNamed('Manifest Story')!.disabled).toBe(true);
+    expect(buttonNamed('Create Story')!.disabled).toBe(true);
     expect(help()).toContain('Choose a whole number of arcs from 10 to 40.');
     // Arc 1 was planned as the opening, so a longer length needs no new plan.
     setArcCount('10');
     expect(latestSeed?.story.optional.arcCount).toBe(10);
     expect(latestBlueprint?.arcPlans).toHaveLength(1);
     expect(container.querySelector('[data-testid="blueprint-arc-problem"]')).toBeNull();
-    expect(buttonNamed('Manifest Story')!.disabled).toBe(false);
+    expect(buttonNamed('Create Story')!.disabled).toBe(false);
     expect(onRegenerateBlueprint).not.toHaveBeenCalled();
   });
 
@@ -173,7 +173,7 @@ describe('Blueprint review: Arc 1 and the story length', () => {
     expect(container.querySelector('[data-testid="blueprint-arc-problem"]')!.textContent).toContain('Arc 1 was planned as the whole story');
     expect(container.textContent).toContain('Arc 1 · the whole story, reaches the Destined Ending');
     expect(buttonNamed('Regenerate with 11 arcs')).toBeTruthy();
-    expect(buttonNamed('Manifest Story')!.disabled).toBe(true);
+    expect(buttonNamed('Create Story')!.disabled).toBe(true);
   });
 
   it('asks before replacing the whole Blueprint, holds the review while it regenerates, and reports a failure where it happened', async () => {
@@ -185,11 +185,11 @@ describe('Blueprint review: Arc 1 and the story length', () => {
     expect(container.querySelector('[data-testid="blueprint-regenerate-confirm"]')!.textContent).toContain('a fresh one for 15 arcs');
     await act(async () => { buttonNamed('Replace Blueprint')!.click(); });
     expect(onRegenerateBlueprint).toHaveBeenCalledWith(15);
-    expect(buttonNamed('Manifest Story')!.disabled).toBe(true);
+    expect(buttonNamed('Create Story')!.disabled).toBe(true);
     await act(async () => { finish(); });
     await flush();
     expect(container.querySelector('[data-testid="blueprint-arc-action-error"]')!.textContent).toBe('The model is resting.');
-    expect(buttonNamed('Manifest Story')!.disabled).toBe(false);
+    expect(buttonNamed('Create Story')!.disabled).toBe(false);
   });
 });
 
@@ -250,12 +250,14 @@ describe('Story Seed creation: regenerating at a chosen length', () => {
     await act(async () => { buttonNamed('Replace Blueprint')!.click(); });
     await flush();
 
-    const value = (id: string) => container.querySelector<HTMLInputElement | HTMLTextAreaElement>(`#${id}`)?.value;
-    expect(value('mc-main-flaw-input')).toBe('Cannot trust anyone who has not died beside him');
-    expect(value('mc-moral-alignment-input')).toBe('Pragmatic protector');
+    // The review shows them on Cast's stat table.
+    const stat = (id: string) => container.querySelector(`[data-testid="blueprint-cast-stats"] [data-stat="${id}"] dd`)?.textContent;
+    expect(stat('mainFlaw')).toBe('Cannot trust anyone who has not died beside him');
+    expect(stat('moralAlignment')).toBe('Pragmatic protector');
     // The creator's own words stay theirs.
-    expect(value('mc-starting-identity-input')).toBe('Crippled young master, secretly the reincarnated Ninth Prince');
-    expect(value('char-skin-preview-character-1')).toBe('Weathered bronze');
+    expect(stat('startingIdentity')).toBe('Crippled young master, secretly the reincarnated Ninth Prince');
+    act(() => container.querySelectorAll<HTMLButtonElement>('[data-testid="blueprint-cast"] [role="group"] button')[1].click());
+    expect(stat('skinTone')).toBe('Weathered bronze');
     const [saved] = await listStorySeeds(LOCAL_WORKSHOP_STORY_SEED_OWNER_ID);
     const foundations = saved.seed.world.optional.worldFoundations;
     expect(foundations.mainCharacter?.mainFlaw).toBe('Cannot trust anyone who has not died beside him');
@@ -280,9 +282,9 @@ describe('Story Seed creation: regenerating at a chosen length', () => {
     expect(onStartStory).not.toHaveBeenCalled();
     expect(container.querySelector('[role="alert"]')!.textContent).toContain('Story Length must be a whole number of arcs from 10 to 40.');
     expect(arcCountInput().value).toBe('4');
-    expect(buttonNamed('Manifest Story')!.disabled).toBe(true);
+    expect(buttonNamed('Create Story')!.disabled).toBe(true);
     // Choosing a length in range lets the story begin, with no model call.
     setArcCount('10');
-    expect(buttonNamed('Manifest Story')!.disabled).toBe(false);
+    expect(buttonNamed('Create Story')!.disabled).toBe(false);
   });
 });

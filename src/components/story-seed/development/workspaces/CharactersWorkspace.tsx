@@ -141,13 +141,128 @@ export const MainCharacterFields = ({ seed, updateSeed }: CharactersWorkspacePro
  * by hand above. They come from the Codex's one definition of a character
  * card, so the Seed holds every slot the Codex shows.
  */
-const CHAPTER_ZERO_MAIN_CHARACTER_SLOTS = [
+export const CHAPTER_ZERO_MAIN_CHARACTER_SLOTS = [
   'gender', 'skinTone', 'eyeColor', 'species', 'location',
   'powerType', 'rankLevel', 'status', 'holds', 'knows', 'goals', 'ties', 'belongsTo', 'voice',
 ];
-const CHAPTER_ZERO_CHARACTER_SLOTS = [
+export const CHAPTER_ZERO_CHARACTER_SLOTS = [
   'gender', 'species', 'location', 'status', 'appearance', 'holds', 'knows', 'goals', 'ties', 'belongsTo', 'voice',
 ];
+
+/**
+ * One side character's fields: the Seed's list editor and the Blueprint's
+ * character sheet share them, so the two can never ask for different things.
+ */
+export const AdditionalCharacterFields = ({ character, index, onChange }: {
+  character: StorySeedCharacter;
+  /** Its place in the cast; the first keeps the Seed's original field id. */
+  index: number;
+  onChange: (patch: Partial<StorySeedCharacter>) => void;
+}) => (
+  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-4">
+    <LibraryTextBox
+      size="compact"
+      label="Name"
+      id={index === 0 ? 'a11y-control-boqy7nd' : `char-name-${character.id}`}
+      value={character.name || ''}
+      onChange={(val) => onChange({ name: val })}
+      placeholder="e.g. Lin Yue"
+    />
+    <LibraryTextBox
+      size="compact"
+      label="Age"
+      id={`char-age-${character.id}`}
+      value={character.age || ''}
+      onChange={(val) => onChange({ age: val })}
+      placeholder="e.g. 18, Ancient..."
+    />
+    <LibraryTextBox
+      size="compact"
+      label="Skin Tone"
+      id={`char-skin-${character.id}`}
+      value={character.skinTone || ''}
+      onChange={(val) => onChange({ skinTone: val })}
+      placeholder="e.g. Pale, Olive..."
+    />
+    <LibraryTextBox
+      size="compact"
+      label="Eye Color"
+      id={`char-eyes-${character.id}`}
+      value={character.eyeColor || ''}
+      onChange={(val) => onChange({ eyeColor: val })}
+      placeholder="e.g. Crimson, Blue..."
+    />
+    <LibraryTextBox
+      size="compact"
+      label="Power Type"
+      id={`char-power-${character.id}`}
+      value={character.powerType || ''}
+      onChange={(val) => onChange({ powerType: val })}
+      placeholder="e.g. Frost Dao, Sword..."
+    />
+    <LibraryTextBox
+      size="compact"
+      label="Rank / Level"
+      id={`char-rank-${character.id}`}
+      value={character.rankLevel || ''}
+      onChange={(val) => onChange({ rankLevel: val })}
+      placeholder="e.g. Foundation Est."
+    />
+    <LibraryTextBox
+      size="compact"
+      label="Role"
+      id={`char-role-${character.id}`}
+      value={character.role || ''}
+      onChange={(val) => onChange({ role: val })}
+      placeholder="e.g. Sect Elder, Rogue..."
+    />
+    <LibraryTextBox
+      size="compact"
+      label="Connection to MC"
+      id={`mc-char-connection-${character.id}`}
+      value={character.connectionToMC || ''}
+      onChange={(val) => onChange({ connectionToMC: val })}
+      placeholder="e.g. Rival, Foe, Ally..."
+    />
+    <div className="col-span-1 sm:col-span-2 md:col-span-4">
+      <LibraryTextArea
+        size="compact"
+        label="Aliases / Known Titles"
+        key={`${character.id}-${normalizeCodexAliases(character.aliases, character.name).join('|')}`}
+        id={`char-aliases-${character.id}`}
+        rows={2}
+        defaultValue={normalizeCodexAliases(character.aliases, character.name).join(', ')}
+        onBlur={(e) => {
+          const aliases = parseCodexAliases(e.currentTarget.value, character.name);
+          e.currentTarget.value = aliases.join(', ');
+          onChange({ aliases });
+        }}
+        placeholder="e.g. Sister Mei; Pavilion Mistress"
+      />
+      <p className="mt-1 font-sans text-[9px] text-neutral-400">User-authored only. Separate names or titles with commas, semicolons, or new lines.</p>
+    </div>
+    <div className="col-span-1 sm:col-span-2 md:col-span-4">
+      <LibraryTextArea
+        size="compact"
+        label="Biography & Traits"
+        id={`char-bio-${character.id}`}
+        value={character.bio || ''}
+        onChange={(val) => onChange({ bio: val })}
+        maxLength={2000}
+        rows={2}
+        placeholder="Vivid biography, personality quirks, hidden talents, major flaws, or specific fated actions..."
+      />
+    </div>
+    {/* The rest of their Codex card, as the world stands at Chapter 0. */}
+    <WorldCardSlotFields
+      kind="character"
+      card={character}
+      idPrefix={`char-world-${character.id}`}
+      only={CHAPTER_ZERO_CHARACTER_SLOTS}
+      onChange={patch => onChange(patch as Partial<StorySeedCharacter>)}
+    />
+  </div>
+);
 
 /** The Seed's additional-character editor; the Seed workspace and Blueprint review share it. */
 export const AdditionalCharactersEditor = ({ seed, updateSeed }: CharactersWorkspaceProps) => {
@@ -175,109 +290,7 @@ export const AdditionalCharactersEditor = ({ seed, updateSeed }: CharactersWorks
               Remove
             </button>
           </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-4">
-            <LibraryTextBox
-              size="compact"
-              label="Name"
-              id={index === 0 ? 'a11y-control-boqy7nd' : `char-name-${char.id}`}
-              value={char.name || ''}
-              onChange={(val) => updateCharacter(index, { name: val })}
-              placeholder="e.g. Lin Yue"
-            />
-            <LibraryTextBox
-              size="compact"
-              label="Age"
-              id={`char-age-${char.id}`}
-              value={char.age || ''}
-              onChange={(val) => updateCharacter(index, { age: val })}
-              placeholder="e.g. 18, Ancient..."
-            />
-            <LibraryTextBox
-              size="compact"
-              label="Skin Tone"
-              id={`char-skin-${char.id}`}
-              value={char.skinTone || ''}
-              onChange={(val) => updateCharacter(index, { skinTone: val })}
-              placeholder="e.g. Pale, Olive..."
-            />
-            <LibraryTextBox
-              size="compact"
-              label="Eye Color"
-              id={`char-eyes-${char.id}`}
-              value={char.eyeColor || ''}
-              onChange={(val) => updateCharacter(index, { eyeColor: val })}
-              placeholder="e.g. Crimson, Blue..."
-            />
-            <LibraryTextBox
-              size="compact"
-              label="Power Type"
-              id={`char-power-${char.id}`}
-              value={char.powerType || ''}
-              onChange={(val) => updateCharacter(index, { powerType: val })}
-              placeholder="e.g. Frost Dao, Sword..."
-            />
-            <LibraryTextBox
-              size="compact"
-              label="Rank / Level"
-              id={`char-rank-${char.id}`}
-              value={char.rankLevel || ''}
-              onChange={(val) => updateCharacter(index, { rankLevel: val })}
-              placeholder="e.g. Foundation Est."
-            />
-            <LibraryTextBox
-              size="compact"
-              label="Role"
-              id={`char-role-${char.id}`}
-              value={char.role || ''}
-              onChange={(val) => updateCharacter(index, { role: val })}
-              placeholder="e.g. Sect Elder, Rogue..."
-            />
-            <LibraryTextBox
-              size="compact"
-              label="Connection to MC"
-              id={`mc-char-connection-${char.id}`}
-              value={char.connectionToMC || ''}
-              onChange={(val) => updateCharacter(index, { connectionToMC: val })}
-              placeholder="e.g. Rival, Foe, Ally..."
-            />
-            <div className="col-span-1 sm:col-span-2 md:col-span-4">
-              <LibraryTextArea
-                size="compact"
-                label="Aliases / Known Titles"
-                key={`${char.id}-${normalizeCodexAliases(char.aliases, char.name).join('|')}`}
-                id={`char-aliases-${char.id}`}
-                rows={2}
-                defaultValue={normalizeCodexAliases(char.aliases, char.name).join(', ')}
-                onBlur={(e) => {
-                  const aliases = parseCodexAliases(e.currentTarget.value, char.name);
-                  e.currentTarget.value = aliases.join(', ');
-                  updateCharacter(index, { aliases });
-                }}
-                placeholder="e.g. Sister Mei; Pavilion Mistress"
-              />
-              <p className="mt-1 font-sans text-[9px] text-neutral-400">User-authored only. Separate names or titles with commas, semicolons, or new lines.</p>
-            </div>
-            <div className="col-span-1 sm:col-span-2 md:col-span-4">
-              <LibraryTextArea
-                size="compact"
-                label="Biography & Traits"
-                id={`char-bio-${char.id}`}
-                value={char.bio || ''}
-                onChange={(val) => updateCharacter(index, { bio: val })}
-                maxLength={2000}
-                rows={2}
-                placeholder="Vivid biography, personality quirks, hidden talents, major flaws, or specific fated actions..."
-              />
-            </div>
-            {/* The rest of their Codex card, as the world stands at Chapter 0. */}
-            <WorldCardSlotFields
-              kind="character"
-              card={char}
-              idPrefix={`char-world-${char.id}`}
-              only={CHAPTER_ZERO_CHARACTER_SLOTS}
-              onChange={patch => updateCharacter(index, patch as Partial<StorySeedCharacter>)}
-            />
-          </div>
+          <AdditionalCharacterFields character={char} index={index} onChange={patch => updateCharacter(index, patch)} />
         </div>
       ))}
       {characters.length < SEED_CHARACTER_LIMIT && (

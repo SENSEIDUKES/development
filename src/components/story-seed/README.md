@@ -10,7 +10,7 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - **Source location:** `src/components/CreationModal.tsx` (default export `CreationModal`)
 - **Workshop preview:** `?preview=story-seed` (`&state=<scenario-id>` deep-links a state)
 - **First Workshop record:** 2026-08-01
-- **Last recorded Workshop update:** 2026-10-26
+- **Last recorded Workshop update:** 2026-10-27
 - **Historical source inspection:** 2026-08-10
 - **Lifecycle status:** finalized Workshop feature; refactored, optimized, and active implementation built here
 
@@ -31,6 +31,20 @@ Story Seed is one creation flow with these visible destinations:
   access, seed reuse, and novel manifestation actions.
 - **World Blueprint** is an editable sibling artifact. It is not nested inside
   the portable Creator / Story / World seed.
+- **The Blueprint as a character screen (2026-10-27).** Inside the shell the
+  Blueprint has four pages on a pinned tab strip: **Story** (cover, Origin,
+  Style Bible, Story Settings, Keep a Copy), **Cast** (a Star Rail-style
+  "My Characters" screen: a portrait row, the chosen character's portrait
+  card, Power and Holds/Knows panels, Character Stats and When the Story Opens
+  stat tables, Biography, and the Generated Background), **World** (World
+  Setting, then Factions, Things, Abilities, Places and the Bestiary as
+  relic-style tiles) and **Arcs** (Arc Goals, then the ARC fields). A
+  character or card opens its fields in a sheet; the fields are the Seed's own
+  per-entry forms (`AdditionalCharacterFields`, `FactionFields`,
+  `WorldCardFields`), shared with the Seed workspaces. Blanks read Fate Will
+  Decide. Refine Details and **Create Story** are pinned in equal cells. Every
+  page stays mounted, so field ids hold. Portraits and tile emblems are
+  `PortraitFrame`, empty until pictures arrive (Manifest and Import, next).
 - **The creator frame (2026-10-26).** Create moves through the Seed like a
   game's character creator: a step strip (Origin → ARC → World → Manifest, any
   step tappable; World's eight kinds as sub-tabs), a live story card that grows
@@ -63,7 +77,7 @@ development/
   useStoryBankRecords.ts          list, loading, error, cancellation, retry
   StorySeedHelpMenu.tsx           Help modal and audio lifecycle
   BlueprintReview.tsx             editable Blueprint dossier coordinator
-  blueprint/                      memoized review sections, collections, copy format
+  blueprint/                      the Blueprint's tabs, Cast screen, world tiles, stat tables, sheets, copy format
   creator/                        step strip, live story card, pinned Back / Next, Manifest step
   workspaces/                     Origin, ARC, and World editors
   workspaces/origin/              Style, Genre, and premise/tag responsibilities
@@ -218,6 +232,16 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-10-27 (the Blueprint as a character screen):** From SENSEI, after
+  seeing the filled Blueprint scroll for about 22 phone screens: borrow Honkai:
+  Star Rail's character screens. The Blueprint now has Story, Cast, World and
+  Arcs pages; Cast and World show stat tables and relic-style tiles, and each
+  card's fields open in a sheet. "Manifest Story" is now **Create Story**.
+  The Blueprint after Chapter 1 (`NovelBlueprintEditor`) wears the same Cast
+  screen and tiles, view-only where it must be. `BlueprintCollectionSections`
+  and `BlueprintMainCharacterSection` are replaced and removed. Also: Story
+  Bank opens straight from an open Blueprint. Pictures on the portrait and the
+  tiles (Manifest, and Import for licensed art) are the next change.
 - **2026-10-26 (Create wording, Fate Will Decide, one button size):** From
   SENSEI, after trying it on a phone. Core rule: a reader never learns that a
   model is involved, so a blank reads "Fate Will Decide", and the Chinese

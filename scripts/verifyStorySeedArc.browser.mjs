@@ -92,7 +92,7 @@ try {
     // Create's one Create button sits on the creator's last step.
     await page.locator('[data-seed-creator-strip] button[data-step="manifest"]').click();
     await button('Create World Blueprint').click();
-    await page.getByRole('button', { name: 'Manifest Story', exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Create Story', exact: true }).waitFor();
     // The Blueprint shows Arc 1 and the Seed's Story Length; the look-ahead is the arc planner's alone.
     assert.match(await page.getByTestId('blueprint-arc-goals').first().textContent(), /Arc 1 of 11 arcs/);
     assert.equal(await page.locator('#blueprint-arc-count-input').inputValue(), '11');
@@ -100,9 +100,22 @@ try {
     assert.ok(!(await page.locator('body').innerText()).includes('LOOKAHEAD_HIDDEN'));
     await page.locator('#hard-pin-2').fill('Keep the revised promise.');
     // Blueprint review edits save to the Seed, including the generated cast.
+    // Cast and World cards open their fields in a sheet.
+    const done = () => page.getByRole('dialog').getByRole('button', { name: 'Done', exact: true }).click();
+    await page.getByRole('tab', { name: 'Cast' }).click();
+    await page.locator('[data-testid="blueprint-cast"] [role="group"] button').nth(1).click();
+    await page.getByTestId('blueprint-cast-edit').click();
     await page.locator('#char-role-blueprint-character-the-keeper').fill('Gatekeeper ally');
-    await page.locator('#faction-description-blueprint-faction-the-gate').fill('Guardians of the pass.');
+    await done();
+    await page.locator('[data-testid="blueprint-cast"] [role="group"] button').first().click();
+    await page.getByTestId('blueprint-cast-edit').click();
     await page.locator('#mc-age-input').fill('26');
+    await done();
+    await page.getByRole('tab', { name: 'World' }).click();
+    await page.locator('[data-testid="blueprint-factions"] .bp-tile').first().click();
+    await page.locator('#faction-description-blueprint-faction-the-gate').fill('Guardians of the pass.');
+    await done();
+    await page.getByRole('tab', { name: 'Story' }).click();
     await page.screenshot({ path: `output/playwright/story-seed-blueprint-${width}.png`, fullPage: true });
     const download = page.waitForEvent('download');
     await button('Export Seed + Blueprint').click();
@@ -121,6 +134,7 @@ try {
     assert.equal(exportedSeed.mainCharacter.age, '26');
     // The length saves as it is typed, with no save step, and drops the look-ahead written for 11 arcs.
     assert.equal(await page.getByRole('button', { name: 'Save length' }).count(), 0);
+    await page.getByRole('tab', { name: 'Arcs' }).click();
     await page.locator('#blueprint-arc-count-input').fill('14');
     assert.match(await page.getByTestId('blueprint-arc-goals').first().textContent(), /Arc 1 of 14 arcs/);
     assert.equal(await page.getByRole('button', { name: 'Save length' }).count(), 0);

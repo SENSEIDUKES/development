@@ -28,7 +28,7 @@ export function HighlightActionIcon({ name, size = 20, ...props }: HighlightActi
       <path fillRule="evenodd" d="M9 3a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H9Zm2 6a1 1 0 0 0 0 2h7a1 1 0 0 0 0-2h-7Zm0 5a1 1 0 0 0 0 2h5a1 1 0 0 0 0-2h-5Z" clipRule="evenodd" />
     </>}
     {name === 'media' && <>
-      <path fillRule="evenodd" d="M3 5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9h-2v11H3V7h10V5H3Zm5 4.8v7.4c0 .6.6 1 1.1.7l6-3.7a.8.8 0 0 0 0-1.4l-6-3.7c-.5-.3-1.1.1-1.1.7Z" clipRule="evenodd" />
+      <path fillRule="evenodd" d="M3 5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V13h-2v7H3V7h9V5H3Zm5 4.8v7.4c0 .6.6 1 1.1.7l6-3.7a.8.8 0 0 0 0-1.4l-6-3.7c-.5-.3-1.1.1-1.1.7Z" clipRule="evenodd" />
       <path d="m19 1 1.2 3.8L24 6l-3.8 1.2L19 11l-1.2-3.8L14 6l3.8-1.2L19 1Z" />
     </>}
     {name === 'remove' && <path fillRule="evenodd" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM7 11a1 1 0 0 0 0 2h10a1 1 0 0 0 0-2H7Z" clipRule="evenodd" />}

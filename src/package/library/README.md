@@ -1,5 +1,8 @@
 # `@seihouse/library`
 
+**0.35.0 (2026-10-26):** Presentation exports 12 individually named reusable icons
+and includes them in the 45-icon catalog. Requires SEN 0.40.0 for the shared artwork.
+
 **Unreleased (2026-10-16):** `./familiar` exports `FamiliarHelperProvider`,
 `FamiliarHelperAction`, `useFamiliarHelperContext`, the screen action/context and
 replaceable voice contracts, and `FamiliarHelperController`. Hosts opt in once

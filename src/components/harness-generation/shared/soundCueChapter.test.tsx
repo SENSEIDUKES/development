@@ -19,7 +19,7 @@ import { buildHarnessTagPrompt } from '../../../server/harness-generation/tagger
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { REST_OF_CHAPTER, writtenChapterReply } from '../../../test-utils/writtenChapter';
 import { acceptHarnessModelResponse } from './responseAcceptance';
-import { readMarks } from '../../../narrative/marks';
+import { createReplayTagger } from '../../../test-utils/replayTagger';
 
 /**
  * Narration plus Sound Cues, end to end, in the tiny SEN language: the tagger
@@ -42,36 +42,6 @@ const response = (rawProviderResponse: string): HarnessGenerationResponse => ({
   },
 });
 
-/**
- * The writer and the tagger from one fixture reply. The writer's prose is the
- * reply with every tag stripped, exactly as acceptance leaves it; the tagger is
- * then given that prose and writes the reply's own tags back into it, which is
- * how a tag reaches a chapter now (SENSEI, 2026-10-24). A paragraph the fixture
- * does not name comes back from the tagger untouched.
- */
-const adapter = (...raws: string[]) => {
-  const tagged = new Map<string, string>();
-  for (const raw of raws) {
-    const parsed: unknown = JSON.parse(raw);
-    const paragraphs = (parsed as { paragraphs?: unknown }).paragraphs;
-    if (Array.isArray(paragraphs)) for (const paragraph of paragraphs) tagged.set(readMarks(String(paragraph)).text, String(paragraph));
-  }
-  const generate = vi.fn(async (_request: HarnessGenerationRequest) => {
-    const raw = raws.length > 1 ? raws.shift()! : raws[0];
-    return response(writtenChapterReply(raw));
-  });
-  const tagChapter = vi.fn(async (request: HarnessTagRequest) => response(JSON.stringify({
-    paragraphs: request.paragraphs.map(paragraph => tagged.get(paragraph) ?? paragraph),
-  })));
-  const value: HarnessGenerationModelAdapter = {
-    getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
-    generate,
-    tagChapter,
-    arcOperation: async () => response(JSON.stringify({ plan: GOAL, destinedEnding: 'Free the city from its debts.' })),
-  };
-  return { value, generate, tagChapter };
-};
-
 /** A tagged reply: two good cues, one unknown sound, one tag that covers too many words, and tags leaking into every other field. */
 const taggedChapter = () => ({
   title: 'The [[sound: growl | Debt Fox]]',
@@ -88,6 +58,29 @@ const taggedChapter = () => ({
   nextWorldBuilding: 'The eastern ward keeps its ledgers.',
   nextConflict: 'The fox returns.',
 });
+
+/**
+ * The writer and the tagger from one fixture reply: the writer's prose is the
+ * reply with every tag stripped out of its paragraphs, which is what a writer
+ * taught no tags returns, and the tagger writes those same tags back into the
+ * finished chapter. Tags left in the reply's other fields stay, so the chapter
+ * still proves they are ignored.
+ */
+const adapter = (...raws: string[]) => {
+  const { tagChapter, teach } = createReplayTagger(response('{}').providerReceipt);
+  for (const raw of raws) teach(raw);
+  const generate = vi.fn(async (_request: HarnessGenerationRequest) => {
+    const raw = raws.length > 1 ? raws.shift()! : raws[0];
+    return response(writtenChapterReply(teach(raw)));
+  });
+  const value: HarnessGenerationModelAdapter = {
+    getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
+    generate,
+    tagChapter,
+    arcOperation: async () => response(JSON.stringify({ plan: GOAL, destinedEnding: 'Free the city from its debts.' })),
+  };
+  return { value, generate, tagChapter };
+};
 
 const createStory = async (controller: HarnessGenerationController, language?: 'ja') => {
   await controller.hydrate();

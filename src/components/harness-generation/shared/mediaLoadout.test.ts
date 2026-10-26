@@ -6,8 +6,8 @@ import type { HarnessRuntime } from './ids';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { asWrittenChapter } from '../../../test-utils/writtenChapter';
 import { createHarnessSenStory } from '@seihouse/sen/harness-generation';
-import { type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessTagRequest } from '@seihouse/sen/harness-generation';
-import { readMarks } from '../../../narrative/marks';
+import { type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse } from '@seihouse/sen/harness-generation';
+import { createReplayTagger } from '../../../test-utils/replayTagger';
 
 const runtime = (): HarnessRuntime => {
   let id = 0;
@@ -67,23 +67,13 @@ const entitlement = (pack: MediaPack, expiresAt?: string): MediaPackEntitlement 
  * (SENSEI, 2026-10-24).
  */
 const adapter = (...outputs: Array<HarnessGenerationResponse | Error>) => {
-  const tagged = new Map<string, string>();
-  for (const output of outputs) {
-    if (output instanceof Error) continue;
-    try {
-      const paragraphs = (JSON.parse(output.rawProviderResponse) as { paragraphs?: unknown }).paragraphs;
-      if (Array.isArray(paragraphs)) for (const paragraph of paragraphs) tagged.set(readMarks(String(paragraph)).text, String(paragraph));
-    } catch { /* a fixture that is not a chapter reply teaches the tagger nothing. */ }
-  }
+  const { tagChapter, teach } = createReplayTagger(response({}).providerReceipt);
   const generate = vi.fn(async (_request: HarnessGenerationRequest) => {
     const output = outputs.shift();
     if (!output) throw new Error('Missing provider fixture.');
     if (output instanceof Error) throw output;
-    return asWrittenChapter(output);
+    return asWrittenChapter({ ...output, rawProviderResponse: teach(output.rawProviderResponse) });
   });
-  const tagChapter = vi.fn(async (request: HarnessTagRequest) => response({
-    paragraphs: request.paragraphs.map(paragraph => tagged.get(paragraph) ?? paragraph),
-  }));
   const value: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
     generate,

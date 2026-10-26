@@ -1,3 +1,5 @@
+@import './materials.css';
+
 /* Story Seed's task rail and phone Sections drawer share the canonical panel.
    The feature's landmark scopes this skin even when the drawer is portalled. */
 [data-slot="navigation-panel"]:has(> nav[aria-label="Story Seed sections"]) {
@@ -57,22 +59,6 @@
 .story-seed-development-surface textarea::placeholder {
   color: rgba(178, 172, 202, 0.7);
   opacity: 1;
-}
-
-/* Celestial polish layered over the shared .glass-panel inside Story Seed
-   workspaces: a warmer parchment-tinted edge, a faint inner glow, and a
-   whisper of gold starlight in the upper corner. Kept subtle so the panels
-   stay quiet, dark glass — only more native to the Library. */
-.seed-field-scope .glass-panel {
-  border-color: rgba(196, 182, 148, 0.15);
-  background:
-    radial-gradient(18rem 10rem at 88% -8%, rgba(205, 178, 113, 0.05), transparent 62%),
-    linear-gradient(160deg, rgba(105, 130, 225, 0.06), rgba(70, 60, 160, 0.04) 50%, rgba(12, 15, 34, 0)),
-    rgba(11, 14, 30, 0.46);
-  box-shadow:
-    inset 0 1px 0 rgba(226, 220, 200, 0.06),
-    inset 0 0 26px -12px rgba(205, 178, 113, 0.1),
-    0 14px 32px -18px rgba(1, 3, 10, 0.95);
 }
 
 /* Form-level celestial polish: the shared glass fields inside a Story Seed
@@ -398,6 +384,12 @@
   .story-seed-action-status { flex: 1 1 100%; }
   .story-seed-action-controls { flex: 1 1 100%; }
   .story-seed-action-controls > :last-child { flex: 1 1 auto; }
+  /* With Save Draft alone (Create's Manifest lives on its step footer), the
+     row stays one line: the status shrinks beside the button. */
+  .story-seed-action-row:not(:has(.story-seed-action-controls > :nth-child(2))) { align-items: center; flex-wrap: nowrap; }
+  .story-seed-action-row:not(:has(.story-seed-action-controls > :nth-child(2))) .story-seed-action-status { flex: 1 1 auto; }
+  .story-seed-action-row:not(:has(.story-seed-action-controls > :nth-child(2))) .story-seed-action-controls { flex: 0 0 auto; }
+  .story-seed-action-row:not(:has(.story-seed-action-controls > :nth-child(2))) .story-seed-action-controls > :last-child { flex: 0 0 auto; }
 }
 
 /* A view-only Blueprint (NovelBlueprintEditor readOnly): fields read as text, and edit controls step aside. */

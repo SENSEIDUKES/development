@@ -6,7 +6,7 @@ import type { PassageSelection } from '../shared/selection';
 export function SelectionHandles({ container, handlesRef, points, selection, length, style }: {
   container: HTMLElement;
   handlesRef: RefObject<HTMLDivElement | null>;
-  points: { start: { left: number; top: number } | null; end: { left: number; top: number } | null };
+  points: { start: { left: number; top: number; height: number } | null; end: { left: number; top: number; height: number } | null };
   selection: PassageSelection;
   length: number;
   style?: CSSProperties;
@@ -20,12 +20,14 @@ export function SelectionHandles({ container, handlesRef, points, selection, len
     <div ref={handlesRef} className="sen-selection-handles" data-sen-selection-preserve>
       {(['start', 'end'] as const).map(side => {
         const point = points[side];
-        if (!point || point.top < top || point.top > top + height - 44) return null;
+        if (!point) return null;
+        const handleTop = side === 'start' ? point.top - 44 : point.top;
+        if (handleTop < top || handleTop > top + height - 44) return null;
         return <button key={side} type="button" role="slider" aria-label={`Selection ${side}`} aria-orientation="horizontal"
           aria-valuemin={side === 'start' ? 0 : selection.startOffset + 1} aria-valuemax={side === 'start' ? selection.endOffset - 1 : length}
           aria-valuenow={side === 'start' ? selection.startOffset : selection.endOffset} aria-valuetext={selection.selectedText}
-          data-sen-selection-handle={side} data-sen-selection-x={point.left} data-sen-selection-y={point.top - 6} className="sen-selection-handle"
-          style={{ left: Math.max(left, Math.min(point.left - 22, left + width - 44)), top: point.top }} />;
+          data-sen-selection-handle={side} data-sen-selection-x={point.left} data-sen-selection-y={point.top + (side === 'start' ? 6 : -6)} className="sen-selection-handle"
+          style={{ left: Math.max(left, Math.min(point.left - 22, left + width - 44)), top: handleTop, '--sen-selection-line-height': `${point.height}px` } as CSSProperties} />;
       })}
     </div>
   </div>, container);

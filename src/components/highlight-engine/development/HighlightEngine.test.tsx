@@ -140,7 +140,7 @@ describe('engine-owned selection input', () => {
           });
         } else {
           offset = 7; pointer('pointerdown', input);
-          if (input === 'touch') await act(() => vi.advanceTimersByTimeAsync(450));
+          if (input === 'touch') { await act(() => vi.advanceTimersByTimeAsync(450)); click('Select text'); }
           else { offset = 13; pointer('pointermove', input, 150); }
         }
         expect(selections).toHaveBeenLastCalledWith(expect.objectContaining({ selectedText: input === 'keyboard' ? 'Before' : 'middle' }));
@@ -160,7 +160,7 @@ describe('engine-owned selection input', () => {
     expect(selections).toHaveBeenLastCalledWith(expect.objectContaining({ selectedText: 'middle' }));
     pointer('pointerdown', 'touch');
     act(() => update(initial.map(block => ({ ...block }))));
-    await act(() => vi.advanceTimersByTimeAsync(450)); pointer('pointerup', 'touch');
+    await act(() => vi.advanceTimersByTimeAsync(450)); pointer('pointerup', 'touch'); click('Select text');
     expect(selections).toHaveBeenLastCalledWith(expect.objectContaining({ selectedText: 'middle' }));
   });
   it('keeps word and paragraph clicks working through small mouse jitter', () => {
@@ -170,6 +170,17 @@ describe('engine-owned selection input', () => {
       expect(selections).toHaveBeenLastCalledWith(expect.objectContaining({ selectedText: detail === 2 ? 'middle' : initial[0].text }));
     }
   });
+  it('anchors the start handle above the text and the end below, with drag coordinates inside the line', async () => {
+    await select();
+    const start = document.querySelector<HTMLElement>('[data-sen-selection-handle="start"]')!;
+    const end = document.querySelector<HTMLElement>('[data-sen-selection-handle="end"]')!;
+    expect(Number.parseFloat(start.style.top) + 44).toBe(200);
+    expect(Number.parseFloat(end.style.top)).toBe(222);
+    expect(start.style.getPropertyValue('--sen-selection-line-height')).toBe('22px');
+    expect(end.style.getPropertyValue('--sen-selection-line-height')).toBe('22px');
+    expect(Number(start.dataset.senSelectionY)).toBe(206);
+    expect(Number(end.dataset.senSelectionY)).toBe(216);
+  });
   it('hides an off-screen endpoint when a browser cannot measure a collapsed range', async () => {
     Range.prototype.getClientRects = function () {
       return (this.collapsed ? [] : [new DOMRect(100, -30, 70, 22), new DOMRect(100, 200, 70, 22)]) as unknown as DOMRectList;
@@ -178,15 +189,36 @@ describe('engine-owned selection input', () => {
     expect(document.querySelector('[data-sen-selection-handle="start"]')).toBeNull();
     expect(document.querySelector('[data-sen-selection-handle="end"]')).not.toBeNull();
   });
-  it('holds to select a word, suppresses its native menu, and exposes adjustable handles', async () => {
+  it('gates a held word before highlighting, suppresses its native menu, then exposes adjustable handles', async () => {
     pointer('pointerdown', 'touch');
     await act(() => vi.advanceTimersByTimeAsync(450));
     pointer('pointerup', 'touch');
+    expect(button('Select text')).toBeDefined();
+    expect(button('Edit')).toBeUndefined();
+    expect(document.querySelector('[data-sen-selection-handle]')).toBeNull();
+    expect(document.querySelector('.sen-text-highlight-marks')).toBeNull();
+    expect(selections).toHaveBeenLastCalledWith(null);
+    click('Select text');
+    expect(button('Select text')).toBeUndefined();
+    expect(button('Edit')).toBeDefined();
     expect(selections).toHaveBeenLastCalledWith(expect.objectContaining({ selectedText: 'middle' }));
     expect(document.querySelectorAll('[data-sen-selection-handle]').length).toBe(2);
     const menu = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
     act(() => block().dispatchEvent(menu)); expect(menu.defaultPrevented).toBe(true);
     expect(document.getSelection()!.rangeCount).toBe(0);
+  });
+  it.each(['outside', 'scroll', 'escape', 'source', 'sealed'])('dismisses the Select text gate on %s', async reason => {
+    pointer('pointerdown', 'touch');
+    await act(() => vi.advanceTimersByTimeAsync(450)); pointer('pointerup', 'touch');
+    expect(button('Select text')).toBeDefined();
+    if (reason === 'outside') pointer('pointerdown', 'touch', 0, 0, document.body);
+    if (reason === 'scroll') act(() => block().dispatchEvent(new Event('scroll', { bubbles: true })));
+    if (reason === 'escape') act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+    if (reason === 'source') act(() => update([{ id: 'a', text: 'Replaced text.' }, initial[1]]));
+    if (reason === 'sealed') act(() => setFixed(true));
+    expect(button('Select text')).toBeUndefined();
+    expect(button('Edit')).toBeUndefined();
+    expect(selections).toHaveBeenLastCalledWith(null);
   });
   it('leaves swipes alone and cancels pending holds on movement, cancellation, or blur', async () => {
     pointer('pointerdown', 'touch');
@@ -411,7 +443,8 @@ describe('Highlight Engine', () => {
     const controls = document.querySelector<HTMLElement>('.sen-text-highlight-controls')!;
     expect(controls.dataset.layout).toBe('inline');
     expect(controls.querySelector('.sen-text-highlight-actions--stacked')).toBeNull();
-    expect(controls.style.top).toBe('270px');
+    expect(controls.dataset.placement).toBe('above');
+    expect(parseFloat(controls.style.top) + 48).toBeLessThanOrEqual(200 - 44);
   });
   it('stacks the touch bar clear of our handles and moves close to the inline editor', async () => {
     vi.stubGlobal('matchMedia', (query: string) => ({ matches: query === '(pointer: coarse)', media: query, addEventListener() {}, removeEventListener() {} }));
@@ -419,12 +452,15 @@ describe('Highlight Engine', () => {
     const controls = document.querySelector<HTMLElement>('.sen-text-highlight-controls')!;
     expect(controls.dataset.layout).toBe('stacked');
     expect(controls.querySelector('.sen-text-highlight-menu.sen-text-highlight-actions--stacked')).not.toBeNull();
-    // The stubbed selection line ends at 222px; our handles need 44px below it.
-    expect(parseFloat(controls.style.top)).toBeGreaterThanOrEqual(222 + 44);
+    // Touch menus start below the last line and its downward-facing handle.
+    expect(controls.dataset.placement).toBe('below');
+    expect(parseFloat(controls.style.top)).toBe(222 + 48);
+    const editorRects = vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([new DOMRect(100, 200, 70, 22)] as unknown as DOMRectList);
     click('Edit');
     const editing = document.querySelector<HTMLElement>('.sen-text-highlight-controls')!;
     expect(editing.querySelector('.sen-text-highlight-actions--stacked')).not.toBeNull();
-    expect(parseFloat(editing.style.top)).toBeLessThan(222 + 72);
+    expect(parseFloat(editing.style.top)).toBe(222 + 12);
+    editorRects.mockRestore();
   });
   it('draws no overlay and attaches no overlay work when the host sets none', () => {
     expect(document.querySelector('.sen-text-highlight-overlay')).toBeNull();

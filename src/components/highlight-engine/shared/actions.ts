@@ -4,6 +4,8 @@ import type { PassageSelection } from './selection';
 interface PassageActionBase {
   id: string;
   label: string;
+  /** Optional decorative artwork, rendered beside the action's visible label. */
+  icon?: ReactNode;
   /**
    * A reason the action cannot run on this selection, or nothing when it can.
    * An unavailable action stays in the bar, dimmed, with its reason under the

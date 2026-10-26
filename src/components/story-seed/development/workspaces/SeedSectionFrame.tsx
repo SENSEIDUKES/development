@@ -178,7 +178,7 @@ export function SeedSegmented<T extends string>({ label, idPrefix, value, option
   label: string;
   idPrefix: string;
   value: T | undefined;
-  options: ReadonlyArray<{ value: T; label: string; description?: string }>;
+  options: ReadonlyArray<{ value: T; label: string; description?: string; icon?: React.ReactNode }>;
   onSelect: (value: T) => void;
   describedBy?: string;
 }) {
@@ -195,10 +195,10 @@ export function SeedSegmented<T extends string>({ label, idPrefix, value, option
               tabIndex={radioGroupTabIndex(isSelected, Boolean(selected), index)}
               title={option.description}
               onClick={() => onSelect(option.value)} onKeyDown={handleRadioGroupKeyDown}
-              className={`min-h-10 min-w-0 truncate rounded-lg px-1.5 font-sc text-[10px] font-bold uppercase tracking-[0.08em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CDB271]/70 motion-reduce:transition-none ${isSelected
+              className={`min-h-10 min-w-0 rounded-lg px-1.5 py-1 font-sc leading-tight break-words text-[10px] font-bold uppercase tracking-[0.08em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CDB271]/70 motion-reduce:transition-none ${isSelected
                 ? 'bg-[#CDB271]/10 text-[#F3EDE0] shadow-[inset_0_0_0_1px_rgba(205,178,113,0.5)]'
                 : 'text-neutral-400 hover:text-neutral-200'}`}>
-              {option.label}
+              {option.icon ? <span className="flex flex-col items-center gap-1 py-1.5"><span aria-hidden="true">{option.icon}</span><span className="text-[9px] tracking-normal">{option.label}</span></span> : option.label}
             </button>
           );
         })}

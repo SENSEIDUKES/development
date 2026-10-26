@@ -5,28 +5,39 @@ import {
   List,
   Sparkles,
 } from 'lucide-react';
-import { LibraryBottomNavigation, LibraryButton, LibraryCard, LibraryDragonCycleIcon, LibraryHeaderBadge, LibraryNavigationDrawer, LibraryNavigationDrawerPanel, LibraryPanel, LibrarySoundGlyph, LibraryTextArea, LibraryTextBox, ManifestButton, type LibraryNavigationDrawerSection } from '@seihouse/library-ui';
-import { LibraryArcIcon as SENArcIcon, LibraryManifestingIcon as SENManifestingIcon, LibraryPowerSystemIcon as SENPowerSystemIcon, LibraryProfileIcon as SENProfileIcon, LibrarySettingsIcon as SENSettingsIcon } from '@seihouse/library-ui';
+import {
+  CelestialChannel,
+  CelestialScrollVessel,
+  LibraryArcIcon as SENArcIcon,
+  LibraryBottomNavigation,
+  LibraryButton,
+  LibraryCard,
+  LibraryCaveBackdrop,
+  LibraryDragonCycleIcon,
+  LibraryHeaderBadge,
+  LibraryIcon,
+  LibraryManifestingIcon as SENManifestingIcon,
+  LibraryNavigationDrawer,
+  LibraryNavigationDrawerPanel,
+  LibraryPanel,
+  LibraryPowerSystemIcon as SENPowerSystemIcon,
+  LibraryProfileIcon as SENProfileIcon,
+  LibraryScrubber,
+  LibrarySettingsIcon as SENSettingsIcon,
+  LibrarySoundGlyph,
+  LibraryTextArea,
+  LibraryTextBox,
+  ManifestationChamber,
+  ManifestButton,
+  ParticleEffect,
+  SwordCultivatorClash,
+  type LibraryNavigationDrawerSection,
+  type LibraryScrollPhase,
+} from '@seihouse/library-ui';
 
-/**
- * LibraryComponents — the home page's Library Components tab.
- *
- * A live inventory of the reusable SEN surface primitives owned by
- * `@seihouse/library-ui` and published as `@seihouse/library-ui` (see its
- * README for the ownership contract).
- * Every card below renders the real component imported from the shared
- * barrel — no replicas, no screenshots — so the tab always shows what
- * actually exists today. When a primitive is added to or renamed in the
- * barrel, update this one list; there is no second source of truth.
- *
- * The structural and visual foundation is the Development tab: the same
- * `workshop-grid` of `workshop-card`s, with the placeholder SVG visual
- * swapped for a dark `library-preview-stage` (the glass skin is drawn for
- * the void page, so it can only be judged on a dark backdrop).
- * `SEIButton`, `SEIBottomNavigation`, and `cn` are intentionally not
- * inventoried — they are base layers for building new Library-skinned
- * controls, never page-level imports.
- */
+/** Live Library UI families from UI's workbench catalog, using the installed
+ * canonical package. Workshop fixtures and interactions stay here; domain
+ * behavior, persistence and media generation are deliberately absent. */
 
 function PanelPreview() {
   return (
@@ -249,8 +260,78 @@ function SoundGlyphPreview() {
   );
 }
 
+function ScrubberPreview() {
+  const [progress, setProgress] = useState(45);
+  return (
+    <div className="w-full min-w-0 space-y-4">
+      <label className="block text-xs text-neutral-400">
+        Journey progress: {progress}%
+        <input className="mt-2 block w-full" type="range" min="0" max="100" value={progress}
+          onChange={event => setProgress(Number(event.target.value))} />
+      </label>
+      {(['cultivator', 'sword-rider', 'spirit-beast'] as const).map((travelerId, index) => (
+        <LibraryScrubber key={travelerId} progress={progress / 100} travelerId={travelerId}
+          trailStyle={['qi-glow', 'starlight-trail', 'scroll-trail'][index]}
+          status={{ title: travelerId, state: progress === 100 ? 'Arrived' : 'Manifesting' }} />
+      ))}
+      <LibraryScrubber progress={null} status={{ title: 'Unknown progress', state: 'Weaving' }} />
+    </div>
+  );
+}
+
+function IconPreview() {
+  return (
+    <div className="flex flex-wrap justify-center gap-5 text-gold-accent">
+      {(['header-profile', 'header-settings', 'navigation-home', 'navigation-energy', 'story-characters'] as const).map(name => (
+        <LibraryIcon key={name} name={name} size={32} role="img" aria-hidden={false} aria-label={name} />
+      ))}
+    </div>
+  );
+}
+
+function CaveBackdropPreview() {
+  return (
+    <div className="relative flex h-56 w-full items-center justify-center overflow-hidden rounded-xl bg-neutral-950">
+      <LibraryCaveBackdrop src="/manifest-backdrops/immortal-land-1.jpg" />
+      <p className="relative z-10 text-sm text-neutral-200">Host-selected Cave artwork</p>
+    </div>
+  );
+}
+
+function ManifestationPreview() {
+  const [phase, setPhase] = useState<LibraryScrollPhase>('sealed');
+  return (
+    <div className="w-full min-w-0 space-y-3">
+      <LibraryButton size="sm" variant="secondary" onClick={() => setPhase(
+        phase === 'sealed' ? 'unsealing' : phase === 'unsealing' ? 'revealed' : 'sealed'
+      )}>Next visual phase</LibraryButton>
+      <p role="status" className="text-xs text-neutral-400">{phase}</p>
+      <div aria-hidden="true">
+        <CelestialScrollVessel state={phase} placeholderLabel="Preview artwork" />
+        <div className="grid grid-cols-2">
+          <div className="relative flex h-36 items-center justify-center" style={{ containerType: 'size' }}>
+            <ManifestationChamber isVersa scene={<SwordCultivatorClash />} />
+          </div>
+          <div className="relative flex h-36 items-center justify-center" style={{ containerType: 'size' }}>
+            <ManifestationChamber isVersa={false} scene={<CelestialChannel />} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ParticlePreview() {
+  return (
+    <div className="relative flex h-56 w-full items-center justify-center overflow-hidden rounded-xl bg-black">
+      <ParticleEffect accent="#d4af37" />
+      <p className="relative z-10 text-sm text-neutral-200" data-celestial-foreground>Celestial particles</p>
+    </div>
+  );
+}
+
 type LibraryComponentEntry = {
-  /** The exact export name in the `@seihouse/library-ui` barrel. */
+  /** Family name from the canonical UI workbench catalog. */
   name: string;
   /** One line on what the primitive is for, so reuse starts from the right component. */
   description: string;
@@ -317,6 +398,31 @@ const LIBRARY_COMPONENTS: LibraryComponentEntry[] = [
     description: 'The custom Library sound mark — a footnote-scale prose annotation with quiet resonance rings, never a platform emoji or full-size control.',
     Preview: SoundGlyphPreview,
   },
+  {
+    name: 'LibraryScrubber',
+    description: 'Journey progress with three traveler skins, milestone trails and an indeterminate state. Move the slider to preview arrival.',
+    Preview: ScrubberPreview,
+  },
+  {
+    name: 'LibraryIcon',
+    description: 'Named Library icon assets rendered through one accessible component. The Icons workspace contains the full inventory.',
+    Preview: IconPreview,
+  },
+  {
+    name: 'LibraryCaveBackdrop',
+    description: 'Decorative Cave atmosphere over host-selected artwork. Artwork selection and persistence belong to the host.',
+    Preview: CaveBackdropPreview,
+  },
+  {
+    name: 'LibraryManifestation',
+    description: 'The manifestation family: CelestialScrollVessel, ManifestationChamber, SwordCultivatorClash and CelestialChannel. Cycle the local visual phases without generating media.',
+    Preview: ManifestationPreview,
+  },
+  {
+    name: 'ParticleEffect',
+    description: 'Celestial ambient particles with foreground calm zones and reduced-motion support.',
+    Preview: ParticlePreview,
+  },
 ];
 
 export function LibraryComponentsGrid() {
@@ -342,10 +448,10 @@ export function LibraryComponentsGrid() {
         ))}
       </section>
       <p className="workshop-library-note">
-        Every preview above renders the real component from <code>@seihouse/library-ui</code>, published as{' '}
-        <code>@seihouse/library-ui</code> — import from that entry instead of rebuilding. <code>SEIButton</code>,{' '}
-        <code>SEIBottomNavigation</code>, and <code>cn</code> are exported only as bases for building new
-        skinned controls.
+        All 16 Library UI families render the real components from <code>@seihouse/library-ui</code>.
+        Controls use isolated preview state; they do not save data or call generation services.
+        Compound parts and artwork registries are grouped with their parent family. Universal primitives
+        belong to <code>@seihouse/ui</code>; the full icon inventory lives in the Icons workspace.
       </p>
     </>
   );

@@ -47,9 +47,10 @@
 .novel-expanded-shell .workspace-header-center .dao-insights-trigger { width: 100%; min-width: 0; min-height: 44px; padding-inline: 0.25rem; }
 
 @media (width < 641px) {
-  /* On phones use the space between unequal side groups instead of a fixed midpoint. */
+  /* The WorkspaceHeader utility override also clears the desktop translation
+     variable: a CSS `translate: none` reset is lost during production lowering. */
   .novel-expanded-shell .workspace-header [data-slot="app-header-center"] {
-    position: static; transform: none; translate: none; flex: 1 1 0; min-width: 0;
+    position: static; transform: none; flex: 1 1 0; min-width: 0;
     width: auto !important; max-width: none !important; overflow: hidden;
   }
 }

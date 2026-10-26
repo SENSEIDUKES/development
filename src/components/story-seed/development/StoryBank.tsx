@@ -1,4 +1,6 @@
-import type { ReactNode } from 'react';
+import { FateSurvivalIcon, type FateSurvivalIconProps } from './FateSurvivalIcon';
+import { GenreIcon } from './GenreIcon';
+import type { ComponentType, ReactNode } from 'react';
 import {
   AlertTriangle,
   CalendarDays,
@@ -9,7 +11,6 @@ import {
   Play,
   ScrollText,
   Sparkle,
-  Skull,
   Sparkles,
   SquarePen,
   type LucideIcon,
@@ -82,7 +83,7 @@ const BankChip = ({
   icon: Icon,
   children,
 }: {
-  icon?: LucideIcon;
+  icon?: ComponentType<FateSurvivalIconProps>;
   children: ReactNode;
 }) => (
   <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(172,166,214,0.25)] bg-[rgba(11,14,30,0.5)] px-2.5 py-1 font-mono text-[9px] uppercase tracking-wider text-neutral-300">
@@ -131,9 +132,9 @@ const StoryBankCard = ({
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
         {isSpark ? (
           <>
-            {genre.trim() && <BankChip icon={Sparkle}>{genre}</BankChip>}
+            {genre.trim() && <BankChip icon={GenreIcon}>{genre}</BankChip>}
             {getStoryStyleLabel(style) && <BankChip>{getStoryStyleLabel(style)}</BankChip>}
-            {record.seed.story.optional.fateSurvival.enabled && <BankChip icon={Skull}>Fate Survival</BankChip>}
+            {record.seed.story.optional.fateSurvival.enabled && <BankChip icon={FateSurvivalIcon}>Fate Survival</BankChip>}
           </>
         ) : manifested ? (
           <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(205,178,113,0.45)] bg-[rgba(205,178,113,0.07)] px-2.5 py-1 font-sc text-[9px] font-bold uppercase tracking-[0.18em] text-[#DDC58A] shadow-[0_0_14px_rgba(205,178,113,0.12)]">

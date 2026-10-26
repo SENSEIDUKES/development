@@ -71,10 +71,10 @@ try {
     private: true,
     type: 'module',
     // The locked audio build still declares UI 0.10.1; validate the host's scoped override.
-    overrides: { '@seihouse/audio-player': { '@seihouse/ui': `file:${join(root, 'vendor/seihouse-ui-0.11.0.tgz')}` } },
+    overrides: { '@seihouse/audio-player': { '@seihouse/ui': `file:${join(root, 'vendor/seihouse-ui-0.12.0.tgz')}` } },
   }, null, 2));
   runNpm(
-    ['install', '--ignore-scripts', ...peers, join(root, 'vendor/seihouse-ui-0.11.0.tgz'), ...(target.id === 'library' ? [join(root, 'vendor/seihouse-library-ui-0.10.0.tgz'), join(root, 'vendor/library-studios-brand-0.1.0.tgz')] : []), audioPlayer, ...dependencyTarballs, tarballPath],
+    ['install', '--ignore-scripts', ...peers, join(root, 'vendor/seihouse-ui-0.12.0.tgz'), ...(target.id === 'library' ? [join(root, 'vendor/seihouse-library-ui-0.10.1.tgz'), join(root, 'vendor/library-studios-brand-0.1.0.tgz')] : []), audioPlayer, ...dependencyTarballs, tarballPath],
     consumerDirectory,
   );
 
@@ -85,11 +85,20 @@ try {
     import { createElement } from 'react';
     import { renderToStaticMarkup } from 'react-dom/server';
     import { NarrativePresentationProvider, NarrativeTextBox } from '@seihouse/sen';
-    ${target.id === 'library' ? "import { LibraryPresentationProvider } from '@seihouse/library/presentation';" : ''}
+    ${target.id === 'library' ? "import { LibraryPresentationProvider, LibraryAtmosphereIcon, LibrarySoundscapeIcon, LIBRARY_ICON_CATALOG } from '@seihouse/library/presentation';" : ''}
     const field = createElement(NarrativeTextBox, { label: 'World', defaultValue: 'Astral' });
     const publisherBrand = props => createElement('label', { 'data-publisher-brand': 'independent' }, props.label, createElement('input', { defaultValue: props.defaultValue }));
     const html = renderToStaticMarkup(${target.id === 'library' ? 'createElement(LibraryPresentationProvider, { assets: { emblem: "https://library.example/emblem.svg" } }, field)' : 'createElement(NarrativePresentationProvider, { components: { NarrativeTextBox: publisherBrand } }, field)'});
     assert.match(html, /Astral/);
+    ${target.id === 'library' ? `
+    assert.equal(LIBRARY_ICON_CATALOG.length, 54);
+    assert.equal(typeof LibraryAtmosphereIcon, 'function');
+    assert.equal(typeof LibrarySoundscapeIcon, 'function');
+    for (const icon of LIBRARY_ICON_CATALOG.filter(icon => icon.source === 'bundled')) {
+      const markup = renderToStaticMarkup(createElement(icon.Icon, { size: 32, 'aria-label': icon.label }));
+      assert.ok(markup.includes('width="32"') && markup.includes('role="img"') && markup.includes('currentColor'));
+    }` : ''}
+
     assert.equal(html.includes('glass-field'), ${target.id === 'library'});
     assert.equal(html.includes('data-publisher-brand="independent"'), ${target.id === 'sen'});
   `);

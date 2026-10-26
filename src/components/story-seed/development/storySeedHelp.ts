@@ -1,8 +1,8 @@
+import { OriginIcon } from './seedSections';
 import {
   BookOpen,
   Brain,
   Drama,
-  Feather,
   Gem,
   GitBranch,
   Globe,
@@ -182,7 +182,7 @@ export const STORY_SEED_HELP_ITEMS: StorySeedHelpItem[] = [
   {
     id: "origin",
     label: "Origin",
-    icon: Feather,
+    icon: OriginIcon,
     contexts: ["story-seed"],
     translations: {
       en: {

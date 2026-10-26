@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+  <title>Origin — contemplating cultivator</title>
+  <path transform="translate(2.5 .8) scale(.85)" d="M13.2 6.8a2 2 0 0 1-.5-3.9 2.6 2.6 0 0 1 4.8-1 2.2 2.2 0 0 1 3.6 1.6 1.7 1.7 0 0 1-.4 3.3Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+  <circle cx="12.5" cy="8.7" r=".8"/>
+  <circle cx="9" cy="11.2" r="1.9"/>
+  <path d="M7.6 14h2.8c1 0 1.6.6 2.1 1.4l1.4 2.1 2 .7a1 1 0 0 1-.7 1.9l-2.4-.9a1 1 0 0 1-.5-.4l-.8-1.1v2l4.5 1.1c1.2.3 1.1 2.2-.3 2.2H2.3c-1.4 0-1.5-1.9-.3-2.2l4.5-1.1v-2l-.8 1.1a1 1 0 0 1-.5.4l-2.4.9a1 1 0 0 1-.7-1.9l2-.7 1.4-2.1c.5-.8 1.1-1.4 2.1-1.4Z"/>
+</svg>

@@ -190,6 +190,21 @@ it('draws any workspace from its definition: Sections only with sections, tools 
   expect(globalNav()).toBeNull();
 });
 
+it('leaves Sections off a phone\'s bar only when the page carries its own section navigation', async () => {
+  vi.stubGlobal('matchMedia', (query: string) => ({ matches: query === '(max-width: 639px)',
+    addEventListener: vi.fn(), removeEventListener: vi.fn(), addListener: vi.fn(), removeListener: vi.fn() }));
+  const definition = (sectionsOnPhoneBar?: boolean): LibraryWorkspaceDefinition => ({
+    label: 'Studio sections', closeLabel: 'Close studio sections', barLabel: 'Studio navigation', sectionsOnPhoneBar,
+    sections: [{ id: 'one', label: 'One', items: [{ id: 'a', label: 'A', onSelect: vi.fn() }] }],
+    tools: [{ id: 'panels', label: 'Panels', icon: null, onSelect: vi.fn() }], back: { onBack: vi.fn() },
+  });
+  const labels = () => Array.from(document.querySelectorAll('nav[aria-label="Studio navigation"] button')).map(button => button.textContent);
+  await render(<LibraryNavigation mode="workspace" workspace={definition()}><p>Studio</p></LibraryNavigation>);
+  expect(labels()).toEqual(['Sections', 'Panels', 'Back']);
+  await render(<LibraryNavigation mode="workspace" workspace={definition(false)}><p>Studio</p></LibraryNavigation>);
+  expect(labels()).toEqual(['Panels', 'Back']);
+});
+
 it('gives every Library navigation beneath it the host\'s places, and a navigation\'s own list still wins', async () => {
   const navigate = vi.fn();
   const strip = () => Array.from(globalNav().querySelectorAll('button')).map(button => button.textContent);

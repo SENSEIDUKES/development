@@ -1,3 +1,6 @@
+import type { ReactNode } from 'react';
+import { FateSurvivalIcon } from '../../FateSurvivalIcon';
+import { FatePressureIcon } from '../../FatePressureIcon';
 import { type StorySeedInput, type StorySeedSurvivalPressure } from '@seihouse/sen/story-seed';
 import { SeedNote, SeedSegmented } from '../SeedSectionFrame';
 
@@ -5,19 +8,23 @@ const SURVIVAL_PRESSURE_OPTIONS: Array<{
   value: StorySeedSurvivalPressure;
   label: string;
   description: string;
+  icon: ReactNode;
 }> = [
   {
     value: 'heaven',
+    icon: <FatePressureIcon level="heaven" size={28} />,
     label: 'Heaven',
     description: 'Strong pressure. Favors conflict and shorter quiet stretches.',
   },
   {
     value: 'immortal',
+    icon: <FatePressureIcon level="immortal" size={28} />,
     label: 'Immortal',
     description: 'Balanced pressure. Balances progression, world-building, and conflict.',
   },
   {
     value: 'mortal',
+    icon: <FatePressureIcon level="mortal" size={28} />,
     label: 'Mortal',
     description: 'Light pressure. Allows more room for world-building before conflict.',
   },
@@ -47,7 +54,7 @@ export const OriginFateControls = ({ settings, onChange }: FateSurvivalSettingPr
     </div>
     <div className="flex items-start justify-between gap-3 p-4">
       <span className="min-w-0">
-        <span className="block font-sc text-[11px] font-bold uppercase tracking-[0.16em] text-signal">Survival</span>
+        <span className="flex items-center gap-2 font-sc text-[11px] font-bold uppercase tracking-[0.16em] text-signal"><FateSurvivalIcon size={22} className="shrink-0" />Survival</span>
         <span className="mt-1 block font-sans text-[11px] leading-relaxed text-neutral-400">
           <SeedNote moreLabel="More about Survival" more={settings.enabled
             ? "Off, fate chooses each chapter's path unless you step in, and the Destined Ending stays the story's guaranteed direction."

@@ -1,5 +1,9 @@
-import { useEffect, useId, useLayoutEffect, useState, type CSSProperties, type PointerEvent, type ReactNode, type RefObject } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
+import { watchLayout } from './measure';
+import { popupPosition, type PopupSide } from './popupPosition';
+import { HighlightActionIcon } from './HighlightActionIcon';
+import { TextSelect } from 'lucide-react';
 import { SEIButton } from '@seihouse/ui';
 import type { PassageAction } from '../shared/actions';
 import type { PassageSelection } from '../shared/selection';
@@ -43,6 +47,7 @@ export interface ActionBarProps {
   /** The current draft while editing: empty reveals Delete Passage. */
   replacement: string;
   style?: CSSProperties;
+  onSelectText?: () => void;
   onEdit: () => void;
   onModeChange: (mode: ActionBarMode) => void;
   onUndo: () => void;
@@ -67,13 +72,15 @@ export interface ActionBarProps {
  */
 export function ActionBar({
   container, controlsRef, selection, rectangles, actions, mode, removeActions, canUndo, focusControls, editable, editing, actionOpen,
-  replacement, style, onEdit, onModeChange, onUndo, onCommit, onPanelOpen, onClose,
+  replacement, style, onSelectText, onEdit, onModeChange, onUndo, onCommit, onPanelOpen, onClose,
 }: ActionBarProps) {
   const [menuPath, setMenuPath] = useState<string[]>([]);
   const [panel, setPanel] = useState<ReactNode>(null);
   const [copyStatus, setCopyStatus] = useState('');
   const [menuMode, setMenuMode] = useState(mode);
-  const [position, setPosition] = useState({ left: 8, top: 8, maxHeight: 400, width: 320 });
+  const [position, setPosition] = useState<CSSProperties>({ visibility: 'hidden' });
+  const placement = useRef<PopupSide | undefined>(undefined);
+  const selecting = !!onSelectText;
   const stacked = useCoarsePointer();
   const reasonId = useId();
   const removing = mode === 'remove';
@@ -86,41 +93,44 @@ export function ActionBar({
   const vertical = stacked || removing;
   const reasons = menuActions.some(action => action.unavailable?.(selection));
   // A submenu in one row is as wide as its labels (Back, then each action), so no two buttons overlap.
-  const submenuWidth = Math.max(120, 64 + menuActions.reduce((total, action) => total + 28 + action.label.length * 8, 0));
+  const submenuWidth = Math.max(150, 94 + menuActions.reduce((total, action) => total + 28 + action.label.length * 8 + (action.icon ? 30 : 0), 0));
+
+  const rootIconWidth = (editable ? 60 : 0) + actions.filter(action => action.icon).length * 30;
 
   useLayoutEffect(() => {
-    const viewport = window.visualViewport;
-    const leftEdge = viewport?.offsetLeft ?? 0;
-    const topEdge = viewport?.offsetTop ?? 0;
-    const width = viewport?.width ?? window.innerWidth;
-    const height = viewport?.height ?? window.innerHeight;
-    const controlWidth = panel ? Math.min(360, width - 16)
-      : vertical && !editing ? Math.min(removing || reasons ? 216 : 168, width - 16)
-      : stacked ? Math.min(168, width - 16)
-      : editing && replacement === '' ? Math.min(220, width - 16)
-      : editing ? 64 : Math.min(reasons ? 320 : menuPath.length ? submenuWidth : actions.length ? 216 : 136, width - 16);
-    const controlHeight = controlsRef.current?.offsetHeight ?? 48;
-    const anchor = rectangles.find(rect => rect.top + rect.height > topEdge && rect.top < topEdge + height) ?? rectangles[0];
-    let top: number;
-    if (!editing && !panel && rectangles.length) {
-      const selectionTop = Math.min(...rectangles.map(rect => rect.top));
-      const selectionBottom = Math.max(...rectangles.map(rect => rect.top + rect.height));
-      const below = selectionBottom + HANDLE_CLEARANCE;
-      const above = selectionTop - 10 - controlHeight;
-      const lowest = topEdge + height - 8;
-      top = below + controlHeight <= lowest ? below
-        : above >= topEdge + 8 ? above
-        : lowest - selectionBottom >= selectionTop - topEdge ? below : above;
-    } else {
-      const below = (anchor?.top ?? topEdge) + (anchor?.height ?? 0) + 10;
-      top = anchor ? (below + controlHeight <= topEdge + height - 8 ? below : anchor.top - controlHeight - 10) : topEdge + 8;
-    }
-    setPosition({
-      left: Math.max(leftEdge + 8, Math.min(anchor?.left ?? leftEdge + 8, leftEdge + width - controlWidth - 8)),
-      top: Math.max(topEdge + 8, Math.min(top, topEdge + height - controlHeight - 8)),
-      width: controlWidth, maxHeight: Math.max(44, height - 16),
-    });
-  }, [rectangles, editing, replacement, controlsRef, actions.length, menuPath.length, panel, stacked, vertical, removing, reasons, submenuWidth, copyStatus]);
+    const controls = controlsRef.current;
+    if (!controls) return;
+    const place = () => {
+      const viewport = container.ownerDocument.defaultView!.visualViewport;
+      const width = viewport?.width ?? window.innerWidth;
+      const height = viewport?.height ?? window.innerHeight;
+      const desiredWidth = selecting ? 216 : panel ? 360
+        : vertical && !editing ? removing || reasons ? 216 : 168
+        : stacked ? 168 : editing ? replacement === '' ? 280 : 94
+        : reasons ? 320 : menuPath.length ? submenuWidth : (actions.length ? 216 : 136) + rootIconWidth;
+      const controlWidth = Math.min(desiredWidth, Math.max(1, width - 24));
+      // Read the content height at the new width without expanding the scroll
+      // container: removing its height cap would reset a scrolled menu to the top.
+      controls.style.width = `${controlWidth}px`;
+      const controlHeight = controls.scrollHeight + controls.offsetHeight - controls.clientHeight || 48;
+      const next = popupPosition({ rectangles, width: controlWidth, height: controlHeight,
+        viewport: { left: viewport?.offsetLeft ?? 0, top: viewport?.offsetTop ?? 0, width, height },
+        clearance: selecting || editing || panel ? 12 : HANDLE_CLEARANCE,
+        preferred: placement.current ?? (stacked ? 'below' : 'above'),
+      });
+      placement.current = next.side;
+      controls.dataset.placement = next.side;
+      // Apply the cap before paint even if React can reuse the previous position.
+      controls.style.maxHeight = `${next.maxHeight}px`;
+      const { side: _side, ...geometry } = next;
+      setPosition(previous => {
+        const updated = { ...geometry, visibility: 'visible' as const };
+        return Object.keys(updated).every(key => previous[key as keyof CSSProperties] === updated[key as keyof typeof updated]) ? previous : updated;
+      });
+    };
+    place();
+    return watchLayout(controls, place);
+  }, [rectangles, editing, replacement, controlsRef, container, actions.length, menuPath.length, panel, stacked, vertical, removing, reasons, submenuWidth, copyStatus, selecting, rootIconWidth]);
 
   // Opened from the keyboard, focus lands on the first thing to do, as in a native menu.
   useEffect(() => {
@@ -160,29 +170,31 @@ export function ActionBar({
     return <SEIButton key={action.id} unstyled disabled={!!reason} data-unavailable={reason ? '' : undefined} data-destructive={removing ? '' : undefined}
       aria-label={reason ? action.label : undefined} aria-describedby={reason ? describedBy : undefined}
       onPointerDown={keepSelection} onClick={() => open(action)}>
-      {action.label}{reason && <span id={describedBy} className="sen-text-highlight-reason">{reason}</span>}
+      <span className="sen-text-highlight-action-label">{action.icon && <span aria-hidden="true" className="sen-text-highlight-action-icon">{action.icon}</span>}{action.label}</span>{reason && <span id={describedBy} className="sen-text-highlight-reason">{reason}</span>}
     </SEIButton>;
   };
   return createPortal(<div className="sen-text-highlight" style={style}>
     <div ref={controlsRef} className="sen-text-highlight-controls" style={position} data-layout={stacked || (vertical && !editing) ? 'stacked' : 'inline'}
       data-mode={mode} role="group"
-      aria-label={editing ? 'Edit passage' : panel ? 'Passage action panel' : removing ? 'Remove from passage' : 'Passage actions'}>
-      {editing ? <div className={`sen-text-highlight-actions${stacked ? ' sen-text-highlight-actions--stacked' : ''}`}>
-        <SEIButton unstyled disabled={replacement === ''} onClick={() => onCommit('replace')}>Save</SEIButton>
-        {replacement === '' && <SEIButton unstyled onClick={() => onCommit('delete')}>Delete Passage</SEIButton>}
+      aria-label={onSelectText ? 'Text selection' : editing ? 'Edit passage' : panel ? 'Passage action panel' : removing ? 'Remove from passage' : 'Passage actions'}>
+      {onSelectText ? <SEIButton unstyled className="sen-text-highlight-select" onPointerDown={keepSelection} onClick={onSelectText}>
+        <TextSelect size={18} aria-hidden="true" />Select text
+      </SEIButton> : editing ? <div className={`sen-text-highlight-actions${stacked ? ' sen-text-highlight-actions--stacked' : ''}`}>
+        <SEIButton unstyled disabled={replacement === ''} onClick={() => onCommit('replace')}><span className="sen-text-highlight-action-label"><HighlightActionIcon className="sen-highlight-action-icon" name="save" />Save</span></SEIButton>
+        {replacement === '' && <SEIButton unstyled onClick={() => onCommit('delete')}><span className="sen-text-highlight-action-label"><HighlightActionIcon className="sen-highlight-action-icon" name="delete" />Delete Passage</span></SEIButton>}
       </div> : panel ? <>
-        <SEIButton unstyled data-back="" onClick={() => setPanel(null)}>Back</SEIButton>
+        <SEIButton unstyled data-back="" onClick={() => setPanel(null)}><span className="sen-text-highlight-action-label"><HighlightActionIcon className="sen-highlight-action-icon" name="back" />Back</span></SEIButton>
         {panel}
       </> : <div className={`sen-text-highlight-actions sen-text-highlight-menu${vertical ? ' sen-text-highlight-actions--stacked' : ''}`}>
         {(!top || removing) && <SEIButton unstyled data-back="" onPointerDown={keepSelection}
-          onClick={() => top ? onModeChange('add') : setMenuPath(path => path.slice(0, -1))}>Back</SEIButton>}
-        {top && !removing && editable && <SEIButton unstyled onPointerDown={keepSelection} onClick={onEdit}>Edit</SEIButton>}
-        {top && !removing && editable && <SEIButton unstyled onPointerDown={keepSelection} onClick={() => { void copy(); }}>Copy</SEIButton>}
-        {top && removing && canUndo && <SEIButton unstyled onPointerDown={keepSelection} onClick={onUndo}>Undo</SEIButton>}
+          onClick={() => top ? onModeChange('add') : setMenuPath(path => path.slice(0, -1))}><span className="sen-text-highlight-action-label"><HighlightActionIcon className="sen-highlight-action-icon" name="back" />Back</span></SEIButton>}
+        {top && !removing && editable && <SEIButton unstyled onPointerDown={keepSelection} onClick={onEdit}><span className="sen-text-highlight-action-label"><HighlightActionIcon className="sen-highlight-action-icon" name="edit" />Edit</span></SEIButton>}
+        {top && !removing && editable && <SEIButton unstyled onPointerDown={keepSelection} onClick={() => { void copy(); }}><span className="sen-text-highlight-action-label"><HighlightActionIcon className="sen-highlight-action-icon" name="copy" />Copy</span></SEIButton>}
+        {top && removing && canUndo && <SEIButton unstyled onPointerDown={keepSelection} onClick={onUndo}><span className="sen-text-highlight-action-label"><HighlightActionIcon className="sen-highlight-action-icon" name="undo" />Undo</span></SEIButton>}
         {menuActions.map(item)}
-        {top && removing && <SEIButton unstyled data-destructive="" onPointerDown={keepSelection} onClick={() => onCommit('delete')}>Delete Passage</SEIButton>}
+        {top && removing && <SEIButton unstyled data-destructive="" onPointerDown={keepSelection} onClick={() => onCommit('delete')}><span className="sen-text-highlight-action-label"><HighlightActionIcon className="sen-highlight-action-icon" name="delete" />Delete Passage</span></SEIButton>}
         {/* A hold selects words; Remove stays an explicit action. */}
-        {top && !removing && stacked && editable && <SEIButton unstyled onPointerDown={keepSelection} onClick={() => onModeChange('remove')}>Remove</SEIButton>}
+        {top && !removing && stacked && editable && <SEIButton unstyled onPointerDown={keepSelection} onClick={() => onModeChange('remove')}><span className="sen-text-highlight-action-label"><HighlightActionIcon className="sen-highlight-action-icon" name="remove" />Remove</span></SEIButton>}
       </div>}
       <p role="status" className={copyStatus ? 'px-3 py-1 text-xs' : 'sen-selection-instructions'}>{copyStatus}</p>
     </div>

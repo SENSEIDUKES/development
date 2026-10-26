@@ -344,12 +344,13 @@ async function walk(browser, viewport, sample) {
   // Listen bar), in the header on laptops, and only ever once.
   const musicNote = () => page.locator(laptop ? 'header .header-sound-control button' : '[data-library-sound-slot] .header-sound-control button')
     .filter({ visible: true });
-  const noteInPlace = async where => {
+  // Story Seed's creator pins Back / Next above its bar, so there the note floats just above that footer instead.
+  const noteInPlace = async (where, above = '.library-global-navigation') => {
     check(await musicNote().count() === 1, `${where} should carry the music note ${laptop ? 'in its header' : 'just above its bottom bar'}.`);
     check(await page.locator('.header-sound-control button').filter({ visible: true }).count() === 1, `${where} should show the music note once.`);
     if (laptop) return;
     const note = await musicNote().boundingBox();
-    const bar = await page.locator('.library-global-navigation').filter({ visible: true }).boundingBox();
+    const bar = await page.locator(above).filter({ visible: true }).boundingBox();
     check(note && bar && note.y + note.height <= bar.y && bar.y - (note.y + note.height) <= 16 && viewport.width - (note.x + note.width) <= 24,
       `${where}'s music note should float just above the bar's right end, got ${JSON.stringify({ note, bar })}.`);
   };
@@ -369,7 +370,7 @@ async function walk(browser, viewport, sample) {
   await page.evaluate(record => localStorage.setItem('novelexpanded-story-seeds-v1', JSON.stringify([record])), sample.record);
   await visibleButton('Carve New Destiny').click();
   await page.getByTestId('novel-expanded-create').waitFor();
-  await noteInPlace('Story Seed');
+  await noteInPlace('Story Seed', '[data-seed-creator-footer]');
   // The app's own music starts with the first tap: calm pieces, with no model.
   await musicOf('ambient');
   check(pieces().every(path => piecesOf('ambient').has(path)), `The app's music should be calm pieces only, got ${JSON.stringify(pieces())}.`);
@@ -389,7 +390,9 @@ async function walk(browser, viewport, sample) {
   await visibleButton(/^Story Bank$/).click();
   await visibleButton(/^Use Seed$/).click();
   await visibleButton(/^Refine Details$/).click();
-  await page.getByRole('button', { name: /^Manifest World Blueprint/ }).and(page.locator(':enabled')).filter({ visible: true }).first().click();
+  // Create's one Create button sits on the creator's last step.
+  await page.locator('[data-seed-creator-strip] button[data-step="manifest"]').click();
+  await page.getByRole('button', { name: /^Create World Blueprint/ }).and(page.locator(':enabled')).filter({ visible: true }).first().click();
   const sheet = page.getByTestId('access-token-sheet');
   await sheet.waitFor();
   check(counts.blueprints === 0, 'No Blueprint request should leave before the token is given.');

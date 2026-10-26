@@ -67,6 +67,7 @@ export const ownershipRules = [
   ['src/components/familiar-training/', 'library', 'familiar'],
   ['src/components/provenance/', 'deferred', 'cross-product provenance (unexported by approval)'],
   ['src/components/card-workshop/', 'workshop', 'card inspection'],
+  ['src/components/palette-materials/', 'workshop', 'visual palette inspection'],
   ['src/server/', 'host', 'backend'],
   ['src/workshop/', 'workshop', 'preview application'],
   ['src/test-utils/', 'test', 'test support'],

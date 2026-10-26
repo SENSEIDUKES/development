@@ -35,4 +35,7 @@ export * from './presentation';
 export * from '../../lib/language';
 
 /** The package surface version, bumped with the published package. */
-export const SEN_PACKAGE_VERSION = '0.27.1';
+export const SEN_PACKAGE_VERSION = '0.40.0';
+
+/** Shared action artwork without loading the Highlight Engine stylesheet. */
+export { HighlightActionIcon, HIGHLIGHT_ACTION_ICONS, type HighlightActionIconName, type HighlightActionIconProps } from '../../components/highlight-engine/development/HighlightActionIcon';

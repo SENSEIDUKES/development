@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 
-export const MATERIAL_IDS = ['home', 'create', 'signin', 'navigation', 'familiar', 'button', 'secondary'] as const;
+export const MATERIAL_IDS = ['home', 'create', 'signin', 'navigation', 'familiar', 'reader', 'button', 'secondary'] as const;
 export type MaterialId = typeof MATERIAL_IDS[number];
 export type Backdrop = 'black' | 'gray' | 'artwork';
 export interface MaterialEdit {
@@ -32,13 +32,17 @@ export interface MeasuredMaterial {
   backgroundColor: string; backgroundImage: string; borderColor: string;
   borderWidth: string; boxShadow: string; backdropFilter: string; color: string;
   hoverGlow?: string;
+  gradientStart?: string;
+  gradientEnd?: string;
 }
 export function measureMaterial(element: Element): MeasuredMaterial {
   const s = getComputedStyle(element);
+  const stops = s.backgroundImage.match(/rgba?\([^)]+\)/g);
   return { backgroundColor: s.backgroundColor, backgroundImage: s.backgroundImage,
     borderColor: s.borderTopColor, borderWidth: s.borderTopWidth,
     boxShadow: s.boxShadow, backdropFilter: s.backdropFilter, color: s.color,
-    hoverGlow: s.getPropertyValue('--glass-glow-hover').trim() || undefined };
+    hoverGlow: s.getPropertyValue('--glass-glow-hover').trim() || undefined,
+    gradientStart: stops?.[0], gradientEnd: stops?.[stops.length - 1] };
 }
 
 export function colorParts(value: string): { hex: string; alpha: number } {

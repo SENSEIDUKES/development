@@ -12,6 +12,14 @@ const results = [];
 async function checkHeader(frame, label) {
   await frame.locator('.dao-insights-trigger').waitFor();
   await frame.locator('.novel-expanded-emblem-art img').waitFor({ state: 'attached' });
+  // The canonical center measures its available width in a ResizeObserver.
+  // Give fonts, the observer and React's resulting update a frame each before
+  // judging the new viewport; WebKit can otherwise expose the previous width.
+  await frame.locator('.workspace-header').evaluate(async header => {
+    await header.ownerDocument.fonts.ready;
+    const view = header.ownerDocument.defaultView;
+    await new Promise(resolve => view.requestAnimationFrame(() => view.requestAnimationFrame(resolve)));
+  });
   const geometry = await frame.locator('.workspace-header').evaluate(header => {
     const box = selector => {
       const { left, right, top, bottom, width, height } = header.querySelector(selector).getBoundingClientRect();

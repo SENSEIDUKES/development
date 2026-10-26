@@ -3,3 +3,7 @@ export { loadingFamiliarPresentation } from '../../library/manifestations/famili
 export type { LoadingFamiliarPresentation } from '../../library/manifestations/familiar';
 export * from '../../library/assets';
 export { LIBRARY_ICON_CATALOG, LibraryEditIcon, LibraryCopyIcon, LibraryMediaIcon, LibraryRemoveIcon, LibraryBackIcon, LibraryAudioIcon, LibraryCueIcon, LibrarySoundscapeIcon, LibraryAtmosphereIcon, LibrarySaveIcon, LibraryUndoIcon, LibraryDeleteIcon, type LibraryGlyphProps } from '../../components/sen-icons/LibraryIcons';
+
+export { LibraryDaoInsightIcon, type LibraryDaoInsightIconProps } from '../../components/sen-icons/LibraryDaoInsightIcon';
+
+export { LibraryMortalPressureIcon, LibraryImmortalPressureIcon, LibraryHeavenPressureIcon, LibrarySurvivalIcon, LibraryGenreIcon } from '../../components/sen-icons/LibraryIcons';

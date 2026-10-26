@@ -47,16 +47,16 @@
     "key": "SEN/IMAGE/ICON/Basic/SENHelp.svg",
     "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENHelp.svg",
     "etag": "ec788ae3aaf35d9eb71c869bad347812",
-    "libraryIcons": [
-      "header-help"
-    ]
+    "libraryIcons": []
   },
   {
     "file": "SENHelpv2.svg",
     "key": "SEN/IMAGE/ICON/Basic/SENHelpv2.svg",
     "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENHelpv2.svg",
     "etag": "5f77de9b62b0f0a07421cb62d5b20725",
-    "libraryIcons": []
+    "libraryIcons": [
+      "header-help"
+    ]
   },
   {
     "file": "SENHome.svg",
@@ -124,25 +124,23 @@
     "key": "SEN/IMAGE/ICON/Basic/SENSearch.svg",
     "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENSearch.svg",
     "etag": "a43167f94bfacc6d78279fb82a33bbd2",
-    "libraryIcons": [
-      "header-search"
-    ]
+    "libraryIcons": []
   },
   {
     "file": "SENSearchv2.svg",
     "key": "SEN/IMAGE/ICON/Basic/SENSearchv2.svg",
     "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENSearchv2.svg",
     "etag": "a91b19064161eb6d48a034e6ca913a4f",
-    "libraryIcons": []
+    "libraryIcons": [
+      "header-search"
+    ]
   },
   {
     "file": "SENSettings.svg",
     "key": "SEN/IMAGE/ICON/Basic/SENSettings.svg",
     "url": "https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENSettings.svg",
     "etag": "893d0ed492274dd7e70df3f6af5efe54",
-    "libraryIcons": [
-      "header-settings"
-    ]
+    "libraryIcons": []
   },
   {
     "file": "SENStorage.svg",

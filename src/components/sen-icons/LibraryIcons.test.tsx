@@ -3,11 +3,11 @@ import { describe, expect, it } from 'vitest';
 import { LibraryAtmosphereIcon, LIBRARY_ICON_CATALOG } from '@seihouse/library/presentation';
 
 describe('reusable Library icons', () => {
-  it('includes all twelve new named icons in the existing catalog categories', () => {
+  it('includes all named icons in the existing catalog categories', () => {
     const bundled = LIBRARY_ICON_CATALOG.filter(icon => icon.source === 'bundled');
-    expect(LIBRARY_ICON_CATALOG).toHaveLength(45);
+    expect(LIBRARY_ICON_CATALOG).toHaveLength(54);
     expect(bundled.map(icon => icon.label)).toEqual([
-      'Edit', 'Copy', 'Media', 'Remove', 'Back', 'Audio', 'Cue', 'Soundscape', 'Atmosphere', 'Save', 'Undo', 'Delete',
+      'Mortal Pressure', 'Immortal Pressure', 'Heaven Pressure', 'Survival', 'Genre', 'Dao Insight', 'Edit', 'Copy', 'Media', 'Remove', 'Back', 'Audio', 'Cue', 'Soundscape', 'Atmosphere', 'Save', 'Undo', 'Delete',
     ]);
     for (const icon of bundled) {
       const html = renderToStaticMarkup(<icon.Icon size={48} className="example" />);

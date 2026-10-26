@@ -1,3 +1,4 @@
+import { OriginIcon } from '../seedSections';
 import { memo, type Dispatch, type SetStateAction } from 'react';
 import {
   CalendarDays,
@@ -114,7 +115,7 @@ export const BlueprintOriginSection = memo(({
   <LibraryPanel as="section" aria-labelledby="blueprint-origin-heading" padding="md">
     <BlueprintSectionHeading
       id="blueprint-origin-heading"
-      icon={Feather}
+      icon={OriginIcon}
       title="Origin Snapshot"
       tagline="Creator-authored Origin inputs. Changes here update the same Story Seed values used for generation."
     />

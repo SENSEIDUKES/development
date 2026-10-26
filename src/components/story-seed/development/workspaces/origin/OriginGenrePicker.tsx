@@ -4,7 +4,6 @@ import {
   Castle,
   ChevronDown,
   ChevronRight,
-  Compass,
   Crown,
   Eye,
   FlaskConical,
@@ -23,6 +22,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { GenreIcon } from '../../GenreIcon';
 import { GENRE_PRESETS } from '../../constants';
 import { NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
 import { workspaceCompactLabelClass } from '../SeedSectionFrame';
@@ -159,7 +159,7 @@ export const OriginGenrePicker = ({
               ? (SelectedGenreSigil
                   ? <SelectedGenreSigil size={16} className="glass-choice-icon" />
                   : <Sparkles size={15} style={{ color: CUSTOM_GENRE_PATH_ACCENT }} />)
-              : <Compass size={16} className="glass-choice-icon" />}
+              : <GenreIcon size={18} className="glass-choice-icon" />}
           </span>
           <span className="min-w-0 flex-1">
             <span className={`block truncate font-sc text-[11px] font-bold uppercase tracking-[0.12em] ${trimmedGenre || conjuring ? 'text-signal' : 'text-neutral-200'}`}>

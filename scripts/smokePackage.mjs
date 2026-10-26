@@ -91,7 +91,7 @@ try {
     const html = renderToStaticMarkup(${target.id === 'library' ? 'createElement(LibraryPresentationProvider, { assets: { emblem: "https://library.example/emblem.svg" } }, field)' : 'createElement(NarrativePresentationProvider, { components: { NarrativeTextBox: publisherBrand } }, field)'});
     assert.match(html, /Astral/);
     ${target.id === 'library' ? `
-    assert.equal(LIBRARY_ICON_CATALOG.length, 45);
+    assert.equal(LIBRARY_ICON_CATALOG.length, 54);
     assert.equal(typeof LibraryAtmosphereIcon, 'function');
     assert.equal(typeof LibrarySoundscapeIcon, 'function');
     for (const icon of LIBRARY_ICON_CATALOG.filter(icon => icon.source === 'bundled')) {

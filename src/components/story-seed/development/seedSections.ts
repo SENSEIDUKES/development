@@ -1,3 +1,4 @@
+import { createElement, forwardRef } from 'react';
 import {
   Feather,
   MapPin,
@@ -48,12 +49,15 @@ export const SEED_FAMILIES: Record<SeedFamily, { label: string; tagline: string 
 
 const hasText = (value?: string): boolean => Boolean(value?.trim());
 
+// Semantic hook lets the Library skin supply its Origin artwork.
+export const OriginIcon: LucideIcon = forwardRef((props, ref) => createElement(Feather, { ...props, ref, className: [props.className, 'sen-origin-icon'].filter(Boolean).join(' ') }));
+
 export const SEED_SECTIONS: SeedSection[] = [
   {
     id: 'origin',
     family: 'story',
     label: 'Origin',
-    icon: Feather,
+    icon: OriginIcon,
     required: true,
     tagline: 'The premise, tradition, genre, and story details that give this novel its first shape.',
     isFilled: seed => Boolean(

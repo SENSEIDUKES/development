@@ -24,7 +24,10 @@ svg.lucide-log-out:not([data-workshop-reference] *) {
   --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENExit.svg") !important;
 }
 
-.sen-icon[data-sen-icon="header-help"]:not([data-workshop-reference] *),
+.sen-icon[data-sen-icon="header-help"]:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("./assets/SENHelpv2.svg") !important;
+}
+
 svg.lucide-circle-help:not([data-workshop-reference] *) {
   --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENHelp.svg") !important;
 }
@@ -59,7 +62,10 @@ svg.lucide-user-round:not([data-workshop-reference] *) {
   --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENSEIHOUSEProvenance.svg") !important;
 }
 
-.sen-icon[data-sen-icon="header-search"]:not([data-workshop-reference] *),
+.sen-icon[data-sen-icon="header-search"]:not([data-workshop-reference] *) {
+  --sen-icon-mask: url("./assets/SENSearchv2.svg") !important;
+}
+
 svg.lucide-search:not([data-workshop-reference] *) {
   --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENSearch.svg") !important;
 }
@@ -67,7 +73,7 @@ svg.lucide-search:not([data-workshop-reference] *) {
 .sen-icon[data-sen-icon="header-settings"]:not([data-workshop-reference] *),
 svg.lucide-settings:not([data-workshop-reference] *),
 svg.lucide-settings-2:not([data-workshop-reference] *) {
-  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENSettings.svg") !important;
+  --sen-icon-mask: url("./assets/SENSettingsv2.svg") !important;
 }
 
 .sen-icon[data-sen-icon="story-bank"]:not([data-workshop-reference] *) {
@@ -99,7 +105,7 @@ svg.lucide-settings-2:not([data-workshop-reference] *) {
 }
 
 .sen-icon[data-sen-icon="header-manifesting"]:not([data-workshop-reference] *) {
-  --sen-icon-mask: url("https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENManifesting.svg") !important;
+  --sen-icon-mask: url("./assets/SENManifesting.svg") !important;
 }
 
 .sen-icon[data-sen-icon="story-power-system"]:not([data-workshop-reference] *) {
@@ -152,4 +158,26 @@ svg.lucide-log-out:not([data-workshop-reference] *) > *,
 svg.lucide-house:not([data-workshop-reference] *) > *,
 [data-sen-asset="provenance"]:not([data-workshop-reference] *) > * {
   opacity: 0;
+}
+
+/* Origin's Library artwork; the portable default remains replaceable. */
+svg.sen-origin-icon:not([data-workshop-reference] *) {
+  background-color: currentColor;
+  -webkit-mask: url("./assets/SENOrigin.svg") center / contain no-repeat;
+  mask: url("./assets/SENOrigin.svg") center / contain no-repeat;
+}
+svg.sen-origin-icon:not([data-workshop-reference] *) > * { opacity: 0; }
+
+/* Shared Information artwork keeps the familiar circled i with a calligraphic stem. */
+svg.lucide-info:not([data-workshop-reference] *) {
+  background-color: currentColor;
+  -webkit-mask: url("./assets/SENInformation.svg") center / contain no-repeat;
+  mask: url("./assets/SENInformation.svg") center / contain no-repeat;
+}
+svg.lucide-info:not([data-workshop-reference] *) > * { opacity: 0; }
+.world-card-base-format:has(svg.lucide-info):not([data-workshop-reference] *) {
+  background: rgba(5, 11, 18, 0.48);
+}
+.world-card-base-format:has(svg.lucide-info):not([data-workshop-reference] *):is(:hover, :focus-visible) {
+  background: rgba(5, 11, 18, 0.65);
 }

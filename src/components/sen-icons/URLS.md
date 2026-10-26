@@ -13,8 +13,8 @@ The active Library skin uses the original Help and Search artwork and Basic Ener
 | SENDownload.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENDownload.svg) | Available in catalog |
 | SENEnergy.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENEnergy.svg) | `navigation-energy` |
 | SENExit.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENExit.svg) | `header-exit` |
-| SENHelp.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENHelp.svg) | `header-help` |
-| SENHelpv2.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENHelpv2.svg) | Alternate artwork, catalog only |
+| SENHelp.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENHelp.svg) | Alternate artwork, catalog only |
+| SENHelpv2.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENHelpv2.svg) | `header-help` uses the [refined local SVG](./assets/SENHelpv2.svg) |
 | SENHome.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENHome.svg) | `navigation-home` |
 | SENProfile.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENProfile.svg) | `header-profile` |
 | SENProfileFemale.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENProfileFemale.svg) | `header-profile-female` |
@@ -22,9 +22,9 @@ The active Library skin uses the original Help and Search artwork and Basic Ener
 | SENQiHead.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENQiHead.svg) | `header-qi` |
 | SENReward.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENReward.svg) | `navigation-relic` |
 | SENSEIHOUSEProvenance.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENSEIHOUSEProvenance.svg) | Available in catalog |
-| SENSearch.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENSearch.svg) | `header-search` |
-| SENSearchv2.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENSearchv2.svg) | Alternate artwork, catalog only |
-| SENSettings.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENSettings.svg) | `header-settings` |
+| SENSearch.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENSearch.svg) | Alternate artwork, catalog only |
+| SENSearchv2.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENSearchv2.svg) | `header-search` uses the [refined local SVG](./assets/SENSearchv2.svg) |
+| SENSettings.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENSettings.svg) | Original artwork, catalog only |
 | SENStorage.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENStorage.svg) | `story-bank` |
 | SENStore.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Basic/SENStore.svg) | `navigation-store` |
 
@@ -38,7 +38,7 @@ The active Library skin uses the original Help and Search artwork and Basic Ener
 | SENCompanion.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENCompanion.svg) | `story-ally-faction` |
 | SENEnergySun.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENEnergySun.svg) | Available in catalog |
 | SENFaction.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENFaction.svg) | `story-enemy-faction` |
-| SENManifesting.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENManifesting.svg) | `header-manifesting` |
+| SENManifesting.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENManifesting.svg) | `header-manifesting` uses the [local sprout SVG](./assets/SENManifesting.svg) |
 | SENPowerSystem.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENPowerSystem.svg) | `story-power-system` |
 | SENScroll.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENScroll.svg) | `navigation-stories`, `story-scroll` |
 | SENStyleChinese.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENStyleChinese.svg) | `story-style-chinese` |
@@ -46,3 +46,5 @@ The active Library skin uses the original Help and Search artwork and Basic Ener
 | SENStyleKorean.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENStyleKorean.svg) | `story-style-korean` |
 | SENWorld.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENWorld.svg) | Available in catalog |
 | SENWorldIdentity.svg | [Open SVG](https://media.seihouse.org/SEN/IMAGE/ICON/Special/SENWorldIdentity.svg) | `story-world-identity` |
+
+Settings V2 uses the [local gear SVG](./assets/SENSettingsv2.svg) for `header-settings`.

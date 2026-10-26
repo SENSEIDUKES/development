@@ -109,7 +109,7 @@ export function audioActions<State extends AuthoringState>({ state, update, cata
 }): { actions: PassageAction[]; removeActions: PassageAction[] } {
   const soundtrackAction = (kind: SoundtrackChangeKind): PassageAction => ({
     id: kind === SOUNDSCAPE_CHANGE_KIND ? 'soundscape' : 'atmosphere', label: SOUNDTRACK_KIND_WORDS[kind].name,
-    icon: <HighlightActionIcon name={kind === SOUNDSCAPE_CHANGE_KIND ? 'soundscape' : 'atmosphere'} />,
+    icon: <HighlightActionIcon className="sen-highlight-action-icon" name={kind === SOUNDSCAPE_CHANGE_KIND ? 'soundscape' : 'atmosphere'} />,
     unavailable: selected => {
       const paragraph = state.manuscript.paragraphs.find(candidate => candidate.id === selected.blockId);
       return paragraph && paragraph.text.slice(selected.startOffset, selected.endOffset).trim() ? undefined : 'Select a word';
@@ -118,8 +118,8 @@ export function audioActions<State extends AuthoringState>({ state, update, cata
       onPlace={(attachment, replaces) => update(current => placeAttachment(replaces ? removeAttachment(current, replaces) : current, attachment) as State)}
       onClose={close} />,
   });
-  const actions: PassageAction[] = [{ id: 'media', label: 'Media', icon: <HighlightActionIcon name="media" />, children: [{ id: 'audio', label: 'Audio', icon: <HighlightActionIcon name="audio" />, children: [{
-    id: 'cue', label: 'Cue', icon: <HighlightActionIcon name="cue" />,
+  const actions: PassageAction[] = [{ id: 'media', label: 'Media', icon: <HighlightActionIcon className="sen-highlight-action-icon" name="media" />, children: [{ id: 'audio', label: 'Audio', icon: <HighlightActionIcon className="sen-highlight-action-icon" name="audio" />, children: [{
+    id: 'cue', label: 'Cue', icon: <HighlightActionIcon className="sen-highlight-action-icon" name="cue" />,
     unavailable: selected => { const target = soundCueTarget(state, selected); return 'reason' in target ? target.reason : undefined; },
     onActivate: (selected, close) => <CueAttachPanel state={state} selection={selected} catalog={catalog}
       onPlace={attachment => {
@@ -133,7 +133,7 @@ export function audioActions<State extends AuthoringState>({ state, update, cata
       onRemove={id => update(current => removeAttachment(current, id) as State)} onClose={close} />,
   }, ...(soundtrack ? [soundtrackAction(SOUNDSCAPE_CHANGE_KIND), soundtrackAction(ATMOSPHERE_CHANGE_KIND)] : [])] }] }];
   const removeActions: PassageAction[] = [{
-    id: 'remove-cue', label: 'Remove cue here', icon: <HighlightActionIcon name="cue" />,
+    id: 'remove-cue', label: 'Remove cue here', icon: <HighlightActionIcon className="sen-highlight-action-icon" name="cue" />,
     unavailable: selected => cuesUnder(state, selected).length ? undefined : 'No Sound Cue here',
     onActivate: selected => {
       const ids = cuesUnder(state, selected).map(attachment => attachment.id);
@@ -142,7 +142,7 @@ export function audioActions<State extends AuthoringState>({ state, update, cata
     },
   }, ...(soundtrack ? ([SOUNDSCAPE_CHANGE_KIND, ATMOSPHERE_CHANGE_KIND] as const).map((kind): PassageAction => ({
     id: `remove-${kind}`, label: `Remove ${SOUNDTRACK_KIND_WORDS[kind].noun} change here`,
-    icon: <HighlightActionIcon name={kind === SOUNDSCAPE_CHANGE_KIND ? 'soundscape' : 'atmosphere'} />,
+    icon: <HighlightActionIcon className="sen-highlight-action-icon" name={kind === SOUNDSCAPE_CHANGE_KIND ? 'soundscape' : 'atmosphere'} />,
     unavailable: selected => changesUnder(state, selected, kind).length ? undefined : `No ${SOUNDTRACK_KIND_WORDS[kind].noun} change here`,
     onActivate: selected => {
       const ids = changesUnder(state, selected, kind).map(attachment => attachment.id);

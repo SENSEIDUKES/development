@@ -1,5 +1,8 @@
 # `@seihouse/library`
 
+**0.35.0 (2026-10-26):** Presentation exports 12 individually named reusable icons
+and includes them in the 45-icon catalog. Requires SEN 0.40.0 for the shared artwork.
+
 **Unreleased (2026-10-16):** `./familiar` exports `FamiliarHelperProvider`,
 `FamiliarHelperAction`, `useFamiliarHelperContext`, the screen action/context and
 replaceable voice contracts, and `FamiliarHelperController`. Hosts opt in once
@@ -327,6 +330,26 @@ The Library's official icon artwork is selected by `./styles.css` from the publi
 SEIHouse R2 Basic/Special folders. `./presentation` exports `LIBRARY_ICON_CATALOG`
 for inspection (exact keys, URLs, ETags and Library identifiers); the existing
 Library UI renderer and named adapters keep their contracts.
+
+The 12 bundled icons have individual named exports from `./presentation`:
+
+```tsx
+import { LibraryAtmosphereIcon, LibrarySoundscapeIcon } from '@seihouse/library/presentation';
+
+<LibraryAtmosphereIcon size={24} aria-label="Atmosphere" />
+<LibrarySoundscapeIcon size={24} aria-label="Soundscape" />
+```
+
+The other named exports are `LibraryEditIcon`, `LibraryCopyIcon`, `LibraryMediaIcon`,
+`LibraryRemoveIcon`, `LibraryBackIcon`, `LibraryAudioIcon`, `LibraryCueIcon`,
+`LibrarySaveIcon`, `LibraryUndoIcon`, and `LibraryDeleteIcon`.
+They inherit `currentColor`, accept SVG props and `className`, and are decorative
+by default; provide `aria-label` for standalone meaning.
+
+`LIBRARY_ICON_CATALOG` includes all 45 icons in Basic and Special categories.
+Entries identify their `source`: `remote` entries retain their public URLs and
+Library identifiers; `bundled` entries provide a named `Icon` component and
+`exportName`. The existing Icons Workshop shows this same catalog.
 
 ## Server Model Router
 

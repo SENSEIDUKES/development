@@ -180,21 +180,21 @@ export function ActionBar({
       {onSelectText ? <SEIButton unstyled className="sen-text-highlight-select" onPointerDown={keepSelection} onClick={onSelectText}>
         <TextSelect size={18} aria-hidden="true" />Select text
       </SEIButton> : editing ? <div className={`sen-text-highlight-actions${stacked ? ' sen-text-highlight-actions--stacked' : ''}`}>
-        <SEIButton unstyled disabled={replacement === ''} onClick={() => onCommit('replace')}><span className="sen-text-highlight-action-label"><HighlightActionIcon name="save" />Save</span></SEIButton>
-        {replacement === '' && <SEIButton unstyled onClick={() => onCommit('delete')}><span className="sen-text-highlight-action-label"><HighlightActionIcon name="delete" />Delete Passage</span></SEIButton>}
+        <SEIButton unstyled disabled={replacement === ''} onClick={() => onCommit('replace')}><span className="sen-text-highlight-action-label"><HighlightActionIcon className="sen-highlight-action-icon" name="save" />Save</span></SEIButton>
+        {replacement === '' && <SEIButton unstyled onClick={() => onCommit('delete')}><span className="sen-text-highlight-action-label"><HighlightActionIcon className="sen-highlight-action-icon" name="delete" />Delete Passage</span></SEIButton>}
       </div> : panel ? <>
-        <SEIButton unstyled data-back="" onClick={() => setPanel(null)}><span className="sen-text-highlight-action-label"><HighlightActionIcon name="back" />Back</span></SEIButton>
+        <SEIButton unstyled data-back="" onClick={() => setPanel(null)}><span className="sen-text-highlight-action-label"><HighlightActionIcon className="sen-highlight-action-icon" name="back" />Back</span></SEIButton>
         {panel}
       </> : <div className={`sen-text-highlight-actions sen-text-highlight-menu${vertical ? ' sen-text-highlight-actions--stacked' : ''}`}>
         {(!top || removing) && <SEIButton unstyled data-back="" onPointerDown={keepSelection}
-          onClick={() => top ? onModeChange('add') : setMenuPath(path => path.slice(0, -1))}><span className="sen-text-highlight-action-label"><HighlightActionIcon name="back" />Back</span></SEIButton>}
-        {top && !removing && editable && <SEIButton unstyled onPointerDown={keepSelection} onClick={onEdit}><span className="sen-text-highlight-action-label"><HighlightActionIcon name="edit" />Edit</span></SEIButton>}
-        {top && !removing && editable && <SEIButton unstyled onPointerDown={keepSelection} onClick={() => { void copy(); }}><span className="sen-text-highlight-action-label"><HighlightActionIcon name="copy" />Copy</span></SEIButton>}
-        {top && removing && canUndo && <SEIButton unstyled onPointerDown={keepSelection} onClick={onUndo}><span className="sen-text-highlight-action-label"><HighlightActionIcon name="undo" />Undo</span></SEIButton>}
+          onClick={() => top ? onModeChange('add') : setMenuPath(path => path.slice(0, -1))}><span className="sen-text-highlight-action-label"><HighlightActionIcon className="sen-highlight-action-icon" name="back" />Back</span></SEIButton>}
+        {top && !removing && editable && <SEIButton unstyled onPointerDown={keepSelection} onClick={onEdit}><span className="sen-text-highlight-action-label"><HighlightActionIcon className="sen-highlight-action-icon" name="edit" />Edit</span></SEIButton>}
+        {top && !removing && editable && <SEIButton unstyled onPointerDown={keepSelection} onClick={() => { void copy(); }}><span className="sen-text-highlight-action-label"><HighlightActionIcon className="sen-highlight-action-icon" name="copy" />Copy</span></SEIButton>}
+        {top && removing && canUndo && <SEIButton unstyled onPointerDown={keepSelection} onClick={onUndo}><span className="sen-text-highlight-action-label"><HighlightActionIcon className="sen-highlight-action-icon" name="undo" />Undo</span></SEIButton>}
         {menuActions.map(item)}
-        {top && removing && <SEIButton unstyled data-destructive="" onPointerDown={keepSelection} onClick={() => onCommit('delete')}><span className="sen-text-highlight-action-label"><HighlightActionIcon name="delete" />Delete Passage</span></SEIButton>}
+        {top && removing && <SEIButton unstyled data-destructive="" onPointerDown={keepSelection} onClick={() => onCommit('delete')}><span className="sen-text-highlight-action-label"><HighlightActionIcon className="sen-highlight-action-icon" name="delete" />Delete Passage</span></SEIButton>}
         {/* A hold selects words; Remove stays an explicit action. */}
-        {top && !removing && stacked && editable && <SEIButton unstyled onPointerDown={keepSelection} onClick={() => onModeChange('remove')}><span className="sen-text-highlight-action-label"><HighlightActionIcon name="remove" />Remove</span></SEIButton>}
+        {top && !removing && stacked && editable && <SEIButton unstyled onPointerDown={keepSelection} onClick={() => onModeChange('remove')}><span className="sen-text-highlight-action-label"><HighlightActionIcon className="sen-highlight-action-icon" name="remove" />Remove</span></SEIButton>}
       </div>}
       <p role="status" className={copyStatus ? 'px-3 py-1 text-xs' : 'sen-selection-instructions'}>{copyStatus}</p>
     </div>

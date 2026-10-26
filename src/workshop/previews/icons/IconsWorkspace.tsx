@@ -6,7 +6,7 @@ export function IconsWorkspace() {
     <CatalogWorkspacePage
       title="Icons"
       section="Components · Library UI"
-      description="45 Basic and Special icons, including reusable Atmosphere, Soundscape, Audio, Cue, and utility artwork."
+      description="54 Basic and Special icons, including reusable Atmosphere, Soundscape, Audio, Cue, and utility artwork."
     >
       <IconsGrid />
     </CatalogWorkspacePage>

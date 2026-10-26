@@ -1,7 +1,7 @@
 # `@seihouse/library`
 
 **0.35.0 (2026-10-26):** Presentation exports 12 individually named reusable icons
-and includes them in the 45-icon catalog. Requires SEN 0.40.0 for the shared artwork.
+and includes them in the 54-icon catalog. Requires SEN 0.40.0 for the shared artwork.
 
 **Unreleased (2026-10-16):** `./familiar` exports `FamiliarHelperProvider`,
 `FamiliarHelperAction`, `useFamiliarHelperContext`, the screen action/context and
@@ -346,7 +346,7 @@ The other named exports are `LibraryEditIcon`, `LibraryCopyIcon`, `LibraryMediaI
 They inherit `currentColor`, accept SVG props and `className`, and are decorative
 by default; provide `aria-label` for standalone meaning.
 
-`LIBRARY_ICON_CATALOG` includes all 45 icons in Basic and Special categories.
+`LIBRARY_ICON_CATALOG` includes all 54 icons in Basic and Special categories.
 Entries identify their `source`: `remote` entries retain their public URLs and
 Library identifiers; `bundled` entries provide a named `Icon` component and
 `exportName`. The existing Icons Workshop shows this same catalog.
@@ -440,3 +440,9 @@ npm run test:package
 Workshop simulations, API handlers, identity verification, database adapters,
 and production infrastructure are not published. Provider access is published
 only through the server-only Model Router entry.
+
+**2026-10-26 icon refinements:** Presentation also exports `LibraryDaoInsightIcon`,
+`LibraryMortalPressureIcon`, `LibraryImmortalPressureIcon`, `LibraryHeavenPressureIcon`,
+`LibrarySurvivalIcon`, and `LibraryGenreIcon`. The 54-entry catalog includes the local
+Help, Search, Settings, Manifest, Origin, and Information SVGs. These assets are bundled
+with the Library; existing remote artwork remains available in the same catalog.

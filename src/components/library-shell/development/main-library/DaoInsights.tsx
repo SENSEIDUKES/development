@@ -1,9 +1,13 @@
+import { LibraryDaoInsightIcon, LibraryCopyIcon, LibrarySaveIcon } from '@seihouse/library/presentation';
+import { LibraryManifestingIcon } from '@seihouse/library-ui';
+import { OriginIcon } from '../../../story-seed/development/seedSections';
+import { FateSurvivalIcon } from '../../../story-seed/development/FateSurvivalIcon';
 import FocusLock from 'react-focus-lock';
 import { useHeaderClipboard } from '../mainLibraryClipboard';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { BookmarkPlus, Check, ChevronLeft, Compass, Copy, Feather, Shuffle, Skull, Sparkle, Sparkles, Wand2, X } from 'lucide-react';
+import { BookmarkPlus, ChevronLeft, Shuffle, Sparkle, Sparkles, X } from 'lucide-react';
 import { getStoryStyleLabel, STORY_SPARK_IDEA_MAX_LENGTH, storySparkTags, type StorySpark, type StorySparkRequest } from '@seihouse/sen/story-seed';
 import { NarrativeTextArea as LibraryTextArea } from '@seihouse/sen/presentation';
 import { GENRE_PATH_SIGILS, OriginGenrePicker } from '../../../story-seed/development/workspaces/origin/OriginGenrePicker';
@@ -238,7 +242,7 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
       >
         {/* One line at every width: phones read the short "Dao Insights". */}
         <div className="flex max-w-full min-w-0 items-center gap-1 mb-0.5 shrink-0 whitespace-nowrap">
-          <Sparkles size={11} className="text-[#CDB271] shrink-0 group-hover:rotate-12 transition-transform" />
+          <LibraryDaoInsightIcon size={14} className="text-[#CDB271] shrink-0 group-hover:rotate-12 transition-transform" />
           <span className="truncate font-sc font-bold text-[8px] tracking-[0.18em] text-[#CDB271]/80 uppercase leading-none group-hover:text-[#E3C878] transition-colors">
             <span className="hidden min-[480px]:inline">Insights from the Dao</span>
             <span className="min-[480px]:hidden">Dao Insights</span>
@@ -278,7 +282,7 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
                     <div className="flex items-center gap-3">
                       <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[rgba(205,178,113,0.4)] bg-[rgba(205,178,113,0.08)] text-[#CDB271] shadow-[0_0_14px_rgba(205,178,113,0.18)]">
                         <motion.div animate={{ rotate: seeking ? 720 : 0 }} transition={{ duration: seeking ? 1.2 : 0.4, ease: 'easeInOut', repeat: seeking ? Infinity : 0 }}>
-                          <Compass size={17} />
+                          <LibraryDaoInsightIcon size={22} />
                         </motion.div>
                       </div>
                       <div className="min-w-0 flex-1">
@@ -321,7 +325,7 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
                                 <span className="truncate font-sc text-[10px] font-bold uppercase tracking-[0.12em] text-signal">{genreName(spark.genre)}</span>
                               </span>
                               {spark.inventedGenre && <span className="font-sc text-[10px] font-bold uppercase tracking-[0.16em] text-[#D4AF37]">Conjured genre</span>}
-                              {spark.survival && <span className="inline-flex items-center gap-1 font-sc text-[10px] font-bold uppercase tracking-[0.16em] text-[#F87171]"><Skull size={11} aria-hidden="true" />Fate Survival</span>}
+                              {spark.survival && <span className="inline-flex items-center gap-1 font-sc text-[10px] font-bold uppercase tracking-[0.16em] text-[#F87171]"><FateSurvivalIcon size={14} aria-hidden="true" />Fate Survival</span>}
                             </div>
                             {spark.title && <h3 className="mt-2.5 font-display text-base font-bold uppercase tracking-[0.08em] text-[#E3C878] leading-snug">{spark.title}</h3>}
                             <p className={`${spark.title ? 'mt-1' : 'mt-2.5'} ${mode === 'custom' ? 'line-clamp-3' : 'line-clamp-5'} select-text font-serif text-[15px] leading-relaxed text-[#F3EDE0]`}>{spark.premise}</p>
@@ -349,7 +353,7 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
                         <div role="group" aria-label="Spark mode" className="grid flex-1 grid-cols-2 gap-1 rounded-xl border border-[rgba(196,182,148,0.15)] bg-[rgba(11,14,30,0.6)] p-1">
                           {([
                             ['random', Shuffle, 'Random', 'The Dao rambles'],
-                            ['custom', Feather, 'Custom', 'Shape your own idea'],
+                            ['custom', OriginIcon, 'Custom', 'Shape your own idea'],
                           ] as const).map(([value, Icon, label, hint]) => {
                             const selected = mode === value;
                             return (
@@ -369,6 +373,7 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
                             : 'Fate Survival off: fate guides each chapter. Turn on for a spark where survival is at stake.'}
                           onClick={() => { setSurvival(current => !current); setMessage(null); }}
                           className={`flex shrink-0 items-center gap-2 rounded-xl border px-2.5 transition-colors disabled:opacity-60 ${survival ? 'border-[rgba(248,113,113,0.45)] bg-[rgba(248,113,113,0.08)] text-[#FCA5A5]' : 'border-[rgba(196,182,148,0.15)] bg-[rgba(11,14,30,0.6)] text-neutral-400'}`}>
+                          <FateSurvivalIcon size={18} className="shrink-0" />
                           <span className="flex flex-col items-start leading-none">
                             <span className="font-sc text-[9px] font-bold uppercase tracking-[0.14em]">Fate</span>
                             <span className="font-sc text-[11px] font-bold uppercase tracking-[0.1em]">Survival</span>
@@ -400,7 +405,7 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
                     <button type="button" onClick={seek} disabled={seeking}
                       className="dao-seek-button flex h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border border-[rgba(205,178,113,0.5)] px-3 font-sc text-[13px] font-bold uppercase tracking-[0.12em] text-[#F3E3B5] transition-all hover:border-[#E3C878] hover:text-white active:scale-[0.98] disabled:opacity-60">
                       <motion.span animate={{ rotate: seeking ? 360 : 0 }} transition={{ duration: 1.2, ease: 'linear', repeat: seeking ? Infinity : 0 }} className="flex shrink-0">
-                        {mode === 'custom' ? <Wand2 size={15} aria-hidden="true" /> : <Sparkles size={15} aria-hidden="true" />}
+                        <LibraryDaoInsightIcon size={19} aria-hidden="true" />
                       </motion.span>
                       <span className="truncate">{seeking ? 'Muttering…' : mode === 'custom'
                         ? <>Shape<span className="sr-only min-[420px]:not-sr-only"> my premise</span></>
@@ -409,7 +414,7 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
                     {host?.beginSpark && (
                       <button type="button" onClick={() => act('begin')} disabled={seeking || acting !== null}
                         className="flex h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-portal px-3 text-sm font-bold text-black shadow-[0_0_18px_rgba(4,172,255,0.25)] transition-opacity hover:opacity-90 disabled:opacity-50">
-                        <Feather size={15} aria-hidden="true" className="shrink-0" />
+                        <LibraryManifestingIcon size={18} aria-hidden="true" className="shrink-0" />
                         <span className="truncate">{acting === 'begin' ? 'Planting…' : <>Begin<span className="sr-only min-[420px]:not-sr-only"> this story</span></>}</span>
                       </button>
                     )}
@@ -417,12 +422,12 @@ export const DaoInsights: React.FC<{ host?: DaoSparkHost }> = ({ host }) => {
                       <button type="button" onClick={() => act('keep')} disabled={seeking || acting !== null || isKept}
                         aria-label={isKept ? 'Kept in your Story Bank' : 'Keep in Story Bank'} title={isKept ? 'Kept in your Story Bank' : 'Keep in Story Bank'}
                         className={sideAction}>
-                        {isKept ? <Check size={16} className="text-emerald-400" aria-hidden="true" /> : <BookmarkPlus size={16} aria-hidden="true" />}
+                        {isKept ? <LibrarySaveIcon size={18} className="text-emerald-400" aria-hidden="true" /> : <BookmarkPlus size={16} aria-hidden="true" />}
                       </button>
                     )}
                     <button type="button" onClick={copySpark} aria-label={copied ? 'Spark copied' : 'Copy spark'} title="Copy the spark's Origin"
                       className={sideAction}>
-                      {copied ? <Check size={16} className="text-emerald-400" aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
+                      {copied ? <LibrarySaveIcon size={18} className="text-emerald-400" aria-hidden="true" /> : <LibraryCopyIcon size={18} aria-hidden="true" />}
                     </button>
                   </div>
                 </motion.div>

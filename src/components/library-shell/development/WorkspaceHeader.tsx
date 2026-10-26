@@ -114,6 +114,10 @@ export function WorkspaceHeader({ title, subtitle, emblem, home, back, primaryAc
       aria-label={back.label} onClick={back.onNavigate} />}
     center={showCenter ? <div className="workspace-header-center" data-header-center>{center}</div> : undefined}
     centerBreakpoint={centerBreakpoint}
+    // Clear the utility's translation variable as well as its visual transform.
+    // Production CSS lowers `translate: none` to `transform: translate(0, 0)`,
+    // which leaves the separate desktop -50% translate active on phones.
+    centerClassName={centerBreakpoint === 'always' ? 'max-[641px]:translate-x-0' : undefined}
     appName={identity ?? <span className="workspace-header-badge" onClick={event => {
       // Canonical badge owns the link markup; the host may intercept ordinary navigation.
       if (home?.onNavigate && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey

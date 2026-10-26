@@ -45,6 +45,18 @@ jobs:
           node scripts/verifyHighlightSelection.mjs
           node scripts/verifyNovelExpandedApp.browser.mjs
 
+      - name: Build app and verify the production header
+        run: |
+          npm run build
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/app-header-preview.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/app/ > /dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/verifyAppHeader.browser.mjs
+
       - name: Run test suite
         run: npm test
 

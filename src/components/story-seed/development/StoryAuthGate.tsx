@@ -2,6 +2,7 @@ import { useLibraryAssets } from '../../../library/assets';
 import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Mail } from 'lucide-react';
+import './materials.css';
 
 /**
  * Story Authentication gate for CreationModal's
@@ -282,7 +283,7 @@ export default function StoryAuthGate({
           initial={shellInitial}
           animate={shellAnimate}
           transition={shellTransition}
-          className="w-full max-w-sm sm:max-w-md lg:mt-[6vh] max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-3xl px-6 py-8 sm:px-9 sm:py-10 bg-[linear-gradient(165deg,rgba(10,18,32,0.38),rgba(3,6,12,0.46))] backdrop-blur-md [-webkit-backdrop-filter:blur(12px)] border border-[rgba(148,196,255,0.22)] shadow-[0_18px_60px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(180,220,255,0.12)]"
+          className="story-auth-glass w-full max-w-sm sm:max-w-md lg:mt-[6vh] max-h-[calc(100dvh-2rem)] overflow-y-auto px-6 py-8 sm:px-9 sm:py-10"
         >
           <div className="flex flex-col items-center text-center gap-5">
             {CELESTIAL_LIBRARY_EMBLEM_URL && <img

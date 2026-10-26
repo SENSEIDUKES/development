@@ -3,7 +3,7 @@
    portrait cards and relic-style world tiles. Colours stay on the Seed's
    tokens (parchment gold, soft violet, the void). */
 
-.bp-dossier { padding-bottom: 8px; }
+/* Room for the pinned footer comes from creator.css (.bp-dossier). */
 .bp-panel { display: grid; gap: 20px; padding-top: 16px; }
 .bp-panel[hidden] { display: none; }
 

@@ -29,6 +29,7 @@ import { CastScreen } from './blueprint/CastScreen';
 import { WorldCardGrid } from './blueprint/WorldCardGrid';
 import { StatTable } from './blueprint/StatRows';
 import './creator/creator.css';
+import { PinnedFooter } from './creator/PinnedFooter';
 import './blueprint/blueprint.css';
 import { getSenLanguageLabel, normalizeChapterWritingStyle, type SenLanguageCode } from '@seihouse/sen/contracts';
 
@@ -337,7 +338,7 @@ export const BlueprintReview = ({
 
       {/* Pinned like the Seed creator's footer: back to the Seed, or create
           the story. Equal cells, so neither button changes size with its label. */}
-      <div className="seed-creator-footer" data-blueprint-footer>
+      <PinnedFooter data-blueprint-footer>
         <div className="seed-creator-footer-inner">
           <div className="seed-creator-footer-cell">
             <LibraryButton variant="ghost" size="md" fullWidth icon={ArrowLeft} onClick={onBack} disabled={isGenerating}>
@@ -364,7 +365,7 @@ export const BlueprintReview = ({
             </ManifestButton>
           </div>
         </div>
-      </div>
+      </PinnedFooter>
     </div>
   );
 };

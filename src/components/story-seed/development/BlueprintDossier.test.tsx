@@ -7,6 +7,7 @@ import { createBlueprintDraftFromSeed, createEmptyStorySeedInput, type StorySeed
 import { BlueprintReview } from './BlueprintReview';
 import { CastScreen } from './blueprint/CastScreen';
 import { WorldCardGrid } from './blueprint/WorldCardGrid';
+import { NovelBlueprintEditor } from './NovelBlueprintEditor';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let root: Root;
@@ -93,5 +94,19 @@ describe('World Blueprint as a character screen', () => {
     // Its tiles still open, read-only, so a reader can see every field.
     act(() => container.querySelector<HTMLButtonElement>('button[aria-label="Thing: Jade Token"]')!.click());
     expect(document.querySelector<HTMLFieldSetElement>('[data-blueprint-sheet]')?.disabled).toBe(true);
+  });
+
+  it('keeps the view-only Blueprint\'s portraits and tiles usable, outside its disabled fields', () => {
+    const seed = seedWithCast();
+    act(() => root.render(<NovelBlueprintEditor snapshot={{ seed, blueprint: createBlueprintDraftFromSeed(seed) }} readOnly />));
+    const avatar = container.querySelector<HTMLButtonElement>('[data-testid="blueprint-cast"] button[aria-label="Elder Qin"]')!;
+    const tile = container.querySelector<HTMLButtonElement>('button[aria-label="Thing: Jade Token"]')!;
+    // A disabled fieldset hides its buttons; navigation must never sit inside one.
+    expect(avatar.closest('fieldset:disabled')).toBeNull();
+    expect(tile.closest('fieldset:disabled')).toBeNull();
+    act(() => avatar.click());
+    expect(stat('role')).toBe('Protector');
+    // The fields themselves stay view-only.
+    expect(container.querySelector<HTMLTextAreaElement>('#blueprint-world-overview')!.closest('fieldset')!.disabled).toBe(true);
   });
 });

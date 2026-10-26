@@ -98,6 +98,7 @@ try {
     assert.equal(await page.locator('#blueprint-arc-count-input').inputValue(), '11');
     assert.equal(await page.locator('#story-length-input').count(), 0);
     assert.ok(!(await page.locator('body').innerText()).includes('LOOKAHEAD_HIDDEN'));
+    await page.getByRole('tab', { name: 'Arcs' }).click();
     await page.locator('#hard-pin-2').fill('Keep the revised promise.');
     // Blueprint review edits save to the Seed, including the generated cast.
     // Cast and World cards open their fields in a sheet.

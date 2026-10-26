@@ -7,6 +7,7 @@ import {
   type HarnessHoldingsFixerPolicy,
   type HarnessWorkspaceState,
 } from '@seihouse/sen/harness-generation';
+import { createReplayTagger } from '../../../test-utils/replayTagger';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { writtenChapterReply } from '../../../test-utils/writtenChapter';
 import { buildHoldingsFixerPrompt } from '../../../server/harness-generation/holdingsFixer';
@@ -36,12 +37,15 @@ const runtime = { now: () => '2026-10-06T12:00:00.000Z', createId: (prefix: stri
 const setup = async ({ policy, fixer = true }: { policy?: HarnessHoldingsFixerPolicy; fixer?: boolean } = {}) => {
   const generate = vi.fn<HarnessGenerationModelAdapter['generate']>();
   const fixHoldings = vi.fn<NonNullable<HarnessGenerationModelAdapter['fixHoldings']>>();
+  // The tagger writes the holding tags now, so the fixer has something to read.
+  const { tagChapter, teach } = createReplayTagger(receipt);
   const controller = new HarnessGenerationController({
     repository: new InMemoryHarnessGenerationRepository(), runtime,
     ...(policy ? { holdingsFixer: policy } : {}),
     modelAdapter: {
       getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
       generate,
+      tagChapter,
       arcOperation: async () => ({ rawProviderResponse: '{}', providerReceipt: receipt }),
       ...(fixer ? { fixHoldings } : {}),
     },
@@ -52,10 +56,10 @@ const setup = async ({ policy, fixer = true }: { policy?: HarnessHoldingsFixerPo
     cast: [{ name: 'Ye Chen', role: 'Main character', isMainCharacter: true, relationshipToMC: 'Self' }],
   });
   const write = async (value: string) => {
-    generate.mockResolvedValueOnce({ rawProviderResponse: writtenChapterReply(value), providerReceipt: receipt });
+    generate.mockResolvedValueOnce({ rawProviderResponse: writtenChapterReply(teach(value)), providerReceipt: receipt });
     await controller.generateNextChapter(story.id, 'fixture');
   };
-  return { controller, storyId: story.id, generate, fixHoldings, write };
+  return { controller, storyId: story.id, generate, fixHoldings, tagChapter, write };
 };
 
 const chapterNumbered = (state: HarnessWorkspaceState, chapterNumber: number) => state.chapters.find(chapter => chapter.chapterNumber === chapterNumber)!;

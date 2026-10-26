@@ -1,10 +1,9 @@
 import { SOUND_CUE_RULES } from '../../../audio/soundCueRules';
 import type { SoundWord } from '../../../audio/soundWords';
-import type { HarnessSkillManifest } from '../../../narrative/generation';
 
 /**
- * How the writer adds Sound Cues, in the tiny SEN language: a sound tag wraps
- * the words where a sound happens and names it. It never chooses a recording,
+ * How Sound Cues are added, in the tiny SEN language: a sound tag wraps the
+ * words where a sound happens and names it. It never chooses a recording,
  * file or placement rule; the HARNESS does that from the story's sound words.
  * The instruction names no sounds itself: the story's sound words, appended
  * below it at assembly one per line, are the whole vocabulary. Its numbers
@@ -17,22 +16,10 @@ export const SEN_SOUND_CUES_INSTRUCTIONS = `When your sentence describes a sound
 The words stay part of your sentence: never put a tag between sentences or write words only for it.
 At most ${SOUND_CUE_RULES.maxPerChapter} a chapter. Never add or change a sentence to fit a sound.`;
 
-/** SEN's bundled Sound Cues skill. It occupies the Sound Cues slot, which the story's Media Loadout manages. */
-export const SEN_SOUND_CUES_SKILL: HarnessSkillManifest = {
-  id: 'seihouse.sen-sound-cues',
-  version: '2.6.0',
-  name: 'SEN Sound Cues',
-  description: 'Tags the words where a sound happens and names it from the story\'s sound words; the HARNESS places the cue and picks the recording.',
-  slot: 'soundCues',
-  applications: ['generation'],
-  instructions: SEN_SOUND_CUES_INSTRUCTIONS,
-  author: 'SEIHouse',
-};
-
 /**
- * The story's sound words as the writer sees them: one example tag made from
+ * The story's sound words as the tagger sees them: one example tag made from
  * the first word, with a placeholder where the words go so no phrase can be
- * copied into the prose (given phrases, the writer once copied them instead
+ * copied into the prose (given phrases, a model once copied them instead
  * of tagging what its prose already said), then every word on one line. The
  * list is the whole vocabulary.
  */

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { buildHarnessTagPrompt } from '../../../server/harness-generation/tagger';
 import { AUDIO_ENERGIES } from '../../../audio/audioTags';
 import { SOUND_CUE_RULES } from '../../../audio/soundCueRules';
 import { SOUND_WORD_LIMITS, validateSoundWords, type SoundWord } from '../../../audio/soundWords';
@@ -9,8 +10,6 @@ import {
   SEN_NOVEL_AUTHOR_SKILL,
   SEN_READING_MODE_SKILLS,
   SEN_SOUND_CUES_INSTRUCTIONS,
-  SEN_SOUND_CUES_SKILL,
-  SEN_SPEAKERS_SKILL,
   assembleCapaPrompt,
   presentSoundVocabulary,
 } from '@seihouse/sen/harness-generation';
@@ -27,7 +26,6 @@ const largestVocabulary = (): SoundWord[] => validateSoundWords(Array.from({ len
 
 describe('SEN Sound Cues skill', () => {
   it('teaches the sound tag with the same numbers placement enforces', () => {
-    expect(SEN_SOUND_CUES_SKILL).toMatchObject({ id: 'seihouse.sen-sound-cues', version: '2.6.0', slot: 'soundCues', applications: ['generation'] });
     // The owner's rules: a cue is earned by the prose, and a sentence is never bent to fit one.
     expect(SEN_SOUND_CUES_INSTRUCTIONS).toContain('Never add or change a sentence to fit a sound.');
     expect(SEN_SOUND_CUES_INSTRUCTIONS).not.toContain('may have none');
@@ -66,23 +64,32 @@ describe('SEN Sound Cues skill', () => {
     expect(presentSoundVocabulary([])).toBe('');
   });
 
-  it('fits the CAPA budget with every bundled skill loaded and the largest sound list a pack may declare', () => {
-    const soundVocabulary = largestVocabulary();
+  it('carries the largest sound list a pack may declare into the tagger\'s prompt', () => {
+    // The list left the writer with the rest of the tag teaching (SENSEI,
+    // 2026-10-24), so what has to hold it now is the tagger's own prompt.
+    const soundWords = largestVocabulary();
+    const prompt = buildHarnessTagPrompt({
+      operation: 'tag-chapter', storyId: 'story', chapterId: 'chapter', chapterNumber: 1, model: 'fixture', language: 'en',
+      paragraphs: ['The yard fell still.'], subjects: [], soundWords,
+    });
+    expect(prompt.systemInstruction).toContain(`SOUND WORDS: ${soundWords.map(sound => sound.word).join(', ')}`);
+    expect(prompt.systemInstruction).toContain('[[sound:');
+  });
+
+  it('leaves the CAPA budget to the writing skills alone, with room for an author\'s own', () => {
     const capa = assembleCapaPrompt({
       capturedAt: 'now',
       originalLanguage: 'ja',
-      skills: [SEN_NOVEL_AUTHOR_SKILL, SEN_FATE_SURVIVAL_SKILL, SEN_READING_MODE_SKILLS['Easy Read'], SEN_SOUND_CUES_SKILL, SEN_SPEAKERS_SKILL],
-      soundVocabulary,
+      skills: [SEN_NOVEL_AUTHOR_SKILL, SEN_FATE_SURVIVAL_SKILL, SEN_READING_MODE_SKILLS['Easy Read']],
     });
-    expect(capa.soundVocabulary).toHaveLength(SOUND_WORD_LIMITS.maxWords);
     expect(capa.estimatedTokens).toBeLessThan(CAPA_PROMPT_TOKEN_LIMIT);
     // Room is left for an author's own Pacing, Continuity and Style skills and a Translation glossary.
     expect(CAPA_PROMPT_TOKEN_LIMIT - capa.estimatedTokens).toBeGreaterThan(1_000);
   });
 
-  it('points a budget overflow at the Sound Cue Pack among its remedies', () => {
+  it('points a budget overflow at the remedies that are left', () => {
     const long = { ...SEN_NOVEL_AUTHOR_SKILL, id: 'test.long', slot: 'style' as const, instructions: 'x'.repeat(CAPA_PROMPT_TOKEN_LIMIT * 4) };
-    expect(() => assembleCapaPrompt({ capturedAt: 'now', skills: [SEN_NOVEL_AUTHOR_SKILL, long, SEN_SOUND_CUES_SKILL], soundVocabulary: largestVocabulary() }))
-      .toThrow('equip a Sound Cue Pack with fewer sound words');
+    expect(() => assembleCapaPrompt({ capturedAt: 'now', skills: [SEN_NOVEL_AUTHOR_SKILL, long] }))
+      .toThrow('Empty a skill slot, install shorter instructions, or narrow the Translation glossary.');
   });
 });

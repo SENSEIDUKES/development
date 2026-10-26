@@ -6,7 +6,8 @@ import type { HarnessRuntime } from './ids';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { asWrittenChapter } from '../../../test-utils/writtenChapter';
 import { createHarnessSenStory } from '@seihouse/sen/harness-generation';
-import { type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse } from '@seihouse/sen/harness-generation';
+import { type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessTagRequest } from '@seihouse/sen/harness-generation';
+import { readMarks } from '../../../narrative/marks';
 
 const runtime = (): HarnessRuntime => {
   let id = 0;
@@ -59,22 +60,40 @@ const entitlement = (pack: MediaPack, expiresAt?: string): MediaPackEntitlement 
   ...(expiresAt ? { expiresAt } : {}),
 });
 
+/**
+ * The writer and the tagger from the same fixture replies: the writer's prose
+ * is the reply with its tags stripped, and the tagger writes those same tags
+ * back into the finished prose, which is how a tag reaches a chapter now
+ * (SENSEI, 2026-10-24).
+ */
 const adapter = (...outputs: Array<HarnessGenerationResponse | Error>) => {
+  const tagged = new Map<string, string>();
+  for (const output of outputs) {
+    if (output instanceof Error) continue;
+    try {
+      const paragraphs = (JSON.parse(output.rawProviderResponse) as { paragraphs?: unknown }).paragraphs;
+      if (Array.isArray(paragraphs)) for (const paragraph of paragraphs) tagged.set(readMarks(String(paragraph)).text, String(paragraph));
+    } catch { /* a fixture that is not a chapter reply teaches the tagger nothing. */ }
+  }
   const generate = vi.fn(async (_request: HarnessGenerationRequest) => {
     const output = outputs.shift();
     if (!output) throw new Error('Missing provider fixture.');
     if (output instanceof Error) throw output;
     return asWrittenChapter(output);
   });
+  const tagChapter = vi.fn(async (request: HarnessTagRequest) => response({
+    paragraphs: request.paragraphs.map(paragraph => tagged.get(paragraph) ?? paragraph),
+  }));
   const value: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
     generate,
+    tagChapter,
     arcOperation: async () => response({
       plan: { arcNumber: 1, goals: [{ id: 'arc-1', text: 'Cross the pass.', chapters: 30 }] },
       destinedEnding: 'Reach the city beyond the pass.',
     }),
   };
-  return { value, generate };
+  return { value, generate, tagChapter };
 };
 
 describe('HARNESS Media Loadout runtime integration', () => {
@@ -135,10 +154,10 @@ describe('HARNESS Media Loadout runtime integration', () => {
     expect(serializedRequest).not.toContain(soundCues.id);
     expect(serializedRequest).not.toContain('fixtures.r2.dev');
     expect(request.capaPrompt.text).not.toContain('Media Pack');
-    // The story's own word reaches the writer, alone: the pack's example stays with its recordings.
-    expect(request.capaPrompt.soundVocabulary).toEqual([{ word: 'clockwork roar' }]);
-    expect(request.capaPrompt.text).not.toContain('the clockwork beast roared');
-    expect(request.capaPrompt.text).toContain('SOUND WORDS: clockwork roar\n');
+    // The story's own word reaches the tagger, alone: the pack's example stays
+    // with its recordings, and the writer is given no sound words at all.
+    expect(provider.tagChapter.mock.calls[0][0].soundWords).toEqual([{ word: 'clockwork roar' }]);
+    expect(request.capaPrompt.text).not.toMatch(/clockwork|SOUND WORDS:/);
 
     const committed = controller.snapshot().chapters[0];
     expect(committed.paragraphs[0]).toBe('Rain crossed the mountain pass as the clockwork beast roared across the stones.');

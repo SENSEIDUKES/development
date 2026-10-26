@@ -40,11 +40,13 @@ describe('planHarnessWorkspaceLoad', () => {
     // 36 gives every world card the chapter it entered in; a workspace holding no world is untouched.
     // 37 gives the world record its own home, opened from each story's active Foundation.
     // 38 drops the semantic-event memory system nothing had written to since the tags took over.
-    expect(HARNESS_GENERATION_SCHEMA_VERSION).toBe(38);
-    for (const schemaVersion of [27, 28, 29, 30, 31, 32, 34, 35, 36, 37]) {
+    // 39 takes tagging off the writer: the five tag slots leave the CAPA Schema
+    // and the Author skill reaches 1.1.0. A story equipping neither is untouched.
+    expect(HARNESS_GENERATION_SCHEMA_VERSION).toBe(39);
+    for (const schemaVersion of [27, 28, 29, 30, 31, 32, 34, 35, 36, 37, 38]) {
       const stored = { ...createEmptyHarnessWorkspaceState(), schemaVersion, stories: [{ id: 'a' }], attempts: [{ id: 'a1', capaPrompt: { soundVocabulary: [{ word: 'blade drawn', example: 'drew his sword' }] } }], chapters: [{ id: 'c1', soundCues: [{ id: 'sc1' }] }] };
       const plan = planHarnessWorkspaceLoad(stored, now);
-      expect(plan.state).toEqual({ ...stored, schemaVersion: 38, worldCards: [] });
+      expect(plan.state).toEqual({ ...stored, schemaVersion: 39, worldCards: [] });
       expect(plan.preserve).toEqual({
         key: `${PRESERVED_WORKSPACE_PREFIX}v${schemaVersion}:2026-09-24T12:00:00.000Z`,
         record: { preservedAt: now(), reason: 'migrated', schemaVersion, workspace: stored },
@@ -70,7 +72,7 @@ describe('planHarnessWorkspaceLoad', () => {
     const upgraded = { cards: [{ ...world.cards[0], key: 'world:character:ye-chen', enteredInChapter: 0 }] };
     expect(plan.state).toEqual({
       ...stored,
-      schemaVersion: 38,
+      schemaVersion: 39,
       foundations: [{ id: 'f1', input: { premise: 'A quarry laborer rises.', worldAtChapterZero: upgraded } }],
       attempts: [{ id: 'a1', storyInformation: { worldAtChapterZero: upgraded } }],
       // No story names that Foundation as its active one, so the living record opens empty.

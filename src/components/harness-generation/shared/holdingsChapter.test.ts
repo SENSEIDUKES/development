@@ -8,6 +8,7 @@ import {
   type HarnessWorkspaceState,
 } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { createReplayTagger } from '../../../test-utils/replayTagger';
 import { REST_OF_CHAPTER, writtenChapterReply } from '../../../test-utils/writtenChapter';
 import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
 import { acceptHarnessModelResponse } from './responseAcceptance';
@@ -26,13 +27,17 @@ const response = (rawProviderResponse: string): HarnessGenerationResponse => ({
 });
 const adapter = (...replies: string[]) => {
   const generate = vi.fn<HarnessGenerationModelAdapter['generate']>();
-  for (const reply of replies) generate.mockResolvedValueOnce(response(writtenChapterReply(reply)));
+  // Each reply is the chapter as the tagger hands it back; the writer's own
+  // reply is it with the tags stripped, which is all the writer is asked for.
+  const { tagChapter, teach } = createReplayTagger(response('{}').providerReceipt);
+  for (const reply of replies) generate.mockResolvedValueOnce(response(writtenChapterReply(teach(reply))));
   const value: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
     generate,
+    tagChapter,
     arcOperation: async () => response(JSON.stringify({ plan: GOAL, destinedEnding: 'Ye Chen masters the armory.' })),
   };
-  return { value, generate };
+  return { value, generate, tagChapter };
 };
 const reply = (paragraphs: string[], extra: Record<string, unknown> = {}) => JSON.stringify({
   title: 'The Armory',
@@ -47,8 +52,7 @@ const reply = (paragraphs: string[], extra: Record<string, unknown> = {}) => JSO
 const chapterOne = () => reply([
   'The armory was cold.',
   '[[gained: MC | Rusted Iron Sword]] Ye Chen lifted the old blade from the rack. [[equipped: MC | Rusted Iron Sword]] He tested its weight.',
-  '[[gained: Elder Qin | Jade Gourd]]',
-  'Elder Qin raised a jade gourd and drank.',
+  '[[gained: Elder Qin | Jade Gourd]] Elder Qin raised a jade gourd and drank.',
   '[[learning: MC | Cloud Step]] Ye Chen began to practise the footwork. [[obtainedd: MC | Ghost]]',
   'He slept. [[gained: MC | Spirit Pill | 3]]',
 ], { mainCharacterHoldings: ['Rusted Iron Sword', 'Cloud Step', 'Spirit Pill ×3', 'Silver Bell'] });
@@ -86,9 +90,10 @@ describe('HARNESS holdings through change tags', () => {
 
     const state = controller.snapshot();
     const chapter = state.chapters[0];
-    expect(JSON.stringify(state.chapters)).not.toContain('[[');
+    // Nothing a reader or the next chapter sees carries a tag. The tagger's own
+    // reply is kept on the chapter for inspection and is read by neither.
+    expect(JSON.stringify(state.chapters.map(({ tagging: _tagging, ...rest }) => rest))).not.toContain('[[');
     expect(chapter.recap?.text).toBe('Ye Chen took a sword.');
-    // A tag alone in its paragraph moved to the next one; that empty paragraph is gone.
     expect(chapter.paragraphs).toEqual([
       'The armory was cold.',
       'Ye Chen lifted the old blade from the rack. He tested its weight.',
@@ -148,9 +153,10 @@ describe('HARNESS holdings through change tags', () => {
     expect(state.attempts[1].storyInformation.diagnostics.sections.find(section => section.section === 'holdings')).toMatchObject({ protected: true, overBudget: false });
     // Chapter 2 named nothing new.
     expect(state.codexEntries).toHaveLength(6);
-    // What the writer actually receives: the Holdings skill, the section, and the closing list it must return.
+    // What the writer actually receives: no tag teaching, the Holdings section,
+    // and the closing list it must return, which is the fixer's cross-check.
     const prompt = buildHarnessGenerationPrompt(writer.generate.mock.calls[1][0]);
-    expect(prompt.systemInstruction).toContain('CAPA SKILL [Holdings] — SEN Holdings v2.2.0');
+    expect(prompt.systemInstruction).not.toContain('[[gained:');
     expect(prompt.userPrompt).toContain('HOLDINGS (what each character has now, by exact name; the main character first)\nYe Chen (main character)\n- in hand: Rusted Iron Sword\n- carries: Spirit Pill ×3\n- learning: Cloud Step\n\nElder Qin\n- carries: Jade Gourd');
     expect(prompt.responseJsonSchema.required).toContain('mainCharacterHoldings');
 

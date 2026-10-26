@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { HARNESS_HARD_RULES, HARNESS_READING_GUIDE, HARNESS_RETURN_FORMAT, HARNESS_ROLE, HARNESS_WRITING_RULES, buildHarnessChapterResponseSchema, presentHoldings, presentImmediateChapterRequest } from './prompt';
+import { SEN_LIGHT_NOVEL_AUTHOR_INSTRUCTIONS } from '../../lib/senLightNovelAuthorInstructions';
 
 /** Every HARNESS part of the system instruction, together. */
 const HARNESS_RESPONSE_CONTRACT = [HARNESS_ROLE, HARNESS_WRITING_RULES, HARNESS_READING_GUIDE, HARNESS_RETURN_FORMAT, HARNESS_HARD_RULES].join('\n\n');
 
-/** The schema every story receives: sound words travel in the CAPA Prompt, never here. */
+/** The schema every story receives: no tag ever travels here. */
 const HARNESS_CHAPTER_RESPONSE_SCHEMA = buildHarnessChapterResponseSchema();
 
 /** Shape metrics of a serialized provider schema; see the PR for before/after values. */
@@ -33,7 +34,7 @@ export const describeSchemaShape = (schema: unknown) => {
 describe('HARNESS chapter response schema shape', () => {
   it('asks for no separate list of signals: sounds, speakers and holding changes travel as tags inside the paragraphs', () => {
     expect(HARNESS_CHAPTER_RESPONSE_SCHEMA.properties).not.toHaveProperty('soundCues');
-    expect(buildHarnessChapterResponseSchema(50, { holdings: true }).properties).not.toHaveProperty('soundCues');
+    expect(buildHarnessChapterResponseSchema(50).properties).not.toHaveProperty('soundCues');
     expect(JSON.stringify(HARNESS_CHAPTER_RESPONSE_SCHEMA)).not.toMatch(/sound|mark"/i);
     // How to tag lives in the CAPA skills, never in the permanent contract.
     expect(HARNESS_RESPONSE_CONTRACT).not.toMatch(/Sound Cue|soundCues|sound tag|\[\[/);
@@ -67,18 +68,27 @@ describe('HARNESS chapter response schema shape', () => {
     expect(request(7).indexOf('WHERE THIS CHAPTER SITS')).toBeLessThan(request(7).indexOf('CHAPTER SCALE'));
   });
 
-  it('lets openings vary naturally, keeps full character portraits for the moments that earn them, and limits pet words within the chapter', () => {
-    expect(HARNESS_RESPONSE_CONTRACT).toContain('Let openings vary naturally from chapter to chapter; describing the place or its weather is one way to begin, never a habit to open every chapter with.');
-    // The setting is never forbidden as an opening, only as a habit.
-    expect(HARNESS_RESPONSE_CONTRACT).not.toMatch(/Never open it by describing/);
-    expect(HARNESS_RESPONSE_CONTRACT).toContain('when they first appear, when they return after time away, and when something about them changes: a breakthrough, a power-up, new gear, an injury, a new rank.');
-    expect(HARNESS_RESPONSE_CONTRACT).toContain('A distinctive word or phrase appears at most twice in a chapter; find a fresh way to say it.');
-    // The writer sees recaps, never earlier chapters' prose, so it is never asked to avoid words it cannot see.
-    expect(HARNESS_RESPONSE_CONTRACT).not.toContain('not carried from chapter to chapter');
+  it('leaves craft to the Author skill and keeps only what the app depends on', () => {
+    // SENSEI, 2026-10-26: "a lot of it seems like we're restricting the
+    // creativity too much, not actually simply enforcing the structure." How a
+    // chapter opens, when a character is described in full and how often a word
+    // may repeat are the Author's, which any author can replace; the HARNESS
+    // rules, which no skill can, keep only what the app itself reads back.
+    for (const craft of ['OPENINGS:', 'CHARACTER DESCRIPTIONS:', 'WORD CHOICE:']) {
+      expect(HARNESS_RESPONSE_CONTRACT, craft).not.toContain(craft);
+    }
+    for (const kept of ['POINT OF VIEW:', 'Carry relationships, decisions, unresolved consequences']) {
+      expect(HARNESS_RESPONSE_CONTRACT, kept).toContain(kept);
+    }
+    // Said once: the recap rule above it already tells the writer to continue from there.
+    expect(HARNESS_RESPONSE_CONTRACT.split('continue from the latest Previously On recap')).toHaveLength(2);
+    expect(SEN_LIGHT_NOVEL_AUTHOR_INSTRUCTIONS).toContain('Open every chapter the same way. Scenery is one way to begin, not a habit.');
+    expect(SEN_LIGHT_NOVEL_AUTHOR_INSTRUCTIONS).toContain('Repeat a character\u2019s full portrait chapter after chapter. Give the full picture when the moment earns it, a light touch between.');
+    expect(SEN_LIGHT_NOVEL_AUTHOR_INSTRUCTIONS).toContain('Lean on a pet word or image.');
   });
 
-  it('asks for the closing list of the main character\'s holdings only when the Holdings skill is loaded, as a plain list of names', () => {
-    const withHoldings = buildHarnessChapterResponseSchema(50, { holdings: true });
+  it('asks every chapter for the closing list of the main character\'s holdings, as a plain list of names', () => {
+    const withHoldings = buildHarnessChapterResponseSchema(50);
     expect(withHoldings.properties.mainCharacterHoldings).toEqual({
       type: 'array', items: { type: 'string' },
       description: 'After the chapter: every thing the main character has and every ability they know or are learning, each by its exact name.',
@@ -91,7 +101,10 @@ describe('HARNESS chapter response schema shape', () => {
     expect(shape.objectSchemas).toBe(describeSchemaShape(buildHarnessChapterResponseSchema(50)).objectSchemas);
     expect(shape.maxObjectDepth).toBeLessThanOrEqual(3);
     expect(shape.serializedBytes).toBeLessThan(2_200);
-    expect(buildHarnessChapterResponseSchema().properties).not.toHaveProperty('mainCharacterHoldings');
+    // The writer places no tags, so this list is the one thing it is asked for
+    // beside the prose: the Holdings fixer's independent cross-check against
+    // the tagger's own holding tags (SENSEI, 2026-10-24).
+    expect(buildHarnessChapterResponseSchema().properties).toHaveProperty('mainCharacterHoldings');
   });
 
   it('is compact, shallow, and free of conditional or nested application contracts', () => {
@@ -102,10 +115,10 @@ describe('HARNESS chapter response schema shape', () => {
     expect(shape.objectSchemas).toBeLessThanOrEqual(3);
     expect(shape.serializedBytes).toBeLessThan(2_000);
     expect(HARNESS_CHAPTER_RESPONSE_SCHEMA.required).toEqual([
-      'paragraphs', 'arcCompletion', 'recap', 'chapterFunction', 'nextProgression', 'nextWorldBuilding', 'nextConflict',
+      'paragraphs', 'mainCharacterHoldings', 'arcCompletion', 'recap', 'chapterFunction', 'nextProgression', 'nextWorldBuilding', 'nextConflict',
     ]);
     expect(Object.keys(HARNESS_CHAPTER_RESPONSE_SCHEMA.properties)).toEqual([
-      'title', 'plan', 'paragraphs', 'arcCompletion', 'recap', 'chapterFunction', 'nextProgression', 'nextWorldBuilding', 'nextConflict',
+      'title', 'plan', 'paragraphs', 'mainCharacterHoldings', 'arcCompletion', 'recap', 'chapterFunction', 'nextProgression', 'nextWorldBuilding', 'nextConflict',
       'storyEnded',
     ]);
     const serialized = JSON.stringify(HARNESS_CHAPTER_RESPONSE_SCHEMA);

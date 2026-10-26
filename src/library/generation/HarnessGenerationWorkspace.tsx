@@ -900,20 +900,10 @@ export function HarnessGenerationWorkspace({
     try { await controller.editChapterRecap(chapterId, text); }
     finally { setBusy(false); }
   };
-  const soundWords = useMemo<SoundWord[]>(() => {
-    if (!state || !selectedStory) return [];
-    try { return controller.describeSoundVocabulary(selectedStory.id); }
-    catch { return []; }
-  }, [controller, state, selectedStory]);
   const storySoundWords = useMemo<{ words: string[]; answered: string[] }>(() => {
     if (!state || !selectedStory) return { words: [], answered: [] };
     try { return controller.describeSoundWords(selectedStory.id); }
     catch { return { words: [], answered: [] }; }
-  }, [controller, state, selectedStory]);
-  const soundtrackWords = useMemo<SoundtrackVocabulary>(() => {
-    if (!state || !selectedStory) return { music: [], atmospheres: [] };
-    try { return controller.describeSoundtrackVocabulary(selectedStory.id); }
-    catch { return { music: [], atmospheres: [] }; }
   }, [controller, state, selectedStory]);
   const missionReminder = useMemo<HarnessMissionReminder | { error: string } | undefined>(() => {
     if (!state || !selectedStory) return undefined;
@@ -1140,8 +1130,6 @@ export function HarnessGenerationWorkspace({
                 story={selectedStory}
                 fateMode={selectedMode}
                 installedSkills={availableSkills}
-                soundWords={soundWords}
-                soundtrackWords={soundtrackWords}
                 busy={busy}
                 onChange={setSkillSlot}
                 renderSlotSkillImport={renderSlotSkillImport}

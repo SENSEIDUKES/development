@@ -4,6 +4,7 @@ import type { Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRoot } from '../../../test-utils/createReaderRoot';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { createReplayTagger } from '../../../test-utils/replayTagger';
 import { writtenChapterReply } from '../../../test-utils/writtenChapter';
 import { installAudioMediaStubs, renderWithDevAudio } from '../../../test-utils/renderWithDevAudio';
 import { HarnessGenerationController, HarnessReaderSession, type HarnessGenerationModelAdapter } from '@seihouse/sen/harness-generation';
@@ -55,9 +56,13 @@ function Host({ controller, storyId }: { controller: HarnessGenerationController
 }
 
 const start = async () => {
+  // Each chapter reply is written as the tagger hands it back; the writer's own
+  // reply is it with the tags stripped (SENSEI, 2026-10-24).
+  const { tagChapter, teach } = createReplayTagger(receipt);
   const modelAdapter: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [{ id: 'test-model', label: 'Test' }], defaultModel: 'test-model' }),
-    generate: async request => ({ rawProviderResponse: writtenChapterReply(chapterReply(request.immediateChapterRequest.chapterNumber)), providerReceipt: receipt }),
+    generate: async request => ({ rawProviderResponse: writtenChapterReply(teach(chapterReply(request.immediateChapterRequest.chapterNumber))), providerReceipt: receipt }),
+    tagChapter,
     arcOperation: vi.fn(),
     // The look step writes each look down from its passage.
     describeLooks: async request => ({ providerReceipt: receipt, rawProviderResponse: JSON.stringify({ looks: request.subjects.map(subject => (

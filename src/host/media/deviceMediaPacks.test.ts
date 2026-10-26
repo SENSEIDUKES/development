@@ -8,6 +8,7 @@ import { isPlayableMediaUrl, packageMediaUrl, readPackageMediaUrl } from '@seiho
 import { createLibraryMediaPort } from '@seihouse/library/media';
 import { HarnessGenerationController, type HarnessGenerationModelAdapter } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../test-utils/InMemoryHarnessGenerationRepository';
+import { createReplayTagger } from '../../test-utils/replayTagger';
 import { writtenChapterReply } from '../../test-utils/writtenChapter';
 import { makeSpp } from '../../../scripts/makeSpp.mjs';
 import { LIBRARY_BASE_MEDIA } from './libraryCatalog';
@@ -128,12 +129,15 @@ describe('playing installed recordings', () => {
     const media = createLibraryMediaPort({ registered: [pack], entitlements: [deviceMediaPackEntitlement(pack, '2026-10-11T00:00:00.000Z')], base: LIBRARY_BASE_MEDIA });
     const goal = { arcNumber: 1, goals: [{ id: 'arc-1', text: 'Reach the temple.', chapters: 30 }] };
     const receipt = { provider: 'fixture', model: 'fixture', generatedAt: '2026-10-11T00:00:00.000Z', usage: { source: 'unavailable' as const } };
+    // The tagger writes the sound tag; the writer is taught no tags at all.
+    const { tagChapter, teach } = createReplayTagger(receipt);
     const writer: HarnessGenerationModelAdapter = {
       getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
-      generate: async () => ({ rawProviderResponse: writtenChapterReply(JSON.stringify({
+      generate: async () => ({ rawProviderResponse: writtenChapterReply(teach(JSON.stringify({
         paragraphs: ['At dusk [[sound: temple bell | the temple bell rang | low]] over the valley.'],
         arcCompletion: { goalId: 'arc-1', completed: false, evidence: '' },
-      })), providerReceipt: receipt }),
+      }))), providerReceipt: receipt }),
+      tagChapter,
       arcOperation: async () => ({ rawProviderResponse: JSON.stringify({ plan: goal, destinedEnding: 'Reach the temple.' }), providerReceipt: receipt }),
     };
     const controller = new HarnessGenerationController({ repository: new InMemoryHarnessGenerationRepository(), media, modelAdapter: writer });

@@ -1,13 +1,13 @@
 import {
   HARNESS_TAG_RULES,
-  SEN_APPEARANCE_SKILL,
+  SEN_APPEARANCE_INSTRUCTIONS,
   SEN_FATE_SURVIVAL_SKILL,
-  SEN_HOLDINGS_SKILL,
+  SEN_HOLDINGS_INSTRUCTIONS,
   SEN_NOVEL_AUTHOR_SKILL,
   SEN_READING_MODE_SKILLS,
-  SEN_SOUND_CUES_SKILL,
-  SEN_SOUNDTRACK_SKILL,
-  SEN_SPEAKERS_SKILL,
+  SEN_SOUND_CUES_INSTRUCTIONS,
+  SEN_SOUNDTRACK_INSTRUCTIONS,
+  SEN_SPEAKERS_INSTRUCTIONS,
   assembleCapaPrompt,
   buildHarnessOfficialOutputRequirements,
   presentSoundVocabulary,
@@ -103,36 +103,6 @@ export const EVERY_CHAPTER: readonly WriterInstruction[] = [
     text: HARNESS_WRITING_RULES,
   },
   {
-    id: 'tag-rules', title: 'Tag rules', source: 'HARNESS', part: 'tagging',
-    when: 'Every chapter with a tag skill, first under How to tag. No skill can change them.',
-    text: HARNESS_TAG_RULES,
-  },
-  {
-    id: 'sound-cues', title: 'Sound Cues', source: skillSource(SEN_SOUND_CUES_SKILL), part: 'tagging',
-    when: 'Every chapter of a story with sound words. The list is the story\'s own Sound Words that a recording plays; shown here with the Library\'s preset a new story starts with.',
-    text: `${skillText(SEN_SOUND_CUES_SKILL)}\n${DEFAULT_SOUND_LIST}`,
-  },
-  {
-    id: 'soundtrack', title: 'Soundtrack', source: skillSource(SEN_SOUNDTRACK_SKILL), part: 'tagging',
-    when: 'Every chapter of a story with music or atmospheres. The lists are the story\'s music and atmosphere categories; shown here with SEN Soundscapes and SEN Atmospheres, Volume 1.',
-    text: `${skillText(SEN_SOUNDTRACK_SKILL)}\n${presentSoundtrackVocabulary(DEFAULT_SOUNDTRACK_WORDS)}`,
-  },
-  {
-    id: 'speakers', title: 'Speakers', source: skillSource(SEN_SPEAKERS_SKILL), part: 'tagging',
-    when: 'Every chapter.',
-    text: skillText(SEN_SPEAKERS_SKILL),
-  },
-  {
-    id: 'holdings', title: 'Holdings', source: skillSource(SEN_HOLDINGS_SKILL), part: 'tagging',
-    when: 'Every chapter.',
-    text: skillText(SEN_HOLDINGS_SKILL),
-  },
-  {
-    id: 'appearance', title: 'Appearance', source: skillSource(SEN_APPEARANCE_SKILL), part: 'tagging',
-    when: 'Every chapter.',
-    text: skillText(SEN_APPEARANCE_SKILL),
-  },
-  {
     id: 'reading-guide', title: 'How to read the story information', source: 'HARNESS', part: 'reading',
     when: 'Every chapter: what each section of the story information and the chapter request means. No skill can change it.',
     text: HARNESS_READING_GUIDE,
@@ -190,6 +160,36 @@ export const AFTER_A_CHAPTER: readonly WriterInstruction[] = [
     text: [HARNESS_TAGGER_ROLE, HARNESS_TAGGER_READING, HARNESS_TAGGER_RETURN].join('\n\n'),
   },
   {
+    id: 'tag-rules', title: 'Tag rules', source: 'HARNESS',
+    when: 'Every chapter the tagger reads, first among the tags: what holds for every kind. No skill can change them.',
+    text: HARNESS_TAG_RULES,
+  },
+  {
+    id: 'speakers', title: 'Speakers', source: 'HARNESS',
+    when: 'Every chapter the tagger reads.',
+    text: SEN_SPEAKERS_INSTRUCTIONS,
+  },
+  {
+    id: 'holdings', title: 'Holdings', source: 'HARNESS',
+    when: 'Every chapter the tagger reads.',
+    text: SEN_HOLDINGS_INSTRUCTIONS,
+  },
+  {
+    id: 'appearance', title: 'Appearance', source: 'HARNESS',
+    when: 'Every chapter the tagger reads.',
+    text: SEN_APPEARANCE_INSTRUCTIONS,
+  },
+  {
+    id: 'sound-cues', title: 'Sound Cues', source: 'HARNESS',
+    when: 'Every chapter of a story with sound words. The list is the story\'s own Sound Words that a recording plays; shown here with the Library\'s preset a new story starts with.',
+    text: `${SEN_SOUND_CUES_INSTRUCTIONS}\n${DEFAULT_SOUND_LIST}`,
+  },
+  {
+    id: 'soundtrack', title: 'Soundtrack', source: 'HARNESS',
+    when: 'Every chapter of a story with music or atmospheres. The lists are the story\'s music and atmosphere categories; shown here with SEN Soundscapes and SEN Atmospheres, Volume 1.',
+    text: `${SEN_SOUNDTRACK_INSTRUCTIONS}\n${presentSoundtrackVocabulary(DEFAULT_SOUNDTRACK_WORDS)}`,
+  },
+  {
     id: 'look-step', title: 'Look writer', source: 'HARNESS',
     when: 'Never after a chapter: only when something made from the story needs one entry\'s full look (a picture, a manga, a game) and the look kept on its Codex entry is missing or a newer tag changed it. One short call with the latest chapter\'s model, which reads these instructions and every passage that shows that one entry (with the author\'s notes on a character), never a whole chapter.',
     text: LOOK_DESCRIBER_INSTRUCTIONS,
@@ -205,16 +205,13 @@ export const RETIRED_WRITER_INSTRUCTIONS: ReadonlyMap<WriterInstructionId, strin
 
 /**
  * Everything a default English story's writer reads before the story, exactly
- * as the HARNESS assembles it: the CAPA Prompt with the default sound list and
- * soundtrack categories, in the HARNESS's skeleton. The page's blocks are this
- * text, in this order, under the skeleton's headings.
+ * as the HARNESS assembles it: the CAPA Prompt in the HARNESS's skeleton. The
+ * page's blocks are this text, in this order, under the skeleton's headings.
  */
 export const defaultSystemInstruction = () => composeHarnessSystemInstruction(assembleCapaPrompt({
   capturedAt: 'now',
   originalLanguage: 'en',
-  skills: [SEN_NOVEL_AUTHOR_SKILL, SEN_SOUND_CUES_SKILL, SEN_SOUNDTRACK_SKILL, SEN_SPEAKERS_SKILL, SEN_HOLDINGS_SKILL, SEN_APPEARANCE_SKILL],
-  soundVocabulary: LIBRARY_SOUND_WORDS,
-  soundtrackVocabulary: DEFAULT_SOUNDTRACK_WORDS,
+  skills: [SEN_NOVEL_AUTHOR_SKILL],
 }));
 
 export const countWords = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;

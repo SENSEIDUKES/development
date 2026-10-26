@@ -36,7 +36,7 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * every card saved before it is the world the story opened with; 37 gives the
  * world record a home of its own on the workspace, so a chapter can add a card
  * to it, seeded from each story's active Foundation. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 38 as const;
+export const HARNESS_GENERATION_SCHEMA_VERSION = 39 as const;
 
 /** The most an Author's notes may hold, in characters. */
 export const AUTHOR_NOTES_LIMIT = 2000;
@@ -278,12 +278,7 @@ export type HarnessSkillSlotId =
   | 'continuity'
   | 'style'
   | 'accessibility'
-  | 'translation'
-  | 'soundCues'
-  | 'soundtrack'
-  | 'speakers'
-  | 'holdings'
-  | 'appearance';
+  | 'translation';
 
 export type HarnessSkillApplication =
   | 'generation'
@@ -364,10 +359,6 @@ export interface HarnessSkillLoadoutSnapshot {
    * with or without a Translation skill. Absent is read as English.
    */
   originalLanguage?: SenLanguageCode;
-  /** The story's sound words from the attempt's frozen Media Loadout; they fill the Sound Cues slot. */
-  soundVocabulary?: SoundWord[];
-  /** The music and atmosphere categories of the attempt's frozen Media Loadout; they fill the Soundtrack slot. */
-  soundtrackVocabulary?: SoundtrackVocabulary;
 }
 
 /** One equipped CAPA Skill recorded in the CAPA Prompt. Its instructions live only in `CapaPrompt.text`. */
@@ -387,32 +378,19 @@ export interface CapaPromptSkill {
 /**
  * CAPA Prompt: every active generation skill, including Author, assembled once
  * in CAPA Schema order. It is the model's complete authoring instruction and
- * never carries story information.
+ * never carries story information. It is all writing: the tag teaching belongs
+ * to the tagger, not the writer (SENSEI, 2026-10-24).
  */
 export interface CapaPrompt {
   capturedAt: string;
   skills: CapaPromptSkill[];
   text: string;
-  /**
-   * Where the tag half of `text` begins: the HARNESS tag rules and the skills
-   * that teach a tag, after the writing skills. Absent when no tag skill is
-   * loaded, and from prompts frozen before the halves were marked.
-   */
-  taggingStart?: number;
   estimatedTokens: number;
   /**
    * The exact glossary entries selected for this attempt. Frozen so a retry or
    * replay reuses the same reference instead of reselecting against new state.
    */
   translationGlossary?: HarnessSelectedTranslationGlossary;
-  /**
-   * The sound words the Sound Cues section gave the writer, frozen with it. The
-   * response contract lets the writer name only these, and acceptance places
-   * cues only for them, on every retry and replay.
-   */
-  soundVocabulary?: SoundWord[];
-  /** The music and atmosphere categories the Soundtrack section gave the writer, frozen with it. */
-  soundtrackVocabulary?: SoundtrackVocabulary;
 }
 
 /**

@@ -39,12 +39,6 @@ describe('Writer Instructions', () => {
     expect(defaultSystemInstruction()).toBe([
       HARNESS_PROMPT_HEADINGS.role, block('role').text,
       HARNESS_PROMPT_HEADINGS.writing, skill('author', 'Author'), block('writing-rules').text,
-      HARNESS_PROMPT_HEADINGS.tagging, block('tag-rules').text,
-      skill('sound-cues', 'Sound Cues'),
-      skill('soundtrack', 'Soundtrack'),
-      skill('speakers', 'Speakers'),
-      skill('holdings', 'Holdings'),
-      skill('appearance', 'Appearance'),
       HARNESS_PROMPT_HEADINGS.reading, block('reading-guide').text,
       HARNESS_PROMPT_HEADINGS.returning, block('return-format').text,
       HARNESS_PROMPT_HEADINGS.hardRules, block('hard-rules').text,
@@ -62,9 +56,13 @@ describe('Writer Instructions', () => {
     }
     for (const id of ['tag-rules', 'sound-cues', 'soundtrack', 'speakers', 'holdings', 'appearance']) expect(markup).toMatch(new RegExp(`<details[^>]*open=""[^>]*data-instruction="${id}"`));
     expect(markup).not.toMatch(/<details[^>]*open=""[^>]*data-instruction="reading-guide"/);
-    for (const heading of ['# ROLE AND MISSION', '# HOW TO WRITE', '# HOW TO TAG', '# HOW TO READ THE STORY INFORMATION', '# HOW TO RETURN THE CHAPTER', '# HARD RULES']) expect(markup).toContain(heading);
+    for (const heading of ['# ROLE AND MISSION', '# HOW TO WRITE', '# HOW TO READ THE STORY INFORMATION', '# HOW TO RETURN THE CHAPTER', '# HARD RULES']) expect(markup).toContain(heading);
+    // The tag teaching is on the page as the tagger's, never as a part of the
+    // writer's prompt. The history still names the retired heading, as it must.
+    expect(markup).not.toContain('data-part="tagging"');
+    expect(markup).not.toContain('writer-instructions__heading"># HOW TO TAG');
     expect(markup).toContain('One speaker per paragraph. Speech goes in quotation marks.');
-    expect(markup.replace(/<[^>]+>/g, '')).toMatch(/SEN Speakers v2\.2\.0 · \d+ words · changed 2026-10-17/);
+    expect(markup.replace(/<[^>]+>/g, '')).toMatch(/SEN Novel Author v1\.1\.0 · \d+ words · changed 2026-10-26/);
     expect(markup).toMatch(/<time datetime="2026-10-04">2026-10-04<\/time>/i);
   });
 });

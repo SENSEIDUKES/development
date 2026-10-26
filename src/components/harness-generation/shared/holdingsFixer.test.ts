@@ -12,6 +12,7 @@ import {
 import type { SoundCueAttachment } from '@seihouse/sen/audio';
 import type { WorldRecord } from '@seihouse/sen/contracts';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { createReplayTagger } from '../../../test-utils/replayTagger';
 import { REST_OF_CHAPTER, writtenChapterReply } from '../../../test-utils/writtenChapter';
 import { declaredCharacters } from './holdings';
 
@@ -36,12 +37,16 @@ const runtime = { now: () => '2026-10-06T12:00:00.000Z', createId: (prefix: stri
 /** A story whose chapters are written from these replies, with no fixer: the problems stay for the test. */
 const written = async (...replies: string[]) => {
   const generate = vi.fn<HarnessGenerationModelAdapter['generate']>();
-  for (const value of replies) generate.mockResolvedValueOnce({ rawProviderResponse: writtenChapterReply(value), providerReceipt: receipt });
+  // Each reply is the chapter as the tagger hands it back; the writer's own
+  // reply is it with the tags stripped (SENSEI, 2026-10-24).
+  const { tagChapter, teach } = createReplayTagger(receipt);
+  for (const value of replies) generate.mockResolvedValueOnce({ rawProviderResponse: writtenChapterReply(teach(value)), providerReceipt: receipt });
   const controller = new HarnessGenerationController({
     repository: new InMemoryHarnessGenerationRepository(), runtime,
     modelAdapter: {
       getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
       generate,
+      tagChapter,
       arcOperation: async () => ({ rawProviderResponse: '{}', providerReceipt: receipt }),
     },
   });

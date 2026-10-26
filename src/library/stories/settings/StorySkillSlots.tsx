@@ -1,9 +1,8 @@
 import type { ReactNode } from 'react';
 import { FileText, Puzzle } from 'lucide-react';
-import type { SoundWord, SoundtrackVocabulary } from '@seihouse/sen/audio';
 import { getSenLanguageLabel, normalizeChapterWritingStyle } from '@seihouse/sen/contracts';
 import {
-  ALWAYS_LOADED_SKILLS, CAPA_SCHEMA, SEN_FATE_SURVIVAL_SKILL, SEN_READING_MODE_SKILLS, SEN_SOUND_CUES_SKILL, SEN_SOUNDTRACK_SKILL,
+  CAPA_SCHEMA, SEN_FATE_SURVIVAL_SKILL, SEN_READING_MODE_SKILLS,
   buildHarnessOfficialOutputRequirements, harnessSkillKey, resolveStoryLanguagePackage,
   type CapaSlotManager, type HarnessSkillManifest, type HarnessSkillReference, type HarnessSkillSlotId, type HarnessStoryMode,
 } from '@seihouse/sen/harness-generation';
@@ -21,40 +20,8 @@ const managedSlotInspection = (
   story: StorySettingsValues,
   fateMode: HarnessStoryMode,
   installedSkills: readonly HarnessSkillManifest[],
-  soundWords: readonly SoundWord[],
-  soundtrackWords: SoundtrackVocabulary,
 ): { status: 'Loaded' | 'Not used' | 'No package' | 'Blocked'; summary: string; skill?: HarnessSkillManifest } => {
   switch (slot.managedBy) {
-    case 'always': {
-      const skill = ALWAYS_LOADED_SKILLS[slot.id];
-      const loaded = skill && installedSkills.some(installed => installed.id === skill.id && installed.version === skill.version);
-      if (slot.id === 'holdings') {
-        return loaded && skill
-          ? { status: 'Loaded', skill, summary: `${skill.name} v${skill.version} loads on every chapter: the writer reads what every character has, uses only that, and tags each change.` }
-          : { status: 'No package', summary: 'This host has no Holdings skill, so chapters are written without holding tags and nothing new is recorded.' };
-      }
-      if (slot.id === 'appearance') {
-        return loaded && skill
-          ? { status: 'Loaded', skill, summary: `${skill.name} v${skill.version} loads on every chapter: the writer reads who and what is already on the page, keeps each look, and tags each first appearance and each change to a look.` }
-          : { status: 'No package', summary: 'This host has no Appearance skill, so chapters are written without appearance tags and no look is recorded.' };
-      }
-      return loaded && skill
-        ? { status: 'Loaded', skill, summary: `${skill.name} v${skill.version} loads on every chapter, so the Reader knows who speaks each line.` }
-        : { status: 'No package', summary: 'This host has no Speakers skill, so chapters are written without speaker tags and Read Aloud takes every speaker from the narration.' };
-    }
-    case 'media-loadout':
-      if (slot.id === 'soundtrack') {
-        const loaded = installedSkills.some(installed => installed.id === SEN_SOUNDTRACK_SKILL.id && installed.version === SEN_SOUNDTRACK_SKILL.version);
-        if (!soundtrackWords.music.length && !soundtrackWords.atmospheres.length) {
-          return { status: 'Not used', summary: 'This story has no music or atmospheres, so this slot stays empty. It follows the story\'s Media Loadout and is never equipped by hand.' };
-        }
-        return loaded
-          ? { status: 'Loaded', skill: SEN_SOUNDTRACK_SKILL, summary: `${SEN_SOUNDTRACK_SKILL.name} v${SEN_SOUNDTRACK_SKILL.version} loads with this story's ${soundtrackWords.music.length} music and ${soundtrackWords.atmospheres.length} atmosphere categories: the writer chooses one of each at every chapter's start, and the HARNESS chooses the recordings.` }
-          : { status: 'No package', summary: 'This host has no Soundtrack skill, so chapters choose no music or atmosphere and the Reader goes on with what plays.' };
-      }
-      return soundWords.length
-        ? { status: 'Loaded', skill: SEN_SOUND_CUES_SKILL, summary: `${SEN_SOUND_CUES_SKILL.name} v${SEN_SOUND_CUES_SKILL.version} loads with this story's ${soundWords.length} sound words from its Media Loadout.` }
-        : { status: 'Not used', summary: 'This story has no sound words, so this slot stays empty. It follows the story\'s Media Loadout and is never equipped by hand.' };
     case 'fate-mode':
       return fateMode === 'survival'
         ? { status: 'Loaded', skill: SEN_FATE_SURVIVAL_SKILL, summary: `${SEN_FATE_SURVIVAL_SKILL.name} v${SEN_FATE_SURVIVAL_SKILL.version} loads on every chapter of this Fate Survival story.` }
@@ -86,7 +53,7 @@ const managedSlotInspection = (
  * The story's CAPA skill slots, as Story Settings shows them: the hand-equipped
  * slots (Author, Pacing, Continuity, Style) to choose from the host's installed
  * skills, and the managed slots that follow the story's own choices (Fate mode,
- * Reading Mode, Story Language, Media Loadout) or load on every chapter. With
+ * Reading Mode, Story Language). With
  * `inspect` (the HARNESS developer page) it also shows each skill's
  * instructions, the Official Requirements and the slot uploads.
  */
@@ -94,8 +61,6 @@ export function StorySkillSlots({
   story,
   fateMode,
   installedSkills,
-  soundWords,
-  soundtrackWords,
   busy,
   onChange,
   renderSlotSkillImport,
@@ -108,10 +73,6 @@ export function StorySkillSlots({
   /** The story's Fate mode, which fills the mode-managed Fate slot. */
   fateMode: HarnessStoryMode;
   installedSkills: readonly HarnessSkillManifest[];
-  /** The story's sound words, which fill the Media Loadout-managed Sound Cues slot. */
-  soundWords: readonly SoundWord[];
-  /** The story's music moods and atmospheres, which fill the Media Loadout-managed Soundtrack slot. */
-  soundtrackWords: SoundtrackVocabulary;
   busy: boolean;
   onChange: (slot: HarnessSkillSlotId, reference?: HarnessSkillReference) => void;
   renderSlotSkillImport?: (slot: HarnessSkillSlotId, busy: boolean, equip: (skill: HarnessSkillManifest) => Promise<void>) => ReactNode;
@@ -165,7 +126,7 @@ export function StorySkillSlots({
       <div className={`mt-5 grid gap-3 ${stacked ? '' : 'sm:grid-cols-2 xl:grid-cols-3'}`}>
         {CAPA_SCHEMA.map(slot => {
           if (slot.managedBy) {
-            const managed = managedSlotInspection(slot as ManagedCapaSlot, story, fateMode, installedSkills, soundWords, soundtrackWords);
+            const managed = managedSlotInspection(slot as ManagedCapaSlot, story, fateMode, installedSkills);
             const loaded = managed.status === 'Loaded';
             const blocked = managed.status === 'Blocked';
             return (

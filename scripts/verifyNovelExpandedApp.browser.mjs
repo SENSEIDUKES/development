@@ -74,21 +74,29 @@ const SILENCE = (() => {
   wav.writeUInt32LE(8000, 28); wav.writeUInt16LE(1, 32); wav.writeUInt16LE(8, 34); wav.write('data', 36); wav.writeUInt32LE(samples, 40);
   return wav;
 })();
+/**
+ * The chapter as the tagger hands it back: the prose the writer wrote with the
+ * app's tags written into it. The writer itself is taught no tags (SENSEI,
+ * 2026-10-24), and the stand-in below answers the writer's call with these same
+ * paragraphs, whose tags acceptance strips out: what reaches the Reader, the
+ * Codex and the Holdings fixer is the tagger's work, from the one call below.
+ */
 const chapter = {
   title: 'Low Tide',
   paragraphs: [
-    // The writer chooses the chapter's music and atmosphere once, at its start; the writer puts a
-    // sound tag on the words where a sound happens, naming one of the Library's sound words.
+    // The chapter's music and atmosphere, once, at its start; a sound tag on the
+    // words where a sound happens, naming one of the Library's sound words.
     '[[soundtrack: fighting | ancient battlefield]] The tide pulled back from the drowned gate, and [[sound: beast roar | the beast roared | high]] across the causeway.',
-    // The writer tags who and what first steps onto the page, and what changes in what a character has, where it happens.
+    // Who and what first steps onto the page, and what changes in what a character has, where it happens.
     '[[appears: MC | character]] [[gained: MC | Bell Key]] Mara counted the bells that no longer rang. [[appears: Bell Key | thing]] [[equipped: MC | Bell Key]] She turned the old key in her palm.',
-    // The writer tags who speaks: the main character with their own tag, then someone else by name.
+    // Who speaks: the main character with their own tag, then someone else by name.
     '[[@MC]] “Ring the bells,” Ye Chen said.',
     '[[appears: Junior Sister Han | character]] [[@Junior Sister Han]] “They are drowned,” she whispered.',
     // The rest of the chapter: a reply under a quarter of the 1,800-word minimum is a failed write and is never saved.
     Array.from({ length: 35 }, () => 'The night went on, and the town kept its quiet watch until dawn.').join(' '),
   ],
-  // The writer's closing list: one name no tag recorded, so the Codex has one record check.
+  // The writer's own closing list, the one thing beside the prose it is still
+  // asked for: one name no tag recorded, so the Codex has one record check.
   mainCharacterHoldings: ['Bell Key', 'Silver Bell'],
   arcCompletion: { goalId: 'none', completed: false, evidence: '' },
   recap: 'Mara returns to the drowned city.',
@@ -288,9 +296,9 @@ async function walk(browser, viewport, sample) {
       return;
     }
     // The tagger's one call per chapter, after the chapter is written: it reads the finished prose
-    // and writes the app's tags into it. This stand-in tags it the way a good tagger would, with the
-    // same tags the writer's reply carried and every word where it was, so the Reader, the Codex and
-    // the Holdings fixer downstream are reading the tagger's work.
+    // and writes the app's tags into it. This stand-in tags it the way a good tagger would, putting
+    // every tag back on the words it belongs to, so the Reader, the Codex and the Holdings fixer
+    // downstream are reading the tagger's work and nothing else.
     if (body.operation === 'tag-chapter') {
       counts.tags.push({ chapterNumber: body.chapterNumber, subjects: body.subjects, token: request.headers().authorization === `Bearer ${TOKEN}` });
       const written = body.paragraphs.some(paragraph => paragraph.startsWith('Mara found the bell key')) ? rewritten : chapter;

@@ -4,9 +4,9 @@ import { createHarnessStory } from './foundation';
 import { defaultHarnessRuntime } from './ids';
 import { createEmptyHarnessWorkspaceState } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
-import { CAPA_SCHEMA, SEN_READING_MODE_SKILLS, assembleCapaPrompt, capaPromptParts, buildHarnessOfficialOutputRequirements, createHarnessSkillCatalog, freezeHarnessSkillLoadout, validateHarnessSkillManifest } from '@seihouse/sen/harness-generation';
+import { CAPA_SCHEMA, SEN_READING_MODE_SKILLS, assembleCapaPrompt, buildHarnessOfficialOutputRequirements, createHarnessSkillCatalog, freezeHarnessSkillLoadout, validateHarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import { type HarnessSkillManifest, type HarnessSkillSlotId } from '@seihouse/sen/harness-generation';
-import { SEN_FATE_SURVIVAL_SKILL, SEN_HOLDINGS_SKILL, SEN_NOVEL_AUTHOR_SKILL, SEN_SOUND_CUES_SKILL, SEN_SOUNDTRACK_SKILL, SEN_SPEAKERS_SKILL, includeBundledHarnessSkills } from '@seihouse/sen/harness-generation';
+import { SEN_FATE_SURVIVAL_SKILL, SEN_NOVEL_AUTHOR_SKILL, includeBundledHarnessSkills } from '@seihouse/sen/harness-generation';
 import { SEN_LIGHT_NOVEL_AUTHOR_INSTRUCTIONS } from '../../../lib/senLightNovelAuthorInstructions';
 
 const pacingSkill = (): HarnessSkillManifest => ({
@@ -89,7 +89,7 @@ describe('Harness installed skills', () => {
     expect(snapshot).toMatchObject({
       capturedAt: '2026-09-12T12:00:00.000Z',
       skills: [
-        { id: 'seihouse.sen-novel-author', version: '1.0.0', slot: 'author' },
+        { id: 'seihouse.sen-novel-author', version: SEN_NOVEL_AUTHOR_SKILL.version, slot: 'author' },
         { id: 'seihouse.long-range-pacing', version: '1.0.0', slot: 'pacing', instructions: 'Earn major events across multiple chapters.' },
       ],
     });
@@ -116,34 +116,27 @@ describe('Harness installed skills', () => {
         generationSkill('accessibility', 'Use readable paragraph boundaries.'),
         generationSkill('style', 'Use short sentences.'),
         generationSkill('continuity', 'Preserve established canon.'),
-        SEN_HOLDINGS_SKILL,
-        SEN_SPEAKERS_SKILL,
-        SEN_SOUNDTRACK_SKILL,
-        SEN_SOUND_CUES_SKILL,
         SEN_FATE_SURVIVAL_SKILL,
         pacingSkill(),
         SEN_NOVEL_AUTHOR_SKILL,
       ],
-      soundVocabulary: [{ word: 'blade drawn', example: 'drew his sword' }, { word: 'chime', example: 'a soft chime', meaning: 'a small bright chime' }],
-      soundtrackVocabulary: { music: ['Ambient', 'War'], atmospheres: ['Rain', 'Places'] },
     });
     expect(CAPA_SCHEMA.map(slot => slot.id)).toEqual([
-      'author', 'pacing', 'fate', 'continuity', 'style', 'accessibility', 'translation', 'soundCues', 'soundtrack', 'speakers', 'holdings', 'appearance',
+      'author', 'pacing', 'fate', 'continuity', 'style', 'accessibility', 'translation',
     ]);
-    // Fate, Accessibility, Translation, Sound Cues and Soundtrack follow story state, Speakers, Holdings and Appearance load on every chapter; the rest are equipped by hand.
+    // Fate, Accessibility and Translation follow story state; the rest are equipped by hand.
     expect(CAPA_SCHEMA.filter(slot => slot.managedBy).map(slot => [slot.id, slot.managedBy])).toEqual([
-      ['fate', 'fate-mode'], ['accessibility', 'reading-mode'], ['translation', 'story-language'], ['soundCues', 'media-loadout'], ['soundtrack', 'media-loadout'], ['speakers', 'always'], ['holdings', 'always'], ['appearance', 'always'],
+      ['fate', 'fate-mode'], ['accessibility', 'reading-mode'], ['translation', 'story-language'],
     ]);
-    // Installable is separate from equippable: Translation packages install; SEN fills Fate, Accessibility, Sound Cues, Soundtrack, Speakers, Holdings and Appearance.
+    // Installable is separate from equippable: Translation packages install; SEN fills Fate and Accessibility.
     expect(CAPA_SCHEMA.filter(slot => slot.installable).map(slot => slot.id)).toEqual([
       'author', 'pacing', 'continuity', 'style', 'translation',
     ]);
     expect(capa.skills.map(skill => skill.slot)).toEqual([
-      'author', 'pacing', 'fate', 'continuity', 'style', 'accessibility', 'translation', 'soundCues', 'soundtrack', 'speakers', 'holdings',
+      'author', 'pacing', 'fate', 'continuity', 'style', 'accessibility', 'translation',
     ]);
-    expect(capa.skills.map(skill => skill.authoring)).toEqual([true, true, true, true, true, true, true, true, true, true, true]);
-    const headers = capa.text.match(/^CAPA SKILL \[[^\]]+\]/gm);
-    expect(headers).toEqual([
+    expect(capa.skills.map(skill => skill.authoring)).toEqual([true, true, true, true, true, true, true]);
+    expect(capa.text.match(/^CAPA SKILL \[[^\]]+\]/gm)).toEqual([
       'CAPA SKILL [Author]',
       'CAPA SKILL [Pacing]',
       'CAPA SKILL [Fate]',
@@ -151,39 +144,15 @@ describe('Harness installed skills', () => {
       'CAPA SKILL [Style]',
       'CAPA SKILL [Accessibility]',
       'CAPA SKILL [Translation]',
-      'CAPA SKILL [Sound Cues]',
-      'CAPA SKILL [Soundtrack]',
-      'CAPA SKILL [Speakers]',
-      'CAPA SKILL [Holdings]',
     ]);
-    // The story's music and atmosphere categories close the Soundtrack section, then the tag words.
-    const soundtrackSection = capa.text.slice(capa.text.indexOf('CAPA SKILL [Soundtrack]'), capa.text.indexOf('CAPA SKILL [Speakers]'));
-    expect(soundtrackSection.trim().endsWith('MUSIC: Ambient, War\nATMOSPHERE: Rain, Places\nTone: bright, neutral, dark. Tension: calm, suspenseful, urgent. Energy: low, medium, high.')).toBe(true);
-    expect(capa.soundtrackVocabulary).toEqual({ music: ['Ambient', 'War'], atmospheres: ['Rain', 'Places'] });
-    // The story's sound words close the Sound Cues section, after one example made from the first, and nothing else carries them.
-    const soundSection = capa.text.slice(capa.text.indexOf('CAPA SKILL [Sound Cues]'), capa.text.indexOf('CAPA SKILL [Soundtrack]'));
-    expect(soundSection.trim().endsWith('Example: Far off, [[sound: blade drawn | the words of your own sentence | high]] and the yard fell still.\nSOUND WORDS: blade drawn, chime')).toBe(true);
-    // No phrase or meaning reaches the writer to copy: the example's words are a placeholder.
-    expect(soundSection).not.toContain('EXAMPLE: [[sound');
-    expect(capa.text).not.toMatch(/drew his sword|a soft chime|a small bright chime/);
-    expect(capa.soundVocabulary).toEqual([{ word: 'blade drawn', example: 'drew his sword' }, { word: 'chime', example: 'a soft chime', meaning: 'a small bright chime' }]);
     expect(capa.text.split(SEN_LIGHT_NOVEL_AUTHOR_INSTRUCTIONS.trim())).toHaveLength(2);
     expect(capa.text).toContain('Use readable paragraph boundaries.');
     expect(capa.text).toContain('Keep reader-facing text in clear English.');
     expect(capa.text).not.toContain('secret asset catalog');
-    // Two halves: the writing skills with the official requirements, then the tag rules and the tag skills.
-    const { writing, tagging } = capaPromptParts(capa);
-    expect(writing.endsWith(buildHarnessOfficialOutputRequirements({ accessibility: true, translation: true })!)).toBe(true);
+    // The official requirements close the prompt, after every writing skill.
+    expect(capa.text.endsWith(buildHarnessOfficialOutputRequirements({ accessibility: true, translation: true })!)).toBe(true);
     expect(capa.text.split('HARNESS OFFICIAL OUTPUT REQUIREMENTS')).toHaveLength(2);
-    expect(tagging.startsWith('HARNESS TAG RULES')).toBe(true);
-    expect(writing).not.toMatch(/CAPA SKILL \[(Sound Cues|Soundtrack|Speakers|Holdings|Appearance)\]/);
-    expect(tagging).not.toMatch(/CAPA SKILL \[(Author|Pacing|Fate|Continuity|Style|Accessibility|Translation)\]/);
-    expect(capa.text.indexOf('CAPA SKILL [Translation]')).toBeLessThan(capa.text.indexOf('CAPA SKILL [Sound Cues]'));
-    expect(capa.text.indexOf('CAPA SKILL [Sound Cues]')).toBeLessThan(capa.text.indexOf('CAPA SKILL [Soundtrack]'));
-    expect(capa.text.indexOf('CAPA SKILL [Soundtrack]')).toBeLessThan(capa.text.indexOf('CAPA SKILL [Speakers]'));
-    expect(capa.text.indexOf('CAPA SKILL [Speakers]')).toBeLessThan(capa.text.indexOf('CAPA SKILL [Holdings]'));
-    expect(capa.text.indexOf('HARNESS OFFICIAL OUTPUT REQUIREMENTS')).toBeLessThan(capa.text.indexOf('HARNESS TAG RULES'));
-    expect(capa.skills).toHaveLength(11);
+    expect(capa.skills).toHaveLength(7);
     expect(capa.estimatedTokens).toBeGreaterThan(0);
   });
 
@@ -192,14 +161,13 @@ describe('Harness installed skills', () => {
     const { story } = createHarnessStory(createEmptyHarnessWorkspaceState(), { premise: 'A patient rebellion begins.' }, 'en', defaultHarnessRuntime);
     story.skillLoadout = { author: { id: SEN_NOVEL_AUTHOR_SKILL.id, version: SEN_NOVEL_AUTHOR_SKILL.version } };
     const slots = (mode?: 'regular' | 'survival') => freezeHarnessSkillLoadout(story, catalog, 'now', mode).skills.map(skill => skill.id);
-    // Speakers, Holdings and Appearance load on every chapter, in both modes.
-    expect(slots()).toEqual(['seihouse.sen-novel-author', 'seihouse.sen-speakers', 'seihouse.sen-holdings', 'seihouse.sen-appearance']);
-    expect(slots('regular')).toEqual(['seihouse.sen-novel-author', 'seihouse.sen-speakers', 'seihouse.sen-holdings', 'seihouse.sen-appearance']);
-    expect(slots('survival')).toEqual(['seihouse.sen-novel-author', 'seihouse.sen-fate-survival', 'seihouse.sen-speakers', 'seihouse.sen-holdings', 'seihouse.sen-appearance']);
+    expect(slots()).toEqual(['seihouse.sen-novel-author']);
+    expect(slots('regular')).toEqual(['seihouse.sen-novel-author']);
+    expect(slots('survival')).toEqual(['seihouse.sen-novel-author', 'seihouse.sen-fate-survival']);
     // The slot follows the mode, whatever the story's loadout says.
     story.skillLoadout = { ...story.skillLoadout, fate: { id: 'someone.else', version: '1.0.0' } };
-    expect(slots('regular')).toEqual(['seihouse.sen-novel-author', 'seihouse.sen-speakers', 'seihouse.sen-holdings', 'seihouse.sen-appearance']);
-    expect(slots('survival')).toEqual(['seihouse.sen-novel-author', 'seihouse.sen-fate-survival', 'seihouse.sen-speakers', 'seihouse.sen-holdings', 'seihouse.sen-appearance']);
+    expect(slots('regular')).toEqual(['seihouse.sen-novel-author']);
+    expect(slots('survival')).toEqual(['seihouse.sen-novel-author', 'seihouse.sen-fate-survival']);
     const capa = assembleCapaPrompt(freezeHarnessSkillLoadout(story, catalog, 'now', 'survival'));
     expect(capa.text).toContain(`CAPA SKILL [Fate] — SEN Fate Survival v${SEN_FATE_SURVIVAL_SKILL.version}`);
     expect(capa.text).toContain('bring the story to a believable, final ending in this chapter');

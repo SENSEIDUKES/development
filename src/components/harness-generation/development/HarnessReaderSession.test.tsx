@@ -4,6 +4,7 @@ import type { Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createLibraryMediaPort } from '@seihouse/library/media';
 import { LIBRARY_BASE_MEDIA } from '../../../host/media/libraryCatalog';
+import { createReplayTagger } from '../../../test-utils/replayTagger';
 import { createRoot } from '../../../test-utils/createReaderRoot';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { STOPPED_WRITE_REPLY, writtenChapter } from '../../../test-utils/writtenChapter';
@@ -39,13 +40,19 @@ const receipt = { provider: 'gemini' as const, model: 'test-model', generatedAt:
 /** A model that answers with the next scripted reply; `hold()` keeps the next answer until released. */
 const scriptedProvider = (replies = [...CHAPTERS]) => {
   let gate: Promise<void> = Promise.resolve();
+  // Each scripted reply is the chapter as the tagger hands it back; the writer's
+  // own reply is it with the tags stripped, which is all the writer is asked
+  // for now (SENSEI, 2026-10-24), and the tagger puts them back where they were.
+  const { tagChapter, teach } = createReplayTagger(receipt);
+  for (const reply of replies) teach(reply);
   const generate = vi.fn(async () => {
     await gate;
-    return { rawProviderResponse: replies.shift()!, providerReceipt: receipt };
+    return { rawProviderResponse: teach(replies.shift()!), providerReceipt: receipt };
   });
   const adapter: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [{ id: 'test-model', label: 'Test' }], defaultModel: 'test-model' }),
     generate,
+    tagChapter,
     arcOperation: async () => ({ rawProviderResponse: JSON.stringify({ plan: GOAL, destinedEnding: 'Mara reclaims her name.' }), providerReceipt: receipt }),
   };
   const hold = () => {

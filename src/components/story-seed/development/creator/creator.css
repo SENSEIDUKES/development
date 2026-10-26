@@ -1,0 +1,351 @@
+/* Story Seed's character-creator frame: a step strip pinned to the top of the
+   scrolling page, the live story card, and Back / Next pinned above the
+   workspace bar. The shell's <main> is the scroller, so both pins are sticky
+   inside it rather than fixed to the screen. */
+
+.seed-creator {
+  position: relative;
+  margin-inline: auto;
+  max-width: 80rem;
+  padding-inline: 16px;
+}
+@media (min-width: 640px) {
+  .seed-creator { padding-inline: 24px; }
+}
+
+/* ── Step strip ───────────────────────────────────────────────────────── */
+.seed-creator-strip {
+  position: sticky;
+  top: 0;
+  z-index: 25;
+  margin-inline: -16px;
+  padding: 10px 16px 8px;
+  /* Opaque: the page scrolls beneath it and must never show through. */
+  background: #05070e;
+  border-bottom: 1px solid rgba(205, 178, 113, 0.14);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+@media (min-width: 640px) {
+  .seed-creator-strip { margin-inline: -24px; padding-inline: 24px; }
+}
+
+.seed-creator-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0 auto;
+  padding: 0;
+  max-width: 40rem;
+  list-style: none;
+}
+.seed-creator-step-item { position: relative; min-width: 0; }
+/* The thread between markers, drawn behind them from each step to the next. */
+.seed-creator-step-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 15px;
+  left: calc(50% + 17px);
+  right: calc(-50% + 17px);
+  height: 1px;
+  background: linear-gradient(90deg, rgba(205, 178, 113, 0.4), rgba(205, 178, 113, 0.14));
+  pointer-events: none;
+}
+
+.seed-creator-step {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 0 2px;
+  border-radius: 10px;
+  color: var(--color-neutral-400);
+  transition: color 160ms ease;
+}
+.seed-creator-step:hover { color: var(--color-neutral-200); }
+.seed-creator-step:focus-visible { outline: 2px solid rgba(205, 178, 113, 0.7); outline-offset: 2px; }
+
+.seed-creator-step-marker {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid rgba(172, 166, 214, 0.28);
+  border-radius: 999px;
+  background: rgba(11, 14, 30, 0.9);
+  font-family: var(--font-sc);
+  font-size: 12px;
+  font-weight: 700;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+.seed-creator-step[data-status='filled'] .seed-creator-step-marker {
+  border-color: rgba(4, 172, 255, 0.5);
+  color: var(--color-portal);
+}
+.seed-creator-step[data-status='missing'] .seed-creator-step-marker {
+  border-color: rgba(255, 51, 51, 0.55);
+}
+.seed-creator-step[aria-current='step'] { color: #f3ede0; }
+.seed-creator-step[aria-current='step'] .seed-creator-step-marker {
+  border-color: rgba(205, 178, 113, 0.75);
+  background: radial-gradient(circle at 35% 30%, rgba(205, 178, 113, 0.3), rgba(11, 14, 30, 0.95) 70%);
+  color: #f3ede0;
+  box-shadow: 0 0 16px rgba(205, 178, 113, 0.28);
+}
+.seed-creator-step-label {
+  max-width: 100%;
+  font-family: var(--font-sc);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* World's eight kinds: one scrolling row of tabs under the strip. */
+.seed-creator-kinds {
+  display: flex;
+  gap: 6px;
+  margin: 10px -16px 0;
+  padding: 0 16px 2px;
+  overflow-x: auto;
+  scroll-padding-inline: 16px;
+  scrollbar-width: none;
+}
+.seed-creator-kinds::-webkit-scrollbar { display: none; }
+@media (min-width: 640px) {
+  .seed-creator-kinds { margin-inline: 0; padding-inline: 0; flex-wrap: wrap; justify-content: center; overflow: visible; }
+}
+.seed-creator-kind {
+  display: inline-flex;
+  flex: 0 0 auto;
+  min-height: 40px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  border: 1px solid rgba(172, 166, 214, 0.2);
+  border-radius: 999px;
+  background: rgba(11, 14, 30, 0.6);
+  color: var(--color-neutral-400);
+  font-family: var(--font-sc);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.seed-creator-kind:hover { color: var(--color-neutral-200); }
+.seed-creator-kind:focus-visible { outline: 2px solid rgba(205, 178, 113, 0.7); outline-offset: 2px; }
+.seed-creator-kind[aria-current='page'] {
+  border-color: rgba(205, 178, 113, 0.6);
+  background: rgba(205, 178, 113, 0.1);
+  color: #f3ede0;
+}
+.seed-creator-kind-dot { width: 6px; height: 6px; border-radius: 999px; background: rgba(4, 172, 255, 0.8); }
+@media (hover: none) and (pointer: coarse) {
+  .seed-creator-kind { min-height: 44px; }
+}
+
+/* ── Body: step content, with the live card beside it on wide screens ─── */
+.seed-creator-body {
+  display: grid;
+  gap: 16px;
+  padding-top: 16px;
+}
+.seed-creator-card-slot { min-width: 0; }
+.seed-creator-content { min-width: 0; padding-bottom: 24px; }
+@media (min-width: 1280px) {
+  .seed-creator-body {
+    grid-template-columns: minmax(0, 1fr) 18rem;
+    align-items: start;
+    gap: 32px;
+    padding-top: 24px;
+  }
+  .seed-creator-card-slot { grid-column: 2; grid-row: 1; position: sticky; top: 76px; }
+  .seed-creator-content { grid-column: 1; grid-row: 1; }
+}
+
+/* ── Live story card ──────────────────────────────────────────────────── */
+.seed-live-card {
+  border: 1px solid rgba(205, 178, 113, 0.22);
+  border-radius: 16px;
+  background:
+    radial-gradient(18rem 10rem at 100% 0%, rgba(205, 178, 113, 0.08), transparent 70%),
+    linear-gradient(180deg, rgba(14, 17, 34, 0.92), rgba(8, 10, 22, 0.92));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 14px 32px -20px rgba(0, 0, 0, 0.9);
+}
+.seed-live-card-head {
+  display: flex;
+  width: 100%;
+  min-height: 52px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.seed-live-card-head[data-static='true'] { cursor: default; }
+.seed-live-card-head:focus-visible { outline: 2px solid rgba(205, 178, 113, 0.7); outline-offset: -2px; border-radius: 16px; }
+.seed-live-card-titles { display: flex; min-width: 0; flex: 1 1 auto; flex-direction: column; }
+.seed-live-card-eyebrow {
+  font-family: var(--font-sc);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #cdb271;
+}
+.seed-live-card-title {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #f3ede0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.seed-live-card-lineage {
+  overflow: hidden;
+  font-size: 12px;
+  color: var(--color-neutral-400);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.seed-live-card-progress {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border: 1px solid rgba(205, 178, 113, 0.35);
+  border-radius: 999px;
+  font-family: var(--font-sc);
+  font-size: 11px;
+  font-weight: 700;
+  color: #ddc58a;
+}
+.seed-live-card-chevron { flex-shrink: 0; color: var(--color-neutral-400); transition: transform 160ms ease; }
+.seed-live-card[data-open='true'] .seed-live-card-chevron { transform: rotate(180deg); }
+
+.seed-live-card-body {
+  display: none;
+  margin: 0;
+  padding: 2px 14px 14px;
+  border-top: 1px solid rgba(205, 178, 113, 0.12);
+}
+.seed-live-card[data-open='true'] .seed-live-card-body { display: grid; }
+.seed-live-card-row { display: grid; gap: 2px; padding-top: 10px; }
+.seed-live-card-row dt {
+  font-family: var(--font-sc);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-neutral-500);
+}
+.seed-live-card-row dd { margin: 0; min-width: 0; font-size: 13px; line-height: 1.5; color: var(--color-neutral-300); }
+.seed-live-card-premise {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  font-family: var(--font-serif);
+}
+.seed-live-card[data-variant='full'] .seed-live-card-premise { -webkit-line-clamp: unset; }
+.seed-live-card-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.seed-live-card-tags > span {
+  padding: 1px 8px;
+  border: 1px solid rgba(172, 166, 214, 0.22);
+  border-radius: 999px;
+  font-size: 11px;
+}
+.seed-live-card-fate { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: #aca6d6; }
+.seed-live-card-missing { font-size: 12px; color: rgba(255, 120, 120, 0.9); }
+
+/* Opened on a tablet, or shown whole, the rows pair up. */
+@media (min-width: 640px) {
+  .seed-live-card-body { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 20px; }
+  .seed-live-card-row:first-child { grid-column: 1 / -1; }
+}
+/* Beside the step on a wide screen the card is always open, one row per
+   line; the toggle only names it. */
+@media (min-width: 1280px) {
+  .seed-live-card[data-variant='summary'] .seed-live-card-body { grid-template-columns: minmax(0, 1fr); }
+}
+.seed-live-card-head[data-static='true'] .seed-live-card-chevron { display: none; }
+
+/* ── Pinned footer ────────────────────────────────────────────────────── */
+.seed-creator-footer {
+  /* The shell's <main> already pads itself clear of the workspace bar, and a
+     sticky box rests inside that padding, so 0 sits just above the bar. */
+  position: sticky;
+  bottom: 0;
+  z-index: 25;
+  margin-inline: -16px;
+  padding: 10px 16px;
+  background: linear-gradient(0deg, rgba(5, 7, 14, 0.97) 70%, rgba(5, 7, 14, 0.85));
+  border-top: 1px solid rgba(205, 178, 113, 0.16);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+@media (min-width: 640px) {
+  .seed-creator-footer { margin-inline: -24px; padding-inline: 24px; }
+}
+/* Back and Next/Create take equal fixed cells and fill them, so neither button
+   changes size with its label; the progress (or Create's price) sits between. */
+.seed-creator-footer-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  margin-inline: auto;
+  max-width: 34rem;
+}
+.seed-creator-footer-cell { min-width: 0; }
+.seed-creator-footer :is(button, a) { width: 100%; min-height: 48px; }
+.seed-creator-footer-next-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.seed-creator-footer-progress {
+  display: flex;
+  min-width: 0;
+  justify-content: center;
+  font-family: var(--font-sc);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--color-neutral-400);
+}
+@media (max-width: 419px) {
+  .seed-creator-footer-next-prefix,
+  .seed-creator-footer-progress-word { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seed-creator-step,
+  .seed-creator-step-marker,
+  .seed-live-card-chevron { transition: none; }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .seed-creator-strip,
+  .seed-creator-footer {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* The shell floats its music note just above the workspace bar's right end,
+   which is where Next sits. While the creator's footer is pinned there, the
+   note rises above the footer instead of covering it. */
+@media (max-width: 1023px) {
+  .library-navigation-layout:has([data-seed-creator-footer]) .library-sound-slot {
+    inset-block-end: calc(var(--library-bar-height, 5.125rem) + 5.5rem);
+  }
+}

@@ -182,7 +182,7 @@ export const OriginGenrePicker = ({
                   <span className="h-px w-5 bg-gradient-to-r from-transparent to-[rgba(167,139,250,0.55)] sm:w-8" />
                   <Sparkle size={9} className="text-[#A78BFA]" />
                 </span>
-                <h3 className="whitespace-nowrap font-display text-base font-bold uppercase tracking-[0.14em] text-signal sm:text-lg sm:tracking-[0.22em]">Story Paths</h3>
+                <h3 className="font-display text-base font-bold uppercase tracking-[0.14em] text-signal sm:text-lg sm:tracking-[0.22em]">Story Paths</h3>
                 <span aria-hidden="true" className="flex items-center gap-1.5">
                   <Sparkle size={9} className="text-[#A78BFA]" />
                   <span className="h-px w-5 bg-gradient-to-l from-transparent to-[rgba(167,139,250,0.55)] sm:w-8" />
@@ -191,7 +191,7 @@ export const OriginGenrePicker = ({
               <p className="mt-1.5 text-center font-sans text-xs text-neutral-400">Choose a path, or define your own.</p>
             </div>
 
-            <div role="radiogroup" aria-label="Story paths" className="mt-4 grid grid-cols-2 gap-2 min-[360px]:grid-cols-3">
+            <div role="radiogroup" aria-label="Story paths" className="mt-4 grid grid-cols-2 gap-2 min-[480px]:grid-cols-3">
               {GENRE_PRESETS.map((preset, index) => {
                 const selected = trimmedGenre === preset.id;
                 const Sigil = GENRE_PATH_SIGILS[preset.id] ?? Sparkles;

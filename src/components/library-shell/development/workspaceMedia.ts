@@ -18,6 +18,8 @@ import { useSyncExternalStore } from 'react';
  */
 export const COMPACT_HEADER_QUERY = '(max-width: 1279px)';
 export const DESKTOP_NAVIGATION_QUERY = '(min-width: 1024px)';
+/** Phones: below the `sm` breakpoint, narrower than any tablet. */
+export const PHONE_QUERY = '(max-width: 639px)';
 
 function subscribe(query: string) {
   return (notify: () => void) => {
@@ -43,6 +45,16 @@ export function useDesktopNavigation() {
   return useSyncExternalStore(
     desktopSubscribe,
     () => window.matchMedia(DESKTOP_NAVIGATION_QUERY).matches,
+    () => false,
+  );
+}
+
+const phoneSubscribe = subscribe(PHONE_QUERY);
+/** True on phones, below the `sm` breakpoint. */
+export function usePhone() {
+  return useSyncExternalStore(
+    phoneSubscribe,
+    () => window.matchMedia(PHONE_QUERY).matches,
     () => false,
   );
 }

@@ -5,7 +5,7 @@ import {
   type LibraryNavigationDrawerProfile, type LibraryNavigationDrawerSection, type LibraryNavigationDrawerPanelProps,
 } from '@seihouse/library-ui';
 import { activeLibraryDestination, LIBRARY_DESTINATIONS, libraryLocationKey, libraryNavigationMode, type LibraryDestination, type LibraryLocation, type LibraryNavigationMode } from './libraryRoutes';
-import { DESKTOP_NAVIGATION_QUERY, useDesktopNavigation } from './workspaceMedia';
+import { DESKTOP_NAVIGATION_QUERY, useDesktopNavigation, usePhone } from './workspaceMedia';
 import { useLibrarySidebarMode, type LibrarySidebarMode } from './librarySidebarMode';
 import { useLibraryAssets } from '../../../library/assets';
 import './library-navigation.css';
@@ -49,6 +49,12 @@ export interface LibraryWorkspaceDefinition {
   footer?: LibraryNavigationDrawerPanelProps['footer'];
   /** The task's own controls on the bar. */
   tools?: readonly LibraryWorkspaceTool[];
+  /**
+   * False when the page itself carries its section navigation on a phone
+   * (Story Seed's step strip), so the phone bar leaves Sections out and gives
+   * its room to the tools. Tablets keep Sections; the desktop has the rail.
+   */
+  sectionsOnPhoneBar?: boolean;
   /** Leaves the workspace through the host, never browser history. */
   back: { label?: string; onBack: () => void };
 }
@@ -381,9 +387,10 @@ function WorkspaceNavigation({ workspace, children }: { workspace: LibraryWorksp
   const state = useMemo<WorkspaceState>(() => ({
     label: workspace.label, profile: workspace.profile, sections, footer, artwork, drawerOpen, openDrawer, closeDrawer,
   }), [workspace.label, workspace.profile, sections, footer, artwork, drawerOpen, openDrawer, closeDrawer]);
-  const { back, tools = [] } = workspace;
+  const { back, tools = [], sectionsOnPhoneBar = true } = workspace;
+  const phone = usePhone();
   const items = [
-    ...(sections.length ? [{ id: 'sections', label: 'Sections', icon: <List size={20} />, active: drawerOpen, onSelect: openDrawer }] : []),
+    ...(sections.length && (sectionsOnPhoneBar || !phone) ? [{ id: 'sections', label: 'Sections', icon: <List size={20} />, active: drawerOpen, onSelect: openDrawer }] : []),
     ...tools.map(({ id, label, icon, active, onSelect }) => ({ id, label, icon, active, onSelect })),
     { id: 'back', label: back.label ?? 'Back', icon: <SENExitIcon size={20} aria-hidden="true" />,
       onSelect: () => { setDrawerOpen(false); back.onBack(); } },

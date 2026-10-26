@@ -371,7 +371,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
     expect(onManifest).toHaveBeenCalledTimes(1);
   });
 
-  it('announces why the primary Manifest action is disabled', () => {
+  it('announces why the primary Create action is disabled', () => {
     act(() => root.render(
       <LibraryPresentationProvider>{<CreationModal onNavigateHome={vi.fn()}
         onStartStory={vi.fn()}
@@ -381,11 +381,12 @@ describe('Story Seed keyboard and mobile navigation', () => {
       />}</LibraryPresentationProvider>,
     ));
 
-    const manifest = container.querySelector<HTMLButtonElement>('button[data-variant="manifest"]');
+    // Create's one Create button is on the creator's last step.
+    act(() => container.querySelector<HTMLButtonElement>('[data-seed-creator-strip] button[data-step="manifest"]')!.click());
+    const manifest = container.querySelector<HTMLButtonElement>('[data-seed-creator-footer] button[aria-label^="Create disabled"]');
     expect(manifest?.disabled).toBe(true);
-    expect(manifest?.getAttribute('aria-label')).toBe(
-      'Manifest World Blueprint — Manifest disabled — missing: Style, Genre, Synopsis',
-    );
+    expect(manifest?.getAttribute('aria-label')).toBe('Create disabled — missing: Style, Genre, Synopsis');
+    expect(container.querySelector('[data-story-seed-action-row] button[data-variant="manifest"]')).toBeNull();
   });
 
   it('keeps custom radio groups to one Tab stop and selects with navigation keys', () => {

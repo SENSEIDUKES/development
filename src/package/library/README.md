@@ -328,6 +328,26 @@ SEIHouse R2 Basic/Special folders. `./presentation` exports `LIBRARY_ICON_CATALO
 for inspection (exact keys, URLs, ETags and Library identifiers); the existing
 Library UI renderer and named adapters keep their contracts.
 
+The 12 bundled icons have individual named exports from `./presentation`:
+
+```tsx
+import { LibraryAtmosphereIcon, LibrarySoundscapeIcon } from '@seihouse/library/presentation';
+
+<LibraryAtmosphereIcon size={24} aria-label="Atmosphere" />
+<LibrarySoundscapeIcon size={24} aria-label="Soundscape" />
+```
+
+The other named exports are `LibraryEditIcon`, `LibraryCopyIcon`, `LibraryMediaIcon`,
+`LibraryRemoveIcon`, `LibraryBackIcon`, `LibraryAudioIcon`, `LibraryCueIcon`,
+`LibrarySaveIcon`, `LibraryUndoIcon`, and `LibraryDeleteIcon`.
+They inherit `currentColor`, accept SVG props and `className`, and are decorative
+by default; provide `aria-label` for standalone meaning.
+
+`LIBRARY_ICON_CATALOG` includes all 45 icons in Basic and Special categories.
+Entries identify their `source`: `remote` entries retain their public URLs and
+Library identifiers; `bundled` entries provide a named `Icon` component and
+`exportName`. The existing Icons Workshop shows this same catalog.
+
 ## Server Model Router
 
 **2026-10-19:** Anthropic is a direct text provider through the official

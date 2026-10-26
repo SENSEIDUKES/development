@@ -1,6 +1,24 @@
-/** Passage actions: compact, solid silhouettes with cutout details, matching the existing icon artwork. */
-export function HighlightActionIcon({ name }: { name: 'edit' | 'copy' | 'media' | 'remove' | 'back' | 'audio' | 'cue' | 'soundscape' | 'atmosphere' | 'save' | 'undo' | 'delete' }) {
-  return <svg className="sen-highlight-action-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+import type { SVGProps } from 'react';
+
+export const HIGHLIGHT_ACTION_ICONS = [
+  { name: 'edit', label: 'Edit' }, { name: 'copy', label: 'Copy' },
+  { name: 'media', label: 'Media' }, { name: 'remove', label: 'Remove' },
+  { name: 'back', label: 'Back' }, { name: 'audio', label: 'Audio' },
+  { name: 'cue', label: 'Cue' }, { name: 'soundscape', label: 'Soundscape' },
+  { name: 'atmosphere', label: 'Atmosphere' }, { name: 'save', label: 'Save' },
+  { name: 'undo', label: 'Undo' }, { name: 'delete', label: 'Delete' },
+] as const;
+export type HighlightActionIconName = typeof HIGHLIGHT_ACTION_ICONS[number]['name'];
+export interface HighlightActionIconProps extends Omit<SVGProps<SVGSVGElement>, 'name' | 'children'> {
+  name: HighlightActionIconName;
+  size?: number | string;
+}
+
+/** One source for the action artwork used by the engine and the Library icon catalog. */
+export function HighlightActionIcon({ name, size = 20, ...props }: HighlightActionIconProps) {
+  const labelled = !!(props['aria-label'] || props['aria-labelledby']);
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"
+    aria-hidden={labelled ? undefined : true} role={labelled ? 'img' : undefined} focusable="false" {...props}>
     {name === 'edit' && <>
       <path d="m15.2 4.8 4 4-10 10-5 1 1-5 10-10Zm1.4-1.4 1-1a2 2 0 0 1 2.8 0l1.2 1.2a2 2 0 0 1 0 2.8l-1 1-4-4Z" />
       <path d="M3 22a1 1 0 0 1 0-2h18a1 1 0 0 1 0 2H3Z" />

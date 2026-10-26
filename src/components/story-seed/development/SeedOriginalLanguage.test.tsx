@@ -152,6 +152,19 @@ describe('reopening a saved seed restores that seed’s own language', () => {
     ]);
   };
 
+  it('opens the Story Bank straight from an open Blueprint', async () => {
+    twoSavedSeeds('ja', 'ko');
+    renderModal();
+
+    await openBank();
+    await openBlueprintFor(0);
+    expect(container.querySelector('#blueprint-story-title')).not.toBeNull();
+
+    await openBank();
+    expect(container.querySelector('#blueprint-story-title')).toBeNull();
+    expect(container.querySelectorAll('.story-bank-card').length).toBeGreaterThan(0);
+  });
+
   it('shows the second seed’s language after the first seed was opened', async () => {
     twoSavedSeeds('ja', 'ko');
     renderModal();

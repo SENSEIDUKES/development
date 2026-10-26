@@ -708,6 +708,8 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     } else {
       setStoryBankRequestedOwnerId(seedOwnerId);
       preloadStorySeedSecondary();
+      // The bank opens over the Seed, so leave an open Blueprint for it.
+      setStage('intake');
     }
     setShowStoryBank(open => !open);
   }, [seedOwnerId, showStoryBank]);

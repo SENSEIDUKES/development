@@ -1,5 +1,7 @@
 # NovelExpanded app
 
+- **2026-10-26** — Fixed the production-only Dao Insights header overlap. The phone center now clears the canonical header's translation utility through its class API; resetting `translate: none` in app CSS was lowered to `transform` during the build and left the separate -50% translation active. `scripts/verifyAppHeader.browser.mjs` checks the built app and Home Workshop in Chromium and WebKit, including phone, tablet, laptop and enlarged-text layouts. CI now builds and checks this delivered header as well as the development app.
+
 - **2026-10-24** — Home places Insights from the Dao in the header on phones and desktops. Its existing spark host, Copy, Story Bank and Begin actions are retained; the duplicate content placement is removed.
 
 - **2026-10-24** — Header branding uses the exact Novel Expanded logo from Library Studios, replacing the circular S emblem. The pinned brand package supplies artwork, spectrum border and reduced-motion behavior. Home navigation, title badges and utilities remain in their hosts. The app header shows only the new logo; its duplicate large wordmark is removed, while the footer wordmark remains. Library Shell and Home Workshop Development previews share these implementations; historical references are unchanged. See `vendor/studio-brand-artifact.json` for provenance.

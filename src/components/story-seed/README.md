@@ -36,10 +36,12 @@ Story Seed is one creation flow with these visible destinations:
   step tappable; World's eight kinds as sub-tabs), a live story card that grows
   as the Seed fills (one line that opens on phones and tablets, a column
   beside the step from 1280px), and Back / Next pinned above the workspace
-  bar. Manifest is the last step, a confirm screen; its footer carries the
-  page's one Manifest button. The bar reads Sections · Story Bank · Blueprint ·
-  Settings · Back. Blueprint opens the World Blueprint inside the shell once
-  one exists, otherwise the Manifest step. Owned by `development/creator/`.
+  bar in equal fixed cells. Create is the last step, a confirm screen; its
+  footer carries the page's one **Create World Blueprint** button. A blank
+  reads **Fate Will Decide**: the reader never meets the machinery behind it.
+  The bar reads Sections · Story Bank · Blueprint · Settings · Back, without
+  Sections on phones, where the step strip does its work. Blueprint opens the
+  World Blueprint inside the shell once one exists, otherwise the Create step. Owned by `development/creator/`.
 
 The canonical Story Seed shape is `creator / story / world`. Title has
 one owner at `world.optional.worldIdentity.title`; Blueprint title editing
@@ -216,6 +218,17 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-10-26 (Create wording, Fate Will Decide, one button size):** From
+  SENSEI, after trying it on a phone. Core rule: a reader never learns that a
+  model is involved, so a blank reads "Fate Will Decide", and the Chinese
+  light-novel extrapolation line is gone (not every story is one). The
+  creator's Manifest is now **Create** (step, heading, button). The phone bar
+  leaves Sections out (`sectionsOnPhoneBar: false`, a new Library Shell
+  workspace option); its labels wrap inside their own button instead of
+  running together. Every button is one size: Back and Next/Create share
+  equal fixed cells, and from 768px every bar destination (here and on Home's
+  strip) has the same fixed width. The step strip is opaque so content never
+  shows through it.
 - **2026-10-26 (character-creator Seed; Blueprint inside the shell):** From
   SENSEI: Story Seed was the first page built here, before the shell, and was
   not mobile friendly. Rebuilt around the character-creator pattern (Baldur's

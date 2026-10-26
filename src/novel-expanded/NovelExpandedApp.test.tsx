@@ -129,10 +129,10 @@ const click = async (element: Element | null | undefined, label: string, wait = 
   await flush(wait);
 };
 
-/** Create's one Manifest is on the creator's last step: open that step, then press it. */
+/** Create's one Create button is on the creator's last step: open that step, then press it. */
 const manifestWorldBlueprint = async (wait = 0) => {
   await click(container.querySelector('[data-seed-creator-strip] button[data-step="manifest"]'), 'the Manifest step', 20);
-  await click([...container.querySelectorAll<HTMLButtonElement>('[data-seed-creator-footer] button')].find(button => button.textContent?.includes('Manifest World Blueprint') && !button.disabled), 'Manifest World Blueprint', wait);
+  await click([...container.querySelectorAll<HTMLButtonElement>('[data-seed-creator-footer] button')].find(button => button.getAttribute('aria-label') === 'Create World Blueprint' && !button.disabled), 'Create World Blueprint', wait);
 };
 const buttonByText = (text: string, scope: ParentNode = document) => [...scope.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.trim() === text);
 const worldInfo = () => document.querySelector<HTMLElement>('[data-testid="harness-world-info"]');
@@ -479,7 +479,7 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     await click(buttonByText('Create', strip()!), 'Create in the navigation', 20);
     expect(address()).toBe('/app/?page=create');
     expect(document.querySelector('[data-testid="novel-expanded-create"]')).toBeTruthy();
-    // Manifest, on the creator's last step, wears the Energy badge with the World Blueprint's price (a chapter's, for now).
+    // Create, on the creator's last step, wears the Energy badge with the World Blueprint's price (a chapter's, for now).
     await click(document.querySelector('[data-seed-creator-strip] button[data-step="manifest"]'), 'the Manifest step', 20);
     expect(document.querySelector('[data-testid="novel-expanded-create"] .energy-badge[data-energy-action="chapter.generate"]')?.textContent).toBe('1');
     // Story Seed's own task bar stands where the global strip was; the note floats above it.

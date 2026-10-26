@@ -16,7 +16,9 @@ try {
         if (refresh) await page.reload();
         const nav = page.getByRole('navigation', { name: 'Story Seed navigation', exact: true, includeHidden: true });
         await nav.waitFor({ state: 'attached' });
-        assert.deepEqual(await nav.locator('button').allTextContents(), ['Sections', 'Story Bank', 'Settings', 'Back']);
+        // On a phone the creator's step strip carries the sections, so the bar leaves Sections out.
+        assert.deepEqual(await nav.locator('button').allTextContents(),
+          [...(width < 640 ? [] : ['Sections']), 'Story Bank', 'Blueprint', 'Settings', 'Back']);
         assert.equal(await nav.getByRole('button', { name: 'Help', exact: true }).count(), 0);
         assert.equal(await page.locator('header .workspace-help-emblem').textContent(), '?');
         assert.equal(await nav.locator('img[alt="Celestial Library"]').getAttribute('src'), '/favicon.jpg');

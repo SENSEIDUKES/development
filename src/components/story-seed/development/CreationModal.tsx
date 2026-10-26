@@ -883,10 +883,11 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
           progress={<span aria-label={`${requiredComplete} of ${REQUIRED_STORY_SECTIONS.length} required Story inputs complete`}>
             {requiredComplete}/{REQUIRED_STORY_SECTIONS.length}<span className="seed-creator-footer-progress-word"> required</span>
           </span>}
+          manifestAside={manifestAside}
           manifest={<>
-            {manifestAside && <span className="shrink-0 text-base">{manifestAside}</span>}
             <ManifestButton
-              size="lg"
+              size="md"
+              fullWidth
               icon={SENManifestingIcon}
               onClick={requestGenerateBlueprint}
               disabled={!canGenerate}
@@ -896,16 +897,16 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
                 <img src={runtime.authorMarkUrl} className="h-5 w-5 shrink-0 animate-pulse object-contain" alt="" aria-hidden="true" />
               ) : undefined}
               // The phone shows only "Manifest"; the name stays whole everywhere.
-              aria-label={missing.length > 0 ? `Manifest disabled — missing: ${missingRequiredLabels}` : isGenerating ? undefined : 'Manifest World Blueprint'}
-              title={missing.length > 0 ? `Missing required: ${missingRequiredLabels}` : 'Manifest the World Blueprint'}
-              className="shrink-0"
+              aria-label={missing.length > 0 ? `Create disabled — missing: ${missingRequiredLabels}` : isGenerating ? undefined : 'Create World Blueprint'}
+              title={missing.length > 0 ? `Missing required: ${missingRequiredLabels}` : 'Create the World Blueprint'}
+              className="seed-creator-footer-create"
             >
               {isGenerating ? (
-                <span>Manifesting...</span>
+                <span>Creating...</span>
               ) : (
                 <>
-                  <span className="hidden sm:inline">Manifest World Blueprint</span>
-                  <span className="sm:hidden">Manifest</span>
+                  <span className="hidden sm:inline">Create World Blueprint</span>
+                  <span className="sm:hidden">Create</span>
                 </>
               )}
             </ManifestButton>

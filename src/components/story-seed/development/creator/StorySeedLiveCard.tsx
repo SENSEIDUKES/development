@@ -5,8 +5,9 @@ import { getStoryStyleLabel, type StorySeedInput } from '@seihouse/sen/story-see
 import { REQUIRED_STORY_SECTIONS, missingRequiredSections } from '../seedSections';
 import { useCompactHeader } from '../../../library-shell/development/workspaceMedia';
 
-const AiFills = () => (
-  <span className="seed-live-card-ai"><Sparkles size={10} aria-hidden="true" />AI will fill</span>
+// What a blank becomes. The reader never meets the machinery behind it.
+const FateDecides = () => (
+  <span className="seed-live-card-fate"><Sparkles size={10} aria-hidden="true" />Fate Will Decide</span>
 );
 
 const Row = ({ label, children }: { label: string; children: ReactNode }) => (
@@ -63,14 +64,14 @@ export function StorySeedLiveCard({ seed, variant = 'summary' }: {
       <dl id={bodyId} className="seed-live-card-body">
         <Row label="Synopsis">{premise ? <span className="seed-live-card-premise">{premise}</span> : <span className="seed-live-card-missing">Required</span>}</Row>
         <Row label="Tags">
-          {tags.length ? <span className="seed-live-card-tags">{tags.map(tag => <span key={tag}>{tag}</span>)}</span> : <AiFills />}
+          {tags.length ? <span className="seed-live-card-tags">{tags.map(tag => <span key={tag}>{tag}</span>)}</span> : <FateDecides />}
         </Row>
         <Row label="Length">
           {typeof arcCount === 'number' && Number.isFinite(arcCount)
             ? `${arcCount} ${arcCount === 1 ? 'arc' : 'arcs'} · ${(arcCount * ARC_LENGTH).toLocaleString('en-US')} chapters`
-            : <AiFills />}
+            : <FateDecides />}
         </Row>
-        <Row label="Destined Ending">{ending ? <span className="seed-live-card-premise">{ending}</span> : <AiFills />}</Row>
+        <Row label="Destined Ending">{ending ? <span className="seed-live-card-premise">{ending}</span> : <FateDecides />}</Row>
       </dl>
     </aside>
   );

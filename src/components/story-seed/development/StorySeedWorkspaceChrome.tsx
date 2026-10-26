@@ -101,6 +101,9 @@ export function StorySeedWorkspaceChrome(props: StorySeedWorkspaceChromeProps) {
       { id: 'settings', label: 'Settings', icon: <SENSettingsIcon size={20} />, active: settingsOpen, onSelect: openSettings },
     ],
     back: { onBack: () => { setSettingsOpen(false); onNavigateHome(); } },
+    // The creator's step strip is the phone's section navigation, so the phone
+    // bar keeps its room for Story Bank, Blueprint, Settings and Back.
+    sectionsOnPhoneBar: false,
   }), [props.seed, props.activeSection, props.onSelectSection, showStoryBank, onToggleStoryBank, onOpenBlueprint, blueprintActive, openSettings, settingsOpen, onNavigateHome]);
   const content = <StorySeedChromeContent {...props} workspace={workspace} settingsOpen={settingsOpen} setSettingsOpen={setSettingsOpen}
     settingsReturnFocusRef={settingsReturnFocusRef} />;

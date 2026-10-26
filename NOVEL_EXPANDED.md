@@ -558,7 +558,7 @@ Update it whenever it changes.
     device. Search opens the reader's stories; the footer offers Help and the
     draft Terms, Privacy and Cookies. Create is Story Seed in the shell's
     workspace mode (Sections, Story Bank, Blueprint, Settings, Back), laid out
-    as a character creator: Origin → ARC → World → Manifest, with a live story
+    as a character creator: Origin → ARC → World → Create, with a live story
     card, and the World Blueprint inside the same shell (2026-10-26). The Reader stays
     full-screen. Discover is in the navigation too (2026-10-20), with sample
     worlds: its structure is in and its look and feel is being refined

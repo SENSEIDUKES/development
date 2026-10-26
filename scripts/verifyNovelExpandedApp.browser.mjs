@@ -382,9 +382,9 @@ async function walk(browser, viewport, sample) {
   await visibleButton(/^Story Bank$/).click();
   await visibleButton(/^Use Seed$/).click();
   await visibleButton(/^Refine Details$/).click();
-  // Create's one Manifest sits on the creator's last step.
+  // Create's one Create button sits on the creator's last step.
   await page.locator('[data-seed-creator-strip] button[data-step="manifest"]').click();
-  await page.getByRole('button', { name: /^Manifest World Blueprint/ }).and(page.locator(':enabled')).filter({ visible: true }).first().click();
+  await page.getByRole('button', { name: /^Create World Blueprint/ }).and(page.locator(':enabled')).filter({ visible: true }).first().click();
   const sheet = page.getByTestId('access-token-sheet');
   await sheet.waitFor();
   check(counts.blueprints === 0, 'No Blueprint request should leave before the token is given.');

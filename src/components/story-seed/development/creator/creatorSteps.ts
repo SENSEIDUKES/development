@@ -9,7 +9,8 @@ import {
 
 /**
  * The character-creator step model over Story Seed's sections. The strip shows
- * four steps — Origin, ARC, World, Manifest — and World holds its eight kinds
+ * four steps — Origin, ARC, World, Create (the Manifest step, `'manifest'`) —
+ * and World holds its eight kinds
  * as sub-tabs. Next and Back walk every section in `SEED_SECTIONS` order, then
  * the Manifest step, so the order has one owner: the section list itself.
  */
@@ -27,7 +28,7 @@ export const CREATOR_STEPS: readonly CreatorStep[] = [
   { id: 'origin', label: 'Origin', page: 'origin' },
   { id: 'arc', label: 'ARC', page: 'arc' },
   { id: 'world', label: 'World', page: FAMILY_SECTIONS.world[0].id },
-  { id: 'manifest', label: 'Manifest', page: 'manifest' },
+  { id: 'manifest', label: 'Create', page: 'manifest' },
 ];
 
 export const WORLD_KINDS: readonly SeedSection[] = FAMILY_SECTIONS.world;
@@ -48,7 +49,7 @@ export const previousPage = (page: CreatorPageId): CreatorPageId | null =>
   CREATOR_PAGE_ORDER[CREATOR_PAGE_ORDER.indexOf(page) - 1] ?? null;
 
 export const pageLabel = (page: CreatorPageId): string =>
-  page === 'manifest' ? 'Manifest' : SEED_SECTIONS.find(section => section.id === page)?.label ?? page;
+  page === 'manifest' ? 'Create' : SEED_SECTIONS.find(section => section.id === page)?.label ?? page;
 
 export type CreatorStepStatus = 'missing' | 'filled' | 'empty';
 

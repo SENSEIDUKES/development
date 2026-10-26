@@ -16,6 +16,8 @@ Original Reference panes carry `data-workshop-reference` and are excluded from a
 
 ## History
 
+- **2026-10-26:** Gave the Media icon's star a clear gap from both ends of its frame, shared by the Library catalog and Highlight Engine.
+
 - **2026-10-26:** Added all 12 custom Highlight Engine action icons to the existing catalog and public Library presentation API, reusing their source artwork.
 
 - **2026-10-09:** Collected and verified 19 Basic and 14 Special public SVGs; selected them in the Library skin, updated matching utility/provenance controls, and expanded the existing Icons catalog with direct URLs and alternate artwork.

@@ -40,6 +40,8 @@ export function PaletteMaterials() {
   const [measured, setMeasured] = useState<Measurements>({});
   const [tokens, setTokens] = useState<Record<string, string>>({});
   const [artworkFailed, setArtworkFailed] = useState(false);
+  const [mobileSection, setMobileSection] = useState('materials');
+  const [browseMaterials, setBrowseMaterials] = useState(false);
   const catalog = useRef<HTMLDivElement>(null);
   const importInput = useRef<HTMLInputElement>(null);
   const selected = MATERIALS.find(m => m.id === settings.selected)!;
@@ -80,6 +82,19 @@ export function PaletteMaterials() {
   }, []);
 
   const update = (patch: Partial<PaletteSettings>) => setSettings(current => ({ ...current, ...patch }));
+  const showSection = (section: string) => {
+    setMobileSection(section);
+    if (matchMedia('(max-width: 650px)').matches) {
+      requestAnimationFrame(() => document.getElementById(`pm-${section}`)?.scrollIntoView({ block: 'start' }));
+    }
+  };
+  const selectMaterial = (selected: MaterialId) => {
+    update({ selected });
+    setBrowseMaterials(false);
+    if (matchMedia('(max-width: 650px)').matches) {
+      requestAnimationFrame(() => document.getElementById('pm-mixing-table')?.scrollIntoView({ block: 'start' }));
+    }
+  };
   const updateEdit = (patch: Partial<MaterialEdit>) => setSettings(current => ({ ...current, edits: { ...current.edits, [current.selected]: { ...current.edits[current.selected], ...patch } } }));
   const reset = () => setSettings(current => {
     const edits = { ...current.edits }; delete edits[current.selected];
@@ -137,7 +152,7 @@ export function PaletteMaterials() {
     };
   };
 
-  return <main className="pm-workbench">
+  return <main className="pm-workbench" data-mobile-section={mobileSection}>
     <header className="pm-intro"><span className="pm-eyebrow">The visual workbench</span><h2>Your paints. Your materials.</h2>
       <p>See what’s here. Try it together. Keep the looks you love.</p>
       <div className="pm-topline"><nav aria-label="Palette sections"><a href="#pm-materials">Materials</a><a href="#pm-colors">Colors</a><a href="#pm-composition">Composition</a><a href="#pm-looks">Saved looks <span>{looks.length}</span></a></nav>
@@ -149,23 +164,30 @@ export function PaletteMaterials() {
       {settings.background === 'artwork' && (!authImage || artworkFailed) && <p role="status">The artwork is unavailable. Samples are shown over neutral gray.</p>}
     </header>
 
+    <nav className="pm-mobile-nav" aria-label="Workspace sections">{[
+      ['materials', 'Materials'], ['colors', 'Colors'], ['composition', 'Preview'], ['looks', 'Saved'],
+    ].map(([id, label]) => <button key={id} type="button" aria-pressed={mobileSection === id} aria-controls={`pm-${id}`} onClick={() => showSection(id)}>{label}{id === 'looks' && looks.length > 0 && <span>{looks.length}</span>}</button>)}</nav>
+
     <section id="pm-materials" className="pm-section"><div className="pm-section-heading"><div><span className="pm-eyebrow">01 / The materials</span><h2>Same light. Different glass.</h2></div><p>These are the current app treatments. Select one to experiment.</p></div>
-      <div ref={catalog} className="pm-catalog">{MATERIALS.map((sample, index) => <article key={sample.id} className="pm-sample" data-selected={settings.selected === sample.id}>
+      <button type="button" className="pm-control pm-mobile-browse" aria-expanded={browseMaterials} aria-controls="pm-material-catalog" onClick={() => setBrowseMaterials(value => !value)}>{browseMaterials ? 'Close material gallery' : `Browse all ${MATERIALS.length} materials`}</button>
+      <div ref={catalog} id="pm-material-catalog" className="pm-catalog" data-browse={browseMaterials}>{MATERIALS.map((sample, index) => <article key={sample.id} className="pm-sample" data-selected={settings.selected === sample.id}>
         {stage(<MaterialSurface id={sample.id} />, 'pm-sample-stage')}
-        <button type="button" className="pm-sample-select" aria-pressed={settings.selected === sample.id} onClick={() => update({ selected: sample.id })}>
+        <button type="button" className="pm-sample-select" aria-pressed={settings.selected === sample.id} onClick={() => selectMaterial(sample.id)}>
           <span className="pm-index">0{index + 1}</span><span><strong>{sample.name}</strong><small>{sample.usage}</small></span><span aria-hidden="true">↗</span>
         </button><p className="pm-origin">{sample.origin}</p>
       </article>)}</div>
 
-      <div className="pm-editor" aria-label="Material editor"><div className="pm-editor-main"><div className="pm-section-heading"><div><span className="pm-eyebrow">On the mixing table</span><h3>{selected.name}</h3></div><button type="button" className="pm-control" onClick={reset}>Reset material</button></div>
+      <div id="pm-mixing-table" className="pm-editor" aria-label="Material editor"><div className="pm-editor-main"><div className="pm-editor-preview"><div className="pm-section-heading"><div><span className="pm-eyebrow">On the mixing table</span><h3>{selected.name}</h3></div><button type="button" className="pm-control" onClick={reset}>Reset material</button></div>
+        <div className="pm-mobile-pickers"><label>Material<select aria-label="Material to edit" value={selected.id} onChange={e => selectMaterial(e.target.value as MaterialId)}>{MATERIALS.map(material => <option key={material.id} value={material.id}>{material.name}</option>)}</select></label>
+          <label>Background<select aria-label="Preview background" value={settings.background} onChange={e => update({ background: e.target.value as PaletteSettings['background'] })}><option value="black">Black</option><option value="gray">Neutral gray</option><option value="artwork">Artwork</option></select></label></div>
         <div className="pm-comparison"><div><span className="pm-caption">Original · current app</span>{stage(<MaterialSurface id={selected.id} />, 'pm-large-sample')}</div>
-          <div><span className="pm-caption">Your experiment {Object.keys(edit).length > 0 && '· edited'}</span>{stage(<MaterialSurface id={selected.id} style={materialStyle(base, edit)} className="pm-experiment" />, 'pm-large-sample')}</div></div>
-        <div className="pm-ingredients" aria-label="Individual material layers">{base && [
+          <div><span className="pm-caption">Your experiment {Object.keys(edit).length > 0 && '· edited'}</span>{stage(<MaterialSurface id={selected.id} style={materialStyle(base, edit)} className="pm-experiment" />, 'pm-large-sample')}</div></div></div>
+        <div className="pm-editor-extras"><div className="pm-ingredients" aria-label="Individual material layers">{base && [
           { name: 'Border', style: { border: `${base.borderWidth} solid ${base.borderColor}` } },
           { name: 'Shadow', style: { boxShadow: shadowLayers(base.boxShadow).filter(s => !isColoredShadow(s) && !s.includes('inset')).join(', ') || 'none' } },
           { name: 'Glow & highlights', style: { boxShadow: shadowLayers(base.boxShadow).filter(s => isColoredShadow(s) || s.includes('inset')).join(', ') || 'none' } },
         ].map(layer => <div key={layer.name}>{stage(<div className="pm-layer" style={layer.style} />)}<span className="pm-caption">{layer.name}</span></div>)}</div>
-        <RecipeDetails base={base} source={selected.source} />
+        <RecipeDetails base={base} source={selected.source} /></div>
       </div><aside className="pm-adjustments"><span className="pm-eyebrow">Adjust the material</span>
         {base && <>
           <ColorControl label="Glass tint" value={edit.tint ?? baseTint(base)} onChange={tint => updateEdit({ tint })} />
@@ -217,7 +239,7 @@ export function PaletteMaterials() {
       <p className="pm-note">{loadedLook ? `Loaded: ${loadedLook.name}${dirty ? ' · unsaved adjustments' : ' · saved'}` : 'Your experiment is separate from saved looks until you save it.'}</p>
       {storageError && <p role="alert" className="pm-warning">{storageError}</p>}<p role="status" className="pm-status">{message}</p>
       <div className="pm-saved-grid">{looks.map(look => <article className="pm-saved-look" key={look.id}><span className="pm-saved-color" style={{ background: look.settings.colors.accent }} /><h3>{look.name}</h3><p>{nameOf(look.settings.roles.panel)} · {look.settings.background}</p><div className="pm-saved-actions">
-        <button type="button" className="pm-control" onClick={() => { setSettings(clone(look.settings)); setLoadedId(look.id); setLookName(look.name); setMessage(`Loaded “${look.name}”.`); }}>Load</button>
+        <button type="button" className="pm-control" onClick={() => { setSettings(clone(look.settings)); setLoadedId(look.id); setLookName(look.name); showSection('materials'); setMessage(`Loaded “${look.name}”.`); }}>Load</button>
         <button type="button" className="pm-control" onClick={() => persist([...looks, { ...clone(look), id: crypto.randomUUID(), name: `${look.name.slice(0, 73)} (copy)` }], 'Duplicated look.')}>Duplicate</button>
         <button type="button" className="pm-control" onClick={() => { const name = window.prompt('Rename this look', look.name)?.trim(); if (!name) return; if (name.length > 80) { setMessage('Use a name of 80 characters or fewer.'); return; } if (persist(looks.map(l => l.id === look.id ? { ...l, name } : l), `Renamed to “${name}”.`) && loadedId === look.id) setLookName(name); }}>Rename</button>
         <button type="button" className="pm-control" onClick={() => { if (persist(looks.filter(l => l.id !== look.id), `Deleted “${look.name}”. Current experiment kept.`) && loadedId === look.id) setLoadedId(''); }}>Delete</button>

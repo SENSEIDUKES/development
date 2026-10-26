@@ -10,6 +10,7 @@ export const MATERIALS: { id: MaterialId; name: string; usage: string; origin: s
   { id: 'signin', name: 'Sign-in glass', usage: 'Your Destiny Awaits', origin: 'Library · local material', source: 'src/components/story-seed/development/materials.css · .story-auth-glass' },
   { id: 'navigation', name: 'Midnight navigation', usage: 'Home and Create sidebars', origin: 'Library UI · shared', source: '@seihouse/library-ui · LibraryNavigationDrawerPanel (pathways)' },
   { id: 'familiar', name: 'Familiar blue', usage: 'Companion helper panel', origin: 'Library · local material', source: 'src/components/familiar/development/familiar.css · .familiar-helper' },
+  { id: 'reader', name: 'Reader blue glass', usage: 'Reader Chamber · Codex and settings', origin: 'Library · Reader panel skin', source: 'src/library/stories/reader-glass.css · .reader-glass.reader-glass-panel' },
   { id: 'button', name: 'Night-glass action', usage: 'Primary app actions', origin: 'Library UI + app override', source: 'src/components/library-presentation/night-glass.css · primary button' },
   { id: 'secondary', name: 'Clear-glass action', usage: 'Secondary actions', origin: 'Library UI · package default', source: '@seihouse/library-ui · LibraryButton (secondary)' },
 ];
@@ -23,6 +24,7 @@ export function MaterialSurface({ id, style, children, className = '', disabled 
   if (id === 'home') return <LibraryPanel padding="none" {...props}>{content}</LibraryPanel>;
   if (id === 'create') return <div className="seed-field-scope pm-material-wrap"><div {...props} className={`glass-panel ${props.className}`}>{content}</div></div>;
   if (id === 'signin') return <div {...props} className={`story-auth-glass ${props.className}`}>{content}</div>;
+  if (id === 'reader') return <div {...props} className={`reader-glass reader-glass-panel relative rounded-2xl border text-neutral-100 ${props.className}`}>{content}</div>;
   if (id === 'familiar') return <div {...props} className={`familiar-helper ${props.className}`} style={{ position: 'relative', inset: 'auto', zIndex: 'auto', width: '100%', maxHeight: 'none', ...style }}>{content}</div>;
   if (id === 'navigation') return <div className="pm-material-wrap">
     <LibraryNavigationDrawerPanel {...props} aria-label="Sample navigation" variant="pathways" sidebarMode="pinned" sidebarBehavior="double-tap"
@@ -43,6 +45,8 @@ export const COLOR_GROUPS = [
     { name: 'Midnight', value: '#080f1e', usage: 'Pathways navigation', sample: 'navigation', property: 'backgroundColor' },
     { name: 'Familiar blue', value: '#101c2cf5', usage: 'Helper panel', sample: 'familiar', property: 'backgroundColor' },
     { name: 'Origin tint', value: '#0b0e1e', usage: 'Create glass', sample: 'create', property: 'backgroundColor' },
+    { name: 'Reader blue', value: '#203a4a', usage: 'Reader panel · upper gradient', sample: 'reader', property: 'gradientStart' },
+    { name: 'Reader deep blue', value: '#0c1c32', usage: 'Reader panel · lower gradient', sample: 'reader', property: 'gradientEnd' },
   ] },
   { name: 'Text', colors: [
     { name: 'Signal', value: '#fafafa', usage: 'Headings', token: '--color-signal' },

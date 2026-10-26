@@ -42,6 +42,15 @@ describe('portable saved looks', () => {
     saved.settings.roles.panel = 'signin';
     expect(decodeLooks(encodeLooks([saved]))).toEqual([saved]);
   });
+  it('accepts Reader glass without changing existing saved-look exports', () => {
+    const existing = look();
+    const reader = look();
+    reader.id = 'reader-look';
+    reader.settings.selected = 'reader';
+    reader.settings.roles.panel = 'reader';
+    reader.settings.edits.reader = { tint: '#203a4a', opacity: 90, blur: 0 };
+    expect(decodeLooks(encodeLooks([existing, reader]))).toEqual([existing, reader]);
+  });
   it.each([
     '{broken',
     JSON.stringify({ format: 'palette-materials', version: 2, looks: [] }),

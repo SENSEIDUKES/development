@@ -4,8 +4,8 @@ Open **Components → Palette & Materials**, `?preview=palette-materials`. This 
 Workshop-owned visual tooling; it ships in neither the SEN nor Library package.
 One `FeatureWorkspace` hosts the workbench, without historical Compare.
 
-The seven starting materials are current Home panels, Create grouped fields,
-sign-in glass, Pathways navigation, Familiar helper panels, primary night-glass
+The eight starting materials are current Home panels, Create grouped fields,
+sign-in glass, Pathways navigation, Familiar helper panels, Reader blue glass, primary night-glass
 actions and secondary actions. Original samples render canonical components or
 classes. The sign-in and Create glass recipes live in the shared Story Seed
 `materials.css`; only sign-in layout remains in `StoryAuthGate`. No production theme,
@@ -17,6 +17,20 @@ package presentation from app overrides. Home and buttons come from
 uses the package's Pathways variant; Familiar uses `.familiar-helper` with only
 position and sample geometry overridden. All samples use the same chosen
 background. Artwork comes from the host's existing `authImage`, never its video.
+
+Reader blue glass consumes `.reader-glass.reader-glass-panel` from the existing
+Library stylesheet, including its gradient, edge seam, shadows and touch/reduced-
+transparency treatment. The two Reader color swatches measure its gradient stops.
+On touch devices the original uses the Reader's opaque gradient and no blur;
+desktop originals use the shared translucent recipe.
+
+On phones (up to 650px), Materials, Colors, Preview and Saved are separate views
+reached through a persistent bottom navigation with safe-area clearance. The
+Materials view starts with a picker and compact side-by-side comparison, which
+stays visible while adjusting the larger controls. The full gallery is optional;
+desktop keeps the full catalog. Sections stay mounted so switching views preserves
+experiments and saved-look state. Loading a look returns to Materials. No saved
+format or existing look IDs change.
 
 The editor measures the original samples in the browser, including responsive
 blur, gradients, borders and layered shadows. Changes become scoped inline
@@ -50,5 +64,8 @@ look lifecycle, reload, import/export, keyboard and reduced transparency.
 
 ## History
 
+- **2026-10-26:** Added the Reader Chamber's blue panel material and gradient colors;
+  made the phone workflow use section navigation, an optional gallery, a pinned
+  comparison, and larger touch controls while preserving the desktop workbench.
 - **2026-10-26:** Added the painter-style workbench with canonical material samples,
   measured color swatches, isolated experiments, composition and portable saved looks.

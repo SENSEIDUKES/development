@@ -10,7 +10,7 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - **Source location:** `src/components/CreationModal.tsx` (default export `CreationModal`)
 - **Workshop preview:** `?preview=story-seed` (`&state=<scenario-id>` deep-links a state)
 - **First Workshop record:** 2026-08-01
-- **Last recorded Workshop update:** 2026-10-22
+- **Last recorded Workshop update:** 2026-10-26
 - **Historical source inspection:** 2026-08-10
 - **Lifecycle status:** finalized Workshop feature; refactored, optimized, and active implementation built here
 
@@ -31,6 +31,15 @@ Story Seed is one creation flow with these visible destinations:
   access, seed reuse, and novel manifestation actions.
 - **World Blueprint** is an editable sibling artifact. It is not nested inside
   the portable Creator / Story / World seed.
+- **The creator frame (2026-10-26).** Create moves through the Seed like a
+  game's character creator: a step strip (Origin → ARC → World → Manifest, any
+  step tappable; World's eight kinds as sub-tabs), a live story card that grows
+  as the Seed fills (one line that opens on phones and tablets, a column
+  beside the step from 1280px), and Back / Next pinned above the workspace
+  bar. Manifest is the last step, a confirm screen; its footer carries the
+  page's one Manifest button. The bar reads Sections · Story Bank · Blueprint ·
+  Settings · Back. Blueprint opens the World Blueprint inside the shell once
+  one exists, otherwise the Manifest step. Owned by `development/creator/`.
 
 The canonical Story Seed shape is `creator / story / world`. Title has
 one owner at `world.optional.worldIdentity.title`; Blueprint title editing
@@ -53,6 +62,7 @@ development/
   StorySeedHelpMenu.tsx           Help modal and audio lifecycle
   BlueprintReview.tsx             editable Blueprint dossier coordinator
   blueprint/                      memoized review sections, collections, copy format
+  creator/                        step strip, live story card, pinned Back / Next, Manifest step
   workspaces/                     Origin, ARC, and World editors
   workspaces/origin/              Style, Genre, and premise/tag responsibilities
   seedSections.ts                 visible navigation plus required-input gate
@@ -206,6 +216,18 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-10-26 (character-creator Seed; Blueprint inside the shell):** From
+  SENSEI: Story Seed was the first page built here, before the shell, and was
+  not mobile friendly. Rebuilt around the character-creator pattern (Baldur's
+  Gate 3 / FFXIV): step strip, live story card, pinned Back / Next, Manifest as
+  the confirm step. The two Manifest buttons became one. The World Blueprint
+  no longer leaves the shell (it had no header, navigation or side padding);
+  Blueprint is on the bar and the rail. Narrow-screen fixes: segmented choices
+  wrap instead of truncating, Story Paths go three-up from 480px, side
+  characters four-up only from 1536px. No field, label or rule changed. The
+  Blueprint's own inner layout is the next change. The Workshop preview's
+  scenario scripts now reach the shell's bar, so `blueprint-review` opens the
+  Blueprint again.
 - **2026-10-25 (Story Tag niches):** From SENSEI: "literally have a lit RPG
   parent tab that has those type game element tags. And we need to do that for
   a lot of different genres." The 15 genre paths are now tag **niches**

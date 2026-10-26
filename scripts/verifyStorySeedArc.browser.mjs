@@ -89,6 +89,8 @@ try {
     if (await button('Open').count()) await button('Open').click();
     await page.getByRole('button', { name: /Advanced/ }).click();
     await page.getByPlaceholder('Enter the server-configured testing token').fill('browser-fixture');
+    // Create's one Manifest sits on the creator's last step.
+    await page.locator('[data-seed-creator-strip] button[data-step="manifest"]').click();
     await button('Manifest World Blueprint').click();
     await page.getByRole('button', { name: 'Manifest Story', exact: true }).waitFor();
     // The Blueprint shows Arc 1 and the Seed's Story Length; the look-ahead is the arc planner's alone.

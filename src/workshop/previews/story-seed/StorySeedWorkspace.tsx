@@ -77,10 +77,12 @@ const SCENARIO_ACTION_TIMEOUT_MS = 10_000;
 
 type PaneKind = 'reference' | 'development';
 
+// Each rendered pane, once its Story Seed has mounted. The whole pane is the
+// scope, so a script reaches the shell's own controls (the bar, the rail) as
+// well as the creator's fields.
 function getRoots(pane: PaneKind): Element[] {
-  return Array.from(
-    document.querySelectorAll(`[data-story-seed-pane="${pane}"] [id="creation-portal-root"]`),
-  );
+  return Array.from(document.querySelectorAll(`[data-story-seed-pane="${pane}"]`))
+    .filter(root => root.querySelector('[id="creation-portal-root"]'));
 }
 
 function setFieldValue(root: Element, id: string, value: string) {

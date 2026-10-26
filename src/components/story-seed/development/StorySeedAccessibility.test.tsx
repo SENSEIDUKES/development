@@ -381,11 +381,12 @@ describe('Story Seed keyboard and mobile navigation', () => {
       />}</LibraryPresentationProvider>,
     ));
 
-    const manifest = container.querySelector<HTMLButtonElement>('button[data-variant="manifest"]');
+    // Create's one Manifest is on the creator's last step.
+    act(() => container.querySelector<HTMLButtonElement>('[data-seed-creator-strip] button[data-step="manifest"]')!.click());
+    const manifest = container.querySelector<HTMLButtonElement>('[data-seed-creator-footer] button[aria-label^="Manifest disabled"]');
     expect(manifest?.disabled).toBe(true);
-    expect(manifest?.getAttribute('aria-label')).toBe(
-      'Manifest World Blueprint — Manifest disabled — missing: Style, Genre, Synopsis',
-    );
+    expect(manifest?.getAttribute('aria-label')).toBe('Manifest disabled — missing: Style, Genre, Synopsis');
+    expect(container.querySelector('[data-story-seed-action-row] button[data-variant="manifest"]')).toBeNull();
   });
 
   it('keeps custom radio groups to one Tab stop and selects with navigation keys', () => {

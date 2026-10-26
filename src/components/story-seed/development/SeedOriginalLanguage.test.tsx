@@ -135,7 +135,8 @@ describe('reopening a saved seed restores that seed’s own language', () => {
   };
 
   const openBlueprintFor = async (index: number) => {
-    await act(async () => { allButtonsNamed('Blueprint')[index]!.click(); });
+    // A Story Bank card's Blueprint, not the workspace navigation's.
+    await act(async () => { allButtonsNamed('Blueprint').filter(button => button.closest('.story-bank-card'))[index]!.click(); });
     await act(async () => { await new Promise(resolve => setTimeout(resolve, 200)); });
   };
 

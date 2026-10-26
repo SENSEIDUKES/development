@@ -36,7 +36,13 @@ import { AbilitiesWorkspace } from './workspaces/AbilitiesWorkspace';
 import { PowerSystemWorkspace } from './workspaces/PowerSystemWorkspace';
 import { PlacesWorkspace, SpeciesWorkspace, ThingsWorkspace } from './workspaces/WorldListWorkspaces';
 
-import { NarrativePanel as LibraryPanel, CreationButton as ManifestButton } from '@seihouse/sen/presentation';
+import { CreationButton as ManifestButton } from '@seihouse/sen/presentation';
+import { CreatorStepStrip } from './creator/CreatorStepStrip';
+import { CreatorStepFooter } from './creator/CreatorStepFooter';
+import { StorySeedLiveCard } from './creator/StorySeedLiveCard';
+import { ManifestStep } from './creator/ManifestStep';
+import { type CreatorPageId } from './creator/creatorSteps';
+import './creator/creator.css';
 import { DeferredStorySeedView } from './DeferredStorySeedView';
 import { StorySeedWorkspaceChrome } from './StorySeedWorkspaceChrome';
 import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
@@ -210,7 +216,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   seedOwnerIdRef.current = seedOwnerId;
 
   // Creation workspace state
-  const [activeSection, setActiveSection] = useState<SeedSectionId>('origin');
+  const [activeSection, setActiveSection] = useState<CreatorPageId>('origin');
   // Story Bank is a real view of the page — the permanent home for saved
   // seeds and their Blueprints — toggled from the bottom navigation's Story
   // Bank tab (mobile) and the header's Story Bank button (desktop).
@@ -712,10 +718,30 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     setHelpOpen(true);
   }, []);
   const closeHelp = useCallback(() => setHelpOpen(false), []);
-  const selectWorkspaceSection = useCallback((id: SeedSectionId) => {
+  const selectWorkspaceSection = useCallback((id: CreatorPageId) => {
     setActiveSection(id);
     setShowStoryBank(false);
+    setStage('intake');
   }, []);
+  /**
+   * The bar's Blueprint: the World Blueprint inside the shell once one exists,
+   * otherwise the Manifest step, which says where it will appear.
+   */
+  const openBlueprint = useCallback(() => {
+    setShowStoryBank(false);
+    if (latestReviewRef.current.blueprint) {
+      setStage('blueprint');
+    } else {
+      setStage('intake');
+      setActiveSection('manifest');
+    }
+  }, []);
+  // A new step, or the Blueprint, opens at its top, as a creator's next screen would.
+  const creatorRootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const scroller = creatorRootRef.current?.closest('.workspace-shell-main');
+    if (scroller && typeof scroller.scrollTo === 'function') scroller.scrollTo({ top: 0 });
+  }, [activeSection, stage]);
   // The host's initial seed opens once, after the owner (and so the bank) is known.
   const openInitialSeed = useLatestCallback(handleEditSeed);
   const openedInitialSeedRef = useRef<string | null>(null);
@@ -742,61 +768,59 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     return <StoryAuthGate linked={Boolean(currentUser)} onAuthenticate={runtime.authenticate} />;
   }
 
-  if (stage === 'blueprint' && blueprint) {
-    return (
-      <>
-        {(seedError || error) && (
-          <div className="mx-auto mb-5 max-w-4xl rounded border border-red-900 bg-red-950/30 p-3 text-center font-sans text-xs text-red-200" role="alert">
-            {seedError || error}
-          </div>
-        )}
-        <DeferredStorySeedView label="World Blueprint">
-          <BlueprintReview
-            blueprint={blueprint}
-            setBlueprint={updateBlueprint}
-            seed={seed}
-            updateSeed={updateSeed}
-            onBack={() => setStage('intake')}
-            onStartStory={requestStartStory}
-            onExportSeed={requestExportCurrentSeed}
-            isGenerating={isGenerating}
-            onRegenerateBlueprint={requestRegenerateBlueprint}
-            originalLanguage={originalLanguage}
-          />
-        </DeferredStorySeedView>
-      </>
-    );
-  }
-
   const missing = missingRequiredSections(seed);
   const requiredComplete = REQUIRED_STORY_SECTIONS.length - missing.length;
   const canGenerate = missing.length === 0 && !isGenerating;
   const missingRequiredLabels = missing.map(section => section.label).join(', ');
-  const ActiveWorkspace = STORY_SEED_WORKSPACES[activeSection];
+  const ActiveWorkspace = activeSection === 'manifest' ? null : STORY_SEED_WORKSPACES[activeSection];
+  const showingBlueprint = stage === 'blueprint' && Boolean(blueprint);
+  const errorBanner = (seedError || error) && (
+    <div className="mt-4 rounded border border-red-900 bg-red-950/30 p-3 text-center font-sans text-xs text-red-200" role="alert">
+      {seedError || error}
+    </div>
+  );
 
   return (
     // The shared workspace shell owns the header row, the desktop section rail
-    // and the scrolling main region; only Story Seed's own content sits inside.
+    // and the scrolling main region; Story Seed's creator and its World
+    // Blueprint both sit inside it, so the page never loses its frame.
     <StorySeedWorkspaceChrome
         onNavigateHome={onNavigateHome}
-        seed={seed} updateSeed={updateSeed} activeSection={activeSection} authorName={authorName}
+        seed={seed} updateSeed={updateSeed} activeSection={showingBlueprint || showStoryBank || activeSection === 'manifest' ? null : activeSection}
+        authorName={authorName}
         storyLanguage={storyLanguageSetting} onReadingModeChange={resolveReadingMode}
         storySettings={renderStorySettings?.({ seed, originalLanguage })}
         onSelectSection={selectWorkspaceSection} isGenerating={isGenerating} savedFeedback={savedFeedback}
-        showStoryBank={showStoryBank} helpOpen={helpOpen} canManifest={canGenerate}
-        manifestLabel={isGenerating ? 'Manifesting...' : 'Manifest World Blueprint'}
-        manifestDisabledReason={missing.length ? `Manifest disabled — missing: ${missingRequiredLabels}` : undefined}
-        manifestIndicator={activeAgentId === 'versa' ? <img src={runtime.authorMarkUrl} className="h-5 w-5 animate-pulse object-contain" alt="" aria-hidden="true" /> : undefined}
+        showStoryBank={showStoryBank} helpOpen={helpOpen}
+        showActionRow={!showingBlueprint}
+        blueprintActive={showingBlueprint} onOpenBlueprint={openBlueprint}
         status={isGenerating ? 'Creating your World Blueprint' : savedFeedback ? 'Draft saved' : missing.length ? `Missing required: ${missingRequiredLabels}` : 'All required Story inputs complete'}
-        error={seedError || error} onSaveDraft={requestSaveDraft} onManifest={requestGenerateBlueprint}
+        error={seedError || error} onSaveDraft={requestSaveDraft}
       onToggleStoryBank={toggleStoryBank} onOpenHelp={openHelp} onSecondaryIntent={preloadStorySeedSecondary}
     >
-      {/* `pb-24` clears the sticky Manifest strip at the end of scroll; below
-          the desktop breakpoint the shell's main region already clears the
-          workspace task bar, so no extra padding is added there. */}
-      <div className="story-seed-development-surface mx-auto max-w-7xl px-4 pb-24 max-lg:pb-0 sm:px-6" id="creation-portal-root">
+      {showingBlueprint && blueprint ? (
+        <div className="px-4 pt-4 sm:px-6 sm:pt-6" ref={creatorRootRef}>
+          {errorBanner && <div className="mx-auto mb-5 max-w-4xl">{errorBanner}</div>}
+          <DeferredStorySeedView label="World Blueprint">
+            <BlueprintReview
+              blueprint={blueprint}
+              setBlueprint={updateBlueprint}
+              seed={seed}
+              updateSeed={updateSeed}
+              onBack={() => selectWorkspaceSection('origin')}
+              onStartStory={requestStartStory}
+              onExportSeed={requestExportCurrentSeed}
+              isGenerating={isGenerating}
+              onRegenerateBlueprint={requestRegenerateBlueprint}
+              originalLanguage={originalLanguage}
+            />
+          </DeferredStorySeedView>
+        </div>
+      ) : (
+      <div className="story-seed-development-surface seed-creator" id="creation-portal-root" ref={creatorRootRef}>
 
       {showStoryBank && (
+        <div className="pt-6">
         <DeferredStorySeedView label="Story Bank">
           <StoryBank
             seeds={savedSeeds}
@@ -821,111 +845,74 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
             onManifest={handleManifestSeed}
           />
         </DeferredStorySeedView>
-      )}
-
-      {(seedError || error) && (
-        <div className="mt-6 rounded border border-red-900 bg-red-950/30 p-3 text-center font-sans text-xs text-red-200" role="alert">
-          {seedError || error}
+        {errorBanner}
         </div>
       )}
 
-      {/* Two-panel creation workspace — shelled in the Celestial Library
-          glass panel; the action bar below is its footer strip. The Story
-          Bank view replaces it while the bank is open. */}
-      {/* The section rail is the shell's sidebar now, so the panel is a single
-          column at every width and the workspace fills it. */}
-      {!showStoryBank && (
-      <LibraryPanel padding="none" className="mt-6">
-        <div className="relative min-w-0">
-          {/* Restrained celestial ambience the glass fields float over —
-              gradients only, no blur, so mobile scrolling stays cheap. */}
-          <div aria-hidden="true" className="seed-workspace-ambience" />
-          <div className="relative p-4 sm:p-8">
+      {/* The character creator: steps across the top, the live story card
+          beside (or above) the open step, and Back / Next pinned at the
+          bottom. The Story Bank view replaces it while the bank is open. */}
+      {!showStoryBank && (<>
+        <CreatorStepStrip seed={seed} page={activeSection} onSelect={selectWorkspaceSection} />
+        <div className="seed-creator-body">
+          {activeSection !== 'manifest' && (
+            <div className="seed-creator-card-slot"><StorySeedLiveCard seed={seed} /></div>
+          )}
+          <div className="seed-creator-content relative">
+            {/* Restrained celestial ambience the glass fields float over —
+                gradients only, no blur, so mobile scrolling stays cheap. */}
+            <div aria-hidden="true" className="seed-workspace-ambience" />
+            {errorBanner}
             <motion.div
               key={activeSection}
+              className="relative"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.18, ease: 'easeOut' }}
             >
-              <ActiveWorkspace seed={seed} updateSeed={updateSeed} />
+              {ActiveWorkspace
+                ? <ActiveWorkspace seed={seed} updateSeed={updateSeed} />
+                : <ManifestStep seed={seed} hasBlueprint={Boolean(blueprint)}
+                    onGoToOrigin={() => selectWorkspaceSection('origin')} onOpenBlueprint={openBlueprint} />}
             </motion.div>
           </div>
-
-          {/* Action bar — required tracking + Manifest as the single primary
-              action, rendered as the panel's footer strip (luminous top
-              divider, translucent blur). Section navigation lives in the
-              bottom navigation on mobile and the sidebar on desktop. On
-              mobile the strip rests in flow at the panel bottom (sticky is
-              off) so it always stays clear of the bottom navigation. */}
-          <LibraryPanel variant="footer" padding="none" className="sticky bottom-0 max-lg:static z-30 px-4 py-3.5 sm:px-8">
-            <div className="flex items-center gap-3">
-              <div className="hidden min-w-0 flex-1 items-center gap-3 sm:flex">
-                <div className="flex shrink-0 items-center gap-2" aria-label={`${requiredComplete} of ${REQUIRED_STORY_SECTIONS.length} required Story inputs complete`}>
-                  {REQUIRED_STORY_SECTIONS.map(section => {
-                    const filled = section.isFilled(seed);
-                    return (
-                      <span
-                        key={section.id}
-                        title={`${section.label}: ${filled ? 'complete' : 'missing'}`}
-                        className={`h-2 w-2 rounded-full ${
-                          filled
-                            ? 'bg-portal shadow-[0_0_6px_rgba(4,172,255,0.65)]'
-                            : 'border border-human/70 bg-human/10'
-                        }`}
-                      />
-                    );
-                  })}
-                </div>
-                <p className="truncate font-sc text-[10px] font-bold uppercase tracking-[0.18em] text-neutral-400">
-                  {missing.length > 0 ? (
-                    <>
-                      Missing required:{' '}
-                      <span className="text-human/80">{missing.map(section => section.label).join(', ')}</span>
-                    </>
-                  ) : (
-                    'All required Story inputs complete'
-                  )}
-                </p>
-              </div>
-              <p className="flex-1 font-sc text-[10px] font-bold uppercase tracking-[0.18em] text-neutral-400 sm:hidden">
-                {requiredComplete}/{REQUIRED_STORY_SECTIONS.length} required
-              </p>
-
-              {manifestAside && <span className="shrink-0 text-base">{manifestAside}</span>}
-              <ManifestButton
-                size="lg"
-                icon={SENManifestingIcon}
-                onClick={requestGenerateBlueprint}
-                disabled={!canGenerate}
-                loading={isGenerating}
-                // While VERSA drafts, its mark replaces the generic spinner.
-                loadingIndicator={activeAgentId === 'versa' ? (
-                  <img src={runtime.authorMarkUrl} className="h-5 w-5 shrink-0 animate-pulse object-contain" alt="" aria-hidden="true" />
-                ) : undefined}
-                aria-label={missing.length > 0 ? `Manifest disabled — missing: ${missingRequiredLabels}` : undefined}
-                title={missing.length > 0 ? `Missing required: ${missingRequiredLabels}` : 'Manifest the World Blueprint'}
-                className="shrink-0"
-              >
-                {isGenerating ? (
-                  <span>Manifesting...</span>
-                ) : (
-                  <>
-                    <span className="hidden sm:inline">Manifest World Blueprint</span>
-                    <span className="sm:hidden">Manifest</span>
-                  </>
-                )}
-              </ManifestButton>
-            </div>
-          </LibraryPanel>
         </div>
-      </LibraryPanel>
-      )}
-
-      {!showStoryBank && (
-        <p className="mt-4 text-center font-sans text-[11px] leading-relaxed text-neutral-400">
-          Every empty field will be intelligently extrapolated using Chinese light-novel logic.
-          A World Blueprint is generated for your review before the story begins.
-        </p>
+        <CreatorStepFooter
+          page={activeSection}
+          onSelect={selectWorkspaceSection}
+          progress={<span aria-label={`${requiredComplete} of ${REQUIRED_STORY_SECTIONS.length} required Story inputs complete`}>
+            {requiredComplete}/{REQUIRED_STORY_SECTIONS.length}<span className="seed-creator-footer-progress-word"> required</span>
+          </span>}
+          manifest={<>
+            {manifestAside && <span className="shrink-0 text-base">{manifestAside}</span>}
+            <ManifestButton
+              size="lg"
+              icon={SENManifestingIcon}
+              onClick={requestGenerateBlueprint}
+              disabled={!canGenerate}
+              loading={isGenerating}
+              // While VERSA drafts, its mark replaces the generic spinner.
+              loadingIndicator={activeAgentId === 'versa' ? (
+                <img src={runtime.authorMarkUrl} className="h-5 w-5 shrink-0 animate-pulse object-contain" alt="" aria-hidden="true" />
+              ) : undefined}
+              // The phone shows only "Manifest"; the name stays whole everywhere.
+              aria-label={missing.length > 0 ? `Manifest disabled — missing: ${missingRequiredLabels}` : isGenerating ? undefined : 'Manifest World Blueprint'}
+              title={missing.length > 0 ? `Missing required: ${missingRequiredLabels}` : 'Manifest the World Blueprint'}
+              className="shrink-0"
+            >
+              {isGenerating ? (
+                <span>Manifesting...</span>
+              ) : (
+                <>
+                  <span className="hidden sm:inline">Manifest World Blueprint</span>
+                  <span className="sm:hidden">Manifest</span>
+                </>
+              )}
+            </ManifestButton>
+          </>}
+        />
+      </>)}
+      </div>
       )}
 
       {/* Story Seed Help — the `?` guidance menu shared by the mobile bottom
@@ -940,7 +927,6 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
           />
         </DeferredStorySeedView>
       )}
-      </div>
     </StorySeedWorkspaceChrome>
   );
 }

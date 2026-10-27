@@ -365,11 +365,31 @@ export function readMarks(source: string, { soundWords }: MarkReadingOptions = {
   const used = new Set<number>();
   /** Spans open in the text, outermost first: an inner one's closing is consumed without ending the outer. */
   const spans: OpenSpan[] = [];
-  /** Words were written inside a speaker tag: its closing bracket comes after them. */
-  let tagWords = false;
+  /**
+   * Where the words written inside a speaker tag begin, when they were: its
+   * closing bracket comes after them, and the space it leaves before that
+   * bracket is the tag's, exactly as it is for a span.
+   */
+  let tagWords: number | undefined;
 
   /** Removing a token between two spaces would leave a double space; keep one. */
   const skipDoubledSpace = (next: number) => (isSpace(text.at(-1)) && isSpace(source[next]) ? next + 1 : next);
+
+  /**
+   * The space a closing tag leaves behind inside the span it ends. The space
+   * before `| medium]]` in `[[sound: growl | growled | medium]].` is the tag's
+   * own spacing, not the sentence's: left in, the paragraph reads back as
+   * `growled .` and no longer matches the prose it was tagged from. It hides
+   * whenever a space follows the tag, because `skipDoubledSpace` takes it as
+   * the word space, and shows whenever punctuation does — which is where most
+   * tagged clauses end. Never trimmed past the span's own start, so prose
+   * space written before the tag stays prose.
+   */
+  const dropSpaceInsideSpan = (start: number) => {
+    let end = text.length;
+    while (end > start && isSpace(text[end - 1])) end -= 1;
+    text = text.slice(0, end);
+  };
 
   /** The span's words, without the spaces at its ends; undefined when it wraps nothing. */
   const wrapped = (start: number, end: number) => {
@@ -400,6 +420,7 @@ export function readMarks(source: string, { soundWords }: MarkReadingOptions = {
   const closeSpan = (trailing?: string) => {
     const span = spans.pop()!;
     if (span.inner) return;
+    dropSpaceInsideSpan(span.start);
     if (span.kind === 'mark') { addSpan(span.id, span.start, text.length); return; }
     const words = text.slice(span.start).trim();
     // `[[sound: thunder | high]]` names an Energy, not words: it is removed whole.
@@ -432,7 +453,7 @@ export function readMarks(source: string, { soundWords }: MarkReadingOptions = {
         if (name && name.length <= SPEAKER_TAG_NAME_LIMIT) speakers.push({ name, offset: text.length });
         else speakerIssues.push({ kind: 'unnamed' });
         // A separator with no number after it means the writer's words follow inside the tag.
-        if (tag[2] && !tag[3]) tagWords = true;
+        if (tag[2] && !tag[3]) tagWords = text.length;
         index = skipDoubledSpace(index + tag[0].length);
         continue;
       }
@@ -536,8 +557,9 @@ export function readMarks(source: string, { soundWords }: MarkReadingOptions = {
       index = skipDoubledSpace(index + closing[0].length);
       continue;
     }
-    if (tagWords && (character === ']' || character === '］')) {
-      tagWords = false;
+    if (tagWords !== undefined && (character === ']' || character === '］')) {
+      dropSpaceInsideSpan(tagWords);
+      tagWords = undefined;
       index = skipDoubledSpace(index + matchAt(SPAN_CLOSE, source, index)![0].length);
       continue;
     }

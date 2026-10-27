@@ -26,6 +26,9 @@ describe('readMarks', () => {
     expect(words(readMarks('He [[drew his sword|1]] fast.'))).toEqual([[1, 'drew his sword']]);
     expect(words(readMarks('He [[1st strike|2]] landed.'))).toEqual([[2, '1st strike']]);
     expect(words(readMarks('[[1|2]] blows'))).toEqual([[1, '2']]);
+    // A space before the closing bracket is the mark's, not the sentence's: it never lands before punctuation.
+    expect(readMarks('He [[1|drew his sword ]], fast.').text).toBe('He drew his sword, fast.');
+    expect(readMarks('He [[1|drew his sword ]] fast.').text).toBe('He drew his sword fast.');
   });
 
   it('reads full-width brackets, pipes and digits in CJK prose', () => {
@@ -96,6 +99,9 @@ describe('speaker tags', () => {
     const inside = readMarks('[[@Mara|“Hold the gate.”]] she said.');
     expect(inside.text).toBe('“Hold the gate.” she said.');
     expect(tags(inside)).toEqual([['Mara', '“Hold the gate.” she said.']]);
+    // A space before the closing bracket is the tag's, not the sentence's: it never lands before punctuation.
+    expect(readMarks('[[@Mara| “Hold the gate” ]], she said.').text).toBe('“Hold the gate”, she said.');
+    expect(readMarks('[[@Mara| “Hold the gate” ]] she said.').text).toBe('“Hold the gate” she said.');
   });
 
   it('is read before marks: never a reversed span, and a tag inside a span leaves the span whole', () => {
@@ -297,6 +303,33 @@ describe('sound tags', () => {
       ['林は［［sound：blade drawn｜剣を抜いた］］。', '林は剣を抜いた。', [['blade drawn', undefined, '剣を抜いた']]],
       // A part after the words that is not an Energy is the tag's, never prose.
       ['He [[sound: blade drawn | drew his sword | loudly]] fast.', 'He drew his sword fast.', [['blade drawn', undefined, 'drew his sword']]],
+    ];
+    for (const [sample, text, expected] of cases) {
+      const reading = readMarks(sample);
+      expect(reading.text).toBe(text);
+      expect(sounds(reading)).toEqual(expected);
+    }
+  });
+
+  /**
+   * The seam the first tagged chapter failed on (The Footnote Ascendant,
+   * 2026-10-27): a tag closed right before a comma or a full stop. The space
+   * the tagger writes before `| Energy]]` is the tag's own, and leaving it in
+   * put a space before the punctuation, which made the paragraph no longer the
+   * prose it was tagged from — so the whole chapter's tags were refused. It is
+   * invisible when a space follows the tag instead, which is the only shape
+   * the tagger is shown, so nothing taught it to avoid this one.
+   */
+  it('leaves no space behind when a tag closes on punctuation', () => {
+    const cases: Array<[string, string, ReturnType<typeof sounds>]> = [
+      ['Her palms [[sound: fire spell | glowed | medium]], red-gold and rising.', 'Her palms glowed, red-gold and rising.', [['fire spell', 'medium', 'glowed']]],
+      ['It [[sound: growl | growled | medium]]. Then it stopped.', 'It growled. Then it stopped.', [['growl', 'medium', 'growled']]],
+      ['It [[sound: growl | growled ]]. Then it stopped.', 'It growled. Then it stopped.', [['growl', undefined, 'growled']]],
+      ['It [[sound: growl | growled | medium]]: the yard fell still.', 'It growled: the yard fell still.', [['growl', 'medium', 'growled']]],
+      ['林は［［sound：growl｜唸った ｜ medium］］。', '林は唸った。', [['growl', 'medium', '唸った']]],
+      // A space after the tag is still one space, not two: the word space was always there.
+      ['It [[sound: growl | growled | medium]] and stopped.', 'It growled and stopped.', [['growl', 'medium', 'growled']]],
+      ['It [[sound: growl | growled ]] and stopped.', 'It growled and stopped.', [['growl', undefined, 'growled']]],
     ];
     for (const [sample, text, expected] of cases) {
       const reading = readMarks(sample);

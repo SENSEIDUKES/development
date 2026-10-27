@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
-import { BookOpen, ChevronDown, Search, Sparkles, Swords, Users } from 'lucide-react';
+import { BookOpen, ChevronDown, LayoutGrid, Search, Shapes, Sparkles, Swords, Trophy, Users } from 'lucide-react';
 import { LibraryPanel, LibraryDiscoveryIcon } from '@seihouse/library-ui';
 import { SEIEmptyState } from '@seihouse/ui';
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
@@ -10,6 +10,7 @@ import type { DiscoverCodexEntry, DiscoverCreator, DiscoverProps } from '../shar
 import './discover.css';
 
 type Feed = 'all' | 'mine';
+type BrowseView = 'browse' | 'genres' | 'rankings';
 const SECTIONS = [
   { id: 'stories', label: 'Stories', icon: BookOpen },
   { id: 'creators', label: 'Creators', icon: Users },
@@ -35,25 +36,25 @@ const matchesText = (query: string, ...values: (string | undefined)[]) =>
 
 /** One Discover shell. Destinations and catalogue truth stay with the host. */
 export function Discover(props: DiscoverProps) {
-  const { section, sectionHref, onSectionChange, events = [], notice } = props;
-  const navigation = useRef<HTMLElement>(null);
+  const { section, sectionHref, onSectionChange, events = [], notice, loreArticle } = props;
+  const surface = useRef<HTMLDivElement>(null);
   const previousSection = useRef(section);
+  const previousArticle = useRef(loreArticle);
   useEffect(() => {
-    if (previousSection.current !== section) {
-      navigation.current?.scrollIntoView?.({ block: 'start', behavior: 'instant' });
-      previousSection.current = section;
+    // Scroll the surface, not the sticky navigation's current on-screen position.
+    if (previousSection.current !== section || (previousArticle.current && !loreArticle)) {
+      surface.current?.scrollIntoView?.({ block: 'start', behavior: 'instant' });
     }
-  }, [section]);
+    previousSection.current = section;
+    previousArticle.current = loreArticle;
+  }, [section, loreArticle]);
   return (
-    <div data-discover className="discover discover-hub pb-12 text-signal">
+    <div ref={surface} data-discover className="discover discover-hub pb-12 text-signal">
       <header className="discover-header">
-        <div className="discover-heading">
-          <p className="discover-eyebrow">Expanded Novels</p>
-          <h1 className="discover-title font-display font-bold">Discover</h1>
-        </div>
+        <h1 className="discover-title font-display font-bold">Discover</h1>
         {notice && <div className="discover-notice">{notice}</div>}
       </header>
-      <nav ref={navigation} aria-label="Discover sections" className="discover-navigation">
+      <nav aria-label="Discover sections" className="discover-navigation">
         {SECTIONS.map(({ id, label, icon: Icon }) => (
           <a
             key={id}
@@ -71,11 +72,14 @@ export function Discover(props: DiscoverProps) {
         ))}
       </nav>
       {events.length > 0 && (
-        <section aria-label="Events" className="discover-events-strip">
-          <div className="discover-events-label">
+        <details className="discover-events-strip">
+          <summary>
             <Sparkles aria-hidden="true" size={16} />
-            <h2>Events</h2>
-          </div>
+            <span className="discover-events-label">Events</span>
+            <span className="discover-events-preview">{events[0].title}</span>
+            {events.length > 1 && <span className="discover-events-more">+{events.length - 1}</span>}
+            <ChevronDown aria-hidden="true" size={16} />
+          </summary>
           <ul className="discover-rail discover-rail--events" aria-label="Events">
             {events.map((event) => (
               <li key={event.id} className="discover-event">
@@ -96,7 +100,7 @@ export function Discover(props: DiscoverProps) {
               </li>
             ))}
           </ul>
-        </section>
+        </details>
       )}
       <DiscoverContent key={section} {...props} />
     </div>
@@ -125,22 +129,29 @@ function DiscoverContent({
   const [feed, setFeed] = useState<Feed>('all');
   const [query, setQuery] = useState('');
   const [genre, setGenre] = useState('');
+  const [view, setView] = useState<BrowseView>('browse');
   const [codexKind, setCodexKind] = useState<DiscoverCodexEntry['kind']>('characters');
+  const contentTop = useRef<HTMLDivElement>(null);
+  const selectView = (next: BrowseView, kind?: DiscoverCodexEntry['kind']) => {
+    setView(next);
+    if (kind) setCodexKind(kind);
+    contentTop.current?.scrollIntoView?.({ block: 'start', behavior: 'instant' });
+  };
   const search = query.trim().toLocaleLowerCase();
   const worldById = new Map(worlds.map((world) => [world.id, world]));
   const tracked = new Set(trackedWorldIds ?? []);
   const followed = new Set(followedCreatorIds ?? []);
   const trackedEntries = new Set(trackedCodexIds ?? []);
-  const worldMatches = (world: HomeWorld) =>
-    (!genre || world.genre === genre) &&
+  const worldMatches = (world: HomeWorld, genreFilter = genre) =>
+    (!genreFilter || world.genre === genreFilter) &&
     matchesText(search, world.title, world.creatorName, world.genre, ...(world.tags ?? []));
   const storyMatches = (world: HomeWorld) => worldMatches(world) && (feed === 'all' || tracked.has(world.id));
   const creatorWorlds = (creator: DiscoverCreator) =>
     creator.worldIds.flatMap((id) => (worldById.get(id) ? [worldById.get(id)!] : []));
-  const creatorMatches = (creator: DiscoverCreator, updates = true) => {
+  const creatorMatches = (creator: DiscoverCreator, updates = true, genreFilter = genre) => {
     const titles = creatorWorlds(creator);
     return (
-      (!genre || titles.some((world) => world.genre === genre)) &&
+      (!genreFilter || titles.some((world) => world.genre === genreFilter)) &&
       matchesText(
         search,
         creator.name,
@@ -176,6 +187,17 @@ function DiscoverContent({
     })
     .sort((a, b) => new Date(b.release.releasedAt).getTime() - new Date(a.release.releasedAt).getTime());
   const genres = Array.from(new Set(worlds.map((world) => world.genre))).sort();
+  // Genre browsing uses the current search/follows, independent of the selected genre.
+  const genreChoices = genres
+    .map((value) => {
+      const genreWorlds = worlds.filter((world) => world.genre === value);
+      const count =
+        section === 'creators'
+          ? creators.filter((creator) => creatorMatches(creator, true, value)).length
+          : genreWorlds.filter((world) => worldMatches(world, '') && (feed === 'all' || tracked.has(world.id))).length;
+      return { value, count, cover: genreWorlds.find((world) => world.imageUrl)?.imageUrl };
+    })
+    .filter((choice) => choice.count > 0);
   const sectionName = SECTIONS.find((item) => item.id === section)!.label;
   const trackingAvailable =
     section === 'stories'
@@ -195,7 +217,7 @@ function DiscoverContent({
         : 'Try another search, genre, or switch to All.';
   const boardKind = section === 'codex' ? codexKind : section;
   const board = rankingBoards.find((value) => value.kind === boardKind);
-  const showFeed = !(section === 'lore' && loreArticle);
+  const showFeed = !(section === 'lore' && loreArticle) && view !== 'rankings';
   const feedControl = (
     <div role="group" aria-label={`${sectionName} feed`} className="discover-segmented">
       {(
@@ -216,7 +238,7 @@ function DiscoverContent({
   const codexCard = (entry: DiscoverCodexEntry, rank?: number) => (
     <CodexEntry entry={entry} world={worldById.get(entry.worldId)!} rank={rank} onOpenWorld={onOpenWorld} />
   );
-  // Filtering never rewrites the host's rank. Rankings remain global under My updates.
+  // Filtering never rewrites the host's rank. Rankings are independent of the personal feed.
   const ranked =
     boardKind === 'stories'
       ? (board?.worldIds ?? []).flatMap((id, index) => {
@@ -236,18 +258,12 @@ function DiscoverContent({
           });
 
   return (
-    <div className="discover-content" data-discover-section={section}>
-      {showFeed && (
-        <div className="discover-section-heading">
-          <div>
-            <p className="discover-eyebrow">Explore the Library</p>
-            <h2 className="font-display">{sectionName}</h2>
-          </div>
-          {feedControl}
-        </div>
-      )}
+    <div ref={contentTop} className="discover-content" data-discover-section={section}>
       {section === 'lore' ? (
-        renderLore(feed === 'mine')
+        <>
+          {showFeed && <div className="discover-feed-row">{feedControl}</div>}
+          {renderLore(feed === 'mine')}
+        </>
       ) : (
         <>
           <div className="discover-filter-bar">
@@ -260,15 +276,15 @@ function DiscoverContent({
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={
                   section === 'stories'
-                    ? 'Stories, creators, tags'
+                    ? 'Search stories, tags'
                     : section === 'creators'
-                      ? 'Creators and their stories'
-                      : 'Characters, items and their stories'
+                      ? 'Search creators'
+                      : 'Search Codex'
                 }
               />
             </label>
             <label className="discover-genre-select">
-              Genre
+              <span className="sr-only">Genre</span>
               <select value={genre} onChange={(event) => setGenre(event.target.value)}>
                 <option value="">All genres</option>
                 {genres.map((value) => (
@@ -277,184 +293,295 @@ function DiscoverContent({
               </select>
             </label>
           </div>
-          {section === 'stories' ? (
-            <>
-              {featured.length > 0 && (
-                <section aria-label="Featured" className="discover-shelf">
-                  <ul className="discover-rail discover-rail--featured" aria-label="Featured worlds">
-                    {featured.map((world) => (
-                      <li key={world.id}>
-                        <WorldCardFeature
-                          world={world}
-                          displayStatus={publicStatus(world)}
-                          onOpen={() => onOpenWorld(world.id)}
-                        />
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              )}
-              <Shelf
-                id={`${ids}-stories`}
-                title={feed === 'all' ? 'All stories' : 'My stories'}
-                subtitle={`${catalogue.length} ${catalogue.length === 1 ? 'story' : 'stories'}${genre ? ` · ${genre}` : ''}`}
-              >
-                {catalogue.length ? (
-                  <ul className="discover-grid" aria-label="Stories">
-                    {catalogue.map((world) => (
-                      <li key={world.id}>
-                        <WorldCard
-                          world={world}
-                          displayStatus={publicStatus(world)}
-                          onOpen={() => onOpenWorld(world.id)}
-                        />
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <Empty title={emptyTitle} description={emptyDescription} />
-                )}
-              </Shelf>
-              <Shelf
-                id={`${ids}-releases`}
-                title="New Chapters"
-                subtitle="Newest first. Nothing decides the order but time."
-              >
-                {feedReleases.length ? (
-                  <ol className="discover-list" aria-label={feed === 'mine' ? 'My updates' : 'New chapters'}>
-                    {feedReleases.map(({ release, world }) => (
-                      <li key={release.id}>
-                        <WorldCardMenu
-                          world={world}
-                          onOpen={() => onOpenWorld(world.id)}
-                          tracked={tracked.has(world.id)}
-                          chapter={{ number: release.chapterNumber, title: release.chapterTitle }}
-                          age={{
-                            label: releaseAge(release.releasedAt, now ?? new Date()),
-                            dateTime: release.releasedAt,
-                          }}
-                        />
-                      </li>
-                    ))}
-                  </ol>
-                ) : (
-                  <Empty
-                    title={
-                      feed === 'mine' && !trackingAvailable
-                        ? 'My updates arrives with the Tracker'
-                        : search || genre
-                          ? feed === 'mine'
-                            ? 'No tracked chapters match'
-                            : 'No new chapters match'
-                          : 'No new chapters yet'
-                    }
-                    description="New chapters appear here as the stories in this view update."
-                  />
-                )}
-              </Shelf>
-              {fate.length > 0 && (
-                <section aria-labelledby={`${ids}-fate`} className="discover-fate">
-                  <div className="discover-fate-copy">
-                    <p className="discover-eyebrow discover-eyebrow--fate">Fate Survival</p>
-                    <h2 id={`${ids}-fate`} className="discover-fate-title font-display">
-                      Your choices write the next chapter.
-                    </h2>
-                    <p className="discover-fate-lede">
-                      Narrative experiences told chapter by chapter. Every decision carries its consequences forward, so
-                      the story you read is the one you shaped.
-                    </p>
-                  </div>
-                  <ul className="discover-rail discover-rail--cards" aria-label="Fate Survival worlds">
-                    {fate.map((world) => (
-                      <li key={world.id}>
-                        <WorldCard
-                          world={world}
-                          displayStatus={publicStatus(world)}
-                          onOpen={() => onOpenWorld(world.id)}
-                        />
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              )}
-            </>
-          ) : section === 'creators' ? (
-            <Shelf
-              id={`${ids}-creators`}
-              title={feed === 'all' ? 'All creators' : 'My creators'}
-              subtitle="Meet the people behind the worlds. Open a creator to explore their stories."
-            >
-              {people.length ? (
-                <ul className="discover-directory-grid" aria-label="Creators">
-                  {people.map((creator) => (
-                    <li key={creator.id}>{creatorCard(creator)}</li>
-                  ))}
-                </ul>
+          <div className="discover-browser">
+            <div role="group" aria-label={`${sectionName} views`} className="discover-view-rail">
+              {section === 'codex' ? (
+                (['characters', 'items'] as const).map((kind) => {
+                  const Icon = kind === 'characters' ? Users : Swords;
+                  return (
+                    <button
+                      key={kind}
+                      type="button"
+                      aria-pressed={view === 'browse' && codexKind === kind}
+                      aria-controls={`${ids}-results`}
+                      onClick={() => selectView('browse', kind)}
+                    >
+                      <Icon aria-hidden="true" size={21} />
+                      <span>{kind === 'characters' ? 'Characters' : 'Items'}</span>
+                    </button>
+                  );
+                })
               ) : (
-                <Empty title={emptyTitle} description={emptyDescription} />
-              )}
-            </Shelf>
-          ) : (
-            <>
-              <div role="group" aria-label="Codex category" className="discover-codex-categories">
-                {(['characters', 'items'] as const).map((kind) => (
-                  <button type="button" key={kind} aria-pressed={codexKind === kind} onClick={() => setCodexKind(kind)}>
-                    {kind === 'characters' ? (
-                      <Users aria-hidden="true" size={18} />
-                    ) : (
-                      <Swords aria-hidden="true" size={18} />
-                    )}
-                    <span>{kind === 'characters' ? 'Characters' : 'Items'}</span>
-                    <span className="discover-category-count">
-                      {codexEntries.filter((entry) => entry.kind === kind && entryMatches(entry)).length}
-                    </span>
+                <>
+                  <button
+                    type="button"
+                    aria-pressed={view === 'browse'}
+                    aria-controls={`${ids}-results`}
+                    onClick={() => selectView('browse')}
+                  >
+                    <LayoutGrid aria-hidden="true" size={21} />
+                    <span>Browse</span>
                   </button>
-                ))}
-              </div>
-              <Shelf
-                id={`${ids}-codex`}
-                title={codexKind === 'characters' ? 'Characters' : 'Items'}
-                subtitle="Every entry belongs to a story. Open one to see its place in that world."
+                  <button
+                    type="button"
+                    aria-pressed={view === 'genres'}
+                    aria-controls={`${ids}-results`}
+                    onClick={() => selectView('genres')}
+                  >
+                    <Shapes aria-hidden="true" size={21} />
+                    <span>Genres</span>
+                  </button>
+                </>
+              )}
+              <button
+                type="button"
+                aria-pressed={view === 'rankings'}
+                aria-controls={`${ids}-results`}
+                onClick={() => selectView('rankings')}
               >
-                {entries.length ? (
-                  <ul className="discover-directory-grid" aria-label={`Codex ${codexKind}`}>
-                    {entries.map((entry) => (
-                      <li key={entry.id}>{codexCard(entry)}</li>
+                <Trophy aria-hidden="true" size={21} />
+                <span>Rankings</span>
+              </button>
+            </div>
+            <div id={`${ids}-results`} className="discover-main">
+              {showFeed && <div className="discover-feed-row">{feedControl}</div>}
+              {view === 'genres' ? (
+                <Shelf
+                  id={`${ids}-genres`}
+                  title="Explore genres"
+                  subtitle={`Browse ${sectionName.toLowerCase()} by genre.`}
+                >
+                  <ul className="discover-genre-grid" aria-label={`${sectionName} genres`}>
+                    <li>
+                      <button
+                        type="button"
+                        aria-pressed={!genre}
+                        onClick={() => {
+                          setGenre('');
+                          selectView('browse');
+                        }}
+                      >
+                        <span className="discover-genre-art">
+                          <LayoutGrid aria-hidden="true" size={24} />
+                        </span>
+                        <span className="discover-genre-name">All genres</span>
+                      </button>
+                    </li>
+                    {genreChoices.map(({ value, count, cover }) => (
+                      <li key={value}>
+                        <button
+                          type="button"
+                          aria-pressed={genre === value}
+                          onClick={() => {
+                            setGenre(value);
+                            selectView('browse');
+                          }}
+                        >
+                          <span className="discover-genre-art">
+                            {cover ? (
+                              <img src={cover} alt="" loading="lazy" />
+                            ) : (
+                              <BookOpen aria-hidden="true" size={24} />
+                            )}
+                          </span>
+                          <span className="discover-genre-name">
+                            {value}
+                            <span>
+                              {count}{' '}
+                              {section === 'stories'
+                                ? count === 1
+                                  ? 'story'
+                                  : 'stories'
+                                : count === 1
+                                  ? 'creator'
+                                  : 'creators'}
+                            </span>
+                          </span>
+                        </button>
+                      </li>
                     ))}
                   </ul>
-                ) : (
-                  <Empty title={emptyTitle} description={emptyDescription} />
-                )}
-              </Shelf>
-            </>
-          )}
-          <Shelf
-            id={`${ids}-rankings`}
-            title="Heavenly Rankings"
-            subtitle={board?.description ?? `${sectionName} rankings are coming soon.`}
-            accessory={
-              <span className="discover-ranking-kind">
-                {board?.label ??
-                  (section === 'codex' ? (codexKind === 'characters' ? 'Characters' : 'Items') : sectionName)}
-              </span>
-            }
-          >
-            {ranked.length ? (
-              <ol
-                className={section === 'stories' ? 'discover-list' : 'discover-directory-grid'}
-                aria-label={`${board?.label} ranking`}
-              >
-                {ranked.map(({ id, node }) => (
-                  <li key={id}>{node}</li>
-                ))}
-              </ol>
-            ) : (
-              <Empty
-                title={genre || search ? 'No rankings match' : `${board?.label ?? sectionName} rankings open soon`}
-                description="Rankings follow what readers do and spend, not star ratings."
-              />
-            )}
-          </Shelf>
+                  {genreChoices.length === 0 && <Empty title={emptyTitle} description={emptyDescription} />}
+                </Shelf>
+              ) : view === 'rankings' ? (
+                <>
+                  {section === 'codex' && (
+                    <div role="group" aria-label="Ranked Codex category" className="discover-segmented">
+                      {(['characters', 'items'] as const).map((kind) => (
+                        <button
+                          type="button"
+                          key={kind}
+                          aria-pressed={codexKind === kind}
+                          onClick={() => setCodexKind(kind)}
+                        >
+                          {kind === 'characters' ? 'Characters' : 'Items'}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <Shelf
+                    id={`${ids}-rankings`}
+                    title="Heavenly Rankings"
+                    subtitle={board?.description ?? `${sectionName} rankings are coming soon.`}
+                  >
+                    <p className="discover-ranking-kind">{board?.label ?? sectionName} · Overall ranking</p>
+                    {ranked.length ? (
+                      <ol
+                        className={section === 'stories' ? 'discover-ranking-list' : 'discover-directory-grid'}
+                        aria-label={`${board?.label} ranking`}
+                      >
+                        {ranked.map(({ id, node }) => (
+                          <li key={id}>{node}</li>
+                        ))}
+                      </ol>
+                    ) : (
+                      <Empty
+                        title={
+                          genre || search ? 'No rankings match' : `${board?.label ?? sectionName} rankings open soon`
+                        }
+                        description="Rankings follow what readers do and spend, not star ratings."
+                      />
+                    )}
+                  </Shelf>
+                </>
+              ) : section === 'stories' ? (
+                <>
+                  <Shelf
+                    id={`${ids}-stories`}
+                    title={feed === 'all' ? 'All stories' : 'My stories'}
+                    subtitle={`${catalogue.length} ${catalogue.length === 1 ? 'story' : 'stories'}${genre ? ` · ${genre}` : ''}`}
+                  >
+                    {catalogue.length ? (
+                      <ul className="discover-grid" aria-label="Stories">
+                        {catalogue.map((world) => (
+                          <li key={world.id}>
+                            <WorldCard
+                              world={world}
+                              displayStatus={publicStatus(world)}
+                              onOpen={() => onOpenWorld(world.id)}
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <Empty title={emptyTitle} description={emptyDescription} />
+                    )}
+                  </Shelf>
+                  <Shelf
+                    id={`${ids}-releases`}
+                    title="New Chapters"
+                    subtitle="Newest first. Nothing decides the order but time."
+                  >
+                    {feedReleases.length ? (
+                      <ol className="discover-list" aria-label={feed === 'mine' ? 'My updates' : 'New chapters'}>
+                        {feedReleases.map(({ release, world }) => (
+                          <li key={release.id}>
+                            <WorldCardMenu
+                              world={world}
+                              onOpen={() => onOpenWorld(world.id)}
+                              tracked={tracked.has(world.id)}
+                              chapter={{ number: release.chapterNumber, title: release.chapterTitle }}
+                              age={{
+                                label: releaseAge(release.releasedAt, now ?? new Date()),
+                                dateTime: release.releasedAt,
+                              }}
+                            />
+                          </li>
+                        ))}
+                      </ol>
+                    ) : (
+                      <Empty
+                        title={
+                          feed === 'mine' && !trackingAvailable
+                            ? 'My updates arrives with the Tracker'
+                            : search || genre
+                              ? feed === 'mine'
+                                ? 'No tracked chapters match'
+                                : 'No new chapters match'
+                              : 'No new chapters yet'
+                        }
+                        description="New chapters appear here as the stories in this view update."
+                      />
+                    )}
+                  </Shelf>
+                  {featured.length > 0 && (
+                    <section aria-label="Featured" className="discover-shelf">
+                      <ul className="discover-rail discover-rail--featured" aria-label="Featured worlds">
+                        {featured.map((world) => (
+                          <li key={world.id}>
+                            <WorldCardFeature
+                              world={world}
+                              displayStatus={publicStatus(world)}
+                              onOpen={() => onOpenWorld(world.id)}
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  )}
+                  {fate.length > 0 && (
+                    <section aria-labelledby={`${ids}-fate`} className="discover-fate">
+                      <div className="discover-fate-copy">
+                        <p className="discover-eyebrow discover-eyebrow--fate">Fate Survival</p>
+                        <h2 id={`${ids}-fate`} className="discover-fate-title font-display">
+                          Your choices write the next chapter.
+                        </h2>
+                        <p className="discover-fate-lede">
+                          Narrative experiences told chapter by chapter. Every decision carries its consequences
+                          forward, so the story you read is the one you shaped.
+                        </p>
+                      </div>
+                      <ul className="discover-rail discover-rail--cards" aria-label="Fate Survival worlds">
+                        {fate.map((world) => (
+                          <li key={world.id}>
+                            <WorldCard
+                              world={world}
+                              displayStatus={publicStatus(world)}
+                              onOpen={() => onOpenWorld(world.id)}
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  )}
+                </>
+              ) : section === 'creators' ? (
+                <Shelf
+                  id={`${ids}-creators`}
+                  title={feed === 'all' ? 'All creators' : 'My creators'}
+                  subtitle={`${people.length} ${people.length === 1 ? 'creator' : 'creators'}${genre ? ` · ${genre}` : ''}`}
+                >
+                  {people.length ? (
+                    <ul className="discover-directory-grid" aria-label="Creators">
+                      {people.map((creator) => (
+                        <li key={creator.id}>{creatorCard(creator)}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <Empty title={emptyTitle} description={emptyDescription} />
+                  )}
+                </Shelf>
+              ) : (
+                <>
+                  <Shelf
+                    id={`${ids}-codex`}
+                    title={codexKind === 'characters' ? 'Characters' : 'Items'}
+                    subtitle={`${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}${genre ? ` · ${genre}` : ''}`}
+                  >
+                    {entries.length ? (
+                      <ul className="discover-directory-grid" aria-label={`Codex ${codexKind}`}>
+                        {entries.map((entry) => (
+                          <li key={entry.id}>{codexCard(entry)}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <Empty title={emptyTitle} description={emptyDescription} />
+                    )}
+                  </Shelf>
+                </>
+              )}
+            </div>
+          </div>
         </>
       )}
     </div>
@@ -547,13 +674,11 @@ function Shelf({
   id,
   title,
   subtitle,
-  accessory,
   children,
 }: {
   id: string;
   title: string;
   subtitle?: string;
-  accessory?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -565,7 +690,6 @@ function Shelf({
           </h2>
           {subtitle && <p className="discover-shelf-subtitle">{subtitle}</p>}
         </div>
-        {accessory}
       </div>
       {children}
     </section>

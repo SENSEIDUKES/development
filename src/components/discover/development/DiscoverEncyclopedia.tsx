@@ -76,20 +76,20 @@ export function DiscoverEncyclopedia({ location, hrefFor, onNavigate, readingLan
   useEffect(() => {
     // The Library shell scrolls its main panel, not the window. Scope article
     // navigation to this surface so opening a result starts at its heading.
-    surface.current?.scrollIntoView?.({ block: 'start', behavior: 'instant' });
+    if (!embedded || location.term) surface.current?.scrollIntoView?.({ block: 'start', behavior: 'instant' });
     heading.current?.focus({ preventScroll: true });
-  }, [location.term]);
+  }, [location.term, embedded]);
 
   const modeLabels: Record<ChapterWritingStyle, string> = {
     Standard: labels.standard, 'Clear Reading': labels.clear, 'Easy Read': labels.easy, 'Literal Reading': labels.literalMode,
   };
-  return <div ref={surface} data-discover data-encyclopedia data-no-interface-translate className="discover encyclopedia" lang={uiCode} dir={getSenTextDirection(uiCode)}>
-    <nav aria-label={labels.directory} className="encyclopedia-breadcrumb">
+  return <div ref={surface} data-discover data-encyclopedia data-no-interface-translate className={`discover encyclopedia${embedded ? ' encyclopedia--embedded' : ''}`} lang={uiCode} dir={getSenTextDirection(uiCode)}>
+    {(!embedded || location.term) && <nav aria-label={labels.directory} className="encyclopedia-breadcrumb">
       {link(undefined, <><ArrowLeft aria-hidden="true" size={16} />{labels.back}</>)}
       {location.term && <><span aria-hidden="true">/</span>{link(directoryLocation, labels.directory)}</>}
-    </nav>
+    </nav>}
     <header className="encyclopedia-header">
-      <p className="discover-eyebrow">SEIHouse · {labels.directory}</p>
+      {!embedded && <p className="discover-eyebrow">SEIHouse · {labels.directory}</p>}
       <Heading ref={heading} tabIndex={-1} className="font-display">{term ? <bdi lang={contentCode}>{copy.terms[term.id as LoreTermId][0]}</bdi> : labels.title}</Heading>
       <p>{location.term ? labels.scope : labels.intro}</p>
     </header>

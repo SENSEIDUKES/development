@@ -926,7 +926,7 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(encyclopedia().textContent).toContain('元婴');
     await click(encyclopedia().querySelectorAll('.encyclopedia-breadcrumb a')[1], 'back to the directory');
     expect(encyclopedia().querySelector<HTMLInputElement>('input')?.value).toBe('Origin Infant');
-    await click(encyclopedia().querySelector('.encyclopedia-breadcrumb a'), 'back to Discover');
+    await click(document.querySelector('.discover-navigation a[href="/app/?page=discover"]'), 'back to Discover stories');
     expect(address()).toBe('/app/?page=discover');
     expect(document.querySelector('.discover-fate')).toBeTruthy();
     expect(services.profile.read()).toMatchObject({ defaultReadingLanguage: 'ja', defaultChapterWritingStyle: 'Easy Read' });
@@ -940,7 +940,7 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     await click(document.querySelector('.discover-navigation a[href*="section=codex"]'), 'Codex');
     expect(address()).toBe('/app/?page=discover&section=codex');
     expect(document.querySelector('ul[aria-label="Codex characters"]')).toBeTruthy();
-    await click(document.querySelectorAll('.discover-codex-categories button')[1], 'Items');
+    await click(buttonByText('Items', document.querySelector('.discover-view-rail')!), 'Items');
     expect(document.querySelector('ul[aria-label="Codex items"]')).toBeTruthy();
     await click(document.querySelector('.discover-navigation a[href*="lore=index"]'), 'Lore');
     expect(address()).toBe('/app/?page=discover&lore=index');

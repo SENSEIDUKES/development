@@ -48,7 +48,7 @@ rewrites and every page survives a reload.
 | Page | Address | What it is |
 | --- | --- | --- |
 | Home | `/app/` | The reader's stories, newest first, and Carve New Destiny |
-| Discover | `/app/?page=discover` | Stories, Creators (`section=creators`), Codex (`section=codex`) and Lore (`lore=index`); Events, scoped All / My updates, genres and relevant rankings outside Lore |
+| Discover | `/app/?page=discover` | Stories, Creators (`section=creators`), Codex (`section=codex`) and Lore (`lore=index`); compact header, expandable Events and left browsing rail; scoped All / My updates, genre tiles and dedicated rankings outside Lore |
 | Create | `/app/?page=create` | The Library's Story Seed journey: the seed, its World Blueprint, Manifest Story |
 | Story View | `/app/?story=<id>` | The story's World Info page: Begin Story or Continue, Manifest on the cover, Story Settings, and Export story (the whole story as one file, for sharing a test) |
 | Reader | `/app/?story=<id>&read=1` | The reading-only Reader, with the Generation Overlay while a chapter is written |
@@ -366,6 +366,10 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## History
 
+- **2026-10-26 (Discover browsing)** — Compact header and Events row, with a
+  left rail for browsing, genres and rankings. Stories, Creators, Codex and Lore
+  stay on top; a separate media switch is undecided. The existing Workshop
+  preview shows the same app layout and interactions.
 - **2026-10-26 (Discover navigation)** — Stories / Creators / Codex / Lore, with
   Events near the top, section-specific All / My updates, genre filters and
   relevant rankings outside Lore. Creators and character/item Codex directories

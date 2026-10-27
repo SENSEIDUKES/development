@@ -571,7 +571,11 @@ Update it whenever it changes.
     defaults. The same Discover Workshop preview opens the real app surface.
     The starter translations have not had professional editorial review.
   - **Discover navigation** (2026-10-26) is Stories, Creators, Codex, Lore.
-    Lore opens that encyclopedia directly. Events sit near the top; the other
+    These remain the top layer across media; a separate media selector is
+    undecided. A compact left rail offers Browse, Genres and Rankings for Stories
+    and Creators, Characters, Items and Rankings for Codex, and encyclopedia
+    categories for Lore. The story catalogue appears first. Lore opens that
+    encyclopedia directly. Events expand from one row near the top; the other
     three destinations have genre filtering and relevant Heavenly Rankings.
     All / My updates follows each section's sample catalogue. Creators expand
     to their stories, and Codex is split into Characters and Items. Public

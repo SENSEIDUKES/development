@@ -71,7 +71,7 @@ export function DiscoverPage({
       readerProfile={readerProfile}
       mainLabel="Discover"
     >
-      <div className="mx-auto w-full max-w-7xl px-4 py-8" data-testid="novel-expanded-discover">
+      <div className="mx-auto w-full max-w-7xl px-4 py-4" data-testid="novel-expanded-discover">
         <Discover
           section={route.lore ? 'lore' : (route.section ?? 'stories')}
           sectionHref={(section) => routeHref(sectionRoute(section))}
@@ -107,7 +107,10 @@ export function DiscoverPage({
           onOpenWorld={open}
           notice={
             route.lore ? undefined : (
-              <p>Explore sample stories, creators and Codex entries. Rankings and follows are examples.</p>
+              <details className="discover-sample-notice">
+                <summary>Sample catalogue</summary>
+                <p>Explore sample stories, creators and Codex entries. Rankings and follows are examples.</p>
+              </details>
             )
           }
         />

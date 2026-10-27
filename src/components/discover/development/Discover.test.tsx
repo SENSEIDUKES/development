@@ -37,6 +37,7 @@ function renderPage(overrides: Partial<DiscoverProps> = {}) {
 }
 const releaseTitles = () => [...container.querySelectorAll('ol[aria-label="New chapters"] .world-card-menu-title, ol[aria-label="My updates"] .world-card-menu-title')].map(node => node.textContent);
 const tab = (label: string) => [...container.querySelectorAll<HTMLButtonElement>('.discover-segmented button')].find(node => node.textContent === label)!;
+const chooseView = (label: string) => act(() => [...container.querySelectorAll<HTMLButtonElement>('.discover-view-rail button')].find(node => node.textContent === label)!.click());
 
 it('lists releases newest first, skipping releases of worlds it does not have', () => {
   renderPage();
@@ -97,16 +98,27 @@ it('shows only the section\'s board, in the host\'s order, and retains ranks whi
     { id: 'creators', kind: 'creators', label: 'Creators', description: 'People' },
   ] });
   const ranked = () => [...container.querySelectorAll('ol[aria-label="Worlds ranking"] .world-card-menu-title')].map(node => node.textContent);
+  expect(ranked()).toEqual([]);
+  act(() => tab('My updates').click());
+  chooseView('Rankings');
   expect(ranked()).toEqual(['Drowned Moon', 'Last Lotus']);
+  expect(container.querySelector('ul[aria-label="Stories"]')).toBeNull();
+  expect(container.querySelector('[aria-label="Stories feed"]')).toBeNull();
   expect(container.querySelector('ol[aria-label="Creators ranking"]')).toBeNull();
   chooseGenre('Xianxia');
   expect(ranked()).toEqual(['Last Lotus']);
   expect(container.querySelector('ol[aria-label="Worlds ranking"]')?.textContent).toContain('2');
+  chooseView('Browse');
+  expect(tab('My updates').getAttribute('aria-pressed')).toBe('true');
+  expect(container.querySelector('ol[aria-label="Worlds ranking"]')).toBeNull();
 });
 
-it('features the host\'s worlds first and filters Browse by genre', () => {
+it('puts the catalogue before features and filters Browse by genre', () => {
   renderPage({ featuredWorldIds: ['moon'] });
-  expect(container.querySelector('ul[aria-label="Featured worlds"]')?.textContent).toContain('Drowned Moon');
+  const featured = container.querySelector('ul[aria-label="Featured worlds"]')!;
+  const catalogue = container.querySelector('ul[aria-label="Stories"]')!;
+  expect(featured.textContent).toContain('Drowned Moon');
+  expect(catalogue.compareDocumentPosition(featured) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   chooseGenre('Xianxia');
   expect(container.querySelector('ul[aria-label="Stories"]')?.textContent).toContain('Last Lotus');
   expect(container.querySelector('ul[aria-label="Stories"]')?.textContent).not.toContain('Drowned Moon');
@@ -141,6 +153,19 @@ it('links Stories, Creators, Codex and Lore in order and keeps native modified l
   expect(props.onSectionChange).toHaveBeenCalledTimes(1);
 });
 
+it('starts a changed destination at the surface so sticky navigation does not hide its controls', () => {
+  renderPage();
+  const surface = container.querySelector<HTMLDivElement>('.discover-hub')!;
+  const scroll = vi.fn();
+  surface.scrollIntoView = scroll;
+  renderPage({ section: 'creators', creators: CREATORS });
+  expect(scroll).toHaveBeenCalledWith({ block: 'start', behavior: 'instant' });
+  renderPage({ section: 'lore', loreArticle: true });
+  scroll.mockClear();
+  renderPage({ section: 'lore', loreArticle: false });
+  expect(scroll).toHaveBeenCalledOnce();
+});
+
 it('lists every creator once, scopes follows to creators, and filters by their stories\' genres', () => {
   renderPage({ section: 'creators', creators: CREATORS, followedCreatorIds: ['two'], rankingBoards: [
     { id: 'creators', kind: 'creators', label: 'Creators', description: 'Sample order', creatorIds: ['one', 'two'] },
@@ -156,6 +181,7 @@ it('lists every creator once, scopes follows to creators, and filters by their s
   act(() => tab('All').click());
   expect(people()?.textContent).toContain('First Author');
   expect(people()?.textContent).not.toContain('Second Author');
+  chooseView('Rankings');
   expect(container.querySelector('ol[aria-label="Creators ranking"]')?.textContent).toContain('First Author');
 });
 
@@ -168,14 +194,49 @@ it('splits Codex into characters and items with scoped follows, genres and board
   expect(container.textContent).not.toContain('Missing world');
   act(() => tab('My updates').click());
   expect(container.querySelector('ul[aria-label="Codex characters"]')?.textContent).not.toContain('Lotus Keeper');
-  act(() => container.querySelectorAll<HTMLButtonElement>('.discover-codex-categories button')[1].click());
+  chooseView('Items');
   expect(container.querySelector('ul[aria-label="Codex items"]')?.textContent).toContain('Jade Sword');
-  expect(container.querySelector('ol[aria-label="Items ranking"]')?.textContent).toContain('Jade Sword');
-  expect(container.querySelector('ol[aria-label="Characters ranking"]')).toBeNull();
   act(() => container.querySelector<HTMLButtonElement>('ul[aria-label="Codex items"] .world-card-menu')!.click());
   expect(props.onOpenWorld).toHaveBeenCalledWith('lotus');
+  chooseView('Rankings');
+  expect(container.querySelector('ol[aria-label="Items ranking"]')?.textContent).toContain('Jade Sword');
+  expect(container.querySelector('ol[aria-label="Characters ranking"]')).toBeNull();
+  act(() => tab('Characters').click());
+  expect(container.querySelector('ol[aria-label="Characters ranking"]')?.textContent).toContain('Lotus Keeper');
+  expect(container.querySelector('ol[aria-label="Items ranking"]')).toBeNull();
+  chooseView('Items');
   chooseGenre('Fate Survival');
   expect(container.textContent).toContain('No items match');
+});
+
+it('uses genre tiles to return to the matching catalogue, respecting the section feed', () => {
+  renderPage();
+  chooseView('Genres');
+  const genres = () => container.querySelector('.discover-genre-grid')!;
+  expect(genres().textContent).toContain('Xianxia');
+  expect(genres().textContent).toContain('Dark Fantasy');
+  act(() => tab('My updates').click());
+  expect(genres().textContent).toContain('Xianxia');
+  expect(genres().textContent).not.toContain('Dark Fantasy');
+  act(() => [...genres().querySelectorAll<HTMLButtonElement>('button')].find(node => node.textContent?.startsWith('Xianxia'))!.click());
+  expect(container.querySelector<HTMLSelectElement>('.discover-genre-select select')!.value).toBe('Xianxia');
+  expect(container.querySelector('ul[aria-label="Stories"]')?.textContent).toContain('Last Lotus');
+  expect(container.querySelector('.discover-genre-grid')).toBeNull();
+});
+
+it('counts creators once per genre and clears temporary views on section navigation', () => {
+  renderPage({ section: 'creators', creators: [{ ...CREATORS[0], worldIds: ['lotus', 'moon'] }, CREATORS[1]], followedCreatorIds: ['one'] });
+  act(() => tab('My updates').click());
+  chooseView('Genres');
+  const buttons = [...container.querySelectorAll<HTMLButtonElement>('.discover-genre-grid button')];
+  expect(buttons.map(button => button.textContent)).toEqual(['All genres', 'Dark Fantasy1 creator', 'Xianxia1 creator']);
+  act(() => buttons[1].click());
+  expect(container.querySelector('ul[aria-label="Creators"]')?.textContent).toContain('First Author');
+  expect(container.querySelector('ul[aria-label="Creators"]')?.textContent).not.toContain('Second Author');
+  renderPage({ section: 'stories' });
+  expect(tab('All').getAttribute('aria-pressed')).toBe('true');
+  expect(container.querySelector<HTMLSelectElement>('.discover-genre-select select')!.value).toBe('');
+  expect(container.querySelector('ul[aria-label="Stories"]')).toBeTruthy();
 });
 
 it('opens the encyclopedia under Lore without genre filters or leaderboards', () => {

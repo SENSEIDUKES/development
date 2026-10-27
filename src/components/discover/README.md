@@ -10,20 +10,23 @@ Heavenly Rankings boards and Events. It never ranks or
 recommends: New Chapters orders by release time alone, and Rankings keep the host's order. Every world opens
 through the host's `onOpenWorld`.
 
-The page reads like a store front (the owner's direction, 2026-10-20: Apple's
-approach): a large title, then full-width shelves, each under one hairline and
-one heading, whose content pages sideways instead of stacking into a long column.
+The page has a compact header, sticky destination links, and a left browsing
+rail beside the current results, including on phones. Stories and Creators
+offer Browse, Genres and Rankings; Codex offers Characters, Items and Rankings.
+The media selector is a separate, undecided future control; it is not part of
+this navigation. Card columns follow their available panel width.
 
 | Shelf | What it shows |
 | --- | --- |
 | Header and navigation | Discover, then Stories / Creators / Codex / Lore as native links with host navigation |
-| Events | Compact horizontal strip below navigation, across all destinations |
+| Events | One expandable row below navigation; opens the Coming soon cards |
 | Section controls | All / My updates, with search and Genre outside Lore; filters reset on destination changes |
-| Stories | Featured, complete catalogue, New Chapters ordered by time, Fate Survival; tracked stories in My updates |
+| Stories | Catalogue first, then New Chapters ordered by time, Featured and Fate Survival; tracked stories in My updates |
 | Creators | Host-supplied creators expanding to their story cards; followed creators in My updates |
 | Codex | Characters and Items only; expandable entries with descriptions and source-story cards; tracked entries in My updates |
-| Heavenly Rankings | Stories, creators, characters or items, in the host's order; search and genres preserve original ranks; global even in My updates |
-| Lore | Directly opens the existing encyclopedia, with alias search, categories and localized articles; no genres or rankings |
+| Genres | Cover-backed tiles for Stories or Creators, counting the current search and feed; selecting a tile opens that genre's catalogue |
+| Heavenly Rankings | A separate overall view for stories, creators, characters or items; search and genres preserve original ranks; returning to Browse restores its feed |
+| Lore | Directly opens the existing encyclopedia, with alias search, a category rail and localized articles; no genres or rankings |
 
 NovelExpanded (`src/novel-expanded/DiscoverPage.tsx`) shows it with sample worlds
 while its look and feel is refined. The Workshop previews that page at
@@ -48,6 +51,10 @@ mode behavior and translation-review limits.
 
 ## History
 
+- **2026-10-26 (browsing rail)** — Kept the four top destinations and moved
+  browsing choices into a left rail. Added genre tiles and dedicated rankings,
+  put the story catalogue first, condensed the header and Events, and retained
+  the existing encyclopedia as Lore. No media-switching control is added.
 - **2026-10-26 (navigation)** — Added Stories / Creators / Codex / Lore navigation,
   section-scoped feeds and genre filters, character/item Codex browsing, relevant
   ranking boards, and a compact Events strip near the top. Lore links directly

@@ -53,6 +53,14 @@ Its controls and actions are visual fixtures. Text and accent choices apply only
 to this composition. The initial composition represents existing roles, not an
 approved palette. Reduced-transparency experiments use an opaque fallback.
 
+The owner's `palette-materials (2).json` is bundled unchanged as `owner-looks.json`.
+Its four looks are added once per browser, without replacing existing IDs or
+identical imported looks. Existing browser work stays last and is the starting
+experiment; a fresh browser opens the final exported combination. A separate
+inclusion marker prevents deleted looks from reappearing. Unreadable storage is
+left untouched; failed writes keep the combined looks available for export.
+These are Workshop starting looks, not a global app palette.
+
 Saved looks contain named combinations, background, selected material, colors,
 and per-material overrides. Explicit saves use
 `workshop.palette-materials.looks.v1` in browser localStorage. No cloud sync or
@@ -69,6 +77,9 @@ canonical materials, desktop/mobile layout, editing/reset, composition, saved
 look lifecycle, reload, import/export, keyboard and reduced transparency.
 
 ## History
+
+- **2026-10-27:** Included the owner’s four exported looks unchanged, opened the
+  latest saved combination on entry, and preserved existing browser work.
 
 - **2026-10-27:** Made the Reader border glow transferable to any or all experiment
   materials and the composition, with saved-look support and an isolated edge sample.

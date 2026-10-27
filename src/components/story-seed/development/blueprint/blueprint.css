@@ -1,7 +1,7 @@
-/* The World Blueprint as a Star Rail-style character screen: a pinned tab
-   strip, gold-edged section strips, stat tables on alternating rows, tall
-   portrait cards and relic-style world tiles. Colours stay on the Seed's
-   tokens (parchment gold, soft violet, the void). */
+/* The World Blueprint in the Library's own dress: a pinned tab strip like the
+   Seed creator's, the Library's section headings and glass, stat tables for
+   what each card holds, and the Codex's own cards for every character and
+   world card, so a card looks the same here and in the Codex. */
 
 /* Room for the pinned footer comes from creator.css (.bp-dossier). */
 .bp-panel { display: grid; gap: 20px; padding-top: 16px; }
@@ -50,45 +50,16 @@
   color: #f3ede0;
 }
 
-/* ── Section strip: ✦ Title ✦✦ on a gold-edged bar ───────────────────── */
-.bp-section { min-width: 0; }
-.bp-heading { margin-bottom: 10px; }
-.bp-heading-bar {
-  display: flex;
-  min-height: 40px;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 8px 6px 12px;
-  border-left: 3px solid #cdb271;
-  border-radius: 4px 12px 0 0;
-  background: linear-gradient(90deg, rgba(88, 84, 140, 0.42), rgba(40, 42, 74, 0.18) 70%, transparent);
-}
-.bp-heading-icon { flex-shrink: 0; color: #cdb271; }
-.bp-heading-title {
-  min-width: 0;
-  margin: 0;
-  overflow: hidden;
-  font-family: var(--font-display);
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: #f3ede0;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.bp-heading-flourish { display: inline-flex; flex: 1 1 auto; gap: 2px; color: rgba(205, 178, 113, 0.45); }
-.bp-heading-action { flex-shrink: 0; margin-left: auto; }
-.bp-heading-tagline { margin: 6px 0 0; font-size: 12px; line-height: 1.5; color: var(--color-neutral-400); }
-@media (min-width: 640px) { .bp-heading-title { font-size: 19px; } }
-
-/* ── Stat table ───────────────────────────────────────────────────────── */
+/* ── Sections and stat tables ────────────────────────────────────────── */
+.bp-section { display: grid; min-width: 0; gap: 12px; }
 .bp-stats {
   display: grid;
   margin: 0;
   overflow: hidden;
-  border: 1px solid rgba(172, 166, 214, 0.14);
-  border-radius: 12px;
-  background: rgba(8, 10, 22, 0.72);
+  border: 1px solid rgba(172, 166, 214, 0.18);
+  border-radius: 14px;
+  background: rgba(11, 14, 30, 0.55);
+  box-shadow: inset 0 1px 0 rgba(216, 210, 240, 0.06);
 }
 .bp-stat {
   display: grid;
@@ -97,129 +68,76 @@
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
+  border-top: 1px solid rgba(172, 166, 214, 0.08);
 }
-.bp-stat:nth-child(odd) { background: rgba(255, 255, 255, 0.035); }
-.bp-stat dt { display: flex; min-width: 0; align-items: center; gap: 8px; font-size: 13px; color: var(--color-neutral-300); }
+.bp-stat:first-child { border-top: 0; }
+.bp-stat dt { display: flex; min-width: 0; align-items: center; gap: 8px; font-family: var(--font-sc); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-neutral-400); }
 .bp-stat dt svg { flex-shrink: 0; color: #cdb271; }
-.bp-stat dd { min-width: 0; margin: 0; font-size: 13px; font-weight: 600; line-height: 1.45; color: #f3ede0; overflow-wrap: anywhere; }
-.bp-stat dd .seed-fate-decides { font-weight: 400; }
+.bp-stat dd { min-width: 0; margin: 0; font-size: 14px; line-height: 1.5; color: #f3ede0; overflow-wrap: anywhere; }
 @media (min-width: 768px) {
   .bp-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .bp-stat:nth-child(odd) { background: transparent; }
-  .bp-stat:nth-child(4n + 1), .bp-stat:nth-child(4n + 2) { background: rgba(255, 255, 255, 0.035); }
-  .bp-stat:nth-child(odd) { border-right: 1px solid rgba(172, 166, 214, 0.1); }
+  .bp-stat:nth-child(2) { border-top: 0; }
+  .bp-stat:nth-child(odd) { border-right: 1px solid rgba(172, 166, 214, 0.08); }
 }
 
-/* ── Portrait and emblem ──────────────────────────────────────────────── */
-.bp-portrait {
-  position: relative;
-  margin: 0;
-  overflow: hidden;
-  border: 1px solid rgba(205, 178, 113, 0.45);
-  border-radius: 14px;
-  background: linear-gradient(160deg, #c98a52, #7c4a3a 55%, #2a1a26);
-}
-.bp-portrait[data-kind='faction'] { background: linear-gradient(160deg, #7a6fc4, #3b3570 60%, #17142e); }
-.bp-portrait[data-kind='thing'] { background: linear-gradient(160deg, #c9a24f, #6e5326 60%, #241a0e); }
-.bp-portrait[data-kind='ability'] { background: linear-gradient(160deg, #4fa3c9, #24516e 60%, #0d1a26); }
-.bp-portrait[data-kind='place'] { background: linear-gradient(160deg, #5fae86, #2c5a48 60%, #0f1f1a); }
-.bp-portrait[data-kind='species'] { background: linear-gradient(160deg, #b0645f, #5c2e33 60%, #1e0f14); }
-.bp-portrait[data-size='portrait'] { aspect-ratio: 3 / 4; box-shadow: 0 18px 40px -22px rgba(0, 0, 0, 0.9); }
-.bp-portrait[data-size='emblem'] { width: 100%; height: 100%; border-radius: 999px; }
-.bp-portrait-art { position: absolute; inset: 0; display: grid; place-items: center; }
-.bp-portrait-art img { width: 100%; height: 100%; object-fit: cover; }
-.bp-portrait-initial {
-  font-family: var(--font-display);
-  font-size: 4.5rem;
-  font-weight: 700;
-  line-height: 1;
-  color: rgba(255, 244, 225, 0.32);
-}
-.bp-portrait[data-size='emblem'] .bp-portrait-initial { font-size: 1.35rem; color: rgba(255, 244, 225, 0.85); }
-.bp-portrait-caption {
-  position: absolute;
-  inset: 0 0 auto;
-  display: grid;
-  gap: 2px;
-  padding: 12px 12px 28px;
-  background: linear-gradient(180deg, rgba(10, 8, 16, 0.7), transparent);
-}
-.bp-portrait-name {
-  overflow: hidden;
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 1.15;
-  color: #fff;
-  text-overflow: ellipsis;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
-  overflow-wrap: anywhere;
-}
-.bp-portrait-sub { font-size: 12px; color: rgba(255, 244, 225, 0.85); }
-.bp-portrait-badges {
-  position: absolute;
-  inset: auto 10px 10px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-.bp-badge {
-  max-width: 100%;
-  overflow: hidden;
-  padding: 2px 8px;
-  border: 1px solid rgba(255, 244, 225, 0.35);
-  border-radius: 999px;
-  background: rgba(10, 8, 16, 0.6);
-  font-size: 11px;
-  color: #fff4e1;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* ── Cast: avatar row, hero, panels ───────────────────────────────────── */
+/* ── Cast: a row of Codex cards, then the chosen one ─────────────────── */
 .bp-cast { display: grid; gap: 20px; }
-.bp-avatars {
+.bp-cast-row {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   margin-inline: -16px;
   padding: 4px 16px 6px;
   overflow-x: auto;
+  scroll-snap-type: x proximity;
   scrollbar-width: none;
 }
-.bp-avatars::-webkit-scrollbar { display: none; }
-.bp-avatar {
-  position: relative;
-  display: grid;
-  width: 56px;
-  height: 56px;
-  flex: 0 0 56px;
-  place-items: center;
-  border: 2px solid rgba(172, 166, 214, 0.25);
-  border-radius: 999px;
-  padding: 2px;
-  color: var(--color-neutral-300);
+.bp-cast-row::-webkit-scrollbar { display: none; }
+.bp-cast-pick { flex: 0 0 8.5rem; scroll-snap-align: start; }
+.bp-cast-pick > button[aria-pressed='true'] { outline: 2px solid rgba(205, 178, 113, 0.75); outline-offset: 2px; }
+@media (min-width: 640px) {
+  .bp-cast-row { margin-inline: 0; padding-inline: 0; flex-wrap: wrap; overflow: visible; }
+  .bp-cast-pick { flex-basis: 9rem; }
 }
-.bp-avatar[data-main='true'] { border-color: rgba(205, 178, 113, 0.6); }
-.bp-avatar[aria-pressed='true'] {
-  border-color: #e8c875;
-  box-shadow: 0 0 0 3px rgba(5, 7, 14, 1), 0 0 0 5px rgba(232, 200, 117, 0.55);
+/* An empty slot for a new card, the size of the cards beside it. */
+.bp-card-add {
+  display: flex;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1px dashed rgba(172, 166, 214, 0.3);
+  border-radius: 12px;
+  color: var(--color-neutral-400);
+  font-family: var(--font-sc);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
 }
-.bp-avatar:focus-visible { outline: 2px solid rgba(205, 178, 113, 0.8); outline-offset: 4px; }
-.bp-avatar-add { border-style: dashed; }
+.bp-card-add:hover { border-color: rgba(4, 172, 255, 0.5); color: var(--color-portal); }
+.bp-card-add:focus-visible { outline: 2px solid rgba(205, 178, 113, 0.75); outline-offset: 2px; }
+.bp-card-add-count { font-size: 10px; color: var(--color-neutral-500); }
 
-.bp-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
-  gap: 12px;
-  align-items: start;
+.bp-hero { display: grid; gap: 12px; }
+/* The chosen card, smaller than a Codex profile's on a phone: the row above
+   already shows the cast, so this one leaves room for what it holds. */
+.bp-hero > header { width: min(100%, 15rem); }
+.bp-hero-panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (min-width: 640px) {
+  .bp-hero { grid-template-columns: minmax(0, 18rem) minmax(0, 1fr); align-items: start; gap: 16px; }
+  .bp-hero > header { width: 100%; }
+  .bp-hero-panels { grid-template-columns: minmax(0, 1fr); }
 }
-.bp-hero-panels { display: grid; gap: 10px; }
 .bp-mini {
-  padding: 10px 12px;
-  border: 1px solid rgba(172, 166, 214, 0.16);
-  border-left: 3px solid rgba(205, 178, 113, 0.7);
-  border-radius: 4px 10px 10px 4px;
-  background: rgba(20, 22, 42, 0.78);
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(172, 166, 214, 0.18);
+  border-radius: 14px;
+  background: rgba(11, 14, 30, 0.55);
+  box-shadow: inset 0 1px 0 rgba(216, 210, 240, 0.06);
 }
 .bp-mini-title {
   display: flex;
@@ -233,99 +151,24 @@
   text-transform: uppercase;
   color: #cdb271;
 }
-.bp-mini-value { margin: 0; font-size: 14px; font-weight: 600; color: #f3ede0; overflow-wrap: anywhere; }
+.bp-mini-value { margin: 0; font-size: 14px; color: #f3ede0; overflow-wrap: anywhere; }
 .bp-mini-sub { margin: 2px 0 0; font-size: 12px; color: var(--color-neutral-400); }
 .bp-chips { display: flex; flex-wrap: wrap; gap: 4px; }
 .bp-chips > span {
   padding: 2px 8px;
   border: 1px solid rgba(172, 166, 214, 0.25);
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--color-neutral-200);
 }
 .bp-aliases { display: flex; flex-wrap: wrap; gap: 8px; margin: -8px 0 0; font-size: 12px; color: var(--color-neutral-300); }
 .bp-aliases > span:first-child { font-family: var(--font-sc); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-neutral-500); }
 .bp-prose { margin: 0; font-family: var(--font-serif); font-size: 14px; line-height: 1.7; color: var(--color-neutral-200); white-space: pre-line; }
 
-@media (min-width: 640px) {
-  .bp-avatars { margin-inline: 0; padding-inline: 0; flex-wrap: wrap; overflow: visible; }
-  .bp-avatar { width: 64px; height: 64px; flex-basis: 64px; }
-  .bp-hero { grid-template-columns: minmax(0, 16rem) minmax(0, 1fr); gap: 16px; }
-}
-
-/* ── World tiles: relic cards ─────────────────────────────────────────── */
+/* ── World: Codex cards in a grid ─────────────────────────────────────── */
 .bp-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-@media (min-width: 1024px) { .bp-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-.bp-tile {
-  position: relative;
-  display: flex;
-  min-width: 0;
-  min-height: 9.5rem;
-  flex-direction: column;
-  overflow: hidden;
-  border: 1px solid rgba(172, 166, 214, 0.16);
-  border-radius: 10px;
-  background: rgba(14, 16, 32, 0.9);
-  text-align: left;
-  transition: border-color 150ms ease, transform 150ms ease;
-}
-.bp-tile:hover { border-color: rgba(205, 178, 113, 0.45); }
-.bp-tile:focus-visible { outline: 2px solid rgba(205, 178, 113, 0.75); outline-offset: 2px; }
-.bp-tile-head {
-  display: flex;
-  min-height: 32px;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 52px 6px 10px;
-  border-left: 3px solid #e8c875;
-  background: linear-gradient(90deg, rgba(196, 163, 106, 0.55), rgba(138, 112, 70, 0.25));
-  font-family: var(--font-sc);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #fff4e1;
-}
-.bp-tile-index { margin-left: 2px; padding: 0 5px; border-radius: 4px; background: rgba(10, 8, 16, 0.55); letter-spacing: 0.05em; }
-.bp-tile-emblem { position: absolute; top: 4px; right: 6px; width: 40px; height: 40px; }
-.bp-tile-emblem .bp-portrait { border-width: 1.5px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); }
-.bp-tile-name {
-  padding: 10px 10px 6px;
-  overflow: hidden;
-  font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1.25;
-  color: #f3ede0;
-  overflow-wrap: anywhere;
-}
-.bp-tile-rows { display: grid; }
-.bp-tile-row { display: grid; gap: 1px; padding: 6px 10px; }
-.bp-tile-row:nth-child(odd) { background: rgba(255, 255, 255, 0.035); }
-.bp-tile-label { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-neutral-500); }
-.bp-tile-value {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  font-size: 12px;
-  color: var(--color-neutral-200);
-}
-.bp-tile-add {
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  border-style: dashed;
-  background: transparent;
-  color: var(--color-neutral-400);
-  font-family: var(--font-sc);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  text-align: center;
-}
-.bp-tile-count { font-size: 10px; color: var(--color-neutral-500); }
+@media (min-width: 640px) { .bp-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1280px) { .bp-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .bp-tiles-empty { grid-column: 1 / -1; margin: 0; }
 
 /* ── Cover: the record's chips, two to a row on a phone ─────────────── */
@@ -352,5 +195,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bp-tab, .bp-tile { transition: none; }
+  .bp-tab { transition: none; }
 }

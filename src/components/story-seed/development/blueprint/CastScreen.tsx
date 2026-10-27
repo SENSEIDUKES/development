@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Eye, HeartCrack, Hourglass, Pencil, Plus, Scale, ScrollText, Shield, ShieldAlert, Sparkles, Star, UserRound, Users, Zap } from 'lucide-react';
+import { Eye, HeartCrack, Hourglass, Pencil, Plus, Scale, ScrollText, Shield, ShieldAlert, Sparkles, Star, User, Users, Zap } from 'lucide-react';
 import { SEED_CHARACTER_LIMIT, type StorySeedCharacter, type StorySeedInput } from '@seihouse/sen/story-seed';
 import { normalizeCodexAliases } from '@seihouse/sen/story-seed';
 import { NarrativeButton as LibraryButton, NarrativeTextArea as LibraryTextArea } from '@seihouse/sen/presentation';
@@ -14,7 +14,7 @@ import { worldCardSlots } from '../workspaces/WorldCardFields';
 import { FateDecides } from '../FateDecides';
 import { BlueprintSectionHeading, EditableChip } from './BlueprintDossierPrimitives';
 import { BlueprintCardSheet } from './BlueprintCardSheet';
-import { PortraitFrame } from './PortraitFrame';
+import { CodexCardButton, CodexProfileHeader } from '@seihouse/sen/harness-generation';
 import { StatTable, type StatRow } from './StatRows';
 
 type Card = Record<string, unknown>;
@@ -40,7 +40,7 @@ const sideRows = (card: Card): StatRow[] => [
   { id: 'age', label: 'Age', value: text(card, 'age'), icon: Hourglass },
   { id: 'role', label: 'Role', value: text(card, 'role'), icon: Shield },
   { id: 'connectionToMC', label: 'Connection to MC', value: text(card, 'connectionToMC'), icon: Users },
-  { id: 'skinTone', label: 'Skin Tone', value: text(card, 'skinTone'), icon: UserRound },
+  { id: 'skinTone', label: 'Skin Tone', value: text(card, 'skinTone'), icon: User },
   { id: 'eyeColor', label: 'Eye Color', value: text(card, 'eyeColor'), icon: Eye },
 ];
 
@@ -124,28 +124,38 @@ export const CastScreen = ({ seed, updateSeed, backgroundProfile, onBackgroundPr
 
   return (
     <div className="bp-cast" data-testid="blueprint-cast">
-      <div className="bp-avatars" role="group" aria-label="Characters">
-        {[{ id: 'main', name: text(main, 'name'), main: true }, ...cast.map(character => ({ id: character.id, name: character.name, main: false }))]
-          .map(entry => (
-            <button key={entry.id} type="button" aria-pressed={selected === entry.id || (entry.main && showingMain)}
-              className="bp-avatar" data-main={entry.main} onClick={() => setSelected(entry.id)}
-              aria-label={`${entry.name || 'Unnamed'}${entry.main ? ', main character' : ''}`}>
-              <PortraitFrame name={entry.name ?? ''} kind="character" size="emblem" />
-            </button>
-          ))}
+      {/* The cast as Codex cards, the main character first: the same card the
+          Codex will show once the story begins. */}
+      <div className="bp-cast-row" role="group" aria-label="Characters">
+        {[{ id: 'main', card: main, main: true }, ...cast.map(character => ({ id: character.id, card: character as unknown as Card, main: false }))]
+          .map(entry => {
+            const entryName = text(entry.card, 'name');
+            return (
+              <div key={entry.id} className="bp-cast-pick">
+                <CodexCardButton category="characters" name={entryName || 'Unnamed'}
+                  line={entry.main ? 'Main character' : text(entry.card, 'role') || 'Character'}
+                  featured={selected === entry.id || (entry.main && showingMain)}
+                  aria-pressed={selected === entry.id || (entry.main && showingMain)}
+                  aria-label={`${entryName || 'Unnamed'}${entry.main ? ', main character' : ''}`}
+                  onClick={() => setSelected(entry.id)} />
+              </div>
+            );
+          })}
         {!readOnly && cast.length < SEED_CHARACTER_LIMIT && (
-          <button type="button" className="bp-avatar bp-avatar-add" onClick={addCharacter}
-            aria-label={`Add character (${cast.length}/${SEED_CHARACTER_LIMIT})`}>
-            <Plus size={20} aria-hidden="true" />
-          </button>
+          <div className="bp-cast-pick">
+            <button type="button" className="bp-card-add" onClick={addCharacter}
+              aria-label={`Add character (${cast.length}/${SEED_CHARACTER_LIMIT})`}>
+              <Plus size={18} aria-hidden="true" />
+              <span>Add</span>
+            </button>
+          </div>
         )}
       </div>
 
       <div className="bp-hero">
-        <PortraitFrame name={name} kind="character"
-          caption={[showingMain ? 'Main character' : text(card, 'role'), text(card, 'age') && `Age ${text(card, 'age')}`].filter(Boolean).join(' · ')}
-          badges={[text(card, 'species'), showingMain ? text(card, 'moralAlignment') : text(card, 'connectionToMC')]
-            .filter(Boolean).map(badge => <span key={badge} className="bp-badge">{badge}</span>)} />
+        <CodexProfileHeader category="characters" name={name || 'Unnamed'}
+          line={[showingMain ? text(card, 'startingIdentity') || 'Main character' : text(card, 'role') || 'Character', text(card, 'age') && `Age ${text(card, 'age')}`].filter(Boolean).join(' · ')}
+          badges={[showingMain ? 'Main character' : '', text(card, 'species')].filter(Boolean)} />
         <HeroPanels card={card} />
       </div>
 
@@ -154,7 +164,7 @@ export const CastScreen = ({ seed, updateSeed, backgroundProfile, onBackgroundPr
       )}
 
       <section aria-labelledby="blueprint-cast-stats-heading" className="bp-section">
-        <BlueprintSectionHeading id="blueprint-cast-stats-heading" icon={UserRound} title="Character Stats" action={edit} />
+        <BlueprintSectionHeading id="blueprint-cast-stats-heading" icon={User} title="Character Stats" action={edit} />
         <StatTable label="Character stats" testId="blueprint-cast-stats" rows={showingMain ? mainRows(card) : sideRows(card)} />
       </section>
 

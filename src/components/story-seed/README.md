@@ -31,31 +31,22 @@ Story Seed is one creation flow with these visible destinations:
   access, seed reuse, and novel manifestation actions.
 - **World Blueprint** is an editable sibling artifact. It is not nested inside
   the portable Creator / Story / World seed.
-- **The Blueprint as a character screen (2026-10-27).** Inside the shell the
-  Blueprint has four pages on a pinned tab strip: **Story** (cover, Origin,
-  Style Bible, Story Settings, Keep a Copy), **Cast** (a Star Rail-style
-  "My Characters" screen: a portrait row, the chosen character's portrait
-  card, Power and Holds/Knows panels, Character Stats and When the Story Opens
-  stat tables, Biography, and the Generated Background), **World** (World
-  Setting, then Factions, Things, Abilities, Places and the Bestiary as
-  relic-style tiles) and **Arcs** (Arc Goals, then the ARC fields). A
-  character or card opens its fields in a sheet; the fields are the Seed's own
+- **The Blueprint (2026-10-27).** Inside the shell the Blueprint has four
+  pages on a pinned tab strip: **Story** (cover, Origin, Style Bible, Story
+  Settings, Keep a Copy), **Cast** (the cast as a row of Codex cards, the
+  chosen character's large Codex card with Power and Holds/Knows beside it,
+  then Character Stats and When the Story Opens stat tables, Biography and the
+  Generated Background), **World** (World Setting, then Factions, Things,
+  Abilities, Places and the Bestiary as Codex cards) and **Arcs** (Arc Goals,
+  then the ARC fields). Every card is the Codex's own card
+  (`@seihouse/sen/harness-generation`: `CodexCardButton`,
+  `CodexProfileHeader`), so a card looks the same here and in the Codex; the
+  information around it is the Blueprint's own, in the Library's headings and
+  glass. A card opens its fields in a sheet; the fields are the Seed's own
   per-entry forms (`AdditionalCharacterFields`, `FactionFields`,
-  `WorldCardFields`), shared with the Seed workspaces. Blanks read Fate Will
-  Decide. Refine Details and **Create Story** are pinned in equal cells. Every
-  page stays mounted, so field ids hold. Portraits and tile emblems are
-  `PortraitFrame`, empty until pictures arrive (Manifest and Import, next).
-- **The creator frame (2026-10-26).** Create moves through the Seed like a
-  game's character creator: a step strip (Origin → ARC → World → Manifest, any
-  step tappable; World's eight kinds as sub-tabs), a live story card that grows
-  as the Seed fills (one line that opens on phones and tablets, a column
-  beside the step from 1280px), and Back / Next pinned above the workspace
-  bar in equal fixed cells. Create is the last step, a confirm screen; its
-  footer carries the page's one **Create World Blueprint** button. A blank
-  reads **Fate Will Decide**: the reader never meets the machinery behind it.
-  The bar reads Sections · Story Bank · Blueprint · Settings · Back, without
-  Sections on phones, where the step strip does its work. Blueprint opens the
-  World Blueprint inside the shell once one exists, otherwise the Create step. Owned by `development/creator/`.
+  `WorldCardFields`). Blanks read Fate Will Decide. Refine Details and
+  **Create Story** are pinned in equal cells on the workspace bar. Every page
+  stays mounted, so field ids hold.
 
 The canonical Story Seed shape is `creator / story / world`. Title has
 one owner at `world.optional.worldIdentity.title`; Blueprint title editing
@@ -232,6 +223,14 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-10-27 (ours, not Star Rail's; one card):** From SENSEI: the first
+  pass copied Honkai: Star Rail's look too closely (gold relic tabs, orange
+  portraits, purple strips). The layout of the information stays; the colours
+  and headings are the Library's again, and every card is now the Codex's own
+  card, shared from SEN (`codexCardParts.tsx`), so the Blueprint and the
+  Codex show one card. The Back / Next footer now rests on the workspace bar
+  by the bar's measured height (`PinnedFooter`), fixing a footer that floated
+  over the page on iPhone.
 - **2026-10-27 (the Blueprint as a character screen):** From SENSEI, after
   seeing the filled Blueprint scroll for about 22 phone screens: borrow Honkai:
   Star Rail's character screens. The Blueprint now has Story, Cast, World and

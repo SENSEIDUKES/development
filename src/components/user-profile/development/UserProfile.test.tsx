@@ -617,9 +617,10 @@ describe('Cultivator Cave home', () => {
     expect(container.querySelector('[data-cave-card="status-effects"]')).toBeNull();
     expect(text()).not.toContain(profile.username);
     expect(container.querySelector('.workspace-header [aria-label="Open settings"]')).toBeNull();
-    // The chrome names the workspace without owning the page heading.
+    // The chrome keeps the logo without a header badge; the page title sits at the top of the page below the header.
     expect(container.querySelector('h1')).toBeNull();
-    expect(container.querySelector('[data-slot="library-header-badge-title"]')?.textContent).toBe('Profile');
+    expect(container.querySelector('[data-slot="library-header-badge-title"]')).toBeNull();
+    expect(container.querySelector('[data-cave-page-heading] [data-page-title]')?.textContent).toBe('Profile');
     // Below the desktop breakpoint the global strip is the only visible
     // navigation: the canonical App Shell keeps the rail `display: none` until
     // `lg`, so the same destinations are never offered twice.

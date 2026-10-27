@@ -60,6 +60,10 @@ export function translateInterfaceText(raw: string, language?: SenLanguageCode):
 
   let translatedCore: string | undefined =
     pack.strings[trimmed] ?? pack.lowercaseLookup.get(trimmed.toLowerCase());
+  if (!translatedCore && PHRASE_FALLBACKS[trimmed]) {
+    const fallback = PHRASE_FALLBACKS[trimmed];
+    translatedCore = pack.strings[fallback] ?? pack.lowercaseLookup.get(fallback.toLowerCase());
+  }
 
   if (!translatedCore) {
     for (const { pattern, apply } of DYNAMIC_PATTERNS) {
@@ -77,15 +81,21 @@ export function translateInterfaceText(raw: string, language?: SenLanguageCode):
   return `${leading}${translatedCore}${trailing}`;
 }
 
+const PHRASE_FALLBACKS: Readonly<Record<string, string>> = {
+  Preferences: 'Settings',
+  'Preferred Language': 'Language',
+};
+
 const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'CODE', 'PRE']);
 const LANGUAGE_SELECT_IDS = new Set([
   'cave-interface-language',
   'cave-reading-language',
+  'header-preferred-language',
   'story-original-language',
   'story-seed-language',
   'world-settings-reading-language',
 ]);
-const LANGUAGE_SELECT_NAMES = new Set(['interfaceLanguage', 'defaultReadingLanguage']);
+const LANGUAGE_SELECT_NAMES = new Set(['interfaceLanguage', 'defaultReadingLanguage', 'preferredLanguage']);
 const EXCLUDED_CONTENT_CLASSES = [
   'world-card-caption-title',
   'world-card-caption-creator',
@@ -336,12 +346,24 @@ function syncActiveLanguage() {
  * or previewed, and restores the original English text immediately when
  * reverted or switched back to `'en'`.
  */
+const HEADER_FALLBACK_ID = Symbol('header-fallback-language');
+
+export function getActiveInterfaceLanguage(): SenLanguageCode {
+  return activeLanguage;
+}
+
+export function setFallbackInterfaceLanguage(language: SenLanguageCode): void {
+  registrations.set(HEADER_FALLBACK_ID, { language: normalizeSenLanguageCode(language), preview: false });
+  syncActiveLanguage();
+}
+
 export function useInterfaceLanguageTranslation(language?: SenLanguageCode, preview = false): void {
   const idRef = useRef<symbol | null>(null);
   if (!idRef.current) idRef.current = Symbol('interface-language');
   const normalized = normalizeSenLanguageCode(language);
 
   useIsomorphicLayoutEffect(() => {
+    registrations.delete(HEADER_FALLBACK_ID);
     registrations.set(idRef.current!, { language: normalized, preview });
     syncActiveLanguage();
   }, [normalized, preview]);

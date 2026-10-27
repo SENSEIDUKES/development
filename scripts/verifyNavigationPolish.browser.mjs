@@ -20,7 +20,7 @@ try {
         assert.deepEqual(await nav.locator('button').allTextContents(),
           [...(width < 640 ? [] : ['Sections']), 'Story Bank', 'Blueprint', 'Settings', 'Back']);
         assert.equal(await nav.getByRole('button', { name: 'Help', exact: true }).count(), 0);
-        assert.equal(await page.locator('header .workspace-help-emblem').textContent(), '?');
+        assert(await page.locator('header .workspace-preferences-emblem').count() > 0);
         assert.equal(await nav.locator('img[alt="Celestial Library"]').getAttribute('src'), '/favicon.jpg');
         if (width >= 1024) { assert.equal(await nav.isVisible(), false); continue; }
         const padding = await nav.evaluate(element => Number.parseFloat(getComputedStyle(element).paddingBottom));
@@ -39,7 +39,7 @@ try {
       }
     }
     await page.goto(origin + '/library-shell.html?variant=development&source=cultivator-cave&state=developed-cultivator');
-    const title = page.locator('[data-slot="library-header-badge-title"]');
+    const title = page.locator('[data-cave-page-heading] [data-page-title]');
     await title.waitFor();
     assert.equal(await title.textContent(), 'Profile');
     const logo = page.locator('header a[aria-label="Return to Library"] img');

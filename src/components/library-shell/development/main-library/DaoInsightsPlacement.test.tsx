@@ -39,19 +39,17 @@ const adapter = (screen = 'home'): MainLibraryHeaderAdapter => ({
   requestDao: (async () => ({ ok: true, json: async () => ({ hasServerGemini: false }) })) as unknown as MainLibraryHeaderAdapter['requestDao'],
 });
 
-// Regression: Dao Insights was mounted in the top header's contextual slot,
-// where it competed with the page title. It belongs to Home's own content.
-it('regression: keeps Dao Insights out of the header at every screen', async () => {
+it('regression: keeps Dao Insights in the header center across screens with Logo, Preferences and Search', async () => {
   for (const screen of ['home', 'detail', 'profile']) {
     await render(<MainLibraryHeader adapter={adapter(screen)} />);
     const header = container.querySelector('header')!;
-    expect(header.querySelector('.dao-insights-trigger')).toBeNull();
-    expect(header.querySelector('[aria-label="Insights from the Dao"]')).toBeNull();
+    expect(header.querySelector('.dao-insights-trigger')).not.toBeNull();
+    expect(header.querySelector('[aria-label="Insights from the Dao: story sparks"]')).not.toBeNull();
     expect(container.querySelector('.workspace-header-context')).toBeNull();
-    // The header keeps its own two utilities and the full page title.
     expect(Array.from(header.querySelectorAll('.workspace-header-utilities button'))
-      .map(element => element.getAttribute('aria-label'))).toEqual(['Help', 'Search']);
-    expect(header.querySelector('[data-slot="library-header-badge-title"]')?.textContent).toBe('Celestial Library');
+      .map(element => element.getAttribute('aria-label'))).toEqual(['Preferences', 'Search']);
+    expect(header.querySelector('[data-slot="library-header-badge-title"]')).toBeNull();
+    expect(header.querySelector('[data-slot="novel-expanded-logo"]')).not.toBeNull();
   }
 });
 

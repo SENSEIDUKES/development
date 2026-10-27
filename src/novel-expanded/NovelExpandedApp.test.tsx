@@ -428,7 +428,7 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     expect(header.querySelector('.novel-expanded-emblem [data-slot="novel-expanded-logo"]')).not.toBeNull();
     expect(header.querySelector('.novel-expanded-wordmark')).toBeNull();
     expect(header.querySelector('[data-slot="library-header-badge-title"]')).toBeNull();
-    expect(header.querySelector('button[aria-label="Help"]')).toBeTruthy();
+    expect(header.querySelector('button[aria-label="Preferences"]')).toBeTruthy();
     expect(header.querySelector('button[aria-label="Search"]')).toBeTruthy();
     // On a phone the music note floats above the bar, not in the header.
     expect(floatingNote()).toBeTruthy();
@@ -570,6 +570,56 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     await render(services);
     expect(document.querySelector('[data-sidebar-mode]')?.getAttribute('data-sidebar-mode')).toBe('compact');
     expect(window.localStorage.getItem(`${NOVEL_EXPANDED_STORAGE.readerPreferences}${LIBRARY_SIDEBAR_MODE_KEY}`)).toBe('compact');
+  });
+
+  it('keeps Logo | Insights | Familiar | Preferences | Search invariant across tabs, moves page titles below the header, and updates Preferred Language immediately', async () => {
+    const services = appServices(scriptedWriter().writer);
+    await render(services);
+    const assertHeaderOrder = () => {
+      const header = document.querySelector<HTMLElement>('.workspace-header')!;
+      expect(header).toBeTruthy();
+      expect(header.querySelector('[data-slot="library-header-badge-title"]')).toBeNull();
+      expect(header.querySelector('[data-slot="novel-expanded-logo"]')).not.toBeNull();
+      expect(header.querySelector('#dao-insights-header-center')).not.toBeNull();
+      expect(
+        Array.from(header.querySelectorAll('.workspace-header-actions button')).map(button => button.getAttribute('aria-label')),
+      ).toEqual(['Show Quill actions', 'Preferences', 'Search']);
+    };
+
+    // Home
+    assertHeaderOrder();
+
+    // Create: Story Seed title sits at the top of the page below the header.
+    await click(buttonByText('Create', strip()!), 'Create in the navigation', 20);
+    assertHeaderOrder();
+    expect(document.querySelector('[data-story-seed-page-heading] [data-page-title]')?.textContent).toBe('Story Seed');
+    await click(buttonByText('Back', document.querySelector<HTMLElement>('nav[aria-label="Story Seed navigation"]')!), 'Back on Story Seed', 20);
+
+    // Discover: Discover heading sits at the top of the page below the header.
+    await click(buttonByText('Discover', strip()!), 'Discover in the navigation', 20);
+    assertHeaderOrder();
+    expect(document.querySelector('.discover-header h1')?.textContent).toBe('Discover');
+
+    // Profile: Profile title sits at the top of the page below the header.
+    await click(buttonByText('Profile', strip()!), 'Profile in the navigation', 50);
+    assertHeaderOrder();
+    expect(document.querySelector('[data-cave-page-heading] [data-page-title]')?.textContent).toBe('Profile');
+
+    // Preferences compact card changes both interfaceLanguage and defaultReadingLanguage immediately.
+    await click(document.querySelector('header button[aria-label="Preferences"]'), 'Preferences in the header', 20);
+    const card = document.querySelector<HTMLElement>('[data-testid="workspace-preferences-card"]')!;
+    expect(card).toBeTruthy();
+    const select = card.querySelector<HTMLSelectElement>('#header-preferred-language')!;
+    expect(select.value).toBe('en');
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')!.set!.call(select, 'es');
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await flush(20);
+    expect(document.body.querySelector('[data-cave-language-confirm]')).toBeNull();
+    expect(services.profile.read().interfaceLanguage).toBe('es');
+    expect(services.profile.read().defaultReadingLanguage).toBe('es');
+    expect(document.documentElement.dataset.interfaceLanguage).toBe('es');
   });
 });
 

@@ -105,11 +105,11 @@ describe('The header\'s sound control', () => {
     expect(slider()).toBeNull();
   });
 
-  it('shows nothing without a reader mixer, and sits before Help and Search in the header', () => {
+  it('shows nothing without a reader mixer, and sits before Preferences and Search in the header', () => {
     render(<HeaderSoundControl />, false);
     expect(container.querySelector('.header-sound-control')).toBeNull();
     render(<WorkspaceHeader title="NovelExpanded" sound={<HeaderSoundControl />} />);
     const labels = Array.from(container.querySelectorAll('header button')).map(button => button.getAttribute('aria-label'));
-    expect(labels).toEqual(['Mute sound', 'Help', 'Search']);
+    expect(labels).toEqual(['Mute sound', 'Preferences', 'Search']);
   });
 });

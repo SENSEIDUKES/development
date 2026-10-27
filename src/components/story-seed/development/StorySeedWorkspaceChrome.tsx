@@ -154,6 +154,10 @@ function StorySeedChromeContent(props: StorySeedChromeContentProps) {
    * callback, eligibility rule, disabled reason, loading indicator and saved
    * feedback is the same one the header toolbar carried.
    */
+  const pageHeading = <div className="story-seed-page-heading" data-story-seed-page-heading data-page-heading>
+    <p className="story-seed-page-eyebrow">Grow Your Universe</p>
+    <h1 className="story-seed-page-title font-display font-bold" data-page-title>Story Seed</h1>
+  </div>;
   const actionRow = <div className="story-seed-action-row" data-story-seed-action-row>
     <p role="status" className="story-seed-action-status"
       data-tone={props.error ? 'error' : props.isGenerating ? 'busy' : props.savedFeedback ? 'success' : 'neutral'}
@@ -180,7 +184,7 @@ function StorySeedChromeContent(props: StorySeedChromeContentProps) {
   if (props.layout === 'mobile') return settingsSheet;
   return <>
     <WorkspaceShell header={header} sidebar={<LibrarySectionSidebar />} sidebarLabel="Story Seed sections">
-      {props.showActionRow !== false && actionRow}
+      {props.showActionRow !== false && <>{pageHeading}{actionRow}</>}
       {props.children}
     </WorkspaceShell>
     {settingsSheet}

@@ -42,8 +42,9 @@ const adapter = (requestDao?: MainLibraryHeaderAdapter['requestDao']): MainLibra
   requestDao: requestDao ?? (async () => ({ ok: true, json: async () => ({ hasServerGemini: false }) })) as unknown as MainLibraryHeaderAdapter['requestDao'],
 });
 
-it('opens Help as text guidance when the host supplies no audio provider', async () => {
+it('opens Help from the Preferences card as text guidance when the host supplies no audio provider', async () => {
   await render(<WorkspaceHeader title="Host page" />);
+  await click(byLabel('Preferences'));
   await click(byLabel('Help'));
   await settle(300);
   const dialog = document.querySelector('[role="dialog"]');

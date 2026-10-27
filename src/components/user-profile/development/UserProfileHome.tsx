@@ -236,6 +236,10 @@ export function UserProfileHome({
       data-cave-home
       data-cave-home-mode={mode}
     >
+      <div className="mb-3" data-cave-page-heading data-page-heading>
+        <p className="font-serif text-[11px] font-semibold tracking-[0.18em] text-neutral-400 uppercase">Cultivator Cave</p>
+        <p className="cave-title font-display text-2xl font-bold leading-tight text-neutral-100 sm:text-3xl" data-page-title>Profile</p>
+      </div>
       <section aria-labelledby="cave-cultivator-name" className="relative">
         <div className="relative z-10 mx-auto mt-2 flex items-center justify-center">
           <div className="relative aspect-square w-[min(58vw,15rem)] md:w-56 lg:w-60">

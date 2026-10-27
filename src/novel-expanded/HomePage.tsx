@@ -26,7 +26,7 @@ export function HomePage({ worlds, navigate, readerProfile, sparks }: {
   sparks?: DaoSparkHost;
 }) {
   return <AppShell route={{ page: 'home' }} navigate={navigate} stories={worlds} readerProfile={readerProfile} mainLabel="Your stories"
-    headerCenter={<MainLibraryHomeInsights everyWidth adapter={{ copyText, daoSparks: sparks }} />}>
+    headerCenter={sparks ? undefined : <MainLibraryHomeInsights everyWidth adapter={{ copyText, daoSparks: sparks }} />}>
     <div className="mx-auto w-full max-w-7xl px-4 py-8" data-testid="novel-expanded-home">
       <LightNovelsHome worlds={worlds} emptyState={EMPTY_LIST}
         featuredWorlds={worlds.filter(world => world.imageUrl.trim()).slice(0, FEATURED_STORIES)}

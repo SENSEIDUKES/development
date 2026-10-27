@@ -3,7 +3,7 @@ import { ReaderMixerProvider, type ReaderMixer } from '@seihouse/audio-player';
 import { LibraryPresentationProvider, loadingFamiliarPresentation } from '@seihouse/library/presentation';
 import { useInterfaceLanguageTranslation } from '@seihouse/library/profile';
 import {
-  HeaderSoundControl, LibraryDesktopNavigationProvider, LibraryDestinationsProvider, WorkspaceHeaderSoundProvider, useMenuMusic, useStoredLibrarySidebarMode,
+  HeaderSoundControl, LibraryDesktopNavigationProvider, LibraryDestinationsProvider, MainLibraryHomeInsights, WorkspaceHeaderCenterProvider, WorkspaceHeaderPreferencesProvider, WorkspaceHeaderSoundProvider, useMenuMusic, useStoredLibrarySidebarMode,
 } from '@seihouse/library/shell';
 import { CreateStorySettings, StoryPages, storyHomeWorlds, useLibraryStories, useStorySettingsDraft } from '@seihouse/library/stories';
 import { findStory, nextChapterWaitsOnReader, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
@@ -176,8 +176,21 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
 
   // One Familiar around every page, at the same place in the tree, so it keeps its
   // place as the reader moves; in the Reader its recall sits in the top bar beside Reader Settings.
-  const withFamiliar = (page: ReactNode) =>
-    <AppFamiliar profile={profile} present={Boolean(state && skills)} reading={route.page === 'read'}>{page}</AppFamiliar>;
+  // place as the reader moves; in the Reader its recall sits in the top bar beside Reader Settings.
+  const headerCenter = useMemo(
+    () => <MainLibraryHomeInsights everyWidth adapter={{ copyText: text => navigator.clipboard.writeText(text), daoSparks: sparks }} />,
+    [sparks],
+  );
+  const headerPreferences = useMemo(
+    () => ({
+      language: profile.interfaceLanguage,
+      onLanguageChange: (language: typeof profile.interfaceLanguage) => {
+        services.profile.save({ interfaceLanguage: language, defaultReadingLanguage: language });
+      },
+    }),
+    [profile.interfaceLanguage, services.profile],
+  );
+  const withFamiliar = (page: ReactNode) => <WorkspaceHeaderCenterProvider center={headerCenter} centerBreakpoint="always"><WorkspaceHeaderPreferencesProvider preferences={headerPreferences}><AppFamiliar profile={profile} present={Boolean(state && skills)} reading={route.page === 'read'}>{page}</AppFamiliar></WorkspaceHeaderPreferencesProvider></WorkspaceHeaderCenterProvider>;
 
   if (!state || !skills) {
     const error = skillsError ?? stories.loadError;

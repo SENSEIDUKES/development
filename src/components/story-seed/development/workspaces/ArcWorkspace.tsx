@@ -5,6 +5,7 @@ import { HARD_PIN_LIMIT, HARD_PIN_TEXT_LIMIT, type StorySeedInput, type FunSetti
 import { getSeedSection } from '../seedSections';
 import { patchFunSettings, patchWorldFoundations, funSettings, worldFoundations, type UpdateSeed } from '../seedState';
 import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
+import { SeedPart } from '../creator/SeedPart';
 import { SeedNote, SeedSectionFrame, SeedSegmented } from './SeedSectionFrame';
 
 interface ArcWorkspaceProps {
@@ -122,66 +123,75 @@ export const ArcWorkspace = ({ seed, updateSeed, showActiveArcGoal = true, showS
   const visiblePins = Math.min(HARD_PIN_LIMIT, lastWrittenPin + 2);
   return (
     <SeedSectionFrame section={section} complete={section.isFilled(seed)}>
-      <LibraryTextArea id="destined-ending-input" label="Destined Ending" icon={Hourglass} maxLength={1500}
-        helpText={<SeedNote moreLabel="More about the Destined Ending" more="The true long-term destination of this novel. If left blank, the Library recommends a fitting ending from your Origin. You can alter this outcome later.">Where the novel ultimately ends. Blank? The Library suggests one.</SeedNote>}
-        value={worldFoundations(seed).destinedEnding || ''}
-        onChange={value => updateSeed(patchWorldFoundations({ destinedEnding: value }))} rows={3} />
-      {showStoryLength && <div>
-        <LibraryTextBox id="story-length-input" label="Story Length (arcs)" icon={Milestone}
-          type="number" min={STORY_LENGTH_ARCS.min} max={STORY_LENGTH_ARCS.max} step={1} inputMode="numeric"
-          helpText={<SeedNote moreLabel="More about Story Length" more={`How many arcs of ${ARC_LENGTH} chapters the story takes to reach its Destined Ending. Leave it blank and the World Blueprint suggests a length you can change.`}>{`Arcs of ${ARC_LENGTH} chapters. Blank? The Blueprint suggests one.`}</SeedNote>}
-          value={lengthText} invalid={typedLength === null}
-          error={typedLength === null ? `Choose a whole number of arcs from ${STORY_LENGTH_ARCS.min} to ${STORY_LENGTH_ARCS.max}.` : undefined}
-          onChange={changeLength} />
-        {typeof typedLength === 'number' && (
-          <p className="mt-2 text-xs text-neutral-400" data-testid="story-length-summary">
-            {arcsLabel(typedLength)} · {(typedLength * ARC_LENGTH).toLocaleString('en-US')} chapters. Arc {typedLength}, the final arc, reaches the Destined Ending.
-          </p>
-        )}
-      </div>}
-      <section aria-labelledby="arc-hard-pins-title" className="glass-panel p-4 sm:p-5">
-        <h3 id="arc-hard-pins-title" className="font-display text-lg text-[#DDC58A]">Hard Pins</h3>
-        <p className="mb-3 text-xs text-neutral-400">Promises the story must keep on the way to its ending. Up to {HARD_PIN_LIMIT}, all optional.</p>
-        <div className="space-y-3">
-          {Array.from({ length: visiblePins }, (_, index) => (
-            <LibraryTextBox key={index} id={`hard-pin-${index + 1}`} label={`Hard Pin ${index + 1}`} icon={Pin}
-              maxLength={HARD_PIN_TEXT_LIMIT} value={pinDrafts[index] ?? ''} onChange={value => updatePin(index, value)} />
-          ))}
+      {/* A phone shows one part at a time (SeedPart); the Active Arc Goal joins the Ending part. */}
+      <SeedPart id="ending">
+        <div className="space-y-4 sm:space-y-6">
+          <LibraryTextArea id="destined-ending-input" label="Destined Ending" icon={Hourglass} maxLength={1500}
+            helpText={<SeedNote moreLabel="More about the Destined Ending" more="The true long-term destination of this novel. If left blank, the Library recommends a fitting ending from your Origin. You can alter this outcome later.">Where the novel ultimately ends. Blank? The Library suggests one.</SeedNote>}
+            value={worldFoundations(seed).destinedEnding || ''}
+            onChange={value => updateSeed(patchWorldFoundations({ destinedEnding: value }))} rows={3} />
+          {showStoryLength && <div>
+            <LibraryTextBox id="story-length-input" label="Story Length (arcs)" icon={Milestone}
+              type="number" min={STORY_LENGTH_ARCS.min} max={STORY_LENGTH_ARCS.max} step={1} inputMode="numeric"
+              helpText={<SeedNote moreLabel="More about Story Length" more={`How many arcs of ${ARC_LENGTH} chapters the story takes to reach its Destined Ending. Leave it blank and the World Blueprint suggests a length you can change.`}>{`Arcs of ${ARC_LENGTH} chapters. Blank? The Blueprint suggests one.`}</SeedNote>}
+              value={lengthText} invalid={typedLength === null}
+              error={typedLength === null ? `Choose a whole number of arcs from ${STORY_LENGTH_ARCS.min} to ${STORY_LENGTH_ARCS.max}.` : undefined}
+              onChange={changeLength} />
+            {typeof typedLength === 'number' && (
+              <p className="mt-2 text-xs text-neutral-400" data-testid="story-length-summary">
+                {arcsLabel(typedLength)} · {(typedLength * ARC_LENGTH).toLocaleString('en-US')} chapters. Arc {typedLength}, the final arc, reaches the Destined Ending.
+              </p>
+            )}
+          </div>}
         </div>
-      </section>
-      {showActiveArcGoal && <>
+      </SeedPart>
+      <SeedPart id="pins">
+        <section aria-labelledby="arc-hard-pins-title" className="glass-panel p-4 sm:p-5">
+          <h3 id="arc-hard-pins-title" className="font-display text-lg text-[#DDC58A]">Hard Pins</h3>
+          <p className="mb-3 text-xs text-neutral-400">Promises the story must keep on the way to its ending. Up to {HARD_PIN_LIMIT}, all optional.</p>
+          <div className="space-y-3">
+            {Array.from({ length: visiblePins }, (_, index) => (
+              <LibraryTextBox key={index} id={`hard-pin-${index + 1}`} label={`Hard Pin ${index + 1}`} icon={Pin}
+                maxLength={HARD_PIN_TEXT_LIMIT} value={pinDrafts[index] ?? ''} onChange={value => updatePin(index, value)} />
+            ))}
+          </div>
+        </section>
+      </SeedPart>
+      {showActiveArcGoal && <SeedPart id="ending">
         <LibraryTextBox id="active-arc-goal-input" label="Active Arc Goal" icon={Target}
           helpText={<SeedNote moreLabel="More about the Active Arc Goal" more="The Blueprint plans Arc 1 around it; each later arc is planned when it begins, and you review its goals then.">What Arc 1 works toward first. Blank? The Blueprint suggests one you can review.</SeedNote>}
           value={seed.story.optional.activeArcGoal?.text ?? ''}
           onChange={text => updateSeed(current => ({ ...current, story: { ...current.story, optional: {
             ...current.story.optional, activeArcGoal: text.trim() ? { id: current.story.optional.activeArcGoal?.id ?? 'arc-1-initial', text, chapters: ARC_LENGTH } : undefined,
           } } }))} />
-      </>}
-      <section className="glass-panel p-4 sm:p-5" aria-labelledby="arc-fun-settings-title">
-        <h3 id="arc-fun-settings-title" className="font-sc text-xs font-bold uppercase tracking-[0.18em] text-[#DDC58A]">
-          Fun Settings
-        </h3>
-        <p className="mt-1 font-sans text-xs leading-relaxed text-neutral-400">
-          Ingredients the story makes room for because they make it more enjoyable.
-        </p>
-        <div className="mt-3 grid grid-cols-1 divide-y divide-neutral-800/70 md:grid-cols-3 md:gap-4 md:divide-y-0">
-          {FUN_SETTINGS.map(setting => (
-            <fieldset key={setting.key} className="min-w-0 py-3 first:pt-0 last:pb-0 md:py-0">
-              <legend className="mb-1.5 flex items-center font-display text-base font-bold tracking-wide text-[#F3EDE0]">
-                {setting.label}
-              </legend>
-              <p id={`arc-${setting.id}-summary`} className="mb-2 font-sans text-[11px] leading-relaxed text-neutral-400">
-                {setting.short === setting.help ? setting.help : <SeedNote moreLabel={`More about ${setting.label}`} more={setting.help}>{setting.short}</SeedNote>}
-              </p>
-              <SeedSegmented label={`${setting.label} level`} idPrefix={`arc-${setting.id}`}
-                describedBy={`arc-${setting.id}-summary`}
-                value={settings[setting.key] || 'medium'}
-                options={FUN_LEVELS.map(level => ({ ...level, description: setting.levelCopy[level.value] }))}
-                onSelect={level => updateSeed(patchFunSettings({ [setting.key]: level }))} />
-            </fieldset>
-          ))}
-        </div>
-      </section>
+      </SeedPart>}
+      <SeedPart id="fun">
+        <section className="glass-panel p-4 sm:p-5" aria-labelledby="arc-fun-settings-title">
+          <h3 id="arc-fun-settings-title" className="font-sc text-xs font-bold uppercase tracking-[0.18em] text-[#DDC58A]">
+            Fun Settings
+          </h3>
+          <p className="mt-1 font-sans text-xs leading-relaxed text-neutral-400">
+            Ingredients the story makes room for because they make it more enjoyable.
+          </p>
+          <div className="mt-3 grid grid-cols-1 divide-y divide-neutral-800/70 md:grid-cols-3 md:gap-4 md:divide-y-0">
+            {FUN_SETTINGS.map(setting => (
+              <fieldset key={setting.key} className="min-w-0 py-3 first:pt-0 last:pb-0 md:py-0">
+                <legend className="mb-1.5 flex items-center font-display text-base font-bold tracking-wide text-[#F3EDE0]">
+                  {setting.label}
+                </legend>
+                <p id={`arc-${setting.id}-summary`} className="mb-2 font-sans text-[11px] leading-relaxed text-neutral-400">
+                  {setting.short === setting.help ? setting.help : <SeedNote moreLabel={`More about ${setting.label}`} more={setting.help}>{setting.short}</SeedNote>}
+                </p>
+                <SeedSegmented label={`${setting.label} level`} idPrefix={`arc-${setting.id}`}
+                  describedBy={`arc-${setting.id}-summary`}
+                  value={settings[setting.key] || 'medium'}
+                  options={FUN_LEVELS.map(level => ({ ...level, description: setting.levelCopy[level.value] }))}
+                  onSelect={level => updateSeed(patchFunSettings({ [setting.key]: level }))} />
+              </fieldset>
+            ))}
+          </div>
+        </section>
+      </SeedPart>
     </SeedSectionFrame>
   );
 };

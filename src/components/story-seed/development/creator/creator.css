@@ -336,6 +336,47 @@
   .seed-creator-footer-progress-word { display: none; }
 }
 
+/* ── Phones: the questions come first ─────────────────────────────────────
+   Below 640px every piece of frame above the questions takes one short line:
+   the steps sit inline in a single row, the story card is one line with Save
+   Draft beside it, and the section heading drops its breadcrumb (the strip
+   already says where you are). The page heading and action row are not
+   rendered on a phone at all (CreationModal). */
+.seed-creator-save {
+  display: none;
+}
+@media (max-width: 639px) {
+  .seed-creator-strip { padding: 4px 12px; }
+  .seed-creator-step { flex-direction: row; justify-content: center; gap: 6px; }
+  .seed-creator-step-marker { width: 22px; height: 22px; font-size: 10px; }
+  .seed-creator-step-item:not(:last-child)::after { display: none; }
+  .seed-creator-step-label { font-size: 9.5px; letter-spacing: 0.1em; }
+  .seed-creator-kinds { margin-top: 4px; }
+
+  .seed-creator-body { gap: 10px; padding-top: 10px; }
+  .seed-creator-card-slot { display: flex; align-items: stretch; justify-content: flex-end; gap: 8px; }
+  .seed-live-card { flex: 1 1 auto; min-width: 0; border-radius: 12px; }
+  .seed-live-card-head { min-height: 44px; gap: 8px; padding: 4px 12px; }
+  .seed-live-card-eyebrow { display: none; }
+  .seed-live-card-titles { flex-direction: row; align-items: baseline; gap: 8px; }
+  .seed-live-card-title { flex: 0 1 auto; min-width: 0; font-size: 15px; }
+  .seed-live-card-lineage { flex: 1 1 0; min-width: 0; font-size: 11px; }
+
+  .seed-creator-save {
+    display: grid;
+    flex: 0 0 44px;
+    min-height: 44px;
+    place-items: center;
+    border: 1px solid rgba(205, 178, 113, 0.3);
+    border-radius: 12px;
+    background: rgba(11, 14, 30, 0.8);
+    color: #ddc58a;
+  }
+  .seed-creator-save[data-saved='true'] { border-color: rgba(4, 172, 255, 0.5); color: var(--color-portal); }
+  .seed-creator-save:disabled { opacity: 0.5; }
+  .seed-creator-save:focus-visible { outline: 2px solid rgba(205, 178, 113, 0.7); outline-offset: 2px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .seed-creator-step,
   .seed-creator-step-marker,

@@ -48,6 +48,17 @@ Story Seed is one creation flow with these visible destinations:
   **Create Story** are pinned in equal cells on the workspace bar. Every page
   stays mounted, so field ids hold.
 
+- **Phones (2026-10-27).** Below 640px the questions come first. The page
+  heading and its action row are not rendered (the shell header names Story
+  Seed); Save Draft is a square button beside the one-line story card; the
+  step strip is one inline row; the section heading drops its breadcrumb.
+  Origin (Style, Synopsis, Fate, Tags) and ARC (Ending, Hard Pins, Fun
+  Settings) show one part at a time from a row of part tabs, and Back / Next
+  walk the parts (`SECTION_PARTS`, `SeedPart`); every part stays mounted.
+  Characters, Factions, Things, Places, the Bestiary and the starting
+  abilities show as Codex cards (`CastCardGrid`, `WorldListGrid`) whose fields
+  open in a sheet. Tablets and laptops keep each page whole.
+
 The canonical Story Seed shape is `creator / story / world`. Title has
 one owner at `world.optional.worldIdentity.title`; Blueprint title editing
 updates that same value. The Blueprint keeps creator-authored Origin
@@ -223,6 +234,16 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-10-27 (actually mobile):** From SENSEI, on an iPhone: the character
+  creator changed the navigation but not the pages, so every page was the
+  same size and scrolled as far as before. Measured at 390×844, the first
+  question started about two-thirds of the way down the screen and a page ran
+  1.6 to 2.7 screens; Characters ran over 6. Now the frame above the
+  questions is one short line each, Origin and ARC are walked part by part,
+  and the World's lists are Codex cards with sheets, so most phone pages fit
+  one screen. The character, faction and world-card forms moved to their own
+  files (`CharacterFields`, `FactionFields`, `WorldCardFields`) so the Seed's
+  pages and the Blueprint can share the card grids without a circular import.
 - **2026-10-27 (ours, not Star Rail's; one card):** From SENSEI: the first
   pass copied Honkai: Star Rail's look too closely (gold relic tabs, orange
   portraits, purple strips). The layout of the information stays; the colours

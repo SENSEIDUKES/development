@@ -9,7 +9,7 @@ import {
   CHAPTER_ZERO_CHARACTER_SLOTS,
   CHAPTER_ZERO_MAIN_CHARACTER_SLOTS,
   MainCharacterFields,
-} from '../workspaces/CharactersWorkspace';
+} from '../workspaces/CharacterFields';
 import { worldCardSlots } from '../workspaces/WorldCardFields';
 import { FateDecides } from '../FateDecides';
 import { BlueprintSectionHeading, EditableChip } from './BlueprintDossierPrimitives';

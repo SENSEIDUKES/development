@@ -42,7 +42,8 @@ export async function verifyAppShellTitles({ tab, viewport, baseUrl }) {
         assert(control.left >= 0 && control.right <= width, `offscreen control: ${control.name}`);
         if (index) assert(control.left >= geometry.controls[index - 1].right - 0.1, `overlapping controls: ${width}/${config}`);
       });
-      if (config === 'source=story-seed&state=filled-intake') assert.equal(geometry.pageTitle, 'Story Seed');
+      // On a phone Story Seed gives its page heading back to the questions; the shell header names it.
+      if (config === 'source=story-seed&state=filled-intake') assert.equal(geometry.pageTitle, width < 640 ? null : 'Story Seed');
       if (config === 'source=cultivator-cave&state=developed-cultivator') {
         assert.equal(geometry.toolbar, false);
         assert.equal(geometry.pageTitle, 'Profile');

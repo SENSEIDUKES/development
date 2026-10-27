@@ -1,10 +1,11 @@
 import { WORLD_CARD_KINDS, type WorldCardKindId } from '@seihouse/sen/contracts';
 import type { StorySeedInput } from '@seihouse/sen/story-seed';
-import { NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
 import { getSeedSection, type SeedSectionId } from '../seedSections';
 import { worldFoundations, type UpdateSeed } from '../seedState';
 import { SeedSectionFrame } from './SeedSectionFrame';
-import { WorldCardSlotFields } from './WorldCardFields';
+import { WorldCardFields, type WorldListCard } from './WorldCardFields';
+import { usePhone } from '../../../library-shell/development/workspaceMedia';
+import { WorldListGrid } from '../blueprint/WorldCardGrid';
 
 /**
  * One Story Seed section for a Codex card kind the world keeps as a list:
@@ -16,44 +17,11 @@ import { WorldCardSlotFields } from './WorldCardFields';
  * kind needs no new form.
  */
 
-/** A card in one of the Seed's world lists. */
-export type WorldListCard = { id: string; name: string } & Record<string, unknown>;
-
 export interface WorldCardsWorkspaceProps {
   seed: StorySeedInput;
   updateSeed: UpdateSeed;
 }
 
-/**
- * One world card's fields (its name, then every slot its kind defines): the
- * Seed's list editor and the Blueprint's card sheet share them.
- */
-export const WorldCardFields = ({ kind, card, onChange }: {
-  kind: WorldCardKindId;
-  card: WorldListCard;
-  onChange: (patch: Record<string, string>) => void;
-}) => {
-  const definition = WORLD_CARD_KINDS.find(candidate => candidate.id === kind)!;
-  return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
-      <LibraryTextBox
-        size="compact"
-        label="Name"
-        id={`${kind}-name-${card.id}`}
-        value={card.name || ''}
-        onChange={value => onChange({ name: value })}
-        placeholder={definition.slots[0].asks.charAt(0).toUpperCase() + definition.slots[0].asks.slice(1)}
-      />
-      <WorldCardSlotFields
-        kind={kind}
-        card={card}
-        idPrefix={`${kind}-${card.id}`}
-        only={definition.slots.filter(slot => slot.id !== 'name').map(slot => slot.id)}
-        onChange={patch => onChange(patch as Record<string, string>)}
-      />
-    </div>
-  );
-};
 
 export const WorldCardsEditor = ({ seed, updateSeed, kind, field, limit, setCards }: WorldCardsWorkspaceProps & {
   kind: WorldCardKindId;
@@ -61,12 +29,16 @@ export const WorldCardsEditor = ({ seed, updateSeed, kind, field, limit, setCard
   limit: number;
   setCards: (cards: WorldListCard[]) => (seed: StorySeedInput) => StorySeedInput;
 }) => {
+  // A phone shows the list as Codex cards, each opening its fields in a sheet,
+  // instead of every card's whole form one after another.
+  const phone = usePhone();
   const definition = WORLD_CARD_KINDS.find(candidate => candidate.id === kind)!;
   const cards = (worldFoundations(seed)[field] ?? []) as WorldListCard[];
   const update = (index: number, patch: Record<string, string>) => {
     const next = cards.map((card, position) => (position === index ? { ...card, ...patch } : card));
     updateSeed(setCards(next));
   };
+  if (phone) return <WorldListGrid seed={seed} updateSeed={updateSeed} field={field} heading={false} />;
   return <>
     {cards.map((card, index) => (
       <div key={card.id} className="glass-panel relative space-y-3 p-4">

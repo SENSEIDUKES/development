@@ -5,20 +5,26 @@ import { SENStorySeedIcon } from '../SENStorySeedIcon';
 import {
   CREATOR_STEPS,
   WORLD_KINDS,
+  pageLabel,
   stepOfPage,
   stepStatus,
   type CreatorPageId,
+  type CreatorPart,
 } from './creatorSteps';
 
 /**
  * The character creator's step strip: Origin, ARC, World and Manifest, any of
  * which can be tapped. On World, its eight kinds sit beneath as a scrolling
- * row of sub-tabs, each marked once it holds something.
+ * row of sub-tabs, each marked once it holds something. On a phone, a long
+ * step's parts (`parts`) sit beneath it the same way.
  */
-export function CreatorStepStrip({ seed, page, onSelect }: {
+export function CreatorStepStrip({ seed, page, onSelect, parts, part, onSelectPart }: {
   seed: StorySeedInput;
   page: CreatorPageId;
   onSelect: (page: CreatorPageId) => void;
+  parts?: readonly CreatorPart[];
+  part?: string;
+  onSelectPart?: (part: string) => void;
 }) {
   const currentStep = stepOfPage(page);
   const kindsRef = useRef<HTMLDivElement>(null);
@@ -26,7 +32,7 @@ export function CreatorStepStrip({ seed, page, onSelect }: {
   useEffect(() => {
     kindsRef.current?.querySelector<HTMLElement>('[aria-current="page"]')
       ?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
-  }, [page]);
+  }, [page, part]);
 
   return (
     <div className="seed-creator-strip" data-seed-creator-strip>
@@ -69,6 +75,17 @@ export function CreatorStepStrip({ seed, page, onSelect }: {
               </button>
             );
           })}
+        </nav>
+      )}
+      {parts && (
+        <nav aria-label={`${pageLabel(page)} parts`} className="seed-creator-kinds" ref={kindsRef}>
+          {parts.map(entry => (
+            <button key={entry.id} type="button" className="seed-creator-kind" data-part={entry.id}
+              aria-current={entry.id === part ? 'page' : undefined}
+              onClick={() => onSelectPart?.(entry.id)}>
+              <span>{entry.label}</span>
+            </button>
+          ))}
         </nav>
       )}
     </div>

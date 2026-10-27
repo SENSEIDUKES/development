@@ -142,13 +142,19 @@ export function PaletteMaterials() {
     } catch (error) { setMessage(error instanceof Error ? error.message : 'The file could not be read. Existing looks were kept.'); }
   };
 
+  const edgeClass = (id: MaterialId) => settings.edits[id]?.borderGlow === 'reader'
+    ? 'reader-border-glow pm-reader-border' : id === 'reader' ? 'reader-border-glow' : '';
+  const applyReaderBorder = () => setSettings(current => ({
+    ...current, edits: Object.fromEntries(MATERIALS.map(({ id }) => [id, { ...current.edits[id], borderGlow: 'reader' as const }])),
+  }));
+
   const compositionStyle = (id: MaterialId): CSSProperties => {
     const measuredBase = measured[id];
     return {
       ...(measuredBase ? { backgroundColor: measuredBase.backgroundColor, backgroundImage: measuredBase.backgroundImage,
         border: `${measuredBase.borderWidth} solid ${measuredBase.borderColor}`, boxShadow: measuredBase.boxShadow,
         backdropFilter: measuredBase.backdropFilter, WebkitBackdropFilter: measuredBase.backdropFilter } : {}),
-      ...materialStyle(measuredBase, settings.edits[id]), color: settings.colors.text,
+      ...materialStyle(measuredBase, settings.edits[id], measured.reader), color: settings.colors.text,
     };
   };
 
@@ -181,26 +187,32 @@ export function PaletteMaterials() {
         <div className="pm-mobile-pickers"><label>Material<select aria-label="Material to edit" value={selected.id} onChange={e => selectMaterial(e.target.value as MaterialId)}>{MATERIALS.map(material => <option key={material.id} value={material.id}>{material.name}</option>)}</select></label>
           <label>Background<select aria-label="Preview background" value={settings.background} onChange={e => update({ background: e.target.value as PaletteSettings['background'] })}><option value="black">Black</option><option value="gray">Neutral gray</option><option value="artwork">Artwork</option></select></label></div>
         <div className="pm-comparison"><div><span className="pm-caption">Original · current app</span>{stage(<MaterialSurface id={selected.id} />, 'pm-large-sample')}</div>
-          <div><span className="pm-caption">Your experiment {Object.keys(edit).length > 0 && '· edited'}</span>{stage(<MaterialSurface id={selected.id} style={materialStyle(base, edit)} className="pm-experiment" />, 'pm-large-sample')}</div></div></div>
+          <div><span className="pm-caption">Your experiment {Object.keys(edit).length > 0 && '· edited'}</span>{stage(<MaterialSurface id={selected.id} style={materialStyle(base, edit, measured.reader)} className={`pm-experiment ${edgeClass(selected.id)}`} />, 'pm-large-sample')}</div></div></div>
         <div className="pm-editor-extras"><div className="pm-ingredients" aria-label="Individual material layers">{base && [
-          { name: 'Border', style: { border: `${base.borderWidth} solid ${base.borderColor}` } },
-          { name: 'Shadow', style: { boxShadow: shadowLayers(base.boxShadow).filter(s => !isColoredShadow(s) && !s.includes('inset')).join(', ') || 'none' } },
-          { name: 'Glow & highlights', style: { boxShadow: shadowLayers(base.boxShadow).filter(s => isColoredShadow(s) || s.includes('inset')).join(', ') || 'none' } },
-        ].map(layer => <div key={layer.name}>{stage(<div className="pm-layer" style={layer.style} />)}<span className="pm-caption">{layer.name}</span></div>)}</div>
+          { name: 'Border', className: '', style: { border: `${base.borderWidth} solid ${base.borderColor}` } },
+          { name: 'Shadow', className: '', style: { boxShadow: shadowLayers(base.boxShadow).filter(s => !isColoredShadow(s) && !s.includes('inset')).join(', ') || 'none' } },
+          { name: 'Glow & highlights', className: '', style: { boxShadow: shadowLayers(base.boxShadow).filter(s => isColoredShadow(s) || s.includes('inset')).join(', ') || 'none' } },
+          { name: 'Reader border glow', className: 'reader-border-glow pm-reader-border', style: measured.reader ? { border: `${measured.reader.borderWidth} solid ${measured.reader.borderColor}`, boxShadow: shadowLayers(measured.reader.boxShadow).filter(s => s.includes('inset')).join(', ') } : {} },
+        ].map(layer => <div key={layer.name}>{stage(<div className={`pm-layer ${layer.className}`} style={layer.style} />)}<span className="pm-caption">{layer.name}</span></div>)}</div>
         <RecipeDetails base={base} source={selected.source} /></div>
       </div><aside className="pm-adjustments"><span className="pm-eyebrow">Adjust the material</span>
         {base && <>
           <ColorControl label="Glass tint" value={edit.tint ?? baseTint(base)} onChange={tint => updateEdit({ tint })} />
           <Slider label="Opacity" value={edit.opacity ?? baseOpacity(base) * 100} max={100} onChange={opacity => updateEdit({ opacity })} />
           <Slider label="Background blur" value={edit.blur ?? baseBlur(base)} max={40} unit="px" onChange={blur => updateEdit({ blur })} />
-          <ColorControl label="Border color" value={edit.borderColor ?? colorParts(base.borderColor).hex} onChange={borderColor => updateEdit({ borderColor })} />
-          <Slider label="Border strength" value={edit.borderOpacity ?? colorParts(base.borderColor).alpha * 100} max={100} onChange={borderOpacity => updateEdit({ borderOpacity })} />
+          <div className="pm-border-choice"><label>Border glow<select aria-label="Border glow" value={edit.borderGlow ?? 'original'} onChange={e => updateEdit({ borderGlow: e.target.value as MaterialEdit['borderGlow'] })}>
+            <option value="original">Original material edge</option><option value="reader">Reader border glow</option>
+          </select></label><button type="button" className="pm-control" onClick={applyReaderBorder}>Apply Reader glow to all materials</button>
+            <p className="pm-note">The Reader’s warm rim, cool highlight and gold-to-blue edge. Applies to this experiment and its preview; save the look to keep it.</p>
+          </div>
+          {edit.borderGlow !== 'reader' && <><ColorControl label="Border color" value={edit.borderColor ?? colorParts(base.borderColor).hex} onChange={borderColor => updateEdit({ borderColor })} />
+          <Slider label="Border strength" value={edit.borderOpacity ?? colorParts(base.borderColor).alpha * 100} max={100} onChange={borderOpacity => updateEdit({ borderOpacity })} /></>}
           <Slider label="Shadow strength" value={edit.shadow ?? 100} max={200} onChange={shadow => updateEdit({ shadow })} />
-          <ColorControl label="Glow color" value={edit.glowColor ?? colorParts(shadowLayers(base.boxShadow).find(isColoredShadow)?.match(/rgba?\([^)]+\)/)?.[0] ?? 'rgb(4,172,255)').hex} onChange={glowColor => updateEdit({ glowColor })} />
-          <Slider label="Glow strength" value={edit.glow ?? (shadowLayers(base.boxShadow).some(isColoredShadow) ? 100 : 0)} max={200} onChange={glow => updateEdit({ glow })} />
+          <ColorControl label="Surface glow color" value={edit.glowColor ?? colorParts(shadowLayers(base.boxShadow).find(isColoredShadow)?.match(/rgba?\([^)]+\)/)?.[0] ?? 'rgb(4,172,255)').hex} onChange={glowColor => updateEdit({ glowColor })} />
+          <Slider label="Surface glow strength" value={edit.glow ?? (shadowLayers(base.boxShadow).some(isColoredShadow) ? 100 : 0)} max={200} onChange={glow => updateEdit({ glow })} />
         </>}
         <p className="pm-note">Opacity controls how much glass covers the scene. Blur softens what’s behind it. 100% shadow or glow keeps the existing strength.</p>
-        <p className="pm-note">Decorative edge rings stay with their original component. Your device’s transparency preferences remain active.</p>
+        <p className="pm-note">Reader border glow replaces the material’s decorative edge. Surface glow adjusts the separate halo. Your device’s transparency preferences remain active.</p>
       </aside></div>
     </section>
 
@@ -220,13 +232,13 @@ export function PaletteMaterials() {
       <div className="pm-role-controls">{(['navigation', 'panel', 'card', 'button'] as const).map(role => <label key={role}>{role === 'card' ? 'Nested card' : role[0].toUpperCase() + role.slice(1)}<select aria-label={role === 'card' ? 'Nested card' : role[0].toUpperCase() + role.slice(1)} value={settings.roles[role]} onChange={e => update({ roles: { ...settings.roles, [role]: e.target.value as MaterialId } })}>{MATERIALS.map(material => <option key={material.id} value={material.id}>{material.name}</option>)}</select></label>)}</div>
       <div className="pm-composition-colors"><ColorControl label="Text" value={settings.colors.text} onChange={text => update({ colors: { ...settings.colors, text } })} /><ColorControl label="Accent" value={settings.colors.accent} onChange={accent => update({ colors: { ...settings.colors, accent } })} /></div>
       {stage(<div className="pm-scene" style={{ '--pm-accent': settings.colors.accent } as CSSProperties}>
-        <nav aria-label="Composition navigation" className="pm-scene-nav pm-experiment" style={compositionStyle(settings.roles.navigation)}><span className="pm-scene-wordmark">NOVEL<br />EXPANDED</span><span className="pm-caption">PATHWAYS</span><button type="button" aria-current="page" className="pm-scene-selected">◇ Home <small>Selected</small></button><button type="button">✧ Create <small>Resting</small></button></nav>
-        <div className="pm-scene-panel pm-experiment" style={compositionStyle(settings.roles.panel)}><span className="pm-scene-kicker">A WORLD OF YOUR OWN</span><h3>The next chapter awaits.</h3><p>See the glass, the light, and the words together.</p>
-          <div className="pm-scene-card pm-experiment" style={compositionStyle(settings.roles.card)}><span className="pm-scene-kicker">YOUR STORY</span><h4>Beyond the quiet mountains</h4><p>A small nested surface. One shared visual language.</p></div>
-          <div className="pm-scene-actions">{(['Resting', 'Focus', 'Disabled'] as const).map(state => <div key={state}><button type="button" disabled={state === 'Disabled'} className={`pm-scene-button pm-experiment ${state === 'Focus' ? 'pm-focus-example' : ''}`} style={compositionStyle(settings.roles.button)}>{state === 'Disabled' ? 'Unavailable' : 'Continue story'}</button><span className="pm-caption">{state}{state === 'Focus' ? ' example' : ''}</span></div>)}</div>
+        <nav aria-label="Composition navigation" className={`pm-scene-nav pm-experiment ${edgeClass(settings.roles.navigation)}`} style={compositionStyle(settings.roles.navigation)}><span className="pm-scene-wordmark">NOVEL<br />EXPANDED</span><span className="pm-caption">PATHWAYS</span><button type="button" aria-current="page" className="pm-scene-selected">◇ Home <small>Selected</small></button><button type="button">✧ Create <small>Resting</small></button></nav>
+        <div className={`pm-scene-panel pm-experiment ${edgeClass(settings.roles.panel)}`} style={compositionStyle(settings.roles.panel)}><span className="pm-scene-kicker">A WORLD OF YOUR OWN</span><h3>The next chapter awaits.</h3><p>See the glass, the light, and the words together.</p>
+          <div className={`pm-scene-card pm-experiment ${edgeClass(settings.roles.card)}`} style={compositionStyle(settings.roles.card)}><span className="pm-scene-kicker">YOUR STORY</span><h4>Beyond the quiet mountains</h4><p>A small nested surface. One shared visual language.</p></div>
+          <div className="pm-scene-actions">{(['Resting', 'Focus', 'Disabled'] as const).map(state => <div key={state}><button type="button" disabled={state === 'Disabled'} className={`pm-scene-button pm-experiment ${edgeClass(settings.roles.button)} ${state === 'Focus' ? 'pm-focus-example' : ''}`} style={compositionStyle(settings.roles.button)}>{state === 'Disabled' ? 'Unavailable' : 'Continue story'}</button><span className="pm-caption">{state}{state === 'Focus' ? ' example' : ''}</span></div>)}</div>
         </div>
       </div>, 'pm-composition-stage')}
-      <p className="pm-note">This composition applies the measured surface layers to simple shapes. Component-specific decorative rings and animations are shown in the original samples above. Actions here are visual examples.</p>
+      <p className="pm-note">This composition applies the measured surface layers to simple shapes. The Reader border glow follows your material choices here. Other component-specific rings and animations are shown in the original samples above. Actions here are visual examples.</p>
     </section>
 
     <section id="pm-looks" className="pm-section"><div className="pm-section-heading"><div><span className="pm-eyebrow">04 / Keep your favorites</span><h2>Saved looks.</h2></div><p>Stored in this browser. Export to keep a portable copy.</p></div>

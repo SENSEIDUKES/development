@@ -182,3 +182,12 @@
 @media (prefers-reduced-transparency: reduce) { .pm-workbench .pm-experiment { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; background-color: #111820 !important; } }
 @supports not (backdrop-filter: blur(1px)) { .pm-workbench .pm-experiment { background-color: #111820 !important; } }
 @media (prefers-reduced-motion: reduce) { .pm-workbench *, .pm-workbench *::before, .pm-workbench *::after { animation: none !important; transition: none !important; } }
+
+/* The borrowed seam replaces decorative rings only in the experiment. Its
+   colors, light, size and responsive direction come from the Library recipe. */
+.pm-workbench .pm-reader-border { position: relative; overflow: visible; }
+.pm-workbench .pm-reader-border::before { display: none; }
+.pm-scene .reader-border-glow { position: relative; }
+.pm-border-choice { margin-block: 18px; grid-column: 1 / -1; }
+.pm-border-choice .pm-control { width: 100%; margin-top: 10px; }
+.pm-ingredients { grid-template-columns: repeat(2, minmax(0, 1fr)); }

@@ -37,12 +37,18 @@ blur, gradients, borders and layered shadows. Changes become scoped inline
 overrides on the experiment only. Recoloring preserves gradient stops and their
 relative opacity; changing blur retains saturation. Shadow strength affects
 neutral shadows, glow strength affects colored shadows; surfaces without a
-colored shadow can add a halo. Decorative pseudo-element edge rings stay with
-their original components. Layer tiles separate the border, outer neutral
+colored shadow can add a halo. The Border glow selector can replace any material's decorative ring with the
+Reader's warm rim, inset light and responsive gold-to-blue seam. Apply to all
+changes only the current experiment, preserving each material's fill and other
+edits. Reset restores the original edge. The shared `.reader-border-glow` recipe
+lives beside the original Reader selectors in `src/library/stories/reader-glass.css`;
+original Reader presentation remains unchanged. The border choice is an optional
+validated field in existing version-1 looks, so existing exports still load. Layer tiles separate the border, outer neutral
 shadow, and colored/inset highlights. They are not complete component replicas.
 
 The composition intentionally puts measured material layers on simple geometry;
-component-specific pseudo-elements and animation remain in the original samples.
+the Reader edge is shared with the samples, while other component-specific
+pseudo-elements and animation remain in the originals.
 Its controls and actions are visual fixtures. Text and accent choices apply only
 to this composition. The initial composition represents existing roles, not an
 approved palette. Reduced-transparency experiments use an opaque fallback.
@@ -63,6 +69,9 @@ canonical materials, desktop/mobile layout, editing/reset, composition, saved
 look lifecycle, reload, import/export, keyboard and reduced transparency.
 
 ## History
+
+- **2026-10-27:** Made the Reader border glow transferable to any or all experiment
+  materials and the composition, with saved-look support and an isolated edge sample.
 
 - **2026-10-26:** Added the Reader Chamber's blue panel material and gradient colors;
   made the phone workflow use section navigation, an optional gallery, a pinned

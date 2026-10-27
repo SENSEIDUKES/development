@@ -31,14 +31,27 @@ describe('material experiments', () => {
     expect(style.boxShadow).toContain('rgba(0, 0, 0, 0)');
     expect(style.boxShadow).toContain('rgba(180, 220, 255, 0.12)');
   });
-  it('can add a glow to a flat material', () => {
+  it('borrows the Reader rim and inset light while preserving edited fill and outer shadows', () => {
+    const reader = { ...glass, borderColor: 'rgba(214, 189, 135, 0.4)',
+      boxShadow: 'rgba(227, 246, 255, 0.15) 0px 1px 0px inset, rgba(2, 11, 32, 0.4) 0px 16px 48px' };
+    const edits = { tint: '#274663', opacity: 25, borderColor: '#000000', borderOpacity: 20 };
+    const before = materialStyle(glass, edits);
+    const borrowed = materialStyle(glass, { ...edits, borderGlow: 'reader' }, reader);
+    expect(borrowed.backgroundImage).toBe(before.backgroundImage);
+    expect(borrowed.borderColor).toBe(reader.borderColor);
+    expect(borrowed.boxShadow).toContain('rgba(227, 246, 255, 0.15)');
+    expect(borrowed.boxShadow).toContain('rgba(0, 0, 0, 0.45)');
+    expect(borrowed.boxShadow).not.toContain('rgba(180, 220, 255, 0.12)');
+    expect(materialStyle(glass, { ...edits, borderGlow: 'original' }, reader)).toEqual(before);
+  });
+  it('can add a glow to a flat material' , () => {
     expect(materialStyle({ ...glass, boxShadow: 'none' }, { glow: 100, glowColor: '#ff0000' }).boxShadow).toBe('0 0 32px rgba(255, 0, 0, 0.25)');
   });
 });
 
 describe('portable saved looks', () => {
   it('round-trips combinations and edits without mutating their settings', () => {
-    const saved = look(); saved.settings.edits.signin = { tint: '#112233', blur: 8, opacity: 65 };
+    const saved = look(); saved.settings.edits.signin = { tint: '#112233', blur: 8, opacity: 65, borderGlow: 'reader' };
     saved.settings.roles.panel = 'signin';
     expect(decodeLooks(encodeLooks([saved]))).toEqual([saved]);
   });
@@ -60,7 +73,7 @@ describe('portable saved looks', () => {
     expect(() => decodeLooks(raw)).toThrow();
   });
   it('rejects unsupported materials, arbitrary CSS and out-of-range settings', () => {
-    for (const edit of [{ tint: 'url(https://example.com)' }, { blur: -1 }, { opacity: 101 }, { position: 'fixed' }]) {
+    for (const edit of [{ tint: 'url(https://example.com)' }, { blur: -1 }, { opacity: 101 }, { position: 'fixed' }, { borderGlow: 'unknown' }, { borderGlow: 1 }]) {
       const raw = JSON.parse(encodeLooks([look()])); raw.looks[0].settings.edits.home = edit;
       expect(() => decodeLooks(JSON.stringify(raw))).toThrow();
     }

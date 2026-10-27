@@ -47,6 +47,18 @@
 import { mkdirSync, readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
 
+/**
+ * True when the page can be dragged sideways: the document is wider than the
+ * screen, or a region that scrolls up and down (the shell's page, a sheet) is
+ * also wider than itself. Rows meant to slide (tabs, rails) only scroll
+ * sideways, never up and down, so they never count.
+ */
+const slidesSideways = () => document.documentElement.scrollWidth > window.innerWidth
+  || [...document.querySelectorAll('*')].some(element => {
+    const style = getComputedStyle(element);
+    return /auto|scroll/.test(style.overflowX) && element.scrollHeight - element.clientHeight > 1
+      && element.scrollWidth - element.clientWidth > 1;
+  });
 const BASE = (process.argv[2] ?? process.env.NOVEL_EXPANDED_URL ?? 'http://localhost:5173').replace(/\/$/, '');
 const OUTPUT = 'output/playwright/novel-expanded';
 const TOKEN = 'browser-walk-token';
@@ -356,7 +368,7 @@ async function walk(browser, viewport, sample) {
       `${where}'s music note should float just above the bar's right end, got ${JSON.stringify({ note, bar })}.`);
   };
   await noteInPlace('Home');
-  check(await page.evaluate(() => document.documentElement.scrollWidth) <= viewport.width, 'The shell must never scroll sideways.');
+  check(!(await page.evaluate(slidesSideways)), 'The shell must never scroll sideways.');
   await page.locator('#novel-expanded-main').evaluate(main => main.scrollTo({ top: main.scrollHeight }));
   await page.locator('[data-library-footer]').waitFor();
   const footerWordmark = page.locator('[data-library-footer]').getByRole('img', { name: 'NovelExpanded', exact: true });
@@ -383,7 +395,7 @@ async function walk(browser, viewport, sample) {
   await createSettings.waitFor();
   check(await createSettings.locator('#harness-skill-author').count() === 1, 'Create\'s Story Settings should offer the Author skill slot.');
   check((await createSettings.innerText()).includes('The Library’s own Sound Cues'), 'Create\'s Story Settings should show the Library\'s own sounds.');
-  check(await page.evaluate(() => document.documentElement.scrollWidth) <= viewport.width, 'Create\'s Settings must never scroll sideways.');
+  check(!(await page.evaluate(slidesSideways)), 'Create\'s Settings must never scroll sideways.');
   await page.waitForTimeout(400);
   await shot('2a-create-story-settings');
   await page.keyboard.press('Escape');
@@ -391,6 +403,12 @@ async function walk(browser, viewport, sample) {
   await visibleButton(/^Story Bank$/).click();
   await visibleButton(/^Use Seed$/).click();
   await visibleButton(/^Refine Details$/).click();
+  // Every Create step scrolls up and down only, never sideways, as an app does.
+  for (const step of ['origin', 'arc', 'world']) {
+    await page.locator(`[data-seed-creator-strip] button[data-step="${step}"]`).click();
+    await page.waitForTimeout(300);
+    check(!(await page.evaluate(slidesSideways)), `Create's ${step} step must never scroll sideways.`);
+  }
   // Create's one Create button sits on the creator's last step.
   await page.locator('[data-seed-creator-strip] button[data-step="manifest"]').click();
   await page.getByRole('button', { name: /^Create World Blueprint/ }).and(page.locator(':enabled')).filter({ visible: true }).first().click();
@@ -405,6 +423,7 @@ async function walk(browser, viewport, sample) {
 
   // 3. The Blueprint, then Create Story, then Story View and Start Story under the veil.
   await visibleButton(/^Create Story/).waitFor();
+  check(!(await page.evaluate(slidesSideways)), 'The Blueprint must never scroll sideways.');
   check(counts.blueprints === 1, `One Blueprint request expected, saw ${counts.blueprints}.`);
   // The Blueprint's pages: Story, Cast, World and Arcs. Arc 1 and the story's length are on Arcs.
   await page.getByRole('tab', { name: 'Arcs' }).click();
@@ -597,7 +616,7 @@ async function walk(browser, viewport, sample) {
   await page.waitForTimeout(200);
   await shot('6c-reader-scene');
   await scene.locator('#reader-soundtrack-piece').selectOption('automatic');
-  check(!(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), 'Reader Settings must not scroll sideways.');
+  check(!(await page.evaluate(slidesSideways)), 'Reader Settings must not scroll sideways.');
   await page.waitForTimeout(300);
   await shot('6c-reader-audio');
   // Text: SEIHouse Sans for the chapter and SEIHouse Display for its title, from the font repo; the reader's choices kept on the device.
@@ -619,7 +638,7 @@ async function walk(browser, viewport, sample) {
   check(after.size === '20px' && after.title.startsWith('"SEIHouse Display Edge"'), `Larger text and the Edge title should apply at once, got ${JSON.stringify(after)}.`);
   const kept = JSON.parse(await page.evaluate(() => localStorage.getItem('novelexpanded-reader-text-settings')) ?? '{}');
   check(kept.size === 'larger' && kept.titleFont === 'seihouse-display-edge', `The text settings should be kept on the device, got ${JSON.stringify(kept)}.`);
-  check(!(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), 'Reader Settings → Text must not scroll sideways.');
+  check(!(await page.evaluate(slidesSideways)), 'Reader Settings → Text must not scroll sideways.');
   await shot('6c-reader-text');
   await text.getByRole('button', { name: 'Reset text' }).click();
   await settings.getByRole('tab', { name: 'Narration', exact: true }).click();
@@ -771,7 +790,7 @@ async function walk(browser, viewport, sample) {
   const codex = page.getByTestId('reader-panel-codex');
   await codex.getByTestId('codex-character').first().waitFor();
   check(!(await page.evaluate(() => document.querySelector('[data-testid="harness-reader"]').hidden)), 'The chapter must stay on the page under the Codex.');
-  check(!(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), 'The Codex must not scroll sideways.');
+  check(!(await page.evaluate(slidesSideways)), 'The Codex must not scroll sideways.');
   check((await codex.locator('[data-testid="codex-checks"] summary').textContent()).trim() === 'Record checks (1)', 'The closing list should leave one check.');
   await shot('6d-codex');
   await codex.getByTestId('codex-character').first().click();
@@ -790,7 +809,7 @@ async function walk(browser, viewport, sample) {
   check(counts.looks.length === 0, `No look may be written after a chapter, saw ${JSON.stringify(counts.looks)}.`);
   const words = await codexSheet.getByTestId('codex-look-description').innerText();
   check(words.includes('Mara') && words.includes('In the story’s words.'), `The sheet should show the story's own words for the look, got ${words}.`);
-  check(!(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), 'The character sheet must not scroll sideways.');
+  check(!(await page.evaluate(slidesSideways)), 'The character sheet must not scroll sideways.');
   await shot('6d-codex-profile');
   // Manifest first writes that one look (one quiet call with the token), then makes the card's picture from it, and the card wears it.
   await codexSheet.getByTestId('codex-manifest').getByRole('button', { name: 'Manifest' }).click();
@@ -828,7 +847,7 @@ async function walk(browser, viewport, sample) {
   const rewriteForm = page.getByRole('form', { name: 'Rewrite Chapter 1' });
   await rewriteForm.waitFor();
   await rewriteForm.locator('textarea').fill(REWRITE_NOTE);
-  check(!(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), 'The rewrite box must not scroll sideways.');
+  check(!(await page.evaluate(slidesSideways)), 'The rewrite box must not scroll sideways.');
   await shot('6e-rewrite');
   await rewriteForm.getByRole('button', { name: 'Rewrite Chapter 1' }).click();
   await veil.waitFor();
@@ -880,7 +899,7 @@ async function walk(browser, viewport, sample) {
   check(await storySettings.locator('#harness-skill-author').count() === 1 && await storySettings.locator('[data-testid="harness-fate-slot"]').count() === 1,
     'World Info\'s Settings should show the hand and managed CAPA slots.');
   check(await storySettings.locator('[data-testid="harness-official-requirements"]').count() === 0, 'The developer page\'s inspection stays off Story View.');
-  check(await page.evaluate(() => document.documentElement.scrollWidth) <= viewport.width, 'Settings must never scroll sideways.');
+  check(!(await page.evaluate(slidesSideways)), 'Settings must never scroll sideways.');
   await shot('4c-story-settings');
   await settingsCard.click();
   // Manifest on the cover: one cover or three; three unseal behind the veil, then the picker, then World Info and Home wear the one kept.
@@ -901,7 +920,7 @@ async function walk(browser, viewport, sample) {
   await page.getByTestId('story-cover-stage').waitFor();
   await page.waitForTimeout(1_000);
   await shot('4f-cover-picker');
-  check(await page.evaluate(() => document.documentElement.scrollWidth) <= viewport.width, 'The cover picker must never scroll sideways.');
+  check(!(await page.evaluate(slidesSideways)), 'The cover picker must never scroll sideways.');
   await page.locator('.story-cover-choice').nth(1).click();
   await visibleButton('Use this cover').click();
   await page.locator('.story-cover-choice').first().waitFor({ state: 'detached' });
@@ -1022,7 +1041,7 @@ async function walk(browser, viewport, sample) {
   check(address() === '/app/?page=profile&cave=%2Fhome', `Profile in the navigation should open the Cave, got ${address()}`);
   await page.locator('[data-cave-qi]').filter({ hasText: '1,000,000 to spend' }).waitFor({ timeout: 10_000 });
   await noteInPlace('The Cave');
-  check(await page.evaluate(() => document.documentElement.scrollWidth) <= viewport.width, 'The Cave must never scroll sideways.');
+  check(!(await page.evaluate(slidesSideways)), 'The Cave must never scroll sideways.');
   // The Familiar's recall sits in the header, beside the music note on laptops and never on it.
   const boxesMeet = (a, b) => a && b && a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
   const recall = page.locator('.workspace-header .familiar-recall').filter({ visible: true });

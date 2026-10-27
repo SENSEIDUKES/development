@@ -212,6 +212,17 @@ The existing local files named by this inventory are:
 
 ## Workshop history
 
+- **2026-10-27 (handles like an app):** From SENSEI, on an iPhone: the pages
+  slid sideways like a web page, not an app. The cause was Create's scrolling
+  page sitting 4px wider than the phone (its part tabs bled past the strip's
+  edge). The shell's page (`.workspace-shell-main`) and its sheets now scroll
+  up and down only; rows meant to slide (tabs, rails) still slide on their
+  own. The page itself no longer bounces, a double tap no longer zooms
+  (pinch still does), and taps lose the browser's grey flash
+  (`src/host/styles/theme.css`). The app walkthrough now fails when any
+  region that scrolls up and down is wider than itself, on Create's steps
+  and the Blueprint as well as before.
+
 - **2026-10-25 (Dao Insights fits one screen; Fate Survival sparks):** From
   SENSEI. The spark panel no longer scrolls on phones: a compact spark card
   (genre, title, premise, one line of tradition and tags, the aside in two

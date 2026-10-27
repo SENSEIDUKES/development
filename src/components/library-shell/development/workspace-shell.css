@@ -10,10 +10,13 @@
 /* Browsing screens scroll inside <main>, the canonical shell's scrolling
    region, so the header and the rail stay put without sticky positioning or
    measured heights. `overscroll-behavior` keeps a phone's bounce inside the
-   content instead of dragging the whole frame. */
+   content instead of dragging the whole frame. A page scrolls up and down
+   only, as an app does: rows meant to slide (tabs, rails) scroll on their
+   own, and nothing a pixel too wide can drag the page sideways. */
 .workspace-shell-main {
   min-width: 0;
-  overscroll-behavior-y: contain;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
 }
 
 /* The column stretches the full grid row, so its surface and border run from

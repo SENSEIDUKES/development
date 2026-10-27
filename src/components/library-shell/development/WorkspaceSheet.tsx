@@ -24,7 +24,7 @@ export function WorkspaceSheet({ open, onOpenChange, onOpenChangeComplete, title
         <SEIDialogTitle>{title}</SEIDialogTitle>
         <NarrativeButton size="icon" variant="ghost" icon={X} aria-label={closeLabel} onClick={() => onOpenChange(false)} />
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</div>
+      <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain">{children}</div>
       {footer && <NarrativePanel variant="footer" padding="sm" className="shrink-0 mt-4">{footer}</NarrativePanel>}
     </SEIDialogContent>
   </SEIDialog>;

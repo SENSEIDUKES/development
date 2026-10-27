@@ -1,5 +1,7 @@
 # NovelExpanded app
 
+- **2026-10-27** — Preferences includes a native Menu music switch synchronized with Profile Settings → Sound. Sound has a separate Menu Music SPP slot: Studio song collections and Soundscape packs install into the existing device media store, persist across reloads and play through the shared mixer; failed imports keep the prior selection. Menu music defaults to the 13 NovelExpanded theme songs at the owner's permanent `media.seihouse.org` URLs, each verified against the original Dropbox SPP's SHA-256 hash. Custom pack selections remain respected, and the Reader keeps SEN Soundscapes as its own soundtrack. `templates/spp/NovelExpanded Theme Songs v1.0.1.spp` carries the hosted links and original source provenance; `scripts/linkMenuMusicSpp.mjs` regenerates such a pack from the original and a complete URL map, requiring a new version.
+
 - **2026-10-26** — Simplified the Library header across every tab (`Logo | Insights | Familiar | Preferences | Search`). Removed header badges from the header row, moved the Create (`Story Seed`) and Profile (`Profile`) titles to the top of their pages below the header, and replaced `Help` in the header with `Preferences` — a compact card where the reader can immediately switch their `Preferred Language` (updating both app interface language and default reading language) or open `Help`. The header now remains unchanged across Home, Create, Discover, Profile and Story View.
 
 - **2026-10-26** — Fixed the production-only Dao Insights header overlap. The phone center now clears the canonical header's translation utility through its class API; resetting `translate: none` in app CSS was lowered to `transform` during the build and left the separate -50% translation active. `scripts/verifyAppHeader.browser.mjs` checks the built app and Home Workshop in Chromium and WebKit, including phone, tablet, laptop and enlarged-text layouts. CI now builds and checks this delivered header as well as the development app.
@@ -247,11 +249,13 @@ their other device preferences (`novelexpanded-reader-audio-mixer`), and so is
 their Scene choice (`novelexpanded-reader-soundtrack-choice`). The older
 single-channel player is not used by the app.
 
-The app has its own music (`appMusic.ts`): calm pieces of SEN Soundscapes,
-Volume 1 (`APP_MUSIC_MOOD`, ambient), one after another, on Home, Create, World
-Info and while a chapter is written, with no model and nothing to wait for. In
-the Reader each chapter's own scene takes over, as its writer chose it; leaving
-the Reader brings the app's music back.
+The app has its own music (`appMusic.ts`): the 13 NovelExpanded theme songs,
+one after another, on the menus, with no model and nothing to wait for.
+Profile Settings → Sound → Menu Music can replace them with an installed SPP.
+The default URLs come from `host/media/data/menu-music-v1.json` and match the
+downloadable `NovelExpanded Theme Songs v1.0.1.spp`. In the Reader each chapter's
+own scene takes over, as its writer chose it; leaving the Reader brings the
+menu music back. Its SEN Soundscapes catalog is separate from menu music.
 
 - **The first tap starts it.** Browsers and phones start no sound before the
   reader's first tap, and scrolling does not count. The music begins with the
@@ -329,7 +333,7 @@ task needs something the list does not allow.
 | `appPlaces.ts` | The app's places (Home, Create, Discover, Profile) and where each page sits in the Library's navigation |
 | `ProfilePage.tsx` | Profile: the Library's Cave on the device profile and the practice economy |
 | `AppFamiliar.tsx` | The app's one Familiar: the header recall and the floating companion |
-| `appMusic.ts` | The app's own music, from SEN Soundscapes, on every page and while a chapter is written |
+| `appMusic.ts` | The menu's theme songs or selected SPP, through the shared mixer; the Reader retains its own soundtrack |
 | `routes.ts` | Addresses and history |
 | `services.ts` | Storage, the writer, the official skills, the Blueprint client, the reader's profile and the practice economy |
 | `HomePage.tsx` | Home: the reader's stories, in `AppShell` |

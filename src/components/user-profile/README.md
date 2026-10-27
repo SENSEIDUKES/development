@@ -897,6 +897,12 @@ Changed only the shared page header title to Profile. Cultivator Cave terminolog
 
 Settings › Customization › Appearance gains a **Sound** section after Cave Environment with one switch, **Menu music**: calm music on the menus, on for a new reader, kept on the device. It shows only when the host supplies `soundPreferences` (its reader-preference storage) through the services port; the Workshop mock supplies the Workshop's own. The Profile header shows the music note (`HeaderSoundControl`) while it is on. The switch and the note read one value (`useMenuMusic`) and change together.
 
+### 2026-10-27 — Menu music in Preferences and its own SPP slot
+
+The header Preferences card exposes the same Menu music switch. Hosts can supply `menuMusic` through the existing profile services port to show the Menu Music slot inside Sound: choose an installed song pack or upload an SPP. The app and Workshop use the same slot and installer with their separate device stores. Import failures preserve the current music; switching it off still leaves the slot available for customization.
+
+The default is NovelExpanded Theme Songs: all 13 hosted recordings from the owner's pack. Menu-only imports remain outside the story media registry, so two menu packs can contain the same song without affecting a story's soundtrack.
+
 
 ## Pieces a host has not built yet — 2026-10-07
 

@@ -53,7 +53,7 @@ export function WorkspaceHeaderCenterProvider({ center, centerBreakpoint = 'alwa
 
 const HeaderPreferencesContext = createContext<WorkspaceHeaderPreferences | null>(null);
 /**
- * Host-owned Preferences card state (Preferred Language) shared across the
+ * Host-owned Preferences card state (language and menu music) shared across the
  * product's page headers.
  */
 export function WorkspaceHeaderPreferencesProvider({ preferences, children }: {

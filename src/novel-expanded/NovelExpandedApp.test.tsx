@@ -26,7 +26,7 @@ import { LIBRARY_SOUND_WORDS_PRESET } from '../host/media/soundWordPacks';
 import { createMemoryDeviceMediaPackStore, DeviceMediaUrls } from '../host/media/deviceMediaPacks';
 import { createPack } from 'seihouse-productions-package';
 import { piecesForMood, storySoundtrack } from '@seihouse/sen/reader-runtime';
-import { APP_MUSIC_MOOD } from './appMusic';
+import { MENU_MUSIC_PIECES } from '../host/media/menuMusicCatalog';
 import { LIBRARY_SIDEBAR_MODE_KEY, writeMenuMusic } from '@seihouse/library/shell';
 import { READER_MUSIC_MOOD } from '../components/harness-generation/development/useReaderSoundtrack';
 import { installFakeSpeechSynthesis } from '../test-utils/fakeSpeechSynthesis';
@@ -347,15 +347,15 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
     }
   });
 
-  it('plays its own calm music from SEN Soundscapes on its menus, with no model, and never into the Reader', async () => {
+  it('plays the theme songs on its menus, with no model, and never into the Reader', async () => {
     const story = scriptedWriter();
     const services = appServices(story.writer);
     const created = await startedStory(services.stories as InMemoryHarnessGenerationRepository, story.writer);
     const mixer = await render(services);
     const soundtrack = storySoundtrack(mixer);
-    const calm = piecesForMood(APP_MUSIC_MOOD, SEN_SOUNDSCAPES).map(piece => piece.id);
+    const themes = MENU_MUSIC_PIECES.map(piece => piece.id);
     const first = soundtrack.piece();
-    expect(calm).toContain(first?.id);
+    expect(themes).toContain(first?.id);
     expect(mixer.getState().layers.soundscapes.requested).toContain(first!.id);
 
     // The same piece plays on through World Info.
@@ -383,12 +383,16 @@ describe('NovelExpanded: Home → Story View → Reader', { timeout: 30_000 }, (
     expect(mixer.getState().preferences).toMatchObject({ masterEnabled: true, masterMuted: true });
     await act(async () => { note()!.click(); });
 
-    // Turned off (Profile Settings › Sound): the menus fall silent and the note leaves the header.
-    await act(async () => { writeMenuMusic(services.readerPreferences, false); });
+    // The native header toggle uses the same setting as Profile Settings › Sound.
+    await click(document.querySelector('header button[aria-label="Preferences"]'), 'Preferences', 5);
+    const musicSwitch = () => document.querySelector<HTMLElement>('[data-testid="workspace-preferences-card"] input[role="switch"]')!;
+    expect(musicSwitch()).toBeTruthy();
+    await act(async () => { musicSwitch().click(); });
     await flush(5);
     expect(note()).toBeNull();
     expect(storySoundtrack(mixer).piece()).toBeUndefined();
-    await act(async () => { writeMenuMusic(services.readerPreferences, true); });
+    expect(services.readerPreferences.read('menu-music')).toBe('off');
+    await act(async () => { musicSwitch().click(); });
     await flush(5);
     expect(note()).not.toBeNull();
     expect(storySoundtrack(mixer).piece()).toBeDefined();

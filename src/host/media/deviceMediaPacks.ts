@@ -1,5 +1,5 @@
-import { intakePack, MAX_LIMITS, type PackContent, type PackInput } from 'seihouse-productions-package';
-import { AUDIO_CUE_CATEGORIES, normalizeSoundWord, isSoundWord, packageMediaUrl, readAudioTags, readPackageMediaUrl, type AudioCue, type SoundWord } from '@seihouse/sen/audio';
+import { fingerprint, intakePack, MAX_LIMITS, type PackContent, type PackInput } from 'seihouse-productions-package';
+import { AUDIO_CUE_CATEGORIES, normalizeSoundWord, isSoundWord, isPlayableMediaUrl, packageMediaUrl, readAudioTags, readPackageMediaUrl, type AudioCue, type SoundWord } from '@seihouse/sen/audio';
 import type { ReaderMixer } from '@seihouse/audio-player';
 import { mediaPackKey, validateMediaPack, type MediaPack, type MediaPackEntitlement } from '@seihouse/library/media';
 import { SPP_CAPA_EXTENSION, SPP_SOUND_WORDS_EXTENSION } from '../generation/capa/sppSkills';
@@ -17,12 +17,13 @@ export const SPP_MEDIA_PACK_EXTENSION = 'seihouse.media-pack';
  * - Sound Cues: `{ "recordings": [{ "path", "sound", "category"? }] }`; a
  *   recording's Energy, Tone and Tension, when it has them, are the package
  *   file's own tags.
- * - Soundscapes: `{ "pieces": [{ "path", "mood", "label"? }] }`.
+ * - Soundscapes: `{ "pieces": [{ "path" | "url", "mood", "label"? }] }`;
+ *   a URL is a permanent public HTTPS recording instead of embedded audio.
  * - Atmospheres: `{ "beds": [{ "path", "word", "label"?, "group"? }] }`: looping
  *   beds, each chosen by its word ("forest"); beds that share a word take turns.
  */
 interface SoundCueCatalog { recordings: Array<{ path: string; sound: string; category?: string }> }
-interface SoundscapeCatalog { pieces: Array<{ path: string; mood: string; label?: string }> }
+interface SoundscapeCatalog { pieces: Array<{ path?: string; url?: string; mood: string; label?: string }> }
 interface AtmosphereCatalog { beds: Array<{ path: string; word: string; label?: string; group?: string }> }
 
 /** Packs of audio are large: the SPP safety ceiling (1 GiB, 512 MiB a file). */
@@ -149,6 +150,13 @@ export function readMediaSpp(content: PackContent): PackagedMediaPack {
         if (!isRecord(entry)) return fail(`${label} must be an object.`);
         const mood = typeof entry.mood === 'string' ? entry.mood.trim().toLowerCase() : '';
         if (!/^[a-z]+(?: [a-z]+){0,2}$/.test(mood)) return fail(`${label} needs a mood: one to three plain lowercase words.`);
+        if (entry.url !== undefined) {
+          if (entry.path !== undefined || typeof entry.url !== 'string' || !entry.url.startsWith('https://') || !isPlayableMediaUrl(entry.url)) {
+            return fail(`${label} needs either a packaged audio path or a public HTTPS audio URL.`);
+          }
+          const title = typeof entry.label === 'string' && entry.label.trim() ? entry.label.trim() : `Song ${index + 1}`;
+          return { id: `${base.id}:${index + 1}`, label: title, mood, moods: [mood], tags: [], url: entry.url };
+        }
         const { url, record } = audio(entry.path, label);
         const title = typeof entry.label === 'string' && entry.label.trim() ? entry.label.trim() : record.path.split('/').pop()!.replace(/\.[^.]+$/, '');
         return { id: `${base.id}:${record.path}`, label: title, mood, moods: [mood], tags: [], url };
@@ -163,15 +171,57 @@ export async function inspectMediaPackSpp(input: PackInput): Promise<PackagedMed
   return readMediaSpp(await inspectMediaSpp(input));
 }
 
+/**
+ * Menus accept a Soundscape pack or a Studio audio collection such as the
+ * theme songs. All songs play, regardless of their narrative mood tags.
+ */
+export async function inspectMenuMusicSpp(input: PackInput): Promise<PackagedMediaPack> {
+  const content = await inspectMediaSpp(input);
+  const { manifest } = content;
+  if (manifest.extensions?.[SPP_MEDIA_PACK_EXTENSION] !== undefined) {
+    const packaged = readMediaSpp(content);
+    if (packaged.pack.type !== 'soundscape') fail('Menu music needs a music package, not Sound Cues or Atmospheres.');
+    return packaged;
+  }
+  if (manifest.extensions?.[SPP_CAPA_EXTENSION] !== undefined || manifest.extensions?.[SPP_SOUND_WORDS_EXTENSION] !== undefined) {
+    fail('Menu music needs a music package, not a writing skill or Sound Words list.');
+  }
+  const recordings = manifest.files.filter(file => AUDIO_TYPE.test(file.mediaType));
+  if (!recordings.length) fail('This package contains no audio for menu music.');
+  const files = new Map<string, Blob>();
+  const id = `spp.${manifest.id}`;
+  const entries = recordings.map(record => {
+    const studio = record.metadata?.['seihouse.senAudio'];
+    if (isRecord(studio) && studio.kind !== undefined && studio.kind !== 'soundscape') {
+      fail('Menu music needs songs only, not Sound Cues or Atmospheres.');
+    }
+    const url = packageMediaUrl(manifest.id, manifest.version, record.path);
+    if (!readPackageMediaUrl(url)) fail(`${record.path} is not a supported audio file.`);
+    files.set(url, new Blob([content.assets.get(record.path)! as BlobPart], { type: record.mediaType }));
+    return {
+      id: `${id}:${record.path}`, url,
+      label: record.path.split('/').pop()!.replace(/\.[^.]+$/, ''),
+      mood: 'menu', moods: ['menu'], tags: [],
+    };
+  });
+  const pack = validateMediaPack({
+    id, version: manifest.version, type: 'soundscape', displayName: manifest.name,
+    description: manifest.description.trim() || `${manifest.name}, installed from a package.`,
+    source: { path: 'manifest.json', digest: await fingerprint(new TextEncoder().encode(JSON.stringify(manifest))) },
+    entries,
+  });
+  return { pack, files };
+}
+
 /** The media packs a host keeps on this device, with their recordings. */
 export interface DeviceMediaPackStore {
-  loadAll(): Promise<Array<PackagedMediaPack & { installedAt: string }>>;
-  save(packaged: PackagedMediaPack, installedAt: string): Promise<void>;
+  loadAll(): Promise<Array<PackagedMediaPack & { installedAt: string; usage?: 'menu-music' }>>;
+  save(packaged: PackagedMediaPack, installedAt: string, usage?: 'menu-music'): Promise<void>;
 }
 
 const DATABASE_VERSION = 1;
 const STORE_NAME = 'media-packs';
-interface StoredMediaPack { pack: MediaPack; files: Record<string, Blob>; installedAt: string }
+interface StoredMediaPack { pack: MediaPack; files: Record<string, Blob>; installedAt: string; usage?: 'menu-music' }
 
 const requestResult = <T,>(request: IDBRequest<T>): Promise<T> => new Promise((resolve, reject) => {
   request.onsuccess = () => resolve(request.result);
@@ -213,15 +263,15 @@ export class IndexedDbDeviceMediaPackStore implements DeviceMediaPackStore {
     return values.flatMap(value => {
       // A damaged record is left out; the rest stay.
       try {
-        return [{ pack: validateMediaPack(value.pack), files: new Map(Object.entries(value.files)), installedAt: value.installedAt }];
+        return [{ pack: validateMediaPack(value.pack), files: new Map(Object.entries(value.files)), installedAt: value.installedAt, usage: value.usage }];
       } catch { return []; }
     });
   }
 
-  async save(packaged: PackagedMediaPack, installedAt: string) {
+  async save(packaged: PackagedMediaPack, installedAt: string, usage?: 'menu-music') {
     const database = await this.open();
     const transaction = database.transaction(STORE_NAME, 'readwrite');
-    const record: StoredMediaPack = { pack: packaged.pack, files: Object.fromEntries(packaged.files), installedAt };
+    const record: StoredMediaPack = { pack: packaged.pack, files: Object.fromEntries(packaged.files), installedAt, usage };
     transaction.objectStore(STORE_NAME).put(record, mediaPackKey(packaged.pack));
     await transactionDone(transaction);
   }
@@ -229,10 +279,10 @@ export class IndexedDbDeviceMediaPackStore implements DeviceMediaPackStore {
 
 /** Packs held for the visit only: tests, and a browser without IndexedDB. */
 export function createMemoryDeviceMediaPackStore(): DeviceMediaPackStore {
-  const packs = new Map<string, PackagedMediaPack & { installedAt: string }>();
+  const packs = new Map<string, PackagedMediaPack & { installedAt: string; usage?: 'menu-music' }>();
   return {
     loadAll: async () => [...packs.values()],
-    save: async (packaged, installedAt) => { packs.set(mediaPackKey(packaged.pack), { ...packaged, installedAt }); },
+    save: async (packaged, installedAt, usage) => { packs.set(mediaPackKey(packaged.pack), { ...packaged, installedAt, usage }); },
   };
 }
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { MainLibraryHeader, MainLibraryHomeInsights, WorkspaceHeaderCenterProvider, type LibraryLocation } from '@seihouse/library/shell';
+import { MainLibraryHeader, MainLibraryHomeInsights, WorkspaceHeaderCenterProvider, WorkspaceHeaderPreferencesProvider, useMenuMusic, type LibraryLocation } from '@seihouse/library/shell';
+import { WORKSHOP_SOUND_PREFERENCES } from '../user-profile/mockUserProfileServices';
 import { MainLibraryPreview } from './MainLibraryPreview';
 import { StorySeedWorkspace } from '../story-seed/StorySeedWorkspace';
 import { UserProfileWorkspace } from '../user-profile/UserProfileWorkspace';
@@ -12,6 +13,13 @@ import { ProductFamiliarSession, ProductFamiliarSurface } from '../familiar/Prod
 
 /** Exercise the real Development consumers with their existing Workshop adapters. */
 export function DevelopmentHeaderPreview({ source, state }: { source: HeaderConfiguration; state: string }) {
+  const [menuMusic, onMenuMusicChange] = useMenuMusic(WORKSHOP_SOUND_PREFERENCES);
+  return <WorkspaceHeaderPreferencesProvider preferences={{ menuMusic, onMenuMusicChange }}>
+    <DevelopmentHeaderContent source={source} state={state} />
+  </WorkspaceHeaderPreferencesProvider>;
+}
+
+function DevelopmentHeaderContent({ source, state }: { source: HeaderConfiguration; state: string }) {
   const [message, setMessage] = useState('Local preview ready.');
   const copyText = async (text: string) => { setMessage(`Local preview clipboard: ${text}`); };
   const headerCenter = <MainLibraryHomeInsights everyWidth adapter={{ copyText }} />;

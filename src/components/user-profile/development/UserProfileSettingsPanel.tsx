@@ -52,6 +52,7 @@ import {
 } from '../../../library/cultivation/progression';
 import { CAVE_ENVIRONMENTS } from './caveEnvironment';
 import { useMenuMusic } from '../../../library/sound/menuMusic';
+import { MenuMusicSlot, type MenuMusicSlotProps } from '../../../library/sound/MenuMusicSlot';
 import type { ReaderPreferenceStorage } from '@seihouse/sen/reader-runtime';
 import {
   DISPLAY_NAME_MAX_VISIBLE,
@@ -468,7 +469,7 @@ export function UserProfileSettingsPanel({
             </SEIDisclosure>
 
             {/* ---- Sound ------------------------------------------------------ */}
-            {soundPreferences && <SoundSettings storage={soundPreferences} />}
+            {soundPreferences && <SoundSettings storage={soundPreferences} slot={services.menuMusic} />}
 
           </SEIDisclosureGroup>
             </SEITabsPanel>
@@ -713,7 +714,7 @@ function NotYetBuiltNote({ note }: { note?: string }) {
  * the menus are silent and the note leaves the header. The Reader keeps its
  * own music either way.
  */
-function SoundSettings({ storage }: { storage: ReaderPreferenceStorage }) {
+function SoundSettings({ storage, slot }: { storage: ReaderPreferenceStorage; slot?: MenuMusicSlotProps }) {
   const [menuMusic, setMenuMusic] = useMenuMusic(storage);
   return <SEIDisclosure value="sound" heading="Sound" icon={Music} supportingText="Music on the menus.">
     <div className="space-y-2 pt-1">
@@ -721,8 +722,9 @@ function SoundSettings({ storage }: { storage: ReaderPreferenceStorage }) {
         Menu music
       </SEISwitch>
       <p className="font-sans text-xs text-neutral-400">
-        Calm music on Home, Create and World Info. The music note in the header mutes it at once; hover it, or hold it on a phone, for its volume.
+        Music on the menus. The music note in the header mutes it at once; hover it, or hold it on a phone, for its volume.
       </p>
+      {slot && <MenuMusicSlot {...slot} />}
     </div>
   </SEIDisclosure>;
 }

@@ -1,0 +1,101 @@
+{
+  "pack": {
+    "id": "52d29202-af27-4a7b-a030-3d19186e6131",
+    "name": "NovelExpanded Theme Songs",
+    "version": "1.0.1",
+    "archiveSha256": "9b1c41a3561f6a8a4ba801f5408d450c6f1790f0a4dd45ce6b5dd93c8cf10418"
+  },
+  "pieces": [
+    {
+      "label": "0001-Theme-Urdu",
+      "mood": "menu",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Theme%20Songs/Theme-Urdu.mp3",
+      "sourcePath": "assets/audio/0001-Theme-Urdu.mp3",
+      "sourceSha256": "16448a53d6b865b683c3e27c6c258d0363080f269bd02abfa5f81cb99fefdf2e"
+    },
+    {
+      "label": "0002-Theme-English",
+      "mood": "menu",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Theme%20Songs/Theme-English.mp3",
+      "sourcePath": "assets/audio/0002-Theme-English.mp3",
+      "sourceSha256": "0f0028d9fa94534cca982901e2a49fb2e4dedbc0a655763a21bf270b8e092a87"
+    },
+    {
+      "label": "0003-Theme-Korean",
+      "mood": "menu",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Theme%20Songs/Theme-Korean.mp3",
+      "sourcePath": "assets/audio/0003-Theme-Korean.mp3",
+      "sourceSha256": "efaa56608fd8d63cc4018624168c9e14de6d854f2f2a46cf943d780df41aae58"
+    },
+    {
+      "label": "0004-Theme-Spanish",
+      "mood": "menu",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Theme%20Songs/Theme-Spanish.mp3",
+      "sourcePath": "assets/audio/0004-Theme-Spanish.mp3",
+      "sourceSha256": "e419b93438eb2ba2fe3ca31ba0315ea82686a21323995c422f15863c7cff8886"
+    },
+    {
+      "label": "0005-Theme-Hebrew",
+      "mood": "menu",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Theme%20Songs/Theme-Hebrew.mp3",
+      "sourcePath": "assets/audio/0005-Theme-Hebrew.mp3",
+      "sourceSha256": "5b2b273783c76a006a6261a107114cad878cd58c7f7c187e0758510006ca5ad8"
+    },
+    {
+      "label": "0006-Theme-Indonesian",
+      "mood": "menu",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Theme%20Songs/Theme-Indonesian.mp3",
+      "sourcePath": "assets/audio/0006-Theme-Indonesian.mp3",
+      "sourceSha256": "cfaab70e46884e58ce31332049693da15684f0f57240ce714187e873ee739ede"
+    },
+    {
+      "label": "0007-Theme-malay",
+      "mood": "menu",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Theme%20Songs/Theme-malay.mp3",
+      "sourcePath": "assets/audio/0007-Theme-malay.mp3",
+      "sourceSha256": "da5bc888801187647f3696de8fc78ef6af4f1358c280a093965ec603f489c4b0"
+    },
+    {
+      "label": "0008-Theme-Persian",
+      "mood": "menu",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Theme%20Songs/Theme-Persian.mp3",
+      "sourcePath": "assets/audio/0008-Theme-Persian.mp3",
+      "sourceSha256": "691ccd5ae025e46748189e8fbbc27de8cd41588b1a50deb375bd0420acf13a83"
+    },
+    {
+      "label": "0009-Theme-Thai",
+      "mood": "menu",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Theme%20Songs/Theme-Thai.mp3",
+      "sourcePath": "assets/audio/0009-Theme-Thai.mp3",
+      "sourceSha256": "8e282a5f8f951c671b32374a3a82741d8d34b9035f05a9d8f67d9a46420455f3"
+    },
+    {
+      "label": "0010-Theme-Arabic",
+      "mood": "menu",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Theme%20Songs/Theme-Arabic.mp3",
+      "sourcePath": "assets/audio/0010-Theme-Arabic.mp3",
+      "sourceSha256": "a37ab2a4bafec0a27d5c3878bf3df9f069026f83930943f88c64107b1984ae70"
+    },
+    {
+      "label": "0011-Theme-Chinese",
+      "mood": "menu",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Theme%20Songs/Theme-Chinese.mp3",
+      "sourcePath": "assets/audio/0011-Theme-Chinese.mp3",
+      "sourceSha256": "237a2752de677eade9e7a2bec279f08a41d6f816a84125b1445d310d4c2cc62a"
+    },
+    {
+      "label": "0012-Theme-Japanese",
+      "mood": "menu",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Theme%20Songs/Theme-Japanese.mp3",
+      "sourcePath": "assets/audio/0012-Theme-Japanese.mp3",
+      "sourceSha256": "21c8809cca354b671d1d61439561cdbf3eb248793089dea49c4a421f6f28bb1e"
+    },
+    {
+      "label": "0013-Theme-Tagalog",
+      "mood": "menu",
+      "url": "https://media.seihouse.org/SEN/AUDIO/SOUNDSCAPE/Theme%20Songs/Theme-Tagalog.mp3",
+      "sourcePath": "assets/audio/0013-Theme-Tagalog.mp3",
+      "sourceSha256": "9e0b26dbc283c6a1c3f1167d2fc7560d83797cf2a3a827da7c0343abfb4eb82b"
+    }
+  ]
+}

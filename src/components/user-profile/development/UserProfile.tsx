@@ -110,7 +110,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   const services = useUserProfileServices();
   const { useController: useUserProfile, localOnlyMode, authenticate, familiars = [], celestialStore, soundPreferences } = services;
   // The header's music note shows while the reader's Menu music is on, where the host has sound.
-  const [menuMusic] = useMenuMusic(soundPreferences);
+  const [menuMusic, setMenuMusic] = useMenuMusic(soundPreferences);
   const hostController = useUserProfile({ currentUser, stories, onLogout, onNavigateHome });
   const activeInterfaceLanguage = hostController.pendingLanguageChange?.interfaceLanguage
     ?? hostController.formData.interfaceLanguage
@@ -580,6 +580,8 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
             <Eye size={20} aria-hidden="true" /><span>Public View</span>
           </button> : undefined}
           preferences={{
+            menuMusic,
+            onMenuMusicChange: soundPreferences ? setMenuMusic : undefined,
             language: activeInterfaceLanguage,
             onLanguageChange: code => {
               if (hostController.handlePreferredLanguageChange) {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { ReaderMixerProvider, type ReaderMixer } from '@seihouse/audio-player';
+import { ReaderMixerProvider, useOptionalReaderMixer, type ReaderMixer } from '@seihouse/audio-player';
 import { LibraryPresentationProvider, loadingFamiliarPresentation } from '@seihouse/library/presentation';
 import { useInterfaceLanguageTranslation } from '@seihouse/library/profile';
 import {
@@ -15,6 +15,7 @@ import { LIBRARY_ASSETS } from '../host/media/libraryAssets';
 import { LIBRARY_BASE_MEDIA } from '../host/media/libraryCatalog';
 import { useSoundWordsPresets } from '../host/media/useSoundWordsPresets';
 import { useDeviceMediaPacks } from '../host/media/useDeviceMediaPacks';
+import { useMenuMusicSlot } from '../host/media/useMenuMusicSlot';
 import { inspectHarnessSkillPackage } from '../host/generation/capa/sppSkills';
 import { MANIFEST_BACKDROPS } from '../host/reader/manifestBackdrops';
 import { startHarnessStoryFromSeed } from '../host/story-seed/startHarnessStory';
@@ -68,7 +69,6 @@ export function NovelExpandedApp({ services, readerMixer }: {
     (familiarCatalogueEntry(profile.familiarId) ?? defaultFamiliar).definition,
   ), [profile.familiarId]);
   const [menuMusic] = useMenuMusic(services.readerPreferences);
-  useAppMusic(readerMixer, menuMusic);
   // The laptop sidebar opens the way the reader last left it, on this device.
   const [sidebarMode, setSidebarMode] = useStoredLibrarySidebarMode(services.readerPreferences);
   return <ReaderMixerProvider mixer={readerMixer}>
@@ -147,6 +147,10 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   const soundWords = useSoundWordsPresets(NOVEL_EXPANDED_STORAGE.soundWords);
   // Soundscape and Sound Cue packs installed on this device: the reader's own, always unlocked.
   const mediaPacks = useDeviceMediaPacks(services.mediaPacks, services.deviceMedia);
+  const [menuMusic, setMenuMusic] = useMenuMusic(services.readerPreferences);
+  const { slot: menuMusicSlot, pieces: menuPieces } = useMenuMusicSlot(services.readerPreferences, mediaPacks);
+  const mixer = useOptionalReaderMixer()!;
+  useAppMusic(mixer, menuMusic, menuPieces);
   // A skill the reader installs from a package is kept on this device and offered with the official ones.
   const installSkill = useCallback((skill: HarnessSkillManifest) => {
     services.saveImportedSkill(skill);
@@ -183,12 +187,14 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
   );
   const headerPreferences = useMemo(
     () => ({
+      menuMusic,
+      onMenuMusicChange: setMenuMusic,
       language: profile.interfaceLanguage,
       onLanguageChange: (language: typeof profile.interfaceLanguage) => {
         services.profile.save({ interfaceLanguage: language, defaultReadingLanguage: language });
       },
     }),
-    [profile.interfaceLanguage, services.profile],
+    [profile.interfaceLanguage, services.profile, menuMusic, setMenuMusic],
   );
   const withFamiliar = (page: ReactNode) => <WorkspaceHeaderCenterProvider center={headerCenter} centerBreakpoint="always"><WorkspaceHeaderPreferencesProvider preferences={headerPreferences}><AppFamiliar profile={profile} present={Boolean(state && skills)} reading={route.page === 'read'}>{page}</AppFamiliar></WorkspaceHeaderPreferencesProvider></WorkspaceHeaderCenterProvider>;
 
@@ -204,7 +210,7 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     </main>);
   }
 
-  if (route.page === 'profile') return withFamiliar(<ProfilePage services={services} stories={caveStories} navigate={navigate} portraits={portraits} />);
+  if (route.page === 'profile') return withFamiliar(<ProfilePage services={services} stories={caveStories} navigate={navigate} portraits={portraits} menuMusic={menuMusicSlot} />);
 
   if (route.page === 'create') return withFamiliar(<CreatePage key={route.seedId ?? 'new'} services={services} askForToken={askForToken} startedSeedIds={seedIds} chapterModel={stories.model || undefined}
     seedId={route.seedId}

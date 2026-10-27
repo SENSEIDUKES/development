@@ -81,7 +81,8 @@ for (const [name, engine, device] of [
     await page.locator('#header-preferred-language').waitFor({ state: 'visible' });
     await page.keyboard.press('Escape');
     for (const [route, selector] of [
-      ['/app/?page=create', '[data-story-seed-page-heading] [data-page-title]'],
+      // A phone gives Story Seed's page heading back to the questions; the step strip shows at every width.
+      ['/app/?page=create', '[data-seed-creator-strip]'],
       ['/app/?page=discover', '.discover-header h1'],
       ['/app/?page=profile', '[data-cave-page-heading] [data-page-title]'],
     ]) {

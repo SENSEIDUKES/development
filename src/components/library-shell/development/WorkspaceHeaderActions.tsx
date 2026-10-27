@@ -52,7 +52,7 @@ export function useHeaderDisclosure() {
   const id = useId();
   useEffect(() => {
     if (!open) return;
-    panelRef.current?.querySelector<HTMLElement>('button:not(:disabled), a[href]')?.focus();
+    panelRef.current?.querySelector<HTMLElement>('select:not(:disabled), button:not(:disabled), a[href]')?.focus();
     const dismiss = (event: Event) => {
       if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
     };

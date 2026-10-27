@@ -34,43 +34,56 @@ it('puts the host\'s sound control on every header beneath it, unless a header s
   const controls = () => Array.from(container.querySelector('header')!.querySelectorAll('button'))
     .map(element => element.getAttribute('aria-label') ?? element.textContent);
   const host = (header: React.ReactNode) => <WorkspaceHeaderSoundProvider sound={<button aria-label="Mute music">Note</button>}>{header}</WorkspaceHeaderSoundProvider>;
-  // Just before Help and Search, like a header's own sound.
+  // Just before Preferences and Search, like a header's own sound.
   await render(host(<WorkspaceHeader title="Story Seed" />));
-  expect(controls()).toEqual(['Mute music', 'Help', 'Search']);
+  expect(controls()).toEqual(['Mute music', 'Preferences', 'Search']);
   await render(host(<WorkspaceHeader title="Story Seed" sound={<button aria-label="Page sound">Page</button>} />));
-  expect(controls()).toEqual(['Page sound', 'Help', 'Search']);
+  expect(controls()).toEqual(['Page sound', 'Preferences', 'Search']);
   await render(host(<WorkspaceHeader title="Story Seed" sound={null} />));
-  expect(controls()).toEqual(['Help', 'Search']);
+  expect(controls()).toEqual(['Preferences', 'Search']);
   await render(<WorkspaceHeader title="Story Seed" />);
-  expect(controls()).toEqual(['Help', 'Search']);
+  expect(controls()).toEqual(['Preferences', 'Search']);
 });
 
-it('keeps logo, canonical badge, optional context, Help and Search in document order', async () => {
+it('keeps logo, optional context, Preferences and Search in document order without a header badge', async () => {
   await render(<WorkspaceHeader title="Long Library workspace title" emblem={{ src: '/favicon.jpg', alt: 'Library' }}
     home={{ href: '/', label: 'Home' }} contextualItem={<button>Page context</button>} />);
   const header = container.querySelector('header')!;
-  expect(Array.from(header.querySelectorAll('a, button')).map(element => element.getAttribute('aria-label') ?? element.textContent)).toEqual(['Home', 'Page context', 'Help', 'Search']);
-  expect(header.querySelector('[data-slot="library-header-badge-title"]')?.textContent).toBe('Long Library workspace title');
+  expect(Array.from(header.querySelectorAll('a, button')).map(element => element.getAttribute('aria-label') ?? element.textContent)).toEqual(['Home', 'Page context', 'Preferences', 'Search']);
+  expect(header.querySelector('[data-slot="library-header-badge-title"]')).toBeNull();
+  expect(header.querySelector('[data-slot="novel-expanded-logo"]')).not.toBeNull();
   expect(header.querySelector('.workspace-header-context')).not.toBeNull();
   expect(header.querySelector('input')).toBeNull();
   await render(<WorkspaceHeader title="Quiet page" contextualItem={false} />);
   expect(container.querySelector('.workspace-header-context')).toBeNull();
-  expect(Array.from(container.querySelectorAll('button')).map(element => element.getAttribute('aria-label'))).toEqual(['Help', 'Search']);
+  expect(Array.from(container.querySelectorAll('button')).map(element => element.getAttribute('aria-label'))).toEqual(['Preferences', 'Search']);
 });
 
-it('calls the existing page Help owner and preserves preload and expanded state', async () => {
-  const onAction = vi.fn(); const onIntent = vi.fn();
-  await render(<WorkspaceHeader title="Story Seed" help={{ id: 'help', label: 'Help', onAction, onIntent, expanded: true }} />);
+it('opens the Preferences card, updates Preferred Language immediately, and calls the page Help owner', async () => {
+  const onAction = vi.fn(); const onIntent = vi.fn(); const onLanguageChange = vi.fn();
+  await render(<WorkspaceHeader title="Story Seed"
+    preferences={{ language: 'en', onLanguageChange }}
+    help={{ id: 'help', label: 'Help', onAction, onIntent, expanded: true }} />);
+  await click(button('Preferences'));
+  expect(onIntent).toHaveBeenCalled();
+  expect(button('Preferences').getAttribute('aria-expanded')).toBe('true');
+  const card = container.querySelector('[data-testid="workspace-preferences-card"]')!;
+  expect(card).not.toBeNull();
+  const select = card.querySelector<HTMLSelectElement>('#header-preferred-language')!;
+  expect(select).not.toBeNull();
+  expect(document.activeElement).toBe(select);
+  expect(select.value).toBe('en');
+  await act(async () => {
+    select.value = 'ja';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  expect(onLanguageChange).toHaveBeenCalledWith('ja');
   await click(button('Help'));
   expect(onAction).toHaveBeenCalledTimes(1);
-  expect(onIntent).toHaveBeenCalled();
-  expect(button('Help').getAttribute('aria-expanded')).toBe('true');
+  expect(container.querySelector('[data-testid="workspace-preferences-card"]')).toBeNull();
   expect(document.querySelector('[role="dialog"]')).toBeNull();
 });
 
-// Regression: Help and Search were consolidated into a "…" menu below 480px.
-// They are two separate, individually visible controls again, at every width,
-// and the badge title stays whole beside them.
 const TEST_WIDTHS = [320, 375, 390, 430, 1440];
 const stubViewport = (width: number) => vi.stubGlobal('matchMedia', (query: string) => {
   const max = /max-width:\s*(\d+)px/.exec(query);
@@ -79,7 +92,7 @@ const stubViewport = (width: number) => vi.stubGlobal('matchMedia', (query: stri
     addEventListener: vi.fn(), removeEventListener: vi.fn(), addListener: vi.fn(), removeListener: vi.fn() };
 });
 
-it.each(TEST_WIDTHS)('regression: keeps Help and Search separate at %ipx with a readable full title', async width => {
+it.each(TEST_WIDTHS)('regression: keeps Preferences and Search separate at %ipx with the NovelExpanded logo', async width => {
   stubViewport(width);
   const onAction = vi.fn();
   await render(<WorkspaceHeader title="Celestial Library" emblem={{ src: '/favicon.jpg', alt: 'Library' }}
@@ -90,20 +103,20 @@ it.each(TEST_WIDTHS)('regression: keeps Help and Search separate at %ipx with a 
   expect(header.querySelector('.header-overflow')).toBeNull();
   const utilities = header.querySelector('.workspace-header-utilities')!;
   expect(Array.from(utilities.querySelectorAll('button')).map(element => element.getAttribute('aria-label')))
-    .toEqual(['Help', 'Search']);
-  expect(button('Help')).not.toBe(button('Search'));
-  expect(button('Help').querySelector('.workspace-help-emblem')).not.toBeNull();
+    .toEqual(['Preferences', 'Search']);
+  expect(button('Preferences')).not.toBe(button('Search'));
+  expect(button('Preferences').querySelector('.workspace-preferences-emblem')).not.toBeNull();
   expect(button('Search').querySelector('.workspace-search-emblem')).not.toBeNull();
-  expect(button('Help').querySelector('[data-sen-icon="header-help"]')).not.toBeNull();
+  expect(button('Preferences').querySelector('[data-sen-icon="header-settings"]')).not.toBeNull();
   expect(button('Search').querySelector('[data-sen-icon="header-search"]')).not.toBeNull();
   // Each keeps its own touch target rather than sharing one trigger.
-  for (const control of [button('Help'), button('Search')]) expect(control.className).toContain('min-h-11');
-  // Full titles stay whole: no ellipsis, no truncation of the badge plaque.
-  const title = header.querySelector('[data-slot="library-header-badge-title"]')!;
-  expect(title.textContent).toBe('Celestial Library');
-  expect(title.textContent).not.toContain('…');
-  expect(header.querySelector('[data-mode="app-header"]')).not.toBeNull();
+  for (const control of [button('Preferences'), button('Search')]) expect(control.className).toContain('min-h-11');
+  // The header carries the logo without a page badge.
+  expect(header.querySelector('[data-slot="library-header-badge-title"]')).toBeNull();
+  expect(header.querySelector('[data-slot="novel-expanded-logo"]')).not.toBeNull();
+  expect(header.getAttribute('data-slot')).toBe('app-header');
 
+  await click(button('Preferences'));
   await click(button('Help'));
   expect(onAction).toHaveBeenCalledTimes(1);
   await click(button('Search'));
@@ -113,23 +126,19 @@ it.each(TEST_WIDTHS)('regression: keeps Help and Search separate at %ipx with a 
   expect(document.activeElement).toBe(button('Search'));
 });
 
-it('regression: keeps the badge legibility rules that let long titles wrap instead of clipping', () => {
+it('regression: keeps utility touch targets and Preferences card styling in workspace-header.css', () => {
   const css = readFileSync(join(process.cwd(), 'src/components/library-shell/development/workspace-header.css'), 'utf8');
-  const badgeTitle = css.slice(css.indexOf('[data-slot="library-header-badge-title"]'));
-  expect(badgeTitle).toContain('overflow: visible');
-  expect(badgeTitle).toContain('text-overflow: clip');
-  expect(badgeTitle).toContain('white-space: normal');
-  expect(badgeTitle).toContain('overflow-wrap: anywhere');
-  // The phone type adjustment that keeps the plaque height is unchanged.
-  expect(css).toContain('font-size: 13px; line-height: 14px; letter-spacing: 0.02em;');
-  // Help and Search hold their own 44px targets; the pair never shrinks.
   expect(css).toContain('.workspace-header-utilities > :is(button, [role="button"]) { min-width: 44px; min-height: 44px; }');
+  expect(css).toContain('.workspace-preferences > :is(button, [role="button"]) { min-width: 44px; min-height: 44px; }');
+  expect(css).toContain('.workspace-preferences-panel');
+  expect(css).toContain('.workspace-preferences-select');
   expect(css).not.toContain('workspace-header-utilities .header-overflow');
   expect(css).not.toContain("/icons/header/");
 });
 
-it('reuses Library Help topics and original guidance, closes with Escape and returns focus', async () => {
+it('reuses Library Help topics and original guidance from inside Preferences, closes with Escape and returns focus', async () => {
   await render(<WorkspaceHeader title="Cultivator Cave" />);
+  await click(button('Preferences'));
   await click(button('Help'));
   await act(async () => { await import('@seihouse/library/story-seed'); });
   await settle();
@@ -141,7 +150,7 @@ it('reuses Library Help topics and original guidance, closes with Escape and ret
   expect(dialog.textContent).toContain(STORY_SEED_HELP_ITEMS.find(item => item.label === 'Relics')!.translations.en!.line);
   await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
   expect(document.querySelector('[role="dialog"]')).toBeNull();
-  expect(document.activeElement).toBe(button('Help'));
+  expect(document.activeElement).toBe(button('Preferences'));
 });
 
 it('searches labels and descriptions, announces no results, resets on reopen, and dispatches once', async () => {

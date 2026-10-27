@@ -76,6 +76,23 @@ for (const [name, engine, device] of [
     await page.getByRole('dialog', { name: 'Dao Insights', exact: true }).waitFor();
     await page.getByRole('button', { name: 'Close Dao Insights', exact: true }).click();
 
+    // Preferences compact card and unchanging header across Create, Discover and Profile.
+    await page.getByRole('button', { name: 'Preferences', exact: true }).click();
+    await page.locator('#header-preferred-language').waitFor({ state: 'visible' });
+    await page.keyboard.press('Escape');
+    for (const [route, selector] of [
+      ['/app/?page=create', '[data-story-seed-page-heading] [data-page-title]'],
+      ['/app/?page=discover', '.discover-header h1'],
+      ['/app/?page=profile', '[data-cave-page-heading] [data-page-title]'],
+    ]) {
+      await page.goto(`${base}${route}`);
+      await page.locator(selector).waitFor({ state: 'visible' });
+      for (const width of [393, 1440]) {
+        await page.setViewportSize({ width, height: width >= 1024 ? 900 : 844 });
+        await checkHeader(page, `${name} ${route} ${width}`);
+      }
+    }
+
     await page.goto(`${base}/?preview=light-novels-home`);
     const home = page.frameLocator('iframe[title^="Expanded Novels Home development"]');
     await checkHeader(home, `${name} Workshop mobile`);

@@ -11,7 +11,7 @@ export async function verifyLibraryHeader({ tab, viewport, baseUrl }) {
   await tab.playwright.getByRole('link', { name: 'Library home' }).press('Tab');
   const active = () => tab.playwright.evaluate(() => document.activeElement?.getAttribute('aria-label'));
   assert.equal(await active(), 'Insights from the keeper of the nine celestial libraries');
-  await tab.cua.keypress({ keys: ['Tab'] }); assert.equal(await active(), 'Help');
+  await tab.cua.keypress({ keys: ['Tab'] }); assert.equal(await active(), 'Preferences');
   await tab.cua.keypress({ keys: ['Tab'] }); assert.equal(await active(), 'Search');
   await tab.playwright.getByRole('button', { name: 'Search', exact: true }).press('Enter');
   await tab.playwright.getByRole('dialog', { name: 'Search', exact: true }).waitFor({ state: 'visible' });
@@ -26,6 +26,8 @@ export async function verifyLibraryHeader({ tab, viewport, baseUrl }) {
   await tab.playwright.locator('button[aria-label="Close Search"]:focus').waitFor({ state: 'visible' });
   await tab.playwright.getByRole('button', { name: 'Close Search', exact: true }).press('Escape');
   await tab.playwright.locator('button[aria-label="Search"]:focus').waitFor({ state: 'visible' });
+  await tab.playwright.getByRole('button', { name: 'Preferences', exact: true }).press('Enter');
+  await tab.playwright.locator('#header-preferred-language:focus').waitFor({ state: 'visible' });
   await tab.playwright.getByRole('button', { name: 'Help', exact: true }).press('Enter');
   await tab.playwright.getByRole('dialog', { name: 'Library Help', exact: true }).waitFor({ state: 'visible' });
   await tab.playwright.getByRole('button', { name: 'Relics', exact: true }).press('Enter');
@@ -33,8 +35,8 @@ export async function verifyLibraryHeader({ tab, viewport, baseUrl }) {
   await tab.playwright.getByRole('button', { name: 'Close help', exact: true }).press('Tab');
   await tab.playwright.getByRole('searchbox', { name: 'Search Library guidance' }).and(tab.playwright.locator(':focus')).waitFor({ state: 'visible' });
   await tab.playwright.getByRole('button', { name: 'Close help', exact: true }).press('Escape');
-  await tab.playwright.locator('button[aria-label="Help"]:focus').waitFor({ state: 'visible' });
-  report.push({ keyboard: 'Tab order, modal focus, Escape return; original Help guidance; disabled and empty Search results passed' });
+  await tab.playwright.locator('button[aria-label="Preferences"]:focus').waitFor({ state: 'visible' });
+  report.push({ keyboard: 'Tab order, modal focus, Escape return; Preferences language card, Help guidance; disabled and empty Search results passed' });
   // Landscape notch with long context; the overlay remains in the viewport.
   await viewport.set({ width: 844, height: 390 });
   await tab.goto(`${baseUrl}/library-shell.html?variant=development&source=header-states&state=long-context&safeArea=landscape&motion=reduced`);

@@ -338,6 +338,28 @@
    above the form. They belong to the page now: an ordinary content row at the
    top of the Story Seed column, with no banner landmark, no sticky behaviour,
    no full-bleed surface and no border of its own. */
+.story-seed-page-heading {
+  margin-inline: auto;
+  max-width: 80rem;
+  padding: 16px 16px 4px;
+}
+@media (min-width: 640px) {
+  .story-seed-page-heading { padding: 20px 24px 4px; }
+}
+.story-seed-page-eyebrow {
+  margin: 0 0 4px;
+  font: 600 11px/1.4 var(--font-sc, serif);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(223, 216, 207, 0.62);
+}
+.story-seed-page-title {
+  margin: 0;
+  color: var(--color-sen-signal, #f3eee7);
+  font-size: clamp(1.75rem, 6vw, 2.5rem);
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+}
 .story-seed-action-row {
   display: flex;
   align-items: center;

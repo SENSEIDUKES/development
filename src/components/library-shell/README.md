@@ -1,5 +1,7 @@
 # Library Shell
 
+- **2026-10-26** — Simplified and stabilized the Library header across pages (`Logo | Insights | Familiar | Preferences | Search`). Removed page-specific header badges (`LibraryHeaderBadge`) from the header row and placed page titles (`Story Seed`, `Profile`) directly at the top of their pages below the header. Replaced the header `Help` button with a `Preferences` button (`SENSettingsIcon`) that opens a compact card with an immediate `Preferred Language` selector (updating both interface language and default reading language without the 30-second confirmation popup) and a `Help` action at the bottom. Added `WorkspaceHeaderCenterProvider` and `WorkspaceHeaderPreferencesProvider` so the header never changes when switching between bottom navigation tabs.
+
 - **2026-10-24** — Header branding uses the exact Novel Expanded logo from Library Studios, replacing the circular S emblem. The pinned brand package supplies artwork, spectrum border and reduced-motion behavior. Home navigation, title badges and utilities remain in their hosts. The app header shows only the new logo; its duplicate large wordmark is removed, while the footer wordmark remains. Library Shell and Home Workshop Development previews share these implementations; historical references are unchanged. See `vendor/studio-brand-artifact.json` for provenance.
 
 
@@ -31,7 +33,7 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 
 ## Top navigation update
 
-Development now uses Logo — existing Library Header Badge — optional contextual item — Help — Search. The public Cave supplies Public View; Dao Insights is Home content rather than a header item. Help reuses the original Library Help menu and Search finds host destinations/actions. Help and Search are two separate controls at every width, each keeping its own 44px target; neither is ever folded into a "…" menu. Pages that still supply header commands keep the shared toolbar below the top row; Story Seed no longer does — it owns its Save Draft, Manifest and status row inside its own content. See [the header contract](../../../docs/library-header-family.md) and its focused Header slot states preview.
+Development now uses `Logo | Insights | Familiar | Preferences | Search` without page-specific header badges, keeping the header row stable across every bottom navigation tab. The public Cave supplies Public View; Dao Insights sits in the center header slot across all tabs (`WorkspaceHeaderCenterProvider`). Preferences opens a compact popover card with one Preferred Language selector (updating both interface and default reading language immediately) and a compact Help action at the bottom of the card that opens the original Library Help menu; Search finds host destinations/actions. Preferences and Search are two separate controls at every width, each keeping its own 44px target; neither is ever folded into a "…" menu. Pages that still supply header commands keep the shared toolbar below the top row; Story Seed no longer does — it owns its Save Draft, Manifest and status row inside its own content, and page titles live directly at the top of the page below the header. See [the header contract](../../../docs/library-header-family.md) and its focused Header slot states preview.
 
 ## Bottom navigation update — 2026-09-11
 

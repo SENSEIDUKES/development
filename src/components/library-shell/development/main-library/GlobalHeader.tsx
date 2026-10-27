@@ -47,7 +47,7 @@ export function GlobalHeader({ landmark = 'banner' }: {
   ];
   // On laptops the Pathways sidebar carries the identity, so Dao Insights takes
   // the header's center — its original home. Phones keep it in Home content.
-  return <WorkspaceHeader title="Celestial Library" landmark={landmark} center={<DaoInsights host={adapter.daoSparks} />}
+  return <WorkspaceHeader title="Celestial Library" landmark={landmark} center={<DaoInsights host={adapter.daoSparks} />} centerBreakpoint="always"
     emblem={LIBRARY_EMBLEM}
     home={{ href: '/', label: 'Return to Home', onNavigate: home }}
     searchItems={items} />;

@@ -17,8 +17,6 @@
   outline-offset: 4px;
 }
 
-/* The badge is the visible identity, so it keeps its own type and its glow is
-   allowed to bleed past the app-name slot instead of being clipped by it. */
 .workspace-header [data-slot="app-header-app-name"] {
   overflow: visible;
   text-overflow: clip;
@@ -26,39 +24,34 @@
   letter-spacing: normal;
 }
 .workspace-header-badge { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.workspace-header-logo { display: inline-flex; align-items: center; justify-content: center; flex: none; border-radius: 12px; }
-.workspace-header-logo-art { --ne-logo-height: 40px; }
+.workspace-header-logo,
+.novel-expanded-emblem {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  min-height: 44px;
+  min-width: 44px;
+  border-radius: 12px;
+}
+.workspace-header-logo-art,
+.novel-expanded-emblem-art { --ne-logo-height: 40px; }
 @media (max-width: 479px) {
   .workspace-header-badge { gap: 4px; }
-  .workspace-header-logo-art { --ne-logo-height: 32px; }
-}
-.workspace-header [data-slot="library-header-badge-title"] {
-  overflow: visible;
-  text-overflow: clip;
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-
-/* Keep the plaque treatment and line height; reclaim horizontal space from
-   utility actions and spacing before making a modest phone type adjustment. */
-@media (max-width: 479px) {
-  .workspace-header .workspace-header-inner { padding-inline: max(8px, var(--sh-safe-left, env(safe-area-inset-left))) max(8px, var(--sh-safe-right, env(safe-area-inset-right))); gap: 4px; }
-  .workspace-header-badge [data-mode="app-header"] { gap: 4px; }
-  .workspace-header [data-slot="library-header-badge-title"] { font-size: 13px; line-height: 14px; letter-spacing: 0.02em; }
-  .workspace-header-badge [data-mode="app-header"] > span:last-child > span:last-child { padding-inline: 8px; }
+  .workspace-header-logo-art,
+  .novel-expanded-emblem-art { --ne-logo-height: 32px; }
+  .workspace-header .workspace-header-inner {
+    padding-inline: max(8px, var(--sh-safe-left, env(safe-area-inset-left))) max(8px, var(--sh-safe-right, env(safe-area-inset-right)));
+    gap: 4px;
+  }
 }
 
-/* One row, shared fairly. The identity is the only item that flexes; the
-   controls always get their intrinsic width. Letting the action group shrink
-   squeezed the primary action's wrapper below the 44px touch target its button
-   is pinned to, and the button then painted outside the wrapper and on top of
-   the overflow trigger. The identity's floor is what has to give instead, so it
-   stays small enough that a 320px phone still fits identity + controls. */
+/* One row, shared fairly. When no center slot is present, identity flexes so
+   actions stay pinned right; when Dao Insights occupies the center, identity
+   keeps its compact logo width so the center gets the space between logo and actions. */
 .workspace-header [data-slot="app-header-identity"] { flex: 1 1 auto; min-width: 0; }
+.workspace-header:has([data-header-center]) .workspace-header-identity { flex: none; min-width: 0; }
 .workspace-header [data-slot="app-header-actions"] { flex: none; }
-@media (min-width: 480px) {
-  .workspace-header [data-slot="app-header-identity"] { min-width: 248px; }
-}
 .workspace-action-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .workspace-header-status {
@@ -83,10 +76,67 @@
 .workspace-header-utilities {
   display: flex; align-items: center; gap: 8px; min-width: 0;
 }
-/* Help and Search are separate controls at every width — never an overflow
+/* Preferences and Search are separate controls at every width — never an overflow
    menu — so the pair always keeps its intrinsic width and its touch targets. */
 .workspace-header-utilities { flex: none; }
 .workspace-header-utilities > :is(button, [role="button"]) { min-width: 44px; min-height: 44px; }
+.workspace-preferences { position: relative; flex: none; display: inline-flex; align-items: center; }
+.workspace-preferences > :is(button, [role="button"]) { min-width: 44px; min-height: 44px; }
+.workspace-preferences-panel {
+  position: absolute; z-index: 60; top: calc(100% + 12px); inset-inline-end: 0;
+  width: 248px; max-width: calc(100vw - 32px);
+  border-radius: 0.85rem;
+  background: var(--color-sen-void);
+  border: 1px solid color-mix(in srgb, var(--color-sen-portal) 24%, transparent);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.72);
+}
+.workspace-preferences-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 4px 8px;
+}
+.workspace-preferences-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-neutral-400);
+}
+.workspace-preferences-select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: 0.65rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid color-mix(in srgb, var(--color-sen-portal) 28%, transparent);
+  color: var(--color-sen-signal);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  cursor: pointer;
+}
+.workspace-preferences-select:focus-visible {
+  outline: 2px solid var(--color-sen-portal);
+  outline-offset: 2px;
+}
+.workspace-preferences-select option {
+  background: #0b0e14;
+  color: var(--color-sen-signal);
+}
+.workspace-preferences-footer {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.workspace-preferences-footer button {
+  width: 100%;
+  min-height: 44px;
+  justify-content: flex-start;
+  text-align: start;
+  gap: 10px;
+  font-size: 13px;
+}
+
 .workspace-header-command-area, .workspace-secondary-actions { flex: none; }
 .workspace-primary-action { flex: none; }
 .header-overflow { position: relative; flex: none; }
@@ -104,15 +154,10 @@
 }
 .header-overflow-panel button { width: 100%; justify-content: flex-start; text-align: left; }
 
-/* Below the desktop breakpoint the secondary actions live in the overflow menu
-   and the status keeps only its tone dot — still announced for assistive tech,
-   and each feature repeats the same message in its own content. */
 @media (max-width: 1279px) {
   .workspace-secondary-actions { display: none; }
 }
 @media (max-width: 639px) {
-  /* On a phone the primary action keeps its icon; its label becomes the
-     button's accessible name so the badge is not squeezed out of the row. */
   .workspace-primary-action .workspace-action-label {
     position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
     overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
@@ -130,7 +175,7 @@
   .workspace-header * { animation: none !important; transition: none !important; }
 }
 
-/* The canonical row always ends in context (when supplied), Help, Search.
+/* The canonical row always ends in context (when supplied), Familiar, Preferences, Search.
    Page commands keep their existing controls in the shared toolbar below. */
 .workspace-header-inner { gap: 8px; }
 .workspace-header-context { display: flex; align-items: center; min-width: 0; max-width: min(30vw, 340px); }
@@ -139,6 +184,7 @@
 }
 .workspace-header-public-view { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--color-sen-signal); font-size: 12px; white-space: nowrap; }
 .workspace-header-utility-icon { width: 24px; height: 24px; }
+.workspace-preferences-footer .workspace-header-utility-icon { width: 18px; height: 18px; }
 .workspace-header-toolbar {
   padding-block: 4px !important;
   padding-inline: max(16px, var(--sh-safe-left, env(safe-area-inset-left))) max(16px, var(--sh-safe-right, env(safe-area-inset-right))) !important;
@@ -161,27 +207,39 @@
   }
 }
 
-/* Header center (laptops with the Pathways sidebar): Dao Insights between two
-   hairlines, as the Library's voice rather than a boxed widget. */
-/* With a centered slot the identity keeps its content width so the center has
-   room. SEIAppHeader asks for this with `lg:flex-none`, but a second Tailwind
-   build on the same page (the locked capture's theme) can re-declare `flex-1`
-   after it, so the rule is stated here at a higher specificity. */
+/* Header center: Dao Insights sits between the logo and actions on every width. */
 @media (min-width: 1024px) {
   .workspace-header-inner:has(> [data-slot="app-header-center"]) > .workspace-header-identity { flex: 0 1 auto; }
 }
 .workspace-header-center {
-  display: flex; align-items: center; justify-content: center; gap: 1.25rem;
-  width: 100%; min-width: 0;
+  display: flex; align-items: center; justify-content: center; gap: 0;
+  width: 100%; min-width: 0; overflow: hidden;
 }
-.workspace-header-center::before,
-.workspace-header-center::after {
-  content: ""; flex: 1 1 3rem; max-width: 6rem; height: 1px;
-  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-sen-gold-accent, #d4af37) 45%, transparent));
-}
-.workspace-header-center::after { transform: scaleX(-1); }
+.workspace-header-center .main-library-home-insights { width: 100%; min-width: 0; margin: 0; }
 .workspace-header-center .dao-insights-trigger {
-  flex: 0 1 44rem; max-width: 44rem !important; height: auto !important; margin-inline: 0 !important;
-  padding-block: 0.35rem; background: transparent !important; border-color: transparent !important;
+  flex: 0 1 44rem; width: 100%; min-width: 0; max-width: 44rem !important;
+  min-height: 44px; height: auto !important; margin-inline: 0 !important;
+  padding-block: 0.35rem; padding-inline: 0.25rem;
+  background: transparent !important; border-color: transparent !important;
 }
 .workspace-header-center .dao-insights-trigger:hover { border-color: color-mix(in srgb, var(--color-sen-portal) 30%, transparent) !important; }
+
+@media (width < 641px) {
+  /* The WorkspaceHeader utility override also clears the desktop translation
+     variable: a CSS `translate: none` reset is lost during production lowering. */
+  .workspace-header [data-slot="app-header-center"] {
+    position: static; transform: none; flex: 1 1 0; min-width: 0;
+    width: auto !important; max-width: none !important; overflow: hidden;
+  }
+}
+
+@media (max-width: 479px) {
+  .workspace-header-center .dao-insights-trigger > div:first-child > span {
+    font-size: 0.6875rem; letter-spacing: 0.08em; line-height: 1.2;
+  }
+}
+@media (max-width: 359px) {
+  .workspace-header-center .dao-insights-trigger > div:first-child > span {
+    font-size: 0.625rem; letter-spacing: 0.03em;
+  }
+}

@@ -579,6 +579,16 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
             className="workspace-header-public-view min-h-11 min-w-11 justify-center rounded-full cursor-pointer hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7dd3ff]">
             <Eye size={20} aria-hidden="true" /><span>Public View</span>
           </button> : undefined}
+          preferences={{
+            language: activeInterfaceLanguage,
+            onLanguageChange: code => {
+              if (hostController.handlePreferredLanguageChange) {
+                void hostController.handlePreferredLanguageChange(code);
+                return;
+              }
+              hostController.setFormData(previous => ({ ...previous, interfaceLanguage: code, defaultReadingLanguage: code }));
+            },
+          }}
           searchItems={navigationItems.map(item => ({ id: item.id, label: item.label, pressed: item.active, onAction: item.onSelect }))}
           sound={soundPreferences && menuMusic ? <HeaderSoundControl /> : undefined}
         />}

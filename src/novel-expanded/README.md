@@ -1,5 +1,7 @@
 # NovelExpanded app
 
+- **2026-10-26** — Simplified the Library header across every tab (`Logo | Insights | Familiar | Preferences | Search`). Removed header badges from the header row, moved the Create (`Story Seed`) and Profile (`Profile`) titles to the top of their pages below the header, and replaced `Help` in the header with `Preferences` — a compact card where the reader can immediately switch their `Preferred Language` (updating both app interface language and default reading language) or open `Help`. The header now remains unchanged across Home, Create, Discover, Profile and Story View.
+
 - **2026-10-26** — Fixed the production-only Dao Insights header overlap. The phone center now clears the canonical header's translation utility through its class API; resetting `translate: none` in app CSS was lowered to `transform` during the build and left the separate -50% translation active. `scripts/verifyAppHeader.browser.mjs` checks the built app and Home Workshop in Chromium and WebKit, including phone, tablet, laptop and enlarged-text layouts. CI now builds and checks this delivered header as well as the development app.
 
 - **2026-10-24** — Home places Insights from the Dao in the header on phones and desktops. Its existing spark host, Copy, Story Bank and Begin actions are retained; the duplicate content placement is removed.

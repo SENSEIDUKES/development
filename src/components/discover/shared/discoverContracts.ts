@@ -1,6 +1,26 @@
 import type { ReactNode } from 'react';
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
 
+export type DiscoverSection = 'stories' | 'creators' | 'codex' | 'lore';
+export type DiscoverMedium = 'novel' | 'manga' | 'game' | 'video';
+
+/** Public directory projections supplied by the host, not another story record. */
+export interface DiscoverCreator {
+  id: string;
+  name: string;
+  description: string;
+  worldIds: readonly string[];
+}
+
+export interface DiscoverCodexEntry {
+  id: string;
+  kind: 'characters' | 'items';
+  name: string;
+  description: string;
+  worldId: string;
+  imageUrl?: string;
+}
+
 /** One new chapter of a world, as the host reports it. */
 export interface DiscoverRelease {
   id: string;
@@ -14,19 +34,13 @@ export interface DiscoverRelease {
 /** A Heavenly Rankings board; the host decides which boards exist and whether they are open yet. */
 export interface DiscoverRankingBoard {
   id: string;
+  kind: 'stories' | 'creators' | 'characters' | 'items';
   label: string;
   description: string;
   /** The board's worlds, first place first, as the host ranked them. Omitted while the board is not open. */
   worldIds?: readonly string[];
-}
-
-/** A themed Event, such as Mystery Week; dates are host display text. */
-export interface DiscoverEvent {
-  id: string;
-  title: string;
-  description: string;
-  when?: string;
-  imageUrl?: string;
+  creatorIds?: readonly string[];
+  entryIds?: readonly string[];
 }
 
 /**
@@ -34,6 +48,15 @@ export interface DiscoverEvent {
  * belong to the host; the page never ranks, recommends or invents a world.
  */
 export interface DiscoverProps {
+  section: DiscoverSection;
+  medium: DiscoverMedium;
+  onMediumChange: (medium: DiscoverMedium) => void;
+  sectionHref: (section: DiscoverSection) => string;
+  onSectionChange: (section: DiscoverSection) => void;
+  creators?: readonly DiscoverCreator[];
+  codexEntries?: readonly DiscoverCodexEntry[];
+  followedCreatorIds?: readonly string[];
+  trackedCodexIds?: readonly string[];
   /** Every world the page may show, public and SEIHouse-backed. */
   worlds: readonly HomeWorld[];
   /** Worlds the host features at the top of the page, in its order. */
@@ -46,13 +69,12 @@ export interface DiscoverProps {
   fateSurvivalWorldIds?: readonly string[];
   /** Heavenly Rankings boards. A board without worlds shows as opening soon. */
   rankingBoards?: readonly DiscoverRankingBoard[];
-  /** Themed Events. */
-  events?: readonly DiscoverEvent[];
   onOpenWorld: (worldId: string) => void;
   /** A short host note under the title, such as a sample-catalog line. */
   notice?: ReactNode;
-  /** The in-house lore directory's doorway, composed by the host on the same Discover route. */
-  encyclopedia?: ReactNode;
+  /** The host composes the existing encyclopedia, including article navigation. */
+  renderLore: (updatesOnly: boolean) => ReactNode;
+  loreArticle?: boolean;
   /** The time relative release times are measured from. Defaults to now. */
   now?: Date;
 }

@@ -24,7 +24,16 @@ export interface HomeWorld {
   /** Creator's branching permission, supplied by the host. Omission means unknown. */
   branchingEnabled?: boolean;
 }
+/** A themed Home event; dates and availability are supplied by the host. */
+export interface HomeEvent {
+  id: string;
+  title: string;
+  description: string;
+  when?: string;
+  imageUrl?: string;
+}
 export interface LightNovelsHomeProps {
+  events?: readonly HomeEvent[];
   active?: boolean;
   worlds: readonly HomeWorld[];
   onCreateStory: () => void;

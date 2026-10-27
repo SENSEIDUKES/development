@@ -73,8 +73,8 @@ both something to chase.
 - **Rankings:** leaderboards like Webtoon's character rankings, extended to
   items, beasts, pets and Familiars. Cultivation stories already run on ranking
   lists, so the audience knows this language. Working name: Heavenly Rankings.
-- **Events:** themed challenges such as Mystery Week or Dark Fantasy Week, for
-  creators and readers.
+- **Events (on Home):** themed challenges such as Mystery Week or Dark Fantasy
+  Week, for creators and readers.
 
 ## Platform guardrails Discover relies on
 
@@ -108,33 +108,65 @@ Together they make botting cost real money per account.
 - Search, series status (ongoing, completed, hiatus) and content warnings: in or
   out?
 
-## What's built (2026-10-20)
+## What's built (updated 2026-10-26)
 
 The page's structure, for refining how it looks and feels. It is the Library's
 `@seihouse/library/discover` (`src/components/discover/`), at `/app/?page=discover`
 in the app and `?preview=discover` in the Workshop. Every world on it is a sample
 (`src/novel-expanded/discoverSamples.ts`); opening one says so.
 
-The hierarchy follows Apple's store fronts: a large title, then full-width
-shelves, each with one heading, whose content pages sideways.
+Discover uses a compact header, a persistent row of destinations and a left
+browsing rail beside the results. **Novel / Manga / Game / Video** is the first
+navigation layer, with **Stories / Creators / Codex / Lore** directly underneath.
+Readers choose a medium, then what to explore within it. Every medium uses the same
+layout. Novel has the current sample catalogue; the other mediums show coming
+soon states until their catalogues are supplied. The `medium` address parameter
+keeps the selection across destinations, reload and browser Back.
 
-- **Search** across the page: titles, creators, genres and tags.
-- **Featured** worlds at the top.
-- **New Chapters**, newest first, with **My updates** beside it (the sample
-  reader tracks two series).
+- **Navigation:** Stories | Creators | Codex | Lore, in that order. Stories
+  is the default; Creators and Codex have reloadable `section` addresses. Lore
+  links directly to the existing encyclopedia at `?page=discover&lore=index`.
+- **Events** have moved to Home, above Featured, as an expandable row with the
+  existing Coming soon event cards. Discover no longer displays them.
+- **All / My updates** follows the selected section: stories use tracked series,
+  creators use followed creators, and Codex uses tracked entries. These follows
+  are host-supplied samples. Lore's My updates explains that term tracking is
+  not available yet; All opens the complete glossary. Article pages keep the
+  navigation without the directory's feed toggle. Rankings have a separate,
+  explicitly overall view; returning to browsing restores the selected feed.
+- **Search and Genre** filter Stories, Creators and Codex. Creator genres come
+  from their listed stories; Codex genres come from their source stories.
+  Changing the main destination resets its temporary filters.
+  Changing medium also resets those filters. Stories, creator source stories,
+  Codex entries, releases and rankings are restricted to the selected medium.
+  Lore is shared across all mediums and preserves its language, Reading Mode
+  and article/search context when the medium changes.
+- **Stories and Creators** share Browse, Genres and Rankings in the left rail.
+  Genres shows cover-backed tiles with counts for the current search and feed;
+  choosing one opens that genre's catalogue. The rail stays beside the content
+  on phones, and expands to labeled rows on desktop.
+- **Stories:** the complete story catalogue comes first, then New Chapters ordered
+  newest first, Featured and Fate Survival. All / My updates scopes these shelves together.
+- **Creators:** eight sample creators, each expandable to their stories using
+  the shared World Card family.
+- **Codex:** Characters and Items only, with four sample entries in each.
+  Each expands to a description and its source story. These are public sample
+  projections, not copies of the reader's private story records. Characters,
+  Items and Rankings are its left-rail choices.
 - **Fate Survival**, its own editorial feature. Its draw is a chapter-by-chapter
   narrative experience with consequences: every choice carries forward.
-- **Heavenly Rankings**, one board at a time (Worlds shows a sample order;
-  Characters, Items, Beasts & Pets and Familiars open soon).
-- **Events** (Mystery Week, Dark Fantasy Week), marked Coming soon.
-- **Browse by Genre**: picture tiles over World Cards.
+- **Heavenly Rankings:** a relevant board in Stories, Creators and Codex;
+  Codex switches between character and item boards. Search and genre filter the
+  host-supplied order while retaining the original rank numbers. The boards
+  are labeled Overall ranking and are independent of My updates. Lore has
+  neither genres nor leaderboards; its rail uses the encyclopedia's categories.
 
 Not built: real worlds and releases, the Tracker, signals, community
 lists, credits pages, branch lineage, curated reviews.
 
 ## Eastern Fantasy Encyclopedia (2026-10-26)
 
-A doorway below Discover's header opens a quiet, text-first directory in the
+The Lore navigation link opens a quiet, text-first directory in the
 same Library shell. It starts with **36 entries** across **Cultivation Realms,
 Qi & Anatomy, Alchemy & Crafts, Mythology & Beasts, Idioms & Cultural Terms,
 and Weapons & Relics**. Each article includes its canonical English term,

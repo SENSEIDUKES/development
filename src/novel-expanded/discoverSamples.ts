@@ -1,4 +1,4 @@
-import type { DiscoverEvent, DiscoverRankingBoard, DiscoverRelease } from '@seihouse/library/discover';
+import type { DiscoverCodexEntry, DiscoverCreator, DiscoverRankingBoard, DiscoverRelease } from '@seihouse/library/discover';
 import type { HomeWorld } from '@seihouse/library/home';
 
 /**
@@ -72,16 +72,35 @@ export const DISCOVER_SAMPLE_FEATURED: readonly string[] = ['sample-last-lotus',
 export const DISCOVER_SAMPLE_FATE_SURVIVAL: readonly string[] = ['sample-ninth-trial', 'sample-sky-ruins', 'sample-grey-tide'];
 
 export const DISCOVER_RANKING_BOARDS: readonly DiscoverRankingBoard[] = [
-  { id: 'worlds', label: 'Worlds', description: 'Sample order. Real boards follow what readers do and spend.',
+  { id: 'worlds', kind: 'stories', label: 'Stories', description: 'Sample order. Real boards follow what readers do and spend.',
     worldIds: ['sample-last-lotus', 'sample-elder-kaelen', 'sample-ember-sect', 'sample-ninth-trial', 'sample-moon-archive', 'sample-iron-front'] },
-  { id: 'characters', label: 'Characters', description: 'The heroes and villains readers follow' },
-  { id: 'beasts', label: 'Items, Beasts & Pets', description: 'Treasures and creatures across every world' },
-  { id: 'familiars', label: 'Familiars', description: 'The companions cultivators raise' },
+  { id: 'creators', kind: 'creators', label: 'Creators', description: 'Sample creator order. Discover the people shaping these worlds.', creatorIds: ['sample-creator-seihouse', 'sample-creator-sensei', 'sample-creator-mo-lan'] },
+  { id: 'characters', kind: 'characters', label: 'Characters', description: 'Sample character order across the stories in Discover.', entryIds: ['sample-character-ye-chen', 'sample-character-lyra', 'sample-character-kaelen', 'sample-character-anya'] },
+  { id: 'items', kind: 'items', label: 'Items', description: 'Sample item order. Treasures with a story behind them.', entryIds: ['sample-item-lotus', 'sample-item-lute', 'sample-item-key', 'sample-item-engine'] },
 ];
 
-export const DISCOVER_SAMPLE_EVENTS: readonly DiscoverEvent[] = [
-  { id: 'mystery-week', title: 'Mystery Week', when: 'Coming soon', imageUrl: '/manifest-backdrops/immortal-land-3.jpg',
-    description: 'Seven days of locked rooms, lies and lost heirs, for creators and readers.' },
-  { id: 'dark-fantasy-week', title: 'Dark Fantasy Week', when: 'Coming soon', imageUrl: '/manifest-backdrops/immortal-land-4.jpg',
-    description: 'Worlds where the light costs something.' },
+/** Explicit public catalogue fixtures, never inferred from the reader's private stories. */
+export const DISCOVER_SAMPLE_CREATORS: readonly DiscoverCreator[] = [
+  { id: 'sample-creator-sensei', name: 'SENSEI', description: 'Ancient promises, impossible choices and worlds that remember.', worldIds: ['sample-last-lotus'] },
+  { id: 'sample-creator-seihouse', name: 'SEIHouse', description: 'Stories of found family and survival, where the next chapter changes everything.', worldIds: ['sample-meadowlight', 'sample-ninth-trial', 'sample-grey-tide'] },
+  { id: 'sample-creator-mo-lan', name: 'Mo Lan', description: 'Slow-burning cultivation tales about the bonds between master and disciple.', worldIds: ['sample-elder-kaelen'] },
+  { id: 'sample-creator-rook', name: 'Rook', description: 'Military science fiction from the people inside the machines.', worldIds: ['sample-iron-front'] },
+  { id: 'sample-creator-qing-yu', name: 'Qing Yu', description: 'Court intrigue and mysteries hidden behind beautiful doors.', worldIds: ['sample-lotus-lake'] },
+  { id: 'sample-creator-ash-wren', name: 'Ash Wren', description: 'Ruined skies, dangerous bargains and choices that carry a cost.', worldIds: ['sample-sky-ruins'] },
+  { id: 'sample-creator-hollow-pine', name: 'Hollow Pine', description: 'Outcasts, alchemists and the long road back from exile.', worldIds: ['sample-ember-sect'] },
+  { id: 'sample-creator-vesper', name: 'Vesper', description: 'Dark fantasy in forgotten libraries and drowned cities.', worldIds: ['sample-moon-archive'] },
 ];
+
+export const DISCOVER_SAMPLE_CODEX: readonly DiscoverCodexEntry[] = [
+  { id: 'sample-character-ye-chen', kind: 'characters', name: 'Ye Chen', worldId: 'sample-last-lotus', imageUrl: '/card-workshop/test-images/ye_chen_portrait.png', description: 'A young cultivator entrusted with the last lotus and a promise older than the empire. A sample character from The Last Lotus of the Jade Empire.' },
+  { id: 'sample-character-lyra', kind: 'characters', name: 'Lyra Meadowlight', worldId: 'sample-meadowlight', imageUrl: '/card-workshop/test-images/lyra_meadowlight_portrait.png', description: 'A wandering bard whose songs keep the memories of her companions alive. A sample character from Meadowlight Requiem.' },
+  { id: 'sample-character-kaelen', kind: 'characters', name: 'Elder Kaelen', worldId: 'sample-elder-kaelen', imageUrl: '/card-workshop/test-images/elder_kaelen_portrait.png', description: 'An aging master with one final lesson to pass on. A sample character from Elder Kaelen’s Last Disciple.' },
+  { id: 'sample-character-anya', kind: 'characters', name: 'Sergeant Anya Petrova', worldId: 'sample-iron-front', imageUrl: '/card-workshop/test-images/sergeant_anya_petrova_portrait.png', description: 'A frontline veteran holding her unit together when their machines and orders fail. A sample character from Iron Front.' },
+  { id: 'sample-item-lotus', kind: 'items', name: 'The Last Jade Lotus', worldId: 'sample-last-lotus', description: 'A living inheritance sheltered beneath an abandoned pavilion. Its meaning belongs to this story, rather than a universal cultivation rule. Sample item.' },
+  { id: 'sample-item-lute', kind: 'items', name: 'Meadowlight Lute', worldId: 'sample-meadowlight', description: 'Lyra’s travel-worn instrument, carrying the melodies of people she refuses to forget. Sample item.' },
+  { id: 'sample-item-key', kind: 'items', name: 'The Ninth Key', worldId: 'sample-ninth-trial', description: 'A key without teeth, found beside a door without a handle. Opening the way demands a choice. Sample item.' },
+  { id: 'sample-item-engine', kind: 'items', name: 'Ironheart Core', worldId: 'sample-iron-front', description: 'A battered power core that keeps Petrova’s last operational mech moving. Sample item.' },
+];
+
+export const DISCOVER_SAMPLE_FOLLOWED_CREATORS = ['sample-creator-sensei', 'sample-creator-rook'];
+export const DISCOVER_SAMPLE_TRACKED_CODEX = ['sample-character-ye-chen', 'sample-character-anya', 'sample-item-lotus'];

@@ -570,6 +570,19 @@ Update it whenever it changes.
     reading languages. It follows the profile's language and Reading Mode
     defaults. The same Discover Workshop preview opens the real app surface.
     The starter translations have not had professional editorial review.
+  - **Discover navigation** (2026-10-26) is Stories, Creators, Codex, Lore.
+    Novel / Manga / Game / Video is the first navigation layer, followed by
+    Stories / Creators / Codex / Lore. The medium stays selected in the address. Novel has
+    the sample catalogue; the other mediums use the same layout with coming
+    soon states. Lore stays shared. A compact left rail offers Browse, Genres and Rankings for Stories
+    and Creators, Characters, Items and Rankings for Codex, and encyclopedia
+    categories for Lore. The story catalogue appears first. Lore opens that
+    encyclopedia directly. Events now expand from one row on Home, above Featured; the other
+    three destinations have genre filtering and relevant Heavenly Rankings.
+    All / My updates follows each section's sample catalogue. Creators expand
+    to their stories, and Codex is split into Characters and Items. Public
+    catalogues, follows and rankings remain samples; Lore term tracking is not
+    built, and its My updates says so.
   - **Profile is in the app, with what it connects to,** so the pieces can be
     seen working together and refined there. Profile is a third place in the
     navigation (Home, Create, Profile, with Settings beside it); it is the

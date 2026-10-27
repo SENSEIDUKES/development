@@ -893,7 +893,7 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(address()).toBe('/app/?page=discover');
     expect(document.querySelector('[data-testid="novel-expanded-discover"]')).toBeTruthy();
     expect(strip()!.querySelector('[aria-current="page"]')?.textContent).toBe('Discover');
-    expect(document.body.textContent).toContain('Showing sample worlds');
+    expect(document.body.textContent).toContain('Explore sample stories, creators and Codex entries');
     expect(document.querySelector('.discover-fate')?.textContent).toContain('Fate Survival');
     // Opening a sample world says so just above the bottom bar.
     await click(document.querySelector<HTMLButtonElement>('.discover-fate .world-card-base-open, .discover-fate button')!, 'a Fate Survival world', 20);
@@ -904,11 +904,51 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(window.history.length).toBe(entries);
   });
 
+  it('moves Events to Home and retains the selected Discover medium through tabs and Lore', async () => {
+    await render(appServices(scriptedWriter().writer));
+    const events = document.querySelector<HTMLDetailsElement>('[data-home-events]')!;
+    expect(events.open).toBe(false);
+    expect(events.compareDocumentPosition(document.querySelector('[data-home-featured]')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    await click(events.querySelector('summary'), 'Home Events');
+    expect(events.open).toBe(true);
+    expect(events.textContent).toContain('Mystery Week');
+    expect(events.textContent).toContain('Coming soon');
+    await click(buttonByText('Discover', strip()!), 'Discover');
+    expect(document.querySelector('[data-home-events]')).toBeNull();
+    expect(document.querySelector('[data-testid="novel-expanded-discover"]')?.textContent).not.toContain('Mystery Week');
+    const medium = () => document.querySelector('.discover-medium-switcher')!;
+    await click(buttonByText('Manga', medium()), 'Manga');
+    expect(address()).toBe('/app/?page=discover&medium=manga');
+    expect(document.body.textContent).toContain('Manga catalogue coming soon');
+    await click(document.querySelector('.discover-navigation a[href*="section=creators"]'), 'Creators');
+    expect(address()).toBe('/app/?page=discover&section=creators&medium=manga');
+    expect(document.querySelector('ul[aria-label="Creators"]')).toBeNull();
+    await click(document.querySelector('.discover-navigation a[href*="lore=index"]'), 'Lore');
+    const encyclopedia = () => document.querySelector('[data-encyclopedia]')!;
+    await typeInto(encyclopedia().querySelector('input')!, 'Origin Infant');
+    await click(encyclopedia().querySelector('.encyclopedia-result'), 'Nascent Soul');
+    expect(new URLSearchParams(window.location.search).get('medium')).toBe('manga');
+    const language = encyclopedia().querySelector('select')!;
+    await act(async () => {
+      language.value = 'ja'; language.dispatchEvent(new Event('change', { bubbles: true }));
+      await import('../components/discover/shared/loreLocales').then(module => module.loadLoreLocale('ja'));
+    });
+    await click(buttonByText('Video', medium()), 'Video');
+    expect(new URLSearchParams(window.location.search).get('medium')).toBe('video');
+    expect(new URLSearchParams(window.location.search).get('lore')).toBe('nascent-soul');
+    expect(new URLSearchParams(window.location.search).get('q')).toBe('Origin Infant');
+    expect(encyclopedia().querySelector('select')?.value).toBe('ja');
+    await click(document.querySelector('.discover-navigation a[href*="page=discover&medium=video"]'), 'Stories');
+    await click(buttonByText('Novel', medium()), 'Novel');
+    expect(address()).toBe('/app/?page=discover');
+    expect(document.querySelector('ul[aria-label="Stories"]')).toBeTruthy();
+  });
+
   it('keeps encyclopedia articles, alias searches and reading defaults inside Discover', async () => {
     const services = appServices(scriptedWriter().writer);
     services.profile.save({ defaultReadingLanguage: 'ja', defaultChapterWritingStyle: 'Easy Read' });
     await render(services, '/app/?page=discover');
-    await click(document.querySelector('.discover-encyclopedia-entry'), 'the encyclopedia doorway', 20);
+    await click(document.querySelector('.discover-navigation a[href*="lore=index"]'), 'Lore in Discover navigation', 20);
     await act(async () => { await import('../components/discover/shared/loreLocales').then(module => module.loadLoreLocale('ja')); });
     expect(address()).toBe('/app/?page=discover&lore=index');
     const encyclopedia = () => document.querySelector<HTMLElement>('[data-encyclopedia]')!;
@@ -926,11 +966,27 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(encyclopedia().textContent).toContain('元婴');
     await click(encyclopedia().querySelectorAll('.encyclopedia-breadcrumb a')[1], 'back to the directory');
     expect(encyclopedia().querySelector<HTMLInputElement>('input')?.value).toBe('Origin Infant');
-    await click(encyclopedia().querySelector('.encyclopedia-breadcrumb a'), 'back to Discover');
+    await click(document.querySelector('.discover-navigation a[href="/app/?page=discover"]'), 'back to Discover stories');
     expect(address()).toBe('/app/?page=discover');
     expect(document.querySelector('.discover-fate')).toBeTruthy();
     expect(services.profile.read()).toMatchObject({ defaultReadingLanguage: 'ja', defaultChapterWritingStyle: 'Easy Read' });
     expect(services.writer.generate).not.toHaveBeenCalled();
+  });
+
+  it('navigates Discover creators and Codex while keeping Lore a direct encyclopedia link', async () => {
+    await render(appServices(scriptedWriter().writer), '/app/?page=discover&section=creators');
+    expect(document.querySelector('.discover-navigation [aria-current="page"]')?.textContent).toBe('Creators');
+    expect(document.querySelector('ul[aria-label="Creators"]')?.querySelectorAll('summary')).toHaveLength(8);
+    await click(document.querySelector('.discover-navigation a[href*="section=codex"]'), 'Codex');
+    expect(address()).toBe('/app/?page=discover&section=codex');
+    expect(document.querySelector('ul[aria-label="Codex characters"]')).toBeTruthy();
+    await click(buttonByText('Items', document.querySelector('.discover-view-rail')!), 'Items');
+    expect(document.querySelector('ul[aria-label="Codex items"]')).toBeTruthy();
+    await click(document.querySelector('.discover-navigation a[href*="lore=index"]'), 'Lore');
+    expect(address()).toBe('/app/?page=discover&lore=index');
+    expect(document.querySelector('[data-encyclopedia]')).toBeTruthy();
+    expect(document.querySelector('.discover-genre-select')).toBeNull();
+    expect(document.querySelector('[data-testid="novel-expanded-discover"]')?.textContent).not.toContain('Heavenly Rankings');
   });
 
   it('opens the Cave from the navigation, on the practice account, inside the app\'s places', async () => {

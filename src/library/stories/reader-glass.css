@@ -24,14 +24,9 @@
   --reader-glass-solid: linear-gradient(145deg, #203a4a, #0c1c32);
 }
 
-/* Match Library navigation's stationary 3px seam (library-navigation.css),
-   rotated along each edge that meets the chapter. No moving light or hit area. */
-/* Standalone edge recipe: lets the Workshop combine this exact Reader seam
-   with another fill. Reset other component pseudo-element decorations first. */
-.reader-border-glow::after { all: unset; }
-.reader-glass-bar::after,
-.reader-glass-panel::after,
-.reader-border-glow::after {
+/* Reading bars meet the chapter on a straight edge. Floating panels and
+   reusable borders instead follow their full rounded outline at every size. */
+.reader-glass-bar::after {
   content: '';
   position: absolute;
   inset-inline: 0;
@@ -47,17 +42,27 @@ header.reader-glass-bar::after {
   bottom: -1px;
   box-shadow: 0 -1px 0 #fff1, 0 -3px 7px #49c9fa22;
 }
-@media (min-width: 1024px) {
-  .reader-glass-panel::after,
-  .reader-border-glow::after {
-    --reader-seam-angle: 180deg;
-    inset-block: 0;
-    left: -1px;
-    right: auto;
-    width: 3px;
-    height: auto;
-    box-shadow: 1px 0 0 #fff1, 3px 0 7px #49c9fa22;
-  }
+
+/* Reset a borrowed component's old decoration, then mask out the center.
+   Keep the rim inside its host: actual Reader sheets can have a border on only
+   one side, while cards and buttons have four. Inherited radii follow each shape
+   without clipping content, focus outlines or the surface's outer shadow. */
+.reader-border-glow::after { all: unset; }
+.reader-glass-panel::after,
+.reader-border-glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  border-radius: inherit;
+  padding: 2px;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(135deg, var(--reader-seam-colors));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
 }
 
 /* A quieter, continuous rim for the two floating Reader selectors.
@@ -308,5 +313,6 @@ html[data-reader-scrollbar][data-reader-scrolling] { scrollbar-color: #c9a24a99 
   .reader-glass-primary::after,
   .reader-glass-bar::after,
   .reader-glass-panel::after,
-  .reader-glass-picker::after { display: none; }
+  .reader-glass-picker::after,
+  .reader-border-glow::after { display: none; }
 }

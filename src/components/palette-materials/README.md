@@ -19,7 +19,7 @@ position and sample geometry overridden. All samples use the same chosen
 background. Artwork comes from the host's existing `authImage`, never its video.
 
 Reader blue glass consumes `.reader-glass.reader-glass-panel` from the existing
-Library stylesheet, including its gradient, edge seam, shadows and touch/reduced-
+Library stylesheet, including its gradient, rounded border, shadows and touch/reduced-
 transparency treatment. The two Reader color swatches measure its gradient stops.
 On touch devices the original uses the Reader's opaque gradient and no blur;
 desktop originals use the shared translucent recipe.
@@ -29,8 +29,7 @@ reached through a persistent bottom navigation with safe-area clearance. The
 Materials view starts with a picker and compact side-by-side comparison, which
 stays visible while adjusting the larger controls. The full gallery is optional;
 desktop keeps the full catalog. Sections stay mounted so switching views preserves
-experiments and saved-look state. Loading a look returns to Materials. No saved
-format or existing look IDs change.
+experiments and saved-look state. Loading a look returns to Materials. The saved-look format remains version 1.
 
 The editor measures the original samples in the browser, including responsive
 blur, gradients, borders and layered shadows. Changes become scoped inline
@@ -38,11 +37,11 @@ overrides on the experiment only. Recoloring preserves gradient stops and their
 relative opacity; changing blur retains saturation. Shadow strength affects
 neutral shadows, glow strength affects colored shadows; surfaces without a
 colored shadow can add a halo. The Border glow selector can replace any material's decorative ring with the
-Reader's warm rim, inset light and responsive gold-to-blue seam. Apply to all
+Reader's warm rim, inset light and gold-to-blue rim that follows each surface’s corner radius. Apply to all
 changes only the current experiment, preserving each material's fill and other
 edits. Reset restores the original edge. The shared `.reader-border-glow` recipe
 lives beside the original Reader selectors in `src/library/stories/reader-glass.css`;
-original Reader presentation remains unchanged. The border choice is an optional
+Reader panels share the same rounded rim; stationary Reader bars retain their straight chapter-edge seam. The border choice is an optional
 validated field in existing version-1 looks, so existing exports still load. Layer tiles separate the border, outer neutral
 shadow, and colored/inset highlights. They are not complete component replicas.
 
@@ -53,13 +52,14 @@ Its controls and actions are visual fixtures. Text and accent choices apply only
 to this composition. The initial composition represents existing roles, not an
 approved palette. Reduced-transparency experiments use an opaque fallback.
 
-The owner's `palette-materials (2).json` is bundled unchanged as `owner-looks.json`.
-Its four looks are added once per browser, without replacing existing IDs or
-identical imported looks. Existing browser work stays last and is the starting
-experiment; a fresh browser opens the final exported combination. A separate
-inclusion marker prevents deleted looks from reappearing. Unreadable storage is
-left untouched; failed writes keep the combined looks available for export.
-These are Workshop starting looks, not a global app palette.
+The owner's latest `palette-materials.json` is bundled unchanged as `owner-looks.json`.
+Its final **V1** combination is the default on a fresh browser and the first visit
+for this export revision. Earlier browser inclusion markers also receive this
+revision. Conflicting browser looks are retained as separate “(previous)” looks;
+other local work and identical imported looks remain available. After inclusion,
+browser saves and deletions are respected. Unreadable storage is left untouched;
+failed writes keep the combined looks available for export. These are Workshop
+starting looks, not a global app palette.
 
 Saved looks contain named combinations, background, selected material, colors,
 and per-material overrides. Explicit saves use
@@ -77,6 +77,10 @@ canonical materials, desktop/mobile layout, editing/reset, composition, saved
 look lifecycle, reload, import/export, keyboard and reduced transparency.
 
 ## History
+
+- **2026-10-27:** Fixed the official Reader border to follow rounded panels and
+  pill buttons at every width; updated defaults to the supplied V1 look while
+  preserving earlier browser work.
 
 - **2026-10-27:** Included the owner’s four exported looks unchanged, opened the
   latest saved combination on entry, and preserved existing browser work.

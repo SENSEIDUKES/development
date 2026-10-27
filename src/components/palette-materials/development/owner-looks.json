@@ -110,45 +110,68 @@
     },
     {
       "id": "e8a2aa83-22e8-45de-b42e-0d5b7aa0c59f",
-      "name": "update",
+      "name": "V1",
       "settings": {
         "background": "artwork",
-        "selected": "navigation",
+        "selected": "home",
         "edits": {
           "home": {
-            "blur": 15,
-            "opacity": 30,
-            "tint": "#000000",
+            "blur": 25,
+            "opacity": 35,
+            "tint": "#00374a",
             "borderOpacity": 10,
-            "glowColor": "#000000"
+            "glowColor": "#000000",
+            "borderGlow": "reader"
           },
           "create": {
-            "opacity": 25,
-            "blur": 6,
+            "opacity": 12,
+            "blur": 24,
             "borderOpacity": 20,
             "borderColor": "#000000",
-            "tint": "#597691",
-            "glow": 100
+            "tint": "#00374a",
+            "glow": 100,
+            "borderGlow": "reader",
+            "shadow": 130,
+            "glowColor": "#000000"
+          },
+          "signin": {
+            "borderGlow": "reader"
           },
           "navigation": {
-            "opacity": 90,
+            "opacity": 95,
             "blur": 20,
             "tint": "#000000",
             "shadow": 140,
             "borderColor": "#b68f25",
             "glow": 100,
-            "borderOpacity": 70
+            "borderOpacity": 70,
+            "borderGlow": "reader"
+          },
+          "familiar": {
+            "borderGlow": "reader",
+            "opacity": 95,
+            "blur": 20,
+            "tint": "#000000"
+          },
+          "reader": {
+            "borderGlow": "reader"
+          },
+          "button": {
+            "borderGlow": "reader"
+          },
+          "secondary": {
+            "borderGlow": "reader"
           }
         },
         "roles": {
           "navigation": "navigation",
           "panel": "create",
           "card": "home",
-          "button": "navigation"
+          "button": "familiar"
         },
         "colors": {
           "text": "#ffffff",
-          "accent": "#6a1aff"
+          "accent": "#fecb3e"
         }
       }
     }

@@ -351,10 +351,11 @@
 }
 
 /* The shell floats its music note just above the workspace bar's right end,
-   which is where Next sits. While the creator's footer is pinned there, the
-   note rises above the footer instead of covering it. */
+   which is where Next or Create Story sits. While the creator's or the
+   Blueprint's pinned footer is there, the note rises above it instead of
+   covering it. */
 @media (max-width: 1023px) {
-  .library-navigation-layout:has([data-seed-creator-footer]) .library-sound-slot {
+  .library-navigation-layout:has(.seed-creator-footer) .library-sound-slot {
     inset-block-end: calc(var(--library-bar-height, 5.125rem) + 4.625rem);
   }
 }

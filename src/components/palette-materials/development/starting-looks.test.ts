@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { encodeLooks, freshSettings, STORAGE_KEY, type SavedLook } from './model';
-import { loadStartingLooks, startingLooks, STARTING_LOOKS_KEY } from './starting-looks';
+import { loadStartingLooks, startingLooks, STARTING_LOOKS_KEY, STARTING_LOOKS_REVISION } from './starting-looks';
 
 function memory(raw?: string) {
   const values = new Map<string, string>(raw === undefined ? [] : [[STORAGE_KEY, raw]]);
@@ -13,19 +13,31 @@ describe('owner-provided starting looks', () => {
     const { looks, warning } = loadStartingLooks(storage);
     expect(looks).toEqual(startingLooks());
     expect(looks).toHaveLength(4);
-    expect(looks.at(-1)?.settings.colors.accent).toBe('#6a1aff');
-    expect(looks.at(-1)?.settings.edits.create).toEqual({ opacity: 25, blur: 6, borderOpacity: 20, borderColor: '#000000', tint: '#597691', glow: 100 });
+    expect(looks.at(-1)?.settings.colors.accent).toBe('#fecb3e');
+    expect(looks.at(-1)?.settings.edits.create).toEqual({ opacity: 12, blur: 24, borderOpacity: 20, borderColor: '#000000', tint: '#00374a', glow: 100, borderGlow: 'reader', shadow: 130, glowColor: '#000000' });
     expect(warning).toBe('');
     expect(loadStartingLooks(storage).looks).toEqual(looks);
   });
-  it('preserves modified browser looks and their place as the starting experiment', () => {
+  it('updates the default while preserving conflicting browser work as a separate look', () => {
     const edited = startingLooks()[3]; edited.settings.edits.home = { opacity: 81, borderGlow: 'reader' };
     const newer: SavedLook = { id: 'newer', name: 'More recent work', settings: freshSettings() };
     const storage = memory(encodeLooks([edited, newer]));
     const { looks } = loadStartingLooks(storage);
-    expect(looks).toHaveLength(5);
-    expect(looks.find(l => l.id === edited.id)).toEqual(edited);
-    expect(looks.at(-1)).toEqual(newer);
+    expect(looks).toHaveLength(6);
+    expect(looks.find(l => l.name === 'V1 (previous)')?.settings).toEqual(edited.settings);
+    expect(looks.find(l => l.id === 'newer')).toEqual(newer);
+    expect(looks.at(-1)).toEqual(startingLooks().at(-1));
+    expect(loadStartingLooks(storage).looks).toEqual(looks);
+  });
+  it('upgrades browsers that already included the prior export', () => {
+    const old = startingLooks();
+    old[3].name = 'update'; old[3].settings.colors.accent = '#6a1aff';
+    const storage = memory(encodeLooks(old));
+    storage.setItem(STARTING_LOOKS_KEY, 'included');
+    const result = loadStartingLooks(storage);
+    expect(result.looks.at(-1)).toEqual(startingLooks().at(-1));
+    expect(result.looks.find(l => l.name === 'update (previous)')?.settings.colors.accent).toBe('#6a1aff');
+    expect(storage.getItem(STARTING_LOOKS_KEY)).toBe(STARTING_LOOKS_REVISION);
   });
   it('does not duplicate looks previously imported with fresh IDs', () => {
     const imported = startingLooks().map((l, i) => ({ ...l, id: `imported-${i}` }));
@@ -50,7 +62,7 @@ describe('owner-provided starting looks', () => {
     const storage = memory(encodeLooks([existing]));
     const result = loadStartingLooks({ ...storage, setItem() { throw new Error('quota'); } });
     expect(result.looks).toHaveLength(5);
-    expect(result.looks.at(-1)).toEqual(existing);
+    expect(result.looks.find(l => l.id === existing.id)).toEqual(existing);
     expect(result.warning).toContain('Export before leaving');
     expect(storage.getItem(STORAGE_KEY)).toBe(encodeLooks([existing]));
   });

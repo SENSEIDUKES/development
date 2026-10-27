@@ -43,7 +43,7 @@ interface WorldList {
 /** The world's own card lists, in the order the Codex reads them. */
 const WORLD_LISTS: readonly WorldList[] = [
   { field: 'factions', kind: 'faction', category: 'factions', title: 'Factions', label: 'Faction', icon: Shield, limit: SEED_FACTION_LIMIT,
-    tagline: 'Sects, guilds, and powers that already shape the world.', tileSlots: ['factionKind', 'standing', 'leader'],
+    tagline: 'Sects, guilds, and powers that already shape the world.', tileSlots: ['factionKind', 'role', 'standing', 'leader'],
     setCards: cards => setFactions(cards as unknown as StorySeedFaction[]) },
   { field: 'things', kind: 'thing', category: 'items', title: 'Things', label: 'Thing', icon: Sword, limit: SEED_THING_LIMIT,
     tagline: 'What already exists when the story opens, and who holds it.', tileSlots: ['holder', 'status', 'location'],

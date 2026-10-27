@@ -83,6 +83,13 @@ describe('World Blueprint as a character screen', () => {
     expect(current.world.optional.worldFoundations.things?.[0].name).toBe('Cracked Jade Token');
   });
 
+  it('gives a faction card its role when it has no kind yet', () => {
+    const seed = seedWithCast();
+    seed.world.optional.worldFoundations.factions = [{ id: 'faction-1', name: 'Heavenly Sword Sect', role: 'Ruling Power' }];
+    act(() => root.render(<Review seed={seed} />));
+    expect(container.querySelector('button[aria-label="Faction: Heavenly Sword Sect"]')?.textContent).toContain('Ruling Power');
+  });
+
   it('offers no edits on a view-only Blueprint', () => {
     act(() => root.render(<>
       <CastScreen seed={seedWithCast()} updateSeed={vi.fn()} backgroundProfile="" onBackgroundProfileChange={vi.fn()} readOnly />

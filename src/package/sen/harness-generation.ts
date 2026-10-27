@@ -25,12 +25,10 @@ export { compileStoryInformationPacket, projectCurrentStory } from '../../compon
 export { projectCanonicalState, normalizeIdentityLabel, type CanonicalProjectionInput, type CanonicalProjectionResult } from '../../components/harness-generation/shared/canonicalProjection';
 export { GENERATION_PACKET_BUDGET, PACKET_SECTION_ORDER, estimatePacketTokens, type PacketSectionBudget } from '../../components/harness-generation/shared/packetBudget';
 export {
-  ALWAYS_LOADED_SKILLS,
   CAPA_SCHEMA,
   CAPA_PROMPT_TOKEN_LIMIT,
   HARNESS_SKILL_INSTRUCTION_LIMIT,
   assembleCapaPrompt,
-  capaPromptParts,
   buildHarnessOfficialOutputRequirements,
   createHarnessSkillCatalog,
   freezeHarnessSkillLoadout,
@@ -89,12 +87,12 @@ export {
 } from '../../components/harness-generation/shared/authorSkill';
 export { SEN_FATE_SURVIVAL_INSTRUCTIONS, SEN_FATE_SURVIVAL_SKILL } from '../../components/harness-generation/shared/fateSurvivalSkill';
 export { SEN_READING_MODE_SKILLS } from '../../components/harness-generation/shared/readingModeSkills';
-export { SEN_SOUND_CUES_INSTRUCTIONS, SEN_SOUND_CUES_SKILL, presentSoundVocabulary } from '../../components/harness-generation/shared/soundCuesSkill';
-export { SEN_SOUNDTRACK_INSTRUCTIONS, SEN_SOUNDTRACK_SKILL, presentSoundtrackVocabulary } from '../../components/harness-generation/shared/soundtrackSkill';
+export { SEN_SOUND_CUES_INSTRUCTIONS, presentSoundVocabulary } from '../../components/harness-generation/shared/soundCuesSkill';
+export { SEN_SOUNDTRACK_INSTRUCTIONS, presentSoundtrackVocabulary } from '../../components/harness-generation/shared/soundtrackSkill';
 export { chapterSoundtrack, type ChapterSoundtrackReading } from '../../components/harness-generation/shared/soundtrack';
-export { SEN_SPEAKERS_INSTRUCTIONS, SEN_SPEAKERS_SKILL } from '../../components/harness-generation/shared/speakersSkill';
-export { SEN_HOLDINGS_INSTRUCTIONS, SEN_HOLDINGS_SKILL } from '../../components/harness-generation/shared/holdingsSkill';
-export { SEN_APPEARANCE_INSTRUCTIONS, SEN_APPEARANCE_SKILL } from '../../components/harness-generation/shared/appearanceSkill';
+export { SEN_SPEAKERS_INSTRUCTIONS } from '../../components/harness-generation/shared/speakersSkill';
+export { SEN_HOLDINGS_INSTRUCTIONS } from '../../components/harness-generation/shared/holdingsSkill';
+export { SEN_APPEARANCE_INSTRUCTIONS } from '../../components/harness-generation/shared/appearanceSkill';
 export { HARNESS_TAG_RULES } from '../../components/harness-generation/shared/tagRules';
 export { isStraySoundTag, settleStraySoundTags, trimLeadingStrayPunctuation } from '../../components/harness-generation/shared/soundTagRepair';
 export {

@@ -7,6 +7,7 @@ import {
 } from '@seihouse/sen/harness-generation';
 import { createLibraryMediaPort } from '@seihouse/library/media';
 import { LIBRARY_BASE_MEDIA } from '../../../host/media/libraryCatalog';
+import { readMarks } from '@seihouse/sen/generation';
 import { REPLAY_MODEL, createMemoryStories, storyWithChapters } from './sampleStory';
 
 /**
@@ -86,8 +87,14 @@ export const RIGHT_TO_LEFT_REPLIES: readonly Record<string, unknown>[] = [
   },
 ];
 
-/** The writer for the right-to-left story: it returns these replies, calling no model. */
+/**
+ * The writer for the right-to-left story: it returns these replies, calling no
+ * model, and replays their tags through the tagging call, which is the only way
+ * a tag reaches a chapter now (SENSEI, 2026-10-24).
+ */
 function rightToLeftWriter(): HarnessGenerationModelAdapter {
+  const tagged = new Map((RIGHT_TO_LEFT_REPLIES as Array<{ paragraphs: string[] }>)
+    .flatMap(reply => reply.paragraphs.map(paragraph => [readMarks(paragraph).text, paragraph] as const)));
   return {
     getServerInfo: async () => ({
       provider: 'workshop-replay',
@@ -104,6 +111,10 @@ function rightToLeftWriter(): HarnessGenerationModelAdapter {
         providerReceipt: { provider: 'workshop-replay', model: REPLAY_MODEL, generatedAt: now, durationMs: 0, usage: { source: 'unavailable' } },
       };
     },
+    tagChapter: async request => ({
+      rawProviderResponse: JSON.stringify({ paragraphs: request.paragraphs.map(paragraph => tagged.get(paragraph) ?? paragraph) }),
+      providerReceipt: { provider: 'workshop-replay', model: REPLAY_MODEL, generatedAt: new Date().toISOString(), usage: { source: 'unavailable' } },
+    }),
     arcOperation: async () => {
       throw new Error('The Workshop replays saved chapters only; it plans no arcs.');
     },

@@ -12,17 +12,23 @@ import {
   type HarnessGenerationModelAdapter,
   type HarnessGenerationRequest,
   type HarnessGenerationResponse,
+  type HarnessTagRequest,
 } from '@seihouse/sen/harness-generation';
 import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
+import { buildHarnessTagPrompt } from '../../../server/harness-generation/tagger';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { REST_OF_CHAPTER, writtenChapterReply } from '../../../test-utils/writtenChapter';
 import { acceptHarnessModelResponse } from './responseAcceptance';
+import { createReplayTagger } from '../../../test-utils/replayTagger';
 
 /**
- * Narration plus Sound Cues, end to end, in the tiny SEN language: the writer
- * puts a sound tag on the words where a sound happens and names the sound; the
- * HARNESS strips every tag, places the cue on those exact words, picks the
- * recording, stores it as a span attachment, and the Reader shows its glyph there.
+ * Narration plus Sound Cues, end to end, in the tiny SEN language: the tagger
+ * reads the finished chapter and puts a sound tag on the words where a sound
+ * happens, naming it from the story's sound words; the HARNESS strips every
+ * tag, places the cue on those exact words, picks the recording, stores it as
+ * a span attachment, and the Reader shows its glyph there. The writer is
+ * taught no tags (SENSEI, 2026-10-24), so a tag it strays into its reply is
+ * stripped out of the prose and then replaced by the tagger's own reading.
  */
 
 const media = createLibraryMediaPort({ registered: [], entitlements: [], base: LIBRARY_BASE_MEDIA });
@@ -35,19 +41,6 @@ const response = (rawProviderResponse: string): HarnessGenerationResponse => ({
     usage: { source: 'reported', inputTokens: 10, outputTokens: 20, totalTokens: 30 },
   },
 });
-
-const adapter = (...raws: string[]) => {
-  const generate = vi.fn(async (_request: HarnessGenerationRequest) => {
-    const raw = raws.length > 1 ? raws.shift()! : raws[0];
-    return response(writtenChapterReply(raw));
-  });
-  const value: HarnessGenerationModelAdapter = {
-    getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
-    generate,
-    arcOperation: async () => response(JSON.stringify({ plan: GOAL, destinedEnding: 'Free the city from its debts.' })),
-  };
-  return { value, generate };
-};
 
 /** A tagged reply: two good cues, one unknown sound, one tag that covers too many words, and tags leaking into every other field. */
 const taggedChapter = () => ({
@@ -66,6 +59,29 @@ const taggedChapter = () => ({
   nextConflict: 'The fox returns.',
 });
 
+/**
+ * The writer and the tagger from one fixture reply: the writer's prose is the
+ * reply with every tag stripped out of its paragraphs, which is what a writer
+ * taught no tags returns, and the tagger writes those same tags back into the
+ * finished chapter. Tags left in the reply's other fields stay, so the chapter
+ * still proves they are ignored.
+ */
+const adapter = (...raws: string[]) => {
+  const { tagChapter, teach } = createReplayTagger(response('{}').providerReceipt);
+  for (const raw of raws) teach(raw);
+  const generate = vi.fn(async (_request: HarnessGenerationRequest) => {
+    const raw = raws.length > 1 ? raws.shift()! : raws[0];
+    return response(writtenChapterReply(teach(raw)));
+  });
+  const value: HarnessGenerationModelAdapter = {
+    getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
+    generate,
+    tagChapter,
+    arcOperation: async () => response(JSON.stringify({ plan: GOAL, destinedEnding: 'Free the city from its debts.' })),
+  };
+  return { value, generate, tagChapter };
+};
+
 const createStory = async (controller: HarnessGenerationController, language?: 'ja') => {
   await controller.hydrate();
   return controller.createStory({
@@ -76,28 +92,31 @@ const createStory = async (controller: HarnessGenerationController, language?: '
 };
 
 describe('HARNESS Sound Cues through sound tags', () => {
-  it('gives the writer the sound words only through the CAPA Sound Cues slot, and asks for no list in the reply', async () => {
+  it('gives the sound words to the tagger alone, and asks the writer for no sounds at all', async () => {
     const provider = adapter(JSON.stringify(taggedChapter()));
     const controller = new HarnessGenerationController({ repository: new InMemoryHarnessGenerationRepository(), media, modelAdapter: provider.value });
     const story = await createStory(controller);
     await controller.generateNextChapter(story.id, 'fixture');
 
-    const request = provider.generate.mock.calls[0][0];
     // A story from before it kept its own list: its recordings' words, each the word alone.
-    expect(request.capaPrompt.soundVocabulary).toEqual(LIBRARY_SOUND_WORDS.map(({ word }) => ({ word })));
-    expect(request.capaPrompt.text).toContain('[[sound: Sound Word | the words | Energy]]');
-    expect(request.capaPrompt.text).toContain(`Example: Far off, [[sound: ${LIBRARY_SOUND_WORDS[0].word} | the words of your own sentence | high]] and the yard fell still.`);
-    expect(request.capaPrompt.text).toMatch(/SOUND WORDS: .*\bunsheathe\b/);
-    // The list names sounds; it hands the writer no phrases to copy into the chapter.
-    expect(request.capaPrompt.text).not.toContain('drew his sword');
+    const tagRequest = provider.tagChapter.mock.calls[0][0];
+    expect(tagRequest.soundWords).toEqual(LIBRARY_SOUND_WORDS.map(({ word }) => ({ word })));
+    const taught = buildHarnessTagPrompt(tagRequest).systemInstruction;
+    expect(taught).toContain('[[sound: Sound Word | the words | Energy]]');
+    expect(taught).toContain(`Example: Far off, [[sound: ${LIBRARY_SOUND_WORDS[0].word} | the words of your own sentence | high]] and the yard fell still.`);
+    expect(taught).toMatch(/SOUND WORDS: .*\bunsheathe\b/);
+    // The list names sounds; it hands no phrases to copy into the chapter.
+    expect(taught).not.toContain('drew his sword');
+
+    const request = provider.generate.mock.calls[0][0];
     const { responseJsonSchema, systemInstruction } = buildHarnessGenerationPrompt(request);
     expect(responseJsonSchema.properties).not.toHaveProperty('soundCues');
     expect(Object.keys(responseJsonSchema.properties).slice(0, 3)).toEqual(['title', 'plan', 'paragraphs']);
-    // Recordings, URLs and catalogs never enter the call.
-    expect(JSON.stringify(request)).not.toMatch(/https:|library-default-cues|\.mp3/);
+    // Recordings, URLs and catalogs never enter either call.
+    expect(JSON.stringify(request) + JSON.stringify(tagRequest)).not.toMatch(/https:|library-default-cues|\.mp3/);
     expect(systemInstruction).not.toMatch(/dialogue|manifestations|systemPanels|creatureEvents/);
-    // Speakers is its own kind, taught by its own skill: never the retired dialogue contract.
-    expect(systemInstruction).toContain('CAPA SKILL [Speakers] — SEN Speakers');
+    // Not a word about sounds, speakers or any other tag reaches the writer.
+    expect(systemInstruction).not.toMatch(/\[\[|SOUND WORDS:|HOW TO TAG/);
   });
 
   it('places cues on the tagged words, strips every tag, explains what it set aside, and survives reload into the Reader', async () => {
@@ -118,8 +137,9 @@ describe('HARNESS Sound Cues through sound tags', () => {
       'The debt collectors of the eastern ward all arrived together at once.',
       REST_OF_CHAPTER,
     ]);
-    // Nothing a reader, memory or the next chapter sees carries a tag.
-    expect(JSON.stringify(state.chapters)).not.toContain('[[');
+    // Nothing a reader or the next chapter sees carries a tag. The tagger's own
+    // reply is kept on the chapter for inspection and is not read by either.
+    expect(JSON.stringify(state.chapters.map(({ tagging: _tagging, ...rest }) => rest))).not.toContain('[[');
     expect(JSON.stringify(state.stories)).not.toContain('[[');
     expect(chapter.soundCues?.map(cue => [cue.id, cue.anchor.selectedText, cue.payload.sound, cue.payload.energy])).toEqual([
       ['sound-cue:c1-p1:24-40', 'the beast roared', 'beast roar', 'high'],
@@ -193,22 +213,21 @@ describe('HARNESS Sound Cues through sound tags', () => {
     ]);
   });
 
-  it('gives the writer the story\'s own words that a recording plays, and keeps saved cues when the words change', async () => {
+  it('gives the tagger the story\'s own words that a recording plays, and keeps saved cues when the words change', async () => {
     const repository = new InMemoryHarnessGenerationRepository();
     const provider = adapter(JSON.stringify(taggedChapter()), JSON.stringify(taggedChapter()));
     const controller = new HarnessGenerationController({ repository, media, modelAdapter: provider.value });
     const story = await createStory(controller);
-    // "door slam" has no recording in the Library: it stays the story's, and never reaches the writer.
+    // "door slam" has no recording in the Library: it stays the story's, and never reaches the tagger.
     await controller.setSoundWords(story.id, ['unsheathe', 'door slam']);
     expect(controller.describeSoundWords(story.id).words).toEqual(['unsheathe', 'door slam']);
     expect(controller.describeSoundVocabulary(story.id)).toEqual([{ word: 'unsheathe' }]);
     await controller.generateNextChapter(story.id, 'fixture');
 
-    const request = provider.generate.mock.calls[0][0];
-    expect(request.capaPrompt.soundVocabulary).toEqual([{ word: 'unsheathe' }]);
-    const soundSection = request.capaPrompt.text.slice(request.capaPrompt.text.indexOf('CAPA SKILL [Sound Cues]'));
-    expect(soundSection).toContain('SOUND WORDS: unsheathe\n');
-    expect(soundSection).not.toMatch(/beast roar|door slam/);
+    expect(provider.tagChapter.mock.calls[0][0].soundWords).toEqual([{ word: 'unsheathe' }]);
+    const taught = buildHarnessTagPrompt(provider.tagChapter.mock.calls[0][0]).systemInstruction;
+    expect(taught).toContain('SOUND WORDS: unsheathe\n');
+    expect(taught).not.toMatch(/beast roar|door slam/);
     const attempt = controller.snapshot().attempts[0];
     expect(attempt.mediaLoadout.sounds).toEqual([{ word: 'unsheathe' }, { word: 'door slam' }]);
     const chapter = controller.snapshot().chapters[0];
@@ -220,9 +239,9 @@ describe('HARNESS Sound Cues through sound tags', () => {
     // An empty list plays no Sound Cues from now on; the saved chapter keeps its cue and recording.
     await controller.setSoundWords(story.id, []);
     await controller.generateNextChapter(story.id, 'fixture');
-    const second = provider.generate.mock.calls[1][0];
-    expect(second.capaPrompt.soundVocabulary ?? []).toEqual([]);
-    expect(second.capaPrompt.text).not.toContain('CAPA SKILL [Sound Cues]');
+    const second = provider.tagChapter.mock.calls[1][0];
+    expect(second.soundWords ?? []).toEqual([]);
+    expect(buildHarnessTagPrompt(second).systemInstruction).not.toContain('[[sound:');
     const state = controller.snapshot();
     expect(state.chapters[0].soundCues).toEqual(saved);
     expect(state.chapters[1].soundCues).toBeUndefined();
@@ -233,15 +252,15 @@ describe('HARNESS Sound Cues through sound tags', () => {
     expect(createHarnessSenStory(reloaded.snapshot(), story.id).arcs[0].chapters[0].soundCues).toEqual(saved);
   });
 
-  it('asks for no Sound Cues when the story has no sound words, and places none', async () => {
+  it('teaches no Sound Cues when the story has no sound words, and places none', async () => {
     const provider = adapter(JSON.stringify(taggedChapter()));
     const controller = new HarnessGenerationController({ repository: new InMemoryHarnessGenerationRepository(), modelAdapter: provider.value });
     const story = await createStory(controller);
     await controller.generateNextChapter(story.id, 'fixture');
 
     const request = provider.generate.mock.calls[0][0];
-    expect(request.capaPrompt.soundVocabulary ?? []).toEqual([]);
-    expect(request.capaPrompt.text).not.toContain('Sound Cues');
+    expect(provider.tagChapter.mock.calls[0][0].soundWords ?? []).toEqual([]);
+    expect(buildHarnessTagPrompt(provider.tagChapter.mock.calls[0][0]).systemInstruction).not.toContain('[[sound:');
     expect(buildHarnessGenerationPrompt(request).responseJsonSchema.properties).not.toHaveProperty('soundCues');
 
     const state = controller.snapshot();

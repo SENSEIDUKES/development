@@ -33,9 +33,60 @@ existing Chapter Generation feature.
 | First Workshop record | 2026-08-29 |
 | Last recorded Workshop update | 2026-10-22 |
 | Historical source inspection | 2026-09-12 — verified the creative author direction in `Light-Novels/src/server/prompts.ts` on `main` before extracting the Author skill |
-| Lifecycle status | Reader-directed continuation (Fate page) in a Reader on the Highlight Engine that reads aloud in three voices over the SEIHouse audio player's soundtrack, each chapter with the music and atmosphere its writer chose, with holdings tagged by the writer, checked by plain rules and quietly fixed after each chapter by the Holdings fixer, the newest chapter rewritable with a note, a chapter's writing kept going when the reader leaves, the story's point of view kept from its opening, and failed writes never saved |
+| Lifecycle status | Reader-directed continuation (Fate page) in a Reader on the Highlight Engine that reads aloud in three voices over the SEIHouse audio player's soundtrack, each chapter with the music and atmosphere the tagger chose for it, with holdings tagged by the tagger, checked by plain rules and quietly fixed after each chapter by the Holdings fixer, the newest chapter rewritable with a note, a chapter's writing kept going when the reader leaves, the story's point of view kept from its opening, and failed writes never saved |
 
 ### History
+
+- **2026-10-26 (tagging leaves the chapter writer, and the HARNESS stops
+  teaching craft):** Two changes to the words the writer reads, both SENSEI's.
+
+  **The writer stops tagging.** This is the step the tagger was built for
+  (SENSEI, 2026-10-24): "we simply take out whatever we're currently having the
+  writer model tag and put it inside a second model call." `# HOW TO TAG` is
+  gone from the writer's instructions and with it the whole part, so the
+  skeleton is eight parts, not nine, and the role line no longer names it. The
+  five tag slots leave the CAPA Schema (`soundCues`, `soundtrack`, `speakers`,
+  `holdings`, `appearance`), and with them `writesTags`, the CAPA Prompt's two
+  halves (`taggingStart`, `capaPromptParts`) and the five skill manifests: the
+  tag teaching is not a skill a host installs any more, it is the tagger's own
+  prompt, which already read these exact words. Not one of them changed. About
+  3,400 characters leave every chapter call, roughly 850 tokens.
+
+  What follows from it: **the writer's reply carries no tags**, so a tag it
+  strays into one is read only to be taken out of the prose and is never kept —
+  a chapter's tags come from the tagging stage and nowhere else, and a failed
+  tagging leaves an honestly untagged chapter rather than a half-tagged one.
+  **The closing holdings list stays and is now asked on every chapter**, where
+  it used to follow the Holdings skill: it is the independent cross-check the
+  Holdings fixer reads against the tagger's holding tags, so two models agree
+  instead of one checking itself. **The Holdings fixer runs off the tagging
+  record** rather than that skill, so it skips a chapter that has no tags to
+  fix. The sound words travel with the chapter the tagger reads, and the HTTP
+  boundary checks them there against the same Sound Cue pack limits.
+
+  **The HARNESS stops teaching craft.** From SENSEI reading the writer's own
+  instructions: "a lot of it seems like we're restricting the creativity too
+  much, not actually simply enforcing the structure." OPENINGS, CHARACTER
+  DESCRIPTIONS and WORD CHOICE leave the HARNESS writing rules, which no skill
+  can replace, for SEN Novel Author 1.1.0, which any author can. All three were
+  added on 2026-10-07 after the Sundered Heavens test, where 7 of 8 chapters
+  opened by describing the scenery and Gu Chen's full portrait came back nearly
+  every chapter — real failures, but the fixes went past them into a menu of
+  ways to open a chapter, five occasions that deserve a full portrait and a
+  count of twice per chapter for a distinctive phrase, none of which the test
+  asked for. Craft welded into the HARNESS is craft every licensee inherits
+  with no way to remove it, which is Library skin in the SEN lane. What the
+  failures actually asked for is three lines the author owns. OPENINGS also
+  carried a second copy of "continue from the latest recap", already said three
+  paragraphs above it. The HARNESS keeps the four rules the app itself reads
+  back: the point of view it records, telling plans apart from what happened,
+  continuing from the recaps the writer is actually given, and putting every
+  change in the prose, which is where Holdings and the Codex read it from.
+
+  Schema 39 drops the five slots from any story that somehow equipped one and
+  moves a story's Author reference to 1.1.0, so neither is refused at the next
+  chapter. Frozen prompts are left exactly as they were sent: each is the
+  record of what its own chapter read, tag teaching and all.
 
 - **2026-10-25 (the semantic-event memory system comes out):** The chapter
   writer used to return `memory.events` beside its prose: structured records of

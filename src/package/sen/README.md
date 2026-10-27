@@ -1,5 +1,22 @@
 # `@seihouse/sen`
 
+**Unreleased (2026-10-26, breaking):** tagging leaves the chapter writer. The
+five tag slots leave `CAPA_SCHEMA` (`soundCues`, `soundtrack`, `speakers`,
+`holdings`, `appearance`), so `HarnessSkillSlotId` narrows to the seven writing
+slots; `SEN_SOUND_CUES_SKILL`, `SEN_SOUNDTRACK_SKILL`, `SEN_SPEAKERS_SKILL`,
+`SEN_HOLDINGS_SKILL`, `SEN_APPEARANCE_SKILL`, `ALWAYS_LOADED_SKILLS`,
+`capaPromptParts` and `CapaSlotDefinition.writesTags` are gone with them, and
+`CapaPrompt` drops `taggingStart`, `soundVocabulary` and `soundtrackVocabulary`.
+The tag teaching itself is unchanged and still exported as
+`SEN_*_INSTRUCTIONS`, `HARNESS_TAG_RULES`, `presentSoundVocabulary` and
+`presentSoundtrackVocabulary`: a host no longer installs or equips it, because
+the Chapter Tagger reads it. `freezeHarnessSkillLoadout` and
+`resolveManagedCapaSkills` take no sound or soundtrack vocabulary, the chapter
+response schema asks every chapter for `mainCharacterHoldings`, and the prompt
+skeleton has eight parts: `# HOW TO TAG` is retired. SEN Novel Author is 1.1.0,
+carrying the three craft rules that left the HARNESS writing rules. Workspace
+schema 39.
+
 **0.40.0 (2026-10-26):** The root entry exports the shared `HighlightActionIcon`
 artwork and its names and props without importing Highlight Engine styles, so Library
 can reuse the same SVGs in its individually named icons.

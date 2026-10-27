@@ -12,6 +12,7 @@ import {
 } from '@seihouse/sen/harness-generation';
 import type { ArcPlan } from '@seihouse/sen/arc-goals';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { createReplayTagger } from '../../../test-utils/replayTagger';
 import { writtenChapter } from '../../../test-utils/writtenChapter';
 import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
 
@@ -43,14 +44,18 @@ const runtime = { now: () => '2026-10-06T12:00:00.000Z', createId: (prefix: stri
 const setup = async (overrides: Partial<StoryFoundationInput> = {}) => {
   const requests: HarnessGenerationRequest[] = [];
   const outputs: Array<Record<string, unknown> | Error> = [];
+  // Each reply is written as the tagger hands it back; the writer's own reply is
+  // it with the tags stripped (SENSEI, 2026-10-24).
+  const { tagChapter, teach } = createReplayTagger(receipt);
   const modelAdapter: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ configured: true, provider: 'fixture', defaultModel: 'fixture', models: [] }),
     generate: vi.fn(async (request: HarnessGenerationRequest) => {
       requests.push(structuredClone(request));
       const next = outputs.shift() ?? chapter('Onward', ['Lin waded on.']);
       if (next instanceof Error) throw next;
-      return { rawProviderResponse: JSON.stringify(writtenChapter(next)), providerReceipt: receipt };
+      return { rawProviderResponse: teach(JSON.stringify(writtenChapter(next))), providerReceipt: receipt };
     }),
+    tagChapter,
     arcOperation: async (_request: HarnessArcRequest) => ({ rawProviderResponse: '{}', providerReceipt: receipt }),
   };
   const repository = new InMemoryHarnessGenerationRepository();

@@ -133,6 +133,9 @@ const parseTagRequest = (parsed: Record<string, unknown>): HarnessTagRequest => 
       && TAG_SUBJECT_KINDS.has(subject.kind as string)
       && (subject.aliases === undefined || (Array.isArray(subject.aliases) && subject.aliases.every(alias => within(alias, TAG_NAME_CHARACTERS)))));
   if (!valid) throw new Error(`A tagging request needs its chapter, model and language, 1 to ${TAG_PARAGRAPH_LIMIT} paragraphs, and at most ${TAG_SUBJECT_LIMIT} named subjects.`);
+  // The sound words travel with the chapter the tagger reads, so they are
+  // checked against the same limits a Sound Cue pack is held to before any call.
+  if (parsed.soundWords !== undefined) parsed.soundWords = validateSoundWords(parsed.soundWords);
   return parsed as unknown as HarnessTagRequest;
 };
 
@@ -159,11 +162,6 @@ const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessArcReque
   // The Generation Model Call carries two separated inputs plus the immediate request.
   if (!isRecord(parsed.capaPrompt) || typeof parsed.capaPrompt.text !== 'string' || !parsed.capaPrompt.text.trim()) {
     throw new Error('Harness Generation requires an assembled CAPA Prompt.');
-  }
-  // The sound words travel with the CAPA Prompt the writer reads, so they are
-  // checked against the same limits a Sound Cue pack is held to before any call.
-  if (parsed.capaPrompt.soundVocabulary !== undefined) {
-    parsed.capaPrompt.soundVocabulary = validateSoundWords(parsed.capaPrompt.soundVocabulary);
   }
   if (!isRecord(parsed.storyInformation) || !isRecord(parsed.storyInformation.arc)) {
     throw new Error('Harness Generation needs a compact Story Information Packet with an authoritative Arc Plan.');

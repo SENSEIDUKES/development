@@ -11,6 +11,7 @@ import {
   type HarnessLookRequest,
 } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { createReplayTagger } from '../../../test-utils/replayTagger';
 import { writtenChapterReply } from '../../../test-utils/writtenChapter';
 import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
 
@@ -64,13 +65,17 @@ const setup = async ({ describeLooks, repository = new InMemoryHarnessGeneration
   repository?: InMemoryHarnessGenerationRepository;
 } = {}) => {
   const generate = vi.fn<HarnessGenerationModelAdapter['generate']>();
-  for (const value of [chapterOne, chapterTwo]) generate.mockResolvedValueOnce(response(writtenChapterReply(value)));
+  // Each chapter is written as the tagger hands it back; the writer's own reply
+  // is it with the tags stripped, which is all the writer is asked for.
+  const { tagChapter, teach } = createReplayTagger(response('{}').providerReceipt);
+  for (const value of [chapterOne, chapterTwo]) generate.mockResolvedValueOnce(response(writtenChapterReply(teach(value))));
   const looks = vi.fn(describeLooks ?? (async (request: HarnessLookRequest) => response(lookReply(request))));
   const controller = new HarnessGenerationController({
     repository, runtime,
     modelAdapter: {
       getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
       generate,
+      tagChapter,
       arcOperation: async () => response('{}'),
       ...(describeLooks === null ? {} : { describeLooks: looks }),
     },
@@ -81,7 +86,7 @@ const setup = async ({ describeLooks, repository = new InMemoryHarnessGeneration
     cast: [{ name: 'Ye Chen', role: 'Main character', isMainCharacter: true, relationshipToMC: 'Self' }],
     identities: [{ name: 'Ye Chen', kind: 'character', evidence: 'Age: 18 Appearance: lean, black hair, hazel eyes.' }],
   });
-  return { controller, storyId: story.id, generate, looks };
+  return { controller, storyId: story.id, generate, tagChapter, looks };
 };
 
 describe('HARNESS appearances through appears and look tags', () => {
@@ -89,8 +94,8 @@ describe('HARNESS appearances through appears and look tags', () => {
     const { controller, storyId, generate } = await setup();
     await controller.generateNextChapter(storyId, 'fixture');
     const request = generate.mock.calls[0][0] as HarnessGenerationRequest;
-    // Every chapter is written with the Appearance skill, and the first is told nobody has appeared yet.
-    expect(request.capaPrompt.skills.map(skill => skill.slot)).toContain('appearance');
+    // The writer is taught no tags, and the first chapter is told nobody has appeared yet.
+    expect(request.capaPrompt.skills.map(skill => skill.slot)).toEqual(['author']);
     expect(buildHarnessGenerationPrompt(request).userPrompt).toContain('APPEARED (every character and thing already on the page, by exact name, with its look; the main character first)\nNobody and nothing has appeared yet.');
 
     const state = controller.snapshot();

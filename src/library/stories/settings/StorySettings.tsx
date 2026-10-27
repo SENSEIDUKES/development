@@ -31,19 +31,10 @@ export function StorySettings({ stories, storyId }: { stories: LibraryStories; s
   const story = state ? findStory(state, storyId) : undefined;
   const writing = Boolean(state && activeAttemptForStory(state, storyId));
   const fateMode = harnessStoryMode(state && story ? findFoundationRevision(state, story.activeFoundationRevisionId)?.input : undefined);
-  // What the next chapter would use, as loadout freezing reads it.
-  const soundWords = useMemo<SoundWord[]>(() => {
-    if (!story) return [];
-    try { return controller.describeSoundVocabulary(story.id); } catch { return []; }
-  }, [controller, story]);
   // The story's own list, and which of its words a recording answers now.
   const storySoundWords = useMemo<{ words: string[]; answered: string[] }>(() => {
     if (!story) return NO_SOUND_WORDS;
     try { return controller.describeSoundWords(story.id); } catch { return NO_SOUND_WORDS; }
-  }, [controller, story]);
-  const soundtrackWords = useMemo<SoundtrackVocabulary>(() => {
-    if (!story) return NO_SOUNDTRACK;
-    try { return controller.describeSoundtrackVocabulary(story.id); } catch { return NO_SOUNDTRACK; }
   }, [controller, story]);
   if (!story) return null;
 
@@ -63,7 +54,7 @@ export function StorySettings({ stories, storyId }: { stories: LibraryStories; s
       <StorySettingsPanel title="Language and Reading Mode" story={story} installedSkills={stories.skills} busy={busy}
         onReadingModeChange={(mode: ChapterWritingStyle) => change(() => controller.setChapterWritingStyle(story.id, mode))} />
       <StorySkillSlots story={story} fateMode={fateMode} installedSkills={stories.skills}
-        soundWords={soundWords} soundtrackWords={soundtrackWords} busy={busy}
+        busy={busy}
         onChange={(slot: HarnessSkillSlotId, reference?: HarnessSkillReference) => change(() => controller.setSkillSlot(story.id, slot, reference))}
         {...(stories.skillIntake && stories.installSkill ? {
           renderSlotSkillImport: (slot: HarnessSkillSlotId, slotBusy: boolean, equip: (skill: HarnessSkillManifest) => Promise<void>) =>

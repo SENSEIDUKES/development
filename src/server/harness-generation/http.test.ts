@@ -115,30 +115,34 @@ describe('Harness Generation HTTP boundary', () => {
       ...request(), operation: 'recover-memory', chapterId: 'saved', prose: 'Saved prose.',
     }]) expect((await handleHarnessGenerationHttp({ method: 'POST', body }, { environment })).status).toBe(400);
   });
-  it('rejects sound words outside the Sound Cue pack limits before contacting the provider, and asks for no list of sounds in the reply', async () => {
+  it('rejects sound words outside the Sound Cue pack limits before contacting the tagger', async () => {
+    // The words travel with the chapter the tagger reads: the writer is taught
+    // no tags and is never given them (SENSEI, 2026-10-24).
     const generate = vi.fn(async (_input: HarnessTextGenerationRequest) => ({
       rawProviderResponse: JSON.stringify({ paragraphs: ['The gate held.'] }),
       providerReceipt: { provider: 'gemini' as const, model: request().model, generatedAt: '2026-09-29', usage: { source: 'unavailable' as const } },
     }));
     const providerFactory = () => ({ provider: 'gemini' as const, model: request().model, generate });
-    for (const soundVocabulary of [
+    const tagRequest = (soundWords: unknown) => ({
+      operation: 'tag-chapter', storyId: 'hst_test', chapterId: 'c1', chapterNumber: 4,
+      model: request().model, language: 'English',
+      paragraphs: ['The gate held.'], subjects: [], soundWords,
+    });
+    for (const soundWords of [
       'blade drawn',
       [{ word: 'Blade Drawn!', example: 'drew his sword' }],
       [{ word: 'blade drawn', example: 'see https://example.com' }],
       Array.from({ length: 33 }, (_, index) => ({ word: `sound ${String.fromCharCode(97 + (index % 26))}${index}`, example: 'it sounded' })),
     ]) {
-      const body = request();
-      body.capaPrompt = { ...body.capaPrompt, soundVocabulary: soundVocabulary as never };
-      expect((await handleHarnessGenerationHttp({ method: 'POST', body }, { environment, providerFactory })).status).toBe(400);
+      expect((await handleHarnessGenerationHttp({ method: 'POST', body: tagRequest(soundWords) }, { environment, providerFactory })).status).toBe(400);
     }
     expect(generate).not.toHaveBeenCalled();
 
-    const body = request();
-    body.capaPrompt = { ...body.capaPrompt, soundVocabulary: [{ word: ' Blade Drawn ', example: 'drew his sword' }] };
-    expect((await handleHarnessGenerationHttp({ method: 'POST', body }, { environment, providerFactory })).status).toBe(200);
-    // The words travel in the CAPA Prompt the writer reads; the reply carries sound tags, never a list.
-    const schema = generate.mock.calls[0][0].responseJsonSchema as { properties: Record<string, unknown> };
-    expect(schema.properties).not.toHaveProperty('soundCues');
+    const sent = await handleHarnessGenerationHttp(
+      { method: 'POST', body: tagRequest([{ word: ' Blade Drawn ', example: 'drew his sword' }]) },
+      { environment, providerFactory });
+    expect(sent.status).toBe(200);
+    expect(generate.mock.calls[0][0].systemInstruction).toContain('SOUND WORDS: blade drawn');
   });
 
   it('rejects a chapter paragraph count that is not a sane whole number before contacting the provider', async () => {
@@ -228,7 +232,7 @@ describe('Harness Generation HTTP boundary', () => {
     // Authoring instruction: the role first, then the CAPA Prompt under How to write, in schema order (Author before Pacing), then the HARNESS parts.
     expect(input.systemInstruction).toBe(composeHarnessSystemInstruction(skilled.capaPrompt));
     expect(input.systemInstruction).toMatch(/^# ROLE AND MISSION\n\nYou are the author of this novel\./);
-    expect(input.systemInstruction).toContain('# HOW TO WRITE\n\nCAPA SKILL [Author] — SEN Novel Author v1.0.0\n');
+    expect(input.systemInstruction).toContain(`# HOW TO WRITE\n\nCAPA SKILL [Author] — SEN Novel Author v${SEN_NOVEL_AUTHOR_SKILL.version}\n`);
     expect(input.systemInstruction.indexOf('CAPA SKILL [Author]')).toBeLessThan(input.systemInstruction.indexOf('CAPA SKILL [Pacing]'));
     expect(input.systemInstruction).toContain('elite Eastern fantasy web-novel author specializing in Asian light novels');
     expect(input.systemInstruction.split('Do not resolve the siege in this chapter.')).toHaveLength(2);
@@ -243,7 +247,7 @@ describe('Harness Generation HTTP boundary', () => {
     expect(skilled.capaPrompt.text).not.toMatch(/R2|track list|Library Cue catalog/i);
     // The provider schema is the compact semantic contract, never the SEN block, memory, or presentation contracts.
     const chapterSchema = input.responseJsonSchema as { properties: Record<string, unknown>; required: string[] };
-    expect(chapterSchema.required).toEqual(['paragraphs', 'arcCompletion', 'recap', 'chapterFunction', 'nextProgression', 'nextWorldBuilding', 'nextConflict']);
+    expect(chapterSchema.required).toEqual(['paragraphs', 'mainCharacterHoldings', 'arcCompletion', 'recap', 'chapterFunction', 'nextProgression', 'nextWorldBuilding', 'nextConflict']);
     // Diagnostics never leave the HARNESS.
     expect(input.userPrompt).not.toMatch(/selectionAudit|diagnostics|budgetSource/);
     expect(Object.keys(chapterSchema.properties)).not.toContain('blocks');

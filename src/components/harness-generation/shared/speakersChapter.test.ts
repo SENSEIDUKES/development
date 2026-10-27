@@ -6,6 +6,7 @@ import {
 } from '@seihouse/sen/harness-generation';
 import { buildReadAloudScript } from '@seihouse/sen/reader-runtime';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { createReplayTagger } from '../../../test-utils/replayTagger';
 import { writtenChapterReply } from '../../../test-utils/writtenChapter';
 import { harnessParagraphBlockId } from './chapterBody';
 import { acceptHarnessModelResponse } from './responseAcceptance';
@@ -23,25 +24,32 @@ const response = (rawProviderResponse: string): HarnessGenerationResponse => ({
   rawProviderResponse,
   providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: '2026-10-01T12:00:00.000Z', usage: { source: 'unavailable' } },
 });
+/**
+ * The writer and the tagger from one fixture reply: the writer's prose is the
+ * reply with its speaker tags stripped, and the tagger writes them back into
+ * the finished chapter, which is how a tag reaches one now (SENSEI, 2026-10-24).
+ */
 const adapter = (raw: string) => {
-  const generate = vi.fn(async () => response(writtenChapterReply(raw)));
+  const { tagChapter, teach } = createReplayTagger(response('{}').providerReceipt);
+  const generate = vi.fn(async () => response(writtenChapterReply(teach(raw))));
   const value: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
     generate,
+    tagChapter,
     arcOperation: async () => response(JSON.stringify({ plan: GOAL, destinedEnding: 'Wei Lin keeps the river gate.' })),
   };
-  return { value, generate };
+  return { value, generate, tagChapter };
 };
 
 const taggedChapter = () => JSON.stringify({
   title: 'The River Gate',
   paragraphs: [
-    'Rain hammered the river gate.',
+    // A speaker tag on a paragraph that holds no speech: it names no spoken line.
+    '[[@Nobody At All]] Rain hammered the river gate.',
     '[[@MC]] “Hold the gate,” he said, and drew his sword.',
     '[[@Elder Mo]] “It will not hold.” The old man did not move.',
     '[[@Wei]] “Then I will.”',
     '“Who goes there?” a voice called from the dark.',
-    '[[@Nobody At All]]',
   ],
   arcCompletion: { goalId: 'arc-1-gate', completed: false, evidence: '' },
   recap: '[[@Wei Lin]] Wei Lin held the gate.',
@@ -68,8 +76,9 @@ describe('HARNESS dialogue speakers through speaker tags', () => {
 
     const state = controller.snapshot();
     const chapter = state.chapters[0];
-    // No tag reaches the prose, the recap, or anything a reader or the next chapter sees.
-    expect(JSON.stringify(state.chapters)).not.toMatch(/\[\[@|\[\[/);
+    // No tag reaches the prose, the recap, or anything a reader or the next
+    // chapter sees. The tagger's own reply is kept for inspection and is read by neither.
+    expect(JSON.stringify(state.chapters.map(({ tagging: _tagging, ...rest }) => rest))).not.toMatch(/\[\[@|\[\[/);
     expect(chapter.paragraphs[1]).toBe('“Hold the gate,” he said, and drew his sword.');
     expect(chapter.recap?.text).toBe('Wei Lin held the gate.');
     expect(chapter.speakers?.map(record => [record.id, record.anchor.selectedText, record.payload.speaker, record.payload.protagonist])).toEqual([

@@ -227,7 +227,7 @@ export interface AppearancesState {
 export interface AppearancesChapter {
   id: string;
   chapterNumber: number;
-  /** Written with the Appearance skill when present, even empty. */
+  /** The tagger's appearance tags, present even when empty: a chapter it read was asked for them. */
   appearances?: readonly AppearanceAttachment[];
   looks?: ChapterLooks;
   /** The chapter's paragraphs, so an appearance keeps the writer's own description. */
@@ -283,7 +283,10 @@ export function deriveAppearances({ entries, chapters, declaredFactions = [] }: 
       || left.record.anchor.startOffset - right.record.anchor.startOffset
       // At one place, an appearance comes before the speech or change it introduces.
       || (left.kind === 'appearance' ? 0 : 1) - (right.kind === 'appearance' ? 0 : 1) || left.order - right.order);
-    const writtenWithAppearances = chapter.appearances !== undefined;
+    // A chapter the tagger read carries its appearances, empty included, so an
+    // absent list means nothing was ever asked to tag this chapter: its speech
+    // is not held against appearances that could not exist.
+    const taggedForAppearances = chapter.appearances !== undefined;
     const flaggedUnseen = new Set<string>();
     const accepted = new Map<string, AppearanceSubject>();
     const passageOf = (record: AppearanceAttachment | SpeakerAttachment): AppearancePassage => {
@@ -312,7 +315,7 @@ export function deriveAppearances({ entries, chapters, declaredFactions = [] }: 
         if (!key) continue;
         if (subjects.has(key)) { seen(key); continue; }
         const name = event.record.payload.speaker;
-        if (!writtenWithAppearances || flaggedUnseen.has(key) || factionNamed(name, declaredFactions)) continue;
+        if (!taggedForAppearances || flaggedUnseen.has(key) || factionNamed(name, declaredFactions)) continue;
         flaggedUnseen.add(key);
         const who = byId.get(key)?.name ?? name;
         flag('speaks-unseen', `‘${who}’ speaks before any tag shows them appearing.`, event.record, who);

@@ -9,6 +9,7 @@ import {
   type HarnessGenerationResponse,
   type HarnessWorkspaceState,
 } from '@seihouse/sen/harness-generation';
+import { readMarks } from '@seihouse/sen/generation';
 import { createReaderStoryState, type ReaderStateRepository, type ReaderStoryState } from '@seihouse/sen/reader-runtime';
 
 /**
@@ -116,12 +117,23 @@ export const REPLAY_WRITING_MS = 5_000;
  * it did then. A chapter the story never had has none, and the write fails
  * with that reason, as it does when the writer cannot be reached. It plans no
  * arcs and runs no Holdings fixer.
+ *
+ * It replays the tagging too. Tags reach a chapter through the tagging call
+ * now, never through the writer (SENSEI, 2026-10-24), so a saved reply's tags
+ * are stripped out of its prose like any other writer's. Asked to tag, this
+ * writer answers each paragraph with the saved paragraph that strips down to
+ * it, which puts the story's own tags back exactly where they were.
  */
 export function createReplayWriter(saved: HarnessWorkspaceState, writingMs = REPLAY_WRITING_MS): HarnessGenerationModelAdapter {
   const replies = new Map<number, HarnessGenerationResponse>();
+  const tagged = new Map<string, string>();
   for (const attempt of saved.attempts) {
     if (attempt.stage !== 'committed' || !attempt.rawProviderResponse || !attempt.providerReceipt) continue;
     replies.set(attempt.chapterNumber, { rawProviderResponse: attempt.rawProviderResponse, providerReceipt: attempt.providerReceipt });
+    try {
+      const paragraphs = (JSON.parse(attempt.rawProviderResponse) as { paragraphs?: unknown }).paragraphs;
+      if (Array.isArray(paragraphs)) for (const paragraph of paragraphs) tagged.set(readMarks(String(paragraph)).text, String(paragraph));
+    } catch { /* a saved reply the HARNESS recovered from prose has no tagged paragraphs to replay. */ }
   }
   return {
     getServerInfo: async () => ({
@@ -141,6 +153,10 @@ export function createReplayWriter(saved: HarnessWorkspaceState, writingMs = REP
         providerReceipt: { ...reply.providerReceipt, provider: 'workshop-replay', generatedAt: new Date().toISOString(), durationMs: Date.now() - started },
       };
     },
+    tagChapter: async request => ({
+      rawProviderResponse: JSON.stringify({ paragraphs: request.paragraphs.map(paragraph => tagged.get(paragraph) ?? paragraph) }),
+      providerReceipt: { provider: 'workshop-replay', model: REPLAY_MODEL, generatedAt: new Date().toISOString(), usage: { source: 'unavailable' } },
+    }),
     arcOperation: async () => {
       throw new Error('The Workshop replays saved chapters only; it plans no arcs.');
     },

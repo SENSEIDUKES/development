@@ -40,7 +40,7 @@ export function CreateStorySettings({ stories, defaults, originalLanguage, chapt
   const { sounds, soundtrack, answered } = useMemo(() => stories.controller.describeMediaSelection(draft.media, soundWords), [stories.controller, draft.media, soundWords]);
   return <div className="space-y-3" data-testid="create-story-settings">
     <StorySkillSlots stacked story={values} fateMode={fateMode} installedSkills={stories.skills}
-      soundWords={sounds} soundtrackWords={soundtrack} busy={false}
+      busy={false}
       onChange={(slot, reference) => onDraftChange({ ...draft, skills: { ...draft.skills, [slot]: reference ?? null } })}
       {...(stories.skillIntake && stories.installSkill ? {
         renderSlotSkillImport: (slot: HarnessSkillSlotId, slotBusy: boolean, equip: (skill: HarnessSkillManifest) => Promise<void>) =>

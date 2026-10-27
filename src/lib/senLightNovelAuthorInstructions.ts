@@ -17,6 +17,12 @@ Write the chapter as an engaging story
 🚫 Never do:
 Replace the story’s established identity, direction, or canon with your own interpretation.
 
+Open every chapter the same way. Scenery is one way to begin, not a habit.
+
+Repeat a character’s full portrait chapter after chapter. Give the full picture when the moment earns it, a light touch between.
+
+Lean on a pet word or image.
+
 3. Philosophy
 
 Stories prioritize immediate hooks, clear forward movement, and digestible chapter-to-chapter momentum without heavy literary pretense.

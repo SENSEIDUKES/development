@@ -529,7 +529,7 @@ export class HarnessGenerationController {
   }
 
   /**
-   * The sound words the next attempt would give the writer: the story's own
+   * The sound words the next chapter's tagger would be given: the story's own
    * words that one of its recordings answers. For inspection; never persisted here.
    */
   describeSoundVocabulary(storyId: string): SoundWord[] {
@@ -558,9 +558,9 @@ export class HarnessGenerationController {
   }
 
   /**
-   * The music moods and atmosphere words the next attempt would freeze for
-   * this story, which the Soundtrack slot gives the writer. For inspection;
-   * never persisted here.
+   * The music and atmosphere categories the next attempt would freeze for this
+   * story, which the next chapter's tagger chooses from. For inspection; never
+   * persisted here.
    */
   describeSoundtrackVocabulary(storyId: string): SoundtrackVocabulary {
     this.assertHydrated();
@@ -1167,7 +1167,7 @@ export class HarnessGenerationController {
       : withStorySoundWords(this.media?.freeze(story.mediaLoadout, startedAt) ?? emptyNarrativeMedia(startedAt), story.soundWords);
     // The Fate slot follows the chapter's frozen Fate mode: every Fate Survival call carries its skill.
     const capaPrompt = frozen ? cloneHarnessValue(frozen.capaPrompt) : assembleCapaPrompt(
-      freezeHarnessSkillLoadout(story, this.skillCatalog, startedAt, storyInformation.storyDirection.fateMode ?? 'regular', soundVocabulary(mediaLoadout), soundtrackVocabulary(mediaLoadout)),
+      freezeHarnessSkillLoadout(story, this.skillCatalog, startedAt, storyInformation.storyDirection.fateMode ?? 'regular'),
       { storyInformation, immediateChapterRequest },
     );
     // Frozen beside the CAPA Prompt; presented as its own section at the provider boundary.
@@ -1255,22 +1255,22 @@ export class HarnessGenerationController {
         message: 'The raw provider response checkpoint is empty, so chapter prose cannot be accepted.',
       });
     }
-    // Prose is accepted on its own, read out of the writer's marks. Sound Cues
-    // are placed only for the sound words the writer was given, on recordings
-    // from the attempt's frozen Media Loadout.
+    // Prose is accepted on its own. The writer is taught no tags, so a tag it
+    // strays into its reply is read only to be taken out of the prose, and
+    // never kept: the tagger is the chapter's one source of tags.
     const acceptance = acceptHarnessModelResponse(raw, attempt.chapterNumber, {
       media: attempt.mediaLoadout,
-      soundVocabulary: attempt.capaPrompt.soundVocabulary,
       locale: findStory(this.state, attempt.storyId)?.originalLanguage,
       paragraphTarget: attempt.immediateChapterRequest.chapterScale.paragraphs,
       // A reply far below the size asked for is a failed write: it is never committed, and the raw reply stays on the attempt.
       minWords: attempt.immediateChapterRequest.chapterScale.minWords,
       // Whose lines are the protagonist's comes from what the writer was shown, so a retry decides the same.
       protagonistNames: protagonistNames(attempt.storyInformation.currentStory, attempt.storyInformation.canonicalState.characters),
-      speakersExpected: attempt.capaPrompt.skills.some(skill => skill.slot === 'speakers' && skill.authoring),
-      holdingsExpected: attempt.capaPrompt.skills.some(skill => skill.slot === 'holdings' && skill.authoring),
-      appearancesExpected: attempt.capaPrompt.skills.some(skill => skill.slot === 'appearance' && skill.authoring),
-      soundtrackExpected: attempt.capaPrompt.skills.some(skill => skill.slot === 'soundtrack' && skill.authoring),
+      // The one thing the writer is still asked for beside the prose: the
+      // closing list of the main character's holdings, which the Holdings
+      // fixer reads against the tagger's holding tags. A reply without it is
+      // worth a warning, so this chapter is simply not cross-checked.
+      holdingsExpected: true,
     });
     if (!acceptance.accepted) {
       return this.appendFailure(attemptId, {
@@ -1283,7 +1283,14 @@ export class HarnessGenerationController {
     const proseAttempt = attemptById(proseAccepted, attemptId);
     proseAttempt.stage = 'prose_accepted';
     proseAttempt.proseAcceptedAt = this.runtime.now();
-    proseAttempt.acceptedDraft = acceptance.draft;
+    // The prose alone, with every attachment a stray tag made dropped: a
+    // chapter's tags come from the tagging stage below, and from nowhere else,
+    // so a failed tagging leaves an honestly untagged chapter rather than one
+    // the writer half-tagged.
+    proseAttempt.acceptedDraft = {
+      ...acceptance.draft,
+      soundCues: undefined, speakers: undefined, holdingChanges: undefined, appearances: undefined, scene: undefined,
+    };
     // The committed chapter's id is settled here, before anything is written
     // against it: tagging and the commit both address the chapter by it.
     proseAttempt.pendingChapterId ??= this.runtime.createId('hch');
@@ -1361,7 +1368,7 @@ export class HarnessGenerationController {
         at,
         model: attempt.model,
         options: {
-          soundVocabulary: attempt.capaPrompt.soundVocabulary,
+          soundVocabulary: soundVocabulary(chapter.mediaLoadout),
           locale: story.originalLanguage,
           media: chapter.mediaLoadout,
           protagonistNames: protagonistNames(attempt.storyInformation.currentStory, attempt.storyInformation.canonicalState.characters),
@@ -1476,7 +1483,7 @@ export class HarnessGenerationController {
         at,
         model: attempt.model,
         options: {
-          soundVocabulary: attempt.capaPrompt.soundVocabulary,
+          soundVocabulary: soundVocabulary(attempt.mediaLoadout),
           locale: story.originalLanguage,
           media: attempt.mediaLoadout,
           // Who the main character is, so `[[@MC]]` is saved under their own
@@ -1708,8 +1715,9 @@ export class HarnessGenerationController {
     const chapter = this.state.chapters.find(entry => entry.id === chapterId);
     const story = chapter ? findStory(this.state, chapter.storyId) : undefined;
     if (policy === 'off' || !this.modelAdapter.fixHoldings || !attempt || !chapter || !story) return;
-    // Only chapters written with the Holdings skill carry holdings to check.
-    if (!attempt.capaPrompt.skills.some(skill => skill.slot === 'holdings' && skill.authoring)) return;
+    // Only a tagged chapter carries holding tags to check. One whose tagging
+    // failed has none, and is read again when it is tagged again.
+    if (chapter.tagging?.status !== 'tagged') return;
     const mainCharacterName = attempt.storyInformation.currentStory.cast?.find(member => member.isMainCharacter)?.name;
     const input = {
       chapter,
@@ -1944,8 +1952,7 @@ export class HarnessGenerationController {
   private managedSkillsStillMatch(story: HarnessStory, attempt: HarnessGenerationAttempt): boolean {
     try {
       const fateMode = attempt.storyInformation.storyDirection.fateMode ?? 'regular';
-      // The Sound Cues slot compares against the attempt's own frozen media, which a retry reuses.
-      const current = Object.values(resolveManagedCapaSkills(story, this.skillCatalog, fateMode, soundVocabulary(attempt.mediaLoadout), soundtrackVocabulary(attempt.mediaLoadout)))
+      const current = Object.values(resolveManagedCapaSkills(story, this.skillCatalog, fateMode))
         .filter((skill): skill is HarnessSkillManifest => Boolean(skill));
       return managedCapaSkillSignature(current) === managedCapaSkillSignature(attempt.capaPrompt.skills);
     } catch {

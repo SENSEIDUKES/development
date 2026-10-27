@@ -1,4 +1,5 @@
 import { cloneHarnessValue, stableHarnessId } from './ids';
+import { SEN_NOVEL_AUTHOR_SKILL } from './authorSkill';
 import { HARNESS_GENERATION_SCHEMA_VERSION, type HarnessWorkspaceState } from '../../../narrative/generation';
 import { WORLD_CARD_KINDS, worldCardKey } from '../../../narrative/worldRecord';
 
@@ -109,7 +110,34 @@ const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => 
     })),
     schemaVersion: 38,
   }),
+  // 39 takes tagging off the chapter writer: the five tag slots leave the CAPA
+  // Schema, so a saved story that somehow equipped one would be refused at
+  // every chapter ("not a supported CAPA skill slot"), and the Author skill
+  // reaches 1.1.0 with the craft rules that moved out of the HARNESS, so a
+  // story still asking for 1.0.0 would be refused as not installed. Frozen
+  // prompts are left exactly as they were sent: each is the record of what its
+  // own chapter read, tag teaching and all.
+  38: stored => ({
+    ...stored,
+    stories: (stored.stories as Array<Record<string, unknown>>).map(story => {
+      const loadout = story.skillLoadout;
+      if (!loadout || typeof loadout !== 'object' || Array.isArray(loadout)) return story;
+      const kept = Object.fromEntries(Object.entries(loadout as Record<string, unknown>)
+        .filter(([slot]) => !RETIRED_TAG_SLOTS.has(slot)));
+      const author = kept.author as { id?: unknown; version?: unknown } | undefined;
+      return {
+        ...story,
+        skillLoadout: author?.id === SEN_NOVEL_AUTHOR_SKILL.id && author.version === '1.0.0'
+          ? { ...kept, author: { ...author, version: SEN_NOVEL_AUTHOR_SKILL.version } }
+          : kept,
+      };
+    }),
+    schemaVersion: 39,
+  }),
 };
+
+/** The CAPA slots that left the schema when the tagger took the tags (schema 39). */
+const RETIRED_TAG_SLOTS = new Set(['soundCues', 'soundtrack', 'speakers', 'holdings', 'appearance']);
 
 /**
  * Every saved story's opening cards, as rows of the living record: read from

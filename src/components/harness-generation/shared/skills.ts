@@ -5,17 +5,9 @@ import { HARNESS_CANONICAL_LANGUAGE, buildSelectedTranslationGlossary, presentSe
 import type { CapaPrompt, HarnessSelectedTranslationGlossary, HarnessSkillLoadoutSnapshot, HarnessSkillApplication, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId, HarnessStory, HarnessStoryMode, ImmediateChapterRequest, StoryInformationPacket } from '../../../narrative/generation';
 import { SEN_FATE_SURVIVAL_SKILL } from './fateSurvivalSkill';
 import { SEN_READING_MODE_SKILLS } from './readingModeSkills';
-import { SEN_SOUND_CUES_SKILL, presentSoundVocabulary } from './soundCuesSkill';
-import { SEN_SOUNDTRACK_SKILL, presentSoundtrackVocabulary } from './soundtrackSkill';
-import { SEN_SPEAKERS_SKILL } from './speakersSkill';
-import { SEN_HOLDINGS_SKILL } from './holdingsSkill';
-import { SEN_APPEARANCE_SKILL } from './appearanceSkill';
-import { HARNESS_TAG_RULES } from './tagRules';
-import type { SoundWord } from '../../../audio/soundWords';
-import type { SoundtrackVocabulary } from '../../../audio/soundtrackVocabulary';
 
 /** The story state that fills a managed CAPA slot. */
-export type CapaSlotManager = 'fate-mode' | 'story-language' | 'reading-mode' | 'media-loadout' | 'always';
+export type CapaSlotManager = 'fate-mode' | 'story-language' | 'reading-mode';
 
 export interface CapaSlotDefinition {
   id: HarnessSkillSlotId;
@@ -32,14 +24,6 @@ export interface CapaSlotDefinition {
    *   Translation package that writes in it, when one is installed.
    * - `reading-mode`: the story's Reading Mode. Standard leaves the slot empty;
    *   each other mode loads SEN's matching bundled skill.
-   * - `media-loadout`: the attempt's frozen Media Loadout. A story with sound
-   *   words loads SEN's Sound Cues skill with those words; one with music or
-   *   atmospheres loads SEN's Soundtrack skill with their categories. Without them the
-   *   slot is empty. A host without the Soundtrack skill leaves its slot empty
-   *   and never fails a chapter.
-   * - `always`: every chapter. SEN's skill for the slot (Speakers, Holdings, Appearance)
-   *   loads whenever the host has it; a host without it leaves the slot empty
-   *   and never fails a chapter.
    */
   managedBy?: CapaSlotManager;
   /**
@@ -48,12 +32,6 @@ export interface CapaSlotDefinition {
    * slots SEN fills with its own bundled skills take no packages at all.
    */
   installable: boolean;
-  /**
-   * The slot's skill teaches one kind of tag the writer puts in its prose. The
-   * HARNESS tag rules, which hold for every kind, are said once before the
-   * first such section (`HARNESS_TAG_RULES`).
-   */
-  writesTags?: true;
 }
 
 /**
@@ -70,19 +48,8 @@ export const CAPA_SCHEMA: readonly CapaSlotDefinition[] = [
   { id: 'style', label: 'Style', description: 'Shapes prose tradition, voice, rhythm, and presentation.', installable: true },
   { id: 'accessibility', label: 'Accessibility', description: 'Writes chapters in the story\'s Reading Mode.', managedBy: 'reading-mode', installable: false },
   { id: 'translation', label: 'Translation', description: 'Writes chapters in the story\'s Story Language when it is not English.', managedBy: 'story-language', installable: true },
-  { id: 'soundCues', label: 'Sound Cues', description: 'Tags the words where a sound happens and names it from the story\'s sound words.', managedBy: 'media-loadout', installable: false, writesTags: true },
-  { id: 'soundtrack', label: 'Soundtrack', description: 'Chooses the music and the atmosphere a chapter opens with, by category and SEN audio tags, once each, at its start.', managedBy: 'media-loadout', installable: false, writesTags: true },
-  { id: 'speakers', label: 'Speakers', description: 'Tags who speaks each spoken line, so the Reader can give each its voice.', managedBy: 'always', installable: false, writesTags: true },
-  { id: 'holdings', label: 'Holdings', description: 'Keeps what every character has, uses, knows and is: tags each change where it happens and lists what the main character holds after the chapter.', managedBy: 'always', installable: false, writesTags: true },
-  { id: 'appearance', label: 'Appearance', description: 'Keeps every look: tags each character and thing when it steps onto the page and each change to a look.', managedBy: 'always', installable: false, writesTags: true },
 ] as const;
 
-/** SEN's own skill for each slot that loads on every chapter. */
-export const ALWAYS_LOADED_SKILLS: Readonly<Partial<Record<HarnessSkillSlotId, HarnessSkillManifest>>> = {
-  speakers: SEN_SPEAKERS_SKILL,
-  holdings: SEN_HOLDINGS_SKILL,
-  appearance: SEN_APPEARANCE_SKILL,
-};
 
 const HARNESS_SKILL_APPLICATIONS: readonly HarnessSkillApplication[] = [
   'generation',
@@ -92,31 +59,16 @@ const HARNESS_SKILL_APPLICATIONS: readonly HarnessSkillApplication[] = [
 
 export const harnessSkillKey = (reference: HarnessSkillReference) => `${reference.id}@${reference.version}`;
 
-const MANAGED_SLOT_REASONS: Record<Exclude<CapaSlotManager, 'always' | 'media-loadout'>, string> = {
+const MANAGED_SLOT_REASONS: Record<CapaSlotManager, string> = {
   'fate-mode': 'The Fate slot follows the story\'s Fate mode: Fate Survival loads its skill on every chapter, and Regular Reader mode leaves it empty.',
   'story-language': 'The Translation slot follows the story\'s Story Language: a non-English story loads that language\'s installed writing package on every chapter, and an English story leaves it empty.',
   'reading-mode': 'The Accessibility slot follows the story\'s Reading Mode: Clear Reading, Easy Read and Literal Reading load SEN\'s matching skill on every chapter, and Standard leaves it empty.',
 };
 
-/** Why each slot the story's Media Loadout fills does. */
-const MEDIA_SLOT_REASONS: Readonly<Partial<Record<HarnessSkillSlotId, string>>> = {
-  soundCues: 'The Sound Cues slot follows the story\'s Media Loadout: a story with sound words loads SEN\'s Sound Cues skill with them on every chapter, and one without leaves it empty.',
-  soundtrack: 'The Soundtrack slot follows the story\'s Media Loadout: a story with music or atmospheres loads SEN\'s Soundtrack skill with their categories on every chapter, and one without leaves it empty.',
-};
-
-/** Why each slot that loads on every chapter does. */
-const ALWAYS_SLOT_REASONS: Readonly<Partial<Record<HarnessSkillSlotId, string>>> = {
-  speakers: 'The Speakers slot loads SEN\'s Speakers skill on every chapter, so the Reader knows who speaks each line.',
-  holdings: 'The Holdings slot loads SEN\'s Holdings skill on every chapter, so what every character has is read, used and recorded.',
-  appearance: 'The Appearance slot loads SEN\'s Appearance skill on every chapter, so everyone and everything on the page keeps the look the story gave it.',
-};
-
 /** Why a slot cannot be equipped by hand, when it cannot. */
 export const managedCapaSlotReason = (slot: HarnessSkillSlotId) => {
   const manager = CAPA_SCHEMA.find(definition => definition.id === slot)?.managedBy;
-  if (!manager) return undefined;
-  if (manager === 'always') return ALWAYS_SLOT_REASONS[slot];
-  return manager === 'media-loadout' ? MEDIA_SLOT_REASONS[slot] : MANAGED_SLOT_REASONS[manager];
+  return manager ? MANAGED_SLOT_REASONS[manager] : undefined;
 };
 
 export const HARNESS_SKILL_INSTRUCTION_LIMIT = 16_000;
@@ -208,30 +160,12 @@ export const resolveStoryLanguagePackage = (
 };
 
 const resolveManagedSkill = (
-  slot: HarnessSkillSlotId,
   manager: CapaSlotManager,
   story: HarnessStory,
   catalog: ReadonlyMap<string, HarnessSkillManifest>,
   fateMode: HarnessStoryMode,
-  soundVocabulary: readonly SoundWord[],
-  soundtrack: SoundtrackVocabulary | undefined,
 ): HarnessSkillManifest | undefined => {
   switch (manager) {
-    // Never required: without it the chapter is simply written without that slot's tags.
-    case 'always': {
-      const skill = ALWAYS_LOADED_SKILLS[slot];
-      return skill ? resolveHarnessSkill(catalog, skill) : undefined;
-    }
-    case 'media-loadout': {
-      // Never required either: without it the Reader goes on with the soundtrack before.
-      if (slot === 'soundtrack') {
-        return soundtrack?.music?.length || soundtrack?.atmospheres?.length ? resolveHarnessSkill(catalog, SEN_SOUNDTRACK_SKILL) : undefined;
-      }
-      if (!soundVocabulary.length) return undefined;
-      const manifest = resolveHarnessSkill(catalog, SEN_SOUND_CUES_SKILL);
-      if (!manifest) throw new Error('The Sound Cues skill is not installed in this host, so a chapter with sound words cannot be written.');
-      return manifest;
-    }
     case 'fate-mode': {
       if (fateMode !== 'survival') return undefined;
       const manifest = resolveHarnessSkill(catalog, SEN_FATE_SURVIVAL_SKILL);
@@ -262,14 +196,10 @@ export const resolveManagedCapaSkills = (
   story: HarnessStory,
   catalog: ReadonlyMap<string, HarnessSkillManifest>,
   fateMode: HarnessStoryMode = 'regular',
-  /** The story's sound words from the attempt's frozen Media Loadout. */
-  soundVocabulary: readonly SoundWord[] = [],
-  /** The music and atmosphere categories of the attempt's frozen Media Loadout. */
-  soundtrack?: SoundtrackVocabulary,
 ): Partial<Record<HarnessSkillSlotId, HarnessSkillManifest>> => Object.fromEntries(
   CAPA_SCHEMA.flatMap(slot => {
     if (!slot.managedBy) return [];
-    const skill = resolveManagedSkill(slot.id, slot.managedBy, story, catalog, fateMode, soundVocabulary, soundtrack);
+    const skill = resolveManagedSkill(slot.managedBy, story, catalog, fateMode);
     return skill ? [[slot.id, skill]] : [];
   }),
 );
@@ -291,17 +221,13 @@ export const freezeHarnessSkillLoadout = (
   capturedAt: string,
   /** The Fate mode of the chapter being frozen. Fate Survival loads its skill into the Fate slot. */
   fateMode: HarnessStoryMode = 'regular',
-  /** The story's sound words from the attempt's frozen Media Loadout. Any fill the Sound Cues slot. */
-  soundVocabulary: readonly SoundWord[] = [],
-  /** The music and atmosphere categories of the attempt's frozen Media Loadout. Any fill the Soundtrack slot. */
-  soundtrack?: SoundtrackVocabulary,
 ): HarnessSkillLoadoutSnapshot => {
   const unsupportedSlot = Object.keys(story.skillLoadout ?? {})
     .find(slot => !CAPA_SCHEMA.some(definition => definition.id === slot));
   if (unsupportedSlot) {
     throw new Error(`${unsupportedSlot} is not a supported CAPA skill slot.`);
   }
-  const managed = resolveManagedCapaSkills(story, catalog, fateMode, soundVocabulary, soundtrack);
+  const managed = resolveManagedCapaSkills(story, catalog, fateMode);
   const skills = CAPA_SCHEMA.flatMap(slot => {
     // A managed slot ignores the story's loadout: story state decides it.
     if (slot.managedBy) {
@@ -322,11 +248,7 @@ export const freezeHarnessSkillLoadout = (
   if (!skills.some(skill => skill.slot === 'author' && skill.applications.includes('generation'))) {
     throw new Error('Equip an installed Author skill before generating a chapter.');
   }
-  return {
-    skills, capturedAt, originalLanguage: story.originalLanguage,
-    ...(managed.soundCues ? { soundVocabulary: cloneHarnessValue([...soundVocabulary]) } : {}),
-    ...(managed.soundtrack && soundtrack ? { soundtrackVocabulary: cloneHarnessValue(soundtrack) } : {}),
-  };
+  return { skills, capturedAt, originalLanguage: story.originalLanguage };
 };
 
 /**
@@ -377,29 +299,13 @@ const slotLabel = (slot: HarnessSkillSlotId) => slotDefinition(slot).label;
 const isAuthoringSkill = (skill: HarnessSkillManifest) =>
   skill.applications.includes('generation') && Boolean(skill.instructions?.trim());
 
-/** What joins the CAPA Prompt's two halves; `taggingStart` counts past it. */
-const CAPA_HALF_SEPARATOR = '\n\n';
-
 /**
- * The CAPA Prompt's two halves: its writing skills, and its tag rules with
- * the skills that teach a tag. A prompt frozen before the halves were marked
- * is all writing.
- */
-export const capaPromptParts = (capaPrompt: Pick<CapaPrompt, 'text' | 'taggingStart'>) => {
-  const start = capaPrompt.taggingStart;
-  if (start === undefined || start <= 0 || start > capaPrompt.text.length) return { writing: capaPrompt.text.trim(), tagging: '' };
-  return { writing: capaPrompt.text.slice(0, start).trim(), tagging: capaPrompt.text.slice(start).trim() };
-};
-
-/**
- * Assembles the CAPA Prompt in two halves (SENSEI, 2026-10-16): every
- * equipped generation skill that writes, Author first, once each, in CAPA
- * Schema order, then the official requirements when the chapter needs them;
- * then, when any loaded skill teaches a tag (`writesTags`), the HARNESS tag
- * rules once and those skills in schema order. `taggingStart` marks where the
- * second half begins, so the system instruction can put each under its own
- * heading. Non-generation skills are recorded for their host runtime but
- * contribute no authoring text.
+ * Assembles the CAPA Prompt: every equipped generation skill that writes,
+ * Author first, once each, in CAPA Schema order, then the official
+ * requirements when the chapter needs them. It is all writing: the tag
+ * teaching left the writer when the tagger took the tags (SENSEI, 2026-10-24),
+ * and lives in the tagger's own prompt. Non-generation skills are recorded for
+ * their host runtime but contribute no authoring text.
  */
 export const assembleCapaPrompt = (
   loadout: HarnessSkillLoadoutSnapshot,
@@ -427,15 +333,6 @@ export const assembleCapaPrompt = (
         ))
       : undefined;
 
-  // The Sound Cues skill carries the story's frozen sound words; without them it never loads.
-  const soundVocabulary = ordered.some(skill => skill.slot === 'soundCues' && isAuthoringSkill(skill)) && loadout.soundVocabulary?.length
-    ? loadout.soundVocabulary
-    : undefined;
-  // The Soundtrack skill carries the story's frozen music and atmosphere categories.
-  const soundtrackVocabulary = ordered.some(skill => skill.slot === 'soundtrack' && isAuthoringSkill(skill))
-    && (loadout.soundtrackVocabulary?.music?.length || loadout.soundtrackVocabulary?.atmospheres?.length)
-    ? loadout.soundtrackVocabulary
-    : undefined;
   const authoring = ordered.filter(isAuthoringSkill);
   const sections = authoring.map(skill => [
     `CAPA SKILL [${slotLabel(skill.slot)}] — ${skill.name} v${skill.version}`,
@@ -444,10 +341,6 @@ export const assembleCapaPrompt = (
     ...(skill === translationSkill && translationGlossary
       ? [presentSelectedTranslationGlossary(translationGlossary)]
       : []),
-    // The story's sound words close the Sound Cues section as its example list.
-    ...(skill.slot === 'soundCues' && soundVocabulary ? [presentSoundVocabulary(soundVocabulary)] : []),
-    // The story's music and atmosphere categories close the Soundtrack section as its lists.
-    ...(skill.slot === 'soundtrack' && soundtrackVocabulary ? [presentSoundtrackVocabulary(soundtrackVocabulary)] : []),
   ].join('\n'));
   // The official requirements travel only when a reader-facing adapter is
   // loaded or the story is not written in English.
@@ -456,16 +349,10 @@ export const assembleCapaPrompt = (
     accessibility: ordered.some(skill => skill.slot === 'accessibility' && isAuthoringSkill(skill)),
     translation: Boolean(translationSkill),
   });
-  // Two halves, by the schema's own mark: the writing skills with the official
-  // requirements, then the rules every tag shares, once, and the skills that
-  // teach a tag. The system instruction puts each half under its own heading.
-  const tagSections = sections.filter((_, index) => slotDefinition(authoring[index].slot).writesTags);
-  const writing = [...sections.filter((_, index) => !slotDefinition(authoring[index].slot).writesTags), ...(officialRequirements ? [officialRequirements] : [])].join('\n\n');
-  const tagging = tagSections.length ? [HARNESS_TAG_RULES, ...tagSections].join('\n\n') : '';
-  const text = tagging ? `${writing}${CAPA_HALF_SEPARATOR}${tagging}` : writing;
+  const text = [...sections, ...(officialRequirements ? [officialRequirements] : [])].join('\n\n');
   const estimatedTokens = Math.max(1, Math.ceil(text.length / 4));
   if (estimatedTokens > CAPA_PROMPT_TOKEN_LIMIT) {
-    throw new Error('Equipped skills exceed the CAPA Prompt budget. Empty a skill slot, install shorter instructions, narrow the Translation glossary, or equip a Sound Cue Pack with fewer sound words.');
+    throw new Error('Equipped skills exceed the CAPA Prompt budget. Empty a skill slot, install shorter instructions, or narrow the Translation glossary.');
   }
   return {
     capturedAt: loadout.capturedAt,
@@ -480,10 +367,7 @@ export const assembleCapaPrompt = (
       ...(skill.source ? { source: cloneHarnessValue(skill.source) } : {}),
     })),
     text,
-    ...(tagging ? { taggingStart: writing.length + CAPA_HALF_SEPARATOR.length } : {}),
     estimatedTokens,
     ...(translationGlossary ? { translationGlossary: cloneHarnessValue(translationGlossary) } : {}),
-    ...(soundVocabulary ? { soundVocabulary: cloneHarnessValue(soundVocabulary) } : {}),
-    ...(soundtrackVocabulary ? { soundtrackVocabulary: cloneHarnessValue(soundtrackVocabulary) } : {}),
   };
 };

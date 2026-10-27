@@ -1,24 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import {
-  CAPA_SCHEMA,
-  SEN_NOVEL_AUTHOR_SKILL,
-  SEN_SPEAKERS_INSTRUCTIONS,
-  SEN_SPEAKERS_SKILL,
-  assembleCapaPrompt,
-  createEmptyHarnessWorkspaceState,
-  createHarnessSkillCatalog,
-  freezeHarnessSkillLoadout,
-  includeBundledHarnessSkills,
-  managedCapaSlotReason,
-} from '@seihouse/sen/harness-generation';
+import { SEN_SPEAKERS_INSTRUCTIONS } from '@seihouse/sen/harness-generation';
 import { readMarks } from '../../../narrative/marks';
 import { isMainCharacterTag } from './speakers';
-import { createHarnessStory } from './foundation';
-import { defaultHarnessRuntime } from './ids';
 
-describe('SEN Speakers skill', () => {
+describe('The speaker tag', () => {
   it('teaches the speaker tag in a few short lines, with one example: the main character\'s', () => {
-    expect(SEN_SPEAKERS_SKILL).toMatchObject({ id: 'seihouse.sen-speakers', version: '2.2.0', slot: 'speakers', applications: ['generation'] });
     const lines = SEN_SPEAKERS_INSTRUCTIONS.split('\n');
     expect(lines).toEqual([
       'Start each paragraph with speech with its speaker: [[@Name]]',
@@ -39,17 +25,4 @@ describe('SEN Speakers skill', () => {
     expect(SEN_SPEAKERS_INSTRUCTIONS).not.toMatch(/CURRENT STORY INFORMATION|MISSION REMINDER|IMMEDIATE CHAPTER REQUEST/);
   });
 
-  it('loads on every chapter from its managed slot, is never equipped by hand, and a host without it still writes', () => {
-    expect(CAPA_SCHEMA.find(slot => slot.id === 'speakers')).toMatchObject({ managedBy: 'always', installable: false });
-    expect(managedCapaSlotReason('speakers')).toContain('every chapter');
-    expect(includeBundledHarnessSkills([]).map(skill => skill.id)).toContain(SEN_SPEAKERS_SKILL.id);
-    const { story } = createHarnessStory(createEmptyHarnessWorkspaceState(), { premise: 'A gate holds.' }, 'en', defaultHarnessRuntime);
-    story.skillLoadout = { author: { id: SEN_NOVEL_AUTHOR_SKILL.id, version: SEN_NOVEL_AUTHOR_SKILL.version } };
-    const bundled = freezeHarnessSkillLoadout(story, createHarnessSkillCatalog(includeBundledHarnessSkills([])), 'now');
-    expect(bundled.skills.map(skill => skill.slot)).toEqual(['author', 'speakers', 'holdings', 'appearance']);
-    expect(assembleCapaPrompt(bundled).text).toContain('CAPA SKILL [Speakers] — SEN Speakers v2.2.0');
-    // A host whose catalog lacks the skill writes the chapter without speaker tags.
-    const minimal = freezeHarnessSkillLoadout(story, createHarnessSkillCatalog([SEN_NOVEL_AUTHOR_SKILL]), 'now');
-    expect(minimal.skills.map(skill => skill.slot)).toEqual(['author']);
-  });
 });

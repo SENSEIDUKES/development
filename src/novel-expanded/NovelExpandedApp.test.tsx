@@ -893,7 +893,7 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(address()).toBe('/app/?page=discover');
     expect(document.querySelector('[data-testid="novel-expanded-discover"]')).toBeTruthy();
     expect(strip()!.querySelector('[aria-current="page"]')?.textContent).toBe('Discover');
-    expect(document.body.textContent).toContain('Showing sample worlds');
+    expect(document.body.textContent).toContain('Explore sample stories, creators and Codex entries');
     expect(document.querySelector('.discover-fate')?.textContent).toContain('Fate Survival');
     // Opening a sample world says so just above the bottom bar.
     await click(document.querySelector<HTMLButtonElement>('.discover-fate .world-card-base-open, .discover-fate button')!, 'a Fate Survival world', 20);
@@ -908,7 +908,7 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     const services = appServices(scriptedWriter().writer);
     services.profile.save({ defaultReadingLanguage: 'ja', defaultChapterWritingStyle: 'Easy Read' });
     await render(services, '/app/?page=discover');
-    await click(document.querySelector('.discover-encyclopedia-entry'), 'the encyclopedia doorway', 20);
+    await click(document.querySelector('.discover-navigation a[href*="lore=index"]'), 'Lore in Discover navigation', 20);
     await act(async () => { await import('../components/discover/shared/loreLocales').then(module => module.loadLoreLocale('ja')); });
     expect(address()).toBe('/app/?page=discover&lore=index');
     const encyclopedia = () => document.querySelector<HTMLElement>('[data-encyclopedia]')!;
@@ -931,6 +931,22 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(document.querySelector('.discover-fate')).toBeTruthy();
     expect(services.profile.read()).toMatchObject({ defaultReadingLanguage: 'ja', defaultChapterWritingStyle: 'Easy Read' });
     expect(services.writer.generate).not.toHaveBeenCalled();
+  });
+
+  it('navigates Discover creators and Codex while keeping Lore a direct encyclopedia link', async () => {
+    await render(appServices(scriptedWriter().writer), '/app/?page=discover&section=creators');
+    expect(document.querySelector('.discover-navigation [aria-current="page"]')?.textContent).toBe('Creators');
+    expect(document.querySelector('ul[aria-label="Creators"]')?.querySelectorAll('summary')).toHaveLength(8);
+    await click(document.querySelector('.discover-navigation a[href*="section=codex"]'), 'Codex');
+    expect(address()).toBe('/app/?page=discover&section=codex');
+    expect(document.querySelector('ul[aria-label="Codex characters"]')).toBeTruthy();
+    await click(document.querySelectorAll('.discover-codex-categories button')[1], 'Items');
+    expect(document.querySelector('ul[aria-label="Codex items"]')).toBeTruthy();
+    await click(document.querySelector('.discover-navigation a[href*="lore=index"]'), 'Lore');
+    expect(address()).toBe('/app/?page=discover&lore=index');
+    expect(document.querySelector('[data-encyclopedia]')).toBeTruthy();
+    expect(document.querySelector('.discover-genre-select')).toBeNull();
+    expect(document.querySelector('[data-testid="novel-expanded-discover"]')?.textContent).not.toContain('Heavenly Rankings');
   });
 
   it('opens the Cave from the navigation, on the practice account, inside the app\'s places', async () => {

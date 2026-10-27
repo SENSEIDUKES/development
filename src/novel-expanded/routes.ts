@@ -18,7 +18,7 @@ import { useCallback, useEffect, useState } from 'react';
  */
 export type NovelExpandedRoute =
   | { page: 'home' }
-  | { page: 'discover'; lore?: string; query?: string; category?: string }
+  | { page: 'discover'; section?: 'creators' | 'codex'; lore?: string; query?: string; category?: string }
   | { page: 'create'; seedId?: string }
   | { page: 'story'; storyId: string }
   | { page: 'read'; storyId: string }
@@ -34,7 +34,9 @@ export function parseRoute(search: string): NovelExpandedRoute {
     : query.get('blueprint') === '1' ? { page: 'blueprint', storyId } : { page: 'story', storyId };
   if (query.get('page') === 'discover') {
     const lore = query.get('lore')?.trim();
-    return lore ? { page: 'discover', lore, ...(query.get('q') ? { query: query.get('q')! } : {}), ...(query.get('category') ? { category: query.get('category')! } : {}) } : { page: 'discover' };
+    const section = query.get('section');
+    return lore ? { page: 'discover', lore, ...(query.get('q') ? { query: query.get('q')! } : {}), ...(query.get('category') ? { category: query.get('category')! } : {}) }
+      : section === 'creators' || section === 'codex' ? { page: 'discover', section } : { page: 'discover' };
   }
   if (query.get('page') === 'create') {
     const seedId = query.get('seed')?.trim();
@@ -50,7 +52,8 @@ export function parseRoute(search: string): NovelExpandedRoute {
 export function routeSearch(route: NovelExpandedRoute): string {
   switch (route.page) {
     case 'home': return '';
-    case 'discover': return route.lore ? `?${new URLSearchParams({ page: 'discover', lore: route.lore, ...(route.query ? { q: route.query } : {}), ...(route.category ? { category: route.category } : {}) })}` : '?page=discover';
+    case 'discover': return route.lore ? `?${new URLSearchParams({ page: 'discover', lore: route.lore, ...(route.query ? { q: route.query } : {}), ...(route.category ? { category: route.category } : {}) })}`
+      : route.section ? `?${new URLSearchParams({ page: 'discover', section: route.section })}` : '?page=discover';
     case 'create': return route.seedId ? `?${new URLSearchParams({ page: 'create', seed: route.seedId })}` : '?page=create';
     case 'story': return `?story=${encodeURIComponent(route.storyId)}`;
     case 'read': return `?story=${encodeURIComponent(route.storyId)}&read=1`;

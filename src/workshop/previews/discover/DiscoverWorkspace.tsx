@@ -39,7 +39,7 @@ export function DiscoverWorkspace() {
     renderReference={() => <p className="p-6 text-sm text-white/70">Discover is new: there is no old production version to compare.</p>}
     renderDevelopment={render}
     workshopControls={{
-      description: 'Development opens the live Expanded Novels Discover page and its Eastern Fantasy Encyclopedia. Worlds are samples; the encyclopedia is real content. This preview uses the app’s saved language and Reading Mode preferences.',
+      description: 'Development opens the app’s Discover page: Stories, Creators, Codex and the Lore encyclopedia. Stories, creators, Codex entries, follows and rankings are samples; Lore is authored reference content. This preview uses the app’s saved language and Reading Mode preferences.',
       defaultSection: 'pages',
       sections: [{
         id: 'pages',

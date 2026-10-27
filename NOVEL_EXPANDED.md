@@ -570,6 +570,13 @@ Update it whenever it changes.
     reading languages. It follows the profile's language and Reading Mode
     defaults. The same Discover Workshop preview opens the real app surface.
     The starter translations have not had professional editorial review.
+  - **Discover navigation** (2026-10-26) is Stories, Creators, Codex, Lore.
+    Lore opens that encyclopedia directly. Events sit near the top; the other
+    three destinations have genre filtering and relevant Heavenly Rankings.
+    All / My updates follows each section's sample catalogue. Creators expand
+    to their stories, and Codex is split into Characters and Items. Public
+    catalogues, follows and rankings remain samples; Lore term tracking is not
+    built, and its My updates says so.
   - **Profile is in the app, with what it connects to,** so the pieces can be
     seen working together and refined there. Profile is a third place in the
     navigation (Home, Create, Profile, with Settings beside it); it is the

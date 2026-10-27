@@ -1,22 +1,14 @@
-.discover-encyclopedia-entry {
-  display: flex; align-items: center; gap: 1rem; min-height: 5.5rem; padding: 1.25rem 0;
-  border-block: 1px solid var(--discover-hairline); color: var(--discover-ink);
-}
-.discover-encyclopedia-entry > svg { flex: 0 0 auto; color: var(--discover-gold); }
-.discover-encyclopedia-entry > span { flex: 1; min-width: 0; }
-.discover-encyclopedia-entry strong { display: block; font-size: 1.1rem; font-weight: 600; }
-.discover-encyclopedia-entry span span { display: block; margin-top: .3rem; color: var(--discover-muted); font-size: .875rem; }
 [data-encyclopedia] { gap: 1.5rem; padding-bottom: 2rem; scroll-margin-block-start: 1rem; }
 [data-encyclopedia] a { text-underline-offset: .2em; }
 [data-encyclopedia] a:hover { text-decoration: underline; }
-[data-encyclopedia] :is(a, button, input, select):focus-visible, .discover-encyclopedia-entry:focus-visible {
+[data-encyclopedia] :is(a, button, input, select):focus-visible {
   outline: 2px solid var(--discover-accent); outline-offset: 4px;
 }
 .encyclopedia-breadcrumb { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; font-size: .875rem; color: var(--discover-muted); }
 .encyclopedia-breadcrumb a { display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; }
 [data-encyclopedia][dir='rtl'] .encyclopedia-breadcrumb svg { transform: scaleX(-1); }
 .encyclopedia-header { display: grid; gap: .75rem; max-width: 55rem; }
-.encyclopedia-header h1 { font-size: clamp(2rem, 6vw, 3.25rem); line-height: 1.12; color: var(--discover-ink); overflow-wrap: anywhere; }
+.encyclopedia-header :is(h1, h2) { font-size: clamp(2rem, 6vw, 3.25rem); line-height: 1.12; color: var(--discover-ink); overflow-wrap: anywhere; }
 .encyclopedia-header p:last-child, .encyclopedia-scope { color: var(--discover-muted); line-height: 1.65; font-size: .9375rem; }
 .encyclopedia-preferences { display: flex; flex-wrap: wrap; gap: .75rem 1rem; }
 .encyclopedia-preferences label { display: grid; gap: .35rem; min-width: 0; flex: 1 1 12rem; max-width: 22rem; font-size: .8125rem; color: var(--discover-muted); }

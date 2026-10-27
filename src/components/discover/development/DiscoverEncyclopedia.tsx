@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
-import { ArrowLeft, ArrowUpRight, BookOpen, Search } from 'lucide-react';
+import { ArrowLeft, Search } from 'lucide-react';
 import {
   CHAPTER_WRITING_STYLE_OPTIONS, getSenTextDirection, normalizeChapterWritingStyle, normalizeSenLanguageCode,
   resolveReadingLanguageCode, SEN_LANGUAGES, type ChapterWritingStyle, type SenLanguageCode,
@@ -16,6 +16,8 @@ export interface DiscoverEncyclopediaProps {
   readingLanguage?: SenLanguageCode;
   interfaceLanguage?: SenLanguageCode;
   readingMode?: ChapterWritingStyle;
+  embedded?: boolean;
+  updatesOnly?: boolean;
 }
 
 function useLoreLocale(language: SenLanguageCode) {
@@ -44,23 +46,10 @@ function followLink(event: MouseEvent<HTMLAnchorElement>, navigate: () => void) 
   navigate();
 }
 
-/** The small doorway in the existing Discover shelves. */
-export function DiscoverEncyclopediaEntry({ href, onOpen, language = 'en' }: {
-  href: string; onOpen: () => void; language?: SenLanguageCode;
-}) {
-  const { locale } = useLoreLocale(normalizeSenLanguageCode(language));
-  const copy = locale ?? ENGLISH_LORE;
-  return <a href={href} onClick={event => followLink(event, onOpen)} className="discover-encyclopedia-entry"
-    data-no-interface-translate lang={locale ? language : 'en'} dir={getSenTextDirection(locale ? language : 'en')}>
-    <BookOpen aria-hidden="true" size={27} />
-    <span><strong>{copy.labels.title}</strong><span>{copy.labels.intro}</span></span>
-    <ArrowUpRight aria-hidden="true" size={22} />
-  </a>;
-}
-
 /** A global, curated reference within Discover. All navigation stays in the host's Discover route. */
-export function DiscoverEncyclopedia({ location, hrefFor, onNavigate, readingLanguage, interfaceLanguage = 'en', readingMode = 'Standard' }: DiscoverEncyclopediaProps) {
+export function DiscoverEncyclopedia({ location, hrefFor, onNavigate, readingLanguage, interfaceLanguage = 'en', readingMode = 'Standard', embedded = false, updatesOnly = false }: DiscoverEncyclopediaProps) {
   const ids = useId();
+  const Heading = embedded ? 'h2' : 'h1';
   const surface = useRef<HTMLDivElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const [chosenLanguage, setChosenLanguage] = useState<SenLanguageCode>();
@@ -101,7 +90,7 @@ export function DiscoverEncyclopedia({ location, hrefFor, onNavigate, readingLan
     </nav>
     <header className="encyclopedia-header">
       <p className="discover-eyebrow">SEIHouse · {labels.directory}</p>
-      <h1 ref={heading} tabIndex={-1} className="font-display">{term ? <bdi lang={contentCode}>{copy.terms[term.id as LoreTermId][0]}</bdi> : labels.title}</h1>
+      <Heading ref={heading} tabIndex={-1} className="font-display">{term ? <bdi lang={contentCode}>{copy.terms[term.id as LoreTermId][0]}</bdi> : labels.title}</Heading>
       <p>{location.term ? labels.scope : labels.intro}</p>
     </header>
     <div className="encyclopedia-preferences">
@@ -155,7 +144,9 @@ export function DiscoverEncyclopedia({ location, hrefFor, onNavigate, readingLan
           </ul>
         </section>
       </div>
-    </article> : <div className="encyclopedia-empty"><p>{labels.missing}</p>{link(directoryLocation, labels.directory)}</div> : <>
+    </article> : <div className="encyclopedia-empty"><p>{labels.missing}</p>{link(directoryLocation, labels.directory)}</div> : updatesOnly ? <div className="encyclopedia-empty" lang="en" dir="ltr">
+      <h2>No followed Lore terms yet</h2><p>Term tracking is not available yet. Choose All to search the encyclopedia.</p>
+    </div> : <>
       <label className="discover-search encyclopedia-search"><Search aria-hidden="true" size={20} /><span className="sr-only">{labels.search}</span>
         <input type="search" value={location.query ?? ''} onChange={event => onNavigate({ ...directoryLocation, query: event.target.value }, true)} placeholder={labels.search} />
       </label>

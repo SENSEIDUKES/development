@@ -48,7 +48,7 @@ rewrites and every page survives a reload.
 | Page | Address | What it is |
 | --- | --- | --- |
 | Home | `/app/` | The reader's stories, newest first, and Carve New Destiny |
-| Discover | `/app/?page=discover` | The Library's Discover page with sample worlds: Featured, New Chapters and My updates, Fate Survival, Heavenly Rankings, Events, Browse by Genre |
+| Discover | `/app/?page=discover` | Stories, Creators (`section=creators`), Codex (`section=codex`) and Lore (`lore=index`); Events, scoped All / My updates, genres and relevant rankings outside Lore |
 | Create | `/app/?page=create` | The Library's Story Seed journey: the seed, its World Blueprint, Manifest Story |
 | Story View | `/app/?story=<id>` | The story's World Info page: Begin Story or Continue, Manifest on the cover, Story Settings, and Export story (the whole story as one file, for sharing a test) |
 | Reader | `/app/?story=<id>&read=1` | The reading-only Reader, with the Generation Overlay while a chapter is written |
@@ -331,7 +331,7 @@ task needs something the list does not allow.
 | `routes.ts` | Addresses and history |
 | `services.ts` | Storage, the writer, the official skills, the Blueprint client, the reader's profile and the practice economy |
 | `HomePage.tsx` | Home: the reader's stories, in `AppShell` |
-| `DiscoverPage.tsx`, `discoverSamples.ts` | Discover (`@seihouse/library/discover`) in `AppShell`, with its sample worlds, releases, boards and events |
+| `DiscoverPage.tsx`, `discoverSamples.ts` | Discover (`@seihouse/library/discover`) in `AppShell`, with sample stories, creators, Codex projections, follows, releases, boards and events; Lore uses the authored encyclopedia |
 | `CreatePage.tsx` | Create: `CreationModal` in a guest Story Seed runtime, starting new seeds from the profile's defaults; asks for the token before a Blueprint |
 | `AccessTokenSheet.tsx` | The access token sheet, one for the whole app |
 | `accessToken.ts` | The chapter writer with the owner's token: a chapter at the limit asks for it and is sent again |
@@ -366,6 +366,10 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## History
 
+- **2026-10-26 (Discover navigation)** — Stories / Creators / Codex / Lore, with
+  Events near the top, section-specific All / My updates, genre filters and
+  relevant rankings outside Lore. Creators and character/item Codex directories
+  use explicit public samples. Lore links directly to the encyclopedia.
 - **2026-10-26** — Discover's Eastern Fantasy Encyclopedia adds a global lore
   directory and stable term links under `?page=discover&lore=...`, with alias
   search, six categories and 36 starter terms. It uses the reader's existing

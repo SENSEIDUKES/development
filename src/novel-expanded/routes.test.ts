@@ -2,6 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { parseRoute, routeSearch, type NovelExpandedRoute } from './routes';
 
 describe('NovelExpanded addresses', () => {
+  it('keeps encyclopedia articles and their search context inside Discover across reloads', () => {
+    for (const route of [
+      { page: 'discover', lore: 'index' },
+      { page: 'discover', lore: 'nascent-soul', query: '元婴 & Origin Infant', category: 'realms' },
+      { page: 'discover', lore: 'unknown' },
+    ] satisfies NovelExpandedRoute[]) expect(parseRoute(routeSearch(route))).toEqual(route);
+    expect(parseRoute('?page=discover&lore=&q=ignored')).toEqual({ page: 'discover' });
+  });
   it('gives each of the four pages its own address and reads it back', () => {
     const pages: NovelExpandedRoute[] = [
       { page: 'home' },

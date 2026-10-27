@@ -7,3 +7,4 @@
  */
 export * from '../../components/discover/shared/discoverContracts';
 export * from '../../components/discover/development/Discover';
+export * from '../../components/discover/development/DiscoverEncyclopedia';

@@ -561,6 +561,13 @@ Update it whenever it changes.
     full-screen. Discover is in the navigation too (2026-10-20), with sample
     worlds: its structure is in and its look and feel is being refined
     ([`docs/discover-page.md`](./docs/discover-page.md)).
+  - **Discover's Eastern Fantasy Encyclopedia** (2026-10-26) is a global genre
+    reference inside Discover, separate from story Codexes: 36 core terms in
+    six categories, original scripts and pronunciation, fan-translation alias
+    search, related articles, and localized definitions for the existing 30
+    reading languages. It follows the profile's language and Reading Mode
+    defaults. The same Discover Workshop preview opens the real app surface.
+    The starter translations have not had professional editorial review.
   - **Profile is in the app, with what it connects to,** so the pieces can be
     seen working together and refined there. Profile is a third place in the
     navigation (Home, Create, Profile, with Settings beside it); it is the
@@ -796,7 +803,7 @@ Update it whenever it changes.
     survives a reload, and the account and server pieces wait.
   - Creator Space is a Library package entry the Workshop previews; the
     NovelExpanded app does not use it yet.
-  - Discover is in the app with sample worlds only: no public worlds,
+  - Discover's world shelves use samples only: no public worlds,
     releases, Tracker, signals, Rankings or Events are real yet.
 - **Not rebuilt yet:**
   - manifestations;

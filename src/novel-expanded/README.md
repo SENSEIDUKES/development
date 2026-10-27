@@ -364,6 +364,11 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## History
 
+- **2026-10-26** — Discover's Eastern Fantasy Encyclopedia adds a global lore
+  directory and stable term links under `?page=discover&lore=...`, with alias
+  search, six categories and 36 starter terms. It uses the reader's existing
+  language and Reading Mode defaults; the Discover Workshop iframe shows the
+  same surface and real profile preferences.
 - **2026-10-25** — Interface language translation across all 30 `SEN_LANGUAGES` (`en` plus the 29 individual language files in `src/library/language/locales/`): each non-English language pack loads on demand when selected or previewed in Cultivator Cave Settings (`useInterfaceLanguageTranslation` in `@seihouse/library/profile`), previews live during the 30-second confirmation dialog, reverts on cancel or timeout, and persists across pages and the footer language pill when kept.
 - **2026-10-25** — Dao Insights in the header, on phones: the header logo
   never shrinks; Dao Insights in the center takes only the space left and

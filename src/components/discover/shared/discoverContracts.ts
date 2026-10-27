@@ -51,6 +51,8 @@ export interface DiscoverProps {
   onOpenWorld: (worldId: string) => void;
   /** A short host note under the title, such as a sample-catalog line. */
   notice?: ReactNode;
+  /** The in-house lore directory's doorway, composed by the host on the same Discover route. */
+  encyclopedia?: ReactNode;
   /** The time relative release times are measured from. Defaults to now. */
   now?: Date;
 }

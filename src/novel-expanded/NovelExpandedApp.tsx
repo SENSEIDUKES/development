@@ -244,5 +244,5 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     onBack={() => navigate(HOME_ROUTE)} />);
 
   if (route.page === 'discover') return withFamiliar(<DiscoverPage route={route} navigate={navigate} stories={worlds} readerProfile={profile} />);
-  return withFamiliar(<HomePage worlds={worlds} navigate={navigate} readerProfile={profile} sparks={sparks} />);
+  return withFamiliar(<HomePage worlds={worlds} navigate={navigate} readerProfile={profile} />);
 }

@@ -113,6 +113,9 @@ export function useDeviceProfileController(
           }
     ));
   }, [record.defaultReadingLanguage, record.interfaceLanguage]);
+  useEffect(() => {
+    setPendingLanguageChange(null);
+  }, [record.defaultReadingLanguage, record.interfaceLanguage]);
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState('');
   const colorInputRef = useRef<HTMLInputElement>(null);
@@ -211,6 +214,11 @@ export function useDeviceProfileController(
       name === 'defaultReadingLanguage' ? value : formData.defaultReadingLanguage || profile.defaultReadingLanguage || DEFAULT_SEN_LANGUAGE_CODE,
     );
   }, [formData, openLanguageConfirmation, pendingLanguageChange, profile]);
+
+  const handlePreferredLanguageChange = useCallback((value: SenLanguageCode) => {
+    setPendingLanguageChange(null);
+    commit({ interfaceLanguage: value, defaultReadingLanguage: value });
+  }, [commit]);
 
   const confirmLanguageChange = useCallback(() => {
     if (!pendingLanguageChange) return;
@@ -383,6 +391,7 @@ export function useDeviceProfileController(
     confirmLanguageChange,
     revertLanguageChange,
     handleLanguageChangeDirect,
+    handlePreferredLanguageChange,
     handleDefaultChapterWritingStyleChange,
     isSavingChapterWritingStyle: false,
     showPortraitModal,

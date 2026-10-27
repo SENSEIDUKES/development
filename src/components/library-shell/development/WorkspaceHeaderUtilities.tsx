@@ -67,7 +67,7 @@ export function WorkspaceHeaderUtilities({ items, help, preferences }: {
     }
   }, [preferences?.language, preferencesDisclosure.open]);
 
-  const currentLanguage = normalizeSenLanguageCode(preferences?.language ?? localLanguage);
+  const selectedLanguage = normalizeSenLanguageCode(preferences?.language ?? localLanguage);
   const handleLanguageChange = (next: SenLanguageCode) => {
     const code = normalizeSenLanguageCode(next);
     setLocalLanguage(code);
@@ -127,9 +127,9 @@ export function WorkspaceHeaderUtilities({ items, help, preferences }: {
                 </label>
                 <select
                   id="header-preferred-language"
-                  name="preferredLanguage"
+                  name="interfaceLanguage"
                   className="workspace-preferences-select"
-                  value={currentLanguage}
+                  value={selectedLanguage}
                   onChange={event => handleLanguageChange(event.target.value as SenLanguageCode)}
                 >
                   {SEN_LANGUAGES.map(option => (

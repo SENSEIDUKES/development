@@ -83,7 +83,7 @@
 .workspace-preferences { position: relative; flex: none; display: inline-flex; align-items: center; }
 .workspace-preferences > :is(button, [role="button"]) { min-width: 44px; min-height: 44px; }
 .workspace-preferences-panel {
-  position: absolute; z-index: 60; top: calc(100% + 12px); right: 0;
+  position: absolute; z-index: 60; top: calc(100% + 12px); inset-inline-end: 0;
   width: 248px; max-width: calc(100vw - 32px);
   border-radius: 0.85rem;
   background: var(--color-sen-void);
@@ -132,7 +132,7 @@
   width: 100%;
   min-height: 44px;
   justify-content: flex-start;
-  text-align: left;
+  text-align: start;
   gap: 10px;
   font-size: 13px;
 }

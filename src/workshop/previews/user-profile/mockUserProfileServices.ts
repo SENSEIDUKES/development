@@ -403,6 +403,21 @@ export function createMockUserProfileServices({
       [formData, pendingLanguageChange, profile],
     );
 
+    const handlePreferredLanguageChange = useCallback(
+      (value: SenLanguageCode) => {
+        setPendingLanguageChange(null);
+        setFormData(previous => ({ ...previous, interfaceLanguage: value, defaultReadingLanguage: value }));
+        if (!profileRef.current) return;
+        commitProfile({
+          ...profileRef.current,
+          interfaceLanguage: value,
+          defaultReadingLanguage: value,
+          updatedAt: new Date().toISOString(),
+        });
+      },
+      [commitProfile],
+    );
+
     const confirmLanguageChange = useCallback(() => {
       if (!pendingLanguageChange) return;
       const pending = pendingLanguageChange;
@@ -844,6 +859,7 @@ export function createMockUserProfileServices({
       confirmLanguageChange,
       revertLanguageChange,
       handleLanguageChangeDirect,
+      handlePreferredLanguageChange,
 
       handleDefaultChapterWritingStyleChange,
       isSavingChapterWritingStyle,

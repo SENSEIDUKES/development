@@ -104,6 +104,8 @@ export interface UserProfileController {
   countdown: number;
   confirmLanguageChange: () => void;
   revertLanguageChange: () => void;
+  /** Saves both interface and default reading language immediately from the header Preferences card. */
+  handlePreferredLanguageChange?: (value: SenLanguageCode) => Promise<void> | void;
   handleLanguageChangeDirect: (
     name: 'interfaceLanguage' | 'defaultReadingLanguage',
     value: SenLanguageCode,

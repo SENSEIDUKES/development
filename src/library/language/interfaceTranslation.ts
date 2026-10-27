@@ -60,7 +60,7 @@ export function translateInterfaceText(raw: string, language?: SenLanguageCode):
 
   let translatedCore: string | undefined =
     pack.strings[trimmed] ?? pack.lowercaseLookup.get(trimmed.toLowerCase());
-  if (!translatedCore && PHRASE_FALLBACKS[trimmed]) {
+  if (!translatedCore && Object.prototype.hasOwnProperty.call(PHRASE_FALLBACKS, trimmed)) {
     const fallback = PHRASE_FALLBACKS[trimmed];
     translatedCore = pack.strings[fallback] ?? pack.lowercaseLookup.get(fallback.toLowerCase());
   }
@@ -95,7 +95,7 @@ const LANGUAGE_SELECT_IDS = new Set([
   'story-seed-language',
   'world-settings-reading-language',
 ]);
-const LANGUAGE_SELECT_NAMES = new Set(['interfaceLanguage', 'defaultReadingLanguage', 'preferredLanguage']);
+const LANGUAGE_SELECT_NAMES = new Set(['interfaceLanguage', 'defaultReadingLanguage']);
 const EXCLUDED_CONTENT_CLASSES = [
   'world-card-caption-title',
   'world-card-caption-creator',

@@ -582,6 +582,10 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
           preferences={{
             language: activeInterfaceLanguage,
             onLanguageChange: code => {
+              if (hostController.handlePreferredLanguageChange) {
+                void hostController.handlePreferredLanguageChange(code);
+                return;
+              }
               hostController.setFormData(previous => ({ ...previous, interfaceLanguage: code, defaultReadingLanguage: code }));
             },
           }}

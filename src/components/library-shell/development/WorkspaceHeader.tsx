@@ -67,8 +67,13 @@ export interface WorkspaceHeaderProps {
   title: string;
   /** Host-supplied identity in place of the default emblem. */
   identity?: ReactNode;
+  /** @deprecated Header badges and subtitles were removed; place page subtitles in the page body below the header. */
   subtitle?: string;
-  emblem?: { src: string; alt: string };
+  emblem?: {
+    /** @deprecated The canonical `NovelExpandedLogo` renders the wordmark directly; only `alt` is read when `home` is omitted. */
+    src?: string;
+    alt: string;
+  };
   home?: { href: string; label: string; onNavigate?: () => void };
   back?: { label: string; onNavigate: () => void };
   primaryAction?: HeaderAction;
@@ -120,7 +125,7 @@ export function WorkspaceHeader({ title, emblem, home, back, primaryAction,
   const hostSound = useContext(HeaderSoundContext);
   const soundControl = sound === undefined ? hostSound : sound;
   const hostPreferences = useContext(HeaderPreferencesContext);
-  const resolvedPreferences = hostPreferences ?? preferences ?? undefined;
+  const resolvedPreferences = preferences ?? hostPreferences ?? undefined;
   // Phones and tablets: the note floats above the bottom bar, not in the header.
   const soundPlace = useLibrarySoundSlot();
   const commands = [...secondaryActions, ...(primaryAction ? [primaryAction] : []), ...overflowActions];

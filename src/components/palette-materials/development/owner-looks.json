@@ -1,0 +1,156 @@
+{
+  "format": "palette-materials",
+  "version": 1,
+  "looks": [
+    {
+      "id": "043230de-91c3-489e-ae02-67bdff93da9b",
+      "name": "Home Glass",
+      "settings": {
+        "background": "artwork",
+        "selected": "home",
+        "edits": {
+          "home": {
+            "blur": 15,
+            "opacity": 30,
+            "tint": "#000000",
+            "borderOpacity": 10,
+            "glowColor": "#000000"
+          }
+        },
+        "roles": {
+          "navigation": "home",
+          "panel": "home",
+          "card": "home",
+          "button": "home"
+        },
+        "colors": {
+          "text": "#ffffff",
+          "accent": "#ffec1a"
+        }
+      }
+    },
+    {
+      "id": "3d56140d-4425-448e-95ec-f35cfe9e7af9",
+      "name": "Create Glass",
+      "settings": {
+        "background": "artwork",
+        "selected": "create",
+        "edits": {
+          "home": {
+            "blur": 15,
+            "opacity": 30,
+            "tint": "#000000",
+            "borderOpacity": 10,
+            "glowColor": "#000000"
+          },
+          "create": {
+            "opacity": 25,
+            "blur": 5,
+            "borderOpacity": 20,
+            "borderColor": "#000000",
+            "tint": "#274663",
+            "glow": 100
+          }
+        },
+        "roles": {
+          "navigation": "create",
+          "panel": "create",
+          "card": "create",
+          "button": "create"
+        },
+        "colors": {
+          "text": "#ffffff",
+          "accent": "#ffec1a"
+        }
+      }
+    },
+    {
+      "id": "6283a22b-4e20-46d6-92d5-cc1e622d2e13",
+      "name": "update",
+      "settings": {
+        "background": "artwork",
+        "selected": "navigation",
+        "edits": {
+          "home": {
+            "blur": 15,
+            "opacity": 30,
+            "tint": "#000000",
+            "borderOpacity": 10,
+            "glowColor": "#000000"
+          },
+          "create": {
+            "opacity": 25,
+            "blur": 6,
+            "borderOpacity": 20,
+            "borderColor": "#000000",
+            "tint": "#597691",
+            "glow": 100
+          },
+          "navigation": {
+            "opacity": 90,
+            "blur": 20,
+            "tint": "#000000",
+            "shadow": 140,
+            "borderColor": "#b68f25",
+            "glow": 100,
+            "borderOpacity": 70
+          }
+        },
+        "roles": {
+          "navigation": "navigation",
+          "panel": "create",
+          "card": "home",
+          "button": "navigation"
+        },
+        "colors": {
+          "text": "#ffffff",
+          "accent": "#ffec1a"
+        }
+      }
+    },
+    {
+      "id": "e8a2aa83-22e8-45de-b42e-0d5b7aa0c59f",
+      "name": "update",
+      "settings": {
+        "background": "artwork",
+        "selected": "navigation",
+        "edits": {
+          "home": {
+            "blur": 15,
+            "opacity": 30,
+            "tint": "#000000",
+            "borderOpacity": 10,
+            "glowColor": "#000000"
+          },
+          "create": {
+            "opacity": 25,
+            "blur": 6,
+            "borderOpacity": 20,
+            "borderColor": "#000000",
+            "tint": "#597691",
+            "glow": 100
+          },
+          "navigation": {
+            "opacity": 90,
+            "blur": 20,
+            "tint": "#000000",
+            "shadow": 140,
+            "borderColor": "#b68f25",
+            "glow": 100,
+            "borderOpacity": 70
+          }
+        },
+        "roles": {
+          "navigation": "navigation",
+          "panel": "create",
+          "card": "home",
+          "button": "navigation"
+        },
+        "colors": {
+          "text": "#ffffff",
+          "accent": "#6a1aff"
+        }
+      }
+    }
+  ]
+}

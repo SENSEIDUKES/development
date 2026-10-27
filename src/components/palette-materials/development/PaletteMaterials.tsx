@@ -3,9 +3,10 @@ import { useLibraryAssets } from '@seihouse/library/presentation';
 import { MATERIALS, MaterialSurface, COLOR_GROUPS } from './samples';
 import {
   baseBlur, baseOpacity, baseTint, colorParts, decodeLooks, encodeLooks, freshSettings,
-  isColoredShadow, materialStyle, measureMaterial, readLooks, shadowLayers, writeLooks,
+  isColoredShadow, materialStyle, measureMaterial, shadowLayers, writeLooks,
   type MaterialEdit, type MaterialId, type MeasuredMaterial, type PaletteSettings, type SavedLook,
 } from './model';
+import { loadStartingLooks, startingLooks } from './starting-looks';
 import './palette-materials.css';
 
 type Measurements = Partial<Record<MaterialId, MeasuredMaterial>>;
@@ -28,12 +29,12 @@ function RecipeDetails({ base, source }: { base?: MeasuredMaterial; source: stri
 
 export function PaletteMaterials() {
   const { authImage } = useLibraryAssets();
-  const [settings, setSettings] = useState(freshSettings);
-  const [looks, setLooks] = useState<SavedLook[]>([]);
+  const [settings, setSettings] = useState(() => startingLooks().at(-1)?.settings ?? freshSettings());
+  const [looks, setLooks] = useState<SavedLook[]>(startingLooks);
   const looksRef = useRef(looks);
   looksRef.current = looks;
-  const [loadedId, setLoadedId] = useState('');
-  const [lookName, setLookName] = useState('');
+  const [loadedId, setLoadedId] = useState(() => startingLooks().at(-1)?.id ?? '');
+  const [lookName, setLookName] = useState(() => startingLooks().at(-1)?.name ?? '');
   const [message, setMessage] = useState('');
   const [storageError, setStorageError] = useState('');
   const [colorTarget, setColorTarget] = useState<'text' | 'accent'>('accent');
@@ -51,8 +52,17 @@ export function PaletteMaterials() {
   const dirty = loadedLook ? JSON.stringify(settings) !== JSON.stringify(loadedLook.settings) : Object.keys(settings.edits).length > 0;
 
   useEffect(() => {
-    try { setLooks(readLooks(window.localStorage)); }
-    catch (error) { setStorageError(`Saved looks could not be read. ${error instanceof Error ? error.message : 'Browser storage is unavailable.'} You can still experiment and export.`); }
+    try {
+      const { looks: available, warning } = loadStartingLooks(window.localStorage);
+      setLooks(available);
+      const latest = available.at(-1);
+      setSettings(latest ? clone(latest.settings) : freshSettings());
+      setLoadedId(latest?.id ?? '');
+      setLookName(latest?.name ?? '');
+      setStorageError(warning);
+    } catch {
+      setStorageError('Browser storage is unavailable. Your exported looks are available for this visit. Export before leaving.');
+    }
   }, []);
 
   useEffect(() => {

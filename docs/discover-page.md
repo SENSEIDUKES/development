@@ -116,9 +116,9 @@ in the app and `?preview=discover` in the Workshop. Every world on it is a sampl
 (`src/novel-expanded/discoverSamples.ts`); opening one says so.
 
 Discover uses a compact header, a persistent row of destinations and a left
-browsing rail beside the results. Stories, Creators, Codex and Lore remain the
-top layer. A separate **Novel / Manga / Game / Video** medium switcher sits
-directly below them, in the former Events position. Every medium uses the same
+browsing rail beside the results. **Novel / Manga / Game / Video** is the first
+navigation layer, with **Stories / Creators / Codex / Lore** directly underneath.
+Readers choose a medium, then what to explore within it. Every medium uses the same
 layout. Novel has the current sample catalogue; the other mediums show coming
 soon states until their catalogues are supplied. The `medium` address parameter
 keeps the selection across destinations, reload and browser Back.

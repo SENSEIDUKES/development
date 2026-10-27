@@ -40,7 +40,7 @@
 [data-discover] .discover-navigation a[aria-current='page']::after { content: ''; position: absolute; inset-inline: .5rem; bottom: -1px; height: 2px; background: var(--discover-gold); }
 [data-discover] .discover-navigation svg { flex-shrink: 0; width: 16px; height: 16px; }
 
-/* Medium is a separate choice below the four Discover destinations. */
+/* Choose the medium first, then a Discover destination below it. */
 [data-discover] .discover-medium-switcher { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: .375rem; padding: .25rem; border: 1px solid var(--discover-hairline); border-radius: .75rem; background: rgba(255,255,255,.025); }
 [data-discover] .discover-medium-switcher button { display: flex; align-items: center; justify-content: center; gap: .375rem; min-width: 0; min-height: 44px; padding: .375rem .125rem; border-radius: .5rem; font-size: .75rem; color: var(--discover-muted); }
 [data-discover] .discover-medium-switcher button svg { flex-shrink: 0; }

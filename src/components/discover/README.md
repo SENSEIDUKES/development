@@ -13,15 +13,15 @@ through the host's `onOpenWorld`.
 The page has a compact header, sticky destination links, and a left browsing
 rail beside the current results, including on phones. Stories and Creators
 offer Browse, Genres and Rankings; Codex offers Characters, Items and Rankings.
-Novel / Manga / Game / Video sits below this navigation as a separate medium
-switcher. Card columns follow their available panel width. The host owns the
+Novel / Manga / Game / Video sits first, with Stories / Creators / Codex /
+Lore underneath it. Card columns follow their available panel width. The host owns the
 selected medium and its address; catalogue content uses each world's declared
 format. Lore remains shared, with its local language and mode preserved.
 
 | Shelf | What it shows |
 | --- | --- |
-| Header and navigation | Discover, then Stories / Creators / Codex / Lore as native links with host navigation |
-| Medium | Novel / Manga / Game / Video below navigation; the same layout and honest upcoming states for unconnected catalogues |
+| Header and navigation | Discover, then the medium switcher, followed by Stories / Creators / Codex / Lore as native links |
+| Medium | Novel / Manga / Game / Video above section navigation; the same layout and honest upcoming states for unconnected catalogues |
 | Section controls | All / My updates, with search and Genre outside Lore; filters reset on destination changes |
 | Stories | Catalogue first, then New Chapters ordered by time, Featured and Fate Survival; tracked stories in My updates |
 | Creators | Host-supplied creators expanding to their story cards; followed creators in My updates |
@@ -52,6 +52,9 @@ fabricates a personal term list. See the direction document for
 mode behavior and translation-review limits.
 
 ## History
+
+- **2026-10-26 (hierarchy)** — Put the medium first and section navigation below
+  it: choose Novel, Manga, Game or Video, then Stories, Creators, Codex or Lore.
 
 - **2026-10-26 (medium switcher)** — Moved Events into Home's owner and replaced
   its Discover position with the four-medium switcher. Medium URLs preserve

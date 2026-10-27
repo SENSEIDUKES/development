@@ -79,6 +79,21 @@ export function Discover(props: DiscoverProps) {
         <h1 className="discover-title font-display font-bold">Discover</h1>
         {notice && <div className="discover-notice">{notice}</div>}
       </header>
+      <div role="group" aria-label="Medium" className="discover-medium-switcher">
+        {MEDIUMS.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            type="button"
+            aria-pressed={medium === id}
+            onClick={() => {
+              if (medium !== id) onMediumChange(id);
+            }}
+          >
+            <Icon aria-hidden="true" size={18} />
+            <span>{label}</span>
+          </button>
+        ))}
+      </div>
       <nav aria-label="Discover sections" className="discover-navigation">
         {SECTIONS.map(({ id, label, icon: Icon }) => (
           <a
@@ -96,21 +111,6 @@ export function Discover(props: DiscoverProps) {
           </a>
         ))}
       </nav>
-      <div role="group" aria-label="Medium" className="discover-medium-switcher">
-        {MEDIUMS.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            type="button"
-            aria-pressed={medium === id}
-            onClick={() => {
-              if (medium !== id) onMediumChange(id);
-            }}
-          >
-            <Icon aria-hidden="true" size={18} />
-            <span>{label}</span>
-          </button>
-        ))}
-      </div>
       <DiscoverContent key={section === 'lore' ? section : `${section}:${medium}`} {...props} />
     </div>
   );

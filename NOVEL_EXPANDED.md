@@ -571,8 +571,8 @@ Update it whenever it changes.
     defaults. The same Discover Workshop preview opens the real app surface.
     The starter translations have not had professional editorial review.
   - **Discover navigation** (2026-10-26) is Stories, Creators, Codex, Lore.
-    These remain the top layer across media; a separate Novel / Manga / Game /
-    Video switcher below them retains its selection in the address. Novel has
+    Novel / Manga / Game / Video is the first navigation layer, followed by
+    Stories / Creators / Codex / Lore. The medium stays selected in the address. Novel has
     the sample catalogue; the other mediums use the same layout with coming
     soon states. Lore stays shared. A compact left rail offers Browse, Genres and Rankings for Stories
     and Creators, Characters, Items and Rankings for Codex, and encyclopedia

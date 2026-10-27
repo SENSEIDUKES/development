@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import type { DiscoverMedium } from '@seihouse/library/discover';
 
 /**
  * The app's pages: the four of its spine, in the order a reader meets them,
@@ -18,7 +19,7 @@ import { useCallback, useEffect, useState } from 'react';
  */
 export type NovelExpandedRoute =
   | { page: 'home' }
-  | { page: 'discover'; section?: 'creators' | 'codex'; lore?: string; query?: string; category?: string }
+  | { page: 'discover'; section?: 'creators' | 'codex'; medium?: DiscoverMedium; lore?: string; query?: string; category?: string }
   | { page: 'create'; seedId?: string }
   | { page: 'story'; storyId: string }
   | { page: 'read'; storyId: string }
@@ -35,8 +36,10 @@ export function parseRoute(search: string): NovelExpandedRoute {
   if (query.get('page') === 'discover') {
     const lore = query.get('lore')?.trim();
     const section = query.get('section');
-    return lore ? { page: 'discover', lore, ...(query.get('q') ? { query: query.get('q')! } : {}), ...(query.get('category') ? { category: query.get('category')! } : {}) }
-      : section === 'creators' || section === 'codex' ? { page: 'discover', section } : { page: 'discover' };
+    const medium = query.get('medium');
+    const base: Extract<NovelExpandedRoute, { page: 'discover' }> = { page: 'discover', ...((medium === 'novel' || medium === 'manga' || medium === 'game' || medium === 'video') ? { medium } : {}) };
+    return lore ? { ...base, lore, ...(query.get('q') ? { query: query.get('q')! } : {}), ...(query.get('category') ? { category: query.get('category')! } : {}) }
+      : section === 'creators' || section === 'codex' ? { ...base, section } : base;
   }
   if (query.get('page') === 'create') {
     const seedId = query.get('seed')?.trim();
@@ -52,8 +55,7 @@ export function parseRoute(search: string): NovelExpandedRoute {
 export function routeSearch(route: NovelExpandedRoute): string {
   switch (route.page) {
     case 'home': return '';
-    case 'discover': return route.lore ? `?${new URLSearchParams({ page: 'discover', lore: route.lore, ...(route.query ? { q: route.query } : {}), ...(route.category ? { category: route.category } : {}) })}`
-      : route.section ? `?${new URLSearchParams({ page: 'discover', section: route.section })}` : '?page=discover';
+    case 'discover': return `?${new URLSearchParams({ page: 'discover', ...(route.lore ? { lore: route.lore, ...(route.query ? { q: route.query } : {}), ...(route.category ? { category: route.category } : {}) } : route.section ? { section: route.section } : {}), ...(route.medium ? { medium: route.medium } : {}) })}`;
     case 'create': return route.seedId ? `?${new URLSearchParams({ page: 'create', seed: route.seedId })}` : '?page=create';
     case 'story': return `?story=${encodeURIComponent(route.storyId)}`;
     case 'read': return `?story=${encodeURIComponent(route.storyId)}&read=1`;

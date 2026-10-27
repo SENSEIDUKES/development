@@ -11,7 +11,6 @@ import { useLibraryBottomClearance } from '@seihouse/library/shell';
 import { AppShell } from './AppShell';
 import {
   DISCOVER_RANKING_BOARDS,
-  DISCOVER_SAMPLE_EVENTS,
   DISCOVER_SAMPLE_FATE_SURVIVAL,
   DISCOVER_SAMPLE_FEATURED,
   DISCOVER_SAMPLE_RELEASES,
@@ -59,10 +58,10 @@ export function DiscoverPage({
   };
   const loreRoute = (location?: DiscoverLoreLocation): Extract<NovelExpandedRoute, { page: 'discover' }> =>
     location
-      ? { page: 'discover', lore: location.term ?? 'index', query: location.query, category: location.category }
-      : { page: 'discover' };
+      ? { page: 'discover', lore: location.term ?? 'index', query: location.query, category: location.category, medium: route.medium }
+      : { page: 'discover', medium: route.medium };
   const sectionRoute = (section: DiscoverSection): Extract<NovelExpandedRoute, { page: 'discover' }> =>
-    section === 'lore' ? loreRoute({}) : section === 'stories' ? { page: 'discover' } : { page: 'discover', section };
+    section === 'lore' ? loreRoute({}) : section === 'stories' ? { page: 'discover', medium: route.medium } : { page: 'discover', section, medium: route.medium };
   return (
     <AppShell
       route={{ page: 'discover' }}
@@ -74,6 +73,8 @@ export function DiscoverPage({
       <div className="mx-auto w-full max-w-7xl px-4 py-4" data-testid="novel-expanded-discover">
         <Discover
           section={route.lore ? 'lore' : (route.section ?? 'stories')}
+          medium={route.medium ?? 'novel'}
+          onMediumChange={medium => navigate({ ...route, medium: medium === 'novel' ? undefined : medium })}
           sectionHref={(section) => routeHref(sectionRoute(section))}
           onSectionChange={(section) => navigate(sectionRoute(section))}
           loreArticle={Boolean(route.lore && route.lore !== 'index')}
@@ -103,7 +104,6 @@ export function DiscoverPage({
           followedCreatorIds={DISCOVER_SAMPLE_FOLLOWED_CREATORS}
           trackedCodexIds={DISCOVER_SAMPLE_TRACKED_CODEX}
           rankingBoards={DISCOVER_RANKING_BOARDS}
-          events={DISCOVER_SAMPLE_EVENTS}
           onOpenWorld={open}
           notice={
             route.lore ? undefined : (

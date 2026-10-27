@@ -40,20 +40,14 @@
 [data-discover] .discover-navigation a[aria-current='page']::after { content: ''; position: absolute; inset-inline: .5rem; bottom: -1px; height: 2px; background: var(--discover-gold); }
 [data-discover] .discover-navigation svg { flex-shrink: 0; width: 16px; height: 16px; }
 
-/* One quiet event row opens the existing event cards on demand. */
-[data-discover] .discover-events-strip { border-bottom: 1px solid var(--discover-hairline); }
-[data-discover] .discover-events-strip > summary { display: flex; align-items: center; gap: .5rem; min-height: 44px; padding: .375rem .25rem .625rem; cursor: pointer; list-style: none; color: var(--discover-gold); }
-[data-discover] .discover-events-strip > summary::-webkit-details-marker { display: none; }
-[data-discover] .discover-events-label { font-size: .75rem; font-weight: 650; }
-[data-discover] .discover-events-preview { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--discover-muted); font-size: .8125rem; padding-inline-start: .375rem; }
-[data-discover] .discover-events-more { color: var(--discover-muted); font-size: .6875rem; }
-[data-discover] .discover-events-strip > summary > svg { flex-shrink: 0; }
-[data-discover] .discover-events-strip[open] > summary > svg:last-child { transform: rotate(180deg); }
-[data-discover] .discover-event { position: relative; display: flex; min-height: 7rem; border-radius: .625rem; overflow: hidden; border: 1px solid var(--discover-hairline); background: var(--discover-glass); }
-[data-discover] .discover-event-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .55; }
-[data-discover] .discover-event-body { position: relative; display: grid; align-content: end; gap: .25rem; width: 100%; padding: .875rem; background: linear-gradient(0deg,rgba(5,5,5,.92),rgba(5,5,5,.15) 85%); }
-[data-discover] .discover-event-title { color: var(--discover-ink); font-size: 1.125rem; font-weight: 700; }
-[data-discover] .discover-event-description { color: rgba(243,238,231,.74); font-size: .8125rem; line-height: 1.5; }
+/* Medium is a separate choice below the four Discover destinations. */
+[data-discover] .discover-medium-switcher { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: .375rem; padding: .25rem; border: 1px solid var(--discover-hairline); border-radius: .75rem; background: rgba(255,255,255,.025); }
+[data-discover] .discover-medium-switcher button { display: flex; align-items: center; justify-content: center; gap: .375rem; min-width: 0; min-height: 44px; padding: .375rem .125rem; border-radius: .5rem; font-size: .75rem; color: var(--discover-muted); }
+[data-discover] .discover-medium-switcher button svg { flex-shrink: 0; }
+[data-discover] .discover-medium-switcher button[aria-pressed='true'] { color: var(--discover-gold); background: rgba(233,211,139,.1); box-shadow: inset 0 0 0 1px rgba(233,211,139,.22); }
+[data-discover] .discover-medium-switcher button:focus-visible { outline: 2px solid var(--discover-accent); outline-offset: 2px; }
+[data-discover] .discover-medium-note { color: var(--discover-muted); font-size: .75rem; }
+@media (max-width: 359px) { [data-discover] .discover-medium-switcher button { flex-direction: column; gap: .25rem; } }
 
 /* Full-width search, then a narrow view rail alongside the current results. */
 [data-discover] .discover-content { display: grid; grid-template-columns: minmax(0,1fr); gap: .875rem; min-width: 0; scroll-margin-block-start: 4rem; }
@@ -87,7 +81,6 @@
 [data-discover] .discover-rail > li { min-width: 0; scroll-snap-align: start; }
 [data-discover] .discover-rail--featured { grid-auto-columns: 100%; }
 [data-discover] .discover-rail--cards { grid-auto-columns: min(10.5rem,75%); }
-[data-discover] .discover-rail--events { grid-auto-columns: min(22rem,88%); }
 [data-discover] .discover-list, [data-discover] .discover-ranking-list { display: grid; grid-template-columns: minmax(0,1fr); list-style: none; }
 [data-discover] :is(.discover-list,.discover-ranking-list) > li { min-width: 0; border-bottom: 1px solid var(--discover-hairline); }
 [data-discover] .discover-ranking-kind { color: var(--discover-gold); font-size: .75rem; }
@@ -119,7 +112,7 @@
 [data-discover] .discover-fate-copy { display: grid; gap: .5rem; max-width: 36rem; }
 [data-discover] .discover-fate-title { color: var(--discover-ink); font-size: 1.5rem; font-weight: 700; line-height: 1.2; }
 [data-discover] .discover-fate-lede { color: rgba(243,238,231,.74); font-size: .875rem; line-height: 1.6; }
-[data-discover] :is(.discover-navigation a,.discover-view-rail button,.discover-segmented button,.discover-directory-entry summary,.discover-events-strip > summary,.discover-sample-notice > summary,.discover-genre-grid button,.discover-genre-select select):focus-visible { outline: 2px solid var(--discover-accent); outline-offset: 3px; border-radius: .5rem; }
+[data-discover] :is(.discover-navigation a,.discover-view-rail button,.discover-segmented button,.discover-directory-entry summary,.discover-sample-notice > summary,.discover-genre-grid button,.discover-genre-select select):focus-visible { outline: 2px solid var(--discover-accent); outline-offset: 3px; border-radius: .5rem; }
 @container (min-width: 260px) { [data-discover] .discover-genre-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @container (min-width: 440px) {
   [data-discover] .discover-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
@@ -142,7 +135,6 @@
   [data-discover] .discover-browser { grid-template-columns: 8rem minmax(0,1fr); gap: 1.25rem; }
   [data-discover] .discover-main { padding-inline-start: 1.25rem; }
   [data-discover] .discover-view-rail button { flex-direction: row; justify-content: start; gap: .75rem; min-height: 3.25rem; padding-inline: .75rem; font-size: .8125rem; }
-  [data-discover] .discover-rail--events { grid-auto-columns: calc((100% - .875rem) / 2); }
 }
 @media (max-width: 359px) { [data-discover] .discover-navigation a { flex-direction: column; gap: .25rem; font-size: .75rem; } }
 @media (prefers-reduced-motion: reduce) { [data-discover] * { transition: none !important; } }

@@ -571,11 +571,13 @@ Update it whenever it changes.
     defaults. The same Discover Workshop preview opens the real app surface.
     The starter translations have not had professional editorial review.
   - **Discover navigation** (2026-10-26) is Stories, Creators, Codex, Lore.
-    These remain the top layer across media; a separate media selector is
-    undecided. A compact left rail offers Browse, Genres and Rankings for Stories
+    These remain the top layer across media; a separate Novel / Manga / Game /
+    Video switcher below them retains its selection in the address. Novel has
+    the sample catalogue; the other mediums use the same layout with coming
+    soon states. Lore stays shared. A compact left rail offers Browse, Genres and Rankings for Stories
     and Creators, Characters, Items and Rankings for Codex, and encyclopedia
     categories for Lore. The story catalogue appears first. Lore opens that
-    encyclopedia directly. Events expand from one row near the top; the other
+    encyclopedia directly. Events now expand from one row on Home, above Featured; the other
     three destinations have genre filtering and relevant Heavenly Rankings.
     All / My updates follows each section's sample catalogue. Creators expand
     to their stories, and Codex is split into Characters and Items. Public

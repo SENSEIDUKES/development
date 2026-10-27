@@ -19,6 +19,11 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 
 ## Boundary and ownership
 
+Home includes the expandable Events notice above Featured. `HomeEvents` and its
+display contract live in this Home owner; NovelExpanded supplies the Coming soon
+sample announcements from `homeEvents.ts`. Discover no longer owns or displays
+Events. The Home Workshop's app iframe shows this same placement.
+
 The Home workspace's **Development** pane loads the actual NovelExpanded `/app/`
 document at the selected mobile, tablet or laptop viewport. This reuses
 `src/novel-expanded/HomePage.tsx` and `AppShell.tsx`, so the wordmark, footer,
@@ -99,6 +104,9 @@ The build, focused navigation/header/profile/Workshop tests, package boundary ch
 
 ## Workshop history
 
+- **2026-10-26:** Moved Events from Discover to Home above Featured, retaining
+  the compact expandable notice and Coming soon announcements. The Home app
+  and existing Workshop iframe share the same Home-owned component.
 - **2026-10-10:** Home Development now opens `/app/` directly, eliminating the separate simulated shell that had drifted from Expanded Novels. Renamed the existing Workshop card to Home, retained its stable route and Original Reference, and documented the same-change app/Workshop synchronization rule in `AGENTS.md`.
 
 - **2026-10-09:** Featured, refined: one fixed gold **Featured** name with its slide dots in the top-left (the slides no longer carry their own label; "Featured Ascension" is gone), small ghost-glass arrows on the slide's edges for pointers, and a sideways swipe on touch (a swipe never opens the card). Carve New Destiny wears the NovelExpanded app's dark night glass with its spectral rim and halo, so a bright backdrop cannot wash it gold.

@@ -6,20 +6,22 @@ The Library's Discover page, Expanded Novels' front door. Direction:
 `Discover` (`@seihouse/library/discover`) draws the page over host-supplied data:
 worlds (`HomeWorld`, shown on the shared `WorldCard`), creator and Codex directory
 projections, releases, section-specific follows, Fate Survival worlds,
-Heavenly Rankings boards and Events. It never ranks or
+Heavenly Rankings boards and the selected medium. It never ranks or
 recommends: New Chapters orders by release time alone, and Rankings keep the host's order. Every world opens
 through the host's `onOpenWorld`.
 
 The page has a compact header, sticky destination links, and a left browsing
 rail beside the current results, including on phones. Stories and Creators
 offer Browse, Genres and Rankings; Codex offers Characters, Items and Rankings.
-The media selector is a separate, undecided future control; it is not part of
-this navigation. Card columns follow their available panel width.
+Novel / Manga / Game / Video sits below this navigation as a separate medium
+switcher. Card columns follow their available panel width. The host owns the
+selected medium and its address; catalogue content uses each world's declared
+format. Lore remains shared, with its local language and mode preserved.
 
 | Shelf | What it shows |
 | --- | --- |
 | Header and navigation | Discover, then Stories / Creators / Codex / Lore as native links with host navigation |
-| Events | One expandable row below navigation; opens the Coming soon cards |
+| Medium | Novel / Manga / Game / Video below navigation; the same layout and honest upcoming states for unconnected catalogues |
 | Section controls | All / My updates, with search and Genre outside Lore; filters reset on destination changes |
 | Stories | Catalogue first, then New Chapters ordered by time, Featured and Fate Survival; tracked stories in My updates |
 | Creators | Host-supplied creators expanding to their story cards; followed creators in My updates |
@@ -51,6 +53,10 @@ mode behavior and translation-review limits.
 
 ## History
 
+- **2026-10-26 (medium switcher)** — Moved Events into Home's owner and replaced
+  its Discover position with the four-medium switcher. Medium URLs preserve
+  selection across sections and reload; all source-story projections respect
+  the medium, while Lore remains a shared reference.
 - **2026-10-26 (browsing rail)** — Kept the four top destinations and moved
   browsing choices into a left rail. Added genre tiles and dedicated rankings,
   put the story catalogue first, condensed the header and Events, and retained

@@ -1,4 +1,4 @@
-import type { DiscoverCodexEntry, DiscoverCreator, DiscoverEvent, DiscoverRankingBoard, DiscoverRelease } from '@seihouse/library/discover';
+import type { DiscoverCodexEntry, DiscoverCreator, DiscoverRankingBoard, DiscoverRelease } from '@seihouse/library/discover';
 import type { HomeWorld } from '@seihouse/library/home';
 
 /**
@@ -104,10 +104,3 @@ export const DISCOVER_SAMPLE_CODEX: readonly DiscoverCodexEntry[] = [
 
 export const DISCOVER_SAMPLE_FOLLOWED_CREATORS = ['sample-creator-sensei', 'sample-creator-rook'];
 export const DISCOVER_SAMPLE_TRACKED_CODEX = ['sample-character-ye-chen', 'sample-character-anya', 'sample-item-lotus'];
-
-export const DISCOVER_SAMPLE_EVENTS: readonly DiscoverEvent[] = [
-  { id: 'mystery-week', title: 'Mystery Week', when: 'Coming soon', imageUrl: '/manifest-backdrops/immortal-land-3.jpg',
-    description: 'Seven days of locked rooms, lies and lost heirs, for creators and readers.' },
-  { id: 'dark-fantasy-week', title: 'Dark Fantasy Week', when: 'Coming soon', imageUrl: '/manifest-backdrops/immortal-land-4.jpg',
-    description: 'Worlds where the light costs something.' },
-];

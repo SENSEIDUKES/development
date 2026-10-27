@@ -904,6 +904,46 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(window.history.length).toBe(entries);
   });
 
+  it('moves Events to Home and retains the selected Discover medium through tabs and Lore', async () => {
+    await render(appServices(scriptedWriter().writer));
+    const events = document.querySelector<HTMLDetailsElement>('[data-home-events]')!;
+    expect(events.open).toBe(false);
+    expect(events.compareDocumentPosition(document.querySelector('[data-home-featured]')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    await click(events.querySelector('summary'), 'Home Events');
+    expect(events.open).toBe(true);
+    expect(events.textContent).toContain('Mystery Week');
+    expect(events.textContent).toContain('Coming soon');
+    await click(buttonByText('Discover', strip()!), 'Discover');
+    expect(document.querySelector('[data-home-events]')).toBeNull();
+    expect(document.querySelector('[data-testid="novel-expanded-discover"]')?.textContent).not.toContain('Mystery Week');
+    const medium = () => document.querySelector('.discover-medium-switcher')!;
+    await click(buttonByText('Manga', medium()), 'Manga');
+    expect(address()).toBe('/app/?page=discover&medium=manga');
+    expect(document.body.textContent).toContain('Manga catalogue coming soon');
+    await click(document.querySelector('.discover-navigation a[href*="section=creators"]'), 'Creators');
+    expect(address()).toBe('/app/?page=discover&section=creators&medium=manga');
+    expect(document.querySelector('ul[aria-label="Creators"]')).toBeNull();
+    await click(document.querySelector('.discover-navigation a[href*="lore=index"]'), 'Lore');
+    const encyclopedia = () => document.querySelector('[data-encyclopedia]')!;
+    await typeInto(encyclopedia().querySelector('input')!, 'Origin Infant');
+    await click(encyclopedia().querySelector('.encyclopedia-result'), 'Nascent Soul');
+    expect(new URLSearchParams(window.location.search).get('medium')).toBe('manga');
+    const language = encyclopedia().querySelector('select')!;
+    await act(async () => {
+      language.value = 'ja'; language.dispatchEvent(new Event('change', { bubbles: true }));
+      await import('../components/discover/shared/loreLocales').then(module => module.loadLoreLocale('ja'));
+    });
+    await click(buttonByText('Video', medium()), 'Video');
+    expect(new URLSearchParams(window.location.search).get('medium')).toBe('video');
+    expect(new URLSearchParams(window.location.search).get('lore')).toBe('nascent-soul');
+    expect(new URLSearchParams(window.location.search).get('q')).toBe('Origin Infant');
+    expect(encyclopedia().querySelector('select')?.value).toBe('ja');
+    await click(document.querySelector('.discover-navigation a[href*="page=discover&medium=video"]'), 'Stories');
+    await click(buttonByText('Novel', medium()), 'Novel');
+    expect(address()).toBe('/app/?page=discover');
+    expect(document.querySelector('ul[aria-label="Stories"]')).toBeTruthy();
+  });
+
   it('keeps encyclopedia articles, alias searches and reading defaults inside Discover', async () => {
     const services = appServices(scriptedWriter().writer);
     services.profile.save({ defaultReadingLanguage: 'ja', defaultChapterWritingStyle: 'Easy Read' });

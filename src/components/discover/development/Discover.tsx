@@ -1,5 +1,18 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
-import { BookOpen, ChevronDown, LayoutGrid, Search, Shapes, Sparkles, Swords, Trophy, Users } from 'lucide-react';
+import {
+  BookOpen,
+  ChevronDown,
+  Film,
+  Gamepad2,
+  LayoutGrid,
+  PanelsTopLeft,
+  Search,
+  Shapes,
+  Sparkles,
+  Swords,
+  Trophy,
+  Users,
+} from 'lucide-react';
 import { LibraryPanel, LibraryDiscoveryIcon } from '@seihouse/library-ui';
 import { SEIEmptyState } from '@seihouse/ui';
 import type { HomeWorld } from '../../light-novels-home/shared/homeContracts';
@@ -11,6 +24,12 @@ import './discover.css';
 
 type Feed = 'all' | 'mine';
 type BrowseView = 'browse' | 'genres' | 'rankings';
+const MEDIUMS = [
+  { id: 'novel', label: 'Novel', icon: BookOpen },
+  { id: 'manga', label: 'Manga', icon: PanelsTopLeft },
+  { id: 'game', label: 'Game', icon: Gamepad2 },
+  { id: 'video', label: 'Video', icon: Film },
+] as const;
 const SECTIONS = [
   { id: 'stories', label: 'Stories', icon: BookOpen },
   { id: 'creators', label: 'Creators', icon: Users },
@@ -36,18 +55,24 @@ const matchesText = (query: string, ...values: (string | undefined)[]) =>
 
 /** One Discover shell. Destinations and catalogue truth stay with the host. */
 export function Discover(props: DiscoverProps) {
-  const { section, sectionHref, onSectionChange, events = [], notice, loreArticle } = props;
+  const { section, sectionHref, onSectionChange, medium, onMediumChange, notice, loreArticle } = props;
   const surface = useRef<HTMLDivElement>(null);
   const previousSection = useRef(section);
   const previousArticle = useRef(loreArticle);
+  const previousMedium = useRef(medium);
   useEffect(() => {
     // Scroll the surface, not the sticky navigation's current on-screen position.
-    if (previousSection.current !== section || (previousArticle.current && !loreArticle)) {
+    if (
+      previousSection.current !== section ||
+      previousMedium.current !== medium ||
+      (previousArticle.current && !loreArticle)
+    ) {
       surface.current?.scrollIntoView?.({ block: 'start', behavior: 'instant' });
     }
     previousSection.current = section;
     previousArticle.current = loreArticle;
-  }, [section, loreArticle]);
+    previousMedium.current = medium;
+  }, [section, loreArticle, medium]);
   return (
     <div ref={surface} data-discover className="discover discover-hub pb-12 text-signal">
       <header className="discover-header">
@@ -71,38 +96,22 @@ export function Discover(props: DiscoverProps) {
           </a>
         ))}
       </nav>
-      {events.length > 0 && (
-        <details className="discover-events-strip">
-          <summary>
-            <Sparkles aria-hidden="true" size={16} />
-            <span className="discover-events-label">Events</span>
-            <span className="discover-events-preview">{events[0].title}</span>
-            {events.length > 1 && <span className="discover-events-more">+{events.length - 1}</span>}
-            <ChevronDown aria-hidden="true" size={16} />
-          </summary>
-          <ul className="discover-rail discover-rail--events" aria-label="Events">
-            {events.map((event) => (
-              <li key={event.id} className="discover-event">
-                {event.imageUrl && (
-                  <img
-                    src={event.imageUrl}
-                    alt=""
-                    className="discover-event-art"
-                    loading="lazy"
-                    referrerPolicy="no-referrer"
-                  />
-                )}
-                <div className="discover-event-body">
-                  <span className="discover-eyebrow">{event.when}</span>
-                  <h3 className="discover-event-title font-display">{event.title}</h3>
-                  <p className="discover-event-description">{event.description}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </details>
-      )}
-      <DiscoverContent key={section} {...props} />
+      <div role="group" aria-label="Medium" className="discover-medium-switcher">
+        {MEDIUMS.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            type="button"
+            aria-pressed={medium === id}
+            onClick={() => {
+              if (medium !== id) onMediumChange(id);
+            }}
+          >
+            <Icon aria-hidden="true" size={18} />
+            <span>{label}</span>
+          </button>
+        ))}
+      </div>
+      <DiscoverContent key={section === 'lore' ? section : `${section}:${medium}`} {...props} />
     </div>
   );
 }
@@ -110,8 +119,9 @@ export function Discover(props: DiscoverProps) {
 /** Filters reset on a destination change; the host's route owns the destination. */
 function DiscoverContent({
   section,
-  worlds,
-  creators = [],
+  medium,
+  worlds: allWorlds,
+  creators: allCreators = [],
   codexEntries = [],
   releases,
   trackedWorldIds,
@@ -138,7 +148,10 @@ function DiscoverContent({
     contentTop.current?.scrollIntoView?.({ block: 'start', behavior: 'instant' });
   };
   const search = query.trim().toLocaleLowerCase();
+  const mediumLabel = MEDIUMS.find((option) => option.id === medium)!.label;
+  const worlds = allWorlds.filter((world) => world.format?.trim().toLowerCase() === medium);
   const worldById = new Map(worlds.map((world) => [world.id, world]));
+  const creators = allCreators.filter((creator) => creator.worldIds.some((id) => worldById.has(id)));
   const tracked = new Set(trackedWorldIds ?? []);
   const followed = new Set(followedCreatorIds ?? []);
   const trackedEntries = new Set(trackedCodexIds ?? []);
@@ -261,6 +274,7 @@ function DiscoverContent({
     <div ref={contentTop} className="discover-content" data-discover-section={section}>
       {section === 'lore' ? (
         <>
+          <p className="discover-medium-note">Lore is shared across all mediums.</p>
           {showFeed && <div className="discover-feed-row">{feedControl}</div>}
           {renderLore(feed === 'mine')}
         </>
@@ -345,7 +359,27 @@ function DiscoverContent({
             </div>
             <div id={`${ids}-results`} className="discover-main">
               {showFeed && <div className="discover-feed-row">{feedControl}</div>}
-              {view === 'genres' ? (
+              {worlds.length === 0 && medium !== 'novel' ? (
+                <Shelf
+                  id={`${ids}-upcoming`}
+                  title={
+                    view === 'rankings'
+                      ? 'Heavenly Rankings'
+                      : view === 'genres'
+                        ? 'Explore genres'
+                        : section === 'codex'
+                          ? codexKind === 'characters'
+                            ? 'Characters'
+                            : 'Items'
+                          : sectionName
+                  }
+                >
+                  <Empty
+                    title={`${mediumLabel} catalogue coming soon`}
+                    description={`There are no ${mediumLabel.toLowerCase()} stories, creators or Codex entries to browse yet. Choose Novel to explore the current catalogue.`}
+                  />
+                </Shelf>
+              ) : view === 'genres' ? (
                 <Shelf
                   id={`${ids}-genres`}
                   title="Explore genres"

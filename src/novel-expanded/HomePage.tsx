@@ -3,6 +3,7 @@ import { MainLibraryHomeInsights, type DaoSparkHost } from '@seihouse/library/sh
 import type { UserProfile } from '@seihouse/library/profile';
 import { AppShell } from './AppShell';
 import type { Navigate } from './routes';
+import { HOME_SAMPLE_EVENTS } from './homeEvents';
 
 const EMPTY_LIST = {
   title: 'Your stories appear here',
@@ -29,6 +30,7 @@ export function HomePage({ worlds, navigate, readerProfile, sparks }: {
     headerCenter={<MainLibraryHomeInsights everyWidth adapter={{ copyText, daoSparks: sparks }} />}>
     <div className="mx-auto w-full max-w-7xl px-4 py-8" data-testid="novel-expanded-home">
       <LightNovelsHome worlds={worlds} emptyState={EMPTY_LIST}
+        events={HOME_SAMPLE_EVENTS}
         featuredWorlds={worlds.filter(world => world.imageUrl.trim()).slice(0, FEATURED_STORIES)}
         onCreateStory={() => navigate({ page: 'create' })}
         onOpenWorld={storyId => navigate({ page: 'story', storyId })} />

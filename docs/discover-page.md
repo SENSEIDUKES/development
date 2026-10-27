@@ -73,8 +73,8 @@ both something to chase.
 - **Rankings:** leaderboards like Webtoon's character rankings, extended to
   items, beasts, pets and Familiars. Cultivation stories already run on ranking
   lists, so the audience knows this language. Working name: Heavenly Rankings.
-- **Events:** themed challenges such as Mystery Week or Dark Fantasy Week, for
-  creators and readers.
+- **Events (on Home):** themed challenges such as Mystery Week or Dark Fantasy
+  Week, for creators and readers.
 
 ## Platform guardrails Discover relies on
 
@@ -116,15 +116,18 @@ in the app and `?preview=discover` in the Workshop. Every world on it is a sampl
 (`src/novel-expanded/discoverSamples.ts`); opening one says so.
 
 Discover uses a compact header, a persistent row of destinations and a left
-browsing rail beside the results. The same layout is intended for every media
-format. A separate format-switching control is still undecided and is not added
-here; Stories, Creators, Codex and Lore remain the top layer.
+browsing rail beside the results. Stories, Creators, Codex and Lore remain the
+top layer. A separate **Novel / Manga / Game / Video** medium switcher sits
+directly below them, in the former Events position. Every medium uses the same
+layout. Novel has the current sample catalogue; the other mediums show coming
+soon states until their catalogues are supplied. The `medium` address parameter
+keeps the selection across destinations, reload and browser Back.
 
 - **Navigation:** Stories | Creators | Codex | Lore, in that order. Stories
   is the default; Creators and Codex have reloadable `section` addresses. Lore
   links directly to the existing encyclopedia at `?page=discover&lore=index`.
-- **Events** sit directly below that navigation as one expandable row across all
-  four destinations. Opening it reveals the Coming soon event cards.
+- **Events** have moved to Home, above Featured, as an expandable row with the
+  existing Coming soon event cards. Discover no longer displays them.
 - **All / My updates** follows the selected section: stories use tracked series,
   creators use followed creators, and Codex uses tracked entries. These follows
   are host-supplied samples. Lore's My updates explains that term tracking is
@@ -134,6 +137,10 @@ here; Stories, Creators, Codex and Lore remain the top layer.
 - **Search and Genre** filter Stories, Creators and Codex. Creator genres come
   from their listed stories; Codex genres come from their source stories.
   Changing the main destination resets its temporary filters.
+  Changing medium also resets those filters. Stories, creator source stories,
+  Codex entries, releases and rankings are restricted to the selected medium.
+  Lore is shared across all mediums and preserves its language, Reading Mode
+  and article/search context when the medium changes.
 - **Stories and Creators** share Browse, Genres and Rankings in the left rail.
   Genres shows cover-backed tiles with counts for the current search and feed;
   choosing one opens that genre's catalogue. The rail stays beside the content

@@ -6,6 +6,7 @@ import { SEIFilterChip, SEISelect, SEIEmptyState } from '@seihouse/ui';
 import type { LightNovelsHomeProps } from '../shared/homeContracts';
 import { WorldCard } from '../../world-card/development/WorldCard';
 import { WorldCardFeature } from '../../world-card/development/WorldCardFeature';
+import { HomeEvents } from './HomeEvents';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { LibraryDiscoveryIcon as SENDiscoveryIcon, LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
 import '../shared/home.css';
@@ -15,7 +16,7 @@ const FEATURE_SLIDE_MS = 8000;
 /** How far a finger must travel sideways before Featured turns. */
 const SWIPE_PX = 40;
 
-export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWorld, emptyState, featuredWorlds = [], children }: LightNovelsHomeProps) {
+export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWorld, emptyState, featuredWorlds = [], events = [], children }: LightNovelsHomeProps) {
   // Featured: the Carve New Destiny slide first, then each featured world's Feature card.
   const slideCount = 1 + featuredWorlds.length;
   const [slide, setSlide] = useState(0);
@@ -103,6 +104,7 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
       transition={{ duration: 0.3 }}
       className="space-y-12 pb-10"
     >
+      <HomeEvents events={events} />
       <section aria-roledescription="carousel" aria-label="Featured" className="home-featured" data-home-featured
         onPointerEnter={() => setSlidesHeld(true)} onPointerLeave={() => setSlidesHeld(false)}
         onFocus={() => setSlidesHeld(true)} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setSlidesHeld(false); }}

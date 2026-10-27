@@ -7,6 +7,7 @@ export interface MaterialEdit {
   tint?: string;
   opacity?: number;
   blur?: number;
+  borderGlow?: 'original' | 'reader';
   borderColor?: string;
   borderOpacity?: number;
   shadow?: number;
@@ -72,7 +73,7 @@ export function isColoredShadow(shadow: string) {
 }
 
 /** Override only what the owner touched; untouched samples keep their canonical CSS. */
-export function materialStyle(base: MeasuredMaterial | undefined, edit: MaterialEdit = {}): CSSProperties {
+export function materialStyle(base: MeasuredMaterial | undefined, edit: MaterialEdit = {}, reader?: MeasuredMaterial): CSSProperties {
   if (!base) return {};
   const style: CSSProperties = {};
   if (edit.tint !== undefined || edit.opacity !== undefined) {
@@ -111,6 +112,14 @@ export function materialStyle(base: MeasuredMaterial | undefined, edit: Material
     }
     style.boxShadow = layers.join(', ') || 'none';
   }
+  if (edit.borderGlow === 'reader' && reader) {
+    style.borderColor = reader.borderColor;
+    style.borderStyle = 'solid';
+    style.borderWidth = reader.borderWidth;
+    const shadows = shadowLayers(style.boxShadow as string ?? base.boxShadow).filter(layer => !layer.includes('inset'));
+    const light = shadowLayers(reader.boxShadow).filter(layer => layer.includes('inset'));
+    style.boxShadow = [...light, ...shadows].join(', ') || 'none';
+  }
   return style;
 }
 
@@ -123,7 +132,7 @@ function validSettings(value: unknown): value is PaletteSettings {
     || !isRecord(value.roles) || !['navigation', 'panel', 'card', 'button'].every(key => isMaterial((value.roles as Record<string, unknown>)[key]))
     || !isRecord(value.colors) || !isColor(value.colors.text) || !isColor(value.colors.accent) || !isRecord(value.edits)) return false;
   return Object.entries(value.edits).every(([id, edit]) => isMaterial(id) && isRecord(edit) && Object.entries(edit).every(([key, v]) =>
-    ['tint', 'borderColor', 'glowColor'].includes(key) ? isColor(v) : Object.hasOwn(ranges, key) && typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= ranges[key]));
+    key === 'borderGlow' ? v === 'original' || v === 'reader' : ['tint', 'borderColor', 'glowColor'].includes(key) ? isColor(v) : Object.hasOwn(ranges, key) && typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= ranges[key]));
 }
 export function encodeLooks(looks: SavedLook[]) { return JSON.stringify({ format: 'palette-materials', version: 1, looks }, null, 2); }
 export function decodeLooks(text: string): SavedLook[] {

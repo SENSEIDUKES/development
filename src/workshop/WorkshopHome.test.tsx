@@ -48,7 +48,7 @@ const ACTIVE_GROUPS = {
   Rewards: ['reward-loop', 'achievements', 'relics-gallery', 'familiar-training', 'dao-pillar', 'idle-cultivation'],
   Customization: ['familiar'],
   Systems: ['novel-expanded-docs', 'library-help', 'harness-generation', 'writer-instructions', 'image-prompts', 'chapter-generation-manifestation', 'character-voice', 'provenance', 'energy'],
-  Components: ['library-components', 'icons', 'highlight-engine', 'motion-picture', 'world-card', 'dao-insights', 'celestial-backdrop', 'card-workshop'],
+  Components: ['palette-materials', 'library-components', 'icons', 'highlight-engine', 'motion-picture', 'world-card', 'dao-insights', 'celestial-backdrop', 'card-workshop'],
 };
 
 describe('WorkshopHome', () => {
@@ -132,7 +132,7 @@ describe('WorkshopHome', () => {
       familiar: 'library', 'relics-gallery': 'library', 'idle-cultivation': 'library',
       'harness-generation': 'sen', 'chapter-generation-manifestation': 'library', 'character-voice': 'sen', provenance: 'deferred', energy: 'library', 'model-router': 'deferred',
       'highlight-engine': 'sen', 'motion-picture': 'sen', 'world-card': 'library', 'dao-insights': 'library', 'celestial-backdrop': 'library-ui', 'card-workshop': 'workshop',
-      'library-components': 'library-ui', icons: 'library-ui', 'novel-expanded-docs': 'workshop', 'library-help': 'library',
+      'palette-materials': 'workshop', 'library-components': 'library-ui', icons: 'library-ui', 'novel-expanded-docs': 'workshop', 'library-help': 'library',
       'chapter-generation-flow': 'workshop', 'writer-instructions': 'workshop', 'image-prompts': 'workshop',
     });
   });

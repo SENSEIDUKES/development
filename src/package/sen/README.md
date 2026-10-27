@@ -1,5 +1,9 @@
 # `@seihouse/sen`
 
+**0.40.0 (2026-10-26):** The root entry exports the shared `HighlightActionIcon`
+artwork and its names and props without importing Highlight Engine styles, so Library
+can reuse the same SVGs in its individually named icons.
+
 **Unreleased (2026-10-16):** `./harness-generation` adds the optional
 `HarnessReaderSession.renderHostTools` slot and `ReaderHostTools` contract. A host
 receives the active chapter ID, busy state and `interruptPlayback()`, whose

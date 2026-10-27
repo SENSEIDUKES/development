@@ -18,27 +18,27 @@ export function IconsGrid() {
             <p>{group.description}</p>
           </header>
           <div className="workshop-icon-grid">
-            {icons.filter(icon => icon.key.includes(`/${group.title}/`)).map(icon => (
+            {icons.filter(icon => icon.group === group.title).map(icon => (
               <article className="workshop-icon-card" key={icon.key}>
                 <div className="workshop-icon-preview">
-                  {icon.libraryIcons.length
+                  {icon.source === 'bundled' ? <icon.Icon size={48} /> : icon.libraryIcons.length
                     ? <LibraryIcon name={icon.libraryIcons[0] as LibraryIconName} size={48} aria-hidden />
                     : <span className="sen-icon" aria-hidden="true" style={{
                         width: 48, height: 48, '--sen-icon-mask': `url("${icon.url}")`,
                       } as CSSProperties} />}
                 </div>
-                <h3>{icon.file.replace(/\.svg$/, '')}</h3>
-                <a href={icon.url} target="_blank" rel="noreferrer">Open SVG</a>
-                <code>{icon.libraryIcons.join(', ') || 'Alternate / additional artwork'}</code>
+                <h3>{icon.label}</h3>
+                {icon.source === 'remote' && <a href={icon.url} target="_blank" rel="noreferrer">Open SVG</a>}
+                <code>{icon.source === 'bundled' ? icon.exportName : icon.libraryIcons.join(', ') || 'Alternate / additional artwork'}</code>
               </article>
             ))}
           </div>
         </section>
       ))}
       <p className="workshop-library-note">
-        All {icons.length} icons link to the original public SVGs. Existing Library icon adapters keep
-        their semantic identifiers, sizes and currentColor styling; the Library skin selects the R2
-        artwork. Original Help and Search are in use; EnergySun is deferred. V2 variants and World remain available here.
+        All {icons.length} icons are organized by their meaning. Bundled icons use the named exports shown
+        above from @seihouse/library/presentation and support size, className, currentColor, and accessible labels.
+        Remote icons link to their original public SVGs.
       </p>
     </div>
   );

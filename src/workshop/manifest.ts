@@ -137,6 +137,12 @@ export function getWorkshopVersionLabel(version: WorkshopEntry['version']) {
  */
 export const workshopEntries: WorkshopEntry[] = [
   {
+    id: 'palette-materials', section: 'components', owner: 'workshop', status: 'active',
+    title: 'Palette & Materials', description: 'The app’s colors and glass, side by side. Mix materials, preview a composition, and save your favorite looks.',
+    category: 'other', version: 'v1.0',
+    source: { repository: 'SENSEIDUKES/development', path: 'src/components/palette-materials/', lastCompared: 'Not applicable — DEV-native visual workbench' },
+  },
+  {
     id: 'library-components', section: 'components', owner: 'library-ui', status: 'active',
     title: 'Library Components', description: 'Reusable Celestial Library primitives, rendered live.',
     category: 'other', version: 'v1.0',

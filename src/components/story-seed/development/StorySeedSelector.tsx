@@ -58,7 +58,7 @@ const sectionTrailing = (section: SeedSection, filled: boolean, active: boolean)
  */
 export function buildStorySeedDrawerSections(
   seed: StorySeedInput,
-  activeSection: SeedSectionId,
+  activeSection: SeedSectionId | null,
   onSelect: (id: SeedSectionId) => void,
 ): LibraryNavigationDrawerSection[] {
   return (['story', 'world'] as SeedFamily[]).map(family => {

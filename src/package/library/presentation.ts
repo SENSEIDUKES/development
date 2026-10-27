@@ -2,5 +2,8 @@ export { LibraryPresentationProvider } from '../../components/library-presentati
 export { loadingFamiliarPresentation } from '../../library/manifestations/familiar';
 export type { LoadingFamiliarPresentation } from '../../library/manifestations/familiar';
 export * from '../../library/assets';
-/** First-party artwork inventory, also inspected by the Icons Workshop. */
-export { default as LIBRARY_ICON_CATALOG } from '../../components/sen-icons/r2-icons.json';
+export { LIBRARY_ICON_CATALOG, LibraryEditIcon, LibraryCopyIcon, LibraryMediaIcon, LibraryRemoveIcon, LibraryBackIcon, LibraryAudioIcon, LibraryCueIcon, LibrarySoundscapeIcon, LibraryAtmosphereIcon, LibrarySaveIcon, LibraryUndoIcon, LibraryDeleteIcon, type LibraryGlyphProps } from '../../components/sen-icons/LibraryIcons';
+
+export { LibraryDaoInsightIcon, type LibraryDaoInsightIconProps } from '../../components/sen-icons/LibraryDaoInsightIcon';
+
+export { LibraryMortalPressureIcon, LibraryImmortalPressureIcon, LibraryHeavenPressureIcon, LibrarySurvivalIcon, LibraryGenreIcon } from '../../components/sen-icons/LibraryIcons';

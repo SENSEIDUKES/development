@@ -125,6 +125,7 @@ const WriterInstructionsWorkspace = lazy(() =>
  * inside its own workspace component (see FeatureWorkspace).
  */
 const previewRegistry: Record<string, ComponentType> = {
+  'palette-materials': lazy(() => import('./workshop/previews/palette-materials/PaletteMaterialsWorkspace').then(module => ({ default: module.PaletteMaterialsWorkspace }))),
   'oauth': lazy(() => import('./workshop/previews/oauth/OAuthWorkspace').then(module => ({ default: module.OAuthWorkspace }))),
   'highlight-engine': lazy(() => import('./workshop/previews/highlight-engine/HighlightEngineWorkspace').then(module => ({ default: module.HighlightEngineWorkspace }))),
   'achievements': AchievementsWorkspace,

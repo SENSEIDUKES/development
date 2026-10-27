@@ -203,7 +203,9 @@ describe('Story Seed creation: regenerating at a chosen length', () => {
   const openBankedBlueprint = async () => {
     await act(async () => { buttonNamed('Story Bank')!.click(); });
     await flush();
-    await act(async () => { buttonNamed('Blueprint')!.click(); });
+    // The Story Bank card's Blueprint, not the workspace bar's.
+    await act(async () => { Array.from(container.querySelectorAll<HTMLButtonElement>('.story-bank-card button'))
+      .find(button => button.textContent?.trim() === 'Blueprint')!.click(); });
     await flush();
   };
 

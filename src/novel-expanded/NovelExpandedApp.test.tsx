@@ -128,6 +128,12 @@ const click = async (element: Element | null | undefined, label: string, wait = 
   await act(async () => { (element as HTMLElement).click(); });
   await flush(wait);
 };
+
+/** Create's one Create button is on the creator's last step: open that step, then press it. */
+const manifestWorldBlueprint = async (wait = 0) => {
+  await click(container.querySelector('[data-seed-creator-strip] button[data-step="manifest"]'), 'the Manifest step', 20);
+  await click([...container.querySelectorAll<HTMLButtonElement>('[data-seed-creator-footer] button')].find(button => button.getAttribute('aria-label') === 'Create World Blueprint' && !button.disabled), 'Create World Blueprint', wait);
+};
 const buttonByText = (text: string, scope: ParentNode = document) => [...scope.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.trim() === text);
 const worldInfo = () => document.querySelector<HTMLElement>('[data-testid="harness-world-info"]');
 const chaptersAction = () => worldInfo()?.querySelector<HTMLElement>('[data-world-info-chapters="action"]');
@@ -473,12 +479,13 @@ describe('NovelExpanded: the Library Shell', { timeout: 30_000 }, () => {
     await click(buttonByText('Create', strip()!), 'Create in the navigation', 20);
     expect(address()).toBe('/app/?page=create');
     expect(document.querySelector('[data-testid="novel-expanded-create"]')).toBeTruthy();
-    // Manifest wears the Energy badge with the World Blueprint's price (a chapter's, for now).
+    // Create, on the creator's last step, wears the Energy badge with the World Blueprint's price (a chapter's, for now).
+    await click(document.querySelector('[data-seed-creator-strip] button[data-step="manifest"]'), 'the Manifest step', 20);
     expect(document.querySelector('[data-testid="novel-expanded-create"] .energy-badge[data-energy-action="chapter.generate"]')?.textContent).toBe('1');
     // Story Seed's own task bar stands where the global strip was; the note floats above it.
     expect(strip()).toBeNull();
     const bar = document.querySelector<HTMLElement>('nav[aria-label="Story Seed navigation"]')!;
-    expect([...bar.querySelectorAll('button')].map(button => button.textContent)).toEqual(['Sections', 'Story Bank', 'Settings', 'Back']);
+    expect([...bar.querySelectorAll('button')].map(button => button.textContent)).toEqual(['Sections', 'Story Bank', 'Blueprint', 'Settings', 'Back']);
     expect(floatingNote()).toBeTruthy();
     expect(headerNote()).toBeNull();
     await click(buttonByText('Back', bar), 'Back on the task bar', 20);
@@ -580,7 +587,7 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     await click(buttonByText('Story Bank', container), 'Story Bank', 200);
     await click(buttonByText('Use Seed', container), 'Use Seed', 200);
     await click(buttonByText('Refine Details', container), 'Refine Details', 200);
-    await click([...container.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.includes('Manifest World Blueprint') && !button.disabled), 'Manifest World Blueprint', 300);
+    await manifestWorldBlueprint(300);
     expect(document.querySelector('[data-testid="access-token-sheet"]')).toBeNull();
     expect(requestWorldBlueprint).toHaveBeenCalledOnce();
     expect((requestWorldBlueprint.mock.calls[0] as unknown[])[1]).toBe('');
@@ -602,7 +609,7 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
       await click(buttonByText('Story Bank', container), 'Story Bank', 200);
       await click(buttonByText('Use Seed', container), 'Use Seed', 200);
       await click(buttonByText('Refine Details', container), 'Refine Details', 200);
-      await click([...container.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.includes('Manifest World Blueprint') && !button.disabled), 'Manifest World Blueprint', 20);
+      await manifestWorldBlueprint(20);
     };
 
     await blueprintFromTheBank();
@@ -644,7 +651,7 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     await click(buttonByText('Story Bank', container), 'Story Bank', 200);
     await click(buttonByText('Use Seed', container), 'Use Seed', 200);
     await click(buttonByText('Refine Details', container), 'Refine Details', 200);
-    await click([...container.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.includes('Manifest World Blueprint') && !button.disabled), 'Manifest World Blueprint', 20);
+    await manifestWorldBlueprint(20);
 
     const sheet = () => document.querySelector<HTMLFormElement>('[data-testid="access-token-sheet"]');
     expect(sheet(), 'Expected the access token sheet').toBeTruthy();
@@ -687,7 +694,7 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     await click(buttonByText('Story Bank', container), 'Story Bank', 200);
     await click(buttonByText('Use Seed', container), 'Use Seed', 200);
     await click(buttonByText('Refine Details', container), 'Refine Details', 200);
-    await click([...container.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.includes('Manifest World Blueprint') && !button.disabled), 'Manifest World Blueprint', 300);
+    await manifestWorldBlueprint(300);
     await click(buttonByText('Manifest Story', container), 'Manifest Story', 50);
     const [started] = (services.stories as InMemoryHarnessGenerationRepository).snapshot().stories;
     expect(address()).toBe(`/app/?story=${started.id}`);
@@ -761,7 +768,7 @@ describe('NovelExpanded: Story Settings and cover art', { timeout: 30_000 }, () 
     await click(buttonByText('Story Bank', container), 'Story Bank', 200);
     await click(buttonByText('Use Seed', container), 'Use Seed', 200);
     await click(buttonByText('Refine Details', container), 'Refine Details', 200);
-    await click([...container.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.includes('Manifest World Blueprint') && !button.disabled), 'Manifest World Blueprint', 300);
+    await manifestWorldBlueprint(300);
     await click(buttonByText('Manifest Story', container), 'Manifest Story', 50);
     const [started] = (services.stories as InMemoryHarnessGenerationRepository).snapshot().stories;
     const { pacing: _pacing, ...withoutPacing } = createOfficialCapaDefaultLoadout(record.seed.story.required.style);

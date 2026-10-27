@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Bookmark, Check } from 'lucide-react';
+import { Bookmark, Check, ScrollText as SENBlueprintIcon } from 'lucide-react';
 import { type StorySeedInput } from '@seihouse/sen/story-seed';
 import type { ChapterWritingStyle, SenLanguageCode } from '@seihouse/sen/contracts';
 import type { SeedUpdate } from './seedState';
@@ -27,7 +27,8 @@ interface StorySeedWorkspaceChromeProps {
   onReadingModeChange?: (mode: ChapterWritingStyle) => void;
   /** The host's Story Settings (skills and media), shown in Settings after the Reading Mode. */
   storySettings?: ReactNode;
-  activeSection: SeedSectionId;
+  /** The open Seed section; null while the Manifest step, Story Bank or Blueprint is showing. */
+  activeSection: SeedSectionId | null;
   /** Host author metadata; the section navigation does not display a profile. */
   authorName?: string | null;
   onSelectSection: (id: SeedSectionId) => void;
@@ -35,14 +36,23 @@ interface StorySeedWorkspaceChromeProps {
   helpOpen: boolean;
   isGenerating: boolean;
   savedFeedback: boolean;
-  canManifest: boolean;
-  manifestLabel: string;
+  /**
+   * The action row's own Manifest, for hosts mounting the chrome without the
+   * creator. Create leaves it out: its Manifest lives on the creator's footer.
+   */
+  canManifest?: boolean;
+  manifestLabel?: string;
   manifestDisabledReason?: string;
   manifestIndicator?: ReactNode;
   status: string;
   error?: string | null;
   onSaveDraft: () => void;
-  onManifest: () => void;
+  onManifest?: () => void;
+  /** Opens the World Blueprint from the bar and the rail; absent, Blueprint is not offered. */
+  onOpenBlueprint?: () => void;
+  blueprintActive?: boolean;
+  /** False while the Blueprint is showing: it carries its own actions. */
+  showActionRow?: boolean;
   onToggleStoryBank: () => void;
   onOpenHelp: () => void;
   onSecondaryIntent?: () => void;
@@ -68,7 +78,7 @@ export function StorySeedWorkspaceChrome(props: StorySeedWorkspaceChromeProps) {
     settingsReturnFocusRef.current = document.activeElement as HTMLElement;
     setSettingsOpen(true);
   }, []);
-  const { onToggleStoryBank, showStoryBank, onNavigateHome } = props;
+  const { onToggleStoryBank, showStoryBank, onNavigateHome, onOpenBlueprint, blueprintActive = false } = props;
   const workspace = useMemo<LibraryWorkspaceDefinition>(() => ({
     label: 'Story Seed sections', closeLabel: 'Close sections', barLabel: 'Story Seed navigation',
     sections: buildStorySeedDrawerSections(props.seed, props.activeSection, props.onSelectSection),
@@ -77,6 +87,8 @@ export function StorySeedWorkspaceChrome(props: StorySeedWorkspaceChromeProps) {
       items: [
         { id: 'story-bank', label: 'Story Bank', icon: <SENStorySeedIcon name="bank" size={16} aria-hidden="true" className="text-neutral-400" />,
           active: showStoryBank, onSelect: onToggleStoryBank },
+        ...(onOpenBlueprint ? [{ id: 'blueprint', label: 'Blueprint', icon: <SENBlueprintIcon size={16} aria-hidden="true" className="text-neutral-400" />,
+          active: blueprintActive, onSelect: onOpenBlueprint }] : []),
         { id: 'settings', label: 'Settings', icon: <SENSettingsIcon size={16} aria-hidden="true" className="text-neutral-400" />,
           onSelect: openSettings },
       ],
@@ -84,10 +96,15 @@ export function StorySeedWorkspaceChrome(props: StorySeedWorkspaceChromeProps) {
     tools: [
       { id: 'story-bank', label: 'Story Bank', icon: <SENStorySeedIcon name="bank" size={20} aria-hidden="true" />,
         active: showStoryBank, onSelect: () => { setSettingsOpen(false); onToggleStoryBank(); } },
+      ...(onOpenBlueprint ? [{ id: 'blueprint', label: 'Blueprint', icon: <SENBlueprintIcon size={20} aria-hidden="true" />,
+        active: blueprintActive, onSelect: () => { setSettingsOpen(false); onOpenBlueprint(); } }] : []),
       { id: 'settings', label: 'Settings', icon: <SENSettingsIcon size={20} />, active: settingsOpen, onSelect: openSettings },
     ],
     back: { onBack: () => { setSettingsOpen(false); onNavigateHome(); } },
-  }), [props.seed, props.activeSection, props.onSelectSection, showStoryBank, onToggleStoryBank, openSettings, settingsOpen, onNavigateHome]);
+    // The creator's step strip is the phone's section navigation, so the phone
+    // bar keeps its room for Story Bank, Blueprint, Settings and Back.
+    sectionsOnPhoneBar: false,
+  }), [props.seed, props.activeSection, props.onSelectSection, showStoryBank, onToggleStoryBank, onOpenBlueprint, blueprintActive, openSettings, settingsOpen, onNavigateHome]);
   const content = <StorySeedChromeContent {...props} workspace={workspace} settingsOpen={settingsOpen} setSettingsOpen={setSettingsOpen}
     settingsReturnFocusRef={settingsReturnFocusRef} />;
   // A host mounting only the standalone header gets no task bar or drawer.
@@ -105,10 +122,10 @@ function StorySeedChromeContent(props: StorySeedChromeContentProps) {
   const { settingsOpen, setSettingsOpen, settingsReturnFocusRef } = props;
   const save: HeaderAction = { id: 'save', label: props.savedFeedback ? 'Saved' : 'Save Draft',
     icon: props.savedFeedback ? Check : Bookmark, disabled: props.isGenerating, onAction: props.onSaveDraft };
-  const manifest: HeaderAction = { id: 'manifest', label: props.manifestLabel, icon: SENManifestingIcon,
+  const manifest: HeaderAction = { id: 'manifest', label: props.manifestLabel ?? 'Manifest', icon: SENManifestingIcon,
     disabled: !props.canManifest, loading: props.isGenerating, loadingIndicator: props.manifestIndicator,
     ariaLabel: props.manifestDisabledReason ? `${props.manifestLabel} — ${props.manifestDisabledReason}` : undefined,
-    title: props.manifestDisabledReason, kind: 'creation', onAction: props.onManifest };
+    title: props.manifestDisabledReason, kind: 'creation', onAction: () => props.onManifest?.() };
   const help: HeaderAction = { id: 'help', label: 'Help', icon: SENHelpIcon,
     expanded: props.helpOpen, hasPopup: 'dialog',
     onIntent: props.onHelpIntent ?? props.onSecondaryIntent, onAction: props.onOpenHelp };
@@ -128,7 +145,7 @@ function StorySeedChromeContent(props: StorySeedChromeContentProps) {
       id: item.id, label: item.label, pressed: item.active,
       onAction: () => item.onSelect?.(item.id),
     }))} />;
-  const manifestAvailable = !props.showStoryBank && !props.headerSaveOnly;
+  const manifestAvailable = Boolean(props.onManifest) && !props.showStoryBank && !props.headerSaveOnly;
   /**
    * The page's own action row: Save Draft, Manifest and the small save and
    * generation status, sitting at the top of Story Seed's content above the
@@ -163,7 +180,7 @@ function StorySeedChromeContent(props: StorySeedChromeContentProps) {
   if (props.layout === 'mobile') return settingsSheet;
   return <>
     <WorkspaceShell header={header} sidebar={<LibrarySectionSidebar />} sidebarLabel="Story Seed sections">
-      {actionRow}
+      {props.showActionRow !== false && actionRow}
       {props.children}
     </WorkspaceShell>
     {settingsSheet}

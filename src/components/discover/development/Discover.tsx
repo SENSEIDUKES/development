@@ -40,7 +40,7 @@ const publicStatus = (world: HomeWorld) => world.publicationStatus ? { view: 'pu
  */
 export function Discover({
   worlds, featuredWorldIds = [], releases, trackedWorldIds, fateSurvivalWorldIds = [], rankingBoards = [], events = [],
-  onOpenWorld, notice, now,
+  onOpenWorld, notice, encyclopedia, now,
 }: DiscoverProps) {
   const ids = useId();
   const [query, setQuery] = useState('');
@@ -87,6 +87,8 @@ export function Discover({
       </label>
       {notice && <div className="discover-notice">{notice}</div>}
     </header>
+
+    {encyclopedia}
 
     {featured.length > 0 && <section aria-label="Featured" className="discover-shelf">
       <ul className="discover-rail discover-rail--featured" aria-label="Featured worlds">

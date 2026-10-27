@@ -904,6 +904,35 @@ describe('NovelExpanded: the Profile', { timeout: 30_000 }, () => {
     expect(window.history.length).toBe(entries);
   });
 
+  it('keeps encyclopedia articles, alias searches and reading defaults inside Discover', async () => {
+    const services = appServices(scriptedWriter().writer);
+    services.profile.save({ defaultReadingLanguage: 'ja', defaultChapterWritingStyle: 'Easy Read' });
+    await render(services, '/app/?page=discover');
+    await click(document.querySelector('.discover-encyclopedia-entry'), 'the encyclopedia doorway', 20);
+    await act(async () => { await import('../components/discover/shared/loreLocales').then(module => module.loadLoreLocale('ja')); });
+    expect(address()).toBe('/app/?page=discover&lore=index');
+    const encyclopedia = () => document.querySelector<HTMLElement>('[data-encyclopedia]')!;
+    const preferences = encyclopedia().querySelectorAll<HTMLSelectElement>('select');
+    expect([...preferences].map(select => select.value)).toEqual(['ja', 'Easy Read']);
+    expect(strip()!.querySelector('[aria-current="page"]')?.textContent).toBe('Discover');
+    const historyLength = window.history.length;
+    await typeInto(encyclopedia().querySelector('input')!, 'Origin Infant');
+    expect(window.history.length).toBe(historyLength);
+    expect(encyclopedia().querySelectorAll('.encyclopedia-result')).toHaveLength(1);
+    await click(encyclopedia().querySelector('.encyclopedia-result'), 'Nascent Soul');
+    expect(new URLSearchParams(window.location.search).get('lore')).toBe('nascent-soul');
+    expect(new URLSearchParams(window.location.search).get('q')).toBe('Origin Infant');
+    expect(encyclopedia().querySelector('[data-reading-mode]')?.getAttribute('data-reading-mode')).toBe('Easy Read');
+    expect(encyclopedia().textContent).toContain('元婴');
+    await click(encyclopedia().querySelectorAll('.encyclopedia-breadcrumb a')[1], 'back to the directory');
+    expect(encyclopedia().querySelector<HTMLInputElement>('input')?.value).toBe('Origin Infant');
+    await click(encyclopedia().querySelector('.encyclopedia-breadcrumb a'), 'back to Discover');
+    expect(address()).toBe('/app/?page=discover');
+    expect(document.querySelector('.discover-fate')).toBeTruthy();
+    expect(services.profile.read()).toMatchObject({ defaultReadingLanguage: 'ja', defaultChapterWritingStyle: 'Easy Read' });
+    expect(services.writer.generate).not.toHaveBeenCalled();
+  });
+
   it('opens the Cave from the navigation, on the practice account, inside the app\'s places', async () => {
     await render(appServices(scriptedWriter().writer));
     await click(buttonByText('Profile', strip()!), 'Profile in the navigation', 100);

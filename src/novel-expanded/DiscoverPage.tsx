@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Discover } from '@seihouse/library/discover';
+import { Discover, DiscoverEncyclopedia, DiscoverEncyclopediaEntry, type DiscoverLoreLocation } from '@seihouse/library/discover';
 import type { UserProfile } from '@seihouse/library/profile';
 import { useLibraryBottomClearance } from '@seihouse/library/shell';
 import { AppShell } from './AppShell';
@@ -8,7 +8,7 @@ import {
   DISCOVER_RANKING_BOARDS, DISCOVER_SAMPLE_EVENTS, DISCOVER_SAMPLE_FATE_SURVIVAL, DISCOVER_SAMPLE_FEATURED,
   DISCOVER_SAMPLE_RELEASES, DISCOVER_SAMPLE_TRACKED, DISCOVER_SAMPLE_WORLDS,
 } from './discoverSamples';
-import type { Navigate } from './routes';
+import { routeHref, type Navigate, type NovelExpandedRoute } from './routes';
 
 /** How long the sample-world note stays after a world is opened. */
 const SAMPLE_NOTE_MS = 4000;
@@ -19,8 +19,9 @@ const SAMPLE_NOTE_MS = 4000;
  * bottom bar, where the reader is looking, instead of opening a Story View
  * that does not exist.
  */
-export function DiscoverPage({ navigate, stories, readerProfile }: {
+export function DiscoverPage({ navigate, stories, readerProfile, route }: {
   navigate: Navigate;
+  route: Extract<NovelExpandedRoute, { page: 'discover' }>;
   /** The reader's own stories, which header Search can open. */
   stories: readonly { id: string; title: string }[];
   readerProfile: UserProfile;
@@ -37,12 +38,21 @@ export function DiscoverPage({ navigate, stories, readerProfile }: {
     const title = DISCOVER_SAMPLE_WORLDS.find(world => world.id === worldId)?.title;
     if (title) setOpened({ title, at: Date.now() });
   };
+  const loreRoute = (location?: DiscoverLoreLocation): Extract<NovelExpandedRoute, { page: 'discover' }> => location
+    ? { page: 'discover', lore: location.term ?? 'index', query: location.query, category: location.category }
+    : { page: 'discover' };
   return <AppShell route={{ page: 'discover' }} navigate={navigate} stories={stories} readerProfile={readerProfile} mainLabel="Discover">
     <div className="mx-auto w-full max-w-7xl px-4 py-8" data-testid="novel-expanded-discover">
-      <Discover worlds={DISCOVER_SAMPLE_WORLDS} featuredWorldIds={DISCOVER_SAMPLE_FEATURED} releases={DISCOVER_SAMPLE_RELEASES}
+      {route.lore ? <DiscoverEncyclopedia location={{ term: route.lore === 'index' ? undefined : route.lore, query: route.query, category: route.category as DiscoverLoreLocation['category'] }}
+        hrefFor={location => routeHref(loreRoute(location))}
+        onNavigate={(location, replace) => navigate(loreRoute(location), { replace, scroll: !replace })}
+        readingLanguage={readerProfile.defaultReadingLanguage} interfaceLanguage={readerProfile.interfaceLanguage}
+        readingMode={readerProfile.defaultChapterWritingStyle} />
+      : <Discover worlds={DISCOVER_SAMPLE_WORLDS} featuredWorldIds={DISCOVER_SAMPLE_FEATURED} releases={DISCOVER_SAMPLE_RELEASES}
         trackedWorldIds={DISCOVER_SAMPLE_TRACKED} fateSurvivalWorldIds={DISCOVER_SAMPLE_FATE_SURVIVAL}
         rankingBoards={DISCOVER_RANKING_BOARDS} events={DISCOVER_SAMPLE_EVENTS} onOpenWorld={open}
-        notice={<p>Showing sample worlds while Discover’s look and feel is refined.</p>} />
+        encyclopedia={<DiscoverEncyclopediaEntry href={routeHref(loreRoute({}))} onOpen={() => navigate(loreRoute({}))} language={readerProfile.interfaceLanguage} />}
+        notice={<p>Showing sample worlds while Discover’s look and feel is refined.</p>} />}
     </div>
     {createPortal(<p role="status" data-testid="discover-sample-note"
       className={`pointer-events-none fixed left-1/2 z-50 w-[min(26rem,calc(100%-2rem))] -translate-x-1/2 rounded-xl bg-[#14161c]/95 px-4 py-3 text-center font-serif text-sm text-[#f3eee7] shadow-lg shadow-black/50 ring-1 ring-white/10 transition-opacity duration-200 motion-reduce:transition-none ${opened ? 'opacity-100' : 'opacity-0'}`}

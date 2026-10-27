@@ -18,7 +18,7 @@ import { useCallback, useEffect, useState } from 'react';
  */
 export type NovelExpandedRoute =
   | { page: 'home' }
-  | { page: 'discover' }
+  | { page: 'discover'; lore?: string; query?: string; category?: string }
   | { page: 'create'; seedId?: string }
   | { page: 'story'; storyId: string }
   | { page: 'read'; storyId: string }
@@ -32,7 +32,10 @@ export function parseRoute(search: string): NovelExpandedRoute {
   const storyId = query.get('story')?.trim();
   if (storyId) return query.get('read') === '1' ? { page: 'read', storyId }
     : query.get('blueprint') === '1' ? { page: 'blueprint', storyId } : { page: 'story', storyId };
-  if (query.get('page') === 'discover') return { page: 'discover' };
+  if (query.get('page') === 'discover') {
+    const lore = query.get('lore')?.trim();
+    return lore ? { page: 'discover', lore, ...(query.get('q') ? { query: query.get('q')! } : {}), ...(query.get('category') ? { category: query.get('category')! } : {}) } : { page: 'discover' };
+  }
   if (query.get('page') === 'create') {
     const seedId = query.get('seed')?.trim();
     return seedId ? { page: 'create', seedId } : { page: 'create' };
@@ -47,7 +50,7 @@ export function parseRoute(search: string): NovelExpandedRoute {
 export function routeSearch(route: NovelExpandedRoute): string {
   switch (route.page) {
     case 'home': return '';
-    case 'discover': return '?page=discover';
+    case 'discover': return route.lore ? `?${new URLSearchParams({ page: 'discover', lore: route.lore, ...(route.query ? { q: route.query } : {}), ...(route.category ? { category: route.category } : {}) })}` : '?page=discover';
     case 'create': return route.seedId ? `?${new URLSearchParams({ page: 'create', seed: route.seedId })}` : '?page=create';
     case 'story': return `?story=${encodeURIComponent(route.storyId)}`;
     case 'read': return `?story=${encodeURIComponent(route.storyId)}&read=1`;
@@ -61,7 +64,7 @@ export function routeHref(route: NovelExpandedRoute): string {
   return `${window.location.pathname}${routeSearch(route)}`;
 }
 
-export type Navigate = (route: NovelExpandedRoute, options?: { replace?: boolean }) => void;
+export type Navigate = (route: NovelExpandedRoute, options?: { replace?: boolean; scroll?: boolean }) => void;
 
 /**
  * The page in the address bar. Moving inside the app adds a history entry, so
@@ -75,13 +78,13 @@ export function useAppRoute(): [NovelExpandedRoute, Navigate] {
     window.addEventListener('popstate', follow);
     return () => window.removeEventListener('popstate', follow);
   }, []);
-  const navigate = useCallback<Navigate>((next, { replace = false } = {}) => {
+  const navigate = useCallback<Navigate>((next, { replace = false, scroll = true } = {}) => {
     const url = routeHref(next);
     if (replace) window.history.replaceState(null, '', url);
     else window.history.pushState(null, '', url);
     setRoute(next);
     // A new page starts at its top.
-    window.scrollTo({ top: 0 });
+    if (scroll) window.scrollTo({ top: 0 });
   }, []);
   return [route, navigate];
 }

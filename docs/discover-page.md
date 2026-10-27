@@ -27,6 +27,10 @@ Updates never comes up.
 
 ## Core features
 
+- **Eastern Fantasy Encyclopedia:** a genre-wide lore and terminology reference,
+  with original scripts, pronunciation, common fan-translated aliases and
+  explanations in the reader's language. It lives inside Discover and is
+  separate from every individual story's Codex.
 - **Latest Releases:** a neutral feed, newest first, with no algorithm deciding
   what you see. A new chapter shows up the moment it's out. This is how readers
   stumble onto stories nobody is promoting.
@@ -127,3 +131,53 @@ shelves, each with one heading, whose content pages sideways.
 
 Not built: real worlds and releases, the Tracker, signals, community
 lists, credits pages, branch lineage, curated reviews.
+
+## Eastern Fantasy Encyclopedia (2026-10-26)
+
+A doorway below Discover's header opens a quiet, text-first directory in the
+same Library shell. It starts with **36 entries** across **Cultivation Realms,
+Qi & Anatomy, Alchemy & Crafts, Mythology & Beasts, Idioms & Cultural Terms,
+and Weapons & Relics**. Each article includes its canonical English term,
+original script and pronunciation, explanation, fan-translated aliases,
+related entries and further reading.
+
+The directory is `/app/?page=discover&lore=index`; articles use stable addresses
+such as `/app/?page=discover&lore=nascent-soul`. Search and category are kept in
+the address, including when returning from an article. Search recognizes
+canonical names, original scripts, pronunciation, aliases and the selected
+reading language's term names. Case, punctuation, spacing and romanization
+accents do not prevent a match: `Yuanying`, `Origin Infant`, `Nascent Soul` and
+`元嬰` find the same entry. An ambiguous word such as `dao` can return both
+the Way and a single-edged saber; related traditions are not silently treated
+as interchangeable translations.
+
+The encyclopedia uses the existing **30 supported reading languages** and
+the profile's reading-language and Reading Mode defaults. Its language and
+mode selectors change this visit without writing a new account preference.
+Interface language follows the existing profile choice, with right-to-left
+layout where appropriate. Localized term packs load on demand; no model,
+generation credit or translation API is involved.
+
+- **Standard:** the definition and genre context.
+- **Clear Reading:** direct prose split into separate sentences.
+- **Easy Read:** the direct explanation, with larger text and short paragraphs.
+- **Literal Reading:** direct prose, with a reminder to read dramatic
+  expressions by their meaning rather than their literal wording.
+
+Every mode preserves the full explanation, context and aliases. English has a
+separate direct-prose edition shared by the accessibility modes. Localized
+entries already use concise, literal definitions and retain their complete
+text in each mode. These are authored reference entries, not generated chapters.
+
+English is the editorial reference. The other language packs contain concise
+localized definitions and interface text; they are not professionally reviewed
+translations. Automated checks cover their completeness and searchable names.
+Lore notes explain where meanings, cultivation ranks and names vary by story.
+This reference does not prescribe a universal realm ladder or override a
+story's own Codex.
+
+Ownership stays in `src/components/discover/`, exported through the existing
+`@seihouse/library/discover` entry. The app supplies navigation and the current
+profile. The existing `?preview=discover` Workshop iframe shows this same app
+and uses its real saved profile preferences. Discover's world shelves remain
+the existing sample worlds.

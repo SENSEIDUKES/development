@@ -230,6 +230,6 @@ function NovelExpandedRoutes({ services, writer, askForToken }: {
     onCloseReader={() => navigate({ page: 'story', storyId })}
     onBack={() => navigate(HOME_ROUTE)} />);
 
-  if (route.page === 'discover') return withFamiliar(<DiscoverPage navigate={navigate} stories={worlds} readerProfile={profile} />);
+  if (route.page === 'discover') return withFamiliar(<DiscoverPage route={route} navigate={navigate} stories={worlds} readerProfile={profile} />);
   return withFamiliar(<HomePage worlds={worlds} navigate={navigate} readerProfile={profile} sparks={sparks} />);
 }

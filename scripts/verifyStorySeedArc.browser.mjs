@@ -113,7 +113,7 @@ try {
     await page.locator('#mc-age-input').fill('26');
     await done();
     await page.getByRole('tab', { name: 'World' }).click();
-    await page.locator('[data-testid="blueprint-factions"] .bp-tile').first().click();
+    await page.locator('[data-testid="blueprint-factions"] button[aria-label^="Faction:"]').first().click();
     await page.locator('#faction-description-blueprint-faction-the-gate').fill('Guardians of the pass.');
     await done();
     await page.getByRole('tab', { name: 'Story' }).click();

@@ -41,10 +41,13 @@ import { CreatorStepStrip } from './creator/CreatorStepStrip';
 import { CreatorStepFooter } from './creator/CreatorStepFooter';
 import { StorySeedLiveCard } from './creator/StorySeedLiveCard';
 import { ManifestStep } from './creator/ManifestStep';
-import { type CreatorPageId } from './creator/creatorSteps';
+import { partsOf, type CreatorPageId, type CreatorPosition } from './creator/creatorSteps';
+import { SeedPartContext } from './creator/SeedPart';
 import './creator/creator.css';
 import { DeferredStorySeedView } from './DeferredStorySeedView';
 import { StorySeedWorkspaceChrome } from './StorySeedWorkspaceChrome';
+import { usePhone } from '../../library-shell/development/workspaceMedia';
+import { SeedSaveButton } from './creator/SeedSaveButton';
 import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
 import { useStoryBankRecords } from './useStoryBankRecords';
 import { downloadStorySeed, downloadStorySeedCollection } from '@seihouse/sen/story-seed';
@@ -720,8 +723,11 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     setHelpOpen(true);
   }, []);
   const closeHelp = useCallback(() => setHelpOpen(false), []);
+  // On a phone, Origin and Arc show one part at a time; a page opens on its first part.
+  const [activePart, setActivePart] = useState<string | undefined>();
   const selectWorkspaceSection = useCallback((id: CreatorPageId) => {
     setActiveSection(id);
+    setActivePart(undefined);
     setShowStoryBank(false);
     setStage('intake');
   }, []);
@@ -743,7 +749,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   useEffect(() => {
     const scroller = creatorRootRef.current?.closest('.workspace-shell-main');
     if (scroller && typeof scroller.scrollTo === 'function') scroller.scrollTo({ top: 0 });
-  }, [activeSection, stage]);
+  }, [activeSection, activePart, stage]);
   // The host's initial seed opens once, after the owner (and so the bank) is known.
   const openInitialSeed = useLatestCallback(handleEditSeed);
   const openedInitialSeedRef = useRef<string | null>(null);
@@ -761,6 +767,15 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     return () => { cancelled = true; };
   }, [initialSeedId, seedOwnerId, runtime.repository, openInitialSeed]);
   const requestSaveDraft = useLatestCallback(handleSaveDraft);
+  // A phone gives the page heading and its action row back to the questions:
+  // the shell header already names Story Seed, and Save Draft sits beside the
+  // story card instead.
+  const phone = usePhone();
+  const moveTo = useCallback((position: CreatorPosition) => {
+    selectWorkspaceSection(position.page);
+    setActivePart(position.part);
+  }, [selectWorkspaceSection]);
+  const selectPage = useCallback((page: CreatorPageId) => moveTo({ page }), [moveTo]);
   const requestStartStory = useLatestCallback(handleStartStoryClick);
   const requestExportCurrentSeed = useLatestCallback(handleExportCurrentSeed);
   const requestGenerateBlueprint = useLatestCallback(handleGenerateBlueprintClick);
@@ -775,6 +790,8 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   const canGenerate = missing.length === 0 && !isGenerating;
   const missingRequiredLabels = missing.map(section => section.label).join(', ');
   const ActiveWorkspace = activeSection === 'manifest' ? null : STORY_SEED_WORKSPACES[activeSection];
+  const phoneParts = phone ? partsOf(activeSection) : undefined;
+  const shownPart = phoneParts ? (phoneParts.find(entry => entry.id === activePart) ?? phoneParts[0]).id : undefined;
   const showingBlueprint = stage === 'blueprint' && Boolean(blueprint);
   const errorBanner = (seedError || error) && (
     <div className="mt-4 rounded border border-red-900 bg-red-950/30 p-3 text-center font-sans text-xs text-red-200" role="alert">
@@ -794,7 +811,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
         storySettings={renderStorySettings?.({ seed, originalLanguage })}
         onSelectSection={selectWorkspaceSection} isGenerating={isGenerating} savedFeedback={savedFeedback}
         showStoryBank={showStoryBank} helpOpen={helpOpen}
-        showActionRow={!showingBlueprint}
+        showActionRow={!showingBlueprint && !phone}
         blueprintActive={showingBlueprint} onOpenBlueprint={openBlueprint}
         status={isGenerating ? 'Creating your World Blueprint' : savedFeedback ? 'Draft saved' : missing.length ? `Missing required: ${missingRequiredLabels}` : 'All required Story inputs complete'}
         error={seedError || error} onSaveDraft={requestSaveDraft}
@@ -855,10 +872,14 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
           beside (or above) the open step, and Back / Next pinned at the
           bottom. The Story Bank view replaces it while the bank is open. */}
       {!showStoryBank && (<>
-        <CreatorStepStrip seed={seed} page={activeSection} onSelect={selectWorkspaceSection} />
+        <CreatorStepStrip seed={seed} page={activeSection} onSelect={selectPage}
+          parts={phoneParts} part={shownPart} onSelectPart={part => moveTo({ page: activeSection, part })} />
         <div className="seed-creator-body">
-          {activeSection !== 'manifest' && (
-            <div className="seed-creator-card-slot"><StorySeedLiveCard seed={seed} /></div>
+          {(activeSection !== 'manifest' || phone) && (
+            <div className="seed-creator-card-slot">
+              {activeSection !== 'manifest' && <StorySeedLiveCard seed={seed} />}
+              {phone && <SeedSaveButton saved={savedFeedback} disabled={isGenerating} onSave={requestSaveDraft} />}
+            </div>
           )}
           <div className="seed-creator-content relative">
             {/* Restrained celestial ambience the glass fields float over —
@@ -873,15 +894,16 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
               transition={{ duration: 0.18, ease: 'easeOut' }}
             >
               {ActiveWorkspace
-                ? <ActiveWorkspace seed={seed} updateSeed={updateSeed} />
+                ? <SeedPartContext.Provider value={shownPart ?? null}><ActiveWorkspace seed={seed} updateSeed={updateSeed} /></SeedPartContext.Provider>
                 : <ManifestStep seed={seed} hasBlueprint={Boolean(blueprint)}
                     onGoToOrigin={() => selectWorkspaceSection('origin')} onOpenBlueprint={openBlueprint} />}
             </motion.div>
           </div>
         </div>
         <CreatorStepFooter
-          page={activeSection}
-          onSelect={selectWorkspaceSection}
+          position={{ page: activeSection, part: shownPart }}
+          withParts={phone}
+          onMove={moveTo}
           progress={<span aria-label={`${requiredComplete} of ${REQUIRED_STORY_SECTIONS.length} required Story inputs complete`}>
             {requiredComplete}/{REQUIRED_STORY_SECTIONS.length}<span className="seed-creator-footer-progress-word"> required</span>
           </span>}

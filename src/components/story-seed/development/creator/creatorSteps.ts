@@ -48,6 +48,42 @@ export const nextPage = (page: CreatorPageId): CreatorPageId | null =>
 export const previousPage = (page: CreatorPageId): CreatorPageId | null =>
   CREATOR_PAGE_ORDER[CREATOR_PAGE_ORDER.indexOf(page) - 1] ?? null;
 
+export interface CreatorPart { id: string; label: string }
+
+/**
+ * The steps too long for one phone screen, in parts a phone shows one at a
+ * time (SeedPart). Wider screens show each step whole.
+ */
+export const SECTION_PARTS: Partial<Record<SeedSectionId, readonly CreatorPart[]>> = {
+  origin: [
+    { id: 'style', label: 'Style' },
+    { id: 'synopsis', label: 'Synopsis' },
+    { id: 'fate', label: 'Fate' },
+    { id: 'tags', label: 'Tags' },
+  ],
+  arc: [
+    { id: 'ending', label: 'Ending' },
+    { id: 'pins', label: 'Hard Pins' },
+    { id: 'fun', label: 'Fun Settings' },
+  ],
+};
+
+export const partsOf = (page: CreatorPageId): readonly CreatorPart[] | undefined =>
+  page === 'manifest' ? undefined : SECTION_PARTS[page];
+
+/** A place in the creator: a page, and on a phone the part of it shown. */
+export interface CreatorPosition { page: CreatorPageId; part?: string }
+
+/** Every place Next and Back walk through: each page, split into its parts when they are shown. */
+export const creatorPositions = (withParts: boolean): CreatorPosition[] =>
+  CREATOR_PAGE_ORDER.flatMap(page => {
+    const parts = withParts ? partsOf(page) : undefined;
+    return parts ? parts.map(part => ({ page, part: part.id })) : [{ page }];
+  });
+
+export const positionLabel = ({ page, part }: CreatorPosition): string =>
+  partsOf(page)?.find(entry => entry.id === part)?.label ?? pageLabel(page);
+
 export const pageLabel = (page: CreatorPageId): string =>
   page === 'manifest' ? 'Create' : SEED_SECTIONS.find(section => section.id === page)?.label ?? page;
 

@@ -17,6 +17,7 @@ import { OriginGenrePicker } from './origin/OriginGenrePicker';
 import { OriginPremiseAndTags } from './origin/OriginPremiseAndTags';
 import { OriginFateControls } from './origin/OriginFateControls';
 import { OriginStyleSelector } from './origin/OriginStyleSelector';
+import { SeedPart } from '../creator/SeedPart';
 
 interface OriginWorkspaceProps {
   seed: StorySeedInput;
@@ -67,11 +68,14 @@ export const OriginWorkspace = ({ seed, updateSeed }: OriginWorkspaceProps) => {
 
   return (
     <SeedSectionFrame section={ORIGIN_SECTION} complete={originComplete}>
-      {styleSelector}
+      <SeedPart id="style">
+        <div className="space-y-4 sm:space-y-6">
+          {styleSelector}
+          {genrePicker}
+        </div>
+      </SeedPart>
 
-      {genrePicker}
-
-      {titleField}
+      <SeedPart id="synopsis">{titleField}</SeedPart>
 
       <OriginPremiseAndTags
         premise={premise}
@@ -80,10 +84,10 @@ export const OriginWorkspace = ({ seed, updateSeed }: OriginWorkspaceProps) => {
         selectedStyle={selectedStyle}
         onPremiseChange={updatePremise}
         updateSeed={updateSeed}
-        beforeTags={<OriginFateControls
+        beforeTags={<SeedPart id="fate"><OriginFateControls
           settings={seed.story.optional.fateSurvival}
           onChange={patch => updateSeed(patchFateSurvival(patch))}
-        />}
+        /></SeedPart>}
       />
     </SeedSectionFrame>
   );

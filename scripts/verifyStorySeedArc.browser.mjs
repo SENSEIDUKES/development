@@ -22,6 +22,9 @@ try {
       }
       await button(name).click();
     };
+    // A phone shows Origin and Arc one part at a time, and the World's lists as cards.
+    const phone = width < 640;
+    const part = async name => { if (phone) await page.locator('.seed-creator-kinds button', { hasText: name }).first().click(); };
     await page.route('**/api/generate-blueprint', async route => {
       const request = route.request().postDataJSON();
       const { storySeed } = request;
@@ -44,21 +47,29 @@ try {
     await page.getByRole('radio', { name: 'Japanese', exact: true }).click();
     await button('Pick a path').click();
     await page.getByRole('radio', { name: 'Xianxia', exact: true }).click();
+    await part('Synopsis');
     await page.getByLabel('Title', { exact: true }).fill('Arc browser verification');
     await page.locator('#core-premise-input').fill('A traveler returns to the mountain gate.');
     await section('ARC');
-    const selectors = ['label[for="destined-ending-input"]', 'label[for="story-length-input"]', '#arc-hard-pins-title', 'label[for="active-arc-goal-input"]', '#arc-fun-settings-title'];
-    const boxes = [];
-    for (const selector of selectors) {
-      const field = page.locator(selector);
-      assert.equal(await field.count(), 1);
-      assert(await field.isVisible());
-      boxes.push(await field.boundingBox());
+    const parts = phone
+      ? [['Ending', ['label[for="destined-ending-input"]', 'label[for="story-length-input"]', 'label[for="active-arc-goal-input"]']],
+        ['Hard Pins', ['#arc-hard-pins-title']], ['Fun Settings', ['#arc-fun-settings-title']]]
+      : [[null, ['label[for="destined-ending-input"]', 'label[for="story-length-input"]', '#arc-hard-pins-title', 'label[for="active-arc-goal-input"]', '#arc-fun-settings-title']]];
+    for (const [name, selectors] of parts) {
+      if (name) await part(name);
+      const boxes = [];
+      for (const selector of selectors) {
+        const field = page.locator(selector);
+        assert.equal(await field.count(), 1);
+        assert(await field.isVisible());
+        boxes.push(await field.boundingBox());
+      }
+      boxes.forEach((box, i) => {
+        assert(box.x >= -1 && box.x + box.width <= width + 1);
+        if (i) assert(box.y >= boxes[i - 1].y + boxes[i - 1].height);
+      });
     }
-    boxes.forEach((box, i) => {
-      assert(box.x >= -1 && box.x + box.width <= width + 1);
-      if (i) assert(box.y >= boxes[i - 1].y + boxes[i - 1].height);
-    });
+    await part('Ending');
     // Hard Pins open one at a time: one empty box until it is filled.
     assert.equal(await page.locator('input[id^="hard-pin-"]').count(), 1);
     assert.equal(await page.getByText('Story Sauce', { exact: true }).count(), 0);
@@ -69,8 +80,11 @@ try {
     assert.equal(await page.getByTestId('story-length-summary').count(), 0);
     await page.locator('#story-length-input').fill('11');
     assert.match(await page.getByTestId('story-length-summary').textContent(), /11 arcs · 330 chapters/);
+    await part('Hard Pins');
     for (let i = 1; i <= 3; i++) await page.locator(`#hard-pin-${i}`).fill(`Keep promise ${i}.`);
+    await part('Ending');
     await page.locator('#active-arc-goal-input').fill('Open the mountain gate.');
+    await part('Fun Settings');
     await page.locator('#arc-face-slap-high').click();
     await page.screenshot({ path: `output/playwright/story-seed-arc-${width}.png`, fullPage: true });
     await section('World Identity');
@@ -152,11 +166,20 @@ try {
     assert.equal(JSON.parse(longer).blueprint.estimatedArcs, 14);
     assert(!longer.includes('LOOKAHEAD_HIDDEN'));
     await button('Refine Details').click();
+    // On a phone each character and faction is a card whose fields open in a sheet.
+    const openCard = async label => { if (phone) await page.locator(`button[aria-label^="${label}"]`).first().click(); };
+    const closeCard = async () => { if (phone) await done(); };
     await section('Characters');
+    await openCard('Character: The Keeper');
     assert.equal(await page.locator('#char-role-blueprint-character-the-keeper').inputValue(), 'Gatekeeper ally');
+    await closeCard();
+    await openCard('Main character:');
     assert.equal(await page.locator('#mc-age-input').inputValue(), '26');
+    await closeCard();
     await section('Factions');
+    await openCard('Faction: The Gate');
     assert.equal(await page.locator('#faction-description-blueprint-faction-the-gate').inputValue(), 'Guardians of the pass.');
+    await closeCard();
     await page.goto(`${origin}/library-shell.html?source=story-seed&variant=development&state=empty-intake`);
     await page.locator('#origin-style-title').waitFor();
     assert.deepEqual(errors, [], 'No browser runtime errors, including the active shell capture');

@@ -32,6 +32,7 @@ import {
   type StoryTagMetadata,
 } from '../../constants';
 import { recommendStoryTags } from '@seihouse/sen/story-seed';
+import { SeedPart } from '../../creator/SeedPart';
 import { updateStoryTags, type UpdateSeed } from '../../seedState';
 import { NarrativeDragonCycleIcon as LibraryDragonCycleIcon, NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
 import { workspaceCompactLabelClass } from '../SeedSectionFrame';
@@ -163,66 +164,70 @@ export const OriginPremiseAndTags = ({
 
   return (
     <>
-      <LibraryTextArea
-        id="core-premise-input"
-        label="Synopsis"
-        icon={Feather}
-        required
-        maxLength={STORY_PREMISE_MAX_LENGTH}
-        value={premise}
-        onChange={value => {
-          setDismissedGhostKey(null);
-          onPremiseChange(value);
-        }}
-        rows={6}
-        placeholder={premiseExample}
-        helpText={premise.trim() ? undefined : 'Example shown as ghost text — use the dragon to view another.'}
-        rightElement={premise.trim() ? undefined : (
-          <button
-            type="button"
-            onClick={handleCyclePremise}
-            aria-label="Show another example synopsis"
-            className="story-seed-touch-target inline-flex h-10 w-10 items-center justify-center rounded-full border border-portal/35 bg-portal/10 text-portal transition-all hover:border-portal hover:bg-portal/15 hover:shadow-[0_0_12px_rgba(4,172,255,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portal/70 active:scale-95"
-          >
-            <span
-              className="inline-flex items-center justify-center transition-transform duration-500 ease-out motion-reduce:transition-none motion-reduce:transform-none"
-              style={{ transform: `rotate(${cycleRotation}deg)` }}
+      <SeedPart id="synopsis">
+        <LibraryTextArea
+          id="core-premise-input"
+          label="Synopsis"
+          icon={Feather}
+          required
+          maxLength={STORY_PREMISE_MAX_LENGTH}
+          value={premise}
+          onChange={value => {
+            setDismissedGhostKey(null);
+            onPremiseChange(value);
+          }}
+          rows={6}
+          placeholder={premiseExample}
+          helpText={premise.trim() ? undefined : 'Example shown as ghost text — use the dragon to view another.'}
+          rightElement={premise.trim() ? undefined : (
+            <button
+              type="button"
+              onClick={handleCyclePremise}
+              aria-label="Show another example synopsis"
+              className="story-seed-touch-target inline-flex h-10 w-10 items-center justify-center rounded-full border border-portal/35 bg-portal/10 text-portal transition-all hover:border-portal hover:bg-portal/15 hover:shadow-[0_0_12px_rgba(4,172,255,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portal/70 active:scale-95"
             >
-              <LibraryDragonCycleIcon size={18} />
-            </span>
-          </button>
-        )}
-      />
+              <span
+                className="inline-flex items-center justify-center transition-transform duration-500 ease-out motion-reduce:transition-none motion-reduce:transform-none"
+                style={{ transform: `rotate(${cycleRotation}deg)` }}
+              >
+                <LibraryDragonCycleIcon size={18} />
+              </span>
+            </button>
+          )}
+        />
+      </SeedPart>
       {beforeTags}
 
-      <AnimatePresence>
-        {ghostSuggestion && (
-          <motion.button
-            type="button"
-            initial={{ opacity: 0, scale: 0.95, y: -2 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: -2 }}
-            transition={{ duration: 0.2 }}
-            onClick={() => {
-              if (addTag(ghostSuggestion)) setDismissedGhostKey(ghostSuggestionKey);
-            }}
-            title="Add this suggestion to your Story Tags"
-            className="story-seed-touch-target ml-auto mt-2 flex max-w-full items-start gap-1.5 rounded-lg border border-portal/40 bg-[#0b0e1e]/90 px-2.5 py-1 font-mono text-[10px] tracking-wider text-portal shadow-[0_0_12px_rgba(4,172,255,0.15)] transition-all hover:border-portal hover:text-signal"
-          >
-            <Sparkles size={11} className="mt-0.5 shrink-0 animate-pulse text-portal" />
-            <span className="min-w-0 break-words text-left">Add tag: {ghostSuggestion}</span>
-          </motion.button>
-        )}
-      </AnimatePresence>
+      <SeedPart id="tags">
+        <AnimatePresence>
+          {ghostSuggestion && (
+            <motion.button
+              type="button"
+              initial={{ opacity: 0, scale: 0.95, y: -2 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: -2 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => {
+                if (addTag(ghostSuggestion)) setDismissedGhostKey(ghostSuggestionKey);
+              }}
+              title="Add this suggestion to your Story Tags"
+              className="story-seed-touch-target ml-auto mt-2 flex max-w-full items-start gap-1.5 rounded-lg border border-portal/40 bg-[#0b0e1e]/90 px-2.5 py-1 font-mono text-[10px] tracking-wider text-portal shadow-[0_0_12px_rgba(4,172,255,0.15)] transition-all hover:border-portal hover:text-signal"
+            >
+              <Sparkles size={11} className="mt-0.5 shrink-0 animate-pulse text-portal" />
+              <span className="min-w-0 break-words text-left">Add tag: {ghostSuggestion}</span>
+            </motion.button>
+          )}
+        </AnimatePresence>
 
-      <OriginTagEditor
-        premise={premise}
-        genre={genre}
-        storyTags={storyTags}
-        selectedStyle={selectedStyle}
-        updateSeed={updateSeed}
-        addTag={addTag}
-        tagLimitError={tagLimitError}
-        setTagLimitError={setTagLimitError}
-      />
+        <OriginTagEditor
+          premise={premise}
+          genre={genre}
+          storyTags={storyTags}
+          selectedStyle={selectedStyle}
+          updateSeed={updateSeed}
+          addTag={addTag}
+          tagLimitError={tagLimitError}
+          setTagLimitError={setTagLimitError}
+        />
+      </SeedPart>
     </>
   );
 };

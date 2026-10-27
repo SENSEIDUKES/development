@@ -58,6 +58,8 @@ describe('Story Seed on a phone', () => {
     renderCreator();
     expect(container.querySelector('[data-story-seed-page-heading]')).toBeNull();
     expect(container.querySelector('[data-story-seed-action-row]')).toBeNull();
+    // The page keeps its name for screen readers.
+    expect(Array.from(container.querySelectorAll('h1')).map(heading => heading.textContent)).toEqual(['Story Seed']);
     expect(container.querySelector('.seed-creator-card-slot button[aria-label="Save Draft"]')).not.toBeNull();
   });
 

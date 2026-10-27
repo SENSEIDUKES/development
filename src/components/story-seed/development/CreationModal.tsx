@@ -837,6 +837,8 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
         </div>
       ) : (
       <div className="story-seed-development-surface seed-creator" id="creation-portal-root" ref={creatorRootRef}>
+      {/* A phone hides the visible page heading; screen readers still find the page by its name. */}
+      {phone && <h1 className="sr-only">Story Seed</h1>}
 
       {showStoryBank && (
         <div className="pt-6">

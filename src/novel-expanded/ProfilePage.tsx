@@ -32,10 +32,11 @@ const FAMILIAR_STORE = { useStoreAccount: useFamiliarStoreAccount };
  * needs a server shows with "Not in the app yet." The Cave draws its own
  * Library header and navigation and moves between its pages itself.
  */
-export function ProfilePage({ services, stories, navigate, portraits }: {
+export function ProfilePage({ services, stories, navigate, portraits, menuMusic }: {
   services: Pick<NovelExpandedServices, 'profile' | 'readerPreferences' | 'storySeeds'>;
   /** Makes the profile picture from the reader's photo. */
   portraits?: DevicePortraitMaker;
+  menuMusic?: import('@seihouse/library/profile').UserProfileServices['menuMusic'];
   /** The reader's stories, for the Cave's Stories page. */
   stories: Story[];
   navigate: Navigate;
@@ -45,10 +46,11 @@ export function ProfilePage({ services, stories, navigate, portraits }: {
     familiars: allFamiliarOptions,
     celestialStore: FAMILIAR_STORE,
     soundPreferences: services.readerPreferences,
+    menuMusic,
     storySeeds: { repository: services.storySeeds, ownerId: NOVEL_EXPANDED_READER_ID },
     notYetBuilt: { note: NOT_IN_THE_APP_YET, features: NOT_YET_BUILT },
     portraits,
-  }), [portraits, services.profile, services.readerPreferences, services.storySeeds]);
+  }), [portraits, services.profile, services.readerPreferences, services.storySeeds, menuMusic]);
   return <div data-testid="novel-expanded-profile">
     <UserProfileServicesProvider services={profileServices}>
       <LibraryProfile currentUser={DEVICE_READER} stories={stories}

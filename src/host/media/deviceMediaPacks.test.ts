@@ -16,6 +16,7 @@ import {
   DeviceMediaUrls,
   deviceMediaPackEntitlement,
   inspectMediaPackSpp,
+  inspectMenuMusicSpp,
   MEDIA_PACK_LIMITS,
   playDeviceMediaThrough,
 } from './deviceMediaPacks';
@@ -52,6 +53,43 @@ describe('package audio addresses', () => {
 });
 
 describe('media packages', () => {
+  it('installs a Studio theme-song collection as menu music, preserving every audio file and order', async () => {
+    const bytes = await createPack({ name: 'Theme songs', description: 'All languages', files: [
+      { path: 'assets/audio/Theme-Urdu.mp3', data: AUDIO, mediaType: 'audio/mpeg', metadata: { 'seihouse.senAudio': { kind: 'soundscape', category: 'Adventure' } } },
+      { path: 'assets/audio/Theme-English.mp3', data: AUDIO, mediaType: 'audio/mpeg', metadata: { 'seihouse.senAudio': { kind: 'soundscape', category: 'Ambient' } } },
+      { path: 'assets/notes.txt', data: new TextEncoder().encode('The package description is data.'), mediaType: 'text/plain' },
+    ] });
+    const { pack, files } = await inspectMenuMusicSpp(bytes);
+    expect(pack).toMatchObject({ type: 'soundscape', displayName: 'Theme songs' });
+    if (pack.type !== 'soundscape') throw new Error('Expected music.');
+    expect(pack.entries.map(track => track.label)).toEqual(['Theme-Urdu', 'Theme-English']);
+    expect(pack.entries.every(track => track.mood === 'menu')).toBe(true);
+    expect([...files.keys()]).toEqual(pack.entries.map(track => track.url));
+    expect(await files.get(pack.entries[0].url)!.arrayBuffer()).toEqual(AUDIO.buffer);
+  });
+
+  it('reads an SPP with permanent HTTPS music links without embedded audio, and rejects unsafe or ambiguous links', async () => {
+    const musicPack = (piece: Record<string, unknown>) => createPack({
+      name: 'Theme links', description: '', extensions: { 'seihouse.media-pack': { type: 'soundscape', catalog: 'assets/music.json' } },
+      files: [{ path: 'assets/music.json', mediaType: 'application/json', data: new TextEncoder().encode(JSON.stringify({ pieces: [{ mood: 'menu', ...piece }] })) }],
+    });
+    const { pack, files } = await inspectMenuMusicSpp(await musicPack({ label: 'English', url: 'https://media.example.org/Theme-English.mp3' }));
+    expect(pack.entries[0]).toMatchObject({ label: 'English', url: 'https://media.example.org/Theme-English.mp3' });
+    expect(files.size).toBe(0);
+    for (const entry of [{ url: 'http://media.example.org/a.mp3' }, { url: 'javascript:alert(1)' }, { url: 'https://media.example.org/a.mp3', path: 'assets/a.mp3' }]) {
+      await expect(inspectMenuMusicSpp(await musicPack(entry))).rejects.toThrow('public HTTPS');
+    }
+  });
+
+  it('refuses non-music collections before they can replace the current menu music', async () => {
+    const empty = await createPack({ name: 'Notes', description: '', files: [] });
+    await expect(inspectMenuMusicSpp(empty)).rejects.toThrow('no audio');
+    const cue = await createPack({ name: 'Cues', description: '', files: [
+      { path: 'assets/cue.mp3', data: AUDIO, mediaType: 'audio/mpeg', metadata: { 'seihouse.senAudio': { kind: 'sound-cue' } } },
+    ] });
+    await expect(inspectMenuMusicSpp(cue)).rejects.toThrow('songs only');
+  });
+
   it('makes and reads a Sound Cue pack from a folder per sound word, with categories', async () => {
     const folder = audioFolder({ 'temple bell': ['bell 1.mp3', 'bell 2.ogg'], growl: ['low.wav'] }, {
       name: 'Temple Sounds', kind: 'sound-cues', categories: { growl: 'beasts' },

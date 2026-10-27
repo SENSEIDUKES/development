@@ -42,6 +42,7 @@ export interface DeviceProfileServicesOptions {
   celestialStore?: CelestialStoreAccountServices;
   /** The host's device preferences, for Settings › Sound (Menu music). */
   soundPreferences?: ReaderPreferenceStorage;
+  menuMusic?: UserProfileServices['menuMusic'];
   /** The reader's Story Seeds, for the Cave's Stories page and its exports. */
   storySeeds?: { repository: StorySeedRepository; ownerId: string };
   /** What this host has not built yet, each shown with the note. */
@@ -58,7 +59,7 @@ export interface DevicePortraitMaker {
   keep(portrait: Blob): Promise<string>;
 }
 
-export function createDeviceProfileServices({ store, familiars, celestialStore, soundPreferences, storySeeds, notYetBuilt, portraits }: DeviceProfileServicesOptions): UserProfileServices {
+export function createDeviceProfileServices({ store, familiars, celestialStore, soundPreferences, menuMusic, storySeeds, notYetBuilt, portraits }: DeviceProfileServicesOptions): UserProfileServices {
   const records = async () => storySeeds ? storySeeds.repository.list(storySeeds.ownerId) : [];
   const generationNote = notYetBuilt?.features.includes('portrait-generation') ? notYetBuilt.note : undefined;
   return {
@@ -66,6 +67,7 @@ export function createDeviceProfileServices({ store, familiars, celestialStore, 
     familiars,
     celestialStore,
     soundPreferences,
+    menuMusic,
     useController: props => useDeviceProfileController(store, props, { familiars, generationNote, portraits }),
     // The host signs its one device reader in; the Spirit Link gate never shows.
     authenticate: noop,

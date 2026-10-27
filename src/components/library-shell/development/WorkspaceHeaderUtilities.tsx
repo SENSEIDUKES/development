@@ -1,5 +1,6 @@
 import { Component, lazy, Suspense, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { SEISwitch } from '@seihouse/ui';
 import { SEN_LANGUAGES, normalizeSenLanguageCode, type SenLanguageCode } from '@seihouse/sen/contracts';
 import { NarrativeButton, NarrativePanel, NarrativeTextBox } from '@seihouse/sen/presentation';
 import { LibraryHelpIcon as SENHelpIcon, LibrarySearchIcon as SENSearchIcon, LibrarySettingsIcon as SENSettingsIcon } from '@seihouse/library-ui';
@@ -29,10 +30,12 @@ export interface HeaderSearchItem extends HeaderAction {
 export interface WorkspaceHeaderPreferences {
   language?: SenLanguageCode;
   onLanguageChange?: (language: SenLanguageCode) => void;
+  menuMusic?: boolean;
+  onMenuMusicChange?: (enabled: boolean) => void;
 }
 
 /**
- * Host destinations, compact Preferences (Preferred Language + Help), and Search.
+ * Host destinations, compact Preferences (language, menu music and Help), and Search.
  *
  * Preferences and Search are two separate, always-visible controls at every width.
  * Neither is ever folded into an overflow menu: each keeps its own 44px target
@@ -139,6 +142,12 @@ export function WorkspaceHeaderUtilities({ items, help, preferences }: {
                   ))}
                 </select>
               </div>
+              {preferences?.onMenuMusicChange && <div className="workspace-preferences-music">
+                <SEISwitch isSelected={preferences.menuMusic ?? true} onChange={preferences.onMenuMusicChange}
+                  size="compact" className="workspace-preferences-music-switch">
+                  Menu music
+                </SEISwitch>
+              </div>}
               <div className="workspace-preferences-footer">
                 <NarrativeButton
                   variant="ghost"

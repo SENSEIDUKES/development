@@ -17,7 +17,10 @@ import { UserProfileServicesProvider as ReferenceUserProfileServicesProvider } f
 import { resolvePermanentDaoXp } from '@seihouse/library/cultivation';
 import { useFamiliarStoreAccount } from '@seihouse/library/familiar';
 import { navigateLibraryPreview } from '../library-shell/libraryPreviewNavigation';
-import { createMockUserProfileServices } from './mockUserProfileServices';
+import { createMockUserProfileServices, WORKSHOP_SOUND_PREFERENCES } from './mockUserProfileServices';
+import { useDeviceMediaPacks } from '../../../host/media/useDeviceMediaPacks';
+import { useMenuMusicSlot } from '../../../host/media/useMenuMusicSlot';
+import { WORKSHOP_DEVICE_MEDIA, WORKSHOP_MEDIA_PACK_STORE } from '../../deviceMedia';
 import { getPreviewScenario } from './previewData';
 import { previewPublicCreators } from './publicCreatorData';
 import { PREVIEW_FAMILIAR_ID, ProductFamiliarSession, ProductFamiliarSurface, useProductFamiliarPreview } from '../familiar/ProductFamiliarPreview';
@@ -95,12 +98,14 @@ function UserProfileContent({ embedded, initialState }: { embedded: boolean; ini
     [logExcludedAction, previewState],
   );
 
-  const developmentServices = useMemo(() => createMockUserProfileServices({
+  const mediaPacks = useDeviceMediaPacks(WORKSHOP_MEDIA_PACK_STORE, WORKSHOP_DEVICE_MEDIA);
+  const { slot: menuMusic } = useMenuMusicSlot(WORKSHOP_SOUND_PREFERENCES, mediaPacks);
+  const developmentServices = useMemo(() => ({ ...createMockUserProfileServices({
     state: previewState, logExcludedAction, onSignIn: setLinkedAccount,
     profileOverride: { familiarId: PREVIEW_FAMILIAR_ID },
     onFamiliarProfile: reportProfile,
     celestialStore: FAMILIAR_STORE_ACCOUNT,
-  }), [previewState, logExcludedAction, reportProfile]);
+  }), menuMusic }), [previewState, logExcludedAction, reportProfile, menuMusic]);
 
   const currentUser = scenario.currentUser ?? linkedAccount;
   const currentUid = currentUser?.uid ?? null;

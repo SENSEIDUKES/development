@@ -10,7 +10,7 @@
  * token sheet → World Blueprint (Arc 1 only,
  * the hidden look-ahead nowhere on screen, every blank Seed slot filled) → Manifest
  * Story → Story View → Start Story under the veil → Chapter 1 with its Sound
- * Cue and its own soundtrack (the app's calm music on every page before it,
+ * Cue and its own soundtrack (the app's theme songs on every page before it,
  * the chapter's fighting music and battlefield atmosphere in the Reader, the
  * app's music again after it, never carried into the Reader) → Listen (three voices from the writer's speaker tags, the spoken
  * sentence lit, Pause and Resume, the ghost note (mute, long-press to Audio),
@@ -58,10 +58,11 @@ const CODEX_PAGE = /\/src\/components\/reader-codex\/(?:development|shared)\//;
 
 const receipt = { provider: 'gemini', model: 'fixture', generatedAt: '2026-10-01T12:00:00.000Z', usage: { source: 'unavailable' } };
 const SOUNDSCAPES = JSON.parse(readFileSync('src/host/media/data/sen-soundscapes-v1.json', 'utf8')).entries;
+const MENU_PIECES = JSON.parse(readFileSync('src/host/media/data/menu-music-v1.json', 'utf8')).pieces;
 const ATMOSPHERES = JSON.parse(readFileSync('src/host/media/data/sen-atmospheres-v1.json', 'utf8')).entries;
-/** The pieces of SEN Soundscapes that answer a mood, by their file names. */
-const piecesOf = mood => new Set(SOUNDSCAPES.filter(piece => piece.mood === mood || piece.moods.includes(mood)).map(piece => new URL(piece.url).pathname));
-const SOUNDSCAPE_PATH = /\/SEN\/AUDIO\/SOUNDSCAPE\/Volumn%201\//;
+/** Menu songs or the Reader's pieces that answer a mood, by their file names. */
+const piecesOf = mood => new Set((mood === 'menu' ? MENU_PIECES : SOUNDSCAPES.filter(piece => piece.mood === mood || piece.moods.includes(mood))).map(piece => new URL(piece.url).pathname));
+const SOUNDSCAPE_PATH = /\/SEN\/AUDIO\/SOUNDSCAPE\/(?:Volumn%201|Theme%20Songs)\//;
 /** The stand-in cover the cover server answers with. */
 const COVER = readFileSync('public/card-workshop/test-images/lotus_lake_pavilion_portrait.jpg');
 const BATTLEFIELD = new URL(ATMOSPHERES.find(bed => bed.label === 'Ancient Battlefield 1').url).pathname;
@@ -371,9 +372,9 @@ async function walk(browser, viewport, sample) {
   await visibleButton('Carve New Destiny').click();
   await page.getByTestId('novel-expanded-create').waitFor();
   await noteInPlace('Story Seed', '[data-seed-creator-footer]');
-  // The app's own music starts with the first tap: calm pieces, with no model.
-  await musicOf('ambient');
-  check(pieces().every(path => piecesOf('ambient').has(path)), `The app's music should be calm pieces only, got ${JSON.stringify(pieces())}.`);
+  // The app's theme songs start with the first tap, with no model.
+  await musicOf('menu');
+  check(pieces().every(path => piecesOf('menu').has(path)), `The app's menu music should use its theme songs, got ${JSON.stringify(pieces())}.`);
   check(address() === '/app/?page=create', `Create should be /app/?page=create, got ${address()}`);
   // Story Settings in Create: Story Seed's Settings holds the language and Reading Mode, then the CAPA skill
   // slots and media the story will start with.
@@ -861,8 +862,8 @@ async function walk(browser, viewport, sample) {
   const beforeLeaving = audioAsked.length;
   await visibleButton(/^Back$/).click();
   await page.getByTestId('harness-world-info').waitFor();
-  // Leaving the Reader brings the app's calm music back.
-  await musicOf('ambient', beforeLeaving);
+  // Leaving the Reader brings the app's theme songs back.
+  await musicOf('menu', beforeLeaving);
   check(address() === storyAddress, `Back from the Reader should open Story View, got ${address()}`);
   check((await page.locator('[data-world-info-chapters="action"]').textContent()).trim() === 'Continue', 'Story View should say Continue.');
   check((await page.locator('[data-world-info-chapters="action"]').getAttribute('aria-label')).startsWith('Continue at Chapter 1'), 'Story View should continue at Chapter 1.');

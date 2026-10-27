@@ -972,8 +972,12 @@ describe('Cultivator Cave settings', () => {
     expect((menuMusic() as HTMLInputElement).checked ?? menuMusic().getAttribute('aria-checked') === 'true').toBe(true);
     await click(menuMusic());
     expect(localStorage.getItem('workshop.reader.menu-music')).toBe('off');
-    await click(menuMusic());
+    await click(document.querySelector<HTMLElement>('header button[aria-label="Preferences"]')!);
+    const headerSwitch = document.querySelector<HTMLInputElement>('[data-testid="workspace-preferences-card"] input[role="switch"]')!;
+    expect(headerSwitch.checked).toBe(false);
+    await click(headerSwitch);
     expect(localStorage.getItem('workshop.reader.menu-music')).toBe('on');
+    expect((menuMusic() as HTMLInputElement).checked).toBe(true);
     localStorage.removeItem('workshop.reader.menu-music');
   });
 

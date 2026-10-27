@@ -123,6 +123,18 @@
   background: #0b0e14;
   color: var(--color-sen-signal);
 }
+.workspace-preferences-music {
+  margin-top: 4px;
+  padding: 6px 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.workspace-preferences-music-switch {
+  width: 100%;
+  min-height: 44px !important;
+  color: var(--color-sen-signal);
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
 .workspace-preferences-footer {
   margin-top: 4px;
   padding-top: 6px;

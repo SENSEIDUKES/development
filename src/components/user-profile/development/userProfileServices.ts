@@ -197,6 +197,8 @@ export interface UserProfileServices {
    * its Menu music switch; without it (a host with no sound), it does not.
    */
   soundPreferences?: ReaderPreferenceStorage;
+  /** The host's installed menu-music packages and SPP importer. */
+  menuMusic?: import('../../../library/sound/MenuMusicSlot').MenuMusicSlotProps;
   /** Production: `useUserProfile(props)` from `src/hooks/useUserProfile.ts`. */
   useController: (props: UserProfileControllerProps) => UserProfileController;
 

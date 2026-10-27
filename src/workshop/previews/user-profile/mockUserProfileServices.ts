@@ -96,7 +96,7 @@ export interface MockUserProfileServicesOptions {
   onSignIn: (account: AppUser) => void;
 }
 
-const WORKSHOP_SOUND_PREFERENCES = createLocalReaderPreferenceStorage('workshop.reader.');
+export const WORKSHOP_SOUND_PREFERENCES = createLocalReaderPreferenceStorage('workshop.reader.');
 
 export function createMockUserProfileServices({
   state,

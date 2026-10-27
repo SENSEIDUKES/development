@@ -3,6 +3,7 @@ import type { ReaderPreferenceStorage } from '@seihouse/sen/reader-runtime';
 
 /** The device preference's key in the host's `ReaderPreferenceStorage`. */
 export const MENU_MUSIC_KEY = 'menu-music';
+export const MENU_MUSIC_PACK_KEY = 'menu-music-pack';
 
 /** Whether the reader wants music on the menus (Home, Create, World Info). On unless they turned it off. */
 export function readMenuMusic(storage?: ReaderPreferenceStorage): boolean {
@@ -29,6 +30,20 @@ const subscribe = (listener: () => void) => {
   listeners.add(listener);
   return () => { listeners.delete(listener); };
 };
+
+/** The installed pack selected for menus; empty means the host's default music. */
+export function readMenuMusicPack(storage: ReaderPreferenceStorage): string {
+  try { return storage.read(MENU_MUSIC_PACK_KEY) ?? ''; } catch { return ''; }
+}
+
+export function useMenuMusicPack(storage: ReaderPreferenceStorage): [string, (key: string) => void] {
+  const key = useSyncExternalStore(subscribe, () => readMenuMusicPack(storage), () => '');
+  const select = useCallback((next: string) => {
+    storage.write(MENU_MUSIC_PACK_KEY, next);
+    listeners.forEach(listener => listener());
+  }, [storage]);
+  return [key, select];
+}
 
 /**
  * The reader's Menu music setting, kept on the device: Profile Settings'

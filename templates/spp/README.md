@@ -73,6 +73,24 @@ Audio packages can be up to 1 GB, with each file up to 512 MB (the SPP safety
 ceiling; skills and word lists keep the small 64 MB default). The whole package
 is read into memory while it is installed, so on a phone keep packs smaller.
 
+### Menu music — 2026-10-27
+
+Profile Settings → Sound → Menu Music accepts a Studio song collection or a
+Soundscape SPP. `NovelExpanded Theme Songs v1.0.1.spp` contains the 13 default
+theme songs as permanent HTTPS links, with the original track order, hashes,
+manifest and Studio tags retained as source provenance. The audio remains at
+the owner's `media.seihouse.org` URLs; no recording bytes are duplicated in the
+pack. Both switches in Sound and header Preferences control the same menu music.
+
+To replace embedded songs with hosted links, create a JSON map from each
+original package audio path to its permanent HTTPS URL, then run:
+
+```bash
+node scripts/linkMenuMusicSpp.mjs original.spp links.json linked.spp 1.0.1
+```
+
+Use a new version and a different output path; keep the original pack.
+
 ### Atmospheres (your own place sounds)
 
 The same, with `"kind": "atmospheres"` and one folder per atmosphere word

@@ -68,6 +68,22 @@ body,
   margin: 0;
 }
 
+/* The app should handle like an app, not a web page: the page itself never
+   rubber-bands or drags sideways (scrolling areas keep their own bounce), a
+   double tap never zooms (pinch still does), text keeps its size when the
+   phone turns, and a tap shows the control's own state instead of the
+   browser's grey flash. */
+html,
+body {
+  overscroll-behavior: none;
+}
+body {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 /* Global scrollbar — thin, rounded, neutral silver with a restrained glow */
 ::-webkit-scrollbar {
   width: 6px;

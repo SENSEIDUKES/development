@@ -1,0 +1,199 @@
+/* The World Blueprint in the Library's own dress: a pinned tab strip like the
+   Seed creator's, the Library's section headings and glass, stat tables for
+   what each card holds, and the Codex's own cards for every character and
+   world card, so a card looks the same here and in the Codex. */
+
+/* Room for the pinned footer comes from creator.css (.bp-dossier). */
+.bp-panel { display: grid; gap: 20px; padding-top: 16px; }
+.bp-panel[hidden] { display: none; }
+
+/* ── Tabs: pinned like the creator's step strip ───────────────────────── */
+.bp-tabs-strip {
+  position: sticky;
+  top: 0;
+  z-index: 25;
+  margin-inline: -16px;
+  padding: 8px 16px;
+  background: #05070e;
+  border-bottom: 1px solid rgba(205, 178, 113, 0.14);
+}
+@media (min-width: 640px) { .bp-tabs-strip { margin-inline: -24px; padding-inline: 24px; } }
+.bp-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin-inline: auto;
+  max-width: 34rem;
+}
+.bp-tab {
+  display: flex;
+  min-height: 48px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  color: var(--color-neutral-400);
+  font-family: var(--font-sc);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease;
+}
+.bp-tab:hover { color: var(--color-neutral-200); }
+.bp-tab:focus-visible { outline: 2px solid rgba(205, 178, 113, 0.7); outline-offset: 2px; }
+.bp-tab[aria-selected='true'] {
+  border-color: rgba(205, 178, 113, 0.5);
+  background: linear-gradient(180deg, rgba(205, 178, 113, 0.16), rgba(205, 178, 113, 0.04));
+  color: #f3ede0;
+}
+
+/* ── Sections and stat tables ────────────────────────────────────────── */
+.bp-section { display: grid; min-width: 0; gap: 12px; }
+.bp-stats {
+  display: grid;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid rgba(172, 166, 214, 0.18);
+  border-radius: 14px;
+  background: rgba(11, 14, 30, 0.55);
+  box-shadow: inset 0 1px 0 rgba(216, 210, 240, 0.06);
+}
+.bp-stat {
+  display: grid;
+  grid-template-columns: minmax(0, 40%) minmax(0, 1fr);
+  min-height: 44px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-top: 1px solid rgba(172, 166, 214, 0.08);
+}
+.bp-stat:first-child { border-top: 0; }
+.bp-stat dt { display: flex; min-width: 0; align-items: center; gap: 8px; font-family: var(--font-sc); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-neutral-400); }
+.bp-stat dt svg { flex-shrink: 0; color: #cdb271; }
+.bp-stat dd { min-width: 0; margin: 0; font-size: 14px; line-height: 1.5; color: #f3ede0; overflow-wrap: anywhere; }
+@media (min-width: 768px) {
+  .bp-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bp-stat:nth-child(2) { border-top: 0; }
+  .bp-stat:nth-child(odd) { border-right: 1px solid rgba(172, 166, 214, 0.08); }
+}
+
+/* ── Cast: a row of Codex cards, then the chosen one ─────────────────── */
+.bp-cast { display: grid; gap: 20px; }
+.bp-cast-row {
+  display: flex;
+  gap: 10px;
+  margin-inline: -16px;
+  padding: 4px 16px 6px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+.bp-cast-row::-webkit-scrollbar { display: none; }
+.bp-cast-pick { flex: 0 0 8.5rem; scroll-snap-align: start; }
+.bp-cast-pick > button[aria-pressed='true'] { outline: 2px solid rgba(205, 178, 113, 0.75); outline-offset: 2px; }
+@media (min-width: 640px) {
+  .bp-cast-row { margin-inline: 0; padding-inline: 0; flex-wrap: wrap; overflow: visible; }
+  .bp-cast-pick { flex-basis: 9rem; }
+}
+/* An empty slot for a new card, the size of the cards beside it. */
+.bp-card-add {
+  display: flex;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1px dashed rgba(172, 166, 214, 0.3);
+  border-radius: 12px;
+  color: var(--color-neutral-400);
+  font-family: var(--font-sc);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
+}
+.bp-card-add:hover { border-color: rgba(4, 172, 255, 0.5); color: var(--color-portal); }
+.bp-card-add:focus-visible { outline: 2px solid rgba(205, 178, 113, 0.75); outline-offset: 2px; }
+.bp-card-add-count { font-size: 10px; color: var(--color-neutral-500); }
+
+.bp-hero { display: grid; gap: 12px; }
+/* The chosen card, smaller than a Codex profile's on a phone: the row above
+   already shows the cast, so this one leaves room for what it holds. */
+.bp-hero > header { width: min(100%, 15rem); }
+.bp-hero-panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (min-width: 640px) {
+  .bp-hero { grid-template-columns: minmax(0, 18rem) minmax(0, 1fr); align-items: start; gap: 16px; }
+  .bp-hero > header { width: 100%; }
+  .bp-hero-panels { grid-template-columns: minmax(0, 1fr); }
+}
+.bp-mini {
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(172, 166, 214, 0.18);
+  border-radius: 14px;
+  background: rgba(11, 14, 30, 0.55);
+  box-shadow: inset 0 1px 0 rgba(216, 210, 240, 0.06);
+}
+.bp-mini-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 6px;
+  font-family: var(--font-sc);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #cdb271;
+}
+.bp-mini-value { margin: 0; font-size: 14px; color: #f3ede0; overflow-wrap: anywhere; }
+.bp-mini-sub { margin: 2px 0 0; font-size: 12px; color: var(--color-neutral-400); }
+.bp-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.bp-chips > span {
+  padding: 2px 8px;
+  border: 1px solid rgba(172, 166, 214, 0.25);
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--color-neutral-200);
+}
+.bp-aliases { display: flex; flex-wrap: wrap; gap: 8px; margin: -8px 0 0; font-size: 12px; color: var(--color-neutral-300); }
+.bp-aliases > span:first-child { font-family: var(--font-sc); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-neutral-500); }
+.bp-prose { margin: 0; font-family: var(--font-serif); font-size: 14px; line-height: 1.7; color: var(--color-neutral-200); white-space: pre-line; }
+
+/* ── World: Codex cards in a grid ─────────────────────────────────────── */
+.bp-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (min-width: 640px) { .bp-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1280px) { .bp-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.bp-tiles-empty { grid-column: 1 / -1; margin: 0; }
+
+/* ── Cover: the record's chips, two to a row on a phone ─────────────── */
+.bp-record { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.bp-record > span { min-width: 0; justify-content: center; padding-inline: 8px; font-size: 9px; }
+@media (min-width: 640px) {
+  .bp-record { display: flex; flex-wrap: wrap; justify-content: center; }
+  .bp-record > span { font-size: 10px; }
+}
+/* The title box stays a field; on a phone its type steps down so a long
+   title still shows most of itself. */
+@media (max-width: 639px) {
+  .seed-field-scope .bp-cover .blueprint-title-field .glass-field { font-size: 1.1rem; line-height: 1.6rem; text-align: left; }
+}
+
+/* ── Keep a copy; sheet footer ────────────────────────────────────────── */
+.bp-more, .bp-sheet-footer { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.bp-more :is(button, a), .bp-sheet-footer :is(button, a) { min-height: 48px; }
+/* Sheet fields sit one or two to a row: the sheet is narrow on every screen. */
+[data-blueprint-sheet] .grid { grid-template-columns: minmax(0, 1fr) !important; }
+@media (min-width: 640px) {
+  [data-blueprint-sheet] .grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  [data-blueprint-sheet] .grid > [class*='col-span'] { grid-column: 1 / -1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bp-tab { transition: none; }
+}

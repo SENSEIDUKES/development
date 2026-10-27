@@ -10,7 +10,7 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - **Source location:** `src/components/CreationModal.tsx` (default export `CreationModal`)
 - **Workshop preview:** `?preview=story-seed` (`&state=<scenario-id>` deep-links a state)
 - **First Workshop record:** 2026-08-01
-- **Last recorded Workshop update:** 2026-10-26
+- **Last recorded Workshop update:** 2026-10-27
 - **Historical source inspection:** 2026-08-10
 - **Lifecycle status:** finalized Workshop feature; refactored, optimized, and active implementation built here
 
@@ -31,17 +31,22 @@ Story Seed is one creation flow with these visible destinations:
   access, seed reuse, and novel manifestation actions.
 - **World Blueprint** is an editable sibling artifact. It is not nested inside
   the portable Creator / Story / World seed.
-- **The creator frame (2026-10-26).** Create moves through the Seed like a
-  game's character creator: a step strip (Origin → ARC → World → Manifest, any
-  step tappable; World's eight kinds as sub-tabs), a live story card that grows
-  as the Seed fills (one line that opens on phones and tablets, a column
-  beside the step from 1280px), and Back / Next pinned above the workspace
-  bar in equal fixed cells. Create is the last step, a confirm screen; its
-  footer carries the page's one **Create World Blueprint** button. A blank
-  reads **Fate Will Decide**: the reader never meets the machinery behind it.
-  The bar reads Sections · Story Bank · Blueprint · Settings · Back, without
-  Sections on phones, where the step strip does its work. Blueprint opens the
-  World Blueprint inside the shell once one exists, otherwise the Create step. Owned by `development/creator/`.
+- **The Blueprint (2026-10-27).** Inside the shell the Blueprint has four
+  pages on a pinned tab strip: **Story** (cover, Origin, Style Bible, Story
+  Settings, Keep a Copy), **Cast** (the cast as a row of Codex cards, the
+  chosen character's large Codex card with Power and Holds/Knows beside it,
+  then Character Stats and When the Story Opens stat tables, Biography and the
+  Generated Background), **World** (World Setting, then Factions, Things,
+  Abilities, Places and the Bestiary as Codex cards) and **Arcs** (Arc Goals,
+  then the ARC fields). Every card is the Codex's own card
+  (`@seihouse/sen/harness-generation`: `CodexCardButton`,
+  `CodexProfileHeader`), so a card looks the same here and in the Codex; the
+  information around it is the Blueprint's own, in the Library's headings and
+  glass. A card opens its fields in a sheet; the fields are the Seed's own
+  per-entry forms (`AdditionalCharacterFields`, `FactionFields`,
+  `WorldCardFields`). Blanks read Fate Will Decide. Refine Details and
+  **Create Story** are pinned in equal cells on the workspace bar. Every page
+  stays mounted, so field ids hold.
 
 The canonical Story Seed shape is `creator / story / world`. Title has
 one owner at `world.optional.worldIdentity.title`; Blueprint title editing
@@ -63,7 +68,7 @@ development/
   useStoryBankRecords.ts          list, loading, error, cancellation, retry
   StorySeedHelpMenu.tsx           Help modal and audio lifecycle
   BlueprintReview.tsx             editable Blueprint dossier coordinator
-  blueprint/                      memoized review sections, collections, copy format
+  blueprint/                      the Blueprint's tabs, Cast screen, world tiles, stat tables, sheets, copy format
   creator/                        step strip, live story card, pinned Back / Next, Manifest step
   workspaces/                     Origin, ARC, and World editors
   workspaces/origin/              Style, Genre, and premise/tag responsibilities
@@ -218,6 +223,24 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-10-27 (ours, not Star Rail's; one card):** From SENSEI: the first
+  pass copied Honkai: Star Rail's look too closely (gold relic tabs, orange
+  portraits, purple strips). The layout of the information stays; the colours
+  and headings are the Library's again, and every card is now the Codex's own
+  card, shared from SEN (`codexCardParts.tsx`), so the Blueprint and the
+  Codex show one card. The Back / Next footer now rests on the workspace bar
+  by the bar's measured height (`PinnedFooter`), fixing a footer that floated
+  over the page on iPhone.
+- **2026-10-27 (the Blueprint as a character screen):** From SENSEI, after
+  seeing the filled Blueprint scroll for about 22 phone screens: borrow Honkai:
+  Star Rail's character screens. The Blueprint now has Story, Cast, World and
+  Arcs pages; Cast and World show stat tables and relic-style tiles, and each
+  card's fields open in a sheet. "Manifest Story" is now **Create Story**.
+  The Blueprint after Chapter 1 (`NovelBlueprintEditor`) wears the same Cast
+  screen and tiles, view-only where it must be. `BlueprintCollectionSections`
+  and `BlueprintMainCharacterSection` are replaced and removed. Also: Story
+  Bank opens straight from an open Blueprint. Pictures on the portrait and the
+  tiles (Manifest, and Import for licensed art) are the next change.
 - **2026-10-26 (Create wording, Fate Will Decide, one button size):** From
   SENSEI, after trying it on a phone. Core rule: a reader never learns that a
   model is involved, so a blank reads "Fate Will Decide", and the Chinese

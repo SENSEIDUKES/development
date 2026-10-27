@@ -530,7 +530,7 @@ Update it whenever it changes.
     come back and it is still writing, or there. A write a closed browser cut
     off is finished by the reader's next Write (a saved reply needs no new
     model call). In the app, Chapter 1 begins the moment the story is made
-    (Manifest Story), so it is ready, or nearly, when the reader starts; a Fate
+    (Create Story), so it is ready, or nearly, when the reader starts; a Fate
     Survival story's first chapter waits for the reader's direction.
   - **Low reasoning by default:** every model that offers a `low` reasoning
     level is sent it unless the reader chooses another, since testing found low
@@ -617,7 +617,7 @@ Update it whenever it changes.
       chapters written from then on, and waits while one is being written.
     - **In Create**, Story Seed's Settings holds the language and Reading Mode, then
       the CAPA skills, media and Sound Words the story will start with. What the reader changes
-      waits on the device until Manifest Story makes it the new story's.
+      waits on the device until Create Story makes it the new story's.
     - The Harness Generation developer page shows the same panels, with its own
       inspection added (each skill's instructions, the Official Requirements, slot
       uploads).

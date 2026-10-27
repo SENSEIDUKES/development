@@ -664,8 +664,8 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     expect(requestWorldBlueprint.mock.calls.map(call => call[1])).toEqual(['wrong-token', 'right-token']);
     expect(sheet()).toBeNull();
 
-    // Manifest Story starts it with the official CAPA skills and shows its Story View.
-    await click(buttonByText('Manifest Story', container), 'Manifest Story', 50);
+    // Create Story starts it with the official CAPA skills and shows its Story View.
+    await click(buttonByText('Create Story', container), 'Create Story', 50);
     const [started] = (services.stories as InMemoryHarnessGenerationRepository).snapshot().stories;
     expect(started.skillLoadout).toEqual(createOfficialCapaDefaultLoadout(record.seed.story.required.style));
     expect(address()).toBe(`/app/?story=${started.id}`);
@@ -680,7 +680,7 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     expect(address()).toBe('/app/');
   });
 
-  it('a Regular story: Manifest Story begins Chapter 1 at once, and Start Story opens it without writing it twice', async () => {
+  it('a Regular story: Create Story begins Chapter 1 at once, and Start Story opens it without writing it twice', async () => {
     const record = createMockStorySeedRecord({ userId: NOVEL_EXPANDED_READER_ID });
     record.seed.story.optional.fateSurvival = { ...record.seed.story.optional.fateSurvival, enabled: false };
     const { blueprint, ...withoutBlueprint } = record;
@@ -695,7 +695,7 @@ describe('NovelExpanded: Create', { timeout: 30_000 }, () => {
     await click(buttonByText('Use Seed', container), 'Use Seed', 200);
     await click(buttonByText('Refine Details', container), 'Refine Details', 200);
     await manifestWorldBlueprint(300);
-    await click(buttonByText('Manifest Story', container), 'Manifest Story', 50);
+    await click(buttonByText('Create Story', container), 'Create Story', 50);
     const [started] = (services.stories as InMemoryHarnessGenerationRepository).snapshot().stories;
     expect(address()).toBe(`/app/?story=${started.id}`);
     // Chapter 1 is already being written while the reader looks over the World Card.
@@ -769,7 +769,7 @@ describe('NovelExpanded: Story Settings and cover art', { timeout: 30_000 }, () 
     await click(buttonByText('Use Seed', container), 'Use Seed', 200);
     await click(buttonByText('Refine Details', container), 'Refine Details', 200);
     await manifestWorldBlueprint(300);
-    await click(buttonByText('Manifest Story', container), 'Manifest Story', 50);
+    await click(buttonByText('Create Story', container), 'Create Story', 50);
     const [started] = (services.stories as InMemoryHarnessGenerationRepository).snapshot().stories;
     const { pacing: _pacing, ...withoutPacing } = createOfficialCapaDefaultLoadout(record.seed.story.required.style);
     expect(started.skillLoadout).toEqual(withoutPacing);

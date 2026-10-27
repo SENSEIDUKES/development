@@ -28,7 +28,7 @@ export interface CreatePageProps {
   /** A saved Story Seed to open, such as a spark begun from Home. */
   seedId?: string;
   onHome: () => void;
-  /** Manifest Story: the host starts the story and shows it. */
+  /** Create Story: the host starts the story and shows it. */
   onStartStory: (payload: InitialStoryGenerationPayload) => Promise<void>;
 }
 

@@ -8,16 +8,23 @@ export const EditableChip = () => (
   </span>
 );
 
+/**
+ * The Library's section heading: a gold-ringed mark beside the section's name,
+ * its tagline, and a quiet star-divided rule. An optional action (Edit on a
+ * character) sits at the heading's end.
+ */
 export const BlueprintSectionHeading = ({
   id,
   icon: Icon,
   title,
   tagline,
+  action,
 }: {
   id: string;
   icon: LucideIcon;
   title: string;
   tagline?: string;
+  action?: ReactNode;
 }) => (
   <div>
     <div className="flex items-center gap-3">
@@ -27,9 +34,10 @@ export const BlueprintSectionHeading = ({
       >
         <Icon size={15} className="drop-shadow-[0_0_6px_rgba(205,178,113,0.35)]" />
       </span>
-      <h2 id={id} className="font-display text-lg font-bold uppercase tracking-[0.12em] text-[#F3EDE0] sm:text-xl">
+      <h2 id={id} className="min-w-0 flex-1 font-display text-lg font-bold uppercase tracking-[0.12em] text-[#F3EDE0] sm:text-xl">
         {title}
       </h2>
+      {action && <span className="shrink-0">{action}</span>}
     </div>
     {tagline && (
       <p className="mt-2 max-w-xl font-serif text-[13px] leading-relaxed text-[#B0A99B]">{tagline}</p>

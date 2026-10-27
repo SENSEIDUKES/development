@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { NarrativeButton as LibraryButton } from '@seihouse/sen/presentation';
 import { nextPage, pageLabel, previousPage, type CreatorPageId } from './creatorSteps';
+import { PinnedFooter } from './PinnedFooter';
 
 /**
  * The character creator's pinned footer: Back, the required progress, and
@@ -20,7 +21,7 @@ export function CreatorStepFooter({ page, onSelect, progress, manifest, manifest
   const previous = previousPage(page);
   const next = nextPage(page);
   return (
-    <div className="seed-creator-footer" data-seed-creator-footer>
+    <PinnedFooter data-seed-creator-footer>
       <div className="seed-creator-footer-inner">
         <div className="seed-creator-footer-cell">
           <LibraryButton variant="ghost" size="md" fullWidth icon={ArrowLeft} disabled={!previous}
@@ -39,6 +40,6 @@ export function CreatorStepFooter({ page, onSelect, progress, manifest, manifest
           ) : manifest}
         </div>
       </div>
-    </div>
+    </PinnedFooter>
   );
 }

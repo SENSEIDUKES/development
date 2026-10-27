@@ -209,6 +209,7 @@ export type { ReaderChapter, ReaderChapterBody, ReaderChapterBodyProps } from '.
 export type { NarrationHighlight } from '../../components/harness-generation/development/useFollowNarration';
 export { FatePage } from '../../components/harness-generation/development/FatePage';
 export { StoryCodex } from '../../components/harness-generation/development/StoryCodex';
+export { CodexCardArt, CodexCardButton, CodexProfileHeader, type CodexCardCategory } from '../../components/harness-generation/development/codexCardParts';
 export { BlueprintArcPage } from '../../components/harness-generation/development/BlueprintArcPage';
 export { useNextChapterWriter, type NextChapterWriter } from '../../components/harness-generation/development/useNextChapterWriter';
 export {

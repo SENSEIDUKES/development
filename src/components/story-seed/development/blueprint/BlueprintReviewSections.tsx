@@ -9,7 +9,6 @@ import {
   Info,
   Landmark,
   MapPin,
-  ScrollText,
   Tag,
 } from 'lucide-react';
 import { LibraryPowerSystemIcon as SENPowerSystemIcon, LibraryWorldIdentityIcon as SENWorldIdentityIcon } from '@seihouse/library-ui';
@@ -38,7 +37,6 @@ import {
 import { formatBlueprintDate } from './createBlueprintMarkdown';
 import { LibraryProfileIcon as SENProfileIcon } from '@seihouse/library-ui';
 import { type UpdateSeed } from '../seedState';
-import { MainCharacterFields } from '../workspaces/CharactersWorkspace';
 import { AbilitiesFields } from '../workspaces/AbilitiesWorkspace';
 import { PowerSystemFields } from '../workspaces/PowerSystemWorkspace';
 
@@ -61,20 +59,14 @@ export const BlueprintHeaderSection = memo(({
   updatedAt,
   onTitleChange,
 }: BlueprintHeaderSectionProps) => (
-  <LibraryPanel as="header" padding="lg" className="text-center">
-    {/* Blueprint version pins to the cover's top-left corner; the
-        remaining metadata chips stay centered under the title. */}
-    <div className="flex justify-start">
+  <LibraryPanel as="header" padding="md" className="bp-cover">
+    {/* The dossier cover: its eyebrow and version, the title, then its record. */}
+    <div className="flex items-center justify-between gap-3">
+      <span className="font-sc text-[11px] font-bold uppercase tracking-[0.3em] text-[#CDB271]">World Blueprint</span>
       <MetadataChip gold>{blueprintVersion || 'v1.0'}</MetadataChip>
     </div>
 
-    <div className="mt-4 flex items-center justify-center gap-3">
-      <span aria-hidden="true" className="h-px w-8 bg-gradient-to-r from-transparent to-[rgba(205,178,113,0.4)]" />
-      <span className="font-sc text-[11px] font-bold uppercase tracking-[0.34em] text-[#CDB271]">World Blueprint</span>
-      <span aria-hidden="true" className="h-px w-8 bg-gradient-to-l from-transparent to-[rgba(205,178,113,0.4)]" />
-    </div>
-
-    <div className="blueprint-title-field mx-auto mt-5 max-w-2xl">
+    <div className="blueprint-title-field mt-4">
       <LibraryTextBox
         id="blueprint-story-title"
         label="Title"
@@ -86,7 +78,7 @@ export const BlueprintHeaderSection = memo(({
       />
     </div>
 
-    <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+    <div className="bp-record mt-4">
       {creator && <MetadataChip icon={SENProfileIcon}>Creator: {creator}</MetadataChip>}
       {status && <MetadataChip icon={Info}>Status: {status}</MetadataChip>}
       {createdAt && <MetadataChip icon={CalendarDays}>Created: {formatBlueprintDate(createdAt)}</MetadataChip>}
@@ -184,50 +176,6 @@ export const BlueprintOriginSection = memo(({
 
 BlueprintOriginSection.displayName = 'BlueprintOriginSection';
 
-interface BlueprintMainCharacterSectionProps {
-  seed: StorySeedInput;
-  updateSeed: UpdateSeed;
-  backgroundProfile: string;
-  onBackgroundProfileChange: (backgroundProfile: string) => void;
-}
-
-/** Main character: every Seed field, edited on the Seed, plus the Blueprint's background prose. */
-export const BlueprintMainCharacterSection = memo(({
-  seed,
-  updateSeed,
-  backgroundProfile,
-  onBackgroundProfileChange,
-}: BlueprintMainCharacterSectionProps) => (
-  <LibraryPanel as="section" aria-labelledby="blueprint-main-character-heading" padding="md">
-    <BlueprintSectionHeading
-      id="blueprint-main-character-heading"
-      icon={SENProfileIcon}
-      title="Main Character"
-      tagline="The protagonist this blueprint builds around. Edits save to the Story Seed."
-    />
-
-    <div className="mt-5 space-y-5">
-      <MainCharacterFields seed={seed} updateSeed={updateSeed} />
-
-      <div className="blueprint-key-field">
-        <LibraryTextArea
-          id="blueprint-mc-profile"
-          label="Generated Background"
-          rightElement={<EditableChip />}
-          icon={ScrollText}
-          value={backgroundProfile}
-          onChange={onBackgroundProfileChange}
-          rows={5}
-          className="leading-relaxed"
-          placeholder="The Blueprint's narrative background for the main character..."
-        />
-      </div>
-    </div>
-  </LibraryPanel>
-));
-
-BlueprintMainCharacterSection.displayName = 'BlueprintMainCharacterSection';
-
 interface BlueprintWorldSettingSectionProps {
   seed: StorySeedInput;
   updateSeed: UpdateSeed;
@@ -320,7 +268,7 @@ export const BlueprintWorldSettingSection = memo(({
           icon={SENWorldIdentityIcon}
           value={worldType}
           onChange={value => onUpdateWorldIdentity({ worldType: value })}
-          rows={7}
+          rows={4}
           className="font-serif leading-relaxed text-[#dfd8cf]"
           placeholder="The setting, lore, and physical characteristics of this universe..."
         />

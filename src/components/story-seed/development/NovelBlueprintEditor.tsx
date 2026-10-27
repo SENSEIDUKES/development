@@ -11,10 +11,11 @@ import {
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel } from '@seihouse/sen/presentation';
 import { patchWorldIdentity, type SeedUpdate } from './seedState';
 import { BlueprintSectionHeading } from './blueprint/BlueprintDossierPrimitives';
-import { BlueprintCollectionSections } from './blueprint/BlueprintCollectionSections';
+import { CastScreen } from './blueprint/CastScreen';
+import { WorldCardGrid } from './blueprint/WorldCardGrid';
+import './blueprint/blueprint.css';
 import {
   BlueprintHeaderSection,
-  BlueprintMainCharacterSection,
   BlueprintNotesSection,
   BlueprintWorldSettingSection,
 } from './blueprint/BlueprintReviewSections';
@@ -95,7 +96,10 @@ export function NovelBlueprintEditor({ snapshot, destinedEnding, busy = false, r
   return (
     <div className="story-seed-development-surface seed-field-scope relative space-y-6" data-testid="novel-blueprint-editor"
       data-read-only={readOnly ? 'true' : undefined}>
-      {/* A disabled fieldset keeps every field visible and none editable. */}
+      {/* A disabled fieldset keeps every field visible and none editable. The
+          Cast screen and the world tiles stay outside it: their portraits and
+          tiles are how a reader moves between cards, so they take readOnly
+          themselves and open their sheets view-only. */}
       <fieldset disabled={readOnly} className="novel-blueprint-fields m-0 min-w-0 space-y-6 border-0 p-0">
       <BlueprintHeaderSection
         blueprintVersion={blueprint.blueprintVersion}
@@ -118,9 +122,11 @@ export function NovelBlueprintEditor({ snapshot, destinedEnding, busy = false, r
           </p>
         ) : null}
       </LibraryPanel>
-      <BlueprintMainCharacterSection
+      </fieldset>
+      <CastScreen
         seed={seed}
         updateSeed={updateSeed}
+        readOnly={readOnly}
         backgroundProfile={mainCharacterBackground}
         onBackgroundProfileChange={backgroundProfile => setBlueprint(current => ({
           ...current,
@@ -128,6 +134,7 @@ export function NovelBlueprintEditor({ snapshot, destinedEnding, busy = false, r
           mcProfile: backgroundProfile,
         }))}
       />
+      <fieldset disabled={readOnly} className="novel-blueprint-fields m-0 min-w-0 space-y-6 border-0 p-0">
       <BlueprintWorldSettingSection
         seed={seed}
         updateSeed={updateSeed}
@@ -148,11 +155,8 @@ export function NovelBlueprintEditor({ snapshot, destinedEnding, busy = false, r
         onWorldFactDetailChange={(field, value, fact) => setBlueprint(current => reviewWorldFactDetail(current, field, value, fact))}
       />
       <BlueprintNotesSection styleBible={blueprint.styleBible} setBlueprint={setBlueprint} />
-      <BlueprintCollectionSections
-        seed={seed}
-        updateSeed={updateSeed}
-      />
       </fieldset>
+      <WorldCardGrid seed={seed} updateSeed={updateSeed} readOnly={readOnly} />
       {!readOnly && <LibraryPanel padding="sm" className="sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="max-w-xl text-xs leading-relaxed text-neutral-400">

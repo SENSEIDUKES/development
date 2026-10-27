@@ -1,14 +1,10 @@
 import { useId, useState, type ReactNode } from 'react';
-import { ChevronDown, Sparkles } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { ARC_LENGTH } from '@seihouse/sen/arc-goals';
 import { getStoryStyleLabel, type StorySeedInput } from '@seihouse/sen/story-seed';
 import { REQUIRED_STORY_SECTIONS, missingRequiredSections } from '../seedSections';
 import { useCompactHeader } from '../../../library-shell/development/workspaceMedia';
-
-// What a blank becomes. The reader never meets the machinery behind it.
-const FateDecides = () => (
-  <span className="seed-live-card-fate"><Sparkles size={10} aria-hidden="true" />Fate Will Decide</span>
-);
+import { FateDecides } from '../FateDecides';
 
 const Row = ({ label, children }: { label: string; children: ReactNode }) => (
   <div className="seed-live-card-row">

@@ -40,11 +40,11 @@ export const resolveHarnessGenerationConfig = (
     models: route.models,
     defaultModel: route.defaultModel,
     temperature: Math.max(0, Math.min(2, finiteNumber(
-      environment.HARNESS_GENERATION_TEMPERATURE ?? environment.AI_TEMPERATURE,
+      environment.HARNESS_GENERATION_TEMPERATURE,
       0.9,
     ))),
     maxOutputTokens: Math.max(1_024, Math.floor(finiteNumber(
-      environment.HARNESS_GENERATION_MAX_OUTPUT_TOKENS ?? environment.AI_MAX_TOKENS,
+      environment.HARNESS_GENERATION_MAX_OUTPUT_TOKENS,
       16_384,
     ))),
     // Vercel allows this route 180 seconds. Leave time for the provider result

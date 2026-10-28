@@ -49,12 +49,12 @@ export function CodexCardButton({ category, name, line, badge, featured = false,
   category: CodexCardCategory; name: string; line: string; badge?: string; featured?: boolean; picture?: string; making?: boolean;
 } & Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'type' | 'children'>) {
   return <button type="button" {...button}
-    className={`group relative block aspect-[3/4] w-full overflow-hidden rounded-xl border text-left shadow-[0_8px_24px_#0008] transition-transform duration-200 motion-reduce:transition-none hover:-translate-y-0.5 ${featured ? 'border-white/30' : 'border-white/10'} ${className}`}>
+    className={`group relative block aspect-[3/4] w-full overflow-hidden rounded-xl border text-start shadow-[0_8px_24px_#0008] transition-transform duration-200 motion-reduce:transition-none hover:-translate-y-0.5 ${featured ? 'border-white/30' : 'border-white/10'} ${className}`}>
     <CodexCardArt category={category} name={name} picture={picture} making={making} />
     {/* The card's frame: an inner rim and a foot dark enough to read its name on any picture. */}
     <span aria-hidden className="pointer-events-none absolute inset-1 rounded-[10px] border border-white/[0.07]" />
     <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/80 to-transparent" />
-    {badge && <span className="absolute left-2 top-2 max-w-[calc(100%-1rem)] truncate rounded-md border border-white/15 bg-black/70 px-1.5 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-sm">{badge}</span>}
+    {badge && <span className="absolute start-2 top-2 max-w-[calc(100%-1rem)] truncate rounded-md border border-white/15 bg-black/70 px-1.5 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-sm">{badge}</span>}
     <span className="absolute inset-x-0 bottom-0 p-2.5">
       <span className="block break-words font-display text-[15px] leading-tight text-white">{name}</span>
       <span className="mt-0.5 block truncate text-[11px] text-white/60">{line}</span>
@@ -72,7 +72,7 @@ export function CodexProfileHeader({ category, name, line, badges, picture, maki
     <CodexCardArt category={category} name={name} large picture={picture} making={making} />
     <span aria-hidden className="pointer-events-none absolute inset-1.5 rounded-[14px] border border-white/[0.07]" />
     <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/80 to-transparent" />
-    {badges.length > 0 && <span className="absolute left-3 top-3 flex flex-wrap gap-1.5">
+    {badges.length > 0 && <span className="absolute start-3 top-3 flex flex-wrap gap-1.5">
       {badges.map(badge => <span key={badge} className="rounded-md border border-white/15 bg-black/70 px-2 py-0.5 text-[11px] font-medium text-white/90 backdrop-blur-sm">{badge}</span>)}
     </span>}
     <div className="absolute inset-x-0 bottom-0 p-4">

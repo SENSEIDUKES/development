@@ -209,10 +209,10 @@ export const OriginPremiseAndTags = ({
                 if (addTag(ghostSuggestion)) setDismissedGhostKey(ghostSuggestionKey);
               }}
               title="Add this suggestion to your Story Tags"
-              className="story-seed-touch-target ml-auto mt-2 flex max-w-full items-start gap-1.5 rounded-lg border border-portal/40 bg-[#0b0e1e]/90 px-2.5 py-1 font-mono text-[10px] tracking-wider text-portal shadow-[0_0_12px_rgba(4,172,255,0.15)] transition-all hover:border-portal hover:text-signal"
+              className="story-seed-touch-target ms-auto mt-2 flex max-w-full items-start gap-1.5 rounded-lg border border-portal/40 bg-[#0b0e1e]/90 px-2.5 py-1 font-mono text-[10px] tracking-wider text-portal shadow-[0_0_12px_rgba(4,172,255,0.15)] transition-all hover:border-portal hover:text-signal"
             >
               <Sparkles size={11} className="mt-0.5 shrink-0 animate-pulse text-portal" />
-              <span className="min-w-0 break-words text-left">Add tag: {ghostSuggestion}</span>
+              <span className="min-w-0 break-words text-start">Add tag: {ghostSuggestion}</span>
             </motion.button>
           )}
         </AnimatePresence>
@@ -373,7 +373,7 @@ const OriginTagEditor = memo(({
 
         <button type="button" aria-expanded={browseOpen} aria-controls="origin-tag-browser" onClick={() => setBrowseOpen(open => !open)}
           className="story-seed-touch-target flex w-full items-center justify-between gap-2 border-t border-neutral-800/80 pt-3 font-sc text-[10px] font-bold uppercase tracking-widest text-[#CDB271] transition-colors hover:text-[#E3C878]">
-          <span>{browseOpen ? 'Close tag browser' : 'Browse all tags'}<span className="ml-2 font-sans text-[11px] font-normal normal-case tracking-normal text-neutral-400">{browseOpen ? '' : 'by niche, family, search, or your own'}</span></span>
+          <span>{browseOpen ? 'Close tag browser' : 'Browse all tags'}<span className="ms-2 font-sans text-[11px] font-normal normal-case tracking-normal text-neutral-400">{browseOpen ? '' : 'by niche, family, search, or your own'}</span></span>
           <ChevronDown size={13} aria-hidden="true" className={browseOpen ? 'rotate-180 transition-transform' : 'transition-transform'} />
         </button>
 
@@ -407,7 +407,7 @@ const OriginTagEditor = memo(({
         </div>
 
         <div>
-          <p className={workspaceCompactLabelClass}>Families<span className="ml-2 font-sans text-[11px] font-normal normal-case tracking-normal text-neutral-400">{activeFamilies.length ? `${activeFamilies.length} chosen` : 'all shown'}</span></p>
+          <p className={workspaceCompactLabelClass}>Families<span className="ms-2 font-sans text-[11px] font-normal normal-case tracking-normal text-neutral-400">{activeFamilies.length ? `${activeFamilies.length} chosen` : 'all shown'}</span></p>
           <div className="mt-2 flex flex-wrap gap-1.5" id="tag-categories">
             {familyCounts.map(({ family, count }) => {
               const chosen = activeFamilies.includes(family);

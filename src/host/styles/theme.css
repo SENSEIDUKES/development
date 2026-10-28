@@ -11,6 +11,8 @@
    A face downloads only when text on the page uses it. */
 @import "@seihouse/seireader/sans.css";
 @import "@seihouse/living-titles/fonts.css";
+/* The interface's fonts and lettering for scripts beyond Latin and Cyrillic. */
+@import "./script-lettering.css";
 @import "tailwindcss";
 @import "@seihouse/library-ui/styles.css";
 @import "@seihouse/library/styles.css";
@@ -19,6 +21,11 @@
 @import "@seihouse/audio-player/styles.css";
 @import "@seihouse/audio-player/reader-ui/styles.css";
 @source "../../../node_modules/@seihouse/audio-player/dist/reader-ui.js";
+
+/* `rtl:` follows the nearest `dir`, not any right-to-left ancestor: the Reader
+   sets its own direction from the story's language, so an English story read
+   in an Arabic interface keeps its arrows pointing the English way. */
+@custom-variant rtl (&:where(:dir(rtl)));
 
 @theme {
   --font-sans: "Rubik", ui-sans-serif, system-ui, sans-serif;

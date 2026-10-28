@@ -26,8 +26,8 @@
   border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 999px; background: rgba(5, 11, 18, 0.18); color: #f5f5f5;
   backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); opacity: 0.75; transition: opacity 150ms ease-out, background-color 150ms ease-out;
 }
-[data-light-novels-home] .home-featured-step[data-side='previous'] { left: 0.4rem; }
-[data-light-novels-home] .home-featured-step[data-side='next'] { right: 0.4rem; }
+[data-light-novels-home] .home-featured-step[data-side='previous'] { inset-inline-start: 0.4rem; }
+[data-light-novels-home] .home-featured-step[data-side='next'] { inset-inline-end: 0.4rem; }
 [data-light-novels-home] .home-featured:hover .home-featured-step,
 [data-light-novels-home] .home-featured-step:focus-visible { opacity: 1; }
 [data-light-novels-home] .home-featured-step:hover { background: rgba(5, 11, 18, 0.4); }

@@ -48,7 +48,9 @@ export function WorldCard(props: WorldCardFaceProps) {
       : displayStatus?.view === 'library' ? WORLD_STATUS_LABELS[displayStatus.value] : undefined;
   const genre = tileWorld?.genre?.trim();
   const format = tileWorld?.format?.trim();
-  const details = [genre, `Ch. ${world.chapterCount}`, statusLabel].filter(Boolean).join(' | ');
+  // One text per part, so the genre and status each show in the reader's language.
+  const details = [genre, `Ch. ${world.chapterCount}`, statusLabel].filter(Boolean)
+    .map((part, index) => <span key={part}>{index > 0 && ' | '}{part}</span>);
   const openLabel = `Open ${world.title}, ${world.chapterCount} chapters${creatorName ? `, creator ${creatorName}` : ''}${format ? `, format ${format}` : ''}${statusLabel ? `, ${statusLabel}` : ''}`;
   const card = <LibraryCard
     interactive={false}

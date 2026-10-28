@@ -16,6 +16,7 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 
 ## Workshop history
 
+- **2026-10-28:** Removed the development `ReaderCodex` page, its `CodexSheetOverlay` and its `ReaderCodexBestiary` (and their tests): the Codex is remade on the HARNESS record and nothing opened them. `@seihouse/sen/reader-codex` no longer exports them, and the app's import checks no longer let in this folder's `development/` and `shared/` code (only the shared `types.ts` reader contract). Also removed the unused `shared/codexHighlighting.ts` and `shared/CodexHovercard.tsx` pass-throughs. The section views, hooks, card surfaces and `reference/` are unchanged.
 - **2026-10-18:** Shared `CodexCardAmbience` now uses one static aura gradient and a single animated gradient field for all seven motes, replacing individual animated nodes, blend modes, shadows and the aura blur filter. `CodexHovercard` shows the complete description in its existing scroll region, also opened by the reveal card's new "Read more in Codex" trigger; desktop keyboard focus waits for the positioned portal to become visible. Reference files and the app's rebuilt Codex remain separate.
 - **2026-10-13 (card gallery):** Development now shows the Codex as a gallery of cards, each opening into one profile; see the Harness Generation README.
 - **2026-10-13:** The Codex is remade on the HARNESS record (`StoryCodex` and `deriveStoryCodex` in `harness-generation/`; see that README). This card's Development view now shows it, reading SENSEI's Sundered Heavens test; its Original Reference stays the production Codex, so Compare shows old and new side by side. The Workshop Controls' page shortcuts drive the Original Reference's tabs. The development `ReaderCodex` in this folder is unchanged and stays, but the Reader no longer opens it.
@@ -80,17 +81,12 @@ reference/
   ReaderCodex.tsx
   CodexSheetOverlay.tsx
 development/
-  ReaderCodex.tsx
-  CodexSheetOverlay.tsx
-  ReaderCodexBestiary.tsx
   CodexHovercard.tsx        — active highlighted-term card (spectral glass fork)
   codexEntityAccent.ts      — entity ambient accent rules shared with CodexCard
   CodexCardAmbience.tsx     — spectral mote field + accent aura for Codex Cards
 shared/
   codex/                    — production section/component tree
   hooks/                    — pure hooks and local production-service adapters
-  CodexHovercard.tsx        — now serves only the historical Reference Reader path
-  codexHighlighting.ts
   codexContext.ts
   codexEntryContext.ts
   codexCompatibility.ts

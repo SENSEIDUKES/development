@@ -271,7 +271,7 @@ export function FatePathChooser({ story, foundation, chapters, busy = false, foc
               onChange={event => setText(event.target.value)} disabled={disabled} autoFocus={focusDirection}
               placeholder={mode === 'survival' ? 'What your protagonist does next, in your own words.' : 'What should happen next, in your own words.'}
               className="min-h-24 w-full rounded-lg border border-white/15 bg-black/35 p-3 text-sm text-white" />
-            <p className="text-right font-mono text-[10px] text-neutral-500">{text.length}/{CHAPTER_DIRECTION_TEXT_LIMIT}</p>
+            <p className="text-end font-mono text-[10px] text-neutral-500">{text.length}/{CHAPTER_DIRECTION_TEXT_LIMIT}</p>
           </div>
         )}
       </fieldset>
@@ -306,7 +306,7 @@ export function FateConclusion({ story }: { story: HarnessStory }) {
     <div role="status" data-testid="fate-conclusion" className={`rounded-xl border p-4 ${reached ? 'border-emerald-300/40 bg-emerald-400/10' : 'border-amber-300/40 bg-amber-400/10'}`}>
       <p className="text-sm font-semibold text-white">{reached ? 'The Destined Ending was reached' : 'Fate failed'}</p>
       <p className="mt-1 text-xs leading-relaxed text-neutral-200">{text} No further chapter is written.</p>
-      {ended.evidence && <blockquote className="mt-2 border-l-2 border-white/20 pl-3 text-xs italic text-neutral-300">{ended.evidence}</blockquote>}
+      {ended.evidence && <blockquote className="mt-2 border-s-2 border-white/20 ps-3 text-xs italic text-neutral-300">{ended.evidence}</blockquote>}
     </div>
   );
 }

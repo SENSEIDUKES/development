@@ -1,5 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import { defineConfig, loadEnv, type Connect, type Plugin } from 'vite';
+import { configDefaults } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { developmentApisPlugin } from './scripts/developmentApisPlugin.mjs';
@@ -62,5 +63,7 @@ export default defineConfig(({ mode }) => {
       developmentApisPlugin(serverEnvironment),
     ],
     resolve: { alias: packageAliases },
+    // Agent worktrees under .claude/ are other checkouts; their tests are not this one's.
+    test: { exclude: [...configDefaults.exclude, '.claude/**'] },
   };
 });

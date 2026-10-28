@@ -1,6 +1,6 @@
 // Near-verbatim copy of Light-Novels `src/lib/dialect.ts`. Only the
 // production import is rewritten: `useAppStore` now resolves to the local
-// mock store in `./stubs` (same pattern as reader-chamber/shared/dialect.ts).
+// mock store in `./stubs`.
 // `PlotControlForm` only calls `getDialectLabel` directly; `useDialect` is
 // carried over verbatim for parity, but nothing in this replica calls it.
 

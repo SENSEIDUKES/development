@@ -239,7 +239,7 @@ function Profile({ category, name, line, badges, backLabel, onBack, art, childre
   art?: ProfileArt; children: ReactNode;
 }) {
   return <article className="space-y-5 motion-safe:animate-[codex-rise_260ms_ease-out]" aria-labelledby="codex-profile-name" data-testid="codex-profile">
-    <button type="button" onClick={onBack} className="inline-flex min-h-11 items-center gap-1 rounded-full pr-3 text-sm text-neutral-300 hover:text-white">
+    <button type="button" onClick={onBack} className="inline-flex min-h-11 items-center gap-1 rounded-full pe-3 text-sm text-neutral-300 hover:text-white">
       <ChevronLeft size={18} aria-hidden /> {backLabel}
     </button>
     <CodexProfileHeader category={category} name={name} line={line} badges={badges} picture={art?.picture} making={art?.making} nameId="codex-profile-name" />

@@ -67,7 +67,7 @@ export interface MockAppState {
   isGenerating: boolean;
   streamingChapter: null;
   autoPlayNarration: boolean;
-  // Narration playback (drives the useReaderPlayback stub in readerPlayback.ts)
+  // Narration playback
   isPlayingText: boolean;
   isPausedText: boolean;
   speechRate: number;

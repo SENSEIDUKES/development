@@ -30,7 +30,6 @@ export function resolveStorySeedBlueprintConfig(
 ): ResolvedStorySeedBlueprintConfig {
   const accessToken = environment.STORY_SEED_BLUEPRINT_ACCESS_TOKEN?.trim() || undefined;
   const model = environment.STORY_SEED_BLUEPRINT_MODEL?.trim()
-    || environment.CHAPTER_GENERATION_DEFAULT_MODEL?.trim()
     || DEFAULT_CHAPTER_MODEL;
   const provider = textModelProvider(model);
   if (!provider) {
@@ -43,14 +42,14 @@ export function resolveStorySeedBlueprintConfig(
     accessToken,
     model,
     temperature: Math.min(2, Math.max(0, finiteNumber(
-      environment.STORY_SEED_BLUEPRINT_TEMPERATURE ?? environment.AI_TEMPERATURE,
+      environment.STORY_SEED_BLUEPRINT_TEMPERATURE,
       1,
     ))),
     // A Blueprint now also writes the world at Chapter 0: every card the
     // Codex holds, with its slots. That is several times the old answer, so
     // the default leaves room for it rather than stopping mid-world.
     maxOutputTokens: Math.min(32_768, Math.max(4_096, Math.floor(finiteNumber(
-      environment.STORY_SEED_BLUEPRINT_MAX_OUTPUT_TOKENS ?? environment.AI_MAX_TOKENS,
+      environment.STORY_SEED_BLUEPRINT_MAX_OUTPUT_TOKENS,
       16_384,
     )))),
     // The Blueprint is written by the chapter model, so it has a chapter's

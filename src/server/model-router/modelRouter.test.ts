@@ -12,7 +12,7 @@ import { resolveHarnessGenerationConfig } from '../harness-generation/config';
 import { createHarnessTextProvider } from '../harness-generation/provider';
 import { modelRouterStatus } from './status';
 import { resolveReasoningLevel } from './catalog';
-import { geminiThinkingConfig } from './geminiThinking';
+import { geminiThinkingConfig } from '@seihouse/library/model-router-server';
 
 afterEach(() => vi.unstubAllGlobals());
 

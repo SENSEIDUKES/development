@@ -138,7 +138,7 @@ export function FamiliarTrainingPanel({
                 style={{ filter: familiarFormFilter(form) }} />
             ) : <Sparkles size={40} aria-hidden className="text-neutral-600" />}
           </div>
-          <div className="min-w-0 flex-1 text-center sm:text-left">
+          <div className="min-w-0 flex-1 text-center sm:text-start">
             <p className="reward-like-heading" data-familiar-identity>{identity}</p>
             <h3 id="familiar-training-name" className="mt-1 font-display text-xl text-neutral-100">{name}</h3>
             <p className="mt-1 font-serif text-lg text-sky-300" data-familiar-bond={view.bondRank}>{bondRankLabel(view.bondRank)}</p>

@@ -170,13 +170,13 @@ export function ManuscriptOverlaySwitch({ mode, onChange, overlay }: {
   return <div className="space-y-3">
     <div className="space-y-2" data-testid="overlay-switch">
       <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400" role="group" aria-label="Overlays">
-        <span className="mr-1 uppercase tracking-[0.14em] text-slate-500">Overlays</span>
+        <span className="me-1 uppercase tracking-[0.14em] text-slate-500">Overlays</span>
         <button type="button" aria-pressed={mode === 'off'} className={tone(mode === 'off')} onClick={() => onChange('off')}>Off</button>
         {/* A category opens on its first overlay; choosing it again keeps the one already on. */}
         {MANUSCRIPT_OVERLAY_GROUPS.map(entry => <button key={entry.id} type="button" aria-pressed={group?.id === entry.id} aria-expanded={group?.id === entry.id}
           className={tone(group?.id === entry.id)} onClick={() => { if (group?.id !== entry.id) onChange(entry.overlays[0].mode); }}>{entry.label}</button>)}
       </div>
-      {group && <div className="flex flex-wrap items-center gap-2 border-l border-white/10 pl-3 text-xs" role="group" aria-label={`${group.label} overlays`} data-testid="overlay-subswitch">
+      {group && <div className="flex flex-wrap items-center gap-2 border-s border-white/10 ps-3 text-xs" role="group" aria-label={`${group.label} overlays`} data-testid="overlay-subswitch">
         {group.overlays.map(entry => <button key={entry.mode} type="button" aria-pressed={mode === entry.mode} className={tone(mode === entry.mode)}
           onClick={() => onChange(entry.mode)}>{entry.label}</button>)}
       </div>}

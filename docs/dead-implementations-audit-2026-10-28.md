@@ -25,6 +25,7 @@ The method was an import-graph reconstruction over all 1,634 source files, resol
 | 7 | A one-line shim that only its own test imports | 1 file | Low | No |
 | 8 | A preview route that exists but is not listed anywhere | 1 route | Low | No |
 | 9 | The same keyboard helper written twice, with different behaviour | 2 files | Medium | **Yes** |
+| 10 | A leftover nested checkout that breaks `npm test` locally | 390 MB | Low | No |
 
 **The single most consequential item is #1** — not because of its volume (three files), but because it is the only one that leaves two competing answers to "what is the Codex," and the only one that needs your word before anything moves. Everything else is housekeeping that can land in one change.
 
@@ -221,6 +222,25 @@ The two tag constants are the clearest case: the reference form uses its own cop
 
 ---
 
+## 10. A leftover nested checkout breaks `npm test` on the working machine
+
+This one is not repository code — it is in the working directory — but it cost real time during this audit, so it belongs on the record.
+
+**What it is.** `.claude/worktrees/pr-365-lm-studio/` is a leftover checkout of PR #365 — **24,506 files, 390 MB** — sitting inside the repository.
+
+**Why it should be cleaned up.** Git ignores it (`.git/info/exclude:24` lists `.claude/worktrees/`), but **vitest does not read `.git/info/exclude`**. Its default glob runs every `*.test.ts` under the project root, so it picks up that other branch's tests and runs them against *this* repository's configuration. The result is a wall of failures that has nothing to do with the working tree:
+
+- `npm test` → **138 failed / 421 passed** test files, 772 failed tests.
+- The first failure is `.claude/worktrees/pr-365-lm-studio/src/workshop/previews/text-highlight-engine/parts.test.tsx:15` — *"Text Highlight Engine: src/components/text-highlight-engine/development/TextHighlightEngine.tsx: expected false to be true"*. The file it cannot find is in the main repository; the test resolves paths relative to the worktree it was written for.
+
+**What depends on it.** Nothing in the repository — it is untracked and locally excluded. CI never sees it: a clean checkout has no `.claude/`, and the `verify` job's `npm test` passes there.
+
+**Recommended action.** Delete the stale worktree. If these are produced routinely, add a `test.exclude` entry for `.claude/**` to the vitest configuration so the failure mode cannot recur — vitest honours its own `exclude` but not `.gitignore`.
+
+**Risk: low. Confidence: high.**
+
+---
+
 ## The guard gap — why all of this survived
 
 `scripts/ownershipGraph.mjs:145` already computes reachability. It just never runs where it would matter:
@@ -252,5 +272,7 @@ Stated so the next audit does not repeat it:
 ## Method
 
 Import-graph reconstruction over all 1,634 files under `src/`, resolved against every entry point: `api/`, the ten `scripts/build*Api.mjs` bundlers, `src/server/developmentApis.ts`, `vite.config.ts`, `src/host/`, and the `exports` maps in `src/package/{sen,library}/package.json`. Cross-checked against `npm run check:ownership` (0 violations) and `npm run check:package-boundaries` so that nothing already guarded is reported as new. Every finding above was confirmed by grep before it was written down, and the published-package import closures were computed directly rather than assumed.
+
+Checks run against this branch: `npm run check:ownership` (1634 source files, 0 violations), `npm run check:package-boundaries` (0 violations), `npm run check:app` (690 files reached, 0 violations), `npm run typecheck` (clean), and CI's `verify` job (green, including `npm test`).
 
 **This audit changed no product code.** It is a report only.

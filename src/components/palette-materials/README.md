@@ -122,3 +122,19 @@ appear first, while subtle gradient layers and the prior inventory are collapsed
 The inventory explicitly shows shared material defaults; the user's personal
 background tint and its exact dark tone are visible in Profile settings. Experiments
 and saved looks keep their own colors and never redefine this source inventory.
+
+
+## 2026-10-28 — Unified purple default
+
+Active outer/nested materials are now Violet glass and Violet inset, with the same
+purple fill as Midnight violet. Their original blur/shadow roles remain distinct.
+The former Tidal and Smoked glass paints are two additional archived materials;
+original IDs and settings keep rendering unchanged. Version 3 exports support the
+new IDs, while version 1/2 imports preserve earlier work.
+
+**App colors · Default preset** loads the current official purple composition and
+white/portal colors without replacing saved looks. New browsers begin on that
+composition, with the supplied older looks still available. Returning browsers
+continue loading their saved look. Profile's app preset restores background and
+accent defaults together; its controls now recolor plain Home cards and chrome
+through the same shared fill.

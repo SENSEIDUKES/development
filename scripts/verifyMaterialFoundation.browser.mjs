@@ -23,26 +23,35 @@ try {
   if (width < 650) await page.getByRole('button', { name: /Browse all/ }).click();
   const catalog = page.locator('#pm-material-catalog');
   assert.equal(await catalog.locator('.pm-catalog').first().locator('.pm-sample').count(), 6);
-  for (const [id, expected] of [['violet-shell', shell], ['blue-glass', panel], ['smoked-glass', card]]) {
+  for (const [id, expected] of [['violet-shell', shell], ['violet-panel', panel], ['violet-card', card]]) {
     assert.deepEqual(await catalog.locator(`[data-pm-recipe="${id}"]`).evaluate(material), expected, `${id} equals actual Home surface`);
   }
   await page.locator('.pm-archive summary').click();
-  assert.equal(await page.locator('.pm-archive .pm-sample').count(), 7);
+  assert.equal(await page.locator('.pm-archive .pm-sample').count(), 9);
+  assert.equal((await catalog.locator('[data-pm-recipe="blue-glass"]').evaluate(material))[0], 'rgba(0, 55, 74, 0.12)', 'Archived blue keeps its original paint');
+  assert.equal((await catalog.locator('[data-pm-recipe="smoked-glass"]').evaluate(material))[0], 'rgba(0, 0, 0, 0.35)', 'Archived smoked glass keeps its original paint');
   const storedBefore = await page.evaluate(() => JSON.parse(localStorage.getItem('workshop.palette-materials.looks.v1')).looks);
-  await catalog.locator('.pm-sample').filter({ has: page.locator('[data-pm-recipe="blue-glass"]') }).locator('button.pm-sample-select').click();
+  await catalog.locator('.pm-sample').filter({ has: page.locator('[data-pm-recipe="violet-panel"]') }).locator('button.pm-sample-select').click();
   if (width < 650) await page.getByRole('button', { name: /^Saved/ }).click();
   await page.getByLabel('Look name', { exact: true }).fill('Foundation test');
   await page.getByRole('button', { name: 'Save as new look', exact: true }).click();
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('workshop.palette-materials.looks.v1')));
-  assert.equal(saved.version, 2);
+  assert.equal(saved.version, 3);
   for (const old of storedBefore) assert.deepEqual(saved.looks.find(l => l.id === old.id), old, 'Archived saved work unchanged');
-  assert.equal(saved.looks.at(-1).settings.selected, 'blue-glass');
+  assert.equal(saved.looks.at(-1).settings.selected, 'violet-panel');
   await page.reload();
   await page.locator('.pm-workbench').waitFor();
-  await page.waitForFunction(() => document.querySelector('#pm-mixing-table h3')?.textContent === 'Tidal glass');
+  await page.waitForFunction(() => document.querySelector('#pm-mixing-table h3')?.textContent === 'Violet glass');
   if (width < 650) await page.getByRole('button', { name: 'Effects', exact: true }).click();
   else await page.locator('#pm-effects').scrollIntoViewIfNeeded();
   assert.equal(await page.locator('#pm-effects article').count(), 6);
+  if (width < 650) await page.getByRole('button', { name: /^Saved/ }).click();
+  await page.getByRole('button', { name: 'App colors · Default preset', exact: true }).click();
+  const composition = page.locator('.pm-scene');
+  const fills = await composition.locator('.pm-scene-nav, .pm-scene-panel, .pm-scene-card').evaluateAll(elements => elements.map(e => getComputedStyle(e).backgroundColor));
+  assert.ok(fills.every(color => color === fills[0]), 'Default preset composes one unified purple');
+  if (width < 650) await page.getByRole('button', { name: 'Effects', exact: true }).click();
+  else await page.locator('#pm-effects').scrollIntoViewIfNeeded();
   const action = page.locator('#pm-effects [data-library-material="rainbow-action"]').first();
   await action.focus();
   assert.equal(await action.evaluate(e => e === document.activeElement), true);
@@ -52,5 +61,5 @@ try {
   assert.deepEqual(errors, []);
   await page.close();
  }
- console.log('Foundation matches Home; six active/seven archived materials, effects, saved-look preservation and mobile checks passed.');
+ console.log('Foundation matches Home; six active/nine archived materials, effects, saved-look preservation and mobile checks passed.');
 } finally { await browser.close(); }

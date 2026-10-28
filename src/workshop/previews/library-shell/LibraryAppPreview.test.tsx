@@ -128,9 +128,9 @@ it('opens the clicked Full and Compact worlds on their Info pages', async () => 
   expect(container.querySelector('[data-story-detail] [aria-label="World information"]')).toBeNull();
   const detailUrl = window.location.href;
   const detailState = window.history.state;
-  await act(async () => { window.history.back(); await new Promise(resolve => setTimeout(resolve, 50)); });
+  await act(async () => { await new Promise<void>(resolve => { window.addEventListener('popstate', () => resolve(), { once: true }); window.history.back(); }); });
   expect(createVisible()).toBe(true);
-  await act(async () => { window.history.forward(); await new Promise(resolve => setTimeout(resolve, 50)); });
+  await act(async () => { await new Promise<void>(resolve => { window.addEventListener('popstate', () => resolve(), { once: true }); window.history.forward(); }); });
   expect(window.location.href).toBe(detailUrl);
   expect(container.querySelector('[data-story-detail] h1')?.textContent).toBe('Ashes of the Nine Moons');
   await act(async () => root.unmount());

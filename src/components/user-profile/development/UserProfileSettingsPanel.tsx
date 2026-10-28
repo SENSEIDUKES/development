@@ -259,8 +259,12 @@ export function UserProfileSettingsPanel({
             <SEITabsPanel value="appearance" keepMounted className="pt-4">
           <SEIDisclosureGroup type="multiple" defaultValue={['identity']}>
             {controller.handleBackgroundTintChange && <SEIDisclosure value="background" heading="Background tint" icon={Palette} supportingText="Choose the color and strength of your background.">
-              <p className="py-2 text-xs text-neutral-400">Currently used on Home’s header, navigation background and footer. Artwork, black buttons, accents and Reader blue keep their own colors.</p>
-              <BackgroundTintControls value={profile?.backgroundTint} onChange={controller.handleBackgroundTintChange} disabled={!profile} />
+              <p className="py-2 text-xs text-neutral-400">Currently used on Home’s header, navigation background, plain glass panels and cards, and footer. Artwork, black buttons, accents and Reader blue keep their own colors.</p>
+              <BackgroundTintControls value={profile?.backgroundTint} onChange={controller.handleBackgroundTintChange} disabled={!profile}
+                appColorsActive={!profile?.backgroundTint && !profile?.accentColor}
+                onApplyAppColors={controller.handleAccentColorChange ? () => {
+                  controller.handleBackgroundTintChange?.(undefined); controller.handleAccentColorChange?.(undefined);
+                } : undefined} />
             </SEIDisclosure>}
             {controller.handleAccentColorChange && <SEIDisclosure value="accent" heading="Accent color" icon={Palette} supportingText="Choose a color for interface highlights and selected controls.">
               <div className="space-y-3 py-1">

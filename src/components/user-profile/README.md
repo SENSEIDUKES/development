@@ -953,3 +953,12 @@ Edits keep the disclosure and input nodes mounted, preserve unfinished identity
 edits, and leave accent and Cultivator Aura choices independent. NovelExpanded
 currently applies the preference only to Home's header, navigation frame and plain
 footer. Workshop Profile uses the same component with its isolated mock profile.
+
+
+### 2026-10-28 — App colors preset and coordinated cards
+
+Background tint now drives Home's plain panels and nested cards along with its
+header/navigation/footer. The live preview includes a nested card. **App colors ·
+Default** restores both default purple and original accents, preserves identity
+edits and other profile fields, and indicates when the full preset is selected.
+**Use default background** still resets only the tint, preserving a custom accent.

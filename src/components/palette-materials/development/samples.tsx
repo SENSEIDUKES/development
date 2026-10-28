@@ -1,4 +1,4 @@
-import { LIBRARY_MATERIALS, LibraryMaterialSurface, type LibraryMaterialId } from '@seihouse/library/presentation';
+import { LIBRARY_MATERIALS, ARCHIVED_LIBRARY_MATERIALS, LibraryMaterialSurface, type LibraryMaterialId } from '@seihouse/library/presentation';
 import type { CSSProperties, ReactNode } from 'react';
 import { LibraryButton, LibraryNavigationDrawerPanel, LibraryPanel } from '@seihouse/library-ui';
 import { Home, Feather } from 'lucide-react';
@@ -7,6 +7,7 @@ import type { MaterialId } from './model';
 
 export const MATERIALS: { id: MaterialId; name: string; usage: string; origin: string; source: string; archived?: boolean }[] = [
   ...LIBRARY_MATERIALS.map(material => ({ ...material, origin: 'Library · active foundation', source: material.id === 'reader' ? 'src/library/stories/reader-glass.css' : 'src/components/library-presentation/materials.css' })),
+  ...ARCHIVED_LIBRARY_MATERIALS.map(material => ({ ...material, archived: true, origin: 'Library · archived foundation', source: 'src/components/library-presentation/materials.css' })),
   { archived: true, id: 'home', name: 'Home glass', usage: 'Home filters and outer panels', origin: 'Library UI · shared', source: '@seihouse/library-ui · LibraryPanel' },
   { archived: true, id: 'create', name: 'Create glass', usage: 'Origin fields and nested groups', origin: 'Library UI + Story Seed treatment', source: 'src/components/story-seed/development/materials.css · .seed-field-scope .glass-panel' },
   { archived: true, id: 'signin', name: 'Sign-in glass', usage: 'Your Destiny Awaits', origin: 'Library · local material', source: 'src/components/story-seed/development/materials.css · .story-auth-glass' },
@@ -22,7 +23,7 @@ export function MaterialSurface({ id, style, children, className = '', disabled 
 }) {
   const props = { className: `pm-surface ${className}`, style, 'data-pm-recipe': id };
   const content = children ?? <><span className="pm-specimen-mark">Aa</span><span className="pm-specimen-copy">A world taking shape</span></>;
-  if (LIBRARY_MATERIALS.some(material => material.id === id)) return <LibraryMaterialSurface material={id as LibraryMaterialId} {...props} disabled={disabled}>{id === 'rainbow-action' ? children ?? 'Carve new destiny' : content}</LibraryMaterialSurface>;
+  if ([...LIBRARY_MATERIALS, ...ARCHIVED_LIBRARY_MATERIALS].some(material => material.id === id)) return <LibraryMaterialSurface material={id as LibraryMaterialId} {...props} disabled={disabled}>{id === 'rainbow-action' ? children ?? 'Carve new destiny' : content}</LibraryMaterialSurface>;
   if (id === 'home') return <LibraryPanel padding="none" {...props}>{content}</LibraryPanel>;
   if (id === 'create') return <div className="seed-field-scope pm-material-wrap"><div {...props} className={`glass-panel ${props.className}`}>{content}</div></div>;
   if (id === 'signin') return <div {...props} className={`story-auth-glass ${props.className}`}>{content}</div>;

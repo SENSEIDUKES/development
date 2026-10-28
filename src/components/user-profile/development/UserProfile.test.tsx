@@ -859,6 +859,11 @@ describe('Cultivator Cave settings', () => {
     await click(byText('button', 'Use default background'));
     expect(controller().profile?.backgroundTint).toBeUndefined();
     expect(controller().profile?.accentColor).toBe('#a78bfa');
+    await click(byText('button', 'App colors · Default'));
+    expect(controller().profile?.accentColor).toBeUndefined();
+    expect(controller().profile?.backgroundTint).toBeUndefined();
+    expect(controller().formData.displayName).toBe('Keep draft');
+    expect(byText('button', 'App colors · Default').getAttribute('aria-pressed')).toBe('true');
   });
 
   it('changes the interface accent independently of the name aura and can restore native colors', async () => {

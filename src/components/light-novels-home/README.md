@@ -195,3 +195,11 @@ The build, focused navigation/header/profile/Workshop tests, package boundary ch
   image/video cards, other glass panels, black buttons and spectrum effects remain
   intact. Reset restores the original violet gradients; the Home Workshop iframe
   shows the same saved app preference.
+
+
+- **2026-10-28, unified purple:** Header, navigation frame, Events container,
+  filters, empty panels, plain nested cards and footer now share the same violet
+  fill, and the background picker/strength slider controls them together. Each
+  role keeps its blur/shadow geometry. Image/video surfaces retain their earlier
+  clear backings; black controls, rainbow effects and the artwork remain intact.
+  App colors is the default preset in Profile and the material Workshop.

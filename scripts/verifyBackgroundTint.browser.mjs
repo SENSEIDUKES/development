@@ -31,6 +31,9 @@ try {
     await page.getByTestId('novel-expanded-home').waitFor();
     const original = await page.locator('.workspace-header').evaluate(fill);
     const panel = await page.locator('[data-home-panel]').nth(1).evaluate(fill);
+    const inset = await page.locator('[data-slot="empty-state"]').evaluate(fill);
+    assert.deepEqual(panel.slice(0, 2), original.slice(0, 2), 'Default outer panels share the header purple');
+    assert.deepEqual(inset.slice(0, 2), original.slice(0, 2), 'Default nested cards share the header purple');
     const cta = page.getByRole('button', { name: 'Carve New Destiny', exact: true });
     const ring = await cta.evaluate(rainbow);
     await page.goto(`${base}${settings}`);
@@ -66,7 +69,12 @@ try {
       assert.equal(actual[0], pink[0], `${selector} consumes shared tint`);
       assert.equal(actual[1], pink[1]);
     }
-    assert.deepEqual(await page.locator('[data-home-panel]').nth(1).evaluate(fill), panel, 'Other panel materials are unchanged');
+    const tintedPanel = await page.locator('[data-home-panel]').nth(1).evaluate(fill);
+    const tintedInset = await page.locator('[data-slot="empty-state"]').evaluate(fill);
+    assert.deepEqual(tintedPanel.slice(0, 2), pink.slice(0, 2), 'Outer panels share the selected tint');
+    assert.deepEqual(tintedInset.slice(0, 2), pink.slice(0, 2), 'Nested cards share the selected tint');
+    assert.deepEqual(tintedPanel.slice(2), panel.slice(2), 'Panel blur and edge stay intact');
+    assert.deepEqual(tintedInset.slice(2), inset.slice(2), 'Card blur and edge stay intact');
     assert.equal(await cta.evaluate(e => getComputedStyle(e).backgroundColor), 'rgba(0, 0, 0, 0.95)');
     assert.deepEqual(await cta.evaluate(rainbow), ring, 'Rainbow effects are unchanged');
     assert.equal(await page.locator('.home-filter-label').evaluate(e => getComputedStyle(e).color), 'rgb(167, 139, 250)', 'Background tint preserves the independent accent');
@@ -82,6 +90,11 @@ try {
       await cdp.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-transparency', value: 'reduce' }] });
       const reduced = await page.locator('.workspace-header').evaluate(fill);
       assert.equal(reduced[0], 'rgb(50, 21, 35)'); assert.equal(reduced[2], 'none');
+      for (const selector of ['[data-home-events]', '[data-slot="empty-state"]']) {
+        await page.waitForFunction(({ selector, color }) => getComputedStyle(document.querySelector(selector)).backgroundColor === color, { selector, color: reduced[0] });
+        const solid = await page.locator(selector).evaluate(fill);
+        assert.equal(solid[0], reduced[0]); assert.equal(solid[2], 'none');
+      }
       await cdp.send('Emulation.setEmulatedMedia', { features: [{ name: 'forced-colors', value: 'active' }] });
       assert.equal(await page.locator('.workspace-header').evaluate(e => getComputedStyle(e).backgroundColor), 'rgb(255, 255, 255)');
       await cdp.send('Emulation.setEmulatedMedia', { features: [] });
@@ -101,6 +114,8 @@ try {
     assert.equal(await slider.getAttribute('aria-valuetext'), 'Black');
     await page.goto(`${base}/app/`); await page.getByTestId('novel-expanded-home').waitFor();
     assert.equal((await page.locator('.workspace-header').evaluate(fill))[0], 'rgba(0, 0, 0, 0.95)', 'Zero strength offers the black look');
+    assert.equal((await page.locator('[data-home-panel]').nth(1).evaluate(fill))[0], 'rgba(0, 0, 0, 0.95)');
+    assert.equal((await page.locator('[data-slot="empty-state"]').evaluate(fill))[0], 'rgba(0, 0, 0, 0.95)', 'Zero strength reaches nested cards too');
     await page.goto(`${base}${settings}`); await open(page, 'Background tint');
     await page.getByRole('button', { name: 'Use default background', exact: true }).click();
     assert.equal(await page.getByRole('button', { name: 'Use default background', exact: true }).isDisabled(), true);
@@ -108,6 +123,13 @@ try {
     assert.equal(await page.getByRole('button', { name: 'Use default background', exact: true }).isDisabled(), true, 'Reset survives reload');
     await open(page, 'Accent color');
     assert.equal(await page.getByLabel('Accent color', { exact: true }).inputValue(), '#a78bfa');
+    const preset = page.getByRole('button', { name: 'App colors · Default', exact: true });
+    assert.equal(await preset.getAttribute('aria-pressed'), 'false', 'An independent custom accent is not the full app preset');
+    await preset.click();
+    assert.equal(await preset.getAttribute('aria-pressed'), 'true');
+    assert.equal(await page.getByLabel('Accent color', { exact: true }).inputValue(), '#04acff');
+    await page.reload(); await open(page, 'Background tint');
+    assert.equal(await preset.getAttribute('aria-pressed'), 'true', 'App colors preset survives reload');
     await page.goto(`${base}/app/`); await page.getByTestId('novel-expanded-home').waitFor();
     assert.deepEqual(await page.locator('.workspace-header').evaluate(fill), original, 'Reset restores the exact original material, including gradients');
     await page.goto(`${base}/?preview=palette-materials`); await page.locator('.pm-workbench').waitFor();
@@ -116,7 +138,7 @@ try {
     const codes = await page.locator('#pm-colors .pm-swatch code').allTextContents();
     const spectrum = await page.locator('#pm-material-catalog [data-pm-recipe="rainbow-action"]').evaluate(e => getComputedStyle(e, '::after').backgroundImage.match(/rgba?\([^)]+\)/g));
     assert.ok(spectrum.every(color => codes.includes(color)), 'Actual rainbow colors are in Colors');
-    assert.ok(codes.includes('rgba(0, 55, 74, 0.12)'), 'Actual Tidal glass tint and alpha are in Colors');
+    assert.ok(codes.includes('rgba(11, 14, 30, 0.95)'), 'Actual unified purple and alpha are in Colors');
     assert.ok(codes.includes('rgb(255, 255, 255)'), 'Actual material white is in Colors');
     assert.ok(codes.includes('#ffffffb8'), 'Actual supporting white is in Colors');
     assert.ok(codes.includes('#49c9fa66'), 'Reader rim blue and alpha are in Colors');

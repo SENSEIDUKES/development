@@ -1,7 +1,7 @@
-import { LIBRARY_MATERIALS } from '@seihouse/library/presentation';
+import { LIBRARY_MATERIALS, ARCHIVED_LIBRARY_MATERIALS } from '@seihouse/library/presentation';
 import type { CSSProperties } from 'react';
 
-export const MATERIAL_IDS = [...LIBRARY_MATERIALS.map(material => material.id), 'home', 'create', 'signin', 'navigation', 'familiar', 'button', 'secondary'] as const;
+export const MATERIAL_IDS = [...LIBRARY_MATERIALS.map(material => material.id), ...ARCHIVED_LIBRARY_MATERIALS.map(material => material.id), 'home', 'create', 'signin', 'navigation', 'familiar', 'button', 'secondary'] as const;
 export type MaterialId = typeof MATERIAL_IDS[number];
 export type Backdrop = 'black' | 'gray' | 'artwork';
 export interface MaterialEdit {
@@ -25,9 +25,9 @@ export interface PaletteSettings {
 export interface SavedLook { id: string; name: string; settings: PaletteSettings }
 export const STORAGE_KEY = 'workshop.palette-materials.looks.v1';
 export const freshSettings = (): PaletteSettings => ({
-  background: 'artwork', selected: 'blue-glass', edits: {},
-  roles: { navigation: 'violet-shell', panel: 'blue-glass', card: 'smoked-glass', button: 'rainbow-action' },
-  colors: { text: '#f2efe8', accent: '#04acff' },
+  background: 'artwork', selected: 'violet-panel', edits: {},
+  roles: { navigation: 'violet-shell', panel: 'violet-panel', card: 'violet-card', button: 'rainbow-action' },
+  colors: { text: '#ffffff', accent: '#04acff' },
 });
 
 export interface MeasuredMaterial {
@@ -149,12 +149,12 @@ function validSettings(value: unknown): value is PaletteSettings {
   return Object.entries(value.edits).every(([id, edit]) => isMaterial(id) && isRecord(edit) && Object.entries(edit).every(([key, v]) =>
     key === 'borderGlow' ? v === 'original' || v === 'reader' : ['tint', 'borderColor', 'glowColor'].includes(key) ? isColor(v) : Object.hasOwn(ranges, key) && typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= ranges[key]));
 }
-export function encodeLooks(looks: SavedLook[]) { return JSON.stringify({ format: 'palette-materials', version: 2, looks }, null, 2); }
+export function encodeLooks(looks: SavedLook[]) { return JSON.stringify({ format: 'palette-materials', version: 3, looks }, null, 2); }
 export function decodeLooks(text: string): SavedLook[] {
   if (text.length > 1_000_000) throw new Error('This file is too large. Choose a Palette & Materials export under 1 MB.');
   let data: unknown;
   try { data = JSON.parse(text); } catch { throw new Error('This is not valid JSON. Choose a Palette & Materials export.'); }
-  if (!isRecord(data) || data.format !== 'palette-materials' || ![1, 2].includes(data.version as number) || !Array.isArray(data.looks) || data.looks.length > 100
+  if (!isRecord(data) || data.format !== 'palette-materials' || ![1, 2, 3].includes(data.version as number) || !Array.isArray(data.looks) || data.looks.length > 100
     || !data.looks.every(look => isRecord(look) && typeof look.id === 'string' && look.id.length > 0 && look.id.length <= 100
       && typeof look.name === 'string' && look.name.trim().length > 0 && look.name.length <= 80 && validSettings(look.settings))
     || new Set(data.looks.map(look => look.id)).size !== data.looks.length) {

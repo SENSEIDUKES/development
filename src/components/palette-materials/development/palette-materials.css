@@ -180,7 +180,7 @@
 }
 /* Short landscape phones need room for the sliders more than a pinned preview. */
 @media (max-width: 650px) and (max-height: 550px) { .pm-comparison { position: static; } }
-@media (prefers-reduced-transparency: reduce) { .pm-workbench .pm-experiment { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; background-color: #111820 !important; } }
+@media (prefers-reduced-transparency: reduce) { .pm-workbench .pm-experiment { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; background-color: #111820 !important; } }
 @supports not (backdrop-filter: blur(1px)) { .pm-workbench .pm-experiment { background-color: #111820 !important; } }
 @media (prefers-reduced-motion: reduce) { .pm-workbench *, .pm-workbench *::before, .pm-workbench *::after { animation: none !important; transition: none !important; } }
 

@@ -5,7 +5,7 @@ import { useLibraryAssets } from '@seihouse/library/presentation';
 import { MATERIALS, MaterialSurface } from './samples';
 import {
   baseBlur, baseOpacity, baseTint, colorParts, decodeLooks, encodeLooks, freshSettings,
-  isColoredShadow, materialStyle, measureMaterial, shadowLayers, writeLooks,
+  isColoredShadow, materialStyle, measureMaterial, shadowLayers, writeLooks, STORAGE_KEY,
   type MaterialEdit, type MaterialId, type MeasuredMaterial, type PaletteSettings, type SavedLook,
 } from './model';
 import { loadStartingLooks, startingLooks } from './starting-looks';
@@ -31,12 +31,12 @@ function RecipeDetails({ base, source }: { base?: MeasuredMaterial; source: stri
 
 export function PaletteMaterials() {
   const { authImage } = useLibraryAssets();
-  const [settings, setSettings] = useState(() => startingLooks().at(-1)?.settings ?? freshSettings());
+  const [settings, setSettings] = useState(freshSettings);
   const [looks, setLooks] = useState<SavedLook[]>(startingLooks);
   const looksRef = useRef(looks);
   looksRef.current = looks;
-  const [loadedId, setLoadedId] = useState(() => startingLooks().at(-1)?.id ?? '');
-  const [lookName, setLookName] = useState(() => startingLooks().at(-1)?.name ?? '');
+  const [loadedId, setLoadedId] = useState('');
+  const [lookName, setLookName] = useState('App colors');
   const [message, setMessage] = useState('');
   const [storageError, setStorageError] = useState('');
   const [colorTarget, setColorTarget] = useState<'text' | 'accent'>('accent');
@@ -55,12 +55,13 @@ export function PaletteMaterials() {
 
   useEffect(() => {
     try {
+      const hadSavedLooks = window.localStorage.getItem(STORAGE_KEY) !== null;
       const { looks: available, warning } = loadStartingLooks(window.localStorage);
       setLooks(available);
-      const latest = available.at(-1);
+      const latest = hadSavedLooks ? available.at(-1) : undefined;
       setSettings(latest ? clone(latest.settings) : freshSettings());
       setLoadedId(latest?.id ?? '');
-      setLookName(latest?.name ?? '');
+      setLookName(latest?.name ?? 'App colors');
       setStorageError(warning);
     } catch {
       setStorageError('Browser storage is unavailable. Your exported looks are available for this visit. Export before leaving.');
@@ -75,11 +76,11 @@ export function PaletteMaterials() {
         const element = catalog.current?.querySelector(`[data-pm-recipe="${sample.id}"]`);
         if (element) next[sample.id] = measureMaterial(element);
       }
-      setMeasured(next);
+      setMeasured(previous => JSON.stringify(previous) === JSON.stringify(next) ? previous : next);
       const root = getComputedStyle(document.documentElement);
       const nextTokens: Record<string, string> = {};
       for (const color of THEME_COLORS) nextTokens[color.token] = root.getPropertyValue(color.token).trim();
-      setTokens(nextTokens);
+      setTokens(previous => JSON.stringify(previous) === JSON.stringify(nextTokens) ? previous : nextTokens);
     };
     const schedule = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(read); };
     schedule();
@@ -153,7 +154,7 @@ export function PaletteMaterials() {
   };
 
   const edgeClass = (id: MaterialId) => settings.edits[id]?.borderGlow === 'reader'
-    ? 'reader-border-glow pm-reader-border' : ['reader', 'violet-shell', 'blue-glass', 'smoked-glass', 'black-control'].includes(id) ? 'reader-border-glow' : '';
+    ? 'reader-border-glow pm-reader-border' : ['reader', 'violet-shell', 'violet-panel', 'violet-card', 'blue-glass', 'smoked-glass', 'black-control'].includes(id) ? 'reader-border-glow' : '';
   const applyReaderBorder = () => setSettings(current => ({
     ...current, edits: Object.fromEntries(MATERIALS.map(({ id }) => [id, { ...current.edits[id], borderGlow: 'reader' as const }])),
   }));
@@ -236,7 +237,7 @@ export function PaletteMaterials() {
       {materialColors(measured, tokens).map(group => <details className="pm-color-group" key={group.name} open={!group.name.startsWith('Archived') && group.name !== 'Surface gradient layers'}><summary>{group.name}</summary><div className="pm-swatches">{group.colors.map(color => {
         const value = color.value;
         const hex = value.startsWith('#') ? value.slice(0, 7) : colorParts(value).hex;
-        return <button key={color.name} type="button" className="pm-swatch" onClick={() => update({ colors: { ...settings.colors, [colorTarget]: hex } })} aria-label={`Use ${color.name} as ${colorTarget}`}>
+        return <button key={color.value.toLowerCase()} type="button" className="pm-swatch" onClick={() => update({ colors: { ...settings.colors, [colorTarget]: hex } })} aria-label={`Use ${color.name} as ${colorTarget}`}>
           <span className="pm-color-chip"><span style={{ background: value }} /></span><strong>{color.name}</strong><code>{value}</code><small>{color.usage}</small>
         </button>;
       })}</div></details>)}
@@ -257,6 +258,10 @@ export function PaletteMaterials() {
     </section>
 
     <section id="pm-looks" className="pm-section"><div className="pm-section-heading"><div><span className="pm-eyebrow">04 / Keep your favorites</span><h2>Saved looks.</h2></div><p>Stored in this browser. Export to keep a portable copy.</p></div>
+      <button type="button" className="pm-control pm-primary" onClick={() => {
+        setSettings(freshSettings()); setLoadedId(''); setLookName('App colors');
+        setMessage('Loaded App colors, the default purple foundation. Saved looks were kept.'); showSection('composition');
+      }}>App colors · Default preset</button>
       <div className="pm-save-bar"><label>Look name<input maxLength={80} placeholder="e.g. Midnight & silver" value={lookName} onChange={e => setLookName(e.target.value)} /></label>
         <button type="button" className="pm-control pm-primary" onClick={saveNew}>Save as new look</button>
         <button type="button" className="pm-control" disabled={!loadedLook} onClick={() => { const name = validName(); if (name && loadedLook) persist(looks.map(l => l.id === loadedId ? { ...l, name, settings: clone(settings) } : l), `Updated “${name}”.`); }}>Update loaded look</button>

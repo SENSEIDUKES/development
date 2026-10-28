@@ -100,6 +100,11 @@ it('keeps archived looks and active foundation recipes through the versioned exp
   const active = { id: 'active', name: 'Foundation', settings: freshSettings() };
   const archived = { id: 'archived', name: 'Earlier work', settings: { ...freshSettings(), selected: 'home' as const, roles: { navigation: 'navigation' as const, panel: 'home' as const, card: 'create' as const, button: 'button' as const } } };
   expect(decodeLooks(JSON.stringify({ format: 'palette-materials', version: 1, looks: [archived] }))).toEqual([archived]);
-  expect(JSON.parse(encodeLooks([active, archived])).version).toBe(2);
+  expect(JSON.parse(encodeLooks([active, archived])).version).toBe(3);
   expect(decodeLooks(encodeLooks([active, archived]))).toEqual([active, archived]);
+});
+
+it('preserves the previous blue and smoked foundation paints when reading version 2 looks', () => {
+  const old = { id: 'older', name: 'Earlier foundation', settings: { ...freshSettings(), selected: 'blue-glass', roles: { navigation: 'violet-shell', panel: 'blue-glass', card: 'smoked-glass', button: 'rainbow-action' }, edits: { 'blue-glass': { tint: '#00374a', opacity: 12 } } } };
+  expect(decodeLooks(JSON.stringify({ format: 'palette-materials', version: 2, looks: [old] }))).toEqual([old]);
 });

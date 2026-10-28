@@ -481,6 +481,20 @@ Update it whenever it changes.
     Sans Hebrew beside a sans. Urdu is set in Naskh for now, not the Nastaliq
     its readers often expect. Speech finds Arabic «…» and Hebrew „…“ quotes, and
     an Arabic ؟ or Urdu ۔ ends a sentence.
+  - **Every script around the Reader too (2026-10-28, SENSEI):** the interface
+    reads right in every language, not only the Reader. On a right-to-left page
+    each piece of text keeps its own direction, so English left on it (an
+    untranslated label, a story pitch, a voice name) keeps its full stop at its
+    end and cuts off at its end; arrows that mean back, next or open point the
+    way the page reads; and spacing set as left and right on the app's pages is
+    start and end. Arabic, Hebrew, Amharic, Hindi, Thai and the CJK scripts set
+    their letters without the Latin style's wide spacing and capitals, and
+    Hebrew, Arabic, Amharic, Hindi and Thai have chosen Noto fonts in the
+    interface. The story words that will not change (novel traditions, genre
+    paths, Story Tag families and Story Tags) are translated into all 29
+    languages (`src/library/language/vocabulary/`); the rest of the interface's
+    wording is still being reworked, so it is not translated further yet.
+    `scripts/findUntranslatedInterface.browser.mjs` lists what is left.
   - **A place to work on the Reader:** the Workshop's Reader Chamber card
     (`?preview=reader-chamber`) shows the app's Reader as its Development view.
     It is the same component the app renders, so the two cannot drift apart. It

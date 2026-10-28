@@ -94,7 +94,7 @@ export const SeedSectionFrame = ({
           <span className="inline-flex items-center gap-2 rounded-full border border-neutral-800 bg-neutral-950/60 px-2.5 py-0.5 font-sc text-[10px] uppercase tracking-widest text-neutral-400">
             Optional
             {optionalNote && (
-              <span className="border-l border-neutral-800 pl-2 normal-case tracking-normal text-neutral-400">
+              <span className="border-s border-neutral-800 ps-2 normal-case tracking-normal text-neutral-400">
                 {optionalNote}
               </span>
             )}
@@ -168,10 +168,10 @@ export const SeedNote = ({ children, more, moreLabel = 'More about this' }: {
       {children}
       <button type="button" aria-expanded={open} aria-controls={id} aria-label={moreLabel} title={moreLabel}
         onClick={() => setOpen(value => !value)}
-        className="story-seed-compact-hit-target ml-1 inline-flex translate-y-[2px] items-center text-neutral-400 transition-colors hover:text-[#DDC58A] aria-expanded:text-[#DDC58A]">
+        className="story-seed-compact-hit-target ms-1 inline-flex translate-y-[2px] items-center text-neutral-400 transition-colors hover:text-[#DDC58A] aria-expanded:text-[#DDC58A]">
         <Info size={13} aria-hidden="true" />
       </button>
-      {open && <span id={id} className="mt-1.5 block border-l border-[rgba(205,178,113,0.3)] pl-2.5 text-neutral-300">{more}</span>}
+      {open && <span id={id} className="mt-1.5 block border-s border-[rgba(205,178,113,0.3)] ps-2.5 text-neutral-300">{more}</span>}
     </span>
   );
 };

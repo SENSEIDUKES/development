@@ -319,7 +319,7 @@ export function UserProfileSettingsPanel({
                   <div className="cave-aura-options space-y-3">
                     <p className="text-xs text-neutral-400">Choose the aura your name carries. <span className="whitespace-nowrap">{currentDaoXp === null ? 'DAO XP unavailable' : `${currentDaoXp.toLocaleString()} DAO XP earned`}</span></p>
                   {/* One row per rank: the name, its colour, and the DAO XP it requires. */}
-                  <div role="radiogroup" aria-label="Cultivator Aura rank" className="max-h-72 space-y-1.5 overflow-y-auto pr-1">
+                  <div role="radiogroup" aria-label="Cultivator Aura rank" className="max-h-72 space-y-1.5 overflow-y-auto pe-1">
                     {RANKS.map((rank, index) => {
                       const token = rankToken(rank);
                       const isUnlocked = currentDaoXp !== null && currentDaoXp >= rank.unlockedAt;
@@ -334,7 +334,7 @@ export function UserProfileSettingsPanel({
                           tabIndex={profileRadioTabIndex(isSelected && isUnlocked && Boolean(profile), hasEnabledAuraSelection, index)}
                           onKeyDown={handleProfileRadioGroupKeyDown}
                           onClick={() => setFormData(previous => ({ ...previous, displayNameColor: token }))}
-                          className={`flex min-h-11 w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-colors motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7dd3ff] ${
+                          className={`flex min-h-11 w-full items-center gap-3 rounded-lg border px-3 py-2 text-start transition-colors motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7dd3ff] ${
                             !isUnlocked
                               ? 'cursor-not-allowed border-white/5 bg-black/30 opacity-60'
                               : isSelected
@@ -398,7 +398,7 @@ export function UserProfileSettingsPanel({
                       <p className="font-mono text-[10px] text-neutral-400">
                         Custom Spectrum
                         {!isMaster ? (
-                          <span className="ml-2 rounded border border-white/10 px-1.5 py-0.5 text-[8px] text-neutral-400">
+                          <span className="ms-2 rounded border border-white/10 px-1.5 py-0.5 text-[8px] text-neutral-400">
                             Requires {MASTER_RANK.name} ({MASTER_RANK.unlockedAt.toLocaleString()} DAO XP)
                           </span>
                         ) : null}
@@ -464,7 +464,7 @@ export function UserProfileSettingsPanel({
                           tabIndex={profileRadioTabIndex(isSelected, hasEnvironmentSelection, index)}
                           onKeyDown={handleProfileRadioGroupKeyDown}
                           onClick={() => onEnvironmentChange(environment.id)}
-                          className={`group relative overflow-hidden rounded-lg border text-left transition-colors motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7dd3ff] ${
+                          className={`group relative overflow-hidden rounded-lg border text-start transition-colors motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7dd3ff] ${
                           isSelected ? 'border-[#e2c46a]' : 'border-white/10 hover:border-white/30'
                         }`}
                       >
@@ -602,7 +602,7 @@ export function UserProfileSettingsPanel({
                       </SEISwitch>
                       <p
                         id={`cave-visibility-${field.id}-description`}
-                        className="mt-0.5 pl-1 font-sans text-[10px] text-neutral-400"
+                        className="mt-0.5 ps-1 font-sans text-[10px] text-neutral-400"
                       >
                         {field.description}
                       </p>
@@ -629,7 +629,7 @@ export function UserProfileSettingsPanel({
                   title={harmonyTitle}
                   aria-label={`Harmony: ${harmonyDetail}`}
                   aria-busy={isHarmonizing}
-                  className={`flex min-h-11 w-full items-center gap-3 rounded-lg border bg-black/40 px-4 py-3 text-left transition-colors motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7dd3ff] disabled:cursor-wait ${
+                  className={`flex min-h-11 w-full items-center gap-3 rounded-lg border bg-black/40 px-4 py-3 text-start transition-colors motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7dd3ff] disabled:cursor-wait ${
                     syncStatus === 'error'
                       ? 'border-[#ff3333]/40 text-[#ff3333] hover:bg-[#ff3333]/10'
                       : syncStatus === 'offline'

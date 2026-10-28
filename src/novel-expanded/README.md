@@ -383,6 +383,17 @@ request through the Library's `planArc`; the reader reviews or edits the goals
 
 ## History
 
+- **2026-10-28 (every language)** — From SENSEI's language testing. On a
+  right-to-left page each piece of text keeps its own direction (English keeps
+  its full stop at its end and its ellipsis after the words it shows), arrows
+  that mean back, next or open mirror, and the app's start/end spacing mirrors
+  with the page. Scripts without capitals or with joined letters drop the wide
+  spacing and capitals; Hebrew, Arabic, Amharic, Hindi and Thai get Noto fonts
+  in the interface (`src/host/styles/script-lettering.css`). Tags, genres, tag
+  families and novel traditions are translated into all 29 languages; other
+  interface wording waits for its rework, and
+  `scripts/findUntranslatedInterface.browser.mjs` lists what is left. Home's
+  Workshop preview loads the app, so it shows the same.
 - **2026-10-26 (medium switcher)** — Moved Events to Home above Featured and
   replaced its Discover position with Novel / Manga / Game / Video. The medium
   stays selected across tabs and reload; empty mediums retain the same layout,

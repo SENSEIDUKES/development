@@ -178,7 +178,7 @@ export function UserProfileStoriesPanel({ profile, currentUser, stories }: UserP
             title="No account seeds indexed yet"
           />
         ) : (
-          <ul className="max-h-64 space-y-2 overflow-y-auto pr-1" aria-label="Story seeds">
+          <ul className="max-h-64 space-y-2 overflow-y-auto pe-1" aria-label="Story seeds">
             {seeds.map(seed => (
               <li
                 key={seed.id}

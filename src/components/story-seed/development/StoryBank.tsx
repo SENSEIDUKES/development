@@ -116,7 +116,7 @@ const StoryBankCard = ({
   return (
     <article data-bank-kind={shelf.id}
       style={{ borderLeftColor: shelf.accent }}
-      className="story-bank-card flex flex-col rounded-xl border border-l-[3px] border-[rgba(172,166,214,0.16)] bg-[rgba(11,14,30,0.55)] p-4 shadow-[inset_0_1px_0_rgba(226,220,200,0.05),0_14px_32px_-18px_rgba(1,3,10,0.95)] sm:p-5">
+      className="story-bank-card flex flex-col rounded-xl border border-s-[3px] border-[rgba(172,166,214,0.16)] bg-[rgba(11,14,30,0.55)] p-4 shadow-[inset_0_1px_0_rgba(226,220,200,0.05),0_14px_32px_-18px_rgba(1,3,10,0.95)] sm:p-5">
       <span className="mb-2 inline-flex items-center gap-1.5 self-start font-sc text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: shelf.accent }}>
         <KindIcon size={11} aria-hidden="true" />
         {shelf.badge}

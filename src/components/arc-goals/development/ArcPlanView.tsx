@@ -31,10 +31,10 @@ export function ArcPlanView({ plan, activeGoalId, generatedThrough = 0, onEdit, 
     <summary className="cursor-pointer">{title ?? `Arc ${plan.arcNumber} · ${ARC_LENGTH} chapters · Goals`}</summary>
     <ol className="mt-3 space-y-3">
       {arcGoalSegments(plan).map(goal => <li key={goal.id}>
-        <span>{goal.text}</span>{goal.id === activeGoalId && <span className="ml-2 text-xs text-cyan-200">Active</span>}
+        <span>{goal.text}</span>{goal.id === activeGoalId && <span className="ms-2 text-xs text-cyan-200">Active</span>}
         {locked.has(goal.id) && (missed.has(goal.id)
-          ? <span className="ml-2 text-xs text-amber-200">Missed</span>
-          : <span className="ml-2 text-xs text-emerald-200">Completed</span>)}
+          ? <span className="ms-2 text-xs text-amber-200">Missed</span>
+          : <span className="ms-2 text-xs text-emerald-200">Completed</span>)}
         <p className="text-xs text-neutral-500">Chapters {goal.startChapter}–{goal.endChapter} · {goal.chapters} chapters</p>
       </li>)}
     </ol>
@@ -47,13 +47,13 @@ export function ArcPlanView({ plan, activeGoalId, generatedThrough = 0, onEdit, 
         const previousLocked = index > 0 && locked.has(draft.goals[index - 1].id);
         return <fieldset key={goal.id} disabled={saving || goalLocked} className="grid min-w-0 gap-2 rounded border border-neutral-800 p-2">
           <label>Goal {index + 1}{goalLocked ? (missed.has(goal.id) ? ' (missed)' : ' (completed)') : ''}<input className="block min-h-11 w-full bg-neutral-950 p-2" value={goal.text} onChange={event => setDraft({ ...draft, goals: draft.goals.map(item => item.id === goal.id ? { ...item, text: event.target.value } : item) })} /></label>
-          <label>Chapters<input type="number" min={1} max={ARC_LENGTH} className="ml-2 min-h-11 w-20 bg-neutral-950 p-2" value={goal.chapters} onChange={event => setDraft({ ...draft, goals: draft.goals.map(item => item.id === goal.id ? { ...item, chapters: Number(event.target.value) } : item) })} /></label>
+          <label>Chapters<input type="number" min={1} max={ARC_LENGTH} className="ms-2 min-h-11 w-20 bg-neutral-950 p-2" value={goal.chapters} onChange={event => setDraft({ ...draft, goals: draft.goals.map(item => item.id === goal.id ? { ...item, chapters: Number(event.target.value) } : item) })} /></label>
           {index > 0 && !goalLocked && !previousLocked && <button className="min-h-11 underline" onClick={() => { const goals = [...draft.goals]; [goals[index - 1], goals[index]] = [goals[index], goals[index - 1]]; setDraft({ ...draft, goals }); }}>Move goal {index + 1} earlier</button>}
         </fieldset>;
       })}
       <p>{draft.goals.reduce((sum, goal) => sum + goal.chapters, 0)} / {ARC_LENGTH} chapters allocated</p>
       {error && <p role="alert">{error}</p>}
-      <button disabled={saving} className="mr-4 min-h-11 underline" onClick={() => void save()}>Save goals</button>
+      <button disabled={saving} className="me-4 min-h-11 underline" onClick={() => void save()}>Save goals</button>
       <button disabled={saving} className="min-h-11" onClick={() => setDraft(undefined)}>Cancel</button>
     </div>}
   </details>;

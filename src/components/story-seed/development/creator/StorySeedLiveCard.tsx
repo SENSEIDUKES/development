@@ -38,7 +38,8 @@ export function StorySeedLiveCard({ seed, variant = 'summary' }: {
   const arcCount = seed.story.optional.arcCount;
   const ending = seed.world.optional.worldFoundations.destinedEnding?.trim();
   const complete = REQUIRED_STORY_SECTIONS.length - missingRequiredSections(seed).length;
-  const lineage = [style, genre].filter(Boolean).join(' · ');
+  // One text per part, so the tradition and genre each show in the reader's language.
+  const lineage = [style, genre].filter(Boolean).map((part, index) => <span key={part}>{index > 0 && ' · '}{part}</span>);
 
   return (
     <aside className="seed-live-card" data-variant={variant} data-open={expanded}
@@ -50,7 +51,7 @@ export function StorySeedLiveCard({ seed, variant = 'summary' }: {
         <span className="seed-live-card-titles">
           <span className="seed-live-card-eyebrow">Your story</span>
           <span className="seed-live-card-title">{title || 'Untitled'}</span>
-          <span className="seed-live-card-lineage">{lineage || 'Tradition and genre not chosen'}</span>
+          <span className="seed-live-card-lineage">{lineage.length > 0 ? lineage : 'Tradition and genre not chosen'}</span>
         </span>
         <span className="seed-live-card-progress" aria-label={`${complete} of ${REQUIRED_STORY_SECTIONS.length} required inputs`}>
           {complete}/{REQUIRED_STORY_SECTIONS.length}

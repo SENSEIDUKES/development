@@ -26,7 +26,7 @@ export function RewardSealedCard({ label, line, tapHint = 'Tap to reveal', onRev
       initial={reduceMotion ? { opacity: 0 } : { scale: 0.8, y: 50, opacity: 0 }}
       animate={reduceMotion ? { opacity: 1 } : { scale: 1, y: 0, opacity: 1 }}
       transition={reduceMotion ? { duration: 0 } : { type: 'spring', damping: 20, stiffness: 100 }}
-      className="group relative cursor-pointer rounded-[1.5rem] text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#7dd3ff]"
+      className="group relative cursor-pointer rounded-[1.5rem] text-start focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#7dd3ff]"
       data-celestial-foreground
       data-reward-sealed
       aria-label={`${label}. ${tapHint}.`}

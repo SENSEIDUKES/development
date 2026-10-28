@@ -362,14 +362,14 @@ export const LibraryHelpMenu = ({
               </div>
 
               <div className="relative mx-4 mt-4 sm:mx-6">
-                <SENSearchIcon size={15} aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#CDB271]/65" />
+                <SENSearchIcon size={15} aria-hidden="true" className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-[#CDB271]/65" />
                 <input
                   type="search"
                   value={query}
                   onChange={event => setQuery(event.target.value)}
                   placeholder="Search Library guidance…"
                   aria-label="Search Library guidance"
-                  className="min-h-11 w-full rounded-xl border border-neutral-800/80 bg-[#0d1126]/65 py-2.5 pl-10 pr-3 font-sans text-base text-[#F3EDE0] outline-none placeholder:text-neutral-400 focus:border-[rgba(205,178,113,0.5)] focus:ring-2 focus:ring-portal/30 lg:text-sm"
+                  className="min-h-11 w-full rounded-xl border border-neutral-800/80 bg-[#0d1126]/65 py-2.5 ps-10 pe-3 font-sans text-base text-[#F3EDE0] outline-none placeholder:text-neutral-400 focus:border-[rgba(205,178,113,0.5)] focus:ring-2 focus:ring-portal/30 lg:text-sm"
                 />
               </div>
 
@@ -396,7 +396,7 @@ export const LibraryHelpMenu = ({
                             }}
                             onClick={() => toggleItem(item.id)}
                             className={cn(
-                              'flex w-full items-center gap-3 rounded-xl border px-3.5 py-3 text-left transition-colors',
+                              'flex w-full items-center gap-3 rounded-xl border px-3.5 py-3 text-start transition-colors',
                               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portal/70',
                               active
                                 ? 'border-[rgba(205,178,113,0.45)] bg-[rgba(205,178,113,0.08)]'

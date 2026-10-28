@@ -104,6 +104,27 @@ The build, focused navigation/header/profile/Workshop tests, package boundary ch
 
 ## Workshop history
 
+- **2026-10-28, footer clearance:** Home moves the bottom dock's existing clearance
+  inside the footer, so the purple-blue fill reaches the bottom without artwork
+  showing underneath. Legal controls remain above the dock, including safe-area
+  insets; desktop keeps its existing spacing.
+
+- **2026-10-28, background follow-up:** Home's plain footer now shares the header's
+  Story Seed blue-violet finish. The artwork backdrop behind Home content remains.
+  Buttons retain black fills; media remains clear. Reader tests now locate their
+  subject content through the accent scope rather than assuming the provider
+  adds no DOM wrapper.
+
+- **2026-10-28, chrome trial:** Home's header, sidebar and mobile dock use the
+  shared Story Seed blue-violet panel recipe, with a denser 95% base for chrome;
+  Story Seed keeps its existing 46% base. Navigation controls keep black fills,
+  their native label colors, border/glow effects and hover transitions. White
+  icons, clear image/video cards, the Reader rim and rainbow action buttons remain.
+  A profile accent choice updates interface highlights; unset restores native
+  colors. Home's existing Workshop iframe shows the same trial. The browser
+  regressions cover 320/390/1440px, saved/reset accents, unfinished identity edits,
+  isolated Profile preview preferences, and unchanged Story Seed material.
+
 - **2026-10-28, media/navigation correction:** All image/video cards remain clear,
   including Events, covered World Cards and Featured still-image backdrops. The
   event text overlay uses its original contrast gradient, with no backdrop blur.
@@ -160,3 +181,9 @@ The build, focused navigation/header/profile/Workshop tests, package boundary ch
 - **2026-09-09:** After homepage PR #195 and navigation PR #194 were confirmed merged, added one mock featured novel, two subtle expansion seals, and the original/manga/game overview. Inspected the source `StoryDetailScreen` at `4a3dd02` and captured its static overview into the existing Home feature, replacing the mock novel's detail placeholder. Reused shared chrome, normal card navigation, and local assets; added no production systems or permanent data architecture.
 
 - **2026-09-09:** Corrected the overview vocabulary to “SEN World · Connected Media” and reframed the game mock as a reusable duel battle shell populated from the world's characters, abilities, artifacts, and locations, separate from the novel's narrative.
+
+
+- **2026-10-28, shared foundation:** Material values and accessibility variants now
+  belong to Library presentation `materials.css`. Home retains component role mapping,
+  artwork, media exceptions and footer clearance. Its rendered surfaces are compared
+  against the active Palette & Materials samples in the browser regression.

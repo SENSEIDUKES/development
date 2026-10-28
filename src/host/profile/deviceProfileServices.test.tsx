@@ -56,6 +56,19 @@ describe('The Cave on the device\'s profile', () => {
     expect(controller.profile?.displayName).toBe('Mara');
   });
 
+  it('saves and resets the accent without saving unrelated identity drafts', async () => {
+    await mount();
+    await run(() => controller.setFormData(previous => ({ ...previous, displayName: 'Unsaved name' })));
+    await run(() => controller.handleAccentColorChange?.('#A78BFA'));
+    expect(store.read()).toMatchObject({ accentColor: '#a78bfa', displayName: '' });
+    expect(controller.formData.displayName).toBe('Unsaved name');
+    await run(() => controller.handleAccentColorChange?.('invalid'));
+    expect(store.read().accentColor).toBe('#a78bfa');
+    await run(() => controller.handleAccentColorChange?.(undefined));
+    expect(store.read().accentColor).toBeUndefined();
+    expect(controller.formData.displayName).toBe('Unsaved name');
+  });
+
   it('asks before a language change and reverts it after 30 seconds without an answer', async () => {
     vi.useFakeTimers();
     await mount();

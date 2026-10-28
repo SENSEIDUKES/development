@@ -38,6 +38,8 @@ export interface UserProfile {
   username: string;
   displayName: string;
   displayNameColor?: string;
+  /** Optional six-digit hex for interface highlights; absent keeps original accents. */
+  accentColor?: string;
   avatarUrl: string;
   activePortraitId?: string;
   /** The equipped Familiar. Ownership is Familiar-account state; the host validates it when saving. */

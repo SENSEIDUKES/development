@@ -7,3 +7,5 @@ export { LIBRARY_ICON_CATALOG, LibraryEditIcon, LibraryCopyIcon, LibraryMediaIco
 export { LibraryDaoInsightIcon, type LibraryDaoInsightIconProps } from '../../components/sen-icons/LibraryDaoInsightIcon';
 
 export { LibraryMortalPressureIcon, LibraryImmortalPressureIcon, LibraryHeavenPressureIcon, LibrarySurvivalIcon, LibraryGenreIcon } from '../../components/sen-icons/LibraryIcons';
+
+export { LIBRARY_MATERIALS, LibraryMaterialSurface, type LibraryMaterialId } from '../../components/library-presentation/LibraryMaterialSurface';

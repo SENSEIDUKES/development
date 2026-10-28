@@ -55,6 +55,43 @@ try {
     const rainbow = await cta.evaluate(rainbowState);
     const selected = await activeNav.evaluate(navState);
     const resting = await inactiveNav.evaluate(navState);
+    assert.equal(selected[1], 'rgba(0, 0, 0, 0.95)', 'Selected navigation button stays black');
+    assert.equal(resting[1], 'rgba(0, 0, 0, 0.95)', 'Navigation button stays black');
+    assert.equal(await page.locator('.workspace-header').evaluate(element => getComputedStyle(element).backgroundColor), 'rgba(11, 14, 30, 0.95)', 'Header uses the Story Seed tint');
+    const chrome = await page.locator('.workspace-header').evaluate(element => {
+      const style = getComputedStyle(element);
+      return [style.backgroundImage, style.backgroundColor];
+    });
+    for (const selector of ['.library-footer']) {
+      assert.deepEqual(await page.locator(selector).evaluate(element => {
+        const style = getComputedStyle(element);
+        return [style.backgroundImage, style.backgroundColor];
+      }), chrome, `${selector} shares the purple-blue chrome finish`);
+    }
+    assert.ok(await page.locator('.library-home-palette').evaluate(element => {
+      const style = getComputedStyle(element);
+      return style.getPropertyValue('--home-palette-art').includes('url(') && style.backgroundImage.includes('url(');
+    }), 'Home retains its artwork backdrop behind the content');
+    const assertFooterBottom = async () => {
+      const bounds = await page.locator('.workspace-shell-main').evaluate(main => {
+        main.scrollTop = main.scrollHeight;
+        const footer = main.querySelector('.library-footer');
+        return { main: main.getBoundingClientRect().bottom, footer: footer.getBoundingClientRect().bottom };
+      });
+      assert.ok(Math.abs(bounds.footer - bounds.main) <= 1, 'Footer reaches the bottom of the scrolling viewport');
+      if (width < 1024) {
+        const legal = await page.locator('.library-footer-legal').boundingBox();
+        const dock = await page.locator('.library-global-navigation').boundingBox();
+        assert.ok(legal.y + legal.height <= dock.y, 'Legal controls remain clear of the navigation dock');
+      }
+    };
+    await assertFooterBottom();
+    if (width < 1024) {
+      await page.locator('.library-navigation-layout').evaluate(element => element.style.setProperty('--sh-safe-bottom', '34px'));
+      await assertFooterBottom();
+      await page.locator('.library-navigation-layout').evaluate(element => element.style.removeProperty('--sh-safe-bottom'));
+    }
+    await page.locator('.library-footer').screenshot({ path: `${output}/footer-${width}.png` });
     await inactiveNav.hover();
     await page.waitForTimeout(350);
     const hovered = await inactiveNav.evaluate(navState);
@@ -64,8 +101,8 @@ try {
     await page.getByTestId('novel-expanded-shell').evaluate(element => element.classList.remove('library-home-palette'));
     await page.waitForTimeout(350);
     assert.deepEqual(await cta.evaluate(rainbowState), rainbow, 'Manifest keeps its animated rainbow');
-    assert.deepEqual(await activeNav.evaluate(navState), selected, 'Selected gradient/glow/text must stay native');
-    assert.deepEqual(await inactiveNav.evaluate(navState), hovered, 'Hover effect must stay native');
+    assert.deepEqual((await activeNav.evaluate(navState)).slice(2), selected.slice(2), 'Selected glow/text/transitions stay native around the black fill');
+    assert.deepEqual((await inactiveNav.evaluate(navState)).slice(2), hovered.slice(2), 'Hover glow/text/transitions stay native around the black fill');
     assert.deepEqual(await page.locator(nativeColors).evaluateAll(elements => elements.map(element => getComputedStyle(element).color)), colors, 'Labels retain their own colors');
     await page.getByTestId('novel-expanded-shell').evaluate(element => element.classList.add('library-home-palette'));
     const icons = page.locator(width >= 1024 ? '[data-slot="navigation-icon"]' : '.library-global-navigation button > span[aria-hidden="true"]');

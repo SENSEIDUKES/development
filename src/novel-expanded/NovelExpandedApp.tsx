@@ -72,7 +72,7 @@ export function NovelExpandedApp({ services, readerMixer }: {
   // The laptop sidebar opens the way the reader last left it, on this device.
   const [sidebarMode, setSidebarMode] = useStoredLibrarySidebarMode(services.readerPreferences);
   return <ReaderMixerProvider mixer={readerMixer}>
-    <LibraryPresentationProvider assets={LIBRARY_ASSETS} backdrops={MANIFEST_BACKDROPS} loadingFamiliar={loadingFamiliar}>
+    <LibraryPresentationProvider accentColor={profile.accentColor} assets={LIBRARY_ASSETS} backdrops={MANIFEST_BACKDROPS} loadingFamiliar={loadingFamiliar}>
       <LibraryDesktopNavigationProvider value="sidebar" sidebarMode={sidebarMode} onSidebarModeChange={setSidebarMode}>
         {/* The app's places in every Library navigation, the Cave's included. */}
         <LibraryDestinationsProvider destinations={APP_DESTINATIONS}>

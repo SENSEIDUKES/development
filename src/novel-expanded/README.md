@@ -1,5 +1,13 @@
 # NovelExpanded app
 
+- **2026-10-28, background follow-up:** Home's plain footer now shares the header's
+  Story Seed blue-violet finish. The artwork backdrop behind Home content remains.
+  Buttons retain black fills; media remains clear. Reader tests now locate their
+  subject content through the accent scope rather than assuming the provider
+  adds no DOM wrapper.
+
+- **2026-10-28** — Profile Settings → Customization → Appearance now has an accent color picker, saved immediately on the existing device profile with a reset to the original colors. It preserves unfinished identity edits, Cultivator Aura colors, artwork and rainbow button effects. Home trials Story Seed's blue-violet material on its header and navigation frames with a denser base; the buttons remain black and keep their glows and transitions. This chrome trial stays on Home; the saved accent follows the reader through the app's Library presentation. Home and Profile Workshop previews share the current surfaces, with Profile retaining its isolated mock state.
+
 - **2026-10-28** — Home trials the owner’s V1 palette: transparent blue outer panels, black nested cards and navigation, and the shared Reader border. Buttons retain the rainbow rim and halo. Image/video cards stay clear of glass overlays. Navigation retains its original colored labels, gradients, glows and hover transitions; only its icons are white. `AppShell` opts in only for Home; the existing Home Workshop iframe shows the same result. No saved Workshop looks or other routes are changed.
 
 - **2026-10-27** — Preferences includes a native Menu music switch synchronized with Profile Settings → Sound. Sound has a separate Menu Music SPP slot: Studio song collections and Soundscape packs install into the existing device media store, persist across reloads and play through the shared mixer; failed imports keep the prior selection. Menu music defaults to the 13 NovelExpanded theme songs at the owner's permanent `media.seihouse.org` URLs, each verified against the original Dropbox SPP's SHA-256 hash. Custom pack selections remain respected, and the Reader keeps SEN Soundscapes as its own soundtrack. `templates/spp/NovelExpanded Theme Songs v1.0.1.spp` carries the hosted links and original source provenance; `scripts/linkMenuMusicSpp.mjs` regenerates such a pack from the original and a complete URL map, requiring a new version.

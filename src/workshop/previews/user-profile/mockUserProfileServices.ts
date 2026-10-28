@@ -35,6 +35,7 @@
  * (`celestialStore` below is replaced by the Familiar account there).
  */
 
+import { normalizeAccentColor } from '@seihouse/library/profile';
 import { createLocalReaderPreferenceStorage } from '../../../host/reader/readerPreferenceStorage';
 import type React from 'react';
 import { allFamiliarOptions } from '../../../host/familiar/catalogue';
@@ -328,6 +329,15 @@ export function createMockUserProfileServices({
         formData.defaultReadingLanguage || DEFAULT_SEN_LANGUAGE_CODE,
       );
     }, [currentUser, formData, pendingLanguageChange, performSave, profile]);
+
+    const handleAccentColorChange = useCallback((color?: string) => {
+      if (!currentUser || !profileRef.current || (color !== undefined && !normalizeAccentColor(color))) return;
+      const accentColor = normalizeAccentColor(color);
+      const next = { ...profileRef.current, accentColor, updatedAt: new Date().toISOString() };
+      profileRef.current = next;
+      setProfile(next);
+      setFormData(previous => ({ ...previous, accentColor }));
+    }, [currentUser]);
 
     const handleFamiliarChange = useCallback(async (id: string) => {
       if (!currentUser || !profileRef.current || familiarSaveLock.current) return;
@@ -828,6 +838,7 @@ export function createMockUserProfileServices({
       colorInputRef,
       handleChange,
       handleSave,
+      handleAccentColorChange,
       handleFamiliarChange,
       handleFamiliarSizeChange,
       isSavingFamiliar,

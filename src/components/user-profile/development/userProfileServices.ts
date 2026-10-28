@@ -48,6 +48,8 @@ export interface UserProfileControllerProps {
  * does not read.
  */
 export interface UserProfileController {
+  /** Saves only the interface accent. Undefined restores the original colors. */
+  handleAccentColorChange?: (color?: string) => void;
   /** Saves only the Familiar selection through the existing account owner. */
   handleFamiliarChange?: (id: string) => Promise<void> | void;
   isSavingFamiliar?: boolean;

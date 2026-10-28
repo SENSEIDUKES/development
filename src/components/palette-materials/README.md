@@ -93,3 +93,18 @@ look lifecycle, reload, import/export, keyboard and reduced transparency.
   comparison, and larger touch controls while preserving the desktop workbench.
 - **2026-10-26:** Added the painter-style workbench with canonical material samples,
   measured color swatches, isolated experiments, composition and portable saved looks.
+
+
+## 2026-10-28 — Active foundation, archive and effects
+
+Six active materials now come from Library presentation: Midnight violet, Tidal
+glass, Smoked glass, Obsidian, Spectrum action and Reader blue. Home and the active
+samples consume the same CSS recipes. Seven previous samples are explicitly archived
+in a closed disclosure, with archived selection labels and existing saved-look IDs
+preserved. Their source surfaces remain functional. New exports use version 2 while
+version 1 files remain importable.
+
+Effects has its own mobile tab and desktop section. It renders live action spectrum,
+logo glow, Reader rim, Codex halo, navigation selection and button highlight owners;
+hover/focus/press work on real controls. Earlier color inventories are collapsed.
+See `../library-presentation/README.md` for ownership and adoption boundaries.

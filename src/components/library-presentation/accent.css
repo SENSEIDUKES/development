@@ -1,0 +1,34 @@
+/* Opt in only after the reader chooses a color. Reset restores the native accents.
+   Media, identity auras, semantic status colors and the button spectrum are untouched. */
+.library-custom-accent {
+  --color-sen-portal: var(--library-accent);
+  --color-portal: var(--library-accent);
+  --color-sen-gold-accent: var(--library-accent);
+  --color-gold-accent: var(--library-accent);
+  --sh-focus-ring: var(--library-accent);
+  --sh-interactive-selected-border: var(--library-accent);
+  --sh-interactive-selected: color-mix(in srgb, var(--library-accent) 14%, transparent);
+  --sh-interactive-selected-hover: color-mix(in srgb, var(--library-accent) 22%, transparent);
+}
+.library-custom-accent .library-navigation {
+  --sh-nav-accent: var(--library-accent);
+  --sh-nav-focus: var(--library-accent);
+  --sh-nav-active-border: var(--library-accent);
+  --sh-nav-active-shadow: 0 0 18px -7px color-mix(in srgb, var(--library-accent) 60%, transparent), inset 0 -12px 22px -18px color-mix(in srgb, var(--library-accent) 60%, white);
+}
+.library-custom-accent [data-light-novels-home] :is(.home-featured-label, .home-filter-label, .text-gold-accent),
+.library-custom-accent [data-home-events] .home-events-label,
+.library-custom-accent .dao-insights-trigger > div:first-child > span {
+  color: var(--library-accent);
+}
+.library-custom-accent [data-light-novels-home] .home-featured-dot[aria-current='true']::after {
+  background: var(--library-accent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--library-accent) 40%, transparent);
+}
+.library-custom-accent .library-footer {
+  --library-footer-gold: var(--library-accent);
+  --library-footer-portal: var(--library-accent);
+}
+@media (forced-colors: active) {
+  .library-custom-accent { --library-accent: Highlight !important; }
+}

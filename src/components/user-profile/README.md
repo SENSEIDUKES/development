@@ -18,6 +18,20 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 - **Historical source inspection:** 2026-09-10
 - **Implementation status:** `@seihouse/library/profile` surface consuming separate Library economy capabilities
 
+### 2026-10-28 — Interface accent color
+
+Settings → Customization → Appearance includes **Accent color** when the host
+supplies `handleAccentColorChange`. The native color picker saves immediately;
+**Use original colors** clears the override. It changes interface highlights and
+selected controls independently of the Cultivator Aura, artwork and rainbow
+button effects. Changing it keeps the disclosure open and unfinished identity
+edits intact.
+
+NovelExpanded stores the optional validated six-digit hex value on its existing
+device profile and passes it to Library presentation. The existing Profile
+Workshop uses the same control with its isolated visit-only mock profile; it does
+not change the app's saved preference. The default remains the original accents.
+
 ### 2026-09-22 — Catalogue-driven Familiar preview
 
 Development profile fixtures start with Quill, the catalogue's separately declared

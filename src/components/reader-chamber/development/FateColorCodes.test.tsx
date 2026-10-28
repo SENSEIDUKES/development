@@ -87,14 +87,14 @@ describe('Reader fate Color Codes', () => {
     } as SystemEvent;
 
     act(() => {
-      root.render(<SystemBlock content="[ A broken fate result. ]" system={malformedFate} />);
+      root.render(<div data-fate-subject><SystemBlock content="[ A broken fate result. ]" system={malformedFate} /></div>);
     });
-    expect(container.innerHTML).toBe('');
+    expect(container.querySelector('[data-fate-subject]')!.innerHTML).toBe('');
 
     act(() => {
-      root.render(<FateResultCard data={malformedFateResult as unknown as FateResultData} />);
+      root.render(<div data-fate-subject><FateResultCard data={malformedFateResult as unknown as FateResultData} /></div>);
     });
-    expect(container.innerHTML).toBe('');
+    expect(container.querySelector('[data-fate-subject]')!.innerHTML).toBe('');
 
     const malformedWorldNotice = {
       kind: 'system_prompt',
@@ -103,9 +103,9 @@ describe('Reader fate Color Codes', () => {
       worldNotice: { entries: [] },
     } as SystemEvent;
     act(() => {
-      root.render(<SystemBlock content="[ A broken notice. ]" system={malformedWorldNotice} />);
+      root.render(<div data-fate-subject><SystemBlock content="[ A broken notice. ]" system={malformedWorldNotice} /></div>);
     });
-    expect(container.innerHTML).toBe('');
+    expect(container.querySelector('[data-fate-subject]')!.innerHTML).toBe('');
   });
 
   it('keeps the locked Story Seed reference fate-type choices on the shared Color Codes', () => {

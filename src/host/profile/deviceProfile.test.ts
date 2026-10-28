@@ -36,6 +36,18 @@ describe('The reader\'s profile on this device', () => {
     });
   });
 
+  it('keeps a valid accent across reloads, rejects invalid values and resets without changing identity', () => {
+    const { storage } = memory();
+    const store = createDeviceProfileStore({ storage, uid: 'reader' });
+    store.save({ displayName: 'Mara', accentColor: '#A78BFA' });
+    expect(createDeviceProfileStore({ storage, uid: 'reader' }).read().accentColor).toBe('#a78bfa');
+    store.save({ accentColor: 'url(bad)' });
+    expect(store.read().accentColor).toBe('#a78bfa');
+    store.save({ accentColor: undefined });
+    expect(createDeviceProfileStore({ storage, uid: 'reader' }).read()).toMatchObject({ displayName: 'Mara', accentColor: undefined });
+    expect(createDeviceProfileStore({ storage: memory(JSON.stringify({ accentColor: '#oops' })).storage, uid: 'reader' }).read().accentColor).toBeUndefined();
+  });
+
   it('never lets a save change who the reader is or what authority they have', () => {
     const { storage } = memory();
     const store = createDeviceProfileStore({ storage, uid: 'reader' });

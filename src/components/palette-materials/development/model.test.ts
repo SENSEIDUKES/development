@@ -66,7 +66,7 @@ describe('portable saved looks', () => {
   });
   it.each([
     '{broken',
-    JSON.stringify({ format: 'palette-materials', version: 2, looks: [] }),
+    JSON.stringify({ format: 'palette-materials', version: 99, looks: [] }),
     encodeLooks([{ ...look(), name: ' ' }]),
     encodeLooks([look(), look()]),
   ])('rejects malformed, incompatible or ambiguous imports', raw => {
@@ -94,4 +94,12 @@ describe('portable saved looks', () => {
     expect(() => writeLooks({ setItem() { throw new Error('quota'); } }, [look()])).toThrow('quota');
     expect(() => readLooks({ getItem() { throw new Error('unavailable'); } })).toThrow('unavailable');
   });
+});
+
+it('keeps archived looks and active foundation recipes through the versioned export', () => {
+  const active = { id: 'active', name: 'Foundation', settings: freshSettings() };
+  const archived = { id: 'archived', name: 'Earlier work', settings: { ...freshSettings(), selected: 'home' as const, roles: { navigation: 'navigation' as const, panel: 'home' as const, card: 'create' as const, button: 'button' as const } } };
+  expect(decodeLooks(JSON.stringify({ format: 'palette-materials', version: 1, looks: [archived] }))).toEqual([archived]);
+  expect(JSON.parse(encodeLooks([active, archived])).version).toBe(2);
+  expect(decodeLooks(encodeLooks([active, archived]))).toEqual([active, archived]);
 });

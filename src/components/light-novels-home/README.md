@@ -104,6 +104,13 @@ The build, focused navigation/header/profile/Workshop tests, package boundary ch
 
 ## Workshop history
 
+- **2026-10-28, owner correction:** Replaced Home's yellow accent with neutral
+  white, including selected navigation/filter fills, labels, focus and slide dots.
+  Removed the full-surface glass overlays from Featured's hero copy and world
+  banner wash; media frames do not apply backdrop blur. Videos keep their existing
+  contrast gradient, play clearly, and retain the rainbow button glow. Surrounding
+  panel/card materials and the shared Reader rim remain unchanged.
+
 - **2026-10-28:** Applied the owner's latest `v1.json` V1 look to the real Home
   through the Home-only `library-home-palette` shell. Navigation uses black at
   95% / 20px blur; outer panels use Create's `#00374a` at 12% / 24px;

@@ -198,7 +198,7 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
         )}
         <div className="absolute inset-0 ink-gradient z-10 pointer-events-none"></div>
 
-        <div className="home-hero-copy relative z-10 p-5 sm:p-12 w-full flex justify-between items-end">
+        <div className="relative z-10 p-5 sm:p-12 w-full flex justify-between items-end">
           <div className="max-w-2xl space-y-2 sm:space-y-3">
             <h2 className="font-display font-bold text-2xl sm:text-4xl md:text-5xl text-signal leading-tight tracking-tight drop-shadow-lg">
               Defying the Heavens

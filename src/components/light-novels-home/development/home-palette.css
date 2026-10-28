@@ -1,11 +1,12 @@
 /* Home's first applied palette, from the owner's v1.json (2026-10-28).
    Roles: navigation → navigation, panel → Create, card → Home, button → Familiar.
    Opt-in belongs to the Home host. Other pages keep their own presentation.
-   The Reader stylesheet owns the shared rim; ManifestButton owns its rainbow. */
+   The Reader stylesheet owns the shared rim; ManifestButton owns its rainbow.
+   Owner correction: neutral accents, with no glass overlay over video. */
 body:has(.library-home-palette) {
   --home-text: #fff;
   --home-muted: #ffffffb8;
-  --home-accent: #fecb3e;
+  --home-accent: #fff;
   --home-navigation: rgba(0, 0, 0, .95);
   --home-panel: radial-gradient(288px 160px at 88% -8%, rgba(0, 55, 74, .01), rgba(0, 55, 74, 0) 62%), linear-gradient(160deg, rgba(0, 55, 74, .016), rgba(0, 55, 74, .01) 50%, rgba(0, 55, 74, 0)), rgba(0, 55, 74, .12);
   --home-card: radial-gradient(130% 100% at 50% 0%, #0000000d, #0000 52%), linear-gradient(168deg, #0000000d, rgba(0, 0, 0, .01) 40%, rgba(0, 0, 0, .082)), rgba(0, 0, 0, .35);
@@ -51,11 +52,11 @@ body:has(.library-home-palette) {
   backdrop-filter: var(--home-card-blur);
 }
 .library-home-palette .home-event-body { border: 0; box-shadow: none; }
-.library-home-palette .home-hero-copy {
-  height: 100%;
-  background: var(--home-panel);
-  -webkit-backdrop-filter: var(--home-panel-blur);
-  backdrop-filter: var(--home-panel-blur);
+/* Media remains clear. Glass belongs to the surrounding frame, never a
+   full-size layer between the reader and a playing video. */
+.library-home-palette .home-featured :is([data-home-panel], .world-card-banner) {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 .library-home-palette :is(.workspace-header, [data-slot='app-shell-sidebar'], .library-global-navigation > div, .library-footer) {
   background: var(--home-navigation);
@@ -67,7 +68,16 @@ body:has(.library-home-palette) {
 }
 .library-home-palette .library-global-navigation > div { position: relative; }
 /* One glass layer per rail: the frame samples the scene, its content is clear. */
-.library-home-palette .library-navigation { background: transparent; color: var(--home-text); }
+.library-home-palette .library-navigation {
+  --sh-nav-accent: var(--home-accent);
+  --sh-nav-divider: #ffffff44;
+  --sh-nav-identity: var(--home-text);
+  --sh-nav-account-ring: #ffffff80;
+  background: transparent;
+  color: var(--home-text);
+}
+.library-home-palette :is([data-slot='navigation-account-name'], [data-slot='navigation-account-eyebrow']) { color: var(--home-text); }
+.library-home-palette [data-slot='navigation-emblem'] { border-color: #ffffff80; }
 .library-home-palette .library-footer {
   --library-footer-cream: var(--home-text);
   --library-footer-muted: var(--home-muted);
@@ -82,7 +92,7 @@ body:has(.library-home-palette) {
   box-shadow: none;
 }
 .library-home-palette :is([data-slot='navigation-item'][data-active='true'], [data-slot='navigation-item'][aria-current='page'], .library-global-navigation button[data-selected='true']) {
-  background: #fecb3e14;
+  background: #ffffff14;
   border-color: var(--home-accent);
   color: var(--home-text);
   box-shadow: inset 0 1px 0 #fff1;
@@ -91,22 +101,18 @@ body:has(.library-home-palette) {
 .library-home-palette :is([data-slot='navigation-icon'], [data-slot='navigation-profile-emblem']) { background: #0009; border-color: var(--reader-glass-edge); box-shadow: none; }
 .library-home-palette :is(.home-event-title, [data-slot='empty-state-title'], .text-signal) { color: var(--home-text); }
 .library-home-palette :is(.home-events-preview, .home-events-more, .home-event-description, .home-event-when, [data-slot='empty-state-description']) { color: var(--home-muted); }
-.library-home-palette .home-featured-dot[aria-current='true']::after { background: var(--home-accent); box-shadow: 0 0 6px #fecb3e66; }
-.library-home-palette [data-light-novels-home] .text-portal { color: var(--home-accent); }
+.library-home-palette [data-light-novels-home] .home-featured-dot[aria-current='true']::after { background: var(--home-accent); box-shadow: 0 0 6px #ffffff66; }
+.library-home-palette [data-light-novels-home] :is(.text-portal, .text-gold-accent, .home-featured-label) { color: var(--home-accent); }
+.library-home-palette .dao-insights-trigger > div:first-child > :is(svg, span) { color: var(--home-accent); }
 .library-home-palette [data-slot='filter-chip'] {
   --sh-interactive-surface: #000000f2;
-  --sh-interactive-selected: #fecb3e24;
-  --sh-interactive-selected-hover: #fecb3e38;
+  --sh-interactive-selected: #ffffff24;
+  --sh-interactive-selected-hover: #ffffff38;
   --sh-interactive-selected-border: var(--home-accent);
   --sh-interactive-selected-text: var(--home-text);
   --sh-text-primary: var(--home-text);
   --sh-text-muted: var(--home-muted);
   --sh-focus-ring: var(--home-accent);
-}
-.library-home-palette .world-card-banner-wash {
-  background: var(--home-panel);
-  -webkit-backdrop-filter: var(--home-panel-blur);
-  backdrop-filter: var(--home-panel-blur);
 }
 .library-home-palette :is(.world-card-caption-title, .world-card-caption-creator, .world-card-banner-title, .world-card-banner-byline) { color: var(--home-text); }
 .library-home-palette :is(.world-card-caption-details, .world-card-banner-details, .world-card-banner-synopsis, .world-card-banner-by) { color: var(--home-muted); }

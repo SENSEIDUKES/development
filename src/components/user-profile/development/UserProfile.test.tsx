@@ -3,6 +3,7 @@ import { act } from 'react';
 import type { Root } from 'react-dom/client';
 import { createRoot } from '../../../test-utils/createLibraryRoot';
 import { LIBRARY_ASSETS } from '../../../host/media/libraryAssets';
+import { loadLanguagePack } from '../../../library/language/localeLoader';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import UserProfile from './UserProfile';
 import { UserProfilePortraitModal } from './UserProfilePortraitModal';
@@ -1167,6 +1168,9 @@ describe('Cultivator Cave settings', () => {
   });
 
   it('asks for confirmation on a language change and reverts on request', async () => {
+    // A cached pack translates immediately; do not depend on the import being
+    // slow enough to leave the confirmation in English.
+    await loadLanguagePack('es');
     await renderCave();
     await click(byText('[data-cave-account-actions] button', 'Settings'));
     await click(byText('[data-slot="disclosure-trigger"]', 'Language'));
@@ -1175,8 +1179,8 @@ describe('Cultivator Cave settings', () => {
       select.value = 'es';
       select.dispatchEvent(new Event('change', { bubbles: true }));
     });
-    expect(document.body.querySelector('[data-cave-language-confirm]')?.textContent).toContain('Confirm Language Change');
-    await click(byText('button', 'No, Revert Back'));
+    expect(document.body.querySelector('[data-cave-language-confirm]')?.textContent).toContain('Confirmar cambio de idioma');
+    await click(byText('button', 'No, revertir'));
     expect(document.body.querySelector('[data-cave-language-confirm]')).toBeNull();
     expect(select.value).toBe('en');
   });

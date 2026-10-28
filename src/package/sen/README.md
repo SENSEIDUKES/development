@@ -1,5 +1,11 @@
 # `@seihouse/sen`
 
+**Unreleased (2026-10-28, breaking):** `./reader-codex` no longer exports the
+older Codex page: `ReaderCodex` (and its `extraPages`), `CodexSheetOverlay`,
+`CodexSheetOverlayProps` and `ReaderCodexBestiary` are gone. The Codex is
+`StoryCodex` in `./harness-generation`. The entry's section views, hooks,
+context and highlighting helpers are unchanged.
+
 **Unreleased (2026-10-26, breaking):** tagging leaves the chapter writer. The
 five tag slots leave `CAPA_SCHEMA` (`soundCues`, `soundtrack`, `speakers`,
 `holdings`, `appearance`), so `HarnessSkillSlotId` narrows to the seven writing

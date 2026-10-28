@@ -1,10 +1,10 @@
 /**
  * `@seihouse/sen/reader-codex` — the Reader Codex surface.
  *
- * The living story compendium: the Codex shell, its sheet overlay, the
- * bestiary, every Codex section view, the Codex context provider, and the
- * hooks and utilities that drive Codex editing, imagery, and voice. Its
- * stylesheet travels with the Codex component itself.
+ * The older Codex's pieces: every Codex section view, the Codex context
+ * provider, and the hooks and utilities that drive Codex editing, imagery, and
+ * voice. Its stylesheet travels with them. The Codex page itself is remade on
+ * the HARNESS record (`StoryCodex` in `./harness-generation`).
  *
  * The Codex renders inside the Reader Chamber's typography, so this entry
  * carries both stylesheets.
@@ -15,12 +15,6 @@
 import '../../components/reader-chamber/shared/reader-chamber.css';
 import '../../components/reader-codex/shared/reader-codex.css';
 
-export { default as ReaderCodex } from '../../components/reader-codex/development/ReaderCodex';
-export { ReaderCodexBestiary } from '../../components/reader-codex/development/ReaderCodexBestiary';
-export {
-  CodexSheetOverlay,
-  type CodexSheetOverlayProps,
-} from '../../components/reader-codex/development/CodexSheetOverlay';
 export { DestinyChoicePanel } from '../../components/reader-codex/shared/DestinyChoicePanel';
 
 export {

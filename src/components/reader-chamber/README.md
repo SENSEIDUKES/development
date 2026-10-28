@@ -18,6 +18,7 @@ is SEN, Library and NovelExpanded built here, guided by `NOVEL_EXPANDED.md`.
 
 ## Workshop history
 
+- **2026-10-28:** Removed the unused `shared/readerPlayback.ts` (the Reader takes playback from `narrative/readerRuntime` and sound-cue text from `audio/readerVisibleText`) and the unused `shared/id.ts` and `shared/dialect.ts` pass-throughs. The `@seihouse/sen/reader-chamber` header no longer claims Workshop mocks are bundled into the entry; none are.
 - **2026-10-18 (review follow-up):** Failed portraits offer a direct URL retry, including hosts without manifestation support. The recovery seal is only offered when a host supplies its action, and opening details does not reintroduce an already failed portrait URL.
 - **2026-10-18 (Codex reveal follow-up):** Categories announce a normalized "Category:" prefix. Each supported entity's description has a keyboard/touch "Read more in Codex" trigger using the existing hovercard, whose full copy now scrolls without a line clamp. A failed portrait URL shows "Portrait unavailable" and the Manifest seal even for an entry with a stored asset ID; a replacement URL is attempted normally. The card emits a bubbling `sen:codex-portrait-error` DOM event with `{ entryId, type, imageAssetId }` for host diagnostics, excluding asset URLs. Hosts must subscribe to collect these events; this retained preview has no analytics service. Shared ambience paints seven motes in one animated background plus a static gradient aura, with reduced motion preserved.
 - **2026-10-18 (shared Codex reveal accessibility):** The retained `CodexCard` uses an `h2` entity name beneath the older ReaderViewport's chapter `h1`. Portraits, backdrops and names no longer react to hover; only the Manifest seal keeps action feedback. The seal's visual contents, including its loading state, are decorative beneath its accessible button label. Card Workshop and other consumers receive the same source change; the app's rebuilt Reader remains separate.
@@ -236,10 +237,9 @@ shared/                       — code genuinely identical between the two forks
                                 src/index.css (imported by the preview Workspace)
   stubs.ts                    — mock external store (useAppStore + selectIsGenerating, no
                                 zustand), LOCAL_ONLY_MODE, inert hook stubs, inert audio engine
-  readerPlayback.ts           — pure extractSFXCues (verbatim) + inert useReaderPlayback
-  id.ts, readerTypography.ts, readerLegend.ts, colorCodes.ts,
+  readerTypography.ts, readerLegend.ts, colorCodes.ts,
   systemColors.ts (compatibility re-export),
-  dialect.ts, autoCuePolicy.ts, manifestationEligibility.ts,
+  autoCuePolicy.ts, manifestationEligibility.ts,
   cinematicScroll/anchors.ts, effects/cinematicEffectGovernor.ts
                             — pure libs copied (near-)verbatim from production
 ```

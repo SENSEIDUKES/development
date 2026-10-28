@@ -46,7 +46,7 @@ any model call that is not registered. See AGENTS.md.
 | `OpenRouter-Dev` (or `OPENROUTER_API_KEY`) | OpenRouter chapter models appear once set |
 | `OPENROUTER_MODELS` | Extra OpenRouter models, comma-separated (`openai/gpt-5.6-luna`) |
 | `OPENROUTER_REASONING_EFFORT` | Optional server fallback reasoning effort for OpenRouter models (the Router's Advanced setting wins; models that send their own default, below, never use it) |
-| `HARNESS_GENERATION_MODELS`, `CHAPTER_GENERATION_MODELS` | Models pinned ahead of the catalog |
+| `HARNESS_GENERATION_MODELS` | Models pinned ahead of the catalog |
 | `*_DEFAULT_MODEL` | Default model per surface (otherwise Gemini 3.1 Flash Lite) |
 | `ELEVENLABS_API_KEY`, `ELEVENLABS_MODEL_ID` | TTS |
 | `TRIPO_API_KEY` | Tripo 3D model provider status |
@@ -58,7 +58,7 @@ any model call that is not registered. See AGENTS.md.
 - `catalog.ts` — models, providers, routing and key resolution
 - `openRouter.ts` — OpenRouter chat-completions call
 - `src/library/model-router/anthropic.ts` — Claude through the official Anthropic SDK
-- `geminiThinking.ts` — maps Router reasoning levels to Gemini `thinkingLevel`
+- `src/library/model-router/geminiThinking.ts` — maps Router reasoning levels to Gemini `thinkingLevel`
 - `status.ts` — capability status for the Workshop
 - `vercelHandler.ts` → `api/model-router.js` (built by `scripts/buildModelRouterApi.mjs`)
 - Workshop gear and panel: `src/workshop/ModelRouterSettings.tsx`

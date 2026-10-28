@@ -1,3 +1,4 @@
+import { EffectsGallery } from './EffectsGallery';
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useLibraryAssets } from '@seihouse/library/presentation';
 import { MATERIALS, MaterialSurface, COLOR_GROUPS } from './samples';
@@ -153,7 +154,7 @@ export function PaletteMaterials() {
   };
 
   const edgeClass = (id: MaterialId) => settings.edits[id]?.borderGlow === 'reader'
-    ? 'reader-border-glow pm-reader-border' : id === 'reader' ? 'reader-border-glow' : '';
+    ? 'reader-border-glow pm-reader-border' : ['reader', 'violet-shell', 'blue-glass', 'smoked-glass', 'black-control'].includes(id) ? 'reader-border-glow' : '';
   const applyReaderBorder = () => setSettings(current => ({
     ...current, edits: Object.fromEntries(MATERIALS.map(({ id }) => [id, { ...current.edits[id], borderGlow: 'reader' as const }])),
   }));
@@ -168,10 +169,17 @@ export function PaletteMaterials() {
     };
   };
 
+  const renderSample = (sample: typeof MATERIALS[number], index: number) => <article key={sample.id} className="pm-sample" data-selected={settings.selected === sample.id}>
+        {stage(<MaterialSurface id={sample.id} />, 'pm-sample-stage')}
+        <button type="button" className="pm-sample-select" aria-pressed={settings.selected === sample.id} onClick={() => selectMaterial(sample.id)}>
+          <span className="pm-index">0{index + 1}</span><span><strong>{sample.name}</strong><small>{sample.usage}</small></span><span aria-hidden="true">↗</span>
+        </button><p className="pm-origin">{sample.origin}</p>
+      </article>;
+
   return <main className="pm-workbench" data-mobile-section={mobileSection}>
     <header className="pm-intro"><span className="pm-eyebrow">The visual workbench</span><h2>Your paints. Your materials.</h2>
       <p>See what’s here. Try it together. Keep the looks you love.</p>
-      <div className="pm-topline"><nav aria-label="Palette sections"><a href="#pm-materials">Materials</a><a href="#pm-colors">Colors</a><a href="#pm-composition">Composition</a><a href="#pm-looks">Saved looks <span>{looks.length}</span></a></nav>
+      <div className="pm-topline"><nav aria-label="Palette sections"><a href="#pm-materials">Materials</a><a href="#pm-effects">Effects</a><a href="#pm-colors">Colors</a><a href="#pm-composition">Composition</a><a href="#pm-looks">Saved looks <span>{looks.length}</span></a></nav>
         <label className="pm-background">Behind every sample<select aria-label="Behind every sample" value={settings.background} onChange={e => update({ background: e.target.value as PaletteSettings['background'] })}>
           <option value="black">Black</option><option value="gray">Neutral gray</option><option value="artwork">Sign-in artwork</option>
         </select></label>
@@ -181,22 +189,18 @@ export function PaletteMaterials() {
     </header>
 
     <nav className="pm-mobile-nav" aria-label="Workspace sections">{[
-      ['materials', 'Materials'], ['colors', 'Colors'], ['composition', 'Preview'], ['looks', 'Saved'],
+      ['materials', 'Materials'], ['effects', 'Effects'], ['colors', 'Colors'], ['composition', 'Preview'], ['looks', 'Saved'],
     ].map(([id, label]) => <button key={id} type="button" aria-pressed={mobileSection === id} aria-controls={`pm-${id}`} onClick={() => showSection(id)}>{label}{id === 'looks' && looks.length > 0 && <span>{looks.length}</span>}</button>)}</nav>
 
-    <section id="pm-materials" className="pm-section"><div className="pm-section-heading"><div><span className="pm-eyebrow">01 / The materials</span><h2>Same light. Different glass.</h2></div><p>These are the current app treatments. Select one to experiment.</p></div>
+    <section id="pm-materials" className="pm-section"><div className="pm-section-heading"><div><span className="pm-eyebrow">01 / The materials</span><h2>The active foundation.</h2></div><p>Active foundations shared with the app. Previous treatments live in the archive below.</p></div>
       <button type="button" className="pm-control pm-mobile-browse" aria-expanded={browseMaterials} aria-controls="pm-material-catalog" onClick={() => setBrowseMaterials(value => !value)}>{browseMaterials ? 'Close material gallery' : `Browse all ${MATERIALS.length} materials`}</button>
-      <div ref={catalog} id="pm-material-catalog" className="pm-catalog" data-browse={browseMaterials}>{MATERIALS.map((sample, index) => <article key={sample.id} className="pm-sample" data-selected={settings.selected === sample.id}>
-        {stage(<MaterialSurface id={sample.id} />, 'pm-sample-stage')}
-        <button type="button" className="pm-sample-select" aria-pressed={settings.selected === sample.id} onClick={() => selectMaterial(sample.id)}>
-          <span className="pm-index">0{index + 1}</span><span><strong>{sample.name}</strong><small>{sample.usage}</small></span><span aria-hidden="true">↗</span>
-        </button><p className="pm-origin">{sample.origin}</p>
-      </article>)}</div>
+      <div ref={catalog} id="pm-material-catalog" className="pm-material-inventory" data-browse={browseMaterials}><div className="pm-catalog" data-browse="true">{MATERIALS.filter(sample => !sample.archived).map(renderSample)}</div><details className="pm-archive"><summary>Archived materials ({MATERIALS.filter(sample => sample.archived).length})</summary><p>Previous treatments, kept for comparison and saved looks. Some pages still use them until they adopt the foundation.</p><div className="pm-catalog" data-browse="true">{MATERIALS.filter(sample => sample.archived).map(renderSample)}</div></details></div>
 
+      {selected.archived && <p className="pm-note" role="status">This look uses an archived material. Your saved edits are preserved; choose an active material to try the new foundation.</p>}
       <div id="pm-mixing-table" className="pm-editor" aria-label="Material editor"><div className="pm-editor-main"><div className="pm-editor-preview"><div className="pm-section-heading"><div><span className="pm-eyebrow">On the mixing table</span><h3>{selected.name}</h3></div><button type="button" className="pm-control" onClick={reset}>Reset material</button></div>
-        <div className="pm-mobile-pickers"><label>Material<select aria-label="Material to edit" value={selected.id} onChange={e => selectMaterial(e.target.value as MaterialId)}>{MATERIALS.map(material => <option key={material.id} value={material.id}>{material.name}</option>)}</select></label>
+        <div className="pm-mobile-pickers"><label>Material<select aria-label="Material to edit" value={selected.id} onChange={e => selectMaterial(e.target.value as MaterialId)}>{MATERIALS.map(material => <option key={material.id} value={material.id}>{material.archived ? 'Archive · ' : ''}{material.name}</option>)}</select></label>
           <label>Background<select aria-label="Preview background" value={settings.background} onChange={e => update({ background: e.target.value as PaletteSettings['background'] })}><option value="black">Black</option><option value="gray">Neutral gray</option><option value="artwork">Artwork</option></select></label></div>
-        <div className="pm-comparison"><div><span className="pm-caption">Original · current app</span>{stage(<MaterialSurface id={selected.id} />, 'pm-large-sample')}</div>
+        <div className="pm-comparison"><div><span className="pm-caption">Original · {selected.archived ? 'archived treatment' : 'active foundation'}</span>{stage(<MaterialSurface id={selected.id} />, 'pm-large-sample')}</div>
           <div><span className="pm-caption">Your experiment {Object.keys(edit).length > 0 && '· edited'}</span>{stage(<MaterialSurface id={selected.id} style={materialStyle(base, edit, measured.reader)} className={`pm-experiment ${edgeClass(selected.id)}`} />, 'pm-large-sample')}</div></div></div>
         <div className="pm-editor-extras"><div className="pm-ingredients" aria-label="Individual material layers">{base && [
           { name: 'Border', className: '', style: { border: `${base.borderWidth} solid ${base.borderColor}` } },
@@ -226,20 +230,22 @@ export function PaletteMaterials() {
       </aside></div>
     </section>
 
+    <EffectsGallery />
+
     <section id="pm-colors" className="pm-section"><div className="pm-section-heading"><div><span className="pm-eyebrow">02 / The paints</span><h2>Colors already in the app.</h2></div>
       <label>Use a swatch for<select aria-label="Use a swatch for" value={colorTarget} onChange={e => setColorTarget(e.target.value as 'text' | 'accent')}><option value="accent">Composition accent</option><option value="text">Composition text</option></select></label></div>
-      {COLOR_GROUPS.map(group => <div className="pm-color-group" key={group.name}><h3>{group.name}</h3><div className="pm-swatches">{group.colors.map(color => {
+      {COLOR_GROUPS.map(group => <details className="pm-color-group" key={group.name} open={!group.name.startsWith('Archived')}><summary>{group.name}</summary><div className="pm-swatches">{group.colors.map(color => {
         const value = 'token' in color ? tokens[color.token] || color.value : measured[color.sample]?.[color.property] ?? color.value;
         const hex = value.startsWith('#') ? value.slice(0, 7) : colorParts(value).hex;
         return <button key={color.name} type="button" className="pm-swatch" onClick={() => update({ colors: { ...settings.colors, [colorTarget]: hex } })} aria-label={`Use ${color.name} as ${colorTarget}`}>
           <span className="pm-color-chip"><span style={{ background: value }} /></span><strong>{color.name}</strong><code>{value}</code><small>{color.usage}</small>
         </button>;
-      })}</div></div>)}
+      })}</div></details>)}
       <p className="pm-note">Swatches use live theme values and sample colors. Transparent swatches show their opacity; applying one to text or an accent uses its solid color.</p>
     </section>
 
     <section id="pm-composition" className="pm-section"><div className="pm-section-heading"><div><span className="pm-eyebrow">03 / Put it together</span><h2>One small world.</h2></div><p>Assign materials, then see them next to each other.</p></div>
-      <div className="pm-role-controls">{(['navigation', 'panel', 'card', 'button'] as const).map(role => <label key={role}>{role === 'card' ? 'Nested card' : role[0].toUpperCase() + role.slice(1)}<select aria-label={role === 'card' ? 'Nested card' : role[0].toUpperCase() + role.slice(1)} value={settings.roles[role]} onChange={e => update({ roles: { ...settings.roles, [role]: e.target.value as MaterialId } })}>{MATERIALS.map(material => <option key={material.id} value={material.id}>{material.name}</option>)}</select></label>)}</div>
+      <div className="pm-role-controls">{(['navigation', 'panel', 'card', 'button'] as const).map(role => <label key={role}>{role === 'card' ? 'Nested card' : role[0].toUpperCase() + role.slice(1)}<select aria-label={role === 'card' ? 'Nested card' : role[0].toUpperCase() + role.slice(1)} value={settings.roles[role]} onChange={e => update({ roles: { ...settings.roles, [role]: e.target.value as MaterialId } })}>{MATERIALS.map(material => <option key={material.id} value={material.id}>{material.archived ? 'Archive · ' : ''}{material.name}</option>)}</select></label>)}</div>
       <div className="pm-composition-colors"><ColorControl label="Text" value={settings.colors.text} onChange={text => update({ colors: { ...settings.colors, text } })} /><ColorControl label="Accent" value={settings.colors.accent} onChange={accent => update({ colors: { ...settings.colors, accent } })} /></div>
       {stage(<div className="pm-scene" style={{ '--pm-accent': settings.colors.accent } as CSSProperties}>
         <nav aria-label="Composition navigation" className={`pm-scene-nav pm-experiment ${edgeClass(settings.roles.navigation)}`} style={compositionStyle(settings.roles.navigation)}><span className="pm-scene-wordmark">NOVEL<br />EXPANDED</span><span className="pm-caption">PATHWAYS</span><button type="button" aria-current="page" className="pm-scene-selected">◇ Home <small>Selected</small></button><button type="button">✧ Create <small>Resting</small></button></nav>

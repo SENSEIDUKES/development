@@ -1,0 +1,70 @@
+/* Canonical Library materials. Home is a role adapter; Workshop uses the same recipes. */
+/* One app-owned blue-violet recipe for Story Seed and the Home chrome trial. */
+.seed-field-scope, .library-material-scope, body:has(.library-home-palette) {
+  --library-material-violet-fill:
+    radial-gradient(18rem 10rem at 88% -8%, rgba(205, 178, 113, 0.05), transparent 62%),
+    linear-gradient(160deg, rgba(105, 130, 225, 0.06), rgba(70, 60, 160, 0.04) 50%, rgba(12, 15, 34, 0)),
+    rgba(11, 14, 30, var(--library-material-violet-opacity, 0.46));
+}
+.library-material-scope, body:has(.library-home-palette) {
+  --library-material-text: #fff;
+  --library-material-muted: #ffffffb8;
+  --library-material-control-fill: rgba(0, 0, 0, .95);
+  --library-material-violet-opacity: .95;
+  --library-material-shell-fill: var(--library-material-violet-fill);
+  --library-material-panel-fill: radial-gradient(288px 160px at 88% -8%, rgba(0, 55, 74, .01), rgba(0, 55, 74, 0) 62%), linear-gradient(160deg, rgba(0, 55, 74, .016), rgba(0, 55, 74, .01) 50%, rgba(0, 55, 74, 0)), rgba(0, 55, 74, .12);
+  --library-material-card-fill: radial-gradient(130% 100% at 50% 0%, #0000000d, #0000 52%), linear-gradient(168deg, #0000000d, rgba(0, 0, 0, .01) 40%, rgba(0, 0, 0, .082)), rgba(0, 0, 0, .35);
+  --library-material-panel-blur: blur(24px);
+  --library-material-card-blur: blur(25px) saturate(1.5);
+  --library-material-control-blur: blur(20px);
+  --library-material-panel-shadow: inset 0 1px 0 #e3f6ff26, 0 14px 32px -18px rgba(1, 3, 10, 1);
+  --library-material-card-shadow: inset 0 1px 0 #e3f6ff26, 0 2px 10px #00000080, 0 28px 80px #0000008c, 0 0 52px #0000001f, 0 0 110px #0000000f;
+  --library-material-shell-shadow: inset 0 1px 0 #e3f6ff26, 0 0 32px #04acff40;
+  --library-material-control-shadow: inset 0 1px 0 #e3f6ff26, 0 12px 40px #0006;
+}
+.library-material-surface {
+  position: relative;
+  border: 1px solid var(--reader-glass-edge);
+  border-radius: 1.5rem;
+  color: var(--library-material-text);
+}
+[data-library-material='violet-shell'] {
+  background: var(--library-material-shell-fill);
+  box-shadow: var(--library-material-shell-shadow);
+  backdrop-filter: var(--library-material-control-blur);
+  -webkit-backdrop-filter: var(--library-material-control-blur);
+}
+[data-library-material='blue-glass'] {
+  background: var(--library-material-panel-fill);
+  box-shadow: var(--library-material-panel-shadow);
+  backdrop-filter: var(--library-material-panel-blur);
+  -webkit-backdrop-filter: var(--library-material-panel-blur);
+}
+[data-library-material='smoked-glass'] {
+  background: var(--library-material-card-fill);
+  box-shadow: var(--library-material-card-shadow);
+  backdrop-filter: var(--library-material-card-blur);
+  -webkit-backdrop-filter: var(--library-material-card-blur);
+}
+[data-library-material='black-control'] {
+  background: var(--library-material-control-fill);
+  box-shadow: var(--library-material-control-shadow);
+  backdrop-filter: var(--library-material-control-blur);
+  -webkit-backdrop-filter: var(--library-material-control-blur);
+}
+[data-library-material='rainbow-action'] {
+  --glass-fill: var(--library-material-control-fill);
+  --glass-edge: var(--reader-glass-edge);
+  --glass-backdrop: var(--library-material-control-blur);
+  --glass-backdrop-dim: none;
+  background-image: none;
+}
+@media (prefers-reduced-transparency: reduce) {
+  .library-material-scope, body:has(.library-home-palette) { --library-material-panel-fill: #0c1c24; --library-material-card-fill: #080b0d; --library-material-control-fill: #000; --library-material-shell-fill: #0b0e1e; --library-material-panel-blur: none; --library-material-card-blur: none; --library-material-control-blur: none; }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .library-material-scope, body:has(.library-home-palette) { --library-material-panel-fill: #0c1c24; --library-material-card-fill: #080b0d; --library-material-control-fill: #000; --library-material-shell-fill: #0b0e1e; }
+}
+@media (forced-colors: active) {
+  .library-material-scope, body:has(.library-home-palette) { --library-material-text: CanvasText; --library-material-muted: CanvasText; --library-material-panel-fill: Canvas; --library-material-card-fill: Canvas; --library-material-control-fill: Canvas; --library-material-shell-fill: Canvas; --reader-glass-edge: ButtonText; --library-material-panel-shadow: none; --library-material-card-shadow: none; --library-material-control-shadow: none; --library-material-shell-shadow: none; --library-material-panel-blur: none; --library-material-card-blur: none; --library-material-control-blur: none; }
+}

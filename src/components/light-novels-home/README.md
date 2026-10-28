@@ -181,3 +181,9 @@ The build, focused navigation/header/profile/Workshop tests, package boundary ch
 - **2026-09-09:** After homepage PR #195 and navigation PR #194 were confirmed merged, added one mock featured novel, two subtle expansion seals, and the original/manga/game overview. Inspected the source `StoryDetailScreen` at `4a3dd02` and captured its static overview into the existing Home feature, replacing the mock novel's detail placeholder. Reused shared chrome, normal card navigation, and local assets; added no production systems or permanent data architecture.
 
 - **2026-09-09:** Corrected the overview vocabulary to “SEN World · Connected Media” and reframed the game mock as a reusable duel battle shell populated from the world's characters, abilities, artifacts, and locations, separate from the novel's narrative.
+
+
+- **2026-10-28, shared foundation:** Material values and accessibility variants now
+  belong to Library presentation `materials.css`. Home retains component role mapping,
+  artwork, media exceptions and footer clearance. Its rendered surfaces are compared
+  against the active Palette & Materials samples in the browser regression.
